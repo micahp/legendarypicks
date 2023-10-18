@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 This is a scaffold for an FCL NextJS Dapp on the Flow Blockchain.
 
 ## Features Provided
@@ -75,3 +76,6 @@ Whenever you need to redeploy changed contracts to Testnet while seeing the diff
 ```
 npm run dev:testnet:update
 ```
+=======
+# legendarypicks
+>>>>>>> 75abdd0 (Initial commit)
