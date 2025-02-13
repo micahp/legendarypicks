@@ -10,6 +10,7 @@
 			}
 		},
 		"HelloWorld": "cadence/contracts/HelloWorld.cdc",
+		"LegendaryPicksContest": "cadence/contracts/LegendaryPicksContest.cdc",
 		"MetadataViews": {
 			"source": "cadence/contracts/standard/MetaViews.cdc",
 			"aliases": {
@@ -28,34 +29,58 @@
 		"TopShot": "cadence/contracts/community/TopShot.cdc",
 		"TopShotLocking": "cadence/contracts/community/TopShotLocking.cdc"
 	},
+	"emulators": {
+		"default": {
+			"port": 8888,
+			"serviceAccount": "emulator-account",
+			"verbose": false,
+			"dbPath": "./flowdb",
+			"rest": {
+				"maxBodySizeMB": 10,
+				"listenAddr": "127.0.0.1:8888"
+			}
+		}
+	},
 	"networks": {
-		"emulator": "127.0.0.1:3569",
+		"emulator": "127.0.0.1:8888",
 		"mainnet": "access.mainnet.nodes.onflow.org:9000",
 		"testnet": "access.devnet.nodes.onflow.org:9000"
 	},
 	"accounts": {
 		"community": {
-			"address": "e392644b9278f81f",
-			"key": "ba68d45a5acaa52f3cacf4ad3a64d9523e0ce0ae3addb1ee6805385b380b7646"
+			"address": "045a1763c93006ca",
+			"key": {
+				"type": "file",
+				"location": "./keys/community.pkey"
+			}
 		},
 		"default": {
-			"address": "1551e7bac5519a9d",
-			"key": "ba68d45a5acaa52f3cacf4ad3a64d9523e0ce0ae3addb1ee6805385b380b7646"
+			"address": "e03daebed8ca0615",
+			"key": {
+				"type": "file",
+				"location": "./keys/default.pkey"
+			}
 		},
 		"emulator-account": {
 			"address": "f8d6e0586b0a20c7",
 			"key": {
 				"type": "file",
-				"location": "./emulator.key"
+				"location": "./keys/emulator-account.pkey"
 			}
 		},
 		"escrow": {
-			"address": "07f5dd968382f8c0",
-			"key": "ba68d45a5acaa52f3cacf4ad3a64d9523e0ce0ae3addb1ee6805385b380b7646"
+			"address": "179b6b1cb6755e31",
+			"key": {
+				"type": "file",
+				"location": "./keys/escrow.pkey"
+			}
 		},
 		"standard": {
-			"address": "11a1b8a51a86f2a1",
-			"key": "ba68d45a5acaa52f3cacf4ad3a64d9523e0ce0ae3addb1ee6805385b380b7646"
+			"address": "f3fcd2c1a78f5eee",
+			"key": {
+				"type": "file",
+				"location": "./keys/standard.pkey"
+			}
 		}
 	},
 	"deployments": {
@@ -72,6 +97,9 @@
 			],
 			"standard": [
 				"MetadataViews"
+			],
+			"emulator-account": [
+				"LegendaryPicksContest"
 			]
 		}
 	}
