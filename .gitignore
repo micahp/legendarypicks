@@ -39,3 +39,6 @@ testnet-account.private.json
 
 package-lock.json
 yarn.lock
+
+# Flow private keys
+/keys/*.pkey
