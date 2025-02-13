@@ -1,8 +1,8 @@
-pub contract HelloWorld {
+access(all) contract HelloWorld {
 
-  pub var greeting: String
+  access(all) var greeting: String
 
-  pub fun changeGreeting(newGreeting: String) {
+  access(all) fun changeGreeting(newGreeting: String) {
     self.greeting = newGreeting
     log(newGreeting)
   }
