@@ -3,14 +3,38 @@ import * as fcl from "@onflow/fcl"
 // Script to get all NFTs in a user's collection
 const getMomentIDs = `
   import TopShot from 0x877931736ee77cff
+  import HybridCustody from 0xd8a7e05a7ac670c0
 
   pub fun main(account: Address): [UInt64] {
-    let collectionRef = getAccount(account)
+    // Get the manager to access linked accounts
+    let manager = getAuthAccount(account).storage
+      .borrow<&HybridCustody.Manager>(from: HybridCustody.ManagerStoragePath)
+    
+    var allMomentIds: [UInt64] = []
+    
+    // First get moments from main account
+    let mainCollection = getAccount(account)
       .getCapability(/public/MomentCollection)
       .borrow<&{TopShot.MomentCollectionPublic}>()
-      ?? panic("Could not get public moment collection reference")
     
-    return collectionRef.getIDs()
+    if let collection = mainCollection {
+      allMomentIds.append(contentsOf: collection.getIDs())
+    }
+    
+    // Then get moments from linked accounts
+    if let manager = manager {
+      for childAddress in manager.getChildAddresses() {
+        let childCollection = getAccount(childAddress)
+          .getCapability(/public/MomentCollection)
+          .borrow<&{TopShot.MomentCollectionPublic}>()
+        
+        if let collection = childCollection {
+          allMomentIds.append(contentsOf: collection.getIDs())
+        }
+      }
+    }
+    
+    return allMomentIds
   }
 `
 
@@ -18,16 +42,42 @@ const getMomentIDs = `
 const getMomentMetadata = `
   import TopShot from 0x877931736ee77cff
   import MetadataViews from 0x631e88ae7f1d7c20
+  import HybridCustody from 0xd8a7e05a7ac670c0
 
   pub fun main(account: Address, id: UInt64): {String: AnyStruct} {
-    let collectionRef = getAccount(account)
+    // Try main account first
+    let mainCollection = getAccount(account)
       .getCapability(/public/MomentCollection)
       .borrow<&{TopShot.MomentCollectionPublic}>()
-      ?? panic("Could not get public moment collection reference")
+    
+    if let collection = mainCollection {
+      if let moment = collection.borrowMoment(id: id) {
+        return resolveMomentMetadata(moment)
+      }
+    }
+    
+    // Try linked accounts
+    let manager = getAuthAccount(account).storage
+      .borrow<&HybridCustody.Manager>(from: HybridCustody.ManagerStoragePath)
+    
+    if let manager = manager {
+      for childAddress in manager.getChildAddresses() {
+        let childCollection = getAccount(childAddress)
+          .getCapability(/public/MomentCollection)
+          .borrow<&{TopShot.MomentCollectionPublic}>()
+        
+        if let collection = childCollection {
+          if let moment = collection.borrowMoment(id: id) {
+            return resolveMomentMetadata(moment)
+          }
+        }
+      }
+    }
+    
+    panic("Could not find moment with ID: ".concat(id.toString()))
+  }
 
-    let moment = collectionRef.borrowMoment(id: id)
-      ?? panic("Could not borrow moment reference")
-
+  pub fun resolveMomentMetadata(moment: &{TopShot.MomentNFT}): {String: AnyStruct} {
     let view = moment.resolveView(Type<TopShot.TopShotMomentMetadataView>())
       ?? panic("Could not resolve view")
 
@@ -56,12 +106,14 @@ export const NBATopShotService = {
   // Get all moment IDs for an account
   getMomentIDs: async (address: string) => {
     try {
+      console.log("Executing getMomentIDs script for address:", address)
       return await fcl.query({
         cadence: getMomentIDs,
         args: (arg: any, t: any) => [arg(address, t.Address)]
       })
     } catch (error) {
-      console.error("Error getting moment IDs:", error)
+      console.error("Error getting moment IDs for address", address, ":", error)
+      console.error("Script:", getMomentIDs)
       return []
     }
   },
@@ -69,6 +121,7 @@ export const NBATopShotService = {
   // Get metadata for a specific moment
   getMomentMetadata: async (address: string, id: number) => {
     try {
+      console.log("Fetching metadata for moment", id, "from address:", address)
       return await fcl.query({
         cadence: getMomentMetadata,
         args: (arg: any, t: any) => [
@@ -77,7 +130,8 @@ export const NBATopShotService = {
         ]
       })
     } catch (error) {
-      console.error("Error getting moment metadata:", error)
+      console.error("Error getting metadata for moment", id, "from address", address, ":", error)
+      console.error("Script:", getMomentMetadata)
       return null
     }
   }

@@ -52,15 +52,19 @@ export default function MomentGallery() {
     const fetchMoments = async () => {
       if (!selectedAccount) return
 
+      console.log("Fetching moments for address:", selectedAccount)
       const momentIds = await NBATopShotService.getMomentIDs(selectedAccount)
+      console.log("Found moment IDs:", momentIds)
       
       const momentData = await Promise.all(
         momentIds.map(async (id: number) => {
           const metadata = await NBATopShotService.getMomentMetadata(selectedAccount, id)
+          console.log("Moment metadata for ID", id, ":", metadata)
           return { id, metadata, selected: false }
         })
       )
 
+      console.log("Final moment data:", momentData)
       setMoments(momentData)
     }
 
@@ -106,6 +110,9 @@ export default function MomentGallery() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Your NBA Top Shot Collection</h2>
+        <div className="text-sm text-gray-500">
+          Connected Address: {user.addr}
+        </div>
         <div className="flex gap-2">
           {linkedAccounts.length > 0 && (
             <select
@@ -140,6 +147,12 @@ export default function MomentGallery() {
             </button>
           )}
         </div>
+      </div>
+
+      <div className="bg-gray-100 p-4 rounded-lg text-sm font-mono">
+        <p>Network: {process.env.NEXT_PUBLIC_FLOW_NETWORK}</p>
+        <p>Total Moments Found: {moments.length}</p>
+        <p>Selected Account: {selectedAccount}</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
