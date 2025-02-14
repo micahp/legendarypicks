@@ -1,16 +1,14 @@
 /** @type {import('next').NextConfig} */
-const nextConfig = {
+module.exports = {
   reactStrictMode: true,
   swcMinify: true,
   webpack: (config) => {
-    
+    // Add support for .cdc files
     config.module.rules.push({
       test: /\.cdc$/,
       loader: "raw-loader",
-    })
+    });
 
     return config;
   },
 }
-
-module.exports = nextConfig
