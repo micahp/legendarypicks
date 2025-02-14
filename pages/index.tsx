@@ -4,9 +4,10 @@ import Head from 'next/head'
 import styles from '../styles/Home.module.css'
 import Links from '../components/Links'
 import Container from '../components/Container'
-import MomentGallery from '../components/MomentGallery'
+import GameBrowser from '../components/GameBrowser'
 import AccountManager from '../components/AccountManager'
 import ContestBrowser from '../components/ContestBrowser'
+import MomentGallery from '../components/MomentGallery'
 
 export default function Home() {
   const [user, setUser] = useState({ loggedIn: false })
@@ -54,13 +55,13 @@ export default function Home() {
         {user.loggedIn && (
           <>
             <AccountManager />
+            <MomentGallery />
+            <GameBrowser />
             <ContestBrowser />
           </>
         )}
-        <MomentGallery />
       </main>
 
-      <Links />
     </div>
   )
 }

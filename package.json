@@ -15,8 +15,8 @@
     "flow:dev": "flow dev",
     "flow:emulator": "flow emulator",
     "flow:dev-wallet": "flow dev-wallet",
-    "dev:backend": "cd backend && uvicorn nba_service:app --reload",
-    "dev:all": "concurrently \"npm run flow:emulator\" \"npm run flow:dev-wallet\" \"npm run dev:local:flow\" \"npm run dev:backend\""
+    "dev:backend": "cd backend && source ~/.venv/bin/activate && python3 -m uvicorn nba_service:app --reload",
+    "dev:all": "concurrently --kill-others-on-fail \"npm run flow:emulator\" \"npm run flow:dev-wallet\" \"npm run dev:local:flow\" \"npm run dev:backend\""
   },
   "dependencies": {
     "@onflow/fcl": "1.4.1",
