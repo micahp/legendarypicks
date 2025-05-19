@@ -10,7 +10,14 @@ import json # Added for WebSockets
 
 app = FastAPI(title="Fantasy Platform API")
 
-from .models import ContestCreate, ContestUpdate, ContestResponse, User, LineupCreate, LineupResponse, LineupPlayerDetail, PlayerSelection, ContestLeaderboard, LeaderboardEntry # Added leaderboard models
+# Updated model imports
+from .models import (
+    ContestCreate, ContestUpdate, ContestResponse, User, # Basic User model for Depends(get_current_user)
+    LineupCreate, LineupResponse, 
+    OwnedNftIdentifier, LineupNftDetail, 
+    ContestLeaderboard, LeaderboardEntry,
+    UserCreate, UserAuthResponse, UserInDB # Added for user signup
+)
 
 # This is a very simplified placeholder. Real implementation needs Supabase JWT handling.
 oauth2_scheme = HTTPBearer()
@@ -52,7 +59,8 @@ async def get_current_user(token: HTTPAuthorizationCredentials = Depends(oauth2_
 
 # In-memory storage
 db_contests: Dict[UUID, ContestResponse] = {}
-db_lineups: Dict[UUID, LineupResponse] = {} # In-memory storage for lineups
+db_lineups: Dict[UUID, LineupResponse] = {} 
+db_users: Dict[UUID, UserInDB] = {} # In-memory user database
 
 
 @app.get("/")
@@ -134,27 +142,35 @@ async def delete_contest(contest_id: UUID, current_user: User = Depends(get_curr
 @app.post("/contests/{contest_id}/lineups", response_model=LineupResponse, status_code=status.HTTP_201_CREATED)
 async def submit_lineup(
     contest_id: UUID,
-    lineup_input: LineupCreate, # Changed variable name
+    lineup_data: LineupCreate, # Will now contain selected_nft_ids
     current_user: User = Depends(get_current_user)
 ):
     contest = db_contests.get(contest_id)
     if not contest:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Contest not found")
 
-    calculated_total_salary = 0
-    player_details_for_response: List[LineupPlayerDetail] = []
-    for ps in lineup_input.player_selections:
-        # Using salary from PlayerSelection as defined in models.py
-        player_salary = ps.salary 
-        calculated_total_salary += player_salary
-        player_details_for_response.append(LineupPlayerDetail(
-            player_id=ps.player_id,
-            salary=player_salary,
-            name=f"Player_{ps.player_id}", # Placeholder name, enrich in real app
-            position="N/A" # Placeholder position, enrich in real app
+    calculated_total_salary = 0.0 # Ensure float for consistency with model
+    nft_details_for_response: List[LineupNftDetail] = []
+
+    # TODO: In future steps:
+    # 1. Verify ownership of each NFT in lineup_data.selected_nft_ids using a Cadence script.
+    # 2. For each NFT, get its associated player_id and current contest salary.
+    #    This might involve querying NFT metadata or an internal 'nft_player_mapping_db'.
+    # For now, using placeholder salary and data:
+    placeholder_salary_per_nft = 10000 
+    for nft_identifier in lineup_data.selected_nft_ids:
+        calculated_total_salary += placeholder_salary_per_nft
+        nft_details_for_response.append(LineupNftDetail(
+            contract_address=nft_identifier.contract_address,
+            nft_id=nft_identifier.nft_id,
+            player_name=f"Player for NFT {nft_identifier.nft_id}", # Placeholder
+            player_team="TEAM", # Placeholder
+            player_position="POS", # Placeholder
+            salary_at_draft=placeholder_salary_per_nft # This is an int, matching LineupNftDetail
         ))
 
-    if calculated_total_salary > contest.salary_cap: # Accessing attribute of ContestResponse object
+    # db_contests stores ContestResponse objects, so use attribute access
+    if calculated_total_salary > contest.salary_cap: 
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Lineup exceeds salary cap of {contest.salary_cap}. Used: {calculated_total_salary}"
@@ -162,40 +178,44 @@ async def submit_lineup(
 
     new_lineup_id = uuid4()
     now = datetime.utcnow()
-    
+        
     new_lineup_obj = LineupResponse(
         id=new_lineup_id,
-        user_id=current_user.id, # Assuming current_user has an 'id' attribute of type UUID
+        user_id=current_user.id,
         contest_id=contest_id,
-        name=lineup_input.name,
-        players_data=player_details_for_response,
-        total_salary_used=calculated_total_salary,
-        nft_id=None, # To be filled after minting
+        name=lineup_data.name,
+        selected_nfts_data=nft_details_for_response, # Use new field
+        total_salary_used=float(calculated_total_salary), # Ensure this is float
+        nft_id=None, 
         created_at=now,
         updated_at=now,
+        total_score=0.0 # Default initial score, already in model default
     )
-    db_lineups[new_lineup_id] = new_lineup_obj
     
-    print(f"Lineup {new_lineup_id} created by user {current_user.email} for contest {contest_id}.")
-    # print(f"TODO: Mint NFT for lineup {new_lineup_id}")
-
+    db_lineups[new_lineup_id] = new_lineup_obj # Store the Pydantic object
+    
+    print(f"Lineup {new_lineup_id} (Pydantic object) created by user {current_user.email} for contest {contest_id}.")
+    # print(f"TODO: Verify NFT ownership and register lineup on-chain.")
+    
     return new_lineup_obj
 
 @app.get("/users/me/lineups", response_model=List[LineupResponse])
 async def get_my_lineups(current_user: User = Depends(get_current_user)):
+    # db_lineups now stores LineupResponse objects, so this should work directly.
     user_lineups = [lineup for lineup in db_lineups.values() if lineup.user_id == current_user.id]
     return user_lineups
 
 @app.get("/contests/{contest_id}/lineups", response_model=List[LineupResponse])
-async def get_contest_lineups(contest_id: UUID): # Not protected for now, anyone can see lineups for a contest
-    if contest_id not in db_contests: # Check if contest exists
+async def get_contest_lineups(contest_id: UUID): 
+    if contest_id not in db_contests: 
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Contest not found")
-    
+    # db_lineups stores LineupResponse objects
     contest_lineups = [lineup for lineup in db_lineups.values() if lineup.contest_id == contest_id]
     return contest_lineups
 
 @app.get("/lineups/{lineup_id}", response_model=LineupResponse)
-async def get_lineup(lineup_id: UUID): # Not protected for now
+async def get_lineup(lineup_id: UUID): 
+    # db_lineups stores LineupResponse objects
     lineup = db_lineups.get(lineup_id)
     if not lineup:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Lineup not found")

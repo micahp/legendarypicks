@@ -41,37 +41,83 @@ class ContestResponse(ContestBase):
 class User(BaseModel):
     id: UUID
     email: str
-    # Add other fields as necessary, like username
+    # Add other fields as necessary, like username (this is the existing User model from previous step)
+    # For user creation and response, we'll define more specific models below.
 
-class PlayerSelection(BaseModel):
-    player_id: str # Or int, depending on how player IDs are sourced
-    # Salary might be fetched server-side based on player_id and contest rules
-    # For now, client might send it, or it's validated/calculated by backend.
-    # Let's add salary here for simplicity in this step, assuming client sends it or we mock it.
-    salary: int = Field(default=0, description="Player's salary for the contest")
+# --- User Authentication and Profile Models ---
 
+class UserCreate(BaseModel):
+    email: str
+    password: str # In a real app, this would be processed and hashed, not stored directly
+    referral_code: Optional[str] = None
+    flow_address: Optional[str] = None # For simulation: user provides their Flow address during sign-up
+
+class UserAuthResponse(BaseModel): # For returning after signup/login, typically with a token
+    id: UUID
+    email: str
+    flow_address: Optional[str] = None
+    scout_pass_nft_id: Optional[str] = None # ID of the minted Scout Pass NFT
+    # referred_by_user_id: Optional[UUID] = None # Might not be needed in auth response, but in UserInDB
+    access_token: Optional[str] = None # Example if returning a token
+    token_type: Optional[str] = "bearer" # Example
+
+class UserInDB(User): # Extends the basic User model if it exists and is suitable
+    # Or define from scratch:
+    # id: UUID
+    # email: str
+    hashed_password: str
+    flow_address: Optional[str] = None
+    referred_by_user_id: Optional[UUID] = None
+    scout_pass_nft_id: Optional[str] = None # This could be UInt64 if from Flow, using str for flexibility
+    created_at: datetime
+    updated_at: datetime
+    # Add other fields like is_active, is_superuser etc. if needed
+
+# New model for identifying selected NFTs
+class OwnedNftIdentifier(BaseModel):
+    contract_address: str # Address of the NFT contract (e.g., TopShot contract)
+    nft_id: str       # The specific ID of the NFT moment
+    # Optional: player_id: str # Could be useful to pre-associate for salary calculation
+    # Optional: position: str # Could be useful
+
+# Old PlayerSelection - to be replaced or removed
+# class PlayerSelection(BaseModel):
+#     player_id: str 
+#     salary: int = Field(default=0, description="Player's salary for the contest")
 
 class LineupBase(BaseModel):
     name: Optional[str] = None
-    # player_selections will be used for creation, players_data for response
     
-class LineupCreate(LineupBase):
-    player_selections: List[PlayerSelection]
+# Updated LineupCreate
+class LineupCreate(LineupBase): 
+    selected_nft_ids: List[OwnedNftIdentifier] # New way
+    # name: Optional[str] is inherited from LineupBase
 
-class LineupPlayerDetail(PlayerSelection): # For response, potentially more player details
-    name: Optional[str] = "Unknown Player" # Example, would be enriched
-    position: Optional[str] = "N/A"      # Example
+# Old LineupPlayerDetail - to be replaced or removed
+# class LineupPlayerDetail(PlayerSelection): 
+#     name: Optional[str] = "Unknown Player" 
+#     position: Optional[str] = "N/A"     
 
+# New model for displaying selected NFT details in a lineup
+class LineupNftDetail(OwnedNftIdentifier):
+    player_name: Optional[str] = "Unknown Player" # To be enriched by backend
+    player_team: Optional[str] = "N/A"
+    player_position: Optional[str] = "N/A"
+    # Salary might be derived from the player associated with the NFT for this contest
+    salary_at_draft: Optional[int] = 0 
+
+# Updated LineupResponse
 class LineupResponse(LineupBase):
     id: UUID
     user_id: UUID # From the authenticated user
     contest_id: UUID
-    players_data: List[LineupPlayerDetail] # Enriched player data
-    total_salary_used: int
-    total_score: float = 0.0 # Added for leaderboard, default to 0.0
-    nft_id: Optional[str] = None # Will be populated after minting
+    # players_data: List[LineupPlayerDetail] # Old
+    selected_nfts_data: List[LineupNftDetail] # New
+    total_salary_used: float # Ensure this remains float, will be calculated from salary_at_draft of selected_nfts_data
+    nft_id: Optional[str] = None # This would be the ID from a future LineupRegistry contract
     created_at: datetime
     updated_at: datetime
+    total_score: float = 0.0 # Ensured present and default
 
     class Config:
         orm_mode = True
