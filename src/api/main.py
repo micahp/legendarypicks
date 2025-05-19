@@ -18,6 +18,9 @@ from .models import (
     ContestLeaderboard, LeaderboardEntry,
     UserCreate, UserAuthResponse, UserInDB # Added for user signup
 )
+# Import for Flow client interaction
+from src.core.flow_client import mint_scout_pass_on_flow, verify_nft_ownership_on_flow, register_lineup_on_flow # Added new imports
+# from src.core import flow_config as cfg # Not directly needed here if flow_client handles it
 
 # This is a very simplified placeholder. Real implementation needs Supabase JWT handling.
 oauth2_scheme = HTTPBearer()
@@ -54,7 +57,14 @@ async def get_current_user(token: HTTPAuthorizationCredentials = Depends(oauth2_
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    return User(id=user_uuid, email=f"user_{user_id_str}@example.com")
+    # The User model in models.py has been updated to include:
+    #   flow_address: Optional[str] = None
+    
+    # Mocking a flow_address based on user_id_str for predictability in testing.
+    # This creates a semi-unique, but deterministic, placeholder Flow address.
+    mock_flow_address = f"0x{user_id_str.replace('-', '')[:16]}" if user_id_str else "0xEMULATORDEFAULTADDR"
+
+    return User(id=user_uuid, email=f"user_{user_id_str}@example.com", flow_address=mock_flow_address)
 
 
 # In-memory storage
@@ -142,62 +152,123 @@ async def delete_contest(contest_id: UUID, current_user: User = Depends(get_curr
 @app.post("/contests/{contest_id}/lineups", response_model=LineupResponse, status_code=status.HTTP_201_CREATED)
 async def submit_lineup(
     contest_id: UUID,
-    lineup_data: LineupCreate, # Will now contain selected_nft_ids
-    current_user: User = Depends(get_current_user)
+    lineup_data: LineupCreate, # Assumes LineupCreate uses OwnedNftIdentifier with collection_public_path_identifier
+    current_user: User = Depends(get_current_user) # User model should have flow_address
 ):
     contest = db_contests.get(contest_id)
     if not contest:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Contest not found")
 
-    calculated_total_salary = 0.0 # Ensure float for consistency with model
-    nft_details_for_response: List[LineupNftDetail] = []
+    if not current_user.flow_address: # current_user.flow_address was added in previous step
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User Flow address not found. Cannot verify NFT ownership.")
 
-    # TODO: In future steps:
-    # 1. Verify ownership of each NFT in lineup_data.selected_nft_ids using a Cadence script.
-    # 2. For each NFT, get its associated player_id and current contest salary.
-    #    This might involve querying NFT metadata or an internal 'nft_player_mapping_db'.
-    # For now, using placeholder salary and data:
-    placeholder_salary_per_nft = 10000 
-    for nft_identifier in lineup_data.selected_nft_ids:
+    # --- 1. NFT Ownership Verification ---
+    nfts_to_verify_for_script = []
+    for nft_id_obj in lineup_data.selected_nft_ids: # selected_nft_ids uses OwnedNftIdentifier
+        nfts_to_verify_for_script.append({
+            "contract_address": nft_id_obj.contract_address,
+            "collection_public_path_identifier": nft_id_obj.collection_public_path_identifier, # Now available from input
+            "nft_id": nft_id_obj.nft_id 
+        })
+    
+    print(f"Verifying NFT ownership for user {current_user.flow_address} and {len(nfts_to_verify_for_script)} NFTs.")
+    try:
+        ownership_results = await verify_nft_ownership_on_flow(
+            user_flow_address=current_user.flow_address,
+            nfts_to_check=nfts_to_verify_for_script
+        )
+        if ownership_results is None or not all(ownership_results):
+            missing_nfts_details = [
+                f"{nft.contract_address}/{nft.nft_id} via path {nft.collection_public_path_identifier}" 
+                for i, nft in enumerate(lineup_data.selected_nft_ids) 
+                if ownership_results is None or (i < len(ownership_results) and not ownership_results[i])
+            ]
+            detail_msg = f"NFT ownership verification failed. Problematic NFTs: {missing_nfts_details}"
+            print(detail_msg)
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=detail_msg)
+    except HTTPException: # Re-raise if it's already an HTTPException (like 400 from above)
+        raise
+    except Exception as e: 
+        print(f"Error during NFT ownership verification call: {type(e).__name__} - {e}")
+        # This could be due to flow_client issues (misconfig, emulator down, script error)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=f"Error verifying NFT ownership: {e}")
+    
+    print("NFT ownership verified successfully.")
+
+    # --- 2. Salary Cap Validation (using placeholder salary) ---
+    calculated_total_salary = 0.0
+    nft_details_for_response: List[LineupNftDetail] = []
+    placeholder_salary_per_nft = 10000 # Placeholder - TODO: Replace with actual salary lookup
+    
+    for nft_identifier in lineup_data.selected_nft_ids: # Iterating over List[OwnedNftIdentifier]
         calculated_total_salary += placeholder_salary_per_nft
         nft_details_for_response.append(LineupNftDetail(
             contract_address=nft_identifier.contract_address,
             nft_id=nft_identifier.nft_id,
+            collection_public_path_identifier=nft_identifier.collection_public_path_identifier, # Pass this through
             player_name=f"Player for NFT {nft_identifier.nft_id}", # Placeholder
             player_team="TEAM", # Placeholder
             player_position="POS", # Placeholder
-            salary_at_draft=placeholder_salary_per_nft # This is an int, matching LineupNftDetail
+            salary_at_draft=placeholder_salary_per_nft
         ))
 
-    # db_contests stores ContestResponse objects, so use attribute access
-    if calculated_total_salary > contest.salary_cap: 
+    if calculated_total_salary > contest.salary_cap: # Accessing attribute of ContestResponse object
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Lineup exceeds salary cap of {contest.salary_cap}. Used: {calculated_total_salary}"
         )
+    print("Salary cap validation passed.")
 
+    # --- 3. On-Chain Lineup Registration ---
+    nfts_for_registration_payload = []
+    for nft_id_obj in lineup_data.selected_nft_ids: # These are OwnedNftIdentifier from the input
+        nfts_for_registration_payload.append({
+            "nftContractAddress": nft_id_obj.contract_address, 
+            "nftID": nft_id_obj.nft_id 
+        })
+
+    onchain_lineup_id: Optional[str] = None
+    print(f"Registering lineup on-chain for contest {str(contest_id)} by user {current_user.flow_address}.")
+    try:
+        onchain_lineup_id = await register_lineup_on_flow(
+            contest_id_str=str(contest_id), # Convert UUID to string
+            user_flow_address=current_user.flow_address,
+            nfts_to_register=nfts_for_registration_payload
+        )
+        if not onchain_lineup_id:
+            # register_lineup_on_flow returning None implies a handled error (logged in flow_client)
+            print("Failed to register lineup on-chain (no ID returned from flow_client).")
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to register lineup on-chain (no ID returned).")
+    except HTTPException: # Re-raise if it's already an HTTPException
+        raise
+    except Exception as e: # Catch any other exception from the flow_client call
+        print(f"Error during on-chain lineup registration call: {type(e).__name__} - {e}")
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=f"Failed to register lineup on-chain: {e}")
+        
+    print(f"Lineup registered on-chain with ID: {onchain_lineup_id}.")
+
+    # --- 4. Store Lineup in DB ---
     new_lineup_id = uuid4()
     now = datetime.utcnow()
         
-    new_lineup_obj = LineupResponse(
+    lineup_db_object = LineupResponse(
         id=new_lineup_id,
         user_id=current_user.id,
         contest_id=contest_id,
         name=lineup_data.name,
-        selected_nfts_data=nft_details_for_response, # Use new field
-        total_salary_used=float(calculated_total_salary), # Ensure this is float
-        nft_id=None, 
+        selected_nfts_data=nft_details_for_response, # Populated during salary validation
+        total_salary_used=float(calculated_total_salary),
+        onchain_registry_id=onchain_lineup_id, # Store the on-chain ID
+        nft_id=None, # Placeholder for potential future LineupNFT itself (representing the lineup)
         created_at=now,
         updated_at=now,
-        total_score=0.0 # Default initial score, already in model default
+        total_score=0.0 # Default initial score
     )
     
-    db_lineups[new_lineup_id] = new_lineup_obj # Store the Pydantic object
+    db_lineups[new_lineup_id] = lineup_db_object # Store the Pydantic object
     
-    print(f"Lineup {new_lineup_id} (Pydantic object) created by user {current_user.email} for contest {contest_id}.")
-    # print(f"TODO: Verify NFT ownership and register lineup on-chain.")
-    
-    return new_lineup_obj
+    print(f"Lineup {new_lineup_id} saved to DB, associated with on-chain ID {onchain_lineup_id}.")
+    return lineup_db_object
 
 @app.get("/users/me/lineups", response_model=List[LineupResponse])
 async def get_my_lineups(current_user: User = Depends(get_current_user)):

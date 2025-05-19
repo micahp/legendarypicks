@@ -38,11 +38,11 @@ class ContestResponse(ContestBase):
     class Config:
         orm_mode = True # For SQLAlchemy or other ORMs, good practice
 
-class User(BaseModel):
+class User(BaseModel): # This is the model used by get_current_user
     id: UUID
     email: str
-    # Add other fields as necessary, like username (this is the existing User model from previous step)
-    # For user creation and response, we'll define more specific models below.
+    flow_address: Optional[str] = None # Added for current_user to have flow_address
+    # Add other fields as necessary, like username
 
 # --- User Authentication and Profile Models ---
 
@@ -77,6 +77,7 @@ class UserInDB(User): # Extends the basic User model if it exists and is suitabl
 class OwnedNftIdentifier(BaseModel):
     contract_address: str # Address of the NFT contract (e.g., TopShot contract)
     nft_id: str       # The specific ID of the NFT moment
+    collection_public_path_identifier: str # Ensuring this is present
     # Optional: player_id: str # Could be useful to pre-associate for salary calculation
     # Optional: position: str # Could be useful
 
@@ -99,7 +100,7 @@ class LineupCreate(LineupBase):
 #     position: Optional[str] = "N/A"     
 
 # New model for displaying selected NFT details in a lineup
-class LineupNftDetail(OwnedNftIdentifier):
+class LineupNftDetail(OwnedNftIdentifier): # Inherits contract_address, nft_id, and collection_public_path_identifier
     player_name: Optional[str] = "Unknown Player" # To be enriched by backend
     player_team: Optional[str] = "N/A"
     player_position: Optional[str] = "N/A"
@@ -111,10 +112,10 @@ class LineupResponse(LineupBase):
     id: UUID
     user_id: UUID # From the authenticated user
     contest_id: UUID
-    # players_data: List[LineupPlayerDetail] # Old
-    selected_nfts_data: List[LineupNftDetail] # New
+    selected_nfts_data: List[LineupNftDetail] # New, contains LineupNftDetail which now has collection_public_path_identifier
     total_salary_used: float # Ensure this remains float, will be calculated from salary_at_draft of selected_nfts_data
-    nft_id: Optional[str] = None # This would be the ID from a future LineupRegistry contract
+    onchain_registry_id: Optional[str] = None # NEW: Stores the ID from LineupRegistry contract
+    nft_id: Optional[str] = None # This would be the ID from a future LineupNFT contract (for the lineup itself) - can be kept or reviewed if onchain_registry_id serves a similar purpose. For now, keeping as per existing.
     created_at: datetime
     updated_at: datetime
     total_score: float = 0.0 # Ensured present and default
