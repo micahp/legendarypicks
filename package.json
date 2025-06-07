@@ -16,6 +16,7 @@
     "flow:emulator": "flow emulator",
     "flow:dev-wallet": "flow dev-wallet",
     "dev:backend": "cd backend && source ~/.venv/bin/activate && python3 -m uvicorn nba_service:app --reload",
+    "dev:sports-backend": "cd backend && source ~/.venv/bin/activate && python3 -m uvicorn sports_service:app --reload",
     "dev:all": "concurrently --kill-others-on-fail \"yarn flow:emulator\" \"yarn flow:dev-wallet\" \"yarn dev:local:flow\" \"yarn dev:backend\"",
     "build:css": "tailwindcss build styles/globals.css -o styles/output.css"
   },

@@ -1,0 +1,58 @@
+{
+  "nba": {
+    "games": [
+      {
+        "gameId": "NBA1",
+        "homeTeam": {"teamId": "LAL", "name": "Lakers", "score": 102},
+        "awayTeam": {"teamId": "BOS", "name": "Celtics", "score": 99},
+        "startTime": "2024-01-01T00:00:00Z",
+        "status": "FINAL"
+      }
+    ],
+    "players": {
+      "LAL23": {"playerId": "LAL23", "name": "LeBron James", "teamId": "LAL", "points": 25, "rebounds": 7, "assists": 8}
+    }
+  },
+  "nfl": {
+    "games": [
+      {
+        "gameId": "NFL1",
+        "homeTeam": {"teamId": "KC", "name": "Chiefs", "score": 31},
+        "awayTeam": {"teamId": "SF", "name": "49ers", "score": 24},
+        "startTime": "2024-01-01T00:00:00Z",
+        "status": "FINAL"
+      }
+    ],
+    "players": {
+      "KC15": {"playerId": "KC15", "name": "Patrick Mahomes", "teamId": "KC", "passingYards": 350, "touchdowns": 3}
+    }
+  },
+  "nhl": {
+    "games": [
+      {
+        "gameId": "NHL1",
+        "homeTeam": {"teamId": "BOS", "name": "Bruins", "score": 4},
+        "awayTeam": {"teamId": "NYR", "name": "Rangers", "score": 2},
+        "startTime": "2024-01-01T00:00:00Z",
+        "status": "FINAL"
+      }
+    ],
+    "players": {
+      "BOS37": {"playerId": "BOS37", "name": "Patrice Bergeron", "teamId": "BOS", "goals": 2, "assists": 1}
+    }
+  },
+  "mlb": {
+    "games": [
+      {
+        "gameId": "MLB1",
+        "homeTeam": {"teamId": "NYY", "name": "Yankees", "score": 5},
+        "awayTeam": {"teamId": "BOS", "name": "Red Sox", "score": 3},
+        "startTime": "2024-01-01T00:00:00Z",
+        "status": "FINAL"
+      }
+    ],
+    "players": {
+      "NYY99": {"playerId": "NYY99", "name": "Aaron Judge", "teamId": "NYY", "hits": 2, "homeRuns": 1, "RBIs": 3}
+    }
+  }
+}

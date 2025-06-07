@@ -33,6 +33,14 @@ Run the following to run Flow Dev, the Emulator, and Dev Wallet:
 npm run dev:local
 ```
 
+### Sports Data Backend
+
+A FastAPI service provides multi-league game and player data. It attempts to pull real stats using the `sportsipy` library and falls back to bundled sample data if live stats aren't available. It also handles basic prediction tracking. Start it with:
+
+```
+npm run dev:sports-backend
+```
+
 Note: Flow Dev will will automatically create new accounts and deploy for you while developing. Your flow.json will be updated automatically. Committing these changes for local development is unncessary.
 
 ### Testnet
