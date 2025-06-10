@@ -30,9 +30,11 @@ export default function Home() {
             <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent">
               Legendary Picks
             </h1>
-            <a href="/predict" className="text-sm text-blue-600 hover:underline">
-              Predictions
-            </a>
+            <nav className="space-x-4 text-sm">
+              <a href="/games" className="text-blue-600 hover:underline">Games</a>
+              <a href="/player" className="text-blue-600 hover:underline">Player Stats</a>
+              <a href="/predict" className="text-blue-600 hover:underline">Predictions</a>
+            </nav>
             <div className="flex items-center gap-4">
               {user.loggedIn && (
                 <span className="text-sm text-gray-500">
