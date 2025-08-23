@@ -11,6 +11,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           <nav className="flex items-center gap-4 text-sm">
             <Link href="/scores" className="hover:text-emerald-400">Scores</Link>
             <Link href="/predict" className="hover:text-emerald-400">Predict</Link>
+            <Link href="/contests" className="hover:text-emerald-400">Contests</Link>
             <a href="https://www.nbatopshot.com" target="_blank" rel="noreferrer" className="hover:text-emerald-400">Top Shot</a>
           </nav>
         </div>

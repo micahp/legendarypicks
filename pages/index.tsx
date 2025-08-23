@@ -3,7 +3,6 @@ import * as fcl from "@onflow/fcl"
 import Head from 'next/head'
 import GameBrowser from '../components/GameBrowser'
 import AccountManager from '../components/AccountManager'
-import ContestBrowser from '../components/ContestBrowser'
 import MomentGallery from '../components/MomentGallery'
 
 export default function Home() {
@@ -22,13 +21,14 @@ export default function Home() {
   }
 
   return (
-    <div>
+    <div className="min-h-screen bg-zinc-950 text-zinc-100 px-4 py-8">
       <Head>
         <title>Legendary Picks</title>
         <meta name="description" content="NBA Fantasy Game on Flow" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
+      {/* Hero */}
       <section className="relative overflow-hidden rounded-2xl border border-zinc-800 bg-gradient-to-br from-zinc-900 via-ink-900 to-zinc-900 p-8 md:p-12">
         <div className="relative z-10 max-w-3xl">
           <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight leading-tight">
@@ -43,6 +43,7 @@ export default function Home() {
               {user.loggedIn ? 'Disconnect' : 'Connect Wallet'}
             </button>
             <a href="/scores" className="px-4 py-2 rounded-lg border border-zinc-700 hover:bg-zinc-800">View Scores</a>
+            <a href="/contests" className="px-4 py-2 rounded-lg border border-zinc-700 hover:bg-zinc-800">Contests</a>
           </div>
           {user.loggedIn && (
             <div className="mt-4 text-sm text-zinc-400">
@@ -53,12 +54,14 @@ export default function Home() {
         <div className="pointer-events-none absolute -right-24 -bottom-24 h-72 w-72 rounded-full bg-emerald-500/10 blur-3xl" />
       </section>
 
+      {/* Main */}
       <main className="space-y-8 mt-8">
-        {/* Always render MomentGallery to allow manual address testing before connect */}
         <section>
           <h2 className="text-xl font-bold mb-3">Moments Gallery</h2>
           <MomentGallery />
         </section>
+
+
         {user.loggedIn && (
           <>
             <section>
@@ -68,10 +71,6 @@ export default function Home() {
             <section>
               <h2 className="text-xl font-bold mb-3">Upcoming Games</h2>
               <GameBrowser />
-            </section>
-            <section>
-              <h2 className="text-xl font-bold mb-3">Contests</h2>
-              <ContestBrowser />
             </section>
           </>
         )}
