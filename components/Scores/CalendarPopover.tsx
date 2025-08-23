@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 interface CalendarPopoverProps {
   date: string
   onChange: (date: string) => void
+  anchorContent?: React.ReactNode
 }
 
 function toISODate(d: Date): string {
@@ -12,7 +13,7 @@ function toISODate(d: Date): string {
   return `${year}-${month}-${day}`
 }
 
-export default function CalendarPopover({ date, onChange }: CalendarPopoverProps) {
+export default function CalendarPopover({ date, onChange, anchorContent }: CalendarPopoverProps) {
   const [open, setOpen] = useState(false)
   const [cursor, setCursor] = useState(() => new Date(date))
   const anchorRef = useRef<HTMLButtonElement | null>(null)
@@ -56,7 +57,7 @@ export default function CalendarPopover({ date, onChange }: CalendarPopoverProps
         aria-haspopup="dialog"
         aria-expanded={open}
       >
-        📅
+        {anchorContent ?? '📅'}
       </button>
       {open && (
         <div

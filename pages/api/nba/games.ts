@@ -55,7 +55,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const provider = (typeof req.query.provider === 'string' ? req.query.provider : process.env.NBA_PROVIDER) || 'sportsdata'
+    const provider = (typeof req.query.provider === 'string' ? req.query.provider : process.env.NBA_PROVIDER) || 'nba_api'
 
     if (provider === 'fastapi' || provider === 'nba_api') {
       // Delegate to our FastAPI backend (free option via nba_api)

@@ -170,13 +170,13 @@ async def get_player_stats(player_id: str):
         game_log = playergamelog.PlayerGameLog(player_id=player_id)
         stats = game_log.get_dict()['resultSets'][0]['rowSet'][0]
         
-        # Calculate fantasy score
+        # Calculate fantasy score (Pts=1, Reb=1.2, Ast=1.5, Stl=3, Blk=3, TO=-1)
         fantasy_score = (
             stats[24] * 1.0 +  # Points
             stats[18] * 1.2 +  # Rebounds
             stats[19] * 1.5 +  # Assists
-            stats[20] * 2.0 +  # Steals
-            stats[21] * 2.0 -  # Blocks
+            stats[20] * 3.0 +  # Steals
+            stats[21] * 3.0 -  # Blocks
             stats[22] * 1.0    # Turnovers
         )
         

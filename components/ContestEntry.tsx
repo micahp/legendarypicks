@@ -3,6 +3,7 @@ import * as fcl from "@onflow/fcl"
 import { NBAGameService } from '../services/nbaGames'
 import { ContestService } from '../services/contestService'
 import { NBATopShotService } from '../services/nbaTopShot'
+import ContestLeaderboard from './ContestLeaderboard'
 
 interface Contest {
   contestId: number
@@ -172,6 +173,8 @@ export default function ContestEntry({ contest }: { contest: Contest }) {
       >
         {submitting ? 'Submitting...' : 'Submit Lineup'}
       </button>
+
+      <ContestLeaderboard contest={contest} />
     </div>
   )
 } 
