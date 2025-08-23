@@ -31,6 +31,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     const provider = (typeof req.query.provider === 'string' ? req.query.provider : process.env.NBA_PROVIDER) || 'sportsdata'
+    // Log provider/environment for observability
+    console.log('[NBA_PROVIDER]', {
+      requestedProvider: req.query.provider,
+      resolvedProvider: provider,
+      envProvider: process.env.NBA_PROVIDER,
+      fastapiBase: process.env.NEXT_PUBLIC_NBA_API_URL,
+      hasSportsDataKey: Boolean(process.env.SPORTSDATA_KEY),
+    })
 
     if (provider === 'fastapi' || provider === 'nba_api') {
       // Delegate to our FastAPI backend (free option via nba_api)
