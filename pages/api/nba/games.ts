@@ -18,6 +18,15 @@ function shouldRetry(status?: number): boolean {
   return false
 }
 
+function normalizeBaseUrl(raw?: string): string {
+  const fallback = 'http://localhost:8000/api'
+  if (!raw || raw.trim() === '') return fallback
+  let base = raw.trim()
+  if (base.startsWith('/')) return fallback
+  if (!/^https?:\/\//i.test(base)) base = `http://${base.replace(/^\/+/, '')}`
+  return base.replace(/\/$/, '')
+}
+
 // Log provider/env once at module load for observability (not on every request)
 try {
   const initInfo = {
@@ -50,8 +59,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     if (provider === 'fastapi' || provider === 'nba_api') {
       // Delegate to our FastAPI backend (free option via nba_api)
-      const base = process.env.NEXT_PUBLIC_NBA_API_URL || 'http://localhost:8000/api'
-      const upstream = `${base.replace(/\/$/, '')}/games/by-date`
+      const base = normalizeBaseUrl(process.env.NEXT_PUBLIC_NBA_API_URL)
+      const upstream = `${base}/games/by-date`
       const upstreamResp = await axios.get(upstream, { params: { date }, validateStatus: () => true })
       if (upstreamResp.status >= 200 && upstreamResp.status < 300) {
         return res.status(200).json(upstreamResp.data)
