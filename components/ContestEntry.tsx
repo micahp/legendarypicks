@@ -118,20 +118,20 @@ export default function ContestEntry({ contest }: { contest: Contest }) {
   }
 
   if (loading) {
-    return <div>Loading your moments...</div>
+    return <div className="text-sm text-zinc-400">Loading your moments...</div>
   }
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-bold">Create Lineup</h2>
-        <div className="text-sm text-gray-500">
+        <div className="text-sm text-zinc-500">
           Selected: {selectedMoments.length} / {contest.requirements.totalPlayers}
         </div>
       </div>
 
       {error && (
-        <div className="bg-red-50 text-red-600 p-3 rounded-lg">
+        <div className="border border-red-900/40 bg-red-900/20 text-red-300 p-3 rounded-lg">
           {error}
         </div>
       )}
@@ -140,8 +140,8 @@ export default function ContestEntry({ contest }: { contest: Contest }) {
         {moments.map((moment) => (
           <div 
             key={moment.id}
-            className={`p-4 border rounded-lg cursor-pointer ${
-              selectedMoments.includes(moment.id) ? 'border-green-500 bg-green-50' : ''
+            className={`p-4 border border-zinc-800 rounded-lg cursor-pointer transition ${
+              selectedMoments.includes(moment.id) ? 'border-emerald-500/70 bg-emerald-500/10' : 'hover:bg-zinc-900'
             }`}
             onClick={() => {
               if (selectedMoments.includes(moment.id)) {
@@ -154,11 +154,11 @@ export default function ContestEntry({ contest }: { contest: Contest }) {
             <div className="flex justify-between">
               <div>
                 <p className="font-semibold">{moment.metadata.fullName}</p>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-zinc-500">
                   {moment.metadata.position} - {moment.metadata.teamAtMoment}
                 </p>
               </div>
-              <div className="text-sm bg-gray-100 px-2 py-1 rounded">
+              <div className="text-sm bg-zinc-800 px-2 py-1 rounded">
                 #{moment.metadata.jerseyNumber}
               </div>
             </div>
@@ -167,7 +167,7 @@ export default function ContestEntry({ contest }: { contest: Contest }) {
       </div>
 
       <button
-        className="w-full bg-green-500 text-white px-4 py-2 rounded-lg disabled:opacity-50"
+        className="w-full bg-emerald-500 text-black font-semibold px-4 py-2 rounded-lg disabled:opacity-50 hover:bg-emerald-400"
         onClick={handleSubmitEntry}
         disabled={submitting || selectedMoments.length !== contest.requirements.totalPlayers}
       >
