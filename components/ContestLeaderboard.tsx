@@ -29,7 +29,7 @@ export default function ContestLeaderboard({ contest, entries }: Props) {
   )
 
   return (
-    <div className="space-y-3 p-4 border rounded-lg">
+    <div className="space-y-3 p-4 border border-zinc-800 rounded-lg bg-zinc-900/40">
       <div className="flex items-center justify-between">
         <h3 className="text-xl font-semibold">Leaderboard</h3>
         <div className="text-xs text-zinc-500">
