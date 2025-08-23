@@ -1,6 +1,15 @@
 import axios from 'axios'
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_NBA_API_URL || 'http://localhost:8000/api'
+function normalizeBaseUrl(raw?: string): string {
+  const fallback = 'http://localhost:8000/api'
+  if (!raw || raw.trim() === '') return fallback
+  const base = raw.trim()
+  if (base.startsWith('/')) return base
+  if (!/^https?:\/\//i.test(base)) return `http://${base}`
+  return base
+}
+
+const API_BASE_URL = normalizeBaseUrl(process.env.NEXT_PUBLIC_NBA_API_URL)
 
 interface Game {
   gameId: string
@@ -65,5 +74,15 @@ export const NBAGameService = {
       console.error('Error fetching player stats:', error)
       return null
     }
-  }
+  },
+
+  getGamesByDate: async (date: string, provider?: 'sportsdata' | 'fastapi' | 'nba_api') => {
+    try {
+      const res = await axios.get(`/api/nba/games`, { params: { date, provider } })
+      return res.data
+    } catch (e) {
+      console.error('getGamesByDate error', e)
+      return []
+    }
+  },
 } 
