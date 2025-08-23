@@ -69,7 +69,9 @@ export default function DayStrip({ date, onChange }: DayStripProps) {
               <div className="text-xs uppercase tracking-wide opacity-70">
                 {d.toLocaleDateString(undefined, { weekday: 'short' })}
               </div>
-              <div className="text-base leading-none">{d.getDate()}</div>
+              <div className="text-base leading-none">
+                {d.toLocaleDateString(undefined, { month: 'short' })} {d.getDate()}
+              </div>
               {isToday(d) && <div className="text-[10px] mt-0.5 opacity-60">Today</div>}
             </button>
           )

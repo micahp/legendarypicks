@@ -21,7 +21,7 @@ export default function ScoresPage() {
   const [loading, setLoading] = useState<boolean>(false)
   const [error, setError] = useState<string | null>(null)
   const [provider, setProvider] = useState<'fastapi' | 'sportsdata' | 'nba_api'>(() =>
-    (process.env.NBA_PROVIDER as any) || 'fastapi'
+    (process.env.NBA_PROVIDER as any) || 'nba_api'
   )
 
   useEffect(() => {
@@ -51,10 +51,31 @@ export default function ScoresPage() {
               onChange={setProvider}
               sportsdataAvailable={Boolean(process.env.SPORTSDATA_KEY)}
             />
-            <CalendarPopover date={date} onChange={setDate} />
+            <CalendarPopover
+              date={date}
+              onChange={setDate}
+              anchorContent={
+                <span className="flex items-center gap-2">
+                  <span className="text-sm text-zinc-300">
+                    {new Date(date).toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}
+                  </span>
+                  <span aria-hidden>📅</span>
+                </span>
+              }
+            />
           </div>
         </div>
         <DayStrip date={date} onChange={setDate} />
+        <div className="text-sm font-bold" aria-live="polite">
+          {(() => {
+            const d = new Date(date)
+            const dow = d.toLocaleDateString(undefined, { weekday: 'short' })
+            const mon = d.toLocaleDateString(undefined, { month: 'short' })
+            const dayNum = d.getDate()
+            const year = d.getFullYear()
+            return `${dow} ${mon} ${dayNum}, ${year}`
+          })()}
+        </div>
         {error && <ErrorBanner message={error} />}
         {loading ? (
           <SkeletonList />
