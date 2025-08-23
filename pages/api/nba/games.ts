@@ -18,6 +18,22 @@ function shouldRetry(status?: number): boolean {
   return false
 }
 
+// Log provider/env once at module load for observability (not on every request)
+try {
+  const initInfo = {
+    envProvider: process.env.NBA_PROVIDER,
+    fastapiBase: process.env.NEXT_PUBLIC_NBA_API_URL,
+    hasSportsDataKey: Boolean(process.env.SPORTSDATA_KEY),
+  }
+  const g: any = globalThis as any
+  if (!g.__NBA_PROVIDER_LOGGED__) {
+    console.log('[NBA_PROVIDER:init]', initInfo)
+    g.__NBA_PROVIDER_LOGGED__ = true
+  }
+} catch (_) {
+  // no-op
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
     res.setHeader('Allow', 'GET')
@@ -31,14 +47,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     const provider = (typeof req.query.provider === 'string' ? req.query.provider : process.env.NBA_PROVIDER) || 'sportsdata'
-    // Log provider/environment for observability
-    console.log('[NBA_PROVIDER]', {
-      requestedProvider: req.query.provider,
-      resolvedProvider: provider,
-      envProvider: process.env.NBA_PROVIDER,
-      fastapiBase: process.env.NEXT_PUBLIC_NBA_API_URL,
-      hasSportsDataKey: Boolean(process.env.SPORTSDATA_KEY),
-    })
 
     if (provider === 'fastapi' || provider === 'nba_api') {
       // Delegate to our FastAPI backend (free option via nba_api)
