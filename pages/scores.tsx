@@ -1,5 +1,10 @@
 import { useState, useEffect } from 'react'
 import { NBAGameService } from '../services/nbaGames'
+import DayStrip from '../components/Scores/DayStrip'
+import CalendarPopover from '../components/Scores/CalendarPopover'
+import ProviderToggle from '../components/Scores/ProviderToggle'
+import GameCard from '../components/Scores/GameCard'
+import { SkeletonList, ErrorBanner, EmptyState } from '../components/Scores/States'
 
 interface Game {
   gameId: string
@@ -14,53 +19,51 @@ export default function ScoresPage() {
   const [date, setDate] = useState<string>(today)
   const [games, setGames] = useState<Game[]>([])
   const [loading, setLoading] = useState<boolean>(false)
+  const [error, setError] = useState<string | null>(null)
+  const [provider, setProvider] = useState<'fastapi' | 'sportsdata' | 'nba_api'>(() =>
+    (process.env.NBA_PROVIDER as any) || 'fastapi'
+  )
 
   useEffect(() => {
     const load = async () => {
       setLoading(true)
-      const data = await NBAGameService.getGamesByDate(date)
-      setGames(data)
-      setLoading(false)
+      setError(null)
+      try {
+        const data = await NBAGameService.getGamesByDate(date, provider)
+        setGames(Array.isArray(data) ? data : [])
+      } catch (e: any) {
+        setError('Unable to load games right now. Try another date.')
+      } finally {
+        setLoading(false)
+      }
     }
     load()
-  }, [date])
+  }, [date, provider])
 
   return (
-    <div className="min-h-screen bg-gray-50 px-4 py-8">
-      <div className="max-w-5xl mx-auto">
-        <h1 className="text-3xl font-bold mb-6">NBA Scores</h1>
-        <div className="mb-6 flex items-center gap-3">
-          <label className="text-sm font-medium">Select Date:</label>
-          <input
-            type="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            className="border px-2 py-1 rounded-md shadow-sm"
-          />
+    <div className="min-h-screen bg-zinc-950 text-zinc-100 px-4 py-8">
+      <div className="max-w-6xl mx-auto space-y-6">
+        <div className="flex items-center justify-between">
+          <h1 className="text-3xl font-extrabold tracking-tight">NBA Scoreboard</h1>
+          <div className="flex items-center gap-3">
+            <ProviderToggle
+              provider={provider}
+              onChange={setProvider}
+              sportsdataAvailable={Boolean(process.env.SPORTSDATA_KEY)}
+            />
+            <CalendarPopover date={date} onChange={setDate} />
+          </div>
         </div>
+        <DayStrip date={date} onChange={setDate} />
+        {error && <ErrorBanner message={error} />}
         {loading ? (
-          <div>Loading…</div>
+          <SkeletonList />
         ) : games.length === 0 ? (
-          <div>No games for this date.</div>
+          <EmptyState />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {games.map((g) => (
-              <div key={g.gameId} className="bg-white p-4 rounded-lg shadow">
-                <div className="text-sm text-gray-500 mb-2">
-                  {new Date(g.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  <span className="ml-2 px-2 py-0.5 rounded-full text-xs bg-gray-100 text-gray-600">{g.status}</span>
-                </div>
-                <div className="space-y-2">
-                  <div className="flex justify-between font-semibold">
-                    <span>{g.homeTeam.name}</span>
-                    {g.homeTeam.score !== undefined && <span>{g.homeTeam.score}</span>}
-                  </div>
-                  <div className="flex justify-between font-semibold">
-                    <span>{g.awayTeam.name}</span>
-                    {g.awayTeam.score !== undefined && <span>{g.awayTeam.score}</span>}
-                  </div>
-                </div>
-              </div>
+              <GameCard key={g.gameId} {...g} />
             ))}
           </div>
         )}

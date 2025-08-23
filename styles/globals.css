@@ -8,6 +8,8 @@ body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen,
     Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
+  background-color: #0f0f11;
+  color: #e5e5e5;
 }
 
 a {
@@ -17,4 +19,21 @@ a {
 
 * {
   box-sizing: border-box;
+}
+
+:root {
+  --lp-bg: #0f0f11;
+  --lp-panel: #18181b;
+  --lp-border: #27272a;
+  --lp-text: #e5e5e5;
+  --lp-muted: #9ca3af;
+  --lp-brand: #22c55e;
+}
+
+.btn-primary {
+  @apply inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-500 text-black font-semibold hover:bg-emerald-400 transition;
+}
+
+.panel {
+  @apply rounded-xl border border-zinc-800 bg-zinc-900 shadow-card;
 }
