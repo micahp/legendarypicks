@@ -52,21 +52,33 @@ export default function PredictionsPage() {
   }
 
   return (
-    <div className="p-6 space-y-6">
-      <h1 className="text-2xl font-bold">Predictions</h1>
+    <div className="space-y-6">
+      <h1 className="text-3xl font-extrabold tracking-tight">Predictions</h1>
       <div className="space-y-4">
-        <div className="flex gap-2">
-          <select value={league} onChange={e => setLeague(e.target.value)} className="border p-2 rounded">
+        <div className="flex flex-wrap gap-2">
+          <select
+            value={league}
+            onChange={e => setLeague(e.target.value)}
+            className="px-3 py-2 rounded-lg border border-zinc-800 bg-zinc-900 text-zinc-200"
+          >
             {leagues.map(l => <option key={l} value={l}>{l.toUpperCase()}</option>)}
           </select>
-          <select value={selectedGame} onChange={e => setSelectedGame(e.target.value)} className="border p-2 rounded">
+          <select
+            value={selectedGame}
+            onChange={e => setSelectedGame(e.target.value)}
+            className="px-3 py-2 rounded-lg border border-zinc-800 bg-zinc-900 text-zinc-200"
+          >
             {games.map(g => (
               <option key={g.gameId} value={g.gameId}>
                 {g.awayTeam.name} at {g.homeTeam.name}
               </option>
             ))}
           </select>
-          <select value={predictedWinner} onChange={e => setPredictedWinner(e.target.value)} className="border p-2 rounded">
+          <select
+            value={predictedWinner}
+            onChange={e => setPredictedWinner(e.target.value)}
+            className="px-3 py-2 rounded-lg border border-zinc-800 bg-zinc-900 text-zinc-200"
+          >
             {selectedGame && (
               games.filter(g => g.gameId === selectedGame).map(g => (
                 [g.homeTeam, g.awayTeam].map(t => (
@@ -75,28 +87,28 @@ export default function PredictionsPage() {
               ))
             )}
           </select>
-          <button onClick={submit} className="bg-blue-600 text-white px-4 py-2 rounded">Submit</button>
+          <button onClick={submit} className="btn-primary">Submit</button>
         </div>
       </div>
 
       <div className="mt-6">
-        <h2 className="text-xl font-semibold mb-2">Your Predictions</h2>
+        <h2 className="text-xl font-bold mb-2">Your Predictions</h2>
         <table className="min-w-full text-sm">
-          <thead>
+          <thead className="text-zinc-400">
             <tr>
-              <th className="text-left">League</th>
-              <th className="text-left">Game</th>
-              <th className="text-left">Prediction</th>
-              <th className="text-left">Correct?</th>
+              <th className="text-left font-medium">League</th>
+              <th className="text-left font-medium">Game</th>
+              <th className="text-left font-medium">Prediction</th>
+              <th className="text-left font-medium">Correct?</th>
             </tr>
           </thead>
           <tbody>
             {predictions.map(p => (
-              <tr key={p.id} className="border-t">
-                <td className="pr-2 py-1">{p.league.toUpperCase()}</td>
-                <td className="pr-2 py-1">{p.gameId}</td>
-                <td className="pr-2 py-1">{p.predictedWinner}</td>
-                <td className="pr-2 py-1">{p.correct === null ? 'Pending' : p.correct ? 'Yes' : 'No'}</td>
+              <tr key={p.id} className="border-t border-zinc-800">
+                <td className="pr-2 py-2">{p.league.toUpperCase()}</td>
+                <td className="pr-2 py-2">{p.gameId}</td>
+                <td className="pr-2 py-2">{p.predictedWinner}</td>
+                <td className="pr-2 py-2">{p.correct === null ? 'Pending' : p.correct ? 'Yes' : 'No'}</td>
               </tr>
             ))}
           </tbody>

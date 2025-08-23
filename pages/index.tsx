@@ -22,63 +22,60 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Sticky Header */}
-      <header className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm">
-        <div className="container mx-auto px-4">
-          <div className="flex justify-between items-center h-16">
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent">
-              Legendary Picks
-            </h1>
-            <nav className="flex items-center gap-4">
-              <a href="/scores" className="text-sm text-blue-600 hover:underline">
-                Scores
-              </a>
-              <a href="/predict" className="text-sm text-blue-600 hover:underline">
-                Predictions
-              </a>
-            </nav>
-            <div className="flex items-center gap-4">
-              {user.loggedIn && (
-                <span className="text-sm text-gray-500">
-                  {user.addr?.slice(0, 6)}...{user.addr?.slice(-4)}
-                </span>
-              )}
-              <button 
-                onClick={user.loggedIn ? logout : login}
-                className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
-                  user.loggedIn 
-                    ? 'bg-red-500 text-white hover:bg-red-600' 
-                    : 'bg-gradient-to-r from-blue-600 to-blue-400 text-white hover:from-blue-700 hover:to-blue-500'
-                }`}
-              >
-                {user.loggedIn ? "Disconnect" : "Connect Wallet"}
-              </button>
-            </div>
+    <div>
+      <Head>
+        <title>Legendary Picks</title>
+        <meta name="description" content="NBA Fantasy Game on Flow" />
+        <link rel="icon" href="/favicon.ico" />
+      </Head>
+
+      <section className="relative overflow-hidden rounded-2xl border border-zinc-800 bg-gradient-to-br from-zinc-900 via-ink-900 to-zinc-900 p-8 md:p-12">
+        <div className="relative z-10 max-w-3xl">
+          <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight leading-tight">
+            Own the Moment. Rule the Board.
+          </h1>
+          <p className="mt-4 text-zinc-300 max-w-xl">
+            Draft with on-chain clout and track the NBA like a pro. Connect your wallet,
+            browse Top Shot moments, and make the picks that matter.
+          </p>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <button onClick={user.loggedIn ? logout : login} className="btn-primary">
+              {user.loggedIn ? 'Disconnect' : 'Connect Wallet'}
+            </button>
+            <a href="/scores" className="px-4 py-2 rounded-lg border border-zinc-700 hover:bg-zinc-800">View Scores</a>
           </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <div className="container mx-auto px-4 py-6">
-        <Head>
-          <title>Legendary Picks</title>
-          <meta name="description" content="NBA Fantasy Game on Flow" />
-          <link rel="icon" href="/favicon.ico" />
-        </Head>
-
-        <main className="space-y-8">
-          {/* Always render MomentGallery to allow manual address testing before connect */}
-          <MomentGallery />
           {user.loggedIn && (
-            <>
-              <AccountManager />
-              <GameBrowser />
-              <ContestBrowser />
-            </>
+            <div className="mt-4 text-sm text-zinc-400">
+              Connected: {user.addr?.slice(0, 6)}...{user.addr?.slice(-4)}
+            </div>
           )}
-        </main>
-      </div>
+        </div>
+        <div className="pointer-events-none absolute -right-24 -bottom-24 h-72 w-72 rounded-full bg-emerald-500/10 blur-3xl" />
+      </section>
+
+      <main className="space-y-8 mt-8">
+        {/* Always render MomentGallery to allow manual address testing before connect */}
+        <section>
+          <h2 className="text-xl font-bold mb-3">Moments Gallery</h2>
+          <MomentGallery />
+        </section>
+        {user.loggedIn && (
+          <>
+            <section>
+              <h2 className="text-xl font-bold mb-3">Account</h2>
+              <AccountManager />
+            </section>
+            <section>
+              <h2 className="text-xl font-bold mb-3">Upcoming Games</h2>
+              <GameBrowser />
+            </section>
+            <section>
+              <h2 className="text-xl font-bold mb-3">Contests</h2>
+              <ContestBrowser />
+            </section>
+          </>
+        )}
+      </main>
     </div>
   )
 }
