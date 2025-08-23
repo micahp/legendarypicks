@@ -30,9 +30,14 @@ export default function Home() {
             <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent">
               Legendary Picks
             </h1>
-            <a href="/predict" className="text-sm text-blue-600 hover:underline">
-              Predictions
-            </a>
+            <nav className="flex items-center gap-4">
+              <a href="/scores" className="text-sm text-blue-600 hover:underline">
+                Scores
+              </a>
+              <a href="/predict" className="text-sm text-blue-600 hover:underline">
+                Predictions
+              </a>
+            </nav>
             <div className="flex items-center gap-4">
               {user.loggedIn && (
                 <span className="text-sm text-gray-500">
@@ -63,10 +68,11 @@ export default function Home() {
         </Head>
 
         <main className="space-y-8">
+          {/* Always render MomentGallery to allow manual address testing before connect */}
+          <MomentGallery />
           {user.loggedIn && (
             <>
               <AccountManager />
-              <MomentGallery />
               <GameBrowser />
               <ContestBrowser />
             </>
