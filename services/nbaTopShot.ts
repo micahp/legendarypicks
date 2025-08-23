@@ -1,104 +1,59 @@
 import * as fcl from "@onflow/fcl"
 
-// Script to get all NFTs in a user's collection
-const getMomentIDs = `
-  import TopShot from 0x877931736ee77cff
-  import HybridCustody from 0xd8a7e05a7ac670c0
+const TOPSHOT_ADDRESS = process.env.NEXT_PUBLIC_TOPSHOT_ADDRESS || "0x0b2a3299cc857e29"
+const METADATAVIEWS_ADDRESS = process.env.NEXT_PUBLIC_METADATAVIEWS_ADDRESS || "0x1d7e57aa55817448"
+const VIEWRESOLVER_ADDRESS = process.env.NEXT_PUBLIC_VIEWRESOLVER_ADDRESS || METADATAVIEWS_ADDRESS
 
-  pub fun main(account: Address): [UInt64] {
-    // Get the manager to access linked accounts
-    let manager = getAuthAccount(account).storage
-      .borrow<&HybridCustody.Manager>(from: HybridCustody.ManagerStoragePath)
-    
-    var allMomentIds: [UInt64] = []
-    
-    // First get moments from main account
-    let mainCollection = getAccount(account)
-      .getCapability(/public/MomentCollection)
-      .borrow<&{TopShot.MomentCollectionPublic}>()
-    
-    if let collection = mainCollection {
-      allMomentIds.append(contentsOf: collection.getIDs())
+// Cadence 1.0 script to get all Moment IDs via public capability
+const getMomentIDs = `
+  import TopShot from ${TOPSHOT_ADDRESS}
+
+  access(all) fun main(account: Address): [UInt64] {
+    let ids: [UInt64] = []
+    if let collection = getAccount(account)
+      .capabilities
+      .borrow<&{TopShot.MomentCollectionPublic}>(/public/MomentCollection) {
+      ids.appendAll(collection.getIDs())
     }
-    
-    // Then get moments from linked accounts
-    if let manager = manager {
-      for childAddress in manager.getChildAddresses() {
-        let childCollection = getAccount(childAddress)
-          .getCapability(/public/MomentCollection)
-          .borrow<&{TopShot.MomentCollectionPublic}>()
-        
-        if let collection = childCollection {
-          allMomentIds.append(contentsOf: collection.getIDs())
-        }
-      }
-    }
-    
-    return allMomentIds
+    return ids
   }
 `
 
-// Script to get metadata for a specific moment
+// Cadence 1.0 script to get metadata for a specific moment via view resolver
 const getMomentMetadata = `
-  import TopShot from 0x877931736ee77cff
-  import MetadataViews from 0x631e88ae7f1d7c20
-  import HybridCustody from 0xd8a7e05a7ac670c0
+  import TopShot from ${TOPSHOT_ADDRESS}
+  import MetadataViews from ${METADATAVIEWS_ADDRESS}
+  import ViewResolver from ${VIEWRESOLVER_ADDRESS}
 
-  pub fun main(account: Address, id: UInt64): {String: AnyStruct} {
-    // Try main account first
-    let mainCollection = getAccount(account)
-      .getCapability(/public/MomentCollection)
-      .borrow<&{TopShot.MomentCollectionPublic}>()
-    
-    if let collection = mainCollection {
-      if let moment = collection.borrowMoment(id: id) {
-        return resolveMomentMetadata(moment)
-      }
-    }
-    
-    // Try linked accounts
-    let manager = getAuthAccount(account).storage
-      .borrow<&HybridCustody.Manager>(from: HybridCustody.ManagerStoragePath)
-    
-    if let manager = manager {
-      for childAddress in manager.getChildAddresses() {
-        let childCollection = getAccount(childAddress)
-          .getCapability(/public/MomentCollection)
-          .borrow<&{TopShot.MomentCollectionPublic}>()
-        
-        if let collection = childCollection {
-          if let moment = collection.borrowMoment(id: id) {
-            return resolveMomentMetadata(moment)
+  access(all) fun main(account: Address, id: UInt64): {String: AnyStruct} {
+    if let collection = getAccount(account)
+      .capabilities
+      .borrow<&{TopShot.MomentCollectionPublic}>(/public/MomentCollection) {
+      if let nft = collection.borrowNFT(id) {
+        let resolver = nft as &{ViewResolver.Resolver}
+        if let anyView = resolver.resolveView(Type<TopShot.TopShotMomentMetadataView>()) {
+          if let v = anyView as? TopShot.TopShotMomentMetadataView {
+            return {
+              "fullName": v.fullName,
+              "playCategory": v.playCategory,
+              "playType": v.playType,
+              "teamAtMoment": v.teamAtMoment,
+              "serialNumber": v.serialNumber,
+              "setName": v.setName,
+              "seriesNumber": v.seriesNumber,
+              "jerseyNumber": v.jerseyNumber,
+              "primaryPosition": v.primaryPosition,
+              "dateOfMoment": v.dateOfMoment,
+              "homeTeamName": v.homeTeamName,
+              "awayTeamName": v.awayTeamName,
+              "homeTeamScore": v.homeTeamScore,
+              "awayTeamScore": v.awayTeamScore
+            }
           }
         }
       }
     }
-    
     panic("Could not find moment with ID: ".concat(id.toString()))
-  }
-
-  pub fun resolveMomentMetadata(moment: &{TopShot.MomentNFT}): {String: AnyStruct} {
-    let view = moment.resolveView(Type<TopShot.TopShotMomentMetadataView>())
-      ?? panic("Could not resolve view")
-
-    let metadata = view as! TopShot.TopShotMomentMetadataView
-
-    return {
-      "fullName": metadata.fullName,
-      "playCategory": metadata.playCategory,
-      "playType": metadata.playType,
-      "teamAtMoment": metadata.teamAtMoment,
-      "serialNumber": metadata.serialNumber,
-      "setName": metadata.setName,
-      "seriesNumber": metadata.seriesNumber,
-      "jerseyNumber": metadata.jerseyNumber,
-      "primaryPosition": metadata.primaryPosition,
-      "dateOfMoment": metadata.dateOfMoment,
-      "homeTeamName": metadata.homeTeamName,
-      "awayTeamName": metadata.awayTeamName,
-      "homeTeamScore": metadata.homeTeamScore,
-      "awayTeamScore": metadata.awayTeamScore
-    }
   }
 `
 

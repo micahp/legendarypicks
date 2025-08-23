@@ -1,6 +1,15 @@
 import axios from 'axios'
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_SPORTS_API_URL || 'http://localhost:8000/api'
+function normalizeBaseUrl(raw?: string): string {
+  const fallback = 'http://localhost:8000/api'
+  if (!raw || raw.trim() === '') return fallback
+  const base = raw.trim()
+  if (base.startsWith('/')) return base
+  if (!/^https?:\/\//i.test(base)) return `http://${base}`
+  return base
+}
+
+const API_BASE_URL = normalizeBaseUrl(process.env.NEXT_PUBLIC_SPORTS_API_URL)
 
 export const SportsService = {
   getGames: async (league: string) => {
