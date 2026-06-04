@@ -47,3 +47,4 @@ yarn.lock
 # generated sports backend DB / cache
 backend/data/picks.db
 backend/__pycache__/
+backend/venv/
