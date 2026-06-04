@@ -58,12 +58,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const provider = (typeof req.query.provider === 'string' ? req.query.provider : process.env.NBA_PROVIDER) || 'nba_api'
 
     if (provider === 'fastapi' || provider === 'nba_api') {
-      // Delegate to our FastAPI backend (free option via nba_api)
+      // Delegate to our unified ESPN backend: GET /api/nba/games?date=YYYY-MM-DD
       const base = normalizeBaseUrl(process.env.NEXT_PUBLIC_NBA_API_URL)
-      const upstream = `${base}/games/by-date`
+      const upstream = `${base}/nba/games`
       const upstreamResp = await axios.get(upstream, { params: { date }, validateStatus: () => true })
       if (upstreamResp.status >= 200 && upstreamResp.status < 300) {
-        return res.status(200).json(upstreamResp.data)
+        // Backend shape -> internal Game shape (the SportsData path below maps to the same shape).
+        const mapped = (Array.isArray(upstreamResp.data) ? upstreamResp.data : []).map((g: any) => ({
+          gameId: String(g?.game_id ?? ''),
+          homeTeam: { teamId: g?.home?.abbrev ?? '', name: g?.home?.name ?? g?.home?.abbrev ?? '', score: g?.home?.score ?? undefined },
+          awayTeam: { teamId: g?.away?.abbrev ?? '', name: g?.away?.name ?? g?.away?.abbrev ?? '', score: g?.away?.score ?? undefined },
+          startTime: g?.date ?? new Date(date).toISOString(),
+          status: g?.state === 'post' ? 'FINAL' : g?.state === 'in' ? 'LIVE' : 'SCHEDULED',
+        }))
+        return res.status(200).json(mapped)
       }
       return res.status(upstreamResp.status).json({ message: 'Upstream error', detail: upstreamResp.data })
     }

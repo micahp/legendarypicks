@@ -129,6 +129,24 @@ def boxscore(league, game_id):
     return d.get("boxscore", {})
 
 
+def roster(league, team):
+    """Active roster for a team (by abbreviation or id): [{player_id, name, jersey, position}]."""
+    _, path = _check(league)
+    d = _get(_SITE.format(path=path) + f"/teams/{team}/roster", ttl=3600)
+    out = []
+    for a in d.get("athletes", []):
+        # NFL/NBA roster nests athletes under position groups; flatten either shape
+        items = a.get("items") if isinstance(a, dict) and "items" in a else [a]
+        for p in items:
+            out.append({
+                "player_id": str(p.get("id")),
+                "name": p.get("fullName") or p.get("displayName"),
+                "jersey": p.get("jersey"),
+                "position": (p.get("position") or {}).get("abbreviation"),
+            })
+    return out
+
+
 def game_result(league, game_id):
     """Clean grading info for one game: {state, scores{abbrev:score}, winner|None}.
 

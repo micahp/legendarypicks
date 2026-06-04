@@ -102,6 +102,14 @@ def get_boxscore(league: str, game_id: str):
         raise HTTPException(404, str(e))
 
 
+@app.get("/api/{league}/team/{team}/roster")
+def get_roster(league: str, team: str):
+    try:
+        return espn.roster(league, team)
+    except ValueError as e:
+        raise HTTPException(404, str(e))
+
+
 @app.post("/api/predictions")
 def submit_prediction(pred: PredictionIn):
     league = pred.league.lower()

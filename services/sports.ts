@@ -11,44 +11,99 @@ function normalizeBaseUrl(raw?: string): string {
 
 const API_BASE_URL = normalizeBaseUrl(process.env.NEXT_PUBLIC_SPORTS_API_URL)
 
+// The unified ESPN backend (sports_service.py) returns games as
+//   { game_id, date, state: 'pre'|'in'|'post', home/away: { abbrev, name, score } }
+// The UI works against a stable internal shape; we translate here (anti-corruption layer).
+export interface Game {
+  gameId: string
+  homeTeam: { teamId: string; name: string; score?: number }
+  awayTeam: { teamId: string; name: string; score?: number }
+  startTime: string
+  status: 'SCHEDULED' | 'LIVE' | 'FINAL'
+}
+
+function statusFromState(state?: string): Game['status'] {
+  return state === 'post' ? 'FINAL' : state === 'in' ? 'LIVE' : 'SCHEDULED'
+}
+
+function side(s: any): Game['homeTeam'] {
+  return { teamId: s?.abbrev ?? '', name: s?.name ?? s?.abbrev ?? '', score: s?.score ?? undefined }
+}
+
+export function normalizeGame(g: any): Game {
+  return {
+    gameId: String(g?.game_id ?? g?.gameId ?? ''),
+    homeTeam: side(g?.home ?? g?.homeTeam),
+    awayTeam: side(g?.away ?? g?.awayTeam),
+    startTime: g?.date ?? g?.startTime ?? '',
+    status: g?.status && ['SCHEDULED', 'LIVE', 'FINAL'].includes(g.status) ? g.status : statusFromState(g?.state),
+  }
+}
+
+export interface Prediction {
+  id: number
+  league: string
+  gameId: string
+  predictedWinner: string
+  correct: boolean | null
+}
+
+function normalizePrediction(p: any): Prediction {
+  return {
+    id: p?.id,
+    league: p?.league,
+    gameId: String(p?.game_id ?? p?.gameId ?? ''),
+    predictedWinner: p?.predicted_winner ?? p?.predictedWinner ?? '',
+    correct: p?.correct === null || p?.correct === undefined ? null : Boolean(p.correct),
+  }
+}
+
 export const SportsService = {
-  getGames: async (league: string) => {
+  getGames: async (league: string): Promise<Game[]> => {
     try {
       const res = await axios.get(`${API_BASE_URL}/${league}/games`)
-      return res.data
+      return (Array.isArray(res.data) ? res.data : []).map(normalizeGame)
     } catch (err) {
       console.error('Error fetching games', err)
       return []
     }
   },
 
-  getPlayerStats: async (league: string, playerId: string) => {
+  // Team quality ranking (win% / differential / streak / last-10) — new capability of the ESPN backend.
+  getStrength: async (league: string) => {
     try {
-      const res = await axios.get(`${API_BASE_URL}/${league}/players/${playerId}`)
+      const res = await axios.get(`${API_BASE_URL}/${league}/strength`)
       return res.data
     } catch (err) {
-      console.error('Error fetching player', err)
-      return null
+      console.error('Error fetching strength', err)
+      return []
     }
   },
 
-  submitPrediction: async (league: string, gameId: string, predictedWinner: string) => {
+  submitPrediction: async (league: string, gameId: string, predictedWinner: string): Promise<Prediction | null> => {
     try {
-      const res = await axios.post(`${API_BASE_URL}/predictions`, { league, gameId, predictedWinner })
-      return res.data
+      // backend contract is snake_case
+      const res = await axios.post(`${API_BASE_URL}/predictions`, {
+        league,
+        game_id: gameId,
+        predicted_winner: predictedWinner,
+      })
+      return normalizePrediction(res.data)
     } catch (err) {
       console.error('Error submitting prediction', err)
       return null
     }
   },
 
-  getPredictions: async () => {
+  getPredictions: async (): Promise<Prediction[]> => {
     try {
       const res = await axios.get(`${API_BASE_URL}/predictions`)
-      return res.data
+      // backend returns { predictions, graded, accuracy }
+      const list = Array.isArray(res.data) ? res.data : res.data?.predictions ?? []
+      return list.map(normalizePrediction)
     } catch (err) {
       console.error('Error getting predictions', err)
       return []
     }
-  }
+  },
 }
