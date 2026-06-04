@@ -43,3 +43,7 @@ yarn.lock
 
 # Flow private keys
 /keys/*.pkey
+
+# generated sports backend DB / cache
+backend/data/picks.db
+backend/__pycache__/

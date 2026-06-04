@@ -1,6 +1,10 @@
-fastapi==0.68.1
-uvicorn==0.15.0
-nba_api==1.1.9
-python-dotenv==0.19.0
-requests==2.26.0
-sportsipy==0.6.0
+# Unified sports backend (sports_service.py) — data via ESPN public API over stdlib urllib,
+# so no scraping/stat library is required at runtime.
+fastapi>=0.110
+uvicorn>=0.27
+pydantic>=2.0
+
+# NOTE: sportsipy was REMOVED — it scrapes sports-reference.com, is unmaintained, and broke
+# regularly. ESPN (espn_client.py) replaces it for every league.
+# nba_api is OPTIONAL and only needed if a feature reintroduces NBA-specific advanced stats:
+#   nba_api>=1.4.1

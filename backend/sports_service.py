@@ -1,174 +1,168 @@
-from fastapi import FastAPI, HTTPException
+#!/usr/bin/env python3
+"""sports_service.py — unified multi-league sports API (ESPN-backed) + prediction store.
+
+ONE service. Replaces the old sportsipy-based `sports_service` and the NBA-only `nba_service`
+(now a deprecation stub). All data flows through espn_client (free, reliable, every league).
+
+What changed from the original:
+  - real data for ALL leagues (was: dead sportsipy + a 1-game hardcoded fixture fallback)
+  - predictions persisted to SQLite and graded against REAL finals (was: in-memory list vs fixture)
+  - /strength endpoint: teams ranked by win% / differential / form — the quality prior shared
+    with the prediction-market trading strategy (its only unfalsified edge: buy undervalued QUALITY)
+"""
+import os, sqlite3, datetime as dt
+from contextlib import closing
+from typing import Optional
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-import json
-import os
-from datetime import datetime
-import logging
 
-try:
-    from sportsipy.nba.boxscore import Boxscores as NBABoxscores
-    from sportsipy.nba.roster import Player as NBAPlayer
-    from sportsipy.nfl.boxscore import Boxscores as NFLBoxscores
-    from sportsipy.nfl.roster import Player as NFLPlayer
-    from sportsipy.mlb.boxscore import Boxscores as MLBBoxscores
-    from sportsipy.mlb.roster import Player as MLBPlayer
-    from sportsipy.nhl.boxscore import Boxscores as NHLBoxscores
-    from sportsipy.nhl.roster import Player as NHLPlayer
-    SPORTS_LIB_AVAILABLE = True
-except Exception as e:
-    logging.exception("sportsipy not available: %s", e)
-    SPORTS_LIB_AVAILABLE = False
+import espn_client as espn
 
-app = FastAPI(
-    title="Sports Stats API",
-    description="Multi-league sports data and prediction service",
-    version="1.0.0",
-)
+DB = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "picks.db")
+ALLOWED_ORIGINS = os.environ.get("LP_ALLOWED_ORIGINS", "http://localhost:3000").split(",")
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+app = FastAPI(title="Legendary Picks Sports API", description="Multi-league sports data (ESPN)", version="2.0.0")
+app.add_middleware(CORSMiddleware, allow_origins=ALLOWED_ORIGINS, allow_credentials=True,
+                   allow_methods=["*"], allow_headers=["*"])
 
-DATA_FILE = os.path.join(os.path.dirname(__file__), "data", "sample_data.json")
-with open(DATA_FILE) as f:
-    DATA = json.load(f)
 
-predictions = []
-prediction_counter = 1
+def _db():
+    os.makedirs(os.path.dirname(DB), exist_ok=True)
+    con = sqlite3.connect(DB)
+    con.row_factory = sqlite3.Row
+    return con
+
+
+def _init_db():
+    with closing(_db()) as con:
+        con.executescript("""
+        CREATE TABLE IF NOT EXISTS predictions(
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          league TEXT NOT NULL, game_id TEXT NOT NULL, predicted_winner TEXT NOT NULL,
+          created_at TEXT NOT NULL, correct INTEGER);
+        CREATE TABLE IF NOT EXISTS strength_snap(
+          captured_at TEXT NOT NULL, league TEXT NOT NULL, abbrev TEXT NOT NULL,
+          win_pct REAL, differential REAL, wins INTEGER, losses INTEGER);
+        """)
+        con.commit()
+
+
+_init_db()
+
 
 class PredictionIn(BaseModel):
     league: str
-    gameId: str
-    predictedWinner: str
+    game_id: str
+    predicted_winner: str   # team abbreviation, e.g. "MIL"
+
 
 @app.get("/")
-async def root():
-    return {"message": "Sports Stats API", "leagues": list(DATA.keys())}
+def root():
+    return {"service": "Legendary Picks Sports API", "version": "2.0.0",
+            "source": "ESPN", "leagues": sorted(espn.LEAGUES)}
+
 
 @app.get("/api/{league}/games")
-async def get_games(league: str):
-    league = league.lower()
+def get_games(league: str, date: Optional[str] = Query(None, description="YYYY-MM-DD (default today)")):
+    try:
+        return espn.games(league, date)
+    except ValueError as e:
+        raise HTTPException(404, str(e))
 
-    games = None
-    if SPORTS_LIB_AVAILABLE:
-        games = _fetch_games_from_library(league)
 
-    if not games:
-        if league not in DATA:
-            raise HTTPException(status_code=404, detail="League not found")
-        return DATA[league]["games"]
+@app.get("/api/{league}/strength")
+def get_strength(league: str):
+    """Teams ranked by quality (win%, differential, streak, last-10) — the selection prior."""
+    try:
+        rows = espn.team_strength(league)
+    except ValueError as e:
+        raise HTTPException(404, str(e))
+    _snapshot_strength(league.lower(), rows)
+    return rows
 
-    return games
 
-@app.get("/api/{league}/players/{player_id}")
-async def get_player_stats(league: str, player_id: str):
-    league = league.lower()
+@app.get("/api/{league}/strength/{team}")
+def get_team_strength(league: str, team: str):
+    try:
+        m = espn.team_strength_map(league)
+    except ValueError as e:
+        raise HTTPException(404, str(e))
+    row = m.get(team.upper())
+    if not row:
+        raise HTTPException(404, f"team {team!r} not found in {league}")
+    return row
 
-    player = None
-    if SPORTS_LIB_AVAILABLE:
-        player = _fetch_player_from_library(league, player_id)
 
-    if not player:
-        if league not in DATA:
-            raise HTTPException(status_code=404, detail="League not found")
-        players = DATA[league]["players"]
-        if player_id not in players:
-            raise HTTPException(status_code=404, detail="Player not found")
-        return players[player_id]
+@app.get("/api/{league}/boxscore/{game_id}")
+def get_boxscore(league: str, game_id: str):
+    try:
+        return espn.boxscore(league, game_id)
+    except ValueError as e:
+        raise HTTPException(404, str(e))
 
-    return player
 
 @app.post("/api/predictions")
-async def submit_prediction(pred: PredictionIn):
-    global prediction_counter
-    entry = pred.dict()
-    entry["id"] = prediction_counter
-    entry["correct"] = evaluate_prediction(entry)
-    prediction_counter += 1
-    predictions.append(entry)
-    return entry
+def submit_prediction(pred: PredictionIn):
+    league = pred.league.lower()
+    if league not in espn.LEAGUES:
+        raise HTTPException(404, f"unsupported league {pred.league!r}")
+    correct = _evaluate(league, pred.game_id, pred.predicted_winner)
+    with closing(_db()) as con:
+        cur = con.execute(
+            "INSERT INTO predictions(league,game_id,predicted_winner,created_at,correct) VALUES(?,?,?,?,?)",
+            (league, pred.game_id, pred.predicted_winner.upper(),
+             dt.datetime.now(dt.timezone.utc).isoformat(),
+             None if correct is None else int(correct)))
+        con.commit()
+        pid = cur.lastrowid
+    return {"id": pid, "league": league, "game_id": pred.game_id,
+            "predicted_winner": pred.predicted_winner.upper(), "correct": correct}
+
 
 @app.get("/api/predictions")
-async def list_predictions():
-    for p in predictions:
-        if p["correct"] is None:
-            p["correct"] = evaluate_prediction(p)
-    return predictions
+def list_predictions():
+    out = []
+    with closing(_db()) as con:
+        for r in con.execute("SELECT * FROM predictions ORDER BY id").fetchall():
+            correct = r["correct"]
+            if correct is None:                     # re-grade: the game may have finished since
+                correct = _evaluate(r["league"], r["game_id"], r["predicted_winner"])
+                if correct is not None:
+                    con.execute("UPDATE predictions SET correct=? WHERE id=?", (int(correct), r["id"]))
+            out.append({"id": r["id"], "league": r["league"], "game_id": r["game_id"],
+                        "predicted_winner": r["predicted_winner"], "correct": correct})
+        con.commit()
+    accuracy = None
+    graded = [p for p in out if p["correct"] is not None]
+    if graded:
+        accuracy = round(sum(1 for p in graded if p["correct"]) / len(graded), 4)
+    return {"predictions": out, "graded": len(graded), "accuracy": accuracy}
 
-def evaluate_prediction(pred):
-    league = pred["league"].lower()
-    if league not in DATA:
-        return None
-    game = next((g for g in DATA[league]["games"] if g["gameId"] == pred["gameId"]), None)
-    if not game or game.get("status") != "FINAL":
-        return None
-    winner = game["homeTeam"]["teamId"] if game["homeTeam"].get("score", 0) >= game["awayTeam"].get("score", 0) else game["awayTeam"]["teamId"]
-    return pred["predictedWinner"].lower() == winner.lower()
 
-
-def _fetch_games_from_library(league: str):
-    """Attempt to fetch games from sportsipy for the given league."""
-    today = datetime.utcnow().date()
-    key = f"{today.month}-{today.day}-{today.year}"
+def _evaluate(league, game_id, predicted_winner):
+    """True/False vs the REAL final, or None if the game isn't final yet."""
     try:
-        if league == "nba":
-            bs = NBABoxscores(today)
-        elif league == "nfl":
-            bs = NFLBoxscores(today)
-        elif league == "mlb":
-            bs = MLBBoxscores(today)
-        elif league == "nhl":
-            bs = NHLBoxscores(today)
-        else:
-            return None
-        raw_games = bs.games.get(key, [])
-        games = []
-        for g in raw_games:
-            games.append({
-                "gameId": g.get("boxscore"),
-                "homeTeam": {
-                    "teamId": g.get("home_name"),
-                    "name": g.get("home_name"),
-                    "score": g.get("home_score"),
-                },
-                "awayTeam": {
-                    "teamId": g.get("away_name"),
-                    "name": g.get("away_name"),
-                    "score": g.get("away_score"),
-                },
-                "startTime": g.get("time", ""),
-                "status": "FINAL" if g.get("home_score") is not None else "SCHEDULED",
-            })
-        return games
-    except Exception as exc:
-        logging.exception("Failed fetching %s games: %s", league, exc)
+        res = espn.game_result(league, game_id)
+    except ValueError:
         return None
+    if res["winner"] is None:
+        return None
+    return predicted_winner.upper() == res["winner"].upper()
 
 
-def _fetch_player_from_library(league: str, player_id: str):
-    """Attempt to fetch player stats using sportsipy."""
-    try:
-        if league == "nba":
-            p = NBAPlayer(player_id)
-        elif league == "nfl":
-            p = NFLPlayer(player_id)
-        elif league == "mlb":
-            p = MLBPlayer(player_id)
-        elif league == "nhl":
-            p = NHLPlayer(player_id)
-        else:
-            return None
-        data = {k.lstrip("_"): v for k, v in vars(p).items() if not k.startswith("_")}
-        return data
-    except Exception as exc:
-        logging.exception("Failed fetching %s player %s: %s", league, player_id, exc)
-        return None
+def _snapshot_strength(league, rows):
+    """Persist a strength snapshot so we accumulate history (the trading side wants the time series)."""
+    now = dt.datetime.now(dt.timezone.utc).isoformat()
+    with closing(_db()) as con:
+        con.executemany(
+            "INSERT INTO strength_snap(captured_at,league,abbrev,win_pct,differential,wins,losses) "
+            "VALUES(?,?,?,?,?,?,?)",
+            [(now, league, r["abbrev"], r["win_pct"], r["differential"], r["wins"], r["losses"])
+             for r in rows])
+        con.commit()
+
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", "8000")))
