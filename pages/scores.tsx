@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/router'
 import { NBAGameService } from '../services/nbaGames'
 import DayStrip from '../components/Scores/DayStrip'
 import CalendarPopover from '../components/Scores/CalendarPopover'
@@ -15,8 +16,15 @@ interface Game {
 }
 
 export default function ScoresPage() {
+  const router = useRouter()
   const today = new Date().toISOString().split('T')[0]
   const [date, setDate] = useState<string>(today)
+
+  // allow a shareable/deep-linkable day via ?date=YYYY-MM-DD
+  useEffect(() => {
+    const q = router.query.date
+    if (typeof q === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(q)) setDate(q)
+  }, [router.query.date])
   const [games, setGames] = useState<Game[]>([])
   const [loading, setLoading] = useState<boolean>(false)
   const [error, setError] = useState<string | null>(null)

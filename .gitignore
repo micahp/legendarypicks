@@ -48,3 +48,5 @@ yarn.lock
 backend/data/picks.db
 backend/__pycache__/
 backend/venv/
+
+.next/

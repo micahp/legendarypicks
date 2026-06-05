@@ -1,5 +1,11 @@
 import Head from 'next/head'
-import ContestBrowser from '../components/ContestBrowser'
+import dynamic from 'next/dynamic'
+
+// ContestBrowser pulls in ContestService -> FCL (browser-only, breaks SSR). Render it client-side.
+const ContestBrowser = dynamic(() => import('../components/ContestBrowser'), {
+  ssr: false,
+  loading: () => <div className="animate-pulse text-zinc-500">Loading contests…</div>,
+})
 
 export default function ContestsPage() {
   return (
