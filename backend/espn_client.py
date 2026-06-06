@@ -63,30 +63,109 @@ def _int(x):
 def games(league, date=None):
     """Normalized scoreboard. date='YYYY-MM-DD' (or None=today). state: pre | in | post."""
     _, path = _check(league)
+    is_tennis = league in ("atp", "wta")
     q = ("?dates=" + date.replace("-", "")) if date else ""
     d = _get(_SITE.format(path=path) + "/scoreboard" + q, ttl=20)
     out = []
-    for e in d.get("events", []):
-        comp = (e.get("competitions") or [{}])[0]
-        status = comp.get("status", {})
-        st = status.get("type", {})
-        teams = {}
-        for c in comp.get("competitors", []):
-            teams[c.get("homeAway")] = {
-                "abbrev": c.get("team", {}).get("abbreviation"),
-                "name": c.get("team", {}).get("displayName"),
-                "score": _num(c.get("score")),
-            }
-        out.append({
-            "game_id": e.get("id"),
-            "date": e.get("date"),
-            "state": st.get("state"),                # pre | in | post
-            "status": st.get("description"),
-            "period": status.get("period"),
-            "clock": status.get("displayClock"),
-            "home": teams.get("home"),
-            "away": teams.get("away"),
-        })
+
+    if is_tennis:
+        # Tennis returns tournaments as events, matches nested in groupings[].competitions[]
+        # Tournaments span weeks — filter to the requested date (or today)
+        import datetime as _dt
+        target_date = None
+        if date:
+            target_date = _dt.datetime.strptime(date, "%Y-%m-%d").date()
+        else:
+            target_date = _dt.date.today()
+        for event in d.get("events", []):
+            # ATP/WTA both return full tournament — filter by gender grouping
+            # Use startswith to avoid matching "mens" inside "womens"
+            if league == "atp":
+                gender_prefix = "mens"
+            else:
+                gender_prefix = "womens"
+            for grp in event.get("groupings", []):
+                slug = grp.get("grouping", {}).get("slug", "")
+                if not slug.startswith(gender_prefix):
+                    continue
+                for comp in grp.get("competitions", []):
+                    # Filter by date — tennis tournaments span weeks
+                    comp_date = comp.get("date", "")
+                    if comp_date:
+                        try:
+                            cd = _dt.datetime.fromisoformat(comp_date.replace("Z", "+00:00")).date()
+                            if cd != target_date:
+                                continue
+                        except (ValueError, TypeError):
+                            pass
+                    status = comp.get("status", {})
+                    st = status.get("type", {})
+                    players = {}
+                    for c in comp.get("competitors", []):
+                        # Singles: athlete object. Doubles: team object with roster.
+                        if c.get("type") == "team":
+                            roster = c.get("roster", {})
+                            name = roster.get("displayName") or roster.get("shortDisplayName") or "TBD"
+                            abbrev = roster.get("shortDisplayName", name)[:8]
+                        else:
+                            ath = c.get("athlete", {})
+                            name = ath.get("displayName") or ath.get("fullName") or "TBD"
+                            abbrev = ath.get("shortName") or name[:3].upper()
+                        players[c.get("homeAway")] = {
+                            "abbrev": abbrev,
+                            "name": name,
+                            "score": None,
+                        }
+                    # Extract set scores from linescores and compute set wins
+                    set_scores = []
+                    away_sets = home_sets = 0
+                    for c in comp.get("competitors", []):
+                        ls = c.get("linescores", [])
+                        scores = [str(int(v.get("value"))) for v in ls if v.get("value") is not None]
+                        wins = sum(1 for v in ls if v.get("winner") is True)
+                        if scores:
+                            set_scores.append("-".join(scores))
+                        if c.get("homeAway") == "away":
+                            away_sets = wins
+                        else:
+                            home_sets = wins
+                    score_str = " | ".join(set_scores) if set_scores else None
+                    # Set numeric scores for display (sets won), 0 is valid (lost in straight sets)
+                    if status.get("type", {}).get("completed") or set_scores:
+                        players["away"]["score"] = away_sets
+                        players["home"]["score"] = home_sets
+                    out.append({
+                        "game_id": comp.get("id"),
+                        "date": comp.get("date") or event.get("date"),
+                        "state": st.get("state"),
+                        "status": st.get("description") or score_str or "",
+                        "period": status.get("period"),
+                        "clock": status.get("displayClock"),
+                        "home": players.get("home"),
+                        "away": players.get("away"),
+                    })
+    else:
+        for e in d.get("events", []):
+            comp = (e.get("competitions") or [{}])[0]
+            status = comp.get("status", {})
+            st = status.get("type", {})
+            teams = {}
+            for c in comp.get("competitors", []):
+                teams[c.get("homeAway")] = {
+                    "abbrev": c.get("team", {}).get("abbreviation"),
+                    "name": c.get("team", {}).get("displayName"),
+                    "score": _num(c.get("score")),
+                }
+            out.append({
+                "game_id": e.get("id"),
+                "date": e.get("date"),
+                "state": st.get("state"),
+                "status": st.get("description"),
+                "period": status.get("period"),
+                "clock": status.get("displayClock"),
+                "home": teams.get("home"),
+                "away": teams.get("away"),
+            })
     return out
 
 
