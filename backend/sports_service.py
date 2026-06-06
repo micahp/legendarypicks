@@ -20,9 +20,10 @@ from pydantic import BaseModel
 import espn_client as espn
 
 DB = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "picks.db")
-ALLOWED_ORIGINS = os.environ.get("LP_ALLOWED_ORIGINS", "http://localhost:3000").split(",")
+ALLOWED_ORIGINS = os.environ.get("LP_ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:3007").split(",")
 
 app = FastAPI(title="Legendary Picks Sports API", description="Multi-league sports data (ESPN)", version="2.0.0")
+print(f"DEBUG: espn_client leagues: {sorted(espn.LEAGUES)}")
 app.add_middleware(CORSMiddleware, allow_origins=ALLOWED_ORIGINS, allow_credentials=True,
                    allow_methods=["*"], allow_headers=["*"])
 
@@ -65,6 +66,10 @@ def root():
 
 @app.get("/api/{league}/games")
 def get_games(league: str, date: Optional[str] = Query(None, description="YYYY-MM-DD (default today)")):
+    if league.lower() == "cod":
+        # Call of Duty League — real data from official CDL schedule page
+        import cdl_client
+        return cdl_client.get_matches(date_str=date)
     try:
         return espn.games(league, date)
     except ValueError as e:

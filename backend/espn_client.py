@@ -18,6 +18,8 @@ LEAGUES = {  # our key -> (espn "sport/league" path, regulation periods)
     "nhl":  ("hockey/nhl", 3),
     "mlb":  ("baseball/mlb", 9),
     "nfl":  ("football/nfl", 4),
+    "atp":  ("tennis/atp", 3),
+    "wta":  ("tennis/wta", 3),
 }
 _SITE = "https://site.api.espn.com/apis/site/v2/sports/{path}"
 _CORE = "https://site.api.espn.com/apis/v2/sports/{path}"

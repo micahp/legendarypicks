@@ -16,6 +16,7 @@ const API_BASE_URL = normalizeBaseUrl(process.env.NEXT_PUBLIC_SPORTS_API_URL)
 // The UI works against a stable internal shape; we translate here (anti-corruption layer).
 export interface Game {
   gameId: string
+  league?: string
   homeTeam: { teamId: string; name: string; score?: number }
   awayTeam: { teamId: string; name: string; score?: number }
   startTime: string
@@ -67,6 +68,26 @@ export const SportsService = {
       console.error('Error fetching games', err)
       return []
     }
+  },
+
+  getGamesByDate: async (league: string, date: string): Promise<Game[]> => {
+    try {
+      const res = await axios.get(`${API_BASE_URL}/${league}/games`, { params: { date } })
+      return (Array.isArray(res.data) ? res.data : []).map((g: any) => ({
+        ...normalizeGame(g),
+        league: league.toUpperCase(),
+      }))
+    } catch (err) {
+      console.error(`Error fetching ${league} games for ${date}`, err)
+      return []
+    }
+  },
+
+  getAllGamesByDate: async (date: string): Promise<Game[]> => {
+    const leagues = ['nba', 'mlb', 'nhl', 'nfl', 'atp', 'wta', 'cod']
+    const promises = leagues.map((l) => SportsService.getGamesByDate(l, date))
+    const results = await Promise.all(promises)
+    return results.flat()
   },
 
   // Team quality ranking (win% / differential / streak / last-10) — new capability of the ESPN backend.
