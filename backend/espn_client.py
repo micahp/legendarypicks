@@ -21,6 +21,63 @@ LEAGUES = {  # our key -> (espn "sport/league" path, regulation periods)
     "atp":  ("tennis/atp", 3),
     "wta":  ("tennis/wta", 3),
 }
+
+# ---------------------------------------------------------------------------
+# Major tournament filter — only Grand Slams, Masters/WTA 1000, and year-end Finals.
+# Substrings matched case-insensitively against ESPN's event shortName.
+# ---------------------------------------------------------------------------
+# Canonical keys — each tuple is (canonical_name, espn_name_substrings)
+_ATP_MAJORS = [
+    # Grand Slams
+    ("Australian Open",        ["Australian Open"]),
+    ("French Open",            ["Roland Garros", "French Open"]),
+    ("Wimbledon",              ["Wimbledon"]),
+    ("US Open",                ["US Open"]),
+    # Masters 1000
+    ("Indian Wells",           ["BNP Paribas Open"]),
+    ("Miami Open",             ["Miami Open"]),
+    ("Monte-Carlo Masters",    ["Monte-Carlo Masters"]),
+    ("Madrid Open",            ["Mutua Madrid Open"]),
+    ("Italian Open",           ["Italian Open", "Internazionali BNL d'Italia"]),
+    ("Canadian Open",          ["National Bank Open", "Omnium Banque Nationale",
+                                "Rogers Cup", "Canadian Open"]),
+    ("Cincinnati Open",        ["Cincinnati Open", "Western & Southern Open"]),
+    ("Shanghai Masters",       ["Rolex Shanghai Masters", "Shanghai Masters"]),
+    ("Paris Masters",          ["Rolex Paris Masters", "Paris Masters"]),
+    # Finals
+    ("ATP Finals",             ["ATP Finals", "Nitto ATP Finals", "ATP World Tour Finals"]),
+]
+
+_WTA_MAJORS = [
+    # Grand Slams (same as ATP)
+    ("Australian Open",        ["Australian Open"]),
+    ("French Open",            ["Roland Garros", "French Open"]),
+    ("Wimbledon",              ["Wimbledon"]),
+    ("US Open",                ["US Open"]),
+    # WTA 1000
+    ("Qatar Open",             ["Qatar TotalEnergies Open", "Qatar Open", "Qatar Total Open"]),
+    ("Dubai",                  ["Dubai Duty Free Tennis Championships", "Dubai Tennis Championships"]),
+    ("Indian Wells",           ["BNP Paribas Open"]),
+    ("Miami Open",             ["Miami Open"]),
+    ("Madrid Open",            ["Mutua Madrid Open"]),
+    ("Italian Open",           ["Italian Open", "Internazionali BNL d'Italia"]),
+    ("Canadian Open",          ["National Bank Open", "Omnium Banque Nationale", "Canadian Open"]),
+    ("Cincinnati Open",        ["Cincinnati Open"]),
+    ("China Open",             ["China Open"]),
+    ("Wuhan Open",             ["Wuhan Open"]),
+    # Finals
+    ("WTA Finals",             ["WTA Finals", "WTA Championships"]),
+]
+
+def _is_major(league: str, event_short_name: str) -> bool:
+    """True if this ESPN event is a Grand Slam, Masters/1000, or Finals."""
+    maj = _ATP_MAJORS if league == "atp" else _WTA_MAJORS
+    name_lower = (event_short_name or "").lower()
+    for _, aliases in maj:
+        for alias in aliases:
+            if alias.lower() in name_lower:
+                return True
+    return False
 _SITE = "https://site.api.espn.com/apis/site/v2/sports/{path}"
 _CORE = "https://site.api.espn.com/apis/v2/sports/{path}"
 _HDRS = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/124 Safari/537.36"}
@@ -84,6 +141,11 @@ def games(league, date=None):
                 gender_prefix = "mens"
             else:
                 gender_prefix = "womens"
+            # ----- major-tournament gate -----
+            short_name = event.get("shortName") or event.get("name", "")
+            if not _is_major(league, short_name):
+                continue
+            # ---------------------------------
             for grp in event.get("groupings", []):
                 slug = grp.get("grouping", {}).get("slug", "")
                 if not slug.startswith(gender_prefix):
