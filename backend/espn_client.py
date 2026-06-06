@@ -197,8 +197,9 @@ def games(league, date=None):
                         else:
                             home_sets = wins
                     score_str = " | ".join(set_scores) if set_scores else None
-                    # Set numeric scores for display (sets won), 0 is valid (lost in straight sets)
-                    if status.get("type", {}).get("completed") or set_scores:
+                    # Set numeric scores for display (sets won), only when there are real set scores.
+                    # Walkovers/retirements show 0-0 completed — skip those.
+                    if set_scores:
                         players["away"]["score"] = away_sets
                         players["home"]["score"] = home_sets
                     out.append({
