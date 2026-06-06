@@ -18,7 +18,7 @@ export default function GameCard(g: GameProps) {
   const timeLabel = time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
   return (
     <div className="bg-zinc-900 text-zinc-100 rounded-xl p-4 shadow border border-zinc-800 hover:border-zinc-700 transition-colors">
-      <div className="flex items-center justify-between text-xs text-zinc-400 mb-1">
+      <div className="flex items-center justify-between text-xs text-zinc-400 mb-2">
         <div className="flex items-center gap-2">
           {g.league && (
             <span className="font-bold text-blue-500 uppercase tracking-widest text-[10px]">
@@ -35,9 +35,6 @@ export default function GameCard(g: GameProps) {
           {g.status}
         </span>
       </div>
-      {g.subtitle && (
-        <div className="text-xs text-zinc-500 mb-2">{g.subtitle}</div>
-      )}
       <div className="space-y-3">
         <div className="flex justify-between items-center">
           <span className="font-semibold text-zinc-200">{g.homeTeam.name}</span>

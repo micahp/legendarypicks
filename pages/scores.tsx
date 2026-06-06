@@ -119,19 +119,38 @@ export default function ScoresPage() {
           <EmptyState />
         ) : (
           <div className="space-y-12">
-            {sortedLeagues.map((league) => (
-              <div key={league} className="space-y-4">
-                <div className="flex items-center gap-4">
-                  <h2 className="text-xl font-bold tracking-tight text-white">{league}</h2>
-                  <div className="h-px flex-1 bg-zinc-800" />
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {sortGames(groupedGames[league]).map((g) => (
-                    <GameCard key={g.gameId} {...g} />
+            {sortedLeagues.map((league) => {
+              const leagueGames = groupedGames[league]
+              const subGroups: Record<string, Game[]> = {}
+              for (const g of leagueGames) {
+                const key = g.subtitle || ''
+                if (!subGroups[key]) subGroups[key] = []
+                subGroups[key].push(g)
+              }
+              const subKeys = Object.keys(subGroups)
+              return (
+                <div key={league} className="space-y-4">
+                  <div className="flex items-center gap-4">
+                    <h2 className="text-xl font-bold tracking-tight text-white">{league}</h2>
+                    <div className="h-px flex-1 bg-zinc-800" />
+                  </div>
+                  {subKeys.map((sub) => (
+                    <div key={sub || league} className="space-y-3">
+                      {sub && (
+                        <h3 className="text-sm font-semibold text-zinc-400 uppercase tracking-wide">
+                          {sub}
+                        </h3>
+                      )}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {sortGames(subGroups[sub]).map((g) => (
+                          <GameCard key={g.gameId} {...g} />
+                        ))}
+                      </div>
+                    </div>
                   ))}
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         )}
       </div>
