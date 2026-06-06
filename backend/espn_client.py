@@ -88,6 +88,9 @@ def games(league, date=None):
                 slug = grp.get("grouping", {}).get("slug", "")
                 if not slug.startswith(gender_prefix):
                     continue
+                # Singles only — skip doubles and mixed
+                if "doubles" in slug or "mixed" in slug:
+                    continue
                 for comp in grp.get("competitions", []):
                     # Filter by date — tennis tournaments span weeks
                     comp_date = comp.get("date", "")
