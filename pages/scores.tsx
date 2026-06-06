@@ -6,8 +6,8 @@ import CalendarPopover from '../components/Scores/CalendarPopover'
 import GameCard from '../components/Scores/GameCard'
 import { SkeletonList, ErrorBanner, EmptyState } from '../components/Scores/States'
 
-const LEAGUE_PRIORITY = ['NBA', 'MLB', 'NHL', 'NFL', 'COD', 'ATP', 'WTA']
-const LEAGUES = ['All', 'NBA', 'MLB', 'NHL', 'NFL', 'ATP', 'WTA', 'Call of Duty']
+const LEAGUE_PRIORITY = ['NBA', 'MLB', 'NHL', 'NFL', 'COD', 'ATP', 'WTA', 'UFC']
+const LEAGUES = ['All', 'NBA', 'MLB', 'NHL', 'NFL', 'ATP', 'WTA', 'UFC', 'Call of Duty']
 
 export default function ScoresPage() {
   const router = useRouter()

@@ -20,6 +20,7 @@ LEAGUES = {  # our key -> (espn "sport/league" path, regulation periods)
     "nfl":  ("football/nfl", 4),
     "atp":  ("tennis/atp", 3),
     "wta":  ("tennis/wta", 3),
+    "ufc":  ("mma/ufc", 3),
 }
 
 # ---------------------------------------------------------------------------
@@ -121,6 +122,7 @@ def games(league, date=None):
     """Normalized scoreboard. date='YYYY-MM-DD' (or None=today). state: pre | in | post."""
     _, path = _check(league)
     is_tennis = league in ("atp", "wta")
+    is_ufc = league == "ufc"
     q = ("?dates=" + date.replace("-", "")) if date else ""
     d = _get(_SITE.format(path=path) + "/scoreboard" + q, ttl=20)
     out = []
@@ -209,6 +211,45 @@ def games(league, date=None):
                         "home": players.get("home"),
                         "away": players.get("away"),
                     })
+    elif is_ufc:
+        # UFC — events contain fights (competitions) directly, athlete-based competitors.
+        # No homeAway field; competitors have order=1 and order=2.
+        for event in d.get("events", []):
+            event_name = event.get("shortName") or event.get("name", "")
+            event_date = event.get("date", "")
+            for comp in event.get("competitions", []):
+                status = comp.get("status", {})
+                st = status.get("type", {})
+                weight_class = (comp.get("type") or {}).get("abbreviation", "")
+                fighters = {}
+                for c in comp.get("competitors", []):
+                    ath = c.get("athlete", {})
+                    name = ath.get("displayName") or ath.get("fullName") or "TBD"
+                    abbrev = ath.get("shortName") or name[:3].upper()
+                    # Extract fighter record (e.g., "15-4-0")
+                    record = ""
+                    for rec in c.get("records", []):
+                        if rec.get("type") == "total":
+                            record = rec.get("summary", "")
+                            break
+                    # Map order=1 → home, order=2 → away
+                    slot = "home" if c.get("order") == 1 else "away"
+                    fighters[slot] = {
+                        "abbrev": abbrev,
+                        "name": name,
+                        "score": None,
+                        "record": record,
+                    }
+                out.append({
+                    "game_id": comp.get("id"),
+                    "date": comp.get("date") or event_date,
+                    "state": st.get("state"),
+                    "status": st.get("description") or weight_class or "",
+                    "period": status.get("period"),
+                    "clock": status.get("displayClock"),
+                    "home": fighters.get("home"),
+                    "away": fighters.get("away"),
+                })
     else:
         for e in d.get("events", []):
             comp = (e.get("competitions") or [{}])[0]

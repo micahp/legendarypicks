@@ -28,7 +28,9 @@ function statusFromState(state?: string): Game['status'] {
 }
 
 function side(s: any): Game['homeTeam'] {
-  return { teamId: s?.abbrev ?? '', name: s?.name ?? s?.abbrev ?? '', score: s?.score ?? undefined }
+  const name = s?.name ?? s?.abbrev ?? ''
+  const record = s?.record ? ` (${s.record})` : ''
+  return { teamId: s?.abbrev ?? '', name: name + record, score: s?.score ?? undefined }
 }
 
 export function normalizeGame(g: any): Game {
@@ -84,7 +86,7 @@ export const SportsService = {
   },
 
   getAllGamesByDate: async (date: string): Promise<Game[]> => {
-    const leagues = ['nba', 'mlb', 'nhl', 'nfl', 'atp', 'wta', 'cod']
+    const leagues = ['nba', 'mlb', 'nhl', 'nfl', 'atp', 'wta', 'cod', 'ufc']
     const promises = leagues.map((l) => SportsService.getGamesByDate(l, date))
     const results = await Promise.all(promises)
     return results.flat()
