@@ -21,6 +21,7 @@ export interface Game {
   awayTeam: { teamId: string; name: string; score?: number }
   startTime: string
   status: 'SCHEDULED' | 'LIVE' | 'FINAL'
+  subtitle?: string
 }
 
 function statusFromState(state?: string): Game['status'] {
@@ -34,12 +35,15 @@ function side(s: any): Game['homeTeam'] {
 }
 
 export function normalizeGame(g: any): Game {
+  // Build subtitle: for UFC use card_segment, for tennis/UFC use event name
+  let subtitle = g?.card_segment || g?.event || ''
   return {
     gameId: String(g?.game_id ?? g?.gameId ?? ''),
     homeTeam: side(g?.home ?? g?.homeTeam),
     awayTeam: side(g?.away ?? g?.awayTeam),
     startTime: g?.date ?? g?.startTime ?? '',
     status: g?.status && ['SCHEDULED', 'LIVE', 'FINAL'].includes(g.status) ? g.status : statusFromState(g?.state),
+    subtitle: subtitle || undefined,
   }
 }
 

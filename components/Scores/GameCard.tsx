@@ -10,6 +10,7 @@ interface GameProps {
   awayTeam: TeamInfo
   startTime: string
   status: 'SCHEDULED' | 'LIVE' | 'FINAL'
+  subtitle?: string
 }
 
 export default function GameCard(g: GameProps) {
@@ -25,6 +26,9 @@ export default function GameCard(g: GameProps) {
             </span>
           )}
           <span>{timeLabel}</span>
+          {g.subtitle && (
+            <span className="text-zinc-500 text-[11px]">· {g.subtitle}</span>
+          )}
         </div>
         <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
           g.status === 'LIVE' ? 'bg-red-500/10 text-red-500 border border-red-500/20' : 

@@ -125,12 +125,12 @@ def games(league, date=None):
     is_ufc = league == "ufc"
     q = ("?dates=" + date.replace("-", "")) if date else ""
     d = _get(_SITE.format(path=path) + "/scoreboard" + q, ttl=20)
+    import datetime as _dt
     out = []
 
     if is_tennis:
         # Tennis returns tournaments as events, matches nested in groupings[].competitions[]
         # Tournaments span weeks — filter to the requested date (or today)
-        import datetime as _dt
         target_date = None
         if date:
             target_date = _dt.datetime.strptime(date, "%Y-%m-%d").date()
@@ -210,14 +210,56 @@ def games(league, date=None):
                         "clock": status.get("displayClock"),
                         "home": players.get("home"),
                         "away": players.get("away"),
+                        "event": event.get("shortName") or event.get("name", ""),
                     })
     elif is_ufc:
         # UFC — events contain fights (competitions) directly, athlete-based competitors.
         # No homeAway field; competitors have order=1 and order=2.
+        # Detect card segments by time grouping (Main Card / Prelims / Early Prelims).
         for event in d.get("events", []):
             event_name = event.get("shortName") or event.get("name", "")
             event_date = event.get("date", "")
-            for comp in event.get("competitions", []):
+            comps = event.get("competitions", [])
+            if not comps:
+                continue
+            # Group fights by distinct start hour to detect card segments
+            distinct_times = []  # list of (sortable_datetime, hour_key)
+            for comp in comps:
+                t = (comp.get("startDate") or comp.get("date", "")).replace("Z", "+00:00")
+                try:
+                    dt_obj = _dt.datetime.fromisoformat(t)
+                    hour_key = dt_obj.strftime("%H")
+                    if not any(hk == hour_key for _, hk in distinct_times):
+                        distinct_times.append((dt_obj, hour_key))
+                except (ValueError, TypeError):
+                    pass
+            # Sort by actual datetime (handles overnight events where UTC hour wraps)
+            distinct_times.sort(key=lambda x: x[0])
+            # Extract ordered hour keys
+            ordered_hours = [hk for _, hk in distinct_times]
+            # Map time group → card-segment label
+            segment_map = {}
+            if len(ordered_hours) == 1:
+                segment_map = {ordered_hours[0]: "Main Card"}
+            elif len(ordered_hours) == 2:
+                segment_map = {ordered_hours[0]: "Prelims", ordered_hours[1]: "Main Card"}
+            else:
+                segment_map = {ordered_hours[0]: "Early Prelims", ordered_hours[1]: "Prelims",
+                               ordered_hours[-1]: "Main Card"}
+                # Any extra middle times also map to Prelims
+                for t in ordered_hours[2:-1]:
+                    segment_map[t] = "Prelims"
+            # Build fights
+            for comp in comps:
+                # Determine card segment
+                t = (comp.get("startDate") or comp.get("date", "")).replace("Z", "+00:00")
+                card_segment = ""
+                try:
+                    dt_obj = _dt.datetime.fromisoformat(t)
+                    hour_key = dt_obj.strftime("%H")
+                    card_segment = segment_map.get(hour_key, "")
+                except (ValueError, TypeError):
+                    pass
                 status = comp.get("status", {})
                 st = status.get("type", {})
                 weight_class = (comp.get("type") or {}).get("abbreviation", "")
@@ -226,13 +268,11 @@ def games(league, date=None):
                     ath = c.get("athlete", {})
                     name = ath.get("displayName") or ath.get("fullName") or "TBD"
                     abbrev = ath.get("shortName") or name[:3].upper()
-                    # Extract fighter record (e.g., "15-4-0")
                     record = ""
                     for rec in c.get("records", []):
                         if rec.get("type") == "total":
                             record = rec.get("summary", "")
                             break
-                    # Map order=1 → home, order=2 → away
                     slot = "home" if c.get("order") == 1 else "away"
                     fighters[slot] = {
                         "abbrev": abbrev,
@@ -249,6 +289,8 @@ def games(league, date=None):
                     "clock": status.get("displayClock"),
                     "home": fighters.get("home"),
                     "away": fighters.get("away"),
+                    "event": event_name,
+                    "card_segment": card_segment,
                 })
     else:
         for e in d.get("events", []):
