@@ -16,12 +16,7 @@ interface GameProps {
 export default function GameCard(g: GameProps) {
   return (
     <div className="bg-zinc-900 text-zinc-100 rounded-xl p-4 shadow border border-zinc-800 hover:border-zinc-700 transition-colors">
-      <div className="flex items-center justify-between text-xs text-zinc-400 mb-2">
-        {g.league && (
-          <span className="font-bold text-blue-500 uppercase tracking-widest text-[10px]">
-            {g.league}
-          </span>
-        )}
+      <div className="flex items-center justify-end text-xs text-zinc-400 mb-2">
         <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
           g.status === 'LIVE' ? 'bg-red-500/10 text-red-500 border border-red-500/20' : 
           g.status === 'FINAL' ? 'bg-zinc-800 text-zinc-400' : 
