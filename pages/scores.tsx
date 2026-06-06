@@ -134,20 +134,33 @@ export default function ScoresPage() {
                     <h2 className="text-xl font-bold tracking-tight text-white">{league}</h2>
                     <div className="h-px flex-1 bg-zinc-800" />
                   </div>
-                  {subKeys.map((sub) => (
+                  {subKeys.map((sub) => {
+                    const sg = subGroups[sub]
+                    // Compute shared time if all games in this group have the same start time
+                    const times = [...new Set(sg.map((g: Game) => {
+                      const d = new Date(g.startTime)
+                      return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                    }))]
+                    const timeLabel = times.length === 1 ? ' · ' + times[0] : ''
+                    return (
                     <div key={sub || league} className="space-y-3">
                       {sub && (
                         <h3 className="text-sm font-semibold text-zinc-400 uppercase tracking-wide">
-                          {sub}
+                          {sub}{timeLabel}
                         </h3>
                       )}
+                      {sub && times.length > 1 && (
+                        <div className="text-xs text-zinc-500">
+                          {times.join(' / ')}
+                        </div>
+                      )}
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {sortGames(subGroups[sub]).map((g) => (
+                        {sortGames(sg).map((g) => (
                           <GameCard key={g.gameId} {...g} />
                         ))}
                       </div>
                     </div>
-                  ))}
+                  )})}
                 </div>
               )
             })}
