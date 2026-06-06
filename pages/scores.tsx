@@ -108,7 +108,7 @@ export default function ScoresPage() {
         <DayStrip date={date} onChange={setDate} />
         <div className="text-sm font-bold text-zinc-400" aria-live="polite">
           {(() => {
-            const d = new Date(date)
+            const d = new Date(date + 'T12:00:00')
             return d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })
           })()}
         </div>
