@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import Head from 'next/head'
 import { useRouter } from 'next/router'
 import { SportsService, Game } from '../services/sports'
 import DayStrip from '../components/Scores/DayStrip'
@@ -8,6 +9,9 @@ import { SkeletonList, ErrorBanner, EmptyState } from '../components/Scores/Stat
 
 const LEAGUE_PRIORITY = ['NBA', 'MLB', 'NHL', 'NFL', 'COD', 'ATP', 'WTA', 'UFC']
 const LEAGUES = ['All', 'NBA', 'MLB', 'NHL', 'NFL', 'ATP', 'WTA', 'UFC', 'Call of Duty']
+
+// Revalidate interval for live games (ms) — must not be statically cached
+const LIVE_POLL_MS = 30_000
 
 export default function ScoresPage() {
   const router = useRouter()
@@ -49,6 +53,31 @@ export default function ScoresPage() {
     load()
   }, [date, leagueFilter])
 
+  // ── live-score polling ──────────────────────────────────────────
+  // Live scores must not be frozen; re-fetch every LIVE_POLL_MS when
+  // any game is in-progress.  When status flips to post the backend
+  // will reconcile from boxscore on the next tick.
+  useEffect(() => {
+    const liveCount = games.filter(g => g.status === 'LIVE').length
+    if (liveCount === 0) return
+    const timer = setInterval(() => {
+      const refetch = async () => {
+        try {
+          let data: Game[]
+          if (leagueFilter === 'All') {
+            data = await SportsService.getAllGamesByDate(date)
+          } else {
+            const l = leagueFilter === 'Call of Duty' ? 'cod' : leagueFilter.toLowerCase()
+            data = await SportsService.getGamesByDate(l, date)
+          }
+          setGames(Array.isArray(data) ? data : [])
+        } catch { /* silent — keep stale scores rather than blank */ }
+      }
+      refetch()
+    }, LIVE_POLL_MS)
+    return () => clearInterval(timer)
+  }, [games, date, leagueFilter])
+
   const groupedGames = games.reduce((acc, g) => {
     const l = g.league || 'OTHER'
     if (!acc[l]) acc[l] = []
@@ -76,6 +105,10 @@ export default function ScoresPage() {
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 px-4 py-8">
+      <Head>
+        <meta httpEquiv="Cache-Control" content="no-store, max-age=0" />
+        <title>Scoreboard — Legendary Picks</title>
+      </Head>
       <div className="max-w-6xl mx-auto space-y-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <h1 className="text-3xl font-extrabold tracking-tight">Scoreboard</h1>
