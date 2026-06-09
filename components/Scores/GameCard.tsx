@@ -127,11 +127,11 @@ export default function GameCard(g: GameProps) {
 
       <div className="space-y-3">
         <div className="flex justify-between items-center">
-          <span className={`font-semibold ${isFinal ? (homeWon ? 'text-zinc-200' : 'text-zinc-500') : 'text-zinc-200'}`}>{g.homeTeam.name}</span>
+          <span className={`font-semibold ${isFinal ? (homeWon ? 'text-zinc-200' : 'text-zinc-500') : 'text-zinc-200'}`}>{g.homeTeam.teamId || g.homeTeam.name}</span>
           {g.homeTeam.score !== undefined && <span className={`text-xl font-black ${isFinal ? (homeWon ? 'text-white' : 'text-zinc-500') : 'text-white'}`}>{g.homeTeam.score}</span>}
         </div>
         <div className="flex justify-between items-center">
-          <span className={`font-semibold ${isFinal ? (awayWon ? 'text-zinc-200' : 'text-zinc-500') : 'text-zinc-200'}`}>{g.awayTeam.name}</span>
+          <span className={`font-semibold ${isFinal ? (awayWon ? 'text-zinc-200' : 'text-zinc-500') : 'text-zinc-200'}`}>{g.awayTeam.teamId || g.awayTeam.name}</span>
           {g.awayTeam.score !== undefined && <span className={`text-xl font-black ${isFinal ? (awayWon ? 'text-white' : 'text-zinc-500') : 'text-white'}`}>{g.awayTeam.score}</span>}
         </div>
 

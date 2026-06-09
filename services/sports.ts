@@ -11,6 +11,19 @@ function normalizeBaseUrl(raw?: string): string {
 
 const API_BASE_URL = normalizeBaseUrl(process.env.NEXT_PUBLIC_SPORTS_API_URL)
 
+// Tennis set score
+export interface TennisSet {
+  homeScore: number
+  awayScore: number
+}
+
+// Live game period detail
+export interface LivePeriod {
+  number: number
+  type: 'inning' | 'period' | 'quarter' | 'round' | 'game'
+  display?: string
+}
+
 // The unified ESPN backend (sports_service.py) returns games as
 //   { game_id, date, state: 'pre'|'in'|'post', home/away: { abbrev, name, score } }
 // The UI works against a stable internal shape; we translate here (anti-corruption layer).
@@ -22,6 +35,10 @@ export interface Game {
   startTime: string
   status: 'SCHEDULED' | 'LIVE' | 'FINAL'
   subtitle?: string
+  // Tennis: array of set scores [home, away] for each set
+  sets?: TennisSet[]
+  // Live game period details (only present when LIVE)
+  livePeriod?: LivePeriod
 }
 
 function statusFromState(state?: string): Game['status'] {
@@ -34,16 +51,77 @@ function side(s: any): Game['homeTeam'] {
   return { teamId: s?.abbrev ?? '', name: name + record, score: s?.score ?? undefined }
 }
 
+function normalizeSets(g: any): TennisSet[] | undefined {
+  // Try multiple possible API response formats
+  if (g?.sets && Array.isArray(g.sets)) {
+    return g.sets.map((s: any) => ({
+      homeScore: s?.home_score ?? s?.homeScore ?? s?.home ?? 0,
+      awayScore: s?.away_score ?? s?.awayScore ?? s?.away ?? 0,
+    }))
+  }
+  // Some APIs return set scores as arrays
+  if (g?.set_scores && Array.isArray(g.set_scores)) {
+    return g.set_scores.map((s: any) => ({
+      homeScore: s[0] ?? 0,
+      awayScore: s[1] ?? 0,
+    }))
+  }
+  return undefined
+}
+
+function normalizeLivePeriod(g: any): LivePeriod | undefined {
+  // Only for LIVE games
+  if (g?.state !== 'in' && g?.status !== 'LIVE') return undefined
+
+  // Try to get period info from various possible fields
+  const period = g?.period ?? g?.current_period ?? g?.inning ?? g?.quarter ?? g?.round ?? g?.game
+  const periodType = g?.period_type
+
+  if (period !== undefined && period !== null) {
+    // Determine type from league or explicit field
+    let type: LivePeriod['type'] = 'period'
+    if (periodType) {
+      type = periodType
+    } else {
+      // Infer from league
+    }
+
+    return {
+      number: typeof period === 'number' ? period : parseInt(String(period), 10),
+      type,
+      display: g?.period_display ?? g?.time_remaining ? `${period} (${g.time_remaining})` : undefined,
+    }
+  }
+
+  // Check for MLB-specific inning/outs
+  if (g?.inning !== undefined) {
+    return {
+      number: g.inning,
+      type: 'inning',
+      display: g?.inning_state ? `Inning ${g.inning} (${g.inning_state})` : `Inning ${g.inning}`,
+    }
+  }
+
+  return undefined
+}
+
 export function normalizeGame(g: any): Game {
   // Build subtitle: for UFC use card_segment, for tennis/UFC use event name
   let subtitle = g?.card_segment || g?.event || ''
+
+  // Determine league from various possible fields
+  const league = g?.league ?? g?.sport ?? ''
+
   return {
     gameId: String(g?.game_id ?? g?.gameId ?? ''),
+    league: league.toUpperCase() || undefined,
     homeTeam: side(g?.home ?? g?.homeTeam),
     awayTeam: side(g?.away ?? g?.awayTeam),
     startTime: g?.date ?? g?.startTime ?? '',
     status: g?.status && ['SCHEDULED', 'LIVE', 'FINAL'].includes(g.status) ? g.status : statusFromState(g?.state),
     subtitle: subtitle || undefined,
+    sets: normalizeSets(g),
+    livePeriod: normalizeLivePeriod(g),
   }
 }
 
@@ -131,6 +209,16 @@ export const SportsService = {
     } catch (err) {
       console.error('Error getting predictions', err)
       return []
+    }
+  },
+
+  getGameDetail: async (league: string, gameId: string) => {
+    try {
+      const res = await axios.get(`${API_BASE_URL}/${league}/game/${gameId}/detail`)
+      return res.data
+    } catch (err) {
+      console.error('Error fetching game detail', err)
+      return null
     }
   },
 }
