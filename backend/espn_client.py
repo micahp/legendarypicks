@@ -303,6 +303,7 @@ def games(league, date=None):
                 teams[c.get("homeAway")] = {
                     "abbrev": c.get("team", {}).get("abbreviation"),
                     "name": c.get("team", {}).get("displayName"),
+                    "nickname": c.get("team", {}).get("name"),
                     "score": _num(c.get("score")),
                 }
             out.append({

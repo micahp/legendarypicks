@@ -1,7 +1,9 @@
 import { useRouter } from 'next/router'
 
 interface TeamInfo {
+  teamId: string
   name: string
+  nickname?: string
   score?: number
 }
 
@@ -77,6 +79,13 @@ export default function GameCard(g: GameProps) {
   const isUFC = g.league === 'UFC'
   const isTennis = g.league === 'ATP' || g.league === 'WTA'
   const hasDetail = g.league === 'NBA' || g.league === 'NHL'
+  const isTeamSport = g.league === 'NBA' || g.league === 'NHL' || g.league === 'MLB' || g.league === 'NFL'
+
+  const teamLabel = (t: GameProps['homeTeam']) => {
+    if (!isTeamSport) return t.name
+    if (t.nickname) return `${t.teamId} ${t.nickname}`
+    return t.teamId || t.name
+  }
 
   // What to show in the top-right area:
   // - SCHEDULED: show time (except UFC)
@@ -127,11 +136,11 @@ export default function GameCard(g: GameProps) {
 
       <div className="space-y-3">
         <div className="flex justify-between items-center">
-          <span className={`font-semibold ${isFinal ? (homeWon ? 'text-zinc-200' : 'text-zinc-500') : 'text-zinc-200'}`}>{g.homeTeam.teamId || g.homeTeam.name}</span>
+          <span className={`font-semibold ${isFinal ? (homeWon ? 'text-zinc-200' : 'text-zinc-500') : 'text-zinc-200'}`}>{teamLabel(g.homeTeam)}</span>
           {g.homeTeam.score !== undefined && <span className={`text-xl font-black ${isFinal ? (homeWon ? 'text-white' : 'text-zinc-500') : 'text-white'}`}>{g.homeTeam.score}</span>}
         </div>
         <div className="flex justify-between items-center">
-          <span className={`font-semibold ${isFinal ? (awayWon ? 'text-zinc-200' : 'text-zinc-500') : 'text-zinc-200'}`}>{g.awayTeam.teamId || g.awayTeam.name}</span>
+          <span className={`font-semibold ${isFinal ? (awayWon ? 'text-zinc-200' : 'text-zinc-500') : 'text-zinc-200'}`}>{teamLabel(g.awayTeam)}</span>
           {g.awayTeam.score !== undefined && <span className={`text-xl font-black ${isFinal ? (awayWon ? 'text-white' : 'text-zinc-500') : 'text-white'}`}>{g.awayTeam.score}</span>}
         </div>
 

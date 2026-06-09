@@ -30,8 +30,8 @@ export interface LivePeriod {
 export interface Game {
   gameId: string
   league?: string
-  homeTeam: { teamId: string; name: string; score?: number }
-  awayTeam: { teamId: string; name: string; score?: number }
+  homeTeam: { teamId: string; name: string; nickname?: string; score?: number }
+  awayTeam: { teamId: string; name: string; nickname?: string; score?: number }
   startTime: string
   status: 'SCHEDULED' | 'LIVE' | 'FINAL'
   subtitle?: string
@@ -48,7 +48,7 @@ function statusFromState(state?: string): Game['status'] {
 function side(s: any): Game['homeTeam'] {
   const name = s?.name ?? s?.abbrev ?? ''
   const record = s?.record ? ` (${s.record})` : ''
-  return { teamId: s?.abbrev ?? '', name: name + record, score: s?.score ?? undefined }
+  return { teamId: s?.abbrev ?? '', name: name + record, nickname: s?.nickname, score: s?.score ?? undefined }
 }
 
 function normalizeSets(g: any): TennisSet[] | undefined {
