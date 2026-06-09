@@ -256,7 +256,7 @@ function PlayByPlay({ allPlays, homeTeam, awayTeam }: {
       <div className="max-h-[500px] overflow-y-auto">
         {Object.entries(byQuarter).map(([q, pplays]) => (
           <div key={q} className="mb-4">
-            <div className="text-xs font-bold text-zinc-500 mb-2 sticky top-0 bg-zinc-950/90 py-1 backdrop-blur z-10">
+            <div className="text-xs font-bold text-zinc-500 mb-2 sticky top-0 bg-zinc-900/90 py-1 backdrop-blur z-10">
               {pplays[0]?.period_disp || `Q${q}`}
             </div>
             {pplays.map((p, i) => {
@@ -349,8 +349,10 @@ export default function GameDetailPage() {
     return detail?.final_score ?? null
   }, [detail])
 
-  if (loading) return <div className="min-h-screen bg-zinc-950 text-zinc-100 px-4 py-8"><div className="max-w-4xl mx-auto"><div className="animate-pulse space-y-3"><div className="h-28 bg-zinc-900 rounded-2xl"/><div className="h-64 bg-zinc-900 rounded-xl"/></div></div></div>
-  if (!detail) return <div className="min-h-screen bg-zinc-950 text-zinc-100 px-4 py-8"><div className="max-w-4xl mx-auto text-center py-16"><p className="text-zinc-500">Game data not available.</p><button onClick={() => router.back()} className="mt-4 text-blue-400 hover:underline text-sm">← Back</button></div></div>
+  // No page-level wrapper here: Layout already provides bg-ink-900 + the max-w-6xl main + padding.
+  // Skeletons use bg-zinc-800 so they're visible against the ink-900 page (zinc-900 would be invisible on the cards).
+  if (loading) return <div className="max-w-4xl mx-auto animate-pulse space-y-3"><div className="h-28 bg-zinc-800 rounded-2xl"/><div className="h-64 bg-zinc-800 rounded-xl"/></div>
+  if (!detail) return <div className="max-w-4xl mx-auto text-center py-16"><p className="text-zinc-500">Game data not available.</p><button onClick={() => router.back()} className="mt-4 text-blue-400 hover:underline text-sm">← Back</button></div>
 
   const ctx = detail.context
   const sHome = detail.strength[ctx?.home_team || '']
@@ -359,8 +361,7 @@ export default function GameDetailPage() {
   const awayRecord = sAway ? `${sAway.wins}-${sAway.losses}` : ''
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100">
-      <div className="max-w-4xl mx-auto px-4 py-6 space-y-5">
+    <div className="max-w-4xl mx-auto space-y-5">
 
         {/* Back + league badge */}
         <div className="flex items-center gap-3">
@@ -399,6 +400,5 @@ export default function GameDetailPage() {
         </div>
 
       </div>
-    </div>
   )
 }

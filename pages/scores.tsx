@@ -104,12 +104,12 @@ export default function ScoresPage() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100 px-4 py-8">
+    <>
       <Head>
         <meta httpEquiv="Cache-Control" content="no-store, max-age=0" />
         <title>Scoreboard — Legendary Picks</title>
       </Head>
-      <div className="max-w-6xl mx-auto space-y-6">
+      <div className="space-y-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <h1 className="text-3xl font-extrabold tracking-tight">Scoreboard</h1>
           <div className="flex items-center gap-3">
@@ -200,7 +200,7 @@ export default function ScoresPage() {
           </div>
         )}
       </div>
-    </div>
+    </>
   )
 }
 
