@@ -102,23 +102,21 @@ def get_games(league: str, date: Optional[str] = Query(None, description="YYYY-M
         games = espn.games(league, date)
     except ValueError as e:
         raise HTTPException(404, str(e))
-    # ── post-state reconciliation ──────────────────────────────────
-    # Finished games must display their boxscore-reconciled FINAL score,
-    # never a frozen live-scoreboard tick.  Walk every post-state game and
-    # replace the scoreboard scores with the authoritative final from the
-    # scoring_plays table or the ESPN summary endpoint.
+    # ── finished-game final score: DB-first, no ESPN on the request path ──
+    # For a post-state game, prefer OUR captured final (scoring_plays) over the
+    # scoreboard tick. DB-only — no per-request ESPN calls. If the DB has no record
+    # (we never snapshotted it), leave the scoreboard score as-is. An occasional
+    # out-of-band job can reconcile DB vs ESPN; the page request never does.
     lg = league.lower()
-    reconciled = 0
     for g in games:
         if g.get("state") != "post":
             continue
-        final = _reconcile_final_score(lg, g["game_id"])
+        final = _final_score_from_db(lg, g["game_id"])
         if final:
             if g.get("home"):
                 g["home"]["score"] = final["home"]
             if g.get("away"):
                 g["away"]["score"] = final["away"]
-            reconciled += 1
     return JSONResponse(content=games, headers={"Cache-Control": "no-store"})
 
 
@@ -168,9 +166,9 @@ def get_game_detail(league: str, game_id: str):
     out = {"game_id": game_id, "league": lg,
            "team_stats": [], "scoring_plays": [], "context": None, "strength": {},
            "final_score": None}
-    # ── authoritative final score (ESPN summary, not derived from plays) ──
+    # ── final score from OUR DB (scoring_plays); no ESPN on the request path ──
     try:
-        out["final_score"] = _reconcile_final_score(lg, game_id)
+        out["final_score"] = _final_score_from_db(lg, game_id)
     except Exception:
         pass
     with closing(_db()) as con:
@@ -294,53 +292,26 @@ def _evaluate(league, game_id, predicted_winner):
     return predicted_winner.upper() == res["winner"].upper()
 
 
-def _reconcile_final_score(league: str, game_id: str):
-    """Return {home: int, away: int} from authoritative boxscore data, or None.
+def _final_score_from_db(league: str, game_id: str):
+    """Return {home: int, away: int} for a finished game from OUR DB, or None.
 
-    Priority: ESPN summary endpoint (the single source of truth for finished
-    games) → persisted scoring_plays (fallback if ESPN is unreachable).
-    The DB is never authoritative — a mid-game snapshot can miss final plays.
+    DB-ONLY — never calls ESPN on the request path. Cumulative game scores are
+    monotonic non-decreasing, so MAX per side from persisted scoring_plays IS the
+    final. The DB is populated by the /boxscore snapshot (backfill / live capture).
+    Catching DB gaps against ESPN is an out-of-band job run occasionally — NOT here —
+    so serving a page never makes an ESPN round-trip.
+    (Do NOT order by `clock`: it is TEXT with mixed formats '8:44' vs '9.4', so a
+    string sort picks the wrong play, and the clock counts DOWN anyway.)
     """
     lg = league.lower()
-
-    # 1) ESPN summary — authoritative final scores for any finished game
-    try:
-        summary = _fetch_summary(lg, game_id)
-        header = summary.get("header", {})
-        comp = (header.get("competitions") or [{}])[0]
-        # Verify the game is actually final before trusting the scores
-        st = comp.get("status", {}).get("type", {})
-        if st.get("state") == "post":
-            home_score = away_score = None
-            for c in comp.get("competitors", []):
-                sc = _num(c.get("score"))
-                if c.get("homeAway") == "home":
-                    home_score = sc
-                else:
-                    away_score = sc
-            if home_score is not None and away_score is not None:
-                # Snapshot boxscore so DB stays warm for detail pages
-                try:
-                    _snapshot_boxscore_full(lg, game_id)
-                except Exception:
-                    pass
-                return {"home": int(home_score), "away": int(away_score)}
-    except Exception:
-        pass  # ESPN unreachable — fall through to DB fallback
-
-    # 2) DB scoring_plays — fallback only (may be incomplete for mid-game snapshots).
-    # Use MAX per side: cumulative game scores are monotonic non-decreasing, so the max IS the final.
-    # (Do NOT order by `clock` — it is TEXT with mixed formats '8:44' vs '9.4', so a string sort picks
-    #  the wrong play; and the clock counts DOWN, so "latest" is the smallest value, not the largest.)
     with closing(_db()) as con:
         row = con.execute(
             "SELECT MAX(home_score) AS home, MAX(away_score) AS away FROM scoring_plays "
             "WHERE league=? AND game_id=?",
             (lg, game_id),
         ).fetchone()
-        if row and row["home"] is not None and row["away"] is not None:
-            return {"home": int(row["home"]), "away": int(row["away"])}
-
+    if row and row["home"] is not None and row["away"] is not None:
+        return {"home": int(row["home"]), "away": int(row["away"])}
     return None
 
 
