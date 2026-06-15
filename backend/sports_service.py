@@ -77,7 +77,10 @@ def _init_db():
         CREATE TABLE IF NOT EXISTS players(
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           name TEXT NOT NULL, team TEXT, league TEXT NOT NULL,
-          espn_id TEXT, UNIQUE(espn_id, league));
+          espn_id TEXT, mlbam_id INTEGER, nfl_gsis_id TEXT,
+          nhl_id INTEGER, nba_id INTEGER,
+          active INTEGER DEFAULT 1, position TEXT, updated_at TEXT,
+          UNIQUE(espn_id, league));
         CREATE TABLE IF NOT EXISTS prop_games(
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           league TEXT NOT NULL, date TEXT NOT NULL,
