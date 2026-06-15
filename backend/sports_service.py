@@ -614,77 +614,51 @@ def player_stats(player_id: int,
 
 
 def _get_mlb_stats(player_name: str, player_id: int, statcast_id, now: float):
-    """Pull MLB Statcast data via pybaseball. Returns dict to merge into result."""
-    from datetime import datetime as dt2, timedelta
-    try:
-        from pybaseball import statcast_batter, statcast_pitcher, playerid_lookup
-        import pandas as pd
-    except ImportError:
-        return {"stats": None, "message": "pybaseball not installed"}
+    """Pull MLB stats from player_stats table (populated by ingest_statcast.py)."""
+    import os, sqlite3 as sq
 
     try:
-        end = dt2.now()
-        start = end - timedelta(days=30)
-        start_str = start.strftime("%Y-%m-%d")
-        end_str = end.strftime("%Y-%m-%d")
+        db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "picks.db")
+        con = sq.connect(db_path)
+        con.row_factory = sq.Row
 
-        sid = statcast_id
-        if not sid:
-            parts = player_name.strip().split(" ", 1)
-            last = parts[-1]
-            first = parts[0] if len(parts) > 1 else ""
-            try:
-                lookup = playerid_lookup(last, first)
-                if lookup is not None and len(lookup) > 0:
-                    sid = int(lookup.iloc[0]["key_mlbam"])
-            except Exception:
-                pass
-        if not sid:
-            return {"stats": None, "message": f"Could not find Statcast ID for {player_name}"}
+        # Batting row
+        bat = con.execute(
+            "SELECT * FROM player_stats WHERE league='mlb' AND stat_type='batting' AND player_name=? ORDER BY season DESC LIMIT 1",
+            (player_name,)
+        ).fetchone()
+        # Pitching row
+        pit = con.execute(
+            "SELECT * FROM player_stats WHERE league='mlb' AND stat_type='pitching' AND player_name=? ORDER BY season DESC LIMIT 1",
+            (player_name,)
+        ).fetchone()
 
-        out = {"window": "30d", "batting": None, "pitching": None}
+        if not bat and not pit:
+            con.close()
+            return {"stats": None, "message": f"No Statcast data for {player_name}. Run ingest_statcast.py to populate."}
 
-        bat = statcast_batter(start_str, end_str, player_id=sid)
-        if bat is not None and len(bat) > 0:
-            bat = bat[bat["events"].notna() | bat["launch_speed"].notna()]
-            bb = bat[bat["launch_speed"].notna()]
-            events = bat["events"].dropna()
-            avg_ev = round(float(bb["launch_speed"].mean()), 1) if len(bb) > 0 else None
-            hard_hit = round(float((bb["launch_speed"] >= 95).mean() * 100), 1) if len(bb) > 0 else None
-            barrel = round(float(((bb["launch_speed"] >= 98) & (bb["launch_angle"].between(26, 30))).mean() * 100), 1) if len(bb) > 0 else None
-            avg_la = round(float(bb["launch_angle"].mean()), 1) if len(bb) > 0 else None
-            woba = round(float(bat[bat["woba_value"].notna()]["woba_value"].mean()), 3)
-            xwoba = round(float(bb["estimated_woba_using_speedangle"].mean()), 3) if len(bb) > 0 else None
-            hits = int(events.isin(["single", "double", "triple", "home_run"]).sum())
-            ab = len(events) - int((events == "walk").sum()) - int((events == "sac_fly").sum()) - int((events.isin(["sac_bunt", "sac_bunt_double_play"])).sum())
-            avg = round(hits / ab, 3) if ab > 0 else 0
-            hr = int((events == "home_run").sum())
-            k_pct = round(float((events == "strikeout").mean() * 100), 1)
-            bb_pct = round(float((events == "walk").mean() * 100), 1)
+        out = {"window": str(bat["season"]) if bat else (str(pit["season"]) if pit else "?"), "batting": None, "pitching": None}
+
+        if bat and bat["avg"] is not None:
             out["batting"] = {
-                "avg": avg, "hr": hr, "k_pct": k_pct, "bb_pct": bb_pct,
-                "exit_velo": avg_ev, "hard_hit_pct": hard_hit,
-                "barrel_pct": barrel, "launch_angle": avg_la,
-                "woba": woba, "xwoba": xwoba,
+                "avg": bat["avg"], "hr": bat["hr"], "k_pct": bat["k_pct"], "bb_pct": bat["bb_pct"],
+                "exit_velo": bat["exit_velo"], "hard_hit_pct": bat["hard_hit_pct"],
+                "barrel_pct": bat["barrel_pct"], "launch_angle": bat["launch_angle"],
+                "woba": bat["woba"], "xwoba": bat["xwoba"],
             }
 
-        pit = statcast_pitcher(start_str, end_str, player_id=sid)
-        if pit is not None and len(pit) > 0:
-            whiff = round(float(pit["description"].isin(["swinging_strike", "swinging_strike_blocked"]).mean() * 100), 1)
-            bb_a = pit[pit["launch_speed"].notna()]
-            ev_against = round(float(bb_a["launch_speed"].mean()), 1) if len(bb_a) > 0 else None
-            barrel_against = round(float(((bb_a["launch_speed"] >= 98) & (bb_a["launch_angle"].between(26, 30))).mean() * 100), 1) if len(bb_a) > 0 else None
-            xwoba_against = round(float(bb_a["estimated_woba_using_speedangle"].mean()), 3) if len(bb_a) > 0 else None
-            k_pct_p = round(float((pit["events"] == "strikeout").mean() * 100), 1) if "events" in pit.columns else None
+        if pit and pit["whiff_pct"] is not None:
             out["pitching"] = {
-                "whiff_pct": whiff, "k_pct": k_pct_p,
-                "exit_velo_against": ev_against,
-                "barrel_pct_against": barrel_against,
-                "xwoba_against": xwoba_against,
+                "whiff_pct": pit["whiff_pct"], "k_pct": pit["k_pct"],
+                "exit_velo_against": pit["exit_velo_against"],
+                "barrel_pct_against": pit["barrel_pct_against"],
+                "xwoba_against": pit["xwoba_against"],
             }
+
+        con.close()
         return out
     except Exception as e:
-        return {"stats": None, "message": f"Statcast error: {str(e)[:200]}"}
+        return {"stats": None, "message": f"MLB stats error: {str(e)[:200]}"}
 
 
 def _get_nfl_stats(player_name: str, player_id: int, now: float):
