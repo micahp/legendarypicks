@@ -1,5 +1,10 @@
 # AGENTS.md — read this before editing legendarypicks
 
+> **Guiding principle (read first).** Before trusting any result, define from first principles what
+> "correct and complete" would actually require, then verify it against ground truth — the whole
+> population, not a convenient sample; the real data, not a status code; an independent source, not the
+> output you just produced — and assume an undiscovered gap remains until you've measured it.
+
 This is a Next.js app with a shared **Layout** and an intentional **two-tone dark theme**. The rules below
 come from real mistakes. Follow them literally; when unsure, look at how an existing page does it and copy that.
 
@@ -70,3 +75,57 @@ the bug would still be live elsewhere. Do the sweep as part of the fix and repor
 - **Backend is DB-first.** Serving a page must not call ESPN per request — read from our DB (`picks.db`); ESPN
   calls belong in the collection path (`/boxscore` snapshot) or an occasional out-of-band job, never per pageview.
 - **No AI attribution** in commits or code. Plain, human commit messages.
+
+---
+
+# Ops / deploy / infra — read before deploying or touching the server
+
+This server is **SHARED** (8+ sites behind one nginx). A mistake here can take down other sites.
+Every rule below comes from a real mistake on 2026-06-15.
+
+## 6. Deploy / server
+- **Never assume a port is free.** 3000/8000 are taken. `ss -tlnp` first, pick a free port (e.g.
+  3100/8100), and **bind `127.0.0.1` only** (`ports: ["127.0.0.1:3100:3000"]`) so only nginx reaches
+  it. Use the same port in compose, the nginx `proxy_pass`, and any in-container proxy.
+- **SQLite DB = BIND MOUNT, not a named volume.** Mount `./backend/data:/app/data`. A fresh named
+  volume mounts EMPTY over the data dir and masks the real `picks.db` → UI shows "no data" (happened).
+  Keep the dev DB out of the image (`.dockerignore: data/*.db`); never serve `data/` statically.
+- **HTTP 200 ≠ working.** Before declaring anything live, curl the real data endpoints, confirm
+  **non-empty content** + that the UI renders it. Tell "empty = expected state" from "empty = broken"
+  by checking the DB, not by assuming. (Same spirit as §3: verify the requirement.)
+- **Finish & verify the primary task before peripheral work.** Don't chase adjacent problems (other
+  sites' certs, cleanup) while the thing you're shipping is unverified.
+- **nginx:** `nginx -t` before EVERY reload — a bad reload takes down ALL sites. Check `nginx -t`'s
+  **exit code directly**; never `nginx -t | tail && reload` (the pipe hides the failure). nginx here is
+  old: use `listen 443 ssl http2;`, NOT `http2 on;`.
+- **certbot:** system certbot (0.40.0) is BROKEN (pyOpenSSL). Issue/renew via **docker certbot +
+  webroot** (keep an `acme-challenge` location in :80). Renewal cron must be **scoped per cert**
+  (`--cert-name`) + reload nginx after — bulk `renew` fails on the 8 nginx-plugin certs.
+- **Concurrent editing:** if another agent is editing the repo, **commit/checkpoint before dividing
+  work**, split frontend vs backend ownership, don't build images from a half-edited tree.
+
+## 7. Data sources
+- **Don't live-scrape hostile endpoints.** `stats.nba.com` blocks **datacenter IPs** (not geo — this
+  box is already US). A new/US VPS or free proxy won't help (all datacenter IPs); only paid residential
+  proxies bypass it. Use **ESPN** + **published data releases** (`nfl_data_py`/nflverse,
+  hoopR/sportsdataverse) — static files, never IP-blocked.
+- **Heavy/optional deps OFF the request path.** `pybaseball`, `nfl_data_py`, etc. go in **ingest
+  scripts** that populate `player_stats`; request handlers read the DB only. Never `import` a
+  possibly-uninstalled lib in a request handler — it blanks on a clean rebuild (the `pybaseball` import
+  was left in the request path but removed from requirements → MLB stats silently broke).
+- **Persist; don't rely on in-memory caches.** An in-memory `_stats_cache` is wiped on every redeploy →
+  cold-load latency (pybaseball's ~100MB Chadwick register = the 10s player load). Pattern:
+  **ingest → `player_stats` → serve from DB → instant** for every league. (Reinforces §5 DB-first.)
+
+## 8. Next.js build / wiring
+- **Lint must not block a deploy.** `next.config.js`: `eslint.ignoreDuringBuilds` +
+  `typescript.ignoreBuildErrors`. Lint/type style = quality item (POLISH-CHECKLIST), not a deploy gate.
+- **In-container API proxy uses the service name, not localhost.** Next rewrites/SSR target
+  `http://backend:8000` (compose service), not `localhost:8000` (= the frontend container itself).
+  Make it env-driven (`API_PROXY_TARGET`).
+
+## 9. Frontend UX patterns that bit us
+- **Search dropdown:** setting `query` on select re-fires the search and re-opens the list. The search
+  component must **own its open/close state** — close on select AND on click-outside.
+- **Mobile:** a fixed `grid grid-cols-N` squashes on small screens. Use `overflow-x-auto` + `min-w`
+  cells (or responsive breakpoints) so content scrolls instead of cramming.
