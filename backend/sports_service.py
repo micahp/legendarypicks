@@ -92,6 +92,15 @@ def _init_db():
         CREATE TABLE IF NOT EXISTS prop_results(
           prop_id INTEGER PRIMARY KEY REFERENCES props(id),
           actual_value REAL, hit INTEGER, settled_at TEXT);
+        CREATE TABLE IF NOT EXISTS player_stats(
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          player_name TEXT NOT NULL, league TEXT NOT NULL, team TEXT,
+          season INTEGER, games INTEGER,
+          pts REAL, reb REAL, ast REAL, stl REAL, blk REAL, tov REAL,
+          fgm INTEGER, fga INTEGER, fg3m INTEGER, fg3a INTEGER,
+          ftm INTEGER, fta INTEGER, minutes REAL,
+          ts_pct REAL, source TEXT,
+          UNIQUE(player_name, league, season));
         """)
         con.commit()
 
@@ -737,52 +746,54 @@ def _get_nfl_stats(player_name: str, player_id: int, now: float):
 
 
 def _get_nba_stats(player_name: str, player_id: int, now: float):
-    """Pull NBA stats via nba_api (stats.nba.com). Falls back gracefully on timeout."""
-    try:
-        from nba_api.stats.static import players
-        from nba_api.stats.endpoints import playercareerstats
-    except ImportError:
-        return {"stats": None, "message": "nba_api not installed"}
+    """Pull NBA stats from player_stats table (populated by ingest_hoopR.py)."""
+    import os, sqlite3 as sq
 
     try:
-        # Name resolution
-        nba_players = players.get_players()
-        matches = [p for p in nba_players if player_name.lower() in p["full_name"].lower()]
-        if not matches:
-            return {"stats": None, "message": f"Could not find NBA ID for {player_name}"}
-        p = matches[0]
-        nba_id = p["id"]
-        nba_name = p["full_name"]
+        db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "picks.db")
+        con = sq.connect(db_path)
+        con.row_factory = sq.Row
+        # Fuzzy name match — try exact first, then LIKE
+        row = con.execute(
+            "SELECT * FROM player_stats WHERE league='nba' AND player_name=? ORDER BY season DESC LIMIT 1",
+            (player_name,)
+        ).fetchone()
+        if not row:
+            # Try partial match
+            parts = player_name.strip().split(" ", 1)
+            last = parts[-1] if len(parts) > 1 else player_name
+            row = con.execute(
+                "SELECT * FROM player_stats WHERE league='nba' AND player_name LIKE ? ORDER BY season DESC LIMIT 1",
+                (f"%{last}%",)
+            ).fetchone()
+        if not row:
+            con.close()
+            return {"stats": None, "message": f"Could not find NBA stats for {player_name}. Run ingest_hoopR.py to populate."}
 
-        # Fetch career stats (most recent season)
-        stats_df = playercareerstats.PlayerCareerStats(player_id=nba_id, timeout=30).get_data_frames()[0]
-        if len(stats_df) == 0:
-            return {"stats": None, "message": f"No stats for {nba_name}"}
-
-        latest = stats_df.iloc[-1]
         out = {
-            "window": str(latest.get("SEASON_ID", "?")),
-            "player_name_nba": nba_name,
-            "games": int(latest.get("GP", 0)),
+            "window": str(row["season"]),
+            "player_name_nba": row["player_name"],
+            "team": row["team"],
+            "games": row["games"],
+            "source": row["source"] or "hoopR",
             "stats": {
-                "pts": round(float(latest.get("PTS", 0)), 1),
-                "reb": round(float(latest.get("REB", 0)), 1),
-                "ast": round(float(latest.get("AST", 0)), 1),
-                "stl": round(float(latest.get("STL", 0)), 1),
-                "blk": round(float(latest.get("BLK", 0)), 1),
-                "fg_pct": round(float(latest.get("FG_PCT", 0)) * 100, 1),
-                "fg3_pct": round(float(latest.get("FG3_PCT", 0)) * 100, 1),
-                "ft_pct": round(float(latest.get("FT_PCT", 0)) * 100, 1),
-                "min_pg": round(float(latest.get("MIN", 0)), 1),
-                "turnovers": round(float(latest.get("TOV", 0)), 1),
+                "pts": round(float(row["pts"]), 1),
+                "reb": round(float(row["reb"]), 1),
+                "ast": round(float(row["ast"]), 1),
+                "stl": round(float(row["stl"]), 1),
+                "blk": round(float(row["blk"]), 1),
+                "fg_pct": round(float(row["fgm"]) / float(row["fga"]) * 100, 1) if row["fga"] else 0,
+                "fg3_pct": round(float(row["fg3m"]) / float(row["fg3a"]) * 100, 1) if row["fg3a"] else 0,
+                "ft_pct": round(float(row["ftm"]) / float(row["fta"]) * 100, 1) if row["fta"] else 0,
+                "min_pg": round(float(row["minutes"]), 1) if row["minutes"] else 0,
+                "turnovers": round(float(row["tov"]), 1),
+                "ts_pct": round(float(row["ts_pct"]), 1),
             }
         }
+        con.close()
         return out
     except Exception as e:
-        msg = str(e)[:200]
-        if "timeout" in msg.lower() or "timed out" in msg.lower():
-            return {"stats": None, "message": "NBA API timed out (stats.nba.com blocks datacenter IPs). Try a proxy."}
-        return {"stats": None, "message": f"NBA stats error: {msg}"}
+        return {"stats": None, "message": f"NBA stats error: {str(e)[:200]}"}
 
 
 def _get_nhl_stats(player_name: str, player_id: int, now: float):

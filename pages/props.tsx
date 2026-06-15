@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import Head from 'next/head'
 
 // ── types ────────────────────────────────────────────────
@@ -69,15 +69,28 @@ function LeaguePills({ league, onChange }: { league: League; onChange: (l: Leagu
 function PlayerSearch({ query, setQuery, players, onSelect }: {
   query: string; setQuery: (q: string) => void; players: Player[]; onSelect: (p: Player) => void
 }) {
+  // own the dropdown open/close so selecting a player (which re-sets query and
+  // re-fires the parent search) does NOT re-open the list; also closes on click-outside.
+  const [open, setOpen] = useState(false)
+  const boxRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const onDoc = (e: MouseEvent) => {
+      if (boxRef.current && !boxRef.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', onDoc)
+    return () => document.removeEventListener('mousedown', onDoc)
+  }, [])
   return (
-    <div className="relative flex-1 min-w-[200px] max-w-sm">
-      <input type="text" value={query} onChange={e => setQuery(e.target.value)}
+    <div ref={boxRef} className="relative flex-1 min-w-[200px] max-w-sm">
+      <input type="text" value={query}
+        onChange={e => { setQuery(e.target.value); setOpen(true) }}
+        onFocus={() => { if (players.length > 0) setOpen(true) }}
         placeholder="Search player…"
         className="w-full px-4 py-2.5 rounded-xl border border-zinc-800 bg-zinc-900 text-zinc-200 placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm" />
-      {players.length > 0 && (
+      {open && players.length > 0 && (
         <div className="absolute top-full mt-1 w-full rounded-xl border border-zinc-700 bg-zinc-900 shadow-xl z-50 overflow-hidden">
           {players.map(p => (
-            <button key={p.id} onClick={() => onSelect(p)}
+            <button key={p.id} onClick={() => { setOpen(false); onSelect(p) }}
               className="w-full text-left px-4 py-2.5 hover:bg-zinc-800 flex justify-between items-center text-sm">
               <span className="font-medium">{p.name}</span>
               <span className="text-xs text-zinc-500">{p.team} · {p.league.toUpperCase()}</span>
@@ -387,6 +400,7 @@ function PerformanceTab({ league }: { league: League }) {
                     {stats.stats.ft_pct != null && <StatBox label="FT%" value={stats.stats.ft_pct + '%'} />}
                     {stats.stats.min_pg != null && <StatBox label="MIN" value={stats.stats.min_pg} />}
                     {stats.stats.turnovers != null && <StatBox label="TOV" value={stats.stats.turnovers} />}
+                    {stats.stats.ts_pct != null && <StatBox label="TS%" value={stats.stats.ts_pct + '%'} desc=\"true shooting\" />}
                   </div>
                 </div>
               ) : stats?.message ? (
