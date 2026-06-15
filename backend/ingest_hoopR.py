@@ -28,8 +28,8 @@ def ingest_season(season: int, con: sqlite3.Connection):
 
     # Filter regular season only, drop All-Star/non-team rows
     df = df[df["team_abbreviation"].str.len() <= 3]  # 'BOS' not 'Team Giannis' -> 'GIA'
-    # Aggregate per player per season
-    grouped = df.groupby("athlete_display_name").agg(
+    # Aggregate per player per season (include athlete_id for spine resolution)
+    grouped = df.groupby(["athlete_display_name", "athlete_id"]).agg(
         games=("game_id", "count"),
         pts=("points", "mean"),
         pts_total=("points", "sum"),
@@ -58,16 +58,24 @@ def ingest_season(season: int, con: sqlite3.Connection):
         lambda x: x.value_counts().index[0] if len(x) > 0 else "???"
     )
 
+    # Pre-load player_id lookup: nba_id → players.id
+    con.row_factory = sqlite3.Row
+    nba_id_to_player = {}
+    for r in con.execute("SELECT id, nba_id FROM players WHERE league='nba' AND nba_id IS NOT NULL"):
+        nba_id_to_player[r["nba_id"]] = r["id"]
+
     ingested = 0
     for _, row in grouped.iterrows():
         name = row["athlete_display_name"]
         team = teams.get(name, "???")
+        athlete_id = int(row["athlete_id"]) if row["athlete_id"] == row["athlete_id"] else None
+        player_id = nba_id_to_player.get(athlete_id) if athlete_id else None
         con.execute(
             """INSERT OR REPLACE INTO player_stats
                (player_name, name_norm, league, team, stat_type, season, games,
                 pts, reb, ast, stl, blk, tov,
-                fgm, fga, fg3m, fg3a, ftm, fta, minutes, ts_pct, source)
-               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                fgm, fga, fg3m, fg3a, ftm, fta, minutes, ts_pct, source, player_id)
+               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
             (name, _normalize_name(name), "nba", team, "season", season,
              int(row["games"]),
              round(float(row["pts"]), 1), round(float(row["reb"]), 1),
@@ -75,7 +83,7 @@ def ingest_season(season: int, con: sqlite3.Connection):
              round(float(row["blk"]), 1), round(float(row["tov"]), 1),
              int(row["fgm"]), int(row["fga"]), int(row["fg3m"]), int(row["fg3a"]),
              int(row["ftm"]), int(row["fta"]), round(float(row["minutes"]), 1),
-             float(row["ts_pct"]), "hoopR"))
+             float(row["ts_pct"]), "hoopR", player_id))
         ingested += 1
 
     con.commit()

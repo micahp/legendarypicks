@@ -41,8 +41,30 @@ def ingest(days: int = 30):
     season = end.year
 
     con = sqlite3.connect(DB)
+    con.row_factory = sqlite3.Row
     batting_count = 0
     pitching_count = 0
+
+    # Pre-load player_id lookup: mlbam_id → players.id
+    mlbam_to_player = {}
+    for r in con.execute("SELECT id, mlbam_id FROM players WHERE league='mlb' AND mlbam_id IS NOT NULL"):
+        mlbam_to_player[r["mlbam_id"]] = r["id"]
+    print(f"  Loaded {len(mlbam_to_player)} mlbam_id→player_id mappings")
+    spine_added = 0
+
+    def _resolve_or_add_player(mlbam_id: int, name: str) -> int:
+        """Resolve player_id from spine; if missing, upsert player WITH their mlbam_id."""
+        nonlocal spine_added
+        pid = mlbam_to_player.get(mlbam_id)
+        if pid is None:
+            # Player not in spine yet — add them (this IS Phase 2 population from authoritative source)
+            cur = con.execute(
+                "INSERT INTO players(name, league, mlbam_id, active) VALUES (?,?,?,1)",
+                (str(name), "mlb", mlbam_id))
+            pid = cur.lastrowid
+            mlbam_to_player[mlbam_id] = pid
+            spine_added += 1
+        return pid
 
     # ── Batting: group by batter ID ──
     # IMPORTANT: player_name is the PITCHER in Statcast data.
@@ -89,17 +111,18 @@ def ingest(days: int = 30):
             bb_pct = round(float((events == "walk").mean() * 100), 1)
             games = group["game_date"].nunique()
 
+            player_id = _resolve_or_add_player(int(batter_id), str(name))
             try:
                 con.execute(
                     """INSERT OR REPLACE INTO player_stats
                        (player_name, name_norm, league, team, stat_type, season, games,
                         avg, hr, k_pct, bb_pct, exit_velo, hard_hit_pct, barrel_pct, launch_angle,
-                        woba, xwoba, source)
-                       VALUES (?,?,?,?,'batting',?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                        woba, xwoba, source, player_id)
+                       VALUES (?,?,?,?,'batting',?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
                     (str(name), _normalize_name(str(name)), "mlb", "", season, games,
                      avg, hr, k_pct, bb_pct,
                      round(avg_ev, 1), round(hard_hit, 1), round(barrel, 1), round(avg_la, 1),
-                     round(woba, 3), round(xwoba, 3), "statcast"))
+                     round(woba, 3), round(xwoba, 3), "statcast", player_id))
                 batting_count += 1
             except Exception as e:
                 if batting_count == 0:
@@ -123,15 +146,16 @@ def ingest(days: int = 30):
         k_pct_p = float((group["events"] == "strikeout").mean() * 100) if "events" in group.columns else 0
         games_p = group["game_date"].nunique()
 
+        player_id = _resolve_or_add_player(int(pitcher_id), str(name))
         try:
             con.execute(
                 """INSERT OR REPLACE INTO player_stats
                    (player_name, name_norm, league, team, stat_type, season, games,
-                    k_pct, whiff_pct, exit_velo_against, barrel_pct_against, xwoba_against, source)
-                   VALUES (?,?,?,?,'pitching',?,?,?,?,?,?,?,?)""",
+                    k_pct, whiff_pct, exit_velo_against, barrel_pct_against, xwoba_against, source, player_id)
+                   VALUES (?,?,?,?,'pitching',?,?,?,?,?,?,?,?,?)""",
                 (str(name), _normalize_name(str(name)), "mlb", "", season, games_p,
                  round(k_pct_p, 1), round(whiff, 1),
-                 round(ev_against, 1), round(barrel_against, 1), round(xwoba_against, 3), "statcast"))
+                 round(ev_against, 1), round(barrel_against, 1), round(xwoba_against, 3), "statcast", player_id))
             pitching_count += 1
         except Exception:
             pass
@@ -139,6 +163,8 @@ def ingest(days: int = 30):
     con.commit()
     con.close()
     print(f"  Ingested: {batting_count} batting, {pitching_count} pitching")
+    if spine_added:
+        print(f"  Spine: added {spine_added} new players (with mlbam_id)")
 
 
 if __name__ == "__main__":

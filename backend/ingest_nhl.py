@@ -85,6 +85,14 @@ def fetch_stats(nhl_id: int) -> dict:
 
 def ingest():
     con = sqlite3.connect(DB)
+    con.row_factory = sqlite3.Row
+
+    # Pre-load player_id lookup: nhl_id → players.id
+    nhl_id_to_player = {}
+    for r in con.execute("SELECT id, nhl_id FROM players WHERE league='nhl' AND nhl_id IS NOT NULL"):
+        nhl_id_to_player[r["nhl_id"]] = r["id"]
+    print(f"Loaded {len(nhl_id_to_player)} nhl_id→player_id mappings")
+
     total_players = 0
     total_stats = 0
     per_team = {}
@@ -112,20 +120,21 @@ def ingest():
             s = fetch_stats(p["id"])
             if s:
                 display = s["name"] or p["name"]
+                player_id = nhl_id_to_player.get(p["id"])
                 try:
                     con.execute(
                         """INSERT OR REPLACE INTO player_stats
                            (player_name, name_norm, league, team, stat_type, season, games,
                             nhl_position, nhl_team, goals, assists, points_nhl, shots,
-                            shooting_pct, plus_minus, pim, ppg, ppp, shg, toi, faceoff_pct, source)
-                           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                            shooting_pct, plus_minus, pim, ppg, ppp, shg, toi, faceoff_pct, source, player_id)
+                           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
                         (display, _normalize_name(display), "nhl", s["team"], "season",
                          s["season"], s["games"],
                          s["position"], s["team"],
                          s["goals"], s["assists"], s["points"], s["shots"],
                          s["shooting_pct"], s["plus_minus"], s["pim"],
                          s["ppg"], s["ppp"], s["shg"],
-                         s["toi"], s["faceoff_pct"], "nhle.com"))
+                         s["toi"], s["faceoff_pct"], "nhle.com", player_id))
                     stats_count += 1
                 except Exception:
                     pass

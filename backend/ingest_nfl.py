@@ -16,12 +16,22 @@ def ingest_nfl(season: int = 2024):
     con = sqlite3.connect(DB)
     con.row_factory = sqlite3.Row
 
+    # Pre-load player_id lookup: nfl_gsis_id → players.id
+    gsis_to_player = {}
+    for r in con.execute("SELECT id, nfl_gsis_id FROM players WHERE league='nfl' AND nfl_gsis_id IS NOT NULL AND nfl_gsis_id != ''"):
+        gsis_to_player[r["nfl_gsis_id"]] = r["id"]
+    print(f"Loaded {len(gsis_to_player)} gsis_id→player_id mappings")
+
     print(f"Loading NFL weekly data for {season}...")
     weekly = nfl.import_weekly_data([season])
     print(f"  {len(weekly)} player-weeks")
 
-    # Aggregate per player
-    grouped = weekly.groupby(["player_display_name", "position", "recent_team"]).agg(
+    # Aggregate per player (include player_id=gsis_id for spine resolution)
+    group_cols = ["player_display_name", "position", "recent_team"]
+    has_player_id = "player_id" in weekly.columns
+    if has_player_id:
+        group_cols.append("player_id")
+    grouped = weekly.groupby(group_cols).agg(
         games=("week", "count"),
         pass_yds_g=("passing_yards", "mean"),
         pass_td=("passing_tds", "sum"),
@@ -39,14 +49,18 @@ def ingest_nfl(season: int = 2024):
 
     ingested = 0
     for _, row in grouped.iterrows():
+        # Resolve player_id from gsis_id (spine), fall back to None
+        gsis_id = str(row.get("player_id", "")) if has_player_id else ""
+        player_id = gsis_to_player.get(gsis_id) if gsis_id else None
+
         con.execute(
             """INSERT OR REPLACE INTO player_stats
                (player_name, name_norm, league, team, stat_type, season, games,
                 nfl_position, nfl_team,
                 pass_yds_g, pass_td, interceptions, cmp_g, pass_epa,
                 carries_g, rush_yds_g, receptions, rec_yds_g, targets,
-                fantasy_pts_g, fantasy_ppr_g, source)
-               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                fantasy_pts_g, fantasy_ppr_g, source, player_id)
+               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
             (row["player_display_name"], _normalize_name(row["player_display_name"]),
              "nfl", row["recent_team"], "weekly",
              season, int(row["games"]),
@@ -63,7 +77,7 @@ def ingest_nfl(season: int = 2024):
              int(row["targets"]) if row["targets"] == row["targets"] else 0,
              round(float(row["fantasy_pts_g"]), 1) if row["fantasy_pts_g"] == row["fantasy_pts_g"] else 0,
              round(float(row["fantasy_ppr_g"]), 1) if row["fantasy_ppr_g"] == row["fantasy_ppr_g"] else 0,
-             "nflverse"))
+             "nflverse", player_id))
         ingested += 1
 
     con.commit()

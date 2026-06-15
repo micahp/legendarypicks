@@ -104,6 +104,16 @@ def _init_db():
           ftm INTEGER, fta INTEGER, minutes REAL,
           ts_pct REAL, source TEXT,
           UNIQUE(player_name, league, season));
+        -- Phase 5: identity resolution queue + alias table
+        CREATE TABLE IF NOT EXISTS unresolved_players(
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          source TEXT NOT NULL, raw_name TEXT NOT NULL,
+          league TEXT NOT NULL, team TEXT,
+          first_seen TEXT NOT NULL, count INTEGER DEFAULT 1);
+        CREATE TABLE IF NOT EXISTS name_alias(
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          player_id INTEGER NOT NULL REFERENCES players(id),
+          alias_norm TEXT NOT NULL);
         """)
         con.commit()
 
@@ -629,25 +639,38 @@ def player_stats(player_id: int,
 
 
 def _get_mlb_stats(player_name: str, player_id: int, statcast_id, now: float):
-    """Pull MLB stats from player_stats table (populated by ingest_statcast.py)."""
+    """Pull MLB stats from player_stats table (populated by ingest_statcast.py).
+    Looks up by player_id first (identity spine), falls back to name_norm for un-backfilled rows."""
     import os, sqlite3 as sq
 
     try:
         db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "picks.db")
         con = sq.connect(db_path)
         con.row_factory = sq.Row
-        nname = _normalize_name(player_name)
 
-        # Batting row
+        # Primary: player_id (identity spine). Fallback: name_norm (un-backfilled rows).
         bat = con.execute(
-            "SELECT * FROM player_stats WHERE league='mlb' AND stat_type='batting' AND name_norm=? ORDER BY season DESC LIMIT 1",
-            (nname,)
+            "SELECT * FROM player_stats WHERE league='mlb' AND stat_type='batting' AND player_id=? ORDER BY season DESC LIMIT 1",
+            (player_id,)
         ).fetchone()
-        # Pitching row
         pit = con.execute(
-            "SELECT * FROM player_stats WHERE league='mlb' AND stat_type='pitching' AND name_norm=? ORDER BY season DESC LIMIT 1",
-            (nname,)
+            "SELECT * FROM player_stats WHERE league='mlb' AND stat_type='pitching' AND player_id=? ORDER BY season DESC LIMIT 1",
+            (player_id,)
         ).fetchone()
+
+        # Fallback: name_norm for rows missing player_id (pre-spine data)
+        if not bat:
+            nname = _normalize_name(player_name)
+            bat = con.execute(
+                "SELECT * FROM player_stats WHERE league='mlb' AND stat_type='batting' AND name_norm=? ORDER BY season DESC LIMIT 1",
+                (nname,)
+            ).fetchone()
+        if not pit:
+            nname = _normalize_name(player_name)
+            pit = con.execute(
+                "SELECT * FROM player_stats WHERE league='mlb' AND stat_type='pitching' AND name_norm=? ORDER BY season DESC LIMIT 1",
+                (nname,)
+            ).fetchone()
 
         if not bat and not pit:
             con.close()
@@ -678,25 +701,29 @@ def _get_mlb_stats(player_name: str, player_id: int, statcast_id, now: float):
 
 
 def _get_nfl_stats(player_name: str, player_id: int, now: float):
-    """Pull NFL stats from player_stats table (populated by ingest_nfl.py)."""
+    """Pull NFL stats from player_stats table (populated by ingest_nfl.py).
+    Looks up by player_id first (identity spine), falls back to name_norm for un-backfilled rows."""
     import os, sqlite3 as sq
 
     try:
         db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "picks.db")
         con = sq.connect(db_path)
         con.row_factory = sq.Row
-        nname = _normalize_name(player_name)
+
+        # Primary: player_id (identity spine)
         row = con.execute(
-            "SELECT * FROM player_stats WHERE league='nfl' AND name_norm=? ORDER BY season DESC LIMIT 1",
-            (nname,)
+            "SELECT * FROM player_stats WHERE league='nfl' AND player_id=? ORDER BY season DESC LIMIT 1",
+            (player_id,)
         ).fetchone()
+
+        # Fallback: name_norm for rows missing player_id (pre-spine data)
         if not row:
-            parts = player_name.strip().split(" ", 1)
-            last = parts[-1] if len(parts) > 1 else player_name
+            nname = _normalize_name(player_name)
             row = con.execute(
-                "SELECT * FROM player_stats WHERE league='nfl' AND player_name LIKE ? ORDER BY season DESC LIMIT 1",
-                (f"%{last}%",)
+                "SELECT * FROM player_stats WHERE league='nfl' AND name_norm=? ORDER BY season DESC LIMIT 1",
+                (nname,)
             ).fetchone()
+
         if not row:
             con.close()
             return {"stats": None, "message": f"No NFL data for {player_name}. Run ingest_nfl.py."}
@@ -730,26 +757,29 @@ def _get_nfl_stats(player_name: str, player_id: int, now: float):
 
 
 def _get_nba_stats(player_name: str, player_id: int, now: float):
-    """Pull NBA stats from player_stats table (populated by ingest_hoopR.py)."""
+    """Pull NBA stats from player_stats table (populated by ingest_hoopR.py).
+    Looks up by player_id first (identity spine), falls back to name_norm for un-backfilled rows."""
     import os, sqlite3 as sq
 
     try:
         db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "picks.db")
         con = sq.connect(db_path)
         con.row_factory = sq.Row
-        # Fuzzy name match — try exact first, then LIKE
-        nname = _normalize_name(player_name)
+
+        # Primary: player_id (identity spine)
         row = con.execute(
-            "SELECT * FROM player_stats WHERE league='nba' AND name_norm=? ORDER BY season DESC LIMIT 1",
-            (nname,)
+            "SELECT * FROM player_stats WHERE league='nba' AND player_id=? ORDER BY season DESC LIMIT 1",
+            (player_id,)
         ).fetchone()
+
+        # Fallback: name_norm for rows missing player_id (pre-spine data)
         if not row:
-            parts = player_name.strip().split(" ", 1)
-            last = parts[-1] if len(parts) > 1 else player_name
+            nname = _normalize_name(player_name)
             row = con.execute(
-                "SELECT * FROM player_stats WHERE league='nba' AND player_name LIKE ? ORDER BY season DESC LIMIT 1",
-                (f"%{last}%",)
+                "SELECT * FROM player_stats WHERE league='nba' AND name_norm=? ORDER BY season DESC LIMIT 1",
+                (nname,)
             ).fetchone()
+
         if not row:
             con.close()
             return {"stats": None, "message": f"Could not find NBA stats for {player_name}. Run ingest_hoopR.py to populate."}
@@ -781,25 +811,29 @@ def _get_nba_stats(player_name: str, player_id: int, now: float):
 
 
 def _get_nhl_stats(player_name: str, player_id: int, now: float):
-    """Pull NHL stats from player_stats table (populated by ingest_nhl.py from full rosters)."""
+    """Pull NHL stats from player_stats table (populated by ingest_nhl.py from full rosters).
+    Looks up by player_id first (identity spine), falls back to name_norm for un-backfilled rows."""
     import os, sqlite3 as sq
 
     try:
         db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "picks.db")
         con = sq.connect(db_path)
         con.row_factory = sq.Row
-        nname = _normalize_name(player_name)
+
+        # Primary: player_id (identity spine)
         row = con.execute(
-            "SELECT * FROM player_stats WHERE league='nhl' AND name_norm=? ORDER BY season DESC LIMIT 1",
-            (nname,)
+            "SELECT * FROM player_stats WHERE league='nhl' AND player_id=? ORDER BY season DESC LIMIT 1",
+            (player_id,)
         ).fetchone()
+
+        # Fallback: name_norm for rows missing player_id (pre-spine data)
         if not row:
-            parts = player_name.strip().split(" ", 1)
-            last = parts[-1] if len(parts) > 1 else player_name
+            nname = _normalize_name(player_name)
             row = con.execute(
-                "SELECT * FROM player_stats WHERE league='nhl' AND name_norm LIKE ? ORDER BY season DESC LIMIT 1",
-                (f"%{_normalize_name(last)}%",)
+                "SELECT * FROM player_stats WHERE league='nhl' AND name_norm=? ORDER BY season DESC LIMIT 1",
+                (nname,)
             ).fetchone()
+
         if not row:
             con.close()
             return {"stats": None, "message": f"No NHL data for {player_name}. Run ingest_nhl.py."}
@@ -823,6 +857,78 @@ def _get_nhl_stats(player_name: str, player_id: int, now: float):
         return out
     except Exception as e:
         return {"stats": None, "message": f"NHL stats error: {str(e)[:200]}"}
+
+
+# ── Player identity resolver (shared by all ingests) ───────────────
+
+def _resolve_player_for_ingest(con, player_name: str, team: str, league: str, source: str = "props"):
+    """Resolve a player name to players.id via the identity spine.
+
+    Resolution order (deterministic, NO silent creates):
+    1. Exact name + league (fast path for already-matched players)
+    2. Normalized name + team + league (deterministic spine match)
+    3. name_alias table (known nicknames/alternate spellings)
+    4. If nothing matches → write to unresolved_players, return None
+
+    Returns (player_id, confidence) where confidence is 'high', 'low', or None.
+    NEVER inserts a new player — that's the whole point of the spine.
+    """
+    import re, unicodedata
+    from datetime import datetime as _dt, timezone as _tz
+
+    now = _dt.now(_tz.utc).isoformat()
+    nname = _normalize_name(player_name)
+    nteam = team.strip().upper() if team else ""
+
+    # 1. Fast path: exact name + league (already-matched players)
+    row = con.execute(
+        "SELECT id FROM players WHERE name=? AND league=?",
+        (player_name, league)
+    ).fetchone()
+    if row:
+        return (row["id"], "high")
+
+    # 2. Deterministic: normalized name + team + league
+    if nteam:
+        row = con.execute(
+            "SELECT id FROM players WHERE LOWER(REPLACE(name,'.','')) LIKE ? AND league=? AND UPPER(team)=? LIMIT 1",
+            (f"%{nname.replace(' ', '%')}%", league, nteam)
+        ).fetchone()
+        if row:
+            return (row["id"], "high")
+
+    # 3. name_alias lookup
+    row = con.execute(
+        "SELECT na.player_id FROM name_alias na WHERE na.alias_norm=?",
+        (nname,)
+    ).fetchone()
+    if row:
+        # Verify the aliased player is in the right league
+        pl = con.execute(
+            "SELECT id FROM players WHERE id=? AND league=?",
+            (row["player_id"], league)
+        ).fetchone()
+        if pl:
+            return (pl["id"], "high")
+
+    # 4. No match — log to unresolved_players (review queue, never silently drop)
+    existing = con.execute(
+        "SELECT id, count FROM unresolved_players WHERE raw_name=? AND league=? AND source=?",
+        (player_name, league, source)
+    ).fetchone()
+    if existing:
+        con.execute(
+            "UPDATE unresolved_players SET count=count+1 WHERE id=?",
+            (existing["id"],)
+        )
+    else:
+        con.execute(
+            "INSERT INTO unresolved_players(source, raw_name, league, team, first_seen, count) "
+            "VALUES (?,?,?,?,?,1)",
+            (source, player_name, league, nteam or None, now)
+        )
+
+    return (None, None)
 
 
 # ── ingestion helper ───────────────────────────────────────────────
@@ -859,26 +965,22 @@ def ingest_props(batch: PropIngest):
         else:
             game_id = game_row["id"]
         ingested = 0
+        unresolved = 0
         for p in batch.props:
-            # ensure player
-            cur = con.execute(
-                "SELECT id FROM players WHERE name=? AND league=?",
-                (p["player_name"], batch.league))
-            player_row = cur.fetchone()
-            if not player_row:
-                cur = con.execute(
-                    "INSERT INTO players(name,team,league) VALUES(?,?,?)",
-                    (p["player_name"], p.get("team", ""), batch.league))
-                player_id = cur.lastrowid
-            else:
-                player_id = player_row["id"]
+            # Resolve player via identity spine (NEVER silently create)
+            player_id, confidence = _resolve_player_for_ingest(
+                con, p["player_name"], p.get("team", ""), batch.league,
+                source=p.get("source", "props"))
+            if player_id is None:
+                unresolved += 1
+                continue  # logged to unresolved_players by the resolver
             # insert prop
             con.execute(
                 "INSERT INTO props(game_id,player_id,market,line,side,source,captured_at) VALUES(?,?,?,?,?,?,?)",
                 (game_id, player_id, p["market"], p["line"], p["side"], p.get("source", "manual"), now))
             ingested += 1
         con.commit()
-    return {"status": "ok", "game_id": game_id, "ingested": ingested}
+    return {"status": "ok", "game_id": game_id, "ingested": ingested, "unresolved": unresolved}
 
 
 def _evaluate(league, game_id, predicted_winner):
