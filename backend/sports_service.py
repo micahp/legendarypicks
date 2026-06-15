@@ -584,14 +584,33 @@ def player_stats(player_id: int,
         return _stats_cache[cache_key][1]
 
     try:
-        from pybaseball import statcast_batter, statcast_pitcher
+        from pybaseball import statcast_batter, statcast_pitcher, playerid_lookup
         import pandas as pd
 
         end = dt2.now()
         start = end - timedelta(days=30)
         start_str = start.strftime("%Y-%m-%d")
         end_str = end.strftime("%Y-%m-%d")
-        sid = statcast_id or player_id
+
+        # Resolve Statcast ID: use provided ID, or look up by name
+        sid = statcast_id
+        if not sid:
+            # Try name lookup: "Ryan Gusto" → last="Gusto", first="Ryan"
+            parts = player_name.strip().split(" ", 1)
+            last = parts[-1]
+            first = parts[0] if len(parts) > 1 else ""
+            try:
+                lookup = playerid_lookup(last, first)
+                if lookup is not None and len(lookup) > 0:
+                    sid = int(lookup.iloc[0]["key_mlbam"])
+            except Exception:
+                pass
+        if not sid:
+            result = {"player_id": player_id, "player_name": player_name,
+                      "league": league, "stats": None,
+                      "message": f"Could not find Statcast ID for {player_name}"}
+            _stats_cache[cache_key] = (now + 3600, result)
+            return result
 
         result = {"player_id": player_id, "player_name": player_name,
                   "league": league, "window": "30d", "batting": None, "pitching": None}
