@@ -778,7 +778,7 @@ def _get_nba_stats(player_name: str, player_id: int, now: float):
 
 
 def _get_nhl_stats(player_name: str, player_id: int, now: float):
-    """Pull NHL stats from player_stats table (populated by ingest_nhl.py)."""
+    """Pull NHL stats from player_stats table (populated by ingest_nhl.py from full rosters)."""
     import os, sqlite3 as sq
 
     try:
@@ -794,8 +794,8 @@ def _get_nhl_stats(player_name: str, player_id: int, now: float):
             parts = player_name.strip().split(" ", 1)
             last = parts[-1] if len(parts) > 1 else player_name
             row = con.execute(
-                "SELECT * FROM player_stats WHERE league='nhl' AND player_name LIKE ? ORDER BY season DESC LIMIT 1",
-                (f"%{last}%",)
+                "SELECT * FROM player_stats WHERE league='nhl' AND name_norm LIKE ? ORDER BY season DESC LIMIT 1",
+                (f"%{_normalize_name(last)}%",)
             ).fetchone()
         if not row:
             con.close()

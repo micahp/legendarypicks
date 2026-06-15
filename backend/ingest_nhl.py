@@ -1,29 +1,61 @@
 #!/usr/bin/env python3
 """
-ingest_nhl.py — pull NHL player stats from nhle.com + ESPN rosters, persist to player_stats.
+ingest_nhl.py — pull full NHL rosters + stats from api-web.nhle.com, persist to player_stats.
+
+Roster source: api-web.nhle.com/v1/roster/{TEAM}/current (all 32 teams)
+Stats source: api-web.nhle.com/v1/player/{id}/landing
+Target: >=95% of rostered NHL players resolve to a stats row.
 
 Usage: python3 ingest_nhl.py
 """
-import sys, os, sqlite3, json, urllib.request
+import sys, os, sqlite3, json, urllib.request, time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from sports_service import _normalize_name
+
 DB = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "picks.db")
 HDR = {"User-Agent": "Mozilla/5.0"}
 
-KNOWN_NHL = {
-    "connor mcdavid": 8478402, "auston matthews": 8479318,
-    "nathan mackinnon": 8477492, "leon draisaitl": 8477934,
-    "david pastrnak": 8477956, "nikita kucherov": 8476453,
-    "sidney crosby": 8471675, "alex ovechkin": 8471214,
-    "cale makar": 8478486, "matthew tkachuk": 8479314,
-}
+# All 32 NHL team abbreviations (nhle.com format — 3 letters for most, some differ from ESPN)
+NHL_TEAMS = [
+    "CAR","BUF","TBL","MTL","BOS","OTT","PIT","PHI","WSH","DET","CBJ","NYI","NJD","FLA","TOR","NYR",
+    "VGK","DAL","MIN","EDM","UTA","ANA","LAK","STL","NSH","SJS","WPG","SEA","CGY","CHI","VAN","COL",
+]
 
-def fetch_nhl_stats(nhl_id: int):
+
+def fetch_roster(team: str) -> list:
+    """Pull current roster from nhle.com. Returns list of {name, id, position, team}."""
+    url = f"https://api-web.nhle.com/v1/roster/{team}/current"
+    req = urllib.request.Request(url, headers=HDR)
+    try:
+        with urllib.request.urlopen(req, timeout=10) as r:
+            data = json.loads(r.read().decode())
+    except Exception as e:
+        print(f"    {team}: roster FAIL ({e})")
+        return []
+
+    players = []
+    for pos_group in ["forwards", "defensemen", "goalies"]:
+        for p in data.get(pos_group, []):
+            pid = p.get("id")
+            fn = p.get("firstName", {}).get("default", "")
+            ln = p.get("lastName", {}).get("default", "")
+            name = f"{fn} {ln}".strip()
+            pos = p.get("positionCode", "?")
+            if pid and name:
+                players.append({"name": name, "id": pid, "position": pos, "team": team})
+    return players
+
+
+def fetch_stats(nhl_id: int) -> dict:
+    """Pull season stats from nhle.com landing endpoint."""
     url = f"https://api-web.nhle.com/v1/player/{nhl_id}/landing"
     req = urllib.request.Request(url, headers=HDR)
-    with urllib.request.urlopen(req, timeout=10) as r:
-        data = json.loads(r.read().decode())
+    try:
+        with urllib.request.urlopen(req, timeout=10) as r:
+            data = json.loads(r.read().decode())
+    except Exception:
+        return None
     st = data.get("seasonTotals", [])
     if not st:
         return None
@@ -50,53 +82,67 @@ def fetch_nhl_stats(nhl_id: int):
         "faceoff_pct": round(float(latest.get("faceoffWinningPctg", 0)) * 100, 1),
     }
 
+
 def ingest():
     con = sqlite3.connect(DB)
-    ingested = 0
+    total_players = 0
+    total_stats = 0
+    per_team = {}
 
-    for name, pid in KNOWN_NHL.items():
-        try:
-            s = fetch_nhl_stats(pid)
-            if not s:
+    for team in NHL_TEAMS:
+        print(f"{team}:", end=" ", flush=True)
+        roster = fetch_roster(team)
+        if not roster:
+            per_team[team] = (0, 0, 0)
+            continue
+
+        size = len(roster)
+        stats_count = 0
+        for p in roster:
+            total_players += 1
+            # Check if already ingested this season
+            existing = con.execute(
+                "SELECT COUNT(*) FROM player_stats WHERE league='nhl' AND name_norm=? AND season >= 2025",
+                (_normalize_name(p["name"]),)
+            ).fetchone()
+            if existing[0] > 0:
+                stats_count += 1
                 continue
-            display = s["name"] or name.title()
-            con.execute(
-                """INSERT OR REPLACE INTO player_stats
-                   (player_name, name_norm, league, team, stat_type, season, games,
-                    nhl_position, nhl_team, goals, assists, points_nhl, shots,
-                    shooting_pct, plus_minus, pim, ppg, ppp, shg, toi, faceoff_pct, source)
-                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
-                (display, _normalize_name(display), "nhl", s["team"], "season",
-                 s["season"], s["games"],
-                 s["position"], s["team"],
-                 s["goals"], s["assists"], s["points"], s["shots"],
-                 s["shooting_pct"], s["plus_minus"], s["pim"],
-                 s["ppg"], s["ppp"], s["shg"],
-                 s["toi"], s["faceoff_pct"], "nhle.com"))
-            ingested += 1
-            print(f"  {display}: {s['goals']}G {s['assists']}A {s['points']}PTS in {s['games']}GP")
-        except Exception as e:
-            print(f"  {name}: FAIL ({e})")
 
-    # Also pull from ESPN rosters
-    try:
-        import espn_client as espn
-        teams = espn.NHL_TEAMS if hasattr(espn, 'NHL_TEAMS') else ['VGK','EDM','TOR','COL','FLA','TBL','BOS','NYR']
-        for team in teams[:5]:
-            try:
-                roster = espn.roster('nhl', team)
-                for p in roster[:5]:
-                    name = p.get("name", "")
-                    # Try nhle.com for each (expensive — just note for now)
+            s = fetch_stats(p["id"])
+            if s:
+                display = s["name"] or p["name"]
+                try:
+                    con.execute(
+                        """INSERT OR REPLACE INTO player_stats
+                           (player_name, name_norm, league, team, stat_type, season, games,
+                            nhl_position, nhl_team, goals, assists, points_nhl, shots,
+                            shooting_pct, plus_minus, pim, ppg, ppp, shg, toi, faceoff_pct, source)
+                           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                        (display, _normalize_name(display), "nhl", s["team"], "season",
+                         s["season"], s["games"],
+                         s["position"], s["team"],
+                         s["goals"], s["assists"], s["points"], s["shots"],
+                         s["shooting_pct"], s["plus_minus"], s["pim"],
+                         s["ppg"], s["ppp"], s["shg"],
+                         s["toi"], s["faceoff_pct"], "nhle.com"))
+                    stats_count += 1
+                except Exception:
                     pass
-            except Exception:
-                pass
-    except Exception:
-        pass
+                time.sleep(0.15)  # gentle rate limit
+
+        pct = round(stats_count / size * 100) if size > 0 else 0
+        flag = "✅" if pct >= 95 else ("⚠️" if pct < 50 else "  ")
+        print(f"{flag} {stats_count}/{size} ({pct}%)")
+        per_team[team] = (stats_count, size, pct)
 
     con.commit()
     con.close()
-    print(f"\nIngested: {ingested} NHL players")
+
+    total_resolved = sum(c for c, _, _ in per_team.values())
+    total_roster = sum(s for _, s, _ in per_team.values())
+    print(f"\nTotal: {total_resolved}/{total_roster} ({round(total_resolved/max(total_roster,1)*100)}%)")
+
 
 if __name__ == "__main__":
     ingest()
