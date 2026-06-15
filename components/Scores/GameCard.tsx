@@ -94,6 +94,8 @@ export default function GameCard(g: GameProps) {
   const showTime = g.status === 'SCHEDULED' && !isUFC
   const showStatusBadge = g.status === 'LIVE' || g.status === 'FINAL'
   const showPeriod = g.status === 'LIVE' && g.livePeriod
+  // Scores only exist once a game starts — never render 0–0 before first pitch/tip/puck
+  const showScore = g.status === 'LIVE' || g.status === 'FINAL'
 
   // Winner/loser dimming — same treatment as ScoreStrip on the detail page
   const isFinal = g.status === 'FINAL'
