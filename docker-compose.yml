@@ -1,0 +1,16 @@
+services:
+  backend:
+    build: ./backend
+    environment:
+      PORT: "8000"
+    expose: ["8000"]
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: .
+      args:
+        NEXT_PUBLIC_API_BASE: /api
+    depends_on: [backend]
+    expose: ["3000"]
+    restart: unless-stopped
