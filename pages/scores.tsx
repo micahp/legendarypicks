@@ -2,8 +2,6 @@ import { useState, useEffect } from 'react'
 import Head from 'next/head'
 import { useRouter } from 'next/router'
 import { SportsService, Game } from '../services/sports'
-import DayStrip from '../components/Scores/DayStrip'
-import CalendarPopover from '../components/Scores/CalendarPopover'
 import GameCard from '../components/Scores/GameCard'
 import { SkeletonList, ErrorBanner, EmptyState } from '../components/Scores/States'
 
@@ -18,6 +16,13 @@ export default function ScoresPage() {
   const today = new Date().toLocaleDateString('en-CA')
   const [date, setDate] = useState<string>(today)
   const [leagueFilter, setLeagueFilter] = useState<string>('All')
+  const isToday = date === today
+  const shiftDay = (delta: number) => {
+    const d = new Date(date + 'T12:00:00')   // noon-anchored to dodge TZ rollover
+    d.setDate(d.getDate() + delta)
+    setDate(d.toLocaleDateString('en-CA'))
+  }
+  const goToday = () => setDate(today)
 
   // allow a shareable/deep-linkable day via ?date=YYYY-MM-DD
   useEffect(() => {
@@ -124,26 +129,36 @@ export default function ScoresPage() {
                 </option>
               ))}
             </select>
-            <CalendarPopover
-              date={date}
-              onChange={setDate}
-              anchorContent={
-                <span className="flex items-center gap-2 bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2">
-                  <span className="text-sm text-zinc-300">
-                    {new Date(date).toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}
-                  </span>
-                  <span aria-hidden>📅</span>
-                </span>
-              }
-            />
           </div>
         </div>
-        <DayStrip date={date} onChange={setDate} />
-        <div className="text-sm font-bold text-zinc-400" aria-live="polite">
-          {(() => {
-            const d = new Date(date + 'T12:00:00')
-            return d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })
-          })()}
+        {/* Day navigator: ‹ date › — works on mobile (just two buttons + a label) */}
+        <div className="flex items-center justify-center gap-2 sm:gap-3">
+          <button
+            type="button"
+            onClick={() => shiftDay(-1)}
+            aria-label="Previous day"
+            className="flex items-center justify-center w-10 h-10 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-300 text-xl leading-none hover:bg-zinc-800 active:scale-95"
+          >
+            ‹
+          </button>
+          <div className="min-w-[11rem] text-center" aria-live="polite">
+            <span className="text-sm font-bold text-zinc-200">
+              {new Date(date + 'T12:00:00').toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
+            </span>
+            {!isToday && (
+              <button type="button" onClick={goToday} className="block mx-auto mt-0.5 text-xs font-medium text-emerald-400 hover:text-emerald-300">
+                Jump to today
+              </button>
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={() => shiftDay(1)}
+            aria-label="Next day"
+            className="flex items-center justify-center w-10 h-10 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-300 text-xl leading-none hover:bg-zinc-800 active:scale-95"
+          >
+            ›
+          </button>
         </div>
         {error && <ErrorBanner message={error} />}
         {loading ? (
