@@ -257,7 +257,7 @@ function PerformanceTab({ league }: { league: League }) {
       .catch(() => setLoading(false))
     // Also fetch advanced stats
     const league = selectedPlayer.league
-    if (league === 'mlb' || league === 'nfl' || league === 'nba') {
+    if (league === 'mlb' || league === 'nfl' || league === 'nba' || league === 'nhl') {
       setStatsLoading(true)
       fetch(`/api/player/${selectedPlayer.id}/stats?league=${league}`)
         .then(r => r.json()).then(d => { setStats(d); setStatsLoading(false) })
@@ -397,8 +397,45 @@ function PerformanceTab({ league }: { league: League }) {
             </div>
           )}
 
+          {/* NHL season stats */}
+          {selectedPlayer.league === 'nhl' && (
+            <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider">NHL — Season Stats (NHL.com)</span>
+                {statsLoading && <span className="text-[10px] text-zinc-600 bg-zinc-800 px-1.5 py-0.5 rounded animate-pulse">loading...</span>}
+              </div>
+              {stats?.stats ? (
+                <div>
+                  <div className="flex items-center gap-2 mb-3 text-sm text-zinc-500">
+                    <span>{stats.player_name_nhl} · {stats.position}</span>
+                    <span className="text-zinc-700">|</span>
+                    <span>{stats.team} · {stats.games} GP · {stats.window}</span>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    {stats.stats.goals != null && <StatBox label="G" value={stats.stats.goals} />}
+                    {stats.stats.assists != null && <StatBox label="A" value={stats.stats.assists} />}
+                    {stats.stats.points != null && <StatBox label="PTS" value={stats.stats.points} />}
+                    {stats.stats.shots != null && <StatBox label="SOG" value={stats.stats.shots} />}
+                    {stats.stats.shooting_pct != null && <StatBox label="SH%" value={stats.stats.shooting_pct + '%'} />}
+                    {stats.stats.plus_minus != null && <StatBox label="±" value={(stats.stats.plus_minus > 0 ? '+' : '') + stats.stats.plus_minus} />}
+                    {stats.stats.pim != null && <StatBox label="PIM" value={stats.stats.pim} />}
+                    {stats.stats.ppg != null && <StatBox label="PPG" value={stats.stats.ppg} />}
+                    {stats.stats.ppp != null && <StatBox label="PPP" value={stats.stats.ppp} />}
+                    {stats.stats.shg != null && <StatBox label="SHG" value={stats.stats.shg} />}
+                    {stats.stats.toi != null && <StatBox label="TOI" value={stats.stats.toi} />}
+                    {stats.stats.faceoff_pct != null && <StatBox label="FO%" value={stats.stats.faceoff_pct + '%'} />}
+                  </div>
+                </div>
+              ) : stats?.message ? (
+                <p className="text-xs text-zinc-600">{stats.message}</p>
+              ) : (
+                <p className="text-xs text-zinc-600">NHL stats not available for this player.</p>
+              )}
+            </div>
+          )}
+
           {/* Other leagues — coming soon */}
-          {selectedPlayer.league !== 'mlb' && selectedPlayer.league !== 'nfl' && selectedPlayer.league !== 'nba' && (
+          {selectedPlayer.league !== 'mlb' && selectedPlayer.league !== 'nfl' && selectedPlayer.league !== 'nba' && selectedPlayer.league !== 'nhl' && (
             <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-4">
               <div className="flex items-center gap-2 mb-3">
                 <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Advanced Metrics</span>
