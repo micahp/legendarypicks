@@ -412,6 +412,149 @@ def prop_stats(market: Optional[str] = Query(None),
             for r in rows]
 
 
+# ── Slate: props grouped by game ──────────────────────────────────
+
+@app.get("/api/props/slate")
+def props_slate(league: Optional[str] = Query(None),
+                date: Optional[str] = Query(None)):
+    """Return props grouped by game → team → player. For the Slate tab."""
+    sql = """SELECT p.id, p.market, p.line, p.side, p.source,
+                    pl.name AS player_name, pl.team AS player_team, pl.league,
+                    pg.id AS game_id, pg.home, pg.away, pg.date AS game_date
+             FROM props p
+             JOIN players pl ON pl.id = p.player_id
+             JOIN prop_games pg ON pg.id = p.game_id
+             WHERE 1=1"""
+    params = []
+    if league:
+        sql += " AND pl.league = ?"
+        params.append(league)
+    if date:
+        sql += " AND pg.date = ?"
+        params.append(date)
+    sql += " ORDER BY pg.date, pg.home, pg.away, pl.name, p.market, p.side"
+    with closing(_db()) as con:
+        rows = con.execute(sql, params).fetchall()
+
+    # Group: game → team → player → props
+    games = {}
+    for r in rows:
+        gkey = f"{r['game_id']}"
+        if gkey not in games:
+            games[gkey] = {
+                "game_id": r["game_id"],
+                "home": r["home"],
+                "away": r["away"],
+                "date": r["game_date"],
+                "league": r["league"],
+                "players": {}
+            }
+        pkey = r["player_name"]
+        if pkey not in games[gkey]["players"]:
+            games[gkey]["players"][pkey] = {
+                "name": r["player_name"],
+                "team": r["player_team"],
+                "props": []
+            }
+        games[gkey]["players"][pkey]["props"].append({
+            "market": r["market"],
+            "line": r["line"],
+            "side": r["side"],
+            "source": r["source"],
+        })
+
+    # Convert to list sorted by date
+    result = sorted(games.values(), key=lambda g: g["date"])
+    for g in result:
+        g["players"] = sorted(g["players"].values(), key=lambda p: p["name"])
+        g["prop_count"] = sum(len(p["props"]) for p in g["players"])
+
+    return result
+
+
+# ── Performance: EMA-weighted hit rates ────────────────────────────
+
+@app.get("/api/props/player/{player_id}/performance")
+def player_performance(player_id: int, market: Optional[str] = Query(None)):
+    """EMA-weighted hit rates for a player, grouped by market+side.
+
+    Weights: last 5 games = 0.5, next 5 = 0.25, next 10 = 0.15, rest = 0.1.
+    """
+    sql = """SELECT p.market, p.side, p.line, r.actual_value, r.hit, r.settled_at
+             FROM props p
+             JOIN prop_results r ON r.prop_id = p.id
+             WHERE p.player_id = ? AND r.hit IS NOT NULL"""
+    params = [player_id]
+    if market:
+        sql += " AND p.market = ?"
+        params.append(market)
+    sql += " ORDER BY r.settled_at DESC LIMIT 200"
+    with closing(_db()) as con:
+        rows = con.execute(sql, params).fetchall()
+
+    # Group by market+side, compute EMA buckets
+    from collections import defaultdict
+    groups = defaultdict(list)
+    for r in rows:
+        key = f"{r['market']}|{r['side']}"
+        groups[key].append({"hit": r["hit"], "actual": r["actual_value"], "line": r["line"]})
+
+    result = []
+    for key, entries in groups.items():
+        market_name, side = key.split("|", 1)
+        total = len(entries)
+        if total == 0:
+            continue
+
+        # EMA buckets
+        def ema(entries, start, end, weight):
+            bucket = entries[start:end]
+            if not bucket:
+                return None
+            return round(sum(1 for e in bucket if e["hit"]) / len(bucket), 3)
+
+        l5 = ema(entries, 0, 5, 0.5)
+        l10 = ema(entries, 0, 10, 0.25) if total >= 5 else None
+        l20 = ema(entries, 0, 20, 0.15) if total >= 10 else None
+        season = ema(entries, 0, total, 0.1)
+
+        # Weighted composite
+        parts = []
+        if l5 is not None:
+            parts.append((l5, 0.5))
+        if l10 is not None and total >= 10:
+            parts.append((l10, 0.25))
+        if l20 is not None and total >= 20:
+            parts.append((l20, 0.15))
+        parts.append((season, 0.1))
+        total_weight = sum(w for _, w in parts)
+        weighted = round(sum(r * w for r, w in parts) / total_weight, 3) if total_weight > 0 else season
+
+        # Trend: compare L5 to L20
+        trend = "→"
+        if l5 is not None and l20 is not None:
+            diff = l5 - l20
+            if diff > 0.1:
+                trend = "↑"
+            elif diff < -0.1:
+                trend = "↓"
+
+        result.append({
+            "market": market_name,
+            "side": side,
+            "total_settled": total,
+            "hit_rate_l5": l5,
+            "hit_rate_l10": l10,
+            "hit_rate_l20": l20,
+            "hit_rate_season": season,
+            "hit_rate_weighted": weighted,
+            "trend": trend,
+        })
+
+    result.sort(key=lambda x: x["total_settled"], reverse=True)
+    return {"player_id": player_id, "performance": result}
+
+
 # ── ingestion helper ───────────────────────────────────────────────
 
 class PropIngest(BaseModel):
