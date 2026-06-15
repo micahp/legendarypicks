@@ -566,8 +566,7 @@ def player_stats(player_id: int,
     """Return advanced stats for a player. MLB uses Statcast via pybaseball."""
     from datetime import datetime as dt2, timedelta
 
-    # Only MLB for now
-    if league not in ("mlb",):
+    if league not in ("mlb", "nfl"):
         return {"player_id": player_id, "stats": None,
                 "message": f"Advanced stats not yet available for {league}"}
 
@@ -583,19 +582,37 @@ def player_stats(player_id: int,
     if cache_key in _stats_cache and _stats_cache[cache_key][0] > now:
         return _stats_cache[cache_key][1]
 
+    result = {"player_id": player_id, "player_name": player_name, "league": league}
+
+    # ── MLB: Statcast via pybaseball ──────────────────────────────
+    if league == "mlb":
+        result.update(_get_mlb_stats(player_name, player_id, statcast_id, now))
+
+    # ── NFL: nflverse via nfl_data_py ─────────────────────────────
+    elif league == "nfl":
+        result.update(_get_nfl_stats(player_name, player_id, now))
+
+    _stats_cache[cache_key] = (now + 3600, result)
+    return result
+
+
+def _get_mlb_stats(player_name: str, player_id: int, statcast_id, now: float):
+    """Pull MLB Statcast data via pybaseball. Returns dict to merge into result."""
+    from datetime import datetime as dt2, timedelta
     try:
         from pybaseball import statcast_batter, statcast_pitcher, playerid_lookup
         import pandas as pd
+    except ImportError:
+        return {"stats": None, "message": "pybaseball not installed"}
 
+    try:
         end = dt2.now()
         start = end - timedelta(days=30)
         start_str = start.strftime("%Y-%m-%d")
         end_str = end.strftime("%Y-%m-%d")
 
-        # Resolve Statcast ID: use provided ID, or look up by name
         sid = statcast_id
         if not sid:
-            # Try name lookup: "Ryan Gusto" → last="Gusto", first="Ryan"
             parts = player_name.strip().split(" ", 1)
             last = parts[-1]
             first = parts[0] if len(parts) > 1 else ""
@@ -606,44 +623,34 @@ def player_stats(player_id: int,
             except Exception:
                 pass
         if not sid:
-            result = {"player_id": player_id, "player_name": player_name,
-                      "league": league, "stats": None,
-                      "message": f"Could not find Statcast ID for {player_name}"}
-            _stats_cache[cache_key] = (now + 3600, result)
-            return result
+            return {"stats": None, "message": f"Could not find Statcast ID for {player_name}"}
 
-        result = {"player_id": player_id, "player_name": player_name,
-                  "league": league, "window": "30d", "batting": None, "pitching": None}
+        out = {"window": "30d", "batting": None, "pitching": None}
 
-        # ── Batting ──
         bat = statcast_batter(start_str, end_str, player_id=sid)
         if bat is not None and len(bat) > 0:
             bat = bat[bat["events"].notna() | bat["launch_speed"].notna()]
             bb = bat[bat["launch_speed"].notna()]
             events = bat["events"].dropna()
-
             avg_ev = round(float(bb["launch_speed"].mean()), 1) if len(bb) > 0 else None
             hard_hit = round(float((bb["launch_speed"] >= 95).mean() * 100), 1) if len(bb) > 0 else None
             barrel = round(float(((bb["launch_speed"] >= 98) & (bb["launch_angle"].between(26, 30))).mean() * 100), 1) if len(bb) > 0 else None
             avg_la = round(float(bb["launch_angle"].mean()), 1) if len(bb) > 0 else None
             woba = round(float(bat[bat["woba_value"].notna()]["woba_value"].mean()), 3)
             xwoba = round(float(bb["estimated_woba_using_speedangle"].mean()), 3) if len(bb) > 0 else None
-
             hits = int(events.isin(["single", "double", "triple", "home_run"]).sum())
             ab = len(events) - int((events == "walk").sum()) - int((events == "sac_fly").sum()) - int((events.isin(["sac_bunt", "sac_bunt_double_play"])).sum())
             avg = round(hits / ab, 3) if ab > 0 else 0
             hr = int((events == "home_run").sum())
             k_pct = round(float((events == "strikeout").mean() * 100), 1)
             bb_pct = round(float((events == "walk").mean() * 100), 1)
-
-            result["batting"] = {
+            out["batting"] = {
                 "avg": avg, "hr": hr, "k_pct": k_pct, "bb_pct": bb_pct,
                 "exit_velo": avg_ev, "hard_hit_pct": hard_hit,
                 "barrel_pct": barrel, "launch_angle": avg_la,
                 "woba": woba, "xwoba": xwoba,
             }
 
-        # ── Pitching ──
         pit = statcast_pitcher(start_str, end_str, player_id=sid)
         if pit is not None and len(pit) > 0:
             whiff = round(float(pit["description"].isin(["swinging_strike", "swinging_strike_blocked"]).mean() * 100), 1)
@@ -652,24 +659,73 @@ def player_stats(player_id: int,
             barrel_against = round(float(((bb_a["launch_speed"] >= 98) & (bb_a["launch_angle"].between(26, 30))).mean() * 100), 1) if len(bb_a) > 0 else None
             xwoba_against = round(float(bb_a["estimated_woba_using_speedangle"].mean()), 3) if len(bb_a) > 0 else None
             k_pct_p = round(float((pit["events"] == "strikeout").mean() * 100), 1) if "events" in pit.columns else None
-
-            result["pitching"] = {
+            out["pitching"] = {
                 "whiff_pct": whiff, "k_pct": k_pct_p,
                 "exit_velo_against": ev_against,
                 "barrel_pct_against": barrel_against,
                 "xwoba_against": xwoba_against,
             }
-
-        # Cache for 1 hour (Statcast data is slow)
-        _stats_cache[cache_key] = (now + 3600, result)
-        return result
-
-    except ImportError:
-        return {"player_id": player_id, "stats": None,
-                "message": "pybaseball not installed"}
+        return out
     except Exception as e:
-        return {"player_id": player_id, "stats": None,
-                "message": f"Statcast error: {str(e)[:200]}"}
+        return {"stats": None, "message": f"Statcast error: {str(e)[:200]}"}
+
+
+def _get_nfl_stats(player_name: str, player_id: int, now: float):
+    """Pull NFL weekly stats via nfl_data_py/nflverse. Returns dict."""
+    try:
+        import nfl_data_py as nfl
+    except ImportError:
+        return {"stats": None, "message": "nfl_data_py not installed"}
+
+    try:
+        # Resolve player by name from rosters
+        parts = player_name.strip().split(" ", 1)
+        first = parts[0] if len(parts) > 0 else ""
+        last = parts[1] if len(parts) > 1 else parts[0]
+        rosters = nfl.import_weekly_rosters([2025])
+        match = rosters[(rosters["first_name"].str.contains(first, case=False, na=False)) &
+                        (rosters["last_name"].str.contains(last, case=False, na=False))]
+        if len(match) == 0:
+            return {"stats": None, "message": f"Could not find NFL ID for {player_name}"}
+        nfl_id = match.iloc[0]["player_id"]
+        position = match.iloc[0]["position"]
+        team = match.iloc[0]["team"]
+        nfl_name = match.iloc[0]["player_name"]
+
+        # Pull most recent season weekly stats
+        weekly = nfl.import_weekly_data([2024])
+        player_data = weekly[weekly["player_id"] == nfl_id].sort_values("week")
+        if len(player_data) == 0:
+            weekly = nfl.import_weekly_data([2025])
+            player_data = weekly[weekly["player_id"] == nfl_id].sort_values("week")
+
+        games = len(player_data)
+        if games == 0:
+            return {"stats": None, "message": f"No weekly data for {nfl_name}"}
+
+        out = {"window": f"{games}g (season)", "player_name_nfl": nfl_name,
+               "position": position, "team": team, "games": games,
+               "stats": {}}
+
+        # Passing stats
+        if position in ("QB", "RB", "WR", "TE"):
+            row = player_data
+            out["stats"]["passing_yards_pg"] = round(float(row["passing_yards"].mean()), 1) if "passing_yards" in row.columns else None
+            out["stats"]["passing_tds"] = int(row["passing_tds"].sum()) if "passing_tds" in row.columns else None
+            out["stats"]["interceptions"] = int(row["interceptions"].sum()) if "interceptions" in row.columns else None
+            out["stats"]["completions_pg"] = round(float(row["completions"].mean()), 1) if "completions" in row.columns else None
+            out["stats"]["passing_epa"] = round(float(row["passing_epa"].sum()), 1) if "passing_epa" in row.columns else None
+            out["stats"]["carries_pg"] = round(float(row["carries"].mean()), 1) if "carries" in row.columns else None
+            out["stats"]["rushing_yards_pg"] = round(float(row["rushing_yards"].mean()), 1) if "rushing_yards" in row.columns else None
+            out["stats"]["receptions"] = int(row["receptions"].sum()) if "receptions" in row.columns else None
+            out["stats"]["receiving_yards_pg"] = round(float(row["receiving_yards"].mean()), 1) if "receiving_yards" in row.columns else None
+            out["stats"]["targets"] = int(row["targets"].sum()) if "targets" in row.columns else None
+            out["stats"]["fantasy_points_pg"] = round(float(row["fantasy_points"].mean()), 1) if "fantasy_points" in row.columns else None
+            out["stats"]["fantasy_points_ppr_pg"] = round(float(row["fantasy_points_ppr"].mean()), 1) if "fantasy_points_ppr" in row.columns else None
+
+        return out
+    except Exception as e:
+        return {"stats": None, "message": f"NFL stats error: {str(e)[:200]}"}
 
 
 # ── ingestion helper ───────────────────────────────────────────────

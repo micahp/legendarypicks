@@ -255,10 +255,11 @@ function PerformanceTab({ league }: { league: League }) {
     fetch(`/api/props/player/${selectedPlayer.id}/performance`)
       .then(r => r.json()).then(d => { setPerf(d.performance || []); setLoading(false) })
       .catch(() => setLoading(false))
-    // Also fetch advanced stats for MLB
-    if (selectedPlayer.league === 'mlb') {
+    // Also fetch advanced stats
+    const league = selectedPlayer.league
+    if (league === 'mlb' || league === 'nfl') {
       setStatsLoading(true)
-      fetch(`/api/player/${selectedPlayer.id}/stats?league=mlb`)
+      fetch(`/api/player/${selectedPlayer.id}/stats?league=${league}`)
         .then(r => r.json()).then(d => { setStats(d); setStatsLoading(false) })
         .catch(() => setStatsLoading(false))
     }
@@ -324,8 +325,45 @@ function PerformanceTab({ league }: { league: League }) {
             </div>
           )}
 
+          {/* NFL weekly stats */}
+          {selectedPlayer.league === 'nfl' && (
+            <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider">NFL — Season Stats (nflverse)</span>
+                {statsLoading && <span className="text-[10px] text-zinc-600 bg-zinc-800 px-1.5 py-0.5 rounded animate-pulse">loading...</span>}
+              </div>
+              {stats?.stats ? (
+                <div>
+                  <div className="flex items-center gap-2 mb-3 text-sm text-zinc-500">
+                    <span>{stats.position} · {stats.team}</span>
+                    <span className="text-zinc-700">|</span>
+                    <span>{stats.games} games · {stats.window}</span>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    {stats.stats.passing_yards_pg != null && <StatBox label="Pass Yds/G" value={stats.stats.passing_yards_pg} />}
+                    {stats.stats.passing_tds != null && <StatBox label="Pass TD" value={stats.stats.passing_tds} />}
+                    {stats.stats.interceptions != null && <StatBox label="INT" value={stats.stats.interceptions} />}
+                    {stats.stats.completions_pg != null && <StatBox label="Cmp/G" value={stats.stats.completions_pg} />}
+                    {stats.stats.passing_epa != null && <StatBox label="EPA" value={stats.stats.passing_epa} desc="total" />}
+                    {stats.stats.carries_pg != null && <StatBox label="Carries/G" value={stats.stats.carries_pg} />}
+                    {stats.stats.rushing_yards_pg != null && <StatBox label="Rush Yds/G" value={stats.stats.rushing_yards_pg} />}
+                    {stats.stats.receptions != null && <StatBox label="Rec" value={stats.stats.receptions} />}
+                    {stats.stats.receiving_yards_pg != null && <StatBox label="Rec Yds/G" value={stats.stats.receiving_yards_pg} />}
+                    {stats.stats.targets != null && <StatBox label="Targets" value={stats.stats.targets} />}
+                    {stats.stats.fantasy_points_pg != null && <StatBox label="Fantasy/G" value={stats.stats.fantasy_points_pg} />}
+                    {stats.stats.fantasy_points_ppr_pg != null && <StatBox label="PPR/G" value={stats.stats.fantasy_points_ppr_pg} />}
+                  </div>
+                </div>
+              ) : stats?.message ? (
+                <p className="text-xs text-zinc-600">{stats.message}</p>
+              ) : (
+                <p className="text-xs text-zinc-600">NFL stats not available for this player.</p>
+              )}
+            </div>
+          )}
+
           {/* Other leagues — coming soon */}
-          {selectedPlayer.league !== 'mlb' && (
+          {selectedPlayer.league !== 'mlb' && selectedPlayer.league !== 'nfl' && (
             <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-4">
               <div className="flex items-center gap-2 mb-3">
                 <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Advanced Metrics</span>
