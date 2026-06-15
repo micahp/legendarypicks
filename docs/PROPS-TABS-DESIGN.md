@@ -2,6 +2,8 @@
 
 Inspired by props.cash. Five tabs ordered by dependency (each builds on the prior).
 
+**Global:** League pills (All / MLB / NBA / NFL / NHL) filter every tab. Default: Slate tab, MLB.
+
 ---
 
 ## Tab 1: Lines
@@ -25,9 +27,9 @@ Inspired by props.cash. Five tabs ordered by dependency (each builds on the prio
 
 ---
 
-## Tab 2: Performance (Hit Rates)
+## Tab 2: Performance (Player Stats Dashboard)
 
-**What:** Historical hit rates per player/market/side, EMA-weighted.
+**What:** Player deep-dive. Search a player → see advanced metrics for their league + EMA-weighted hit rates. Doubles as the educational layer — each metric has a plain-English tooltip.
 
 Weight decay: last 5 games ×0.5, next 5 ×0.25, next 10 ×0.15, rest ×0.1.
 

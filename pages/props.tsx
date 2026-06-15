@@ -23,6 +23,8 @@ interface PerfRow {
 }
 
 type Tab = 'lines' | 'slate' | 'performance' | 'matchups' | 'model'
+type League = 'All' | 'nba' | 'mlb' | 'nfl' | 'nhl'
+
 const TABS: { key: Tab; label: string }[] = [
   { key: 'lines', label: 'Lines' },
   { key: 'slate', label: 'Slate' },
@@ -30,7 +32,7 @@ const TABS: { key: Tab; label: string }[] = [
   { key: 'matchups', label: 'Matchups' },
   { key: 'model', label: 'Model' },
 ]
-const LEAGUES = ['All', 'nba', 'mlb', 'nfl', 'nhl']
+const LEAGUES: League[] = ['All', 'mlb', 'nba', 'nfl', 'nhl']
 const MARKETS = ['All', 'points', 'rebounds', 'assists', 'threes', 'strikeouts', 'passing_yards', 'rushing_yards', 'receiving_yards', 'hits', 'home_runs', 'goals', 'shots', 'saves']
 const BOOKS = ['All', 'bovada', 'kalshi']
 
@@ -51,12 +53,56 @@ function HitBadge({ hit }: { hit: boolean | null }) {
     : <span className="text-red-400 font-bold">❌</span>
 }
 
+function LeaguePills({ league, onChange }: { league: League; onChange: (l: League) => void }) {
+  return (
+    <div className="flex gap-1.5">
+      {LEAGUES.map(l => (
+        <button key={l} onClick={() => onChange(l)}
+          className={`px-3.5 py-1.5 rounded-lg text-sm font-medium transition-colors ${league === l ? 'bg-emerald-600 text-white' : 'bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-zinc-200'}`}>
+          {l === 'All' ? 'All' : l.toUpperCase()}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+function PlayerSearch({ query, setQuery, players, onSelect }: {
+  query: string; setQuery: (q: string) => void; players: Player[]; onSelect: (p: Player) => void
+}) {
+  return (
+    <div className="relative flex-1 min-w-[200px] max-w-sm">
+      <input type="text" value={query} onChange={e => setQuery(e.target.value)}
+        placeholder="Search player…"
+        className="w-full px-4 py-2.5 rounded-xl border border-zinc-800 bg-zinc-900 text-zinc-200 placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm" />
+      {players.length > 0 && (
+        <div className="absolute top-full mt-1 w-full rounded-xl border border-zinc-700 bg-zinc-900 shadow-xl z-50 overflow-hidden">
+          {players.map(p => (
+            <button key={p.id} onClick={() => onSelect(p)}
+              className="w-full text-left px-4 py-2.5 hover:bg-zinc-800 flex justify-between items-center text-sm">
+              <span className="font-medium">{p.name}</span>
+              <span className="text-xs text-zinc-500">{p.team} · {p.league.toUpperCase()}</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function Select({ value, onChange, options }: { value: string; onChange: (v: string) => void; options: { v: string; label: string }[] }) {
+  return (
+    <select value={value} onChange={e => onChange(e.target.value)}
+      className="px-3 py-2.5 rounded-xl border border-zinc-800 bg-zinc-900 text-zinc-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+      {options.map(o => <option key={o.v} value={o.v}>{o.label}</option>)}
+    </select>
+  )
+}
+
 // ── Tab: Lines ───────────────────────────────────────────
-function LinesTab() {
+function LinesTab({ league }: { league: League }) {
   const [query, setQuery] = useState('')
   const [players, setPlayers] = useState<Player[]>([])
   const [props, setProps] = useState<Prop[]>([])
-  const [league, setLeague] = useState('All')
   const [market, setMarket] = useState('All')
   const [book, setBook] = useState('All')
   const [loading, setLoading] = useState(false)
@@ -65,10 +111,7 @@ function LinesTab() {
   useEffect(() => {
     if (query.length < 2) { setPlayers([]); return }
     const t = setTimeout(async () => {
-      try {
-        const r = await fetch(`/api/players/search?q=${encodeURIComponent(query)}`)
-        setPlayers(await r.json())
-      } catch { /* */ }
+      try { const r = await fetch(`/api/players/search?q=${encodeURIComponent(query)}`); setPlayers(await r.json()) } catch {}
     }, 250)
     return () => clearTimeout(t)
   }, [query])
@@ -80,8 +123,7 @@ function LinesTab() {
     if (league !== 'All') params.set('league', league)
     if (market !== 'All') params.set('market', market)
     fetch(`/api/props?${params}`)
-      .then(r => r.json())
-      .then(d => { setProps(d); setLoading(false) })
+      .then(r => r.json()).then(d => { setProps(d); setLoading(false) })
       .catch(() => { setError('Failed to load props.'); setLoading(false) })
   }, [query, league, market])
 
@@ -89,32 +131,12 @@ function LinesTab() {
 
   return (
     <div className="space-y-4">
-      {/* Search + filters */}
       <div className="flex flex-wrap gap-2 items-center">
-        <div className="relative flex-1 min-w-[200px] max-w-sm">
-          <input type="text" value={query} onChange={e => setQuery(e.target.value)}
-            placeholder="Search player…"
-            className="w-full px-4 py-2.5 rounded-xl border border-zinc-800 bg-zinc-900 text-zinc-200 placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm" />
-          {players.length > 0 && (
-            <div className="absolute top-full mt-1 w-full rounded-xl border border-zinc-700 bg-zinc-900 shadow-xl z-50 overflow-hidden">
-              {players.map(p => (
-                <button key={p.id} onClick={() => { setQuery(p.name); setPlayers([]) }}
-                  className="w-full text-left px-4 py-2.5 hover:bg-zinc-800 flex justify-between items-center text-sm">
-                  <span className="font-medium">{p.name}</span>
-                  <span className="text-xs text-zinc-500">{p.team} · {p.league.toUpperCase()}</span>
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-        <Select value={league} onChange={setLeague} options={LEAGUES.map(l => ({ v: l, label: l === 'All' ? 'All Leagues' : l.toUpperCase() }))} />
+        <PlayerSearch query={query} setQuery={setQuery} players={players} onSelect={p => { setQuery(p.name); setPlayers([]) }} />
         <Select value={market} onChange={setMarket} options={MARKETS.map(m => ({ v: m, label: m === 'All' ? 'All Markets' : m.replace(/_/g, ' ') }))} />
         <Select value={book} onChange={setBook} options={BOOKS.map(b => ({ v: b, label: b === 'All' ? 'All Books' : b }))} />
       </div>
-
       {error && <div className="rounded-lg border border-red-500/40 bg-red-950/40 text-red-200 px-4 py-3 text-sm">{error}</div>}
-
-      {/* Table */}
       {loading ? <Skeleton lines={6} /> : filtered.length === 0 ? (
         <div className="text-center py-16 text-zinc-500 text-sm">No props found. Try a different filter or league.</div>
       ) : (
@@ -135,23 +157,14 @@ function LinesTab() {
             <tbody>
               {filtered.map(p => (
                 <tr key={p.id} className="border-b border-zinc-800/50 hover:bg-zinc-800/30 transition-colors">
-                  <td className="px-4 py-2.5">
-                    <span className="font-medium">{p.player_name}</span>
-                    <span className="text-zinc-500 text-xs ml-1.5">{p.player_team}</span>
-                  </td>
+                  <td className="px-4 py-2.5"><span className="font-medium">{p.player_name}</span><span className="text-zinc-500 text-xs ml-1.5">{p.player_team}</span></td>
                   <td className="px-4 py-2.5 text-zinc-300">{p.market.replace(/_/g, ' ')}</td>
                   <td className="px-4 py-2.5 text-right font-mono tabular-nums">{p.line}</td>
-                  <td className="px-4 py-2.5 text-center">
-                    <span className={`text-[11px] font-bold px-2 py-0.5 rounded ${p.side === 'over' ? 'bg-emerald-900/30 text-emerald-300' : 'bg-red-900/30 text-red-300'}`}>
-                      {p.side.toUpperCase()}
-                    </span>
-                  </td>
+                  <td className="px-4 py-2.5 text-center"><span className={`text-[11px] font-bold px-2 py-0.5 rounded ${p.side === 'over' ? 'bg-emerald-900/30 text-emerald-300' : 'bg-red-900/30 text-red-300'}`}>{p.side.toUpperCase()}</span></td>
                   <td className="px-4 py-2.5 text-right font-mono tabular-nums text-zinc-400">{p.actual_value ?? '—'}</td>
                   <td className="px-4 py-2.5 text-center"><HitBadge hit={p.hit} /></td>
                   <td className="px-4 py-2.5 text-zinc-500 text-xs capitalize">{p.source}</td>
-                  <td className="px-4 py-2.5 text-zinc-500 text-xs hidden md:table-cell whitespace-nowrap">
-                    {p.captured_at ? new Date(p.captured_at).toLocaleDateString() : '—'}
-                  </td>
+                  <td className="px-4 py-2.5 text-zinc-500 text-xs hidden md:table-cell whitespace-nowrap">{p.captured_at ? new Date(p.captured_at).toLocaleDateString() : '—'}</td>
                 </tr>
               ))}
             </tbody>
@@ -163,8 +176,7 @@ function LinesTab() {
 }
 
 // ── Tab: Slate ────────────────────────────────────────────
-function SlateTab() {
-  const [league, setLeague] = useState('mlb')
+function SlateTab({ league }: { league: League }) {
   const [slate, setSlate] = useState<SlateGame[]>([])
   const [loading, setLoading] = useState(true)
   const [expandedGame, setExpandedGame] = useState<number | null>(null)
@@ -174,22 +186,12 @@ function SlateTab() {
     const params = new URLSearchParams()
     if (league !== 'All') params.set('league', league)
     fetch(`/api/props/slate?${params}`)
-      .then(r => r.json())
-      .then(d => { setSlate(d); setLoading(false) })
+      .then(r => r.json()).then(d => { setSlate(d); setLoading(false) })
       .catch(() => setLoading(false))
   }, [league])
 
   return (
     <div className="space-y-4">
-      <div className="flex gap-2">
-        {['mlb', 'nba', 'nfl', 'nhl'].map(l => (
-          <button key={l} onClick={() => setLeague(l)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${league === l ? 'bg-emerald-600 text-white' : 'bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-zinc-200'}`}>
-            {l.toUpperCase()}
-          </button>
-        ))}
-      </div>
-
       {loading ? <Skeleton lines={4} /> : slate.length === 0 ? (
         <div className="text-center py-16 text-zinc-500 text-sm">No games on the board. Check back closer to game time.</div>
       ) : (
@@ -208,10 +210,7 @@ function SlateTab() {
                 <div className="border-t border-zinc-800 px-4 py-3 space-y-4 max-h-96 overflow-y-auto">
                   {g.players.map(p => (
                     <div key={p.name}>
-                      <div className="text-xs font-bold text-zinc-400 mb-1.5 flex items-center gap-1.5">
-                        {p.name}
-                        <span className="text-zinc-600 font-normal">{p.team}</span>
-                      </div>
+                      <div className="text-xs font-bold text-zinc-400 mb-1.5 flex items-center gap-1.5">{p.name}<span className="text-zinc-600 font-normal">{p.team}</span></div>
                       <div className="flex flex-wrap gap-1.5">
                         {p.props.map((pr, i) => (
                           <span key={i} className={`inline-flex items-center gap-1 px-2 py-1 rounded text-[11px] font-mono ${pr.side === 'over' ? 'bg-emerald-900/30 text-emerald-300' : 'bg-red-900/30 text-red-300'}`}>
@@ -231,8 +230,8 @@ function SlateTab() {
   )
 }
 
-// ── Tab: Performance ───────────────────────────────────────
-function PerformanceTab() {
+// ── Tab: Performance (player stats dashboard) ─────────────
+function PerformanceTab({ league }: { league: League }) {
   const [query, setQuery] = useState('')
   const [players, setPlayers] = useState<Player[]>([])
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null)
@@ -242,10 +241,7 @@ function PerformanceTab() {
   useEffect(() => {
     if (query.length < 2) { setPlayers([]); return }
     const t = setTimeout(async () => {
-      try {
-        const r = await fetch(`/api/players/search?q=${encodeURIComponent(query)}`)
-        setPlayers(await r.json())
-      } catch { /* */ }
+      try { const r = await fetch(`/api/players/search?q=${encodeURIComponent(query)}`); setPlayers(await r.json()) } catch {}
     }, 250)
     return () => clearTimeout(t)
   }, [query])
@@ -254,78 +250,106 @@ function PerformanceTab() {
     if (!selectedPlayer) return
     setLoading(true)
     fetch(`/api/props/player/${selectedPlayer.id}/performance`)
-      .then(r => r.json())
-      .then(d => { setPerf(d.performance || []); setLoading(false) })
+      .then(r => r.json()).then(d => { setPerf(d.performance || []); setLoading(false) })
       .catch(() => setLoading(false))
   }, [selectedPlayer])
 
+  // Determine which advanced metrics to show based on league
+  const advancedMetrics = selectedPlayer
+    ? {
+        mlb: ['xwOBA', 'Barrel%', 'Exit Velo', 'Hard Hit%', 'Whiff%', 'xFIP', 'Sprint Speed'],
+        nba: ['TS%', 'USG%', 'Pace', 'AST%', 'TOV%', 'REB%', 'Opp DvP'],
+        nfl: ['EPA/play', 'CPOE', 'aDOT', 'Target Share', 'Air Yards%', 'YAC', 'DVOA'],
+        nhl: ['Corsi%', 'Fenwick%', 'xG/60', 'PDO', 'O-Zone%', 'IPP', 'SH%'],
+      }[selectedPlayer.league] || []
+    : []
+
   return (
     <div className="space-y-4">
-      <div className="relative max-w-sm">
-        <input type="text" value={query} onChange={e => setQuery(e.target.value)}
-          placeholder="Search player…"
-          className="w-full px-4 py-2.5 rounded-xl border border-zinc-800 bg-zinc-900 text-zinc-200 placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm" />
-        {players.length > 0 && (
-          <div className="absolute top-full mt-1 w-full rounded-xl border border-zinc-700 bg-zinc-900 shadow-xl z-50 overflow-hidden">
-            {players.map(p => (
-              <button key={p.id} onClick={() => { setSelectedPlayer(p); setQuery(p.name); setPlayers([]) }}
-                className="w-full text-left px-4 py-2.5 hover:bg-zinc-800 flex justify-between items-center text-sm">
-                <span className="font-medium">{p.name}</span>
-                <span className="text-xs text-zinc-500">{p.team}</span>
-              </button>
-            ))}
-          </div>
-        )}
+      <div className="flex flex-wrap gap-2 items-center">
+        <PlayerSearch query={query} setQuery={setQuery} players={players} onSelect={p => { setSelectedPlayer(p); setQuery(p.name); setPlayers([]) }} />
       </div>
 
       {selectedPlayer && (
-        <h2 className="text-lg font-bold">{selectedPlayer.name} <span className="text-sm font-normal text-zinc-500">{selectedPlayer.team} · {selectedPlayer.league.toUpperCase()}</span></h2>
+        <div className="flex items-center gap-3">
+          <h2 className="text-lg font-bold">{selectedPlayer.name}</h2>
+          <span className="text-sm text-zinc-500">{selectedPlayer.team} · {selectedPlayer.league.toUpperCase()}</span>
+        </div>
       )}
 
-      {loading ? <Skeleton lines={5} /> : !selectedPlayer ? (
-        <div className="text-center py-16 text-zinc-500 text-sm">Search for a player to see their hit-rate history with EMA weighting.</div>
-      ) : perf.length === 0 ? (
-        <div className="text-center py-16 text-zinc-500 text-sm">No settled props yet for {selectedPlayer.name}. Props are settled after games finish.</div>
+      {!selectedPlayer ? (
+        <div className="text-center py-16 text-zinc-500 text-sm">Search for a player to see their hit rates and advanced metrics.</div>
       ) : (
-        <div className="rounded-xl border border-zinc-800 bg-zinc-900 overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-zinc-800 text-zinc-500 text-[11px] uppercase tracking-wider">
-                <th className="text-left px-4 py-3 font-medium">Market</th>
-                <th className="text-center px-3 py-3 font-medium">Side</th>
-                <th className="text-right px-3 py-3 font-medium">Settled</th>
-                <th className="text-right px-3 py-3 font-medium">L5</th>
-                <th className="text-right px-3 py-3 font-medium">L10</th>
-                <th className="text-right px-3 py-3 font-medium">L20</th>
-                <th className="text-right px-3 py-3 font-medium">Season</th>
-                <th className="text-right px-3 py-3 font-medium">Weighted</th>
-                <th className="text-center px-3 py-3 font-medium">Trend</th>
-              </tr>
-            </thead>
-            <tbody>
-              {perf.map((r, i) => (
-                <tr key={i} className="border-b border-zinc-800/50 hover:bg-zinc-800/30 transition-colors">
-                  <td className="px-4 py-2.5 font-medium">{r.market.replace(/_/g, ' ')}</td>
-                  <td className="px-3 py-2.5 text-center">
-                    <span className={`text-[11px] font-bold px-1.5 py-0.5 rounded ${r.side === 'over' ? 'bg-emerald-900/30 text-emerald-300' : 'bg-red-900/30 text-red-300'}`}>
-                      {r.side.toUpperCase()}
-                    </span>
-                  </td>
-                  <td className="px-3 py-2.5 text-right font-mono tabular-nums">{r.total_settled}</td>
-                  <td className="px-3 py-2.5 text-right font-mono tabular-nums">{r.hit_rate_l5 !== null ? (r.hit_rate_l5 * 100).toFixed(0) + '%' : '—'}</td>
-                  <td className="px-3 py-2.5 text-right font-mono tabular-nums">{r.hit_rate_l10 !== null ? (r.hit_rate_l10 * 100).toFixed(0) + '%' : '—'}</td>
-                  <td className="px-3 py-2.5 text-right font-mono tabular-nums">{r.hit_rate_l20 !== null ? (r.hit_rate_l20 * 100).toFixed(0) + '%' : '—'}</td>
-                  <td className="px-3 py-2.5 text-right font-mono tabular-nums">{r.hit_rate_season !== null ? (r.hit_rate_season * 100).toFixed(0) + '%' : '—'}</td>
-                  <td className="px-3 py-2.5 text-right font-mono tabular-nums font-bold">
-                    <span className={r.hit_rate_weighted >= 0.5 ? 'text-emerald-300' : 'text-red-300'}>
-                      {(r.hit_rate_weighted * 100).toFixed(0)}%
-                    </span>
-                  </td>
-                  <td className="px-3 py-2.5 text-center text-lg">{r.trend}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="space-y-6">
+          {/* Advanced metrics coming soon callout */}
+          {advancedMetrics.length > 0 && (
+            <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Advanced Metrics</span>
+                <span className="text-[10px] text-zinc-600 bg-zinc-800 px-1.5 py-0.5 rounded">coming soon</span>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {advancedMetrics.map(m => (
+                  <span key={m} className="px-3 py-1.5 rounded-lg bg-zinc-800 text-sm text-zinc-400 font-mono">{m}</span>
+                ))}
+              </div>
+              <p className="text-xs text-zinc-600 mt-3">
+                {selectedPlayer.league === 'nfl' && 'EPA, CPOE, target share, and more — the metrics sharp money uses to price props. Pulling from nflfastR soon.'}
+                {selectedPlayer.league === 'nba' && 'TS%, usage rate, pace-adjusted stats, and opponent defense-vs-position. Pulling from hoopR soon.'}
+                {selectedPlayer.league === 'mlb' && 'xwOBA, barrel rate, exit velocity, and Statcast metrics. Pulling from baseballr soon.'}
+                {selectedPlayer.league === 'nhl' && 'Corsi, expected goals, PDO, and shot-quality metrics. Pulling from fastRhockey soon.'}
+              </p>
+            </div>
+          )}
+
+          {/* Hit rate table */}
+          {loading ? <Skeleton lines={4} /> : perf.length === 0 ? (
+            <div className="text-center py-8 text-zinc-500 text-sm">No settled props yet. Props are settled after games finish.</div>
+          ) : (
+            <div className="rounded-xl border border-zinc-800 bg-zinc-900 overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-zinc-800 text-zinc-500 text-[11px] uppercase tracking-wider">
+                    <th className="text-left px-4 py-3 font-medium">Market</th>
+                    <th className="text-center px-3 py-3 font-medium">Side</th>
+                    <th className="text-right px-3 py-3 font-medium">Settled</th>
+                    <th className="text-right px-3 py-3 font-medium">L5</th>
+                    <th className="text-right px-3 py-3 font-medium">L10</th>
+                    <th className="text-right px-3 py-3 font-medium">L20</th>
+                    <th className="text-right px-3 py-3 font-medium">Season</th>
+                    <th className="text-right px-3 py-3 font-medium">Weighted</th>
+                    <th className="text-center px-3 py-3 font-medium">Trend</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {perf.map((r, i) => (
+                    <tr key={i} className="border-b border-zinc-800/50 hover:bg-zinc-800/30 transition-colors">
+                      <td className="px-4 py-2.5 font-medium">{r.market.replace(/_/g, ' ')}</td>
+                      <td className="px-3 py-2.5 text-center"><span className={`text-[11px] font-bold px-1.5 py-0.5 rounded ${r.side === 'over' ? 'bg-emerald-900/30 text-emerald-300' : 'bg-red-900/30 text-red-300'}`}>{r.side.toUpperCase()}</span></td>
+                      <td className="px-3 py-2.5 text-right font-mono tabular-nums">{r.total_settled}</td>
+                      <td className="px-3 py-2.5 text-right font-mono tabular-nums">{r.hit_rate_l5 !== null ? (r.hit_rate_l5 * 100).toFixed(0) + '%' : '—'}</td>
+                      <td className="px-3 py-2.5 text-right font-mono tabular-nums">{r.hit_rate_l10 !== null ? (r.hit_rate_l10 * 100).toFixed(0) + '%' : '—'}</td>
+                      <td className="px-3 py-2.5 text-right font-mono tabular-nums">{r.hit_rate_l20 !== null ? (r.hit_rate_l20 * 100).toFixed(0) + '%' : '—'}</td>
+                      <td className="px-3 py-2.5 text-right font-mono tabular-nums">{r.hit_rate_season !== null ? (r.hit_rate_season * 100).toFixed(0) + '%' : '—'}</td>
+                      <td className="px-3 py-2.5 text-right font-mono tabular-nums font-bold"><span className={r.hit_rate_weighted >= 0.5 ? 'text-emerald-300' : 'text-red-300'}>{(r.hit_rate_weighted * 100).toFixed(0)}%</span></td>
+                      <td className="px-3 py-2.5 text-center text-lg">{r.trend}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {/* Legend / guide */}
+          <details className="rounded-xl border border-zinc-800 bg-zinc-900 p-4 text-sm">
+            <summary className="font-medium text-zinc-400 cursor-pointer">How to read this</summary>
+            <div className="mt-3 space-y-2 text-zinc-500 text-xs leading-relaxed">
+              <p><strong>L5 / L10 / L20</strong> — Hit rate over the last 5, 10, or 20 settled props. Shorter windows react faster to slumps or hot streaks.</p>
+              <p><strong>Season</strong> — Hit rate across all settled props for this market. The big-picture baseline.</p>
+              <p><strong>Weighted</strong> — An EMA (exponential moving average) that gives more weight to recent games: L5 × 0.5 + L10 × 0.25 + L20 × 0.15 + season × 0.1. This is the best single number for predicting the next game.</p>
+              <p><strong>Trend</strong> — ↑ improving (L5 &gt; L20 by 10%+), → flat, ↓ declining.</p>
+            </div>
+          </details>
         </div>
       )}
     </div>
@@ -338,9 +362,7 @@ function MatchupsTab() {
     <div className="text-center py-16 space-y-3">
       <div className="text-5xl">🏟️</div>
       <h3 className="text-lg font-bold text-zinc-300">Matchup Analysis</h3>
-      <p className="text-zinc-500 text-sm max-w-md mx-auto">
-        Player-vs-opponent history with defensive rankings and pace-adjusted splits. Coming after settlement data is live.
-      </p>
+      <p className="text-zinc-500 text-sm max-w-md mx-auto">Player-vs-opponent history with defensive rankings and pace-adjusted splits. Coming after settlement data is live.</p>
     </div>
   )
 }
@@ -351,26 +373,15 @@ function ModelTab() {
     <div className="text-center py-16 space-y-3">
       <div className="text-5xl">🧠</div>
       <h3 className="text-lg font-bold text-zinc-300">Model Projections</h3>
-      <p className="text-zinc-500 text-sm max-w-md mx-auto">
-        LightGBM projections vs sportsbook lines with confidence scoring. Built on EMA performance + matchup context + pace-adjusted features.
-      </p>
+      <p className="text-zinc-500 text-sm max-w-md mx-auto">LightGBM projections vs sportsbook lines with confidence scoring. Built on EMA performance + matchup context + pace-adjusted features.</p>
     </div>
-  )
-}
-
-// ── Helpers ────────────────────────────────────────────────
-function Select({ value, onChange, options }: { value: string; onChange: (v: string) => void; options: { v: string; label: string }[] }) {
-  return (
-    <select value={value} onChange={e => onChange(e.target.value)}
-      className="px-3 py-2.5 rounded-xl border border-zinc-800 bg-zinc-900 text-zinc-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
-      {options.map(o => <option key={o.v} value={o.v}>{o.label}</option>)}
-    </select>
   )
 }
 
 // ── Page ───────────────────────────────────────────────────
 export default function PropsPage() {
-  const [tab, setTab] = useState<Tab>('lines')
+  const [tab, setTab] = useState<Tab>('slate')
+  const [league, setLeague] = useState<League>('mlb')
 
   return (
     <>
@@ -379,8 +390,12 @@ export default function PropsPage() {
         <meta name="description" content="Player prop lines, hit rates, matchup analysis, and model projections" />
       </Head>
 
-      <div className="space-y-6">
-        <h1 className="text-3xl font-extrabold tracking-tight">Props</h1>
+      <div className="space-y-4">
+        {/* Page header row: title + league pills */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <h1 className="text-3xl font-extrabold tracking-tight">Props</h1>
+          <LeaguePills league={league} onChange={setLeague} />
+        </div>
 
         {/* Tab bar */}
         <div className="flex gap-0 overflow-x-auto border-b border-zinc-800 -mx-4 px-4">
@@ -393,9 +408,9 @@ export default function PropsPage() {
         </div>
 
         {/* Tab content */}
-        {tab === 'lines' && <LinesTab />}
-        {tab === 'slate' && <SlateTab />}
-        {tab === 'performance' && <PerformanceTab />}
+        {tab === 'lines' && <LinesTab league={league} />}
+        {tab === 'slate' && <SlateTab league={league} />}
+        {tab === 'performance' && <PerformanceTab league={league} />}
         {tab === 'matchups' && <MatchupsTab />}
         {tab === 'model' && <ModelTab />}
       </div>
