@@ -10,7 +10,7 @@ What changed from the original:
   - /strength endpoint: teams ranked by win% / differential / form — the quality prior shared
     with the prediction-market trading strategy (its only unfalsified edge: buy undervalued QUALITY)
 """
-import os, sqlite3, datetime as dt, time
+import os, sqlite3, datetime as dt
 from contextlib import closing
 from typing import Optional
 from fastapi import FastAPI, HTTPException, Query
@@ -564,9 +564,7 @@ def player_performance(player_id: int, market: Optional[str] = Query(None)):
     return {"player_id": player_id, "performance": result}
 
 
-# ── Player Stats (Statcast via pybaseball) ─────────────────────────
-
-_stats_cache = {}  # {cache_key: (expires_at, data)}
+# ── Player Stats (DB-backed, all leagues) ──────────────────────────
 
 @app.get("/api/player/{player_id}/stats")
 def player_stats(player_id: int,
@@ -586,11 +584,6 @@ def player_stats(player_id: int,
         raise HTTPException(404, "Player not found")
     player_name = row["name"]
 
-    cache_key = f"stats:{league}:{player_id}"
-    now = time.time()
-    if cache_key in _stats_cache and _stats_cache[cache_key][0] > now:
-        return _stats_cache[cache_key][1]
-
     result = {"player_id": player_id, "player_name": player_name, "league": league}
 
     # ── MLB: Statcast via pybaseball ──────────────────────────────
@@ -609,7 +602,6 @@ def player_stats(player_id: int,
     elif league == "nhl":
         result.update(_get_nhl_stats(player_name, player_id, now))
 
-    _stats_cache[cache_key] = (now + 3600, result)
     return result
 
 
@@ -765,99 +757,45 @@ def _get_nba_stats(player_name: str, player_id: int, now: float):
 
 
 def _get_nhl_stats(player_name: str, player_id: int, now: float):
-    """Pull NHL stats via api-web.nhle.com."""
-    import urllib.request as urlreq, json
+    """Pull NHL stats from player_stats table (populated by ingest_nhl.py)."""
+    import os, sqlite3 as sq
 
     try:
-        # Search for player by name — try search API, fall back to known IDs
-        parts = player_name.strip().split(" ", 1)
-        last = parts[-1] if len(parts) > 1 else player_name
-        first = parts[0] if len(parts) > 1 else ""
-
-        nhl_id = None
-        nhl_name = None
-
-        # Try NHL search API
-        try:
-            search_url = f"https://api.nhle.com/stats/rest/en/player/search?q={player_name.replace(' ', '%20')}"
-            req = urlreq.Request(search_url, headers={"User-Agent": "Mozilla/5.0"})
-            with urlreq.urlopen(req, timeout=8) as r:
-                sr = json.loads(r.read().decode())
-            if isinstance(sr, dict) and "data" in sr and len(sr["data"]) > 0:
-                nhl_id = sr["data"][0].get("playerId")
-                nhl_name = sr["data"][0].get("name")
-        except Exception:
-            pass
-
-        # Fallback: try suggest API
-        if not nhl_id:
-            try:
-                search_url = f"https://suggest.svc.nhle.com/svc/suggest/v1/minplayers/{last}/10"
-                req = urlreq.Request(search_url, headers={"User-Agent": "Mozilla/5.0"})
-                with urlreq.urlopen(req, timeout=5) as r:
-                    suggestions = json.loads(r.read().decode())
-                if isinstance(suggestions, dict) and "suggestions" in suggestions:
-                    for s in suggestions["suggestions"]:
-                        if last.lower() in str(s).lower():
-                            parts_s = str(s).split("|")
-                            if len(parts_s) >= 1:
-                                try:
-                                    nhl_id = int(parts_s[0])
-                                    nhl_name = parts_s[1] if len(parts_s) > 1 else str(s)
-                                    break
-                                except ValueError:
-                                    continue
-            except Exception:
-                pass
-
-        # Hardcoded fallback for known stars (NHL search API is 404, suggest DNS fails)
-        KNOWN_NHL = {"connor mcdavid": 8478402, "auston matthews": 8479318,
-                     "nathan mackinnon": 8477492, "leon draisaitl": 8477934,
-                     "david pastrnak": 8477956, "nikita kucherov": 8476453}
-        if not nhl_id:
-            nhl_id = KNOWN_NHL.get(player_name.lower())
-        if not nhl_id:
-            return {"stats": None, "message": f"Could not find NHL ID for {player_name}. NHL search API unavailable from this server."}
-
-        # Fetch player landing page (stats)
-        landing_url = f"https://api-web.nhle.com/v1/player/{nhl_id}/landing"
-        req = urlreq.Request(landing_url, headers={"User-Agent": "Mozilla/5.0"})
-        with urlreq.urlopen(req, timeout=10) as r:
-            data = json.loads(r.read().decode())
-
-        st = data.get("seasonTotals", [])
-        if not st:
-            return {"stats": None, "message": f"No season stats for {nhl_name or player_name}"}
-
-        latest = st[-1]
-        pos = data.get("position", "?")
-        team = data.get("currentTeamAbbrev", "?")
-        games = int(latest.get("gamesPlayed", 0))
-        first = data.get("firstName", {})
-        last = data.get("lastName", {})
-        display = f"{first.get('default','')} {last.get('default','')}".strip()
+        db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "picks.db")
+        con = sq.connect(db_path)
+        con.row_factory = sq.Row
+        row = con.execute(
+            "SELECT * FROM player_stats WHERE league='nhl' AND player_name=? ORDER BY season DESC LIMIT 1",
+            (player_name,)
+        ).fetchone()
+        if not row:
+            # Fuzzy fallback
+            parts = player_name.strip().split(" ", 1)
+            last = parts[-1] if len(parts) > 1 else player_name
+            row = con.execute(
+                "SELECT * FROM player_stats WHERE league='nhl' AND player_name LIKE ? ORDER BY season DESC LIMIT 1",
+                (f"%{last}%",)
+            ).fetchone()
+        if not row:
+            con.close()
+            return {"stats": None, "message": f"No NHL data for {player_name}. Run ingest_nhl.py."}
 
         out = {
-            "window": str(latest.get("season", "?")),
-            "player_name_nhl": display or player_name,
-            "position": pos,
-            "team": team,
-            "games": games,
+            "window": str(row["season"]),
+            "player_name_nhl": row["player_name"],
+            "position": row["nhl_position"],
+            "team": row["nhl_team"],
+            "games": row["games"],
+            "source": row["source"] or "nhle.com",
             "stats": {
-                "goals": int(latest.get("goals", 0)),
-                "assists": int(latest.get("assists", 0)),
-                "points": int(latest.get("points", 0)),
-                "shots": int(latest.get("shots", 0)),
-                "shooting_pct": round(float(latest.get("shootingPctg", 0)) * 100, 1),
-                "plus_minus": int(latest.get("plusMinus", 0)),
-                "pim": int(latest.get("pim", 0)),
-                "ppg": int(latest.get("powerPlayGoals", 0)),
-                "ppp": int(latest.get("powerPlayPoints", 0)),
-                "shg": int(latest.get("shorthandedGoals", 0)),
-                "toi": str(latest.get("avgToi", "?")),
-                "faceoff_pct": round(float(latest.get("faceoffWinningPctg", 0)) * 100, 1),
+                "goals": row["goals"], "assists": row["assists"], "points": row["points_nhl"],
+                "shots": row["shots"], "shooting_pct": row["shooting_pct"],
+                "plus_minus": row["plus_minus"], "pim": row["pim"],
+                "ppg": row["ppg"], "ppp": row["ppp"], "shg": row["shg"],
+                "toi": row["toi"], "faceoff_pct": row["faceoff_pct"],
             }
         }
+        con.close()
         return out
     except Exception as e:
         return {"stats": None, "message": f"NHL stats error: {str(e)[:200]}"}
