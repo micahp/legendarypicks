@@ -3,3 +3,5 @@ __pycache__
 data/cache
 data/*.db
 *.db
+*.bak
+*.bak-*

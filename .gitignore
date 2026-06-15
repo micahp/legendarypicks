@@ -50,3 +50,8 @@ backend/__pycache__/
 backend/venv/
 
 .next/
+
+# DB backups — never commit
+*.bak
+*.bak-*
+backend/data/*.bak*

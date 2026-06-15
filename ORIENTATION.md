@@ -45,6 +45,16 @@ bind-mounted). Deployed via docker-compose behind nginx on this server (Contabo,
 - `services/sports.ts` — API client (base = relative `/api`; NEVER hardcode a host — AGENTS.md §6/§8).
 - `next.config.js` — eslint/type unblock for builds + `/api`→backend rewrite (`API_PROXY_TARGET`).
 
+## Running ingest scripts / backend scripts (avoid the recurring ModuleNotFoundError)
+The ingest libs (pybaseball, nfl_data_py) live ONLY in `backend/venv` — NOT in the container, NOT on
+host python. And `espn_client` is a local module (needs cwd=`backend/`). So the ONE correct way:
+```
+cd /root/legendarypicks/backend && venv/bin/python <script>.py     # e.g. ingest_statcast.py, ../scripts/coverage_report.py
+```
+- ❌ container (`docker compose exec backend python …`) → missing pybaseball/nfl_data_py.
+- ❌ host `python3` → broken cryptography/fastapi.
+- ✅ `backend/venv` from `backend/` → has fastapi + pybaseball + nfl_data_py + local modules.
+
 ## Run / deploy
 - `docker compose up -d --build` (frontend 3100, backend 8100, loopback only; nginx fronts it).
 - Build MUST compile before commit; verify pages RENDER DATA, not just 200 (AGENTS.md).
