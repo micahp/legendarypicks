@@ -566,7 +566,7 @@ def player_stats(player_id: int,
     """Return advanced stats for a player. MLB uses Statcast via pybaseball."""
     from datetime import datetime as dt2, timedelta
 
-    if league not in ("mlb", "nfl"):
+    if league not in ("mlb", "nfl", "nba"):
         return {"player_id": player_id, "stats": None,
                 "message": f"Advanced stats not yet available for {league}"}
 
@@ -591,6 +591,10 @@ def player_stats(player_id: int,
     # ── NFL: nflverse via nfl_data_py ─────────────────────────────
     elif league == "nfl":
         result.update(_get_nfl_stats(player_name, player_id, now))
+
+    # ── NBA: nba_api (stats.nba.com) ──────────────────────────────
+    elif league == "nba":
+        result.update(_get_nba_stats(player_name, player_id, now))
 
     _stats_cache[cache_key] = (now + 3600, result)
     return result
@@ -726,6 +730,55 @@ def _get_nfl_stats(player_name: str, player_id: int, now: float):
         return out
     except Exception as e:
         return {"stats": None, "message": f"NFL stats error: {str(e)[:200]}"}
+
+
+def _get_nba_stats(player_name: str, player_id: int, now: float):
+    """Pull NBA stats via nba_api (stats.nba.com). Falls back gracefully on timeout."""
+    try:
+        from nba_api.stats.static import players
+        from nba_api.stats.endpoints import playercareerstats
+    except ImportError:
+        return {"stats": None, "message": "nba_api not installed"}
+
+    try:
+        # Name resolution
+        nba_players = players.get_players()
+        matches = [p for p in nba_players if player_name.lower() in p["full_name"].lower()]
+        if not matches:
+            return {"stats": None, "message": f"Could not find NBA ID for {player_name}"}
+        p = matches[0]
+        nba_id = p["id"]
+        nba_name = p["full_name"]
+
+        # Fetch career stats (most recent season)
+        stats_df = playercareerstats.PlayerCareerStats(player_id=nba_id, timeout=30).get_data_frames()[0]
+        if len(stats_df) == 0:
+            return {"stats": None, "message": f"No stats for {nba_name}"}
+
+        latest = stats_df.iloc[-1]
+        out = {
+            "window": str(latest.get("SEASON_ID", "?")),
+            "player_name_nba": nba_name,
+            "games": int(latest.get("GP", 0)),
+            "stats": {
+                "pts": round(float(latest.get("PTS", 0)), 1),
+                "reb": round(float(latest.get("REB", 0)), 1),
+                "ast": round(float(latest.get("AST", 0)), 1),
+                "stl": round(float(latest.get("STL", 0)), 1),
+                "blk": round(float(latest.get("BLK", 0)), 1),
+                "fg_pct": round(float(latest.get("FG_PCT", 0)) * 100, 1),
+                "fg3_pct": round(float(latest.get("FG3_PCT", 0)) * 100, 1),
+                "ft_pct": round(float(latest.get("FT_PCT", 0)) * 100, 1),
+                "min_pg": round(float(latest.get("MIN", 0)), 1),
+                "turnovers": round(float(latest.get("TOV", 0)), 1),
+            }
+        }
+        return out
+    except Exception as e:
+        msg = str(e)[:200]
+        if "timeout" in msg.lower() or "timed out" in msg.lower():
+            return {"stats": None, "message": "NBA API timed out (stats.nba.com blocks datacenter IPs). Try a proxy."}
+        return {"stats": None, "message": f"NBA stats error: {msg}"}
 
 
 # ── ingestion helper ───────────────────────────────────────────────

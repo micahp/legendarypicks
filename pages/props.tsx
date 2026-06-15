@@ -257,7 +257,7 @@ function PerformanceTab({ league }: { league: League }) {
       .catch(() => setLoading(false))
     // Also fetch advanced stats
     const league = selectedPlayer.league
-    if (league === 'mlb' || league === 'nfl') {
+    if (league === 'mlb' || league === 'nfl' || league === 'nba') {
       setStatsLoading(true)
       fetch(`/api/player/${selectedPlayer.id}/stats?league=${league}`)
         .then(r => r.json()).then(d => { setStats(d); setStatsLoading(false) })
@@ -362,8 +362,43 @@ function PerformanceTab({ league }: { league: League }) {
             </div>
           )}
 
+          {/* NBA season stats */}
+          {selectedPlayer.league === 'nba' && (
+            <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider">NBA — Season Averages (stats.nba.com)</span>
+                {statsLoading && <span className="text-[10px] text-zinc-600 bg-zinc-800 px-1.5 py-0.5 rounded animate-pulse">loading...</span>}
+              </div>
+              {stats?.stats ? (
+                <div>
+                  <div className="flex items-center gap-2 mb-3 text-sm text-zinc-500">
+                    <span>{stats.player_name_nba}</span>
+                    <span className="text-zinc-700">|</span>
+                    <span>{stats.games} games · {stats.window}</span>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    {stats.stats.pts != null && <StatBox label="PTS" value={stats.stats.pts} />}
+                    {stats.stats.reb != null && <StatBox label="REB" value={stats.stats.reb} />}
+                    {stats.stats.ast != null && <StatBox label="AST" value={stats.stats.ast} />}
+                    {stats.stats.stl != null && <StatBox label="STL" value={stats.stats.stl} />}
+                    {stats.stats.blk != null && <StatBox label="BLK" value={stats.stats.blk} />}
+                    {stats.stats.fg_pct != null && <StatBox label="FG%" value={stats.stats.fg_pct + '%'} />}
+                    {stats.stats.fg3_pct != null && <StatBox label="3PT%" value={stats.stats.fg3_pct + '%'} />}
+                    {stats.stats.ft_pct != null && <StatBox label="FT%" value={stats.stats.ft_pct + '%'} />}
+                    {stats.stats.min_pg != null && <StatBox label="MIN" value={stats.stats.min_pg} />}
+                    {stats.stats.turnovers != null && <StatBox label="TOV" value={stats.stats.turnovers} />}
+                  </div>
+                </div>
+              ) : stats?.message ? (
+                <p className="text-xs text-zinc-600">{stats.message}</p>
+              ) : (
+                <p className="text-xs text-zinc-600">NBA stats not available for this player.</p>
+              )}
+            </div>
+          )}
+
           {/* Other leagues — coming soon */}
-          {selectedPlayer.league !== 'mlb' && selectedPlayer.league !== 'nfl' && (
+          {selectedPlayer.league !== 'mlb' && selectedPlayer.league !== 'nfl' && selectedPlayer.league !== 'nba' && (
             <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-4">
               <div className="flex items-center gap-2 mb-3">
                 <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Advanced Metrics</span>
