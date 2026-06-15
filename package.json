@@ -1,44 +1,28 @@
 {
-  "name": "fcl-next-scaffold",
+  "name": "legendarypicks",
   "version": "0.3.1",
   "private": true,
   "scripts": {
-    "dev": "cross-env NEXT_PUBLIC_FLOW_NETWORK=local next dev",
-    "dev-wait": "yarn dev & wait-on tcp:8888 tcp:8701 tcp:3000",
-    "dev:local": "concurrently \"yarn flow:emulator\" \"yarn flow:dev-wallet\" \"yarn dev:local:flow\"",
-    "dev:local:flow": "yarn dev-wait && yarn flow:dev",
-    "dev:local:deploy": "flow project deploy --network=emulator --update && cross-env NEXT_PUBLIC_FLOW_NETWORK=local yarn dev",
-    "dev:testnet": "cross-env NEXT_PUBLIC_FLOW_NETWORK=testnet next dev",
-    "dev:testnet:deploy": "flow project deploy --network=testnet --update && cross-env NEXT_PUBLIC_FLOW_NETWORK=testnet yarn dev",
-    "dev:testnet:update": "flow project deploy --network=testnet --update --show-diff",
-    "dev:mainnet": "cross-env NEXT_PUBLIC_FLOW_NETWORK=mainnet next dev",
-    "flow:dev": "flow dev",
-    "flow:emulator": "flow emulator",
-    "flow:dev-wallet": "flow dev-wallet",
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
     "dev:backend": "cd backend && venv/bin/python -m uvicorn sports_service:app --reload",
     "dev:sports-backend": "cd backend && venv/bin/python -m uvicorn sports_service:app --reload",
     "dev:phase1": "concurrently --kill-others-on-fail \"yarn dev:sports-backend\" \"next dev\"",
-    "dev:all": "concurrently --kill-others-on-fail \"yarn flow:emulator\" \"yarn flow:dev-wallet\" \"yarn dev:local:flow\" \"yarn dev:backend\"",
     "build:css": "tailwindcss build styles/globals.css -o styles/output.css"
   },
   "dependencies": {
-    "@onflow/fcl": "1.4.1",
-    "@onflow/typedefs": "1.1.0",
-    "elliptic": "^6.5.4",
     "next": "13.0.0",
     "react": "18.2.0",
-    "react-dom": "18.2.0",
-    "sha3": "^2.1.4"
+    "react-dom": "18.2.0"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^5.16.5",
     "@testing-library/react": "^13.4.0",
-    "@types/elliptic": "^6.4.14",
     "@types/node": "^18.0.0",
     "@types/react": "19.0.8",
     "autoprefixer": "^10.4.16",
     "concurrently": "^8.0.1",
-    "cross-env": "^7.0.3",
     "css-loader": "^6.8.1",
     "eslint": "8.26.0",
     "eslint-config-next": "13.0.0",
@@ -47,10 +31,8 @@
     "postcss": "^8.4.31",
     "postcss-loader": "^7.3.3",
     "puppeteer-core": "^25.1.0",
-    "raw-loader": "^4.0.2",
     "style-loader": "^3.3.3",
     "tailwindcss": "^3.4.17",
-    "typescript": "5.7.3",
-    "wait-on": "^7.0.1"
+    "typescript": "5.7.3"
   }
 }
