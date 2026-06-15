@@ -6,6 +6,7 @@ Usage: python3 ingest_nfl.py [--year 2024]
 """
 import sys, os, sqlite3
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from sports_service import _normalize_name
 
 DB = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "picks.db")
 
@@ -40,13 +41,14 @@ def ingest_nfl(season: int = 2024):
     for _, row in grouped.iterrows():
         con.execute(
             """INSERT OR REPLACE INTO player_stats
-               (player_name, league, team, stat_type, season, games,
+               (player_name, name_norm, league, team, stat_type, season, games,
                 nfl_position, nfl_team,
                 pass_yds_g, pass_td, interceptions, cmp_g, pass_epa,
                 carries_g, rush_yds_g, receptions, rec_yds_g, targets,
                 fantasy_pts_g, fantasy_ppr_g, source)
-               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
-            (row["player_display_name"], "nfl", row["recent_team"], "weekly",
+               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+            (row["player_display_name"], _normalize_name(row["player_display_name"]),
+             "nfl", row["recent_team"], "weekly",
              season, int(row["games"]),
              row["position"], row["recent_team"],
              round(float(row["pass_yds_g"]), 1) if row["pass_yds_g"] == row["pass_yds_g"] else 0,

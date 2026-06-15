@@ -7,6 +7,8 @@ Downloads from sportsdataverse/hoopR-data GitHub repo (free, no IP blocks).
 """
 import sys, os, io, urllib.request, sqlite3
 import pyarrow.parquet as pq
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from sports_service import _normalize_name
 
 DB = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "picks.db")
 HOOPR_BASE = "https://raw.githubusercontent.com/sportsdataverse/hoopR-data/main/nba/player_box/parquet/player_box_{season}.parquet"
@@ -62,10 +64,11 @@ def ingest_season(season: int, con: sqlite3.Connection):
         team = teams.get(name, "???")
         con.execute(
             """INSERT OR REPLACE INTO player_stats
-               (player_name, league, team, season, games, pts, reb, ast, stl, blk, tov,
+               (player_name, name_norm, league, team, stat_type, season, games,
+                pts, reb, ast, stl, blk, tov,
                 fgm, fga, fg3m, fg3a, ftm, fta, minutes, ts_pct, source)
-               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
-            (name, "nba", team, season,
+               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+            (name, _normalize_name(name), "nba", team, "season", season,
              int(row["games"]),
              round(float(row["pts"]), 1), round(float(row["reb"]), 1),
              round(float(row["ast"]), 1), round(float(row["stl"]), 1),

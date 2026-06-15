@@ -7,6 +7,7 @@ Usage: python3 ingest_nhl.py
 import sys, os, sqlite3, json, urllib.request
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from sports_service import _normalize_name
 DB = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "picks.db")
 HDR = {"User-Agent": "Mozilla/5.0"}
 
@@ -61,11 +62,12 @@ def ingest():
             display = s["name"] or name.title()
             con.execute(
                 """INSERT OR REPLACE INTO player_stats
-                   (player_name, league, team, stat_type, season, games,
+                   (player_name, name_norm, league, team, stat_type, season, games,
                     nhl_position, nhl_team, goals, assists, points_nhl, shots,
                     shooting_pct, plus_minus, pim, ppg, ppp, shg, toi, faceoff_pct, source)
-                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
-                (display, "nhl", s["team"], "season", s["season"], s["games"],
+                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                (display, _normalize_name(display), "nhl", s["team"], "season",
+                 s["season"], s["games"],
                  s["position"], s["team"],
                  s["goals"], s["assists"], s["points"], s["shots"],
                  s["shooting_pct"], s["plus_minus"], s["pim"],

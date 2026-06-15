@@ -564,6 +564,26 @@ def player_performance(player_id: int, market: Optional[str] = Query(None)):
     return {"player_id": player_id, "performance": result}
 
 
+# ── Name normalization (fixes Bobby Witt Jr. / accent / punct mismatches) ──
+
+import re, unicodedata
+
+def _normalize_name(name: str) -> str:
+    """Normalize player name for matching: lowercase, strip punctuation + suffixes + accents."""
+    if not name:
+        return ""
+    n = name.lower().strip()
+    # Strip suffixes
+    n = re.sub(r'\b(jr\.?|sr\.?|ii|iii|iv|v)\b', '', n)
+    # Strip punctuation
+    n = re.sub(r'[^\w\s]', '', n)
+    # Strip accents
+    n = unicodedata.normalize('NFKD', n).encode('ascii', 'ignore').decode('ascii')
+    # Collapse whitespace
+    n = re.sub(r'\s+', ' ', n).strip()
+    return n
+
+
 # ── Player Stats (DB-backed, all leagues) ──────────────────────────
 
 @app.get("/api/player/{player_id}/stats")
@@ -613,16 +633,17 @@ def _get_mlb_stats(player_name: str, player_id: int, statcast_id, now: float):
         db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "picks.db")
         con = sq.connect(db_path)
         con.row_factory = sq.Row
+        nname = _normalize_name(player_name)
 
         # Batting row
         bat = con.execute(
-            "SELECT * FROM player_stats WHERE league='mlb' AND stat_type='batting' AND player_name=? ORDER BY season DESC LIMIT 1",
-            (player_name,)
+            "SELECT * FROM player_stats WHERE league='mlb' AND stat_type='batting' AND name_norm=? ORDER BY season DESC LIMIT 1",
+            (nname,)
         ).fetchone()
         # Pitching row
         pit = con.execute(
-            "SELECT * FROM player_stats WHERE league='mlb' AND stat_type='pitching' AND player_name=? ORDER BY season DESC LIMIT 1",
-            (player_name,)
+            "SELECT * FROM player_stats WHERE league='mlb' AND stat_type='pitching' AND name_norm=? ORDER BY season DESC LIMIT 1",
+            (nname,)
         ).fetchone()
 
         if not bat and not pit:
@@ -661,12 +682,12 @@ def _get_nfl_stats(player_name: str, player_id: int, now: float):
         db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "picks.db")
         con = sq.connect(db_path)
         con.row_factory = sq.Row
+        nname = _normalize_name(player_name)
         row = con.execute(
-            "SELECT * FROM player_stats WHERE league='nfl' AND player_name=? ORDER BY season DESC LIMIT 1",
-            (player_name,)
+            "SELECT * FROM player_stats WHERE league='nfl' AND name_norm=? ORDER BY season DESC LIMIT 1",
+            (nname,)
         ).fetchone()
         if not row:
-            # Fuzzy fallback
             parts = player_name.strip().split(" ", 1)
             last = parts[-1] if len(parts) > 1 else player_name
             row = con.execute(
@@ -714,12 +735,12 @@ def _get_nba_stats(player_name: str, player_id: int, now: float):
         con = sq.connect(db_path)
         con.row_factory = sq.Row
         # Fuzzy name match — try exact first, then LIKE
+        nname = _normalize_name(player_name)
         row = con.execute(
-            "SELECT * FROM player_stats WHERE league='nba' AND player_name=? ORDER BY season DESC LIMIT 1",
-            (player_name,)
+            "SELECT * FROM player_stats WHERE league='nba' AND name_norm=? ORDER BY season DESC LIMIT 1",
+            (nname,)
         ).fetchone()
         if not row:
-            # Try partial match
             parts = player_name.strip().split(" ", 1)
             last = parts[-1] if len(parts) > 1 else player_name
             row = con.execute(
@@ -764,12 +785,12 @@ def _get_nhl_stats(player_name: str, player_id: int, now: float):
         db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "picks.db")
         con = sq.connect(db_path)
         con.row_factory = sq.Row
+        nname = _normalize_name(player_name)
         row = con.execute(
-            "SELECT * FROM player_stats WHERE league='nhl' AND player_name=? ORDER BY season DESC LIMIT 1",
-            (player_name,)
+            "SELECT * FROM player_stats WHERE league='nhl' AND name_norm=? ORDER BY season DESC LIMIT 1",
+            (nname,)
         ).fetchone()
         if not row:
-            # Fuzzy fallback
             parts = player_name.strip().split(" ", 1)
             last = parts[-1] if len(parts) > 1 else player_name
             row = con.execute(
