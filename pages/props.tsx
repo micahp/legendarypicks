@@ -246,23 +246,23 @@ function PerformanceTab({ league }: { league: League }) {
     return () => clearTimeout(t)
   }, [query])
 
+  const [stats, setStats] = useState<any>(null)
+  const [statsLoading, setStatsLoading] = useState(false)
+
   useEffect(() => {
     if (!selectedPlayer) return
-    setLoading(true)
+    setLoading(true); setStats(null)
     fetch(`/api/props/player/${selectedPlayer.id}/performance`)
       .then(r => r.json()).then(d => { setPerf(d.performance || []); setLoading(false) })
       .catch(() => setLoading(false))
+    // Also fetch advanced stats for MLB
+    if (selectedPlayer.league === 'mlb') {
+      setStatsLoading(true)
+      fetch(`/api/player/${selectedPlayer.id}/stats?league=mlb`)
+        .then(r => r.json()).then(d => { setStats(d); setStatsLoading(false) })
+        .catch(() => setStatsLoading(false))
+    }
   }, [selectedPlayer])
-
-  // Determine which advanced metrics to show based on league
-  const advancedMetrics = selectedPlayer
-    ? {
-        mlb: ['xwOBA', 'Barrel%', 'Exit Velo', 'Hard Hit%', 'Whiff%', 'xFIP', 'Sprint Speed'],
-        nba: ['TS%', 'USG%', 'Pace', 'AST%', 'TOV%', 'REB%', 'Opp DvP'],
-        nfl: ['EPA/play', 'CPOE', 'aDOT', 'Target Share', 'Air Yards%', 'YAC', 'DVOA'],
-        nhl: ['Corsi%', 'Fenwick%', 'xG/60', 'PDO', 'O-Zone%', 'IPP', 'SH%'],
-      }[selectedPlayer.league] || []
-    : []
 
   return (
     <div className="space-y-4">
@@ -281,23 +281,60 @@ function PerformanceTab({ league }: { league: League }) {
         <div className="text-center py-16 text-zinc-500 text-sm">Search for a player to see their hit rates and advanced metrics.</div>
       ) : (
         <div className="space-y-6">
-          {/* Advanced metrics coming soon callout */}
-          {advancedMetrics.length > 0 && (
+          {/* Advanced metrics from Statcast (MLB only for now) */}
+          {selectedPlayer.league === 'mlb' && (
+            <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Statcast — Last 30 Days</span>
+                {statsLoading && <span className="text-[10px] text-zinc-600 bg-zinc-800 px-1.5 py-0.5 rounded animate-pulse">loading...</span>}
+              </div>
+              {stats?.batting ? (
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <StatBox label="AVG" value={stats.batting.avg?.toFixed(3)} />
+                  <StatBox label="HR" value={stats.batting.hr} />
+                  <StatBox label="K%" value={stats.batting.k_pct + '%'} />
+                  <StatBox label="BB%" value={stats.batting.bb_pct + '%'} />
+                  <StatBox label="Exit Velo" value={stats.batting.exit_velo + ' mph'} />
+                  <StatBox label="Hard Hit%" value={stats.batting.hard_hit_pct + '%'} />
+                  <StatBox label="Barrel%" value={stats.batting.barrel_pct + '%'} />
+                  <StatBox label="Launch Angle" value={stats.batting.launch_angle + '°'} />
+                  <StatBox label="wOBA" value={stats.batting.woba?.toFixed(3)} desc="weighted on-base" />
+                  <StatBox label="xwOBA" value={stats.batting.xwoba?.toFixed(3)} desc="expected wOBA" />
+                </div>
+              ) : stats?.message ? (
+                <p className="text-xs text-zinc-600">{stats.message}</p>
+              ) : (
+                <p className="text-xs text-zinc-600">Statcast data not available for this player.</p>
+              )}
+
+              {stats?.pitching && (
+                <>
+                  <div className="mt-4 mb-3">
+                    <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Pitching</span>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <StatBox label="Whiff%" value={stats.pitching.whiff_pct + '%'} />
+                    <StatBox label="K%" value={stats.pitching.k_pct + '%'} />
+                    <StatBox label="EV Against" value={stats.pitching.exit_velo_against + ' mph'} />
+                    <StatBox label="Barrel Against" value={stats.pitching.barrel_pct_against + '%'} />
+                    <StatBox label="xwOBA Against" value={stats.pitching.xwoba_against?.toFixed(3)} desc="lower = better" />
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+
+          {/* Other leagues — coming soon */}
+          {selectedPlayer.league !== 'mlb' && (
             <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-4">
               <div className="flex items-center gap-2 mb-3">
                 <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Advanced Metrics</span>
                 <span className="text-[10px] text-zinc-600 bg-zinc-800 px-1.5 py-0.5 rounded">coming soon</span>
               </div>
-              <div className="flex flex-wrap gap-2">
-                {advancedMetrics.map(m => (
-                  <span key={m} className="px-3 py-1.5 rounded-lg bg-zinc-800 text-sm text-zinc-400 font-mono">{m}</span>
-                ))}
-              </div>
-              <p className="text-xs text-zinc-600 mt-3">
-                {selectedPlayer.league === 'nfl' && 'EPA, CPOE, target share, and more — the metrics sharp money uses to price props. Pulling from nflfastR soon.'}
-                {selectedPlayer.league === 'nba' && 'TS%, usage rate, pace-adjusted stats, and opponent defense-vs-position. Pulling from hoopR soon.'}
-                {selectedPlayer.league === 'mlb' && 'xwOBA, barrel rate, exit velocity, and Statcast metrics. Pulling from baseballr soon.'}
-                {selectedPlayer.league === 'nhl' && 'Corsi, expected goals, PDO, and shot-quality metrics. Pulling from fastRhockey soon.'}
+              <p className="text-xs text-zinc-600">
+                {selectedPlayer.league === 'nfl' && 'EPA, CPOE, target share, DVOA — pulling from nflfastR soon.'}
+                {selectedPlayer.league === 'nba' && 'TS%, USG%, pace, Opp DvP — pulling from hoopR soon.'}
+                {selectedPlayer.league === 'nhl' && 'Corsi, xG, PDO, O-zone% — pulling from fastRhockey soon.'}
               </p>
             </div>
           )}
@@ -374,6 +411,15 @@ function ModelTab() {
       <div className="text-5xl">🧠</div>
       <h3 className="text-lg font-bold text-zinc-300">Model Projections</h3>
       <p className="text-zinc-500 text-sm max-w-md mx-auto">LightGBM projections vs sportsbook lines with confidence scoring. Built on EMA performance + matchup context + pace-adjusted features.</p>
+    </div>
+  )
+}
+
+function StatBox({ label, value, desc }: { label: string; value: string | number; desc?: string }) {
+  return (
+    <div className="bg-zinc-800/50 rounded-lg px-3 py-2.5">
+      <div className="text-[10px] text-zinc-500 uppercase tracking-wider">{label}{desc ? <span className="ml-1 normal-case tracking-normal">({desc})</span> : ''}</div>
+      <div className="text-lg font-bold font-mono tabular-nums mt-0.5">{value ?? '—'}</div>
     </div>
   )
 }

@@ -10,7 +10,7 @@ What changed from the original:
   - /strength endpoint: teams ranked by win% / differential / form — the quality prior shared
     with the prediction-market trading strategy (its only unfalsified edge: buy undervalued QUALITY)
 """
-import os, sqlite3, datetime as dt
+import os, sqlite3, datetime as dt, time
 from contextlib import closing
 from typing import Optional
 from fastapi import FastAPI, HTTPException, Query
@@ -553,6 +553,104 @@ def player_performance(player_id: int, market: Optional[str] = Query(None)):
 
     result.sort(key=lambda x: x["total_settled"], reverse=True)
     return {"player_id": player_id, "performance": result}
+
+
+# ── Player Stats (Statcast via pybaseball) ─────────────────────────
+
+_stats_cache = {}  # {cache_key: (expires_at, data)}
+
+@app.get("/api/player/{player_id}/stats")
+def player_stats(player_id: int,
+                 league: str = Query("mlb"),
+                 statcast_id: Optional[int] = Query(None)):
+    """Return advanced stats for a player. MLB uses Statcast via pybaseball."""
+    from datetime import datetime as dt2, timedelta
+
+    # Only MLB for now
+    if league not in ("mlb",):
+        return {"player_id": player_id, "stats": None,
+                "message": f"Advanced stats not yet available for {league}"}
+
+    # Look up player name
+    with closing(_db()) as con:
+        row = con.execute("SELECT name FROM players WHERE id=?", (player_id,)).fetchone()
+    if not row:
+        raise HTTPException(404, "Player not found")
+    player_name = row["name"]
+
+    cache_key = f"stats:{league}:{player_id}"
+    now = time.time()
+    if cache_key in _stats_cache and _stats_cache[cache_key][0] > now:
+        return _stats_cache[cache_key][1]
+
+    try:
+        from pybaseball import statcast_batter, statcast_pitcher
+        import pandas as pd
+
+        end = dt2.now()
+        start = end - timedelta(days=30)
+        start_str = start.strftime("%Y-%m-%d")
+        end_str = end.strftime("%Y-%m-%d")
+        sid = statcast_id or player_id
+
+        result = {"player_id": player_id, "player_name": player_name,
+                  "league": league, "window": "30d", "batting": None, "pitching": None}
+
+        # ── Batting ──
+        bat = statcast_batter(start_str, end_str, player_id=sid)
+        if bat is not None and len(bat) > 0:
+            bat = bat[bat["events"].notna() | bat["launch_speed"].notna()]
+            bb = bat[bat["launch_speed"].notna()]
+            events = bat["events"].dropna()
+
+            avg_ev = round(float(bb["launch_speed"].mean()), 1) if len(bb) > 0 else None
+            hard_hit = round(float((bb["launch_speed"] >= 95).mean() * 100), 1) if len(bb) > 0 else None
+            barrel = round(float(((bb["launch_speed"] >= 98) & (bb["launch_angle"].between(26, 30))).mean() * 100), 1) if len(bb) > 0 else None
+            avg_la = round(float(bb["launch_angle"].mean()), 1) if len(bb) > 0 else None
+            woba = round(float(bat[bat["woba_value"].notna()]["woba_value"].mean()), 3)
+            xwoba = round(float(bb["estimated_woba_using_speedangle"].mean()), 3) if len(bb) > 0 else None
+
+            hits = int(events.isin(["single", "double", "triple", "home_run"]).sum())
+            ab = len(events) - int((events == "walk").sum()) - int((events == "sac_fly").sum()) - int((events.isin(["sac_bunt", "sac_bunt_double_play"])).sum())
+            avg = round(hits / ab, 3) if ab > 0 else 0
+            hr = int((events == "home_run").sum())
+            k_pct = round(float((events == "strikeout").mean() * 100), 1)
+            bb_pct = round(float((events == "walk").mean() * 100), 1)
+
+            result["batting"] = {
+                "avg": avg, "hr": hr, "k_pct": k_pct, "bb_pct": bb_pct,
+                "exit_velo": avg_ev, "hard_hit_pct": hard_hit,
+                "barrel_pct": barrel, "launch_angle": avg_la,
+                "woba": woba, "xwoba": xwoba,
+            }
+
+        # ── Pitching ──
+        pit = statcast_pitcher(start_str, end_str, player_id=sid)
+        if pit is not None and len(pit) > 0:
+            whiff = round(float(pit["description"].isin(["swinging_strike", "swinging_strike_blocked"]).mean() * 100), 1)
+            bb_a = pit[pit["launch_speed"].notna()]
+            ev_against = round(float(bb_a["launch_speed"].mean()), 1) if len(bb_a) > 0 else None
+            barrel_against = round(float(((bb_a["launch_speed"] >= 98) & (bb_a["launch_angle"].between(26, 30))).mean() * 100), 1) if len(bb_a) > 0 else None
+            xwoba_against = round(float(bb_a["estimated_woba_using_speedangle"].mean()), 3) if len(bb_a) > 0 else None
+            k_pct_p = round(float((pit["events"] == "strikeout").mean() * 100), 1) if "events" in pit.columns else None
+
+            result["pitching"] = {
+                "whiff_pct": whiff, "k_pct": k_pct_p,
+                "exit_velo_against": ev_against,
+                "barrel_pct_against": barrel_against,
+                "xwoba_against": xwoba_against,
+            }
+
+        # Cache for 1 hour (Statcast data is slow)
+        _stats_cache[cache_key] = (now + 3600, result)
+        return result
+
+    except ImportError:
+        return {"player_id": player_id, "stats": None,
+                "message": "pybaseball not installed"}
+    except Exception as e:
+        return {"player_id": player_id, "stats": None,
+                "message": f"Statcast error: {str(e)[:200]}"}
 
 
 # ── ingestion helper ───────────────────────────────────────────────
