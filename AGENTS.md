@@ -105,6 +105,17 @@ Every rule below comes from a real mistake on 2026-06-15.
   work**, split frontend vs backend ownership, don't build images from a half-edited tree.
 
 ## 7. Data sources
+- **Resolve identity BEFORE you integrate sources. Join on stable IDs, never on display strings.**
+  Any entity that arrives from more than one source (players, teams, games, props) needs ONE canonical
+  surrogate ID plus a crosswalk of each source's native ID — established at ingest, *before* you wire
+  the sources together. Joining on human-readable strings (names, team names, titles) silently drops
+  every spelling/format mismatch, and the loss is **invisible until you measure against ground truth.**
+  We joined players by name across Bovada/ESPN/Statcast/nflverse/nhle and roster coverage was 2–55%
+  (whole leagues missing) while everything *looked* fine. Names are for humans; keys are for joins.
+  Build the identity spine first, key all downstream data on the surrogate ID, and send unresolved
+  records to a review queue — never silently create a names-only row or drop a mismatch. (This is the
+  Guiding-principle "the whole population, not a convenient sample" applied to data modeling: a string
+  join quietly *is* a convenient sample.)
 - **Don't live-scrape hostile endpoints.** `stats.nba.com` blocks **datacenter IPs** (not geo — this
   box is already US). A new/US VPS or free proxy won't help (all datacenter IPs); only paid residential
   proxies bypass it. Use **ESPN** + **published data releases** (`nfl_data_py`/nflverse,
