@@ -21,7 +21,7 @@ def _flip_name(name: str) -> str:
         return f'{parts[1].strip()} {parts[0].strip()}'
     return name
 
-def ingest(days: int = 30):
+def ingest(days: int = 200):
     from pybaseball import statcast
     import pandas as pd
     import numpy as np
@@ -31,7 +31,7 @@ def ingest(days: int = 30):
     start_str = start.strftime("%Y-%m-%d")
     end_str = end.strftime("%Y-%m-%d")
 
-    print(f"Pulling Statcast {start_str} to {end_str} (this may take a minute)...")
+    print(f"Pulling Statcast {start_str} to {end_str} (full-season window, this may take a minute)...")
     data = statcast(start_str, end_str)
     if data is None or len(data) == 0:
         print("No Statcast data returned.")
@@ -44,52 +44,52 @@ def ingest(days: int = 30):
     con.row_factory = sqlite3.Row
     batting_count = 0
     pitching_count = 0
+    unresolved_count = 0
 
-    # Pre-load player_id lookup: mlbam_id → players.id
-    mlbam_to_player = {}
-    for r in con.execute("SELECT id, mlbam_id FROM players WHERE league='mlb' AND mlbam_id IS NOT NULL"):
+    # Pre-load spine: mlbam_id → (name, player_id) — Chadwick-backed, the source of truth
+    mlbam_info = {}   # mlbam_id → (name, player_id)
+    mlbam_to_player = {}  # mlbam_id → player_id (for quick lookup)
+    for r in con.execute("SELECT mlbam_id, name, id FROM players WHERE league='mlb' AND mlbam_id IS NOT NULL AND mlbam_id != 0"):
+        mlbam_info[r["mlbam_id"]] = (r["name"], r["id"])
         mlbam_to_player[r["mlbam_id"]] = r["id"]
-    print(f"  Loaded {len(mlbam_to_player)} mlbam_id→player_id mappings")
+    print(f"  Loaded {len(mlbam_info)} mlbam_id→(name, player_id) from spine")
     spine_added = 0
 
-    def _resolve_or_add_player(mlbam_id: int, name: str) -> int:
-        """Resolve player_id from spine; if missing, upsert player WITH their mlbam_id."""
+    def _resolve_or_add(mlbam_id: int, fallback_name: str) -> tuple:
+        """Return (name, player_id) — from spine if known, else upsert with fallback name.
+        The fallback_name is a placeholder for batters (mlbam_XXXXX) or a real name
+        for pitchers (from Statcast's player_name, which IS the pitcher's name)."""
         nonlocal spine_added
+        info = mlbam_info.get(mlbam_id)
+        if info:
+            return info  # (name, player_id) from Chadwick-backed spine
+        # Not in spine — add them
         pid = mlbam_to_player.get(mlbam_id)
         if pid is None:
-            # Player not in spine yet — add them (this IS Phase 2 population from authoritative source)
             cur = con.execute(
                 "INSERT INTO players(name, league, mlbam_id, active) VALUES (?,?,?,1)",
-                (str(name), "mlb", mlbam_id))
+                (str(fallback_name), "mlb", mlbam_id))
             pid = cur.lastrowid
             mlbam_to_player[mlbam_id] = pid
+            mlbam_info[mlbam_id] = (str(fallback_name), pid)
             spine_added += 1
-        return pid
+        else:
+            # Already resolved in this session
+            pass
+        return (str(fallback_name), pid)
 
     # ── Batting: group by batter ID ──
-    # IMPORTANT: player_name is the PITCHER in Statcast data.
-    # For batters, we need to resolve batter ID → name from a known-good source.
-    # Build a mapping: batter_id → name from rows where that player PITCHED
-    # (player_name is correct when they're the pitcher), then use that.
-    pitcher_id_to_name = {}
-    for pid, name in data.groupby("pitcher")["player_name"].first().items():
-        if name and name != "NaN":
-            pitcher_id_to_name[pid] = name
-
+    # KEY FIX: batter_id IS the mlbam_id. Resolve name + player_id from the spine
+    # (Chadwick-backed players table), NOT from Statcast's player_name (which is
+    # the PITCHER's name, useless for pure batters).
     bat_mask = data["events"].notna() | data["launch_speed"].notna()
     bat_data = data[bat_mask]
     if len(bat_data) == 0:
         print("  No batting data")
     else:
         for batter_id, group in bat_data.groupby("batter"):
-            # Resolve name: prefer pitcher-name map (two-way players), else use first non-NaN
-            name = pitcher_id_to_name.get(batter_id)
-            if not name:
-                name = group["player_name"].dropna()
-                name = name.iloc[0] if len(name) > 0 else None
-            if not name or name == "NaN":
-                continue
-            name = _flip_name(str(name))
+            mlbam = int(batter_id)
+            name, player_id = _resolve_or_add(mlbam, f"mlbam_{mlbam}")
 
             events = group["events"].dropna()
             bb = group[group["launch_speed"].notna()]  # batted balls
@@ -111,7 +111,6 @@ def ingest(days: int = 30):
             bb_pct = round(float((events == "walk").mean() * 100), 1)
             games = group["game_date"].nunique()
 
-            player_id = _resolve_or_add_player(int(batter_id), str(name))
             try:
                 con.execute(
                     """INSERT OR REPLACE INTO player_stats
@@ -125,17 +124,29 @@ def ingest(days: int = 30):
                      round(woba, 3), round(xwoba, 3), "statcast", player_id))
                 batting_count += 1
             except Exception as e:
-                if batting_count == 0:
-                    print(f"  Batting INSERT error (first): {e}")
-                    print(f"    name={str(name)[:30]} season={season} games={games}")
+                if batting_count <= 3:
+                    print(f"  Batting INSERT error: {e}")
+                    print(f"    batter={mlbam} name={str(name)[:40]} season={season}")
 
     # ── Pitching: group by pitcher ID ──
+    # For pitchers, Statcast's player_name IS correct (it's the pitcher's name).
+    # We prefer the spine name when available (Chadwick-backed), falling back to
+    # the Statcast name for players not yet in the spine.
     pitcher_names = data.groupby("pitcher")["player_name"].first()
     for pitcher_id, group in data.groupby("pitcher"):
-        name = pitcher_names.get(pitcher_id, f"pitcher_{pitcher_id}")
-        if not name or name == "NaN":
-            continue
-        name = _flip_name(str(name))
+        mlbam = int(pitcher_id)
+        statcast_name = pitcher_names.get(pitcher_id)
+        if statcast_name and statcast_name != "NaN":
+            statcast_name = _flip_name(str(statcast_name))
+        else:
+            statcast_name = None
+
+        # Resolve: spine name preferred, fallback to Statcast name, then placeholder
+        fallback = statcast_name if statcast_name else f"mlbam_{mlbam}"
+        name, player_id = _resolve_or_add(mlbam, fallback)
+        # If spine returned a placeholder but we have a real Statcast name, use that
+        if name.startswith("mlbam_") and statcast_name:
+            name = statcast_name
 
         whiff = float(group["description"].isin(["swinging_strike", "swinging_strike_blocked"]).mean() * 100)
         bb_a = group[group["launch_speed"].notna()]
@@ -146,7 +157,6 @@ def ingest(days: int = 30):
         k_pct_p = float((group["events"] == "strikeout").mean() * 100) if "events" in group.columns else 0
         games_p = group["game_date"].nunique()
 
-        player_id = _resolve_or_add_player(int(pitcher_id), str(name))
         try:
             con.execute(
                 """INSERT OR REPLACE INTO player_stats
@@ -165,10 +175,13 @@ def ingest(days: int = 30):
     print(f"  Ingested: {batting_count} batting, {pitching_count} pitching")
     if spine_added:
         print(f"  Spine: added {spine_added} new players (with mlbam_id)")
+    unresolved_count = sum(1 for v in mlbam_info.values() if v[0].startswith("mlbam_"))
+    if unresolved_count:
+        print(f"  Placeholder names in spine: {unresolved_count} (needs name repair pass)")
 
 
 if __name__ == "__main__":
-    days = 30
+    days = 200
     if "--days" in sys.argv:
         idx = sys.argv.index("--days")
         days = int(sys.argv[idx + 1])
