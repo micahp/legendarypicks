@@ -400,7 +400,7 @@ function PerformanceTab({ league }: { league: League }) {
                     {stats.stats.ft_pct != null && <StatBox label="FT%" value={stats.stats.ft_pct + '%'} />}
                     {stats.stats.min_pg != null && <StatBox label="MIN" value={stats.stats.min_pg} />}
                     {stats.stats.turnovers != null && <StatBox label="TOV" value={stats.stats.turnovers} />}
-                    {stats.stats.ts_pct != null && <StatBox label="TS%" value={stats.stats.ts_pct + '%'} desc=\"true shooting\" />}
+                    {stats.stats.ts_pct != null && <StatBox label="TS%" value={stats.stats.ts_pct + '%'} desc="true shooting" />}
                   </div>
                 </div>
               ) : stats?.message ? (
