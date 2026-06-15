@@ -662,58 +662,52 @@ def _get_mlb_stats(player_name: str, player_id: int, statcast_id, now: float):
 
 
 def _get_nfl_stats(player_name: str, player_id: int, now: float):
-    """Pull NFL weekly stats via nfl_data_py/nflverse. Returns dict."""
-    try:
-        import nfl_data_py as nfl
-    except ImportError:
-        return {"stats": None, "message": "nfl_data_py not installed"}
+    """Pull NFL stats from player_stats table (populated by ingest_nfl.py)."""
+    import os, sqlite3 as sq
 
     try:
-        # Resolve player by name from rosters
-        parts = player_name.strip().split(" ", 1)
-        first = parts[0] if len(parts) > 0 else ""
-        last = parts[1] if len(parts) > 1 else parts[0]
-        rosters = nfl.import_weekly_rosters([2025])
-        match = rosters[(rosters["first_name"].str.contains(first, case=False, na=False)) &
-                        (rosters["last_name"].str.contains(last, case=False, na=False))]
-        if len(match) == 0:
-            return {"stats": None, "message": f"Could not find NFL ID for {player_name}"}
-        nfl_id = match.iloc[0]["player_id"]
-        position = match.iloc[0]["position"]
-        team = match.iloc[0]["team"]
-        nfl_name = match.iloc[0]["player_name"]
+        db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "picks.db")
+        con = sq.connect(db_path)
+        con.row_factory = sq.Row
+        row = con.execute(
+            "SELECT * FROM player_stats WHERE league='nfl' AND player_name=? ORDER BY season DESC LIMIT 1",
+            (player_name,)
+        ).fetchone()
+        if not row:
+            # Fuzzy fallback
+            parts = player_name.strip().split(" ", 1)
+            last = parts[-1] if len(parts) > 1 else player_name
+            row = con.execute(
+                "SELECT * FROM player_stats WHERE league='nfl' AND player_name LIKE ? ORDER BY season DESC LIMIT 1",
+                (f"%{last}%",)
+            ).fetchone()
+        if not row:
+            con.close()
+            return {"stats": None, "message": f"No NFL data for {player_name}. Run ingest_nfl.py."}
 
-        # Pull most recent season weekly stats
-        weekly = nfl.import_weekly_data([2024])
-        player_data = weekly[weekly["player_id"] == nfl_id].sort_values("week")
-        if len(player_data) == 0:
-            weekly = nfl.import_weekly_data([2025])
-            player_data = weekly[weekly["player_id"] == nfl_id].sort_values("week")
-
-        games = len(player_data)
-        if games == 0:
-            return {"stats": None, "message": f"No weekly data for {nfl_name}"}
-
-        out = {"window": f"{games}g (season)", "player_name_nfl": nfl_name,
-               "position": position, "team": team, "games": games,
-               "stats": {}}
-
-        # Passing stats
-        if position in ("QB", "RB", "WR", "TE"):
-            row = player_data
-            out["stats"]["passing_yards_pg"] = round(float(row["passing_yards"].mean()), 1) if "passing_yards" in row.columns else None
-            out["stats"]["passing_tds"] = int(row["passing_tds"].sum()) if "passing_tds" in row.columns else None
-            out["stats"]["interceptions"] = int(row["interceptions"].sum()) if "interceptions" in row.columns else None
-            out["stats"]["completions_pg"] = round(float(row["completions"].mean()), 1) if "completions" in row.columns else None
-            out["stats"]["passing_epa"] = round(float(row["passing_epa"].sum()), 1) if "passing_epa" in row.columns else None
-            out["stats"]["carries_pg"] = round(float(row["carries"].mean()), 1) if "carries" in row.columns else None
-            out["stats"]["rushing_yards_pg"] = round(float(row["rushing_yards"].mean()), 1) if "rushing_yards" in row.columns else None
-            out["stats"]["receptions"] = int(row["receptions"].sum()) if "receptions" in row.columns else None
-            out["stats"]["receiving_yards_pg"] = round(float(row["receiving_yards"].mean()), 1) if "receiving_yards" in row.columns else None
-            out["stats"]["targets"] = int(row["targets"].sum()) if "targets" in row.columns else None
-            out["stats"]["fantasy_points_pg"] = round(float(row["fantasy_points"].mean()), 1) if "fantasy_points" in row.columns else None
-            out["stats"]["fantasy_points_ppr_pg"] = round(float(row["fantasy_points_ppr"].mean()), 1) if "fantasy_points_ppr" in row.columns else None
-
+        out = {
+            "window": str(row["season"]),
+            "player_name_nfl": row["player_name"],
+            "position": row["nfl_position"],
+            "team": row["nfl_team"],
+            "games": row["games"],
+            "source": row["source"] or "nflverse",
+            "stats": {
+                "passing_yards_pg": row["pass_yds_g"],
+                "passing_tds": row["pass_td"],
+                "interceptions": row["interceptions"],
+                "completions_pg": row["cmp_g"],
+                "passing_epa": row["pass_epa"],
+                "carries_pg": row["carries_g"],
+                "rushing_yards_pg": row["rush_yds_g"],
+                "receptions": row["receptions"],
+                "receiving_yards_pg": row["rec_yds_g"],
+                "targets": row["targets"],
+                "fantasy_points_pg": row["fantasy_pts_g"],
+                "fantasy_points_ppr_pg": row["fantasy_ppr_g"],
+            }
+        }
+        con.close()
         return out
     except Exception as e:
         return {"stats": None, "message": f"NFL stats error: {str(e)[:200]}"}
