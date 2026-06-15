@@ -1,0 +1,14 @@
+{
+  "league": "nba",
+  "date": "2026-06-15",
+  "home": "BOS",
+  "away": "GSW",
+  "espn_event_id": "401234567",
+  "props": [
+    {"player_name": "Jayson Tatum", "team": "BOS", "market": "points", "line": 27.5, "side": "over"},
+    {"player_name": "Jayson Tatum", "team": "BOS", "market": "rebounds", "line": 8.5, "side": "under"},
+    {"player_name": "Jayson Tatum", "team": "BOS", "market": "assists", "line": 5.5, "side": "over"},
+    {"player_name": "Stephen Curry", "team": "GSW", "market": "points", "line": 25.5, "side": "over"},
+    {"player_name": "Stephen Curry", "team": "GSW", "market": "threes", "line": 4.5, "side": "under"}
+  ]
+}

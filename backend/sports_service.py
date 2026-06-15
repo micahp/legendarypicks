@@ -73,6 +73,25 @@ def _init_db():
           captured_at TEXT NOT NULL, home_team TEXT, away_team TEXT,
           venue_name TEXT, venue_city TEXT, attendance INTEGER,
           officials TEXT);
+        -- Phase 2: prop-outcome data engine
+        CREATE TABLE IF NOT EXISTS players(
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          name TEXT NOT NULL, team TEXT, league TEXT NOT NULL,
+          espn_id TEXT, UNIQUE(espn_id, league));
+        CREATE TABLE IF NOT EXISTS prop_games(
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          league TEXT NOT NULL, date TEXT NOT NULL,
+          home TEXT, away TEXT, espn_event_id TEXT,
+          final_home INTEGER, final_away INTEGER);
+        CREATE TABLE IF NOT EXISTS props(
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          game_id INTEGER REFERENCES prop_games(id),
+          player_id INTEGER REFERENCES players(id),
+          market TEXT NOT NULL, line REAL NOT NULL, side TEXT NOT NULL,
+          source TEXT, captured_at TEXT NOT NULL);
+        CREATE TABLE IF NOT EXISTS prop_results(
+          prop_id INTEGER PRIMARY KEY REFERENCES props(id),
+          actual_value REAL, hit INTEGER, settled_at TEXT);
         """)
         con.commit()
 
@@ -90,6 +109,11 @@ class PredictionIn(BaseModel):
 def root():
     return {"service": "Legendary Picks Sports API", "version": "2.0.0",
             "source": "ESPN", "leagues": sorted(espn.LEAGUES)}
+
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
 
 
 @app.get("/api/{league}/games")
@@ -117,7 +141,7 @@ def get_games(league: str, date: Optional[str] = Query(None, description="YYYY-M
                 g["home"]["score"] = final["home"]
             if g.get("away"):
                 g["away"]["score"] = final["away"]
-    return JSONResponse(content=games, headers={"Cache-Control": "no-store"})
+    return JSONResponse(content=games, headers={"Cache-Control": "public, max-age=30"})
 
 
 @app.get("/api/{league}/strength")
@@ -279,6 +303,164 @@ def list_predictions():
     if graded:
         accuracy = round(sum(1 for p in graded if p["correct"]) / len(graded), 4)
     return {"predictions": out, "graded": len(graded), "accuracy": accuracy}
+
+
+# ── Phase 2: prop-outcome data engine ──────────────────────────────
+
+@app.get("/api/players/search")
+def search_players(q: str = Query("", description="Search query")):
+    if not q or len(q) < 2:
+        return []
+    with closing(_db()) as con:
+        rows = con.execute(
+            "SELECT DISTINCT id, name, team, league FROM players WHERE name LIKE ? LIMIT 20",
+            (f"%{q}%",)
+        ).fetchall()
+    return [{"id": r["id"], "name": r["name"], "team": r["team"], "league": r["league"]} for r in rows]
+
+
+@app.get("/api/props")
+def list_props(player: Optional[str] = Query(None),
+               market: Optional[str] = Query(None),
+               league: Optional[str] = Query(None),
+               date: Optional[str] = Query(None),
+               limit: int = Query(50, ge=1, le=500)):
+    sql = """SELECT p.id, p.market, p.line, p.side, p.source, p.captured_at,
+                    pl.name AS player_name, pl.team AS player_team, pl.league,
+                    r.actual_value, r.hit, r.settled_at
+             FROM props p
+             JOIN players pl ON pl.id = p.player_id
+             LEFT JOIN prop_results r ON r.prop_id = p.id
+             WHERE 1=1"""
+    params = []
+    if player:
+        sql += " AND pl.name LIKE ?"
+        params.append(f"%{player}%")
+    if market:
+        sql += " AND p.market = ?"
+        params.append(market)
+    if league:
+        sql += " AND pl.league = ?"
+        params.append(league)
+    if date:
+        sql += " AND p.captured_at >= ? AND p.captured_at < ?"
+        params.extend([f"{date}T00:00:00", f"{date}T23:59:59"])
+    sql += " ORDER BY p.captured_at DESC LIMIT ?"
+    params.append(limit)
+    with closing(_db()) as con:
+        rows = con.execute(sql, params).fetchall()
+    return [{"id": r["id"], "market": r["market"], "line": r["line"], "side": r["side"],
+             "source": r["source"], "captured_at": r["captured_at"],
+             "player_name": r["player_name"], "player_team": r["player_team"],
+             "league": r["league"], "actual_value": r["actual_value"],
+             "hit": bool(r["hit"]) if r["hit"] is not None else None,
+             "settled_at": r["settled_at"]} for r in rows]
+
+
+@app.get("/api/props/player/{player_id}/history")
+def player_prop_history(player_id: int, market: Optional[str] = Query(None)):
+    sql = """SELECT p.id, p.market, p.line, p.side, p.captured_at,
+                    r.actual_value, r.hit, r.settled_at
+             FROM props p
+             LEFT JOIN prop_results r ON r.prop_id = p.id
+             WHERE p.player_id = ?"""
+    params = [player_id]
+    if market:
+        sql += " AND p.market = ?"
+        params.append(market)
+    sql += " ORDER BY p.captured_at DESC LIMIT 200"
+    with closing(_db()) as con:
+        rows = con.execute(sql, params).fetchall()
+    history = [{"id": r["id"], "market": r["market"], "line": r["line"], "side": r["side"],
+                "captured_at": r["captured_at"], "actual_value": r["actual_value"],
+                "hit": bool(r["hit"]) if r["hit"] is not None else None,
+                "settled_at": r["settled_at"]} for r in rows]
+    # rolling hit rate (last 20 settled)
+    settled = [h for h in history if h["hit"] is not None]
+    hit_rate = round(sum(1 for h in settled[-20:] if h["hit"]) / max(len(settled[-20:]), 1), 3) if settled else None
+    return {"player_id": player_id, "history": history, "hit_rate": hit_rate, "total_settled": len(settled)}
+
+
+@app.get("/api/props/stats")
+def prop_stats(market: Optional[str] = Query(None),
+               league: Optional[str] = Query(None),
+               window: int = Query(30, ge=1, le=365, description="Days of history")):
+    sql = """SELECT p.market, p.side,
+                    COUNT(*) AS total,
+                    SUM(CASE WHEN r.hit = 1 THEN 1 ELSE 0 END) AS hits,
+                    AVG(p.line) AS avg_line,
+                    AVG(r.actual_value) AS avg_actual
+             FROM props p
+             JOIN prop_results r ON r.prop_id = p.id
+             JOIN players pl ON pl.id = p.player_id
+             WHERE r.hit IS NOT NULL
+               AND p.captured_at >= date('now', ? || ' days')"""
+    params = [f"-{window}"]
+    if market:
+        sql += " AND p.market = ?"
+        params.append(market)
+    if league:
+        sql += " AND pl.league = ?"
+        params.append(league)
+    sql += " GROUP BY p.market, p.side ORDER BY total DESC"
+    with closing(_db()) as con:
+        rows = con.execute(sql, params).fetchall()
+    return [{"market": r["market"], "side": r["side"], "total": r["total"],
+             "hits": r["hits"], "hit_rate": round(r["hits"] / r["total"], 3) if r["total"] else 0,
+             "avg_line": round(r["avg_line"], 1) if r["avg_line"] else None,
+             "avg_actual": round(r["avg_actual"], 1) if r["avg_actual"] else None}
+            for r in rows]
+
+
+# ── ingestion helper ───────────────────────────────────────────────
+
+class PropIngest(BaseModel):
+    league: str
+    date: str
+    home: str = ""
+    away: str = ""
+    espn_event_id: str = ""
+    props: list  # [{"player_name": str, "team": str, "market": str, "line": float, "side": "over"|"under"}]
+
+
+@app.post("/api/props/ingest")
+def ingest_props(batch: PropIngest):
+    """Ingest a batch of props for one game. Creates player/game rows as needed."""
+    now = dt.datetime.now(dt.timezone.utc).isoformat()
+    with closing(_db()) as con:
+        # ensure game row
+        cur = con.execute(
+            "SELECT id FROM prop_games WHERE espn_event_id=? AND league=?",
+            (batch.espn_event_id, batch.league))
+        game_row = cur.fetchone()
+        if not game_row:
+            cur = con.execute(
+                "INSERT INTO prop_games(league,date,home,away,espn_event_id) VALUES(?,?,?,?,?)",
+                (batch.league, batch.date, batch.home, batch.away, batch.espn_event_id))
+            game_id = cur.lastrowid
+        else:
+            game_id = game_row["id"]
+        ingested = 0
+        for p in batch.props:
+            # ensure player
+            cur = con.execute(
+                "SELECT id FROM players WHERE name=? AND league=?",
+                (p["player_name"], batch.league))
+            player_row = cur.fetchone()
+            if not player_row:
+                cur = con.execute(
+                    "INSERT INTO players(name,team,league) VALUES(?,?,?)",
+                    (p["player_name"], p.get("team", ""), batch.league))
+                player_id = cur.lastrowid
+            else:
+                player_id = player_row["id"]
+            # insert prop
+            con.execute(
+                "INSERT INTO props(game_id,player_id,market,line,side,source,captured_at) VALUES(?,?,?,?,?,?,?)",
+                (game_id, player_id, p["market"], p["line"], p["side"], p.get("source", "manual"), now))
+            ingested += 1
+        con.commit()
+    return {"status": "ok", "game_id": game_id, "ingested": ingested}
 
 
 def _evaluate(league, game_id, predicted_winner):
