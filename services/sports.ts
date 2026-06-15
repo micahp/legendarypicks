@@ -1,7 +1,9 @@
 import axios from 'axios'
 
 function normalizeBaseUrl(raw?: string): string {
-  const fallback = 'http://localhost:8000/api'
+  // Relative same-origin default: browser -> nginx -> backend. A 'localhost:8000'
+  // default fails in the user's browser (it's THEIR machine), which blanked the scores page.
+  const fallback = '/api'
   if (!raw || raw.trim() === '') return fallback
   const base = raw.trim()
   if (base.startsWith('/')) return base

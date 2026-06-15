@@ -50,7 +50,7 @@ export default function DayStrip({ date, onChange }: DayStripProps) {
       >
         ‹
       </button>
-      <div className="flex-1 grid grid-cols-7 gap-2">
+      <div className="flex-1 min-w-0 flex gap-2 overflow-x-auto">
         {days.map((d) => {
           const iso = toISODate(d)
           const active = iso === date
@@ -60,7 +60,7 @@ export default function DayStrip({ date, onChange }: DayStripProps) {
               type="button"
               onClick={() => onChange(iso)}
               className={[
-                'rounded-lg px-2 py-2 text-center transition',
+                'flex-1 min-w-[3.5rem] shrink-0 rounded-lg px-2 py-2 text-center transition',
                 active
                   ? 'bg-emerald-500 text-black font-semibold shadow'
                   : 'bg-zinc-800 hover:bg-zinc-700',

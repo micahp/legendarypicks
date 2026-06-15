@@ -3,7 +3,13 @@ services:
     build: ./backend
     environment:
       PORT: "8000"
-    expose: ["8000"]
+    # bind to loopback ONLY: reachable by host nginx, never from the internet
+    # host 8100 -> container 8000 (8000 already used by another site)
+    ports: ["127.0.0.1:8100:8000"]
+    # Bind-mount the HOST data dir so the populated picks.db is used and persists
+    # on the host (visible + backup-able). Not baked into the image (.dockerignore).
+    volumes:
+      - ./backend/data:/app/data
     restart: unless-stopped
 
   frontend:
@@ -11,6 +17,12 @@ services:
       context: .
       args:
         NEXT_PUBLIC_API_BASE: /api
+        # services/sports.ts reads THIS var; without it SportsService hit localhost:8000 → blank scores
+        NEXT_PUBLIC_SPORTS_API_URL: /api
     depends_on: [backend]
-    expose: ["3000"]
+    environment:
+      # reach the backend container over the compose network (SSR/server-side /api)
+      API_PROXY_TARGET: http://backend:8000
+    # host 3100 -> container 3000 (3000 already used by another site)
+    ports: ["127.0.0.1:3100:3000"]
     restart: unless-stopped
