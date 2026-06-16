@@ -390,9 +390,9 @@ def _settle_mlb_props(con, game_row, props) -> dict:
         canonical = MARKET_ALIASES.get(canonical, canonical)
         mapping = _MLB_MARKET_MAP.get(canonical)
 
-        if not mapping:
-            # Try compound: hits_runs_rbis
-            if canonical == "hits_runs_rbis":
+        if not mapping or mapping == (None, None):
+            # Compound markets: sum multiple stats
+            if canonical in ("hits_runs_rbis", "hits_runs_rbis"):
                 bat = ps.get("batting", {})
                 h = bat.get("hits", 0) or 0
                 r = bat.get("runs", 0) or 0
@@ -404,15 +404,30 @@ def _settle_mlb_props(con, game_row, props) -> dict:
         else:
             category, mlb_field = mapping
             stats_dict = ps.get(category, {})
-            actual = stats_dict.get(mlb_field)
-            if actual is None:
-                void += 1
-                continue
-            try:
-                actual = float(actual)
-            except (ValueError, TypeError):
-                void += 1
-                continue
+
+            # Handle derived fields
+            if mlb_field == "outs" and "outs" not in stats_dict:
+                # Compute outs from innings pitched (IP like "6.0" = 18 outs)
+                ip_str = stats_dict.get("inningsPitched")
+                if ip_str:
+                    try:
+                        actual = float(ip_str) * 3
+                    except (ValueError, TypeError):
+                        void += 1
+                        continue
+                else:
+                    void += 1
+                    continue
+            else:
+                actual = stats_dict.get(mlb_field)
+                if actual is None:
+                    void += 1
+                    continue
+                try:
+                    actual = float(actual)
+                except (ValueError, TypeError):
+                    void += 1
+                    continue
 
         # Grade
         line = prop["line"]
