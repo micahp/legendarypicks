@@ -244,6 +244,199 @@ def _find_player_compound_stat(boxscore: dict, player_name: str, team: str,
     return total if found_any else None
 
 
+# ── MLB Stats API boxscore integration ─────────────────────────────
+# MLB settlement uses the MLB Stats API (statsapi.mlb.com) instead of ESPN
+# because: (a) totalBases/doubles are directly available per player,
+# (b) players are keyed by mlbam_id (no name-matching, no derivation),
+# (c) strikeOuts, hits, rbi, runs all come directly.
+
+_MLB_SCHEDULE = "https://statsapi.mlb.com/api/v1/schedule"
+_MLB_BOXSCORE = "https://statsapi.mlb.com/api/v1/game/{gamePk}/boxscore"
+_MLB_HDR = {"User-Agent": "Mozilla/5.0"}
+
+# MLB Stats API field names → our canonical stat_key
+_MLB_BATTING_STATS = {
+    "hits": "H", "totalBases": "TB", "rbi": "RBI", "runs": "R",
+    "homeRuns": "HR", "doubles": "2B", "triples": "3B",
+    "stolenBases": "SB", "atBats": "AB",
+}
+_MLB_PITCHING_STATS = {
+    "strikeOuts": "SO", "hits": "H", "earnedRuns": "ER",
+    "baseOnBalls": "BB", "inningsPitched": "IP", "outs": "outs",
+}
+
+# Canonical market name → (mlb_api_category, mlb_api_field_name)
+_MLB_MARKET_MAP = {
+    # Pitching
+    "strikeouts":    ("pitching", "strikeOuts"),
+    "hits_allowed":  ("pitching", "hits"),
+    "outs":          ("pitching", "outs"),
+    "earned_runs":   ("pitching", "earnedRuns"),
+    "walks":         ("pitching", "baseOnBalls"),
+    # Batting
+    "total_bases":           ("batting", "totalBases"),
+    "hits_runs_rbis":        (None, None),  # compound — sum H+R+RBI
+    "home_run_any":          ("batting", "homeRuns"),
+    "hit_any":               ("batting", "hits"),
+    "rbi_any":               ("batting", "rbi"),
+    "run_any":               ("batting", "runs"),
+    "stolen_base_any":       ("batting", "stolenBases"),
+    "double_any":            ("batting", "doubles"),
+    "triple_any":            ("batting", "triples"),
+}
+
+
+def _fetch_mlb_gamepk(date_str: str, home_team: str, away_team: str) -> Optional[int]:
+    """Look up MLB gamePk from the schedule API by date + team names."""
+    import urllib.request as _ur
+    try:
+        url = f"{_MLB_SCHEDULE}?date={date_str}&sportId=1"
+        req = _ur.Request(url, headers=_MLB_HDR)
+        with _ur.urlopen(req, timeout=10) as r:
+            data = json.loads(r.read().decode())
+        for dt_entry in data.get("dates", []):
+            for game in dt_entry.get("games", []):
+                teams = game.get("teams", {})
+                away_name = (teams.get("away", {}).get("team", {}).get("name") or "").lower()
+                home_name = (teams.get("home", {}).get("team", {}).get("name") or "").lower()
+                if home_team.lower() == home_name and away_team.lower() == away_name:
+                    return game["gamePk"]
+                # Also try abbreviation match
+                away_abbr = (teams.get("away", {}).get("team", {}).get("abbreviation") or "").lower()
+                home_abbr = (teams.get("home", {}).get("team", {}).get("abbreviation") or "").lower()
+                if home_team.lower() == home_abbr and away_team.lower() == away_abbr:
+                    return game["gamePk"]
+    except Exception:
+        pass
+    return None
+
+
+def _fetch_mlb_boxscore(gamePk: int) -> Optional[dict]:
+    """Pull the MLB Stats API boxscore for a game."""
+    import urllib.request as _ur
+    try:
+        url = _MLB_BOXSCORE.format(gamePk=gamePk)
+        req = _ur.Request(url, headers=_MLB_HDR)
+        with _ur.urlopen(req, timeout=15) as r:
+            return json.loads(r.read().decode())
+    except Exception:
+        return None
+
+
+def _settle_mlb_props(con, game_row, props) -> dict:
+    """Settle MLB props using the MLB Stats API boxscore (mlbam_id-based matching)."""
+    date_str = game_row["date"]
+    home = game_row["home"]
+    away = game_row["away"]
+
+    gamePk = _fetch_mlb_gamepk(date_str, home, away)
+    if not gamePk:
+        return {"settled": 0, "void": 0, "unmappable": 0, "errors": 0,
+                "msg": f"MLB gamePk not found for {away}@{home} on {date_str}"}
+
+    box = _fetch_mlb_boxscore(gamePk)
+    if not box:
+        return {"settled": 0, "void": 0, "unmappable": 0, "errors": 1,
+                "error_msg": f"MLB boxscore failed for gamePk={gamePk}"}
+
+    # Build lookup: mlbam_id → {"batting": {...}, "pitching": {...}}
+    # MLB Stats API: players are keyed as "ID{mlbam_id}" in teams.{side}.players
+    player_stats = {}  # mlbam_id → {"batting": {...}, "pitching": {...}}
+    for side in ("away", "home"):
+        team_data = box.get("teams", {}).get(side, {})
+        players_dict = team_data.get("players", {})
+        for key, pdata in players_dict.items():
+            # Key is like "ID689414" — extract numeric mlbam_id
+            if key.startswith("ID"):
+                try:
+                    mlbam = int(key[2:])
+                except ValueError:
+                    continue
+            else:
+                try:
+                    mlbam = int(key)
+                except ValueError:
+                    continue
+            stats = pdata.get("stats", {})
+            player_stats[mlbam] = {
+                "batting": stats.get("batting", {}),
+                "pitching": stats.get("pitching", {}),
+            }
+
+    # Build player_id → mlbam_id lookup from the spine
+    player_mlbam = {}
+    for r in con.execute("SELECT id, mlbam_id FROM players WHERE league='mlb' AND mlbam_id IS NOT NULL AND mlbam_id != 0"):
+        player_mlbam[r["id"]] = r["mlbam_id"]
+
+    settled = 0
+    void = 0
+    unmappable = 0
+    errors = 0
+    now = dt.datetime.now(dt.timezone.utc).isoformat()
+
+    for prop in props:
+        mlbam_id = player_mlbam.get(prop["player_id"])
+        if not mlbam_id:
+            void += 1
+            continue
+
+        ps = player_stats.get(mlbam_id)
+        if not ps:
+            void += 1  # DNP
+            continue
+
+        # Resolve market to (category, mlb_api_field)
+        canonical = normalize_market(prop["market"])
+        canonical = MARKET_ALIASES.get(canonical, canonical)
+        mapping = _MLB_MARKET_MAP.get(canonical)
+
+        if not mapping:
+            # Try compound: hits_runs_rbis
+            if canonical == "hits_runs_rbis":
+                bat = ps.get("batting", {})
+                h = bat.get("hits", 0) or 0
+                r = bat.get("runs", 0) or 0
+                rbi = bat.get("rbi", 0) or 0
+                actual = float(h + r + rbi)
+            else:
+                unmappable += 1
+                continue
+        else:
+            category, mlb_field = mapping
+            stats_dict = ps.get(category, {})
+            actual = stats_dict.get(mlb_field)
+            if actual is None:
+                void += 1
+                continue
+            try:
+                actual = float(actual)
+            except (ValueError, TypeError):
+                void += 1
+                continue
+
+        # Grade
+        line = prop["line"]
+        side = (prop["side"] or "").lower()
+        if side == "over":
+            hit = 1 if actual > line else (0 if actual < line else None)
+        elif side == "under":
+            hit = 1 if actual < line else (0 if actual > line else None)
+        else:
+            unmappable += 1
+            continue
+
+        try:
+            con.execute(
+                "INSERT INTO prop_results(prop_id, actual_value, hit, settled_at) VALUES (?,?,?,?)",
+                (prop["id"], actual, hit, now))
+            settled += 1
+        except Exception:
+            errors += 1
+
+    con.commit()
+    return {"settled": settled, "void": void, "unmappable": unmappable, "errors": errors}
+
+
 def settle_game(con: sqlite3.Connection, game_id: int) -> dict:
     """Settle all unsettled props for one prop_games row.
 
@@ -256,7 +449,7 @@ def settle_game(con: sqlite3.Connection, game_id: int) -> dict:
     import espn_client as espn
 
     game = con.execute(
-        "SELECT id, league, home, away, espn_event_id, final_home, final_away FROM prop_games WHERE id=?",
+        "SELECT id, league, home, away, date, espn_event_id, final_home, final_away FROM prop_games WHERE id=?",
         (game_id,)
     ).fetchone()
     if not game:
@@ -267,6 +460,24 @@ def settle_game(con: sqlite3.Connection, game_id: int) -> dict:
     if not espn_event_id:
         return {"settled": 0, "void": 0, "unmappable": 0, "errors": 0,
                 "msg": f"game {game_id}: no espn_event_id, cannot pull boxscore"}
+
+    # ── MLB: use MLB Stats API for accurate TB/doubles/strikeouts ──
+    if league == "mlb":
+        # Find unsettled props
+        props = con.execute("""
+            SELECT p.id, p.market, p.line, p.side, p.player_id, pl.name as player_name, pl.team as player_team
+            FROM props p
+            JOIN players pl ON pl.id = p.player_id
+            LEFT JOIN prop_results pr ON pr.prop_id = p.id
+            WHERE p.game_id = ? AND pr.prop_id IS NULL
+        """, (game_id,)).fetchall()
+        if not props:
+            return {"settled": 0, "void": 0, "unmappable": 0, "errors": 0,
+                    "msg": f"game {game_id}: no unsettled props"}
+        result = _settle_mlb_props(con, game, props)
+        # Merge with standard result keys
+        result.setdefault("errors", 0)
+        return result
 
     # Ensure game is final
     if game["final_home"] is None:
