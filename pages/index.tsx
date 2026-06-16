@@ -5,11 +5,23 @@ export default function Home() {
   return (
     <>
       <Head>
-        <title>Legendary Picks — Sports Scores & Predictions</title>
-        <meta name="description" content="Live scores, predictions, and prop-outcome data across the NBA, NFL, MLB, NHL and more." />
-        <meta property="og:title" content="Legendary Picks" />
-        <meta property="og:description" content="Live scores, predictions, and prop-outcome data." />
+        <title>Legendary Picks — Every play. Every stat. One scoreboard.</title>
+        <meta name="description" content="Live scores, prop lines, daily slates, and player stats across the NBA, NFL, MLB & NHL. Every play. Every stat. One scoreboard." />
+        <link rel="canonical" href="https://legendarypicks.xyz/" />
+        {/* Open Graph (Facebook/LinkedIn/iMessage/etc.) */}
+        <meta property="og:title" content="Legendary Picks — Every play. Every stat. One scoreboard." />
+        <meta property="og:description" content="Live scores, prop lines, daily slates, and player stats across the NBA, NFL, MLB & NHL." />
+        <meta property="og:image" content="https://legendarypicks.xyz/og-image.png" />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta property="og:url" content="https://legendarypicks.xyz/" />
         <meta property="og:type" content="website" />
+        <meta property="og:site_name" content="Legendary Picks" />
+        {/* Twitter / X card */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Legendary Picks — Every play. Every stat. One scoreboard." />
+        <meta name="twitter:description" content="Live scores, prop lines, daily slates, and player stats across the NBA, NFL, MLB & NHL." />
+        <meta name="twitter:image" content="https://legendarypicks.xyz/og-image.png" />
       </Head>
 
       <section className="relative overflow-hidden rounded-2xl border border-zinc-800 bg-gradient-to-br from-zinc-900 via-ink-900 to-zinc-900 p-8 md:p-12">
