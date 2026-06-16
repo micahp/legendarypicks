@@ -962,8 +962,31 @@ def ingest_props(batch: PropIngest):
                 "INSERT INTO prop_games(league,date,home,away,espn_event_id) VALUES(?,?,?,?,?)",
                 (batch.league, batch.date, batch.home, batch.away, batch.espn_event_id))
             game_id = cur.lastrowid
+            # Try to link espn_event_id for newly created games
+            if not batch.espn_event_id:
+                try:
+                    from link_prop_games import link_prop_game
+                    import espn_client as _espn
+                    new_row = con.execute("SELECT id, league, date, home, away FROM prop_games WHERE id=?", (game_id,)).fetchone()
+                    espn_games = _espn.games(batch.league, batch.date)
+                    espn_id = link_prop_game(con, new_row, espn_games)
+                    if espn_id:
+                        con.execute("UPDATE prop_games SET espn_event_id=? WHERE id=?", (espn_id, game_id))
+                except Exception:
+                    pass
         else:
             game_id = game_row["id"]
+            # If existing game has no espn_event_id, try to link it now
+            if not game_row["espn_event_id"] and not batch.espn_event_id:
+                try:
+                    from link_prop_games import link_prop_game
+                    import espn_client as _espn
+                    espn_games = _espn.games(batch.league, batch.date)
+                    espn_id = link_prop_game(con, game_row, espn_games)
+                    if espn_id:
+                        con.execute("UPDATE prop_games SET espn_event_id=? WHERE id=?", (espn_id, game_id))
+                except Exception:
+                    pass  # crosswalk is best-effort; don't block ingest
         ingested = 0
         unresolved = 0
         for p in batch.props:
