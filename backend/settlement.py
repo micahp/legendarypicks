@@ -85,7 +85,7 @@ MARKET_ALIASES = {
     "total_hits": "hit_any",
     "total_runs": "run_any",
     "total_rbis": "rbi_any",
-    "total_doubles": "double_any",
+    "total_doubles": "double_any",  # 2B not in ESPN basic labels — will return None (unmappable without expanded boxscore)
     "total_triples": "triple_any",
     "total_home_runs": "home_run_any",
     "total_stolen_bases": "stolen_base_any",
@@ -143,15 +143,26 @@ def _find_player_stat(boxscore: dict, player_name: str, team: str,
     if not players:
         return None
 
+    # Team abbreviation aliases (ESPN sometimes uses different abbrevs than our data)
+    _TEAM_ALIASES = {
+        "WAS": "WSH", "WSH": "WAS",  # Washington
+        "ATH": "OAK", "OAK": "ATH",  # Athletics
+        "LAL": "LAL", "LAC": "LAC",  # LA teams
+        "TB": "TB", "TBL": "TB",     # Tampa Bay
+        "ARI": "ARI", "AZ": "ARI",   # Arizona
+    }
+
     # players is a list of team groups: [{"team": {"abbreviation": "PHI"}, "statistics": [...]}, ...]
     for team_group in players:
         tg_team = (team_group.get("team") or {}).get("abbreviation", "")
-        # Match by team abbreviation (case-insensitive)
-        if tg_team.upper() != team.upper():
+        # Match by team abbreviation (case-insensitive, with aliases)
+        tg_upper = tg_team.upper()
+        team_upper = team.upper()
+        if tg_upper != team_upper and _TEAM_ALIASES.get(tg_upper) != team_upper:
             # Also try displayName / shortDisplayName
             tg_name = (team_group.get("team") or {}).get("displayName", "")
             tg_short = (team_group.get("team") or {}).get("shortDisplayName", "")
-            if team.upper() not in (tg_team.upper(), tg_name.upper(), tg_short.upper()):
+            if team.upper() not in (tg_upper, tg_name.upper(), tg_short.upper()):
                 continue
 
         for stats_group in team_group.get("statistics", []):
@@ -190,10 +201,24 @@ def _find_player_stat(boxscore: dict, player_name: str, team: str,
 
                 # Found the player — extract the stat
                 stats_list = athlete_entry.get("stats", [])
+                labels = stats_group.get("labels") or []
                 if isinstance(stats_list, list) and len(stats_list) > 0:
-                    # stats_list is a flat list of values in order of the category's "labels"
-                    # We need to find the index of stat_key in the labels
-                    labels = stats_group.get("labels")
+                    # Compute TB from SLG * AB if not directly in labels
+                    if stat_key == "TB" and "TB" not in labels and "SLG" in labels and "AB" in labels:
+                        try:
+                            slg_idx = labels.index("SLG")
+                            ab_idx = labels.index("AB")
+                            slg = float(stats_list[slg_idx]) if stats_list[slg_idx] not in (None, "") else 0.0
+                            ab = float(stats_list[ab_idx]) if stats_list[ab_idx] not in (None, "") else 0.0
+                            return round(slg * ab)
+                        except (ValueError, TypeError, IndexError):
+                            pass
+
+                    # Compute 2B similarly if not available
+                    if stat_key == "2B" and "2B" not in labels:
+                        return None  # can't compute without expanded boxscore
+
+                    # Standard label-based lookup
                     if labels and stat_key in labels:
                         idx = labels.index(stat_key)
                         if idx < len(stats_list):
