@@ -950,11 +950,11 @@ def ingest_props(batch: PropIngest):
         # ensure game row — match on league+date+home+away (espn_event_id is optional)
         if batch.espn_event_id:
             cur = con.execute(
-                "SELECT id FROM prop_games WHERE espn_event_id=? AND league=?",
+                "SELECT id, espn_event_id FROM prop_games WHERE espn_event_id=? AND league=?",
                 (batch.espn_event_id, batch.league))
         else:
             cur = con.execute(
-                "SELECT id FROM prop_games WHERE league=? AND date=? AND home=? AND away=?",
+                "SELECT id, espn_event_id FROM prop_games WHERE league=? AND date=? AND home=? AND away=?",
                 (batch.league, batch.date, batch.home, batch.away))
         game_row = cur.fetchone()
         if not game_row:
