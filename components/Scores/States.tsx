@@ -20,10 +20,19 @@ export function ErrorBanner({ message }: { message: string }) {
   )
 }
 
-export function EmptyState() {
+export function EmptyState({ leagueFilter, onViewAll }: { leagueFilter?: string; onViewAll?: () => void }) {
+  const isFiltered = leagueFilter && leagueFilter !== 'All'
   return (
-    <div className="rounded-lg border border-zinc-800 bg-zinc-900 px-4 py-6 text-zinc-300">
-      No games scheduled for this date.
+    <div className="rounded-lg border border-zinc-800 bg-zinc-900 px-4 py-6 text-zinc-300 space-y-4">
+      <p>No games scheduled for this date{isFiltered ? ` in ${leagueFilter}` : ''}.</p>
+      {isFiltered && onViewAll && (
+        <button
+          onClick={onViewAll}
+          className="px-4 py-2 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-sm font-medium hover:bg-emerald-500/20 transition-colors"
+        >
+          View All Leagues
+        </button>
+      )}
     </div>
   )
 }

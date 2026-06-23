@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import Head from 'next/head'
 import { SportsService } from '../services/sports'
 
@@ -30,6 +30,15 @@ export default function PredictionsPage() {
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
+  // Build a gameId -> "{away} at {home}" lookup from loaded games
+  const gameNames = useMemo(() => {
+    const map = new Map<string, string>()
+    for (const g of games) {
+      map.set(g.gameId, `${g.awayTeam.name} at ${g.homeTeam.name}`)
+    }
+    return map
+  }, [games])
+
   useEffect(() => {
     const fetchGames = async () => {
       setLoading(true)
@@ -54,19 +63,19 @@ export default function PredictionsPage() {
     const fetchPreds = async () => {
       setPredsLoading(true)
       try {
-        const p = await SportsService.getPredictions()
+        const p = await SportsService.getPredictions(league)
         setPredictions(p)
       } catch { /* silent */ }
       finally { setPredsLoading(false) }
     }
     fetchPreds()
-  }, [])
+  }, [league])
 
   const submit = async () => {
     setSubmitting(true)
     try {
       await SportsService.submitPrediction(league, selectedGame, predictedWinner)
-      const p = await SportsService.getPredictions()
+      const p = await SportsService.getPredictions(league)
       setPredictions(p)
     } catch {
       setError('Failed to submit prediction.')
@@ -167,7 +176,7 @@ export default function PredictionsPage() {
                 {predictions.map(p => (
                   <tr key={p.id} className="border-t border-zinc-800">
                     <td className="pr-2 py-2">{p.league.toUpperCase()}</td>
-                    <td className="pr-2 py-2">{p.gameId}</td>
+                    <td className="pr-2 py-2">{gameNames.get(p.gameId) ?? p.gameId}</td>
                     <td className="pr-2 py-2">{p.predictedWinner}</td>
                     <td className="pr-2 py-2">{p.correct === null ? 'Pending' : p.correct ? '✅' : '❌'}</td>
                   </tr>

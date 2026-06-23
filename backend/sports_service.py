@@ -203,22 +203,10 @@ def get_boxscore(league: str, game_id: str):
         raise HTTPException(404, str(e))
 
 
-@app.get("/api/{league}/game/{game_id}/detail")
-def get_game_detail(league: str, game_id: str):
-    """NBA/NHL game detail: persisted team stats, scoring timeline, venue, and strength priors."""
-    lg = league.lower()
-    if lg not in ("nba", "nhl"):
-        raise HTTPException(400, "game detail only available for NBA and NHL")
-    out = {"game_id": game_id, "league": lg,
-           "team_stats": [], "scoring_plays": [], "context": None, "strength": {},
-           "final_score": None}
-    # ── final score from OUR DB (scoring_plays); no ESPN on the request path ──
-    try:
-        out["final_score"] = _final_score_from_db(lg, game_id)
-    except Exception:
-        pass
+def _read_game_detail_from_db(lg, game_id, out):
+    """Populate out dict with team_stats, scoring_plays, context from DB.
+    Returns True if context was populated (game had snapshot data)."""
     with closing(_db()) as con:
-        # Team stats
         for r in con.execute(
             "SELECT * FROM team_game_stats WHERE league=? AND game_id=? ORDER BY home_away",
             (lg, game_id)
@@ -241,7 +229,6 @@ def get_game_detail(league: str, game_id: str):
                 "powerplay_goals": r["powerplay_goals"], "powerplay_opps": r["powerplay_opps"],
                 "penalties": r["penalties"], "penalty_min": r["penalty_min"],
             })
-        # Scoring plays
         for r in con.execute(
             "SELECT * FROM scoring_plays WHERE league=? AND game_id=? ORDER BY period, clock",
             (lg, game_id)
@@ -252,7 +239,6 @@ def get_game_detail(league: str, game_id: str):
                 "home_score": r["home_score"], "team_abbrev": r["team_abbrev"],
                 "play_text": r["play_text"], "play_type": r["play_type"],
             })
-        # Game context
         ctx = con.execute(
             "SELECT * FROM game_context WHERE league=? AND game_id=?",
             (lg, game_id)
@@ -265,13 +251,107 @@ def get_game_detail(league: str, game_id: str):
                 "officials": json.loads(ctx["officials"] or "[]"),
                 "home_team": ctx["home_team"], "away_team": ctx["away_team"],
             }
-        # Strength priors for both teams
-        for ab in [out["context"]["home_team"], out["context"]["away_team"]] if out["context"] else []:
-            if not ab: continue
+            return True
+    return False
+
+
+@app.get("/api/{league}/game/{game_id}/detail")
+def get_game_detail(league: str, game_id: str):
+    """NBA/NHL game detail: persisted team stats, scoring timeline, venue, and strength priors."""
+    lg = league.lower()
+    if lg not in ("nba", "nhl"):
+        raise HTTPException(400, "game detail only available for NBA and NHL")
+    out = {"game_id": game_id, "league": lg,
+           "team_stats": [], "scoring_plays": [], "context": None, "strength": {},
+           "final_score": None}
+    # ── final score from OUR DB (scoring_plays); no ESPN on the request path ──
+    try:
+        out["final_score"] = _final_score_from_db(lg, game_id)
+    except Exception:
+        pass
+    # Read from DB
+    _read_game_detail_from_db(lg, game_id, out)
+
+    # ── Fallback: when boxscore snapshots were never captured (empty DB),
+    #     pull team names + scores from ESPN's scoreboard/game_result so the
+    #     detail page shows real data instead of AWAY/HOME placeholders. ──
+    if not out["team_stats"] and not out["context"]:
+        # First, try to populate the DB via the boxscore snapshot pipeline
+        # so both this request and future ones get full data.
+        try:
+            _snapshot_boxscore_full(lg, game_id)
+        except Exception:
+            pass  # snapshot may fail for pre-game, which is fine
+
+        # Re-query the DB now that snapshot has run
+        _read_game_detail_from_db(lg, game_id, out)
+        out["final_score"] = _final_score_from_db(lg, game_id)
+
+        # If DB is still empty (e.g. pre-game or snapshot failed),
+        # fall back to ESPN's scoreboard summary for minimal context + scores
+        if not out["context"]:
             try:
-                out["strength"][ab] = espn.team_strength_map(lg).get(ab)
+                result = espn.game_result(league, game_id)
+                scores = result.get("scores", {})
+                home_abbrev = ""
+                away_abbrev = ""
+                try:
+                    summary = _fetch_summary(lg, game_id)
+                    comp = (summary.get("header", {}).get("competitions") or [{}])[0]
+                    for c in comp.get("competitors", []):
+                        ab = c.get("team", {}).get("abbreviation", "")
+                        if c.get("homeAway") == "home":
+                            home_abbrev = ab
+                        else:
+                            away_abbrev = ab
+                    if not scores:
+                        for c in comp.get("competitors", []):
+                            ab = c.get("team", {}).get("abbreviation", "")
+                            sc = _num(c.get("score"))
+                            if ab and sc is not None:
+                                scores[ab] = int(sc)
+                except Exception:
+                    if len(scores) == 2:
+                        score_keys = sorted(scores.keys())
+                        home_abbrev = score_keys[0]
+                        away_abbrev = score_keys[1]
+
+                if scores and len(scores) == 2:
+                    abbrevs = list(scores.keys())
+                    if home_abbrev and away_abbrev and home_abbrev in scores and away_abbrev in scores:
+                        out["final_score"] = {"home": scores[home_abbrev], "away": scores[away_abbrev]}
+                    else:
+                        out["final_score"] = {"home": scores[abbrevs[0]], "away": scores[abbrevs[1]]}
+
+                if home_abbrev or away_abbrev:
+                    out["context"] = {
+                        "venue_name": "", "venue_city": "",
+                        "attendance": None, "officials": [],
+                        "home_team": home_abbrev, "away_team": away_abbrev,
+                    }
             except Exception:
-                pass
+                pass  # ESPN fallback failed — return whatever we have
+
+        # Strength priors for whatever teams we ended up with
+        if out["context"]:
+            for ab in [out["context"]["home_team"], out["context"]["away_team"]]:
+                if not ab:
+                    continue
+                try:
+                    if ab not in out["strength"]:
+                        out["strength"][ab] = espn.team_strength_map(lg).get(ab)
+                except Exception:
+                    pass
+    else:
+        # DB had data — strength priors for both teams
+        if out["context"]:
+            for ab in [out["context"]["home_team"], out["context"]["away_team"]]:
+                if not ab: continue
+                try:
+                    out["strength"][ab] = espn.team_strength_map(lg).get(ab)
+                except Exception:
+                    pass
+
     return out
 
 
@@ -308,10 +388,16 @@ def submit_prediction(pred: PredictionIn):
 
 
 @app.get("/api/predictions")
-def list_predictions():
+def list_predictions(league: Optional[str] = Query(None, description="Filter by league (nba, mlb, nhl, nfl, etc.)")):
+    sql = "SELECT * FROM predictions"
+    params = []
+    if league:
+        sql += " WHERE league = ?"
+        params.append(league.lower())
+    sql += " ORDER BY id"
     out = []
     with closing(_db()) as con:
-        for r in con.execute("SELECT * FROM predictions ORDER BY id").fetchall():
+        for r in con.execute(sql, params).fetchall():
             correct = r["correct"]
             if correct is None:                     # re-grade: the game may have finished since
                 correct = _evaluate(r["league"], r["game_id"], r["predicted_winner"])

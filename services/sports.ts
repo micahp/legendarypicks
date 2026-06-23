@@ -32,8 +32,8 @@ export interface LivePeriod {
 export interface Game {
   gameId: string
   league?: string
-  homeTeam: { teamId: string; name: string; nickname?: string; score?: number }
-  awayTeam: { teamId: string; name: string; nickname?: string; score?: number }
+  homeTeam: { teamId: string; name: string; nickname?: string; score?: number; winner?: boolean }
+  awayTeam: { teamId: string; name: string; nickname?: string; score?: number; winner?: boolean }
   startTime: string
   status: 'SCHEDULED' | 'LIVE' | 'FINAL'
   subtitle?: string
@@ -50,7 +50,7 @@ function statusFromState(state?: string): Game['status'] {
 function side(s: any): Game['homeTeam'] {
   const name = s?.name ?? s?.abbrev ?? ''
   const record = s?.record ? ` (${s.record})` : ''
-  return { teamId: s?.abbrev ?? '', name: name + record, nickname: s?.nickname, score: s?.score ?? undefined }
+  return { teamId: s?.abbrev ?? '', name: name + record, nickname: s?.nickname, score: s?.score ?? undefined, winner: s?.winner ?? undefined }
 }
 
 function normalizeSets(g: any): TennisSet[] | undefined {
@@ -71,27 +71,35 @@ function normalizeSets(g: any): TennisSet[] | undefined {
   return undefined
 }
 
-function normalizeLivePeriod(g: any): LivePeriod | undefined {
+function normalizeLivePeriod(g: any, league?: string): LivePeriod | undefined {
   // Only for LIVE games
   if (g?.state !== 'in' && g?.status !== 'LIVE') return undefined
 
-  // Try to get period info from various possible fields
   const period = g?.period ?? g?.current_period ?? g?.inning ?? g?.quarter ?? g?.round ?? g?.game
-  const periodType = g?.period_type
+  const lg = (league || g?.league || '').toLowerCase()
 
   if (period !== undefined && period !== null) {
-    // Determine type from league or explicit field
+    // Determine type from league
     let type: LivePeriod['type'] = 'period'
-    if (periodType) {
-      type = periodType
-    } else {
-      // Infer from league
+    if (lg === 'mlb') type = 'inning'
+    else if (lg === 'nba') type = 'quarter'
+    else if (lg === 'nhl') type = 'period'
+    else if (lg === 'nfl') type = 'quarter'
+    else if (lg === 'ufc') type = 'round'
+    else if (lg === 'atp' || lg === 'wta') type = 'period'
+
+    // For MLB, use ESPN's status_detail which has inning state ("Top 1st", "End 5th", etc.)
+    let display: string | undefined
+    if (lg === 'mlb' && g?.status_detail) {
+      // ESPN format: "End 1st", "Top 2nd", "Bot 3rd", "Mid 7th"
+      // Convert "End 1st" → "End 1st" (keep as-is), "Top 2nd" → "Top 2nd"
+      display = g.status_detail
     }
 
     return {
       number: typeof period === 'number' ? period : parseInt(String(period), 10),
       type,
-      display: g?.period_display ?? g?.time_remaining ? `${period} (${g.time_remaining})` : undefined,
+      display,
     }
   }
 
@@ -107,12 +115,12 @@ function normalizeLivePeriod(g: any): LivePeriod | undefined {
   return undefined
 }
 
-export function normalizeGame(g: any): Game {
+export function normalizeGame(g: any, leagueOverride?: string): Game {
   // Build subtitle: for UFC use card_segment, for tennis/UFC use event name
   let subtitle = g?.card_segment || g?.event || ''
 
-  // Determine league from various possible fields
-  const league = g?.league ?? g?.sport ?? ''
+  // Determine league from various possible fields, with optional override
+  const league = leagueOverride ? leagueOverride : (g?.league ?? g?.sport ?? '')
 
   return {
     gameId: String(g?.game_id ?? g?.gameId ?? ''),
@@ -123,7 +131,7 @@ export function normalizeGame(g: any): Game {
     status: g?.status && ['SCHEDULED', 'LIVE', 'FINAL'].includes(g.status) ? g.status : statusFromState(g?.state),
     subtitle: subtitle || undefined,
     sets: normalizeSets(g),
-    livePeriod: normalizeLivePeriod(g),
+    livePeriod: normalizeLivePeriod(g, league),
   }
 }
 
@@ -160,7 +168,7 @@ export const SportsService = {
     try {
       const res = await axios.get(`${API_BASE_URL}/${league}/games`, { params: { date } })
       return (Array.isArray(res.data) ? res.data : []).map((g: any) => ({
-        ...normalizeGame(g),
+        ...normalizeGame(g, league),
         league: league.toUpperCase(),
       }))
     } catch (err) {
@@ -202,9 +210,11 @@ export const SportsService = {
     }
   },
 
-  getPredictions: async (): Promise<Prediction[]> => {
+  getPredictions: async (league?: string): Promise<Prediction[]> => {
     try {
-      const res = await axios.get(`${API_BASE_URL}/predictions`)
+      const params: Record<string, string> = {}
+      if (league) params.league = league
+      const res = await axios.get(`${API_BASE_URL}/predictions`, { params })
       // backend returns { predictions, graded, accuracy }
       const list = Array.isArray(res.data) ? res.data : res.data?.predictions ?? []
       return list.map(normalizePrediction)

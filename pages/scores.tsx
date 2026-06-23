@@ -37,6 +37,7 @@ export default function ScoresPage() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
+    let ignore = false
     const load = async () => {
       setLoading(true)
       setError(null)
@@ -48,14 +49,16 @@ export default function ScoresPage() {
           const l = leagueFilter === 'Call of Duty' ? 'cod' : leagueFilter.toLowerCase()
           data = await SportsService.getGamesByDate(l, date)
         }
-        setGames(Array.isArray(data) ? data : [])
+        if (!ignore) {
+          setGames(Array.isArray(data) ? data : [])
+          setLoading(false)
+        }
       } catch (e: any) {
-        setError('Unable to load games right now. Try another date.')
-      } finally {
-        setLoading(false)
+        if (!ignore) setError('Unable to load games right now. Try another date.')
       }
     }
     load()
+    return () => { ignore = true }
   }, [date, leagueFilter])
 
   // ── live-score polling ──────────────────────────────────────────
@@ -65,6 +68,7 @@ export default function ScoresPage() {
   useEffect(() => {
     const liveCount = games.filter(g => g.status === 'LIVE').length
     if (liveCount === 0) return
+    let ignore = false
     const timer = setInterval(() => {
       const refetch = async () => {
         try {
@@ -75,12 +79,12 @@ export default function ScoresPage() {
             const l = leagueFilter === 'Call of Duty' ? 'cod' : leagueFilter.toLowerCase()
             data = await SportsService.getGamesByDate(l, date)
           }
-          setGames(Array.isArray(data) ? data : [])
+          if (!ignore) setGames(Array.isArray(data) ? data : [])
         } catch { /* silent — keep stale scores rather than blank */ }
       }
       refetch()
     }, LIVE_POLL_MS)
-    return () => clearInterval(timer)
+    return () => { ignore = true; clearInterval(timer) }
   }, [games, date, leagueFilter])
 
   const groupedGames = games.reduce((acc, g) => {
@@ -164,7 +168,7 @@ export default function ScoresPage() {
         {loading ? (
           <SkeletonList />
         ) : games.length === 0 ? (
-          <EmptyState />
+          <EmptyState leagueFilter={leagueFilter} onViewAll={() => setLeagueFilter('All')} />
         ) : (
           <div className="space-y-12">
             {sortedLeagues.map((league) => {
@@ -196,11 +200,6 @@ export default function ScoresPage() {
                         <h3 className="text-sm font-semibold text-zinc-400 uppercase tracking-wide">
                           {sub}{timeLabel}
                         </h3>
-                      )}
-                      {sub && times.length > 1 && (
-                        <div className="text-xs text-zinc-500">
-                          {times.join(' / ')}
-                        </div>
                       )}
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {sortGames(sg).map((g) => (

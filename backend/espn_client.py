@@ -209,6 +209,7 @@ def games(league, date=None):
                         "status": st.get("description") or score_str or "",
                         "period": status.get("period"),
                         "clock": status.get("displayClock"),
+                        "status_detail": st.get("shortDetail"),
                         "home": players.get("home"),
                         "away": players.get("away"),
                         "event": event.get("shortName") or event.get("name", ""),
@@ -280,6 +281,7 @@ def games(league, date=None):
                         "name": name,
                         "score": None,
                         "record": record,
+                        "winner": c.get("winner"),
                     }
                 out.append({
                     "game_id": comp.get("id"),
@@ -288,6 +290,7 @@ def games(league, date=None):
                     "status": st.get("description") or weight_class or "",
                     "period": status.get("period"),
                     "clock": status.get("displayClock"),
+                    "status_detail": st.get("shortDetail"),
                     "home": fighters.get("home"),
                     "away": fighters.get("away"),
                     "event": event_name,
@@ -313,6 +316,7 @@ def games(league, date=None):
                 "status": st.get("description"),
                 "period": status.get("period"),
                 "clock": status.get("displayClock"),
+                "status_detail": st.get("shortDetail"),
                 "home": teams.get("home"),
                 "away": teams.get("away"),
             })

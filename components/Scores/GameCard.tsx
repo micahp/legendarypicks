@@ -5,6 +5,7 @@ interface TeamInfo {
   name: string
   nickname?: string
   score?: number
+  winner?: boolean
 }
 
 interface TennisSet {
@@ -50,19 +51,19 @@ function getPeriodLabel(league?: string, livePeriod?: GameProps['livePeriod']) {
 
   const { type, number, display } = livePeriod
 
-  // Use display if provided, otherwise format based on type
+  // Use display if provided (MLB status_detail: "Top 1st", "End 5th", etc.)
   if (display) return display
 
-  // League-specific defaults based on type
+  // Format based on type
   switch (type) {
     case 'inning':
-      return `Inning ${number}`
+      return `${number}`
     case 'period':
-      return `Period ${number}`
+      return `P${number}`
     case 'quarter':
       return `Q${number}`
     case 'round':
-      return `Round ${number}`
+      return `R${number}`
     case 'game':
       return `Game ${number}`
     default:
@@ -99,11 +100,13 @@ export default function GameCard(g: GameProps) {
 
   // Winner/loser dimming — same treatment as ScoreStrip on the detail page
   const isFinal = g.status === 'FINAL'
-  const homeWon = isFinal && g.homeTeam.score !== undefined && g.awayTeam.score !== undefined
-    ? g.homeTeam.score! > g.awayTeam.score!
+  // Team sports: compare scores. UFC: use winner boolean (scores are always null).
+  const isUFCFinal = isFinal && g.league === 'UFC'
+  const homeWon = isFinal
+    ? (isUFCFinal ? g.homeTeam.winner === true : (g.homeTeam.score !== undefined && g.awayTeam.score !== undefined && g.homeTeam.score! > g.awayTeam.score!))
     : false
-  const awayWon = isFinal && g.homeTeam.score !== undefined && g.awayTeam.score !== undefined
-    ? g.awayTeam.score! > g.homeTeam.score!
+  const awayWon = isFinal
+    ? (isUFCFinal ? g.awayTeam.winner === true : (g.homeTeam.score !== undefined && g.awayTeam.score !== undefined && g.awayTeam.score! > g.homeTeam.score!))
     : false
 
   const handleClick = () => {
