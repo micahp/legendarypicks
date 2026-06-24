@@ -86,13 +86,15 @@ function normalizeLivePeriod(g: any, league?: string): LivePeriod | undefined {
     else if (lg === 'nhl') type = 'period'
     else if (lg === 'nfl') type = 'quarter'
     else if (lg === 'ufc') type = 'round'
+    else if (lg === 'wc') type = 'half'
     else if (lg === 'atp' || lg === 'wta') type = 'period'
 
     // For MLB, use ESPN's status_detail which has inning state ("Top 1st", "End 5th", etc.)
+    // For soccer, pass through the displayClock / stage label
     let display: string | undefined
-    if (lg === 'mlb' && g?.status_detail) {
-      // ESPN format: "End 1st", "Top 2nd", "Bot 3rd", "Mid 7th"
-      // Convert "End 1st" → "End 1st" (keep as-is), "Top 2nd" → "Top 2nd"
+    if (lg === 'wc') {
+      display = g?.clock ?? g?.status_detail ?? undefined
+    } else if (lg === 'mlb' && g?.status_detail) {
       display = g.status_detail
     }
 
@@ -178,7 +180,7 @@ export const SportsService = {
   },
 
   getAllGamesByDate: async (date: string): Promise<Game[]> => {
-    const leagues = ['nba', 'mlb', 'nhl', 'nfl', 'atp', 'wta', 'cod', 'ufc']
+    const leagues = ['nba', 'mlb', 'nhl', 'nfl', 'atp', 'wta', 'cod', 'ufc', 'wc']
     const promises = leagues.map((l) => SportsService.getGamesByDate(l, date))
     const results = await Promise.all(promises)
     return results.flat()

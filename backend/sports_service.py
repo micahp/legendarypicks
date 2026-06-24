@@ -185,6 +185,20 @@ def get_strength(league: str):
     return rows
 
 
+@app.get("/api/{league}/standings")
+def get_standings(league: str):
+    """Group/division standings. For World Cup: returns group tables with draws."""
+    if league.lower() != "wc":
+        try:
+            return espn.team_strength(league)
+        except ValueError as e:
+            raise HTTPException(404, str(e))
+    try:
+        return espn.group_standings(league)
+    except ValueError as e:
+        raise HTTPException(404, str(e))
+
+
 @app.get("/api/{league}/strength/{team}")
 def get_team_strength(league: str, team: str):
     try:

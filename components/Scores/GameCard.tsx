@@ -79,8 +79,9 @@ export default function GameCard(g: GameProps) {
   // UFC never shows time
   const isUFC = g.league === 'UFC'
   const isTennis = g.league === 'ATP' || g.league === 'WTA'
-  const hasDetail = g.league === 'NBA' || g.league === 'NHL'
+  const hasDetail = g.league === 'NBA' || g.league === 'NHL' || g.league === 'WC'
   const isTeamSport = g.league === 'NBA' || g.league === 'NHL' || g.league === 'MLB' || g.league === 'NFL'
+  const isSoccer = g.league === 'WC'
 
   const teamLabel = (t: GameProps['homeTeam']) => {
     if (!isTeamSport) return t.name
@@ -99,14 +100,21 @@ export default function GameCard(g: GameProps) {
 
   // Winner/loser dimming — same treatment as ScoreStrip on the detail page
   const isFinal = g.status === 'FINAL'
-  // Team sports: compare scores. UFC: use winner boolean (scores are always null).
+  // Team sports: compare scores. UFC: use winner boolean. Soccer: winner flag + draw handling.
+  const isSoccerFinal = isFinal && g.league === 'WC'
   const isUFCFinal = isFinal && g.league === 'UFC'
   const homeWon = isFinal
-    ? (isUFCFinal ? g.homeTeam.winner === true : (g.homeTeam.score !== undefined && g.awayTeam.score !== undefined && g.homeTeam.score! > g.awayTeam.score!))
+    ? (isSoccerFinal ? !!(g as any).homeTeam?.winner === true
+       : isUFCFinal ? g.homeTeam.winner === true
+       : (g.homeTeam.score !== undefined && g.awayTeam.score !== undefined && g.homeTeam.score! > g.awayTeam.score!))
     : false
   const awayWon = isFinal
-    ? (isUFCFinal ? g.awayTeam.winner === true : (g.homeTeam.score !== undefined && g.awayTeam.score !== undefined && g.awayTeam.score! > g.homeTeam.score!))
+    ? (isSoccerFinal ? !!(g as any).awayTeam?.winner === true
+       : isUFCFinal ? g.awayTeam.winner === true
+       : (g.homeTeam.score !== undefined && g.awayTeam.score !== undefined && g.awayTeam.score! > g.homeTeam.score!))
     : false
+  // Draw: neither side dimmed
+  const isDraw = isSoccerFinal && !homeWon && !awayWon
 
   const handleClick = () => {
     if (hasDetail) {

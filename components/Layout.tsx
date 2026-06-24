@@ -10,6 +10,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           </Link>
           <nav className="flex items-center gap-4 text-sm">
             <Link href="/scores" className="hover:text-emerald-400">Scores</Link>
+            <Link href="/standings" className="hover:text-emerald-400">Standings</Link>
             <Link href="/predict" className="hover:text-emerald-400">Predict</Link>
             <Link href="/props" className="hover:text-emerald-400">Props</Link>
             <Link href="/stats" className="hover:text-emerald-400">Stats</Link>

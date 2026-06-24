@@ -21,6 +21,7 @@ LEAGUES = {  # our key -> (espn "sport/league" path, regulation periods)
     "atp":  ("tennis/atp", 3),
     "wta":  ("tennis/wta", 3),
     "ufc":  ("mma/ufc", 3),
+    "wc":   ("soccer/fifa.world", 2),
 }
 
 # ---------------------------------------------------------------------------
@@ -296,6 +297,71 @@ def games(league, date=None):
                     "event": event_name,
                     "card_segment": card_segment,
                 })
+    elif league == "wc":
+        # Soccer (World Cup) - events with group/round context, draws, ET, penalties
+        for e in d.get("events", []):
+            comp = (e.get("competitions") or [{}])[0]
+            status = comp.get("status", {})
+            st = status.get("type", {})
+
+            teams = {}
+            winner_abbrev = None
+            for c in comp.get("competitors", []):
+                t = c.get("team", {})
+                teams[c.get("homeAway")] = {
+                    "abbrev": t.get("abbreviation"),
+                    "name": t.get("displayName"),
+                    "nickname": t.get("name"),
+                    "score": _num(c.get("score")),
+                }
+                if c.get("winner") is True:
+                    winner_abbrev = t.get("abbreviation")
+
+            state = st.get("state")
+            is_post = state == "post"
+            hs = teams.get("home", {}).get("score")
+            away_s = teams.get("away", {}).get("score")
+            is_draw = is_post and hs is not None and away_s is not None and hs == away_s
+
+            status_name = st.get("name", "")
+            stage = "regular"
+            if "EXTRA" in status_name:
+                stage = "et"
+            if "SHOOTOUT" in status_name:
+                stage = "pens"
+
+            status_display = st.get("description") or ""
+            if is_post:
+                if is_draw and winner_abbrev:
+                    status_display = "FT (Pens)"
+                elif stage == "et":
+                    status_display = "FT (AET)"
+                else:
+                    status_display = "FT"
+
+            notes = comp.get("notes", [])
+            subtitle = ""
+            for n in notes:
+                headline = n.get("headline", "") or ""
+                if "Group" in headline:
+                    subtitle = headline
+                    break
+
+            out.append({
+                "game_id": e.get("id"),
+                "date": e.get("date"),
+                "state": state,
+                "status": status_display,
+                "period": status.get("period"),
+                "clock": status.get("displayClock"),
+                "status_detail": st.get("shortDetail"),
+                "home": teams.get("home"),
+                "away": teams.get("away"),
+                "subtitle": subtitle,
+                "is_draw": is_draw,
+                "winner_abbrev": winner_abbrev,
+                "stage": stage,
+            })
     else:
         for e in d.get("events", []):
             comp = (e.get("competitions") or [{}])[0]
@@ -357,6 +423,85 @@ def team_strength_map(league):
     return {r["abbrev"]: r for r in team_strength(league) if r["abbrev"]}
 
 
+
+def group_standings(league):
+    """World Cup group tables — per-group standings with draws.
+    Returns [{group: "Group A", rows: [{rank, abbrev, name, played, wins, draws, losses, gf, ga, gd, points}]}]
+    """
+    _, path = _check(league)
+    d = _get(_CORE.format(path=path) + "/standings", ttl=900)
+    groups = []
+    for child in d.get("children", []):
+        gname = child.get("name", "")
+        rows = []
+        for ent in child.get("standings", {}).get("entries", []):
+            s = {x.get("name"): x.get("value") for x in ent.get("stats", [])}
+            t = ent.get("team", {})
+            rows.append({
+                "rank": int(s.get("rank", 0)),
+                "abbrev": t.get("abbreviation"),
+                "name": t.get("displayName"),
+                "played": int(s.get("gamesPlayed", 0)),
+                "wins": int(s.get("wins", 0)),
+                "draws": int(s.get("ties", 0)),
+                "losses": int(s.get("losses", 0)),
+                "gf": int(s.get("pointsFor", 0)),
+                "ga": int(s.get("pointsAgainst", 0)),
+                "gd": int(s.get("pointDifferential", 0)),
+                "points": int(s.get("points", 0)),
+            })
+        rows.sort(key=lambda r: r["rank"])
+        groups.append({"group": gname, "rows": rows})
+    return groups
+
+
+
+def game_result_soccer(league, game_id):
+    """Soccer-specific game result — uses competitor.winner flag (penalty/AET aware)."""
+    _, path = _check(league)
+    d = _get(_SITE.format(path=path) + f"/summary?event={game_id}", ttl=20)
+    comp = (d.get("header", {}).get("competitions") or [{}])[0]
+    st = comp.get("status", {}).get("type", {})
+    scores = {}
+    winner = None
+    for c in comp.get("competitors", []):
+        abbr = c.get("team", {}).get("abbreviation")
+        scores[abbr] = _num(c.get("score"))
+        if c.get("winner") is True:
+            winner = abbr
+    return {"state": st.get("state"), "scores": scores, "winner": winner}
+
+
+def lineups(league, game_id):
+    """Starting XI + formation for a soccer match. [{side: 'home'|'away', formation, players: [{jersey, name, position}]}]"""
+    _, path = _check(league)
+    d = _get(_SITE.format(path=path) + f"/summary?event={game_id}", ttl=20)
+    result = []
+    for roster in d.get("rosters", []):
+        side = "home" if roster.get("homeAway") == "home" else "away"
+        formation = roster.get("formation", "")
+        players = []
+        for p in roster.get("roster", []):
+            ath = p.get("athlete", {})
+            players.append({
+                "jersey": p.get("jersey"),
+                "name": ath.get("displayName") or ath.get("fullName"),
+                "position": p.get("position", ""),
+                "starter": p.get("starter", False),
+            })
+        result.append({"side": side, "formation": formation, "players": players})
+    return result
+
+
+def match_events(league, game_id):
+    """Key events + commentary for a soccer match."""
+    _, path = _check(league)
+    d = _get(_SITE.format(path=path) + f"/summary?event={game_id}", ttl=20)
+    return {
+        "key_events": d.get("keyEvents", []),
+        "commentary": d.get("commentary", []),
+    }
+
 def boxscore(league, game_id):
     """Full per-game box score (team + player stat lines)."""
     _, path = _check(league)
@@ -386,8 +531,10 @@ def game_result(league, game_id):
     """Clean grading info for one game: {state, scores{abbrev:score}, winner|None}.
 
     Robust to date (queries the game directly), so it grades predictions regardless of when
-    the game was played. winner is None until the game is final.
+    the game was played. winner is None until the game is final. Soccer uses competitor.winner flag.
     """
+    if league == "wc":
+        return game_result_soccer(league, game_id)
     _, path = _check(league)
     d = _get(_SITE.format(path=path) + f"/summary?event={game_id}", ttl=20)
     comp = (d.get("header", {}).get("competitions") or [{}])[0]
