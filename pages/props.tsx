@@ -112,7 +112,7 @@ function Select({ value, onChange, options }: { value: string; onChange: (v: str
 }
 
 // ── Tab: Lines ───────────────────────────────────────────
-function LinesTab({ league }: { league: League }) {
+function LinesTab({ league, date }: { league: League; date: string }) {
   const [query, setQuery] = useState('')
   const [players, setPlayers] = useState<Player[]>([])
   const [props, setProps] = useState<Prop[]>([])
@@ -132,13 +132,14 @@ function LinesTab({ league }: { league: League }) {
   useEffect(() => {
     setLoading(true); setError(null)
     const params = new URLSearchParams({ limit: '100' })
+    params.set('date', date)
     if (query) params.set('player', query)
     if (league !== 'All') params.set('league', league)
     if (market !== 'All') params.set('market', market)
     fetch(`/api/props?${params}`)
       .then(r => r.json()).then(d => { setProps(d); setLoading(false) })
       .catch(() => { setError('Failed to load props.'); setLoading(false) })
-  }, [query, league, market])
+  }, [query, league, market, date])
 
   const filtered = book === 'All' ? props : props.filter(p => p.source === book)
 
@@ -189,7 +190,7 @@ function LinesTab({ league }: { league: League }) {
 }
 
 // ── Tab: Slate ────────────────────────────────────────────
-function SlateTab({ league }: { league: League }) {
+function SlateTab({ league, date }: { league: League; date: string }) {
   const [slate, setSlate] = useState<SlateGame[]>([])
   const [loading, setLoading] = useState(true)
   const [expandedGame, setExpandedGame] = useState<number | null>(null)
@@ -197,11 +198,12 @@ function SlateTab({ league }: { league: League }) {
   useEffect(() => {
     setLoading(true)
     const params = new URLSearchParams()
+    params.set('date', date)
     if (league !== 'All') params.set('league', league)
     fetch(`/api/props/slate?${params}`)
       .then(r => r.json()).then(d => { setSlate(d); setLoading(false) })
       .catch(() => setLoading(false))
-  }, [league])
+  }, [league, date])
 
   return (
     <div className="space-y-4">
@@ -553,6 +555,26 @@ export default function PropsPage() {
   const [tab, setTab] = useState<Tab>('slate')
   const [league, setLeague] = useState<League>('mlb')
 
+  // Date navigation — mirrors scores.tsx pattern exactly
+  const today = new Date().toLocaleDateString('en-CA')
+  const [date, setDate] = useState<string>(today)
+  const isToday = date === today
+  const shiftDay = (delta: number) => {
+    const d = new Date(date + 'T12:00:00')   // noon-anchored to dodge TZ rollover
+    d.setDate(d.getDate() + delta)
+    setDate(d.toLocaleDateString('en-CA'))
+  }
+  const goToday = () => setDate(today)
+
+  // allow deep-linkable date via ?date=YYYY-MM-DD
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const q = params.get('date')
+    if (q && /^\d{4}-\d{2}-\d{2}$/.test(q)) setDate(q)
+  }, [])
+
+  const showDateNav = tab === 'lines' || tab === 'slate'
+
   return (
     <>
       <Head>
@@ -577,9 +599,41 @@ export default function PropsPage() {
           ))}
         </div>
 
+        {/* Date navigator — only on date-scoped tabs */}
+        {showDateNav && (
+          <div className="flex items-center justify-center gap-2 sm:gap-3">
+            <button
+              type="button"
+              onClick={() => shiftDay(-1)}
+              aria-label="Previous day"
+              className="flex items-center justify-center w-10 h-10 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-300 text-xl leading-none hover:bg-zinc-800 active:scale-95"
+            >
+              ‹
+            </button>
+            <div className="min-w-[11rem] text-center" aria-live="polite">
+              <span className="text-sm font-bold text-zinc-200">
+                {new Date(date + 'T12:00:00').toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
+              </span>
+              {!isToday && (
+                <button type="button" onClick={goToday} className="block mx-auto mt-0.5 text-xs font-medium text-emerald-400 hover:text-emerald-300">
+                  Jump to today
+                </button>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={() => shiftDay(1)}
+              aria-label="Next day"
+              className="flex items-center justify-center w-10 h-10 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-300 text-xl leading-none hover:bg-zinc-800 active:scale-95"
+            >
+              ›
+            </button>
+          </div>
+        )}
+
         {/* Tab content */}
-        {tab === 'lines' && <LinesTab league={league} />}
-        {tab === 'slate' && <SlateTab league={league} />}
+        {tab === 'lines' && <LinesTab league={league} date={date} />}
+        {tab === 'slate' && <SlateTab league={league} date={date} />}
         {tab === 'performance' && <PerformanceTab league={league} />}
         {tab === 'matchups' && <MatchupsTab />}
         {tab === 'model' && <ModelTab />}

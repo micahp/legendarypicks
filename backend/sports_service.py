@@ -438,6 +438,7 @@ def list_props(player: Optional[str] = Query(None),
                     r.actual_value, r.hit, r.settled_at
              FROM props p
              JOIN players pl ON pl.id = p.player_id
+             JOIN prop_games pg ON pg.id = p.game_id
              LEFT JOIN prop_results r ON r.prop_id = p.id
              WHERE 1=1"""
     params = []
@@ -451,8 +452,8 @@ def list_props(player: Optional[str] = Query(None),
         sql += " AND pl.league = ?"
         params.append(league)
     if date:
-        sql += " AND p.captured_at >= ? AND p.captured_at < ?"
-        params.extend([f"{date}T00:00:00", f"{date}T23:59:59"])
+        sql += " AND pg.date = ?"
+        params.append(date)
     sql += " ORDER BY p.captured_at DESC LIMIT ?"
     params.append(limit)
     with closing(_db()) as con:
