@@ -34,7 +34,6 @@ const TABS: { key: Tab; label: string }[] = [
 ]
 const LEAGUES: League[] = ['All', 'mlb', 'nba', 'nfl', 'nhl']
 const MARKETS = ['All', 'points', 'rebounds', 'assists', 'threes', 'strikeouts', 'passing_yards', 'rushing_yards', 'receiving_yards', 'hits', 'home_runs', 'goals', 'shots', 'saves']
-const BOOKS = ['All', 'bovada', 'kalshi']
 
 function Skeleton({ lines = 4 }: { lines?: number }) {
   return (
@@ -117,7 +116,6 @@ function LinesTab({ league, date }: { league: League; date: string }) {
   const [players, setPlayers] = useState<Player[]>([])
   const [props, setProps] = useState<Prop[]>([])
   const [market, setMarket] = useState('All')
-  const [book, setBook] = useState('All')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -141,14 +139,13 @@ function LinesTab({ league, date }: { league: League; date: string }) {
       .catch(() => { setError('Failed to load props.'); setLoading(false) })
   }, [query, league, market, date])
 
-  const filtered = book === 'All' ? props : props.filter(p => p.source === book)
+  const filtered = props
 
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap gap-2 items-center">
         <PlayerSearch query={query} setQuery={setQuery} players={players} onSelect={p => { setQuery(p.name); setPlayers([]) }} />
         <Select value={market} onChange={setMarket} options={MARKETS.map(m => ({ v: m, label: m === 'All' ? 'All Markets' : m.replace(/_/g, ' ') }))} />
-        <Select value={book} onChange={setBook} options={BOOKS.map(b => ({ v: b, label: b === 'All' ? 'All Books' : b }))} />
       </div>
       {error && <div className="rounded-lg border border-red-500/40 bg-red-950/40 text-red-200 px-4 py-3 text-sm">{error}</div>}
       {loading ? <Skeleton lines={6} /> : filtered.length === 0 ? (
@@ -164,7 +161,6 @@ function LinesTab({ league, date }: { league: League; date: string }) {
                 <th className="text-center px-4 py-3 font-medium">Side</th>
                 <th className="text-right px-4 py-3 font-medium">Actual</th>
                 <th className="text-center px-4 py-3 font-medium">Hit</th>
-                <th className="text-left px-4 py-3 font-medium">Book</th>
                 <th className="text-left px-4 py-3 font-medium hidden md:table-cell">Date</th>
               </tr>
             </thead>
@@ -177,7 +173,6 @@ function LinesTab({ league, date }: { league: League; date: string }) {
                   <td className="px-4 py-2.5 text-center"><span className={`text-[11px] font-bold px-2 py-0.5 rounded ${p.side === 'over' ? 'bg-emerald-900/30 text-emerald-300' : 'bg-red-900/30 text-red-300'}`}>{p.side.toUpperCase()}</span></td>
                   <td className="px-4 py-2.5 text-right font-mono tabular-nums text-zinc-400">{p.actual_value ?? '—'}</td>
                   <td className="px-4 py-2.5 text-center"><HitBadge hit={p.hit} /></td>
-                  <td className="px-4 py-2.5 text-zinc-500 text-xs capitalize">{p.source}</td>
                   <td className="px-4 py-2.5 text-zinc-500 text-xs hidden md:table-cell whitespace-nowrap">{p.captured_at ? new Date(p.captured_at).toLocaleDateString() : '—'}</td>
                 </tr>
               ))}
@@ -590,7 +585,7 @@ export default function PropsPage() {
         </div>
 
         {/* Tab bar */}
-        <div className="flex gap-0 overflow-x-auto border-b border-zinc-800 -mx-4 px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="flex gap-0 flex-wrap border-b border-zinc-800 -mx-4 px-4">
           {TABS.map(t => (
             <button key={t.key} onClick={() => setTab(t.key)}
               className={`px-4 py-3 text-sm font-medium whitespace-nowrap transition-colors border-b-2 -mb-px ${tab === t.key ? 'border-emerald-500 text-white' : 'border-transparent text-zinc-500 hover:text-zinc-300'}`}>
