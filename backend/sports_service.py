@@ -198,6 +198,22 @@ def get_standings(league: str):
     except ValueError as e:
         raise HTTPException(404, str(e))
 
+@app.get("/api/{league}/team-stats")
+def get_team_stats(league: str, game_id: Optional[str] = Query(None)):
+    """Per-game team boxscore totals for NBA/NHL/NFL."""
+    if league.lower() not in ("nba", "nhl", "nfl"):
+        raise HTTPException(400, "team-stats is for nba/nhl/nfl only")
+    sql = "SELECT * FROM team_game_stats WHERE league=?"
+    params = [league.lower()]
+    if game_id:
+        sql += " AND game_id=?"
+        params.append(game_id)
+    sql += " ORDER BY captured_at DESC LIMIT 200"
+    with closing(_db()) as con:
+        con.row_factory = sqlite3.Row
+        rows = con.execute(sql, params).fetchall()
+    return [dict(r) for r in rows]
+
 
 @app.get("/api/{league}/strength/{team}")
 def get_team_strength(league: str, team: str):
