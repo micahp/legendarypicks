@@ -175,6 +175,17 @@ def ingest_batch(batch: dict):
         return json.loads(r.read().decode())
 
 
+
+
+def capture_snapshots(all_props: list, league: str):
+    """Write prop_odds_snapshots for existing props. Does NOT create new props."""
+    import urllib.request as _ur, json as _json
+    url = f"{API_BASE}/api/capture-odds"
+    data = _json.dumps({"league": league, "props": all_props}).encode()
+    req = _ur.Request(url, data=data, headers={"Content-Type": "application/json"})
+    with _ur.urlopen(req, timeout=30) as r:
+        return _json.loads(r.read().decode())
+
 def main():
     if len(sys.argv) < 2:
         print(__doc__)
@@ -182,6 +193,7 @@ def main():
 
     league = sys.argv[1]
     do_ingest = "--ingest" in sys.argv
+    do_capture = "--capture" in sys.argv
 
     if league == "all":
         targets = list(LEAGUES.items())
@@ -242,6 +254,7 @@ def main():
                     "line": p["line"] or 0,
                     "side": p["side"],
                     "source": "bovada",
+                    "odds": p.get("odds"),
                 })
             for batch in by_game.values():
                 try:
@@ -249,6 +262,14 @@ def main():
                     print(f"  {batch['away']} @ {batch['home']}: {result['ingested']} ingested")
                 except Exception as e:
                     print(f"  FAIL ingest: {e}")
+        # Optionally capture snapshots
+        if do_capture:
+            print(f"\nCapturing odds snapshots...")
+            try:
+                result = capture_snapshots(all_props, league)
+                print(f"  Snapshots: {result.get('snapshots',0)} written ({result.get('paired',0)} paired, {result.get('single',0)} single)")
+            except Exception as e:
+                print(f"  FAIL capture: {e}")
     else:
         print("  (no props found — games may not have started yet, or sport is out of season)")
 

@@ -1123,12 +1123,130 @@ def ingest_props(batch: PropIngest):
                 unresolved += 1
                 continue  # logged to unresolved_players by the resolver
             # insert prop
-            con.execute(
-                "INSERT INTO props(game_id,player_id,market,line,side,source,captured_at) VALUES(?,?,?,?,?,?,?)",
-                (game_id, player_id, p["market"], p["line"], p["side"], p.get("source", "manual"), now))
+            odds_val = p.get("odds")
+            if odds_val is not None:
+                try:
+                    odds_int = int(odds_val)
+                except (ValueError, TypeError):
+                    odds_int = 100 if str(odds_val).upper() == "EVEN" else None
+                if odds_int is not None:
+                    con.execute(
+                        "INSERT INTO props(game_id,player_id,market,line,side,source,captured_at,odds,odds_captured_at) VALUES(?,?,?,?,?,?,?,?,?)",
+                        (game_id, player_id, p["market"], p["line"], p["side"], p.get("source", "manual"), now, odds_int, now))
+            else:
+                con.execute(
+                    "INSERT INTO props(game_id,player_id,market,line,side,source,captured_at) VALUES(?,?,?,?,?,?,?,?)",
+                    (game_id, player_id, p["market"], p["line"], p["side"], p.get("source", "manual"), now))
             ingested += 1
         con.commit()
     return {"status": "ok", "game_id": game_id, "ingested": ingested, "unresolved": unresolved}
+
+
+
+class CaptureOddsIn(BaseModel):
+    league: str
+    props: list
+
+
+@app.post("/api/capture-odds")
+def capture_odds(batch: CaptureOddsIn):
+    """Write prop_odds_snapshots rows for existing props matched by (player_id, market, line, side).
+    Does NOT create new props. Paired odds get de_vig_status='paired', singles get 'single'.
+    Line-moved props are logged and skipped."""
+    now = dt.datetime.now(dt.timezone.utc).isoformat()
+    snapshots = 0
+    paired = 0
+    single = 0
+    skipped_line = 0
+    unmatched = 0
+
+    with closing(_db()) as con:
+        # Build a map of existing props: (player_id, market, line, side) -> prop_id + existing odds_opp
+        existing = {}
+        for r in con.execute(
+            "SELECT p.id, p.player_id, p.market, p.line, p.side, p.odds "
+            "FROM props p JOIN players pl ON pl.id=p.player_id WHERE pl.league=?",
+            (batch.league,)
+        ).fetchall():
+            key = (r["player_id"], r["market"], round(r["line"], 1), r["side"])
+            existing[key] = {"prop_id": r["id"], "odds": r["odds"]}
+
+        # Group scraped props by (player_name, market, line) so we can pair over/under
+        by_market = {}
+        for p in batch.props:
+            pname = p.get("player_name", "")
+            mkt = p.get("market", "")
+            line = round(float(p.get("line", 0) or 0), 1)
+            side = p.get("side", "")
+            odds_val = p.get("odds")
+            if not pname or not mkt or odds_val is None:
+                continue
+            try:
+                odds_int = int(odds_val)
+            except (ValueError, TypeError):
+                odds_int = 100 if str(odds_val).upper() == "EVEN" else None
+            if odds_int is None:
+                continue
+
+            # Resolve player_id
+            player_id, confidence = _resolve_player_for_ingest(
+                con, pname, p.get("team", ""), batch.league, source="bovada")
+            if player_id is None:
+                continue
+
+            mkey = (player_id, mkt, line)
+            if mkey not in by_market:
+                by_market[mkey] = {}
+            by_market[mkey][side] = {"player_id": player_id, "odds": odds_int}
+
+        # Write snapshots
+        for mkey, sides in by_market.items():
+            player_id, mkt, line = mkey
+            over_data = sides.get("over")
+            under_data = sides.get("under")
+
+            for s, sdata in [("over", over_data), ("under", under_data)]:
+                if sdata is None:
+                    continue
+                prop_key = (player_id, mkt, line, s)
+                prop_info = existing.get(prop_key)
+
+                if prop_info is None:
+                    # Try to find with looser line matching (line changed)
+                    unmatched += 1
+                    continue
+
+                # Check line match
+                opp_data = under_data if s == "over" else over_data
+                odds_opp = opp_data["odds"] if opp_data else None
+                de_vig = "paired" if odds_opp is not None else "single"
+
+                # Odds-value-change dedup: skip if odds haven't moved since last snapshot
+                last = con.execute(
+                    "SELECT odds, odds_opp FROM prop_odds_snapshots WHERE prop_id=? AND side=? ORDER BY captured_at DESC LIMIT 1",
+                    (prop_info["prop_id"], s)).fetchone()
+                if last and last["odds"] == sdata["odds"] and (last["odds_opp"] or None) == odds_opp:
+                    continue  # line didn't move, skip duplicate poll
+
+                con.execute(
+                    "INSERT OR IGNORE INTO prop_odds_snapshots(prop_id, side, odds, odds_opp, captured_at, de_vig_status) VALUES(?,?,?,?,?,?)",
+                    (prop_info["prop_id"], s, sdata["odds"], odds_opp, now, de_vig))
+                snapshots += 1
+                if de_vig == "paired":
+                    paired += 1
+                else:
+                    single += 1
+
+        con.commit()
+
+    return {
+        "status": "ok",
+        "snapshots": snapshots,
+        "paired": paired,
+        "single": single,
+        "skipped_line": skipped_line,
+        "unmatched": unmatched,
+    }
 
 
 def _evaluate(league, game_id, predicted_winner):
