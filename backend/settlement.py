@@ -377,11 +377,17 @@ def _settle_mlb_props(con, game_row, props) -> dict:
     for prop in props:
         mlbam_id = player_mlbam.get(prop["player_id"])
         if not mlbam_id:
+            con.execute(
+                "INSERT INTO prop_results(prop_id, actual_value, hit, settled_at) VALUES (?,NULL,NULL,?)",
+                (prop["id"], now))
             void += 1
             continue
 
         ps = player_stats.get(mlbam_id)
         if not ps:
+            con.execute(
+                "INSERT INTO prop_results(prop_id, actual_value, hit, settled_at) VALUES (?,NULL,NULL,?)",
+                (prop["id"], now))
             void += 1  # DNP
             continue
 
@@ -399,6 +405,9 @@ def _settle_mlb_props(con, game_row, props) -> dict:
                 rbi = bat.get("rbi", 0) or 0
                 actual = float(h + r + rbi)
             else:
+                con.execute(
+                    "INSERT INTO prop_results(prop_id, actual_value, hit, settled_at) VALUES (?,NULL,NULL,?)",
+                    (prop["id"], now))
                 unmappable += 1
                 continue
         else:
@@ -413,19 +422,31 @@ def _settle_mlb_props(con, game_row, props) -> dict:
                     try:
                         actual = float(ip_str) * 3
                     except (ValueError, TypeError):
+                        con.execute(
+                            "INSERT INTO prop_results(prop_id, actual_value, hit, settled_at) VALUES (?,NULL,NULL,?)",
+                            (prop["id"], now))
                         void += 1
                         continue
                 else:
+                    con.execute(
+                        "INSERT INTO prop_results(prop_id, actual_value, hit, settled_at) VALUES (?,NULL,NULL,?)",
+                        (prop["id"], now))
                     void += 1
                     continue
             else:
                 actual = stats_dict.get(mlb_field)
                 if actual is None:
+                    con.execute(
+                        "INSERT INTO prop_results(prop_id, actual_value, hit, settled_at) VALUES (?,NULL,NULL,?)",
+                        (prop["id"], now))
                     void += 1
                     continue
                 try:
                     actual = float(actual)
                 except (ValueError, TypeError):
+                    con.execute(
+                        "INSERT INTO prop_results(prop_id, actual_value, hit, settled_at) VALUES (?,NULL,NULL,?)",
+                        (prop["id"], now))
                     void += 1
                     continue
 
@@ -437,6 +458,9 @@ def _settle_mlb_props(con, game_row, props) -> dict:
         elif side == "under":
             hit = 1 if actual < line else (0 if actual > line else None)
         else:
+            con.execute(
+                "INSERT INTO prop_results(prop_id, actual_value, hit, settled_at) VALUES (?,NULL,NULL,?)",
+                (prop["id"], now))
             unmappable += 1
             continue
 
@@ -540,6 +564,9 @@ def settle_game(con: sqlite3.Connection, game_id: int) -> dict:
     for prop in props:
         mapping = resolve_market(league, prop["market"])
         if mapping is None:
+            con.execute(
+                "INSERT INTO prop_results(prop_id, actual_value, hit, settled_at) VALUES (?,NULL,NULL,?)",
+                (prop["id"], now))
             unmappable += 1
             continue
 
@@ -552,6 +579,9 @@ def settle_game(con: sqlite3.Connection, game_id: int) -> dict:
                     box, prop["player_name"], prop["player_team"],
                     ["batting", "batting", "batting"], ["H", "R", "RBI"])
             else:
+                con.execute(
+                    "INSERT INTO prop_results(prop_id, actual_value, hit, settled_at) VALUES (?,NULL,NULL,?)",
+                    (prop["id"], now))
                 unmappable += 1
                 continue
         else:
@@ -561,6 +591,9 @@ def settle_game(con: sqlite3.Connection, game_id: int) -> dict:
 
         # Void: player DNP or stat not found
         if actual is None:
+            con.execute(
+                "INSERT INTO prop_results(prop_id, actual_value, hit, settled_at) VALUES (?,NULL,NULL,?)",
+                (prop["id"], now))
             void += 1
             continue
 
@@ -572,6 +605,9 @@ def settle_game(con: sqlite3.Connection, game_id: int) -> dict:
         elif side == "under":
             hit = 1 if actual < line else (0 if actual > line else None)
         else:
+            con.execute(
+                "INSERT INTO prop_results(prop_id, actual_value, hit, settled_at) VALUES (?,NULL,NULL,?)",
+                (prop["id"], now))
             unmappable += 1
             continue
 
