@@ -154,7 +154,7 @@ function LinesTab({ league, date }: { league: League; date: string }) {
       {loading ? <Skeleton lines={6} /> : filtered.length === 0 ? (
         <div className="text-center py-16 text-zinc-500 text-sm">No props found. Try a different filter or league.</div>
       ) : (
-        <div className="rounded-xl border border-zinc-800 bg-zinc-900 overflow-x-auto">
+        <div className="rounded-xl border border-zinc-800 bg-zinc-900 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-zinc-800 text-zinc-500 text-[11px] uppercase tracking-wider">
@@ -469,7 +469,7 @@ function PerformanceTab({ league }: { league: League }) {
           {loading ? <Skeleton lines={4} /> : perf.length === 0 ? (
             <div className="text-center py-8 text-zinc-500 text-sm">No settled props yet. Props are settled after games finish.</div>
           ) : (
-            <div className="rounded-xl border border-zinc-800 bg-zinc-900 overflow-x-auto">
+            <div className="rounded-xl border border-zinc-800 bg-zinc-900 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-zinc-800 text-zinc-500 text-[11px] uppercase tracking-wider">
@@ -590,7 +590,7 @@ export default function PropsPage() {
         </div>
 
         {/* Tab bar */}
-        <div className="flex gap-0 overflow-x-auto border-b border-zinc-800 -mx-4 px-4">
+        <div className="flex gap-0 overflow-x-auto border-b border-zinc-800 -mx-4 px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {TABS.map(t => (
             <button key={t.key} onClick={() => setTab(t.key)}
               className={`px-4 py-3 text-sm font-medium whitespace-nowrap transition-colors border-b-2 -mb-px ${tab === t.key ? 'border-emerald-500 text-white' : 'border-transparent text-zinc-500 hover:text-zinc-300'}`}>

@@ -94,7 +94,6 @@ export default function GameCard(g: GameProps) {
   // - FINAL: show FINAL badge (no time)
   const showTime = g.status === 'SCHEDULED' && !isUFC
   const showStatusBadge = g.status === 'LIVE' || g.status === 'FINAL'
-  const showPeriod = g.status === 'LIVE' && g.livePeriod
   // Scores only exist once a game starts — never render 0–0 before first pitch/tip/puck
   const showScore = g.status === 'LIVE' || g.status === 'FINAL'
 
@@ -124,18 +123,13 @@ export default function GameCard(g: GameProps) {
         {/* Left side: time (for scheduled, non-UFC) or period info (for live) */}
         <span className="flex items-center gap-2">
           {showTime && <span>{timeLabel}</span>}
-          {showPeriod && (
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-              {getPeriodLabel(g.league, g.livePeriod)}
-            </span>
-          )}
         </span>
 
         {/* Right side: status badge (LIVE/FINAL), or SCHEDULED badge only for UFC? No badge for scheduled non-UFC */}
         <span
           className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${showStatusBadge ? getStatusBadge(g.status) : 'hidden'}`}
         >
-          {showStatusBadge ? getStatusLabel(g.status) : ''}
+          {g.status === 'LIVE' && getPeriodLabel(g.league, g.livePeriod) ? getPeriodLabel(g.league, g.livePeriod) : (showStatusBadge ? getStatusLabel(g.status) : '')}
         </span>
       </div>
 
