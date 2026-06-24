@@ -141,7 +141,15 @@ def health():
 @app.get("/api/{league}/games")
 def get_games(league: str, date: Optional[str] = Query(None, description="YYYY-MM-DD (default today)")):
     if league.lower() == "cod":
-        # Call of Duty League — real data from official CDL schedule page
+        # Call of Duty League — breakingpoint.gg (persists completed matches)
+        # Falls back to cdl_client if breakingpoint is unreachable
+        try:
+            import breakingpoint_client
+            matches = breakingpoint_client.get_cod_matches(date_str=date)
+            if matches:
+                return matches
+        except Exception as e:
+            print(f"[sports_service] breakingpoint failed ({e}), falling back to cdl_client")
         import cdl_client
         return cdl_client.get_matches(date_str=date)
     try:
