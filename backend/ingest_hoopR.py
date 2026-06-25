@@ -10,7 +10,7 @@ import pyarrow.parquet as pq
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from sports_service import _normalize_name
 
-DB = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "picks.db")
+DB = os.environ.get("LP_DB_PATH") or os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "picks.db")
 HOOPR_BASE = "https://raw.githubusercontent.com/sportsdataverse/hoopR-data/main/nba/player_box/parquet/player_box_{season}.parquet"
 
 def ingest_season(season: int, con: sqlite3.Connection):

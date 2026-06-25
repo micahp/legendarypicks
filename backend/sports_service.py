@@ -20,7 +20,7 @@ from pydantic import BaseModel
 
 import espn_client as espn
 
-DB = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "picks.db")
+DB = os.environ.get("LP_DB_PATH") or os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "picks.db")
 ALLOWED_ORIGINS = os.environ.get("LP_ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:3007").split(",")
 
 app = FastAPI(title="Legendary Picks Sports API", description="Multi-league sports data (ESPN)", version="2.0.0")
@@ -115,6 +115,24 @@ def _init_db():
           player_id INTEGER NOT NULL REFERENCES players(id),
           alias_norm TEXT NOT NULL);
         """)
+        # M6 odds capture: additive schema. CREATE IF NOT EXISTS for the snapshot
+        # table, and idempotent ADD COLUMN for props (SQLite has no
+        # "ADD COLUMN IF NOT EXISTS", so guard on existing columns).
+        con.execute("""
+        CREATE TABLE IF NOT EXISTS prop_odds_snapshots(
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          prop_id INTEGER NOT NULL REFERENCES props(id),
+          side TEXT NOT NULL,
+          odds INTEGER NOT NULL,
+          odds_opp INTEGER,
+          captured_at TEXT NOT NULL,
+          is_close INTEGER DEFAULT 0,
+          de_vig_status TEXT NOT NULL DEFAULT 'single');
+        """)
+        existing = {r[1] for r in con.execute("PRAGMA table_info(props)").fetchall()}
+        for col, decl in (("odds", "INTEGER"), ("odds_captured_at", "TEXT")):
+            if col not in existing:
+                con.execute(f"ALTER TABLE props ADD COLUMN {col} {decl}")
         con.commit()
 
 
@@ -769,7 +787,7 @@ def _get_mlb_stats(player_name: str, player_id: int, statcast_id, now: float):
     import os, sqlite3 as sq
 
     try:
-        db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "picks.db")
+        db_path = os.environ.get("LP_DB_PATH") or os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "picks.db")
         con = sq.connect(db_path)
         con.row_factory = sq.Row
 
@@ -831,7 +849,7 @@ def _get_nfl_stats(player_name: str, player_id: int, now: float):
     import os, sqlite3 as sq
 
     try:
-        db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "picks.db")
+        db_path = os.environ.get("LP_DB_PATH") or os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "picks.db")
         con = sq.connect(db_path)
         con.row_factory = sq.Row
 
@@ -887,7 +905,7 @@ def _get_nba_stats(player_name: str, player_id: int, now: float):
     import os, sqlite3 as sq
 
     try:
-        db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "picks.db")
+        db_path = os.environ.get("LP_DB_PATH") or os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "picks.db")
         con = sq.connect(db_path)
         con.row_factory = sq.Row
 
@@ -941,7 +959,7 @@ def _get_nhl_stats(player_name: str, player_id: int, now: float):
     import os, sqlite3 as sq
 
     try:
-        db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "picks.db")
+        db_path = os.environ.get("LP_DB_PATH") or os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "picks.db")
         con = sq.connect(db_path)
         con.row_factory = sq.Row
 

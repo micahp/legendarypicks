@@ -12,7 +12,7 @@ import sys, os, sqlite3
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from settlement import settle_game
 
-DB = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "picks.db")
+DB = os.environ.get("LP_DB_PATH") or os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "picks.db")
 
 
 def main(dry_run: bool = False):

@@ -12,7 +12,7 @@ from player_stats. A prop is graded against what that player did in THAT specifi
 import os, sqlite3, datetime as dt, re, json
 from typing import Optional, Dict, Tuple, List
 
-DB = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "picks.db")
+DB = os.environ.get("LP_DB_PATH") or os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "picks.db")
 
 # ── Market → ESPN boxscore stat mapping ──────────────────────────
 # (league, canonical_market) → (boxscore_category, stat_key)

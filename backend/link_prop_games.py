@@ -12,7 +12,7 @@ import sys, os, sqlite3, re
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import espn_client as espn
 
-DB = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "picks.db")
+DB = os.environ.get("LP_DB_PATH") or os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "picks.db")
 
 # Team name → abbreviation lookup (built from ESPN data on the fly + a static fallback)
 # ESPN returns team abbrev in game data, so we match by abbreviation.

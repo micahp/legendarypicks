@@ -13,7 +13,7 @@ import sys, os, sqlite3, json, urllib.request, time
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from sports_service import _normalize_name
 
-DB = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "picks.db")
+DB = os.environ.get("LP_DB_PATH") or os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "picks.db")
 HDR = {"User-Agent": "Mozilla/5.0"}
 
 # All 32 NHL team abbreviations (nhle.com format — 3 letters for most, some differ from ESPN)

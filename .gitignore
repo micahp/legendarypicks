@@ -55,3 +55,4 @@ backend/venv/
 *.bak
 *.bak-*
 backend/data/*.bak*
+backend/data/picks.dev.db
