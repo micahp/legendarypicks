@@ -197,6 +197,39 @@ export const SportsService = {
     }
   },
 
+  // M7 analytics — EV / CLV / calibration from the odds-snapshot backbone.
+  getCalibration: async (league: string, market?: string) => {
+    try {
+      const params: Record<string, any> = { league }
+      if (market) params.market = market
+      const res = await axios.get(`${API_BASE_URL}/calibration`, { params })
+      return res.data
+    } catch (err) {
+      console.error('Error fetching calibration', err)
+      return null
+    }
+  },
+
+  getPropsEV: async (league: string, opts: { min_ev?: number; market?: string; limit?: number } = {}) => {
+    try {
+      const res = await axios.get(`${API_BASE_URL}/props/ev`, { params: { league, ...opts } })
+      return res.data
+    } catch (err) {
+      console.error('Error fetching props EV', err)
+      return null
+    }
+  },
+
+  getPropsCLV: async (league: string, opts: { min_clv?: number; limit?: number } = {}) => {
+    try {
+      const res = await axios.get(`${API_BASE_URL}/props/clv`, { params: { league, ...opts } })
+      return res.data
+    } catch (err) {
+      console.error('Error fetching props CLV', err)
+      return null
+    }
+  },
+
   submitPrediction: async (league: string, gameId: string, predictedWinner: string): Promise<Prediction | null> => {
     try {
       // backend contract is snake_case

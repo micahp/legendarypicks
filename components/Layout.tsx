@@ -14,6 +14,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             <Link href="/predict" className="hover:text-emerald-400">Predict</Link>
             <Link href="/props" className="hover:text-emerald-400">Props</Link>
             <Link href="/stats" className="hover:text-emerald-400">Stats</Link>
+            <Link href="/analytics" className="hover:text-emerald-400">Analytics</Link>
           </nav>
         </div>
       </header>
