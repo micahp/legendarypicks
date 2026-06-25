@@ -1,4 +1,4 @@
-# RESUME — 2026-06-25 — read this FIRST after a context reset
+# CONTEXT SUMMARY — 2026-06-24 — read this FIRST after a context reset
 
 Orchestrator (Claude) handoff. Supersedes `RESUME-2026-06-24.md` (still accurate for M1–M7
 detail; this doc only adds what happened after it was written + current branch state).
@@ -26,6 +26,10 @@ detail; this doc only adds what happened after it was written + current branch s
   verified a pre-M6 file heals on import and re-runs cleanly.
 - Doc: `docs/DB-DEV-PROD-SEPARATION.md` (bind-mount, LP_DB_PATH contract, dev bootstrap,
   guardrails, exactly what this session wrote to prod + why it was left in place).
+- **Dev-mode tested + verified (2026-06-24):** `LP_DB_PATH` unset → resolves prod path;
+  set → resolves `data/picks.dev.db`; `_init_db()` heals the dev DB (all tables/columns
+  present, 10,393 `prop_results` readable). **Prod `picks.db` mtime unchanged during the dev
+  test** — isolation holds, the gate never touched prod.
 
 ## 2. What's written to PROD right now (left in place intentionally)
 Because the work ran before the LP_DB_PATH gate existed, the live `picks.db` already has:
