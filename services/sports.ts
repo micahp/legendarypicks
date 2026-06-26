@@ -22,7 +22,7 @@ export interface TennisSet {
 // Live game period detail
 export interface LivePeriod {
   number: number
-  type: 'inning' | 'period' | 'quarter' | 'round' | 'game'
+  type: 'inning' | 'period' | 'quarter' | 'round' | 'game' | 'half'
   display?: string
 }
 
@@ -87,6 +87,7 @@ function normalizeLivePeriod(g: any, league?: string): LivePeriod | undefined {
     else if (lg === 'nfl') type = 'quarter'
     else if (lg === 'ufc') type = 'round'
     else if (lg === 'wc') type = 'half'
+    else if (lg === 'cod') type = 'game'
     else if (lg === 'atp' || lg === 'wta') type = 'period'
 
     // For MLB, use ESPN's status_detail which has inning state ("Top 1st", "End 5th", etc.)

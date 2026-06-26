@@ -185,7 +185,8 @@ def get_cod_matches(date_str=None):
         else:
             status_display = round_name or "Upcoming"
 
-        results.append({
+        # COD score = maps won; derive current map/game number for live matches
+        result = {
             "game_id": f"BP-{m['id']}",
             "date": match_dt.strftime("%Y-%m-%dT%H:%M:%SZ"),
             "state": state,
@@ -200,7 +201,11 @@ def get_cod_matches(date_str=None):
                 "name": t2_name,
                 "score": int(s2) if s2 is not None else None,
             },
-        })
+        }
+        if state == "in" and s1 is not None and s2 is not None:
+            maps_played = int(s1) + int(s2) + 1
+            result["period"] = maps_played
+        results.append(result)
 
     # Sort: live first, then upcoming, then completed
     state_order = {"in": 0, "pre": 1, "post": 2}
