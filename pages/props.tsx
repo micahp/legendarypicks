@@ -525,13 +525,126 @@ function MatchupsTab() {
   )
 }
 
-// ── Tab: Model (placeholder) ───────────────────────────────
-function ModelTab() {
+// ── Tab: Model (projections from per-game logs) ────────────
+interface Projection {
+  n: number; projection: number; median: number; floor: number; ceiling: number
+  l5_avg: number; season_avg: number; trend: string; last5: number[]
+  prob_over?: { line: number; n: number; over: number; p_over: number; push: number }
+}
+// headline markets first, then the rest alphabetically
+const STAT_ORDER = ['pass_yds', 'rush_yds', 'rec_yds', 'pass_td', 'rush_td', 'rec_td', 'rec', 'targets',
+  'PTS', 'REB', 'AST', 'PRA', '3PM', 'STL', 'BLK',
+  'points', 'goals', 'assists', 'shots',
+  'H', 'TB', 'HR', 'K', 'BB',
+  'fpts_ppr', 'fpts']
+const TREND_ICON: Record<string, string> = { up: '↑', down: '↓', flat: '→' }
+
+function ModelTab({ league }: { league: League }) {
+  const [query, setQuery] = useState('')
+  const [players, setPlayers] = useState<Player[]>([])
+  const [player, setPlayer] = useState<Player | null>(null)
+  const [data, setData] = useState<{ season: number; games: number; projections: Record<string, Projection> } | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [statKey, setStatKey] = useState<string>('')
+  const [line, setLine] = useState<string>('')
+  const [probe, setProbe] = useState<Projection['prob_over'] | null>(null)
+
+  useEffect(() => {
+    if (query.length < 2) { setPlayers([]); return }
+    const t = setTimeout(async () => {
+      try { const r = await fetch(`/api/players/search?q=${encodeURIComponent(query)}`); setPlayers(await r.json()) } catch {}
+    }, 250)
+    return () => clearTimeout(t)
+  }, [query])
+
+  useEffect(() => {
+    if (!player) return
+    setLoading(true); setData(null); setProbe(null); setStatKey(''); setLine('')
+    fetch(`/api/projections/player/${player.id}`)
+      .then(r => r.json()).then(d => { setData(d); setLoading(false) })
+      .catch(() => setLoading(false))
+  }, [player])
+
+  const keys = data ? Object.keys(data.projections).sort((a, b) => {
+    const ia = STAT_ORDER.indexOf(a), ib = STAT_ORDER.indexOf(b)
+    return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib) || a.localeCompare(b)
+  }) : []
+
+  const checkLine = () => {
+    if (!player || !statKey || line === '') return
+    fetch(`/api/projections/player/${player.id}?market=${statKey}&line=${line}`)
+      .then(r => r.json()).then(d => setProbe(d.projections?.[statKey]?.prob_over || null))
+      .catch(() => setProbe(null))
+  }
+
   return (
-    <div className="text-center py-16 space-y-3">
-      <div className="text-5xl">🧠</div>
-      <h3 className="text-lg font-bold text-zinc-300">Model Projections</h3>
-      <p className="text-zinc-500 text-sm max-w-md mx-auto">LightGBM projections vs sportsbook lines with confidence scoring. Built on EMA performance + matchup context + pace-adjusted features.</p>
+    <div className="space-y-4">
+      <PlayerSearch query={query} setQuery={setQuery} players={players} onSelect={p => { setPlayer(p); setQuery(p.name); setPlayers([]) }} />
+
+      {!player ? (
+        <div className="text-center py-16 space-y-2">
+          <div className="text-4xl">🧠</div>
+          <p className="text-zinc-500 text-sm max-w-md mx-auto">Search a player for projections built from their per-game logs — recency-weighted expected value with floor / median / ceiling, plus hit rate vs any line.</p>
+        </div>
+      ) : loading ? <Skeleton lines={6} /> : !data || keys.length === 0 ? (
+        <div className="text-center py-12 text-zinc-500 text-sm">No game logs for {player.name} yet — projections need per-game history.</div>
+      ) : (
+        <div className="space-y-5">
+          <div className="flex items-center gap-3">
+            <h2 className="text-lg font-bold">{player.name}</h2>
+            <span className="text-sm text-zinc-500">{player.team} · {player.league.toUpperCase()} · {data.season} · {data.games} games</span>
+          </div>
+
+          {/* Line checker */}
+          <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-3 flex flex-wrap items-end gap-2">
+            <div className="text-xs text-zinc-500 w-full mb-0.5">Check a line — hit rate from this player's own game distribution</div>
+            <Select value={statKey || keys[0]} onChange={setStatKey} options={keys.map(k => ({ v: k, label: k.replace(/_/g, ' ') }))} />
+            <input type="number" step="0.5" value={line} onChange={e => setLine(e.target.value)} placeholder="line"
+              className="w-24 px-3 py-2.5 rounded-xl border border-zinc-800 bg-zinc-900 text-zinc-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+            <button onClick={checkLine} className="px-4 py-2.5 rounded-xl bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-500">Check</button>
+            {probe && (
+              <span className="text-sm ml-1">
+                <span className="font-bold text-emerald-300">{(probe.p_over * 100).toFixed(0)}% over</span>
+                <span className="text-zinc-500"> ({probe.over}/{probe.n} games)</span>
+              </span>
+            )}
+          </div>
+
+          {/* Projections table */}
+          <div className="rounded-xl border border-zinc-800 bg-zinc-900 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-zinc-800 text-zinc-500 text-[11px] uppercase tracking-wider">
+                  <th className="text-left px-4 py-3 font-medium">Stat</th>
+                  <th className="text-right px-3 py-3 font-medium">Proj</th>
+                  <th className="text-right px-3 py-3 font-medium">Median</th>
+                  <th className="text-right px-3 py-3 font-medium">Floor–Ceiling</th>
+                  <th className="text-right px-3 py-3 font-medium">L5</th>
+                  <th className="text-right px-3 py-3 font-medium">Season</th>
+                  <th className="text-center px-3 py-3 font-medium">Trend</th>
+                </tr>
+              </thead>
+              <tbody>
+                {keys.map(k => {
+                  const p = data.projections[k]
+                  return (
+                    <tr key={k} className="border-b border-zinc-800/50 hover:bg-zinc-800/30 transition-colors">
+                      <td className="px-4 py-2.5 font-medium">{k.replace(/_/g, ' ')}</td>
+                      <td className="px-3 py-2.5 text-right font-mono tabular-nums font-bold text-emerald-300">{p.projection}</td>
+                      <td className="px-3 py-2.5 text-right font-mono tabular-nums text-zinc-400">{p.median}</td>
+                      <td className="px-3 py-2.5 text-right font-mono tabular-nums text-zinc-500">{p.floor}–{p.ceiling}</td>
+                      <td className="px-3 py-2.5 text-right font-mono tabular-nums">{p.l5_avg}</td>
+                      <td className="px-3 py-2.5 text-right font-mono tabular-nums text-zinc-400">{p.season_avg}</td>
+                      <td className="px-3 py-2.5 text-center text-lg">{TREND_ICON[p.trend] || '→'}</td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+          <p className="text-xs text-zinc-600">Proj = recency-weighted expected value (L5·0.5 + L10·0.3 + season·0.2). Median is the typical game; means skew toward ceiling outings. Marcel-grade baseline — regression to mean, opportunity share, and matchup adjustment are upcoming layers.</p>
+        </div>
+      )}
     </div>
   )
 }
@@ -631,7 +744,7 @@ export default function PropsPage() {
         {tab === 'slate' && <SlateTab league={league} date={date} />}
         {tab === 'performance' && <PerformanceTab league={league} />}
         {tab === 'matchups' && <MatchupsTab />}
-        {tab === 'model' && <ModelTab />}
+        {tab === 'model' && <ModelTab league={league} />}
       </div>
     </>
   )

@@ -19,7 +19,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 import espn_client as espn
-from analytics import ev as ev_mod, clv as clv_mod, calibration as calib_mod
+from analytics import ev as ev_mod, clv as clv_mod, calibration as calib_mod, projections as proj_mod
 
 DB = os.environ.get("LP_DB_PATH") or os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "picks.db")
 ALLOWED_ORIGINS = os.environ.get("LP_ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:3007").split(",")
@@ -750,6 +750,55 @@ def calibration(league: Optional[str] = Query(None),
     }
 
 
+# ── Projections from per-game logs (Model tab) ────────────────────
+
+@app.get("/api/projections/player/{player_id}")
+def player_projections(player_id: int,
+                       season: Optional[int] = Query(None),
+                       line: Optional[float] = Query(None),
+                       market: Optional[str] = Query(None)):
+    """Per-stat projections (recency-weighted EV + floor/median/ceiling) for a
+    player, derived from player_game_logs. Pass ?line=&market= for P(over)."""
+    import json as _json
+    with closing(_db()) as con:
+        prow = con.execute("SELECT id, name, league, team FROM players WHERE id=?", (player_id,)).fetchone()
+        if not prow:
+            raise HTTPException(404, "Player not found")
+        if season is None:
+            srow = con.execute(
+                "SELECT season FROM player_game_logs WHERE player_id=? ORDER BY season DESC LIMIT 1",
+                (player_id,)).fetchone()
+            season = srow["season"] if srow else None
+        params = [player_id]
+        q = "SELECT stats FROM player_game_logs WHERE player_id=?"
+        if season is not None:
+            q += " AND season=?"; params.append(season)
+        # most-recent-first; game_date is NULL for NFL (week-keyed) → fall back to week
+        q += " ORDER BY COALESCE(game_date,'') DESC, CAST(game_no AS INTEGER) DESC"
+        rows = con.execute(q, params).fetchall()
+
+    base = {"player_id": player_id, "name": prow["name"], "league": prow["league"],
+            "team": prow["team"], "season": season, "games": len(rows)}
+    if not rows:
+        return {**base, "projections": {}}
+
+    series: dict = {}
+    for r in rows:
+        for k, v in _json.loads(r["stats"]).items():
+            if isinstance(v, (int, float)):
+                series.setdefault(k, []).append(v)
+
+    projections = {}
+    for k, vals in series.items():
+        pr = proj_mod.project_stat(vals)
+        if not pr:
+            continue
+        if line is not None and (market is None or market == k):
+            pr["prob_over"] = proj_mod.prob_over(vals, line)
+        projections[k] = pr
+    return {**base, "projections": projections}
+
+
 # ── Slate: props grouped by game ──────────────────────────────────
 
 @app.get("/api/props/slate")
@@ -932,6 +981,9 @@ def player_stats(player_id: int,
     if not row:
         raise HTTPException(404, "Player not found")
     player_name = row["name"]
+
+    import time
+    now = time.time()  # passed to helpers for cache keying (was undefined → 500 on every call)
 
     result = {"player_id": player_id, "player_name": player_name, "league": league}
 
