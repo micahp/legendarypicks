@@ -4,18 +4,23 @@ Large, multi-session undertaking. Source of truth for the work + delegation. Che
 todos as they land; keep this doc current (it's the handoff across sessions/agents).
 
 ## The vision
-The app's spine becomes **entity pages, not feature tabs.** Data reorganizes around
-**League → Team → Player**, with **Games** as the time cross-section and **Slate** as the
-daily home. Today's feature tabs (Scores/Stats/Props/Predict/Analytics) dissolve into:
+**Tabs stay simple: Scoreboard · Stats · Props** (owner: "stats and props for now").
+We are NOT renaming or retiring tabs. The richness comes from **entity pages as the
+content/depth behind those tabs + global search** — not a tab restructure.
 
-| Entity page | What it is | Replaces / absorbs |
+**Top nav (kept):**
+- **Scoreboard** (`/scores`) — today's games → Game pages. Landing page routes here.
+- **Stats** — the league/team view: standings/strength + team stats + leaders + schedule.
+  (This is the "league page" content — it lives UNDER the Stats tab, same name.)
+- **Props** — props / slate / projections board → Game pages.
+
+**Destinations (reached via search + clicking names, NOT tabs):**
+| Entity page | What it is | Reached from |
 |---|---|---|
-| **Scoreboard** (= the slate) | Today's games → drills into Game pages. KEPT as-is + enhanced (not replaced). Landing page routes here. | — (kept) |
-| **Game** `/game/[lg]/[id]` | Matchup + **today's projections / props / edges** for its players. Where today's-game projections live (they're game-contextual). | Props·Lines/Slate, Predict |
-| **Player** `/player/[id]` | Asset/profile: stats, game logs, form trajectory, projection trend, "next game" card → game. | Props·Performance/Matchups/Model |
-| **League** `/league/[lg]` | Standings/strength + team stats + leaders + schedule. | **Stats tab** |
-| **Team** `/team/[lg]/[id]` | Roster, schedule, team stats → players. | (new) |
-| **Global search** | Jumps to any entity (players first). | (new, header) |
+| **Game** `/game/[lg]/[id]` | Matchup + **today's projections / props / edges** for its players (game-contextual projections live here). | Scoreboard, Props |
+| **Player** `/player/[id]` | Asset/profile: stats, game logs, form trajectory, projection trend, "next game" card → game. | Global search, any player name |
+| **Team** `/team/[lg]/[id]` | Roster, schedule, team stats → players. | Stats, Game |
+| **Global search** (header) | Jumps to a player (later: teams). | everywhere |
 
 ### Persona → door (all share the entity pages)
 - **Prop bettor** (props.cash) → Slate → Game (tonight's edges)
@@ -73,18 +78,19 @@ verify every "done" against the live UI (data flowing ≠ it looks right — the
 - [ ] Acceptance: open slate → tap a game → see per-player projections (+ lines where MLB props
       exist). Verify on tunnel.
 
-### Phase 3 — League page (retire Stats) + Team page
+### Phase 3 — Build out the Stats tab (league/team view) + Team page
 - [ ] **Backend:** league leaders endpoint (top players by stat, from `player_game_logs`).
-- [ ] **Frontend `/league/[league]`:** standings/strength (from `/strength`) + team stats + leaders
-      + schedule. World Cup standings as a league here. **Retire the Stats tab.**
+- [ ] **Frontend Stats tab:** standings/strength (from `/strength`) + team stats + leaders +
+      schedule, per league. World Cup standings stays as a league here. (Keep the tab named "Stats".)
 - [ ] **Frontend `/team/[league]/[id]`:** roster (→ players) + schedule + team stats.
-- [ ] Acceptance: league page replaces Stats with no data regression; team page lists current roster.
+- [ ] Acceptance: Stats tab gains leaders/schedule with no regression; team page lists current roster.
 
-### Phase 4 — Nav consolidation + retire old tabs
-- [ ] New top nav: Scoreboard (kept) + league switcher + global search (+ Predict if kept).
-- [ ] Redirect/remove `/stats`, `/props`, `/analytics` as absorbed. **Keep `/scores`** (the slate) and the landing page.
+### Phase 4 — Nav cleanup (keep Scoreboard · Stats · Props)
+- [ ] Top nav = **Scoreboard · Stats · Props** + global search (+ Predict if kept as engagement).
+- [ ] Fold `/analytics` and the old Props sub-tabs (Performance/Matchups/Model) into Props +
+      Player pages. **Keep Stats and Props tabs** and `/scores` + landing. Don't rename tabs.
 - [ ] Update OG/meta, mobile nav, empty states.
-- [ ] Acceptance: every old surface's content reachable via new entity pages; no dead links.
+- [ ] Acceptance: old surfaces' content reachable via the three tabs + entity pages; no dead links.
 
 ### Phase 5 — Model + breadth (post-restructure)
 - [ ] Projection model beyond Marcel: opponent/matchup adjustment, regression-to-mean, opportunity
