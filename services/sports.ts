@@ -114,6 +114,14 @@ function normalizeLivePeriod(g: any, league?: string): LivePeriod | undefined {
     }
   }
 
+  // WC: show running match clock even when period number is unavailable from ESPN
+  if (lg === 'wc') {
+    const clock = g?.clock ?? g?.status_detail
+    if (clock) {
+      return { number: 0, type: 'half', display: clock }
+    }
+  }
+
   return undefined
 }
 
