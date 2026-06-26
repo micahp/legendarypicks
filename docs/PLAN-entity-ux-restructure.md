@@ -10,7 +10,7 @@ daily home. Today's feature tabs (Scores/Stats/Props/Predict/Analytics) dissolve
 
 | Entity page | What it is | Replaces / absorbs |
 |---|---|---|
-| **Slate** (home) | Today's games across leagues → drills into games. The daily workbench. | Scores (today) |
+| **Scoreboard** (= the slate) | Today's games → drills into Game pages. KEPT as-is + enhanced (not replaced). Landing page routes here. | — (kept) |
 | **Game** `/game/[lg]/[id]` | Matchup + **today's projections / props / edges** for its players. Where today's-game projections live (they're game-contextual). | Props·Lines/Slate, Predict |
 | **Player** `/player/[id]` | Asset/profile: stats, game logs, form trajectory, projection trend, "next game" card → game. | Props·Performance/Matchups/Model |
 | **League** `/league/[lg]` | Standings/strength + team stats + leaders + schedule. | **Stats tab** |
@@ -23,13 +23,13 @@ daily home. Today's feature tabs (Scores/Stats/Props/Predict/Analytics) dissolve
 - **Fantasy** → Player projections + Game (start/sit)
 - **Trader** (sport.fun, later) → Player page as asset (trajectory/value)
 
-## OPEN DECISION — lock before Phase 1
-**Front door: Slate-first vs League-first.**
-- Slate-first (props.cash): open into today's games + edges; league/player are drill-downs.
-- League-first (ESPN): top nav = leagues; each → league page; slate is "Today" within.
-- **Recommendation: Slate-first + a league switcher** — the bettor/fantasy edge is the
-  differentiated value. Revisit if casual-fan is persona #1.
-- ⛳ **Owner decision needed. Everything below assumes slate-first; adjust nav if league-first.**
+## DECISION (locked 2026-06-26) — scoreboard-led, keep what exists
+**Front door = the existing landing page → the existing scoreboard.** We do NOT build a new
+Slate home or retire Scores. The **scoreboard IS the slate** (it already shows today's games);
+we keep it and enhance it so a game drills into the new Game page (matchup + projections).
+- Landing page (`/`) — kept as-is, routes to the scoreboard.
+- Scoreboard (`/scores`) — kept; becomes the daily slate surface. Games link → Game page.
+- This is the slate-led model, reusing existing pages rather than replacing them.
 
 ## Already built (foundation — reuse, don't rebuild)
 - `player_game_logs` (111k logs, 4 leagues) + per-game ingests + `roster_sync` + NFL dedupe.
@@ -68,8 +68,8 @@ verify every "done" against the live UI (data flowing ≠ it looks right — the
 - [ ] **Backend:** enrich slate endpoint (games + has-props/projections flags).
 - [ ] **Frontend Game page** (`/game/[league]/[id]` exists — extend): matchup header + player
       **projections vs lines + edges** + props for the game. Today's projections live here.
-- [ ] **Frontend Slate (`/` home):** today's games across leagues (league filter) → game pages.
-      props.cash-style board; bettor's home.
+- [ ] **Keep & enhance the existing scoreboard (`/scores`) as the slate** — don't rebuild a home.
+      Ensure each game links into the Game page (with projections). Landing page still routes here.
 - [ ] Acceptance: open slate → tap a game → see per-player projections (+ lines where MLB props
       exist). Verify on tunnel.
 
@@ -81,8 +81,8 @@ verify every "done" against the live UI (data flowing ≠ it looks right — the
 - [ ] Acceptance: league page replaces Stats with no data regression; team page lists current roster.
 
 ### Phase 4 — Nav consolidation + retire old tabs
-- [ ] New top nav: Slate/Today + league switcher + global search (+ Predict if kept as engagement).
-- [ ] Redirect/remove `/scores`, `/stats`, `/props`, `/analytics` as absorbed (keep redirects).
+- [ ] New top nav: Scoreboard (kept) + league switcher + global search (+ Predict if kept).
+- [ ] Redirect/remove `/stats`, `/props`, `/analytics` as absorbed. **Keep `/scores`** (the slate) and the landing page.
 - [ ] Update OG/meta, mobile nav, empty states.
 - [ ] Acceptance: every old surface's content reachable via new entity pages; no dead links.
 
