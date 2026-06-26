@@ -313,6 +313,7 @@ def games(league, date=None):
                     "name": t.get("displayName"),
                     "nickname": t.get("name"),
                     "score": _num(c.get("score")),
+                    "winner": c.get("winner"),
                 }
                 if c.get("winner") is True:
                     winner_abbrev = t.get("abbreviation")

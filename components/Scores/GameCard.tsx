@@ -143,12 +143,12 @@ export default function GameCard(g: GameProps) {
 
       <div className="space-y-3">
         <div className="flex justify-between items-center">
-          <span className={`font-semibold ${isFinal ? (homeWon ? 'text-zinc-200' : 'text-zinc-500') : 'text-zinc-200'}`}>{teamLabel(g.homeTeam)}</span>
-          {showScore && g.homeTeam.score !== undefined && <span className={`text-xl font-black ${isFinal ? (homeWon ? 'text-white' : 'text-zinc-500') : 'text-white'}`}>{g.homeTeam.score}</span>}
+          <span className={`font-semibold ${isFinal ? (isDraw ? 'text-zinc-200' : homeWon ? 'text-zinc-200' : 'text-zinc-500') : 'text-zinc-200'}`}>{teamLabel(g.homeTeam)}</span>
+          {showScore && g.homeTeam.score !== undefined && <span className={`text-xl font-black ${isFinal ? (isDraw ? 'text-white' : homeWon ? 'text-white' : 'text-zinc-500') : 'text-white'}`}>{g.homeTeam.score}</span>}
         </div>
         <div className="flex justify-between items-center">
-          <span className={`font-semibold ${isFinal ? (awayWon ? 'text-zinc-200' : 'text-zinc-500') : 'text-zinc-200'}`}>{teamLabel(g.awayTeam)}</span>
-          {showScore && g.awayTeam.score !== undefined && <span className={`text-xl font-black ${isFinal ? (awayWon ? 'text-white' : 'text-zinc-500') : 'text-white'}`}>{g.awayTeam.score}</span>}
+          <span className={`font-semibold ${isFinal ? (isDraw ? 'text-zinc-200' : awayWon ? 'text-zinc-200' : 'text-zinc-500') : 'text-zinc-200'}`}>{teamLabel(g.awayTeam)}</span>
+          {showScore && g.awayTeam.score !== undefined && <span className={`text-xl font-black ${isFinal ? (isDraw ? 'text-white' : awayWon ? 'text-white' : 'text-zinc-500') : 'text-white'}`}>{g.awayTeam.score}</span>}
         </div>
 
         {/* Tennis set totals */}
