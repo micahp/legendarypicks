@@ -27,6 +27,8 @@ The analytics-backbone branch — built, not yet deployed.
   expected value, floor/median/ceiling, P(over a line), and projected fantasy points.
 - **roster_sync** — current ESPN rosters populate `espn_id` and a meaningful `active` flag.
 - **World Cup standings** consolidated into the Stats tab as a league option.
+- **Tennis scoreboard cards** show per-set game scores (parsed from ESPN `linescores`)
+  in a proper scoreboard layout — each player's games-per-set as aligned columns.
 
 ### Changed
 - **NFL identity dedupe** — removed 380 id-less orphan player rows that shadowed real players
