@@ -184,25 +184,26 @@ def games(league, date=None):
                             "name": name,
                             "score": None,
                         }
-                    # Extract set scores from linescores and compute set wins
-                    set_scores = []
-                    away_sets = home_sets = 0
+                    # Extract per-set game scores from linescores for each competitor
                     for c in comp.get("competitors", []):
                         ls = c.get("linescores", [])
-                        scores = [str(int(v.get("value"))) for v in ls if v.get("value") is not None]
+                        per_set = [int(v.get("value")) for v in ls if v.get("value") is not None]
                         wins = sum(1 for v in ls if v.get("winner") is True)
-                        if scores:
-                            set_scores.append("-".join(scores))
-                        if c.get("homeAway") == "away":
-                            away_sets = wins
-                        else:
-                            home_sets = wins
-                    score_str = " | ".join(set_scores) if set_scores else None
-                    # Set numeric scores for display (sets won), only when there are real set scores.
-                    # Walkovers/retirements show 0-0 completed — skip those.
-                    if set_scores:
-                        players["away"]["score"] = away_sets
-                        players["home"]["score"] = home_sets
+                        ha = c.get("homeAway")
+                        if ha in players:
+                            players[ha]["sets"] = per_set
+                            if per_set:
+                                players[ha]["score"] = wins
+                    # Build status string from paired set scores (home[i] - away[i])
+                    home_sets = players.get("home", {}).get("sets", [])
+                    away_sets = players.get("away", {}).get("sets", [])
+                    n_sets = max(len(home_sets), len(away_sets))
+                    set_strs = []
+                    for i in range(n_sets):
+                        h = str(home_sets[i]) if i < len(home_sets) else "-"
+                        a = str(away_sets[i]) if i < len(away_sets) else "-"
+                        set_strs.append(f"{h}-{a}")
+                    score_str = " | ".join(set_strs) if set_strs else None
                     out.append({
                         "game_id": comp.get("id"),
                         "date": comp.get("date") or event.get("date"),

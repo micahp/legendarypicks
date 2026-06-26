@@ -54,14 +54,25 @@ function side(s: any): Game['homeTeam'] {
 }
 
 function normalizeSets(g: any): TennisSet[] | undefined {
-  // Try multiple possible API response formats
+  // Per-competitor arrays from tennis branch (home.sets=[6,7,6], away.sets=[2,5,4])
+  const homeArr = g?.home?.sets
+  const awayArr = g?.away?.sets
+  if (homeArr && awayArr && Array.isArray(homeArr) && Array.isArray(awayArr)) {
+    const n = Math.max(homeArr.length, awayArr.length)
+    const sets: TennisSet[] = []
+    for (let i = 0; i < n; i++) {
+      sets.push({ homeScore: homeArr[i] ?? 0, awayScore: awayArr[i] ?? 0 })
+    }
+    return sets.length > 0 ? sets : undefined
+  }
+  // Old format: g.sets = [{home_score, away_score}, ...]
   if (g?.sets && Array.isArray(g.sets)) {
     return g.sets.map((s: any) => ({
       homeScore: s?.home_score ?? s?.homeScore ?? s?.home ?? 0,
       awayScore: s?.away_score ?? s?.awayScore ?? s?.away ?? 0,
     }))
   }
-  // Some APIs return set scores as arrays
+  // Old format: g.set_scores = [[home, away], ...]
   if (g?.set_scores && Array.isArray(g.set_scores)) {
     return g.set_scores.map((s: any) => ({
       homeScore: s[0] ?? 0,
