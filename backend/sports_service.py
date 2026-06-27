@@ -706,21 +706,23 @@ def _deepseek_key():
         return None
 
 
-def _deepseek_chat(system: str, user: str, max_tokens: int = 900) -> Optional[str]:
-    # deepseek-v4-pro is a reasoning model — it burns tokens on hidden reasoning
-    # before the answer, so max_tokens must leave room for both or content is empty.
+def _deepseek_chat(system: str, user: str, max_tokens: int = 8000) -> Optional[str]:
+    # deepseek-v4-pro is a reasoning model. We let it reason at MAX (reasoning_effort=high)
+    # — DeepSeek is cheap, so we never starve the reasoning — and give a big token ceiling
+    # so the hidden reasoning + the answer are never truncated (low ceilings → empty content).
     key = _deepseek_key()
     if not key:
         return None
     import urllib.request as _u
     body = json.dumps({
         "model": "deepseek-v4-pro", "temperature": 0.4, "max_tokens": max_tokens,
+        "reasoning_effort": "high",
         "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}],
     }).encode()
     req = _u.Request("https://api.deepseek.com/v1/chat/completions", data=body,
                      headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"})
     try:
-        with _u.urlopen(req, timeout=30) as r:
+        with _u.urlopen(req, timeout=90) as r:
             return json.loads(r.read())["choices"][0]["message"]["content"].strip()
     except Exception:
         return None
