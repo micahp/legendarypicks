@@ -62,12 +62,26 @@ def ingest(start: str, end: str, season: int = 2026) -> int:
             games = []
         for g in games:
             gid = g["game_id"]
+            home_abbrev = (g.get("home") or {}).get("abbrev", "")
+            away_abbrev = (g.get("away") or {}).get("abbrev", "")
             try:
                 bx = espn.boxscore("nba", gid)
             except Exception:
                 continue
             for blk in bx.get("players", []):
                 team = (blk.get("team") or {}).get("abbreviation")
+                # Derive opponent / home_away from the game-level home/away abbrevs
+                if team and home_abbrev and away_abbrev:
+                    if team.upper() == home_abbrev.upper():
+                        opponent = away_abbrev
+                        home_away = "home"
+                    elif team.upper() == away_abbrev.upper():
+                        opponent = home_abbrev
+                        home_away = "away"
+                    else:
+                        opponent = None; home_away = None
+                else:
+                    opponent = None; home_away = None
                 for st in blk.get("statistics", []):
                     names = st.get("names", [])
                     for a in st.get("athletes", []):
@@ -92,7 +106,7 @@ def ingest(start: str, end: str, season: int = 2026) -> int:
                                (player_id, league, season, game_no, game_id, game_date, team,
                                 opponent, home_away, stats, source, source_player_key)
                                VALUES (?,?,?,?,?,?,?,?,?,?,?,?)""",
-                            (pid, "nba", season, ds, str(gid), ds, team, None, None,
+                            (pid, "nba", season, ds, str(gid), ds, team, opponent, home_away,
                              json.dumps(stats), "espn", eid))
                         ingested += 1
             time.sleep(0.05)

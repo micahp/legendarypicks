@@ -568,7 +568,7 @@ function MatchupsTab() {
   const [query, setQuery] = useState('')
   const [players, setPlayers] = useState<Player[]>([])
   const [player, setPlayer] = useState<Player | null>(null)
-  const [data, setData] = useState<{ matchups: Matchup[] } | null>(null)
+  const [data, setData] = useState<{ season: number; matchups: Matchup[] } | null>(null)
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
@@ -605,6 +605,14 @@ function MatchupsTab() {
       ) : loading ? <Skeleton lines={6} /> : !data?.matchups?.length ? (
         <div className="text-center py-12 text-zinc-500 text-sm">No opponent splits yet — needs game logs with opponents.</div>
       ) : (
+        <div className="space-y-3">
+          {/* Player header with league badge */}
+          <div className="flex items-center gap-3">
+            <h2 className="text-lg font-bold">{player.name}</h2>
+            <span className="text-xs font-medium px-2 py-0.5 rounded bg-zinc-800 text-zinc-400">{player.team}</span>
+            <span className="text-xs font-medium px-2 py-0.5 rounded bg-emerald-900/50 text-emerald-400 border border-emerald-800/50">{player.league.toUpperCase()}</span>
+            <span className="text-xs text-zinc-500 ml-auto">{data.matchups.length} opponents · {data.season}</span>
+          </div>
         <div className="rounded-xl border border-zinc-800 bg-zinc-900 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <table className="w-full text-sm">
             <thead><tr className="border-b border-zinc-800 text-zinc-500 text-[11px] uppercase tracking-wider">
@@ -622,6 +630,7 @@ function MatchupsTab() {
               ))}
             </tbody>
           </table>
+        </div>
         </div>
       )}
     </div>
