@@ -121,9 +121,11 @@ export default function PropChart({ data, window: initialWindow = 'l10' }: { dat
             const x = i * (barW + gap)
             const barH = Math.max(2, chartH * (g.value - minVal) / range)
             const barY = padTop + chartH - barH
-            const hit = isHit(g.value)
-            const color = hit ? '#34d399' : '#71717a'
-            const alpha = hit ? '0.9' : '0.5'
+            // Color: green = above line, grey = below. Always relative to the line,
+            // NOT inverted for under side (standard props.cash/PrizePicks convention).
+            const over = g.value >= data.line
+            const color = over ? '#34d399' : '#71717a'
+            const alpha = over ? '0.9' : '0.5'
 
             return (
               <g key={i}>
