@@ -561,7 +561,11 @@ _MARKET_STAT_KEY = {
     "mlb": {"total_bases": "TB", "hits": "H", "home_runs": "HR", "walks": "BB",
             "doubles": "2B", "total_doubles": "2B", "triples": "3B", "total_triples": "3B",
             "total_home_runs": "HR", "total_hits": "H", "total_walks": "BB",
-            "total_bases_allowed": None},
+            "total_bases_allowed": None,
+            # Pitcher markets (ingest_mlb_pitcher_logs.py)
+            "strikeouts": "K", "outs": "outs", "hits_allowed": "hits_allowed",
+            "pitcher_walks": "BB", "total_pitcher_walks": "BB",
+            "earned_runs": "earned_runs"},
     "nba": {"points": "PTS", "rebounds": "REB", "assists": "AST", "threes": "3PM",
             "steals": "STL", "blocks": "BLK", "turnovers": "TO",
             "points_rebounds_assists": "PRA", "pra": "PRA"},
