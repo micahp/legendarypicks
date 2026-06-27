@@ -382,6 +382,18 @@ function GameProps({ league, gameId }: { league: string; gameId: string }) {
   )
 }
 
+function GameStory({ league, gameId }: { league: string; gameId: string }) {
+  const [story, setStory] = useState<string | null>(null)
+  useEffect(() => {
+    fetch(`/api/game/${league}/${gameId}/story`)
+      .then(r => r.json()).then(d => setStory(d.story || null)).catch(() => {})
+  }, [league, gameId])
+  if (!story) return null
+  return (
+    <p className="text-sm text-zinc-300 leading-relaxed border-l-2 border-emerald-600/60 pl-3">{story}</p>
+  )
+}
+
 export default function GameDetailPage() {
   const router = useRouter()
   const { league, gameId } = router.query as { league?: string; gameId?: string }
@@ -416,6 +428,7 @@ export default function GameDetailPage() {
         <button onClick={() => router.back()} className="text-zinc-500 hover:text-white transition-colors text-sm">← Back</button>
         <span className="text-[10px] uppercase tracking-widest text-zinc-500 bg-zinc-900 px-2 py-0.5 rounded">{league?.toUpperCase()}</span>
       </div>
+      {league && gameId && <GameStory league={league} gameId={gameId} />}
       {league && gameId ? <GameProps league={league} gameId={gameId} /> : null}
       {league && gameId
         ? <p className="text-zinc-600 text-xs text-center pt-2">Full box score for this league is coming soon.</p>
@@ -445,6 +458,9 @@ export default function GameDetailPage() {
           awayName={sAway?.name || ctx?.away_team || ''}
           homeRecord={homeRecord} awayRecord={awayRecord}
         />
+
+        {/* AI matchup story (grounded in records/streaks) */}
+        {league && gameId && <GameStory league={league} gameId={gameId} />}
 
         {/* Player props for this game (MLB) */}
         {league && gameId && <GameProps league={league} gameId={gameId} />}

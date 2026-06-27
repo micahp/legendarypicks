@@ -10,6 +10,7 @@ What changed from the original:
   - /strength endpoint: teams ranked by win% / differential / form — the quality prior shared
     with the prediction-market trading strategy (its only unfalsified edge: buy undervalued QUALITY)
 """
+import json
 import os, sqlite3, datetime as dt
 from contextlib import closing
 from typing import Optional
@@ -690,6 +691,85 @@ def game_props(league: str, game_id: str):
                                                 "team": r["team"], "props": []})
         d["props"].append({"market": _base_market(r["market"]), "line": r["line"], "side": r["side"]})
     return {"league": league, "game_id": str(game_id), "players": list(players.values())}
+
+
+def _deepseek_key():
+    k = os.environ.get("DEEPSEEK_API_KEY")
+    if k:
+        return k
+    try:  # fall back to the shared .env so the backend works however it was launched
+        with open("/root/.hermes/.env") as f:
+            for line in f:
+                if line.startswith("DEEPSEEK_API_KEY="):
+                    return line.split("=", 1)[1].strip().strip('"')
+    except Exception:
+        return None
+
+
+def _deepseek_chat(system: str, user: str, max_tokens: int = 900) -> Optional[str]:
+    # deepseek-v4-pro is a reasoning model — it burns tokens on hidden reasoning
+    # before the answer, so max_tokens must leave room for both or content is empty.
+    key = _deepseek_key()
+    if not key:
+        return None
+    import urllib.request as _u
+    body = json.dumps({
+        "model": "deepseek-v4-pro", "temperature": 0.4, "max_tokens": max_tokens,
+        "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}],
+    }).encode()
+    req = _u.Request("https://api.deepseek.com/v1/chat/completions", data=body,
+                     headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"})
+    try:
+        with _u.urlopen(req, timeout=30) as r:
+            return json.loads(r.read())["choices"][0]["message"]["content"].strip()
+    except Exception:
+        return None
+
+
+@app.get("/api/game/{league}/{game_id}/story")
+def game_story(league: str, game_id: str, refresh: bool = Query(False)):
+    """AI matchup blurb (DeepSeek V4 Pro), grounded ONLY in our records/streaks/form.
+    Cached per game so it's generated once, not every load."""
+    lg = league.lower()
+    with closing(_db()) as con:
+        con.execute("""CREATE TABLE IF NOT EXISTS game_story(
+            league TEXT, game_id TEXT, story TEXT, generated_at TEXT,
+            PRIMARY KEY(league, game_id))""")
+        if not refresh:
+            r = con.execute("SELECT story FROM game_story WHERE league=? AND game_id=?", (lg, game_id)).fetchone()
+            if r:
+                return {"league": lg, "game_id": game_id, "story": r["story"], "cached": True}
+
+    try:
+        gr = espn.game_result(lg, game_id)
+        teams = list((gr.get("scores") or {}).keys())
+    except Exception:
+        teams = []
+    if len(teams) != 2:
+        return {"league": lg, "game_id": game_id, "story": None}
+    smap = espn.team_strength_map(lg)
+
+    def facts(ab):
+        s = smap.get(ab) or {}
+        return (f"{s.get('name', ab)} ({ab}): {s.get('wins')}-{s.get('losses')}, "
+                f"{s.get('win_pct')} win%, streak {s.get('streak')}, last-10 {s.get('last10')}, "
+                f"differential {s.get('differential')}")
+    grounding = (f"Matchup: {teams[0]} vs {teams[1]}. Game state: {gr.get('state')}.\n"
+                 f"{facts(teams[0])}\n{facts(teams[1])}")
+    system = ("You are a sharp sports writer. In 2-3 sentences, set up this matchup using ONLY the "
+              "facts given. Lead with the most interesting thing (a streak, a strong record, a big "
+              "run differential). Be specific with the numbers. Do NOT invent injuries, trades, "
+              "lineup news, or anything not in the facts. No clichés, no hype, plain confident tone.")
+    story = _deepseek_chat(system, grounding)
+    if story:
+        with closing(_db()) as con:
+            con.execute("""CREATE TABLE IF NOT EXISTS game_story(
+                league TEXT, game_id TEXT, story TEXT, generated_at TEXT,
+                PRIMARY KEY(league, game_id))""")
+            con.execute("INSERT OR REPLACE INTO game_story(league, game_id, story, generated_at) "
+                        "VALUES (?,?,?,datetime('now'))", (lg, game_id, story))
+            con.commit()
+    return {"league": lg, "game_id": game_id, "story": story, "cached": False}
 
 
 @app.get("/api/props/history")
