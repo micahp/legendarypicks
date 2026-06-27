@@ -103,3 +103,61 @@ def game_story(league: str, game_id: str, refresh: bool = Query(False)):
             con.commit()
     return {"league": lg, "game_id": game_id, "story": story, "cached": False}
 
+
+@router.get("/api/game/{league}/{game_id}/edge")
+def game_edge(league: str, game_id: str):
+    """Projected stat lines for players in an NBA game (no Bovada props for NBA).
+    Queries player_game_logs for this game's participants, computes per-stat
+    projections from their recent logs, returns top projected lines."""
+    lg = league.lower()
+    if lg != "nba":
+        return {"league": lg, "game_id": str(game_id), "players": []}
+
+    import json as _json
+    with closing(_db()) as con:
+        rows = con.execute(
+            """SELECT DISTINCT pl.id AS player_id, pl.name, pl.team
+               FROM player_game_logs l
+               JOIN players pl ON pl.id = l.player_id
+               WHERE l.league='nba' AND l.game_id=?""",
+            (str(game_id),)).fetchall()
+
+    if not rows:
+        return {"league": lg, "game_id": str(game_id), "players": []}
+
+    stat_keys = ["PTS", "REB", "AST", "PRA", "3PM", "STL", "BLK", "TO"]
+    players_out = []
+
+    with closing(_db()) as con:
+        for r in rows:
+            pid = r["player_id"]
+            logs = con.execute(
+                """SELECT stats FROM player_game_logs
+                   WHERE player_id=? AND league='nba'
+                   ORDER BY COALESCE(game_date,'') DESC, CAST(game_no AS INTEGER) DESC
+                   LIMIT 20""",
+                (pid,)).fetchall()
+            if not logs:
+                continue
+
+            series: dict = {}
+            for lr in logs:
+                for k, v in _json.loads(lr["stats"]).items():
+                    if isinstance(v, (int, float)) and k in stat_keys:
+                        series.setdefault(k, []).append(v)
+
+            props = []
+            for sk in stat_keys:
+                vals = series.get(sk)
+                if vals and len(vals) >= 5:
+                    avg = round(sum(vals) / len(vals), 1)
+                    props.append({"market": sk.lower(), "line": avg, "side": "proj"})
+
+            if props:
+                players_out.append({
+                    "player_id": pid, "name": r["name"], "team": r["team"],
+                    "props": props[:5]
+                })
+
+    return {"league": lg, "game_id": str(game_id), "players": players_out}
+

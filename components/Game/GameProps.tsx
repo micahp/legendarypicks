@@ -7,10 +7,18 @@ export default function GameProps({ league, gameId }: { league: string; gameId: 
   const [players, setPlayers] = useState<GamePropPlayer[]>([])
   const [openKey, setOpenKey] = useState<string | null>(null)
   const [chart, setChart] = useState<PropHistory | null>(null)
+  const [edgeLabel, setEdgeLabel] = useState(false)
 
   useEffect(() => {
     fetch(`/api/game/${league}/${gameId}/props`)
-      .then(r => r.json()).then(d => setPlayers(d.players || [])).catch(() => {})
+      .then(r => r.json()).then(d => {
+        if (d.players?.length) { setPlayers(d.players); return }
+        // NBA fallback: no Bovada props — show projected stat lines
+        if (league === 'nba') {
+          fetch(`/api/game/${league}/${gameId}/edge`)
+            .then(r => r.json()).then(e => { setPlayers(e.players || []); setEdgeLabel(true) }).catch(() => {})
+        }
+      }).catch(() => {})
   }, [league, gameId])
 
   if (!players.length) return null
@@ -29,7 +37,7 @@ export default function GameProps({ league, gameId }: { league: string; gameId: 
 
   return (
     <section className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
-      <h2 className="text-sm font-bold text-zinc-400 uppercase tracking-wider mb-3">Player Props</h2>
+      <h2 className="text-sm font-bold text-zinc-400 uppercase tracking-wider mb-3">{edgeLabel ? 'Projected Lines' : 'Player Props'}</h2>
       <div className="space-y-3">
         {players.map(pl => (
           <div key={pl.player_id} className="border-b border-zinc-800/50 pb-2.5 last:border-0">
