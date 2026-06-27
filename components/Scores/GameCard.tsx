@@ -79,7 +79,7 @@ export default function GameCard(g: GameProps) {
   // UFC never shows time
   const isUFC = g.league === 'UFC'
   const isTennis = g.league === 'ATP' || g.league === 'WTA'
-  const hasDetail = g.league === 'NBA' || g.league === 'NHL' || g.league === 'WC' || g.league === 'MLB'
+  const hasDetail = g.league === 'NBA' || g.league === 'NHL' || g.league === 'MLB'
   const isTeamSport = g.league === 'NBA' || g.league === 'NHL' || g.league === 'MLB' || g.league === 'NFL'
   const isSoccer = g.league === 'WC'
 
