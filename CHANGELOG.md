@@ -16,12 +16,33 @@ in `package.json` tracks the next (in-development) release.
 
 ## [Unreleased] — targeting v0.3.0 — entity-page UX restructure
 
-Roadmap in `docs/PLAN-entity-ux-restructure.md`. Planned, not yet built:
-- **Prop visualization** — bar chart of last N games vs the line + hit rate + projection
-  (props.cash/PrizePicks style), replacing the retrospective ✅/❌. Used in Props, Player, Game.
-- **Entity pages** — Player / Game / Team pages as the depth behind the tabs + global search.
+Roadmap in `docs/PLAN-entity-ux-restructure.md`. Remaining:
+- **Game + Team pages** as the depth behind the tabs.
 - **Stats tab → Leagues tab** (standings + team stats + leaders + schedule).
 - **Remove the Analytics tab** (fold calibration into a credibility element; defer EV/CLV).
+- Player-name links app-wide → player page.
+
+## [0.2.1] — 2026-06-27
+
+### Added
+- **Player page** — `/player/[id]` + `/api/player/{id}`: header, current props (with charts),
+  projections, recent games — reached via a new **global player search** in the header
+  (search icon on mobile, inline on desktop).
+- **Prop visualization** — `<PropChart>` + `/api/props/history`: bar chart of last N games vs
+  the line + hit rate + projection, with L5/L10/L20 + home/away + vs-opponent filters. Replaces
+  the retrospective ✅/❌ in Props·Lines.
+- **MLB pitcher game-logs** — pitcher props (strikeouts/outs/hits_allowed) now chart.
+- **Matchups tab** — live player-vs-opponent splits (was a stub).
+- `opponent` / `home_away` added to game logs (+ backfill).
+
+### Fixed
+- **MLB identity dedup** — merged 317 duplicate player rows; batter prop-chart coverage 53%→90%
+  (Freeman/Betts/Kurtz now resolve). `dedupe_mlb.py`.
+- Prop market mapping — league-keyed + `total_*` Bovada names + `_base_market` normalization.
+- Header nav hidden on mobile; dev frontend silently proxying to prod (`.env.local`).
+
+### Docs
+- `IDENTITY-SPINE-STATE.md` + the resolve-or-queue rule in `AGENTS.md §7`.
 
 ## [0.2.0] — 2026-06-26 — analytics-backbone (cut; not yet deployed)
 
