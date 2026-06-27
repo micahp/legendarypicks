@@ -582,6 +582,56 @@ def _base_market(m: str) -> str:
     return (m or "").split("___")[0].strip().lower()
 
 
+@app.get("/api/player/{player_id}")
+def player_profile(player_id: int):
+    """Aggregate for the player page: header + recent game logs + per-stat
+    projections + current props on this player. (Advanced metrics stay at
+    /api/player/{id}/stats; this is the page-level rollup.)"""
+    import json as _json
+    with closing(_db()) as con:
+        p = con.execute("SELECT id, name, team, league, position FROM players WHERE id=?", (player_id,)).fetchone()
+        if not p:
+            raise HTTPException(404, "Player not found")
+        league = p["league"]
+        srow = con.execute(
+            "SELECT season FROM player_game_logs WHERE player_id=? ORDER BY season DESC LIMIT 1",
+            (player_id,)).fetchone()
+        season = srow["season"] if srow else None
+        logs = []
+        if season is not None:
+            logs = con.execute(
+                """SELECT stats, game_date, opponent, home_away, game_no
+                   FROM player_game_logs WHERE player_id=? AND season=?
+                   ORDER BY COALESCE(game_date,'') DESC, CAST(game_no AS INTEGER) DESC LIMIT 25""",
+                (player_id, season)).fetchall()
+        props = con.execute(
+            """SELECT market, side, line, MAX(captured_at) ca FROM props
+               WHERE player_id=? GROUP BY market, side ORDER BY ca DESC LIMIT 30""",
+            (player_id,)).fetchall()
+
+    series, recent = {}, []
+    for r in logs:
+        s = _json.loads(r["stats"])
+        recent.append({"date": r["game_date"], "opponent": r["opponent"],
+                       "home": (r["home_away"] == "home") if r["home_away"] else None, "stats": s})
+        for k, v in s.items():
+            if isinstance(v, (int, float)):
+                series.setdefault(k, []).append(v)
+    projections = {}
+    for k, vals in series.items():
+        pr = proj_mod.project_stat(vals)
+        if pr:
+            projections[k] = pr
+
+    return {
+        "id": p["id"], "name": p["name"], "team": p["team"], "league": league,
+        "position": p["position"], "season": season, "games": len(logs),
+        "recent_games": recent[:15],
+        "projections": projections,
+        "props": [{"market": _base_market(x["market"]), "side": x["side"], "line": x["line"]} for x in props],
+    }
+
+
 @app.get("/api/props/history")
 def prop_history(player_id: int = Query(...),
                  market: str = Query(...),
