@@ -82,6 +82,18 @@ Delegation-ready: scope + files + acceptance. Verify every "done" on the live tu
 - [ ] Reuse `<PropChart>` on Player page + Game detail.
 - [ ] Acceptance: open a prop → see last-10 bars vs the line + hit rate + projection. Tunnel-verified.
 
+> ⚠️ **v1 is a FIRST DRAFT — not done.** Backend endpoint + a working bar chart + MLB dedup
+> (batter coverage 53%→90%) shipped and verified. **Remaining before this is "done":**
+> - **Design polish** — the chart is functional, not finished; treat like the tennis-card pass.
+> - **Filters** — L5/L10/L20 toggle exists; add **home/away** and **vs-opponent** (props.cash has these).
+> - **Opponent data** — MLB logs store `opponent=NULL`; backfill it (for vs-opp + hover labels).
+> - **Non-chartable UX** — markets with no logs show a bare "no data"; show a clear "chart not
+>   available for this market" / hide the expand instead of looking broken.
+> - **Data gaps** — pitcher props + composite markets (total_hits_runs_rbis) not chartable yet
+>   (needs pitcher logs — `TASK-mlb-pitcher-logs.md`); ~10% batters unresolved (mlbam crosswalk).
+> - **Reuse** — only in Props·Lines so far; not yet on Player page / Game detail.
+> - **Projection marker** — show the projection on the chart, not just the line.
+
 ### Phase 2 — Player page (asset/profile hub)
 - [ ] **Backend** `/api/player/{id}` aggregate (stats + recent logs + projections + props-on-player +
       next-game ref) OR compose from existing endpoints.
