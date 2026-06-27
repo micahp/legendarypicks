@@ -1,6 +1,7 @@
 import { useRouter } from 'next/router'
 import { useState, useEffect, useMemo } from 'react'
 import { SportsService } from '../../../services/sports'
+import PropChart, { PropHistory } from '../../../components/Props/PropChart'
 
 // ── types ──
 interface TeamStat {
@@ -326,6 +327,61 @@ function GameInfo({ ctx, homeStrength, awayStrength }: {
 }
 
 // ── page ──
+interface GamePropPlayer { player_id: number; name: string; team: string; props: { market: string; side: string; line: number }[] }
+
+function GameProps({ league, gameId }: { league: string; gameId: string }) {
+  const [players, setPlayers] = useState<GamePropPlayer[]>([])
+  const [openKey, setOpenKey] = useState<string | null>(null)
+  const [chart, setChart] = useState<PropHistory | null>(null)
+
+  useEffect(() => {
+    fetch(`/api/game/${league}/${gameId}/props`)
+      .then(r => r.json()).then(d => setPlayers(d.players || [])).catch(() => {})
+  }, [league, gameId])
+
+  if (!players.length) return null
+
+  const openChart = async (pid: number, pr: GamePropPlayer['props'][0]) => {
+    const key = `${pid}-${pr.market}-${pr.side}`
+    if (openKey === key) { setOpenKey(null); setChart(null); return }
+    setOpenKey(key); setChart(null)
+    try {
+      const params = new URLSearchParams({ player_id: String(pid), market: pr.market, line: String(pr.line), side: pr.side, league })
+      const r = await fetch(`/api/props/history?${params}`)
+      const d = await r.json()
+      setChart(d.games?.length ? d : null)
+    } catch { setChart(null) }
+  }
+
+  return (
+    <section className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
+      <h2 className="text-sm font-bold text-zinc-400 uppercase tracking-wider mb-3">Player Props</h2>
+      <div className="space-y-3">
+        {players.map(pl => (
+          <div key={pl.player_id} className="border-b border-zinc-800/50 pb-2.5 last:border-0">
+            <div className="flex items-baseline gap-1.5">
+              <a href={`/player/${pl.player_id}`} className="text-sm font-semibold hover:text-emerald-400">{pl.name}</a>
+              <span className="text-xs text-zinc-500">{pl.team}</span>
+            </div>
+            <div className="mt-1.5 flex flex-wrap gap-1.5">
+              {pl.props.map((pr, i) => {
+                const key = `${pl.player_id}-${pr.market}-${pr.side}`
+                return (
+                  <button key={i} onClick={() => openChart(pl.player_id, pr)}
+                    className={`text-[11px] px-2 py-1 rounded font-mono tabular-nums transition-colors ${openKey === key ? 'bg-emerald-600 text-white' : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'}`}>
+                    {pr.market.replace(/_/g, ' ')} {pr.side} {pr.line}
+                  </button>
+                )
+              })}
+            </div>
+            {openKey?.startsWith(`${pl.player_id}-`) && chart && <div className="mt-2"><PropChart data={chart} /></div>}
+          </div>
+        ))}
+      </div>
+    </section>
+  )
+}
+
 export default function GameDetailPage() {
   const router = useRouter()
   const { league, gameId } = router.query as { league?: string; gameId?: string }
@@ -352,7 +408,20 @@ export default function GameDetailPage() {
   // No page-level wrapper here: Layout already provides bg-ink-900 + the max-w-6xl main + padding.
   // Skeletons use bg-zinc-800 so they're visible against the ink-900 page (zinc-900 would be invisible on the cards).
   if (loading) return <div className="max-w-4xl mx-auto animate-pulse space-y-3"><div className="h-28 bg-zinc-800 rounded-2xl"/><div className="h-64 bg-zinc-800 rounded-xl"/></div>
-  if (!detail) return <div className="max-w-4xl mx-auto text-center py-16"><p className="text-zinc-500">Game data not available.</p><button onClick={() => router.back()} className="mt-4 text-blue-400 hover:underline text-sm">← Back</button></div>
+  // Full box-score detail is NBA/NHL only. For other leagues (e.g. MLB) still render
+  // the player-props view if this game has props; otherwise show "not available".
+  if (!detail || !detail.context) return (
+    <div className="max-w-4xl mx-auto space-y-5">
+      <div className="flex items-center gap-3">
+        <button onClick={() => router.back()} className="text-zinc-500 hover:text-white transition-colors text-sm">← Back</button>
+        <span className="text-[10px] uppercase tracking-widest text-zinc-500 bg-zinc-900 px-2 py-0.5 rounded">{league?.toUpperCase()}</span>
+      </div>
+      {league && gameId ? <GameProps league={league} gameId={gameId} /> : null}
+      {league && gameId
+        ? <p className="text-zinc-600 text-xs text-center pt-2">Full box score for this league is coming soon.</p>
+        : <p className="text-zinc-500 text-center py-8">Game data not available.</p>}
+    </div>
+  )
 
   const ctx = detail.context
   const sHome = detail.strength[ctx?.home_team || '']
@@ -376,6 +445,9 @@ export default function GameDetailPage() {
           awayName={sAway?.name || ctx?.away_team || ''}
           homeRecord={homeRecord} awayRecord={awayRecord}
         />
+
+        {/* Player props for this game (MLB) */}
+        {league && gameId && <GameProps league={league} gameId={gameId} />}
 
         {/* Tabs */}
         <TabBar active={tab} onChange={setTab} />

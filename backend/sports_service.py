@@ -669,6 +669,29 @@ def player_matchups(player_id: int):
             "season": season, "matchups": matchups}
 
 
+@app.get("/api/game/{league}/{game_id}/props")
+def game_props(league: str, game_id: str):
+    """Props for an ESPN game (linked via prop_games.espn_event_id), grouped by
+    player — the Game page's betting view. Each player's props expand to a chart."""
+    with closing(_db()) as con:
+        rows = con.execute(
+            """SELECT pl.id AS player_id, pl.name, pl.team, p.market, p.line, p.side,
+                      MAX(p.captured_at) ca
+               FROM props p
+               JOIN prop_games g ON g.id = p.game_id
+               JOIN players pl ON pl.id = p.player_id
+               WHERE g.espn_event_id = ?
+               GROUP BY pl.id, p.market, p.side
+               ORDER BY pl.name""",
+            (str(game_id),)).fetchall()
+    players: dict = {}
+    for r in rows:
+        d = players.setdefault(r["player_id"], {"player_id": r["player_id"], "name": r["name"],
+                                                "team": r["team"], "props": []})
+        d["props"].append({"market": _base_market(r["market"]), "line": r["line"], "side": r["side"]})
+    return {"league": league, "game_id": str(game_id), "players": list(players.values())}
+
+
 @app.get("/api/props/history")
 def prop_history(player_id: int = Query(...),
                  market: str = Query(...),
