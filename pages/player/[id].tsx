@@ -21,6 +21,30 @@ const STAT_ORDER = ['pass_yds', 'rush_yds', 'rec_yds', 'PTS', 'REB', 'AST', 'PRA
   'points', 'goals', 'assists', 'shots', 'H', 'TB', 'HR', 'K', 'outs', 'hits_allowed', 'fpts_ppr']
 const TREND: Record<string, string> = { up: '↑', down: '↓', flat: '→' }
 
+const MARKET_STAT: Record<string, string[]> = {
+  points: ['PTS', 'points'], rebounds: ['REB'], assists: ['AST'], threes: ['3PM'], pra: ['PRA'],
+  steals: ['STL'], blocks: ['BLK'], turnovers: ['TO'],
+  goals: ['goals'], shots: ['shots'], saves: ['saves'],
+  hits: ['H'], home_runs: ['HR'], strikeouts: ['K'], total_bases: ['TB'],
+  walks: ['BB'], doubles: ['2B'], triples: ['3B'],
+  passing_yards: ['passing_yards'], rushing_yards: ['rushing_yards'],
+  receiving_yards: ['receiving_yards'], receptions: ['receptions'],
+  outs: ['outs'], hits_allowed: ['hits_allowed'],
+}
+
+function projForMarket(projections: Record<string, Projection>, market: string): Projection | null {
+  const candidates = MARKET_STAT[market] || [market]
+  for (const c of candidates) {
+    if (projections[c]) return projections[c]
+    // Also try case-insensitive
+    const lc = c.toLowerCase()
+    for (const k of Object.keys(projections)) {
+      if (k.toLowerCase() === lc) return projections[k]
+    }
+  }
+  return null
+}
+
 export default function PlayerPage() {
   const router = useRouter()
   const { id } = router.query
@@ -78,7 +102,10 @@ export default function PlayerPage() {
                   <div key={i}>
                     <button onClick={() => openChart(pr)} className="w-full flex items-center justify-between px-4 py-3 hover:bg-zinc-800/40 text-sm">
                       <span className="font-medium">{pr.market.replace(/_/g, ' ')}</span>
-                      <span className="font-mono tabular-nums text-zinc-300">{pr.side} {pr.line}</span>
+                      <span className="font-mono tabular-nums text-zinc-300">
+                        {pr.side} {pr.line}
+                        {(() => { const pj = projForMarket(p.projections, pr.market); return pj ? <span className="ml-2 text-xs text-emerald-400">Proj {pj.projection}</span> : null })()}
+                      </span>
                     </button>
                     {openProp === key && (
                       <div className="px-4 pb-4">{chart ? <PropChart data={chart} /> : <div className="text-xs text-zinc-600 py-3">Chart not available for this market.</div>}</div>
