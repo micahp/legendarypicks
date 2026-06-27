@@ -552,19 +552,28 @@ def player_prop_history(player_id: int, market: Optional[str] = Query(None)):
 
 
 
-# Market → stat-key mapping for player_game_logs stats JSON
+# Market → stat-key in player_game_logs.stats JSON, per league. Must be league-keyed:
+# markets like "points"/"goals"/"assists" collide across leagues with different stat keys.
+# Markets sometimes carry the player baked in ("total_bases___cody_bellinger_(nyy)") so we
+# normalize to the base market first. NULL/absent → not chartable from current logs
+# (e.g. MLB pitcher props — our MLB logs are batting-only).
 _MARKET_STAT_KEY = {
-    # NBA (UPPERCASE keys)
-    "points": "PTS", "rebounds": "REB", "assists": "AST",
-    "threes": "3PM", "steals": "STL", "blocks": "BLK",
-    # MLB (UPPERCASE keys)
-    "strikeouts": "K", "hits": "H", "home_runs": "HR",
-    # NFL (lowercase keys)
-    "passing_yards": "passing_yards", "rushing_yards": "rushing_yards",
-    "receiving_yards": "receiving_yards",
-    # NHL (lowercase keys)
-    "goals": "goals", "shots": "shots", "saves": "saves",
+    "mlb": {"total_bases": "TB", "hits": "H", "home_runs": "HR", "walks": "BB",
+            "doubles": "2B", "triples": "3B"},
+    "nba": {"points": "PTS", "rebounds": "REB", "assists": "AST", "threes": "3PM",
+            "steals": "STL", "blocks": "BLK", "turnovers": "TO",
+            "points_rebounds_assists": "PRA", "pra": "PRA"},
+    "nhl": {"goals": "goals", "assists": "assists", "points": "points",
+            "shots": "shots", "shots_on_goal": "shots"},
+    "nfl": {"passing_yards": "passing_yards", "rushing_yards": "rushing_yards",
+            "receiving_yards": "receiving_yards", "receptions": "receptions",
+            "passing_tds": "passing_tds", "rushing_tds": "rushing_tds",
+            "receiving_tds": "receiving_tds", "interceptions": "interceptions"},
 }
+
+
+def _base_market(m: str) -> str:
+    return (m or "").split("___")[0].strip().lower()
 
 
 @app.get("/api/props/history")
@@ -574,9 +583,9 @@ def prop_history(player_id: int = Query(...),
                  side: str = Query("over"),
                  league: str = Query(...)):
     """Per-game stat history for a prop's player+market, with the line."""
-    stat_key = _MARKET_STAT_KEY.get(market)
+    stat_key = _MARKET_STAT_KEY.get(league, {}).get(_base_market(market))
     if not stat_key:
-        return {"error": f"unknown market: {market}", "games": []}
+        return {"error": f"market not chartable from logs: {market}", "games": []}
 
     stat_path = f"$.{stat_key}"
     with closing(_db()) as con:
@@ -633,9 +642,9 @@ def prop_history(player_id: int = Query(...),
         hits = sum(1 for g in games_subset if g["hit"])
         return round(hits / len(games_subset), 3)
 
-    # Compute simple projection: recency-weighted average
-    all_vals = [g["value"] for g in games[:20]]
-    projection = round(sum(all_vals) / len(all_vals), 1) if all_vals else None
+    # Projection: recency-weighted EV from the shared projections module (games is recent-first).
+    proj = proj_mod.project_stat([g["value"] for g in games])
+    projection = proj["projection"] if proj else None
 
     return {
         "player_id": player_id,
