@@ -127,8 +127,8 @@ export default function PropChart({ data, window: initialWindow = 'l10' }: { dat
         )}
       </div>
 
-      <div className="overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" style={{ maxWidth: '100%' }}>
-        <svg width={chartW} height={svgH} className="block" style={{ minWidth: chartW }}>
+      <div style={{ maxWidth: '100%' }}>
+        <svg viewBox={`0 0 ${chartW} ${svgH}`} width="100%" preserveAspectRatio="xMidYMid meet" className="block">
           <line x1={0} y1={lineY} x2={chartW} y2={lineY} stroke="#71717a" strokeWidth={1} strokeDasharray="4,3" />
           <text x={chartW + 2} y={lineY + 4} className="text-[9px] fill-zinc-500" textAnchor="start">{data.line}</text>
 
@@ -156,7 +156,7 @@ export default function PropChart({ data, window: initialWindow = 'l10' }: { dat
 
       <div className="flex gap-[6px] text-[10px] text-zinc-600" style={{ paddingLeft: 0 }}>
         {displayGames.map((g, i) => (
-          <div key={i} className="text-center overflow-hidden" style={{ width: barW, flexShrink: 0 }}>
+          <div key={i} className="text-center overflow-hidden" style={{ width: `${100 / displayGames.length}%`, flexShrink: 0 }}>
             <span title={`${g.home ? 'vs' : '@'} ${g.opponent} · ${g.date}`}>
               {g.opponent.length > 5 ? g.opponent.slice(0, 5) : g.opponent || '—'}
             </span>
