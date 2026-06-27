@@ -61,17 +61,21 @@ def ingest(days: int = 60) -> int:
         }
         gdate = str(g["game_date"].iloc[0])[:10]
         team = None
+        opponent = None
+        home_away = None
         # home/away team abbrevs exist as 'home_team'/'away_team'; batter's team = inferred via inning_topbot
         if "inning_topbot" in g.columns and "home_team" in g.columns and "away_team" in g.columns:
             top = (g["inning_topbot"].iloc[0] == "Top")  # away bats in top
             team = g["away_team"].iloc[0] if top else g["home_team"].iloc[0]
+            opponent = g["home_team"].iloc[0] if top else g["away_team"].iloc[0]
+            home_away = "away" if top else "home"
         con.execute(
             """INSERT OR REPLACE INTO player_game_logs
                (player_id, league, season, game_no, game_id, game_date, team,
                 opponent, home_away, stats, source, source_player_key)
                VALUES (?,?,?,?,?,?,?,?,?,?,?,?)""",
             (pid, "mlb", season, gdate, str(int(game_pk)), gdate, team,
-             None, None, json.dumps(stats), "statcast", str(mlbam)))
+             opponent, home_away, json.dumps(stats), "statcast", str(mlbam)))
         ingested += 1
 
     con.commit()
