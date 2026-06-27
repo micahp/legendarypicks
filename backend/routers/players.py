@@ -193,3 +193,109 @@ def player_stats(player_id: int,
 
     return result
 
+
+# ── Per-league stat columns for the leaders endpoint ─────────
+_LEAGUE_STATS = {
+    "nba": ["pts", "reb", "ast", "stl", "blk", "tov", "fg3m", "minutes", "ts_pct", "fgm", "fga", "ftm", "fta"],
+    "nfl": ["pass_yds_g", "pass_td", "interceptions", "cmp_g", "rush_yds_g", "receptions", "rec_yds_g", "targets", "fantasy_pts_g", "fantasy_ppr_g"],
+    "nhl": ["goals", "assists", "points_nhl", "shots", "shooting_pct", "plus_minus", "pim", "ppg", "ppp", "shg"],
+    "mlb_batting": ["avg", "hr", "k_pct", "bb_pct", "woba", "xwoba", "exit_velo", "hard_hit_pct"],
+    "mlb_pitching": ["k_pct", "whiff_pct", "xwoba_against", "exit_velo_against", "barrel_pct_against"],
+}
+_LEAGUE_DEFAULT_STAT = {"nba": "pts", "nfl": "fantasy_pts_g", "nhl": "points_nhl",
+                        "mlb_batting": "avg", "mlb_pitching": "k_pct"}
+
+# Human-readable stat labels (camelCase/snake_case → display)
+def _stat_label(k: str) -> str:
+    return k.replace("_g", "/G").replace("_pct", "%").replace("_nhl", "").replace("_", " ").upper()
+
+
+@router.get("/api/{league}/leaders")
+def league_leaders(league: str,
+                   stat: Optional[str] = Query(None),
+                   type: Optional[str] = Query(None),
+                   min_games: int = Query(0, ge=0),
+                   limit: int = Query(25, ge=1, le=100)):
+    """Player leaderboard for a league from the player_stats table.
+    ?stat=pts — sort column (default: league-appropriate)
+    ?type=batting|pitching — MLB only, picks the stat_type to filter
+    ?min_games=N — minimum games played (default: 0 for all, 10 for MLB batting)
+    """
+    lg = league.lower()
+    if lg not in ("nba", "nfl", "nhl", "mlb"):
+        return JSONResponse({"error": f"Unsupported league: {league}"}, 404)
+
+    with closing(_db()) as con:
+        # Find the current/latest season
+        srow = con.execute(
+            "SELECT season FROM player_stats WHERE league=? ORDER BY season DESC LIMIT 1",
+            (lg,)).fetchone()
+        season = srow["season"] if srow else None
+        if season is None:
+            return {"league": lg, "season": None, "stat": stat, "leaders": []}
+
+        stat_type = None
+        stat_set = _LEAGUE_STATS.get(lg, [])
+        if lg == "mlb":
+            # MLB: filter by stat_type=batting (default) or pitching
+            stat_type = (type or "batting").lower()
+            if stat_type not in ("batting", "pitching"):
+                stat_type = "batting"
+            stat_set = _LEAGUE_STATS.get(f"mlb_{stat_type}", stat_set)
+
+        # Resolve the sort stat
+        default_key = f"mlb_{stat_type}" if lg == "mlb" and stat_type else lg
+        sort_stat = stat or _LEAGUE_DEFAULT_STAT.get(default_key, stat_set[0] if stat_set else "games")
+        if sort_stat not in stat_set:
+            stat_set = list(stat_set) + [sort_stat]  # allow ad-hoc stat if it exists in DB
+
+        # Build SELECT: only columns that exist and are in the stat set
+        # Always include player_id, player_name, team, games
+        cols = ["player_id", "player_name", "team", "games"] + [c for c in stat_set if c != sort_stat or c in stat_set]
+        # Put sort_stat first in stat columns for readability
+        stat_cols = [sort_stat] + [c for c in stat_set if c != sort_stat]
+
+        # Validate columns exist in DB (the table is wide and mixed)
+        db_cols = set()
+        try:
+            db_cols = {r[1] for r in con.execute("PRAGMA table_info(player_stats)").fetchall()}
+        except Exception:
+            pass
+        valid_stat_cols = [c for c in stat_cols if c in db_cols]
+        valid_extra = [c for c in cols if c in db_cols]
+
+        select_cols = [c for c in valid_extra if c not in valid_stat_cols] + valid_stat_cols
+        select_str = ", ".join(select_cols)
+        order_col = sort_stat if sort_stat in db_cols else "games"
+
+        params = [lg, season]
+        where = "WHERE league=? AND season=?"
+        if lg == "mlb" and stat_type:
+            where += " AND stat_type=?"
+            params.append(stat_type)
+        # Default min_games for MLB to filter cup-of-coffee players
+        effective_min = min_games
+        if effective_min == 0 and lg == "mlb":
+            effective_min = 30 if stat_type == "batting" else 10
+        if effective_min > 0:
+            where += " AND games >= ?"
+            params.append(effective_min)
+
+        rows = con.execute(
+            f"SELECT {select_str} FROM player_stats {where} "
+            f"AND {order_col} IS NOT NULL ORDER BY {order_col} DESC LIMIT ?",
+            params + [limit]
+        ).fetchall()
+
+    leaders = []
+    for r in rows:
+        entry = {"player_id": r["player_id"], "name": r["player_name"],
+                 "team": r["team"] or "", "games": r["games"]}
+        for c in valid_stat_cols:
+            v = r[c]
+            entry[c] = round(float(v), 1) if v is not None else None
+        leaders.append(entry)
+
+    return {"league": lg, "season": season if isinstance(season, int) else str(season),
+            "stat": sort_stat, "stat_type": stat_type, "leaders": leaders}
+
