@@ -127,12 +127,12 @@ export default function StatsPage() {
   return (
     <>
       <Head>
-        <title>Stats — Legendary Picks</title>
+        <title>Leagues — Legendary Picks</title>
       </Head>
 
       <div className="space-y-4">
         {/* Page header */}
-        <h1 className="text-3xl font-extrabold tracking-tight">Stats</h1>
+        <h1 className="text-3xl font-extrabold tracking-tight">Leagues</h1>
 
         {/* League selector */}
         <div className="flex items-center gap-2 flex-wrap">
