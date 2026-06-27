@@ -1,0 +1,34 @@
+{
+  "date": "2026-06-27",
+  "window": "7d",
+  "ref_analyzed": "origin/analytics-backbone",
+  "note": "default branch origin/dev had 0 commits in window; all work staged on analytics-backbone (undeployed)",
+  "metrics": {
+    "commits": 83,
+    "non_merge_commits": 80,
+    "merges": 3,
+    "contributors": 1,
+    "prs_merged": 0,
+    "insertions": 10279,
+    "deletions": 1002,
+    "net_loc": 9277,
+    "test_loc": 0,
+    "test_ratio": 0.0,
+    "active_days": 6,
+    "sessions": 20,
+    "deep_sessions": 3,
+    "avg_session_minutes": 24,
+    "loc_per_session_hour": 1250,
+    "feat_pct": 0.24,
+    "fix_pct": 0.14,
+    "docs_pct": 0.31,
+    "peak_hour": 2,
+    "ai_assisted_commits": 0
+  },
+  "authors": {
+    "micahp": { "commits": 83, "insertions": 10279, "deletions": 1002, "test_ratio": 0.0, "top_area": "backend/" }
+  },
+  "version_range": ["0.1.0", "0.2.1"],
+  "streak_days": 6,
+  "tweetable": "Week of Jun 20: 83 commits (solo), 10.3k LOC, 0% tests, v0.1.0->v0.2.1, peak: 2am | Streak: 6d"
+}
