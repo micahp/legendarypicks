@@ -116,6 +116,14 @@ Every rule below comes from a real mistake on 2026-06-15.
   records to a review queue — never silently create a names-only row or drop a mismatch. (This is the
   Guiding-principle "the whole population, not a convenient sample" applied to data modeling: a string
   join quietly *is* a convenient sample.)
+  - **The miss case is where it breaks: resolve-or-QUEUE, never DUP.** When an ingest can't find a
+    player by its source-id, it must link to the canonical row (backfill the id) or send it to the
+    review queue — it must **never insert a second `players` row**. Doing so creates two rows for one
+    human (e.g. props on the `espn_id` row, logs on a Statcast `mlbam_id` row) and every join silently
+    splits. This actually happened: 317 MLB players split, prop charts showed no data for Freeman/Betts/
+    Kurtz while coverage *looked* fine. See **`docs/IDENTITY-SPINE-STATE.md`** (as-built spine, the rule,
+    per-league dup status) + `docs/SPEC-player-identity-spine.md` (design). Cleanup: `dedupe_mlb.py` /
+    `dedupe_nfl.py` — merge by shared source-id only, never by name.
 - **Don't live-scrape hostile endpoints.** `stats.nba.com` blocks **datacenter IPs** (not geo — this
   box is already US). A new/US VPS or free proxy won't help (all datacenter IPs); only paid residential
   proxies bypass it. Use **ESPN** + **published data releases** (`nfl_data_py`/nflverse,
