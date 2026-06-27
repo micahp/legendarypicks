@@ -547,6 +547,108 @@ def player_prop_history(player_id: int, market: Optional[str] = Query(None)):
     return {"player_id": player_id, "history": history, "hit_rate": hit_rate, "total_settled": len(settled)}
 
 
+
+
+
+# Market → stat-key mapping for player_game_logs stats JSON
+_MARKET_STAT_KEY = {
+    "points": "pts", "rebounds": "reb", "assists": "ast",
+    "threes": "fg3m", "steals": "stl", "blocks": "blk",
+    "strikeouts": "so", "hits": "h", "home_runs": "hr",
+    "passing_yards": "pass_yds", "rushing_yards": "rush_yds",
+    "receiving_yards": "rec_yds", "goals": "goals",
+    "shots": "shots", "saves": "saves",
+}
+
+
+@app.get("/api/props/history")
+def prop_history(player_id: int = Query(...),
+                 market: str = Query(...),
+                 line: float = Query(...),
+                 side: str = Query("over"),
+                 league: str = Query(...)):
+    """Per-game stat history for a prop's player+market, with the line."""
+    stat_key = _MARKET_STAT_KEY.get(market)
+    if not stat_key:
+        return {"error": f"unknown market: {market}", "games": []}
+
+    stat_path = f"$.{stat_key}"
+    with closing(_db()) as con:
+        con.row_factory = sqlite3.Row
+        # Get player info
+        player = con.execute(
+            "SELECT id, name, team FROM players WHERE id=?", (player_id,)
+        ).fetchone()
+        if not player:
+            return {"error": "player not found", "games": []}
+
+        # Get game logs with this stat, most recent first
+        rows = con.execute(
+            f"""SELECT game_date, opponent, home_away,
+                       json_extract(stats, ?) AS val
+                FROM player_game_logs
+                WHERE player_id=? AND league=?
+                  AND json_extract(stats, ?) IS NOT NULL
+                ORDER BY game_date DESC LIMIT 100""",
+            (stat_path, player_id, league, stat_path)
+        ).fetchall()
+
+    if not rows:
+        return {
+            "player_id": player_id,
+            "player": player["name"],
+            "team": player["team"] or "",
+            "league": league,
+            "market": market,
+            "line": line,
+            "side": side,
+            "projection": None,
+            "hit_rate": {"l5": 0, "l10": 0, "l20": 0, "season": 0},
+            "games": [],
+        }
+
+    games = []
+    for r in rows:
+        try:
+            val = float(r["val"]) if r["val"] is not None else 0
+        except (ValueError, TypeError):
+            val = 0
+        hit = val >= line if side == "over" else val <= line
+        games.append({
+            "date": r["game_date"] or "",
+            "value": val,
+            "opponent": r["opponent"] or "",
+            "home": r["home_away"] == "home",
+            "hit": hit,
+        })
+
+    def _rate(games_subset, ln):
+        if not games_subset: return 0.0
+        hits = sum(1 for g in games_subset if g["hit"])
+        return round(hits / len(games_subset), 3)
+
+    # Compute simple projection: recency-weighted average
+    all_vals = [g["value"] for g in games[:20]]
+    projection = round(sum(all_vals) / len(all_vals), 1) if all_vals else None
+
+    return {
+        "player_id": player_id,
+        "player": player["name"],
+        "team": player["team"] or "",
+        "league": league,
+        "market": market,
+        "line": line,
+        "side": side,
+        "projection": projection,
+        "hit_rate": {
+            "l5": _rate(games[:5], line),
+            "l10": _rate(games[:10], line),
+            "l20": _rate(games[:20], line),
+            "season": _rate(games, line),
+        },
+        "games": games,
+    }
+
 @app.get("/api/props/stats")
 def prop_stats(market: Optional[str] = Query(None),
                league: Optional[str] = Query(None),
