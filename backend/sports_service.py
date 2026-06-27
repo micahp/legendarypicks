@@ -317,8 +317,10 @@ def _read_game_detail_from_db(lg, game_id, out):
 def get_game_detail(league: str, game_id: str):
     """NBA/NHL game detail: persisted team stats, scoring timeline, venue, and strength priors."""
     lg = league.lower()
-    if lg not in ("nba", "nhl"):
-        raise HTTPException(400, "game detail only available for NBA and NHL")
+    # Full box-score detail (team stats + scoring timeline) is NBA/NHL only. Other leagues
+    # (MLB etc.) still get minimal context — teams, score, state — via the ESPN fallback
+    # below, so the game page renders a real matchup header + story + props instead of bailing.
+    has_boxscore = lg in ("nba", "nhl")
     out = {"game_id": game_id, "league": lg,
            "team_stats": [], "scoring_plays": [], "context": None, "strength": {},
            "final_score": None}
@@ -336,10 +338,11 @@ def get_game_detail(league: str, game_id: str):
     if not out["team_stats"] and not out["context"]:
         # First, try to populate the DB via the boxscore snapshot pipeline
         # so both this request and future ones get full data.
-        try:
-            _snapshot_boxscore_full(lg, game_id)
-        except Exception:
-            pass  # snapshot may fail for pre-game, which is fine
+        if has_boxscore:
+            try:
+                _snapshot_boxscore_full(lg, game_id)
+            except Exception:
+                pass  # snapshot may fail for pre-game, which is fine
 
         # Re-query the DB now that snapshot has run
         _read_game_detail_from_db(lg, game_id, out)
