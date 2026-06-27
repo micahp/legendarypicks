@@ -632,6 +632,43 @@ def player_profile(player_id: int):
     }
 
 
+@app.get("/api/player/{player_id}/matchups")
+def player_matchups(player_id: int):
+    """Player-vs-opponent splits from per-game logs (Matchups tab). Groups the
+    player's games by opponent → games count + per-stat averages."""
+    import json as _json
+    with closing(_db()) as con:
+        p = con.execute("SELECT id, name, league FROM players WHERE id=?", (player_id,)).fetchone()
+        if not p:
+            raise HTTPException(404, "Player not found")
+        srow = con.execute(
+            "SELECT season FROM player_game_logs WHERE player_id=? ORDER BY season DESC LIMIT 1",
+            (player_id,)).fetchone()
+        season = srow["season"] if srow else None
+        rows = []
+        if season is not None:
+            rows = con.execute(
+                "SELECT opponent, stats FROM player_game_logs WHERE player_id=? AND season=? AND opponent IS NOT NULL",
+                (player_id, season)).fetchall()
+
+    by_opp: dict = {}
+    for r in rows:
+        opp = r["opponent"]
+        d = by_opp.setdefault(opp, {"games": 0, "sums": {}})
+        d["games"] += 1
+        for k, v in _json.loads(r["stats"]).items():
+            if isinstance(v, (int, float)):
+                d["sums"][k] = d["sums"].get(k, 0) + v
+    matchups = [
+        {"opponent": opp, "games": d["games"],
+         "avg": {k: round(v / d["games"], 2) for k, v in d["sums"].items()}}
+        for opp, d in by_opp.items()
+    ]
+    matchups.sort(key=lambda x: -x["games"])
+    return {"player_id": player_id, "name": p["name"], "league": p["league"],
+            "season": season, "matchups": matchups}
+
+
 @app.get("/api/props/history")
 def prop_history(player_id: int = Query(...),
                  market: str = Query(...),

@@ -562,12 +562,68 @@ function PerformanceTab({ league }: { league: League }) {
 }
 
 // ── Tab: Matchups (placeholder) ────────────────────────────
+interface Matchup { opponent: string; games: number; avg: Record<string, number> }
+
 function MatchupsTab() {
+  const [query, setQuery] = useState('')
+  const [players, setPlayers] = useState<Player[]>([])
+  const [player, setPlayer] = useState<Player | null>(null)
+  const [data, setData] = useState<{ matchups: Matchup[] } | null>(null)
+  const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    if (query.length < 2) { setPlayers([]); return }
+    const t = setTimeout(async () => {
+      try { const r = await fetch(`/api/players/search?q=${encodeURIComponent(query)}`); setPlayers(await r.json()) } catch {}
+    }, 250)
+    return () => clearTimeout(t)
+  }, [query])
+
+  useEffect(() => {
+    if (!player) return
+    setLoading(true); setData(null)
+    fetch(`/api/player/${player.id}/matchups`)
+      .then(r => r.json()).then(d => { setData(d); setLoading(false) })
+      .catch(() => setLoading(false))
+  }, [player])
+
+  const order = ['PTS', 'REB', 'AST', 'PRA', '3PM', 'pass_yds', 'rush_yds', 'rec_yds', 'fpts_ppr',
+    'points', 'goals', 'assists', 'shots', 'H', 'TB', 'HR', 'K', 'outs', 'hits_allowed']
+  const statKeys = data?.matchups?.length
+    ? Object.keys(data.matchups[0].avg).sort((a, b) => {
+        const ia = order.indexOf(a), ib = order.indexOf(b)
+        return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib) || a.localeCompare(b)
+      }).slice(0, 6)
+    : []
+
   return (
-    <div className="text-center py-16 space-y-3">
-      <div className="text-5xl">🏟️</div>
-      <h3 className="text-lg font-bold text-zinc-300">Matchup Analysis</h3>
-      <p className="text-zinc-500 text-sm max-w-md mx-auto">Player-vs-opponent history with defensive rankings and pace-adjusted splits. Coming after settlement data is live.</p>
+    <div className="space-y-4">
+      <PlayerSearch query={query} setQuery={setQuery} players={players} onSelect={p => { setPlayer(p); setQuery(p.name); setPlayers([]) }} />
+      {!player ? (
+        <div className="text-center py-16 space-y-2"><div className="text-4xl">🏟️</div>
+          <p className="text-zinc-500 text-sm max-w-md mx-auto">Search a player to see how they perform split by opponent this season.</p></div>
+      ) : loading ? <Skeleton lines={6} /> : !data?.matchups?.length ? (
+        <div className="text-center py-12 text-zinc-500 text-sm">No opponent splits yet — needs game logs with opponents.</div>
+      ) : (
+        <div className="rounded-xl border border-zinc-800 bg-zinc-900 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <table className="w-full text-sm">
+            <thead><tr className="border-b border-zinc-800 text-zinc-500 text-[11px] uppercase tracking-wider">
+              <th className="text-left px-4 py-3 font-medium">Opp</th>
+              <th className="text-right px-3 py-3 font-medium">GP</th>
+              {statKeys.map(k => <th key={k} className="text-right px-3 py-3 font-medium">{k.replace(/_/g, ' ')}</th>)}
+            </tr></thead>
+            <tbody>
+              {data.matchups.map((m, i) => (
+                <tr key={i} className="border-b border-zinc-800/50 hover:bg-zinc-800/30">
+                  <td className="px-4 py-2.5 font-medium">{m.opponent}</td>
+                  <td className="px-3 py-2.5 text-right font-mono tabular-nums text-zinc-400">{m.games}</td>
+                  {statKeys.map(k => <td key={k} className="px-3 py-2.5 text-right font-mono tabular-nums">{m.avg[k] ?? '—'}</td>)}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   )
 }
