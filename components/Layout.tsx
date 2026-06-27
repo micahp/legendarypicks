@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import GlobalSearch from './GlobalSearch'
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
@@ -8,13 +9,16 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           <Link href="/" className="font-extrabold tracking-tight text-xl">
             Legendary Picks
           </Link>
-          <nav className="flex items-center gap-4 text-sm">
-            <Link href="/scores" className="hover:text-emerald-400">Scores</Link>
-            <Link href="/predict" className="hover:text-emerald-400">Predict</Link>
-            <Link href="/props" className="hover:text-emerald-400">Props</Link>
-            <Link href="/stats" className="hover:text-emerald-400">Stats</Link>
-            <Link href="/analytics" className="hover:text-emerald-400">Analytics</Link>
-          </nav>
+          <div className="flex items-center gap-4">
+            <nav className="hidden sm:flex items-center gap-4 text-sm">
+              <Link href="/scores" className="hover:text-emerald-400">Scores</Link>
+              <Link href="/predict" className="hover:text-emerald-400">Predict</Link>
+              <Link href="/props" className="hover:text-emerald-400">Props</Link>
+              <Link href="/stats" className="hover:text-emerald-400">Stats</Link>
+              <Link href="/analytics" className="hover:text-emerald-400">Analytics</Link>
+            </nav>
+            <GlobalSearch />
+          </div>
         </div>
       </header>
       <main className="mx-auto max-w-6xl px-4 py-8 space-y-6">{children}</main>
