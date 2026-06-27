@@ -1,5 +1,6 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, Fragment } from 'react'
 import Head from 'next/head'
+import PropChart, { PropHistory } from '../components/Props/PropChart'
 
 // ── types ────────────────────────────────────────────────
 interface Player {
@@ -8,6 +9,7 @@ interface Player {
 interface Prop {
   id: number; market: string; line: number; side: string; source: string
   captured_at: string; player_name: string; player_team: string; league: string
+  player_id: number
   actual_value: number | null; hit: boolean | null; settled_at: string | null
 }
 interface SlateGame {
@@ -119,6 +121,11 @@ function LinesTab({ league, date }: { league: League; date: string }) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  // Expandable chart state
+  const [expandedId, setExpandedId] = useState<number | null>(null)
+  const [chartData, setChartData] = useState<PropHistory | null>(null)
+  const [chartLoading, setChartLoading] = useState(false)
+
   useEffect(() => {
     if (query.length < 2) { setPlayers([]); return }
     const t = setTimeout(async () => {
@@ -128,7 +135,7 @@ function LinesTab({ league, date }: { league: League; date: string }) {
   }, [query])
 
   useEffect(() => {
-    setLoading(true); setError(null)
+    setLoading(true); setError(null); setExpandedId(null); setChartData(null)
     const params = new URLSearchParams({ limit: '100' })
     params.set('date', date)
     if (query) params.set('player', query)
@@ -138,6 +145,24 @@ function LinesTab({ league, date }: { league: League; date: string }) {
       .then(r => r.json()).then(d => { setProps(d); setLoading(false) })
       .catch(() => { setError('Failed to load props.'); setLoading(false) })
   }, [query, league, market, date])
+
+  const toggleChart = async (p: Prop) => {
+    if (expandedId === p.id) { setExpandedId(null); setChartData(null); return }
+    setExpandedId(p.id)
+    setChartLoading(true)
+    setChartData(null)
+    try {
+      const lg = p.league || (league !== 'All' ? league : 'nba')
+      const params = new URLSearchParams({
+        player_id: String(p.player_id),
+        market: p.market, line: String(p.line), side: p.side, league: lg,
+      })
+      const r = await fetch(`/api/props/history?${params}`)
+      const d = await r.json()
+      setChartData(d.games?.length ? d : null)
+    } catch { setChartData(null) }
+    setChartLoading(false)
+  }
 
   const filtered = props
 
@@ -155,6 +180,7 @@ function LinesTab({ league, date }: { league: League; date: string }) {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-zinc-800 text-zinc-500 text-[11px] uppercase tracking-wider">
+                <th className="text-left px-4 py-3 font-medium w-8"></th>
                 <th className="text-left px-4 py-3 font-medium">Player</th>
                 <th className="text-left px-4 py-3 font-medium">Market</th>
                 <th className="text-right px-4 py-3 font-medium">Line</th>
@@ -166,15 +192,30 @@ function LinesTab({ league, date }: { league: League; date: string }) {
             </thead>
             <tbody>
               {filtered.map(p => (
-                <tr key={p.id} className="border-b border-zinc-800/50 hover:bg-zinc-800/30 transition-colors">
-                  <td className="px-4 py-2.5"><span className="font-medium">{p.player_name}</span><span className="text-zinc-500 text-xs ml-1.5">{p.player_team}</span></td>
-                  <td className="px-4 py-2.5 text-zinc-300">{p.market.replace(/_/g, ' ')}</td>
-                  <td className="px-4 py-2.5 text-right font-mono tabular-nums">{p.line}</td>
-                  <td className="px-4 py-2.5 text-center"><span className={`text-[11px] font-bold px-2 py-0.5 rounded ${p.side === 'over' ? 'bg-emerald-900/30 text-emerald-300' : 'bg-red-900/30 text-red-300'}`}>{p.side.toUpperCase()}</span></td>
-                  <td className="px-4 py-2.5 text-right font-mono tabular-nums text-zinc-400">{p.actual_value ?? '—'}</td>
-                  <td className="px-4 py-2.5 text-center"><HitBadge hit={p.hit} /></td>
-                  <td className="px-4 py-2.5 text-zinc-500 text-xs hidden md:table-cell whitespace-nowrap">{p.captured_at ? new Date(p.captured_at).toLocaleDateString() : '—'}</td>
-                </tr>
+                <Fragment key={p.id}>
+                  <tr key={p.id} onClick={() => toggleChart(p)}
+                    className={`border-b border-zinc-800/50 transition-colors cursor-pointer ${expandedId === p.id ? 'bg-zinc-800/50' : 'hover:bg-zinc-800/30'}`}>
+                    <td className="px-2 py-2.5 text-zinc-500 text-xs">{expandedId === p.id ? '▾' : '▸'}</td>
+                    <td className="px-4 py-2.5"><span className="font-medium">{p.player_name}</span><span className="text-zinc-500 text-xs ml-1.5">{p.player_team}</span></td>
+                    <td className="px-4 py-2.5 text-zinc-300">{p.market.replace(/_/g, ' ')}</td>
+                    <td className="px-4 py-2.5 text-right tabular-nums">{p.line}</td>
+                    <td className="px-4 py-2.5 text-center"><span className={`text-[11px] font-bold px-2 py-0.5 rounded ${p.side === 'over' ? 'bg-emerald-900/30 text-emerald-300' : 'bg-red-900/30 text-red-300'}`}>{p.side.toUpperCase()}</span></td>
+                    <td className="px-4 py-2.5 text-right tabular-nums text-zinc-400">{p.actual_value ?? '—'}</td>
+                    <td className="px-4 py-2.5 text-center"><HitBadge hit={p.hit} /></td>
+                    <td className="px-4 py-2.5 text-zinc-500 text-xs hidden md:table-cell whitespace-nowrap">{p.captured_at ? new Date(p.captured_at).toLocaleDateString() : '—'}</td>
+                  </tr>
+                  {expandedId === p.id && (
+                    <tr key={`${p.id}-chart`} className="border-b border-zinc-800/50 bg-zinc-900/50">
+                      <td colSpan={8} className="px-4 py-4">
+                        {chartLoading ? <Skeleton lines={3} /> : chartData ? (
+                          <PropChart data={chartData} />
+                        ) : (
+                          <div className="text-center py-4 text-zinc-500 text-xs">No game history available for this prop.</div>
+                        )}
+                      </td>
+                    </tr>
+                  )}
+                </Fragment>
               ))}
             </tbody>
           </table>

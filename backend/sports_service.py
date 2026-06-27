@@ -491,6 +491,7 @@ def list_props(player: Optional[str] = Query(None),
                date: Optional[str] = Query(None),
                limit: int = Query(50, ge=1, le=500)):
     sql = """SELECT p.id, p.market, p.line, p.side, p.source, p.captured_at,
+                    p.player_id,
                     pl.name AS player_name, pl.team AS player_team, pl.league,
                     r.actual_value, r.hit, r.settled_at
              FROM props p
@@ -517,6 +518,7 @@ def list_props(player: Optional[str] = Query(None),
         rows = con.execute(sql, params).fetchall()
     return [{"id": r["id"], "market": r["market"], "line": r["line"], "side": r["side"],
              "source": r["source"], "captured_at": r["captured_at"],
+             "player_id": r["player_id"],
              "player_name": r["player_name"], "player_team": r["player_team"],
              "league": r["league"], "actual_value": r["actual_value"],
              "hit": bool(r["hit"]) if r["hit"] is not None else None,
@@ -552,12 +554,16 @@ def player_prop_history(player_id: int, market: Optional[str] = Query(None)):
 
 # Market → stat-key mapping for player_game_logs stats JSON
 _MARKET_STAT_KEY = {
-    "points": "pts", "rebounds": "reb", "assists": "ast",
-    "threes": "fg3m", "steals": "stl", "blocks": "blk",
-    "strikeouts": "so", "hits": "h", "home_runs": "hr",
-    "passing_yards": "pass_yds", "rushing_yards": "rush_yds",
-    "receiving_yards": "rec_yds", "goals": "goals",
-    "shots": "shots", "saves": "saves",
+    # NBA (UPPERCASE keys)
+    "points": "PTS", "rebounds": "REB", "assists": "AST",
+    "threes": "3PM", "steals": "STL", "blocks": "BLK",
+    # MLB (UPPERCASE keys)
+    "strikeouts": "K", "hits": "H", "home_runs": "HR",
+    # NFL (lowercase keys)
+    "passing_yards": "passing_yards", "rushing_yards": "rushing_yards",
+    "receiving_yards": "receiving_yards",
+    # NHL (lowercase keys)
+    "goals": "goals", "shots": "shots", "saves": "saves",
 }
 
 
