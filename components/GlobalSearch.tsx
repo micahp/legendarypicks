@@ -39,7 +39,7 @@ export default function GlobalSearch() {
   }
 
   return (
-    <div ref={ref} className="relative w-44 sm:w-56">
+    <div ref={ref} className="relative w-full sm:w-56">
       <input
         type="text" value={q} onChange={e => setQ(e.target.value)} onKeyDown={onKey}
         onFocus={() => results.length > 0 && setOpen(true)}

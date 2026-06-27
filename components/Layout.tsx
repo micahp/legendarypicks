@@ -5,20 +5,18 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-ink-900 text-zinc-100">
       <header className="sticky top-0 z-40 border-b border-zinc-800 bg-ink-900/80 backdrop-blur">
-        <div className="mx-auto max-w-6xl px-4 h-14 flex items-center justify-between">
+        <div className="mx-auto max-w-6xl px-4 min-h-14 py-2 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
           <Link href="/" className="font-extrabold tracking-tight text-xl">
             Legendary Picks
           </Link>
-          <div className="flex items-center gap-3 sm:gap-4 min-w-0">
-            <nav className="flex items-center gap-3 sm:gap-4 text-sm overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              <Link href="/scores" className="hover:text-emerald-400 whitespace-nowrap">Scores</Link>
-              <Link href="/predict" className="hover:text-emerald-400 whitespace-nowrap">Predict</Link>
-              <Link href="/props" className="hover:text-emerald-400 whitespace-nowrap">Props</Link>
-              <Link href="/stats" className="hover:text-emerald-400 whitespace-nowrap">Stats</Link>
-              <Link href="/analytics" className="hover:text-emerald-400 whitespace-nowrap">Analytics</Link>
-            </nav>
-            <div className="hidden md:block"><GlobalSearch /></div>
-          </div>
+          <nav className="flex items-center gap-3 sm:gap-4 text-sm overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <Link href="/scores" className="hover:text-emerald-400 whitespace-nowrap">Scores</Link>
+            <Link href="/predict" className="hover:text-emerald-400 whitespace-nowrap">Predict</Link>
+            <Link href="/props" className="hover:text-emerald-400 whitespace-nowrap">Props</Link>
+            <Link href="/stats" className="hover:text-emerald-400 whitespace-nowrap">Stats</Link>
+            <Link href="/analytics" className="hover:text-emerald-400 whitespace-nowrap">Analytics</Link>
+          </nav>
+          <div className="w-full sm:w-auto order-last sm:order-none"><GlobalSearch /></div>
         </div>
       </header>
       <main className="mx-auto max-w-6xl px-4 py-8 space-y-6">{children}</main>
