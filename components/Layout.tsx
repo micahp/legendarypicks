@@ -5,11 +5,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-ink-900 text-zinc-100">
       <header className="sticky top-0 z-40 border-b border-zinc-800 bg-ink-900/80 backdrop-blur">
-        <div className="mx-auto max-w-6xl px-4 h-14 flex items-center justify-between gap-2">
-          <Link href="/" className="font-extrabold tracking-tight text-xl whitespace-nowrap">
+        <div className="mx-auto max-w-6xl px-4 py-2 space-y-2">
+          <Link href="/" className="block w-fit font-extrabold tracking-tight text-xl whitespace-nowrap">
             Legendary Picks
           </Link>
-          <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+          <div className="flex items-center justify-between gap-3 min-w-0">
             <nav className="flex items-center gap-3 sm:gap-4 text-sm overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               <Link href="/scores" className="hover:text-emerald-400 whitespace-nowrap">Scores</Link>
               <Link href="/predict" className="hover:text-emerald-400 whitespace-nowrap">Predict</Link>
