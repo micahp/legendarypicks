@@ -14,9 +14,7 @@ in `package.json` tracks the next (in-development) release.
 > real release. Disciplined versioning starts here, with the current production state
 > tagged `v0.1.0`.
 
-## [Unreleased] — targeting v0.2.0
-
-The analytics-backbone branch — built, not yet deployed.
+## [0.2.0] — 2026-06-26 — analytics-backbone (cut; not yet deployed)
 
 ### Added
 - **Per-game player logs** (`player_game_logs`) across all four leagues — 111k+ logs,
