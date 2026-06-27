@@ -559,7 +559,9 @@ def player_prop_history(player_id: int, market: Optional[str] = Query(None)):
 # (e.g. MLB pitcher props — our MLB logs are batting-only).
 _MARKET_STAT_KEY = {
     "mlb": {"total_bases": "TB", "hits": "H", "home_runs": "HR", "walks": "BB",
-            "doubles": "2B", "triples": "3B"},
+            "doubles": "2B", "total_doubles": "2B", "triples": "3B", "total_triples": "3B",
+            "total_home_runs": "HR", "total_hits": "H", "total_walks": "BB",
+            "total_bases_allowed": None},
     "nba": {"points": "PTS", "rebounds": "REB", "assists": "AST", "threes": "3PM",
             "steals": "STL", "blocks": "BLK", "turnovers": "TO",
             "points_rebounds_assists": "PRA", "pra": "PRA"},
