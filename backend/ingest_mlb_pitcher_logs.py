@@ -115,10 +115,10 @@ def ingest(days: int = 60) -> int:
         opponent = None
         home_away = None
         if "inning_topbot" in g.columns and "home_team" in g.columns and "away_team" in g.columns:
-            top = (g["inning_topbot"].iloc[0] == "Top")
-            team = g["home_team"].iloc[0] if not top else g["away_team"].iloc[0]
-            opponent = g["away_team"].iloc[0] if not top else g["home_team"].iloc[0]
-            home_away = "home" if not top else "away"
+            top = (g["inning_topbot"].iloc[0] == "Top")  # away bats in top → home fields
+            team = g["home_team"].iloc[0] if top else g["away_team"].iloc[0]
+            opponent = g["away_team"].iloc[0] if top else g["home_team"].iloc[0]
+            home_away = "home" if top else "away"
 
         con.execute(
             """INSERT OR REPLACE INTO player_game_logs
