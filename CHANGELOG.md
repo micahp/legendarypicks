@@ -14,6 +14,15 @@ in `package.json` tracks the next (in-development) release.
 > real release. Disciplined versioning starts here, with the current production state
 > tagged `v0.1.0`.
 
+## [Unreleased] — targeting v0.3.0 — entity-page UX restructure
+
+Roadmap in `docs/PLAN-entity-ux-restructure.md`. Planned, not yet built:
+- **Prop visualization** — bar chart of last N games vs the line + hit rate + projection
+  (props.cash/PrizePicks style), replacing the retrospective ✅/❌. Used in Props, Player, Game.
+- **Entity pages** — Player / Game / Team pages as the depth behind the tabs + global search.
+- **Stats tab → Leagues tab** (standings + team stats + leaders + schedule).
+- **Remove the Analytics tab** (fold calibration into a credibility element; defer EV/CLV).
+
 ## [0.2.0] — 2026-06-26 — analytics-backbone (cut; not yet deployed)
 
 ### Added

@@ -1,122 +1,147 @@
-# PLAN — Entity-page UX restructure
+# PLAN — Entity-page UX restructure (v0.3.0 roadmap)
 
 Large, multi-session undertaking. Source of truth for the work + delegation. Check off
-todos as they land; keep this doc current (it's the handoff across sessions/agents).
+todos as they land; keep this doc current (handoff across sessions/agents).
+**v0.2.0 is cut** (per-game logs + projections + Model tab + tennis). This plan = the **v0.3.0** line.
 
 ## The vision
-**Tabs stay simple: Scoreboard · Stats · Props** (owner: "stats and props for now").
-We are NOT renaming or retiring tabs. The richness comes from **entity pages as the
-content/depth behind those tabs + global search** — not a tab restructure.
+Top-level **tabs: Scoreboard · Leagues · Props** + global search. The richness is **entity
+pages** (Player / Game / Team) as the depth behind those tabs, plus a real **prop visualization**.
 
-**Top nav (kept):**
-- **Scoreboard** (`/scores`) — today's games → Game pages. Landing page routes here.
-- **Stats** — the league/team view: standings/strength + team stats + leaders + schedule.
-  (This is the "league page" content — it lives UNDER the Stats tab, same name.)
-- **Props** — props / slate / projections board → Game pages.
+**Top nav:**
+- **Scoreboard** (`/scores`, kept) — today's games → Game pages. Landing page routes here.
+- **Leagues** (upgrade of the Stats tab → renamed) — per-league standings/strength + team stats
+  + leaders + schedule. Drills into Team + Player pages. *(Stats only ever showed league data,
+  so it becomes the Leagues tab.)*
+- **Props** — the slate/board **+ the prop visualization** (see below). Drills into Game/Player.
 
-**Destinations (reached via search + clicking names, NOT tabs):**
-| Entity page | What it is | Reached from |
+**Destinations (via search + clicking names, NOT tabs):**
+| Page | What it is | Reached from |
 |---|---|---|
-| **Game** `/game/[lg]/[id]` | Matchup + **today's projections / props / edges** for its players (game-contextual projections live here). | Scoreboard, Props |
-| **Player** `/player/[id]` | Asset/profile: stats, game logs, form trajectory, projection trend, "next game" card → game. | Global search, any player name |
-| **Team** `/team/[lg]/[id]` | Roster, schedule, team stats → players. | Stats, Game |
-| **Global search** (header) | Jumps to a player (later: teams). | everywhere |
+| **Game** `/game/[lg]/[id]` | Matchup + today's projections / props / edges (game-contextual projections live here). | Scoreboard, Props |
+| **Player** `/player/[id]` | Asset/profile: stats, game logs, form trajectory, projection trend, prop charts, "next game" card. | Search, any player name |
+| **Team** `/team/[lg]/[id]` | Roster, schedule, team stats → players. | Leagues, Game |
 
-### Persona → door (all share the entity pages)
-- **Prop bettor** (props.cash) → Slate → Game (tonight's edges)
-- **Casual fan** (ESPN) → Scores/League (what's on, standings)
+## ⭐ The prop visualization (headline upgrade — addresses the #1 gap)
+Today the prop display is **retrospective** — a ✅/❌ *after* the game. Useless for deciding a bet.
+The industry standard (props.cash, PrizePicks, Underdog) is a **bar chart of the player's last N
+games for that stat with the line drawn across it**, so hit rate reads at a glance:
+
+```
+Tatum — Points     Line 27.5      L10: 7/10 over     Proj 29.4
+  ▆     ▇        ▅
+  ▆  ▆  ▇  ▆  ▆  ▅  ▇  ▆  ▇  ▆
+──┼──┼──┼──┼──┼──┼──┼──┼──┼──┼── 27.5
+  31 24 33 28 26 22 35 29 30 27   (bars over line = hit, color-coded)
+```
+
+We **already have the data**: `player_game_logs` (per-game values) + the prop line (`props`) +
+the projection (`/api/projections`). This is the payoff of the per-game-log foundation — it makes
+the prop *decision-useful*. Filters: L5/L10/L20, home/away, vs-opponent. Used in **Props, Player
+page, and Game detail**.
+
+## The Analytics tab → folded (not a user-facing tab)
+EV / CLV / Brier are sharp-bettor / model-quality metrics — and 2 of 3 are non-functional
+(**EV all zeros** w/o a real model edge; **CLV empty** w/o closing-odds capture). Calibration works
+but "Brier 0.21" means nothing to a user. **Remove the Analytics tab.** Calibration becomes a quiet
+"model accuracy / track record" credibility element; EV/CLV return only once there's a model + odds
+feed (Phase 6). The genuinely useful analytic is the **prop visualization above**, in the prop.
+
+### Persona → door
+- **Prop bettor** (props.cash) → Scoreboard → Game / Props (prop charts + edges)
+- **Casual fan** (ESPN) → Scoreboard / Leagues (what's on, standings)
 - **Fantasy** → Player projections + Game (start/sit)
 - **Trader** (sport.fun, later) → Player page as asset (trajectory/value)
-
-## DECISION (locked 2026-06-26) — scoreboard-led, keep what exists
-**Front door = the existing landing page → the existing scoreboard.** We do NOT build a new
-Slate home or retire Scores. The **scoreboard IS the slate** (it already shows today's games);
-we keep it and enhance it so a game drills into the new Game page (matchup + projections).
-- Landing page (`/`) — kept as-is, routes to the scoreboard.
-- Scoreboard (`/scores`) — kept; becomes the daily slate surface. Games link → Game page.
-- This is the slate-led model, reusing existing pages rather than replacing them.
 
 ## Already built (foundation — reuse, don't rebuild)
 - `player_game_logs` (111k logs, 4 leagues) + per-game ingests + `roster_sync` + NFL dedupe.
 - `/api/projections/player/{id}` — recency-weighted EV + floor/median/ceiling + P(over) + fantasy pts.
 - `/api/player/{id}/stats` (advanced metrics, all leagues — `now` bug fixed).
-- `espn_client`: `games(lg,date)`, `team_strength(lg)`, `boxscore(lg,id)`, `roster(lg,team)`, `game_result`.
-- `/api/{lg}/games`, `/strength`, `/team-stats` (M5), `/api/props*`, `/api/players/search`.
-- Existing routes: `/scores`, `/stats`, `/props`, `/predict`, `/analytics`, `/game/[league]/[gameId]`.
+- `espn_client`: `games`, `team_strength`, `boxscore`, `roster`, `game_result`.
+- `/api/{lg}/games`, `/strength`, `/team-stats`, `/api/props*`, `/api/players/search`.
+- Routes today: `/scores`, `/stats`(→Leagues), `/props`, `/predict`, `/analytics`(→remove), `/game/[league]/[gameId]`.
 - See `CONTEXT-2026-06-26.md` + `PROJECTIONS-METHODOLOGY.md`.
 
 ---
 
 ## Phases & todos
-Each task is delegation-ready: scope + files + acceptance. Hand specs to Hermes/meeseek;
-verify every "done" against the live UI (data flowing ≠ it looks right — the tennis lesson).
+Delegation-ready: scope + files + acceptance. Verify every "done" on the live tunnel
+(data flowing ≠ it looks right — the tennis lesson).
 
-### Phase 0 — Decisions + scaffolding
-- [ ] Lock front-door model (slate-first vs league-first) — **owner**.
-- [ ] Add routes skeleton (empty pages + types): `/` (slate), `/league/[league]`,
-      `/player/[id]`, `/team/[league]/[id]`. Keep old tabs live until parity.
-- [ ] Header: global search component (wraps `/api/players/search`) → routes to player page.
-- [ ] Define data contracts per page (what each endpoint must return) — short doc.
+### Phase 0 — Scaffold + global search
+- [ ] Routes skeleton: `/league/[league]`, `/player/[id]`, `/team/[league]/[id]` (keep old tabs live until parity).
+- [ ] Header global search (wraps `/api/players/search`) → player page.
+- [ ] Per-page data contracts (short doc).
 
-### Phase 1 — Player page (highest value, foundation ready)
-- [ ] **Backend:** `/api/player/{id}` aggregate (compose stats + recent logs + projections +
-      props-on-player + next-game ref) OR compose client-side from existing endpoints.
-- [ ] **Frontend `/player/[id]`:** header (name/team/pos), projection trend, game-log table,
-      advanced metrics, **"next game" card → /game/...**. Subsumes Performance/Matchups/Model.
-- [ ] Wire global search + every player name (slate, game, league, box scores) → player page.
-- [ ] Acceptance: search a player in each league → page shows real logs + projections; next-game
-      card links to a real game. Verify on tunnel.
+### Phase 1 — ⭐ Prop visualization (headline; data ready, highest value)
+- [ ] **Backend** `/api/props/history?player=&market=&line=` (or `/api/props/{id}/history`):
+      last N game values for the stat (from `player_game_logs`) + per-game hit/miss vs line +
+      L5/L10/L20 hit rates + projection. Filters: window, home/away, opponent.
+- [ ] **Frontend** `<PropChart>` bar-chart component (bars = games, horizontal line = prop line,
+      color over/under, hit-rate + projection labels). Replace the retrospective ✅/❌ in Props·Lines.
+- [ ] Reuse `<PropChart>` on Player page + Game detail.
+- [ ] Acceptance: open a prop → see last-10 bars vs the line + hit rate + projection. Tunnel-verified.
 
-### Phase 2 — Game page + Slate (the daily decision loop)
-- [ ] **Backend:** `/api/projections/game/{league}/{id}` — projections for both rosters in the
-      matchup (reuse per-player projection; later: opponent-adjust per PROJECTIONS-METHODOLOGY).
-- [ ] **Backend:** enrich slate endpoint (games + has-props/projections flags).
-- [ ] **Frontend Game page** (`/game/[league]/[id]` exists — extend): matchup header + player
-      **projections vs lines + edges** + props for the game. Today's projections live here.
-- [ ] **Keep & enhance the existing scoreboard (`/scores`) as the slate** — don't rebuild a home.
-      Ensure each game links into the Game page (with projections). Landing page still routes here.
-- [ ] Acceptance: open slate → tap a game → see per-player projections (+ lines where MLB props
-      exist). Verify on tunnel.
+### Phase 2 — Player page (asset/profile hub)
+- [ ] **Backend** `/api/player/{id}` aggregate (stats + recent logs + projections + props-on-player +
+      next-game ref) OR compose from existing endpoints.
+- [ ] **Frontend `/player/[id]`:** header, projection trend, game-log table, advanced metrics,
+      **prop charts** for their active props, **"next game" card → /game/...**. Subsumes Performance/Matchups/Model.
+- [ ] Wire search + every player name → player page.
+- [ ] Acceptance: search any player → real logs + projections + prop charts; next-game links to a real game.
 
-### Phase 3 — Build out the Stats tab (league/team view) + Team page
-- [ ] **Backend:** league leaders endpoint (top players by stat, from `player_game_logs`).
-- [ ] **Frontend Stats tab:** standings/strength (from `/strength`) + team stats + leaders +
-      schedule, per league. World Cup standings stays as a league here. (Keep the tab named "Stats".)
+### Phase 3 — Game page + enhance scoreboard (daily loop)
+- [ ] **Backend** `/api/projections/game/{lg}/{id}` — projections for both rosters in the matchup.
+- [ ] **Frontend Game page** (`/game/[league]/[id]` exists — extend): matchup + per-player
+      **projections vs lines + prop charts + edges** + props for the game. Today's projections live here.
+- [ ] **Keep & enhance `/scores`** as the slate — each game links into the Game page. Landing still routes here.
+- [ ] Acceptance: scoreboard → tap a game → per-player projections + prop charts (where MLB props exist).
+
+### Phase 4 — Leagues tab (rename/upgrade Stats) + Team page
+- [ ] **Backend** league leaders endpoint (top players by stat, from `player_game_logs`).
+- [ ] **Frontend Leagues tab** (rename Stats → Leagues): standings/strength + team stats + leaders +
+      schedule, per league. World Cup stays as a league here.
 - [ ] **Frontend `/team/[league]/[id]`:** roster (→ players) + schedule + team stats.
-- [ ] Acceptance: Stats tab gains leaders/schedule with no regression; team page lists current roster.
+- [ ] Acceptance: Leagues tab = old Stats + leaders/schedule, no regression; team page lists current roster.
 
-### Phase 4 — Nav cleanup (keep Scoreboard · Stats · Props)
-- [ ] Top nav = **Scoreboard · Stats · Props** + global search (+ Predict if kept as engagement).
-- [ ] Fold `/analytics` and the old Props sub-tabs (Performance/Matchups/Model) into Props +
-      Player pages. **Keep Stats and Props tabs** and `/scores` + landing. Don't rename tabs.
-- [ ] Update OG/meta, mobile nav, empty states.
-- [ ] Acceptance: old surfaces' content reachable via the three tabs + entity pages; no dead links.
+### Phase 5 — Nav cleanup
+- [ ] Top nav = **Scoreboard · Leagues · Props** + global search (+ Predict if kept).
+- [ ] **Remove the Analytics tab** (calibration → credibility element; EV/CLV deferred). Fold old
+      Props sub-tabs (Performance/Matchups/Model) into Player/Game. Keep `/scores` + landing.
+- [ ] Redirects for `/stats`→Leagues, `/analytics`→gone. Update OG/meta, mobile nav, empty states.
+- [ ] Acceptance: every old surface reachable via the three tabs + entity pages; no dead links.
 
-### Phase 5 — Model + breadth (post-restructure)
-- [ ] Projection model beyond Marcel: opponent/matchup adjustment, regression-to-mean, opportunity
-      share (PROJECTIONS-METHODOLOGY steps 2/4/5).
-- [ ] Props breadth beyond MLB (Bovada/odds source decision) → real lines on more games.
-- [ ] Fantasy: rankings / start-sit / rookie "best available" (player-asset → sport.fun lane).
+### Phase 6 — Model + breadth (post-restructure)
+- [ ] Projection model beyond Marcel: opponent/matchup adjustment, regression-to-mean, opportunity share.
+- [ ] Props breadth beyond MLB (odds source decision) → real lines on more games.
+- [ ] Revive EV/CLV with a real model + closing-odds capture (then maybe a sharp "edge" view).
+- [ ] Fantasy: rankings / start-sit / rookie "best available" (→ sport.fun lane).
 
-## Sequencing / dependencies
+## Sequencing
 ```
-Phase 0 (decide + scaffold)
-   └─> Phase 1 (Player)  ─┐
-   └─> Phase 2 (Game/Slate) ─┤── can run in parallel (different agents/sessions)
-   └─> Phase 3 (League/Team) ┘
-                 └─> Phase 4 (nav cleanup — after 1–3 reach parity)
-                          └─> Phase 5 (model + breadth)
+Phase 0 (scaffold + search)
+   ├─> Phase 1 (Prop viz — ship first, highest value, data ready)
+   ├─> Phase 2 (Player page)  ─┐
+   ├─> Phase 3 (Game/scoreboard) ┤ parallelizable (uses Phase-1 PropChart)
+   └─> Phase 4 (Leagues/Team)  ─┘
+                 └─> Phase 5 (nav cleanup — after 1–4 reach parity)
+                          └─> Phase 6 (model + breadth)
 ```
-Phases 1/2/3 are independent slices (good for parallel delegation). Phase 4 only after they
-reach feature parity with the old tabs. Phase 5 is open-ended follow-on.
 
-## Delegation notes
+## Delegation notes — parallel backend/UI split
+Run backend and UI in parallel against a clean contract so neither blocks the other:
+- **I (Claude) own backend** — endpoints + data shape. **Hermes owns UI** — components/pages that
+  consume those endpoints. Define the JSON contract first; both build to it independently.
+- Carve **independent slices**: e.g. I ship `/api/props/history` (returns the shape), Hermes builds
+  `<PropChart>` against that shape (mock until live); or I add a route stub, Hermes fills the page.
+  Removals/renames that are self-contained (e.g. "remove the Analytics tab") → hand straight to Hermes.
 - Each todo → a self-contained spec (like `TASK-tennis-set-scores.md`): goal, files, data shape,
-  definition-of-done, dev-only constraints. Hand to Hermes (warmed on this repo) or meeseek.
-- **roma-dspy(trial) can't write code** (calculator toolkit only) — use Hermes / meeseeks.sh for build tasks.
-- Verify every agent "done" against the live tunnel yourself — its "done" is a claim.
+  definition-of-done, dev-only constraints. Hermes is warmed on this repo.
+- **roma-dspy(trial) can't write code** (calculator toolkit only) — use Hermes / meeseeks.sh for builds.
+- Verify every agent "done" on the live tunnel yourself — its "done" is a claim (the tennis lesson:
+  data flowing ≠ it looks right; check the actual render).
 
 ## Guardrails
 - Dev only: `LP_DB_PATH=backend/data/picks.dev.db`, backend :8095, frontend :3095. Never touch prod.
 - Branch per slice off `analytics-backbone`; merge when verified. No AI/Claude attribution.
-- This is v0.2.0+ territory — tag releases as slices ship (semver, see CHANGELOG.md).
+- Tag releases as the line ships (semver, CHANGELOG.md). This plan = v0.3.0.
