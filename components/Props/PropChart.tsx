@@ -85,7 +85,6 @@ export default function PropChart({ data, window: initialWindow = 'l10' }: { dat
 
   const y = (v: number) => padTop + chartH * (1 - (v - minVal) / range)
   const lineY = y(data.line)
-  const projY = data.projection !== null ? y(data.projection) : null
   const isHit = (v: number) => data.side === 'over' ? v >= data.line : v <= data.line
 
   return (
@@ -130,12 +129,6 @@ export default function PropChart({ data, window: initialWindow = 'l10' }: { dat
 
       <div className="overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" style={{ maxWidth: '100%' }}>
         <svg width={chartW} height={svgH} className="block" style={{ minWidth: chartW }}>
-          {projY !== null && (
-            <>
-              <line x1={0} y1={projY} x2={chartW} y2={projY} stroke="#f59e0b" strokeWidth={1} strokeDasharray="2,4" opacity={0.6} />
-              <text x={chartW + 2} y={projY + 4} className="text-[8px] fill-amber-400/70" textAnchor="start">{data.projection!.toFixed(1)}</text>
-            </>
-          )}
           <line x1={0} y1={lineY} x2={chartW} y2={lineY} stroke="#71717a" strokeWidth={1} strokeDasharray="4,3" />
           <text x={chartW + 2} y={lineY + 4} className="text-[9px] fill-zinc-500" textAnchor="start">{data.line}</text>
 
