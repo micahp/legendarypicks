@@ -323,12 +323,20 @@ def get_game_detail(league: str, game_id: str):
     has_boxscore = lg in ("nba", "nhl")
     out = {"game_id": game_id, "league": lg,
            "team_stats": [], "scoring_plays": [], "context": None, "strength": {},
-           "final_score": None}
-    # ── final score from OUR DB (scoring_plays); no ESPN on the request path ──
+           "final_score": None, "live_score": None, "state": None}
+    # Game state up front so we NEVER label a live/upcoming game "final".
     try:
-        out["final_score"] = _final_score_from_db(lg, game_id)
+        _gr = espn.game_result(league, game_id)
+        out["state"] = _gr.get("state")
     except Exception:
-        pass
+        _gr = {}
+    is_final = out["state"] == "post"
+    # Final score from OUR DB (scoring_plays) — only when the game is actually over.
+    if is_final:
+        try:
+            out["final_score"] = _final_score_from_db(lg, game_id)
+        except Exception:
+            pass
     # Read from DB
     _read_game_detail_from_db(lg, game_id, out)
 
@@ -346,7 +354,8 @@ def get_game_detail(league: str, game_id: str):
 
         # Re-query the DB now that snapshot has run
         _read_game_detail_from_db(lg, game_id, out)
-        out["final_score"] = _final_score_from_db(lg, game_id)
+        if is_final:
+            out["final_score"] = _final_score_from_db(lg, game_id)
 
         # If DB is still empty (e.g. pre-game or snapshot failed),
         # fall back to ESPN's scoreboard summary for minimal context + scores
@@ -380,9 +389,14 @@ def get_game_detail(league: str, game_id: str):
                 if scores and len(scores) == 2:
                     abbrevs = list(scores.keys())
                     if home_abbrev and away_abbrev and home_abbrev in scores and away_abbrev in scores:
-                        out["final_score"] = {"home": scores[home_abbrev], "away": scores[away_abbrev]}
+                        sc = {"home": scores[home_abbrev], "away": scores[away_abbrev]}
                     else:
-                        out["final_score"] = {"home": scores[abbrevs[0]], "away": scores[abbrevs[1]]}
+                        sc = {"home": scores[abbrevs[0]], "away": scores[abbrevs[1]]}
+                    # Only "final" when the game is over; otherwise it's the live score.
+                    if is_final:
+                        out["final_score"] = sc
+                    else:
+                        out["live_score"] = sc
 
                 if home_abbrev or away_abbrev:
                     out["context"] = {
@@ -761,10 +775,39 @@ def game_story(league: str, game_id: str, refresh: bool = Query(False)):
                 f"differential {s.get('differential')}")
     grounding = (f"Matchup: {teams[0]} vs {teams[1]}. Game state: {gr.get('state')}.\n"
                  f"{facts(teams[0])}\n{facts(teams[1])}")
-    system = ("You are a sharp sports writer. In 2-3 sentences, set up this matchup using ONLY the "
-              "facts given. Lead with the most interesting thing (a streak, a strong record, a big "
-              "run differential). Be specific with the numbers. Do NOT invent injuries, trades, "
-              "lineup news, or anything not in the facts. No clichés, no hype, plain confident tone.")
+
+    # Notable player form: each prop player's last 5 games for their primary market —
+    # grounds "X is hot / cold" without inventing news.
+    form_lines, seen = [], set()
+    with closing(_db()) as con:
+        prs = con.execute(
+            """SELECT pl.id, pl.name, p.market, COUNT(*) c FROM props p
+               JOIN prop_games g ON g.id = p.game_id JOIN players pl ON pl.id = p.player_id
+               WHERE g.espn_event_id = ? GROUP BY pl.id, p.market ORDER BY c DESC""",
+            (str(game_id),)).fetchall()
+        for r in prs:
+            if r["id"] in seen or len(form_lines) >= 8:
+                continue
+            sk = _MARKET_STAT_KEY.get(lg, {}).get(_base_market(r["market"]))
+            if not sk:
+                continue
+            logs = con.execute(
+                """SELECT stats FROM player_game_logs WHERE player_id=?
+                   ORDER BY COALESCE(game_date,'') DESC, CAST(game_no AS INTEGER) DESC LIMIT 5""",
+                (r["id"],)).fetchall()
+            vals = [json.loads(x["stats"]).get(sk) for x in logs]
+            vals = [v for v in vals if v is not None]
+            if len(vals) >= 3:
+                form_lines.append(f"{r['name']} — last 5 {_base_market(r['market'])}: {vals}")
+                seen.add(r["id"])
+    if form_lines:
+        grounding += "\nRecent player form (most recent first):\n" + "\n".join(form_lines)
+
+    system = ("You are a sharp sports writer. In 2-4 sentences, set up this matchup using ONLY the "
+              "facts given. Lead with the most interesting thing — a team streak/record/differential, "
+              "OR a player on a clear hot or cold run from the form data. Be specific with numbers. "
+              "Do NOT invent injuries, trades, lineup news, or anything not in the facts. No clichés, "
+              "no hype, plain confident tone.")
     story = _deepseek_chat(system, grounding)
     if story:
         with closing(_db()) as con:
