@@ -124,6 +124,7 @@ function LinesTab({ league, date }: { league: League; date: string }) {
   // Expandable chart state
   const [expandedId, setExpandedId] = useState<number | null>(null)
   const [chartData, setChartData] = useState<PropHistory | null>(null)
+  const [chartError, setChartError] = useState<string | null>(null)
   const [chartLoading, setChartLoading] = useState(false)
 
   useEffect(() => {
@@ -135,7 +136,7 @@ function LinesTab({ league, date }: { league: League; date: string }) {
   }, [query])
 
   useEffect(() => {
-    setLoading(true); setError(null); setExpandedId(null); setChartData(null)
+    setLoading(true); setError(null); setExpandedId(null); setChartData(null); setChartError(null)
     const params = new URLSearchParams({ limit: '100' })
     params.set('date', date)
     if (query) params.set('player', query)
@@ -147,10 +148,11 @@ function LinesTab({ league, date }: { league: League; date: string }) {
   }, [query, league, market, date])
 
   const toggleChart = async (p: Prop) => {
-    if (expandedId === p.id) { setExpandedId(null); setChartData(null); return }
+    if (expandedId === p.id) { setExpandedId(null); setChartData(null); setChartError(null); return }
     setExpandedId(p.id)
     setChartLoading(true)
     setChartData(null)
+    setChartError(null)
     try {
       const lg = p.league || (league !== 'All' ? league : 'nba')
       const params = new URLSearchParams({
@@ -159,8 +161,10 @@ function LinesTab({ league, date }: { league: League; date: string }) {
       })
       const r = await fetch(`/api/props/history?${params}`)
       const d = await r.json()
-      setChartData(d.games?.length ? d : null)
-    } catch { setChartData(null) }
+      if (d.error) { setChartError(d.error); setChartData(null) }
+      else if (d.games?.length) { setChartData(d) }
+      else { setChartData(null) }
+    } catch { setChartError('Failed to load chart.'); setChartData(null) }
     setChartLoading(false)
   }
 
@@ -209,6 +213,8 @@ function LinesTab({ league, date }: { league: League; date: string }) {
                       <td colSpan={8} className="px-4 py-4">
                         {chartLoading ? <Skeleton lines={3} /> : chartData ? (
                           <PropChart data={chartData} />
+                        ) : chartError ? (
+                          <div className="text-center py-4 text-zinc-500 text-xs">Chart not available for this market yet.</div>
                         ) : (
                           <div className="text-center py-4 text-zinc-500 text-xs">No game history available for this prop.</div>
                         )}
