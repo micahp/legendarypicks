@@ -8,6 +8,17 @@
 This is a Next.js app with a shared **Layout** and an intentional **two-tone dark theme**. The rules below
 come from real mistakes. Follow them literally; when unsure, look at how an existing page does it and copy that.
 
+## 0. Current state — read these first
+- **Latest session handoff:** `docs/CONTEXT-2026-06-27.md` (most recent; supersedes earlier `CONTEXT-*`).
+- **Backend is no longer one file (Jun-27 refactor).** `backend/sports_service.py` is now a thin app
+  shell that `include_router`s `backend/routers/{games,players,props,analytics,game_extras}.py`. Shared
+  DB/schema, `_helpers`, market maps, and Pydantic models live in `backend/_core.py`; routers pull them
+  with `from _core import *` (core sets `__all__` so underscore names export). **Add a new endpoint to the
+  matching router, not to `sports_service.py`.** Frontend game page is likewise split into `components/Game/*`.
+- **Next-phase build spec:** `docs/SPEC-2026-06-27-next-phases.md` — NBA matchups, Stats-page leagues,
+  remaining milestone UI, UFC rankings — with backend + frontend acceptance criteria.
+- **Engineering retro:** `docs/RETRO-2026-06-27.md`.
+
 ---
 
 ## 1. Layout owns the page shell — a page must NOT re-create it
