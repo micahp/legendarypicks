@@ -9,7 +9,7 @@ This is a Next.js app with a shared **Layout** and an intentional **two-tone dar
 come from real mistakes. Follow them literally; when unsure, look at how an existing page does it and copy that.
 
 ## 0. Current state — read these first
-- **Latest session handoff:** `docs/CONTEXT-2026-06-27.md` (most recent; supersedes earlier `CONTEXT-*`).
+- **Latest session handoff:** `docs/CONTEXT-2026-06-28.md` (most recent; supersedes earlier `CONTEXT-*`).
 - **Backend is no longer one file (Jun-27 refactor).** `backend/sports_service.py` is now a thin app
   shell that `include_router`s `backend/routers/{games,players,props,analytics,game_extras}.py`. Shared
   DB/schema, `_helpers`, market maps, and Pydantic models live in `backend/_core.py`; routers pull them
