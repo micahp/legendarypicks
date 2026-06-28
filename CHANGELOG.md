@@ -29,6 +29,13 @@ v0.3.0 is gated on closing the current UI holes. Each bullet is its own minor bu
 - Player-name links app-wide → player page.
 - **UFC rankings** (weight class + pound-for-pound) — P4 from `docs/SPEC-2026-06-27-next-phases.md`.
 
+### Shipped to prod ahead of tag (v0.2.3 — hotfixes)
+- **Footer pinned to the viewport bottom** on short pages — the layout wrapper is now a flex
+  column with `main` growing (`flex-1`), so the footer stops floating mid-page on the homepage.
+- **App icons + favicon: transparent corners** — circular alpha mask applied to every `logo-*.png`,
+  `apple-touch-icon.png`, and a rebuilt `favicon.ico`, removing the black square corners while
+  keeping the holographic disc and the black "LP" mark intact.
+
 ## [0.2.2] — 2026-06-28
 
 ### Added
