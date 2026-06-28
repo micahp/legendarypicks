@@ -946,6 +946,55 @@ def generate_game_story(lg: str, game_id: str, refresh: bool = False,
     return {"league": lg, "game_id": game_id, "story": story, "cached": False}
 
 
+import threading as _threading
+_story_inflight: set = set()
+_story_lock = _threading.Lock()
+_story_sema = _threading.Semaphore(3)  # cap concurrent DeepSeek generations
+
+def kick_game_stories(lg: str, games: list):
+    """Fire-and-forget: when a league scoreboard is fetched, warm the preview cache
+    for any games we don't have a story for yet. Each generation runs in a daemon
+    thread (bounded by a semaphore) so the /games response returns immediately and the
+    preview is ready — or generating — by the time the user opens the game.
+
+    This is the 'write the preview whenever we find out about the game' hook: games are
+    lazy-loaded via /api/{league}/games, so that fetch is exactly when we find out."""
+    lg = lg.lower()
+    ids = [(str(g.get("game_id")), (g.get("home") or {}).get("abbrev"), (g.get("away") or {}).get("abbrev"))
+           for g in (games or []) if g.get("game_id")]
+    if not ids:
+        return
+    gid_list = [i[0] for i in ids]
+    try:
+        with closing(_db()) as con:
+            con.execute("""CREATE TABLE IF NOT EXISTS game_story(
+                league TEXT, game_id TEXT, story TEXT, generated_at TEXT,
+                PRIMARY KEY(league, game_id))""")
+            qs = ",".join("?" * len(gid_list))
+            cached = {r[0] for r in con.execute(
+                f"SELECT game_id FROM game_story WHERE league=? AND game_id IN ({qs})",
+                [lg] + gid_list)}
+    except Exception:
+        cached = set()
+    for gid, home, away in ids:
+        if gid in cached:
+            continue
+        with _story_lock:
+            if gid in _story_inflight:
+                continue
+            _story_inflight.add(gid)
+        def _run(gid=gid, home=home, away=away):
+            try:
+                with _story_sema:
+                    generate_game_story(lg, gid, home=home, away=away)
+            except Exception as e:
+                print(f"[story] bg gen failed {lg} {gid}: {e}")
+            finally:
+                with _story_lock:
+                    _story_inflight.discard(gid)
+        _threading.Thread(target=_run, daemon=True).start()
+
+
 # Build the DB on import so any router that imports _core has the schema ready.
 _init_db()
 

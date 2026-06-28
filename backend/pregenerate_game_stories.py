@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Pre-generate AI matchup stories for discovered games, so the preview cache is warm
-BEFORE the first user view — instead of generating lazily when someone opens the game
-detail (which makes that first viewer wait on a DeepSeek call).
+"""Manual one-shot backfill: warm the AI-story cache for upcoming games across leagues.
 
-"Write the preview whenever we find out about the game." Run on a cron (e.g. hourly).
-Idempotent: _core.generate_game_story skips games already in the game_story cache.
+The AUTOMATIC path is the `/api/{league}/games` hook (`_core.kick_game_stories`): loading
+a scoreboard fires background generation for that league's games, so previews are warm by
+click-time without any cron. This script is just a convenience to warm the whole slate at
+once (e.g. after a fresh DB or a code change). Idempotent — skips already-cached games.
 
 Usage:
   LP_DB_PATH=data/picks.dev.db python3 pregenerate_game_stories.py [league ...] [--days N]

@@ -50,6 +50,11 @@ def get_games(league: str, date: Optional[str] = Query(None, description="YYYY-M
                 g["home"]["score"] = final["home"]
             if g.get("away"):
                 g["away"]["score"] = final["away"]
+    # "Write the preview whenever we find out about the game": loading the scoreboard is
+    # exactly when we find out, so warm the AI-story cache in the background here. Non-
+    # blocking — the games response returns now; stories generate in daemon threads.
+    if lg in ("nba", "nhl", "mlb", "nfl"):
+        kick_game_stories(lg, games)
     return JSONResponse(content=games, headers={"Cache-Control": "public, max-age=30"})
 
 
