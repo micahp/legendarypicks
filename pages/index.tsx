@@ -49,7 +49,7 @@ export default function Home() {
         {[
           { title: 'Live Scores', desc: 'Real-time scores across 8+ leagues with box scores and play-by-play.', href: '/scores' },
           { title: 'Predictions', desc: 'Pick winners and track your accuracy over the season.', href: '/predict' },
-          { title: 'Prop Data', desc: 'Coming soon — player prop outcomes, hit rates, and trends.', href: '#' },
+          { title: 'Prop Data', desc: 'Player prop charts, hit rates, projections, and matchup trends across the slate.', href: '/props' },
         ].map((card) => (
           <Link
             key={card.title}
