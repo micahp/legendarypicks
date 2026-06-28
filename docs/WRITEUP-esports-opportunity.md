@@ -66,6 +66,33 @@ overlap is clearest, and run it through the existing engine end-to-end as a prob
 Leading candidate to probe first: **CS2** (deepest bettor culture + scrapeable stats) or **Dota 2**
 (most open free API, lowest data friction). Decide on data access, not vibes.
 
+## Live-stream embedding — free content as an engagement moat
+The sharpest part of the opportunity: most esports streams **free** on YouTube/Twitch via official
+org channels (Riot/`twitch.tv/lec` + `twitch.tv/riotgames` for LoL, ESL for CS2, plus Dota 2 and
+Valorant). Both platforms ship a **sanctioned embed player**, so we could put the live match *inside
+our site*, next to our scoreboard / props / projections. "Watch + the stats and lines in one view" is
+a real engagement hook and a differentiator — and it's content we don't pay for or produce.
+
+It's not only esports. There's a class of **free, embeddable competitions ESPN hasn't locked up**:
+- **PWHL** streams every game free on YouTube (and thepwhl.com), US + worldwide except Canada/Czechia/
+  Slovakia (regional rights). **[verified — PWHL "Where to Watch"]**
+- **MLS / NWSL** and select European divisions have official free Twitch channels. **[verify current]**
+- Counter-weight the prompt named: **ESPN / ESPN+ has paywalled much of the minor-league / niche space**,
+  so those aren't embeddable. The play is the leagues that *choose* free distribution to grow reach.
+
+**Embedding reality (don't skip this):** embeddable ≠ free-for-all.
+- **YouTube** allows display only through its embeddable player, "as permitted by the Service"; its ToS
+  forbids broadcasting/displaying content otherwise, and embedding does **not** grant copyright immunity.
+- **Twitch** embeds require SSL + a `parent` (domain) parameter and compliance with its Developer
+  Services Agreement, and Twitch can **revoke embed access at any time**.
+- So: only embed **official/sanctioned** org streams via the platform players; never restream or
+  rebroadcast; confirm rights per competition. Treat it as "we surround a free official embed with our
+  data," not "we host the broadcast." **[verify per-competition + ToS before building]**
+
+**Research to do (the prompt asked for it):** catalog which competitions are (free × officially
+embeddable × audience that bets/engages) — esports majors, PWHL, MLS/NWSL, others — versus the
+ESPN-locked set. That list, crossed with where we can get stats/props, is the real target map.
+
 ## Open questions to answer before building
 - Does the esports audience bet at a rate that justifies the build? **[verify]**
 - Which single title has the best (data accessibility × bettor overlap × scene durability)?
