@@ -31,16 +31,24 @@ modeling**. Esports maps onto every layer:
 So the marginal cost of adding an esports title is mostly **data ingestion + identity**, not new
 product surface. That's the strategic point: we don't build a separate thing, we add a league.
 
-## Data — the deciding factor per title
-Esports lives or dies on data accessibility, and it varies a lot by title:
-- **CS2** — the classic: HLTV and similar carry rich, scrapeable match + player stats and a deep
-  betting culture. Strongest candidate for "accessible data + bettor overlap". **[verify access terms]**
-- **League of Legends** — Riot has an official data API + sites like Leaguepedia/Oracle's Elixir; very
-  stats-heavy audience.
-- **Dota 2** — OpenDota / STRATZ expose extensive free APIs (most open data of any title).
-- **Valorant** — growing fast; data via VLR.gg and others. **[verify access]**
+## Data — the deciding factor per title (researched 2026-06-28)
+Esports lives or dies on data accessibility, and the key finding is that **data accessibility and
+bettor overlap pull in OPPOSITE directions**:
+- **Dota 2 — best data, lower betting profile.** **OpenDota** (free, open-source, built on Valve's
+  WebAPI + automated replay parsing) and **STRATZ** (free, the most comprehensive 3rd-party Dota stats;
+  heavy commercial users are asked to meet a small referral quota + represent the brand). Lowest data
+  friction of any title, commercial-friendly, no approval gate. **[verified — opendota.com/api-keys, stratz.com/api]**
+- **CS2 — best betting audience, worst data access.** Deepest bettor culture (DraftKings runs CS2 map +
+  prop markets). But **HLTV has no official API** — only unofficial scrapers (Selenium/BeautifulSoup) or
+  paid third-party scrapers (Apify), both ToS-risk and fragile. My earlier "accessible data" claim here
+  was wrong. To do CS2 right you'd likely **pay an aggregator** (GRID / PandaScore / Abios). **[verified — no official HLTV API]**
+- **LoL / Valorant (Riot) — official API but approval-gated.** Riot has a real API, but **public/commercial
+  use requires an approved Production key** (personal keys are barred from public consumption), and Valorant
+  player data needs an RSO OAuth opt-in. A betting-adjacent product may not get approved — verify before
+  counting on it. **[verified — developer.riotgames.com/terms]**
 - **CoD** — we already ingest it (breakingpoint.gg); a proven path to extend, not start from zero.
-- Aggregators (Liquipedia, Abios, PandaScore, GRID) cover many titles but some are paid. **[verify]**
+- **Aggregators (Abios, PandaScore, GRID)** cover many titles with official, licensed feeds — the clean
+  legal path, but **paid**. The build-vs-buy call: free scraping (ToS risk, fragile) vs a paid aggregator.
 
 Identity resolution is the recurring tax (our spine rule applies): players use handles, switch teams,
 and span titles — resolve by a stable per-title source ID, never by name (`AGENTS.md §7`).
@@ -98,8 +106,44 @@ It's not only esports. There's a class of **free, embeddable competitions ESPN h
 embeddable × audience that bets/engages) — esports majors, PWHL, MLS/NWSL, others — versus the
 ESPN-locked set. That list, crossed with where we can get stats/props, is the real target map.
 
-## Open questions to answer before building
-- Does the esports audience bet at a rate that justifies the build? **[verify]**
-- Which single title has the best (data accessibility × bettor overlap × scene durability)?
-- Are there legal/ToS constraints on the stats sources we'd scrape? **[verify]**
-- Does our prop-outcome engine need any title-specific outcome types (maps/rounds vs counts)?
+## Answers to the open questions (researched 2026-06-28)
+
+**Q: Does the esports audience bet enough to justify the build?** Yes, directionally. The global
+**esports-betting market is ~$18.5B in 2026** (up from ~$16.3B in 2025), forecast ~$51.7B by 2034
+(~13.7% CAGR), on **640M+ viewers (2025) → 700M+ (2026)**. Prop markets already exist on US books —
+**DraftKings is the most active** (match, map, and props like total headshots / most assists / live
+micro-bets); FanDuel is narrower. Caveat: the dollar figures are market-research-firm projections
+(directional, not gospel); the *verified* facts are "real, large, growing, and props exist on DraftKings."
+
+**Q: Which single title is best (data × bettor-overlap × durability)?** No title wins all three — the
+core tension is data-vs-audience:
+- **Dota 2** wins on **data** (free open APIs, no gate) and durability (decade+ scene), but has a
+  smaller betting profile than CS2.
+- **CS2** wins on **betting audience + durability**, but has the **worst data access** (no official API).
+- **LoL/Valorant** have a real API but it's **approval-gated** and may reject gambling-adjacent apps.
+- **Recommendation:** prove the engine on **Dota 2** (cheapest, cleanest data — fastest end-to-end
+  probe), and if the bettor-draw thesis holds, invest in **CS2** via a **paid aggregator** (GRID/
+  PandaScore/Abios) since that's where the betting audience is. CoD is the already-working third option.
+
+**Q: Legal/ToS on the stats sources?** Varies hard (see the data section): Dota (OpenDota/STRATZ) = free
++ commercial-OK (STRATZ asks heavy users for a referral quota). Riot = official but production-key
+approval required, no public use on personal keys, Valorant needs RSO opt-in. HLTV (CS2) = **no official
+API**, scraping is ToS-risk → the clean path is a **paid licensed aggregator**. Embedding streams =
+official platform players only, no rebroadcast (see streaming section).
+
+**Q: Does the prop-outcome engine need title-specific outcome types?** Minor extension, not a rebuild.
+Esports outcomes are countable and map onto our existing "did the line hit" shape: **series structure**
+(best-of-X → map-winner / total-maps, the CoD/tennis-set pattern we already handle) plus **per-player
+counting stats** (kills, headshots, assists for CS2; kills, last-hits, GPM for Dota). Add per-title
+market definitions to `_MARKET_STAT_KEY` and a per-match player-log ingest; the modeling layer is reused.
+
+## Still genuinely open (need a decision, not just research)
+- **Build-vs-buy for CS2 data:** scrape HLTV (free, fragile, ToS-risk) vs pay an aggregator (clean, $$$).
+- **Which title actually first** — Dota (build-cheap) vs CS2 (audience) — is a strategy call, not a fact.
+- The **free × embeddable × bettor** competition catalog (the streaming research map) is still to compile.
+
+## Sources
+Esports betting market + props: businessresearchinsights.com, marketresearchfuture.com, Bleacher Nation
+(DraftKings/FanDuel esports). Data/ToS: opendota.com/api-keys, stratz.com/api, developer.riotgames.com/terms,
+HLTV (no official API — unofficial scrapers only). Streaming: thepwhl.com, dev.twitch.tv/docs/embed,
+youtube ToS, mlssoccer.com (MLS→Apple TV exclusive).
