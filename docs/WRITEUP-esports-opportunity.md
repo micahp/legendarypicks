@@ -76,9 +76,14 @@ a real engagement hook and a differentiator — and it's content we don't pay fo
 It's not only esports. There's a class of **free, embeddable competitions ESPN hasn't locked up**:
 - **PWHL** streams every game free on YouTube (and thepwhl.com), US + worldwide except Canada/Czechia/
   Slovakia (regional rights). **[verified — PWHL "Where to Watch"]**
-- **MLS / NWSL** and select European divisions have official free Twitch channels. **[verify current]**
-- Counter-weight the prompt named: **ESPN / ESPN+ has paywalled much of the minor-league / niche space**,
-  so those aren't embeddable. The play is the leagues that *choose* free distribution to grow reach.
+- **NOT MLS** (corrected): MLS is **exclusive to Apple TV** — all 2026 matches are under the Apple TV
+  subscription, and the standalone Season Pass folded in after 2025. No Twitch, not embeddable. An
+  earlier draft of this doc wrongly listed MLS/NWSL as free Twitch; that came from a low-quality
+  streaming listicle, not a real rights check. NWSL is likewise on paid/linear (Prime/ESPN/CBS).
+- The counter-weight the prompt named is the whole point: big platforms **buy exclusivity** —
+  **Apple (MLS)**, **ESPN/ESPN+** (much of the minor-league / college / niche space). Those aren't
+  embeddable. The play is only the leagues that *choose* free distribution to grow reach (PWHL, most
+  esports orgs). **Every candidate needs a real per-league rights check before it counts.**
 
 **Embedding reality (don't skip this):** embeddable ≠ free-for-all.
 - **YouTube** allows display only through its embeddable player, "as permitted by the Service"; its ToS
