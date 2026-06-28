@@ -35,7 +35,21 @@ const TABS: { key: Tab; label: string }[] = [
   { key: 'model', label: 'Model' },
 ]
 const LEAGUES: League[] = ['All', 'mlb', 'nba', 'nfl', 'nhl']
-const MARKETS = ['All', 'points', 'rebounds', 'assists', 'threes', 'strikeouts', 'passing_yards', 'rushing_yards', 'receiving_yards', 'hits', 'home_runs', 'goals', 'shots', 'saves']
+// Market filter options scoped to each league. Grounded in real data + the backend's
+// canonical market map (backend/_core.py `_MARKET_STAT_KEY`): every entry is a market the
+// /api/props exact-match filter can actually return rows for. MLB here is the pitcher-side
+// set that's stored as plain market strings — batter markets (total_bases, etc.) carry a
+// per-player suffix so they can't be exact-matched and are intentionally omitted.
+const LEAGUE_MARKETS: Record<Exclude<League, 'All'>, string[]> = {
+  nba: ['points', 'rebounds', 'assists', 'threes', 'steals', 'blocks'],
+  mlb: ['strikeouts', 'outs', 'hits_allowed', 'earned_runs'],
+  nfl: ['passing_yards', 'rushing_yards', 'receiving_yards', 'receptions'],
+  nhl: ['goals', 'assists', 'points', 'shots'],
+}
+// "All" leagues → union of every league's markets, de-duped, first-seen order preserved.
+const ALL_MARKETS = Array.from(new Set(Object.values(LEAGUE_MARKETS).flat()))
+const marketsForLeague = (league: League): string[] =>
+  league === 'All' ? ALL_MARKETS : LEAGUE_MARKETS[league]
 
 function Skeleton({ lines = 4 }: { lines?: number }) {
   return (
@@ -127,6 +141,12 @@ function LinesTab({ league, date }: { league: League; date: string }) {
   const [chartError, setChartError] = useState<string | null>(null)
   const [chartLoading, setChartLoading] = useState(false)
 
+  // markets valid for the active league; reset the selection when the league changes so a
+  // stale market (e.g. an MLB market left selected when switching to the NBA tab) doesn't
+  // silently filter everything out.
+  const markets = marketsForLeague(league)
+  useEffect(() => { setMarket('All') }, [league])
+
   useEffect(() => {
     if (query.length < 2) { setPlayers([]); return }
     const t = setTimeout(async () => {
@@ -174,7 +194,7 @@ function LinesTab({ league, date }: { league: League; date: string }) {
     <div className="space-y-4">
       <div className="flex flex-wrap gap-2 items-center">
         <PlayerSearch query={query} setQuery={setQuery} players={players} onSelect={p => { setQuery(p.name); setPlayers([]) }} />
-        <Select value={market} onChange={setMarket} options={MARKETS.map(m => ({ v: m, label: m === 'All' ? 'All Markets' : m.replace(/_/g, ' ') }))} />
+        <Select value={market} onChange={setMarket} options={['All', ...markets].map(m => ({ v: m, label: m === 'All' ? 'All Markets' : m.replace(/_/g, ' ') }))} />
       </div>
       {error && <div className="rounded-lg border border-red-500/40 bg-red-950/40 text-red-200 px-4 py-3 text-sm">{error}</div>}
       {loading ? <Skeleton lines={6} /> : filtered.length === 0 ? (
