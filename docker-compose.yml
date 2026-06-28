@@ -3,6 +3,10 @@ services:
     build: ./backend
     environment:
       PORT: "8000"
+      # AI game previews (DeepSeek). Passed from the host shell at `docker compose up`
+      # time so the key never lives in the repo; without it _deepseek_key() finds no
+      # key in-container (it can't read the host's /root/.hermes/.env) and stories no-op.
+      DEEPSEEK_API_KEY: "${DEEPSEEK_API_KEY:-}"
     # bind to loopback ONLY: reachable by host nginx, never from the internet
     # host 8100 -> container 8000 (8000 already used by another site)
     ports: ["127.0.0.1:8100:8000"]

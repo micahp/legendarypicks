@@ -15,9 +15,16 @@ come from real mistakes. Follow them literally; when unsure, look at how an exis
   DB/schema, `_helpers`, market maps, and Pydantic models live in `backend/_core.py`; routers pull them
   with `from _core import *` (core sets `__all__` so underscore names export). **Add a new endpoint to the
   matching router, not to `sports_service.py`.** Frontend game page is likewise split into `components/Game/*`.
-- **Next-phase build spec:** `docs/SPEC-2026-06-27-next-phases.md` — NBA matchups, Stats-page leagues,
-  remaining milestone UI, UFC rankings — with backend + frontend acceptance criteria.
-- **Engineering retro:** `docs/RETRO-2026-06-27.md`.
+- **Deploying / promoting to prod?** Read `docs/RUNBOOK-prod-promotion.md` FIRST. Prod is a docker
+  stack on this host with its OWN DB (`backend/data/picks.db`), separate from dev (`picks.dev.db`).
+  The trap: shipping code whose data isn't migrated into `picks.db` (200 ≠ working). Procedure +
+  the `migrate_logs_to_prod.py` data step are in the runbook. **Current prod = v0.2.2 (deployed 2026-06-28).**
+- **v0.3.0 roadmap (the UI holes gating it):** `docs/SPEC-v0.3.0-ui-holes.md` — richer Stats (player/team,
+  offensive/defensive), non-MLB game detail + the 3 empty tabs, post-game recap, prop outcomes on game
+  detail, **UFC build-out** (props/stats/rankings + per-fight strike/takedown data for modeling), and a
+  **World Cup/CoD bracket + pick'em** page.
+- **Earlier next-phase spec:** `docs/SPEC-2026-06-27-next-phases.md` (NBA matchups, Stats-page leagues, UFC
+  rankings — with acceptance criteria). **Engineering retro:** `docs/RETRO-2026-06-27.md`.
 
 ---
 

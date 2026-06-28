@@ -42,11 +42,26 @@ game-detail props don't show **what hit**.
 - AC: settled props on game detail show outcome + actual; the new orientation is reviewed via the
   design skill before shipping.
 
+## 5. UFC build-out (on the scoreboard, nowhere else)
+Today UFC shows on the scoreboard only — no props, no stats, no detail. Build it out, in order:
+- **Props + Stats first.** Give UFC a presence on the Props page and the Stats tab.
+- **Rankings in Stats** — **pound-for-pound + every division**. Source from ufc.com/rankings (also
+  Sherdog / Tapology as backups). Scrape into a cached table, weekly refresh, never live on the request
+  path (see P4 in `docs/SPEC-2026-06-27-next-phases.md` for the endpoint shape).
+- **Fight data for modeling (eventual).** Pull the significant per-fight data — **significant strikes,
+  takedowns, control time, etc.** — so we can model fighters the way we model other leagues' players.
+  This is the UFC analog of `player_game_logs`: a per-fight log keyed to a fighter identity.
+
+## 6. World Cup — bracket / pick'em page
+We have World Cup on the scoreboard. Opportunity: a **bracket page** showing the current state of a
+knockout/playoff (applies to **World Cup** and **Call of Duty** playoffs too), and let users **pick who
+wins** (pick'em). One bracket component driven by a generic series/round data shape, reused across any
+league that has a playoff/knockout structure.
+
 ## Also tracked
 - Player-name links app-wide → `/player/[id]`.
-- **UFC rankings** (weight class + P4P) — P4 in `docs/SPEC-2026-06-27-next-phases.md`.
 
-## Deploy note (carry-over blocker)
-Prod DB `picks.db` is **missing `player_game_logs`** and has **stale `player_stats`**. The marquee
-features (player page, matchups, PropChart, projections, NBA edge, stories) need that data. **Migrate
-it into `picks.db` (without clobbering prod's live `props`/`prop_results`) before the container deploy.**
+## Deploy note — RESOLVED (2026-06-28)
+The carry-over blocker (prod `picks.db` missing `player_game_logs` + stale `player_stats`) was resolved:
+migrated logs/stats into `picks.db` and deployed v0.2.2. **The repeatable procedure is now
+`docs/RUNBOOK-prod-promotion.md` — read it before any future deploy.**
