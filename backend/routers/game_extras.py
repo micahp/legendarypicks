@@ -32,76 +32,10 @@ def game_props(league: str, game_id: str):
 @router.get("/api/game/{league}/{game_id}/story")
 def game_story(league: str, game_id: str, refresh: bool = Query(False)):
     """AI matchup blurb (DeepSeek V4 Pro), grounded ONLY in our records/streaks/form.
-    Cached per game so it's generated once, not every load."""
-    lg = league.lower()
-    with closing(_db()) as con:
-        con.execute("""CREATE TABLE IF NOT EXISTS game_story(
-            league TEXT, game_id TEXT, story TEXT, generated_at TEXT,
-            PRIMARY KEY(league, game_id))""")
-        if not refresh:
-            r = con.execute("SELECT story FROM game_story WHERE league=? AND game_id=?", (lg, game_id)).fetchone()
-            if r:
-                return {"league": lg, "game_id": game_id, "story": r["story"], "cached": True}
-
-    try:
-        gr = espn.game_result(lg, game_id)
-        teams = list((gr.get("scores") or {}).keys())
-    except Exception:
-        teams = []
-    if len(teams) != 2:
-        return {"league": lg, "game_id": game_id, "story": None}
-    smap = espn.team_strength_map(lg)
-
-    def facts(ab):
-        s = smap.get(ab) or {}
-        return (f"{s.get('name', ab)} ({ab}): {s.get('wins')}-{s.get('losses')}, "
-                f"{s.get('win_pct')} win%, streak {s.get('streak')}, last-10 {s.get('last10')}, "
-                f"differential {s.get('differential')}")
-    grounding = (f"Matchup: {teams[0]} vs {teams[1]}. Game state: {gr.get('state')}.\n"
-                 f"{facts(teams[0])}\n{facts(teams[1])}")
-
-    # Notable player form: each prop player's last 5 games for their primary market —
-    # grounds "X is hot / cold" without inventing news.
-    form_lines, seen = [], set()
-    with closing(_db()) as con:
-        prs = con.execute(
-            """SELECT pl.id, pl.name, p.market, COUNT(*) c FROM props p
-               JOIN prop_games g ON g.id = p.game_id JOIN players pl ON pl.id = p.player_id
-               WHERE g.espn_event_id = ? GROUP BY pl.id, p.market ORDER BY c DESC""",
-            (str(game_id),)).fetchall()
-        for r in prs:
-            if r["id"] in seen or len(form_lines) >= 8:
-                continue
-            sk = _MARKET_STAT_KEY.get(lg, {}).get(_base_market(r["market"]))
-            if not sk:
-                continue
-            logs = con.execute(
-                """SELECT stats FROM player_game_logs WHERE player_id=?
-                   ORDER BY COALESCE(game_date,'') DESC, CAST(game_no AS INTEGER) DESC LIMIT 5""",
-                (r["id"],)).fetchall()
-            vals = [json.loads(x["stats"]).get(sk) for x in logs]
-            vals = [v for v in vals if v is not None]
-            if len(vals) >= 3:
-                form_lines.append(f"{r['name']} — last 5 {_base_market(r['market'])}: {vals}")
-                seen.add(r["id"])
-    if form_lines:
-        grounding += "\nRecent player form (most recent first):\n" + "\n".join(form_lines)
-
-    system = ("You are a sharp sports writer. In 2-4 sentences, set up this matchup using ONLY the "
-              "facts given. Lead with the most interesting thing — a team streak/record/differential, "
-              "OR a player on a clear hot or cold run from the form data. Be specific with numbers. "
-              "Do NOT invent injuries, trades, lineup news, or anything not in the facts. No clichés, "
-              "no hype, plain confident tone.")
-    story = _deepseek_chat(system, grounding)
-    if story:
-        with closing(_db()) as con:
-            con.execute("""CREATE TABLE IF NOT EXISTS game_story(
-                league TEXT, game_id TEXT, story TEXT, generated_at TEXT,
-                PRIMARY KEY(league, game_id))""")
-            con.execute("INSERT OR REPLACE INTO game_story(league, game_id, story, generated_at) "
-                        "VALUES (?,?,?,datetime('now'))", (lg, game_id, story))
-            con.commit()
-    return {"league": lg, "game_id": game_id, "story": story, "cached": False}
+    Cached per game. Generation logic lives in _core.generate_game_story so the
+    pregenerate_game_stories job can warm the cache when a game is first discovered,
+    instead of paying the latency on the first user view."""
+    return generate_game_story(league, game_id, refresh)
 
 
 @router.get("/api/game/{league}/{game_id}/edge")
