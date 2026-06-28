@@ -62,6 +62,14 @@ function fmtStat(k: string, v: number | null | undefined): string {
   return v.toFixed(1)
 }
 
+// Weight class → lbs for UFC division cards
+const WEIGHT_CLASS_LBS: Record<string, number> = {
+  Flyweight: 125, Bantamweight: 135, Featherweight: 145,
+  Lightweight: 155, Welterweight: 170, Middleweight: 185,
+  'Light Heavyweight': 205, Heavyweight: 265,
+  "Women's Strawweight": 115, "Women's Flyweight": 125, "Women's Bantamweight": 135,
+}
+
 // ── Page ────────────────────────────────────────────────────
 export default function StatsPage() {
   const [league, setLeague] = useState<League>('NBA')
@@ -110,7 +118,7 @@ export default function StatsPage() {
 
   // ── Load players ─────────────────────────────────────────
   useEffect(() => {
-    if (league === 'WC') return  // no player stats for WC
+    if (league === 'WC' || league === 'UFC') return  // no player stats for WC or UFC
     let ignore = false
     const load = async () => {
       setPlayerLoading(true); setPlayerError(null)
@@ -240,112 +248,134 @@ export default function StatsPage() {
                 No UFC rankings available.
               </div>
             ) : (
-              <div className="space-y-6">
-                {/* ── Pound-for-Pound ────────────────────── */}
-                <div>
-                  <h2 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider mb-3">
-                    Pound-for-Pound
-                  </h2>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-8">
+                {/* ── Pound-for-Pound — the crown ────────── */}
+                <section>
+                  <div className="flex items-center gap-3 mb-4">
+                    <span className="text-[10px] text-emerald-500/60 bg-emerald-500/10 px-2 py-0.5 rounded font-bold uppercase tracking-widest">
+                      Pound-for-Pound
+                    </span>
+                    <span className="text-[10px] text-zinc-600 uppercase tracking-wider">
+                      The best across all weight classes
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {/* Men's P4P */}
-                    <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
-                      <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-3">
-                        Men's
-                      </h3>
-                      <ol className="space-y-1.5">
+                    <div className="bg-zinc-900/80 border border-zinc-800/80 rounded-xl overflow-hidden">
+                      <div className="px-4 py-2.5 border-b border-zinc-800/60 flex items-center gap-2">
+                        <span className="text-[11px] font-semibold text-zinc-300 uppercase tracking-wider">Men's</span>
+                      </div>
+                      <ol className="divide-y divide-zinc-800/40">
                         {ufcRankings.pound_for_pound.men.map(f => (
                           <li key={f.rank}
-                            className={`flex items-center gap-3 text-sm ${
+                            className={`flex items-center gap-3 px-4 py-2 text-sm ${
                               f.champion
-                                ? 'text-emerald-300 font-semibold'
-                                : 'text-zinc-300'
+                                ? 'bg-emerald-500/5'
+                                : ''
                             }`}
                           >
-                            <span className={`w-5 text-right text-xs tabular-nums ${
-                              f.champion ? 'text-emerald-400' : 'text-zinc-500'
+                            <span className={`w-5 text-right text-xs tabular-nums font-medium ${
+                              f.champion ? 'text-emerald-400' : 'text-zinc-600'
                             }`}>
-                              {f.champion ? 'C' : f.rank}
+                              {f.champion ? '♛' : f.rank}
                             </span>
-                            <span>{f.fighter}</span>
+                            <span className={f.champion ? 'text-emerald-300 font-semibold' : 'text-zinc-300'}>
+                              {f.fighter}
+                            </span>
                           </li>
                         ))}
                       </ol>
                     </div>
                     {/* Women's P4P */}
-                    <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
-                      <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-3">
-                        Women's
-                      </h3>
-                      <ol className="space-y-1.5">
+                    <div className="bg-zinc-900/80 border border-zinc-800/80 rounded-xl overflow-hidden">
+                      <div className="px-4 py-2.5 border-b border-zinc-800/60 flex items-center gap-2">
+                        <span className="text-[11px] font-semibold text-zinc-300 uppercase tracking-wider">Women's</span>
+                      </div>
+                      <ol className="divide-y divide-zinc-800/40">
                         {ufcRankings.pound_for_pound.women.map(f => (
                           <li key={f.rank}
-                            className={`flex items-center gap-3 text-sm ${
+                            className={`flex items-center gap-3 px-4 py-2 text-sm ${
                               f.champion
-                                ? 'text-emerald-300 font-semibold'
-                                : 'text-zinc-300'
+                                ? 'bg-emerald-500/5'
+                                : ''
                             }`}
                           >
-                            <span className={`w-5 text-right text-xs tabular-nums ${
-                              f.champion ? 'text-emerald-400' : 'text-zinc-500'
+                            <span className={`w-5 text-right text-xs tabular-nums font-medium ${
+                              f.champion ? 'text-emerald-400' : 'text-zinc-600'
                             }`}>
-                              {f.champion ? 'C' : f.rank}
+                              {f.champion ? '♛' : f.rank}
                             </span>
-                            <span>{f.fighter}</span>
+                            <span className={f.champion ? 'text-emerald-300 font-semibold' : 'text-zinc-300'}>
+                              {f.fighter}
+                            </span>
                           </li>
                         ))}
                       </ol>
                     </div>
                   </div>
-                </div>
+                </section>
 
-                {/* ── Weight Divisions ──────────────────── */}
-                <div>
-                  <h2 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider mb-3">
-                    Divisions
-                  </h2>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                    {ufcRankings.divisions.map(div => (
+                {/* ── Weight Divisions — weight class as hero ── */}
+                <section>
+                  <div className="flex items-center gap-3 mb-4">
+                    <span className="text-[10px] text-zinc-500 bg-zinc-900 px-2 py-0.5 rounded font-bold uppercase tracking-widest border border-zinc-800">
+                      Divisions
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {ufcRankings.divisions.map(div => {
+                      const lbs = WEIGHT_CLASS_LBS[div.division]
+                      return (
                       <div key={div.division}
-                        className="bg-zinc-900 border border-zinc-800 rounded-xl p-4"
+                        className="bg-zinc-900/80 border border-zinc-800/80 rounded-xl overflow-hidden group"
                       >
-                        <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2">
-                          {div.division}
-                        </h3>
-                        {/* Champion */}
-                        {div.champion && (
-                          <div className="flex items-center gap-2 mb-2 pb-2 border-b border-zinc-800">
-                            <span className="text-[10px] text-emerald-500 bg-emerald-500/10 px-1.5 py-0.5 rounded font-semibold uppercase">
-                              Champ
+                        {/* Weight class hero */}
+                        <div className="px-4 pt-4 pb-1">
+                          <div className="flex items-baseline gap-2">
+                            <span className="text-3xl font-black text-zinc-200 tabular-nums tracking-tight">
+                              {lbs}
                             </span>
+                            <span className="text-xs text-zinc-600 font-medium uppercase tracking-widest">LBS</span>
+                          </div>
+                          <h3 className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider mt-0.5">
+                            {div.division}
+                          </h3>
+                        </div>
+
+                        {/* Champion row */}
+                        {div.champion && (
+                          <div className="mx-4 mt-2 mb-1 flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-500/5 border border-emerald-500/10">
+                            <span className="text-emerald-400 text-xs">◆</span>
                             <span className="text-sm text-emerald-300 font-semibold">
                               {div.champion}
                             </span>
                           </div>
                         )}
+
                         {/* Ranked contenders */}
-                        <ol className="space-y-1">
+                        <ol className="px-4 pb-3 pt-1 space-y-0.5">
                           {div.ranked.map(f => (
                             <li key={f.rank}
-                              className="flex items-center gap-2 text-sm text-zinc-400"
+                              className="flex items-center gap-3 text-sm group-hover:text-zinc-300 transition-colors"
                             >
-                              <span className="w-5 text-right text-xs tabular-nums text-zinc-600">
+                              <span className="w-5 text-right text-[11px] tabular-nums text-zinc-600 font-medium">
                                 {f.rank}
                               </span>
-                              <span>{f.fighter}</span>
+                              <span className="text-zinc-400">{f.fighter}</span>
                             </li>
                           ))}
                         </ol>
                       </div>
-                    ))}
+                    )})}
                   </div>
-                </div>
+                </section>
               </div>
             )}
           </>
         )}
 
         {/* ── Players sub-view ──────────────────────────── */}
-        {subView === 'players' && league !== 'WC' && (
+        {subView === 'players' && league !== 'WC' && league !== 'UFC' && (
           <>
             {playerError && (
               <div className="bg-red-500/10 border border-red-500/20 rounded-lg px-4 py-3 text-red-400 text-sm">
@@ -410,7 +440,7 @@ export default function StatsPage() {
         )}
 
         {/* ── Teams sub-view ─────────────────────────────── */}
-        {subView === 'teams' && (
+        {subView === 'teams' && league !== 'UFC' && (
           <>
             {teamError && (
               <div className="bg-red-500/10 border border-red-500/20 rounded-lg px-4 py-3 text-red-400 text-sm">
