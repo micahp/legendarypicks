@@ -58,6 +58,21 @@ knockout/playoff (applies to **World Cup** and **Call of Duty** playoffs too), a
 wins** (pick'em). One bracket component driven by a generic series/round data shape, reused across any
 league that has a playoff/knockout structure.
 
+## 7. Context-aware filters (polish — gates 0.3.0)
+Filters across pages offer options that don't apply to the current context — reads as unpolished, and
+polish is what signals we're real. **Grounded example:** the Props page market filter renders a single
+**static** `MARKETS` list (`pages/props.tsx:38` — points/rebounds/assists/threes + strikeouts/hits/
+home_runs + passing/rushing/receiving_yards + goals/shots/saves), so on the **NBA** tab you still see
+MLB markets (strikeouts, home_runs) and vice versa. The `<Select options={MARKETS…}>` (line ~177) isn't
+scoped to the active league.
+- **Fix pattern:** derive filter options from the active league — a per-league market map (or the
+  distinct markets present in the loaded props for that league) — and reset `market` to `All` when the
+  league changes.
+- **Sweep the rest:** this is a class of bug, not one filter. Audit every page's filters (Props markets,
+  Stats, Scores league/date, player/game filters) for options that ignore the current league/tab/state.
+- **AC:** a filter only offers options valid for the current context; switching league rescopes/resets
+  it; no option that returns zero results by construction. Quick first fix: scope the Props market filter.
+
 ## Also tracked
 - Player-name links app-wide → `/player/[id]`.
 
