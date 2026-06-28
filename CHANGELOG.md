@@ -14,13 +14,49 @@ in `package.json` tracks the next (in-development) release.
 > real release. Disciplined versioning starts here, with the current production state
 > tagged `v0.1.0`.
 
-## [Unreleased] — targeting v0.3.0 — entity-page UX restructure
+## [Unreleased] — targeting v0.3.0 — depth + richness
 
-Roadmap in `docs/PLAN-entity-ux-restructure.md`. Remaining:
-- **Game + Team pages** as the depth behind the tabs.
-- **Stats tab → Leagues tab** (standings + team stats + leaders + schedule).
-- **Remove the Analytics tab** (fold calibration into a credibility element; defer EV/CLV).
+v0.3.0 is gated on closing the current UI holes. Each bullet is its own minor build
+(v0.2.x), promoted to v0.3.0 once the set lands. See `docs/SPEC-v0.3.0-ui-holes.md`.
+- **Richer Stats (league) tab** — match ESPN's depth: separate **player vs team** breakdowns,
+  and category splits (e.g. **offensive / defensive**), not a single flat leaderboard.
+- **Game detail beyond MLB** — only MLB has a real detail page today. Build NBA/NHL/NFL detail,
+  and fill the three empty tabs (**box score, play-by-play, game info**).
+- **Post-game recap** — the AI summary today is a *pre-game* preview; add a separate
+  **post-game recap/summary** generated once the game is final.
+- **Prop outcomes on game detail** — show **what hit** on the game-detail props (today only the
+  Props page has a ✅/❌, and its orientation needs rework). Run the front-end design skill on it.
 - Player-name links app-wide → player page.
+- **UFC rankings** (weight class + pound-for-pound) — P4 from `docs/SPEC-2026-06-27-next-phases.md`.
+
+## [0.2.2] — 2026-06-28
+
+### Added
+- **Stats (league) tab** — `GET /api/{league}/leaders` leaderboard + a **Players | Teams**
+  sub-view toggle on the Stats page; MLB batting/pitching toggle. Player names link to `/player/[id]`.
+- **NBA matchups** — the Matchups tab now works for NBA (per-game logs got `opponent`/`home_away`
+  via `ingest_nba_logs` fix + `backfill_nba_opponent.py`), no sportsbook data needed.
+- **NBA edge slot** on the game page — projected stat lines where NBA has no posted props
+  (`/api/game/{lg}/{id}/edge`).
+- **AI game previews generated on discovery** — loading a scoreboard warms the preview cache in
+  the background (`_core.kick_game_stories` on `/api/{league}/games`), so the preview is instant
+  on click instead of making the first viewer wait ~7s. `pregenerate_game_stories.py` backfill helper.
+- **Projection-vs-line badge** on player-page prop rows.
+
+### Changed
+- **Backend de-monolithed** — `sports_service.py` (2125 lines / 30 routes) split into a thin app
+  shell + `routers/{games,players,props,analytics,game_extras}.py` + shared `_core.py`.
+- **Frontend game page** split into `components/Game/*`.
+- **Analytics tab removed** from the nav (EV all-zero / CLV empty per the M7 audit; deferred).
+- Stats tab kept the name **"Stats"** (briefly "Leagues"; reverted pending the richer-stats build).
+
+### Fixed
+- Game-state labelling — never show "FINAL" on a live/upcoming game (state-aware ScoreStrip).
+- Removed the World Cup dead-click (no detail page exists for WC).
+
+### Docs
+- Engineering retro (`docs/RETRO-2026-06-27.md`), next-phase spec
+  (`docs/SPEC-2026-06-27-next-phases.md`), AGENTS `§0` current-state pointers.
 
 ## [0.2.1] — 2026-06-27
 
