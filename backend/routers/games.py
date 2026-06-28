@@ -17,6 +17,70 @@ def health():
     return {"status": "ok"}
 
 
+@router.get("/api/ufc/rankings")
+def ufc_rankings():
+    """UFC rankings — reads cached ufc_rankings table populated by
+    ingest_ufc_rankings.py (live scrape, never on the request path)."""
+    with closing(_db()) as con:
+        con.row_factory = sqlite3.Row
+        rows = con.execute(
+            "SELECT division, rank, fighter, is_champion FROM ufc_rankings "
+            "ORDER BY division, rank"
+        ).fetchall()
+
+    if not rows:
+        return {"pound_for_pound": {"men": [], "women": []}, "divisions": []}
+
+    # Separate P4P from weight divisions
+    p4p_men, p4p_women = [], []
+    divisions: dict = {}  # division_name -> {champion, ranked: [{rank, fighter}]}
+
+    for r in rows:
+        div = r["division"]
+        if "Pound-for-Pound" in div:
+            entry = {"rank": r["rank"], "fighter": r["fighter"]}
+            if r["is_champion"]:
+                entry["champion"] = True
+            if "Women" in div:
+                p4p_women.append(entry)
+            else:
+                p4p_men.append(entry)
+        else:
+            if div not in divisions:
+                divisions[div] = {"division": div, "champion": "", "ranked": []}
+            if r["is_champion"]:
+                divisions[div]["champion"] = r["fighter"]
+            else:
+                divisions[div]["ranked"].append(
+                    {"rank": r["rank"], "fighter": r["fighter"]}
+                )
+
+    # Sort P4P by rank (champion=rank 0 first)
+    p4p_men.sort(key=lambda x: x["rank"])
+    p4p_women.sort(key=lambda x: x["rank"])
+
+    # Order divisions: men's weight classes first, then women's
+    MEN_ORDER = [
+        "Flyweight", "Bantamweight", "Featherweight", "Lightweight",
+        "Welterweight", "Middleweight", "Light Heavyweight", "Heavyweight",
+    ]
+    WOMEN_ORDER = ["Women's Strawweight", "Women's Flyweight", "Women's Bantamweight"]
+    ordered = []
+    for d in MEN_ORDER:
+        if d in divisions:
+            divisions[d]["ranked"].sort(key=lambda x: x["rank"])
+            ordered.append(divisions[d])
+    for d in WOMEN_ORDER:
+        if d in divisions:
+            divisions[d]["ranked"].sort(key=lambda x: x["rank"])
+            ordered.append(divisions[d])
+
+    return {
+        "pound_for_pound": {"men": p4p_men, "women": p4p_women},
+        "divisions": ordered,
+    }
+
+
 @router.get("/api/{league}/games")
 def get_games(league: str, date: Optional[str] = Query(None, description="YYYY-MM-DD (default today)")):
     if league.lower() == "cod":
