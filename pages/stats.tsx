@@ -28,9 +28,17 @@ interface LeadersData {
   leaders: Leader[]
 }
 
+// UFC types
+interface UFCRanked { rank: number; fighter: string; champion?: boolean }
+interface UFCDivision { division: string; champion: string; ranked: UFCRanked[] }
+interface UFCRankings {
+  pound_for_pound: { men: UFCRanked[]; women: UFCRanked[] }
+  divisions: UFCDivision[]
+}
+
 type SubView = 'players' | 'teams'
 
-const LEAGUES = ['MLB', 'NBA', 'NHL', 'NFL', 'WC'] as const
+const LEAGUES = ['MLB', 'NBA', 'NHL', 'NFL', 'WC', 'UFC'] as const
 type League = typeof LEAGUES[number]
 
 // Columns to display per league (subset of what the backend returns)
@@ -70,6 +78,11 @@ export default function StatsPage() {
   const [playerLoading, setPlayerLoading] = useState(false)
   const [playerError, setPlayerError] = useState<string | null>(null)
   const [mlbType, setMlbType] = useState<'batting' | 'pitching'>('batting')
+
+  // UFC state
+  const [ufcRankings, setUfcRankings] = useState<UFCRankings | null>(null)
+  const [ufcLoading, setUfcLoading] = useState(false)
+  const [ufcError, setUfcError] = useState<string | null>(null)
 
   // ── Load teams ──────────────────────────────────────────
   useEffect(() => {
@@ -119,6 +132,27 @@ export default function StatsPage() {
     return () => { ignore = true }
   }, [league, mlbType])
 
+  // ── Load UFC rankings ───────────────────────────────────
+  useEffect(() => {
+    if (league !== 'UFC') return
+    let ignore = false
+    const load = async () => {
+      setUfcLoading(true); setUfcError(null)
+      try {
+        const res = await fetch('/api/ufc/rankings')
+        if (!res.ok) throw new Error(`${res.status}`)
+        const data: UFCRankings = await res.json()
+        if (!ignore) setUfcRankings(data)
+      } catch (e: any) {
+        if (!ignore) setUfcError(e.message || 'Unable to load UFC rankings.')
+      } finally {
+        if (!ignore) setUfcLoading(false)
+      }
+    }
+    load()
+    return () => { ignore = true }
+  }, [league])
+
   // ── Derived column list ─────────────────────────────────
   const lg = league.toLowerCase()
   const colKey = lg === 'mlb' ? `mlb_${mlbType}` : lg
@@ -151,8 +185,8 @@ export default function StatsPage() {
           ))}
         </div>
 
-        {/* Sub-view toggle (Players | Teams) — hidden for WC */}
-        {league !== 'WC' && (
+        {/* Sub-view toggle (Players | Teams) — hidden for WC and UFC */}
+        {league !== 'WC' && league !== 'UFC' && (
           <div className="flex gap-0 border-b border-zinc-800 -mx-4 px-4">
             {(['players', 'teams'] as SubView[]).map(v => (
               <button key={v} onClick={() => setSubView(v)}
@@ -181,6 +215,133 @@ export default function StatsPage() {
               </button>
             ))}
           </div>
+        )}
+
+        {/* ── UFC Rankings view ──────────────────────────── */}
+        {league === 'UFC' && (
+          <>
+            {ufcError && (
+              <div className="bg-red-500/10 border border-red-500/20 rounded-lg px-4 py-3 text-red-400 text-sm">
+                {ufcError}
+              </div>
+            )}
+
+            {ufcLoading ? (
+              <div className="space-y-4 animate-pulse">
+                <div className="h-6 bg-zinc-800 rounded w-48" />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {[...Array(4)].map((_, i) => (
+                    <div key={i} className="h-48 bg-zinc-800 rounded-xl" />
+                  ))}
+                </div>
+              </div>
+            ) : !ufcRankings ? (
+              <div className="text-center py-12 text-zinc-500 text-sm">
+                No UFC rankings available.
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {/* ── Pound-for-Pound ────────────────────── */}
+                <div>
+                  <h2 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider mb-3">
+                    Pound-for-Pound
+                  </h2>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {/* Men's P4P */}
+                    <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
+                      <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-3">
+                        Men's
+                      </h3>
+                      <ol className="space-y-1.5">
+                        {ufcRankings.pound_for_pound.men.map(f => (
+                          <li key={f.rank}
+                            className={`flex items-center gap-3 text-sm ${
+                              f.champion
+                                ? 'text-emerald-300 font-semibold'
+                                : 'text-zinc-300'
+                            }`}
+                          >
+                            <span className={`w-5 text-right text-xs tabular-nums ${
+                              f.champion ? 'text-emerald-400' : 'text-zinc-500'
+                            }`}>
+                              {f.champion ? 'C' : f.rank}
+                            </span>
+                            <span>{f.fighter}</span>
+                          </li>
+                        ))}
+                      </ol>
+                    </div>
+                    {/* Women's P4P */}
+                    <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
+                      <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-3">
+                        Women's
+                      </h3>
+                      <ol className="space-y-1.5">
+                        {ufcRankings.pound_for_pound.women.map(f => (
+                          <li key={f.rank}
+                            className={`flex items-center gap-3 text-sm ${
+                              f.champion
+                                ? 'text-emerald-300 font-semibold'
+                                : 'text-zinc-300'
+                            }`}
+                          >
+                            <span className={`w-5 text-right text-xs tabular-nums ${
+                              f.champion ? 'text-emerald-400' : 'text-zinc-500'
+                            }`}>
+                              {f.champion ? 'C' : f.rank}
+                            </span>
+                            <span>{f.fighter}</span>
+                          </li>
+                        ))}
+                      </ol>
+                    </div>
+                  </div>
+                </div>
+
+                {/* ── Weight Divisions ──────────────────── */}
+                <div>
+                  <h2 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider mb-3">
+                    Divisions
+                  </h2>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {ufcRankings.divisions.map(div => (
+                      <div key={div.division}
+                        className="bg-zinc-900 border border-zinc-800 rounded-xl p-4"
+                      >
+                        <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2">
+                          {div.division}
+                        </h3>
+                        {/* Champion */}
+                        {div.champion && (
+                          <div className="flex items-center gap-2 mb-2 pb-2 border-b border-zinc-800">
+                            <span className="text-[10px] text-emerald-500 bg-emerald-500/10 px-1.5 py-0.5 rounded font-semibold uppercase">
+                              Champ
+                            </span>
+                            <span className="text-sm text-emerald-300 font-semibold">
+                              {div.champion}
+                            </span>
+                          </div>
+                        )}
+                        {/* Ranked contenders */}
+                        <ol className="space-y-1">
+                          {div.ranked.map(f => (
+                            <li key={f.rank}
+                              className="flex items-center gap-2 text-sm text-zinc-400"
+                            >
+                              <span className="w-5 text-right text-xs tabular-nums text-zinc-600">
+                                {f.rank}
+                              </span>
+                              <span>{f.fighter}</span>
+                            </li>
+                          ))}
+                        </ol>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </>
         )}
 
         {/* ── Players sub-view ──────────────────────────── */}
