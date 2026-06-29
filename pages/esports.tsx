@@ -24,6 +24,8 @@ type LiveMatch = {
   live: boolean
   gameNumber?: number
   bestOf?: number
+  winsNeeded?: number
+  games?: { number: number; state: string }[]
   gameState?: string | null
   youtube?: string | null
   twitch?: string | null
@@ -133,6 +135,41 @@ function MatchCard({ m }: { m: Match }) {
   )
 }
 
+/* Bo5 series strip — score + per-game progress */
+function SeriesStrip({ m }: { m: LiveMatch }) {
+  const a = m.teamA, b = m.teamB
+  const aw = a?.wins ?? 0, bw = b?.wins ?? 0
+  const games = m.games ?? []
+  const pip = (state: string) =>
+    state === 'completed' ? 'bg-zinc-300'
+      : state === 'inProgress' ? 'bg-red-500 animate-pulse motion-reduce:animate-none ring-2 ring-red-500/30'
+        : 'border border-zinc-700'
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 rounded-xl border border-zinc-800 bg-zinc-900/40 px-4 py-3">
+      <div className="flex items-center gap-3">
+        {a?.image ? <img src={a.image} alt="" className="h-7 w-7 object-contain" /> : null}
+        <span className={`text-sm font-semibold ${aw > bw ? 'text-zinc-50' : 'text-zinc-400'}`}>{a?.code}</span>
+        <span className="font-mono text-2xl font-bold tabular-nums text-zinc-100">
+          {aw} <span className="text-zinc-600">–</span> {bw}
+        </span>
+        <span className={`text-sm font-semibold ${bw > aw ? 'text-zinc-50' : 'text-zinc-400'}`}>{b?.code}</span>
+        {b?.image ? <img src={b.image} alt="" className="h-7 w-7 object-contain" /> : null}
+      </div>
+      <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
+          {games.map((g) => (
+            <div key={g.number} className="flex flex-col items-center gap-1">
+              <span className={`h-3 w-3 rounded-full ${pip(g.state)}`} />
+              <span className="font-mono text-[9px] text-zinc-600">G{g.number}</span>
+            </div>
+          ))}
+        </div>
+        <span className="text-[10px] font-medium uppercase tracking-wider text-zinc-500">First to {m.winsNeeded}</span>
+      </div>
+    </div>
+  )
+}
+
 /* Live MSI game — the actual broadcast + live gold/kills/objectives overlay */
 function LiveStatTeam({ t, share, lead }: { t: LiveTeam; share: number; lead: boolean }) {
   return (
@@ -178,6 +215,8 @@ function LiveMSI({ m }: { m: LiveMatch }) {
           {a?.code} vs {b?.code} · Game {m.gameNumber} · Bo{m.bestOf}
         </span>
       </div>
+
+      <SeriesStrip m={m} />
 
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px]">
         {/* the actual game */}

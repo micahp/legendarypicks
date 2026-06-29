@@ -430,10 +430,13 @@ def msi_live():
                 if s.get("provider") == "twitch" and not tw:
                     tw = s.get("parameter")
         gid = gnum = None
+        games = []
         for g in m.get("games") or []:
+            games.append({"number": g.get("number"), "state": g.get("state")})
             if g.get("state") == "inProgress":
                 gid, gnum = g.get("id"), g.get("number")
         win = _lol_window(gid) if gid else None
+        bo = (m.get("strategy") or {}).get("count") or 1
 
         def team(x):
             r = _team_rating(x.get("code"), x.get("name"))
@@ -455,7 +458,7 @@ def msi_live():
             gold_lead = {"code": a["code"] if a["gold"] >= b["gold"] else b["code"],
                          "amount": abs(a["gold"] - b["gold"])}
         return {"live": True, "matchId": m.get("id"), "gameId": gid, "gameNumber": gnum,
-                "bestOf": (m.get("strategy") or {}).get("count"),
+                "bestOf": bo, "winsNeeded": bo // 2 + 1, "games": games,
                 "gameState": win.get("state") if win else None,
                 "youtube": yt, "twitch": tw, "teamA": a, "teamB": b, "goldLead": gold_lead}
     return {"live": False}
