@@ -380,7 +380,7 @@ def get_game_boxscore(league: str, game_id: str):
         team_info = pgrp.get("team", {})
         team_abbr = team_info.get("abbreviation", "")
         for sg in pgrp.get("statistics", []):
-            group_name = sg.get("name", "")
+            group_name = (sg.get("type") or "").capitalize()
             labels = sg.get("labels", [])
             rows = []
             for ath in sg.get("athletes", []):
