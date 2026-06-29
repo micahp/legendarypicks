@@ -628,17 +628,26 @@ def grid_live():
         label = _grid_title_label(((node.get("title") or {}).get("name")))
         if label and not is_test(node):
             cands.append((node, label))
-    for node, label in cands[:10]:
+    # Collect everything currently live, then pick DETERMINISTICALLY so the featured match doesn't
+    # flip every poll: prefer a tournament we have a broadcast channel for, then the earliest-started
+    # one (it stays featured until it actually ends, rather than jumping to each newly-started match).
+    live_ones = []
+    for node, label in cands[:12]:
         st = _grid_state(node["id"])
         if st and st.get("started") and not st.get("finished"):
-            def tm(t):
-                return {"name": t.get("name"), "score": t.get("score"), "won": t.get("won"),
-                        "players": [{"name": p.get("name"), "kills": p.get("kills"), "deaths": p.get("deaths")}
-                                    for p in (t.get("players") or [])]}
-            teams = st.get("teams") or []
             tournament = (node.get("tournament") or {}).get("name")
-            return {"live": True, "title": label, "seriesId": node["id"],
-                    "tournament": tournament, "stream": _grid_stream(tournament, label),
-                    "teamA": tm(teams[0]) if len(teams) > 0 else None,
-                    "teamB": tm(teams[1]) if len(teams) > 1 else None}
-    return {"live": False}
+            live_ones.append((node, label, st, _grid_stream(tournament, label)))
+    if not live_ones:
+        return {"live": False}
+    live_ones.sort(key=lambda x: (x[3] is None, x[0].get("startTimeScheduled") or ""))
+    node, label, st, stream = live_ones[0]
+
+    def tm(t):
+        return {"name": t.get("name"), "score": t.get("score"), "won": t.get("won"),
+                "players": [{"name": p.get("name"), "kills": p.get("kills"), "deaths": p.get("deaths")}
+                            for p in (t.get("players") or [])]}
+    teams = st.get("teams") or []
+    return {"live": True, "title": label, "seriesId": node["id"],
+            "tournament": (node.get("tournament") or {}).get("name"), "stream": stream,
+            "teamA": tm(teams[0]) if len(teams) > 0 else None,
+            "teamB": tm(teams[1]) if len(teams) > 1 else None}
