@@ -194,8 +194,8 @@ def wc_knockout():
                     winner = away.get("abbrev")
 
         rounds[round_name]["matches"].append({
-            "home": {"abbrev": home.get("abbrev", ""), "name": home.get("name", "")},
-            "away": {"abbrev": away.get("abbrev", ""), "name": away.get("name", "")},
+            "home": home.get("abbrev", ""),
+            "away": away.get("abbrev", ""),
             "homeScore": home.get("score"),
             "awayScore": away.get("score"),
             "winner": winner,
