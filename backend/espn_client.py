@@ -458,10 +458,18 @@ def group_standings(league):
 
 
 
+def summary(league, game_id):
+    """Cached raw ESPN /summary JSON for one game. TTL 20s.
+    Shared by boxscore, play-by-play, lineups, match_events, and game_result.
+    One fetch serves all callers — the second and subsequent hits come from the in-memory
+    _CACHE without an extra HTTP round-trip."""
+    _, path = _check(league)
+    return _get(_SITE.format(path=path) + f"/summary?event={game_id}", ttl=20)
+
+
 def game_result_soccer(league, game_id):
     """Soccer-specific game result — uses competitor.winner flag (penalty/AET aware)."""
-    _, path = _check(league)
-    d = _get(_SITE.format(path=path) + f"/summary?event={game_id}", ttl=20)
+    d = summary(league, game_id)
     comp = (d.get("header", {}).get("competitions") or [{}])[0]
     st = comp.get("status", {}).get("type", {})
     scores = {}
@@ -476,8 +484,7 @@ def game_result_soccer(league, game_id):
 
 def lineups(league, game_id):
     """Starting XI + formation for a soccer match. [{side: 'home'|'away', formation, players: [{jersey, name, position}]}]"""
-    _, path = _check(league)
-    d = _get(_SITE.format(path=path) + f"/summary?event={game_id}", ttl=20)
+    d = summary(league, game_id)
     result = []
     for roster in d.get("rosters", []):
         side = "home" if roster.get("homeAway") == "home" else "away"
@@ -497,8 +504,7 @@ def lineups(league, game_id):
 
 def match_events(league, game_id):
     """Key events + commentary for a soccer match."""
-    _, path = _check(league)
-    d = _get(_SITE.format(path=path) + f"/summary?event={game_id}", ttl=20)
+    d = summary(league, game_id)
     return {
         "key_events": d.get("keyEvents", []),
         "commentary": d.get("commentary", []),
@@ -506,8 +512,7 @@ def match_events(league, game_id):
 
 def boxscore(league, game_id):
     """Full per-game box score (team + player stat lines)."""
-    _, path = _check(league)
-    d = _get(_SITE.format(path=path) + f"/summary?event={game_id}", ttl=20)
+    d = summary(league, game_id)
     return d.get("boxscore", {})
 
 
@@ -537,8 +542,7 @@ def game_result(league, game_id):
     """
     if league == "wc":
         return game_result_soccer(league, game_id)
-    _, path = _check(league)
-    d = _get(_SITE.format(path=path) + f"/summary?event={game_id}", ttl=20)
+    d = summary(league, game_id)
     comp = (d.get("header", {}).get("competitions") or [{}])[0]
     st = comp.get("status", {}).get("type", {})
     scores = {}

@@ -664,12 +664,7 @@ def _num(x):
 
 def _fetch_summary(league, game_id):
     """Raw ESPN summary payload for a single game. Returns the full JSON dict."""
-    import json, urllib.request
-    _, path = espn._check(league)
-    url = f"https://site.api.espn.com/apis/site/v2/sports/{path}/summary?event={game_id}"
-    req = urllib.request.Request(url, headers=espn._HDRS)
-    with urllib.request.urlopen(req, timeout=20) as r:
-        return json.loads(r.read().decode())
+    return espn.summary(league, game_id)
 
 
 def _extract_team_stats(league, game_id, summary):
