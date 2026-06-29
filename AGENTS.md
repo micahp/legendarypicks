@@ -166,3 +166,18 @@ Every rule below comes from a real mistake on 2026-06-15.
   component must **own its open/close state** — close on select AND on click-outside.
 - **Mobile:** a fixed `grid grid-cols-N` squashes on small screens. Use `overflow-x-auto` + `min-w`
   cells (or responsive breakpoints) so content scrolls instead of cramming.
+
+## 10. Review lessons — game-detail tabs (2026-06-29)
+Caught at review (orchestrator), should have been caught by the feature's own validators:
+- **ESPN `/summary` fields are OBJECTS, not strings.** `position` = `{name,displayName,abbreviation}`,
+  `clock` = `{value,displayValue:"45'+2"}`, `team` = `{name,displayName,abbreviation}`. **Extract the
+  string** (`.abbreviation`, `.displayValue`) in the backend before putting it in a contract. Shipping
+  `pos: p["position"]` (the object) crashed the WC page with *"Objects are not valid as a React child"*.
+- **Never render an object as a React child — and the FRONTEND VALIDATOR MUST load each variant in a
+  headless browser and assert ZERO `pageerror`s + real data.** The build "passed" but every WC tab
+  crashed on load. A 200 from the endpoint is NOT acceptance; you must render the page. Screenshot
+  one game PER league family (US-team-sport AND soccer) and per N/A league (tennis = hidden tabs).
+- **Parse defensively:** clock displayValues include stoppage (`"45'+2"`) and empty (`""`). Take the
+  leading number; don't `int(x.replace("'",""))` (breaks on `+`, gives `0`, mis-sorts the timeline).
+- **Don't commit gitignored junk.** `__pycache__/` and `venv` got committed (use targeted `git add`,
+  not `git add -A`) — they then block merges with dirty-tree errors.
