@@ -421,6 +421,8 @@ export default function EsportsPage() {
   }, [])
 
   const matches = msi?.matches ?? []
+  const scheduled = matches.filter((m) => m.state !== 'completed')
+  const results = matches.filter((m) => m.state === 'completed')
   const anyLive = !!live?.live || !!chess?.live
 
   return (
@@ -443,8 +445,8 @@ export default function EsportsPage() {
         {/* Feature exactly one live match — MSI if it's on, else the chess fallback */}
         {live?.live ? <LiveMSI m={live} /> : chess?.live ? <ChessSection chess={chess} /> : null}
 
-        <section className="space-y-4">
-          <SectionHeader eyebrow="Pre-game · MSI 2026" title="Win Predictions" meta={msi?.model ?? 'power-ranking prior'} />
+        <section className="space-y-5">
+          <SectionHeader eyebrow="MSI 2026" title="Win Predictions" meta={msi?.model ?? 'power-ranking prior'} />
           {msi?.error ? (
             <p className="text-sm text-zinc-500">Schedule unavailable right now — retrying.</p>
           ) : matches.length === 0 ? (
@@ -452,7 +454,20 @@ export default function EsportsPage() {
               {[0, 1].map((i) => <div key={i} className="h-32 animate-pulse rounded-xl border border-zinc-800 bg-zinc-900/40 motion-reduce:animate-none" />)}
             </div>
           ) : (
-            <div className="grid gap-4 sm:grid-cols-2">{matches.map((m, i) => <MatchCard key={i} m={m} />)}</div>
+            <div className="space-y-6">
+              {scheduled.length ? (
+                <div className="space-y-3">
+                  <Eyebrow>Scheduled</Eyebrow>
+                  <div className="grid gap-4 sm:grid-cols-2">{scheduled.map((m, i) => <MatchCard key={i} m={m} />)}</div>
+                </div>
+              ) : null}
+              {results.length ? (
+                <div className="space-y-3">
+                  <Eyebrow>Results · model backtest</Eyebrow>
+                  <div className="grid gap-4 sm:grid-cols-2">{results.map((m, i) => <MatchCard key={i} m={m} />)}</div>
+                </div>
+              ) : null}
+            </div>
           )}
           <p className="max-w-2xl text-xs text-zinc-600">
             Win % from expert power rankings (Elo → Bo5), priced against the Bovada line — the gap is the edge.
