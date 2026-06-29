@@ -28,7 +28,7 @@ interface GameProps {
     // MLB: current inning (1-9+), NHL: period (1-3+), NBA: quarter (1-4+)
     // UFC: round (1-5), COD: game (1-5+)
     number: number
-    type: 'inning' | 'period' | 'quarter' | 'round' | 'game'
+    type: 'inning' | 'period' | 'quarter' | 'round' | 'game' | 'half' | 'set'
     // Optional: time remaining in period, outs (MLB), etc.
     display?: string
   }
@@ -64,6 +64,10 @@ function getPeriodLabel(league?: string, livePeriod?: GameProps['livePeriod']) {
       return `Q${number}`
     case 'round':
       return `R${number}`
+    case 'set':
+      return `Set ${number}`
+    case 'half':
+      return number === 1 ? '1st Half' : number === 2 ? '2nd Half' : `Half ${number}`
     case 'game':
       return `Game ${number}`
     default:
@@ -79,7 +83,10 @@ export default function GameCard(g: GameProps) {
   // UFC never shows time
   const isUFC = g.league === 'UFC'
   const isTennis = g.league === 'ATP' || g.league === 'WTA'
-  const hasDetail = g.league === 'NBA' || g.league === 'NHL' || g.league === 'MLB'
+  // Leagues with a real detail page (box score / play-by-play / game info tabs). NFL + WC were
+  // added with the per-tab endpoints, so their cards must be clickable too — else the pages we built
+  // are unreachable. Tennis/UFC/CoD have no detail content, so their cards stay non-clickable.
+  const hasDetail = ['NBA', 'NHL', 'MLB', 'NFL', 'WC'].includes(g.league || '')
   const isTeamSport = g.league === 'NBA' || g.league === 'NHL' || g.league === 'MLB' || g.league === 'NFL'
   const isSoccer = g.league === 'WC'
 
