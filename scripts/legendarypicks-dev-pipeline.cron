@@ -1,0 +1,22 @@
+# Legendary Picks — DEV data pipeline schedule
+# Keeps picks.dev.db populated with live props so dev game summaries / projections have
+# player form data, mirroring the prod cron (legendarypicks-pipeline). Without this you
+# have to hand-run the ingest into dev every day.
+#
+# Targeting: the ingest step POSTs to the DEV API on :8095 (LP_API_BASE); link/settle/coverage
+# write picks.dev.db (LP_DB_PATH). It does NOT run --full on purpose — dev's player_game_logs /
+# player_stats are managed separately and are AHEAD of prod, so the stat-refresh must not run here.
+#
+# Install: cp scripts/legendarypicks-dev-pipeline.cron /etc/cron.d/legendarypicks-dev-pipeline
+#          chmod 644 /etc/cron.d/legendarypicks-dev-pipeline
+# (cron picks up /etc/cron.d/ automatically; no `crontab` import needed.)
+
+PIPELINE=/root/legendarypicks/backend/venv/bin/python
+SCRIPTS=/root/legendarypicks/scripts
+LOGDIR=/root/legendarypicks/logs
+LP_API_BASE=http://localhost:8095
+LP_DB_PATH=/root/legendarypicks/backend/data/picks.dev.db
+
+# Ingest props + link games + settle finaled games into DEV — across active-game windows.
+# Mirrors the prod ingest hours; the early run captures the full upcoming slate before games start.
+0 12,16,20,23 * * * root $PIPELINE $SCRIPTS/run_pipeline.py >> $LOGDIR/dev_pipeline_cron.log 2>&1
