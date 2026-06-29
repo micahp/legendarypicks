@@ -1,7 +1,27 @@
 # CONTEXT — 2026-06-29 — Esports "Live Now" build (read FIRST)
 
-A full day on the **`/esports` page** ("Live Now"). This is the state of it. All on **dev**
-(branch `analytics-backbone` = `dev`), uncommitted-to-prod. Nothing esports is on prod yet.
+A full day on the **`/esports` page** ("Live Now") + a **discovery rail and free audio on the
+Scoreboard**. This is the state of it. All on **dev** (branch `analytics-backbone` = `dev`),
+uncommitted-to-prod.
+
+## Update (later 06-29) — discovery rail + free World Cup audio
+- **Scoreboard "Live Now" rail** (`pages/scores.tsx` → `LiveNow`): surfaces every in-progress game
+  as a clickable chip + a **"🎮 Live esports →"** pull + (when a WC match is live) the audio player.
+  This is the **discovery thesis** — pull a viewer who came for one sport into another that's live.
+- **Free WC audio** (`components/ListenLive.tsx`): native `<audio>` playing iHeart's FIFA World Cup
+  station **direct AAC stream** `https://stream.revma.ihrhls.com/zc11554` (FOX English commentary,
+  all 104 games, free, **US-accessible**). On the WC game-detail page too. Verified playing.
+  - **Audio saga / lessons:** talkSPORT(TuneIn) = UK geo-blocked; iHeart's full *page* embed
+    defaulted to a local station (Kiss.fm); the fix = the **direct stream URL in a native player**
+    (got it from iHeart's `api.iheart.com/api/v2/content/liveStations/<id>`). Don't embed consumer
+    radio *pages* — get the stream URL.
+- **GRID live: only feature ON-AIR matches.** GRID's `finished` flag lags (a Bo3 ends but stays
+  started && !finished), so we were featuring dead series with offline streams. Now gated on
+  `seriesState.updatedAt` freshness (<4 min) + stable pick (prefer a tournament we have a channel
+  for, earliest-started). Can't query Kick/Twitch live-status directly (both block servers).
+- **Valorant assessment** (deferred — EWC starts Jul 2): GRID Open Access EXCLUDES Valorant (Riot
+  paid tier); paths are (1) GRID paid = trivial code add, contract blocker; (2) unofficial vlrggapi
+  scrape = ~half day, ToS-grey. Plan: vlrggapi stopgap for EWC + ask GRID Valorant pricing.
 
 ## What the page does now (`pages/esports.tsx`)
 Top to bottom:
