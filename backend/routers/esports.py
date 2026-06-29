@@ -196,3 +196,183 @@ def chess_live():
         "winSwing": win_swing,
         "moment": moment,
     }
+
+
+# --- LoL / MSI pre-game prediction ---------------------------------------------------------
+# Data: the LoL Esports web API (the semi-public key embedded in lolesports.com — not a
+# secret). getSchedule gives MSI matches + team codes; we price each one with a power-ranking
+# prior (Sheep Esports MSI 2026 rankings, encoded as Elo) → per-game win prob → Bo5 series
+# prob. This is the "selection prior" layer; Oracle's Elixir team form blends in later, and the
+# live gold/objective window replaces the prior once a game is actually being played.
+_LOL_KEY = "0TvQnueqKa5mxJntVWt0w4LpLfEkrV1Ta8rQBb9Z"  # public lolesports.com web key
+
+# code -> (rank, Elo rating, display name). Ratings derived from the Sheep MSI 2026 order,
+# spaced to reflect its tiers (top Asian sides + G2 tight at the top, then clear gaps).
+_LOL_TEAMS = {
+    "HLE":  (1, 1700, "Hanwha Life Esports"),
+    "BLG":  (2, 1690, "BiliBili Gaming"),
+    "T1":   (3, 1668, "T1"),
+    "G2":   (4, 1622, "G2 Esports"),
+    "TES":  (5, 1600, "Top Esports"),
+    "LYON": (6, 1520, "LYON"),
+    "KC":   (7, 1500, "Karmine Corp"),
+    "TSW":  (8, 1462, "Team Secret Whales"),
+    "TLAW": (9, 1450, "Team Liquid"),
+    "FUR":  (10, 1410, "FURIA"),
+    "DCG":  (11, 1372, "Deep Cross Gaming"),
+}
+# name-keyword fallback when a broadcast code differs from the above
+_LOL_ALIASES = {
+    "hanwha": "HLE", "bilibili": "BLG", "t1": "T1", "g2": "G2", "top esports": "TES",
+    "lyon": "LYON", "karmine": "KC", "secret whales": "TSW", "team liquid": "TLAW",
+    "furia": "FUR", "deep cross": "DCG",
+}
+
+
+def _team_rating(code, name):
+    if code in _LOL_TEAMS:
+        return _LOL_TEAMS[code]
+    n = (name or "").lower()
+    for kw, c in _LOL_ALIASES.items():
+        if kw in n:
+            return _LOL_TEAMS[c]
+    return None
+
+
+def _p_game(ra, rb):
+    """Elo win prob for A vs B (single game)."""
+    return 1.0 / (1.0 + 10 ** ((rb - ra) / 400.0))
+
+
+def _p_bo5(p):
+    """Probability of winning a best-of-5 given per-game prob p (win 3 before opp)."""
+    q = 1 - p
+    return p ** 3 * (1 + 3 * q + 6 * q * q)
+
+
+def _lol_get(url):
+    req = _u.Request(url, headers={"x-api-key": _LOL_KEY, "Accept": "application/json"})
+    with _u.urlopen(req, timeout=10) as r:
+        return json.loads(r.read().decode())
+
+
+# --- Bovada market line (model vs market = the edge) ---------------------------------------
+_BOV_MSI = ("https://www.bovada.lv/services/sports/event/coupon/events/A/description/"
+            "esports/league-of-legends/mid-season-invitational?marketFilterId=def&liveOnly=false&lang=en")
+_bov_cache = {"t": 0.0, "data": {}}
+
+
+def _amer_to_p(american):
+    o = float(american)
+    return (-o) / (-o + 100) if o < 0 else 100 / (o + 100)
+
+
+def _resolve_code(name):
+    n = (name or "").lower()
+    for code in _LOL_TEAMS:
+        if code.lower() == n:
+            return code
+    for kw, c in _LOL_ALIASES.items():
+        if kw in n:
+            return c
+    return None
+
+
+def _bovada_msi_market():
+    """Map {frozenset(codeA,codeB): {code: de-vigged market win%}} from Bovada moneylines.
+    Cached ~45s (odds move slowly; don't hammer Bovada on every poll)."""
+    import time
+    if _bov_cache["data"] and time.time() - _bov_cache["t"] < 45:
+        return _bov_cache["data"]
+    out = {}
+    try:
+        req = _u.Request(_BOV_MSI, headers={"User-Agent": "Mozilla/5.0", "Accept": "application/json"})
+        with _u.urlopen(req, timeout=8) as r:
+            data = json.loads(r.read().decode())
+        for grp in data:
+            for e in grp.get("events", []):
+                ml = None
+                for dg in e.get("displayGroups", []):
+                    for mk in dg.get("markets", []):
+                        if (mk.get("description") or "").lower() == "moneyline":
+                            ml = mk
+                            break
+                    if ml:
+                        break
+                if not ml:
+                    continue
+                pairs = []
+                for o in ml.get("outcomes", []):
+                    code = _resolve_code(o.get("description"))
+                    am = (o.get("price") or {}).get("american")
+                    if code and am not in (None, "EVEN"):
+                        try:
+                            pairs.append((code, _amer_to_p(am)))
+                        except Exception:
+                            pass
+                if len(pairs) == 2:
+                    s = pairs[0][1] + pairs[1][1]
+                    if s > 0:
+                        out[frozenset(c for c, _ in pairs)] = {c: round(p / s * 100, 1) for c, p in pairs}
+        _bov_cache.update(t=time.time(), data=out)
+    except Exception:
+        return _bov_cache["data"]  # stale-but-ok on failure
+    return out
+
+
+@router.get("/api/esports/lol/msi/predictions")
+def msi_predictions():
+    """Pre-game win predictions for upcoming/known MSI 2026 matches, with the Bovada market
+    line attached so model% vs market% surfaces the edge."""
+    try:
+        sched = _lol_get("https://esports-api.lolesports.com/persisted/gw/getSchedule?hl=en-US&sport=lol")
+    except Exception:
+        return {"event": "MSI 2026", "matches": [], "error": "schedule unavailable"}
+
+    market = _bovada_msi_market()
+
+    events = (((sched.get("data") or {}).get("schedule") or {}).get("events") or [])
+    matches = []
+    for e in events:
+        if (e.get("league") or {}).get("slug") != "msi":
+            continue
+        m = e.get("match") or {}
+        teams = m.get("teams") or []
+        if len(teams) != 2:
+            continue
+        a, b = teams[0], teams[1]
+        if a.get("code") == "TBD" or b.get("code") == "TBD":
+            continue
+        ra = _team_rating(a.get("code"), a.get("name"))
+        rb = _team_rating(b.get("code"), b.get("name"))
+        if not ra or not rb:
+            continue
+
+        bo = (m.get("strategy") or {}).get("count") or 1
+        pa = _p_game(ra[1], rb[1])
+        sa = _p_bo5(pa) if bo >= 5 else pa  # series prob for team A
+
+        mkt = market.get(frozenset({a.get("code"), b.get("code")})) or {}
+
+        def team(t, rt, series_pct):
+            res = t.get("result") or {}
+            model_pct = round(series_pct * 100, 1)
+            market_pct = mkt.get(t.get("code"))
+            return {"name": t.get("name"), "code": t.get("code"), "image": t.get("image"),
+                    "rank": rt[0], "winPct": model_pct,
+                    "marketPct": market_pct,
+                    "edge": round(model_pct - market_pct, 1) if market_pct is not None else None,
+                    "wins": res.get("gameWins")}
+
+        fav = a.get("code") if sa >= 0.5 else b.get("code")
+        matches.append({
+            "startTime": e.get("startTime"), "state": e.get("state"), "bestOf": bo,
+            "teamA": team(a, ra, sa), "teamB": team(b, rb, 1 - sa),
+            "favorite": fav, "hasMarket": bool(mkt),
+        })
+
+    # upcoming first (inProgress, unstarted), completed last; each by start time
+    order = {"inProgress": 0, "unstarted": 1, "completed": 2}
+    matches.sort(key=lambda x: (order.get(x["state"], 1), x["startTime"] or ""))
+    return {"event": "MSI 2026", "model": "power-ranking prior (Sheep) · Elo · Bo5",
+            "matches": matches}
