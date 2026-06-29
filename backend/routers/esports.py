@@ -8,7 +8,14 @@ without an engine — Lichess `cloud-eval` does not cover live mid-game position
 string) is what the Dota/CS2 adapters will return, so the frontend card is title-agnostic.
 """
 import json
+import math
+import os
+import shutil
+import threading
 import urllib.request as _u
+
+import chess
+import chess.engine
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 
@@ -27,6 +34,56 @@ def _material(fen: str) -> int:
             continue
         total += v if ch.isupper() else -v
     return total
+
+
+# --- Engine eval (Stockfish) → real win% --------------------------------------------------
+# Lichess cloud-eval doesn't cover live positions, so we run our own engine at a shallow,
+# bounded depth (fast enough for the request path) and convert to a White-POV win%.
+_ENGINE_PATH = os.environ.get("STOCKFISH_PATH") or shutil.which("stockfish") or "/usr/games/stockfish"
+_engine = None
+_engine_lock = threading.Lock()
+
+
+def _get_engine():
+    global _engine
+    if _engine is None:
+        _engine = chess.engine.SimpleEngine.popen_uci(_ENGINE_PATH)
+    return _engine
+
+
+def _win_pct_from_cp(cp: int) -> float:
+    """Centipawns (White POV) → White win%, using Lichess's logistic constant."""
+    return 50 + 50 * (2 / (1 + math.exp(-0.00368208 * cp)) - 1)
+
+
+def _engine_eval(fen: str, depth: int = 11):
+    """{cp, mate, win_pct} from White's POV, or None if the engine is unavailable."""
+    try:
+        board = chess.Board(fen)
+    except Exception:
+        return None
+    if board.is_game_over():
+        res = board.result()
+        wp = 100.0 if res == "1-0" else 0.0 if res == "0-1" else 50.0
+        return {"cp": None, "mate": None, "win_pct": round(wp, 1)}
+    try:
+        with _engine_lock:
+            info = _get_engine().analyse(board, chess.engine.Limit(depth=depth))
+        score = info["score"].white()
+        if score.is_mate():
+            m = score.mate()
+            return {"cp": None, "mate": m, "win_pct": 100.0 if m > 0 else 0.0}
+        cp = max(-1500, min(1500, score.score()))
+        return {"cp": cp, "mate": None, "win_pct": round(_win_pct_from_cp(cp), 1)}
+    except Exception:
+        global _engine  # engine crashed → drop it so the next call respawns
+        try:
+            if _engine:
+                _engine.quit()
+        except Exception:
+            pass
+        _engine = None
+        return None
 
 
 def _read_tv(window: int = 6, timeout: float = 3.0):
@@ -77,19 +134,33 @@ def chess_live():
     bc = cur.get("bc") if cur else pl("black")["clock"]
 
     mat = _material(cur_fen) if cur_fen else 0
-    series = [_material(f["fen"]) for f in fens if f.get("fen")]
-    swing = (series[-1] - series[0]) if len(series) >= 2 else 0
     turn = "white" if (cur_fen.split(" ")[1:2] or ["w"])[0] == "w" else "black"
 
-    # The "moment that matters": a material swing in-window (capture/blunder), a time
-    # scramble, or a settled-but-decisive material edge — in priority order.
+    # Real win% from the engine: evaluate the current position, and the window-start
+    # position, so we can read a *win-probability swing* (the truest "moment that matters").
+    eval_now = _engine_eval(cur_fen) if cur_fen else None
+    start_fen = fens[0].get("fen") if len(fens) >= 2 else None
+    eval_then = _engine_eval(start_fen) if start_fen else None
+    win_now = eval_now["win_pct"] if eval_now else None
+    win_swing = (round(win_now - eval_then["win_pct"], 1)
+                 if (win_now is not None and eval_then) else None)
+
+    # Moment priority: a big win% swing (someone blundered/converted) → time scramble →
+    # decisive position → material fallback when the engine is unavailable.
     low = min([c for c in (wc, bc) if c is not None], default=None)
     moment = None
-    if abs(swing) >= 3:
-        moment = f"{'White' if swing > 0 else 'Black'} just won material (+{abs(swing)})"
+    if win_swing is not None and abs(win_swing) >= 12 and eval_then:
+        who = "White" if win_swing > 0 else "Black"
+        moment = f"{who} swung the game — win% {eval_then['win_pct']:.0f}→{win_now:.0f}"
     elif low is not None and low <= 20:
         moment = "Time scramble — under 20s on the clock"
-    elif abs(mat) >= 5:
+    elif eval_now and eval_now.get("mate") is not None:
+        who = "White" if eval_now["mate"] > 0 else "Black"
+        moment = f"{who} has forced mate in {abs(eval_now['mate'])}"
+    elif win_now is not None and (win_now >= 80 or win_now <= 20):
+        who = "White" if win_now >= 80 else "Black"
+        moment = f"{who} is winning ({max(win_now, 100 - win_now):.0f}% win)"
+    elif abs(mat) >= 5:  # engine-less fallback
         moment = f"{'White' if mat > 0 else 'Black'} is winning (+{abs(mat)})"
 
     return {
@@ -99,5 +170,9 @@ def chess_live():
         "white": pl("white"), "black": pl("black"),
         "fen": cur_fen, "turn": turn,
         "clocks": {"white": wc, "black": bc},
-        "material": mat, "swing": swing, "moment": moment,
+        "material": mat,
+        "eval": eval_now,          # {cp, mate, win_pct} White POV, or null
+        "winPct": win_now,         # White win% (null if engine unavailable)
+        "winSwing": win_swing,
+        "moment": moment,
     }

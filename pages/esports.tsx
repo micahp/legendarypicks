@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import Head from 'next/head'
 
 type Player = { name: string; rating: number | null; clock: number | null }
+type Eval = { cp: number | null; mate: number | null; win_pct: number }
 type ChessLive = {
   live: boolean
   gameId?: string
@@ -11,7 +12,9 @@ type ChessLive = {
   turn?: 'white' | 'black'
   clocks?: { white: number | null; black: number | null }
   material?: number
-  swing?: number
+  eval?: Eval | null
+  winPct?: number | null
+  winSwing?: number | null
   moment?: string | null
 }
 
@@ -24,17 +27,35 @@ function clock(s: number | null | undefined) {
   return m > 0 ? `${m}:${String(r).padStart(2, '0')}` : `${r}s`
 }
 
-function PlayerRow({ p, up, lowClock }: { p?: Player; up: boolean; lowClock: boolean }) {
+function PlayerRow({ p, pct, lowClock }: { p?: Player; pct: number | null; lowClock: boolean }) {
   return (
     <div className="flex items-center justify-between gap-3">
       <div className="min-w-0 flex items-center gap-2">
         <span className="truncate font-medium text-zinc-100">{p?.name ?? '—'}</span>
         {p?.rating ? <span className="text-xs text-zinc-500">{p.rating}</span> : null}
-        {up ? <span className="text-xs text-emerald-400">▲ up material</span> : null}
       </div>
-      <span className={`tabular-nums text-sm ${lowClock ? 'text-red-400 font-semibold' : 'text-zinc-400'}`}>
-        {clock(p?.clock)}
-      </span>
+      <div className="flex items-center gap-3">
+        {pct !== null ? <span className="tabular-nums text-xs text-zinc-400">{pct.toFixed(0)}%</span> : null}
+        <span className={`tabular-nums text-sm ${lowClock ? 'text-red-400 font-semibold' : 'text-zinc-400'}`}>
+          {clock(p?.clock)}
+        </span>
+      </div>
+    </div>
+  )
+}
+
+// White/Black win-probability bar (engine-derived). White fills from the left.
+function WinBar({ white }: { white: number }) {
+  return (
+    <div className="space-y-1">
+      <div className="flex h-2.5 w-full overflow-hidden rounded-full bg-zinc-800">
+        <div className="bg-zinc-100" style={{ width: `${white}%` }} />
+        <div className="bg-zinc-700" style={{ width: `${100 - white}%` }} />
+      </div>
+      <div className="flex justify-between text-[10px] uppercase tracking-wider text-zinc-500">
+        <span>White {white.toFixed(0)}%</span>
+        <span>{(100 - white).toFixed(0)}% Black</span>
+      </div>
     </div>
   )
 }
@@ -60,9 +81,7 @@ export default function EsportsPage() {
     return () => { alive = false; if (timer.current) clearInterval(timer.current) }
   }, [])
 
-  const mat = data?.material ?? 0
-  const whiteUp = mat > 0
-  const blackUp = mat < 0
+  const wp = data?.winPct ?? null
   const wLow = (data?.clocks?.white ?? 99) <= 20
   const bLow = (data?.clocks?.black ?? 99) <= 20
 
@@ -103,15 +122,18 @@ export default function EsportsPage() {
               ) : !data ? (
                 <div className="space-y-2 animate-pulse">
                   <div className="h-4 w-3/4 rounded bg-zinc-800" />
+                  <div className="h-3 w-full rounded bg-zinc-800" />
                   <div className="h-4 w-2/3 rounded bg-zinc-800" />
                 </div>
               ) : !data.live ? (
                 <p className="text-sm text-zinc-500">No featured game right now.</p>
               ) : (
-                <div className="space-y-2">
-                  <PlayerRow p={data.white} up={whiteUp} lowClock={wLow} />
-                  <div className="h-px bg-zinc-800" />
-                  <PlayerRow p={data.black} up={blackUp} lowClock={bLow} />
+                <div className="space-y-3">
+                  <PlayerRow p={data.white} pct={wp} lowClock={wLow} />
+                  {wp !== null
+                    ? <WinBar white={wp} />
+                    : <div className="h-px bg-zinc-800" />}
+                  <PlayerRow p={data.black} pct={wp !== null ? 100 - wp : null} lowClock={bLow} />
                 </div>
               )}
             </div>
