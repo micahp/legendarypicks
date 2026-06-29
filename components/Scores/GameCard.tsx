@@ -20,6 +20,7 @@ interface GameProps {
   awayTeam: TeamInfo
   startTime: string
   status: 'SCHEDULED' | 'LIVE' | 'FINAL'
+  statusDetail?: string   // ESPN "Final/10" etc.
   subtitle?: string
   // Tennis: array of set scores [home, away] for each set
   sets?: TennisSet[]
@@ -42,8 +43,11 @@ function getStatusBadge(status: GameProps['status']) {
     : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
 }
 
-function getStatusLabel(status: GameProps['status']) {
-  return status === 'LIVE' ? 'LIVE' : status === 'FINAL' ? 'FINAL' : 'SCHEDULED'
+function getStatusLabel(status: GameProps['status'], statusDetail?: string) {
+  if (status === 'LIVE') return 'LIVE'
+  // Extra innings / OT: ESPN gives "Final/10", "Final/OT" — show it instead of plain FINAL.
+  if (status === 'FINAL') return statusDetail && statusDetail.includes('/') ? statusDetail : 'FINAL'
+  return 'SCHEDULED'
 }
 
 function getPeriodLabel(league?: string, livePeriod?: GameProps['livePeriod']) {
@@ -144,7 +148,7 @@ export default function GameCard(g: GameProps) {
         <span
           className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${showStatusBadge ? getStatusBadge(g.status) : 'hidden'}`}
         >
-          {g.status === 'LIVE' && getPeriodLabel(g.league, g.livePeriod) ? getPeriodLabel(g.league, g.livePeriod) : (showStatusBadge ? getStatusLabel(g.status) : '')}
+          {g.status === 'LIVE' && getPeriodLabel(g.league, g.livePeriod) ? getPeriodLabel(g.league, g.livePeriod) : (showStatusBadge ? getStatusLabel(g.status, g.statusDetail) : '')}
         </span>
       </div>
 
@@ -177,11 +181,21 @@ export default function GameCard(g: GameProps) {
         <div className="space-y-3">
           <div className="flex justify-between items-center">
             <span className={`font-semibold ${isFinal ? (isDraw ? 'text-zinc-200' : homeWon ? 'text-zinc-200' : 'text-zinc-500') : 'text-zinc-200'}`}>{teamLabel(g.homeTeam)}</span>
-            {showScore && g.homeTeam.score !== undefined && <span className={`text-xl font-black ${isFinal ? (isDraw ? 'text-white' : homeWon ? 'text-white' : 'text-zinc-500') : 'text-white'}`}>{g.homeTeam.score}</span>}
+            {showScore && g.homeTeam.score !== undefined && (
+              <span className="flex items-center gap-1.5">
+                <span className={`text-xl font-black ${isFinal ? (isDraw ? 'text-white' : homeWon ? 'text-white' : 'text-zinc-500') : 'text-white'}`}>{g.homeTeam.score}</span>
+                {isFinal && homeWon && <span className="text-zinc-400 text-xs" aria-label="winner">◄</span>}
+              </span>
+            )}
           </div>
           <div className="flex justify-between items-center">
             <span className={`font-semibold ${isFinal ? (isDraw ? 'text-zinc-200' : awayWon ? 'text-zinc-200' : 'text-zinc-500') : 'text-zinc-200'}`}>{teamLabel(g.awayTeam)}</span>
-            {showScore && g.awayTeam.score !== undefined && <span className={`text-xl font-black ${isFinal ? (isDraw ? 'text-white' : awayWon ? 'text-white' : 'text-zinc-500') : 'text-white'}`}>{g.awayTeam.score}</span>}
+            {showScore && g.awayTeam.score !== undefined && (
+              <span className="flex items-center gap-1.5">
+                <span className={`text-xl font-black ${isFinal ? (isDraw ? 'text-white' : awayWon ? 'text-white' : 'text-zinc-500') : 'text-white'}`}>{g.awayTeam.score}</span>
+                {isFinal && awayWon && <span className="text-zinc-400 text-xs" aria-label="winner">◄</span>}
+              </span>
+            )}
           </div>
         </div>
       )}

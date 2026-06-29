@@ -36,6 +36,8 @@ export interface Game {
   awayTeam: { teamId: string; name: string; nickname?: string; score?: number; winner?: boolean }
   startTime: string
   status: 'SCHEDULED' | 'LIVE' | 'FINAL'
+  // ESPN short detail, e.g. "Final/10" (extra innings) or "Final/OT" — shown on the FINAL badge
+  statusDetail?: string
   subtitle?: string
   // Tennis: array of set scores [home, away] for each set
   sets?: TennisSet[]
@@ -151,6 +153,7 @@ export function normalizeGame(g: any, leagueOverride?: string): Game {
     awayTeam: side(g?.away ?? g?.awayTeam),
     startTime: g?.date ?? g?.startTime ?? '',
     status: g?.status && ['SCHEDULED', 'LIVE', 'FINAL'].includes(g.status) ? g.status : statusFromState(g?.state),
+    statusDetail: g?.status_detail ?? g?.statusDetail ?? undefined,   // ESPN shortDetail, e.g. "Final/10"
     subtitle: subtitle || undefined,
     sets: normalizeSets(g),
     livePeriod: normalizeLivePeriod(g, league),
