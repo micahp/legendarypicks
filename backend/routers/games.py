@@ -356,8 +356,11 @@ def get_game_boxscore(league: str, game_id: str):
             lups = espn.lineups(league, game_id)
         except Exception:
             lups = []
+        def _pos(p):  # ESPN position is an object {name,displayName,abbreviation}; emit the abbrev string
+            pos = p.get("position")
+            return pos.get("abbreviation", "") if isinstance(pos, dict) else (pos or "")
         lineups = [{"side": lu["side"], "formation": lu["formation"],
-                     "players": [{"num": p["jersey"], "name": p["name"], "pos": p["position"]}
+                     "players": [{"num": p.get("jersey"), "name": p.get("name"), "pos": _pos(p)}
                                  for p in lu["players"]]} for lu in lups]
 
         return {"available": True, "teamStats": team_stats, "lineups": lineups}
@@ -433,15 +436,11 @@ def get_game_playbyplay(league: str, game_id: str):
             elif "sub" in ke_type:
                 etype = "sub"
 
-            clock = ""
-            if ke.get("clock"):
-                clock = ke["clock"].get("displayValue", "")
-            minute = 0
-            if clock:
-                try:
-                    minute = int(clock.replace("'", "").strip())
-                except (ValueError, TypeError):
-                    pass
+            # clock.displayValue is like "12'", "45'+2", or "" (kickoff). Take the leading number
+            # (stoppage "+2" dropped) so events order correctly instead of collapsing to 0'.
+            clock = (ke.get("clock") or {}).get("displayValue", "") or ""
+            digits = "".join(c for c in clock.split("+")[0] if c.isdigit())
+            minute = int(digits) if digits else 0
 
             team = ""
             if ke.get("team"):
