@@ -13,7 +13,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 import espn_client as espn
 from _core import ALLOWED_ORIGINS
-from routers import games, players, props, analytics, game_extras
+from routers import games, players, props, analytics, game_extras, esports
 
 app = FastAPI(title="Legendary Picks Sports API", description="Multi-league sports data (ESPN)", version="2.0.0")
 print(f"DEBUG: espn_client leagues: {sorted(espn.LEAGUES)}")
@@ -25,3 +25,4 @@ app.include_router(players.router)
 app.include_router(props.router)
 app.include_router(analytics.router)
 app.include_router(game_extras.router)
+app.include_router(esports.router)
