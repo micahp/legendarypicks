@@ -34,6 +34,10 @@ type LiveMatch = {
   goldLead?: { code: string; amount: number } | null
 }
 
+type CS2Player = { name: string; kills: number | null; deaths: number | null }
+type CS2Team = { name: string; score: number | null; won: boolean; players: CS2Player[] }
+type CS2Live = { live: boolean; title?: string; tournament?: string; teamA?: CS2Team; teamB?: CS2Team }
+
 const POLL_MS = 10_000
 const PRED_POLL_MS = 60_000
 
@@ -313,6 +317,52 @@ function LiveMSI({ m }: { m: LiveMatch }) {
   )
 }
 
+/* ---------------- CS2 (GRID official, data-only) ---------------- */
+function CS2Roster({ team, lead }: { team?: CS2Team; lead: boolean }) {
+  const ps = team?.players ?? []
+  return (
+    <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 p-3">
+      <div className="mb-1 flex items-center justify-between px-1">
+        <span className={`text-sm font-semibold ${lead ? 'text-zinc-50' : 'text-zinc-300'}`}>{team?.name ?? '—'}</span>
+        <span className="font-mono text-lg font-bold tabular-nums text-zinc-100">{team?.score ?? 0}</span>
+      </div>
+      <div className="divide-y divide-zinc-800/70">
+        {ps.map((p, i) => {
+          const diff = (p.kills ?? 0) - (p.deaths ?? 0)
+          return (
+            <div key={i} className="flex items-center justify-between gap-3 py-1.5">
+              <span className="truncate text-sm font-medium text-zinc-100">{p.name}</span>
+              <div className="flex items-center gap-3 font-mono text-sm tabular-nums">
+                <span className="text-zinc-300">{p.kills ?? 0}<span className="text-zinc-600">–</span>{p.deaths ?? 0}</span>
+                <span className={`w-8 text-right ${diff > 0 ? 'text-emerald-400' : diff < 0 ? 'text-red-400' : 'text-zinc-500'}`}>{diff > 0 ? '+' : ''}{diff}</span>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+function LiveCS2({ m }: { m: CS2Live }) {
+  const a = m.teamA, b = m.teamB
+  const aLead = (a?.score ?? 0) >= (b?.score ?? 0)
+  return (
+    <section className="space-y-4">
+      <SectionHeader live eyebrow={`Live now · CS2${m.tournament ? ' · ' + m.tournament : ''}`} title={`${a?.name ?? ''} vs ${b?.name ?? ''}`} meta="grid · official" />
+      <div className="flex items-center justify-center gap-5 rounded-xl border border-zinc-800 bg-zinc-900/40 py-3">
+        <span className={`text-sm font-semibold ${aLead ? 'text-zinc-50' : 'text-zinc-400'}`}>{a?.name}</span>
+        <span className="font-mono text-2xl font-bold tabular-nums text-zinc-100">{a?.score ?? 0} <span className="text-zinc-600">–</span> {b?.score ?? 0}</span>
+        <span className={`text-sm font-semibold ${!aLead ? 'text-zinc-50' : 'text-zinc-400'}`}>{b?.name}</span>
+      </div>
+      <div className="grid gap-4 md:grid-cols-2">
+        <CS2Roster team={a} lead={aLead} />
+        <CS2Roster team={b} lead={!aLead} />
+      </div>
+    </section>
+  )
+}
+
 /* ---------------- chess (demoted "also live" test) ---------------- */
 function WinBar({ white }: { white: number }) {
   return (
@@ -404,6 +454,7 @@ function ChessSection({ chess }: { chess: ChessLive | null }) {
 export default function EsportsPage() {
   const [msi, setMsi] = useState<MSIData | null>(null)
   const [live, setLive] = useState<LiveMatch | null>(null)
+  const [cs2, setCs2] = useState<CS2Live | null>(null)
   const [chess, setChess] = useState<ChessLive | null>(null)
   const timers = useRef<ReturnType<typeof setInterval>[]>([])
 
@@ -414,16 +465,17 @@ export default function EsportsPage() {
     }
     const loadPred = j('/api/esports/lol/msi/predictions', setMsi)
     const loadLive = j('/api/esports/lol/msi/live', setLive)
+    const loadCs2 = j('/api/esports/cs2/live', setCs2)
     const loadChess = j('/api/esports/chess/live', setChess)
-    loadPred(); loadLive(); loadChess()
-    timers.current = [setInterval(loadPred, PRED_POLL_MS), setInterval(loadLive, 15_000), setInterval(loadChess, POLL_MS)]
+    loadPred(); loadLive(); loadCs2(); loadChess()
+    timers.current = [setInterval(loadPred, PRED_POLL_MS), setInterval(loadLive, 15_000), setInterval(loadCs2, 20_000), setInterval(loadChess, POLL_MS)]
     return () => { alive = false; timers.current.forEach(clearInterval) }
   }, [])
 
   const matches = msi?.matches ?? []
   const scheduled = matches.filter((m) => m.state !== 'completed')
   const results = matches.filter((m) => m.state === 'completed')
-  const anyLive = !!live?.live || !!chess?.live
+  const anyLive = !!live?.live || !!cs2?.live || !!chess?.live
 
   return (
     <>
@@ -442,8 +494,8 @@ export default function EsportsPage() {
           <p className="text-sm text-zinc-400">Who wins — and the moment it turns.</p>
         </header>
 
-        {/* Feature exactly one live match — MSI if it's on, else the chess fallback */}
-        {live?.live ? <LiveMSI m={live} /> : chess?.live ? <ChessSection chess={chess} /> : null}
+        {/* Feature exactly one live match — MSI > CS2 (GRID official) > chess fallback */}
+        {live?.live ? <LiveMSI m={live} /> : cs2?.live ? <LiveCS2 m={cs2} /> : chess?.live ? <ChessSection chess={chess} /> : null}
 
         <section className="space-y-5">
           <SectionHeader eyebrow="MSI 2026" title="Win Predictions" meta={msi?.model ?? 'power-ranking prior'} />

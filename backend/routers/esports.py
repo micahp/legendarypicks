@@ -530,3 +530,69 @@ def msi_live():
                 "gameState": win.get("state") if win else None,
                 "youtube": yt, "twitch": tw, "teamA": a, "teamB": b, "goldLead": gold_lead}
     return {"live": False}
+
+
+# --- GRID (official CS2 / Dota data via Open Access) ---------------------------------------
+# api-op.grid.gg (the Open Access host). Covers CS2 + Dota2 only. Commercial-legit, unlike the
+# unofficial lolesports feed. central-data = schedule/teams; series-state = live score + KDA.
+_GRID_KEY = os.environ.get("GRID_API_KEY")
+_GRID_CD = "https://api-op.grid.gg/central-data/graphql"
+_GRID_SS = "https://api-op.grid.gg/live-data-feed/series-state/graphql"
+
+
+def _grid(url, query):
+    if not _GRID_KEY:
+        return None
+    try:
+        body = json.dumps({"query": query}).encode()
+        req = _u.Request(url, data=body, headers={"x-api-key": _GRID_KEY, "Content-Type": "application/json"})
+        with _u.urlopen(req, timeout=10) as r:
+            return (json.loads(r.read().decode()) or {}).get("data")
+    except Exception:
+        return None
+
+
+def _grid_state(sid):
+    # Known-good fields only (format/games subfields differ in the schema — add later if needed).
+    q = ('{ seriesState(id:"%s") { started finished valid '
+         'teams { name score won players { name kills deaths } } } }' % sid)
+    d = _grid(_GRID_SS, q)
+    return (d or {}).get("seriesState") if d else None
+
+
+@router.get("/api/esports/cs2/live")
+def cs2_live():
+    """A currently-live CS2 series via GRID (official): series score + per-player K/D. Data-only —
+    Open Access doesn't expose the broadcast stream."""
+    if not _GRID_KEY:
+        return {"live": False, "error": "GRID key not configured"}
+    import datetime
+    now = datetime.datetime.utcnow()
+    lo = (now - datetime.timedelta(hours=6)).strftime("%Y-%m-%dT%H:%M:%SZ")
+    hi = now.strftime("%Y-%m-%dT%H:%M:%SZ")
+    q = ('{ allSeries(first:25, orderBy: StartTimeScheduled, orderDirection: DESC, '
+         'filter:{ startTimeScheduled:{ gte:"%s", lte:"%s" } }) '
+         '{ edges { node { id startTimeScheduled title { name } tournament { name } '
+         'teams { baseInfo { name } } } } } }' % (lo, hi))
+    d = _grid(_GRID_CD, q)
+    edges = (((d or {}).get("allSeries") or {}).get("edges") or [])
+
+    def is_test(n):
+        names = [((t.get("baseInfo") or {}).get("name") or "") for t in (n.get("teams") or [])]
+        return any(x in ("CS2-1", "CS2-2", "TBD-1", "TBD-2") for x in names)
+    cs2 = [e["node"] for e in edges
+           if "counter" in (((e.get("node") or {}).get("title") or {}).get("name") or "").lower()
+           and not is_test(e.get("node") or {})]
+    for node in cs2[:8]:
+        st = _grid_state(node["id"])
+        if st and st.get("started") and not st.get("finished"):
+            def tm(t):
+                return {"name": t.get("name"), "score": t.get("score"), "won": t.get("won"),
+                        "players": [{"name": p.get("name"), "kills": p.get("kills"), "deaths": p.get("deaths")}
+                                    for p in (t.get("players") or [])]}
+            teams = st.get("teams") or []
+            return {"live": True, "title": "CS2", "seriesId": node["id"],
+                    "tournament": (node.get("tournament") or {}).get("name"),
+                    "teamA": tm(teams[0]) if len(teams) > 0 else None,
+                    "teamB": tm(teams[1]) if len(teams) > 1 else None}
+    return {"live": False}
