@@ -29,7 +29,7 @@ type LiveMatch = {
   twitch?: string | null
   teamA?: LiveTeam
   teamB?: LiveTeam
-  moment?: string | null
+  goldLead?: { code: string; amount: number } | null
 }
 
 const POLL_MS = 10_000
@@ -133,23 +133,32 @@ function MatchCard({ m }: { m: Match }) {
   )
 }
 
-/* Live MSI game — the actual broadcast + the LIVE WIN% the scoreboard doesn't show */
-function StatLine({ t, lead }: { t: LiveTeam; lead: boolean }) {
+/* Live MSI game — the actual broadcast + live gold/kills/objectives overlay */
+function LiveStatTeam({ t, share, lead }: { t: LiveTeam; share: number; lead: boolean }) {
   return (
-    <div className="flex items-center justify-between gap-2 font-mono text-[11px] tabular-nums">
-      <div className="flex min-w-0 items-center gap-1.5">
-        {t.image ? <img src={t.image} alt="" className="h-4 w-4 shrink-0 object-contain" /> : null}
-        <span className={`truncate ${lead ? 'text-zinc-200' : 'text-zinc-500'}`}>{t.code}</span>
+    <div className="space-y-2">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex min-w-0 items-center gap-2">
+          {t.image ? <img src={t.image} alt="" className="h-6 w-6 shrink-0 object-contain" />
+            : <span className="h-6 w-6 shrink-0 rounded bg-zinc-800" />}
+          <span className={`truncate text-sm font-semibold ${lead ? 'text-zinc-50' : 'text-zinc-300'}`}>{t.name}</span>
+        </div>
+        <span className="font-mono text-lg font-bold tabular-nums text-zinc-100">{t.kills ?? 0}</span>
       </div>
-      <span className="text-zinc-500">
-        {t.kills ?? 0}k · {t.gold !== null ? `${((t.gold ?? 0) / 1000).toFixed(1)}k` : '—'} · 🏰{t.towers ?? 0} · 🐉{t.dragons ?? 0}{t.barons ? ` · 👑${t.barons}` : ''}
-      </span>
+      <div className="flex items-center justify-between font-mono text-[11px] tabular-nums text-zinc-500">
+        <span>{t.gold !== null ? `${(t.gold / 1000).toFixed(1)}k gold` : '—'}</span>
+        <span>🏰 {t.towers ?? 0} · 🐉 {t.dragons ?? 0}{t.barons ? ` · 👑 ${t.barons}` : ''}</span>
+      </div>
     </div>
   )
 }
 
 function LiveMSI({ m }: { m: LiveMatch }) {
   const a = m.teamA, b = m.teamB
+  const ga = a?.gold ?? 0, gb = b?.gold ?? 0
+  const tot = ga + gb || 1
+  const aShare = (ga / tot) * 100
+  const aLead = ga >= gb
   // Twitch embeds reliably (official streams often block YouTube embedding); parent must match
   // the page host, so read it at runtime — works on the tunnel, localhost, and prod alike.
   const [host, setHost] = useState('')
@@ -157,12 +166,6 @@ function LiveMSI({ m }: { m: LiveMatch }) {
   const embed = (m.twitch && host)
     ? `https://player.twitch.tv/?channel=${m.twitch}&parent=${host}&muted=true`
     : (m.youtube ? `https://www.youtube.com/embed/${m.youtube}?autoplay=1&mute=1` : null)
-
-  const aw = a?.winPct ?? null
-  const hasWin = aw !== null && a && b
-  const aLead = hasWin ? (aw as number) >= 50 : true
-  const leader = aLead ? a : b
-  const leaderPct = hasWin ? Math.max(aw as number, 100 - (aw as number)) : null
 
   return (
     <section className="space-y-3">
@@ -187,51 +190,26 @@ function LiveMSI({ m }: { m: LiveMatch }) {
           )}
         </div>
 
-        {/* live win% — the derived signal, led; raw stats demoted below */}
+        {/* live state overlay */}
         <aside className="space-y-3">
           <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-4">
-            <div className="flex items-center justify-between text-[10px] font-medium uppercase tracking-[0.18em] text-zinc-500">
-              <span>Live win probability</span><span className="font-mono">lolesports model</span>
+            <div className="mb-3 flex items-center justify-between text-[10px] font-medium uppercase tracking-[0.18em] text-zinc-500">
+              <span>Live game state</span><span className="font-mono">lolesports</span>
             </div>
-
-            {hasWin ? (
-              <>
-                <div className="mt-3 flex items-end justify-between">
-                  <div>
-                    <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-[0.18em] text-zinc-500">
-                      {leader?.image ? <img src={leader.image} alt="" className="h-3.5 w-3.5 object-contain" /> : null}
-                      {leader?.code} to win
-                    </div>
-                    <div className="font-mono text-5xl font-bold leading-none tabular-nums text-zinc-50">
-                      {leaderPct!.toFixed(0)}<span className="text-2xl text-zinc-500">%</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="mt-3 flex h-3 w-full overflow-hidden rounded-sm bg-zinc-800 ring-1 ring-inset ring-black/40">
-                  <div className="bg-emerald-500 transition-[width] duration-700 ease-out motion-reduce:transition-none"
-                       style={{ width: `${aLead ? aw : 100 - (aw as number)}%` }} />
-                  <div className="bg-amber-500 transition-[width] duration-700 ease-out motion-reduce:transition-none"
-                       style={{ width: `${aLead ? 100 - (aw as number) : aw}%` }} />
-                </div>
-                <div className="mt-1 flex justify-between font-mono text-[10px] text-zinc-600">
-                  <span>{a?.code} {(aw as number).toFixed(0)}%</span>
-                  <span>{(100 - (aw as number)).toFixed(0)}% {b?.code}</span>
-                </div>
-                {/* raw stats — small, for context (the broadcast already shows these) */}
-                <div className="mt-3 space-y-1 border-t border-zinc-800 pt-2">
-                  <StatLine t={a!} lead={aLead} />
-                  <StatLine t={b!} lead={!aLead} />
-                </div>
-              </>
-            ) : (
-              <p className="mt-4 text-sm text-zinc-500">Waiting for live game data…</p>
-            )}
+            <LiveStatTeam t={a!} share={aShare} lead={aLead} />
+            <div className="my-3 flex h-2 w-full overflow-hidden rounded-full bg-zinc-800">
+              <div className="bg-emerald-500" style={{ width: `${aShare}%` }} />
+              <div className="bg-amber-500" style={{ width: `${100 - aShare}%` }} />
+            </div>
+            <LiveStatTeam t={b!} share={100 - aShare} lead={!aLead} />
           </div>
 
-          {m.moment ? (
+          {m.goldLead && m.goldLead.amount > 500 ? (
             <div className="rounded-xl border-l-2 border-emerald-500 bg-emerald-500/[0.07] p-4">
               <div className="text-[10px] font-medium uppercase tracking-[0.18em] text-emerald-400/90">Moment that matters</div>
-              <p className="mt-1 font-mono text-sm font-semibold text-emerald-200">{m.moment}</p>
+              <p className="mt-1 font-mono text-sm font-semibold text-emerald-200">
+                {m.goldLead.code} +{m.goldLead.amount.toLocaleString()} gold
+              </p>
             </div>
           ) : null}
 
