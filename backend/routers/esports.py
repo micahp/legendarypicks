@@ -395,16 +395,27 @@ def _lol_window(gid):
     frames = d.get("frames") or []
     if not frames:
         return None
-    f = frames[-1]
+    f0, f1 = frames[0], frames[-1]
     md = d.get("gameMetadata") or {}
+    mb, mr = md.get("blueTeamMetadata") or {}, md.get("redTeamMetadata") or {}
 
     def side(team, meta):
         return {"id": meta.get("esportsTeamId"), "gold": team.get("totalGold"),
                 "kills": team.get("totalKills"), "towers": team.get("towers"),
                 "barons": team.get("barons"), "dragons": len(team.get("dragons") or [])}
-    return {"state": f.get("gameState"),
-            "blue": side(f.get("blueTeam") or {}, md.get("blueTeamMetadata") or {}),
-            "red": side(f.get("redTeam") or {}, md.get("redTeamMetadata") or {})}
+    return {"state": f1.get("gameState"),
+            "blue": side(f1.get("blueTeam") or {}, mb), "red": side(f1.get("redTeam") or {}, mr),
+            "blue0": side(f0.get("blueTeam") or {}, mb), "red0": side(f0.get("redTeam") or {}, mr)}
+
+
+def _lol_winpct(blue, red):
+    """Live blue-side win prob from a gold-equivalent lead (gold + objective values),
+    logistic. A heuristic, but it's the thing the broadcast scoreboard does NOT show."""
+    lead = ((blue.get("gold") or 0) - (red.get("gold") or 0)
+            + 250 * ((blue.get("towers") or 0) - (red.get("towers") or 0))
+            + 500 * ((blue.get("dragons") or 0) - (red.get("dragons") or 0))
+            + 1500 * ((blue.get("barons") or 0) - (red.get("barons") or 0)))
+    return 1.0 / (1.0 + math.exp(-lead / 4500.0))
 
 
 @router.get("/api/esports/lol/msi/live")
@@ -434,28 +445,47 @@ def msi_live():
             if g.get("state") == "inProgress":
                 gid, gnum = g.get("id"), g.get("number")
         win = _lol_window(gid) if gid else None
+        # Live win% (blue side) now and at the window start — the derived signal the
+        # broadcast doesn't surface, plus the swing that flags a fight/objective just happened.
+        blue_now = _lol_winpct(win["blue"], win["red"]) * 100 if win else None
+        blue_then = _lol_winpct(win["blue0"], win["red0"]) * 100 if win else None
+        blue_id = win["blue"].get("id") if win else None
 
         def team(x):
             r = _team_rating(x.get("code"), x.get("name"))
             t = {"name": x.get("name"), "code": x.get("code"), "image": x.get("image"),
                  "id": x.get("id"), "rank": r[0] if r else None,
                  "wins": (x.get("result") or {}).get("gameWins"),
-                 "gold": None, "kills": None, "towers": None}
+                 "gold": None, "kills": None, "towers": None, "dragons": None, "barons": None,
+                 "winPct": None}
             if win:  # map live side by team id
+                is_blue = blue_id and str(blue_id) == str(x.get("id"))
                 for s in (win["blue"], win["red"]):
                     if s.get("id") and str(s["id"]) == str(x.get("id")):
                         t.update(gold=s["gold"], kills=s["kills"], towers=s["towers"],
                                  barons=s["barons"], dragons=s["dragons"])
+                if blue_now is not None:
+                    t["winPct"] = round(blue_now if is_blue else 100 - blue_now, 1)
             return t
 
         a = team(teams[0]) if teams else None
         b = team(teams[1]) if len(teams) > 1 else None
-        gold_lead = None
-        if a and b and a.get("gold") and b.get("gold"):
-            gold_lead = {"code": a["code"] if a["gold"] >= b["gold"] else b["code"],
-                         "amount": abs(a["gold"] - b["gold"])}
+
+        # "Moment that matters": a win% swing since the window start (a fight/baron just hit).
+        moment = None
+        if a and b and blue_now is not None and blue_then is not None:
+            blue_team = a if str(a["id"]) == str(blue_id) else b
+            red_team = b if blue_team is a else a
+            swing = blue_now - blue_then  # blue-side swing
+            mover = blue_team if swing >= 0 else red_team
+            lead_t = a if a["winPct"] >= b["winPct"] else b
+            if abs(swing) >= 6:
+                moment = f"{mover['code']} swinging — win% → {mover['winPct']:.0f}%"
+            elif lead_t["winPct"] >= 65:
+                moment = f"{lead_t['code']} in control — {lead_t['winPct']:.0f}% to win"
+
         return {"live": True, "matchId": m.get("id"), "gameId": gid, "gameNumber": gnum,
                 "bestOf": (m.get("strategy") or {}).get("count"),
                 "gameState": win.get("state") if win else None,
-                "youtube": yt, "twitch": tw, "teamA": a, "teamB": b, "goldLead": gold_lead}
+                "youtube": yt, "twitch": tw, "teamA": a, "teamB": b, "moment": moment}
     return {"live": False}
