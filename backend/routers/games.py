@@ -307,6 +307,283 @@ def get_game_detail(league: str, game_id: str):
     return out
 
 
+# ── Per-tab lazy endpoints: boxscore, play-by-play, game info ──
+# These serve live ESPN /summary data per tab, additive to the DB-snapshot
+# /api/{league}/game/{game_id}/detail path that stays as-is for NBA/NHL.
+
+
+@router.get("/api/{league}/game/{game_id}/boxscore")
+def get_game_boxscore(league: str, game_id: str):
+    """Live per-tab box score: team stats + player stat tables (US sports) or
+    team match stats + lineups (soccer). Returns {available: false} for unsupported leagues."""
+    lg = league.lower()
+    if lg in ("atp", "wta", "ufc", "cod"):
+        return {"available": False}
+
+    try:
+        sm = espn.summary(league, game_id)
+    except Exception:
+        return {"available": False}
+
+    if not sm or not sm.get("boxscore"):
+        return {"available": False}
+    bs = sm["boxscore"]
+
+    # ── Soccer (WC) shape ──
+    if lg == "wc":
+        team_stats_raw = []
+        for t in bs.get("teams", []):
+            ha = t.get("homeAway", "")
+            for s in t.get("statistics", []):
+                team_stats_raw.append({
+                    "label": s.get("name", ""),
+                    "home": s.get("displayValue", "") if ha == "home" else None,
+                    "away": s.get("displayValue", "") if ha == "away" else None,
+                })
+        # Merge home/away values per label
+        merged: dict = {}
+        for ts in team_stats_raw:
+            label = ts["label"]
+            if label not in merged:
+                merged[label] = {"label": label, "home": "", "away": ""}
+            if ts["home"] is not None:
+                merged[label]["home"] = ts["home"]
+            if ts["away"] is not None:
+                merged[label]["away"] = ts["away"]
+        team_stats = list(merged.values())
+
+        try:
+            lups = espn.lineups(league, game_id)
+        except Exception:
+            lups = []
+        def _pos(p):  # ESPN position is an object {name,displayName,abbreviation}; emit the abbrev string
+            pos = p.get("position")
+            return pos.get("abbreviation", "") if isinstance(pos, dict) else (pos or "")
+        lineups = [{"side": lu["side"], "formation": lu["formation"],
+                     "players": [{"num": p.get("jersey"), "name": p.get("name"), "pos": _pos(p)}
+                                 for p in lu["players"]]} for lu in lups]
+
+        return {"available": True, "teamStats": team_stats, "lineups": lineups}
+
+    # ── US team sports (mlb, nfl, nba, nhl) ──
+    # Team totals
+    teams = []
+    for t in bs.get("teams", []):
+        ti = t.get("team", {})
+        teams.append({
+            "name": ti.get("displayName", ""),
+            "abbrev": ti.get("abbreviation", ""),
+            "stats": [{"label": s.get("name", ""), "value": s.get("displayValue", "")}
+                      for s in t.get("statistics", [])],
+        })
+
+    # Player stat tables
+    players = []
+    for pgrp in bs.get("players", []):
+        team_info = pgrp.get("team", {})
+        team_abbr = team_info.get("abbreviation", "")
+        for sg in pgrp.get("statistics", []):
+            group_name = (sg.get("type") or "").capitalize()
+            labels = sg.get("labels", [])
+            rows = []
+            for ath in sg.get("athletes", []):
+                a = ath.get("athlete", {})
+                rows.append({
+                    "name": a.get("displayName", ""),
+                    "position": (a.get("position") or {}).get("abbreviation", ""),
+                    "stats": ath.get("stats", []),
+                })
+            players.append({
+                "team": team_abbr,
+                "group": group_name,
+                "columns": labels,
+                "rows": rows,
+            })
+
+    return {"available": True, "teams": teams, "players": players}
+
+
+@router.get("/api/{league}/game/{game_id}/playbyplay")
+def get_game_playbyplay(league: str, game_id: str):
+    """Live per-tab play-by-play: chrono plays (US sports) or key events (soccer)."""
+    lg = league.lower()
+    if lg in ("atp", "wta", "ufc", "cod"):
+        return {"available": False}
+
+    try:
+        sm = espn.summary(league, game_id)
+    except Exception:
+        return {"available": False}
+
+    if not sm:
+        return {"available": False}
+
+    # ── Soccer (WC) shape ──
+    if lg == "wc":
+        try:
+            ev = espn.match_events(league, game_id)
+        except Exception:
+            ev = {"key_events": [], "commentary": []}
+
+        events = []
+        for ke in ev.get("key_events", []):
+            etype = "var"
+            ke_type = ((ke.get("type") or {}).get("text") or "").lower()
+            if "goal" in ke_type or "penalty" in ke_type:
+                etype = "goal"
+            elif "card" in ke_type or "yellow" in ke_type or "red" in ke_type:
+                etype = "card"
+            elif "sub" in ke_type:
+                etype = "sub"
+
+            # clock.displayValue is like "12'", "45'+2", or "" (kickoff). Take the leading number
+            # (stoppage "+2" dropped) so events order correctly instead of collapsing to 0'.
+            clock = (ke.get("clock") or {}).get("displayValue", "") or ""
+            digits = "".join(c for c in clock.split("+")[0] if c.isdigit())
+            minute = int(digits) if digits else 0
+
+            team = ""
+            if ke.get("team"):
+                team = ke["team"].get("abbreviation", "")
+
+            events.append({
+                "minute": minute,
+                "type": etype,
+                "text": ke.get("text", ""),
+                "team": team,
+            })
+
+        # Sort by minute
+        events.sort(key=lambda e: e["minute"])
+        return {"available": True, "events": events}
+
+    # ── US team sports ──
+    plays_raw = sm.get("plays")
+    if not plays_raw:
+        return {"available": False}
+
+    periods = []
+    current_period = None
+    current_label = ""
+    current_plays: list = []
+
+    for p in plays_raw:
+        pd = p.get("period") or {}
+        pd_num = pd.get("number", 0)
+        pd_label = pd.get("displayValue", "")
+
+        if pd_num != current_period:
+            if current_period is not None:
+                periods.append({"label": current_label, "plays": current_plays})
+            current_period = pd_num
+            current_label = pd_label
+            current_plays = []
+
+        clock = (p.get("clock") or {}).get("displayValue", "")
+        current_plays.append({
+            "clock": clock,
+            "text": p.get("text", ""),
+            "scoreAway": p.get("awayScore"),
+            "scoreHome": p.get("homeScore"),
+            "scoringPlay": bool(p.get("scoringPlay", False)),
+        })
+
+    if current_period is not None:
+        periods.append({"label": current_label, "plays": current_plays})
+
+    return {"available": True, "periods": periods}
+
+
+@router.get("/api/{league}/game/{game_id}/gameinfo")
+def get_game_gameinfo(league: str, game_id: str):
+    """Live per-tab game info: venue, attendance, officials, odds, weather (NFL), broadcasts."""
+    lg = league.lower()
+    if lg in ("atp", "wta", "ufc", "cod"):
+        return {"available": False}
+
+    try:
+        sm = espn.summary(league, game_id)
+    except Exception:
+        return {"available": False}
+
+    if not sm:
+        return {"available": False}
+
+    gi = sm.get("gameInfo") or {}
+    if not gi:
+        return {"available": False}
+
+    venue_data = gi.get("venue") or {}
+    officials = [o.get("displayName", "") for o in (gi.get("officials") or [])]
+
+    # Broadcasts
+    broadcasts = []
+    broadcast_list = gi.get("broadcasts", []) or []
+    for b in broadcast_list:
+        names = b.get("names", [])
+        if names:
+            broadcasts.extend(names)
+        elif b.get("name"):
+            broadcasts.append(b["name"])
+
+    # Also check header.competitions[0].broadcasts
+    header = sm.get("header", {})
+    comp = (header.get("competitions") or [{}])[0]
+    for b in (comp.get("broadcasts") or []):
+        names = b.get("names", [])
+        if names:
+            broadcasts.extend(names)
+        elif b.get("name"):
+            broadcasts.append(b["name"])
+    # Dedupe
+    broadcasts = list(dict.fromkeys(broadcasts))
+
+    # Odds
+    odds_data = {}
+    if comp.get("odds"):
+        odds_data = comp["odds"][0] if comp["odds"] else {}
+    # Try competitors for odds
+    if not odds_data:
+        for c in comp.get("competitors", []):
+            if c.get("odds"):
+                odds_data = c["odds"]
+                break
+
+    spread = odds_data.get("details") or odds_data.get("spread") or ""
+    over_under = odds_data.get("overUnder") or odds_data.get("over_under") or ""
+    favorite = odds_data.get("favorite", "")
+    if not favorite:
+        for c in comp.get("competitors", []):
+            if c.get("favorite"):
+                favorite = c.get("team", {}).get("abbreviation", "")
+
+    # Weather (NFL)
+    weather = None
+    if lg == "nfl":
+        w = gi.get("weather") or {}
+        if w:
+            weather = {
+                "temperature": w.get("temperature"),
+                "condition": w.get("condition") or w.get("displayValue"),
+                "wind": w.get("wind") or w.get("windSpeed"),
+            }
+
+    result: dict = {
+        "available": True,
+        "venue": venue_data.get("fullName", ""),
+        "city": (venue_data.get("address") or {}).get("city", ""),
+        "attendance": gi.get("attendance"),
+        "capacity": venue_data.get("capacity") or gi.get("capacity"),
+        "officials": officials,
+        "odds": {"spread": spread, "overUnder": over_under, "favorite": favorite},
+        "broadcasts": broadcasts,
+    }
+    if weather:
+        result["weather"] = weather
+
+    return result
+
+
 @router.get("/api/{league}/team/{team}/roster")
 def get_roster(league: str, team: str):
     try:

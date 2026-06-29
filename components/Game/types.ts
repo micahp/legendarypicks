@@ -39,9 +39,82 @@ export interface GameDetail {
 
 export type Tab = 'boxscore' | 'playbyplay' | 'info'
 
+// ── New per-tab API response types ──
+
+// BoxScore: US team sports (MLB, NFL, NBA, NHL)
+export interface BoxStatEntry { label: string; value: string }
+export interface BoxTeamTotals { name: string; abbrev: string; stats: BoxStatEntry[] }
+export interface BoxPlayerRow { name: string; position: string; stats: string[] }
+export interface BoxPlayerGroup { team: string; group: string; columns: string[]; rows: BoxPlayerRow[] }
+export interface BoxScoreData {
+  available: boolean
+  teams?: BoxTeamTotals[]
+  players?: BoxPlayerGroup[]
+}
+
+// BoxScore: Soccer (WC)
+export interface SoccerStatBar { label: string; home: string; away: string }
+export interface SoccerLineupPlayer { num: number; name: string; pos: string }
+export interface SoccerLineup { side: string; formation: string; players: SoccerLineupPlayer[] }
+export interface SoccerBoxScoreData {
+  available: boolean
+  teamStats?: SoccerStatBar[]
+  lineups?: SoccerLineup[]
+}
+
+// PlayByPlay: US team sports
+export interface PbPPlay {
+  clock: string
+  text: string
+  scoreAway: number
+  scoreHome: number
+  scoringPlay: boolean
+}
+export interface PbPPeriod { label: string; plays: PbPPlay[] }
+export interface PbPData {
+  available: boolean
+  periods?: PbPPeriod[]
+}
+
+// PlayByPlay: Soccer
+export interface SoccerEvent {
+  minute: number
+  type: 'goal' | 'card' | 'sub' | 'var'
+  text: string
+  team: string
+}
+export interface SoccerPbPData {
+  available: boolean
+  events?: SoccerEvent[]
+}
+
+// GameInfo
+export interface GameOdds { spread: string; overUnder: string; favorite: string }
+export interface GameWeather { temperature: number | null; condition: string; wind: string }
+export interface GameInfoData {
+  available: boolean
+  venue?: string
+  city?: string
+  attendance?: number
+  capacity?: number
+  officials?: string[]
+  odds?: GameOdds
+  broadcasts?: string[]
+  weather?: GameWeather
+}
+
 // ── helpers ──
 export function isNBA(lg: string) { return lg === 'nba' }
 export function isNHL(lg: string) { return lg === 'nhl' }
+export function isMLB(lg: string) { return lg === 'mlb' }
+export function isNFL(lg: string) { return lg === 'nfl' }
+export function isWC(lg: string) { return lg === 'wc' }
+export function isSoccer(lg: string) { return isWC(lg) }
+export function isUSTeamSport(lg: string) { return isNBA(lg) || isNHL(lg) || isMLB(lg) || isNFL(lg) }
+export function hasGameTabs(lg: string) { return isNBA(lg) || isNHL(lg) || isMLB(lg) || isNFL(lg) || isWC(lg) }
+export function usesDetailEndpoint(lg: string) { return isNBA(lg) || isNHL(lg) }
+export function usesPerTabEndpoints(lg: string) { return isMLB(lg) || isNFL(lg) || isWC(lg) }
+
 export function fmt(v: any, dec?: boolean): string {
   if (v === null || v === undefined) return '-'
   if (typeof v === 'number') return dec ? v.toFixed(v % 1 ? 1 : 0) : String(v)

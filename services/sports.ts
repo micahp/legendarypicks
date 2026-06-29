@@ -288,4 +288,35 @@ export const SportsService = {
       return null
     }
   },
+
+  // Per-tab lazy endpoints — each tab fetches its own data on first open
+  getBoxscore: async (league: string, gameId: string) => {
+    try {
+      const res = await axios.get(`${API_BASE_URL}/${league}/game/${gameId}/boxscore`)
+      return res.data
+    } catch (err) {
+      console.error('Error fetching boxscore', err)
+      return { available: false }
+    }
+  },
+
+  getPlayByPlay: async (league: string, gameId: string) => {
+    try {
+      const res = await axios.get(`${API_BASE_URL}/${league}/game/${gameId}/playbyplay`)
+      return res.data
+    } catch (err) {
+      console.error('Error fetching play-by-play', err)
+      return { available: false }
+    }
+  },
+
+  getGameInfo: async (league: string, gameId: string) => {
+    try {
+      const res = await axios.get(`${API_BASE_URL}/${league}/game/${gameId}/gameinfo`)
+      return res.data
+    } catch (err) {
+      console.error('Error fetching game info', err)
+      return { available: false }
+    }
+  },
 }
