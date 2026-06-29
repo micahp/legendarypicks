@@ -36,7 +36,7 @@ type LiveMatch = {
 
 type CS2Player = { name: string; kills: number | null; deaths: number | null }
 type CS2Team = { name: string; score: number | null; won: boolean; players: CS2Player[] }
-type CS2Live = { live: boolean; title?: string; tournament?: string; teamA?: CS2Team; teamB?: CS2Team }
+type CS2Live = { live: boolean; title?: string; tournament?: string; twitch?: string | null; teamA?: CS2Team; teamB?: CS2Team }
 
 const POLL_MS = 10_000
 const PRED_POLL_MS = 60_000
@@ -347,9 +347,18 @@ function CS2Roster({ team, lead }: { team?: CS2Team; lead: boolean }) {
 function LiveGrid({ m }: { m: CS2Live }) {
   const a = m.teamA, b = m.teamB
   const aLead = (a?.score ?? 0) >= (b?.score ?? 0)
+  const [host, setHost] = useState('')
+  useEffect(() => { setHost(window.location.hostname) }, [])
+  const embed = (m.twitch && host) ? `https://player.twitch.tv/?channel=${m.twitch}&parent=${host}&muted=true` : null
   return (
     <section className="space-y-4">
       <SectionHeader live eyebrow={`Live now · ${m.title ?? 'Esports'}${m.tournament ? ' · ' + m.tournament : ''}`} title={`${a?.name ?? ''} vs ${b?.name ?? ''}`} meta="grid · official" />
+      {embed ? (
+        <div className="overflow-hidden rounded-xl border border-zinc-800 bg-black">
+          <iframe src={embed} title="Live broadcast" className="aspect-video w-full"
+                  allow="autoplay; fullscreen" allowFullScreen style={{ border: 'none' }} />
+        </div>
+      ) : null}
       <div className="flex items-center justify-center gap-5 rounded-xl border border-zinc-800 bg-zinc-900/40 py-3">
         <span className={`text-sm font-semibold ${aLead ? 'text-zinc-50' : 'text-zinc-400'}`}>{a?.name}</span>
         <span className="font-mono text-2xl font-bold tabular-nums text-zinc-100">{a?.score ?? 0} <span className="text-zinc-600">–</span> {b?.score ?? 0}</span>

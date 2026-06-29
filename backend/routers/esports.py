@@ -571,6 +571,35 @@ def _grid_title_label(name):
     return None
 
 
+# GRID doesn't expose the broadcast for these (streams[] is empty on Open Access), so we map the
+# tournament/league name → its official Twitch channel. (tournament-keyword, title or None, channel)
+_GRID_STREAM_MAP = [
+    ("united21", None, "united21_en"),
+    ("cct", None, "cct_cs2"),
+    ("european pro league", "Dota 2", "epldota_en1"),
+    ("european pro league", "CS2", "eplcs_en1"),
+    ("blast", None, "blastpremier"),
+    ("dreamleague", None, "dreamleague"),
+    ("esl one", "Dota 2", "esl_dota2"),
+    ("esl", "Dota 2", "esl_dota2"),
+    ("esl", "CS2", "esl_csgo"),
+    ("iem", "CS2", "esl_csgo"),
+    ("pgl", "Dota 2", "pgl_dota2"),
+    ("pgl", "CS2", "pglmajor"),
+    ("thunderpick", None, "thunderpicktv"),
+    ("esports world cup", "Dota 2", "esl_dota2"),
+    ("esports world cup", "CS2", "blastpremier"),
+]
+
+
+def _grid_stream(tournament, title_label):
+    t = (tournament or "").lower()
+    for kw, want_title, channel in _GRID_STREAM_MAP:
+        if kw in t and (want_title is None or want_title == title_label):
+            return channel
+    return None
+
+
 @router.get("/api/esports/grid/live")
 def grid_live():
     """A currently-live CS2 or Dota 2 series via GRID (official): series score + per-player K/D.
@@ -606,8 +635,9 @@ def grid_live():
                         "players": [{"name": p.get("name"), "kills": p.get("kills"), "deaths": p.get("deaths")}
                                     for p in (t.get("players") or [])]}
             teams = st.get("teams") or []
+            tournament = (node.get("tournament") or {}).get("name")
             return {"live": True, "title": label, "seriesId": node["id"],
-                    "tournament": (node.get("tournament") or {}).get("name"),
+                    "tournament": tournament, "twitch": _grid_stream(tournament, label),
                     "teamA": tm(teams[0]) if len(teams) > 0 else None,
                     "teamB": tm(teams[1]) if len(teams) > 1 else None}
     return {"live": False}
