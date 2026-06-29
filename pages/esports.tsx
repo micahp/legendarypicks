@@ -18,7 +18,8 @@ type Team = { name: string; code: string; image: string | null; rank: number | n
 type Match = { startTime: string; state: string; bestOf: number; teamA: Team; teamB: Team; favorite: string; hasMarket?: boolean }
 type MSIData = { event: string; model?: string; matches: Match[]; error?: string }
 
-type LiveTeam = Team & { gold: number | null; kills: number | null; towers: number | null; dragons: number | null; barons: number | null }
+type LivePlayer = { name: string; role: string; champ: string | null; champImg: string | null; kills: number | null; deaths: number | null; assists: number | null; cs: number | null; gold: number | null; level: number | null }
+type LiveTeam = Team & { gold: number | null; kills: number | null; towers: number | null; dragons: number | null; barons: number | null; players?: LivePlayer[] }
 type LiveMatch = {
   live: boolean
   gameNumber?: number
@@ -180,6 +181,34 @@ function SeriesStrip({ m }: { m: LiveMatch }) {
   )
 }
 
+// Full roster — champion, role, live K/D/A and CS per player. The lane order (top→support)
+// is the information: it's how the game is read, so we sort by it rather than by stats.
+const ROLE_ORDER = ['top', 'jungle', 'mid', 'bottom', 'support']
+function PlayerRoster({ team }: { team: LiveTeam }) {
+  const ps = (team.players ?? []).slice().sort((p, q) => ROLE_ORDER.indexOf(p.role) - ROLE_ORDER.indexOf(q.role))
+  if (!ps.length) return null
+  return (
+    <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 p-3">
+      <div className="mb-1 flex items-center gap-2 px-1 text-[10px] font-medium uppercase tracking-[0.18em] text-zinc-500">
+        <TeamCrest src={team.image} size="h-4 w-4" />{team.code}
+      </div>
+      <div className="divide-y divide-zinc-800/70">
+        {ps.map((p, i) => (
+          <div key={i} className="flex items-center gap-3 py-1.5">
+            {p.champImg ? <img src={p.champImg} alt={p.champ ?? ''} className="h-8 w-8 rounded object-cover bg-zinc-800" /> : <span className="h-8 w-8 rounded bg-zinc-800" />}
+            <div className="min-w-0 flex-1">
+              <div className="truncate text-sm font-medium text-zinc-100">{p.name}</div>
+              <div className="text-[10px] uppercase tracking-wider text-zinc-600">{p.role}{p.champ ? ` · ${p.champ}` : ''}</div>
+            </div>
+            <span className="font-mono text-sm tabular-nums text-zinc-200">{p.kills ?? 0}<span className="text-zinc-600">/</span>{p.deaths ?? 0}<span className="text-zinc-600">/</span>{p.assists ?? 0}</span>
+            <span className="w-16 text-right font-mono text-xs tabular-nums text-zinc-500">{p.cs ?? 0} cs</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 function LiveStatTeam({ t, lead }: { t: LiveTeam; lead: boolean }) {
   return (
     <div className="space-y-1.5">
@@ -273,6 +302,13 @@ function LiveMSI({ m }: { m: LiveMatch }) {
           </div>
         </aside>
       </div>
+
+      {(a?.players?.length || b?.players?.length) ? (
+        <div className="grid gap-4 md:grid-cols-2">
+          <PlayerRoster team={a!} />
+          <PlayerRoster team={b!} />
+        </div>
+      ) : null}
     </section>
   )
 }

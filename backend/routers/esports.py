@@ -402,9 +402,55 @@ def _lol_window(gid):
         return {"id": meta.get("esportsTeamId"), "gold": team.get("totalGold"),
                 "kills": team.get("totalKills"), "towers": team.get("towers"),
                 "barons": team.get("barons"), "dragons": len(team.get("dragons") or [])}
+
+    def roster(meta):
+        return [{"pid": p.get("participantId"), "playerId": p.get("esportsPlayerId"),
+                 "name": p.get("summonerName"), "role": p.get("role"),
+                 "champ": p.get("championId"), "teamId": meta.get("esportsTeamId")}
+                for p in (meta.get("participantMetadata") or [])]
     return {"state": f.get("gameState"),
             "blue": side(f.get("blueTeam") or {}, md.get("blueTeamMetadata") or {}),
-            "red": side(f.get("redTeam") or {}, md.get("redTeamMetadata") or {})}
+            "red": side(f.get("redTeam") or {}, md.get("redTeamMetadata") or {}),
+            "roster": roster(md.get("blueTeamMetadata") or {}) + roster(md.get("redTeamMetadata") or {})}
+
+
+_ddv_cache = {"t": 0.0, "v": None}
+
+
+def _ddragon_ver():
+    """Latest Data Dragon version (for champion portraits). Cached ~1h."""
+    import time
+    if _ddv_cache["v"] and time.time() - _ddv_cache["t"] < 3600:
+        return _ddv_cache["v"]
+    try:
+        with _u.urlopen("https://ddragon.leagueoflegends.com/api/versions.json", timeout=6) as r:
+            _ddv_cache.update(t=time.time(), v=json.loads(r.read().decode())[0])
+    except Exception:
+        pass
+    return _ddv_cache["v"]
+
+
+def _lol_details(gid):
+    """Per-player live stats {participantId: {level,kills,deaths,assists,cs,gold}}."""
+    import datetime
+    t = datetime.datetime.utcnow() - datetime.timedelta(seconds=60)
+    t = t.replace(microsecond=0, second=(t.second // 10) * 10)
+    ts = t.strftime("%Y-%m-%dT%H:%M:%S.000Z")
+    url = f"https://feed.lolesports.com/livestats/v1/details/{gid}?startingTime={ts}"
+    try:
+        with _u.urlopen(_u.Request(url, headers={"User-Agent": "Mozilla/5.0"}), timeout=8) as r:
+            d = json.loads(r.read().decode())
+    except Exception:
+        return {}
+    frames = d.get("frames") or []
+    if not frames:
+        return {}
+    out = {}
+    for p in frames[-1].get("participants") or []:
+        out[p.get("participantId")] = {"level": p.get("level"), "kills": p.get("kills"),
+                                       "deaths": p.get("deaths"), "assists": p.get("assists"),
+                                       "cs": p.get("creepScore"), "gold": p.get("totalGold")}
+    return out
 
 
 @router.get("/api/esports/lol/msi/live")
@@ -437,13 +483,35 @@ def msi_live():
                 gid, gnum = g.get("id"), g.get("number")
         win = _lol_window(gid) if gid else None
         bo = (m.get("strategy") or {}).get("count") or 1
+        details = _lol_details(gid) if gid else {}
+        ddv = _ddragon_ver()
+        roster = win.get("roster", []) if win else []
+
+        def players_for(team_id):
+            rows = []
+            for pm in roster:
+                if str(pm.get("teamId")) != str(team_id):
+                    continue
+                st = details.get(pm["pid"], {})
+                champ = pm.get("champ")
+                rows.append({
+                    "name": pm.get("name"), "role": pm.get("role"), "champ": champ,
+                    "champImg": (f"https://ddragon.leagueoflegends.com/cdn/{ddv}/img/champion/{champ}.png"
+                                 if (ddv and champ) else None),
+                    "kills": st.get("kills"), "deaths": st.get("deaths"), "assists": st.get("assists"),
+                    "cs": st.get("cs"), "gold": st.get("gold"), "level": st.get("level"),
+                })
+            order = {"top": 0, "jungle": 1, "mid": 2, "bottom": 3, "support": 4}
+            rows.sort(key=lambda r: order.get(r.get("role"), 9))
+            return rows
 
         def team(x):
             r = _team_rating(x.get("code"), x.get("name"))
             t = {"name": x.get("name"), "code": x.get("code"), "image": x.get("image"),
                  "id": x.get("id"), "rank": r[0] if r else None,
                  "wins": (x.get("result") or {}).get("gameWins"),
-                 "gold": None, "kills": None, "towers": None}
+                 "gold": None, "kills": None, "towers": None,
+                 "players": players_for(x.get("id"))}
             if win:  # map live side by team id
                 for s in (win["blue"], win["red"]):
                     if s.get("id") and str(s["id"]) == str(x.get("id")):
