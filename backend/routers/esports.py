@@ -86,14 +86,25 @@ def _engine_eval(fen: str, depth: int = 11):
         return None
 
 
-def _read_tv(window: int = 6, timeout: float = 3.0):
-    """Read the global featured TV game: the 'featured' snapshot + up to `window` following
-    fen updates (each carries the live clocks wc/bc). Returns (featured_dict, [fen_events])."""
+def _read_tv(window: int = 6, timeout: float = 3.5):
+    """Read the global featured TV game: the 'featured' snapshot (sent first on connect, and
+    again whenever TV switches games) + up to `window` following fen updates, each carrying the
+    live clocks wc/bc. Returns (featured_dict, [fen_events]).
+
+    Resilient by design: a slow game may not produce `window` moves before the deadline, so we
+    return whatever we captured (the featured snapshot alone is enough to render the card) rather
+    than letting a socket timeout discard it."""
+    import time
     req = _u.Request("https://lichess.org/api/tv/feed",
                      headers={"Accept": "application/x-ndjson"})
     featured, fens = None, []
-    with _u.urlopen(req, timeout=timeout) as r:
-        for raw in r:
+    deadline = time.time() + timeout
+    try:
+        resp = _u.urlopen(req, timeout=timeout)
+    except Exception:
+        return None, []
+    try:
+        for raw in resp:
             try:
                 ev = json.loads(raw.decode().strip())
             except Exception:
@@ -104,8 +115,17 @@ def _read_tv(window: int = 6, timeout: float = 3.0):
                 fens = []  # reset: only collect updates for the current featured game
             elif t == "fen":
                 fens.append(ev.get("d"))
-            if featured and len(fens) >= window:
+            if featured and (len(fens) >= window or time.time() >= deadline):
                 break
+            if time.time() >= deadline:
+                break
+    except Exception:
+        pass  # socket timeout / reset — fall through with whatever we collected
+    finally:
+        try:
+            resp.close()
+        except Exception:
+            pass
     return featured, fens
 
 
