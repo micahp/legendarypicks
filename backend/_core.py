@@ -874,14 +874,22 @@ def generate_game_story(lg: str, game_id: str, refresh: bool = False,
     home/away (team abbrevs) let the pre-game path work: a scheduled game has no
     `scores` yet, so the team abbrevs come from the scoreboard instead."""
     lg = lg.lower()
+    cached = None
     with closing(_db()) as con:
         con.execute("""CREATE TABLE IF NOT EXISTS game_story(
-            league TEXT, game_id TEXT, story TEXT, generated_at TEXT,
+            league TEXT, game_id TEXT, story TEXT, generated_at TEXT, has_form INTEGER DEFAULT 0,
             PRIMARY KEY(league, game_id))""")
+        if "has_form" not in [c["name"] for c in con.execute("PRAGMA table_info(game_story)")]:
+            con.execute("ALTER TABLE game_story ADD COLUMN has_form INTEGER DEFAULT 0")
+            con.commit()
         if not refresh:
-            r = con.execute("SELECT story FROM game_story WHERE league=? AND game_id=?", (lg, game_id)).fetchone()
-            if r:
-                return {"league": lg, "game_id": game_id, "story": r["story"], "cached": True}
+            cached = con.execute("SELECT story, has_form FROM game_story WHERE league=? AND game_id=?",
+                                 (lg, game_id)).fetchone()
+            # A story written WITH player form is final — serve it. A "thin" one (has_form=0,
+            # generated before props/form data existed) is provisional: fall through and try to
+            # rewrite it, but only if form data has since arrived (checked below).
+            if cached and cached["has_form"]:
+                return {"league": lg, "game_id": game_id, "story": cached["story"], "cached": True}
 
     try:
         gr = espn.game_result(lg, game_id)
@@ -893,7 +901,8 @@ def generate_game_story(lg: str, game_id: str, refresh: bool = False,
     if len(teams) != 2 and away and home:
         teams = [away, home]
     if len(teams) != 2:
-        return {"league": lg, "game_id": game_id, "story": None}
+        return {"league": lg, "game_id": game_id,
+                "story": cached["story"] if cached else None, "cached": bool(cached)}
     smap = espn.team_strength_map(lg)
 
     def facts(ab):
@@ -929,6 +938,11 @@ def generate_game_story(lg: str, game_id: str, refresh: bool = False,
     if form_lines:
         grounding += "\nRecent player form (most recent first):\n" + "\n".join(form_lines)
 
+    # Provisional thin story already cached and form data STILL hasn't arrived → keep it,
+    # don't spend another LLM call re-writing the same thin blurb on every view.
+    if cached and not form_lines:
+        return {"league": lg, "game_id": game_id, "story": cached["story"], "cached": True}
+
     system = ("You are a sharp sports writer. In 2-4 sentences, set up this matchup using ONLY the "
               "facts given. Lead with the most interesting thing — a team streak/record/differential, "
               "OR a player on a clear hot or cold run from the form data. Be specific with numbers. "
@@ -937,13 +951,14 @@ def generate_game_story(lg: str, game_id: str, refresh: bool = False,
     story = _deepseek_chat(system, grounding)
     if story:
         with closing(_db()) as con:
-            con.execute("""CREATE TABLE IF NOT EXISTS game_story(
-                league TEXT, game_id TEXT, story TEXT, generated_at TEXT,
-                PRIMARY KEY(league, game_id))""")
-            con.execute("INSERT OR REPLACE INTO game_story(league, game_id, story, generated_at) "
-                        "VALUES (?,?,?,datetime('now'))", (lg, game_id, story))
+            con.execute("INSERT OR REPLACE INTO game_story(league, game_id, story, generated_at, has_form) "
+                        "VALUES (?,?,?,datetime('now'),?)", (lg, game_id, story, 1 if form_lines else 0))
             con.commit()
-    return {"league": lg, "game_id": game_id, "story": story, "cached": False}
+    elif cached:
+        # generation failed this time — keep the previous story rather than blanking it
+        return {"league": lg, "game_id": game_id, "story": cached["story"], "cached": True}
+    return {"league": lg, "game_id": game_id, "story": story,
+            "cached": False, "has_form": bool(form_lines)}
 
 
 import threading as _threading
