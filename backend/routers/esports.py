@@ -560,17 +560,28 @@ def _grid_state(sid):
     return (d or {}).get("seriesState") if d else None
 
 
-@router.get("/api/esports/cs2/live")
-def cs2_live():
-    """A currently-live CS2 series via GRID (official): series score + per-player K/D. Data-only —
-    Open Access doesn't expose the broadcast stream."""
+_GRID_TITLE_LABELS = [("counter", "CS2"), ("ancient", "Dota 2"), ("dota", "Dota 2")]
+
+
+def _grid_title_label(name):
+    n = (name or "").lower()
+    for kw, label in _GRID_TITLE_LABELS:
+        if kw in n:
+            return label
+    return None
+
+
+@router.get("/api/esports/grid/live")
+def grid_live():
+    """A currently-live CS2 or Dota 2 series via GRID (official): series score + per-player K/D.
+    Returns the most-recently-started in-progress one. Data-only — Open Access has no stream."""
     if not _GRID_KEY:
         return {"live": False, "error": "GRID key not configured"}
     import datetime
     now = datetime.datetime.utcnow()
     lo = (now - datetime.timedelta(hours=6)).strftime("%Y-%m-%dT%H:%M:%SZ")
     hi = now.strftime("%Y-%m-%dT%H:%M:%SZ")
-    q = ('{ allSeries(first:25, orderBy: StartTimeScheduled, orderDirection: DESC, '
+    q = ('{ allSeries(first:40, orderBy: StartTimeScheduled, orderDirection: DESC, '
          'filter:{ startTimeScheduled:{ gte:"%s", lte:"%s" } }) '
          '{ edges { node { id startTimeScheduled title { name } tournament { name } '
          'teams { baseInfo { name } } } } } }' % (lo, hi))
@@ -579,11 +590,15 @@ def cs2_live():
 
     def is_test(n):
         names = [((t.get("baseInfo") or {}).get("name") or "") for t in (n.get("teams") or [])]
-        return any(x in ("CS2-1", "CS2-2", "TBD-1", "TBD-2") for x in names)
-    cs2 = [e["node"] for e in edges
-           if "counter" in (((e.get("node") or {}).get("title") or {}).get("name") or "").lower()
-           and not is_test(e.get("node") or {})]
-    for node in cs2[:8]:
+        return any(x in ("CS2-1", "CS2-2", "DOTA-1", "DOTA-2", "TBD-1", "TBD-2") for x in names)
+
+    cands = []
+    for e in edges:
+        node = e.get("node") or {}
+        label = _grid_title_label(((node.get("title") or {}).get("name")))
+        if label and not is_test(node):
+            cands.append((node, label))
+    for node, label in cands[:10]:
         st = _grid_state(node["id"])
         if st and st.get("started") and not st.get("finished"):
             def tm(t):
@@ -591,7 +606,7 @@ def cs2_live():
                         "players": [{"name": p.get("name"), "kills": p.get("kills"), "deaths": p.get("deaths")}
                                     for p in (t.get("players") or [])]}
             teams = st.get("teams") or []
-            return {"live": True, "title": "CS2", "seriesId": node["id"],
+            return {"live": True, "title": label, "seriesId": node["id"],
                     "tournament": (node.get("tournament") or {}).get("name"),
                     "teamA": tm(teams[0]) if len(teams) > 0 else None,
                     "teamB": tm(teams[1]) if len(teams) > 1 else None}
