@@ -554,10 +554,24 @@ def _grid(url, query):
 
 def _grid_state(sid):
     # Known-good fields only (format/games subfields differ in the schema — add later if needed).
-    q = ('{ seriesState(id:"%s") { started finished valid '
+    q = ('{ seriesState(id:"%s") { started finished valid updatedAt '
          'teams { name score won players { name kills deaths } } } }' % sid)
     d = _grid(_GRID_SS, q)
     return (d or {}).get("seriesState") if d else None
+
+
+def _fresh(ts, minutes=4):
+    """GRID's `finished` flag lags (a Bo3 ends but stays started && !finished), so a 'live' series
+    whose state hasn't updated in minutes is actually over / off-air. Gate on updatedAt freshness."""
+    if not ts:
+        return False
+    try:
+        import datetime
+        s = ts.replace("Z", "").split(".")[0]
+        dt = datetime.datetime.strptime(s, "%Y-%m-%dT%H:%M:%S")
+        return (datetime.datetime.utcnow() - dt).total_seconds() < minutes * 60
+    except Exception:
+        return False
 
 
 _GRID_TITLE_LABELS = [("counter", "CS2"), ("ancient", "Dota 2"), ("dota", "Dota 2")]
@@ -634,7 +648,7 @@ def grid_live():
     live_ones = []
     for node, label in cands[:12]:
         st = _grid_state(node["id"])
-        if st and st.get("started") and not st.get("finished"):
+        if st and st.get("started") and not st.get("finished") and _fresh(st.get("updatedAt")):
             tournament = (node.get("tournament") or {}).get("name")
             live_ones.append((node, label, st, _grid_stream(tournament, label)))
     if not live_ones:
