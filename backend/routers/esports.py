@@ -376,3 +376,86 @@ def msi_predictions():
     matches.sort(key=lambda x: (order.get(x["state"], 1), x["startTime"] or ""))
     return {"event": "MSI 2026", "model": "power-ranking prior (Sheep) · Elo · Bo5",
             "matches": matches}
+
+
+# --- LoL / MSI live game (embed the actual broadcast + live state) -------------------------
+def _lol_window(gid):
+    """Latest live frame (gold/kills/objectives per side) from the LoL livestats window.
+    The window needs a startingTime ~now-60s rounded to 10s, else it returns opening frames."""
+    import datetime
+    t = datetime.datetime.utcnow() - datetime.timedelta(seconds=60)
+    t = t.replace(microsecond=0, second=(t.second // 10) * 10)
+    ts = t.strftime("%Y-%m-%dT%H:%M:%S.000Z")
+    url = f"https://feed.lolesports.com/livestats/v1/window/{gid}?startingTime={ts}"
+    try:
+        with _u.urlopen(_u.Request(url, headers={"User-Agent": "Mozilla/5.0"}), timeout=8) as r:
+            d = json.loads(r.read().decode())
+    except Exception:
+        return None
+    frames = d.get("frames") or []
+    if not frames:
+        return None
+    f = frames[-1]
+    md = d.get("gameMetadata") or {}
+
+    def side(team, meta):
+        return {"id": meta.get("esportsTeamId"), "gold": team.get("totalGold"),
+                "kills": team.get("totalKills"), "towers": team.get("towers"),
+                "barons": team.get("barons"), "dragons": len(team.get("dragons") or [])}
+    return {"state": f.get("gameState"),
+            "blue": side(f.get("blueTeam") or {}, md.get("blueTeamMetadata") or {}),
+            "red": side(f.get("redTeam") or {}, md.get("redTeamMetadata") or {})}
+
+
+@router.get("/api/esports/lol/msi/live")
+def msi_live():
+    """The currently-live MSI match: broadcast embed (YouTube/Twitch) + live game state."""
+    try:
+        live = _lol_get("https://esports-api.lolesports.com/persisted/gw/getLive?hl=en-US")
+    except Exception:
+        return {"live": False}
+    for e in (((live.get("data") or {}).get("schedule") or {}).get("events") or []):
+        if (e.get("league") or {}).get("slug") != "msi":
+            continue
+        if e.get("type") != "match" or e.get("state") != "inProgress":
+            continue
+        m = e.get("match") or {}
+        teams = m.get("teams") or []
+        yt = tw = None
+        for s in e.get("streams") or []:
+            loc = (s.get("mediaLocale") or {}).get("locale", "")
+            if loc.startswith("en"):
+                if s.get("provider") == "youtube" and not yt:
+                    yt = s.get("parameter")
+                if s.get("provider") == "twitch" and not tw:
+                    tw = s.get("parameter")
+        gid = gnum = None
+        for g in m.get("games") or []:
+            if g.get("state") == "inProgress":
+                gid, gnum = g.get("id"), g.get("number")
+        win = _lol_window(gid) if gid else None
+
+        def team(x):
+            r = _team_rating(x.get("code"), x.get("name"))
+            t = {"name": x.get("name"), "code": x.get("code"), "image": x.get("image"),
+                 "id": x.get("id"), "rank": r[0] if r else None,
+                 "wins": (x.get("result") or {}).get("gameWins"),
+                 "gold": None, "kills": None, "towers": None}
+            if win:  # map live side by team id
+                for s in (win["blue"], win["red"]):
+                    if s.get("id") and str(s["id"]) == str(x.get("id")):
+                        t.update(gold=s["gold"], kills=s["kills"], towers=s["towers"],
+                                 barons=s["barons"], dragons=s["dragons"])
+            return t
+
+        a = team(teams[0]) if teams else None
+        b = team(teams[1]) if len(teams) > 1 else None
+        gold_lead = None
+        if a and b and a.get("gold") and b.get("gold"):
+            gold_lead = {"code": a["code"] if a["gold"] >= b["gold"] else b["code"],
+                         "amount": abs(a["gold"] - b["gold"])}
+        return {"live": True, "matchId": m.get("id"), "gameId": gid, "gameNumber": gnum,
+                "bestOf": (m.get("strategy") or {}).get("count"),
+                "gameState": win.get("state") if win else None,
+                "youtube": yt, "twitch": tw, "teamA": a, "teamB": b, "goldLead": gold_lead}
+    return {"live": False}

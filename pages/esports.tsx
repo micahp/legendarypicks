@@ -19,6 +19,19 @@ type Team = { name: string; code: string; image: string | null; rank: number | n
 type Match = { startTime: string; state: string; bestOf: number; teamA: Team; teamB: Team; favorite: string; hasMarket?: boolean }
 type MSIData = { event: string; model?: string; matches: Match[]; error?: string }
 
+type LiveTeam = Team & { gold: number | null; kills: number | null; towers: number | null; dragons: number | null; barons: number | null }
+type LiveMatch = {
+  live: boolean
+  gameNumber?: number
+  bestOf?: number
+  gameState?: string | null
+  youtube?: string | null
+  twitch?: string | null
+  teamA?: LiveTeam
+  teamB?: LiveTeam
+  goldLead?: { code: string; amount: number } | null
+}
+
 const POLL_MS = 10_000
 const PRED_POLL_MS = 60_000
 
@@ -120,6 +133,96 @@ function MatchCard({ m }: { m: Match }) {
   )
 }
 
+/* Live MSI game — the actual broadcast + live gold/kills/objectives overlay */
+function LiveStatTeam({ t, share, lead }: { t: LiveTeam; share: number; lead: boolean }) {
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex min-w-0 items-center gap-2">
+          {t.image ? <img src={t.image} alt="" className="h-6 w-6 shrink-0 object-contain" />
+            : <span className="h-6 w-6 shrink-0 rounded bg-zinc-800" />}
+          <span className={`truncate text-sm font-semibold ${lead ? 'text-zinc-50' : 'text-zinc-300'}`}>{t.name}</span>
+        </div>
+        <span className="font-mono text-lg font-bold tabular-nums text-zinc-100">{t.kills ?? 0}</span>
+      </div>
+      <div className="flex items-center justify-between font-mono text-[11px] tabular-nums text-zinc-500">
+        <span>{t.gold !== null ? `${(t.gold / 1000).toFixed(1)}k gold` : '—'}</span>
+        <span>🏰 {t.towers ?? 0} · 🐉 {t.dragons ?? 0}{t.barons ? ` · 👑 ${t.barons}` : ''}</span>
+      </div>
+    </div>
+  )
+}
+
+function LiveMSI({ m }: { m: LiveMatch }) {
+  const a = m.teamA, b = m.teamB
+  const ga = a?.gold ?? 0, gb = b?.gold ?? 0
+  const tot = ga + gb || 1
+  const aShare = (ga / tot) * 100
+  const aLead = ga >= gb
+  // Twitch embeds reliably (official streams often block YouTube embedding); parent must match
+  // the page host, so read it at runtime — works on the tunnel, localhost, and prod alike.
+  const [host, setHost] = useState('')
+  useEffect(() => { setHost(window.location.hostname) }, [])
+  const embed = (m.twitch && host)
+    ? `https://player.twitch.tv/?channel=${m.twitch}&parent=${host}&muted=true`
+    : (m.youtube ? `https://www.youtube.com/embed/${m.youtube}?autoplay=1&mute=1` : null)
+
+  return (
+    <section className="space-y-3">
+      <div className="flex flex-wrap items-center gap-3">
+        <h2 className="text-lg font-bold tracking-tight">MSI 2026 — Live</h2>
+        <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-red-400">
+          <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse motion-reduce:animate-none" /> LIVE
+        </span>
+        <span className="font-mono text-xs text-zinc-500">
+          {a?.code} vs {b?.code} · Game {m.gameNumber} · Bo{m.bestOf}
+        </span>
+      </div>
+
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px]">
+        {/* the actual game */}
+        <div className="overflow-hidden rounded-xl border border-zinc-800 bg-black">
+          {embed ? (
+            <iframe src={embed} title="MSI live broadcast" className="aspect-video w-full"
+                    allow="autoplay; fullscreen; encrypted-media" allowFullScreen style={{ border: 'none' }} />
+          ) : (
+            <div className="flex aspect-video items-center justify-center text-sm text-zinc-500">Stream loading…</div>
+          )}
+        </div>
+
+        {/* live state overlay */}
+        <aside className="space-y-3">
+          <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-4">
+            <div className="mb-3 flex items-center justify-between text-[10px] font-medium uppercase tracking-[0.18em] text-zinc-500">
+              <span>Live game state</span><span className="font-mono">lolesports</span>
+            </div>
+            <LiveStatTeam t={a!} share={aShare} lead={aLead} />
+            <div className="my-3 flex h-2 w-full overflow-hidden rounded-full bg-zinc-800">
+              <div className="bg-emerald-500" style={{ width: `${aShare}%` }} />
+              <div className="bg-amber-500" style={{ width: `${100 - aShare}%` }} />
+            </div>
+            <LiveStatTeam t={b!} share={100 - aShare} lead={!aLead} />
+          </div>
+
+          {m.goldLead && m.goldLead.amount > 500 ? (
+            <div className="rounded-xl border-l-2 border-emerald-500 bg-emerald-500/[0.07] p-4">
+              <div className="text-[10px] font-medium uppercase tracking-[0.18em] text-emerald-400/90">Moment that matters</div>
+              <p className="mt-1 font-mono text-sm font-semibold text-emerald-200">
+                {m.goldLead.code} +{m.goldLead.amount.toLocaleString()} gold
+              </p>
+            </div>
+          ) : null}
+
+          <div className="flex gap-3 font-mono text-xs text-zinc-500">
+            {m.youtube ? <a className="hover:text-emerald-400" href={`https://youtube.com/watch?v=${m.youtube}`} target="_blank" rel="noreferrer">youtube ↗</a> : null}
+            {m.twitch ? <a className="hover:text-emerald-400" href={`https://twitch.tv/${m.twitch}`} target="_blank" rel="noreferrer">twitch ↗</a> : null}
+          </div>
+        </aside>
+      </div>
+    </section>
+  )
+}
+
 /* Win-probability bar for the chess card (white fills from the left) */
 function WinBar({ white }: { white: number }) {
   return (
@@ -142,26 +245,25 @@ function ClockTag({ s }: { s: number | null | undefined }) {
 
 export default function EsportsPage() {
   const [msi, setMsi] = useState<MSIData | null>(null)
+  const [live, setLive] = useState<LiveMatch | null>(null)
   const [chess, setChess] = useState<ChessLive | null>(null)
-  const chessTimer = useRef<ReturnType<typeof setInterval> | null>(null)
-  const predTimer = useRef<ReturnType<typeof setInterval> | null>(null)
+  const timers = useRef<ReturnType<typeof setInterval>[]>([])
 
   useEffect(() => {
     let alive = true
-    const loadPred = async () => {
-      try { const r = await fetch('/api/esports/lol/msi/predictions'); const d = await r.json(); if (alive) setMsi(d) } catch {}
+    const j = (url: string, set: (d: any) => void) => async () => {
+      try { const r = await fetch(url); const d = await r.json(); if (alive) set(d) } catch {}
     }
-    const loadChess = async () => {
-      try { const r = await fetch('/api/esports/chess/live'); const d = await r.json(); if (alive) setChess(d) } catch {}
-    }
-    loadPred(); loadChess()
-    predTimer.current = setInterval(loadPred, PRED_POLL_MS)
-    chessTimer.current = setInterval(loadChess, POLL_MS)
-    return () => {
-      alive = false
-      if (predTimer.current) clearInterval(predTimer.current)
-      if (chessTimer.current) clearInterval(chessTimer.current)
-    }
+    const loadPred = j('/api/esports/lol/msi/predictions', setMsi)
+    const loadLive = j('/api/esports/lol/msi/live', setLive)
+    const loadChess = j('/api/esports/chess/live', setChess)
+    loadPred(); loadLive(); loadChess()
+    timers.current = [
+      setInterval(loadPred, PRED_POLL_MS),
+      setInterval(loadLive, 15_000),
+      setInterval(loadChess, POLL_MS),
+    ]
+    return () => { alive = false; timers.current.forEach(clearInterval) }
   }, [])
 
   const wp = chess?.winPct ?? null
@@ -185,6 +287,9 @@ export default function EsportsPage() {
           </div>
           <p className="text-sm text-zinc-500">Who wins, and the moment it turns.</p>
         </header>
+
+        {/* MSI 2026 — live game (the actual broadcast + live state), when one is on */}
+        {live?.live ? <LiveMSI m={live} /> : null}
 
         {/* MSI 2026 — pre-game predictions */}
         <section className="space-y-3">
