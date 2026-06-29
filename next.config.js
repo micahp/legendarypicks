@@ -7,6 +7,11 @@ module.exports = {
   // code-quality item (see docs/POLISH-CHECKLIST.md), not a deploy blocker.
   eslint: { ignoreDuringBuilds: true },
   typescript: { ignoreBuildErrors: true },
+  async redirects() {
+    return [
+      { source: '/stats', destination: '/leagues', permanent: false },
+    ]
+  },
   async rewrites() {
     // In docker-compose the backend is reachable as service `backend:8000`.
     // Locally it's on localhost:8000. Override with API_PROXY_TARGET (.env.local sets this to

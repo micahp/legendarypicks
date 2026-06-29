@@ -502,6 +502,115 @@ def lineups(league, game_id):
     return result
 
 
+def wc_knockout_standings():
+    """World Cup knockout bracket/results from the scoreboard.
+
+    When group_standings() returns empty (group stage is over), read the
+    scoreboard for knockout events. ESPN /standings returns {children: []}
+    once groups finish, but /scoreboard carries the bracket events with
+    results, scores, and winner flags.
+
+    Returns {rounds: [{name, matches: [{home, away, homeScore, awayScore,
+                                         winner, status, game_id}]}]}
+
+    §10: ESPN fields are OBJECTS — extract .abbreviation from team,
+         .displayValue from scores before returning.
+    """
+    _, path = _check("wc")
+    d = _get(_SITE.format(path=path) + "/scoreboard", ttl=60)
+
+    # Try to read the current phase from the season envelope
+    season = d.get("season") or {}
+    if not isinstance(season, dict):
+        season = {}
+    season_type = season.get("type") or {}
+    if not isinstance(season_type, dict):
+        season_type = {}
+    default_phase = season_type.get("name") or "Knockout Stage"
+
+    # Collect matches, then group by round
+    matches = []
+    for e in d.get("events", []):
+        comp = (e.get("competitions") or [{}])[0]
+        status = comp.get("status", {}) or {}
+        st = status.get("type", {}) or {}
+
+        # ── Round / stage ──
+        round_info = e.get("round", {}) or {}
+        round_name = (
+            round_info.get("displayName")
+            or round_info.get("name")
+            or round_info.get("shortDisplayName")
+            or default_phase
+        )
+
+        # ── Competitor data (extract strings, never ship raw ESPN objects) ──
+        home_team = None
+        away_team = None
+        home_score = None
+        away_score = None
+        winner = None
+
+        for c in comp.get("competitors", []):
+            t = c.get("team", {}) or {}
+            # §10: team is an object — extract .abbreviation
+            abbrev = t.get("abbreviation")
+
+            # Score may be a raw number or an object {value, displayValue}
+            score_raw = c.get("score")
+            if isinstance(score_raw, dict):
+                score_val = score_raw.get("displayValue")
+                if score_val is None:
+                    score_val = score_raw.get("value")
+            else:
+                score_val = score_raw
+
+            ha = c.get("homeAway")
+            if ha == "home":
+                home_team = abbrev
+                home_score = score_val
+            else:
+                away_team = abbrev
+                away_score = score_val
+
+            if c.get("winner") is True:
+                winner = abbrev
+
+        matches.append({
+            "home": home_team,
+            "away": away_team,
+            "homeScore": home_score,
+            "awayScore": away_score,
+            "winner": winner,
+            "status": st.get("name") or st.get("description") or "",
+            "round": round_name,
+            "game_id": e.get("id"),
+        })
+
+    # Group by round
+    rounds_map = {}
+    for m in matches:
+        rname = m.pop("round", default_phase)
+        if rname not in rounds_map:
+            rounds_map[rname] = []
+        rounds_map[rname].append(m)
+
+    # Stable order (canonical knockout sequence)
+    ROUND_ORDER = [
+        "Round of 32", "Round of 16", "Quarterfinals",
+        "Semifinals", "Third Place", "Final",
+    ]
+    rounds = []
+    for rname in ROUND_ORDER:
+        if rname in rounds_map:
+            rounds.append({"name": rname, "matches": rounds_map.pop(rname)})
+    # Anything left (unusual round names)
+    for rname, match_list in rounds_map.items():
+        rounds.append({"name": rname, "matches": match_list})
+
+    return {"rounds": rounds}
+
+
 def match_events(league, game_id):
     """Key events + commentary for a soccer match."""
     d = summary(league, game_id)

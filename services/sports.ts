@@ -144,7 +144,8 @@ export function normalizeGame(g: any, leagueOverride?: string): Game {
   let subtitle = g?.card_segment || g?.event || ''
 
   // Determine league from various possible fields, with optional override
-  const league = leagueOverride ? leagueOverride : (g?.league ?? g?.sport ?? '')
+  const rawLeague = leagueOverride ? leagueOverride : (g?.league ?? g?.sport ?? '')
+  const league = typeof rawLeague === 'string' ? rawLeague : (rawLeague?.abbreviation || rawLeague?.name || String(rawLeague || ''))
 
   return {
     gameId: String(g?.game_id ?? g?.gameId ?? ''),
