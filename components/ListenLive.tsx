@@ -1,36 +1,22 @@
-import { useState } from 'react'
+// Free live audio anchor for leagues we can't show on video (World Cup etc.). Plays the iHeart
+// FIFA World Cup 2026 station's DIRECT AAC stream (FOX Sports English commentary, all 104 games,
+// free + US-accessible) in a native <audio> element — no iHeart page (which defaulted to a local
+// station like Kiss.fm) and no UK geo-block like talkSPORT. preload=none so nothing loads until tapped.
+const WC_STREAM = 'https://stream.revma.ihrhls.com/zc11554'        // iHeart FIFA World Cup 2026 (FOX, AAC)
+const WC_PAGE = 'https://www.iheart.com/live/fifa-world-cup-2026-11554/'
 
-// Free live audio anchor for leagues we can't show on video (World Cup etc.). Uses iHeartRadio's
-// FIFA World Cup station — FOX Sports English commentary, all 104 games, free and US-accessible
-// (talkSPORT/BBC are UK-geo-blocked; iHeart is not). Collapsed by default so it never autoplays.
-const IHEART_WC = 'https://www.iheart.com/live/fifa-world-cup-2026-11554/'
-export default function ListenLive({ label = 'World Cup · FOX Sports on iHeart (free)' }: { label?: string }) {
-  const [open, setOpen] = useState(false)
+export default function ListenLive({ label = 'World Cup · FOX Sports commentary (free)' }: { label?: string }) {
   return (
-    <div className="overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900/50">
-      <div className="flex items-center justify-between gap-3 px-4 py-3">
-        <button
-          type="button"
-          onClick={() => setOpen((o) => !o)}
-          aria-expanded={open}
-          className="flex items-center gap-2 text-left text-sm font-semibold text-zinc-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-500"
-        >
-          <span aria-hidden>🎧</span> Listen live
-          <span className="font-normal text-zinc-500">· {label}</span>
-          <span className="font-mono text-xs text-zinc-500">{open ? '▾' : '▸'}</span>
-        </button>
-        <a href={IHEART_WC} target="_blank" rel="noreferrer"
-           className="font-mono text-[11px] text-zinc-500 hover:text-emerald-400">open ↗</a>
+    <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-4">
+      <div className="mb-2.5 flex items-center justify-between gap-2">
+        <span className="flex items-center gap-2 text-sm font-semibold text-zinc-100">
+          <span aria-hidden>🎧</span> Listen live <span className="font-normal text-zinc-500">· {label}</span>
+        </span>
+        <a href={WC_PAGE} target="_blank" rel="noreferrer" className="font-mono text-[11px] text-zinc-500 hover:text-emerald-400">iHeart ↗</a>
       </div>
-      {open ? (
-        <iframe
-          src={IHEART_WC}
-          title="FIFA World Cup live audio — iHeart"
-          className="w-full"
-          height={340}
-          style={{ border: 'none' }}
-        />
-      ) : null}
+      <audio controls preload="none" src={WC_STREAM} className="h-9 w-full">
+        Your browser can’t play this stream — <a href={WC_PAGE}>open on iHeart ↗</a>
+      </audio>
     </div>
   )
 }
