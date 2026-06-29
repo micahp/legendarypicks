@@ -9,6 +9,7 @@ import PlayByPlay from '../../../components/Game/PlayByPlay'
 import GameInfo from '../../../components/Game/GameInfo'
 import GameProps from '../../../components/Game/GameProps'
 import GameStory from '../../../components/Game/GameStory'
+import ListenLive from '../../../components/ListenLive'
 
 export default function GameDetailPage() {
   const router = useRouter()
@@ -42,6 +43,7 @@ export default function GameDetailPage() {
         <button onClick={() => router.back()} className="text-zinc-500 hover:text-white transition-colors text-sm">← Back</button>
         <span className="text-[10px] uppercase tracking-widest text-zinc-500 bg-zinc-900 px-2 py-0.5 rounded">{league?.toUpperCase()}</span>
       </div>
+      {league === 'wc' ? <ListenLive /> : null}
       {league && gameId && <GameStory league={league} gameId={gameId} />}
       {league && gameId ? <GameProps league={league} gameId={gameId} /> : null}
       {league && gameId
@@ -72,6 +74,8 @@ export default function GameDetailPage() {
           awayName={sAway?.name || ctx?.away_team || ''}
           homeRecord={homeRecord} awayRecord={awayRecord}
         />
+
+        {league === 'wc' ? <ListenLive /> : null}
 
         {/* AI matchup story (grounded in records/streaks) */}
         {league && gameId && <GameStory league={league} gameId={gameId} />}

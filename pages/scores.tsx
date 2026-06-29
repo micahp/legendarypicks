@@ -1,9 +1,41 @@
 import { useState, useEffect } from 'react'
 import Head from 'next/head'
+import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { SportsService, Game } from '../services/sports'
 import GameCard from '../components/Scores/GameCard'
 import { SkeletonList, ErrorBanner, EmptyState } from '../components/Scores/States'
+import ListenLive from '../components/ListenLive'
+
+// Discovery rail: surface what's live to everyone on the board — a CS player who wandered in
+// might click into the World Cup, and vice versa.
+function LiveNow({ games }: { games: Game[] }) {
+  const live = games.filter((g) => g.status === 'LIVE')
+  const wcLive = live.some((g) => g.league === 'WC')
+  if (live.length === 0) return null
+  return (
+    <div className="space-y-3 rounded-2xl border border-red-500/20 bg-red-500/[0.04] p-4">
+      <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-red-400">
+        <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse motion-reduce:animate-none" /> Live now
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {live.map((g) => (
+          <Link key={g.gameId} href={`/game/${g.league?.toLowerCase()}/${g.gameId}`}
+                className="group flex items-center gap-2 rounded-lg border border-zinc-800 bg-zinc-900/70 px-3 py-1.5 text-sm hover:border-zinc-600">
+            <span className="font-mono text-[10px] uppercase tracking-wider text-zinc-500">{g.league}</span>
+            <span className="font-medium text-zinc-100">{g.awayTeam?.nickname || g.awayTeam?.name}</span>
+            <span className="font-mono tabular-nums text-zinc-400">{g.awayTeam?.score ?? 0}–{g.homeTeam?.score ?? 0}</span>
+            <span className="font-medium text-zinc-100">{g.homeTeam?.nickname || g.homeTeam?.name}</span>
+          </Link>
+        ))}
+        <Link href="/esports" className="flex items-center gap-1.5 rounded-lg border border-emerald-600/40 bg-emerald-500/[0.07] px-3 py-1.5 text-sm font-medium text-emerald-300 hover:bg-emerald-500/15">
+          🎮 Live esports →
+        </Link>
+      </div>
+      {wcLive ? <ListenLive /> : null}
+    </div>
+  )
+}
 
 const LEAGUE_PRIORITY = ['NBA', 'MLB', 'NHL', 'NFL', 'COD', 'WC', 'ATP', 'WTA', 'UFC']
 const LEAGUES = ['All', 'NBA', 'MLB', 'NHL', 'NFL', 'ATP', 'WTA', 'UFC', 'Call of Duty', 'World Cup']
@@ -165,6 +197,7 @@ export default function ScoresPage() {
           </button>
         </div>
         {error && <ErrorBanner message={error} />}
+        {!loading && games.length > 0 ? <LiveNow games={games} /> : null}
         {loading ? (
           <SkeletonList />
         ) : games.length === 0 ? (
