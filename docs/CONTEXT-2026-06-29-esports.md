@@ -100,3 +100,22 @@ numerals for all data, emerald reserved for the "moment that matters" beacon.
 - **Never suggest pausing** / "watch the game" — keep working.
 - When he sends rapid feedback, KEEP shipping consistently; don't go data-only/lazy on one surface
   while another (chess) has the richer treatment.
+
+## Update (late 06-29) — Game-detail tabs for all leagues
+- **Branch:** `feat/game-detail-tabs` (off `analytics-backbone`, worktree `/root/lp-game-detail-tabs`)
+- **Backend** (`0b3ad8d`): 3 new lazy per-tab endpoints — `GET /api/{league}/game/{id}/boxscore`,
+  `GET /api/{league}/game/{id}/playbyplay`, `GET /api/{league}/game/{id}/gameinfo`. Shared cached
+  `espn.summary()` (20s TTL) replaces 5 duplicate `/summary` fetches. Two data families: US team
+  sports (MLB/NFL/NBA/NHL — period-grouped plays + team/player stat tables) and soccer (WC — team
+  match stats + lineups + key-events timeline). ATP/WTA/UFC/COD return `{available:false}`.
+  Existing `/api/{league}/game/{id}/detail` path (NBA/NHL DB-snapshot) untouched — no regression.
+- **Frontend** (`f9193e0`): MLBBoxScore (batting+pitching, ◆ HR markers, AVG glow), NFLBoxScore
+  (passing/rushing/receiving 3-col grid + defense), SoccerBoxScore (stat bars + lineups),
+  generalized PlayByPlay (period timeline + soccer event rail), extended GameInfo (odds chips,
+  weather, broadcasts, capacity fill%). TabBar gating hides tabs for unsupported leagues (ATP/WTA/
+  UFC/COD show clean "Detailed stats aren't available for this sport yet."). NBA/NHL use legacy
+  `/detail` path unchanged.
+- **One bug caught:** ESPN uses `sg.type` (not `sg.name`) for stat group names — backend patched.
+- **Dev preview:** http://127.0.0.1:3096/game/mlb/401815676 (backend :8096).
+- **Not yet merged** — awaiting frontend validator (headless browser screenshots). Merge to
+  `analytics-backbone` with `git -C /root/legendarypicks merge --ff-only feat/game-detail-tabs`.
