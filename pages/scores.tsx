@@ -34,19 +34,9 @@ function LiveNow({ games }: { games: Game[] }) {
 
   return (
     <div className="space-y-4 rounded-2xl border border-red-500/20 bg-red-500/[0.04] p-4 sm:p-5">
-      <div className="flex items-center justify-between gap-3">
-        <span className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-red-400">
-          <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse motion-reduce:animate-none" /> Live now
-        </span>
-        <div className="flex items-center gap-4 text-sm font-medium">
-          {rest.length > 0 ? (
-            <button type="button" onClick={() => setShowAll((s) => !s)} className="text-zinc-400 hover:text-white">
-              {showAll ? 'Hide' : `+${rest.length} more live`} →
-            </button>
-          ) : null}
-          <Link href="/esports" className="text-emerald-300 hover:text-emerald-200">🎮 Live esports →</Link>
-        </div>
-      </div>
+      <span className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-red-400">
+        <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse motion-reduce:animate-none" /> Live now
+      </span>
 
       {/* featured — one game, big score */}
       <Link href={`/game/${feat.league?.toLowerCase()}/${feat.gameId}`}
@@ -62,11 +52,24 @@ function LiveNow({ games }: { games: Game[] }) {
         ))}
       </Link>
 
+      {wcLive ? <ListenLive /> : null}
+
+      {/* buttons below, chip-style */}
+      <div className="flex flex-wrap gap-2">
+        {rest.length > 0 ? (
+          <button type="button" onClick={() => setShowAll((s) => !s)}
+                  className="rounded-lg border border-zinc-800 bg-zinc-900/70 px-3 py-1.5 text-sm font-medium text-zinc-300 hover:border-zinc-600 hover:text-white">
+            {showAll ? 'Hide' : `+${rest.length} more live`} →
+          </button>
+        ) : null}
+        <Link href="/esports" className="rounded-lg border border-emerald-600/40 bg-emerald-500/[0.07] px-3 py-1.5 text-sm font-medium text-emerald-300 hover:bg-emerald-500/15">
+          🎮 Live esports →
+        </Link>
+      </div>
+
       {showAll && rest.length > 0 ? (
         <div className="flex flex-wrap gap-2">{rest.map((g) => <LiveChip key={g.gameId} g={g} />)}</div>
       ) : null}
-
-      {wcLive ? <ListenLive /> : null}
     </div>
   )
 }
