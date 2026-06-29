@@ -351,8 +351,8 @@ function LiveGrid({ m }: { m: CS2Live }) {
   useEffect(() => { setHost(window.location.hostname) }, [])
   const s = m.stream
   const embed = !s ? null
-    : s.platform === 'kick' ? `https://player.kick.com/${s.channel}?autoplay=true&muted=true`
-    : s.platform === 'twitch' && host ? `https://player.twitch.tv/?channel=${s.channel}&parent=${host}&muted=true`
+    : s.platform === 'kick' ? `https://player.kick.com/${s.channel}?autoplay=true&muted=false`
+    : s.platform === 'twitch' && host ? `https://player.twitch.tv/?channel=${s.channel}&parent=${host}&muted=false`
     : null
   return (
     <section className="space-y-4">
