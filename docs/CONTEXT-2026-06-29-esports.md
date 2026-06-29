@@ -119,3 +119,10 @@ numerals for all data, emerald reserved for the "moment that matters" beacon.
 - **Dev preview:** http://127.0.0.1:3096/game/mlb/401815676 (backend :8096).
 - **Not yet merged** — awaiting frontend validator (headless browser screenshots). Merge to
   `analytics-backbone` with `git -C /root/legendarypicks merge --ff-only feat/game-detail-tabs`.
+- **Merged** (`78c8912`) — orchestrator review caught 2 crashes the validators missed: (a) WC soccer
+  lineup `pos` was a raw ESPN object `{name,displayName,abbreviation}` → React crash, fix = emit
+  `.abbreviation` string. (b) Soccer PBP clock `"45'+2"` broke `int(x.replace)` → all minutes showed 0,
+  fix = take leading digits before `+`. Both fixed in merge (`9d8c415`). Root cause: frontend validator
+  skipped WC — must headless-render EVERY league family. Learnings codified in AGENTS.md §10.
+- **Git hygiene:** `git add -A` committed `__pycache__/` and `venv` symlink → dirty-tree merge blocks.
+  Use targeted `git add` only. Cleaned up in `6413739`.
