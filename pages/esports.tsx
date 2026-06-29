@@ -36,7 +36,7 @@ type LiveMatch = {
 
 type CS2Player = { name: string; kills: number | null; deaths: number | null }
 type CS2Team = { name: string; score: number | null; won: boolean; players: CS2Player[] }
-type CS2Live = { live: boolean; title?: string; tournament?: string; twitch?: string | null; teamA?: CS2Team; teamB?: CS2Team }
+type CS2Live = { live: boolean; title?: string; tournament?: string; stream?: { platform: string; channel: string } | null; teamA?: CS2Team; teamB?: CS2Team }
 
 const POLL_MS = 10_000
 const PRED_POLL_MS = 60_000
@@ -349,7 +349,11 @@ function LiveGrid({ m }: { m: CS2Live }) {
   const aLead = (a?.score ?? 0) >= (b?.score ?? 0)
   const [host, setHost] = useState('')
   useEffect(() => { setHost(window.location.hostname) }, [])
-  const embed = (m.twitch && host) ? `https://player.twitch.tv/?channel=${m.twitch}&parent=${host}&muted=true` : null
+  const s = m.stream
+  const embed = !s ? null
+    : s.platform === 'kick' ? `https://player.kick.com/${s.channel}?autoplay=true&muted=true`
+    : s.platform === 'twitch' && host ? `https://player.twitch.tv/?channel=${s.channel}&parent=${host}&muted=true`
+    : null
   return (
     <section className="space-y-4">
       <SectionHeader live eyebrow={`Live now · ${m.title ?? 'Esports'}${m.tournament ? ' · ' + m.tournament : ''}`} title={`${a?.name ?? ''} vs ${b?.name ?? ''}`} meta="grid · official" />

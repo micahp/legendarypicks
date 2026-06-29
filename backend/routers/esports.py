@@ -571,32 +571,33 @@ def _grid_title_label(name):
     return None
 
 
-# GRID doesn't expose the broadcast for these (streams[] is empty on Open Access), so we map the
-# tournament/league name → its official Twitch channel. (tournament-keyword, title or None, channel)
+# GRID doesn't expose the broadcast for these (streams[] empty on Open Access), so map the
+# tournament/league → its official channel. The bookmaker-sponsored minor leagues stream on Kick;
+# the majors are on Twitch. (tournament-keyword, title or None, platform, channel)
 _GRID_STREAM_MAP = [
-    ("united21", None, "united21_en"),
-    ("cct", None, "cct_cs2"),
-    ("european pro league", "Dota 2", "epldota_en1"),
-    ("european pro league", "CS2", "eplcs_en1"),
-    ("blast", None, "blastpremier"),
-    ("dreamleague", None, "dreamleague"),
-    ("esl one", "Dota 2", "esl_dota2"),
-    ("esl", "Dota 2", "esl_dota2"),
-    ("esl", "CS2", "esl_csgo"),
-    ("iem", "CS2", "esl_csgo"),
-    ("pgl", "Dota 2", "pgl_dota2"),
-    ("pgl", "CS2", "pglmajor"),
-    ("thunderpick", None, "thunderpicktv"),
-    ("esports world cup", "Dota 2", "esl_dota2"),
-    ("esports world cup", "CS2", "blastpremier"),
+    ("united21", None, "kick", "united21_en"),
+    ("cct", None, "kick", "cct_cs2"),
+    ("european pro league", "Dota 2", "kick", "epldota_en2"),
+    ("european pro league", "CS2", "kick", "eplcs_en2"),
+    ("thunderpick", None, "kick", "thunderpicktv"),
+    ("blast", None, "twitch", "blastpremier"),
+    ("dreamleague", None, "twitch", "dreamleague"),
+    ("esl one", "Dota 2", "twitch", "esl_dota2"),
+    ("esl", "Dota 2", "twitch", "esl_dota2"),
+    ("esl", "CS2", "twitch", "esl_csgo"),
+    ("iem", "CS2", "twitch", "esl_csgo"),
+    ("pgl", "Dota 2", "twitch", "pgl_dota2"),
+    ("pgl", "CS2", "twitch", "pglmajor"),
+    ("esports world cup", "Dota 2", "twitch", "esl_dota2"),
+    ("esports world cup", "CS2", "twitch", "blastpremier"),
 ]
 
 
 def _grid_stream(tournament, title_label):
     t = (tournament or "").lower()
-    for kw, want_title, channel in _GRID_STREAM_MAP:
+    for kw, want_title, platform, channel in _GRID_STREAM_MAP:
         if kw in t and (want_title is None or want_title == title_label):
-            return channel
+            return {"platform": platform, "channel": channel}
     return None
 
 
@@ -637,7 +638,7 @@ def grid_live():
             teams = st.get("teams") or []
             tournament = (node.get("tournament") or {}).get("name")
             return {"live": True, "title": label, "seriesId": node["id"],
-                    "tournament": tournament, "twitch": _grid_stream(tournament, label),
+                    "tournament": tournament, "stream": _grid_stream(tournament, label),
                     "teamA": tm(teams[0]) if len(teams) > 0 else None,
                     "teamB": tm(teams[1]) if len(teams) > 1 else None}
     return {"live": False}
