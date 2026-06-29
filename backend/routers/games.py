@@ -312,6 +312,15 @@ def get_game_detail(league: str, game_id: str):
 # /api/{league}/game/{game_id}/detail path that stays as-is for NBA/NHL.
 
 
+def _summary_not_started(sm):
+    """True if the game hasn't started (ESPN status state == 'pre'). Without this, a scheduled
+    game's box score renders the rosters with all-zero stats — indistinguishable from a final."""
+    try:
+        return sm["header"]["competitions"][0]["status"]["type"]["state"] == "pre"
+    except Exception:
+        return False
+
+
 @router.get("/api/{league}/game/{game_id}/boxscore")
 def get_game_boxscore(league: str, game_id: str):
     """Live per-tab box score: team stats + player stat tables (US sports) or
@@ -327,6 +336,8 @@ def get_game_boxscore(league: str, game_id: str):
 
     if not sm or not sm.get("boxscore"):
         return {"available": False}
+    if _summary_not_started(sm):
+        return {"available": False, "notStarted": True}
     bs = sm["boxscore"]
 
     # ── Soccer (WC) shape ──
