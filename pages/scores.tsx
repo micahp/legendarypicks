@@ -7,31 +7,65 @@ import GameCard from '../components/Scores/GameCard'
 import { SkeletonList, ErrorBanner, EmptyState } from '../components/Scores/States'
 import ListenLive from '../components/ListenLive'
 
-// Discovery rail: surface what's live to everyone on the board — a CS player who wandered in
-// might click into the World Cup, and vice versa.
-function LiveNow({ games }: { games: Game[] }) {
-  const live = games.filter((g) => g.status === 'LIVE')
-  const wcLive = live.some((g) => g.league === 'WC')
-  if (live.length === 0) return null
+// Discovery rail: feature ONE live game big (a viewer who came for another sport gets pulled in),
+// with a "+N more" reveal and a pull to the esports page. Featured pick = highest league priority.
+function LiveChip({ g }: { g: Game }) {
   return (
-    <div className="space-y-3 rounded-2xl border border-red-500/20 bg-red-500/[0.04] p-4">
-      <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-red-400">
-        <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse motion-reduce:animate-none" /> Live now
+    <Link href={`/game/${g.league?.toLowerCase()}/${g.gameId}`}
+          className="flex items-center gap-2 rounded-lg border border-zinc-800 bg-zinc-900/70 px-3 py-1.5 text-sm hover:border-zinc-600">
+      <span className="font-mono text-[10px] uppercase tracking-wider text-zinc-500">{g.league}</span>
+      <span className="font-medium text-zinc-100">{g.awayTeam?.nickname || g.awayTeam?.name}</span>
+      <span className="font-mono tabular-nums text-zinc-400">{g.awayTeam?.score ?? 0}–{g.homeTeam?.score ?? 0}</span>
+      <span className="font-medium text-zinc-100">{g.homeTeam?.nickname || g.homeTeam?.name}</span>
+    </Link>
+  )
+}
+
+function LiveNow({ games }: { games: Game[] }) {
+  const [showAll, setShowAll] = useState(false)
+  const live = games.filter((g) => g.status === 'LIVE').sort((a, b) => {
+    const pa = LEAGUE_PRIORITY.indexOf(a.league || ''), pb = LEAGUE_PRIORITY.indexOf(b.league || '')
+    return (pa === -1 ? 99 : pa) - (pb === -1 ? 99 : pb)
+  })
+  if (live.length === 0) return null
+  const feat = live[0]
+  const rest = live.slice(1)
+  const wcLive = live.some((g) => g.league === 'WC')
+
+  return (
+    <div className="space-y-4 rounded-2xl border border-red-500/20 bg-red-500/[0.04] p-4 sm:p-5">
+      <div className="flex items-center justify-between gap-3">
+        <span className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-red-400">
+          <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse motion-reduce:animate-none" /> Live now
+        </span>
+        <div className="flex items-center gap-4 text-sm font-medium">
+          {rest.length > 0 ? (
+            <button type="button" onClick={() => setShowAll((s) => !s)} className="text-zinc-400 hover:text-white">
+              {showAll ? 'Hide' : `+${rest.length} more live`} →
+            </button>
+          ) : null}
+          <Link href="/esports" className="text-emerald-300 hover:text-emerald-200">🎮 Live esports →</Link>
+        </div>
       </div>
-      <div className="flex flex-wrap gap-2">
-        {live.map((g) => (
-          <Link key={g.gameId} href={`/game/${g.league?.toLowerCase()}/${g.gameId}`}
-                className="group flex items-center gap-2 rounded-lg border border-zinc-800 bg-zinc-900/70 px-3 py-1.5 text-sm hover:border-zinc-600">
-            <span className="font-mono text-[10px] uppercase tracking-wider text-zinc-500">{g.league}</span>
-            <span className="font-medium text-zinc-100">{g.awayTeam?.nickname || g.awayTeam?.name}</span>
-            <span className="font-mono tabular-nums text-zinc-400">{g.awayTeam?.score ?? 0}–{g.homeTeam?.score ?? 0}</span>
-            <span className="font-medium text-zinc-100">{g.homeTeam?.nickname || g.homeTeam?.name}</span>
-          </Link>
+
+      {/* featured — one game, big score */}
+      <Link href={`/game/${feat.league?.toLowerCase()}/${feat.gameId}`}
+            className="block rounded-xl border border-zinc-800 bg-zinc-900/70 p-4 transition-colors hover:border-zinc-600">
+        <div className="mb-3 font-mono text-[10px] uppercase tracking-[0.18em] text-zinc-500">
+          <span className="text-zinc-300">{feat.league}</span>{feat.subtitle ? ` · ${feat.subtitle}` : ''} · live
+        </div>
+        {[feat.awayTeam, feat.homeTeam].map((t, i) => (
+          <div key={i} className="flex items-center justify-between gap-4 py-1">
+            <span className="truncate text-lg font-semibold text-zinc-100">{t?.name}</span>
+            <span className="font-mono text-3xl font-bold tabular-nums text-zinc-50">{t?.score ?? 0}</span>
+          </div>
         ))}
-        <Link href="/esports" className="flex items-center gap-1.5 rounded-lg border border-emerald-600/40 bg-emerald-500/[0.07] px-3 py-1.5 text-sm font-medium text-emerald-300 hover:bg-emerald-500/15">
-          🎮 Live esports →
-        </Link>
-      </div>
+      </Link>
+
+      {showAll && rest.length > 0 ? (
+        <div className="flex flex-wrap gap-2">{rest.map((g) => <LiveChip key={g.gameId} g={g} />)}</div>
+      ) : null}
+
       {wcLive ? <ListenLive /> : null}
     </div>
   )
