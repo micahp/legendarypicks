@@ -21,16 +21,16 @@ function LiveChip({ g }: { g: Game }) {
   )
 }
 
-function LiveNow({ games }: { games: Game[] }) {
+function LiveNow({ games, esportsLive }: { games: Game[]; esportsLive: boolean }) {
   const [showAll, setShowAll] = useState(false)
   const live = games.filter((g) => g.status === 'LIVE').sort((a, b) => {
     const pa = LEAGUE_PRIORITY.indexOf(a.league || ''), pb = LEAGUE_PRIORITY.indexOf(b.league || '')
     return (pa === -1 ? 99 : pa) - (pb === -1 ? 99 : pb)
   })
   if (live.length === 0) return null
-  const feat = live[0]
-  const rest = live.slice(1)
-  const wcLive = live.some((g) => g.league === 'WC')
+  const wcLive = live.find((g) => g.league === 'WC')
+  const feat = wcLive || live[0]
+  const rest = live.filter((g) => g !== feat)
 
   return (
     <div className="space-y-4 rounded-2xl border border-red-500/20 bg-red-500/[0.04] p-4 sm:p-5">
@@ -52,7 +52,7 @@ function LiveNow({ games }: { games: Game[] }) {
         ))}
       </Link>
 
-      {wcLive ? <ListenLive /> : null}
+      {feat.league === 'WC' ? <ListenLive /> : null}
 
       {/* buttons below, chip-style */}
       <div className="flex flex-wrap gap-2">
@@ -62,9 +62,11 @@ function LiveNow({ games }: { games: Game[] }) {
             {showAll ? 'Hide' : `+${rest.length} more live`} →
           </button>
         ) : null}
-        <Link href="/esports" className="rounded-lg border border-emerald-600/40 bg-emerald-500/[0.07] px-3 py-1.5 text-sm font-medium text-emerald-300 hover:bg-emerald-500/15">
-          🎮 Live esports →
-        </Link>
+        {esportsLive ? (
+          <Link href="/esports" className="rounded-lg border border-emerald-600/40 bg-emerald-500/[0.07] px-3 py-1.5 text-sm font-medium text-emerald-300 transition-colors hover:bg-emerald-500/15">
+            🎮 Live esports →
+          </Link>
+        ) : null}
       </div>
 
       {showAll && rest.length > 0 ? (
@@ -104,6 +106,22 @@ export default function ScoresPage() {
   const [games, setGames] = useState<Game[]>([])
   const [loading, setLoading] = useState<boolean>(false)
   const [error, setError] = useState<string | null>(null)
+
+  // Is anything live on the esports page right now? Drives whether the chip says "Live esports".
+  const [esportsLive, setEsportsLive] = useState(false)
+  useEffect(() => {
+    let ignore = false
+    const check = async () => {
+      try {
+        const r = await fetch('/api/esports/upcoming', { cache: 'no-store' })
+        const d = await r.json()
+        if (!ignore) setEsportsLive(Array.isArray(d?.matches) && d.matches.some((m: any) => m.live))
+      } catch { /* leave as-is */ }
+    }
+    check()
+    const t = setInterval(check, LIVE_POLL_MS)
+    return () => { ignore = true; clearInterval(t) }
+  }, [])
 
   useEffect(() => {
     let ignore = false
@@ -234,7 +252,7 @@ export default function ScoresPage() {
           </button>
         </div>
         {error && <ErrorBanner message={error} />}
-        {!loading && games.length > 0 ? <LiveNow games={games} /> : null}
+        {!loading && games.length > 0 ? <LiveNow games={games} esportsLive={esportsLive} /> : null}
         {loading ? (
           <SkeletonList />
         ) : games.length === 0 ? (
