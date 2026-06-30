@@ -23,10 +23,13 @@ def ufc_rankings():
     ingest_ufc_rankings.py (live scrape, never on the request path)."""
     with closing(_db()) as con:
         con.row_factory = sqlite3.Row
-        rows = con.execute(
-            "SELECT division, rank, fighter, is_champion FROM ufc_rankings "
-            "ORDER BY division, rank"
-        ).fetchall()
+        try:
+            rows = con.execute(
+                "SELECT division, rank, fighter, is_champion FROM ufc_rankings "
+                "ORDER BY division, rank"
+            ).fetchall()
+        except sqlite3.OperationalError:
+            rows = []  # table not populated yet (ingest_ufc_rankings.py hasn't run) — degrade, don't 500
 
     if not rows:
         return {"pound_for_pound": {"men": [], "women": []}, "divisions": []}
