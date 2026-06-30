@@ -422,9 +422,10 @@ function UpcomingSlate({ data }: { data: UpcomingData | null }) {
   useEffect(() => { setHost(window.location.hostname) }, [])
   const matches = data?.matches ?? []
 
-  // Split: finished → Results (most-recent first); everything else → Scheduled
+  // Split: finished → Results (most-recent first); upcoming (not live, not finished) → Scheduled.
+  // Live games are surfaced ABOVE this section in <LiveNow>, so they're excluded here.
   const rs = matches.filter((m) => m.finished).sort((a, b) => (b.startTime || 0) - (a.startTime || 0))
-  const sc = matches.filter((m) => !m.finished)
+  const sc = matches.filter((m) => !m.finished && !m.live)
   // Group scheduled consecutively by day (the list is time-ordered: live first, then soonest).
   const days: { label: string; matches: UpMatch[] }[] = []
   for (const m of sc) {
@@ -554,6 +555,83 @@ function FeaturedUpcoming({ m, host }: { m: UpMatch; host: string }) {
   )
 }
 
+/* ---------------- Live now — all live games, above the fold ---------------- */
+function LiveCard({ m, host }: { m: UpMatch; host: string }) {
+  const [open, setOpen] = useState(false)
+  const iframeRef = useRef<HTMLIFrameElement>(null)
+  // Only a confirmed on-air channel is embeddable; otherwise we say so honestly.
+  const embeddable = m.watch?.online === true && !!m.watch?.channel && (m.watch.platform === 'twitch' || m.watch.platform === 'kick')
+  const toggle = () => {
+    const next = !open
+    setOpen(next)
+    const f = iframeRef.current
+    if (!f) return
+    if (next && m.watch?.channel) {
+      const { platform, channel } = m.watch
+      f.src = platform === 'kick'
+        ? `https://player.kick.com/${channel}?muted=false`
+        : `https://player.twitch.tv/?channel=${channel}&parent=${encodeURIComponent(host)}&muted=false`
+    } else {
+      f.src = ''
+    }
+  }
+  return (
+    <div className="overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900/50">
+      <div className="p-4">
+        <div className="mb-2 flex items-center justify-between gap-2">
+          <Eyebrow live>{m.title} · {m.league}</Eyebrow>
+          {m.score ? (
+            <span className="font-mono text-base font-bold tabular-nums text-zinc-100">{m.score.a ?? '–'}<span className="px-0.5 text-zinc-600">–</span>{m.score.b ?? '–'}</span>
+          ) : null}
+        </div>
+        <div className="space-y-1.5">
+          <div className="flex items-center gap-2">
+            {m.logoA ? <TeamCrest src={m.logoA} size="h-5 w-5" /> : null}
+            <span className="truncate text-sm font-semibold text-zinc-100">{m.teamA}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            {m.logoB ? <TeamCrest src={m.logoB} size="h-5 w-5" /> : null}
+            <span className="truncate text-sm font-semibold text-zinc-100">{m.teamB}</span>
+          </div>
+        </div>
+        <div className="mt-3 font-mono text-[11px] uppercase tracking-wider">
+          {embeddable ? (
+            <button onClick={toggle} className="text-emerald-400 hover:text-emerald-300 focus-visible:outline-none">
+              {open ? 'hide stream ▴' : 'watch here ▾'}
+            </button>
+          ) : m.watch ? (
+            <a href={m.watch.url} target="_blank" rel="noreferrer" className="text-zinc-500 hover:text-emerald-400">
+              no stream embedded · {watchLabel(m.watch.platform)} ↗
+            </a>
+          ) : (
+            <span className="text-zinc-600">no stream available</span>
+          )}
+        </div>
+      </div>
+      {embeddable ? (
+        <div className={open ? '' : 'hidden'}>
+          <div className="aspect-video w-full bg-black">
+            <iframe ref={iframeRef} title="Live broadcast" allow="autoplay; fullscreen" allowFullScreen className="h-full w-full" style={{ border: 'none' }} />
+          </div>
+          <p className="px-4 pb-3 pt-1.5 text-[10px] text-zinc-600">Tap player for sound</p>
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
+function LiveNow({ matches, host }: { matches: UpMatch[]; host: string }) {
+  if (!matches.length) return null
+  return (
+    <section className="space-y-4">
+      <SectionHeader live eyebrow="Live now" title={matches.length === 1 ? 'Live match' : `${matches.length} matches live`} meta="esports" />
+      <div className="grid gap-4 sm:grid-cols-2">
+        {matches.map((m, i) => <LiveCard key={i} m={m} host={host} />)}
+      </div>
+    </section>
+  )
+}
+
 export default function EsportsPage() {
   const [live, setLive] = useState<LiveMatch | null>(null)
   const [upcoming, setUpcoming] = useState<UpcomingData | null>(null)
@@ -575,19 +653,10 @@ export default function EsportsPage() {
   }, [])
 
   // Hero features a live match whose stream we've CONFIRMED is on-air — never a dead embed.
-  const upcomingLive = (upcoming?.matches ?? []).find((m) => m.live && m.watch?.online === true) ?? null
-  const anyLive = !!live?.live || !!upcomingLive
-
-  // Featured hero: one source of truth. MSI live > slate live (CS2/Dota/etc., GRID-verified with
-  // the correct stream). The old /grid/live path was a second match-picker on a freshness gate that
-  // toggled on/off and fought the slate — causing the hero to flip between two different matches /
-  // streams. The slate already carries live CS2/Dota with score + the right channel, so use only it.
-  let hero: React.ReactNode = null
-  if (live?.live) {
-    hero = <LiveMSI m={live} />
-  } else if (upcomingLive) {
-    hero = <FeaturedUpcoming m={upcomingLive} host={host} />
-  }
+  // ALL live games go above the fold (not gated on stream availability — show the match, embed the
+  // stream when it's confirmed on-air, else say "no stream"). MSI live keeps its rich dedicated view.
+  const liveMatches = (upcoming?.matches ?? []).filter((m) => m.live)
+  const anyLive = !!live?.live || liveMatches.length > 0
 
   return (
     <>
@@ -606,8 +675,9 @@ export default function EsportsPage() {
           <p className="text-sm text-zinc-400">Who wins — and the moment it turns.</p>
         </header>
 
-        {/* Feature exactly one live match — MSI > CS2/Dota (GRID official) > upcoming slate */}
-        {hero}
+        {/* Live games, above the fold: MSI's rich view first, then every other live match. */}
+        {live?.live ? <LiveMSI m={live} /> : null}
+        <LiveNow matches={liveMatches} host={host} />
 
         <UpcomingSlate data={upcoming} />
       </div>
