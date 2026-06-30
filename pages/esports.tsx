@@ -555,28 +555,26 @@ function FeaturedUpcoming({ m, host }: { m: UpMatch; host: string }) {
   )
 }
 
-/* ---------------- Live now — all live games, above the fold ---------------- */
-function LiveCard({ m, host }: { m: UpMatch; host: string }) {
+/* ---------------- Live now — featured match auto-plays, the rest are tap-to-watch ---------------- */
+function LiveCard({ m, host, featured = false }: { m: UpMatch; host: string; featured?: boolean }) {
   const [open, setOpen] = useState(false)
   const iframeRef = useRef<HTMLIFrameElement>(null)
   // Only a confirmed on-air channel is embeddable; otherwise we say so honestly.
   const embeddable = m.watch?.online === true && !!m.watch?.channel && (m.watch.platform === 'twitch' || m.watch.platform === 'kick')
+  const embedSrc = embeddable
+    ? (m.watch!.platform === 'kick'
+        ? `https://player.kick.com/${m.watch!.channel}?muted=false`
+        : `https://player.twitch.tv/?channel=${m.watch!.channel}&parent=${encodeURIComponent(host)}&muted=false`)
+    : null
+  // Non-featured cards mount the player on tap (so we don't autoplay every stream at once).
   const toggle = () => {
     const next = !open
     setOpen(next)
     const f = iframeRef.current
-    if (!f) return
-    if (next && m.watch?.channel) {
-      const { platform, channel } = m.watch
-      f.src = platform === 'kick'
-        ? `https://player.kick.com/${channel}?muted=false`
-        : `https://player.twitch.tv/?channel=${channel}&parent=${encodeURIComponent(host)}&muted=false`
-    } else {
-      f.src = ''
-    }
+    if (f) f.src = next && embedSrc ? embedSrc : ''
   }
   return (
-    <div className="overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900/50">
+    <div className={`overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900/50 ${featured ? 'sm:col-span-2' : ''}`}>
       <div className="p-4">
         <div className="mb-2 flex items-center justify-between gap-2">
           <Eyebrow live>{m.title} · {m.league}</Eyebrow>
@@ -595,23 +593,29 @@ function LiveCard({ m, host }: { m: UpMatch; host: string }) {
           </div>
         </div>
         <div className="mt-3 font-mono text-[11px] uppercase tracking-wider">
-          {embeddable ? (
+          {!embeddable ? (
+            m.watch ? (
+              <a href={m.watch.url} target="_blank" rel="noreferrer" className="text-zinc-500 hover:text-emerald-400">
+                no stream embedded · {watchLabel(m.watch.platform)} ↗
+              </a>
+            ) : (
+              <span className="text-zinc-600">no stream available</span>
+            )
+          ) : featured ? (
+            <span className="inline-flex items-center gap-1 text-red-400"><span className="h-1 w-1 rounded-full bg-red-500 animate-pulse motion-reduce:animate-none" />playing now</span>
+          ) : (
             <button onClick={toggle} className="text-emerald-400 hover:text-emerald-300 focus-visible:outline-none">
               {open ? 'hide stream ▴' : 'watch here ▾'}
             </button>
-          ) : m.watch ? (
-            <a href={m.watch.url} target="_blank" rel="noreferrer" className="text-zinc-500 hover:text-emerald-400">
-              no stream embedded · {watchLabel(m.watch.platform)} ↗
-            </a>
-          ) : (
-            <span className="text-zinc-600">no stream available</span>
           )}
         </div>
       </div>
       {embeddable ? (
-        <div className={open ? '' : 'hidden'}>
+        <div className={featured || open ? '' : 'hidden'}>
           <div className="aspect-video w-full bg-black">
-            <iframe ref={iframeRef} title="Live broadcast" allow="autoplay; fullscreen" allowFullScreen className="h-full w-full" style={{ border: 'none' }} />
+            {/* Featured: src set on render → auto-plays. Others: mounted on tap via the ref. */}
+            <iframe ref={featured ? undefined : iframeRef} src={featured ? embedSrc! : undefined}
+                    title="Live broadcast" allow="autoplay; fullscreen" allowFullScreen className="h-full w-full" style={{ border: 'none' }} />
           </div>
           <p className="px-4 pb-3 pt-1.5 text-[10px] text-zinc-600">Tap player for sound</p>
         </div>
@@ -622,12 +626,21 @@ function LiveCard({ m, host }: { m: UpMatch; host: string }) {
 
 function LiveNow({ matches, host }: { matches: UpMatch[]; host: string }) {
   if (!matches.length) return null
+  // Feature a match whose stream is actually on-air (it auto-plays); fall back to the first live one.
+  const sorted = [...matches].sort((a, b) => Number(b.watch?.online === true) - Number(a.watch?.online === true))
+  const [first, ...rest] = sorted
   return (
     <section className="space-y-4">
       <SectionHeader live eyebrow="Live now" title={matches.length === 1 ? 'Live match' : `${matches.length} matches live`} meta="esports" />
-      <div className="grid gap-4 sm:grid-cols-2">
-        {matches.map((m, i) => <LiveCard key={i} m={m} host={host} />)}
-      </div>
+      <LiveCard m={first} host={host} featured />
+      {rest.length ? (
+        <div className="space-y-2">
+          <Eyebrow>Also live — tap to watch</Eyebrow>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {rest.map((m, i) => <LiveCard key={i} m={m} host={host} />)}
+          </div>
+        </div>
+      ) : null}
     </section>
   )
 }
