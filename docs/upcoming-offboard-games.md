@@ -5,9 +5,12 @@ NHL, NFL, ATP, WTA, UFC, World Cup, and Call of Duty — so "off-board" here = t
 titles** (LoL, CS2, Dota 2, Valorant, Rainbow Six, King of Glory) plus the niche sports from the
 strategy docs (PWHL, UFA disc golf, etc.) that Bovada doesn't cover.
 
-**Where these live:** the **Leagues hub** (the planned Stats→Leagues restructure — an ESPN-style
-sport/league directory where each league gets its own page with tabs: scores, stats, standings,
-predictions). Until that exists, the marquee live one is featured on the **Esports tab**.
+**Where these live:** the **Esports tab** now carries the whole esports slate — the marquee live
+match is featured up top, MSI gets the model-vs-market prediction cards, and the **"Upcoming slate"**
+section (`/api/esports/upcoming`) lists every off-board esports title (LoL, Valorant, CS2, Dota, R6,
+KoG), grouped by league, priced by the Bovada moneyline favorite. Full schedules + standings will
+later graduate to the planned **Leagues hub** (the Stats→Leagues restructure), but esports coverage
+is complete on the tab today. CoD is excluded from the slate — it's already on the main scoreboard.
 
 ## Marquee / worth featuring
 - **LoL — MSI 2026** (our current feature): next **Tue 06-30 03:00 UTC** Karmine Corp vs Team Liquid;
@@ -53,6 +56,7 @@ they'd need their own data/schedule sources (and have no market to price against
 
 ## Takeaway
 Plenty of off-board esports daily, but most CS2/Dota/R6 leagues are minor-tier. The ones worth
-surfacing are **MSI now → Valorant EWC (07-02) next**. Everything else belongs in the Leagues hub as
-schedule/standings rather than a featured live view. Niche sports need non-Bovada data sources before
-they're worth adding.
+**featuring** are **MSI now → Valorant EWC (07-02) next**; everything else now shows in the Esports
+tab's **Upcoming slate** as schedule + market line (live-sourced from Bovada, so it stays current
+without hand-maintaining this doc). Niche sports (PWHL/UFA/disc golf) need non-Bovada data sources
+before they're worth adding.

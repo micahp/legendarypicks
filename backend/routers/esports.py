@@ -590,9 +590,9 @@ def _grid_title_label(name):
 # the majors are on Twitch. (tournament-keyword, title or None, platform, channel)
 _GRID_STREAM_MAP = [
     ("united21", None, "kick", "united21_en"),
-    ("cct", None, "kick", "cct_cs2"),
-    ("european pro league", "Dota 2", "kick", "epldota_en2"),
-    ("european pro league", "CS2", "kick", "eplcs_en2"),
+    ("cct", None, "kick", "cct_cs"),              # official CCT channel — Kick (verified frag.se Jun 2026)
+    ("european pro league", "Dota 2", "twitch", "epldota_en2"),  # _en2 = Twitch (kick is _en)
+    ("european pro league", "CS2", "twitch", "eplcs_en2"),       # _en2 = Twitch (kick is _en)
     ("thunderpick", None, "kick", "thunderpicktv"),
     ("blast", None, "twitch", "blastpremier"),
     ("dreamleague", None, "twitch", "dreamleague"),
@@ -665,3 +665,498 @@ def grid_live():
             "tournament": (node.get("tournament") or {}).get("name"), "stream": stream,
             "teamA": tm(teams[0]) if len(teams) > 0 else None,
             "teamB": tm(teams[1]) if len(teams) > 1 else None}
+
+
+# --- Upcoming slate (the full off-board esports schedule) ----------------------------------
+# MSI is the marquee with a model edge; everything else (CS2, Dota, Valorant, R6, KoG, the other
+# LoL leagues) we just *cover* — schedule + the Bovada market line. One broad Bovada esports coupon
+# carries the whole slate; we group by title/league. CoD is excluded — it's already on the scoreboard.
+_BOV_ESPORTS = ("https://www.bovada.lv/services/sports/event/coupon/events/A/description/"
+                "esports?marketFilterId=def&liveOnly=false&lang=en")
+_up_cache = {"t": 0.0, "data": None}
+_pinned_live = {"match": None, "t": 0.0}  # last real live match + when we last saw it (no hardcoded seed)
+
+# Durable results store — survives backend restarts and GRID lulls.
+_RESULTS_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data", "esports_results.json")
+
+def _load_results_store():
+    """Read the persisted results store. Returns {} on any error (missing/corrupt → rebuild)."""
+    try:
+        with open(_RESULTS_PATH) as f:
+            return json.loads(f.read())
+    except Exception:
+        return {}
+
+def _save_results_store(store):
+    """Atomic write: temp file + os.replace — safe against crashes and concurrent workers."""
+    try:
+        tmp = _RESULTS_PATH + ".tmp"
+        os.makedirs(os.path.dirname(_RESULTS_PATH), exist_ok=True)
+        with open(tmp, "w") as f:
+            json.dump(store, f)
+        os.replace(tmp, _RESULTS_PATH)
+    except Exception:
+        pass  # store write failures are non-fatal
+
+# title slug -> short display label. CoD intentionally absent (it's on the main scoreboard).
+_ESPORTS_TITLES = {
+    "league-of-legends": "LoL",
+    "valorant": "Valorant",
+    "counter-strike-2": "CS2",
+    "dota-2": "Dota 2",
+    "rainbow-six": "Rainbow Six",
+    "king-of-glory": "King of Glory",
+}
+
+
+def _slug_to_name(slug):
+    return " ".join(w.capitalize() for w in (slug or "").split("-"))
+
+
+# Display title -> slug (reverse of _ESPORTS_TITLES) for resolving a built match back to its slug.
+_TITLE_SLUG = {v: k for k, v in _ESPORTS_TITLES.items()}
+
+# Broadcast channels per (title, compact-league-keyword). Keyword is matched against the league
+# string with ALL non-alphanumerics stripped, so it works for BOTH Bovada slugs ("european-pro-
+# league") AND GRID tournament names ("European Pro League Series 8"). Each rule lists CANDIDATE
+# channels in preference order — for a LIVE match we pick the one that's ACTUALLY on-air (verified),
+# which fixes wrong-platform guesses (e.g. EPL streams on Kick or Twitch depending on the day).
+_WATCH_RULES = [
+    ("league-of-legends", "midseason", [("twitch", "riotgames")]),
+    ("league-of-legends", "primeleague", [("twitch", "primeleague")]),
+    ("league-of-legends", None, [("twitch", "riotgames")]),
+    ("valorant", "esportsworldcup", [("twitch", "ewc")]),
+    ("valorant", "emea", [("twitch", "valorant_emea")]),
+    ("valorant", "pacific", [("twitch", "valorant_pacific")]),
+    ("valorant", None, [("twitch", "valorant")]),
+    ("counter-strike-2", "cct", [("kick", "cct_cs"), ("twitch", "cct_cs"), ("kick", "cct_cs2")]),
+    ("counter-strike-2", "europeanproleague", [("kick", "eplcs_en"), ("twitch", "eplcs_en2")]),
+    ("counter-strike-2", "united21", [("kick", "united21_en")]),
+    ("dota-2", "europeanproleague", [("kick", "epldota_en"), ("twitch", "epldota_en2")]),
+    ("rainbow-six", None, [("twitch", "rainbow6")]),
+    ("king-of-glory", None, [("web", "https://www.honorofkings.com/esports/?language=en")]),
+]
+
+_live_cache = {}  # "platform:channel" -> (ts, bool|None) — on-air status, cached ~90s
+
+
+def _chan_url(platform, channel):
+    if platform == "twitch":
+        return f"https://www.twitch.tv/{channel}"
+    if platform == "kick":
+        return f"https://kick.com/{channel}"
+    return channel  # web: channel holds the full URL
+
+
+def _channel_online(platform, channel):
+    """Is this channel actually broadcasting right now? Twitch via decapi, Kick via api/v1.
+    Returns True/False, or None if unverifiable. Cached ~90s so we don't hammer on every poll."""
+    if platform not in ("twitch", "kick"):
+        return None
+    import time
+    key = f"{platform}:{channel}"
+    c = _live_cache.get(key)
+    if c and time.time() - c[0] < 90:
+        return c[1]
+    online = None
+    try:
+        if platform == "twitch":
+            with _u.urlopen(_u.Request(f"https://decapi.me/twitch/uptime/{channel}",
+                                       headers={"User-Agent": "Mozilla/5.0"}), timeout=6) as r:
+                txt = r.read().decode().lower()
+            online = bool(txt.strip()) and not any(w in txt for w in ("offline", "error", "unable", "not found"))
+        else:  # kick
+            with _u.urlopen(_u.Request(f"https://kick.com/api/v1/channels/{channel}",
+                                       headers={"User-Agent": "Mozilla/5.0"}), timeout=6) as r:
+                online = json.loads(r.read().decode()).get("livestream") is not None
+    except Exception:
+        online = None
+    if online is not None:
+        _live_cache[key] = (time.time(), online)
+    return online
+
+
+def _resolve_watch(title_slug, league, live=False):
+    """Pick the watch channel for a match. For a LIVE match, return the first CANDIDATE that's
+    actually on-air (so we never show a dead/wrong link); if none are live, return the top candidate
+    flagged offline. For a scheduled match, return the top candidate (where it'll be). None if no rule."""
+    import re
+    ls = re.sub(r"[^a-z0-9]+", "", (league or "").lower())
+    for t, kw, cands in _WATCH_RULES:
+        if t != title_slug or (kw is not None and kw not in ls):
+            continue
+        if not live:
+            platform, ch = cands[0]
+            return {"platform": platform, "url": _chan_url(platform, ch),
+                    "channel": (ch if platform != "web" else None), "online": None}
+        # live: surface the candidate that's confirmed broadcasting
+        for platform, ch in cands:
+            if platform == "web":
+                return {"platform": platform, "url": _chan_url(platform, ch), "channel": None, "online": None}
+            if _channel_online(platform, ch):
+                return {"platform": platform, "url": _chan_url(platform, ch), "channel": ch, "online": True}
+        platform, ch = cands[0]  # nothing on-air → top candidate, marked offline (frontend shows no embed)
+        return {"platform": platform, "url": _chan_url(platform, ch),
+                "channel": (ch if platform != "web" else None), "online": False}
+    return None
+
+
+# --- GRID map-score enrichment (CS2/Dota) --------------------------------------------------
+# GRID Open Access gives the real series state for CS2/Dota: map score, finished, winner. That's
+# the honest "is it over + what's the score" signal — Bovada dropping a match is NOT that signal.
+_grid_idx_cache = {"t": 0.0, "data": None}
+
+
+def _norm_team(n):
+    toks = [t for t in (n or "").lower().replace(".", " ").split()
+            if t not in ("gaming", "esports", "e-sports", "club", "team", "gc", "the")]
+    return " ".join(toks)
+
+
+# GRID title label -> our title slug (for watch-link lookup on GRID-sourced results).
+_GRID_LABEL_SLUG = {"CS2": "counter-strike-2", "Dota 2": "dota-2"}
+
+
+
+
+def _team_match(a, b):
+    """True if two team names likely refer to the same team (sub/superstring after norm)."""
+    na, nb = _norm_team(a), _norm_team(b)
+    if na == nb:
+        return True
+    if na and nb:
+        if na in nb or nb in na:
+            return True
+        wa, wb = set(na.split()), set(nb.split())
+        if wa and wb:
+            common = wa & wb
+            if len(common) >= 2 or common == wa or common == wb:
+                return True
+    return False
+
+def _grid_score_index():
+    """Recent CS2/Dota series with full state — used both to enrich Bovada matches AND to surface
+    finished results that Bovada has already dropped (GRID's 8h window IS the persistent results
+    store, so a final match doesn't vanish on a Bovada drop / backend restart). Cached ~60s."""
+    import time, datetime, calendar
+    if _grid_idx_cache["data"] is not None and time.time() - _grid_idx_cache["t"] < 60:
+        return _grid_idx_cache["data"]
+
+    def _ms(ts):  # GRID ISO8601 -> epoch ms
+        if not ts:
+            return None
+        try:
+            dt = datetime.datetime.strptime(ts.replace("Z", "").split(".")[0], "%Y-%m-%dT%H:%M:%S")
+            return int(calendar.timegm(dt.timetuple()) * 1000)
+        except Exception:
+            return None
+
+    def _is_test(names):
+        return any(x in ("CS2-1", "CS2-2", "DOTA-1", "DOTA-2", "TBD-1", "TBD-2") for x in names)
+
+    idx = []
+    if _GRID_KEY:
+        now = datetime.datetime.utcnow()
+        lo = (now - datetime.timedelta(hours=8)).strftime("%Y-%m-%dT%H:%M:%SZ")
+        hi = now.strftime("%Y-%m-%dT%H:%M:%SZ")
+        q = ('{ allSeries(first:50, orderBy: StartTimeScheduled, orderDirection: DESC, '
+             'filter:{ startTimeScheduled:{ gte:"%s", lte:"%s" } }) '
+             '{ edges { node { id startTimeScheduled title { name } tournament { name } '
+             'teams { baseInfo { name } } } } } }' % (lo, hi))
+        d = _grid(_GRID_CD, q)
+        cands = [e.get("node") or {} for e in (((d or {}).get("allSeries") or {}).get("edges") or [])
+                 if _grid_title_label(((e.get("node") or {}).get("title") or {}).get("name"))]
+        for node in cands[:16]:
+            st = _grid_state(node["id"])
+            teams = (st or {}).get("teams") or []
+            if not st or len(teams) != 2:
+                continue
+            names = [t.get("name") for t in teams]
+            if _is_test(names):
+                continue
+            idx.append({
+                "names": names,
+                "score": {t.get("name"): t.get("score") for t in teams},
+                "winner": next((t.get("name") for t in teams if t.get("won")), None),
+                "finished": bool(st.get("finished")), "started": bool(st.get("started")),
+                "title": _grid_title_label((node.get("title") or {}).get("name")),
+                "tournament": (node.get("tournament") or {}).get("name"),
+                "startMs": _ms(node.get("startTimeScheduled")),
+            })
+    _grid_idx_cache.update(t=time.time(), data=idx)
+    return idx
+
+
+def _grid_match(team_a, team_b, idx):
+    """Find the GRID series for this pairing by normalized team-name match → (entry, gridA, gridB)."""
+    na, nb = _norm_team(team_a), _norm_team(team_b)
+
+    def name_for(nx, entry):
+        for gn in entry["names"]:
+            g = _norm_team(gn)
+            if nx == g or (nx and (nx in g or g in nx)):
+                return gn
+        return None
+
+    for entry in idx:
+        ga, gb = name_for(na, entry), name_for(nb, entry)
+        if ga and gb and ga != gb:
+            return entry, ga, gb
+    return None, None, None
+
+
+@router.get("/api/esports/upcoming")
+def esports_upcoming():
+    """The full off-board esports slate (next ~2 weeks) as a single **chronological** list —
+    what's coming next first (live matches lead). Each match is tagged with its title + league
+    and priced by the Bovada moneyline favorite. Covers LoL/Valorant/CS2/Dota/R6/KoG (CoD is on
+    the scoreboard, so it's excluded). Cache: 4h merge — old matches survive Bovada drops."""
+    import time
+    now = time.time()
+    CACHE_TTL = 4 * 3600
+    STALE_CUTOFF_MS = (now - 4 * 3600) * 1000
+
+    if _up_cache["data"] is not None and now - _up_cache["t"] < 60:
+        return _up_cache["data"]
+
+    prev_matches = (_up_cache["data"] or {}).get("matches", [])
+
+    try:
+        req = _u.Request(_BOV_ESPORTS, headers={"User-Agent": "Mozilla/5.0", "Accept": "application/json"})
+        with _u.urlopen(req, timeout=10) as r:
+            data = json.loads(r.read().decode())
+    except Exception:
+        return _up_cache["data"] or {"matches": [], "error": "schedule unavailable"}
+
+    def _key(m):
+        return f"{m.get('teamA','')}||{m.get('teamB','')}||{m.get('title','')}||{m.get('league','')}"
+
+    matches = []
+    for grp in data:
+        for e in grp.get("events", []):
+            parts = [p for p in (e.get("link") or "").split("/") if p]
+            if len(parts) < 3:
+                continue
+            title_slug, league_slug = parts[1], parts[2]
+            if title_slug not in _ESPORTS_TITLES:
+                continue
+            st = e.get("startTime")
+            if not e.get("live") and st and st < STALE_CUTOFF_MS:
+                continue
+
+            ml = None
+            for dg in e.get("displayGroups", []):
+                for mk in dg.get("markets", []):
+                    if (mk.get("description") or "").lower() == "moneyline":
+                        ml = mk
+                        break
+                if ml:
+                    break
+            pairs = []
+            if ml:
+                for o in ml.get("outcomes", []):
+                    am = (o.get("price") or {}).get("american")
+                    if am not in (None, "EVEN", "", "-"):
+                        try:
+                            pairs.append((o.get("description"), _amer_to_p(am)))
+                        except Exception:
+                            pairs.append((o.get("description"), None))
+                    else:
+                        pairs.append((o.get("description"), None))
+            if len(pairs) != 2:
+                desc = e.get("description") or ""
+                names = [s.strip() for s in desc.split(" vs ")] if " vs " in desc else []
+                if len(names) != 2:
+                    continue
+                pairs = [(names[0], None), (names[1], None)]
+
+            fav = None
+            if pairs[0][1] is not None and pairs[1][1] is not None:
+                s = pairs[0][1] + pairs[1][1]
+                if s > 0:
+                    p0 = round(pairs[0][1] / s * 100)
+                    fav = {"name": pairs[0][0] if p0 >= 50 else pairs[1][0],
+                           "pct": max(p0, 100 - p0)}
+
+            matches.append({
+                "startTime": e.get("startTime"),
+                "live": bool(e.get("live")),
+                "title": _ESPORTS_TITLES[title_slug],
+                "league": _slug_to_name(league_slug),
+                "teamA": pairs[0][0], "teamB": pairs[1][0],
+                "favorite": fav,
+                "watch": None,  # resolved in the final on-air pass below
+            })
+
+    # Merge: keep old matches that Bovada dropped, for up to CACHE_TTL (4h).
+    fresh_keys = {_key(m) for m in matches}
+    for old in prev_matches:
+        if _key(old) not in fresh_keys:
+            st = old.get("startTime")
+            if (st and st > STALE_CUTOFF_MS) or old.get("live"):
+                old = dict(old)
+                old["pinned"] = True
+                matches.append(old)
+
+    # Attach GRID state to CS2/Dota matches — the honest "score + is it over" signal.
+    gidx = _grid_score_index()
+    used_grid = set()
+    for m in matches:
+        if m["title"] not in ("CS2", "Dota 2"):
+            continue
+        entry, ga, gb = _grid_match(m["teamA"], m["teamB"], gidx)
+        if not entry:
+            continue
+        used_grid.add(id(entry))
+        m["score"] = {"a": entry["score"].get(ga), "b": entry["score"].get(gb)}
+        m["finished"] = entry["finished"]
+        m["winner"] = "a" if entry["winner"] == ga else "b" if entry["winner"] == gb else None
+        m["live"] = entry["started"] and not entry["finished"]  # GRID is authoritative on live-ness
+
+    # Surface live/finished GRID series that Bovada no longer lists (it drops matches mid-game and
+    # on completion) — so an in-progress or just-finished match doesn't VANISH. GRID's 8h window is
+    # the persistent source; this survives Bovada drops and backend restarts, no hardcoded seed.
+    for entry in gidx:
+        if id(entry) in used_grid:
+            continue
+        if not (entry["started"]):  # not yet started — Bovada already covers the schedule
+            continue
+        ga, gb = entry["names"][0], entry["names"][1]
+        slug = _GRID_LABEL_SLUG.get(entry["title"])
+        matches.append({
+            "startTime": entry["startMs"],
+            "live": entry["started"] and not entry["finished"],
+            "finished": entry["finished"],
+            "title": entry["title"],
+            "league": entry["tournament"] or entry["title"],
+            "teamA": ga, "teamB": gb,
+            "favorite": None,
+            "score": {"a": entry["score"].get(ga), "b": entry["score"].get(gb)},
+            "winner": "a" if entry["winner"] == ga else "b" if entry["winner"] == gb else None,
+            "watch": None,  # resolved in the final on-air pass below
+            "source": "grid",
+        })
+
+    # Attach MSI model edge + logos to LoL slate matches (folded from retired "Win Predictions" section).
+    try:
+        msi = msi_predictions()
+        # Index by normalized team-name frozenset -> (favName, modelPct, marketPct, edge, logoA, logoB)
+        msi_map = {}
+        for pm in msi.get("matches", []):
+            a, b = pm.get("teamA"), pm.get("teamB")
+            if not a or not b:
+                continue
+            na, nb = a.get("name") or "", b.get("name") or ""
+            # The EDGE is on the side the model rates HIGHER than the market (model% - market%),
+            # NOT the favorite — a favorite the market overrates has a NEGATIVE edge (no value).
+            # model%/market% each sum to 100, so the two sides' edges are exact negatives; the value
+            # side's edge is therefore always >= 0. Pick that side for the chip.
+            def _edge(t):
+                mp, kp = t.get("winPct"), t.get("marketPct")
+                return (mp - kp) if (mp is not None and kp is not None) else None
+            ea, eb = _edge(a), _edge(b)
+            val_team = a if (ea if ea is not None else -999) >= (eb if eb is not None else -999) else b
+            ve = _edge(val_team)
+            msi_map[(na, nb)] = {
+                "favName": val_team.get("code") or val_team.get("name", ""),
+                "modelPct": val_team.get("winPct"),
+                "marketPct": val_team.get("marketPct"),
+                "edge": round(ve, 1) if ve is not None else None,
+                "logoA": a.get("image"),
+                "logoB": b.get("image"),
+            }
+        for m in matches:
+            if m.get("model") or m.get("title") != "LoL":
+                continue
+            # Try to match by normalized team names (fuzzy: "Team Liquid" ≈ "Team Liquid Alienware")
+            md = None
+            for (pna, pnb), val in msi_map.items():
+                if (_team_match(m["teamA"], pna) and _team_match(m["teamB"], pnb)) or \
+                   (_team_match(m["teamA"], pnb) and _team_match(m["teamB"], pna)):
+                    md = val
+                    break
+            if md:
+                m["model"] = {"favName": md["favName"], "modelPct": md["modelPct"],
+                              "marketPct": md["marketPct"], "edge": md["edge"]}
+                m["logoA"] = md["logoA"]
+                m["logoB"] = md["logoB"]
+    except Exception:
+        pass  # MSI model unavailable — slate still works without it
+
+    # --- durable results store ---
+    # Upsert finished matches, prune old entries, load stored finals.
+    store = _load_results_store()
+    for m in matches:
+        if m.get("finished") and not m.get("pinned"):
+            k = _key(m)
+            if k not in store:
+                m2 = dict(m)
+                m2["finishedAt"] = now * 1000  # epoch ms
+                store[k] = m2
+            elif "finishedAt" not in store[k]:
+                store[k]["finishedAt"] = now * 1000
+
+    # Prune entries older than 3 days
+    cutoff_ms = (now - 3 * 86400) * 1000
+    store = {k: v for k, v in store.items() if v.get("finishedAt", 0) > cutoff_ms}
+    _save_results_store(store)
+
+    # Append stored finished matches not already in the live list
+    existing = {_key(m) for m in matches}
+    for k, v in store.items():
+        if k not in existing:
+            v = dict(v)
+            v["pinned"] = True  # mark as from store
+            matches.append(v)
+
+    # --- dedup: Bovada and GRID list the same game with name variants ("Prestige" vs "Prestige
+    # Esports", "Millennium" vs "Millenium"), which slipped past exact-key matching and double-listed
+    # matches (one with a link, one without). Collapse on a fuzzy key (title + 5-char team prefixes),
+    # merging fields so the survivor has odds (Bovada) + score (GRID).
+    def _pfx(n):
+        t = _norm_team(n)
+        return t[:5] if t else t
+
+    def _dk(m):
+        return (m.get("title"), frozenset({_pfx(m.get("teamA", "")), _pfx(m.get("teamB", ""))}))
+
+    deduped = {}
+    for m in matches:
+        k = _dk(m)
+        if k not in deduped:
+            deduped[k] = m
+        else:
+            base = deduped[k]
+            for f in ("favorite", "score", "winner", "model", "logoA", "logoB", "startTime", "league"):
+                if not base.get(f) and m.get(f):
+                    base[f] = m[f]
+            base["live"] = bool(base.get("live") or m.get("live"))
+            base["finished"] = bool(base.get("finished") or m.get("finished"))
+    matches = list(deduped.values())
+    for m in matches:
+        if m.get("finished"):
+            m["live"] = False  # a finished match is never live
+
+    # --- resolve the watch channel, ON-AIR-VERIFIED for live matches ---
+    # For a live match we surface only a channel that's actually broadcasting (Twitch via decapi,
+    # Kick via api/v1); a wrong/offline guess yields online:false so the UI shows no dead embed.
+    for m in matches:
+        slug = _TITLE_SLUG.get(m.get("title"))
+        m["watch"] = _resolve_watch(slug, m.get("league"), live=bool(m.get("live"))) if slug else None
+
+    # Pin live match for hero.
+    live_now = [m for m in matches if m["live"]]
+    if live_now:
+        _pinned_live["match"] = live_now[0]
+        _pinned_live["t"] = now
+    elif _pinned_live["match"] and now - _pinned_live["t"] < CACHE_TTL:
+        pinned = dict(_pinned_live["match"])
+        pinned["pinned"] = True
+        if not any(_key(m) == _key(pinned) for m in matches):
+            matches.insert(0, pinned)
+
+    matches.sort(key=lambda m: (not m["live"], m["startTime"] or 0))
+
+    out = {"matches": matches, "source": "bovada"}
+    _up_cache.update(t=now, data=out)
+    return out

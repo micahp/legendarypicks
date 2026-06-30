@@ -126,3 +126,23 @@ numerals for all data, emerald reserved for the "moment that matters" beacon.
   skipped WC — must headless-render EVERY league family. Learnings codified in AGENTS.md §10.
 - **Git hygiene:** `git add -A` committed `__pycache__/` and `venv` symlink → dirty-tree merge blocks.
   Use targeted `git add` only. Cleaned up in `6413739`.
+
+## Update (late 06-29) — Leagues hub (Stats → per-league tabbed pages) + WC knockout fix
+- **Branch:** `feat/leagues-hub` (off `analytics-backbone`, worktree `/root/lp-leagues-hub`).
+  Not yet merged — user verifies before merge.
+- **Commits:** `04a02e1` (7 files, 1006 lines), `31156f4` (ESPN object extraction fix).
+- **Backend:** New `wc_knockout_standings()` in `espn_client.py` — reads scoreboard for knockout
+  bracket when group stage is over. ESPN `/standings` returns empty `{children:[]}` but `/scoreboard`
+  carries knockout events with results. `/api/wc/standings` now returns `{rounds:[{name,matches}]}`
+  with knockout data (Brazil 2-1 Japan, etc.) instead of stale 12 group tables. Fix: `season.type`
+  can be an int (not a dict) — added isinstance guards.
+- **Frontend:** New `/leagues` index grid (6 league cards) + `/leagues/[league]` hub with tabs:
+  Standings, Stats (Players|Teams), Schedule (+ Rankings for UFC). Nav "Stats" → "Leagues".
+  `/stats` redirects to `/leagues`. Reuses all stats.tsx patterns. `normalizeGame` fixed: league
+  field can be ESPN object — extract string.
+- **Verification:** Frontend validator headless-rendered ALL 6 league hubs (NBA/MLB/NHL/NFL/WC/UFC)
+  with ZERO pageerrors. WC knockout confirmed rendering. Two-tone design verified. Backend
+  validator caught `/api/wc/knockout` home/away still shipping as objects — fixed to plain strings.
+- **Dev preview:** http://127.0.0.1:3097/leagues (frontend :3097, backend :8097).
+- **Merge:** `git -C /root/legendarypicks merge --ff-only feat/leagues-hub` (after user review).
+- **Tear down:** `scripts/hermes-worktree.sh down leagues-hub`

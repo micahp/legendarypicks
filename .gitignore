@@ -56,3 +56,4 @@ backend/venv/
 *.bak-*
 backend/data/*.bak*
 backend/data/picks.dev.db
+esports_results.json
