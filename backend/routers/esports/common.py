@@ -12,6 +12,16 @@ def _norm_team(n):
     return " ".join(toks)
 
 
+def _strip_name(n):
+    """Normalize a team name for dedup and cross-source matching.
+
+    Lowercase + strip ALL non-alphanumerics so spacing/punctuation diffs collapse:
+    'Game Hunters' == 'GameHunters' == 'gamehunters'.
+    """
+    import re
+    return re.sub(r"[^a-z0-9]", "", (n or "").lower())
+
+
 def _slug_to_name(slug):
     return " ".join(w.capitalize() for w in (slug or "").split("-"))
 

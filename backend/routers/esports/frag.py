@@ -73,9 +73,10 @@ def _frag_enrich(team_a, team_b):
 
     Stream priority: main+official > main > official > any community.
     """
-    from .common import _norm_team
+    from .common import _strip_name
 
-    na, nb = _norm_team(team_a), _norm_team(team_b)
+    na = _strip_name(team_a)
+    nb = _strip_name(team_b)
 
     live = _fetch_frag_live()
     if not live:
@@ -88,15 +89,25 @@ def _frag_enrich(team_a, team_b):
         if len(opponents) < 2:
             continue
 
-        fn_a = (opponents[0].get("opponent") or {}).get("name") or ""
-        fn_b = (opponents[1].get("opponent") or {}).get("name") or ""
-        nfa, nfb = _norm_team(fn_a), _norm_team(fn_b)
+        opp0 = opponents[0].get("opponent") or {}
+        opp1 = opponents[1].get("opponent") or {}
 
-        # Fuzzy match: both sides must match (order-independent).
-        match_ab = (na and nfa and (na in nfa or nfa in na)) and \
-                   (nb and nfb and (nb in nfb or nfb in nb))
-        match_ba = (na and nfb and (na in nfb or nfb in na)) and \
-                   (nb and nfa and (nb in nfa or nfa in nb))
+        # Collect all name variants for each frag team: name, acronym, slug.
+        def _frag_names(opp):
+            return {_strip_name(v) for v in (
+                opp.get("name") or "",
+                opp.get("acronym") or "",
+                opp.get("slug") or "",
+            ) if v}
+
+        names_a = _frag_names(opp0)
+        names_b = _frag_names(opp1)
+
+        # Match: each Bovada team must hit at least one frag variant.
+        match_ab = (na and any(na == fn or na in fn or fn in na for fn in names_a)) and \
+                   (nb and any(nb == fn or nb in fn or fn in nb for fn in names_b))
+        match_ba = (na and any(na == fn or na in fn or fn in na for fn in names_b)) and \
+                   (nb and any(nb == fn or nb in fn or fn in nb for fn in names_a))
         if not (match_ab or match_ba):
             continue
 
@@ -141,12 +152,15 @@ def _frag_enrich(team_a, team_b):
 
         watch = best_stream[1] if best_stream else None
 
+        frag_team_a = opp0.get("name") or ""
+        frag_team_b = opp1.get("name") or ""
+
         return {
             "watch": watch,
             "logoA": img_b if swapped else img_a,
             "logoB": img_a if swapped else img_b,
-            "canonicalA": fn_b if swapped else fn_a,
-            "canonicalB": fn_a if swapped else fn_b,
+            "canonicalA": frag_team_b if swapped else frag_team_a,
+            "canonicalB": frag_team_a if swapped else frag_team_b,
         }
 
     return None

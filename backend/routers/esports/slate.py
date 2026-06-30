@@ -6,7 +6,7 @@ import urllib.request as _u
 
 from fastapi import APIRouter
 
-from .common import _amer_to_p, _ESPORTS_TITLES, _slug_to_name, _TITLE_SLUG, _team_match, _norm_team, _GRID_LABEL_SLUG
+from .common import _amer_to_p, _ESPORTS_TITLES, _slug_to_name, _TITLE_SLUG, _team_match, _norm_team, _GRID_LABEL_SLUG, _strip_name
 from .grid import _grid_score_index, _grid_match
 from .lol import msi_predictions
 from .results_store import _load_results_store, _save_results_store
@@ -214,13 +214,9 @@ def esports_upcoming():
             v["pinned"] = True
             matches.append(v)
 
-    # --- dedup ---
-    def _pfx(n):
-        t = _norm_team(n)
-        return t[:5] if t else t
-
+    # --- dedup: collapse Bovada duplicates (spacing/acronym diffs) + frag/Bovada overlap ---
     def _dk(m):
-        return (m.get("title"), frozenset({_pfx(m.get("teamA", "")), _pfx(m.get("teamB", ""))}))
+        return (m.get("title"), frozenset({_strip_name(m.get("teamA", "")), _strip_name(m.get("teamB", ""))}))
 
     deduped = {}
     for m in matches:
@@ -229,9 +225,21 @@ def esports_upcoming():
             deduped[k] = m
         else:
             base = deduped[k]
+            # Merge missing fields from the incoming copy.
             for f in ("favorite", "score", "winner", "model", "logoA", "logoB", "startTime", "league"):
                 if not base.get(f) and m.get(f):
                     base[f] = m[f]
+            # Prefer the copy that has a stream.
+            if not base.get("watch") and m.get("watch"):
+                base["watch"] = m["watch"]
+            # Prefer the copy with logos.
+            if not base.get("logoA") and m.get("logoA"):
+                base["logoA"] = m["logoA"]
+                base["logoB"] = m.get("logoB")
+            # Prefer the canonical (frag) team names over Bovada raw names.
+            if m.get("logoA") and not base.get("logoA"):
+                base["teamA"] = m.get("teamA", base["teamA"])
+                base["teamB"] = m.get("teamB", base["teamB"])
             base["live"] = bool(base.get("live") or m.get("live"))
             base["finished"] = bool(base.get("finished") or m.get("finished"))
     matches = list(deduped.values())
