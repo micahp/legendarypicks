@@ -30,20 +30,21 @@ def _fetch_frag_live():
 
 
 def _frag_stream_to_watch(stream):
-    """Convert a frag.se stream dict to our watch-shape {platform, url, channel, online}."""
-    url = (stream.get("embed_url") or stream.get("raw_url") or "").strip()
+    """Convert a frag.se stream dict to our watch-shape. frag gives a ready-to-embed `embed_url`
+    for Twitch/Kick/YouTube alike, so we pass it through as `embedUrl` and the frontend iframes it
+    directly — no per-platform channel re-derivation (that's what dropped YouTube streams before)."""
+    embed = (stream.get("embed_url") or "").strip()
+    raw = (stream.get("raw_url") or "").strip()
+    url = embed or raw
     if not url:
         return None
 
     if "kick.com/" in url:
         platform = "kick"
-        channel = url.rsplit("/", 1)[-1].split("?")[0]
+        channel = embed.rsplit("/", 1)[-1].split("?")[0] if embed else None
     elif "twitch.tv/" in url:
         platform = "twitch"
-        if "channel=" in url:
-            channel = url.split("channel=", 1)[1].split("&")[0]
-        else:
-            channel = url.rstrip("/").rsplit("/", 1)[-1]
+        channel = url.split("channel=", 1)[1].split("&")[0] if "channel=" in url else url.rstrip("/").rsplit("/", 1)[-1]
     elif "youtube.com/" in url or "youtu.be/" in url:
         platform = "youtube"
         channel = None
@@ -53,9 +54,10 @@ def _frag_stream_to_watch(stream):
 
     return {
         "platform": platform,
-        "url": url,
+        "url": raw or embed,        # human-clickable page for the ↗ link
         "channel": channel,
-        "online": True,  # frag.se only lists live matches — stream is broadcasting
+        "embedUrl": embed or None,  # ready-to-embed iframe src (Twitch/Kick/YouTube)
+        "online": True,             # frag.se only lists live matches — stream is broadcasting
     }
 
 

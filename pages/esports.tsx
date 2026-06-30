@@ -25,7 +25,7 @@ type CS2Player = { name: string; kills: number | null; deaths: number | null }
 type CS2Team = { name: string; score: number | null; won: boolean; players: CS2Player[] }
 type CS2Live = { live: boolean; title?: string; tournament?: string; stream?: { platform: string; channel: string } | null; teamA?: CS2Team; teamB?: CS2Team }
 
-type UpMatch = { startTime: number | null; live: boolean; title: string; league: string; teamA: string; teamB: string; favorite: { name: string; pct: number } | null; watch: { platform: string; url: string; channel: string | null; online?: boolean | null } | null; score?: { a: number | null; b: number | null } | null; finished?: boolean | null; winner?: 'a' | 'b' | null; pinned?: boolean; model?: { favName: string; modelPct: number; marketPct: number | null; edge: number | null } | null; logoA?: string | null; logoB?: string | null }
+type UpMatch = { startTime: number | null; live: boolean; title: string; league: string; teamA: string; teamB: string; favorite: { name: string; pct: number } | null; watch: { platform: string; url: string; channel: string | null; online?: boolean | null; embedUrl?: string | null } | null; score?: { a: number | null; b: number | null } | null; finished?: boolean | null; winner?: 'a' | 'b' | null; pinned?: boolean; model?: { favName: string; modelPct: number; marketPct: number | null; edge: number | null } | null; logoA?: string | null; logoB?: string | null }
 type UpcomingData = { matches: UpMatch[]; source?: string; error?: string }
 
 const POLL_MS = 10_000
@@ -560,12 +560,19 @@ function LiveCard({ m, host, featured = false }: { m: UpMatch; host: string; fea
   const [open, setOpen] = useState(false)
   const iframeRef = useRef<HTMLIFrameElement>(null)
   // Only a confirmed on-air channel is embeddable; otherwise we say so honestly.
-  const embeddable = m.watch?.online === true && !!m.watch?.channel && (m.watch.platform === 'twitch' || m.watch.platform === 'kick')
-  const embedSrc = embeddable
-    ? (m.watch!.platform === 'kick'
-        ? `https://player.kick.com/${m.watch!.channel}?muted=false`
-        : `https://player.twitch.tv/?channel=${m.watch!.channel}&parent=${encodeURIComponent(host)}&muted=false`)
+  // Build the iframe src per platform. YouTube uses frag's ready embed_url directly; Twitch must get
+  // a &parent=<host> (frag's embed_url omits it); Kick plays from the channel. Anything else (web) isn't embeddable.
+  const w = m.watch
+  const embedSrc = w?.online === true
+    ? (w.platform === 'youtube' && w.embedUrl
+        ? `${w.embedUrl}${w.embedUrl.includes('?') ? '&' : '?'}autoplay=1&mute=1`
+        : w.platform === 'kick' && w.channel
+        ? `https://player.kick.com/${w.channel}?muted=false`
+        : w.platform === 'twitch' && w.channel
+        ? `https://player.twitch.tv/?channel=${w.channel}&parent=${encodeURIComponent(host)}&muted=false`
+        : null)
     : null
+  const embeddable = !!embedSrc
   // Non-featured cards mount the player on tap (so we don't autoplay every stream at once).
   const toggle = () => {
     const next = !open
