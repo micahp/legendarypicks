@@ -251,7 +251,7 @@ def esports_upcoming():
     for m in matches:
         slug = _TITLE_SLUG.get(m.get("title"))
         if m.get("live") and slug:
-            # Try frag.se for the canonical per-match stream + logos + clean names.
+            # Try frag.se for the canonical per-match stream + logos + score + clean names.
             enrich = _frag_enrich(m["teamA"], m["teamB"])
             if enrich:
                 if enrich.get("watch"):
@@ -264,6 +264,13 @@ def esports_upcoming():
                     m["teamA"] = enrich["canonicalA"]
                 if enrich.get("canonicalB"):
                     m["teamB"] = enrich["canonicalB"]
+                # Apply frag score when GRID hasn't already set one (GRID stays authoritative for CS2/Dota).
+                if enrich.get("score") and not m.get("score"):
+                    m["score"] = enrich["score"]
+                if enrich.get("finished") and not m.get("finished"):
+                    m["finished"] = enrich["finished"]
+                if enrich.get("winner") and not m.get("winner"):
+                    m["winner"] = enrich["winner"]
                 # If frag gave us a stream, we're done; otherwise fall through to hardcoded.
                 if enrich.get("watch"):
                     continue
