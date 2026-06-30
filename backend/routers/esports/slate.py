@@ -10,6 +10,7 @@ from .common import _amer_to_p, _ESPORTS_TITLES, _slug_to_name, _TITLE_SLUG, _te
 from .grid import _grid_score_index, _grid_match
 from .lol import msi_predictions
 from .results_store import _load_results_store, _save_results_store
+from .frag import _frag_enrich
 from .streams import _resolve_watch
 
 router = APIRouter()
@@ -238,10 +239,30 @@ def esports_upcoming():
         if m.get("finished"):
             m["live"] = False
 
-    # --- resolve the watch channel, ON-AIR-VERIFIED for live matches ---
+    # --- resolve the watch channel: frag.se first (per-match, live), fall back to hardcoded maps ---
     for m in matches:
         slug = _TITLE_SLUG.get(m.get("title"))
-        m["watch"] = _resolve_watch(slug, m.get("league"), live=bool(m.get("live"))) if slug else None
+        if m.get("live") and slug:
+            # Try frag.se for the canonical per-match stream + logos + clean names.
+            enrich = _frag_enrich(m["teamA"], m["teamB"])
+            if enrich:
+                if enrich.get("watch"):
+                    m["watch"] = enrich["watch"]
+                if enrich.get("logoA"):
+                    m["logoA"] = enrich["logoA"]
+                if enrich.get("logoB"):
+                    m["logoB"] = enrich["logoB"]
+                if enrich.get("canonicalA"):
+                    m["teamA"] = enrich["canonicalA"]
+                if enrich.get("canonicalB"):
+                    m["teamB"] = enrich["canonicalB"]
+                # If frag gave us a stream, we're done; otherwise fall through to hardcoded.
+                if enrich.get("watch"):
+                    continue
+            # Fall back to hardcoded map with on-air verification.
+            m["watch"] = _resolve_watch(slug, m.get("league"), live=True)
+        else:
+            m["watch"] = _resolve_watch(slug, m.get("league"), live=False) if slug else None
 
     # Pin live match for hero.
     live_now = [m for m in matches if m["live"]]
