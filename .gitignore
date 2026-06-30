@@ -57,3 +57,7 @@ backend/venv/
 backend/data/*.bak*
 backend/data/picks.dev.db
 esports_results.json
+
+# catch __pycache__ at any depth
+__pycache__/
+*.pyc
