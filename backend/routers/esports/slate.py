@@ -182,9 +182,16 @@ def _rebuild_upcoming():
             m["logoA"], m["logoB"] = ps["logoA"], ps.get("logoB")
         if ps.get("winner") and not m.get("winner"):
             m["winner"] = ps["winner"]
-        if m.get("pinned"):
+        # Only a CONFIRMED-finished results-store entry (has `finishedAt`, set once below when it's
+        # first archived) should freeze here — its finished/score state is settled and must not be
+        # second-guessed. A match that's merely `pinned` because Bovada dropped it mid-cycle (line
+        # ~151) is NOT yet known to be finished — skipping it here was the bug: it never got
+        # rechecked again, so it sat showing finished=false (-> Scheduled tab) forever instead of
+        # resolving to finished=true (-> Results) once PandaScore/GRID actually confirmed the
+        # result. See logs/ESPORTS-BUG-TRACKER.md Class C.
+        if m.get("pinned") and "finishedAt" in m:
             continue
-        # Full status/score enrichment only for fresh (non-pinned) matches.
+        # Full status/score enrichment for fresh matches AND unresolved pinned carry-forwards.
         if ps.get("finished"):
             m["finished"], m["live"] = True, False
         elif ps.get("live"):
@@ -280,9 +287,15 @@ def _rebuild_upcoming():
         pass  # MSI model unavailable — slate still works without it
 
     # --- durable results store ---
+    # `"finishedAt" not in m`, not `not m.get("pinned")`: a carry-forward match (line ~151) that
+    # JUST resolved to finished=true this cycle (via the PandaScore/GRID recheck above) is still
+    # tagged pinned=True, but it's a newly-confirmed result that needs archiving like any other —
+    # excluding it here was the other half of the Class C bug (it would resolve correctly for one
+    # cycle, then get re-pinned as an unarchived, still-technically-"pinned" entry with no
+    # `finishedAt` and never permanently settle into Results).
     store = _load_results_store()
     for m in matches:
-        if m.get("finished") and not m.get("pinned"):
+        if m.get("finished") and "finishedAt" not in m:
             k = _key(m)
             if k not in store:
                 m2 = dict(m)
@@ -306,34 +319,38 @@ def _rebuild_upcoming():
     def _dk(m):
         return (m.get("title"), frozenset({_strip_name(m.get("teamA", "")), _strip_name(m.get("teamB", ""))}))
 
-    deduped = {}
-    for m in matches:
-        k = _dk(m)
-        if k not in deduped:
-            deduped[k] = m
-        else:
-            base = deduped[k]
-            # Merge missing fields from the incoming copy.
-            for f in ("favorite", "score", "winner", "model", "logoA", "logoB", "startTime", "league"):
-                if not base.get(f) and m.get(f):
-                    base[f] = m[f]
-            # Prefer the copy that has a stream.
-            if not base.get("watch") and m.get("watch"):
-                base["watch"] = m["watch"]
-            # Prefer the copy with logos.
-            if not base.get("logoA") and m.get("logoA"):
-                base["logoA"] = m["logoA"]
-                base["logoB"] = m.get("logoB")
-            # Prefer the canonical (frag) team names over Bovada raw names.
-            if m.get("logoA") and not base.get("logoA"):
-                base["teamA"] = m.get("teamA", base["teamA"])
-                base["teamB"] = m.get("teamB", base["teamB"])
-            base["live"] = bool(base.get("live") or m.get("live"))
-            base["finished"] = bool(base.get("finished") or m.get("finished"))
-    matches = list(deduped.values())
-    for m in matches:
-        if m.get("finished"):
-            m["live"] = False
+    def _collapse(ms):
+        deduped = {}
+        for m in ms:
+            k = _dk(m)
+            if k not in deduped:
+                deduped[k] = m
+            else:
+                base = deduped[k]
+                # Merge missing fields from the incoming copy.
+                for f in ("favorite", "score", "winner", "model", "logoA", "logoB", "startTime", "league"):
+                    if not base.get(f) and m.get(f):
+                        base[f] = m[f]
+                # Prefer the copy that has a stream.
+                if not base.get("watch") and m.get("watch"):
+                    base["watch"] = m["watch"]
+                # Prefer the copy with logos.
+                if not base.get("logoA") and m.get("logoA"):
+                    base["logoA"] = m["logoA"]
+                    base["logoB"] = m.get("logoB")
+                # Prefer the canonical (frag) team names over Bovada raw names.
+                if m.get("logoA") and not base.get("logoA"):
+                    base["teamA"] = m.get("teamA", base["teamA"])
+                    base["teamB"] = m.get("teamB", base["teamB"])
+                base["live"] = bool(base.get("live") or m.get("live"))
+                base["finished"] = bool(base.get("finished") or m.get("finished"))
+        out = list(deduped.values())
+        for m in out:
+            if m.get("finished"):
+                m["live"] = False
+        return out
+
+    matches = _collapse(matches)
 
     # Backfill any still-missing team crest by NAME from PandaScore's cached team-logo index. Runs
     # AFTER the results-store merge so it also lights up GRID-sourced / pinned finished results whose
@@ -387,6 +404,15 @@ def _rebuild_upcoming():
     # NOTE: no live-hero fabrication. If nothing is live, the page honestly shows
     # "what's next" — we do NOT re-insert the last-seen live match (that kept a dead
     # game pinned as "live" for hours with no stream to play).
+
+    # Re-collapse after frag's canonical-name rewrite above. frag matches by name/acronym/slug,
+    # which is more lenient than _dk's fuzzy match — two entries that looked like different
+    # matches going into the first _collapse() (e.g. Bovada's "Inner Circle Academy" vs a
+    # GRID-surfaced entry using GRID's short name "IC Academy") can both get renamed to the same
+    # frag canonical name here, and would otherwise survive as a cosmetic duplicate: same display
+    # names, never merged, because dedup only ran once, before the rename. See
+    # logs/ESPORTS-BUG-TRACKER.md Class A #5.
+    matches = _collapse(matches)
 
     matches.sort(key=lambda m: (not m["live"], m["startTime"] or 0))
 

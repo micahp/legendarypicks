@@ -115,7 +115,24 @@ def run():
             "first_seen": (prev or {}).get("first_seen", now),
             "ever_live": bool((prev or {}).get("ever_live")) or phase == "live",
             "last_seen": now,
+            "live_link_missing_since": (prev or {}).get("live_link_missing_since"),
         }
+
+        # Persistent no-stream-link while live: the "always one game at the bottom with no
+        # stream available" case — a match goes live but no source ever attaches a watch link,
+        # and it sits there indefinitely instead of resolving one way or the other. Give it a
+        # grace window (links often land within a cycle or two of going live) before flagging,
+        # then keep flagging every cycle for visibility (same pattern as NEVER_WENT_LIVE below).
+        if phase == "live" and not any(watch_sig):
+            since = entry["live_link_missing_since"] or now
+            entry["live_link_missing_since"] = since
+            missing_for_min = (now - since) / 60
+            if missing_for_min > 10:
+                _append(_ANOMALIES_LOG,
+                        f"{time.strftime('%Y-%m-%dT%H:%M:%S')} LIVE_NO_WATCH_LINK {k} live with no "
+                        f"stream link for {missing_for_min:.0f}m")
+        else:
+            entry["live_link_missing_since"] = None
 
         if prev is None:
             new_state[k] = entry
