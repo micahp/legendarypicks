@@ -11,6 +11,7 @@ from .grid import _grid_score_index, _grid_match
 from .lol import msi_predictions
 from .results_store import _load_results_store, _save_results_store
 from .frag import _frag_enrich
+from .pandascore import _ps_enrich
 from .streams import _resolve_watch
 
 router = APIRouter()
@@ -18,7 +19,6 @@ router = APIRouter()
 _BOV_ESPORTS = ("https://www.bovada.lv/services/sports/event/coupon/events/A/description/"
                 "esports?marketFilterId=def&liveOnly=false&lang=en")
 _up_cache = {"t": 0.0, "data": None}
-_pinned_live = {"match": None, "t": 0.0}  # last real live match + when we last saw it (no hardcoded seed)
 
 
 @router.get("/api/esports/upcoming")
@@ -31,7 +31,9 @@ def esports_upcoming():
     CACHE_TTL = 4 * 3600
     STALE_CUTOFF_MS = (now - 4 * 3600) * 1000
 
-    if _up_cache["data"] is not None and now - _up_cache["t"] < 60:
+    # Response cache: 60s while something is live (scores move), 5min when idle (nothing to
+    # refresh — don't rebuild/ping upstreams every minute for a static "what's next" list).
+    if _up_cache["data"] is not None and now - _up_cache["t"] < _up_cache.get("ttl", 60):
         return _up_cache["data"]
 
     prev_matches = (_up_cache["data"] or {}).get("matches", [])
@@ -104,17 +106,64 @@ def esports_upcoming():
             })
 
     # Merge: keep old matches that Bovada dropped, for up to CACHE_TTL (4h).
+    # A match Bovada dropped is NOT live anymore — never carry `live` forward (that
+    # resurrected phantom "live" games with no stream/hero). Keep it only if it's still
+    # within the schedule window or a finished result; a genuinely-live match that Bovada
+    # keeps listing stays fresh above, and real live CS2/Dota re-enters via the GRID loop.
     fresh_keys = {_key(m) for m in matches}
     for old in prev_matches:
         if _key(old) not in fresh_keys:
             st = old.get("startTime")
-            if (st and st > STALE_CUTOFF_MS) or old.get("live"):
+            if (st and st > STALE_CUTOFF_MS) or old.get("finished"):
                 old = dict(old)
                 old["pinned"] = True
+                old["live"] = False
                 matches.append(old)
 
+    # Live-window gate: do we need the LIVE feeds this cycle? Only if a match is plausibly on-air
+    # (Bovada flags it live, or its start time is within the window). When nothing's live we skip
+    # frag / PandaScore-running / GRID series-state entirely — idle esports shouldn't ping upstreams.
+    now_ms = now * 1000
+    LIVE_LEAD_MS = 20 * 60 * 1000    # a match ~20min pre-start may already have a stream up
+    LIVE_TAIL_MS = 6 * 3600 * 1000   # ...and a Bo5 can still be running ~6h after start
+    def _in_live_window(m):
+        if m.get("finished"):
+            return False
+        if m.get("live"):
+            return True
+        st = m.get("startTime")
+        return bool(st and now_ms - LIVE_TAIL_MS <= st <= now_ms + LIVE_LEAD_MS)
+    live_window = any(_in_live_window(m) for m in matches)
+
+    # PandaScore: authoritative status / score / winner / logos across ALL titles (Valorant, R6,
+    # LoL, ...). Its explicit `finished` status is what finally tells us a Bovada match ENDED —
+    # Bovada silently drops finished games, which is what stuck them as zombie-live. GRID (below)
+    # still overrides for CS2/Dota. The live `running` feed is only fetched inside the live window.
+    for m in matches:
+        if m.get("pinned"):
+            continue
+        ps = _ps_enrich(m["teamA"], m["teamB"], include_running=live_window)
+        if not ps:
+            continue
+        if ps.get("finished"):
+            m["finished"], m["live"] = True, False
+        elif ps.get("live"):
+            m["live"], m["finished"] = True, False
+        else:
+            m["live"] = False  # PandaScore says not_started — authoritative that it's NOT live
+        if ps.get("score") and not m.get("score"):
+            m["score"] = ps["score"]
+        if ps.get("winner") and not m.get("winner"):
+            m["winner"] = ps["winner"]
+        if ps.get("logoA") and not m.get("logoA"):
+            m["logoA"], m["logoB"] = ps["logoA"], ps.get("logoB")
+        if ps.get("startTime") and not m.get("startTime"):
+            m["startTime"] = ps["startTime"]
+        if ps.get("watch"):
+            m["_ps_watch"] = ps["watch"]  # link fallback, used if frag has no embed
+
     # Attach GRID state to CS2/Dota matches — the honest "score + is it over" signal.
-    gidx = _grid_score_index()
+    gidx = _grid_score_index() if live_window else []
     used_grid = set()
     for m in matches:
         if m["title"] not in ("CS2", "Dota 2"):
@@ -123,7 +172,10 @@ def esports_upcoming():
         if not entry:
             continue
         used_grid.add(id(entry))
-        m["score"] = {"a": entry["score"].get(ga), "b": entry["score"].get(gb)}
+        # Only attach a score once the series is under way — a not-yet-started series is 0-0,
+        # which must not surface as a live scoreline on an upcoming match.
+        if entry["started"] or entry["finished"]:
+            m["score"] = {"a": entry["score"].get(ga), "b": entry["score"].get(gb)}
         m["finished"] = entry["finished"]
         m["winner"] = "a" if entry["winner"] == ga else "b" if entry["winner"] == gb else None
         m["live"] = entry["started"] and not entry["finished"]  # GRID is authoritative on live-ness
@@ -271,27 +323,30 @@ def esports_upcoming():
                     m["finished"] = enrich["finished"]
                 if enrich.get("winner") and not m.get("winner"):
                     m["winner"] = enrich["winner"]
-                # If frag gave us a stream, we're done; otherwise fall through to hardcoded.
+                # If frag gave us a stream, we're done; otherwise fall through.
                 if enrich.get("watch"):
                     continue
-            # Fall back to hardcoded map with on-air verification.
+            # Next: PandaScore's stream link (official broadcast, may be a clickable ↗ not an embed).
+            if m.get("_ps_watch"):
+                m["watch"] = m["_ps_watch"]
+                continue
+            # Last: hardcoded map with on-air verification.
             m["watch"] = _resolve_watch(slug, m.get("league"), live=True)
         else:
             m["watch"] = _resolve_watch(slug, m.get("league"), live=False) if slug else None
 
-    # Pin live match for hero.
-    live_now = [m for m in matches if m["live"]]
-    if live_now:
-        _pinned_live["match"] = live_now[0]
-        _pinned_live["t"] = now
-    elif _pinned_live["match"] and now - _pinned_live["t"] < CACHE_TTL:
-        pinned = dict(_pinned_live["match"])
-        pinned["pinned"] = True
-        if not any(_key(m) == _key(pinned) for m in matches):
-            matches.insert(0, pinned)
+    # NOTE: no live-hero fabrication. If nothing is live, the page honestly shows
+    # "what's next" — we do NOT re-insert the last-seen live match (that kept a dead
+    # game pinned as "live" for hours with no stream to play).
 
     matches.sort(key=lambda m: (not m["live"], m["startTime"] or 0))
 
+    for m in matches:
+        m.pop("_ps_watch", None)  # internal-only stream fallback, not part of the API shape
+
+    # Idle (nothing live) -> hold the response 5min so we stop rebuilding/pinging upstreams every
+    # minute; something live -> 60s so scores stay fresh.
+    any_live = any(m.get("live") for m in matches)
     out = {"matches": matches, "source": "bovada"}
-    _up_cache.update(t=now, data=out)
+    _up_cache.update(t=now, data=out, ttl=(60 if any_live else 300))
     return out
