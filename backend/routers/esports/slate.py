@@ -11,7 +11,7 @@ from .grid import _grid_score_index, _grid_match
 from .lol import msi_predictions
 from .results_store import _load_results_store, _save_results_store
 from .frag import _frag_enrich
-from .pandascore import _ps_enrich
+from .pandascore import _ps_enrich, _ps_logo_for
 from .streams import _resolve_watch
 
 router = APIRouter()
@@ -140,11 +140,19 @@ def esports_upcoming():
     # Bovada silently drops finished games, which is what stuck them as zombie-live. GRID (below)
     # still overrides for CS2/Dota. The live `running` feed is only fetched inside the live window.
     for m in matches:
-        if m.get("pinned"):
-            continue
-        ps = _ps_enrich(m["teamA"], m["teamB"], include_running=live_window)
+        ps = _ps_enrich(m["teamA"], m["teamB"], include_running=live_window, near_ms=m.get("startTime"))
         if not ps:
             continue
+        # Logos + winner backfill for EVERY match, including pinned results-store entries — those
+        # were saved logo-less (GRID gives no crests) but PandaScore has them. This must NOT touch a
+        # stored result's finished/score state, so it runs before the pinned guard below.
+        if ps.get("logoA") and not m.get("logoA"):
+            m["logoA"], m["logoB"] = ps["logoA"], ps.get("logoB")
+        if ps.get("winner") and not m.get("winner"):
+            m["winner"] = ps["winner"]
+        if m.get("pinned"):
+            continue
+        # Full status/score enrichment only for fresh (non-pinned) matches.
         if ps.get("finished"):
             m["finished"], m["live"] = True, False
         elif ps.get("live"):
@@ -153,10 +161,6 @@ def esports_upcoming():
             m["live"] = False  # PandaScore says not_started — authoritative that it's NOT live
         if ps.get("score") and not m.get("score"):
             m["score"] = ps["score"]
-        if ps.get("winner") and not m.get("winner"):
-            m["winner"] = ps["winner"]
-        if ps.get("logoA") and not m.get("logoA"):
-            m["logoA"], m["logoB"] = ps["logoA"], ps.get("logoB")
         if ps.get("startTime") and not m.get("startTime"):
             m["startTime"] = ps["startTime"]
         if ps.get("watch"):
@@ -298,6 +302,19 @@ def esports_upcoming():
     for m in matches:
         if m.get("finished"):
             m["live"] = False
+
+    # Backfill any still-missing team crest by NAME from PandaScore's cached team-logo index. Runs
+    # AFTER the results-store merge so it also lights up GRID-sourced / pinned finished results whose
+    # exact fixture PandaScore doesn't carry. Reads the already-cached feeds — no extra API calls.
+    for m in matches:
+        if not m.get("logoA"):
+            lg = _ps_logo_for(m.get("teamA"))
+            if lg:
+                m["logoA"] = lg
+        if not m.get("logoB"):
+            lg = _ps_logo_for(m.get("teamB"))
+            if lg:
+                m["logoB"] = lg
 
     # --- resolve the watch channel: frag.se first (per-match, live), fall back to hardcoded maps ---
     for m in matches:

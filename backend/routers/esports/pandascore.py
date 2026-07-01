@@ -21,6 +21,10 @@ import urllib.request as _u
 import urllib.error as _ue
 
 _PS_BASE = "https://api.pandascore.co"
+# The titles we surface. Per-title feeds (vs one combined endpoint) give far deeper coverage:
+# the combined /matches/past returns only ~50 most-recent-globally, so minor CS2/Dota results from
+# hours ago fall off it — per-title past-100 keeps them (and their team logos).
+_PS_TITLES = ["valorant", "csgo", "dota2", "r6siege", "lol", "kog"]
 # Three separately-cached layers so idle esports doesn't ping the live feed:
 #   upcoming = schedule (changes slowly)      -> long TTL
 #   past     = finished results (need fresh-ish "it's over" signal) -> medium TTL
@@ -28,9 +32,11 @@ _PS_BASE = "https://api.pandascore.co"
 _ps_cache_up = {"t": 0.0, "data": None}
 _ps_cache_past = {"t": 0.0, "data": None}
 _ps_cache_run = {"t": 0.0, "data": None}
+_ps_cache_logos = {"t": 0.0, "data": None}
 _PS_TTL_UP = 600
 _PS_TTL_PAST = 120
 _PS_TTL_RUN = 45
+_PS_TTL_LOGOS = 120
 
 
 def _ps_key():
@@ -67,15 +73,23 @@ def _ps_get(path):
         return []
 
 
-def _cached(cache, ttl, path):
-    """Return `path`'s parsed list, memoized in `cache` for `ttl` seconds."""
+def _cached(cache, ttl, loader):
+    """Return `loader()`'s list, memoized in `cache` for `ttl` seconds."""
     if cache["data"] is not None and time.time() - cache["t"] < ttl:
         return cache["data"]
-    data = _ps_get(path)
+    data = loader()
     # Keep the last good payload on a transient failure rather than blanking the slate.
     if data or cache["data"] is None:
         cache.update(t=time.time(), data=data)
     return cache["data"] or []
+
+
+def _per_title(kind, query):
+    """Concatenate a per-title match feed across all our titles (deeper than the combined feed)."""
+    out = []
+    for t in _PS_TITLES:
+        out += _ps_get(f"/{t}/matches/{kind}?per_page=100&{query}")
+    return out
 
 
 def _fetch_ps(include_running=True):
@@ -84,10 +98,10 @@ def _fetch_ps(include_running=True):
     window so idle esports costs ~0 PandaScore calls beyond the slow schedule refresh."""
     if not _ps_key():
         return []
-    matches = list(_cached(_ps_cache_up, _PS_TTL_UP, "/matches/upcoming?per_page=50&sort=begin_at"))
-    matches += _cached(_ps_cache_past, _PS_TTL_PAST, "/matches/past?filter[status]=finished&sort=-end_at&per_page=50")
+    matches = list(_cached(_ps_cache_up, _PS_TTL_UP, lambda: _per_title("upcoming", "sort=begin_at")))
+    matches += _cached(_ps_cache_past, _PS_TTL_PAST, lambda: _per_title("past", "filter[status]=finished&sort=-end_at"))
     if include_running:
-        matches += _cached(_ps_cache_run, _PS_TTL_RUN, "/matches/running?per_page=50")
+        matches += _cached(_ps_cache_run, _PS_TTL_RUN, lambda: _ps_get("/matches/running?per_page=50"))
     # De-dup by match id (a match can appear in more than one feed at the boundary).
     seen, uniq = set(), []
     for m in matches:
@@ -97,6 +111,45 @@ def _fetch_ps(include_running=True):
         seen.add(mid)
         uniq.append(m)
     return uniq
+
+
+def _ps_team_logos():
+    """A cached {stripped-team-name: logo_url} index harvested from every team seen in the feeds —
+    so we can fill a match's crest by TEAM NAME even when that exact fixture isn't in PandaScore
+    (e.g. GRID-sourced results). Built off already-cached match data, so it costs no extra calls."""
+    if _ps_cache_logos["data"] is not None and time.time() - _ps_cache_logos["t"] < _PS_TTL_LOGOS:
+        return _ps_cache_logos["data"]
+    from .common import _strip_name
+    idx = {}
+    for m in _fetch_ps(include_running=False):
+        for o in (m.get("opponents") or []):
+            op = o.get("opponent") or {}
+            img = op.get("image_url")
+            if not img:
+                continue
+            for v in (op.get("name"), op.get("acronym"), op.get("slug")):
+                k = _strip_name(v or "")
+                if k and k not in idx:
+                    idx[k] = img
+    _ps_cache_logos.update(t=time.time(), data=idx)
+    return idx
+
+
+def _ps_logo_for(name):
+    """Best logo URL for a team name via the cached index: exact stripped-name, else a conservative
+    substring match (>=5 chars) to catch 'Procyon' -> 'Procyon Gaming'."""
+    from .common import _strip_name
+    k = _strip_name(name or "")
+    if not k:
+        return None
+    idx = _ps_team_logos()
+    if k in idx:
+        return idx[k]
+    if len(k) >= 5:
+        for tk, img in idx.items():
+            if len(tk) >= 5 and (k in tk or tk in k):
+                return img
+    return None
 
 
 def _ps_stream_to_watch(streams_list, live):
@@ -129,7 +182,7 @@ def _ps_stream_to_watch(streams_list, live):
     return best[1] if best else None
 
 
-def _ps_enrich(team_a, team_b, include_running=True):
+def _ps_enrich(team_a, team_b, include_running=True, near_ms=None):
     """Look up a match on PandaScore by fuzzy team-name match. Returns the authoritative status/
     score/winner + logos/canonical names/startTime, or None if no match found.
 
@@ -163,6 +216,12 @@ def _ps_enrich(team_a, team_b, include_running=True):
                     return True
         return False
 
+    # Teams play many matches; a name match alone attaches a PAST result to a same-team FUTURE
+    # fixture (e.g. a finished Edward Gaming game -> the Edward Gaming EWC match days later, marked
+    # falsely finished). When we know the fixture's time (`near_ms`), require the PandaScore match to
+    # be within a day-ish of it and pick the CLOSEST — that disambiguates same-team collisions.
+    NEAR_TOL_MS = 36 * 3600 * 1000
+    best = None  # (time_delta, match_dict, swapped)
     for m in _fetch_ps(include_running=include_running):
         opps = m.get("opponents") or []
         if len(opps) < 2:
@@ -174,45 +233,54 @@ def _ps_enrich(team_a, team_b, include_running=True):
         ba = _hits(na, n1) and _hits(nb, n0)
         if not (ab or ba):
             continue
-        swapped = ba and not ab
+        begin_ms = _iso_to_ms(m.get("begin_at") or m.get("scheduled_at"))
+        delta = abs(begin_ms - near_ms) if (near_ms and begin_ms) else 0
+        if near_ms and begin_ms and delta > NEAR_TOL_MS:
+            continue  # same team names, but a different match at a different time — not this one
+        if best is None or delta < best[0]:
+            best = (delta, m, ba and not ab)
 
-        status = (m.get("status") or "").lower()
-        live = status == "running"
-        finished = status == "finished"
+    if best is None:
+        return None
+    _, m, swapped = best
+    op0 = (m.get("opponents") or [])[0].get("opponent") or {}
+    op1 = (m.get("opponents") or [])[1].get("opponent") or {}
 
-        # Score from results[] keyed by team_id, aligned to opponent order then to our A/B.
-        # Only real once the match is under way — PandaScore seeds not_started matches with 0-0,
-        # which must NOT surface as a live "0 - 0" scoreline on an upcoming game.
-        score = None
-        if live or finished:
-            res = {r.get("team_id"): r.get("score") for r in (m.get("results") or [])}
-            s0, s1 = res.get(op0.get("id")), res.get(op1.get("id"))
-            if s0 is not None or s1 is not None:
-                score = {"a": s1 if swapped else s0, "b": s0 if swapped else s1}
+    status = (m.get("status") or "").lower()
+    live = status == "running"
+    finished = status == "finished"
 
-        winner = None
-        win_id = m.get("winner_id")
-        if win_id:
-            if win_id == op0.get("id"):
-                winner = "b" if swapped else "a"
-            elif win_id == op1.get("id"):
-                winner = "a" if swapped else "b"
+    # Score from results[] keyed by team_id, aligned to opponent order then to our A/B.
+    # Only real once the match is under way — PandaScore seeds not_started matches with 0-0,
+    # which must NOT surface as a live "0 - 0" scoreline on an upcoming game.
+    score = None
+    if live or finished:
+        res = {r.get("team_id"): r.get("score") for r in (m.get("results") or [])}
+        s0, s1 = res.get(op0.get("id")), res.get(op1.get("id"))
+        if s0 is not None or s1 is not None:
+            score = {"a": s1 if swapped else s0, "b": s0 if swapped else s1}
 
-        img0, img1 = op0.get("image_url"), op1.get("image_url")
-        name0, name1 = op0.get("name") or "", op1.get("name") or ""
+    winner = None
+    win_id = m.get("winner_id")
+    if win_id:
+        if win_id == op0.get("id"):
+            winner = "b" if swapped else "a"
+        elif win_id == op1.get("id"):
+            winner = "a" if swapped else "b"
 
-        return {
-            "live": live,
-            "finished": finished,
-            "score": score,
-            "winner": winner,
-            "watch": _ps_stream_to_watch(m.get("streams_list"), live),
-            "logoA": img1 if swapped else img0,
-            "logoB": img0 if swapped else img1,
-            "canonicalA": name1 if swapped else name0,
-            "canonicalB": name0 if swapped else name1,
-            "startTime": _iso_to_ms(m.get("begin_at") or m.get("scheduled_at")),
-            "league": (m.get("league") or {}).get("name"),
-        }
+    img0, img1 = op0.get("image_url"), op1.get("image_url")
+    name0, name1 = op0.get("name") or "", op1.get("name") or ""
 
-    return None
+    return {
+        "live": live,
+        "finished": finished,
+        "score": score,
+        "winner": winner,
+        "watch": _ps_stream_to_watch(m.get("streams_list"), live),
+        "logoA": img1 if swapped else img0,
+        "logoB": img0 if swapped else img1,
+        "canonicalA": name1 if swapped else name0,
+        "canonicalB": name0 if swapped else name1,
+        "startTime": _iso_to_ms(m.get("begin_at") or m.get("scheduled_at")),
+        "league": (m.get("league") or {}).get("name"),
+    }

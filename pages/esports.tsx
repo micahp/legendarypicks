@@ -158,13 +158,13 @@ function LiveMSI({ m }: { m: LiveMatch }) {
   // Twitch embeds reliably (official streams often block YouTube embedding); parent must match the
   // page host, so read it at runtime — works on the tunnel, localhost, and prod alike.
   const [host, setHost] = useState('')
-  const [source, setSource] = useState<'youtube' | 'twitch'>('youtube')
+  const [source, setSource] = useState<'youtube' | 'twitch'>('twitch')
   useEffect(() => { setHost(window.location.hostname) }, [])
   const ytEmbed = m.youtube ? `https://www.youtube.com/embed/${m.youtube}?autoplay=1&mute=1` : null
   const twEmbed = (m.twitch && host) ? `https://player.twitch.tv/?channel=${m.twitch}&parent=${host}&muted=true` : null
   // YouTube is the primary stream; Twitch is the fallback (auto when there's no YouTube, or one tap if YT blocks embedding).
-  const useTwitch = source === 'twitch' || !ytEmbed
-  const embed = useTwitch ? twEmbed : ytEmbed
+  const useTwitch = source === 'twitch' && !!twEmbed
+  const embed = useTwitch ? twEmbed : (ytEmbed ?? twEmbed)
 
   return (
     <section className="space-y-4">
@@ -187,7 +187,7 @@ function LiveMSI({ m }: { m: LiveMatch }) {
               <button onClick={() => setSource('youtube')} className={!useTwitch ? 'text-emerald-400' : 'hover:text-zinc-300'}>youtube</button>
               <span className="text-zinc-700">·</span>
               <button onClick={() => setSource('twitch')} className={useTwitch ? 'text-emerald-400' : 'hover:text-zinc-300'}>twitch</button>
-              <span className="ml-auto text-zinc-700 normal-case tracking-normal">won't play? switch to twitch</span>
+              <span className="ml-auto text-zinc-700 normal-case tracking-normal">won't play? switch source</span>
             </div>
           ) : null}
         </div>
@@ -211,17 +211,6 @@ function LiveMSI({ m }: { m: LiveMatch }) {
             )}
           </div>
 
-          {m.goldLead && m.goldLead.amount > 500 ? (
-            <div className="rounded-xl border-l-2 border-emerald-500 bg-emerald-500/[0.07] p-4">
-              <Eyebrow>Moment that matters</Eyebrow>
-              <p className="mt-1.5 font-mono text-sm font-semibold text-emerald-200">{m.goldLead.code} +{m.goldLead.amount.toLocaleString()} gold</p>
-            </div>
-          ) : null}
-
-          <div className="flex gap-4 font-mono text-xs text-zinc-500">
-            {m.twitch ? <a className="hover:text-emerald-400 focus-visible:text-emerald-400 focus-visible:outline-none" href={`https://twitch.tv/${m.twitch}`} target="_blank" rel="noreferrer">twitch ↗</a> : null}
-            {m.youtube ? <a className="hover:text-emerald-400 focus-visible:text-emerald-400 focus-visible:outline-none" href={`https://youtube.com/watch?v=${m.youtube}`} target="_blank" rel="noreferrer">youtube ↗</a> : null}
-          </div>
         </aside>
       </div>
 
@@ -301,9 +290,11 @@ function dayKey(ms: number | null) {
   const d = new Date(ms)
   const today = new Date()
   const tom = new Date(today); tom.setDate(today.getDate() + 1)
+  const yest = new Date(today); yest.setDate(today.getDate() - 1)
   const same = (a: Date, b: Date) => a.toDateString() === b.toDateString()
   if (same(d, today)) return 'Today'
   if (same(d, tom)) return 'Tomorrow'
+  if (same(d, yest)) return 'Yesterday'
   return d.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })
 }
 
@@ -345,10 +336,12 @@ function UpMatchRow({ m, host }: { m: UpMatch; host: string }) {
         <div className="w-16 shrink-0 font-mono text-[11px] tabular-nums">
           {m.live
             ? <span className="inline-flex items-center gap-1 text-red-400"><span className="h-1 w-1 rounded-full bg-red-500 animate-pulse motion-reduce:animate-none" />LIVE</span>
+            : m.finished
+            ? <span className="text-zinc-400">Final</span>
             : <span className="text-zinc-500">{fmtClock(m.startTime)}</span>}
         </div>
-        {/* Map score — GRID-sourced, shown for live+finished CS2/Dota matches */}
-        {m.score ? (
+        {/* Map score — GRID-sourced, shown for LIVE matches (finished games show it on the right). */}
+        {m.score && m.live ? (
           <div className="shrink-0 w-10 text-center font-mono text-sm font-bold tabular-nums text-zinc-300">
             {m.score.a ?? '–'}<span className="text-zinc-600">–</span>{m.score.b ?? '–'}
           </div>
@@ -357,16 +350,18 @@ function UpMatchRow({ m, host }: { m: UpMatch; host: string }) {
           <div className="text-sm text-zinc-200 leading-snug">
             <div className={`flex items-center gap-1.5 font-medium ${m.finished ? (m.winner === 'a' ? 'text-zinc-200' : 'text-zinc-500') : ''}`}>
               {m.logoA ? <TeamCrest src={m.logoA} size="h-4 w-4" /> : null}
-              {m.teamA}
+              <span className="truncate">{m.teamA}</span>
+              {m.finished && m.score ? <span className="ml-auto font-mono text-sm font-bold tabular-nums text-zinc-200">{m.score.a ?? '–'}</span> : null}
             </div>
             <div className="text-zinc-600 text-[11px]">v</div>
             <div className={`flex items-center gap-1.5 font-medium ${m.finished ? (m.winner === 'b' ? 'text-zinc-200' : 'text-zinc-500') : ''}`}>
               {m.logoB ? <TeamCrest src={m.logoB} size="h-4 w-4" /> : null}
-              {m.teamB}
+              <span className="truncate">{m.teamB}</span>
+              {m.finished && m.score ? <span className="ml-auto font-mono text-sm font-bold tabular-nums text-zinc-200">{m.score.b ?? '–'}</span> : null}
             </div>
           </div>
           <div className="mt-0.5 flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-wider text-zinc-600">
-            <span>{m.finished ? 'Final' : ''}{m.finished && m.title ? ' — ' : ''}{m.title} · {m.league}</span>
+            <span>{m.title} · {m.league}</span>
             {m.model ? (
               <span className={`shrink-0 rounded px-1.5 py-px text-[10px] font-medium ${(m.model.edge && Math.abs(m.model.edge) >= 4) ? 'bg-amber-500/10 text-amber-300' : 'text-zinc-500'}`}>
                 {(m.model.edge && Math.abs(m.model.edge) >= 4) ? `EDGE ${m.model.favName} +${Math.abs(m.model.edge).toFixed(0)}` : 'model ≈ market'}
@@ -385,7 +380,7 @@ function UpMatchRow({ m, host }: { m: UpMatch; host: string }) {
                 <span className="text-zinc-700">·</span>
                 <span className="shrink-0 text-zinc-600">stream offline</span>
               </>
-            ) : m.watch ? (
+            ) : m.watch && !m.finished ? (
               <>
                 <span className="text-zinc-700">·</span>
                 <a href={m.watch.url} target="_blank" rel="noreferrer"
@@ -396,7 +391,7 @@ function UpMatchRow({ m, host }: { m: UpMatch; host: string }) {
             ) : null}
           </div>
         </div>
-        {m.favorite ? (
+        {!m.finished && m.favorite ? (
           <div className="shrink-0 text-right leading-none">
             <div className="max-w-[7rem] truncate text-[11px] font-medium text-zinc-400">{m.favorite.name}</div>
             <div className="mt-1 font-mono text-xs tabular-nums text-emerald-300">{m.favorite.pct}%</div>
@@ -437,6 +432,13 @@ function UpcomingSlate({ data }: { data: UpcomingData | null }) {
   }
 
   const show = tab === 'results' ? rs : sc
+  const resultDays: { label: string; matches: UpMatch[] }[] = []
+  for (const m of rs) {
+    const label = dayKey(m.startTime)
+    const last = resultDays[resultDays.length - 1]
+    if (last && last.label === label) last.matches.push(m)
+    else resultDays.push({ label, matches: [m] })
+  }
 
   return (
     <section className="space-y-5">
@@ -486,11 +488,18 @@ function UpcomingSlate({ data }: { data: UpcomingData | null }) {
             </div>
           ) : (
             <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 p-4 sm:p-5">
-              {rs.length === 0 ? (
+              {resultDays.length === 0 ? (
                 <p className="text-sm text-zinc-500">No finished matches yet.</p>
               ) : (
-                <div className="divide-y divide-zinc-800/70">
-                  {rs.map((m, i) => <UpMatchRow key={i} m={m} host={host} />)}
+                <div className="space-y-5">
+                  {resultDays.map((d, di) => (
+                    <div key={di}>
+                      <Eyebrow>{d.label}</Eyebrow>
+                      <div className="mt-1 divide-y divide-zinc-800/70">
+                        {d.matches.map((m, i) => <UpMatchRow key={i} m={m} host={host} />)}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
@@ -583,20 +592,23 @@ function LiveCard({ m, host, featured = false }: { m: UpMatch; host: string; fea
   return (
     <div className={`overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900/50 ${featured ? 'sm:col-span-2' : ''}`}>
       <div className="p-4">
-        <div className="mb-2 flex items-center justify-between gap-2">
+        <div className="mb-2">
           <Eyebrow live>{m.title} · {m.league}</Eyebrow>
-          {m.score ? (
-            <span className="font-mono text-base font-bold tabular-nums text-zinc-100">{m.score.a ?? '–'}<span className="px-0.5 text-zinc-600">–</span>{m.score.b ?? '–'}</span>
-          ) : null}
         </div>
         <div className="space-y-1.5">
-          <div className="flex items-center gap-2">
-            {m.logoA ? <TeamCrest src={m.logoA} size="h-5 w-5" /> : null}
-            <span className="truncate text-sm font-semibold text-zinc-100">{m.teamA}</span>
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex min-w-0 items-center gap-2">
+              {m.logoA ? <TeamCrest src={m.logoA} size="h-5 w-5" /> : null}
+              <span className="truncate text-sm font-semibold text-zinc-100">{m.teamA}</span>
+            </div>
+            {m.score ? <span className="font-mono text-sm font-bold tabular-nums text-zinc-100">{m.score.a ?? '–'}</span> : null}
           </div>
-          <div className="flex items-center gap-2">
-            {m.logoB ? <TeamCrest src={m.logoB} size="h-5 w-5" /> : null}
-            <span className="truncate text-sm font-semibold text-zinc-100">{m.teamB}</span>
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex min-w-0 items-center gap-2">
+              {m.logoB ? <TeamCrest src={m.logoB} size="h-5 w-5" /> : null}
+              <span className="truncate text-sm font-semibold text-zinc-100">{m.teamB}</span>
+            </div>
+            {m.score ? <span className="font-mono text-sm font-bold tabular-nums text-zinc-100">{m.score.b ?? '–'}</span> : null}
           </div>
         </div>
         <div className="mt-3 font-mono text-[11px] uppercase tracking-wider">
@@ -631,14 +643,15 @@ function LiveCard({ m, host, featured = false }: { m: UpMatch; host: string; fea
   )
 }
 
-function LiveNow({ matches, host }: { matches: UpMatch[]; host: string }) {
+function LiveNow({ matches, host, msiLive = false }: { matches: UpMatch[]; host: string; msiLive?: boolean }) {
   if (!matches.length) return null
   // Feature a match whose stream is actually on-air (it auto-plays); fall back to the first live one.
+  const total = matches.length + (msiLive ? 1 : 0)
   const sorted = [...matches].sort((a, b) => Number(b.watch?.online === true) - Number(a.watch?.online === true))
   const [first, ...rest] = sorted
   return (
     <section className="space-y-4">
-      <SectionHeader live eyebrow="Live now" title={matches.length === 1 ? 'Live match' : `${matches.length} matches live`} meta="esports" />
+      <SectionHeader live eyebrow="Live now" title={total === 1 ? 'Live match' : `${total} matches live`} meta="esports" />
       <LiveCard m={first} host={host} featured />
       {rest.length ? (
         <div className="space-y-2">
@@ -675,7 +688,14 @@ export default function EsportsPage() {
   // Hero features a live match whose stream we've CONFIRMED is on-air — never a dead embed.
   // ALL live games go above the fold (not gated on stream availability — show the match, embed the
   // stream when it's confirmed on-air, else say "no stream"). MSI live keeps its rich dedicated view.
-  const liveMatches = (upcoming?.matches ?? []).filter((m) => m.live)
+  const _n = (s?: string | null) => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '')
+  const msiTeams = live?.live
+    ? [live.teamA?.name, live.teamA?.code, live.teamB?.name, live.teamB?.code].filter(Boolean).map(_n)
+    : []
+  const isMsi = (m: UpMatch) =>
+    msiTeams.length > 0 &&
+    [m.teamA, m.teamB].some((t) => msiTeams.some((n) => n && (_n(t) === n || _n(t).includes(n) || n.includes(_n(t)))))
+  const liveMatches = (upcoming?.matches ?? []).filter((m) => m.live && !isMsi(m))
   const anyLive = !!live?.live || liveMatches.length > 0
 
   return (
@@ -695,9 +715,9 @@ export default function EsportsPage() {
           <p className="text-sm text-zinc-400">Who wins — and the moment it turns.</p>
         </header>
 
-        {/* Live games, above the fold: MSI's rich view first, then every other live match. */}
+        {/* Live games, above the fold: every other live match first, then MSI's rich view. */}
+        <LiveNow matches={liveMatches} host={host} msiLive={!!live?.live} />
         {live?.live ? <LiveMSI m={live} /> : null}
-        <LiveNow matches={liveMatches} host={host} />
 
         <UpcomingSlate data={upcoming} />
       </div>

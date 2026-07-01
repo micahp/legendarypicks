@@ -83,10 +83,15 @@ def _grid_score_index():
             if not st or len(teams) != 2:
                 continue
             names = [t.get("name") for t in teams]
+            base_teams = node.get("teams") or []
+            full_names = [(t.get("baseInfo") or {}).get("name") for t in base_teams]
+            if len(full_names) != 2:
+                full_names = [None, None]
             if _is_test(names):
                 continue
             idx.append({
                 "names": names,
+                "fullNames": full_names,
                 "score": {t.get("name"): t.get("score") for t in teams},
                 "winner": next((t.get("name") for t in teams if t.get("won")), None),
                 "finished": bool(st.get("finished")), "started": bool(st.get("started")),
@@ -98,6 +103,18 @@ def _grid_score_index():
     return idx
 
 
+
+# GRID short codes with NO full name anywhere in its API (both allSeries.baseInfo.name and
+# seriesState.teams.name return the code itself) — confirmed via _grid_score_index() for "WBT",
+# whose Bovada-visible name is "Wrotberry". A generic name-matching relaxation can't bridge this
+# (there's no shared substring/word overlap at all), so it needs an explicit, scoped alias instead
+# of loosening `_team_match` for every caller. Add entries here only after confirming via
+# _grid_score_index() that GRID truly has no full name for the team — don't guess.
+_GRID_CODE_ALIASES = {
+    "wbt": "wrotberry",
+}
+
+
 def _grid_match(team_a, team_b, idx):
     """Find the GRID series for this pairing by normalized team-name match -> (entry, gridA, gridB)."""
     from .common import _norm_team
@@ -105,10 +122,21 @@ def _grid_match(team_a, team_b, idx):
     na, nb = _norm_team(team_a), _norm_team(team_b)
 
     def name_for(nx, entry):
-        for gn in entry["names"]:
-            g = _norm_team(gn)
-            if nx == g or (nx and (nx in g or g in nx)):
-                return gn
+        names = entry.get("names") or []
+        full_names = entry.get("fullNames") or []
+        for i, gn in enumerate(names):
+            full = full_names[i] if i < len(full_names) else None
+            candidates = [gn, full]
+            alias = _GRID_CODE_ALIASES.get(_norm_team(gn))
+            if alias:
+                candidates.append(alias)
+            for candidate in candidates:
+                if not candidate:
+                    continue
+                g = _norm_team(candidate)
+                # exact or substring match
+                if nx == g or (nx and (nx in g or g in nx)):
+                    return gn
         return None
 
     for entry in idx:
