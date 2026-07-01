@@ -76,9 +76,15 @@ def _grid_score_index():
              'teams { baseInfo { name } } } } } }' % (lo, hi))
         d = _grid(_GRID_CD, q)
         cands = [e.get("node") or {} for e in (((d or {}).get("allSeries") or {}).get("edges") or [])
-                 if _grid_title_label(((e.get("node") or {}).get("title") or {}).get("name"))]
-        for node in cands[:16]:
-            st = _grid_state(node["id"])
+                 if _grid_title_label(((e.get("node") or {}).get("title") or {}).get("name"))][:16]
+        # One _grid_state call per candidate series, run CONCURRENTLY — sequential calls here
+        # added ~4.8s to a cold /api/esports/upcoming response (up to 16 series x ~0.3s each),
+        # the other half of the ~10s page-load bottleneck (the other half was PandaScore's
+        # per-title fetch, fixed the same way in pandascore.py:_per_title).
+        from concurrent.futures import ThreadPoolExecutor
+        with ThreadPoolExecutor(max_workers=len(cands) or 1) as ex:
+            states = list(ex.map(lambda n: _grid_state(n["id"]), cands)) if cands else []
+        for node, st in zip(cands, states):
             teams = (st or {}).get("teams") or []
             if not st or len(teams) != 2:
                 continue

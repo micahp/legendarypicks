@@ -85,10 +85,20 @@ def _cached(cache, ttl, loader):
 
 
 def _per_title(kind, query):
-    """Concatenate a per-title match feed across all our titles (deeper than the combined feed)."""
+    """Concatenate a per-title match feed across all our titles (deeper than the combined feed).
+
+    Titles are fetched CONCURRENTLY. Sequential per-title calls (the original implementation)
+    added ~8s to a cold-cache /api/esports/upcoming response — 6 titles x ~1-1.5s each — which
+    is what made the whole esports page take ~10s to load whenever the 600s/120s cache expired.
+    A thread pool cuts that to roughly one request's latency.
+    """
+    from concurrent.futures import ThreadPoolExecutor
+    paths = [f"/{t}/matches/{kind}?per_page=100&{query}" for t in _PS_TITLES]
+    with ThreadPoolExecutor(max_workers=len(paths)) as ex:
+        results = list(ex.map(_ps_get, paths))
     out = []
-    for t in _PS_TITLES:
-        out += _ps_get(f"/{t}/matches/{kind}?per_page=100&{query}")
+    for r in results:
+        out += r
     return out
 
 
@@ -182,6 +192,46 @@ def _ps_stream_to_watch(streams_list, live):
     return best[1] if best else None
 
 
+# _ps_enrich is called once PER BOVADA MATCH (~50-80 times per /api/esports/upcoming request),
+# and each call used to re-scan the full ~1174-entry PandaScore match list AND recompute each
+# opponent's stripped name set from scratch every time — same ~1174 PandaScore matches, same
+# names, redone 50-80x per request. Measured cost: ~3s of a ~7s cold request. Fix: memoize the
+# (match, op0, op1, names0, names1) tuples once per _fetch_ps() cache generation (keyed by the
+# id() of the list _fetch_ps returns — a fresh list object means a new generation, so this can't
+# go stale) instead of recomputing per Bovada match.
+_ps_indexed_cache = {}
+
+
+def _ps_names(op):
+    from .common import _strip_name
+    return {_strip_name(v) for v in (op.get("name") or "", op.get("acronym") or "",
+                                     op.get("slug") or "") if v}
+
+
+def _ps_indexed(include_running):
+    # _fetch_ps() rebuilds a brand-new list object (list(...) + dedup pass) on EVERY call, even
+    # when the underlying _ps_cache_* entries are still warm — so id() of its return value is
+    # never stable and can't be used as a memoization key. Key on the underlying caches' own
+    # data-object identities instead; those only change when a cache actually re-fetches.
+    gen = (id(_ps_cache_up["data"]), id(_ps_cache_past["data"]),
+           id(_ps_cache_run["data"]) if include_running else None, include_running)
+    cached = _ps_indexed_cache.get(gen)
+    if cached is not None:
+        return cached
+    matches = _fetch_ps(include_running=include_running)
+    _ps_indexed_cache.clear()  # old generation's list is gone (new fetch/cache cycle) — drop it
+    out = []
+    for m in matches:
+        opps = m.get("opponents") or []
+        if len(opps) < 2:
+            continue
+        op0 = opps[0].get("opponent") or {}
+        op1 = opps[1].get("opponent") or {}
+        out.append((m, op0, op1, _ps_names(op0), _ps_names(op1)))
+    _ps_indexed_cache[gen] = out
+    return out
+
+
 def _ps_enrich(team_a, team_b, include_running=True, near_ms=None):
     """Look up a match on PandaScore by fuzzy team-name match. Returns the authoritative status/
     score/winner + logos/canonical names/startTime, or None if no match found.
@@ -195,10 +245,6 @@ def _ps_enrich(team_a, team_b, include_running=True, near_ms=None):
     na, nb = _strip_name(team_a), _strip_name(team_b)
     if not na or not nb:
         return None
-
-    def _names(op):
-        return {_strip_name(v) for v in (op.get("name") or "", op.get("acronym") or "",
-                                         op.get("slug") or "") if v}
 
     def _hits(bov, names):
         if not bov:
@@ -222,13 +268,7 @@ def _ps_enrich(team_a, team_b, include_running=True, near_ms=None):
     # be within a day-ish of it and pick the CLOSEST — that disambiguates same-team collisions.
     NEAR_TOL_MS = 36 * 3600 * 1000
     best = None  # (time_delta, match_dict, swapped)
-    for m in _fetch_ps(include_running=include_running):
-        opps = m.get("opponents") or []
-        if len(opps) < 2:
-            continue
-        op0 = opps[0].get("opponent") or {}
-        op1 = opps[1].get("opponent") or {}
-        n0, n1 = _names(op0), _names(op1)
+    for m, op0, op1, n0, n1 in _ps_indexed(include_running):
         ab = _hits(na, n0) and _hits(nb, n1)
         ba = _hits(na, n1) and _hits(nb, n0)
         if not (ab or ba):

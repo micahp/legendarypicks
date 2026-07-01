@@ -1,6 +1,7 @@
 """slate.py — the full off-board esports schedule: Bovada -> GRID enrich -> MSI edge -> results store."""
 
 import json
+import threading
 import time
 import urllib.request as _u
 
@@ -19,6 +20,8 @@ router = APIRouter()
 _BOV_ESPORTS = ("https://www.bovada.lv/services/sports/event/coupon/events/A/description/"
                 "esports?marketFilterId=def&liveOnly=false&lang=en")
 _up_cache = {"t": 0.0, "data": None}
+_up_rebuild_lock = threading.Lock()
+_up_rebuilding = False
 
 
 @router.get("/api/esports/upcoming")
@@ -26,15 +29,44 @@ def esports_upcoming():
     """The full off-board esports slate (next ~2 weeks) as a single **chronological** list —
     what's coming next first (live matches lead). Each match is tagged with its title + league
     and priced by the Bovada moneyline favorite. Covers LoL/Valorant/CS2/Dota/R6/KoG (CoD is on
-    the scoreboard, so it's excluded). Cache: 4h merge — old matches survive Bovada drops."""
+    the scoreboard, so it's excluded). Cache: 4h merge — old matches survive Bovada drops.
+
+    Stale-while-revalidate: a rebuild (Bovada + PandaScore + GRID + frag) costs several seconds
+    even after parallelizing the upstream fetches — that's real external API latency, not
+    something further code changes can remove. So once ANY cached response exists, a request
+    NEVER blocks on it: an expired cache is served as-is while a background thread refreshes it
+    for the next request. Only a true cold start (process just restarted, no cache at all) blocks
+    synchronously, since there's nothing else to serve."""
+    now = time.time()
+
+    if _up_cache["data"] is not None:
+        if now - _up_cache["t"] < _up_cache.get("ttl", 60):
+            return _up_cache["data"]
+        # Stale but present: serve immediately, refresh in the background (single-flight — don't
+        # stack up N concurrent rebuilds if several requests land while one is already running).
+        global _up_rebuilding
+        with _up_rebuild_lock:
+            already = _up_rebuilding
+            _up_rebuilding = True
+        if not already:
+            def _bg():
+                global _up_rebuilding
+                try:
+                    _rebuild_upcoming()
+                finally:
+                    with _up_rebuild_lock:
+                        _up_rebuilding = False
+            threading.Thread(target=_bg, daemon=True).start()
+        return _up_cache["data"]
+
+    # True cold start — nothing cached yet, must build synchronously this one time.
+    return _rebuild_upcoming()
+
+
+def _rebuild_upcoming():
     now = time.time()
     CACHE_TTL = 4 * 3600
     STALE_CUTOFF_MS = (now - 4 * 3600) * 1000
-
-    # Response cache: 60s while something is live (scores move), 5min when idle (nothing to
-    # refresh — don't rebuild/ping upstreams every minute for a static "what's next" list).
-    if _up_cache["data"] is not None and now - _up_cache["t"] < _up_cache.get("ttl", 60):
-        return _up_cache["data"]
 
     prev_matches = (_up_cache["data"] or {}).get("matches", [])
 
