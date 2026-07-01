@@ -61,3 +61,7 @@ esports_results.json
 # catch __pycache__ at any depth
 __pycache__/
 *.pyc
+
+# esports state monitor — runtime output, not source
+backend/data/esports_state_snapshot.json
+logs/
