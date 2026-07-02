@@ -184,6 +184,58 @@ def _ps_logo_for(name):
     return None
 
 
+# PandaScore game slug per our title label, for the teams-API logo fallback.
+_PS_GAME_SLUG = {"CS2": "csgo", "Dota 2": "dota2", "Valorant": "valorant", "LoL": "lol",
+                 "Rainbow Six": "r6siege", "King of Glory": "kog", "Overwatch": "ow"}
+_PS_API_LOGO_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+                                 "data", "esports_team_logos.json")
+_ps_api_logos = None  # {canon-name: url}  ('' = queried, PandaScore has no crest — a cached negative)
+
+
+def _load_api_logos():
+    global _ps_api_logos
+    if _ps_api_logos is None:
+        try:
+            with open(_PS_API_LOGO_PATH) as f:
+                _ps_api_logos = json.load(f)
+        except Exception:
+            _ps_api_logos = {}
+    return _ps_api_logos
+
+
+def _ps_team_logo_api(name, title):
+    """Fallback crest straight from the PandaScore *teams* API, for a team whose matches aren't in the
+    current match-feed window so the feed-derived index (`_ps_logo_for`) can't see its logo — the
+    proven-recoverable case (Nemiga Gaming / Fortress / Vasco). Result (including a NEGATIVE for a team
+    PandaScore genuinely has no crest for) is cached to disk, so each team is queried at most once and
+    cold starts stay fast."""
+    from .common import _canon_team
+    ck = _canon_team(name)
+    game = _PS_GAME_SLUG.get(title)
+    if not ck or not game or not _ps_key():
+        return None
+    cache = _load_api_logos()
+    if ck in cache:
+        return cache[ck] or None
+    import urllib.parse
+    res = _ps_get(f"/{game}/teams?{urllib.parse.urlencode({'search[name]': name, 'per_page': 10})}")
+    url = ""
+    for t in (res or []):
+        if ck in (_canon_team(t.get("name") or ""), _canon_team(t.get("acronym") or ""), _canon_team(t.get("slug") or "")):
+            url = t.get("image_url") or ""
+            break
+    cache[ck] = url
+    try:
+        tmp = _PS_API_LOGO_PATH + ".tmp"
+        os.makedirs(os.path.dirname(_PS_API_LOGO_PATH), exist_ok=True)
+        with open(tmp, "w") as f:
+            json.dump(cache, f)
+        os.replace(tmp, _PS_API_LOGO_PATH)
+    except Exception:
+        pass
+    return url or None
+
+
 def _ps_stream_to_watch(streams_list, live):
     """Best stream from PandaScore's streams_list in our watch-shape. PandaScore often gives a
     channel `/live` raw_url with no ready embed_url, so this is a clickable-link fallback; frag's

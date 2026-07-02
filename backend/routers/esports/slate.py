@@ -12,7 +12,7 @@ from .grid import _grid_score_index, _grid_match
 from .lol import msi_predictions
 from .results_store import _load_results_store, _save_results_store
 from .frag import _frag_enrich
-from .pandascore import _ps_enrich, _ps_logo_for, _ps_surface_matches
+from .pandascore import _ps_enrich, _ps_logo_for, _ps_surface_matches, _ps_team_logo_api
 from .streams import _resolve_watch
 
 router = APIRouter()
@@ -435,15 +435,13 @@ def _rebuild_upcoming():
     # Backfill any still-missing team crest by NAME from PandaScore's cached team-logo index. Runs
     # AFTER the results-store merge so it also lights up GRID-sourced / pinned finished results whose
     # exact fixture PandaScore doesn't carry. Reads the already-cached feeds — no extra API calls.
+    # First the in-memory feed index (free); then, only if still missing, the teams-API fallback
+    # (disk-cached, at most one query per team ever) for crests whose match is out of the feed window.
     for m in matches:
         if not m.get("logoA"):
-            lg = _ps_logo_for(m.get("teamA"))
-            if lg:
-                m["logoA"] = lg
+            m["logoA"] = _ps_logo_for(m.get("teamA")) or _ps_team_logo_api(m.get("teamA"), m.get("title"))
         if not m.get("logoB"):
-            lg = _ps_logo_for(m.get("teamB"))
-            if lg:
-                m["logoB"] = lg
+            m["logoB"] = _ps_logo_for(m.get("teamB")) or _ps_team_logo_api(m.get("teamB"), m.get("title"))
 
     # --- resolve the watch channel: frag.se first (per-match, live), fall back to hardcoded maps ---
     for m in matches:
