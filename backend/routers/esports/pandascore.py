@@ -421,7 +421,7 @@ def _ps_match_tier(m):
 
 def _ps_surface_matches(finished_window_ms=3 * 3600 * 1000,
                         upcoming_window_ms=14 * 86400 * 1000,
-                        upcoming_tiers=("s",)):  # major upcoming events (EWC, MSI, Worlds, TI, Majors,
+                        upcoming_tiers=("s",), kalshi_pairs=None):  # major upcoming events (EWC, MSI, Worlds, TI, Majors,
                                                  # KPL) land ahead of time; minor scheduled matches
                                                  # don't. Bovada-overlap dups are removed in slate.py
                                                  # by PandaScore match-id (used_ps_ids), not by name.
@@ -467,8 +467,11 @@ def _ps_surface_matches(finished_window_ms=3 * 3600 * 1000,
         if finished and (not end_ms or now_ms - end_ms > finished_window_ms):
             continue  # only surface RECENT finishes, not the whole 100-deep past feed
         if upcoming:
-            if _ps_match_tier(m) not in upcoming_tiers:
-                continue  # minor scheduled match — don't pre-surface, only majors
+            from .common import _canon_team
+            is_major = _ps_match_tier(m) in upcoming_tiers
+            is_kalshi = kalshi_pairs is not None and (title, frozenset({_canon_team(na), _canon_team(nb)})) in kalshi_pairs
+            if not is_major and not is_kalshi:
+                continue  # minor scheduled match Kalshi isn't trading either — don't pre-surface
             if not begin_ms or begin_ms - now_ms > upcoming_window_ms or begin_ms < now_ms - 6 * 3600 * 1000:
                 continue  # outside the schedule window
 

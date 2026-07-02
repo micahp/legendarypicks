@@ -14,7 +14,7 @@ from .results_store import _load_results_store, _save_results_store
 from .frag import _frag_enrich
 from .pandascore import _ps_enrich, _ps_logo_for, _ps_surface_matches, _ps_team_logo_api
 from .streams import _resolve_watch
-from .kalshi import _kalshi_winner_for
+from .kalshi import _kalshi_esports_matchups, _kalshi_winner_for
 
 router = APIRouter()
 
@@ -288,7 +288,10 @@ def _rebuild_upcoming():
     # match we already have (Bovada/GRID) from being double-added, and _collapse() is the safety net.
     existing_dk = {(m.get("title"), frozenset({_canon_team(m.get("teamA", "")), _canon_team(m.get("teamB", ""))}))
                    for m in matches}
-    for pm in _ps_surface_matches():
+    # Kalshi-driven coverage: whatever Kalshi has an open market on is a match a bettor cares about,
+    # so surface it (any tier) if it's not already on the board — "only add missing", alongside the
+    # tier-s majors. Fails open to an empty set, so Kalshi being down just falls back to tier-s only.
+    for pm in _ps_surface_matches(kalshi_pairs=_kalshi_esports_matchups()):
         if pm.get("_ps_id") in used_ps_ids:
             continue  # already on the slate via a Bovada match (id-matched by _ps_enrich) — skip the twin
         dk = (pm["title"], frozenset({_canon_team(pm["teamA"]), _canon_team(pm["teamB"])}))
