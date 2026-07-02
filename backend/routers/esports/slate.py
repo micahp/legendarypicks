@@ -14,6 +14,7 @@ from .results_store import _load_results_store, _save_results_store
 from .frag import _frag_enrich
 from .pandascore import _ps_enrich, _ps_logo_for, _ps_surface_matches, _ps_team_logo_api
 from .streams import _resolve_watch
+from .kalshi import _kalshi_winner_for
 
 router = APIRouter()
 
@@ -336,6 +337,22 @@ def _rebuild_upcoming():
                 m["logoB"] = md["logoB"]
     except Exception:
         pass  # MSI model unavailable — slate still works without it
+
+    # --- Kalshi result fallback ---
+    # A minor-league match (e.g. BetBoom CS2) that neither PandaScore's past feed nor GRID's Open
+    # Access window carries never flips to `finished`, so it rots in Scheduled hours after it ended.
+    # Kalshi finalizes a game-winner market per matchup — a settled market gives us the winner (no map
+    # score) which is enough to move it into Results. Only touches limbo matches (past-start, not live,
+    # not already finished); the close-time proximity guard keeps a same-pair rematch from mis-settling.
+    for m in matches:
+        if m.get("finished") or m.get("live"):
+            continue
+        st = m.get("startTime")
+        if not (st and st < now_ms):
+            continue
+        w = _kalshi_winner_for(m.get("title"), m.get("teamA"), m.get("teamB"), near_ms=st)
+        if w:
+            m["finished"], m["winner"], m["live"] = True, w, False
 
     # --- durable results store ---
     # `"finishedAt" not in m`, not `not m.get("pinned")`: a carry-forward match (line ~151) that
