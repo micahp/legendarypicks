@@ -36,6 +36,14 @@ def _phase(m):
     return "scheduled"
 
 
+def _is_zero_score(sc):
+    """A finished match with no real scoreline — absent or 0-0. A finished match that stays this way
+    while carrying a winner is the score-capture bug (ESPORTS-BUG-TRACKER Class F)."""
+    if not sc:
+        return True
+    return not (sc.get("a") or 0) and not (sc.get("b") or 0)
+
+
 def _key(m):
     # Raw (not normalized) names on purpose — if the same real match shows up under two
     # different name spellings, that's exactly the duplicate-match bug class we want to catch,
@@ -149,6 +157,13 @@ def run():
             _append(_TRANSITIONS_LOG, line)
             if tag != "TRANSITION":
                 _append(_ANOMALIES_LOG, f"{time.strftime('%Y-%m-%dT%H:%M:%S')} {tag} {k} {prev['phase']}->{phase}")
+            # A match that just went finished with a declared winner but no real scoreline is the
+            # 0-0 score-capture bug (Class F). Slate should now supersede the placeholder before this
+            # fires; if it still trips, a source dropped the score and it needs a look.
+            if phase == "finished" and m.get("winner") and _is_zero_score(m.get("score")):
+                _append(_ANOMALIES_LOG,
+                        f"{time.strftime('%Y-%m-%dT%H:%M:%S')} FINISHED_NO_SCORE {k} finished "
+                        f"winner={m.get('winner')} but score={m.get('score')}")
 
         # Watch link appeared/disappeared.
         if prev["watch_sig"] != list(watch_sig):
@@ -180,6 +195,16 @@ def run():
             if t1 and t2 and abs(t1 - t2) < 2 * 3600 * 1000:
                 _append(_ANOMALIES_LOG,
                         f"{time.strftime('%Y-%m-%dT%H:%M:%S')} POSSIBLE_DUPLICATE {title} {set(teams)} keys={[m[0] for m in members_sorted]}")
+
+    # A match that was LIVE in the last snapshot and is now entirely gone from the feed (not moved to
+    # finished, just absent) — the "live match silently dropped off the board" case (Bolivia v Ecuador
+    # SA-qualifier drop, ESPORTS-BUG-TRACKER Class G). A clean live->finished shows up as a TRANSITION
+    # above; this catches the ones that vanish while live and never resolve to a result.
+    for k, pv in prev_state.items():
+        if k not in seen_keys and pv.get("phase") == "live":
+            _append(_ANOMALIES_LOG,
+                    f"{time.strftime('%Y-%m-%dT%H:%M:%S')} LIVE_THEN_VANISHED {k} was live, now absent "
+                    f"from feed with no finish transition")
 
     # Prune matches no longer in the feed at all (don't grow the snapshot forever).
     _save_state(new_state)

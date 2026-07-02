@@ -7,12 +7,12 @@ import urllib.request as _u
 
 from fastapi import APIRouter
 
-from .common import _amer_to_p, _ESPORTS_TITLES, _slug_to_name, _TITLE_SLUG, _team_match, _norm_team, _GRID_LABEL_SLUG, _strip_name
+from .common import _amer_to_p, _ESPORTS_TITLES, _slug_to_name, _TITLE_SLUG, _team_match, _norm_team, _GRID_LABEL_SLUG, _strip_name, _canon_team
 from .grid import _grid_score_index, _grid_match
 from .lol import msi_predictions
 from .results_store import _load_results_store, _save_results_store
 from .frag import _frag_enrich
-from .pandascore import _ps_enrich, _ps_logo_for
+from .pandascore import _ps_enrich, _ps_logo_for, _ps_surface_matches
 from .streams import _resolve_watch
 
 router = APIRouter()
@@ -22,6 +22,22 @@ _BOV_ESPORTS = ("https://www.bovada.lv/services/sports/event/coupon/events/A/des
 _up_cache = {"t": 0.0, "data": None}
 _up_rebuild_lock = threading.Lock()
 _up_rebuilding = False
+
+# A finished match with a winner but only a placeholder 0-0 score usually gets its real scoreline a
+# PandaScore refresh or two later; hold off archiving it into the durable store for this long so the
+# real score can land first (once archived+finishedAt, the pinned guard freezes the score forever —
+# logs/ESPORTS-BUG-TRACKER.md Class F). Keyed by match key -> first time seen finished-but-scoreless.
+_FINISH_GRACE_MS = 45 * 60 * 1000
+_finish_seen = {}
+
+
+def _is_placeholder_score(sc):
+    """A score carrying no real result yet: absent, or 0-0 — which is exactly what a Bo1 shows all
+    through live play, and what PandaScore seeds a not_started match with. A *finished* match still
+    showing this means the real scoreline was never captured (ESPORTS-BUG-TRACKER Class F)."""
+    if not sc:
+        return True
+    return not (sc.get("a") or 0) and not (sc.get("b") or 0)
 
 
 @router.get("/api/esports/upcoming")
@@ -171,10 +187,15 @@ def _rebuild_upcoming():
     # LoL, ...). Its explicit `finished` status is what finally tells us a Bovada match ENDED —
     # Bovada silently drops finished games, which is what stuck them as zombie-live. GRID (below)
     # still overrides for CS2/Dota. The live `running` feed is only fetched inside the live window.
+    used_ps_ids = set()  # PandaScore match ids already attached to a slate match — the surface block
+                         # below skips these so a Bovada match and its PandaScore twin (different team
+                         # spelling) can't both show as two rows.
     for m in matches:
         ps = _ps_enrich(m["teamA"], m["teamB"], include_running=live_window, near_ms=m.get("startTime"))
         if not ps:
             continue
+        if ps.get("_ps_id") is not None:
+            used_ps_ids.add(ps["_ps_id"])
         # Logos + winner backfill for EVERY match, including pinned results-store entries — those
         # were saved logo-less (GRID gives no crests) but PandaScore has them. This must NOT touch a
         # stored result's finished/score state, so it runs before the pinned guard below.
@@ -190,6 +211,14 @@ def _rebuild_upcoming():
         # resolving to finished=true (-> Results) once PandaScore/GRID actually confirmed the
         # result. See logs/ESPORTS-BUG-TRACKER.md Class C.
         if m.get("pinned") and "finishedAt" in m:
+            # Narrow score-only self-heal (Class F): an already-archived entry that has a winner but
+            # a placeholder 0-0 score can have JUST its score repaired from a finished PandaScore
+            # record — never its settled finished/winner/finishedAt state. _ps_enrich's near_ms
+            # disambiguation guards against attaching a same-team match's score.
+            if (m.get("winner") and _is_placeholder_score(m.get("score"))
+                    and ps.get("finished") and not _is_placeholder_score(ps.get("score") or {})):
+                m["score"] = ps["score"]
+                m["_score_repaired"] = True
             continue
         # Full status/score enrichment for fresh matches AND unresolved pinned carry-forwards.
         if ps.get("finished"):
@@ -198,8 +227,13 @@ def _rebuild_upcoming():
             m["live"], m["finished"] = True, False
         else:
             m["live"] = False  # PandaScore says not_started — authoritative that it's NOT live
-        if ps.get("score") and not m.get("score"):
-            m["score"] = ps["score"]
+        # A finished PandaScore record's real score supersedes a placeholder 0-0 captured during
+        # live play — without this, a Bo1's all-match 0-0 sticks and the game archives as "winner
+        # but 0-0" (Class F, slate.py truthy-{0,0} guard). Otherwise only fill when we have nothing.
+        if ps.get("score"):
+            if not m.get("score") or (ps.get("finished") and _is_placeholder_score(m.get("score"))
+                                      and not _is_placeholder_score(ps["score"])):
+                m["score"] = ps["score"]
         if ps.get("startTime") and not m.get("startTime"):
             m["startTime"] = ps["startTime"]
         if ps.get("watch"):
@@ -244,6 +278,23 @@ def _rebuild_upcoming():
             "watch": None,  # resolved in the final on-air pass below
             "source": "grid",
         })
+
+    # Surface live (and just-finished) PandaScore matches that neither Bovada nor GRID lists — a
+    # minor Dota/Valorant/R6 qualifier can be genuinely live with a real stream yet invisible here,
+    # because PandaScore is otherwise enrich-only and never ADDS a match (it drops off the slate the
+    # moment Bovada stops listing it — see the Bolivia v Ecuador SA-qualifier drop, ESPORTS-BUG-
+    # TRACKER Class G). PandaScore analogue of the GRID-surface block above; the dedup guard keeps a
+    # match we already have (Bovada/GRID) from being double-added, and _collapse() is the safety net.
+    existing_dk = {(m.get("title"), frozenset({_canon_team(m.get("teamA", "")), _canon_team(m.get("teamB", ""))}))
+                   for m in matches}
+    for pm in _ps_surface_matches():
+        if pm.get("_ps_id") in used_ps_ids:
+            continue  # already on the slate via a Bovada match (id-matched by _ps_enrich) — skip the twin
+        dk = (pm["title"], frozenset({_canon_team(pm["teamA"]), _canon_team(pm["teamB"])}))
+        if dk in existing_dk:
+            continue
+        existing_dk.add(dk)
+        matches.append(pm)
 
     # Attach MSI model edge + logos to LoL slate matches.
     try:
@@ -297,12 +348,30 @@ def _rebuild_upcoming():
     for m in matches:
         if m.get("finished") and "finishedAt" not in m:
             k = _key(m)
+            # Grace window (Class F): a finished match with a winner but only a placeholder 0-0 score
+            # usually gets its real score a PandaScore refresh or two later. Don't freeze it into the
+            # store yet — once archived+finishedAt, the pinned guard blocks the score forever. Archive
+            # anyway past the window so a genuine 0-0 (e.g. a GRID forfeit) still lands in Results
+            # instead of sticking in Scheduled (Class C).
+            if m.get("winner") and _is_placeholder_score(m.get("score")):
+                seen = _finish_seen.setdefault(k, now * 1000)
+                if now * 1000 - seen < _FINISH_GRACE_MS:
+                    continue
+            _finish_seen.pop(k, None)
             if k not in store:
                 m2 = dict(m)
                 m2["finishedAt"] = now * 1000
                 store[k] = m2
             elif "finishedAt" not in store[k]:
                 store[k]["finishedAt"] = now * 1000
+
+    # Class F self-heal persist: write a repaired placeholder score (set at the pinned guard above)
+    # back onto its already-archived store entry. Score only — finished/winner/finishedAt stay settled.
+    for m in matches:
+        if m.get("_score_repaired"):
+            k = _key(m)
+            if k in store and _is_placeholder_score(store[k].get("score")):
+                store[k]["score"] = m["score"]
 
     cutoff_ms = (now - 3 * 86400) * 1000
     store = {k: v for k, v in store.items() if v.get("finishedAt", 0) > cutoff_ms}
@@ -317,7 +386,7 @@ def _rebuild_upcoming():
 
     # --- dedup: collapse Bovada duplicates (spacing/acronym diffs) + frag/Bovada overlap ---
     def _dk(m):
-        return (m.get("title"), frozenset({_strip_name(m.get("teamA", "")), _strip_name(m.get("teamB", ""))}))
+        return (m.get("title"), frozenset({_canon_team(m.get("teamA", "")), _canon_team(m.get("teamB", ""))}))
 
     def _collapse(ms):
         deduped = {}
@@ -414,10 +483,22 @@ def _rebuild_upcoming():
     # logs/ESPORTS-BUG-TRACKER.md Class A #5.
     matches = _collapse(matches)
 
-    matches.sort(key=lambda m: (not m["live"], m["startTime"] or 0))
+    # Qualifier/nation-team brackets are real matches (can be genuinely live with a real stream —
+    # confirmed for "Esports Nation Cup Qualifiers" Bolivia v Ecuador on 2026-07-01, PandaScore
+    # showed a progressing score, not a stale zombie-live flag) but they're lower-stakes than a
+    # pro league's actual playoffs/group stage, and "live sorts first" alone let a national
+    # qualifier outrank a live Playoffs match from a real league. User call: minor brackets never
+    # take the featured/first live slot, even when legitimately live.
+    _MINOR_LEAGUE_KW = ("qualifier", "nation cup", "nations cup", "amateur")
+    for m in matches:
+        m["minorLeague"] = any(kw in (m.get("league") or "").lower() for kw in _MINOR_LEAGUE_KW)
+
+    matches.sort(key=lambda m: (not m["live"], m["minorLeague"], m["startTime"] or 0))
 
     for m in matches:
         m.pop("_ps_watch", None)  # internal-only stream fallback, not part of the API shape
+        m.pop("_score_repaired", None)  # internal self-heal flag, not part of the API shape
+        m.pop("_ps_id", None)  # internal PandaScore id for dedup, not part of the API shape
 
     # Idle (nothing live) -> hold the response 5min so we stop rebuilding/pinging upstreams every
     # minute; something live -> 60s so scores stay fresh.

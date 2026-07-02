@@ -25,7 +25,7 @@ type CS2Player = { name: string; kills: number | null; deaths: number | null }
 type CS2Team = { name: string; score: number | null; won: boolean; players: CS2Player[] }
 type CS2Live = { live: boolean; title?: string; tournament?: string; stream?: { platform: string; channel: string } | null; teamA?: CS2Team; teamB?: CS2Team }
 
-type UpMatch = { startTime: number | null; live: boolean; title: string; league: string; teamA: string; teamB: string; favorite: { name: string; pct: number } | null; watch: { platform: string; url: string; channel: string | null; online?: boolean | null; embedUrl?: string | null } | null; score?: { a: number | null; b: number | null } | null; finished?: boolean | null; winner?: 'a' | 'b' | null; pinned?: boolean; model?: { favName: string; modelPct: number; marketPct: number | null; edge: number | null } | null; logoA?: string | null; logoB?: string | null }
+type UpMatch = { startTime: number | null; live: boolean; title: string; league: string; teamA: string; teamB: string; favorite: { name: string; pct: number } | null; watch: { platform: string; url: string; channel: string | null; online?: boolean | null; embedUrl?: string | null } | null; score?: { a: number | null; b: number | null } | null; finished?: boolean | null; winner?: 'a' | 'b' | null; pinned?: boolean; model?: { favName: string; modelPct: number; marketPct: number | null; edge: number | null } | null; logoA?: string | null; logoB?: string | null; minorLeague?: boolean }
 type UpcomingData = { matches: UpMatch[]; source?: string; error?: string }
 
 const POLL_MS = 10_000
@@ -645,9 +645,15 @@ function LiveCard({ m, host, featured = false }: { m: UpMatch; host: string; fea
 
 function LiveNow({ matches, host, msiLive = false }: { matches: UpMatch[]; host: string; msiLive?: boolean }) {
   if (!matches.length) return null
-  // Feature a match whose stream is actually on-air (it auto-plays); fall back to the first live one.
+  // Feature a match whose stream is actually on-air (it auto-plays); fall back to the first live
+  // one. Minor-league brackets (qualifiers, nation cups) never win the featured slot over a real
+  // league match, even with a working stream — only fall back to one if nothing else is live.
   const total = matches.length + (msiLive ? 1 : 0)
-  const sorted = [...matches].sort((a, b) => Number(b.watch?.online === true) - Number(a.watch?.online === true))
+  const sorted = [...matches].sort((a, b) => {
+    const minorDiff = Number(!!a.minorLeague) - Number(!!b.minorLeague)
+    if (minorDiff !== 0) return minorDiff
+    return Number(b.watch?.online === true) - Number(a.watch?.online === true)
+  })
   const [first, ...rest] = sorted
   return (
     <section className="space-y-4">

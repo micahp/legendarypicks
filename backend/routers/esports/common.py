@@ -22,6 +22,35 @@ def _strip_name(n):
     return re.sub(r"[^a-z0-9]", "", (n or "").lower())
 
 
+# Generic org words that don't identify a team — dropped when building the canonical dedup/logo key
+# so 'AION Esports' == 'Team AION', 'FaZe Clan' == 'FaZe', 'INFURITY Gaming' == 'Infurity'.
+# 'academy' is intentionally NOT here — an org's academy squad is a DIFFERENT team from its main one.
+_TEAM_GENERIC = {"gaming", "esports", "esport", "club", "team", "clan", "gc", "gg", "the", "of", "fc"}
+
+# Acronym / short-code -> canonical full name, for cross-source pairs with NO shared substring (a
+# GRID/PandaScore short code vs the full Bovada name — 'WBT' has nothing in common with 'Wrotberry').
+# Keep NARROW and explicit: a wrong entry here silently merges two different teams. Values are matched
+# after generic-word stripping (i.e. already lowercased, punctuation-free).
+_TEAM_ALIASES = {
+    "wbt": "wrotberry",
+}
+
+
+def _canon_team(n):
+    """Canonical identity key for DEDUP + logo lookup — stricter than `_strip_name`: lowercase, drop
+    generic org words, resolve known acronyms, strip punctuation. 'AION Esports'/'Team AION' -> 'aion';
+    'FaZe Clan'/'FaZe' -> 'faze'; 'WBT' -> 'wrotberry'.
+
+    NOT for enrich matching (that's `_team_match`, kept conservative on purpose): this is the final
+    merge key, where an over-collapse shows a wrong logo, not a wrong result. Falls back to the plain
+    stripped name if generic-word removal would empty it (e.g. a team literally called 'Team')."""
+    import re
+    s = (n or "").lower().replace(".", " ")
+    toks = [t for t in re.split(r"[^a-z0-9]+", s) if t and t not in _TEAM_GENERIC]
+    key = "".join(toks) or _strip_name(n)
+    return _TEAM_ALIASES.get(key, key)
+
+
 def _slug_to_name(slug):
     return " ".join(w.capitalize() for w in (slug or "").split("-"))
 

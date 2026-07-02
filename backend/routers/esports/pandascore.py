@@ -21,6 +21,17 @@ import urllib.request as _u
 import urllib.error as _ue
 
 _PS_BASE = "https://api.pandascore.co"
+
+# PandaScore videogame slug/name -> our display title label (common._ESPORTS_TITLES values). Used
+# to surface a PandaScore-only match onto the slate; anything not in here is a title we don't cover.
+_PS_VG_TITLE = {
+    "dota-2": "Dota 2", "dota2": "Dota 2",
+    "cs-go": "CS2", "csgo": "CS2", "cs2": "CS2", "counter-strike": "CS2", "counter-strike-2": "CS2",
+    "valorant": "Valorant",
+    "rainbow-6-siege": "Rainbow Six", "r6-siege": "Rainbow Six", "rainbow-six-siege": "Rainbow Six",
+    "league-of-legends": "LoL", "lol": "LoL",
+    "king-of-glory": "King of Glory", "honor-of-kings": "King of Glory",
+}
 # The titles we surface. Per-title feeds (vs one combined endpoint) give far deeper coverage:
 # the combined /matches/past returns only ~50 most-recent-globally, so minor CS2/Dota results from
 # hours ago fall off it — per-title past-100 keeps them (and their team logos).
@@ -129,7 +140,7 @@ def _ps_team_logos():
     (e.g. GRID-sourced results). Built off already-cached match data, so it costs no extra calls."""
     if _ps_cache_logos["data"] is not None and time.time() - _ps_cache_logos["t"] < _PS_TTL_LOGOS:
         return _ps_cache_logos["data"]
-    from .common import _strip_name
+    from .common import _strip_name, _canon_team
     idx = {}
     for m in _fetch_ps(include_running=False):
         for o in (m.get("opponents") or []):
@@ -137,22 +148,29 @@ def _ps_team_logos():
             img = op.get("image_url")
             if not img:
                 continue
+            # Index each variant under BOTH the plain stripped name and the canonical key, so a logo
+            # carried under a short code ('WBT') is findable by the full name ('Wrotberry') and vice
+            # versa — the acronym-logo gap the user hit. _strip_name keys stay for exact matches.
             for v in (op.get("name"), op.get("acronym"), op.get("slug")):
-                k = _strip_name(v or "")
-                if k and k not in idx:
-                    idx[k] = img
+                for k in (_strip_name(v or ""), _canon_team(v or "")):
+                    if k and k not in idx:
+                        idx[k] = img
     _ps_cache_logos.update(t=time.time(), data=idx)
     return idx
 
 
 def _ps_logo_for(name):
-    """Best logo URL for a team name via the cached index: exact stripped-name, else a conservative
-    substring match (>=5 chars) to catch 'Procyon' -> 'Procyon Gaming'."""
-    from .common import _strip_name
+    """Best logo URL for a team name via the cached index: canonical key (acronym/generic-word aware)
+    -> exact stripped-name -> conservative substring match (>=5 chars) to catch 'Procyon' ->
+    'Procyon Gaming'."""
+    from .common import _strip_name, _canon_team
+    ck = _canon_team(name or "")
+    idx = _ps_team_logos()
+    if ck and ck in idx:
+        return idx[ck]
     k = _strip_name(name or "")
     if not k:
         return None
-    idx = _ps_team_logos()
     if k in idx:
         return idx[k]
     if len(k) >= 5:
@@ -312,6 +330,9 @@ def _ps_enrich(team_a, team_b, include_running=True, near_ms=None):
     name0, name1 = op0.get("name") or "", op1.get("name") or ""
 
     return {
+        "_ps_id": m.get("id"),  # PandaScore match id — lets slate.py dedup the surface block by
+                                # identity (this match was already consumed by a Bovada entry) instead
+                                # of by fuzzy team names.
         "live": live,
         "finished": finished,
         "score": score,
@@ -324,3 +345,95 @@ def _ps_enrich(team_a, team_b, include_running=True, near_ms=None):
         "startTime": _iso_to_ms(m.get("begin_at") or m.get("scheduled_at")),
         "league": (m.get("league") or {}).get("name"),
     }
+
+
+def _ps_match_tier(m):
+    """PandaScore prestige tier for a match: 's' (marquee — EWC, MSI, Worlds, TI, Majors, KPL…) down
+    to 'd'. Lives on the match, else the serie/tournament. Lowercased, '' if absent."""
+    return (m.get("tier") or (m.get("serie") or {}).get("tier")
+            or (m.get("tournament") or {}).get("tier") or "").lower()
+
+
+def _ps_surface_matches(finished_window_ms=3 * 3600 * 1000,
+                        upcoming_window_ms=14 * 86400 * 1000,
+                        upcoming_tiers=("s",)):  # major upcoming events (EWC, MSI, Worlds, TI, Majors,
+                                                 # KPL) land ahead of time; minor scheduled matches
+                                                 # don't. Bovada-overlap dups are removed in slate.py
+                                                 # by PandaScore match-id (used_ps_ids), not by name.
+    """Live, just-finished, and MAJOR-upcoming PandaScore matches in slate match-shape, so slate.py
+    can SURFACE a match Bovada dropped/never listed and GRID doesn't cover. Everything else in the
+    pipeline treats PandaScore as enrich-only (it fills score/winner on matches we already have) and
+    cannot ADD a match, so such a match — a live qualifier with a real stream, or a whole major
+    tournament Bovada isn't pricing (e.g. Esports World Cup) — was invisible on our board.
+
+    - `running` + just-finished (end within `finished_window_ms`): surfaced regardless of tier — any
+      live match is worth showing, and a just-finished one so a surfaced live match survives its own
+      finish transition into Results instead of vanishing the moment it ends.
+    - `not_started`: surfaced ONLY for major events (tier in `upcoming_tiers`, default 's') within
+      `upcoming_window_ms`. Without a tier gate, 100s of minor scheduled matches would swamp the board;
+      the gate is how "all the major tournaments" land ahead of time without the noise.
+
+    Reads the cached feeds; the only marginal cost over what enrich already does is one running-feed
+    fetch when nothing else put us in a live window."""
+    now_ms = time.time() * 1000
+    out = []
+    for m in _fetch_ps(include_running=True):
+        status = (m.get("status") or "").lower()
+        running = status == "running"
+        finished = status == "finished"
+        upcoming = status in ("not_started", "not started")
+        if not (running or finished or upcoming):
+            continue
+        title = _PS_VG_TITLE.get((m.get("videogame") or {}).get("slug")) \
+            or _PS_VG_TITLE.get(((m.get("videogame") or {}).get("name") or "").lower())
+        if not title:
+            continue  # a title we don't surface
+        opps = m.get("opponents") or []
+        if len(opps) < 2:
+            continue
+        op0 = opps[0].get("opponent") or {}
+        op1 = opps[1].get("opponent") or {}
+        na, nb = op0.get("name"), op1.get("name")
+        if not na or not nb:
+            continue  # placeholder bracket slot (TBD vs TBD) — nothing to show yet
+
+        end_ms = _iso_to_ms(m.get("end_at"))
+        begin_ms = _iso_to_ms(m.get("begin_at") or m.get("scheduled_at"))
+        if finished and (not end_ms or now_ms - end_ms > finished_window_ms):
+            continue  # only surface RECENT finishes, not the whole 100-deep past feed
+        if upcoming:
+            if _ps_match_tier(m) not in upcoming_tiers:
+                continue  # minor scheduled match — don't pre-surface, only majors
+            if not begin_ms or begin_ms - now_ms > upcoming_window_ms or begin_ms < now_ms - 6 * 3600 * 1000:
+                continue  # outside the schedule window
+
+        res = {r.get("team_id"): r.get("score") for r in (m.get("results") or [])}
+        s0, s1 = res.get(op0.get("id")), res.get(op1.get("id"))
+        score = {"a": s0, "b": s1} if (s0 is not None or s1 is not None) else None
+        win_id = m.get("winner_id")
+        winner = "a" if win_id == op0.get("id") else "b" if win_id == op1.get("id") else None
+
+        league = (m.get("league") or {}).get("name") or ""
+        serie = (m.get("serie") or {}).get("full_name") or ""
+        tour = (m.get("tournament") or {}).get("name") or ""
+        league_str = " — ".join([p for p in (league, serie) if p]) or league or serie or title
+        if tour and tour.lower() not in league_str.lower():
+            league_str = f"{league_str} ({tour})"
+
+        out.append({
+            "_ps_id": m.get("id"),
+            "startTime": begin_ms,
+            "live": running,
+            "finished": finished,
+            "title": title,
+            "league": league_str,
+            "teamA": na, "teamB": nb,
+            "favorite": None,
+            "score": score,
+            "winner": winner,
+            "logoA": op0.get("image_url"), "logoB": op1.get("image_url"),
+            "watch": None,  # resolved in slate.py's on-air pass; the stream link rides on _ps_watch
+            "_ps_watch": _ps_stream_to_watch(m.get("streams_list"), running),
+            "source": "pandascore",
+        })
+    return out
