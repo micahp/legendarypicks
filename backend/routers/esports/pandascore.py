@@ -31,11 +31,12 @@ _PS_VG_TITLE = {
     "rainbow-6-siege": "Rainbow Six", "r6-siege": "Rainbow Six", "rainbow-six-siege": "Rainbow Six",
     "league-of-legends": "LoL", "lol": "LoL",
     "king-of-glory": "King of Glory", "honor-of-kings": "King of Glory",
+    "ow": "Overwatch", "overwatch": "Overwatch",
 }
 # The titles we surface. Per-title feeds (vs one combined endpoint) give far deeper coverage:
 # the combined /matches/past returns only ~50 most-recent-globally, so minor CS2/Dota results from
 # hours ago fall off it — per-title past-100 keeps them (and their team logos).
-_PS_TITLES = ["valorant", "csgo", "dota2", "r6siege", "lol", "kog"]
+_PS_TITLES = ["valorant", "csgo", "dota2", "r6siege", "lol", "kog", "ow"]
 # Three separately-cached layers so idle esports doesn't ping the live feed:
 #   upcoming = schedule (changes slowly)      -> long TTL
 #   past     = finished results (need fresh-ish "it's over" signal) -> medium TTL

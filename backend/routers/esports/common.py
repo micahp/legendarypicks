@@ -83,6 +83,7 @@ _ESPORTS_TITLES = {
     "dota-2": "Dota 2",
     "rainbow-six": "Rainbow Six",
     "king-of-glory": "King of Glory",
+    "overwatch": "Overwatch",
 }
 
 # Display title -> slug (reverse of _ESPORTS_TITLES).
