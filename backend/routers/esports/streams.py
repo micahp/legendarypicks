@@ -71,13 +71,23 @@ def _resolve_watch(title_slug, league, live=False):
             platform, ch = cands[0]
             return {"platform": platform, "url": _chan_url(platform, ch),
                     "channel": (ch if platform != "web" else None), "online": None}
-        # live: surface the candidate that's confirmed broadcasting
+        # live: prefer a candidate we can positively confirm is on-air; but the MATCH is already
+        # confirmed live upstream (PandaScore/GRID), so a channel we merely CAN'T verify (status
+        # None — e.g. Kick's API is Cloudflare-blocked from our server IP) still gets embedded. We
+        # only refuse to embed a candidate we can positively DISCONFIRM (status False = truly dark).
+        first_unverifiable = None  # (platform, ch) — trust the match liveness if nothing confirms
         for platform, ch in cands:
             if platform == "web":
                 return {"platform": platform, "url": _chan_url(platform, ch), "channel": None, "online": None}
-            if _channel_online(platform, ch):
+            st = _channel_online(platform, ch)
+            if st is True:
                 return {"platform": platform, "url": _chan_url(platform, ch), "channel": ch, "online": True}
-        platform, ch = cands[0]  # nothing on-air -> top candidate, marked offline
+            if st is None and first_unverifiable is None:
+                first_unverifiable = (platform, ch)
+        if first_unverifiable is not None:
+            platform, ch = first_unverifiable
+            return {"platform": platform, "url": _chan_url(platform, ch), "channel": ch, "online": True}
+        platform, ch = cands[0]  # every candidate positively offline -> top candidate, marked offline
         return {"platform": platform, "url": _chan_url(platform, ch),
                 "channel": (ch if platform != "web" else None), "online": False}
     return None
