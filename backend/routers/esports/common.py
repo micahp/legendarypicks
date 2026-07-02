@@ -33,6 +33,7 @@ _TEAM_GENERIC = {"gaming", "esports", "esport", "club", "team", "clan", "gc", "g
 # after generic-word stripping (i.e. already lowercased, punctuation-free).
 _TEAM_ALIASES = {
     "wbt": "wrotberry",
+    "navi": "natusvincere",  # NAVI == Natus Vincere (so 'NAVI Junior' matches 'Natus Vincere Junior')
 }
 
 
@@ -48,6 +49,9 @@ def _canon_team(n):
     s = (n or "").lower().replace(".", " ")
     s = re.sub(r"^\s*ex[-\s]+", "", s)  # 'ex-Vexa' == 'Vexa' — the former-roster prefix isn't identity
     toks = [t for t in re.split(r"[^a-z0-9]+", s) if t and t not in _TEAM_GENERIC]
+    # Expand known acronyms per-token AND whole-key: a multi-word name may embed an acronym token
+    # ('NAVI Junior' -> natusvincere+junior) while a bare code resolves as the whole key ('WBT').
+    toks = [_TEAM_ALIASES.get(t, t) for t in toks]
     key = "".join(toks) or _strip_name(n)
     return _TEAM_ALIASES.get(key, key)
 

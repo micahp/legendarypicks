@@ -314,11 +314,19 @@ def _ps_enrich(team_a, team_b, include_running=True, near_ms=None):
          canonicalA, canonicalB, startTime(ms), league}
 
     `include_running=False` looks only at the schedule + finished feeds (no live-feed ping)."""
-    from .common import _strip_name
+    from .common import _strip_name, _canon_team
 
     na, nb = _strip_name(team_a), _strip_name(team_b)
     if not na or not nb:
         return None
+    # Canonical (acronym/alias-aware) identity keys — bridges pairs the plain stripped-name matcher
+    # can't (PandaScore's 'NAVI Junior' vs Bovada's 'Natus Vincere Junior'). Used as an ADDITIONAL
+    # accept path below; the `near_ms` time guard still prevents same-team-different-match collisions.
+    ca, cb = _canon_team(team_a), _canon_team(team_b)
+
+    def _canon_hit(cx, op):
+        return any(v and _canon_team(v) == cx
+                   for v in (op.get("name"), op.get("acronym"), op.get("slug")))
 
     def _hits(bov, names):
         if not bov:
@@ -343,8 +351,8 @@ def _ps_enrich(team_a, team_b, include_running=True, near_ms=None):
     NEAR_TOL_MS = 36 * 3600 * 1000
     best = None  # (time_delta, match_dict, swapped)
     for m, op0, op1, n0, n1 in _ps_indexed(include_running):
-        ab = _hits(na, n0) and _hits(nb, n1)
-        ba = _hits(na, n1) and _hits(nb, n0)
+        ab = (_hits(na, n0) and _hits(nb, n1)) or (_canon_hit(ca, op0) and _canon_hit(cb, op1))
+        ba = (_hits(na, n1) and _hits(nb, n0)) or (_canon_hit(ca, op1) and _canon_hit(cb, op0))
         if not (ab or ba):
             continue
         begin_ms = _iso_to_ms(m.get("begin_at") or m.get("scheduled_at"))
