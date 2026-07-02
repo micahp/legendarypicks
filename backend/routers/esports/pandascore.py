@@ -135,14 +135,18 @@ def _fetch_ps(include_running=True):
 
 
 def _ps_team_logos():
-    """A cached {stripped-team-name: logo_url} index harvested from every team seen in the feeds —
-    so we can fill a match's crest by TEAM NAME even when that exact fixture isn't in PandaScore
-    (e.g. GRID-sourced results). Built off already-cached match data, so it costs no extra calls."""
+    """A cached {team-name-key: logo_url} index harvested from every team seen in the feeds — so we
+    can fill a match's crest by TEAM NAME even when that exact fixture isn't in PandaScore (e.g. a
+    GRID-sourced result). Built off already-cached match data, so it costs no extra calls.
+
+    Includes the RUNNING feed (a live team's crest — e.g. WBT/Wrotberry — is otherwise only in the
+    live feed and would be missing), and ACCUMULATES across rebuilds: a logo seen once persists after
+    that team ages out of the 100-deep feed window, so we never lose a crest we've already learned."""
     if _ps_cache_logos["data"] is not None and time.time() - _ps_cache_logos["t"] < _PS_TTL_LOGOS:
         return _ps_cache_logos["data"]
     from .common import _strip_name, _canon_team
-    idx = {}
-    for m in _fetch_ps(include_running=False):
+    idx = dict(_ps_cache_logos["data"] or {})  # accumulate — don't drop logos learned earlier
+    for m in _fetch_ps(include_running=True):
         for o in (m.get("opponents") or []):
             op = o.get("opponent") or {}
             img = op.get("image_url")

@@ -388,10 +388,21 @@ def _rebuild_upcoming():
     def _dk(m):
         return (m.get("title"), frozenset({_canon_team(m.get("teamA", "")), _canon_team(m.get("teamB", ""))}))
 
-    def _collapse(ms):
+    def _anagram_dk(m):
+        # Letter-transposition typos across sources ('AION'/'Aoin', 'Dontsu'/'Donstu') are exact
+        # anagrams — same letters, reordered. Fold each team to its sorted letters so they collapse.
+        # Guarded to names >=4 chars (short codes like 'og'/'wbt' are excluded — too easy to be
+        # coincidental anagrams) and, being a frozenset of BOTH teams, only merges when BOTH sides
+        # anagram-match under the same title, which two genuinely different fixtures never do.
+        def _ana(n):
+            c = _canon_team(n)
+            return "".join(sorted(c)) if len(c) >= 4 else c
+        return (m.get("title"), frozenset({_ana(m.get("teamA", "")), _ana(m.get("teamB", ""))}))
+
+    def _collapse(ms, keyfn=_dk):
         deduped = {}
         for m in ms:
-            k = _dk(m)
+            k = keyfn(m)
             if k not in deduped:
                 deduped[k] = m
             else:
@@ -482,6 +493,11 @@ def _rebuild_upcoming():
     # names, never merged, because dedup only ran once, before the rename. See
     # logs/ESPORTS-BUG-TRACKER.md Class A #5.
     matches = _collapse(matches)
+
+    # Final pass: collapse cross-source letter-transposition typos the canonical key can't bridge
+    # ('AION Esports'/'Team Aoin', 'Dontsu'/'Donstu') — same team, same match, one logo-bearing copy
+    # from frag and one without, which is why the merge also fixes the missing-logo cases.
+    matches = _collapse(matches, _anagram_dk)
 
     # Qualifier/nation-team brackets are real matches (can be genuinely live with a real stream —
     # confirmed for "Esports Nation Cup Qualifiers" Bolivia v Ecuador on 2026-07-01, PandaScore

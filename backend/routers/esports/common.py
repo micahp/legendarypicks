@@ -46,6 +46,7 @@ def _canon_team(n):
     stripped name if generic-word removal would empty it (e.g. a team literally called 'Team')."""
     import re
     s = (n or "").lower().replace(".", " ")
+    s = re.sub(r"^\s*ex[-\s]+", "", s)  # 'ex-Vexa' == 'Vexa' — the former-roster prefix isn't identity
     toks = [t for t in re.split(r"[^a-z0-9]+", s) if t and t not in _TEAM_GENERIC]
     key = "".join(toks) or _strip_name(n)
     return _TEAM_ALIASES.get(key, key)
