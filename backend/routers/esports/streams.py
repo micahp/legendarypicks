@@ -1,14 +1,43 @@
-"""streams.py — broadcast channel resolution and on-air verification."""
+"""streams.reviewed.py — candidate-pool broadcast resolution with platform priority + fallback.
+
+REDESIGN (2026-07-03 expert review, see logs/SLATE-EXPERT-REVIEW-2026-07-03.md):
+
+The old resolver picked ONE stream per source and stopped at the first hit; a raw-URL-only frag
+stream (live example: ex-Sashi Academy v eternal premium, frag's only stream = kick eplcs_en with an
+EMPTY embed_url) shipped with no embedUrl even though the embed is trivially derivable, and a
+positively-offline hardcoded channel (twitch/ewc during EWC Valorant, actually broadcast on
+ewc_stcarena_en — decapi confirmed 'ewc is offline' while ewc_stcarena_en was 3h+ live) shipped
+anyway because there was no fallback.
+
+New model: every source contributes CANDIDATES into one pool; candidates are normalized (platform,
+channel, embedUrl — synthesized from the raw URL when the source didn't provide one), liveness-checked
+where a platform allows it, ranked, and the best is returned with the runners-up as `alternates`.
+
+Ranking: platform priority YouTube > Twitch > Kick > web (YouTube/Twitch embeds are reliable from any
+network; Kick's API is Cloudflare-403 from our datacenter IP so Kick liveness is UNVERIFIABLE — it
+ranks last so we only land on it when nothing better exists). Within a platform: source-attested-live
+first, then main+official, then English. A candidate that is POSITIVELY offline (Twitch via decapi)
+is excluded unless every candidate is offline — then the top one ships flagged online=false, honestly.
+
+Kick policy (evaluating the prior patch): embedding an unverifiable Kick channel is RIGHT when the
+match itself is live-confirmed upstream and the candidate is source-attested (frag/PandaScore list it
+as the live broadcast) — the player handles a dark channel gracefully and alternates now give an
+escape hatch. It stays wrong only as a sole blind hardcoded guess, which the ranking already demotes.
+"""
 
 import json
 import re
+import time
 import urllib.request as _u
 
+# Hardcoded per-league channel rules — the LAST-RESORT candidate source (frag/PandaScore per-match
+# streams rank ahead of these in the pool). Kept from streams.py; still used alone for scheduled
+# matches ("where it'll air").
 _WATCH_RULES = [
     ("league-of-legends", "midseason", [("twitch", "riotgames")]),
     ("league-of-legends", "primeleague", [("twitch", "primeleague")]),
     ("league-of-legends", None, [("twitch", "riotgames")]),
-    ("valorant", "esportsworldcup", [("twitch", "ewc")]),
+    ("valorant", "esportsworldcup", [("twitch", "ewc_stcarena_en"), ("twitch", "ewc")]),
     ("valorant", "emea", [("twitch", "valorant_emea")]),
     ("valorant", "pacific", [("twitch", "valorant_pacific")]),
     ("valorant", None, [("twitch", "valorant")]),
@@ -20,7 +49,14 @@ _WATCH_RULES = [
     ("king-of-glory", None, [("web", "https://www.honorofkings.com/esports/?language=en")]),
 ]
 
-_live_cache = {}  # "platform:channel" -> (ts, bool|None) — on-air status, cached ~90s
+# Lower = preferred. YouTube first (requirement), then Twitch (verifiable via decapi), then Kick
+# (unverifiable from this host — kick.com/api/v1|v2 both 403 via Cloudflare, verified 2026-07-03),
+# then bare web links.
+_PLATFORM_PRIO = {"youtube": 0, "twitch": 1, "kick": 2, "web": 3}
+
+_live_cache = {}       # "platform:channel" -> (ts, True|False|None)
+_LIVE_TTL = 90         # confirmed statuses
+_LIVE_TTL_UNKNOWN = 600  # unverifiable (Kick 403) — don't re-ping a blocked API every rebuild
 
 
 def _chan_url(platform, channel):
@@ -31,15 +67,52 @@ def _chan_url(platform, channel):
     return channel  # web: channel holds the full URL
 
 
+_YT_ID = re.compile(r"(?:youtube\.com/(?:watch\?v=|embed/|live/)|youtu\.be/)([A-Za-z0-9_-]{6,})")
+
+
+def _embed_url(platform, channel, url):
+    """Best iframe src for a candidate. Pass a source-provided embed through; otherwise SYNTHESIZE
+    from the channel/raw URL — a Twitch/Kick channel always has a canonical player URL, so a
+    raw-URL-only stream (frag's eplcs_en case) must never ship embed-less."""
+    u = (url or "").strip()
+    if "player.twitch.tv" in u or "player.kick.com" in u or "/embed" in u or "blackboard/live" in u:
+        return u  # already an embed
+    if platform == "twitch" and channel:
+        return f"https://player.twitch.tv/?channel={channel}"
+    if platform == "kick" and channel:
+        return f"https://player.kick.com/{channel}"
+    if platform == "youtube":
+        m = _YT_ID.search(u)
+        if m:
+            return f"https://www.youtube.com/embed/{m.group(1)}"
+    return None
+
+
+def _parse_platform_channel(url):
+    """(platform, channel) from any stream URL, embed or raw."""
+    u = (url or "").strip()
+    if not u:
+        return None, None
+    if "twitch.tv" in u:
+        if "channel=" in u:
+            return "twitch", u.split("channel=", 1)[1].split("&")[0]
+        return "twitch", u.rstrip("/").rsplit("/", 1)[-1].split("?")[0]
+    if "kick.com" in u:
+        return "kick", u.rstrip("/").rsplit("/", 1)[-1].split("?")[0]
+    if "youtube.com" in u or "youtu.be" in u:
+        return "youtube", None
+    return "web", None
+
+
 def _channel_online(platform, channel):
-    """Is this channel actually broadcasting right now? Twitch via decapi, Kick via api/v1.
-    Returns True/False, or None if unverifiable. Cached ~90s so we don't hammer on every poll."""
+    """True/False/None per platform. Twitch: decapi.me (works from this host). Kick: api 403s from
+    our datacenter IP (Cloudflare) -> None, cached longer so we don't hammer a blocked endpoint.
+    YouTube: no free liveness endpoint -> None (a frag-attested YouTube stream is live by listing)."""
     if platform not in ("twitch", "kick"):
         return None
-    import time
     key = f"{platform}:{channel}"
     c = _live_cache.get(key)
-    if c and time.time() - c[0] < 90:
+    if c and time.time() - c[0] < (_LIVE_TTL if c[1] is not None else _LIVE_TTL_UNKNOWN):
         return c[1]
     online = None
     try:
@@ -48,46 +121,135 @@ def _channel_online(platform, channel):
                                        headers={"User-Agent": "Mozilla/5.0"}), timeout=6) as r:
                 txt = r.read().decode().lower()
             online = bool(txt.strip()) and not any(w in txt for w in ("offline", "error", "unable", "not found"))
-        else:  # kick
-            with _u.urlopen(_u.Request(f"https://kick.com/api/v1/channels/{channel}",
+        else:  # kick — expected to fail (403) from this host; kept so it self-heals if unblocked
+            with _u.urlopen(_u.Request(f"https://kick.com/api/v2/channels/{channel}",
                                        headers={"User-Agent": "Mozilla/5.0"}), timeout=6) as r:
                 online = json.loads(r.read().decode()).get("livestream") is not None
     except Exception:
         online = None
-    if online is not None:
-        _live_cache[key] = (time.time(), online)
+    _live_cache[key] = (time.time(), online)
     return online
 
 
-def _resolve_watch(title_slug, league, live=False):
-    """Pick the watch channel for a match. For a LIVE match, return the first CANDIDATE that's
-    actually on-air (so we never show a dead/wrong link); if none are live, return the top candidate
-    flagged offline. For a scheduled match, return the top candidate (where it'll be). None if no rule."""
+def _candidate(url=None, embed=None, platform=None, channel=None,
+               main=False, official=False, language=None, attested=False, source=""):
+    """Normalize one stream into a pool candidate. `attested` = the SOURCE says this stream is the
+    live broadcast of a currently-live match (frag only lists live matches; PandaScore streams_list
+    on a `running` match) — stronger than an unverifiable platform check, weaker than a positive one."""
+    raw = (url or "").strip()
+    emb = (embed or "").strip()
+    if platform is None:
+        platform, channel = _parse_platform_channel(emb or raw)
+    if platform is None:
+        return None
+    if channel is None and platform in ("twitch", "kick"):
+        _, channel = _parse_platform_channel(emb or raw)
+    embed_url = _embed_url(platform, channel, emb or raw)
+    click = raw or (_chan_url(platform, channel) if channel else emb)
+    if not (click or embed_url):
+        return None
+    return {"platform": platform, "channel": channel, "url": click or embed_url,
+            "embedUrl": embed_url, "main": bool(main), "official": bool(official),
+            "language": (language or "").lower() or None, "attested": bool(attested),
+            "source": source}
+
+
+def _rule_candidates(title_slug, league):
+    """Hardcoded-rule candidates for a title/league (may be empty)."""
     ls = re.sub(r"[^a-z0-9]+", "", (league or "").lower())
     for t, kw, cands in _WATCH_RULES:
         if t != title_slug or (kw is not None and kw not in ls):
             continue
-        if not live:
-            platform, ch = cands[0]
-            return {"platform": platform, "url": _chan_url(platform, ch),
-                    "channel": (ch if platform != "web" else None), "online": None}
-        # live: prefer a candidate we can positively confirm is on-air; but the MATCH is already
-        # confirmed live upstream (PandaScore/GRID), so a channel we merely CAN'T verify (status
-        # None — e.g. Kick's API is Cloudflare-blocked from our server IP) still gets embedded. We
-        # only refuse to embed a candidate we can positively DISCONFIRM (status False = truly dark).
-        first_unverifiable = None  # (platform, ch) — trust the match liveness if nothing confirms
+        out = []
         for platform, ch in cands:
             if platform == "web":
-                return {"platform": platform, "url": _chan_url(platform, ch), "channel": None, "online": None}
-            st = _channel_online(platform, ch)
-            if st is True:
-                return {"platform": platform, "url": _chan_url(platform, ch), "channel": ch, "online": True}
-            if st is None and first_unverifiable is None:
-                first_unverifiable = (platform, ch)
-        if first_unverifiable is not None:
-            platform, ch = first_unverifiable
-            return {"platform": platform, "url": _chan_url(platform, ch), "channel": ch, "online": True}
-        platform, ch = cands[0]  # every candidate positively offline -> top candidate, marked offline
-        return {"platform": platform, "url": _chan_url(platform, ch),
-                "channel": (ch if platform != "web" else None), "online": False}
-    return None
+                out.append(_candidate(url=ch, platform="web", channel=None, source="rule"))
+            else:
+                out.append(_candidate(url=_chan_url(platform, ch), platform=platform, channel=ch,
+                                      source="rule"))
+        return [c for c in out if c]
+    return []
+
+
+def _watch_shape(c, online):
+    return {"platform": c["platform"], "url": c["url"], "channel": c.get("channel"),
+            "embedUrl": c.get("embedUrl"), "online": online}
+
+
+def _pick_stream(candidates, match_live=True, max_alternates=4):
+    """Rank the pool, return the watch dict with `alternates`, or None if the pool is empty.
+
+    Selection: drop positively-offline candidates (unless ALL are offline); rank the rest by
+    (platform prio, liveness confidence, main+official, English). `online` on the result: True when
+    confirmed or attested, True when unverifiable but the MATCH is live-confirmed upstream (prior
+    patch's rule, kept deliberately — see module docstring), False only when positively dark."""
+    pool = []
+    seen = set()
+    for c in candidates:
+        if not c:
+            continue
+        k = (c["platform"], c.get("channel") or c.get("embedUrl") or c.get("url"))
+        if k in seen:
+            continue
+        seen.add(k)
+        # Source-attested candidates (frag/PS list them as the live broadcast) skip the network
+        # check: attestation is sufficient, and probing every pool candidate made a rebuild pay
+        # dozens of decapi round-trips per cycle. Only unattested (rule) candidates get verified.
+        checked = None
+        if not c.get("attested") and c.get("channel"):
+            checked = _channel_online(c["platform"], c.get("channel"))
+        c = dict(c)
+        c["_checked"] = checked
+        pool.append(c)
+    if not pool:
+        return None
+
+    selectable = [c for c in pool if c["_checked"] is not False or c.get("attested")]
+    ranked_from = selectable or pool
+
+    def _rank(c):
+        conf = 0 if c["_checked"] is True else (1 if c.get("attested") else 2)
+        lang = c.get("language")
+        # Never rank a KNOWN-foreign broadcast above a non-foreign one (Micah's call): a Russian
+        # YouTube cast must not beat the official English Kick main. Unknown language (None) is
+        # treated as non-foreign so YouTube priority is preserved when we simply don't know.
+        foreign = 1 if (lang and lang != "en") else 0
+        return (foreign,
+                _PLATFORM_PRIO.get(c["platform"], 9), conf,
+                0 if (c.get("main") and c.get("official")) else 1,
+                0 if lang == "en" else 1)
+
+    ranked = sorted(ranked_from, key=_rank)
+    top = ranked[0]
+
+    def _online_val(c):
+        if c["_checked"] is True or c.get("attested"):
+            return True
+        if c["_checked"] is False:
+            return False
+        return True if match_live else None  # unverifiable on a live-confirmed match -> embed anyway
+
+    watch = _watch_shape(top, _online_val(top))
+    alts = []
+    for c in ranked[1:]:
+        alts.append(_watch_shape(c, _online_val(c)))
+        if len(alts) >= max_alternates:
+            break
+    # Offer positively-offline leftovers only if the list is otherwise empty (honest last resort).
+    if not selectable:
+        watch["online"] = False
+    watch["alternates"] = alts
+    return watch
+
+
+def _resolve_watch(title_slug, league, live=False):
+    """Rule-only resolution (kept for scheduled matches and as the no-per-match-data fallback).
+    Same signature as the old streams.py entry point; now returns embedUrl + alternates too."""
+    cands = _rule_candidates(title_slug, league)
+    if not cands:
+        return None
+    if not live:
+        w = _watch_shape(cands[0], None)
+        w["alternates"] = []
+        return w
+    return _pick_stream(cands, match_live=True)
