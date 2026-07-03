@@ -30,6 +30,8 @@ import re
 import time
 import urllib.request as _u
 
+from .yt_live_resolver import resolve_pool_youtube
+
 # Hardcoded per-league channel rules — the LAST-RESORT candidate source (frag/PandaScore per-match
 # streams rank ahead of these in the pool). Kept from streams.py; still used alone for scheduled
 # matches ("where it'll air").
@@ -204,17 +206,30 @@ def _pick_stream(candidates, match_live=True, max_alternates=4):
     if not pool:
         return None
 
+    # Fill embedUrl on live YouTube candidates (deterministic currentVideoEndpoint id, verified
+    # right-channel + live + embeddable — see yt_live_resolver). A resolved embed flips `playable`
+    # to 0 so YouTube's platform priority wins; unresolved stays embed-less and Twitch/Kick wins.
+    # Only for live matches (a scheduled channel isn't live -> wasted fetches).
+    if match_live:
+        resolve_pool_youtube(pool)
+
     selectable = [c for c in pool if c["_checked"] is not False or c.get("attested")]
     ranked_from = selectable or pool
 
     def _rank(c):
         conf = 0 if c["_checked"] is True else (1 if c.get("attested") else 2)
         lang = c.get("language")
+        # Play IN the app, don't link out: a candidate we can actually EMBED beats one we can't,
+        # before any platform preference. A YouTube channel-handle /live URL has no video id to
+        # synthesize an embed from, so it must not outrank an embeddable Twitch of the same
+        # broadcast (MIBR Academy v la Masia: youtube.com/@gamersclubvalorant/live had no embed
+        # while twitch.tv/gamersclubvalorant did). Among embeddable candidates YouTube still wins.
+        playable = 0 if c.get("embedUrl") else 1
         # Never rank a KNOWN-foreign broadcast above a non-foreign one (Micah's call): a Russian
         # YouTube cast must not beat the official English Kick main. Unknown language (None) is
         # treated as non-foreign so YouTube priority is preserved when we simply don't know.
         foreign = 1 if (lang and lang != "en") else 0
-        return (foreign,
+        return (playable, foreign,
                 _PLATFORM_PRIO.get(c["platform"], 9), conf,
                 0 if (c.get("main") and c.get("official")) else 1,
                 0 if lang == "en" else 1)
