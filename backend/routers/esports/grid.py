@@ -104,6 +104,13 @@ def _grid_score_index():
                 "title": _grid_title_label((node.get("title") or {}).get("name")),
                 "tournament": (node.get("tournament") or {}).get("name"),
                 "startMs": _ms(node.get("startTimeScheduled")),
+                # updatedAt = when GRID last mutated this series-state. Live CS2/Dota series tick
+                # every ~2-5min (per round); a series whose updatedAt is >30min stale has stopped
+                # updating = the match is OVER even though `finished` never flipped (GRID's finished
+                # flag lags/never fires on minor events). slate._derive_state uses this to refuse to
+                # count a STALE started&&!finished series as live evidence (the Prestige v Vasteras
+                # zombie: started=True finished=False, updatedAt 224min stale, frozen LIVE for 4.4h).
+                "updatedAtMs": _ms(st.get("updatedAt")),
             })
     _grid_idx_cache.update(t=time.time(), data=idx)
     return idx

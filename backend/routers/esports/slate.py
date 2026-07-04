@@ -87,6 +87,24 @@ _DELAYED_CAP_MS = 4 * 3600 * 1000      # how long an affirmed not_started match 
 _LIVE_LEAD_MS = 20 * 60 * 1000
 _LIVE_TAIL_MS = 6 * 3600 * 1000
 _FINISH_GRACE_MS = 45 * 60 * 1000      # wait for a real scoreline before archiving a winner-only final
+# --- live-evidence FRESHNESS (zombie-live fix) ---
+# GRID CS2/Dota series-state ticks every ~2-5min while a match is live (per round). A
+# `started && !finished` series whose GRID `updatedAt` is older than this has STOPPED updating =
+# the match is over even though GRID's `finished` flag never flipped (it lags / never fires on
+# minor events). 30min sits far above the ~5min live cadence and any realistic map/tech break, and
+# far below the observed zombie (Prestige v Vasteras: 229min stale) — no risk of demoting a real
+# live match, decisive on a dead one.
+_LIVE_FRESH_MS = 30 * 60 * 1000
+# Hard backstop: NOTHING is LIVE more than this past its start, whatever any source claims. A CS2/
+# Dota Bo5 tops out ~4-5h; 6h leaves headroom while killing any stale-flag zombie a per-source
+# freshness check might miss (stale frag listing, PS lagging running->finished).
+_MAX_LIVE_MS = 6 * 3600 * 1000
+# Bovada's live flag is the stickiest, least-reliable liveness signal (it silently keeps/drops and
+# carries no timestamp — unlike PS `running` or frag's live-only feed, which are active "live now"
+# assertions). A match whose ONLY live signal is Bovada's flag is trusted live for at most this long
+# past start (a long Bo5); beyond it, a bov-only signal is treated as stale. Real long matches almost
+# always also surface on PS/frag/GRID, so this near-exclusively kills stale-flag zombies.
+_BOV_LIVE_MAX_MS = 3 * 3600 * 1000
 _finish_seen = {}
 
 # ---------------------------------------------------------------------------
@@ -346,6 +364,11 @@ def _carry_row(old):
         row.update({"finishedAt": old["finishedAt"], "finished": True,
                     "winner": old.get("winner"), "score": old.get("score"),
                     "_origin": "store"})
+        if old.get("resultUnknown"):
+            # Carry the label too, not just the null winner/score — otherwise a reloaded
+            # ended_unknown entry re-derives as a bare S_FINISHED (implying a settled 0-0/no-winner
+            # result) instead of staying honestly marked "result unavailable, still being retried".
+            row["resultUnknown"] = True
     return row
 
 
@@ -396,6 +419,8 @@ def _cluster(rows):
             if other.get("finishedAt") and not base.get("finishedAt"):
                 base["finishedAt"] = other["finishedAt"]
                 base["finished"] = True
+                if other.get("resultUnknown"):
+                    base["resultUnknown"] = True
                 w = other.get("winner")
                 if w in ("a", "b"):
                     flipped = _same_team(base.get("teamA", ""), other.get("teamB", "")) and \
@@ -412,28 +437,60 @@ def _cluster(rows):
     return merged
 
 
+def _grid_live_fresh(grid, now_ms, past):
+    """GRID `started && !finished` counts as LIVE evidence ONLY if the series-state is still
+    updating. A stale series (updatedAt older than _LIVE_FRESH_MS) has stopped ticking = the match
+    is over, GRID just never flipped `finished` (the zombie mechanism). If GRID gave no updatedAt
+    (older grid.py without the field), don't manufacture a zombie: trust `started&&!finished` only
+    when the match isn't already past its start."""
+    if not (grid and grid.get("started") and not grid.get("finished")):
+        return False
+    ua = grid.get("updatedAtMs")
+    if ua is not None:
+        return (now_ms - ua) < _LIVE_FRESH_MS
+    return not past
+
+
 def _derive_state(row, ev, now_ms):
-    """The one place state comes from. Source hierarchy for 'it's over':
-    GRID.finished (CS2/Dota realtime) / PS.finished (explicit status) / archived result — any one
-    ends the match (GRID's finished flag LAGS on minor events, so a PS finish must not be vetoed by
-    GRID still showing started; the reverse holds for PS lag). A settled Kalshi market also ends it,
-    but only when NO source affirms the match is live right now (a fuzzy same-pair settlement must
-    not kill a genuinely running rematch)."""
+    """The one place state comes from.
+
+    'It's over' (any one ends the match): GRID.finished / PS.finished / archived result. GRID's
+    finished flag LAGS on minor events (a PS finish must not be vetoed by GRID still showing
+    started; the reverse holds for PS lag). A settled Kalshi market also ends it, but only when NO
+    source affirms the match is live right now (a fuzzy same-pair settlement must not kill a
+    genuinely running rematch).
+
+    'It's live' — live evidence must be FRESH (zombie-live fix). A stale GRID series, or ANY source
+    still claiming live past the _MAX_LIVE_MS hard cap, does NOT count as live. A match whose only
+    'live' signal is stale is demoted here, which also UNBLOCKS the Kalshi/finish resolution below
+    (`if kalshi and not live_ev`) so a demoted zombie becomes its real result instead of freezing.
+
+    An ARCHIVED resultUnknown carry (a prior cycle's "ended, no source had a result") stays labeled
+    S_ENDED_UNKNOWN — not a bare S_FINISHED implying a settled no-winner result — unless a FRESH
+    source now confirms a real finish/settlement, so it's retried every cycle without ever losing
+    the honest 'still unresolved' label, and can still be promoted the moment a result lands."""
     grid, ps, frag = ev.get("grid"), ev.get("ps"), ev.get("frag")
-    live_ev = ((grid and grid.get("started") and not grid.get("finished")) or
-               (ps and ps.get("live")) or
-               (frag is not None) or
-               (row.get("_bov_live") and ps is None))  # Bovada-live counts only unrebutted by PS
-    finished_ev = (row.get("finishedAt") is not None or
-                   (grid and grid.get("finished")) or
-                   (ps and ps.get("finished")))
-    if finished_ev:
+    st = row.get("startTime")
+    past = st is not None and st < now_ms - _START_SLACK_MS
+    too_old_to_live = st is not None and (now_ms - st) > _MAX_LIVE_MS
+
+    grid_live = _grid_live_fresh(grid, now_ms, past)
+    ps_live = bool(ps and ps.get("live"))          # explicit queried status (running), inherently fresh
+    frag_live = frag is not None                    # frag /api/live is a live-only, ~60s-cached feed
+    # Bovada flag: this-cycle only, unrebutted by PS, and only within the sticky-flag freshness window.
+    bov_live = bool(row.get("_bov_live") and ps is None
+                    and (st is None or (now_ms - st) <= _BOV_LIVE_MAX_MS))
+    # Hard cap is the last-resort backstop for a live signal with no per-source freshness of its own.
+    live_ev = (grid_live or ps_live or frag_live or bov_live) and not too_old_to_live
+
+    fresh_finish = bool((grid and grid.get("finished")) or (ps and ps.get("finished")))
+    fresh_kalshi = bool(ev.get("kalshi")) and not live_ev
+    if fresh_finish or fresh_kalshi:
         return S_FINISHED
-    if ev.get("kalshi") and not live_ev:
-        return S_FINISHED
+    if row.get("finishedAt") is not None:
+        return S_ENDED_UNKNOWN if row.get("resultUnknown") else S_FINISHED
     if live_ev:
         return S_LIVE
-    st = row.get("startTime")
     if not st or st > now_ms - _START_SLACK_MS:
         return S_SCHEDULED
     if ps and not ps.get("live") and not ps.get("finished") and now_ms - st < _DELAYED_CAP_MS:
@@ -549,7 +606,8 @@ def _rebuild_upcoming():
         # PandaScore: statuses/score/winner/logos for everything not already settled (an archived
         # entry only gets the narrow Class-F score repair below).
         ps = None
-        if not archived or (m.get("winner") and _is_placeholder_score(m.get("score"))):
+        if (not archived or m.get("resultUnknown")
+                or (m.get("winner") and _is_placeholder_score(m.get("score")))):
             ps = _ps_enrich(m.get("teamA", ""), m.get("teamB", ""),
                             include_running=live_window, near_ms=m.get("startTime"))
         ev["ps"] = ps
@@ -591,13 +649,18 @@ def _rebuild_upcoming():
 
         # Kalshi settled-winner fallback — only consulted for a past-start match with no finish
         # evidence yet (the minor-league blind spot: GRID window rotation + PS past-feed misses).
+        # A resultUnknown archive is retried too — it's "ended, unresolved", not "settled".
         st = m.get("startTime")
-        if (not archived and st and st < now_ms - _START_SLACK_MS
+        if ((not archived or m.get("resultUnknown")) and st and st < now_ms - _START_SLACK_MS
                 and not (gentry and gentry.get("finished")) and not (ps and ps.get("finished"))):
             ev["kalshi"] = _kalshi_winner_fuzzy(m.get("title"), m.get("teamA", ""),
                                                 m.get("teamB", ""), near_ms=st)
 
-        state = S_FINISHED if archived else _derive_state(m, ev, now_ms)
+        # A genuinely-settled archive (real winner, not resultUnknown) is frozen at S_FINISHED — no
+        # need to re-derive it every cycle. Everything else (fresh matches, and a resultUnknown
+        # archive still being retried) goes through _derive_state, which knows how to keep an
+        # unresolved carry honestly labeled S_ENDED_UNKNOWN until a real result actually lands.
+        state = S_FINISHED if (archived and not m.get("resultUnknown")) else _derive_state(m, ev, now_ms)
         m["state"] = state
         m["_ev"] = ev
         m["_gswap"] = gswap
@@ -622,8 +685,11 @@ def _rebuild_upcoming():
                 if ps.get("score") and (not m.get("score") or
                                         (_is_placeholder_score(m.get("score")) and not _is_placeholder_score(ps["score"]))):
                     m["score"] = ps["score"]
-            elif archived:
-                pass  # settled store values stand (score repair below)
+            elif archived and not m.get("resultUnknown"):
+                pass  # a genuinely-settled archive stands as-is (score repair below)
+            # else: archived-but-resultUnknown, just promoted to S_FINISHED this cycle by a fresh
+            # source — fall through to the kalshi branch below so its winner actually gets assigned
+            # (a bare `elif archived: pass` here would silently keep the old null winner forever).
             elif ev["kalshi"]:
                 m["winner"] = ev["kalshi"]
                 m["score"] = None  # Kalshi is winner-only — no fake scoreline
@@ -709,12 +775,26 @@ def _rebuild_upcoming():
             k = _key(m)
             if k in store and _is_placeholder_score(store[k].get("score")):
                 store[k]["score"] = m["score"]
+    # ENDED_UNKNOWN persistence (data-must-not-vanish): a match that is genuinely OVER but for which
+    # no source (GRID final / PS / Kalshi) has a result must NOT disappear and must NOT be faked. We
+    # archive it too — but as an explicit result-UNKNOWN entry (winner/score null, resultUnknown
+    # true), so it survives Bovada drops / restarts / the carry window and stays visible in Results
+    # as "Ended — result unavailable" instead of vanishing. If a later cycle DOES obtain a result
+    # (e.g. Kalshi settles late), the match re-derives to S_FINISHED and archives the real winner
+    # first (that branch runs above), so this only ever persists the truly-unresolvable case.
+    for m in matches:
+        if m["state"] != S_ENDED_UNKNOWN:
+            continue
+        k = _key(m)
+        if k not in store:
+            m2 = {kk: vv for kk, vv in m.items() if not kk.startswith("_")}
+            m2.update(finishedAt=now_ms, finished=True, resultUnknown=True,
+                      winner=None, score=None)
+            store[k] = m2
+
     cutoff_ms = now_ms - 3 * 86400 * 1000
     store = {k: v for k, v in store.items() if v.get("finishedAt", 0) > cutoff_ms}
     _save_results_store(store)
-
-    # ENDED_UNKNOWN never enters the store (no fabricated results persisted); it stays on the board
-    # via the carry path, retried against Kalshi/PS every cycle until the 4h carry window lapses.
 
     # ---------------- logo backfill (unchanged mechanism) ----------------
     for m in matches:
@@ -745,12 +825,20 @@ def _rebuild_upcoming():
     for m in matches:
         state = m["state"]
         st = m.get("startTime")
-        if state == S_ENDED_UNKNOWN and st and now_ms - st > _DELAYED_CAP_MS:
-            continue  # ended long ago, no result obtainable from any source — drop, don't fake
+        # Data must not vanish: an ENDED_UNKNOWN match is KEPT (shown in Results as "result
+        # unavailable"), NOT dropped and NOT faked. It only leaves the board when it ages out of the
+        # 3-day store retention like any other result.
         m["live"] = state == S_LIVE
         m["finished"] = state in (S_FINISHED, S_ENDED_UNKNOWN)
         if state == S_ENDED_UNKNOWN:
             m["resultUnknown"] = True  # legacy bucket: Results (it IS over); no winner, no score
+            m["score"] = None
+            m["winner"] = None
+        elif m.get("resultUnknown"):
+            # Was carried in as resultUnknown but just resolved to a real state this cycle (S_FINISHED
+            # via a fresh grid/ps/kalshi result, or even back to S_LIVE on a genuine rematch) — clear
+            # the stale flag so the output isn't self-contradictory (finished+resultUnknown+a winner).
+            m["resultUnknown"] = False
         for k in [kk for kk in m if kk.startswith("_")]:
             m.pop(k, None)
         out_matches.append(m)
