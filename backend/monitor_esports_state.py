@@ -86,6 +86,81 @@ def _append(path, line):
         f.write(line + "\n")
 
 
+# ---------------------------------------------------------------------------
+# Per-day results archive
+# ---------------------------------------------------------------------------
+# A permanent, dated dump of finished matches — one file per day, bucketed by the match's START day,
+# so at the end of any day `logs/esports-results-<YYYY-MM-DD>.jsonl` is that day's results. We have no
+# real "game over" event, so this just runs every monitor tick and records whatever is finished;
+# finished matches linger in the feed for days, so nothing is missed between runs. Write-once and
+# UPGRADE-only (a real scoreline can supersede an earlier winner-only record) — never duplicated,
+# never regressed to a worse result.
+_RESULTS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "logs")
+
+
+def _result_fullness(rec):
+    """How complete a result is, so an upgrade never overwrites a good record with a worse one."""
+    sc = rec.get("score") or {}
+    if (sc.get("a") or 0) or (sc.get("b") or 0):
+        return 2  # real scoreline
+    if rec.get("winner"):
+        return 1  # winner known, no score yet (winner-only final)
+    return 0      # finished but no result (ended_unknown / placeholder)
+
+
+def _dump_daily_results(matches):
+    now_iso = time.strftime("%Y-%m-%dT%H:%M:%S")
+    by_day = {}
+    for m in matches:
+        if not m.get("finished"):
+            continue
+        st = m.get("startTime")
+        if not st:
+            continue
+        day = time.strftime("%Y-%m-%d", time.localtime(st / 1000))
+        by_day.setdefault(day, []).append({
+            "key": _key(m), "title": m.get("title"), "league": m.get("league"),
+            "teamA": m.get("teamA"), "teamB": m.get("teamB"),
+            "score": m.get("score"), "winner": m.get("winner"),
+            "resultUnknown": bool(m.get("resultUnknown")), "state": m.get("state"),
+            "startTime": st,
+            "startTimeLocal": time.strftime("%Y-%m-%dT%H:%M:%S", time.localtime(st / 1000)),
+            "recordedAt": now_iso,
+        })
+
+    for day, recs in by_day.items():
+        path = os.path.join(_RESULTS_DIR, f"esports-results-{day}.jsonl")
+        existing = {}
+        if os.path.exists(path):
+            try:
+                with open(path) as f:
+                    for line in f:
+                        line = line.strip()
+                        if line:
+                            r = json.loads(line)
+                            existing[r.get("key")] = r
+            except Exception:
+                existing = {}
+        changed = False
+        for rec in recs:
+            old = existing.get(rec["key"])
+            if old is None:
+                existing[rec["key"]] = rec
+                changed = True
+            elif _result_fullness(rec) > _result_fullness(old):
+                rec["recordedAt"] = old.get("recordedAt", now_iso)  # keep first-seen time
+                rec["updatedAt"] = now_iso
+                existing[rec["key"]] = rec
+                changed = True
+        if changed:
+            os.makedirs(_RESULTS_DIR, exist_ok=True)
+            tmp = path + ".tmp"
+            with open(tmp, "w") as f:
+                for r in sorted(existing.values(), key=lambda x: x.get("startTime") or 0):
+                    f.write(json.dumps(r) + "\n")
+            os.replace(tmp, path)
+
+
 def run():
     now = time.time()
     now_ms = now * 1000
@@ -94,6 +169,12 @@ def run():
     except Exception as ex:
         _append(_ANOMALIES_LOG, f"{time.strftime('%Y-%m-%dT%H:%M:%S')} FETCH_FAILED {ex!r}")
         return
+
+    # Permanent per-day results archive (independent of the transition diff below).
+    try:
+        _dump_daily_results(matches)
+    except Exception as ex:
+        _append(_ANOMALIES_LOG, f"{time.strftime('%Y-%m-%dT%H:%M:%S')} RESULTS_DUMP_FAILED {ex!r}")
 
     prev_state = _load_state()
     new_state = {}
