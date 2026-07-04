@@ -48,6 +48,7 @@ from .frag import _fetch_frag_live, _parse_frag_score
 from .pandascore import (_ps_enrich, _ps_logo_for, _ps_surface_matches, _ps_team_logo_api,
                          _fetch_ps)
 from .kalshi import _kalshi_esports_matchups, _kalshi_results
+from .league_tier import apply_tier_and_filter
 
 # Stream helpers: post-swap these live in streams.py; pre-swap (validation) load the reviewed file
 # by path so this module is testable without touching the running streams.py.
@@ -843,10 +844,11 @@ def _rebuild_upcoming():
             m.pop(k, None)
         out_matches.append(m)
 
-    _MINOR_LEAGUE_KW = ("qualifier", "nation cup", "nations cup", "amateur")
-    for m in out_matches:
-        m["minorLeague"] = any(kw in (m.get("league") or "").lower() for kw in _MINOR_LEAGUE_KW)
-    out_matches.sort(key=lambda m: (not m["live"], m["minorLeague"], m.get("startTime") or 0))
+    # League-tier sort (marquee int'l > regional pro > challengers/dev > minor/novelty) + the
+    # odds-or-stream visibility filter: this board's purpose is matches you can watch or bet on,
+    # so a live/finished/ended_unknown match with neither has no reason to be shown (never applied
+    # to SCHEDULED — a market/stream often just hasn't posted yet). See league_tier.py.
+    out_matches, _dropped = apply_tier_and_filter(out_matches)
 
     any_live = any(m.get("live") for m in out_matches)
     out = {"matches": out_matches, "source": "bovada"}
