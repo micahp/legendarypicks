@@ -77,6 +77,13 @@ genuinely lower stakes than the leagues above):
   - VCT Game Changers (Japan or any region) — separate identity-based circuit, lower general
     coverage/stakes than the main VCL/VCT ladder; classified dev-tier per the coordinator's
     offered judgment call.
+  - RES Showdown (all seasons) — CORRECTED post-verification (2026-07-04, user found the actual
+    HLTV event page): confirmed via Liquipedia (RLG/RES/Showdown) + HLTV
+    (events/8594/res-showdown-2-blast-premier-rising-event) as a real RLG-organized B-Tier /
+    Valve Tier-1 QUALIFIER for BLAST Premier Rising — structurally the same class as CCT's
+    qualifier ladder, not a novelty event. Originally misfiled Tier 3 by the generic "showdown"
+    keyword below (a name-pattern-match, exactly the blind-classification trap this system was
+    built to avoid) — moved here to Tier 2 and the keyword removed.
   - Anything ending up here via the qualifier-demotion rule (see below).
 
 TIER 3 — minor / amateur / novelty (not real competitive stakes):
@@ -84,13 +91,6 @@ TIER 3 — minor / amateur / novelty (not real competitive stakes):
     organized by Gabe Media/ESforce, teams composed of FAMOUS STREAMERS, not pro players
     (team names are streamer handles: "Team Aunkere", "Team shoke", "Team hooch", "Team
     Burger"). Exactly the novelty/entertainment event the user suspected.
-  - Res Showdown — researched with a caveat: externally it's described as a "B-Tier, Valve
-    Tier-1 QUALIFIER" for the Valve ecosystem, which sounds higher-status than expected. But
-    structurally it IS a qualifier bracket (open/closed qualifier rounds), and the participants
-    in our feed are obscure/unrecognized teams (Fluxo, Shinden) consistent with the "unclear/
-    tiny, likely amateur" read from the ask. Classified Tier 3 for OUR purposes (does this
-    deserve featured billing on a general esports board — no); it would also be caught by the
-    existing "qualifier"-family keyword logic in most of its rounds regardless.
   - Legacy keyword catches kept as a floor: "amateur", "nation cup", "nations cup" (unchanged
     from the old _MINOR_LEAGUE_KW; nothing on the current board hits these, kept for safety).
 
@@ -127,9 +127,16 @@ _TIER1_KW = ("vcl", "valorant challengers league", "lrs", "lrn", "liga regional"
 _TIER1_R6_BARE_REGIONS = ("china", "mena", "apac asia", "apac")
 
 _TIER2_KW = ("cct", "challengers", "contenders", "xse", "tesfed", "united21", "united 21",
-             "game changers", "development", "qualifier", "last chance")
+             "game changers", "development", "qualifier", "last chance",
+             # RES Showdown: confirmed via Liquipedia + HLTV a real RLG-organized B-Tier / Valve
+             # Tier-1 QUALIFIER for BLAST Premier Rising (liquipedia.net/counterstrike/RLG/RES/
+             # Showdown/2025/Fall; hltv.org/events/8594/res-showdown-2-blast-premier-rising-event)
+             # — same class as CCT's qualifier ladder, NOT a novelty event. It was previously
+             # misclassified Tier 3 by the generic "showdown" keyword below, which is exactly the
+             # blind-pattern-match trap this whole system was built to avoid.
+             "res showdown")
 
-_TIER3_KW = ("streamers battle", "streamer", "showmatch", "showdown", "celebrity",
+_TIER3_KW = ("streamers battle", "streamer", "showmatch", "celebrity",
              "amateur", "nation cup", "nations cup")
 
 
