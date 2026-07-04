@@ -77,6 +77,21 @@ Confirmed via the event-level endpoint (`/trade-api/v2/events/<ticker>`): Kalshi
 downstream of PandaScore data we already have direct API access to. Item #1 above is the actual
 path to the same value (live series score/format) without the scraping risk.
 
+## 5. Tier system is global, should be per-game — `docs/LEAGUE-REGISTRY-per-game.md` (commit `46c5d71`)
+
+Parallel work (different session/pane) found a real structural gap in the tier system shipped this
+session: `league_tier.py`'s keyword tuples are GLOBAL, but a league's tier is relative to its game
+— European Pro League is held at Tier 1 today, roughly right for CS2, but Liquipedia ranks its Dota
+side Tier-3 (a feeder), so the same keyword misfires across titles. Worse: every game's actual
+top-tier majors except EWC/MSI/CDL are entirely unclassified (LCK, VCT International, BLAST/ESL/IEM,
+TI, Six Invitational) — they'd default to the neutral Tier 2 the day they appear and sort *below*
+CCT/Prime League, a real landmine.
+
+Full per-game breakdown + a concrete `_LEAGUE_REGISTRY` (per-title keyword lists, first-match-wins,
+falls back to today's global list for unknown titles) restructure plan is in that doc — read it
+before touching `league_tier.py` again. This should probably be the next tier-system change, ahead
+of item #2 (Kalshi odds) since it's a correctness fix on what's already shipped, not a new signal.
+
 ## Frontend note
 
 Board sorting/tiering is entirely backend-driven (`league_tier.py`'s `apply_tier_and_filter`) — the
