@@ -14,6 +14,7 @@ type Card = {
   knife: 'falling' | 'stabilizing'
   rank?: number | null; opp_rank?: number | null; last10?: string | null; streak?: string | null
   evidence?: string | null
+  wp?: number | null; edge?: number | null
 }
 type Payload = {
   cards: Card[]
@@ -56,6 +57,9 @@ function DiscountCard({ c }: { c: Card }) {
         </div>
         <div className="text-right">
           <div className="font-mono text-2xl font-bold tabular-nums text-zinc-50">{cents(c.price)}</div>
+          {c.wp != null ? (
+            <div className="font-mono text-[11px] tabular-nums text-emerald-300">live WP {Math.round(c.wp * 100)}%</div>
+          ) : null}
           {c.pregame != null ? (
             <div className="font-mono text-[11px] tabular-nums text-zinc-500">was {cents(c.pregame)}</div>
           ) : null}

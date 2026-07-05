@@ -98,6 +98,16 @@ no card. We buy the visible turn, never the fall — same doctrine as the Jun-8 
 entry-timing finding. Other leagues define their own evidence when they activate (NFL:
 possession / red zone).
 
+**v0.3 (Jul 5) — edge, not price level (Micah).** The v0.1 contested-price band (25–75¢) was
+wrong doctrine: "a quality team's price dropping IS a signal — just not by itself. If they
+have a 50% chance of coming back at 3 cents to make 100, you take that every time." The
+missing input was the comeback probability, and ESPN publishes one live (`winprobability`,
+summary endpoint). Witching hour now anchors on the side where **live Kalshi price sits under
+ESPN's live WP** — edge ≥ 5 points, or ≥ 1.75× ratio for sub-10¢ prices; no WP available → no
+value claim → no card. DISCOUNT suppresses when WP says the market is already fair. Cards show
+"live WP N%" next to the price. Backtested against the trap: SD at 3.5¢ vs ~5% WP = no edge,
+correctly dead; a 3¢/10% case correctly fires; a fair 45¢/47% coin flip stays silent.
+
 ## Acceptance
 1. During any live MLB slate, the widget shows only games meeting A or B, each with a live
    Kalshi price ≤60s stale, and never shows a cheap-but-correct trap (spot-check vs win

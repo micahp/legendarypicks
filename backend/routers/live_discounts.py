@@ -40,10 +40,13 @@ _REVERSIBLE_MAX_DEFICIT = 3
 _REVERSIBLE_MAX_INNING = 6   # "before the 7th"
 _WITCHING_MIN_INNING = 7
 _WITCHING_MAX_DIFF = 2
-# The market's own definition of "close": witching hour requires the cheap side to still be
-# genuinely contested. A 3c team down late is cheap-AND-CORRECT (the SD@LAD Jul-4 trap: our own
-# game story had SD on a 7-game losing streak) — never a card, no matter the run diff.
-_WITCHING_MIN_PRICE = 0.25
+# v0.3 (Micah): price level alone neither qualifies nor disqualifies — a 3c team with a 10%
+# comeback probability is a GREAT buy. The rule is price vs ESPN's live win probability
+# (the comeback estimate we lacked on the SD@LAD trap): anchor only where the market is
+# underpricing the live WP by a real margin, absolute or ratio (ratio matters at low prices —
+# "3 cents to make 100").
+_WITCHING_MIN_EDGE = 0.05    # wp - price, in probability points
+_WITCHING_MIN_RATIO = 1.75   # for prices under 10c: wp must be >= 1.75x the price
 # Form gate: a team this cold is not a value candidate in ANY class — quality includes current
 # form, not just season record. (last10 wins <= 3, or losing streak >= 4.)
 _COLD_MAX_L10_WINS = 3
@@ -174,6 +177,22 @@ def _rally_evidence(sit, team_is_home, status_detail):
     outs = sit.get("outs")
     if runners >= 1 and isinstance(outs, int) and outs <= 2:
         return f"{runners} on, {outs} out{'s' if outs != 1 else ''}, at bat"
+    return None
+
+
+def _live_wp_home(league, game_id):
+    """Latest ESPN live HOME win probability for an in-progress game — the state-based
+    comeback estimate every value judgment needs (summary endpoint, cached ttl 20s; called
+    lazily only for games that pass the cheap gates, and _get dedupes repeat calls)."""
+    try:
+        _, path = espn._check(league)
+        d = espn._get(espn._SITE.format(path=path) + f"/summary?event={game_id}", ttl=20)
+        wp = d.get("winprobability") or []
+        if wp:
+            v = wp[-1].get("homeWinPercentage")
+            return float(v) if v is not None else None
+    except Exception:
+        return None
     return None
 
 
@@ -323,26 +342,41 @@ def _build(league):
                             and 0 <= deficit <= _REVERSIBLE_MAX_DEFICIT
                             and inning <= _REVERSIBLE_MAX_INNING
                             and evidence):
-                        card = dict(base, cls="DISCOUNT", evidence=evidence)
+                        wp_home = _live_wp_home(league, g["game_id"])
+                        wp = None if wp_home is None else \
+                            round(wp_home if team == hab else 1 - wp_home, 3)
+                        # If the live WP says the market is already fair or rich, there is no
+                        # value claim to make — evidence or not.
+                        if wp is not None and wp <= price:
+                            continue
+                        card = dict(base, cls="DISCOUNT", evidence=evidence, wp=wp,
+                                    edge=None if wp is None else round(wp - price, 3))
                         cards.append(card)
                         _fire(con, league, card["game_id"], m["ticker"], "DISCOUNT", team,
                               price, pregame, {"inning": inning, "deficit": deficit,
-                                               "score": card["score"], "evidence": evidence})
-                # B. WITCHING HOUR — close game, late, and CONTESTED BY THE MARKET'S OWN
-                # PRICING. Run diff alone lies: SD@LAD Jul-4 was "0–2 in the 8th" by score but
-                # 3c/97c by price — cheap-and-correct, and our own game story had SD on a
-                # 7-game losing streak. Gates: the anchored side must be priced inside the
-                # contested band AND not cold-streaking; prefer the cheaper qualifying side.
+                                               "score": card["score"], "evidence": evidence,
+                                               "wp": wp})
+                # B. WITCHING HOUR — close game, late, anchored on real EDGE: the side whose
+                # live Kalshi price sits meaningfully under ESPN's live win probability
+                # (absolute points, or ratio for cheap sides — "3 cents to make 100" is a take
+                # when the comeback probability supports it). Price level alone neither
+                # qualifies nor disqualifies (v0.3); no WP available -> no value claim -> no
+                # card ("not that I know what their comeback probability was" — exactly).
+                # Cold-form gate stays: state-based WP doesn't know about a 7-game skid.
                 if inning >= _WITCHING_MIN_INNING and abs(diff) <= _WITCHING_MAX_DIFF and prices:
-                    anchor = None
-                    for team, tup in sorted(prices.items(), key=lambda kv: kv[1][1]):
-                        p = tup[1]
-                        if p < _WITCHING_MIN_PRICE or p > 1 - _WITCHING_MIN_PRICE:
-                            continue
-                        if _is_cold(meta.get(team)):
-                            continue
-                        anchor = (team, tup)
-                        break
+                    anchor = anchor_wp = anchor_edge = None
+                    wp_home = _live_wp_home(league, g["game_id"])
+                    if wp_home is not None:
+                        for team, tup in sorted(prices.items(), key=lambda kv: kv[1][1]):
+                            p = tup[1]
+                            if _is_cold(meta.get(team)):
+                                continue
+                            wp = wp_home if team == hab else 1 - wp_home
+                            edge = wp - p
+                            if edge >= _WITCHING_MIN_EDGE or \
+                                    (p < 0.10 and wp >= p * _WITCHING_MIN_RATIO):
+                                anchor, anchor_wp, anchor_edge = (team, tup), round(wp, 3), round(edge, 3)
+                                break
                     if anchor:
                         team, (m, price, pregame, pregame_src, opp) = anchor
                         spark = _spark(con, m["ticker"])
@@ -358,10 +392,12 @@ def _build(league):
                             "rank": rank.get(team), "opp_rank": rank.get(opp),
                             "last10": (meta.get(team) or {}).get("last10"),
                             "streak": (meta.get(team) or {}).get("streak"),
+                            "wp": anchor_wp, "edge": anchor_edge,
                         }
                         cards.append(card)
                         _fire(con, league, card["game_id"], m["ticker"], "WITCHING_HOUR", team,
-                              price, pregame, {"inning": inning, "diff": diff, "score": card["score"]})
+                              price, pregame, {"inning": inning, "diff": diff,
+                                               "score": card["score"], "wp": anchor_wp})
         con.execute("DELETE FROM live_price_snapshots WHERE ts < ?", (int(time.time()) - 3 * 86400,))
         con.commit()
 
