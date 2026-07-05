@@ -874,17 +874,25 @@ def generate_game_story(lg: str, game_id: str, refresh: bool = False,
         con.execute("""CREATE TABLE IF NOT EXISTS game_story(
             league TEXT, game_id TEXT, story TEXT, generated_at TEXT, has_form INTEGER DEFAULT 0,
             PRIMARY KEY(league, game_id))""")
-        if "has_form" not in [c["name"] for c in con.execute("PRAGMA table_info(game_story)")]:
+        cols = [c["name"] for c in con.execute("PRAGMA table_info(game_story)")]
+        if "has_form" not in cols:
             con.execute("ALTER TABLE game_story ADD COLUMN has_form INTEGER DEFAULT 0")
             con.commit()
+        # has_stakes: story was written WITH the stakes context (stakes.py). A has_form story
+        # from before the stakes engine is provisional the same way thin pre-form stories
+        # were: regenerate once stakes are computable, then it's final.
+        if "has_stakes" not in cols:
+            con.execute("ALTER TABLE game_story ADD COLUMN has_stakes INTEGER DEFAULT 0")
+            con.commit()
         if not refresh:
-            cached = con.execute("SELECT story, has_form FROM game_story WHERE league=? AND game_id=?",
+            cached = con.execute("SELECT story, has_form, has_stakes FROM game_story WHERE league=? AND game_id=?",
                                  (lg, game_id)).fetchone()
-            # A story written WITH player form is final — serve it. A "thin" one (has_form=0,
-            # generated before props/form data existed) is provisional: fall through and try to
-            # rewrite it, but only if form data has since arrived (checked below).
             if cached and cached["has_form"]:
-                return {"league": lg, "game_id": game_id, "story": cached["story"], "cached": True}
+                import stakes as _stakes_mod
+                # Final unless this league HAS a stakes model and the story predates it —
+                # that one case regenerates once (below) and becomes final with has_stakes=1.
+                if cached["has_stakes"] or lg not in _stakes_mod.SUPPORTED:
+                    return {"league": lg, "game_id": game_id, "story": cached["story"], "cached": True}
 
     try:
         gr = espn.game_result(lg, game_id)
@@ -899,14 +907,28 @@ def generate_game_story(lg: str, game_id: str, refresh: bool = False,
         return {"league": lg, "game_id": game_id,
                 "story": cached["story"] if cached else None, "cached": bool(cached)}
     smap = espn.team_strength_map(lg)
+    try:  # quality rank: position in the strength table (same rows smap is built from)
+        _rank = {r["abbrev"]: i + 1 for i, r in enumerate(espn.team_strength(lg))}
+    except Exception:
+        _rank = {}
 
     def facts(ab):
         s = smap.get(ab) or {}
+        rk = f", quality rank #{_rank[ab]} of {len(_rank)}" if ab in _rank else ""
         return (f"{s.get('name', ab)} ({ab}): {s.get('wins')}-{s.get('losses')}, "
                 f"{s.get('win_pct')} win%, streak {s.get('streak')}, last-10 {s.get('last10')}, "
-                f"differential {s.get('differential')}")
+                f"differential {s.get('differential')}{rk}")
     grounding = (f"Matchup: {teams[0]} vs {teams[1]}. Game state: {gr.get('state')}.\n"
                  f"{facts(teams[0])}\n{facts(teams[1])}")
+
+    # Stakes: what each team is playing for in THIS game (stakes.py — certain facts only).
+    try:
+        import stakes as _stakes
+        stakes_lines = _stakes.for_matchup(lg, teams[0], teams[1])
+    except Exception:
+        stakes_lines = []
+    if stakes_lines:
+        grounding += "\nWhat's at stake in this game:\n" + "\n".join(stakes_lines)
 
     form_lines, seen = [], set()
     with closing(_db()) as con:
@@ -933,21 +955,28 @@ def generate_game_story(lg: str, game_id: str, refresh: bool = False,
     if form_lines:
         grounding += "\nRecent player form (most recent first):\n" + "\n".join(form_lines)
 
-    # Provisional thin story already cached and form data STILL hasn't arrived → keep it,
-    # don't spend another LLM call re-writing the same thin blurb on every view.
-    if cached and not form_lines:
-        return {"league": lg, "game_id": game_id, "story": cached["story"], "cached": True}
+    # Regenerate a cached story ONLY when genuinely new context arrived since it was written
+    # (form for a pre-form story, stakes for a pre-stakes story). Otherwise keep it — never
+    # burn an LLM call re-writing the same blurb, and never loop when a source is down.
+    if cached:
+        new_form = bool(form_lines) and not cached["has_form"]
+        new_stakes = bool(stakes_lines) and not cached["has_stakes"]
+        if not new_form and not new_stakes:
+            return {"league": lg, "game_id": game_id, "story": cached["story"], "cached": True}
 
-    system = ("You are a sharp sports writer. In 2-4 sentences, set up this matchup using ONLY the "
-              "facts given. Lead with the most interesting thing — a team streak/record/differential, "
-              "OR a player on a clear hot or cold run from the form data. Be specific with numbers. "
-              "Do NOT invent injuries, trades, lineup news, or anything not in the facts. No clichés, "
-              "no hype, plain confident tone.")
+    system = ("You are a sharp sports writer. Set up this matchup using ONLY the facts given. "
+              "Lead priority: (1) what's at stake in this game, (2) a player or team on a clear "
+              "hot or cold run, (3) record/quality context. Be specific with numbers, but NEVER "
+              "state the same stat twice in different units, and never pad — if the facts are "
+              "thin, one sharp sentence beats four generic ones. 1-4 sentences. Do NOT invent "
+              "injuries, trades, lineup news, or anything not in the facts. No clichés, no hype, "
+              "plain confident tone.")
     story = _deepseek_chat(system, grounding)
     if story:
         with closing(_db()) as con:
-            con.execute("INSERT OR REPLACE INTO game_story(league, game_id, story, generated_at, has_form) "
-                        "VALUES (?,?,?,datetime('now'),?)", (lg, game_id, story, 1 if form_lines else 0))
+            con.execute("INSERT OR REPLACE INTO game_story(league, game_id, story, generated_at, has_form, has_stakes) "
+                        "VALUES (?,?,?,datetime('now'),?,?)",
+                        (lg, game_id, story, 1 if form_lines else 0, 1 if stakes_lines else 0))
             con.commit()
     elif cached:
         # generation failed this time — keep the previous story rather than blanking it
