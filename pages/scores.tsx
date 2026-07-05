@@ -6,6 +6,7 @@ import { SportsService, Game } from '../services/sports'
 import GameCard from '../components/Scores/GameCard'
 import { SkeletonList, ErrorBanner, EmptyState } from '../components/Scores/States'
 import ListenLive from '../components/ListenLive'
+import LiveDiscounts from '../components/LiveDiscounts'
 
 // Discovery rail: feature ONE live game big (a viewer who came for another sport gets pulled in),
 // with a "+N more" reveal and a pull to the esports page. Featured pick = highest league priority.
@@ -252,6 +253,7 @@ export default function ScoresPage() {
           </button>
         </div>
         {error && <ErrorBanner message={error} />}
+        {isToday ? <LiveDiscounts /> : null}
         {!loading && games.length > 0 ? <LiveNow games={games} esportsLive={esportsLive} /> : null}
         {loading ? (
           <SkeletonList />
