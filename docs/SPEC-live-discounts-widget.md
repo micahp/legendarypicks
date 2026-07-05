@@ -76,6 +76,28 @@ expire on their own; an empty state is honest ("no live discounts right now — 
 market price, plus expected point/run differential as the display metric. Feels "less pure"
 than props/live (his read); revisit after the live widget ships and the prop loop is clean.
 
+## Evolution (keep — the lessons are the spec)
+
+**v0 (Jul 4, `c4ca767`) — shipped, and its first live card was a value trap.** WITCHING_HOUR
+fired on SD @ LAD "0–2 in the 8th" (run-diff rule) anchoring the cheapest side: SD at 3¢ —
+while our own game story read "Padres stumble in on a seven-game losing streak" vs Dodgers
+"winners of eight of their last ten." Cheap-AND-correct, surfaced as if it were a pick.
+Receipt resolved: SD lost. Two failures: run diff is not closeness (the market's 3¢/97¢ was),
+and form was displayed but never used.
+
+**v0.1 (Jul 5) — gates.** (1) Witching hour requires the anchored side inside the
+market-contested band (25–75¢) and not cold; (2) cold gate everywhere: last-10 wins ≤ 3 or
+losing streak ≥ 4 disqualifies a team from ANY card class — quality includes current form.
+
+**v0.2 (Jul 5) — the no-knife-catching rule (Micah).** A quality dip with no live evidence of
+the turn is a knife, not a discount — "are we just yoloing, praying they get one?" DISCOUNT
+now additionally requires **rally evidence** from the live base/out situation (ESPN scoreboard
+`situation`, same cached call): the trailing quality team must be *at bat right now with
+runners on and outs to work with*. The card states it ("2 on, 1 out, at bat"). No evidence,
+no card. We buy the visible turn, never the fall — same doctrine as the Jun-8 trading
+entry-timing finding. Other leagues define their own evidence when they activate (NFL:
+possession / red zone).
+
 ## Acceptance
 1. During any live MLB slate, the widget shows only games meeting A or B, each with a live
    Kalshi price ≤60s stale, and never shows a cheap-but-correct trap (spot-check vs win

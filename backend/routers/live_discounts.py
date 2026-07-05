@@ -40,6 +40,14 @@ _REVERSIBLE_MAX_DEFICIT = 3
 _REVERSIBLE_MAX_INNING = 6   # "before the 7th"
 _WITCHING_MIN_INNING = 7
 _WITCHING_MAX_DIFF = 2
+# The market's own definition of "close": witching hour requires the cheap side to still be
+# genuinely contested. A 3c team down late is cheap-AND-CORRECT (the SD@LAD Jul-4 trap: our own
+# game story had SD on a 7-game losing streak) — never a card, no matter the run diff.
+_WITCHING_MIN_PRICE = 0.25
+# Form gate: a team this cold is not a value candidate in ANY class — quality includes current
+# form, not just season record. (last10 wins <= 3, or losing streak >= 4.)
+_COLD_MAX_L10_WINS = 3
+_COLD_STREAK = 4
 _SPARK_N = 24
 _KNIFE_MIN_DROP = 0.02
 
@@ -111,9 +119,62 @@ def _strength(league):
         return hit[1], hit[2]
     rows = espn.team_strength(league)
     rank = {r["abbrev"]: i + 1 for i, r in enumerate(rows)}
-    meta = {r["abbrev"]: {"win_pct": r.get("win_pct"), "last10": r.get("last10")} for r in rows}
+    meta = {r["abbrev"]: {"win_pct": r.get("win_pct"), "last10": r.get("last10"),
+                          "streak": r.get("streak")} for r in rows}
     _strength_cache[league] = (now, rank, meta)
     return rank, meta
+
+
+def _is_cold(meta_row):
+    """Current-form gate. The game story narrates this signal ('stumble in on a seven-game
+    losing streak') — the widget must respect it too."""
+    if not meta_row:
+        return False
+    l10 = meta_row.get("last10") or ""
+    m = re.match(r"(\d+)-(\d+)", l10)
+    if m and int(m.group(1)) <= _COLD_MAX_L10_WINS:
+        return True
+    st = meta_row.get("streak") or ""
+    if st.startswith("L") and st[1:].isdigit() and int(st[1:]) >= _COLD_STREAK:
+        return True
+    return False
+
+
+def _situations(league):
+    """game_id -> live base/out situation from the raw ESPN scoreboard. Uses the SAME cached
+    URL espn_client.games() reads (ttl 20s), so this adds no upstream traffic — it just keeps
+    the fields games() discards. MLB shape: {onFirst,onSecond,onThird,outs,balls,strikes,...}."""
+    try:
+        _, path = espn._check(league)
+        d = espn._get(espn._SITE.format(path=path) + "/scoreboard", ttl=20)
+    except Exception:
+        return {}
+    out = {}
+    for ev in d.get("events", []):
+        comp = (ev.get("competitions") or [{}])[0]
+        sit = comp.get("situation")
+        if sit:
+            out[str(ev.get("id"))] = sit
+    return out
+
+
+def _rally_evidence(sit, team_is_home, status_detail):
+    """The no-knife-catching rule: a dip is only buyable when the turn is VISIBLY starting —
+    the trailing team at bat right now with runners on and outs to work with. No evidence,
+    no card; a falling price alone is a knife, not a signal. (MLB mechanic; other leagues
+    get their own evidence definitions — possession/red zone for NFL — when they activate.)"""
+    if not sit:
+        return None
+    sd = (status_detail or "").lower()
+    at_bat_home = sd.startswith("bot")
+    at_bat_away = sd.startswith("top")
+    if not (at_bat_home or at_bat_away) or ((at_bat_home) != bool(team_is_home)):
+        return None
+    runners = sum(1 for k in ("onFirst", "onSecond", "onThird") if sit.get(k))
+    outs = sit.get("outs")
+    if runners >= 1 and isinstance(outs, int) and outs <= 2:
+        return f"{runners} on, {outs} out{'s' if outs != 1 else ''}, at bat"
+    return None
 
 
 def _snapshot(con, ticker, price):
@@ -179,6 +240,7 @@ def _build(league):
     games = espn.games(league)
     markets = _kalshi_markets(series)
     rank, meta = _strength(league)
+    sits = _situations(league)
     alias = _ESPN_TO_KALSHI.get(league, {})
     k = lambda ab: alias.get(ab, ab)
 
@@ -244,40 +306,62 @@ def _build(league):
                         "spark": spark, "knife": _knife(spark), "ticker": m["ticker"],
                         "rank": rank.get(team), "opp_rank": rank.get(opp),
                         "last10": (meta.get(team) or {}).get("last10"),
+                        "streak": (meta.get(team) or {}).get("streak"),
                     }
-                    # A. QUALITY DIP — model-favored quality team, price well under pregame,
-                    # deficit small with time left (value-trap guard: cheap-but-correct never shows).
+                    # A. QUALITY DIP — model-favored quality team IN FORM, price well under
+                    # pregame, deficit small with time left, AND the turn visibly starting
+                    # (rally evidence: at bat, runners on, outs left). Quality includes current
+                    # form — a cold-streaking team is never a buy-the-dip candidate — and a dip
+                    # with no live evidence is a knife, not a discount: we buy the visible
+                    # turn, never the fall.
+                    evidence = _rally_evidence(sits.get(str(g["game_id"])), team == hab,
+                                               g.get("status_detail"))
                     if (pregame and pregame >= _QUALITY_MIN_PREGAME
                             and rank.get(team) and rank.get(opp) and rank[team] < rank[opp]
+                            and not _is_cold(meta.get(team))
                             and price <= pregame - _DIP_CENTS
                             and 0 <= deficit <= _REVERSIBLE_MAX_DEFICIT
-                            and inning <= _REVERSIBLE_MAX_INNING):
-                        card = dict(base, cls="DISCOUNT")
+                            and inning <= _REVERSIBLE_MAX_INNING
+                            and evidence):
+                        card = dict(base, cls="DISCOUNT", evidence=evidence)
                         cards.append(card)
                         _fire(con, league, card["game_id"], m["ticker"], "DISCOUNT", team,
                               price, pregame, {"inning": inning, "deficit": deficit,
-                                               "score": card["score"]})
-                # B. WITCHING HOUR — close game, late. One card per game, anchored on the
-                # team currently priced cheapest (the live decision point).
+                                               "score": card["score"], "evidence": evidence})
+                # B. WITCHING HOUR — close game, late, and CONTESTED BY THE MARKET'S OWN
+                # PRICING. Run diff alone lies: SD@LAD Jul-4 was "0–2 in the 8th" by score but
+                # 3c/97c by price — cheap-and-correct, and our own game story had SD on a
+                # 7-game losing streak. Gates: the anchored side must be priced inside the
+                # contested band AND not cold-streaking; prefer the cheaper qualifying side.
                 if inning >= _WITCHING_MIN_INNING and abs(diff) <= _WITCHING_MAX_DIFF and prices:
-                    team, (m, price, pregame, pregame_src, opp) = \
-                        min(prices.items(), key=lambda kv: kv[1][1])
-                    spark = _spark(con, m["ticker"])
-                    card = {
-                        "cls": "WITCHING_HOUR",
-                        "league": league.upper(), "game_id": str(g["game_id"]),
-                        "matchup": f"{aab} @ {hab}", "team": team, "opp": opp,
-                        "team_name": (h if team == hab else a).get("name"),
-                        "score": f"{int(a.get('score') or 0)}–{int(h.get('score') or 0)}",
-                        "inning": inning, "status_detail": g.get("status_detail"),
-                        "price": price, "pregame": pregame, "pregame_source": pregame_src,
-                        "spark": spark, "knife": _knife(spark), "ticker": m["ticker"],
-                        "rank": rank.get(team), "opp_rank": rank.get(opp),
-                        "last10": (meta.get(team) or {}).get("last10"),
-                    }
-                    cards.append(card)
-                    _fire(con, league, card["game_id"], m["ticker"], "WITCHING_HOUR", team,
-                          price, pregame, {"inning": inning, "diff": diff, "score": card["score"]})
+                    anchor = None
+                    for team, tup in sorted(prices.items(), key=lambda kv: kv[1][1]):
+                        p = tup[1]
+                        if p < _WITCHING_MIN_PRICE or p > 1 - _WITCHING_MIN_PRICE:
+                            continue
+                        if _is_cold(meta.get(team)):
+                            continue
+                        anchor = (team, tup)
+                        break
+                    if anchor:
+                        team, (m, price, pregame, pregame_src, opp) = anchor
+                        spark = _spark(con, m["ticker"])
+                        card = {
+                            "cls": "WITCHING_HOUR",
+                            "league": league.upper(), "game_id": str(g["game_id"]),
+                            "matchup": f"{aab} @ {hab}", "team": team, "opp": opp,
+                            "team_name": (h if team == hab else a).get("name"),
+                            "score": f"{int(a.get('score') or 0)}–{int(h.get('score') or 0)}",
+                            "inning": inning, "status_detail": g.get("status_detail"),
+                            "price": price, "pregame": pregame, "pregame_source": pregame_src,
+                            "spark": spark, "knife": _knife(spark), "ticker": m["ticker"],
+                            "rank": rank.get(team), "opp_rank": rank.get(opp),
+                            "last10": (meta.get(team) or {}).get("last10"),
+                            "streak": (meta.get(team) or {}).get("streak"),
+                        }
+                        cards.append(card)
+                        _fire(con, league, card["game_id"], m["ticker"], "WITCHING_HOUR", team,
+                              price, pregame, {"inning": inning, "diff": diff, "score": card["score"]})
         con.execute("DELETE FROM live_price_snapshots WHERE ts < ?", (int(time.time()) - 3 * 86400,))
         con.commit()
 

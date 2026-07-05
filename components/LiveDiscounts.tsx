@@ -12,7 +12,8 @@ type Card = {
   score: string; inning: number; status_detail?: string
   price: number; pregame?: number | null; spark: number[]
   knife: 'falling' | 'stabilizing'
-  rank?: number | null; opp_rank?: number | null; last10?: string | null
+  rank?: number | null; opp_rank?: number | null; last10?: string | null; streak?: string | null
+  evidence?: string | null
 }
 type Payload = {
   cards: Card[]
@@ -60,6 +61,9 @@ function DiscountCard({ c }: { c: Card }) {
           ) : null}
         </div>
       </div>
+      {c.evidence ? (
+        <div className="mt-1.5 text-[12px] font-medium text-emerald-300">🔥 {c.evidence}</div>
+      ) : null}
       <div className="mt-2 flex items-center justify-between gap-2 text-[11px]">
         <span className={c.knife === 'falling' ? 'font-medium text-red-400' : 'text-zinc-500'}>
           {c.knife === 'falling' ? '▼ still falling' : '· stabilizing'}
@@ -68,7 +72,9 @@ function DiscountCard({ c }: { c: Card }) {
           <Spark pts={c.spark} />
         </span>
         {c.rank && c.opp_rank ? (
-          <span className="font-mono text-zinc-500">#{c.rank} vs #{c.opp_rank}{c.last10 ? ` · L10 ${c.last10}` : ''}</span>
+          <span className="font-mono text-zinc-500">
+            #{c.rank} vs #{c.opp_rank}{c.last10 ? ` · L10 ${c.last10}` : ''}{c.streak ? ` · ${c.streak}` : ''}
+          </span>
         ) : null}
       </div>
     </Link>
