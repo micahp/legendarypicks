@@ -6,7 +6,7 @@ import Link from 'next/link'
 // Live Kalshi prices vs pregame; knife tag = still falling vs stabilizing (entry-timing lesson).
 
 type Card = {
-  cls: 'DISCOUNT' | 'WITCHING_HOUR'
+  cls: 'DISCOUNT' | 'WITCHING_HOUR' | 'PREPRICED'
   league: string; game_id: string; matchup: string
   team: string; opp: string; team_name?: string
   score: string; inning: number; status_detail?: string
@@ -15,6 +15,7 @@ type Card = {
   rank?: number | null; opp_rank?: number | null; last10?: string | null; streak?: string | null
   evidence?: string | null
   wp?: number | null; edge?: number | null
+  level?: number | null; level_k?: number | null
 }
 type Payload = {
   cards: Card[]
@@ -38,13 +39,15 @@ function Spark({ pts }: { pts: number[] }) {
 
 function DiscountCard({ c }: { c: Card }) {
   const isDip = c.cls === 'DISCOUNT'
+  const isPre = c.cls === 'PREPRICED'
   return (
     <Link href={`/game/${c.league.toLowerCase()}/${c.game_id}`}
           className="block min-w-[240px] flex-1 rounded-xl border border-zinc-800 bg-zinc-900/70 p-3 transition-colors hover:border-zinc-600">
       <div className="mb-2 flex items-center justify-between gap-2">
         <span className={`rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
-          isDip ? 'bg-emerald-500/15 text-emerald-300' : 'bg-violet-500/15 text-violet-300'}`}>
-          {isDip ? 'Discount' : 'Witching hour'}
+          isDip ? 'bg-emerald-500/15 text-emerald-300'
+          : isPre ? 'bg-amber-500/15 text-amber-300' : 'bg-violet-500/15 text-violet-300'}`}>
+          {isDip ? 'Discount' : isPre ? 'Pre-priced' : 'Witching hour'}
         </span>
         <span className="font-mono text-[10px] uppercase tracking-wider text-zinc-500">
           {c.league} · {c.status_detail || `inning ${c.inning}`}
@@ -68,6 +71,11 @@ function DiscountCard({ c }: { c: Card }) {
       {c.evidence ? (
         <div className="mt-1.5 text-[12px] font-medium text-emerald-300">🔥 {c.evidence}</div>
       ) : null}
+      {c.cls === 'PREPRICED' && c.level != null ? (
+        <div className="mt-1.5 text-[12px] font-medium text-amber-300">
+          touched the {cents(c.level)} level set pregame{c.level_k && c.pregame != null ? ` (${c.level_k}× of ${cents(c.pregame)})` : ''}
+        </div>
+      ) : null}
       <div className="mt-2 flex items-center justify-between gap-2 text-[11px]">
         <span className={c.knife === 'falling' ? 'font-medium text-red-400' : 'text-zinc-500'}>
           {c.knife === 'falling' ? '▼ still falling' : '· stabilizing'}
@@ -85,7 +93,7 @@ function DiscountCard({ c }: { c: Card }) {
   )
 }
 
-export default function LiveDiscounts({ league = 'mlb' }: { league?: string }) {
+export default function LiveDiscounts({ league = 'mlb,wc' }: { league?: string }) {
   const [data, setData] = useState<Payload | null>(null)
   useEffect(() => {
     let ignore = false

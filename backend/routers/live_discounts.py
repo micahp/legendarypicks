@@ -28,7 +28,10 @@ import espn_client as espn
 router = APIRouter()
 
 _KALSHI_BASE = "https://api.elections.kalshi.com/trade-api/v2"
-_SERIES = {"mlb": "KXMLBGAME", "nfl": "KXNFLGAME", "nba": "KXNBAGAME", "nhl": "KXNHLGAME"}
+_SERIES = {"mlb": "KXMLBGAME", "nfl": "KXNFLGAME", "nba": "KXNBAGAME", "nhl": "KXNHLGAME",
+           # WC knockouts: the market that matters is "to advance" (covers ET/pens), and it's
+           # where the account's own best trades live (no public WP models -> stale prices).
+           "wc": "KXWCADVANCE"}
 # ESPN abbrev -> Kalshi ticker abbrev, where they differ. Unmatched games are reported in the
 # payload's `unmatched` list rather than silently dropped.
 _ESPN_TO_KALSHI = {"mlb": {"ARI": "AZ", "CHW": "CWS", "OAK": "ATH"}}
@@ -53,6 +56,11 @@ _COLD_MAX_L10_WINS = 3
 _COLD_STREAK = 4
 _SPARK_N = 24
 _KNIFE_MIN_DROP = 0.02
+# Class C — PRE-PRICED DISCOUNT (spec: docs/SPEC-live-discounts-widget.md). Level is computed
+# PREGAME and immutable; live price touching it fires the card. Sovereign: WP never gates it.
+_PREPRICED_K = 0.35            # level = k x pregame (the MEX fill was ~0.28x)
+_PREPRICED_MIN_PREGAME = 0.30  # only real contested sides get a level, never longshots
+_PREPRICED_FLOOR = 0.05        # fee/noise floor
 
 _cache = {}            # league -> (ts, payload)
 _strength_cache = {}   # league -> (ts, rank_map, meta_map)
@@ -69,6 +77,12 @@ def _ensure_tables():
             cls TEXT NOT NULL, team TEXT NOT NULL,
             fired_at TEXT NOT NULL, price REAL, pregame REAL, detail TEXT,
             result TEXT, resolved_at TEXT)""")
+        # Class C levels: computed pregame, IMMUTABLE (INSERT OR IGNORE only) — the
+        # immutability is what makes it a resting bid rather than a chase.
+        con.execute("""CREATE TABLE IF NOT EXISTS live_discount_levels(
+            ticker TEXT PRIMARY KEY, league TEXT NOT NULL, team TEXT NOT NULL,
+            level REAL NOT NULL, pregame REAL NOT NULL, k REAL NOT NULL,
+            computed_at TEXT NOT NULL)""")
         con.commit()
 
 
@@ -135,8 +149,12 @@ def _is_cold(meta_row):
         return False
     l10 = meta_row.get("last10") or ""
     m = re.match(r"(\d+)-(\d+)", l10)
-    if m and int(m.group(1)) <= _COLD_MAX_L10_WINS:
-        return True
+    if m:
+        w, l = int(m.group(1)), int(m.group(2))
+        # small-sample guard: "2-0" from a 3-game WC group stage is not a cold streak —
+        # the low-wins rule only means something with a real sample behind it
+        if w + l >= 8 and w <= _COLD_MAX_L10_WINS:
+            return True
     st = meta_row.get("streak") or ""
     if st.startswith("L") and st[1:].isdigit() and int(st[1:]) >= _COLD_STREAK:
         return True
@@ -226,6 +244,35 @@ def _pregame_ref(con, ticker, game_start_ts, market):
     return None, None
 
 
+def _time_left_ok(league, g):
+    """Class C guard: only fire while enough game remains for the discount to be reachable —
+    a level touched in the 89th minute is usually correct pricing, not value."""
+    if league == "mlb":
+        return (g.get("period") or 0) <= 7
+    if league == "wc":
+        m = re.search(r"(\d+)'", f"{g.get('status_detail') or ''} {g.get('clock') or ''}")
+        if m:
+            return int(m.group(1)) <= 70
+        return (g.get("period") or 1) <= 1  # minute unknown: 1st half ok, be conservative after
+    return True
+
+
+def _set_level(con, league, ticker, team, pregame, meta_row):
+    """Compute the pre-priced level ONCE, pregame. Eligibility: real contested side, not cold."""
+    if pregame is None or pregame < _PREPRICED_MIN_PREGAME or _is_cold(meta_row):
+        return
+    level = max(_PREPRICED_FLOOR, round(_PREPRICED_K * pregame, 2))
+    con.execute("""INSERT OR IGNORE INTO live_discount_levels(ticker, league, team, level,
+                   pregame, k, computed_at) VALUES (?,?,?,?,?,?,?)""",
+                (ticker, league, team, level, pregame, _PREPRICED_K,
+                 dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")))
+
+
+def _get_level(con, ticker):
+    return con.execute("SELECT level, pregame, k FROM live_discount_levels WHERE ticker=?",
+                       (ticker,)).fetchone()
+
+
 def _fire(con, league, game_id, ticker, cls, team, price, pregame, detail):
     dup = con.execute("SELECT 1 FROM live_discount_log WHERE game_id=? AND cls=? AND team=?",
                       (game_id, cls, team)).fetchone()
@@ -271,13 +318,15 @@ def _build(league):
             if not hab or not aab:
                 continue
             token = _et_token(g["date"])
+            # MLB events run away+home (26JUL042210SDLAD for SD@LAD); WC advance events run
+            # home+away (26JUL05MEXENG for ENG@MEX) — accept either order.
             pair = f"{k(aab)}{k(hab)}"
-            # per-team market: ...-26JUL04HHMM<AWAY><HOME>-<TEAM>
+            rpair = f"{k(hab)}{k(aab)}"
             by_team = {}
             for m in markets:
                 tk = m.get("ticker", "")
                 ev, _, side = tk.rpartition("-")
-                if token in ev and ev.endswith(pair):
+                if token in ev and (ev.endswith(pair) or ev.endswith(rpair)):
                     by_team[side] = m
             if not by_team:
                 if g.get("state") in ("pre", "in"):
@@ -303,6 +352,9 @@ def _build(league):
                 prices[team_ab_espn] = (m, price, pregame, pregame_src, opp_ab)
 
             if state == "pre":
+                # Class C: price the discount NOW, while the judge is calm (immutable once set)
+                for team, (m, price, _pg, _src, _opp) in prices.items():
+                    _set_level(con, league, m["ticker"], team, price, meta.get(team))
                 fav = max(prices.items(), key=lambda kv: kv[1][1], default=None)
                 upcoming.append({"matchup": f"{aab} @ {hab}", "start": g["date"],
                                  "fav": fav[0] if fav else None,
@@ -311,6 +363,31 @@ def _build(league):
                 _resolve(con, g)
             elif state == "in":
                 for team, (m, price, pregame, pregame_src, opp) in prices.items():
+                    # C. PRE-PRICED DISCOUNT — sovereign, league-agnostic: the level was set
+                    # pregame; live price touching it IS the signal. WP/evidence never gate it.
+                    lvl = _get_level(con, m["ticker"])
+                    if lvl and price <= lvl[0] and _time_left_ok(league, g):
+                        spark_c = _spark(con, m["ticker"])
+                        card = {
+                            "cls": "PREPRICED",
+                            "league": league.upper(), "game_id": str(g["game_id"]),
+                            "matchup": f"{aab} @ {hab}", "team": team, "opp": opp,
+                            "team_name": (h if team == hab else a).get("name"),
+                            "score": f"{int(a.get('score') or 0)}\u2013{int(h.get('score') or 0)}",
+                            "inning": inning, "status_detail": g.get("status_detail"),
+                            "price": price, "pregame": lvl[1], "pregame_source": "level_basis",
+                            "level": lvl[0], "level_k": lvl[2],
+                            "spark": spark_c, "knife": _knife(spark_c), "ticker": m["ticker"],
+                            "rank": rank.get(team), "opp_rank": rank.get(opp),
+                            "last10": (meta.get(team) or {}).get("last10"),
+                            "streak": (meta.get(team) or {}).get("streak"),
+                        }
+                        cards.append(card)
+                        _fire(con, league, card["game_id"], m["ticker"], "PREPRICED", team,
+                              price, lvl[1], {"level": lvl[0], "k": lvl[2],
+                                              "state": g.get("status_detail")})
+                    if league != "mlb":
+                        continue  # Classes A/B are MLB mechanics (innings, base-out evidence)
                     spark = _spark(con, m["ticker"])
                     team_score = (h.get("score") or 0) if team == hab else (a.get("score") or 0)
                     opp_score = (a.get("score") or 0) if team == hab else (h.get("score") or 0)
@@ -363,7 +440,7 @@ def _build(league):
                 # qualifies nor disqualifies (v0.3); no WP available -> no value claim -> no
                 # card ("not that I know what their comeback probability was" — exactly).
                 # Cold-form gate stays: state-based WP doesn't know about a 7-game skid.
-                if inning >= _WITCHING_MIN_INNING and abs(diff) <= _WITCHING_MAX_DIFF and prices:
+                if league == "mlb" and inning >= _WITCHING_MIN_INNING and abs(diff) <= _WITCHING_MAX_DIFF and prices:
                     anchor = anchor_wp = anchor_edge = None
                     wp_home = _live_wp_home(league, g["game_id"])
                     if wp_home is not None:
@@ -409,21 +486,42 @@ def _build(league):
 
 @router.get("/api/live/discounts")
 def live_discounts(league: str = Query("mlb")):
-    league = league.lower()
-    if league not in _SERIES:
+    """league accepts a comma list ("mlb,wc") — the scores page merges leagues; future
+    per-league pages pass a single league. Each league is cached and fails independently
+    (one venue's hiccup never blanks another's cards)."""
+    leagues = [l.strip().lower() for l in league.split(",") if l.strip()]
+    bad = [l for l in leagues if l not in _SERIES]
+    if bad or not leagues:
         raise HTTPException(400, f"league must be one of {sorted(_SERIES)}")
     now = time.time()
-    hit = _cache.get(league)
-    if hit and now - hit[0] < _CACHE_TTL:
-        return hit[1]
-    try:
-        payload = _build(league)
-    except Exception as e:  # Kalshi/ESPN hiccup: serve stale cache over a 500
-        if hit:
-            return hit[1]
-        raise HTTPException(502, f"live discounts unavailable: {e}")
-    _cache[league] = (now, payload)
-    return payload
+    payloads, errors = [], []
+    for lg in leagues:
+        hit = _cache.get(lg)
+        if hit and now - hit[0] < _CACHE_TTL:
+            payloads.append(hit[1])
+            continue
+        try:
+            p = _build(lg)
+            _cache[lg] = (now, p)
+            payloads.append(p)
+        except Exception as e:
+            if hit:
+                payloads.append(hit[1])
+            else:
+                errors.append(f"{lg}: {e}")
+    if not payloads:
+        raise HTTPException(502, f"live discounts unavailable: {'; '.join(errors)}")
+    if len(payloads) == 1 and not errors:
+        return payloads[0]
+    merged = {"league": ",".join(p["league"] for p in payloads),
+              "generated_at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
+              "cards": [c for p in payloads for c in p["cards"]],
+              "upcoming": sorted((u for p in payloads for u in p["upcoming"]),
+                                 key=lambda u: u["start"])[:6],
+              "unmatched": [x for p in payloads for x in p["unmatched"]]}
+    if errors:
+        merged["degraded"] = errors
+    return merged
 
 
 @router.get("/api/live/discounts/log")
