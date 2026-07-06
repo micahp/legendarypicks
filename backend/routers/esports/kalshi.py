@@ -83,11 +83,19 @@ def _kalshi_results():
             by_event[et]["close"] = by_event[et]["close"] or _iso_ms(m.get("close_time"))
         for et, ev in by_event.items():
             teams = ev["teams"]
+            # HONESTY HARDENING (2026-07-06, the NRG/Karmine flip): a winner is accepted ONLY
+            # from an unambiguous two-team event that settled exactly one yes + one no, with no
+            # TIE/draw side. The new game series (Valorant/Dota) carry TIE markets and can carry
+            # map-level events; treating any settled yes as "won the match" fabricates winners.
             if len(teams) != 2:
                 continue
-            winner = next((c for c, res in teams.items() if res == "yes"), None)
-            if winner:
-                out.setdefault((title, frozenset(teams)), []).append((winner, ev["close"]))
+            if any(c in ("tie", "draw") for c in teams):
+                continue
+            results = sorted(teams.values())
+            if results != ["no", "yes"]:
+                continue  # 2 yes / 2 no / anything unsettled -> not a clean match result
+            winner = next(c for c, res in teams.items() if res == "yes")
+            out.setdefault((title, frozenset(teams)), []).append((winner, ev["close"]))
     if out or _res_cache["data"] is None:
         _res_cache.update(t=now, data=out)
     return _res_cache["data"] or {}
@@ -106,6 +114,10 @@ def _kalshi_winner_for(title, team_a, team_b, near_ms=None, tol_ms=12 * 3600 * 1
         if not cands:
             return None
         cands = sorted(cands, key=lambda c: abs((c[1] or near_ms) - near_ms))
+    # Ambiguity guard: multiple settled events for the SAME pair inside the window naming
+    # DIFFERENT winners (map markets, split series events) -> we don't know, say so.
+    if len({c[0] for c in cands}) > 1:
+        return None
     winner = cands[0][0]
     if winner == ca:
         return "a"

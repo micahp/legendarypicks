@@ -190,6 +190,7 @@ def _kalshi_winner_fuzzy(title, team_a, team_b, near_ms=None, tol_ms=12 * 3600 *
     The exact-key lookup missed BOTH of today's rotting ghosts even though Kalshi HAD settled them:
     slate '9Z Globant' vs Kalshi '9z', slate 'Dontsu' vs Kalshi 'Donstu' (verified live 2026-07-03)."""
     best = None  # (delta, winner_name)
+    seen_winners = set()  # ambiguity guard (2026-07-06, the NRG/Karmine flip)
     for (t, pair), settlements in (_kalshi_results() or {}).items():
         if t != title or len(pair) != 2:
             continue
@@ -199,10 +200,15 @@ def _kalshi_winner_fuzzy(title, team_a, team_b, near_ms=None, tol_ms=12 * 3600 *
         for winner, close_ms in settlements:
             if near_ms and close_ms and abs(close_ms - near_ms) > tol_ms:
                 continue
+            seen_winners.add(winner)
             d = abs((close_ms or near_ms or 0) - (near_ms or 0))
             if best is None or d < best[0]:
                 best = (d, winner)
     if best is None:
+        return None
+    # Multiple in-window settlements naming DIFFERENT winners for this pair (map markets,
+    # split series events) -> we don't actually know the match winner. Wait for a real result.
+    if len(seen_winners) > 1:
         return None
     w = best[1]
     return "a" if _same_team(w, team_a) else "b" if _same_team(w, team_b) else None
