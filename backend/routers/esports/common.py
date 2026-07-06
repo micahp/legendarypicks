@@ -34,6 +34,10 @@ _TEAM_GENERIC = {"gaming", "esports", "esport", "club", "team", "clan", "gc", "g
 _TEAM_ALIASES = {
     "wbt": "wrotberry",
     "navi": "natusvincere",  # NAVI == Natus Vincere (so 'NAVI Junior' matches 'Natus Vincere Junior')
+    # EWC 2026 Dota: the real team is "Poor Rangers" (Liquipedia-verified 2026-07-06). Bovada
+    # labels them "Power Ranger", which duplicated their GamerLegion match on the schedule.
+    "powerranger": "poorrangers",
+    "powerrangers": "poorrangers",
 }
 
 
