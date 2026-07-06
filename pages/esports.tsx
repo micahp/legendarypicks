@@ -391,7 +391,7 @@ function UpMatchRow({ m, host }: { m: UpMatch; host: string }) {
             ) : null}
           </div>
         </div>
-        {!m.finished && m.favorite ? (
+        {!m.finished && m.favorite && m.favorite.pct >= 55 ? (
           <div className="shrink-0 text-right leading-none">
             <div className="max-w-[7rem] truncate text-[11px] font-medium text-zinc-400">{m.favorite.name}</div>
             <div className="mt-1 font-mono text-xs tabular-nums text-emerald-300">{m.favorite.pct}%</div>
@@ -540,7 +540,7 @@ function FeaturedUpcoming({ m, host }: { m: UpMatch; host: string }) {
               <div className="text-[10px] uppercase tracking-wider text-zinc-500">{m.finished ? 'Final' : 'Map score'}</div>
               <div className="font-mono text-2xl font-bold tabular-nums text-zinc-100">{m.score.a ?? '–'}<span className="text-zinc-600">{'–'}</span>{m.score.b ?? '–'}</div>
             </div>
-          ) : m.favorite ? (
+          ) : m.favorite && m.favorite.pct >= 55 ? (
             <div className="shrink-0 text-right">
               <div className="text-[10px] uppercase tracking-wider text-zinc-500">Favorite</div>
               <div className="text-sm font-semibold text-zinc-300">{m.favorite.name}</div>
