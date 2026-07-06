@@ -111,17 +111,9 @@ export default function LiveDiscounts({ league = 'mlb,wc' }: { league?: string }
   if (!data) return null
   const { cards, upcoming } = data
 
-  if (cards.length === 0) {
-    if (upcoming.length === 0) return null
-    const next = upcoming[0]
-    return (
-      <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 px-4 py-3 text-sm text-zinc-500">
-        <span className="mr-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-amber-400/80">⚡ Cheap quality, live</span>
-        no live discounts right now · next: {next.matchup}{next.fav ? ` (${next.fav} ${cents(next.fav_price)})` : ''} at{' '}
-        {new Date(next.start).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
-      </div>
-    )
-  }
+  // No live cards -> render NOTHING (Micah 2026-07-06): an empty-state bar is noise on a
+  // scoreboard; the widget earns its space only when it has something to say.
+  if (cards.length === 0) return null
 
   return (
     <div className="space-y-3 rounded-2xl border border-amber-500/20 bg-amber-500/[0.04] p-4 sm:p-5">
