@@ -33,6 +33,7 @@ Bo3). A final whose real scoreline we never captured ships score=null, not a fak
 import importlib.util
 import json
 import os
+import re
 import threading
 import time
 import urllib.request as _u
@@ -316,6 +317,11 @@ def _fetch_bovada_rows(now_ms, stale_cutoff_ms):
             st = e.get("startTime")
             if not e.get("live") and st and st < stale_cutoff_ms:
                 continue
+            # Bovada lists LIVE MAP lines as separate events ('Power Ranger - LMap 2 vs
+            # GamerLegion - LMap 2') — sub-match markets, not matches; they were rendering as
+            # phantom rows with absurd 95% favorites (seen 2026-07-07). Match-winner rows only.
+            if re.search(r"\bl?map\s*\d", (e.get("description") or "").lower()):
+                continue
             ml = None
             for dg in e.get("displayGroups", []):
                 for mk in dg.get("markets", []):
@@ -417,6 +423,20 @@ def _cluster(rows):
     for idxs in groups.values():
         grp = sorted((rows[i] for i in idxs), key=lambda r: _ORIGIN_PRIO.get(r.get("_origin"), 9))
         base = dict(grp[0])
+        # DISPLAY NAMES: prefer PandaScore's canonical team names over Bovada's labels when a
+        # PS twin exists (Micah 2026-07-07: Bovada prints 'Power Ranger' for what the EWC
+        # officially lists as 'Poor Rangers'). Identity/dedup is _canon_team's job and already
+        # merged the rows; this only picks the honest spelling, aligned via _same_team so a
+        # reversed pair can't swap names onto the wrong sides.
+        if base.get("_origin") == "bovada":
+            ps_twin = next((r for r in grp[1:] if r.get("_origin") == "pandascore"), None)
+            if ps_twin and ps_twin.get("teamA") and ps_twin.get("teamB"):
+                if _same_team(base.get("teamA", ""), ps_twin["teamA"]) and \
+                   _same_team(base.get("teamB", ""), ps_twin["teamB"]):
+                    base["teamA"], base["teamB"] = ps_twin["teamA"], ps_twin["teamB"]
+                elif _same_team(base.get("teamA", ""), ps_twin["teamB"]) and \
+                     _same_team(base.get("teamB", ""), ps_twin["teamA"]):
+                    base["teamA"], base["teamB"] = ps_twin["teamB"], ps_twin["teamA"]
         for other in grp[1:]:
             for f in ("favorite", "model", "logoA", "logoB", "startTime", "league", "source"):
                 if not base.get(f) and other.get(f):
