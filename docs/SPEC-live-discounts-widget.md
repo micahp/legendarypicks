@@ -129,6 +129,25 @@ Auto-placing actual resting orders on the Kalshi account from these levels (the 
 the widget and the trading book converge here). Surface + receipts first; order routing is a
 separate decision with real money and needs its own review.
 
+
+## Class D — GIFT FADE (implemented 2026-07-07, born from a real +2.6R fill)
+
+ARG–EGY, WC round of 16: Argentina (85¢ pregame favorite) had a penalty SAVED at 21' while
+trailing 0–1. Micah bought Egypt at 29¢ two minutes later, banked at 83¢ after Egypt's second
+goal — +2.6R. The market barely repriced on the miss because "quality comes back"; but a
+favorite wasting its gift chance while not leading is real information about THIS game.
+
+**Mechanic (event-driven, sovereign — WP never gates):** ESPN summary `keyEvents` containing
+"Penalty - Saved/Missed" attributed to the pregame favorite (≥55¢) while it is NOT leading →
+card anchors the DOG at its current lagging price. Window: `_GIFT_WINDOW_MIN` = 20 minutes
+after the miss ("that shit doesn't last long"); favorite taking the lead kills the card
+(gift forgiven). Fire-once receipts log event, minute, favorite, and its pregame price.
+WC/soccer first (where the receipt printed); the MLB analog (bases-loaded-no-runs, blown
+save) is a later evidence definition.
+
+Verified against the real game: detector finds ('home', 21, 'Penalty - Saved') on event
+760509; the card window (21'–41') covers the actual 16:23Z entry at 29¢.
+
 ## Evolution (keep — the lessons are the spec)
 
 **v0 (Jul 4, `c4ca767`) — shipped, and its first live card was a value trap.** WITCHING_HOUR

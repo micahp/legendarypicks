@@ -6,7 +6,7 @@ import Link from 'next/link'
 // Live Kalshi prices vs pregame; knife tag = still falling vs stabilizing (entry-timing lesson).
 
 type Card = {
-  cls: 'DISCOUNT' | 'WITCHING_HOUR' | 'PREPRICED'
+  cls: 'DISCOUNT' | 'WITCHING_HOUR' | 'PREPRICED' | 'GIFT_FADE'
   league: string; game_id: string; matchup: string
   team: string; opp: string; team_name?: string
   score: string; inning: number; status_detail?: string
@@ -40,14 +40,16 @@ function Spark({ pts }: { pts: number[] }) {
 function DiscountCard({ c }: { c: Card }) {
   const isDip = c.cls === 'DISCOUNT'
   const isPre = c.cls === 'PREPRICED'
+  const isGift = c.cls === 'GIFT_FADE'
   return (
     <Link href={`/game/${c.league.toLowerCase()}/${c.game_id}`}
           className="block min-w-[240px] flex-1 rounded-xl border border-zinc-800 bg-zinc-900/70 p-3 transition-colors hover:border-zinc-600">
       <div className="mb-2 flex items-center justify-between gap-2">
         <span className={`rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
           isDip ? 'bg-emerald-500/15 text-emerald-300'
-          : isPre ? 'bg-amber-500/15 text-amber-300' : 'bg-violet-500/15 text-violet-300'}`}>
-          {isDip ? 'Discount' : isPre ? 'Pre-priced' : 'Witching hour'}
+          : isPre ? 'bg-amber-500/15 text-amber-300'
+          : isGift ? 'bg-rose-500/15 text-rose-300' : 'bg-violet-500/15 text-violet-300'}`}>
+          {isDip ? 'Discount' : isPre ? 'Pre-priced' : isGift ? 'Gift fade' : 'Witching hour'}
         </span>
         <span className="font-mono text-[10px] uppercase tracking-wider text-zinc-500">
           {c.league} · {c.status_detail || `inning ${c.inning}`}

@@ -61,6 +61,11 @@ _KNIFE_MIN_DROP = 0.02
 _PREPRICED_K = 0.35            # level = k x pregame (the MEX fill was ~0.28x)
 _PREPRICED_MIN_PREGAME = 0.30  # only real contested sides get a level, never longshots
 _PREPRICED_FLOOR = 0.05        # fee/noise floor
+# Class D — GIFT FADE (Micah's ARG-EGY receipt, Jul-7: bought EGY 29c two minutes after
+# Argentina's penalty save, banked 83c, +2.6R). The favorite missing a GIFT chance (penalty
+# saved/missed) while NOT leading is real information about THIS game; the market underprices
+# the dog because "quality comes back." Fade window decays fast.
+_GIFT_WINDOW_MIN = 20          # minutes after the miss during which the card shows
 
 _cache = {}            # league -> (ts, payload)
 _strength_cache = {}   # league -> (ts, rank_map, meta_map)
@@ -242,6 +247,38 @@ def _pregame_ref(con, ticker, game_start_ts, market):
     if prev:
         return prev, "kalshi_previous_close"
     return None, None
+
+
+def _gift_events(league, game_id, home_name, away_name):
+    """Soccer gift-chances the favorite wasted: penalty saved/missed keyEvents from the ESPN
+    summary (same cached _get). -> [(side 'home'|'away', minute|None, event_text)].
+    WC/soccer only for now — the MLB analog (bases loaded, no runs) comes later."""
+    if league != "wc":
+        return []
+    try:
+        _, path = espn._check(league)
+        d = espn._get(espn._SITE.format(path=path) + f"/summary?event={game_id}", ttl=20)
+    except Exception:
+        return []
+    out = []
+    for e in (d.get("keyEvents") or []):
+        tx = ((e.get("type") or {}).get("text") or "")
+        low = tx.lower()
+        if "penalty" not in low or not ("saved" in low or "missed" in low):
+            continue
+        team = ((e.get("team") or {}).get("displayName") or "").lower()
+        clock = ((e.get("clock") or {}).get("displayValue") or "")
+        m = re.search(r"(\d+)", clock)
+        minute = int(m.group(1)) if m else None
+        hn, an = (home_name or "").lower(), (away_name or "").lower()
+        side = None
+        if team and hn and (team in hn or hn in team):
+            side = "home"
+        elif team and an and (team in an or an in team):
+            side = "away"
+        if side:
+            out.append((side, minute, tx))
+    return out
 
 
 def _time_left_ok(league, g):
@@ -433,6 +470,48 @@ def _build(league):
                               price, pregame, {"inning": inning, "deficit": deficit,
                                                "score": card["score"], "evidence": evidence,
                                                "wp": wp})
+                # D. GIFT FADE — the favorite wasted a gift chance (penalty saved/missed)
+                # while NOT leading: fade side = the dog, whose price lags because the market
+                # keeps assuming "quality comes back." Event-driven and sovereign (no WP);
+                # decays after _GIFT_WINDOW_MIN. Born from a real +2.6R fill (ARG-EGY Jul-7).
+                for side, minute, tx in _gift_events(league, g["game_id"], h.get("name"), a.get("name")):
+                    fav_t = hab if side == "home" else aab
+                    dog_t = aab if side == "home" else hab
+                    fav_row, dog_row = prices.get(fav_t), prices.get(dog_t)
+                    if not fav_row or not dog_row:
+                        continue
+                    if not fav_row[2] or fav_row[2] < _QUALITY_MIN_PREGAME:
+                        continue  # the misser must be the pregame favorite for the fade to mean anything
+                    fav_sc = (h.get("score") or 0) if side == "home" else (a.get("score") or 0)
+                    dog_sc = (a.get("score") or 0) if side == "home" else (h.get("score") or 0)
+                    if fav_sc > dog_sc:
+                        continue  # favorite leads anyway: gift already forgiven, no fade
+                    mn = re.search(r"(\d+)", str(g.get("status_detail") or g.get("clock") or ""))
+                    now_min = int(mn.group(1)) if mn else None
+                    if minute is not None and now_min is not None and now_min - minute > _GIFT_WINDOW_MIN:
+                        continue  # window closed — "that shit doesn't last long"
+                    m_d, price_d, pregame_d, pregame_src_d, opp_d = dog_row
+                    spark_d = _spark(con, m_d["ticker"])
+                    ev_txt = f"{fav_t} {tx.lower()} ({minute}') while not leading" if minute \
+                        else f"{fav_t} {tx.lower()} while not leading"
+                    card = {
+                        "cls": "GIFT_FADE",
+                        "league": league.upper(), "game_id": str(g["game_id"]),
+                        "matchup": f"{aab} @ {hab}", "team": dog_t, "opp": fav_t,
+                        "team_name": (a if dog_t == aab else h).get("name"),
+                        "score": f"{int(a.get('score') or 0)}–{int(h.get('score') or 0)}",
+                        "inning": inning, "status_detail": g.get("status_detail"),
+                        "price": price_d, "pregame": pregame_d, "pregame_source": pregame_src_d,
+                        "spark": spark_d, "knife": _knife(spark_d), "ticker": m_d["ticker"],
+                        "rank": rank.get(dog_t), "opp_rank": rank.get(fav_t),
+                        "last10": (meta.get(dog_t) or {}).get("last10"),
+                        "streak": (meta.get(dog_t) or {}).get("streak"),
+                        "evidence": ev_txt,
+                    }
+                    cards.append(card)
+                    _fire(con, league, card["game_id"], m_d["ticker"], "GIFT_FADE", dog_t,
+                          price_d, pregame_d, {"event": tx, "minute": minute,
+                                               "favorite": fav_t, "fav_pregame": fav_row[2]})
                 # B. WITCHING HOUR — close game, late, anchored on real EDGE: the side whose
                 # live Kalshi price sits meaningfully under ESPN's live win probability
                 # (absolute points, or ratio for cheap sides — "3 cents to make 100" is a take
