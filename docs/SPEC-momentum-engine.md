@@ -109,6 +109,24 @@ Whatever passes graduates into the widget/trading selection with its own receipt
   against it, per the buy-discount doctrine — never to chase).
 - "Who's hot" board / player Model tab: the consumer surface of the same state table.
 
+
+## The unifying frame (Micah, Jul-7 night): a game contains the entire crash cycle
+
+Consensus → shock → denial → panic → capitulation → reversal → melt-up → settlement — every
+live game runs the full market cycle, compressed into a fixed clock and terminated by a binary
+settlement. Two structural edges over real markets: the cycle MUST complete (hard expiry =
+visible theta, forced repricing every scoreless minute), and it repeats thousands of times a
+season with logged price paths and ground-truth outcomes — a crash-cycle laboratory at a
+sample size macro traders never get.
+
+Implication for this engine's live level: its output is a **phase label per live game**
+(consensus / shock / panic / capitulation / reversal / melt-up), derived from the price path
+(knife falling→stabilizing = capitulation) plus in-game event momentum (reversal evidence).
+The widget's classes then become phase-keyed entries: Class C fires in panic overshoot,
+gift-fade in denial, rally/momentum in reversal, and the swing-regime note governs the
+melt-up exit (sell into maximum agreement, look for the next leg). ARG–EGY (Jul-7) ran every
+phase on schedule and is the reference case.
+
 ## Risks, stated plainly
 - Raw outcome-stat crossovers will mostly track noise; the expected-vs-actual axis and
   usage/role signals carry the real weight. The validation gate exists for this reason.
