@@ -620,11 +620,14 @@ def _rebuild_upcoming():
     matches = _cluster(rows)
 
     # ---------------- evidence + state ----------------
+    # NOT gated on live_window: a scheduled match's PS stream (sometimes already a YouTube handle,
+    # e.g. '@ValorantEsportsKR/live') is known well before the match goes live, and gating this on
+    # "something else is live right now" meant scheduled matches never got a real stream at all —
+    # the upcoming/past feeds are already cached from _ps_enrich below regardless.
     ps_streams_by_id = {}
-    if live_window:
-        for m in _fetch_ps(include_running=True):
-            if m.get("id") is not None:
-                ps_streams_by_id[m["id"]] = m.get("streams_list") or []
+    for m in _fetch_ps(include_running=live_window):
+        if m.get("id") is not None:
+            ps_streams_by_id[m["id"]] = m.get("streams_list") or []
 
     for m in matches:
         ev = {"grid": None, "ps": None, "frag": None, "kalshi": None}
@@ -833,6 +836,7 @@ def _rebuild_upcoming():
     # ---------------- streams: candidate pool + platform priority + fallback ----------------
     for m in matches:
         slug = _TITLE_SLUG.get(m.get("title"))
+        team_names = (m.get("teamA"), m.get("teamB"))
         if m["state"] == S_LIVE and slug:
             pool = []
             if m.get("_fmatch") is not None:
@@ -841,8 +845,21 @@ def _rebuild_upcoming():
             if ps and m.get("_ps_id") is not None:
                 pool += _ps_candidates(m["_ps_id"], ps_streams_by_id, ps.get("live"))
             pool += _rule_candidates(slug, m.get("league"))
-            m["watch"] = _pick_stream(pool, match_live=True) if pool else None
-        elif m["state"] in (S_SCHEDULED, S_FINISHED) and slug:
+            m["watch"] = _pick_stream(pool, match_live=True, team_names=team_names) if pool else None
+        elif m["state"] == S_SCHEDULED and slug:
+            ps_cands = (_ps_candidates(m["_ps_id"], ps_streams_by_id, False)
+                        if m.get("_ps_id") is not None else [])
+            # network_checks=False: even narrowed to a 3h window this was still enough concurrent
+            # scheduled matches across all leagues, each paying sequential blocking HTTP calls
+            # (Twitch/Kick liveness pings + YouTube resolution, no concurrency), to hang the
+            # endpoint (2026-07-08 incident). Scheduled matches still get PS's raw stream URL
+            # (Twitch/Kick embed synthesizes for free, no network) — just no verified/YouTube-
+            # resolved embed until the match goes live and hits the S_LIVE branch above, which
+            # already scopes down to the handful of matches actually live at once.
+            m["watch"] = _resolve_watch(slug, m.get("league"), live=False,
+                                         extra_candidates=ps_cands, team_names=team_names,
+                                         network_checks=False)
+        elif m["state"] == S_FINISHED and slug:
             m["watch"] = _resolve_watch(slug, m.get("league"), live=False)
         else:
             m["watch"] = None  # ended_unknown: no honest stream to offer

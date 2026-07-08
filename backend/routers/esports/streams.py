@@ -56,6 +56,27 @@ _WATCH_RULES = [
 # then bare web links.
 _PLATFORM_PRIO = {"youtube": 0, "twitch": 1, "kick": 2, "web": 3}
 
+# Tournament -> official YouTube channel, title-agnostic (a festival's main channel can carry any
+# arena depending on the moment). yt_live_resolver resolves this via the Data API (channel_id
+# survives the datacenter bot wall); if nothing's live on that channel right now it just returns
+# None and Twitch/Kick wins, so a wrong/stale entry here is harmless, never a wrong embed.
+_YT_TOURNAMENT_CHANNELS = [
+    # @ewc, 1.45M subs, verified live 2026-07-08 (5 concurrent live videos incl. Dota Stream A/B/C).
+    # NOTE: UC1Xqp122TsjLISeYa1EwcaQ (customUrl @esportsworldcup) is a DIFFERENT, abandoned
+    # 56-subscriber channel that happens to hold that handle — do not revert to it.
+    ("esportsworldcup", "UCENNtCRTPTdH_IGXs42LuHQ"),
+]
+
+
+def _yt_channel_candidates(league):
+    ls = re.sub(r"[^a-z0-9]+", "", (league or "").lower())
+    out = []
+    for kw, chan_id in _YT_TOURNAMENT_CHANNELS:
+        if kw in ls:
+            out.append(_candidate(url=f"https://www.youtube.com/channel/{chan_id}/live",
+                                   platform="youtube", channel=None, source="rule-yt"))
+    return out
+
 _live_cache = {}       # "platform:channel" -> (ts, True|False|None)
 _LIVE_TTL = 90         # confirmed statuses
 _LIVE_TTL_UNKNOWN = 600  # unverifiable (Kick 403) — don't re-ping a blocked API every rebuild
@@ -159,18 +180,19 @@ def _candidate(url=None, embed=None, platform=None, channel=None,
 def _rule_candidates(title_slug, league):
     """Hardcoded-rule candidates for a title/league (may be empty)."""
     ls = re.sub(r"[^a-z0-9]+", "", (league or "").lower())
+    out = []
     for t, kw, cands in _WATCH_RULES:
         if t != title_slug or (kw is not None and kw not in ls):
             continue
-        out = []
         for platform, ch in cands:
             if platform == "web":
                 out.append(_candidate(url=ch, platform="web", channel=None, source="rule"))
             else:
                 out.append(_candidate(url=_chan_url(platform, ch), platform=platform, channel=ch,
                                       source="rule"))
-        return [c for c in out if c]
-    return []
+        break
+    out += _yt_channel_candidates(league)
+    return [c for c in out if c]
 
 
 def _watch_shape(c, online):
@@ -178,13 +200,22 @@ def _watch_shape(c, online):
             "embedUrl": c.get("embedUrl"), "online": online}
 
 
-def _pick_stream(candidates, match_live=True, max_alternates=4):
+def _pick_stream(candidates, match_live=True, team_names=None, network_checks=True,
+                  max_alternates=4):
     """Rank the pool, return the watch dict with `alternates`, or None if the pool is empty.
 
     Selection: drop positively-offline candidates (unless ALL are offline); rank the rest by
     (platform prio, liveness confidence, main+official, English). `online` on the result: True when
     confirmed or attested, True when unverifiable but the MATCH is live-confirmed upstream (prior
-    patch's rule, kept deliberately — see module docstring), False only when positively dark."""
+    patch's rule, kept deliberately — see module docstring), False only when positively dark.
+
+    `network_checks=False` (a scheduled match not starting soon) skips BOTH the Twitch/Kick
+    liveness ping and YouTube resolution below — those are per-candidate blocking HTTP calls with
+    multi-second timeouts and no concurrency; running them for every one of ~500 scheduled PS
+    matches on a single rebuild pass is what hung the /api/esports/upcoming endpoint entirely
+    (2026-07-08). Candidates still carry whatever embedUrl they got for free (Twitch/Kick synthesize
+    one from the channel with zero network cost); only YouTube (which needs the network to resolve
+    at all) stays an unembedded link until the match is close enough to be worth the round trip."""
     pool = []
     seen = set()
     for c in candidates:
@@ -198,7 +229,7 @@ def _pick_stream(candidates, match_live=True, max_alternates=4):
         # check: attestation is sufficient, and probing every pool candidate made a rebuild pay
         # dozens of decapi round-trips per cycle. Only unattested (rule) candidates get verified.
         checked = None
-        if not c.get("attested") and c.get("channel"):
+        if network_checks and not c.get("attested") and c.get("channel"):
             checked = _channel_online(c["platform"], c.get("channel"))
         c = dict(c)
         c["_checked"] = checked
@@ -206,12 +237,15 @@ def _pick_stream(candidates, match_live=True, max_alternates=4):
     if not pool:
         return None
 
-    # Fill embedUrl on live YouTube candidates (deterministic currentVideoEndpoint id, verified
-    # right-channel + live + embeddable — see yt_live_resolver). A resolved embed flips `playable`
-    # to 0 so YouTube's platform priority wins; unresolved stays embed-less and Twitch/Kick wins.
-    # Only for live matches (a scheduled channel isn't live -> wasted fetches).
-    if match_live:
-        resolve_pool_youtube(pool)
+    # Fill embedUrl on YouTube candidates (deterministic currentVideoEndpoint id, verified
+    # right-channel + live/upcoming + embeddable, team-name-disambiguated on multi-stream channels
+    # — see yt_live_resolver). A resolved embed flips `playable` to 0 so YouTube's platform
+    # priority wins; unresolved stays embed-less and Twitch/Kick wins. Runs for near-term scheduled
+    # matches too (a PS-provided scheduled YouTube handle resolves via eventType=upcoming) — the
+    # inner loop only makes a network call for actual youtube-platform candidates, so this costs
+    # nothing extra on matches with no YouTube candidate at all.
+    if network_checks:
+        resolve_pool_youtube(pool, team_names)
 
     selectable = [c for c in pool if c["_checked"] is not False or c.get("attested")]
     ranked_from = selectable or pool
@@ -257,12 +291,21 @@ def _pick_stream(candidates, match_live=True, max_alternates=4):
     return watch
 
 
-def _resolve_watch(title_slug, league, live=False):
-    """Rule-only resolution (kept for scheduled matches and as the no-per-match-data fallback).
-    Same signature as the old streams.py entry point; now returns embedUrl + alternates too."""
-    cands = _rule_candidates(title_slug, league)
+def _resolve_watch(title_slug, league, live=False, extra_candidates=None, team_names=None,
+                    network_checks=True):
+    """Rule candidates, plus (for scheduled matches) real per-match candidates from PS/frag when
+    given — a PS scheduled match often already carries its stream (including a YouTube handle,
+    e.g. '@ValorantEsportsKR/live') well before it goes live, and YouTube supports resolving a
+    scheduled premiere via eventType=upcoming, so a scheduled match doesn't have to wait for the
+    live branch to get a real embed. `extra_candidates` triggers full pool resolution (network
+    calls, cached); without it this stays the old zero-network rule-only lookup (finished matches /
+    no per-match data). `network_checks=False` for scheduled matches far out — see _pick_stream."""
+    cands = _rule_candidates(title_slug, league) + (extra_candidates or [])
     if not cands:
         return None
+    if extra_candidates:
+        return _pick_stream(cands, match_live=live, team_names=team_names,
+                             network_checks=network_checks)
     if not live:
         w = _watch_shape(cands[0], None)
         w["alternates"] = []
