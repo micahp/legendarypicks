@@ -127,6 +127,29 @@ gift-fade in denial, rally/momentum in reversal, and the swing-regime note gover
 melt-up exit (sell into maximum agreement, look for the next leg). ARG–EGY (Jul-7) ran every
 phase on schedule and is the reference case.
 
+## Build status — phase 1 shipped 2026-07-08 (MLB, display-only)
+
+- `analytics/momentum.py` — core math as spec'd: `wilder()` (mean-seeded, α=1/n) +
+  `cross_state()` (full cross history, spread + slow-normalized spread_pct, small-sample
+  guard returns None below the slow window). Hand-verified recurrence.
+- `ingest_team_results.py` — NEW `team_game_results` table from ESPN team schedules
+  (one call/team; neither `team_game_stats` nor `prop_games` had MLB finals). 2,735 rows,
+  current through Jul 7.
+- `compute_momentum.py` — materializes `momentum_state` (upsert) + `momentum_crosses`
+  (append-only, UNIQUE-deduped). Batters TB/H/HR/BB/K @ 5/26; pitchers K/outs/hits_allowed
+  @ 3/10 (starters only reach ~16 starts by midseason); teams score_for/score_diff/win @
+  5/26. Stat POLARITY handled: `state` is the raw direction, `improving` flips for
+  less-is-better stats (batter K, pitcher hits_allowed).
+- `routers/momentum.py` — `/api/momentum/{league}/crosses` (the "who just turned" feed),
+  `/board` (ranked |spread_pct|), `/player/{id}`, `/team/{ab}`. DISPLAY-ONLY per the
+  validation gate.
+- Cron: `scripts/momentum_nightly.sh` @ 06:30 UTC (team results → Statcast logs → compute).
+- First-run receipts: SD death-crossed Jun 28 (matches the widget v0 "cold as fuck"
+  incident window); KC/TEX golden-crossed on the day of computation.
+- NOT built yet: expected-vs-actual axis (per-game xwOBA rides the same Statcast pull the
+  log ingest already makes — next slice), live within-game level, validation harness
+  (gated on prop-loop repair), other leagues.
+
 ## Risks, stated plainly
 - Raw outcome-stat crossovers will mostly track noise; the expected-vs-actual axis and
   usage/role signals carry the real weight. The validation gate exists for this reason.
