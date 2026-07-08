@@ -25,10 +25,19 @@ Verified live 2026-07-03 on Valorant VCL Brazil "MIBR Academy v la Masia":
 """
 
 import json
+import os
 import re
 import time
 import urllib.request as _u
 import urllib.error as _ue
+
+# Official YouTube Data API v3 — the only clean way past the datacenter-IP bot wall that strips
+# the videoId from scraped /live pages (a plain headless browser hits "Sign in to confirm you're
+# not a bot" from this egress). Returns the SPECIFIC live videoId for a SPECIFIC channel, so it
+# also fixes the EWC multi-simulcast case a channel-live embed can't. Inert (=> keep Twitch) until
+# a valid key is set. Key checked lazily so dropping it in needs no code change / restart-only.
+def _yt_api_key():
+    return (os.environ.get("YOUTUBE_API_KEY") or os.environ.get("GOOGLE_API_KEY") or "").strip()
 
 _UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
        "(KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36")
@@ -76,6 +85,37 @@ def _live_page_video_id(live_url):
         return None
 
 
+def _channel_id_from_live_page(live_url):
+    """UC channel id from a channel /live page. Survives the datacenter bot wall that strips
+    ytInitialData (the videoId gate fails on this server, but externalId/browseId persist), so
+    it's the anchor for the channel-live embed fallback. Returns a UC id or None."""
+    try:
+        html = _get(live_url)
+    except Exception:
+        return None
+    for pat in (r'"externalId":"(UC[A-Za-z0-9_-]{22})',
+                r'"browseId":"(UC[A-Za-z0-9_-]{22})',
+                r'"channelId":"(UC[A-Za-z0-9_-]{22})'):
+        m = re.search(pat, html)
+        if m:
+            return m.group(1)
+    return None
+
+
+def _data_api_live_video_id(channel_id, key):
+    """Official Data API v3: the currently-live videoId on a channel, or None. Pins the exact video
+    (unlike a channel-live embed) so a multi-simulcast network resolves to THIS channel's cast."""
+    try:
+        q = ("https://www.googleapis.com/youtube/v3/search?part=snippet&type=video"
+             "&eventType=live&maxResults=1&channelId=%s&key=%s" % (channel_id, key))
+        d = json.loads(_get(q, timeout=6))
+        items = d.get("items") or []
+        vid = items[0]["id"]["videoId"] if items else None
+        return vid if (vid and re.fullmatch(_VID_RE, vid)) else None
+    except Exception:
+        return None
+
+
 def _watch_ownership_and_live(video_id):
     """(canonical_handle, channel_id, is_live) from the ungated watch page, or (None,None,None)."""
     try:
@@ -101,10 +141,16 @@ def _is_embeddable(video_id):
 
 def yt_live_embed(url):
     """A frag/PS YouTube stream URL -> confirmed live+embeddable embedUrl, or None (=> keep Twitch).
-    Cached per URL. Fail-CLOSED: any uncertainty returns None so we never ship a wrong/dead embed."""
+    Cached per URL. Fail-CLOSED: any uncertainty returns None so we never ship a wrong/dead VOD.
+
+    Path 1 (scrape, no key): deterministic currentVideoEndpoint videoId from the /live page, gated
+    on right-channel + isLive + embeddable. Works when the box isn't bot-walled.
+    Path 2 (Data API, keyed): when the wall strips the scraped videoId, recover the exact live
+    videoId via YouTube Data API v3. Both paths pin a specific videoId — never a channel guess."""
     if not url or ("youtube" not in url and "youtu.be" not in url):
         return None
-    c = _resolve_cache.get(url)
+    ck = url
+    c = _resolve_cache.get(ck)
     if c and time.time() - c[0] < (_TTL if c[1] else _TTL_NEG):
         return c[1]
 
@@ -124,10 +170,21 @@ def yt_live_embed(url):
                         (want.startswith("UC") and cid == want))
             if owner_ok and is_live and _is_embeddable(vid):
                 result = "https://www.youtube.com/embed/%s?autoplay=1" % vid
+        # Bot wall stripped the scraped videoId. Recover the EXACT live videoId via the official
+        # Data API (channel_id survives the wall even when videoId doesn't). NOT a channel-live
+        # embed: that pins no videoId and can surface the wrong arena on EWC's multi-simulcast
+        # networks (tried and rejected before). Inert without a key => Twitch kept, same as today.
+        key = _yt_api_key()
+        if result is None and want and key:
+            cid = want if want.startswith("UC") else _channel_id_from_live_page(url)
+            if cid and cid.startswith("UC"):
+                vid = _data_api_live_video_id(cid, key)
+                if vid and _is_embeddable(vid):
+                    result = "https://www.youtube.com/embed/%s?autoplay=1" % vid
     except Exception:
         result = None
 
-    _resolve_cache[url] = (time.time(), result)
+    _resolve_cache[ck] = (time.time(), result)
     return result
 
 
