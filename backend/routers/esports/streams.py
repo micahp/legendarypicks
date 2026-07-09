@@ -268,6 +268,19 @@ def _pick_stream(candidates, match_live=True, team_names=None, network_checks=Tr
                 0 if (c.get("main") and c.get("official")) else 1,
                 0 if lang == "en" else 1)
 
+    # Every remaining candidate is positively DARK (decapi-confirmed offline) and unattested — i.e.
+    # a pool of dead guesses, not the real broadcast (the classic case: a regional LoL match whose
+    # per-match PS stream hasn't posted, leaving only the global `riotgames` rule, which is offline
+    # because that channel never carries a specific regional game). Shipping the top one flagged
+    # online=false is worse than nothing: the frontend can't embed a dark channel so it renders a
+    # dead "· TWITCH ↗" link, and the visibility filter counts a non-null `watch` as a stream, which
+    # keeps a PandaScore phantom-`running` card on the live board with no way to actually watch it.
+    # Return None so the match honestly has no stream — the board filter then drops it (no odds, no
+    # stream) or shows "no stream available", and a real embed appears the moment an ATTESTED stream
+    # posts (which skips this check entirely). Attested candidates are never in this bucket.
+    if not selectable:
+        return None
+
     ranked = sorted(ranked_from, key=_rank)
     top = ranked[0]
 
@@ -284,9 +297,6 @@ def _pick_stream(candidates, match_live=True, team_names=None, network_checks=Tr
         alts.append(_watch_shape(c, _online_val(c)))
         if len(alts) >= max_alternates:
             break
-    # Offer positively-offline leftovers only if the list is otherwise empty (honest last resort).
-    if not selectable:
-        watch["online"] = False
     watch["alternates"] = alts
     return watch
 
