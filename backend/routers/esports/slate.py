@@ -447,6 +447,52 @@ def _carry_row(old):
 _ORIGIN_PRIO = {"bovada": 0, "pandascore": 1, "grid": 2, "carry": 3, "store": 4}
 
 
+# A team cannot play two matches within this window, so two same-title rows this close in start time
+# that share an exactly-matched team are the SAME real match — even if the strict pair test misses
+# because the OTHER team is labelled differently across sources.
+_RELAXED_MERGE_MS = 10 * 60 * 1000
+
+
+# Squad-distinguishing words: their presence means two similar names are DIFFERENT teams of one org
+# (a main team vs its academy/B/women's side), never a labelling variant — so they must never be
+# collapsed. 'academy' is the canonical case (common.py keeps it out of the generic-word strip).
+_DISTINCT_SQUAD = frozenset({"academy", "youth", "junior", "juniors", "jr", "women", "woman",
+                             "female", "fem", "prospect", "prospects", "reserve", "reserves",
+                             "ii", "iii", "b"})
+
+
+def _label_variant(a, b):
+    """The two names plausibly label the SAME team — an org-tag / spelling variant like 'Sharks' vs
+    'YNG Sharks Esports' — and NOT two distinct squads of one org. They must share >=1 canonical
+    token AND the differing tokens must carry no distinct-squad marker. This guards the NON-exact
+    side of a relaxed same-match merge: it accepts 'Sharks' <> 'YNG Sharks' (residual {yng}) but
+    rejects 'FaZe' <> 'FaZe Academy' (residual {academy}), so a main-squad match and its academy's
+    match at the same time can never collapse into one."""
+    ta, tb = set(_canon_tokens(a)), set(_canon_tokens(b))
+    if not (ta & tb):
+        return False
+    return not ((ta ^ tb) & _DISTINCT_SQUAD)
+
+
+def _same_match_relaxed(ri, rj):
+    """Merge two same-title rows the strict pair test missed but which MUST be the same real match:
+    their starts are within _RELAXED_MERGE_MS and ONE team matches exactly (_same_team) while the
+    OTHER is only a label variant (_label_variant) — the same match cross-listed under two league
+    strings with a team-name variant ('Sharks' vs 'YNG Sharks Esports'). The physical invariant does
+    the work: a team can't be in two matches at once, so exact-team + near-identical-start = same
+    match. The label-variant guard on the opposite side blocks both a lone _same_team false-positive
+    and a main-vs-academy collision."""
+    si, sj = ri.get("startTime"), rj.get("startTime")
+    if not (si and sj) or abs(si - sj) > _RELAXED_MERGE_MS:
+        return False
+    a1, b1 = ri.get("teamA", ""), ri.get("teamB", "")
+    a2, b2 = rj.get("teamA", ""), rj.get("teamB", "")
+    return ((_same_team(a1, a2) and _label_variant(b1, b2)) or
+            (_same_team(b1, b2) and _label_variant(a1, a2)) or
+            (_same_team(a1, b2) and _label_variant(b1, a2)) or
+            (_same_team(b1, a2) and _label_variant(a1, b2)))
+
+
 def _cluster(rows):
     """Union-find over (same title, same pair, near start) -> one merged row per real match."""
     n = len(rows)
@@ -469,8 +515,9 @@ def _cluster(rows):
                 si, sj = ri.get("startTime"), rj.get("startTime")
                 if si and sj and abs(si - sj) > 8 * 3600 * 1000:
                     continue  # same pair meeting twice (rematch) stays two matches
-                if _same_pair(ri.get("teamA", ""), ri.get("teamB", ""),
-                              rj.get("teamA", ""), rj.get("teamB", "")):
+                if (_same_pair(ri.get("teamA", ""), ri.get("teamB", ""),
+                               rj.get("teamA", ""), rj.get("teamB", ""))
+                        or _same_match_relaxed(ri, rj)):
                     pi, pj = find(i), find(j)
                     if pi != pj:
                         parent[pj] = pi
