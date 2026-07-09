@@ -25,7 +25,7 @@ type CS2Player = { name: string; kills: number | null; deaths: number | null }
 type CS2Team = { name: string; score: number | null; won: boolean; players: CS2Player[] }
 type CS2Live = { live: boolean; title?: string; tournament?: string; stream?: { platform: string; channel: string } | null; teamA?: CS2Team; teamB?: CS2Team }
 
-type UpMatch = { startTime: number | null; live: boolean; title: string; league: string; teamA: string; teamB: string; favorite: { name: string; pct: number } | null; watch: { platform: string; url: string; channel: string | null; online?: boolean | null; embedUrl?: string | null } | null; score?: { a: number | null; b: number | null } | null; finished?: boolean | null; winner?: 'a' | 'b' | null; pinned?: boolean; model?: { favName: string; modelPct: number; marketPct: number | null; edge: number | null } | null; logoA?: string | null; logoB?: string | null; minorLeague?: boolean }
+type UpMatch = { startTime: number | null; live: boolean; title: string; league: string; teamA: string; teamB: string; favorite: { name: string; pct: number } | null; watch: { platform: string; url: string; channel: string | null; online?: boolean | null; embedUrl?: string | null } | null; score?: { a: number | null; b: number | null } | null; finished?: boolean | null; winner?: 'a' | 'b' | null; pinned?: boolean; model?: { favName: string; modelPct: number; marketPct: number | null; edge: number | null } | null; logoA?: string | null; logoB?: string | null; minorLeague?: boolean; tier?: number; prominence?: number }
 type UpcomingData = { matches: UpMatch[]; source?: string; error?: string }
 
 const POLL_MS = 10_000
@@ -651,9 +651,13 @@ function LiveNow({ matches, host, msi = null }: { matches: UpMatch[]; host: stri
   // the top-ranked live match: a match whose stream is actually on-air (it auto-plays), and a
   // minor-league bracket (qualifier, nation cup) never wins the featured slot over a real league.
   const total = matches.length + (msi ? 1 : 0)
+  // Order by the backend's single prominence score (tier + stage/round — higher = more prominent),
+  // the one source of truth; an on-air stream only breaks ties WITHIN equal prominence (so the
+  // featured non-MSI slot still prefers a match that can auto-play). This replaces the old
+  // (minorLeague, online) rule that collapsed tier-0 and tier-1 into one bucket.
   const sorted = [...matches].sort((a, b) => {
-    const minorDiff = Number(!!a.minorLeague) - Number(!!b.minorLeague)
-    if (minorDiff !== 0) return minorDiff
+    const promDiff = (b.prominence ?? 0) - (a.prominence ?? 0)
+    if (promDiff !== 0) return promDiff
     return Number(b.watch?.online === true) - Number(a.watch?.online === true)
   })
   // MSI featured -> the whole sorted list grids below it; otherwise the top match is featured and

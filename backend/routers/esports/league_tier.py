@@ -167,6 +167,37 @@ def _league_tier(title, league):
     return 2  # unknown league: neutral default, neither promoted nor buried
 
 
+# Stage/round within an event — the "importance" gradient WITHIN a tier that tier alone can't see
+# (an EWC Grand Final and an EWC group-stage match are both tier 0). Parsed from the league string,
+# which is where the board carries the stage: "… (Group D)", "… (Playoffs)", "Last Chance
+# Qualifier", "… (Group Stage)". Lower rank sorts first (more prominent). This is our stand-in for
+# real match volume, which no upstream (Bovada omits it, Kalshi delists esports intraday) gives us.
+_STAGE_QUAL_KW = ("qualifier", "last chance", "lcq", "play-in", "play in", "open qualifier", "wildcard")
+_STAGE_PLAYOFF_KW = ("playoff", "knockout", "elimination", "bracket", "semifinal", "semi-final",
+                     "quarterfinal", "quarter-final", "top 8", "top 4", "top8", "top4")
+_STAGE_GROUP_KW = ("group", "regular season", "swiss", "round robin", "round-robin", "stage",
+                   "season", "split", "league")
+
+
+def _stage_rank(league):
+    """Round-importance within an event, 0 (final) .. 3 (qualifier). Qualifier is checked FIRST so a
+    'Last Chance Qualifier (Playoffs)' buckets as a qualifier (lowest stakes) rather than riding its
+    internal 'playoffs' word. An unknown/stageless league ('Esports World Cup 26') defaults to 2
+    (same as group) so it is neither promoted nor penalized on stage."""
+    L = (league or "").lower()
+    if any(k in L for k in _STAGE_QUAL_KW):
+        return 3
+    # Grand/event final — but not semi-/quarter-final (those are playoff rounds, rank 1).
+    if "grand final" in L or ("final" in L and not any(k in L for k in
+                              ("semifinal", "semi-final", "quarterfinal", "quarter-final"))):
+        return 0
+    if any(k in L for k in _STAGE_PLAYOFF_KW):
+        return 1
+    if any(k in L for k in _STAGE_GROUP_KW):
+        return 2
+    return 2
+
+
 def _has_real_odds(m):
     """True favorite requires two-sided real Bovada prices (see slate.py's fav computation) —
     a GRID/PS-surfaced match with no Bovada listing never gets a `favorite`, correctly."""
@@ -205,15 +236,25 @@ def _passes_visibility_filter(m, title_signal):
     return _has_real_odds(m) or _has_stream(m)
 
 
+def _prominence(tier, stage):
+    """Single descending importance score (higher = more prominent) the frontend can sort by as one
+    source of truth, replacing its old two-boolean (minorLeague, online) rule that collapsed tiers.
+    tier is the coarse floor (a tier-0 group match still outranks a tier-1 final); stage breaks ties
+    WITHIN a tier. tier-0 grand final = 330, tier-3 qualifier = 0."""
+    return (3 - tier) * 100 + (3 - stage) * 10
+
+
 def _sort_key(m):
-    """New sort key: (not live, tier, live_no_stream, startTime).
-    live_no_stream demotes a live match that STILL has no stream within its own tier bucket —
-    it's not necessarily minor (a stream can post seconds later), just not featurable THIS
-    instant; a genuinely-marquee live match with a stream still leads its tier."""
+    """Sort key: (not live, tier, stage, live_no_stream, startTime).
+    tier is the coarse event-prestige floor; stage is round-importance WITHIN a tier (a Grand Final
+    leads its tier's group-stage matches). live_no_stream demotes a live match that STILL has no
+    stream within its bucket — not necessarily minor (a stream can post seconds later), just not
+    featurable THIS instant; a marquee live match with a stream still leads its tier."""
     live = bool(m.get("live"))
     tier = _league_tier(m.get("title"), m.get("league"))
+    stage = _stage_rank(m.get("league"))
     live_no_stream = bool(live and not m.get("watch"))
-    return (not live, tier, live_no_stream, m.get("startTime") or 0)
+    return (not live, tier, stage, live_no_stream, m.get("startTime") or 0)
 
 
 def apply_tier_and_filter(matches):
@@ -225,8 +266,13 @@ def apply_tier_and_filter(matches):
     for m in matches:
         m = dict(m)
         m["tier"] = _league_tier(m.get("title"), m.get("league"))
+        m["stageRank"] = _stage_rank(m.get("league"))
+        # `prominence` is the single importance score the frontend sorts by (tier + stage). Higher
+        # = more prominent. Emitted so the client has ONE ordering signal instead of re-deriving a
+        # coarser one that collapsed tier-0 and tier-1 together.
+        m["prominence"] = _prominence(m["tier"], m["stageRank"])
         # Backward-compat field: old consumers reading `minorLeague` still see a sane boolean
-        # (tier >= 2 — Challengers-or-below), even though `tier` is the real signal now.
+        # (tier >= 2 — Challengers-or-below), even though `tier`/`prominence` are the real signals now.
         m["minorLeague"] = m["tier"] >= 2
         if _passes_visibility_filter(m, title_signal):
             visible.append(m)
