@@ -158,7 +158,7 @@ function LiveMSI({ m }: { m: LiveMatch }) {
   // Twitch embeds reliably (official streams often block YouTube embedding); parent must match the
   // page host, so read it at runtime — works on the tunnel, localhost, and prod alike.
   const [host, setHost] = useState('')
-  const [source, setSource] = useState<'youtube' | 'twitch'>('twitch')
+  const [source, setSource] = useState<'youtube' | 'twitch'>('youtube')
   useEffect(() => { setHost(window.location.hostname) }, [])
   const ytEmbed = m.youtube ? `https://www.youtube.com/embed/${m.youtube}?autoplay=1&mute=1` : null
   const twEmbed = (m.twitch && host) ? `https://player.twitch.tv/?channel=${m.twitch}&parent=${host}&muted=true` : null
