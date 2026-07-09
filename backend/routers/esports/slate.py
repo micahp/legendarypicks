@@ -41,7 +41,7 @@ import urllib.request as _u
 from fastapi import APIRouter
 
 from .common import (_amer_to_p, _ESPORTS_TITLES, _slug_to_name, _TITLE_SLUG, _canon_team,
-                     _GRID_LABEL_SLUG)
+                     _canon_tokens, _GRID_LABEL_SLUG)
 from .grid import _grid_score_index
 from .lol import msi_predictions
 from .results_store import _load_results_store, _save_results_store
@@ -133,10 +133,23 @@ def _ckey(name):
     return _XALIASES.get(c, c)
 
 
+_VOWELS = frozenset("aeiou")
+
+
+def _consonant_skeleton(k):
+    """Vowel-elided form of a canonical key — the SAME letters minus vowels, order preserved.
+    'levelup' -> 'lvlp', 'lvlup' -> 'lvlp'. Lets the matcher recognize a vowel-dropped abbreviation
+    ('LVLUP' == 'Level UP') as one team WITHOUT a hardcoded alias — this is a mechanical spelling of
+    the same name, not a genuinely-different label (contrast Power Ranger vs Poor Rangers, which are
+    different words and still need an explicit alias)."""
+    return "".join(ch for ch in k if ch not in _VOWELS)
+
+
 def _same_team(a, b):
     """One shared answer to 'are these the same team?' — canonical equality, anagram (letter-swap
-    typos: Dontsu/Donstu, AION/Aoin — Kalshi and GRID both carry such variants), or a guarded
-    affix match ('9z' vs '9z Globant' sponsor suffix) whose residual isn't a distinct-squad marker."""
+    typos: Dontsu/Donstu, AION/Aoin — Kalshi and GRID both carry such variants), a guarded affix
+    match ('9z' vs '9z Globant' sponsor suffix) whose residual isn't a distinct-squad marker, or a
+    vowel-elided abbreviation ('LVLUP' == 'Level UP')."""
     ka, kb = _ckey(a), _ckey(b)
     if not ka or not kb:
         return False
@@ -144,12 +157,33 @@ def _same_team(a, b):
         return True
     if len(ka) >= 4 and len(kb) >= 4 and sorted(ka) == sorted(kb):
         return True  # exact anagram
-    s, l = (ka, kb) if len(ka) < len(kb) else (kb, ka)
-    if len(s) >= 2 and (l.startswith(s) or l.endswith(s)):
-        residual = l[len(s):] if l.startswith(s) else l[:-len(s)]
-        if not any(m in residual for m in _SQUAD_MARKERS):
+    # Affix match at WORD-TOKEN granularity (not substrings of the concatenated key). The old
+    # char-level `l.startswith(s)` matched 'gam' INSIDE 'gamerlegion' and merged unrelated orgs
+    # (GAM Esports==GamerLegion, Rustec==TEC, Eterna==eternal premium). Now the shorter name's
+    # tokens must be a leading or trailing RUN of the longer's, with a residual carrying no
+    # distinct-squad marker — keeps '9z'=='9z Globant', 'Keyd'=='Keyd Stars', 'Nigma'=='Nigma Galaxy'.
+    ta, tb = _canon_tokens(a), _canon_tokens(b)
+    ss, ls = (ta, tb) if len(ta) <= len(tb) else (tb, ta)
+    if ss and len(ss) < len(ls):
+        residual = (ls[len(ss):] if ls[:len(ss)] == ss else
+                    ls[:len(ls) - len(ss)] if ls[len(ls) - len(ss):] == ss else None)
+        if residual is not None and not any(m in "".join(residual) for m in _SQUAD_MARKERS):
             return True
+    # Vowel-elided abbreviation: identical consonant skeletons (>=4 to keep short names like
+    # 'BIG'/'Bug'->'bg' from colliding) AND actually different by vowels (not a same-length reshuffle
+    # the anagram rule already owns). Requires the vowel-dropped one to be a subsequence of the other
+    # so it's a real abbreviation, not two words that merely share consonants.
+    sk, lk = (ka, kb) if len(ka) <= len(kb) else (kb, ka)
+    sa, sb = _consonant_skeleton(ka), _consonant_skeleton(kb)
+    if len(sa) >= 4 and sa == sb and ka != kb and _is_subsequence(sk, lk):
+        return True
     return False
+
+
+def _is_subsequence(s, l):
+    """Is every char of s found in l in order (s an abbreviation of l)? 'lvlup' ⊆ 'levelup'."""
+    it = iter(l)
+    return all(ch in it for ch in s)
 
 
 def _same_pair(a1, b1, a2, b2):

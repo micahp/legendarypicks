@@ -38,11 +38,19 @@ _TEAM_ALIASES = {
     # labels them "Power Ranger", which duplicated their GamerLegion match on the schedule.
     "powerranger": "poorrangers",
     "powerrangers": "poorrangers",
-    # EWC 2026 Dota: Bovada labels "Level UP" as "LVLUP", splitting the match into two cards
-    # (Bovada 'Playtime v LVLUP' vs PandaScore/GRID 'PlayTime v Level UP'). Same Bovada-label-dupe
-    # class as powerranger->poorrangers above.
-    "lvlup": "levelup",
 }
+
+
+def _canon_tokens(n):
+    """The canonical WORD-tokens of a name: lowercase, drop generic org words, resolve known acronym
+    aliases. Kept separate from the joined key so a matcher can align on word boundaries instead of
+    substrings of the concatenated key — 'gam' (GAM Esports) must not match INSIDE 'gamerlegion'."""
+    import re
+    s = (n or "").lower().replace(".", " ")
+    s = re.sub(r"^\s*ex[-\s]+", "", s)  # 'ex-Vexa' == 'Vexa' — the former-roster prefix isn't identity
+    toks = [t for t in re.split(r"[^a-z0-9]+", s) if t and t not in _TEAM_GENERIC]
+    # Expand known acronyms per-token ('NAVI Junior' -> natusvincere+junior).
+    return [_TEAM_ALIASES.get(t, t) for t in toks]
 
 
 def _canon_team(n):
@@ -53,14 +61,8 @@ def _canon_team(n):
     NOT for enrich matching (that's `_team_match`, kept conservative on purpose): this is the final
     merge key, where an over-collapse shows a wrong logo, not a wrong result. Falls back to the plain
     stripped name if generic-word removal would empty it (e.g. a team literally called 'Team')."""
-    import re
-    s = (n or "").lower().replace(".", " ")
-    s = re.sub(r"^\s*ex[-\s]+", "", s)  # 'ex-Vexa' == 'Vexa' — the former-roster prefix isn't identity
-    toks = [t for t in re.split(r"[^a-z0-9]+", s) if t and t not in _TEAM_GENERIC]
-    # Expand known acronyms per-token AND whole-key: a multi-word name may embed an acronym token
-    # ('NAVI Junior' -> natusvincere+junior) while a bare code resolves as the whole key ('WBT').
-    toks = [_TEAM_ALIASES.get(t, t) for t in toks]
-    key = "".join(toks) or _strip_name(n)
+    # whole-key acronym resolves a bare code ('WBT' -> wrotberry) that per-token expansion can't.
+    key = "".join(_canon_tokens(n)) or _strip_name(n)
     return _TEAM_ALIASES.get(key, key)
 
 
