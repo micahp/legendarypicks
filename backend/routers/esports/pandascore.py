@@ -16,6 +16,7 @@ so a busy slate costs ~2 req/min — well inside budget.
 
 import json
 import os
+import re
 import time
 import urllib.request as _u
 import urllib.error as _ue
@@ -283,6 +284,16 @@ def _ps_names(op):
                                      op.get("slug") or "") if v}
 
 
+_TOK_RE = re.compile(r"[^a-z0-9]+")
+
+
+def _tokset(s):
+    """Alphanumeric tokens (len>=3) of a stripped name — the exact set _ps_enrich's fuzzy matcher
+    used to recompute inline. Precomputed once per PS name in _ps_indexed so the per-match enrich
+    loop (177 matches x ~250 PS rows) stops re-tokenizing the same ~250 names 177 times over."""
+    return {t for t in _TOK_RE.split(s or "") if len(t) >= 3}
+
+
 def _ps_indexed(include_running):
     # _fetch_ps() rebuilds a brand-new list object (list(...) + dedup pass) on EVERY call, even
     # when the underlying _ps_cache_* entries are still warm — so id() of its return value is
@@ -295,6 +306,7 @@ def _ps_indexed(include_running):
         return cached
     matches = _fetch_ps(include_running=include_running)
     _ps_indexed_cache.clear()  # old generation's list is gone (new fetch/cache cycle) — drop it
+    from .common import _canon_team
     out = []
     for m in matches:
         opps = m.get("opponents") or []
@@ -302,7 +314,15 @@ def _ps_indexed(include_running):
             continue
         op0 = opps[0].get("opponent") or {}
         op1 = opps[1].get("opponent") or {}
-        out.append((m, op0, op1, _ps_names(op0), _ps_names(op1)))
+        n0, n1 = _ps_names(op0), _ps_names(op1)
+        # Precompute each name's token set AND canon-identity set ONCE (both were recomputed per
+        # enrich call — together the ~7.8s hot spot: 177 matches x ~250 PS rows re-tokenizing and
+        # re-canonicalizing the same names). Enrich now just does set ops against these.
+        tk0 = [t for t in (_tokset(n) for n in n0) if t]
+        tk1 = [t for t in (_tokset(n) for n in n1) if t]
+        cs0 = {_canon_team(v) for v in (op0.get("name"), op0.get("acronym"), op0.get("slug")) if v}
+        cs1 = {_canon_team(v) for v in (op1.get("name"), op1.get("acronym"), op1.get("slug")) if v}
+        out.append((m, op0, op1, n0, n1, tk0, tk1, cs0, cs1))
     _ps_indexed_cache[gen] = out
     return out
 
@@ -325,25 +345,27 @@ def _ps_enrich(team_a, team_b, include_running=True, near_ms=None):
     # accept path below; the `near_ms` time guard still prevents same-team-different-match collisions.
     ca, cb = _canon_team(team_a), _canon_team(team_b)
 
-    def _canon_hit(cx, op):
-        return any(v and _canon_team(v) == cx
-                   for v in (op.get("name"), op.get("acronym"), op.get("slug")))
+    def _canon_hit(cx, canon_set):
+        return cx in canon_set  # canon_set precomputed once in _ps_indexed
 
-    def _hits(bov, names):
+    def _hits(bov, bt, names, name_toks):
+        # bt = precomputed token set of `bov`; name_toks = precomputed token sets of `names`
+        # (see _tokset/_ps_indexed). Semantics identical to the old inline version: substring hit on
+        # any name, OR token-overlap hit on any name.
         if not bov:
             return False
         for n in names:
             if bov == n or bov in n or n in bov:
                 return True
-        import re
-        bt = {t for t in re.split(r"[^a-z0-9]+", bov) if len(t) >= 3}
-        for n in names:
-            ft = {t for t in re.split(r"[^a-z0-9]+", n) if len(t) >= 3}
-            if bt and ft:
-                ov = bt & ft
-                if len(ov) >= 2 or (len(ov) >= 1 and min(len(bt), len(ft)) <= 2):
-                    return True
+        if not bt:
+            return False
+        for ft in name_toks:
+            ov = bt & ft
+            if len(ov) >= 2 or (len(ov) >= 1 and min(len(bt), len(ft)) <= 2):
+                return True
         return False
+
+    bta, btb = _tokset(na), _tokset(nb)
 
     # Teams play many matches; a name match alone attaches a PAST result to a same-team FUTURE
     # fixture (e.g. a finished Edward Gaming game -> the Edward Gaming EWC match days later, marked
@@ -351,9 +373,9 @@ def _ps_enrich(team_a, team_b, include_running=True, near_ms=None):
     # be within a day-ish of it and pick the CLOSEST — that disambiguates same-team collisions.
     NEAR_TOL_MS = 36 * 3600 * 1000
     best = None  # (time_delta, match_dict, swapped)
-    for m, op0, op1, n0, n1 in _ps_indexed(include_running):
-        ab = (_hits(na, n0) and _hits(nb, n1)) or (_canon_hit(ca, op0) and _canon_hit(cb, op1))
-        ba = (_hits(na, n1) and _hits(nb, n0)) or (_canon_hit(ca, op1) and _canon_hit(cb, op0))
+    for m, op0, op1, n0, n1, tk0, tk1, cs0, cs1 in _ps_indexed(include_running):
+        ab = (_hits(na, bta, n0, tk0) and _hits(nb, btb, n1, tk1)) or (_canon_hit(ca, cs0) and _canon_hit(cb, cs1))
+        ba = (_hits(na, bta, n1, tk1) and _hits(nb, btb, n0, tk0)) or (_canon_hit(ca, cs1) and _canon_hit(cb, cs0))
         if not (ab or ba):
             continue
         begin_ms = _iso_to_ms(m.get("begin_at") or m.get("scheduled_at"))
