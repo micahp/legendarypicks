@@ -27,9 +27,11 @@ Verified live 2026-07-03 on Valorant VCL Brazil "MIBR Academy v la Masia":
 import json
 import os
 import re
+import threading
 import time
 import urllib.request as _u
 import urllib.error as _ue
+from concurrent.futures import ThreadPoolExecutor
 
 # Official YouTube Data API v3 — the only clean way past the datacenter-IP bot wall that strips
 # the videoId from scraped /live pages (a plain headless browser hits "Sign in to confirm you're
@@ -321,7 +323,10 @@ def yt_live_embed(url, team_names=None, extra_hints=None):
     if not url or ("youtube" not in url and "youtu.be" not in url):
         return None
     names = tuple(sorted(_name_variants(team_names)))
-    ck = (url, names, tuple(sorted(extra_hints or ())))
+    # Key on (url, team_names) only — NOT the arena hint. The hint needs a network call (a Twitch
+    # title) to compute, so keying on it would make the rebuild-path peek (which has no hint) miss.
+    # (url, team_names) already disambiguates per match (same channel url, different teams).
+    ck = (url, names)
     c = _resolve_cache.get(ck)
     if c and time.time() - c[0] < (_TTL if c[1] else _TTL_NEG):
         return c[1]
@@ -372,30 +377,92 @@ def yt_live_embed(url, team_names=None, extra_hints=None):
     return result
 
 
-def resolve_pool_youtube(candidates, team_names=None):
-    """Integration helper: fill embedUrl on YouTube candidates that lack one. Call ONCE inside
-    _pick_stream, before ranking. A resolved embedUrl flips the candidate's `playable` to 0 so
-    YouTube's platform priority wins; an unresolved one stays embed-less and Twitch wins.
+# Background resolver: all YouTube network work (channel /streams scrape, oEmbed, Twitch-title arena
+# hint) runs OFF the rebuild path in this pool, populating _resolve_cache. The rebuild reads cache
+# only (see resolve_pool_youtube), so a cold rebuild is O(dict) instead of the 60s+ it took when
+# every marquee match scraped inline. Small pool: the work is I/O-bound and dedup keeps it sparse.
+_executor = None
+_executor_lock = threading.Lock()
+_inflight = set()
+_inflight_lock = threading.Lock()
 
-    `team_names` disambiguates a channel running several concurrent broadcasts by team name, when
-    the video titles happen to carry them. When they DON'T (EWC: verified 2026-07-08, YouTube
-    titles are just 'Stream A/B/C', no team names anywhere), fall back to an ARENA TAG pulled from
-    any already-attested Twitch/Kick candidate already in this same pool's live title (e.g. Twitch
-    title 'Vici Gaming vs. PVISION | ... Stream A - LIVE' -> 'stream a') — that label IS shared
-    verbatim across platforms even when nothing else is. See extract_arena_tag."""
-    hint = None
-    for c in candidates:
-        if c and c.get("attested") and c.get("platform") in ("twitch", "kick") and c.get("channel"):
-            title = _twitch_live_title(c["channel"]) if c["platform"] == "twitch" else None
-            hint = extract_arena_tag(title)
+
+def _get_executor():
+    global _executor
+    if _executor is None:
+        with _executor_lock:
+            if _executor is None:
+                _executor = ThreadPoolExecutor(max_workers=4, thread_name_prefix="yt-resolve")
+    return _executor
+
+
+def _resolve_peek(url, team_names):
+    """Cache-only read for (url, team_names): (embedUrl, fresh?). Never touches the network."""
+    names = tuple(sorted(_name_variants(team_names)))
+    c = _resolve_cache.get((url, names))
+    if not c:
+        return None, False
+    return c[1], (time.time() - c[0] < (_TTL if c[1] else _TTL_NEG))
+
+
+def _bg_resolve(yt_urls, team_names, hint_channels):
+    """Background job: does ALL the network — Twitch title -> arena hint -> per-url resolution —
+    and populates _resolve_cache. The next rebuild reads the result from cache. Deduped so the same
+    match's job doesn't pile up while one is already running."""
+    key = (tuple(sorted(yt_urls)), tuple(sorted(_name_variants(team_names))))
+    with _inflight_lock:
+        if key in _inflight:
+            return
+        _inflight.add(key)
+    try:
+        # Arena tag from an already-attested Twitch candidate's live title ('Vici Gaming vs. PVISION
+        # | ... Stream A - LIVE' -> 'stream a') — the label shared across platforms when the YouTube
+        # title carries no team names (EWC's 'Stream A/B/C'). See extract_arena_tag.
+        hint = None
+        for ch in hint_channels:
+            hint = extract_arena_tag(_twitch_live_title(ch))
             if hint:
                 break
-    hints = [hint] if hint else None
-    for c in candidates:
-        if c and c.get("platform") == "youtube" and not c.get("embedUrl"):
-            e = yt_live_embed(c.get("url") or "", team_names, hints)
-            if e:
-                c["embedUrl"] = e
+        hints = [hint] if hint else None
+        for url in yt_urls:
+            yt_live_embed(url, team_names, hints)   # blocking; result lands in _resolve_cache
+    except Exception:
+        pass
+    finally:
+        with _inflight_lock:
+            _inflight.discard(key)
+
+
+def resolve_pool_youtube(candidates, team_names=None):
+    """Fill embedUrl on YouTube candidates from CACHE ONLY (zero network on the rebuild path), and
+    hand off a background refresh for anything missing or stale. Call ONCE inside _pick_stream,
+    before ranking. A resolved embedUrl flips the candidate's `playable` to 0 so YouTube's platform
+    priority wins.
+
+    Trade-off (deliberate): a YouTube embed appears ~one rebuild cycle after the match goes live
+    instead of blocking the rebuild on per-channel scrapes (which pushed a cold rebuild to 60s+,
+    2026-07-08). Until the background job lands, an unresolved YouTube candidate stays embed-less
+    and Twitch wins — the same graceful fallback as before, just one cycle sooner to respond."""
+    yt_cands = [c for c in candidates
+                if c and c.get("platform") == "youtube" and not c.get("embedUrl")]
+    if not yt_cands:
+        return candidates
+    need_refresh = False
+    for c in yt_cands:
+        cached, fresh = _resolve_peek(c.get("url") or "", team_names)
+        if cached:
+            c["embedUrl"] = cached     # show the last-known embed even while a refresh is pending
+        if not fresh:
+            need_refresh = True
+    if need_refresh:
+        yt_urls = [c.get("url") or "" for c in yt_cands]
+        hint_channels = [c["channel"] for c in candidates
+                         if c and c.get("attested") and c.get("platform") == "twitch"
+                         and c.get("channel")]
+        try:
+            _get_executor().submit(_bg_resolve, yt_urls, team_names, hint_channels)
+        except Exception:
+            pass
     return candidates
 
 
