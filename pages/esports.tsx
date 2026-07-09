@@ -565,8 +565,6 @@ function FeaturedUpcoming({ m, host }: { m: UpMatch; host: string }) {
 }
 
 /* ---------------- Live now — featured match auto-plays, the rest are tap-to-watch ---------------- */
-const PLATFORM_RANK: Record<string, number> = { youtube: 0, twitch: 1, kick: 2 }
-
 function embedSrcFor(s: { platform: string; channel: string | null; embedUrl?: string | null; online?: boolean | null }, host: string): string | null {
   if (!s || s.online === false) return null  // never embed a positively-dark channel
   if (s.platform === 'youtube' && s.embedUrl) return `${s.embedUrl}${s.embedUrl.includes('?') ? '&' : '?'}autoplay=1&mute=1`
@@ -579,8 +577,13 @@ function LiveCard({ m, host, featured = false }: { m: UpMatch; host: string; fea
   const [open, setOpen] = useState(false)
   const [srcIdx, setSrcIdx] = useState(0)
   // Every embeddable stream for this match — the primary `watch` plus its `alternates` — one per
-  // platform, YouTube first (Micah prefers it). The viewer can switch platforms when an embed won't
-  // play in their browser; default (index 0) is YouTube whenever it resolved.
+  // platform, in the ORDER THE BACKEND RANKED THEM. Do NOT re-sort here. The backend rank applies
+  // its language penalty BEFORE the platform preference, which gives exactly the desired policy:
+  // an ENGLISH YouTube is first whenever available, but a FOREIGN-language YouTube is NOT hoisted
+  // over an English stream (English is preferred). A fixed platform re-sort would break both halves
+  // — it once surfaced a dead foreign Twitch co-stream above the live Kick main the backend chose,
+  // and it would equally shove a foreign YouTube ahead of an English cast. Default (index 0) is the
+  // backend's primary.
   const sources: { platform: string; src: string }[] = []
   {
     const seen = new Set<string>()
@@ -590,7 +593,6 @@ function LiveCard({ m, host, featured = false }: { m: UpMatch; host: string; fea
       const src = embedSrcFor(s, host)
       if (src) { sources.push({ platform: s.platform, src }); seen.add(s.platform) }
     }
-    sources.sort((a, b) => (PLATFORM_RANK[a.platform] ?? 9) - (PLATFORM_RANK[b.platform] ?? 9))
   }
   const active = sources[Math.min(srcIdx, Math.max(0, sources.length - 1))]
   const embedSrc = active?.src ?? null
