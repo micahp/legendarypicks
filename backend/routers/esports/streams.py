@@ -225,11 +225,15 @@ def _pick_stream(candidates, match_live=True, team_names=None, network_checks=Tr
         if k in seen:
             continue
         seen.add(k)
-        # Source-attested candidates (frag/PS list them as the live broadcast) skip the network
-        # check: attestation is sufficient, and probing every pool candidate made a rebuild pay
-        # dozens of decapi round-trips per cycle. Only unattested (rule) candidates get verified.
+        # TWITCH is positively verifiable (decapi), so verify it even when a source attests the
+        # stream — attestation goes STALE (frag/PS keep listing a broadcast channel after it goes
+        # dark), and a decapi-confirmed-offline Twitch must never ship as a live embed on the
+        # strength of a stale attestation (live case: frag's foreign Twitch co-stream `locomass22`,
+        # already offline, was outranking the live Kick main). Other platforms keep the attestation
+        # shortcut: Kick's API 403s from our datacenter IP so we genuinely can't verify it, and
+        # probing every unattested pool candidate is what the rebuild-cost note below guards.
         checked = None
-        if network_checks and not c.get("attested") and c.get("channel"):
+        if network_checks and c.get("channel") and (c["platform"] == "twitch" or not c.get("attested")):
             checked = _channel_online(c["platform"], c.get("channel"))
         c = dict(c)
         c["_checked"] = checked
@@ -247,7 +251,9 @@ def _pick_stream(candidates, match_live=True, team_names=None, network_checks=Tr
     if network_checks:
         resolve_pool_youtube(pool, team_names, game)
 
-    selectable = [c for c in pool if c["_checked"] is not False or c.get("attested")]
+    # A positively-dark candidate (decapi False) is excluded even if attested — a stale attestation
+    # can't resurrect a channel decapi confirms is offline (see the per-candidate check above).
+    selectable = [c for c in pool if c["_checked"] is not False]
     ranked_from = selectable or pool
 
     def _rank(c):
@@ -285,10 +291,10 @@ def _pick_stream(candidates, match_live=True, team_names=None, network_checks=Tr
     top = ranked[0]
 
     def _online_val(c):
+        if c["_checked"] is False:
+            return False  # decapi says dark — overrides a stale attestation
         if c["_checked"] is True or c.get("attested"):
             return True
-        if c["_checked"] is False:
-            return False
         return True if match_live else None  # unverifiable on a live-confirmed match -> embed anyway
 
     watch = _watch_shape(top, _online_val(top))
