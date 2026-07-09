@@ -123,9 +123,25 @@ _XALIASES = {
     "anyoneslegend": "agal",
     "bb": "betboom",  # Bovada lists BetBoom's CS2 roster as 'BB Team' (verified dup 2026-07-03)
 }
-# Distinct-squad markers: 'Team Spirit' vs 'Team Spirit Academy' are DIFFERENT teams — a substring
-# hit whose residual contains one of these must not merge.
-_SQUAD_MARKERS = ("academy", "junior", "youth", "prospects", "female", "women")
+# Affix-match residual policy (ALLOWLIST, not blocklist). A word-boundary affix match ('Keyd' vs
+# 'Keyd Stars') is the same team ONLY IF the extra word(s) are a known generic/sponsor/name suffix.
+# Any OTHER distinct word means a DIFFERENT squad — 'G2' vs 'G2 HEL', 'Vitality' vs 'Vitality Rising
+# Bees', 'Team Secret' vs 'Team Secret Whales', 'MIBR' vs 'MIBR LOS'. This flips the old tiny
+# blocklist (which passed everything not explicitly listed) to fail-closed: unknown suffix => split.
+# (esports/gaming/gg/team are already dropped as generic tokens, so they never reach the residual.)
+_MERGE_OK_SUFFIX = frozenset({"stars", "galaxy", "kia", "globant", "w7m", "lmap"})
+
+
+def _residual_droppable(residual):
+    """True if every residual token is a droppable generic/sponsor/name suffix (or an 'lmap N'
+    map-level marker) — i.e. the affix pair is the same team. A distinct roster word => False."""
+    for tok in residual:
+        if tok in _MERGE_OK_SUFFIX:
+            continue
+        if tok.isdigit() and "lmap" in residual:  # 'X' vs 'X - LMap 2' map-level row
+            continue
+        return False
+    return True
 
 
 def _ckey(name):
@@ -167,8 +183,17 @@ def _same_team(a, b):
     if ss and len(ss) < len(ls):
         residual = (ls[len(ss):] if ls[:len(ss)] == ss else
                     ls[:len(ls) - len(ss)] if ls[len(ls) - len(ss):] == ss else None)
-        if residual is not None and not any(m in "".join(residual) for m in _SQUAD_MARKERS):
+        if residual is not None and _residual_droppable(residual):
             return True
+    # Trivial spelling variant of the SAME name — plural/truncation ('Inner Circle Prospect' vs
+    # '...Prospects', 'Falcon' vs 'Falcons'): concatenated keys differ only by a <=2-char tail. The
+    # word-boundary rule above treats 'prospect'/'prospects' as different tokens and won't merge
+    # them, so this recovers that (the old char-level affix used to, incidentally). Guarded to keys
+    # >=6 chars with a <=2-char residual so it can't reopen the short-prefix whole-word merges just
+    # closed ('g2'/'g2hel', 'gam'/'gamerlegion' have <6-char shorter keys or a >2-char residual).
+    sp, lp = (ka, kb) if len(ka) <= len(kb) else (kb, ka)
+    if len(sp) >= 6 and lp.startswith(sp) and (len(lp) - len(sp)) <= 2:
+        return True
     # Vowel-elided abbreviation: identical consonant skeletons (>=4 to keep short names like
     # 'BIG'/'Bug'->'bg' from colliding) AND actually different by vowels (not a same-length reshuffle
     # the anagram rule already owns). Requires the vowel-dropped one to be a subsequence of the other
