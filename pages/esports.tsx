@@ -643,30 +643,45 @@ function LiveCard({ m, host, featured = false }: { m: UpMatch; host: string; fea
   )
 }
 
-function LiveNow({ matches, host, msiLive = false }: { matches: UpMatch[]; host: string; msiLive?: boolean }) {
-  if (!matches.length) return null
-  // Feature a match whose stream is actually on-air (it auto-plays); fall back to the first live
-  // one. Minor-league brackets (qualifiers, nation cups) never win the featured slot over a real
-  // league match, even with a working stream — only fall back to one if nothing else is live.
-  const total = matches.length + (msiLive ? 1 : 0)
+function LiveNow({ matches, host, msi = null }: { matches: UpMatch[]; host: string; msi?: LiveMatch | null }) {
+  if (!matches.length && !msi) return null
+  // One unified "Live now" section. When MSI is live it's the marquee event (5-10x the volume of
+  // the regional slate) so it takes the featured full-width slot with its rich lolesports view;
+  // every other live match flows into the grid below. With no MSI, the featured slot falls back to
+  // the top-ranked live match: a match whose stream is actually on-air (it auto-plays), and a
+  // minor-league bracket (qualifier, nation cup) never wins the featured slot over a real league.
+  const total = matches.length + (msi ? 1 : 0)
   const sorted = [...matches].sort((a, b) => {
     const minorDiff = Number(!!a.minorLeague) - Number(!!b.minorLeague)
     if (minorDiff !== 0) return minorDiff
     return Number(b.watch?.online === true) - Number(a.watch?.online === true)
   })
-  const [first, ...rest] = sorted
+  // MSI featured -> the whole sorted list grids below it; otherwise the top match is featured and
+  // the remainder grids.
+  const grid = msi ? sorted : sorted.slice(1)
+  const alsoLive = grid.length ? (
+    <div className="space-y-2">
+      <Eyebrow>{`Also live — ${grid.length} more`}</Eyebrow>
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {grid.map((m, i) => <LiveCard key={i} m={m} host={host} />)}
+      </div>
+    </div>
+  ) : null
+  // When MSI is live it's the featured item and its own rich SectionHeader ("Live now · MSI 2026 …")
+  // titles the whole live block — so we DON'T also render the generic "Live now / N matches" header
+  // (that produced two stacked "Live now" headers + a nested <section>). The rest grid follows under
+  // a plain "Also live" label. Without MSI, keep the generic header + featured top match.
+  if (msi) return (
+    <div className="space-y-4">
+      <LiveMSI m={msi} />
+      {alsoLive}
+    </div>
+  )
   return (
     <section className="space-y-4">
       <SectionHeader live eyebrow="Live now" title={total === 1 ? 'Live match' : `${total} matches live`} meta="esports" />
-      <LiveCard m={first} host={host} featured />
-      {rest.length ? (
-        <div className="space-y-2">
-          <Eyebrow>Also live — tap to watch</Eyebrow>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {rest.map((m, i) => <LiveCard key={i} m={m} host={host} />)}
-          </div>
-        </div>
-      ) : null}
+      <LiveCard m={sorted[0]} host={host} featured />
+      {alsoLive}
     </section>
   )
 }
@@ -721,9 +736,9 @@ export default function EsportsPage() {
           <p className="text-sm text-zinc-400">Who wins — and the moment it turns.</p>
         </header>
 
-        {/* Live games, above the fold: every other live match first, then MSI's rich view. */}
-        <LiveNow matches={liveMatches} host={host} msiLive={!!live?.live} />
-        {live?.live ? <LiveMSI m={live} /> : null}
+        {/* One unified "Live now" section: MSI leads as the featured rich view when live (it's the
+            marquee event, 5-10x the volume of the regional slate), the rest flow into the grid. */}
+        <LiveNow matches={liveMatches} host={host} msi={live?.live ? live : null} />
 
         <UpcomingSlate data={upcoming} />
       </div>
