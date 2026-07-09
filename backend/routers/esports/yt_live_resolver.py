@@ -155,16 +155,40 @@ def extract_arena_tag(text):
     return ("%s %s" % (m.group(1), m.group(2))).lower() if m else None
 
 
-def _scrape_find_video(channel_ref, team_names=None, status="live", extra_hints=None):
+# A board game title -> the word(s) identifying its broadcast in a YouTube video title. A
+# multi-game tournament channel (EWC runs Valorant + Dota + ALGS + CS2 simultaneously) is narrowed
+# to the right GAME before arena/team disambiguation — one Valorant stream is live so it resolves
+# immediately; Dota has 3 (Stream A/B/C) and still needs the arena tag.
+_GAME_KW = {
+    "valorant": ("valorant",),
+    "dota 2": ("dota",),
+    "cs2": ("cs2", "counter-strike", "counter strike"),
+    "lol": ("league of legends", "lol"),
+    "league of legends": ("league of legends", "lol"),
+    "rocket league": ("rocket league",),
+}
+
+
+def _game_keywords(game):
+    return _GAME_KW.get((game or "").strip().lower(), ())
+
+
+def _scrape_find_video(channel_ref, team_names=None, status="live", extra_hints=None, game=None):
     """Free-path equivalent of _data_api_find_video: pick the one video in `status` on this
     channel that's THIS match, or None if ambiguous. Same fail-closed contract — a channel running
     several concurrent broadcasts with no shared textual signal at all stays unresolved rather than
-    guessing the wrong arena. `extra_hints` (e.g. an arena tag pulled from an already-attested
-    Twitch/Kick candidate's live title for the same match — see extract_arena_tag) are matched as
+    guessing the wrong arena. `game` narrows to the match's title first (EWC runs several games at
+    once); `extra_hints` (an arena tag from an attested Twitch title, see extract_arena_tag) match as
     literal substrings, unlike `team_names` which get tokenized/length-filtered."""
     items = [it for it in _channel_streams(channel_ref) if it["status"] == status]
     if not items:
         return None
+    # Narrow to the match's GAME first — an EWC Valorant match must not resolve to a Dota stream.
+    gk = _game_keywords(game)
+    if gk and len(items) > 1:
+        gitems = [it for it in items if any(k in it["title"].lower() for k in gk)]
+        if gitems:
+            items = gitems
     if len(items) == 1:
         return items[0]["videoId"]
     names = _name_variants(team_names) | {h.lower() for h in (extra_hints or []) if h}
@@ -244,7 +268,7 @@ def _name_variants(team_names):
     return out
 
 
-def _data_api_find_video(channel_id, key, team_names=None, event_type="live", extra_hints=None):
+def _data_api_find_video(channel_id, key, team_names=None, event_type="live", extra_hints=None, game=None):
     """Official Data API v3: a videoId live/upcoming on a channel right now, matched to THIS match.
 
     A big tournament org (EWC verified 2026-07-08: 5 simultaneous live videos — ALGS, Fatal Fury,
@@ -266,6 +290,12 @@ def _data_api_find_video(channel_id, key, team_names=None, event_type="live", ex
         items = d.get("items") or []
         if not items:
             return None
+        gk = _game_keywords(game)
+        if gk and len(items) > 1:
+            gitems = [it for it in items
+                      if any(k in ((it.get("snippet") or {}).get("title") or "").lower() for k in gk)]
+            if gitems:
+                items = gitems
         if len(items) == 1:
             vid = items[0]["id"]["videoId"]
             return vid if re.fullmatch(_VID_RE, vid) else None
@@ -309,9 +339,9 @@ def _is_embeddable(video_id):
         return False
 
 
-def yt_live_embed(url, team_names=None, extra_hints=None):
+def yt_live_embed(url, team_names=None, extra_hints=None, game=None):
     """A frag/PS YouTube stream URL -> confirmed embeddable embedUrl, or None (=> keep Twitch).
-    Cached per (url, team_names, extra_hints). Fail-CLOSED: any uncertainty returns None, never a
+    Cached per (url, team_names, game). Fail-CLOSED: any uncertainty returns None, never a
     wrong/dead VOD.
 
     A URL with a specific video id (frag/PS already picked one) just gets confirmed: right
@@ -323,10 +353,10 @@ def yt_live_embed(url, team_names=None, extra_hints=None):
     if not url or ("youtube" not in url and "youtu.be" not in url):
         return None
     names = tuple(sorted(_name_variants(team_names)))
-    # Key on (url, team_names) only — NOT the arena hint. The hint needs a network call (a Twitch
-    # title) to compute, so keying on it would make the rebuild-path peek (which has no hint) miss.
-    # (url, team_names) already disambiguates per match (same channel url, different teams).
-    ck = (url, names)
+    # Key on (url, team_names, game) — NOT the arena hint (that needs a network call to compute, so
+    # keying on it would make the rebuild-path peek, which has no hint, miss). game is in the key so
+    # two matches sharing a channel url + ambiguous teams still resolve to their own game's stream.
+    ck = (url, names, (game or "").lower())
     c = _resolve_cache.get(ck)
     if c and time.time() - c[0] < (_TTL if c[1] else _TTL_NEG):
         return c[1]
@@ -353,7 +383,7 @@ def yt_live_embed(url, team_names=None, extra_hints=None):
             # /streams tab for every live/upcoming video at once, cached per channel.
             hints = list(extra_hints or [])
             for status in ("live", "upcoming"):
-                vid2 = _scrape_find_video(want, team_names, status, hints)
+                vid2 = _scrape_find_video(want, team_names, status, hints, game)
                 if vid2 and _is_embeddable(vid2):
                     result = "https://www.youtube.com/embed/%s?autoplay=1" % vid2
                     break
@@ -366,7 +396,7 @@ def yt_live_embed(url, team_names=None, extra_hints=None):
                     cid = want if want.startswith("UC") else _channel_id_from_live_page(url)
                     if cid and cid.startswith("UC"):
                         for et in ("live", "upcoming"):
-                            vid3 = _data_api_find_video(cid, key, team_names, et, hints)
+                            vid3 = _data_api_find_video(cid, key, team_names, et, hints, game)
                             if vid3 and _is_embeddable(vid3):
                                 result = "https://www.youtube.com/embed/%s?autoplay=1" % vid3
                                 break
@@ -396,20 +426,20 @@ def _get_executor():
     return _executor
 
 
-def _resolve_peek(url, team_names):
-    """Cache-only read for (url, team_names): (embedUrl, fresh?). Never touches the network."""
+def _resolve_peek(url, team_names, game=None):
+    """Cache-only read for (url, team_names, game): (embedUrl, fresh?). Never touches the network."""
     names = tuple(sorted(_name_variants(team_names)))
-    c = _resolve_cache.get((url, names))
+    c = _resolve_cache.get((url, names, (game or "").lower()))
     if not c:
         return None, False
     return c[1], (time.time() - c[0] < (_TTL if c[1] else _TTL_NEG))
 
 
-def _bg_resolve(yt_urls, team_names, hint_channels):
+def _bg_resolve(yt_urls, team_names, hint_channels, game=None):
     """Background job: does ALL the network — Twitch title -> arena hint -> per-url resolution —
     and populates _resolve_cache. The next rebuild reads the result from cache. Deduped so the same
     match's job doesn't pile up while one is already running."""
-    key = (tuple(sorted(yt_urls)), tuple(sorted(_name_variants(team_names))))
+    key = (tuple(sorted(yt_urls)), tuple(sorted(_name_variants(team_names))), (game or "").lower())
     with _inflight_lock:
         if key in _inflight:
             return
@@ -425,7 +455,7 @@ def _bg_resolve(yt_urls, team_names, hint_channels):
                 break
         hints = [hint] if hint else None
         for url in yt_urls:
-            yt_live_embed(url, team_names, hints)   # blocking; result lands in _resolve_cache
+            yt_live_embed(url, team_names, hints, game)   # blocking; result lands in _resolve_cache
     except Exception:
         pass
     finally:
@@ -433,7 +463,7 @@ def _bg_resolve(yt_urls, team_names, hint_channels):
             _inflight.discard(key)
 
 
-def resolve_pool_youtube(candidates, team_names=None):
+def resolve_pool_youtube(candidates, team_names=None, game=None):
     """Fill embedUrl on YouTube candidates from CACHE ONLY (zero network on the rebuild path), and
     hand off a background refresh for anything missing or stale. Call ONCE inside _pick_stream,
     before ranking. A resolved embedUrl flips the candidate's `playable` to 0 so YouTube's platform
@@ -449,7 +479,7 @@ def resolve_pool_youtube(candidates, team_names=None):
         return candidates
     need_refresh = False
     for c in yt_cands:
-        cached, fresh = _resolve_peek(c.get("url") or "", team_names)
+        cached, fresh = _resolve_peek(c.get("url") or "", team_names, game)
         if cached:
             c["embedUrl"] = cached     # show the last-known embed even while a refresh is pending
         if not fresh:
@@ -460,7 +490,7 @@ def resolve_pool_youtube(candidates, team_names=None):
                          if c and c.get("attested") and c.get("platform") == "twitch"
                          and c.get("channel")]
         try:
-            _get_executor().submit(_bg_resolve, yt_urls, team_names, hint_channels)
+            _get_executor().submit(_bg_resolve, yt_urls, team_names, hint_channels, game)
         except Exception:
             pass
     return candidates

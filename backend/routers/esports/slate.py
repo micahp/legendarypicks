@@ -904,7 +904,8 @@ def _rebuild_upcoming():
             if ps and m.get("_ps_id") is not None:
                 pool += _ps_candidates(m["_ps_id"], ps_streams_by_id, ps.get("live"))
             pool += _rule_candidates(slug, m.get("league"))
-            m["watch"] = _pick_stream(pool, match_live=True, team_names=team_names) if pool else None
+            m["watch"] = _pick_stream(pool, match_live=True, team_names=team_names,
+                                       game=m.get("title")) if pool else None
         elif m["state"] == S_SCHEDULED and slug:
             ps_cands = (_ps_candidates(m["_ps_id"], ps_streams_by_id, False)
                         if m.get("_ps_id") is not None else [])

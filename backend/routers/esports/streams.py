@@ -201,7 +201,7 @@ def _watch_shape(c, online):
 
 
 def _pick_stream(candidates, match_live=True, team_names=None, network_checks=True,
-                  max_alternates=4):
+                  game=None, max_alternates=4):
     """Rank the pool, return the watch dict with `alternates`, or None if the pool is empty.
 
     Selection: drop positively-offline candidates (unless ALL are offline); rank the rest by
@@ -245,7 +245,7 @@ def _pick_stream(candidates, match_live=True, team_names=None, network_checks=Tr
     # inner loop only makes a network call for actual youtube-platform candidates, so this costs
     # nothing extra on matches with no YouTube candidate at all.
     if network_checks:
-        resolve_pool_youtube(pool, team_names)
+        resolve_pool_youtube(pool, team_names, game)
 
     selectable = [c for c in pool if c["_checked"] is not False or c.get("attested")]
     ranked_from = selectable or pool
