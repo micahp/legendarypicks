@@ -1,5 +1,29 @@
 """common.py — shared utilities for the esports package."""
 
+import re
+import unicodedata
+
+
+def _fold(s):
+    """ASCII-fold diacritics so accented spellings collapse to their base letters BEFORE the
+    non-alphanumeric strip drops them entirely: 'Beşiktaş' would otherwise strip to 'beikta' (the
+    ş's vanish) instead of matching 'Besiktas'. NFKD splits a letter from its combining marks; we
+    drop the marks and keep the base."""
+    return "".join(c for c in unicodedata.normalize("NFKD", s or "") if not unicodedata.combining(c))
+
+
+def _split_camel(s):
+    """Re-space a camelCase name ONLY when doing so separates out a GENERIC word — so a Bovada-style
+    concatenation like 'TeamOrangeGaming'/'TheBoys' becomes 'Team Orange Gaming'/'The Boys' and the
+    embedded generics drop, WITHOUT touching stylized single words. Splitting unconditionally would
+    wreck common esports capitalizations: 'eSports'->'e Sports', 'BakS'->'Bak S', 'paiN'->'pai N'.
+    So we segment on camel boundaries, and re-space only if a segment is itself a generic word;
+    otherwise the original string is returned untouched."""
+    segs = re.findall(r"[A-Z]+(?![a-z])|[A-Z][a-z]*|[a-z]+|[0-9]+", s or "")
+    if any(seg.lower() in _TEAM_GENERIC for seg in segs):
+        return " ".join(segs)
+    return s or ""
+
 
 def _amer_to_p(american):
     o = float(american)
@@ -15,11 +39,10 @@ def _norm_team(n):
 def _strip_name(n):
     """Normalize a team name for dedup and cross-source matching.
 
-    Lowercase + strip ALL non-alphanumerics so spacing/punctuation diffs collapse:
-    'Game Hunters' == 'GameHunters' == 'gamehunters'.
+    ASCII-fold diacritics, lowercase, then strip ALL non-alphanumerics so spacing/punctuation/accent
+    diffs collapse: 'Game Hunters' == 'GameHunters' == 'gamehunters', 'Beşiktaş' == 'Besiktas'.
     """
-    import re
-    return re.sub(r"[^a-z0-9]", "", (n or "").lower())
+    return re.sub(r"[^a-z0-9]", "", _fold(n).lower())
 
 
 # Generic org words that don't identify a team — dropped when building the canonical dedup/logo key
@@ -38,15 +61,17 @@ _TEAM_ALIASES = {
     # labels them "Power Ranger", which duplicated their GamerLegion match on the schedule.
     "powerranger": "poorrangers",
     "powerrangers": "poorrangers",
+    "jplay": "justplayers",  # 'JPlay' == 'Just Players' (Bovada vs PS label, verified dup 2026-07-09)
 }
 
 
 def _canon_tokens(n):
-    """The canonical WORD-tokens of a name: lowercase, drop generic org words, resolve known acronym
-    aliases. Kept separate from the joined key so a matcher can align on word boundaries instead of
-    substrings of the concatenated key — 'gam' (GAM Esports) must not match INSIDE 'gamerlegion'."""
-    import re
-    s = (n or "").lower().replace(".", " ")
+    """The canonical WORD-tokens of a name: ASCII-fold accents, split camelCase, lowercase, drop
+    generic org words, resolve known acronym aliases. Kept separate from the joined key so a matcher
+    can align on word boundaries instead of substrings of the concatenated key — 'gam' (GAM Esports)
+    must not match INSIDE 'gamerlegion'. Fold+camel-split run FIRST so 'Beşiktaş'=='Besiktas' and the
+    embedded generics in 'TeamOrangeGaming'/'TheBoys' are separated out and dropped."""
+    s = _split_camel(_fold(n)).lower().replace(".", " ")
     s = re.sub(r"^\s*ex[-\s]+", "", s)  # 'ex-Vexa' == 'Vexa' — the former-roster prefix isn't identity
     toks = [t for t in re.split(r"[^a-z0-9]+", s) if t and t not in _TEAM_GENERIC]
     # Expand known acronyms per-token ('NAVI Junior' -> natusvincere+junior).
