@@ -25,7 +25,7 @@ type CS2Player = { name: string; kills: number | null; deaths: number | null }
 type CS2Team = { name: string; score: number | null; won: boolean; players: CS2Player[] }
 type CS2Live = { live: boolean; title?: string; tournament?: string; stream?: { platform: string; channel: string } | null; teamA?: CS2Team; teamB?: CS2Team }
 
-type UpMatch = { startTime: number | null; live: boolean; title: string; league: string; teamA: string; teamB: string; favorite: { name: string; pct: number } | null; watch: { platform: string; url: string; channel: string | null; online?: boolean | null; embedUrl?: string | null } | null; score?: { a: number | null; b: number | null } | null; finished?: boolean | null; winner?: 'a' | 'b' | null; pinned?: boolean; model?: { favName: string; modelPct: number; marketPct: number | null; edge: number | null } | null; logoA?: string | null; logoB?: string | null; minorLeague?: boolean; tier?: number; prominence?: number }
+type UpMatch = { startTime: number | null; live: boolean; title: string; league: string; teamA: string; teamB: string; favorite: { name: string; pct: number } | null; watch: { platform: string; url: string; channel: string | null; online?: boolean | null; embedUrl?: string | null; alternates?: Array<{ platform: string; url: string; channel: string | null; online?: boolean | null; embedUrl?: string | null }> } | null; score?: { a: number | null; b: number | null } | null; finished?: boolean | null; winner?: 'a' | 'b' | null; pinned?: boolean; model?: { favName: string; modelPct: number; marketPct: number | null; edge: number | null } | null; logoA?: string | null; logoB?: string | null; minorLeague?: boolean; tier?: number; prominence?: number }
 type UpcomingData = { matches: UpMatch[]; source?: string; error?: string }
 
 const POLL_MS = 10_000
@@ -565,30 +565,38 @@ function FeaturedUpcoming({ m, host }: { m: UpMatch; host: string }) {
 }
 
 /* ---------------- Live now — featured match auto-plays, the rest are tap-to-watch ---------------- */
+const PLATFORM_RANK: Record<string, number> = { youtube: 0, twitch: 1, kick: 2 }
+
+function embedSrcFor(s: { platform: string; channel: string | null; embedUrl?: string | null; online?: boolean | null }, host: string): string | null {
+  if (!s || s.online === false) return null  // never embed a positively-dark channel
+  if (s.platform === 'youtube' && s.embedUrl) return `${s.embedUrl}${s.embedUrl.includes('?') ? '&' : '?'}autoplay=1&mute=1`
+  if (s.platform === 'kick' && s.channel) return `https://player.kick.com/${s.channel}?muted=false`
+  if (s.platform === 'twitch' && s.channel) return `https://player.twitch.tv/?channel=${s.channel}&parent=${encodeURIComponent(host)}&muted=false`
+  return null
+}
+
 function LiveCard({ m, host, featured = false }: { m: UpMatch; host: string; featured?: boolean }) {
   const [open, setOpen] = useState(false)
-  const iframeRef = useRef<HTMLIFrameElement>(null)
-  // Only a confirmed on-air channel is embeddable; otherwise we say so honestly.
-  // Build the iframe src per platform. YouTube uses frag's ready embed_url directly; Twitch must get
-  // a &parent=<host> (frag's embed_url omits it); Kick plays from the channel. Anything else (web) isn't embeddable.
-  const w = m.watch
-  const embedSrc = w?.online === true
-    ? (w.platform === 'youtube' && w.embedUrl
-        ? `${w.embedUrl}${w.embedUrl.includes('?') ? '&' : '?'}autoplay=1&mute=1`
-        : w.platform === 'kick' && w.channel
-        ? `https://player.kick.com/${w.channel}?muted=false`
-        : w.platform === 'twitch' && w.channel
-        ? `https://player.twitch.tv/?channel=${w.channel}&parent=${encodeURIComponent(host)}&muted=false`
-        : null)
-    : null
-  const embeddable = !!embedSrc
-  // Non-featured cards mount the player on tap (so we don't autoplay every stream at once).
-  const toggle = () => {
-    const next = !open
-    setOpen(next)
-    const f = iframeRef.current
-    if (f) f.src = next && embedSrc ? embedSrc : ''
+  const [srcIdx, setSrcIdx] = useState(0)
+  // Every embeddable stream for this match — the primary `watch` plus its `alternates` — one per
+  // platform, YouTube first (Micah prefers it). The viewer can switch platforms when an embed won't
+  // play in their browser; default (index 0) is YouTube whenever it resolved.
+  const sources: { platform: string; src: string }[] = []
+  {
+    const seen = new Set<string>()
+    const raw = m.watch ? [m.watch, ...(m.watch.alternates || [])] : []
+    for (const s of raw) {
+      if (!s || seen.has(s.platform)) continue
+      const src = embedSrcFor(s, host)
+      if (src) { sources.push({ platform: s.platform, src }); seen.add(s.platform) }
+    }
+    sources.sort((a, b) => (PLATFORM_RANK[a.platform] ?? 9) - (PLATFORM_RANK[b.platform] ?? 9))
   }
+  const active = sources[Math.min(srcIdx, Math.max(0, sources.length - 1))]
+  const embedSrc = active?.src ?? null
+  const embeddable = sources.length > 0
+  // Non-featured cards mount the player on tap (so we don't autoplay every stream at once).
+  const toggle = () => setOpen(o => !o)
   return (
     <div className={`overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900/50 ${featured ? 'sm:col-span-2' : ''}`}>
       <div className="p-4">
@@ -632,11 +640,27 @@ function LiveCard({ m, host, featured = false }: { m: UpMatch; host: string; fea
       {embeddable ? (
         <div className={featured || open ? '' : 'hidden'}>
           <div className="aspect-video w-full bg-black">
-            {/* Featured: src set on render → auto-plays. Others: mounted on tap via the ref. */}
-            <iframe ref={featured ? undefined : iframeRef} src={featured ? embedSrc! : undefined}
-                    title="Live broadcast" allow="autoplay; fullscreen" allowFullScreen className="h-full w-full" style={{ border: 'none' }} />
+            {/* Player only mounts once shown (featured, or tapped open) so we don't autoplay every
+                card at once. `key` on the src remounts the iframe when the viewer switches source. */}
+            {(featured || open) && embedSrc ? (
+              <iframe key={embedSrc} src={embedSrc}
+                      title="Live broadcast" allow="autoplay; fullscreen" allowFullScreen className="h-full w-full" style={{ border: 'none' }} />
+            ) : null}
           </div>
-          <p className="px-4 pb-3 pt-1.5 text-[10px] text-zinc-600">Tap player for sound</p>
+          {sources.length > 1 ? (
+            <div className="flex items-center gap-2 px-4 pb-2 pt-1.5 font-mono text-[10px] uppercase tracking-wider text-zinc-600">
+              <span>stream</span>
+              {sources.map((s, i) => (
+                <span key={s.platform} className="flex items-center gap-2">
+                  {i > 0 ? <span className="text-zinc-700">·</span> : null}
+                  <button onClick={() => setSrcIdx(i)} className={i === srcIdx ? 'text-emerald-400' : 'hover:text-zinc-300'}>{s.platform}</button>
+                </span>
+              ))}
+              <span className="ml-auto normal-case tracking-normal text-zinc-700">won&apos;t play? switch source</span>
+            </div>
+          ) : (
+            <p className="px-4 pb-3 pt-1.5 text-[10px] text-zinc-600">Tap player for sound</p>
+          )}
         </div>
       ) : null}
     </div>
