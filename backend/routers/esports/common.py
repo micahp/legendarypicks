@@ -38,6 +38,10 @@ _TEAM_ALIASES = {
     # labels them "Power Ranger", which duplicated their GamerLegion match on the schedule.
     "powerranger": "poorrangers",
     "powerrangers": "poorrangers",
+    # EWC 2026 Dota: Bovada labels "Level UP" as "LVLUP", splitting the match into two cards
+    # (Bovada 'Playtime v LVLUP' vs PandaScore/GRID 'PlayTime v Level UP'). Same Bovada-label-dupe
+    # class as powerranger->poorrangers above.
+    "lvlup": "levelup",
 }
 
 
