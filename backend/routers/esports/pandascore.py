@@ -314,7 +314,7 @@ def _ps_indexed(include_running):
         return cached
     matches = _fetch_ps(include_running=include_running)
     _ps_indexed_cache.clear()  # old generation's list is gone (new fetch/cache cycle) — drop it
-    from .common import _canon_team
+    from .common import _canon_team_x
     out = []
     for m in matches:
         opps = m.get("opponents") or []
@@ -328,8 +328,8 @@ def _ps_indexed(include_running):
         # re-canonicalizing the same names). Enrich now just does set ops against these.
         tk0 = [t for t in (_tokset(n) for n in n0) if t]
         tk1 = [t for t in (_tokset(n) for n in n1) if t]
-        cs0 = {_canon_team(v) for v in (op0.get("name"), op0.get("acronym"), op0.get("slug")) if v}
-        cs1 = {_canon_team(v) for v in (op1.get("name"), op1.get("acronym"), op1.get("slug")) if v}
+        cs0 = {_canon_team_x(v) for v in (op0.get("name"), op0.get("acronym"), op0.get("slug")) if v}
+        cs1 = {_canon_team_x(v) for v in (op1.get("name"), op1.get("acronym"), op1.get("slug")) if v}
         out.append((m, op0, op1, n0, n1, tk0, tk1, cs0, cs1))
     _ps_indexed_cache[gen] = out
     return out
@@ -343,7 +343,7 @@ def _ps_enrich(team_a, team_b, include_running=True, near_ms=None):
          canonicalA, canonicalB, startTime(ms), league}
 
     `include_running=False` looks only at the schedule + finished feeds (no live-feed ping)."""
-    from .common import _strip_name, _canon_team
+    from .common import _strip_name, _canon_team_x
 
     na, nb = _strip_name(team_a), _strip_name(team_b)
     if not na or not nb:
@@ -351,7 +351,7 @@ def _ps_enrich(team_a, team_b, include_running=True, near_ms=None):
     # Canonical (acronym/alias-aware) identity keys — bridges pairs the plain stripped-name matcher
     # can't (PandaScore's 'NAVI Junior' vs Bovada's 'Natus Vincere Junior'). Used as an ADDITIONAL
     # accept path below; the `near_ms` time guard still prevents same-team-different-match collisions.
-    ca, cb = _canon_team(team_a), _canon_team(team_b)
+    ca, cb = _canon_team_x(team_a), _canon_team_x(team_b)
 
     def _canon_hit(cx, canon_set):
         return cx in canon_set  # canon_set precomputed once in _ps_indexed
@@ -382,8 +382,17 @@ def _ps_enrich(team_a, team_b, include_running=True, near_ms=None):
     NEAR_TOL_MS = 36 * 3600 * 1000
     best = None  # (time_delta, match_dict, swapped)
     for m, op0, op1, n0, n1, tk0, tk1, cs0, cs1 in _ps_indexed(include_running):
-        ab = (_hits(na, bta, n0, tk0) and _hits(nb, btb, n1, tk1)) or (_canon_hit(ca, cs0) and _canon_hit(cb, cs1))
-        ba = (_hits(na, bta, n1, tk1) and _hits(nb, btb, n0, tk0)) or (_canon_hit(ca, cs1) and _canon_hit(cb, cs0))
+        # Each side may use its strongest evidence independently. This matters when one side is a
+        # lexical variant (MIBR <-> MIBR LOS) while the other needs an explicit cross-source alias
+        # (Anyone's Legend <-> AG.AL International). Requiring BOTH sides to use the same matching
+        # path missed that real fixture. The time guard below still prevents a same-team rematch from
+        # receiving the wrong result, and this does not change slate._same_team's global split policy.
+        a0 = _hits(na, bta, n0, tk0) or _canon_hit(ca, cs0)
+        a1 = _hits(na, bta, n1, tk1) or _canon_hit(ca, cs1)
+        b0 = _hits(nb, btb, n0, tk0) or _canon_hit(cb, cs0)
+        b1 = _hits(nb, btb, n1, tk1) or _canon_hit(cb, cs1)
+        ab = a0 and b1
+        ba = a1 and b0
         if not (ab or ba):
             continue
         begin_ms = _iso_to_ms(m.get("begin_at") or m.get("scheduled_at"))

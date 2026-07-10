@@ -40,8 +40,8 @@ import urllib.request as _u
 
 from fastapi import APIRouter
 
-from .common import (_amer_to_p, _ESPORTS_TITLES, _slug_to_name, _TITLE_SLUG, _canon_team,
-                     _canon_tokens, _GRID_LABEL_SLUG)
+from .common import (_amer_to_p, _ESPORTS_TITLES, _slug_to_name, _TITLE_SLUG, _canon_team_x,
+                     _canon_tokens, _fold, _GRID_LABEL_SLUG)
 from .grid import _grid_score_index
 from .lol import msi_predictions
 from .results_store import _load_results_store, _save_results_store
@@ -112,17 +112,8 @@ _finish_seen = {}
 # ---------------------------------------------------------------------------
 # identity — ONE team matcher for clustering, GRID lookup, and Kalshi lookup
 # ---------------------------------------------------------------------------
-# Cross-source aliases with no lexical bridge, confirmed on live data (2026-07-03):
-#   NIP           <-> Ninjas in Pyjamas   (Bovada dual-lists both spellings)
-#   AG.AL Intl / AllGamers / Anyone's Legend — the EWC Valorant squad of the merged AG.AL org;
-#   Bovada, PandaScore and Kalshi each used a different one, producing three rows for one match.
-_XALIASES = {
-    "nip": "ninjasinpyjamas",
-    "agalinternational": "agal",
-    "allgamers": "agal",
-    "anyoneslegend": "agal",
-    "bb": "betboom",  # Bovada lists BetBoom's CS2 roster as 'BB Team' (verified dup 2026-07-03)
-}
+# Cross-source aliases (NIP/Ninjas in Pyjamas, AG.AL/AllGamers/Anyone's Legend, BB/BetBoom, SYF/
+# SYGaming) now live in common._XALIASES so `_ps_enrich` bridges them too — see `_ckey` below.
 # Affix-match residual policy (ALLOWLIST, not blocklist). A word-boundary affix match ('Keyd' vs
 # 'Keyd Stars') is the same team ONLY IF the extra word(s) are a known generic/sponsor/name suffix.
 # Any OTHER distinct word means a DIFFERENT squad — 'G2' vs 'G2 HEL', 'Vitality' vs 'Vitality Rising
@@ -145,8 +136,7 @@ def _residual_droppable(residual):
 
 
 def _ckey(name):
-    c = _canon_team(name or "")
-    return _XALIASES.get(c, c)
+    return _canon_team_x(name or "")
 
 
 _VOWELS = frozenset("aeiou")
@@ -482,23 +472,53 @@ def _label_variant(a, b):
     return not ((ta ^ tb) & _DISTINCT_SQUAD)
 
 
+def _league_signature(league):
+    """Order-insensitive league identity for cross-source label variants.
+
+    Sources reorder the same league words (for example, ``CCT South America — Series 3 2026`` vs
+    ``CCT 2026 South America Series 3``). Keeping every normalized token, including season, series,
+    and stage, makes those spellings equal without collapsing distinct events.
+    """
+    return tuple(sorted(re.findall(r"[a-z0-9]+", _fold(league or "").lower())))
+
+
+def _same_league(ri, rj):
+    li, lj = _league_signature(ri.get("league")), _league_signature(rj.get("league"))
+    return bool(li and li == lj)
+
+
+def _league_scoped_variant(a, b):
+    """Allow unrelated labels only when the match-level league/time guards already agree.
+
+    Distinct-roster markers remain a hard veto so the physical-invariant fallback cannot merge a
+    main squad with its academy, women's, reserve, or departed roster.
+    """
+    tokens = set(_canon_tokens(a)) | set(_canon_tokens(b))
+    return bool(a and b) and not (tokens & _DISTINCT_SQUAD)
+
+
 def _same_match_relaxed(ri, rj):
     """Merge two same-title rows the strict pair test missed but which MUST be the same real match:
     their starts are within _RELAXED_MERGE_MS and ONE team matches exactly (_same_team) while the
-    OTHER is only a label variant (_label_variant) — the same match cross-listed under two league
-    strings with a team-name variant ('Sharks' vs 'YNG Sharks Esports'). The physical invariant does
-    the work: a team can't be in two matches at once, so exact-team + near-identical-start = same
-    match. The label-variant guard on the opposite side blocks both a lone _same_team false-positive
-    and a main-vs-academy collision."""
+    OTHER is either a lexical label variant (_label_variant), or the rows carry the same normalized
+    league identity and the other labels have no distinct-roster marker. The latter is deliberately
+    match-scoped: it merges `LP` with `largadosypelados` for the same CCT fixture without making the
+    globally-ambiguous `LP` a team alias. The physical invariant does the work: a team can't be in
+    two matches at once. Academy/women/reserve/ex-roster differences remain a hard veto."""
     si, sj = ri.get("startTime"), rj.get("startTime")
     if not (si and sj) or abs(si - sj) > _RELAXED_MERGE_MS:
         return False
     a1, b1 = ri.get("teamA", ""), ri.get("teamB", "")
     a2, b2 = rj.get("teamA", ""), rj.get("teamB", "")
-    return ((_same_team(a1, a2) and _label_variant(b1, b2)) or
-            (_same_team(b1, b2) and _label_variant(a1, a2)) or
-            (_same_team(a1, b2) and _label_variant(b1, a2)) or
-            (_same_team(b1, a2) and _label_variant(a1, b2)))
+    same_league = _same_league(ri, rj)
+
+    def _other_side_matches(x, y):
+        return _label_variant(x, y) or (same_league and _league_scoped_variant(x, y))
+
+    return ((_same_team(a1, a2) and _other_side_matches(b1, b2)) or
+            (_same_team(b1, b2) and _other_side_matches(a1, a2)) or
+            (_same_team(a1, b2) and _other_side_matches(b1, a2)) or
+            (_same_team(b1, a2) and _other_side_matches(a1, b2)))
 
 
 def _cluster(rows):
@@ -556,20 +576,27 @@ def _cluster(rows):
                 if not base.get(f) and other.get(f):
                     base[f] = other[f]
             # Align + adopt an archived result from a clustered twin (the '3DMAX v 9z' finished
-            # entry resolving the '3DMAX v 9Z Globant' ghost).
-            if other.get("finishedAt") and not base.get("finishedAt"):
+            # entry resolving the '3DMAX v 9Z Globant' ghost). A resultUnknown base may already have
+            # finishedAt, so a real result from its twin must still replace it (LP/largadosypelados).
+            better_result = _has_result(other) and not _has_result(base)
+            if other.get("finishedAt") and (not base.get("finishedAt") or better_result):
                 base["finishedAt"] = other["finishedAt"]
                 base["finished"] = True
-                if other.get("resultUnknown"):
+                direct = (_same_team(base.get("teamA", ""), other.get("teamA", "")) or
+                          _same_team(base.get("teamB", ""), other.get("teamB", "")))
+                crossed = (_same_team(base.get("teamA", ""), other.get("teamB", "")) or
+                           _same_team(base.get("teamB", ""), other.get("teamA", "")))
+                flipped = crossed and not direct
+                if better_result:
+                    base["resultUnknown"] = False
+                elif other.get("resultUnknown"):
                     base["resultUnknown"] = True
                 w = other.get("winner")
                 if w in ("a", "b"):
-                    flipped = _same_team(base.get("teamA", ""), other.get("teamB", "")) and \
-                              _same_team(base.get("teamB", ""), other.get("teamA", ""))
                     base["winner"] = (("b" if w == "a" else "a") if flipped else w)
-                    sc = other.get("score")
-                    if sc:
-                        base["score"] = ({"a": sc.get("b"), "b": sc.get("a")} if flipped else sc)
+                sc = other.get("score")
+                if sc:
+                    base["score"] = ({"a": sc.get("b"), "b": sc.get("a")} if flipped else sc)
             if other.get("_bov_live"):
                 base["_bov_live"] = True
             if other.get("pinned"):
@@ -941,11 +968,10 @@ def _rebuild_upcoming():
             store[k] = m2
 
     # Promotion freeze: an archived carry (resultUnknown, or a resultLESS 'finished') that obtained a
-    # real result THIS cycle — via the major-league past backstop or a late Kalshi settle — is written
-    # back so the store stops re-querying it AND the result survives after the tournament's feed drops
-    # (the not_started legs that anchor _major_past disappear once the event ends, taking the only
-    # re-resolution path with them). Without this the resolved EWC results would silently revert to
-    # 'result unavailable' days later when the carry re-derives with nothing to match against.
+    # real result THIS cycle — via the corrected PandaScore past feed, a clustered resolved twin, or
+    # a late Kalshi settle — is written back so the store stops re-querying it AND the result survives
+    # after the source match leaves the feed. Without this, a resolved carry could silently revert to
+    # 'result unavailable' days later when it re-derives with nothing left to match against.
     for m in matches:
         if m["state"] != S_FINISHED or not _has_result(m):
             continue

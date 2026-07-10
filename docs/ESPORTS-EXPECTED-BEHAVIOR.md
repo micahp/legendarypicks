@@ -77,8 +77,11 @@ Goal: exactly one card per real-world match. Two layers.
    entity from `Marsborne` (the org's new lineup). Liquipedia/HLTV confirmed; Micah 2026-07-09.
    Canonical keys: `exmarsborne` ≠ `marsborne`.
 
-`slate.py:_XALIASES` adds a second alias layer for cross-source names with no lexical bridge
-(`nip→ninjasinpyjamas`, `anyoneslegend/agalinternational/allgamers→agal`, `bb→betboom`).
+`common.py:_XALIASES` adds a second, whole-key-only alias layer for cross-source names with no
+lexical bridge (`nip→ninjasinpyjamas`, `anyoneslegend/agalinternational/allgamers→agal`,
+`bb→betboom`, `syf→sy`, the canonical key for SYGaming). `_canon_team_x` applies it in both slate
+clustering and PandaScore result enrichment; `_canon_team` remains the base identity key for contexts
+where the source-specific bridge is inappropriate.
 
 ### 2b. `_same_team` (slate.py)
 "Are these the same team?" — canonical equality, exact anagram (`Dontsu`/`Donstu`), a **word-token
@@ -99,9 +102,16 @@ Yawara` (BLAST Open). Loosening `_same_team` to catch these would reopen the cur
 
 Instead we use a **physical invariant: a team cannot play two matches at once.** Two same-title rows
 within `_RELAXED_MERGE_MS` (10 min) that share ONE exactly-matched team (strict `_same_team`) are the
-same match. The other side only needs to be a **label variant** (`_label_variant`: shares a token,
-and the differing tokens contain no `_DISTINCT_SQUAD` marker — academy/ii/women/**ex**/…). This keeps
-`_same_team` (and MIBR≠MIBR LOS) untouched while de-duping the physically-identical rows.
+same match when the other side is either:
+
+- a lexical **label variant** (`_label_variant`: shares a token, with no `_DISTINCT_SQUAD` marker), or
+- an otherwise-unrelated label under the **same normalized league identity** (all league/season/
+  series/stage tokens equal, allowing source word-order differences), again with no academy/ii/
+  women/**ex**/reserve marker.
+
+The second path handles `LP`↔`largadosypelados` only at the match level: same CCT league, same time,
+same opponent. `LP` deliberately remains globally distinct from `largadosypelados`. `_same_team`
+(including the global MIBR≠MIBR LOS split) stays untouched.
 
 ### 2d. Display name after merge
 `_cluster` picks the base row by origin priority, then prefers PandaScore's canonical spelling over
@@ -110,10 +120,11 @@ swap names onto the wrong sides. This is why `Level UP` shows instead of `LVLUP`
 the only exceptions are LMap rows (§5).
 
 ### Regression guard
-There is no committed unit suite; keep a positive/negative pair list when touching the matcher
-(scratch harness used 2026-07-09: 21 positives incl. Beşiktaş/TeamOrange/TheBoys/JPlay/BakS, 12
-negatives incl. MIBR/G2/Secret/ex-Marsborne). Every negative staying SEPARATE matters as much as the
-positives merging.
+Run `cd backend && venv/bin/python routers/esports/matcher_assertions.py` when touching identity or
+enrichment. It covers the known positive aliases; the critical negative splits (MIBR/G2/Secret/
+academy/**ex**/LP); the LP league/time and distinct-roster guards; resolved-twin archive promotion;
+the two PandaScore name bridges; score/winner alignment; and the 36-hour rematch guard. Every
+negative staying SEPARATE matters as much as the positives merging.
 
 ---
 
@@ -198,14 +209,13 @@ TODO: also strip the `- LMap N` suffix / drop these from the archive path so the
      `slate._has_result` — a resultless finished archive is treated as `ended_unknown` (retried every
      cycle) until a real result lands, and a resolved result is written back to the store ("promotion
      freeze") so it survives after the tournament's feed drops.
-  Took bare Finals 40 → 6. The 6 residuals are NOT the sort hole:
-  - **Name bridges** (2): `MIBR v Anyone's Legend` (PS: `MIBR LOS` / `AG.AL International`) and
-    `Hero Jiujing v SYF` (PS: `Hero JiuJing` / `SYGaming`). `_ps_enrich` uses `common._canon_team`,
-    which lacks the `agal` / `sygaming` bridges (agal lives in slate `_XALIASES`); adding them risks
-    the curated `MIBR ≠ MIBR LOS` split. Scoped decision.
-  - **Genuine PS gaps** (4): United21 (`Prestige v Vasteras`, `Leo Team v Prestige`) and RES Showdown
-    Fall 2025 phantoms (`Arch v Virtus.pro`, `Metanoia v Bounty Hunters`) — those exact pairings are
-    not in PandaScore at all. Correct behavior is to show them as "result unavailable" (§4).
+  The feed/archive fix took bare Finals 40 → 6. The shared cross-source alias layer and per-side
+  PandaScore evidence then resolved `MIBR v Anyone's Legend` (PS: `MIBR LOS` / `AG.AL International`)
+  and `Hero Jiujing v SYF` (PS: `Hero JiuJing` / `SYGaming`) WITHOUT changing the global
+  `MIBR ≠ MIBR LOS` identity rule. Final verified count: **40 → 4** bare Finals.
+  - The **4 genuine PS gaps** are United21 (`Prestige v Vasteras`, `Leo Team v Prestige`) and RES
+    Showdown Fall 2025 phantoms (`Arch v Virtus.pro`, `Metanoia v Bounty Hunters`). Those exact
+    pairings are not in PandaScore at all. Correct behavior is "result unavailable" (§4).
 
 ---
 
@@ -234,13 +244,9 @@ already covers spelling variants (0 index-level naming misses in the same audit)
 - LMap `- LMap N` rows: strip suffix / drop from archive so they don't linger in Results (§5).
 - ~~EWC/minor-league result resolution; relabel `finished`-no-result → `ended_unknown`~~ — DONE
   2026-07-09 (§6: `past` feed `sort=-scheduled_at` fix + `_has_result` relabel/promotion-freeze).
-- **Name bridges for `_ps_enrich`** (2 residual cards): `Anyone's Legend`↔`AG.AL International` and
-  `SYF`↔`SYGaming` don't bridge because `_ps_enrich` uses `common._canon_team` (agal lives only in
-  slate `_XALIASES`). Bridging risks the curated `MIBR ≠ MIBR LOS` split — needs a scoped decision (§6).
-- **`Imperial v LP` / `Imperial v largadosypelados` dup** (§2): both cards now RESOLVE (same 2-0)
-  after the sort fix, but still render as two cards. Merging needs an `LP`↔`largadosypelados` bridge —
-  `LP` is too generic to alias globally, so this is a scoped (league-limited) decision, not a global alias.
+- ~~Name bridges for `_ps_enrich`~~ — DONE 2026-07-09. Shared `_canon_team_x` aliases plus per-side
+  lexical-or-canonical evidence resolve AG.AL and SYGaming without merging MIBR/MIBR LOS globally (§6).
+- ~~`Imperial v LP` / `Imperial v largadosypelados` dup~~ — DONE 2026-07-09. Same normalized league
+  + same time + one strict team match scopes the identity to that fixture; `LP` is not a global alias (§2).
 - Frontend: render a "result unavailable" label for `resultUnknown` (§6).
 - Logo negative-cache expiry; optional EWC/tournament logo source for Poor-Rangers-class gaps (§7).
-- `Imperial v LP` dupe: "LP" = "Largados y Pelados" but too generic to alias globally — needs a
-  scoped decision (§2).

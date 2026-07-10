@@ -94,6 +94,30 @@ def _canon_team(n):
     return _TEAM_ALIASES.get(key, key)
 
 
+# Cross-source aliases with no LEXICAL bridge — different words for the same org that each source
+# spells its own way. Applied ONLY to the WHOLE canonical key (not per-token like _TEAM_ALIASES), so
+# a short code like 'bb'/'nip' can't over-expand when it appears as an inner token of another name.
+# Lives here (not slate) so BOTH the clustering matcher (slate `_ckey`) AND the PandaScore result
+# matcher (`_ps_enrich`) bridge them — otherwise a card resolves its dup but never its result, or
+# vice-versa (the 'Anyone's Legend' / 'SYF' no-result cards, 2026-07-09). Confirmed on live data:
+#   NIP <-> Ninjas in Pyjamas;  AG.AL Intl / AllGamers / Anyone's Legend (one EWC Valorant squad,
+#   three source spellings);  BB Team <-> BetBoom;  SYF <-> SYGaming (KoG King Pro League).
+_XALIASES = {
+    "nip": "ninjasinpyjamas",
+    "agalinternational": "agal",
+    "allgamers": "agal",
+    "anyoneslegend": "agal",
+    "bb": "betboom",
+    "syf": "sy",
+}
+
+
+def _canon_team_x(n):
+    """`_canon_team` plus the cross-source whole-key alias layer (`_XALIASES`). Use this for CROSS-
+    SOURCE identity (Bovada<->PandaScore<->Kalshi<->GRID); plain `_canon_team` stays the base key."""
+    return _XALIASES.get(_canon_team(n), _canon_team(n))
+
+
 def _slug_to_name(slug):
     return " ".join(w.capitalize() for w in (slug or "").split("-"))
 
