@@ -183,10 +183,10 @@ Bovada markets + no stream rules) is guarded so the filter doesn't silently dele
 
 At `sm` and wider, an **Also live** card's primary action promotes that match into the full-width
 featured player, and the previous hero returns to its normal prominence-ranked position in the grid.
-A secondary **show preview** action deliberately mounts an inline preview; **hide preview** removes
-it. The MSI rich hero participates in the same exchange: when another match is selected, MSI becomes
-the first compact Also-live card; selecting it restores the MSI hero. On mobile, cards retain the
-inline tap-to-watch interaction so selecting a stream does not unexpectedly scroll the user back up.
+Desktop cards do not mount inline previews. The MSI rich hero participates in the same exchange:
+when another match is selected, MSI becomes the first compact Also-live card; selecting it restores
+the MSI hero. On mobile, cards retain the inline **watch here** interaction so selecting a stream
+does not unexpectedly scroll the user back up.
 
 The MSI hero defaults to a full-width broadcast with **Live game state below it**. A compact panel-
 layout icon in the game-state header can dock that panel to a 340px right rail or move it back below;

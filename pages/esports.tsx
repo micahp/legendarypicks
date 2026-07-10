@@ -724,14 +724,10 @@ function LiveCard({ m, host, featured = false, onPromote }: { m: UpMatch; host: 
                         className="text-emerald-400 hover:text-emerald-300 focus-visible:outline-none sm:hidden">
                   {open ? 'hide stream ▴' : 'watch here ▾'}
                 </button>
-                <div className="hidden flex-col items-start gap-1.5 sm:flex">
+                <div className="hidden sm:block">
                   <button onClick={onPromote} aria-label={`Feature ${m.teamA} vs ${m.teamB}`}
                           className="text-emerald-400 hover:text-emerald-300 focus-visible:outline-none">
                     watch in featured player ↑
-                  </button>
-                  <button onClick={toggle} aria-label={`${open ? 'Hide' : 'Show'} preview for ${m.teamA} vs ${m.teamB}`}
-                          className="text-zinc-500 hover:text-zinc-300 focus-visible:outline-none">
-                    {open ? 'hide preview ▴' : 'show preview ▾'}
                   </button>
                 </div>
               </>
@@ -745,7 +741,7 @@ function LiveCard({ m, host, featured = false, onPromote }: { m: UpMatch; host: 
         )}
       </div>
       {embeddable ? (
-        <div className={featured || open ? '' : 'hidden'}>
+        <div className={featured ? '' : open ? (onPromote ? 'sm:hidden' : '') : 'hidden'}>
           <div className="aspect-video w-full bg-black">
             {/* Player only mounts once shown (featured, or tapped open) so we don't autoplay every
                 card at once. `key` on the src remounts the iframe when the viewer switches source. */}
@@ -806,23 +802,23 @@ function MsiLiveCard({ m, onPromote }: { m: LiveMatch; onPromote: () => void }) 
             <span className="font-mono text-sm font-bold tabular-nums text-zinc-100">{teamB?.wins ?? 0}</span>
           </div>
         </div>
-        <div className="mt-3 flex flex-col items-start gap-1.5 font-mono text-[11px] uppercase tracking-wider">
+        <div className="mt-3 font-mono text-[11px] uppercase tracking-wider">
           <button onClick={onPromote}
                   aria-label={`Feature ${teamA?.name || 'MSI'} vs ${teamB?.name || 'opponent'}`}
-                  className="text-emerald-400 hover:text-emerald-300 focus-visible:outline-none">
+                  className="hidden text-emerald-400 hover:text-emerald-300 focus-visible:outline-none sm:inline">
             watch in featured player ↑
           </button>
           {preview ? (
             <button onClick={() => setOpen((value) => !value)}
-                    aria-label={`${open ? 'Hide' : 'Show'} preview for ${teamA?.name || 'MSI'} vs ${teamB?.name || 'opponent'}`}
-                    className="text-zinc-500 hover:text-zinc-300 focus-visible:outline-none">
-              {open ? 'hide preview ▴' : 'show preview ▾'}
+                    aria-label={`${open ? 'Hide' : 'Watch'} ${teamA?.name || 'MSI'} vs ${teamB?.name || 'opponent'}`}
+                    className="text-emerald-400 hover:text-emerald-300 focus-visible:outline-none sm:hidden">
+              {open ? 'hide stream ▴' : 'watch here ▾'}
             </button>
           ) : null}
         </div>
       </div>
       {open && preview ? (
-        <div className="aspect-video w-full bg-black">
+        <div className="aspect-video w-full bg-black sm:hidden">
           <iframe src={preview} title="MSI live preview" allow="autoplay; fullscreen; encrypted-media"
                   allowFullScreen className="h-full w-full" style={{ border: 'none' }} />
         </div>
