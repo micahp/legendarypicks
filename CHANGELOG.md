@@ -16,6 +16,26 @@ in `package.json` tracks the next (in-development) release.
 
 ## [Unreleased]
 
+## [0.3.1] — 2026-07-10
+
+Esports polish + the deploy fix that makes the board work in production.
+
+### Added
+- **"Building the board" state** — while the slate warms on a cold rebuild (~30–40s the backend
+  returns an empty `building` board), show skeleton match rows under a live-signal eyebrow instead
+  of a misleading "no matches" message.
+
+### Changed
+- **Desktop live cards drop the inline preview** — at `sm` and wider an Also-live card's only action
+  is "watch in featured player"; the redundant show/hide-preview toggle is gone. Mobile keeps inline
+  "watch here". MSI compact card follows the same rule.
+
+### Fixed
+- **Prod backend gets its esports source keys** — the Docker Compose backend now forwards
+  `PANDASCORE_API_KEY` / `GRID_API_KEY` / `YOUTUBE_API_KEY` (host-shell pass-through, like the
+  DeepSeek key). Without them the containerized board silently degraded — no truth layer, no live
+  scores, no stream resolution. Source `/root/.hermes/.env` before `docker compose up`.
+
 ## [0.3.0] — 2026-07-10
 
 Esports control-room release — a more reliable slate pipeline and a desktop viewing experience
