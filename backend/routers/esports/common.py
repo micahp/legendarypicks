@@ -71,8 +71,11 @@ def _canon_tokens(n):
     can align on word boundaries instead of substrings of the concatenated key — 'gam' (GAM Esports)
     must not match INSIDE 'gamerlegion'. Fold+camel-split run FIRST so 'Beşiktaş'=='Besiktas' and the
     embedded generics in 'TeamOrangeGaming'/'TheBoys' are separated out and dropped."""
+    # NOTE: the 'ex-' prefix is KEPT (kept as its own token), NOT stripped. 'ex-Marsborne' is the
+    # DEPARTED roster and a different competitive entity from the org 'Marsborne' (which fields a new
+    # lineup) — Micah 2026-07-09, Liquipedia/HLTV confirmed. Stripping it wrongly merged the two and
+    # let the crest-less ex- entry mask the org's real logo.
     s = _split_camel(_fold(n)).lower().replace(".", " ")
-    s = re.sub(r"^\s*ex[-\s]+", "", s)  # 'ex-Vexa' == 'Vexa' — the former-roster prefix isn't identity
     toks = [t for t in re.split(r"[^a-z0-9]+", s) if t and t not in _TEAM_GENERIC]
     # Expand known acronyms per-token ('NAVI Junior' -> natusvincere+junior).
     return [_TEAM_ALIASES.get(t, t) for t in toks]

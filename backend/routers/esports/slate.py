@@ -458,7 +458,7 @@ _RELAXED_MERGE_MS = 10 * 60 * 1000
 # collapsed. 'academy' is the canonical case (common.py keeps it out of the generic-word strip).
 _DISTINCT_SQUAD = frozenset({"academy", "youth", "junior", "juniors", "jr", "women", "woman",
                              "female", "fem", "prospect", "prospects", "reserve", "reserves",
-                             "ii", "iii", "b"})
+                             "ii", "iii", "b", "ex"})  # 'ex' = departed roster, a distinct entity
 
 
 def _label_variant(a, b):
