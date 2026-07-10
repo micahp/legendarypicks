@@ -29,7 +29,96 @@ v0.3.0 is gated on closing the current UI holes. Each bullet is its own minor bu
 - Player-name links app-wide → player page.
 - **UFC rankings** (weight class + pound-for-pound) — P4 from `docs/SPEC-2026-06-27-next-phases.md`.
 
-### Shipped to prod ahead of tag (v0.2.3 — hotfixes)
+## [0.2.6] — 2026-07-09
+
+Esports slate correctness — team-identity matching, stream switching, and result repair.
+
+### Added
+- **YouTube-default stream switcher** on every live card — English-YouTube-first source order
+  (trusts backend ranking), with Twitch/Kick as one-tap fallbacks. MSI unified into the
+  live-now section as the featured slot; prominence-based ordering (tier + stage).
+- **`docs/ESPORTS-EXPECTED-BEHAVIOR.md`** — state-machine invariants, matcher fail-closed
+  allowlist, stream ranking, and Results-gap policy (read before editing esports code).
+
+### Changed
+- Slate section renamed **"Schedule & Results"** (from "What's next"), redundant subtitle dropped.
+
+### Fixed
+- **Team matcher hardened** — word-boundary affix + vowel-elision matching; same-org sub-rosters
+  stay split via an allowlist; `ex-<org>` treated as a **distinct** team (no prefix stripping);
+  accent-fold + generic-aware camelCase canon; `LVLUP == Level UP` dedup; relaxed same-match
+  merge governed by the "one team, one time" physical invariant.
+- **Streams** — verify attested Twitch liveness and drop dark streams; narrow YouTube resolution
+  by game before team/arena; drop the dead link when every candidate is dark.
+- **Slate** — reconcile reschedules and purge map (`LMap`) markers; group Scheduled/Results by
+  stable calendar day; resolve EWC + minor-league result holes; correct flipped team crests.
+
+### Performance
+- Precompute PandaScore name-token/canon sets — enrich **7.8s → 0.7s**.
+- Moved YouTube resolution off the rebuild path (async background pool).
+
+## [0.2.5] — 2026-07-08
+
+Live "cheap quality" trading surface, a momentum engine, and esports-board hardening.
+
+### Added
+- **"Cheap Quality, Live" widget** — the value-discount trading strategy as a live scores-page
+  surface. Grew from v0 (MLB) → edge-vs-live-win-probability → **Class C** pre-priced discount
+  + World Cup wiring → **Class D** gift-fade. Guarded against value traps and knife-catching
+  (form gates, witching-hour contest, rally-evidence requirement); renders nothing when no live
+  cards; no "favorite" chip below 55%.
+- **Momentum engine (phase 1)** — Wilder dual-MA core with MLB player/team adapters and a
+  cross-feed API; live level outputs phase labels (crash-cycle frame).
+- **Stakes engine** — every AI summary now leads with what the game *is*.
+- **4-level esports league-tier taxonomy** + tier-sort and odds-or-stream visibility filter;
+  per-day results archive in the state monitor.
+
+### Fixed
+- Stop fabricating winners from ambiguous Kalshi settlements — wait for real results.
+- Official team names on merged rows; Bovada live-map phantom filter; Poor Rangers / "Power
+  Ranger" alias dedup; zombie-live freshness gate + persistent `ended_unknown` label.
+- RES Showdown reclassified as a real BLAST Premier qualifier (not Tier-3 novelty).
+- **EWC YouTube streams** resolved via the Data API + a free channel-streams scrape (no quota).
+
+### Changed
+- Version corrected from a mistaken `0.3.0` minor bump back to the `0.2.5` patch.
+
+## [0.2.4] — 2026-07-03
+
+Live esports hub — the big one: real-time broadcast, scores, and game-detail depth.
+
+### Added
+- **Live esports hub** — hero + tabs, GRID/frag live scores, verified in-app broadcast embeds.
+  Live games surfaced above the fold (multi-live grid, not buried in Scheduled); the featured
+  match auto-plays, the rest are tap-to-watch.
+- **Broadcast embedding** — GRID-official CS2/Dota adapter via tournament→channel map; frag.se
+  per-match live source; YouTube / Twitch / Kick embeds; stable featured-match pick (stop the
+  flipping); unmuted stream audio. Overwatch added as a covered title.
+- **Game-detail tabs** — box score / play-by-play / game info for MLB, NFL, NBA, NHL, and the
+  World Cup, each fed by per-tab backend endpoints.
+- **Scores page** — winner arrow (`◄`) + "Final/N" on cards (ESPN parity); Live-Now discovery
+  banner; feature-one-live-big with "+N more" reveal; **free World Cup audio** (iHeart's direct
+  AAC stream, US-accessible).
+- Kalshi settled-market result fallback for unsourced matches; acronym team-name bridging.
+
+### Changed
+- Slate rewritten as an **explicit state machine** with unified identity; PandaScore truth layer;
+  canonical dedup key; zombie-live matches killed; on-air freshness gate.
+
+### Fixed
+- Box score gated on game state (scheduled games no longer render a zeros table identical to a
+  final); tennis "P3" → "Set 3"; NFL/WC cards clickable to their detail pages; soccer lineup
+  React crash + robust minute parse.
+
+### Performance
+- Parallelized upstream fetches, memoized match-matching, stale-while-revalidate serving.
+- Split the 1162-line esports monolith into a package.
+
+## [0.2.3] — 2026-06-28
+
+Hotfixes shipped to prod.
+
+### Fixed
 - **Footer pinned to the viewport bottom** on short pages — the layout wrapper is now a flex
   column with `main` growing (`flex-1`), so the footer stops floating mid-page on the homepage.
 - **App icons + favicon: transparent corners** — circular alpha mask applied to every `logo-*.png`,
