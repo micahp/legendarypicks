@@ -180,10 +180,32 @@ TODO: also strip the `- LMap N` suffix / drop these from the archive path so the
 - `resultUnknown` matches currently render as a bare "Final" with no score and no explanatory label —
   **the frontend does not render a "result unavailable" label** (`resultUnknown` is computed in the
   backend but unused in `esports.tsx`). Known gap: these read like broken Finals.
-- **EWC (Dota especially) is the main result hole**: ~20 of the "no result shown" cards are EWC/World
-  Cup, plus a handful archived as `finished` with no winner+score (should be `ended_unknown`). Root:
-  no source (PS/GRID/Kalshi) returned an EWC Dota result. TODO: fix EWC result resolution; relabel a
-  `finished`-with-no-result as `ended_unknown`.
+- A **Bo2 group-stage draw** (e.g. EWC Dota 1-1) is a legitimate finished result with a real score
+  and NO winner — it renders "1 / 1" with neither side dimmed. It is NOT `resultUnknown`. Backend:
+  `_has_result` treats a real (non-placeholder) score as a result even when `winner` is null.
+- **Result hole (EWC + minor leagues) — FIXED 2026-07-09** (was ~40 cards, ~25 of them EWC, showing a
+  bare Final). Two root causes:
+  1. **The finished feed was sorted by the wrong field.** `pandascore._per_title("past", …)` fetched
+     `sort=-end_at` at `per_page=100`. A large fraction of PandaScore's finished matches have a NULL
+     `end_at` (never back-filled), and the API sorts NULLs FIRST on a DESC sort — so page 1 was ~100
+     null-`end_at` rows and EVERY real same-day result got pushed to page 2+, outside our single-page
+     window. That hid whole tournaments (all 36 EWC Dota, EPL, CCT South America, RES Showdown…). Fix
+     is one field: **`sort=-scheduled_at`** — populated for ~every match, so page 1 now holds the 100
+     most-recently-SCHEDULED finished matches per title (~8-10 days deep even for Dota, well past the
+     3-day store retention). This resolves EWC *and* the minor-league tail with no per-league fan-out.
+  2. **Mislabeled frozen archives.** A match archived as `finished` with null winner+score but WITHOUT
+     `resultUnknown` was frozen at `S_FINISHED` and never re-enriched (a bare Final forever). Fix:
+     `slate._has_result` — a resultless finished archive is treated as `ended_unknown` (retried every
+     cycle) until a real result lands, and a resolved result is written back to the store ("promotion
+     freeze") so it survives after the tournament's feed drops.
+  Took bare Finals 40 → 6. The 6 residuals are NOT the sort hole:
+  - **Name bridges** (2): `MIBR v Anyone's Legend` (PS: `MIBR LOS` / `AG.AL International`) and
+    `Hero Jiujing v SYF` (PS: `Hero JiuJing` / `SYGaming`). `_ps_enrich` uses `common._canon_team`,
+    which lacks the `agal` / `sygaming` bridges (agal lives in slate `_XALIASES`); adding them risks
+    the curated `MIBR ≠ MIBR LOS` split. Scoped decision.
+  - **Genuine PS gaps** (4): United21 (`Prestige v Vasteras`, `Leo Team v Prestige`) and RES Showdown
+    Fall 2025 phantoms (`Arch v Virtus.pro`, `Metanoia v Bounty Hunters`) — those exact pairings are
+    not in PandaScore at all. Correct behavior is to show them as "result unavailable" (§4).
 
 ---
 
@@ -210,7 +232,14 @@ already covers spelling variants (0 index-level naming misses in the same audit)
 
 ## 8. Known open follow-ups
 - LMap `- LMap N` rows: strip suffix / drop from archive so they don't linger in Results (§5).
-- EWC (Dota) result resolution; relabel `finished`-no-result → `ended_unknown` (§6).
+- ~~EWC/minor-league result resolution; relabel `finished`-no-result → `ended_unknown`~~ — DONE
+  2026-07-09 (§6: `past` feed `sort=-scheduled_at` fix + `_has_result` relabel/promotion-freeze).
+- **Name bridges for `_ps_enrich`** (2 residual cards): `Anyone's Legend`↔`AG.AL International` and
+  `SYF`↔`SYGaming` don't bridge because `_ps_enrich` uses `common._canon_team` (agal lives only in
+  slate `_XALIASES`). Bridging risks the curated `MIBR ≠ MIBR LOS` split — needs a scoped decision (§6).
+- **`Imperial v LP` / `Imperial v largadosypelados` dup** (§2): both cards now RESOLVE (same 2-0)
+  after the sort fix, but still render as two cards. Merging needs an `LP`↔`largadosypelados` bridge —
+  `LP` is too generic to alias globally, so this is a scoped (league-limited) decision, not a global alias.
 - Frontend: render a "result unavailable" label for `resultUnknown` (§6).
 - Logo negative-cache expiry; optional EWC/tournament logo source for Poor-Rangers-class gaps (§7).
 - `Imperial v LP` dupe: "LP" = "Largados y Pelados" but too generic to alias globally — needs a

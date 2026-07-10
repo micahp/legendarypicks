@@ -222,6 +222,14 @@ def _is_placeholder_score(sc):
     return not (sc.get("a") or 0) and not (sc.get("b") or 0)
 
 
+def _has_result(m):
+    """A finished match actually carries a RESULT — a winner, or a real (non-placeholder) scoreline
+    (a Bo2 group-stage 1-1 draw is a legit result with no winner). A finished archive that has
+    NEITHER is not really settled: it's ended_unknown and must be retried, never frozen as a bare
+    'Final' (the mislabeled-finish class behind the EWC/round-robin no-result cards, 2026-07-09)."""
+    return bool(m.get("winner")) or (m.get("score") is not None and not _is_placeholder_score(m.get("score")))
+
+
 # ---------------------------------------------------------------------------
 # source lookups sharing the one matcher
 # ---------------------------------------------------------------------------
@@ -621,7 +629,9 @@ def _derive_state(row, ev, now_ms):
     if fresh_finish or fresh_kalshi:
         return S_FINISHED
     if row.get("finishedAt") is not None:
-        return S_ENDED_UNKNOWN if row.get("resultUnknown") else S_FINISHED
+        # A finished archive with no result (no winner, no real score) is really ended_unknown — keep
+        # it retryable instead of freezing a bare 'Final' (relabels the mislabeled-finish archives).
+        return S_ENDED_UNKNOWN if (row.get("resultUnknown") or not _has_result(row)) else S_FINISHED
     if live_ev:
         return S_LIVE
     if not st or st > now_ms - _START_SLACK_MS:
@@ -742,7 +752,7 @@ def _rebuild_upcoming():
         # PandaScore: statuses/score/winner/logos for everything not already settled (an archived
         # entry only gets the narrow Class-F score repair below).
         ps = None
-        if (not archived or m.get("resultUnknown")
+        if (not archived or m.get("resultUnknown") or not _has_result(m)
                 or (m.get("winner") and _is_placeholder_score(m.get("score")))):
             ps = _ps_enrich(m.get("teamA", ""), m.get("teamB", ""),
                             include_running=live_window, near_ms=m.get("startTime"))
@@ -787,16 +797,18 @@ def _rebuild_upcoming():
         # evidence yet (the minor-league blind spot: GRID window rotation + PS past-feed misses).
         # A resultUnknown archive is retried too — it's "ended, unresolved", not "settled".
         st = m.get("startTime")
-        if ((not archived or m.get("resultUnknown")) and st and st < now_ms - _START_SLACK_MS
+        if ((not archived or m.get("resultUnknown") or not _has_result(m)) and st and st < now_ms - _START_SLACK_MS
                 and not (gentry and gentry.get("finished")) and not (ps and ps.get("finished"))):
             ev["kalshi"] = _kalshi_winner_fuzzy(m.get("title"), m.get("teamA", ""),
                                                 m.get("teamB", ""), near_ms=st)
 
-        # A genuinely-settled archive (real winner, not resultUnknown) is frozen at S_FINISHED — no
-        # need to re-derive it every cycle. Everything else (fresh matches, and a resultUnknown
-        # archive still being retried) goes through _derive_state, which knows how to keep an
-        # unresolved carry honestly labeled S_ENDED_UNKNOWN until a real result actually lands.
-        state = S_FINISHED if (archived and not m.get("resultUnknown")) else _derive_state(m, ev, now_ms)
+        # A genuinely-settled archive (a real RESULT — winner or real score — and not resultUnknown)
+        # is frozen at S_FINISHED — no need to re-derive it every cycle. Everything else (fresh
+        # matches, a resultUnknown archive, and a resultLESS 'finished' archive still being retried)
+        # goes through _derive_state, which keeps an unresolved carry honestly labeled S_ENDED_UNKNOWN
+        # until a real result actually lands.
+        state = (S_FINISHED if (archived and not m.get("resultUnknown") and _has_result(m))
+                 else _derive_state(m, ev, now_ms))
         m["state"] = state
         m["_ev"] = ev
         m["_gswap"] = gswap
@@ -927,6 +939,20 @@ def _rebuild_upcoming():
             m2.update(finishedAt=now_ms, finished=True, resultUnknown=True,
                       winner=None, score=None)
             store[k] = m2
+
+    # Promotion freeze: an archived carry (resultUnknown, or a resultLESS 'finished') that obtained a
+    # real result THIS cycle — via the major-league past backstop or a late Kalshi settle — is written
+    # back so the store stops re-querying it AND the result survives after the tournament's feed drops
+    # (the not_started legs that anchor _major_past disappear once the event ends, taking the only
+    # re-resolution path with them). Without this the resolved EWC results would silently revert to
+    # 'result unavailable' days later when the carry re-derives with nothing to match against.
+    for m in matches:
+        if m["state"] != S_FINISHED or not _has_result(m):
+            continue
+        ex = store.get(_key(m))
+        if ex is not None and (ex.get("resultUnknown") or not _has_result(ex)):
+            ex.update(winner=m.get("winner"), score=m.get("score"),
+                      resultUnknown=False, finished=True)
 
     cutoff_ms = now_ms - 3 * 86400 * 1000
     store = {k: v for k, v in store.items() if v.get("finishedAt", 0) > cutoff_ms}

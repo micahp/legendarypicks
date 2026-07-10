@@ -122,7 +122,15 @@ def _fetch_ps(include_running=True):
     if not _ps_key():
         return []
     matches = list(_cached(_ps_cache_up, _PS_TTL_UP, lambda: _per_title("upcoming", "sort=begin_at")))
-    matches += _cached(_ps_cache_past, _PS_TTL_PAST, lambda: _per_title("past", "filter[status]=finished&sort=-end_at"))
+    # Sort the finished feed by -scheduled_at, NOT -end_at: a large slice of finished matches have a
+    # NULL end_at (never back-filled), and Postgres sorts NULLs FIRST on a DESC sort — so `-end_at`
+    # packed page 1 (per_page=100) with ~100 null-end_at rows and pushed every real same-day result to
+    # page 2+, out of our fetch window. That silently hid whole marquee tournaments (all 36 Esports
+    # World Cup Dota results, EPL, CCT South America, RES Showdown…) behind a bare "Final". scheduled_at
+    # is set at creation so it's populated for ~every match: page 1 now holds the 100 most-recently-
+    # SCHEDULED finished matches per title (~8-10 days deep even for Dota — well past our 3-day store
+    # retention). (EWC result hole, 2026-07-09.)
+    matches += _cached(_ps_cache_past, _PS_TTL_PAST, lambda: _per_title("past", "filter[status]=finished&sort=-scheduled_at"))
     if include_running:
         matches += _cached(_ps_cache_run, _PS_TTL_RUN, lambda: _ps_get("/matches/running?per_page=50"))
     # De-dup by match id (a match can appear in more than one feed at the boundary).
