@@ -397,29 +397,34 @@ def _ps_candidates(ps_id, ps_streams_by_id, running):
 @router.get("/api/esports/upcoming")
 def esports_upcoming():
     now = time.time()
-    if _up_cache["data"] is not None:
-        if now - _up_cache["t"] < _up_cache.get("ttl", 60):
-            return _up_cache["data"]
-        global _up_rebuilding, _up_rebuild_started
-        with _up_rebuild_lock:
-            stuck = _up_rebuilding and (now - _up_rebuild_started > _REBUILD_STUCK_S)
-            already = _up_rebuilding and not stuck
-            _up_rebuilding = True
-            if not already:
-                _up_rebuild_started = now
-        if not already:
-            def _bg():
-                global _up_rebuilding
-                try:
-                    _rebuild_upcoming()
-                except Exception:
-                    pass  # a failed rebuild must release the single-flight flag, never freeze the slate
-                finally:
-                    with _up_rebuild_lock:
-                        _up_rebuilding = False
-            threading.Thread(target=_bg, daemon=True).start()
+    global _up_rebuilding, _up_rebuild_started
+    # Single-flight, warm OR cold. Serve the cache when fresh; otherwise ensure AT MOST ONE rebuild
+    # runs in the background and return whatever we have (the stale board when warm, an empty
+    # "building" board on a cold start). The cold path used to call _rebuild_upcoming() inline with
+    # NO lock, so a burst of first requests (frontend poll + tab loads) each launched a full rebuild;
+    # under the GIL those concurrent rebuilds share one core and thrash the PandaScore canon index,
+    # so none finishes, the cache never warms, and the endpoint pins at 100% CPU forever (2026-07-10
+    # outage). Now cold callers kick off one rebuild and return immediately, same as the warm path.
+    if _up_cache["data"] is not None and now - _up_cache["t"] < _up_cache.get("ttl", 60):
         return _up_cache["data"]
-    return _rebuild_upcoming()
+    with _up_rebuild_lock:
+        stuck = _up_rebuilding and (now - _up_rebuild_started > _REBUILD_STUCK_S)
+        start_build = (not _up_rebuilding) or stuck
+        if start_build:
+            _up_rebuilding = True
+            _up_rebuild_started = now
+    if start_build:
+        def _bg():
+            global _up_rebuilding
+            try:
+                _rebuild_upcoming()
+            except Exception:
+                pass  # a failed rebuild must release the single-flight flag, never freeze the slate
+            finally:
+                with _up_rebuild_lock:
+                    _up_rebuilding = False
+        threading.Thread(target=_bg, daemon=True).start()
+    return _up_cache["data"] or {"matches": [], "building": True}
 
 
 # ---------------------------------------------------------------------------
