@@ -46,7 +46,7 @@ function SectionHeader({ eyebrow, title, meta, live = false }: { eyebrow: string
     <div className="space-y-2">
       <div className="flex items-end justify-between gap-3">
         <div className="space-y-1.5">
-          <Eyebrow live={live}>{eyebrow}</Eyebrow>
+          {eyebrow ? <Eyebrow live={live}>{eyebrow}</Eyebrow> : null}
           <h2 className="text-xl font-bold tracking-tight text-zinc-50">{title}</h2>
         </div>
         {meta ? <span className="shrink-0 pb-0.5 font-mono text-[10px] uppercase tracking-wider text-zinc-600">{meta}</span> : null}
@@ -458,7 +458,7 @@ function UpcomingSlate({ data }: { data: UpcomingData | null }) {
 
   return (
     <section className="space-y-5">
-      <SectionHeader eyebrow="Across esports" title="What's next" meta="bovada line" />
+      <SectionHeader eyebrow="" title="Schedule & Results" meta="favorite" />
       {data?.error ? (
         <p className="text-sm text-zinc-500">Schedule unavailable right now — retrying.</p>
       ) : data === null ? (
@@ -779,7 +779,6 @@ export default function EsportsPage() {
               </span>
             ) : null}
           </div>
-          <p className="text-sm text-zinc-400">Who wins — and the moment it turns.</p>
         </header>
 
         {/* One unified "Live now" section: MSI leads as the featured rich view when live (it's the
