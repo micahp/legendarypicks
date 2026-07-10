@@ -250,20 +250,33 @@ def _repair_logos_by_psid(m):
     _rebuild_upcoming wrote the wrong side). When the row carries a stable ``psId`` we re-enrich the
     stored team names through ``_ps_enrich`` (which returns a swapped-correct logo per side) and adopt
     its logos when they differ from what's stored — correcting a previously-flipped crest rather than
-    freezing it. No-op when there's no psId or the enrichment yields no logos."""
-    psid = m.get("psId") or m.get("_ps_id")
-    if not psid:
-        return m
+    freezing it. No-op when there's no psId or the enrichment yields no logos.
+
+    Fallback: rows WITHOUT a psId (older records predating psId persistence) still get corrected by a
+    name-based PS enrich — if PS can canonicalize both team names, re-derive each side's crest from the
+    matched canonical side so a flipped crest is fixed even when no stable id is available."""
     ta, tb = m.get("teamA", ""), m.get("teamB", "")
     if not (ta and tb):
         return m
-    ps = _ps_enrich(ta, tb, include_running=True, near_ms=m.get("startTime"),
-                    league=m.get("league"), ps_id=psid)
+    psid = m.get("psId") or m.get("_ps_id")
+    ps = None
+    if psid:
+        ps = _ps_enrich(ta, tb, include_running=True, near_ms=m.get("startTime"),
+                        league=m.get("league"), ps_id=psid)
+    if not ps:
+        # psId-less fallback: resolve on names so legacy rows still get the correct crests.
+        ps = _ps_enrich(ta, tb, include_running=True, near_ms=m.get("startTime"),
+                        league=m.get("league"))
     if not ps:
         return m
     la, lb = ps.get("logoA"), ps.get("logoB")
-    if la and lb and (la != m.get("logoA") or lb != m.get("logoB")):
-        m["logoA"], m["logoB"] = la, lb
+    ca, cb = ps.get("canonicalA"), ps.get("canonicalB")
+    if not (la and lb and ca and cb):
+        return m
+    new_a = la if _same_team(ta, ca) else (lb if _same_team(ta, cb) else m.get("logoA"))
+    new_b = lb if _same_team(tb, cb) else (la if _same_team(tb, ca) else m.get("logoB"))
+    if new_a != m.get("logoA") or new_b != m.get("logoB"):
+        m["logoA"], m["logoB"] = new_a, new_b
     return m
 
 
@@ -896,17 +909,21 @@ def _rebuild_upcoming():
             # came from a prior PS match with a different orientation — freezing flipped logos into the
             # results store (e.g. GamerLegion/Xtreme, G2/LYON). Fill each side from its own matched PS
             # opponent, confirmed against canonicalA/canonicalB.
+            # Force-correct each side's crest from the matched PS record. We do NOT gate on
+            # "already has a logo": a wrong crest baked into the base row (e.g. from a prior PS
+            # match with a different orientation) must be overwritten, not frozen. Match the row
+            # side to PS canonicalA/canonicalB so the correct logo lands on the correct side even
+            # when PS lists the pairing reversed vs the base row.
             psa, psb = ps.get("logoA"), ps.get("logoB")
             ca, cb = ps.get("canonicalA"), ps.get("canonicalB")
-            if ca and cb:
-                if _same_team(m.get("teamA", ""), ca) and not m.get("logoA"):
+            if ca and cb and psa and psb:
+                if _same_team(m.get("teamA", ""), ca):
                     m["logoA"] = psa
-                if _same_team(m.get("teamB", ""), cb) and not m.get("logoB"):
-                    m["logoB"] = psb
-                # crossed orientation: PS lists them reversed vs the row — fill the opposite sides
-                if _same_team(m.get("teamA", ""), cb) and not m.get("logoA"):
+                elif _same_team(m.get("teamA", ""), cb):
                     m["logoA"] = psb
-                if _same_team(m.get("teamB", ""), ca) and not m.get("logoB"):
+                if _same_team(m.get("teamB", ""), cb):
+                    m["logoB"] = psb
+                elif _same_team(m.get("teamB", ""), ca):
                     m["logoB"] = psa
             if ps.get("startTime") and not m.get("startTime"):
                 m["startTime"] = ps["startTime"]
