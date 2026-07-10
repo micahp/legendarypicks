@@ -120,16 +120,17 @@ _finish_seen = {}
 # Bees', 'Team Secret' vs 'Team Secret Whales', 'MIBR' vs 'MIBR LOS'. This flips the old tiny
 # blocklist (which passed everything not explicitly listed) to fail-closed: unknown suffix => split.
 # (esports/gaming/gg/team are already dropped as generic tokens, so they never reach the residual.)
-_MERGE_OK_SUFFIX = frozenset({"stars", "galaxy", "kia", "globant", "w7m", "lmap"})
+_MERGE_OK_SUFFIX = frozenset({"stars", "galaxy", "kia", "globant", "w7m"})
 
 
 def _residual_droppable(residual):
-    """True if every residual token is a droppable generic/sponsor/name suffix (or an 'lmap N'
-    map-level marker) — i.e. the affix pair is the same team. A distinct roster word => False."""
+    """True if every residual token is a droppable generic/sponsor/name suffix.
+
+    Map-market markers are deliberately NOT droppable: ``Team - LMap 2`` is a betting sub-market,
+    not another spelling of the series team, and must never merge into the real match.
+    """
     for tok in residual:
         if tok in _MERGE_OK_SUFFIX:
-            continue
-        if tok.isdigit() and "lmap" in residual:  # 'X' vs 'X - LMap 2' map-level row
             continue
         return False
     return True
@@ -204,6 +205,42 @@ def _is_subsequence(s, l):
 def _same_pair(a1, b1, a2, b2):
     return ((_same_team(a1, a2) and _same_team(b1, b2)) or
             (_same_team(a1, b2) and _same_team(b1, a2)))
+
+
+_MAP_SUFFIX_RE = re.compile(r"\s*[-–—]?\s*l?map\s*\d+\s*$", re.IGNORECASE)
+
+
+def _strip_map_suffix(name):
+    """Remove a trailing Bovada map-market marker from a display label."""
+    return _MAP_SUFFIX_RE.sub("", name or "").strip()
+
+
+def _is_map_market(m):
+    """A two-sided ``- LMap N`` row is a map betting market, not a real series match."""
+    a, b = m.get("teamA") or "", m.get("teamB") or ""
+    return bool(_MAP_SUFFIX_RE.search(a) and _MAP_SUFFIX_RE.search(b))
+
+
+_RES_ARCHIVE_LEAGUE_FIXES = {
+    frozenset({_ckey("Arch"), _ckey("Virtus.pro")}):
+        "RES Showdown Europe Fall 2026 — East European Open Qualifier",
+    frozenset({_ckey("Metanoia Wolves"), _ckey("Bounty Hunters")}):
+        "RES Showdown South America Fall 2026 — Open Qualifier #2",
+}
+
+
+def _normalize_match_metadata(m):
+    """Apply verified archive-label corrections and remove map-marker display contamination."""
+    if (m.get("league") or "").strip().lower() == "res showdown fall 2025":
+        pair = frozenset({_ckey(m.get("teamA")), _ckey(m.get("teamB"))})
+        if pair in _RES_ARCHIVE_LEAGUE_FIXES:
+            m["league"] = _RES_ARCHIVE_LEAGUE_FIXES[pair]
+    m["teamA"] = _strip_map_suffix(m.get("teamA"))
+    m["teamB"] = _strip_map_suffix(m.get("teamB"))
+    if m.get("favorite") and m["favorite"].get("name"):
+        m["favorite"] = dict(m["favorite"])
+        m["favorite"]["name"] = _strip_map_suffix(m["favorite"]["name"])
+    return m
 
 
 def _is_placeholder_score(sc):
@@ -410,18 +447,18 @@ def _fetch_bovada_rows(now_ms, stale_cutoff_ms):
                 if s > 0:
                     p0 = round(pairs[0][1] / s * 100)
                     fav = {"name": pairs[0][0] if p0 >= 50 else pairs[1][0], "pct": max(p0, 100 - p0)}
-            rows.append({
+            rows.append(_normalize_match_metadata({
                 "startTime": st, "title": _ESPORTS_TITLES[title_slug],
                 "league": _slug_to_name(league_slug),
                 "teamA": pairs[0][0], "teamB": pairs[1][0],
                 "favorite": fav, "watch": None,
                 "_origin": "bovada", "_bov_live": bool(e.get("live")),
-            })
+            }))
     return rows
 
 
 _CARRY_FIELDS = ("startTime", "title", "league", "teamA", "teamB", "favorite",
-                 "logoA", "logoB", "model", "minorLeague")
+                 "logoA", "logoB", "model", "minorLeague", "psId")
 
 
 def _carry_row(old):
@@ -439,7 +476,7 @@ def _carry_row(old):
             # ended_unknown entry re-derives as a bare S_FINISHED (implying a settled 0-0/no-winner
             # result) instead of staying honestly marked "result unavailable, still being retried".
             row["resultUnknown"] = True
-    return row
+    return _normalize_match_metadata(row)
 
 
 _ORIGIN_PRIO = {"bovada": 0, "pandascore": 1, "grid": 2, "carry": 3, "store": 4}
@@ -541,10 +578,12 @@ def _cluster(rows):
                 i, j = idxs[x], idxs[y]
                 ri, rj = rows[i], rows[j]
                 si, sj = ri.get("startTime"), rj.get("startTime")
-                if si and sj and abs(si - sj) > 8 * 3600 * 1000:
+                same_ps_id = bool(ri.get("psId") and ri.get("psId") == rj.get("psId"))
+                if not same_ps_id and si and sj and abs(si - sj) > 8 * 3600 * 1000:
                     continue  # same pair meeting twice (rematch) stays two matches
-                if (_same_pair(ri.get("teamA", ""), ri.get("teamB", ""),
-                               rj.get("teamA", ""), rj.get("teamB", ""))
+                if (same_ps_id
+                        or _same_pair(ri.get("teamA", ""), ri.get("teamB", ""),
+                                      rj.get("teamA", ""), rj.get("teamB", ""))
                         or _same_match_relaxed(ri, rj)):
                     pi, pj = find(i), find(j)
                     if pi != pj:
@@ -711,6 +750,8 @@ def _rebuild_upcoming():
     # Carry: identity-only survivors of a Bovada drop (window-gated as before).
     fresh_pairs = [(r["title"], r["teamA"], r["teamB"], r.get("startTime")) for r in rows]
     for old in prev_matches:
+        if _is_map_market(old):
+            continue
         st = old.get("startTime")
         if not ((st and st > stale_cutoff_ms) or old.get("finishedAt")):
             continue
@@ -721,7 +762,16 @@ def _rebuild_upcoming():
             rows.append(_carry_row(old))
 
     # Durable results store.
-    store = _load_results_store()
+    raw_store = _load_results_store()
+    store = {}
+    for stored in raw_store.values():
+        if _is_map_market(stored):
+            continue  # stale Bovada map markets are not matches and must age out immediately
+        stored = _normalize_match_metadata(dict(stored))
+        key = _key(stored)
+        current = store.get(key)
+        if current is None or (_has_result(stored) and not _has_result(current)):
+            store[key] = stored
     have_keys = {_key(r) for r in rows}
     for k, v in store.items():
         if k not in have_keys:
@@ -760,6 +810,32 @@ def _rebuild_upcoming():
     except Exception:
         pass
 
+    # Reconcile unresolved archives BEFORE clustering. Persisted PandaScore ids make this exact on
+    # future cycles; the league-scoped fallback bootstraps older rows that predate psId persistence.
+    # A postponed fixture must move back to Scheduled at its new time, not become a false Final at
+    # the abandoned time (United21 LEO v Prestige Academy, shifted by ~51h on 2026-07-09).
+    for row in rows:
+        if not (row.get("finishedAt") and row.get("resultUnknown")):
+            continue
+        old_key = _key(row)
+        ps = _ps_enrich(row.get("teamA", ""), row.get("teamB", ""),
+                        include_running=live_window, near_ms=row.get("startTime"),
+                        league=row.get("league"), ps_id=row.get("psId"),
+                        allow_reschedule=True)
+        if not ps:
+            continue
+        row["psId"] = ps.get("_ps_id")
+        ps_start = ps.get("startTime")
+        if (not ps.get("live") and not ps.get("finished") and ps_start
+                and ps_start > now_ms - _START_SLACK_MS):
+            row["startTime"] = ps_start
+            row["teamA"] = ps.get("canonicalA") or row.get("teamA")
+            row["teamB"] = ps.get("canonicalB") or row.get("teamB")
+            for field in ("finishedAt", "finished", "resultUnknown", "state", "winner", "score"):
+                row.pop(field, None)
+            row["_origin"] = "carry"
+            store.pop(old_key, None)
+
     matches = _cluster(rows)
 
     # ---------------- evidence + state ----------------
@@ -782,10 +858,12 @@ def _rebuild_upcoming():
         if (not archived or m.get("resultUnknown") or not _has_result(m)
                 or (m.get("winner") and _is_placeholder_score(m.get("score")))):
             ps = _ps_enrich(m.get("teamA", ""), m.get("teamB", ""),
-                            include_running=live_window, near_ms=m.get("startTime"))
+                            include_running=live_window, near_ms=m.get("startTime"),
+                            league=m.get("league"), ps_id=m.get("psId"))
         ev["ps"] = ps
         if ps:
             m["_ps_id"] = ps.get("_ps_id")
+            m["psId"] = ps.get("_ps_id")
             if ps.get("logoA") and not m.get("logoA"):
                 m["logoA"], m["logoB"] = ps["logoA"], ps.get("logoB")
             if ps.get("startTime") and not m.get("startTime"):
@@ -978,10 +1056,11 @@ def _rebuild_upcoming():
         ex = store.get(_key(m))
         if ex is not None and (ex.get("resultUnknown") or not _has_result(ex)):
             ex.update(winner=m.get("winner"), score=m.get("score"),
-                      resultUnknown=False, finished=True)
+                      resultUnknown=False, finished=True, psId=m.get("psId"))
 
     cutoff_ms = now_ms - 3 * 86400 * 1000
-    store = {k: v for k, v in store.items() if v.get("finishedAt", 0) > cutoff_ms}
+    store = {_key(v): _normalize_match_metadata(v) for v in store.values()
+             if not _is_map_market(v) and v.get("finishedAt", 0) > cutoff_ms}
     _save_results_store(store)
 
     # ---------------- logo backfill (unchanged mechanism) ----------------
@@ -1042,6 +1121,7 @@ def _rebuild_upcoming():
             # via a fresh grid/ps/kalshi result, or even back to S_LIVE on a genuine rematch) — clear
             # the stale flag so the output isn't self-contradictory (finished+resultUnknown+a winner).
             m["resultUnknown"] = False
+        _normalize_match_metadata(m)
         for k in [kk for kk in m if kk.startswith("_")]:
             m.pop(k, None)
         out_matches.append(m)

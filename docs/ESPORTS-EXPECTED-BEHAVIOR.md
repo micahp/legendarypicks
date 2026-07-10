@@ -173,15 +173,28 @@ Bovada markets + no stream rules) is guarded so the filter doesn't silently dele
 
 ---
 
-## 5. LMap 2 rows
+## 5. LMap 2 map-market rows — PURGED (2026-07-09)
 
 Bovada lists per-map betting lines as separate events (`Power Ranger - LMap 2 vs GamerLegion -
 LMap 2`) — sub-match markets, not matches (they rendered as phantom rows with absurd ~95% favorites).
-They are filtered on the live Bovada path (`slate.py`, regex `\bl?map\s*\d` on the description). Any
-`- LMap 2` rows still visible are **stale carried/archived rows** aging out of the 3-day results
-store — they have no series result, so they show as blank/`ended_unknown` in Results, and their team
-names keep the abbreviation (`LVLUP - LMap 2`). These are the same games we "have no result for."
-TODO: also strip the `- LMap N` suffix / drop these from the archive path so they don't linger.
+They are filtered on the live Bovada path (`slate.py`, regex `\bl?map\s*\d` on the description).
+
+The archive/stale form is now handled too (was the TODO below). A row whose **both** `teamA` and
+`teamB` carry a trailing `- LMap N` marker is a two-sided map market (`_is_map_market`) and is:
+- dropped from the carry path and excluded from the results store entirely (no lingering phantom
+  Results rows), and
+- stripped of the `- LMap N` suffix on every display label — `teamA`/`teamB` and
+  `favorite.name` — via `_strip_map_suffix` inside `_normalize_match_metadata`.
+
+Two residual forms existed at audit time and both are now removed from emitted output:
+1. ~6 stale two-sided map-market rows (e.g. `Poor Rangers - LMap 2` vs another `- LMap 2` team).
+2. ~20 legitimate EWC series rows whose `favorite.name` was contaminated with `- LMap 2` while the
+   team names were clean — only the favorite label is sanitized; the series row itself is preserved.
+
+Invariant after this fix: **no emitted `teamA`, `teamB`, or `favorite.name` contains `LMap`**, and
+**no two-sided `- LMap N` row is emitted as a match**. The map-market affix is deliberately NO LONGER
+in `_MERGE_OK_SUFFIX` — `Team - LMap 2` must never merge into the real series team; it is dropped,
+not merged.
 
 ---
 
@@ -214,8 +227,46 @@ TODO: also strip the `- LMap N` suffix / drop these from the archive path so the
   and `Hero Jiujing v SYF` (PS: `Hero JiuJing` / `SYGaming`) WITHOUT changing the global
   `MIBR ≠ MIBR LOS` identity rule. Final verified count: **40 → 4** bare Finals.
   - The **4 genuine PS gaps** are United21 (`Prestige v Vasteras`, `Leo Team v Prestige`) and RES
-    Showdown Fall 2025 phantoms (`Arch v Virtus.pro`, `Metanoia v Bounty Hunters`). Those exact
-    pairings are not in PandaScore at all. Correct behavior is "result unavailable" (§4).
+    Showdown Fall 2025 phantoms (`Arch v Virtus.pro`, `Metanoia v Bounty Hunters`). As of 2026-07-09
+    the first two are RESOLVED against PandaScore (see below); the two RES qualifiers remain genuine
+    gaps — absent from PandaScore entirely — and are correctly labeled "result unavailable" (§4).
+
+### 6a. Stable `psId` reschedule reconciliation (2026-07-09)
+
+A carried/store row that carries a persisted PandaScore match id (`psId`) is reconciled by that id
+first, bypassing the normal 36-hour `_NEAR_TOL_MS` match window. This lets a single real-world match
+move far beyond its originally-scheduled time (reschedules, postponements) and still re-link to the
+same authoritative PandaScore fixture. `_ps_enrich` now accepts `ps_id` and `_ps_indexed` ranks a
+same-id candidate above any time-proximity candidate.
+
+- **Postponed fixture → Scheduled.** When the PS match is `not_started`/`not started` and within a 7-day
+  window of the carried row's time, clustering + the pre-cluster reconciliation step update the row to
+  its new start time, adopt PS canonical names, and **clear the false-final fields** (`finishedAt`,
+  `finished`, `resultUnknown`, `state`, `winner`, `score`) so it returns to Scheduled instead of a
+  phantom Final. Verified: United21 `LEO v Prestige Academy` (PS id `1568951`), shifted ~51h.
+- **Stable-id cluster.** `_cluster` unions two rows that share a `psId` even if their start times differ
+  by more than the 8h rematch guard — the id is authoritative.
+
+### 6b. Fixture-scoped United21 Prestige bridge (2026-07-09)
+
+`_ps_league_compatible` recognizes the United21 family narrowly (Bovada `United 21` / `United21 Season
+52 …` vs PS `league`+`serie`+`tournament`) and REJECTS conflicting season numbers. When the fixture
+matches, `_ps_enrich` allows ONE matched opponent to bridge a source-label variation such as
+`Prestige Esports` ↔ `Prestige Academy` — but only within that exact fixture, never as a global team
+alias (§2 guards still separate the squads everywhere else). Verified: `Prestige Esports v Vasteras
+Esport` → finished PS `Prestige Academy 1-2 Västerås` (id `1568949`), winner B.
+
+### 6c. RES 2026 qualifier identities corrected (2026-07-09)
+
+The two RES Showdown fixtures were mislabeled `RES Showdown Fall 2025` in the local archive. Their
+event identity is corrected to the verified 2026 qualifiers via `_normalize_match_metadata`
+(`_RES_ARCHIVE_LEAGUE_FIXES`):
+- `Arch v Virtus.pro` → `RES Showdown Europe Fall 2026 — East European Open Qualifier`.
+- `Metanoia Wolves v Bounty Hunters` → `RES Showdown South America Fall 2026 — Open Qualifier #2`.
+
+Both remain `resultUnknown` (shown as "result unavailable" once the frontend labels it, §6) — they
+are absent from PandaScore. **Qualifier-result sourcing (DRAFT5/Liquipedia) is explicitly OPEN and
+DEFERRED** — do NOT add a new results source without user approval (guardrail in `HANDOFF`).
 
 ---
 
@@ -241,12 +292,21 @@ already covers spelling variants (0 index-level naming misses in the same audit)
 ---
 
 ## 8. Known open follow-ups
-- LMap `- LMap N` rows: strip suffix / drop from archive so they don't linger in Results (§5).
+- ~~LMap `- LMap N` rows: strip suffix / drop from archive~~ — DONE 2026-07-09 (§5: `_is_map_market`
+  drops two-sided map rows from carry + store; `_strip_map_suffix` sanitizes `teamA`/`teamB`/`favorite.name`).
+- **LEO/Prestige Academy duplicate card.** Two source rows (Bovada `Leo Team v Prestige` and PS
+  `LEO v Prestige Academy`, both `psId=1568951`) emit as TWO separate Scheduled cards despite sharing
+  a stable `psId` and identical start time — `_cluster` should union them (the `same_ps_id` branch
+  does NOT reliably fire for a Bovada+PS twin pair). Not yet confirmed in the matcher suite; flagged
+  2026-07-09. Same latent issue leaves a stale `resultUnknown` store key (`Leo Team||Prestige||…`)
+  un-popped. Both symptoms trace to the same psId-twin clustering gap.
 - ~~EWC/minor-league result resolution; relabel `finished`-no-result → `ended_unknown`~~ — DONE
   2026-07-09 (§6: `past` feed `sort=-scheduled_at` fix + `_has_result` relabel/promotion-freeze).
 - ~~Name bridges for `_ps_enrich`~~ — DONE 2026-07-09. Shared `_canon_team_x` aliases plus per-side
   lexical-or-canonical evidence resolve AG.AL and SYGaming without merging MIBR/MIBR LOS globally (§6).
 - ~~`Imperial v LP` / `Imperial v largadosypelados` dup~~ — DONE 2026-07-09. Same normalized league
   + same time + one strict team match scopes the identity to that fixture; `LP` is not a global alias (§2).
+- ~~RES 2026 qualifier label correction + Prestige/United21 fixture bridge + stable-psId reschedule
+  reconciliation~~ — DONE 2026-07-09 (§6a/§6b/§6c).
 - Frontend: render a "result unavailable" label for `resultUnknown` (§6).
 - Logo negative-cache expiry; optional EWC/tournament logo source for Poor-Rangers-class gaps (§7).

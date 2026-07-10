@@ -36,18 +36,21 @@ def _row(team_a, team_b, league, start=1_783_500_000_000, origin="bovada"):
     }
 
 
-def _indexed_match(team_a, team_b, scheduled_at, score_a, score_b, winner="a"):
+def _indexed_match(team_a, team_b, scheduled_at, score_a, score_b, winner="a",
+                   league="Regression League", serie=None, tournament=None, status="finished"):
     op0 = {"id": 101, "name": team_a, "acronym": None, "slug": None}
     op1 = {"id": 202, "name": team_b, "acronym": None, "slug": None}
     match = {
         "id": 9001,
-        "status": "finished",
+        "status": status,
         "scheduled_at": scheduled_at,
         "opponents": [{"opponent": op0}, {"opponent": op1}],
         "results": [{"team_id": 101, "score": score_a}, {"team_id": 202, "score": score_b}],
-        "winner_id": 101 if winner == "a" else 202,
+        "winner_id": 101 if winner == "a" else 202 if winner == "b" else None,
         "streams_list": [],
-        "league": {"name": "Regression League"},
+        "league": {"name": league},
+        "serie": {"full_name": serie} if serie else None,
+        "tournament": {"name": tournament} if tournament else None,
     }
     n0, n1 = pandascore._ps_names(op0), pandascore._ps_names(op1)
     tk0 = [t for t in (pandascore._tokset(n) for n in n0) if t]
@@ -84,6 +87,7 @@ def _team_policy_assertions():
         ("ex-Marsborne", "Marsborne"),
         ("ex-Vexa", "Vexa"),
         ("LP", "largadosypelados"),
+        ("Team Liquid", "Team Liquid - LMap 2"),
     ]
     for left, right in positives:
         _assert(slate._same_team(left, right), f"team aliases merge: {left} == {right}")
@@ -107,6 +111,13 @@ def _match_scope_assertions():
             and clustered[0].get("resultUnknown") is False,
             "resolved full-name twin promotes an unknown LP archive")
 
+    old_fixture = _row("Leo Team", "Prestige", "United 21")
+    new_fixture = _row("LEO", "Prestige Academy", "United21 Season 52 (Group B)",
+                       start=old_fixture["startTime"] + 2 * 86400 * 1000, origin="pandascore")
+    old_fixture["psId"] = new_fixture["psId"] = 1568951
+    _assert(len(slate._cluster([old_fixture, new_fixture])) == 1,
+            "stable PandaScore id clusters a rescheduled fixture across time drift")
+
     different_series = _row("Imperial", "largadosypelados",
                             "CCT 2026 South America Series 4 (Playoffs)", origin="carry")
     _assert(not slate._same_match_relaxed(lp, different_series),
@@ -123,6 +134,20 @@ def _match_scope_assertions():
     departed = _row("Shared Opponent", "ex-Marsborne", league_b, origin="carry")
     _assert(not slate._same_match_relaxed(org, departed),
             "same-league fallback keeps departed rosters distinct")
+
+    map_row = _row("Team Liquid - LMap 2", "LVLUP - LMap 2", "Esports World Cup 26")
+    _assert(slate._is_map_market(map_row), "two-sided LMap row is identified as a map market")
+    _assert(slate._strip_map_suffix("Team Liquid - LMap 2") == "Team Liquid",
+            "LMap suffix is removed from display labels")
+
+    res_eu = _row("Arch", "Virtus.pro", "Res Showdown Fall 2025")
+    slate._normalize_match_metadata(res_eu)
+    _assert(res_eu["league"] == "RES Showdown Europe Fall 2026 — East European Open Qualifier",
+            "Arch/VP archive receives the verified 2026 European qualifier label")
+    res_sa = _row("Metanoia Wolves", "Bounty Hunters", "Res Showdown Fall 2025")
+    slate._normalize_match_metadata(res_sa)
+    _assert(res_sa["league"] == "RES Showdown South America Fall 2026 — Open Qualifier #2",
+            "Metanoia/Bounty archive receives the verified 2026 South American qualifier label")
 
 
 def _pandascore_assertions():
@@ -150,6 +175,29 @@ def _pandascore_assertions():
         _assert(pandascore._ps_enrich("Hero Jiujing", "SYF", include_running=False,
                                      near_ms=too_far) is None,
                 "PS alias matching still obeys the rematch time guard")
+
+        united = _indexed_match("Prestige Academy", "Västerås", scheduled, 1, 2, winner="b",
+                                league="United21", serie="Season 52 2026",
+                                tournament="Group B")
+        pandascore._ps_indexed = lambda include_running: [united]
+        result = pandascore._ps_enrich("Prestige Esports", "Vasteras Esport",
+                                      include_running=False, near_ms=near_ms + 10 * 60 * 1000,
+                                      league="United21 Season 52 (Group Stage)")
+        _assert(result is not None and result["winner"] == "b"
+                and result["score"] == {"a": 1, "b": 2},
+                "United21 fixture scope bridges Prestige Esports/Academy")
+
+        future = "2026-07-11T18:00:00Z"
+        rescheduled = _indexed_match("LEO", "Prestige Academy", future, 0, 0, winner=None,
+                                     league="United21", serie="Season 52 2026",
+                                     tournament="Group B", status="not_started")
+        pandascore._ps_indexed = lambda include_running: [rescheduled]
+        result = pandascore._ps_enrich("Leo Team", "Prestige", include_running=False,
+                                      near_ms=near_ms, league="United 21",
+                                      allow_reschedule=True)
+        _assert(result is not None and not result["live"] and not result["finished"]
+                and result["startTime"] == pandascore._iso_to_ms(future),
+                "United21 postponed fixture can reconcile beyond the normal time guard")
     finally:
         pandascore._ps_indexed = original
 

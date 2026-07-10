@@ -302,6 +302,39 @@ def _tokset(s):
     return {t for t in _TOK_RE.split(s or "") if len(t) >= 3}
 
 
+def _ps_league_compatible(slate_league, match):
+    """Narrow fixture-level league bridge for United21's inconsistent source labels.
+
+    Bovada emits ``United 21`` / ``United21 Season 52 (Group Stage)`` while PandaScore splits the
+    same identity across league/serie/tournament fields. This is intentionally NOT a general fuzzy
+    league matcher: it only recognizes the United21 family and rejects conflicting season numbers.
+    """
+    from .common import _fold
+
+    def _norm(value):
+        value = re.sub(r"\bunited\s*21\b", "united21", _fold(value or "").lower())
+        return re.findall(r"[a-z0-9]+", value)
+
+    source_tokens = _norm(slate_league)
+    ps_text = " ".join(filter(None, [
+        (match.get("league") or {}).get("name"),
+        (match.get("serie") or {}).get("full_name"),
+        (match.get("tournament") or {}).get("name"),
+    ]))
+    target_tokens = _norm(ps_text)
+    if "united21" not in source_tokens or "united21" not in target_tokens:
+        return False
+
+    def _season(tokens):
+        for i, token in enumerate(tokens[:-1]):
+            if token == "season" and tokens[i + 1].isdigit():
+                return tokens[i + 1]
+        return None
+
+    source_season, target_season = _season(source_tokens), _season(target_tokens)
+    return not (source_season and target_season and source_season != target_season)
+
+
 def _ps_indexed(include_running):
     # _fetch_ps() rebuilds a brand-new list object (list(...) + dedup pass) on EVERY call, even
     # when the underlying _ps_cache_* entries are still warm — so id() of its return value is
@@ -335,7 +368,8 @@ def _ps_indexed(include_running):
     return out
 
 
-def _ps_enrich(team_a, team_b, include_running=True, near_ms=None):
+def _ps_enrich(team_a, team_b, include_running=True, near_ms=None, league=None, ps_id=None,
+               allow_reschedule=False):
     """Look up a match on PandaScore by fuzzy team-name match. Returns the authoritative status/
     score/winner + logos/canonical names/startTime, or None if no match found.
 
@@ -380,7 +414,8 @@ def _ps_enrich(team_a, team_b, include_running=True, near_ms=None):
     # falsely finished). When we know the fixture's time (`near_ms`), require the PandaScore match to
     # be within a day-ish of it and pick the CLOSEST — that disambiguates same-team collisions.
     NEAR_TOL_MS = 36 * 3600 * 1000
-    best = None  # (time_delta, match_dict, swapped)
+    RESCHEDULE_TOL_MS = 7 * 86400 * 1000
+    best = None  # ((id_priority, time_delta), match_dict, swapped)
     for m, op0, op1, n0, n1, tk0, tk1, cs0, cs1 in _ps_indexed(include_running):
         # Each side may use its strongest evidence independently. This matters when one side is a
         # lexical variant (MIBR <-> MIBR LOS) while the other needs an explicit cross-source alias
@@ -391,16 +426,28 @@ def _ps_enrich(team_a, team_b, include_running=True, near_ms=None):
         a1 = _hits(na, bta, n1, tk1) or _canon_hit(ca, cs1)
         b0 = _hits(nb, btb, n0, tk0) or _canon_hit(cb, cs0)
         b1 = _hits(nb, btb, n1, tk1) or _canon_hit(cb, cs1)
-        ab = a0 and b1
-        ba = a1 and b0
+        league_fixture = _ps_league_compatible(league, m)
+        # Fixture-scoped fallback: same United21 season/time plus ONE matched opponent is enough to
+        # bridge a source label such as Prestige Esports <-> Prestige Academy. It does not change
+        # global team identity; outside this exact fixture those squads remain distinct.
+        ab = (a0 and b1) or (league_fixture and (a0 or b1))
+        ba = (a1 and b0) or (league_fixture and (a1 or b0))
+        same_id = ps_id is not None and m.get("id") == ps_id
         if not (ab or ba):
-            continue
+            if not same_id:
+                continue
+            ab = True  # a stable source id is authoritative; preserve the stored orientation
         begin_ms = _iso_to_ms(m.get("begin_at") or m.get("scheduled_at"))
         delta = abs(begin_ms - near_ms) if (near_ms and begin_ms) else 0
-        if near_ms and begin_ms and delta > NEAR_TOL_MS:
+        status = (m.get("status") or "").lower()
+        rescheduled = (allow_reschedule and league_fixture
+                       and status in ("not_started", "not started")
+                       and delta <= RESCHEDULE_TOL_MS)
+        if near_ms and begin_ms and delta > NEAR_TOL_MS and not (same_id or rescheduled):
             continue  # same team names, but a different match at a different time — not this one
-        if best is None or delta < best[0]:
-            best = (delta, m, ba and not ab)
+        rank = (0 if same_id else 1, delta)
+        if best is None or rank < best[0]:
+            best = (rank, m, ba and not ab)
 
     if best is None:
         return None
