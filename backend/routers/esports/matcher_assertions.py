@@ -15,7 +15,7 @@ import sys
 BACKEND = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, BACKEND)
 
-from routers.esports import pandascore, slate  # noqa: E402
+from routers.esports import match_identity, pandascore, slate_state  # noqa: E402
 from routers.esports.common import _canon_team_x  # noqa: E402
 
 
@@ -90,9 +90,9 @@ def _team_policy_assertions():
         ("Team Liquid", "Team Liquid - LMap 2"),
     ]
     for left, right in positives:
-        _assert(slate._same_team(left, right), f"team aliases merge: {left} == {right}")
+        _assert(match_identity._same_team(left, right), f"team aliases merge: {left} == {right}")
     for left, right in negatives:
-        _assert(not slate._same_team(left, right), f"distinct teams stay split: {left} != {right}")
+        _assert(not match_identity._same_team(left, right), f"distinct teams stay split: {left} != {right}")
 
 
 def _match_scope_assertions():
@@ -104,8 +104,8 @@ def _match_scope_assertions():
               winner=None, score=None)
     full.update(finishedAt=1_783_505_000_000, finished=True, resultUnknown=False,
                 winner="a", score={"a": 2, "b": 0})
-    _assert(slate._same_match_relaxed(lp, full), "LP merges only at same league and time")
-    clustered = slate._cluster([lp, full])
+    _assert(slate_state._same_match_relaxed(lp, full), "LP merges only at same league and time")
+    clustered = slate_state._cluster([lp, full])
     _assert(len(clustered) == 1, "LP duplicate clusters to one card")
     _assert(clustered[0].get("winner") == "a" and clustered[0].get("score") == {"a": 2, "b": 0}
             and clustered[0].get("resultUnknown") is False,
@@ -115,37 +115,37 @@ def _match_scope_assertions():
     new_fixture = _row("LEO", "Prestige Academy", "United21 Season 52 (Group B)",
                        start=old_fixture["startTime"] + 2 * 86400 * 1000, origin="pandascore")
     old_fixture["psId"] = new_fixture["psId"] = 1568951
-    _assert(len(slate._cluster([old_fixture, new_fixture])) == 1,
+    _assert(len(slate_state._cluster([old_fixture, new_fixture])) == 1,
             "stable PandaScore id clusters a rescheduled fixture across time drift")
 
     different_series = _row("Imperial", "largadosypelados",
                             "CCT 2026 South America Series 4 (Playoffs)", origin="carry")
-    _assert(not slate._same_match_relaxed(lp, different_series),
+    _assert(not slate_state._same_match_relaxed(lp, different_series),
             "LP does not merge across different league series")
     late = _row("Imperial", "largadosypelados", league_b,
-                start=lp["startTime"] + slate._RELAXED_MERGE_MS + 1, origin="carry")
-    _assert(not slate._same_match_relaxed(lp, late), "LP does not merge outside the time window")
+                start=lp["startTime"] + slate_state._RELAXED_MERGE_MS + 1, origin="carry")
+    _assert(not slate_state._same_match_relaxed(lp, late), "LP does not merge outside the time window")
 
     main = _row("Shared Opponent", "FaZe", league_a)
     academy = _row("Shared Opponent", "FaZe Academy", league_b, origin="carry")
-    _assert(not slate._same_match_relaxed(main, academy),
+    _assert(not slate_state._same_match_relaxed(main, academy),
             "same-league fallback keeps academy squads distinct")
     org = _row("Shared Opponent", "Marsborne", league_a)
     departed = _row("Shared Opponent", "ex-Marsborne", league_b, origin="carry")
-    _assert(not slate._same_match_relaxed(org, departed),
+    _assert(not slate_state._same_match_relaxed(org, departed),
             "same-league fallback keeps departed rosters distinct")
 
     map_row = _row("Team Liquid - LMap 2", "LVLUP - LMap 2", "Esports World Cup 26")
-    _assert(slate._is_map_market(map_row), "two-sided LMap row is identified as a map market")
-    _assert(slate._strip_map_suffix("Team Liquid - LMap 2") == "Team Liquid",
+    _assert(match_identity._is_map_market(map_row), "two-sided LMap row is identified as a map market")
+    _assert(match_identity._strip_map_suffix("Team Liquid - LMap 2") == "Team Liquid",
             "LMap suffix is removed from display labels")
 
     res_eu = _row("Arch", "Virtus.pro", "Res Showdown Fall 2025")
-    slate._normalize_match_metadata(res_eu)
+    match_identity._normalize_match_metadata(res_eu)
     _assert(res_eu["league"] == "RES Showdown Europe Fall 2026 — East European Open Qualifier",
             "Arch/VP archive receives the verified 2026 European qualifier label")
     res_sa = _row("Metanoia Wolves", "Bounty Hunters", "Res Showdown Fall 2025")
-    slate._normalize_match_metadata(res_sa)
+    match_identity._normalize_match_metadata(res_sa)
     _assert(res_sa["league"] == "RES Showdown South America Fall 2026 — Open Qualifier #2",
             "Metanoia/Bounty archive receives the verified 2026 South American qualifier label")
 

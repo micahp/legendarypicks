@@ -25,7 +25,7 @@ type CS2Player = { name: string; kills: number | null; deaths: number | null }
 type CS2Team = { name: string; score: number | null; won: boolean; players: CS2Player[] }
 type CS2Live = { live: boolean; title?: string; tournament?: string; stream?: { platform: string; channel: string } | null; teamA?: CS2Team; teamB?: CS2Team }
 
-type UpMatch = { startTime: number | null; live: boolean; title: string; league: string; teamA: string; teamB: string; favorite: { name: string; pct: number } | null; watch: { platform: string; url: string; channel: string | null; online?: boolean | null; embedUrl?: string | null; alternates?: Array<{ platform: string; url: string; channel: string | null; online?: boolean | null; embedUrl?: string | null }> } | null; score?: { a: number | null; b: number | null } | null; finished?: boolean | null; winner?: 'a' | 'b' | null; pinned?: boolean; model?: { favName: string; modelPct: number; marketPct: number | null; edge: number | null } | null; logoA?: string | null; logoB?: string | null; minorLeague?: boolean; tier?: number; prominence?: number }
+type UpMatch = { startTime: number | null; live: boolean; title: string; league: string; teamA: string; teamB: string; favorite: { name: string; pct: number } | null; watch: { platform: string; url: string; channel: string | null; online?: boolean | null; embedUrl?: string | null; alternates?: Array<{ platform: string; url: string; channel: string | null; online?: boolean | null; embedUrl?: string | null }> } | null; score?: { a: number | null; b: number | null } | null; finished?: boolean | null; winner?: 'a' | 'b' | null; pinned?: boolean; model?: { favName: string; modelPct: number; marketPct: number | null; edge: number | null } | null; logoA?: string | null; logoB?: string | null; minorLeague?: boolean; tier?: number; prominence?: number; psId?: number | string | null }
 type UpcomingData = { matches: UpMatch[]; source?: string; error?: string }
 
 const POLL_MS = 10_000
@@ -149,6 +149,18 @@ function LiveStatTeam({ t, lead }: { t: LiveTeam; lead: boolean }) {
   )
 }
 
+function PanelLayoutIcon({ panel }: { panel: 'below' | 'right' }) {
+  return (
+    <svg viewBox="0 0 20 20" aria-hidden="true" className="h-3.5 w-3.5" fill="none"
+         stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+      <rect x="2.5" y="3" width="15" height="14" rx="2" />
+      {panel === 'below'
+        ? <path d="M3 12.5h14" />
+        : <path d="M12.5 3.5v13" />}
+    </svg>
+  )
+}
+
 function LiveMSI({ m }: { m: LiveMatch }) {
   const a = m.teamA, b = m.teamB
   const hasState = a?.gold != null && b?.gold != null
@@ -159,19 +171,29 @@ function LiveMSI({ m }: { m: LiveMatch }) {
   // page host, so read it at runtime — works on the tunnel, localhost, and prod alike.
   const [host, setHost] = useState('')
   const [source, setSource] = useState<'youtube' | 'twitch'>('youtube')
-  useEffect(() => { setHost(window.location.hostname) }, [])
+  const [stateBelow, setStateBelow] = useState(true)
+  useEffect(() => {
+    setHost(window.location.hostname)
+    setStateBelow(window.localStorage.getItem('esports-msi-game-state-layout') !== 'right')
+  }, [])
   const ytEmbed = m.youtube ? `https://www.youtube.com/embed/${m.youtube}?autoplay=1&mute=1` : null
   const twEmbed = (m.twitch && host) ? `https://player.twitch.tv/?channel=${m.twitch}&parent=${host}&muted=true` : null
   // YouTube is the primary stream; Twitch is the fallback (auto when there's no YouTube, or one tap if YT blocks embedding).
   const useTwitch = source === 'twitch' && !!twEmbed
   const embed = useTwitch ? twEmbed : (ytEmbed ?? twEmbed)
+  const toggleStateLayout = () => {
+    const next = !stateBelow
+    setStateBelow(next)
+    window.localStorage.setItem('esports-msi-game-state-layout', next ? 'below' : 'right')
+  }
 
   return (
     <section className="space-y-4">
       <SectionHeader live eyebrow={`Live now · MSI 2026 · Game ${m.gameNumber} · Bo${m.bestOf}`} title={`${a?.name ?? ''} vs ${b?.name ?? ''}`} />
       <SeriesStrip m={m} />
 
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px]">
+      <div data-game-state-layout={stateBelow ? 'below' : 'right'}
+           className={`grid gap-5 ${stateBelow ? '' : 'lg:grid-cols-[minmax(0,1fr)_340px]'}`}>
         <div className="space-y-2">
           <div className="overflow-hidden rounded-xl border border-zinc-800 bg-black">
             {embed ? (
@@ -195,7 +217,17 @@ function LiveMSI({ m }: { m: LiveMatch }) {
         <aside className="space-y-3">
           <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-4">
             <div className="flex items-center justify-between text-[10px] font-medium uppercase tracking-[0.18em] text-zinc-500">
-              <span>Live game state</span><span className="font-mono">lolesports</span>
+              <span>Live game state</span>
+              <div className="flex items-center gap-2 font-mono">
+                <span>lolesports</span>
+                <span className="hidden text-zinc-700 lg:inline">·</span>
+                <button onClick={toggleStateLayout} aria-pressed={stateBelow}
+                        aria-label={stateBelow ? 'Dock game state to the right' : 'Move game state below the player'}
+                        title={stateBelow ? 'Dock game state to the right' : 'Move game state below the player'}
+                        className="hidden h-6 w-6 items-center justify-center rounded border border-zinc-700 text-zinc-400 hover:border-emerald-500/60 hover:text-emerald-400 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-emerald-400 lg:inline-flex">
+                  <PanelLayoutIcon panel={stateBelow ? 'right' : 'below'} />
+                </button>
+              </div>
             </div>
             {hasState ? (
               <div className="mt-3">
@@ -589,7 +621,13 @@ function embedSrcFor(s: { platform: string; channel: string | null; embedUrl?: s
   return null
 }
 
-function LiveCard({ m, host, featured = false }: { m: UpMatch; host: string; featured?: boolean }) {
+function liveMatchKey(m: UpMatch) {
+  return m.psId != null
+    ? `ps:${m.psId}`
+    : `${m.title}|${m.teamA}|${m.teamB}|${m.startTime ?? 'unknown'}`
+}
+
+function LiveCard({ m, host, featured = false, onPromote }: { m: UpMatch; host: string; featured?: boolean; onPromote?: () => void }) {
   const [open, setOpen] = useState(false)
   const [srcIdx, setSrcIdx] = useState(0)
   // Every embeddable stream for this match — the primary `watch` plus its `alternates` — one per
@@ -616,7 +654,8 @@ function LiveCard({ m, host, featured = false }: { m: UpMatch; host: string; fea
   // Non-featured cards mount the player on tap (so we don't autoplay every stream at once).
   const toggle = () => setOpen(o => !o)
   return (
-    <div className={`overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900/50 ${featured ? 'sm:col-span-2' : ''}`}>
+    <div data-live-match={liveMatchKey(m)} data-featured={featured ? 'true' : 'false'}
+         className={`overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900/50 ${featured ? 'sm:col-span-2' : ''}`}>
       <div className="p-4">
         <div className="mb-2">
           <Eyebrow live>{m.title} · {m.league}</Eyebrow>
@@ -649,9 +688,29 @@ function LiveCard({ m, host, featured = false }: { m: UpMatch; host: string; fea
           </div>
         ) : featured ? null : (
           <div className="mt-3 font-mono text-[11px] uppercase tracking-wider">
-            <button onClick={toggle} className="text-emerald-400 hover:text-emerald-300 focus-visible:outline-none">
-              {open ? 'hide stream ▴' : 'watch here ▾'}
-            </button>
+            {onPromote ? (
+              <>
+                <button onClick={toggle} aria-label={`${open ? 'Hide' : 'Watch'} ${m.teamA} vs ${m.teamB}`}
+                        className="text-emerald-400 hover:text-emerald-300 focus-visible:outline-none sm:hidden">
+                  {open ? 'hide stream ▴' : 'watch here ▾'}
+                </button>
+                <div className="hidden flex-col items-start gap-1.5 sm:flex">
+                  <button onClick={onPromote} aria-label={`Feature ${m.teamA} vs ${m.teamB}`}
+                          className="text-emerald-400 hover:text-emerald-300 focus-visible:outline-none">
+                    watch in featured player ↑
+                  </button>
+                  <button onClick={toggle} aria-label={`${open ? 'Hide' : 'Show'} preview for ${m.teamA} vs ${m.teamB}`}
+                          className="text-zinc-500 hover:text-zinc-300 focus-visible:outline-none">
+                    {open ? 'hide preview ▴' : 'show preview ▾'}
+                  </button>
+                </div>
+              </>
+            ) : (
+              <button onClick={toggle} aria-label={`${open ? 'Hide' : 'Watch'} ${m.teamA} vs ${m.teamB}`}
+                      className="text-emerald-400 hover:text-emerald-300 focus-visible:outline-none">
+                {open ? 'hide stream ▴' : 'watch here ▾'}
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -685,8 +744,66 @@ function LiveCard({ m, host, featured = false }: { m: UpMatch; host: string; fea
   )
 }
 
+function MsiLiveCard({ m, onPromote }: { m: LiveMatch; onPromote: () => void }) {
+  const teamA = m.teamA
+  const teamB = m.teamB
+  const [open, setOpen] = useState(false)
+  const [host, setHost] = useState('')
+  useEffect(() => { setHost(window.location.hostname) }, [])
+  const preview = m.youtube
+    ? `https://www.youtube.com/embed/${m.youtube}?autoplay=1&mute=1`
+    : m.twitch && host
+      ? `https://player.twitch.tv/?channel=${m.twitch}&parent=${host}&muted=true`
+      : null
+  return (
+    <div data-live-match="msi" data-featured="false"
+         className="overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900/50">
+      <div className="p-4">
+        <div className="mb-2"><Eyebrow live>LoL · MSI 2026</Eyebrow></div>
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex min-w-0 items-center gap-2">
+              {teamA?.image ? <TeamCrest src={teamA.image} size="h-5 w-5" /> : null}
+              <span className="truncate text-sm font-semibold text-zinc-100">{teamA?.name || teamA?.code || 'TBD'}</span>
+            </div>
+            <span className="font-mono text-sm font-bold tabular-nums text-zinc-100">{teamA?.wins ?? 0}</span>
+          </div>
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex min-w-0 items-center gap-2">
+              {teamB?.image ? <TeamCrest src={teamB.image} size="h-5 w-5" /> : null}
+              <span className="truncate text-sm font-semibold text-zinc-100">{teamB?.name || teamB?.code || 'TBD'}</span>
+            </div>
+            <span className="font-mono text-sm font-bold tabular-nums text-zinc-100">{teamB?.wins ?? 0}</span>
+          </div>
+        </div>
+        <div className="mt-3 flex flex-col items-start gap-1.5 font-mono text-[11px] uppercase tracking-wider">
+          <button onClick={onPromote}
+                  aria-label={`Feature ${teamA?.name || 'MSI'} vs ${teamB?.name || 'opponent'}`}
+                  className="text-emerald-400 hover:text-emerald-300 focus-visible:outline-none">
+            watch in featured player ↑
+          </button>
+          {preview ? (
+            <button onClick={() => setOpen((value) => !value)}
+                    aria-label={`${open ? 'Hide' : 'Show'} preview for ${teamA?.name || 'MSI'} vs ${teamB?.name || 'opponent'}`}
+                    className="text-zinc-500 hover:text-zinc-300 focus-visible:outline-none">
+              {open ? 'hide preview ▴' : 'show preview ▾'}
+            </button>
+          ) : null}
+        </div>
+      </div>
+      {open && preview ? (
+        <div className="aspect-video w-full bg-black">
+          <iframe src={preview} title="MSI live preview" allow="autoplay; fullscreen; encrypted-media"
+                  allowFullScreen className="h-full w-full" style={{ border: 'none' }} />
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
 function LiveNow({ matches, host, msi = null }: { matches: UpMatch[]; host: string; msi?: LiveMatch | null }) {
-  if (!matches.length && !msi) return null
+  const [selectedKey, setSelectedKey] = useState<string | null>(null)
+  const heroRef = useRef<HTMLDivElement>(null)
   // One unified "Live now" section. When MSI is live it's the marquee event (5-10x the volume of
   // the regional slate) so it takes the featured full-width slot with its rich lolesports view;
   // every other live match flows into the grid below. With no MSI, the featured slot falls back to
@@ -702,14 +819,35 @@ function LiveNow({ matches, host, msi = null }: { matches: UpMatch[]; host: stri
     if (promDiff !== 0) return promDiff
     return Number(b.watch?.online === true) - Number(a.watch?.online === true)
   })
-  // MSI featured -> the whole sorted list grids below it; otherwise the top match is featured and
-  // the remainder grids.
-  const grid = msi ? sorted : sorted.slice(1)
-  const alsoLive = grid.length ? (
+  const selected = sorted.find((m) => liveMatchKey(m) === selectedKey)
+  const showMsiHero = Boolean(msi && !selected)
+  const featuredMatch = selected ?? (!msi ? sorted[0] : undefined)
+  const featuredKey = featuredMatch ? liveMatchKey(featuredMatch) : null
+  const selectedStillLive = !selectedKey || sorted.some((m) => liveMatchKey(m) === selectedKey)
+
+  useEffect(() => {
+    if (!selectedStillLive) setSelectedKey(null)
+  }, [selectedStillLive])
+
+  if (!matches.length && !msi) return null
+
+  const promote = (key: string | null) => {
+    setSelectedKey(key)
+    requestAnimationFrame(() => heroRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
+  }
+
+  // The ranked list never changes. Selecting a non-MSI card only changes which member occupies the
+  // hero; the old hero naturally returns to its original prominence-ranked position in this grid.
+  const grid = showMsiHero ? sorted : sorted.filter((m) => liveMatchKey(m) !== featuredKey)
+  const compactMsi = msi && !showMsiHero
+  const gridCount = grid.length + (compactMsi ? 1 : 0)
+  const alsoLive = gridCount ? (
     <div className="space-y-2">
-      <Eyebrow>{`Also live — ${grid.length} more`}</Eyebrow>
+      <Eyebrow>{`Also live — ${gridCount} more`}</Eyebrow>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {grid.map((m, i) => <LiveCard key={i} m={m} host={host} />)}
+        {compactMsi && msi ? <MsiLiveCard m={msi} onPromote={() => promote(null)} /> : null}
+        {grid.map((m) => <LiveCard key={liveMatchKey(m)} m={m} host={host}
+                                  onPromote={() => promote(liveMatchKey(m))} />)}
       </div>
     </div>
   ) : null
@@ -717,16 +855,21 @@ function LiveNow({ matches, host, msi = null }: { matches: UpMatch[]; host: stri
   // titles the whole live block — so we DON'T also render the generic "Live now / N matches" header
   // (that produced two stacked "Live now" headers + a nested <section>). The rest grid follows under
   // a plain "Also live" label. Without MSI, keep the generic header + featured top match.
-  if (msi) return (
+  if (showMsiHero && msi) return (
     <div className="space-y-4">
-      <LiveMSI m={msi} />
+      <div ref={heroRef} data-live-match="msi" data-featured="true" className="scroll-mt-4">
+        <LiveMSI m={msi} />
+      </div>
       {alsoLive}
     </div>
   )
+  if (!featuredMatch) return null
   return (
     <section className="space-y-4">
       <SectionHeader live eyebrow="Live now" title={total === 1 ? 'Live match' : `${total} matches live`} />
-      <LiveCard m={sorted[0]} host={host} featured />
+      <div ref={heroRef} className="scroll-mt-4">
+        <LiveCard key={featuredKey} m={featuredMatch} host={host} featured />
+      </div>
       {alsoLive}
     </section>
   )

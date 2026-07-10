@@ -4,7 +4,7 @@
 regress each other. Read this before editing `backend/routers/esports/*` or `pages/esports.tsx`.
 When you change behavior here, update this doc in the same commit.
 
-Last updated 2026-07-09.
+Last updated 2026-07-10.
 
 ---
 
@@ -25,11 +25,19 @@ Sources, in identity-priority order (`_ORIGIN_PRIO`): **Bovada** (odds + schedul
 (status/score/winner/logos/canonical names), **GRID** (realtime CS2/Dota score + honest finished
 flags), **frag.se** (live-only feed + stream pool), **Kalshi** (settled winner fallback).
 
+Backend ownership is intentionally split by reason to change:
+
+- `slate.py` — the route, stale-while-revalidate cache, and rebuild orchestration.
+- `match_identity.py` — cross-source team identity, display metadata normalization, and stored-logo
+  realignment.
+- `slate_state.py` — carry semantics, fixture clustering, result predicates, and state derivation.
+- `slate_sources.py` — Bovada parsing and GRID/Kalshi/frag/PandaScore stream adapters.
+
 ---
 
 ## 1. Match state machine
 
-One state per match, derived once in `_derive_state` (`slate.py`). States:
+One state per match, derived once in `_derive_state` (`slate_state.py`). States:
 `scheduled | live | finished | ended_unknown`.
 
 Invariants (each born from a real incident — do not weaken without cause):
@@ -83,10 +91,10 @@ lexical bridge (`nip→ninjasinpyjamas`, `anyoneslegend/agalinternational/allgam
 clustering and PandaScore result enrichment; `_canon_team` remains the base identity key for contexts
 where the source-specific bridge is inappropriate.
 
-### 2b. `_same_team` (slate.py)
+### 2b. `_same_team` (`match_identity.py`)
 "Are these the same team?" — canonical equality, exact anagram (`Dontsu`/`Donstu`), a **word-token
 affix** match whose residual is a known-droppable suffix (`_MERGE_OK_SUFFIX` = stars/galaxy/kia/
-globant/w7m/lmap only), or a vowel-elided abbreviation (`LVLUP`==`Level UP`, via consonant skeleton
+globant/w7m only), or a vowel-elided abbreviation (`LVLUP`==`Level UP`, via consonant skeleton
 — bidirectional, NOT "shorten the full name").
 
 **The affix policy is a fail-closed ALLOWLIST.** An unknown residual word ⇒ SPLIT. These are
@@ -95,7 +103,7 @@ globant/w7m/lmap only), or a vowel-elided abbreviation (`LVLUP`==`Level UP`, via
 `Team Secret` ≠ `Team Secret Whales`, `FaZe` ≠ `FaZe Up Next`, main ≠ `… Academy`. **Do not add
 `los`/`whales`/`hel`/etc. to the allowlist.**
 
-### 2c. Relaxed same-match merge (`_same_match_relaxed`, slate.py)
+### 2c. Relaxed same-match merge (`_same_match_relaxed`, `slate_state.py`)
 Some dupes are the same *match* cross-listed under two league strings with a team-name variant the
 strict matcher (correctly) won't merge — e.g. `Yawara v Sharks` (RES Showdown) vs `YNG Sharks v
 Yawara` (BLAST Open). Loosening `_same_team` to catch these would reopen the curated splits above.
@@ -114,10 +122,10 @@ same opponent. `LP` deliberately remains globally distinct from `largadosypelado
 (including the global MIBR≠MIBR LOS split) stays untouched.
 
 ### 2d. Display name after merge
-`_cluster` picks the base row by origin priority, then prefers PandaScore's canonical spelling over
+`slate_state.py:_cluster` picks the base row by origin priority, then prefers PandaScore's canonical spelling over
 Bovada's label (`Power Ranger`→`Poor Rangers`), aligned via `_same_team` so a reversed pair can't
-swap names onto the wrong sides. This is why `Level UP` shows instead of `LVLUP` almost everywhere —
-the only exceptions are LMap rows (§5).
+swap names onto the wrong sides. This is why `Level UP` shows instead of `LVLUP` when a canonical
+PandaScore twin is available.
 
 ### Regression guard
 Run `cd backend && venv/bin/python routers/esports/matcher_assertions.py` when touching identity or
@@ -171,13 +179,27 @@ Bovada markets + no stream rules) is guarded so the filter doesn't silently dele
 
 `/api/esports/upcoming` returns the POST-filter list, so what the API returns == what renders.
 
+### Desktop live-player selection
+
+At `sm` and wider, an **Also live** card's primary action promotes that match into the full-width
+featured player, and the previous hero returns to its normal prominence-ranked position in the grid.
+A secondary **show preview** action deliberately mounts an inline preview; **hide preview** removes
+it. The MSI rich hero participates in the same exchange: when another match is selected, MSI becomes
+the first compact Also-live card; selecting it restores the MSI hero. On mobile, cards retain the
+inline tap-to-watch interaction so selecting a stream does not unexpectedly scroll the user back up.
+
+The MSI hero defaults to a full-width broadcast with **Live game state below it**. A compact panel-
+layout icon in the game-state header can dock that panel to a 340px right rail or move it back below;
+the explicit choice persists in local storage.
+
 ---
 
 ## 5. LMap 2 map-market rows — PURGED (2026-07-09)
 
 Bovada lists per-map betting lines as separate events (`Power Ranger - LMap 2 vs GamerLegion -
 LMap 2`) — sub-match markets, not matches (they rendered as phantom rows with absurd ~95% favorites).
-They are filtered on the live Bovada path (`slate.py`, regex `\bl?map\s*\d` on the description).
+They are filtered on the live Bovada path (`slate_sources.py`, regex `\bl?map\s*\d` on the
+description).
 
 The archive/stale form is now handled too (was the TODO below). A row whose **both** `teamA` and
 `teamB` carry a trailing `- LMap N` marker is a two-sided map market (`_is_map_market`) and is:
@@ -310,17 +332,10 @@ already covers spelling variants (0 index-level naming misses in the same audit)
   reconciliation~~ — DONE 2026-07-09 (§6a/§6b/§6c).
 - Frontend: render a "result unavailable" label for `resultUnknown` (§6).
 - Logo negative-cache expiry; optional EWC/tournament logo source for Poor-Rangers-class gaps (§7).
-- **Flipped team logos (population-wide).** A 2026-07-09 audit of the live `/api/esports/upcoming`
-  population (293 matches) found **28 emitted matches whose A/B logos are reversed** — side A's logo
-  equals the canonical PandaScore crest for team B, and/or vice-versa (e.g. `BetBoom Team v Team
-  Falcons` shows Falcons' crest on A, `Xtreme Gaming v GamerLegion`, `Aurora v Nigma Galaxy`,
-  `Parivision v Vici Gaming`, `1Win v Virtus.Pro`, `Inner Circle v Team Yandex`, …). This is NOT a
-  one-off first-card glitch — it spans many pairings. Likely root cause: the per-side logo fill in
-  `_rebuild_upcoming` (slate.py ~L899) only writes a side when `not m.get("logoA"/"logoB")`; a base
-  row that already carries a crest from a PRIOR PS match with a different orientation freezes the
-  flipped crest into the results store, and the crossed-orientation branch can't overwrite an already
-  populated side. The `_realign_logos` helper (L247) also keys off `_ps_enrich` rather than canonical
-  keys and only fires when logos differ. Audit + fix deferred 2026-07-09: do NOT patch only the first
-  card — re-align every emitted pair against canonical PS crests and overwrite, not just fill-if-empty.
+- ~~Flipped team logos (population-wide)~~ — DONE 2026-07-09. The live audit found 28 A/B reversals;
+  matched PandaScore sides now overwrite stale stored crests, and `match_identity.py` repairs legacy
+  store rows with or without a persisted `psId`. Strict audit result: 28 → 1. The remaining `Inner
+  Circle` case is deliberately not forced because PandaScore resolves it to the distinct organization
+  `Inner Circle x Insanity`; using that crest would be a false identity match.
 - ~~Scheduled/Results tab day-grouping (chronological, one heading per day)~~ — DONE 2026-07-09
   (esports.tsx `groupByDay` groups by a stable local-date key, Scheduled asc / Results desc).

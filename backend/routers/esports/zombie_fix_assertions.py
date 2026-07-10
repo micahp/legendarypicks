@@ -2,25 +2,17 @@
 
 Runnable:  cd backend && venv/bin/python routers/esports/zombie_fix_assertions.py
 
-Unit-asserts _derive_state (from slate.candidate.py) directly with synthetic evidence — the couple
+Unit-asserts _derive_state (from slate_state.py) directly with synthetic evidence — the couple
 of assertions that prove the zombie-live fix and its winner-resolution, without a big sim harness.
 Covers the exact live case (Prestige v Vasteras: stale GRID started&&!finished, no other source)
 plus the branches that prove FRESH live survives and a demoted zombie WITH a result resolves to it.
 """
-import importlib.util, sys, os
+import os
+import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.dirname(os.path.dirname(HERE)))  # backend/ on path for `routers` pkg
-import routers.esports  # noqa: F401
-
-
-def _load(name, fname):
-    spec = importlib.util.spec_from_file_location(name, os.path.join(HERE, fname))
-    m = importlib.util.module_from_spec(spec); sys.modules[name] = m; spec.loader.exec_module(m)
-    return m
-
-
-sl = _load("routers.esports.slate_candidate", "slate.candidate.py")
+from routers.esports import slate_state as sl  # noqa: E402
 NOW = 1_800_000_000_000  # fixed reference now (ms)
 MIN = 60 * 1000
 H = 60 * MIN

@@ -258,7 +258,7 @@ def _sort_key(m):
 
 
 def apply_tier_and_filter(matches):
-    """Full replacement for slate.py's minorLeague-demotion + sort (lines ~845-849). Returns
+    """Apply slate.py's visibility policy and tier-aware output ordering. Returns
     (visible_matches_sorted, dropped_matches) — dropped kept separately for verification/logging,
     never shipped in the API response."""
     title_signal = _title_has_any_signal(matches)

@@ -421,7 +421,8 @@ def _ps_enrich(team_a, team_b, include_running=True, near_ms=None, league=None, 
         # lexical variant (MIBR <-> MIBR LOS) while the other needs an explicit cross-source alias
         # (Anyone's Legend <-> AG.AL International). Requiring BOTH sides to use the same matching
         # path missed that real fixture. The time guard below still prevents a same-team rematch from
-        # receiving the wrong result, and this does not change slate._same_team's global split policy.
+        # receiving the wrong result, and this does not change match_identity._same_team's global
+        # split policy.
         a0 = _hits(na, bta, n0, tk0) or _canon_hit(ca, cs0)
         a1 = _hits(na, bta, n1, tk1) or _canon_hit(ca, cs1)
         b0 = _hits(nb, btb, n0, tk0) or _canon_hit(cb, cs0)
@@ -481,7 +482,7 @@ def _ps_enrich(team_a, team_b, include_running=True, near_ms=None, league=None, 
     name0, name1 = op0.get("name") or "", op1.get("name") or ""
 
     return {
-        "_ps_id": m.get("id"),  # PandaScore match id — lets slate.py dedup the surface block by
+        "_ps_id": m.get("id"),  # PandaScore match id — lets slate_state.py dedup the surface block by
                                 # identity (this match was already consumed by a Bovada entry) instead
                                 # of by fuzzy team names.
         "live": live,
@@ -509,7 +510,7 @@ def _ps_surface_matches(finished_window_ms=3 * 3600 * 1000,
                         upcoming_window_ms=14 * 86400 * 1000,
                         upcoming_tiers=("s",), kalshi_pairs=None):  # major upcoming events (EWC, MSI, Worlds, TI, Majors,
                                                  # KPL) land ahead of time; minor scheduled matches
-                                                 # don't. Bovada-overlap dups are removed in slate.py
+                                                 # don't. Bovada-overlap dups are removed in slate_state.py
                                                  # by PandaScore match-id (used_ps_ids), not by name.
     """Live, just-finished, and MAJOR-upcoming PandaScore matches in slate match-shape, so slate.py
     can SURFACE a match Bovada dropped/never listed and GRID doesn't cover. Everything else in the
