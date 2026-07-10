@@ -26,7 +26,7 @@ type CS2Team = { name: string; score: number | null; won: boolean; players: CS2P
 type CS2Live = { live: boolean; title?: string; tournament?: string; stream?: { platform: string; channel: string } | null; teamA?: CS2Team; teamB?: CS2Team }
 
 type UpMatch = { startTime: number | null; live: boolean; title: string; league: string; teamA: string; teamB: string; favorite: { name: string; pct: number } | null; watch: { platform: string; url: string; channel: string | null; online?: boolean | null; embedUrl?: string | null; alternates?: Array<{ platform: string; url: string; channel: string | null; online?: boolean | null; embedUrl?: string | null }> } | null; score?: { a: number | null; b: number | null } | null; finished?: boolean | null; winner?: 'a' | 'b' | null; pinned?: boolean; model?: { favName: string; modelPct: number; marketPct: number | null; edge: number | null } | null; logoA?: string | null; logoB?: string | null; minorLeague?: boolean; tier?: number; prominence?: number; psId?: number | string | null }
-type UpcomingData = { matches: UpMatch[]; source?: string; error?: string }
+type UpcomingData = { matches: UpMatch[]; source?: string; error?: string; building?: boolean }
 
 const POLL_MS = 10_000
 
@@ -470,6 +470,36 @@ function UpMatchRow({ m, host }: { m: UpMatch; host: string }) {
   )
 }
 
+// Cold-start state: the board aggregates several live feeds on a fresh rebuild (~30-40s), during
+// which the backend returns building:true with no matches yet. An empty "no matches" reads as
+// broken and a spinner says nothing — so preview the board's real shape instead: skeleton match
+// rows in the exact geometry of a live row (time chip · two teams · favorite), breathing in
+// sequence so the slate looks like it's coming online row by row.
+function BoardBuilding() {
+  return (
+    <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 p-4 sm:p-5">
+      <div className="flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-[0.2em] text-red-400">
+        <span className="h-1.5 w-1.5 rounded-full bg-red-500 animate-pulse motion-reduce:animate-none" />
+        <span>Building the board</span>
+      </div>
+      <p className="mt-1.5 text-sm text-zinc-500">Pulling live matches, schedule, and results.</p>
+      <div className="mt-4 divide-y divide-zinc-800/70" aria-hidden="true">
+        {[0, 1, 2, 3].map((i) => (
+          <div key={i} className="flex items-center gap-3 py-2.5 animate-pulse motion-reduce:animate-none"
+               style={{ animationDelay: `${i * 160}ms` }}>
+            <div className="h-3 w-10 shrink-0 rounded bg-zinc-800" />
+            <div className="min-w-0 flex-1 space-y-1.5">
+              <div className="h-3 w-2/5 rounded bg-zinc-800" />
+              <div className="h-3 w-1/3 rounded bg-zinc-800/70" />
+            </div>
+            <div className="h-6 w-12 shrink-0 rounded bg-zinc-800/60" />
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 function UpcomingSlate({ data }: { data: UpcomingData | null }) {
   const [host, setHost] = useState('')
   const [tab, setTab] = useState<'scheduled' | 'results'>('scheduled')
@@ -493,8 +523,8 @@ function UpcomingSlate({ data }: { data: UpcomingData | null }) {
       <SectionHeader eyebrow="" title="Schedule & Results" meta="favorite" />
       {data?.error ? (
         <p className="text-sm text-zinc-500">Schedule unavailable right now — retrying.</p>
-      ) : data === null ? (
-        <div className="h-48 animate-pulse rounded-xl border border-zinc-800 bg-zinc-900/40 motion-reduce:animate-none" />
+      ) : data === null || (data.building && matches.length === 0) ? (
+        <BoardBuilding />
       ) : matches.length === 0 ? (
         <p className="text-sm text-zinc-500">No upcoming esports matches on the board right now.</p>
       ) : (
