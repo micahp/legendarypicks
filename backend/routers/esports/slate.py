@@ -243,6 +243,30 @@ def _normalize_match_metadata(m):
     return m
 
 
+def _repair_logos_by_psid(m):
+    """Re-align logoA/logoB to the authoritative PandaScore record for a stored match.
+
+    A stored entry can carry flipped crests baked in from a prior cycle (the old coupled fill in
+    _rebuild_upcoming wrote the wrong side). When the row carries a stable ``psId`` we re-enrich the
+    stored team names through ``_ps_enrich`` (which returns a swapped-correct logo per side) and adopt
+    its logos when they differ from what's stored — correcting a previously-flipped crest rather than
+    freezing it. No-op when there's no psId or the enrichment yields no logos."""
+    psid = m.get("psId") or m.get("_ps_id")
+    if not psid:
+        return m
+    ta, tb = m.get("teamA", ""), m.get("teamB", "")
+    if not (ta and tb):
+        return m
+    ps = _ps_enrich(ta, tb, include_running=True, near_ms=m.get("startTime"),
+                    league=m.get("league"), ps_id=psid)
+    if not ps:
+        return m
+    la, lb = ps.get("logoA"), ps.get("logoB")
+    if la and lb and (la != m.get("logoA") or lb != m.get("logoB")):
+        m["logoA"], m["logoB"] = la, lb
+    return m
+
+
 def _is_placeholder_score(sc):
     if not sc:
         return True
@@ -768,6 +792,7 @@ def _rebuild_upcoming():
         if _is_map_market(stored):
             continue  # stale Bovada map markets are not matches and must age out immediately
         stored = _normalize_match_metadata(dict(stored))
+        stored = _repair_logos_by_psid(stored)  # fix flipped crests from prior cycles
         key = _key(stored)
         current = store.get(key)
         if current is None or (_has_result(stored) and not _has_result(current)):
@@ -864,8 +889,25 @@ def _rebuild_upcoming():
         if ps:
             m["_ps_id"] = ps.get("_ps_id")
             m["psId"] = ps.get("_ps_id")
-            if ps.get("logoA") and not m.get("logoA"):
-                m["logoA"], m["logoB"] = ps["logoA"], ps.get("logoB")
+            # Independently aligned per-side logo fill. Re-derive the PS orientation from the matched
+            # team names (canonical A/B) rather than coupling logoA/logoB to a single conditional:
+            # the old `if ps.logoA and not m.logoA: m.logoA, m.logoB = ps.logoA, ps.logoB` could write
+            # the wrong crest to the surviving side when the base row already had one side populated or
+            # came from a prior PS match with a different orientation — freezing flipped logos into the
+            # results store (e.g. GamerLegion/Xtreme, G2/LYON). Fill each side from its own matched PS
+            # opponent, confirmed against canonicalA/canonicalB.
+            psa, psb = ps.get("logoA"), ps.get("logoB")
+            ca, cb = ps.get("canonicalA"), ps.get("canonicalB")
+            if ca and cb:
+                if _same_team(m.get("teamA", ""), ca) and not m.get("logoA"):
+                    m["logoA"] = psa
+                if _same_team(m.get("teamB", ""), cb) and not m.get("logoB"):
+                    m["logoB"] = psb
+                # crossed orientation: PS lists them reversed vs the row — fill the opposite sides
+                if _same_team(m.get("teamA", ""), cb) and not m.get("logoA"):
+                    m["logoA"] = psb
+                if _same_team(m.get("teamB", ""), ca) and not m.get("logoB"):
+                    m["logoB"] = psa
             if ps.get("startTime") and not m.get("startTime"):
                 m["startTime"] = ps["startTime"]
 

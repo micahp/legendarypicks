@@ -198,6 +198,40 @@ def _pandascore_assertions():
         _assert(result is not None and not result["live"] and not result["finished"]
                 and result["startTime"] == pandascore._iso_to_ms(future),
                 "United21 postponed fixture can reconcile beyond the normal time guard")
+
+        # Logo orientation: a match where PandaScore lists the opponents in the OPPOSITE order to our
+        # row must still return each logo on the side whose team name matches the PS opponent — never
+        # swapped. This is the flipped-crest guard (GamerLegion/Xtreme, G2/LYON class).
+        gl_a = "https://cdn-api.pandascore.co/images/team/image/128329/xtreme.png"
+        gl_b = "https://cdn-api.pandascore.co/images/team/image/137588/gamerlegion.png"
+        scheduled_iso = "2026-07-09T15:00:00Z"
+        near_ms_logo = pandascore._iso_to_ms(scheduled_iso)
+        op0_gl = {"id": 202, "name": "GamerLegion", "image_url": gl_b, "acronym": None, "slug": None}
+        op1_xt = {"id": 101, "name": "Xtreme Gaming", "image_url": gl_a, "acronym": None, "slug": None}
+        # Build a full _ps_indexed-shaped tuple so the precomputed token sets (used to decide
+        # `swapped`) agree with the opponents order in the match dict.
+        m_gl = {
+            "id": 9001, "status": "finished", "scheduled_at": scheduled_iso,
+            "opponents": [{"opponent": op0_gl}, {"opponent": op1_xt}],
+            "results": [{"team_id": 202, "score": 0}, {"team_id": 101, "score": 2}],
+            "winner_id": 101,
+            "streams_list": [], "league": {"name": "Esports World Cup 2026 - Dota 2"},
+        }
+        n0, n1 = pandascore._ps_names(op0_gl), pandascore._ps_names(op1_xt)
+        tk0 = [t for t in (pandascore._tokset(n) for n in n0) if t]
+        tk1 = [t for t in (pandascore._tokset(n) for n in n1) if t]
+        cs0 = {_canon_team_x("GamerLegion")}
+        cs1 = {_canon_team_x("Xtreme Gaming")}
+        oriented = (m_gl, op0_gl, op1_xt, n0, n1, tk0, tk1, cs0, cs1)
+        pandascore._ps_indexed = lambda include_running: [oriented]
+        r_norm = pandascore._ps_enrich("Xtreme Gaming", "GamerLegion", include_running=False,
+                                       near_ms=near_ms_logo)
+        _assert(r_norm is not None and r_norm["logoA"] == gl_a and r_norm["logoB"] == gl_b,
+                "PS logo orientation aligns to matching side (normal order)")
+        r_swap = pandascore._ps_enrich("GamerLegion", "Xtreme Gaming", include_running=False,
+                                       near_ms=near_ms_logo)
+        _assert(r_swap is not None and r_swap["logoA"] == gl_b and r_swap["logoB"] == gl_a,
+                "PS logo orientation aligns to matching side (swapped PS order)")
     finally:
         pandascore._ps_indexed = original
 
