@@ -310,3 +310,17 @@ already covers spelling variants (0 index-level naming misses in the same audit)
   reconciliation~~ — DONE 2026-07-09 (§6a/§6b/§6c).
 - Frontend: render a "result unavailable" label for `resultUnknown` (§6).
 - Logo negative-cache expiry; optional EWC/tournament logo source for Poor-Rangers-class gaps (§7).
+- **Flipped team logos (population-wide).** A 2026-07-09 audit of the live `/api/esports/upcoming`
+  population (293 matches) found **28 emitted matches whose A/B logos are reversed** — side A's logo
+  equals the canonical PandaScore crest for team B, and/or vice-versa (e.g. `BetBoom Team v Team
+  Falcons` shows Falcons' crest on A, `Xtreme Gaming v GamerLegion`, `Aurora v Nigma Galaxy`,
+  `Parivision v Vici Gaming`, `1Win v Virtus.Pro`, `Inner Circle v Team Yandex`, …). This is NOT a
+  one-off first-card glitch — it spans many pairings. Likely root cause: the per-side logo fill in
+  `_rebuild_upcoming` (slate.py ~L899) only writes a side when `not m.get("logoA"/"logoB")`; a base
+  row that already carries a crest from a PRIOR PS match with a different orientation freezes the
+  flipped crest into the results store, and the crossed-orientation branch can't overwrite an already
+  populated side. The `_realign_logos` helper (L247) also keys off `_ps_enrich` rather than canonical
+  keys and only fires when logos differ. Audit + fix deferred 2026-07-09: do NOT patch only the first
+  card — re-align every emitted pair against canonical PS crests and overwrite, not just fill-if-empty.
+- ~~Scheduled/Results tab day-grouping (chronological, one heading per day)~~ — DONE 2026-07-09
+  (esports.tsx `groupByDay` groups by a stable local-date key, Scheduled asc / Results desc).
