@@ -14,20 +14,33 @@ in `package.json` tracks the next (in-development) release.
 > real release. Disciplined versioning starts here, with the current production state
 > tagged `v0.1.0`.
 
-## [Unreleased] — targeting v0.3.0 — depth + richness
+## [Unreleased]
 
-v0.3.0 is gated on closing the current UI holes. Each bullet is its own minor build
-(v0.2.x), promoted to v0.3.0 once the set lands. See `docs/SPEC-v0.3.0-ui-holes.md`.
-- **Richer Stats (league) tab** — match ESPN's depth: separate **player vs team** breakdowns,
-  and category splits (e.g. **offensive / defensive**), not a single flat leaderboard.
-- **Game detail beyond MLB** — only MLB has a real detail page today. Build NBA/NHL/NFL detail,
-  and fill the three empty tabs (**box score, play-by-play, game info**).
-- **Post-game recap** — the AI summary today is a *pre-game* preview; add a separate
-  **post-game recap/summary** generated once the game is final.
-- **Prop outcomes on game detail** — show **what hit** on the game-detail props (today only the
-  Props page has a ✅/❌, and its orientation needs rework). Run the front-end design skill on it.
-- Player-name links app-wide → player page.
-- **UFC rankings** (weight class + pound-for-pound) — P4 from `docs/SPEC-2026-06-27-next-phases.md`.
+## [0.3.0] — 2026-07-10
+
+Esports control-room release — a more reliable slate pipeline and a desktop viewing experience
+that treats the featured player as the center of the live page.
+
+### Added
+- **Desktop featured-player handoff** — selecting an Also-live match promotes it into the hero and
+  returns the displaced hero to its normal prominence-ranked grid position. The rich MSI hero joins
+  the same exchange as the source-ranked match cards.
+- **Optional inline previews** — every Also-live card offers Show preview / Hide preview beneath its
+  featured-player action without mounting every stream at once.
+- **MSI game-state layout control** — an icon docks live state below the full-width broadcast
+  (the default) or in the right rail, with the explicit choice persisted locally.
+
+### Changed
+- **Slate backend decomposed by ownership** — `slate.py` is now a 582-line route/rebuild orchestrator
+  (down from 1,222 lines); team identity, source adapters, and lifecycle/clustering live in
+  `match_identity.py`, `slate_sources.py`, and `slate_state.py`.
+- Simplified redundant live indicators while preserving the prominence-ranked live order.
+
+### Fixed
+- Single-flight cold-cache rebuilds prevent concurrent first requests from pinning the backend.
+- A confirmed official broadcast can promote a source-stuck scheduled match to Live without adding
+  blocking network checks to the rebuild path.
+- Restored the previously stale zombie-state assertion suite against the extracted state module.
 
 ## [0.2.6] — 2026-07-09
 
