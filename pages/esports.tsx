@@ -637,23 +637,23 @@ function LiveCard({ m, host, featured = false }: { m: UpMatch; host: string; fea
             {m.score ? <span className="font-mono text-sm font-bold tabular-nums text-zinc-100">{m.score.b ?? '–'}</span> : null}
           </div>
         </div>
-        <div className="mt-3 font-mono text-[11px] uppercase tracking-wider">
-          {!embeddable ? (
-            m.watch ? (
+        {!embeddable ? (
+          <div className="mt-3 font-mono text-[11px] uppercase tracking-wider">
+            {m.watch ? (
               <a href={m.watch.url} target="_blank" rel="noreferrer" className="text-zinc-500 hover:text-emerald-400">
                 no stream embedded · {watchLabel(m.watch.platform)} ↗
               </a>
             ) : (
               <span className="text-zinc-600">no stream available</span>
-            )
-          ) : featured ? (
-            <span className="inline-flex items-center gap-1 text-red-400"><span className="h-1 w-1 rounded-full bg-red-500 animate-pulse motion-reduce:animate-none" />playing now</span>
-          ) : (
+            )}
+          </div>
+        ) : featured ? null : (
+          <div className="mt-3 font-mono text-[11px] uppercase tracking-wider">
             <button onClick={toggle} className="text-emerald-400 hover:text-emerald-300 focus-visible:outline-none">
               {open ? 'hide stream ▴' : 'watch here ▾'}
             </button>
-          )}
-        </div>
+          </div>
+        )}
       </div>
       {embeddable ? (
         <div className={featured || open ? '' : 'hidden'}>
@@ -725,7 +725,7 @@ function LiveNow({ matches, host, msi = null }: { matches: UpMatch[]; host: stri
   )
   return (
     <section className="space-y-4">
-      <SectionHeader live eyebrow="Live now" title={total === 1 ? 'Live match' : `${total} matches live`} meta="esports" />
+      <SectionHeader live eyebrow="Live now" title={total === 1 ? 'Live match' : `${total} matches live`} />
       <LiveCard m={sorted[0]} host={host} featured />
       {alsoLive}
     </section>
