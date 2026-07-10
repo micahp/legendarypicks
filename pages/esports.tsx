@@ -298,6 +298,33 @@ function dayKey(ms: number | null) {
   return d.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })
 }
 
+// Stable local-calendar key (YYYY-MM-DD) used ONLY for grouping/sorting — never shown. Grouping by
+// this (instead of the display label, and instead of adjacency) guarantees every calendar day gets
+// exactly one heading and days stay chronologically ordered no matter how the backend sorted the
+// combined slate (it sorts by prominence, so same-day matches are NOT contiguous in the raw feed).
+function localDateKey(ms: number | null): string {
+  if (!ms) return '9999-99-99'
+  const d = new Date(ms)
+  const y = d.getFullYear()
+  const mo = String(d.getMonth() + 1).padStart(2, '0')
+  const da = String(d.getDate()).padStart(2, '0')
+  return `${y}-${mo}-${da}`
+}
+
+// Group a time-sorted list into one bucket per local calendar day, ordered by day. `dir` picks the
+// day order: Scheduled = 'asc' (Today first); Results = 'desc' (most recent day first). The display
+// label for each bucket is derived from its first match via dayKey (Today/Tomorrow/formatted date).
+function groupByDay(list: UpMatch[], dir: 'asc' | 'desc' = 'asc'): { label: string; matches: UpMatch[] }[] {
+  const byKey = new Map<string, UpMatch[]>()
+  for (const m of list) {
+    const k = localDateKey(m.startTime)
+    if (!byKey.has(k)) byKey.set(k, [])
+    byKey.get(k)!.push(m)
+  }
+  const entries = [...byKey.entries()].sort(([a], [b]) => dir === 'asc' ? a.localeCompare(b) : b.localeCompare(a))
+  return entries.map(([k, ms]) => ({ label: dayKey(ms[0].startTime), matches: ms }))
+}
+
 function fmtClock(ms: number | null) {
   if (!ms) return ''
   try { return new Date(ms).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }) }
@@ -420,25 +447,14 @@ function UpcomingSlate({ data }: { data: UpcomingData | null }) {
   // Split: finished → Results (most-recent first); upcoming (not live, not finished) → Scheduled.
   // Live games are surfaced ABOVE this section in <LiveNow>, so they're excluded here.
   const rs = matches.filter((m) => m.finished).sort((a, b) => (b.startTime || 0) - (a.startTime || 0))
-  const sc = matches.filter((m) => !m.finished && !m.live)
-  // Group scheduled consecutively by day (the list is time-ordered: live first, then soonest).
-  const days: { label: string; matches: UpMatch[] }[] = []
-  for (const m of sc) {
-    const label = dayKey(m.startTime)
-    const last = days[days.length - 1]
-    if (last && last.label === label && !m.live) last.matches.push(m)
-    else if (m.live && last && last.label === 'Live now') last.matches.push(m)
-    else days.push({ label: m.live ? 'Live now' : label, matches: [m] })
-  }
-
+  const sc = matches.filter((m) => !m.finished && !m.live).sort((a, b) => (a.startTime || 0) - (b.startTime || 0))
+  // Group by a STABLE local-calendar date key (not the display label, not adjacency) so every day
+  // gets exactly one heading and days stay chronological regardless of backend prominence ordering.
+  // See groupByDay(): Scheduled asc (Today first), Results desc (most recent first). Games within a
+  // day are already time-sorted above; groupByDay preserves that order.
+  const days = groupByDay(sc, 'asc')
   const show = tab === 'results' ? rs : sc
-  const resultDays: { label: string; matches: UpMatch[] }[] = []
-  for (const m of rs) {
-    const label = dayKey(m.startTime)
-    const last = resultDays[resultDays.length - 1]
-    if (last && last.label === label) last.matches.push(m)
-    else resultDays.push({ label, matches: [m] })
-  }
+  const resultDays = groupByDay(rs, 'desc')
 
   return (
     <section className="space-y-5">
