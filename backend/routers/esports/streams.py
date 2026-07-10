@@ -27,8 +27,10 @@ escape hatch. It stays wrong only as a sole blind hardcoded guess, which the ran
 
 import json
 import re
+import threading
 import time
 import urllib.request as _u
+from concurrent.futures import ThreadPoolExecutor
 
 from .yt_live_resolver import resolve_pool_youtube
 
@@ -154,6 +156,56 @@ def _channel_online(platform, channel):
     return online
 
 
+# Background liveness pool: the decapi/Kick ping is the ONLY blocking network call in _pick_stream.
+# Running it inline for scheduled matches on the rebuild path is what let the broadcast-liveness
+# promotion hang the endpoint. Mirror the YouTube resolver: the rebuild reads _live_cache ONLY
+# (zero network) and hands a refresh to this pool, so a promotion lands ~one cycle after the channel
+# goes live instead of blocking the rebuild. Deduped so the same channel's probe can't pile up.
+_probe_executor = None
+_probe_executor_lock = threading.Lock()
+_probe_inflight = set()
+_probe_inflight_lock = threading.Lock()
+
+
+def _get_probe_executor():
+    global _probe_executor
+    if _probe_executor is None:
+        with _probe_executor_lock:
+            if _probe_executor is None:
+                _probe_executor = ThreadPoolExecutor(max_workers=4, thread_name_prefix="chan-live")
+    return _probe_executor
+
+
+def _channel_online_cached(platform, channel):
+    """Non-blocking liveness: the fresh cached value if we have one, else None while a background
+    decapi probe refreshes _live_cache for next cycle. Never touches the network on the caller's
+    thread. Only twitch/kick are verifiable (others -> None, no probe)."""
+    if platform not in ("twitch", "kick") or not channel:
+        return None
+    key = f"{platform}:{channel}"
+    c = _live_cache.get(key)
+    if c and time.time() - c[0] < (_LIVE_TTL if c[1] is not None else _LIVE_TTL_UNKNOWN):
+        return c[1]
+    with _probe_inflight_lock:
+        if key not in _probe_inflight:
+            _probe_inflight.add(key)
+
+            def _job():
+                try:
+                    _channel_online(platform, channel)   # blocking; result lands in _live_cache
+                except Exception:
+                    pass
+                finally:
+                    with _probe_inflight_lock:
+                        _probe_inflight.discard(key)
+            try:
+                _get_probe_executor().submit(_job)
+            except Exception:
+                with _probe_inflight_lock:
+                    _probe_inflight.discard(key)
+    return c[1] if c else None   # last-known value if stale, else unknown-for-now
+
+
 def _candidate(url=None, embed=None, platform=None, channel=None,
                main=False, official=False, language=None, attested=False, source=""):
     """Normalize one stream into a pool candidate. `attested` = the SOURCE says this stream is the
@@ -232,9 +284,14 @@ def _pick_stream(candidates, match_live=True, team_names=None, network_checks=Tr
         # already offline, was outranking the live Kick main). Other platforms keep the attestation
         # shortcut: Kick's API 403s from our datacenter IP so we genuinely can't verify it, and
         # probing every unattested pool candidate is what the rebuild-cost note below guards.
+        # network_checks: True = blocking decapi ping (S_LIVE branch, already scoped to a handful of
+        # matches); "cache" = non-blocking cached read + background refresh (scheduled near-start
+        # matches, off the rebuild path — never block the rebuild on a ping); False = skip entirely.
         checked = None
         if network_checks and c.get("channel") and (c["platform"] == "twitch" or not c.get("attested")):
-            checked = _channel_online(c["platform"], c.get("channel"))
+            checked = (_channel_online_cached(c["platform"], c.get("channel"))
+                       if network_checks == "cache"
+                       else _channel_online(c["platform"], c.get("channel")))
         c = dict(c)
         c["_checked"] = checked
         pool.append(c)

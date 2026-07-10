@@ -107,6 +107,13 @@ _MAX_LIVE_MS = 6 * 3600 * 1000
 # past start (a long Bo5); beyond it, a bov-only signal is treated as stale. Real long matches almost
 # always also surface on PS/frag/GRID, so this near-exclusively kills stale-flag zombies.
 _BOV_LIVE_MAX_MS = 3 * 3600 * 1000
+# Broadcast-liveness promotion: a scheduled match whose OFFICIAL channel is decapi-confirmed on-air
+# is itself a live signal, for the minor-circuit blind spot where no data feed (GRID/PS/frag/Bovada)
+# flips to running but the Twitch broadcast is plainly streaming (e.g. Ggmedia Challenger on
+# betboom_cs_ru3). The liveness read is CACHE-ONLY on the rebuild path (a background pool does the
+# decapi ping — see streams._channel_online_cached), so this can never block the rebuild. Only
+# scheduled matches inside this window get the cached check + a background refresh.
+_CHANNEL_LIVE_TAIL_MS = _DELAYED_CAP_MS   # how far past start a still-scheduled match stays eligible
 _finish_seen = {}
 
 # ---------------------------------------------------------------------------
@@ -1151,16 +1158,21 @@ def _rebuild_upcoming():
         elif m["state"] == S_SCHEDULED and slug:
             ps_cands = (_ps_candidates(m["_ps_id"], ps_streams_by_id, False)
                         if m.get("_ps_id") is not None else [])
-            # network_checks=False: even narrowed to a 3h window this was still enough concurrent
-            # scheduled matches across all leagues, each paying sequential blocking HTTP calls
-            # (Twitch/Kick liveness pings + YouTube resolution, no concurrency), to hang the
-            # endpoint (2026-07-08 incident). Scheduled matches still get PS's raw stream URL
-            # (Twitch/Kick embed synthesizes for free, no network) — just no verified/YouTube-
-            # resolved embed until the match goes live and hits the S_LIVE branch above, which
-            # already scopes down to the handful of matches actually live at once.
+            # network_checks=False by default: a full liveness/YouTube pass on every one of ~500
+            # scheduled matches, each a blocking HTTP call, hung the endpoint (2026-07-08). But a
+            # match AT/PAST start still sitting in Scheduled (no data feed flipped it live) uses
+            # "cache" mode: the liveness read is cache-only and any refresh is handed to a background
+            # pool (streams._channel_online_cached), so it stays off the rebuild path. If the official
+            # broadcast is confirmed on-air and start has passed, the broadcast itself is the live
+            # signal — promote to LIVE so the page actually plays it (the minor-circuit blind spot).
+            st = m.get("startTime")
+            near = (st is not None
+                    and now_ms - _CHANNEL_LIVE_TAIL_MS <= st <= now_ms + _START_SLACK_MS)
             m["watch"] = _resolve_watch(slug, m.get("league"), live=False,
                                          extra_candidates=ps_cands, team_names=team_names,
-                                         network_checks=False)
+                                         network_checks=("cache" if near else False))
+            if (near and st <= now_ms and m["watch"] and m["watch"].get("online") is True):
+                m["state"] = S_LIVE
         elif m["state"] == S_FINISHED and slug:
             m["watch"] = _resolve_watch(slug, m.get("league"), live=False)
         else:
@@ -1197,6 +1209,14 @@ def _rebuild_upcoming():
     out_matches, _dropped = apply_tier_and_filter(out_matches)
 
     any_live = any(m.get("live") for m in out_matches)
+    # A scheduled match at/just-past start is a broadcast-liveness promotion candidate: its first
+    # rebuild only SCHEDULES the background decapi probe, so hold the fast (60s) cadence until it
+    # resolves — otherwise the 300s idle TTL outlives the 90s liveness cache and the promotion never
+    # lands (the confirmed-on-air minor-circuit match would stay stuck in Scheduled).
+    any_promote_pending = any(
+        m.get("state") == S_SCHEDULED and m.get("startTime") is not None
+        and now_ms - _CHANNEL_LIVE_TAIL_MS <= m["startTime"] <= now_ms
+        for m in out_matches)
     out = {"matches": out_matches, "source": "bovada"}
-    _up_cache.update(t=now, data=out, ttl=(60 if any_live else 300))
+    _up_cache.update(t=now, data=out, ttl=(60 if (any_live or any_promote_pending) else 300))
     return out
