@@ -65,3 +65,6 @@ __pycache__/
 # esports state monitor — runtime output, not source
 backend/data/esports_state_snapshot.json
 logs/
+
+# isolated build output
+.next-build
