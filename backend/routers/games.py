@@ -138,92 +138,54 @@ def get_strength(league: str):
 
 @router.get("/api/{league}/standings")
 def get_standings(league: str):
-    """Group/division standings. For World Cup: group tables during group stage,
-    knockout bracket/results once groups are empty (stage moves to knockouts)."""
+    """Group/division standings. For World Cup: group tables during the group
+    stage; the canonical knockout bracket/results once the season phase leaves
+    'Group' (progression gate via espn.wc_is_knockout — never serve stale groups
+    once knockouts have begun)."""
     if league.lower() != "wc":
         try:
             return espn.team_strength(league)
         except ValueError as e:
             raise HTTPException(404, str(e))
-    # WC: prefer knockout bracket when scoreboard has matches (group stage is over).
-    # Falls back to group tables when knockout data is empty (group stage still ongoing).
+    # WC: group tables are ONLY valid during the Group phase. Once knockouts
+    # have begun, serve the canonical bracket ONLY — never stale group tables.
+    # The no-stale-group fallback: if the bracket is empty/unavailable while
+    # knockouts are live, return 503 rather than silently serving yesterday's
+    # Group standings (the swallowed-exception fall-through that regressed here).
+    # Any upstream failure on the knockout path (phase lookup or bracket fetch)
+    # becomes 503 too — never an uncaught 500, never a stale-group fall-through.
     try:
-        knockout = espn.wc_knockout_standings()
-        if knockout.get("rounds"):
-            return knockout
+        knockout = espn.wc_is_knockout()
     except Exception:
-        pass
-    # No knockout data yet — serve group tables
+        # Phase lookup failed — we cannot confirm groups are still valid, so do
+        # NOT fall through to group_standings (that would serve stale tables).
+        raise HTTPException(503, "World Cup phase lookup unavailable")
+    if knockout:
+        try:
+            bracket = espn.wc_knockout_standings()
+        except HTTPException:
+            raise  # preserve an already-shaped HTTP error from the client layer
+        except Exception:
+            raise HTTPException(503, "World Cup knockout bracket unavailable")
+        if bracket.get("rounds"):
+            return bracket
+        raise HTTPException(503, "World Cup knockout bracket is unavailable")
+    # Group phase — serve group tables
     try:
         return espn.group_standings(league)
     except ValueError as e:
         raise HTTPException(404, str(e))
 @router.get("/api/wc/knockout")
 def wc_knockout():
-    """World Cup knockout bracket — groups games by round name extracted from
-    the scoreboard subtitle/event notes. Returns [{round, matches: [{home, away,
-    homeScore, awayScore, winner, status}]}]."""
+    """World Cup knockout bracket — the SAME canonical {rounds:[...]} shape as
+    /api/wc/standings during knockouts. Single source of truth:
+    espn.wc_knockout_standings(). Returns {rounds:[{round, matches:[{game_id,
+    date, home:{abbrev,name}, away:{abbrev,name}, homeScore, awayScore, winner,
+    status, state}]}]}."""
     try:
-        games = espn.games("wc")
-    except ValueError as e:
+        return espn.wc_knockout_standings()
+    except Exception as e:
         raise HTTPException(404, str(e))
-
-    import re
-    # Group games by round (from subtitle like "Round of 32", "Quarterfinal", etc.)
-    rounds: dict = {}
-    for g in games:
-        subtitle = (g.get("subtitle") or "").strip()
-        status = g.get("status") or ""
-        state = g.get("state", "")
-        # Falls back to "Knockout" if no round info
-        round_name = subtitle or "Knockout"
-
-        if round_name not in rounds:
-            rounds[round_name] = {"round": round_name, "matches": []}
-
-        home = g.get("home", {})
-        away = g.get("away", {})
-        winner = g.get("winner_abbrev")
-        if not winner and state == "post":
-            hs = home.get("score")
-            away_s = away.get("score")
-            if hs is not None and away_s is not None:
-                if hs > away_s:
-                    winner = home.get("abbrev")
-                elif away_s > hs:
-                    winner = away.get("abbrev")
-
-        rounds[round_name]["matches"].append({
-            "home": home.get("abbrev", ""),
-            "away": away.get("abbrev", ""),
-            "homeScore": home.get("score"),
-            "awayScore": away.get("score"),
-            "winner": winner,
-            "status": status,
-            "state": state,
-        })
-
-    # Order: group stage first (alphabetical), then knockout rounds in order
-    GROUP_ORDER = ["Group A", "Group B", "Group C", "Group D",
-                   "Group E", "Group F", "Group G", "Group H"]
-    KNOCKOUT_ORDER = [
-        "Round of 32", "Round of 16", "Quarterfinal",
-        "Semifinal", "Third Place", "Final"
-    ]
-
-    def _sort_key(name: str) -> tuple:
-        try:
-            return (0, GROUP_ORDER.index(name))
-        except ValueError:
-            pass
-        try:
-            return (1, KNOCKOUT_ORDER.index(name))
-        except ValueError:
-            pass
-        return (2, name)
-
-    ordered = sorted(rounds.values(), key=lambda r: _sort_key(r["round"]))
-    return ordered
 
 
 @router.get("/api/{league}/team-stats")

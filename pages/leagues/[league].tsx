@@ -106,14 +106,27 @@ export default function LeagueHubPage() {
   const isWC = lg === 'wc'
   const isUFC = lg === 'ufc'
 
-  const validTabs: HubTab[] = ['standings', 'stats', 'schedule']
-  if (isUFC) validTabs.push('rankings')
-  // WC has no player stats
-  if (isWC) validTabs.splice(validTabs.indexOf('stats'), 1)
-  // UFC has no team standings in the traditional sense
-  if (isUFC) validTabs.splice(validTabs.indexOf('standings'), 1)
+  // WC: Standings (bracket during knockouts / group tables) + Schedule. No player stats.
+  // UFC: Rankings (default) + Schedule — NO Stats or Standings (loader skips both, so
+  //       an empty Stats tab would render). Rankings must be first so it is the default.
+  let validTabs: HubTab[]
+  if (isUFC) {
+    validTabs = ['rankings', 'schedule']
+  } else {
+    validTabs = ['standings', 'stats', 'schedule']
+    if (isWC) validTabs.splice(validTabs.indexOf('stats'), 1)
+  }
 
   const [activeTab, setActiveTab] = useState<HubTab>(validTabs[0] || 'standings')
+
+  // Reset to a valid tab whenever the league changes. Next.js reuses this route
+  // component across /leagues/<a> → /leagues/<b> navigations (dynamic-route
+  // reuse), so without this a UFC page could be left showing standings/stats
+  // (tabs UFC doesn't define) or vice-versa. Keyed by lg only — resets to the
+  // first valid tab on every league change.
+  useEffect(() => {
+    setActiveTab(validTabs[0])
+  }, [lg])
 
   // ── Standings state ─────────────────────────────────────
   const [teams, setTeams] = useState<TeamStats[]>([])
@@ -148,12 +161,14 @@ export default function LeagueHubPage() {
       setStandingsLoading(true); setStandingsError(null)
       try {
         if (isWC) {
-          // Try knockout endpoint first; fall back to group standings
+          // Try the canonical knockout bracket first; fall back to group standings
+          // when knockouts haven't begun (endpoint returns {rounds:[]}).
           const kres = await fetch('/api/wc/knockout')
           const kdata = await kres.json()
+          const krounds = Array.isArray(kdata) ? kdata : (kdata?.rounds ?? [])
           if (!ignore) {
-            if (Array.isArray(kdata) && kdata.length > 0 && kdata.some((r: any) => r.matches?.length > 0)) {
-              setKnockout(kdata)
+            if (Array.isArray(krounds) && krounds.length > 0 && krounds.some((r: any) => r.matches?.length > 0)) {
+              setKnockout(krounds)
             } else {
               // Fall back to group standings
               const gres = await fetch('/api/wc/standings')

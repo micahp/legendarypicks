@@ -502,113 +502,179 @@ def lineups(league, game_id):
     return result
 
 
+# ── Canonical World Cup knockout contract ─────────────────────────────────
+# One shape, used by BOTH /api/wc/standings (during knockouts) and
+# /api/wc/knockout. Each round: {round, matches:[M]}. Each match M:
+#   {game_id, date, home:{abbrev,name}, away:{abbrev,name},
+#    homeScore, awayScore, winner, status, state}
+# §10: ESPN team/score fields are OBJECTS — extract .abbreviation/.displayName
+#      and .displayValue before returning. Never ship raw ESPN objects.
+_WC_ROUND_MAP = {
+    "round-of-32": "Round of 32",
+    "round-of-16": "Round of 16",
+    "quarterfinals": "Quarterfinals",
+    "semifinals": "Semifinals",
+    "3rd-place-match": "Third Place",
+    "final": "Final",
+}
+_WC_ROUND_ORDER = [
+    "Round of 32", "Round of 16", "Quarterfinals",
+    "Semifinals", "Third Place", "Final",
+]
+
+
+def _wc_round_from_event(e):
+    """Determine the knockout round name from event.season.slug (canonical),
+    falling back to competition.altGameNote text parsing."""
+    slug = ((e.get("season") or {}).get("slug") or "").lower()
+    if slug in _WC_ROUND_MAP:
+        return _WC_ROUND_MAP[slug]
+    # Fallback: altGameNote like "FIFA World Cup, Round of 32"
+    note = ((e.get("competitions") or [{}])[0].get("altGameNote") or "")
+    for key, label in _WC_ROUND_MAP.items():
+        if label.lower() in note.lower():
+            return label
+    return "Knockout"
+
+
+def _wc_competitor(c):
+    """Extract {abbrev, name} + numeric score + winner flag from one ESPN
+    competitor entry (objects → strings/ints per §10)."""
+    t = c.get("team", {}) or {}
+    abbrev = t.get("abbreviation")
+    name = t.get("displayName") or t.get("name") or abbrev or ""
+    score_raw = c.get("score")
+    if isinstance(score_raw, dict):
+        score_val = score_raw.get("displayValue")
+        if score_val is None:
+            score_val = score_raw.get("value")
+    else:
+        score_val = score_raw
+    try:
+        score = int(score_val) if score_val not in (None, "") else None
+    except (TypeError, ValueError):
+        score = None
+    return {
+        "abbrev": abbrev,
+        "name": name,
+        "score": score,
+        "winner": bool(c.get("winner") is True),
+    }
+
+
 def wc_knockout_standings():
-    """World Cup knockout bracket/results from the scoreboard.
+    """World Cup knockout bracket/results — the COMPLETE current bracket.
 
-    When group_standings() returns empty (group stage is over), read the
-    scoreboard for knockout events. ESPN /standings returns {children: []}
-    once groups finish, but /scoreboard carries the bracket events with
-    results, scores, and winner flags.
+    Future-proof: read leagues[0].calendar[0].entries from the default
+    scoreboard, exclude the 'Group' phase, derive the first knockout start
+    date and last knockout end date, then issue ONE cached range request
+    (?dates=START-END&limit=100). Group matches by event.season.slug into
+    the canonical six rounds, dedupe by event id.
 
-    Returns {rounds: [{name, matches: [{home, away, homeScore, awayScore,
-                                         winner, status, game_id}]}]}
+    Returns {rounds:[{round, matches:[{game_id, date, home:{abbrev,name},
+    away:{abbrev,name}, homeScore, awayScore, winner, status, state}]}]}.
 
-    §10: ESPN fields are OBJECTS — extract .abbreviation from team,
-         .displayValue from scores before returning.
+    During the group stage the bracket is empty — callers fall back to
+    group tables. See wc_is_knockout() for the gate.
     """
     _, path = _check("wc")
-    d = _get(_SITE.format(path=path) + "/scoreboard", ttl=60)
 
-    # Try to read the current phase from the season envelope
-    season = d.get("season") or {}
-    if not isinstance(season, dict):
-        season = {}
-    season_type = season.get("type") or {}
-    if not isinstance(season_type, dict):
-        season_type = {}
-    default_phase = season_type.get("name") or "Knockout Stage"
+    # ── 1. Derive the knockout date window from the calendar ──
+    d = _get(_SITE.format(path=path) + "/scoreboard", ttl=300)
+    league_blob = (d.get("leagues") or [{}])[0]
+    calendar = league_blob.get("calendar") or [{}]
+    entries = (calendar[0].get("entries") if calendar else []) or []
+    ko_start = None
+    ko_end = None
+    for ent in entries:
+        if (ent.get("label") or "").lower().startswith("group"):
+            continue
+        sd = ent.get("startDate")
+        ed = ent.get("endDate")
+        if sd and (ko_start is None or sd < ko_start):
+            ko_start = sd
+        if ed and (ko_end is None or ed > ko_end):
+            ko_end = ed
 
-    # Collect matches, then group by round
-    matches = []
-    for e in d.get("events", []):
+    if not ko_start or not ko_end:
+        # No knockout window published yet (pre-tournament) — nothing to show.
+        return {"rounds": []}
+
+    # ESPN date range format: YYYYMMDD-YYYYMMDD
+    def _ymd(iso):
+        return iso[:10].replace("-", "")
+    rng = f"{_ymd(ko_start)}-{_ymd(ko_end)}"
+
+    # ── 2. One cached range request for the whole bracket ──
+    rd = _get(
+        _SITE.format(path=path) + f"/scoreboard?dates={rng}&limit=100",
+        ttl=120,
+    )
+
+    # ── 3. Build canonical rounds, dedupe by event id ──
+    rounds_map = {}
+    seen = set()
+    for e in rd.get("events", []):
+        eid = e.get("id")
+        if eid in seen:
+            continue
+        seen.add(eid)
         comp = (e.get("competitions") or [{}])[0]
-        status = comp.get("status", {}) or {}
-        st = status.get("type", {}) or {}
+        comp_status = comp.get("status", {}) or {}
+        st = comp_status.get("type", {}) or {}
+        state = st.get("state") or ""
 
-        # ── Round / stage ──
-        round_info = e.get("round", {}) or {}
-        round_name = (
-            round_info.get("displayName")
-            or round_info.get("name")
-            or round_info.get("shortDisplayName")
-            or default_phase
-        )
-
-        # ── Competitor data (extract strings, never ship raw ESPN objects) ──
-        home_team = None
-        away_team = None
-        home_score = None
-        away_score = None
-        winner = None
-
+        home = away = None
         for c in comp.get("competitors", []):
-            t = c.get("team", {}) or {}
-            # §10: team is an object — extract .abbreviation
-            abbrev = t.get("abbreviation")
-
-            # Score may be a raw number or an object {value, displayValue}
-            score_raw = c.get("score")
-            if isinstance(score_raw, dict):
-                score_val = score_raw.get("displayValue")
-                if score_val is None:
-                    score_val = score_raw.get("value")
+            ci = _wc_competitor(c)
+            if c.get("homeAway") == "home":
+                home = ci
             else:
-                score_val = score_raw
+                away = ci
+        if not home or not away:
+            continue
 
-            ha = c.get("homeAway")
-            if ha == "home":
-                home_team = abbrev
-                home_score = score_val
-            else:
-                away_team = abbrev
-                away_score = score_val
+        winner = home["abbrev"] if home["winner"] else (
+            away["abbrev"] if away["winner"] else None)
 
-            if c.get("winner") is True:
-                winner = abbrev
-
-        matches.append({
-            "home": home_team,
-            "away": away_team,
-            "homeScore": home_score,
-            "awayScore": away_score,
+        match = {
+            "game_id": eid,
+            "date": e.get("date"),
+            "home": {"abbrev": home["abbrev"], "name": home["name"]},
+            "away": {"abbrev": away["abbrev"], "name": away["name"]},
+            "homeScore": home["score"],
+            "awayScore": away["score"],
             "winner": winner,
             "status": st.get("name") or st.get("description") or "",
-            "round": round_name,
-            "game_id": e.get("id"),
-        })
+            "state": state,
+        }
+        rname = _wc_round_from_event(e)
+        rounds_map.setdefault(rname, []).append(match)
 
-    # Group by round
-    rounds_map = {}
-    for m in matches:
-        rname = m.pop("round", default_phase)
-        if rname not in rounds_map:
-            rounds_map[rname] = []
-        rounds_map[rname].append(m)
-
-    # Stable order (canonical knockout sequence)
-    ROUND_ORDER = [
-        "Round of 32", "Round of 16", "Quarterfinals",
-        "Semifinals", "Third Place", "Final",
-    ]
+    # Stable canonical order
     rounds = []
-    for rname in ROUND_ORDER:
+    for rname in _WC_ROUND_ORDER:
         if rname in rounds_map:
-            rounds.append({"name": rname, "matches": rounds_map.pop(rname)})
-    # Anything left (unusual round names)
-    for rname, match_list in rounds_map.items():
-        rounds.append({"name": rname, "matches": match_list})
+            rounds.append({"round": rname, "matches": rounds_map.pop(rname)})
+    for rname, match_list in rounds_map.items():  # unknown round names last
+        rounds.append({"round": rname, "matches": match_list})
 
     return {"rounds": rounds}
+
+
+def wc_is_knockout():
+    """True once the current WC league-season phase is NOT 'Group'.
+
+    Reads league.season.type.name from the default scoreboard. While it is
+    'Group' (or missing) the group stage is live and the bracket must not be
+    served. Used by /api/wc/standings to pick bracket vs group tables.
+    """
+    _, path = _check("wc")
+    d = _get(_SITE.format(path=path) + "/scoreboard", ttl=300)
+    league_blob = (d.get("leagues") or [{}])[0]
+    stype = (league_blob.get("season") or {}).get("type") or {}
+    phase = (stype.get("name") or "") if isinstance(stype, dict) else ""
+    return bool(phase) and phase.lower() != "group"
 
 
 def match_events(league, game_id):

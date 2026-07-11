@@ -183,7 +183,10 @@ export const SportsService = {
   getGames: async (league: string): Promise<Game[]> => {
     try {
       const res = await axios.get(`${API_BASE_URL}/${league}/games`)
-      return (Array.isArray(res.data) ? res.data : []).map(normalizeGame)
+      // Pass the requested league explicitly as the override so each game keeps
+      // the correct league (the map(callback) form would pass the array INDEX as
+      // the override — see Blocker-3 regression). This keeps GameCard links working.
+      return (Array.isArray(res.data) ? res.data : []).map((g: any) => normalizeGame(g, league))
     } catch (err) {
       console.error('Error fetching games', err)
       return []
