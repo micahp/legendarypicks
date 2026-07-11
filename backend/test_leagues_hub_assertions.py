@@ -7,6 +7,9 @@ REAL code paths (live ESPN for the bracket; monkeypatched for the 503 gate so we
 don't depend on the live phase to exercise it). Exits non-zero on any failure.
 """
 import sys
+import os
+import sqlite3
+import tempfile
 import traceback
 
 # ── live ESPN imports (real code) ──
@@ -122,23 +125,43 @@ try:
 finally:
     espn.wc_is_knockout = _orig_phase
 
-print("== [5] UFC rankings: packaged seed fills an empty deployment DB ==")
+print("== [5] UFC rankings: missing data fails loudly; complete data is non-empty ==")
 _orig_db = games_router._db
 try:
-    games_router._db = lambda: games_router.sqlite3.connect(":memory:")
-    seeded = games_router.ufc_rankings()
-    check("seed fallback returns men's P4P rankings",
-          bool(seeded.get("pound_for_pound", {}).get("men")))
-    check("seed fallback returns women's P4P rankings",
-          bool(seeded.get("pound_for_pound", {}).get("women")))
-    check("seed fallback returns weight divisions",
-          len(seeded.get("divisions", [])) >= 10,
-          f"got {len(seeded.get('divisions', []))}")
-    bantamweight = next((d for d in seeded.get("divisions", [])
-                         if d.get("division") == "Bantamweight"), {})
-    check("seed fallback decodes fighter-name HTML entities",
-          any(f.get("fighter") == "Sean O'Malley"
-              for f in bantamweight.get("ranked", [])))
+    with tempfile.TemporaryDirectory() as tmp:
+        db_path = os.path.join(tmp, "rankings.db")
+        games_router._db = lambda: sqlite3.connect(db_path)
+        check_raises("missing UFC table -> 503", games_router.ufc_rankings, 503)
+
+        divisions = [
+            "Flyweight", "Bantamweight", "Featherweight", "Lightweight",
+            "Welterweight", "Middleweight", "Light Heavyweight", "Heavyweight",
+            "Women's Strawweight", "Women's Flyweight", "Women's Bantamweight",
+        ]
+        with sqlite3.connect(db_path) as con:
+            con.execute(
+                "CREATE TABLE ufc_rankings(division TEXT, rank INTEGER, "
+                "fighter TEXT, is_champion INTEGER, captured_at TEXT)"
+            )
+            rows = [
+                ("Men's Pound-for-Pound Top Rank", 1, "Men One", 0, "test"),
+                ("Women's Pound-for-Pound Top Rank", 1, "Women One", 0, "test"),
+            ]
+            for division in divisions:
+                rows.extend([
+                    (division, 0, f"{division} Champion", 1, "test"),
+                    (division, 1, f"{division} Contender", 0, "test"),
+                ])
+            con.executemany("INSERT INTO ufc_rankings VALUES (?,?,?,?,?)", rows)
+
+        result = games_router.ufc_rankings()
+        check("men's P4P rankings are non-empty",
+              bool(result.get("pound_for_pound", {}).get("men")))
+        check("women's P4P rankings are non-empty",
+              bool(result.get("pound_for_pound", {}).get("women")))
+        check("all 11 weight divisions are present",
+              len(result.get("divisions", [])) == 11,
+              f"got {len(result.get('divisions', []))}")
 finally:
     games_router._db = _orig_db
 

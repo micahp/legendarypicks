@@ -1,7 +1,5 @@
 """routers/games.py — games endpoints. Handlers only; shared code lives in _core."""
 import html
-import json
-import os
 
 from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import JSONResponse
@@ -9,41 +7,6 @@ from typing import Optional
 from _core import *
 
 router = APIRouter()
-
-
-def _seeded_ufc_ranking_rows():
-    """Return packaged UFC rankings when the deployment DB has not been seeded."""
-    seed_path = os.path.join(os.path.dirname(__file__), "..", "data", "ufc_rankings_seed.json")
-    try:
-        with open(seed_path, encoding="utf-8") as f:
-            groups = json.load(f)
-    except (OSError, ValueError, TypeError):
-        return []
-
-    rows = []
-    for group in groups if isinstance(groups, list) else []:
-        division = group.get("division")
-        if not division:
-            continue
-        champion = html.unescape(group.get("champion") or "")
-        if champion:
-            rows.append({
-                "division": division,
-                "rank": 0,
-                "fighter": champion,
-                "is_champion": 1,
-            })
-        for fighter in group.get("fighters") or []:
-            name = html.unescape(fighter.get("name") or "")
-            rank = fighter.get("rank")
-            if name and isinstance(rank, int):
-                rows.append({
-                    "division": division,
-                    "rank": rank,
-                    "fighter": name,
-                    "is_champion": 0,
-                })
-    return rows
 
 @router.get("/")
 def root():
@@ -59,8 +22,7 @@ def health():
 @router.get("/api/ufc/rankings")
 def ufc_rankings():
     """UFC rankings — reads cached ufc_rankings table populated by
-    ingest_ufc_rankings.py (live scrape, never on the request path).
-    Falls back to the packaged seed when a deployment DB has not been populated."""
+    ingest_ufc_rankings.py (live scrape, never on the request path)."""
     with closing(_db()) as con:
         con.row_factory = sqlite3.Row
         try:
@@ -68,14 +30,17 @@ def ufc_rankings():
                 "SELECT division, rank, fighter, is_champion FROM ufc_rankings "
                 "ORDER BY division, rank"
             ).fetchall()
-        except sqlite3.OperationalError:
-            rows = []  # table not populated yet (ingest_ufc_rankings.py hasn't run) — degrade, don't 500
+        except sqlite3.OperationalError as exc:
+            raise HTTPException(
+                503,
+                "UFC rankings data unavailable: production data has not been promoted",
+            ) from exc
 
     if not rows:
-        rows = _seeded_ufc_ranking_rows()
-
-    if not rows:
-        return {"pound_for_pound": {"men": [], "women": []}, "divisions": []}
+        raise HTTPException(
+            503,
+            "UFC rankings data unavailable: production data is empty",
+        )
 
     # Separate P4P from weight divisions
     p4p_men, p4p_women = [], []
@@ -83,9 +48,15 @@ def ufc_rankings():
 
     for r in rows:
         div = r["division"]
-        fighter = html.unescape(r["fighter"])
+        rank = r["rank"]
+        raw_fighter = r["fighter"]
+        if not isinstance(div, str) or not isinstance(rank, int):
+            continue
+        if not isinstance(raw_fighter, str) or not raw_fighter.strip():
+            continue
+        fighter = html.unescape(raw_fighter)
         if "Pound-for-Pound" in div:
-            entry = {"rank": r["rank"], "fighter": fighter}
+            entry = {"rank": rank, "fighter": fighter}
             if r["is_champion"]:
                 entry["champion"] = True
             if "Women" in div:
@@ -99,7 +70,7 @@ def ufc_rankings():
                 divisions[div]["champion"] = fighter
             else:
                 divisions[div]["ranked"].append(
-                    {"rank": r["rank"], "fighter": fighter}
+                    {"rank": rank, "fighter": fighter}
                 )
 
     # Sort P4P by rank (champion=rank 0 first)
@@ -121,6 +92,20 @@ def ufc_rankings():
         if d in divisions:
             divisions[d]["ranked"].sort(key=lambda x: x["rank"])
             ordered.append(divisions[d])
+
+    expected_divisions = set(MEN_ORDER + WOMEN_ORDER)
+    populated_divisions = {
+        division["division"] for division in ordered if division["ranked"]
+    }
+    if (
+        not p4p_men
+        or not p4p_women
+        or populated_divisions != expected_divisions
+    ):
+        raise HTTPException(
+            503,
+            "UFC rankings data unavailable: production data is incomplete",
+        )
 
     return {
         "pound_for_pound": {"men": p4p_men, "women": p4p_women},

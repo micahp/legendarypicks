@@ -24,10 +24,15 @@ failure mode here is shipping code whose data isn't in the prod DB (the empty-DB
    ~fully aligned dev↔prod (resolve-by-ID still holds). The proven path:
    - `cd backend && python3 migrate_logs_to_prod.py` — backs up `picks.db`, creates `player_game_logs`,
      copies the missing player rows + all logs (excluding identity-mismatched shared IDs).
+   - `python3 migrate_ufc_rankings_to_prod.py` — validates the complete dev rankings dataset, takes a
+     consistent SQLite online backup of
+     `picks.db`, then transactionally replaces only `ufc_rankings`. It is safe to re-run and never
+     touches props or other production tables.
    - `LP_DB_PATH=data/picks.db venv/bin/python derive_player_stats.py` — re-derive `player_stats` from
      the copied logs.
    - (NBA opponent splits: `backfill_nba_opponent.py` if logs lack `opponent`/`home_away`.)
-   - **Verify**: `player_game_logs` non-empty, `player_stats` current, `props`/`prop_results` UNCHANGED.
+   - **Verify**: `player_game_logs` non-empty, `player_stats` current, `props`/`prop_results` UNCHANGED,
+     and `ufc_rankings` contains both P4P groups plus all 11 weight divisions.
 5. **Deploy.** The backend container needs the DeepSeek key (it can't read the host's
    `/root/.hermes/.env`), so pass it at up-time — it's never stored in the repo:
    ```
@@ -37,7 +42,9 @@ failure mode here is shipping code whose data isn't in the prod DB (the empty-DB
    ```
 6. **Verify on the LIVE domain, not just a 200.** Hit `https://legendarypicks.xyz` and confirm the
    data-backed surfaces actually render real data: Stats leaderboard, a player page, the Matchups tab,
-   a PropChart, a game preview. Empty UI = the migration didn't take. Roll back by restoring the
+   a PropChart, a game preview. Run `cd backend && python3 verify_ufc_rankings.py`; it fails unless the
+   live API has non-empty men's and women's P4P lists and exactly 11 populated weight divisions.
+   Empty UI = the migration didn't take. Roll back by restoring the
    `picks.db.bak-premigrate-*` backup + `docker compose up -d` on the prior image.
 
 ## Gotchas
@@ -45,3 +52,5 @@ failure mode here is shipping code whose data isn't in the prod DB (the empty-DB
 - `docker compose up --build` rebuilds from the working tree, not a git ref — make sure the tree is the
   release commit.
 - Story generation in prod depends on step 5's key; without it `GameStory` silently renders nothing.
+- Install/update `scripts/legendarypicks-pipeline.cron` so the validated, transactional UFC ingest
+  refreshes production weekly; a failed/partial scrape leaves the prior rankings intact.
