@@ -122,6 +122,26 @@ try:
 finally:
     espn.wc_is_knockout = _orig_phase
 
+print("== [5] UFC rankings: packaged seed fills an empty deployment DB ==")
+_orig_db = games_router._db
+try:
+    games_router._db = lambda: games_router.sqlite3.connect(":memory:")
+    seeded = games_router.ufc_rankings()
+    check("seed fallback returns men's P4P rankings",
+          bool(seeded.get("pound_for_pound", {}).get("men")))
+    check("seed fallback returns women's P4P rankings",
+          bool(seeded.get("pound_for_pound", {}).get("women")))
+    check("seed fallback returns weight divisions",
+          len(seeded.get("divisions", [])) >= 10,
+          f"got {len(seeded.get('divisions', []))}")
+    bantamweight = next((d for d in seeded.get("divisions", [])
+                         if d.get("division") == "Bantamweight"), {})
+    check("seed fallback decodes fighter-name HTML entities",
+          any(f.get("fighter") == "Sean O'Malley"
+              for f in bantamweight.get("ranked", [])))
+finally:
+    games_router._db = _orig_db
+
 print()
 if FAILURES:
     print(f"FAILED {len(FAILURES)} check(s): {FAILURES}")

@@ -1,10 +1,49 @@
 """routers/games.py — games endpoints. Handlers only; shared code lives in _core."""
+import html
+import json
+import os
+
 from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import JSONResponse
 from typing import Optional
 from _core import *
 
 router = APIRouter()
+
+
+def _seeded_ufc_ranking_rows():
+    """Return packaged UFC rankings when the deployment DB has not been seeded."""
+    seed_path = os.path.join(os.path.dirname(__file__), "..", "data", "ufc_rankings_seed.json")
+    try:
+        with open(seed_path, encoding="utf-8") as f:
+            groups = json.load(f)
+    except (OSError, ValueError, TypeError):
+        return []
+
+    rows = []
+    for group in groups if isinstance(groups, list) else []:
+        division = group.get("division")
+        if not division:
+            continue
+        champion = html.unescape(group.get("champion") or "")
+        if champion:
+            rows.append({
+                "division": division,
+                "rank": 0,
+                "fighter": champion,
+                "is_champion": 1,
+            })
+        for fighter in group.get("fighters") or []:
+            name = html.unescape(fighter.get("name") or "")
+            rank = fighter.get("rank")
+            if name and isinstance(rank, int):
+                rows.append({
+                    "division": division,
+                    "rank": rank,
+                    "fighter": name,
+                    "is_champion": 0,
+                })
+    return rows
 
 @router.get("/")
 def root():
@@ -20,7 +59,8 @@ def health():
 @router.get("/api/ufc/rankings")
 def ufc_rankings():
     """UFC rankings — reads cached ufc_rankings table populated by
-    ingest_ufc_rankings.py (live scrape, never on the request path)."""
+    ingest_ufc_rankings.py (live scrape, never on the request path).
+    Falls back to the packaged seed when a deployment DB has not been populated."""
     with closing(_db()) as con:
         con.row_factory = sqlite3.Row
         try:
@@ -32,6 +72,9 @@ def ufc_rankings():
             rows = []  # table not populated yet (ingest_ufc_rankings.py hasn't run) — degrade, don't 500
 
     if not rows:
+        rows = _seeded_ufc_ranking_rows()
+
+    if not rows:
         return {"pound_for_pound": {"men": [], "women": []}, "divisions": []}
 
     # Separate P4P from weight divisions
@@ -40,8 +83,9 @@ def ufc_rankings():
 
     for r in rows:
         div = r["division"]
+        fighter = html.unescape(r["fighter"])
         if "Pound-for-Pound" in div:
-            entry = {"rank": r["rank"], "fighter": r["fighter"]}
+            entry = {"rank": r["rank"], "fighter": fighter}
             if r["is_champion"]:
                 entry["champion"] = True
             if "Women" in div:
@@ -52,10 +96,10 @@ def ufc_rankings():
             if div not in divisions:
                 divisions[div] = {"division": div, "champion": "", "ranked": []}
             if r["is_champion"]:
-                divisions[div]["champion"] = r["fighter"]
+                divisions[div]["champion"] = fighter
             else:
                 divisions[div]["ranked"].append(
-                    {"rank": r["rank"], "fighter": r["fighter"]}
+                    {"rank": r["rank"], "fighter": fighter}
                 )
 
     # Sort P4P by rank (champion=rank 0 first)
@@ -692,4 +736,3 @@ def list_predictions(league: Optional[str] = Query(None, description="Filter by 
     if graded:
         accuracy = round(sum(1 for p in graded if p["correct"]) / len(graded), 4)
     return {"predictions": out, "graded": len(graded), "accuracy": accuracy}
-
