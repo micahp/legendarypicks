@@ -16,6 +16,16 @@ in `package.json` tracks the next (in-development) release.
 
 ## [Unreleased]
 
+## [0.3.2] — 2026-07-12
+
+Hotfix: scores page alignment.
+
+### Fixed
+- **Scores page** — removed the winner arrow (`◄`) from final score cards. It rendered only on the
+  winning team's row, pushing that score out of vertical alignment with the loser's. The winner is
+  already indicated by the brighter score/name (loser dimmed), so the caret was redundant as well as
+  misaligning.
+
 ## [0.3.1] — 2026-07-10
 
 Esports polish + the deploy fix that makes the board work in production.
