@@ -157,7 +157,8 @@ that unresolved input changes the queue but never the `players` population.
 This proposal is deliberately marked `ready_for_apply_planner: false`. Before any
 shared-database mutation:
 
-1. Review all 135 crosswalk proposals and 166 queue entries.
+1. **Completed on this branch:** review all 135 crosswalk proposals and 166 queue
+   entries; see `MLB-IDENTITY-PROPOSAL-REVIEW-2026-07-14.md`.
 2. **Completed on this branch:** harden Statcast ingestion to resolve-or-queue with
    no silent player insertion.
 3. Design a separate transactional applier with explicit invariants and rollback.
