@@ -1,191 +1,252 @@
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState } from 'react'
 import Head from 'next/head'
-import { SportsService } from '../services/sports'
+import { getDeviceId } from '../lib/deviceId'
 
-interface Game {
-  gameId: string
-  homeTeam: { teamId: string; name: string; score?: number }
-  awayTeam: { teamId: string; name: string; score?: number }
-  status: string
-}
-
-interface Prediction {
-  id: number
+interface Match {
+  matchKey: string
+  teamA: string
+  teamB: string
+  title: string
   league: string
-  gameId: string
-  predictedWinner: string
-  correct: boolean | null
+  startTime: number | null
+  logoA: string | null
+  logoB: string | null
+  live: boolean
+  finished: boolean
 }
 
-const leagues = ['nba', 'nfl', 'nhl', 'mlb']
+interface MyPick {
+  matchKey: string
+  side: 'A' | 'B'
+  createdAt: number
+  lockAt: number | null
+  settledAt: number | null
+  result: 'win' | 'loss' | 'void' | null
+  points: number | null
+}
 
-export default function PredictionsPage() {
-  const [league, setLeague] = useState('nba')
-  const [games, setGames] = useState<Game[]>([])
-  const [selectedGame, setSelectedGame] = useState('')
-  const [predictedWinner, setPredictedWinner] = useState('')
-  const [predictions, setPredictions] = useState<Prediction[]>([])
+interface RecordT {
+  wins: number
+  losses: number
+  voids: number
+  streak: number
+}
+
+export default function PredictPage() {
+  const [matches, setMatches] = useState<Match[]>([])
+  const [myPicks, setMyPicks] = useState<MyPick[]>([])
+  const [record, setRecord] = useState<RecordT>({ wins: 0, losses: 0, voids: 0, streak: 0 })
   const [loading, setLoading] = useState(true)
-  const [predsLoading, setPredsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [submitting, setSubmitting] = useState(false)
+  const [submittingKey, setSubmittingKey] = useState<string | null>(null)
 
-  // Build a gameId -> "{away} at {home}" lookup from loaded games
-  const gameNames = useMemo(() => {
-    const map = new Map<string, string>()
-    for (const g of games) {
-      map.set(g.gameId, `${g.awayTeam.name} at ${g.homeTeam.name}`)
-    }
-    return map
-  }, [games])
+  const loadPicks = async () => {
+    const deviceId = getDeviceId()
+    const res = await fetch('/api/esports/picks/me', { headers: { 'X-Device-Id': deviceId } })
+    if (!res.ok) throw new Error('failed to load picks')
+    const data = await res.json()
+    setMyPicks(data.picks || [])
+    setRecord(data.record || { wins: 0, losses: 0, voids: 0, streak: 0 })
+  }
 
   useEffect(() => {
-    const fetchGames = async () => {
+    let active = true
+    ;(async () => {
       setLoading(true)
-      setError(null)
       try {
-        const g = await SportsService.getGames(league)
-        setGames(g)
-        if (g.length > 0) {
-          setSelectedGame(g[0].gameId)
-          setPredictedWinner(g[0].homeTeam.teamId)
-        }
+        const [upRes, picksRes] = await Promise.all([
+          fetch('/api/esports/upcoming'),
+          fetch('/api/esports/picks/me', { headers: { 'X-Device-Id': getDeviceId() } }),
+        ])
+        if (!upRes.ok) throw new Error('failed to load upcoming')
+        const up = await upRes.json()
+        const picksData = picksRes.ok
+          ? await picksRes.json()
+          : { picks: [], record: { wins: 0, losses: 0, voids: 0, streak: 0 } }
+        if (!active) return
+        setMatches(up.matches || [])
+        setMyPicks(picksData.picks || [])
+        setRecord(picksData.record || { wins: 0, losses: 0, voids: 0, streak: 0 })
       } catch {
-        setError('Could not load games. Try again.')
+        // leave empty on failure
       } finally {
-        setLoading(false)
+        if (active) setLoading(false)
       }
+    })()
+    return () => {
+      active = false
     }
-    fetchGames()
-  }, [league])
+  }, [])
 
-  useEffect(() => {
-    const fetchPreds = async () => {
-      setPredsLoading(true)
-      try {
-        const p = await SportsService.getPredictions(league)
-        setPredictions(p)
-      } catch { /* silent */ }
-      finally { setPredsLoading(false) }
-    }
-    fetchPreds()
-  }, [league])
-
-  const submit = async () => {
-    setSubmitting(true)
+  const call = async (m: Match, side: 'A' | 'B') => {
+    const deviceId = getDeviceId()
+    setSubmittingKey(m.matchKey)
     try {
-      await SportsService.submitPrediction(league, selectedGame, predictedWinner)
-      const p = await SportsService.getPredictions(league)
-      setPredictions(p)
+      await fetch('/api/esports/picks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Device-Id': deviceId },
+        body: JSON.stringify({ matchKey: m.matchKey, side, lockAt: m.startTime }),
+      })
+      await loadPicks()
     } catch {
-      setError('Failed to submit prediction.')
+      // ignore network errors in F1 skeleton
     } finally {
-      setSubmitting(false)
+      setSubmittingKey(null)
     }
   }
+
+  const openMatches = matches
+    .filter((m) => !m.finished && m.teamA && m.teamB)
+    .sort((a, b) => {
+      if (a.startTime == null && b.startTime == null) return 0
+      if (a.startTime == null) return 1
+      if (b.startTime == null) return -1
+      return a.startTime - b.startTime
+    })
+
+  const pickByKey = (mk: string): MyPick | null =>
+    myPicks.find((p) => p.matchKey === mk) || null
+
+  const hasTotal = record.wins + record.losses + record.voids > 0
+
+  const settled = myPicks
+    .filter((p) => p.settledAt !== null)
+    .sort((a, b) => (b.settledAt || 0) - (a.settledAt || 0))
 
   return (
     <>
       <Head>
-        <title>Predictions — Legendary Picks</title>
-        <meta name="description" content="Make sports predictions and track your accuracy" />
+        <title>The Pick Desk — Legendary Picks</title>
+        <meta name="description" content="Call the winner. Build your record." />
       </Head>
-      <div className="space-y-6">
-        <h1 className="text-3xl font-extrabold tracking-tight">Predictions</h1>
 
-        {error && (
-          <div className="rounded-lg border border-red-500/40 bg-red-950/40 text-red-200 px-4 py-3">
-            {error}
+      <div className="mx-auto max-w-2xl px-4 py-6">
+        {/* Header with record */}
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h1 className="text-3xl font-extrabold tracking-tight text-zinc-50">The Pick Desk</h1>
+            <p className="mt-1 text-sm text-zinc-500">Call the winner. Build your record.</p>
           </div>
+          <div className="text-right">
+            {!hasTotal ? (
+              <span className="text-sm text-zinc-500">Make your first call</span>
+            ) : (
+              <div className="flex items-center gap-2">
+                <span className="font-mono text-lg font-bold tabular-nums text-zinc-100">
+                  {record.wins}–{record.losses}
+                </span>
+                {record.streak !== 0 && <span className="text-zinc-500">·</span>}
+                {record.streak > 0 && (
+                  <span className="font-mono text-lg font-bold text-[#22c55e]">W{record.streak}</span>
+                )}
+                {record.streak < 0 && (
+                  <span className="font-mono text-lg font-bold text-[#ff3d71]">L{-record.streak}</span>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Open calls */}
+        <div className="mt-8 mb-3 text-[10px] font-medium uppercase tracking-[0.18em] text-zinc-500">
+          Open calls
+        </div>
+
+        {loading ? (
+          <p className="text-sm text-zinc-500">Loading the desk…</p>
+        ) : openMatches.length === 0 ? (
+          <p className="text-sm text-zinc-500">No matches to call right now.</p>
+        ) : (
+          openMatches.map((m) => {
+            const existing = pickByKey(m.matchKey)
+            return (
+              <div key={m.matchKey} className="rounded-xl border border-zinc-800 bg-zinc-900/40 p-4 mb-3">
+                <div className="mb-3 flex items-center gap-2 text-[10px] font-medium uppercase tracking-[0.18em] text-zinc-500">
+                  {m.title} · {m.league}
+                  {m.live ? ' · ' : ''}
+                  {m.live && <span className="text-[#ff3d71]">live</span>}
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <TeamLine name={m.teamA} logo={m.logoA} />
+                  <span className="text-zinc-600 text-xs">vs</span>
+                  <TeamLine name={m.teamB} logo={m.logoB} />
+                </div>
+                <div className="mt-3">
+                  {existing ? (
+                    <div className="text-sm">
+                      <span className="text-zinc-500">You called </span>
+                      <span className="font-semibold text-zinc-50">
+                        {existing.side === 'A' ? m.teamA : m.teamB}
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="flex gap-3">
+                      <button
+                        disabled={submittingKey === m.matchKey}
+                        onClick={() => call(m, 'A')}
+                        className="flex-1 rounded-lg border border-zinc-700 bg-zinc-800/60 px-3 py-2 text-sm font-semibold text-zinc-200 hover:border-zinc-500 hover:text-zinc-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Call {m.teamA}
+                      </button>
+                      <button
+                        disabled={submittingKey === m.matchKey}
+                        onClick={() => call(m, 'B')}
+                        className="flex-1 rounded-lg border border-zinc-700 bg-zinc-800/60 px-3 py-2 text-sm font-semibold text-zinc-200 hover:border-zinc-500 hover:text-zinc-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Call {m.teamB}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )
+          })
         )}
 
-        <div className="space-y-4">
-          {loading ? (
-            <div className="flex gap-2">
-              {[1,2,3,4].map(i => (
-                <div key={i} className="h-10 w-24 bg-zinc-800 rounded-lg animate-pulse" />
-              ))}
-            </div>
-          ) : games.length === 0 ? (
-            <p className="text-zinc-500">No games available for {league.toUpperCase()}.</p>
-          ) : (
-            <div className="flex flex-wrap gap-2">
-              <select
-                value={league}
-                onChange={e => setLeague(e.target.value)}
-                className="px-3 py-2 rounded-lg border border-zinc-800 bg-zinc-900 text-zinc-200"
-              >
-                {leagues.map(l => <option key={l} value={l}>{l.toUpperCase()}</option>)}
-              </select>
-              <select
-                value={selectedGame}
-                onChange={e => setSelectedGame(e.target.value)}
-                className="px-3 py-2 rounded-lg border border-zinc-800 bg-zinc-900 text-zinc-200"
-              >
-                {games.map(g => (
-                  <option key={g.gameId} value={g.gameId}>
-                    {g.awayTeam.name} at {g.homeTeam.name}
-                  </option>
-                ))}
-              </select>
-              <select
-                value={predictedWinner}
-                onChange={e => setPredictedWinner(e.target.value)}
-                className="px-3 py-2 rounded-lg border border-zinc-800 bg-zinc-900 text-zinc-200"
-              >
-                {selectedGame && (
-                  games.filter(g => g.gameId === selectedGame).map(g => (
-                    [g.homeTeam, g.awayTeam].map(t => (
-                      <option key={t.teamId} value={t.teamId}>{t.name}</option>
-                    ))
-                  ))
-                )}
-              </select>
-              <button
-                onClick={submit}
-                disabled={submitting || !selectedGame}
-                className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold transition-colors"
-              >
-                {submitting ? 'Submitting…' : 'Submit'}
-              </button>
-            </div>
-          )}
+        {/* Your record */}
+        <div className="mt-8 mb-3 text-[10px] font-medium uppercase tracking-[0.18em] text-zinc-500">
+          Your record
         </div>
 
-        <div className="mt-6">
-          <h2 className="text-xl font-bold mb-2">Your Predictions</h2>
-          {predsLoading ? (
-            <div className="space-y-2">
-              {[1,2,3].map(i => (
-                <div key={i} className="h-8 bg-zinc-800 rounded animate-pulse" />
-              ))}
-            </div>
-          ) : predictions.length === 0 ? (
-            <p className="text-zinc-500">No predictions yet. Pick a game above.</p>
-          ) : (
-            <table className="min-w-full text-sm">
-              <thead className="text-zinc-400">
-                <tr>
-                  <th className="text-left font-medium">League</th>
-                  <th className="text-left font-medium">Game</th>
-                  <th className="text-left font-medium">Prediction</th>
-                  <th className="text-left font-medium">Correct?</th>
-                </tr>
-              </thead>
-              <tbody>
-                {predictions.map(p => (
-                  <tr key={p.id} className="border-t border-zinc-800">
-                    <td className="pr-2 py-2">{p.league.toUpperCase()}</td>
-                    <td className="pr-2 py-2">{gameNames.get(p.gameId) ?? p.gameId}</td>
-                    <td className="pr-2 py-2">{p.predictedWinner}</td>
-                    <td className="pr-2 py-2">{p.correct === null ? 'Pending' : p.correct ? '✅' : '❌'}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
+        {settled.length === 0 ? (
+          <p className="text-sm text-zinc-500">No settled calls yet.</p>
+        ) : (
+          settled.map((p) => {
+            const parts = p.matchKey.split('||')
+            const teamA = parts[0]
+            const teamB = parts[1]
+            const title = parts[2] || ''
+            const pickedTeam = p.side === 'A' ? teamA : teamB
+            return (
+              <div
+                key={p.matchKey}
+                className="flex items-center justify-between border-b border-zinc-800/60 py-2 text-sm"
+              >
+                <span className="text-zinc-300">
+                  {pickedTeam} <span className="text-zinc-600">· {title}</span>
+                </span>
+                <span>
+                  {p.result === 'win' && (
+                    <span className="font-mono text-[#22c55e]">
+                      ✓ called it +{(p.points ?? 0).toFixed(1)}
+                    </span>
+                  )}
+                  {p.result === 'loss' && <span className="font-mono text-[#ff3d71]">✗ missed</span>}
+                  {p.result === 'void' && <span className="font-mono text-zinc-500">— void</span>}
+                </span>
+              </div>
+            )
+          })
+        )}
       </div>
     </>
+  )
+}
+
+function TeamLine({ name, logo }: { name: string; logo: string | null }) {
+  return (
+    <div className="flex items-center gap-2 min-w-0">
+      {logo && <img src={logo} alt="" className="h-6 w-6 rounded-sm object-contain" />}
+      <span className="text-sm font-semibold text-zinc-100 truncate">{name}</span>
+    </div>
   )
 }
