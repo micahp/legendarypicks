@@ -131,8 +131,8 @@ the house "desk" personas, upset-alert model surfacing. All deferred; none block
 
 ## Open decisions
 
-- **Identity:** anonymous-device-then-claim (recommended) vs. wallet-required vs. email. One call
-  needed before build.
+- **Identity:** DECIDED (Micah, 2026-07-14) → **anonymous device-scoped record, then claim/bind to
+  wallet or email.** First call is one tap; the record becomes portable once claimed.
 - **`predict.tsx`:** confirm it moves backstage (model informs, doesn't front-door) rather than
   running as a second prediction surface.
 - **Void handling on streaks:** confirm a `void` leaves the streak untouched (recommended) vs.
