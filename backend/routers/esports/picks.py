@@ -18,10 +18,22 @@ from typing import Optional
 from fastapi import APIRouter, Header, Query, Request
 from fastapi.responses import JSONResponse
 
+from .results_store import _load_results_store
+
 # Resolve the DB path exactly like the surrounding backend does.
 _DB = os.environ.get("LP_DB_PATH") or os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "..", "..", "data", "picks.db"
 )
+
+# Settlement tunables.
+# Points for a winning call: base 1 + a contrarian bonus that grows the FEWER people were on your
+# (winning) side — difficulty from crowd disagreement, never a model probability. A lock pays ~1, a
+# call almost nobody made pays ~2. Losing pays 0; a void pays nothing and doesn't touch the record.
+_CONTRARIAN_K = 1.0
+# A match that finished with no obtainable winner (ENDED_UNKNOWN / resultUnknown) is NOT voided
+# immediately — a result can still land late (e.g. a delayed Kalshi settle). Only void past this
+# grace window, so we never prematurely void a pick that was actually a win or loss.
+_VOID_GRACE_MS = 2 * 86400 * 1000
 
 
 def _conn():
@@ -99,6 +111,83 @@ def _signed_streak(results):
         else:
             break
     return sign * n
+
+
+def _tally(c, match_key):
+    """(countA, countB, total) of ALL picks on a match — the crowd at settlement time."""
+    counts = {"A": 0, "B": 0}
+    for r in c.execute(
+        "SELECT side, COUNT(*) AS n FROM esports_picks WHERE match_key=? GROUP BY side",
+        (match_key,),
+    ).fetchall():
+        counts[r["side"]] = r["n"]
+    a, b = counts["A"], counts["B"]
+    return a, b, a + b
+
+
+def settle_finished() -> int:
+    """Settle unsettled picks whose match now has a definite winner in the durable results store.
+
+    The pick `match_key` IS the slate identity key (teamA||teamB||title||league), which is also the
+    results-store's top-level key — so this is a direct lookup, no reconstruction. Only a DEFINITE
+    'a'/'b' winner settles a pick to win/loss; a finished-but-resultUnknown match is left OPEN until
+    a real result lands, and only voided after `_VOID_GRACE_MS` (never prematurely). Idempotent
+    (touches only `settled_at IS NULL` rows) and never raises. Returns the number of picks settled.
+    """
+    now = int(time.time() * 1000)
+    settled = 0
+    try:
+        c = _conn()
+        try:
+            open_keys = [
+                r["match_key"] for r in c.execute(
+                    "SELECT DISTINCT match_key FROM esports_picks WHERE settled_at IS NULL"
+                ).fetchall()
+            ]
+            if not open_keys:
+                return 0
+            store = _load_results_store()
+            for mk in open_keys:
+                v = store.get(mk)
+                if not v or not v.get("finished"):
+                    continue  # not finished yet
+                winner = v.get("winner")
+                if winner in ("a", "b"):
+                    win_side = winner.upper()
+                    a, b, total = _tally(c, mk)
+                    share = {"A": (a / total if total else None), "B": (b / total if total else None)}
+                    for r in c.execute(
+                        "SELECT id, side FROM esports_picks WHERE match_key=? AND settled_at IS NULL",
+                        (mk,),
+                    ).fetchall():
+                        won = r["side"] == win_side
+                        s = share.get(r["side"])
+                        pts = (1.0 + _CONTRARIAN_K * (1.0 - (s if s is not None else 1.0))) if won else 0.0
+                        c.execute(
+                            "UPDATE esports_picks SET settled_at=?, result=?, points=?, "
+                            "crowd_share_at_lock=? WHERE id=?",
+                            (now, "win" if won else "loss", pts, s, r["id"]),
+                        )
+                        settled += 1
+                elif (v.get("resultUnknown") and v.get("finishedAt")
+                      and (now - int(v["finishedAt"])) > _VOID_GRACE_MS):
+                    for r in c.execute(
+                        "SELECT id FROM esports_picks WHERE match_key=? AND settled_at IS NULL",
+                        (mk,),
+                    ).fetchall():
+                        c.execute(
+                            "UPDATE esports_picks SET settled_at=?, result='void', points=NULL, "
+                            "crowd_share_at_lock=NULL WHERE id=?",
+                            (now, r["id"]),
+                        )
+                        settled += 1
+                # else: finished, winner not yet known, still within grace -> leave OPEN.
+            c.commit()
+        finally:
+            c.close()
+    except Exception:
+        pass
+    return settled
 
 
 @router.post("/api/esports/picks")
@@ -190,6 +279,7 @@ async def get_my_picks(x_device_id: Optional[str] = Header(None)):
     if not device_id:
         return _json({"error": "device id required"}, status=400)
 
+    settle_finished()  # lazy: settle anything newly finished before showing this device its record
     c = _conn()
     try:
         rows = c.execute(
@@ -270,6 +360,7 @@ async def get_crowd(matchKey: Optional[str] = Query(None)):
 
 @router.get("/api/esports/leaderboard")
 async def get_leaderboard(window: str = Query("season")):
+    settle_finished()  # lazy: keep the board current at read time
     c = _conn()
     try:
         rows = c.execute(
@@ -311,3 +402,9 @@ async def get_leaderboard(window: str = Query("season")):
         c.close()
 
     return _json({"leaders": leaders})
+
+
+@router.post("/api/esports/picks/settle")
+async def settle_endpoint():
+    """Force a settlement pass (for a cron or manual trigger). Returns how many picks settled."""
+    return _json({"settled": settle_finished()})
