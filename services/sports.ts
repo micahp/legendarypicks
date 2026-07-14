@@ -140,8 +140,8 @@ function normalizeLivePeriod(g: any, league?: string): LivePeriod | undefined {
 }
 
 export function normalizeGame(g: any, leagueOverride?: string): Game {
-  // Build subtitle: for UFC use card_segment, for tennis/UFC use event name
-  let subtitle = g?.card_segment || g?.event || ''
+  // Preserve backend-provided stage/week context; UFC card segments remain most specific.
+  let subtitle = g?.card_segment || g?.subtitle || g?.event || ''
 
   // Determine league from various possible fields, with optional override
   const rawLeague = leagueOverride ? leagueOverride : (g?.league ?? g?.sport ?? '')
@@ -202,7 +202,9 @@ export const SportsService = {
       }))
     } catch (err) {
       console.error(`Error fetching ${league} games for ${date}`, err)
-      return []
+      // A failed request is not the same thing as a valid day with no games.
+      // Callers own the visible error state and already catch this rejection.
+      throw err
     }
   },
 

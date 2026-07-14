@@ -94,6 +94,24 @@ const TAB_LABELS: Record<HubTab, string> = {
   rankings: 'Rankings',
 }
 
+const DATE_PARAM = /^\d{4}-\d{2}-\d{2}$/
+
+function localToday(): string {
+  return new Date().toLocaleDateString('en-CA')
+}
+
+function validScheduleDate(value: unknown): value is string {
+  if (typeof value !== 'string' || !DATE_PARAM.test(value)) return false
+  const parsed = new Date(`${value}T12:00:00`)
+  return !Number.isNaN(parsed.getTime()) && parsed.toLocaleDateString('en-CA') === value
+}
+
+function formatScheduleDate(date: string): string {
+  return new Date(`${date}T12:00:00`).toLocaleDateString(undefined, {
+    weekday: 'short', month: 'short', day: 'numeric', year: 'numeric',
+  })
+}
+
 export default function LeagueHubPage() {
   const router = useRouter()
   const { league } = router.query
@@ -117,16 +135,56 @@ export default function LeagueHubPage() {
     if (isWC) validTabs.splice(validTabs.indexOf('stats'), 1)
   }
 
-  const [activeTab, setActiveTab] = useState<HubTab>(validTabs[0] || 'standings')
+  const [activeTab, setActiveTab] = useState<HubTab>('standings')
+  const [scheduleDate, setScheduleDate] = useState<string>(() => localToday())
 
-  // Reset to a valid tab whenever the league changes. Next.js reuses this route
-  // component across /leagues/<a> → /leagues/<b> navigations (dynamic-route
-  // reuse), so without this a UFC page could be left showing standings/stats
-  // (tabs UFC doesn't define) or vice-versa. Keyed by lg only — resets to the
-  // first valid tab on every league change.
+  // The query string is the shareable source of truth. Canonicalize invalid
+  // tabs (notably stats/standings on UFC) and ensure Schedule always has a day.
   useEffect(() => {
-    setActiveTab(validTabs[0])
-  }, [lg])
+    if (!router.isReady || !lg) return
+    const queryTab = typeof router.query.tab === 'string' ? router.query.tab : ''
+    const nextTab = validTabs.includes(queryTab as HubTab)
+      ? queryTab as HubTab
+      : validTabs[0]
+    const nextDate = validScheduleDate(router.query.date) ? router.query.date : localToday()
+    setActiveTab(nextTab)
+    setScheduleDate(nextDate)
+
+    const tabNeedsUpdate = router.query.tab !== nextTab
+    const dateNeedsUpdate = nextTab === 'schedule' && router.query.date !== nextDate
+    if (tabNeedsUpdate || dateNeedsUpdate) {
+      const query: Record<string, string | string[] | undefined> = {
+        ...router.query, league: router.query.league || lg, tab: nextTab,
+      }
+      if (nextTab === 'schedule') query.date = nextDate
+      void router.replace({ pathname: router.pathname, query }, undefined, { shallow: true })
+    }
+  }, [router.isReady, router.query.tab, router.query.date, lg])
+
+  const updateRoute = (tab: HubTab, date = scheduleDate) => {
+    const query: Record<string, string | string[] | undefined> = {
+      ...router.query, league: router.query.league || lg, tab,
+    }
+    if (tab === 'schedule') query.date = date
+    void router.replace({ pathname: router.pathname, query }, undefined, { shallow: true })
+  }
+
+  const selectTab = (tab: HubTab) => {
+    setActiveTab(tab)
+    updateRoute(tab)
+  }
+
+  const selectScheduleDate = (date: string) => {
+    if (!validScheduleDate(date)) return
+    setScheduleDate(date)
+    updateRoute('schedule', date)
+  }
+
+  const shiftScheduleDay = (delta: number) => {
+    const date = new Date(`${scheduleDate}T12:00:00`)
+    date.setDate(date.getDate() + delta)
+    selectScheduleDate(date.toLocaleDateString('en-CA'))
+  }
 
   // ── Standings state ─────────────────────────────────────
   const [teams, setTeams] = useState<TeamStats[]>([])
@@ -216,13 +274,14 @@ export default function LeagueHubPage() {
 
   // ── Load schedule ───────────────────────────────────────
   useEffect(() => {
-    if (!lg) return
+    if (!lg || activeTab !== 'schedule') return
     let ignore = false
     const load = async () => {
+      setGames([])
       setScheduleLoading(true); setScheduleError(null)
       try {
-        const data = await SportsService.getGames(lg)
-        if (!ignore) setGames(data)
+        const data = await SportsService.getGamesByDate(lg, scheduleDate)
+        if (!ignore) setGames(Array.isArray(data) ? data : [])
       } catch {
         if (!ignore) setScheduleError('Unable to load schedule.')
       } finally {
@@ -231,7 +290,7 @@ export default function LeagueHubPage() {
     }
     load()
     return () => { ignore = true }
-  }, [lg])
+  }, [lg, scheduleDate, activeTab])
 
   // ── Load UFC rankings ───────────────────────────────────
   useEffect(() => {
@@ -257,6 +316,17 @@ export default function LeagueHubPage() {
   // ── Derived column list ─────────────────────────────────
   const colKey = lg === 'mlb' ? `mlb_${mlbType}` : lg
   const cols = LEAGUE_COLS[colKey] || []
+  const formattedScheduleDate = formatScheduleDate(scheduleDate)
+  const isScheduleToday = scheduleDate === localToday()
+  const sortedScheduleGames = [...games].sort(
+    (a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
+  )
+  const scheduleGroups = sortedScheduleGames.reduce((groups, game) => {
+    const subtitle = game.subtitle || ''
+    if (!groups[subtitle]) groups[subtitle] = []
+    groups[subtitle].push(game)
+    return groups
+  }, {} as Record<string, Game[]>)
 
   // ── Loading (no league yet) ─────────────────────────────
   if (!lg) {
@@ -282,11 +352,11 @@ export default function LeagueHubPage() {
         </div>
 
         {/* Tab bar */}
-        <div className="flex gap-0 overflow-x-auto border-b border-zinc-800 -mx-4 px-4">
+        <div className="flex gap-0 overflow-x-auto border-b border-zinc-800 -mx-4 px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {validTabs.map(t => (
             <button
               key={t}
-              onClick={() => setActiveTab(t)}
+              onClick={() => selectTab(t)}
               className={`px-4 py-3 text-sm font-medium whitespace-nowrap transition-colors border-b-2 -mb-px ${
                 activeTab === t
                   ? 'border-emerald-500 text-white'
@@ -609,6 +679,53 @@ export default function LeagueHubPage() {
         {/* ── Schedule tab ────────────────────────────────── */}
         {activeTab === 'schedule' && (
           <>
+            <div className="space-y-1.5 text-center">
+              <div className="flex items-center justify-center gap-2 sm:gap-3">
+                <button
+                  type="button"
+                  onClick={() => shiftScheduleDay(-1)}
+                  aria-label="Previous day"
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900 text-xl leading-none text-zinc-300 hover:bg-zinc-800 active:scale-95"
+                >
+                  ‹
+                </button>
+                <div className="min-w-[9rem] text-center sm:min-w-[10.5rem]" aria-live="polite">
+                  <div className="text-sm font-bold text-zinc-200">{formattedScheduleDate}</div>
+                  {!isScheduleToday && (
+                    <button
+                      type="button"
+                      onClick={() => selectScheduleDate(localToday())}
+                      className="mt-1 text-xs font-medium text-emerald-400 hover:text-emerald-300"
+                    >
+                      Jump to today
+                    </button>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => shiftScheduleDay(1)}
+                  aria-label="Next day"
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900 text-xl leading-none text-zinc-300 hover:bg-zinc-800 active:scale-95"
+                >
+                  ›
+                </button>
+                <label className="relative flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 focus-within:border-emerald-500 focus-within:ring-1 focus-within:ring-emerald-500">
+                  <span className="sr-only">Choose date</span>
+                  <svg viewBox="0 0 20 20" aria-hidden="true" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <rect x="3" y="4.5" width="14" height="12.5" rx="2" />
+                    <path d="M6.5 2.5v4M13.5 2.5v4M3 8h14" />
+                  </svg>
+                  <input
+                    type="date"
+                    aria-label="Choose schedule date"
+                    value={scheduleDate}
+                    onChange={(event) => selectScheduleDate(event.target.value)}
+                    className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                  />
+                </label>
+              </div>
+            </div>
+
             {scheduleError && (
               <div className="bg-red-500/10 border border-red-500/20 rounded-lg px-4 py-3 text-red-400 text-sm">
                 {scheduleError}
@@ -621,14 +738,29 @@ export default function LeagueHubPage() {
                   <div key={i} className="h-24 bg-zinc-800 rounded-xl" />
                 ))}
               </div>
-            ) : games.length === 0 ? (
+            ) : scheduleError ? null : games.length === 0 ? (
               <div className="text-center py-12 text-zinc-500 text-sm">
-                No games scheduled for {leagueName}.
+                No {leagueName} games scheduled for {formattedScheduleDate}.
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                {games.map(g => (
-                  <GameCard key={g.gameId} {...g} />
+              <div className="space-y-6">
+                {Object.entries(scheduleGroups).map(([subtitle, groupedGames]) => (
+                  <section key={subtitle || 'schedule'} className="space-y-3">
+                    {subtitle && (
+                      <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-400">
+                        {subtitle}
+                      </h2>
+                    )}
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                      {groupedGames.map(game => (
+                        <GameCard
+                          key={game.gameId}
+                          {...game}
+                          showScheduledTime={isUFC}
+                        />
+                      ))}
+                    </div>
+                  </section>
                 ))}
               </div>
             )}

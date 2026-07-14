@@ -22,6 +22,7 @@ interface GameProps {
   status: 'SCHEDULED' | 'LIVE' | 'FINAL'
   statusDetail?: string   // ESPN "Final/10" etc.
   subtitle?: string
+  showScheduledTime?: boolean
   // Tennis: array of set scores [home, away] for each set
   sets?: TennisSet[]
   // Live game period details (only present when LIVE)
@@ -84,7 +85,7 @@ export default function GameCard(g: GameProps) {
   const time = new Date(g.startTime)
   const timeLabel = time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 
-  // UFC never shows time
+  // UFC suppresses time on shared score surfaces; a schedule can opt in.
   const isUFC = g.league === 'UFC'
   const isTennis = g.league === 'ATP' || g.league === 'WTA'
   // Leagues with a real detail page (box score / play-by-play / game info tabs). NFL + WC were
@@ -104,7 +105,7 @@ export default function GameCard(g: GameProps) {
   // - SCHEDULED: show time (except UFC)
   // - LIVE: show LIVE badge (no time), plus period info if available
   // - FINAL: show FINAL badge (no time)
-  const showTime = g.status === 'SCHEDULED' && !isUFC
+  const showTime = g.status === 'SCHEDULED' && (!isUFC || g.showScheduledTime)
   const showStatusBadge = g.status === 'LIVE' || g.status === 'FINAL'
   // Scores only exist once a game starts — never render 0–0 before first pitch/tip/puck
   const showScore = g.status === 'LIVE' || g.status === 'FINAL'
