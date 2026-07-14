@@ -1,4 +1,7 @@
 """routers/players.py — players endpoints. Handlers only; shared code lives in _core."""
+import json
+import math
+
 from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import JSONResponse
 from typing import Optional
@@ -305,6 +308,35 @@ _LEAGUE_DEFAULTS = {
     "mlb_pitching": ("strikeouts", "k_pct"),
 }
 
+_CHANGE_METRICS = {
+    "nba": {
+        "scoring": {"metric": _metric("pts", "Points/Game", "decimal_1"), "raw_keys": ("PTS",)},
+        "playmaking": {"metric": _metric("ast", "Assists/Game", "decimal_1"), "raw_keys": ("AST",)},
+        "rebounding": {"metric": _metric("reb", "Rebounds/Game", "decimal_1"), "raw_keys": ("REB",)},
+        "defense": {"metric": _metric("stl", "Steals/Game", "decimal_1"), "raw_keys": ("STL",)},
+        "efficiency": {"metric": _metric("ts_pct", "True Shooting %", "percent_1"), "ts": True},
+    },
+    "nfl": {
+        "passing": {"metric": _metric("pass_yds_g", "Pass Yards/Game", "decimal_1"), "raw_keys": ("pass_yds", "passing_yards")},
+        "rushing": {"metric": _metric("rush_yds_g", "Rush Yards/Game", "decimal_1"), "raw_keys": ("rush_yds", "rushing_yards")},
+        "receiving": {"metric": _metric("rec_yds_g", "Receiving Yards/Game", "decimal_1"), "raw_keys": ("rec_yds", "receiving_yards")},
+    },
+    "nhl": {
+        "scoring": {"metric": _metric("points_nhl", "Points/Game", "decimal_1"), "raw_keys": ("points",)},
+        "shooting": {"metric": _metric("shots", "Shots/Game", "decimal_1"), "raw_keys": ("shots",)},
+        "special_teams": {"metric": _metric("ppp", "Power-Play Points/Game", "decimal_1"), "raw_keys": ("powerPlayPoints",)},
+        "possession": {"metric": _metric("plus_minus", "Plus/Minus per Game", "decimal_1"), "raw_keys": ("plusMinus",)},
+    },
+}
+
+_COMPARISON_BASE = {
+    "recent_label": "Last 5",
+    "baseline_label": "Earlier season",
+    "recent_games": 5,
+    "min_baseline_games": 5,
+    "status": "display_only",
+}
+
 
 def _empty_leaders(lg, season, stat_type):
     return {
@@ -316,6 +348,9 @@ def _empty_leaders(lg, season, stat_type):
         "categories": [],
         "columns": [],
         "leaders": [],
+        "change_metric": None,
+        "comparison": None,
+        "changes": [],
     }
 
 
@@ -331,6 +366,140 @@ def _format_leader_value(value, format):
     if format == "time":
         return str(value)
     raise ValueError(f"Unsupported leader format: {format}")
+
+
+def _numeric_stat(stats, keys):
+    for key in keys:
+        if key not in stats:
+            continue
+        value = stats[key]
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            return None
+        value = float(value)
+        return value if math.isfinite(value) else None
+    return None
+
+
+def _parse_log_stats(raw):
+    try:
+        parsed = json.loads(raw)
+    except (TypeError, ValueError):
+        return None
+    return parsed if isinstance(parsed, dict) else None
+
+
+def _window_value(logs, definition):
+    if definition.get("ts"):
+        totals = {"PTS": 0.0, "FGA": 0.0, "FTA": 0.0}
+        valid = 0
+        for log in logs:
+            stats = _parse_log_stats(log["stats"])
+            if stats is None:
+                continue
+            values = {key: _numeric_stat(stats, (key,)) for key in totals}
+            if any(value is None for value in values.values()):
+                continue
+            valid += 1
+            for key, value in values.items():
+                totals[key] += value
+        denominator = 2 * (totals["FGA"] + 0.44 * totals["FTA"])
+        return (100 * totals["PTS"] / denominator if denominator > 0 else None), valid
+
+    values = []
+    for log in logs:
+        stats = _parse_log_stats(log["stats"])
+        if stats is None:
+            continue
+        value = _numeric_stat(stats, definition["raw_keys"])
+        if value is not None:
+            values.append(value)
+    return (sum(values) / len(values) if values else None), len(values)
+
+
+def _log_order(row):
+    game_date = row["game_date"] or ""
+    try:
+        game_no = int(row["game_no"])
+    except (TypeError, ValueError):
+        game_no = -1
+    return (1, game_date, game_no) if game_date else (0, "", game_no)
+
+
+def _change_evidence(lg, selected_category, season, leaders):
+    definition = _CHANGE_METRICS.get(lg, {}).get(selected_category)
+    if definition is None:
+        return None, None, []
+
+    change_metric = dict(definition["metric"])
+    eligible = [leader for leader in leaders if leader.get("player_id") is not None]
+    comparison = {
+        **_COMPARISON_BASE,
+        "eligible_leaders": len(eligible),
+        "qualified_leaders": 0,
+    }
+    if not eligible:
+        return change_metric, comparison, []
+
+    leader_by_id = {}
+    for leader in eligible:
+        leader_by_id.setdefault(leader["player_id"], leader)
+    player_ids = list(leader_by_id)
+    placeholders = ",".join("?" for _ in player_ids)
+    try:
+        with closing(_db()) as con:
+            con.row_factory = sqlite3.Row
+            rows = con.execute(
+                "SELECT player_id, stats, game_date, game_no FROM player_game_logs "
+                f"WHERE league=? AND season=? AND player_id IN ({placeholders})",
+                [lg, season] + player_ids,
+            ).fetchall()
+    except sqlite3.OperationalError as exc:
+        if "no such table: player_game_logs" in str(exc).lower():
+            return change_metric, comparison, []
+        raise
+
+    logs_by_player = {player_id: [] for player_id in player_ids}
+    for row in rows:
+        if row["player_id"] in logs_by_player:
+            logs_by_player[row["player_id"]].append(row)
+
+    candidates = []
+    for player_id, leader in leader_by_id.items():
+        logs = sorted(logs_by_player[player_id], key=_log_order)
+        if len(logs) < 10:
+            continue
+        baseline_logs, recent_logs = logs[:-5], logs[-5:]
+        recent_value, recent_games = _window_value(recent_logs, definition)
+        baseline_value, baseline_games = _window_value(baseline_logs, definition)
+        if (
+            recent_value is None or baseline_value is None
+            or recent_games != 5 or baseline_games < 5
+        ):
+            continue
+        delta = recent_value - baseline_value
+        tolerance = 0.05
+        direction = "rising" if delta > tolerance else "falling" if delta < -tolerance else "flat"
+        candidates.append({
+            "player_id": player_id,
+            "name": leader["name"],
+            "team": leader["team"],
+            "metric": dict(change_metric),
+            "recent_value": _format_leader_value(recent_value, change_metric["format"]),
+            "baseline_value": _format_leader_value(baseline_value, change_metric["format"]),
+            "delta": _format_leader_value(delta, change_metric["format"]),
+            "direction": direction,
+            "recent_games": recent_games,
+            "baseline_games": baseline_games,
+            "_delta": delta,
+        })
+
+    comparison["qualified_leaders"] = len(candidates)
+    candidates.sort(key=lambda item: (-abs(item["_delta"]), item["name"]))
+    changes = []
+    for candidate in candidates[:3]:
+        candidate.pop("_delta")
+        changes.append(candidate)
+    return change_metric, comparison, changes
 
 
 @router.get("/api/{league}/leaders")
@@ -481,7 +650,12 @@ def league_leaders(league: str,
             entry[key] = _format_leader_value(r[key], metric_metadata[key]["format"])
         leaders.append(entry)
 
+    change_metric, comparison, changes = _change_evidence(
+        lg, selected_category, season, leaders
+    )
     return {"league": lg, "season": season if isinstance(season, int) else str(season),
             "stat": sort_stat, "stat_type": stat_type,
             "category": selected_category, "categories": categories,
-            "columns": columns, "leaders": leaders}
+            "columns": columns, "leaders": leaders,
+            "change_metric": change_metric, "comparison": comparison,
+            "changes": changes}

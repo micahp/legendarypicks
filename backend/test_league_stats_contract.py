@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Deterministic contract tests for GET /api/{league}/leaders."""
+import json
 import os
 import sqlite3
 import tempfile
@@ -35,7 +36,7 @@ def connect(path):
     return con
 
 
-def create_schema(path, omitted=()):
+def create_schema(path, omitted=(), with_logs=True):
     omitted = set(omitted)
     metric_columns = []
     for key in ALL_METRICS:
@@ -53,6 +54,12 @@ def create_schema(path, omitted=()):
             + ", ".join(metric_columns)
             + ")"
         )
+        if with_logs:
+            con.execute(
+                "CREATE TABLE player_game_logs("
+                "player_id INTEGER, league TEXT, season INTEGER, "
+                "game_date TEXT, game_no TEXT, stats TEXT)"
+            )
 
 
 def metric_values(definition_key, high=True):
@@ -91,6 +98,23 @@ def insert_row(path, player_id, name, league, season, games, stat_type=None, val
         con.execute(
             f"INSERT INTO player_stats ({','.join(columns)}) VALUES ({placeholders})",
             [data[column] for column in columns],
+        )
+
+
+def insert_logs(path, player_id, league, stats_rows, season=2026, dated=False):
+    with sqlite3.connect(path) as con:
+        con.executemany(
+            "INSERT INTO player_game_logs(player_id,league,season,game_date,game_no,stats) "
+            "VALUES (?,?,?,?,?,?)",
+            [
+                (
+                    player_id, league, season,
+                    f"2026-01-{index:02d}" if dated else None,
+                    str(index),
+                    value if isinstance(value, str) else json.dumps(value),
+                )
+                for index, value in enumerate(stats_rows, 1)
+            ],
         )
 
 
@@ -236,7 +260,8 @@ class LeagueStatsContractTests(unittest.TestCase):
             {
                 "league": "nba", "season": None, "stat": None,
                 "stat_type": None, "category": None, "categories": [],
-                "columns": [], "leaders": [],
+                "columns": [], "leaders": [], "change_metric": None,
+                "comparison": None, "changes": [],
             },
         )
         insert_row(self.db_path, 1, "No Metrics", "nba", 2026, 10, values={})
@@ -245,6 +270,9 @@ class LeagueStatsContractTests(unittest.TestCase):
         self.assertIsNone(no_metrics["stat"])
         self.assertEqual(no_metrics["categories"], [])
         self.assertEqual(no_metrics["leaders"], [])
+        self.assertIsNone(no_metrics["change_metric"])
+        self.assertIsNone(no_metrics["comparison"])
+        self.assertEqual(no_metrics["changes"], [])
 
     def test_mlb_precision_and_integer_values_are_preserved(self):
         batting = metric_values("mlb_batting")
@@ -275,6 +303,172 @@ class LeagueStatsContractTests(unittest.TestCase):
         insert_row(self.db_path, 3, "NBA A", "nba", 2026, 10, values=metric_values("nba", high=True))
         insert_row(self.db_path, 4, "NBA B", "nba", 2026, 10, values=metric_values("nba", high=False))
         self.assertEqual(len(call("nba", min_games=10, limit=1)["leaders"]), 1)
+
+    def test_nba_last_five_math_max_three_and_deterministic_order(self):
+        fixtures = [
+            (1, "Alpha", 10, 20),
+            (2, "Beta", 30, 10),
+            (3, "Charlie", 10, 15),
+            (4, "Delta", 10, 30),
+        ]
+        for player_id, name, baseline, recent in fixtures:
+            values = metric_values("nba")
+            values.update({"pts": recent, "fgm": 100 + player_id})
+            insert_row(self.db_path, player_id, name, "nba", 2026, 10, values=values)
+            insert_logs(
+                self.db_path, player_id, "nba",
+                [{"PTS": baseline}] * 5 + [{"PTS": recent}] * 5,
+                dated=True,
+            )
+
+        response = call("nba", category="scoring", stat="fgm")
+        self.assertEqual(response["change_metric"], {
+            "key": "pts", "label": "Points/Game", "format": "decimal_1",
+        })
+        self.assertEqual(response["comparison"], {
+            "recent_label": "Last 5", "baseline_label": "Earlier season",
+            "recent_games": 5, "min_baseline_games": 5,
+            "status": "display_only", "eligible_leaders": 4,
+            "qualified_leaders": 4,
+        })
+        self.assertEqual([change["name"] for change in response["changes"]], [
+            "Beta", "Delta", "Alpha",
+        ])
+        beta, delta, alpha = response["changes"]
+        self.assertEqual(
+            (beta["recent_value"], beta["baseline_value"], beta["delta"], beta["direction"]),
+            (10.0, 30.0, -20.0, "falling"),
+        )
+        self.assertEqual(delta["direction"], "rising")
+        self.assertEqual(alpha["recent_games"], 5)
+        self.assertEqual(alpha["baseline_games"], 5)
+
+    def test_true_shooting_is_derived_separately_for_each_window(self):
+        values = metric_values("nba")
+        insert_row(self.db_path, 1, "TS Player", "nba", 2026, 10, values=values)
+        baseline = {"PTS": 10, "FGA": 8, "FTA": 4}
+        recent = {"PTS": 15, "FGA": 10, "FTA": 2}
+        insert_logs(self.db_path, 1, "nba", [baseline] * 5 + [recent] * 5)
+
+        response = call("nba", category="efficiency", stat="minutes")
+        self.assertEqual(response["change_metric"]["key"], "ts_pct")
+        self.assertEqual(response["change_metric"]["format"], "percent_1")
+        change = response["changes"][0]
+        baseline_ts = 100 * 50 / (2 * (40 + 0.44 * 20))
+        recent_ts = 100 * 75 / (2 * (50 + 0.44 * 10))
+        self.assertEqual(change["baseline_value"], round(baseline_ts, 1))
+        self.assertEqual(change["recent_value"], round(recent_ts, 1))
+        self.assertEqual(change["delta"], round(recent_ts - baseline_ts, 1))
+        self.assertEqual(change["direction"], "rising")
+
+    def test_nfl_aliases_work_and_missing_values_are_not_zero(self):
+        for player_id, name in ((1, "Alias Player"), (2, "Missing Player")):
+            insert_row(
+                self.db_path, player_id, name, "nfl", 2026, 10,
+                values=metric_values("nfl"),
+            )
+        insert_logs(
+            self.db_path, 1, "nfl",
+            [{"pass_yds": 100}] * 5 + [{"passing_yards": 200}] * 5,
+        )
+        insert_logs(
+            self.db_path, 2, "nfl",
+            [{"pass_yds": 50}] * 5 + [{"pass_yds": 75}] * 4 + [{"pass_td": 2}],
+        )
+
+        response = call("nfl", category="passing")
+        self.assertEqual(response["comparison"]["eligible_leaders"], 2)
+        self.assertEqual(response["comparison"]["qualified_leaders"], 1)
+        self.assertEqual([change["name"] for change in response["changes"]], ["Alias Player"])
+        self.assertEqual(response["changes"][0]["baseline_value"], 100.0)
+        self.assertEqual(response["changes"][0]["recent_value"], 200.0)
+
+    def test_nhl_category_metric_uses_required_raw_key(self):
+        insert_row(
+            self.db_path, 1, "NHL Player", "nhl", 2026, 10,
+            values=metric_values("nhl"),
+        )
+        insert_logs(
+            self.db_path, 1, "nhl",
+            [{"powerPlayPoints": 0}] * 5 + [{"powerPlayPoints": 2}] * 5,
+        )
+        response = call("nhl", category="special_teams", stat="ppg")
+        self.assertEqual(response["change_metric"], {
+            "key": "ppp", "label": "Power-Play Points/Game", "format": "decimal_1",
+        })
+        self.assertEqual(response["changes"][0]["delta"], 2.0)
+
+    def test_thresholds_and_malformed_or_non_object_logs_skip_without_failure(self):
+        for player_id, name in ((1, "Malformed Baseline"), (2, "Only Nine"), (3, "Bad Recent")):
+            insert_row(
+                self.db_path, player_id, name, "nba", 2026, 10,
+                values=metric_values("nba"),
+            )
+        insert_logs(
+            self.db_path, 1, "nba",
+            ["{bad json"] + [{"PTS": 10}] * 5 + [{"PTS": 20}] * 5,
+        )
+        insert_logs(self.db_path, 2, "nba", [{"PTS": 10}] * 9)
+        insert_logs(
+            self.db_path, 3, "nba",
+            [{"PTS": 10}] * 5 + [{"PTS": 20}] * 4 + [[20]],
+        )
+
+        response = call("nba", category="scoring")
+        self.assertEqual(response["comparison"]["eligible_leaders"], 3)
+        self.assertEqual(response["comparison"]["qualified_leaders"], 1)
+        self.assertEqual(response["changes"][0]["name"], "Malformed Baseline")
+        self.assertEqual(response["changes"][0]["baseline_games"], 5)
+
+    def test_missing_game_log_table_fails_closed(self):
+        old_db = os.path.join(self.tmp.name, "old.db")
+        create_schema(old_db, with_logs=False)
+        insert_row(
+            old_db, 1, "Old DB Player", "nba", 2026, 10,
+            values=metric_values("nba"),
+        )
+        players._db = lambda: connect(old_db)
+        response = call("nba", category="scoring")
+        self.assertEqual(response["change_metric"]["key"], "pts")
+        self.assertEqual(response["comparison"]["eligible_leaders"], 1)
+        self.assertEqual(response["comparison"]["qualified_leaders"], 0)
+        self.assertEqual(response["changes"], [])
+
+    def test_unrelated_game_log_schema_error_is_not_swallowed(self):
+        bad_db = os.path.join(self.tmp.name, "bad-log-schema.db")
+        create_schema(bad_db, with_logs=False)
+        with sqlite3.connect(bad_db) as con:
+            con.execute("CREATE TABLE player_game_logs(wrong_column TEXT)")
+        insert_row(
+            bad_db, 1, "Schema Error Player", "nba", 2026, 10,
+            values=metric_values("nba"),
+        )
+        players._db = lambda: connect(bad_db)
+        with self.assertRaises(sqlite3.OperationalError):
+            call("nba", category="scoring")
+
+    def test_mlb_never_queries_game_logs_and_always_has_no_comparison(self):
+        insert_row(
+            self.db_path, 1, "Batter", "mlb", 2026, 50, "batting",
+            metric_values("mlb_batting"),
+        )
+        log_reads = []
+
+        def monitored_connection():
+            con = connect(self.db_path)
+            def authorizer(action, arg1, arg2, db_name, trigger):
+                if action == sqlite3.SQLITE_READ and arg1 == "player_game_logs":
+                    log_reads.append((arg1, arg2))
+                return sqlite3.SQLITE_OK
+            con.set_authorizer(authorizer)
+            return con
+
+        players._db = monitored_connection
+        response = call("mlb", type="batting")
+        self.assertIsNone(response["change_metric"])
+        self.assertIsNone(response["comparison"])
+        self.assertEqual(response["changes"], [])
+        self.assertEqual(log_reads, [])
 
 
 if __name__ == "__main__":
