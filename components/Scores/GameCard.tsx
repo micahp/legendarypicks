@@ -185,7 +185,6 @@ export default function GameCard(g: GameProps) {
             {showScore && g.homeTeam.score !== undefined && (
               <span className="flex items-center gap-1.5">
                 <span className={`text-xl font-black ${isFinal ? (isDraw ? 'text-white' : homeWon ? 'text-white' : 'text-zinc-500') : 'text-white'}`}>{g.homeTeam.score}</span>
-                {isFinal && homeWon && <span className="text-zinc-400 text-xs" aria-label="winner">◄</span>}
               </span>
             )}
           </div>
@@ -194,7 +193,6 @@ export default function GameCard(g: GameProps) {
             {showScore && g.awayTeam.score !== undefined && (
               <span className="flex items-center gap-1.5">
                 <span className={`text-xl font-black ${isFinal ? (isDraw ? 'text-white' : awayWon ? 'text-white' : 'text-zinc-500') : 'text-white'}`}>{g.awayTeam.score}</span>
-                {isFinal && awayWon && <span className="text-zinc-400 text-xs" aria-label="winner">◄</span>}
               </span>
             )}
           </div>

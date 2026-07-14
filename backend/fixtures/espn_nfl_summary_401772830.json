@@ -1,0 +1,43 @@
+{
+  "fixture_source": "ESPN site API /football/nfl/summary?event=401772830",
+  "captured_for_contract_test": "2026-07-14",
+  "header": {
+    "competitions": [{
+      "date": "2025-09-07T17:00Z",
+      "competitors": [
+        {"homeAway": "home", "score": "20", "team": {"abbreviation": "ATL"}},
+        {"homeAway": "away", "score": "23", "team": {"abbreviation": "TB"}}
+      ]
+    }]
+  },
+  "boxscore": {
+    "teams": [
+      {
+        "team": {"abbreviation": "TB"},
+        "homeAway": "away",
+        "statistics": [
+          {"name": "firstDowns", "displayValue": "16"},
+          {"name": "totalOffensivePlays", "displayValue": "56"},
+          {"name": "totalYards", "displayValue": "260"},
+          {"name": "netPassingYards", "displayValue": "159"},
+          {"name": "rushingYards", "displayValue": "101"},
+          {"name": "turnovers", "displayValue": "0"},
+          {"name": "defensiveTouchdowns", "displayValue": "0"}
+        ]
+      },
+      {
+        "team": {"abbreviation": "ATL"},
+        "homeAway": "home",
+        "statistics": [
+          {"name": "firstDowns", "displayValue": "23"},
+          {"name": "totalOffensivePlays", "displayValue": "71"},
+          {"name": "totalYards", "displayValue": "358"},
+          {"name": "netPassingYards", "displayValue": "289"},
+          {"name": "rushingYards", "displayValue": "69"},
+          {"name": "turnovers", "displayValue": "0"},
+          {"name": "defensiveTouchdowns", "displayValue": "0"}
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,719 @@
+{
+  "fixture_source": "synthetic_fixture",
+  "league": "nba",
+  "season": 2026,
+  "season_start": "2025-10-01",
+  "season_end": "2026-06-30",
+  "teams": [
+    "N00", "N01", "N02", "N03", "N04", "N05", "N06", "N07", "N08", "N09",
+    "N10", "N11", "N12", "N13", "N14", "N15", "N16", "N17", "N18", "N19",
+    "N20", "N21", "N22", "N23", "N24", "N25", "N26", "N27", "N28", "N29"
+  ],
+  "games": [
+    {
+      "game_id": "nba-synthetic-000",
+      "game_date": "2025-11-05",
+      "home_team": "N00",
+      "away_team": "N01",
+      "home_score": 115,
+      "away_score": 102,
+      "status": "completed",
+      "summary": {
+        "boxscore": {
+          "teams": [
+            {
+              "team": {"abbreviation": "N00"},
+              "homeAway": "home",
+              "statistics": [
+                {"name": "fieldGoalsMade-fieldGoalsAttempted", "displayValue": "42-85"},
+                {"name": "threePointFieldGoalsMade-threePointFieldGoalsAttempted", "displayValue": "14-32"},
+                {"name": "freeThrowsMade-freeThrowsAttempted", "displayValue": "17-20"},
+                {"name": "totalRebounds", "displayValue": "48"},
+                {"name": "offensiveRebounds", "displayValue": "11"},
+                {"name": "defensiveRebounds", "displayValue": "37"},
+                {"name": "assists", "displayValue": "26"},
+                {"name": "steals", "displayValue": "9"},
+                {"name": "blocks", "displayValue": "6"},
+                {"name": "turnovers", "displayValue": "13"}
+              ]
+            },
+            {
+              "team": {"abbreviation": "N01"},
+              "homeAway": "away",
+              "statistics": [
+                {"name": "fieldGoalsMade-fieldGoalsAttempted", "displayValue": "38-88"},
+                {"name": "threePointFieldGoalsMade-threePointFieldGoalsAttempted", "displayValue": "10-29"},
+                {"name": "freeThrowsMade-freeThrowsAttempted", "displayValue": "16-22"},
+                {"name": "totalRebounds", "displayValue": "41"},
+                {"name": "offensiveRebounds", "displayValue": "9"},
+                {"name": "defensiveRebounds", "displayValue": "32"},
+                {"name": "assists", "displayValue": "22"},
+                {"name": "steals", "displayValue": "7"},
+                {"name": "blocks", "displayValue": "4"},
+                {"name": "turnovers", "displayValue": "14"}
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "game_id": "nba-synthetic-001",
+      "game_date": "2025-11-08",
+      "home_team": "N02",
+      "away_team": "N03",
+      "home_score": 108,
+      "away_score": 99,
+      "status": "completed",
+      "summary": {
+        "boxscore": {
+          "teams": [
+            {
+              "team": {"abbreviation": "N02"},
+              "homeAway": "home",
+              "statistics": [
+                {"name": "fieldGoalsMade-fieldGoalsAttempted", "displayValue": "39-82"},
+                {"name": "threePointFieldGoalsMade-threePointFieldGoalsAttempted", "displayValue": "11-28"},
+                {"name": "freeThrowsMade-freeThrowsAttempted", "displayValue": "19-24"},
+                {"name": "totalRebounds", "displayValue": "44"},
+                {"name": "offensiveRebounds", "displayValue": "12"},
+                {"name": "defensiveRebounds", "displayValue": "32"},
+                {"name": "assists", "displayValue": "24"},
+                {"name": "steals", "displayValue": "8"},
+                {"name": "blocks", "displayValue": "5"},
+                {"name": "turnovers", "displayValue": "11"}
+              ]
+            },
+            {
+              "team": {"abbreviation": "N03"},
+              "homeAway": "away",
+              "statistics": [
+                {"name": "fieldGoalsMade-fieldGoalsAttempted", "displayValue": "36-79"},
+                {"name": "threePointFieldGoalsMade-threePointFieldGoalsAttempted", "displayValue": "9-26"},
+                {"name": "freeThrowsMade-freeThrowsAttempted", "displayValue": "18-23"},
+                {"name": "totalRebounds", "displayValue": "38"},
+                {"name": "offensiveRebounds", "displayValue": "10"},
+                {"name": "defensiveRebounds", "displayValue": "28"},
+                {"name": "assists", "displayValue": "20"},
+                {"name": "steals", "displayValue": "6"},
+                {"name": "blocks", "displayValue": "3"},
+                {"name": "turnovers", "displayValue": "12"}
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "game_id": "nba-synthetic-002",
+      "game_date": "2025-11-10",
+      "home_team": "N04",
+      "away_team": "N05",
+      "home_score": 122,
+      "away_score": 118,
+      "status": "completed",
+      "summary": {
+        "boxscore": {
+          "teams": [
+            {
+              "team": {"abbreviation": "N04"},
+              "homeAway": "home",
+              "statistics": [
+                {"name": "fieldGoalsMade-fieldGoalsAttempted", "displayValue": "45-90"},
+                {"name": "threePointFieldGoalsMade-threePointFieldGoalsAttempted", "displayValue": "16-36"},
+                {"name": "freeThrowsMade-freeThrowsAttempted", "displayValue": "16-19"},
+                {"name": "totalRebounds", "displayValue": "46"},
+                {"name": "offensiveRebounds", "displayValue": "10"},
+                {"name": "defensiveRebounds", "displayValue": "36"},
+                {"name": "assists", "displayValue": "28"},
+                {"name": "steals", "displayValue": "10"},
+                {"name": "blocks", "displayValue": "7"},
+                {"name": "turnovers", "displayValue": "14"}
+              ]
+            },
+            {
+              "team": {"abbreviation": "N05"},
+              "homeAway": "away",
+              "statistics": [
+                {"name": "fieldGoalsMade-fieldGoalsAttempted", "displayValue": "44-91"},
+                {"name": "threePointFieldGoalsMade-threePointFieldGoalsAttempted", "displayValue": "13-35"},
+                {"name": "freeThrowsMade-freeThrowsAttempted", "displayValue": "17-21"},
+                {"name": "totalRebounds", "displayValue": "43"},
+                {"name": "offensiveRebounds", "displayValue": "13"},
+                {"name": "defensiveRebounds", "displayValue": "30"},
+                {"name": "assists", "displayValue": "25"},
+                {"name": "steals", "displayValue": "8"},
+                {"name": "blocks", "displayValue": "5"},
+                {"name": "turnovers", "displayValue": "15"}
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "game_id": "nba-synthetic-003",
+      "game_date": "2025-11-12",
+      "home_team": "N06",
+      "away_team": "N07",
+      "home_score": 101,
+      "away_score": 96,
+      "status": "completed",
+      "summary": {
+        "boxscore": {
+          "teams": [
+            {
+              "team": {"abbreviation": "N06"},
+              "homeAway": "home",
+              "statistics": [
+                {"name": "fieldGoalsMade-fieldGoalsAttempted", "displayValue": "37-81"},
+                {"name": "threePointFieldGoalsMade-threePointFieldGoalsAttempted", "displayValue": "8-22"},
+                {"name": "freeThrowsMade-freeThrowsAttempted", "displayValue": "19-26"},
+                {"name": "totalRebounds", "displayValue": "50"},
+                {"name": "offensiveRebounds", "displayValue": "14"},
+                {"name": "defensiveRebounds", "displayValue": "36"},
+                {"name": "assists", "displayValue": "21"},
+                {"name": "steals", "displayValue": "7"},
+                {"name": "blocks", "displayValue": "5"},
+                {"name": "turnovers", "displayValue": "10"}
+              ]
+            },
+            {
+              "team": {"abbreviation": "N07"},
+              "homeAway": "away",
+              "statistics": [
+                {"name": "fieldGoalsMade-fieldGoalsAttempted", "displayValue": "35-84"},
+                {"name": "threePointFieldGoalsMade-threePointFieldGoalsAttempted", "displayValue": "7-24"},
+                {"name": "freeThrowsMade-freeThrowsAttempted", "displayValue": "19-27"},
+                {"name": "totalRebounds", "displayValue": "42"},
+                {"name": "offensiveRebounds", "displayValue": "11"},
+                {"name": "defensiveRebounds", "displayValue": "31"},
+                {"name": "assists", "displayValue": "18"},
+                {"name": "steals", "displayValue": "6"},
+                {"name": "blocks", "displayValue": "4"},
+                {"name": "turnovers", "displayValue": "11"}
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "game_id": "nba-synthetic-004",
+      "game_date": "2025-11-15",
+      "home_team": "N08",
+      "away_team": "N09",
+      "home_score": 130,
+      "away_score": 112,
+      "status": "completed",
+      "summary": {
+        "boxscore": {
+          "teams": [
+            {
+              "team": {"abbreviation": "N08"},
+              "homeAway": "home",
+              "statistics": [
+                {"name": "fieldGoalsMade-fieldGoalsAttempted", "displayValue": "50-94"},
+                {"name": "threePointFieldGoalsMade-threePointFieldGoalsAttempted", "displayValue": "18-40"},
+                {"name": "freeThrowsMade-freeThrowsAttempted", "displayValue": "12-15"},
+                {"name": "totalRebounds", "displayValue": "47"},
+                {"name": "offensiveRebounds", "displayValue": "10"},
+                {"name": "defensiveRebounds", "displayValue": "37"},
+                {"name": "assists", "displayValue": "32"},
+                {"name": "steals", "displayValue": "11"},
+                {"name": "blocks", "displayValue": "8"},
+                {"name": "turnovers", "displayValue": "12"}
+              ]
+            },
+            {
+              "team": {"abbreviation": "N09"},
+              "homeAway": "away",
+              "statistics": [
+                {"name": "fieldGoalsMade-fieldGoalsAttempted", "displayValue": "41-92"},
+                {"name": "threePointFieldGoalsMade-threePointFieldGoalsAttempted", "displayValue": "12-33"},
+                {"name": "freeThrowsMade-freeThrowsAttempted", "displayValue": "18-22"},
+                {"name": "totalRebounds", "displayValue": "40"},
+                {"name": "offensiveRebounds", "displayValue": "8"},
+                {"name": "defensiveRebounds", "displayValue": "32"},
+                {"name": "assists", "displayValue": "24"},
+                {"name": "steals", "displayValue": "9"},
+                {"name": "blocks", "displayValue": "4"},
+                {"name": "turnovers", "displayValue": "16"}
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "game_id": "nba-synthetic-005",
+      "game_date": "2025-11-18",
+      "home_team": "N10",
+      "away_team": "N11",
+      "home_score": 104,
+      "away_score": 107,
+      "status": "completed",
+      "summary": {
+        "boxscore": {
+          "teams": [
+            {
+              "team": {"abbreviation": "N10"},
+              "homeAway": "home",
+              "statistics": [
+                {"name": "fieldGoalsMade-fieldGoalsAttempted", "displayValue": "38-83"},
+                {"name": "threePointFieldGoalsMade-threePointFieldGoalsAttempted", "displayValue": "10-28"},
+                {"name": "freeThrowsMade-freeThrowsAttempted", "displayValue": "18-23"},
+                {"name": "totalRebounds", "displayValue": "42"},
+                {"name": "offensiveRebounds", "displayValue": "12"},
+                {"name": "defensiveRebounds", "displayValue": "30"},
+                {"name": "assists", "displayValue": "22"},
+                {"name": "steals", "displayValue": "8"},
+                {"name": "blocks", "displayValue": "5"},
+                {"name": "turnovers", "displayValue": "13"}
+              ]
+            },
+            {
+              "team": {"abbreviation": "N11"},
+              "homeAway": "away",
+              "statistics": [
+                {"name": "fieldGoalsMade-fieldGoalsAttempted", "displayValue": "40-86"},
+                {"name": "threePointFieldGoalsMade-threePointFieldGoalsAttempted", "displayValue": "13-31"},
+                {"name": "freeThrowsMade-freeThrowsAttempted", "displayValue": "14-18"},
+                {"name": "totalRebounds", "displayValue": "44"},
+                {"name": "offensiveRebounds", "displayValue": "14"},
+                {"name": "defensiveRebounds", "displayValue": "30"},
+                {"name": "assists", "displayValue": "24"},
+                {"name": "steals", "displayValue": "9"},
+                {"name": "blocks", "displayValue": "6"},
+                {"name": "turnovers", "displayValue": "14"}
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "game_id": "nba-synthetic-006",
+      "game_date": "2025-11-20",
+      "home_team": "N12",
+      "away_team": "N13",
+      "home_score": 98,
+      "away_score": 94,
+      "status": "completed",
+      "summary": {
+        "boxscore": {
+          "teams": [
+            {
+              "team": {"abbreviation": "N12"},
+              "homeAway": "home",
+              "statistics": [
+                {"name": "fieldGoalsMade-fieldGoalsAttempted", "displayValue": "36-78"},
+                {"name": "threePointFieldGoalsMade-threePointFieldGoalsAttempted", "displayValue": "7-20"},
+                {"name": "freeThrowsMade-freeThrowsAttempted", "displayValue": "19-26"},
+                {"name": "totalRebounds", "displayValue": "49"},
+                {"name": "offensiveRebounds", "displayValue": "13"},
+                {"name": "defensiveRebounds", "displayValue": "36"},
+                {"name": "assists", "displayValue": "19"},
+                {"name": "steals", "displayValue": "6"},
+                {"name": "blocks", "displayValue": "7"},
+                {"name": "turnovers", "displayValue": "9"}
+              ]
+            },
+            {
+              "team": {"abbreviation": "N13"},
+              "homeAway": "away",
+              "statistics": [
+                {"name": "fieldGoalsMade-fieldGoalsAttempted", "displayValue": "34-80"},
+                {"name": "threePointFieldGoalsMade-threePointFieldGoalsAttempted", "displayValue": "8-23"},
+                {"name": "freeThrowsMade-freeThrowsAttempted", "displayValue": "18-24"},
+                {"name": "totalRebounds", "displayValue": "39"},
+                {"name": "offensiveRebounds", "displayValue": "10"},
+                {"name": "defensiveRebounds", "displayValue": "29"},
+                {"name": "assists", "displayValue": "17"},
+                {"name": "steals", "displayValue": "5"},
+                {"name": "blocks", "displayValue": "3"},
+                {"name": "turnovers", "displayValue": "8"}
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "game_id": "nba-synthetic-007",
+      "game_date": "2025-11-25",
+      "home_team": "N14",
+      "away_team": "N15",
+      "home_score": 112,
+      "away_score": 105,
+      "status": "completed",
+      "summary": {
+        "boxscore": {
+          "teams": [
+            {
+              "team": {"abbreviation": "N14"},
+              "homeAway": "home",
+              "statistics": [
+                {"name": "fieldGoalsMade-fieldGoalsAttempted", "displayValue": "41-86"},
+                {"name": "threePointFieldGoalsMade-threePointFieldGoalsAttempted", "displayValue": "13-31"},
+                {"name": "freeThrowsMade-freeThrowsAttempted", "displayValue": "17-21"},
+                {"name": "totalRebounds", "displayValue": "45"},
+                {"name": "offensiveRebounds", "displayValue": "11"},
+                {"name": "defensiveRebounds", "displayValue": "34"},
+                {"name": "assists", "displayValue": "25"},
+                {"name": "steals", "displayValue": "9"},
+                {"name": "blocks", "displayValue": "5"},
+                {"name": "turnovers", "displayValue": "12"}
+              ]
+            },
+            {
+              "team": {"abbreviation": "N15"},
+              "homeAway": "away",
+              "statistics": [
+                {"name": "fieldGoalsMade-fieldGoalsAttempted", "displayValue": "39-87"},
+                {"name": "threePointFieldGoalsMade-threePointFieldGoalsAttempted", "displayValue": "10-28"},
+                {"name": "freeThrowsMade-freeThrowsAttempted", "displayValue": "17-20"},
+                {"name": "totalRebounds", "displayValue": "41"},
+                {"name": "offensiveRebounds", "displayValue": "12"},
+                {"name": "defensiveRebounds", "displayValue": "29"},
+                {"name": "assists", "displayValue": "21"},
+                {"name": "steals", "displayValue": "8"},
+                {"name": "blocks", "displayValue": "4"},
+                {"name": "turnovers", "displayValue": "13"}
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "game_id": "nba-synthetic-008",
+      "game_date": "2026-04-02",
+      "home_team": "N16",
+      "away_team": "N17",
+      "home_score": 118,
+      "away_score": 110,
+      "status": "completed",
+      "summary": {
+        "boxscore": {
+          "teams": [
+            {
+              "team": {"abbreviation": "N16"},
+              "homeAway": "home",
+              "statistics": [
+                {"name": "fieldGoalsMade-fieldGoalsAttempted", "displayValue": "44-89"},
+                {"name": "threePointFieldGoalsMade-threePointFieldGoalsAttempted", "displayValue": "15-34"},
+                {"name": "freeThrowsMade-freeThrowsAttempted", "displayValue": "15-18"},
+                {"name": "totalRebounds", "displayValue": "43"},
+                {"name": "offensiveRebounds", "displayValue": "11"},
+                {"name": "defensiveRebounds", "displayValue": "32"},
+                {"name": "assists", "displayValue": "27"},
+                {"name": "steals", "displayValue": "8"},
+                {"name": "blocks", "displayValue": "6"},
+                {"name": "turnovers", "displayValue": "11"}
+              ]
+            },
+            {
+              "team": {"abbreviation": "N17"},
+              "homeAway": "away",
+              "statistics": [
+                {"name": "fieldGoalsMade-fieldGoalsAttempted", "displayValue": "41-90"},
+                {"name": "threePointFieldGoalsMade-threePointFieldGoalsAttempted", "displayValue": "12-30"},
+                {"name": "freeThrowsMade-freeThrowsAttempted", "displayValue": "16-21"},
+                {"name": "totalRebounds", "displayValue": "42"},
+                {"name": "offensiveRebounds", "displayValue": "13"},
+                {"name": "defensiveRebounds", "displayValue": "29"},
+                {"name": "assists", "displayValue": "23"},
+                {"name": "steals", "displayValue": "7"},
+                {"name": "blocks", "displayValue": "4"},
+                {"name": "turnovers", "displayValue": "13"}
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "game_id": "nba-synthetic-009",
+      "game_date": "2026-04-05",
+      "home_team": "N18",
+      "away_team": "N19",
+      "home_score": 95,
+      "away_score": 88,
+      "status": "completed",
+      "summary": {
+        "boxscore": {
+          "teams": [
+            {
+              "team": {"abbreviation": "N18"},
+              "homeAway": "home",
+              "statistics": [
+                {"name": "fieldGoalsMade-fieldGoalsAttempted", "displayValue": "35-80"},
+                {"name": "threePointFieldGoalsMade-threePointFieldGoalsAttempted", "displayValue": "6-19"},
+                {"name": "freeThrowsMade-freeThrowsAttempted", "displayValue": "19-25"},
+                {"name": "totalRebounds", "displayValue": "52"},
+                {"name": "offensiveRebounds", "displayValue": "15"},
+                {"name": "defensiveRebounds", "displayValue": "37"},
+                {"name": "assists", "displayValue": "18"},
+                {"name": "steals", "displayValue": "7"},
+                {"name": "blocks", "displayValue": "8"},
+                {"name": "turnovers", "displayValue": "10"}
+              ]
+            },
+            {
+              "team": {"abbreviation": "N19"},
+              "homeAway": "away",
+              "statistics": [
+                {"name": "fieldGoalsMade-fieldGoalsAttempted", "displayValue": "33-82"},
+                {"name": "threePointFieldGoalsMade-threePointFieldGoalsAttempted", "displayValue": "5-18"},
+                {"name": "freeThrowsMade-freeThrowsAttempted", "displayValue": "17-22"},
+                {"name": "totalRebounds", "displayValue": "40"},
+                {"name": "offensiveRebounds", "displayValue": "10"},
+                {"name": "defensiveRebounds", "displayValue": "30"},
+                {"name": "assists", "displayValue": "16"},
+                {"name": "steals", "displayValue": "5"},
+                {"name": "blocks", "displayValue": "3"},
+                {"name": "turnovers", "displayValue": "12"}
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "game_id": "nba-synthetic-010",
+      "game_date": "2026-04-08",
+      "home_team": "N20",
+      "away_team": "N21",
+      "home_score": 125,
+      "away_score": 120,
+      "status": "completed",
+      "summary": {
+        "boxscore": {
+          "teams": [
+            {
+              "team": {"abbreviation": "N20"},
+              "homeAway": "home",
+              "statistics": [
+                {"name": "fieldGoalsMade-fieldGoalsAttempted", "displayValue": "47-93"},
+                {"name": "threePointFieldGoalsMade-threePointFieldGoalsAttempted", "displayValue": "17-38"},
+                {"name": "freeThrowsMade-freeThrowsAttempted", "displayValue": "14-17"},
+                {"name": "totalRebounds", "displayValue": "45"},
+                {"name": "offensiveRebounds", "displayValue": "11"},
+                {"name": "defensiveRebounds", "displayValue": "34"},
+                {"name": "assists", "displayValue": "30"},
+                {"name": "steals", "displayValue": "10"},
+                {"name": "blocks", "displayValue": "5"},
+                {"name": "turnovers", "displayValue": "13"}
+              ]
+            },
+            {
+              "team": {"abbreviation": "N21"},
+              "homeAway": "away",
+              "statistics": [
+                {"name": "fieldGoalsMade-fieldGoalsAttempted", "displayValue": "46-95"},
+                {"name": "threePointFieldGoalsMade-threePointFieldGoalsAttempted", "displayValue": "16-37"},
+                {"name": "freeThrowsMade-freeThrowsAttempted", "displayValue": "12-16"},
+                {"name": "totalRebounds", "displayValue": "44"},
+                {"name": "offensiveRebounds", "displayValue": "14"},
+                {"name": "defensiveRebounds", "displayValue": "30"},
+                {"name": "assists", "displayValue": "28"},
+                {"name": "steals", "displayValue": "9"},
+                {"name": "blocks", "displayValue": "6"},
+                {"name": "turnovers", "displayValue": "14"}
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "game_id": "nba-synthetic-011",
+      "game_date": "2026-04-10",
+      "home_team": "N22",
+      "away_team": "N23",
+      "home_score": 103,
+      "away_score": 97,
+      "status": "completed",
+      "summary": {
+        "boxscore": {
+          "teams": [
+            {
+              "team": {"abbreviation": "N22"},
+              "homeAway": "home",
+              "statistics": [
+                {"name": "fieldGoalsMade-fieldGoalsAttempted", "displayValue": "38-81"},
+                {"name": "threePointFieldGoalsMade-threePointFieldGoalsAttempted", "displayValue": "9-24"},
+                {"name": "freeThrowsMade-freeThrowsAttempted", "displayValue": "18-24"},
+                {"name": "totalRebounds", "displayValue": "47"},
+                {"name": "offensiveRebounds", "displayValue": "13"},
+                {"name": "defensiveRebounds", "displayValue": "34"},
+                {"name": "assists", "displayValue": "21"},
+                {"name": "steals", "displayValue": "7"},
+                {"name": "blocks", "displayValue": "6"},
+                {"name": "turnovers", "displayValue": "11"}
+              ]
+            },
+            {
+              "team": {"abbreviation": "N23"},
+              "homeAway": "away",
+              "statistics": [
+                {"name": "fieldGoalsMade-fieldGoalsAttempted", "displayValue": "36-83"},
+                {"name": "threePointFieldGoalsMade-threePointFieldGoalsAttempted", "displayValue": "8-25"},
+                {"name": "freeThrowsMade-freeThrowsAttempted", "displayValue": "17-22"},
+                {"name": "totalRebounds", "displayValue": "40"},
+                {"name": "offensiveRebounds", "displayValue": "11"},
+                {"name": "defensiveRebounds", "displayValue": "29"},
+                {"name": "assists", "displayValue": "19"},
+                {"name": "steals", "displayValue": "6"},
+                {"name": "blocks", "displayValue": "4"},
+                {"name": "turnovers", "displayValue": "10"}
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "game_id": "nba-synthetic-012",
+      "game_date": "2026-04-14",
+      "home_team": "N24",
+      "away_team": "N25",
+      "home_score": 111,
+      "away_score": 109,
+      "status": "completed",
+      "summary": {
+        "boxscore": {
+          "teams": [
+            {
+              "team": {"abbreviation": "N24"},
+              "homeAway": "home",
+              "statistics": [
+                {"name": "fieldGoalsMade-fieldGoalsAttempted", "displayValue": "41-87"},
+                {"name": "threePointFieldGoalsMade-threePointFieldGoalsAttempted", "displayValue": "12-30"},
+                {"name": "freeThrowsMade-freeThrowsAttempted", "displayValue": "17-22"},
+                {"name": "totalRebounds", "displayValue": "44"},
+                {"name": "offensiveRebounds", "displayValue": "12"},
+                {"name": "defensiveRebounds", "displayValue": "32"},
+                {"name": "assists", "displayValue": "24"},
+                {"name": "steals", "displayValue": "8"},
+                {"name": "blocks", "displayValue": "5"},
+                {"name": "turnovers", "displayValue": "12"}
+              ]
+            },
+            {
+              "team": {"abbreviation": "N25"},
+              "homeAway": "away",
+              "statistics": [
+                {"name": "fieldGoalsMade-fieldGoalsAttempted", "displayValue": "40-88"},
+                {"name": "threePointFieldGoalsMade-threePointFieldGoalsAttempted", "displayValue": "11-29"},
+                {"name": "freeThrowsMade-freeThrowsAttempted", "displayValue": "18-23"},
+                {"name": "totalRebounds", "displayValue": "43"},
+                {"name": "offensiveRebounds", "displayValue": "13"},
+                {"name": "defensiveRebounds", "displayValue": "30"},
+                {"name": "assists", "displayValue": "22"},
+                {"name": "steals", "displayValue": "7"},
+                {"name": "blocks", "displayValue": "4"},
+                {"name": "turnovers", "displayValue": "13"}
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "game_id": "nba-synthetic-013",
+      "game_date": "2026-04-18",
+      "home_team": "N26",
+      "away_team": "N27",
+      "home_score": 106,
+      "away_score": 100,
+      "status": "completed",
+      "summary": {
+        "boxscore": {
+          "teams": [
+            {
+              "team": {"abbreviation": "N26"},
+              "homeAway": "home",
+              "statistics": [
+                {"name": "fieldGoalsMade-fieldGoalsAttempted", "displayValue": "39-84"},
+                {"name": "threePointFieldGoalsMade-threePointFieldGoalsAttempted", "displayValue": "10-27"},
+                {"name": "freeThrowsMade-freeThrowsAttempted", "displayValue": "18-23"},
+                {"name": "totalRebounds", "displayValue": "46"},
+                {"name": "offensiveRebounds", "displayValue": "12"},
+                {"name": "defensiveRebounds", "displayValue": "34"},
+                {"name": "assists", "displayValue": "23"},
+                {"name": "steals", "displayValue": "7"},
+                {"name": "blocks", "displayValue": "5"},
+                {"name": "turnovers", "displayValue": "11"}
+              ]
+            },
+            {
+              "team": {"abbreviation": "N27"},
+              "homeAway": "away",
+              "statistics": [
+                {"name": "fieldGoalsMade-fieldGoalsAttempted", "displayValue": "37-85"},
+                {"name": "threePointFieldGoalsMade-threePointFieldGoalsAttempted", "displayValue": "9-26"},
+                {"name": "freeThrowsMade-freeThrowsAttempted", "displayValue": "17-21"},
+                {"name": "totalRebounds", "displayValue": "41"},
+                {"name": "offensiveRebounds", "displayValue": "11"},
+                {"name": "defensiveRebounds", "displayValue": "30"},
+                {"name": "assists", "displayValue": "20"},
+                {"name": "steals", "displayValue": "6"},
+                {"name": "blocks", "displayValue": "4"},
+                {"name": "turnovers", "displayValue": "12"}
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "game_id": "nba-synthetic-014",
+      "game_date": "2026-04-22",
+      "home_team": "N28",
+      "away_team": "N29",
+      "home_score": 114,
+      "away_score": 113,
+      "status": "completed",
+      "summary": {
+        "boxscore": {
+          "teams": [
+            {
+              "team": {"abbreviation": "N28"},
+              "homeAway": "home",
+              "statistics": [
+                {"name": "fieldGoalsMade-fieldGoalsAttempted", "displayValue": "43-88"},
+                {"name": "threePointFieldGoalsMade-threePointFieldGoalsAttempted", "displayValue": "13-33"},
+                {"name": "freeThrowsMade-freeThrowsAttempted", "displayValue": "15-19"},
+                {"name": "totalRebounds", "displayValue": "45"},
+                {"name": "offensiveRebounds", "displayValue": "10"},
+                {"name": "defensiveRebounds", "displayValue": "35"},
+                {"name": "assists", "displayValue": "26"},
+                {"name": "steals", "displayValue": "8"},
+                {"name": "blocks", "displayValue": "6"},
+                {"name": "turnovers", "displayValue": "14"}
+              ]
+            },
+            {
+              "team": {"abbreviation": "N29"},
+              "homeAway": "away",
+              "statistics": [
+                {"name": "fieldGoalsMade-fieldGoalsAttempted", "displayValue": "42-90"},
+                {"name": "threePointFieldGoalsMade-threePointFieldGoalsAttempted", "displayValue": "14-35"},
+                {"name": "freeThrowsMade-freeThrowsAttempted", "displayValue": "15-20"},
+                {"name": "totalRebounds", "displayValue": "43"},
+                {"name": "offensiveRebounds", "displayValue": "12"},
+                {"name": "defensiveRebounds", "displayValue": "31"},
+                {"name": "assists", "displayValue": "24"},
+                {"name": "steals", "displayValue": "7"},
+                {"name": "blocks", "displayValue": "5"},
+                {"name": "turnovers", "displayValue": "13"}
+              ]
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

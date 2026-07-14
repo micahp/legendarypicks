@@ -5,6 +5,7 @@ from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import JSONResponse
 from typing import Optional
 from _core import *
+from team_stats_contract import build_team_aggregates
 
 router = APIRouter()
 
@@ -234,163 +235,17 @@ def get_team_stats(league: str, game_id: Optional[str] = Query(None)):
     return [dict(r) for r in rows]
 
 
-_MLB_EXPECTED_TEAMS = 30
-_TEAM_AGGREGATE_COLUMNS = [
-    {"key": "games", "label": "Games"},
-    {"key": "wins", "label": "Wins"},
-    {"key": "losses", "label": "Losses"},
-    {"key": "runs_for", "label": "Runs For"},
-    {"key": "runs_against", "label": "Runs Against"},
-    {"key": "run_differential", "label": "Run Differential"},
-]
-
-
-def _team_aggregate_response(reason, coverage=None, season=None, teams=None):
-    return {
-        "league": "mlb",
-        "season": season,
-        "supported": reason is None,
-        "reason": reason,
-        "columns": _TEAM_AGGREGATE_COLUMNS,
-        "coverage": coverage or {
-            "status": "unavailable",
-            "source": "team_game_results",
-            "scope": "captured_completed_games",
-            "expected_teams": _MLB_EXPECTED_TEAMS,
-            "team_count": 0,
-            "rows": 0,
-            "games": 0,
-            "paired_games": 0,
-            "invalid_games": 0,
-            "first_game_date": None,
-            "last_game_date": None,
-            "external_schedule_reconciled": False,
-        },
-        "teams": teams or [],
-    }
-
-
 @router.get("/api/{league}/team-aggregates")
 def get_team_aggregates(league: str):
-    """Season-to-date MLB run aggregates from captured completed games.
-
-    Coverage is deliberately explicit. A supported response means all 30 MLB
-    teams are represented and every captured game has a reciprocal two-team
-    result. It does not claim that the table was reconciled against an external
-    authoritative schedule.
-    """
+    """Season team aggregates with league-specific categories and coverage."""
     lg = league.lower()
-    if lg != "mlb":
-        response = _team_aggregate_response("unsupported_league")
-        response["league"] = lg
-        return response
-
     try:
         with closing(_db()) as con:
             con.row_factory = sqlite3.Row
-            season_row = con.execute(
-                "SELECT MAX(CAST(substr(game_date, 1, 4) AS INTEGER)) AS season "
-                "FROM team_game_results WHERE league=? "
-                "AND game_date GLOB '[0-9][0-9][0-9][0-9]-*'",
-                (lg,),
-            ).fetchone()
-            season = season_row["season"] if season_row else None
-            if season is None:
-                return _team_aggregate_response("no_measured_coverage")
-            rows = con.execute(
-                "SELECT game_id, team, game_date, opponent, score_for, "
-                "score_against, win FROM team_game_results "
-                "WHERE league=? AND substr(game_date, 1, 4)=? "
-                "ORDER BY game_date, game_id, team",
-                (lg, str(season)),
-            ).fetchall()
+            return build_team_aggregates(con, lg)
     except sqlite3.OperationalError:
-        return _team_aggregate_response("coverage_table_unavailable")
-
-    games = {}
-    for row in rows:
-        games.setdefault(str(row["game_id"]), []).append(row)
-
-    invalid_games = 0
-    paired_games = 0
-    for game_rows in games.values():
-        valid = len(game_rows) == 2
-        if valid:
-            first, second = game_rows
-            required = ("team", "opponent", "score_for", "score_against", "win")
-            valid = all(row[key] is not None for row in game_rows for key in required)
-            if valid:
-                first_score = float(first["score_for"])
-                second_score = float(second["score_for"])
-                expected_first_win = 1 if first_score > second_score else 0
-                valid = (
-                    first["team"] == second["opponent"]
-                    and second["team"] == first["opponent"]
-                    and float(first["score_for"]) == float(second["score_against"])
-                    and float(second["score_for"]) == float(first["score_against"])
-                    and first_score != second_score
-                    and int(first["win"]) == expected_first_win
-                    and int(second["win"]) == 1 - expected_first_win
-                    and sorted((int(first["win"]), int(second["win"]))) == [0, 1]
-                )
-        if valid:
-            paired_games += 1
-        else:
-            invalid_games += 1
-
-    team_names = sorted({row["team"] for row in rows if row["team"]})
-    dates = [row["game_date"] for row in rows if row["game_date"]]
-    supported = (
-        len(team_names) == _MLB_EXPECTED_TEAMS
-        and bool(rows)
-        and invalid_games == 0
-    )
-    coverage = {
-        "status": "measured" if supported else "incomplete",
-        "source": "team_game_results",
-        "scope": "captured_completed_games",
-        "expected_teams": _MLB_EXPECTED_TEAMS,
-        "team_count": len(team_names),
-        "rows": len(rows),
-        "games": len(games),
-        "paired_games": paired_games,
-        "invalid_games": invalid_games,
-        "first_game_date": min(dates) if dates else None,
-        "last_game_date": max(dates) if dates else None,
-        "external_schedule_reconciled": False,
-    }
-    if not supported:
-        return _team_aggregate_response(
-            "incomplete_measured_coverage", coverage=coverage, season=season
-        )
-
-    aggregates = {}
-    for row in rows:
-        team = row["team"]
-        aggregate = aggregates.setdefault(team, {
-            "team": team,
-            "games": 0,
-            "wins": 0,
-            "losses": 0,
-            "runs_for": 0,
-            "runs_against": 0,
-            "run_differential": 0,
-        })
-        aggregate["games"] += 1
-        aggregate["wins"] += int(row["win"])
-        aggregate["losses"] += 1 - int(row["win"])
-        aggregate["runs_for"] += int(row["score_for"])
-        aggregate["runs_against"] += int(row["score_against"])
-
-    for aggregate in aggregates.values():
-        aggregate["run_differential"] = (
-            aggregate["runs_for"] - aggregate["runs_against"]
-        )
-    teams = sorted(
-        aggregates.values(),
-        key=lambda row: (-row["run_differential"], -row["runs_for"], row["team"]),
-    )
-    return _team_aggregate_response(None, coverage=coverage, season=season, teams=teams)
+        with closing(sqlite3.connect(":memory:")) as con:
+            return build_team_aggregates(con, lg)
 
 
 @router.get("/api/{league}/strength/{team}")

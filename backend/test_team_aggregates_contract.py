@@ -81,12 +81,15 @@ class TeamAggregatesContractTests(unittest.TestCase):
         self.assertEqual(leader["run_differential"], 37)
         self.assertEqual((leader["games"], leader["wins"], leader["losses"]), (1, 1, 0))
 
-    def test_non_mlb_is_explicitly_unsupported_without_reading_db(self):
-        games._db = lambda: self.fail("unsupported leagues must not read the database")
+    def test_non_mlb_without_results_fails_closed(self):
         response = games.get_team_aggregates("nba")
         self.assertFalse(response["supported"])
         self.assertEqual(response["league"], "nba")
-        self.assertEqual(response["reason"], "unsupported_league")
+        self.assertEqual(response["reason"], "season_bounds_unavailable")
+        self.assertEqual(
+            [category["key"] for category in response["categories"]],
+            ["scoring_shooting", "rebounding", "playmaking", "defense"],
+        )
         self.assertEqual(response["teams"], [])
 
     def test_missing_team_fails_coverage_gate(self):
@@ -95,7 +98,7 @@ class TeamAggregatesContractTests(unittest.TestCase):
             insert_game(self.db_path, f"g-{index}", teams[index], teams[index + 1], 5, 2)
         response = games.get_team_aggregates("mlb")
         self.assertFalse(response["supported"])
-        self.assertEqual(response["reason"], "incomplete_measured_coverage")
+        self.assertEqual(response["reason"], "incomplete_team_coverage")
         self.assertEqual(response["coverage"]["team_count"], 28)
         self.assertEqual(response["teams"], [])
 
