@@ -24,9 +24,16 @@ interface Leader {
   [stat: string]: number | string | null
 }
 
+type MetricFormat = 'integer' | 'decimal_1' | 'decimal_3' | 'percent_1' | 'time'
+interface StatMetric { key: string; label: string; format: MetricFormat }
+interface StatCategory { key: string; label: string; stats: StatMetric[] }
+
 interface LeadersData {
-  league: string; season: number | string
-  stat: string; stat_type: string | null
+  league: string; season: number | string | null
+  stat: string | null; stat_type: string | null
+  category: string | null
+  categories: StatCategory[]
+  columns: StatMetric[]
   leaders: Leader[]
 }
 
@@ -49,15 +56,6 @@ interface KnockoutRound { round: string; matches: KnockoutMatch[] }
 
 type SubView = 'players' | 'teams'
 
-// Columns to display per league (subset of what the backend returns)
-const LEAGUE_COLS: Record<string, string[]> = {
-  nba: ['pts', 'reb', 'ast', 'fg3m', 'stl', 'blk', 'minutes'],
-  nfl: ['pass_yds_g', 'pass_td', 'rush_yds_g', 'rec_yds_g', 'receptions', 'fantasy_pts_g', 'fantasy_ppr_g'],
-  nhl: ['goals', 'assists', 'points_nhl', 'shots', 'plus_minus', 'ppg', 'ppp'],
-  mlb_batting: ['avg', 'hr', 'k_pct', 'bb_pct', 'woba', 'xwoba'],
-  mlb_pitching: ['k_pct', 'whiff_pct', 'xwoba_against', 'exit_velo_against'],
-}
-
 const LEAGUE_NAMES: Record<string, string> = {
   mlb: 'MLB', nba: 'NBA', nhl: 'NHL', nfl: 'NFL', wc: 'World Cup', ufc: 'UFC',
 }
@@ -74,15 +72,15 @@ const WEIGHT_CLASS_LBS: Record<string, number> = {
   "Women's Strawweight": 115, "Women's Flyweight": 125, "Women's Bantamweight": 135,
 }
 
-function statLabel(k: string): string {
-  return k.replace(/_g$/, '/G').replace(/_pct$/, '%').replace(/_nhl$/, '').replace(/_/g, ' ').toUpperCase()
-}
-
-function fmtStat(k: string, v: number | null | undefined): string {
-  if (v == null) return '—'
-  if (k === 'avg' || k === 'woba' || k === 'xwoba' || k === 'xwoba_against' || k === 'shooting_pct')
-    return v.toFixed(3)
-  return v.toFixed(1)
+function formatMetric(metric: StatMetric, value: number | string | null | undefined): string {
+  if (value == null) return '—'
+  if (metric.format === 'time') return String(value)
+  const numeric = typeof value === 'number' ? value : Number(value)
+  if (!Number.isFinite(numeric)) return '—'
+  if (metric.format === 'integer') return numeric.toFixed(0)
+  if (metric.format === 'decimal_3') return numeric.toFixed(3)
+  if (metric.format === 'percent_1') return `${numeric.toFixed(1)}%`
+  return numeric.toFixed(1)
 }
 
 type HubTab = 'standings' | 'stats' | 'schedule' | 'rankings'
@@ -198,6 +196,7 @@ export default function LeagueHubPage() {
   const [leadersData, setLeadersData] = useState<LeadersData | null>(null)
   const [playerLoading, setPlayerLoading] = useState(false)
   const [playerError, setPlayerError] = useState<string | null>(null)
+  const [playerFilterError, setPlayerFilterError] = useState(false)
   const [mlbType, setMlbType] = useState<'batting' | 'pitching'>('batting')
 
   // ── Schedule state ──────────────────────────────────────
@@ -209,6 +208,85 @@ export default function LeagueHubPage() {
   const [ufcRankings, setUfcRankings] = useState<UFCRankings | null>(null)
   const [ufcLoading, setUfcLoading] = useState(false)
   const [ufcError, setUfcError] = useState<string | null>(null)
+
+  // Stats view/type are URL-owned and canonical only while the Stats tab is active.
+  useEffect(() => {
+    if (!router.isReady || !lg || router.query.tab !== 'stats') return
+    const nextView: SubView = router.query.view === 'teams' ? 'teams' : 'players'
+    const nextType: 'batting' | 'pitching' = router.query.type === 'pitching' ? 'pitching' : 'batting'
+    setSubView(nextView)
+    if (lg === 'mlb') setMlbType(nextType)
+
+    const query: Record<string, string | string[] | undefined> = { ...router.query }
+    let needsUpdate = false
+    if (router.query.view !== nextView) {
+      query.view = nextView
+      needsUpdate = true
+    }
+    if (lg === 'mlb') {
+      if (router.query.type !== nextType) {
+        query.type = nextType
+        needsUpdate = true
+      }
+    } else if (router.query.type !== undefined) {
+      delete query.type
+      needsUpdate = true
+    }
+    if (needsUpdate) {
+      void router.replace({ pathname: router.pathname, query }, undefined, { shallow: true })
+    }
+  }, [router.isReady, router.query.tab, router.query.view, router.query.type, lg])
+
+  useEffect(() => {
+    setLeadersData(null)
+    setPlayerError(null)
+    setPlayerFilterError(false)
+  }, [lg, mlbType])
+
+  const replaceStatsQuery = (
+    updates: Record<string, string>,
+    remove: string[] = [],
+  ) => {
+    const query: Record<string, string | string[] | undefined> = {
+      ...router.query,
+      league: router.query.league || lg,
+      tab: 'stats',
+      ...updates,
+    }
+    for (const key of remove) delete query[key]
+    if (lg !== 'mlb') delete query.type
+    void router.replace({ pathname: router.pathname, query }, undefined, { shallow: true })
+  }
+
+  const selectSubView = (view: SubView) => {
+    setSubView(view)
+    replaceStatsQuery({ view })
+  }
+
+  const selectMlbType = (type: 'batting' | 'pitching') => {
+    setLeadersData(null)
+    replaceStatsQuery({ view: 'players', type }, ['category', 'stat'])
+  }
+
+  const selectStatCategory = (category: string) => {
+    replaceStatsQuery({ view: 'players', category }, ['stat'])
+  }
+
+  const selectSortMetric = (stat: string) => {
+    if (!leadersData?.category) return
+    replaceStatsQuery({ view: 'players', category: leadersData.category, stat })
+  }
+
+  const resetStatsFilters = () => {
+    setPlayerError(null)
+    setPlayerFilterError(false)
+    const updates: Record<string, string> = { view: 'players' }
+    if (lg === 'mlb') {
+      updates.type = router.query.type === 'pitching' ? 'pitching' : 'batting'
+      setMlbType(updates.type as 'batting' | 'pitching')
+    }
+    replaceStatsQuery(updates, ['category', 'stat'])
+  }
 
   // ── Load standings ──────────────────────────────────────
   useEffect(() => {
@@ -250,27 +328,54 @@ export default function LeagueHubPage() {
 
   // ── Load players ─────────────────────────────────────────
   useEffect(() => {
-    if (!lg) return
+    if (!router.isReady || !lg || activeTab !== 'stats' || subView !== 'players') return
     if (isWC || isUFC) return
+    if (lg === 'mlb' && router.query.type !== mlbType) return
     let ignore = false
     const load = async () => {
-      setPlayerLoading(true); setPlayerError(null)
+      setPlayerLoading(true); setPlayerError(null); setPlayerFilterError(false)
       try {
-        let url = `/api/${lg}/leaders?limit=25`
-        if (lg === 'mlb') url += `&type=${mlbType}`
-        const res = await fetch(url)
-        if (!res.ok) throw new Error(`${res.status}`)
+        const params = new URLSearchParams({ limit: '25' })
+        if (lg === 'mlb') params.set('type', mlbType)
+        const requestedCategory = typeof router.query.category === 'string' ? router.query.category : null
+        const requestedStat = typeof router.query.stat === 'string' ? router.query.stat : null
+        if (requestedCategory) params.set('category', requestedCategory)
+        if (requestedStat) params.set('stat', requestedStat)
+        const res = await fetch(`/api/${lg}/leaders?${params.toString()}`)
+        if (!res.ok) {
+          let detail = `HTTP ${res.status}`
+          try {
+            const payload = await res.json()
+            if (typeof payload?.detail === 'string') detail = payload.detail
+            else if (payload?.detail != null) detail = JSON.stringify(payload.detail)
+          } catch { /* retain the HTTP detail */ }
+          const error: any = new Error(detail)
+          error.status = res.status
+          throw error
+        }
         const data: LeadersData = await res.json()
-        if (!ignore) setLeadersData(data)
+        if (!ignore) {
+          setLeadersData(data)
+          if ((!requestedCategory && data.category) || (!requestedStat && data.stat)) {
+            const query: Record<string, string | string[] | undefined> = { ...router.query }
+            if (!requestedCategory && data.category) query.category = data.category
+            if (!requestedStat && data.stat) query.stat = data.stat
+            void router.replace({ pathname: router.pathname, query }, undefined, { shallow: true })
+          }
+        }
       } catch (e: any) {
-        if (!ignore) setPlayerError(e.message || 'Unable to load player stats.')
+        if (!ignore) {
+          setLeadersData(null)
+          setPlayerFilterError(e?.status === 400)
+          setPlayerError(`Unable to load player stats: ${e?.message || 'Unknown error'}`)
+        }
       } finally {
         if (!ignore) setPlayerLoading(false)
       }
     }
     load()
     return () => { ignore = true }
-  }, [lg, mlbType, isWC, isUFC])
+  }, [router.isReady, router.query.category, router.query.stat, router.query.type, lg, mlbType, isWC, isUFC, activeTab, subView])
 
   // ── Load schedule ───────────────────────────────────────
   useEffect(() => {
@@ -313,9 +418,7 @@ export default function LeagueHubPage() {
     return () => { ignore = true }
   }, [isUFC, lg])
 
-  // ── Derived column list ─────────────────────────────────
-  const colKey = lg === 'mlb' ? `mlb_${mlbType}` : lg
-  const cols = LEAGUE_COLS[colKey] || []
+  // ── Derived schedule data ───────────────────────────────
   const formattedScheduleDate = formatScheduleDate(scheduleDate)
   const isScheduleToday = scheduleDate === localToday()
   const sortedScheduleGames = [...games].sort(
@@ -529,7 +632,7 @@ export default function LeagueHubPage() {
             {/* Sub-view toggle (Players | Teams) */}
             <div className="flex gap-0 border-b border-zinc-800 -mx-4 px-4">
               {(['players', 'teams'] as SubView[]).map(v => (
-                <button key={v} onClick={() => setSubView(v)}
+                <button key={v} onClick={() => selectSubView(v)}
                   className={`px-4 py-3 text-sm font-medium whitespace-nowrap transition-colors border-b-2 -mb-px capitalize ${
                     subView === v ? 'border-emerald-500 text-white' : 'border-transparent text-zinc-500 hover:text-zinc-300'
                   }`}
@@ -543,7 +646,7 @@ export default function LeagueHubPage() {
             {lg === 'mlb' && subView === 'players' && (
               <div className="flex items-center gap-2">
                 {(['batting', 'pitching'] as const).map(t => (
-                  <button key={t} onClick={() => setMlbType(t)}
+                  <button key={t} onClick={() => selectMlbType(t)}
                     className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors capitalize ${
                       mlbType === t
                         ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
@@ -556,27 +659,57 @@ export default function LeagueHubPage() {
               </div>
             )}
 
+            {subView === 'players' && leadersData?.categories?.length ? (
+              <div className="flex flex-wrap items-center gap-2" aria-label="Player stat categories">
+                {leadersData.categories.map(category => (
+                  <button
+                    key={category.key}
+                    type="button"
+                    onClick={() => selectStatCategory(category.key)}
+                    className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
+                      leadersData.category === category.key
+                        ? 'border-emerald-500/30 bg-emerald-500/20 text-emerald-400'
+                        : 'border-zinc-800 bg-zinc-900 text-zinc-500 hover:text-zinc-300'
+                    }`}
+                  >
+                    {category.label}
+                  </button>
+                ))}
+              </div>
+            ) : null}
+
             {/* Players sub-view */}
             {subView === 'players' && (
               <>
                 {playerError && (
-                  <div className="bg-red-500/10 border border-red-500/20 rounded-lg px-4 py-3 text-red-400 text-sm">
-                    {playerError}
+                  <div className="space-y-2 rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+                    <div>{playerError}</div>
+                    {playerFilterError && (
+                      <button
+                        type="button"
+                        onClick={resetStatsFilters}
+                        className="rounded-lg border border-red-400/30 px-2.5 py-1 text-xs font-semibold text-red-300 hover:bg-red-500/10"
+                      >
+                        Reset stats filters
+                      </button>
+                    )}
                   </div>
                 )}
 
                 {playerLoading ? (
                   <div className="text-zinc-500 text-sm py-8 text-center">Loading players...</div>
-                ) : !leadersData?.leaders?.length ? (
+                ) : playerError ? null : !leadersData?.leaders?.length ? (
                   <div className="text-center py-12 text-zinc-500 text-sm">
-                    No player data for {leagueName}.
+                    Player statistics are not available for {leagueName} yet.
                   </div>
                 ) : (
                   <div className="space-y-3">
                     <div className="flex items-center gap-3 text-xs text-zinc-500">
                       <span>Season {leadersData.season}</span>
                       <span>·</span>
-                      <span>Sorted by {statLabel(leadersData.stat)}</span>
+                      <span>
+                        Sorted by {leadersData.columns.find(metric => metric.key === leadersData.stat)?.label || leadersData.stat}
+                      </span>
                     </div>
 
                     <div className="overflow-x-auto rounded-xl border border-zinc-800 bg-zinc-900 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
@@ -586,8 +719,23 @@ export default function LeagueHubPage() {
                             <th className="text-left px-4 py-3 font-medium w-10">#</th>
                             <th className="text-left px-3 py-3 font-medium">Player</th>
                             <th className="text-right px-3 py-3 font-medium">GP</th>
-                            {cols.map(c => (
-                              <th key={c} className="text-right px-3 py-3 font-medium">{statLabel(c)}</th>
+                            {leadersData.columns.map(metric => (
+                              <th
+                                key={metric.key}
+                                aria-sort={metric.key === leadersData.stat ? 'descending' : 'none'}
+                                className="px-3 py-3 text-right font-medium"
+                              >
+                                <button
+                                  type="button"
+                                  onClick={() => selectSortMetric(metric.key)}
+                                  className={`inline-flex items-center gap-1 whitespace-nowrap hover:text-zinc-200 ${
+                                    metric.key === leadersData.stat ? 'text-emerald-400' : 'text-zinc-500'
+                                  }`}
+                                >
+                                  {metric.label}
+                                  {metric.key === leadersData.stat && <span aria-hidden="true">↓</span>}
+                                </button>
+                              </th>
                             ))}
                           </tr>
                         </thead>
@@ -602,11 +750,11 @@ export default function LeagueHubPage() {
                                 {l.team && <span className="text-zinc-500 ml-1.5 text-xs">{l.team}</span>}
                               </td>
                               <td className="px-3 py-2.5 text-right font-mono tabular-nums text-zinc-400">{l.games}</td>
-                              {cols.map(c => (
-                                <td key={c} className={`px-3 py-2.5 text-right font-mono tabular-nums ${
-                                  c === leadersData.stat ? 'text-emerald-300 font-bold' : 'text-zinc-300'
+                              {leadersData.columns.map(metric => (
+                                <td key={metric.key} className={`px-3 py-2.5 text-right font-mono tabular-nums ${
+                                  metric.key === leadersData.stat ? 'text-emerald-300 font-bold' : 'text-zinc-300'
                                 }`}>
-                                  {fmtStat(c, l[c] as number)}
+                                  {formatMetric(metric, l[metric.key])}
                                 </td>
                               ))}
                             </tr>

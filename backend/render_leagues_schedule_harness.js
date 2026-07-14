@@ -84,7 +84,7 @@ async function activeTab(page) {
   const deepLinkBody = await page.innerText('body')
   check('[schedule] deep link activates Schedule', await activeTab(page) === 'Schedule')
   check('[schedule] selected date including year is visible', /Jul.*18.*2026|18.*Jul.*2026/.test(deepLinkBody))
-  check('[schedule] timezone context is visible', /Times shown in your local time \([^)]+\)/.test(deepLinkBody))
+  check('[schedule] removed timezone copy stays hidden', !deepLinkBody.includes('Times shown in your local time'))
   check('[schedule] UFC subtitle group is visible', deepLinkBody.includes('UFC 999 Main Card'))
   check(
     '[schedule] requested deep-link date',
