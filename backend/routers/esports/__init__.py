@@ -2,8 +2,9 @@
 
 from fastapi import APIRouter
 
-from . import lol, slate
+from . import lol, slate, picks
 
 router = APIRouter()
 router.include_router(lol.router)
 router.include_router(slate.router)
+router.include_router(picks.router)
