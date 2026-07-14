@@ -28,3 +28,10 @@ app.include_router(game_extras.router)
 app.include_router(esports.router)
 app.include_router(live_discounts.router)
 app.include_router(momentum.router)
+
+
+@app.on_event("startup")
+def _start_background_warmers():
+    # Keep the lazily-cached esports board fresh without depending on organic traffic (prod has ~0).
+    # No-op unless enabled — see routers/esports/slate.ESPORTS_WARMER_INTERVAL_S.
+    esports.slate.start_esports_warmer()

@@ -115,6 +115,41 @@ def esports_upcoming():
 
 
 # ---------------------------------------------------------------------------
+# prod board warmer
+# ---------------------------------------------------------------------------
+# The board above is computed lazily ON-REQUEST: a hit past the TTL kicks off a background rebuild.
+# With ~0 organic prod traffic the cache just sits stale, so a short-lived match can come and go
+# entirely within one stale window and never surface as live (dev only ever looks correct because
+# the monitor cron pokes :8095 every 5 min). This warmer pokes the SAME endpoint path on a timer so
+# prod's board recomputes without waiting for a visitor. It lives in-app on purpose — no external
+# poker (cron/tunnel) that can silently fall off.
+#
+# ONE knob: set to 0 to DISABLE and restore the pre-warmer lazy-only behavior. At 3600s the board is
+# at most ~1h stale, which is fine while there are no users; drop it toward the 60s live-TTL once
+# real traffic / real-time liveness matters. Env var overrides the constant for ops without a rebuild.
+ESPORTS_WARMER_INTERVAL_S = int(os.environ.get("LP_ESPORTS_WARMER_INTERVAL_S", "900"))  # 15 min; 0 disables
+_warmer_started = False
+
+
+def start_esports_warmer():
+    """Start the background board warmer once. No-op if disabled (interval<=0) or already running."""
+    global _warmer_started
+    if _warmer_started or ESPORTS_WARMER_INTERVAL_S <= 0:
+        return
+    _warmer_started = True
+
+    def _loop():
+        while True:
+            try:
+                esports_upcoming()  # same single-flight path a real visit takes; triggers a bg rebuild
+            except Exception:
+                pass  # a warmer tick must never kill the loop
+            time.sleep(ESPORTS_WARMER_INTERVAL_S)
+
+    threading.Thread(target=_loop, name="esports-warmer", daemon=True).start()
+
+
+# ---------------------------------------------------------------------------
 # rebuild pipeline: gather rows -> cluster -> evidence -> state -> streams
 # ---------------------------------------------------------------------------
 def _rebuild_upcoming():
