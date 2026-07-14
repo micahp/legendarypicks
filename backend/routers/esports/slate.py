@@ -78,6 +78,13 @@ _up_rebuild_started = 0.0
 _REBUILD_STUCK_S = 300
 _finish_seen = {}
 
+# How many days of finished results the DURABLE store keeps (the on-disk layer that survives
+# restarts). This is the guaranteed floor: after any restart the board reconstructs at least this
+# many days of results from disk, instead of dropping to whatever a cold rebuild happens to find.
+# The in-memory carry is intentionally NOT capped to this — while a process stays warm it may show
+# an older tail on top; this only sets the floor that persists. One knob, env-overridable.
+_RESULTS_RETENTION_DAYS = int(os.environ.get("LP_RESULTS_RETENTION_DAYS", "7"))
+
 # ---------------------------------------------------------------------------
 # endpoint (stale-while-revalidate, unchanged semantics + stuck-rebuild watchdog)
 # ---------------------------------------------------------------------------
@@ -524,7 +531,7 @@ def _rebuild_upcoming():
             ex.update(winner=m.get("winner"), score=m.get("score"),
                       resultUnknown=False, finished=True, psId=m.get("psId"))
 
-    cutoff_ms = now_ms - 3 * 86400 * 1000
+    cutoff_ms = now_ms - _RESULTS_RETENTION_DAYS * 86400 * 1000
     store = {_key(v): _normalize_match_metadata(v) for v in store.values()
              if not _is_map_market(v) and v.get("finishedAt", 0) > cutoff_ms}
     _save_results_store(store)
