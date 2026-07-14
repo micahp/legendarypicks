@@ -147,16 +147,16 @@ export default function PredictPage() {
   return (
     <>
       <Head>
-        <title>The Pick Desk — Legendary Picks</title>
-        <meta name="description" content="Call the winner. Build your record." />
+        <title>Predict — Legendary Picks</title>
+        <meta name="description" content="Pick the winner of each match and track your record." />
       </Head>
 
       <div className="mx-auto max-w-2xl px-4 py-6">
         {/* Header with record */}
         <div className="flex items-center justify-between gap-3">
           <div>
-            <h1 className="text-3xl font-extrabold tracking-tight text-zinc-50">Make Legendary Picks</h1>
-            <p className="mt-1 text-sm text-zinc-500">Pick the winners. Build your legend.</p>
+            <h1 className="text-3xl font-extrabold tracking-tight text-zinc-50">Predict</h1>
+            <p className="mt-1 text-sm text-zinc-500">Pick the winner. Track your record.</p>
           </div>
           <div className="text-right">
             {!hasTotal ? (
@@ -178,9 +178,9 @@ export default function PredictPage() {
           </div>
         </div>
 
-        {/* Make your picks */}
+        {/* Matches */}
         <div className="mt-8 mb-3 text-[10px] font-medium uppercase tracking-[0.18em] text-zinc-500">
-          Make your picks
+          Matches
         </div>
 
         {loading ? (
@@ -240,13 +240,13 @@ export default function PredictPage() {
           })
         )}
 
-        {/* Your legend */}
+        {/* History */}
         <div className="mt-8 mb-3 text-[10px] font-medium uppercase tracking-[0.18em] text-zinc-500">
-          Your legend
+          History
         </div>
 
         {settled.length === 0 ? (
-          <p className="text-sm text-zinc-500">No picks settled yet.</p>
+          <p className="text-sm text-zinc-500">No history yet.</p>
         ) : (
           settled.map((p) => {
             const parts = p.matchKey.split('||')
@@ -265,11 +265,11 @@ export default function PredictPage() {
                 <span>
                   {p.result === 'win' && (
                     <span className="font-mono text-[#22c55e]">
-                      ✓ Legendary +{(p.points ?? 0).toFixed(1)}
+                      Won +{(p.points ?? 0).toFixed(1)}
                     </span>
                   )}
-                  {p.result === 'loss' && <span className="font-mono text-[#ff3d71]">✗ Missed</span>}
-                  {p.result === 'void' && <span className="font-mono text-zinc-500">— void</span>}
+                  {p.result === 'loss' && <span className="font-mono text-[#ff3d71]">Lost</span>}
+                  {p.result === 'void' && <span className="font-mono text-zinc-500">Void</span>}
                 </span>
               </div>
             )
