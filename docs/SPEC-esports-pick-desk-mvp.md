@@ -70,8 +70,13 @@ results store).
   the winner when few agreed pays more; calling a lock pays the base point. The difficulty signal is
   **crowd disagreement**, surfaced as a fact ("only 18% called this"), never as a model %.
   Start `k = 1` and tune.
-- **Crowd line.** `crowdShareAtLock` frozen per pick; the live `CrowdTally` drives the split bar and
-  is the seed of our own line (the thing that eventually retires Bovada).
+- **Crowd line — Bovada is the fallback until we have picks.** We have ~no users yet, so a match
+  will often have 0 or too few picks to show a meaningful crowd split. **Never show nothing.** Per
+  match: below a threshold of picks (start at ~5), show the existing **Bovada favorite/line** with a
+  "be the first to call it" prompt; once the match clears the threshold, the **crowd split**
+  (`CrowdTally`) takes over and Bovada recedes. This is how Bovada gets replaced — gradually,
+  per-match, as calls accumulate — not in one switch. `crowdShareAtLock` is frozen per pick for
+  scoring/receipts.
 
 ## API (additive, under the existing esports router)
 
@@ -107,8 +112,9 @@ only piece not already sitting in the backend.
 3. **The record desk** (the signature) — a persistent broadcast-style strip: **you · the crowd**
    (house desk added later), each with W‑L + streak. Lives in the header as a compact chip and in
    full on the desk page.
-4. **The desk page** — fill `contests.tsx` (don't add a route): my open calls, my settled history
-   (the receipts), the leaderboard. `predict.tsx`'s model output moves backstage.
+4. **The desk page = `predict.tsx`** — predictions *is* exactly this: my open calls, my settled
+   history (the receipts), the leaderboard. Do **NOT** use `contests.tsx` — that route is reserved
+   for the Ultimate Team lineup concept (a later layer). The record chip still lives in the header.
 5. **Copy** — "Call it" / "Call {Team}" → "You called it" / "Missed"; record as "18–5 · W4";
    difficulty as "only 18% called this." Empty states: "Make your call" / "Make your first call."
 
@@ -133,8 +139,10 @@ the house "desk" personas, upset-alert model surfacing. All deferred; none block
 
 - **Identity:** DECIDED (Micah, 2026-07-14) → **anonymous device-scoped record, then claim/bind to
   wallet or email.** First call is one tap; the record becomes portable once claimed.
-- **`predict.tsx`:** confirm it moves backstage (model informs, doesn't front-door) rather than
-  running as a second prediction surface.
+- **Page homes:** DECIDED (Micah, 2026-07-14) → the Pick Desk lives on **`predict.tsx`** (it *is*
+  predictions). **`contests.tsx` is reserved for the Ultimate Team lineup concept** (a later layer);
+  do not put picks there. Any existing model output on `predict.tsx` informs but does not front-door
+  over the picks.
 - **Void handling on streaks:** confirm a `void` leaves the streak untouched (recommended) vs.
   resets it.
 - **Scoring constant `k`** and whether week vs. season is the primary leaderboard window.
