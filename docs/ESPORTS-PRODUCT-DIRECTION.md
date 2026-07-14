@@ -119,6 +119,19 @@ Sport.Fun's black-box Skill Rating failed because users couldn't see or control 
 streaks, leaderboards, divisions, badges. The contrarian bonus is shown as a crowd fact ("12%
 were on this"), never as a model probability. Receipts, not a mystery number.
 
+## Legal guardrails (non-negotiable)
+
+Pressure-tested in `ESPORTS-LEGALITY-PRESSURE-TEST.md`; the box that must stay true as this gets
+built: **monetize on the way IN (packs + cosmetics), never build a way OUT.** A game that sells
+random packs is a low-risk game-with-IAP; it becomes gambling or securities the moment real money
+can come back out. So — cards never cash out and are never tradable or tokenized (no crypto: the
+tradable-card model, Sorare, is under active UK gambling *prosecution*; the field-don't-trade model,
+FUT, was cleared by the Dutch top court as part of a skill game); contest prizes are
+status/cosmetics/packs, **never cash**; any *paid* contest is **peer-to-peer**, never vs. the house
+(the format regulators are killing — PrizePicks fled to peer-to-peer to survive); publish pack drop
+odds; age-gate spend and require parental consent under 16; geo-exclude Belgium. Not legal advice —
+a gaming lawyer signs off on the final design and jurisdiction list before the first dollar.
+
 ## Build order (taste = restraint)
 
 1. **Pick Desk** — free binary pick'em, records, you vs. desk vs. crowd, contrarian bonus.
@@ -133,9 +146,10 @@ player shares, and do not let this collapse back into "polish the esports board.
 
 ## Open questions / to pressure-test before building
 
-- **Loot box regulation.** Paid loot boxes are banned or restricted in some jurisdictions
-  (Belgium, Netherlands) and increasingly require published drop-odds elsewhere. Confirm the
-  ruleset and disclose odds. This needs a real check before money touches a pack.
+- **Loot box regulation** — pressure-tested (see the Legal guardrails box above and
+  `ESPORTS-LEGALITY-PRESSURE-TEST.md`). Belgium hard-bans paid loot boxes; the Netherlands now
+  permits FUT-style packs (EA won on appeal). Left to confirm at launch: the final jurisdiction
+  list and a gaming-lawyer sign-off on the exact design.
 - **Account/revenue ownership.** Inbound money runs on Micah's account per the agent-money
   policy; agents build, humans own the ledger.
 - **Data rights at monetization.** GRID Open Access is non-commercial/pre-revenue; PandaScore and
