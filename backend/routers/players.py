@@ -194,30 +194,155 @@ def player_stats(player_id: int,
     return result
 
 
-# ── Per-league stat columns for the leaders endpoint ─────────
-_LEAGUE_STATS = {
-    "nba": ["pts", "reb", "ast", "stl", "blk", "tov", "fg3m", "minutes", "ts_pct", "fgm", "fga", "ftm", "fta"],
-    "nfl": ["pass_yds_g", "pass_td", "interceptions", "cmp_g", "rush_yds_g", "receptions", "rec_yds_g", "targets", "fantasy_pts_g", "fantasy_ppr_g"],
-    "nhl": ["goals", "assists", "points_nhl", "shots", "shooting_pct", "plus_minus", "pim", "ppg", "ppp", "shg"],
-    "mlb_batting": ["avg", "hr", "k_pct", "bb_pct", "woba", "xwoba", "exit_velo", "hard_hit_pct"],
-    "mlb_pitching": ["k_pct", "whiff_pct", "xwoba_against", "exit_velo_against", "barrel_pct_against"],
-}
-_LEAGUE_DEFAULT_STAT = {"nba": "pts", "nfl": "fantasy_pts_g", "nhl": "points_nhl",
-                        "mlb_batting": "avg", "mlb_pitching": "k_pct"}
+# ── Explicit player-leader categories and display contracts ────────
+def _metric(key, label, format):
+    return {"key": key, "label": label, "format": format}
 
-# Human-readable stat labels (camelCase/snake_case → display)
-def _stat_label(k: str) -> str:
-    return k.replace("_g", "/G").replace("_pct", "%").replace("_nhl", "").replace("_", " ").upper()
+
+_LEAGUE_CATEGORIES = {
+    "nba": [
+        {"key": "scoring", "label": "Scoring", "stats": [
+            _metric("pts", "Points", "decimal_1"),
+            _metric("fgm", "Field Goals Made", "integer"),
+            _metric("fga", "Field Goals Attempted", "integer"),
+            _metric("fg3m", "3-Pointers Made", "integer"),
+            _metric("fg3a", "3-Pointers Attempted", "integer"),
+            _metric("ftm", "Free Throws Made", "integer"),
+            _metric("fta", "Free Throws Attempted", "integer"),
+        ]},
+        {"key": "playmaking", "label": "Playmaking", "stats": [
+            _metric("ast", "Assists", "decimal_1"),
+            _metric("tov", "Turnovers", "decimal_1"),
+        ]},
+        {"key": "rebounding", "label": "Rebounding", "stats": [
+            _metric("reb", "Rebounds", "decimal_1"),
+        ]},
+        {"key": "defense", "label": "Defense", "stats": [
+            _metric("stl", "Steals", "decimal_1"),
+            _metric("blk", "Blocks", "decimal_1"),
+        ]},
+        {"key": "efficiency", "label": "Efficiency", "stats": [
+            _metric("ts_pct", "True Shooting %", "percent_1"),
+            _metric("pts", "Points", "decimal_1"),
+            _metric("minutes", "Minutes", "decimal_1"),
+        ]},
+    ],
+    "nfl": [
+        {"key": "passing", "label": "Passing", "stats": [
+            _metric("pass_yds_g", "Pass Yards/Game", "decimal_1"),
+            _metric("pass_td", "Pass Touchdowns", "integer"),
+            _metric("interceptions", "Interceptions", "integer"),
+            _metric("cmp_g", "Completions/Game", "decimal_1"),
+            _metric("pass_epa", "Pass EPA", "decimal_1"),
+        ]},
+        {"key": "rushing", "label": "Rushing", "stats": [
+            _metric("rush_yds_g", "Rush Yards/Game", "decimal_1"),
+            _metric("carries_g", "Carries/Game", "decimal_1"),
+        ]},
+        {"key": "receiving", "label": "Receiving", "stats": [
+            _metric("rec_yds_g", "Receiving Yards/Game", "decimal_1"),
+            _metric("receptions", "Receptions", "integer"),
+            _metric("targets", "Targets", "integer"),
+        ]},
+    ],
+    "nhl": [
+        {"key": "scoring", "label": "Scoring", "stats": [
+            _metric("points_nhl", "Points", "integer"),
+            _metric("goals", "Goals", "integer"),
+            _metric("assists", "Assists", "integer"),
+        ]},
+        {"key": "shooting", "label": "Shooting", "stats": [
+            _metric("shots", "Shots", "integer"),
+            _metric("shooting_pct", "Shooting %", "percent_1"),
+        ]},
+        {"key": "special_teams", "label": "Special Teams", "stats": [
+            _metric("ppg", "Power-Play Goals", "integer"),
+            _metric("ppp", "Power-Play Points", "integer"),
+            _metric("shg", "Short-Handed Goals", "integer"),
+        ]},
+        {"key": "possession", "label": "Possession", "stats": [
+            _metric("plus_minus", "Plus/Minus", "integer"),
+            _metric("pim", "Penalty Minutes", "integer"),
+            _metric("faceoff_pct", "Faceoff %", "percent_1"),
+        ]},
+    ],
+    "mlb_batting": [
+        {"key": "production", "label": "Production", "stats": [
+            _metric("avg", "Batting Average", "decimal_3"),
+            _metric("hr", "Home Runs", "integer"),
+            _metric("woba", "wOBA", "decimal_3"),
+            _metric("xwoba", "xwOBA", "decimal_3"),
+        ]},
+        {"key": "contact_quality", "label": "Contact Quality", "stats": [
+            _metric("xwoba", "xwOBA", "decimal_3"),
+            _metric("exit_velo", "Exit Velocity", "decimal_1"),
+            _metric("hard_hit_pct", "Hard-Hit %", "percent_1"),
+            _metric("barrel_pct", "Barrel %", "percent_1"),
+        ]},
+        {"key": "discipline", "label": "Discipline", "stats": [
+            _metric("k_pct", "Strikeout %", "percent_1"),
+            _metric("bb_pct", "Walk %", "percent_1"),
+        ]},
+    ],
+    "mlb_pitching": [
+        {"key": "strikeouts", "label": "Strikeouts", "stats": [
+            _metric("k_pct", "Strikeout %", "percent_1"),
+            _metric("whiff_pct", "Whiff %", "percent_1"),
+        ]},
+        {"key": "contact_suppression", "label": "Contact Suppression", "stats": [
+            _metric("xwoba_against", "xwOBA Against", "decimal_3"),
+            _metric("exit_velo_against", "Exit Velocity Against", "decimal_1"),
+            _metric("barrel_pct_against", "Barrel % Against", "percent_1"),
+        ]},
+    ],
+}
+
+_LEAGUE_DEFAULTS = {
+    "nba": ("scoring", "pts"),
+    "nfl": ("passing", "pass_yds_g"),
+    "nhl": ("scoring", "points_nhl"),
+    "mlb_batting": ("production", "avg"),
+    "mlb_pitching": ("strikeouts", "k_pct"),
+}
+
+
+def _empty_leaders(lg, season, stat_type):
+    return {
+        "league": lg,
+        "season": season,
+        "stat": None,
+        "stat_type": stat_type,
+        "category": None,
+        "categories": [],
+        "columns": [],
+        "leaders": [],
+    }
+
+
+def _format_leader_value(value, format):
+    if value is None:
+        return None
+    if format == "integer":
+        return int(value)
+    if format == "decimal_3":
+        return round(float(value), 3)
+    if format in ("decimal_1", "percent_1"):
+        return round(float(value), 1)
+    if format == "time":
+        return str(value)
+    raise ValueError(f"Unsupported leader format: {format}")
 
 
 @router.get("/api/{league}/leaders")
 def league_leaders(league: str,
                    stat: Optional[str] = Query(None),
+                   category: Optional[str] = Query(None),
                    type: Optional[str] = Query(None),
                    min_games: int = Query(0, ge=0),
                    limit: int = Query(25, ge=1, le=100)):
     """Player leaderboard for a league from the player_stats table.
-    ?stat=pts — sort column (default: league-appropriate)
+    ?category=scoring — metric group (default: league-appropriate)
+    ?stat=pts — sort column within/inferred from the category
     ?type=batting|pitching — MLB only, picks the stat_type to filter
     ?min_games=N — minimum games played (default: 0 for all, 10 for MLB batting)
     """
@@ -225,54 +350,115 @@ def league_leaders(league: str,
     if lg not in ("nba", "nfl", "nhl", "mlb"):
         return JSONResponse({"error": f"Unsupported league: {league}"}, 404)
 
+    if lg == "mlb":
+        stat_type = (type or "batting").lower()
+        if stat_type not in ("batting", "pitching"):
+            raise HTTPException(400, "type must be batting or pitching for MLB")
+        definition_key = f"mlb_{stat_type}"
+    else:
+        if type is not None:
+            raise HTTPException(400, "type is only supported for MLB leaders")
+        stat_type = None
+        definition_key = lg
+
+    definitions = _LEAGUE_CATEGORIES[definition_key]
+    category_defs = {item["key"]: item for item in definitions}
+    approved_stats = {
+        metric["key"] for item in definitions for metric in item["stats"]
+    }
+    if category is not None and category not in category_defs:
+        raise HTTPException(400, f"Unknown category {category!r} for {definition_key}")
+    if stat is not None and stat not in approved_stats:
+        raise HTTPException(400, f"Unknown stat {stat!r} for {definition_key}")
+    if category is not None and stat is not None:
+        category_stats = {metric["key"] for metric in category_defs[category]["stats"]}
+        if stat not in category_stats:
+            raise HTTPException(400, f"Stat {stat!r} does not belong to category {category!r}")
+
     with closing(_db()) as con:
-        # Find the current/latest season
+        con.row_factory = sqlite3.Row
+        db_cols = {row[1] for row in con.execute("PRAGMA table_info(player_stats)").fetchall()}
+        season_where = "league=?"
+        season_params = [lg]
+        if stat_type is not None:
+            season_where += " AND stat_type=?"
+            season_params.append(stat_type)
         srow = con.execute(
-            "SELECT season FROM player_stats WHERE league=? ORDER BY season DESC LIMIT 1",
-            (lg,)).fetchone()
+            f"SELECT season FROM player_stats WHERE {season_where} "
+            "ORDER BY season DESC LIMIT 1",
+            season_params,
+        ).fetchone()
         season = srow["season"] if srow else None
         if season is None:
-            return {"league": lg, "season": None, "stat": stat, "leaders": []}
+            return _empty_leaders(lg, None, stat_type)
 
-        stat_type = None
-        stat_set = _LEAGUE_STATS.get(lg, [])
-        if lg == "mlb":
-            # MLB: filter by stat_type=batting (default) or pitching
-            stat_type = (type or "batting").lower()
-            if stat_type not in ("batting", "pitching"):
-                stat_type = "batting"
-            stat_set = _LEAGUE_STATS.get(f"mlb_{stat_type}", stat_set)
+        population_where = "league=? AND season=?"
+        population_params = [lg, season]
+        if stat_type is not None:
+            population_where += " AND stat_type=?"
+            population_params.append(stat_type)
 
-        # Resolve the sort stat
-        default_key = f"mlb_{stat_type}" if lg == "mlb" and stat_type else lg
-        sort_stat = stat or _LEAGUE_DEFAULT_STAT.get(default_key, stat_set[0] if stat_set else "games")
-        if sort_stat not in stat_set:
-            stat_set = list(stat_set) + [sort_stat]  # allow ad-hoc stat if it exists in DB
+        available_keys = set()
+        for key in approved_stats:
+            if key not in db_cols:
+                continue
+            count = con.execute(
+                f"SELECT COUNT({key}) FROM player_stats WHERE {population_where}",
+                population_params,
+            ).fetchone()[0]
+            if count > 0:
+                available_keys.add(key)
 
-        # Build SELECT: only columns that exist and are in the stat set
-        # Always include player_id, player_name, team, games
-        cols = ["player_id", "player_name", "team", "games"] + [c for c in stat_set if c != sort_stat or c in stat_set]
-        # Put sort_stat first in stat columns for readability
-        stat_cols = [sort_stat] + [c for c in stat_set if c != sort_stat]
+        categories = []
+        for item in definitions:
+            metrics = [dict(metric) for metric in item["stats"] if metric["key"] in available_keys]
+            if metrics:
+                categories.append({"key": item["key"], "label": item["label"], "stats": metrics})
+        if not categories:
+            normalized_season = season if isinstance(season, int) else str(season)
+            return _empty_leaders(lg, normalized_season, stat_type)
 
-        # Validate columns exist in DB (the table is wide and mixed)
-        db_cols = set()
-        try:
-            db_cols = {r[1] for r in con.execute("PRAGMA table_info(player_stats)").fetchall()}
-        except Exception:
-            pass
-        valid_stat_cols = [c for c in stat_cols if c in db_cols]
-        valid_extra = [c for c in cols if c in db_cols]
+        available_categories = {item["key"]: item for item in categories}
+        if stat is not None and stat not in available_keys:
+            raise HTTPException(400, f"Stat {stat!r} is unavailable for season {season}")
+        if category is not None:
+            if category not in available_categories:
+                raise HTTPException(400, f"Category {category!r} is unavailable for season {season}")
+            selected_category = category
+        elif stat is not None:
+            selected_category = next(
+                item["key"] for item in definitions
+                if any(metric["key"] == stat for metric in item["stats"])
+            )
+        else:
+            default_category, _default_stat = _LEAGUE_DEFAULTS[definition_key]
+            selected_category = (
+                default_category if default_category in available_categories else categories[0]["key"]
+            )
 
-        select_cols = [c for c in valid_extra if c not in valid_stat_cols] + valid_stat_cols
+        columns = available_categories[selected_category]["stats"]
+        if stat is not None:
+            sort_stat = stat
+        elif category is not None:
+            sort_stat = columns[0]["key"]
+        else:
+            _default_category, default_stat = _LEAGUE_DEFAULTS[definition_key]
+            sort_stat = default_stat if (
+                selected_category == _default_category and default_stat in available_keys
+            ) else columns[0]["key"]
+
+        metric_metadata = {}
+        ordered_metric_keys = []
+        for item in categories:
+            for metric in item["stats"]:
+                metric_metadata.setdefault(metric["key"], metric)
+                if metric["key"] not in ordered_metric_keys:
+                    ordered_metric_keys.append(metric["key"])
+
+        select_cols = ["player_id", "player_name", "team", "games"] + ordered_metric_keys
         select_str = ", ".join(select_cols)
-        order_col = sort_stat if sort_stat in db_cols else "games"
-
-        params = [lg, season]
-        where = "WHERE league=? AND season=?"
-        if lg == "mlb" and stat_type:
-            where += " AND stat_type=?"
-            params.append(stat_type)
+        params = list(population_params)
+        where = f"WHERE {population_where}"
         # Default min_games for MLB to filter cup-of-coffee players
         effective_min = min_games
         if effective_min == 0 and lg == "mlb":
@@ -283,7 +469,7 @@ def league_leaders(league: str,
 
         rows = con.execute(
             f"SELECT {select_str} FROM player_stats {where} "
-            f"AND {order_col} IS NOT NULL ORDER BY {order_col} DESC LIMIT ?",
+            f"AND {sort_stat} IS NOT NULL ORDER BY {sort_stat} DESC, player_name ASC LIMIT ?",
             params + [limit]
         ).fetchall()
 
@@ -291,11 +477,11 @@ def league_leaders(league: str,
     for r in rows:
         entry = {"player_id": r["player_id"], "name": r["player_name"],
                  "team": r["team"] or "", "games": r["games"]}
-        for c in valid_stat_cols:
-            v = r[c]
-            entry[c] = round(float(v), 1) if v is not None else None
+        for key in ordered_metric_keys:
+            entry[key] = _format_leader_value(r[key], metric_metadata[key]["format"])
         leaders.append(entry)
 
     return {"league": lg, "season": season if isinstance(season, int) else str(season),
-            "stat": sort_stat, "stat_type": stat_type, "leaders": leaders}
-
+            "stat": sort_stat, "stat_type": stat_type,
+            "category": selected_category, "categories": categories,
+            "columns": columns, "leaders": leaders}
