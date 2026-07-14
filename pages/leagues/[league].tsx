@@ -27,6 +27,27 @@ interface Leader {
 type MetricFormat = 'integer' | 'decimal_1' | 'decimal_3' | 'percent_1' | 'time'
 interface StatMetric { key: string; label: string; format: MetricFormat }
 interface StatCategory { key: string; label: string; stats: StatMetric[] }
+interface ChangeComparison {
+  recent_label: string
+  baseline_label: string
+  recent_games: number
+  min_baseline_games: number
+  status: 'display_only'
+  eligible_leaders: number
+  qualified_leaders: number
+}
+interface StatChange {
+  player_id: number
+  name: string
+  team: string
+  metric: StatMetric
+  recent_value: number | string | null
+  baseline_value: number | string | null
+  delta: number
+  direction: 'rising' | 'falling' | 'flat'
+  recent_games: number
+  baseline_games: number
+}
 
 interface LeadersData {
   league: string; season: number | string | null
@@ -35,6 +56,9 @@ interface LeadersData {
   categories: StatCategory[]
   columns: StatMetric[]
   leaders: Leader[]
+  change_metric: StatMetric | null
+  comparison: ChangeComparison | null
+  changes: StatChange[]
 }
 
 // UFC types
@@ -81,6 +105,17 @@ function formatMetric(metric: StatMetric, value: number | string | null | undefi
   if (metric.format === 'decimal_3') return numeric.toFixed(3)
   if (metric.format === 'percent_1') return `${numeric.toFixed(1)}%`
   return numeric.toFixed(1)
+}
+
+function formatSignedMetric(metric: StatMetric, value: number): string {
+  const formatted = formatMetric(metric, value)
+  return value > 0 ? `+${formatted}` : formatted
+}
+
+function directionDisplay(direction: StatChange['direction']) {
+  if (direction === 'rising') return { glyph: '↑', label: 'Rising', className: 'text-emerald-400' }
+  if (direction === 'falling') return { glyph: '↓', label: 'Falling', className: 'text-amber-400' }
+  return { glyph: '→', label: 'Flat', className: 'text-zinc-400' }
 }
 
 type HubTab = 'standings' | 'stats' | 'schedule' | 'rankings'
@@ -353,7 +388,18 @@ export default function LeagueHubPage() {
           error.status = res.status
           throw error
         }
-        const data: LeadersData = await res.json()
+        const payload: any = await res.json()
+        if (!Array.isArray(payload?.categories) || !Array.isArray(payload?.columns)) {
+          const error: any = new Error('Incompatible stats response.')
+          if (requestedCategory || requestedStat) error.status = 400
+          throw error
+        }
+        const data: LeadersData = {
+          ...payload,
+          change_metric: payload.change_metric ?? null,
+          comparison: payload.comparison ?? null,
+          changes: Array.isArray(payload.changes) ? payload.changes : [],
+        }
         if (!ignore) {
           setLeadersData(data)
           if ((!requestedCategory && data.category) || (!requestedStat && data.stat)) {
@@ -676,6 +722,64 @@ export default function LeagueHubPage() {
                   </button>
                 ))}
               </div>
+            ) : null}
+
+            {subView === 'players' && !playerLoading && !playerError
+              && leadersData?.change_metric && leadersData.comparison ? (
+              <section
+                aria-labelledby="what-changed-heading"
+                className="overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900"
+              >
+                <div className="flex flex-wrap items-start justify-between gap-3 border-b border-zinc-800 px-4 py-3">
+                  <div>
+                    <h2 id="what-changed-heading" className="text-sm font-semibold text-zinc-100">What changed</h2>
+                    <p className="mt-0.5 text-xs text-zinc-500">
+                      {leadersData.comparison.recent_label} vs {leadersData.comparison.baseline_label}
+                    </p>
+                  </div>
+                  {leadersData.comparison.status === 'display_only' && (
+                    <span className="rounded-full border border-zinc-700 px-2.5 py-1 text-[11px] font-medium text-zinc-400">
+                      Display-only trend
+                    </span>
+                  )}
+                </div>
+
+                {leadersData.changes.length === 0 || leadersData.comparison.qualified_leaders === 0 ? (
+                  <p className="px-4 py-4 text-sm text-zinc-400">
+                    Not enough valid game history for a Last 5 comparison.
+                  </p>
+                ) : (
+                  <div className="divide-y divide-zinc-800">
+                    {leadersData.changes.map(change => {
+                      const direction = directionDisplay(change.direction)
+                      return (
+                        <div key={`${change.player_id}-${change.metric.key}`} className="px-4 py-3">
+                          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+                            <div className="min-w-0">
+                              <a
+                                href={`/player/${change.player_id}`}
+                                className="font-medium text-zinc-200 transition-colors hover:text-emerald-400"
+                              >
+                                {change.name}
+                              </a>
+                              {change.team && <span className="ml-1.5 text-xs text-zinc-500">{change.team}</span>}
+                            </div>
+                            <div className="flex items-center gap-2 font-mono text-sm tabular-nums text-zinc-300">
+                              <span role="img" aria-label={direction.label} className={direction.className}>
+                                {direction.glyph}
+                              </span>
+                              <span>{formatSignedMetric(change.metric, change.delta)} {change.metric.label}</span>
+                            </div>
+                          </div>
+                          <p className="mt-1 text-xs text-zinc-500">
+                            Recent {formatMetric(change.metric, change.recent_value)} · Earlier {formatMetric(change.metric, change.baseline_value)} · {change.recent_games} recent / {change.baseline_games} earlier
+                          </p>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+              </section>
             ) : null}
 
             {/* Players sub-view */}
