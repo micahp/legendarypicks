@@ -1,8 +1,11 @@
 """routers/games.py — games endpoints. Handlers only; shared code lives in _core."""
+import html
+
 from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import JSONResponse
 from typing import Optional
 from _core import *
+from team_stats_contract import build_team_aggregates
 
 router = APIRouter()
 
@@ -28,11 +31,17 @@ def ufc_rankings():
                 "SELECT division, rank, fighter, is_champion FROM ufc_rankings "
                 "ORDER BY division, rank"
             ).fetchall()
-        except sqlite3.OperationalError:
-            rows = []  # table not populated yet (ingest_ufc_rankings.py hasn't run) — degrade, don't 500
+        except sqlite3.OperationalError as exc:
+            raise HTTPException(
+                503,
+                "UFC rankings data unavailable: production data has not been promoted",
+            ) from exc
 
     if not rows:
-        return {"pound_for_pound": {"men": [], "women": []}, "divisions": []}
+        raise HTTPException(
+            503,
+            "UFC rankings data unavailable: production data is empty",
+        )
 
     # Separate P4P from weight divisions
     p4p_men, p4p_women = [], []
@@ -40,8 +49,15 @@ def ufc_rankings():
 
     for r in rows:
         div = r["division"]
+        rank = r["rank"]
+        raw_fighter = r["fighter"]
+        if not isinstance(div, str) or not isinstance(rank, int):
+            continue
+        if not isinstance(raw_fighter, str) or not raw_fighter.strip():
+            continue
+        fighter = html.unescape(raw_fighter)
         if "Pound-for-Pound" in div:
-            entry = {"rank": r["rank"], "fighter": r["fighter"]}
+            entry = {"rank": rank, "fighter": fighter}
             if r["is_champion"]:
                 entry["champion"] = True
             if "Women" in div:
@@ -52,10 +68,10 @@ def ufc_rankings():
             if div not in divisions:
                 divisions[div] = {"division": div, "champion": "", "ranked": []}
             if r["is_champion"]:
-                divisions[div]["champion"] = r["fighter"]
+                divisions[div]["champion"] = fighter
             else:
                 divisions[div]["ranked"].append(
-                    {"rank": r["rank"], "fighter": r["fighter"]}
+                    {"rank": rank, "fighter": fighter}
                 )
 
     # Sort P4P by rank (champion=rank 0 first)
@@ -77,6 +93,20 @@ def ufc_rankings():
         if d in divisions:
             divisions[d]["ranked"].sort(key=lambda x: x["rank"])
             ordered.append(divisions[d])
+
+    expected_divisions = set(MEN_ORDER + WOMEN_ORDER)
+    populated_divisions = {
+        division["division"] for division in ordered if division["ranked"]
+    }
+    if (
+        not p4p_men
+        or not p4p_women
+        or populated_divisions != expected_divisions
+    ):
+        raise HTTPException(
+            503,
+            "UFC rankings data unavailable: production data is incomplete",
+        )
 
     return {
         "pound_for_pound": {"men": p4p_men, "women": p4p_women},
@@ -138,15 +168,53 @@ def get_strength(league: str):
 
 @router.get("/api/{league}/standings")
 def get_standings(league: str):
-    """Group/division standings. For World Cup: returns group tables with draws."""
+    """Group/division standings. For World Cup: group tables during the group
+    stage; the canonical knockout bracket/results once the season phase leaves
+    'Group' (progression gate via espn.wc_is_knockout — never serve stale groups
+    once knockouts have begun)."""
     if league.lower() != "wc":
         try:
             return espn.team_strength(league)
         except ValueError as e:
             raise HTTPException(404, str(e))
+    # WC: group tables are ONLY valid during the Group phase. Once knockouts
+    # have begun, serve the canonical bracket ONLY — never stale group tables.
+    # The no-stale-group fallback: if the bracket is empty/unavailable while
+    # knockouts are live, return 503 rather than silently serving yesterday's
+    # Group standings (the swallowed-exception fall-through that regressed here).
+    # Any upstream failure on the knockout path (phase lookup or bracket fetch)
+    # becomes 503 too — never an uncaught 500, never a stale-group fall-through.
+    try:
+        knockout = espn.wc_is_knockout()
+    except Exception:
+        # Phase lookup failed — we cannot confirm groups are still valid, so do
+        # NOT fall through to group_standings (that would serve stale tables).
+        raise HTTPException(503, "World Cup phase lookup unavailable")
+    if knockout:
+        try:
+            bracket = espn.wc_knockout_standings()
+        except HTTPException:
+            raise  # preserve an already-shaped HTTP error from the client layer
+        except Exception:
+            raise HTTPException(503, "World Cup knockout bracket unavailable")
+        if bracket.get("rounds"):
+            return bracket
+        raise HTTPException(503, "World Cup knockout bracket is unavailable")
+    # Group phase — serve group tables
     try:
         return espn.group_standings(league)
     except ValueError as e:
+        raise HTTPException(404, str(e))
+@router.get("/api/wc/knockout")
+def wc_knockout():
+    """World Cup knockout bracket — the SAME canonical {rounds:[...]} shape as
+    /api/wc/standings during knockouts. Single source of truth:
+    espn.wc_knockout_standings(). Returns {rounds:[{round, matches:[{game_id,
+    date, home:{abbrev,name}, away:{abbrev,name}, homeScore, awayScore, winner,
+    status, state}]}]}."""
+    try:
+        return espn.wc_knockout_standings()
+    except Exception as e:
         raise HTTPException(404, str(e))
 
 
@@ -165,6 +233,19 @@ def get_team_stats(league: str, game_id: Optional[str] = Query(None)):
         con.row_factory = sqlite3.Row
         rows = con.execute(sql, params).fetchall()
     return [dict(r) for r in rows]
+
+
+@router.get("/api/{league}/team-aggregates")
+def get_team_aggregates(league: str):
+    """Season team aggregates with league-specific categories and coverage."""
+    lg = league.lower()
+    try:
+        with closing(_db()) as con:
+            con.row_factory = sqlite3.Row
+            return build_team_aggregates(con, lg)
+    except sqlite3.OperationalError:
+        with closing(sqlite3.connect(":memory:")) as con:
+            return build_team_aggregates(con, lg)
 
 
 @router.get("/api/{league}/strength/{team}")
@@ -654,4 +735,3 @@ def list_predictions(league: Optional[str] = Query(None, description="Filter by 
     if graded:
         accuracy = round(sum(1 for p in graded if p["correct"]) / len(graded), 4)
     return {"predictions": out, "graded": len(graded), "accuracy": accuracy}
-

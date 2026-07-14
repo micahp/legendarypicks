@@ -25,3 +25,8 @@ LOGDIR=/root/legendarypicks/logs
 
 # Coverage report — daily at 9am
 0 9 * * * root $PIPELINE $SCRIPTS/coverage_report.py >> $LOGDIR/coverage_cron.log 2>&1
+
+# Refresh production UFC rankings weekly. The ingest validates the complete
+# source and transactionally replaces only ufc_rankings; partial scrapes fail
+# without deleting the last known-good dataset.
+15 6 * * 1 root cd $BACKEND && LP_DB_PATH=data/picks.db $PIPELINE ingest_ufc_rankings.py >> $LOGDIR/ufc_rankings_cron.log 2>&1

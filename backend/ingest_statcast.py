@@ -14,6 +14,79 @@ from sports_service import _normalize_name
 
 DB = os.environ.get("LP_DB_PATH") or os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "picks.db")
 
+
+def _ensure_identity_queue_schema(con) -> None:
+    """Keep standalone ingest runs compatible with older unresolved queues."""
+    columns = {row[1] for row in con.execute("PRAGMA table_info(unresolved_players)")}
+    for column in ("source_player_key", "reason"):
+        if column not in columns:
+            con.execute(f"ALTER TABLE unresolved_players ADD COLUMN {column} TEXT")
+    con.execute(
+        "CREATE INDEX IF NOT EXISTS idx_unresolved_players_source_key "
+        "ON unresolved_players(source, league, source_player_key)"
+    )
+
+
+def _load_mlb_spine(con):
+    """Return unique MLBAM resolutions and IDs that are ambiguous in the spine."""
+    resolved = {}
+    ambiguous = set()
+    rows = con.execute(
+        "SELECT mlbam_id, name, id FROM players WHERE league='mlb' "
+        "AND mlbam_id IS NOT NULL AND mlbam_id != 0 ORDER BY id"
+    )
+    for row in rows:
+        mlbam_id = int(row["mlbam_id"])
+        if mlbam_id in resolved:
+            ambiguous.add(mlbam_id)
+        else:
+            resolved[mlbam_id] = (row["name"], row["id"])
+    return resolved, ambiguous
+
+
+def _queue_unresolved_statcast(con, mlbam_id: int, fallback_name: str, reason: str) -> None:
+    """Queue a stable Statcast identity for review without creating a player."""
+    source_key = str(int(mlbam_id))
+    existing = con.execute(
+        "SELECT id FROM unresolved_players "
+        "WHERE source='statcast' AND league='mlb' AND source_player_key=?",
+        (source_key,),
+    ).fetchone()
+    if existing:
+        con.execute(
+            "UPDATE unresolved_players SET count=count+1, raw_name=?, reason=? WHERE id=?",
+            (str(fallback_name), reason, existing["id"]),
+        )
+        return
+    now = dt.datetime.now(dt.timezone.utc).isoformat()
+    con.execute(
+        "INSERT INTO unresolved_players"
+        "(source,raw_name,league,team,first_seen,count,source_player_key,reason) "
+        "VALUES ('statcast',?,'mlb',NULL,?,1,?,?)",
+        (str(fallback_name), now, source_key, reason),
+    )
+
+
+def _resolve_or_queue_statcast(
+    con, mlbam_info, ambiguous_mlbam_ids, queued_mlbam_ids,
+    mlbam_id: int, fallback_name: str,
+):
+    """Resolve by stable MLBAM ID or queue once per ingest run; never insert."""
+    mlbam_id = int(mlbam_id)
+    if mlbam_id not in ambiguous_mlbam_ids:
+        info = mlbam_info.get(mlbam_id)
+        if info:
+            return info
+    if mlbam_id not in queued_mlbam_ids:
+        reason = (
+            "duplicate_spine_mlbam_id"
+            if mlbam_id in ambiguous_mlbam_ids
+            else "mlbam_id_not_in_spine"
+        )
+        _queue_unresolved_statcast(con, mlbam_id, fallback_name, reason)
+        queued_mlbam_ids.add(mlbam_id)
+    return None
+
 def _flip_name(name: str) -> str:
     """Convert 'Last, First' → 'First Last' for ESPN compatibility."""
     if ',' in name:
@@ -44,39 +117,16 @@ def ingest(days: int = 200):
     con.row_factory = sqlite3.Row
     batting_count = 0
     pitching_count = 0
-    unresolved_count = 0
+    unresolved_batting = 0
+    unresolved_pitching = 0
 
-    # Pre-load spine: mlbam_id → (name, player_id) — Chadwick-backed, the source of truth
-    mlbam_info = {}   # mlbam_id → (name, player_id)
-    mlbam_to_player = {}  # mlbam_id → player_id (for quick lookup)
-    for r in con.execute("SELECT mlbam_id, name, id FROM players WHERE league='mlb' AND mlbam_id IS NOT NULL AND mlbam_id != 0"):
-        mlbam_info[r["mlbam_id"]] = (r["name"], r["id"])
-        mlbam_to_player[r["mlbam_id"]] = r["id"]
+    _ensure_identity_queue_schema(con)
+    # Pre-load the Chadwick-backed spine. Duplicate MLBAM IDs fail closed.
+    mlbam_info, ambiguous_mlbam_ids = _load_mlb_spine(con)
+    queued_mlbam_ids = set()
     print(f"  Loaded {len(mlbam_info)} mlbam_id→(name, player_id) from spine")
-    spine_added = 0
-
-    def _resolve_or_add(mlbam_id: int, fallback_name: str) -> tuple:
-        """Return (name, player_id) — from spine if known, else upsert with fallback name.
-        The fallback_name is a placeholder for batters (mlbam_XXXXX) or a real name
-        for pitchers (from Statcast's player_name, which IS the pitcher's name)."""
-        nonlocal spine_added
-        info = mlbam_info.get(mlbam_id)
-        if info:
-            return info  # (name, player_id) from Chadwick-backed spine
-        # Not in spine — add them
-        pid = mlbam_to_player.get(mlbam_id)
-        if pid is None:
-            cur = con.execute(
-                "INSERT INTO players(name, league, mlbam_id, active) VALUES (?,?,?,1)",
-                (str(fallback_name), "mlb", mlbam_id))
-            pid = cur.lastrowid
-            mlbam_to_player[mlbam_id] = pid
-            mlbam_info[mlbam_id] = (str(fallback_name), pid)
-            spine_added += 1
-        else:
-            # Already resolved in this session
-            pass
-        return (str(fallback_name), pid)
+    if ambiguous_mlbam_ids:
+        print(f"  WARNING: {len(ambiguous_mlbam_ids)} duplicate MLBAM IDs will be queued")
 
     # ── Batting: group by batter ID ──
     # KEY FIX: batter_id IS the mlbam_id. Resolve name + player_id from the spine
@@ -89,7 +139,14 @@ def ingest(days: int = 200):
     else:
         for batter_id, group in bat_data.groupby("batter"):
             mlbam = int(batter_id)
-            name, player_id = _resolve_or_add(mlbam, f"mlbam_{mlbam}")
+            resolved = _resolve_or_queue_statcast(
+                con, mlbam_info, ambiguous_mlbam_ids, queued_mlbam_ids,
+                mlbam, f"mlbam_{mlbam}",
+            )
+            if resolved is None:
+                unresolved_batting += 1
+                continue
+            name, player_id = resolved
 
             events = group["events"].dropna()
             bb = group[group["launch_speed"].notna()]  # batted balls
@@ -143,7 +200,14 @@ def ingest(days: int = 200):
 
         # Resolve: spine name preferred, fallback to Statcast name, then placeholder
         fallback = statcast_name if statcast_name else f"mlbam_{mlbam}"
-        name, player_id = _resolve_or_add(mlbam, fallback)
+        resolved = _resolve_or_queue_statcast(
+            con, mlbam_info, ambiguous_mlbam_ids, queued_mlbam_ids,
+            mlbam, fallback,
+        )
+        if resolved is None:
+            unresolved_pitching += 1
+            continue
+        name, player_id = resolved
         # If spine returned a placeholder but we have a real Statcast name, use that
         if name.startswith("mlbam_") and statcast_name:
             name = statcast_name
@@ -173,11 +237,11 @@ def ingest(days: int = 200):
     con.commit()
     con.close()
     print(f"  Ingested: {batting_count} batting, {pitching_count} pitching")
-    if spine_added:
-        print(f"  Spine: added {spine_added} new players (with mlbam_id)")
-    unresolved_count = sum(1 for v in mlbam_info.values() if v[0].startswith("mlbam_"))
-    if unresolved_count:
-        print(f"  Placeholder names in spine: {unresolved_count} (needs name repair pass)")
+    if queued_mlbam_ids:
+        print(
+            f"  Resolve-or-queue: {len(queued_mlbam_ids)} MLBAM IDs queued; "
+            f"skipped {unresolved_batting} batting and {unresolved_pitching} pitching rows"
+        )
 
 
 if __name__ == "__main__":

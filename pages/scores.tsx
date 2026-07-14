@@ -139,10 +139,11 @@ export default function ScoresPage() {
         }
         if (!ignore) {
           setGames(Array.isArray(data) ? data : [])
-          setLoading(false)
         }
       } catch (e: any) {
         if (!ignore) setError('Unable to load games right now. Try another date.')
+      } finally {
+        if (!ignore) setLoading(false)
       }
     }
     load()
@@ -307,4 +308,3 @@ export default function ScoresPage() {
     </>
   )
 }
-

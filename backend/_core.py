@@ -104,7 +104,8 @@ def _init_db():
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           source TEXT NOT NULL, raw_name TEXT NOT NULL,
           league TEXT NOT NULL, team TEXT,
-          first_seen TEXT NOT NULL, count INTEGER DEFAULT 1);
+          first_seen TEXT NOT NULL, count INTEGER DEFAULT 1,
+          source_player_key TEXT, reason TEXT);
         CREATE TABLE IF NOT EXISTS name_alias(
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           player_id INTEGER NOT NULL REFERENCES players(id),
@@ -128,6 +129,16 @@ def _init_db():
         for col, decl in (("odds", "INTEGER"), ("odds_captured_at", "TEXT")):
             if col not in existing:
                 con.execute(f"ALTER TABLE props ADD COLUMN {col} {decl}")
+        unresolved_columns = {
+            r[1] for r in con.execute("PRAGMA table_info(unresolved_players)").fetchall()
+        }
+        for col in ("source_player_key", "reason"):
+            if col not in unresolved_columns:
+                con.execute(f"ALTER TABLE unresolved_players ADD COLUMN {col} TEXT")
+        con.execute(
+            "CREATE INDEX IF NOT EXISTS idx_unresolved_players_source_key "
+            "ON unresolved_players(source, league, source_player_key)"
+        )
         con.commit()
 
 

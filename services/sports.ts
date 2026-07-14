@@ -140,11 +140,12 @@ function normalizeLivePeriod(g: any, league?: string): LivePeriod | undefined {
 }
 
 export function normalizeGame(g: any, leagueOverride?: string): Game {
-  // Build subtitle: for UFC use card_segment, for tennis/UFC use event name
-  let subtitle = g?.card_segment || g?.event || ''
+  // Preserve backend-provided stage/week context; UFC card segments remain most specific.
+  let subtitle = g?.card_segment || g?.subtitle || g?.event || ''
 
   // Determine league from various possible fields, with optional override
-  const league = leagueOverride ? leagueOverride : (g?.league ?? g?.sport ?? '')
+  const rawLeague = leagueOverride ? leagueOverride : (g?.league ?? g?.sport ?? '')
+  const league = typeof rawLeague === 'string' ? rawLeague : (rawLeague?.abbreviation || rawLeague?.name || String(rawLeague || ''))
 
   return {
     gameId: String(g?.game_id ?? g?.gameId ?? ''),
@@ -182,7 +183,10 @@ export const SportsService = {
   getGames: async (league: string): Promise<Game[]> => {
     try {
       const res = await axios.get(`${API_BASE_URL}/${league}/games`)
-      return (Array.isArray(res.data) ? res.data : []).map(normalizeGame)
+      // Pass the requested league explicitly as the override so each game keeps
+      // the correct league (the map(callback) form would pass the array INDEX as
+      // the override — see Blocker-3 regression). This keeps GameCard links working.
+      return (Array.isArray(res.data) ? res.data : []).map((g: any) => normalizeGame(g, league))
     } catch (err) {
       console.error('Error fetching games', err)
       return []
@@ -198,7 +202,9 @@ export const SportsService = {
       }))
     } catch (err) {
       console.error(`Error fetching ${league} games for ${date}`, err)
-      return []
+      // A failed request is not the same thing as a valid day with no games.
+      // Callers own the visible error state and already catch this rejection.
+      throw err
     }
   },
 
