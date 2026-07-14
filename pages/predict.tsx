@@ -13,6 +13,7 @@ interface Match {
   logoB: string | null
   live: boolean
   finished: boolean
+  favorite?: { name: string; pct: number } | null
 }
 
 interface MyPick {
@@ -38,6 +39,7 @@ export default function PredictPage() {
   const [record, setRecord] = useState<RecordT>({ wins: 0, losses: 0, voids: 0, streak: 0 })
   const [loading, setLoading] = useState(true)
   const [submittingKey, setSubmittingKey] = useState<string | null>(null)
+  const [crowd, setCrowd] = useState<Record<string, { countA: number; countB: number; total: number; shareA: number | null }>>({})
 
   const loadPicks = async () => {
     const deviceId = getDeviceId()
@@ -76,6 +78,36 @@ export default function PredictPage() {
       active = false
     }
   }, [])
+
+  // Fetch the crowd for each match the user has already picked (revealed after a pick).
+  useEffect(() => {
+    let active = true
+    const toFetch = myPicks.map((p) => p.matchKey).filter((mk) => !(mk in crowd))
+    if (toFetch.length === 0) return
+    ;(async () => {
+      const results = await Promise.all(
+        toFetch.map(async (mk) => {
+          try {
+            const r = await fetch(`/api/esports/crowd?matchKey=${encodeURIComponent(mk)}`)
+            if (!r.ok) return [mk, null] as const
+            const d = (await r.json()) as { countA: number; countB: number; total: number; shareA: number | null }
+            return [mk, d] as const
+          } catch {
+            return [mk, null] as const
+          }
+        })
+      )
+      if (!active) return
+      setCrowd((prev) => {
+        const next = { ...prev }
+        for (const [mk, d] of results) if (d) next[mk] = d
+        return next
+      })
+    })()
+    return () => {
+      active = false
+    }
+  }, [myPicks, crowd])
 
   const call = async (m: Match, side: 'A' | 'B') => {
     const deviceId = getDeviceId()
@@ -123,12 +155,12 @@ export default function PredictPage() {
         {/* Header with record */}
         <div className="flex items-center justify-between gap-3">
           <div>
-            <h1 className="text-3xl font-extrabold tracking-tight text-zinc-50">The Pick Desk</h1>
-            <p className="mt-1 text-sm text-zinc-500">Call the winner. Build your record.</p>
+            <h1 className="text-3xl font-extrabold tracking-tight text-zinc-50">Make Legendary Picks</h1>
+            <p className="mt-1 text-sm text-zinc-500">Pick the winners. Build your legend.</p>
           </div>
           <div className="text-right">
             {!hasTotal ? (
-              <span className="text-sm text-zinc-500">Make your first call</span>
+              <span className="text-sm text-zinc-500">Make your first pick</span>
             ) : (
               <div className="flex items-center gap-2">
                 <span className="font-mono text-lg font-bold tabular-nums text-zinc-100">
@@ -146,24 +178,27 @@ export default function PredictPage() {
           </div>
         </div>
 
-        {/* Open calls */}
+        {/* Make your picks */}
         <div className="mt-8 mb-3 text-[10px] font-medium uppercase tracking-[0.18em] text-zinc-500">
-          Open calls
+          Make your picks
         </div>
 
         {loading ? (
-          <p className="text-sm text-zinc-500">Loading the desk…</p>
+          <p className="text-sm text-zinc-500">Loading…</p>
         ) : openMatches.length === 0 ? (
-          <p className="text-sm text-zinc-500">No matches to call right now.</p>
+          <p className="text-sm text-zinc-500">No matches to pick right now.</p>
         ) : (
           openMatches.map((m) => {
             const existing = pickByKey(m.matchKey)
             return (
               <div key={m.matchKey} className="rounded-xl border border-zinc-800 bg-zinc-900/40 p-4 mb-3">
-                <div className="mb-3 flex items-center gap-2 text-[10px] font-medium uppercase tracking-[0.18em] text-zinc-500">
-                  {m.title} · {m.league}
-                  {m.live ? ' · ' : ''}
-                  {m.live && <span className="text-[#ff3d71]">live</span>}
+                <div className="mb-3 flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-[10px] font-medium uppercase tracking-[0.18em] text-zinc-500">
+                    {m.title} · {m.league}
+                    {m.live ? ' · ' : ''}
+                    {m.live && <span className="text-[#ff3d71]">live</span>}
+                  </div>
+                  <a href="/esports" className="shrink-0 text-[11px] font-medium uppercase tracking-wider text-zinc-500 hover:text-zinc-200">Watch ↗</a>
                 </div>
                 <div className="flex items-center justify-between gap-3">
                   <TeamLine name={m.teamA} logo={m.logoA} />
@@ -172,12 +207,15 @@ export default function PredictPage() {
                 </div>
                 <div className="mt-3">
                   {existing ? (
-                    <div className="text-sm">
-                      <span className="text-zinc-500">You called </span>
-                      <span className="font-semibold text-zinc-50">
-                        {existing.side === 'A' ? m.teamA : m.teamB}
-                      </span>
-                    </div>
+                    <>
+                      <div className="text-sm">
+                        <span className="text-zinc-500">You picked </span>
+                        <span className="font-semibold text-zinc-50">
+                          {existing.side === 'A' ? m.teamA : m.teamB}
+                        </span>
+                      </div>
+                      <CrowdReveal m={m} crowd={crowd[m.matchKey]} />
+                    </>
                   ) : (
                     <div className="flex gap-3">
                       <button
@@ -185,14 +223,14 @@ export default function PredictPage() {
                         onClick={() => call(m, 'A')}
                         className="flex-1 rounded-lg border border-zinc-700 bg-zinc-800/60 px-3 py-2 text-sm font-semibold text-zinc-200 hover:border-zinc-500 hover:text-zinc-50 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        Call {m.teamA}
+                        Pick {m.teamA}
                       </button>
                       <button
                         disabled={submittingKey === m.matchKey}
                         onClick={() => call(m, 'B')}
                         className="flex-1 rounded-lg border border-zinc-700 bg-zinc-800/60 px-3 py-2 text-sm font-semibold text-zinc-200 hover:border-zinc-500 hover:text-zinc-50 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        Call {m.teamB}
+                        Pick {m.teamB}
                       </button>
                     </div>
                   )}
@@ -202,13 +240,13 @@ export default function PredictPage() {
           })
         )}
 
-        {/* Your record */}
+        {/* Your legend */}
         <div className="mt-8 mb-3 text-[10px] font-medium uppercase tracking-[0.18em] text-zinc-500">
-          Your record
+          Your legend
         </div>
 
         {settled.length === 0 ? (
-          <p className="text-sm text-zinc-500">No settled calls yet.</p>
+          <p className="text-sm text-zinc-500">No picks settled yet.</p>
         ) : (
           settled.map((p) => {
             const parts = p.matchKey.split('||')
@@ -227,10 +265,10 @@ export default function PredictPage() {
                 <span>
                   {p.result === 'win' && (
                     <span className="font-mono text-[#22c55e]">
-                      ✓ called it +{(p.points ?? 0).toFixed(1)}
+                      ✓ Legendary +{(p.points ?? 0).toFixed(1)}
                     </span>
                   )}
-                  {p.result === 'loss' && <span className="font-mono text-[#ff3d71]">✗ missed</span>}
+                  {p.result === 'loss' && <span className="font-mono text-[#ff3d71]">✗ Missed</span>}
                   {p.result === 'void' && <span className="font-mono text-zinc-500">— void</span>}
                 </span>
               </div>
@@ -248,5 +286,36 @@ function TeamLine({ name, logo }: { name: string; logo: string | null }) {
       {logo && <img src={logo} alt="" className="h-6 w-6 rounded-sm object-contain" />}
       <span className="text-sm font-semibold text-zinc-100 truncate">{name}</span>
     </div>
+  )
+}
+
+function CrowdReveal({ m, crowd }: { m: Match; crowd?: { countA: number; countB: number; total: number; shareA: number | null } }) {
+  if (!crowd) return null
+  if (crowd.total >= 5) {
+    const favSide = crowd.countA >= crowd.countB ? 'A' : 'B'
+    const favName = favSide === 'A' ? m.teamA : m.teamB
+    const favPct = Math.round(((favSide === 'A' ? crowd.countA : crowd.countB) / crowd.total) * 100)
+    return (
+      <div className="mt-3">
+        <div className="mb-1 flex items-center justify-between text-[11px] text-zinc-500">
+          <span>Fans favor <span className="text-zinc-300">{favName}</span></span>
+          <span className="font-mono tabular-nums">{favPct}%</span>
+        </div>
+        <div className="h-1.5 w-full overflow-hidden rounded-full bg-zinc-800">
+          <div className="h-full bg-zinc-400" style={{ width: `${favPct}%` }} />
+        </div>
+      </div>
+    )
+  }
+  if (m.favorite) {
+    return (
+      <div className="mt-3 text-[11px] text-zinc-500">
+        Bovada favors <span className="text-zinc-300">{m.favorite.name}</span>
+        <span className="font-mono tabular-nums"> · {m.favorite.pct}%</span>
+      </div>
+    )
+  }
+  return (
+    <div className="mt-3 text-[11px] text-zinc-600">Be the first to pick this one.</div>
   )
 }
