@@ -161,9 +161,14 @@ shared-database mutation:
    entries; see `MLB-IDENTITY-PROPOSAL-REVIEW-2026-07-14.md`.
 2. **Completed on this branch:** harden Statcast ingestion to resolve-or-queue with
    no silent player insertion.
-3. Design a separate transactional applier with explicit invariants and rollback.
-4. Apply it only to a fresh database copy.
-5. Re-resolve source-keyed logs and regenerate affected MLB aggregates.
-6. Re-run whole-population identity, coverage, props-history, and recent-form checks.
-7. Review the copy's before/after diff before requesting permission to touch the shared
-   development database.
+3. **Completed on this branch:** design a transactional, hash-gated, copy-only
+   applier with explicit invariants and rollback.
+4. **Completed:** apply it to a fresh database copy after a byte-identical rollback
+   dry run.
+5. **Completed on the copy:** re-resolve source-keyed logs and regenerate affected
+   MLB aggregates from a fresh Statcast pull.
+6. **Completed at the data layer:** re-run whole-population identity, coverage, and
+   props-preservation checks. Real-runtime verification remains required after any
+   approved shared-development application.
+7. **Completed:** review the copy's before/after diff; see
+   `MLB-IDENTITY-COPY-APPLICATION-2026-07-14.md`.
