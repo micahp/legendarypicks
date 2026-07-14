@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import Head from 'next/head'
+import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { SportsService, Game } from '../../services/sports'
 import GameCard from '../../components/Scores/GameCard'
@@ -61,6 +62,26 @@ interface LeadersData {
   changes: StatChange[]
 }
 
+interface TeamAggregate {
+  team: string
+  games: number; wins: number; losses: number
+  runs_for: number; runs_against: number; run_differential: number
+}
+interface TeamAggregateCoverage {
+  status: 'measured' | 'incomplete' | 'unavailable'
+  scope: 'captured_completed_games'
+  team_count: number; expected_teams: number
+  games: number; paired_games: number; invalid_games: number
+  first_game_date: string | null; last_game_date: string | null
+  external_schedule_reconciled: boolean
+}
+interface TeamAggregatesData {
+  league: string; season: number | null
+  supported: boolean; reason: string | null
+  coverage: TeamAggregateCoverage
+  teams: TeamAggregate[]
+}
+
 // UFC types
 interface UFCRanked { rank: number; fighter: string; champion?: boolean }
 interface UFCDivision { division: string; champion: string; ranked: UFCRanked[] }
@@ -87,6 +108,8 @@ const LEAGUE_NAMES: Record<string, string> = {
 const LEAGUE_EMOJIS: Record<string, string> = {
   mlb: '⚾', nba: '🏀', nhl: '🏒', nfl: '🏈', wc: '⚽', ufc: '🥊',
 }
+
+const LEAGUE_SWITCHER = ['mlb', 'nba', 'nhl', 'nfl', 'wc', 'ufc'] as const
 
 // Weight class → lbs for UFC division cards
 const WEIGHT_CLASS_LBS: Record<string, number> = {
@@ -156,6 +179,7 @@ export default function LeagueHubPage() {
   // Determine valid tabs for this league
   const isWC = lg === 'wc'
   const isUFC = lg === 'ufc'
+  const supportsTeamStats = lg === 'mlb'
 
   // WC: Standings (bracket during knockouts / group tables) + Schedule. No player stats.
   // UFC: Rankings (default) + Schedule — NO Stats or Standings (loader skips both, so
@@ -233,6 +257,9 @@ export default function LeagueHubPage() {
   const [playerError, setPlayerError] = useState<string | null>(null)
   const [playerFilterError, setPlayerFilterError] = useState(false)
   const [mlbType, setMlbType] = useState<'batting' | 'pitching'>('batting')
+  const [teamAggregates, setTeamAggregates] = useState<TeamAggregatesData | null>(null)
+  const [teamStatsLoading, setTeamStatsLoading] = useState(false)
+  const [teamStatsError, setTeamStatsError] = useState<string | null>(null)
 
   // ── Schedule state ──────────────────────────────────────
   const [games, setGames] = useState<Game[]>([])
@@ -247,10 +274,10 @@ export default function LeagueHubPage() {
   // Stats view/type are URL-owned and canonical only while the Stats tab is active.
   useEffect(() => {
     if (!router.isReady || !lg || router.query.tab !== 'stats') return
-    const nextView: SubView = router.query.view === 'teams' ? 'teams' : 'players'
+    const nextView: SubView = supportsTeamStats && router.query.view === 'teams' ? 'teams' : 'players'
     const nextType: 'batting' | 'pitching' = router.query.type === 'pitching' ? 'pitching' : 'batting'
     setSubView(nextView)
-    if (lg === 'mlb') setMlbType(nextType)
+    if (lg === 'mlb' && nextView === 'players') setMlbType(nextType)
 
     const query: Record<string, string | string[] | undefined> = { ...router.query }
     let needsUpdate = false
@@ -258,7 +285,7 @@ export default function LeagueHubPage() {
       query.view = nextView
       needsUpdate = true
     }
-    if (lg === 'mlb') {
+    if (lg === 'mlb' && nextView === 'players') {
       if (router.query.type !== nextType) {
         query.type = nextType
         needsUpdate = true
@@ -267,16 +294,29 @@ export default function LeagueHubPage() {
       delete query.type
       needsUpdate = true
     }
+    if (nextView === 'teams') {
+      for (const key of ['category', 'stat']) {
+        if (query[key] !== undefined) {
+          delete query[key]
+          needsUpdate = true
+        }
+      }
+    }
     if (needsUpdate) {
       void router.replace({ pathname: router.pathname, query }, undefined, { shallow: true })
     }
-  }, [router.isReady, router.query.tab, router.query.view, router.query.type, lg])
+  }, [router.isReady, router.query.tab, router.query.view, router.query.type, router.query.category, router.query.stat, lg, supportsTeamStats])
 
   useEffect(() => {
     setLeadersData(null)
     setPlayerError(null)
     setPlayerFilterError(false)
   }, [lg, mlbType])
+
+  useEffect(() => {
+    setTeamAggregates(null)
+    setTeamStatsError(null)
+  }, [lg])
 
   const replaceStatsQuery = (
     updates: Record<string, string>,
@@ -295,7 +335,14 @@ export default function LeagueHubPage() {
 
   const selectSubView = (view: SubView) => {
     setSubView(view)
-    replaceStatsQuery({ view })
+    if (view === 'teams') {
+      replaceStatsQuery({ view }, ['type', 'category', 'stat'])
+    } else {
+      replaceStatsQuery(
+        lg === 'mlb' ? { view, type: mlbType } : { view },
+        ['category', 'stat'],
+      )
+    }
   }
 
   const selectMlbType = (type: 'batting' | 'pitching') => {
@@ -423,6 +470,45 @@ export default function LeagueHubPage() {
     return () => { ignore = true }
   }, [router.isReady, router.query.category, router.query.stat, router.query.type, lg, mlbType, isWC, isUFC, activeTab, subView])
 
+  // ── Load team aggregates/capability ─────────────────────
+  useEffect(() => {
+    if (!router.isReady || !supportsTeamStats || activeTab !== 'stats') return
+    let ignore = false
+    const load = async () => {
+      setTeamAggregates(null)
+      setTeamStatsLoading(true)
+      setTeamStatsError(null)
+      try {
+        const res = await fetch(`/api/${lg}/team-aggregates`)
+        if (!res.ok) throw new Error(`HTTP ${res.status}`)
+        const payload: TeamAggregatesData = await res.json()
+        if (!payload.supported || !Array.isArray(payload.teams)) {
+          throw new Error('Measured team coverage is incomplete.')
+        }
+        if (!ignore) setTeamAggregates(payload)
+      } catch (error: any) {
+        if (!ignore) {
+          setTeamStatsError(error?.message || 'Unable to load team stats.')
+          if (subView === 'teams') {
+            setSubView('players')
+            const query: Record<string, string | string[] | undefined> = {
+              ...router.query,
+              view: 'players',
+              type: mlbType,
+            }
+            delete query.category
+            delete query.stat
+            void router.replace({ pathname: router.pathname, query }, undefined, { shallow: true })
+          }
+        }
+      } finally {
+        if (!ignore) setTeamStatsLoading(false)
+      }
+    }
+    load()
+    return () => { ignore = true }
+  }, [router, router.isReady, lg, supportsTeamStats, activeTab, mlbType, subView])
+
   // ── Load schedule ───────────────────────────────────────
   useEffect(() => {
     if (!lg || activeTab !== 'schedule') return
@@ -494,6 +580,23 @@ export default function LeagueHubPage() {
       </Head>
 
       <div className="space-y-4">
+        {/* League switcher */}
+        <nav
+          aria-label="Leagues"
+          className="-mx-4 flex items-center gap-3 overflow-x-auto px-4 text-sm sm:gap-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        >
+          {LEAGUE_SWITCHER.map(leagueKey => (
+            <Link
+              key={leagueKey}
+              href={`/leagues/${leagueKey}`}
+              aria-current={lg === leagueKey ? 'page' : undefined}
+              className="whitespace-nowrap text-zinc-500 transition-colors hover:text-emerald-400"
+            >
+              {LEAGUE_NAMES[leagueKey]}
+            </Link>
+          ))}
+        </nav>
+
         {/* League header */}
         <div className="flex items-center gap-3">
           <span className="text-2xl">{leagueEmoji}</span>
@@ -675,9 +778,10 @@ export default function LeagueHubPage() {
         {/* ── Stats tab ──────────────────────────────────── */}
         {activeTab === 'stats' && (
           <>
-            {/* Sub-view toggle (Players | Teams) */}
-            <div className="flex gap-0 border-b border-zinc-800 -mx-4 px-4">
-              {(['players', 'teams'] as SubView[]).map(v => (
+            {/* MLB has measured player and team data; other leagues expose players only. */}
+            {supportsTeamStats && teamAggregates?.supported && (
+              <div className="flex gap-0 border-b border-zinc-800 -mx-4 px-4">
+                {(['players', 'teams'] as SubView[]).map(v => (
                 <button key={v} onClick={() => selectSubView(v)}
                   className={`px-4 py-3 text-sm font-medium whitespace-nowrap transition-colors border-b-2 -mb-px capitalize ${
                     subView === v ? 'border-emerald-500 text-white' : 'border-transparent text-zinc-500 hover:text-zinc-300'
@@ -685,8 +789,9 @@ export default function LeagueHubPage() {
                 >
                   {v}
                 </button>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
 
             {/* MLB batting/pitching toggle (Players sub-view only) */}
             {lg === 'mlb' && subView === 'players' && (
@@ -845,7 +950,7 @@ export default function LeagueHubPage() {
                         </thead>
                         <tbody>
                           {leadersData.leaders.map((l, i) => (
-                            <tr key={l.player_id} className="border-b border-zinc-800/50 hover:bg-zinc-800/30">
+                            <tr key={`${l.player_id}-${l.team}-${i}`} className="border-b border-zinc-800/50 hover:bg-zinc-800/30">
                               <td className="px-4 py-2.5 text-zinc-500 text-xs">{i + 1}</td>
                               <td className="px-3 py-2.5">
                                 <a href={`/player/${l.player_id}`} className="font-medium text-zinc-200 hover:text-emerald-400 transition-colors">
@@ -871,56 +976,65 @@ export default function LeagueHubPage() {
               </>
             )}
 
-            {/* Teams sub-view — reuse standings table exactly */}
-            {subView === 'teams' && (
+            {/* MLB team aggregates from captured completed games. */}
+            {supportsTeamStats && subView === 'teams' && (
               <>
-                {standingsLoading ? (
-                  <div className="text-zinc-500 text-sm py-8 text-center">Loading...</div>
-                ) : teams.length === 0 ? (
-                  <div className="text-zinc-500 text-sm">No data available for {leagueName}.</div>
+                {teamStatsLoading ? (
+                  <div className="text-zinc-500 text-sm py-8 text-center">Loading team stats...</div>
+                ) : teamStatsError ? (
+                  <div className="rounded-lg border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-sm text-amber-300">
+                    Team statistics are hidden because complete measured coverage is not available.
+                  </div>
+                ) : !teamAggregates?.teams.length ? (
+                  <div className="text-zinc-500 text-sm">No measured team data available for {leagueName}.</div>
                 ) : (
-                  <div className="overflow-x-auto rounded-xl border border-zinc-800 bg-zinc-900 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                    <table className="w-full text-sm">
+                  <div className="space-y-3">
+                    <div className="flex flex-wrap items-center gap-2 text-xs text-zinc-500">
+                      <span>Season {teamAggregates.season}</span>
+                      <span>·</span>
+                      <span>{teamAggregates.coverage.games} captured completed games</span>
+                      <span>·</span>
+                      <span>Through {teamAggregates.coverage.last_game_date}</span>
+                    </div>
+                    <div className="overflow-x-auto rounded-xl border border-zinc-800 bg-zinc-900 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                      <table className="w-full text-sm">
                       <thead>
                         <tr className="border-b border-zinc-800 text-zinc-400 text-xs uppercase tracking-wider">
                           <th className="text-left py-3 pr-4 pl-4">#</th>
                           <th className="text-left py-3 pr-4">Team</th>
+                          <th className="text-right py-3 px-3">G</th>
                           <th className="text-right py-3 px-3">W</th>
                           <th className="text-right py-3 px-3">L</th>
-                          <th className="text-right py-3 px-3">Win%</th>
-                          <th className="text-right py-3 px-3">Diff</th>
-                          <th className="text-right py-3 px-3">Streak</th>
-                          <th className="text-right py-3 pl-3 pr-4">L10</th>
+                          <th className="text-right py-3 px-3">RF</th>
+                          <th className="text-right py-3 px-3">RA</th>
+                          <th className="text-right py-3 pl-3 pr-4">Run Diff</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {teams.map((t, i) => (
-                          <tr key={t.abbrev} className="border-b border-zinc-800/50 hover:bg-zinc-800/30">
+                        {teamAggregates.teams.map((team, i) => (
+                          <tr key={team.team} className="border-b border-zinc-800/50 hover:bg-zinc-800/30">
                             <td className="py-3 pr-4 pl-4 text-zinc-500">{i + 1}</td>
-                            <td className="py-3 pr-4">
-                              <span className="font-semibold text-zinc-200">{t.abbrev}</span>
-                              <span className="text-zinc-500 ml-2">{t.name}</span>
-                            </td>
-                            <td className="py-3 px-3 text-right text-zinc-200">{t.wins}</td>
-                            <td className="py-3 px-3 text-right text-zinc-200">{t.losses}</td>
-                            <td className="py-3 px-3 text-right text-zinc-200 font-mono tabular-nums">
-                              {(t.win_pct * 100).toFixed(1)}%
-                            </td>
+                            <td className="py-3 pr-4 font-semibold text-zinc-200">{team.team}</td>
+                            <td className="py-3 px-3 text-right text-zinc-400">{team.games}</td>
+                            <td className="py-3 px-3 text-right text-zinc-200">{team.wins}</td>
+                            <td className="py-3 px-3 text-right text-zinc-200">{team.losses}</td>
+                            <td className="py-3 px-3 text-right text-zinc-200 font-mono tabular-nums">{team.runs_for}</td>
+                            <td className="py-3 px-3 text-right text-zinc-200 font-mono tabular-nums">{team.runs_against}</td>
                             <td className="py-3 px-3 text-right">
-                              <span className={t.differential > 0 ? 'text-emerald-400' : t.differential < 0 ? 'text-red-400' : 'text-zinc-400'}>
-                                {t.differential > 0 ? '+' : ''}{t.differential}
+                              <span className={team.run_differential > 0 ? 'text-emerald-400' : team.run_differential < 0 ? 'text-red-400' : 'text-zinc-400'}>
+                                {team.run_differential > 0 ? '+' : ''}{team.run_differential}
                               </span>
                             </td>
-                            <td className="py-3 px-3 text-right">
-                              <span className={t.streak?.startsWith('W') ? 'text-emerald-400' : 'text-red-400'}>
-                                {t.streak}
-                              </span>
-                            </td>
-                            <td className="py-3 pl-3 pr-4 text-right text-zinc-400 font-mono tabular-nums">{t.last10}</td>
                           </tr>
                         ))}
                       </tbody>
-                    </table>
+                      </table>
+                    </div>
+                    {!teamAggregates.coverage.external_schedule_reconciled && (
+                      <p className="text-xs text-zinc-600">
+                        Covers captured completed games; not independently reconciled against the official schedule.
+                      </p>
+                    )}
                   </div>
                 )}
               </>
