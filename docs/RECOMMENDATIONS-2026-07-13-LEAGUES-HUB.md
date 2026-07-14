@@ -34,6 +34,19 @@ The product standard should be:
 > ESPN-grade breadth for understanding what is true. Legendary Picks-grade depth for
 > understanding what is changing, why it matters, and what to do next.
 
+The stats interface is not a separate reporting product. It is the human-readable surface of the
+same identity, observation, feature, and prediction system that should power props research,
+fantasy decisions, pregame forecasts, and live inference. A number shown in a league table and a
+feature used by a model must resolve to the same player or team, use the same point-in-time input,
+and carry the same definition, source, timestamp, coverage, and version.
+
+The forecasting standard is calibrated probability rather than a single unexplained projection.
+For each prediction, preserve the input and model versions, the as-of time, the predicted
+distribution and uncertainty, and the evidence explaining why it differs from the prior forecast.
+Backtests must reconstruct only information available at the historical prediction time. The UI
+should expose enough of that lineage for a user to understand what changed without revealing
+proprietary model internals.
+
 ## Turn league data into decisions
 
 "What is changing" must have a concrete meaning. The league experience should detect and explain
@@ -133,6 +146,59 @@ The league page should be the doorway into functionality that already exists:
 At present these capabilities feel like separate application experiments. The Leagues Hub can make
 them feel like a single connected product.
 
+## What the Sport.Fun corpus adds
+
+The complete 25-article founder corpus is interpreted separately in
+`docs/SPORTFUN-ARTICLE-CORPUS-NARRATIVE-2026-07-13.md`. Founder-stated facts and Legendary Picks
+recommendations must remain distinct; the articles are product evidence, not authority for LP's
+roadmap.
+
+The durable founder-stated direction is:
+
+- Complex machinery should produce a simple user experience
+  (`crypto-natives-and-sports-fans-love-speculation-lets-build-them-a-paradise-1932099614204682564.md:14-20`).
+- One account and one core feature spine should carry identity and progression across sports
+  (`time-to-have-fun-1975652786701324715.md:29-56`,
+  `founders-fun-based-1985662042074730850.md:42-54`).
+- Skill needs visible receipts. Sport.Fun's first black-box skill system failed because users lacked
+  clarity and control; the product moved toward explicit picks, leaderboards, divisions, badges, and
+  status (`whos-gonna-carry-the-boats-2008566960842568018.md:55-76`,
+  `now-execute-phase-2-2021207470526583114.md:143-153`).
+- Research belongs beside the decision. The stated product direction puts injury, form, and
+  transfer news alongside win percentages and odds in-game
+  (`now-execute-phase-2-2021207470526583114.md:143-153`).
+- The current free-to-play design uses meaningful constraints, squad depth, active picks,
+  performance divisions, friends leagues, and greater progression rewards for successful
+  unpopular picks (`official-strategy-guide-2062577274617209183.md:14-46`).
+- The most recent UX framing gives each page a job: Home explains what matters now, Squad shows
+  progress and eligibility, Transfers supports decisions with context, and Live combines real-time
+  data, scoring, and social activity
+  (`wc26-week-1-and-whats-next-2066972165480894766.md:59-92`).
+
+The corpus also documents mechanics that changed or failed: the black-box Skill Rating lost its
+main reward role, a dual-currency loop became TP-only, and the Development Squad was sunset
+(`product-diary-1963932708276424774.md:58-71`,
+`wen-wen-wen-soon-now-1967935255765016669.md:52-64`,
+`sportfun-product-leaks-2014008101062820224.md:29-77`). The founder later warned users not to assume
+specific mechanics would remain fixed
+(`founder-thoughts-and-whats-next-for-sdf-2029982367083905277.md:23-57`).
+
+Legendary Picks should therefore borrow the stable user needs, not the volatile economic layer:
+
+- **Now:** make league changes inspectable, fix identity integrity, preserve point-in-time feature
+  lineage, and connect every visible trend to the affected player and evidence.
+- **Next:** create the props.cash-style path from change to player to game log to market line to LP
+  probability and edge; add a free pick history with transparent scoring and friend comparison.
+- **Later:** use the same calibrated projections for constrained fantasy lineups, skill divisions,
+  progression, and lightweight onboarding minigames. Live play-by-play should update inference and
+  explain forecast movement; audio/video remain later inputs when their incremental value justifies
+  their cost.
+
+Do not copy token issuance, tradable-player shares, liquidity management, buybacks, or
+regulatory-driven reward mechanics into the near-term plan. Those mechanisms dominated much of the
+founder communication and changed repeatedly; they are not required to deliver research, skill,
+progression, or friend competition.
+
 ## Build advanced stats around each sport
 
 ESPN is a useful reference for the statistical categories users already recognize. Its MLB pages
@@ -185,14 +251,20 @@ and special-teams depth should only be added when they support a demonstrated us
 
 The current data foundation is uneven, so the UI must not imply equal depth across every league:
 
-- **MLB:** strongest advanced foundation. Build production, contact-quality, discipline, and form
-  views first; add conventional pitching results where the current Statcast aggregates lack them.
-- **NBA:** enough player box-score and efficiency data to ship meaningful categories now. Aggregate
-  existing team game statistics for Team, Opponent, and Differential views.
-- **NHL:** skater statistics are usable now. Do not expose a Goalies category until goaltending data
-  is ingested and coverage is measured.
-- **NFL:** start with offensive players. Defensive-player, special-teams, CPOE, and opportunity-share
-  views require additional ingestion.
+- **MLB players:** strongest advanced-stat foundation, but not currently identity-safe. A read-only
+  official comparison found 169 stored-name versus MLBAM identity mismatches among 2,397
+  current-season referenced players. Recent-form evidence must continue to fail closed until a
+  proposal-only identity repair is reviewed, tested on a database copy, and followed by
+  authoritative stat regeneration.
+- **MLB teams:** the only league with season-complete enough `team_game_results` for honest team
+  aggregates. Build runs for, runs against, and run differential here first.
+- **NBA:** enough player box-score and efficiency data to ship meaningful player categories now.
+  Existing team-game-stat captures are partial, so do not present them as season team statistics.
+- **NHL:** skater statistics are usable now, but team-game-stat captures are partial. Do not expose
+  season team aggregates or a Goalies category until their intended populations have measured
+  coverage.
+- **NFL:** start with offensive players. There are no `team_game_results`; defensive-player,
+  special-teams, CPOE, opportunity-share, and season team views require additional ingestion.
 - **World Cup:** prioritize matches, group state, and bracket context before the competition has
   enough event data for meaningful trends.
 - **UFC:** retain Rankings until per-fight fighter logs exist. Do not manufacture advanced fighter
@@ -201,6 +273,10 @@ The current data foundation is uneven, so the UI must not imply equal depth acro
 A category should only appear when its intended population and recent history have measured,
 high coverage. Missing categories should be omitted or labeled as unavailable rather than rendered
 as an empty table that looks broken.
+
+The current Teams subview is effectively another standings table. Replace it with measured MLB
+aggregates and hide or remove it for leagues without sufficient coverage rather than filling the
+same UI with partial data.
 
 ## Sport-specific schedule behavior
 
@@ -233,28 +309,40 @@ plain text inside standings tables.
 
 ## Recommended build order
 
-1. Finish and browser-verify the current Schedule UX correction.
-2. Replace the current generic Stats table with league-specific categories and real team aggregates.
-3. Add L5/L10/season comparisons and an evidence-backed "What changed" summary, beginning with MLB
-   and NBA, then NHL skaters and NFL offense.
-4. Add Overview using the existing games, standings, leaders, UFC rankings, and World Cup bracket APIs.
-5. Make player, team, and game references consistently clickable.
-6. Add Team pages; roster and strength endpoints already exist.
-7. Integrate Props, Predict, momentum, and live discounts into Overview and Turn Tape actions.
+The schedule correction, league-specific player categories, sorting, URL state, and
+recent-versus-earlier-season evidence are already implemented on this branch. Continue in this
+order:
+
+1. Build a proposal-only MLB identity repair planner. Require exact, unique, authoritative matches;
+   queue ambiguity; test the application in one transaction on a database copy; and do not mutate
+   the shared development database before the dry run is reviewed.
+2. Replace the Teams standings duplicate with honest MLB aggregates, while hiding or removing the
+   Teams destination in leagues without sufficient measured team-game coverage.
+3. Run end-to-end verification against the real frontend/backend contract after those bounded data
+   changes. Keep the existing dev tunnel and frontend process stable; do not use a mocked API as the
+   only browser evidence.
+4. Add Overview using the existing games, standings, leaders, UFC rankings, and World Cup bracket
+   APIs, with an evidence-backed Turn Tape contract shared across leagues.
+5. Make player, team, and game references consistently clickable and connect changes to game logs,
+   projections, Props, and Predict.
+6. Implement the props research path: change → affected player → history → line → LP distribution
+   and probability → market edge, with feature and prediction versions visible in diagnostics.
+7. Add free picks, transparent scoring, and friend comparison on the same user and prediction spine.
 8. Add the missing ingestion for NHL goalies, NFL defense/opportunity, World Cup events, and UFC
    fighter logs before exposing their advanced categories.
-9. Replace generic tabs with the league-specific sets defined above.
+9. Add constrained fantasy lineups, progression, and divisions only after identity integrity,
+   calibration, point-in-time backtests, and coverage contracts are trusted.
 
 ### Scope boundary for the current branch
 
-This branch should prove the complete loop without becoming a rewrite of every sports pipeline:
+This branch has already shipped category-based, sortable player statistics and recent-form evidence.
+Its remaining bounded proof should be:
 
-- Ship category-based, sortable player statistics.
-- Replace "Teams" as a standings duplicate with real team statistical aggregates.
-- Add L5/L10/season deltas from existing game logs.
-- Surface one compact, evidence-backed "What changed" section above the tables.
-- Connect its actions to existing player, game, Props, and Predict destinations.
-- Implement the complete pattern first for MLB and NBA, then reuse it where current data is ready.
+- a reviewable, non-mutating MLB identity repair proposal;
+- real MLB team aggregates with honest omission elsewhere;
+- a compact, evidence-backed "What changed" contract that can connect to existing player, game,
+  Props, and Predict destinations; and
+- real-runtime verification of the resulting frontend/backend contract.
 
 New NHL goalie, NFL defensive-player, World Cup event, and UFC per-fight ingestion should be
 separately reviewable follow-up work. The current branch should define the interface and coverage
