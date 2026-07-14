@@ -600,6 +600,8 @@ def _rebuild_upcoming():
             # the stale flag so the output isn't self-contradictory (finished+resultUnknown+a winner).
             m["resultUnknown"] = False
         _normalize_match_metadata(m)
+        # Stable identity for the client (picks + crowd + settlement all key on this exact string).
+        m["matchKey"] = _key(m)
         for k in [kk for kk in m if kk.startswith("_")]:
             m.pop(k, None)
         out_matches.append(m)
