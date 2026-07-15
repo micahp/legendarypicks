@@ -405,15 +405,26 @@ def team_strength(league):
             disp = {x.get("name"): x.get("displayValue") for x in ent.get("stats", [])}
             t = ent.get("team", {})
             wp = s.get("winPercent")
+            w, l = _int(s.get("wins")), _int(s.get("losses"))
+            if wp is None and w is not None:
+                # NHL (and any league) exposes no winPercent stat — derive it.
+                # Prefer games played (includes OT losses) so it isn't overstated.
+                denom = _int(s.get("gamesPlayed")) or ((w or 0) + (l or 0))
+                wp = (w / denom) if denom else None
+            # ESPN's NHL "Last Ten Games" displayValue is e.g. "7-2-1, 0 PTS";
+            # keep just the record and drop the stray points suffix.
+            last10 = disp.get("Last Ten Games")
+            if isinstance(last10, str) and "," in last10:
+                last10 = last10.split(",")[0].strip()
             rows.append({
                 "abbrev": t.get("abbreviation"),
                 "name": t.get("displayName"),
-                "wins": _int(s.get("wins")),
-                "losses": _int(s.get("losses")),
+                "wins": w,
+                "losses": l,
                 "win_pct": round(wp, 4) if wp is not None else None,
                 "differential": s.get("pointDifferential", s.get("differential")),
                 "streak": disp.get("streak"),
-                "last10": disp.get("Last Ten Games"),
+                "last10": last10,
                 "games_played": _int(s.get("gamesPlayed")),
             })
     rows.sort(key=lambda r: (r["win_pct"] if r["win_pct"] is not None else -1), reverse=True)
