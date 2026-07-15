@@ -250,24 +250,43 @@ def _deepseek(system, user, max_tokens=700):
         return None
 
 
-_hl_cache = {}
-_HL_SYS = (
-    "For each numbered broadcast read, write a <=7-word INSIGHT headline capturing the TAKEAWAY "
-    "(what it means for the match / a bettor) — NOT a paraphrase of the quote. Plain, punchy, no "
-    'period. Return ONLY JSON: [{"i":<number>,"headline":"..."}] for every read.'
+_insight_cache = {}
+_INSIGHT_SYS = (
+    "Turn each numbered broadcast excerpt into a takeaway-first card for a bettor watching live. "
+    "For EVERY excerpt return: (1) headline: <=8 words, the actual insight; (2) analysis: <=130 "
+    "characters explaining why the excerpt matters, grounded ONLY in that excerpt; (3) lean: "
+    "back/fade/watch only when a PROP line is supplied AND the excerpt genuinely changes the case "
+    "for that named player to score, otherwise an empty string. Commentary is natural conversation "
+    "and may describe prior matches: preserve the full sentence's timeframe and NEVER turn history "
+    "into a fact about today's match. Do not claim an outcome, score, lineup fact, or that the booth "
+    "foreshadowed something unless the excerpt itself says so. Do not attach another player's prop. "
+    'Return ONLY JSON: [{"i":0,"headline":"...","analysis":"...","lean":"back|fade|watch|"}].'
 )
 
 
-def _headline_insights(insights, cache_key):
-    """Attach a short takeaway headline to each booth read (one batched LLM call, cached)."""
+def _fmt_odds(odds):
+    try:
+        value = int(odds)
+        return f"+{value}" if value > 0 else str(value)
+    except (TypeError, ValueError):
+        return str(odds)
+
+
+def _enrich_insights(insights, goals_market, cache_key):
+    """Give every booth excerpt its own takeaway, analysis, and grounded prop lean."""
     if not insights:
         return insights
-    hls = _hl_cache.get(cache_key)
-    if hls is None:
-        numbered = "\n".join(f"{i}. [{x['tag']}/{x['subject']}] {x['quote']}"
-                             for i, x in enumerate(insights))
-        out = _deepseek(_HL_SYS, numbered, max_tokens=1600)
-        hls = {}
+    cards = _insight_cache.get(cache_key)
+    if cards is None:
+        numbered = "\n".join(
+            f"{i}. [{x['tag']}/{x['subject']}] "
+            f"PROP: {_fmt_odds(goals_market[x['subject']])} to score; QUOTE: {x['quote']}"
+            if x["subject"] in goals_market else
+            f"{i}. [{x['tag']}/{x['subject']}] PROP: none; QUOTE: {x['quote']}"
+            for i, x in enumerate(insights)
+        )
+        out = _deepseek(_INSIGHT_SYS, numbered, max_tokens=2600)
+        cards = {}
         if out:
             txt = out.strip()
             if txt.startswith("```"):
@@ -278,13 +297,29 @@ def _headline_insights(insights, cache_key):
             try:
                 for it in json.loads(txt):
                     if isinstance(it, dict) and "i" in it and it.get("headline"):
-                        hls[int(it["i"])] = str(it["headline"])[:80]
+                        cards[int(it["i"])] = {
+                            "headline": str(it["headline"])[:100],
+                            "analysis": str(it.get("analysis", ""))[:160],
+                            "lean": str(it.get("lean", "")).lower(),
+                        }
             except Exception:
-                hls = {}
-        _hl_cache[cache_key] = hls
+                cards = {}
+        _insight_cache[cache_key] = cards
     for i, x in enumerate(insights):
-        if i in hls:
-            x["headline"] = hls[i]
+        card = cards.get(i)
+        if not card:
+            continue
+        x["headline"] = card["headline"]
+        if card["analysis"]:
+            x["analysis"] = card["analysis"]
+        odds = goals_market.get(x["subject"])
+        if odds is not None and card["lean"] in {"back", "fade", "watch"}:
+            x["prop"] = {
+                "player": x["subject"],
+                "market": "to score",
+                "line": _fmt_odds(odds),
+                "lean": card["lean"],
+            }
     return insights
 
 
@@ -379,7 +414,6 @@ def build_context(game_id, limit=8):
 
     names = _roster_names(sm)
     insights_full = _broadcast_insights(tag, names, limit=40)
-    insights_full = _headline_insights(insights_full, (str(game_id), len(insights_full)))
     allowed = _signal_subjects(insights_full, names)
     scorers = _top_scorers(home_abbr, away_abbr)
 
@@ -394,6 +428,8 @@ def build_context(game_id, limit=8):
 
     away_sc, home_sc = away.get("score"), home.get("score")
     goals_mkt = _goals_market()
+    insight_cache_key = ("v2", str(game_id), len(insights_full), tuple(sorted(goals_mkt.items())))
+    insights_full = _enrich_insights(insights_full, goals_mkt, insight_cache_key)
     board_str = ", ".join(f"{n} {'+' if o > 0 else ''}{o}"
                           for n, o in sorted(goals_mkt.items(), key=lambda kv: kv[1]))
     events = _match_events(sm)
