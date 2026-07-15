@@ -280,6 +280,10 @@ export default function LeagueHubPage() {
   // (adding subView as a dep re-fired the fetch on every Players/Teams click,
   // nulling teamAggregates and flickering the toggle).
   const subViewRef = useRef<SubView>('players')
+  // Always-fresh view of router.query for async callbacks. Spreading the closure's
+  // router.query after an await can write back a stale `tab` and clobber a tab the
+  // user just changed (e.g. clicking Stats reverted to standings/schedule).
+  const queryRef = useRef(router.query)
 
   // ── Schedule state ──────────────────────────────────────
   const [games, setGames] = useState<Game[]>([])
@@ -469,8 +473,11 @@ export default function LeagueHubPage() {
         }
         if (!ignore) {
           setLeadersData(data)
-          if ((!requestedCategory && data.category) || (!requestedStat && data.stat)) {
-            const query: Record<string, string | string[] | undefined> = { ...router.query }
+          if (
+            queryRef.current.tab === 'stats' &&
+            ((!requestedCategory && data.category) || (!requestedStat && data.stat))
+          ) {
+            const query: Record<string, string | string[] | undefined> = { ...queryRef.current }
             if (!requestedCategory && data.category) query.category = data.category
             if (!requestedStat && data.stat) query.stat = data.stat
             void router.replace({ pathname: router.pathname, query }, undefined, { shallow: true })
@@ -491,6 +498,7 @@ export default function LeagueHubPage() {
   }, [router.isReady, router.query.category, router.query.stat, router.query.type, lg, mlbType, isWC, isUFC, activeTab, subView])
 
   useEffect(() => { subViewRef.current = subView }, [subView])
+  useEffect(() => { queryRef.current = router.query }, [router.query])
 
   // ── Load team aggregates/capability ─────────────────────
   // Capability probe: runs once per league/tab, NOT per sub-view toggle. Keeps
@@ -517,7 +525,7 @@ export default function LeagueHubPage() {
           if (subViewRef.current === 'teams') {
             setSubView('players')
             const query: Record<string, string | string[] | undefined> = {
-              ...router.query, view: 'players',
+              ...queryRef.current, view: 'players',
             }
             if (lg === 'mlb') query.type = mlbType
             delete query.category
