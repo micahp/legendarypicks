@@ -15,6 +15,7 @@ import GameInfo from '../../../components/Game/GameInfo'
 import GameProps from '../../../components/Game/GameProps'
 import GameStory from '../../../components/Game/GameStory'
 import WCContext from '../../../components/Game/WCContext'
+import BoothFeed from '../../../components/Game/BoothFeed'
 import ListenLive from '../../../components/ListenLive'
 
 const TAB_DEFS: { key: Tab; label: string }[] = [
@@ -231,6 +232,8 @@ export default function GameDetailPage() {
 
   const lg = (league || '').toLowerCase()
   const showTabs = hasGameTabs(lg)
+  // WC gets an extra "From the Booth" tab for the live broadcast reads.
+  const tabDefs = lg === 'wc' ? [...TAB_DEFS, { key: 'booth' as Tab, label: 'From the Booth' }] : TAB_DEFS
   const usesDetail = usesDetailEndpoint(lg)
   const usesPerTab = usesPerTabEndpoints(lg)
 
@@ -317,7 +320,7 @@ export default function GameDetailPage() {
       {/* Tab gating: supported leagues get tabs; others get "not available" */}
       {showTabs ? (
         <>
-          <TabBar active={tab} onChange={setTab} tabs={TAB_DEFS} />
+          <TabBar active={tab} onChange={setTab} tabs={tabDefs} />
 
           {/* Tab content card */}
           <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
@@ -383,6 +386,8 @@ export default function GameDetailPage() {
                 <GameInfo ctx={ctx || null} homeStrength={sHome} awayStrength={sAway} />
               )
             )}
+
+            {tab === 'booth' && gameId && <BoothFeed gameId={gameId} />}
           </div>
         </>
       ) : (

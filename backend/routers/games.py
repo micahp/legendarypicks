@@ -219,11 +219,12 @@ def wc_knockout():
 
 
 @router.get("/api/wc/{game_id}/context")
-def wc_context(game_id: str):
+def wc_context(game_id: str, limit: int = Query(8, ge=1, le=100)):
     """Game Context summary for a WC game detail: form + most-likely goalscorer
-    per team (from our WC props) + the broadcast's relevance-filtered soft reads."""
+    per team (from our WC props) + the broadcast's relevance-filtered soft reads.
+    `limit` caps the insight feed (8 for the summary panel, more for the tab)."""
     import wc_context as _wcc
-    ctx = _wcc.build_context(game_id)
+    ctx = _wcc.build_context(game_id, limit=limit)
     if not ctx:
         raise HTTPException(404, "no context for this game")
     return ctx

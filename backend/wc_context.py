@@ -113,7 +113,7 @@ def _broadcast_insights(tag, limit=8):
     return kept[:limit]
 
 
-def build_context(game_id):
+def build_context(game_id, limit=8):
     """Return the Game Context object for a WC game detail page, or None."""
     try:
         sm = espn.summary("wc", game_id)
@@ -158,6 +158,6 @@ def build_context(game_id):
             "away": {"abbr": away_abbr, "name": _name(away), "form": _form(away)},
         },
         "top_scorers": _top_scorers(home_abbr, away_abbr),
-        "insights": _broadcast_insights(tag),
+        "insights": _broadcast_insights(tag, limit=limit),
         "source": "broadcast + market + form",
     }
