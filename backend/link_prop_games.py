@@ -75,7 +75,33 @@ _NHL_TEAM_MAP = {
     "washington capitals": "WSH", "winnipeg jets": "WPG",
 }
 
-_TEAM_MAPS = {"mlb": _MLB_TEAM_MAP, "nba": _NBA_TEAM_MAP, "nfl": _NFL_TEAM_MAP, "nhl": _NHL_TEAM_MAP}
+_WC_TEAM_MAP = {
+    "argentina": "ARG", "australia": "AUS", "belgium": "BEL", "brazil": "BRA",
+    "canada": "CAN", "chile": "CHI", "colombia": "COL", "croatia": "CRO",
+    "denmark": "DEN", "ecuador": "ECU", "england": "ENG", "egypt": "EGY",
+    "france": "FRA", "germany": "GER", "ghana": "GHA", "iceland": "ISL",
+    "iran": "IRN", "italy": "ITA", "japan": "JPN", "jamaica": "JAM",
+    "mexico": "MEX", "morocco": "MAR", "netherlands": "NED", "new zealand": "NZL",
+    "nigeria": "NGA", "norway": "NOR", "paraguay": "PAR", "peru": "PER",
+    "poland": "POL", "portugal": "POR", "qatar": "QAT", "saudi arabia": "KSA",
+    "senegal": "SEN", "serbia": "SRB", "south africa": "RSA", "south korea": "KOR",
+    "spain": "ESP", "sweden": "SWE", "switzerland": "SUI", "tunisia": "TUN",
+    "turkey": "TUR", "ukraine": "UKR", "united states": "USA", "uruguay": "URU",
+    "venezuela": "VEN", "wales": "WAL",
+    # Also map some common short forms
+    "usa": "USA", "uae": "UAE", "costa rica": "CRC", "ivory coast": "CIV",
+    "côte d'ivoire": "CIV", "cote d'ivoire": "CIV",
+    "czech republic": "CZE", "czechia": "CZE",
+    "scotland": "SCO", "northern ireland": "NIR", "ireland": "IRL",
+    "austria": "AUT", "hungary": "HUN", "romania": "ROU", "greece": "GRE",
+    "slovakia": "SVK", "slovenia": "SVN", "bulgaria": "BUL",
+    "algeria": "ALG", "cameroon": "CMR", "mali": "MLI",
+    "bolivia": "BOL",
+    "north korea": "PRK",
+    "china": "CHN", "india": "IND",
+}
+
+_TEAM_MAPS = {"mlb": _MLB_TEAM_MAP, "nba": _NBA_TEAM_MAP, "nfl": _NFL_TEAM_MAP, "nhl": _NHL_TEAM_MAP, "wc": _WC_TEAM_MAP}
 
 
 def _norm_team(team_name: str, league: str) -> str:
