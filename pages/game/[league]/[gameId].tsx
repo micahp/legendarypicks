@@ -14,6 +14,7 @@ import PlayByPlay from '../../../components/Game/PlayByPlay'
 import GameInfo from '../../../components/Game/GameInfo'
 import GameProps from '../../../components/Game/GameProps'
 import GameStory from '../../../components/Game/GameStory'
+import WCContext from '../../../components/Game/WCContext'
 import ListenLive from '../../../components/ListenLive'
 
 const TAB_DEFS: { key: Tab; label: string }[] = [
@@ -305,8 +306,10 @@ export default function GameDetailPage() {
 
       {lg === 'wc' ? <ListenLive /> : null}
 
-      {/* AI matchup story */}
-      {league && gameId && <GameStory league={league} gameId={gameId} />}
+      {/* Game context: WC gets the broadcast+market+form summary; others the AI matchup story */}
+      {league && gameId && (lg === 'wc'
+        ? <WCContext gameId={gameId} />
+        : <GameStory league={league} gameId={gameId} />)}
 
       {/* Player props for this game */}
       {league && gameId && <GameProps league={league} gameId={gameId} />}

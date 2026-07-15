@@ -218,6 +218,17 @@ def wc_knockout():
         raise HTTPException(404, str(e))
 
 
+@router.get("/api/wc/{game_id}/context")
+def wc_context(game_id: str):
+    """Game Context summary for a WC game detail: form + most-likely goalscorer
+    per team (from our WC props) + the broadcast's relevance-filtered soft reads."""
+    import wc_context as _wcc
+    ctx = _wcc.build_context(game_id)
+    if not ctx:
+        raise HTTPException(404, "no context for this game")
+    return ctx
+
+
 @router.get("/api/{league}/team-stats")
 def get_team_stats(league: str, game_id: Optional[str] = Query(None)):
     """Per-game team boxscore totals for NBA/NHL/NFL."""
