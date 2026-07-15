@@ -342,14 +342,17 @@ def build_context(game_id, limit=8):
     ev_str = "; ".join(
         f"{e['clock']} {e['kind']}{' [GOAL]' if e['scoring'] else ''}: "
         f"{', '.join(e['players']) or e['team']} ({e['team']})" for e in events) or "none yet"
+    def _team_line(t, ab, side):
+        return (f"{_name(t)} ({side}, {ab}) — score {t.get('score')}, "
+                f"possession {_st(ab,'possessionPct')}%, shots {_st(ab,'totalShots')} "
+                f"(on target {_st(ab,'shotsOnTarget')}), form {forms.get(ab)}")
+
     data_str = (
-        f"Match: {_name(away)} {away_sc}-{home_sc} {_name(home)} ({status}). "
-        f"Score events: {ev_str}. "
-        f"Possession: {away_abbr} {_st(away_abbr,'possessionPct')}% / {home_abbr} {_st(home_abbr,'possessionPct')}%. "
-        f"Shots: {away_abbr} {_st(away_abbr,'totalShots')} / {home_abbr} {_st(home_abbr,'totalShots')}. "
-        f"Form: {away_abbr} {forms.get(away_abbr)}, {home_abbr} {forms.get(home_abbr)}. "
-        + (f"Bovada anytime-goalscorer prop board: {board_str}. " if board_str else "")
-        + f"Recent broadcast transcript: {_transcript_tail(tag)}"
+        f"MATCH ({status}): {_name(away)} {away_sc} - {home_sc} {_name(home)}. "
+        f"Score events (authoritative): {ev_str}. "
+        f"TEAM STATS — {_team_line(away, away_abbr, 'away')}. {_team_line(home, home_abbr, 'home')}. "
+        + (f"Bovada anytime-goalscorer board: {board_str}. " if board_str else "")
+        + f"Broadcast transcript (color/why only, may mix live action with history): {_transcript_tail(tag)}"
     )
     cache_key = (str(game_id), len(insights_full), f"{away_sc}-{home_sc}", len(events))
     read = _synthesize_read(data_str, insights_full, cache_key)
