@@ -46,7 +46,7 @@ export default function BoothFeed({ gameId }: { gameId: string }) {
       ) : (
         <ol className="space-y-3">
           {items.map((it, i) => (
-            <li key={i} className="flex gap-3">
+            <li key={i} className="flex items-start gap-3">
               <span className="mt-0.5 w-10 shrink-0 text-right font-mono text-[11px] tabular-nums text-zinc-600">
                 {clock(it.ts)}
               </span>

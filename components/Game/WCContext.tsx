@@ -90,7 +90,7 @@ export default function WCContext({ gameId }: { gameId: string }) {
       {ctx.insights.length > 0 && (
         <div className="space-y-2.5 px-4 py-3">
           {ctx.insights.map((it, i) => (
-            <div key={i} className="flex gap-2.5">
+            <div key={i} className="flex items-start gap-2.5">
               <span className={`mt-0.5 shrink-0 rounded border px-1.5 py-0.5 text-[10px] font-medium ${TAG_STYLE[it.tag] || 'bg-zinc-800 text-zinc-400 border-zinc-700'}`}>
                 {it.tag}
               </span>
