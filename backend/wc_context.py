@@ -116,6 +116,22 @@ def _top_scorers(home_abbr, away_abbr):
     return out
 
 
+def _goals_market():
+    """{player: anytime-goalscorer american odds} for the WC game — the prop board."""
+    m = {}
+    try:
+        c = _db()
+        for r in c.execute(
+                "SELECT pl.name, p.odds FROM props p "
+                "JOIN prop_games g ON p.game_id=g.id JOIN players pl ON p.player_id=pl.id "
+                "WHERE g.league='wc' AND p.market='goals'").fetchall():
+            m[r["name"]] = r["odds"]
+        c.close()
+    except Exception:
+        pass
+    return m
+
+
 def _broadcast_insights(tag, names, limit=8):
     """Relevance-filtered, name-normalized, de-duplicated booth reads → cards."""
     path = os.path.join(BROADCAST_DIR, f"{tag}_signals.jsonl")
@@ -155,14 +171,63 @@ def _broadcast_insights(tag, names, limit=8):
 _read_cache = {}
 
 _READ_SYS = (
-    "You are a sharp, concise football (soccer) analyst writing live in-match INTEL for fans. "
-    "You get the current match DATA and recent BROADCAST commentary quotes. Produce 3-4 punchy "
-    "insight lines: the real story right now, the danger man, and ESPECIALLY any place the "
-    "commentary NARRATIVE and the DATA disagree — state the lean. Each line is a takeaway a fan "
-    "scans in ~2 seconds. Do NOT just repeat quotes; SYNTHESIZE what it means. "
-    'Return ONLY JSON: [{"headline":"...","evidence":"short supporting quote or stat"}]. '
-    "Max 4 items. headline <= 110 chars, no trailing period."
+    "You are a betting-desk analyst writing live in-match INTEL for a bettor who has the BOVADA prop "
+    "board open. Inputs: DATA (score, events, lineup — AUTHORITATIVE for all match facts), PROP LINES "
+    "(Bovada anytime-goalscorer odds), recent BROADCAST quotes + a raw transcript tail (use only for "
+    "the WHY / color). Produce 3-4 punchy lines that connect what the booth is saying to a BETTABLE "
+    "prop. RULES: "
+    "(1) Match facts (score, who scored/assisted, who started) come ONLY from DATA — NEVER from the "
+    "transcript. "
+    "(2) Commentary is natural conversation that mixes live action with BACKGROUND/history — read the "
+    "FULL sentence in context; never state a historical detail (e.g. 'came off the bench in a prior "
+    "round') as a fact about today's match. "
+    "(3) When the booth flags a player as a threat or as quiet/cold, TIE it to that player's prop line "
+    "and give a lean: back / fade / watch. "
+    "(4) Flag where the NARRATIVE and the DATA disagree. "
+    "Each line is a takeaway a bettor scans in ~2s; SYNTHESIZE, do not just quote. "
+    'Return ONLY JSON: [{"headline":"...","evidence":"quote or stat",'
+    '"prop":{"player":"","market":"to score","line":"+150","lean":"back|fade|watch"}}]. '
+    "prop is OPTIONAL (include only when a line is relevant). Max 4 items. headline <= 110 chars, no trailing period."
 )
+
+
+_EVENT_KINDS = ("Goal", "Penalty", "Own Goal", "Red Card", "Yellow Card", "Substitution")
+
+
+def _match_events(sm):
+    """Hard match events from ESPN keyEvents (goals/cards/subs) — the events the
+    audio extractor misses. This is the reliable source for what actually happened."""
+    out = []
+    for e in sm.get("keyEvents", []) or []:
+        typ = (e.get("type", {}) or {}).get("text", "") or ""
+        if not any(k in typ for k in _EVENT_KINDS):
+            continue
+        players = [(p.get("athlete", {}) or {}).get("displayName")
+                   for p in e.get("participants", []) or [] if p.get("athlete")]
+        out.append({
+            "clock": (e.get("clock", {}) or {}).get("displayValue", ""),
+            "kind": typ,
+            "team": (e.get("team", {}) or {}).get("abbreviation", ""),
+            "players": [p for p in players if p],
+            "scoring": bool(e.get("scoringPlay")),
+            "text": e.get("text", ""),
+        })
+    return out
+
+
+def _transcript_tail(tag, n=16):
+    """Recent transcript text — carries the goal call / passages the extractor skipped."""
+    path = os.path.join(BROADCAST_DIR, f"{tag}_transcript.jsonl")
+    if not os.path.exists(path):
+        return ""
+    lines = []
+    with open(path) as f:
+        for line in f:
+            try:
+                lines.append(json.loads(line).get("text", ""))
+            except Exception:
+                continue
+    return " ".join(lines[-n:])[-2400:]
 
 
 def _deepseek(system, user, max_tokens=700):
@@ -203,8 +268,17 @@ def _synthesize_read(data_str, insights, cache_key):
         try:
             for it in json.loads(txt)[:4]:
                 if isinstance(it, dict) and it.get("headline"):
-                    read.append({"headline": str(it["headline"])[:140],
-                                 "evidence": str(it.get("evidence", ""))[:170]})
+                    card = {"headline": str(it["headline"])[:140],
+                            "evidence": str(it.get("evidence", ""))[:170]}
+                    p = it.get("prop")
+                    if isinstance(p, dict) and p.get("player"):
+                        card["prop"] = {
+                            "player": str(p.get("player", ""))[:40],
+                            "market": str(p.get("market", "to score"))[:24],
+                            "line": str(p.get("line", ""))[:12],
+                            "lean": str(p.get("lean", "watch"))[:6],
+                        }
+                    read.append(card)
         except Exception:
             read = []
     _read_cache[cache_key] = read
@@ -261,14 +335,23 @@ def build_context(game_id, limit=8):
         return (tstats.get(ab) or {}).get(k, "—")
 
     away_sc, home_sc = away.get("score"), home.get("score")
+    goals_mkt = _goals_market()
+    board_str = ", ".join(f"{n} {'+' if o > 0 else ''}{o}"
+                          for n, o in sorted(goals_mkt.items(), key=lambda kv: kv[1]))
+    events = _match_events(sm)
+    ev_str = "; ".join(
+        f"{e['clock']} {e['kind']}{' [GOAL]' if e['scoring'] else ''}: "
+        f"{', '.join(e['players']) or e['team']} ({e['team']})" for e in events) or "none yet"
     data_str = (
         f"Match: {_name(away)} {away_sc}-{home_sc} {_name(home)} ({status}). "
+        f"Score events: {ev_str}. "
         f"Possession: {away_abbr} {_st(away_abbr,'possessionPct')}% / {home_abbr} {_st(home_abbr,'possessionPct')}%. "
         f"Shots: {away_abbr} {_st(away_abbr,'totalShots')} / {home_abbr} {_st(home_abbr,'totalShots')}. "
         f"Form: {away_abbr} {forms.get(away_abbr)}, {home_abbr} {forms.get(home_abbr)}. "
-        + ("Most likely to score: " + ", ".join(f"{s['player']} +{s['odds']} ({s['team']})" for s in scorers) if scorers else "")
+        + (f"Bovada anytime-goalscorer prop board: {board_str}. " if board_str else "")
+        + f"Recent broadcast transcript: {_transcript_tail(tag)}"
     )
-    cache_key = (str(game_id), len(insights_full), f"{away_sc}-{home_sc}")
+    cache_key = (str(game_id), len(insights_full), f"{away_sc}-{home_sc}", len(events))
     read = _synthesize_read(data_str, insights_full, cache_key)
 
     return {
