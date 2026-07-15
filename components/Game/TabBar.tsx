@@ -9,6 +9,7 @@ export default function TabBar({ active, onChange, tabs }: {
   const defaultTabs: { key: Tab; label: string }[] = [
     { key: 'boxscore', label: 'Box Score' },
     { key: 'playbyplay', label: 'Play-by-Play' },
+    { key: 'props', label: 'Props' },
     { key: 'info', label: 'Game Info' },
   ]
   const visibleTabs = tabs ?? defaultTabs

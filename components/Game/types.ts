@@ -37,7 +37,7 @@ export interface GameDetail {
   state?: string | null
 }
 
-export type Tab = 'boxscore' | 'playbyplay' | 'info' | 'booth'
+export type Tab = 'boxscore' | 'playbyplay' | 'props' | 'info' | 'booth'
 
 // ── New per-tab API response types ──
 

@@ -3,25 +3,44 @@ import PropChart, { PropHistory } from '../Props/PropChart'
 
 interface GamePropPlayer { player_id: number; name: string; team: string; props: { market: string; side: string; line: number }[] }
 
-export default function GameProps({ league, gameId }: { league: string; gameId: string }) {
+export default function GameProps({ league, gameId, inTab = false }: { league: string; gameId: string; inTab?: boolean }) {
   const [players, setPlayers] = useState<GamePropPlayer[]>([])
   const [openKey, setOpenKey] = useState<string | null>(null)
   const [chart, setChart] = useState<PropHistory | null>(null)
   const [edgeLabel, setEdgeLabel] = useState(false)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    let alive = true
+    setLoading(true)
+    setPlayers([])
+    setEdgeLabel(false)
     fetch(`/api/game/${league}/${gameId}/props`)
       .then(r => r.json()).then(d => {
-        if (d.players?.length) { setPlayers(d.players); return }
+        if (d.players?.length) {
+          if (alive) setPlayers(d.players)
+          return
+        }
         // NBA fallback: no Bovada props — show projected stat lines
         if (league === 'nba') {
-          fetch(`/api/game/${league}/${gameId}/edge`)
-            .then(r => r.json()).then(e => { setPlayers(e.players || []); setEdgeLabel(true) }).catch(() => {})
+          return fetch(`/api/game/${league}/${gameId}/edge`)
+            .then(r => r.json()).then(e => {
+              if (alive) { setPlayers(e.players || []); setEdgeLabel(true) }
+            }).catch(() => {})
         }
       }).catch(() => {})
+      .finally(() => { if (alive) setLoading(false) })
+    return () => { alive = false }
   }, [league, gameId])
 
-  if (!players.length) return null
+  if (loading) return inTab ? (
+    <div className="space-y-3 animate-pulse">
+      {Array.from({ length: 6 }).map((_, i) => <div key={i} className="h-3 rounded bg-zinc-800" />)}
+    </div>
+  ) : null
+  if (!players.length) return inTab ? (
+    <p className="py-8 text-center text-sm text-zinc-500">No player props available for this game.</p>
+  ) : null
 
   const openChart = async (pid: number, pr: GamePropPlayer['props'][0]) => {
     const key = `${pid}-${pr.market}-${pr.side}`
@@ -36,7 +55,7 @@ export default function GameProps({ league, gameId }: { league: string; gameId: 
   }
 
   return (
-    <section className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
+    <section className={inTab ? '' : 'bg-zinc-900 border border-zinc-800 rounded-xl p-4'}>
       <h2 className="text-sm font-bold text-zinc-400 uppercase tracking-wider mb-3">{edgeLabel ? 'Projected Lines' : 'Player Props'}</h2>
       <div className="space-y-3">
         {players.map(pl => (

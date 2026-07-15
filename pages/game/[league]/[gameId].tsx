@@ -21,6 +21,7 @@ import ListenLive from '../../../components/ListenLive'
 const TAB_DEFS: { key: Tab; label: string }[] = [
   { key: 'boxscore', label: 'Box Score' },
   { key: 'playbyplay', label: 'Play-by-Play' },
+  { key: 'props', label: 'Props' },
   { key: 'info', label: 'Game Info' },
 ]
 
@@ -314,9 +315,6 @@ export default function GameDetailPage() {
         ? <WCContext gameId={gameId} />
         : <GameStory league={league} gameId={gameId} />)}
 
-      {/* Player props for this game */}
-      {league && gameId && <GameProps league={league} gameId={gameId} />}
-
       {/* Tab gating: supported leagues get tabs; others get "not available" */}
       {showTabs ? (
         <>
@@ -387,15 +385,22 @@ export default function GameDetailPage() {
               )
             )}
 
+            {tab === 'props' && league && gameId && (
+              <GameProps league={league} gameId={gameId} inTab />
+            )}
+
             {tab === 'booth' && gameId && <BoothFeed gameId={gameId} />}
           </div>
         </>
       ) : (
-        /* Not available for this sport */
-        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-12 text-center">
-          <p className="text-zinc-500 text-sm">Detailed stats aren&apos;t available for this sport yet.</p>
-          <p className="text-zinc-600 text-xs mt-2">Check back for future updates.</p>
-        </div>
+        <>
+          {/* Leagues without detail tabs retain the existing standalone props surface. */}
+          {league && gameId && <GameProps league={league} gameId={gameId} />}
+          <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-12 text-center">
+            <p className="text-zinc-500 text-sm">Detailed stats aren&apos;t available for this sport yet.</p>
+            <p className="text-zinc-600 text-xs mt-2">Check back for future updates.</p>
+          </div>
+        </>
       )}
     </div>
   )
