@@ -284,6 +284,10 @@ export default function LeagueHubPage() {
   // router.query after an await can write back a stale `tab` and clobber a tab the
   // user just changed (e.g. clicking Stats reverted to standings/schedule).
   const queryRef = useRef(router.query)
+  // Signature the leaders effect just wrote into the URL as canonical defaults.
+  // The write re-fires the effect (category/stat are deps); skip that echo so we
+  // don't re-fetch identical data and flash loading→results twice.
+  const canonicalRef = useRef<string | null>(null)
 
   // ── Schedule state ──────────────────────────────────────
   const [games, setGames] = useState<Game[]>([])
@@ -437,6 +441,11 @@ export default function LeagueHubPage() {
     if (!router.isReady || !lg || activeTab !== 'stats' || subView !== 'players') return
     if (isWC || isUFC) return
     if (lg === 'mlb' && router.query.type !== mlbType) return
+    // Skip the re-fire caused by our own canonical-default URL write (data already loaded).
+    const reqCat = typeof router.query.category === 'string' ? router.query.category : ''
+    const reqStat = typeof router.query.stat === 'string' ? router.query.stat : ''
+    const sig = `${lg}|${mlbType}|${reqCat}|${reqStat}`
+    if (canonicalRef.current === sig) { canonicalRef.current = null; return }
     let ignore = false
     const load = async () => {
       setPlayerLoading(true); setPlayerError(null); setPlayerFilterError(false)
@@ -480,6 +489,8 @@ export default function LeagueHubPage() {
             const query: Record<string, string | string[] | undefined> = { ...queryRef.current }
             if (!requestedCategory && data.category) query.category = data.category
             if (!requestedStat && data.stat) query.stat = data.stat
+            // Remember what we're writing so the resulting effect re-fire is skipped.
+            canonicalRef.current = `${lg}|${mlbType}|${(query.category as string) || ''}|${(query.stat as string) || ''}`
             void router.replace({ pathname: router.pathname, query }, undefined, { shallow: true })
           }
         }
