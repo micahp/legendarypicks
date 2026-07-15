@@ -2,11 +2,13 @@ import { useEffect, useState } from 'react'
 
 type Scorer = { team: string; player: string; odds: number }
 type Insight = { tag: string; subject: string; quote: string; strength: number; ts?: string }
+type Read = { headline: string; evidence?: string }
 type Ctx = {
   headline: string
   status?: string
   teams: { home: { abbr: string; name: string; form?: string | null }; away: { abbr: string; name: string; form?: string | null } }
   top_scorers: Scorer[]
+  read?: Read[]
   insights: Insight[]
 }
 
@@ -62,8 +64,25 @@ export default function WCContext({ gameId }: { gameId: string }) {
         <span className="text-[10px] text-zinc-500">from the broadcast · market · form</span>
       </div>
 
+      {/* The Read: synthesized intel, takeaway-first (the value; quotes are the receipts in the tab) */}
+      {ctx.read && ctx.read.length > 0 && (
+        <ul className="divide-y divide-zinc-800/70">
+          {ctx.read.map((r, i) => (
+            <li key={i} className="px-4 py-3">
+              <div className="flex gap-2.5">
+                <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-400" />
+                <div>
+                  <p className="text-sm font-semibold leading-snug text-zinc-100">{r.headline}</p>
+                  {r.evidence && <p className="mt-0.5 text-xs leading-snug text-zinc-500">{r.evidence}</p>}
+                </div>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+
       {/* form + most likely to score */}
-      <div className="grid gap-px bg-zinc-800 sm:grid-cols-2">
+      <div className="grid gap-px border-t border-zinc-800 bg-zinc-800 sm:grid-cols-2">
         {[ctx.teams.away, ctx.teams.home].map(t => {
           const scorer = ctx.top_scorers.find(s => s.team === t.abbr)
           return (
@@ -86,8 +105,8 @@ export default function WCContext({ gameId }: { gameId: string }) {
         })}
       </div>
 
-      {/* booth reads */}
-      {ctx.insights.length > 0 && (
+      {/* fallback: raw booth reads only if synthesis is unavailable */}
+      {(!ctx.read || ctx.read.length === 0) && ctx.insights.length > 0 && (
         <div className="space-y-2.5 px-4 py-3">
           {ctx.insights.map((it, i) => (
             <div key={i} className="flex items-start gap-2.5">

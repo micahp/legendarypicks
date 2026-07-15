@@ -152,6 +152,65 @@ def _broadcast_insights(tag, names, limit=8):
     return kept[:limit]
 
 
+_read_cache = {}
+
+_READ_SYS = (
+    "You are a sharp, concise football (soccer) analyst writing live in-match INTEL for fans. "
+    "You get the current match DATA and recent BROADCAST commentary quotes. Produce 3-4 punchy "
+    "insight lines: the real story right now, the danger man, and ESPECIALLY any place the "
+    "commentary NARRATIVE and the DATA disagree — state the lean. Each line is a takeaway a fan "
+    "scans in ~2 seconds. Do NOT just repeat quotes; SYNTHESIZE what it means. "
+    'Return ONLY JSON: [{"headline":"...","evidence":"short supporting quote or stat"}]. '
+    "Max 4 items. headline <= 110 chars, no trailing period."
+)
+
+
+def _deepseek(system, user, max_tokens=700):
+    key = os.environ.get("DEEPSEEK_API_KEY")
+    if not key:
+        return None
+    body = json.dumps({
+        "model": "deepseek-chat", "temperature": 0.2, "max_tokens": max_tokens,
+        "messages": [{"role": "system", "content": system},
+                     {"role": "user", "content": user}],
+    }).encode()
+    req = urllib.request.Request(
+        "https://api.deepseek.com/chat/completions", data=body,
+        headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"})
+    try:
+        with urllib.request.urlopen(req, timeout=30) as r:
+            return json.load(r)["choices"][0]["message"]["content"]
+    except Exception:
+        return None
+
+
+def _synthesize_read(data_str, insights, cache_key):
+    """LLM synthesis of the reads + data → scannable intel lines (cached)."""
+    if cache_key in _read_cache:
+        return _read_cache[cache_key]
+    if not insights:
+        return []
+    quotes = "\n".join(f"- [{i['tag']}/{i['subject']}] {i['quote']}" for i in insights[:18])
+    out = _deepseek(_READ_SYS, f"{data_str}\n\nBroadcast reads:\n{quotes}")
+    read = []
+    if out:
+        txt = out.strip()
+        if txt.startswith("```"):
+            txt = txt.strip("`")
+            txt = txt.split("\n", 1)[-1]
+            if txt.lstrip().startswith("json"):
+                txt = txt.lstrip()[4:]
+        try:
+            for it in json.loads(txt)[:4]:
+                if isinstance(it, dict) and it.get("headline"):
+                    read.append({"headline": str(it["headline"])[:140],
+                                 "evidence": str(it.get("evidence", ""))[:170]})
+        except Exception:
+            read = []
+    _read_cache[cache_key] = read
+    return read
+
+
 def build_context(game_id, limit=8):
     """Return the Game Context object for a WC game detail page, or None."""
     try:
@@ -188,6 +247,30 @@ def build_context(game_id, limit=8):
               .get("status", {}).get("type", {}).get("detail")) \
         or sm.get("header", {}).get("competitions", [{}])[0].get("status", {}).get("type", {}).get("description")
 
+    names = _roster_names(sm)
+    insights_full = _broadcast_insights(tag, names, limit=40)
+    scorers = _top_scorers(home_abbr, away_abbr)
+
+    # live match stats → feed the synthesis so it can surface narrative-vs-data
+    tstats = {}
+    for t in sm.get("boxscore", {}).get("teams", []) or []:
+        ab = (t.get("team", {}) or {}).get("abbreviation")
+        tstats[ab] = {x.get("name"): x.get("displayValue") for x in t.get("statistics", []) or []}
+
+    def _st(ab, k):
+        return (tstats.get(ab) or {}).get(k, "—")
+
+    away_sc, home_sc = away.get("score"), home.get("score")
+    data_str = (
+        f"Match: {_name(away)} {away_sc}-{home_sc} {_name(home)} ({status}). "
+        f"Possession: {away_abbr} {_st(away_abbr,'possessionPct')}% / {home_abbr} {_st(home_abbr,'possessionPct')}%. "
+        f"Shots: {away_abbr} {_st(away_abbr,'totalShots')} / {home_abbr} {_st(home_abbr,'totalShots')}. "
+        f"Form: {away_abbr} {forms.get(away_abbr)}, {home_abbr} {forms.get(home_abbr)}. "
+        + ("Most likely to score: " + ", ".join(f"{s['player']} +{s['odds']} ({s['team']})" for s in scorers) if scorers else "")
+    )
+    cache_key = (str(game_id), len(insights_full), f"{away_sc}-{home_sc}")
+    read = _synthesize_read(data_str, insights_full, cache_key)
+
     return {
         "game_id": str(game_id),
         "headline": f"{_name(away)} at {_name(home)}",
@@ -196,7 +279,8 @@ def build_context(game_id, limit=8):
             "home": {"abbr": home_abbr, "name": _name(home), "form": _form(home)},
             "away": {"abbr": away_abbr, "name": _name(away), "form": _form(away)},
         },
-        "top_scorers": _top_scorers(home_abbr, away_abbr),
-        "insights": _broadcast_insights(tag, _roster_names(sm), limit=limit),
+        "top_scorers": scorers,
+        "read": read,
+        "insights": insights_full[:limit],
         "source": "broadcast + market + form",
     }
