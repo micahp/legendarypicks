@@ -78,7 +78,7 @@ function LiveNow({ games, esportsLive }: { games: Game[]; esportsLive: boolean }
 }
 
 const LEAGUE_PRIORITY = ['NBA', 'MLB', 'NHL', 'NFL', 'COD', 'WC', 'ATP', 'WTA', 'UFC']
-const LEAGUES = ['All', 'NBA', 'MLB', 'NHL', 'NFL', 'ATP', 'WTA', 'UFC', 'Call of Duty', 'World Cup']
+const LEAGUES = ['All', 'NBA', 'MLB', 'NHL', 'NFL', 'ATP', 'WTA', 'UFC', 'Call of Duty', 'FIFA World Cup']
 
 // Revalidate interval for live games (ms) — must not be statically cached
 const LIVE_POLL_MS = 30_000
@@ -134,7 +134,7 @@ export default function ScoresPage() {
         if (leagueFilter === 'All') {
           data = await SportsService.getAllGamesByDate(date)
         } else {
-          const l = leagueFilter === 'Call of Duty' ? 'cod' : leagueFilter === 'World Cup' ? 'wc' : leagueFilter.toLowerCase()
+          const l = leagueFilter === 'Call of Duty' ? 'cod' : leagueFilter === 'FIFA World Cup' ? 'wc' : leagueFilter.toLowerCase()
           data = await SportsService.getGamesByDate(l, date)
         }
         if (!ignore) {
@@ -165,7 +165,7 @@ export default function ScoresPage() {
           if (leagueFilter === 'All') {
             data = await SportsService.getAllGamesByDate(date)
           } else {
-            const l = leagueFilter === 'Call of Duty' ? 'cod' : leagueFilter === 'World Cup' ? 'wc' : leagueFilter.toLowerCase()
+            const l = leagueFilter === 'Call of Duty' ? 'cod' : leagueFilter === 'FIFA World Cup' ? 'wc' : leagueFilter.toLowerCase()
             data = await SportsService.getGamesByDate(l, date)
           }
           if (!ignore) setGames(Array.isArray(data) ? data : [])

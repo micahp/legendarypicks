@@ -24,7 +24,7 @@ export default function StandingsPage() {
     <>
       <Head><title>Standings — Legendary Picks</title></Head>
       <div className="space-y-6">
-        <h1 className="text-3xl font-extrabold tracking-tight">World Cup Standings</h1>
+        <h1 className="text-3xl font-extrabold tracking-tight">FIFA World Cup Standings</h1>
         {loading ? (
           <div className="text-zinc-500 text-sm">Loading...</div>
         ) : groups.length === 0 ? (

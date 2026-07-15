@@ -6,7 +6,7 @@ const LEAGUES = [
   { key: 'nba', name: 'NBA', desc: 'National Basketball Association — scoring leaders, team standings, game schedule', emoji: '🏀' },
   { key: 'nhl', name: 'NHL', desc: 'National Hockey League — points leaders, goalie stats, division races', emoji: '🏒' },
   { key: 'nfl', name: 'NFL', desc: 'National Football League — passing, rushing, receiving leaders, team power rankings', emoji: '🏈' },
-  { key: 'wc', name: 'World Cup', desc: 'FIFA World Cup — knockout bracket, match results, group stage history', emoji: '⚽' },
+  { key: 'wc', name: 'FIFA World Cup', desc: 'FIFA World Cup — knockout bracket, match results, group stage history', emoji: '⚽' },
   { key: 'ufc', name: 'UFC', desc: 'Ultimate Fighting Championship — pound-for-pound rankings, division champions', emoji: '🥊' },
 ]
 

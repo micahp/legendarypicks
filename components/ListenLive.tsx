@@ -5,7 +5,7 @@
 const WC_STREAM = 'https://stream.revma.ihrhls.com/zc11554'        // iHeart FIFA World Cup 2026 (FOX, AAC)
 const WC_PAGE = 'https://www.iheart.com/live/fifa-world-cup-2026-11554/'
 
-export default function ListenLive({ label = 'World Cup · FOX Sports commentary (free)' }: { label?: string }) {
+export default function ListenLive({ label = 'FIFA World Cup · FOX Sports commentary (free)' }: { label?: string }) {
   return (
     <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-4">
       <div className="mb-2.5 flex items-center justify-between gap-2">

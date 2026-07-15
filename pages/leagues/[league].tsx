@@ -106,7 +106,7 @@ interface KnockoutRound { round: string; matches: KnockoutMatch[] }
 type SubView = 'players' | 'teams'
 
 const LEAGUE_NAMES: Record<string, string> = {
-  mlb: 'MLB', nba: 'NBA', nhl: 'NHL', nfl: 'NFL', wc: 'World Cup', ufc: 'UFC',
+  mlb: 'MLB', nba: 'NBA', nhl: 'NHL', nfl: 'NFL', wc: 'FIFA World Cup', ufc: 'UFC',
 }
 
 const LEAGUE_EMOJIS: Record<string, string> = {
