@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import ListenLive from '../ListenLive'
 
-type Insight = { tag: string; subject: string; quote: string; strength: number; ts?: string }
+type Insight = { tag: string; subject: string; quote: string; strength: number; ts?: string; headline?: string }
 
 const TAG_STYLE: Record<string, string> = {
   'Key man': 'bg-amber-500/15 text-amber-300 border-amber-500/25',
@@ -53,10 +53,13 @@ export default function BoothFeed({ gameId }: { gameId: string }) {
               <span className={`mt-0.5 shrink-0 rounded border px-1.5 py-0.5 text-[10px] font-medium ${TAG_STYLE[it.tag] || 'bg-zinc-800 text-zinc-400 border-zinc-700'}`}>
                 {it.tag}
               </span>
-              <p className="text-sm leading-snug text-zinc-300">
-                {it.subject && <span className="font-semibold text-zinc-100">{it.subject}: </span>}
-                <span className="text-zinc-400">“{it.quote}”</span>
-              </p>
+              <div>
+                {it.headline && <p className="text-sm font-semibold leading-snug text-zinc-100">{it.headline}</p>}
+                <p className={`text-xs leading-snug text-zinc-500 ${it.headline ? 'mt-0.5' : ''}`}>
+                  {it.subject && <span className="font-medium text-zinc-400">{it.subject}: </span>}
+                  “{it.quote}”
+                </p>
+              </div>
             </li>
           ))}
         </ol>

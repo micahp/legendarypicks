@@ -182,7 +182,8 @@ _READ_SYS = (
     "FULL sentence in context; never state a historical detail (e.g. 'came off the bench in a prior "
     "round') as a fact about today's match. "
     "(3) When the booth flags a player as a threat or as quiet/cold, TIE it to that player's prop line "
-    "and give a lean: back / fade / watch. "
+    "and give a lean: back / fade / watch. ONLY attach a prop for a player the provided broadcast reads "
+    "specifically discuss BY NAME — NEVER attach a prop to a player the reads don't mention (no longshot fishing). "
     "(4) Flag where the NARRATIVE and the DATA disagree. "
     "Each line is a takeaway a bettor scans in ~2s; SYNTHESIZE, do not just quote. "
     'Return ONLY JSON: [{"headline":"...","evidence":"quote or stat",'
@@ -249,7 +250,58 @@ def _deepseek(system, user, max_tokens=700):
         return None
 
 
-def _synthesize_read(data_str, insights, cache_key):
+_hl_cache = {}
+_HL_SYS = (
+    "For each numbered broadcast read, write a <=7-word INSIGHT headline capturing the TAKEAWAY "
+    "(what it means for the match / a bettor) — NOT a paraphrase of the quote. Plain, punchy, no "
+    'period. Return ONLY JSON: [{"i":<number>,"headline":"..."}] for every read.'
+)
+
+
+def _headline_insights(insights, cache_key):
+    """Attach a short takeaway headline to each booth read (one batched LLM call, cached)."""
+    if not insights:
+        return insights
+    hls = _hl_cache.get(cache_key)
+    if hls is None:
+        numbered = "\n".join(f"{i}. [{x['tag']}/{x['subject']}] {x['quote']}"
+                             for i, x in enumerate(insights))
+        out = _deepseek(_HL_SYS, numbered, max_tokens=1600)
+        hls = {}
+        if out:
+            txt = out.strip()
+            if txt.startswith("```"):
+                txt = txt.strip("`")
+                txt = txt.split("\n", 1)[-1]
+                if txt.lstrip().startswith("json"):
+                    txt = txt.lstrip()[4:]
+            try:
+                for it in json.loads(txt):
+                    if isinstance(it, dict) and "i" in it and it.get("headline"):
+                        hls[int(it["i"])] = str(it["headline"])[:80]
+            except Exception:
+                hls = {}
+        _hl_cache[cache_key] = hls
+    for i, x in enumerate(insights):
+        if i in hls:
+            x["headline"] = hls[i]
+    return insights
+
+
+def _signal_subjects(insights, names):
+    """Last names the booth actually made the SUBJECT of a read — the only players a
+    prop lean may attach to (stops the LLM free-picking longshots it never discussed)."""
+    lastmap = names["last"]
+    allowed = set()
+    for i in insights:
+        subj = (i.get("subject") or "").strip().lower()
+        toks = subj.split()
+        if toks and toks[-1] in lastmap:
+            allowed.add(toks[-1])
+    return allowed
+
+
+def _synthesize_read(data_str, insights, cache_key, allowed_players=None):
     """LLM synthesis of the reads + data → scannable intel lines (cached)."""
     if cache_key in _read_cache:
         return _read_cache[cache_key]
@@ -272,12 +324,16 @@ def _synthesize_read(data_str, insights, cache_key):
                             "evidence": str(it.get("evidence", ""))[:170]}
                     p = it.get("prop")
                     if isinstance(p, dict) and p.get("player"):
-                        card["prop"] = {
-                            "player": str(p.get("player", ""))[:40],
-                            "market": str(p.get("market", "to score"))[:24],
-                            "line": str(p.get("line", ""))[:12],
-                            "lean": str(p.get("lean", "watch"))[:6],
-                        }
+                        player = str(p.get("player", ""))[:40]
+                        last = player.split()[-1].lower() if player.split() else ""
+                        # grounding guard: prop only if the booth made this player a signal subject
+                        if allowed_players is None or last in allowed_players:
+                            card["prop"] = {
+                                "player": player,
+                                "market": str(p.get("market", "to score"))[:24],
+                                "line": str(p.get("line", ""))[:12],
+                                "lean": str(p.get("lean", "watch"))[:6],
+                            }
                     read.append(card)
         except Exception:
             read = []
@@ -323,6 +379,8 @@ def build_context(game_id, limit=8):
 
     names = _roster_names(sm)
     insights_full = _broadcast_insights(tag, names, limit=40)
+    insights_full = _headline_insights(insights_full, (str(game_id), len(insights_full)))
+    allowed = _signal_subjects(insights_full, names)
     scorers = _top_scorers(home_abbr, away_abbr)
 
     # live match stats → feed the synthesis so it can surface narrative-vs-data
@@ -355,7 +413,7 @@ def build_context(game_id, limit=8):
         + f"Broadcast transcript (color/why only, may mix live action with history): {_transcript_tail(tag)}"
     )
     cache_key = (str(game_id), len(insights_full), f"{away_sc}-{home_sc}", len(events))
-    read = _synthesize_read(data_str, insights_full, cache_key)
+    read = _synthesize_read(data_str, insights_full, cache_key, allowed_players=allowed)
 
     return {
         "game_id": str(game_id),
