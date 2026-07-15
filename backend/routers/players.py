@@ -309,6 +309,10 @@ _LEAGUE_DEFAULTS = {
 }
 
 _CHANGE_METRICS = {
+    "mlb": {
+        "production": {"metric": _metric("hr_g", "HR/Game", "decimal_1"), "raw_keys": ("HR",)},
+        "discipline": {"metric": _metric("k_pct", "K%", "percent_1"), "rate": {"numerators": ["K"], "denominators": ["PA"], "pct": True}},
+    },
     "nba": {
         "scoring": {"metric": _metric("pts", "Points/Game", "decimal_1"), "raw_keys": ("PTS",)},
         "playmaking": {"metric": _metric("ast", "Assists/Game", "decimal_1"), "raw_keys": ("AST",)},
@@ -404,6 +408,32 @@ def _window_value(logs, definition):
                 totals[key] += value
         denominator = 2 * (totals["FGA"] + 0.44 * totals["FTA"])
         return (100 * totals["PTS"] / denominator if denominator > 0 else None), valid
+
+    rate_def = definition.get("rate")
+    if rate_def:
+        numer_keys = rate_def["numerators"]
+        denom_keys = rate_def["denominators"]
+        all_keys = numer_keys + denom_keys
+        totals = {k: 0.0 for k in all_keys}
+        valid = 0
+        for log in logs:
+            stats = _parse_log_stats(log["stats"])
+            if stats is None:
+                continue
+            values = {key: _numeric_stat(stats, (key,)) for key in totals}
+            if any(value is None for value in values.values()):
+                continue
+            valid += 1
+            for key, value in values.items():
+                totals[key] += value
+        num_total = sum(totals[k] for k in numer_keys)
+        denom_total = sum(totals[k] for k in denom_keys)
+        if denom_total == 0:
+            return None, valid
+        result = num_total / denom_total
+        if rate_def.get("pct"):
+            result *= 100
+        return result, valid
 
     values = []
     for log in logs:
