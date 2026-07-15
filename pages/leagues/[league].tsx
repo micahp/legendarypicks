@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Head from 'next/head'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
@@ -62,10 +62,12 @@ interface LeadersData {
   changes: StatChange[]
 }
 
+interface TeamColumn { key: string; label: string; format: string }
+interface TeamStatCategory { key: string; label: string; columns: TeamColumn[] }
 interface TeamAggregate {
   team: string
   games: number; wins: number; losses: number
-  runs_for: number; runs_against: number; run_differential: number
+  [key: string]: number | string
 }
 interface TeamAggregateCoverage {
   status: 'measured' | 'incomplete' | 'unavailable'
@@ -79,6 +81,8 @@ interface TeamAggregatesData {
   league: string; season: number | null
   supported: boolean; reason: string | null
   coverage: TeamAggregateCoverage
+  categories: TeamStatCategory[]
+  columns: TeamColumn[]
   teams: TeamAggregate[]
 }
 
@@ -130,6 +134,17 @@ function formatMetric(metric: StatMetric, value: number | string | null | undefi
   return numeric.toFixed(1)
 }
 
+// Team-aggregate columns use a coarser format vocabulary (number/decimal/percent)
+// than player StatMetrics, and percent values arrive as 0–1 ratios.
+function formatTeamMetric(col: TeamColumn, value: number | string | null | undefined): string {
+  if (value == null) return '—'
+  const numeric = typeof value === 'number' ? value : Number(value)
+  if (!Number.isFinite(numeric)) return '—'
+  if (col.format === 'percent') return `${(numeric * 100).toFixed(1)}%`
+  if (col.format === 'decimal') return numeric.toFixed(1)
+  return Number.isInteger(numeric) ? numeric.toFixed(0) : numeric.toFixed(1)
+}
+
 function formatSignedMetric(metric: StatMetric, value: number): string {
   const formatted = formatMetric(metric, value)
   return value > 0 ? `+${formatted}` : formatted
@@ -179,7 +194,7 @@ export default function LeagueHubPage() {
   // Determine valid tabs for this league
   const isWC = lg === 'wc'
   const isUFC = lg === 'ufc'
-  const supportsTeamStats = lg === 'mlb'
+  const supportsTeamStats = lg === 'mlb' || lg === 'nba' || lg === 'nhl' || lg === 'nfl'
 
   // WC: Standings (bracket during knockouts / group tables) + Schedule. No player stats.
   // UFC: Rankings (default) + Schedule — NO Stats or Standings (loader skips both, so
@@ -260,6 +275,11 @@ export default function LeagueHubPage() {
   const [teamAggregates, setTeamAggregates] = useState<TeamAggregatesData | null>(null)
   const [teamStatsLoading, setTeamStatsLoading] = useState(false)
   const [teamStatsError, setTeamStatsError] = useState<string | null>(null)
+  const [teamCategory, setTeamCategory] = useState<string | null>(null)
+  // Read current sub-view inside the capability fetch without making it a dep
+  // (adding subView as a dep re-fired the fetch on every Players/Teams click,
+  // nulling teamAggregates and flickering the toggle).
+  const subViewRef = useRef<SubView>('players')
 
   // ── Schedule state ──────────────────────────────────────
   const [games, setGames] = useState<Game[]>([])
@@ -470,12 +490,16 @@ export default function LeagueHubPage() {
     return () => { ignore = true }
   }, [router.isReady, router.query.category, router.query.stat, router.query.type, lg, mlbType, isWC, isUFC, activeTab, subView])
 
+  useEffect(() => { subViewRef.current = subView }, [subView])
+
   // ── Load team aggregates/capability ─────────────────────
+  // Capability probe: runs once per league/tab, NOT per sub-view toggle. Keeps
+  // any existing data visible during a refetch so the Players/Teams toggle does
+  // not flicker, and only steers out of the Teams view if the fetch actually fails.
   useEffect(() => {
     if (!router.isReady || !supportsTeamStats || activeTab !== 'stats') return
     let ignore = false
     const load = async () => {
-      setTeamAggregates(null)
       setTeamStatsLoading(true)
       setTeamStatsError(null)
       try {
@@ -488,14 +512,14 @@ export default function LeagueHubPage() {
         if (!ignore) setTeamAggregates(payload)
       } catch (error: any) {
         if (!ignore) {
+          setTeamAggregates(null)
           setTeamStatsError(error?.message || 'Unable to load team stats.')
-          if (subView === 'teams') {
+          if (subViewRef.current === 'teams') {
             setSubView('players')
             const query: Record<string, string | string[] | undefined> = {
-              ...router.query,
-              view: 'players',
-              type: mlbType,
+              ...router.query, view: 'players',
             }
+            if (lg === 'mlb') query.type = mlbType
             delete query.category
             delete query.stat
             void router.replace({ pathname: router.pathname, query }, undefined, { shallow: true })
@@ -507,7 +531,8 @@ export default function LeagueHubPage() {
     }
     load()
     return () => { ignore = true }
-  }, [router, router.isReady, lg, supportsTeamStats, activeTab, mlbType, subView])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [router.isReady, lg, supportsTeamStats, activeTab])
 
   // ── Load schedule ───────────────────────────────────────
   useEffect(() => {
@@ -987,7 +1012,11 @@ export default function LeagueHubPage() {
                   </div>
                 ) : !teamAggregates?.teams.length ? (
                   <div className="text-zinc-500 text-sm">No measured team data available for {leagueName}.</div>
-                ) : (
+                ) : (() => {
+                  const cats = teamAggregates.categories ?? []
+                  const activeCat = cats.find(c => c.key === teamCategory) ?? cats[0]
+                  const cols = activeCat?.columns ?? teamAggregates.columns ?? []
+                  return (
                   <div className="space-y-3">
                     <div className="flex flex-wrap items-center gap-2 text-xs text-zinc-500">
                       <span>Season {teamAggregates.season}</span>
@@ -996,18 +1025,30 @@ export default function LeagueHubPage() {
                       <span>·</span>
                       <span>Through {teamAggregates.coverage.last_game_date}</span>
                     </div>
+                    {cats.length > 1 && (
+                      <div className="flex flex-wrap items-center gap-2" aria-label="Team stat categories">
+                        {cats.map(c => (
+                          <button key={c.key} type="button" onClick={() => setTeamCategory(c.key)}
+                            className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
+                              activeCat?.key === c.key
+                                ? 'border-emerald-500/30 bg-emerald-500/20 text-emerald-400'
+                                : 'border-zinc-800 bg-zinc-900 text-zinc-500 hover:text-zinc-300'
+                            }`}
+                          >
+                            {c.label}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                     <div className="overflow-x-auto rounded-xl border border-zinc-800 bg-zinc-900 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                       <table className="w-full text-sm">
                       <thead>
                         <tr className="border-b border-zinc-800 text-zinc-400 text-xs uppercase tracking-wider">
                           <th className="text-left py-3 pr-4 pl-4">#</th>
                           <th className="text-left py-3 pr-4">Team</th>
-                          <th className="text-right py-3 px-3">G</th>
-                          <th className="text-right py-3 px-3">W</th>
-                          <th className="text-right py-3 px-3">L</th>
-                          <th className="text-right py-3 px-3">RF</th>
-                          <th className="text-right py-3 px-3">RA</th>
-                          <th className="text-right py-3 pl-3 pr-4">Run Diff</th>
+                          {cols.map(col => (
+                            <th key={col.key} className="text-right py-3 px-3 whitespace-nowrap">{col.label}</th>
+                          ))}
                         </tr>
                       </thead>
                       <tbody>
@@ -1015,16 +1056,11 @@ export default function LeagueHubPage() {
                           <tr key={team.team} className="border-b border-zinc-800/50 hover:bg-zinc-800/30">
                             <td className="py-3 pr-4 pl-4 text-zinc-500">{i + 1}</td>
                             <td className="py-3 pr-4 font-semibold text-zinc-200">{team.team}</td>
-                            <td className="py-3 px-3 text-right text-zinc-400">{team.games}</td>
-                            <td className="py-3 px-3 text-right text-zinc-200">{team.wins}</td>
-                            <td className="py-3 px-3 text-right text-zinc-200">{team.losses}</td>
-                            <td className="py-3 px-3 text-right text-zinc-200 font-mono tabular-nums">{team.runs_for}</td>
-                            <td className="py-3 px-3 text-right text-zinc-200 font-mono tabular-nums">{team.runs_against}</td>
-                            <td className="py-3 px-3 text-right">
-                              <span className={team.run_differential > 0 ? 'text-emerald-400' : team.run_differential < 0 ? 'text-red-400' : 'text-zinc-400'}>
-                                {team.run_differential > 0 ? '+' : ''}{team.run_differential}
-                              </span>
-                            </td>
+                            {cols.map(col => (
+                              <td key={col.key} className="py-3 px-3 text-right text-zinc-200 font-mono tabular-nums">
+                                {formatTeamMetric(col, team[col.key])}
+                              </td>
+                            ))}
                           </tr>
                         ))}
                       </tbody>
@@ -1036,7 +1072,8 @@ export default function LeagueHubPage() {
                       </p>
                     )}
                   </div>
-                )}
+                  )
+                })()}
               </>
             )}
           </>
