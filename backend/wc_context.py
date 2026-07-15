@@ -8,8 +8,10 @@ Blends three sources into one fan-legible object:
 POC for ARG–ENG (2026-07-15). The signals file is written by
 prediction-market-trading/broadcast_alpha.py; we read it cross-repo.
 """
+import difflib
 import json
 import os
+import re
 import sqlite3
 import urllib.request
 
@@ -50,6 +52,43 @@ _JUNK_KW = ("brady", "senate", "bulger", "podcast", "iheart", "dirty rats",
             "honorary", "nfl", "touchdown", "mbappe", "france", "spain")
 
 
+_GENERIC_SUBJ = {"game", "match", "both teams", "teams", "players",
+                 "argentina", "england", "england vs argentina"}
+
+
+def _roster_names(sm):
+    """{full:[displayName], last:{lastname_lower: displayName}} for this match."""
+    full, last = [], {}
+    for team in sm.get("rosters", []) or []:
+        for r in team.get("roster", []) or []:
+            nm = (r.get("athlete", {}) or {}).get("displayName")
+            if nm:
+                full.append(nm)
+                toks = nm.split()
+                if toks:
+                    last[toks[-1].lower()] = nm
+    return {"full": full, "last": last}
+
+
+def _normalize_subject(subj, names):
+    """Map a whisper-mangled subject to a real roster name (Jett Spence→Djed
+    Spence, jute Bellingham→Jude Bellingham). Team/generic subjects pass through."""
+    s = (subj or "").strip()
+    if not s or s.lower() in _GENERIC_SUBJ:
+        return s
+    last = names["last"]
+    toks = s.split()
+    if toks:
+        lt = toks[-1].lower()
+        if lt in last:
+            return last[lt]
+        m = difflib.get_close_matches(lt, list(last.keys()), n=1, cutoff=0.72)
+        if m:
+            return last[m[0]]
+    m = difflib.get_close_matches(s, names["full"], n=1, cutoff=0.72)
+    return m[0] if m else s
+
+
 def _db():
     path = os.environ.get("LP_DB_PATH", "data/picks.db")
     c = sqlite3.connect(path)
@@ -77,8 +116,8 @@ def _top_scorers(home_abbr, away_abbr):
     return out
 
 
-def _broadcast_insights(tag, limit=8):
-    """Relevance-filtered booth reads → tagged insight cards, strongest first."""
+def _broadcast_insights(tag, names, limit=8):
+    """Relevance-filtered, name-normalized, de-duplicated booth reads → cards."""
     path = os.path.join(BROADCAST_DIR, f"{tag}_signals.jsonl")
     if not os.path.exists(path):
         return []
@@ -94,17 +133,17 @@ def _broadcast_insights(tag, limit=8):
         blob = (str(r.get("subject", "")) + " " + r.get("quote", "")).lower()
         if any(k in blob for k in _JUNK_KW):
             continue
-        subj = str(r.get("subject", "")).strip()
         quote = r.get("quote", "").strip()
         if not quote or len(quote) < 25:
             continue
-        key = (r.get("type"), subj)
-        if key in seen:
+        # dedup on the quote itself → collapses repeats + same quote under two subjects
+        qk = re.sub(r"[^a-z0-9]", "", quote.lower())[:50]
+        if qk in seen:
             continue
-        seen.add(key)
+        seen.add(qk)
         kept.append({
             "tag": _TAG_LABEL.get(r.get("type"), "Read"),
-            "subject": subj,
+            "subject": _normalize_subject(str(r.get("subject", "")).strip(), names),
             "quote": quote if len(quote) <= 180 else quote[:177].rstrip() + "…",
             "strength": r.get("strength", 1),
             "ts": r.get("ts"),
@@ -158,6 +197,6 @@ def build_context(game_id, limit=8):
             "away": {"abbr": away_abbr, "name": _name(away), "form": _form(away)},
         },
         "top_scorers": _top_scorers(home_abbr, away_abbr),
-        "insights": _broadcast_insights(tag, limit=limit),
+        "insights": _broadcast_insights(tag, _roster_names(sm), limit=limit),
         "source": "broadcast + market + form",
     }
