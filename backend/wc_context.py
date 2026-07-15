@@ -96,7 +96,7 @@ def _db():
     return c
 
 
-def _top_scorers(home_abbr, away_abbr):
+def _top_scorers(game_id, home_abbr, away_abbr):
     """Shortest anytime-goalscorer odds per team → the 'most likely to score'."""
     out = []
     try:
@@ -106,8 +106,9 @@ def _top_scorers(home_abbr, away_abbr):
                 "SELECT pl.name, p.odds FROM props p "
                 "JOIN prop_games g ON p.game_id=g.id "
                 "JOIN players pl ON p.player_id=pl.id "
-                "WHERE g.league='wc' AND p.market='goals' AND pl.team=? "
-                "ORDER BY p.odds ASC LIMIT 1", (abbr,)).fetchone()
+                "WHERE g.league='wc' AND g.espn_event_id=? "
+                "AND p.market='goals' AND pl.team=? AND p.odds IS NOT NULL "
+                "ORDER BY p.odds ASC LIMIT 1", (str(game_id), abbr)).fetchone()
             if r:
                 out.append({"team": abbr, "player": r["name"], "odds": r["odds"]})
         c.close()
@@ -116,7 +117,7 @@ def _top_scorers(home_abbr, away_abbr):
     return out
 
 
-def _goals_market():
+def _goals_market(game_id):
     """{player: anytime-goalscorer american odds} for the WC game — the prop board."""
     m = {}
     try:
@@ -124,7 +125,10 @@ def _goals_market():
         for r in c.execute(
                 "SELECT pl.name, p.odds FROM props p "
                 "JOIN prop_games g ON p.game_id=g.id JOIN players pl ON p.player_id=pl.id "
-                "WHERE g.league='wc' AND p.market='goals'").fetchall():
+                "WHERE g.league='wc' AND g.espn_event_id=? "
+                "AND p.market='goals' AND p.odds IS NOT NULL "
+                "ORDER BY COALESCE(p.odds_captured_at,p.captured_at),p.id",
+                (str(game_id),)).fetchall():
             m[r["name"]] = r["odds"]
         c.close()
     except Exception:
@@ -415,7 +419,7 @@ def build_context(game_id, limit=8):
     names = _roster_names(sm)
     insights_full = _broadcast_insights(tag, names, limit=40)
     allowed = _signal_subjects(insights_full, names)
-    scorers = _top_scorers(home_abbr, away_abbr)
+    scorers = _top_scorers(game_id, home_abbr, away_abbr)
 
     # live match stats → feed the synthesis so it can surface narrative-vs-data
     tstats = {}
@@ -427,7 +431,7 @@ def build_context(game_id, limit=8):
         return (tstats.get(ab) or {}).get(k, "—")
 
     away_sc, home_sc = away.get("score"), home.get("score")
-    goals_mkt = _goals_market()
+    goals_mkt = _goals_market(game_id)
     insight_cache_key = ("v2", str(game_id), len(insights_full), tuple(sorted(goals_mkt.items())))
     insights_full = _enrich_insights(insights_full, goals_mkt, insight_cache_key)
     board_str = ", ".join(f"{n} {'+' if o > 0 else ''}{o}"

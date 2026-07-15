@@ -14,6 +14,9 @@ Source: Bovada's internal API — no auth, no Cloudflare, live odds.
 """
 import sys, json, os, urllib.request, datetime as dt
 
+from link_prop_games import link_prop_game
+import espn_client as espn
+
 API_BASE = os.environ.get("LP_API_BASE", "http://localhost:8000")
 BOVADA = "https://www.bovada.lv/services/sports/event/coupon/events/A/description"
 
@@ -320,6 +323,17 @@ def _parse_standard_props(event: dict, league: str) -> list:
     return results
 
 
+def _wc_event_date(prop: dict, fallback: str) -> str:
+    """UTC event date from Bovada startTime (milliseconds or seconds)."""
+    try:
+        stamp = float(prop.get("start_time"))
+        if stamp > 10_000_000_000:
+            stamp /= 1000
+        return dt.datetime.fromtimestamp(stamp, dt.timezone.utc).date().isoformat()
+    except (TypeError, ValueError, OSError, OverflowError):
+        return fallback
+
+
 def _wc_direct_ingest(all_props: list, today: str):
     """Direct DB insert for WC props — bypasses ingest API since WC players
     don't exist in the players table yet (Phase 1: name-match only).
@@ -331,13 +345,16 @@ def _wc_direct_ingest(all_props: list, today: str):
     con.row_factory = sqlite3.Row
     now = dt.datetime.now(dt.timezone.utc).isoformat()
     ingested = 0
+    espn_by_date = {}
 
     try:
         by_game = {}
         for p in all_props:
-            gkey = f"{p['game_desc']}"
+            game_date = _wc_event_date(p, today)
+            gkey = (game_date, p["game_desc"])
             if gkey not in by_game:
                 by_game[gkey] = {
+                    "date": game_date,
                     "home": p["home_team"],
                     "away": p["away_team"],
                     "props": []
@@ -347,16 +364,34 @@ def _wc_direct_ingest(all_props: list, today: str):
         for gkey, batch in by_game.items():
             print(f"  {batch['away']} @ {batch['home']}: {len(batch['props'])} props")
             cur = con.execute(
-                "SELECT id FROM prop_games WHERE league=? AND date=? AND home=? AND away=?",
-                ("wc", today, batch["home"], batch["away"]))
+                "SELECT id,league,date,home,away,espn_event_id FROM prop_games "
+                "WHERE league=? AND date=? AND home=? AND away=?",
+                ("wc", batch["date"], batch["home"], batch["away"]))
             game_row = cur.fetchone()
             if game_row:
                 game_id = game_row["id"]
             else:
                 cur = con.execute(
                     "INSERT INTO prop_games(league,date,home,away,espn_event_id) VALUES(?,?,?,?,?)",
-                    ("wc", today, batch["home"], batch["away"], ""))
+                    ("wc", batch["date"], batch["home"], batch["away"], ""))
                 game_id = cur.lastrowid
+                game_row = con.execute(
+                    "SELECT id,league,date,home,away,espn_event_id FROM prop_games WHERE id=?",
+                    (game_id,)).fetchone()
+
+            if not game_row["espn_event_id"]:
+                if batch["date"] not in espn_by_date:
+                    try:
+                        espn_by_date[batch["date"]] = espn.games("wc", batch["date"])
+                    except Exception as exc:
+                        print(f"    ESPN schedule unavailable for {batch['date']}: {exc}")
+                        espn_by_date[batch["date"]] = []
+                espn_id = link_prop_game(con, game_row, espn_by_date[batch["date"]])
+                if espn_id:
+                    con.execute("UPDATE prop_games SET espn_event_id=? WHERE id=?", (espn_id, game_id))
+                    print(f"    linked ESPN event {espn_id}")
+                else:
+                    print("    WARNING: unresolved ESPN event; props retained for next retry")
 
             for p in batch["props"]:
                 pname = p["player_name"]
@@ -384,7 +419,18 @@ def _wc_direct_ingest(all_props: list, today: str):
                     except (ValueError, TypeError):
                         if str(odds_val).upper() == "EVEN":
                             odds_int = 100
-                if odds_int is not None:
+                existing = con.execute(
+                    "SELECT id FROM props WHERE game_id=? AND player_id=? AND market=? "
+                    "AND line=? AND side=? AND source='bovada'",
+                    (game_id, player_id, market, line_val, side)).fetchone()
+                if existing:
+                    if odds_int is None:
+                        con.execute("UPDATE props SET captured_at=? WHERE id=?", (now, existing["id"]))
+                    else:
+                        con.execute(
+                            "UPDATE props SET captured_at=?,odds=?,odds_captured_at=? WHERE id=?",
+                            (now, odds_int, now, existing["id"]))
+                elif odds_int is not None:
                     con.execute(
                         "INSERT INTO props(game_id,player_id,market,line,side,source,captured_at,odds,odds_captured_at) VALUES(?,?,?,?,?,?,?,?,?)",
                         (game_id, player_id, market, line_val, side, "bovada", now, odds_int, now))
