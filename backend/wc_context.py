@@ -397,9 +397,14 @@ def build_context(game_id, limit=8):
     board_str = ", ".join(f"{n} {'+' if o > 0 else ''}{o}"
                           for n, o in sorted(goals_mkt.items(), key=lambda kv: kv[1]))
     events = _match_events(sm)
-    ev_str = "; ".join(
-        f"{e['clock']} {e['kind']}{' [GOAL]' if e['scoring'] else ''}: "
-        f"{', '.join(e['players']) or e['team']} ({e['team']})" for e in events) or "none yet"
+
+    def _ev_fmt(e):
+        if e["scoring"] and e["players"]:
+            assist = f" (assist: {e['players'][1]})" if len(e["players"]) > 1 else ""
+            return f"{e['clock']} GOAL scored by {e['players'][0]}{assist} for {e['team']}"
+        who = ", ".join(e["players"]) or e["team"]
+        return f"{e['clock']} {e['kind']}: {who} ({e['team']})"
+    ev_str = "; ".join(_ev_fmt(e) for e in events) or "none yet"
     def _team_line(t, ab, side):
         return (f"{_name(t)} ({side}, {ab}) — score {t.get('score')}, "
                 f"possession {_st(ab,'possessionPct')}%, shots {_st(ab,'totalShots')} "
