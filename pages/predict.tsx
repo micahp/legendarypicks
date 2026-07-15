@@ -148,15 +148,18 @@ export default function PredictPage() {
     <>
       <Head>
         <title>Predict — Legendary Picks</title>
-        <meta name="description" content="Pick the winner of each match and track your record." />
+        <meta name="description" content="Pick the winner of each esports match and track your record." />
       </Head>
 
       <div className="mx-auto max-w-2xl px-4 py-6">
         {/* Header with record */}
         <div className="flex items-center justify-between gap-3">
           <div>
-            <h1 className="text-3xl font-extrabold tracking-tight text-zinc-50">Predict</h1>
-            <p className="mt-1 text-sm text-zinc-500">Pick the winner. Track your record.</p>
+            <div className="flex items-center gap-2">
+              <h1 className="text-3xl font-extrabold tracking-tight text-zinc-50">Predict</h1>
+              <span className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-emerald-400">Esports</span>
+            </div>
+            <p className="mt-1 text-sm text-zinc-500">Pick the winner of each esports match. Track your record.</p>
           </div>
           <div className="text-right">
             {!hasTotal ? (
@@ -180,7 +183,7 @@ export default function PredictPage() {
 
         {/* Matches */}
         <div className="mt-8 mb-3 text-[10px] font-medium uppercase tracking-[0.18em] text-zinc-500">
-          Matches
+          Esports matches
         </div>
 
         {loading ? (
