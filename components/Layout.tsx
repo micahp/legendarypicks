@@ -24,7 +24,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 space-y-6">{children}</main>
       <footer className="border-t border-zinc-800 py-8">
         <div className="mx-auto max-w-6xl px-4 text-sm text-zinc-500">
-          © {new Date().getFullYear()} Legendary Picks. Not affiliated with the NBA.
+          © {new Date().getFullYear()} Legendary Picks. Not affiliated with or endorsed by any professional sports league, team, or player.
         </div>
       </footer>
     </div>
