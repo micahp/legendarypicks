@@ -25,7 +25,7 @@ interface PerfRow {
 }
 
 type Tab = 'lines' | 'slate' | 'performance' | 'matchups' | 'model'
-type League = 'All' | 'nba' | 'mlb' | 'nfl' | 'nhl'
+type League = 'All' | 'nba' | 'mlb' | 'nfl' | 'nhl' | 'wc'
 
 const TABS: { key: Tab; label: string }[] = [
   { key: 'lines', label: 'Lines' },
@@ -34,7 +34,7 @@ const TABS: { key: Tab; label: string }[] = [
   { key: 'matchups', label: 'Matchups' },
   { key: 'model', label: 'Model' },
 ]
-const LEAGUES: League[] = ['All', 'mlb', 'nba', 'nfl', 'nhl']
+const LEAGUES: League[] = ['All', 'mlb', 'nba', 'nfl', 'nhl', 'wc']
 // Market filter options scoped to each league. Grounded in real data + the backend's
 // canonical market map (backend/_core.py `_MARKET_STAT_KEY`): every entry is a market the
 // /api/props exact-match filter can actually return rows for. MLB here is the pitcher-side
@@ -45,6 +45,7 @@ const LEAGUE_MARKETS: Record<Exclude<League, 'All'>, string[]> = {
   mlb: ['strikeouts', 'outs', 'hits_allowed', 'earned_runs'],
   nfl: ['passing_yards', 'rushing_yards', 'receiving_yards', 'receptions'],
   nhl: ['goals', 'assists', 'points', 'shots'],
+  wc: ['goals', 'assists', 'shots_on_target', 'shots'],
 }
 // "All" leagues → union of every league's markets, de-duped, first-seen order preserved.
 const ALL_MARKETS = Array.from(new Set(Object.values(LEAGUE_MARKETS).flat()))
@@ -169,6 +170,14 @@ function LinesTab({ league, date }: { league: League; date: string }) {
 
   const toggleChart = async (p: Prop) => {
     if (expandedId === p.id) { setExpandedId(null); setChartData(null); setChartError(null); return }
+    // WC props: no history/settlement in Phase 1 — lines + odds only
+    if (p.league === 'wc') {
+      setExpandedId(p.id)
+      setChartLoading(false)
+      setChartData(null)
+      setChartError('WC props are display-only — settlement and history coming in Phase 2.')
+      return
+    }
     setExpandedId(p.id)
     setChartLoading(true)
     setChartData(null)
@@ -218,8 +227,8 @@ function LinesTab({ league, date }: { league: League; date: string }) {
               {filtered.map(p => (
                 <Fragment key={p.id}>
                   <tr key={p.id} onClick={() => toggleChart(p)}
-                    className={`border-b border-zinc-800/50 transition-colors cursor-pointer ${expandedId === p.id ? 'bg-zinc-800/50' : 'hover:bg-zinc-800/30'}`}>
-                    <td className="px-2 py-2.5 text-zinc-500 text-xs">{expandedId === p.id ? '▾' : '▸'}</td>
+                    className={`border-b border-zinc-800/50 transition-colors ${p.league === 'wc' ? '' : 'cursor-pointer'} ${expandedId === p.id ? 'bg-zinc-800/50' : 'hover:bg-zinc-800/30'}`}>
+                    <td className="px-2 py-2.5 text-zinc-500 text-xs">{p.league === 'wc' ? '' : expandedId === p.id ? '▾' : '▸'}</td>
                     <td className="px-4 py-2.5"><span className="font-medium">{p.player_name}</span><span className="text-zinc-500 text-xs ml-1.5">{p.player_team}</span></td>
                     <td className="px-4 py-2.5 text-zinc-300">{p.market.replace(/_/g, ' ')}</td>
                     <td className="px-4 py-2.5 text-right tabular-nums">{p.line}</td>
