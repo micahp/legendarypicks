@@ -1,7 +1,16 @@
 import { useEffect, useState } from 'react'
 import ListenLive from '../ListenLive'
 
-type Prop = { player: string; market: string; line: string; lean: string }
+type Opportunity = {
+  kind: 'match' | 'player'
+  selection: string
+  market: string
+  price: string
+  source: string
+  action: string
+  change: string
+  previous_price?: string
+}
 type Insight = {
   tag: string
   subject: string
@@ -10,15 +19,9 @@ type Insight = {
   ts?: string
   headline?: string
   analysis?: string
-  prop?: Prop
+  opportunity?: Opportunity
 }
 type BoothContext = { insights?: Insight[] }
-
-const LEAN_STYLE: Record<string, { cls: string; mark: string }> = {
-  back: { cls: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30', mark: '▲' },
-  fade: { cls: 'bg-red-500/15 text-red-300 border-red-500/30', mark: '▼' },
-  watch: { cls: 'bg-zinc-700/40 text-zinc-300 border-zinc-600/50', mark: '•' },
-}
 
 const TAG_STYLE: Record<string, string> = {
   'Key man': 'bg-amber-500/15 text-amber-300 border-amber-500/25',
@@ -30,15 +33,17 @@ const TAG_STYLE: Record<string, string> = {
 
 const clock = (ts?: string) => (ts && ts.length >= 16 ? ts.slice(11, 16) : '')
 
-function PropChip({ prop }: { prop: Prop }) {
-  const s = LEAN_STYLE[prop.lean] || LEAN_STYLE.watch
+function OpportunityChip({ opportunity }: { opportunity: Opportunity }) {
   return (
-    <span className={`mt-1 inline-flex max-w-full flex-wrap items-center gap-x-1.5 rounded-md border px-2 py-0.5 text-xs font-medium ${s.cls}`}>
-      <span className="text-[10px]">{s.mark}</span>
-      <span className="text-[9px] uppercase tracking-wide opacity-70">{prop.lean}</span>
-      <span className="font-semibold">{prop.player}</span>
-      <span className="opacity-80">{prop.market}</span>
-      <span className="font-mono tabular-nums">{prop.line}</span>
+    <span className="mt-1 inline-flex max-w-full flex-wrap items-center gap-x-1.5 rounded-md border border-emerald-500/30 bg-emerald-500/15 px-2 py-0.5 text-xs font-medium text-emerald-300">
+      <span className="text-[10px]">▲</span>
+      <span className="text-[9px] uppercase tracking-wide opacity-70">Play</span>
+      <span className="font-semibold">{opportunity.selection}</span>
+      <span className="opacity-80">{opportunity.market}</span>
+      <span className="font-mono tabular-nums">{opportunity.price}</span>
+      {opportunity.previous_price && <span className="font-mono text-[10px] opacity-60">was {opportunity.previous_price}</span>}
+      <span className="text-[9px] uppercase tracking-wide text-emerald-200/60">{opportunity.change}</span>
+      <span className="text-[9px] uppercase tracking-wide opacity-50">{opportunity.source}</span>
     </span>
   )
 }
@@ -79,7 +84,7 @@ export default function BoothFeed({ gameId }: { gameId: string }) {
         <section className="overflow-hidden rounded-lg border border-emerald-500/20 bg-ink-900">
           <div className="flex items-center justify-between gap-3 border-b border-zinc-800 px-3 py-2.5">
             <h3 className="text-[10px] font-medium uppercase tracking-[0.18em] text-emerald-400">Booth intelligence</h3>
-            <span className="text-right text-[10px] text-zinc-600">takeaway first · quote as evidence</span>
+            <span className="text-right text-[10px] text-zinc-600">takeaway first · play only on divergence</span>
           </div>
           <ol className="divide-y divide-zinc-800/70">
             {items.map((it, i) => (
@@ -102,7 +107,7 @@ export default function BoothFeed({ gameId }: { gameId: string }) {
                       <span className="font-medium uppercase tracking-wide text-zinc-500">Booth: </span>
                       “{it.quote}”
                     </p>
-                    {it.prop && <div><PropChip prop={it.prop} /></div>}
+                    {it.opportunity && <div><OpportunityChip opportunity={it.opportunity} /></div>}
                   </div>
                 </div>
               </li>
@@ -110,7 +115,7 @@ export default function BoothFeed({ gameId }: { gameId: string }) {
           </ol>
         </section>
       )}
-      <p className="text-[10px] text-zinc-600">Reads pulled live from the match broadcast · refreshes every 30s.</p>
+      <p className="text-[10px] text-zinc-600">Reads pulled live from the match broadcast · exact event markets only · refreshes every 30s.</p>
     </div>
   )
 }

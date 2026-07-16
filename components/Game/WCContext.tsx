@@ -2,24 +2,29 @@ import { useEffect, useState } from 'react'
 
 type Scorer = { team: string; player: string; odds: number }
 type Insight = { tag: string; subject: string; quote: string; strength: number; ts?: string }
-type Prop = { player: string; market: string; line: string; lean: string }
-type Read = { headline: string; evidence?: string; prop?: Prop }
-
-const LEAN_STYLE: Record<string, { cls: string; mark: string }> = {
-  back: { cls: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30', mark: '▲' },
-  fade: { cls: 'bg-red-500/15 text-red-300 border-red-500/30', mark: '▼' },
-  watch: { cls: 'bg-zinc-700/40 text-zinc-300 border-zinc-600/50', mark: '•' },
+type Opportunity = {
+  kind: 'match' | 'player'
+  selection: string
+  market: string
+  price: string
+  source: string
+  action: string
+  change: string
+  previous_price?: string
 }
+type Read = { headline: string; evidence?: string; opportunity?: Opportunity }
 
-function PropChip({ prop }: { prop: Prop }) {
-  const s = LEAN_STYLE[prop.lean] || LEAN_STYLE.watch
+function OpportunityChip({ opportunity }: { opportunity: Opportunity }) {
   return (
-    <span className={`mt-1 inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 text-xs font-medium ${s.cls}`}>
-      <span className="text-[10px]">{s.mark}</span>
-      <span className="uppercase tracking-wide text-[9px] opacity-70">{prop.lean}</span>
-      <span className="font-semibold">{prop.player}</span>
-      <span className="opacity-80">{prop.market}</span>
-      <span className="font-mono tabular-nums">{prop.line}</span>
+    <span className="mt-1 inline-flex flex-wrap items-center gap-1.5 rounded-md border border-emerald-500/30 bg-emerald-500/15 px-2 py-0.5 text-xs font-medium text-emerald-300">
+      <span className="text-[10px]">▲</span>
+      <span className="text-[9px] uppercase tracking-wide opacity-70">Play</span>
+      <span className="font-semibold">{opportunity.selection}</span>
+      <span className="opacity-80">{opportunity.market}</span>
+      <span className="font-mono tabular-nums">{opportunity.price}</span>
+      {opportunity.previous_price && <span className="font-mono text-[10px] opacity-60">was {opportunity.previous_price}</span>}
+      <span className="text-[9px] uppercase tracking-wide text-emerald-200/60">{opportunity.change}</span>
+      <span className="text-[9px] uppercase tracking-wide opacity-50">{opportunity.source}</span>
     </span>
   )
 }
@@ -94,7 +99,7 @@ export default function WCContext({ gameId }: { gameId: string }) {
                 <div>
                   <p className="text-sm font-semibold leading-snug text-zinc-100">{r.headline}</p>
                   {r.evidence && <p className="mt-0.5 text-xs leading-snug text-zinc-500">{r.evidence}</p>}
-                  {r.prop && <div><PropChip prop={r.prop} /></div>}
+                  {r.opportunity && <div><OpportunityChip opportunity={r.opportunity} /></div>}
                 </div>
               </div>
             </li>

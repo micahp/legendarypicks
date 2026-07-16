@@ -238,6 +238,45 @@ def _parse_wc_props(event: dict) -> list:
     return results
 
 
+def _parse_wc_game_markets(event: dict) -> list:
+    """Full-match team markets from the same WC event payload as the player board.
+
+    Keep the source's stable event/market/outcome IDs. The first-half market has the same
+    description and key, so outcome labels are the ground-truth discriminator here.
+    """
+    results = []
+    competitors = event.get("competitors", [])
+    home = next((c.get("name", "") for c in competitors if c.get("home")), "")
+    away = next((c.get("name", "") for c in competitors if not c.get("home")), "")
+    for group in event.get("displayGroups", []):
+        if (group.get("description") or "").lower() != "game lines":
+            continue
+        for market in group.get("markets", []):
+            if (market.get("description") or "").lower() != "3-way moneyline":
+                continue
+            outcomes = market.get("outcomes", [])
+            if any("1h" in (o.get("description") or "").lower() for o in outcomes):
+                continue
+            for outcome in outcomes:
+                odds = (outcome.get("price") or {}).get("american")
+                if odds is None:
+                    continue
+                results.append({
+                    "source_event_id": str(event.get("id", "")),
+                    "source_market_id": str(market.get("id", "")),
+                    "source_outcome_id": str(outcome.get("id", "")),
+                    "selection": (outcome.get("description") or "").strip(),
+                    "market": "to win (90 min)",
+                    "odds": odds,
+                    "status": market.get("status"),
+                    "game_desc": event.get("description", ""),
+                    "home_team": home,
+                    "away_team": away,
+                    "start_time": event.get("startTime"),
+                })
+    return results
+
+
 def _parse_standard_props(event: dict, league: str) -> list:
     """Extract all player props from a single Bovada event (non-WC leagues)."""
     results = []
@@ -334,7 +373,7 @@ def _wc_event_date(prop: dict, fallback: str) -> str:
         return fallback
 
 
-def _wc_direct_ingest(all_props: list, today: str):
+def _wc_direct_ingest(all_props: list, today: str, all_markets=None):
     """Direct DB insert for WC props — bypasses ingest API since WC players
     don't exist in the players table yet (Phase 1: name-match only).
     Creates player rows as needed."""
@@ -346,8 +385,23 @@ def _wc_direct_ingest(all_props: list, today: str):
     now = dt.datetime.now(dt.timezone.utc).isoformat()
     ingested = 0
     espn_by_date = {}
+    all_markets = all_markets or []
 
     try:
+        con.execute("""CREATE TABLE IF NOT EXISTS wc_market_quotes(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            prop_game_id INTEGER NOT NULL REFERENCES prop_games(id),
+            source_event_id TEXT NOT NULL,
+            source_market_id TEXT NOT NULL,
+            source_outcome_id TEXT NOT NULL,
+            market TEXT NOT NULL,
+            selection TEXT NOT NULL,
+            odds INTEGER NOT NULL,
+            status TEXT,
+            captured_at TEXT NOT NULL,
+            UNIQUE(source_outcome_id, captured_at))""")
+        con.execute("CREATE INDEX IF NOT EXISTS idx_wcmq_game_outcome "
+                    "ON wc_market_quotes(prop_game_id,source_outcome_id,captured_at)")
         by_game = {}
         for p in all_props:
             game_date = _wc_event_date(p, today)
@@ -357,12 +411,26 @@ def _wc_direct_ingest(all_props: list, today: str):
                     "date": game_date,
                     "home": p["home_team"],
                     "away": p["away_team"],
-                    "props": []
+                    "props": [],
+                    "markets": [],
                 }
             by_game[gkey]["props"].append(p)
+        for market in all_markets:
+            game_date = _wc_event_date(market, today)
+            gkey = (game_date, market["game_desc"])
+            if gkey not in by_game:
+                by_game[gkey] = {
+                    "date": game_date,
+                    "home": market["home_team"],
+                    "away": market["away_team"],
+                    "props": [],
+                    "markets": [],
+                }
+            by_game[gkey]["markets"].append(market)
 
         for gkey, batch in by_game.items():
-            print(f"  {batch['away']} @ {batch['home']}: {len(batch['props'])} props")
+            print(f"  {batch['away']} @ {batch['home']}: {len(batch['props'])} props, "
+                  f"{len(batch['markets'])} game lines")
             cur = con.execute(
                 "SELECT id,league,date,home,away,espn_event_id FROM prop_games "
                 "WHERE league=? AND date=? AND home=? AND away=?",
@@ -424,21 +492,46 @@ def _wc_direct_ingest(all_props: list, today: str):
                     "AND line=? AND side=? AND source='bovada'",
                     (game_id, player_id, market, line_val, side)).fetchone()
                 if existing:
+                    prop_id = existing["id"]
                     if odds_int is None:
-                        con.execute("UPDATE props SET captured_at=? WHERE id=?", (now, existing["id"]))
+                        con.execute("UPDATE props SET captured_at=? WHERE id=?", (now, prop_id))
                     else:
                         con.execute(
                             "UPDATE props SET captured_at=?,odds=?,odds_captured_at=? WHERE id=?",
-                            (now, odds_int, now, existing["id"]))
+                            (now, odds_int, now, prop_id))
                 elif odds_int is not None:
-                    con.execute(
+                    cur = con.execute(
                         "INSERT INTO props(game_id,player_id,market,line,side,source,captured_at,odds,odds_captured_at) VALUES(?,?,?,?,?,?,?,?,?)",
                         (game_id, player_id, market, line_val, side, "bovada", now, odds_int, now))
+                    prop_id = cur.lastrowid
                 else:
-                    con.execute(
+                    cur = con.execute(
                         "INSERT INTO props(game_id,player_id,market,line,side,source,captured_at) VALUES(?,?,?,?,?,?,?)",
                         (game_id, player_id, market, line_val, side, "bovada", now))
+                    prop_id = cur.lastrowid
+                if odds_int is not None:
+                    # The WC timer updates props in place, so record the quote before the next
+                    # refresh overwrites it. Divergence reads need to know whether the book has
+                    # already moved with the broadcast signal; current odds alone cannot say that.
+                    con.execute(
+                        "INSERT OR IGNORE INTO prop_odds_snapshots"
+                        "(prop_id,side,odds,captured_at,de_vig_status) VALUES(?,?,?,?,?)",
+                        (prop_id, side, odds_int, now, "single"))
                 ingested += 1
+
+            for market in batch["markets"]:
+                odds_val = market.get("odds")
+                try:
+                    odds_int = 100 if str(odds_val).upper() == "EVEN" else int(odds_val)
+                except (TypeError, ValueError):
+                    continue
+                con.execute(
+                    "INSERT OR IGNORE INTO wc_market_quotes"
+                    "(prop_game_id,source_event_id,source_market_id,source_outcome_id,market,"
+                    "selection,odds,status,captured_at) VALUES(?,?,?,?,?,?,?,?,?)",
+                    (game_id, market["source_event_id"], market["source_market_id"],
+                     market["source_outcome_id"], market["market"], market["selection"],
+                     odds_int, market.get("status"), now))
 
         con.commit()
     finally:
@@ -485,6 +578,7 @@ def main():
         sys.exit(1)
 
     all_props = []
+    all_wc_markets = []
     today = dt.date.today().isoformat()
 
     for key, (sport, lg) in targets:
@@ -499,6 +593,8 @@ def main():
 
         for ev in events:
             props = parse_player_props(ev, key)
+            if key == "wc":
+                all_wc_markets.extend(_parse_wc_game_markets(ev))
             if props:
                 game_desc = ev.get("description", "?")
                 print(f"  {game_desc}: {len(props)} props")
@@ -517,7 +613,7 @@ def main():
             if league == "wc":
                 print(f"\nDirect-ingesting WC props into DB...")
                 try:
-                    n = _wc_direct_ingest(all_props, today)
+                    n = _wc_direct_ingest(all_props, today, all_wc_markets)
                     print(f"  {n} props ingested")
                 except Exception as e:
                     print(f"  FAIL ingest: {e}")

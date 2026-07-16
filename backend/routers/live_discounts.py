@@ -338,6 +338,67 @@ def _game_start_ts(g):
     return int(d.timestamp())
 
 
+def wc_event_markets(game_id, game_date=None):
+    """Exact, currently tradable Kalshi advance markets for one ESPN WC event.
+
+    This is intentionally a market board, not a discount classifier. Broadcast intelligence
+    decides whether new match-specific information creates a divergence; this function only
+    grounds that decision in the two real event sides and their observed price history.
+    """
+    games = espn.games("wc", game_date) if game_date else espn.games("wc")
+    game = next((g for g in games if str(g.get("game_id")) == str(game_id)), None)
+    if not game or game.get("state") not in ("pre", "in"):
+        return []
+
+    h, a = game.get("home") or {}, game.get("away") or {}
+    hab, aab = h.get("abbrev"), a.get("abbrev")
+    if not hab or not aab:
+        return []
+    token = _et_token(game["date"])
+    pair, rpair = f"{aab}{hab}", f"{hab}{aab}"
+    by_team = {}
+    for market in _kalshi_markets(_SERIES["wc"]):
+        ticker = market.get("ticker", "")
+        event_ticker, _, side = ticker.rpartition("-")
+        if token in event_ticker and (event_ticker.endswith(pair) or event_ticker.endswith(rpair)):
+            by_team[side] = market
+
+    now = int(time.time())
+    start_ts = _game_start_ts(game)
+    board = []
+    with closing(_db()) as con:
+        for team, team_data in ((hab, h), (aab, a)):
+            market = by_team.get(team)
+            if not market:
+                continue
+            price = _yes_price(market)
+            if price is None:
+                continue
+            _snapshot(con, market["ticker"], price)
+            pregame, _ = _pregame_ref(con, market["ticker"], start_ts, market)
+            previous = con.execute(
+                "SELECT price FROM live_price_snapshots WHERE ticker=? AND ts<? "
+                "ORDER BY ts DESC LIMIT 1", (market["ticker"], now - 45)).fetchone()
+            opening = con.execute(
+                "SELECT price FROM live_price_snapshots WHERE ticker=? ORDER BY ts LIMIT 1",
+                (market["ticker"],)).fetchone()
+            board.append({
+                "market_id": f"kalshi:{market['ticker']}",
+                "kind": "match",
+                "team": team,
+                "selection": team_data.get("name") or team,
+                "market": "to advance",
+                "price": price,
+                "previous_price": previous[0] if previous else None,
+                "opening_price": pregame if pregame is not None else (opening[0] if opening else None),
+                "source": "Kalshi",
+                "as_of": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
+                "tradable": market.get("status") not in ("closed", "settled", "finalized"),
+            })
+        con.commit()
+    return board
+
+
 def _build(league):
     series = _SERIES[league]
     games = espn.games(league)
