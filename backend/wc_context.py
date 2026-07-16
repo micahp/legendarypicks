@@ -136,6 +136,26 @@ def _goals_market(game_id):
     return m
 
 
+def _team_odds(sm, home_name, away_name):
+    """3-way match-result moneyline from ESPN pickcenter — no scraper/table needed.
+    Returns {selection: american_odds} for away/home/Draw, or {}."""
+    for p in sm.get("pickcenter", []) or []:
+        ho = (p.get("homeTeamOdds", {}) or {}).get("moneyLine")
+        ao = (p.get("awayTeamOdds", {}) or {}).get("moneyLine")
+        do = (p.get("drawOdds", {}) or {}).get("moneyLine")
+        if ho is None and ao is None:
+            continue
+        out = {}
+        if ao is not None:
+            out[away_name] = int(ao)
+        if ho is not None:
+            out[home_name] = int(ho)
+        if do is not None:
+            out["Draw"] = int(do)
+        return out
+    return {}
+
+
 def _broadcast_insights(tag, names, limit=8):
     """Relevance-filtered, name-normalized, de-duplicated booth reads → cards."""
     path = os.path.join(BROADCAST_DIR, f"{tag}_signals.jsonl")
@@ -175,24 +195,30 @@ def _broadcast_insights(tag, names, limit=8):
 _read_cache = {}
 
 _READ_SYS = (
-    "You are a betting-desk analyst writing live in-match INTEL for a bettor who has the BOVADA prop "
-    "board open. Inputs: DATA (score, events, lineup — AUTHORITATIVE for all match facts), PROP LINES "
-    "(Bovada anytime-goalscorer odds), recent BROADCAST quotes + a raw transcript tail (use only for "
-    "the WHY / color). Produce 3-4 punchy lines that connect what the booth is saying to a BETTABLE "
-    "prop. RULES: "
-    "(1) Match facts (score, who scored/assisted, who started) come ONLY from DATA — NEVER from the "
-    "transcript. "
-    "(2) Commentary is natural conversation that mixes live action with BACKGROUND/history — read the "
-    "FULL sentence in context; never state a historical detail (e.g. 'came off the bench in a prior "
-    "round') as a fact about today's match. "
-    "(3) When the booth flags a player as a threat or as quiet/cold, TIE it to that player's prop line "
-    "and give a lean: back / fade / watch. ONLY attach a prop for a player the provided broadcast reads "
-    "specifically discuss BY NAME — NEVER attach a prop to a player the reads don't mention (no longshot fishing). "
+    "You are a betting-desk analyst writing live in-match INTEL. Inputs: DATA (score, events, lineup, "
+    "team stats — AUTHORITATIVE for match facts), MARKET LINES (Bovada player anytime-goalscorer odds "
+    "AND the 3-way match-result moneyline), recent BROADCAST quotes + a transcript tail (the WHY/color). "
+    "Produce 3-4 punchy intel lines. A line MAY carry an optional 'play', but MOST lines should NOT — "
+    "plays are rare and high-conviction. "
+    "WHAT A PLAY IS — a DISCOUNT: an outcome the market prices as UNLIKELY (a longish price) that the "
+    "booth's NEW INFORMATION makes MORE LIKELY than the line implies (the market underweights the new "
+    "info). A play is a PLAYER (to score) OR a TEAM (to win / draw). Example: team trailing, their "
+    "'to win' line has drifted long, but the booth shows real momentum/a man advantage the price hasn't "
+    "caught → back that team to win at the discount. "
+    "RULES: "
+    "(1) Match facts come ONLY from DATA, never the transcript. Read full-sentence context; never turn "
+    "background/history into a fact about today's match. "
+    "(2) A play needs CONFLUENCE: a genuine market discount AND a specific booth signal the price hasn't "
+    "absorbed. This is buying an info-backed VALUE discount — NOT backing favorites, NOT 'the price "
+    "looks low/high', NOT a play with no informational reason. If the market is pricing it correctly (a "
+    "value trap), NO play. "
+    "(3) Player plays: only a player the booth discussed BY NAME. Team plays: only the two teams or 'Draw'. "
     "(4) Flag where the NARRATIVE and the DATA disagree. "
     "Each line is a takeaway a bettor scans in ~2s; SYNTHESIZE, do not just quote. "
     'Return ONLY JSON: [{"headline":"...","evidence":"quote or stat",'
-    '"prop":{"player":"","market":"to score","line":"+150","lean":"back|fade|watch"}}]. '
-    "prop is OPTIONAL (include only when a line is relevant). Max 4 items. headline <= 110 chars, no trailing period."
+    '"prop":{"player":"Argentina","market":"to win","line":"+205","lean":"back|fade|watch"}}]. '
+    '"player" holds the selection (a player name OR a team name / "Draw"). prop is OPTIONAL — omit it on '
+    "most lines. Max 4 items. headline <= 110 chars, no trailing period."
 )
 
 
@@ -340,7 +366,7 @@ def _signal_subjects(insights, names):
     return allowed
 
 
-def _synthesize_read(data_str, insights, cache_key, allowed_players=None):
+def _synthesize_read(data_str, insights, cache_key, allowed_players=None, allowed_teams=None):
     """LLM synthesis of the reads + data → scannable intel lines (cached)."""
     if cache_key in _read_cache:
         return _read_cache[cache_key]
@@ -363,12 +389,15 @@ def _synthesize_read(data_str, insights, cache_key, allowed_players=None):
                             "evidence": str(it.get("evidence", ""))[:170]}
                     p = it.get("prop")
                     if isinstance(p, dict) and p.get("player"):
-                        player = str(p.get("player", ""))[:40]
-                        last = player.split()[-1].lower() if player.split() else ""
-                        # grounding guard: prop only if the booth made this player a signal subject
-                        if allowed_players is None or last in allowed_players:
+                        sel = str(p.get("player", ""))[:40]
+                        last = sel.split()[-1].lower() if sel.split() else ""
+                        # grounding guard: a TEAM play must name one of the two teams / Draw;
+                        # a PLAYER play must name a player the booth made a signal subject.
+                        is_team = bool(allowed_teams) and sel.lower() in allowed_teams
+                        is_player = allowed_players is None or last in allowed_players
+                        if is_team or is_player:
                             card["prop"] = {
-                                "player": player,
+                                "player": sel,
                                 "market": str(p.get("market", "to score"))[:24],
                                 "line": str(p.get("line", ""))[:12],
                                 "lean": str(p.get("lean", "watch"))[:6],
@@ -432,6 +461,8 @@ def build_context(game_id, limit=8):
 
     away_sc, home_sc = away.get("score"), home.get("score")
     goals_mkt = _goals_market(game_id)
+    team_odds = _team_odds(sm, _name(home), _name(away))
+    allowed_teams = {s.lower() for s in (_name(home), _name(away), "Draw", home_abbr, away_abbr) if s}
     insight_cache_key = ("v2", str(game_id), len(insights_full), tuple(sorted(goals_mkt.items())))
     insights_full = _enrich_insights(insights_full, goals_mkt, insight_cache_key)
     board_str = ", ".join(f"{n} {'+' if o > 0 else ''}{o}"
@@ -455,10 +486,13 @@ def build_context(game_id, limit=8):
         f"Score events (authoritative): {ev_str}. "
         f"TEAM STATS — {_team_line(away, away_abbr, 'away')}. {_team_line(home, home_abbr, 'home')}. "
         + (f"Bovada anytime-goalscorer board: {board_str}. " if board_str else "")
+        + (("Match-result moneyline: "
+            + ", ".join(f"{k} {_fmt_odds(v)}" for k, v in team_odds.items()) + ". ") if team_odds else "")
         + f"Broadcast transcript (color/why only, may mix live action with history): {_transcript_tail(tag)}"
     )
     cache_key = (str(game_id), len(insights_full), f"{away_sc}-{home_sc}", len(events))
-    read = _synthesize_read(data_str, insights_full, cache_key, allowed_players=allowed)
+    read = _synthesize_read(data_str, insights_full, cache_key,
+                            allowed_players=allowed, allowed_teams=allowed_teams)
 
     return {
         "game_id": str(game_id),
