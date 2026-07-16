@@ -18,7 +18,9 @@ in `package.json` tracks the next (in-development) release.
 
 ## [0.4.0] — 2026-07-16
 
-Call of Duty joins the esports board.
+The 0.3 → 0.4 milestone. This minor rolls up everything shipped since v0.3.2 — the incremental
+steps were tagged `v0.3.3` (Leagues Hub + Pick Desk) and `v0.3.4` (World Cup intelligence + board
+dupe fix); v0.4.0 adds Call of Duty and promotes the whole arc to production.
 
 ### Added
 - **Call of Duty (CDL) on `/esports`** — registered Call of Duty as an esports title, so Call of Duty
@@ -30,6 +32,24 @@ Call of Duty joins the esports board.
     season-finale event so it outranks the mid-season Majors.
   - Stream: official CDL YouTube channel (@CODLeague, Data-API-resolved) for the live embed, with a
     "where it'll air" fallback for scheduled matches.
+- **Leagues Hub** — per-league tabbed pages with full completed-season team-stat parity for NBA / NHL
+  / NFL / MLB, player stat categories with advanced controls, recent-form evidence, and WC knockout
+  standings. _(tagged v0.3.3)_
+- **Pick Desk (`/predict`)** — free binary esports picks with a record header, callable matches, a
+  settled-picks list, crowd/Bovada reveal after picking, contrarian scoring, and a pick/crowd/
+  leaderboard ledger; labeled as Esports. _(tagged v0.3.3)_
+- **World Cup intelligence** — WC props (Phase 1) on `/props`; game-detail context (broadcast +
+  market + form), a **"From the Booth"** tab of live broadcast reads, **"The Read"** synthesized
+  intel tied to Bovada props, and an optional **discount play** (team, player, or none). _(tagged
+  v0.3.4)_
+
+### Fixed
+- **Class-A display-duplicate suppressor** on the esports board — collapses pure casing/spacing/punct
+  team-name twins at the same start time (e.g. `PARIVISION`/`Parivision`), leaving true rematches and
+  name-variants logged-not-merged. _(tagged v0.3.4)_
+- Esports durability (15-min prod board warmer, 7-day results retention, key self-hydration), Leagues
+  Hub UI fixes (flicker, Stats-tab revert, NHL standings), and a league-agnostic footer disclaimer.
+  See v0.3.3 / v0.3.4 for the full list.
 
 ## [0.3.4] — 2026-07-16
 
