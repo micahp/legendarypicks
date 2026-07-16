@@ -2,7 +2,7 @@
 
 import re
 
-from .common import _canon_tokens, _fold
+from .common import _canon_tokens, _fold, _strip_name
 from .match_identity import _normalize_match_metadata, _same_pair, _same_team
 
 
@@ -193,6 +193,62 @@ def _cluster(rows):
                 base.setdefault("pinned", True)
         merged.append(base)
     return merged
+
+
+# State priority for choosing which twin survives a display-dupe collapse: a settled result outranks
+# a live one, live outranks scheduled, and ended_unknown (over, no result) is the least informative.
+_DUPE_STATE_RANK = {S_FINISHED: 0, S_LIVE: 1, S_SCHEDULED: 2, S_ENDED_UNKNOWN: 3}
+
+
+def _suppress_display_dupes(matches):
+    """Final safety net (Class A): collapse two board rows that are the SAME physical fixture but
+    reached the assembled board as separate rows because they differ only in team-name CASING /
+    SPACING / PUNCTUATION at the same start time — e.g. 'PARIVISION' vs 'Parivision', 'The Boys' vs
+    'TheBoys'. `_cluster` already unions on identity + time; this catches the residue that slips past
+    it (a source re-spells a team AFTER clustering, or a twin arrives from a different assembly path).
+
+    STRICT on purpose, so it can never eat a real rematch or two genuinely different teams:
+    - keys on `_strip_name` (case/space/punct/accent-insensitive ONLY — NOT the generic-word/alias
+      collapse of `_canon_team`), so BOTH sides must be the same spelling modulo formatting. A name
+      VARIANT like '9z' vs '9Z Globant' has an extra token and stays SEPARATE (that's the deliberate
+      Class B case, left to the monitor).
+    - requires both start times within `_START_SLACK_MS` (15 min). Rematches are hours/days apart;
+      same-fixture start-time jitter across sources is a couple minutes — so the window is safe.
+    The surviving twin is the most informative one (has-result > live > scheduled, then origin
+    priority). Its `matchKey`/identity is untouched, so picks + crowd continuity are preserved."""
+    def sig(match):
+        return (match.get("title"),
+                frozenset((_strip_name(match.get("teamA")), _strip_name(match.get("teamB")))))
+
+    groups = {}
+    for match in matches:
+        groups.setdefault(sig(match), []).append(match)
+
+    kept = []
+    for members in groups.values():
+        if len(members) == 1:
+            kept.append(members[0])
+            continue
+        # Bucket the same-signature rows into physical fixtures by start-time proximity, so a genuine
+        # rematch (far-apart start times, same two teams) survives as separate rows.
+        remaining = list(members)
+        while remaining:
+            head = remaining.pop(0)
+            fixture, rest = [head], []
+            for match in remaining:
+                head_start, match_start = head.get("startTime"), match.get("startTime")
+                if head_start and match_start and abs(head_start - match_start) <= _START_SLACK_MS:
+                    fixture.append(match)
+                else:
+                    rest.append(match)
+            remaining = rest
+            fixture.sort(key=lambda match: (
+                0 if _has_result(match) else 1,
+                _DUPE_STATE_RANK.get(match.get("state"), 9),
+                _ORIGIN_PRIO.get(match.get("_origin"), 9),
+            ))
+            kept.append(fixture[0])
+    return kept
 
 
 def _grid_live_fresh(grid, now_ms, past):

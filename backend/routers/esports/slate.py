@@ -54,7 +54,8 @@ from .slate_sources import (_fetch_bovada_rows, _frag_candidates, _frag_lookup,
 from .slate_state import (S_ENDED_UNKNOWN, S_FINISHED, S_LIVE, S_SCHEDULED,
                           _CHANNEL_LIVE_TAIL_MS, _FINISH_GRACE_MS, _LIVE_LEAD_MS,
                           _LIVE_TAIL_MS, _START_SLACK_MS, _carry_row, _cluster,
-                          _derive_state, _has_result, _is_placeholder_score, _key)
+                          _derive_state, _has_result, _is_placeholder_score, _key,
+                          _suppress_display_dupes)
 
 # Stream helpers: post-swap these live in streams.py; pre-swap (validation) load the reviewed file
 # by path so this module is testable without touching the running streams.py.
@@ -581,6 +582,11 @@ def _rebuild_upcoming():
             m["watch"] = None  # ended_unknown: no honest stream to offer
 
     # ---------------- output shaping ----------------
+    # Final display-dupe net: drop a same-fixture twin that differs only by team-name casing/spacing
+    # (e.g. 'PARIVISION' vs 'Parivision') and slipped past `_cluster`. Runs before `_origin`/`_` fields
+    # are stripped below so it can pick the most informative survivor. See slate_state docstring.
+    matches = _suppress_display_dupes(matches)
+
     out_matches = []
     for m in matches:
         state = m["state"]
