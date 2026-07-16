@@ -16,6 +16,62 @@ in `package.json` tracks the next (in-development) release.
 
 ## [Unreleased]
 
+## [0.4.0] — 2026-07-16
+
+Call of Duty joins the esports board.
+
+### Added
+- **Call of Duty (CDL) on `/esports`** — registered Call of Duty as an esports title, so Call of Duty
+  League matches (the Championship, and future Majors) surface on the board with Bovada odds, live
+  state, PandaScore scores/winner/logos, the official broadcast, and picks — reusing the existing
+  Bovada-schedule + PandaScore-enrich + YouTube-resolver pipeline (no new pipeline).
+  - Tier-aware: the pro CDL is a flagship international circuit (Tier 0); "Call of Duty Challengers"
+    (development ladder) stays Tier 2, and qualifiers demote as usual. CoD Champs is ranked as the
+    season-finale event so it outranks the mid-season Majors.
+  - Stream: official CDL YouTube channel (@CODLeague, Data-API-resolved) for the live embed, with a
+    "where it'll air" fallback for scheduled matches.
+
+## [0.3.4] — 2026-07-16
+
+World Cup intelligence: what the market says vs what the booth sees.
+
+### Added
+- **World Cup props (Phase 1)** on `/props` — display-only prop lines scoped per ESPN game, with
+  automated odds refresh.
+- **Game-detail intelligence** — replaced the AI "story" with a grounded game context (broadcast +
+  market + form), a **"From the Booth"** tab (live broadcast reads, roster-normalized and deduped),
+  and **"The Read"** — a synthesized intel summary tied to Bovada props and data-authoritative
+  grounding (per-team stats labeled to stop home/away mixups; goal-scorer vs assist disambiguated).
+- **Discount play** — an optional value lean (team, player, or none) surfaced when the booth's read
+  makes a market-priced-unlikely outcome more plausible; never a forced prop.
+- Player props moved into their own tab on the game-detail page.
+
+### Fixed
+- **Class-A display-duplicate suppressor** on the esports board — collapses pure casing/spacing/punct
+  team-name twins at the same start time (e.g. `PARIVISION`/`Parivision`) while deliberately leaving
+  same-name/different-time rematches and true name-variants logged-not-merged.
+
+## [0.3.3] — 2026-07-15
+
+Leagues Hub and the Pick Desk.
+
+### Added
+- **Leagues Hub** — per-league tabbed pages with full completed-season team-stat parity for NBA / NHL
+  / NFL / MLB, player stat categories with advanced controls, recent-form evidence, and WC knockout
+  standings. MLB recent-changes evidence for batting categories.
+- **Pick Desk (`/predict`)** — free binary esports picks with a record header, callable matches, a
+  settled-picks list, crowd/Bovada reveal after picking, contrarian scoring, and a pick/crowd/
+  leaderboard ledger. Labeled as **Esports** (badge + copy); plainer copy throughout.
+- **Esports durability** — in-app prod board warmer (15 min) to keep the lazily-cached slate fresh
+  without organic traffic; results retention extended 3→7 days; API keys self-hydrate at startup.
+
+### Fixed
+- Leagues Hub: sub-view flicker, Stats tab reverting after async leaders fetch, double-fetch on
+  player-stat category switch; NHL Standings Win% `0.0%` and L10 `0 PTS`; date-aware schedules; UFC
+  rankings served from package when the prod cache is empty.
+- Footer disclaimer made league-agnostic (was hardcoded NBA). FIFA World Cup shown as the league
+  title (keys unchanged).
+
 ## [0.3.2] — 2026-07-12
 
 Hotfix: scores page alignment.
