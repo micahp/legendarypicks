@@ -146,6 +146,10 @@ _ESPORTS_TITLES = {
     "rainbow-six": "Rainbow Six",
     "king-of-glory": "King of Glory",
     "overwatch": "Overwatch",
+    # Bovada esports coupon path is `call-of-duty/<league>` (e.g. call-of-duty/cdl-championship);
+    # path_parts[1] == "call-of-duty" is the title_slug that gates entry (slate_sources.py). This
+    # display string is keyed EVERYWHERE downstream (picks/crowd/settlement _key) — do not rename.
+    "call-of-duty": "Call of Duty",
 }
 
 # Display title -> slug (reverse of _ESPORTS_TITLES).

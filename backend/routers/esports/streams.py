@@ -51,6 +51,10 @@ _WATCH_RULES = [
     ("dota-2", "europeanproleague", [("kick", "epldota_en"), ("twitch", "epldota_en2")]),
     ("rainbow-six", None, [("twitch", "rainbow6")]),
     ("king-of-glory", None, [("web", "https://www.honorofkings.com/esports/?language=en")]),
+    # CoD: the live embed comes from the Data-API-resolved official CDL channel below
+    # (_YT_TOURNAMENT_CHANNELS); this web link is the scheduled "where it'll air" fallback (lowest
+    # prio, non-embedding) for when nothing's live to resolve yet — same pattern as king-of-glory.
+    ("call-of-duty", None, [("web", "https://www.youtube.com/@CODLeague/live")]),
 ]
 
 # Lower = preferred. YouTube first (requirement), then Twitch (verifiable via decapi), then Kick
@@ -67,6 +71,11 @@ _YT_TOURNAMENT_CHANNELS = [
     # NOTE: UC1Xqp122TsjLISeYa1EwcaQ (customUrl @esportsworldcup) is a DIFFERENT, abandoned
     # 56-subscriber channel that happens to hold that handle — do not revert to it.
     ("esportsworldcup", "UCENNtCRTPTdH_IGXs42LuHQ"),
+    # @CODLeague, 1.97M subs — the official English CDL broadcast. Keyed on "cdl" so it matches the
+    # Bovada league string "Cdl Championship" (ls="cdlchampionship") and future "Cdl Major N", but
+    # NOT "Call of Duty Challengers" (that broadcasts on codchallengers, carried via PS streams_list).
+    # NOTE: @CallofDutyLeague (UC-VqDM9ogg-Q4urJjKneHxQ, 76 subs) is a DECOY — do not use it.
+    ("cdl", "UCbLIqv9Puhyp9_ZjVtfOy7w"),
 ]
 
 

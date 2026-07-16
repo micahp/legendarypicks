@@ -155,7 +155,12 @@ def _league_tier(title, league):
     # league's higher tier.
     is_qualifier = any(kw in L for kw in ("qualifier", "last chance"))
 
-    if any(kw in L for kw in _TIER0_KW):
+    # Call of Duty: the ONLY CoD competition Bovada books is the pro Call of Duty League (its
+    # season events are the Majors and — this time — CoD Champs / "Cdl Championship"), which is a
+    # flagship international circuit -> Tier 0 by title. The one CoD string that must NOT ride this
+    # is "Call of Duty Challengers" (the development ladder), which is excluded here and correctly
+    # falls through to the "challengers" _TIER2_KW below. Qualifiers still demote via is_qualifier.
+    if any(kw in L for kw in _TIER0_KW) or (T == "call of duty" and "challengers" not in L):
         return 2 if is_qualifier else 0
 
     if any(kw in L for kw in _TIER1_KW) or (T == "rainbow six" and any(kw in L for kw in _TIER1_R6_BARE_REGIONS)):
@@ -187,6 +192,11 @@ def _stage_rank(league):
     L = (league or "").lower()
     if any(k in L for k in _STAGE_QUAL_KW):
         return 3
+    # CoD Champs = the season-ending flagship event (its whole "Cdl Championship" bracket outranks
+    # the mid-season Majors), so treat it as an event-final for prominence. "champs" is safe (it is
+    # not a substring of "champions"); "cdl championship" is CoD-specific.
+    if "cod champs" in L or "cdl championship" in L or "champs" in L:
+        return 0
     # Grand/event final — but not semi-/quarter-final (those are playoff rounds, rank 1).
     if "grand final" in L or ("final" in L and not any(k in L for k in
                               ("semifinal", "semi-final", "quarterfinal", "quarter-final"))):

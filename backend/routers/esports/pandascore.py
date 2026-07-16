@@ -33,11 +33,14 @@ _PS_VG_TITLE = {
     "league-of-legends": "LoL", "lol": "LoL",
     "king-of-glory": "King of Glory", "honor-of-kings": "King of Glory",
     "ow": "Overwatch", "overwatch": "Overwatch",
+    # CoD: match-object videogame.slug is "cod-mw" (name "Call of Duty"); the per-title feed path
+    # alias is "codmw" (no hyphen — same short-alias divergence as csgo/dota2 vs cs-go/dota-2).
+    "cod-mw": "Call of Duty", "call of duty": "Call of Duty", "codmw": "Call of Duty",
 }
 # The titles we surface. Per-title feeds (vs one combined endpoint) give far deeper coverage:
 # the combined /matches/past returns only ~50 most-recent-globally, so minor CS2/Dota results from
 # hours ago fall off it — per-title past-100 keeps them (and their team logos).
-_PS_TITLES = ["valorant", "csgo", "dota2", "r6siege", "lol", "kog", "ow"]
+_PS_TITLES = ["valorant", "csgo", "dota2", "r6siege", "lol", "kog", "ow", "codmw"]
 # Three separately-cached layers so idle esports doesn't ping the live feed:
 #   upcoming = schedule (changes slowly)      -> long TTL
 #   past     = finished results (need fresh-ish "it's over" signal) -> medium TTL
