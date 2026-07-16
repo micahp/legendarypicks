@@ -1,5 +1,5 @@
 [Unit]
-Description=Refresh and link World Cup event markets
+Description=Refresh and link World Cup player props
 After=network-online.target
 Wants=network-online.target
 
