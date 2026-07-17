@@ -15,6 +15,7 @@ interface TennisSet {
 
 interface GameProps {
   gameId: string
+  detailGameId?: string
   league?: string
   homeTeam: TeamInfo
   awayTeam: TeamInfo
@@ -90,8 +91,9 @@ export default function GameCard(g: GameProps) {
   const isTennis = g.league === 'ATP' || g.league === 'WTA'
   // Leagues with a real detail page (box score / play-by-play / game info tabs). NFL + WC were
   // added with the per-tab endpoints, so their cards must be clickable too — else the pages we built
-  // are unreachable. Tennis/UFC/CoD have no detail content, so their cards stay non-clickable.
+  // are unreachable. CoD is clickable only when its score-source fixture has a verified PandaScore id.
   const hasDetail = ['NBA', 'NHL', 'MLB', 'NFL', 'WC'].includes(g.league || '')
+    || (g.league === 'COD' && !!g.detailGameId)
   const isTeamSport = g.league === 'NBA' || g.league === 'NHL' || g.league === 'MLB' || g.league === 'NFL'
   const isSoccer = g.league === 'WC'
 
@@ -130,7 +132,10 @@ export default function GameCard(g: GameProps) {
 
   const handleClick = () => {
     if (hasDetail) {
-      router.push(`/game/${g.league?.toLowerCase()}/${g.gameId}`)
+      const href = g.league === 'COD'
+        ? `/game/call-of-duty/${g.detailGameId}`
+        : `/game/${g.league?.toLowerCase()}/${g.gameId}`
+      router.push(href)
     }
   }
 

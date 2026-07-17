@@ -31,6 +31,9 @@ export interface LivePeriod {
 // The UI works against a stable internal shape; we translate here (anti-corruption layer).
 export interface Game {
   gameId: string
+  // Optional canonical id for a league-specific detail source. CoD scores use
+  // BreakingPoint gameId values while the grounded detail page uses PandaScore.
+  detailGameId?: string
   league?: string
   homeTeam: { teamId: string; name: string; nickname?: string; score?: number; winner?: boolean }
   awayTeam: { teamId: string; name: string; nickname?: string; score?: number; winner?: boolean }
@@ -149,6 +152,11 @@ export function normalizeGame(g: any, leagueOverride?: string): Game {
 
   return {
     gameId: String(g?.game_id ?? g?.gameId ?? ''),
+    detailGameId: g?.detail_game_id != null
+      ? String(g.detail_game_id)
+      : g?.detailGameId != null
+      ? String(g.detailGameId)
+      : undefined,
     league: league.toUpperCase() || undefined,
     homeTeam: side(g?.home ?? g?.homeTeam),
     awayTeam: side(g?.away ?? g?.awayTeam),

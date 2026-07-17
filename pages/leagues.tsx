@@ -8,6 +8,7 @@ const LEAGUES = [
   { key: 'nfl', name: 'NFL', desc: 'National Football League — passing, rushing, receiving leaders, team power rankings', emoji: '🏈' },
   { key: 'wc', name: 'FIFA World Cup', desc: 'FIFA World Cup — knockout bracket, match results, group stage history', emoji: '⚽' },
   { key: 'ufc', name: 'UFC', desc: 'Ultimate Fighting Championship — pound-for-pound rankings, division champions', emoji: '🥊' },
+  { key: 'cod', name: 'Call of Duty League', desc: 'Call of Duty League — live broadcast, running order, results, and picks', emoji: '🎮' },
 ]
 
 export default function LeaguesPage() {
@@ -24,7 +25,7 @@ export default function LeaguesPage() {
           {LEAGUES.map((lg) => (
             <Link
               key={lg.key}
-              href={`/leagues/${lg.key}`}
+              href={lg.key === 'cod' ? '/cod' : `/leagues/${lg.key}`}
               className="group bg-zinc-900 border border-zinc-800 rounded-xl p-5 transition-colors hover:border-emerald-500/30 hover:bg-zinc-900/80"
             >
               <div className="flex items-start gap-3">

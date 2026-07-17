@@ -9,6 +9,42 @@ from team_stats_contract import build_team_aggregates
 
 router = APIRouter()
 
+
+def _attach_cod_detail_ids(matches):
+    """Add a PandaScore detail id only when the fixture identity resolves.
+
+    BreakingPoint remains the scoreboard source and keeps its own ``game_id``.
+    The dedicated CoD detail route is PandaScore-backed, so expose that separate
+    id after the shared esports matcher verifies both opponents and match time.
+    Unresolved fixtures intentionally stay without a detail id.
+    """
+    try:
+        from routers.esports.pandascore import _iso_to_ms, _ps_enrich
+    except Exception as exc:
+        print(f"[sports_service] CoD detail identity unavailable ({exc})")
+        return matches
+
+    for match in matches:
+        home = (match.get("home") or {}).get("name")
+        away = (match.get("away") or {}).get("name")
+        near_ms = _iso_to_ms(match.get("date"))
+        if not home or not away or not near_ms:
+            continue
+        try:
+            identity = _ps_enrich(
+                home,
+                away,
+                include_running=True,
+                near_ms=near_ms,
+                league="Call of Duty",
+            )
+        except Exception as exc:
+            print(f"[sports_service] CoD detail identity failed for {match.get('game_id')} ({exc})")
+            continue
+        if identity and identity.get("_ps_id") is not None:
+            match["detail_game_id"] = str(identity["_ps_id"])
+    return matches
+
 @router.get("/")
 def root():
     return {"service": "Legendary Picks Sports API", "version": "2.0.0",
@@ -123,11 +159,11 @@ def get_games(league: str, date: Optional[str] = Query(None, description="YYYY-M
             import breakingpoint_client
             matches = breakingpoint_client.get_cod_matches(date_str=date)
             if matches:
-                return matches
+                return _attach_cod_detail_ids(matches)
         except Exception as e:
             print(f"[sports_service] breakingpoint failed ({e}), falling back to cdl_client")
         import cdl_client
-        return cdl_client.get_matches(date_str=date)
+        return _attach_cod_detail_ids(cdl_client.get_matches(date_str=date))
     try:
         games = espn.games(league, date)
     except ValueError as e:
@@ -227,6 +263,17 @@ def wc_context(game_id: str, limit: int = Query(8, ge=1, le=100)):
     ctx = _wcc.build_context(game_id, limit=limit)
     if not ctx:
         raise HTTPException(404, "no context for this game")
+    return ctx
+
+
+@router.get("/api/cod/{game_id}/context")
+def cod_game_context(game_id: str, limit: int = Query(12, ge=1, le=100)):
+    """Grounded Call of Duty match context from PandaScore history, the existing
+    esports slate, and timestamp-matched CDL booth reads."""
+    import cod_context as _cod
+    ctx = _cod.build_context(game_id, limit=limit)
+    if not ctx:
+        raise HTTPException(404, "no Call of Duty context for this game")
     return ctx
 
 

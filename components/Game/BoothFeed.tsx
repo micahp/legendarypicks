@@ -43,27 +43,31 @@ function PropChip({ prop }: { prop: Prop }) {
   )
 }
 
-export default function BoothFeed({ gameId }: { gameId: string }) {
+export default function BoothFeed({ gameId, contextLeague = 'wc', showListenLive = true }: {
+  gameId: string
+  contextLeague?: 'wc' | 'cod'
+  showListenLive?: boolean
+}) {
   const [ctx, setCtx] = useState<BoothContext | null | undefined>(undefined)
 
   useEffect(() => {
     let alive = true
     const load = () =>
-      fetch(`/api/wc/${gameId}/context?limit=40`)
+      fetch(`/api/${contextLeague}/${gameId}/context?limit=40`)
         .then(r => (r.ok ? r.json() : null))
         .then(d => { if (alive) setCtx(d) })
         .catch(() => { if (alive) setCtx(null) })
     load()
     const t = setInterval(load, 30000) // refresh the feed while the match runs
     return () => { alive = false; clearInterval(t) }
-  }, [gameId])
+  }, [gameId, contextLeague])
 
   const items = ctx?.insights ?? []
 
   return (
     <div className="space-y-4">
       {/* The audio and its enriched reads are one booth surface. */}
-      <ListenLive />
+      {showListenLive ? <ListenLive /> : null}
 
       {ctx === undefined ? (
         <div className="space-y-3 animate-pulse">

@@ -8,11 +8,18 @@ import { SkeletonList, ErrorBanner, EmptyState } from '../components/Scores/Stat
 import ListenLive from '../components/ListenLive'
 import LiveDiscounts from '../components/LiveDiscounts'
 
+function gameHref(game: Game) {
+  if (game.league === 'COD') {
+    return game.detailGameId ? `/game/call-of-duty/${game.detailGameId}` : '/cod'
+  }
+  return `/game/${game.league?.toLowerCase()}/${game.gameId}`
+}
+
 // Discovery rail: feature ONE live game big (a viewer who came for another sport gets pulled in),
 // with a "+N more" reveal and a pull to the esports page. Featured pick = highest league priority.
 function LiveChip({ g }: { g: Game }) {
   return (
-    <Link href={`/game/${g.league?.toLowerCase()}/${g.gameId}`}
+    <Link href={gameHref(g)}
           className="flex items-center gap-2 rounded-lg border border-zinc-800 bg-zinc-900/70 px-3 py-1.5 text-sm hover:border-zinc-600">
       <span className="font-mono text-[10px] uppercase tracking-wider text-zinc-500">{g.league}</span>
       <span className="font-medium text-zinc-100">{g.awayTeam?.nickname || g.awayTeam?.name}</span>
@@ -40,7 +47,7 @@ function LiveNow({ games, esportsLive }: { games: Game[]; esportsLive: boolean }
       </span>
 
       {/* featured — one game, big score */}
-      <Link href={`/game/${feat.league?.toLowerCase()}/${feat.gameId}`}
+      <Link href={gameHref(feat)}
             className="block rounded-xl border border-zinc-800 bg-zinc-900/70 p-4 transition-colors hover:border-zinc-600">
         <div className="mb-3 font-mono text-[10px] uppercase tracking-[0.18em] text-zinc-500">
           <span className="text-zinc-300">{feat.league}</span>{feat.subtitle ? ` · ${feat.subtitle}` : ''} · live
