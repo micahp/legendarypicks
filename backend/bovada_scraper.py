@@ -27,6 +27,7 @@ LEAGUES = {
     "nhl":  ("hockey", "nhl"),
     "wnba": ("basketball", "wnba"),
     "wc":   ("soccer", "fifa-world-cup/fifa-world-cup-matches"),
+    "ufc":  ("ufc-mma", "ufc"),
 }
 
 HDR = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/131 Safari/537.36"}
@@ -114,7 +115,58 @@ def parse_player_props(event: dict, league: str) -> list:
     """Extract all player props from a single Bovada event."""
     if league == "wc":
         return _parse_wc_props(event)
+    if league == "ufc":
+        return _parse_ufc_props(event)
     return _parse_standard_props(event, league)
+
+
+# UFC has no per-fighter STAT props on Bovada; the fighter-attributed market is Method of Victory. Map
+# each outcome to a yes/no prop on the fighter (o0.5), mirroring the WC anytime-goal shape. Fight-level
+# markets (total rounds, go-the-distance) are game-level and not represented in the player-prop schema
+# yet — deferred. This is the template for other individual sports (tennis majors) too.
+_UFC_METHOD = {
+    "ko, tko or dq": "win_by_ko",
+    "submission": "win_by_submission",
+    "decision or technical decision": "win_by_decision",
+}
+
+
+def _parse_ufc_props(event: dict) -> list:
+    comps = [c.get("name") for c in event.get("competitors", []) if c.get("name")]
+    if len(comps) < 2:
+        return []
+    fa, fb = comps[0], comps[1]
+    desc = event.get("description") or f"{fa} vs {fb}"
+    start_time = event.get("startTime")
+    props = []
+    for dg in event.get("displayGroups", []):
+        for m in dg.get("markets", []):
+            if m.get("description") != "Method of Victory":
+                continue
+            for o in m.get("outcomes", []):
+                od = o.get("description") or ""
+                if " Wins by " not in od:
+                    continue
+                fighter, method = od.split(" Wins by ", 1)
+                market = _UFC_METHOD.get(method.strip().lower())
+                if not market:
+                    continue
+                fighter = fighter.strip()
+                opp = fb if fighter == fa else fa
+                props.append({
+                    "player_name": fighter,
+                    "team": opp,
+                    "market": market,
+                    "line": 0.5,
+                    "side": "over",
+                    "odds": (o.get("price") or {}).get("american"),
+                    "start_time": start_time,
+                    "game_desc": desc,
+                    "home_team": fa,
+                    "away_team": fb,
+                    "league": "ufc",
+                })
+    return props
 
 
 def _parse_wc_props(event: dict) -> list:
@@ -461,6 +513,78 @@ def _wc_direct_ingest(all_props: list, today: str):
     return ingested
 
 
+def _ufc_direct_ingest(all_props: list, today: str) -> int:
+    """Direct DB insert for UFC method-of-victory props — fighters are created as players (league
+    'ufc') as needed, like WC. Game home/away = the two fighters; start_time stored. No ESPN linking."""
+    import sqlite3, os as _os
+    DB = _os.environ.get("LP_DB_PATH") or _os.path.join(
+        _os.path.dirname(_os.path.abspath(__file__)), "data", "picks.db")
+    con = sqlite3.connect(DB)
+    con.row_factory = sqlite3.Row
+    now = dt.datetime.now(dt.timezone.utc).isoformat()
+    ingested = 0
+    try:
+        by_game = {}
+        for p in all_props:
+            gdate = _wc_event_date(p, today)
+            gkey = (gdate, p["game_desc"])
+            if gkey not in by_game:
+                by_game[gkey] = {"date": gdate, "home": p["home_team"], "away": p["away_team"], "props": []}
+            by_game[gkey]["props"].append(p)
+
+        for batch in by_game.values():
+            game_start = _event_start_iso(batch["props"][0]) if batch["props"] else None
+            row = con.execute(
+                "SELECT id,start_time FROM prop_games WHERE league=? AND date=? AND home=? AND away=?",
+                ("ufc", batch["date"], batch["home"], batch["away"])).fetchone()
+            if row:
+                game_id = row["id"]
+                if game_start and not row["start_time"]:
+                    con.execute("UPDATE prop_games SET start_time=? WHERE id=?", (game_start, game_id))
+            else:
+                game_id = con.execute(
+                    "INSERT INTO prop_games(league,date,home,away,espn_event_id,start_time) VALUES(?,?,?,?,?,?)",
+                    ("ufc", batch["date"], batch["home"], batch["away"], "", game_start)).lastrowid
+            print(f"  {batch['away']} vs {batch['home']}: {len(batch['props'])} props")
+            for p in batch["props"]:
+                pname = p["player_name"]
+                pl = con.execute("SELECT id FROM players WHERE name=? AND league=?", (pname, "ufc")).fetchone()
+                player_id = pl["id"] if pl else con.execute(
+                    "INSERT INTO players(name, team, league) VALUES(?,?,?)",
+                    (pname, p.get("team") or None, "ufc")).lastrowid
+                line_val = p.get("line") or 0
+                side = p.get("side", "over")
+                market = p.get("market", "")
+                odds_int = None
+                if p.get("odds") is not None:
+                    try:
+                        odds_int = int(p["odds"])
+                    except (ValueError, TypeError):
+                        odds_int = 100 if str(p["odds"]).upper() == "EVEN" else None
+                existing = con.execute(
+                    "SELECT id FROM props WHERE game_id=? AND player_id=? AND market=? AND line=? AND side=? AND source='bovada'",
+                    (game_id, player_id, market, line_val, side)).fetchone()
+                if existing:
+                    if odds_int is None:
+                        con.execute("UPDATE props SET captured_at=? WHERE id=?", (now, existing["id"]))
+                    else:
+                        con.execute("UPDATE props SET captured_at=?,odds=?,odds_captured_at=? WHERE id=?",
+                                    (now, odds_int, now, existing["id"]))
+                elif odds_int is not None:
+                    con.execute(
+                        "INSERT INTO props(game_id,player_id,market,line,side,source,captured_at,odds,odds_captured_at) VALUES(?,?,?,?,?,?,?,?,?)",
+                        (game_id, player_id, market, line_val, side, "bovada", now, odds_int, now))
+                else:
+                    con.execute(
+                        "INSERT INTO props(game_id,player_id,market,line,side,source,captured_at) VALUES(?,?,?,?,?,?,?)",
+                        (game_id, player_id, market, line_val, side, "bovada", now))
+                ingested += 1
+        con.commit()
+    finally:
+        con.close()
+    return ingested
+
+
 def ingest_batch(batch: dict):
     """POST to the ingest API."""
     url = f"{API_BASE}/api/props/ingest"
@@ -529,43 +653,54 @@ def main():
 
         # Optionally ingest
         if do_ingest:
-            if league == "wc":
-                print(f"\nDirect-ingesting WC props into DB...")
-                try:
-                    n = _wc_direct_ingest(all_props, today)
-                    print(f"  {n} props ingested")
-                except Exception as e:
-                    print(f"  FAIL ingest: {e}")
-            else:
-                print(f"\nIngesting into {API_BASE}...")
-                # Group by game
-                by_game = {}
-                for p in all_props:
-                    gkey = f"{p['league']}|{p['game_desc']}"
-                    if gkey not in by_game:
-                        by_game[gkey] = {
-                            "league": p["league"],
-                            "date": today,
-                            "home": p["home_team"],
-                            "away": p["away_team"],
-                            "espn_event_id": "",
-                            "props": []
-                        }
-                    by_game[gkey]["props"].append({
-                        "player_name": p["player_name"],
-                        "team": p["team"],
-                        "market": p["market"],
-                        "line": p["line"] or 0,
-                        "side": p["side"],
-                        "source": "bovada",
-                        "odds": p.get("odds"),
-                    })
-                for batch in by_game.values():
+            # Route ingest PER PROP-LEAGUE (not the CLI arg) so `all --ingest` sends each league to the
+            # right path: WC + UFC create their own players (direct DB), everything else goes through the
+            # resolver API. The game date is derived from the Bovada startTime, not "today".
+            by_league = {}
+            for p in all_props:
+                by_league.setdefault(p["league"], []).append(p)
+            for lg, lprops in by_league.items():
+                if lg == "wc":
+                    print(f"\nDirect-ingesting WC props into DB...")
                     try:
-                        result = ingest_batch(batch)
-                        print(f"  {batch['away']} @ {batch['home']}: {result['ingested']} ingested")
+                        print(f"  {_wc_direct_ingest(lprops, today)} props ingested")
                     except Exception as e:
-                        print(f"  FAIL ingest: {e}")
+                        print(f"  FAIL ingest (wc): {e}")
+                elif lg == "ufc":
+                    print(f"\nDirect-ingesting UFC props into DB...")
+                    try:
+                        print(f"  {_ufc_direct_ingest(lprops, today)} props ingested")
+                    except Exception as e:
+                        print(f"  FAIL ingest (ufc): {e}")
+                else:
+                    print(f"\nIngesting {lg.upper()} into {API_BASE}...")
+                    by_game = {}
+                    for p in lprops:
+                        gkey = f"{p['league']}|{p['game_desc']}"
+                        if gkey not in by_game:
+                            by_game[gkey] = {
+                                "league": p["league"],
+                                "date": _wc_event_date(p, today),
+                                "home": p["home_team"],
+                                "away": p["away_team"],
+                                "espn_event_id": "",
+                                "props": []
+                            }
+                        by_game[gkey]["props"].append({
+                            "player_name": p["player_name"],
+                            "team": p["team"],
+                            "market": p["market"],
+                            "line": p["line"] or 0,
+                            "side": p["side"],
+                            "source": "bovada",
+                            "odds": p.get("odds"),
+                        })
+                    for batch in by_game.values():
+                        try:
+                            result = ingest_batch(batch)
+                            print(f"  {batch['away']} @ {batch['home']}: {result['ingested']} ingested")
+                        except Exception as e:
+                            print(f"  FAIL ingest: {e}")
         # Optionally capture snapshots
         if do_capture:
             print(f"\nCapturing odds snapshots...")

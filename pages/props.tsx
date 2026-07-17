@@ -25,7 +25,7 @@ interface PerfRow {
 }
 
 type Tab = 'lines' | 'slate' | 'performance' | 'matchups' | 'model'
-type League = 'All' | 'nba' | 'mlb' | 'nfl' | 'nhl' | 'wc'
+type League = 'All' | 'nba' | 'mlb' | 'nfl' | 'nhl' | 'wc' | 'ufc'
 
 const TABS: { key: Tab; label: string }[] = [
   { key: 'lines', label: 'Lines' },
@@ -34,7 +34,7 @@ const TABS: { key: Tab; label: string }[] = [
   { key: 'matchups', label: 'Matchups' },
   { key: 'model', label: 'Model' },
 ]
-const LEAGUES: League[] = ['All', 'mlb', 'nba', 'nfl', 'nhl', 'wc']
+const LEAGUES: League[] = ['All', 'mlb', 'nba', 'nfl', 'nhl', 'wc', 'ufc']
 // Market filter options scoped to each league. Grounded in real data + the backend's
 // canonical market map (backend/_core.py `_MARKET_STAT_KEY`): every entry is a market the
 // /api/props exact-match filter can actually return rows for. MLB here is the pitcher-side
@@ -46,6 +46,7 @@ const LEAGUE_MARKETS: Record<Exclude<League, 'All'>, string[]> = {
   nfl: ['passing_yards', 'rushing_yards', 'receiving_yards', 'receptions'],
   nhl: ['goals', 'assists', 'points', 'shots'],
   wc: ['goals', 'assists', 'shots_on_target', 'shots'],
+  ufc: ['win_by_ko', 'win_by_submission', 'win_by_decision'],
 }
 // "All" leagues → union of every league's markets, de-duped, first-seen order preserved.
 const ALL_MARKETS = Array.from(new Set(Object.values(LEAGUE_MARKETS).flat()))
@@ -842,7 +843,7 @@ function StatBox({ label, value, desc }: { label: string; value: string | number
 // ── Page ───────────────────────────────────────────────────
 export default function PropsPage() {
   const [tab, setTab] = useState<Tab>('slate')
-  const [league, setLeague] = useState<League>('mlb')
+  const [league, setLeague] = useState<League>('All')
 
   // Date navigation — mirrors scores.tsx pattern exactly
   const today = new Date().toLocaleDateString('en-CA')

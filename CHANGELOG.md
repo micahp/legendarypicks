@@ -16,6 +16,24 @@ in `package.json` tracks the next (in-development) release.
 
 ## [Unreleased]
 
+## [0.4.4] — 2026-07-17
+
+Minor: UFC props — the first custom individual-sport prop system — plus all-leagues ingest routing.
+
+### Added
+- **UFC props on the board.** A custom parser (`_parse_ufc_props`) maps Bovada's Method of Victory
+  market to per-fighter yes/no props (`win_by_ko` / `win_by_submission` / `win_by_decision`, o0.5) —
+  the WC anytime-goal shape applied to fighters, and the template for tennis majors next. Fighters are
+  ingested as players via a direct-DB path (`_ufc_direct_ingest`) with kickoff times. UFC added to the
+  props page league filter. (Fight-level markets — total rounds, go-the-distance — are deferred; they
+  need a game-level prop representation the schema doesn't have yet.)
+- The props page **defaults to the All league** (was MLB), so the whole upcoming slate shows on open.
+
+### Changed
+- **Prop ingest now routes per prop-league**, not the CLI arg: `bovada_scraper.py all --ingest` sends
+  WC + UFC to their direct-DB paths and every other league to the resolver API, and derives each game's
+  date from the Bovada startTime instead of "today".
+
 ## [0.4.3] — 2026-07-17
 
 Patch: the props board shows the upcoming slate grouped by date, with game times.
