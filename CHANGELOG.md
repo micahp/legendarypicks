@@ -16,6 +16,25 @@ in `package.json` tracks the next (in-development) release.
 
 ## [Unreleased]
 
+## [0.4.1] — 2026-07-16
+
+Patch: a stable per-broadcast stream identity, and an `/esports` rewrite that renders every broadcast.
+
+### Added
+- **Stable `streamKey` + `eventId` on every match** (backend) — a channel-level stream id
+  (e.g. `twitch:callofduty`) and the PandaScore `serie.id`, both of which survive a match finishing.
+  A finished match's `watch` degrades to a bare web link and loses its stream key; these fields are
+  recovered from the persisted PandaScore streams/serie (with a `(title, team-pair)` fallback for
+  archived rows), so a broadcast's games — including the finished ones — group onto one stream.
+- **CoD league page + grounded match-detail pages** (`/cod`).
+
+### Changed
+- **`/esports` builds an independent view per proven `streamKey::eventId` broadcast** — each renders
+  Live / Final + Up Next / Starting soon. Prominence only orders the views and picks the hero rather
+  than gating whether a stream shows. Parallel channels in one event stay separate; the `event:<id>`
+  fallback is never grouped as a broadcast (no merging YouTube-only arenas); the same iframe survives
+  Final → Starting soon → Live.
+
 ## [0.4.0] — 2026-07-16
 
 The 0.3 → 0.4 milestone. This minor rolls up everything shipped since v0.3.2 — the incremental
