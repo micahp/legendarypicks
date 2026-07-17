@@ -684,6 +684,7 @@ def main():
                                 "home": p["home_team"],
                                 "away": p["away_team"],
                                 "espn_event_id": "",
+                                "start_time": _event_start_iso(p),
                                 "props": []
                             }
                         by_game[gkey]["props"].append({

@@ -187,7 +187,19 @@ export default function PredictPage() {
         </div>
 
         {loading ? (
-          <p className="text-sm text-zinc-500">Loading…</p>
+          <div className="space-y-3" role="status" aria-label="Loading matches">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="animate-pulse rounded-xl border border-zinc-800 bg-zinc-900 p-4" style={{ opacity: 1 - i * 0.18 }}>
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex-1 space-y-2">
+                    <div className="h-3.5 w-1/3 rounded bg-zinc-800" />
+                    <div className="h-3 w-1/2 rounded bg-zinc-800/70" />
+                  </div>
+                  <div className="h-8 w-24 rounded-lg bg-zinc-800" />
+                </div>
+              </div>
+            ))}
+          </div>
         ) : openMatches.length === 0 ? (
           <p className="text-sm text-zinc-500">No matches to pick right now.</p>
         ) : (

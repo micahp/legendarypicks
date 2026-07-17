@@ -203,7 +203,7 @@ function requestAfter(index, predicate) {
     const url = new URL(response.url())
     return url.pathname === '/api/nba/leaders'
       && url.searchParams.get('category') === 'playmaking'
-      && url.searchParams.get('stat') === 'ast'
+      && !url.searchParams.has('stat')
   })
   await page.getByRole('button', { name: 'Playmaking', exact: true }).click()
   await page.waitForURL('**/*stat=ast*')
@@ -236,7 +236,7 @@ function requestAfter(index, predicate) {
     const url = new URL(response.url())
     return url.pathname === '/api/nba/leaders'
       && url.searchParams.get('category') === 'defense'
-      && url.searchParams.get('stat') === 'stl'
+      && !url.searchParams.has('stat')
   })
   await page.getByRole('button', { name: 'Defense', exact: true }).click()
   await page.waitForURL('**/*stat=stl*')

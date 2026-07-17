@@ -6,6 +6,13 @@ from _core import *
 
 router = APIRouter()
 
+
+_CorePropIngest = PropIngest
+
+
+class PropIngest(_CorePropIngest):
+    start_time: Optional[str] = None
+
 @router.get("/api/props")
 def list_props(player: Optional[str] = Query(None),
                market: Optional[str] = Query(None),
@@ -13,8 +20,10 @@ def list_props(player: Optional[str] = Query(None),
                date: Optional[str] = Query(None),
                limit: int = Query(50, ge=1, le=500)):
     sql = """SELECT p.id, p.market, p.line, p.side, p.source, p.captured_at,
+                    p.odds,
                     p.player_id,
                     pl.name AS player_name, pl.team AS player_team, pl.league,
+                    pg.home AS game_home, pg.away AS game_away, pg.date AS game_date,
                     r.actual_value, r.hit, r.settled_at
              FROM props p
              JOIN players pl ON pl.id = p.player_id
@@ -39,10 +48,12 @@ def list_props(player: Optional[str] = Query(None),
     with closing(_db()) as con:
         rows = con.execute(sql, params).fetchall()
     return [{"id": r["id"], "market": r["market"], "line": r["line"], "side": r["side"],
-             "source": r["source"], "captured_at": r["captured_at"],
+             "source": r["source"], "captured_at": r["captured_at"], "odds": r["odds"],
              "player_id": r["player_id"],
              "player_name": r["player_name"], "player_team": r["player_team"],
-             "league": r["league"], "actual_value": r["actual_value"],
+             "league": r["league"], "game_home": r["game_home"],
+             "game_away": r["game_away"], "game_date": r["game_date"],
+             "actual_value": r["actual_value"],
              "hit": bool(r["hit"]) if r["hit"] is not None else None,
              "settled_at": r["settled_at"]} for r in rows]
 
@@ -344,17 +355,18 @@ def ingest_props(batch: PropIngest):
         # ensure game row — match on league+date+home+away (espn_event_id is optional)
         if batch.espn_event_id:
             cur = con.execute(
-                "SELECT id, espn_event_id FROM prop_games WHERE espn_event_id=? AND league=?",
+                "SELECT id, espn_event_id, start_time FROM prop_games WHERE espn_event_id=? AND league=?",
                 (batch.espn_event_id, batch.league))
         else:
             cur = con.execute(
-                "SELECT id, espn_event_id FROM prop_games WHERE league=? AND date=? AND home=? AND away=?",
+                "SELECT id, espn_event_id, start_time FROM prop_games WHERE league=? AND date=? AND home=? AND away=?",
                 (batch.league, batch.date, batch.home, batch.away))
         game_row = cur.fetchone()
         if not game_row:
             cur = con.execute(
-                "INSERT INTO prop_games(league,date,home,away,espn_event_id) VALUES(?,?,?,?,?)",
-                (batch.league, batch.date, batch.home, batch.away, batch.espn_event_id))
+                "INSERT INTO prop_games(league,date,home,away,espn_event_id,start_time) VALUES(?,?,?,?,?,?)",
+                (batch.league, batch.date, batch.home, batch.away,
+                 batch.espn_event_id, batch.start_time))
             game_id = cur.lastrowid
             # Try to link espn_event_id for newly created games
             if not batch.espn_event_id:
@@ -370,6 +382,10 @@ def ingest_props(batch: PropIngest):
                     pass
         else:
             game_id = game_row["id"]
+            if batch.start_time and not game_row["start_time"]:
+                con.execute(
+                    "UPDATE prop_games SET start_time=? WHERE id=?",
+                    (batch.start_time, game_id))
             # If existing game has no espn_event_id, try to link it now
             if not game_row["espn_event_id"] and not batch.espn_event_id:
                 try:
@@ -510,4 +526,3 @@ def capture_odds(batch: CaptureOddsIn):
         "skipped_line": skipped_line,
         "unmatched": unmatched,
     }
-

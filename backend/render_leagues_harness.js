@@ -90,13 +90,20 @@ function check(name, cond, detail = '') {
       })
       check(`[${lg}] Schedule tab clickable`, clicked)
       await page.waitForTimeout(1500)
-      // Schedule cards render (GameCard divs) for detail leagues
+      // A valid empty slate is expected in the offseason; distinguish it from
+      // a broken/blank schedule while still exercising cards when they exist.
       const cardCount = await page.evaluate(() =>
         Array.from(document.querySelectorAll('div')).filter(d =>
           /cursor-pointer/.test(d.className || '') && /hover:border-blue-500/.test(d.className || '')
         ).length
       )
-      check(`[${lg}] schedule cards rendered`, cardCount > 0, `cards=${cardCount}`)
+      const scheduleBody = await page.innerText('body').catch(() => '')
+      const honestEmpty = new RegExp(`No ${lg.toUpperCase()} games scheduled for`, 'i').test(scheduleBody)
+      check(
+        `[${lg}] schedule state rendered`,
+        cardCount > 0 || honestEmpty,
+        `cards=${cardCount} empty=${honestEmpty}`,
+      )
       if (cardCount > 0) {
         // Click first card -> router.push to /game/<league>/<id>
         let navOk = false

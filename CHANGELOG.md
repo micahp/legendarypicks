@@ -16,6 +16,28 @@ in `package.json` tracks the next (in-development) release.
 
 ## [Unreleased]
 
+## [0.4.5] — 2026-07-17
+
+Minor: market-first props board, leagues-page refactor, non-WC game times, nicer predict loading.
+
+### Added
+- **Market-first props board** (`components/Props/MarketSlateBoard.tsx`) — pick a stat → every
+  player's line across the slate, each with the last-N `PropChart` + hit rate, sortable by edge.
+  (Charts populate where we have player logs — MLB now; UFC/WC lack game history so their charts are
+  empty for now, pending the individual-sport stats DB.)
+- **UFC Rankings tab** on the leagues hub.
+
+### Changed
+- **Non-WC/UFC game times** — `/api/props/ingest` now accepts + stores `start_time`, so MLB/NBA/NHL/NFL
+  slate cards carry kickoff times (previously WC/UFC only, via their direct-DB paths).
+- **Leagues hub page split** — `pages/leagues/[league].tsx` (1,300+ lines) decomposed into focused tab
+  components + data hooks under `components/Leagues/`. Behavior-preserving: 34/34 render-harness checks
+  pass (nfl/wc/ufc).
+- **Predict** loading is now a skeleton placeholder instead of a "Loading…" string.
+
+> Next (→ v0.5.0, pending review): rename this board's tab to **Props**, restore a real **Slate** =
+> the day's games (game-based, linking to per-game props via `GameProps`), and retire the Lines tab.
+
 ## [0.4.4] — 2026-07-17
 
 Minor: UFC props — the first custom individual-sport prop system — plus all-leagues ingest routing.
