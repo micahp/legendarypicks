@@ -38,7 +38,7 @@ import time
 
 from fastapi import APIRouter
 
-from .common import _TITLE_SLUG
+from .common import _TITLE_SLUG, _canon_team
 from .frag import _parse_frag_score
 from .grid import _grid_score_index
 from .kalshi import _kalshi_esports_matchups
@@ -47,7 +47,7 @@ from .lol import msi_predictions
 from .match_identity import (_is_map_market, _normalize_match_metadata,
                              _repair_logos_by_psid, _same_pair, _same_team)
 from .pandascore import (_ps_enrich, _ps_logo_for, _ps_surface_matches, _ps_team_logo_api,
-                         _fetch_ps)
+                         _fetch_ps, _stable_stream_key, _PS_VG_TITLE)
 from .results_store import _load_results_store, _save_results_store
 from .slate_sources import (_fetch_bovada_rows, _frag_candidates, _frag_lookup,
                             _grid_lookup, _kalshi_winner_fuzzy, _ps_candidates)
@@ -297,9 +297,32 @@ def _rebuild_upcoming():
     # "something else is live right now" meant scheduled matches never got a real stream at all —
     # the upcoming/past feeds are already cached from _ps_enrich below regardless.
     ps_streams_by_id = {}
+    # Stable stream/event identity that SURVIVES a match finishing (a finished match's watch degrades
+    # to a bare web link and loses its stream key). streamKey = channel-level (twitch:callofduty), so
+    # a broadcast's games group together; eventId = serie.id. Keyed by PS match id, plus a
+    # (title, team-pair) fallback for archived finished rows that lost their ps id by output time.
+    ps_meta_by_id = {}    # ps match id -> {"streamKey", "eventId"}
+    ps_meta_by_pair = {}  # (title, frozenset(canonA, canonB)) -> same meta
     for m in _fetch_ps(include_running=live_window):
-        if m.get("id") is not None:
-            ps_streams_by_id[m["id"]] = m.get("streams_list") or []
+        if m.get("id") is None:
+            continue
+        sl = m.get("streams_list") or []
+        ps_streams_by_id[m["id"]] = sl
+        eid = (m.get("serie") or {}).get("id")
+        meta = {"streamKey": _stable_stream_key(sl), "eventId": eid}
+        ps_meta_by_id[m["id"]] = meta
+        title = (_PS_VG_TITLE.get((m.get("videogame") or {}).get("slug"))
+                 or _PS_VG_TITLE.get(((m.get("videogame") or {}).get("name") or "").lower()))
+        opps = m.get("opponents") or []
+        if title and len(opps) >= 2:
+            na = ((opps[0].get("opponent") or {}).get("name")) or ""
+            nb = ((opps[1].get("opponent") or {}).get("name")) or ""
+            ca, cb = _canon_team(na), _canon_team(nb)
+            if ca and cb:
+                pk = (title, frozenset((ca, cb)))
+                # Prefer an entry that actually resolved a channel key; else keep the first seen.
+                if pk not in ps_meta_by_pair or (meta["streamKey"] and not ps_meta_by_pair[pk]["streamKey"]):
+                    ps_meta_by_pair[pk] = meta
 
     for m in matches:
         ev = {"grid": None, "ps": None, "frag": None, "kalshi": None}
@@ -580,6 +603,27 @@ def _rebuild_upcoming():
             m["watch"] = _resolve_watch(slug, m.get("league"), live=False)
         else:
             m["watch"] = None  # ended_unknown: no honest stream to offer
+
+    # ---------------- stable stream identity (survives finishing) ----------------
+    # Attach a channel/event-level streamKey + eventId that persists after a match ends, so the board
+    # can group a broadcast's games and hold the featured slot through FINAL + gaps. Looked up by PS
+    # match id first; a (title, team-pair) fallback recovers archived finished rows that lost their ps
+    # id. Falls back to the event id as a grouping anchor when there's no stable channel key (e.g. a
+    # YouTube-video-only broadcast) so same-event games still group. Additive: null when unknown.
+    for m in matches:
+        meta = None
+        pid = m.get("_ps_id") or m.get("psId")
+        if pid is not None:
+            meta = ps_meta_by_id.get(pid)
+        if meta is None:
+            ca, cb = _canon_team(m.get("teamA", "")), _canon_team(m.get("teamB", ""))
+            if ca and cb:
+                meta = ps_meta_by_pair.get((m.get("title"), frozenset((ca, cb))))
+        if meta:
+            eid = meta.get("eventId")
+            m["streamKey"] = meta.get("streamKey") or (f"event:{eid}" if eid is not None else None)
+            if eid is not None:
+                m["eventId"] = eid
 
     # ---------------- output shaping ----------------
     # Final display-dupe net: drop a same-fixture twin that differs only by team-name casing/spacing

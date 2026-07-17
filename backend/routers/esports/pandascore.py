@@ -279,6 +279,51 @@ def _ps_stream_to_watch(streams_list, live):
     return best[1] if best else None
 
 
+def _stable_stream_key(streams_list):
+    """A CHANNEL-level, per-game-STABLE stream identity used to GROUP the games of one broadcast
+    together — and to keep the featured slot on that broadcast after a game finishes.
+
+    Deliberately DIFFERENT from _ps_stream_to_watch / the frontend's watch-derived `yt:<videoid>`
+    key: PandaScore rotates the YouTube `watch?v=` id per GAME within a single event (serie 10734
+    gave three different video ids on one Twitch channel), so a video-level key splits one broadcast
+    into a new "stream" every game. This anchors on the CHANNEL instead, which is constant across the
+    broadcast's games. Two concurrent arenas = two channels = two keys (correct — they stay separate).
+
+    Channels are lowercased (Twitch/Kick are case-insensitive; PS mixes 'callofduty'/'CallofDuty'
+    across series). Priority official+main > main > official > any. Returns None when the only stream
+    is a bare rotating YouTube video (no channel anchor) — callers fall back to the event id."""
+    best = None  # (prio, key)
+    for s in streams_list or []:
+        raw = (s.get("raw_url") or s.get("embed_url") or "").strip().lower()
+        if not raw:
+            continue
+        key = None
+        if "twitch.tv/" in raw:
+            ch = raw.split("channel=", 1)[1].split("&")[0] if "channel=" in raw else raw.rstrip("/").rsplit("/", 1)[-1]
+            if ch:
+                key = f"twitch:{ch}"
+        elif "kick.com/" in raw:
+            ch = raw.rstrip("/").rsplit("/", 1)[-1].split("?")[0]
+            if ch:
+                key = f"kick:{ch}"
+        elif "youtube.com/channel/" in raw:
+            cid = raw.split("/channel/", 1)[1].split("/")[0].split("?")[0]
+            if cid:
+                key = f"ytc:{cid}"
+        elif "youtube.com/@" in raw:
+            handle = raw.split("/@", 1)[1].split("/")[0].split("?")[0]
+            if handle:
+                key = f"ytc:@{handle}"
+        # a bare watch?v= / youtu.be video is per-GAME, not a stable channel anchor -> skip it
+        if not key:
+            continue
+        prio = (0 if (s.get("main") and s.get("official")) else 1 if s.get("main")
+                else 2 if s.get("official") else 3)
+        if best is None or prio < best[0]:
+            best = (prio, key)
+    return best[1] if best else None
+
+
 # _ps_enrich is called once PER BOVADA MATCH (~50-80 times per /api/esports/upcoming request),
 # and each call used to re-scan the full ~1174-entry PandaScore match list AND recompute each
 # opponent's stripped name set from scratch every time — same ~1174 PandaScore matches, same

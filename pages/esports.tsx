@@ -25,7 +25,7 @@ type CS2Player = { name: string; kills: number | null; deaths: number | null }
 type CS2Team = { name: string; score: number | null; won: boolean; players: CS2Player[] }
 type CS2Live = { live: boolean; title?: string; tournament?: string; stream?: { platform: string; channel: string } | null; teamA?: CS2Team; teamB?: CS2Team }
 
-type UpMatch = { startTime: number | null; live: boolean; title: string; league: string; teamA: string; teamB: string; favorite: { name: string; pct: number } | null; watch: { platform: string; url: string; channel: string | null; online?: boolean | null; embedUrl?: string | null; alternates?: Array<{ platform: string; url: string; channel: string | null; online?: boolean | null; embedUrl?: string | null }> } | null; score?: { a: number | null; b: number | null } | null; finished?: boolean | null; winner?: 'a' | 'b' | null; pinned?: boolean; model?: { favName: string; modelPct: number; marketPct: number | null; edge: number | null } | null; logoA?: string | null; logoB?: string | null; minorLeague?: boolean; tier?: number; prominence?: number; psId?: number | string | null }
+type UpMatch = { startTime: number | null; live: boolean; title: string; league: string; teamA: string; teamB: string; favorite: { name: string; pct: number } | null; watch: { platform: string; url: string; channel: string | null; online?: boolean | null; embedUrl?: string | null; alternates?: Array<{ platform: string; url: string; channel: string | null; online?: boolean | null; embedUrl?: string | null }> } | null; score?: { a: number | null; b: number | null } | null; finished?: boolean | null; winner?: 'a' | 'b' | null; pinned?: boolean; model?: { favName: string; modelPct: number; marketPct: number | null; edge: number | null } | null; logoA?: string | null; logoB?: string | null; minorLeague?: boolean; tier?: number; prominence?: number; psId?: number | string | null; streamKey?: string | null; eventId?: number | string | null }
 type UpcomingData = { matches: UpMatch[]; source?: string; error?: string; building?: boolean }
 
 const POLL_MS = 10_000
@@ -664,6 +664,10 @@ function liveMatchKey(m: UpMatch) {
 // target, which is the stream's identity; a match that has ended loses it (its watch degrades to a
 // bare channel link), so the current-game pointer is carried across that one transition by LiveNow.
 function streamKeyOf(m: UpMatch): string | null {
+  // Backend-provided channel/event-level key survives a match finishing (the watch link degrades to a
+  // bare web url once a game ends). Prefer it; fall back to deriving from the live watch link for rows
+  // the backend couldn't key (Bovada-only matches with no PandaScore stream).
+  if (m.streamKey) return m.streamKey
   const w = m.watch
   if (!w) return null
   if (w.platform === 'youtube') {
@@ -689,6 +693,13 @@ function isEmbeddableWatch(w?: UpMatch['watch']): boolean {
   if (w.platform === 'youtube') return !!w.embedUrl
   if (w.platform === 'twitch' || w.platform === 'kick') return !!w.channel
   return false
+}
+
+function hasConfirmedOnlineWatch(w?: UpMatch['watch']): boolean {
+  if (!w) return false
+  return [w, ...(w.alternates || [])].some((source) => (
+    source.online === true && isEmbeddableWatch(source)
+  ))
 }
 
 // The stream's live playable source — the embeddable feed from any match riding it (they share the
@@ -717,8 +728,8 @@ function fmtCountdown(ms: number): string {
   return h > 0 ? `${h}:${pad(m)}:${pad(sec)}` : `${m}:${pad(sec)}`
 }
 
-function LiveCard({ m, host, featured = false, onPromote, upNext = null, streamSrcOverride = null }:
-  { m: UpMatch; host: string; featured?: boolean; onPromote?: () => void; upNext?: UpMatch | null; streamSrcOverride?: string | null }) {
+export function LiveCard({ m, host, featured = false, onPromote, upNext = null, streamSrcOverride = null, startingSoon = false }:
+  { m: UpMatch; host: string; featured?: boolean; onPromote?: () => void; upNext?: UpMatch | null; streamSrcOverride?: string | null; startingSoon?: boolean }) {
   const [open, setOpen] = useState(false)
   const [srcIdx, setSrcIdx] = useState(0)
   // Tick once a second only while an Up Next countdown is showing.
@@ -761,8 +772,10 @@ function LiveCard({ m, host, featured = false, onPromote, upNext = null, streamS
         <div className="mb-2">
           <Eyebrow live>{m.title} · {m.league}</Eyebrow>
         </div>
-        {m.finished ? (
-          <div className="mb-1 font-mono text-[10px] uppercase tracking-wider text-zinc-500">Final</div>
+        {m.finished || startingSoon ? (
+          <div className="mb-1 font-mono text-[10px] uppercase tracking-wider text-zinc-500">
+            {m.finished ? 'Final' : 'Starting soon'}
+          </div>
         ) : null}
         <div className="space-y-1.5">
           <div className="flex items-center justify-between gap-2">
@@ -841,7 +854,7 @@ function LiveCard({ m, host, featured = false, onPromote, upNext = null, streamS
         </div>
       ) : null}
       {featured && upNext ? (
-        <div className="flex items-center justify-between gap-3 border-t border-zinc-800 px-4 py-3">
+        <div className="flex items-center justify-between gap-3 px-4 py-3">
           <div className="min-w-0">
             <div className="font-mono text-[10px] uppercase tracking-wider text-zinc-500">Up Next</div>
             <div className="truncate text-sm font-semibold text-zinc-300">{upNext.teamA}</div>
@@ -916,12 +929,31 @@ function MsiLiveCard({ m, onPromote }: { m: LiveMatch; onPromote: () => void }) 
   )
 }
 
-function LiveNow({ matches, host, msi = null, slate = [] }: { matches: UpMatch[]; host: string; msi?: LiveMatch | null; slate?: UpMatch[] }) {
+export function LiveNow({ matches, host, msi = null, slate = [] }: { matches: UpMatch[]; host: string; msi?: LiveMatch | null; slate?: UpMatch[] }) {
   const [selectedKey, setSelectedKey] = useState<string | null>(null)
+  const [scheduleNow, setScheduleNow] = useState<number>(() => Date.now())
   const heroRef = useRef<HTMLDivElement>(null)
   // The stream + game we're currently featuring — remembered so that when the game ends we can hold
   // the same stream and slide the current-game pointer to whatever starts next on it.
   const lastFeatured = useRef<{ streamKey: string | null; matchKey: string | null }>({ streamKey: null, matchKey: null })
+  // The provider can stay "scheduled" while the confirmed-live broadcast has moved from its desk
+  // break into the next match. Re-render at the scheduled handoff so the stream card can advance;
+  // the API remains authoritative for scores and the eventual explicit live state.
+  useEffect(() => {
+    const nextStart = slate
+      .filter((m) => (
+        !m.live
+        && !m.finished
+        && m.startTime != null
+        && m.startTime > scheduleNow
+        && hasConfirmedOnlineWatch(m.watch)
+      ))
+      .reduce((soonest, m) => Math.min(soonest, m.startTime as number), Infinity)
+    if (!Number.isFinite(nextStart)) return
+    const delay = Math.min(Math.max(nextStart - Date.now() + 100, 100), 2_147_483_647)
+    const timer = setTimeout(() => setScheduleNow(Date.now()), delay)
+    return () => clearTimeout(timer)
+  }, [slate, scheduleNow])
   // One unified "Live now" section. When MSI is live it's the marquee event (5-10x the volume of
   // the regional slate) so it takes the featured full-width slot with its rich lolesports view;
   // every other live match flows into the grid below. With no MSI, the featured slot falls back to
@@ -939,36 +971,87 @@ function LiveNow({ matches, host, msi = null, slate = [] }: { matches: UpMatch[]
   })
   const selected = sorted.find((m) => liveMatchKey(m) === selectedKey)
   const showMsiHero = Boolean(msi && !selected)
-  const liveFeatured = selected ?? (!msi ? sorted[0] : undefined)
-  // While a game is live in the slot, remember its stream + key (ref write during render is fine —
-  // it's a cache, not state) so the next render can hold that stream once the game ends.
-  if (liveFeatured) lastFeatured.current = { streamKey: streamKeyOf(liveFeatured), matchKey: liveMatchKey(liveFeatured) }
-  // Between games: keep the just-ended game featured (as FINAL) as long as ITS stream is still on
-  // air. The live feed is already present on the upcoming matches — we're only holding the pointer.
-  const active = activeStreamKeys(slate)
-  const betweenFeatured = (!liveFeatured && !msi && lastFeatured.current.streamKey &&
-    active.has(lastFeatured.current.streamKey))
-    ? slate.find((m) => m.finished && liveMatchKey(m) === lastFeatured.current.matchKey)
-    : undefined
-  const featuredMatch = liveFeatured ?? betweenFeatured
+
+  // Feature a STREAM, not a match, and ride it through its games AND the desk gaps between them. A
+  // stream = games that share the same stream LINK *and* the same EVENT (title+league), running
+  // sequentially. Keying on link alone could splice two events that share a channel; keying on link+
+  // event keeps them apart, and correctly splits a single event's concurrent arenas (they resolve to
+  // different links). This keeps a marquee stream (a Tier-0 CoD Champs broadcast) featured after a game
+  // ends and even while a lesser match is live elsewhere — that lesser match just sits in the grid.
+  type Stream = { key: string; streamKey: string; event: string; prom: number; live?: UpMatch; next?: UpMatch }
+  // Prefer the backend's stable eventId (PandaScore serie.id): the league STRING drifts across a
+  // match's life (scheduled "Cdl Championship" -> finished "Call of Duty League — Championship 2026"),
+  // which would split one broadcast's games into separate events. eventId is constant for both.
+  const eventOf = (m: UpMatch) => (m.eventId != null ? `ev:${m.eventId}` : `${m.title}|${m.league}`)
+  const streams = new Map<string, Stream>()
+  for (const m of slate) {
+    const sk = streamKeyOf(m); if (!sk) continue
+    const key = `${sk}::${eventOf(m)}`               // same link AND same event
+    const s = streams.get(key) ?? { key, streamKey: sk, event: eventOf(m), prom: 0 }
+    s.prom = Math.max(s.prom, m.prominence ?? 0)
+    if (m.live && (!s.live || (m.prominence ?? 0) > (s.live.prominence ?? 0))) s.live = m
+    // next = the soonest game that hasn't started — the next in the sequence (always a future time,
+    // so it can't be one that's concurrent with a game already live on this stream).
+    if (!m.live && !m.finished && (!s.next || (m.startTime ?? Infinity) < (s.next.startTime ?? Infinity))) s.next = m
+    streams.set(key, s)
+  }
+  // On air = a live game is playing, or a playable source for the next game is confirmed online.
+  const onAir = Array.from(streams.values()).filter((s) => s.live || (s.next != null && hasConfirmedOnlineWatch(s.next.watch)))
+  onAir.sort((a, b) => b.prom - a.prom)
+
+  // Pick the featured stream + the game it shows. A live game plays outright. In a desk gap, keep
+  // the official feed mounted under the most recent finished game and show the next fixture below it.
+  // The in-memory pointer makes the transition instant; stable stream + event ids recover the same
+  // state after a cold reload.
+  let featStream: Stream | undefined
+  let gapGame: UpMatch | undefined
+  let startingGame: UpMatch | undefined
+  const selKey = selected && streamKeyOf(selected) ? `${streamKeyOf(selected)}::${eventOf(selected)}` : null
+  if (selKey) {
+    featStream = streams.get(selKey)
+  } else if (!msi) {
+    for (const s of onAir) {
+      if (s.live) { featStream = s; break }
+      if (s.next?.startTime != null && s.next.startTime <= scheduleNow) {
+        featStream = s; startingGame = s.next; break
+      }
+      // Gap: first use the exact game remembered while it was live. After a reload, rebuild that
+      // pointer from the newest finished fixture on this same stable stream + event identity.
+      if (lastFeatured.current.streamKey === s.key) {
+        const g = slate.find((m) => m.finished && liveMatchKey(m) === lastFeatured.current.matchKey)
+        if (g) { featStream = s; gapGame = g; break }
+      }
+      const nextStart = s.next?.startTime ?? Infinity
+      const justFinished = slate
+        .filter((m) => (
+          m.finished
+          && streamKeyOf(m) === s.streamKey
+          && eventOf(m) === s.event
+          && (m.startTime ?? -Infinity) <= nextStart
+        ))
+        .sort((a, b) => (b.startTime ?? 0) - (a.startTime ?? 0))[0]
+      if (justFinished) { featStream = s; gapGame = justFinished; break }
+    }
+  }
+  // Remember the live game we're featuring so this same stream can show it as FINAL once it ends.
+  if (featStream?.live) lastFeatured.current = { streamKey: featStream.key, matchKey: liveMatchKey(featStream.live) }
+
+  const featuredMatch = selected ?? featStream?.live ?? startingGame ?? gapGame
   const featuredKey = featuredMatch ? liveMatchKey(featuredMatch) : null
-  // Up Next + the borrowed feed, both scoped to the featured game's STREAM (the just-ended game has
-  // lost its own key, so fall back to the held stream). The feed is only borrowed when the featured
-  // game can't embed its own watch (i.e. it's the finished one) — a live game plays its own.
-  const featStreamKey = featuredMatch
-    ? (streamKeyOf(featuredMatch) ?? (featuredMatch === betweenFeatured ? lastFeatured.current.streamKey : null))
-    : null
-  const nx = featStreamKey ? nextOnStream(slate, featStreamKey, featuredMatch) : null
-  const upNext = nx && (nx.startTime == null || nx.startTime - Date.now() < 3 * 60 * 60 * 1000) ? nx : null
-  const streamSrcOverride = (featuredMatch && featStreamKey && !isEmbeddableWatch(featuredMatch.watch))
-    ? streamSrc(slate, featStreamKey, host) : null
+  // In a gap = featuring the just-ended game while the next hasn't gone live yet. The countdown and
+  // Up Next appear ONLY here — never during a live game.
+  const inGap = Boolean(gapGame && featuredMatch === gapGame)
+  const upNext = inGap ? (featStream?.next ?? null) : null
+  // A finished game's own watch can't embed; borrow the stream's live feed so it keeps playing.
+  const streamSrcOverride = (featuredMatch && featStream && !isEmbeddableWatch(featuredMatch.watch))
+    ? streamSrc(slate, featStream.streamKey, host) : null
   const selectedStillLive = !selectedKey || sorted.some((m) => liveMatchKey(m) === selectedKey)
 
   useEffect(() => {
     if (!selectedStillLive) setSelectedKey(null)
   }, [selectedStillLive])
 
-  if (!matches.length && !msi && !betweenFeatured) return null
+  if (!featuredMatch && !showMsiHero) return null
 
   const promote = (key: string | null) => {
     setSelectedKey(key)
@@ -1007,7 +1090,8 @@ function LiveNow({ matches, host, msi = null, slate = [] }: { matches: UpMatch[]
     <section className="space-y-4">
       <SectionHeader live eyebrow="Live now" title={total === 0 ? 'Live now' : total === 1 ? 'Live match' : `${total} matches live`} />
       <div ref={heroRef} className="scroll-mt-4">
-        <LiveCard key={featuredKey} m={featuredMatch} host={host} featured upNext={upNext} streamSrcOverride={streamSrcOverride} />
+        <LiveCard key={featuredKey} m={featuredMatch} host={host} featured upNext={upNext}
+                  streamSrcOverride={streamSrcOverride} startingSoon={featuredMatch === startingGame} />
       </div>
       {alsoLive}
     </section>
