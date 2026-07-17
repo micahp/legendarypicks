@@ -334,6 +334,18 @@ def _wc_event_date(prop: dict, fallback: str) -> str:
         return fallback
 
 
+def _event_start_iso(prop: dict):
+    """Full UTC kickoff datetime (ISO) from Bovada startTime, so the slate can show a game time and
+    not just a date. None when the stamp is missing/unparseable."""
+    try:
+        stamp = float(prop.get("start_time"))
+        if stamp > 10_000_000_000:
+            stamp /= 1000
+        return dt.datetime.fromtimestamp(stamp, dt.timezone.utc).isoformat()
+    except (TypeError, ValueError, OSError, OverflowError):
+        return None
+
+
 def _wc_direct_ingest(all_props: list, today: str):
     """Direct DB insert for WC props — bypasses ingest API since WC players
     don't exist in the players table yet (Phase 1: name-match only).
@@ -363,20 +375,23 @@ def _wc_direct_ingest(all_props: list, today: str):
 
         for gkey, batch in by_game.items():
             print(f"  {batch['away']} @ {batch['home']}: {len(batch['props'])} props")
+            game_start = _event_start_iso(batch["props"][0]) if batch["props"] else None
             cur = con.execute(
-                "SELECT id,league,date,home,away,espn_event_id FROM prop_games "
+                "SELECT id,league,date,home,away,espn_event_id,start_time FROM prop_games "
                 "WHERE league=? AND date=? AND home=? AND away=?",
                 ("wc", batch["date"], batch["home"], batch["away"]))
             game_row = cur.fetchone()
             if game_row:
                 game_id = game_row["id"]
+                if game_start and not game_row["start_time"]:   # backfill a known kickoff time
+                    con.execute("UPDATE prop_games SET start_time=? WHERE id=?", (game_start, game_id))
             else:
                 cur = con.execute(
-                    "INSERT INTO prop_games(league,date,home,away,espn_event_id) VALUES(?,?,?,?,?)",
-                    ("wc", batch["date"], batch["home"], batch["away"], ""))
+                    "INSERT INTO prop_games(league,date,home,away,espn_event_id,start_time) VALUES(?,?,?,?,?,?)",
+                    ("wc", batch["date"], batch["home"], batch["away"], "", game_start))
                 game_id = cur.lastrowid
                 game_row = con.execute(
-                    "SELECT id,league,date,home,away,espn_event_id FROM prop_games WHERE id=?",
+                    "SELECT id,league,date,home,away,espn_event_id,start_time FROM prop_games WHERE id=?",
                     (game_id,)).fetchone()
 
             if not game_row["espn_event_id"]:

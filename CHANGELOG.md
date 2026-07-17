@@ -16,6 +16,21 @@ in `package.json` tracks the next (in-development) release.
 
 ## [Unreleased]
 
+## [0.4.3] — 2026-07-17
+
+Patch: the props board shows the upcoming slate grouped by date, with game times.
+
+### Added
+- **Game kickoff time on each slate card** — `prop_games` gains a `start_time` (derived from the
+  Bovada event startTime), stored on WC ingest, surfaced through `/api/props/slate`, and shown on the
+  card. (Requires the additive `ALTER TABLE prop_games ADD COLUMN start_time TEXT` on deploy.)
+
+### Changed
+- **Props slate is now the UPCOMING board**: `/api/props/slate` without a date returns today-forward
+  games (dropping months-old stale games that never pruned), and the Slate tab groups them into
+  per-date sections instead of one day at a time. The page also lands on the nearest date that has
+  props, so it no longer opens blank on a fixture-less day (props post ~a day before a match).
+
 ## [0.4.2] — 2026-07-17
 
 Patch: a non-English broadcast no longer takes the auto-playing hero over an English one.

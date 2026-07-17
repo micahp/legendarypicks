@@ -197,7 +197,7 @@ def props_slate(league: Optional[str] = Query(None),
     """Return props grouped by game → team → player. For the Slate tab."""
     sql = """SELECT p.id, p.market, p.line, p.side, p.source,
                     pl.name AS player_name, pl.team AS player_team, pl.league,
-                    pg.id AS game_id, pg.home, pg.away, pg.date AS game_date
+                    pg.id AS game_id, pg.home, pg.away, pg.date AS game_date, pg.start_time
              FROM props p
              JOIN players pl ON pl.id = p.player_id
              JOIN prop_games pg ON pg.id = p.game_id
@@ -209,6 +209,11 @@ def props_slate(league: Optional[str] = Query(None),
     if date:
         sql += " AND pg.date = ?"
         params.append(date)
+    else:
+        # No specific date → the UPCOMING slate: today forward only. This both drops stale past games
+        # (e.g. months-old MLB that never pruned) and lets the client show the whole slate grouped by
+        # date, Bovada-style. The exact-date path stays for deep links / the date navigator.
+        sql += " AND pg.date >= date('now')"
     sql += " ORDER BY pg.date, pg.home, pg.away, pl.name, p.market, p.side"
     with closing(_db()) as con:
         rows = con.execute(sql, params).fetchall()
@@ -223,6 +228,7 @@ def props_slate(league: Optional[str] = Query(None),
                 "home": r["home"],
                 "away": r["away"],
                 "date": r["game_date"],
+                "start_time": r["start_time"],
                 "league": r["league"],
                 "players": {}
             }

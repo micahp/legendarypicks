@@ -13,7 +13,7 @@ interface Prop {
   actual_value: number | null; hit: boolean | null; settled_at: string | null
 }
 interface SlateGame {
-  game_id: number; home: string; away: string; date: string; league: string
+  game_id: number; home: string; away: string; date: string; start_time?: string | null; league: string
   prop_count: number
   players: { name: string; team: string; props: { market: string; line: number; side: string; source: string }[] }[]
 }
@@ -261,56 +261,96 @@ function LinesTab({ league, date }: { league: League; date: string }) {
 }
 
 // ── Tab: Slate ────────────────────────────────────────────
-function SlateTab({ league, date }: { league: League; date: string }) {
+function SlateTab({ league }: { league: League }) {
   const [slate, setSlate] = useState<SlateGame[]>([])
   const [loading, setLoading] = useState(true)
   const [expandedGame, setExpandedGame] = useState<number | null>(null)
+  const [collapsedDates, setCollapsedDates] = useState<Set<string>>(new Set())
 
+  // No `date` param → the backend returns the whole UPCOMING slate (today forward), which we group by
+  // date below. This is the Bovada-style board: every upcoming date on one page, each collapsible —
+  // so a day with no fixture never leaves the page blank while other dates have props.
   useEffect(() => {
     setLoading(true)
     const params = new URLSearchParams()
-    params.set('date', date)
     if (league !== 'All') params.set('league', league)
     fetch(`/api/props/slate?${params}`)
       .then(r => r.json()).then(d => { setSlate(d); setLoading(false) })
       .catch(() => setLoading(false))
-  }, [league, date])
+  }, [league])
+
+  // Group games by date, dates ascending (nearest first).
+  const byDate: { date: string; games: SlateGame[] }[] = []
+  {
+    const idx = new Map<string, SlateGame[]>()
+    for (const g of slate) {
+      if (!idx.has(g.date)) { idx.set(g.date, []); byDate.push({ date: g.date, games: idx.get(g.date)! }) }
+      idx.get(g.date)!.push(g)
+    }
+    byDate.sort((a, b) => a.date.localeCompare(b.date))
+  }
+
+  const fmtDate = (d: string) =>
+    new Date(d + 'T12:00:00').toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })
 
   return (
-    <div className="space-y-4">
-      {loading ? <Skeleton lines={4} /> : slate.length === 0 ? (
-        <div className="text-center py-16 text-zinc-500 text-sm">No games on the board. Check back closer to game time.</div>
+    <div className="space-y-5">
+      {loading ? <Skeleton lines={4} /> : byDate.length === 0 ? (
+        <div className="text-center py-16 text-zinc-500 text-sm">No upcoming games on the board. Check back closer to game time.</div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {slate.map(g => (
-            <div key={g.game_id} className="rounded-xl border border-zinc-800 bg-zinc-900 overflow-hidden">
-              <button onClick={() => setExpandedGame(expandedGame === g.game_id ? null : g.game_id)}
-                className="w-full text-left px-4 py-3 hover:bg-zinc-800/50 transition-colors flex items-center justify-between">
-                <div>
-                  <div className="font-semibold text-sm">{g.away} @ {g.home}</div>
-                  <div className="text-xs text-zinc-500">{g.league.toUpperCase()} · {new Date(g.date).toLocaleDateString()} · {g.prop_count} props</div>
+        byDate.map(({ date, games }) => {
+          const collapsed = collapsedDates.has(date)
+          const dayProps = games.reduce((n, g) => n + g.prop_count, 0)
+          return (
+            <div key={date} className="space-y-3">
+              <button
+                onClick={() => setCollapsedDates(s => { const n = new Set(s); n.has(date) ? n.delete(date) : n.add(date); return n })}
+                className="w-full flex items-center justify-between text-left group">
+                <div className="flex items-center gap-2">
+                  <span className="text-zinc-500 text-sm">{collapsed ? '▸' : '▾'}</span>
+                  <h3 className="text-sm font-bold uppercase tracking-wide text-zinc-300">{fmtDate(date)}</h3>
+                  <span className="text-xs text-zinc-600">{games.length} game{games.length === 1 ? '' : 's'} · {dayProps} props</span>
                 </div>
-                <span className="text-zinc-500 text-lg">{expandedGame === g.game_id ? '▾' : '▸'}</span>
+                <div className="h-px flex-1 ml-3 bg-gradient-to-r from-zinc-800 to-transparent" />
               </button>
-              {expandedGame === g.game_id && (
-                <div className="border-t border-zinc-800 px-4 py-3 space-y-4 max-h-96 overflow-y-auto">
-                  {g.players.map(p => (
-                    <div key={p.name}>
-                      <div className="text-xs font-bold text-zinc-400 mb-1.5 flex items-center gap-1.5">{p.name}<span className="text-zinc-600 font-normal">{p.team}</span></div>
-                      <div className="flex flex-wrap gap-1.5">
-                        {p.props.map((pr, i) => (
-                          <span key={i} className={`inline-flex items-center gap-1 px-2 py-1 rounded text-[11px] font-mono ${pr.side === 'over' ? 'bg-emerald-900/30 text-emerald-300' : 'bg-red-900/30 text-red-300'}`}>
-                            {pr.market.replace(/_/g, ' ')} {pr.line} {pr.side.toUpperCase()}
-                          </span>
-                        ))}
-                      </div>
+              {!collapsed && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {games.map(g => (
+                    <div key={g.game_id} className="rounded-xl border border-zinc-800 bg-zinc-900 overflow-hidden">
+                      <button onClick={() => setExpandedGame(expandedGame === g.game_id ? null : g.game_id)}
+                        className="w-full text-left px-4 py-3 hover:bg-zinc-800/50 transition-colors flex items-center justify-between">
+                        <div>
+                          <div className="font-semibold text-sm">{g.away} @ {g.home}</div>
+                          <div className="text-xs text-zinc-500">
+                            {g.start_time ? `${new Date(g.start_time).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })} · ` : ''}
+                            {g.league.toUpperCase()} · {g.prop_count} props
+                          </div>
+                        </div>
+                        <span className="text-zinc-500 text-lg">{expandedGame === g.game_id ? '▾' : '▸'}</span>
+                      </button>
+                      {expandedGame === g.game_id && (
+                        <div className="border-t border-zinc-800 px-4 py-3 space-y-4 max-h-96 overflow-y-auto">
+                          {g.players.map(p => (
+                            <div key={p.name}>
+                              <div className="text-xs font-bold text-zinc-400 mb-1.5 flex items-center gap-1.5">{p.name}<span className="text-zinc-600 font-normal">{p.team}</span></div>
+                              <div className="flex flex-wrap gap-1.5">
+                                {p.props.map((pr, i) => (
+                                  <span key={i} className={`inline-flex items-center gap-1 px-2 py-1 rounded text-[11px] font-mono ${pr.side === 'over' ? 'bg-emerald-900/30 text-emerald-300' : 'bg-red-900/30 text-red-300'}`}>
+                                    {pr.market.replace(/_/g, ' ')} {pr.line} {pr.side.toUpperCase()}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
               )}
             </div>
-          ))}
-        </div>
+          )
+        })
       )}
     </div>
   )
@@ -822,7 +862,21 @@ export default function PropsPage() {
     if (q && /^\d{4}-\d{2}-\d{2}$/.test(q)) setDate(q)
   }, [])
 
-  const showDateNav = tab === 'lines' || tab === 'slate'
+  // If today has no games, land the date on the nearest UPCOMING date that actually has props, so the
+  // Lines tab + date navigator don't open on a blank day (props post ~a day before the match). Skipped
+  // when a ?date= deep link is present.
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('date')) return
+    fetch('/api/props/slate')
+      .then(r => r.json())
+      .then((games: SlateGame[]) => {
+        const dates = Array.from(new Set(games.map(g => g.date))).sort()
+        if (dates.length && !dates.includes(today)) setDate(dates[0])
+      })
+      .catch(() => {})
+  }, [])
+
+  const showDateNav = tab === 'lines'
 
   return (
     <>
@@ -882,7 +936,7 @@ export default function PropsPage() {
 
         {/* Tab content */}
         {tab === 'lines' && <LinesTab league={league} date={date} />}
-        {tab === 'slate' && <SlateTab league={league} date={date} />}
+        {tab === 'slate' && <SlateTab league={league} />}
         {tab === 'performance' && <PerformanceTab league={league} />}
         {tab === 'matchups' && <MatchupsTab />}
         {tab === 'model' && <ModelTab league={league} />}
