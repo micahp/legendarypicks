@@ -254,6 +254,39 @@ def _prominence(tier, stage):
     return (3 - tier) * 100 + (3 - stage) * 10
 
 
+# Titles whose competition has NO English broadcast (Chinese-only casts). Their prestige TIER is left
+# correct (King Pro League is a top-flight league), but for our English-speaking audience they cannot
+# be the auto-playing hero, so `_broadcast_is_foreign` flags them and prominence is demoted below every
+# English cast. They still appear on the board.
+_FOREIGN_TITLES = ("king of glory", "honor of kings")
+_FOREIGN_HOSTS = ("bilibili", "huya", "douyu", "honorofkings", "afreecatv", "nimo.tv", "douyin", "openrec")
+_LOCALE_CHAN = re.compile(r"(^|[_./-])(cn|zh|kr|jp|tw|ru|vn|th|br|tr)([_./-]|$)")
+# A foreign broadcast sorts below EVERY English/unknown one regardless of prestige, so the offset just
+# needs to exceed the max real prominence (tier-0 grand final = 330).
+_FOREIGN_DEMOTION = 1000
+
+
+def _broadcast_is_foreign(title, league, watch):
+    """Whether this match's broadcast has no English cast for our audience — a separate axis from
+    competitive prestige (tier). Signals, in order: a title with no English broadcast; the chosen
+    stream's own language tag; a foreign-only streaming host; a locale-suffixed channel. Unknown
+    language is treated as NON-foreign so we never over-demote a stream we simply can't classify."""
+    t = (title or "").lower()
+    if any(ft in t for ft in _FOREIGN_TITLES):
+        return True
+    w = watch or {}
+    lang = (w.get("language") or "").lower()
+    if lang and lang != "en":
+        return True
+    host = f"{w.get('url', '')} {w.get('embedUrl', '')}".lower()
+    if any(h in host for h in _FOREIGN_HOSTS):
+        return True
+    chan = (w.get("channel") or "").lower()
+    if chan and _LOCALE_CHAN.search(chan):
+        return True
+    return False
+
+
 def _sort_key(m):
     """Sort key: (not live, tier, stage, live_no_stream, startTime).
     tier is the coarse event-prestige floor; stage is round-importance WITHIN a tier (a Grand Final
@@ -280,7 +313,11 @@ def apply_tier_and_filter(matches):
         # `prominence` is the single importance score the frontend sorts by (tier + stage). Higher
         # = more prominent. Emitted so the client has ONE ordering signal instead of re-deriving a
         # coarser one that collapsed tier-0 and tier-1 together.
-        m["prominence"] = _prominence(m["tier"], m["stageRank"])
+        # A non-English broadcast (no English cast) is demoted below every English/unknown one so it
+        # can't grab the auto-playing hero — while staying on the board. `foreign` is emitted too so
+        # the client can label it. Prestige tier is unchanged; this is a language axis, not prestige.
+        m["foreign"] = _broadcast_is_foreign(m.get("title"), m.get("league"), m.get("watch"))
+        m["prominence"] = _prominence(m["tier"], m["stageRank"]) - (_FOREIGN_DEMOTION if m["foreign"] else 0)
         # Backward-compat field: old consumers reading `minorLeague` still see a sane boolean
         # (tier >= 2 — Challengers-or-below), even though `tier`/`prominence` are the real signals now.
         m["minorLeague"] = m["tier"] >= 2

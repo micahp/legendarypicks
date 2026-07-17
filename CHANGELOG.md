@@ -16,6 +16,22 @@ in `package.json` tracks the next (in-development) release.
 
 ## [Unreleased]
 
+## [0.4.2] — 2026-07-17
+
+Patch: a non-English broadcast no longer takes the auto-playing hero over an English one.
+
+### Added
+- **Backend surfaces the stream `language`** (it was computed for stream ranking but dropped before
+  output) and an authoritative **`foreign`** flag per match, from: titles with no English broadcast
+  (King of Glory / Honor of Kings), the chosen stream's own language tag, foreign-only streaming hosts
+  (bilibili/huya/douyu/…), and locale-suffixed channels.
+
+### Changed
+- **A non-English broadcast is demoted in `prominence`** below every English/unknown one, so it can no
+  longer grab the auto-playing hero (King of Glory went 210 → −790) while still showing on the board.
+  Competitive prestige (`tier`) is unchanged — this is a separate language axis. Replaces a fragile
+  client-side language heuristic with the authoritative backend signal.
+
 ## [0.4.1] — 2026-07-16
 
 Patch: a stable per-broadcast stream identity, and an `/esports` rewrite that renders every broadcast.

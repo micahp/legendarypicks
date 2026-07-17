@@ -258,7 +258,10 @@ def _rule_candidates(title_slug, league):
 
 def _watch_shape(c, online):
     return {"platform": c["platform"], "url": c["url"], "channel": c.get("channel"),
-            "embedUrl": c.get("embedUrl"), "online": online}
+            "embedUrl": c.get("embedUrl"), "online": online,
+            # Surface the stream's language (already used for ranking above) so the board can demote a
+            # non-English broadcast from the auto-playing hero. None = unknown (treated as non-foreign).
+            "language": c.get("language")}
 
 
 def _pick_stream(candidates, match_live=True, team_names=None, network_checks=True,
