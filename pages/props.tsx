@@ -1,17 +1,10 @@
-import { useState, useEffect, useCallback, useRef, Fragment } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Head from 'next/head'
-import PropChart, { PropHistory } from '../components/Props/PropChart'
 import MarketSlateBoard from '../components/Props/MarketSlateBoard'
 
 // ── types ────────────────────────────────────────────────
 interface Player {
   id: number; name: string; team: string; league: string
-}
-interface Prop {
-  id: number; market: string; line: number; side: string; source: string
-  captured_at: string; player_name: string; player_team: string; league: string
-  player_id: number
-  actual_value: number | null; hit: boolean | null; settled_at: string | null
 }
 interface SlateGame {
   game_id: number; home: string; away: string; date: string; start_time?: string | null; league: string
@@ -25,34 +18,17 @@ interface PerfRow {
   hit_rate_weighted: number; trend: string
 }
 
-type Tab = 'lines' | 'slate' | 'performance' | 'matchups' | 'model'
+type Tab = 'slate' | 'props' | 'performance' | 'matchups' | 'model'
 type League = 'All' | 'nba' | 'mlb' | 'nfl' | 'nhl' | 'wc' | 'ufc'
 
 const TABS: { key: Tab; label: string }[] = [
-  { key: 'lines', label: 'Lines' },
   { key: 'slate', label: 'Slate' },
+  { key: 'props', label: 'Props' },
   { key: 'performance', label: 'Performance' },
   { key: 'matchups', label: 'Matchups' },
   { key: 'model', label: 'Model' },
 ]
 const LEAGUES: League[] = ['All', 'mlb', 'nba', 'nfl', 'nhl', 'wc', 'ufc']
-// Market filter options scoped to each league. Grounded in real data + the backend's
-// canonical market map (backend/_core.py `_MARKET_STAT_KEY`): every entry is a market the
-// /api/props exact-match filter can actually return rows for. MLB here is the pitcher-side
-// set that's stored as plain market strings — batter markets (total_bases, etc.) carry a
-// per-player suffix so they can't be exact-matched and are intentionally omitted.
-const LEAGUE_MARKETS: Record<Exclude<League, 'All'>, string[]> = {
-  nba: ['points', 'rebounds', 'assists', 'threes', 'steals', 'blocks'],
-  mlb: ['strikeouts', 'outs', 'hits_allowed', 'earned_runs'],
-  nfl: ['passing_yards', 'rushing_yards', 'receiving_yards', 'receptions'],
-  nhl: ['goals', 'assists', 'points', 'shots'],
-  wc: ['goals', 'assists', 'shots_on_target', 'shots'],
-  ufc: ['win_by_ko', 'win_by_submission', 'win_by_decision'],
-}
-// "All" leagues → union of every league's markets, de-duped, first-seen order preserved.
-const ALL_MARKETS = Array.from(new Set(Object.values(LEAGUE_MARKETS).flat()))
-const marketsForLeague = (league: League): string[] =>
-  league === 'All' ? ALL_MARKETS : LEAGUE_MARKETS[league]
 
 function Skeleton({ lines = 4 }: { lines?: number }) {
   return (
@@ -62,13 +38,6 @@ function Skeleton({ lines = 4 }: { lines?: number }) {
       ))}
     </div>
   )
-}
-
-function HitBadge({ hit }: { hit: boolean | null }) {
-  if (hit === null) return <span className="text-zinc-600">—</span>
-  return hit
-    ? <span className="text-emerald-400 font-bold">✅</span>
-    : <span className="text-red-400 font-bold">❌</span>
 }
 
 function LeaguePills({ league, onChange }: { league: League; onChange: (l: League) => void }) {
@@ -129,134 +98,163 @@ function Select({ value, onChange, options }: { value: string; onChange: (v: str
   )
 }
 
-// ── Tab: Lines ───────────────────────────────────────────
-function LinesTab({ league, date }: { league: League; date: string }) {
-  const [query, setQuery] = useState('')
-  const [players, setPlayers] = useState<Player[]>([])
-  const [props, setProps] = useState<Prop[]>([])
-  const [market, setMarket] = useState('All')
-  const [loading, setLoading] = useState(false)
+// ── Tab: Slate (games) ───────────────────────────────────
+function SlateTab({ league }: { league: League }) {
+  const [slate, setSlate] = useState<SlateGame[]>([])
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [expandedGame, setExpandedGame] = useState<number | null>(null)
+  // A game's props load only when it's opened — the summary list carries no props, so the tab paints
+  // instantly instead of pulling every game's book (the fully-nested slate is ~1.4MB / 15k props).
+  const [gameProps, setGameProps] = useState<Record<number, { loading: boolean; players: SlateGame['players'] }>>({})
 
-  // Expandable chart state
-  const [expandedId, setExpandedId] = useState<number | null>(null)
-  const [chartData, setChartData] = useState<PropHistory | null>(null)
-  const [chartError, setChartError] = useState<string | null>(null)
-  const [chartLoading, setChartLoading] = useState(false)
-
-  // markets valid for the active league; reset the selection when the league changes so a
-  // stale market (e.g. an MLB market left selected when switching to the NBA tab) doesn't
-  // silently filter everything out.
-  const markets = marketsForLeague(league)
-  useEffect(() => { setMarket('All') }, [league])
-
-  useEffect(() => {
-    if (query.length < 2) { setPlayers([]); return }
-    const t = setTimeout(async () => {
-      try { const r = await fetch(`/api/players/search?q=${encodeURIComponent(query)}`); setPlayers(await r.json()) } catch {}
-    }, 250)
-    return () => clearTimeout(t)
-  }, [query])
-
-  useEffect(() => {
-    setLoading(true); setError(null); setExpandedId(null); setChartData(null); setChartError(null)
-    const params = new URLSearchParams({ limit: '100' })
-    params.set('date', date)
-    if (query) params.set('player', query)
-    if (league !== 'All') params.set('league', league)
-    if (market !== 'All') params.set('market', market)
-    fetch(`/api/props?${params}`)
-      .then(r => r.json()).then(d => { setProps(d); setLoading(false) })
-      .catch(() => { setError('Failed to load props.'); setLoading(false) })
-  }, [query, league, market, date])
-
-  const toggleChart = async (p: Prop) => {
-    if (expandedId === p.id) { setExpandedId(null); setChartData(null); setChartError(null); return }
-    // WC props: no history/settlement in Phase 1 — lines + odds only
-    if (p.league === 'wc') {
-      setExpandedId(p.id)
-      setChartLoading(false)
-      setChartData(null)
-      setChartError('WC props are display-only — settlement and history coming in Phase 2.')
-      return
-    }
-    setExpandedId(p.id)
-    setChartLoading(true)
-    setChartData(null)
-    setChartError(null)
-    try {
-      const lg = p.league || (league !== 'All' ? league : 'nba')
-      const params = new URLSearchParams({
-        player_id: String(p.player_id),
-        market: p.market, line: String(p.line), side: p.side, league: lg,
+  const openGame = (gid: number) => {
+    const opening = expandedGame !== gid
+    setExpandedGame(opening ? gid : null)
+    if (!opening || gid in gameProps) return
+    setGameProps(prev => ({ ...prev, [gid]: { loading: true, players: [] } }))
+    fetch(`/api/props/slate?game_id=${gid}`)
+      .then(r => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
+      .then((games: SlateGame[]) => {
+        const players = Array.isArray(games) && games[0] ? games[0].players : []
+        setGameProps(cur => ({ ...cur, [gid]: { loading: false, players } }))
       })
-      const r = await fetch(`/api/props/history?${params}`)
-      const d = await r.json()
-      if (d.error) { setChartError(d.error); setChartData(null) }
-      else if (d.games?.length) { setChartData(d) }
-      else { setChartData(null) }
-    } catch { setChartError('Failed to load chart.'); setChartData(null) }
-    setChartLoading(false)
+      .catch(() => setGameProps(cur => ({ ...cur, [gid]: { loading: false, players: [] } })))
   }
 
-  const filtered = props
+  useEffect(() => {
+    const controller = new AbortController()
+    const params = new URLSearchParams()
+    params.set('summary', '1')
+    if (league !== 'All') params.set('league', league)
+
+    setLoading(true)
+    setError(null)
+    setExpandedGame(null)
+    setGameProps({})
+    fetch(`/api/props/slate?${params}`, { signal: controller.signal })
+      .then(response => {
+        if (!response.ok) throw new Error(`Slate request failed (${response.status})`)
+        return response.json()
+      })
+      .then(data => {
+        if (!Array.isArray(data)) throw new Error('Slate response was not a list')
+        setSlate(data)
+        setLoading(false)
+      })
+      .catch(err => {
+        if (err.name === 'AbortError') return
+        setSlate([])
+        setError('The game slate could not be loaded. Try again in a moment.')
+        setLoading(false)
+      })
+
+    return () => controller.abort()
+  }, [league])
+
+  const gamesByDate = new Map<string, SlateGame[]>()
+  for (const game of slate) {
+    const games = gamesByDate.get(game.date) || []
+    games.push(game)
+    gamesByDate.set(game.date, games)
+  }
+  const dateGroups = Array.from(gamesByDate, ([gameDate, games]) => ({ gameDate, games }))
+    .sort((a, b) => a.gameDate.localeCompare(b.gameDate))
+
+  const formatDate = (gameDate: string) =>
+    new Date(gameDate + 'T12:00:00').toLocaleDateString(undefined, {
+      weekday: 'short', month: 'short', day: 'numeric',
+    })
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap gap-2 items-center">
-        <PlayerSearch query={query} setQuery={setQuery} players={players} onSelect={p => { setQuery(p.name); setPlayers([]) }} />
-        <Select value={market} onChange={setMarket} options={['All', ...markets].map(m => ({ v: m, label: m === 'All' ? 'All Markets' : m.replace(/_/g, ' ') }))} />
-      </div>
-      {error && <div className="rounded-lg border border-red-500/40 bg-red-950/40 text-red-200 px-4 py-3 text-sm">{error}</div>}
-      {loading ? <Skeleton lines={6} /> : filtered.length === 0 ? (
-        <div className="text-center py-16 text-zinc-500 text-sm">No props found. Try a different filter or league.</div>
-      ) : (
-        <div className="rounded-xl border border-zinc-800 bg-zinc-900 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-zinc-800 text-zinc-500 text-[11px] uppercase tracking-wider">
-                <th className="text-left px-4 py-3 font-medium w-8"></th>
-                <th className="text-left px-4 py-3 font-medium">Player</th>
-                <th className="text-left px-4 py-3 font-medium">Market</th>
-                <th className="text-right px-4 py-3 font-medium">Line</th>
-                <th className="text-center px-4 py-3 font-medium">Side</th>
-                <th className="text-right px-4 py-3 font-medium">Actual</th>
-                <th className="text-center px-4 py-3 font-medium">Hit</th>
-                <th className="text-left px-4 py-3 font-medium hidden md:table-cell">Date</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map(p => (
-                <Fragment key={p.id}>
-                  <tr key={p.id} onClick={() => toggleChart(p)}
-                    className={`border-b border-zinc-800/50 transition-colors ${p.league === 'wc' ? '' : 'cursor-pointer'} ${expandedId === p.id ? 'bg-zinc-800/50' : 'hover:bg-zinc-800/30'}`}>
-                    <td className="px-2 py-2.5 text-zinc-500 text-xs">{p.league === 'wc' ? '' : expandedId === p.id ? '▾' : '▸'}</td>
-                    <td className="px-4 py-2.5"><span className="font-medium">{p.player_name}</span><span className="text-zinc-500 text-xs ml-1.5">{p.player_team}</span></td>
-                    <td className="px-4 py-2.5 text-zinc-300">{p.market.replace(/_/g, ' ')}</td>
-                    <td className="px-4 py-2.5 text-right tabular-nums">{p.line}</td>
-                    <td className="px-4 py-2.5 text-center"><span className={`text-[11px] font-bold px-2 py-0.5 rounded ${p.side === 'over' ? 'bg-emerald-900/30 text-emerald-300' : 'bg-red-900/30 text-red-300'}`}>{p.side.toUpperCase()}</span></td>
-                    <td className="px-4 py-2.5 text-right tabular-nums text-zinc-400">{p.actual_value ?? '—'}</td>
-                    <td className="px-4 py-2.5 text-center"><HitBadge hit={p.hit} /></td>
-                    <td className="px-4 py-2.5 text-zinc-500 text-xs hidden md:table-cell whitespace-nowrap">{p.captured_at ? new Date(p.captured_at).toLocaleDateString() : '—'}</td>
-                  </tr>
-                  {expandedId === p.id && (
-                    <tr key={`${p.id}-chart`} className="border-b border-zinc-800/50 bg-zinc-900/50">
-                      <td colSpan={8} className="px-4 py-4">
-                        {chartLoading ? <Skeleton lines={3} /> : chartData ? (
-                          <PropChart data={chartData} />
-                        ) : chartError ? (
-                          <div className="text-center py-4 text-zinc-500 text-xs">Chart not available for this market yet.</div>
-                        ) : (
-                          <div className="text-center py-4 text-zinc-500 text-xs">No game history available for this prop.</div>
-                        )}
-                      </td>
-                    </tr>
-                  )}
-                </Fragment>
-              ))}
-            </tbody>
-          </table>
+    <div className="space-y-5" aria-label="Upcoming game slate">
+      {error && (
+        <div className="rounded-lg border border-red-500/40 bg-red-950/40 px-4 py-3 text-sm text-red-200">
+          {error}
         </div>
+      )}
+      {loading ? <Skeleton lines={5} /> : dateGroups.length === 0 ? (
+        <div className="py-16 text-center text-sm text-zinc-500">
+          No upcoming games with props. Check back closer to game time.
+        </div>
+      ) : (
+        dateGroups.map(({ gameDate, games }) => {
+          const propCount = games.reduce((total, game) => total + game.prop_count, 0)
+          return (
+            <section key={gameDate} data-slate-date={gameDate} className="space-y-3">
+              <div className="flex min-w-0 items-center gap-2">
+                <h2 className="shrink-0 text-sm font-bold uppercase tracking-wide text-zinc-300">
+                  {formatDate(gameDate)}
+                </h2>
+                <span className="truncate text-xs tabular-nums text-zinc-600">
+                  {games.length} game{games.length === 1 ? '' : 's'} · {propCount} props
+                </span>
+                <div className="h-px min-w-4 flex-1 bg-gradient-to-r from-zinc-800 to-transparent" />
+              </div>
+
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                {games.map(game => {
+                  const expanded = expandedGame === game.game_id
+                  return (
+                    <article key={game.game_id} data-slate-game className="min-w-0 overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900">
+                      <button
+                        type="button"
+                        onClick={() => openGame(game.game_id)}
+                        aria-expanded={expanded}
+                        className="flex w-full min-w-0 items-center justify-between gap-3 px-4 py-3 text-left transition-colors hover:bg-zinc-800/50"
+                      >
+                        <span className="min-w-0">
+                          <span className="block break-words text-sm font-semibold">{game.away} @ {game.home}</span>
+                          <span className="mt-0.5 block text-xs tabular-nums text-zinc-500">
+                            {game.start_time
+                              ? `${new Date(game.start_time).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })} · `
+                              : ''}
+                            {game.league.toUpperCase()} · {game.prop_count} props
+                          </span>
+                        </span>
+                        <span aria-hidden="true" className="shrink-0 text-lg text-zinc-500">{expanded ? '▾' : '▸'}</span>
+                      </button>
+
+                      {expanded && (() => {
+                        const gp = gameProps[game.game_id]
+                        if (!gp || gp.loading) {
+                          return <div data-slate-props className="border-t border-zinc-800 px-4 py-3"><Skeleton lines={3} /></div>
+                        }
+                        if (!gp.players.length) {
+                          return <div data-slate-props className="border-t border-zinc-800 px-4 py-3 text-xs text-zinc-500">No props for this game yet.</div>
+                        }
+                        return (
+                          <div data-slate-props className="max-h-96 space-y-4 overflow-y-auto border-t border-zinc-800 px-4 py-3">
+                            {gp.players.map(player => (
+                              <div key={`${player.team}-${player.name}`}>
+                                <div className="mb-1.5 flex flex-wrap items-baseline gap-x-1.5 text-xs">
+                                  <span className="font-bold text-zinc-300">{player.name}</span>
+                                  <span className="text-zinc-600">{player.team}</span>
+                                </div>
+                                <div className="flex flex-wrap gap-1.5">
+                                  {Array.from(new Map(player.props.map(prop => [
+                                    `${prop.market}-${prop.side}-${prop.line}-${prop.source}`, prop,
+                                  ] as const)).values()).map((prop, index) => (
+                                    <span
+                                      key={`${prop.market}-${prop.side}-${prop.line}-${index}`}
+                                      className={`inline-flex max-w-full items-center gap-1 break-all rounded px-2 py-1 text-[11px] font-mono tabular-nums ${prop.side === 'over' || prop.side === 'yes' ? 'bg-emerald-900/30 text-emerald-300' : 'bg-red-900/30 text-red-300'}`}
+                                    >
+                                      {prop.market.replace(/_/g, ' ')} {prop.line} {prop.side.toUpperCase()}
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )
+                      })()}
+                    </article>
+                  )
+                })}
+              </div>
+            </section>
+          )
+        })
       )}
     </div>
   )
@@ -684,7 +682,7 @@ function ModelTab({ league }: { league: League }) {
 
           {/* Line checker */}
           <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-3 flex flex-wrap items-end gap-2">
-            <div className="text-xs text-zinc-500 w-full mb-0.5">Check a line — hit rate from this player's own game distribution</div>
+            <div className="text-xs text-zinc-500 w-full mb-0.5">Check a line — hit rate from this player&apos;s own game distribution</div>
             <Select value={statKey || keys[0]} onChange={setStatKey} options={keys.map(k => ({ v: k, label: k.replace(/_/g, ' ') }))} />
             <input type="number" step="0.5" value={line} onChange={e => setLine(e.target.value)} placeholder="line"
               className="w-24 px-3 py-2.5 rounded-xl border border-zinc-800 bg-zinc-900 text-zinc-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" />
@@ -782,9 +780,9 @@ export default function PropsPage() {
         if (dates.length) setDate(dates.includes(today) ? today : dates[0])
       })
       .catch(() => {})
-  }, [league])
+  }, [league, today])
 
-  const showDateNav = tab === 'lines' || tab === 'slate'
+  const showDateNav = tab === 'props'
 
   return (
     <>
@@ -843,8 +841,8 @@ export default function PropsPage() {
         )}
 
         {/* Tab content */}
-        {tab === 'lines' && <LinesTab league={league} date={date} />}
-        {tab === 'slate' && <MarketSlateBoard league={league} date={date} />}
+        {tab === 'slate' && <SlateTab league={league} />}
+        {tab === 'props' && <MarketSlateBoard league={league} date={date} />}
         {tab === 'performance' && <PerformanceTab league={league} />}
         {tab === 'matchups' && <MatchupsTab />}
         {tab === 'model' && <ModelTab league={league} />}

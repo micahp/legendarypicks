@@ -204,8 +204,34 @@ def prop_stats(market: Optional[str] = Query(None),
 
 @router.get("/api/props/slate")
 def props_slate(league: Optional[str] = Query(None),
-                date: Optional[str] = Query(None)):
-    """Return props grouped by game → team → player. For the Slate tab."""
+                date: Optional[str] = Query(None),
+                game_id: Optional[int] = Query(None),
+                summary: bool = Query(False)):
+    """Props grouped by game → team → player, for the Slate tab.
+
+    `summary=1` returns games ONLY (matchup / time / league / prop_count, no nested props) so the slate
+    list paints instantly instead of shipping every game's full prop book (the fully-nested slate is
+    ~1.4MB / 15k props). The client fetches a single game's props on open via `game_id=`."""
+    if summary:
+        gsql = ("SELECT pg.id AS game_id, pg.home, pg.away, pg.date AS game_date, pg.start_time, "
+                "pg.league, COUNT(p.id) AS prop_count "
+                "FROM prop_games pg JOIN props p ON p.game_id = pg.id WHERE 1=1")
+        gp = []
+        if league:
+            gsql += " AND pg.league = ?"
+            gp.append(league)
+        if date:
+            gsql += " AND pg.date = ?"
+            gp.append(date)
+        else:
+            gsql += " AND pg.date >= date('now')"
+        gsql += " GROUP BY pg.id HAVING prop_count > 0 ORDER BY pg.date, pg.start_time, pg.home, pg.away"
+        with closing(_db()) as con:
+            grows = con.execute(gsql, gp).fetchall()
+        return [{"game_id": r["game_id"], "home": r["home"], "away": r["away"], "date": r["game_date"],
+                 "start_time": r["start_time"], "league": r["league"], "prop_count": r["prop_count"],
+                 "players": []} for r in grows]
+
     sql = """SELECT p.id, p.market, p.line, p.side, p.source,
                     pl.name AS player_name, pl.team AS player_team, pl.league,
                     pg.id AS game_id, pg.home, pg.away, pg.date AS game_date, pg.start_time
@@ -217,7 +243,10 @@ def props_slate(league: Optional[str] = Query(None),
     if league:
         sql += " AND pl.league = ?"
         params.append(league)
-    if date:
+    if game_id is not None:
+        sql += " AND pg.id = ?"
+        params.append(game_id)
+    elif date:
         sql += " AND pg.date = ?"
         params.append(date)
     else:

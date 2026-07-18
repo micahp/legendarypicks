@@ -16,6 +16,23 @@ in `package.json` tracks the next (in-development) release.
 
 ## [Unreleased]
 
+## [0.5.0] — 2026-07-17
+
+Props page restructure — a real game **Slate** and a market **Props** board — with a fast, lazy slate.
+
+### Added
+- **Slate tab = the day's games** (grouped by date: matchup, kickoff time, league, prop count), each
+  expandable to its props on open. The market board moved to its own **Props** tab.
+- **`docs/DEV-STANDARDS.md`** — enforced performance + verification standards (a list view must not
+  download more than it renders; measure payload/time before shipping; 200 ≠ done).
+
+### Changed
+- **Props tabs → `Slate · Props · Performance · Matchups · Model`** — the Lines tab is retired (the
+  market board supersedes it).
+- **Slate loads games-first, props-on-open.** `/api/props/slate?summary=1` returns a lightweight games
+  list (**4 KB / 0.1 s** vs the old fully-nested **1.1 MB / 2.7 s**); a game's props load via
+  `?game_id=` only when the game is opened. ~270× smaller initial payload.
+
 ## [0.4.5] — 2026-07-17
 
 Minor: market-first props board, leagues-page refactor, non-WC game times, nicer predict loading.
