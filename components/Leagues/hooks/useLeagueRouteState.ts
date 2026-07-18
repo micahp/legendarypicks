@@ -11,7 +11,7 @@ export function useLeagueRouteState() {
   const isUFC = league === 'ufc'
   const supportsTeamStats = ['mlb', 'nba', 'nhl', 'nfl'].includes(league)
   const validTabs: HubTab[] = isUFC
-    ? ['rankings', 'schedule']
+    ? ['rankings', 'schedule', 'predict']
     : isWorldCup
       ? ['standings', 'schedule']
       : ['standings', 'stats', 'schedule']

@@ -4,11 +4,13 @@ import ScheduleTab from '../../components/Leagues/ScheduleTab'
 import StandingsTab from '../../components/Leagues/StandingsTab'
 import StatsTab from '../../components/Leagues/StatsTab'
 import UfcRankingsTab from '../../components/Leagues/UfcRankingsTab'
+import PredictTab from '../../components/Leagues/PredictTab'
 import { useLeagueRouteState } from '../../components/Leagues/hooks/useLeagueRouteState'
 import { useScheduleData } from '../../components/Leagues/hooks/useScheduleData'
 import { useStandingsData } from '../../components/Leagues/hooks/useStandingsData'
 import { useStatsData } from '../../components/Leagues/hooks/useStatsData'
 import { useUfcRankingsData } from '../../components/Leagues/hooks/useUfcRankingsData'
+import { useUfcPredictData } from '../../components/Leagues/hooks/useUfcPredictData'
 import {
   LEAGUE_EMOJIS,
   LEAGUE_NAMES,
@@ -22,6 +24,7 @@ const TAB_LABELS: Record<HubTab, string> = {
   stats: 'Stats',
   schedule: 'Schedule',
   rankings: 'Rankings',
+  predict: 'Predict',
 }
 
 export default function LeagueHubPage() {
@@ -40,6 +43,7 @@ export default function LeagueHubPage() {
     route.scheduleDate,
   )
   const ufc = useUfcRankingsData(route.isUFC, route.league)
+  const predict = useUfcPredictData(route.isUFC, route.activeTab)
 
   if (!route.league) return <LeagueHubSkeleton />
 
@@ -121,6 +125,20 @@ export default function LeagueHubPage() {
             rankings={ufc.rankings}
             loading={ufc.loading}
             error={ufc.error}
+          />
+        )}
+
+        {route.activeTab === 'predict' && (
+          <PredictTab
+            fights={predict.fights}
+            myPicks={predict.myPicks}
+            record={predict.record}
+            crowd={predict.crowd}
+            loading={predict.loading}
+            error={predict.error}
+            actionError={predict.actionError}
+            submittingKey={predict.submittingKey}
+            onSubmitPick={predict.submitPick}
           />
         )}
       </div>

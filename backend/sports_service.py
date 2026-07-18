@@ -49,7 +49,7 @@ _hydrate_esports_keys()
 
 import espn_client as espn  # noqa: E402  (must import after key hydration; grid.py reads its key at import)
 from _core import ALLOWED_ORIGINS, _normalize_name  # noqa: E402  (_normalize_name re-exported for ingest scripts)
-from routers import games, players, props, analytics, game_extras, esports, live_discounts, momentum  # noqa: E402
+from routers import games, players, props, analytics, game_extras, esports, live_discounts, momentum, ufc_picks  # noqa: E402
 
 app = FastAPI(title="Legendary Picks Sports API", description="Multi-league sports data (ESPN)", version="2.0.0")
 print(f"DEBUG: espn_client leagues: {sorted(espn.LEAGUES)}")
@@ -64,6 +64,7 @@ app.include_router(game_extras.router)
 app.include_router(esports.router)
 app.include_router(live_discounts.router)
 app.include_router(momentum.router)
+app.include_router(ufc_picks.router)
 
 
 @app.on_event("startup")

@@ -170,4 +170,4 @@ export interface KnockoutRound {
 }
 
 export type SubView = 'players' | 'teams'
-export type HubTab = 'standings' | 'stats' | 'schedule' | 'rankings'
+export type HubTab = 'standings' | 'stats' | 'schedule' | 'rankings' | 'predict'
