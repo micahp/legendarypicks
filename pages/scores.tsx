@@ -137,15 +137,25 @@ export default function ScoresPage() {
       setLoading(true)
       setError(null)
       try {
-        let data: Game[]
         if (leagueFilter === 'All') {
-          data = await SportsService.getAllGamesByLocalDate(date)
+          // Progressive: paint each league as it resolves so the fast ones (<200ms) show
+          // immediately instead of the whole board waiting on the slowest (cod ~1.3s).
+          setGames([])
+          const leagues = ['nba', 'mlb', 'nhl', 'nfl', 'atp', 'wta', 'cod', 'ufc', 'wc']
+          let cleared = false
+          const clearOnce = () => { if (!cleared && !ignore) { cleared = true; setLoading(false) } }
+          const settled = await Promise.allSettled(leagues.map(async (l) => {
+            const g = await SportsService.getGamesByLocalDate(l, date)
+            if (!ignore && g.length) { setGames((prev) => [...prev, ...g]); clearOnce() }
+          }))
+          if (!ignore && settled.every((r) => r.status === 'rejected')) {
+            setError('Unable to load games right now. Try another date.')
+          }
+          clearOnce() // clear even if every league was empty
         } else {
           const l = leagueFilter === 'Call of Duty' ? 'cod' : leagueFilter === 'FIFA World Cup' ? 'wc' : leagueFilter.toLowerCase()
-          data = await SportsService.getGamesByLocalDate(l, date)
-        }
-        if (!ignore) {
-          setGames(Array.isArray(data) ? data : [])
+          const data = await SportsService.getGamesByLocalDate(l, date)
+          if (!ignore) setGames(Array.isArray(data) ? data : [])
         }
       } catch (e: any) {
         if (!ignore) setError('Unable to load games right now. Try another date.')

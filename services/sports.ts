@@ -187,6 +187,20 @@ function normalizePrediction(p: any): Prediction {
   }
 }
 
+// Client-side games cache. The scoreboard fans out to many league×date requests (each
+// viewer-local day pulls neighbors, and the 30s live-poll re-fires) — without this, cod
+// (~1.3s) got re-fetched several times per load. Past days are settled (cache long);
+// today refreshes fast enough (< the 30s poll) that live scores never freeze.
+const _gamesCache = new Map<string, { ts: number; data: Game[] }>()
+const _gamesInflight = new Map<string, Promise<Game[]>>()
+const _localToday = () => new Date().toLocaleDateString('en-CA')
+const _cacheTtl = (date: string): number => {
+  const today = _localToday()
+  if (date < today) return 300_000 // settled past — 5 min
+  if (date > today) return 60_000  // future slate — 1 min
+  return 10_000                    // today — 10s (< 30s live poll, so scores stay fresh)
+}
+
 export const SportsService = {
   getGames: async (league: string): Promise<Game[]> => {
     try {
@@ -202,18 +216,33 @@ export const SportsService = {
   },
 
   getGamesByDate: async (league: string, date: string): Promise<Game[]> => {
-    try {
-      const res = await axios.get(`${API_BASE_URL}/${league}/games`, { params: { date } })
-      return (Array.isArray(res.data) ? res.data : []).map((g: any) => ({
-        ...normalizeGame(g, league),
-        league: league.toUpperCase(),
-      }))
-    } catch (err) {
-      console.error(`Error fetching ${league} games for ${date}`, err)
-      // A failed request is not the same thing as a valid day with no games.
-      // Callers own the visible error state and already catch this rejection.
-      throw err
-    }
+    const key = `${league}:${date}`
+    const hit = _gamesCache.get(key)
+    if (hit && Date.now() - hit.ts < _cacheTtl(date)) return hit.data
+    // Collapse concurrent identical requests (React re-renders, the window's neighbor
+    // days, and the live poll) into a single in-flight fetch.
+    const inflight = _gamesInflight.get(key)
+    if (inflight) return inflight
+    const p = (async () => {
+      try {
+        const res = await axios.get(`${API_BASE_URL}/${league}/games`, { params: { date } })
+        const data = (Array.isArray(res.data) ? res.data : []).map((g: any) => ({
+          ...normalizeGame(g, league),
+          league: league.toUpperCase(),
+        }))
+        _gamesCache.set(key, { ts: Date.now(), data })
+        return data
+      } catch (err) {
+        console.error(`Error fetching ${league} games for ${date}`, err)
+        // A failed request is not the same thing as a valid day with no games.
+        // Callers own the visible error state and already catch this rejection.
+        throw err
+      } finally {
+        _gamesInflight.delete(key)
+      }
+    })()
+    _gamesInflight.set(key, p)
+    return p
   },
 
   getAllGamesByDate: async (date: string): Promise<Game[]> => {
@@ -234,7 +263,12 @@ export const SportsService = {
       return isNaN(d.getTime()) ? null : d.toLocaleDateString('en-CA')
     }
     const base = new Date(localDate + 'T12:00:00') // noon-anchored to dodge TZ rollover
-    const windowDates = [-1, 0, 1].map((delta) => {
+    // A local day maps to at most two UTC dates; fetch only the neighbor in the tz's
+    // direction (west of UTC → next day also holds late-local games; east → previous)
+    // instead of both, halving the request fan-out.
+    const off = base.getTimezoneOffset() // minutes; >0 = behind UTC (west), <0 = ahead (east)
+    const deltas = off > 0 ? [0, 1] : off < 0 ? [-1, 0] : [0]
+    const windowDates = deltas.map((delta) => {
       const d = new Date(base); d.setDate(d.getDate() + delta)
       return d.toLocaleDateString('en-CA')
     })
