@@ -190,3 +190,8 @@ Caught at review (orchestrator), should have been caught by the feature's own va
 - **Follow `docs/DEV-STANDARDS.md`.** In particular, list endpoints must not download substantially
   more data than the UI renders, payload sizes must be measured, and an HTTP 200 alone is not proof
   that a feature works.
+- **Reproduce before you fix.** Before writing (or being handed) a bug fix, pin the EXACT repro: which
+  URL/surface, which element, expected vs actual — by opening the live page or hitting the endpoint.
+  Never inherit a diagnosis from a task doc/handoff as fact; confirm the named code path actually
+  produces the visible symptom. A wrong-surface fix wastes a whole run. (Jul-18: a "day grouping" bug
+  was chased on `/esports` when the real bug was UTC date-bucketing on `/scores`.)
