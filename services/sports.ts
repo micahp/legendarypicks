@@ -223,6 +223,49 @@ export const SportsService = {
     return results.flat()
   },
 
+  // `startTime` is an absolute UTC instant, but the scoreboard's "day" must be the VIEWER's
+  // local day — not the backend's UTC date bucket. A CoD match that ended 9pm CT is 02:00 UTC
+  // the next day, so a plain by-UTC-date fetch drops it onto tomorrow's board. Fetch the
+  // selected day plus its neighbors and keep only games whose local day matches.
+  getGamesByLocalDate: async (league: string, localDate: string): Promise<Game[]> => {
+    const localDayOf = (iso: string): string | null => {
+      if (!iso) return null
+      const d = new Date(iso)
+      return isNaN(d.getTime()) ? null : d.toLocaleDateString('en-CA')
+    }
+    const base = new Date(localDate + 'T12:00:00') // noon-anchored to dodge TZ rollover
+    const windowDates = [-1, 0, 1].map((delta) => {
+      const d = new Date(base); d.setDate(d.getDate() + delta)
+      return d.toLocaleDateString('en-CA')
+    })
+    const perDate = await Promise.all(
+      windowDates.map(async (d) => ({
+        d,
+        games: await SportsService.getGamesByDate(league, d).catch(() => [] as Game[]),
+      })),
+    )
+    const seen = new Set<string>()
+    const kept: Game[] = []
+    for (const { d, games } of perDate) {
+      for (const g of games) {
+        const day = localDayOf(g.startTime)
+        // valid instant → keep on its local day; undated (TBD) → keep on its own backend bucket
+        if (!(day ? day === localDate : d === localDate)) continue
+        const key = `${g.league}:${g.gameId}`
+        if (seen.has(key)) continue
+        seen.add(key)
+        kept.push(g)
+      }
+    }
+    return kept
+  },
+
+  getAllGamesByLocalDate: async (localDate: string): Promise<Game[]> => {
+    const leagues = ['nba', 'mlb', 'nhl', 'nfl', 'atp', 'wta', 'cod', 'ufc', 'wc']
+    const results = await Promise.all(leagues.map((l) => SportsService.getGamesByLocalDate(l, localDate)))
+    return results.flat()
+  },
+
   // Team quality ranking (win% / differential / streak / last-10) — new capability of the ESPN backend.
   getStrength: async (league: string) => {
     try {

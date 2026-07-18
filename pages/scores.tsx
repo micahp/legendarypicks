@@ -139,10 +139,10 @@ export default function ScoresPage() {
       try {
         let data: Game[]
         if (leagueFilter === 'All') {
-          data = await SportsService.getAllGamesByDate(date)
+          data = await SportsService.getAllGamesByLocalDate(date)
         } else {
           const l = leagueFilter === 'Call of Duty' ? 'cod' : leagueFilter === 'FIFA World Cup' ? 'wc' : leagueFilter.toLowerCase()
-          data = await SportsService.getGamesByDate(l, date)
+          data = await SportsService.getGamesByLocalDate(l, date)
         }
         if (!ignore) {
           setGames(Array.isArray(data) ? data : [])
@@ -170,10 +170,10 @@ export default function ScoresPage() {
         try {
           let data: Game[]
           if (leagueFilter === 'All') {
-            data = await SportsService.getAllGamesByDate(date)
+            data = await SportsService.getAllGamesByLocalDate(date)
           } else {
             const l = leagueFilter === 'Call of Duty' ? 'cod' : leagueFilter === 'FIFA World Cup' ? 'wc' : leagueFilter.toLowerCase()
-            data = await SportsService.getGamesByDate(l, date)
+            data = await SportsService.getGamesByLocalDate(l, date)
           }
           if (!ignore) setGames(Array.isArray(data) ? data : [])
         } catch { /* silent — keep stale scores rather than blank */ }
