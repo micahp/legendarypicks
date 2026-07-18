@@ -35,8 +35,10 @@ def list_props(player: Optional[str] = Query(None),
         sql += " AND pl.name LIKE ?"
         params.append(f"%{player}%")
     if market:
-        sql += " AND p.market = ?"
-        params.append(market)
+        # Market-first boards group source-specific keys such as
+        # `total_bases___player_slug` under their base market.
+        sql += " AND (p.market = ? OR instr(p.market, ? || '___') = 1)"
+        params.extend((market, market))
     if league:
         sql += " AND pl.league = ?"
         params.append(league)
@@ -213,24 +215,50 @@ def props_slate(league: Optional[str] = Query(None),
     list paints instantly instead of shipping every game's full prop book (the fully-nested slate is
     ~1.4MB / 15k props). The client fetches a single game's props on open via `game_id=`."""
     if summary:
+        filters = ""
+        filter_params = []
+        if league:
+            filters += " AND pg.league = ?"
+            filter_params.append(league)
+        if date:
+            filters += " AND pg.date = ?"
+            filter_params.append(date)
+        else:
+            filters += " AND pg.date >= date('now')"
+
         gsql = ("SELECT pg.id AS game_id, pg.home, pg.away, pg.date AS game_date, pg.start_time, "
                 "pg.league, COUNT(p.id) AS prop_count "
-                "FROM prop_games pg JOIN props p ON p.game_id = pg.id WHERE 1=1")
-        gp = []
-        if league:
-            gsql += " AND pg.league = ?"
-            gp.append(league)
-        if date:
-            gsql += " AND pg.date = ?"
-            gp.append(date)
-        else:
-            gsql += " AND pg.date >= date('now')"
+                "FROM prop_games pg JOIN props p ON p.game_id = pg.id WHERE 1=1" + filters)
         gsql += " GROUP BY pg.id HAVING prop_count > 0 ORDER BY pg.date, pg.start_time, pg.home, pg.away"
+
+        base_market = (
+            "CASE WHEN instr(p.market, '___') > 0 "
+            "THEN substr(p.market, 1, instr(p.market, '___') - 1) ELSE p.market END"
+        )
+        market_sql = f"""SELECT game_id, market, COUNT(*) AS row_count
+                         FROM (
+                           SELECT pg.id AS game_id, {base_market} AS market
+                           FROM prop_games pg
+                           JOIN props p ON p.game_id = pg.id
+                           JOIN players pl ON pl.id = p.player_id
+                           WHERE 1=1 {filters}
+                           GROUP BY pg.id, p.player_id, {base_market}, p.line, p.source,
+                                    pg.date, pg.home, pg.away
+                         ) grouped_markets
+                         GROUP BY game_id, market
+                         ORDER BY game_id, market"""
         with closing(_db()) as con:
-            grows = con.execute(gsql, gp).fetchall()
+            grows = con.execute(gsql, filter_params).fetchall()
+            market_rows = con.execute(market_sql, filter_params).fetchall()
+        markets_by_game = {}
+        for row in market_rows:
+            markets_by_game.setdefault(row["game_id"], []).append({
+                "market": row["market"],
+                "count": row["row_count"],
+            })
         return [{"game_id": r["game_id"], "home": r["home"], "away": r["away"], "date": r["game_date"],
                  "start_time": r["start_time"], "league": r["league"], "prop_count": r["prop_count"],
-                 "players": []} for r in grows]
+                 "markets": markets_by_game.get(r["game_id"], []), "players": []} for r in grows]
 
     sql = """SELECT p.id, p.market, p.line, p.side, p.source,
                     pl.name AS player_name, pl.team AS player_team, pl.league,

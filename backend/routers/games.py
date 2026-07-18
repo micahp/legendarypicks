@@ -150,6 +150,62 @@ def ufc_rankings():
     }
 
 
+@router.get("/api/ufc/fighter/{player_id}/form")
+def ufc_fighter_form(player_id: int):
+    """Lazy ESPN-backed last-five form for one internal UFC fighter."""
+    with closing(_db()) as con:
+        con.row_factory = sqlite3.Row
+        player = con.execute(
+            "SELECT id, name, espn_id FROM players WHERE id=? AND league='ufc'",
+            (player_id,),
+        ).fetchone()
+        if not player:
+            raise HTTPException(404, "UFC fighter not found")
+        date_row = con.execute(
+            """SELECT pg.date
+               FROM props p JOIN prop_games pg ON pg.id=p.game_id
+               WHERE p.player_id=? AND pg.league='ufc'
+               ORDER BY ABS(julianday(pg.date) - julianday('now')) LIMIT 1""",
+            (player_id,),
+        ).fetchone()
+
+    athlete_id = str(player["espn_id"] or "")
+    canonical_name = player["name"]
+    if not athlete_id:
+        match = espn.ufc_athlete(player["name"], date_row["date"] if date_row else None)
+        if not match:
+            return {
+                "player_id": player_id,
+                "fighter": player["name"],
+                "source": "espn",
+                "fights": [],
+            }
+        athlete_id = match["id"]
+        canonical_name = match["name"]
+        # Persist the source crosswalk only when it is not already owned by a
+        # different UFC row. The endpoint never fabricates or merges players.
+        with closing(_db()) as con:
+            owner = con.execute(
+                "SELECT id FROM players WHERE league='ufc' AND espn_id=?",
+                (athlete_id,),
+            ).fetchone()
+            if owner is None or owner[0] == player_id:
+                con.execute("UPDATE players SET espn_id=? WHERE id=?", (athlete_id, player_id))
+                con.commit()
+
+    try:
+        fights = espn.ufc_fight_history(athlete_id, limit=5)
+    except Exception as exc:
+        raise HTTPException(502, "ESPN UFC fight history unavailable") from exc
+    return {
+        "player_id": player_id,
+        "fighter": canonical_name,
+        "espn_id": athlete_id,
+        "source": "espn",
+        "fights": fights,
+    }
+
+
 @router.get("/api/{league}/games")
 def get_games(league: str, date: Optional[str] = Query(None, description="YYYY-MM-DD (default today)")):
     if league.lower() == "cod":

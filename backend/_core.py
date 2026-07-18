@@ -218,6 +218,8 @@ _MARKET_STAT_KEY = {
             "receiving_yards": "receiving_yards", "receptions": "receptions",
             "passing_tds": "passing_tds", "rushing_tds": "rushing_tds",
             "receiving_tds": "receiving_tds", "interceptions": "interceptions"},
+    "wc": {"goals": "goals", "assists": "assists", "shots": "shots",
+           "shots_on_target": "sot", "shots_on_goal": "sot"},
 }
 
 

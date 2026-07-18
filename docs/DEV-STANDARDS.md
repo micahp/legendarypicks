@@ -33,6 +33,20 @@ Performance and correctness are part of "done" — not a follow-up after someone
    externally. Do not start/kill/restart them; verify against them. Spawning duplicates corrupts the
    tunnel.
 
+## Data must not silently drop off
+
+11. **Every live environment gets its own continuous data feed + freshness monitoring.** Prod once went
+    **8 days stale** because the ingest only fed dev and nothing watched prod. A pipeline that "runs on
+    a timer" is not enough — timers die, deploys forget, and silence hides it.
+    - `monitor_props_freshness.py` + `legendarypicks-props-freshness.timer` (30 min) check each env's
+      latest prop capture, ALERT loudly, and self-heal (re-trigger the ingest) if it's > 3 h stale.
+    - **PROD DEPLOY CHECKLIST (do not skip):**
+      1. Stand up a **prod-targeted ingest** service/timer (`bovada_scraper.py all --ingest` pointed at
+         the prod DB / prod backend `:8100`), mirroring `legendarypicks-props.service`.
+      2. **Enable `prod` in `monitor_props_freshness.py` `ENVS`** (uncomment the line) so prod staleness
+         alerts + self-heals from the moment it's live.
+    - Verify after deploy: `curl :8100/api/props?limit=1` shows a capture within the last hour.
+
 ## Cleanliness
 
 8. **Match the surrounding code** — the app's dark/emerald system, `tabular-nums`, the app font (not

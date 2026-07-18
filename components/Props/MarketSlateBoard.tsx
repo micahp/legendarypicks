@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import FightForm from './FightForm'
 import PropChart, { PropHistory } from './PropChart'
 
 interface BoardProp {
@@ -38,6 +39,15 @@ interface BoardRow {
 interface HistoryState {
   loading: boolean
   data: PropHistory | null
+}
+
+interface MarketOption {
+  market: string
+  count: number
+}
+
+interface SlateMarketSummary {
+  markets?: MarketOption[]
 }
 
 type SortKey = 'hit-rate' | 'edge' | 'line'
@@ -169,6 +179,8 @@ function EmptyBoard({ date }: { date: string }) {
 
 export default function MarketSlateBoard({ league, date }: { league: string; date: string }) {
   const [props, setProps] = useState<BoardProp[]>([])
+  const [marketOptions, setMarketOptions] = useState<MarketOption[]>([])
+  const [loadedMarket, setLoadedMarket] = useState('')
   const [selectedMarket, setSelectedMarket] = useState('')
   const [sortKey, setSortKey] = useState<SortKey>('hit-rate')
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc')
@@ -179,7 +191,84 @@ export default function MarketSlateBoard({ league, date }: { league: string; dat
 
   useEffect(() => {
     const controller = new AbortController()
-    const params = new URLSearchParams({ date, limit: '500' })
+    const summaryParams = new URLSearchParams({ date, summary: '1' })
+    if (league !== 'All') summaryParams.set('league', league)
+
+    setLoading(true)
+    setError(null)
+    setProps([])
+    setMarketOptions([])
+    setLoadedMarket('')
+
+    const loadMarketSummary = async () => {
+      const response = await fetch(`/api/props/slate?${summaryParams}`, { signal: controller.signal })
+      if (!response.ok) throw new Error(`Market summary request failed (${response.status})`)
+      const games = await response.json()
+      if (!Array.isArray(games)) throw new Error('Market summary response was not a list')
+
+      // New summaries carry counts only; one selected market is fetched below.
+      // During a managed backend rollout, fall back to the old list contract so
+      // an already-running worker can keep painting the board until it reloads.
+      const hasMarketSummary = games.length === 0
+        || games.every((game: SlateMarketSummary) => Array.isArray(game.markets))
+      if (hasMarketSummary) {
+        const counts = new Map<string, number>()
+        for (const game of games as SlateMarketSummary[]) {
+          for (const item of game.markets || []) {
+            counts.set(item.market, (counts.get(item.market) || 0) + item.count)
+          }
+        }
+        setMarketOptions(Array.from(counts, ([market, count]) => ({ market, count })))
+        if (!counts.size) setLoading(false)
+        return
+      }
+
+      const fallbackParams = new URLSearchParams({ date, limit: '500' })
+      if (league !== 'All') fallbackParams.set('league', league)
+      const fallbackResponse = await fetch(`/api/props?${fallbackParams}`, { signal: controller.signal })
+      if (!fallbackResponse.ok) throw new Error(`Props request failed (${fallbackResponse.status})`)
+      const fallbackProps = await fallbackResponse.json()
+      if (!Array.isArray(fallbackProps)) throw new Error('Props response was not a list')
+      const counts = new Map<string, number>()
+      for (const row of groupProps(fallbackProps)) {
+        counts.set(row.market, (counts.get(row.market) || 0) + 1)
+      }
+      setProps(fallbackProps)
+      setMarketOptions(Array.from(counts, ([market, count]) => ({ market, count })))
+      setLoadedMarket('*')
+      setLoading(false)
+    }
+
+    void loadMarketSummary().catch(err => {
+      if (err.name === 'AbortError') return
+      setProps([])
+      setMarketOptions([])
+      setError('The prop board could not be loaded. Try again in a moment.')
+      setLoading(false)
+    })
+
+    return () => controller.abort()
+  }, [date, league])
+
+  const allRows = useMemo(() => groupProps(props), [props])
+  const markets = useMemo(
+    () => [...marketOptions].sort((a, b) =>
+      marketRank(a.market) - marketRank(b.market) || marketLabel(a.market).localeCompare(marketLabel(b.market))),
+    [marketOptions],
+  )
+
+  const activeMarket = markets.some(item => item.market === selectedMarket)
+    ? selectedMarket
+    : markets[0]?.market || ''
+
+  useEffect(() => {
+    if (activeMarket !== selectedMarket) setSelectedMarket(activeMarket)
+  }, [activeMarket, selectedMarket])
+
+  useEffect(() => {
+    if (!activeMarket || loadedMarket === '*' || loadedMarket === activeMarket) return
+    const controller = new AbortController()
+    const params = new URLSearchParams({ date, limit: '500', market: activeMarket })
     if (league !== 'All') params.set('league', league)
 
     setLoading(true)
@@ -192,6 +281,7 @@ export default function MarketSlateBoard({ league, date }: { league: string; dat
       .then(data => {
         if (!Array.isArray(data)) throw new Error('Props response was not a list')
         setProps(data)
+        setLoadedMarket(activeMarket)
         setLoading(false)
       })
       .catch(err => {
@@ -202,23 +292,7 @@ export default function MarketSlateBoard({ league, date }: { league: string; dat
       })
 
     return () => controller.abort()
-  }, [date, league])
-
-  const allRows = useMemo(() => groupProps(props), [props])
-  const markets = useMemo(() => {
-    const counts = new Map<string, number>()
-    for (const row of allRows) counts.set(row.market, (counts.get(row.market) || 0) + 1)
-    return Array.from(counts, ([market, count]) => ({ market, count })).sort((a, b) =>
-      marketRank(a.market) - marketRank(b.market) || marketLabel(a.market).localeCompare(marketLabel(b.market)))
-  }, [allRows])
-
-  const activeMarket = markets.some(item => item.market === selectedMarket)
-    ? selectedMarket
-    : markets[0]?.market || ''
-
-  useEffect(() => {
-    if (activeMarket !== selectedMarket) setSelectedMarket(activeMarket)
-  }, [activeMarket, selectedMarket])
+  }, [activeMarket, date, league, loadedMarket])
 
   const marketRows = useMemo(
     () => allRows.filter(row => row.market === activeMarket),
@@ -229,10 +303,15 @@ export default function MarketSlateBoard({ league, date }: { league: string; dat
     const requestId = ++historyRequest.current
     const controller = new AbortController()
     const initial: Record<string, HistoryState> = {}
-    for (const row of marketRows) initial[row.key] = { loading: true, data: null }
+    for (const row of marketRows) {
+      initial[row.key] = { loading: row.league !== 'ufc', data: null }
+    }
     setHistoryByRow(initial)
 
     for (const row of marketRows) {
+      // Method-of-victory props are categorical. FightForm lazily loads the
+      // fighter's ESPN form only when its disclosure is opened.
+      if (row.league === 'ufc') continue
       const chartProp = row.over || row.under
       if (!chartProp) continue
       const params = new URLSearchParams({
@@ -249,7 +328,9 @@ export default function MarketSlateBoard({ league, date }: { league: string; dat
         })
         .then(data => {
           if (historyRequest.current !== requestId) return
-          const history = !data.error && Array.isArray(data.games) ? data as PropHistory : null
+          const history = !data.error && Array.isArray(data.games) && data.games.length
+            ? data as PropHistory
+            : null
           setHistoryByRow(current => ({ ...current, [row.key]: { loading: false, data: history } }))
         })
         .catch(err => {
@@ -360,6 +441,7 @@ export default function MarketSlateBoard({ league, date }: { league: string; dat
         {sortedRows.map(row => {
           const historyState = historyByRow[row.key]
           const history = historyState?.data
+          const isUfc = row.league === 'ufc'
           const projection = history?.projection ?? null
           const edge = projection === null ? null : projection - row.line
           return (
@@ -384,7 +466,9 @@ export default function MarketSlateBoard({ league, date }: { league: string; dat
                 </div>
 
                 <div className="min-w-0 md:text-right">
-                  {historyState?.loading ? <LoadingEvidence /> : history ? (
+                  {isUfc ? (
+                    <p className="text-xs text-zinc-600">Method-of-victory market</p>
+                  ) : historyState?.loading ? <LoadingEvidence /> : history ? (
                     <div className="space-y-2">
                       <div className="flex flex-wrap gap-1.5 md:justify-end">
                         <RateChip label="L5" value={history.hit_rate.l5} />
@@ -404,15 +488,23 @@ export default function MarketSlateBoard({ league, date }: { league: string; dat
                 </div>
               </div>
 
-              <div data-market-chart className="min-w-0 overflow-hidden border-t border-zinc-800 bg-zinc-950/40 p-3 sm:p-4">
-                {history?.games.length ? (
+              {isUfc ? (
+                <div data-market-chart className="min-w-0 overflow-hidden border-t border-zinc-800 bg-zinc-950/40">
+                  <FightForm playerId={row.playerId} fighter={row.player} />
+                </div>
+              ) : history?.games.length ? (
+                <div data-market-chart className="min-w-0 overflow-hidden border-t border-zinc-800 bg-zinc-950/40 p-3 sm:p-4">
                   <PropChart data={history} />
-                ) : historyState?.loading ? (
+                </div>
+              ) : historyState?.loading ? (
+                <div data-market-chart className="min-w-0 overflow-hidden border-t border-zinc-800 bg-zinc-950/40 p-3 sm:p-4">
                   <div className="h-32 animate-pulse rounded-lg bg-zinc-800/60" />
-                ) : (
-                  <div className="flex h-24 items-center justify-center text-xs text-zinc-600">Chart history is not available for this market yet.</div>
-                )}
-              </div>
+                </div>
+              ) : (
+                <div data-history-empty className="border-t border-zinc-800 bg-zinc-950/40 px-4 py-3 text-xs text-zinc-600">
+                  No history yet.
+                </div>
+              )}
             </article>
           )
         })}

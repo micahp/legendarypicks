@@ -772,6 +772,9 @@ export default function PropsPage() {
   useEffect(() => {
     if (new URLSearchParams(window.location.search).get('date')) return
     const params = new URLSearchParams()
+    // Date discovery only needs game summaries. Pulling every nested prop here
+    // duplicated the full slate payload before either tab rendered it.
+    params.set('summary', '1')
     if (league !== 'All') params.set('league', league)
     fetch(`/api/props/slate?${params}`)
       .then(r => r.json())

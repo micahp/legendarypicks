@@ -181,3 +181,12 @@ Caught at review (orchestrator), should have been caught by the feature's own va
   leading number; don't `int(x.replace("'",""))` (breaks on `+`, gives `0`, mis-sorts the timeline).
 - **Don't commit gitignored junk.** `__pycache__/` and `venv` got committed (use targeted `git add`,
   not `git add -A`) — they then block merges with dirty-tree errors.
+
+## 11. Operating rules
+- **Dev servers are externally managed.** A frontend is already running on `:3096` and a backend on
+  `:8096`. Verify against those services and re-request a page or endpoint if it appears stale.
+- **Never start, kill, or restart a dev server.** Never run `kill` or `pkill` against Node or uvicorn;
+  duplicate processes and terminated servers corrupt the shared tunnel.
+- **Follow `docs/DEV-STANDARDS.md`.** In particular, list endpoints must not download substantially
+  more data than the UI renders, payload sizes must be measured, and an HTTP 200 alone is not proof
+  that a feature works.
