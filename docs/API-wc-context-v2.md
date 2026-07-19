@@ -6,10 +6,12 @@ phase-aware episodes. It is not a raw transcript endpoint and it is not a compet
 live-market signal API.
 
 The canonical live team-signal surface remains `GET /api/live/discounts?league=wc`.
-This endpoint never calls Kalshi. A player action may appear only when the episode is
+This endpoint never calls Kalshi. A player action may appear only when the canonical
+Booth alert engine has passed its evidence and exact-contract gates, the episode is
 current-match evidence, its ESPN player identity exactly matches the market record,
-and the timestamped quote is inside the response freshness policy. Otherwise the
-episode has no `prop` field.
+and the timestamped executable quote is inside the response freshness policy.
+Ordinary Bovada scorer captures do not satisfy that contract. Otherwise the episode
+has no `prop` field.
 
 ## Query behavior
 
@@ -54,6 +56,9 @@ interface MarketImplication {
   quote_status: 'current'
   quote_age_seconds: number
   quote_source: string
+  contract_ticker: string
+  settlement_semantics?: string
+  evidence_label?: 'information_leading' | 'discount_confirming'
 }
 
 interface BoothEpisode {
@@ -165,4 +170,5 @@ interface WCContextV2 {
   time and historical labels.
 - `historical_reference` is useful context, not a leak. Label it; do not delete it or
   present it as a current event.
-- Never manufacture a price/freshness state. No `prop` means no actionable player chip.
+- Never manufacture a price/freshness or alert-gate state. No `prop` means no actionable
+  player chip; do not turn the episode's contextual Bovada reference into one.

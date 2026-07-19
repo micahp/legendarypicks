@@ -1096,15 +1096,19 @@ def _market_for_subject(subject, goals_market):
 
 
 def _actionable_market(insight, goals_market):
-    """A player chip requires exact roster ID, current scope, and a fresh quote."""
+    """Only a canonical, fully-gated Booth alert may become a player chip."""
     if insight.get("subject_kind") != "player":
         return None
     if insight.get("time_scope") != "current_match":
+        return None
+    if insight.get("phase") in {"pregame", "final"}:
         return None
     if insight.get("subject_resolution") not in {"exact_player", "exact_quote_mention"}:
         return None
     market = _market_for_subject(insight.get("subject"), goals_market)
     if not market or market.get("quote_status") != "current":
+        return None
+    if not market.get("contract_ticker") or market.get("evidence_gate") != "passed":
         return None
     espn_id = str(insight.get("espn_id") or "")
     market_espn_id = str(market.get("espn_id") or "")
@@ -1219,6 +1223,9 @@ def _enrich_insights(insights, goals_market, cache_key):
                 "quote_status": market["quote_status"],
                 "quote_age_seconds": market["quote_age_seconds"],
                 "quote_source": market["quote_source"],
+                "contract_ticker": market["contract_ticker"],
+                "settlement_semantics": market.get("settlement_semantics"),
+                "evidence_label": market.get("evidence_label"),
             }
     return insights
 
@@ -1326,7 +1333,8 @@ def _synthesize_read(facts, insights, cache_key, market_lines=None):
                                 "line": market["line"],
                                 "lean": lean,
                                 **{key: market[key] for key in (
-                                    "price_as_of", "quote_status", "quote_age_seconds", "quote_source"
+                                    "price_as_of", "quote_status", "quote_age_seconds", "quote_source",
+                                    "contract_ticker", "settlement_semantics", "evidence_label",
                                 ) if key in market},
                             }
                     read.append(card)
@@ -1617,8 +1625,8 @@ def build_context(game_id, limit=8, phase=None):
         "market_context": {
             "canonical_live_signal_endpoint": "/api/live/discounts?league=wc",
             "player_action_rule": (
-                "A player action requires current-match evidence, exact ESPN identity, "
-                "and a current timestamped quote."
+                "A player action requires a canonical Booth alert with passed evidence/contract gates, "
+                "current-match evidence, exact ESPN identity, and a current timestamped quote."
             ),
         },
         "social_sentiment": {

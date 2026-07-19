@@ -291,12 +291,13 @@ class IdentityAndEpisodeTests(unittest.TestCase):
         episode = {
             "subject": "Lisandro Martínez", "subject_kind": "player",
             "subject_resolution": "exact_player", "espn_id": "2",
-            "time_scope": "current_match",
+            "time_scope": "current_match", "phase": "first_half",
         }
         market = {
             "Lisandro Martinez": {
                 "player": "Lisandro Martinez", "espn_id": "2", "quote_status": "current",
                 "line": "+2000", "price_as_of": "2026-07-19T19:50:00Z",
+                "contract_ticker": "KXWCGOAL-TEST", "evidence_gate": "passed",
             }
         }
         self.assertIsNotNone(wc_context._actionable_market(episode, market))
@@ -308,6 +309,11 @@ class IdentityAndEpisodeTests(unittest.TestCase):
         ))
         self.assertIsNone(wc_context._actionable_market(
             episode, {"Lisandro Martinez": {**market["Lisandro Martinez"], "quote_status": "stale"}}
+        ))
+        self.assertIsNone(wc_context._actionable_market(
+            episode, {"Lisandro Martinez": {
+                **market["Lisandro Martinez"], "contract_ticker": None,
+            }}
         ))
 
     def test_quote_state_uses_shared_ninety_second_freshness_semantics(self):
