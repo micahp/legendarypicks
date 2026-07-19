@@ -397,6 +397,7 @@ class CacheAndClaimsTests(unittest.TestCase):
     def setUp(self):
         wc_context._read_cache.clear()
         wc_context._insight_cache.clear()
+        wc_context._episode_detail_cache.clear()
 
     def test_cache_is_bounded_and_content_hash_changes_with_quote(self):
         cache = OrderedDict()
@@ -486,7 +487,7 @@ class ContextContractTests(unittest.TestCase):
                 for patcher in reversed(patches):
                     patcher.stop()
 
-        self.assertEqual(context["insights"][0]["subject"], "Spain")
+        self.assertEqual(context["episodes"][0]["subject"], "Spain")
         self.assertEqual(context["match_stats"][0], {
             "key": "possessionPct", "label": "Possession", "unit": "%", "away": "42", "home": "58"
         })
@@ -497,7 +498,11 @@ class ContextContractTests(unittest.TestCase):
         self.assertEqual(context["schema_version"], "wc-context-v2")
         self.assertEqual(context["coverage"]["source_observation_count"], 1)
         self.assertEqual(context["coverage"]["episode_count"], 1)
-        self.assertEqual(context["episodes"], context["insights"])
+        self.assertNotIn("insights", context)
+        self.assertNotIn("_all_receipts", context["episodes"][0])
+        detail = wc_context.get_episode_detail("760517", context["episodes"][0]["id"])
+        self.assertEqual(detail["schema_version"], "wc-context-episode-v1")
+        self.assertEqual(detail["receipt_count"], 1)
 
 
 if __name__ == "__main__":

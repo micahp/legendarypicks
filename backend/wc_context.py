@@ -68,6 +68,7 @@ _BOOTH_STALE_AFTER_SECONDS = 180
 _EPISODE_WINDOW_SECONDS = 20 * 60
 _MAX_EPISODE_RECEIPTS = 3
 _bracket_cache = {"expires_at": 0.0, "data": {"rounds": []}}
+_episode_detail_cache = OrderedDict()
 
 
 def _plain(value):
@@ -809,6 +810,7 @@ def _collapse_episodes(insights):
             episode.pop("_receipts"), key=lambda row: row.get("ts") or "", reverse=True
         )
         episode["receipt_count"] = len(receipts)
+        episode["_all_receipts"] = receipts
         episode["receipts"] = receipts[:_MAX_EPISODE_RECEIPTS]
         episode["id"] = _content_hash({
             "anchor": episode.pop("_anchor"),
@@ -827,7 +829,8 @@ def _attach_match_events(episodes, events):
     for episode in episodes:
         episode["priority"] = "availability" if episode.get("topic") == "injury" else "storyline"
         quotes = " ".join(
-            str(row.get("quote") or "") for row in episode.get("receipts", [])
+            str(row.get("quote") or "")
+            for row in episode.get("_all_receipts", episode.get("receipts", []))
         )
         receipt_text = f" {_plain(quotes)} "
         matches = []
@@ -1388,6 +1391,26 @@ def _coverage_payload(
     }
 
 
+def _public_episode(episode):
+    return {key: value for key, value in episode.items() if not key.startswith("_")}
+
+
+def _cache_episode_details(game_id, episodes):
+    for episode in episodes:
+        key = (str(game_id), str(episode.get("id")))
+        _cache_put(_episode_detail_cache, key, {
+            "schema_version": "wc-context-episode-v1",
+            "game_id": str(game_id),
+            "episode_id": str(episode.get("id")),
+            "receipt_count": int(episode.get("receipt_count") or 0),
+            "receipts": list(episode.get("_all_receipts") or episode.get("receipts") or []),
+        })
+
+
+def get_episode_detail(game_id, episode_id):
+    return _cache_get(_episode_detail_cache, (str(game_id), str(episode_id)))
+
+
 def build_context(game_id, limit=8, phase=None):
     """Return the Game Context object for a WC game detail page, or None."""
     try:
@@ -1485,6 +1508,7 @@ def build_context(game_id, limit=8, phase=None):
         "v4", str(game_id), raw_insight_hash, _content_hash(goals_mkt)
     )
     _enrich_insights(enrich_targets, goals_mkt, insight_cache_key)
+    _cache_episode_details(game_id, insights_full)
 
     def _ev_fmt(e):
         if e["scoring"] and e["players"]:
@@ -1551,10 +1575,10 @@ def build_context(game_id, limit=8, phase=None):
         "history": history,
         "right_now": right_now,
         "read": right_now,
-        "featured_episodes": current_featured[:5],
-        "episodes": visible_episodes,
-        # Backward-compatible alias while the Booth tab moves to episodes.
-        "insights": visible_episodes,
+        "featured_episodes": (
+            [_public_episode(row) for row in current_featured[:5]] if phase is None else []
+        ),
+        "episodes": [_public_episode(row) for row in visible_episodes],
         "coverage": coverage,
         "latest_booth_at": coverage["source_latest_at"],
         "server_time": generated_at,

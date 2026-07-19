@@ -16,9 +16,13 @@ episode has no `prop` field.
 - `limit` is `1..100` and caps **episodes**, not extractor rows.
 - With no `phase`, `episodes` contains the current match phase.
 - `phase=pregame|first_half|halftime|second_half|extra_time|final` loads that phase
-  for explicit catch-up navigation.
+  for explicit catch-up navigation; phase-specific responses leave `featured_episodes`
+  empty because the current highlights were already supplied by the default request.
 - `coverage.phases` always reports the available phases and their full episode counts,
   so a client can lazy-load a past phase without downloading the whole broadcast.
+- `GET /api/wc/{game_id}/context/episodes/{episode_id}` returns the complete receipt
+  stack only when a card is expanded. The phase list carries at most three preview
+  receipts, keeping the initial board bounded.
 - All API timestamps are ISO-8601 UTC receipts. Render relative time primarily and
   viewer-local absolute time on expansion; never display `ts.slice(11, 16)` as a clock.
 
@@ -118,7 +122,6 @@ interface WCContextV2 {
   right_now: CatchUpLine[] // zero or one; fall back to featured episodes if empty
   featured_episodes: BoothEpisode[] // impact-ranked current-phase cards, max five
   episodes: BoothEpisode[] // selected phase, capped by limit
-  insights: BoothEpisode[] // temporary compatibility alias of episodes
   coverage: {
     current_phase: MatchPhase
     selected_phase: MatchPhase
@@ -157,8 +160,8 @@ interface WCContextV2 {
 - Phase navigation uses `coverage.phases`; current phase is selected initially.
 - Availability episodes are pinned before ordinary storylines within a phase.
 - Cards show one takeaway and one receipt by default. Additional receipts are disclosed
-  on interaction and retain their own relative/local time and historical labels.
+  on interaction through the episode-detail endpoint and retain their own relative/local
+  time and historical labels.
 - `historical_reference` is useful context, not a leak. Label it; do not delete it or
   present it as a current event.
 - Never manufacture a price/freshness state. No `prop` means no actionable player chip.
-

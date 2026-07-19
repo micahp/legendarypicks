@@ -332,6 +332,21 @@ def wc_context(
     return ctx
 
 
+@router.get("/api/wc/{game_id}/context/episodes/{episode_id}")
+def wc_context_episode(game_id: str, episode_id: str):
+    """Full receipt stack for one episode, fetched only when a user expands it."""
+    import wc_context as _wcc
+    detail = _wcc.get_episode_detail(game_id, episode_id)
+    if detail is None:
+        # A normal list request primes this bounded derived cache. Rebuild once
+        # after a worker restart so an already-open browser can still expand.
+        _wcc.build_context(game_id, limit=1)
+        detail = _wcc.get_episode_detail(game_id, episode_id)
+    if detail is None:
+        raise HTTPException(404, "episode not found")
+    return detail
+
+
 @router.get("/api/cod/{game_id}/context")
 def cod_game_context(game_id: str, limit: int = Query(12, ge=1, le=100)):
     """Grounded Call of Duty match context from PandaScore history, the existing
