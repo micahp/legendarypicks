@@ -357,6 +357,53 @@ class IdentityAndEpisodeTests(unittest.TestCase):
         self.assertEqual(injury["match_event"]["matched_players"], ["Lisandro Martínez"])
         self.assertEqual(ranked[0]["id"], "injury")
 
+    def test_public_episode_does_not_present_capture_time_as_match_clock(self):
+        episode = {
+            "id": "injury", "topic": "injury", "subject": "Argentina",
+            "phase": "first_half", "started_at": "2026-07-19T19:49:00Z",
+            "updated_at": "2026-07-19T20:24:00Z", "receipt_count": 2,
+            "receipts": [{
+                "id": "receipt-1", "quote": "Lisandro Martinez is forced off",
+                "ts": "2026-07-19T20:24:00Z", "time_scope": "current_match",
+            }],
+            "event_clock": "44'",
+            "match_event": {"clock": "44'", "players": ["Lisandro Martínez"]},
+        }
+        public = wc_context._public_episode(episode)
+
+        self.assertEqual(public["match_time"], {
+            "display": "44'", "source": "espn_event", "relation": "linked_event",
+        })
+        self.assertEqual(public["latest_capture_at"], "2026-07-19T20:24:00Z")
+        self.assertEqual(public["receipts"][0]["captured_at"], "2026-07-19T20:24:00Z")
+        self.assertEqual(public["receipts"][0]["time_basis"], "broadcast_capture")
+        self.assertNotIn("ts", public["receipts"][0])
+        self.assertNotIn("started_at", public)
+        self.assertNotIn("updated_at", public)
+        self.assertNotIn("event_clock", public)
+
+    def test_public_episode_omits_match_time_without_espn_event_link(self):
+        public = wc_context._public_episode({
+            "id": "pressure", "phase": "second_half",
+            "updated_at": "2026-07-19T20:24:00Z", "receipts": [],
+        })
+        self.assertNotIn("match_time", public)
+
+    def test_episode_detail_receipts_read_oldest_to_newest(self):
+        episode = {
+            "id": "pressure", "phase": "second_half", "subject": "Spain",
+            "receipt_count": 2,
+            "_all_receipts": [
+                {"quote": "later", "ts": "2026-07-19T20:24:00Z"},
+                {"quote": "earlier", "ts": "2026-07-19T20:20:00Z"},
+            ],
+        }
+        wc_context._cache_episode_details("760517", [episode])
+        detail = wc_context.get_episode_detail("760517", "pressure")
+
+        self.assertEqual(detail["receipt_order"], "oldest_to_newest")
+        self.assertEqual([row["quote"] for row in detail["receipts"]], ["earlier", "later"])
+
     def test_featured_mix_keeps_availability_and_player_specific_story(self):
         common = {
             "priority": "storyline", "strength": 3, "receipt_count": 5,
@@ -467,6 +514,21 @@ class CacheAndClaimsTests(unittest.TestCase):
         self.assertEqual(enriched[0]["headline"], "Argentina trapped")
         self.assertEqual(enriched[1]["headline"], "Spain creating more")
 
+    def test_catch_up_labels_booth_capture_time_without_calling_it_match_time(self):
+        public = wc_context._public_catch_up({
+            "headline": "Spain are controlling the ball",
+            "evidence_items": [{
+                "ref": "B0", "kind": "booth", "scope": "current_match",
+                "text": "Spain continue to control possession",
+                "ts": "2026-07-19T20:24:00Z",
+            }],
+        })
+        receipt = public["evidence_items"][0]
+        self.assertEqual(receipt["captured_at"], "2026-07-19T20:24:00Z")
+        self.assertEqual(receipt["time_basis"], "broadcast_capture")
+        self.assertNotIn("ts", receipt)
+        self.assertNotIn("match_time", receipt)
+
 
 class ContextContractTests(unittest.TestCase):
     def test_context_exposes_stats_history_provenance_and_social_gap(self):
@@ -502,15 +564,29 @@ class ContextContractTests(unittest.TestCase):
         self.assertEqual(context["history"]["teams"]["ARG"]["rest_days"], 4)
         self.assertEqual(context["social_sentiment"]["status"], "unavailable")
         self.assertEqual(context["sources"]["match_and_stats"], "ESPN summary")
-        self.assertEqual(context["latest_booth_at"], "2026-07-19T19:18:46Z")
+        self.assertEqual(context["latest_booth_capture_at"], "2026-07-19T19:18:46Z")
+        self.assertNotIn("latest_booth_at", context)
         self.assertEqual(context["schema_version"], "wc-context-v2")
+        self.assertEqual(context["time_semantics"]["capture_time_basis"], "broadcast_capture")
+        self.assertEqual(
+            context["time_semantics"]["phase_basis"],
+            "scheduled_kickoff_and_broadcast_gap",
+        )
+        self.assertEqual(context["coverage"]["capture_started_at"], "2026-07-19T19:18:46Z")
+        self.assertEqual(context["coverage"]["capture_latest_at"], "2026-07-19T19:18:46Z")
+        self.assertNotIn("source_started_at", context["coverage"])
+        self.assertNotIn("source_latest_at", context["coverage"])
         self.assertEqual(context["coverage"]["source_observation_count"], 1)
         self.assertEqual(context["coverage"]["episode_count"], 1)
         self.assertNotIn("insights", context)
         self.assertNotIn("_all_receipts", context["episodes"][0])
         detail = wc_context.get_episode_detail("760517", context["episodes"][0]["id"])
-        self.assertEqual(detail["schema_version"], "wc-context-episode-v1")
+        self.assertEqual(detail["schema_version"], "wc-context-episode-v2")
         self.assertEqual(detail["receipt_count"], 1)
+        self.assertEqual(detail["receipt_order"], "oldest_to_newest")
+        self.assertEqual(detail["receipts"][0]["captured_at"], "2026-07-19T19:18:46Z")
+        self.assertEqual(detail["receipts"][0]["time_basis"], "broadcast_capture")
+        self.assertNotIn("ts", detail["receipts"][0])
 
 
 if __name__ == "__main__":

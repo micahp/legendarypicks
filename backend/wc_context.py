@@ -1376,16 +1376,12 @@ def _coverage_payload(
             "key": phase,
             "label": _PHASE_LABELS[phase],
             "episode_count": len(rows),
-            "started_at": min(row.get("started_at") for row in rows if row.get("started_at")),
-            "updated_at": max(row.get("updated_at") for row in rows if row.get("updated_at")),
         })
     if current_phase not in {row["key"] for row in phase_rows}:
         phase_rows.append({
             "key": current_phase,
             "label": _PHASE_LABELS.get(current_phase, current_phase.replace("_", " ").title()),
             "episode_count": 0,
-            "started_at": None,
-            "updated_at": None,
         })
     latest = raw_stamped[-1][0] if raw_stamped else None
     age = max(0, int((now - latest).total_seconds())) if latest else None
@@ -1395,8 +1391,10 @@ def _coverage_payload(
     return {
         "current_phase": current_phase,
         "selected_phase": selected_phase or current_phase,
-        "source_started_at": raw_stamped[0][1] if raw_stamped else None,
-        "source_latest_at": raw_stamped[-1][1] if raw_stamped else None,
+        "capture_started_at": raw_stamped[0][1] if raw_stamped else None,
+        "capture_latest_at": raw_stamped[-1][1] if raw_stamped else None,
+        "capture_time_basis": "broadcast_capture",
+        "phase_basis": "scheduled_kickoff_and_broadcast_gap",
         "source_observation_count": len(raw_rows),
         "relevant_observation_count": len(observations),
         "episode_count": len(episodes),
@@ -1413,25 +1411,90 @@ def _coverage_payload(
             else "current"
         ),
         "booth_age_seconds": age,
-        "relevant_started_at": observation_stamped[0][1] if observation_stamped else None,
+        "relevant_capture_started_at": observation_stamped[0][1] if observation_stamped else None,
         "phases": phase_rows,
     }
 
 
+def _public_receipt(receipt):
+    """Name wall time for what it is; it is never an inferred match clock."""
+    public = {
+        key: value for key, value in receipt.items()
+        if key not in {"ts"} and value is not None
+    }
+    captured_at = receipt.get("ts")
+    if captured_at:
+        public["captured_at"] = captured_at
+        public["time_basis"] = "broadcast_capture"
+    return public
+
+
 def _public_episode(episode):
-    return {key: value for key, value in episode.items() if not key.startswith("_")}
+    public = {
+        key: value for key, value in episode.items()
+        if not key.startswith("_")
+        and key not in {"started_at", "updated_at", "event_clock", "receipts"}
+    }
+    public["latest_capture_at"] = episode.get("updated_at")
+    public["capture_time_basis"] = "broadcast_capture"
+    public["receipts"] = [
+        _public_receipt(receipt) for receipt in episode.get("receipts", [])
+    ]
+    match_event = episode.get("match_event") or {}
+    if match_event.get("clock"):
+        public["match_time"] = {
+            "display": match_event["clock"],
+            "source": "espn_event",
+            "relation": "linked_event",
+        }
+    return public
+
+
+def _public_catch_up(line):
+    public = dict(line)
+    evidence_items = []
+    for receipt in line.get("evidence_items", []):
+        item = {key: value for key, value in receipt.items() if key != "ts"}
+        timestamp = receipt.get("ts")
+        if timestamp and receipt.get("kind") == "booth":
+            item["captured_at"] = timestamp
+            item["time_basis"] = "broadcast_capture"
+        elif timestamp:
+            item["observed_at"] = timestamp
+        evidence_items.append(item)
+    public["evidence_items"] = evidence_items
+    return public
 
 
 def _cache_episode_details(game_id, episodes):
     for episode in episodes:
         key = (str(game_id), str(episode.get("id")))
-        _cache_put(_episode_detail_cache, key, {
-            "schema_version": "wc-context-episode-v1",
+        receipts = sorted(
+            episode.get("_all_receipts") or episode.get("receipts") or [],
+            key=lambda receipt: receipt.get("ts") or "",
+        )
+        detail = {
+            "schema_version": "wc-context-episode-v2",
             "game_id": str(game_id),
             "episode_id": str(episode.get("id")),
             "receipt_count": int(episode.get("receipt_count") or 0),
-            "receipts": list(episode.get("_all_receipts") or episode.get("receipts") or []),
-        })
+            "receipt_order": "oldest_to_newest",
+            "phase": episode.get("phase"),
+            "subject": episode.get("subject"),
+            "capture_time_basis": "broadcast_capture",
+            "receipts": [
+                _public_receipt(receipt)
+                for receipt in receipts
+            ],
+        }
+        match_event = episode.get("match_event") or {}
+        if match_event.get("clock"):
+            detail["match_time"] = {
+                "display": match_event["clock"],
+                "source": "espn_event",
+                "relation": "linked_event",
+            }
+        _cache_put(_episode_detail_cache, key, detail)
 
 
 def get_episode_detail(game_id, episode_id):
@@ -1587,7 +1650,10 @@ def build_context(game_id, limit=8, phase=None):
         _synthesize_read(facts, current_episodes, read_cache_key, market_lines=market_lines)
         if phase is None else []
     )
-    right_now = [row for row in read if row.get("context_scope") == "right_now"][:1]
+    right_now = [
+        _public_catch_up(row)
+        for row in read if row.get("context_scope") == "right_now"
+    ][:1]
     generated_at = now.isoformat()
     coverage = _coverage_payload(
         raw_rows, observations, insights_full, current_phase, now, limit,
@@ -1615,9 +1681,18 @@ def build_context(game_id, limit=8, phase=None):
         ),
         "episodes": [_public_episode(row) for row in visible_episodes],
         "coverage": coverage,
-        "latest_booth_at": coverage["source_latest_at"],
+        "latest_booth_capture_at": coverage["capture_latest_at"],
         "server_time": generated_at,
         "generated_at": generated_at,
+        "time_semantics": {
+            "capture_time_basis": "broadcast_capture",
+            "capture_timezone": "UTC",
+            "phase_basis": coverage["phase_basis"],
+            "match_clock_policy": (
+                "Only an ESPN-linked event may expose match_time; broadcast capture timestamps "
+                "must not be displayed as match minutes."
+            ),
+        },
         "freshness_policy": {
             "booth_stale_after_seconds": _BOOTH_STALE_AFTER_SECONDS,
             "market_quote_stale_after_seconds": _MARKET_QUOTE_STALE_AFTER_SECONDS,
@@ -1642,7 +1717,8 @@ def build_context(game_id, limit=8, phase=None):
         },
         "limitations": [
             "Broadcast observations are commentary receipts, not authoritative match facts.",
-            "Exact game clock is unavailable for booth receipts; broad match phases and wall time are retained.",
+            "Broadcast capture time may lag the spoken commentary and is not a match clock.",
+            "Broad receipt phases are heuristic; exact match time appears only for an ESPN-linked event.",
             "Social sentiment is omitted until a validated, timestamped source is connected.",
         ],
         "source": "ESPN facts + bracket history + timestamped market references + broadcast episodes",

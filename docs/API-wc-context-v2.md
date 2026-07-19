@@ -24,10 +24,22 @@ has no `prop` field.
 - `coverage.phases` always reports the available phases and their full episode counts,
   so a client can lazy-load a past phase without downloading the whole broadcast.
 - `GET /api/wc/{game_id}/context/episodes/{episode_id}` returns the complete receipt
-  stack only when a card is expanded. The phase list carries at most three preview
-  receipts, keeping the initial board bounded.
-- All API timestamps are ISO-8601 UTC receipts. Render relative time primarily and
-  viewer-local absolute time on expansion; never display `ts.slice(11, 16)` as a clock.
+  stack oldest-to-newest only when a card is expanded. The phase list carries at most
+  three newest-first preview receipts, keeping the initial board bounded while leading
+  with the latest development.
+- The source has a **broadcast capture timestamp**, not a synchronized soccer clock.
+  Public receipt fields therefore use `captured_at` and `time_basis: 'broadcast_capture'`.
+  They answer "when did our extractor capture this?", not "what minute was the match in?"
+- A soccer minute appears only as `match_time`, when the episode links to one
+  authoritative ESPN event. Do not derive match minutes by subtracting scheduled kickoff:
+  kickoff delay, halftime, broadcast delay, and extractor latency make that dishonest.
+- Render a linked `match_time.display` (for example `44'`) when present. Otherwise render
+  phase plus recency (for example `Second half · 4m ago`). Viewer-local capture time belongs
+  in expanded receipt detail. Never show a card-level capture-time range and never display
+  an ISO substring as if it were match time.
+- Historical extractor rows cannot honestly be retrofitted with exact match minutes. Future
+  capture can support that only by persisting a synchronized ESPN `{period, game_clock,
+  captured_at}` snapshot alongside each receipt (including uncertainty/broadcast delay).
 
 ## TypeScript-friendly shape
 
@@ -42,9 +54,16 @@ type BoothStatus = 'current' | 'quiet' | 'stale' | 'complete' | 'unavailable'
 interface BoothReceipt {
   id?: string
   quote: string
-  ts: string
+  captured_at: string
+  time_basis: 'broadcast_capture'
   time_scope: TimeScope
   subject_raw?: string
+}
+
+interface LinkedMatchTime {
+  display: string // e.g. "44'"
+  source: 'espn_event'
+  relation: 'linked_event'
 }
 
 interface MarketImplication {
@@ -75,15 +94,15 @@ interface BoothEpisode {
   phase: MatchPhase
   time_scope: TimeScope
   priority: 'availability' | 'storyline'
-  started_at: string
-  updated_at: string
+  latest_capture_at: string
+  capture_time_basis: 'broadcast_capture'
   strength: number
   quote: string
   receipt_count: number
   receipts: BoothReceipt[] // newest first, at most three in the initial card payload
   headline?: string
   analysis?: string
-  event_clock?: string
+  match_time?: LinkedMatchTime
   match_event?: {
     clock?: string
     kind?: string
@@ -100,7 +119,9 @@ interface CatchUpReceipt {
   kind: 'fact' | 'booth'
   scope: 'current_match' | 'historical_reference' | 'mixed'
   text: string
-  ts?: string | null
+  captured_at?: string // booth evidence only
+  time_basis?: 'broadcast_capture'
+  observed_at?: string // non-booth evidence only
 }
 
 interface CatchUpLine {
@@ -121,7 +142,13 @@ interface WCContextV2 {
   current_phase: MatchPhase
   server_time: string
   generated_at: string
-  latest_booth_at?: string | null
+  latest_booth_capture_at?: string | null
+  time_semantics: {
+    capture_time_basis: 'broadcast_capture'
+    capture_timezone: 'UTC'
+    phase_basis: 'scheduled_kickoff_and_broadcast_gap'
+    match_clock_policy: string
+  }
   teams: unknown
   match_stats: unknown[]
   history: unknown
@@ -131,8 +158,10 @@ interface WCContextV2 {
   coverage: {
     current_phase: MatchPhase
     selected_phase: MatchPhase
-    source_started_at?: string | null
-    source_latest_at?: string | null
+    capture_started_at?: string | null
+    capture_latest_at?: string | null
+    capture_time_basis: 'broadcast_capture'
+    phase_basis: 'scheduled_kickoff_and_broadcast_gap'
     source_observation_count: number
     relevant_observation_count: number
     episode_count: number
@@ -145,8 +174,6 @@ interface WCContextV2 {
       key: MatchPhase
       label: string
       episode_count: number
-      started_at: string | null
-      updated_at: string | null
     }[]
   }
   freshness_policy: {
@@ -168,6 +195,9 @@ interface WCContextV2 {
 - Cards show one takeaway and one receipt by default. Additional receipts are disclosed
   on interaction through the episode-detail endpoint and retain their own relative/local
   time and historical labels.
+- Card chronology is `match_time` when event-linked; otherwise it is phase + relative
+  capture recency. Capture timestamps must never be presented as soccer minutes or as a
+  card-level from-to span.
 - `historical_reference` is useful context, not a leak. Label it; do not delete it or
   present it as a current event.
 - Never manufacture a price/freshness or alert-gate state. No `prop` means no actionable
