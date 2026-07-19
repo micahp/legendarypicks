@@ -311,12 +311,22 @@ def wc_knockout():
 
 
 @router.get("/api/wc/{game_id}/context")
-def wc_context(game_id: str, limit: int = Query(8, ge=1, le=100)):
-    """Game Context summary for a WC game detail: form + most-likely goalscorer
-    per team (from our WC props) + the broadcast's relevance-filtered soft reads.
-    `limit` caps the insight feed (8 for the summary panel, more for the tab)."""
+def wc_context(
+    game_id: str,
+    limit: int = Query(8, ge=1, le=100),
+    phase: Optional[str] = Query(None),
+):
+    """Phase-aware WC catch-up plus receipt-backed booth episodes.
+
+    With no phase, episodes come from the current match phase. The Booth tab
+    may request a past phase on interaction without downloading the whole
+    broadcast on initial render.
+    """
+    allowed_phases = {"pregame", "first_half", "halftime", "second_half", "extra_time", "final"}
+    if phase is not None and phase not in allowed_phases:
+        raise HTTPException(400, f"phase must be one of {sorted(allowed_phases)}")
     import wc_context as _wcc
-    ctx = _wcc.build_context(game_id, limit=limit)
+    ctx = _wcc.build_context(game_id, limit=limit, phase=phase)
     if not ctx:
         raise HTTPException(404, "no context for this game")
     return ctx

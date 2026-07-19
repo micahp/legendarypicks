@@ -18,7 +18,7 @@ import sqlite3
 import time
 import unicodedata
 import urllib.request
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 
 import espn_client as espn
 
@@ -63,6 +63,10 @@ _GENERIC_SUBJ = {"game", "match", "both teams", "teams", "players",
 
 _CACHE_MAX = 128
 _BRACKET_TTL_SECONDS = 120
+_MARKET_QUOTE_STALE_AFTER_SECONDS = 90
+_BOOTH_STALE_AFTER_SECONDS = 180
+_EPISODE_WINDOW_SECONDS = 20 * 60
+_MAX_EPISODE_RECEIPTS = 3
 _bracket_cache = {"expires_at": 0.0, "data": {"rounds": []}}
 
 
@@ -74,18 +78,49 @@ def _plain(value):
     )
 
 
-def _roster_names(sm):
-    """Roster identity map for this match, built only from ESPN's team sheet."""
-    full, last = [], {}
+def _roster_names(sm, canonical_teams=None):
+    """Roster identity map for this match, built only from ESPN's team sheet.
+
+    Surnames deliberately map to *all* matching players. A single-value surname
+    map silently turned Lisandro Martinez into Lautaro Martinez in the final.
+    """
+    full, players = [], []
+    by_alias, last = defaultdict(list), defaultdict(list)
+    canonical_teams = canonical_teams or {}
     for team in sm.get("rosters", []) or []:
+        team_blob = team.get("team", {}) or {}
+        team_abbr = str(team_blob.get("abbreviation") or "")
+        team_name = canonical_teams.get(team_abbr) or team_blob.get("displayName") or team_abbr
         for r in team.get("roster", []) or []:
-            nm = (r.get("athlete", {}) or {}).get("displayName")
+            athlete = r.get("athlete", {}) or {}
+            nm = athlete.get("displayName")
             if nm:
                 full.append(nm)
+                aliases = []
+                for key in ("displayName", "fullName", "shortName"):
+                    alias = str(athlete.get(key) or "").strip()
+                    if alias and _plain(alias) not in {_plain(value) for value in aliases}:
+                        aliases.append(alias)
+                player = {
+                    "id": str(athlete.get("id") or "") or None,
+                    "name": nm,
+                    "team_abbr": team_abbr or None,
+                    "team_name": team_name or None,
+                    "aliases": aliases,
+                }
+                players.append(player)
+                for alias in aliases:
+                    by_alias[_plain(alias)].append(player)
                 toks = nm.split()
                 if toks:
-                    last[_plain(toks[-1])] = nm
-    return {"full": full, "last": last}
+                    last[_plain(toks[-1])].append(player)
+    return {
+        "full": full,
+        "players": players,
+        "by_alias": dict(by_alias),
+        "last": dict(last),
+        "teams": dict(canonical_teams),
+    }
 
 
 def _team_aliases(*competitors):
@@ -98,6 +133,69 @@ def _team_aliases(*competitors):
             if value:
                 aliases.add(value)
     return aliases
+
+
+def _team_subjects(*competitors):
+    """All current-team aliases mapped to one canonical team subject."""
+    subjects = {}
+    for competitor in competitors:
+        team = (competitor or {}).get("team", {}) or {}
+        abbr = str(team.get("abbreviation") or "")
+        name = str(team.get("displayName") or team.get("name") or abbr)
+        entry = {
+            "name": name,
+            "subject_id": f"team:{abbr or _plain(name)}",
+            "subject_kind": "team",
+            "team_abbr": abbr or None,
+        }
+        for key in ("displayName", "shortDisplayName", "name", "abbreviation"):
+            alias = _plain(team.get(key))
+            if alias:
+                subjects[alias] = entry
+    return subjects
+
+
+def _candidate_rows(value):
+    """Read both the v2 collision-safe roster map and old unit-test fixtures."""
+    if value is None:
+        return []
+    if isinstance(value, str):
+        return [{"id": None, "name": value, "team_abbr": None, "team_name": None, "aliases": [value]}]
+    if isinstance(value, dict):
+        return [value]
+    return [row for row in value if isinstance(row, dict)]
+
+
+def _player_resolution(player, status, raw):
+    player_id = player.get("id")
+    return {
+        "name": player.get("name") or raw,
+        "subject_id": f"player:{player_id}" if player_id else f"player-name:{_plain(player.get('name'))}",
+        "subject_kind": "player",
+        "subject_resolution": status,
+        "subject_raw": raw,
+        "team_abbr": player.get("team_abbr"),
+        "team_name": player.get("team_name"),
+        "espn_id": player_id,
+    }
+
+
+def _team_fallback(candidates, names, raw):
+    teams = {row.get("team_abbr") for row in candidates if row.get("team_abbr")}
+    if len(teams) != 1:
+        return None
+    abbr = next(iter(teams))
+    name = (names.get("teams") or {}).get(abbr) or candidates[0].get("team_name") or abbr
+    return {
+        "name": name,
+        "subject_id": f"team:{abbr}",
+        "subject_kind": "team",
+        "subject_resolution": "ambiguous_team_fallback",
+        "subject_raw": raw,
+        "team_abbr": abbr,
+        "team_name": name,
+        "ambiguous_players": [row.get("name") for row in candidates if row.get("name")],
+    }
 
 
 def _match_identities(names, team_aliases):
@@ -115,24 +213,108 @@ def _match_identities(names, team_aliases):
     }
 
 
-def _normalize_subject(subj, names, generic_subjects=None):
-    """Map a whisper-mangled subject to a real roster name (Jett Spence→Djed
-    Spence, jute Bellingham→Jude Bellingham). Team/generic subjects pass through."""
-    s = (subj or "").strip()
+def _resolve_subject(subj, names, generic_subjects=None, team_subjects=None):
+    """Resolve a signal subject without guessing across same-surname players.
+
+    Exact full aliases win. A unique surname or unambiguous fuzzy alias may be
+    rescued. If several players in the same team share the surname, the signal
+    falls back to that team; it never inherits one of their player props.
+    """
+    s = str(subj or "").strip()
+    plain = _plain(s)
     generic_subjects = generic_subjects or _GENERIC_SUBJ
-    if not s or _plain(s) in generic_subjects:
-        return s
-    last = names["last"]
-    toks = s.split()
-    if toks:
-        lt = _plain(toks[-1])
-        if lt in last:
-            return last[lt]
-        m = difflib.get_close_matches(lt, list(last.keys()), n=1, cutoff=0.72)
-        if m:
-            return last[m[0]]
-    m = difflib.get_close_matches(s, names["full"], n=1, cutoff=0.72)
-    return m[0] if m else s
+    team_subjects = team_subjects or {}
+    if plain in team_subjects:
+        return {
+            **team_subjects[plain],
+            "subject_resolution": "exact_team",
+            "subject_raw": s,
+            "team_name": team_subjects[plain].get("name"),
+        }
+    if not s or plain in generic_subjects:
+        return {
+            "name": s,
+            "subject_id": f"match:{plain or 'unknown'}",
+            "subject_kind": "match",
+            "subject_resolution": "generic",
+            "subject_raw": s,
+            "team_abbr": None,
+            "team_name": None,
+        }
+
+    exact = _candidate_rows((names.get("by_alias") or {}).get(plain))
+    if not exact:
+        # Compatibility with older fixtures that only provide ``full``.
+        exact = [
+            {"id": None, "name": value, "team_abbr": None, "team_name": None, "aliases": [value]}
+            for value in names.get("full", [])
+            if _plain(value) == plain
+        ]
+    if len(exact) == 1:
+        return _player_resolution(exact[0], "exact_player", s)
+    if len(exact) > 1:
+        fallback = _team_fallback(exact, names, s)
+        if fallback:
+            return fallback
+
+    toks = plain.split()
+    surname = toks[-1] if toks else ""
+    surname_candidates = _candidate_rows((names.get("last") or {}).get(surname))
+    if len(surname_candidates) == 1:
+        return _player_resolution(surname_candidates[0], "unique_surname", s)
+    if len(surname_candidates) > 1:
+        fallback = _team_fallback(surname_candidates, names, s)
+        if fallback:
+            return fallback
+        return {
+            "name": s,
+            "subject_id": None,
+            "subject_kind": "unresolved",
+            "subject_resolution": "ambiguous",
+            "subject_raw": s,
+            "team_abbr": None,
+            "team_name": None,
+        }
+
+    # Rescue ordinary ASR misspellings only when the winning alias is unique
+    # and meaningfully clearer than the runner-up.
+    alias_map = names.get("by_alias") or {
+        _plain(value): [{"id": None, "name": value, "aliases": [value]}]
+        for value in names.get("full", [])
+    }
+    scored = sorted(
+        ((difflib.SequenceMatcher(None, plain, alias).ratio(), alias)
+         for alias, rows in alias_map.items() if len(_candidate_rows(rows)) == 1),
+        reverse=True,
+    )
+    if scored and scored[0][0] >= 0.72 and (len(scored) == 1 or scored[0][0] - scored[1][0] >= 0.08):
+        return _player_resolution(
+            _candidate_rows(alias_map[scored[0][1]])[0], "fuzzy_player", s
+        )
+    return {
+        "name": s,
+        "subject_id": None,
+        "subject_kind": "unresolved",
+        "subject_resolution": "unresolved",
+        "subject_raw": s,
+        "team_abbr": None,
+        "team_name": None,
+    }
+
+
+def _player_mentioned_in_quote(quote, names):
+    """Return one exact full-name roster mention, never a surname-only guess."""
+    normalized = f" {_plain(quote)} "
+    found = {}
+    for alias, value in (names.get("by_alias") or {}).items():
+        if len(alias.split()) < 2 or f" {alias} " not in normalized:
+            continue
+        candidates = _candidate_rows(value)
+        if len(candidates) != 1:
+            continue
+        row = candidates[0]
+        found[row.get("id") or _plain(row.get("name"))] = row
+    return next(iter(found.values())) if len(found) == 1 else None
 
 
 def _subject_is_grounded(subject, identities):
@@ -151,64 +333,88 @@ def _db():
     return c
 
 
-def _top_scorers(game_id, home_abbr, away_abbr):
-    """Shortest anytime-goalscorer odds per team → the 'most likely to score'."""
+def _quote_state(price_as_of, now=None):
+    current = now or dt.datetime.now(dt.timezone.utc)
+    captured = _parse_datetime(price_as_of)
+    if not captured:
+        return "unavailable", None
+    age = max(0, int((current - captured).total_seconds()))
+    return (
+        "stale" if age > _MARKET_QUOTE_STALE_AFTER_SECONDS else "current",
+        age,
+    )
+
+
+def _top_scorers(game_id, home_abbr, away_abbr, now=None):
+    """Fresh shortest anytime-goalscorer quote per team.
+
+    Old Bovada captures are not presented as a live recommendation. The full
+    props tab remains the historical/detail surface.
+    """
     out = []
     try:
         c = _db()
         for abbr in (away_abbr, home_abbr):  # away first (matchup reads "A @ H")
             r = c.execute(
-                "SELECT pl.name, p.odds FROM props p "
+                "SELECT pl.id AS player_id, pl.espn_id, pl.name, p.odds, p.source, "
+                "COALESCE(p.odds_captured_at,p.captured_at) AS price_as_of FROM props p "
                 "JOIN prop_games g ON p.game_id=g.id "
                 "JOIN players pl ON p.player_id=pl.id "
                 "WHERE g.league='wc' AND g.espn_event_id=? "
                 "AND p.market='goals' AND pl.team=? AND p.odds IS NOT NULL "
-                "ORDER BY p.odds ASC LIMIT 1", (str(game_id), abbr)).fetchone()
+                "ORDER BY COALESCE(p.odds_captured_at,p.captured_at) DESC, p.odds ASC LIMIT 1",
+                (str(game_id), abbr)).fetchone()
             if r:
-                out.append({"team": abbr, "player": r["name"], "odds": r["odds"]})
+                quote_status, quote_age = _quote_state(r["price_as_of"], now=now)
+                if quote_status == "current":
+                    out.append({
+                        "team": abbr,
+                        "player_id": r["player_id"],
+                        "espn_id": r["espn_id"],
+                        "player": r["name"],
+                        "odds": r["odds"],
+                        "price_as_of": r["price_as_of"],
+                        "quote_status": quote_status,
+                        "quote_age_seconds": quote_age,
+                        "quote_source": r["source"] or "Bovada",
+                    })
         c.close()
     except Exception:
         pass
     return out
 
 
-def _goals_market(game_id):
-    """{player: anytime-goalscorer american odds} for the WC game — the prop board."""
+def _goals_market(game_id, now=None):
+    """Latest timestamped anytime-goalscorer record for every player."""
     m = {}
     try:
         c = _db()
         for r in c.execute(
-                "SELECT pl.name, p.odds FROM props p "
+                "SELECT pl.id AS player_id, pl.espn_id, pl.name, pl.team, p.odds, p.source, "
+                "COALESCE(p.odds_captured_at,p.captured_at) AS price_as_of FROM props p "
                 "JOIN prop_games g ON p.game_id=g.id JOIN players pl ON p.player_id=pl.id "
                 "WHERE g.league='wc' AND g.espn_event_id=? "
                 "AND p.market='goals' AND p.odds IS NOT NULL "
                 "ORDER BY COALESCE(p.odds_captured_at,p.captured_at),p.id",
                 (str(game_id),)).fetchall():
-            m[r["name"]] = r["odds"]
+            quote_status, quote_age = _quote_state(r["price_as_of"], now=now)
+            m[r["name"]] = {
+                "player_id": r["player_id"],
+                "espn_id": str(r["espn_id"] or "") or None,
+                "player": r["name"],
+                "team": r["team"],
+                "market": "to score",
+                "odds": r["odds"],
+                "line": _fmt_odds(r["odds"]),
+                "price_as_of": r["price_as_of"],
+                "quote_status": quote_status,
+                "quote_age_seconds": quote_age,
+                "quote_source": r["source"] or "Bovada",
+            }
         c.close()
     except Exception:
         pass
     return m
-
-
-def _team_odds(sm, home_name, away_name):
-    """3-way match-result moneyline from ESPN pickcenter — no scraper/table needed.
-    Returns {selection: american_odds} for away/home/Draw, or {}."""
-    for p in sm.get("pickcenter", []) or []:
-        ho = (p.get("homeTeamOdds", {}) or {}).get("moneyLine")
-        ao = (p.get("awayTeamOdds", {}) or {}).get("moneyLine")
-        do = (p.get("drawOdds", {}) or {}).get("moneyLine")
-        if ho is None and ao is None:
-            continue
-        out = {}
-        if ao is not None:
-            out[away_name] = int(ao)
-        if ho is not None:
-            out[home_name] = int(ho)
-        if do is not None:
-            out["Draw"] = int(do)
-        return out
-    return {}
 
 
 def _content_hash(value):
@@ -351,18 +557,51 @@ def _visible_match_stats(team_stats, away_abbr, home_abbr):
     return rows
 
 
-def _broadcast_insights(tag, names, team_aliases, limit=8):
-    """Relevance-filtered, name-normalized, de-duplicated booth reads → cards."""
+_HISTORICAL_CUES = (
+    r"\b(?:last|previous|prior) (?:game|match|round|half|season)\b",
+    r"\b(?:semi[- ]?final|quarter[- ]?final|round of \d+)\b",
+    r"\bagainst [a-z]", r"\bas [a-z ]+ found out\b",
+    r"\b(?:in|during) the spring\b", r"\bcoming into (?:this|the) (?:game|match)\b",
+    r"\bthis (?:knockout round|tournament)\b", r"\bwe (?:ve|have) seen\b",
+    r"\b(?:ever played|has never lost|have never lost|unbeaten)\b",
+    r"\b(?:goals?|games?) after the \d+", r"\b\d+ of (?:their )?\d+ goals\b",
+    r"\bused to\b", r"\bcareer\b", r"\bpregame\b",
+)
+_CURRENT_CUES = (
+    r"\bright now\b", r"\bso far\b", r"\bat the moment\b", r"\bthis match\b",
+    r"\bthis game\b", r"\bthis (?:first|second) half\b", r"\btoday\b", r"\btonight\b",
+)
+
+
+def _time_scope(quote):
+    """Separate a live observation from history mentioned during the broadcast."""
+    text = _plain(quote)
+    historical = any(re.search(pattern, text, re.I) for pattern in _HISTORICAL_CUES)
+    current = any(re.search(pattern, text, re.I) for pattern in _CURRENT_CUES)
+    if historical and current:
+        return "mixed"
+    if historical:
+        return "historical_reference"
+    return "current_match"
+
+
+def _broadcast_rows(tag):
     path = os.path.join(BROADCAST_DIR, f"{tag}_signals.jsonl")
     if not os.path.exists(path):
         return []
     rows = []
-    with open(path) as f:
+    with open(path, encoding="utf-8") as f:
         for line in f:
             try:
                 rows.append(json.loads(line))
             except Exception:
                 continue
+    return rows
+
+
+def _broadcast_insights(tag, names, team_aliases, limit=None, rows=None, team_subjects=None):
+    """Ground every relevant booth observation before collapsing it into episodes."""
+    rows = list(rows) if rows is not None else _broadcast_rows(tag)
     identities = _match_identities(names, team_aliases)
     kept, seen = [], set()
     for r in rows:
@@ -372,13 +611,18 @@ def _broadcast_insights(tag, names, team_aliases, limit=8):
         quote = r.get("quote", "").strip()
         if not quote or len(quote) < 25:
             continue
-        subject = _normalize_subject(
-            str(r.get("subject", "")).strip(), names, identities["generic"]
+        resolved = _resolve_subject(
+            str(r.get("subject", "")).strip(), names, identities["generic"], team_subjects
         )
+        mentioned = _player_mentioned_in_quote(quote, names)
+        if mentioned and resolved.get("subject_kind") != "player":
+            resolved = _player_resolution(mentioned, "exact_quote_mention", resolved.get("subject_raw"))
+        subject = resolved.get("name") or ""
         if not _subject_is_grounded(subject, identities):
             continue
-        # dedup on the quote itself → collapses repeats + same quote under two subjects
-        qk = re.sub(r"[^a-z0-9]", "", quote.lower())[:50]
+        # Exact quote repeats are one observation. Semantic overlap is collapsed
+        # later at the episode layer, where the receipt count remains visible.
+        qk = _plain(quote)
         if qk in seen:
             continue
         seen.add(qk)
@@ -387,22 +631,279 @@ def _broadcast_insights(tag, names, team_aliases, limit=8):
             "id": _content_hash({"tag": tag, "subject": subject, "quote": quote, "ts": ts})[:16],
             "tag": _TAG_LABEL.get(r.get("type"), "Read"),
             "subject": subject,
-            "quote": quote if len(quote) <= 180 else quote[:177].rstrip() + "…",
+            "quote": quote if len(quote) <= 420 else quote[:417].rstrip() + "…",
             "strength": r.get("strength", 1),
             "ts": ts,
+            "time_scope": _time_scope(quote),
+            **{key: value for key, value in resolved.items() if key != "name"},
         })
     # A live feed must visibly move. Newest evidence leads; strength breaks ties.
     kept.sort(key=lambda x: (x.get("ts") or "", x.get("strength") or 1), reverse=True)
-    return kept[:limit]
+    return kept if limit is None else kept[:limit]
+
+
+def _annotate_match_phases(insights, kickoff, status):
+    """Assign broad match phases without inventing an exact game clock.
+
+    The broadcast source only timestamps wall time. A clear mid-match silence
+    identifies halftime; otherwise phase labels stay conservative.
+    """
+    kickoff_at = _parse_datetime(kickoff)
+    parsed = sorted(
+        ((stamp, row) for row in insights if (stamp := _parse_datetime(row.get("ts")))),
+        key=lambda pair: pair[0],
+    )
+    halftime_gap = None
+    if kickoff_at:
+        eligible = []
+        for (left, _), (right, _) in zip(parsed, parsed[1:]):
+            gap = (right - left).total_seconds()
+            if left >= kickoff_at + dt.timedelta(minutes=30) and gap >= 8 * 60:
+                eligible.append((gap, left, right))
+        if eligible:
+            _, gap_start, gap_end = max(eligible)
+            halftime_gap = (gap_start, gap_end)
+
+    status_text = str(status or "").upper()
+    current_phase = "pregame"
+    for stamp, row in parsed:
+        if kickoff_at and stamp < kickoff_at:
+            phase = "pregame"
+        elif halftime_gap and stamp <= halftime_gap[0]:
+            phase = "first_half"
+        elif halftime_gap and stamp < halftime_gap[1]:
+            phase = "halftime"
+        elif halftime_gap:
+            phase = "second_half"
+        elif "HALF" in status_text or status_text == "HT":
+            phase = "first_half"
+        elif re.match(r"^(?:[4-9]\d|1\d\d)'", status_text):
+            phase = "second_half"
+        else:
+            phase = "first_half" if kickoff_at else "live"
+        row["phase"] = phase
+        current_phase = phase
+    return current_phase
+
+
+_TOPIC_RULES = (
+    ("injury", r"\b(?:injur|limp|down injured|cannot continue|won t make|not going to be able|big loss)"),
+    ("player_influence", r"\b(?:get involved|turn it on|pockets of space|something out of nothing|changes? (?:the )?(?:game|match))\b"),
+    ("outlet", r"\b(?:outlet|drop deeper|higher up|nothing forward|can t get out|cannot get out)\b"),
+    ("game_management", r"\b(?:half ?time|second half|after the 80|late in games?|sit back|wait for)\b"),
+    ("pressing_shape", r"\b(?:press|shape|spread out|connection across|connected|defensive set)\b"),
+    ("chance_creation", r"\b(?:shots?|on target|chances?|break down|dangerous|passing lane|score)\b"),
+    ("possession_control", r"\b(?:possession|have the ball|has the ball|without the ball|better of the play)\b"),
+    ("mentality", r"\b(?:comfortable|confidence|belief|mentality|calm|pressure situation)\b"),
+)
+
+
+def _episode_topic(insight):
+    text = _plain(" ".join(
+        str(insight.get(key) or "") for key in ("quote", "headline", "analysis")
+    ))
+    for topic, pattern in _TOPIC_RULES:
+        if re.search(pattern, text, re.I):
+            return topic
+    return _plain(insight.get("tag")) or "booth_read"
+
+
+def _episode_anchor(insight, topic):
+    team_abbr = insight.get("team_abbr")
+    if topic == "injury" and team_abbr:
+        return f"team:{team_abbr}:injury"
+    if insight.get("subject_kind") == "player":
+        return insight.get("subject_id") or f"player:{_plain(insight.get('subject'))}"
+    if team_abbr:
+        return f"team:{team_abbr}"
+    return insight.get("subject_id") or f"subject:{_plain(insight.get('subject'))}"
+
+
+def _merge_scope(left, right):
+    scopes = {value for value in (left, right) if value}
+    if len(scopes) <= 1:
+        return next(iter(scopes), "current_match")
+    return "mixed"
+
+
+def _collapse_episodes(insights):
+    """Collapse overlapping extractor rows into evolving, receipt-backed stories."""
+    episodes = []
+    for insight in sorted(insights, key=lambda row: row.get("ts") or ""):
+        topic = _episode_topic(insight)
+        anchor = _episode_anchor(insight, topic)
+        stamp = _parse_datetime(insight.get("ts"))
+        episode = None
+        for candidate in reversed(episodes):
+            if candidate["_anchor"] != anchor or candidate["topic"] != topic:
+                continue
+            if candidate.get("phase") != insight.get("phase"):
+                continue
+            updated = _parse_datetime(candidate.get("updated_at"))
+            if stamp and updated and (stamp - updated).total_seconds() > _EPISODE_WINDOW_SECONDS:
+                continue
+            episode = candidate
+            break
+
+        receipt = {
+            "id": insight.get("id"),
+            "quote": insight.get("quote"),
+            "ts": insight.get("ts"),
+            "time_scope": insight.get("time_scope", "current_match"),
+            "subject_raw": insight.get("subject_raw"),
+        }
+        if episode is None:
+            episode = {
+                "_anchor": anchor,
+                "_receipts": [receipt],
+                "id": None,
+                "topic": topic,
+                "tag": insight.get("tag"),
+                "tags": [insight.get("tag")],
+                "subject": insight.get("subject"),
+                "subject_id": insight.get("subject_id"),
+                "subject_kind": insight.get("subject_kind"),
+                "subject_resolution": insight.get("subject_resolution"),
+                "espn_id": insight.get("espn_id"),
+                "team_abbr": insight.get("team_abbr"),
+                "entities": ([{
+                    "id": insight.get("subject_id"),
+                    "name": insight.get("subject"),
+                    "kind": "player",
+                }] if insight.get("subject_kind") == "player" else []),
+                "phase": insight.get("phase", "live"),
+                "time_scope": insight.get("time_scope", "current_match"),
+                "started_at": insight.get("ts"),
+                "updated_at": insight.get("ts"),
+                "strength": insight.get("strength", 1),
+                "quote": insight.get("quote"),
+            }
+            episodes.append(episode)
+        else:
+            episode["_receipts"].append(receipt)
+            episode["updated_at"] = max(
+                value for value in (episode.get("updated_at"), insight.get("ts")) if value
+            )
+            episode["strength"] = max(episode.get("strength", 1), insight.get("strength", 1))
+            episode["time_scope"] = _merge_scope(
+                episode.get("time_scope"), insight.get("time_scope")
+            )
+            if insight.get("tag") and insight.get("tag") not in episode["tags"]:
+                episode["tags"].append(insight["tag"])
+            if insight.get("subject_kind") == "player":
+                entity = {
+                    "id": insight.get("subject_id"),
+                    "name": insight.get("subject"),
+                    "kind": "player",
+                }
+                if entity not in episode["entities"]:
+                    episode["entities"].append(entity)
+            # The latest high-strength receipt is the enrichment representative.
+            if (insight.get("strength", 1), insight.get("ts") or "") >= (
+                episode.get("strength", 1), episode.get("updated_at") or ""
+            ):
+                episode["quote"] = insight.get("quote")
+
+    for episode in episodes:
+        receipts = sorted(
+            episode.pop("_receipts"), key=lambda row: row.get("ts") or "", reverse=True
+        )
+        episode["receipt_count"] = len(receipts)
+        episode["receipts"] = receipts[:_MAX_EPISODE_RECEIPTS]
+        episode["id"] = _content_hash({
+            "anchor": episode.pop("_anchor"),
+            "topic": episode["topic"],
+            "phase": episode["phase"],
+            "started_at": episode["started_at"],
+        })[:16]
+    episodes.sort(
+        key=lambda row: (row.get("updated_at") or "", row.get("strength") or 1), reverse=True
+    )
+    return episodes
+
+
+def _attach_match_events(episodes, events):
+    """Link a booth episode to an authoritative ESPN event on an exact full name."""
+    for episode in episodes:
+        episode["priority"] = "availability" if episode.get("topic") == "injury" else "storyline"
+        quotes = " ".join(
+            str(row.get("quote") or "") for row in episode.get("receipts", [])
+        )
+        receipt_text = f" {_plain(quotes)} "
+        matches = []
+        for event in events:
+            exact_players = [
+                player for player in event.get("players", [])
+                if len(_plain(player).split()) >= 2 and f" {_plain(player)} " in receipt_text
+            ]
+            if not exact_players:
+                continue
+            matches.append((event, exact_players))
+        if len(matches) == 1:
+            event, exact_players = matches[0]
+            episode["match_event"] = {
+                "clock": event.get("clock"),
+                "kind": event.get("kind"),
+                "team": event.get("team"),
+                "players": event.get("players", []),
+                "text": event.get("text"),
+                "matched_players": exact_players,
+            }
+            episode["event_clock"] = event.get("clock")
+    return episodes
+
+
+_TOPIC_WEIGHT = {
+    "injury": 50,
+    "player_influence": 18,
+    "outlet": 16,
+    "pressing_shape": 15,
+    "chance_creation": 14,
+    "game_management": 13,
+    "possession_control": 12,
+    "mentality": 8,
+    "tactical": 10,
+    "momentum": 8,
+    "fatigue": 7,
+}
+
+
+def _rank_episodes(episodes):
+    """Availability first, then impact/receipts/recency within one match phase."""
+    if not episodes:
+        return []
+    latest = max(
+        (_parse_datetime(row.get("updated_at")) for row in episodes), default=None
+    )
+
+    def score(row):
+        updated = _parse_datetime(row.get("updated_at"))
+        age_minutes = max(0, (latest - updated).total_seconds() / 60) if latest and updated else 0
+        scope_penalty = 6 if row.get("time_scope") == "historical_reference" else 0
+        generic_penalty = 3 if row.get("subject_kind") == "match" else 0
+        return (
+            100 if row.get("priority") == "availability" else 0
+        ) + _TOPIC_WEIGHT.get(row.get("topic"), 6) + min(
+            int(row.get("receipt_count") or 1), 6
+        ) * 2 + int(row.get("strength") or 1) * 3 - age_minutes * 0.35 - scope_penalty - generic_penalty
+
+    return sorted(
+        episodes,
+        key=lambda row: (score(row), row.get("updated_at") or ""),
+        reverse=True,
+    )
 
 
 _read_cache = OrderedDict()
 
 _READ_SYS = (
     "You are a betting-desk analyst writing live in-match INTEL. Inputs are numbered FACTS (ESPN match "
-    "facts, route history, and market lines) and numbered BOOTH quotes (commentary/color, never an "
+    "facts and current market lines) and numbered BOOTH episodes (commentary/color, never an "
     "authoritative match fact). "
-    "Produce 3-4 punchy intel lines. A line MAY carry an optional 'play', but MOST lines should NOT — "
+    "Produce exactly ONE concise RIGHT-NOW catch-up line about what is happening in this match. "
+    "It should connect the two most important current developments in one fan-readable sentence. Historical references "
+    "may explain a current development but must be described explicitly as history; never make a "
+    "history-only line look live. A line MAY carry an optional 'play', but MOST lines should NOT — "
     "plays are rare and high-conviction. "
     "WHAT A PLAY IS — a DISCOUNT: an outcome the market prices as UNLIKELY (a longish price) that the "
     "booth's NEW INFORMATION makes MORE LIKELY than the line implies (the market underweights the new "
@@ -425,7 +926,7 @@ _READ_SYS = (
     'Return ONLY JSON: [{"headline":"...","evidence_refs":["F0","B1"],'
     '"prop":{"player":"Argentina","market":"to win","line":"+205","lean":"back|fade|watch"}}]. '
     '"player" holds the selection (a player name OR a team name / "Draw"). prop is OPTIONAL — omit it on '
-    "most lines. Max 4 items. headline <= 110 chars, no trailing period."
+    "most lines. Return exactly 1 item. headline <= 140 chars, no trailing period."
 )
 
 
@@ -474,10 +975,11 @@ def _deepseek(system, user, max_tokens=700):
 
 _insight_cache = OrderedDict()
 _INSIGHT_SYS = (
-    "Turn each numbered broadcast excerpt into a takeaway-first card for a bettor watching live. "
-    "For EVERY excerpt return: (1) headline: <=8 words, the actual insight; (2) analysis: <=130 "
-    "characters explaining why the excerpt matters, grounded ONLY in that excerpt; (3) lean: "
-    "back/fade/watch only when a PROP line is supplied AND the excerpt genuinely changes the case "
+    "Turn each numbered broadcast EPISODE into a takeaway-first card for a fan watching live. "
+    "An episode may have several receipts describing one evolving story. For EVERY episode return: "
+    "(1) headline: <=8 words, the actual development; (2) analysis: <=130 characters explaining "
+    "why it matters, grounded ONLY in its receipts; (3) lean: back/fade/watch only when a PROP line "
+    "is supplied AND current-match evidence genuinely changes the case "
     "for that named player to score, otherwise an empty string. Commentary is natural conversation "
     "and may describe prior matches: preserve the full sentence's timeframe and NEVER turn history "
     "into a fact about today's match. Do not claim an outcome, score, lineup fact, or that the booth "
@@ -507,73 +1009,153 @@ def _strip_data_framing(headline):
     ).strip()
 
 
+def _market_for_subject(subject, goals_market):
+    target = _plain(subject)
+    for key, value in (goals_market or {}).items():
+        player = value.get("player") if isinstance(value, dict) else key
+        if _plain(player or key) != target:
+            continue
+        if isinstance(value, dict):
+            return value
+        return {
+            "player": key,
+            "market": "to score",
+            "odds": value,
+            "line": _fmt_odds(value),
+            "quote_status": "unavailable",
+            "quote_age_seconds": None,
+            "price_as_of": None,
+            "espn_id": None,
+        }
+    return None
+
+
+def _actionable_market(insight, goals_market):
+    """A player chip requires exact roster ID, current scope, and a fresh quote."""
+    if insight.get("subject_kind") != "player":
+        return None
+    if insight.get("time_scope") != "current_match":
+        return None
+    if insight.get("subject_resolution") not in {"exact_player", "exact_quote_mention"}:
+        return None
+    market = _market_for_subject(insight.get("subject"), goals_market)
+    if not market or market.get("quote_status") != "current":
+        return None
+    espn_id = str(insight.get("espn_id") or "")
+    market_espn_id = str(market.get("espn_id") or "")
+    if not espn_id or espn_id != market_espn_id:
+        return None
+    return market
+
+
+def _parse_enrichment(out):
+    cards = {}
+    if not out:
+        return cards
+    txt = out.strip()
+    if txt.startswith("```"):
+        txt = txt.strip("`")
+        txt = txt.split("\n", 1)[-1]
+        if txt.lstrip().startswith("json"):
+            txt = txt.lstrip()[4:]
+    try:
+        for item in json.loads(txt):
+            if isinstance(item, dict) and "i" in item and item.get("headline"):
+                cards[int(item["i"])] = {
+                    "headline": str(item["headline"])[:100],
+                    "analysis": str(item.get("analysis", ""))[:160],
+                    "lean": str(item.get("lean", "")).lower(),
+                }
+    except Exception:
+        return {}
+    return cards
+
+
+def _episode_prompt_line(index, insight, goals_market):
+    receipts = insight.get("receipts") or [{"quote": insight.get("quote")}]
+    evidence = " | ".join(str(row.get("quote") or "") for row in receipts[:3])
+    market = _actionable_market(insight, goals_market)
+    prop = f"{market['line']} to score" if market else "none"
+    return (
+        f"{index}. [{insight.get('tag')}/{insight.get('subject')}; "
+        f"phase={insight.get('phase')}; scope={insight.get('time_scope')}] "
+        f"PROP: {prop}; RECEIPTS: {evidence}"
+    )
+
+
 def _enrich_insights(insights, goals_market, cache_key):
-    """Give every booth excerpt its own takeaway, analysis, and grounded prop lean."""
+    """Enrich episodes in bounded batches and retry omitted indices once."""
     if not insights:
         return insights
-    cards = _cache_get(_insight_cache, cache_key)
-    if cards is None:
-        numbered = "\n".join(
-            f"{i}. [{x['tag']}/{x['subject']}] "
-            f"PROP: {_fmt_odds(goals_market[x['subject']])} to score; QUOTE: {x['quote']}"
-            if x["subject"] in goals_market else
-            f"{i}. [{x['tag']}/{x['subject']}] PROP: none; QUOTE: {x['quote']}"
-            for i, x in enumerate(insights)
+    cards, missing = {}, []
+    cache_keys = {}
+    for index, insight in enumerate(insights):
+        item_key = (
+            "episode-v2",
+            _content_hash({
+                "subject": insight.get("subject"),
+                "phase": insight.get("phase"),
+                "scope": insight.get("time_scope"),
+                "receipts": insight.get("receipts") or insight.get("quote"),
+                "market": _actionable_market(insight, goals_market),
+            }),
         )
-        out = _deepseek(_INSIGHT_SYS, numbered, max_tokens=2600)
-        cards = {}
-        if out:
-            txt = out.strip()
-            if txt.startswith("```"):
-                txt = txt.strip("`")
-                txt = txt.split("\n", 1)[-1]
-                if txt.lstrip().startswith("json"):
-                    txt = txt.lstrip()[4:]
-            try:
-                for it in json.loads(txt):
-                    if isinstance(it, dict) and "i" in it and it.get("headline"):
-                        cards[int(it["i"])] = {
-                            "headline": str(it["headline"])[:100],
-                            "analysis": str(it.get("analysis", ""))[:160],
-                            "lean": str(it.get("lean", "")).lower(),
-                        }
-            except Exception:
-                cards = {}
-        _cache_put(_insight_cache, cache_key, cards)
+        cache_keys[index] = item_key
+        cached = _cache_get(_insight_cache, item_key)
+        if cached is None:
+            missing.append(index)
+        elif cached:
+            cards[index] = cached
+
+    # Small batches prevent the model from silently dropping the tail of a
+    # forty-row prompt. One retry covers any omitted indices.
+    for start in range(0, len(missing), 10):
+        batch = missing[start:start + 10]
+        prompt = "\n".join(
+            _episode_prompt_line(index, insights[index], goals_market) for index in batch
+        )
+        parsed = _parse_enrichment(_deepseek(_INSIGHT_SYS, prompt, max_tokens=1800))
+        omitted = [index for index in batch if index not in parsed]
+        if omitted:
+            retry_prompt = "\n".join(
+                _episode_prompt_line(index, insights[index], goals_market) for index in omitted
+            )
+            parsed.update(_parse_enrichment(
+                _deepseek(_INSIGHT_SYS, retry_prompt, max_tokens=max(500, 260 * len(omitted)))
+            ))
+        for index in batch:
+            card = parsed.get(index)
+            if card:
+                cards[index] = card
+                _cache_put(_insight_cache, cache_keys[index], card)
     for i, x in enumerate(insights):
         card = cards.get(i)
         if not card:
             continue
-        # The enrichment model only saw this quote. Reject any new numeric fact
+        # The enrichment model only saw this episode. Reject any new numeric fact
         # instead of letting a generated analysis turn commentary into data.
         generated_numbers = _numeric_tokens(card["headline"] + " " + card["analysis"])
-        if not generated_numbers.issubset(_numeric_tokens(x["quote"])):
+        receipt_text = " ".join(
+            str(row.get("quote") or "") for row in (x.get("receipts") or [{"quote": x.get("quote")}])
+        )
+        if not generated_numbers.issubset(_numeric_tokens(receipt_text)):
             continue
         x["headline"] = card["headline"]
         if card["analysis"]:
             x["analysis"] = card["analysis"]
-        odds = goals_market.get(x["subject"])
-        if odds is not None and card["lean"] in {"back", "fade", "watch"}:
+        market = _actionable_market(x, goals_market)
+        if market and card["lean"] in {"back", "fade", "watch"}:
             x["prop"] = {
                 "player": x["subject"],
                 "market": "to score",
-                "line": _fmt_odds(odds),
+                "line": market["line"],
                 "lean": card["lean"],
+                "price_as_of": market["price_as_of"],
+                "quote_status": market["quote_status"],
+                "quote_age_seconds": market["quote_age_seconds"],
+                "quote_source": market["quote_source"],
             }
     return insights
-
-
-def _signal_subjects(insights, names):
-    """Last names the booth actually made the SUBJECT of a read — the only players a
-    prop lean may attach to (stops the LLM free-picking longshots it never discussed)."""
-    lastmap = names["last"]
-    allowed = set()
-    for i in insights:
-        subj = _plain(i.get("subject"))
-        toks = subj.split()
-        if toks and toks[-1] in lastmap:
-            allowed.add(toks[-1])
-    return allowed
 
 
 def _synthesize_read(facts, insights, cache_key, market_lines=None):
@@ -587,14 +1169,29 @@ def _synthesize_read(facts, insights, cache_key, market_lines=None):
     fact_lines = []
     for index, fact in enumerate(facts):
         ref = f"F{index}"
-        refs[ref] = {"kind": "fact", "text": str(fact)}
-        fact_lines.append(f"{ref}: {fact}")
+        if isinstance(fact, dict):
+            receipt = {
+                "kind": fact.get("kind", "fact"),
+                "scope": fact.get("scope", "current_match"),
+                "text": str(fact.get("text") or ""),
+                "ts": fact.get("ts"),
+            }
+        else:
+            receipt = {"kind": "fact", "scope": "current_match", "text": str(fact), "ts": None}
+        refs[ref] = receipt
+        fact_lines.append(f"{ref} [{receipt['scope']}]: {receipt['text']}")
     quote_lines = []
     for index, insight in enumerate(insights[:18]):
         ref = f"B{index}"
-        refs[ref] = {"kind": "booth", "text": insight["quote"]}
+        refs[ref] = {
+            "kind": "booth",
+            "scope": insight.get("time_scope", "current_match"),
+            "text": insight["quote"],
+            "ts": insight.get("updated_at") or insight.get("ts"),
+        }
         quote_lines.append(
-            f"{ref}: [{insight['tag']}/{insight['subject']}] {insight['quote']}"
+            f"{ref} [{refs[ref]['scope']}]: "
+            f"[{insight['tag']}/{insight['subject']}] {insight['quote']}"
         )
     prompt = "FACTS:\n" + "\n".join(fact_lines) + "\n\nBOOTH:\n" + "\n".join(quote_lines)
     out = _deepseek(_READ_SYS, prompt)
@@ -628,14 +1225,29 @@ def _synthesize_read(facts, insights, cache_key, market_lines=None):
                     kinds = {refs[ref]["kind"] for ref in selected_refs}
                     source = "combined" if len(kinds) > 1 else next(iter(kinds))
                     evidence = []
+                    evidence_items = []
                     for ref in selected_refs:
                         receipt = refs[ref]
                         prefix = "ESPN/market" if receipt["kind"] == "fact" else "Booth"
                         evidence.append(f"{prefix}: {receipt['text']}")
+                        evidence_items.append({
+                            "ref": ref,
+                            "kind": receipt["kind"],
+                            "scope": receipt["scope"],
+                            "text": receipt["text"],
+                            "ts": receipt.get("ts"),
+                        })
+                    scopes = {refs[ref]["scope"] for ref in selected_refs}
+                    context_scope = (
+                        "right_now" if "current_match" in scopes or "mixed" in scopes
+                        else "path_here"
+                    )
                     card = {
                         "headline": headline,
-                        "evidence": " · ".join(evidence)[:420],
+                        "evidence": " · ".join(evidence),
+                        "evidence_items": evidence_items,
                         "source": source,
+                        "context_scope": context_scope,
                         "evidence_refs": selected_refs,
                     }
                     p = it.get("prop")
@@ -648,6 +1260,9 @@ def _synthesize_read(facts, insights, cache_key, market_lines=None):
                                 "market": market["market"],
                                 "line": market["line"],
                                 "lean": lean,
+                                **{key: market[key] for key in (
+                                    "price_as_of", "quote_status", "quote_age_seconds", "quote_source"
+                                ) if key in market},
                             }
                     read.append(card)
         except Exception:
@@ -656,7 +1271,71 @@ def _synthesize_read(facts, insights, cache_key, market_lines=None):
     return read
 
 
-def build_context(game_id, limit=8):
+_PHASE_LABELS = {
+    "pregame": "Pregame",
+    "first_half": "First half",
+    "halftime": "Halftime",
+    "second_half": "Second half",
+    "extra_time": "Extra time",
+    "final": "Final",
+    "live": "Live",
+}
+
+
+def _coverage_payload(
+    raw_rows, observations, episodes, current_phase, now, limit,
+    selected_phase=None, returned_count=None,
+):
+    raw_stamped = sorted(
+        ((stamp, row.get("ts")) for row in raw_rows if (stamp := _parse_datetime(row.get("ts")))),
+        key=lambda pair: pair[0],
+    )
+    observation_stamped = sorted(
+        ((stamp, row.get("ts")) for row in observations if (stamp := _parse_datetime(row.get("ts")))),
+        key=lambda pair: pair[0],
+    )
+    phase_rows = []
+    for phase in _PHASE_LABELS:
+        rows = [row for row in episodes if row.get("phase") == phase]
+        if not rows:
+            continue
+        phase_rows.append({
+            "key": phase,
+            "label": _PHASE_LABELS[phase],
+            "episode_count": len(rows),
+            "started_at": min(row.get("started_at") for row in rows if row.get("started_at")),
+            "updated_at": max(row.get("updated_at") for row in rows if row.get("updated_at")),
+        })
+    latest = raw_stamped[-1][0] if raw_stamped else None
+    age = max(0, int((now - latest).total_seconds())) if latest else None
+    selected_count = len([
+        row for row in episodes if selected_phase is None or row.get("phase") == selected_phase
+    ])
+    return {
+        "current_phase": current_phase,
+        "selected_phase": selected_phase or current_phase,
+        "source_started_at": raw_stamped[0][1] if raw_stamped else None,
+        "source_latest_at": raw_stamped[-1][1] if raw_stamped else None,
+        "source_observation_count": len(raw_rows),
+        "relevant_observation_count": len(observations),
+        "episode_count": len(episodes),
+        "selected_episode_count": selected_count,
+        "returned_episode_count": (
+            min(selected_count, limit) if returned_count is None else returned_count
+        ),
+        "truncated": selected_count > limit,
+        "booth_status": (
+            "unavailable" if age is None
+            else "stale" if age > _BOOTH_STALE_AFTER_SECONDS
+            else "current"
+        ),
+        "booth_age_seconds": age,
+        "relevant_started_at": observation_stamped[0][1] if observation_stamped else None,
+        "phases": phase_rows,
+    }
+
+
+def build_context(game_id, limit=8, phase=None):
     """Return the Game Context object for a WC game detail page, or None."""
     try:
         sm = espn.summary("wc", game_id)
@@ -692,19 +1371,31 @@ def build_context(game_id, limit=8):
               .get("status", {}).get("type", {}).get("detail")) \
         or sm.get("header", {}).get("competitions", [{}])[0].get("status", {}).get("type", {}).get("description")
 
-    names = _roster_names(sm)
+    now = dt.datetime.now(dt.timezone.utc)
+    canonical_teams = {home_abbr: _name(home), away_abbr: _name(away)}
+    names = _roster_names(sm, canonical_teams)
     aliases = _team_aliases(home, away)
+    team_subjects = _team_subjects(home, away)
     bracket = _world_cup_bracket()
     history = _tournament_history(
         bracket, game_id, comp.get("date"), home_abbr, away_abbr
     )
-    insights_full = _broadcast_insights(tag, names, aliases, limit=40)
+    raw_rows = _broadcast_rows(tag)
+    observations = _broadcast_insights(
+        tag, names, aliases, rows=raw_rows, team_subjects=team_subjects
+    )
+    current_phase = _annotate_match_phases(observations, comp.get("date"), status)
+    insights_full = _collapse_episodes(observations)
+    events = _match_events(sm)
+    insights_full = _attach_match_events(insights_full, events)
     raw_insight_hash = _content_hash([
-        {key: insight.get(key) for key in ("id", "tag", "subject", "quote", "strength", "ts")}
+        {key: insight.get(key) for key in (
+            "id", "topic", "tag", "subject", "quote", "strength", "phase",
+            "time_scope", "started_at", "updated_at", "receipt_count",
+        )}
         for insight in insights_full
     ])
-    allowed_players = _signal_subjects(insights_full, names)
-    scorers = _top_scorers(game_id, home_abbr, away_abbr)
+    scorers = _top_scorers(game_id, home_abbr, away_abbr, now=now)
 
     # live match stats → feed the synthesis so it can surface narrative-vs-data
     tstats = {}
@@ -717,15 +1408,30 @@ def build_context(game_id, limit=8):
 
     away_sc, home_sc = away.get("score"), home.get("score")
     match_stats = _visible_match_stats(tstats, away_abbr, home_abbr)
-    goals_mkt = _goals_market(game_id)
-    team_odds = _team_odds(sm, _name(home), _name(away))
+    goals_mkt = _goals_market(game_id, now=now)
+    available_phases = {row.get("phase") for row in insights_full}
+    selected_phase = phase if phase in available_phases else current_phase
+    if selected_phase not in available_phases and insights_full:
+        selected_phase = insights_full[0].get("phase")
+    selected_pool = _rank_episodes([
+        row for row in insights_full if row.get("phase") == selected_phase
+    ])
+    visible_episodes = selected_pool[:limit]
+    current_featured = _rank_episodes([
+        row for row in insights_full if row.get("phase") == current_phase
+    ])[:6]
+    if not current_featured:
+        current_featured = _rank_episodes(insights_full)[:6]
+    enrich_targets, enrich_seen = [], set()
+    for episode in current_featured + visible_episodes:
+        if episode.get("id") in enrich_seen:
+            continue
+        enrich_seen.add(episode.get("id"))
+        enrich_targets.append(episode)
     insight_cache_key = (
-        "v3", str(game_id), raw_insight_hash, _content_hash(sorted(goals_mkt.items()))
+        "v4", str(game_id), raw_insight_hash, _content_hash(goals_mkt)
     )
-    insights_full = _enrich_insights(insights_full, goals_mkt, insight_cache_key)
-    board_str = ", ".join(f"{n} {'+' if o > 0 else ''}{o}"
-                          for n, o in sorted(goals_mkt.items(), key=lambda kv: kv[1]))
-    events = _match_events(sm)
+    _enrich_insights(enrich_targets, goals_mkt, insight_cache_key)
 
     def _ev_fmt(e):
         if e["scoring"] and e["players"]:
@@ -741,64 +1447,48 @@ def build_context(game_id, limit=8):
                 f"(on target {_st(ab,'shotsOnTarget')}), form {_form(t) or 'unavailable'}")
 
     facts = [
-        f"MATCH ({status}): {_name(away)} {away_sc} - {home_sc} {_name(home)}",
-        f"Score events: {ev_str}",
-        _team_line(away, away_abbr, "away"),
-        _team_line(home, home_abbr, "home"),
+        {"kind": "fact", "scope": "current_match",
+         "text": f"MATCH ({status}): {_name(away)} {away_sc} - {home_sc} {_name(home)}"},
+        {"kind": "fact", "scope": "current_match", "text": f"Score events: {ev_str}"},
+        {"kind": "fact", "scope": "current_match", "text": _team_line(away, away_abbr, "away")},
+        {"kind": "fact", "scope": "current_match", "text": _team_line(home, home_abbr, "home")},
     ]
-    for abbr, team_name in ((away_abbr, _name(away)), (home_abbr, _name(home))):
-        route = (history.get("teams") or {}).get(abbr) or {}
-        route_matches = route.get("matches") or []
-        if route_matches:
-            route_text = "; ".join(
-                f"{row.get('round')}: {row.get('result')} {row.get('score_for')}-{row.get('score_against')} "
-                f"vs {(row.get('opponent') or {}).get('name')}"
-                + (" after extra time" if row.get("extra_time") else "")
-                for row in route_matches
-            )
-            rest = route.get("rest_days")
-            extra = route.get("extra_time_minutes") or 0
-            facts.append(
-                f"{team_name} route before this match: {route_text}; "
-                f"{rest} full days since the previous match; {extra} verified extra-time minutes"
-            )
-    if board_str:
-        facts.append(f"Bovada anytime-goalscorer board: {board_str}")
-    if team_odds:
-        facts.append(
-            "Match-result moneyline: "
-            + ", ".join(f"{name} {_fmt_odds(odds)}" for name, odds in team_odds.items())
-        )
 
     market_lines = {}
-    for player, odds in goals_mkt.items():
-        last = _plain(player).split()[-1] if _plain(player).split() else ""
-        if last in allowed_players:
-            market_lines[_plain(player)] = {
-                "player": player, "market": "to score", "line": _fmt_odds(odds)
-            }
-    for selection, odds in team_odds.items():
-        market = {
-            "player": selection, "market": "to win" if selection != "Draw" else "draw",
-            "line": _fmt_odds(odds),
-        }
-        market_lines[_plain(selection)] = market
-        if selection == _name(home):
-            market_lines[_plain(home_abbr)] = market
-        elif selection == _name(away):
-            market_lines[_plain(away_abbr)] = market
+    for episode in insights_full:
+        market = _actionable_market(episode, goals_mkt)
+        if market:
+            market_lines[_plain(episode.get("subject"))] = market
+
+    current_episodes = [
+        episode for episode in current_featured
+        if episode.get("time_scope") in {"current_match", "mixed"}
+    ][:8]
+    if not current_episodes:
+        current_episodes = [
+            episode for episode in insights_full
+            if episode.get("time_scope") in {"current_match", "mixed"}
+        ][:12]
 
     read_cache_key = (
-        "v3", str(game_id), raw_insight_hash,
+        "v4", str(game_id), current_phase, raw_insight_hash,
         _content_hash({"facts": facts, "markets": market_lines}),
     )
-    read = _synthesize_read(facts, insights_full, read_cache_key, market_lines=market_lines)
-    generated_at = dt.datetime.now(dt.timezone.utc).isoformat()
+    read = _synthesize_read(facts, current_episodes, read_cache_key, market_lines=market_lines)
+    right_now = [row for row in read if row.get("context_scope") == "right_now"][:1]
+    generated_at = now.isoformat()
+    coverage = _coverage_payload(
+        raw_rows, observations, insights_full, current_phase, now, limit,
+        selected_phase=selected_phase, returned_count=len(visible_episodes),
+    )
 
     return {
+        "schema_version": "wc-context-v2",
+        "surface": "game_context",
         "game_id": str(game_id),
         "headline": f"{_name(away)} at {_name(home)}",
         "status": status,
+        "current_phase": current_phase,
         "teams": {
             "home": {"abbr": home_abbr, "name": _name(home), "form": _form(home)},
             "away": {"abbr": away_abbr, "name": _name(away), "form": _form(away)},
@@ -806,10 +1496,27 @@ def build_context(game_id, limit=8):
         "top_scorers": scorers,
         "match_stats": match_stats,
         "history": history,
-        "read": read,
-        "insights": insights_full[:limit],
-        "latest_booth_at": insights_full[0].get("ts") if insights_full else None,
+        "right_now": right_now,
+        "read": right_now,
+        "featured_episodes": current_featured[:5],
+        "episodes": visible_episodes,
+        # Backward-compatible alias while the Booth tab moves to episodes.
+        "insights": visible_episodes,
+        "coverage": coverage,
+        "latest_booth_at": coverage["source_latest_at"],
+        "server_time": generated_at,
         "generated_at": generated_at,
+        "freshness_policy": {
+            "booth_stale_after_seconds": _BOOTH_STALE_AFTER_SECONDS,
+            "market_quote_stale_after_seconds": _MARKET_QUOTE_STALE_AFTER_SECONDS,
+        },
+        "market_context": {
+            "canonical_live_signal_endpoint": "/api/live/discounts?league=wc",
+            "player_action_rule": (
+                "A player action requires current-match evidence, exact ESPN identity, "
+                "and a current timestamped quote."
+            ),
+        },
         "social_sentiment": {
             "status": "unavailable",
             "reason": "No validated social-sentiment source is connected; social claims are omitted.",
@@ -817,13 +1524,14 @@ def build_context(game_id, limit=8):
         "sources": {
             "match_and_stats": "ESPN summary",
             "history": "ESPN World Cup bracket" if (history.get("teams") or {}) else None,
-            "market": "Bovada props + ESPN pickcenter",
+            "market": "Timestamped Bovada props; live team signals use /api/live/discounts",
             "booth": os.path.basename(os.path.join(BROADCAST_DIR, f"{tag}_signals.jsonl")),
             "social": None,
         },
         "limitations": [
             "Broadcast observations are commentary receipts, not authoritative match facts.",
+            "Exact game clock is unavailable for booth receipts; broad match phases and wall time are retained.",
             "Social sentiment is omitted until a validated, timestamped source is connected.",
         ],
-        "source": "ESPN facts + bracket history + market + broadcast",
+        "source": "ESPN facts + bracket history + timestamped market references + broadcast episodes",
     }

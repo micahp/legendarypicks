@@ -180,6 +180,175 @@ class BroadcastFilteringTests(unittest.TestCase):
         ))
         self.assertTrue(all(row.get("id") for row in insights))
 
+    def test_full_signal_population_is_available_before_episode_collapse(self):
+        rows = [
+            _signal(
+                "Spain",
+                f"Spain observation number {index} carries enough distinct match context",
+                f"2026-07-19T19:{index:02d}:00Z",
+            )
+            for index in range(55)
+        ]
+        names = {"full": [], "last": {}}
+        all_rows = wc_context._broadcast_insights(
+            "unused", names, {"spain"}, rows=rows, limit=None
+        )
+        capped_rows = wc_context._broadcast_insights(
+            "unused", names, {"spain"}, rows=rows, limit=40
+        )
+        self.assertEqual(len(all_rows), 55)
+        self.assertEqual(len(capped_rows), 40)
+
+
+class IdentityAndEpisodeTests(unittest.TestCase):
+    def setUp(self):
+        self.summary = {
+            "rosters": [{
+                "team": {"abbreviation": "ARG", "displayName": "Argentina"},
+                "roster": [
+                    {"athlete": {"id": "1", "displayName": "Emiliano Martínez"}},
+                    {"athlete": {"id": "2", "displayName": "Lisandro Martínez"}},
+                    {"athlete": {"id": "3", "displayName": "Lautaro Martínez"}},
+                ],
+            }]
+        }
+        self.names = wc_context._roster_names(self.summary, {"ARG": "Argentina"})
+
+    def test_same_surname_fails_closed_but_exact_full_name_resolves(self):
+        ambiguous = wc_context._resolve_subject("Andrew Martinez", self.names)
+        lisandro = wc_context._resolve_subject("Lisandro Martinez", self.names)
+
+        self.assertEqual(ambiguous["name"], "Argentina")
+        self.assertEqual(ambiguous["subject_kind"], "team")
+        self.assertEqual(ambiguous["subject_resolution"], "ambiguous_team_fallback")
+        self.assertCountEqual(
+            ambiguous["ambiguous_players"],
+            ["Emiliano Martínez", "Lisandro Martínez", "Lautaro Martínez"],
+        )
+        self.assertEqual(lisandro["name"], "Lisandro Martínez")
+        self.assertEqual(lisandro["subject_id"], "player:2")
+
+    def test_exact_player_mention_in_quote_upgrades_team_subject(self):
+        rows = [_signal(
+            "Argentina",
+            "What a big loss for Lisandro Martinez in the middle of the defense",
+            "2026-07-19T19:50:49Z",
+            3,
+            "injury",
+        )]
+        insights = wc_context._broadcast_insights(
+            "unused",
+            self.names,
+            {"argentina", "arg"},
+            rows=rows,
+            team_subjects={
+                "argentina": {
+                    "name": "Argentina", "subject_id": "team:ARG",
+                    "subject_kind": "team", "team_abbr": "ARG",
+                }
+            },
+        )
+        self.assertEqual(insights[0]["subject"], "Lisandro Martínez")
+        self.assertEqual(insights[0]["subject_id"], "player:2")
+        self.assertEqual(insights[0]["subject_resolution"], "exact_quote_mention")
+
+    def test_nearby_rows_collapse_into_one_evolving_episode(self):
+        base = {
+            "subject": "Lionel Messi", "subject_id": "player:10", "subject_kind": "player",
+            "subject_resolution": "exact_player", "espn_id": "10", "team_abbr": "ARG",
+            "phase": "second_half", "time_scope": "historical_reference", "strength": 2,
+        }
+        rows = [
+            {**base, "id": "a", "tag": "Key man", "ts": "2026-07-19T20:23:18Z",
+             "quote": "Messi turns it on late in games and then finds pockets of space"},
+            {**base, "id": "b", "tag": "Momentum", "ts": "2026-07-19T20:24:18Z",
+             "quote": "When Messi gets involved he changes the game quickly"},
+        ]
+        episodes = wc_context._collapse_episodes(rows)
+        self.assertEqual(len(episodes), 1)
+        self.assertEqual(episodes[0]["receipt_count"], 2)
+        self.assertCountEqual(episodes[0]["tags"], ["Key man", "Momentum"])
+
+    def test_match_phase_uses_full_timeline_and_halftime_gap(self):
+        rows = [
+            {"ts": "2026-07-19T18:55:00Z"},
+            {"ts": "2026-07-19T19:15:00Z"},
+            {"ts": "2026-07-19T19:58:00Z"},
+            {"ts": "2026-07-19T20:20:00Z"},
+        ]
+        current = wc_context._annotate_match_phases(
+            rows, "2026-07-19T19:00:00Z", "46'"
+        )
+        self.assertEqual(
+            [row["phase"] for row in rows],
+            ["pregame", "first_half", "first_half", "second_half"],
+        )
+        self.assertEqual(current, "second_half")
+
+    def test_player_action_requires_current_scope_fresh_quote_and_exact_id(self):
+        episode = {
+            "subject": "Lisandro Martínez", "subject_kind": "player",
+            "subject_resolution": "exact_player", "espn_id": "2",
+            "time_scope": "current_match",
+        }
+        market = {
+            "Lisandro Martinez": {
+                "player": "Lisandro Martinez", "espn_id": "2", "quote_status": "current",
+                "line": "+2000", "price_as_of": "2026-07-19T19:50:00Z",
+            }
+        }
+        self.assertIsNotNone(wc_context._actionable_market(episode, market))
+        self.assertIsNone(wc_context._actionable_market(
+            {**episode, "time_scope": "historical_reference"}, market
+        ))
+        self.assertIsNone(wc_context._actionable_market(
+            {**episode, "subject_resolution": "ambiguous_team_fallback"}, market
+        ))
+        self.assertIsNone(wc_context._actionable_market(
+            episode, {"Lisandro Martinez": {**market["Lisandro Martinez"], "quote_status": "stale"}}
+        ))
+
+    def test_quote_state_uses_shared_ninety_second_freshness_semantics(self):
+        now = wc_context.dt.datetime(2026, 7, 19, 20, 0, tzinfo=wc_context.dt.timezone.utc)
+        self.assertEqual(
+            wc_context._quote_state("2026-07-19T19:59:00Z", now), ("current", 60)
+        )
+        self.assertEqual(
+            wc_context._quote_state("2026-07-19T19:58:29Z", now), ("stale", 91)
+        )
+
+    def test_historical_comparison_is_retained_and_labeled(self):
+        self.assertEqual(
+            wc_context._time_scope(
+                "When Messi gets involved, as England found out, things change quickly"
+            ),
+            "historical_reference",
+        )
+
+    def test_injury_episode_links_only_to_exact_espn_event_and_ranks_first(self):
+        injury = {
+            "id": "injury", "topic": "injury", "subject": "Argentina",
+            "subject_kind": "team", "priority": "storyline", "strength": 2,
+            "receipt_count": 2, "updated_at": "2026-07-19T19:52:47Z",
+            "receipts": [{"quote": "What a big loss for Lisandro Martinez"}],
+        }
+        ordinary = {
+            "id": "pressure", "topic": "chance_creation", "subject": "Spain",
+            "subject_kind": "team", "priority": "storyline", "strength": 3,
+            "receipt_count": 5, "updated_at": "2026-07-19T19:55:47Z",
+            "receipts": [{"quote": "Spain are creating chances"}],
+        }
+        events = [{
+            "clock": "44'", "kind": "Substitution", "team": "ARG",
+            "players": ["Lisandro Martínez", "Nicolás Otamendi"],
+            "text": "Nicolás Otamendi replaces Lisandro Martínez",
+        }]
+        attached = wc_context._attach_match_events([ordinary, injury], events)
+        ranked = wc_context._rank_episodes(attached)
+        self.assertEqual(injury["event_clock"], "44'")
+        self.assertEqual(injury["match_event"]["matched_players"], ["Lisandro Martínez"])
+        self.assertEqual(ranked[0]["id"], "injury")
+
 
 class HistoryTests(unittest.TestCase):
     def test_route_rest_and_extra_time_come_from_bracket_contract(self):
@@ -238,6 +407,29 @@ class CacheAndClaimsTests(unittest.TestCase):
         self.assertIn("Booth:", read[0]["evidence"])
         self.assertNotIn("DATA shows", read[0]["headline"])
 
+    def test_episode_enrichment_retries_indices_missing_from_first_batch(self):
+        episodes = [
+            {
+                "tag": "Tactical", "subject": "Argentina", "subject_kind": "team",
+                "subject_resolution": "exact_team", "phase": "first_half",
+                "time_scope": "current_match", "quote": "Argentina cannot get out",
+                "receipts": [{"quote": "Argentina cannot get out"}],
+            },
+            {
+                "tag": "Momentum", "subject": "Spain", "subject_kind": "team",
+                "subject_resolution": "exact_team", "phase": "first_half",
+                "time_scope": "current_match", "quote": "Spain are creating the better chances",
+                "receipts": [{"quote": "Spain are creating the better chances"}],
+            },
+        ]
+        first = json.dumps([{"i": 0, "headline": "Argentina trapped", "analysis": "No outlet", "lean": ""}])
+        retry = json.dumps([{"i": 1, "headline": "Spain creating more", "analysis": "Better chances", "lean": ""}])
+        with mock.patch.object(wc_context, "_deepseek", side_effect=[first, retry]) as deepseek:
+            enriched = wc_context._enrich_insights(episodes, {}, ("retry",))
+        self.assertEqual(deepseek.call_count, 2)
+        self.assertEqual(enriched[0]["headline"], "Argentina trapped")
+        self.assertEqual(enriched[1]["headline"], "Spain creating more")
+
 
 class ContextContractTests(unittest.TestCase):
     def test_context_exposes_stats_history_provenance_and_social_gap(self):
@@ -255,7 +447,6 @@ class ContextContractTests(unittest.TestCase):
                 mock.patch.object(wc_context, "_world_cup_bracket", return_value=_bracket_fixture()),
                 mock.patch.object(wc_context, "_top_scorers", return_value=[]),
                 mock.patch.object(wc_context, "_goals_market", return_value={}),
-                mock.patch.object(wc_context, "_team_odds", return_value={}),
                 mock.patch.object(wc_context, "_enrich_insights", side_effect=lambda rows, *_: rows),
                 mock.patch.object(wc_context, "_synthesize_read", return_value=[]),
             ]
@@ -275,6 +466,10 @@ class ContextContractTests(unittest.TestCase):
         self.assertEqual(context["social_sentiment"]["status"], "unavailable")
         self.assertEqual(context["sources"]["match_and_stats"], "ESPN summary")
         self.assertEqual(context["latest_booth_at"], "2026-07-19T19:18:46Z")
+        self.assertEqual(context["schema_version"], "wc-context-v2")
+        self.assertEqual(context["coverage"]["source_observation_count"], 1)
+        self.assertEqual(context["coverage"]["episode_count"], 1)
+        self.assertEqual(context["episodes"], context["insights"])
 
 
 if __name__ == "__main__":
