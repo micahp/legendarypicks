@@ -47,7 +47,7 @@ from .lol import msi_predictions
 from .match_identity import (_is_map_market, _normalize_match_metadata,
                              _repair_logos_by_psid, _same_pair, _same_team)
 from .pandascore import (_ps_enrich, _ps_logo_for, _ps_surface_matches, _ps_team_logo_api,
-                         _fetch_ps, _stable_stream_key, _PS_VG_TITLE)
+                         _fetch_ps, _iso_to_ms, _stable_stream_key, _PS_VG_TITLE)
 from .results_store import _load_results_store, _save_results_store
 from .slate_sources import (_fetch_bovada_rows, _frag_candidates, _frag_lookup,
                             _grid_lookup, _kalshi_winner_fuzzy, _ps_candidates)
@@ -309,7 +309,8 @@ def _rebuild_upcoming():
         sl = m.get("streams_list") or []
         ps_streams_by_id[m["id"]] = sl
         eid = (m.get("serie") or {}).get("id")
-        meta = {"streamKey": _stable_stream_key(sl), "eventId": eid}
+        meta = {"streamKey": _stable_stream_key(sl), "eventId": eid,
+                "endTime": _iso_to_ms(m.get("end_at"))}
         ps_meta_by_id[m["id"]] = meta
         title = (_PS_VG_TITLE.get((m.get("videogame") or {}).get("slug"))
                  or _PS_VG_TITLE.get(((m.get("videogame") or {}).get("name") or "").lower()))
@@ -365,6 +366,8 @@ def _rebuild_upcoming():
                     m["logoB"] = psa
             if ps.get("startTime") and not m.get("startTime"):
                 m["startTime"] = ps["startTime"]
+            if ps.get("endTime") is not None:
+                m["endTime"] = ps["endTime"]
 
         # GRID (CS2/Dota): realtime score + the honest finished/won flags.
         gentry = gswap = None
@@ -611,14 +614,19 @@ def _rebuild_upcoming():
     # id. Falls back to the event id as a grouping anchor when there's no stable channel key (e.g. a
     # YouTube-video-only broadcast) so same-event games still group. Additive: null when unknown.
     for m in matches:
-        meta = None
+        exact_meta = None
         pid = m.get("_ps_id") or m.get("psId")
         if pid is not None:
-            meta = ps_meta_by_id.get(pid)
+            exact_meta = ps_meta_by_id.get(pid)
+        meta = exact_meta
         if meta is None:
             ca, cb = _canon_team(m.get("teamA", "")), _canon_team(m.get("teamB", ""))
             if ca and cb:
                 meta = ps_meta_by_pair.get((m.get("title"), frozenset((ca, cb))))
+        # End time is identity-sensitive: only copy it from an exact PandaScore match id, never the
+        # team-pair fallback (the same teams can rematch within one event).
+        if exact_meta and exact_meta.get("endTime") is not None:
+            m["endTime"] = exact_meta["endTime"]
         if meta:
             eid = meta.get("eventId")
             m["streamKey"] = meta.get("streamKey") or (f"event:{eid}" if eid is not None else None)
@@ -635,6 +643,7 @@ def _rebuild_upcoming():
     for m in matches:
         state = m["state"]
         st = m.get("startTime")
+        m["endTime"] = m.get("endTime")
         # Data must not vanish: an ENDED_UNKNOWN match is KEPT (shown in Results as "result
         # unavailable"), NOT dropped and NOT faked. It only leaves the board when it ages out of the
         # 3-day store retention like any other result.

@@ -25,7 +25,7 @@ type CS2Player = { name: string; kills: number | null; deaths: number | null }
 type CS2Team = { name: string; score: number | null; won: boolean; players: CS2Player[] }
 type CS2Live = { live: boolean; title?: string; tournament?: string; stream?: { platform: string; channel: string } | null; teamA?: CS2Team; teamB?: CS2Team }
 
-type UpMatch = { startTime: number | null; live: boolean; title: string; league: string; teamA: string; teamB: string; favorite: { name: string; pct: number } | null; watch: { platform: string; url: string; channel: string | null; online?: boolean | null; embedUrl?: string | null; language?: string | null; alternates?: Array<{ platform: string; url: string; channel: string | null; online?: boolean | null; embedUrl?: string | null; language?: string | null }> } | null; score?: { a: number | null; b: number | null } | null; finished?: boolean | null; winner?: 'a' | 'b' | null; pinned?: boolean; model?: { favName: string; modelPct: number; marketPct: number | null; edge: number | null } | null; logoA?: string | null; logoB?: string | null; minorLeague?: boolean; tier?: number; prominence?: number; psId?: number | string | null; streamKey?: string | null; eventId?: number | string | null; foreign?: boolean }
+type UpMatch = { startTime: number | null; endTime: number | null; live: boolean; title: string; league: string; teamA: string; teamB: string; favorite: { name: string; pct: number } | null; watch: { platform: string; url: string; channel: string | null; online?: boolean | null; embedUrl?: string | null; language?: string | null; alternates?: Array<{ platform: string; url: string; channel: string | null; online?: boolean | null; embedUrl?: string | null; language?: string | null }> } | null; score?: { a: number | null; b: number | null } | null; finished?: boolean | null; winner?: 'a' | 'b' | null; pinned?: boolean; model?: { favName: string; modelPct: number; marketPct: number | null; edge: number | null } | null; logoA?: string | null; logoB?: string | null; minorLeague?: boolean; tier?: number; prominence?: number; psId?: number | string | null; streamKey?: string | null; eventId?: number | string | null; foreign?: boolean }
 type UpcomingData = { matches: UpMatch[]; source?: string; error?: string; building?: boolean }
 
 const POLL_MS = 10_000
@@ -343,18 +343,22 @@ function localDateKey(ms: number | null): string {
   return `${y}-${mo}-${da}`
 }
 
+function groupTime(m: UpMatch): number | null {
+  return m.finished ? (m.endTime ?? m.startTime) : m.startTime
+}
+
 // Group a time-sorted list into one bucket per local calendar day, ordered by day. `dir` picks the
 // day order: Scheduled = 'asc' (Today first); Results = 'desc' (most recent day first). The display
 // label for each bucket is derived from its first match via dayKey (Today/Tomorrow/formatted date).
 function groupByDay(list: UpMatch[], dir: 'asc' | 'desc' = 'asc'): { label: string; matches: UpMatch[] }[] {
   const byKey = new Map<string, UpMatch[]>()
   for (const m of list) {
-    const k = localDateKey(m.startTime)
+    const k = localDateKey(groupTime(m))
     if (!byKey.has(k)) byKey.set(k, [])
     byKey.get(k)!.push(m)
   }
   const entries = Array.from(byKey.entries()).sort(([a], [b]) => dir === 'asc' ? a.localeCompare(b) : b.localeCompare(a))
-  return entries.map(([k, ms]) => ({ label: dayKey(ms[0].startTime), matches: ms }))
+  return entries.map(([k, ms]) => ({ label: dayKey(groupTime(ms[0])), matches: ms }))
 }
 
 function fmtClock(ms: number | null) {

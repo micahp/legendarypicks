@@ -543,6 +543,7 @@ def _ps_enrich(team_a, team_b, include_running=True, near_ms=None, league=None, 
         "canonicalA": name1 if swapped else name0,
         "canonicalB": name0 if swapped else name1,
         "startTime": _iso_to_ms(m.get("begin_at") or m.get("scheduled_at")),
+        "endTime": _iso_to_ms(m.get("end_at")),
         "league": (m.get("league") or {}).get("name"),
     }
 
@@ -626,6 +627,7 @@ def _ps_surface_matches(finished_window_ms=3 * 3600 * 1000,
         out.append({
             "_ps_id": m.get("id"),
             "startTime": begin_ms,
+            "endTime": end_ms,
             "live": running,
             "finished": finished,
             "title": title,

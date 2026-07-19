@@ -21,7 +21,7 @@ _MAX_LIVE_MS = 6 * 3600 * 1000
 _BOV_LIVE_MAX_MS = 3 * 3600 * 1000
 _CHANNEL_LIVE_TAIL_MS = _DELAYED_CAP_MS
 
-_CARRY_FIELDS = ("startTime", "title", "league", "teamA", "teamB", "favorite",
+_CARRY_FIELDS = ("startTime", "endTime", "title", "league", "teamA", "teamB", "favorite",
                  "logoA", "logoB", "model", "minorLeague", "psId")
 _ORIGIN_PRIO = {"bovada": 0, "pandascore": 1, "grid": 2, "carry": 3, "store": 4}
 _RELAXED_MERGE_MS = 10 * 60 * 1000
@@ -163,7 +163,7 @@ def _cluster(rows):
                     base["teamA"], base["teamB"] = ps_twin["teamB"], ps_twin["teamA"]
 
         for other in group[1:]:
-            for field in ("favorite", "model", "logoA", "logoB", "startTime", "league", "source"):
+            for field in ("favorite", "model", "logoA", "logoB", "startTime", "endTime", "league", "source"):
                 if not base.get(field) and other.get(field):
                     base[field] = other[field]
             better_result = _has_result(other) and not _has_result(base)
