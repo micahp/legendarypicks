@@ -1,9 +1,23 @@
 import { useEffect, useState } from 'react'
 
 type Scorer = { team: string; player: string; odds: number }
-type Insight = { tag: string; subject: string; quote: string; strength: number; ts?: string }
+type Insight = { id?: string; tag: string; subject: string; quote: string; strength: number; ts?: string }
 type Prop = { player: string; market: string; line: string; lean: string }
-type Read = { headline: string; evidence?: string; prop?: Prop }
+type Read = { headline: string; evidence?: string; source?: 'fact' | 'booth' | 'combined'; prop?: Prop }
+type MatchStat = { key: string; label: string; unit?: string; away?: string | null; home?: string | null }
+type RouteMatch = {
+  game_id: string
+  round?: string
+  date?: string
+  opponent: { abbr?: string; name?: string }
+  score_for?: number | null
+  score_against?: number | null
+  result: 'W' | 'L'
+  extra_time?: boolean
+  penalties?: boolean
+}
+type TeamHistory = { rest_days?: number | null; extra_time_matches: number; extra_time_minutes: number; matches: RouteMatch[] }
+type History = { teams?: Record<string, TeamHistory>; head_to_head?: unknown[] }
 
 const LEAN_STYLE: Record<string, { cls: string; mark: string }> = {
   back: { cls: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30', mark: '▲' },
@@ -28,9 +42,16 @@ type Ctx = {
   status?: string
   teams: { home: { abbr: string; name: string; form?: string | null }; away: { abbr: string; name: string; form?: string | null } }
   top_scorers: Scorer[]
+  match_stats?: MatchStat[]
+  history?: History
   read?: Read[]
   insights: Insight[]
+  latest_booth_at?: string | null
+  generated_at?: string
+  social_sentiment?: { status: 'unavailable' | 'current'; reason?: string }
 }
+
+const POLL_MS = 30_000
 
 // Broadcast-derived reads are colored by their tag so a fan can scan the timeline.
 const TAG_STYLE: Record<string, string> = {
@@ -55,17 +76,93 @@ function FormChips({ form }: { form?: string | null }) {
 }
 
 const fmtOdds = (o: number) => (o > 0 ? `+${o}` : `${o}`)
+const localClock = (ts?: string | null) => {
+  if (!ts) return ''
+  const parsed = new Date(ts)
+  return Number.isNaN(parsed.getTime()) ? '' : parsed.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+}
+
+const SOURCE_STYLE: Record<string, string> = {
+  fact: 'border-sky-500/25 bg-sky-500/10 text-sky-300',
+  booth: 'border-fuchsia-500/25 bg-fuchsia-500/10 text-fuchsia-300',
+  combined: 'border-emerald-500/25 bg-emerald-500/10 text-emerald-300',
+}
+
+const SOURCE_LABEL: Record<string, string> = {
+  fact: 'ESPN / market',
+  booth: 'Broadcast',
+  combined: 'Facts + broadcast',
+}
+
+const shortRound = (round?: string) => ({
+  'Round of 32': 'R32',
+  'Round of 16': 'R16',
+  Quarterfinals: 'QF',
+  Semifinals: 'SF',
+  Final: 'F',
+}[round || ''] || round || 'Match')
+
+function RouteToMatch({ team, history }: { team: Ctx['teams']['home']; history?: TeamHistory }) {
+  if (!history || history.matches.length === 0) return null
+  return (
+    <div className="min-w-0">
+      <div className="mb-2 flex flex-wrap items-baseline justify-between gap-1.5">
+        <span className="text-xs font-semibold text-zinc-200">{team.name}</span>
+        <span className="text-[10px] text-zinc-500">
+          {history.rest_days == null ? 'rest unavailable' : `${history.rest_days}d rest`}
+          {history.extra_time_minutes > 0 ? ` · ${history.extra_time_minutes} ET min` : ''}
+        </span>
+      </div>
+      <ol className="space-y-1.5">
+        {history.matches.map(match => (
+          <li key={match.game_id} className="flex items-center justify-between gap-2 text-[11px]">
+            <span className="min-w-0 truncate text-zinc-500">
+              <span className="mr-1.5 text-zinc-600">{shortRound(match.round)}</span>
+              {match.opponent.name || match.opponent.abbr}
+              {match.extra_time ? <span className="ml-1 text-amber-400/80">{match.penalties ? 'pens' : 'AET'}</span> : null}
+            </span>
+            <span className={`shrink-0 font-mono tabular-nums ${match.result === 'W' ? 'text-emerald-400' : 'text-red-400'}`}>
+              {match.result} {match.score_for ?? '–'}–{match.score_against ?? '–'}
+            </span>
+          </li>
+        ))}
+      </ol>
+    </div>
+  )
+}
 
 export default function WCContext({ gameId }: { gameId: string }) {
   const [ctx, setCtx] = useState<Ctx | null | undefined>(undefined)
 
   useEffect(() => {
     let alive = true
-    fetch(`/api/wc/${gameId}/context`)
-      .then(r => (r.ok ? r.json() : null))
-      .then(d => { if (alive) setCtx(d) })
-      .catch(() => { if (alive) setCtx(null) })
-    return () => { alive = false }
+    let hasValue = false
+    let active: AbortController | null = null
+    setCtx(undefined)
+    const load = () => {
+      active?.abort()
+      const request = new AbortController()
+      active = request
+      fetch(`/api/wc/${gameId}/context`, { signal: request.signal })
+        .then(r => (r.ok ? r.json() : null))
+        .then(d => {
+          if (!alive || request.signal.aborted) return
+          if (d) {
+            hasValue = true
+            setCtx(d)
+          } else if (!hasValue) {
+            setCtx(null)
+          }
+        })
+        .catch(() => { if (alive && !hasValue && !request.signal.aborted) setCtx(null) })
+    }
+    load()
+    const timer = setInterval(load, POLL_MS)
+    return () => {
+      alive = false
+      active?.abort()
+      clearInterval(timer)
+    }
   }, [gameId])
 
   if (ctx === undefined) return (
@@ -81,7 +178,10 @@ export default function WCContext({ gameId }: { gameId: string }) {
       {/* header */}
       <div className="flex items-center justify-between border-b border-zinc-800 px-4 py-2.5">
         <span className="text-[10px] font-medium uppercase tracking-[0.18em] text-emerald-400">Game Context</span>
-        <span className="text-[10px] text-zinc-500">from the broadcast · market · form</span>
+        <span className="text-right text-[10px] text-zinc-500">
+          ESPN facts · route history · broadcast
+          {localClock(ctx.latest_booth_at) ? ` · booth ${localClock(ctx.latest_booth_at)}` : ''}
+        </span>
       </div>
 
       {/* The Read: synthesized intel, takeaway-first (the value; quotes are the receipts in the tab) */}
@@ -92,6 +192,11 @@ export default function WCContext({ gameId }: { gameId: string }) {
               <div className="flex gap-2.5">
                 <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-400" />
                 <div>
+                  {r.source && (
+                    <span className={`mb-1 inline-flex rounded border px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wide ${SOURCE_STYLE[r.source] || SOURCE_STYLE.fact}`}>
+                      {SOURCE_LABEL[r.source] || r.source}
+                    </span>
+                  )}
                   <p className="text-sm font-semibold leading-snug text-zinc-100">{r.headline}</p>
                   {r.evidence && <p className="mt-0.5 text-xs leading-snug text-zinc-500">{r.evidence}</p>}
                   {r.prop && <div><PropChip prop={r.prop} /></div>}
@@ -126,11 +231,40 @@ export default function WCContext({ gameId }: { gameId: string }) {
         })}
       </div>
 
+      {ctx.match_stats && ctx.match_stats.length > 0 && (
+        <div className="border-t border-zinc-800 px-4 py-3">
+          <div className="mb-2 grid grid-cols-[1fr_auto_1fr] items-center text-[10px] font-medium uppercase tracking-wider text-zinc-600">
+            <span>{ctx.teams.away.abbr}</span>
+            <span>Match facts</span>
+            <span className="text-right">{ctx.teams.home.abbr}</span>
+          </div>
+          <div className="space-y-1.5">
+            {ctx.match_stats.map(stat => (
+              <div key={stat.key} className="grid grid-cols-[1fr_auto_1fr] items-center text-xs">
+                <span className="font-mono tabular-nums text-zinc-300">{stat.away ?? '–'}{stat.away != null ? stat.unit : ''}</span>
+                <span className="px-4 text-center text-zinc-600">{stat.label}</span>
+                <span className="text-right font-mono tabular-nums text-zinc-300">{stat.home ?? '–'}{stat.home != null ? stat.unit : ''}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {ctx.history?.teams && (
+        <div className="border-t border-zinc-800 px-4 py-3">
+          <p className="mb-3 text-[10px] font-medium uppercase tracking-[0.16em] text-zinc-500">Route to this match</p>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <RouteToMatch team={ctx.teams.away} history={ctx.history.teams[ctx.teams.away.abbr]} />
+            <RouteToMatch team={ctx.teams.home} history={ctx.history.teams[ctx.teams.home.abbr]} />
+          </div>
+        </div>
+      )}
+
       {/* fallback: raw booth reads only if synthesis is unavailable */}
       {(!ctx.read || ctx.read.length === 0) && ctx.insights.length > 0 && (
         <div className="space-y-2.5 px-4 py-3">
           {ctx.insights.map((it, i) => (
-            <div key={i} className="flex items-start gap-2.5">
+            <div key={it.id || `${it.ts || 'untimed'}-${i}`} className="flex items-start gap-2.5">
               <span className={`mt-0.5 shrink-0 rounded border px-1.5 py-0.5 text-[10px] font-medium ${TAG_STYLE[it.tag] || 'bg-zinc-800 text-zinc-400 border-zinc-700'}`}>
                 {it.tag}
               </span>
@@ -142,6 +276,12 @@ export default function WCContext({ gameId }: { gameId: string }) {
           ))}
           <p className="pt-1 text-[10px] text-zinc-600">Insight pulled live from the match broadcast.</p>
         </div>
+      )}
+
+      {ctx.social_sentiment?.status === 'unavailable' && (
+        <p className="border-t border-zinc-800 px-4 py-2 text-[10px] text-zinc-600">
+          Social sentiment omitted — no validated, timestamped source is connected.
+        </p>
       )}
     </section>
   )

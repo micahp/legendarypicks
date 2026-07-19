@@ -3,6 +3,7 @@ import ListenLive from '../ListenLive'
 
 type Prop = { player: string; market: string; line: string; lean: string }
 type Insight = {
+  id?: string
   tag: string
   subject: string
   quote: string
@@ -12,7 +13,9 @@ type Insight = {
   analysis?: string
   prop?: Prop
 }
-type BoothContext = { insights?: Insight[] }
+type BoothContext = { insights?: Insight[]; latest_booth_at?: string | null }
+
+const POLL_MS = 30_000
 
 const LEAN_STYLE: Record<string, { cls: string; mark: string }> = {
   back: { cls: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30', mark: '▲' },
@@ -29,6 +32,11 @@ const TAG_STYLE: Record<string, string> = {
 }
 
 const clock = (ts?: string) => (ts && ts.length >= 16 ? ts.slice(11, 16) : '')
+const localClock = (ts?: string | null) => {
+  if (!ts) return ''
+  const parsed = new Date(ts)
+  return Number.isNaN(parsed.getTime()) ? '' : parsed.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+}
 
 function PropChip({ prop }: { prop: Prop }) {
   const s = LEAN_STYLE[prop.lean] || LEAN_STYLE.watch
@@ -52,14 +60,33 @@ export default function BoothFeed({ gameId, contextLeague = 'wc', showListenLive
 
   useEffect(() => {
     let alive = true
-    const load = () =>
-      fetch(`/api/${contextLeague}/${gameId}/context?limit=40`)
+    let hasValue = false
+    let active: AbortController | null = null
+    setCtx(undefined)
+    const load = () => {
+      active?.abort()
+      const request = new AbortController()
+      active = request
+      return fetch(`/api/${contextLeague}/${gameId}/context?limit=40`, { signal: request.signal })
         .then(r => (r.ok ? r.json() : null))
-        .then(d => { if (alive) setCtx(d) })
-        .catch(() => { if (alive) setCtx(null) })
+        .then(d => {
+          if (!alive || request.signal.aborted) return
+          if (d) {
+            hasValue = true
+            setCtx(d)
+          } else if (!hasValue) {
+            setCtx(null)
+          }
+        })
+        .catch(() => { if (alive && !hasValue && !request.signal.aborted) setCtx(null) })
+    }
     load()
-    const t = setInterval(load, 30000) // refresh the feed while the match runs
-    return () => { alive = false; clearInterval(t) }
+    const timer = setInterval(load, POLL_MS)
+    return () => {
+      alive = false
+      active?.abort()
+      clearInterval(timer)
+    }
   }, [gameId, contextLeague])
 
   const items = ctx?.insights ?? []
@@ -83,11 +110,14 @@ export default function BoothFeed({ gameId, contextLeague = 'wc', showListenLive
         <section className="overflow-hidden rounded-lg border border-emerald-500/20 bg-ink-900">
           <div className="flex items-center justify-between gap-3 border-b border-zinc-800 px-3 py-2.5">
             <h3 className="text-[10px] font-medium uppercase tracking-[0.18em] text-emerald-400">Booth intelligence</h3>
-            <span className="text-right text-[10px] text-zinc-600">takeaway first · quote as evidence</span>
+            <span className="text-right text-[10px] text-zinc-600">
+              newest first · quote as evidence
+              {localClock(ctx?.latest_booth_at) ? ` · ${localClock(ctx?.latest_booth_at)}` : ''}
+            </span>
           </div>
           <ol className="divide-y divide-zinc-800/70">
             {items.map((it, i) => (
-              <li key={i} className="px-3 py-3">
+              <li key={it.id || `${it.ts || 'untimed'}-${i}`} className="px-3 py-3">
                 <div className="flex gap-2.5">
                   <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-400" />
                   <div className="min-w-0 flex-1">
@@ -114,7 +144,7 @@ export default function BoothFeed({ gameId, contextLeague = 'wc', showListenLive
           </ol>
         </section>
       )}
-      <p className="text-[10px] text-zinc-600">Reads pulled live from the match broadcast · refreshes every 30s.</p>
+      <p className="text-[10px] text-zinc-600">Commentary receipts, not match facts · newest first · refreshes every 30s.</p>
     </div>
   )
 }
