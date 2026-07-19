@@ -80,6 +80,7 @@ def _init_db():
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           league TEXT NOT NULL, date TEXT NOT NULL,
           home TEXT, away TEXT, espn_event_id TEXT,
+          start_time TEXT,
           final_home INTEGER, final_away INTEGER);
         CREATE TABLE IF NOT EXISTS props(
           id INTEGER PRIMARY KEY AUTOINCREMENT,
