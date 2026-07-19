@@ -10,6 +10,11 @@ import { ageFromSeconds, localTime, categoryLabel, titleCase } from './format'
 import CuratedPlayCard from './CuratedPlayCard'
 import { PlaysSkeleton, PlaysNetworkError, PlaysUnavailable } from './States'
 
+// Background refresh cadence for an open tab. Matches the API's stated cadence
+// (the shared-feed quote refresh advances the atomic snapshot every minute while
+// in scope) so a left-open tab never drifts more than one publish behind.
+const POLL_MS = 60_000
+
 const BOARD_PILL: Record<PlaysBoardAvailable['board_status'], string> = {
   current: 'bg-emerald-500/15 text-emerald-300',
   stale: 'bg-amber-500/15 text-amber-300',
@@ -164,6 +169,28 @@ export default function CuratedPlaysBoard() {
     load(ac.signal)
     return () => ac.abort()
   }, [load])
+
+  // Background poll: an open tab must not freeze on stale status/quotes. This is
+  // deliberately independent of `load` above — it never flips status back to
+  // 'loading' (no flicker) and silently keeps the last good board on failure,
+  // the same "keep last" contract LiveDiscounts.tsx uses for its own poll.
+  useEffect(() => {
+    let ignore = false
+    const ac = new AbortController()
+    const refresh = () => {
+      fetchPlaysBoard({ signal: ac.signal })
+        .then((b) => {
+          if (!ignore) setBoard(b)
+        })
+        .catch(() => { /* keep last board */ })
+    }
+    const t = setInterval(refresh, POLL_MS)
+    return () => {
+      ignore = true
+      ac.abort()
+      clearInterval(t)
+    }
+  }, [])
 
   if (status === 'loading') return <PlaysSkeleton />
   if (status === 'error' || !board) return <PlaysNetworkError onRetry={() => load()} />
