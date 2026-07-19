@@ -16,8 +16,9 @@ episode has no `prop` field.
 - `limit` is `1..100` and caps **episodes**, not extractor rows.
 - With no `phase`, `episodes` contains the current match phase.
 - `phase=pregame|first_half|halftime|second_half|extra_time|final` loads that phase
-  for explicit catch-up navigation; phase-specific responses leave `featured_episodes`
-  empty because the current highlights were already supplied by the default request.
+  for explicit catch-up navigation; phase-specific responses leave `right_now` and
+  `featured_episodes` empty because the current catch-up was already supplied by the
+  default request.
 - `coverage.phases` always reports the available phases and their full episode counts,
   so a client can lazy-load a past phase without downloading the whole broadcast.
 - `GET /api/wc/{game_id}/context/episodes/{episode_id}` returns the complete receipt

@@ -1513,11 +1513,13 @@ def build_context(game_id, limit=8, phase=None):
         row for row in insights_full if row.get("phase") == selected_phase
     ])
     visible_episodes = selected_pool[:limit]
-    current_featured = _select_featured([
-        row for row in insights_full if row.get("phase") == current_phase
-    ], limit=6)
-    if not current_featured:
-        current_featured = _select_featured(insights_full, limit=6)
+    current_featured = []
+    if phase is None:
+        current_featured = _select_featured([
+            row for row in insights_full if row.get("phase") == current_phase
+        ], limit=6)
+        if not current_featured:
+            current_featured = _select_featured(insights_full, limit=6)
     enrich_targets, enrich_seen = [], set()
     for episode in current_featured + visible_episodes:
         if episode.get("id") in enrich_seen:
@@ -1557,21 +1559,26 @@ def build_context(game_id, limit=8, phase=None):
         if market:
             market_lines[_plain(episode.get("subject"))] = market
 
-    current_episodes = [
-        episode for episode in current_featured
-        if episode.get("time_scope") in {"current_match", "mixed"}
-    ][:8]
-    if not current_episodes:
+    current_episodes = []
+    if phase is None:
         current_episodes = [
-            episode for episode in insights_full
+            episode for episode in current_featured
             if episode.get("time_scope") in {"current_match", "mixed"}
-        ][:12]
+        ][:8]
+        if not current_episodes:
+            current_episodes = [
+                episode for episode in insights_full
+                if episode.get("time_scope") in {"current_match", "mixed"}
+            ][:12]
 
     read_cache_key = (
         "v4", str(game_id), current_phase, raw_insight_hash,
         _content_hash({"facts": facts, "markets": market_lines}),
     )
-    read = _synthesize_read(facts, current_episodes, read_cache_key, market_lines=market_lines)
+    read = (
+        _synthesize_read(facts, current_episodes, read_cache_key, market_lines=market_lines)
+        if phase is None else []
+    )
     right_now = [row for row in read if row.get("context_scope") == "right_now"][:1]
     generated_at = now.isoformat()
     coverage = _coverage_payload(
