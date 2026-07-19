@@ -1,0 +1,194 @@
+{
+  "generated_at": "2026-07-19T14:58:23.178695Z",
+  "as_of": "2026-07-19T02:48:22Z",
+  "timezone": "America/Chicago",
+  "mode": "paper_research_only",
+  "scope": {
+    "from": "2026-07-18T21:48:22-05:00",
+    "through": "2026-07-20T00:00:00-05:00",
+    "label": "remainder of Saturday 2026-07-18 and Sunday 2026-07-19"
+  },
+  "risk_definition": "1R is the full fixed stake at risk. stop_price 0 means no mechanical downside stop; exit into a favorable swing.",
+  "plays": [
+    {
+      "category": "soccer",
+      "ticker": "KXWCGAME-26JUL19ESPARG-ESP",
+      "title": "Spain to beat Argentina in regulation",
+      "side": "YES",
+      "current_price": 0.43,
+      "current_bid": 0.42,
+      "current_ask": 0.43,
+      "current_bid_depth": 924257.9,
+      "current_ask_depth": 5581201.4,
+      "price_as_of": "2026-07-19T14:58:22.933292Z",
+      "entry_price": 0.15,
+      "stop_price": 0.0,
+      "target_price": 0.45,
+      "r_target": 2.0,
+      "thesis": "BUY-ONLY reversible-dip fade: Spain is the higher-quality pregame side, but 43c is efficient. Buy only after an early Argentina goal creates a stabilized discount near 35% of the pregame ask.",
+      "entry_condition": "Argentina scores by 25:00; Spain remains tactically intact; selling exhausts and the tape forms a higher low or Spain renews pressure; executable YES ask is 0.15 or lower.",
+      "invalidation": "No entry after 25:00, after a red card or material injury, during a continuing fall, or if Argentina is structurally controlling the match.",
+      "exit_rule": "Exit into the live comeback payoff; 0.45 is the 2R target cap, not a requirement to hold to resolution.",
+      "confidence": "high_if_triggered",
+      "resolves_at": "2026-07-19T21:00:00Z",
+      "resolves_at_note": "Expected shortly after regulation; exchange settlement may be later.",
+      "quote_source": "kalshi_shared_feed",
+      "market_status": "active",
+      "event_status": "open_window",
+      "quote_status": "current",
+      "quote_age_seconds": 0
+    },
+    {
+      "category": "mlb",
+      "ticker": "KXMLBGAME-26JUL191335TBBOS-BOS",
+      "title": "Boston Red Sox to beat Tampa Bay Rays",
+      "side": "YES",
+      "current_price": 0.54,
+      "current_bid": 0.53,
+      "current_ask": 0.54,
+      "current_bid_depth": 252441.4,
+      "current_ask_depth": 1386922.0,
+      "price_as_of": "2026-07-19T14:54:38.206492Z",
+      "entry_price": 0.19,
+      "stop_price": 0.0,
+      "target_price": 0.57,
+      "r_target": 2.0,
+      "thesis": "Immutable live-discount setup: Boston has the stronger immediate form and Sonny Gray matchup, but there is no pregame edge at 54c. A reversible early deficit at 19c offers the quality outcome at 35% of its pregame ask.",
+      "entry_condition": "Before the seventh inning; Boston trails by no more than three runs; Gray is active; game and tape show a rally, higher low, or selling exhaustion; executable YES ask is 0.19 or lower.",
+      "invalidation": "No entry on a starter scratch, material weather change, deficit greater than three, seventh inning or later, continuing free fall, or structural contact/velocity damage.",
+      "exit_rule": "Exit into the comeback repricing; target 0.57 equals 2R from the maximum entry.",
+      "confidence": "medium_high_if_triggered",
+      "resolves_at": "2026-07-19T21:35:00Z",
+      "resolves_at_note": "Expected game-resolution window; delays and settlement can move this time.",
+      "quote_source": "kalshi_shared_feed",
+      "market_status": "active",
+      "event_status": "open_window",
+      "quote_status": "stale",
+      "quote_age_seconds": 224
+    },
+    {
+      "category": "esports",
+      "ticker": "KXLOLGAME-26JUL190830DKKC-DK",
+      "title": "Dplus KIA to beat Karmine Corp",
+      "side": "YES",
+      "current_price": 0.91,
+      "current_bid": 0.91,
+      "current_ask": 0.92,
+      "current_bid_depth": 20213.0,
+      "current_ask_depth": 67154.1,
+      "price_as_of": "2026-07-19T14:58:22.680585Z",
+      "entry_price": 0.22,
+      "stop_price": 0.0,
+      "target_price": 0.66,
+      "r_target": 2.0,
+      "thesis": "Quality-side series fade: DK is about a 70% pregame outcome, so 71c is a favorite chase. A stabilized 22c panic print while the series remains recoverable is the required Buffett-grade discount.",
+      "entry_condition": "An adverse early series state drives YES to 0.22 or lower; comeback path remains open; no roster or health issue; selloff has stopped and formed a higher low.",
+      "invalidation": "No entry in an unrecoverable series state, after repeated structural draft mismatch, on roster/health news, in a map-only market, or while price is still falling.",
+      "exit_rule": "Exit into the comeback repricing; target 0.66 equals 2R and remains below the pregame ask.",
+      "confidence": "medium_high_if_triggered",
+      "resolves_at": "2026-07-19T13:30:00Z",
+      "resolves_at_note": "Expected series-resolution window; match duration and settlement can vary.",
+      "quote_source": "kalshi_shared_feed",
+      "market_status": "active",
+      "event_status": "open_window",
+      "quote_status": "current",
+      "quote_age_seconds": 0
+    },
+    {
+      "category": "soccer",
+      "ticker": "KXWCGAME-26JUL19ESPARG-ARG",
+      "title": "Argentina to beat Spain in regulation",
+      "side": "YES",
+      "current_price": 0.26,
+      "current_bid": 0.26,
+      "current_ask": 0.27,
+      "current_bid_depth": 874755.5,
+      "current_ask_depth": 26472202.8,
+      "price_as_of": "2026-07-19T14:58:21.159644Z",
+      "entry_price": 0.1,
+      "stop_price": 0.0,
+      "target_price": 0.3,
+      "r_target": 2.0,
+      "thesis": "BUY-ONLY reversible-dip fade on an elite outcome. Spain's defensive quality makes ordinary cheapness a trap, so Argentina qualifies only at 10c with clear stabilization after an early concession.",
+      "entry_condition": "Spain scores by 25:00; Argentina remains tactically alive; selling exhausts and Argentina shows a higher low or credible attacking response; executable YES ask is 0.10 or lower.",
+      "invalidation": "No entry after 25:00, after a red card or material injury, during a continuing fall, or if Spain is structurally controlling the match.",
+      "exit_rule": "Exit into the live comeback payoff; target 0.30 equals 2R from the maximum entry.",
+      "confidence": "medium_if_triggered",
+      "resolves_at": "2026-07-19T21:00:00Z",
+      "resolves_at_note": "Expected shortly after regulation; exchange settlement may be later.",
+      "quote_source": "kalshi_shared_feed",
+      "market_status": "active",
+      "event_status": "open_window",
+      "quote_status": "current",
+      "quote_age_seconds": 2
+    }
+  ],
+  "category_status": [
+    {
+      "category": "soccer",
+      "status": "two_conditional_plays_no_pregame_buy",
+      "note": "Spain, Argentina, draw, and main scorer props are near fair at the snapshot."
+    },
+    {
+      "category": "mlb",
+      "status": "one_conditional_play_no_pregame_buy",
+      "note": "Boston has the only complete current price, quality, starter, and immutable-level setup selected for the board."
+    },
+    {
+      "category": "esports",
+      "status": "one_conditional_play_no_pregame_buy",
+      "note": "Fresh listed EWC lines are within a few points of independent local fair value."
+    },
+    {
+      "category": "wnba",
+      "status": "no_play",
+      "note": "Sunday price tape was not executable at publication; Dallas and Atlanta are watch-only quality sides."
+    },
+    {
+      "category": "tennis",
+      "status": "no_play",
+      "note": "Insufficient reliable event mapping and current executable tape to establish selection quality."
+    },
+    {
+      "category": "ufc",
+      "status": "no_play",
+      "note": "Du Plessis-Usman was live and repricing sharply; no round-state context means no chase and no knife-catch."
+    },
+    {
+      "category": "crypto_econ_weather_politics",
+      "status": "no_play_coverage_limited",
+      "note": "No locally captured executable tape supported a quality-and-reversibility edge; no exchange-wide completeness claim."
+    }
+  ],
+  "limitations": [
+    "Conditional-entry liquidity must be rechecked when the event condition fires; current displayed depth is not guaranteed at the trigger.",
+    "The authenticated broad-market endpoint was rate-limited, so this is the verified local sports/esports board rather than a claimed exhaustive non-sports exchange scan.",
+    "resolves_at values are expected event-resolution windows, not guaranteed exchange settlement timestamps."
+  ],
+  "quote_refresh": {
+    "source": "kalshi_shared_feed",
+    "refreshed_at": "2026-07-19T14:58:23.178695Z",
+    "refreshed": 4,
+    "unavailable": 0
+  },
+  "schema_version": "plays-board-v1",
+  "surface": "curated_plays",
+  "freshness_policy": {
+    "quote_stale_after_seconds": 90,
+    "board_stale_after_seconds": 900
+  },
+  "published_at": "2026-07-19T14:58:23.178695Z",
+  "server_time": "2026-07-19T14:58:23.178695Z",
+  "board_status": "stale",
+  "status_reason": "The published board is older than its freshness window.",
+  "board_age_seconds": 43801,
+  "quote_status_counts": {
+    "current": 3,
+    "stale": 1,
+    "unavailable": 0
+  },
+  "event_status_counts": {
+    "open_window": 4,
+    "expired": 0
+  }
+}
