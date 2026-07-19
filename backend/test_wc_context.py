@@ -284,6 +284,8 @@ class IdentityAndEpisodeTests(unittest.TestCase):
             ["pregame", "first_half", "first_half", "second_half"],
         )
         self.assertEqual(current, "second_half")
+        self.assertEqual(wc_context._current_phase("HT", "first_half"), "halftime")
+        self.assertEqual(wc_context._current_phase("Final", "second_half"), "final")
 
     def test_player_action_requires_current_scope_fresh_quote_and_exact_id(self):
         episode = {

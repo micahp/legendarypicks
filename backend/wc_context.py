@@ -687,6 +687,15 @@ def _annotate_match_phases(insights, kickoff, status):
     return current_phase
 
 
+def _current_phase(status, derived_phase):
+    normalized = _plain(status)
+    if normalized in {"ht", "half time", "halftime"}:
+        return "halftime"
+    if normalized in {"ft", "full time", "final"} or normalized.startswith("final "):
+        return "final"
+    return derived_phase
+
+
 _TOPIC_RULES = (
     ("injury", r"\b(?:injur|limp|down injured|cannot continue|won t make|not going to be able|big loss)"),
     ("player_influence", r"\b(?:get involved|turn it on|pockets of space|something out of nothing|changes? (?:the )?(?:game|match))\b"),
@@ -1362,6 +1371,14 @@ def _coverage_payload(
             "started_at": min(row.get("started_at") for row in rows if row.get("started_at")),
             "updated_at": max(row.get("updated_at") for row in rows if row.get("updated_at")),
         })
+    if current_phase not in {row["key"] for row in phase_rows}:
+        phase_rows.append({
+            "key": current_phase,
+            "label": _PHASE_LABELS.get(current_phase, current_phase.replace("_", " ").title()),
+            "episode_count": 0,
+            "started_at": None,
+            "updated_at": None,
+        })
     latest = raw_stamped[-1][0] if raw_stamped else None
     age = max(0, int((now - latest).total_seconds())) if latest else None
     selected_count = len([
@@ -1381,7 +1398,9 @@ def _coverage_payload(
         ),
         "truncated": selected_count > limit,
         "booth_status": (
-            "unavailable" if age is None
+            "complete" if current_phase == "final"
+            else "quiet" if current_phase == "halftime"
+            else "unavailable" if age is None
             else "stale" if age > _BOOTH_STALE_AFTER_SECONDS
             else "current"
         ),
@@ -1460,7 +1479,8 @@ def build_context(game_id, limit=8, phase=None):
     observations = _broadcast_insights(
         tag, names, aliases, rows=raw_rows, team_subjects=team_subjects
     )
-    current_phase = _annotate_match_phases(observations, comp.get("date"), status)
+    derived_phase = _annotate_match_phases(observations, comp.get("date"), status)
+    current_phase = _current_phase(status, derived_phase)
     insights_full = _collapse_episodes(observations)
     events = _match_events(sm)
     insights_full = _attach_match_events(insights_full, events)

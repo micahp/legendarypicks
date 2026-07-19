@@ -34,7 +34,7 @@ type MatchPhase =
   | 'second_half' | 'extra_time' | 'final' | 'live'
 
 type TimeScope = 'current_match' | 'historical_reference' | 'mixed'
-type QuoteStatus = 'current' | 'stale' | 'unavailable'
+type BoothStatus = 'current' | 'quiet' | 'stale' | 'complete' | 'unavailable'
 
 interface BoothReceipt {
   id?: string
@@ -133,14 +133,14 @@ interface WCContextV2 {
     selected_episode_count: number
     returned_episode_count: number
     truncated: boolean
-    booth_status: QuoteStatus
+    booth_status: BoothStatus
     booth_age_seconds?: number | null
     phases: {
       key: MatchPhase
       label: string
       episode_count: number
-      started_at: string
-      updated_at: string
+      started_at: string | null
+      updated_at: string | null
     }[]
   }
   freshness_policy: {
