@@ -349,6 +349,34 @@ class IdentityAndEpisodeTests(unittest.TestCase):
         self.assertEqual(injury["match_event"]["matched_players"], ["Lisandro Martínez"])
         self.assertEqual(ranked[0]["id"], "injury")
 
+    def test_featured_mix_keeps_availability_and_player_specific_story(self):
+        common = {
+            "priority": "storyline", "strength": 3, "receipt_count": 5,
+            "updated_at": "2026-07-19T20:30:00Z", "time_scope": "current_match",
+        }
+        episodes = [
+            {**common, "id": "injury", "topic": "injury", "priority": "availability",
+             "subject": "Argentina", "subject_kind": "team", "team_abbr": "ARG"},
+            {**common, "id": "arg1", "topic": "tactical", "subject": "Argentina",
+             "subject_kind": "team", "team_abbr": "ARG"},
+            {**common, "id": "arg2", "topic": "possession_control", "subject": "Argentina",
+             "subject_kind": "team", "team_abbr": "ARG"},
+            {**common, "id": "arg3", "topic": "mentality", "subject": "Argentina",
+             "subject_kind": "team", "team_abbr": "ARG"},
+            {**common, "id": "esp1", "topic": "chance_creation", "subject": "Spain",
+             "subject_kind": "team", "team_abbr": "ESP"},
+            {**common, "id": "messi", "topic": "player_influence", "subject": "Lionel Messi",
+             "subject_kind": "player", "team_abbr": "ARG"},
+        ]
+        featured = wc_context._select_featured(episodes, limit=5)
+        self.assertEqual(featured[0]["id"], "injury")
+        self.assertIn("messi", [row["id"] for row in featured])
+        self.assertLessEqual(
+            sum(row.get("subject_kind") == "team" and row.get("team_abbr") == "ARG"
+                for row in featured),
+            3,  # availability plus at most two ordinary Argentina team stories
+        )
+
 
 class HistoryTests(unittest.TestCase):
     def test_route_rest_and_extra_time_come_from_bracket_contract(self):

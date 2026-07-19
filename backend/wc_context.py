@@ -894,6 +894,59 @@ def _rank_episodes(episodes):
     )
 
 
+def _select_featured(episodes, limit=6):
+    """Choose a compact, persona-useful mix instead of five versions of one team."""
+    ranked = _rank_episodes(episodes)
+    selected, selected_ids = [], set()
+    team_counts, topics = defaultdict(int), set()
+
+    for row in ranked:
+        if row.get("priority") != "availability":
+            continue
+        selected.append(row)
+        selected_ids.add(row.get("id"))
+        if len(selected) >= limit:
+            return selected
+
+    for row in ranked:
+        if row.get("id") in selected_ids:
+            continue
+        team = row.get("team_abbr")
+        if row.get("subject_kind") == "team" and team and team_counts[team] >= 2:
+            continue
+        if row.get("topic") in topics and row.get("subject_kind") != "player":
+            continue
+        selected.append(row)
+        selected_ids.add(row.get("id"))
+        topics.add(row.get("topic"))
+        if row.get("subject_kind") == "team" and team:
+            team_counts[team] += 1
+        if len(selected) >= limit:
+            break
+
+    player_rows = [
+        row for row in ranked
+        if row.get("subject_kind") == "player" and row.get("id") not in selected_ids
+    ]
+    if player_rows and not any(row.get("subject_kind") == "player" for row in selected):
+        replacement = next(
+            (index for index in range(len(selected) - 1, -1, -1)
+             if selected[index].get("priority") != "availability"),
+            None,
+        )
+        if replacement is not None:
+            selected[replacement] = player_rows[0]
+
+    if len(selected) < limit:
+        for row in ranked:
+            if row.get("id") in {item.get("id") for item in selected}:
+                continue
+            selected.append(row)
+            if len(selected) >= limit:
+                break
+    return selected
+
+
 _read_cache = OrderedDict()
 
 _READ_SYS = (
@@ -1417,11 +1470,11 @@ def build_context(game_id, limit=8, phase=None):
         row for row in insights_full if row.get("phase") == selected_phase
     ])
     visible_episodes = selected_pool[:limit]
-    current_featured = _rank_episodes([
+    current_featured = _select_featured([
         row for row in insights_full if row.get("phase") == current_phase
-    ])[:6]
+    ], limit=6)
     if not current_featured:
-        current_featured = _rank_episodes(insights_full)[:6]
+        current_featured = _select_featured(insights_full, limit=6)
     enrich_targets, enrich_seen = [], set()
     for episode in current_featured + visible_episodes:
         if episode.get("id") in enrich_seen:
