@@ -196,7 +196,7 @@ function EpisodeCard({
                   : TAG_STYLE[episode.tag] || 'bg-zinc-800 text-zinc-400 border-zinc-700'
               }`}
             >
-              {episode.priority === 'availability' ? `⚠ ${episode.tag}` : episode.tag}
+              {episode.tag}
             </span>
             {episode.subject && <span className="text-[10px] font-medium text-zinc-400">{episode.subject}</span>}
             {episode.time_scope === 'historical_reference' && (
