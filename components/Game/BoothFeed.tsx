@@ -162,8 +162,8 @@ function ReceiptRow({ receipt, showCapturedLabel, showScopeBadge = true }: {
         <span className="mr-1 rounded bg-zinc-800 px-1 py-0.5 text-[9px] uppercase tracking-wide text-zinc-500">past</span>
       )}
       {showCapturedLabel && receipt.captured_at && (
-        <span className="mr-1 font-medium uppercase tracking-wide text-zinc-500">
-          Captured {localClock(receipt.captured_at)}:
+        <span className="mr-1 font-mono tabular-nums text-zinc-500">
+          {localClock(receipt.captured_at)}:
         </span>
       )}
       “{receipt.quote}”
@@ -187,13 +187,16 @@ function EpisodeCard({
         <span className={`mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full ${episode.priority === 'availability' ? 'bg-amber-400' : 'bg-emerald-400'}`} />
         <div className="min-w-0 flex-1">
           <div className="mb-1 flex flex-wrap items-center gap-1.5">
-            {episode.priority === 'availability' && (
-              <span className="shrink-0 rounded border border-amber-500/30 bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-medium text-amber-300">
-                ⚠ Availability
-              </span>
-            )}
-            <span className={`shrink-0 rounded border px-1.5 py-0.5 text-[10px] font-medium ${TAG_STYLE[episode.tag] || 'bg-zinc-800 text-zinc-400 border-zinc-700'}`}>
-              {episode.tag}
+            {/* One category badge, not two: the tag (more specific — Injury, Fatigue,
+                etc.) carries the availability warning styling instead of a separate pill. */}
+            <span
+              className={`shrink-0 rounded border px-1.5 py-0.5 text-[10px] font-medium ${
+                episode.priority === 'availability'
+                  ? 'border-amber-500/30 bg-amber-500/10 text-amber-300'
+                  : TAG_STYLE[episode.tag] || 'bg-zinc-800 text-zinc-400 border-zinc-700'
+              }`}
+            >
+              {episode.priority === 'availability' ? `⚠ ${episode.tag}` : episode.tag}
             </span>
             {episode.subject && <span className="text-[10px] font-medium text-zinc-400">{episode.subject}</span>}
             {episode.time_scope === 'historical_reference' && (
