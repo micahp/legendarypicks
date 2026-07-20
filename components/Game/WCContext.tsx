@@ -1,9 +1,14 @@
 import { useEffect, useState } from 'react'
 
 type Scorer = { team: string; player: string; odds: number }
-type Insight = { id?: string; tag: string; subject: string; quote: string; strength: number; ts?: string }
-type Prop = { player: string; market: string; line: string; lean: string }
-type Read = { headline: string; evidence?: string; source?: 'fact' | 'booth' | 'combined'; prop?: Prop }
+type Prop = {
+  player: string
+  market: string
+  line: string
+  lean: 'back' | 'fade' | 'watch'
+  price_as_of?: string
+  quote_age_seconds?: number
+}
 type MatchStat = { key: string; label: string; unit?: string; away?: string | null; home?: string | null }
 type RouteMatch = {
   game_id: string
@@ -18,6 +23,54 @@ type RouteMatch = {
 }
 type TeamHistory = { rest_days?: number | null; extra_time_matches: number; extra_time_minutes: number; matches: RouteMatch[] }
 type History = { teams?: Record<string, TeamHistory>; head_to_head?: unknown[] }
+
+type CatchUpReceipt = {
+  ref: string
+  kind: 'fact' | 'booth'
+  scope: 'current_match' | 'historical_reference' | 'mixed'
+  text: string
+  captured_at?: string
+  observed_at?: string
+}
+type CatchUpLine = {
+  headline: string
+  source?: 'fact' | 'booth' | 'combined'
+  evidence_items?: CatchUpReceipt[]
+  prop?: Prop
+}
+
+type MatchPhase = 'pregame' | 'first_half' | 'halftime' | 'second_half' | 'extra_time' | 'final' | 'live'
+type BoothEpisode = {
+  id: string
+  headline?: string
+  quote: string
+  subject: string
+  tag: string
+  phase: MatchPhase
+  latest_capture_at?: string
+  match_time?: { display: string }
+}
+type BoothStatus = 'current' | 'quiet' | 'stale' | 'complete' | 'unavailable'
+
+type Ctx = {
+  headline: string
+  status?: string
+  current_phase?: MatchPhase
+  teams: { home: { abbr: string; name: string; form?: string | null }; away: { abbr: string; name: string; form?: string | null } }
+  top_scorers: Scorer[]
+  match_stats?: MatchStat[]
+  history?: History
+  right_now?: CatchUpLine[]
+  featured_episodes?: BoothEpisode[]
+  coverage?: {
+    booth_status: BoothStatus
+    capture_latest_at?: string | null
+    phases: { key: MatchPhase; label: string; episode_count: number }[]
+  }
+  social_sentiment?: { status: 'unavailable' | 'current'; reason?: string }
+}
+
+const POLL_MS = 30_000
 
 const LEAN_STYLE: Record<string, { cls: string; mark: string }> = {
   back: { cls: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30', mark: '▲' },
@@ -34,32 +87,11 @@ function PropChip({ prop }: { prop: Prop }) {
       <span className="font-semibold">{prop.player}</span>
       <span className="opacity-80">{prop.market}</span>
       <span className="font-mono tabular-nums">{prop.line}</span>
+      {prop.quote_age_seconds != null && (
+        <span className="opacity-60">· priced {relativeFromSeconds(prop.quote_age_seconds)}</span>
+      )}
     </span>
   )
-}
-type Ctx = {
-  headline: string
-  status?: string
-  teams: { home: { abbr: string; name: string; form?: string | null }; away: { abbr: string; name: string; form?: string | null } }
-  top_scorers: Scorer[]
-  match_stats?: MatchStat[]
-  history?: History
-  read?: Read[]
-  insights: Insight[]
-  latest_booth_at?: string | null
-  generated_at?: string
-  social_sentiment?: { status: 'unavailable' | 'current'; reason?: string }
-}
-
-const POLL_MS = 30_000
-
-// Broadcast-derived reads are colored by their tag so a fan can scan the timeline.
-const TAG_STYLE: Record<string, string> = {
-  'Key man': 'bg-amber-500/15 text-amber-300 border-amber-500/25',
-  Momentum: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/25',
-  Tactical: 'bg-sky-500/15 text-sky-300 border-sky-500/25',
-  Mentality: 'bg-fuchsia-500/15 text-fuchsia-300 border-fuchsia-500/25',
-  Fatigue: 'bg-orange-500/15 text-orange-300 border-orange-500/25',
 }
 
 function FormChips({ form }: { form?: string | null }) {
@@ -76,9 +108,26 @@ function FormChips({ form }: { form?: string | null }) {
 }
 
 const fmtOdds = (o: number) => (o > 0 ? `+${o}` : `${o}`)
-const localClock = (ts?: string | null) => {
-  if (!ts) return ''
-  const parsed = new Date(ts)
+
+// Relative time is the primary display everywhere capture time appears — never
+// a raw ISO substring, never presented as a match minute (see docs/API-wc-context-v2.md).
+function relativeFromSeconds(seconds: number): string {
+  if (seconds < 10) return 'just now'
+  if (seconds < 60) return `${Math.round(seconds)}s ago`
+  const mins = Math.round(seconds / 60)
+  if (mins < 60) return `${mins}m ago`
+  const hours = Math.round(mins / 60)
+  return `${hours}h ago`
+}
+function relativeFromNow(iso?: string | null): string {
+  if (!iso) return ''
+  const parsed = new Date(iso)
+  if (Number.isNaN(parsed.getTime())) return ''
+  return relativeFromSeconds(Math.max(0, (Date.now() - parsed.getTime()) / 1000))
+}
+const localClock = (iso?: string | null) => {
+  if (!iso) return ''
+  const parsed = new Date(iso)
   return Number.isNaN(parsed.getTime()) ? '' : parsed.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
 }
 
@@ -87,11 +136,18 @@ const SOURCE_STYLE: Record<string, string> = {
   booth: 'border-fuchsia-500/25 bg-fuchsia-500/10 text-fuchsia-300',
   combined: 'border-emerald-500/25 bg-emerald-500/10 text-emerald-300',
 }
-
 const SOURCE_LABEL: Record<string, string> = {
   fact: 'ESPN / market',
   booth: 'Broadcast',
   combined: 'Facts + broadcast',
+}
+
+const STATUS_STYLE: Record<BoothStatus, string> = {
+  current: 'bg-emerald-500/15 text-emerald-300',
+  quiet: 'bg-sky-500/15 text-sky-300',
+  stale: 'bg-amber-500/15 text-amber-300',
+  complete: 'bg-zinc-700/40 text-zinc-300',
+  unavailable: 'bg-zinc-700/40 text-zinc-500',
 }
 
 const shortRound = (round?: string) => ({
@@ -129,6 +185,57 @@ function RouteToMatch({ team, history }: { team: Ctx['teams']['home']; history?:
       </ol>
     </div>
   )
+}
+
+// The 15-second casual-fan catch-up. right_now[0] is the primary source; when the
+// synthesis has nothing yet, the top featured episode stands in (same visual slot,
+// clearly not a claim of synthesis).
+function CatchUp({ line, fallbackEpisode }: { line?: CatchUpLine; fallbackEpisode?: BoothEpisode }) {
+  if (line) {
+    return (
+      <li className="px-4 py-3">
+        <div className="flex gap-2.5">
+          <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-400" />
+          <div className="min-w-0">
+            {line.source && (
+              <span className={`mb-1 inline-flex rounded border px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wide ${SOURCE_STYLE[line.source] || SOURCE_STYLE.fact}`}>
+                {SOURCE_LABEL[line.source] || line.source}
+              </span>
+            )}
+            <p className="text-sm font-semibold leading-snug text-zinc-100">{line.headline}</p>
+            {line.evidence_items && line.evidence_items.length > 0 && (
+              <p className="mt-0.5 text-xs leading-snug text-zinc-500">
+                {line.evidence_items.map((e, i) => (
+                  <span key={i}>
+                    {i > 0 ? ' · ' : ''}
+                    {e.scope === 'historical_reference' && <span className="text-zinc-600">(past) </span>}
+                    {e.text}
+                  </span>
+                ))}
+              </p>
+            )}
+            {line.prop && <div><PropChip prop={line.prop} /></div>}
+          </div>
+        </div>
+      </li>
+    )
+  }
+  if (fallbackEpisode) {
+    return (
+      <li className="px-4 py-3">
+        <div className="flex gap-2.5">
+          <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-400" />
+          <div className="min-w-0">
+            <p className="text-sm font-semibold leading-snug text-zinc-100">
+              {fallbackEpisode.headline || fallbackEpisode.quote}
+            </p>
+            <p className="mt-0.5 text-xs leading-snug text-zinc-500">Booth: “{fallbackEpisode.quote}”</p>
+          </div>
+        </div>
+      </li>
+    )
+  }
+  return null
 }
 
 export default function WCContext({ gameId }: { gameId: string }) {
@@ -173,37 +280,31 @@ export default function WCContext({ gameId }: { gameId: string }) {
   )
   if (!ctx) return null
 
+  const catchUpLine = ctx.right_now?.[0]
+  const fallbackEpisode = !catchUpLine ? ctx.featured_episodes?.[0] : undefined
+  const status = ctx.coverage?.booth_status
+  const phaseLabel = ctx.coverage?.phases.find(p => p.key === ctx.current_phase)?.label
+
   return (
     <section className="rounded-xl border border-zinc-800 bg-zinc-900 overflow-hidden">
       {/* header */}
       <div className="flex items-center justify-between border-b border-zinc-800 px-4 py-2.5">
         <span className="text-[10px] font-medium uppercase tracking-[0.18em] text-emerald-400">Game Context</span>
-        <span className="text-right text-[10px] text-zinc-500">
-          ESPN facts · route history · broadcast
-          {localClock(ctx.latest_booth_at) ? ` · booth ${localClock(ctx.latest_booth_at)}` : ''}
+        <span className="flex items-center gap-1.5 text-right text-[10px] text-zinc-500">
+          {status && (
+            <span className={`rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider ${STATUS_STYLE[status]}`}>
+              {status}
+            </span>
+          )}
+          {phaseLabel || 'Live'}
+          {ctx.coverage?.capture_latest_at ? ` · booth ${relativeFromNow(ctx.coverage.capture_latest_at)}` : ''}
         </span>
       </div>
 
-      {/* The Read: synthesized intel, takeaway-first (the value; quotes are the receipts in the tab) */}
-      {ctx.read && ctx.read.length > 0 && (
+      {/* Right now: the 15-second catch-up, one line, not a list of cards */}
+      {(catchUpLine || fallbackEpisode) && (
         <ul className="divide-y divide-zinc-800/70">
-          {ctx.read.map((r, i) => (
-            <li key={i} className="px-4 py-3">
-              <div className="flex gap-2.5">
-                <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-400" />
-                <div>
-                  {r.source && (
-                    <span className={`mb-1 inline-flex rounded border px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wide ${SOURCE_STYLE[r.source] || SOURCE_STYLE.fact}`}>
-                      {SOURCE_LABEL[r.source] || r.source}
-                    </span>
-                  )}
-                  <p className="text-sm font-semibold leading-snug text-zinc-100">{r.headline}</p>
-                  {r.evidence && <p className="mt-0.5 text-xs leading-snug text-zinc-500">{r.evidence}</p>}
-                  {r.prop && <div><PropChip prop={r.prop} /></div>}
-                </div>
-              </div>
-            </li>
-          ))}
+          <CatchUp line={catchUpLine} fallbackEpisode={fallbackEpisode} />
         </ul>
       )}
 
@@ -250,32 +351,17 @@ export default function WCContext({ gameId }: { gameId: string }) {
         </div>
       )}
 
+      {/* Path here: collapsed by default — route history is context, not today's catch-up */}
       {ctx.history?.teams && (
-        <div className="border-t border-zinc-800 px-4 py-3">
-          <p className="mb-3 text-[10px] font-medium uppercase tracking-[0.16em] text-zinc-500">Route to this match</p>
-          <div className="grid gap-4 sm:grid-cols-2">
+        <details className="border-t border-zinc-800 px-4 py-3">
+          <summary className="cursor-pointer text-[10px] font-medium uppercase tracking-[0.16em] text-zinc-500">
+            Path here
+          </summary>
+          <div className="mt-3 grid gap-4 sm:grid-cols-2">
             <RouteToMatch team={ctx.teams.away} history={ctx.history.teams[ctx.teams.away.abbr]} />
             <RouteToMatch team={ctx.teams.home} history={ctx.history.teams[ctx.teams.home.abbr]} />
           </div>
-        </div>
-      )}
-
-      {/* fallback: raw booth reads only if synthesis is unavailable */}
-      {(!ctx.read || ctx.read.length === 0) && ctx.insights.length > 0 && (
-        <div className="space-y-2.5 px-4 py-3">
-          {ctx.insights.map((it, i) => (
-            <div key={it.id || `${it.ts || 'untimed'}-${i}`} className="flex items-start gap-2.5">
-              <span className={`mt-0.5 shrink-0 rounded border px-1.5 py-0.5 text-[10px] font-medium ${TAG_STYLE[it.tag] || 'bg-zinc-800 text-zinc-400 border-zinc-700'}`}>
-                {it.tag}
-              </span>
-              <p className="text-sm leading-snug text-zinc-300">
-                {it.subject && <span className="font-semibold text-zinc-100">{it.subject}: </span>}
-                <span className="text-zinc-400">“{it.quote}”</span>
-              </p>
-            </div>
-          ))}
-          <p className="pt-1 text-[10px] text-zinc-600">Insight pulled live from the match broadcast.</p>
-        </div>
+        </details>
       )}
 
       {ctx.social_sentiment?.status === 'unavailable' && (
