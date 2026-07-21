@@ -67,8 +67,12 @@ _MARKET_QUOTE_STALE_AFTER_SECONDS = 90
 _BOOTH_STALE_AFTER_SECONDS = 180
 _EPISODE_WINDOW_SECONDS = 20 * 60
 _MAX_EPISODE_RECEIPTS = 3
+_TRANSCRIPT_LOOKBACK_SECONDS = 6 * 60
+_SOURCE_TIME_CACHE_MAX = 8192
 _bracket_cache = {"expires_at": 0.0, "data": {"rounds": []}}
 _episode_detail_cache = OrderedDict()
+_source_time_cache = OrderedDict()
+_transcript_file_cache = {}
 
 
 def _plain(value):
@@ -600,7 +604,327 @@ def _broadcast_rows(tag):
     return rows
 
 
-def _broadcast_insights(tag, names, team_aliases, limit=None, rows=None, team_subjects=None):
+def _broadcast_transcript_rows(tag):
+    """Load the source transcript used to produce the signal receipts."""
+    path = os.path.join(BROADCAST_DIR, f"{tag}_transcript.jsonl")
+    if not os.path.exists(path):
+        return []
+    try:
+        stat = os.stat(path)
+        signature = (stat.st_mtime_ns, stat.st_size)
+    except OSError:
+        return []
+    cached = _transcript_file_cache.get(path)
+    if cached and cached["signature"] == signature:
+        return cached["rows"]
+    rows = []
+    with open(path, encoding="utf-8") as handle:
+        for line in handle:
+            try:
+                row = json.loads(line)
+            except Exception:
+                continue
+            stamp = _parse_datetime(row.get("ts"))
+            text = _plain(row.get("text"))
+            if stamp and text:
+                rows.append({"ts": row.get("ts"), "_stamp": stamp, "_text": text})
+    _transcript_file_cache[path] = {"signature": signature, "rows": rows}
+    return rows
+
+
+def _quote_match_score(quote, transcript):
+    quote_text = _plain(quote)
+    transcript_text = _plain(transcript)
+    if not quote_text or not transcript_text:
+        return 0.0
+    if quote_text in transcript_text:
+        return 1.0
+    quote_words = [token for token in quote_text.split() if len(token) >= 4]
+    transcript_words = [token for token in transcript_text.split() if len(token) >= 4]
+    quote_tokens = set(quote_words)
+    transcript_tokens = set(transcript_words)
+    if len(quote_tokens) < 3:
+        return 0.0
+    token_recall = len(quote_tokens & transcript_tokens) / len(quote_tokens)
+    quote_pairs = set(zip(quote_words, quote_words[1:]))
+    transcript_pairs = set(zip(transcript_words, transcript_words[1:]))
+    pair_recall = (
+        len(quote_pairs & transcript_pairs) / len(quote_pairs) if quote_pairs else 0.0
+    )
+    return token_recall * 0.7 + pair_recall * 0.3
+
+
+def _source_transcript_time(quote, captured_at, transcript_rows):
+    """Recover when the quoted words aired from the extractor's rolling source.
+
+    Signal ``ts`` is the later LLM extraction time. The quote came from one of the
+    preceding transcript chunks, so using that timestamp directly makes every
+    inferred game clock several minutes late.
+    """
+    captured = _parse_datetime(captured_at)
+    if not captured or not transcript_rows:
+        return None
+    earliest = captured - dt.timedelta(seconds=_TRANSCRIPT_LOOKBACK_SECONDS)
+    latest = captured + dt.timedelta(seconds=30)
+    best = None
+    for row in transcript_rows:
+        stamp = row.get("_stamp")
+        if not stamp or stamp < earliest or stamp > latest:
+            continue
+        score = _quote_match_score(quote, row.get("_text"))
+        if best is None or score > best[0]:
+            best = (score, row.get("ts"))
+    return best[1] if best and best[0] >= 0.48 else None
+
+
+def _normalize_clock_display(value):
+    text = str(value or "").strip()
+    stoppage = re.match(r"^(\d+)'?\+(\d+)'?$", text)
+    if stoppage:
+        return f"{stoppage.group(1)}+{stoppage.group(2)}'"
+    minute = re.match(r"^(\d+)'?$", text)
+    return f"{minute.group(1)}'" if minute else text
+
+
+def _match_clock_timeline(sm, kickoff=None):
+    """Build period segments from ESPN's paired wall clock + soccer clock."""
+    markers = {}
+    terminal_at = None
+    terminal_types = {
+        "end game", "full time", "match ends", "end extra time",
+        "end penalty shootout", "penalty shootout ends",
+    }
+    marker_names = {
+        "kickoff": "first_start",
+        "halftime": "first_end",
+        "start 2nd half": "second_start",
+        "end regular time": "second_end",
+        "start extra time": "extra_first_start",
+        "halftime extra time": "extra_first_end",
+        "start 2nd half extra time": "extra_second_start",
+        "end extra time": "extra_second_end",
+        "start penalty shootout": "penalties_start",
+        "end penalty shootout": "penalties_end",
+    }
+    for event in sm.get("keyEvents", []) or []:
+        event_type = _plain((event.get("type") or {}).get("text"))
+        wallclock = _parse_datetime(event.get("wallclock") or (event.get("play") or {}).get("wallclock"))
+        if not wallclock:
+            continue
+        marker = marker_names.get(event_type)
+        if marker and marker not in markers:
+            markers[marker] = wallclock
+        if event_type in terminal_types or event_type.startswith("match ends"):
+            terminal_at = max(terminal_at, wallclock) if terminal_at else wallclock
+
+    points = []
+    period_bounds = defaultdict(list)
+    for item in sm.get("commentary", []) or []:
+        play = item.get("play") or {}
+        wallclock = _parse_datetime(play.get("wallclock"))
+        clock = (play.get("clock") or {}).get("displayValue") or (item.get("time") or {}).get("displayValue")
+        period = (play.get("period") or {}).get("number")
+        if not wallclock or not period or not clock:
+            continue
+        point = {
+            "at": wallclock,
+            "period": int(period),
+            "display": _normalize_clock_display(clock),
+        }
+        points.append(point)
+        period_bounds[int(period)].append(wallclock)
+    points.sort(key=lambda row: row["at"])
+    if not markers and not points:
+        return {"segments": [], "points": [], "terminal_at": None}
+
+    def bound(period, edge):
+        values = period_bounds.get(period) or []
+        return (min(values) if edge == "start" else max(values)) if values else None
+
+    first_start = markers.get("first_start") or bound(1, "start") or _parse_datetime(kickoff)
+    definitions = [
+        ("first_half", 1, 0, first_start,
+         markers.get("first_end") or bound(1, "end")),
+        ("second_half", 2, 45, markers.get("second_start") or bound(2, "start"),
+         markers.get("second_end") or bound(2, "end")),
+        ("extra_time", 3, 90, markers.get("extra_first_start") or bound(3, "start"),
+         markers.get("extra_first_end") or bound(3, "end")),
+        ("extra_time", 4, 105, markers.get("extra_second_start") or bound(4, "start"),
+         markers.get("extra_second_end") or bound(4, "end")),
+    ]
+    segments = [
+        {"phase": phase, "period": period, "base_minute": base,
+         "start_at": start, "end_at": end}
+        for phase, period, base, start, end in definitions if start
+    ]
+    penalties_start = markers.get("penalties_start") or bound(5, "start")
+    if penalties_start:
+        segments.append({
+            "phase": "penalties", "period": 5, "base_minute": 120,
+            "start_at": penalties_start,
+            "end_at": markers.get("penalties_end") or bound(5, "end"),
+        })
+    if not terminal_at:
+        terminal_at = markers.get("penalties_end") or markers.get("extra_second_end")
+    if not terminal_at and period_bounds:
+        terminal_at = bound(max(period_bounds), "end")
+    return {"segments": segments, "points": points, "terminal_at": terminal_at}
+
+
+def _stated_match_time(quote, phase, scope):
+    """Use only explicit current-match clock language, never route-history stats."""
+    if scope == "historical_reference":
+        return None
+    text = _plain(quote)
+    patterns = (
+        r"\bfirst (\d{1,2}) minutes? of this game (?:have |has )?gone\b",
+        r"\b(?:we are |were |still )?(?:in|into) the (\d{1,3})(?:st|nd|rd|th) minute\b"
+        r"(?: of (?:this |the )?(?:game|match|world cup final))?",
+        r"\b(?:still )?(\d{2,3}) minutes? in\b",
+    )
+    minute = None
+    for pattern in patterns:
+        match = re.search(pattern, text, re.I)
+        if match:
+            minute = int(match.group(1))
+            break
+    if minute is None and re.search(r"seconds? (?:from|after) (?:the )?kickoff of the second half of extra time", text):
+        minute = 106
+    if minute is None or not 1 <= minute <= 130:
+        return None
+    plausible = {
+        "first_half": minute <= 55,
+        "second_half": 45 <= minute <= 105,
+        "extra_time": 90 <= minute <= 130,
+        "final": 90 <= minute <= 130,
+        "live": True,
+    }.get(phase, False)
+    if not plausible:
+        return None
+    return {
+        "display": f"{minute}'",
+        "minute": minute,
+        "source": "booth_stated_clock",
+        "relation": "stated_in_receipt",
+        "precision": "stated",
+    }
+
+
+def _estimated_clock_display(segment, when):
+    period = segment["period"]
+    if period == 5:
+        return "Pens"
+    elapsed_minutes = max(0.0, (when - segment["start_at"]).total_seconds() / 60)
+    minute = int(segment["base_minute"] + elapsed_minutes) + 1
+    boundary = {1: 45, 2: 90, 3: 105, 4: 120}[period]
+    if minute > boundary:
+        return f"{boundary}+{minute - boundary}'"
+    return f"{minute}'"
+
+
+def _timeline_position(value, timeline, completed=False):
+    when = _parse_datetime(value)
+    segments = timeline.get("segments") or []
+    if not when or not segments:
+        return None
+    terminal_at = timeline.get("terminal_at")
+    if completed and terminal_at and when >= terminal_at:
+        return {
+            "phase": "final",
+            "match_time": {
+                "display": "FT", "source": "espn_period_boundary",
+                "relation": "after_final_whistle", "precision": "exact_phase",
+            },
+        }
+    first = min(segments, key=lambda row: row["start_at"])
+    if when < first["start_at"]:
+        return {"phase": "pregame", "match_time": None}
+
+    ordered = sorted(segments, key=lambda row: row["start_at"])
+    for index, segment in enumerate(ordered):
+        end = segment.get("end_at")
+        if when >= segment["start_at"] and (not end or when <= end):
+            if segment["phase"] == "penalties":
+                display = "Pens"
+            else:
+                period_points = [
+                    point for point in timeline.get("points", [])
+                    if point["period"] == segment["period"]
+                ]
+                nearest = min(
+                    period_points,
+                    key=lambda point: abs((point["at"] - when).total_seconds()),
+                    default=None,
+                )
+                display = (
+                    nearest["display"] if nearest and
+                    abs((nearest["at"] - when).total_seconds()) <= 180
+                    else _estimated_clock_display(segment, when)
+                )
+            return {
+                "phase": segment["phase"],
+                "match_time": {
+                    "display": f"~{display}" if display not in {"Pens"} else display,
+                    "source": "espn_wallclock_alignment",
+                    "relation": "broadcast_aligned",
+                    "precision": "estimated",
+                },
+            }
+        if end and index + 1 < len(ordered) and end < when < ordered[index + 1]["start_at"]:
+            following = ordered[index + 1]
+            if segment["phase"] == "first_half" and following["phase"] == "second_half":
+                return {
+                    "phase": "halftime",
+                    "match_time": {
+                        "display": "HT", "source": "espn_period_boundary",
+                        "relation": "between_periods", "precision": "exact_phase",
+                    },
+                }
+            if following["phase"] == "penalties":
+                display = "Pens"
+            else:
+                display = "ET HT" if segment["period"] == 3 else "ET"
+            return {
+                "phase": following["phase"],
+                "match_time": {
+                    "display": display, "source": "espn_period_boundary",
+                    "relation": "between_periods", "precision": "exact_phase",
+                },
+            }
+    last = ordered[-1]
+    return {
+        "phase": last["phase"],
+        "match_time": {
+            "display": f"~{_estimated_clock_display(last, when)}",
+            "source": "espn_wallclock_alignment",
+            "relation": "broadcast_aligned", "precision": "estimated",
+        },
+    }
+
+
+def _annotate_match_timeline(insights, sm, kickoff, status_type=None, timeline=None):
+    """Attach fan-facing match phases and clocks from ESPN wall-clock anchors."""
+    timeline = timeline or _match_clock_timeline(sm, kickoff=kickoff)
+    if not timeline.get("segments"):
+        return _annotate_match_phases(insights, kickoff, (status_type or {}).get("detail"))
+    completed = bool((status_type or {}).get("completed")) or (status_type or {}).get("state") == "post"
+    current_phase = "pregame"
+    for row in sorted(insights, key=lambda item: item.get("source_ts") or item.get("ts") or ""):
+        position = _timeline_position(row.get("source_ts") or row.get("ts"), timeline, completed=completed)
+        if not position:
+            continue
+        row["phase"] = position["phase"]
+        row["match_time"] = _stated_match_time(
+            row.get("quote"), row["phase"], row.get("time_scope")
+        ) or position.get("match_time")
+        current_phase = row["phase"]
+    return current_phase
+
+
+def _broadcast_insights(
+    tag, names, team_aliases, limit=None, rows=None, team_subjects=None,
+    transcript_rows=None,
+):
     """Ground every relevant booth observation before collapsing it into episodes."""
     rows = list(rows) if rows is not None else _broadcast_rows(tag)
     identities = _match_identities(names, team_aliases)
@@ -628,6 +952,16 @@ def _broadcast_insights(tag, names, team_aliases, limit=None, rows=None, team_su
             continue
         seen.add(qk)
         ts = r.get("ts")
+        source_cache_key = (str(tag), str(ts), _content_hash(quote)[:16])
+        if source_cache_key in _source_time_cache:
+            source_ts = _source_time_cache[source_cache_key] or None
+            _source_time_cache.move_to_end(source_cache_key)
+        else:
+            source_ts = _source_transcript_time(quote, ts, transcript_rows or [])
+            _source_time_cache[source_cache_key] = source_ts or ""
+            _source_time_cache.move_to_end(source_cache_key)
+            while len(_source_time_cache) > _SOURCE_TIME_CACHE_MAX:
+                _source_time_cache.popitem(last=False)
         kept.append({
             "id": _content_hash({"tag": tag, "subject": subject, "quote": quote, "ts": ts})[:16],
             "tag": _TAG_LABEL.get(r.get("type"), "Read"),
@@ -635,6 +969,7 @@ def _broadcast_insights(tag, names, team_aliases, limit=None, rows=None, team_su
             "quote": quote if len(quote) <= 420 else quote[:417].rstrip() + "…",
             "strength": r.get("strength", 1),
             "ts": ts,
+            "source_ts": source_ts,
             "time_scope": _time_scope(quote),
             **{key: value for key, value in resolved.items() if key != "name"},
         })
@@ -687,12 +1022,31 @@ def _annotate_match_phases(insights, kickoff, status):
     return current_phase
 
 
-def _current_phase(status, derived_phase):
+def _current_phase(status, derived_phase, status_type=None):
+    status_type = status_type or {}
     normalized = _plain(status)
+    status_name = _plain(status_type.get("name"))
+    if (
+        status_type.get("completed") is True
+        or _plain(status_type.get("state")) == "post"
+        or status_name.startswith("status final")
+    ):
+        return "final"
     if normalized in {"ht", "half time", "halftime"}:
         return "halftime"
-    if normalized in {"ft", "full time", "final"} or normalized.startswith("final "):
+    if (
+        normalized in {
+            "ft", "full time", "final", "aet", "after extra time",
+            "final after extra time", "final after penalties", "pen",
+        }
+        or normalized.startswith("final ")
+    ):
         return "final"
+    if normalized in {"pens", "penalties", "penalty shootout", "shootout"}:
+        return "penalties"
+    clock = re.match(r"^(\d{1,3})", normalized)
+    if clock and int(clock.group(1)) > 90:
+        return "extra_time"
     return derived_phase
 
 
@@ -759,6 +1113,8 @@ def _collapse_episodes(insights):
             "id": insight.get("id"),
             "quote": insight.get("quote"),
             "ts": insight.get("ts"),
+            "source_ts": insight.get("source_ts"),
+            "match_time": insight.get("match_time"),
             "time_scope": insight.get("time_scope", "current_match"),
             "subject_raw": insight.get("subject_raw"),
         }
@@ -785,6 +1141,7 @@ def _collapse_episodes(insights):
                 "time_scope": insight.get("time_scope", "current_match"),
                 "started_at": insight.get("ts"),
                 "updated_at": insight.get("ts"),
+                "match_time": insight.get("match_time"),
                 "strength": insight.get("strength", 1),
                 "quote": insight.get("quote"),
             }
@@ -798,6 +1155,8 @@ def _collapse_episodes(insights):
             episode["time_scope"] = _merge_scope(
                 episode.get("time_scope"), insight.get("time_scope")
             )
+            if insight.get("match_time"):
+                episode["match_time"] = insight["match_time"]
             if insight.get("tag") and insight.get("tag") not in episode["tags"]:
                 episode["tags"].append(insight["tag"])
             if insight.get("subject_kind") == "player":
@@ -834,25 +1193,52 @@ def _collapse_episodes(insights):
 
 
 def _attach_match_events(episodes, events):
-    """Link a booth episode to an authoritative ESPN event on an exact full name."""
+    """Link only contemporaneous, event-shaped receipts to an ESPN event.
+
+    A player's name appearing somewhere in an episode is not enough: that linked
+    Julián Álvarez fatigue commentary to a substitution almost half an hour later.
+    """
+    event_cues = {
+        "substitution": r"\b(?:sub|substitut(?:e|ed|es|ing|ion)|replace|comes? (?:on|off)|enter|forced off|cannot continue|big loss)\b",
+        "goal": r"\b(?:goal|score|scored|lead|finish|assist|back of the net)\b",
+        "own goal": r"\b(?:own goal|score|back of the net)\b",
+        "yellow card": r"\b(?:yellow|card|booked|foul)\b",
+        "red card": r"\b(?:red|card|sent off|down a man)\b",
+        "penalty": r"\b(?:penalty|spot kick)\b",
+    }
     for episode in episodes:
         episode["priority"] = "availability" if episode.get("topic") == "injury" else "storyline"
-        quotes = " ".join(
-            str(row.get("quote") or "")
-            for row in episode.get("_all_receipts", episode.get("receipts", []))
-        )
+        receipts = episode.get("_all_receipts", episode.get("receipts", []))
+        quotes = " ".join(str(row.get("quote") or "") for row in receipts)
         receipt_text = f" {_plain(quotes)} "
         matches = []
         for event in events:
+            kind = _plain(event.get("kind"))
+            cue = next(
+                (pattern for event_name, pattern in event_cues.items() if event_name in kind),
+                None,
+            )
+            if not cue or not re.search(cue, _plain(quotes), re.I):
+                continue
             exact_players = [
                 player for player in event.get("players", [])
                 if len(_plain(player).split()) >= 2 and f" {_plain(player)} " in receipt_text
             ]
             if not exact_players:
                 continue
-            matches.append((event, exact_players))
+            event_at = _parse_datetime(event.get("wallclock"))
+            receipt_times = [
+                _parse_datetime(row.get("source_ts") or row.get("ts")) for row in receipts
+            ]
+            deltas = [
+                abs((receipt_at - event_at).total_seconds())
+                for receipt_at in receipt_times if receipt_at and event_at
+            ]
+            if event_at and (not deltas or min(deltas) > 5 * 60):
+                continue
+            matches.append((event, exact_players, min(deltas) if deltas else None))
         if len(matches) == 1:
-            event, exact_players = matches[0]
+            event, exact_players, delta = matches[0]
             episode["match_event"] = {
                 "clock": event.get("clock"),
                 "kind": event.get("kind"),
@@ -862,6 +1248,13 @@ def _attach_match_events(episodes, events):
                 "matched_players": exact_players,
             }
             episode["event_clock"] = event.get("clock")
+            if event.get("clock") and (delta is None or delta <= 3 * 60):
+                episode["match_time"] = {
+                    "display": _normalize_clock_display(event["clock"]),
+                    "source": "espn_event",
+                    "relation": "contemporaneous_event",
+                    "precision": "exact_event",
+                }
     return episodes
 
 
@@ -966,6 +1359,8 @@ _READ_SYS = (
     "facts and current market lines) and numbered BOOTH episodes (commentary/color, never an "
     "authoritative match fact). "
     "Produce exactly ONE concise RIGHT-NOW catch-up line about what is happening in this match. "
+    "If MATCH is marked FINAL, write a completed-match recap in past tense; never describe a comeback "
+    "or remaining chance after the final whistle. "
     "It should connect the two most important current developments in one fan-readable sentence. Historical references "
     "may explain a current development but must be described explicitly as history; never make a "
     "history-only line look live. A line MAY carry an optional 'play', but MOST lines should NOT — "
@@ -1010,6 +1405,7 @@ def _match_events(sm):
                    for p in e.get("participants", []) or [] if p.get("athlete")]
         out.append({
             "clock": (e.get("clock", {}) or {}).get("displayValue", ""),
+            "wallclock": e.get("wallclock") or (e.get("play") or {}).get("wallclock"),
             "kind": typ,
             "team": (e.get("team", {}) or {}).get("abbreviation", ""),
             "players": [p for p in players if p],
@@ -1017,6 +1413,41 @@ def _match_events(sm):
             "text": e.get("text", ""),
         })
     return out
+
+
+def _final_catch_up(away_name, home_name, away_score, home_score, status, events):
+    """A completed match gets a deterministic outcome, never a live-style LLM read."""
+    try:
+        away_value, home_value = int(away_score), int(home_score)
+    except (TypeError, ValueError):
+        away_value = home_value = None
+    if away_value is None or away_value == home_value:
+        result = f"{away_name} {away_score}–{home_score} {home_name}"
+    elif away_value > home_value:
+        result = f"{away_name} beat {home_name} {away_score}–{home_score}"
+    else:
+        result = f"{home_name} beat {away_name} {home_score}–{away_score}"
+    normalized = _plain(status)
+    if "pen" in normalized or "shootout" in normalized:
+        result += " on penalties"
+    elif normalized in {"aet", "after extra time", "final after extra time"}:
+        result += " after extra time"
+    goals = [event for event in events if event.get("scoring") and event.get("players")]
+    if goals:
+        goal = goals[-1]
+        clock = _normalize_clock_display(goal.get("clock"))
+        result += f"; {goal['players'][0]} scored at {clock}" if clock else f"; {goal['players'][0]} scored"
+    evidence_text = f"FINAL ({status}): {away_name} {away_score} - {home_score} {home_name}"
+    return {
+        "headline": result,
+        "evidence": f"ESPN: {evidence_text}",
+        "evidence_items": [{
+            "ref": "F0", "kind": "fact", "scope": "current_match", "text": evidence_text,
+        }],
+        "source": "fact",
+        "context_scope": "right_now",
+        "evidence_refs": ["F0"],
+    }
 
 
 def _deepseek(system, user, max_tokens=700):
@@ -1350,6 +1781,7 @@ _PHASE_LABELS = {
     "halftime": "Halftime",
     "second_half": "Second half",
     "extra_time": "Extra time",
+    "penalties": "Penalties",
     "final": "Final",
     "live": "Live",
 }
@@ -1358,6 +1790,7 @@ _PHASE_LABELS = {
 def _coverage_payload(
     raw_rows, observations, episodes, current_phase, now, limit,
     selected_phase=None, returned_count=None,
+    phase_basis="scheduled_kickoff_and_broadcast_gap",
 ):
     raw_stamped = sorted(
         ((stamp, row.get("ts")) for row in raw_rows if (stamp := _parse_datetime(row.get("ts")))),
@@ -1394,7 +1827,7 @@ def _coverage_payload(
         "capture_started_at": raw_stamped[0][1] if raw_stamped else None,
         "capture_latest_at": raw_stamped[-1][1] if raw_stamped else None,
         "capture_time_basis": "broadcast_capture",
-        "phase_basis": "scheduled_kickoff_and_broadcast_gap",
+        "phase_basis": phase_basis,
         "source_observation_count": len(raw_rows),
         "relevant_observation_count": len(observations),
         "episode_count": len(episodes),
@@ -1417,10 +1850,10 @@ def _coverage_payload(
 
 
 def _public_receipt(receipt):
-    """Name wall time for what it is; it is never an inferred match clock."""
+    """Keep source-alignment internals private while exposing the soccer clock."""
     public = {
         key: value for key, value in receipt.items()
-        if key not in {"ts"} and value is not None
+        if key not in {"ts", "source_ts"} and value is not None
     }
     captured_at = receipt.get("ts")
     if captured_at:
@@ -1440,13 +1873,6 @@ def _public_episode(episode):
     public["receipts"] = [
         _public_receipt(receipt) for receipt in episode.get("receipts", [])
     ]
-    match_event = episode.get("match_event") or {}
-    if match_event.get("clock"):
-        public["match_time"] = {
-            "display": match_event["clock"],
-            "source": "espn_event",
-            "relation": "linked_event",
-        }
     return public
 
 
@@ -1487,13 +1913,8 @@ def _cache_episode_details(game_id, episodes):
                 for receipt in receipts
             ],
         }
-        match_event = episode.get("match_event") or {}
-        if match_event.get("clock"):
-            detail["match_time"] = {
-                "display": match_event["clock"],
-                "source": "espn_event",
-                "relation": "linked_event",
-            }
+        if episode.get("match_time"):
+            detail["match_time"] = episode["match_time"]
         _cache_put(_episode_detail_cache, key, detail)
 
 
@@ -1533,9 +1954,8 @@ def build_context(game_id, limit=8, phase=None):
             return f
         return forms.get(_abbr(t))
 
-    status = ((sm.get("header", {}).get("competitions") or [{}])[0]
-              .get("status", {}).get("type", {}).get("detail")) \
-        or sm.get("header", {}).get("competitions", [{}])[0].get("status", {}).get("type", {}).get("description")
+    status_type = (comp.get("status") or {}).get("type") or {}
+    status = status_type.get("detail") or status_type.get("description")
 
     now = dt.datetime.now(dt.timezone.utc)
     canonical_teams = {home_abbr: _name(home), away_abbr: _name(away)}
@@ -1547,18 +1967,29 @@ def build_context(game_id, limit=8, phase=None):
         bracket, game_id, comp.get("date"), home_abbr, away_abbr
     )
     raw_rows = _broadcast_rows(tag)
+    transcript_rows = _broadcast_transcript_rows(tag)
     observations = _broadcast_insights(
-        tag, names, aliases, rows=raw_rows, team_subjects=team_subjects
+        tag, names, aliases, rows=raw_rows, team_subjects=team_subjects,
+        transcript_rows=transcript_rows,
     )
-    derived_phase = _annotate_match_phases(observations, comp.get("date"), status)
-    current_phase = _current_phase(status, derived_phase)
+    timeline = _match_clock_timeline(sm, kickoff=comp.get("date"))
+    if timeline.get("segments"):
+        derived_phase = _annotate_match_timeline(
+            observations, sm, comp.get("date"), status_type=status_type,
+            timeline=timeline,
+        )
+        phase_basis = "espn_wallclock_alignment"
+    else:
+        derived_phase = _annotate_match_phases(observations, comp.get("date"), status)
+        phase_basis = "scheduled_kickoff_and_broadcast_gap"
+    current_phase = _current_phase(status, derived_phase, status_type=status_type)
     insights_full = _collapse_episodes(observations)
     events = _match_events(sm)
     insights_full = _attach_match_events(insights_full, events)
     raw_insight_hash = _content_hash([
         {key: insight.get(key) for key in (
             "id", "topic", "tag", "subject", "quote", "strength", "phase",
-            "time_scope", "started_at", "updated_at", "receipt_count",
+            "time_scope", "match_time", "started_at", "updated_at", "receipt_count",
         )}
         for insight in insights_full
     ])
@@ -1616,9 +2047,13 @@ def build_context(game_id, limit=8, phase=None):
                 f"possession {_st(ab,'possessionPct')}%, shots {_st(ab,'totalShots')} "
                 f"(on target {_st(ab,'shotsOnTarget')}), form {_form(t) or 'unavailable'}")
 
+    fact_status = (
+        (f"FINAL ({status})" if status else "FINAL")
+        if current_phase == "final" else status
+    )
     facts = [
         {"kind": "fact", "scope": "current_match",
-         "text": f"MATCH ({status}): {_name(away)} {away_sc} - {home_sc} {_name(home)}"},
+         "text": f"MATCH ({fact_status}): {_name(away)} {away_sc} - {home_sc} {_name(home)}"},
         {"kind": "fact", "scope": "current_match", "text": f"Score events: {ev_str}"},
         {"kind": "fact", "scope": "current_match", "text": _team_line(away, away_abbr, "away")},
         {"kind": "fact", "scope": "current_match", "text": _team_line(home, home_abbr, "home")},
@@ -1648,16 +2083,22 @@ def build_context(game_id, limit=8, phase=None):
     )
     read = (
         _synthesize_read(facts, current_episodes, read_cache_key, market_lines=market_lines)
-        if phase is None else []
+        if phase is None and current_phase != "final" else []
     )
-    right_now = [
-        _public_catch_up(row)
-        for row in read if row.get("context_scope") == "right_now"
-    ][:1]
+    if current_phase == "final":
+        right_now = [_final_catch_up(
+            _name(away), _name(home), away_sc, home_sc, status, events
+        )]
+    else:
+        right_now = [
+            _public_catch_up(row)
+            for row in read if row.get("context_scope") == "right_now"
+        ][:1]
     generated_at = now.isoformat()
     coverage = _coverage_payload(
         raw_rows, observations, insights_full, current_phase, now, limit,
         selected_phase=selected_phase, returned_count=len(visible_episodes),
+        phase_basis=phase_basis,
     )
 
     return {
@@ -1689,8 +2130,8 @@ def build_context(game_id, limit=8, phase=None):
             "capture_timezone": "UTC",
             "phase_basis": coverage["phase_basis"],
             "match_clock_policy": (
-                "Only an ESPN-linked event may expose match_time; broadcast capture timestamps "
-                "must not be displayed as match minutes."
+                "Match time comes from ESPN wallclock-to-clock alignment. A leading ~ marks an "
+                "estimated minute; stated booth clocks and contemporaneous ESPN events are unprefixed."
             ),
         },
         "freshness_policy": {
@@ -1718,7 +2159,7 @@ def build_context(game_id, limit=8, phase=None):
         "limitations": [
             "Broadcast observations are commentary receipts, not authoritative match facts.",
             "Broadcast capture time may lag the spoken commentary and is not a match clock.",
-            "Broad receipt phases are heuristic; exact match time appears only for an ESPN-linked event.",
+            "A leading ~ marks a match minute aligned to ESPN wallclock rather than an exact event clock.",
             "Social sentiment is omitted until a validated, timestamped source is connected.",
         ],
         "source": "ESPN facts + bracket history + timestamped market references + broadcast episodes",

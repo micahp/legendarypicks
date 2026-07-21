@@ -17,7 +17,7 @@ has no `prop` field.
 
 - `limit` is `1..100` and caps **episodes**, not extractor rows.
 - With no `phase`, `episodes` contains the current match phase.
-- `phase=pregame|first_half|halftime|second_half|extra_time|final` loads that phase
+- `phase=pregame|first_half|halftime|second_half|extra_time|penalties|final` loads that phase
   for explicit catch-up navigation; phase-specific responses leave `right_now` and
   `featured_episodes` empty because the current catch-up was already supplied by the
   default request.
@@ -27,26 +27,24 @@ has no `prop` field.
   stack oldest-to-newest only when a card is expanded. The phase list carries at most
   three newest-first preview receipts, keeping the initial board bounded while leading
   with the latest development.
-- The source has a **broadcast capture timestamp**, not a synchronized soccer clock.
-  Public receipt fields therefore use `captured_at` and `time_basis: 'broadcast_capture'`.
-  They answer "when did our extractor capture this?", not "what minute was the match in?"
-- A soccer minute appears only as `match_time`, when the episode links to one
-  authoritative ESPN event. Do not derive match minutes by subtracting scheduled kickoff:
-  kickoff delay, halftime, broadcast delay, and extractor latency make that dishonest.
-- Render a linked `match_time.display` (for example `44'`) when present. Otherwise render
-  phase plus recency (for example `Second half · 4m ago`). Viewer-local capture time belongs
-  in expanded receipt detail. Never show a card-level capture-time range and never display
-  an ISO substring as if it were match time.
-- Historical extractor rows cannot honestly be retrofitted with exact match minutes. Future
-  capture can support that only by persisting a synchronized ESPN `{period, game_clock,
-  captured_at}` snapshot alongside each receipt (including uncertainty/broadcast delay).
+- `captured_at` remains provenance only: it says when the extractor emitted the receipt,
+  not what minute the match was in. The UI does not use it as card chronology.
+- ESPN supplies both `play.wallclock` and soccer `play.clock`. The backend matches a signal
+  quote back to its source transcript chunk, then aligns that source time to ESPN's period
+  timeline. This preserves long halftimes, extra-time breaks, stoppage time, and the final
+  whistle rather than subtracting scheduled kickoff.
+- Every episode/receipt with clock coverage carries `match_time`. An unprefixed minute is
+  stated in the receipt or tied to a contemporaneous ESPN event; `~83'` is an ESPN
+  wallclock-aligned estimate. `HT`, `ET HT`, `Pens`, and `FT` are exact phase boundaries.
+- Render `match_time.display` as the chronology. If it is absent, render the phase only—do
+  not fall back to a generic local/relative capture timestamp and never show a from-to range.
 
 ## TypeScript-friendly shape
 
 ```ts
 type MatchPhase =
   | 'pregame' | 'first_half' | 'halftime'
-  | 'second_half' | 'extra_time' | 'final' | 'live'
+  | 'second_half' | 'extra_time' | 'penalties' | 'final' | 'live'
 
 type TimeScope = 'current_match' | 'historical_reference' | 'mixed'
 type BoothStatus = 'current' | 'quiet' | 'stale' | 'complete' | 'unavailable'
@@ -58,12 +56,15 @@ interface BoothReceipt {
   time_basis: 'broadcast_capture'
   time_scope: TimeScope
   subject_raw?: string
+  match_time?: MatchTime
 }
 
-interface LinkedMatchTime {
-  display: string // e.g. "44'"
-  source: 'espn_event'
-  relation: 'linked_event'
+interface MatchTime {
+  display: string // e.g. "44'", "~83'", "90+3'", "HT", or "FT"
+  minute?: number
+  source: 'espn_event' | 'booth_stated_clock' | 'espn_wallclock_alignment' | 'espn_period_boundary'
+  relation: 'contemporaneous_event' | 'stated_in_receipt' | 'broadcast_aligned' | 'between_periods' | 'after_final_whistle'
+  precision: 'exact_event' | 'stated' | 'estimated' | 'exact_phase'
 }
 
 interface MarketImplication {
@@ -102,7 +103,7 @@ interface BoothEpisode {
   receipts: BoothReceipt[] // newest first, at most three in the initial card payload
   headline?: string
   analysis?: string
-  match_time?: LinkedMatchTime
+  match_time?: MatchTime
   match_event?: {
     clock?: string
     kind?: string
@@ -146,7 +147,7 @@ interface WCContextV2 {
   time_semantics: {
     capture_time_basis: 'broadcast_capture'
     capture_timezone: 'UTC'
-    phase_basis: 'scheduled_kickoff_and_broadcast_gap'
+    phase_basis: 'espn_wallclock_alignment' | 'scheduled_kickoff_and_broadcast_gap'
     match_clock_policy: string
   }
   teams: unknown
@@ -161,7 +162,7 @@ interface WCContextV2 {
     capture_started_at?: string | null
     capture_latest_at?: string | null
     capture_time_basis: 'broadcast_capture'
-    phase_basis: 'scheduled_kickoff_and_broadcast_gap'
+    phase_basis: 'espn_wallclock_alignment' | 'scheduled_kickoff_and_broadcast_gap'
     source_observation_count: number
     relevant_observation_count: number
     episode_count: number
@@ -193,11 +194,13 @@ interface WCContextV2 {
 - Phase navigation uses `coverage.phases`; current phase is selected initially.
 - Availability episodes are pinned before ordinary storylines within a phase.
 - Cards show one takeaway and one receipt by default. Additional receipts are disclosed
-  on interaction through the episode-detail endpoint and retain their own relative/local
-  time and historical labels.
-- Card chronology is `match_time` when event-linked; otherwise it is phase + relative
-  capture recency. Capture timestamps must never be presented as soccer minutes or as a
-  card-level from-to span.
+  on interaction through the episode-detail endpoint and retain their own match minute and
+  historical labels.
+- Card and expanded-receipt chronology is `match_time.display`. A leading `~` is intentional
+  uncertainty disclosure. If `match_time` is absent, show the phase without a timestamp.
+- A terminal ESPN status (`completed`, `state: post`, AET, or a completed shootout) maps to
+  `current_phase: final` and `booth_status: complete`; clients stop live polling and label the
+  default view as match complete.
 - `historical_reference` is useful context, not a leak. Label it; do not delete it or
   present it as a current event.
 - Never manufacture a price/freshness or alert-gate state. No `prop` means no actionable

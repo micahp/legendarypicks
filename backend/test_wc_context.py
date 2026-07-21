@@ -287,6 +287,137 @@ class IdentityAndEpisodeTests(unittest.TestCase):
         self.assertEqual(wc_context._current_phase("HT", "first_half"), "halftime")
         self.assertEqual(wc_context._current_phase("Final", "second_half"), "final")
 
+    def test_completed_aet_and_penalty_statuses_are_terminal(self):
+        self.assertEqual(wc_context._current_phase("AET", "second_half"), "final")
+        self.assertEqual(
+            wc_context._current_phase(
+                "AET", "second_half",
+                {"name": "STATUS_FINAL_AET", "state": "post", "completed": True},
+            ),
+            "final",
+        )
+        self.assertEqual(
+            wc_context._current_phase("Penalty Shootout", "extra_time"),
+            "penalties",
+        )
+        self.assertEqual(wc_context._current_phase("98'", "second_half"), "extra_time")
+
+    def test_espn_wallclock_timeline_places_periods_and_final_whistle(self):
+        def event(kind, wallclock, clock):
+            return {
+                "type": {"text": kind}, "wallclock": wallclock,
+                "clock": {"displayValue": clock},
+            }
+
+        sm = {"keyEvents": [
+            event("Kickoff", "2026-07-19T19:00:00Z", ""),
+            event("Halftime", "2026-07-19T19:49:00Z", "45'+4'"),
+            event("Start 2nd Half", "2026-07-19T20:05:00Z", "45'"),
+            event("End Regular Time", "2026-07-19T20:59:00Z", "90'+9'"),
+            event("Start Extra Time", "2026-07-19T21:04:00Z", "90'"),
+            event("Halftime Extra Time", "2026-07-19T21:22:00Z", "105'+3'"),
+            event("Start 2nd Half Extra Time", "2026-07-19T21:25:00Z", "105'"),
+            event("End Extra Time", "2026-07-19T21:45:00Z", "120'+5'"),
+        ], "commentary": [{
+            "time": {"displayValue": "83'"},
+            "play": {
+                "wallclock": "2026-07-19T20:43:00Z",
+                "clock": {"displayValue": "83'"},
+                "period": {"number": 2},
+            },
+        }]}
+        timeline = wc_context._match_clock_timeline(sm)
+
+        halftime = wc_context._timeline_position(
+            "2026-07-19T19:55:00Z", timeline, completed=True
+        )
+        second_half = wc_context._timeline_position(
+            "2026-07-19T20:43:10Z", timeline, completed=True
+        )
+        extra_time = wc_context._timeline_position(
+            "2026-07-19T21:10:00Z", timeline, completed=True
+        )
+        final = wc_context._timeline_position(
+            "2026-07-19T21:45:01Z", timeline, completed=True
+        )
+
+        self.assertEqual(halftime["phase"], "halftime")
+        self.assertEqual(halftime["match_time"]["display"], "HT")
+        self.assertEqual(second_half["match_time"]["display"], "~83'")
+        self.assertEqual(extra_time["phase"], "extra_time")
+        self.assertTrue(extra_time["match_time"]["display"].startswith("~"))
+        self.assertEqual(final["phase"], "final")
+        self.assertEqual(final["match_time"]["display"], "FT")
+
+    def test_stated_current_minute_wins_but_historical_minute_does_not(self):
+        stated = wc_context._stated_match_time(
+            "Still no shots for Argentina in the 83rd minute",
+            "second_half", "current_match",
+        )
+        historical = wc_context._stated_match_time(
+            "Messi changed the semifinal in the 55th minute against England",
+            "second_half", "historical_reference",
+        )
+        self.assertEqual(stated["display"], "83'")
+        self.assertEqual(stated["precision"], "stated")
+        self.assertIsNone(historical)
+
+    def test_signal_quote_recovers_the_source_transcript_time(self):
+        transcript = [
+            {
+                "ts": "2026-07-19T21:01:18Z",
+                "_stamp": wc_context._parse_datetime("2026-07-19T21:01:18Z"),
+                "_text": wc_context._plain(
+                    "Still no shots for Argentina in the 83rd minute of the game"
+                ),
+            },
+            {
+                "ts": "2026-07-19T21:01:48Z",
+                "_stamp": wc_context._parse_datetime("2026-07-19T21:01:48Z"),
+                "_text": wc_context._plain("Spain recycle possession through midfield"),
+            },
+        ]
+        source = wc_context._source_transcript_time(
+            "still no shots for Argentina in the 83rd minute",
+            "2026-07-19T21:02:46Z",
+            transcript,
+        )
+        self.assertEqual(source, "2026-07-19T21:01:18Z")
+
+    def test_future_player_event_does_not_retime_an_unrelated_episode(self):
+        episode = {
+            "id": "fatigue", "topic": "fatigue", "subject": "Julián Álvarez",
+            "subject_kind": "player", "priority": "storyline", "strength": 2,
+            "receipt_count": 1, "updated_at": "2026-07-19T21:06:49Z",
+            "receipts": [{
+                "quote": "Julian Alvarez is dead on his legs and cannot press",
+                "source_ts": "2026-07-19T21:05:18Z",
+            }],
+        }
+        event = {
+            "clock": "102'", "wallclock": "2026-07-19T21:32:00Z",
+            "kind": "Substitution", "team": "ARG",
+            "players": ["Julián Álvarez", "Marcos Senesi"],
+            "text": "Marcos Senesi replaces Julián Álvarez",
+        }
+        wc_context._attach_match_events([episode], [event])
+        self.assertNotIn("match_event", episode)
+
+    def test_final_catch_up_reports_outcome_and_winning_goal_in_past_tense(self):
+        line = wc_context._final_catch_up(
+            "Argentina", "Spain", "0", "1", "AET",
+            [{
+                "clock": "106'", "scoring": True,
+                "players": ["Ferran Torres"],
+            }],
+        )
+        self.assertEqual(
+            line["headline"],
+            "Spain beat Argentina 1–0 after extra time; Ferran Torres scored at 106'",
+        )
+        self.assertEqual(line["source"], "fact")
+        self.assertNotIn("comeback", line["headline"].lower())
+
     def test_player_action_requires_current_scope_fresh_quote_and_exact_id(self):
         episode = {
             "subject": "Lisandro Martínez", "subject_kind": "player",
@@ -368,11 +499,16 @@ class IdentityAndEpisodeTests(unittest.TestCase):
             }],
             "event_clock": "44'",
             "match_event": {"clock": "44'", "players": ["Lisandro Martínez"]},
+            "match_time": {
+                "display": "44'", "source": "espn_event",
+                "relation": "contemporaneous_event", "precision": "exact_event",
+            },
         }
         public = wc_context._public_episode(episode)
 
         self.assertEqual(public["match_time"], {
-            "display": "44'", "source": "espn_event", "relation": "linked_event",
+            "display": "44'", "source": "espn_event",
+            "relation": "contemporaneous_event", "precision": "exact_event",
         })
         self.assertEqual(public["latest_capture_at"], "2026-07-19T20:24:00Z")
         self.assertEqual(public["receipts"][0]["captured_at"], "2026-07-19T20:24:00Z")

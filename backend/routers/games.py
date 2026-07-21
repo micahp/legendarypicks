@@ -322,7 +322,10 @@ def wc_context(
     may request a past phase on interaction without downloading the whole
     broadcast on initial render.
     """
-    allowed_phases = {"pregame", "first_half", "halftime", "second_half", "extra_time", "final"}
+    allowed_phases = {
+        "pregame", "first_half", "halftime", "second_half",
+        "extra_time", "penalties", "final",
+    }
     if phase is not None and phase not in allowed_phases:
         raise HTTPException(400, f"phase must be one of {sorted(allowed_phases)}")
     import wc_context as _wcc
