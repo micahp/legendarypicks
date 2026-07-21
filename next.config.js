@@ -13,6 +13,9 @@ module.exports = {
       // The CoD-only league desk is generalized into the shared esports title
       // surface — keep the old URL working as a compatibility redirect.
       { source: '/cod', destination: '/esports/call-of-duty', permanent: false },
+      // Plays is a locked dead-product decision — no value in its current
+      // state. Point the old URL at Props instead of a dead board.
+      { source: '/plays', destination: '/props', permanent: false },
     ]
   },
   async rewrites() {
