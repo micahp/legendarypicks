@@ -5,12 +5,16 @@ import StandingsTab from '../../components/Leagues/StandingsTab'
 import StatsTab from '../../components/Leagues/StatsTab'
 import UfcRankingsTab from '../../components/Leagues/UfcRankingsTab'
 import PredictTab from '../../components/Leagues/PredictTab'
+import NflCampHero from '../../components/Leagues/NflCampHero'
+import NflDraftRoom from '../../components/Leagues/NflDraftRoom'
 import { useLeagueRouteState } from '../../components/Leagues/hooks/useLeagueRouteState'
 import { useScheduleData } from '../../components/Leagues/hooks/useScheduleData'
 import { useStandingsData } from '../../components/Leagues/hooks/useStandingsData'
 import { useStatsData } from '../../components/Leagues/hooks/useStatsData'
 import { useUfcRankingsData } from '../../components/Leagues/hooks/useUfcRankingsData'
 import { useUfcPredictData } from '../../components/Leagues/hooks/useUfcPredictData'
+import { useNflSeasonContext } from '../../components/Leagues/hooks/useNflSeasonContext'
+import { useNflDraftBoard } from '../../components/Leagues/hooks/useNflDraftBoard'
 import {
   LEAGUE_EMOJIS,
   LEAGUE_NAMES,
@@ -19,7 +23,15 @@ import {
 } from '../../components/Leagues/presentation'
 import type { HubTab } from '../../components/Leagues/types'
 
+const NFL_TAB_LABELS: Record<string, string> = {
+  camp: 'Training Camp',
+  standings: '2025 Final',
+  stats: '2025 Stats',
+  schedule: '2026 Schedule',
+}
+
 const TAB_LABELS: Record<HubTab, string> = {
+  camp: 'Training Camp',
   standings: 'Standings',
   stats: 'Stats',
   schedule: 'Schedule',
@@ -45,10 +57,20 @@ export default function LeagueHubPage() {
   const ufc = useUfcRankingsData(route.isUFC, route.league)
   const predict = useUfcPredictData(route.isUFC, route.activeTab)
 
+  // NFL camp-mode data (cheap to call regardless — hooks ignore non-NFL)
+  const isNFL = route.league === 'nfl'
+  const seasonContext = useNflSeasonContext()
+  const draftBoard = useNflDraftBoard()
+
   if (!route.league) return <LeagueHubSkeleton />
 
   const leagueName = LEAGUE_NAMES[route.league] || route.league.toUpperCase()
   const leagueEmoji = LEAGUE_EMOJIS[route.league] || ''
+
+  const tabLabels = isNFL
+    ? { ...TAB_LABELS, ...NFL_TAB_LABELS }
+    : TAB_LABELS
+
   return (
     <>
       <Head>
@@ -65,7 +87,34 @@ export default function LeagueHubPage() {
           tabs={route.validTabs}
           activeTab={route.activeTab}
           onSelect={route.selectTab}
+          labels={tabLabels}
         />
+
+        {/* ── NFL Camp-mode default ── */}
+        {route.activeTab === 'camp' && (
+          <div className="space-y-6">
+            <NflCampHero
+              data={seasonContext.data}
+              loading={seasonContext.loading}
+              error={seasonContext.error}
+            />
+            <NflDraftRoom
+              data={draftBoard.data}
+              loading={draftBoard.loading}
+              error={draftBoard.error}
+              position={draftBoard.position}
+              sort={draftBoard.sort}
+              offset={draftBoard.offset}
+              notes={draftBoard.notes}
+              onSelectPosition={draftBoard.selectPosition}
+              onSelectSort={draftBoard.selectSort}
+              onSetOffset={draftBoard.setOffset}
+              onSetRank={draftBoard.setRank}
+              onToggleWatch={draftBoard.toggleWatch}
+              onToggleFade={draftBoard.toggleFade}
+            />
+          </div>
+        )}
 
         {route.activeTab === 'standings' && (
           <StandingsTab
@@ -179,10 +228,12 @@ function HubTabs({
   tabs,
   activeTab,
   onSelect,
+  labels,
 }: {
   tabs: HubTab[]
   activeTab: HubTab
   onSelect: (tab: HubTab) => void
+  labels: Record<HubTab, string>
 }) {
   return (
     <div className="flex gap-0 overflow-x-auto border-b border-zinc-800 -mx-4 px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
@@ -197,7 +248,7 @@ function HubTabs({
               : 'border-transparent text-zinc-500 hover:text-zinc-300'
           }`}
         >
-          {TAB_LABELS[tab]}
+          {labels[tab]}
         </button>
       ))}
     </div>

@@ -170,4 +170,90 @@ export interface KnockoutRound {
 }
 
 export type SubView = 'players' | 'teams'
-export type HubTab = 'standings' | 'stats' | 'schedule' | 'rankings' | 'predict'
+export type HubTab = 'camp' | 'standings' | 'stats' | 'schedule' | 'rankings' | 'predict'
+
+// ── NFL camp-mode contracts ──────────────────────────────────────────────
+
+export interface NflNextEvent {
+  id: string
+  label: string
+  date: string
+  days_until: number
+}
+
+export interface NflMilestone {
+  id: string
+  label: string
+  date: string
+  kind: string
+  status: 'past' | 'today' | 'upcoming'
+  days_until: number | null
+}
+
+export interface NflSeasonContext {
+  contract: string
+  league: string
+  as_of: string
+  calendar_status: string
+  calendar_valid_through: string
+  phase: string
+  phase_label: string
+  current_season: number
+  reference_season: number
+  next_event: NflNextEvent | null
+  milestones: NflMilestone[]
+  coverage: Record<string, any>
+  experiences: {
+    timeline: { status: string }
+    draft_board: { status: string; basis_season: number | null; eligible_players: number }
+    opportunity_movers: { status: string; reason: string | null }
+    camp_battles: { status: string; reason: string | null }
+  }
+  sources: { name: string; url: string; verified_at: string }[]
+}
+
+export interface NflDraftPlayer {
+  rank: number
+  player_id: number
+  name: string
+  position: string
+  current_team: string
+  reference_team: string
+  team_changed: boolean | null
+  games: number
+  fantasy_ppr_g: number
+  fantasy_pts_g: number
+  pass_yds_g: number | null
+  rush_yds_g: number | null
+  rec_yds_g: number | null
+  targets: number | null
+  receptions: number | null
+  carries_g: number | null
+}
+
+export interface NflDraftBoard {
+  contract: string
+  league: string
+  current_season: number
+  reference_season: number
+  scoring: string
+  sort: string
+  position: string | null
+  limit: number
+  offset: number
+  eligible_players: number
+  returned_players: number
+  roster: {
+    last_verified_at: string | null
+    freshness: { status: string; age_days: number | null; max_age_days: number }
+  }
+  players: NflDraftPlayer[]
+}
+
+export type NflDraftSort = 'fantasy_ppr_g' | 'fantasy_pts_g' | 'pass_yds_g' | 'rush_yds_g' | 'rec_yds_g' | 'targets'
+
+export interface NflDraftNotes {
+  rank: Record<number, number>
+  watch: Record<number, boolean>
+  fade: Record<number, boolean>
+}
