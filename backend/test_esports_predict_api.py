@@ -35,6 +35,7 @@ def _match(title, team_a, team_b, start, *, live=False, finished=False):
         "psId": 123,
         "watch": {"url": "large detail must not leak into the list"},
         "score": {"a": 1, "b": 0},
+        "unusedBlob": {"rows": [1, 2, 3]},
     }
 
 
@@ -88,6 +89,24 @@ class EsportsPredictApiTests(unittest.TestCase):
     def test_route_reuses_existing_upcoming_cache(self):
         with mock.patch.object(predict, "esports_upcoming", return_value=self.upcoming):
             result = predict.predict_slate(title="cs2")
+
+        self.assertEqual("counter-strike-2", result["selected_title"]["slug"])
+        self.assertEqual(["CS A"], [row["teamA"] for row in result["matches"]])
+
+    def test_league_slate_splits_schedule_and_results_without_full_row_leak(self):
+        result = predict.build_league_slate(self.upcoming, title="call-of-duty")
+
+        self.assertEqual("call-of-duty", result["selected_title"]["slug"])
+        self.assertEqual(["COD A"], [row["teamA"] for row in result["matches"]])
+        self.assertEqual(["Old A"], [row["teamA"] for row in result["results"]])
+        self.assertNotIn("unusedBlob", result["matches"][0])
+        option = next(row for row in result["titles"] if row["slug"] == "call-of-duty")
+        self.assertEqual(1, option["match_count"])
+        self.assertEqual(1, option["result_count"])
+
+    def test_league_route_reuses_existing_upcoming_cache(self):
+        with mock.patch.object(predict, "esports_upcoming", return_value=self.upcoming):
+            result = predict.league_slate("cs2")
 
         self.assertEqual("counter-strike-2", result["selected_title"]["slug"])
         self.assertEqual(["CS A"], [row["teamA"] for row in result["matches"]])
