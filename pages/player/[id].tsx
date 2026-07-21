@@ -9,12 +9,29 @@ interface Projection {
 }
 interface RecentGame { date: string | null; opponent: string | null; home: boolean | null; stats: Record<string, number> }
 interface PropRow { market: string; side: string; line: number }
+interface SeasonStatBlock {
+  window?: string
+  games?: number
+  team?: string
+  position?: string
+  source?: string
+  stats?: Record<string, number | string | null>
+}
+interface MlbSeasonStats {
+  window?: string
+  batting?: Record<string, number | string | null> | null
+  pitching?: Record<string, number | string | null> | null
+}
+type SeasonStats = SeasonStatBlock | MlbSeasonStats
 interface PlayerProfile {
   id: number; name: string; team: string; league: string; position: string | null
   season: number | null; games: number
   recent_games: RecentGame[]
   projections: Record<string, Projection>
   props: PropRow[]
+  season_stats: SeasonStats | null
+  coverage: { game_logs: boolean; props: boolean; season_stats: boolean }
+  data_status: 'ready' | 'unavailable'
 }
 
 const STAT_ORDER = ['pass_yds', 'rush_yds', 'rec_yds', 'PTS', 'REB', 'AST', 'PRA', '3PM',
@@ -32,6 +49,88 @@ const MARKET_STAT: Record<string, string[]> = {
   outs: ['outs'], hits_allowed: ['hits_allowed'],
 }
 
+// Compact, league-appropriate labels for the season_stats keys returned by
+// /api/player/{id} (NHL/NBA/NFL flat `stats`, MLB split `batting`/`pitching`).
+const STAT_LABELS: Record<string, string> = {
+  // NHL
+  goals: 'Goals', assists: 'Assists', points: 'Points', shots: 'Shots',
+  shooting_pct: 'Shooting %', plus_minus: '+/-', pim: 'PIM', ppg: 'PP Goals',
+  ppp: 'PP Points', shg: 'SH Goals', toi: 'TOI', faceoff_pct: 'Faceoff %',
+  // NBA
+  pts: 'Points', reb: 'Rebounds', ast: 'Assists', stl: 'Steals', blk: 'Blocks',
+  fg_pct: 'FG %', fg3_pct: '3PT %', ft_pct: 'FT %', min_pg: 'Minutes/G',
+  turnovers: 'Turnovers', ts_pct: 'True Shooting %',
+  // NFL
+  passing_yards_pg: 'Pass Yds/G', passing_tds: 'Pass TDs', interceptions: 'INTs',
+  completions_pg: 'Comp/G', passing_epa: 'Pass EPA', carries_pg: 'Carries/G',
+  rushing_yards_pg: 'Rush Yds/G', receptions: 'Receptions',
+  receiving_yards_pg: 'Rec Yds/G', targets: 'Targets',
+  fantasy_points_pg: 'Fantasy Pts/G', fantasy_points_ppr_pg: 'Fantasy Pts/G (PPR)',
+  // MLB batting
+  avg: 'AVG', hr: 'HR', k_pct: 'K %', bb_pct: 'BB %', exit_velo: 'Exit Velo',
+  hard_hit_pct: 'Hard-Hit %', barrel_pct: 'Barrel %', launch_angle: 'Launch Angle',
+  woba: 'wOBA', xwoba: 'xwOBA',
+  // MLB pitching
+  whiff_pct: 'Whiff %', exit_velo_against: 'Exit Velo Against',
+  barrel_pct_against: 'Barrel % Against', xwoba_against: 'xwOBA Against',
+}
+
+function statLabel(key: string): string {
+  return STAT_LABELS[key] || key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+}
+
+function formatStatValue(key: string, value: number | string | null): string {
+  if (value === null || value === undefined) return '—'
+  if (typeof value === 'string') return value
+  if (key.endsWith('_pct')) return `${value.toFixed(1)}%`
+  return Number.isInteger(value) ? String(value) : value.toFixed(1)
+}
+
+// Renders one compact stat grid (a flat `stats` dict, or an MLB batting/pitching split).
+function SeasonStatsSection({ league, seasonStats }: { league: string; seasonStats: SeasonStats }) {
+  const isMlbSplit = 'batting' in seasonStats || 'pitching' in seasonStats
+  const blocks: { label: string; entries: [string, number | string | null][] }[] = []
+
+  if (isMlbSplit) {
+    const mlb = seasonStats as MlbSeasonStats
+    if (mlb.batting) blocks.push({ label: 'Batting', entries: Object.entries(mlb.batting) })
+    if (mlb.pitching) blocks.push({ label: 'Pitching', entries: Object.entries(mlb.pitching) })
+  } else {
+    const block = seasonStats as SeasonStatBlock
+    if (block.stats) blocks.push({ label: 'Season', entries: Object.entries(block.stats) })
+  }
+
+  const meta = seasonStats as SeasonStatBlock
+
+  if (blocks.length === 0) return null
+
+  return (
+    <section>
+      <h2 className="text-sm font-bold text-zinc-400 uppercase tracking-wider mb-2">
+        Season Stats{seasonStats.window ? ` · ${seasonStats.window}` : ''}{meta.games ? ` · ${meta.games} games` : ''}
+      </h2>
+      <div className="rounded-xl border border-zinc-800 bg-zinc-900 divide-y divide-zinc-800">
+        {blocks.map(b => (
+          <div key={b.label} className="p-4">
+            {blocks.length > 1 && <div className="text-xs font-semibold text-zinc-400 mb-2">{b.label}</div>}
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-2">
+              {b.entries.map(([k, v]) => (
+                <div key={k} className="flex items-baseline justify-between gap-2">
+                  <span className="text-xs text-zinc-500">{statLabel(k)}</span>
+                  <span className="font-mono tabular-nums text-sm text-zinc-200">{formatStatValue(k, v)}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+      {meta.source && (
+        <p className="mt-1 text-[10px] text-zinc-600">Source: {meta.source} ({league.toUpperCase()})</p>
+      )}
+    </section>
+  )
+}
+
 function projForMarket(projections: Record<string, Projection>, market: string): Projection | null {
   const candidates = MARKET_STAT[market] || [market]
   for (const c of candidates) {
@@ -45,19 +144,36 @@ function projForMarket(projections: Record<string, Projection>, market: string):
   return null
 }
 
+type FetchState = 'loading' | 'ready' | 'not_found' | 'error'
+
 export default function PlayerPage() {
   const router = useRouter()
   const { id } = router.query
   const [p, setP] = useState<PlayerProfile | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [state, setState] = useState<FetchState>('loading')
+  const [retryTick, setRetryTick] = useState(0)
   const [openProp, setOpenProp] = useState<string | null>(null)
   const [chart, setChart] = useState<PropHistory | null>(null)
 
   useEffect(() => {
     if (!id) return
-    setLoading(true)
-    fetch(`/api/player/${id}`).then(r => r.json()).then(d => { setP(d); setLoading(false) }).catch(() => setLoading(false))
-  }, [id])
+    let alive = true
+    setState('loading')
+    setP(null)
+    fetch(`/api/player/${id}`)
+      .then(r => {
+        if (r.status === 404) { if (alive) setState('not_found'); return null }
+        if (!r.ok) { if (alive) setState('error'); return null }
+        return r.json()
+      })
+      .then(d => {
+        if (!alive || !d) return
+        setP(d)
+        setState('ready')
+      })
+      .catch(() => { if (alive) setState('error') })
+    return () => { alive = false }
+  }, [id, retryTick])
 
   const openChart = async (pr: PropRow) => {
     const key = `${pr.market}-${pr.side}`
@@ -66,13 +182,22 @@ export default function PlayerPage() {
     try {
       const params = new URLSearchParams({ player_id: String(id), market: pr.market, line: String(pr.line), side: pr.side, league: p?.league || 'mlb' })
       const r = await fetch(`/api/props/history?${params}`)
+      if (!r.ok) { setChart(null); return }
       const d = await r.json()
       setChart(d.games?.length ? d : null)
     } catch { setChart(null) }
   }
 
-  if (loading) return <div className="text-zinc-500 text-sm py-16 text-center">Loading…</div>
-  if (!p || !p.name) return <div className="text-zinc-500 text-sm py-16 text-center">Player not found.</div>
+  if (state === 'loading') return <div className="text-zinc-500 text-sm py-16 text-center">Loading…</div>
+  if (state === 'not_found') return <div className="text-zinc-500 text-sm py-16 text-center">Player not found.</div>
+  if (state === 'error' || !p) return (
+    <div className="text-sm py-16 text-center space-y-2">
+      <p className="text-red-400">Couldn’t load this player.</p>
+      <button onClick={() => setRetryTick(t => t + 1)} className="text-emerald-400/80 hover:text-emerald-300 text-xs font-medium">
+        Retry
+      </button>
+    </div>
+  )
 
   const projKeys = Object.keys(p.projections).sort((a, b) => {
     const ia = STAT_ORDER.indexOf(a), ib = STAT_ORDER.indexOf(b)
@@ -90,6 +215,18 @@ export default function PlayerPage() {
             {[p.team, p.position, p.league?.toUpperCase(), p.season ? `${p.season} · ${p.games} games` : null].filter(Boolean).join(' · ')}
           </div>
         </div>
+
+        {/* Honest empty state: no logs, no props, no season stats on file. */}
+        {p.data_status === 'unavailable' && (
+          <p className="text-sm text-zinc-500 py-6 text-center border border-zinc-800 rounded-xl bg-zinc-900">
+            No stats, game logs, or props on file for this player yet.
+          </p>
+        )}
+
+        {/* Season stats: the only meaningful content for stats-only profiles
+            (no game-log/props coverage — e.g. NHL/NBA/NFL players synced from
+            season totals rather than per-game rows). */}
+        {p.season_stats && <SeasonStatsSection league={p.league} seasonStats={p.season_stats} />}
 
         {/* Current props (each expands to a chart) */}
         {p.props.length > 0 && (
