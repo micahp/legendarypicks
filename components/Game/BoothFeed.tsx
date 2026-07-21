@@ -183,55 +183,52 @@ function EpisodeCard({
   const latestReceipt = episode.receipts[0]
   return (
     <li className="px-3 py-3">
-      <div className="flex gap-2.5">
-        <span className={`mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full ${episode.priority === 'availability' ? 'bg-amber-400' : 'bg-emerald-400'}`} />
-        <div className="min-w-0 flex-1">
-          <div className="mb-1 flex flex-wrap items-center gap-1.5">
-            {/* One category badge, not two: the tag (more specific — Injury, Fatigue,
-                etc.) carries the availability warning styling instead of a separate pill. */}
-            <span
-              className={`shrink-0 rounded border px-1.5 py-0.5 text-[10px] font-medium ${
-                episode.priority === 'availability'
-                  ? 'border-amber-500/30 bg-amber-500/10 text-amber-300'
-                  : TAG_STYLE[episode.tag] || 'bg-zinc-800 text-zinc-400 border-zinc-700'
-              }`}
-            >
-              {episode.tag}
-            </span>
-            {episode.subject && <span className="text-[10px] font-medium text-zinc-400">{episode.subject}</span>}
-            {episode.time_scope === 'historical_reference' && (
-              <span className="rounded bg-zinc-800 px-1.5 py-0.5 text-[9px] uppercase tracking-wide text-zinc-500">past</span>
-            )}
-            <Chronology episode={episode} phaseLabel={phaseLabel} />
-          </div>
-          <p className="text-sm font-semibold leading-snug text-zinc-100">
-            {episode.headline || `${episode.subject || episode.tag} is worth watching`}
-          </p>
-          {episode.analysis && <p className="mt-0.5 text-xs leading-snug text-zinc-400">{episode.analysis}</p>}
-          {/* The episode-level "past" badge above already covers this preview receipt. */}
-          {latestReceipt && <div className="mt-1"><ReceiptRow receipt={latestReceipt} showScopeBadge={false} /></div>}
-          {episode.prop && <div><PropChip prop={episode.prop} /></div>}
-
-          {episode.receipt_count > 1 && (
-            <button
-              type="button"
-              onClick={onToggle}
-              className="mt-1.5 text-[11px] font-medium text-emerald-400/80 hover:text-emerald-300"
-            >
-              {expanded ? 'Hide receipts' : `Show ${episode.receipt_count} receipts`}
-            </button>
+      <div className="min-w-0">
+        <div className="mb-1 flex flex-wrap items-center gap-1.5">
+          {/* One category badge, not two: the tag (more specific — Injury, Fatigue,
+              etc.) carries the availability warning styling instead of a separate pill. */}
+          <span
+            className={`shrink-0 rounded border px-1.5 py-0.5 text-[10px] font-medium ${
+              episode.priority === 'availability'
+                ? 'border-amber-500/30 bg-amber-500/10 text-amber-300'
+                : TAG_STYLE[episode.tag] || 'bg-zinc-800 text-zinc-400 border-zinc-700'
+            }`}
+          >
+            {episode.tag}
+          </span>
+          {episode.subject && <span className="text-[10px] font-medium text-zinc-400">{episode.subject}</span>}
+          {episode.time_scope === 'historical_reference' && (
+            <span className="rounded bg-zinc-800 px-1.5 py-0.5 text-[9px] uppercase tracking-wide text-zinc-500">past</span>
           )}
-
-          {expanded && (
-            <div className="mt-2 space-y-1.5 border-t border-zinc-800/70 pt-2">
-              {detail === 'loading' && <p className="text-[11px] text-zinc-600">Loading receipts…</p>}
-              {detail === 'error' && <p className="text-[11px] text-red-400/70">Couldn’t load receipts.</p>}
-              {detail && detail !== 'loading' && detail !== 'error' && detail.receipts.map((r, i) => (
-                <ReceiptRow key={r.id || i} receipt={r} showCapturedLabel />
-              ))}
-            </div>
-          )}
+          <Chronology episode={episode} phaseLabel={phaseLabel} />
         </div>
+        <p className="text-sm font-semibold leading-snug text-zinc-100">
+          {episode.headline || `${episode.subject || episode.tag} is worth watching`}
+        </p>
+        {episode.analysis && <p className="mt-0.5 text-xs leading-snug text-zinc-400">{episode.analysis}</p>}
+        {/* The episode-level "past" badge above already covers this preview receipt. */}
+        {latestReceipt && <div className="mt-1"><ReceiptRow receipt={latestReceipt} showScopeBadge={false} /></div>}
+        {episode.prop && <div><PropChip prop={episode.prop} /></div>}
+
+        {episode.receipt_count > 1 && (
+          <button
+            type="button"
+            onClick={onToggle}
+            className="mt-1.5 text-[11px] font-medium text-emerald-400/80 hover:text-emerald-300"
+          >
+            {expanded ? 'Hide receipts' : `Show ${episode.receipt_count} receipts`}
+          </button>
+        )}
+
+        {expanded && (
+          <div className="mt-2 space-y-1.5 border-t border-zinc-800/70 pt-2">
+            {detail === 'loading' && <p className="text-[11px] text-zinc-600">Loading receipts…</p>}
+            {detail === 'error' && <p className="text-[11px] text-red-400/70">Couldn’t load receipts.</p>}
+            {detail && detail !== 'loading' && detail !== 'error' && detail.receipts.map((r, i) => (
+              <ReceiptRow key={r.id || i} receipt={r} showCapturedLabel />
+            ))}
+          </div>
+        )}
       </div>
     </li>
   )

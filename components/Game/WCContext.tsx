@@ -194,28 +194,25 @@ function CatchUp({ line, fallbackEpisode }: { line?: CatchUpLine; fallbackEpisod
   if (line) {
     return (
       <li className="px-4 py-3">
-        <div className="flex gap-2.5">
-          <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-400" />
-          <div className="min-w-0">
-            {line.source && (
-              <span className={`mb-1 inline-flex rounded border px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wide ${SOURCE_STYLE[line.source] || SOURCE_STYLE.fact}`}>
-                {SOURCE_LABEL[line.source] || line.source}
-              </span>
-            )}
-            <p className="text-sm font-semibold leading-snug text-zinc-100">{line.headline}</p>
-            {line.evidence_items && line.evidence_items.length > 0 && (
-              <p className="mt-0.5 text-xs leading-snug text-zinc-500">
-                {line.evidence_items.map((e, i) => (
-                  <span key={i}>
-                    {i > 0 ? ' · ' : ''}
-                    {e.scope === 'historical_reference' && <span className="text-zinc-600">(past) </span>}
-                    {e.text}
-                  </span>
-                ))}
-              </p>
-            )}
-            {line.prop && <div><PropChip prop={line.prop} /></div>}
-          </div>
+        <div className="min-w-0">
+          {line.source && (
+            <span className={`mb-1 inline-flex rounded border px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wide ${SOURCE_STYLE[line.source] || SOURCE_STYLE.fact}`}>
+              {SOURCE_LABEL[line.source] || line.source}
+            </span>
+          )}
+          <p className="text-sm font-semibold leading-snug text-zinc-100">{line.headline}</p>
+          {line.evidence_items && line.evidence_items.length > 0 && (
+            <p className="mt-0.5 text-xs leading-snug text-zinc-500">
+              {line.evidence_items.map((e, i) => (
+                <span key={i}>
+                  {i > 0 ? ' · ' : ''}
+                  {e.scope === 'historical_reference' && <span className="text-zinc-600">(past) </span>}
+                  {e.text}
+                </span>
+              ))}
+            </p>
+          )}
+          {line.prop && <div><PropChip prop={line.prop} /></div>}
         </div>
       </li>
     )
@@ -223,14 +220,11 @@ function CatchUp({ line, fallbackEpisode }: { line?: CatchUpLine; fallbackEpisod
   if (fallbackEpisode) {
     return (
       <li className="px-4 py-3">
-        <div className="flex gap-2.5">
-          <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-400" />
-          <div className="min-w-0">
-            <p className="text-sm font-semibold leading-snug text-zinc-100">
-              {fallbackEpisode.headline || fallbackEpisode.quote}
-            </p>
-            <p className="mt-0.5 text-xs leading-snug text-zinc-500">Booth: “{fallbackEpisode.quote}”</p>
-          </div>
+        <div className="min-w-0">
+          <p className="text-sm font-semibold leading-snug text-zinc-100">
+            {fallbackEpisode.headline || fallbackEpisode.quote}
+          </p>
+          <p className="mt-0.5 text-xs leading-snug text-zinc-500">Booth: “{fallbackEpisode.quote}”</p>
         </div>
       </li>
     )
