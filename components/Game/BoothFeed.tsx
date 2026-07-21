@@ -8,9 +8,17 @@ type Prop = {
   lean: 'back' | 'fade' | 'watch'
   quote_age_seconds?: number
 }
-type MatchPhase = 'pregame' | 'first_half' | 'halftime' | 'second_half' | 'extra_time' | 'final' | 'live'
+type MatchPhase = 'pregame' | 'first_half' | 'halftime' | 'second_half' | 'extra_time' | 'penalties' | 'final' | 'live'
 type TimeScope = 'current_match' | 'historical_reference' | 'mixed'
 type BoothStatus = 'current' | 'quiet' | 'stale' | 'complete' | 'unavailable'
+
+type MatchTime = {
+  display: string
+  minute?: number
+  source: 'espn_event' | 'booth_stated_clock' | 'espn_wallclock_alignment' | 'espn_period_boundary'
+  relation: 'contemporaneous_event' | 'stated_in_receipt' | 'broadcast_aligned' | 'between_periods' | 'after_final_whistle'
+  precision: 'exact_event' | 'stated' | 'estimated' | 'exact_phase'
+}
 
 type Receipt = {
   id?: string
@@ -18,6 +26,7 @@ type Receipt = {
   captured_at?: string
   time_scope?: TimeScope
   subject_raw?: string
+  match_time?: MatchTime
 }
 
 type Episode = {
@@ -33,7 +42,7 @@ type Episode = {
   latest_capture_at?: string
   receipt_count: number
   receipts: Receipt[] // newest first, up to 3 in the list payload
-  match_time?: { display: string }
+  match_time?: MatchTime
   prop?: Prop
 }
 
@@ -70,7 +79,7 @@ type EpisodeDetail = {
   receipt_count: number
   receipt_order: 'oldest_to_newest'
   receipts: Receipt[]
-  match_time?: { display: string }
+  match_time?: MatchTime
 }
 
 const POLL_MS = 30_000
@@ -109,18 +118,6 @@ function relativeFromSeconds(seconds: number): string {
   if (mins < 60) return `${mins}m ago`
   return `${Math.round(mins / 60)}h ago`
 }
-function relativeFromNow(iso?: string | null): string {
-  if (!iso) return ''
-  const parsed = new Date(iso)
-  if (Number.isNaN(parsed.getTime())) return ''
-  return relativeFromSeconds(Math.max(0, (Date.now() - parsed.getTime()) / 1000))
-}
-const localClock = (iso?: string | null) => {
-  if (!iso) return ''
-  const parsed = new Date(iso)
-  return Number.isNaN(parsed.getTime()) ? '' : parsed.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
-}
-
 function PropChip({ prop }: { prop: Prop }) {
   const s = LEAN_STYLE[prop.lean] || LEAN_STYLE.watch
   return (
@@ -137,23 +134,20 @@ function PropChip({ prop }: { prop: Prop }) {
   )
 }
 
-// Chronology: an ESPN-linked match minute when we have one, otherwise phase +
-// relative capture recency. Never a card-level from-to range.
+// Chronology: an ESPN-linked match minute when we have one, otherwise phase
+// alone. Never a relative/local capture timestamp, never a from-to range.
 function Chronology({ episode, phaseLabel }: { episode: Episode; phaseLabel?: string }) {
   if (episode.match_time?.display) {
     return <span className="font-mono text-[10px] tabular-nums text-zinc-500">{episode.match_time.display}</span>
   }
-  const rel = relativeFromNow(episode.latest_capture_at)
-  return (
-    <span className="text-[10px] text-zinc-600">
-      {phaseLabel}{phaseLabel && rel ? ' · ' : ''}{rel}
-    </span>
-  )
+  if (!phaseLabel) return null
+  return <span className="text-[10px] text-zinc-600">{phaseLabel}</span>
 }
 
-function ReceiptRow({ receipt, showCapturedLabel, showScopeBadge = true }: {
+function ReceiptRow({ receipt, phaseLabel, showTime, showScopeBadge = true }: {
   receipt: Receipt
-  showCapturedLabel?: boolean
+  phaseLabel?: string
+  showTime?: boolean
   showScopeBadge?: boolean
 }) {
   return (
@@ -161,9 +155,9 @@ function ReceiptRow({ receipt, showCapturedLabel, showScopeBadge = true }: {
       {showScopeBadge && receipt.time_scope === 'historical_reference' && (
         <span className="mr-1 rounded bg-zinc-800 px-1 py-0.5 text-[9px] uppercase tracking-wide text-zinc-500">past</span>
       )}
-      {showCapturedLabel && receipt.captured_at && (
+      {showTime && (receipt.match_time?.display || phaseLabel) && (
         <span className="mr-1 font-mono tabular-nums text-zinc-500">
-          {localClock(receipt.captured_at)}:
+          {receipt.match_time?.display || phaseLabel}:
         </span>
       )}
       “{receipt.quote}”
@@ -225,7 +219,7 @@ function EpisodeCard({
             {detail === 'loading' && <p className="text-[11px] text-zinc-600">Loading receipts…</p>}
             {detail === 'error' && <p className="text-[11px] text-red-400/70">Couldn’t load receipts.</p>}
             {detail && detail !== 'loading' && detail !== 'error' && detail.receipts.map((r, i) => (
-              <ReceiptRow key={r.id || i} receipt={r} showCapturedLabel />
+              <ReceiptRow key={r.id || i} receipt={r} phaseLabel={phaseLabel} showTime />
             ))}
           </div>
         )}
@@ -284,10 +278,13 @@ export default function BoothFeed({ gameId, contextLeague = 'wc', showListenLive
 
   // Fetch the selected phase. Following live (selectedPhase === null) polls every
   // 30s; browsing a past phase is a static catch-up snapshot and does not poll.
+  // Polling also stops once the match reaches a terminal state (current_phase
+  // final or booth_status complete) — there is nothing left to follow live.
   useEffect(() => {
     let alive = true
     let hasValue = false
     let active: AbortController | null = null
+    let timer: ReturnType<typeof setTimeout> | null = null
     const load = () => {
       active?.abort()
       const request = new AbortController()
@@ -295,13 +292,17 @@ export default function BoothFeed({ gameId, contextLeague = 'wc', showListenLive
       // CoD has no phase concept — preserve its original limit=40, no-phase request.
       const limit = contextLeague === 'cod' ? 40 : selectedPhase ? PHASE_BROWSE_LIMIT : DEFAULT_LIMIT
       const phaseParam = contextLeague === 'wc' && selectedPhase ? `&phase=${selectedPhase}` : ''
-      return fetch(`/api/${contextLeague}/${gameId}/context?limit=${limit}${phaseParam}`, { signal: request.signal })
+      fetch(`/api/${contextLeague}/${gameId}/context?limit=${limit}${phaseParam}`, { signal: request.signal })
         .then(r => (r.ok ? r.json() : null))
         .then(d => {
           if (!alive || request.signal.aborted) return
           if (d) {
             hasValue = true
             setCtx(d)
+            const terminal = d.coverage?.current_phase === 'final' || d.coverage?.booth_status === 'complete'
+            if (selectedPhase === null && !terminal) {
+              timer = setTimeout(load, POLL_MS)
+            }
           } else if (!hasValue) {
             setCtx(null)
           }
@@ -309,11 +310,10 @@ export default function BoothFeed({ gameId, contextLeague = 'wc', showListenLive
         .catch(() => { if (alive && !hasValue && !request.signal.aborted) setCtx(null) })
     }
     load()
-    const timer = selectedPhase === null ? setInterval(load, POLL_MS) : null
     return () => {
       alive = false
       active?.abort()
-      if (timer) clearInterval(timer)
+      if (timer) clearTimeout(timer)
     }
   }, [gameId, contextLeague, selectedPhase])
 
@@ -344,6 +344,7 @@ export default function BoothFeed({ gameId, contextLeague = 'wc', showListenLive
   const activePhaseKey = selectedPhase ?? ctx?.coverage?.current_phase
   const activePhaseLabel = phases.find(p => p.key === activePhaseKey)?.label
   const status = ctx?.coverage?.booth_status
+  const isTerminal = ctx?.coverage?.current_phase === 'final' || status === 'complete'
 
   return (
     <div className="space-y-4">
@@ -383,7 +384,7 @@ export default function BoothFeed({ gameId, contextLeague = 'wc', showListenLive
                     {status}
                   </span>
                 )}
-                {selectedPhase === null ? 'following live' : 'catch-up'}
+                {selectedPhase === null ? (isTerminal ? 'match complete' : 'following live') : 'catch-up'}
               </span>
             </div>
             {phases.length > 0 && (

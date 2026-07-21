@@ -39,7 +39,14 @@ type CatchUpLine = {
   prop?: Prop
 }
 
-type MatchPhase = 'pregame' | 'first_half' | 'halftime' | 'second_half' | 'extra_time' | 'final' | 'live'
+type MatchPhase = 'pregame' | 'first_half' | 'halftime' | 'second_half' | 'extra_time' | 'penalties' | 'final' | 'live'
+type MatchTime = {
+  display: string
+  minute?: number
+  source: 'espn_event' | 'booth_stated_clock' | 'espn_wallclock_alignment' | 'espn_period_boundary'
+  relation: 'contemporaneous_event' | 'stated_in_receipt' | 'broadcast_aligned' | 'between_periods' | 'after_final_whistle'
+  precision: 'exact_event' | 'stated' | 'estimated' | 'exact_phase'
+}
 type BoothEpisode = {
   id: string
   headline?: string
@@ -48,7 +55,7 @@ type BoothEpisode = {
   tag: string
   phase: MatchPhase
   latest_capture_at?: string
-  match_time?: { display: string }
+  match_time?: MatchTime
 }
 type BoothStatus = 'current' | 'quiet' | 'stale' | 'complete' | 'unavailable'
 
@@ -190,7 +197,7 @@ function RouteToMatch({ team, history }: { team: Ctx['teams']['home']; history?:
 // The 15-second casual-fan catch-up. right_now[0] is the primary source; when the
 // synthesis has nothing yet, the top featured episode stands in (same visual slot,
 // clearly not a claim of synthesis).
-function CatchUp({ line, fallbackEpisode }: { line?: CatchUpLine; fallbackEpisode?: BoothEpisode }) {
+function CatchUp({ line, fallbackEpisode, fallbackPhaseLabel }: { line?: CatchUpLine; fallbackEpisode?: BoothEpisode; fallbackPhaseLabel?: string }) {
   if (line) {
     return (
       <li className="px-4 py-3">
@@ -221,6 +228,13 @@ function CatchUp({ line, fallbackEpisode }: { line?: CatchUpLine; fallbackEpisod
     return (
       <li className="px-4 py-3">
         <div className="min-w-0">
+          {/* Chronology: match_time.display when present, otherwise phase only —
+              never a relative/local capture timestamp or a from-to range. */}
+          {(fallbackEpisode.match_time?.display || fallbackPhaseLabel) && (
+            <span className={fallbackEpisode.match_time?.display ? 'font-mono text-[10px] tabular-nums text-zinc-500' : 'text-[10px] text-zinc-600'}>
+              {fallbackEpisode.match_time?.display || fallbackPhaseLabel}
+            </span>
+          )}
           <p className="text-sm font-semibold leading-snug text-zinc-100">
             {fallbackEpisode.headline || fallbackEpisode.quote}
           </p>
@@ -235,10 +249,13 @@ function CatchUp({ line, fallbackEpisode }: { line?: CatchUpLine; fallbackEpisod
 export default function WCContext({ gameId }: { gameId: string }) {
   const [ctx, setCtx] = useState<Ctx | null | undefined>(undefined)
 
+  // Polls every 30s while the match is live; stops once a terminal state is
+  // reached (current_phase final or booth_status complete) — nothing left to follow.
   useEffect(() => {
     let alive = true
     let hasValue = false
     let active: AbortController | null = null
+    let timer: ReturnType<typeof setTimeout> | null = null
     setCtx(undefined)
     const load = () => {
       active?.abort()
@@ -251,6 +268,10 @@ export default function WCContext({ gameId }: { gameId: string }) {
           if (d) {
             hasValue = true
             setCtx(d)
+            const terminal = d.current_phase === 'final' || d.coverage?.booth_status === 'complete'
+            if (!terminal) {
+              timer = setTimeout(load, POLL_MS)
+            }
           } else if (!hasValue) {
             setCtx(null)
           }
@@ -258,11 +279,10 @@ export default function WCContext({ gameId }: { gameId: string }) {
         .catch(() => { if (alive && !hasValue && !request.signal.aborted) setCtx(null) })
     }
     load()
-    const timer = setInterval(load, POLL_MS)
     return () => {
       alive = false
       active?.abort()
-      clearInterval(timer)
+      if (timer) clearTimeout(timer)
     }
   }, [gameId])
 
@@ -278,6 +298,7 @@ export default function WCContext({ gameId }: { gameId: string }) {
   const fallbackEpisode = !catchUpLine ? ctx.featured_episodes?.[0] : undefined
   const status = ctx.coverage?.booth_status
   const phaseLabel = ctx.coverage?.phases.find(p => p.key === ctx.current_phase)?.label
+  const isTerminal = ctx.current_phase === 'final' || status === 'complete'
 
   return (
     <section className="rounded-xl border border-zinc-800 bg-zinc-900 overflow-hidden">
@@ -290,7 +311,7 @@ export default function WCContext({ gameId }: { gameId: string }) {
               {status}
             </span>
           )}
-          {phaseLabel || 'Live'}
+          {phaseLabel || (isTerminal ? 'Final' : 'Live')}
           {ctx.coverage?.capture_latest_at ? ` · booth ${relativeFromNow(ctx.coverage.capture_latest_at)}` : ''}
         </span>
       </div>
@@ -298,7 +319,11 @@ export default function WCContext({ gameId }: { gameId: string }) {
       {/* Right now: the 15-second catch-up, one line, not a list of cards */}
       {(catchUpLine || fallbackEpisode) && (
         <ul className="divide-y divide-zinc-800/70">
-          <CatchUp line={catchUpLine} fallbackEpisode={fallbackEpisode} />
+          <CatchUp
+            line={catchUpLine}
+            fallbackEpisode={fallbackEpisode}
+            fallbackPhaseLabel={ctx.coverage?.phases.find(p => p.key === fallbackEpisode?.phase)?.label}
+          />
         </ul>
       )}
 
