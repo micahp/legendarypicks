@@ -10,6 +10,9 @@ module.exports = {
   async redirects() {
     return [
       { source: '/stats', destination: '/leagues', permanent: false },
+      // The CoD-only league desk is generalized into the shared esports title
+      // surface — keep the old URL working as a compatibility redirect.
+      { source: '/cod', destination: '/esports/call-of-duty', permanent: false },
     ]
   },
   async rewrites() {

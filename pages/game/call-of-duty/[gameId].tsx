@@ -368,7 +368,7 @@ export default function CodGameDetailPage() {
 
   if (!context || error) return (
     <div className="mx-auto max-w-4xl space-y-5">
-      <Link href="/cod" className="text-sm text-zinc-500 hover:text-zinc-200">← Back to CDL desk</Link>
+      <Link href="/esports/call-of-duty" className="text-sm text-zinc-500 hover:text-zinc-200">← Back to CDL desk</Link>
       <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 p-8 text-center">
         <p className="text-sm text-zinc-400">This CoD match context is unavailable.</p>
         <p className="mt-2 text-xs text-zinc-600">The match may be outside the current PandaScore history window.</p>
@@ -382,7 +382,7 @@ export default function CodGameDetailPage() {
 
       <div className="mx-auto max-w-4xl space-y-8">
         <div className="flex items-center justify-between gap-3">
-          <Link href="/cod" className="text-sm text-zinc-500 transition-colors hover:text-zinc-200">← Back to CDL desk</Link>
+          <Link href="/esports/call-of-duty" className="text-sm text-zinc-500 transition-colors hover:text-zinc-200">← Back to CDL desk</Link>
           <span className="font-mono text-[10px] uppercase tracking-wider text-zinc-600">Call of Duty League</span>
         </div>
 

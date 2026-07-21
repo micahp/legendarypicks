@@ -10,7 +10,7 @@ import LiveDiscounts from '../components/LiveDiscounts'
 
 function gameHref(game: Game) {
   if (game.league === 'COD') {
-    return game.detailGameId ? `/game/call-of-duty/${game.detailGameId}` : '/cod'
+    return game.detailGameId ? `/game/call-of-duty/${game.detailGameId}` : '/esports/call-of-duty'
   }
   return `/game/${game.league?.toLowerCase()}/${game.gameId}`
 }
