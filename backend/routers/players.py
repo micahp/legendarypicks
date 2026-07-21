@@ -1,6 +1,7 @@
 """routers/players.py — players endpoints. Handlers only; shared code lives in _core."""
 import json
 import math
+import time
 
 from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import JSONResponse
@@ -11,14 +12,70 @@ router = APIRouter()
 
 @router.get("/api/players/search")
 def search_players(q: str = Query("", description="Search query")):
-    if not q or len(q) < 2:
+    query = str(q or "").strip()
+    if len(query) < 2:
         return []
+    contains = "%{}%".format(query)
+    prefix = "{}%".format(query)
     with closing(_db()) as con:
         rows = con.execute(
-            "SELECT DISTINCT id, name, team, league FROM players WHERE name LIKE ? LIMIT 20",
-            (f"%{q}%",)
+            """SELECT p.id, p.name, p.team, p.league,
+                      EXISTS(SELECT 1 FROM player_game_logs g WHERE g.player_id=p.id) AS has_logs,
+                      EXISTS(SELECT 1 FROM props pr WHERE pr.player_id=p.id) AS has_props,
+                      EXISTS(SELECT 1 FROM player_stats s WHERE s.player_id=p.id) AS has_stats
+               FROM players p
+               WHERE p.name LIKE ? COLLATE NOCASE
+                 AND (
+                   EXISTS(SELECT 1 FROM player_game_logs g WHERE g.player_id=p.id)
+                   OR EXISTS(SELECT 1 FROM props pr WHERE pr.player_id=p.id)
+                   OR EXISTS(SELECT 1 FROM player_stats s WHERE s.player_id=p.id)
+                 )
+               ORDER BY
+                 CASE
+                   WHEN p.name = ? COLLATE NOCASE THEN 0
+                   WHEN p.name LIKE ? COLLATE NOCASE THEN 1
+                   ELSE 2
+                 END,
+                 has_props DESC, has_logs DESC, has_stats DESC,
+                 p.name COLLATE NOCASE, p.id
+               LIMIT 20""",
+            (contains, query, prefix),
         ).fetchall()
-    return [{"id": r["id"], "name": r["name"], "team": r["team"], "league": r["league"]} for r in rows]
+    return [
+        {
+            "id": r["id"],
+            "name": r["name"],
+            "team": r["team"],
+            "league": r["league"],
+            "coverage": {
+                "game_logs": bool(r["has_logs"]),
+                "props": bool(r["has_props"]),
+                "season_stats": bool(r["has_stats"]),
+            },
+        }
+        for r in rows
+    ]
+
+
+def _season_stats_for_profile(player_id: int, player_name: str, league: str):
+    """Reuse the DB-backed advanced-stat readers for the page-level profile."""
+    getter = {
+        "mlb": lambda: _get_mlb_stats(player_name, player_id, None, time.time()),
+        "nfl": lambda: _get_nfl_stats(player_name, player_id, time.time()),
+        "nba": lambda: _get_nba_stats(player_name, player_id, time.time()),
+        "nhl": lambda: _get_nhl_stats(player_name, player_id, time.time()),
+    }.get(str(league or "").lower())
+    if getter is None:
+        return None
+    result = getter()
+    if not isinstance(result, dict):
+        return None
+    has_stats = (
+        bool(result.get("stats"))
+        or bool(result.get("batting"))
+        or bool(result.get("pitching"))
+    )
+    return result if has_stats else None
 
 
 @router.get("/api/player/{player_id}")
@@ -62,12 +119,20 @@ def player_profile(player_id: int):
         if pr:
             projections[k] = pr
 
+    season_stats = _season_stats_for_profile(p["id"], p["name"], league)
     return {
         "id": p["id"], "name": p["name"], "team": p["team"], "league": league,
         "position": p["position"], "season": season, "games": len(logs),
         "recent_games": recent[:15],
         "projections": projections,
         "props": [{"market": _base_market(x["market"]), "side": x["side"], "line": x["line"]} for x in props],
+        "season_stats": season_stats,
+        "coverage": {
+            "game_logs": bool(logs),
+            "props": bool(props),
+            "season_stats": season_stats is not None,
+        },
+        "data_status": "ready" if (logs or props or season_stats) else "unavailable",
     }
 
 

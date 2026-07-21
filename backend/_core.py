@@ -136,9 +136,24 @@ def _init_db():
         for col in ("source_player_key", "reason"):
             if col not in unresolved_columns:
                 con.execute(f"ALTER TABLE unresolved_players ADD COLUMN {col} TEXT")
+        player_stats_columns = {
+            r[1] for r in con.execute("PRAGMA table_info(player_stats)").fetchall()
+        }
+        if "player_id" not in player_stats_columns:
+            con.execute("ALTER TABLE player_stats ADD COLUMN player_id INTEGER")
         con.execute(
             "CREATE INDEX IF NOT EXISTS idx_unresolved_players_source_key "
             "ON unresolved_players(source, league, source_player_key)"
+        )
+        # Player search/profile checks data availability on these foreign keys.
+        # Without the indexes, a two-letter search can repeatedly scan the full
+        # props/stats tables for thousands of historical roster identities.
+        con.execute(
+            "CREATE INDEX IF NOT EXISTS idx_props_player ON props(player_id)"
+        )
+        con.execute(
+            "CREATE INDEX IF NOT EXISTS idx_player_stats_player "
+            "ON player_stats(player_id, season)"
         )
         con.commit()
 
