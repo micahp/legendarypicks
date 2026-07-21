@@ -11,11 +11,50 @@ from team_stats_contract import build_team_aggregates
 router = APIRouter()
 
 _SCHEDULE_DATES_CONTRACT = "league-schedule-dates-v1"
+_NFL_SCHEDULE_WEEKS_CONTRACT = "nfl-schedule-weeks-v1"
+_NFL_SCHEDULE_WEEK_CONTRACT = "nfl-schedule-week-v1"
 _SCHEDULE_SEARCH_RANGES = {
     "future": ((0, 14), (15, 90), (91, 370)),
     "past": ((-14, -1), (-90, -15), (-370, -91)),
 }
 _SCHEDULE_CANDIDATE_LIMIT = 64
+
+
+def _parse_anchor_date(anchor: Optional[str]) -> dt.date:
+    if anchor is None:
+        return dt.date.today()
+    try:
+        parsed = dt.date.fromisoformat(anchor)
+    except (TypeError, ValueError):
+        raise HTTPException(400, "anchor must be YYYY-MM-DD")
+    if parsed.isoformat() != anchor:
+        raise HTTPException(400, "anchor must be YYYY-MM-DD")
+    return parsed
+
+
+def _default_nfl_season(anchor: dt.date) -> int:
+    return anchor.year - 1 if anchor.month <= 2 else anchor.year
+
+
+def _flatten_nfl_weeks(phases):
+    return [week for phase in phases for week in phase.get("weeks", [])]
+
+
+def _default_nfl_week(weeks, anchor: dt.date):
+    if not weeks:
+        return None, "none"
+    anchor_text = anchor.isoformat()
+    starts = [str(week.get("start_time") or "")[:10] for week in weeks]
+    if anchor_text < starts[0]:
+        return weeks[0], "next"
+    for index, week in enumerate(weeks):
+        next_start = starts[index + 1] if index + 1 < len(starts) else None
+        if next_start is not None and anchor_text < next_start:
+            return week, "current"
+        if next_start is None:
+            end_text = str(week.get("end_time") or "")[:10]
+            return week, "current" if anchor_text <= end_text else "latest"
+    return weeks[-1], "latest"
 
 
 def _schedule_candidates(league: str, anchor: dt.date, direction: str):
@@ -288,15 +327,7 @@ def get_schedule_dates(
     lg = league.lower()
     if lg not in espn.LEAGUES:
         raise HTTPException(404, f"unsupported league {lg!r}")
-    if anchor is None:
-        anchor_date = dt.date.today()
-    else:
-        try:
-            anchor_date = dt.date.fromisoformat(anchor)
-        except (TypeError, ValueError):
-            raise HTTPException(400, "anchor must be YYYY-MM-DD")
-        if anchor_date.isoformat() != anchor:
-            raise HTTPException(400, "anchor must be YYYY-MM-DD")
+    anchor_date = _parse_anchor_date(anchor)
 
     try:
         future_starts, future_search = _schedule_candidates(lg, anchor_date, "future")
@@ -319,6 +350,91 @@ def get_schedule_dates(
             },
         },
         headers={"Cache-Control": "public, max-age=300"},
+    )
+
+
+@router.get("/api/nfl/schedule-weeks")
+def get_nfl_schedule_weeks(
+    season: Optional[int] = Query(None, ge=2000, le=2100),
+    anchor: Optional[str] = Query(None, description="Viewer-local YYYY-MM-DD"),
+):
+    """ESPN's ordered NFL phase/week catalog and the default week for an anchor date."""
+    anchor_date = _parse_anchor_date(anchor)
+    selected_season = season if season is not None else _default_nfl_season(anchor_date)
+    if selected_season < 2000 or selected_season > 2100:
+        raise HTTPException(400, "season must be between 2000 and 2100")
+    try:
+        phases = espn.nfl_schedule_weeks(selected_season)
+    except (TypeError, ValueError) as exc:
+        raise HTTPException(404, str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(502, "NFL schedule week catalog unavailable") from exc
+
+    weeks = _flatten_nfl_weeks(phases)
+    default_week, default_reason = _default_nfl_week(weeks, anchor_date)
+    if default_week is None:
+        raise HTTPException(502, "NFL schedule week catalog is empty")
+    return JSONResponse(
+        content={
+            "contract": _NFL_SCHEDULE_WEEKS_CONTRACT,
+            "league": "nfl",
+            "season": selected_season,
+            "anchor_date": anchor_date.isoformat(),
+            "navigation": "week",
+            "phases": phases,
+            "weeks": weeks,
+            "default_week_key": default_week["key"],
+            "default_reason": default_reason,
+        },
+        headers={"Cache-Control": "public, max-age=300"},
+    )
+
+
+@router.get("/api/nfl/schedule-week")
+def get_nfl_schedule_week(
+    season: int = Query(..., ge=2000, le=2100),
+    season_type: int = Query(..., ge=1, le=3),
+    week: int = Query(..., ge=1, le=25),
+):
+    """One NFL week of games, keyed by ESPN season type and week number."""
+    if season < 2000 or season > 2100:
+        raise HTTPException(400, "season must be between 2000 and 2100")
+    if season_type not in (1, 2, 3):
+        raise HTTPException(400, "season_type must be 1, 2, or 3")
+    if week < 1 or week > 25:
+        raise HTTPException(400, "week must be between 1 and 25")
+    try:
+        phases = espn.nfl_schedule_weeks(season)
+    except (TypeError, ValueError) as exc:
+        raise HTTPException(404, str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(502, "NFL schedule week catalog unavailable") from exc
+
+    selected = next(
+        (
+            candidate
+            for candidate in _flatten_nfl_weeks(phases)
+            if candidate["season_type"] == season_type and candidate["week"] == week
+        ),
+        None,
+    )
+    if selected is None:
+        raise HTTPException(404, "NFL schedule week not found")
+    try:
+        week_games = espn.nfl_schedule_week_games(season, season_type, week)
+    except Exception as exc:
+        raise HTTPException(502, "NFL schedule week games unavailable") from exc
+
+    return JSONResponse(
+        content={
+            "contract": _NFL_SCHEDULE_WEEK_CONTRACT,
+            "league": "nfl",
+            "season": season,
+            "navigation": "week",
+            "selected_week": selected,
+            "games": week_games,
+        },
+        headers={"Cache-Control": "public, max-age=20"},
     )
 
 
