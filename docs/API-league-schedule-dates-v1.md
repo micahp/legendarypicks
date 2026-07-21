@@ -4,10 +4,9 @@
 
 Contract: `league-schedule-dates-v1`
 
-This bounded discovery contract supports the league-page Schedule default. The
-client first checks the viewer's local current day. If that day has no games and
-the URL did not explicitly select a date, it requests this contract, converts
-the returned absolute event starts into the viewer's local calendar, and picks:
+This bounded discovery contract supports the non-NFL league-page Schedule
+default and previous/next navigation. The client converts the returned
+absolute event starts into the viewer's local calendar and picks:
 
 1. the earliest local date after the anchor that contains a game;
 2. otherwise, the most recent local date before the anchor that contains a game;
@@ -28,11 +27,11 @@ Example shape:
 ```json
 {
   "contract": "league-schedule-dates-v1",
-  "league": "nfl",
+  "league": "nba",
   "anchor_date": "2026-07-21",
   "event_start_timezone": "UTC",
-  "future_event_starts": ["2026-08-07T00:00Z"],
-  "past_event_starts": ["2026-02-09T01:30Z"],
+  "future_event_starts": ["2026-10-06T00:00Z"],
+  "past_event_starts": ["2026-04-13T00:30Z"],
   "search": {
     "future": [
       {
@@ -47,6 +46,12 @@ Example shape:
 }
 ```
 
-The auto-resolution behavior is default-only. Explicit `?date=` URLs and dates
-chosen with arrows, the date picker, or "Jump to today" must never be silently
-redirected away from an empty day.
+Automatic resolution is default-only: an explicit `?date=` URL, a date-picker
+choice, and "Jump to today" stay on the requested day even when it is empty.
+Previous/next arrows are different, explicit user actions: they use this same
+contract to jump directly to the nearest earlier or later date that contains a
+game, skipping empty calendar days.
+
+NFL does not use daily navigation. Its league page consumes the dedicated
+`nfl-schedule-weeks-v1` and `nfl-schedule-week-v1` contracts documented in
+`API-nfl-schedule-weeks-v1.md`.
