@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { useRouter } from 'next/router'
 import Head from 'next/head'
 import { getDeviceId } from '../lib/deviceId'
 
@@ -14,6 +15,27 @@ interface Match {
   live: boolean
   finished: boolean
   favorite?: { name: string; pct: number } | null
+}
+
+interface TitleOption {
+  slug: string
+  label: string
+  match_count: number
+  live_count: number
+  result_count: number
+  next_start: number | null
+}
+
+interface PredictSlate {
+  schema_version: string
+  selected_title: { slug: string; label: string }
+  titles: TitleOption[]
+  matches: Match[]
+  match_count: number
+  has_more: boolean
+  building: boolean
+  error: string | null
+  source: string | null
 }
 
 interface MyPick {
@@ -33,11 +55,43 @@ interface RecordT {
   streak: number
 }
 
+const EMPTY_RECORD: RecordT = { wins: 0, losses: 0, voids: 0, streak: 0 }
+
+// Derive a title-scoped record from the (cross-title) picks list — the picks
+// API reports one aggregate record, not one per esports title.
+function recordForTitle(picks: MyPick[], titleLabel: string): RecordT {
+  const scoped = picks
+    .filter((p) => p.matchKey.split('||')[2] === titleLabel && p.settledAt !== null)
+    .sort((a, b) => (a.settledAt || 0) - (b.settledAt || 0))
+
+  let wins = 0, losses = 0, voids = 0
+  for (const p of scoped) {
+    if (p.result === 'win') wins++
+    else if (p.result === 'loss') losses++
+    else if (p.result === 'void') voids++
+  }
+
+  let streak = 0
+  for (let i = scoped.length - 1; i >= 0; i--) {
+    const r = scoped[i].result
+    if (r === 'void') continue
+    if (streak === 0) { streak = r === 'win' ? 1 : -1; continue }
+    if ((streak > 0 && r === 'win') || (streak < 0 && r === 'loss')) streak += streak > 0 ? 1 : -1
+    else break
+  }
+  return { wins, losses, voids, streak }
+}
+
 export default function PredictPage() {
-  const [matches, setMatches] = useState<Match[]>([])
-  const [myPicks, setMyPicks] = useState<MyPick[]>([])
-  const [record, setRecord] = useState<RecordT>({ wins: 0, losses: 0, voids: 0, streak: 0 })
+  const router = useRouter()
+  const urlTitle = typeof router.query.title === 'string' ? router.query.title : undefined
+
+  const [slate, setSlate] = useState<PredictSlate | null>(null)
   const [loading, setLoading] = useState(true)
+  const [fetchError, setFetchError] = useState<string | null>(null)
+  const [reloadTick, setReloadTick] = useState(0)
+
+  const [myPicks, setMyPicks] = useState<MyPick[]>([])
   const [submittingKey, setSubmittingKey] = useState<string | null>(null)
   const [crowd, setCrowd] = useState<Record<string, { countA: number; countB: number; total: number; shareA: number | null }>>({})
 
@@ -47,36 +101,50 @@ export default function PredictPage() {
     if (!res.ok) throw new Error('failed to load picks')
     const data = await res.json()
     setMyPicks(data.picks || [])
-    setRecord(data.record || { wins: 0, losses: 0, voids: 0, streak: 0 })
   }
 
+  // Slate fetch — keyed on the URL's ?title= (alias or canonical slug, passed
+  // straight through to the backend, which resolves it) plus a manual retry tick.
   useEffect(() => {
+    // Wait for Next's client-side query parsing to settle — otherwise a direct
+    // load of /predict?title=cod fetches once with urlTitle undefined (wrong
+    // default-title slate flashes in) and again once router.isReady catches up.
+    if (!router.isReady) return
     let active = true
     ;(async () => {
       setLoading(true)
+      setFetchError(null)
       try {
-        const [upRes, picksRes] = await Promise.all([
-          fetch('/api/esports/upcoming'),
-          fetch('/api/esports/picks/me', { headers: { 'X-Device-Id': getDeviceId() } }),
-        ])
-        if (!upRes.ok) throw new Error('failed to load upcoming')
-        const up = await upRes.json()
-        const picksData = picksRes.ok
-          ? await picksRes.json()
-          : { picks: [], record: { wins: 0, losses: 0, voids: 0, streak: 0 } }
+        const qs = urlTitle ? `?title=${encodeURIComponent(urlTitle)}` : ''
+        const res = await fetch(`/api/esports/predict${qs}`)
+        if (!res.ok) {
+          const body = await res.json().catch(() => null)
+          throw new Error(body?.detail || `Failed to load predict slate (${res.status})`)
+        }
+        const data: PredictSlate = await res.json()
         if (!active) return
-        setMatches(up.matches || [])
-        setMyPicks(picksData.picks || [])
-        setRecord(picksData.record || { wins: 0, losses: 0, voids: 0, streak: 0 })
-      } catch {
-        // leave empty on failure
+        setSlate(data)
+      } catch (e) {
+        if (!active) return
+        setFetchError(e instanceof Error ? e.message : 'Failed to load predict slate')
       } finally {
         if (active) setLoading(false)
       }
     })()
-    return () => {
-      active = false
-    }
+    return () => { active = false }
+  }, [router.isReady, urlTitle, reloadTick])
+
+  // Picks load independently of the selected title (cross-title record/history).
+  useEffect(() => {
+    let active = true
+    ;(async () => {
+      try {
+        await loadPicks()
+      } catch {
+        if (active) setMyPicks([])
+      }
+    })()
+    return () => { active = false }
   }, [])
 
   // Fetch the crowd for each match the user has already picked (revealed after a pick).
@@ -104,9 +172,7 @@ export default function PredictPage() {
         return next
       })
     })()
-    return () => {
-      active = false
-    }
+    return () => { active = false }
   }, [myPicks, crowd])
 
   const call = async (m: Match, side: 'A' | 'B') => {
@@ -126,23 +192,27 @@ export default function PredictPage() {
     }
   }
 
-  const openMatches = matches
-    .filter((m) => !m.finished && m.teamA && m.teamB)
-    .sort((a, b) => {
-      if (a.startTime == null && b.startTime == null) return 0
-      if (a.startTime == null) return 1
-      if (b.startTime == null) return -1
-      return a.startTime - b.startTime
-    })
+  const selectTitle = (slug: string) => {
+    router.push({ pathname: '/predict', query: { title: slug } }, undefined, { shallow: true })
+  }
 
-  const pickByKey = (mk: string): MyPick | null =>
-    myPicks.find((p) => p.matchKey === mk) || null
+  const selectedLabel = slate?.selected_title.label
+  const pickByKey = (mk: string): MyPick | null => myPicks.find((p) => p.matchKey === mk) || null
 
+  const record = useMemo(
+    () => (selectedLabel ? recordForTitle(myPicks, selectedLabel) : EMPTY_RECORD),
+    [myPicks, selectedLabel]
+  )
   const hasTotal = record.wins + record.losses + record.voids > 0
 
-  const settled = myPicks
-    .filter((p) => p.settledAt !== null)
-    .sort((a, b) => (b.settledAt || 0) - (a.settledAt || 0))
+  const settled = useMemo(
+    () => myPicks
+      .filter((p) => p.settledAt !== null && (!selectedLabel || p.matchKey.split('||')[2] === selectedLabel))
+      .sort((a, b) => (b.settledAt || 0) - (a.settledAt || 0)),
+    [myPicks, selectedLabel]
+  )
+
+  const selectedTitleOption = slate?.titles.find((t) => t.slug === slate.selected_title.slug)
 
   return (
     <>
@@ -181,9 +251,47 @@ export default function PredictPage() {
           </div>
         </div>
 
+        {/* Title pills — horizontally scrollable, URL-driven selection */}
+        <div className="mt-6 flex gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {(slate?.titles || []).map((t) => {
+            const active = t.slug === slate?.selected_title.slug
+            return (
+              <button
+                key={t.slug}
+                type="button"
+                onClick={() => selectTitle(t.slug)}
+                className={`shrink-0 rounded-full border px-3 py-1.5 text-[12px] font-medium transition-colors ${
+                  active
+                    ? 'border-emerald-500/40 bg-emerald-500/15 text-emerald-300'
+                    : 'border-zinc-800 bg-zinc-900/60 text-zinc-500 hover:text-zinc-300'
+                }`}
+              >
+                {t.live_count > 0 && <span className="mr-1 text-emerald-400">●</span>}
+                {t.label}
+                {t.match_count > 0 && <span className="ml-1 opacity-60">{t.match_count}</span>}
+              </button>
+            )
+          })}
+        </div>
+
+        {/* Visible fetch error, distinct from "no matches" */}
+        {fetchError && (
+          <div className="mt-4 flex items-center justify-between gap-3 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+            <span>{fetchError}</span>
+            <button onClick={() => setReloadTick((t) => t + 1)} className="shrink-0 font-medium text-red-200 hover:text-red-100">
+              Retry
+            </button>
+          </div>
+        )}
+        {!fetchError && slate?.error && (
+          <div className="mt-4 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-300">
+            {slate.error}
+          </div>
+        )}
+
         {/* Matches */}
-        <div className="mt-8 mb-3 text-[10px] font-medium uppercase tracking-[0.18em] text-zinc-500">
-          Esports matches
+        <div className="mt-6 mb-3 text-[10px] font-medium uppercase tracking-[0.18em] text-zinc-500">
+          {selectedLabel ? `${selectedLabel} matches` : 'Esports matches'}
         </div>
 
         {loading ? (
@@ -200,10 +308,19 @@ export default function PredictPage() {
               </div>
             ))}
           </div>
-        ) : openMatches.length === 0 ? (
-          <p className="text-sm text-zinc-500">No matches to pick right now.</p>
-        ) : (
-          openMatches.map((m) => {
+        ) : !fetchError && slate && slate.matches.length === 0 ? (
+          slate.building ? (
+            <p className="text-sm text-zinc-500">Still loading the latest esports slate — check back in a moment.</p>
+          ) : (
+            <p className="text-sm text-zinc-500">
+              No open {selectedLabel || 'esports'} matches right now.
+              {selectedTitleOption?.next_start ? (
+                <> Next match {new Date(selectedTitleOption.next_start).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}.</>
+              ) : null}
+            </p>
+          )
+        ) : !fetchError && slate ? (
+          slate.matches.map((m) => {
             const existing = pickByKey(m.matchKey)
             return (
               <div key={m.matchKey} className="rounded-xl border border-zinc-800 bg-zinc-900/40 p-4 mb-3">
@@ -253,9 +370,9 @@ export default function PredictPage() {
               </div>
             )
           })
-        )}
+        ) : null}
 
-        {/* History */}
+        {/* History — scoped to the selected title */}
         <div className="mt-8 mb-3 text-[10px] font-medium uppercase tracking-[0.18em] text-zinc-500">
           History
         </div>
