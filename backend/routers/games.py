@@ -1,4 +1,5 @@
 """routers/games.py — games endpoints. Handlers only; shared code lives in _core."""
+import datetime as dt
 import html
 
 from fastapi import APIRouter, HTTPException, Query
@@ -8,6 +9,32 @@ from _core import *
 from team_stats_contract import build_team_aggregates
 
 router = APIRouter()
+
+_SCHEDULE_DATES_CONTRACT = "league-schedule-dates-v1"
+_SCHEDULE_SEARCH_RANGES = {
+    "future": ((0, 14), (15, 90), (91, 370)),
+    "past": ((-14, -1), (-90, -15), (-370, -91)),
+}
+_SCHEDULE_CANDIDATE_LIMIT = 64
+
+
+def _schedule_candidates(league: str, anchor: dt.date, direction: str):
+    attempts = []
+    for start_delta, end_delta in _SCHEDULE_SEARCH_RANGES[direction]:
+        start_date = anchor + dt.timedelta(days=start_delta)
+        end_date = anchor + dt.timedelta(days=end_delta)
+        starts = espn.schedule_event_starts(league, start_date, end_date)
+        attempts.append({
+            "start_date": start_date.isoformat(),
+            "end_date": end_date.isoformat(),
+            "event_starts_found": len(starts),
+        })
+        if starts:
+            ordered = sorted(set(starts))
+            if direction == "future":
+                return ordered[:_SCHEDULE_CANDIDATE_LIMIT], attempts
+            return ordered[-_SCHEDULE_CANDIDATE_LIMIT:], attempts
+    return [], attempts
 
 
 def _attach_cod_detail_ids(matches):
@@ -245,6 +272,54 @@ def get_games(league: str, date: Optional[str] = Query(None, description="YYYY-M
     if lg in ("nba", "nhl", "mlb", "nfl"):
         kick_game_stories(lg, games)
     return JSONResponse(content=games, headers={"Cache-Control": "public, max-age=30"})
+
+
+@router.get("/api/{league}/schedule-dates")
+def get_schedule_dates(
+    league: str,
+    anchor: Optional[str] = Query(None, description="Viewer-local YYYY-MM-DD"),
+):
+    """Bounded event-start candidates for resolving an empty schedule day.
+
+    Event starts stay as absolute ISO instants. The browser converts them to
+    its own local calendar before choosing the nearest future date or, when no
+    future event exists in the verified horizon, the most recent past date.
+    """
+    lg = league.lower()
+    if lg not in espn.LEAGUES:
+        raise HTTPException(404, f"unsupported league {lg!r}")
+    if anchor is None:
+        anchor_date = dt.date.today()
+    else:
+        try:
+            anchor_date = dt.date.fromisoformat(anchor)
+        except (TypeError, ValueError):
+            raise HTTPException(400, "anchor must be YYYY-MM-DD")
+        if anchor_date.isoformat() != anchor:
+            raise HTTPException(400, "anchor must be YYYY-MM-DD")
+
+    try:
+        future_starts, future_search = _schedule_candidates(lg, anchor_date, "future")
+        past_starts, past_search = _schedule_candidates(lg, anchor_date, "past")
+    except Exception as exc:
+        raise HTTPException(502, "schedule date discovery unavailable") from exc
+
+    return JSONResponse(
+        content={
+            "contract": _SCHEDULE_DATES_CONTRACT,
+            "league": lg,
+            "anchor_date": anchor_date.isoformat(),
+            "event_start_timezone": "UTC",
+            "future_event_starts": future_starts,
+            "past_event_starts": past_starts,
+            "search": {
+                "future": future_search,
+                "past": past_search,
+                "max_horizon_days": 370,
+            },
+        },
+        headers={"Cache-Control": "public, max-age=300"},
+    )
 
 
 @router.get("/api/{league}/strength")

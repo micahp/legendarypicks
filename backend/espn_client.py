@@ -394,6 +394,31 @@ def games(league, date=None):
     return out
 
 
+def schedule_event_starts(league, start_date, end_date, limit=1000):
+    """Return absolute event start instants from one bounded scoreboard range.
+
+    This is intentionally lower-level than :func:`games`: callers that need to
+    choose a viewer-local schedule date must convert the returned ISO instants
+    in the browser's timezone. ESPN date buckets are US-sports calendar dates,
+    while an evening game often starts on the following UTC date.
+    """
+    _, path = _check(league)
+    start = start_date.strftime("%Y%m%d")
+    end = end_date.strftime("%Y%m%d")
+    bounded_limit = max(1, min(int(limit), 1000))
+    url = (
+        _SITE.format(path=path)
+        + f"/scoreboard?dates={start}-{end}&limit={bounded_limit}"
+    )
+    data = _get(url, ttl=900)
+    starts = {
+        str(event.get("date"))
+        for event in data.get("events", [])
+        if event.get("date")
+    }
+    return sorted(starts)
+
+
 def _athlete_name_key(name):
     value = unicodedata.normalize("NFKD", str(name or "")).encode("ascii", "ignore").decode("ascii")
     return re.sub(r"[^a-z0-9]+", "", value.lower())
