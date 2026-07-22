@@ -372,6 +372,11 @@ function watchLabel(platform: string) {
     : platform === 'youtube' ? 'youtube' : 'watch'
 }
 
+const viewerFmt = new Intl.NumberFormat('en', { notation: 'compact', maximumFractionDigits: 1 })
+function fmtViewers(n: number): string {
+  return viewerFmt.format(n)
+}
+
 function UpMatchRow({ m, host }: { m: UpMatch; host: string }) {
   const [open, setOpen] = useState(false)
   const iframeRef = useRef<HTMLIFrameElement>(null)
@@ -879,10 +884,10 @@ export function LiveCard({ m, host, featured = false, onPromote, upNext = null, 
   // — it once surfaced a dead foreign Twitch co-stream above the live Kick main the backend chose,
   // and it would equally shove a foreign YouTube ahead of an English cast. Default (index 0) is the
   // backend's primary.
+  const watch = watchOverride ?? m.watch
   const sources: { platform: string; src: string }[] = []
   {
     const seen = new Set<string>()
-    const watch = watchOverride ?? m.watch
     const raw = watch ? [watch, ...(watch.alternates || [])] : []
     for (const s of raw) {
       if (!s || seen.has(s.platform)) continue
@@ -904,7 +909,7 @@ export function LiveCard({ m, host, featured = false, onPromote, upNext = null, 
          className={`overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900/50 ${featured ? 'sm:col-span-2' : ''}`}>
       <div className="p-4">
         <div className="mb-2">
-          <Eyebrow live>{m.title} · {m.league}</Eyebrow>
+          <Eyebrow live>{m.title} · {m.league}{watch?.viewers != null ? ` · ${fmtViewers(watch.viewers)} watching` : ''}</Eyebrow>
         </div>
         {m.finished || startingSoon ? (
           <div className="mb-1 font-mono text-[10px] uppercase tracking-wider text-zinc-500">
