@@ -31,7 +31,7 @@ import {
 import type { HubTab } from '../../components/Leagues/types'
 
 const TAB_LABELS: Record<HubTab, string> = {
-  camp: 'Training Camp',
+  camp: 'Home',
   standings: 'Standings',
   stats: 'Stats',
   schedule: 'Schedule',
