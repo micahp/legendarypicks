@@ -14,25 +14,32 @@ channel, embedUrl — synthesized from the raw URL when the source didn't provid
 where a platform allows it, ranked, and the best is returned with the runners-up as `alternates`.
 
 Ranking: platform priority YouTube > Twitch > Kick > web (YouTube/Twitch embeds are reliable from any
-network; Kick's API is Cloudflare-403 from our datacenter IP so Kick liveness is UNVERIFIABLE — it
-ranks last so we only land on it when nothing better exists). Within a platform: source-attested-live
-first, then main+official, then English. A candidate that is POSITIVELY offline (Twitch via decapi)
-is excluded unless every candidate is offline — then the top one ships flagged online=false, honestly.
+network). Kick liveness+viewer_count is now verified via the official OAuth API (api.kick.com/public/v1,
+client-credentials grant — added 2026-07-22 once KICK_CLIENT_ID/SECRET existed); the direct kick.com
+site/API stays Cloudflare-403 from our datacenter IP for ANY request, even a real-browser XHR (reverified
+2026-07-22), so Kick still ranks last in platform priority — verifying liveness doesn't make its embed
+more reliable than YouTube/Twitch, it just means we're no longer flying blind on it. Within a platform:
+source-attested-live first, then main+official, then English. A candidate that is POSITIVELY offline
+(Twitch via decapi, Kick via the official API) is excluded unless every candidate is offline — then the
+top one ships flagged online=false, honestly.
 
-Kick policy (evaluating the prior patch): embedding an unverifiable Kick channel is RIGHT when the
-match itself is live-confirmed upstream and the candidate is source-attested (frag/PandaScore list it
-as the live broadcast) — the player handles a dark channel gracefully and alternates now give an
-escape hatch. It stays wrong only as a sole blind hardcoded guess, which the ranking already demotes.
+Kick policy (evaluating the prior patch): embedding a Kick channel is RIGHT when the match itself is
+live-confirmed upstream and the candidate is source-attested (frag/PandaScore list it as the live
+broadcast) or the official API confirms is_live — the player handles a dark channel gracefully and
+alternates now give an escape hatch. It stays wrong only as a sole blind hardcoded guess with no
+attestation and no confirmed liveness, which the ranking already demotes.
 """
 
 import json
+import os
 import re
 import threading
 import time
+import urllib.parse as _up
 import urllib.request as _u
 from concurrent.futures import ThreadPoolExecutor
 
-from .yt_live_resolver import resolve_pool_youtube
+from .yt_live_resolver import resolve_pool_youtube, yt_viewer_count
 
 # Hardcoded per-league channel rules — the LAST-RESORT candidate source (frag/PandaScore per-match
 # streams rank ahead of these in the pool). Kept from streams.py; still used alone for scheduled
@@ -65,8 +72,9 @@ _WATCH_RULES = [
 ]
 
 # Lower = preferred. YouTube first (requirement), then Twitch (verifiable via decapi), then Kick
-# (unverifiable from this host — kick.com/api/v1|v2 both 403 via Cloudflare, verified 2026-07-03),
-# then bare web links.
+# (verifiable via the official API since 2026-07-22, but still ranked last — its embed itself isn't
+# more reliable than YouTube/Twitch, verifying liveness just stopped us flying blind on it), then
+# bare web links.
 _PLATFORM_PRIO = {"youtube": 0, "twitch": 1, "kick": 2, "web": 3}
 
 # Tournament -> official YouTube channel, title-agnostic (a festival's main channel can carry any
@@ -135,7 +143,98 @@ def _yt_channel_candidates(league):
 
 _live_cache = {}       # "platform:channel" -> (ts, True|False|None)
 _LIVE_TTL = 90         # confirmed statuses
-_LIVE_TTL_UNKNOWN = 600  # unverifiable (Kick 403) — don't re-ping a blocked API every rebuild
+_LIVE_TTL_UNKNOWN = 600  # unverifiable (no Kick creds, or a transient API/network failure)
+
+# Kick viewer_count, captured as a free side effect of the same official-API call that verifies
+# liveness below — not used for ranking yet, just cached for the viewer-based sort discussion.
+_kick_viewer_cache = {}  # channel -> (ts, viewer_count|None)
+
+_KICK_TOKEN_URL = "https://id.kick.com/oauth/token"
+_KICK_API_CHANNELS = "https://api.kick.com/public/v1/channels"
+_kick_token_cache = {"token": None, "exp": 0}
+
+
+def _kick_token():
+    """Client-credentials app token for the official Kick API (api.kick.com/public/v1). Requires
+    KICK_CLIENT_ID/KICK_CLIENT_SECRET (a registered Kick developer app, added 2026-07-22 — the
+    direct kick.com site/API is Cloudflare-403 from our datacenter IP for every request, verified
+    even via a real headless-browser session, so this OAuth path is the only way to reach Kick data
+    at all from this host). Token is long-lived (~60d observed); cached until near expiry."""
+    now = time.time()
+    if _kick_token_cache["token"] and now < _kick_token_cache["exp"]:
+        return _kick_token_cache["token"]
+    client_id = os.environ.get("KICK_CLIENT_ID")
+    client_secret = os.environ.get("KICK_CLIENT_SECRET")
+    if not client_id or not client_secret:
+        return None
+    try:
+        data = _up.urlencode({"grant_type": "client_credentials", "client_id": client_id,
+                               "client_secret": client_secret}).encode()
+        with _u.urlopen(_u.Request(_KICK_TOKEN_URL, data=data, method="POST"), timeout=6) as r:
+            body = json.loads(r.read().decode())
+        _kick_token_cache["token"] = body["access_token"]
+        _kick_token_cache["exp"] = now + body.get("expires_in", 3600) - 60
+        return _kick_token_cache["token"]
+    except Exception:
+        return None
+
+
+def _kick_channel_data(channel):
+    """(is_live, viewer_count) from the official Kick API, or (None, None) if unavailable (no
+    creds, token failure, or the channel isn't found)."""
+    token = _kick_token()
+    client_id = os.environ.get("KICK_CLIENT_ID")
+    if not token or not client_id:
+        return None, None
+    try:
+        url = f"{_KICK_API_CHANNELS}?slug={_up.quote(channel)}"
+        req = _u.Request(url, headers={"Authorization": f"Bearer {token}", "Client-Id": client_id,
+                                        "Accept": "application/json"})
+        with _u.urlopen(req, timeout=6) as r:
+            body = json.loads(r.read().decode())
+        rows = body.get("data") or []
+        if not rows:
+            return None, None
+        stream = rows[0].get("stream") or {}
+        return bool(stream.get("is_live")), stream.get("viewer_count")
+    except Exception:
+        return None, None
+
+
+_twitch_viewer_cache = {}   # channel -> (ts, viewer_count|None)
+_TWITCH_VIEWER_TTL = 60      # viewer counts drift second to second; cheap decapi call
+
+
+def _twitch_viewer_count(channel):
+    """Live viewer count via decapi.me (no auth, free) — a separate endpoint from the uptime check
+    used for liveness, so this is one extra HTTP call per Twitch candidate we resolve."""
+    c = _twitch_viewer_cache.get(channel)
+    if c and time.time() - c[0] < _TWITCH_VIEWER_TTL:
+        return c[1]
+    viewers = None
+    try:
+        with _u.urlopen(_u.Request(f"https://decapi.me/twitch/viewercount/{channel}",
+                                   headers={"User-Agent": "Mozilla/5.0"}), timeout=6) as r:
+            txt = r.read().decode().strip()
+        viewers = int(txt) if txt.isdigit() else None
+    except Exception:
+        viewers = None
+    _twitch_viewer_cache[channel] = (time.time(), viewers)
+    return viewers
+
+
+def _viewer_count(c):
+    """Live viewer count for a candidate, or None if unknown/unverifiable. Kick's comes free as a
+    side effect of _channel_online's liveness check; Twitch and YouTube need their own call."""
+    platform = c.get("platform")
+    if platform == "twitch" and c.get("channel"):
+        return _twitch_viewer_count(c["channel"])
+    if platform == "kick" and c.get("channel"):
+        cached = _kick_viewer_cache.get(c["channel"])
+        return cached[1] if cached else None
+    if platform == "youtube" and c.get("embedUrl"):
+        return yt_viewer_count(c["embedUrl"])
+    return None
 
 
 def _chan_url(platform, channel):
@@ -184,9 +283,10 @@ def _parse_platform_channel(url):
 
 
 def _channel_online(platform, channel):
-    """True/False/None per platform. Twitch: decapi.me (works from this host). Kick: api 403s from
-    our datacenter IP (Cloudflare) -> None, cached longer so we don't hammer a blocked endpoint.
-    YouTube: no free liveness endpoint -> None (a frag-attested YouTube stream is live by listing)."""
+    """True/False/None per platform. Twitch: decapi.me (works from this host). Kick: the official
+    OAuth API (falls back to None if KICK_CLIENT_ID/SECRET aren't set or the call fails — same as
+    before creds existed). YouTube: no free liveness endpoint -> None (a frag-attested YouTube
+    stream is live by listing)."""
     if platform not in ("twitch", "kick"):
         return None
     key = f"{platform}:{channel}"
@@ -200,10 +300,9 @@ def _channel_online(platform, channel):
                                        headers={"User-Agent": "Mozilla/5.0"}), timeout=6) as r:
                 txt = r.read().decode().lower()
             online = bool(txt.strip()) and not any(w in txt for w in ("offline", "error", "unable", "not found"))
-        else:  # kick — expected to fail (403) from this host; kept so it self-heals if unblocked
-            with _u.urlopen(_u.Request(f"https://kick.com/api/v2/channels/{channel}",
-                                       headers={"User-Agent": "Mozilla/5.0"}), timeout=6) as r:
-                online = json.loads(r.read().decode()).get("livestream") is not None
+        else:  # kick
+            online, viewers = _kick_channel_data(channel)
+            _kick_viewer_cache[channel] = (time.time(), viewers)
     except Exception:
         online = None
     _live_cache[key] = (time.time(), online)
@@ -303,12 +402,15 @@ def _rule_candidates(title_slug, league):
     return [c for c in out if c]
 
 
-def _watch_shape(c, online):
+def _watch_shape(c, online, viewers=None):
     return {"platform": c["platform"], "url": c["url"], "channel": c.get("channel"),
             "embedUrl": c.get("embedUrl"), "online": online,
             # Surface the stream's language (already used for ranking above) so the board can demote a
             # non-English broadcast from the auto-playing hero. None = unknown (treated as non-foreign).
-            "language": c.get("language")}
+            "language": c.get("language"),
+            # Live viewer count (None = unknown/unverifiable) — lets the board sort by what's
+            # actually being watched instead of only competitive prestige. See _viewer_count.
+            "viewers": viewers}
 
 
 def _pick_stream(candidates, match_live=True, team_names=None, network_checks=True,
@@ -336,18 +438,19 @@ def _pick_stream(candidates, match_live=True, team_names=None, network_checks=Tr
         if k in seen:
             continue
         seen.add(k)
-        # TWITCH is positively verifiable (decapi), so verify it even when a source attests the
-        # stream — attestation goes STALE (frag/PS keep listing a broadcast channel after it goes
-        # dark), and a decapi-confirmed-offline Twitch must never ship as a live embed on the
-        # strength of a stale attestation (live case: frag's foreign Twitch co-stream `locomass22`,
-        # already offline, was outranking the live Kick main). Other platforms keep the attestation
-        # shortcut: Kick's API 403s from our datacenter IP so we genuinely can't verify it, and
-        # probing every unattested pool candidate is what the rebuild-cost note below guards.
-        # network_checks: True = blocking decapi ping (S_LIVE branch, already scoped to a handful of
+        # TWITCH and KICK are both positively verifiable now (decapi; official Kick API since
+        # 2026-07-22), so verify either even when a source attests the stream — attestation goes
+        # STALE (frag/PS keep listing a broadcast channel after it goes dark), and a
+        # confirmed-offline channel must never ship as a live embed on the strength of a stale
+        # attestation (live Twitch case: frag's foreign co-stream `locomass22`, already offline,
+        # was outranking the live Kick main; same risk now applies to Kick, e.g. an attested Kick
+        # candidate whose stream ended between maps). YouTube keeps the attestation shortcut — no
+        # free liveness check exists for it.
+        # network_checks: True = blocking ping (S_LIVE branch, already scoped to a handful of
         # matches); "cache" = non-blocking cached read + background refresh (scheduled near-start
         # matches, off the rebuild path — never block the rebuild on a ping); False = skip entirely.
         checked = None
-        if network_checks and c.get("channel") and (c["platform"] == "twitch" or not c.get("attested")):
+        if network_checks and c.get("channel") and (c["platform"] in ("twitch", "kick") or not c.get("attested")):
             checked = (_channel_online_cached(c["platform"], c.get("channel"))
                        if network_checks == "cache"
                        else _channel_online(c["platform"], c.get("channel")))
@@ -413,7 +516,10 @@ def _pick_stream(candidates, match_live=True, team_names=None, network_checks=Tr
             return True
         return True if match_live else None  # unverifiable on a live-confirmed match -> embed anyway
 
-    watch = _watch_shape(top, _online_val(top))
+    # Viewer count only for the winning stream (the one actually shown/embedded) — alternates never
+    # render, so fetching theirs too would just be extra network cost for data nobody sees.
+    top_viewers = _viewer_count(top) if network_checks is True else None
+    watch = _watch_shape(top, _online_val(top), top_viewers)
     alts = []
     for c in ranked[1:]:
         alts.append(_watch_shape(c, _online_val(c)))

@@ -525,3 +525,37 @@ def _twitch_live_title(channel):
         title = None
     _twitch_title_cache[channel] = (time.time(), title)
     return title
+
+
+_yt_viewer_cache = {}   # video_id -> (ts, viewer_count|None)
+_YT_VIEWER_TTL = 60      # viewer counts genuinely drift second to second; cheap call (1 quota unit)
+_YT_VID_RE = re.compile(r"embed/([A-Za-z0-9_-]{11})")
+
+
+def yt_viewer_count(embed_url):
+    """Live concurrent viewer count for an already-resolved YouTube embed, via the Data API's
+    videos.list (1 quota unit — unlike search.list's 100, no daily-budget guard needed). None if
+    unresolved, no key set, or the call fails — same fail-open-to-None as everywhere else here."""
+    m = _YT_VID_RE.search(embed_url or "")
+    if not m:
+        return None
+    vid = m.group(1)
+    c = _yt_viewer_cache.get(vid)
+    if c and time.time() - c[0] < _YT_VIEWER_TTL:
+        return c[1]
+    viewers = None
+    key = _yt_api_key()
+    if key:
+        try:
+            url = ("https://www.googleapis.com/youtube/v3/videos?part=liveStreamingDetails"
+                   f"&id={vid}&key={key}")
+            with _u.urlopen(_u.Request(url), timeout=6) as r:
+                body = json.loads(r.read().decode())
+            items = body.get("items") or []
+            if items:
+                cv = (items[0].get("liveStreamingDetails") or {}).get("concurrentViewers")
+                viewers = int(cv) if cv is not None else None
+        except Exception:
+            viewers = None
+    _yt_viewer_cache[vid] = (time.time(), viewers)
+    return viewers

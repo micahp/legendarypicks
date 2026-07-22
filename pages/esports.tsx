@@ -25,7 +25,7 @@ type CS2Player = { name: string; kills: number | null; deaths: number | null }
 type CS2Team = { name: string; score: number | null; won: boolean; players: CS2Player[] }
 type CS2Live = { live: boolean; title?: string; tournament?: string; stream?: { platform: string; channel: string } | null; teamA?: CS2Team; teamB?: CS2Team }
 
-type UpMatch = { startTime: number | null; endTime: number | null; live: boolean; title: string; league: string; teamA: string; teamB: string; favorite: { name: string; pct: number } | null; watch: { platform: string; url: string; channel: string | null; online?: boolean | null; embedUrl?: string | null; language?: string | null; alternates?: Array<{ platform: string; url: string; channel: string | null; online?: boolean | null; embedUrl?: string | null; language?: string | null }> } | null; score?: { a: number | null; b: number | null } | null; finished?: boolean | null; winner?: 'a' | 'b' | null; pinned?: boolean; model?: { favName: string; modelPct: number; marketPct: number | null; edge: number | null } | null; logoA?: string | null; logoB?: string | null; minorLeague?: boolean; tier?: number; prominence?: number; psId?: number | string | null; streamKey?: string | null; eventId?: number | string | null; foreign?: boolean }
+type UpMatch = { startTime: number | null; endTime: number | null; live: boolean; title: string; league: string; teamA: string; teamB: string; favorite: { name: string; pct: number } | null; watch: { platform: string; url: string; channel: string | null; online?: boolean | null; embedUrl?: string | null; language?: string | null; viewers?: number | null; alternates?: Array<{ platform: string; url: string; channel: string | null; online?: boolean | null; embedUrl?: string | null; language?: string | null }> } | null; score?: { a: number | null; b: number | null } | null; finished?: boolean | null; winner?: 'a' | 'b' | null; pinned?: boolean; model?: { favName: string; modelPct: number; marketPct: number | null; edge: number | null } | null; logoA?: string | null; logoB?: string | null; minorLeague?: boolean; tier?: number; prominence?: number; psId?: number | string | null; streamKey?: string | null; eventId?: number | string | null; foreign?: boolean }
 type UpcomingData = { matches: UpMatch[]; source?: string; error?: string; building?: boolean }
 
 const POLL_MS = 10_000
@@ -841,9 +841,19 @@ function buildBroadcastViews(slate: UpMatch[], liveMatches: UpMatch[], now: numb
   // A watchable broadcast always beats an unwatchable one, regardless of prominence — a high-tier match
   // with no stream (e.g. an unbroadcast dead-rubber decider) must never bump a lower-tier match that
   // actually has a live embed out of the featured slot; the whole point of "featured" is "watch this now".
+  //
+  // Viewer count is the primary ordering signal (Micah's call, 2026-07-22): this board is titled
+  // "LIVE NOW", and `prominence` is a competitive-prestige score, not a popularity one — verified
+  // case that motivated this: a 650-viewer Dota match was featured over a live 38k-viewer CS2 match
+  // that ranked lower on prominence alone. Unknown viewer count (null — platform lacks a free
+  // viewer-count API, or the check hasn't landed yet) ranks below every KNOWN count via -1, never
+  // above; `prominence` is kept only as the tiebreaker for equal/unknown viewer counts, so a
+  // scheduled "starting soon" card (no viewers yet) still orders sensibly against its peers.
+  const viewerRank = (v: BroadcastView) => v.watch?.viewers ?? -1
   return views.sort((a, b) => (
     Number(isEmbeddableWatch(b.watch)) - Number(isEmbeddableWatch(a.watch))
     || langRank(a) - langRank(b)
+    || viewerRank(b) - viewerRank(a)
     || b.prominence - a.prominence
     || stateRank[b.state] - stateRank[a.state]
     || (a.match.startTime ?? Infinity) - (b.match.startTime ?? Infinity)
