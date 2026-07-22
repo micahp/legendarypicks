@@ -12,10 +12,14 @@ absolute event starts into the viewer's local calendar and picks:
 2. otherwise, the most recent local date before the anchor that contains a game;
 3. otherwise, the unchanged anchor date and the honest empty state.
 
-The endpoint returns at most 64 starts from the nearest non-empty future search
-window and 64 from the nearest non-empty past search window. Search windows are
-bounded to 370 days and recorded in the response. ESPN range responses are
-cached for 15 minutes; the HTTP response is cacheable for five minutes.
+The endpoint returns at most 64 future starts and 64 past starts. Search windows
+are bounded to 370 days, kept small enough to avoid ESPN's event-result cap, and
+recorded in the response. At a calendar boundary, discovery keeps searching if
+the only start found could still land on the anchor date in a viewer timezone.
+This is what lets Next cross an offseason after the final game instead of
+mistaking that game's next-UTC-day timestamp for a future slate. ESPN range
+responses are cached for 15 minutes; the HTTP response is cacheable for five
+minutes.
 
 Event starts remain ISO instants rather than backend-derived dates. The backend
 cannot know the viewer's timezone, and an evening US game commonly begins on

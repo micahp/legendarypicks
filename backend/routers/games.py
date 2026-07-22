@@ -14,10 +14,33 @@ _SCHEDULE_DATES_CONTRACT = "league-schedule-dates-v1"
 _NFL_SCHEDULE_WEEKS_CONTRACT = "nfl-schedule-weeks-v1"
 _NFL_SCHEDULE_WEEK_CONTRACT = "nfl-schedule-week-v1"
 _SCHEDULE_SEARCH_RANGES = {
-    "future": ((0, 14), (15, 90), (91, 370)),
-    "past": ((-14, -1), (-90, -15), (-370, -91)),
+    # Keep every ESPN range comfortably below its 1,000-event response cap.
+    # A full NBA season in one 280-day request can otherwise truncate before
+    # the games nearest the anchor (especially when searching backwards).
+    "future": (
+        (0, 14),
+        (15, 45),
+        (46, 90),
+        (91, 150),
+        (151, 210),
+        (211, 270),
+        (271, 330),
+        (331, 370),
+    ),
+    "past": (
+        (-14, -1),
+        (-45, -15),
+        (-90, -46),
+        (-150, -91),
+        (-210, -151),
+        (-270, -211),
+        (-330, -271),
+        (-370, -331),
+    ),
 }
 _SCHEDULE_CANDIDATE_LIMIT = 64
+_MIN_VIEWER_OFFSET = dt.timezone(dt.timedelta(hours=-12))
+_MAX_VIEWER_OFFSET = dt.timezone(dt.timedelta(hours=14))
 
 
 def _parse_anchor_date(anchor: Optional[str]) -> dt.date:
@@ -57,23 +80,74 @@ def _default_nfl_week(weeks, anchor: dt.date):
     return weeks[-1], "latest"
 
 
+def _event_start(value):
+    """Parse an absolute ESPN start time, returning ``None`` for junk."""
+    try:
+        parsed = dt.datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+    except (TypeError, ValueError):
+        return None
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=dt.timezone.utc)
+    return parsed
+
+
+def _is_guaranteed_directional_start(value, anchor: dt.date, direction: str):
+    """Whether every real viewer timezone places ``value`` past the anchor.
+
+    The browser remains authoritative for its local calendar. This conservative
+    check only tells the backend when it has searched far enough: a future start
+    must still be after ``anchor`` at UTC-12, while a past start must already be
+    before it at UTC+14. Boundary starts are retained for the browser but do not
+    prematurely stop discovery.
+    """
+    parsed = _event_start(value)
+    if parsed is None:
+        return False
+    if direction == "future":
+        return parsed.astimezone(_MIN_VIEWER_OFFSET).date() > anchor
+    return parsed.astimezone(_MAX_VIEWER_OFFSET).date() < anchor
+
+
+def _cap_schedule_candidates(starts, anchor: dt.date, direction: str):
+    ordered = sorted(set(starts))
+    if len(ordered) <= _SCHEDULE_CANDIDATE_LIMIT:
+        return ordered
+
+    guaranteed = [
+        value
+        for value in ordered
+        if _is_guaranteed_directional_start(value, anchor, direction)
+    ]
+    if direction == "future":
+        selected = ordered[:_SCHEDULE_CANDIDATE_LIMIT]
+        if guaranteed and not any(value in selected for value in guaranteed):
+            selected[-1] = guaranteed[0]
+    else:
+        selected = ordered[-_SCHEDULE_CANDIDATE_LIMIT:]
+        if guaranteed and not any(value in selected for value in guaranteed):
+            selected[0] = guaranteed[-1]
+    return sorted(set(selected))
+
+
 def _schedule_candidates(league: str, anchor: dt.date, direction: str):
     attempts = []
+    candidates = []
     for start_delta, end_delta in _SCHEDULE_SEARCH_RANGES[direction]:
         start_date = anchor + dt.timedelta(days=start_delta)
         end_date = anchor + dt.timedelta(days=end_delta)
         starts = espn.schedule_event_starts(league, start_date, end_date)
+        candidates.extend(starts)
         attempts.append({
             "start_date": start_date.isoformat(),
             "end_date": end_date.isoformat(),
             "event_starts_found": len(starts),
         })
-        if starts:
-            ordered = sorted(set(starts))
-            if direction == "future":
-                return ordered[:_SCHEDULE_CANDIDATE_LIMIT], attempts
-            return ordered[-_SCHEDULE_CANDIDATE_LIMIT:], attempts
-    return [], attempts
+        if any(
+            _is_guaranteed_directional_start(value, anchor, direction)
+            for value in starts
+        ):
+            break
+    return _cap_schedule_candidates(candidates, anchor, direction), attempts
 
 
 def _attach_cod_detail_ids(matches):
