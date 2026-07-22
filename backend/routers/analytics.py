@@ -26,8 +26,7 @@ def props_ev(league: Optional[str] = Query(None),
 
     computed = []
     for r in rows:
-        odds, odds_opp, status = _ev_inputs(r)
-        e = ev_mod.compute_ev(odds, odds_opp, status) if status else None
+        e = _compute_ev_with_projection(r, r["player_id"], r["market"], r["line"])
         if e is None:
             continue
         computed.append({

@@ -10,7 +10,7 @@ import json
 import os, sqlite3, datetime as dt
 import re, unicodedata
 from contextlib import closing
-from typing import Optional
+from typing import Optional, Tuple
 from fastapi import HTTPException, Query
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
@@ -305,6 +305,87 @@ def _ev_inputs(r):
     if r["prop_odds"] is not None:
         return r["prop_odds"], None, "single"
     return None, None, None
+
+
+# ── projections-backed fair probability (EV's independent probability source) ──
+
+# MLB prop market → (stat_json_key, game_log_source_filter).
+# Most-recent-first game-log values are pulled, then prob_over(values, line)
+# gives the empirical P(over) — an independent fair probability to compare
+# against the market-implied probability.
+_MLB_MARKET_STAT = {
+    "strikeouts":     ("K",            "statcast_pitcher"),
+    "outs":           ("outs",         "statcast_pitcher"),
+    "hits_allowed":   ("hits_allowed", "statcast_pitcher"),
+    "walks":          ("BB",           "statcast_pitcher"),
+    "hits":           ("H",            "statcast"),
+    "home_runs":      ("HR",           "statcast"),
+    "doubles":        ("2B",           "statcast"),
+    "total_bases":    ("TB",           "statcast"),
+    # earned_runs: not in player_game_logs (Statcast events don't track ERA)
+}
+
+# How many recent games to pull for the empirical distribution.
+# 30 days ≈ ~25-30 games for a regular — balances recency vs sample size.
+_PROJECTION_WINDOW_GAMES = 30
+_PROJECTION_MIN_GAMES = 5
+
+
+def _query_game_log_values(player_id: int, market: str, line: float) -> Optional[list]:
+    """Return game-log stat values for a player+market, most-recent-first.
+    Returns None if the market isn't mapped or the player has too few games."""
+    if market not in _MLB_MARKET_STAT:
+        return None
+    stat_key, source = _MLB_MARKET_STAT[market]
+    with closing(_db()) as con:
+        rows = con.execute(
+            """SELECT json_extract(stats, ?) AS val
+               FROM player_game_logs
+               WHERE player_id = ? AND league = 'mlb' AND source = ?
+                 AND json_extract(stats, ?) IS NOT NULL
+               ORDER BY game_date DESC
+               LIMIT ?""",
+            (f"$.{stat_key}", player_id, source, f"$.{stat_key}", _PROJECTION_WINDOW_GAMES),
+        ).fetchall()
+    vals = [float(r["val"]) for r in rows]
+    if len(vals) < _PROJECTION_MIN_GAMES:
+        return None
+    return vals
+
+
+def _projected_p_fair(player_id: int, market: str, line: float) -> Optional[Tuple[float, str]]:
+    """Return (p_fair, 'projection') from player game logs, or None if insufficient data."""
+    vals = _query_game_log_values(player_id, market, line)
+    if vals is None:
+        return None
+    result = proj_mod.prob_over(vals, line)
+    if result is None:
+        return None
+    return (result["p_over"], "projection")
+
+
+def _compute_ev_with_projection(r, player_id: int, market: str, line: float) -> Optional[dict]:
+    """EV using the projections-backed fair probability. Falls back to de-vig."""
+    odds, odds_opp, status = _ev_inputs(r)
+    if odds is None:
+        return None
+
+    # Try projections first (independent probability source)
+    proj = _projected_p_fair(player_id, market, line)
+    if proj is not None:
+        p_fair, confidence = proj
+        d = ev_mod.american_to_decimal(odds)
+        return {
+            "odds_american": odds,
+            "d_decimal": round(d, 4),
+            "p_implied": round(ev_mod.implied_prob(odds), 4),
+            "p_fair": round(p_fair, 4),
+            "ev": round(ev_mod.ev(odds, p_fair), 4),
+            "de_vig_confidence": confidence,
+        }
+
+    # Fall back to de-vig of market odds
+    return ev_mod.compute_ev(odds, odds_opp, status)
 
 
 def _normalize_name(name: str) -> str:
