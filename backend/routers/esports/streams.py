@@ -78,6 +78,44 @@ _YT_TOURNAMENT_CHANNELS = [
     ("cdl", "UCbLIqv9Puhyp9_ZjVtfOy7w"),
 ]
 
+# Known official Twitch channel -> its sibling official YouTube channel. Riot's regional VCT
+# broadcasts simulcast Twitch+YouTube, but PandaScore's streams_list (and frag) only ever lists the
+# Twitch side for these — so platform priority (YouTube > Twitch) never gets a YouTube candidate to
+# rank against Twitch at all. Keyed on the Twitch channel PandaScore/frag actually resolved (reliable)
+# rather than the league string (the frontend-facing `league` field is a normalized display name that
+# has already dropped the region, e.g. "Valorant Champions Tour" with no "EMEA" — league-keyword
+# matching like _yt_channel_candidates can't scope to region from it).
+# @vctemea, verified live 2026-07-22 (oEmbed + Data API on the FNC vs KC VCT EMEA Stage 2 broadcast,
+# description confirms twitch.tv/valorant_emea as the same broadcast's Twitch side).
+_TWITCH_YT_SIBLINGS = {
+    "valorant_emea": "UCp6n8d8Y8r3MwKNw_MMaouQ",
+}
+
+
+def _yt_sibling_candidates(pool):
+    """For each known Twitch channel already resolved into the pool, add its verified official
+    YouTube sibling as an extra candidate (yt_live_resolver still has to confirm it's actually live
+    right now — a wrong/stale entry here is harmless, never a wrong embed, same guarantee as
+    _yt_channel_candidates).
+
+    BUG FIXED 2026-07-22: only trust the channel if a real per-match source (frag/pandascore, i.e.
+    NOT source=="rule") put it there. `_WATCH_RULES`'s "emea" keyword rule matches "Game Changers
+    EMEA" too (a substring hit, not a real region check) and injects the MAIN valorant_emea Twitch
+    channel as a low-confidence fallback guess into Game Changers matches that already have their
+    own correctly-attested different channel (valorant_emea2, remakeval, ...). Gating on source
+    excludes that guess: Karmine Corp GC vs Habos Babos and Twisted Minds Orchid vs ALTERNATE aTTaX
+    Ruby were both wrongly resolving to the MAIN bracket's YouTube video (an acronym collision —
+    Karmine Corp's main and Game Changers rosters share the "KC" acronym in PandaScore's data —
+    made worse by the rule guess putting the wrong channel in the pool in the first place)."""
+    out = []
+    twitch_channels = {c.get("channel") for c in pool
+                        if c and c.get("platform") == "twitch" and c.get("source") != "rule"}
+    for twitch_chan, yt_channel_id in _TWITCH_YT_SIBLINGS.items():
+        if twitch_chan in twitch_channels:
+            out.append(_candidate(url=f"https://www.youtube.com/channel/{yt_channel_id}/live",
+                                   platform="youtube", channel=None, source="rule-yt-sibling"))
+    return out
+
 
 def _yt_channel_candidates(league):
     ls = re.sub(r"[^a-z0-9]+", "", (league or "").lower())
@@ -265,7 +303,7 @@ def _watch_shape(c, online):
 
 
 def _pick_stream(candidates, match_live=True, team_names=None, network_checks=True,
-                  game=None, max_alternates=4):
+                  game=None, max_alternates=4, extra_hints=None):
     """Rank the pool, return the watch dict with `alternates`, or None if the pool is empty.
 
     Selection: drop positively-offline candidates (unless ALL are offline); rank the rest by
@@ -318,7 +356,7 @@ def _pick_stream(candidates, match_live=True, team_names=None, network_checks=Tr
     # inner loop only makes a network call for actual youtube-platform candidates, so this costs
     # nothing extra on matches with no YouTube candidate at all.
     if network_checks:
-        resolve_pool_youtube(pool, team_names, game)
+        resolve_pool_youtube(pool, team_names, game, extra_hints=extra_hints)
 
     # A positively-dark candidate (decapi False) is excluded even if attested — a stale attestation
     # can't resurrect a channel decapi confirms is offline (see the per-candidate check above).
