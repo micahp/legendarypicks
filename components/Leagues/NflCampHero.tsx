@@ -28,8 +28,6 @@ export default function NflCampHero({ data, loading, error }: Props) {
   }
 
   const nextEvent = data.next_event
-  const upcoming = data.milestones.filter(m => m.status !== 'past')
-  const past = data.milestones.filter(m => m.status === 'past')
 
   return (
     <section className="space-y-4">
@@ -77,22 +75,6 @@ export default function NflCampHero({ data, loading, error }: Props) {
           ))}
         </div>
       </div>
-
-      {/* Experience gates — only show blocked ones */}
-      {data.experiences.opportunity_movers.status === 'blocked' && (
-        <div className="rounded-lg border border-amber-500/10 bg-amber-500/5 px-4 py-3">
-          <p className="text-xs text-amber-400/70">
-            Opportunity Movers are unavailable until roster data is refreshed.
-          </p>
-        </div>
-      )}
-      {data.experiences.camp_battles.status === 'blocked' && (
-        <div className="rounded-lg border border-amber-500/10 bg-amber-500/5 px-4 py-3">
-          <p className="text-xs text-amber-400/70">
-            Camp Battles require a verified depth-chart feed.
-          </p>
-        </div>
-      )}
     </section>
   )
 }

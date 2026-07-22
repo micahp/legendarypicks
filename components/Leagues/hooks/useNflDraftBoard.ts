@@ -15,12 +15,43 @@ const SORT_LABELS: Record<NflDraftSort, string> = {
 
 const STORAGE_KEY = 'lp_nfl_draft_notes'
 
+function sanitizeNotes(raw: unknown): NflDraftNotes {
+  const empty: NflDraftNotes = { rank: {}, watch: {}, fade: {} }
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return empty
+
+  const obj = raw as Record<string, unknown>
+  const result: NflDraftNotes = { rank: {}, watch: {}, fade: {} }
+
+  for (const bucket of ['rank', 'watch', 'fade'] as const) {
+    const bucketVal = obj[bucket]
+    if (!bucketVal || typeof bucketVal !== 'object' || Array.isArray(bucketVal)) continue
+    const src = bucketVal as Record<string, unknown>
+    for (const [key, val] of Object.entries(src)) {
+      const pid = Number(key)
+      if (!Number.isFinite(pid) || pid <= 0 || pid !== Math.floor(pid)) continue
+      // Canonical positive decimal integer only — reject whitespace, 1e2, etc.
+      if (!/^[1-9][0-9]*$/.test(key)) continue
+      if (!Number.isSafeInteger(pid)) continue
+      if (bucket === 'rank') {
+        if (typeof val !== 'number' || val < 1 || val > 999 || val !== Math.floor(val)) continue
+        result.rank[pid] = val
+      } else {
+        if (val !== true) continue
+        result[bucket][pid] = true
+      }
+    }
+  }
+  return result
+}
+
 function loadNotes(): NflDraftNotes {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
-    if (raw) return JSON.parse(raw)
-  } catch { /* ignore corrupt data */ }
-  return { rank: {}, watch: {}, fade: {} }
+    if (!raw) return { rank: {}, watch: {}, fade: {} }
+    return sanitizeNotes(JSON.parse(raw))
+  } catch {
+    return { rank: {}, watch: {}, fade: {} }
+  }
 }
 
 function saveNotes(notes: NflDraftNotes) {
@@ -29,7 +60,7 @@ function saveNotes(notes: NflDraftNotes) {
   } catch { /* storage full — silently degrade */ }
 }
 
-export function useNflDraftBoard() {
+export function useNflDraftBoard(enabled: boolean) {
   const [data, setData] = useState<NflDraftBoard | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -48,6 +79,12 @@ export function useNflDraftBoard() {
   }, [position, sort, offset])
 
   useEffect(() => {
+    if (!enabled) {
+      setData(null)
+      setError(null)
+      setLoading(true) // ready for re-entry
+      return
+    }
     let ignore = false
     const load = async () => {
       setLoading(true)
@@ -68,9 +105,8 @@ export function useNflDraftBoard() {
     }
     load()
     return () => { ignore = true }
-  }, [buildUrl])
+  }, [enabled, buildUrl])
 
-  // reset offset when position or sort changes
   const selectPosition = useCallback((next: DraftPosition) => {
     setPosition(next)
     setOffset(0)
@@ -79,11 +115,6 @@ export function useNflDraftBoard() {
   const selectSort = useCallback((next: NflDraftSort) => {
     setSort(next)
     setOffset(0)
-  }, [])
-
-  const persist = useCallback((next: NflDraftNotes) => {
-    setNotes(next)
-    saveNotes(next)
   }, [])
 
   const setRank = useCallback((playerId: number, rank: number | null) => {

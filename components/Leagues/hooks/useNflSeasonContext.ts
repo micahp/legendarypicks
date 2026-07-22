@@ -1,12 +1,18 @@
 import { useEffect, useState } from 'react'
 import type { NflSeasonContext } from '../types'
 
-export function useNflSeasonContext() {
+export function useNflSeasonContext(enabled: boolean) {
   const [data, setData] = useState<NflSeasonContext | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
+    if (!enabled) {
+      setData(null)
+      setError(null)
+      setLoading(true) // ready for re-entry, no flash
+      return
+    }
     let ignore = false
     const load = async () => {
       setLoading(true)
@@ -27,7 +33,7 @@ export function useNflSeasonContext() {
     }
     load()
     return () => { ignore = true }
-  }, [])
+  }, [enabled])
 
   return { data, loading, error }
 }

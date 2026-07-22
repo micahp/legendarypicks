@@ -100,7 +100,7 @@ export default function LeagueHubPage() {
   // Explanation only shows for auto intent, cleared on user action
   const displayExplanation = route.dateIntent === 'auto' ? autoDate.explanation : null
 
-  const seasonContext = useNflSeasonContext()
+  const seasonContext = useNflSeasonContext(isNFL && route.activeTab === 'camp')
   // Resolve prev/next game dates for arrow navigation (non-NFL only)
   const nav = useScheduleNavigation(isNFL || route.activeTab !== 'schedule', route.league, route.scheduleDate)
 
@@ -130,7 +130,7 @@ export default function LeagueHubPage() {
   const ufc = useUfcRankingsData(route.isUFC, route.league)
   const predict = useUfcPredictData(route.isUFC, route.activeTab)
 
-  const draftBoard = useNflDraftBoard()
+  const draftBoard = useNflDraftBoard(isNFL && route.activeTab === 'camp')
 
   if (!route.league) return <LeagueHubSkeleton />
 
