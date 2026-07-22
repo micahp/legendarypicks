@@ -16,6 +16,35 @@ in `package.json` tracks the next (in-development) release.
 
 ## [Unreleased]
 
+## [0.5.3] — 2026-07-22
+
+Esports live board: viewer-count-aware ranking + verified Kick liveness, plus a run of stream-
+resolution fixes (VCT EMEA's official YouTube simulcast, a Game Changers misattribution bug, and
+featured-match selection).
+
+### Added
+- **Live viewer counts** for every stream platform — Twitch (decapi), YouTube (Data API
+  `videos.list`, 1 quota unit), and Kick (official OAuth API, `api.kick.com/public/v1` via a
+  registered client-credentials app — the direct kick.com site/API stays Cloudflare-403 from our
+  datacenter IP for any request, this was the only way to reach Kick data at all).
+- **Live board sorted by viewer count**, not just competitive prestige — a 650-viewer match was
+  previously featured over a live 38k-viewer one on prominence alone. Unknown counts always sink
+  below known ones; prominence remains the tiebreaker when a count is equal or unavailable. The
+  foreign-language demotion floor and watchable-stream-first filter still apply on top.
+- **VCT EMEA's official YouTube simulcast** now resolves via a verified sibling-channel map +
+  team-acronym hints, closing a gap where a real live official stream was invisible to the board.
+
+### Fixed
+- **Kick liveness is now actually verified** instead of trusted-if-attested — catches a stale
+  attestation (an ended/paused Kick stream a match was still pointing at) the same way Twitch's
+  decapi check already did.
+- **The "emea"/"pacific" fallback rule no longer matches Game Changers** — an over-broad keyword
+  match was misattributing separate Game Changers EMEA matches to the main EMEA bracket's stream
+  (surfaced by three different Valorant matches resolving to the same wrong video).
+- **Featured match must be watchable** — a high-prominence match with no live stream (an unbroadcast
+  dead rubber) could outrank a lower-prominence match that actually has a live embed; ranking now
+  checks watchability first.
+
 ## [0.5.0] — 2026-07-17
 
 Props page restructure — a real game **Slate** and a market **Props** board — with a fast, lazy slate.
