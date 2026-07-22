@@ -832,11 +832,19 @@ function buildBroadcastViews(slate: UpMatch[], liveMatches: UpMatch[], now: numb
   }
 
   const stateRank: Record<BroadcastState, number> = { live: 2, gap: 1, starting: 0 }
-  // Prominence already encodes the language demotion — the backend drops a non-English broadcast (its
-  // `foreign` flag) below every English/unknown one — so a Chinese-only cast can't take the hero over
-  // a live English one, with no client-side language guessing.
+  // `prominence` is a per-MATCH field but a broadcast view can represent a GROUP (same streamKey +
+  // eventId, e.g. sibling games in one series) whose `group.prominence` is a Math.max() over every
+  // match in the group — so a foreign-demoted live game can inherit a non-foreign sibling's higher
+  // prominence and outrank an actually-English broadcast. Rank on the STREAM WE'RE ABOUT TO SHOW
+  // (view.watch.language), not the group's leaked max, so foreign demotion actually holds at render time.
+  const langRank = (v: BroadcastView) => (v.watch?.language && v.watch.language !== 'en') ? 1 : 0
+  // A watchable broadcast always beats an unwatchable one, regardless of prominence — a high-tier match
+  // with no stream (e.g. an unbroadcast dead-rubber decider) must never bump a lower-tier match that
+  // actually has a live embed out of the featured slot; the whole point of "featured" is "watch this now".
   return views.sort((a, b) => (
-    b.prominence - a.prominence
+    Number(isEmbeddableWatch(b.watch)) - Number(isEmbeddableWatch(a.watch))
+    || langRank(a) - langRank(b)
+    || b.prominence - a.prominence
     || stateRank[b.state] - stateRank[a.state]
     || (a.match.startTime ?? Infinity) - (b.match.startTime ?? Infinity)
   ))
