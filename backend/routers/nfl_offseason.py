@@ -247,39 +247,6 @@ def _reference_coverage(connection: sqlite3.Connection, as_of: dt.date) -> dict:
     return coverage
 
 
-def _experience_status(coverage: dict) -> dict:
-    roster = coverage["current_roster"]
-    reference = coverage["reference_stats"]
-    roster_status = roster["freshness"]["status"]
-    has_reference = reference["status"] == "ready"
-    has_linked_players = roster["skill_players_with_reference_stats"] > 0
-    draft_status = "ready" if has_reference and has_linked_players else "blocked"
-    movers_status = "ready" if draft_status == "ready" and roster_status == "current" else "blocked"
-    movers_reason = None
-    if movers_status == "blocked":
-        movers_reason = (
-            "Refresh and verify the current roster before claiming team or role changes."
-            if roster_status != "current"
-            else "No current skill players are linked to the reference season."
-        )
-    return {
-        "timeline": {"status": "ready"},
-        "draft_board": {
-            "status": draft_status,
-            "basis_season": reference["season"],
-            "eligible_players": roster["skill_players_with_reference_stats"],
-        },
-        "opportunity_movers": {
-            "status": movers_status,
-            "reason": movers_reason,
-        },
-        "camp_battles": {
-            "status": "blocked",
-            "reason": "A verified current depth-chart feed is not connected yet.",
-        },
-    }
-
-
 def _build_nfl_season_context(as_of: dt.date, connection: sqlite3.Connection) -> dict:
     phase, phase_label = _phase_for(as_of)
     milestones = _milestones_for(as_of)
@@ -298,7 +265,6 @@ def _build_nfl_season_context(as_of: dt.date, connection: sqlite3.Connection) ->
         "next_event": next_event,
         "milestones": milestones,
         "coverage": coverage,
-        "experiences": _experience_status(coverage),
         "sources": [_NFL_CALENDAR_SOURCE, _NFL_CAMP_SOURCE],
     }
 
@@ -309,6 +275,46 @@ def nfl_season_context():
     with closing(_db()) as connection:
         connection.row_factory = sqlite3.Row
         return _build_nfl_season_context(_today(), connection)
+
+
+_TRANSACTIONS_CONTRACT = "nfl-transactions-v1"
+
+
+@router.get("/api/nfl/transactions")
+def nfl_transactions(
+    limit: int = Query(30, ge=1, le=100),
+    team: Optional[str] = Query(None, description="team abbreviation, e.g. ATL"),
+):
+    """Recent NFL roster moves (waives, signings, IR, releases, retirements) —
+    ingested from ESPN's public transactions feed by nfl_transactions_sync.py.
+    "Offseason Movers" card content; see docs on why this replaced the raw
+    season-milestone timeline (it's actual news, not a static calendar)."""
+    with closing(_db()) as connection:
+        connection.row_factory = sqlite3.Row
+        columns = _table_columns(connection, "nfl_transactions")
+        if not columns:
+            return {"contract": _TRANSACTIONS_CONTRACT, "transactions": [], "count": 0}
+        where = "WHERE team_abbr=?" if team else ""
+        params = (team.upper(),) if team else ()
+        rows = connection.execute(
+            f"""SELECT txn_date, team_id, team_abbr, team_name, description
+                FROM nfl_transactions {where}
+                ORDER BY txn_date DESC, id DESC LIMIT ?""",
+            (*params, limit),
+        ).fetchall()
+        return {
+            "contract": _TRANSACTIONS_CONTRACT,
+            "count": len(rows),
+            "transactions": [
+                {
+                    "date": r["txn_date"],
+                    "team": r["team_abbr"],
+                    "teamName": r["team_name"],
+                    "description": r["description"],
+                }
+                for r in rows
+            ],
+        }
 
 
 def _draft_board_schema(connection: sqlite3.Connection) -> None:

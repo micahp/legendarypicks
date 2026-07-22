@@ -7,6 +7,7 @@ import StatsTab from '../../components/Leagues/StatsTab'
 import UfcRankingsTab from '../../components/Leagues/UfcRankingsTab'
 import PredictTab from '../../components/Leagues/PredictTab'
 import NflCampHero from '../../components/Leagues/NflCampHero'
+import NflOffseasonMovers from '../../components/Leagues/NflOffseasonMovers'
 import NflDraftRoom from '../../components/Leagues/NflDraftRoom'
 import NflScheduleTab from '../../components/Leagues/NflScheduleTab'
 import { useLeagueRouteState } from '../../components/Leagues/hooks/useLeagueRouteState'
@@ -19,6 +20,7 @@ import { useStatsData } from '../../components/Leagues/hooks/useStatsData'
 import { useUfcRankingsData } from '../../components/Leagues/hooks/useUfcRankingsData'
 import { useUfcPredictData } from '../../components/Leagues/hooks/useUfcPredictData'
 import { useNflSeasonContext } from '../../components/Leagues/hooks/useNflSeasonContext'
+import { useNflTransactions } from '../../components/Leagues/hooks/useNflTransactions'
 import { useNflDraftBoard } from '../../components/Leagues/hooks/useNflDraftBoard'
 import {
   LEAGUE_EMOJIS,
@@ -101,6 +103,7 @@ export default function LeagueHubPage() {
   const displayExplanation = route.dateIntent === 'auto' ? autoDate.explanation : null
 
   const seasonContext = useNflSeasonContext(isNFL && route.activeTab === 'camp')
+  const transactions = useNflTransactions(isNFL && route.activeTab === 'camp')
   // Resolve prev/next game dates for arrow navigation (non-NFL only)
   const nav = useScheduleNavigation(isNFL || route.activeTab !== 'schedule', route.league, route.scheduleDate)
 
@@ -167,6 +170,11 @@ export default function LeagueHubPage() {
               data={seasonContext.data}
               loading={seasonContext.loading}
               error={seasonContext.error}
+            />
+            <NflOffseasonMovers
+              data={transactions.data}
+              loading={transactions.loading}
+              error={transactions.error}
             />
             <NflDraftRoom
               data={draftBoard.data}

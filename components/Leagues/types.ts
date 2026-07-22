@@ -203,13 +203,14 @@ export interface NflSeasonContext {
   next_event: NflNextEvent | null
   milestones: NflMilestone[]
   coverage: Record<string, any>
-  experiences: {
-    timeline: { status: string }
-    draft_board: { status: string; basis_season: number | null; eligible_players: number }
-    opportunity_movers: { status: string; reason: string | null }
-    camp_battles: { status: string; reason: string | null }
-  }
   sources: { name: string; url: string; verified_at: string }[]
+}
+
+export interface NflTransaction {
+  date: string
+  team: string | null
+  teamName: string | null
+  description: string
 }
 
 export interface NflDraftPlayer {

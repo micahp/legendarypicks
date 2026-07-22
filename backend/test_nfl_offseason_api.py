@@ -128,9 +128,6 @@ class NflOffseasonApiTests(unittest.TestCase):
             2,
         )
         self.assertEqual(payload["coverage"]["team_reference"]["games"], 272)
-        self.assertEqual(payload["experiences"]["draft_board"]["status"], "ready")
-        self.assertEqual(payload["experiences"]["opportunity_movers"]["status"], "ready")
-        self.assertEqual(payload["experiences"]["camp_battles"]["status"], "blocked")
 
     def test_calendar_phases_fail_closed_after_verified_window(self):
         cases = [
@@ -181,7 +178,6 @@ class NflOffseasonApiTests(unittest.TestCase):
             context["coverage"]["current_roster"]["freshness"]["status"],
             "stale",
         )
-        self.assertEqual(context["experiences"]["opportunity_movers"]["status"], "blocked")
         board = self.board()
         self.assertTrue(all(player["team_changed"] is None for player in board["players"]))
 
