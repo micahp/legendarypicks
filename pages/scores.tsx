@@ -26,7 +26,6 @@ function LiveNow({ games, esportsLive }: { games: Game[]; esportsLive: boolean }
   if (live.length === 0) return null
   const feat = live[0]
   const rest = live.slice(1)
-  const abbrev = (t: Game['awayTeam']) => t.teamId || (t.nickname || t.name).slice(0, 3).toUpperCase()
   const teamDisplay = (t: Game['awayTeam']) => t.nickname || t.name.replace(/\s*\(.*?\)\s*/g, '')
 
   return (
@@ -42,19 +41,14 @@ function LiveNow({ games, esportsLive }: { games: Game[]; esportsLive: boolean }
           {feat.subtitle ? <><span className="text-[10px] text-zinc-600">·</span><span className="text-[10px] text-zinc-500">{feat.subtitle}</span></> : null}
         </div>
 
-        <div className="flex items-center justify-between">
-          <div className="flex-1 min-w-0">
-            <div className="text-xs font-semibold text-zinc-500 uppercase tracking-wide mb-1">{abbrev(feat.awayTeam)}</div>
-            <div className="font-mono text-5xl font-extrabold tabular-nums text-zinc-100 tracking-tight">{feat.awayTeam.score ?? 0}</div>
-            <div className="text-xs text-zinc-500 mt-1 truncate">{teamDisplay(feat.awayTeam)}</div>
+        <div className="space-y-1">
+          <div className="flex items-center justify-between gap-4">
+            <span className="text-lg font-semibold text-zinc-100 truncate">{teamDisplay(feat.awayTeam)}</span>
+            <span className="font-mono text-4xl font-bold tabular-nums text-zinc-100 tracking-tight">{feat.awayTeam.score ?? 0}</span>
           </div>
-          <div className="shrink-0 px-6 text-center">
-            <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-600">vs</div>
-          </div>
-          <div className="flex-1 min-w-0 text-right">
-            <div className="text-xs font-semibold text-zinc-500 uppercase tracking-wide mb-1">{abbrev(feat.homeTeam)}</div>
-            <div className="font-mono text-5xl font-extrabold tabular-nums text-zinc-100 tracking-tight">{feat.homeTeam.score ?? 0}</div>
-            <div className="text-xs text-zinc-500 mt-1 truncate">{teamDisplay(feat.homeTeam)}</div>
+          <div className="flex items-center justify-between gap-4">
+            <span className="text-lg font-semibold text-zinc-100 truncate">{teamDisplay(feat.homeTeam)}</span>
+            <span className="font-mono text-4xl font-bold tabular-nums text-zinc-100 tracking-tight">{feat.homeTeam.score ?? 0}</span>
           </div>
         </div>
       </Link>
