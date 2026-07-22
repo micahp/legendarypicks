@@ -2,6 +2,12 @@
 
 Status: spec only, not built. Written 2026-07-22.
 
+**Update 2026-07-22**: reframed by `SPEC-nfl-product-direction.md` — this is real and still
+worth building, but it's no longer the headline NFL feature. The sit/start engine (same
+computation as props, near-free once EV/CLV is fixed) and the waiver-wire feed rank higher on
+moat-adjacency; this is scoped as an August-relevant feature, not the retention driver. See that
+doc for the full reasoning.
+
 ## Problem
 
 The Draft Room (`components/Leagues/NflDraftRoom.tsx`) is a cheat-sheet: rank/watch/fade
