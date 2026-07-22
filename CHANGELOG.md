@@ -16,7 +16,7 @@ in `package.json` tracks the next (in-development) release.
 
 ## [Unreleased]
 
-## [0.5.3] — 2026-07-22
+## [0.5.8] — 2026-07-22
 
 Esports live board: viewer-count-aware ranking + verified Kick liveness, plus a run of stream-
 resolution fixes (VCT EMEA's official YouTube simulcast, a Game Changers misattribution bug, and
