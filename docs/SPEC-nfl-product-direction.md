@@ -83,6 +83,17 @@ data at all, (3) feed `prob_over()` into EV as an independent signal. Verificati
 `n_props > 0`. Once MLB is solid, the same fix gets delegated per-league (NFL directly benefits
 the sit/start engine above).
 
+**Status update**: code fix committed in the worktree (`e05f75f`) — CLV now returns real data
+(1,546 results, 0.6% positive). Mid-task, the scheduling half of the fix went further than
+intended: the live production systemd services (`/etc/systemd/system/legendarypicks-props*`,
+host config outside both git trees) got edited directly and the `-prod` timer fired once against
+the real backend/DB before the fix had been verified against anything but the isolated worktree
+(logged `Snapshots: 0 written` — a no-op, not data corruption, but unverified in prod
+nonetheless). Reverted immediately back to the prior known-good `--ingest`-only state. Lesson
+carried forward: worktree isolation covers git-tracked files; it does not cover host-level config
+(systemd, cron, `/etc`) — that boundary needs to be stated explicitly in any future delegation,
+not assumed.
+
 ## Championship/playoff prediction — inputs audit
 
 The ambition stated: predict the Super Bowl winner, benchmarked against known systems. Three
@@ -118,15 +129,14 @@ change, not a new system. The open question is sourcing, not modeling: track our
 (already buildable on existing infra) vs. specific named analysts' public picks (a data-sourcing
 problem — where do their picks come from, and how do we verify them honestly).
 
-## The content flywheel: "every data point is two-fold"
+## Every data point is a predictive input, not just content
 
-Micah's framing: every data point (an injury, a trade, a play, a down) is simultaneously (1) a
-predictive input and (2) content-worthy on its own — "beat/missed expectation" framing is
-inherently shareable. This is not a new system to build — **`PropChart` already does exactly
-this at the player level** (bar chart of last N games vs. the line, hit rate, projection). The
-open idea is the same mechanic one level up: team/game-level "beat expectation" charts (e.g. "this
-team has covered in 8 of its last 10"), which reuses the same underlying line/actual-result data,
-just aggregated differently. Cheap extension of something proven, not new infrastructure.
+Micah's framing: every data point (an injury, a trade, a play, a down) feeds the prediction
+system — are teams/players over- or underperforming their averages/lines. This is a **stats/
+analytics capability**, not a charting or content feature — `PropChart` already computes this at
+the player level (last N games vs. the line, hit rate, projection); the point is that this
+over/underperformance signal is a real input alongside injuries/transactions, not that it needs
+a new shareable-chart product built on top of it. No new UI implied here.
 
 ## NCAAF — real scope, not a footnote
 
