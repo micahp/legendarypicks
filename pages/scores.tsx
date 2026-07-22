@@ -231,17 +231,25 @@ export default function ScoresPage() {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <h1 className="text-3xl font-extrabold tracking-tight">Scoreboard</h1>
           <div className="flex items-center gap-3">
-            <select
-              value={leagueFilter}
-              onChange={(e) => setLeagueFilter(e.target.value)}
-              className="bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              {LEAGUES.map((l) => (
-                <option key={l} value={l}>
-                  {l === 'All' ? 'All Leagues' : l}
-                </option>
-              ))}
-            </select>
+            <div className="relative">
+              <select
+                value={leagueFilter}
+                onChange={(e) => setLeagueFilter(e.target.value)}
+                className="appearance-none bg-zinc-900 border border-zinc-800 rounded-lg pl-3 pr-8 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                {LEAGUES.map((l) => (
+                  <option key={l} value={l}>
+                    {l === 'All' ? 'All Leagues' : l}
+                  </option>
+                ))}
+              </select>
+              <svg
+                className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-500"
+                viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"
+              >
+                <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </div>
           </div>
         </div>
         {/* Day navigator: ‹ date › — works on mobile (just two buttons + a label) */}
