@@ -295,7 +295,7 @@ def _analytics_base_sql() -> str:
         JOIN players pl ON pl.id = p.player_id
         JOIN prop_games pg ON pg.id = p.game_id
         LEFT JOIN prop_results r ON r.prop_id = p.id
-        WHERE 1=1"""
+        WHERE {_OPEN_SNAP.format(col='s.odds')} IS NOT NULL"""
 
 
 def _ev_inputs(r):

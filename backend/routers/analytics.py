@@ -58,15 +58,15 @@ def props_clv(league: Optional[str] = Query(None),
               market: Optional[str] = Query(None),
               min_clv: float = Query(-1.0),
               limit: int = Query(50, ge=1, le=500)):
-    """Closing-line value per prop. Requires a closing snapshot (is_close=1);
-    returns empty until closing-snapshot capture is wired (M6 follow-up)."""
+    """Closing-line value per prop. Close = last snapshot captured before game start."""
     sql = """
         SELECT p.id, pl.name AS player_name, pl.league, p.market, p.line, p.side,
-               pg.date AS game_date,
+               pg.date AS game_date, pg.start_time,
                (SELECT odds FROM prop_odds_snapshots s WHERE s.prop_id=p.id AND s.side=p.side
                   ORDER BY s.captured_at ASC LIMIT 1) AS odds_open,
                (SELECT odds FROM prop_odds_snapshots s WHERE s.prop_id=p.id AND s.side=p.side
-                  AND s.is_close=1 ORDER BY s.captured_at DESC LIMIT 1) AS odds_close,
+                  AND (pg.start_time IS NULL OR s.captured_at <= pg.start_time)
+                  ORDER BY s.captured_at DESC LIMIT 1) AS odds_close,
                (SELECT COUNT(*) FROM prop_odds_snapshots s WHERE s.prop_id=p.id) AS snapshots_count
         FROM props p
         JOIN players pl ON pl.id = p.player_id
@@ -101,7 +101,7 @@ def props_clv(league: Optional[str] = Query(None),
             "summary": {"mean_clv": round(sum(c["clv"] for c in computed) / n, 4) if n else None,
                         "positive_clv_pct": round(pos * 100.0 / n, 1) if n else 0.0,
                         "n_props": n},
-            "note": None if n else "No closing snapshots (is_close=1) captured yet — CLV needs M6 closing-snapshot capture.",
+            "note": None if n else "No opening snapshots captured yet.",
             "filters": {"league": league, "market": market, "min_clv": min_clv, "limit": limit}}
 
 
