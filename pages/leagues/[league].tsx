@@ -30,13 +30,6 @@ import {
 } from '../../components/Leagues/presentation'
 import type { HubTab } from '../../components/Leagues/types'
 
-const NFL_TAB_LABELS: Record<string, string> = {
-  camp: 'Training Camp',
-  standings: '2025 Final',
-  stats: '2025 Stats',
-  schedule: '2026 Schedule',
-}
-
 const TAB_LABELS: Record<HubTab, string> = {
   camp: 'Training Camp',
   standings: 'Standings',
@@ -140,10 +133,6 @@ export default function LeagueHubPage() {
   const leagueName = LEAGUE_NAMES[route.league] || route.league.toUpperCase()
   const leagueEmoji = LEAGUE_EMOJIS[route.league] || ''
 
-  const tabLabels = isNFL
-    ? { ...TAB_LABELS, ...NFL_TAB_LABELS }
-    : TAB_LABELS
-
   return (
     <>
       <Head>
@@ -160,7 +149,7 @@ export default function LeagueHubPage() {
           tabs={route.validTabs}
           activeTab={route.activeTab}
           onSelect={route.selectTab}
-          labels={tabLabels}
+          labels={TAB_LABELS}
         />
 
         {/* ── NFL Camp-mode default ── */}
