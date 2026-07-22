@@ -42,8 +42,15 @@ _WATCH_RULES = [
     ("league-of-legends", "primeleague", [("twitch", "primeleague")]),
     ("league-of-legends", None, [("twitch", "riotgames")]),
     ("valorant", "esportsworldcup", [("twitch", "ewc_stcarena_en"), ("twitch", "ewc")]),
-    ("valorant", "emea", [("twitch", "valorant_emea")]),
-    ("valorant", "pacific", [("twitch", "valorant_pacific")]),
+    # exclude="gamechangers": "emea"/"pacific" are naive substring checks on the fully-stripped
+    # league string, so "VCT — Game Changers EMEA Stage 3" matched "emea" too (BUG, fixed 2026-07-22)
+    # and injected the MAIN bracket's channel as a fallback candidate into a Game Changers match that
+    # already has its own correctly-attested different channel — worse, that wrong candidate could
+    # win the pool outright when the match's REAL channel was momentarily offline (decapi-confirmed)
+    # while the wrong one was busy airing an unrelated main-bracket game. Game Changers matches always
+    # carry their own real frag/PandaScore stream in practice, so excluding them here costs nothing.
+    ("valorant", "emea", [("twitch", "valorant_emea")], "gamechangers"),
+    ("valorant", "pacific", [("twitch", "valorant_pacific")], "gamechangers"),
     ("valorant", None, [("twitch", "valorant")]),
     ("counter-strike-2", "cct", [("kick", "cct_cs"), ("twitch", "cct_cs"), ("kick", "cct_cs2")]),
     ("counter-strike-2", "europeanproleague", [("kick", "eplcs_en"), ("twitch", "eplcs_en2")]),
@@ -280,8 +287,10 @@ def _rule_candidates(title_slug, league):
     """Hardcoded-rule candidates for a title/league (may be empty)."""
     ls = re.sub(r"[^a-z0-9]+", "", (league or "").lower())
     out = []
-    for t, kw, cands in _WATCH_RULES:
-        if t != title_slug or (kw is not None and kw not in ls):
+    for rule in _WATCH_RULES:
+        t, kw, cands = rule[0], rule[1], rule[2]
+        exclude = rule[3] if len(rule) > 3 else None
+        if t != title_slug or (kw is not None and kw not in ls) or (exclude is not None and exclude in ls):
             continue
         for platform, ch in cands:
             if platform == "web":
