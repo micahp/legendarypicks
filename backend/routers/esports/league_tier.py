@@ -263,6 +263,20 @@ _FOREIGN_HOSTS = ("bilibili", "huya", "douyu", "honorofkings", "afreecatv", "nim
 _LOCALE_CHAN = re.compile(r"(^|[_./-])(cn|zh|kr|jp|tw|ru|vn|th|br|tr)([_./-]|$)")
 # A foreign broadcast sorts below EVERY English/unknown one regardless of prestige, so the offset just
 # needs to exceed the max real prominence (tier-0 grand final = 330).
+#
+# KNOWN TRADEOFF (reconfirmed 2026-07-22, kept on purpose): this is a hard floor, not a bounded
+# penalty, so a genuinely marquee foreign-only broadcast can rank below a throwaway English one.
+# Verified real case: Hanwha Life Esports' 2026-07-21 KeSPA Cup match (PandaScore match 1570045,
+# top-flight Korean team/tournament) had exactly one stream, twitch.tv/kespa2026lck, language=ko,
+# no English option — under this policy it loses the hero slot to any minor English stream. HLE's
+# OTHER recent event (Esports World Cup) DOES carry an official English feed, so this isn't
+# team-prestige-dependent, it's tournament-broadcast-dependent, and it isn't rare.
+# Micah's call, kept deliberately: it's more jarring to auto-play a foreign-language stream for a
+# team/broadcast you don't recognize than to feature a lesser English match while the foreign one
+# sits one click away in the grid — the downside of the floor is a click, the downside of removing
+# it is an unrecognized non-English autoplay. Considered a bounded penalty instead (< one tier-gap
+# of 100, e.g. ~60-80, so foreign only loses to an EQUAL-tier English stream) — rejected for this
+# reason. Revisit only if this specific tradeoff becomes a live complaint again.
 _FOREIGN_DEMOTION = 1000
 
 
