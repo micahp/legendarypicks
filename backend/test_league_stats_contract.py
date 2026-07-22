@@ -118,12 +118,13 @@ def insert_logs(path, player_id, league, stats_rows, season=2026, dated=False):
         )
 
 
-def call(league, *, stat=None, category=None, type=None, min_games=0, limit=25):
+def call(league, *, stat=None, category=None, type=None, season=None, min_games=0, limit=25):
     return players.league_leaders(
         league,
         stat=stat,
         category=category,
         type=type,
+        season=season,
         min_games=min_games,
         limit=limit,
     )
@@ -258,7 +259,7 @@ class LeagueStatsContractTests(unittest.TestCase):
         self.assertEqual(
             empty,
             {
-                "league": "nba", "season": None, "stat": None,
+                "league": "nba", "season": None, "available_seasons": [], "stat": None,
                 "stat_type": None, "category": None, "categories": [],
                 "columns": [], "leaders": [], "change_metric": None,
                 "comparison": None, "changes": [],
@@ -267,12 +268,33 @@ class LeagueStatsContractTests(unittest.TestCase):
         insert_row(self.db_path, 1, "No Metrics", "nba", 2026, 10, values={})
         no_metrics = call("nba", stat="pts")
         self.assertEqual(no_metrics["season"], 2026)
+        self.assertEqual(no_metrics["available_seasons"], [2026])
         self.assertIsNone(no_metrics["stat"])
         self.assertEqual(no_metrics["categories"], [])
         self.assertEqual(no_metrics["leaders"], [])
         self.assertIsNone(no_metrics["change_metric"])
         self.assertIsNone(no_metrics["comparison"])
         self.assertEqual(no_metrics["changes"], [])
+
+    def test_season_defaults_to_latest_and_can_be_overridden(self):
+        nfl = metric_values("nfl")
+        insert_row(self.db_path, 1, "Old Season Passer", "nfl", 2024, 16, values=nfl)
+        insert_row(self.db_path, 2, "New Season Passer", "nfl", 2025, 16, values=nfl)
+
+        default = call("nfl")
+        self.assertEqual(default["season"], 2025)
+        self.assertEqual(default["available_seasons"], [2025, 2024])
+        self.assertEqual(default["leaders"][0]["name"], "New Season Passer")
+
+        older = call("nfl", season=2024)
+        self.assertEqual(older["season"], 2024)
+        self.assertEqual(older["available_seasons"], [2025, 2024])
+        self.assertEqual(older["leaders"][0]["name"], "Old Season Passer")
+
+        with self.assertRaises(HTTPException) as ctx:
+            call("nfl", season=2099)
+        self.assertEqual(ctx.exception.status_code, 400)
+        self.assertIn("2099", str(ctx.exception.detail))
 
     def test_mlb_precision_and_integer_values_are_preserved(self):
         batting = metric_values("mlb_batting")

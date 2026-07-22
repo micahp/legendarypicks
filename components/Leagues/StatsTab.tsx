@@ -24,6 +24,7 @@ interface StatsTabProps {
   teamCategory: string | null
   onSelectSubView: (view: SubView) => void
   onSelectMlbType: (type: MlbType) => void
+  onSelectSeason: (season: string) => void
   onSelectStatCategory: (category: string) => void
   onSelectSortMetric: (metric: string) => void
   onResetFilters: () => void
@@ -46,6 +47,7 @@ export default function StatsTab({
   teamCategory,
   onSelectSubView,
   onSelectMlbType,
+  onSelectSeason,
   onSelectStatCategory,
   onSelectSortMetric,
   onResetFilters,
@@ -59,6 +61,14 @@ export default function StatsTab({
 
       {league === 'mlb' && subView === 'players' && (
         <MlbTypeTabs value={mlbType} onChange={onSelectMlbType} />
+      )}
+
+      {subView === 'players' && leaders && leaders.available_seasons.length > 1 && (
+        <SeasonTabs
+          value={leaders.season}
+          seasons={leaders.available_seasons}
+          onChange={onSelectSeason}
+        />
       )}
 
       {subView === 'players' && (
@@ -136,6 +146,35 @@ function MlbTypeTabs({
           }`}
         >
           {type}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+function SeasonTabs({
+  value,
+  seasons,
+  onChange,
+}: {
+  value: number | string | null
+  seasons: (number | string)[]
+  onChange: (season: string) => void
+}) {
+  return (
+    <div className="flex items-center gap-2">
+      {seasons.map(season => (
+        <button
+          key={season}
+          type="button"
+          onClick={() => onChange(String(season))}
+          className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+            String(value) === String(season)
+              ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+              : 'bg-zinc-900 text-zinc-500 border border-zinc-800 hover:text-zinc-300'
+          }`}
+        >
+          {season}
         </button>
       ))}
     </div>

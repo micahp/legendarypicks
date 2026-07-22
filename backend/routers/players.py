@@ -407,10 +407,11 @@ _COMPARISON_BASE = {
 }
 
 
-def _empty_leaders(lg, season, stat_type):
+def _empty_leaders(lg, season, stat_type, available_seasons=None):
     return {
         "league": lg,
         "season": season,
+        "available_seasons": available_seasons or [],
         "stat": None,
         "stat_type": stat_type,
         "category": None,
@@ -602,12 +603,16 @@ def league_leaders(league: str,
                    stat: Optional[str] = Query(None),
                    category: Optional[str] = Query(None),
                    type: Optional[str] = Query(None),
+                   season: Optional[int] = Query(None),
                    min_games: int = Query(0, ge=0),
                    limit: int = Query(25, ge=1, le=100)):
     """Player leaderboard for a league from the player_stats table.
     ?category=scoring — metric group (default: league-appropriate)
     ?stat=pts — sort column within/inferred from the category
     ?type=batting|pitching — MLB only, picks the stat_type to filter
+    ?season=2024 — defaults to the latest season with data (never hardcoded — a new
+    season's rows just become the new MAX() the day an ingest job starts writing them,
+    same day it appears in `available_seasons` below, no code change required)
     ?min_games=N — minimum games played (default: 0 for all, 10 for MLB batting)
     """
     lg = league.lower()
@@ -647,14 +652,22 @@ def league_leaders(league: str,
         if stat_type is not None:
             season_where += " AND stat_type=?"
             season_params.append(stat_type)
-        srow = con.execute(
-            f"SELECT season FROM player_stats WHERE {season_where} "
-            "ORDER BY season DESC LIMIT 1",
-            season_params,
-        ).fetchone()
-        season = srow["season"] if srow else None
-        if season is None:
+        available_seasons = [
+            row["season"] for row in con.execute(
+                f"SELECT DISTINCT season FROM player_stats WHERE {season_where} "
+                "ORDER BY season DESC",
+                season_params,
+            ).fetchall()
+        ]
+        if not available_seasons:
             return _empty_leaders(lg, None, stat_type)
+        if season is not None:
+            if season not in available_seasons:
+                raise HTTPException(400, f"season {season} has no data for {lg}"
+                                     f"{f' ({stat_type})' if stat_type else ''}; "
+                                     f"available: {available_seasons}")
+        else:
+            season = available_seasons[0]
 
         population_where = "league=? AND season=?"
         population_params = [lg, season]
@@ -680,7 +693,7 @@ def league_leaders(league: str,
                 categories.append({"key": item["key"], "label": item["label"], "stats": metrics})
         if not categories:
             normalized_season = season if isinstance(season, int) else str(season)
-            return _empty_leaders(lg, normalized_season, stat_type)
+            return _empty_leaders(lg, normalized_season, stat_type, available_seasons)
 
         available_categories = {item["key"]: item for item in categories}
         if stat is not None and stat not in available_keys:
@@ -749,6 +762,7 @@ def league_leaders(league: str,
         lg, selected_category, season, leaders
     )
     return {"league": lg, "season": season if isinstance(season, int) else str(season),
+            "available_seasons": available_seasons,
             "stat": sort_stat, "stat_type": stat_type,
             "category": selected_category, "categories": categories,
             "columns": columns, "leaders": leaders,

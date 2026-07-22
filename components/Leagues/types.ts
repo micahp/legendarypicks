@@ -77,6 +77,7 @@ export interface StatChange {
 export interface LeadersData {
   league: string
   season: number | string | null
+  available_seasons: (number | string)[]
   stat: string | null
   stat_type: string | null
   category: string | null

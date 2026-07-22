@@ -212,6 +212,7 @@ export default function LeagueHubPage() {
             teamCategory={stats.teamCategory}
             onSelectSubView={stats.selectSubView}
             onSelectMlbType={stats.selectMlbType}
+            onSelectSeason={stats.selectSeason}
             onSelectStatCategory={stats.selectStatCategory}
             onSelectSortMetric={stats.selectSortMetric}
             onResetFilters={stats.resetStatsFilters}
