@@ -29,30 +29,23 @@ export default function NflCampHero({ data, loading, error }: Props) {
 
   const nextEvent = data.next_event
 
+  const dateParts = nextEvent ? formatDateParts(nextEvent.date) : null
+
   return (
     <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-5 sm:p-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-widest text-emerald-400">
-              {data.phase_label}
-            </span>
-            <span className="text-xs text-zinc-600">
-              {data.current_season} season
-            </span>
-          </div>
+      <div className="flex justify-between gap-4">
+        <div className="min-w-0 flex flex-col justify-between">
+          {nextEvent && <p className="text-lg font-bold text-white">{nextEvent.label}</p>}
           {nextEvent && (
-            <p className="text-sm text-zinc-300 mt-2">
-              <span className="font-semibold text-white">{nextEvent.label}</span>
-              <span className="text-zinc-500">
-                {' '}· {formatCountdown(nextEvent.days_until)}
-              </span>
-            </p>
+            <p className="text-xs text-zinc-500">{formatCountdown(nextEvent.days_until)}</p>
           )}
         </div>
-        {nextEvent && (
-          <div className="flex items-center gap-1.5 text-xs text-zinc-500 shrink-0">
-            <span>{formatDate(nextEvent.date)}</span>
+        {dateParts && (
+          <div className="text-right leading-none shrink-0 flex flex-col justify-between items-end">
+            <div className="text-xs font-semibold uppercase tracking-widest text-zinc-500">
+              {dateParts.month}
+            </div>
+            <div className="text-4xl font-black text-white mt-1">{dateParts.day}</div>
           </div>
         )}
       </div>
@@ -60,17 +53,17 @@ export default function NflCampHero({ data, loading, error }: Props) {
   )
 }
 
-function formatDate(iso: string): string {
+function formatDateParts(iso: string): { month: string; day: string } {
   const date = new Date(`${iso}T12:00:00`)
-  if (Number.isNaN(date.getTime())) return iso
-  return date.toLocaleDateString(undefined, {
-    month: 'short',
-    day: 'numeric',
-  })
+  if (Number.isNaN(date.getTime())) return { month: '', day: iso }
+  return {
+    month: date.toLocaleDateString(undefined, { month: 'short' }),
+    day: date.toLocaleDateString(undefined, { day: 'numeric' }),
+  }
 }
 
 function formatCountdown(days: number): string {
   if (days === 0) return 'Today'
   if (days === 1) return 'Tomorrow'
-  return `${days} days away`
+  return `In ${days} days`
 }
