@@ -563,7 +563,12 @@ function MatchupsTab({ query, setQuery, player, setPlayer }: {
   }, [player])
 
   const order = ['PTS', 'REB', 'AST', 'PRA', '3PM', 'pass_yds', 'rush_yds', 'rec_yds', 'fpts_ppr',
-    'points', 'goals', 'assists', 'shots', 'H', 'TB', 'HR', 'K', 'outs', 'hits_allowed']
+    'points', 'goals', 'assists', 'shots', 'H', 'TB', 'HR', 'K', 'outs', 'hits_allowed',
+    // UFC's game logs store ESPN's full 43-field raw stat blob, not a curated list —
+    // without these prioritized first, the alphabetically-first fields (advanceToBack,
+    // advanceToHalfGuard, ...) would win the slice(0, 6) below instead of anything meaningful.
+    'sigStrikesLanded', 'sigStrikesAttempted', 'totalStrikesLanded', 'totalStrikesAttempted',
+    'takedownsLanded', 'takedownsAttempted', 'knockDowns', 'submissions']
   const statKeys = data?.matchups?.length
     ? Object.keys(data.matchups[0].avg).sort((a, b) => {
         const ia = order.indexOf(a), ib = order.indexOf(b)
@@ -653,10 +658,21 @@ function ModelTab({ league, query, setQuery, player, setPlayer }: {
       .catch(() => setLoading(false))
   }, [player])
 
-  const keys = data ? Object.keys(data.projections).sort((a, b) => {
-    const ia = STAT_ORDER.indexOf(a), ib = STAT_ORDER.indexOf(b)
-    return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib) || a.localeCompare(b)
-  }) : []
+  // UFC game logs store ESPN's full raw stat blob (43 fields — positional/target
+  // breakdowns like advanceToBack, posBreakdownClinch, slamRate — not a curated
+  // prop-market list like other leagues). Restrict to the headline stats someone
+  // would actually want to check a line against, not the full raw dump.
+  const _UFC_MODEL_STATS = new Set([
+    'knockDowns', 'totalStrikesLanded', 'totalStrikesAttempted',
+    'sigStrikesLanded', 'sigStrikesAttempted',
+    'takedownsLanded', 'takedownsAttempted', 'submissions', 'timeInControl',
+  ])
+  const keys = data ? Object.keys(data.projections)
+    .filter(k => player?.league !== 'ufc' || _UFC_MODEL_STATS.has(k))
+    .sort((a, b) => {
+      const ia = STAT_ORDER.indexOf(a), ib = STAT_ORDER.indexOf(b)
+      return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib) || a.localeCompare(b)
+    }) : []
 
   const checkLine = () => {
     if (!player || !statKey || line === '') return
