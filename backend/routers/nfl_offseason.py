@@ -9,6 +9,7 @@ import datetime as dt
 import json
 import re
 import sqlite3
+import time
 from collections import defaultdict
 from contextlib import closing
 from typing import Dict, List, Optional, Set, Tuple
@@ -299,22 +300,37 @@ _SENTENCE_SPLIT = re.compile(r"(?<![A-Z]\.)(?<=[.!?])\s+(?=[A-Z])")
 _TRAILING_INITIAL = re.compile(r"\b[A-Z]\.$")
 
 
+# players/nfl_adp only change via the daily ingest timers now (see
+# docs/DATA-FRESHNESS-SPLIT-2026-07-23.md) — no reason to rebuild these two
+# full-table dicts (~9.6k players + ~2.5k ADP rows) on every single request.
+_SIGNIFICANCE_CACHE_TTL = 300
+_significance_cache: Dict[str, object] = {"ts": 0.0, "name_to_pid": None, "pid_to_adp": None}
+
+
 def _player_significance_lookup(connection: sqlite3.Connection):
     """name -> ADP, as a proxy for "how significant is this player" — lower ADP
     is more significant/valuable. Missing/unresolved names return None (treated
     as least significant, so a real ADP always wins the mirror tie-break)."""
-    name_to_pid: Dict[str, int] = {}
-    for r in connection.execute("SELECT id, name FROM players WHERE league='nfl'"):
-        name_to_pid[_normalize_name(r["name"])] = r["id"]
-    pid_to_adp: Dict[int, float] = {}
-    try:
-        for r in connection.execute(
-            "SELECT player_id, adp FROM nfl_adp WHERE season=? AND adp IS NOT NULL",
-            (_CURRENT_SEASON,),
-        ):
-            pid_to_adp[r["player_id"]] = r["adp"]
-    except sqlite3.OperationalError:
-        pass  # nfl_adp not populated yet — significance lookup degrades to "unknown" for everyone
+    now = time.time()
+    if now - _significance_cache["ts"] < _SIGNIFICANCE_CACHE_TTL and _significance_cache["name_to_pid"] is not None:
+        name_to_pid: Dict[str, int] = _significance_cache["name_to_pid"]
+        pid_to_adp: Dict[int, float] = _significance_cache["pid_to_adp"]
+    else:
+        name_to_pid = {}
+        for r in connection.execute("SELECT id, name FROM players WHERE league='nfl'"):
+            name_to_pid[_normalize_name(r["name"])] = r["id"]
+        pid_to_adp = {}
+        try:
+            for r in connection.execute(
+                "SELECT player_id, adp FROM nfl_adp WHERE season=? AND adp IS NOT NULL",
+                (_CURRENT_SEASON,),
+            ):
+                pid_to_adp[r["player_id"]] = r["adp"]
+        except sqlite3.OperationalError:
+            pass  # nfl_adp not populated yet — significance lookup degrades to "unknown" for everyone
+        _significance_cache["ts"] = now
+        _significance_cache["name_to_pid"] = name_to_pid
+        _significance_cache["pid_to_adp"] = pid_to_adp
 
     def significance(name: str) -> Optional[float]:
         pid = name_to_pid.get(_normalize_name(name))
