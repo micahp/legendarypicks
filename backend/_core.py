@@ -309,10 +309,11 @@ def _ev_inputs(r):
 
 # ── projections-backed fair probability (EV's independent probability source) ──
 
-# MLB prop market → (stat_json_key, game_log_source_filter).
+# Prop market → (stat_json_key, game_log_source_filter).
 # Most-recent-first game-log values are pulled, then prob_over(values, line)
 # gives the empirical P(over) — an independent fair probability to compare
 # against the market-implied probability.
+
 _MLB_MARKET_STAT = {
     "strikeouts":     ("K",            "statcast_pitcher"),
     "outs":           ("outs",         "statcast_pitcher"),
@@ -325,27 +326,45 @@ _MLB_MARKET_STAT = {
     # earned_runs: not in player_game_logs (Statcast events don't track ERA)
 }
 
+# NFL: nflverse source has full box-score per-game aggregates.
+# nflverse_pbp is ruled out — abbreviated keys (pass_yds/rec) and missing
+# receiving stats entirely. These 5 markets are the ONLY NFL player-prop
+# markets bovada_scraper.py currently maps.
+_NFL_MARKET_STAT = {
+    "passing_yards":   ("passing_yards",   "nflverse"),
+    "passing_tds":     ("passing_tds",     "nflverse"),
+    "rushing_yards":   ("rushing_yards",   "nflverse"),
+    "receiving_yards": ("receiving_yards", "nflverse"),
+    "receptions":      ("receptions",      "nflverse"),
+}
+
+_LEAGUE_MARKET_STAT = {
+    "mlb": _MLB_MARKET_STAT,
+    "nfl": _NFL_MARKET_STAT,
+}
+
 # How many recent games to pull for the empirical distribution.
 # 30 days ≈ ~25-30 games for a regular — balances recency vs sample size.
 _PROJECTION_WINDOW_GAMES = 30
 _PROJECTION_MIN_GAMES = 5
 
 
-def _query_game_log_values(player_id: int, market: str, line: float) -> Optional[list]:
+def _query_game_log_values(player_id: int, market: str, line: float, league: str = "mlb") -> Optional[list]:
     """Return game-log stat values for a player+market, most-recent-first.
-    Returns None if the market isn't mapped or the player has too few games."""
-    if market not in _MLB_MARKET_STAT:
+    Returns None if the market isn't mapped for this league or the player has too few games."""
+    league_markets = _LEAGUE_MARKET_STAT.get(league)
+    if league_markets is None or market not in league_markets:
         return None
-    stat_key, source = _MLB_MARKET_STAT[market]
+    stat_key, source = league_markets[market]
     with closing(_db()) as con:
         rows = con.execute(
             """SELECT json_extract(stats, ?) AS val
                FROM player_game_logs
-               WHERE player_id = ? AND league = 'mlb' AND source = ?
+               WHERE player_id = ? AND league = ? AND source = ?
                  AND json_extract(stats, ?) IS NOT NULL
                ORDER BY game_date DESC
                LIMIT ?""",
-            (f"$.{stat_key}", player_id, source, f"$.{stat_key}", _PROJECTION_WINDOW_GAMES),
+            (f"$.{stat_key}", player_id, league, source, f"$.{stat_key}", _PROJECTION_WINDOW_GAMES),
         ).fetchall()
     vals = [float(r["val"]) for r in rows]
     if len(vals) < _PROJECTION_MIN_GAMES:
@@ -353,9 +372,9 @@ def _query_game_log_values(player_id: int, market: str, line: float) -> Optional
     return vals
 
 
-def _projected_p_fair(player_id: int, market: str, line: float) -> Optional[Tuple[float, str]]:
+def _projected_p_fair(player_id: int, market: str, line: float, league: str = "mlb") -> Optional[Tuple[float, str]]:
     """Return (p_fair, 'projection') from player game logs, or None if insufficient data."""
-    vals = _query_game_log_values(player_id, market, line)
+    vals = _query_game_log_values(player_id, market, line, league)
     if vals is None:
         return None
     result = proj_mod.prob_over(vals, line)
@@ -371,7 +390,7 @@ def _compute_ev_with_projection(r, player_id: int, market: str, line: float) -> 
         return None
 
     # Try projections first (independent probability source)
-    proj = _projected_p_fair(player_id, market, line)
+    proj = _projected_p_fair(player_id, market, line, r["league"])
     if proj is not None:
         p_fair, confidence = proj
         d = ev_mod.american_to_decimal(odds)
