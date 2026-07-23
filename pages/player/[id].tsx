@@ -199,7 +199,13 @@ export default function PlayerPage() {
     </div>
   )
 
-  const projKeys = Object.keys(p.projections).sort((a, b) => {
+  // UFC's game logs store ESPN's full raw stat blob (43 fields — advances,
+  // reversals, slamRate, etc.), not a curated prop-market list like other
+  // leagues — this generic table has no way to know which of those are
+  // meaningful, so it would dump all 43. Recent Fights (below) already shows
+  // the headline UFC stats; skip this section for UFC entirely rather than
+  // rendering noise.
+  const projKeys = p.league === 'ufc' ? [] : Object.keys(p.projections).sort((a, b) => {
     const ia = STAT_ORDER.indexOf(a), ib = STAT_ORDER.indexOf(b)
     return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib) || a.localeCompare(b)
   })
