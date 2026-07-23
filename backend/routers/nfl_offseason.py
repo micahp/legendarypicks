@@ -15,7 +15,7 @@ from typing import Dict, List, Optional, Set, Tuple
 
 from fastapi import APIRouter, HTTPException, Query
 
-from _core import _db, proj_mod
+from _core import _db, _normalize_name, proj_mod
 
 
 router = APIRouter()
@@ -299,10 +299,52 @@ _SENTENCE_SPLIT = re.compile(r"(?<![A-Z]\.)(?<=[.!?])\s+(?=[A-Z])")
 _TRAILING_INITIAL = re.compile(r"\b[A-Z]\.$")
 
 
-def _split_trade_sentences(description: str) -> List[Tuple[str, List[str]]]:
+def _player_significance_lookup(connection: sqlite3.Connection):
+    """name -> ADP, as a proxy for "how significant is this player" — lower ADP
+    is more significant/valuable. Missing/unresolved names return None (treated
+    as least significant, so a real ADP always wins the mirror tie-break)."""
+    name_to_pid: Dict[str, int] = {}
+    for r in connection.execute("SELECT id, name FROM players WHERE league='nfl'"):
+        name_to_pid[_normalize_name(r["name"])] = r["id"]
+    pid_to_adp: Dict[int, float] = {}
+    try:
+        for r in connection.execute(
+            "SELECT player_id, adp FROM nfl_adp WHERE season=? AND adp IS NOT NULL",
+            (_CURRENT_SEASON,),
+        ):
+            pid_to_adp[r["player_id"]] = r["adp"]
+    except sqlite3.OperationalError:
+        pass  # nfl_adp not populated yet — significance lookup degrades to "unknown" for everyone
+
+    def significance(name: str) -> Optional[float]:
+        pid = name_to_pid.get(_normalize_name(name))
+        return pid_to_adp.get(pid) if pid is not None else None
+
+    return significance
+
+
+def _outgoing_player(sentence: str, players: List[str]) -> Optional[str]:
+    """Which named player is THIS team's own outgoing asset, not the return
+    they got back. ESPN's standard phrasing is "Traded [outgoing] to [team]
+    for [incoming]" — a player named before " for " is outgoing; one named
+    only after " for " (e.g. this team gave up picks only, got a named player
+    back — "Traded a 1st... to Miami for WR Jaylen Waddle") is incoming, and
+    must NOT be mistaken for this team's own significant piece."""
+    if not players:
+        return None
+    m = re.search(r"\bfor\b", sentence)
+    if not m:
+        return players[0]  # no "for" clause (e.g. "Traded QB X to Kansas City.") — best effort
+    before_for = sentence[: m.start()]
+    before_names = _POSITION_PREFIX.findall(before_for)
+    return before_names[0] if before_names else None  # gave up picks only, no named outgoing player
+
+
+def _split_trade_sentences(description: str) -> List[Tuple[str, List[str], Optional[str]]]:
     """A logged transaction can bundle unrelated moves in one blob ("Signed X.
     Released Y. Traded Z..."). Split into sentences, keep only the trade ones,
-    and pull out the player name(s) mentioned in each for bolding client-side."""
+    and pull out the player name(s) mentioned in each for bolding client-side,
+    plus which one (if any) is THIS team's own outgoing player."""
     out = []
     for sentence in _SENTENCE_SPLIT.split(description.strip()):
         sentence = sentence.strip()
@@ -312,8 +354,47 @@ def _split_trade_sentences(description: str) -> List[Tuple[str, List[str]]]:
             p if _TRAILING_INITIAL.search(p) else p.rstrip(".")
             for p in _POSITION_PREFIX.findall(sentence)
         ]
-        out.append((sentence, players))
+        out.append((sentence, players, _outgoing_player(sentence, players)))
     return out
+
+
+def _dedupe_trade_rows(connection: sqlite3.Connection, rows: list, limit: int) -> List[dict]:
+    """Split raw transaction rows into individual trade sentences (dropping any
+    bundled non-trade sentences), dedupe mirror entries — ESPN logs one row per
+    team in a deal, so the same trade otherwise appears once per side — and
+    return the most recent `limit` distinct trades.
+
+    Mirror entries are grouped by the set of player names mentioned (reliable;
+    team names in free text are often ambiguous, e.g. "Los Angeles" alone
+    doesn't say Rams vs Chargers). Within a group, keep the entry for the team
+    that gave up the more significant player (ADP as the significance proxy,
+    lower = more significant) — that's "the from team" for a headline trade.
+    If ADP can't disambiguate (tie, or neither player resolves), it doesn't
+    matter which side is kept, so fall back to team abbreviation for a stable,
+    deterministic pick."""
+    significance = _player_significance_lookup(connection)
+    groups: Dict[frozenset, list] = defaultdict(list)
+    for r in rows:
+        for sentence, players, from_player in _split_trade_sentences(r["description"]):
+            key = frozenset(p.lower() for p in players) if players else frozenset({sentence.lower()})
+            groups[key].append({
+                "date": r["txn_date"],
+                "team": r["team_abbr"],
+                "teamName": r["team_name"],
+                "description": sentence,
+                "players": players,
+                "_from_player": from_player,
+            })
+
+    def sort_key(e: dict) -> tuple:
+        sig = significance(e["_from_player"]) if e["_from_player"] else None
+        return (sig if sig is not None else float("inf"), e["team"])
+
+    deduped = [min(events, key=sort_key) for events in groups.values()]
+    deduped.sort(key=lambda e: e["date"], reverse=True)
+    for e in deduped:
+        del e["_from_player"]  # internal only, not part of the API contract
+    return deduped[:limit]
 
 
 @router.get("/api/nfl/transactions")
@@ -334,9 +415,12 @@ def nfl_transactions(
     otherwise appears twice — are deduped by the set of player names
     mentioned (reliable; team names in the text are often ambiguous, e.g.
     "Los Angeles" alone doesn't say Rams vs Chargers). Within a duplicate
-    pair there's no textual signal for which side is colloquially "the from
-    team" in a genuine two-way trade, so the tie-break is simply the
-    alphabetically-first team abbreviation — arbitrary but deterministic."""
+    pair, keep the entry for the team that gave up the more significant
+    player — ADP (nfl_adp) as the significance proxy, lower = more
+    significant — since that's "the from team" for a headline trade; if
+    ADP can't disambiguate (tie, or neither player resolves), it doesn't
+    matter which side is kept, so fall back to team abbreviation for a
+    stable, deterministic pick."""
     with closing(_db()) as connection:
         connection.row_factory = sqlite3.Row
         columns = _table_columns(connection, "nfl_transactions")
@@ -376,22 +460,7 @@ def nfl_transactions(
                 ],
             }
 
-        # Split each row into individual trade sentences, dedupe mirrored
-        # entries by the set of player names mentioned.
-        groups: Dict[frozenset, list] = defaultdict(list)
-        for r in rows:
-            for sentence, players in _split_trade_sentences(r["description"]):
-                key = frozenset(p.lower() for p in players) if players else frozenset({sentence.lower()})
-                groups[key].append({
-                    "date": r["txn_date"],
-                    "team": r["team_abbr"],
-                    "teamName": r["team_name"],
-                    "description": sentence,
-                    "players": players,
-                })
-        deduped = [min(events, key=lambda e: e["team"]) for events in groups.values()]
-        deduped.sort(key=lambda e: e["date"], reverse=True)
-        deduped = deduped[:limit]
+        deduped = _dedupe_trade_rows(connection, rows, limit)
         return {
             "contract": _TRANSACTIONS_CONTRACT,
             "count": len(deduped),
