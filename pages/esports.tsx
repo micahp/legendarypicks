@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import Head from 'next/head'
+import Link from 'next/link'
 
 /* ---------------- types ---------------- */
 type Player = { name: string; rating: number | null; clock: number | null }
@@ -1196,7 +1197,7 @@ export default function EsportsPage() {
       <Head><title>Esports — Legendary Picks</title></Head>
 
       <div className="space-y-10">
-        <header className="space-y-2">
+        <header className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <h1 className="text-3xl font-extrabold tracking-tight text-zinc-50">Esports</h1>
             {anyLive ? (
@@ -1205,6 +1206,12 @@ export default function EsportsPage() {
               </span>
             ) : null}
           </div>
+          <Link
+            href="/predict"
+            className="shrink-0 rounded-lg bg-emerald-500 px-4 py-2 text-sm font-bold text-zinc-950 transition-colors hover:bg-emerald-400"
+          >
+            Make Picks
+          </Link>
         </header>
 
         {/* One unified "Live now" section: MSI leads as the featured rich view when live (it's the
