@@ -338,9 +338,32 @@ _NFL_MARKET_STAT = {
     "receptions":      ("receptions",      "nflverse"),
 }
 
+# NBA: espn source, real JSON keys confirmed: PTS,REB,AST,STL,BLK,TO,3PM.
+# MIN/FGM/FGA/FTM/FTA/PRA also present but are not bovada prop markets.
+_NBA_MARKET_STAT = {
+    "points":    ("PTS", "espn"),
+    "rebounds":  ("REB", "espn"),
+    "assists":   ("AST", "espn"),
+    "threes":    ("3PM", "espn"),
+    "blocks":    ("BLK", "espn"),
+    "steals":    ("STL", "espn"),
+    "turnovers": ("TO",  "espn"),
+}
+
+# NHL: nhle.com source, skater stats confirmed: goals,assists,points,shots.
+# "saves" is a goalie stat — zero NHL rows have a non-null $.saves key.
+# Goalie game logs are not ingested at all; leave "saves" unmapped.
+_NHL_MARKET_STAT = {
+    "goals":   ("goals",   "nhle.com"),
+    "shots":   ("shots",   "nhle.com"),
+    "assists": ("assists", "nhle.com"),
+}
+
 _LEAGUE_MARKET_STAT = {
     "mlb": _MLB_MARKET_STAT,
     "nfl": _NFL_MARKET_STAT,
+    "nba": _NBA_MARKET_STAT,
+    "nhl": _NHL_MARKET_STAT,
 }
 
 # How many recent games to pull for the empirical distribution.
