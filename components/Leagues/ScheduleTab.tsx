@@ -14,7 +14,6 @@ interface ScheduleTabProps {
   explanation: string | null
   prevDate: string | null
   nextDate: string | null
-  navLoading: boolean
   onGoPrev: () => void
   onGoNext: () => void
   onSelectDate: (date: string) => void
@@ -34,7 +33,6 @@ export default function ScheduleTab({
   explanation,
   prevDate,
   nextDate,
-  navLoading,
   onGoPrev,
   onGoNext,
   onSelectDate,
@@ -47,7 +45,7 @@ export default function ScheduleTab({
           <button
             type="button"
             onClick={onGoPrev}
-            disabled={!prevDate || navLoading}
+            disabled={!prevDate}
             aria-label="Previous game date"
             className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900 text-xl leading-none text-zinc-300 hover:bg-zinc-800 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed"
           >
@@ -68,7 +66,7 @@ export default function ScheduleTab({
           <button
             type="button"
             onClick={onGoNext}
-            disabled={!nextDate || navLoading}
+            disabled={!nextDate}
             aria-label="Next game date"
             className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900 text-xl leading-none text-zinc-300 hover:bg-zinc-800 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed"
           >
@@ -100,12 +98,6 @@ export default function ScheduleTab({
       {error && (
         <div className="bg-red-500/10 border border-red-500/20 rounded-lg px-4 py-3 text-red-400 text-sm">
           {error}
-        </div>
-      )}
-
-      {navLoading && (
-        <div className="flex justify-center py-4">
-          <div className="h-4 w-4 animate-spin rounded-full border-2 border-zinc-600 border-t-emerald-400" />
         </div>
       )}
 

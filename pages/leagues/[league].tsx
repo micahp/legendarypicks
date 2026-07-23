@@ -253,7 +253,6 @@ export default function LeagueHubPage() {
             explanation={displayExplanation}
             prevDate={nav.prevDate}
             nextDate={nav.nextDate}
-            navLoading={nav.loading}
             onGoPrev={handleGoPrev}
             onGoNext={handleGoNext}
             onSelectDate={route.selectScheduleDate}
