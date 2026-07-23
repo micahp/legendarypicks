@@ -65,9 +65,23 @@ up() {
 down() {
   [ -n "$TASK" ] || { echo "usage: down <task>"; exit 1; }
   echo "🧹 tearing down '$TASK'"
-  pkill -f "uvicorn sports_service:app --port $BPORT" 2>/dev/null || true
-  pkill -f "next dev -p $FPORT" 2>/dev/null || true
-  pkill -f "cloudflared tunnel --url http://localhost:$FPORT" 2>/dev/null || true
+  # Kill only processes actually running FROM this worktree's directory (checked via
+  # /proc/$pid/cwd), never by hardcoded port alone. BPORT/FPORT are fixed constants
+  # reused by every task — a blind `pkill -f "...port $BPORT"` kills the MAIN dev env
+  # (or another task manually relaunched on those ports) whenever they happen to be
+  # running there too, which is often, since collisions on these same hardcoded ports
+  # are exactly why a task gets manually relaunched on different ports in the first
+  # place. This killed the main dev tunnel's backend/frontend twice in one session
+  # (2026-07-23) before this fix — always verify by cwd, not port.
+  for pid in $(pgrep -f "uvicorn sports_service:app" 2>/dev/null); do
+    [ "$(readlink -f "/proc/$pid/cwd" 2>/dev/null)" = "$(readlink -f "$WT/backend" 2>/dev/null)" ] && kill "$pid" 2>/dev/null
+  done
+  for pid in $(pgrep -f "next dev" 2>/dev/null); do
+    [ "$(readlink -f "/proc/$pid/cwd" 2>/dev/null)" = "$(readlink -f "$WT" 2>/dev/null)" ] && kill "$pid" 2>/dev/null
+  done
+  # No cloudflared kill here: `up` never starts one ("No auto-tunnel" by design,
+  # see above) — nothing for `down` to legitimately clean up, and killing by port
+  # alone is exactly the mistake this function used to make.
   sleep 1
   git -C "$MAIN" worktree remove "$WT" --force 2>/dev/null \
     && echo "  worktree removed (branch $BR kept — merge or delete it)" \
