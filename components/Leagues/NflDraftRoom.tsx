@@ -131,7 +131,8 @@ export default function NflDraftRoom({
                   <th className="text-center py-3 px-2">Team</th>
                   <th className="text-right py-3 px-2">G</th>
                   <th className="text-right py-3 px-2">ADP</th>
-                  {sort !== 'adp' && <th className="text-right py-3 px-2">{SORT_LABELS[sort]}</th>}
+                  <th className="text-right py-3 px-2">Season Proj</th>
+                  {sort !== 'adp' && sort !== 'season_proj_pts' && <th className="text-right py-3 px-2">{SORT_LABELS[sort]}</th>}
                   <th className="text-right py-3 px-2">
                     <span className="inline-flex items-center gap-1">
                       Rank
@@ -242,7 +243,13 @@ function DraftPlayerRow({
           <div className="text-[10px] font-normal text-zinc-600">{player.percent_owned.toFixed(1)}% owned</div>
         )}
       </td>
-      {sort !== 'adp' && (
+      <td className="py-2.5 px-2 text-right font-mono tabular-nums text-zinc-300 font-semibold">
+        {player.season_proj_pts != null ? player.season_proj_pts.toFixed(1) : '—'}
+        {player.games_assumed != null && (
+          <div className="text-[10px] font-normal text-zinc-600">{player.games_assumed} gms assumed</div>
+        )}
+      </td>
+      {sort !== 'adp' && sort !== 'season_proj_pts' && (
         <td className="py-2.5 px-2 text-right font-mono tabular-nums text-zinc-300 font-semibold">
           {sortDisplay}
         </td>

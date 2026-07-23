@@ -233,6 +233,8 @@ export interface NflDraftPlayer {
   carries_g: number | null
   adp: number | null
   percent_owned: number | null
+  season_proj_pts: number | null
+  games_assumed: number | null
 }
 
 export interface NflDraftBoard {
@@ -254,7 +256,7 @@ export interface NflDraftBoard {
   players: NflDraftPlayer[]
 }
 
-export type NflDraftSort = 'fantasy_ppr_g' | 'fantasy_pts_g' | 'pass_yds_g' | 'rush_yds_g' | 'rec_yds_g' | 'targets' | 'adp'
+export type NflDraftSort = 'fantasy_ppr_g' | 'fantasy_pts_g' | 'pass_yds_g' | 'rush_yds_g' | 'rec_yds_g' | 'targets' | 'adp' | 'season_proj_pts'
 
 export interface NflDraftNotes {
   rank: Record<number, number>

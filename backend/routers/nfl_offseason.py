@@ -6,13 +6,15 @@ from the NFL's published 2026 calendar and must be refreshed for a new league
 year before the contract can claim a current phase.
 """
 import datetime as dt
+import json
 import sqlite3
+from collections import defaultdict
 from contextlib import closing
 from typing import Dict, List, Optional, Set, Tuple
 
 from fastapi import APIRouter, HTTPException, Query
 
-from _core import _db
+from _core import _db, proj_mod
 
 
 router = APIRouter()
@@ -61,6 +63,7 @@ _SORT_FIELDS = {
     "rec_yds_g": "ps.rec_yds_g",
     "targets": "ps.targets",
     "adp": "na.adp",
+    "season_proj_pts": None,  # computed in Python from player_game_logs
 }
 
 
@@ -335,6 +338,64 @@ def _draft_board_schema(connection: sqlite3.Connection) -> None:
         )
 
 
+def _compute_season_projections(
+    connection: sqlite3.Connection, player_ids: List[int]
+) -> Dict[int, dict]:
+    """Batch-compute season_proj_pts + games_assumed for a set of players.
+
+    Returns a dict keyed by player_id, each value is
+    ``{"season_proj_pts": float | None, "games_assumed": int | None}``.
+    """
+    if not player_ids:
+        return {}
+    placeholders = ",".join("?" for _ in player_ids)
+    rows = connection.execute(
+        f"""SELECT player_id, stats, season, game_date, game_no
+            FROM player_game_logs
+            WHERE league='nfl' AND player_id IN ({placeholders})
+            ORDER BY player_id, COALESCE(game_date,'') DESC, CAST(game_no AS INTEGER) DESC""",
+        player_ids,
+    ).fetchall()
+
+    # Group logs by player, keeping most-recent-first order
+    player_logs: Dict[int, list] = defaultdict(list)
+    for r in rows:
+        player_logs[r["player_id"]].append(r)
+
+    result: Dict[int, dict] = {}
+    for pid, logs in player_logs.items():
+        fpts_vals: List[float] = []
+        season_games: Dict[int, int] = defaultdict(int)
+        for log in logs:
+            try:
+                s = json.loads(log["stats"])
+                val = s.get("fantasy_points_ppr")
+                if val is not None:
+                    fpts_vals.append(float(val))
+                    season_games[log["season"]] += 1
+            except (json.JSONDecodeError, TypeError, ValueError):
+                continue
+
+        proj = proj_mod.project_stat(fpts_vals, min_games=3)
+        games_assumed: Optional[int] = None
+        season_proj_pts: Optional[float] = None
+
+        if season_games:
+            latest = max(season_games.keys())
+            ga = season_games[latest]
+            if ga > 0:
+                games_assumed = min(ga, 17)
+                if proj and games_assumed:
+                    season_proj_pts = round(proj["projection"] * games_assumed, 1)
+
+        result[pid] = {
+            "season_proj_pts": season_proj_pts,
+            "games_assumed": games_assumed,
+        }
+
+    return result
+
+
 @router.get("/api/nfl/draft-board")
 def nfl_draft_board(
     position: Optional[str] = Query(None),
@@ -353,6 +414,12 @@ def nfl_draft_board(
         raise HTTPException(400, f"position must be one of {sorted(_POSITION_FILTERS)}")
     if sort not in _SORT_FIELDS:
         raise HTTPException(400, f"sort must be one of {sorted(_SORT_FIELDS)}")
+
+    # season_proj_pts is computed in Python; use fantasy_ppr_g for the SQL
+    # WHERE filter (ensures we only include players with stats to project from).
+    season_proj_sort = sort == "season_proj_pts"
+    sql_sort = "fantasy_ppr_g" if season_proj_sort else sort
+    sort_field = _SORT_FIELDS[sql_sort]
 
     with closing(_db()) as connection:
         connection.row_factory = sqlite3.Row
@@ -377,7 +444,7 @@ def nfl_draft_board(
             "ps.league='nfl'",
             "ps.season=?",
             "ps.games>0",
-            f"{_SORT_FIELDS[sort]} IS NOT NULL",
+            f"{sort_field} IS NOT NULL",
         ]
         params: list = [season]
         if selected_position == "FLEX":
@@ -389,30 +456,86 @@ def nfl_draft_board(
             where.append(f"{position_expr} IN ('QB','RB','WR','TE','FB')")
         where_sql = " AND ".join(where)
         join_sql = "LEFT JOIN nfl_adp na ON na.player_id=p.id AND na.season=?"
-        eligible = connection.execute(
-            f"""SELECT COUNT(*) FROM players p
-                JOIN player_stats ps ON ps.player_id=p.id
-                {join_sql}
-                WHERE {where_sql}""",
-            [_CURRENT_SEASON, *params],
-        ).fetchone()[0]
-        order_clause = f"{_SORT_FIELDS[sort]} ASC" if sort == "adp" else f"{_SORT_FIELDS[sort]} DESC"
-        nulls = "NULLS LAST" if sort == "adp" else ""
-        rows = connection.execute(
-            f"""SELECT p.id AS player_id, p.name, {position_expr} AS position,
-                       p.team AS current_team, COALESCE(NULLIF(ps.nfl_team,''), ps.team) AS reference_team,
-                       ps.games, ps.fantasy_ppr_g, ps.fantasy_pts_g,
-                       ps.pass_yds_g, ps.rush_yds_g, ps.rec_yds_g,
-                       ps.targets, ps.receptions, ps.carries_g,
-                       na.adp, na.percent_owned
-                FROM players p
-                JOIN player_stats ps ON ps.player_id=p.id
-                {join_sql}
-                WHERE {where_sql}
-                ORDER BY {order_clause} {nulls}, ps.games DESC, p.name COLLATE NOCASE
-                LIMIT ? OFFSET ?""",
-            [_CURRENT_SEASON, *params, limit, offset],
-        ).fetchall()
+
+        if season_proj_sort:
+            # ── season_proj_pts sort: compute projections for ALL eligible,
+            #    sort in Python, then fetch player details for the slice ──
+            id_rows = connection.execute(
+                f"""SELECT p.id AS player_id
+                    FROM players p
+                    JOIN player_stats ps ON ps.player_id=p.id
+                    {join_sql}
+                    WHERE {where_sql}""",
+                [_CURRENT_SEASON, *params],
+            ).fetchall()
+            all_ids = [r["player_id"] for r in id_rows]
+            eligible = len(all_ids)
+
+            # Compute projections for the full eligible population
+            proj_map = _compute_season_projections(connection, all_ids)
+
+            # Sort eligible IDs by season_proj_pts DESC, then by games DESC, then name
+            def _sort_key(pid: int) -> tuple:
+                p = proj_map.get(pid, {})
+                pts = p.get("season_proj_pts")
+                return (0 if pts is not None else 1, -(pts or 0))
+
+            all_ids.sort(key=_sort_key)
+            page_ids = all_ids[offset : offset + limit]
+
+            if not page_ids:
+                rows = []
+            else:
+                id_placeholders = ",".join("?" for _ in page_ids)
+                order_clause = f"fantasy_ppr_g DESC"
+                rows = connection.execute(
+                    f"""SELECT p.id AS player_id, p.name, {position_expr} AS position,
+                               p.team AS current_team, COALESCE(NULLIF(ps.nfl_team,''), ps.team) AS reference_team,
+                               ps.games, ps.fantasy_ppr_g, ps.fantasy_pts_g,
+                               ps.pass_yds_g, ps.rush_yds_g, ps.rec_yds_g,
+                               ps.targets, ps.receptions, ps.carries_g,
+                               na.adp, na.percent_owned
+                        FROM players p
+                        JOIN player_stats ps ON ps.player_id=p.id
+                        {join_sql}
+                        WHERE p.id IN ({id_placeholders})
+                        ORDER BY {order_clause}, ps.games DESC, p.name COLLATE NOCASE""",
+                    [_CURRENT_SEASON, *page_ids],
+                ).fetchall()
+                # Reorder rows to match page_ids order
+                row_by_id = {r["player_id"]: r for r in rows}
+                rows = [row_by_id[pid] for pid in page_ids if pid in row_by_id]
+        else:
+            # ── normal sort: SQL ordering, compute projections for returned 50 ──
+            eligible = connection.execute(
+                f"""SELECT COUNT(*) FROM players p
+                    JOIN player_stats ps ON ps.player_id=p.id
+                    {join_sql}
+                    WHERE {where_sql}""",
+                [_CURRENT_SEASON, *params],
+            ).fetchone()[0]
+            order_clause = f"{sort_field} ASC" if sql_sort == "adp" else f"{sort_field} DESC"
+            nulls = "NULLS LAST" if sql_sort == "adp" else ""
+            rows = connection.execute(
+                f"""SELECT p.id AS player_id, p.name, {position_expr} AS position,
+                           p.team AS current_team, COALESCE(NULLIF(ps.nfl_team,''), ps.team) AS reference_team,
+                           ps.games, ps.fantasy_ppr_g, ps.fantasy_pts_g,
+                           ps.pass_yds_g, ps.rush_yds_g, ps.rec_yds_g,
+                           ps.targets, ps.receptions, ps.carries_g,
+                           na.adp, na.percent_owned
+                    FROM players p
+                    JOIN player_stats ps ON ps.player_id=p.id
+                    {join_sql}
+                    WHERE {where_sql}
+                    ORDER BY {order_clause} {nulls}, ps.games DESC, p.name COLLATE NOCASE
+                    LIMIT ? OFFSET ?""",
+                [_CURRENT_SEASON, *params, limit, offset],
+            ).fetchall()
+
+            # Compute projections for just the returned players
+            proj_map = _compute_season_projections(
+                connection, [r["player_id"] for r in rows]
+            )
 
     roster_is_current = roster_freshness["status"] == "current"
     players = []
@@ -422,9 +545,11 @@ def nfl_draft_board(
         team_changed = None
         if roster_is_current and current_team and reference_team:
             team_changed = current_team != reference_team
+        pid = row["player_id"]
+        proj = proj_map.get(pid, {})
         players.append({
             "rank": offset + index + 1,
-            "player_id": row["player_id"],
+            "player_id": pid,
             "name": row["name"],
             "position": row["position"],
             "current_team": current_team,
@@ -441,6 +566,8 @@ def nfl_draft_board(
             "carries_g": row["carries_g"],
             "adp": row["adp"],
             "percent_owned": row["percent_owned"],
+            "season_proj_pts": proj.get("season_proj_pts"),
+            "games_assumed": proj.get("games_assumed"),
         })
     return {
         "contract": _DRAFT_BOARD_CONTRACT,
