@@ -7,6 +7,7 @@ year before the contract can claim a current phase.
 """
 import datetime as dt
 import json
+import re
 import sqlite3
 from collections import defaultdict
 from contextlib import closing
@@ -283,6 +284,37 @@ def nfl_season_context():
 
 _TRANSACTIONS_CONTRACT = "nfl-transactions-v1"
 
+# ESPN's transaction text always prefixes a player mention with their position
+# abbreviation ("WR A.J. Brown", "DE Myles Garrett") — reliable enough to pull
+# player names out of free text without a real NLP pass.
+_POSITION_PREFIX = re.compile(
+    r"\b(?:QB|RB|WR|TE|FB|OL|OT|OG|C|DL|DE|DT|EDGE|LB|CB|S|FS|SS|K|P|LS|NT|DB)\s+"
+    r"([A-Z][A-Za-z'.\-]+(?:\s+[A-Z][A-Za-z'.\-]+){0,3})"
+)
+# Negative lookbehind excludes splitting after a single-capital-letter initial
+# ("A.J.", "T.J.") — those periods aren't sentence ends, just part of a name.
+_SENTENCE_SPLIT = re.compile(r"(?<![A-Z]\.)(?<=[.!?])\s+(?=[A-Z])")
+# A bare trailing period is sentence punctuation, not part of the name — unless
+# the name itself legitimately ends in a single-letter initial ("A.J.").
+_TRAILING_INITIAL = re.compile(r"\b[A-Z]\.$")
+
+
+def _split_trade_sentences(description: str) -> List[Tuple[str, List[str]]]:
+    """A logged transaction can bundle unrelated moves in one blob ("Signed X.
+    Released Y. Traded Z..."). Split into sentences, keep only the trade ones,
+    and pull out the player name(s) mentioned in each for bolding client-side."""
+    out = []
+    for sentence in _SENTENCE_SPLIT.split(description.strip()):
+        sentence = sentence.strip()
+        if not sentence or "trad" not in sentence.lower():
+            continue
+        players = [
+            p if _TRAILING_INITIAL.search(p) else p.rstrip(".")
+            for p in _POSITION_PREFIX.findall(sentence)
+        ]
+        out.append((sentence, players))
+    return out
+
 
 @router.get("/api/nfl/transactions")
 def nfl_transactions(
@@ -295,10 +327,16 @@ def nfl_transactions(
     "Offseason Movers" card content; see docs on why this replaced the raw
     season-milestone timeline (it's actual news, not a static calendar).
 
-    trades_only: no dedicated "type" field exists in ESPN's feed (free text only),
-    so this matches on the word "trad" (covers "traded"/"trade") — good enough
-    since ESPN's wording is consistent. Note ESPN logs one row per team involved
-    in a deal, so a single trade surfaces as two rows here (one per side)."""
+    trades_only: no dedicated "type" field exists in ESPN's feed (free text
+    only). Each bundled description is split into individual trade sentences
+    (a signing/release bundled in the same blob is dropped), and mirror
+    entries — ESPN logs one row per team in a deal, so the same trade
+    otherwise appears twice — are deduped by the set of player names
+    mentioned (reliable; team names in the text are often ambiguous, e.g.
+    "Los Angeles" alone doesn't say Rams vs Chargers). Within a duplicate
+    pair there's no textual signal for which side is colloquially "the from
+    team" in a genuine two-way trade, so the tie-break is simply the
+    alphabetically-first team abbreviation — arbitrary but deterministic."""
     with closing(_db()) as connection:
         connection.row_factory = sqlite3.Row
         columns = _table_columns(connection, "nfl_transactions")
@@ -312,24 +350,52 @@ def nfl_transactions(
         if trades_only:
             conditions.append("description LIKE '%trad%'")
         where = f"WHERE {' AND '.join(conditions)}" if conditions else ""
+        # Trade sentences get split out of bundled rows and deduped, so pull a
+        # wider raw window than `limit` — the final trade-event count is smaller
+        # than the raw row count once bundling/mirroring collapse.
+        raw_limit = limit * 6 if trades_only else limit
         rows = connection.execute(
             f"""SELECT txn_date, team_id, team_abbr, team_name, description
                 FROM nfl_transactions {where}
                 ORDER BY txn_date DESC, id DESC LIMIT ?""",
-            (*params, limit),
+            (*params, raw_limit),
         ).fetchall()
-        return {
-            "contract": _TRANSACTIONS_CONTRACT,
-            "count": len(rows),
-            "transactions": [
-                {
+
+        if not trades_only:
+            return {
+                "contract": _TRANSACTIONS_CONTRACT,
+                "count": len(rows),
+                "transactions": [
+                    {
+                        "date": r["txn_date"],
+                        "team": r["team_abbr"],
+                        "teamName": r["team_name"],
+                        "description": r["description"],
+                    }
+                    for r in rows
+                ],
+            }
+
+        # Split each row into individual trade sentences, dedupe mirrored
+        # entries by the set of player names mentioned.
+        groups: Dict[frozenset, list] = defaultdict(list)
+        for r in rows:
+            for sentence, players in _split_trade_sentences(r["description"]):
+                key = frozenset(p.lower() for p in players) if players else frozenset({sentence.lower()})
+                groups[key].append({
                     "date": r["txn_date"],
                     "team": r["team_abbr"],
                     "teamName": r["team_name"],
-                    "description": r["description"],
-                }
-                for r in rows
-            ],
+                    "description": sentence,
+                    "players": players,
+                })
+        deduped = [min(events, key=lambda e: e["team"]) for events in groups.values()]
+        deduped.sort(key=lambda e: e["date"], reverse=True)
+        deduped = deduped[:limit]
+        return {
+            "contract": _TRANSACTIONS_CONTRACT,
+            "count": len(deduped),
+            "transactions": deduped,
         }
 
 

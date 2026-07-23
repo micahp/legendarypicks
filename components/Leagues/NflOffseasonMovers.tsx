@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import type { NflTransaction } from './types'
 
 interface Props {
@@ -50,11 +51,25 @@ export default function NflOffseasonMovers({ data, loading, error }: Props) {
                 {t.team}
               </span>
             ) : null}
-            <p className="text-sm text-zinc-300">{t.description}</p>
+            <p className="text-sm text-zinc-300">{boldPlayers(t.description, t.players)}</p>
           </div>
         ))}
       </div>
     </section>
+  )
+}
+
+function escapeRegExp(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+// Bold the player name(s) the backend already extracted, without dangerouslySetInnerHTML.
+function boldPlayers(text: string, players?: string[]): ReactNode {
+  if (!players || players.length === 0) return text
+  const pattern = new RegExp(`(${players.map(escapeRegExp).join('|')})`, 'g')
+  const parts = text.split(pattern)
+  return parts.map((part, i) =>
+    players.includes(part) ? <strong key={i} className="font-semibold text-zinc-100">{part}</strong> : part
   )
 }
 

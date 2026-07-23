@@ -212,6 +212,7 @@ export interface NflTransaction {
   team: string | null
   teamName: string | null
   description: string
+  players?: string[]
 }
 
 export interface NflDraftPlayer {
