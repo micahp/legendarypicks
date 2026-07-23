@@ -528,6 +528,7 @@ def _ps_enrich(team_a, team_b, include_running=True, near_ms=None, league=None, 
 
     img0, img1 = op0.get("image_url"), op1.get("image_url")
     name0, name1 = op0.get("name") or "", op1.get("name") or ""
+    acr0, acr1 = op0.get("acronym") or "", op1.get("acronym") or ""
 
     return {
         "_ps_id": m.get("id"),  # PandaScore match id — lets slate_state.py dedup the surface block by
@@ -542,6 +543,13 @@ def _ps_enrich(team_a, team_b, include_running=True, near_ms=None, league=None, 
         "logoB": img0 if swapped else img1,
         "canonicalA": name1 if swapped else name0,
         "canonicalB": name0 if swapped else name1,
+        # Short team acronym (e.g. Fnatic -> FNC, Karmine Corp -> KC) — an official broadcast's video
+        # title/description often uses ONLY the acronym ("FNC vs KC"), never the full name, so the
+        # yt_live_resolver team-name disambiguator (which needs a >=3/4 char token to avoid false
+        # positives) can't find a match without this passed separately as a hint. See streams.py
+        # _pick_stream's extra_hints and yt_live_resolver._scrape_find_video.
+        "acronymA": acr1 if swapped else acr0,
+        "acronymB": acr0 if swapped else acr1,
         "startTime": _iso_to_ms(m.get("begin_at") or m.get("scheduled_at")),
         "endTime": _iso_to_ms(m.get("end_at")),
         "league": (m.get("league") or {}).get("name"),

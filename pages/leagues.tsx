@@ -2,13 +2,14 @@ import Head from 'next/head'
 import Link from 'next/link'
 
 const LEAGUES = [
-  { key: 'mlb', name: 'MLB', desc: 'Major League Baseball — batting leaders, pitching stars, division standings', emoji: '⚾' },
-  { key: 'nba', name: 'NBA', desc: 'National Basketball Association — scoring leaders, team standings, game schedule', emoji: '🏀' },
-  { key: 'nhl', name: 'NHL', desc: 'National Hockey League — points leaders, goalie stats, division races', emoji: '🏒' },
-  { key: 'nfl', name: 'NFL', desc: 'National Football League — passing, rushing, receiving leaders, team power rankings', emoji: '🏈' },
-  { key: 'wc', name: 'FIFA World Cup', desc: 'FIFA World Cup — knockout bracket, match results, group stage history', emoji: '⚽' },
-  { key: 'ufc', name: 'UFC', desc: 'Ultimate Fighting Championship — pound-for-pound rankings, division champions', emoji: '🥊' },
-  { key: 'cod', name: 'Esports', desc: 'Call of Duty, CS2, Valorant, LoL, Dota 2, and more — live broadcast, running order, results, and picks', emoji: '🎮' },
+  { key: 'mlb', name: 'MLB', desc: 'Major League Baseball, batting leaders, pitching stars, division standings', emoji: '⚾' },
+  { key: 'nba', name: 'NBA', desc: 'National Basketball Association, scoring leaders, team standings, game schedule', emoji: '🏀' },
+  { key: 'nhl', name: 'NHL', desc: 'National Hockey League, points leaders, goalie stats, division races', emoji: '🏒' },
+  { key: 'nfl', name: 'NFL', desc: 'National Football League, passing, rushing, receiving leaders, team power rankings', emoji: '🏈' },
+  { key: 'wc', name: 'FIFA World Cup', desc: 'FIFA World Cup, knockout bracket, match results, group stage history', emoji: '⚽' },
+  { key: 'ufc', name: 'UFC', desc: 'Ultimate Fighting Championship, pound-for-pound rankings, division champions', emoji: '🥊' },
+  // Esports card hidden 2026-07-22 (Micah): tab defaulting/content-awareness unresolved,
+  // leagues surface needs organization before esports goes back up here.
 ]
 
 export default function LeaguesPage() {
@@ -25,7 +26,7 @@ export default function LeaguesPage() {
           {LEAGUES.map((lg) => (
             <Link
               key={lg.key}
-              href={lg.key === 'cod' ? '/esports/call-of-duty' : `/leagues/${lg.key}`}
+              href={`/leagues/${lg.key}`}
               className="group bg-zinc-900 border border-zinc-800 rounded-xl p-5 transition-colors hover:border-emerald-500/30 hover:bg-zinc-900/80"
             >
               <div className="flex items-start gap-3">

@@ -55,6 +55,11 @@ up() {
   echo "  Merge when done:  git -C $MAIN merge --ff-only $BR"
   echo "  Tear down:        scripts/hermes-worktree.sh down $TASK"
   echo "────────────────────────────────────────────────"
+  echo "  ⚠ Isolation covers this git tree ONLY — it does NOT cover /etc, systemd units, cron,"
+  echo "    or anything else host-level/shared. Never edit those from inside the worktree, even"
+  echo "    if the task needs a scheduling change to fully take effect — describe what's needed"
+  echo "    in the task summary instead and let the operator apply it after reviewing the diff."
+  echo "────────────────────────────────────────────────"
 }
 
 down() {

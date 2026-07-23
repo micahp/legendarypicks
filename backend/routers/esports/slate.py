@@ -60,15 +60,15 @@ from .slate_state import (S_ENDED_UNKNOWN, S_FINISHED, S_LIVE, S_SCHEDULED,
 # Stream helpers: post-swap these live in streams.py; pre-swap (validation) load the reviewed file
 # by path so this module is testable without touching the running streams.py.
 try:
-    from .streams import _pick_stream, _rule_candidates, _resolve_watch
+    from .streams import _pick_stream, _rule_candidates, _resolve_watch, _yt_sibling_candidates
 except ImportError:
     _spec = importlib.util.spec_from_file_location(
         "routers.esports._streams_reviewed",
         os.path.join(os.path.dirname(os.path.abspath(__file__)), "streams.reviewed.py"))
     _sr = importlib.util.module_from_spec(_spec)
     _spec.loader.exec_module(_sr)
-    _pick_stream, _rule_candidates, _resolve_watch = (
-        _sr._pick_stream, _sr._rule_candidates, _sr._resolve_watch)
+    _pick_stream, _rule_candidates, _resolve_watch, _yt_sibling_candidates = (
+        _sr._pick_stream, _sr._rule_candidates, _sr._resolve_watch, _sr._yt_sibling_candidates)
 
 router = APIRouter()
 
@@ -582,8 +582,14 @@ def _rebuild_upcoming():
             if ps and m.get("_ps_id") is not None:
                 pool += _ps_candidates(m["_ps_id"], ps_streams_by_id, ps.get("live"))
             pool += _rule_candidates(slug, m.get("league"))
+            pool += _yt_sibling_candidates(pool)
+            # Team acronyms (Fnatic -> FNC) disambiguate a channel's video titles that never spell
+            # out the full names (VCT EMEA: "FNC vs KC") — see streams.py _pick_stream extra_hints.
+            acronym_hints = [h for h in (ps.get("acronymA") if ps else None,
+                                          ps.get("acronymB") if ps else None) if h]
             m["watch"] = _pick_stream(pool, match_live=True, team_names=team_names,
-                                       game=m.get("title")) if pool else None
+                                       game=m.get("title"),
+                                       extra_hints=acronym_hints or None) if pool else None
         elif m["state"] == S_SCHEDULED and slug:
             ps_cands = (_ps_candidates(m["_ps_id"], ps_streams_by_id, False)
                         if m.get("_ps_id") is not None else [])

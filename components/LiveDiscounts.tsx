@@ -43,7 +43,7 @@ function DiscountCard({ c }: { c: Card }) {
   const isGift = c.cls === 'GIFT_FADE'
   return (
     <Link href={`/game/${c.league.toLowerCase()}/${c.game_id}`}
-          className="block min-w-[240px] flex-1 rounded-xl border border-zinc-800 bg-zinc-900/70 p-3 transition-colors hover:border-zinc-600">
+          className="block min-w-[220px] flex-1 rounded-lg border border-zinc-800/40 px-3 py-2.5 transition-colors hover:bg-zinc-800/40">
       <div className="mb-2 flex items-center justify-between gap-2">
         <span className={`rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
           isDip ? 'bg-emerald-500/15 text-emerald-300'
@@ -118,7 +118,7 @@ export default function LiveDiscounts({ league = 'mlb,wc' }: { league?: string }
   if (cards.length === 0) return null
 
   return (
-    <div className="space-y-3 rounded-2xl border border-amber-500/20 bg-amber-500/[0.04] p-4 sm:p-5">
+    <div className="space-y-3 rounded-r-xl bg-zinc-900 amber-edge p-4 sm:p-5">
       <div className="flex items-baseline justify-between gap-3">
         <span className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-amber-400">
           ⚡ Cheap quality, live

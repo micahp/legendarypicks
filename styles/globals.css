@@ -37,3 +37,15 @@ a {
 .panel {
   @apply rounded-xl border border-zinc-800 bg-zinc-900 shadow-card;
 }
+
+/* ── live-card rail (Broadcast Rail design system) ── */
+@keyframes breathe {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+.live-edge {
+  border-left: 3px solid rgb(16 185 129 / 0.6);
+}
+.amber-edge {
+  border-left: 3px solid rgb(245 158 11 / 0.5);
+}

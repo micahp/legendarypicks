@@ -21,7 +21,9 @@ export function useScheduleData(
       setLoading(true)
       setError(null)
       try {
-        const schedule = await SportsService.getGamesByDate(league, scheduleDate)
+        // Strict local-date fetch: if either neighbor backend request fails,
+        // the whole load fails → error → no auto-resolve.
+        const schedule = await SportsService.getGamesByLocalDate(league, scheduleDate, { strict: true })
         if (!ignore) setGames(Array.isArray(schedule) ? schedule : [])
       } catch {
         if (!ignore) setError('Unable to load schedule.')

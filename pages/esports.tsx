@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import Head from 'next/head'
+import Link from 'next/link'
 
 /* ---------------- types ---------------- */
 type Player = { name: string; rating: number | null; clock: number | null }
@@ -25,7 +26,7 @@ type CS2Player = { name: string; kills: number | null; deaths: number | null }
 type CS2Team = { name: string; score: number | null; won: boolean; players: CS2Player[] }
 type CS2Live = { live: boolean; title?: string; tournament?: string; stream?: { platform: string; channel: string } | null; teamA?: CS2Team; teamB?: CS2Team }
 
-type UpMatch = { startTime: number | null; endTime: number | null; live: boolean; title: string; league: string; teamA: string; teamB: string; favorite: { name: string; pct: number } | null; watch: { platform: string; url: string; channel: string | null; online?: boolean | null; embedUrl?: string | null; language?: string | null; alternates?: Array<{ platform: string; url: string; channel: string | null; online?: boolean | null; embedUrl?: string | null; language?: string | null }> } | null; score?: { a: number | null; b: number | null } | null; finished?: boolean | null; winner?: 'a' | 'b' | null; pinned?: boolean; model?: { favName: string; modelPct: number; marketPct: number | null; edge: number | null } | null; logoA?: string | null; logoB?: string | null; minorLeague?: boolean; tier?: number; prominence?: number; psId?: number | string | null; streamKey?: string | null; eventId?: number | string | null; foreign?: boolean }
+type UpMatch = { startTime: number | null; endTime: number | null; live: boolean; title: string; league: string; teamA: string; teamB: string; favorite: { name: string; pct: number } | null; watch: { platform: string; url: string; channel: string | null; online?: boolean | null; embedUrl?: string | null; language?: string | null; viewers?: number | null; alternates?: Array<{ platform: string; url: string; channel: string | null; online?: boolean | null; embedUrl?: string | null; language?: string | null }> } | null; score?: { a: number | null; b: number | null } | null; finished?: boolean | null; winner?: 'a' | 'b' | null; pinned?: boolean; model?: { favName: string; modelPct: number; marketPct: number | null; edge: number | null } | null; logoA?: string | null; logoB?: string | null; minorLeague?: boolean; tier?: number; prominence?: number; psId?: number | string | null; streamKey?: string | null; eventId?: number | string | null; foreign?: boolean }
 type UpcomingData = { matches: UpMatch[]; source?: string; error?: string; building?: boolean }
 
 const POLL_MS = 10_000
@@ -370,6 +371,11 @@ function fmtClock(ms: number | null) {
 function watchLabel(platform: string) {
   return platform === 'twitch' ? 'twitch' : platform === 'kick' ? 'kick'
     : platform === 'youtube' ? 'youtube' : 'watch'
+}
+
+const viewerFmt = new Intl.NumberFormat('en', { notation: 'compact', maximumFractionDigits: 1 })
+function fmtViewers(n: number): string {
+  return viewerFmt.format(n)
 }
 
 function UpMatchRow({ m, host }: { m: UpMatch; host: string }) {
@@ -832,11 +838,29 @@ function buildBroadcastViews(slate: UpMatch[], liveMatches: UpMatch[], now: numb
   }
 
   const stateRank: Record<BroadcastState, number> = { live: 2, gap: 1, starting: 0 }
-  // Prominence already encodes the language demotion — the backend drops a non-English broadcast (its
-  // `foreign` flag) below every English/unknown one — so a Chinese-only cast can't take the hero over
-  // a live English one, with no client-side language guessing.
+  // `prominence` is a per-MATCH field but a broadcast view can represent a GROUP (same streamKey +
+  // eventId, e.g. sibling games in one series) whose `group.prominence` is a Math.max() over every
+  // match in the group — so a foreign-demoted live game can inherit a non-foreign sibling's higher
+  // prominence and outrank an actually-English broadcast. Rank on the STREAM WE'RE ABOUT TO SHOW
+  // (view.watch.language), not the group's leaked max, so foreign demotion actually holds at render time.
+  const langRank = (v: BroadcastView) => (v.watch?.language && v.watch.language !== 'en') ? 1 : 0
+  // A watchable broadcast always beats an unwatchable one, regardless of prominence — a high-tier match
+  // with no stream (e.g. an unbroadcast dead-rubber decider) must never bump a lower-tier match that
+  // actually has a live embed out of the featured slot; the whole point of "featured" is "watch this now".
+  //
+  // Viewer count is the primary ordering signal (Micah's call, 2026-07-22): this board is titled
+  // "LIVE NOW", and `prominence` is a competitive-prestige score, not a popularity one — verified
+  // case that motivated this: a 650-viewer Dota match was featured over a live 38k-viewer CS2 match
+  // that ranked lower on prominence alone. Unknown viewer count (null — platform lacks a free
+  // viewer-count API, or the check hasn't landed yet) ranks below every KNOWN count via -1, never
+  // above; `prominence` is kept only as the tiebreaker for equal/unknown viewer counts, so a
+  // scheduled "starting soon" card (no viewers yet) still orders sensibly against its peers.
+  const viewerRank = (v: BroadcastView) => v.watch?.viewers ?? -1
   return views.sort((a, b) => (
-    b.prominence - a.prominence
+    Number(isEmbeddableWatch(b.watch)) - Number(isEmbeddableWatch(a.watch))
+    || langRank(a) - langRank(b)
+    || viewerRank(b) - viewerRank(a)
+    || b.prominence - a.prominence
     || stateRank[b.state] - stateRank[a.state]
     || (a.match.startTime ?? Infinity) - (b.match.startTime ?? Infinity)
   ))
@@ -861,10 +885,10 @@ export function LiveCard({ m, host, featured = false, onPromote, upNext = null, 
   // — it once surfaced a dead foreign Twitch co-stream above the live Kick main the backend chose,
   // and it would equally shove a foreign YouTube ahead of an English cast. Default (index 0) is the
   // backend's primary.
+  const watch = watchOverride ?? m.watch
   const sources: { platform: string; src: string }[] = []
   {
     const seen = new Set<string>()
-    const watch = watchOverride ?? m.watch
     const raw = watch ? [watch, ...(watch.alternates || [])] : []
     for (const s of raw) {
       if (!s || seen.has(s.platform)) continue
@@ -886,7 +910,7 @@ export function LiveCard({ m, host, featured = false, onPromote, upNext = null, 
          className={`overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900/50 ${featured ? 'sm:col-span-2' : ''}`}>
       <div className="p-4">
         <div className="mb-2">
-          <Eyebrow live>{m.title} · {m.league}</Eyebrow>
+          <Eyebrow live>{m.title} · {m.league}{watch?.viewers != null ? ` · ${fmtViewers(watch.viewers)} watching` : ''}</Eyebrow>
         </div>
         {m.finished || startingSoon ? (
           <div className="mb-1 font-mono text-[10px] uppercase tracking-wider text-zinc-500">
@@ -1173,7 +1197,7 @@ export default function EsportsPage() {
       <Head><title>Esports — Legendary Picks</title></Head>
 
       <div className="space-y-10">
-        <header className="space-y-2">
+        <header className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <h1 className="text-3xl font-extrabold tracking-tight text-zinc-50">Esports</h1>
             {anyLive ? (
@@ -1182,6 +1206,12 @@ export default function EsportsPage() {
               </span>
             ) : null}
           </div>
+          <Link
+            href="/predict"
+            className="shrink-0 rounded-lg bg-emerald-500 px-4 py-2 text-sm font-bold text-zinc-950 transition-colors hover:bg-emerald-400"
+          >
+            Make Picks
+          </Link>
         </header>
 
         {/* One unified "Live now" section: MSI leads as the featured rich view when live (it's the

@@ -193,6 +193,9 @@ function normalizePrediction(p: any): Prediction {
 // today refreshes fast enough (< the 30s poll) that live scores never freeze.
 const _gamesCache = new Map<string, { ts: number; data: Game[] }>()
 const _gamesInflight = new Map<string, Promise<Game[]>>()
+const _scheduleDatesCache = new Map<string, { ts: number; data: ScheduleDatesResponse }>()
+const _scheduleDatesInflight = new Map<string, Promise<ScheduleDatesResponse | null>>()
+const _scheduleDatesTtl = 300_000
 const _localToday = () => new Date().toLocaleDateString('en-CA')
 const _cacheTtl = (date: string): number => {
   const today = _localToday()
@@ -256,7 +259,7 @@ export const SportsService = {
   // local day — not the backend's UTC date bucket. A CoD match that ended 9pm CT is 02:00 UTC
   // the next day, so a plain by-UTC-date fetch drops it onto tomorrow's board. Fetch the
   // selected day plus its neighbors and keep only games whose local day matches.
-  getGamesByLocalDate: async (league: string, localDate: string): Promise<Game[]> => {
+  getGamesByLocalDate: async (league: string, localDate: string, opts?: { strict?: boolean }): Promise<Game[]> => {
     const localDayOf = (iso: string): string | null => {
       if (!iso) return null
       const d = new Date(iso)
@@ -273,10 +276,15 @@ export const SportsService = {
       return d.toLocaleDateString('en-CA')
     })
     const perDate = await Promise.all(
-      windowDates.map(async (d) => ({
-        d,
-        games: await SportsService.getGamesByDate(league, d).catch(() => [] as Game[]),
-      })),
+      windowDates.map(async (d) => {
+        try {
+          const games = await SportsService.getGamesByDate(league, d)
+          return { d, games }
+        } catch (err) {
+          if (opts?.strict) throw err
+          return { d, games: [] as Game[] }
+        }
+      }),
     )
     const seen = new Set<string>()
     const kept: Game[] = []
@@ -413,4 +421,109 @@ export const SportsService = {
       return { available: false }
     }
   },
+
+  getScheduleDates: async (league: string, anchor: string): Promise<ScheduleDatesResponse | null> => {
+    const key = `${league.toLowerCase()}:${anchor}`
+    const cached = _scheduleDatesCache.get(key)
+    if (cached && Date.now() - cached.ts < _scheduleDatesTtl) return cached.data
+
+    // Auto-resolution and arrow navigation consume the same contract. Collapse
+    // their concurrent effects (including React development replays) into one
+    // backend request instead of multiplying ESPN discovery work.
+    const inflight = _scheduleDatesInflight.get(key)
+    if (inflight) return inflight
+
+    const request = (async () => {
+      try {
+        const res = await axios.get(`${API_BASE_URL}/${league}/schedule-dates`, { params: { anchor } })
+        const data = res.data as ScheduleDatesResponse
+        _scheduleDatesCache.set(key, { ts: Date.now(), data })
+        return data
+      } catch (err) {
+        console.error('Error fetching schedule dates', err)
+        return null
+      } finally {
+        _scheduleDatesInflight.delete(key)
+      }
+    })()
+    _scheduleDatesInflight.set(key, request)
+    return request
+  },
+
+  getNflScheduleWeeks: async (anchor: string): Promise<NflScheduleWeeksResponse | null> => {
+    try {
+      const res = await axios.get(`${API_BASE_URL}/nfl/schedule-weeks`, { params: { anchor } })
+      return res.data
+    } catch (err) {
+      console.error('Error fetching NFL schedule weeks', err)
+      return null
+    }
+  },
+
+  getNflScheduleWeek: async (season: number, seasonType: number, week: number): Promise<NflScheduleWeekResponse | null> => {
+    try {
+      const res = await axios.get(`${API_BASE_URL}/nfl/schedule-week`, {
+        params: { season, season_type: seasonType, week },
+      })
+      return res.data
+    } catch (err) {
+      console.error('Error fetching NFL schedule week', err)
+      return null
+    }
+  },
+}
+
+export interface ScheduleDatesResponse {
+  contract: string
+  league: string
+  anchor_date: string
+  event_start_timezone: string
+  future_event_starts: string[]
+  past_event_starts: string[]
+  search: {
+    future: { start_date: string; end_date: string; event_starts_found: number }[]
+    past: { start_date: string; end_date: string; event_starts_found: number }[]
+    max_horizon_days: number
+  }
+}
+
+// ── NFL schedule weeks ──
+
+export interface NflWeekEntry {
+  key: string
+  season_type: number
+  week: number
+  label: string
+  alternate_label: string | null
+  detail: string | null
+  start_time: string
+  end_time: string
+}
+
+export interface NflPhaseGroup {
+  season_type: number
+  label: string
+  start_time: string
+  end_time: string
+  weeks: NflWeekEntry[]
+}
+
+export interface NflScheduleWeeksResponse {
+  contract: string
+  league: string
+  season: number
+  anchor_date: string
+  navigation: string
+  phases: NflPhaseGroup[]
+  weeks: NflWeekEntry[]
+  default_week_key: string
+  default_reason: string
+}
+
+export interface NflScheduleWeekResponse {
+  contract: string
+  league: string
+  season: number
+  selected_week: NflWeekEntry
+  games: any[]
 }

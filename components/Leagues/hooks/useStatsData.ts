@@ -140,6 +140,13 @@ export function useStatsData({
     replaceStatsQuery({ view: 'players', type }, ['category', 'stat'])
   }
 
+  const selectSeason = (season: string) => {
+    setLeaders(null)
+    const updates: Record<string, string> = { view: 'players', season }
+    if (league === 'mlb') updates.type = mlbType
+    replaceStatsQuery(updates, ['category', 'stat'])
+  }
+
   const selectStatCategory = (category: string) => {
     replaceStatsQuery({ view: 'players', category }, ['stat'])
   }
@@ -177,7 +184,10 @@ export function useStatsData({
     const requestedStat = typeof router.query.stat === 'string'
       ? router.query.stat
       : ''
-    const signature = `${league}|${mlbType}|${requestedCategory}|${requestedStat}`
+    const requestedSeason = typeof router.query.season === 'string'
+      ? router.query.season
+      : ''
+    const signature = `${league}|${mlbType}|${requestedSeason}|${requestedCategory}|${requestedStat}`
     if (canonicalRef.current === signature) {
       canonicalRef.current = null
       return
@@ -193,8 +203,10 @@ export function useStatsData({
         if (league === 'mlb') params.set('type', mlbType)
         const category = requestedCategory || null
         const stat = requestedStat || null
+        const season = requestedSeason || null
         if (category) params.set('category', category)
         if (stat) params.set('stat', stat)
+        if (season) params.set('season', season)
         const response = await fetch(`/api/${league}/leaders?${params.toString()}`)
         if (!response.ok) {
           let detail = `HTTP ${response.status}`
@@ -223,14 +235,15 @@ export function useStatsData({
           setLeaders(data)
           if (
             queryRef.current.tab === 'stats'
-            && ((!category && data.category) || (!stat && data.stat))
+            && ((!category && data.category) || (!stat && data.stat) || (!season && data.season != null))
           ) {
             const query: Record<string, string | string[] | undefined> = {
               ...queryRef.current,
             }
             if (!category && data.category) query.category = data.category
             if (!stat && data.stat) query.stat = data.stat
-            canonicalRef.current = `${league}|${mlbType}|${(query.category as string) || ''}|${(query.stat as string) || ''}`
+            if (!season && data.season != null) query.season = String(data.season)
+            canonicalRef.current = `${league}|${mlbType}|${(query.season as string) || ''}|${(query.category as string) || ''}|${(query.stat as string) || ''}`
             void router.replace(
               { pathname: router.pathname, query },
               undefined,
@@ -257,6 +270,7 @@ export function useStatsData({
     router.query.category,
     router.query.stat,
     router.query.type,
+    router.query.season,
     league,
     mlbType,
     isWorldCup,
@@ -324,6 +338,7 @@ export function useStatsData({
     teamCategory,
     selectSubView,
     selectMlbType,
+    selectSeason,
     selectStatCategory,
     selectSortMetric,
     resetStatsFilters,

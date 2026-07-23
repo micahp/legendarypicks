@@ -355,16 +355,35 @@ def _build(league):
             if not hab or not aab:
                 continue
             token = _et_token(g["date"])
+            # Postponed/suspended games often replay under their ORIGINALLY scheduled Kalshi
+            # ticker date (rules_secondary: "market will remain open and close after the
+            # rescheduled game has finished"), one ET day behind ESPN's actual game date —
+            # e.g. a 7/21 rainout replayed 7/22 still tickers as ...26JUL21.... Search both.
+            prev_token = _et_token(
+                (dt.datetime.strptime(g["date"][:16], "%Y-%m-%dT%H:%M") - dt.timedelta(days=1))
+                .strftime("%Y-%m-%dT%H:%M") + "Z")
             # MLB events run away+home (26JUL042210SDLAD for SD@LAD); WC advance events run
             # home+away (26JUL05MEXENG for ENG@MEX) — accept either order.
             pair = f"{k(aab)}{k(hab)}"
             rpair = f"{k(hab)}{k(aab)}"
-            by_team = {}
+            candidates = {}  # side -> list of matching markets (doubleheader: >1 possible)
             for m in markets:
                 tk = m.get("ticker", "")
                 ev, _, side = tk.rpartition("-")
-                if token in ev and (ev.endswith(pair) or ev.endswith(rpair)):
-                    by_team[side] = m
+                if (token in ev or prev_token in ev) and (ev.endswith(pair) or ev.endswith(rpair)):
+                    candidates.setdefault(side, []).append(m)
+            by_team = {}
+            for side, ms in candidates.items():
+                # A live/upcoming ESPN game can never be correctly priced by an already-settled
+                # Kalshi market — e.g. today's earlier game of a doubleheader shares the team
+                # pair with tonight's live game but is a DIFFERENT, finished contract. Only
+                # accept a settled market when ESPN itself says this game is over.
+                pool = [m for m in ms if m.get("status") != "finalized"] if g.get("state") != "post" else ms
+                pool = pool or ms
+                # Prefer the exact same-date ticker when more than one candidate remains
+                # (true same-day doubleheader with two still-active markets).
+                exact = [m for m in pool if token in m.get("ticker", "")]
+                by_team[side] = (exact or pool)[0]
             if not by_team:
                 if g.get("state") in ("pre", "in"):
                     unmatched.append({"matchup": f"{aab} @ {hab}", "token": token, "pair": pair})

@@ -121,6 +121,36 @@ def _int(x):
         return None
 
 
+def _normalize_team_events(events):
+    """Normalize team-vs-team scoreboard events into the shared game shape."""
+    out = []
+    for event in events or []:
+        competition = (event.get("competitions") or [{}])[0]
+        status = competition.get("status", {})
+        status_type = status.get("type", {})
+        teams = {}
+        for competitor in competition.get("competitors", []):
+            team = competitor.get("team", {})
+            teams[competitor.get("homeAway")] = {
+                "abbrev": team.get("abbreviation"),
+                "name": team.get("displayName"),
+                "nickname": team.get("name"),
+                "score": _num(competitor.get("score")),
+            }
+        out.append({
+            "game_id": event.get("id"),
+            "date": event.get("date"),
+            "state": status_type.get("state"),
+            "status": status_type.get("description"),
+            "period": status.get("period"),
+            "clock": status.get("displayClock"),
+            "status_detail": status_type.get("shortDetail"),
+            "home": teams.get("home"),
+            "away": teams.get("away"),
+        })
+    return out
+
+
 def games(league, date=None):
     """Normalized scoreboard. date='YYYY-MM-DD' (or None=today). state: pre | in | post."""
     _, path = _check(league)
@@ -368,30 +398,102 @@ def games(league, date=None):
                 "stage": stage,
             })
     else:
-        for e in d.get("events", []):
-            comp = (e.get("competitions") or [{}])[0]
-            status = comp.get("status", {})
-            st = status.get("type", {})
-            teams = {}
-            for c in comp.get("competitors", []):
-                teams[c.get("homeAway")] = {
-                    "abbrev": c.get("team", {}).get("abbreviation"),
-                    "name": c.get("team", {}).get("displayName"),
-                    "nickname": c.get("team", {}).get("name"),
-                    "score": _num(c.get("score")),
-                }
-            out.append({
-                "game_id": e.get("id"),
-                "date": e.get("date"),
-                "state": st.get("state"),
-                "status": st.get("description"),
-                "period": status.get("period"),
-                "clock": status.get("displayClock"),
-                "status_detail": st.get("shortDetail"),
-                "home": teams.get("home"),
-                "away": teams.get("away"),
-            })
+        out.extend(_normalize_team_events(d.get("events", [])))
     return out
+
+
+def nfl_schedule_weeks(season):
+    """Return ESPN's ordered NFL phase/week catalog for one league season."""
+    season = int(season)
+    _, path = _check("nfl")
+    url = _SITE.format(path=path) + f"/scoreboard?dates={season}&limit=1"
+    data = _get(url, ttl=900)
+    league = (data.get("leagues") or [{}])[0]
+    league_season = league.get("season") or {}
+    if _int(league_season.get("year")) != season:
+        raise ValueError(f"ESPN NFL calendar unavailable for season {season}")
+
+    phases = []
+    for phase in league.get("calendar") or []:
+        season_type = _int(phase.get("value"))
+        entries = []
+        if season_type is None:
+            continue
+        for entry in phase.get("entries") or []:
+            week = _int(entry.get("value"))
+            if week is None or not entry.get("startDate") or not entry.get("endDate"):
+                continue
+            entries.append({
+                "key": f"{season_type}:{week}",
+                "season_type": season_type,
+                "week": week,
+                "label": entry.get("label") or entry.get("alternateLabel") or f"Week {week}",
+                "alternate_label": entry.get("alternateLabel"),
+                "detail": entry.get("detail"),
+                "start_time": entry.get("startDate"),
+                "end_time": entry.get("endDate"),
+            })
+        if entries:
+            phases.append({
+                "season_type": season_type,
+                "label": phase.get("label") or f"Season type {season_type}",
+                "start_time": phase.get("startDate"),
+                "end_time": phase.get("endDate"),
+                "weeks": entries,
+            })
+    if not phases:
+        raise ValueError(f"ESPN NFL calendar has no weeks for season {season}")
+    return phases
+
+
+def nfl_schedule_week_games(season, season_type, week):
+    """Return one ESPN NFL week, filtered defensively to the requested identity."""
+    season = int(season)
+    season_type = int(season_type)
+    week = int(week)
+    _, path = _check("nfl")
+    url = (
+        _SITE.format(path=path)
+        + f"/scoreboard?dates={season}&seasontype={season_type}&week={week}&limit=100"
+    )
+    data = _get(url, ttl=20)
+    events = []
+    for event in data.get("events") or []:
+        event_season = event.get("season") or {}
+        event_week = event.get("week") or {}
+        if _int(event_season.get("year")) != season:
+            continue
+        if _int(event_season.get("type")) != season_type:
+            continue
+        if _int(event_week.get("number")) != week:
+            continue
+        events.append(event)
+    return _normalize_team_events(events)
+
+
+def schedule_event_starts(league, start_date, end_date, limit=1000):
+    """Return absolute event start instants from one bounded scoreboard range.
+
+    This is intentionally lower-level than :func:`games`: callers that need to
+    choose a viewer-local schedule date must convert the returned ISO instants
+    in the browser's timezone. ESPN date buckets are US-sports calendar dates,
+    while an evening game often starts on the following UTC date.
+    """
+    _, path = _check(league)
+    start = start_date.strftime("%Y%m%d")
+    end = end_date.strftime("%Y%m%d")
+    bounded_limit = max(1, min(int(limit), 1000))
+    url = (
+        _SITE.format(path=path)
+        + f"/scoreboard?dates={start}-{end}&limit={bounded_limit}"
+    )
+    data = _get(url, ttl=900)
+    starts = {
+        str(event.get("date"))
+        for event in data.get("events", [])
+        if event.get("date")
+    }
+    return sorted(starts)
 
 
 def _athlete_name_key(name):

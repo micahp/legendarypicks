@@ -1,6 +1,6 @@
 {
   "name": "legendarypicks",
-  "version": "0.5.0",
+  "version": "0.5.10",
   "private": true,
   "scripts": {
     "dev": "next dev",

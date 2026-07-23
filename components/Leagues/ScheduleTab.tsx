@@ -11,7 +11,11 @@ interface ScheduleTabProps {
   groups: Record<string, Game[]>
   loading: boolean
   error: string | null
-  onShiftDay: (delta: number) => void
+  explanation: string | null
+  prevDate: string | null
+  nextDate: string | null
+  onGoPrev: () => void
+  onGoNext: () => void
   onSelectDate: (date: string) => void
   today: () => string
 }
@@ -26,7 +30,11 @@ export default function ScheduleTab({
   groups,
   loading,
   error,
-  onShiftDay,
+  explanation,
+  prevDate,
+  nextDate,
+  onGoPrev,
+  onGoNext,
   onSelectDate,
   today,
 }: ScheduleTabProps) {
@@ -36,9 +44,10 @@ export default function ScheduleTab({
         <div className="flex items-center justify-center gap-2 sm:gap-3">
           <button
             type="button"
-            onClick={() => onShiftDay(-1)}
-            aria-label="Previous day"
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900 text-xl leading-none text-zinc-300 hover:bg-zinc-800 active:scale-95"
+            onClick={onGoPrev}
+            disabled={!prevDate}
+            aria-label="Previous game date"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900 text-xl leading-none text-zinc-300 hover:bg-zinc-800 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed"
           >
             ‹
           </button>
@@ -56,9 +65,10 @@ export default function ScheduleTab({
           </div>
           <button
             type="button"
-            onClick={() => onShiftDay(1)}
-            aria-label="Next day"
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900 text-xl leading-none text-zinc-300 hover:bg-zinc-800 active:scale-95"
+            onClick={onGoNext}
+            disabled={!nextDate}
+            aria-label="Next game date"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900 text-xl leading-none text-zinc-300 hover:bg-zinc-800 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed"
           >
             ›
           </button>
@@ -78,6 +88,12 @@ export default function ScheduleTab({
           </label>
         </div>
       </div>
+
+      {explanation && (
+        <p className="text-center text-xs text-zinc-500 -mt-1">
+          {explanation}
+        </p>
+      )}
 
       {error && (
         <div className="bg-red-500/10 border border-red-500/20 rounded-lg px-4 py-3 text-red-400 text-sm">

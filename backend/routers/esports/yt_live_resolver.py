@@ -435,7 +435,7 @@ def _resolve_peek(url, team_names, game=None):
     return c[1], (time.time() - c[0] < (_TTL if c[1] else _TTL_NEG))
 
 
-def _bg_resolve(yt_urls, team_names, hint_channels, game=None):
+def _bg_resolve(yt_urls, team_names, hint_channels, game=None, extra_hints=None):
     """Background job: does ALL the network — Twitch title -> arena hint -> per-url resolution —
     and populates _resolve_cache. The next rebuild reads the result from cache. Deduped so the same
     match's job doesn't pile up while one is already running."""
@@ -453,7 +453,12 @@ def _bg_resolve(yt_urls, team_names, hint_channels, game=None):
             hint = extract_arena_tag(_twitch_live_title(ch))
             if hint:
                 break
-        hints = [hint] if hint else None
+        # Caller-supplied hints (e.g. PandaScore team acronyms — "FNC"/"KC") merge in alongside the
+        # arena tag: a broadcast video titled only "FNC vs KC" has neither team's full name nor an
+        # arena tag, so without this the multi-video-on-one-channel case (main + a vertical/#shorts
+        # simulcast) stays permanently unresolved, fail-closed with no path to ever succeed.
+        hints = ([hint] if hint else []) + list(extra_hints or [])
+        hints = hints or None
         for url in yt_urls:
             yt_live_embed(url, team_names, hints, game)   # blocking; result lands in _resolve_cache
     except Exception:
@@ -463,11 +468,16 @@ def _bg_resolve(yt_urls, team_names, hint_channels, game=None):
             _inflight.discard(key)
 
 
-def resolve_pool_youtube(candidates, team_names=None, game=None):
+def resolve_pool_youtube(candidates, team_names=None, game=None, extra_hints=None):
     """Fill embedUrl on YouTube candidates from CACHE ONLY (zero network on the rebuild path), and
     hand off a background refresh for anything missing or stale. Call ONCE inside _pick_stream,
     before ranking. A resolved embedUrl flips the candidate's `playable` to 0 so YouTube's platform
     priority wins.
+
+    `extra_hints`: caller-supplied disambiguation hints (e.g. team ACRONYMS — "FNC"/"KC" — from
+    PandaScore) for channels whose video titles never spell out full team names. These bypass
+    `_name_variants`' >=3/4-char tokenization (which would drop a 2-char acronym like "KC" outright)
+    by being matched as literal substrings, same mechanism as the internally-derived arena tag.
 
     Trade-off (deliberate): a YouTube embed appears ~one rebuild cycle after the match goes live
     instead of blocking the rebuild on per-channel scrapes (which pushed a cold rebuild to 60s+,
@@ -490,7 +500,7 @@ def resolve_pool_youtube(candidates, team_names=None, game=None):
                          if c and c.get("attested") and c.get("platform") == "twitch"
                          and c.get("channel")]
         try:
-            _get_executor().submit(_bg_resolve, yt_urls, team_names, hint_channels, game)
+            _get_executor().submit(_bg_resolve, yt_urls, team_names, hint_channels, game, extra_hints)
         except Exception:
             pass
     return candidates
@@ -515,3 +525,37 @@ def _twitch_live_title(channel):
         title = None
     _twitch_title_cache[channel] = (time.time(), title)
     return title
+
+
+_yt_viewer_cache = {}   # video_id -> (ts, viewer_count|None)
+_YT_VIEWER_TTL = 60      # viewer counts genuinely drift second to second; cheap call (1 quota unit)
+_YT_VID_RE = re.compile(r"embed/([A-Za-z0-9_-]{11})")
+
+
+def yt_viewer_count(embed_url):
+    """Live concurrent viewer count for an already-resolved YouTube embed, via the Data API's
+    videos.list (1 quota unit — unlike search.list's 100, no daily-budget guard needed). None if
+    unresolved, no key set, or the call fails — same fail-open-to-None as everywhere else here."""
+    m = _YT_VID_RE.search(embed_url or "")
+    if not m:
+        return None
+    vid = m.group(1)
+    c = _yt_viewer_cache.get(vid)
+    if c and time.time() - c[0] < _YT_VIEWER_TTL:
+        return c[1]
+    viewers = None
+    key = _yt_api_key()
+    if key:
+        try:
+            url = ("https://www.googleapis.com/youtube/v3/videos?part=liveStreamingDetails"
+                   f"&id={vid}&key={key}")
+            with _u.urlopen(_u.Request(url), timeout=6) as r:
+                body = json.loads(r.read().decode())
+            items = body.get("items") or []
+            if items:
+                cv = (items[0].get("liveStreamingDetails") or {}).get("concurrentViewers")
+                viewers = int(cv) if cv is not None else None
+        except Exception:
+            viewers = None
+    _yt_viewer_cache[vid] = (time.time(), viewers)
+    return viewers
