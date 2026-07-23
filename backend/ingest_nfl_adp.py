@@ -88,6 +88,7 @@ def main():
     unmatched_samples = []
     offset = 0
     page_num = 1
+    seen_espn_ids = set()
 
     while True:
         print(f"  Fetching page {page_num} (offset {offset})...")
@@ -95,6 +96,16 @@ def main():
         if not page:
             break
         total_fetched += len(page)
+
+        page_ids = {str(p.get("id", "")) for p in page}
+        if page_ids and page_ids <= seen_espn_ids:
+            # ESPN's API ignores `limit`/`offset` on this endpoint and just
+            # returns the whole player pool every call — no new ids means
+            # pagination isn't actually advancing, so stop instead of
+            # looping forever re-fetching the same set.
+            print("    no new espn ids vs previous page(s) — pagination isn't advancing, stopping")
+            break
+        seen_espn_ids |= page_ids
 
         for p in page:
             eid = str(p.get("id", ""))
