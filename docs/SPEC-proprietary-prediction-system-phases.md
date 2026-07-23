@@ -20,28 +20,44 @@ Already built, not re-litigated here: ESPN-based scores/schedule/stats backend, 
 `prop_games`. This is real infrastructure, not a gap — it's the raw ingredient everything below
 consumes.
 
-## Phase 1 — Real EV/CLV (in progress, MLB first)
+## Phase 1 — Real EV/CLV (MLB done and live; other leagues partially blocked)
 
 The props-vs-market edge engine. Without this, there is no proprietary signal anywhere in the
-product — "EV" currently just compares the market's price to itself (see
-`SPEC-nfl-product-direction.md` for the full root-cause diagnosis). Scope:
+product — "EV" used to just compare the market's price to itself (see
+`SPEC-nfl-product-direction.md` for the full root-cause diagnosis).
 
-1. Get the opening-odds `--capture` step actually scheduled and running (currently dead code —
-   the flag exists, nothing invokes it in production).
-2. Wire `is_close` through so a real closing snapshot gets captured near each game's start,
-   giving CLV actual data (currently zero across every league, no exceptions).
-3. Feed `analytics/projections.py`'s `prob_over()` into the EV calculation as an independent
-   probability estimate — the only way EV can ever reflect a real model-vs-market disagreement
-   instead of the market agreeing with itself.
+**Status (2026-07-22, current)**: done for MLB and merged. Two commits on the former
+`feat/mlb-ev-clv` worktree branch, now in `dev` (`bcfe6a9`): (1) CLV fixed — derives "close" from
+`captured_at <= game.start_time` rather than a never-set `is_close` flag, real data now (1,546+
+results). (2) EV fixed — `analytics/projections.py`'s `prob_over()` wired in as an independent
+probability source (player's own last-30-games history vs. the line), falling back to de-vig only
+when there isn't enough game-log history. Verified live: 90/500 sampled props are now
+projection-backed with a real, non-degenerate EV distribution (72 positive where there were 0
+before) instead of the old market-agrees-with-itself tautology. Production capture scheduling is
+live (`legendarypicks-mlb-capture.timer`, MLB-only, every 5 min, verified against the real prod
+backend/DB before enabling — not just the isolated dev copy, after the systemd incident taught
+that lesson). **Not yet done**: the actual fixed code isn't serving live requests yet — prod runs
+from a built Docker image, not live from the checkout, so a deliberate `docker compose up -d
+--build` redeploy is still a separate, held decision.
 
-**Status**: delegated to Hermes, isolated worktree `/root/lp-mlb-ev-clv` (branch
-`feat/mlb-ev-clv`, off `dev`). Code fix committed (`e05f75f`) — CLV already returns real numbers
-(1,546 results, 0.6% positive) once the local capture ran. Production scheduling is NOT yet
-applied (a live systemd edit went out ahead of verification and was reverted — see the product-
-direction doc's status note). Next: review the worktree diff, verify against the real prod
-backend/DB (not just the isolated dev copy), then apply the scheduling change deliberately.
+**NFL/NBA/NHL: EV/CLV split into two halves that are blocked for different reasons, and only one
+of them actually requires the season to have started.**
 
-Once MLB is solid, this same fix gets delegated per-league — NFL directly unblocks Phase 2.
+- **The market half** (de-vig against real captured odds, and all of CLV) — fully blocked, no way
+  around it. No book lists player props for a league with no games; there's no price to capture,
+  full stop. This half can't start until each league's regular season is live.
+- **The projections half** (`prob_over()` against a player's own game-log history) — **not
+  blocked at all**, and worth doing now as dead-time work. Real historical game logs already
+  exist: NFL 5,377 rows / 605 players (2024+2025), NBA 24,086 rows / 580 players (2026), NHL
+  48,017 rows / 842 players (20252026). The same market→stat mapping pattern as MLB's
+  `_MLB_MARKET_STAT` (NFL: pass_yds/receptions/rush_yds; NBA: pts/reb/ast; NHL: goals/assists/
+  shots) can be built and validated against real historical outcomes *before* any of those
+  leagues' seasons start — so the projection engine is already proven the moment real props
+  appear, instead of starting that validation cold once the season begins.
+
+Once each league's market half unblocks (season starts, real props appear), only the capture
+scheduling + wiring needs to be delegated per-league — the same pattern already proven on MLB.
+NFL's market half unblocking directly feeds Phase 2.
 
 ## Phase 2 — Application layer: sit/start + waiver-wire (not started)
 
