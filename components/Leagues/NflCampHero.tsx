@@ -33,15 +33,15 @@ export default function NflCampHero({ data, loading, error }: Props) {
 
   return (
     <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-5 sm:p-6">
-      <div className="flex justify-between gap-4">
-        <div className="min-w-0 flex flex-col justify-between">
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0">
           {nextEvent && <p className="text-lg font-bold text-white">{nextEvent.label}</p>}
           {nextEvent && (
-            <p className="text-xs text-zinc-500">{formatCountdown(nextEvent.days_until)}</p>
+            <p className="text-xs text-zinc-500 pt-1">{formatCountdown(nextEvent.days_until)}</p>
           )}
         </div>
         {dateParts && (
-          <div className="text-right leading-none shrink-0 flex flex-col justify-between items-end">
+          <div className="text-right leading-none shrink-0">
             <div className="text-xs font-semibold uppercase tracking-widest text-zinc-500">
               {dateParts.month}
             </div>
