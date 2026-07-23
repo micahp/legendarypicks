@@ -261,10 +261,11 @@ function SlateTab({ league }: { league: League }) {
 }
 
 // ── Tab: Performance (player stats dashboard) ─────────────
-function PerformanceTab({ league }: { league: League }) {
-  const [query, setQuery] = useState('')
+function PerformanceTab({ league, query, setQuery, selectedPlayer, setSelectedPlayer }: {
+  league: League; query: string; setQuery: (q: string) => void
+  selectedPlayer: Player | null; setSelectedPlayer: (p: Player | null) => void
+}) {
   const [players, setPlayers] = useState<Player[]>([])
-  const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null)
   const [perf, setPerf] = useState<PerfRow[]>([])
   const [loading, setLoading] = useState(false)
 
@@ -537,10 +538,11 @@ function PerformanceTab({ league }: { league: League }) {
 // ── Tab: Matchups (placeholder) ────────────────────────────
 interface Matchup { opponent: string; games: number; avg: Record<string, number> }
 
-function MatchupsTab() {
-  const [query, setQuery] = useState('')
+function MatchupsTab({ query, setQuery, player, setPlayer }: {
+  query: string; setQuery: (q: string) => void
+  player: Player | null; setPlayer: (p: Player | null) => void
+}) {
   const [players, setPlayers] = useState<Player[]>([])
-  const [player, setPlayer] = useState<Player | null>(null)
   const [data, setData] = useState<{ season: number; matchups: Matchup[] } | null>(null)
   const [loading, setLoading] = useState(false)
 
@@ -624,10 +626,11 @@ const STAT_ORDER = ['pass_yds', 'rush_yds', 'rec_yds', 'pass_td', 'rush_td', 're
   'fpts_ppr', 'fpts']
 const TREND_ICON: Record<string, string> = { up: '↑', down: '↓', flat: '→' }
 
-function ModelTab({ league }: { league: League }) {
-  const [query, setQuery] = useState('')
+function ModelTab({ league, query, setQuery, player, setPlayer }: {
+  league: League; query: string; setQuery: (q: string) => void
+  player: Player | null; setPlayer: (p: Player | null) => void
+}) {
   const [players, setPlayers] = useState<Player[]>([])
-  const [player, setPlayer] = useState<Player | null>(null)
   const [data, setData] = useState<{ season: number; games: number; projections: Record<string, Projection> } | null>(null)
   const [loading, setLoading] = useState(false)
   const [statKey, setStatKey] = useState<string>('')
@@ -748,6 +751,11 @@ export default function PropsPage() {
   const [tab, setTab] = useState<Tab>('slate')
   const [league, setLeague] = useState<League>('All')
 
+  // Shared across Performance/Matchups/Model so switching tabs keeps the same
+  // player instead of making you re-search each time.
+  const [sharedQuery, setSharedQuery] = useState('')
+  const [sharedPlayer, setSharedPlayer] = useState<Player | null>(null)
+
   // Date navigation — mirrors scores.tsx pattern exactly
   const today = new Date().toLocaleDateString('en-CA')
   const [date, setDate] = useState<string>(today)
@@ -846,9 +854,9 @@ export default function PropsPage() {
         {/* Tab content */}
         {tab === 'slate' && <SlateTab league={league} />}
         {tab === 'props' && <MarketSlateBoard league={league} date={date} />}
-        {tab === 'performance' && <PerformanceTab league={league} />}
-        {tab === 'matchups' && <MatchupsTab />}
-        {tab === 'model' && <ModelTab league={league} />}
+        {tab === 'performance' && <PerformanceTab league={league} query={sharedQuery} setQuery={setSharedQuery} selectedPlayer={sharedPlayer} setSelectedPlayer={setSharedPlayer} />}
+        {tab === 'matchups' && <MatchupsTab query={sharedQuery} setQuery={setSharedQuery} player={sharedPlayer} setPlayer={setSharedPlayer} />}
+        {tab === 'model' && <ModelTab league={league} query={sharedQuery} setQuery={setSharedQuery} player={sharedPlayer} setPlayer={setSharedPlayer} />}
       </div>
     </>
   )
