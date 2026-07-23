@@ -7,7 +7,7 @@ interface Projection {
   n: number; projection: number; median: number; floor: number; ceiling: number
   l5_avg: number; season_avg: number; trend: string; last5: number[]
 }
-interface RecentGame { date: string | null; opponent: string | null; home: boolean | null; stats: Record<string, number> }
+interface RecentGame { date: string | null; opponent: string | null; home: boolean | null; stats: Record<string, number | string> }
 interface PropRow { market: string; side: string; line: number }
 interface SeasonStatBlock {
   window?: string
@@ -199,7 +199,13 @@ export default function PlayerPage() {
     </div>
   )
 
-  const projKeys = Object.keys(p.projections).sort((a, b) => {
+  // UFC's game logs store ESPN's full raw stat blob (43 fields — advances,
+  // reversals, slamRate, etc.), not a curated prop-market list like other
+  // leagues — this generic table has no way to know which of those are
+  // meaningful, so it would dump all 43. Recent Fights (below) already shows
+  // the headline UFC stats; skip this section for UFC entirely rather than
+  // rendering noise.
+  const projKeys = p.league === 'ufc' ? [] : Object.keys(p.projections).sort((a, b) => {
     const ia = STAT_ORDER.indexOf(a), ib = STAT_ORDER.indexOf(b)
     return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib) || a.localeCompare(b)
   })
@@ -285,8 +291,59 @@ export default function PlayerPage() {
           </section>
         )}
 
-        {/* Recent games */}
-        {p.recent_games.length > 0 && (
+        {/* Recent fights — UFC specific */}
+        {p.league === 'ufc' && p.recent_games.length > 0 && (
+          <section>
+            <h2 className="text-sm font-bold text-zinc-400 uppercase tracking-wider mb-2">Recent Fights</h2>
+            <div className="rounded-xl border border-zinc-800 bg-zinc-900 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-zinc-800 text-zinc-500 text-[11px] uppercase tracking-wider">
+                    <th className="text-left py-3 pl-4 pr-2">Opponent</th>
+                    <th className="text-left py-3 px-2">Date</th>
+                    <th className="text-center py-3 px-2 w-12">Result</th>
+                    <th className="text-right py-3 px-2">Sig Str</th>
+                    <th className="text-right py-3 pr-4">Takedowns</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {p.recent_games.map((g, i) => {
+                    const s = g.stats as Record<string, number | string>
+                    const result = (s.result as string) || ''
+                    const sigLanded = s.sigStrikesLanded ?? '—'
+                    const sigAttempted = s.sigStrikesAttempted ?? '—'
+                    const tdkLanded = s.takedownsLanded ?? '—'
+                    const tdkAttempted = s.takedownsAttempted ?? '—'
+                    const resultColor =
+                      result === 'W' ? 'text-emerald-400' :
+                      result === 'L' ? 'text-red-400' :
+                      result === 'D' ? 'text-amber-400' : 'text-zinc-500'
+                    return (
+                      <tr key={i} className="border-b border-zinc-800/50 hover:bg-zinc-800/30">
+                        <td className="py-2.5 pl-4 pr-2 text-zinc-200">{g.opponent || '—'}</td>
+                        <td className="py-2.5 px-2 text-zinc-500 text-xs">{g.date || '—'}</td>
+                        <td className={`py-2.5 px-2 text-center font-bold ${resultColor}`}>
+                          {result || '—'}
+                        </td>
+                        <td className="py-2.5 px-2 text-right font-mono tabular-nums text-xs text-zinc-300">
+                          {typeof sigLanded === 'number' && typeof sigAttempted === 'number'
+                            ? `${sigLanded}/${sigAttempted}` : '—'}
+                        </td>
+                        <td className="py-2.5 pr-4 text-right font-mono tabular-nums text-xs text-zinc-300">
+                          {typeof tdkLanded === 'number' && typeof tdkAttempted === 'number'
+                            ? `${tdkLanded}/${tdkAttempted}` : '—'}
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        )}
+
+        {/* Recent games — generic (non-UFC) */}
+        {p.league !== 'ufc' && p.recent_games.length > 0 && (
           <section>
             <h2 className="text-sm font-bold text-zinc-400 uppercase tracking-wider mb-2">Recent Games</h2>
             <div className="rounded-xl border border-zinc-800 bg-zinc-900 divide-y divide-zinc-800 text-sm">
