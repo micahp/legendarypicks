@@ -35,29 +35,9 @@ export default function NflDraftRoom({
 }: Props) {
   return (
     <section className="space-y-4">
-      {/* Header */}
-      <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-5">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h2 className="text-lg font-bold text-zinc-100">Draft Room</h2>
-            <p className="mt-1 text-sm text-zinc-500">
-              {data?.reference_season
-                ? `Based on ${data.reference_season} production`
-                : 'Loading reference data…'}
-              {data?.roster?.freshness?.status === 'stale' && (
-                <span className="ml-2 text-amber-400/70 text-xs">
-                  Roster data may be stale
-                </span>
-              )}
-            </p>
-          </div>
-          {data && !error && (
-            <p className="text-xs text-zinc-600 shrink-0">
-              {data.eligible_players} eligible
-            </p>
-          )}
-        </div>
-      </div>
+      <h3 className="text-xs font-semibold uppercase tracking-[0.16em] text-zinc-500">
+        Player Rankings
+      </h3>
 
       {/* Position pills */}
       <div
