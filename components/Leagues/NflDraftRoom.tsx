@@ -35,7 +35,7 @@ export default function NflDraftRoom({
 }: Props) {
   return (
     <section className="space-y-4">
-      <h3 className="text-xs font-semibold uppercase tracking-[0.16em] text-zinc-500">
+      <h3 className="text-xl font-bold text-zinc-100">
         Player Rankings
       </h3>
 
