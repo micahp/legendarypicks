@@ -60,6 +60,7 @@ _SORT_FIELDS = {
     "rush_yds_g": "ps.rush_yds_g",
     "rec_yds_g": "ps.rec_yds_g",
     "targets": "ps.targets",
+    "adp": "na.adp",
 }
 
 
@@ -387,23 +388,30 @@ def nfl_draft_board(
         else:
             where.append(f"{position_expr} IN ('QB','RB','WR','TE','FB')")
         where_sql = " AND ".join(where)
+        join_sql = "LEFT JOIN nfl_adp na ON na.player_id=p.id AND na.season=?"
         eligible = connection.execute(
             f"""SELECT COUNT(*) FROM players p
                 JOIN player_stats ps ON ps.player_id=p.id
+                {join_sql}
                 WHERE {where_sql}""",
-            params,
+            [_CURRENT_SEASON, *params],
         ).fetchone()[0]
+        order_clause = f"{_SORT_FIELDS[sort]} ASC" if sort == "adp" else f"{_SORT_FIELDS[sort]} DESC"
+        nulls = "NULLS LAST" if sort == "adp" else ""
         rows = connection.execute(
             f"""SELECT p.id AS player_id, p.name, {position_expr} AS position,
                        p.team AS current_team, COALESCE(NULLIF(ps.nfl_team,''), ps.team) AS reference_team,
                        ps.games, ps.fantasy_ppr_g, ps.fantasy_pts_g,
                        ps.pass_yds_g, ps.rush_yds_g, ps.rec_yds_g,
-                       ps.targets, ps.receptions, ps.carries_g
-                FROM players p JOIN player_stats ps ON ps.player_id=p.id
+                       ps.targets, ps.receptions, ps.carries_g,
+                       na.adp, na.percent_owned
+                FROM players p
+                JOIN player_stats ps ON ps.player_id=p.id
+                {join_sql}
                 WHERE {where_sql}
-                ORDER BY {_SORT_FIELDS[sort]} DESC, ps.games DESC, p.name COLLATE NOCASE
+                ORDER BY {order_clause} {nulls}, ps.games DESC, p.name COLLATE NOCASE
                 LIMIT ? OFFSET ?""",
-            (*params, limit, offset),
+            [_CURRENT_SEASON, *params, limit, offset],
         ).fetchall()
 
     roster_is_current = roster_freshness["status"] == "current"
@@ -431,6 +439,8 @@ def nfl_draft_board(
             "targets": row["targets"],
             "receptions": row["receptions"],
             "carries_g": row["carries_g"],
+            "adp": row["adp"],
+            "percent_owned": row["percent_owned"],
         })
     return {
         "contract": _DRAFT_BOARD_CONTRACT,

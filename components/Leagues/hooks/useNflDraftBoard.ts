@@ -11,6 +11,7 @@ const SORT_LABELS: Record<NflDraftSort, string> = {
   rush_yds_g: 'Rush Yds/G',
   rec_yds_g: 'Rec Yds/G',
   targets: 'Targets',
+  adp: 'ADP',
 }
 
 const STORAGE_KEY = 'lp_nfl_draft_notes'

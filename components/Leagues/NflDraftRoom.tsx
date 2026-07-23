@@ -236,7 +236,16 @@ function DraftPlayerRow({
         {player.games}
       </td>
       <td className="py-2.5 px-2 text-right font-mono tabular-nums text-zinc-300 font-semibold">
-        {sortDisplay}
+        {sort === 'adp' ? (
+          <div>
+            <div>{sortDisplay}</div>
+            {player.percent_owned != null && (
+              <div className="text-[10px] font-normal text-zinc-600">{player.percent_owned.toFixed(1)}% owned</div>
+            )}
+          </div>
+        ) : (
+          sortDisplay
+        )}
       </td>
       <td className="py-2.5 px-2 text-right">
         <input
