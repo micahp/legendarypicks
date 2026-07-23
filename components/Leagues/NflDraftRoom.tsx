@@ -130,7 +130,8 @@ export default function NflDraftRoom({
                   <th className="text-center py-3 px-2">Pos</th>
                   <th className="text-center py-3 px-2">Team</th>
                   <th className="text-right py-3 px-2">G</th>
-                  <th className="text-right py-3 px-2">{SORT_LABELS[sort]}</th>
+                  <th className="text-right py-3 px-2">ADP</th>
+                  {sort !== 'adp' && <th className="text-right py-3 px-2">{SORT_LABELS[sort]}</th>}
                   <th className="text-right py-3 px-2">
                     <span className="inline-flex items-center gap-1">
                       Rank
@@ -236,17 +237,16 @@ function DraftPlayerRow({
         {player.games}
       </td>
       <td className="py-2.5 px-2 text-right font-mono tabular-nums text-zinc-300 font-semibold">
-        {sort === 'adp' ? (
-          <div>
-            <div>{sortDisplay}</div>
-            {player.percent_owned != null && (
-              <div className="text-[10px] font-normal text-zinc-600">{player.percent_owned.toFixed(1)}% owned</div>
-            )}
-          </div>
-        ) : (
-          sortDisplay
+        {player.adp != null ? player.adp.toFixed(1) : '—'}
+        {player.percent_owned != null && (
+          <div className="text-[10px] font-normal text-zinc-600">{player.percent_owned.toFixed(1)}% owned</div>
         )}
       </td>
+      {sort !== 'adp' && (
+        <td className="py-2.5 px-2 text-right font-mono tabular-nums text-zinc-300 font-semibold">
+          {sortDisplay}
+        </td>
+      )}
       <td className="py-2.5 px-2 text-right">
         <input
           type="number"
