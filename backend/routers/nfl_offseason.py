@@ -353,7 +353,7 @@ def _compute_season_projections(
         f"""SELECT player_id, stats, season, game_date, game_no
             FROM player_game_logs
             WHERE league='nfl' AND player_id IN ({placeholders})
-            ORDER BY player_id, COALESCE(game_date,'') DESC, CAST(game_no AS INTEGER) DESC""",
+            ORDER BY player_id, season DESC, COALESCE(game_date,'') DESC, CAST(game_no AS INTEGER) DESC""",
         player_ids,
     ).fetchall()
 
@@ -369,7 +369,10 @@ def _compute_season_projections(
         for log in logs:
             try:
                 s = json.loads(log["stats"])
-                val = s.get("fantasy_points_ppr")
+                # 2025 pbp ingest uses the canonical short key; 2024 nflverse-weekly
+                # ingest uses the legacy long key (see _NFL_KEY_NORMALIZE in players.py)
+                # — check both or every 2025 game silently drops out of the projection.
+                val = s.get("fpts_ppr", s.get("fantasy_points_ppr"))
                 if val is not None:
                     fpts_vals.append(float(val))
                     season_games[log["season"]] += 1
