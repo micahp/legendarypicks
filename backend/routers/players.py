@@ -173,6 +173,26 @@ def player_matchups(player_id: int):
             "season": season, "matchups": matchups}
 
 
+# Legacy (2024 nflverse) → canonical (2025 pbp) stat key normalization.
+# The two ingest pipelines use different key names; projections must be
+# key-consistent regardless of which season is auto-selected.
+_NFL_KEY_NORMALIZE = {
+    "passing_yards":    "pass_yds",
+    "passing_tds":      "pass_td",
+    "completions":      "cmp",
+    "attempts":         "att",
+    "interceptions":    "intc",
+    "rushing_yards":    "rush_yds",
+    "rushing_tds":      "rush_td",
+    "receiving_yards":  "rec_yds",
+    "receiving_tds":    "rec_td",
+    "receptions":       "rec",
+    "fantasy_points":   "fpts",
+    "fantasy_points_ppr": "fpts_ppr",
+    # carries, targets: same key in both pipelines
+}
+
+
 @router.get("/api/projections/player/{player_id}")
 def player_projections(player_id: int,
                        season: Optional[int] = Query(None),
@@ -207,6 +227,8 @@ def player_projections(player_id: int,
     for r in rows:
         for k, v in _json.loads(r["stats"]).items():
             if isinstance(v, (int, float)):
+                # Normalize legacy (2024 nflverse) keys → canonical (2025 pbp) keys
+                k = _NFL_KEY_NORMALIZE.get(k, k)
                 series.setdefault(k, []).append(v)
 
     projections = {}
