@@ -5,14 +5,14 @@ const POSITIONS = ['all', 'QB', 'RB', 'WR', 'TE', 'FB', 'FLEX'] as const
 export type DraftPosition = typeof POSITIONS[number]
 
 const SORT_LABELS: Record<NflDraftSort, string> = {
+  adp: 'ADP',
+  season_proj_pts: 'Season Proj',
   fantasy_ppr_g: 'PPR/G',
   fantasy_pts_g: 'Pts/G',
   pass_yds_g: 'Pass Yds/G',
   rush_yds_g: 'Rush Yds/G',
   rec_yds_g: 'Rec Yds/G',
   targets: 'Targets',
-  adp: 'ADP',
-  season_proj_pts: 'Season Proj',
 }
 
 const STORAGE_KEY = 'lp_nfl_draft_notes'
@@ -67,7 +67,7 @@ export function useNflDraftBoard(enabled: boolean) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [position, setPosition] = useState<DraftPosition>('all')
-  const [sort, setSort] = useState<NflDraftSort>('fantasy_ppr_g')
+  const [sort, setSort] = useState<NflDraftSort>('adp')
   const [offset, setOffset] = useState(0)
   const [notes, setNotes] = useState<NflDraftNotes>(() => {
     if (typeof window === 'undefined') return { rank: {}, watch: {}, fade: {} }
