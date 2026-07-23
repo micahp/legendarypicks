@@ -13,6 +13,11 @@ services:
       PANDASCORE_API_KEY: "${PANDASCORE_API_KEY:-}"
       GRID_API_KEY: "${GRID_API_KEY:-}"
       YOUTUBE_API_KEY: "${YOUTUBE_API_KEY:-}"
+      # Kick viewer counts (added 2026-07-22, same pass-through pattern as above). Without
+      # these, _kick_token() has no creds so _kick_channel_data() always returns (None, None)
+      # — Kick-hosted matches show as live but with no viewer count on the board.
+      KICK_CLIENT_ID: "${KICK_CLIENT_ID:-}"
+      KICK_CLIENT_SECRET: "${KICK_CLIENT_SECRET:-}"
     # bind to loopback ONLY: reachable by host nginx, never from the internet
     # host 8100 -> container 8000 (8000 already used by another site)
     ports: ["127.0.0.1:8100:8000"]
