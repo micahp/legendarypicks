@@ -215,8 +215,9 @@ function EvView({ data, league }: { data: EvResp | null; league: string }) {
         <Stat label="Mean +EV only" value={s.mean_ev_positive_only != null ? fmtSigned(s.mean_ev_positive_only) : '—'} />
       </div>
       <p className="text-xs text-zinc-500">
-        EV is computed from the market's own de-vigged price, so it measures the vig you pay — beating it
-        needs an independent model probability. Sorted by EV.
+        Fair probability comes from our own projection (recent game-log performance vs. the line) when
+        there's enough history; otherwise it falls back to the market's de-vigged price, which only
+        measures the vig you pay. Sorted by EV.
       </p>
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
