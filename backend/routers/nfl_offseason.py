@@ -288,18 +288,30 @@ _TRANSACTIONS_CONTRACT = "nfl-transactions-v1"
 def nfl_transactions(
     limit: int = Query(30, ge=1, le=100),
     team: Optional[str] = Query(None, description="team abbreviation, e.g. ATL"),
+    trades_only: bool = Query(False, description="only transactions whose description mentions a trade"),
 ):
     """Recent NFL roster moves (waives, signings, IR, releases, retirements) —
     ingested from ESPN's public transactions feed by nfl_transactions_sync.py.
     "Offseason Movers" card content; see docs on why this replaced the raw
-    season-milestone timeline (it's actual news, not a static calendar)."""
+    season-milestone timeline (it's actual news, not a static calendar).
+
+    trades_only: no dedicated "type" field exists in ESPN's feed (free text only),
+    so this matches on the word "trad" (covers "traded"/"trade") — good enough
+    since ESPN's wording is consistent. Note ESPN logs one row per team involved
+    in a deal, so a single trade surfaces as two rows here (one per side)."""
     with closing(_db()) as connection:
         connection.row_factory = sqlite3.Row
         columns = _table_columns(connection, "nfl_transactions")
         if not columns:
             return {"contract": _TRANSACTIONS_CONTRACT, "transactions": [], "count": 0}
-        where = "WHERE team_abbr=?" if team else ""
-        params = (team.upper(),) if team else ()
+        conditions = []
+        params: list = []
+        if team:
+            conditions.append("team_abbr=?")
+            params.append(team.upper())
+        if trades_only:
+            conditions.append("description LIKE '%trad%'")
+        where = f"WHERE {' AND '.join(conditions)}" if conditions else ""
         rows = connection.execute(
             f"""SELECT txn_date, team_id, team_abbr, team_name, description
                 FROM nfl_transactions {where}

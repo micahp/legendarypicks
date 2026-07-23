@@ -18,9 +18,9 @@ export function useNflTransactions(enabled: boolean) {
       setLoading(true)
       setError(null)
       try {
-        const response = await fetch('/api/nfl/transactions?limit=25')
+        const response = await fetch('/api/nfl/transactions?limit=25&trades_only=true')
         if (!response.ok) {
-          if (!ignore) setError(`Transactions unavailable (${response.status})`)
+          if (!ignore) setError(`Trades unavailable (${response.status})`)
           return
         }
         const json = await response.json()

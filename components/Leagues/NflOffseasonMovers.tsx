@@ -21,7 +21,7 @@ export default function NflOffseasonMovers({ data, loading, error }: Props) {
   if (error || !data) {
     return (
       <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-5">
-        <p className="text-sm text-zinc-500">{error || 'Transactions unavailable.'}</p>
+        <p className="text-sm text-zinc-500">{error || 'Trades unavailable.'}</p>
       </div>
     )
   }
@@ -29,7 +29,7 @@ export default function NflOffseasonMovers({ data, loading, error }: Props) {
   if (data.length === 0) {
     return (
       <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-5">
-        <p className="text-sm text-zinc-500">No recent roster moves.</p>
+        <p className="text-sm text-zinc-500">No recent trades.</p>
       </div>
     )
   }
@@ -37,7 +37,7 @@ export default function NflOffseasonMovers({ data, loading, error }: Props) {
   return (
     <section className="rounded-xl border border-zinc-800 bg-zinc-900 p-5">
       <h3 className="text-xs font-semibold uppercase tracking-[0.16em] text-zinc-500 mb-4">
-        Offseason Movers
+        Recent Trades
       </h3>
       <div className="space-y-3">
         {data.map((t, i) => (
