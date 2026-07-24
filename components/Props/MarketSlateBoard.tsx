@@ -53,12 +53,6 @@ interface SlateMarketSummary {
 type SortKey = 'hit-rate' | 'edge' | 'line'
 type SortDirection = 'asc' | 'desc'
 
-const MARKET_PRIORITY = [
-  'strikeouts', 'goals', 'shots_on_target', 'shots', 'points', 'rebounds', 'assists',
-  'total_bases', 'outs', 'hits_allowed', 'earned_runs', 'passing_yards',
-  'rushing_yards', 'receiving_yards', 'receptions', 'win_by_ko',
-  'win_by_submission', 'win_by_decision',
-]
 
 const MARKET_LABELS: Record<string, string> = {
   strikeouts: 'Strikeouts',
@@ -81,11 +75,6 @@ function baseMarket(market: string): string {
 
 function marketLabel(market: string): string {
   return MARKET_LABELS[market] || market.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
-}
-
-function marketRank(market: string): number {
-  const index = MARKET_PRIORITY.indexOf(market)
-  return index === -1 ? MARKET_PRIORITY.length : index
 }
 
 function formatOdds(odds: number | null | undefined): string {
@@ -253,7 +242,7 @@ export default function MarketSlateBoard({ league, date }: { league: string; dat
   const allRows = useMemo(() => groupProps(props), [props])
   const markets = useMemo(
     () => [...marketOptions].sort((a, b) =>
-      marketRank(a.market) - marketRank(b.market) || marketLabel(a.market).localeCompare(marketLabel(b.market))),
+      b.count - a.count || marketLabel(a.market).localeCompare(marketLabel(b.market))),
     [marketOptions],
   )
 
