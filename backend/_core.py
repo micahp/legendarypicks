@@ -221,7 +221,14 @@ _MARKET_STAT_KEY = {
             "doubles": "2B", "total_doubles": "2B", "triples": "3B", "total_triples": "3B",
             "total_home_runs": "HR", "total_hits": "H", "total_walks": "BB",
             "total_bases_allowed": None,
-            "hits_runs_rbis": ["H", "R", "RBI"],  # compound: sum across 3 stat keys
+            # compound: sum across 3 stat keys. Real Bovada market string is
+            # "total_hits,_runs_and_rbis" (comma + "total_" prefix + spelled-out "and") —
+            # mapping under the clean "hits_runs_rbis" name alone never matches what
+            # _base_market() actually produces from real prop rows, so the chart silently
+            # never fires from the real UI. Keep both keys: the real one so it actually
+            # works, the clean one in case a future source names it plainly.
+            "total_hits,_runs_and_rbis": ["H", "R", "RBI"],
+            "hits_runs_rbis": ["H", "R", "RBI"],
             # Pitcher markets (ingest_mlb_pitcher_logs.py)
             "strikeouts": "K", "outs": "outs", "hits_allowed": "hits_allowed",
             "pitcher_walks": "BB", "total_pitcher_walks": "BB",
