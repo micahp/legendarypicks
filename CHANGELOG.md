@@ -1,5 +1,26 @@
 # Changelog
 
+## v0.6.3 — 2026-07-24
+
+### MLB: hits_runs_rbis compound prop chart, full season
+
+- **New compound chart** (`total_hits,_runs_and_rbis`, MLB's H+R+RBI prop): `_MARKET_STAT_KEY`
+  now supports list-valued stat keys that sum across multiple `player_game_logs` fields, not just
+  a single stat. R and RBI aren't derivable from Statcast's pitch-level event stream (they need
+  whole-game baserunner tracking), so they're pulled separately from the MLB Stats API boxscore
+  (same source `settlement.py` already uses) and merged onto the existing per-game rows.
+- **R/RBI backfilled across the full 2026 season** (2026-03-15 → 07-23, ~44k game-logs) — verified
+  day-by-day with zero real gaps (the only 3 empty days are the actual All-Star break).
+- **Real fix**: the compound chart was wired under a clean `hits_runs_rbis` key, but the real
+  Bovada market string normalizes to `total_hits,_runs_and_rbis` (comma + `total_` prefix) — so it
+  never actually fired from the real UI despite testing clean via a hand-typed API param. Fixed by
+  mapping the real market string too, verified against a live prop row through the actual
+  `/api/props/history` endpoint the frontend calls.
+- **Backfill script hardened**: `ingest_mlb_logs.py` now pulls one day at a time
+  (`pybaseball.statcast(day, day, parallel=False)`) instead of a whole date range in one call —
+  the library's default threaded parallelism across days in a range was blowing memory/load on
+  this box regardless of how the caller chunked `--start`/`--end`.
+
 ## v0.6.2 — 2026-07-23
 
 ### EV/CLV: extended to NBA + NHL
