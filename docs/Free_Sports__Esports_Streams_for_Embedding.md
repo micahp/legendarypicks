@@ -1,5 +1,24 @@
 # Free Sports/Esports Streams for Embedding 
 
+> ## ⚠ PARTIALLY SUPERSEDED — 2026-07-24
+> This was desk research with **no endpoint testing**. An empirical pass verified every claim
+> below by scraping the actual channels: **`EMBEDDABLE-STREAMS-VERIFICATION-2026-07-24.md`**.
+> Read that first. Text below is preserved as written; it is the origin of the thinking, not
+> current fact. Specifically:
+>
+> - **PWHL — the central claim is FALSE.** "All PWHL games are streamed on the League's YouTube
+>   channel" does not hold: of 30 broadcasts on that channel, **1** is a full event and **21** are
+>   reaction shows / draft / announcements. This doc's top recommendation is not a video source.
+> - **DRL — the channel lead is wrong**, it resolves to an unrelated Tamil-language channel.
+> - **UFA — unverifiable**, no working channel handle found (5 variants tried).
+> - **FIBA and CDL — CONFIRMED**, and FIBA is now the strongest verified pick (30/30 full events,
+>   live games scheduled).
+> - **CAF TV** — not re-tested.
+>
+> Also note the embed-code examples below use the legacy
+> `youtube.com/embed/live_stream?channel=ID` form. Production resolves a concrete `videoId` via
+> `backend/routers/esports/yt_live_resolver.py` instead — see that file's header for why.
+
 **Executive Summary:** We identified several leagues across traditional sports, esports, and niche competitions that offer free live streaming on platforms like YouTube and Twitch. These include, for example, the Professional Women's Hockey League (ice hockey), the Call of Duty League (esports), FIBA basketball competitions, and the Ultimate Frisbee Association. In each case, official league streams are available without subscription on free platforms and generally permit embedding (via YouTube/Twitch embed APIs with standard code). We summarize the platform, region, schedule, and technical/embed details for each league below. A comparison table highlights each league's embed-friendliness, platforms, and regions. Actionable recommendations follow on the best choices for commercial sites. 
 
 ## Leagues and Streaming Details

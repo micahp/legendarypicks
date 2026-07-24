@@ -1,5 +1,25 @@
 # Sports audio broadcasts — a live anchor for leagues we can't show on video
 
+> ## ✅ VERIFIED, WITH ONE IMPORTANT CORRECTION — 2026-07-24
+> The strategy in this doc holds up and TuneIn was the right primary call. Empirical results:
+> **`EMBEDDABLE-STREAMS-VERIFICATION-2026-07-24.md`**. Confirmed working with no auth: the OPML
+> API (`Browse.ashx`/`Search.ashx`/`Tune.ashx`), the team→station crosswalk (dedicated stations
+> exist, e.g. `Boston Bruins` = `s137387`), real audio bytes (`ESPN LA 710` served verified
+> MPEG layer III), and the embed player (`tunein.com/embed/player/{guide_id}/` → 200 with **zero**
+> frame-blocking headers on 4/4 stations). iHeart also verified.
+>
+> **The correction — embed the player, never extract the stream.** Some stations resolve to
+> `audio/x-scpls` playlists whose inner URL is `streamtheworld.com` carrying **`tdtok`/`partnertok`
+> JWTs minted for `DIST=TuneIn`** with `"trusted_partner":true`. Those tokens are time-bound and
+> issued to *their* player; fetching the inner stream directly refused connection anyway
+> (`http=000`). So raw extraction is fragile, partly blocked, and squarely the licensing problem
+> caveat #1 below warns about. The iframe embed works uniformly and settles the ads question:
+> their player carries their ads, we monetize around it.
+>
+> Both caveats below (**per-team not per-game feeds**, **MLB audio paywalled**) survive and are the
+> real implementation cost. `prediction-market-trading/broadcast_alpha.py`'s `watch-wc` already
+> implements the schedule-gate pattern needed — copy that shape.
+
 ## The idea (Micah's)
 Live **video** for the major leagues (NBA, NFL, MLB, NHL, soccer) is rights-locked — we can't
 embed it the way we embed an esports stream. But live **audio** (radio play-by-play) is a different
