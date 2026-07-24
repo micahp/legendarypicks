@@ -12,6 +12,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           <div className="flex items-center justify-between gap-3 min-w-0">
             <nav className="flex items-center gap-3 sm:gap-4 text-sm overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               <Link href="/scores" className="hover:text-emerald-400 whitespace-nowrap">Scores</Link>
+              <Link href="/plays" className="hover:text-emerald-400 whitespace-nowrap">Plays</Link>
               <Link href="/predict" className="hover:text-emerald-400 whitespace-nowrap">Predict</Link>
               <Link href="/props" className="hover:text-emerald-400 whitespace-nowrap">Props</Link>
               <Link href="/leagues" className="hover:text-emerald-400 whitespace-nowrap">Leagues</Link>
