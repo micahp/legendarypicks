@@ -121,6 +121,13 @@ def ingest_fighter(
         # Add fight metadata into stats blob
         stats["result"] = f["result"]
         stats["method"] = f["method"]
+        if f.get("fight_time_seconds") is not None:
+            stats["fight_time_seconds"] = f["fight_time_seconds"]
+            # Underdog's fight_time market lines are in minutes (e.g. 2.5, 7.5, 14.99 --
+            # 14.99 caps just under the 15-min full-fight max), not seconds.
+            stats["fight_time"] = round(f["fight_time_seconds"] / 60.0, 2)
+            stats["round"] = f["round"]
+            stats["clock_display"] = f["clock_display"]
 
         date_str = f["date"]
         season = int(date_str[:4]) if date_str and len(date_str) >= 4 else 0

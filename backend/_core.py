@@ -244,12 +244,12 @@ _MARKET_STAT_KEY = {
             "receiving_tds": "receiving_tds", "interceptions": "interceptions"},
     "wc": {"goals": "goals", "assists": "assists", "shots": "shots",
            "shots_on_target": "sot", "shots_on_goal": "sot"},
-    # significant_strikes is the only UFC market with a direct raw game-log stat to chart.
-    # fight_time isn't captured into player_game_logs yet (round+clock fetched but not
-    # stored). finishes/win_by_ko/win_by_submission are win-by-method yes/no props, same
+    # fight_time (minutes, from round+clock at the ESPN status endpoint -- see
+    # ingest_ufc_fight_stats.py) now backfillable same as significant_strikes.
+    # finishes/win_by_ko/win_by_submission are win-by-method yes/no props, same
     # category as MLB's home_run_any/hit_any etc — none of those are chartable either,
     # this isn't a new gap. All fall back to "chart not available" via lookup returning None.
-    "ufc": {"significant_strikes": "sigStrikesLanded"},
+    "ufc": {"significant_strikes": "sigStrikesLanded", "fight_time": "fight_time"},
 }
 
 

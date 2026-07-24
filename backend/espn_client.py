@@ -674,6 +674,18 @@ def ufc_fight_history(athlete_id, limit=5):
             result_text = str((status.get("result") or {}).get("displayName") or "").lower()
             outcome = "D" if "draw" in result_text else "NC"
         opponent_id = str(opponent.get("id") or "")
+        # round/clock: ESPN's status object for a "post" (final) competition reports the
+        # round the fight ended in (period) and elapsed time within that round (clock,
+        # seconds; displayClock, "M:SS") -- already being fetched here for method/result,
+        # just never read. UFC rounds are a fixed 5 minutes, so total fight time =
+        # (round - 1) * 300 + clock_seconds.
+        round_num = status.get("period")
+        clock_seconds = status.get("clock")
+        fight_time_seconds = (
+            (round_num - 1) * 300 + clock_seconds
+            if isinstance(round_num, int) and isinstance(clock_seconds, (int, float))
+            else None
+        )
         fights.append({
             "result": outcome,
             "method": _ufc_method(status.get("result") or {}),
@@ -681,6 +693,9 @@ def ufc_fight_history(athlete_id, limit=5):
             "date": str(competition.get("date") or "")[:10],
             "event_id": event_id,
             "fight_id": fight_id,
+            "round": round_num,
+            "clock_display": status.get("displayClock"),
+            "fight_time_seconds": fight_time_seconds,
         })
     fights.sort(key=lambda row: row["date"], reverse=True)
     return fights[:limit]
