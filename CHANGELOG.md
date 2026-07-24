@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.6.4 — 2026-07-24
+
+### UFC: fight_time prop chart
+
+- **New chartable market**: `fight_time` (Underdog's Over/Under total-fight-duration prop,
+  lines in minutes e.g. 2.5/7.5/12.5/14.99) now has a real per-fighter history chart. The
+  underlying data — round the fight ended in, and elapsed clock within that round — was already
+  being fetched from ESPN's per-fight `/status` endpoint for the result/method fields, just never
+  read. Total fight time = `(round-1)*300 + clock_seconds` (UFC rounds are a fixed 5 minutes).
+- Backfilled all 49 tracked UFC fighters (77/78 fight rows now carry `fight_time`; the one gap is
+  a pre-existing ESPN data hole, same class as fights that were already skipped for missing stats).
+- Verified against the real `/api/props/history` endpoint with an actual Underdog prop line, not
+  just a database read — correct hit/miss against the line.
+
 ## v0.6.3 — 2026-07-24
 
 ### MLB: hits_runs_rbis compound prop chart, full season
