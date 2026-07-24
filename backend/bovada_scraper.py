@@ -124,9 +124,11 @@ def parse_player_props(event: dict, league: str) -> list:
 # each outcome to a yes/no prop on the fighter (o0.5), mirroring the WC anytime-goal shape. Fight-level
 # markets (total rounds, go-the-distance) are game-level and not represented in the player-prop schema
 # yet — deferred. This is the template for other individual sports (tennis majors) too.
+# win_by_ko / win_by_submission are deliberately NOT mapped here — Underdog Fantasy prices
+# the same markets (its "Knockouts"/"Submissions" O/U 0.5 lines) and is now the sole source
+# for both (see ingest_underdog_props.py). win_by_decision has no Underdog equivalent, still
+# sourced from Bovada.
 _UFC_METHOD = {
-    "ko, tko or dq": "win_by_ko",
-    "submission": "win_by_submission",
     "decision or technical decision": "win_by_decision",
 }
 
