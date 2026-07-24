@@ -4,18 +4,64 @@ ingest_mlb_logs.py — per-GAME MLB hitting logs derived from Statcast events.
 
 The season-aggregate ingest (ingest_statcast.py) groups all pitches by batter.
 This groups by (batter, game) instead, deriving a per-game box line from the
-pitch-level `events` column: H, 2B, 3B, HR, BB, K, TB. These map directly to the
-common MLB props (hits, total_bases, home_runs) and feed projections/form.
+pitch-level `events` column: H, 2B, 3B, HR, BB, K, TB. Runs and RBI are
+fetched from the MLB Stats API boxscore (same source as settlement.py) because
+they require whole-game baserunner tracking that per-batter Statcast rows
+cannot provide.
 
 Usage: python3 ingest_mlb_logs.py [--days 60]
 """
-import sys, os, json, sqlite3, datetime as dt
+import sys, os, json, sqlite3, datetime as dt, urllib.request as _ur
+from typing import Optional
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from ingest_nfl_logs import ensure_table  # reuse the shared schema
 
 DB = os.environ.get("LP_DB_PATH") or os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "picks.db")
 
 HIT_EVENTS = {"single": 1, "double": 2, "triple": 3, "home_run": 4}  # event -> total bases
+
+_MLB_BOXSCORE_URL = "https://statsapi.mlb.com/api/v1/game/{gamePk}/boxscore"
+_MLB_HDR = {"User-Agent": "Mozilla/5.0"}
+
+# Per-run cache: game_pk → boxscore JSON. One API call per unique game.
+_boxscore_cache: dict = {}
+
+
+def _fetch_boxscore(game_pk: int) -> Optional[dict]:
+    """Fetch MLB Stats API boxscore for a game. Cached per game_pk in memory."""
+    if game_pk in _boxscore_cache:
+        return _boxscore_cache[game_pk]
+    try:
+        url = _MLB_BOXSCORE_URL.format(gamePk=game_pk)
+        req = _ur.Request(url, headers=_MLB_HDR)
+        with _ur.urlopen(req, timeout=15) as r:
+            data = json.loads(r.read().decode())
+    except Exception:
+        data = None
+    _boxscore_cache[game_pk] = data
+    return data
+
+
+def _get_runs_rbi(game_pk: int, mlbam: int) -> tuple:
+    """Return (runs, rbi) for a batter from the boxscore, or (None, None).
+    Navigates teams.{home,away}.players.ID{mlbam}.stats.batting.{runs,rbi}.
+    """
+    box = _fetch_boxscore(game_pk)
+    if not box:
+        return None, None
+    for side in ("away", "home"):
+        team_data = box.get("teams", {}).get(side, {})
+        players_dict = team_data.get("players", {})
+        player_key = f"ID{mlbam}"
+        pdata = players_dict.get(player_key)
+        if pdata is None:
+            continue
+        batting = pdata.get("stats", {}).get("batting", {})
+        runs = batting.get("runs")
+        rbi = batting.get("rbi")
+        if runs is not None or rbi is not None:
+            return runs, rbi
+    return None, None
 
 
 def ingest(days: int = 60) -> int:
@@ -59,6 +105,12 @@ def ingest(days: int = 60) -> int:
             "TB": int(tb),
             "PA": int(len(g)),
         }
+        # Merge R/RBI from MLB Stats API boxscore (Statcast events can't derive these)
+        runs, rbi = _get_runs_rbi(int(game_pk), mlbam)
+        if runs is not None:
+            stats["R"] = int(runs)
+        if rbi is not None:
+            stats["RBI"] = int(rbi)
         gdate = str(g["game_date"].iloc[0])[:10]
         team = None
         opponent = None

@@ -95,7 +95,27 @@ def prop_history(player_id: int = Query(...),
     if not stat_key:
         return {"error": f"market not chartable from logs: {market}", "games": []}
 
-    stat_path = f"$.{stat_key}"
+    # stat_key is either a string (single JSON field) or a list (compound: sum fields)
+    if isinstance(stat_key, list):
+        keys = stat_key
+        # SUM with COALESCE so missing fields don't null the whole row
+        coalesce_terms = [
+            f"COALESCE(json_extract(stats, '$.{k}'), 0)" for k in keys
+        ]
+        val_expr = f"({' + '.join(coalesce_terms)})"
+        # WHERE: at least one key must be non-null (found_any semantics)
+        non_null_terms = " OR ".join(
+            f"json_extract(stats, '$.{k}') IS NOT NULL" for k in keys
+        )
+        where_clause = f"({non_null_terms})"
+        params_for_query = ()  # no bind params needed, keys are hardcoded per market
+    else:
+        val_expr = "json_extract(stats, ?)"
+        where_clause = "json_extract(stats, ?) IS NOT NULL"
+        stat_path = f"$.{stat_key}"
+        params_for_query = (stat_path, stat_path)
+        keys = None  # unused for non-compound
+
     with closing(_db()) as con:
         con.row_factory = sqlite3.Row
         # Get player info
@@ -106,15 +126,26 @@ def prop_history(player_id: int = Query(...),
             return {"error": "player not found", "games": []}
 
         # Get game logs with this stat, most recent first
-        rows = con.execute(
-            f"""SELECT game_date, opponent, home_away,
-                       json_extract(stats, ?) AS val
-                FROM player_game_logs
-                WHERE player_id=? AND league=?
-                  AND json_extract(stats, ?) IS NOT NULL
-                ORDER BY game_date DESC LIMIT 100""",
-            (stat_path, player_id, league, stat_path)
-        ).fetchall()
+        if isinstance(stat_key, list):
+            rows = con.execute(
+                f"""SELECT game_date, opponent, home_away,
+                           {val_expr} AS val
+                    FROM player_game_logs
+                    WHERE player_id=? AND league=?
+                      AND {where_clause}
+                    ORDER BY game_date DESC LIMIT 100""",
+                (player_id, league)
+            ).fetchall()
+        else:
+            rows = con.execute(
+                f"""SELECT game_date, opponent, home_away,
+                           json_extract(stats, ?) AS val
+                    FROM player_game_logs
+                    WHERE player_id=? AND league=?
+                      AND json_extract(stats, ?) IS NOT NULL
+                    ORDER BY game_date DESC LIMIT 100""",
+                (stat_path, player_id, league, stat_path)
+            ).fetchall()
 
     if not rows:
         return {

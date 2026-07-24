@@ -221,6 +221,7 @@ _MARKET_STAT_KEY = {
             "doubles": "2B", "total_doubles": "2B", "triples": "3B", "total_triples": "3B",
             "total_home_runs": "HR", "total_hits": "H", "total_walks": "BB",
             "total_bases_allowed": None,
+            "hits_runs_rbis": ["H", "R", "RBI"],  # compound: sum across 3 stat keys
             # Pitcher markets (ingest_mlb_pitcher_logs.py)
             "strikeouts": "K", "outs": "outs", "hits_allowed": "hits_allowed",
             "pitcher_walks": "BB", "total_pitcher_walks": "BB",
@@ -236,6 +237,12 @@ _MARKET_STAT_KEY = {
             "receiving_tds": "receiving_tds", "interceptions": "interceptions"},
     "wc": {"goals": "goals", "assists": "assists", "shots": "shots",
            "shots_on_target": "sot", "shots_on_goal": "sot"},
+    # significant_strikes is the only UFC market with a direct raw game-log stat to chart.
+    # fight_time isn't captured into player_game_logs yet (round+clock fetched but not
+    # stored). finishes/win_by_ko/win_by_submission are win-by-method yes/no props, same
+    # category as MLB's home_run_any/hit_any etc — none of those are chartable either,
+    # this isn't a new gap. All fall back to "chart not available" via lookup returning None.
+    "ufc": {"significant_strikes": "sigStrikesLanded"},
 }
 
 
