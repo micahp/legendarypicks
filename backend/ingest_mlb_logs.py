@@ -10,8 +10,19 @@ they require whole-game baserunner tracking that per-batter Statcast rows
 cannot provide.
 
 Usage: python3 ingest_mlb_logs.py [--days 60]
+       python3 ingest_mlb_logs.py --start 2026-03-15 --end 2026-03-22
+
+--start/--end pull an explicit date window instead of a trailing --days lookback
+from now — needed to backfill history in chunks. Internally this fetches ONE DAY
+at a time via pybaseball.statcast(day, day, parallel=False) and writes it to the
+DB before moving to the next day, freeing each day's DataFrame immediately after.
+pybaseball's default parallel=True spins up a thread per day in the range, each
+holding a full day's wide pitch-level DataFrame concurrently, then pd.concat's
+them all — on this box that blew load to 189+ and swap to near-full from a
+single 7-day chunk. Day-by-day + parallel=False bounds peak memory to ~1 day's
+data regardless of how wide the --start/--end window is.
 """
-import sys, os, json, sqlite3, datetime as dt, urllib.request as _ur
+import sys, os, gc, json, sqlite3, datetime as dt, time as _time, urllib.request as _ur
 from typing import Optional
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from ingest_nfl_logs import ensure_table  # reuse the shared schema
@@ -64,30 +75,12 @@ def _get_runs_rbi(game_pk: int, mlbam: int) -> tuple:
     return None, None
 
 
-def ingest(days: int = 60) -> int:
-    from pybaseball import statcast
-    import pandas as pd
-
-    end = dt.datetime.now()
-    start = end - dt.timedelta(days=days)
-    s, e = start.strftime("%Y-%m-%d"), end.strftime("%Y-%m-%d")
-    print(f"Pulling Statcast {s}..{e} (per-game derive)...")
-    data = statcast(s, e)
-    if data is None or len(data) == 0:
-        print("No Statcast data."); return 0
-
+def _process_day(data, con, mlbam_to_player: dict, season: int) -> int:
+    """Derive per-game box lines from one day's Statcast DataFrame and write to DB."""
     bat = data[data["events"].notna()].copy()
-    print(f"  {len(bat)} batted-ball/PA-ending events across {bat['game_pk'].nunique()} games")
-
-    con = sqlite3.connect(DB); con.row_factory = sqlite3.Row
-    ensure_table(con)
-    season = end.year
-
-    mlbam_to_player = {
-        r["mlbam_id"]: r["id"]
-        for r in con.execute("SELECT mlbam_id, id FROM players WHERE league='mlb' AND mlbam_id IS NOT NULL AND mlbam_id != 0")
-    }
-
+    del data
+    if len(bat) == 0:
+        return 0
     ingested = 0
     for (batter, game_pk), g in bat.groupby(["batter", "game_pk"]):
         mlbam = int(batter)
@@ -129,18 +122,64 @@ def ingest(days: int = 60) -> int:
             (pid, "mlb", season, gdate, str(int(game_pk)), gdate, team,
              opponent, home_away, json.dumps(stats), "statcast", str(mlbam)))
         ingested += 1
+    del bat
+    return ingested
 
-    con.commit()
+
+def ingest(days: int = 60, start_date: Optional[str] = None, end_date: Optional[str] = None) -> int:
+    from pybaseball import statcast
+
+    if start_date and end_date:
+        end = dt.datetime.strptime(end_date, "%Y-%m-%d")
+        start = dt.datetime.strptime(start_date, "%Y-%m-%d")
+    else:
+        end = dt.datetime.now()
+        start = end - dt.timedelta(days=days)
+    print(f"Pulling Statcast {start.date()}..{end.date()} (per-game derive), one day at a time...")
+
+    con = sqlite3.connect(DB); con.row_factory = sqlite3.Row
+    ensure_table(con)
+    season = end.year
+    mlbam_to_player = {
+        r["mlbam_id"]: r["id"]
+        for r in con.execute("SELECT mlbam_id, id FROM players WHERE league='mlb' AND mlbam_id IS NOT NULL AND mlbam_id != 0")
+    }
+
+    ingested = 0
+    cur = start
+    while cur <= end:
+        day = cur.strftime("%Y-%m-%d")
+        # parallel=False: pybaseball's default spins up a thread per day in the range,
+        # each holding a full day's wide pitch-level DataFrame concurrently — fine for a
+        # single day (this call), but that concurrency is what OOM'd a multi-day range.
+        data = statcast(day, day, verbose=False, parallel=False)
+        if data is not None and len(data) > 0:
+            n = _process_day(data, con, mlbam_to_player, season)
+            ingested += n
+            con.commit()
+            print(f"  {day}: {n} game-logs")
+        else:
+            print(f"  {day}: no games")
+        del data
+        gc.collect()
+        cur += dt.timedelta(days=1)
+        _time.sleep(1)  # brief pause between days, don't hammer Savant or this box back-to-back
+
     resolved = con.execute(
         "SELECT COUNT(*) FROM player_game_logs WHERE league='mlb' AND season=? AND player_id IS NOT NULL",
         (season,)).fetchone()[0]
-    print(f"  Ingested {ingested} MLB game-logs ({resolved} spine-resolved)")
+    print(f"  Ingested {ingested} MLB game-logs total ({resolved} spine-resolved for {season})")
     con.close()
     return ingested
 
 
 if __name__ == "__main__":
     days = 60
+    start_date = end_date = None
     if "--days" in sys.argv:
         days = int(sys.argv[sys.argv.index("--days") + 1])
-    ingest(days)
+    if "--start" in sys.argv:
+        start_date = sys.argv[sys.argv.index("--start") + 1]
+    if "--end" in sys.argv:
+        end_date = sys.argv[sys.argv.index("--end") + 1]
+    ingest(days, start_date, end_date)
