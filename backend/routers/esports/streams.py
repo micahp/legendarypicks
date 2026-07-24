@@ -223,18 +223,37 @@ def _twitch_viewer_count(channel):
     return viewers
 
 
+# Last known good count per stream, so ONE transient fetch miss doesn't blank a number that was
+# on screen seconds ago. Every upstream here fails to None on any hiccup (decapi timeout, Kick
+# token blip, YT parse miss) and the per-platform caches happily store that None, so a single bad
+# call used to show an empty viewer slot on a stream that is plainly live — observed live on the
+# board: cct_cs3 read None one cycle and 311 the next with no code change. A slightly stale count
+# beats a hole, but only briefly: past _VIEWER_STALE_MAX we'd rather show nothing than a lie.
+_viewer_last_good = {}    # "platform:channel-or-embed" -> (ts, count)
+_VIEWER_STALE_MAX = 900   # 15 min
+
+
 def _viewer_count(c):
     """Live viewer count for a candidate, or None if unknown/unverifiable. Kick's comes free as a
-    side effect of _channel_online's liveness check; Twitch and YouTube need their own call."""
+    side effect of _channel_online's liveness check; Twitch and YouTube need their own call.
+    Falls back to the last known good count (up to _VIEWER_STALE_MAX) on a transient miss."""
     platform = c.get("platform")
     if platform == "twitch" and c.get("channel"):
-        return _twitch_viewer_count(c["channel"])
-    if platform == "kick" and c.get("channel"):
+        fresh = _twitch_viewer_count(c["channel"])
+    elif platform == "kick" and c.get("channel"):
         cached = _kick_viewer_cache.get(c["channel"])
-        return cached[1] if cached else None
-    if platform == "youtube" and c.get("embedUrl"):
-        return yt_viewer_count(c["embedUrl"])
-    return None
+        fresh = cached[1] if cached else None
+    elif platform == "youtube" and c.get("embedUrl"):
+        fresh = yt_viewer_count(c["embedUrl"])
+    else:
+        return None
+
+    key = f"{platform}:{c.get('channel') or c.get('embedUrl') or ''}"
+    if fresh is not None:
+        _viewer_last_good[key] = (time.time(), fresh)
+        return fresh
+    prev = _viewer_last_good.get(key)
+    return prev[1] if prev and time.time() - prev[0] < _VIEWER_STALE_MAX else None
 
 
 def _chan_url(platform, channel):
