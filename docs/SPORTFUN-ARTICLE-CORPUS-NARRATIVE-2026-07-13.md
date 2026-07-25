@@ -1,9 +1,12 @@
 # Sport.Fun founder-article corpus: the product narrative
 
 **Date:** 2026-07-13
-**Corpus:** 25 top-level Markdown articles listed in
+**Extended:** 2026-07-25 — added **Act VII** (Season 2 update) plus two addenda at the end. Acts I–VI
+and both concluding sections are unchanged from the 07-13 reading; where Act VII revises an earlier
+conclusion it says so explicitly rather than editing the original text.
+**Corpus:** 26 top-level Markdown articles listed in
 `/root/ai-research/data/adamfdf_articles/INDEX.md`
-**Period covered:** 2025-06-09 through 2026-06-16
+**Period covered:** 2025-06-09 through 2026-07-25
 
 ## How to read this document
 
@@ -254,6 +257,94 @@ avoiding app-store taxes
 while the June 2026 roadmap makes app-store distribution a priority. The product did not merely add
 features; it changed its distribution assumptions as the target audience changed.
 
+## Act VII — July 2026: a settled identity, an unsolved market, and a quiet revenue migration
+
+*Added 2026-07-25 from `season-2-is-coming-a-bigger-better-arena-not-to-cry-in-20260725.md`.*
+
+This is the first article in the corpus written from a position of **declared product certainty**. Where
+the June article said the product was not ready for 100,000 users, this one names the formula and
+states it will not change: **Picks as the short-term engagement loop, trading as the depth — "Picks.
+But you own it."** The founder explicitly frames this as the end of a year of experiments and
+missteps, and says he does not see it changing or pivoting.
+
+Three things in this article matter more than the roadmap items.
+
+### 1. The identity was found behaviorally, not editorially
+
+The stated evidence for the formula is a habit threshold: *once you make your first trade and play
+5–8 tournaments, it sticks.* That is an activation metric, not a taste judgment. A year of shipping
+produced one sentence of positioning, and the sentence is trusted because the funnel data underneath
+it is trusted. This is the single most transferable operating fact in the entire corpus, and it is a
+capability question before it is a product question: you cannot locate your own habit threshold
+without instrumentation and users.
+
+### 2. Market health remains unsolved after a year, and is now delegated to an agent
+
+Market health is listed as track #1 and described as *"the thing that fucks up every open market and
+is incredibly difficult to solve."* The specific failure named is social, not technical: *"I love FDF
+but I don't want to sit there whilst the other guy sells."* Committed, skilled players feel like
+suckers relative to sellers. The founder concedes it is *"just true too often"* and generalizes it to
+crypto as a whole — *never be the believer, always sell* — the tragedy of the commons.
+
+The response is **Motty**, an internal market-health system built over six months of research. Its
+job is to smooth "bad volatility" — the moves users do not understand or accept — while leaving the
+legible kind (a hat-trick, an injury, a transfer to Saudi Arabia). Mechanically it is a smarter
+deployment schedule for the buybacks that already existed. Its status is candid: **shadow-live**,
+logging the trades it *would* make, not yet holding the buyback wallet, with an "AI learning skill"
+planned. The founder twice says it is not a magic bullet.
+
+Paired with Motty is the **Reputation system**, whose stated purpose is to *"reward the skilled
+players and curb people exploiting them."* Note what this implies structurally: owning the market
+obliges you to police your own users. Surge fees are described as too blunt an instrument for the
+same job.
+
+This is the corpus's fifth distinct attempt at market health (surge fees → buybacks → issuance
+changes → reward restructuring → Motty + Reputation), by a funded in-house team, on a system with no
+meaningful adversarial bots. It remains open.
+
+### 3. Revenue is migrating from market/token mechanics toward content and subscription
+
+Read the money items together and a shift appears that the article never announces:
+
+- **Limited pack drop** — 4–5 genuinely missing players per sport, access prioritized for trusted
+  managers. Deliberately *not* a market flood: *"flooding the market with new players right now would
+  make us money, but would run against that aim."*
+- **Season Pass** — *"Best in class AI Assistant, cosmetics, premium features,"* for both Pro and
+  free-to-play, with F2P subscriptions still routing value to `$FUN`.
+- **Scouting** — deferred to Q4 with an explicit reason: a full scouting layer *"would split liquidity
+  in ways that hurt the market."* The founder acknowledges scouting was a plank of the January `$FUN`
+  pitch and that the timing was wrong.
+- **`$FUN` rewards** move from holding-based to *activity*-based.
+
+So the paid surfaces of Season 2 are a content drop, a subscription, and an AI assistant. The
+market itself is treated as a fragile substrate to be protected from monetization, not as the
+monetization. Compare the October 2025 NFL article, where the headline economics were $67m traded,
+$64m of packs ripped, 15k spending wallets, and $7m revenue — **packs, not market fees, were always
+the revenue engine.** Season 2 leans into that and adds recurring revenue on top.
+
+### Two admissions worth recording verbatim
+
+- **Distribution is unsolved and expensive:** track #3 is *"how do you start cutting into the market
+  share of behemoths when they spend millions a month and we don't?"* — asked, not answered.
+- **Fundamentals decoupled from price:** *"Our token price and marketcap have taken a beating. But we
+  are also much more solid as a business and closer to real success now than we ever were when
+  everything was green."* Also *"We're good for money. We're long term focused."*
+
+### What this revises from the 07-13 reading
+
+Act VI closed on free-to-play as the mainstream front door and the 2.0 page-by-page UX framing. Both
+survive. What changes:
+
+- The 07-13 reading treated market health as one recurring problem among several. Act VII shows it is
+  the founder's **first-ranked** problem, still open after a year and six months of dedicated
+  research, and now being handed to an autonomous agent in shadow mode. Its difficulty should be
+  rated higher than the earlier reading implied.
+- The 07-13 reading described mechanic instability as a pattern. Season 2 is the first article to
+  claim the instability has **stopped** at the identity layer while continuing at the economic layer.
+  The split matters: the loop is declared settled, the market is explicitly not.
+- Scouting's deferral is now stated as a **liquidity** decision, which confirms that new-supply
+  features and market health are in direct tension — a constraint the earlier reading did not have.
+
 ## What remained stable
 
 Across launches, redesigns, and economic changes, six ideas remain recognizable:
@@ -351,6 +442,49 @@ inputs, projections, props, fantasy rosters, and the UI. The first practical les
 corpus is to make the invisible system trustworthy before multiplying the number of experiences
 that depend on it.
 
+## Addendum 2026-07-25 — what Season 2 changes for Legendary Picks
+
+The 07-13 reading already argued for restraint on tokens, buybacks, and liquidity management. Season 2
+converts that from a judgment call into an evidenced one, and adds three new conclusions.
+
+**1. The market layer is now a confirmed money pit, not an unproven one.** A funded team with an
+in-house AMM, no adversarial bots, and full control of its own order flow has spent a year and five
+successive mechanisms on market health and is currently running a shadow-mode agent that does not yet
+hold the wallet. This is the clearest available evidence that *running the market is the expensive,
+low-fun part of this category.* It reinforces the existing decision to keep player-shares in Phase 3
+behind pricing, users, and legal review — and argues for demoting it further rather than sequencing
+toward it.
+
+**2. Adam's own list of what's fun does not include the market.** The article's enthusiasm attaches to
+discovery (*"the raw excitement of discovering new talent before anyone else"*), to seeing other
+managers' picks, to competing with friends, and to pack openings. Trading is described as *depth* —
+the retention scaffolding under the fun, not the fun itself. Picks is the short-term loop; trading is
+what you graduate into. A product that ships the fun layer without owning a market is not a lesser
+version of Sport.Fun; it is the part of Sport.Fun that works, minus the part that has consumed the
+company.
+
+**3. The premium feature he is selling is the asset Legendary Picks already has.** Season Pass leads
+with a *"Best in class AI Assistant,"* and the corpus's recurring unmet promise is data at the
+decision point — form, injuries, predicted lineups, why the price moved. Sport.Fun's scarcity is
+sports-data depth and explanation; its abundance is users, funding, and a live market. Legendary Picks
+is the exact inverse: `player_game_logs` (111k rows across 4 leagues), per-game projections, EV/CLV,
+and the prop-outcome history, with effectively no users and no analytics. That asymmetry points at
+supply rather than competition — the Phase 2 prop-outcome API thesis
+(`project_legendarypicks_phase2`) is the shape that fits, and Sport.Fun-type games are plausible
+buyers of it rather than only rivals.
+
+**4. The one operating practice to copy immediately is instrumentation, not any feature.** The Season 2
+identity rests on a measured habit threshold (first trade + 5–8 tournaments). Legendary Picks cannot
+form an equivalent claim: as of 2026-07-24 no analytics library is installed anywhere in the app, and
+prod logs showed zero unique app-route visitors that day. Every roadmap in this corpus was corrected
+by contact with user behavior. Without measurement, product direction is taste — and taste is exactly
+what the founder says cost him a year of experiments and missteps before the data settled it.
+
+**Do not copy:** tokenized supply, buybacks, surge fees, a Reputation system (its purpose is to police
+a market you would not be running), or pack-based supply drops. **Do copy:** a one-sentence identity
+defended over a year, an activation metric that defines "it stuck," data placed at the decision, and
+subscription rather than transaction-fee revenue.
+
 ## Article map in chronological order
 
 The narrative above draws on the entire indexed set. This map records the role each article plays:
@@ -405,3 +539,7 @@ The narrative above draws on the entire indexed set. This map records the role e
     — current World Cup rules and the clearest description of fantasy decision depth.
 25. `wc26-week-1-and-whats-next-2066972165480894766.md`
     — current 2.0 UX direction, free-to-play growth, minigames, and unresolved market health.
+26. `season-2-is-coming-a-bigger-better-arena-not-to-cry-in-20260725.md`
+    — settled identity ("Picks. But you own it."), the measured habit threshold, Motty market-health
+    agent in shadow mode, Reputation, limited pack drop, Scouting deferred to Q4 on liquidity
+    grounds, and the Season Pass / activity-based `$FUN` revenue shift.
