@@ -195,3 +195,45 @@ Caught at review (orchestrator), should have been caught by the feature's own va
   Never inherit a diagnosis from a task doc/handoff as fact; confirm the named code path actually
   produces the visible symptom. A wrong-surface fix wastes a whole run. (Jul-18: a "day grouping" bug
   was chased on `/esports` when the real bug was UTC date-bucketing on `/scores`.)
+
+## 12. Don't let a process take over the box (added 2026-07-25)
+
+**This box has 5.8GB RAM total and normally sits ~4-4.7GB used** — several dev servers, LSPs, and
+background services across projects. Headroom is usually under 1.5GB. Assume you are sharing it with
+a live dev server and tunnel a human is actively browsing.
+
+- **Check BOTH load and memory before any batch job** — `uptime` AND `free -h`. `uptime` alone is
+  not enough; the real ceiling here is RAM/swap, not CPU. If `available` is under ~1-1.5GB, don't
+  start. Say the expected cost (CPU, memory, duration, subprocess/thread count) out loud BEFORE
+  running, not after someone notices the site got slow.
+- **Read the script's internals, not just its CLI flags.** A chunked `--start`/`--end` argument tells
+  you nothing about what happens inside one call. (Jul-24: `ingest_mlb_logs.py` was "fixed" by
+  chunking the date range, but `pybaseball.statcast()` defaults to `parallel=True` and spins a thread
+  per day in the range, each holding a full day's pitch-level DataFrame, then concats them — a single
+  7-day chunk drove load to **189** and swap to near-full, and starved the tunnel. Fix was one day at
+  a time with `parallel=False`.) Go read a library call's source if its concurrency isn't obvious.
+- **Throttle by default**: smallest real unit first (one day, one page) while watching `free -h`,
+  brief pauses between units, single-process over any internal parallelism. A chunk size that
+  "worked before" on a different code path is not evidence.
+- **Verify a kill actually landed** (`ps`/`pgrep`) before reporting something stopped. A `pkill`
+  exit code is not proof — a missed pattern kept a backfill running after it was reported dead.
+- There is a **`resource-check` skill** at `.claude/skills/resource-check/SKILL.md` encoding the
+  above. Load it before batch work.
+- **Don't run parallel worktree dev-server stacks.** `scripts/hermes-worktree.sh up` hardcodes
+  3096/8096 and collides with the main env; 3+ concurrent `next dev` stacks exhausted inotify
+  watches and OOM-killed a running agent. See `docs/RUNBOOK-parallel-dev-servers-and-hmr.md`.
+
+### The tunnel specifically
+- A `cloudflared` quick tunnel points at a **port**, so it **never needs restarting** when the
+  process behind it restarts. Don't touch it.
+- **Never run `scripts/hermes-worktree.sh down <task>` while a tunnel is up on :3096/:8096.** It
+  `pkill`s by hardcoded port and has killed the live tunnel as collateral even for a worktree whose
+  own servers never bound (Cloudflare 1033 on the user's end). Quick tunnels get a **new URL** each
+  restart, so this is not cheap to undo.
+- If the frontend wedges — a route 500s with `ENOENT ... .next/server/pages/<route>.js` while the
+  process still looks alive — the `.next` build cache is corrupted (memory pressure during a rebuild
+  does this). Recovery is `kill -9` + `rm -rf .next` + relaunch. A plain restart does not unstick it.
+  **Ask first**, per §11 — it's externally managed.
+- Relaunch is `npm run dev -- --port 3096`. **The `--` matters**: `npm run dev --port 3096` silently
+  passes `3096` as a positional and Next treats it as a project directory
+  (`Invalid project directory provided, no such directory: /root/legendarypicks/3096`).
