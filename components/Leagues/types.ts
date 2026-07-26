@@ -264,3 +264,44 @@ export interface NflDraftNotes {
   watch: Record<number, boolean>
   fade: Record<number, boolean>
 }
+
+// ── NFL usage trend ────────────────────────────────────────────────────
+
+export interface NflUsageGame {
+  week: number | null
+  opponent: string | null
+  snaps: number | null
+  snap_share: number | null
+  targets: number | null
+  target_share: number | null
+  air_yds_share: number | null
+  adot: number | null
+  wopr: number | null
+  rec: number | null
+  rec_yds: number | null
+  rec_td: number | null
+  fpts_ppr: number | null
+}
+
+export interface NflUsageTrend {
+  snap_share: 'up' | 'down' | 'flat' | null
+  target_share: 'up' | 'down' | 'flat' | null
+  wopr: 'up' | 'down' | 'flat' | null
+}
+
+export interface NflUsageAverages {
+  snap_share: number | null
+  target_share: number | null
+  wopr: number | null
+}
+
+export interface NflUsageResponse {
+  player_id: number
+  name: string
+  team: string
+  position: string
+  season: number | null
+  games: NflUsageGame[]
+  averages: NflUsageAverages
+  trend: NflUsageTrend
+}
