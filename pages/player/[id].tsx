@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import Head from 'next/head'
 import PropChart, { PropHistory } from '../../components/Props/PropChart'
+import { trackPlayerViewed } from '../../lib/analytics'
 
 interface Projection {
   n: number; projection: number; median: number; floor: number; ceiling: number
@@ -170,6 +171,8 @@ export default function PlayerPage() {
         if (!alive || !d) return
         setP(d)
         setState('ready')
+        // Fired on a resolved profile, so 404s and errors are not counted as views.
+        trackPlayerViewed({ player_id: String(id), league: d.league || 'unknown', surface: 'player-page' })
       })
       .catch(() => { if (alive) setState('error') })
     return () => { alive = false }

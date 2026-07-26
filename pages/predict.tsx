@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/router'
 import Head from 'next/head'
 import { getDeviceId } from '../lib/deviceId'
+import { trackPickMade } from '../lib/analytics'
 
 interface Match {
   matchKey: string
@@ -179,11 +180,15 @@ export default function PredictPage() {
     const deviceId = getDeviceId()
     setSubmittingKey(m.matchKey)
     try {
-      await fetch('/api/esports/picks', {
+      const res = await fetch('/api/esports/picks', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-Device-Id': deviceId },
         body: JSON.stringify({ matchKey: m.matchKey, side, lockAt: m.startTime }),
       })
+      // Only a persisted pick counts — a click that failed server-side is not a pick.
+      if (res.ok) {
+        trackPickMade({ league: m.league || 'esports', surface: 'predict', pick_id: m.matchKey })
+      }
       await loadPicks()
     } catch {
       // ignore network errors in F1 skeleton

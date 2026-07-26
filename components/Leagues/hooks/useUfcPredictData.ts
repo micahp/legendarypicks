@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { getDeviceId } from '../../../lib/deviceId'
+import { trackPickMade } from '../../../lib/analytics'
 import type { HubTab } from '../types'
 
 export type UfcPickSide = 'home' | 'away'
@@ -153,6 +154,8 @@ export function useUfcPredictData(isUFC: boolean, activeTab: HubTab) {
         const data = await response.json().catch(() => ({}))
         throw new Error(data.error || 'Unable to save this pick.')
       }
+      // Past the !response.ok throw above, so the pick is persisted.
+      trackPickMade({ league: 'ufc', surface: 'leagues-predict-tab', pick_id: fightKey })
       setCrowd(current => {
         const next = { ...current }
         delete next[fightKey]
