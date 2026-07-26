@@ -62,6 +62,17 @@ def _rush_td(stats: dict) -> Optional[float]:
     return _num(stats, "rush_td", "rushing_tds")
 
 
+# Next Gen and play-by-play metrics. All spelled identically in both pipelines,
+# so none of them needs a COALESCE. cpoe / pass_epa exist only from 2025 — the
+# 2024 source is nflverse's weekly summary, which does not carry them.
+#
+# These were ingested and then rendered nowhere. The receiving three are the
+# WR/TE separation story; the passing two are the QB accuracy story. See
+# docs/NFL-DATA-INVENTORY.md for what covers whom.
+_ADVANCED_STATS = ("separation", "cushion", "yac_above_exp", "cpoe", "pass_epa",
+                   "st_snaps", "st_pct")
+
+
 # Derived stats that are stored identically across seasons
 def _stat(stats: dict, key: str) -> Optional[float]:
     v = stats.get(key)
@@ -331,6 +342,16 @@ def nfl_usage(
                 "rush_td": _rush_td(stats),
                 "fpts_ppr": _fpts_ppr(stats),
             }
+            game.update({k: _stat(stats, k) for k in _ADVANCED_STATS})
+            # pass_epa is stored as a game total (a sum of per-play qb_epa).
+            # Per-dropback is the comparable form — a 40-attempt game and a
+            # 20-attempt game are not on the same scale otherwise.
+            att = _num(stats, "att", "attempts")
+            game["pass_att"] = att
+            game["epa_per_db"] = (
+                round(game["pass_epa"] / att, 3)
+                if (game["pass_epa"] is not None and att) else None
+            )
             games.append(game)
 
             snap_shares.append(_snap_share(stats))
