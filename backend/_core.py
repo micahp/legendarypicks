@@ -522,6 +522,44 @@ def _get_mlb_stats(player_name: str, player_id: int, statcast_id, now: float):
         return {"stats": None, "message": f"MLB stats error: {str(e)[:200]}"}
 
 
+# player_stats stores every NFL column for every player, zero-filled — a receiver
+# carries pass_yds_g 0, a quarterback carries targets 0. Rendering the row whole
+# opens a tight end's page on "Pass Yds/G 0 · Pass TDs 0 · INTs 0 · Comp/G 0 ·
+# Pass EPA 0 · Carries/G 0", which is the first thing on the page and says nothing.
+# Which phases a player participates in is a property of his position, so pick the
+# blocks off position and prune values second.
+_NFL_STAT_BLOCKS = {
+    "passing":   ("passing_yards_pg", "passing_tds", "interceptions",
+                  "completions_pg", "passing_epa"),
+    "rushing":   ("carries_pg", "rushing_yards_pg"),
+    "receiving": ("receptions", "receiving_yards_pg", "targets"),
+    "fantasy":   ("fantasy_points_pg", "fantasy_points_ppr_pg"),
+}
+
+_NFL_POSITION_BLOCKS = {
+    "QB": ("passing", "rushing", "fantasy"),
+    "RB": ("rushing", "receiving", "fantasy"),
+    "FB": ("rushing", "receiving", "fantasy"),
+    "WR": ("receiving", "fantasy"),
+    "TE": ("receiving", "fantasy"),
+}
+
+
+def _nfl_stats_for_position(stats: dict, position):
+    """Narrow a zero-filled NFL stat row to the phases the position plays.
+
+    Within a kept block a zero is a real number — a quarterback with no
+    interceptions has thrown none — so only ``None`` is dropped there. An
+    unrecognized position (linemen, kickers, defenders, or a missing value) has no
+    known phase, so it falls back to dropping anything empty rather than to
+    printing the whole zero-filled row."""
+    blocks = _NFL_POSITION_BLOCKS.get(str(position or "").upper().strip())
+    if blocks is None:
+        return {k: v for k, v in stats.items() if v}
+    keep = {k for b in blocks for k in _NFL_STAT_BLOCKS[b]}
+    return {k: v for k, v in stats.items() if k in keep and v is not None}
+
+
 def _get_nfl_stats(player_name: str, player_id: int, now: float):
     """Pull NFL stats from player_stats table (populated by ingest_nfl.py).
     Looks up by player_id first (identity spine), falls back to name_norm for un-backfilled rows."""
@@ -557,7 +595,7 @@ def _get_nfl_stats(player_name: str, player_id: int, now: float):
             "team": row["nfl_team"],
             "games": row["games"],
             "source": row["source"] or "nflverse",
-            "stats": {
+            "stats": _nfl_stats_for_position({
                 "passing_yards_pg": row["pass_yds_g"],
                 "passing_tds": row["pass_td"],
                 "interceptions": row["interceptions"],
@@ -570,7 +608,7 @@ def _get_nfl_stats(player_name: str, player_id: int, now: float):
                 "targets": row["targets"],
                 "fantasy_points_pg": row["fantasy_pts_g"],
                 "fantasy_points_ppr_pg": row["fantasy_ppr_g"],
-            }
+            }, row["nfl_position"]),
         }
         con.close()
         return out
