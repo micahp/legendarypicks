@@ -121,5 +121,86 @@ class PlayerProfileApiTests(unittest.TestCase):
         )
 
 
+class NflSeasonStatsPositionTests(unittest.TestCase):
+    """player_stats is zero-filled across every NFL column, so the profile has to
+    pick the blocks a position actually plays rather than print the whole row."""
+
+    # One full row as _get_nfl_stats assembles it, with a receiver's production.
+    ROW = {
+        "passing_yards_pg": 0, "passing_tds": 0, "interceptions": 0,
+        "completions_pg": 0, "passing_epa": 0,
+        "carries_pg": 0, "rushing_yards_pg": 0,
+        "receptions": 126, "receiving_yards_pg": 72.9, "targets": 170,
+        "fantasy_points_pg": 11.2, "fantasy_points_ppr_pg": 18.6,
+    }
+
+    def _keys(self, position, row=None):
+        from _core import _nfl_stats_for_position
+        return set(_nfl_stats_for_position(dict(row or self.ROW), position))
+
+    def test_receiver_drops_the_passing_and_rushing_blocks(self):
+        """The bug this fixes: a tight end's landing tab opened on seven zeros."""
+        for position in ("TE", "WR"):
+            with self.subTest(position=position):
+                self.assertEqual(
+                    {"receptions", "receiving_yards_pg", "targets",
+                     "fantasy_points_pg", "fantasy_points_ppr_pg"},
+                    self._keys(position))
+
+    def test_quarterback_keeps_passing_and_rushing_but_not_receiving(self):
+        keys = self._keys("QB")
+        self.assertIn("passing_epa", keys)
+        self.assertIn("carries_pg", keys)
+        self.assertNotIn("targets", keys)
+        self.assertNotIn("receptions", keys)
+
+    def test_back_keeps_rushing_and_receiving_but_not_passing(self):
+        for position in ("RB", "FB"):
+            with self.subTest(position=position):
+                keys = self._keys(position)
+                self.assertIn("carries_pg", keys)
+                self.assertIn("targets", keys)
+                self.assertNotIn("passing_yards_pg", keys)
+
+    def test_zero_inside_a_played_block_is_kept(self):
+        """A quarterback who has thrown no interceptions has thrown none — that
+        is a fact about him, not an empty column."""
+        row = dict(self.ROW, passing_yards_pg=229.2, interceptions=0)
+        keys = self._keys("QB", row)
+        self.assertIn("interceptions", keys)
+
+    def test_none_inside_a_played_block_is_dropped(self):
+        row = dict(self.ROW, passing_epa=None)
+        self.assertNotIn("passing_epa", self._keys("QB", row))
+
+    def test_unknown_position_falls_back_to_dropping_empties(self):
+        """Linemen, kickers and defenders have no known phase. Rather than print
+        the zero-filled row, keep only what is actually populated."""
+        for position in ("K", "CB", "", None):
+            with self.subTest(position=position):
+                self.assertEqual(
+                    {"receptions", "receiving_yards_pg", "targets",
+                     "fantasy_points_pg", "fantasy_points_ppr_pg"},
+                    self._keys(position))
+
+    def test_position_matching_ignores_case_and_padding(self):
+        self.assertEqual(self._keys("QB"), self._keys("  qb "))
+
+    def test_empty_result_reads_as_no_season_stats(self):
+        """When nothing survives, the profile must report the section absent
+        rather than render an empty card: _season_stats_for_profile treats a
+        falsy `stats` as no stats at all."""
+        from _core import _nfl_stats_for_position
+        blank = {k: 0 for k in self.ROW}
+        self.assertEqual({}, _nfl_stats_for_position(blank, "K"))
+
+        with mock.patch.object(
+            players, "_get_nfl_stats",
+            return_value={"window": "2025", "stats": {}},
+        ):
+            self.assertIsNone(
+                players._season_stats_for_profile(1, "Nobody", "nfl"))
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
