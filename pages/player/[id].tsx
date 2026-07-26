@@ -117,11 +117,14 @@ function SeasonStatsSection({ league, seasonStats }: { league: string; seasonSta
         {blocks.map(b => (
           <div key={b.label} className="p-4">
             {blocks.length > 1 && <div className="text-xs font-semibold text-zinc-400 mb-2">{b.label}</div>}
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-2">
+            {/* Label over value, not label-and-value spread across the column:
+                at three columns a justified pair puts the number nearer the next
+                column's label than its own. */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-x-6 gap-y-4">
               {b.entries.map(([k, v]) => (
-                <div key={k} className="flex items-baseline justify-between gap-2">
-                  <span className="text-xs text-zinc-500">{statLabel(k)}</span>
-                  <span className="font-mono tabular-nums text-sm text-zinc-200">{formatStatValue(k, v)}</span>
+                <div key={k} className="flex flex-col gap-0.5">
+                  <span className="text-[11px] uppercase tracking-wide text-zinc-500">{statLabel(k)}</span>
+                  <span className="font-mono tabular-nums text-lg text-zinc-100">{formatStatValue(k, v)}</span>
                 </div>
               ))}
             </div>
