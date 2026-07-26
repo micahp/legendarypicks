@@ -1,7 +1,6 @@
 import Script from 'next/script'
 import { useEffect } from 'react'
 import { useRouter } from 'next/router'
-import { getDeviceId } from '../../lib/deviceId'
 import { trackPageView } from '../../lib/analytics'
 
 interface Props {
@@ -25,14 +24,6 @@ export default function GoogleAnalytics({ trackingId }: Props) {
     router.events.on('routeChangeComplete', onRouteChange)
     return () => router.events.off('routeChangeComplete', onRouteChange)
   }, [router.events, trackingId])
-
-  // Reuse the existing lp_device_id so a returning picker is the same user
-  // across sessions rather than a fresh GA client id.
-  useEffect(() => {
-    if (!trackingId || typeof window === 'undefined' || !window.gtag) return
-    const id = getDeviceId()
-    if (id) window.gtag('set', { user_id: id })
-  }, [trackingId])
 
   if (!trackingId || process.env.NODE_ENV === 'development') {
     return null
