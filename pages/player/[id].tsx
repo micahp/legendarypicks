@@ -3,7 +3,7 @@ import { useRouter } from 'next/router'
 import Head from 'next/head'
 import PropChart, { PropHistory } from '../../components/Props/PropChart'
 import NflUsageTrend from '../../components/Leagues/NflUsageTrend'
-import { trackPlayerViewed } from '../../lib/analytics'
+import { trackPlayerViewed, trackUsageTrendViewed } from '../../lib/analytics'
 
 interface Projection {
   n: number; projection: number; median: number; floor: number; ceiling: number
@@ -342,7 +342,16 @@ export default function PlayerPage() {
           </div>
         </div>
 
-        {isNfl && p.data_status !== 'unavailable' && <TabStrip tab={tab} setTab={setTab} />}
+        {isNfl && p.data_status !== 'unavailable' && (
+          <TabStrip tab={tab} setTab={(t) => {
+            // Fired on the move into Usage rather than on render, so the event
+            // counts deliberate visits and not every re-render of the tab.
+            if (t === 'usage' && tab !== 'usage') {
+              trackUsageTrendViewed({ player_id: String(p.id), season: p.season ?? undefined })
+            }
+            setTab(t)
+          }} />
+        )}
 
         {/* Honest empty state: no logs, no props, no season stats on file. */}
         {p.data_status === 'unavailable' && (
