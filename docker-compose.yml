@@ -34,6 +34,8 @@ services:
         NEXT_PUBLIC_API_BASE: /api
         # services/sports.ts reads THIS var; without it SportsService hit localhost:8000 → blank scores
         NEXT_PUBLIC_SPORTS_API_URL: /api
+        # GA4. Empty => analytics renders nothing. Set in .env as GA_TRACKING_ID before a prod build.
+        NEXT_PUBLIC_GA_TRACKING_ID: ${GA_TRACKING_ID:-}
     depends_on: [backend]
     environment:
       # reach the backend container over the compose network (SSR/server-side /api)
