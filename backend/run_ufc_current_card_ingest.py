@@ -9,32 +9,11 @@ from __future__ import annotations
 
 import datetime as dt
 import os
-import shutil
-import sqlite3
 import sys
-from contextlib import closing
 from typing import Callable, Optional
 
+import history_refresh_common as common
 import ingest_ufc_fight_stats as ingest
-
-
-def backup_database(db_path: str, now: dt.datetime) -> str:
-    stamp = now.strftime("%Y%m%d-%H%M%S")
-    backup_path = "{}.bak-premigrate-ufc-timer-{}".format(db_path, stamp)
-    if os.path.exists(backup_path):
-        raise RuntimeError("backup already exists: {}".format(backup_path))
-    shutil.copy2(db_path, backup_path)
-    if os.path.getsize(backup_path) <= 0:
-        raise RuntimeError("backup is empty: {}".format(backup_path))
-    with closing(ingest._read_only_connection(backup_path)) as con:
-        integrity = con.execute("PRAGMA integrity_check").fetchone()[0]
-    if integrity != "ok":
-        raise RuntimeError(
-            "backup integrity_check returned {}: {}".format(
-                integrity, backup_path
-            )
-        )
-    return backup_path
 
 
 def run(
@@ -96,7 +75,7 @@ def run(
             "unresolved": len(plan.unresolved),
         }
 
-    backup_path = backup_database(db_path, now)
+    backup_path = common.backup_database(db_path, "ufc-timer", now=now)
     result = ingest.apply_plan(db_path, plan)
     emit(
         "Applied UFC timer plan: {} logs, {} identities, {} links".format(

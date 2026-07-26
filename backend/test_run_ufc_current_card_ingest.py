@@ -2,9 +2,7 @@
 
 import datetime as dt
 import os
-import sqlite3
 import sys
-import tempfile
 import unittest
 from unittest import mock
 
@@ -26,7 +24,7 @@ class UfcTimerRunnerTests(unittest.TestCase):
         ), mock.patch.object(
             runner.ingest, "build_current_card_plan", return_value=plan
         ), mock.patch.object(
-            runner, "backup_database"
+            runner.common, "backup_database"
         ) as backup, mock.patch.object(
             runner.ingest, "apply_plan"
         ) as apply:
@@ -53,10 +51,11 @@ class UfcTimerRunnerTests(unittest.TestCase):
         ), mock.patch.object(
             runner.ingest, "build_current_card_plan", return_value=plan
         ), mock.patch.object(
-            runner,
+            runner.common,
             "backup_database",
-            side_effect=lambda *_: order.append("backup") or "/tmp/backup.db",
-        ), mock.patch.object(
+            side_effect=lambda *_, **__: order.append("backup")
+            or "/tmp/backup.db",
+        ) as backup, mock.patch.object(
             runner.ingest,
             "apply_plan",
             side_effect=lambda *_: order.append("apply")
@@ -74,6 +73,11 @@ class UfcTimerRunnerTests(unittest.TestCase):
 
         self.assertEqual(["backup", "apply"], order)
         self.assertEqual("applied", result["status"])
+        backup.assert_called_once_with(
+            "/tmp/not-opened.db",
+            "ufc-timer",
+            now=dt.datetime(2026, 7, 26, 12, 0, 0),
+        )
 
     def test_dry_run_reports_mutations_without_backup_or_writer(self):
         plan = ingest.IngestPlan(
@@ -89,7 +93,7 @@ class UfcTimerRunnerTests(unittest.TestCase):
         ), mock.patch.object(
             runner.ingest, "build_current_card_plan", return_value=plan
         ), mock.patch.object(
-            runner, "backup_database"
+            runner.common, "backup_database"
         ) as backup, mock.patch.object(
             runner.ingest, "apply_plan"
         ) as writer:
@@ -112,27 +116,6 @@ class UfcTimerRunnerTests(unittest.TestCase):
         )
         backup.assert_not_called()
         writer.assert_not_called()
-
-    def test_backup_is_nonempty_and_integrity_clean(self):
-        with tempfile.TemporaryDirectory(prefix="ufc-timer-test-") as temp_dir:
-            db_path = os.path.join(temp_dir, "picks.db")
-            con = sqlite3.connect(db_path)
-            con.execute("CREATE TABLE sample(id INTEGER PRIMARY KEY)")
-            con.execute("INSERT INTO sample VALUES(1)")
-            con.commit()
-            con.close()
-
-            backup = runner.backup_database(
-                db_path, dt.datetime(2026, 7, 26, 12, 34, 56)
-            )
-
-            self.assertTrue(os.path.getsize(backup) > 0)
-            con = sqlite3.connect("file:{}?mode=ro".format(backup), uri=True)
-            integrity = con.execute("PRAGMA integrity_check").fetchone()[0]
-            value = con.execute("SELECT id FROM sample").fetchone()[0]
-            con.close()
-            self.assertEqual("ok", integrity)
-            self.assertEqual(1, value)
 
 
 if __name__ == "__main__":

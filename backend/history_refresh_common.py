@@ -5,7 +5,6 @@ import datetime as dt
 import json
 import os
 import re
-import shutil
 import sqlite3
 from contextlib import closing
 from typing import Optional
@@ -47,7 +46,13 @@ def backup_database(
     )
     if os.path.exists(backup_path):
         raise RuntimeError("backup already exists: {}".format(backup_path))
-    shutil.copy2(db_path, backup_path)
+    # A file copy can capture a logically torn delete-mode database while a
+    # live writer is active. SQLite's backup API produces one coherent snapshot.
+    with closing(read_only_connection(db_path)) as source:
+        source.execute("PRAGMA busy_timeout=60000")
+        with closing(sqlite3.connect(backup_path)) as destination:
+            with destination:
+                source.backup(destination)
     if os.path.getsize(backup_path) <= 0:
         raise RuntimeError("backup is empty: {}".format(backup_path))
     integrity = integrity_check(backup_path)
