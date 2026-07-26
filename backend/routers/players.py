@@ -112,12 +112,32 @@ def player_profile(player_id: int):
                        "home": (r["home_away"] == "home") if r["home_away"] else None, "stats": s})
         for k, v in s.items():
             if isinstance(v, (int, float)):
+                # Required for the allowlist below to be correct, not cosmetic:
+                # 2024 rows carry legacy nflverse keys (`receptions`), 2025 rows
+                # canonical pbp keys (`rec`), and no season mixes the two. A
+                # player whose most recent season is 2024 would miss
+                # _NFL_PROJECTION_STATS entirely and lose every projection.
+                # /api/projections/player/{id} already normalizes the same way.
+                if league == "nfl":
+                    k = _NFL_KEY_NORMALIZE.get(k, k)
                 series.setdefault(k, []).append(v)
     projections = {}
     for k, vals in series.items():
+        # NFL blobs carry snap-count and NGS fields alongside production stats.
+        # Projecting a cushion or a special-teams snap % is meaningless, and for
+        # an offensive player those rows are all zeros — 17-20 rows of them,
+        # burying everything below. Usage belongs on the usage trend, not here.
+        if league == "nfl" and k not in _NFL_PROJECTION_STATS:
+            continue
         pr = proj_mod.project_stat(vals)
-        if pr:
-            projections[k] = pr
+        if not pr:
+            continue
+        # A stat the player has never recorded projects to zero across the board:
+        # every passing field for a receiver, every defensive field for anyone on
+        # offense. Nothing to say, so say nothing.
+        if league == "nfl" and not pr.get("season_avg") and not pr.get("projection"):
+            continue
+        projections[k] = pr
 
     season_stats = _season_stats_for_profile(p["id"], p["name"], league)
     return {
@@ -190,6 +210,18 @@ _NFL_KEY_NORMALIZE = {
     "fantasy_points":   "fpts",
     "fantasy_points_ppr": "fpts_ppr",
     # carries, targets: same key in both pipelines
+}
+
+# Production stats worth projecting on the player page, in canonical (post-
+# normalize) key names. Everything else an NFL blob carries — off_pct/off_snaps,
+# def_pct/def_snaps, st_pct/st_snaps, and the NGS fields adot/air_yds_share/
+# cushion/separation/yac_above_exp/cpoe/pass_epa — is usage or context, shown on
+# the usage trend rather than projected here.
+_NFL_PROJECTION_STATS = {
+    "pass_yds", "pass_td", "intc", "cmp", "att",
+    "rush_yds", "rush_td", "carries",
+    "rec", "rec_yds", "rec_td", "targets",
+    "fpts", "fpts_ppr",
 }
 
 

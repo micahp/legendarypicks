@@ -45,8 +45,11 @@ const MARKET_STAT: Record<string, string[]> = {
   goals: ['goals'], shots: ['shots'], saves: ['saves'],
   hits: ['H'], home_runs: ['HR'], strikeouts: ['K'], total_bases: ['TB'],
   walks: ['BB'], doubles: ['2B'], triples: ['3B'],
-  passing_yards: ['passing_yards'], rushing_yards: ['rushing_yards'],
-  receiving_yards: ['receiving_yards'], receptions: ['receptions'],
+  // NFL: canonical key first, legacy nflverse key as fallback. /api/player/{id}
+  // now normalizes NFL keys, so the legacy names no longer reach this map — but
+  // a player whose only logs predate the rename still resolves through them.
+  passing_yards: ['pass_yds', 'passing_yards'], rushing_yards: ['rush_yds', 'rushing_yards'],
+  receiving_yards: ['rec_yds', 'receiving_yards'], receptions: ['rec', 'receptions'],
   outs: ['outs'], hits_allowed: ['hits_allowed'],
 }
 
