@@ -285,6 +285,18 @@ export interface NflUsageGame {
   rush_yds: number | null
   rush_td: number | null
   fpts_ppr: number | null
+  // Next Gen receiving — WR/TE only, no RB or QB carries these.
+  separation: number | null
+  cushion: number | null
+  yac_above_exp: number | null
+  // Play-by-play passing — QBs, 2025 onward only.
+  cpoe: number | null
+  pass_epa: number | null
+  pass_att: number | null
+  epa_per_db: number | null
+  // Special teams — the only thing that explains a low-offensive-snap player.
+  st_snaps: number | null
+  st_pct: number | null
 }
 
 export interface NflUsageTrend {
