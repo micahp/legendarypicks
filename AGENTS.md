@@ -9,6 +9,17 @@ This is a Next.js app with a shared **Layout** and an intentional **two-tone dar
 come from real mistakes. Follow them literally; when unsure, look at how an existing page does it and copy that.
 
 ## 0. Current state — read these first
+
+> ### Leagues that are NOT in play — do not spend time here
+> **World Cup (`wc`) is OUT OF SEASON and stays that way.** The 2026 tournament is over; the next
+> one is **2030**. `backend/ingest_wc_logs.py`, the WC pages, and anything else `wc`-scoped are
+> **dormant code**. Do not build WC features, do not refactor WC ingest, do not "improve" it while
+> passing through. Touch a `wc` file only when it is *blocking* the task you were actually given —
+> and say so explicitly when you do.
+>
+> **The live calendar is NFL.** Fantasy football is the forced focus; NFL work outranks everything
+> else. UFC and esports are the active secondary surfaces. MLB/NBA/NHL are maintenance-only.
+
 - **Latest session handoff:** `docs/CONTEXT-2026-06-28.md` (most recent; supersedes earlier `CONTEXT-*`).
 - **Backend is no longer one file (Jun-27 refactor).** `backend/sports_service.py` is now a thin app
   shell that `include_router`s `backend/routers/{games,players,props,analytics,game_extras}.py`. Shared
@@ -18,7 +29,9 @@ come from real mistakes. Follow them literally; when unsure, look at how an exis
 - **Deploying / promoting to prod?** Read `docs/RUNBOOK-prod-promotion.md` FIRST. Prod is a docker
   stack on this host with its OWN DB (`backend/data/picks.db`), separate from dev (`picks.dev.db`).
   The trap: shipping code whose data isn't migrated into `picks.db` (200 ≠ working). Procedure +
-  the `migrate_logs_to_prod.py` data step are in the runbook. **Current prod = v0.2.2 (deployed 2026-06-28).**
+  the `migrate_logs_to_prod.py` data step are in the runbook. **Current prod = v0.6.5 (deployed 2026-07-26);
+  `dev` is at v0.6.7.** Cut releases with `scripts/release.sh <version>` only — never bump the version,
+  write the tag, or push them separately by hand. That is what burned v0.6.1–v0.6.4.
 - **v0.3.0 roadmap (the UI holes gating it):** `docs/SPEC-v0.3.0-ui-holes.md` — richer Stats (player/team,
   offensive/defensive), non-MLB game detail + the 3 empty tabs, post-game recap, prop outcomes on game
   detail, **UFC build-out** (props/stats/rankings + per-fight strike/takedown data for modeling), and a
