@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from 'react'
+import { trackPropChartOpened } from '../../lib/analytics'
 
 // ── types ────────────────────────────────────────────────
 export interface GameLog {
@@ -55,6 +56,16 @@ export default function PropChart({ data, window: initialWindow = 'l10' }: { dat
     setVenue('all')
     setVsOpp(false)
   }, [seriesKey, initialWindow])
+
+  // Keyed on seriesKey rather than mount: callers swap `data` between prop buttons
+  // without remounting, and each of those is a chart opened.
+  useEffect(() => {
+    trackPropChartOpened({
+      player_id: data.player_id,
+      league: data.league,
+      market: data.market,
+    })
+  }, [seriesKey]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const opponents = useMemo(() => {
     const seen = new Set<string>()

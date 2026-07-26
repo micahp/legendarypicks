@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import Head from 'next/head'
 import Link from 'next/link'
+import { trackStreamWatched } from '../lib/analytics'
 
 /* ---------------- types ---------------- */
 type Player = { name: string; rating: number | null; clock: number | null }
@@ -391,6 +392,9 @@ function UpMatchRow({ m, host }: { m: UpMatch; host: string }) {
     if (!iframe) return
     if (next && m.watch?.channel) {
       const { platform, channel } = m.watch
+      // Fired on the deliberate open, not on iframe mount -- a rendered player
+      // that nobody opened is not a watch.
+      trackStreamWatched({ match_id: m.streamKey || `${m.teamA} v ${m.teamB}`, game: m.title, source: platform })
       iframe.src = platform === 'kick'
         ? `https://player.kick.com/${channel}?muted=false`
         : `https://player.twitch.tv/?channel=${channel}&parent=${encodeURIComponent(host)}&muted=false`

@@ -1,5 +1,38 @@
 # Changelog
 
+## v0.6.5 — 2026-07-26
+
+### Analytics: GA4 instrumentation
+
+- **The app had no analytics of any kind** — no dependency, no calls, no tags. The NFL season is
+  the only large traffic event on the calendar, so arriving uninstrumented would have spent the
+  one annual spike and learned nothing from it.
+- **GA4 wired for the pages router**: `send_page_view` is off and `page_view` fires explicitly on
+  `routeChangeComplete`. LP's nav is client-side, so `config` alone would only count hard loads.
+  GA4 Enhanced measurement can pick up history events, but it double-counts against a manual
+  handler — the "Page changes based on browser history events" toggle is turned off on the
+  property to match.
+- **Five custom events**, each fired on a confirmed action rather than on render or click:
+  `pick_made` (both flows — esports pick'em and UFC — only after the POST succeeds),
+  `player_viewed` (resolved profile only, so 404s aren't views), `prop_chart_opened` (keyed on
+  series identity, since callers swap the chart's data without remounting), `stream_watched` (the
+  deliberate open, not iframe render). `usage_trend_viewed` is defined but not yet wired.
+- `NEXT_PUBLIC_GA_TRACKING_ID` threaded through the Dockerfile and compose build args.
+  `NEXT_PUBLIC_*` is inlined at build time, so a runtime-only variable would have produced a
+  build that looked instrumented but recorded nothing.
+- Verified against a production build in a throwaway worktree: the id is inlined into the `_app`
+  chunk, the loader requests it, and a client-side nav produces exactly one additional
+  `page_view` with no duplicate.
+
+### Housekeeping
+
+- **Version reconciliation.** v0.6.1 through v0.6.4 were written to this changelog and to
+  `package.json` but never tagged or released — the last real tag was `v0.6.0`, so four version
+  numbers were burned without a release. `package.json` and the tag are now aligned at `0.6.5`.
+  The 0.6.1–0.6.4 entries are left in place as the record of what shipped; they are deliberately
+  not tagged retroactively, since choosing commits for them after the fact would invent a history
+  that did not happen.
+
 ## v0.6.4 — 2026-07-24
 
 ### UFC: fight_time prop chart
