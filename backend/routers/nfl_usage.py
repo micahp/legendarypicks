@@ -49,6 +49,19 @@ def _fpts_ppr(stats: dict) -> Optional[float]:
     return _num(stats, "fpts_ppr", "fantasy_points_ppr")
 
 
+# carries is identically named in both pipelines; the yardage and TD keys are not.
+def _carries(stats: dict) -> Optional[float]:
+    return _num(stats, "carries")
+
+
+def _rush_yds(stats: dict) -> Optional[float]:
+    return _num(stats, "rush_yds", "rushing_yards")
+
+
+def _rush_td(stats: dict) -> Optional[float]:
+    return _num(stats, "rush_td", "rushing_tds")
+
+
 # Derived stats that are stored identically across seasons
 def _stat(stats: dict, key: str) -> Optional[float]:
     v = stats.get(key)
@@ -90,14 +103,23 @@ def _build_game_key(season: int, game_no: str, game_id: Optional[str]) -> str:
     return f"{season}-{game_no}"
 
 
-def _fetch_team_target_sums(
+# Stat keys this module is allowed to aggregate team-wide. Both are named
+# identically across the 2024 and 2025 ingest pipelines, so neither needs a
+# COALESCE — see the vocabulary note at the top of the file.
+_TEAM_SUM_STATS = ("targets", "carries")
+
+
+def _fetch_team_stat_sums(
     con: sqlite3.Connection,
     game_keys: List[Tuple[int, str, Optional[str], str]],  # (season, game_no, game_id, team)
+    stat_key: str,
 ) -> Dict[Tuple[str, str], float]:
-    """Batch-fetch team target sums for multiple (game_key, team) pairs.
+    """Batch-fetch a team-wide stat sum for multiple (game_key, team) pairs.
 
-    Returns a dict keyed by (game_key, team) -> sum of targets.
+    Returns a dict keyed by (game_key, team) -> sum of `stat_key`.
     """
+    if stat_key not in _TEAM_SUM_STATS:
+        raise ValueError(f"unsupported team-sum stat: {stat_key}")
     if not game_keys:
         return {}
 
@@ -118,8 +140,10 @@ def _fetch_team_target_sums(
     if not clauses:
         return {}
 
+    # stat_key is checked against _TEAM_SUM_STATS above, so this interpolation
+    # cannot carry anything a caller supplied.
     query = f"""SELECT game_id, season, game_no, team,
-                       SUM(CAST(COALESCE(json_extract(stats, '$.targets'), 0) AS REAL)) AS team_tg
+                       SUM(CAST(COALESCE(json_extract(stats, '$.{stat_key}'), 0) AS REAL)) AS team_sum
                 FROM player_game_logs
                 WHERE {' OR '.join(clauses)}
                 GROUP BY COALESCE(game_id, season || '-' || game_no), team"""
@@ -130,8 +154,15 @@ def _fetch_team_target_sums(
         key = _build_game_key(
             row["season"], row["game_no"], row["game_id"],
         )
-        result[(key, row["team"])] = float(row["team_tg"])
+        result[(key, row["team"])] = float(row["team_sum"])
     return result
+
+
+def _fetch_team_target_sums(
+    con: sqlite3.Connection,
+    game_keys: List[Tuple[int, str, Optional[str], str]],
+) -> Dict[Tuple[str, str], float]:
+    return _fetch_team_stat_sums(con, game_keys, "targets")
 
 
 # ── WOPR ─────────────────────────────────────────────────────────────
@@ -256,6 +287,9 @@ def nfl_usage(
             for row in logs
         ]
         team_sums = _fetch_team_target_sums(con, game_keys)
+        # Backfield share is to a runner what target share is to a receiver.
+        # Without it the usage table is almost entirely dashes for an RB.
+        team_carry_sums = _fetch_team_stat_sums(con, game_keys, "carries")
 
         # 5. Build per-game records
         games: List[Dict[str, Any]] = []
@@ -274,6 +308,10 @@ def nfl_usage(
             ays = _air_yds_share(stats)
             w = _wopr(tgt_share, ays)
 
+            car = _carries(stats)
+            team_car = team_carry_sums.get((gk, row["team"]), 0.0)
+            car_share = round(car / team_car, 3) if (car is not None and team_car > 0) else None
+
             game = {
                 "week": int(row["game_no"]) if row["game_no"] else None,
                 "opponent": row["opponent"],
@@ -287,6 +325,10 @@ def nfl_usage(
                 "rec": _rec(stats),
                 "rec_yds": _yards(stats),
                 "rec_td": _rec_td(stats),
+                "carries": car,
+                "carry_share": car_share,
+                "rush_yds": _rush_yds(stats),
+                "rush_td": _rush_td(stats),
                 "fpts_ppr": _fpts_ppr(stats),
             }
             games.append(game)

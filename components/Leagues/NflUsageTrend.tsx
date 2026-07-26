@@ -37,18 +37,57 @@ const TREND_METRICS: { key: keyof NflUsageTrend; label: string; format: (g: NflU
   { key: 'wopr', label: 'WOPR', format: (g) => g.wopr },
 ]
 
-const COLUMNS = [
-  { label: 'Week', key: 'week', align: 'left', fmt: (g: NflUsageGame) => g.week != null ? String(g.week) : '\u2014' },
-  { label: 'Opp', key: 'opponent', align: 'left', fmt: (g: NflUsageGame) => g.opponent ?? '\u2014' },
-  { label: 'Snaps', key: 'snaps', align: 'right', fmt: (g: NflUsageGame) => fmt(g.snaps, 0) },
-  { label: 'Snap%', key: 'snap_share', align: 'right', fmt: (g: NflUsageGame) => fmtPct(g.snap_share) },
-  { label: 'Tgt', key: 'targets', align: 'right', fmt: (g: NflUsageGame) => fmt(g.targets, 0) },
-  { label: 'Tgt%', key: 'target_share', align: 'right', fmt: (g: NflUsageGame) => fmtPct(g.target_share) },
-  { label: 'aDOT', key: 'adot', align: 'right', fmt: (g: NflUsageGame) => fmt(g.adot) },
-  { label: 'AY%', key: 'air_yds_share', align: 'right', fmt: (g: NflUsageGame) => fmt(g.air_yds_share, 1) },
-  { label: 'WOPR', key: 'wopr', align: 'right', fmt: (g: NflUsageGame) => fmt(g.wopr) },
-  { label: 'PPR', key: 'fpts_ppr', align: 'right', fmt: (g: NflUsageGame) => fmt(g.fpts_ppr) },
+interface UsageCol {
+  key: string
+  label: string
+  /** Raw value, used both to render and to decide whether the band is alive. */
+  value: (g: NflUsageGame) => number | null
+  fmt: (g: NflUsageGame) => string
+}
+
+// Same phase-band treatment as the game log, for the same reason: a flat
+// receiving-only list left an RB reading `3 snaps, 5%, 0 targets, 6.1 PPR` \u2014
+// six of ten columns dead and the fantasy points arriving from nowhere. Bands
+// no game in the window touched are dropped rather than shown as zeros.
+// Box-score counting stats (rec/yds/TD, rush yds/TD) stay out: this table is
+// opportunity, the game log is production, and that split is the whole axis
+// the restructure is built on.
+const USAGE_BANDS: { label: string; cols: UsageCol[] }[] = [
+  { label: 'Snaps', cols: [
+    { key: 'snaps', label: 'Snp', value: (g) => g.snaps, fmt: (g) => fmt(g.snaps, 0) },
+    { key: 'snap_share', label: 'Snp%', value: (g) => g.snap_share, fmt: (g) => fmtPct(g.snap_share) },
+  ] },
+  { label: 'Receiving', cols: [
+    { key: 'targets', label: 'Tgt', value: (g) => g.targets, fmt: (g) => fmt(g.targets, 0) },
+    { key: 'target_share', label: 'Tgt%', value: (g) => g.target_share, fmt: (g) => fmtPct(g.target_share) },
+    { key: 'adot', label: 'aDOT', value: (g) => g.adot, fmt: (g) => fmt(g.adot) },
+    // air_yds_share is stored 0-100, unlike the 0-1 shares beside it, so it
+    // formats itself rather than going through fmtPct. The column has always
+    // been a percentage; it just never printed the sign.
+    { key: 'air_yds_share', label: 'AY%', value: (g) => g.air_yds_share,
+      fmt: (g) => (g.air_yds_share == null ? '\u2014' : g.air_yds_share.toFixed(1) + '%') },
+    { key: 'wopr', label: 'WOPR', value: (g) => g.wopr, fmt: (g) => fmt(g.wopr) },
+  ] },
+  { label: 'Rushing', cols: [
+    { key: 'carries', label: 'Car', value: (g) => g.carries, fmt: (g) => fmt(g.carries, 0) },
+    { key: 'carry_share', label: 'Car%', value: (g) => g.carry_share, fmt: (g) => fmtPct(g.carry_share) },
+  ] },
+  { label: 'Fantasy', cols: [
+    { key: 'fpts_ppr', label: 'PPR', value: (g) => g.fpts_ppr, fmt: (g) => fmt(g.fpts_ppr) },
+  ] },
 ]
+
+/** A column earns its place by having a non-zero value in the window. Pruning
+ *  is per column, not per band: Elliott has a target or two, so the Receiving
+ *  band survives, but he has no NGS coverage at all and aDOT/AY%/WOPR would be
+ *  eight rows of dashes under a header that promises data. A band with nothing
+ *  left disappears with its columns. */
+function pruneBands(games: NflUsageGame[]) {
+  const live = (c: UsageCol) => games.some((g) => (c.value(g) ?? 0) !== 0)
+  return USAGE_BANDS
+    .map((b) => ({ ...b, cols: b.cols.filter(live) }))
+    .filter((b) => b.cols.length > 0)
+}
 
 interface Props {
   playerId: number
@@ -97,6 +136,11 @@ export default function NflUsageTrend({ playerId, season, showHeader = true }: P
   }
 
   const { games, averages, trend, name, position, team, season: resolvedSeason } = data
+  const bands = pruneBands(games)
+  // The footer must not advertise a metric whose column was just pruned — a
+  // WOPR sparkline over a table with no WOPR column contradicts itself.
+  const liveCols = new Set(bands.flatMap((b) => b.cols.map((c) => c.key)))
+  const trendRows = TREND_METRICS.filter((m) => liveCols.has(m.key))
 
   return (
     <div className="rounded-xl border border-zinc-800 bg-zinc-900">
@@ -111,20 +155,32 @@ export default function NflUsageTrend({ playerId, season, showHeader = true }: P
       )}
 
       {/* Table */}
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-zinc-800 text-xs uppercase text-zinc-500">
-              {COLUMNS.map((col) => (
+            <tr className="border-b border-zinc-800/60 text-[10px] uppercase tracking-wider text-zinc-600">
+              <th colSpan={2} />
+              {bands.map((b) => (
                 <th
-                  key={col.key}
-                  className={`py-2 px-3 font-medium ${
-                    col.align === 'right' ? 'text-right' : 'text-left'
-                  }`}
+                  key={b.label}
+                  colSpan={b.cols.length}
+                  className="py-2 px-3 text-center font-medium border-l border-zinc-800"
                 >
-                  {col.label}
+                  {b.label}
                 </th>
               ))}
+            </tr>
+            <tr className="border-b border-zinc-800 text-[11px] uppercase tracking-wider text-zinc-500">
+              <th className="py-2 px-3 text-left font-medium">Wk</th>
+              <th className="py-2 px-3 text-left font-medium">Opp</th>
+              {bands.map((b) => b.cols.map((c, i) => (
+                <th
+                  key={b.label + c.key}
+                  className={`py-2 px-3 text-right font-medium ${i === 0 ? 'border-l border-zinc-800' : ''}`}
+                >
+                  {c.label}
+                </th>
+              )))}
             </tr>
           </thead>
           <tbody>
@@ -133,18 +189,23 @@ export default function NflUsageTrend({ playerId, season, showHeader = true }: P
                 key={i}
                 className="border-b border-zinc-800/50 hover:bg-zinc-800/30 transition-colors"
               >
-                {COLUMNS.map((col) => (
-                  <td
-                    key={col.key}
-                    className={`py-2 px-3 ${
-                      col.align === 'right'
-                        ? 'text-right font-mono tabular-nums text-zinc-300'
-                        : 'text-zinc-400'
-                    }`}
-                  >
-                    {col.fmt(game)}
-                  </td>
-                ))}
+                <td className="py-2 px-3 font-mono tabular-nums text-zinc-400">
+                  {game.week != null ? game.week : '—'}
+                </td>
+                <td className="py-2 px-3 text-zinc-300">{game.opponent ?? '—'}</td>
+                {bands.map((b) => b.cols.map((c, ci) => {
+                  const v = c.value(game)
+                  return (
+                    <td
+                      key={b.label + c.key}
+                      className={`py-2 px-3 text-right font-mono tabular-nums ${
+                        v ? 'text-zinc-300' : 'text-zinc-600'
+                      } ${ci === 0 ? 'border-l border-zinc-800' : ''}`}
+                    >
+                      {c.fmt(game)}
+                    </td>
+                  )
+                }))}
               </tr>
             ))}
           </tbody>
@@ -152,8 +213,9 @@ export default function NflUsageTrend({ playerId, season, showHeader = true }: P
       </div>
 
       {/* Trend summary */}
+      {trendRows.length > 0 && (
       <div className="px-5 py-4 border-t border-zinc-800 space-y-1">
-        {TREND_METRICS.map(({ key, label, format: getter }) => {
+        {trendRows.map(({ key, label, format: getter }) => {
           const metrics = games.map(getter)
           const avg = averages[key]
           const dir = trend[key]
@@ -184,6 +246,7 @@ export default function NflUsageTrend({ playerId, season, showHeader = true }: P
           )
         })}
       </div>
+      )}
     </div>
   )
 }

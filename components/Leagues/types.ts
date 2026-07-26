@@ -280,6 +280,10 @@ export interface NflUsageGame {
   rec: number | null
   rec_yds: number | null
   rec_td: number | null
+  carries: number | null
+  carry_share: number | null
+  rush_yds: number | null
+  rush_td: number | null
   fpts_ppr: number | null
 }
 
