@@ -34,8 +34,11 @@ services:
         NEXT_PUBLIC_API_BASE: /api
         # services/sports.ts reads THIS var; without it SportsService hit localhost:8000 → blank scores
         NEXT_PUBLIC_SPORTS_API_URL: /api
-        # GA4. Empty => analytics renders nothing. Set in .env as GA_TRACKING_ID before a prod build.
-        NEXT_PUBLIC_GA_TRACKING_ID: ${GA_TRACKING_ID:-}
+        # GA4 measurement id for legendarypicks.xyz. Public (it ships in the client
+        # bundle), so it is defaulted here rather than left to an env var -- a missing
+        # var would build a site that looks instrumented but records nothing.
+        # Override with GA_TRACKING_ID=... to point a build at a different property.
+        NEXT_PUBLIC_GA_TRACKING_ID: ${GA_TRACKING_ID:-G-ZZKRW6MMMM}
     depends_on: [backend]
     environment:
       # reach the backend container over the compose network (SSR/server-side /api)
