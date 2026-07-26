@@ -4,7 +4,7 @@
 regress each other. Read this before editing `backend/routers/esports/*` or `pages/esports.tsx`.
 When you change behavior here, update this doc in the same commit.
 
-Last updated 2026-07-10.
+Last updated 2026-07-26.
 
 ---
 
@@ -159,6 +159,13 @@ Rules:
 - **YouTube resolution** confirms a real embeddable video id, fail-CLOSED (any ambiguity → None →
   Twitch/Kick wins). Multi-game tournament channels (EWC runs Valorant+Dota+CS2+ALGS at once) are
   narrowed by GAME first (`_GAME_KW`), then arena tag / team names.
+- **Official simulcast siblings:** when a real per-match source attests a known official Twitch
+  broadcaster whose organizer also simulcasts on YouTube, the backend adds that organizer's
+  official YouTube channel as a candidate. This mapping is broadcaster-level and case-insensitive
+  (currently VCT EMEA and BLAST Premier), so it covers every event from that broadcaster rather
+  than one match or league label. Rule-only Twitch guesses cannot trigger it. The resolver checks
+  YouTube's `/streams` page first at zero Data API quota; its budget-capped Data API search is only
+  a fallback, and ambiguity still fails closed to Twitch/Kick.
 - **Frontend switcher does NOT re-sort.** It uses the backend order as-is (`pages/esports.tsx`
   `LiveCard`). The backend already gives English-YouTube-first + liveness/language ordering; a fixed
   platform re-sort would (and did) hoist a dead foreign Twitch above the live Kick. Default source =

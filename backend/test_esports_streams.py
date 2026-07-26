@@ -560,6 +560,62 @@ class KickViewerReliabilityTests(unittest.TestCase):
         )
         diagnostic.assert_called_once_with("starladder", "token_unavailable", None)
 
+    def test_blast_attested_twitch_adds_official_youtube_and_prefers_it(self):
+        twitch = streams._candidate(
+            url="https://www.twitch.tv/BLASTPremier",
+            platform="twitch",
+            channel="BLASTPremier",
+            language="en",
+            attested=True,
+            source="frag",
+        )
+        pool = [twitch] + streams._yt_sibling_candidates([twitch])
+        self.assertEqual(
+            "https://www.youtube.com/channel/UC9k--dE_UE0Faxzgb_DDkYQ/live",
+            pool[1]["url"],
+        )
+
+        def resolve_youtube(candidates, *_args, **_kwargs):
+            for candidate in candidates:
+                if candidate["platform"] == "youtube":
+                    candidate["embedUrl"] = "https://www.youtube.com/embed/p5lkkfwOeEI"
+
+        with ExitStack() as stack:
+            stack.enter_context(mock.patch.object(
+                streams,
+                "resolve_pool_youtube",
+                side_effect=resolve_youtube,
+            ))
+            stack.enter_context(mock.patch.object(
+                streams,
+                "_channel_online",
+                return_value=True,
+            ))
+            stack.enter_context(mock.patch.object(
+                streams,
+                "_viewer_count",
+                return_value=None,
+            ))
+            watch = streams._pick_stream(
+                pool,
+                match_live=True,
+                team_names=("100 Thieves", "Spirit"),
+                game="CS2",
+            )
+
+        self.assertEqual("youtube", watch["platform"])
+        self.assertEqual("twitch", watch["alternates"][0]["platform"])
+
+    def test_rule_only_twitch_guess_cannot_inject_youtube_sibling(self):
+        twitch = streams._candidate(
+            url="https://www.twitch.tv/BLASTPremier",
+            platform="twitch",
+            channel="BLASTPremier",
+            source="rule",
+        )
+
+        self.assertEqual([], streams._yt_sibling_candidates([twitch]))
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

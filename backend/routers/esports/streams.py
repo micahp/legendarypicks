@@ -97,17 +97,20 @@ _YT_TOURNAMENT_CHANNELS = [
     ("cdl", "UCbLIqv9Puhyp9_ZjVtfOy7w"),
 ]
 
-# Known official Twitch channel -> its sibling official YouTube channel. Riot's regional VCT
-# broadcasts simulcast Twitch+YouTube, but PandaScore's streams_list (and frag) only ever lists the
-# Twitch side for these — so platform priority (YouTube > Twitch) never gets a YouTube candidate to
-# rank against Twitch at all. Keyed on the Twitch channel PandaScore/frag actually resolved (reliable)
-# rather than the league string (the frontend-facing `league` field is a normalized display name that
-# has already dropped the region, e.g. "Valorant Champions Tour" with no "EMEA" — league-keyword
-# matching like _yt_channel_candidates can't scope to region from it).
-# @vctemea, verified live 2026-07-22 (oEmbed + Data API on the FNC vs KC VCT EMEA Stage 2 broadcast,
-# description confirms twitch.tv/valorant_emea as the same broadcast's Twitch side).
+# Known official Twitch channel -> its sibling official YouTube channel. Some organizers simulcast
+# on Twitch+YouTube, but PandaScore/frag may list only the Twitch side for a given match. Without a
+# sibling candidate, platform priority (YouTube > Twitch) has nothing YouTube-shaped to rank.
+#
+# Key this on the source-attested Twitch broadcaster rather than a league string: one entry covers
+# every event that broadcaster runs, while normalized league labels can lose the identifying region
+# or organizer. Channel comparison is case-insensitive because source casing varies.
 _TWITCH_YT_SIBLINGS = {
+    # @vctemea, verified live 2026-07-22 (FNC vs KC VCT EMEA Stage 2).
     "valorant_emea": "UCp6n8d8Y8r3MwKNw_MMaouQ",
+    # @BLASTPremier, verified live 2026-07-26 on BLAST Bounty S2 Day 6. FRAG carried the official
+    # twitch.tv/BLASTPremier stream but omitted the simultaneous official YouTube broadcast.
+    # Broadcaster-level mapping also covers BLAST Open/Rivals and future Bounty events.
+    "blastpremier": "UC9k--dE_UE0Faxzgb_DDkYQ",
 }
 
 
@@ -127,8 +130,9 @@ def _yt_sibling_candidates(pool):
     Karmine Corp's main and Game Changers rosters share the "KC" acronym in PandaScore's data —
     made worse by the rule guess putting the wrong channel in the pool in the first place)."""
     out = []
-    twitch_channels = {c.get("channel") for c in pool
-                        if c and c.get("platform") == "twitch" and c.get("source") != "rule"}
+    twitch_channels = {(c.get("channel") or "").lower() for c in pool
+                       if c and c.get("platform") == "twitch"
+                       and c.get("channel") and c.get("source") != "rule"}
     for twitch_chan, yt_channel_id in _TWITCH_YT_SIBLINGS.items():
         if twitch_chan in twitch_channels:
             out.append(_candidate(url=f"https://www.youtube.com/channel/{yt_channel_id}/live",
