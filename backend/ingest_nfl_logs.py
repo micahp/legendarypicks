@@ -49,6 +49,12 @@ def ensure_table(con: sqlite3.Connection) -> None:
         )""")
     con.execute("CREATE INDEX IF NOT EXISTS idx_pgl_player ON player_game_logs(player_id, league, season, game_no)")
     con.execute("CREATE INDEX IF NOT EXISTS idx_pgl_league_date ON player_game_logs(league, game_date)")
+    # Team-wide stat sums (target share, carry share) look rows up by team+game,
+    # never by player. Without these the usage endpoint scans every NFL row twice
+    # per request — 70-100ms each, ~140x slower than the indexed lookup. Two
+    # indexes because the 2024 rows carry no game_id and fall back to season+week.
+    con.execute("CREATE INDEX IF NOT EXISTS idx_pgl_team_game ON player_game_logs(league, game_id, team)")
+    con.execute("CREATE INDEX IF NOT EXISTS idx_pgl_team_season_game ON player_game_logs(league, season, game_no, team)")
     con.commit()
 
 
