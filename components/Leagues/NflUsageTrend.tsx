@@ -237,6 +237,12 @@ interface Props {
 
 const SHELL = 'rounded-xl border border-zinc-800 bg-zinc-900'
 
+// A tight end's table is 14 columns wide and scrolls sideways on a phone. Pin
+// the week so a row keeps its identity once the scroll carries the label off —
+// otherwise the numbers are unattributable. Needs an opaque background of its
+// own, since the columns pass underneath it.
+const STICK = 'sticky left-0 z-10'
+
 export default function NflUsageTrend({ playerId, season, showHeader = true }: Props) {
   const { data, loading, error } = useNflUsage(playerId, season)
 
@@ -314,7 +320,7 @@ export default function NflUsageTrend({ playerId, season, showHeader = true }: P
         <table className="w-full text-sm">
           <thead>
             <tr className="text-[10px] uppercase tracking-[0.12em] text-zinc-600">
-              <th colSpan={2} />
+              <th colSpan={2} className={`${STICK} bg-zinc-900`} />
               {bands.map((b) => (
                 <th key={b.label} colSpan={b.cols.length}
                     className="border-l border-zinc-800 px-3 pt-3 pb-1.5 text-center font-medium">
@@ -323,7 +329,7 @@ export default function NflUsageTrend({ playerId, season, showHeader = true }: P
               ))}
             </tr>
             <tr className="border-b border-zinc-800 text-[11px] uppercase tracking-wider text-zinc-500">
-              <th className="px-3 pb-2 text-left font-medium">Wk</th>
+              <th className={`${STICK} bg-zinc-900 px-3 pb-2 text-left font-medium`}>Wk</th>
               <th className="px-3 pb-2 text-left font-medium">Opp</th>
               {bands.map((b) => b.cols.map((col, i) => (
                 <th key={b.label + col.key}
@@ -335,8 +341,12 @@ export default function NflUsageTrend({ playerId, season, showHeader = true }: P
           </thead>
           <tbody>
             {games.map((g, gi) => (
-              <tr key={gi} className="border-b border-zinc-800/50 last:border-b-0 hover:bg-zinc-800/30 transition-colors">
-                <td className="px-3 py-2.5 font-mono tabular-nums text-zinc-400">{g.week ?? DASH}</td>
+              <tr key={gi} className="group border-b border-zinc-800/50 last:border-b-0 hover:bg-zinc-800/30 transition-colors">
+                {/* The row's hover tint paints behind this cell rather than
+                    through it, so it is repeated here — pre-blended, because a
+                    translucent hover would let the scrolled columns show. #1c1c1f
+                    is zinc-800/30 over zinc-900. */}
+                <td className={`${STICK} bg-zinc-900 group-hover:bg-[#1c1c1f] px-3 py-2.5 font-mono tabular-nums text-zinc-400 transition-colors`}>{g.week ?? DASH}</td>
                 {/* No vs/@ — home_away is NULL on every NFL row, and the old
                     renderer printed "@" for all of them, calling home games away. */}
                 <td className="px-3 py-2.5 text-zinc-300">{g.opponent ?? DASH}</td>
