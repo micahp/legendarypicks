@@ -744,7 +744,7 @@ function broadcastIdentityOf(m: UpMatch): string | null {
   return `${streamKey}::ev:${m.eventId}`
 }
 
-function buildBroadcastViews(slate: UpMatch[], liveMatches: UpMatch[], now: number): BroadcastView[] {
+export function buildBroadcastViews(slate: UpMatch[], liveMatches: UpMatch[], now: number): BroadcastView[] {
   const groups = new Map<string, BroadcastGroup>()
   for (const m of slate) {
     const key = broadcastIdentityOf(m)
