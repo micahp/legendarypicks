@@ -53,9 +53,14 @@ const COLUMNS = [
 interface Props {
   playerId: number
   season?: number
+  /** The component was built standalone, so it renders its own identity line.
+   *  Mounted under a page that already names the player, that is a duplicate —
+   *  pass false there. Kept opt-out rather than removed so the component still
+   *  stands on its own elsewhere. */
+  showHeader?: boolean
 }
 
-export default function NflUsageTrend({ playerId, season }: Props) {
+export default function NflUsageTrend({ playerId, season, showHeader = true }: Props) {
   const { data, loading, error } = useNflUsage(playerId, season)
 
   // ── loading ────────────────────────────────────────────────────────
@@ -96,12 +101,14 @@ export default function NflUsageTrend({ playerId, season }: Props) {
   return (
     <div className="rounded-xl border border-zinc-800 bg-zinc-900">
       {/* Header */}
-      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 px-5 pt-5 pb-3">
-        <span className="text-zinc-100 font-semibold text-base">{name}</span>
-        <span className="text-zinc-500 text-sm">{position}</span>
-        <span className="text-zinc-500 text-sm">{team}</span>
-        <span className="text-zinc-600 text-xs">{resolvedSeason}</span>
-      </div>
+      {showHeader && (
+        <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 px-5 pt-5 pb-3">
+          <span className="text-zinc-100 font-semibold text-base">{name}</span>
+          <span className="text-zinc-500 text-sm">{position}</span>
+          <span className="text-zinc-500 text-sm">{team}</span>
+          <span className="text-zinc-600 text-xs">{resolvedSeason}</span>
+        </div>
+      )}
 
       {/* Table */}
       <div className="overflow-x-auto">

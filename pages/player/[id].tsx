@@ -150,6 +150,40 @@ function projForMarket(projections: Record<string, Projection>, market: string):
 
 type FetchState = 'loading' | 'ready' | 'not_found' | 'error'
 
+// NFL only. Every other league keeps the flat stack — their pages are short
+// enough that tabs would add a click and hide nothing worth hiding.
+type PlayerTab = 'overview' | 'usage' | 'gamelog'
+const NFL_TABS: { id: PlayerTab; label: string }[] = [
+  { id: 'overview', label: 'Overview' },
+  { id: 'usage', label: 'Usage' },
+  { id: 'gamelog', label: 'Game Log' },
+]
+
+function TabStrip({ tab, setTab }: { tab: PlayerTab; setTab: (t: PlayerTab) => void }) {
+  return (
+    <div className="flex gap-1 border-b border-zinc-800" role="tablist">
+      {NFL_TABS.map((t) => {
+        const active = t.id === tab
+        return (
+          <button
+            key={t.id}
+            role="tab"
+            aria-selected={active}
+            onClick={() => setTab(t.id)}
+            className={`px-4 py-2.5 text-sm font-medium -mb-px border-b-2 transition-colors ${
+              active
+                ? 'border-emerald-400 text-zinc-100'
+                : 'border-transparent text-zinc-500 hover:text-zinc-300'
+            }`}
+          >
+            {t.label}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
 export default function PlayerPage() {
   const router = useRouter()
   const { id } = router.query
@@ -158,6 +192,7 @@ export default function PlayerPage() {
   const [retryTick, setRetryTick] = useState(0)
   const [openProp, setOpenProp] = useState<string | null>(null)
   const [chart, setChart] = useState<PropHistory | null>(null)
+  const [tab, setTab] = useState<PlayerTab>('overview')
 
   useEffect(() => {
     if (!id) return
@@ -214,6 +249,11 @@ export default function PlayerPage() {
     return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib) || a.localeCompare(b)
   })
 
+  // NFL splits into tabs; every other league renders the same flat stack it
+  // always has, so `show` is unconditionally true off NFL.
+  const isNfl = p.league === 'nfl'
+  const show = (t: PlayerTab) => !isNfl || tab === t
+
   return (
     <>
       <Head><title>{p.name} — Legendary Picks</title></Head>
@@ -226,6 +266,8 @@ export default function PlayerPage() {
           </div>
         </div>
 
+        {isNfl && p.data_status !== 'unavailable' && <TabStrip tab={tab} setTab={setTab} />}
+
         {/* Honest empty state: no logs, no props, no season stats on file. */}
         {p.data_status === 'unavailable' && (
           <p className="text-sm text-zinc-500 py-6 text-center border border-zinc-800 rounded-xl bg-zinc-900">
@@ -236,10 +278,10 @@ export default function PlayerPage() {
         {/* Season stats: the only meaningful content for stats-only profiles
             (no game-log/props coverage — e.g. NHL/NBA/NFL players synced from
             season totals rather than per-game rows). */}
-        {p.season_stats && <SeasonStatsSection league={p.league} seasonStats={p.season_stats} />}
+        {show('overview') && p.season_stats && <SeasonStatsSection league={p.league} seasonStats={p.season_stats} />}
 
         {/* Current props (each expands to a chart) */}
-        {p.props.length > 0 && (
+        {show('overview') && p.props.length > 0 && (
           <section>
             <h2 className="text-sm font-bold text-zinc-400 uppercase tracking-wider mb-2">Current Props</h2>
             <div className="rounded-xl border border-zinc-800 bg-zinc-900 divide-y divide-zinc-800">
@@ -265,7 +307,7 @@ export default function PlayerPage() {
         )}
 
         {/* Projections */}
-        {projKeys.length > 0 && (
+        {show('overview') && projKeys.length > 0 && (
           <section>
             <h2 className="text-sm font-bold text-zinc-400 uppercase tracking-wider mb-2">Projections</h2>
             <div className="rounded-xl border border-zinc-800 bg-zinc-900 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
@@ -298,10 +340,11 @@ export default function PlayerPage() {
         {/* Usage trend — NFL specific. Season is left unset so the endpoint
             resolves the player's most recent season with logs (the page is
             reachable in the off-season, when the current season has none). */}
-        {p.league === 'nfl' && (
+        {isNfl && tab === 'usage' && (
           <section>
-            <h2 className="text-sm font-bold text-zinc-400 uppercase tracking-wider mb-2">Usage Trend</h2>
-            <NflUsageTrend playerId={p.id} />
+            {/* No section heading and no identity line — the tab label names the
+                section and the page header names the player. */}
+            <NflUsageTrend playerId={p.id} showHeader={false} />
           </section>
         )}
 
@@ -357,9 +400,9 @@ export default function PlayerPage() {
         )}
 
         {/* Recent games — generic (non-UFC) */}
-        {p.league !== 'ufc' && p.recent_games.length > 0 && (
+        {show('gamelog') && p.league !== 'ufc' && p.recent_games.length > 0 && (
           <section>
-            <h2 className="text-sm font-bold text-zinc-400 uppercase tracking-wider mb-2">Recent Games</h2>
+            {!isNfl && <h2 className="text-sm font-bold text-zinc-400 uppercase tracking-wider mb-2">Recent Games</h2>}
             <div className="rounded-xl border border-zinc-800 bg-zinc-900 divide-y divide-zinc-800 text-sm">
               {p.recent_games.map((g, i) => (
                 <div key={i} className="flex items-center justify-between px-4 py-2.5">
