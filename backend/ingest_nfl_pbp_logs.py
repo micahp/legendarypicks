@@ -16,6 +16,43 @@ from ingest_nfl_logs import ensure_table
 DB = os.environ.get("LP_DB_PATH") or os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "picks.db")
 
 
+# Plays worth keeping. This ingest already downloads all 372 pbp columns and
+# builds a ~388MB frame to produce the per-game rollup below, then throws every
+# play away -- so the rollup was the only record, and no number in it could be
+# checked without re-downloading and recomputing by hand.
+#
+# Only 34 columns are retained, not all 372: 372 undocumented columns is a schema
+# nobody can reason about in three months, and the play text (`desc`) alone is
+# 4.7MB/season. Measured cost of this subset: 15.7MB per season in SQLite with
+# the indexes below, against a 122MB picks.db.
+#
+# NOTE: this is the curated query layer, NOT an archival copy. nflverse rewrites
+# historical files in place -- the 2020 parquet was re-uploaded in 2025 -- so
+# retaining the raw artifact with a checksum is a separate, still-open job.
+_PLAY_COLS = [
+    "game_id", "play_id", "season", "week", "posteam", "defteam",
+    "home_team", "away_team", "game_date",
+    "qtr", "down", "ydstogo", "yardline_100", "game_seconds_remaining",
+    "play_type", "epa", "wpa", "qb_epa", "air_yards", "yards_gained", "cpoe",
+    "passer_player_id", "rusher_player_id", "receiver_player_id",
+    "pass_location", "run_location", "run_gap", "complete_pass", "touchdown",
+    "series", "series_result", "drive", "success", "shotgun",
+]
+
+
+def ensure_pbp_table(con: sqlite3.Connection) -> None:
+    """Create nfl_pbp (additive, idempotent). One row per play."""
+    cols = ", ".join('"{}"'.format(c) for c in _PLAY_COLS)
+    con.execute("CREATE TABLE IF NOT EXISTS nfl_pbp ({}, UNIQUE(game_id, play_id))".format(cols))
+    # Player-scoped lookups are the whole point -- every chart asks "this player,
+    # this season". Without these each question scans the full play table.
+    con.execute("CREATE INDEX IF NOT EXISTS idx_pbp_game ON nfl_pbp(game_id, play_id)")
+    con.execute("CREATE INDEX IF NOT EXISTS idx_pbp_passer ON nfl_pbp(passer_player_id, season)")
+    con.execute("CREATE INDEX IF NOT EXISTS idx_pbp_rusher ON nfl_pbp(rusher_player_id, season)")
+    con.execute("CREATE INDEX IF NOT EXISTS idx_pbp_receiver ON nfl_pbp(receiver_player_id, season)")
+    con.commit()
+
+
 def ingest(year: int = 2025) -> int:
     import warnings; warnings.filterwarnings("ignore")
     import nfl_data_py as nfl
@@ -55,6 +92,31 @@ def ingest(year: int = 2025) -> int:
 
     con = sqlite3.connect(DB); con.row_factory = sqlite3.Row
     ensure_table(con)
+
+    # Retain the plays before deriving anything from them.
+    ensure_pbp_table(con)
+    have = [c for c in _PLAY_COLS if c in df.columns]
+    if len(have) != len(_PLAY_COLS):
+        # Fail loud rather than silently persisting a narrower table than the
+        # readers expect -- a missing column here means nflverse renamed
+        # something, which is exactly the class of drift that went unnoticed
+        # between the 2024 and 2025 schemas.
+        raise RuntimeError("pbp source is missing expected columns: {}".format(
+            sorted(set(_PLAY_COLS) - set(have))))
+    plays = df[_PLAY_COLS].astype(object).where(df[_PLAY_COLS].notna(), None)
+    con.executemany(
+        "INSERT OR REPLACE INTO nfl_pbp VALUES ({})".format(",".join("?" * len(_PLAY_COLS))),
+        plays.itertuples(index=False, name=None))
+    con.commit()
+    print(f"  retained {con.execute('SELECT COUNT(*) FROM nfl_pbp WHERE season=?', (year,)).fetchone()[0]} plays")
+
+    # game_date and home_away were passed as literal None on every row, leaving
+    # them NULL across all 10,717 NFL rows, while the source frame carried both
+    # the whole time. Build the lookup once from the plays just retained.
+    game_meta = {}
+    for gid, gdate, home in df[["game_id", "game_date", "home_team"]].itertuples(index=False, name=None):
+        if gid not in game_meta:
+            game_meta[gid] = (str(gdate)[:10] if gdate is not None and gdate == gdate else None, home)
     gsis_to_player = {
         r["nfl_gsis_id"]: r["id"]
         for r in con.execute("SELECT id, nfl_gsis_id FROM players WHERE league='nfl' AND nfl_gsis_id IS NOT NULL AND nfl_gsis_id != ''")
@@ -81,13 +143,15 @@ def ingest(year: int = 2025) -> int:
             fv = float(v)
             s[f] = int(fv) if fv.is_integer() else round(fv, 2)
         s["fpts"] = fpts(s); s["fpts_ppr"] = fpts(s, 1.0)
+        game_date, home_team = game_meta.get(row["game_id"], (None, None))
+        home_away = ("home" if row["posteam"] == home_team else "away") if home_team else None
         con.execute(
             """INSERT OR REPLACE INTO player_game_logs
                (player_id, league, season, game_no, game_id, game_date, team,
                 opponent, home_away, stats, source, source_player_key)
                VALUES (?,?,?,?,?,?,?,?,?,?,?,?)""",
-            (pid, "nfl", year, str(int(row["week"])), row["game_id"], None,
-             row["posteam"], row["defteam"], None, json.dumps(s), "nflverse_pbp", gsis))
+            (pid, "nfl", year, str(int(row["week"])), row["game_id"], game_date,
+             row["posteam"], row["defteam"], home_away, json.dumps(s), "nflverse_pbp", gsis))
         ingested += 1
 
     con.commit()
