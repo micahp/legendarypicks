@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import Head from 'next/head'
 import PropChart, { PropHistory } from '../../components/Props/PropChart'
+import NflUsageTrend from '../../components/Leagues/NflUsageTrend'
 
 interface Projection {
   n: number; projection: number; median: number; floor: number; ceiling: number
@@ -288,6 +289,16 @@ export default function PlayerPage() {
                 </tbody>
               </table>
             </div>
+          </section>
+        )}
+
+        {/* Usage trend — NFL specific. Season is left unset so the endpoint
+            resolves the player's most recent season with logs (the page is
+            reachable in the off-season, when the current season has none). */}
+        {p.league === 'nfl' && (
+          <section>
+            <h2 className="text-sm font-bold text-zinc-400 uppercase tracking-wider mb-2">Usage Trend</h2>
+            <NflUsageTrend playerId={p.id} />
           </section>
         )}
 
