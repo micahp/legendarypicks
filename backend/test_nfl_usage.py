@@ -261,6 +261,158 @@ class NflUsageIsolatedTests(unittest.TestCase):
         self.assertEqual(r.status_code, 200)
         self.assertEqual(len(r.json()["games"]), 18)
 
+    # ── 8. Carry share partitions the backfield ──────────────────────
+
+    def test_carry_share_partitions_backfield(self):
+        """carry_share is the runner's cut of the team's carries in that game."""
+        _insert_player(self.db_path, 800, "Lead Back", "nfl", "TST", "RB")
+        _insert_player(self.db_path, 801, "Change Up", "nfl", "TST", "RB")
+        _insert_player(self.db_path, 802, "Scrambler", "nfl", "TST", "QB")
+        for g in ["1", "2", "3", "4"]:
+            _insert_log(self.db_path, 800, 2025, g, "TST", "OPP",
+                        {"carries": 15, "rush_yds": 70, "off_snaps": 40, "off_pct": 0.62})
+            _insert_log(self.db_path, 801, 2025, g, "TST", "OPP",
+                        {"carries": 4, "rush_yds": 18, "off_snaps": 14, "off_pct": 0.22})
+            _insert_log(self.db_path, 802, 2025, g, "TST", "OPP",
+                        {"carries": 1, "rush_yds": 3, "off_snaps": 65, "off_pct": 1.0})
+
+        lead = nfl_usage.nfl_usage(800, season=2025, weeks=4)["games"][0]
+        backup = nfl_usage.nfl_usage(801, season=2025, weeks=4)["games"][0]
+        qb = nfl_usage.nfl_usage(802, season=2025, weeks=4)["games"][0]
+
+        self.assertAlmostEqual(lead["carry_share"], 0.75, places=3)
+        self.assertAlmostEqual(backup["carry_share"], 0.20, places=3)
+        self.assertAlmostEqual(qb["carry_share"], 0.05, places=3)
+        # The quarterback's carries count against the denominator, so the
+        # backfield alone must not sum to 1.0.
+        self.assertAlmostEqual(
+            lead["carry_share"] + backup["carry_share"] + qb["carry_share"],
+            1.0, places=3)
+
+    def test_carry_share_null_without_carries(self):
+        """A receiver who never runs gets null, not zero — he has no backfield role."""
+        _insert_player(self.db_path, 810, "Pure WR", "nfl", "TST", "WR")
+        _insert_player(self.db_path, 811, "The Back", "nfl", "TST", "RB")
+        for g in ["1", "2", "3", "4"]:
+            _insert_log(self.db_path, 810, 2025, g, "TST", "OPP",
+                        {"targets": 9, "rec": 6, "off_snaps": 58, "off_pct": 0.9})
+            _insert_log(self.db_path, 811, 2025, g, "TST", "OPP",
+                        {"carries": 20, "off_snaps": 40, "off_pct": 0.62})
+
+        wr = nfl_usage.nfl_usage(810, season=2025, weeks=4)["games"][0]
+        self.assertIsNone(wr["carries"])
+        self.assertIsNone(wr["carry_share"],
+                          "no carries must read as null, not a 0.0 share")
+
+    # ── 9. Next Gen / play-by-play passthrough ───────────────────────
+
+    def test_advanced_stats_passthrough(self):
+        """separation/cushion/yac_above_exp/cpoe/pass_epa/st reach the response."""
+        _insert_player(self.db_path, 820, "Ngs WR", "nfl", "TST", "WR")
+        for g in ["1", "2", "3", "4"]:
+            _insert_log(self.db_path, 820, 2025, g, "TST", "OPP", {
+                "targets": 7, "off_snaps": 50, "off_pct": 0.8,
+                "separation": 3.1, "cushion": 6.4, "yac_above_exp": -0.8,
+                "st_snaps": 4, "st_pct": 0.15,
+            })
+
+        game = nfl_usage.nfl_usage(820, season=2025, weeks=4)["games"][0]
+        self.assertAlmostEqual(game["separation"], 3.1, places=2)
+        self.assertAlmostEqual(game["cushion"], 6.4, places=2)
+        self.assertAlmostEqual(game["yac_above_exp"], -0.8, places=2,
+                               msg="a negative NGS value must survive, not clamp to 0")
+        self.assertAlmostEqual(game["st_pct"], 0.15, places=2)
+        self.assertEqual(game["st_snaps"], 4.0)
+        # Passing metrics belong to a different phase and stay null for a WR.
+        self.assertIsNone(game["cpoe"])
+        self.assertIsNone(game["pass_epa"])
+
+    def test_advanced_stats_absent_are_null(self):
+        """A 2024 row carries none of these; every advanced key must be null."""
+        _insert_player(self.db_path, 830, "Legacy WR", "nfl", "TST", "WR")
+        for g in ["1", "2", "3", "4"]:
+            _insert_log(self.db_path, 830, 2024, g, "TST", "OPP", {
+                "targets": 6, "receiving_yards": 71, "receptions": 5,
+                "off_snaps": 48, "off_pct": 0.77,
+            }, source="nflverse")
+
+        game = nfl_usage.nfl_usage(830, season=2024, weeks=4)["games"][0]
+        for key in ("separation", "cushion", "yac_above_exp", "cpoe",
+                    "pass_epa", "st_snaps", "st_pct", "epa_per_db"):
+            self.assertIsNone(game[key], f"{key} must be null on a 2024 row")
+
+    # ── 10. EPA per dropback ─────────────────────────────────────────
+
+    def test_epa_per_dropback_divides_by_attempts(self):
+        """pass_epa is a game total; the response also carries it per attempt."""
+        _insert_player(self.db_path, 840, "Starter QB", "nfl", "TST", "QB")
+        for g, att, epa in [("1", 40, 12.0), ("2", 20, 6.0),
+                            ("3", 30, -9.0), ("4", 25, 5.0)]:
+            _insert_log(self.db_path, 840, 2025, g, "TST", "OPP", {
+                "att": att, "cmp": att - 8, "pass_yds": att * 7,
+                "pass_epa": epa, "cpoe": 2.5,
+                "off_snaps": 60, "off_pct": 1.0,
+            })
+
+        games = {g["week"]: g for g in
+                 nfl_usage.nfl_usage(840, season=2025, weeks=4)["games"]}
+        # Same total EPA over half the attempts is twice the rate.
+        self.assertAlmostEqual(games[1]["epa_per_db"], 0.3, places=3)
+        self.assertAlmostEqual(games[2]["epa_per_db"], 0.3, places=3)
+        self.assertEqual(games[1]["pass_att"], 40.0)
+        self.assertEqual(games[2]["pass_att"], 20.0)
+        # A negative game must stay negative.
+        self.assertAlmostEqual(games[3]["epa_per_db"], -0.3, places=3)
+
+    def test_epa_per_dropback_null_without_attempts(self):
+        """No attempts means no dropbacks — a rate, not a divide-by-zero."""
+        _insert_player(self.db_path, 850, "Wildcat RB", "nfl", "TST", "RB")
+        for g in ["1", "2", "3", "4"]:
+            _insert_log(self.db_path, 850, 2025, g, "TST", "OPP", {
+                "carries": 12, "rush_yds": 50, "pass_epa": 1.4,
+                "off_snaps": 35, "off_pct": 0.55,
+            })
+
+        game = nfl_usage.nfl_usage(850, season=2025, weeks=4)["games"][0]
+        self.assertIsNone(game["pass_att"])
+        self.assertAlmostEqual(game["pass_epa"], 1.4, places=2)
+        self.assertIsNone(game["epa_per_db"],
+                          "pass_epa with zero attempts must not divide")
+
+    def test_epa_per_dropback_reads_2024_attempts_key(self):
+        """2024 spells attempts `attempts`; pass_att must still resolve.
+
+        pass_epa itself is 2025-only, so epa_per_db stays null here — the point
+        is that the attempt count is not lost to the vocabulary split.
+        """
+        _insert_player(self.db_path, 860, "Legacy QB", "nfl", "TST", "QB")
+        for g in ["1", "2", "3", "4"]:
+            _insert_log(self.db_path, 860, 2024, g, "TST", "OPP", {
+                "attempts": 33, "completions": 22, "passing_yards": 260,
+                "off_snaps": 62, "off_pct": 1.0,
+            }, source="nflverse")
+
+        game = nfl_usage.nfl_usage(860, season=2024, weeks=4)["games"][0]
+        self.assertEqual(game["pass_att"], 33.0,
+                         "2024 `attempts` must resolve to pass_att")
+        self.assertIsNone(game["epa_per_db"])
+
+    # ── 11. The team-sum whitelist ───────────────────────────────────
+
+    def test_team_stat_sums_rejects_unlisted_key(self):
+        """_fetch_team_stat_sums interpolates its key into SQL, so it is a whitelist."""
+        _insert_player(self.db_path, 870, "Sum WR", "nfl", "TST", "WR")
+        _insert_log(self.db_path, 870, 2025, "1", "TST", "OPP", {"targets": 6})
+        keys = [(2025, "1", None, "TST")]  # (season, game_no, game_id, team)
+        with _connect(self.db_path) as con:
+            listed = nfl_usage._fetch_team_stat_sums(con, keys, "targets")
+            self.assertEqual(list(listed.values()), [6.0],
+                             "a listed key sums normally")
+            for unlisted in ("rec_yds", "targets') + 1 --", ""):
+                with self.subTest(stat=unlisted):
+                    with self.assertRaises(ValueError):
+                        nfl_usage._fetch_team_stat_sums(con, keys, unlisted)
+
 
 class NflUsageRealDBTests(unittest.TestCase):
     """Tests against the real dev DB that need actual multi-player data."""
