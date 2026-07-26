@@ -527,6 +527,19 @@ def _twitch_viewer_count(channel):
 # beats a hole, but only briefly: past _VIEWER_STALE_MAX we'd rather show nothing than a lie.
 _viewer_last_good = {}    # "platform:channel-or-embed" -> (ts, count)
 _VIEWER_STALE_MAX = 900   # 15 min
+_VIEWER_FRESH_TTL = 60    # matches the Twitch/YouTube/Kick platform cache TTLs
+_viewer_refresh_inflight = {}
+_viewer_refresh_inflight_lock = threading.Lock()
+
+
+def _viewer_key(c):
+    return f"{c.get('platform')}:{c.get('channel') or c.get('embedUrl') or ''}"
+
+
+def _recent_viewer_count(key, now=None):
+    now = time.time() if now is None else now
+    previous = _viewer_last_good.get(key)
+    return previous if previous and now - previous[0] < _VIEWER_STALE_MAX else None
 
 
 def _viewer_count(c, *, confirmed_live=False, wait_for_first_sample=True):
@@ -536,10 +549,9 @@ def _viewer_count(c, *, confirmed_live=False, wait_for_first_sample=True):
     retain their existing fetch paths. All platforms fall back to a recent last-known-good count.
     """
     platform = c.get("platform")
-    key = f"{platform}:{c.get('channel') or c.get('embedUrl') or ''}"
+    key = _viewer_key(c)
     now = time.time()
-    prev = _viewer_last_good.get(key)
-    recent_prev = prev if prev and now - prev[0] < _VIEWER_STALE_MAX else None
+    recent_prev = _recent_viewer_count(key, now)
 
     if platform == "twitch" and c.get("channel"):
         fresh = _twitch_viewer_count(c["channel"])
@@ -559,6 +571,55 @@ def _viewer_count(c, *, confirmed_live=False, wait_for_first_sample=True):
         _viewer_last_good[key] = (time.time(), fresh)
         return fresh
     return recent_prev[1] if recent_prev else None
+
+
+def _clear_viewer_refresh(key, future):
+    with _viewer_refresh_inflight_lock:
+        if _viewer_refresh_inflight.get(key) is future:
+            _viewer_refresh_inflight.pop(key, None)
+
+
+def _submit_viewer_refresh(c):
+    """Refresh a Twitch/YouTube viewer count off-thread, deduplicated by resolved stream."""
+    key = _viewer_key(c)
+    with _viewer_refresh_inflight_lock:
+        current = _viewer_refresh_inflight.get(key)
+        if current and not current.done():
+            return current
+        try:
+            future = _get_probe_executor().submit(_viewer_count, dict(c))
+        except Exception:
+            return None
+        _viewer_refresh_inflight[key] = future
+    # A Future may already be done here; register only after releasing the non-reentrant lock.
+    future.add_done_callback(lambda done: _clear_viewer_refresh(key, done))
+    return future
+
+
+def _viewer_count_cached(c, *, confirmed_live=False):
+    """Return a cached/last-good count and refresh stale data without blocking the caller.
+
+    Scheduled rows use this path while the slate rebuild is running. Kick already owns a
+    non-blocking cache refresh; Twitch and YouTube network reads are handed to the shared probe
+    executor so a slow viewer endpoint can never stall the whole board.
+    """
+    platform = c.get("platform")
+    key = _viewer_key(c)
+    now = time.time()
+    recent = _recent_viewer_count(key, now)
+    if recent and now - recent[0] < _VIEWER_FRESH_TTL:
+        return recent[1]
+
+    if platform == "kick" and c.get("channel"):
+        return _viewer_count(
+            c,
+            confirmed_live=confirmed_live,
+            wait_for_first_sample=False,
+        )
+    if ((platform == "twitch" and c.get("channel"))
+            or (platform == "youtube" and c.get("embedUrl"))):
+        _submit_viewer_refresh(c)
+    return recent[1] if recent else None
 
 
 def _chan_url(platform, channel):
@@ -853,19 +914,21 @@ def _pick_stream(candidates, match_live=True, team_names=None, network_checks=Tr
             return True
         return True if match_live else None  # unverifiable on a live-confirmed match -> embed anyway
 
-    # Viewer count only for the winning stream (the one actually shown/embedded) — alternates never
-    # render, so fetching theirs too would just be extra network cost for data nobody sees.
+    # Viewer count belongs to the winning primary (the source shown by default). Alternates can be
+    # selected manually and, crucially, can prove that a shared broadcast is still on-air between
+    # games; do not stamp an alternate's audience onto the primary source.
     top_online = _online_val(top)
     if network_checks is True:
         top_viewers = _viewer_count(top, confirmed_live=top_online is True)
-    elif network_checks == "cache" and top_online is True:
-        # Scheduled-near-start matches are promoted to LIVE from cache-only liveness. Surface any
-        # viewer sample already captured by that probe and trigger a missing first-sample refresh,
-        # but never wait on network from the slate rebuild thread.
-        top_viewers = _viewer_count(
+    elif network_checks == "cache" and any(_online_val(c) is True for c in ranked):
+        # A scheduled row can represent the same continuous broadcast during a gap. Its preferred
+        # YouTube source is not independently liveness-checkable, while a Twitch/Kick alternate can
+        # still prove the broadcast is on-air. Keep the preferred source and scheduled state, but
+        # continue its own viewer sampling from cache/off-thread so the count does not disappear
+        # between games. No platform may perform a blocking viewer read on this rebuild thread.
+        top_viewers = _viewer_count_cached(
             top,
-            confirmed_live=True,
-            wait_for_first_sample=False,
+            confirmed_live=top_online is True,
         )
     else:
         top_viewers = None

@@ -33,7 +33,10 @@ class KickViewerReliabilityTests(unittest.TestCase):
 
     def setUp(self):
         streams._live_cache.clear()
+        streams._twitch_viewer_cache.clear()
         streams._viewer_last_good.clear()
+        with streams._viewer_refresh_inflight_lock:
+            streams._viewer_refresh_inflight.clear()
         with streams._kick_snapshot_lock:
             streams._kick_snapshot_cache.clear()
         with streams._kick_viewer_inflight_lock:
@@ -150,6 +153,128 @@ class KickViewerReliabilityTests(unittest.TestCase):
         self.assertIs(watch["online"], True)
         self.assertIsNone(watch["viewers"])
         submit.assert_called_once_with("nodwin_cs2")
+
+    def test_between_match_row_keeps_primary_count_when_alternate_is_online(self):
+        now = 1_000.0
+        embed = "https://www.youtube.com/embed/D4jmAm688f8"
+        youtube = streams._candidate(
+            url="https://www.youtube.com/watch?v=D4jmAm688f8",
+            embed=embed,
+            platform="youtube",
+            language="en",
+            source="pandascore",
+        )
+        twitch = streams._candidate(
+            url="https://www.twitch.tv/lec",
+            platform="twitch",
+            channel="lec",
+            language="en",
+            source="pandascore",
+        )
+        streams._live_cache["twitch:lec"] = (now, True)
+        # The same YouTube broadcast was sampled while the previous game was live. It is older than
+        # the 60-second freshness target but still safe to show while an off-thread refresh runs.
+        streams._viewer_last_good[f"youtube:{embed}"] = (now - 120, 18454)
+        pending = Future()
+
+        with ExitStack() as stack:
+            stack.enter_context(mock.patch.object(streams.time, "time", return_value=now))
+            stack.enter_context(mock.patch.object(streams, "resolve_pool_youtube"))
+            blocking_youtube = stack.enter_context(mock.patch.object(
+                streams,
+                "yt_viewer_count",
+                side_effect=AssertionError("cache mode called YouTube on the rebuild thread"),
+            ))
+            submit = stack.enter_context(mock.patch.object(
+                streams,
+                "_submit_viewer_refresh",
+                return_value=pending,
+            ))
+            watch = streams._pick_stream(
+                [youtube, twitch],
+                match_live=False,
+                network_checks="cache",
+            )
+
+        self.assertEqual("youtube", watch["platform"])
+        self.assertIsNone(watch["online"])
+        self.assertEqual(18454, watch["viewers"])
+        self.assertEqual("twitch", watch["alternates"][0]["platform"])
+        self.assertIs(watch["alternates"][0]["online"], True)
+        blocking_youtube.assert_not_called()
+        submit.assert_called_once()
+        self.assertEqual("youtube", submit.call_args.args[0]["platform"])
+        self.assertEqual(embed, submit.call_args.args[0]["embedUrl"])
+
+    def test_cache_mode_twitch_viewer_refresh_never_blocks_rebuild_thread(self):
+        now = time.time()
+        streams._live_cache["twitch:lec"] = (now, True)
+        twitch = streams._candidate(
+            url="https://www.twitch.tv/lec",
+            platform="twitch",
+            channel="lec",
+            source="pandascore",
+        )
+        pending = Future()
+
+        started = time.monotonic()
+        with ExitStack() as stack:
+            blocking_twitch = stack.enter_context(mock.patch.object(
+                streams,
+                "_twitch_viewer_count",
+                side_effect=AssertionError("cache mode called Twitch on the rebuild thread"),
+            ))
+            submit = stack.enter_context(mock.patch.object(
+                streams,
+                "_submit_viewer_refresh",
+                return_value=pending,
+            ))
+            watch = streams._pick_stream(
+                [twitch],
+                match_live=False,
+                network_checks="cache",
+            )
+
+        self.assertLess(time.monotonic() - started, 0.2)
+        self.assertIs(watch["online"], True)
+        self.assertIsNone(watch["viewers"])
+        blocking_twitch.assert_not_called()
+        submit.assert_called_once()
+        self.assertEqual("twitch", submit.call_args.args[0]["platform"])
+
+    def test_background_viewer_refreshes_are_deduplicated_per_stream(self):
+        started = threading.Event()
+        release = threading.Event()
+        calls = []
+        candidate = {
+            "platform": "youtube",
+            "embedUrl": "https://www.youtube.com/embed/D4jmAm688f8",
+        }
+
+        def blocked_refresh(c):
+            calls.append(streams._viewer_key(c))
+            started.set()
+            release.wait(timeout=1)
+            return 18454
+
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            with ExitStack() as stack:
+                stack.enter_context(
+                    mock.patch.object(streams, "_get_probe_executor", return_value=executor)
+                )
+                stack.enter_context(mock.patch.object(
+                    streams,
+                    "_viewer_count",
+                    side_effect=blocked_refresh,
+                ))
+                first = streams._submit_viewer_refresh(candidate)
+                self.assertTrue(started.wait(timeout=1))
+                second = streams._submit_viewer_refresh(candidate)
+                self.assertIs(first, second)
+                release.set()
+                self.assertEqual(18454, first.result(timeout=1))
+
+        self.assertEqual(["youtube:https://www.youtube.com/embed/D4jmAm688f8"], calls)
 
     def test_official_active_livestream_fallback_reads_viewer_count(self):
         response = {
