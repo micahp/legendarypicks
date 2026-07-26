@@ -1,5 +1,55 @@
 # Changelog
 
+## v0.6.7 — 2026-07-26
+
+### NFL player page: usage is now its own tab
+
+- **Player page restructured into Overview │ Usage │ Game Log.** The usage card is role-driven —
+  it reads the player's position first and picks columns off that, because the underlying feeds
+  do not cover every position equally.
+- **Four positional tile sets.** QB Snap%/Att-g/CPOE/EPA-per-dropback · RB Snap%/Car%/Tgt%/PPR
+  (Rushing sorts before Receiving) · WR/TE Snap%/Tgt%/WOPR/Separation, plus the full Next Gen
+  band. Share columns carry a magnitude bar.
+- **Seven ingested-but-unrendered keys exposed** on `/api/nfl/usage`, plus a derived
+  `epa_per_db` — `pass_epa` is stored as a game total, so a 40-attempt game and a 20-attempt
+  game were not otherwise comparable.
+- **Rushing usage added** (carries / carry share). Without it an RB's usage table was almost
+  entirely dashes.
+- **Two sparkline bugs fixed:** shares were forced onto a 0–100% axis, so a 21%→37% climb
+  rendered as eight identical stubs; and a negative CPOE drew a short bar growing *upward*.
+  Diverging metrics now hang below a zero line.
+- **Season Stats zero wall removed.** Stat blocks are selected by position before values are
+  pruned. Rendered zero/None tiles across all 1,217 NFL rows: **7,255 → 408**, with no player
+  losing a section.
+- **Performance:** the usage endpoint's team-wide target/carry sums had no covering index and
+  scanned every NFL row twice per request. Two indexes on `player_game_logs`
+  (`league,game_id,team` and `league,season,game_no,team` — the 2024 rows carry no `game_id`).
+  Team-sum query 70–100ms → 0.5ms; full request **~180ms → ~13ms**. A response cache was
+  considered and rejected: it would have hidden the scan rather than removed it.
+- **`usage_trend_viewed`** (defined but unwired in v0.6.5) now fires on entry into the Usage tab.
+- Verified at 1280px and 390px; the week column is pinned so a scrolled 14-column table keeps
+  row identity.
+- **+16 tests**, each assertion checked against a mutated implementation rather than only a
+  passing one.
+- **Test isolation fix:** `LP_DB_PATH` leaked between suites, so three real-DB tests failed in a
+  whole-suite run but passed file-by-file. The full suite is usable as a gate again.
+- New reference docs: `docs/NFL-DATA-INVENTORY.md`, `docs/NFL-CHART-CONTENT-RESEARCH.md`.
+
+## v0.6.6 — 2026-07-26
+
+### Esports: broadcast source reliability
+
+- **Official simulcast siblings.** When a real per-match source attests a known official Twitch
+  broadcaster whose organizer also simulcasts on YouTube, the backend adds that organizer's
+  official YouTube channel as a candidate. The mapping is broadcaster-level and case-insensitive
+  (VCT EMEA and BLAST Premier today), so it covers every event from that broadcaster rather than
+  a single match or league label. Rule-only Twitch guesses cannot trigger it.
+- The resolver checks YouTube's `/streams` page first at zero Data API quota; the budget-capped
+  Data API search is only a fallback, and ambiguity still fails closed to Twitch/Kick.
+- **Viewer counts persist between matches** instead of blanking during the gap.
+- **Missing Kick viewer counts are retried** rather than left empty for the rest of the session.
+- `docs/ESPORTS-EXPECTED-BEHAVIOR.md` updated in step, per the rule at the top of that file.
+
 ## v0.6.5 — 2026-07-26
 
 ### Analytics: GA4 instrumentation
