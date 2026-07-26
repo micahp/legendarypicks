@@ -414,13 +414,30 @@ class NflUsageIsolatedTests(unittest.TestCase):
                         nfl_usage._fetch_team_stat_sums(con, keys, unlisted)
 
 
+def _dev_db_path() -> str:
+    """The database these tests mean, resolved without trusting _core.
+
+    _core binds its module-level DB at import, and several sibling suites point
+    LP_DB_PATH at a throwaway file before importing the app. In a whole-suite run
+    whichever of them imports first decides where _core._db connects, so reusing
+    it made these tests read an empty temp database and fail with "no such table:
+    player_game_logs" — but only when the full suite ran, never file by file.
+    conftest.py keeps the environment variable honest; this resolves the path
+    from it rather than from _core's frozen copy.
+    """
+    return os.environ.get("LP_DB_PATH") or os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), "data", "picks.dev.db")
+
+
 class NflUsageRealDBTests(unittest.TestCase):
     """Tests against the real dev DB that need actual multi-player data."""
 
     def setUp(self):
         self._orig_db = nfl_usage._db
-        from _core import _db as real_db
-        nfl_usage._db = real_db
+        path = _dev_db_path()
+        if not os.path.exists(path):
+            self.skipTest(f"dev database not present at {path}")
+        nfl_usage._db = lambda: _connect(path)
 
     def tearDown(self):
         nfl_usage._db = self._orig_db
@@ -434,7 +451,7 @@ class NflUsageRealDBTests(unittest.TestCase):
         fallback.  Every player with targets > 0 must be included — a subset
         would not sum to 1.0 and would make the assertion meaningless.
         """
-        db_path = os.environ.get("LP_DB_PATH", "data/picks.dev.db")
+        db_path = _dev_db_path()
         with _connect(db_path) as con:
             rows = con.execute(
                 """SELECT player_id FROM player_game_logs
@@ -461,7 +478,7 @@ class NflUsageRealDBTests(unittest.TestCase):
         The team-game is chosen from the data rather than hardcoded — a fixed
         game_id silently skipped this test when that id was absent.
         """
-        db_path = os.environ.get("LP_DB_PATH", "data/picks.dev.db")
+        db_path = _dev_db_path()
         with _connect(db_path) as con:
             pick = con.execute(
                 """SELECT game_id, team FROM player_game_logs
