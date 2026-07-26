@@ -108,18 +108,22 @@ def player_profile(player_id: int):
     series, recent = {}, []
     for r in logs:
         s = _json.loads(r["stats"])
+        # Required for the allowlist below to be correct, not cosmetic: 2024 rows
+        # carry legacy nflverse keys (`receptions`), 2025 rows canonical pbp keys
+        # (`rec`), and no season mixes the two. A player whose most recent season
+        # is 2024 would miss _NFL_PROJECTION_STATS entirely and lose every
+        # projection. Applied to the game logs too so the game-log table can key
+        # off canonical names alone. /api/projections/player/{id} normalizes the
+        # same way.
+        if league == "nfl":
+            s = {_NFL_KEY_NORMALIZE.get(k, k): v for k, v in s.items()}
         recent.append({"date": r["game_date"], "opponent": r["opponent"],
-                       "home": (r["home_away"] == "home") if r["home_away"] else None, "stats": s})
+                       "home": (r["home_away"] == "home") if r["home_away"] else None,
+                       # NFL rows are week-keyed with a NULL game_date, so the
+                       # week is the only thing that identifies the game.
+                       "game_no": r["game_no"], "stats": s})
         for k, v in s.items():
             if isinstance(v, (int, float)):
-                # Required for the allowlist below to be correct, not cosmetic:
-                # 2024 rows carry legacy nflverse keys (`receptions`), 2025 rows
-                # canonical pbp keys (`rec`), and no season mixes the two. A
-                # player whose most recent season is 2024 would miss
-                # _NFL_PROJECTION_STATS entirely and lose every projection.
-                # /api/projections/player/{id} already normalizes the same way.
-                if league == "nfl":
-                    k = _NFL_KEY_NORMALIZE.get(k, k)
                 series.setdefault(k, []).append(v)
     projections = {}
     for k, vals in series.items():

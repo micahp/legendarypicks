@@ -8,7 +8,7 @@ interface Projection {
   n: number; projection: number; median: number; floor: number; ceiling: number
   l5_avg: number; season_avg: number; trend: string; last5: number[]
 }
-interface RecentGame { date: string | null; opponent: string | null; home: boolean | null; stats: Record<string, number | string> }
+interface RecentGame { date: string | null; opponent: string | null; home: boolean | null; game_no?: string | number | null; stats: Record<string, number | string> }
 interface PropRow { market: string; side: string; line: number }
 interface SeasonStatBlock {
   window?: string
@@ -146,6 +146,76 @@ function projForMarket(projections: Record<string, Projection>, market: string):
     }
   }
   return null
+}
+
+// ESPN groups an NFL game log into phase bands under a two-row header and keeps
+// one table for every position rather than swapping columns per position — an
+// all-zero Rushing band just sits there on a TE page. Same structure here, with
+// one deviation: a band no game in the window touched is dropped rather than
+// rendered as a column of zeros. A receiver does not need five passing columns,
+// and the whole point of this pass is that the page shows too much.
+const NFL_GAMELOG_BANDS: { label: string; cols: { key: string; label: string }[] }[] = [
+  { label: 'Passing', cols: [
+    { key: 'cmp', label: 'C' }, { key: 'att', label: 'A' },
+    { key: 'pass_yds', label: 'Yds' }, { key: 'pass_td', label: 'TD' },
+    { key: 'intc', label: 'Int' }] },
+  { label: 'Rushing', cols: [
+    { key: 'carries', label: 'Car' }, { key: 'rush_yds', label: 'Yds' },
+    { key: 'rush_td', label: 'TD' }] },
+  { label: 'Receiving', cols: [
+    { key: 'targets', label: 'Tgt' }, { key: 'rec', label: 'Rec' },
+    { key: 'rec_yds', label: 'Yds' }, { key: 'rec_td', label: 'TD' }] },
+  { label: 'Fantasy', cols: [
+    { key: 'fpts', label: 'Fpts' }, { key: 'fpts_ppr', label: 'PPR' }] },
+]
+
+function NflGameLog({ games }: { games: RecentGame[] }) {
+  const num = (g: RecentGame, k: string) => (typeof g.stats[k] === 'number' ? (g.stats[k] as number) : null)
+  const bands = NFL_GAMELOG_BANDS.filter(b => b.cols.some(c => games.some(g => (num(g, c.key) ?? 0) !== 0)))
+  if (!bands.length) return null
+
+  return (
+    <div className="rounded-xl border border-zinc-800 bg-zinc-900 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="border-b border-zinc-800/60 text-zinc-600 text-[10px] uppercase tracking-wider">
+            <th colSpan={2} />
+            {bands.map(b => (
+              <th key={b.label} colSpan={b.cols.length}
+                  className="text-center px-3 py-2 font-medium border-l border-zinc-800">{b.label}</th>
+            ))}
+          </tr>
+          <tr className="border-b border-zinc-800 text-zinc-500 text-[11px] uppercase tracking-wider">
+            <th className="text-left px-3 py-2 font-medium">Wk</th>
+            <th className="text-left px-3 py-2 font-medium">Opp</th>
+            {bands.map(b => b.cols.map((c, i) => (
+              <th key={b.label + c.key}
+                  className={`text-right px-3 py-2 font-medium ${i === 0 ? 'border-l border-zinc-800' : ''}`}>{c.label}</th>
+            )))}
+          </tr>
+        </thead>
+        <tbody>
+          {games.map((g, gi) => (
+            <tr key={gi} className="border-b border-zinc-800/50 hover:bg-zinc-800/30 transition-colors">
+              <td className="px-3 py-2.5 text-zinc-400 font-mono tabular-nums">{g.game_no ?? '—'}</td>
+              {/* No vs/@ — home_away is NULL on every NFL row, and the old
+                  renderer printed "@" for all of them, calling home games away. */}
+              <td className="px-3 py-2.5 text-zinc-300">{g.opponent ?? '—'}</td>
+              {bands.map(b => b.cols.map((c, ci) => {
+                const v = num(g, c.key)
+                return (
+                  <td key={b.label + c.key}
+                      className={`px-3 py-2.5 text-right font-mono tabular-nums ${v ? 'text-zinc-300' : 'text-zinc-600'} ${ci === 0 ? 'border-l border-zinc-800' : ''}`}>
+                    {v == null ? '—' : v}
+                  </td>
+                )
+              }))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
 }
 
 type FetchState = 'loading' | 'ready' | 'not_found' | 'error'
@@ -403,16 +473,18 @@ export default function PlayerPage() {
         {show('gamelog') && p.league !== 'ufc' && p.recent_games.length > 0 && (
           <section>
             {!isNfl && <h2 className="text-sm font-bold text-zinc-400 uppercase tracking-wider mb-2">Recent Games</h2>}
-            <div className="rounded-xl border border-zinc-800 bg-zinc-900 divide-y divide-zinc-800 text-sm">
-              {p.recent_games.map((g, i) => (
-                <div key={i} className="flex items-center justify-between px-4 py-2.5">
-                  <span className="text-zinc-400 text-xs w-32">{g.date} {g.opponent ? `${g.home ? 'vs' : '@'} ${g.opponent}` : ''}</span>
-                  <span className="font-mono tabular-nums text-zinc-300 text-xs truncate">
-                    {Object.entries(g.stats).filter(([, v]) => typeof v === 'number').slice(0, 6).map(([k, v]) => `${k} ${v}`).join('  ')}
-                  </span>
-                </div>
-              ))}
-            </div>
+            {isNfl ? <NflGameLog games={p.recent_games} /> : (
+              <div className="rounded-xl border border-zinc-800 bg-zinc-900 divide-y divide-zinc-800 text-sm">
+                {p.recent_games.map((g, i) => (
+                  <div key={i} className="flex items-center justify-between px-4 py-2.5">
+                    <span className="text-zinc-400 text-xs w-32">{g.date} {g.opponent ? `${g.home ? 'vs' : '@'} ${g.opponent}` : ''}</span>
+                    <span className="font-mono tabular-nums text-zinc-300 text-xs truncate">
+                      {Object.entries(g.stats).filter(([, v]) => typeof v === 'number').slice(0, 6).map(([k, v]) => `${k} ${v}`).join('  ')}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
           </section>
         )}
       </div>
