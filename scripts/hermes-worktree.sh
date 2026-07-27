@@ -46,7 +46,14 @@ up() {
   (cd "$WT/backend" && LP_DB_PATH="$DEV_DB" setsid nohup venv/bin/uvicorn sports_service:app \
       --port $BPORT --host 127.0.0.1 >/tmp/hermes-wt-$TASK-backend.log 2>&1 < /dev/null &)
   echo "▶ frontend :$FPORT  (proxy → :$BPORT)"
-  (cd "$WT" && API_PROXY_TARGET="http://localhost:$BPORT" setsid nohup npx next dev -p $FPORT \
+  # Run the binary directly, NEVER `npx next`. node_modules above is a SYMLINK to the main
+  # repo's, so npm's resolution runs against the shared install: `npx next` finds the pinned
+  # next 13.0.0 unsatisfying, fetches next@16, and in doing so emptied /root/legendarypicks/
+  # node_modules to 0 entries on 2026-07-27 — taking down the main dev frontend and the
+  # public tunnel, while the running server kept serving deleted inodes until it needed a
+  # file and failed with ENOENT .next/server/pages/... (which looks exactly like .next
+  # corruption and cost most of a session to diagnose). No npm/npx/yarn from a worktree, ever.
+  (cd "$WT" && API_PROXY_TARGET="http://localhost:$BPORT" setsid nohup ./node_modules/.bin/next dev -p $FPORT \
       >/tmp/hermes-wt-$TASK-frontend.log 2>&1 < /dev/null &)
   # No auto-tunnel. Agents verify on localhost (headless browser runs on this box), so a
   # public trycloudflare URL is only needed for a HUMAN to eyeball it off-box — and they pile

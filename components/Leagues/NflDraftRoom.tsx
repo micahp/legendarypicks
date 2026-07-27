@@ -11,6 +11,7 @@ interface Props {
   offset: number
   query: string
   notes: NflDraftNotes
+  syncError: string | null
   onSelectPosition: (position: DraftPosition) => void
   onSelectSort: (sort: NflDraftSort) => void
   onSetQuery: (query: string) => void
@@ -30,6 +31,7 @@ export default function NflDraftRoom({
   offset,
   query,
   notes,
+  syncError,
   onSelectPosition,
   onSelectSort,
   onSetQuery,
@@ -117,6 +119,14 @@ export default function NflDraftRoom({
           </button>
         ))}
       </div>
+
+      {/* A note that failed to reach the server was rolled back. Say so — a rank
+          that silently reverts is worse than one that never saved. */}
+      {syncError && (
+        <p role="status" aria-live="polite" className="text-xs text-red-400">
+          {syncError} — your change was undone. Check your connection and try again.
+        </p>
+      )}
 
       {/* Error */}
       {error && (

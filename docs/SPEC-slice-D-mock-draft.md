@@ -11,6 +11,108 @@ file is the build-level detail, plus three things the parent spec's numbers get 
 
 ---
 
+## ⛔ Guardrails — read before writing any code
+
+Binding scope for whoever implements this, including Hermes. Anything not listed as
+permitted is out of scope; if the task seems to require it, **stop and report instead of
+widening the scope yourself.**
+
+### This slice is BLOCKED until two things happen
+
+1. **Slice A must be merged first.** A completed draft saves against `device_id` on the
+   server, and that path is slice A's. Do not build a `localStorage` stand-in "for now" —
+   a mock draft stranded in a browser is the exact mistake slice A exists to fix.
+2. **§0 (the pool does not fit) needs Micah's decision.** 181 draftable players against 180
+   picks is not a detail you can route around while building. Do not start until it is
+   answered.
+
+If you have been handed this task and either is unresolved, say so and stop.
+
+### Files you may create
+
+```
+backend/routers/nfl_mock_draft.py
+backend/test_nfl_mock_draft.py
+lib/mockDraft/engine.ts
+lib/mockDraft/__tests__/engine.test.ts
+components/MockDraft/*.tsx
+pages/mock-draft.tsx
+```
+
+### Files you may modify, and only in the way stated
+
+| file | permitted change |
+|---|---|
+| `backend/sports_service.py` | add `nfl_mock_draft` to the router import list and one `app.include_router(...)` line. **Nothing else in this file.** |
+| `components/Leagues/NflDraftRoom.tsx` | **add the `export` keyword** to `DraftPlayerRow`, `AvailabilityStrip` and `StatValue` so §6.1 can reuse them. **No other change to this file — no refactor, no extraction to a new module, no prop changes.** It renders a live, reviewed surface. |
+| `components/Leagues/types.ts` | **additive only** — new interfaces for the pool and draft contracts. Do not edit any existing type. |
+
+### Files you must not touch
+
+`backend/_core.py` · `backend/routers/nfl_offseason.py` — **especially `_SKILL_POSITIONS`;
+§1 explains why the pool gets its own endpoint rather than a widened board** · any other
+router · any `ingest_*.py` · `next.config.js` · `docker-compose.yml` · `Dockerfile` ·
+`package.json` / `package-lock.json` · `scripts/` · `.claude/` · `AGENTS.md` · any
+`docs/*.md` except appending to your own report · any file belonging to another league or
+surface.
+
+**No shared utilities and no new dependencies.** The engine is plain TypeScript — no draft
+library, no RNG package (write a seeded PRNG in `engine.ts`, it is eight lines), no state
+manager.
+
+### Never, on this box
+
+- **Never run `npx`, `npm install`, `npm ci`, or `yarn` from a worktree.** A worktree's
+  `node_modules` is a **symlink to `/root/legendarypicks/node_modules`**, and an `npm exec`
+  in a worktree emptied that shared directory on 2026-07-27 — it took down the main dev
+  frontend and the public tunnel. This slice adds no dependency; if you think it needs one,
+  stop and report.
+- **Never start, kill, or restart a dev server, and never `pkill` node or uvicorn**
+  (AGENTS.md §11). `:3096` and `:8096` are externally managed and a human is browsing them
+  through a Cloudflare tunnel. `:8096` runs with reload — backend edits are picked up
+  automatically.
+- **Never touch `cloudflared`**, and never run `scripts/hermes-worktree.sh down` while a
+  tunnel is up — it `pkill`s by hardcoded port and has killed the live tunnel as collateral.
+- **Never touch host-level config** — `/etc`, systemd units or timers, cron, nginx.
+  Worktree isolation does not cover these.
+- **The 200-draft simulation in §7 runs against the pure engine in Node, never against the
+  API and never against a browser.** Check `free -h` first. Do not fire 200 drafts' worth of
+  HTTP at `:8096`.
+- **Never write to any `.db` file other than a `tempfile` you created.** Not
+  `backend/data/picks.dev.db`, and absolutely not `backend/data/picks.db` (production).
+  Tests point `LP_DB_PATH` at a temp file *before importing the router*.
+
+### Design is not open here
+
+§6 is binding, and `.claude/skills/honest-data-ui/SKILL.md` must be loaded before any UI
+work. Three rules get broken by default if nobody is watching:
+
+- **The accent colour marks absence only.** No accent on the clock, on your pick, on a
+  drafted row, or on a low timer.
+- **No player with `sample: 'none'` ever renders a "0 of 17" strip** — 24 of the 181 are in
+  this state, 15 of them kickers. §6.3.
+- **The results headline is a historical statement with its `n`**, never a present-tense
+  claim about 2026.
+
+### Definition of done
+
+- Every check in §7 run, with the **measured** result pasted into the report — not "verified"
+  as a word. A 200 is not acceptance, and the no-sample check (§7.6) is a screenshot a human
+  looks at.
+- `git diff --stat` reviewed against the permitted-files table above and included in the
+  report. A diff that touches a file not in that table is a failed task regardless of whether
+  the feature works.
+- Separate commits per logical change; plain human commit messages; **no AI attribution
+  anywhere** in commits, code or comments.
+- **Do not bump the version, tag, or run `scripts/release.sh`.**
+- **Do not resolve the §9 open questions yourself.** Take the stated recommendation and flag
+  that you did.
+- Report what you did **not** finish, and any measurement that disagreed with this spec.
+  Every number here was measured on 2026-07-27 against `picks.dev.db`; if yours differs, the
+  report says so rather than quietly matching the doc.
+
+---
+
 ## 0. Read this before anything else: the pool does not fit
 
 The parent spec justifies 12×15 with *"only 248 players carry a real ADP against 180 picks."*

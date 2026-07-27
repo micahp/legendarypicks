@@ -8,6 +8,81 @@ system) and §2 Phase 0 first. This file is the build-level detail for that phas
 
 ---
 
+## ⛔ Guardrails — read before writing any code
+
+Binding scope for whoever implements this, including Hermes. Anything not listed as
+permitted is out of scope; if the task seems to require it, **stop and report instead of
+widening the scope yourself.**
+
+### Files you may create
+
+```
+backend/routers/nfl_draft_notes.py
+backend/test_nfl_draft_notes.py
+```
+
+### Files you may modify, and only in the way stated
+
+| file | permitted change |
+|---|---|
+| `backend/sports_service.py` | add `nfl_draft_notes` to the router import list and one `app.include_router(...)` line. **Nothing else in this file.** |
+| `components/Leagues/hooks/useNflDraftBoard.ts` | the read/write paths in §5 |
+| `components/Leagues/types.ts` | **additive only** — a new interface for the notes response. Do not edit `NflDraftNotes`, `NflDraftBoard`, or any existing type. |
+
+### Files you must not touch
+
+`backend/_core.py` · `backend/routers/nfl_offseason.py` (the live `nfl-draft-board-v2`
+contract) · `components/Leagues/NflDraftRoom.tsx` · any other router · `next.config.js` ·
+`docker-compose.yml` · `Dockerfile` · `package.json` / `package-lock.json` · `scripts/` ·
+`.claude/` · `AGENTS.md` · any `docs/*.md` except appending to your own report · anything
+under `pages/` · any file belonging to another league or surface.
+
+**No shared utilities.** If a helper looks like it belongs in `_core.py`, put it in the new
+router instead and say so in the report. A shared-util edit changes surfaces you are not
+testing.
+
+### Never, on this box
+
+- **Never run `npx`, `npm install`, `npm ci`, or `yarn` from a worktree.** A worktree's
+  `node_modules` is a **symlink to `/root/legendarypicks/node_modules`**, and an `npm exec`
+  in a worktree emptied that shared directory on 2026-07-27 — it took down the main dev
+  frontend and the public tunnel. If a dependency is genuinely missing, stop and report. This
+  slice needs no new dependency.
+- **Never start, kill, or restart a dev server, and never `pkill` node or uvicorn**
+  (AGENTS.md §11). `:3096` and `:8096` are externally managed and a human is browsing them
+  through a Cloudflare tunnel. `:8096` runs with reload — a backend edit is picked up
+  automatically, so there is nothing to restart.
+- **Never touch `cloudflared`**, and never run `scripts/hermes-worktree.sh down` while a
+  tunnel is up — it `pkill`s by hardcoded port and has killed the live tunnel as collateral.
+- **Never touch host-level config** — `/etc`, systemd units or timers, cron, nginx.
+  Worktree isolation does not cover these, so a change there escapes your sandbox and hits
+  production.
+- **Never run a batch job, ingest script, or full-table scan.** This box has 5.9GB of RAM
+  and normally sits with about 1GB free. Check `free -h` before anything heavier than a
+  test run.
+- **Never write to any `.db` file other than a `tempfile` you created.** Not
+  `backend/data/picks.dev.db`, and absolutely not `backend/data/picks.db` (production).
+  Tests point `LP_DB_PATH` at a temp file *before importing the router*.
+
+### Definition of done
+
+- Every check in §7 run, with the **measured** result pasted into the report — not "verified"
+  as a word. A 200 is not acceptance.
+- `git diff --stat` reviewed against the permitted-files table above and included in the
+  report. A diff that touches a file not in that table is a failed task regardless of whether
+  the feature works.
+- Separate commits per logical change; plain human commit messages; **no AI attribution
+  anywhere** in commits, code or comments.
+- **Do not bump the version, tag, or run `scripts/release.sh`.** Releases are cut by hand at
+  a human's instruction.
+- **Do not resolve §9 yourself.** If the open question blocks you, take the recommendation
+  stated there and flag in the report that you did — do not invent a third option.
+- Report what you did **not** finish, and any measurement that disagreed with this spec.
+  A number in this document is a measurement from 2026-07-27, not a guarantee; if yours
+  differs, the report says so rather than quietly matching the doc.
+
+---
+
 ## 1. What this is, in one paragraph
 
 `rank` / `watch` / `fade` on the NFL draft board live in `localStorage` under
