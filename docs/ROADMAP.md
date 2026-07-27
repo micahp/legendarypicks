@@ -7,7 +7,38 @@ Last updated 2026-07-27.
 
 ---
 
+## User evidence — 2026-07-26
+
+First conversation with a potential user, and the first outside signal this roadmap has.
+
+- Pitching **"the app" in general was hard. Pitching NFL was easy.** The framing problem is
+  a scope problem.
+- **She had no place she went to do draft research.** Not "she prefers a competitor" — no
+  incumbent at all. That vacancy is what the board fills.
+- **The v0.6.9 availability UX landed on a first-time viewer**: she could scan and see who
+  misses games. Accent-marks-absence did its job on someone who'd never had it explained.
+
+**Consequence: R6 moves up.** It was scheduled after v0.7.0, decided before anyone was
+asking for the board. She cannot reach it — prod is v0.6.7 and the board is dev-only behind
+a trycloudflare URL. Everything else on this list is an improvement to something no user
+can open. See R7, R8.
+
+---
+
 ## Now — v0.7.0
+
+### R7. Player search on the draft board — **user-blocking**
+522 eligible players, 50 per page, and the only controls are a position filter, a sort, and
+prev/next. Draft research is name-driven — "what about Rashee Rice" — and today that means
+paging. A search input over the board is the smallest change that makes it usable for the
+thing she described doing.
+
+### R8. Decide what happens to a user's draft notes
+`rank` / `watch` / `fade` persist to `localStorage` under `lp_nfl_draft_notes`. Device-local:
+gone on a cache clear, invisible between phone and laptop. Doing the research *is* the
+retention hook, so this is the wrong storage for it long-term. Two options — label it
+honestly as this-device-only for now, or move it behind an account. **Needs Micah's call;**
+the account path is much larger than the label.
 
 ### R1. Rebuild `/api/nfl/draft-board` around availability
 **The board already exists** (`routers/nfl_offseason.py`, contract `nfl-draft-board-v1`,
