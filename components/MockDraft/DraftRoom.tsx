@@ -1,0 +1,403 @@
+import { useMemo } from 'react'
+import type { PoolPlayer } from '../Leagues/types'
+import type { DraftState, DraftPlayer } from '../../lib/mockDraft/engine'
+import {
+  currentDrafter,
+  isUserPick,
+  getRosterState,
+} from '../../lib/mockDraft/engine'
+import { AvailabilityStrip } from '../Leagues/NflDraftRoom'
+
+interface Props {
+  pool: PoolPlayer[]
+  draftState: DraftState
+  onUserPick: (playerId: number) => void
+  userPicking: boolean
+}
+
+const TEAM_GAMES = 17
+const PICK_LEDGER_LIMIT = 15
+
+/**
+ * Main draft UI — pool on left, roster + ledger on right.
+ *
+ * Design rules (honest-data-ui §6.2):
+ *   - Accent (amber) marks absence only — never on clock, your pick, drafted row.
+ *   - On the clock: weight + position + rule. NOT colour.
+ *   - Your picks: left rule or fill one step lighter.
+ *   - Drafted: dim + strike.
+ *   - Clock: tabular figures, may change weight under 10s, never red.
+ */
+export default function DraftRoom({ pool, draftState, onUserPick, userPicking }: Props) {
+  // Build a lookup from player_id → PoolPlayer for O(1) resolution
+  const playerMap = useMemo(() => {
+    const m = new Map<number, PoolPlayer>()
+    for (const p of pool) m.set(p.player_id, p)
+    return m
+  }, [pool])
+
+  // Which players have been drafted
+  const draftedIds = useMemo(() => {
+    const s = new Set<number>()
+    for (const pick of draftState.picks) s.add(pick.player_id)
+    return s
+  }, [draftState.picks])
+
+  // Available pool, sorted by ADP
+  const availablePool = useMemo(
+    () => [...draftState.availablePool].sort((a, b) => a.adp - b.adp),
+    [draftState.availablePool],
+  )
+
+  // User's roster state
+  const userRoster = useMemo(
+    () => getRosterState(draftState, draftState.seat),
+    [draftState],
+  )
+
+  const userTurn = isUserPick(draftState)
+  const drafter = currentDrafter(draftState)
+  const round = Math.ceil(draftState.currentPick / draftState.teams)
+
+  // Sort user's players into slot order
+  const rosterSlots = useMemo(() => buildRosterSlots(userRoster.players, playerMap), [userRoster, playerMap])
+
+  // Recent picks for the ledger
+  const recentPicks = useMemo(() => {
+    const all = [...draftState.picks].reverse().slice(0, PICK_LEDGER_LIMIT).reverse()
+    return all
+  }, [draftState.picks])
+
+  return (
+    <section className="space-y-4">
+      {/* Status bar — weight + position + rule, NO colour */}
+      <div className="flex items-center gap-3 rounded-lg border border-zinc-800 bg-zinc-900 px-4 py-3">
+        <div className="flex items-baseline gap-2">
+          <span className="text-sm font-semibold text-zinc-300">
+            Round {round}
+          </span>
+          <span className="text-xs text-zinc-500">·</span>
+          <span className="text-sm text-zinc-400">
+            Pick {draftState.currentPick} of {draftState.teams * draftState.rounds}
+          </span>
+        </div>
+        <div className="ml-auto flex items-center gap-2">
+          {draftState.completed ? (
+            <span className="text-sm font-semibold text-zinc-300">Draft complete</span>
+          ) : (
+            <>
+              <span className="text-sm font-semibold text-zinc-200">
+                Team {drafter}
+                {userTurn ? ' (you)' : ''}
+              </span>
+              <span className="text-xs text-zinc-500">on the clock</span>
+            </>
+          )}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* ── Pool (left 2/3) ── */}
+        <div className="lg:col-span-2 space-y-3">
+          <div className="flex items-center justify-between">
+            <h4 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider">
+              Player Pool
+            </h4>
+            <span className="text-xs text-zinc-600 tabular-nums">
+              {availablePool.length} available · {draftedIds.size} drafted
+            </span>
+          </div>
+
+          <div className="overflow-y-auto max-h-[calc(100vh-300px)] rounded-xl border border-zinc-800 bg-zinc-900 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <table className="w-full text-sm">
+              <thead className="sticky top-0 z-10 bg-zinc-900">
+                <tr className="border-b border-zinc-800 text-zinc-500 text-[11px] uppercase tracking-wider">
+                  <th className="text-left py-2.5 pl-3 pr-2 w-10">#</th>
+                  <th className="text-left py-2.5 px-2">Player</th>
+                  <th className="text-center py-2.5 px-2 w-12">Pos</th>
+                  <th className="text-left py-2.5 px-2 min-w-[8rem]">Available</th>
+                  <th className="text-right py-2.5 px-2 w-16">ADP</th>
+                </tr>
+              </thead>
+              <tbody>
+                {availablePool.map((dp, i) => {
+                  const poolPlayer = playerMap.get(dp.player_id)
+                  if (!poolPlayer) return null
+                  const drafted = draftedIds.has(dp.player_id)
+                  return (
+                    <tr
+                      key={dp.player_id}
+                      className={`border-b border-zinc-800/40 transition-colors ${
+                        drafted
+                          ? 'opacity-30 line-through'
+                          : userTurn
+                            ? 'cursor-pointer hover:bg-zinc-800/50'
+                            : ''
+                      }`}
+                      onClick={() => {
+                        if (userTurn && !drafted) onUserPick(dp.player_id)
+                      }}
+                    >
+                      <td className="py-2 pl-3 pr-2 text-zinc-500 text-xs tabular-nums">
+                        {i + 1}
+                      </td>
+                      <td className="py-2 px-2">
+                        <span className={`font-medium ${drafted ? 'text-zinc-600' : 'text-zinc-200'}`}>
+                          {dp.name}
+                        </span>
+                        <div className="text-[10px] text-zinc-600">{dp.team}</div>
+                      </td>
+                      <td className="py-2 px-2 text-center">
+                        <span className="rounded bg-zinc-800 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-zinc-400">
+                          {dp.position}
+                        </span>
+                      </td>
+                      <td className="py-2 px-2">
+                        <PoolAvailability poolPlayer={poolPlayer} />
+                      </td>
+                      <td className="py-2 pr-3 pl-2 text-right font-mono tabular-nums text-xs text-zinc-400">
+                        {dp.adp.toFixed(1)}
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* ── Roster + Ledger (right 1/3) ── */}
+        <div className="space-y-4">
+          {/* Roster panel */}
+          <div className="rounded-xl border border-zinc-800 bg-zinc-900 overflow-hidden">
+            <div className="px-4 py-3 border-b border-zinc-800">
+              <h4 className="text-sm font-semibold text-zinc-300">
+                Your Roster
+                <span className="ml-2 text-xs font-normal text-zinc-500 tabular-nums">
+                  {userRoster.totalPicks}/{draftState.rounds} picks
+                </span>
+              </h4>
+            </div>
+            <div className="divide-y divide-zinc-800/50">
+              {rosterSlots.map((slot, i) => (
+                <RosterSlotRow key={i} slot={slot} />
+              ))}
+              {rosterSlots.length === 0 && (
+                <div className="px-4 py-6 text-center text-sm text-zinc-600">
+                  No picks yet
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Pick ledger */}
+          <div className="rounded-xl border border-zinc-800 bg-zinc-900 overflow-hidden">
+            <div className="px-4 py-3 border-b border-zinc-800">
+              <h4 className="text-sm font-semibold text-zinc-300">
+                Pick Ledger
+                <span className="ml-2 text-xs font-normal text-zinc-500 tabular-nums">
+                  {draftState.picks.length} picks
+                </span>
+              </h4>
+            </div>
+            <div className="max-h-[300px] overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              <div className="divide-y divide-zinc-800/30">
+                {recentPicks.map(pick => {
+                  const dp = draftState.playerPool.find(p => p.player_id === pick.player_id)
+                  const isUser = pick.team_no === draftState.seat
+                  return (
+                    <div
+                      key={pick.pick_no}
+                      className={`flex items-center gap-2 px-4 py-2 text-xs ${
+                        isUser ? 'border-l-2 border-l-zinc-600 bg-zinc-800/30' : ''
+                      }`}
+                    >
+                      <span className="text-zinc-600 tabular-nums w-8 shrink-0">
+                        {pick.pick_no}
+                      </span>
+                      <span className="text-zinc-500 tabular-nums w-8 shrink-0">
+                        T{pick.team_no}
+                      </span>
+                      <span className={`truncate ${isUser ? 'font-semibold text-zinc-200' : 'text-zinc-400'}`}>
+                        {dp?.name ?? `#${pick.player_id}`}
+                      </span>
+                      <span className="text-[10px] text-zinc-600 shrink-0">
+                        {dp?.position ?? ''}
+                      </span>
+                      {pick.auto && (
+                        <span className="text-[10px] text-zinc-600 shrink-0 ml-auto">auto</span>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+/** Availability display for a pool player in the draft room. */
+function PoolAvailability({ poolPlayer }: { poolPlayer: PoolPlayer }) {
+  const noSample = poolPlayer.sample === 'none'
+  const isKicker = poolPlayer.position === 'PK'
+
+  if (noSample) {
+    return (
+      <span className="text-[11px] text-zinc-500">
+        {isKicker ? 'Kicker games not tracked' : 'Rookie — no NFL sample'}
+      </span>
+    )
+  }
+
+  const missed = TEAM_GAMES - poolPlayer.games_played
+  return (
+    <>
+      <div className="flex items-baseline gap-1.5">
+        <span
+          className={`font-mono tabular-nums text-sm font-semibold ${
+            missed > 0 ? 'text-amber-400' : 'text-zinc-300'
+          }`}
+        >
+          {poolPlayer.games_played}/{TEAM_GAMES}
+        </span>
+        {missed > 0 && (
+          <span className="text-[10px] text-zinc-600">missed {missed}</span>
+        )}
+      </div>
+      <AvailabilityStrip
+        weeksPlayed={poolPlayer.weeks_played}
+        teamWeeks={poolPlayer.team_weeks}
+        name={poolPlayer.name}
+      />
+    </>
+  )
+}
+
+// ── Roster slot helpers ──
+
+interface RosterSlot {
+  label: string
+  player: DraftPlayer | null
+  poolPlayer: PoolPlayer | null
+  isStarter: boolean
+}
+
+function buildRosterSlots(
+  players: DraftPlayer[],
+  playerMap: Map<number, PoolPlayer>,
+): RosterSlot[] {
+  const byPos: Record<string, DraftPlayer[]> = {}
+  for (const p of players) {
+    if (!byPos[p.position]) byPos[p.position] = []
+    byPos[p.position].push(p)
+  }
+
+  const slots: RosterSlot[] = []
+
+  function addSlot(label: string, pos: string, isStarter: boolean) {
+    const arr = byPos[pos] ?? []
+    const player = arr.shift() ?? null
+    slots.push({
+      label,
+      player,
+      poolPlayer: player ? playerMap.get(player.player_id) ?? null : null,
+      isStarter,
+    })
+  }
+
+  // Starters in order
+  addSlot('QB', 'QB', true)
+  addSlot('RB1', 'RB', true)
+  addSlot('RB2', 'RB', true)
+  addSlot('WR1', 'WR', true)
+  addSlot('WR2', 'WR', true)
+  addSlot('TE', 'TE', true)
+  // FLEX: next RB/WR/TE
+  const flexPlayer =
+    (byPos['RB'] ?? [])[0] ??
+    (byPos['WR'] ?? [])[0] ??
+    (byPos['TE'] ?? [])[0] ??
+    null
+  if (flexPlayer) {
+    // Remove from its position array
+    const flexArr = byPos[flexPlayer.position]
+    if (flexArr) flexArr.shift()
+    slots.push({
+      label: 'FLEX',
+      player: flexPlayer,
+      poolPlayer: playerMap.get(flexPlayer.player_id) ?? null,
+      isStarter: true,
+    })
+  } else {
+    slots.push({ label: 'FLEX', player: null, poolPlayer: null, isStarter: true })
+  }
+  addSlot('K', 'PK', true)
+
+  // Bench — remaining players
+  const remaining = players.filter(p => !slots.some(s => s.player?.player_id === p.player_id))
+  remaining.forEach((p, i) => {
+    slots.push({
+      label: `BE${i + 1}`,
+      player: p,
+      poolPlayer: playerMap.get(p.player_id) ?? null,
+      isStarter: false,
+    })
+  })
+
+  // Pad bench to 7 slots
+  for (let i = remaining.length; i < 7; i++) {
+    slots.push({
+      label: `BE${i + 1}`,
+      player: null,
+      poolPlayer: null,
+      isStarter: false,
+    })
+  }
+
+  return slots
+}
+
+function RosterSlotRow({ slot }: { slot: RosterSlot }) {
+  return (
+    <div
+      className={`flex items-center gap-2 px-4 py-2 text-xs ${
+        slot.isStarter ? '' : 'opacity-70'
+      }`}
+    >
+      <span
+        className={`w-12 shrink-0 font-semibold tabular-nums ${
+          slot.isStarter ? 'text-zinc-300' : 'text-zinc-500'
+        }`}
+      >
+        {slot.label}
+      </span>
+      {slot.player ? (
+        <>
+          <span className="truncate font-medium text-zinc-200 flex-1">
+            {slot.player.name}
+          </span>
+          <span className="text-[10px] text-zinc-500 shrink-0">
+            {slot.player.position}
+          </span>
+          {slot.poolPlayer && slot.poolPlayer.sample !== 'none' && (
+            <span className="text-[10px] text-zinc-600 tabular-nums shrink-0">
+              {slot.poolPlayer.games_played}/{TEAM_GAMES}
+            </span>
+          )}
+          {slot.poolPlayer && slot.poolPlayer.sample === 'none' && (
+            <span className="text-[10px] text-zinc-600 shrink-0">
+              {slot.poolPlayer.position === 'PK'
+                ? 'no logs'
+                : 'rookie'}
+            </span>
+          )}
+        </>
+      ) : (
+        <span className="text-zinc-700 flex-1">—</span>
+      )}
+    </div>
+  )
+}
