@@ -174,6 +174,7 @@ export default function LeagueHubPage() {
               offset={draftBoard.offset}
               query={draftBoard.query}
               notes={draftBoard.notes}
+              syncError={draftBoard.syncError}
               onSelectPosition={draftBoard.selectPosition}
               onSelectSort={draftBoard.selectSort}
               onSetQuery={draftBoard.setQuery}

@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
-import type { NflDraftBoard, NflDraftNotes, NflDraftPlayer, NflDraftSort } from '../types'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import type { DraftNotesResponse, NflDraftBoard, NflDraftNotes, NflDraftPlayer, NflDraftSort } from '../types'
+import { getDeviceId } from '../../../lib/deviceId'
 
 const POSITIONS = ['all', 'QB', 'RB', 'WR', 'TE', 'FB', 'FLEX'] as const
 export type DraftPosition = typeof POSITIONS[number]
@@ -17,6 +18,7 @@ const SORT_LABELS: Record<NflDraftSort, string> = {
 
 const STORAGE_KEY = 'lp_nfl_draft_notes'
 const SEARCH_DEBOUNCE_MS = 250
+const CURRENT_SEASON = 2026
 
 function sanitizeNotes(raw: unknown): NflDraftNotes {
   const empty: NflDraftNotes = { rank: {}, watch: {}, fade: {} }
@@ -78,6 +80,9 @@ export function useNflDraftBoard(enabled: boolean) {
     if (typeof window === 'undefined') return { rank: {}, watch: {}, fade: {} }
     return loadNotes()
   })
+  const [syncError, setSyncError] = useState<string | null>(null)
+  const notesRef = useRef(notes)
+  notesRef.current = notes
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -126,6 +131,60 @@ export function useNflDraftBoard(enabled: boolean) {
     return () => { ignore = true }
   }, [enabled, buildUrl])
 
+  // ── Server sync: read notes from the server on mount ──
+  useEffect(() => {
+    if (!enabled || typeof window === 'undefined') return
+
+    const deviceId = getDeviceId()
+    if (!deviceId) return
+
+    let ignore = false
+
+    const sync = async () => {
+      try {
+        const res = await fetch(`/api/nfl/draft-notes?season=${CURRENT_SEASON}`, {
+          headers: { 'X-Device-Id': deviceId },
+        })
+        if (!res.ok || ignore) return
+
+        const json: DraftNotesResponse = await res.json()
+
+        if (json.note_count > 0) {
+          // Server wins — replace state and rewrite localStorage cache
+          const serverNotes = sanitizeNotes(json.notes)
+          if (!ignore) {
+            notesRef.current = serverNotes
+            setNotes(serverNotes)
+            saveNotes(serverNotes)
+          }
+        } else {
+          // Server has zero rows — import from localStorage if we have notes
+          const localNotes = loadNotes()
+          const hasLocalNotes =
+            Object.keys(localNotes.rank).length > 0 ||
+            Object.keys(localNotes.watch).length > 0 ||
+            Object.keys(localNotes.fade).length > 0
+          if (hasLocalNotes && !ignore) {
+            await fetch('/api/nfl/draft-notes/import', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'X-Device-Id': deviceId,
+              },
+              body: JSON.stringify({ season: CURRENT_SEASON, notes: localNotes }),
+            })
+            // localStorage is already correct; notes are now on the server
+          }
+        }
+      } catch {
+        // GET failed — keep running on localStorage exactly as today
+      }
+    }
+
+    sync()
+    return () => { ignore = true }
+  }, [enabled])
+
   const selectPosition = useCallback((next: DraftPosition) => {
     setPosition(next)
     setOffset(0)
@@ -137,42 +196,120 @@ export function useNflDraftBoard(enabled: boolean) {
   }, [])
 
   const setRank = useCallback((playerId: number, rank: number | null) => {
-    setNotes(current => {
-      const next = { ...current, rank: { ...current.rank } }
-      if (rank === null) {
-        delete next.rank[playerId]
-      } else {
-        next.rank[playerId] = rank
-      }
-      saveNotes(next)
-      return next
-    })
+    const prev = notesRef.current
+
+    const nextRank = { ...prev.rank }
+    if (rank === null) {
+      delete nextRank[playerId]
+    } else {
+      nextRank[playerId] = rank
+    }
+    const next: NflDraftNotes = { ...prev, rank: nextRank }
+
+    notesRef.current = next
+    setNotes(next)
+    saveNotes(next)
+
+    const deviceId = getDeviceId()
+    if (deviceId) {
+      fetch('/api/nfl/draft-notes', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'X-Device-Id': deviceId },
+        body: JSON.stringify({
+          season: CURRENT_SEASON,
+          player_id: playerId,
+          rank,
+          watch: next.watch[playerId] ?? false,
+          fade: next.fade[playerId] ?? false,
+        }),
+      }).then(res => {
+        if (!res.ok) throw new Error(`${res.status}`)
+      }).catch(() => {
+        notesRef.current = prev
+        setNotes(prev)
+        saveNotes(prev)
+        setSyncError('Failed to save rank')
+        setTimeout(() => setSyncError(null), 5000)
+      })
+    }
   }, [])
 
   const toggleWatch = useCallback((playerId: number) => {
-    setNotes(current => {
-      const next = { ...current, watch: { ...current.watch } }
-      if (next.watch[playerId]) {
-        delete next.watch[playerId]
-      } else {
-        next.watch[playerId] = true
-      }
-      saveNotes(next)
-      return next
-    })
+    const prev = notesRef.current
+
+    const nextWatch = { ...prev.watch }
+    if (nextWatch[playerId]) {
+      delete nextWatch[playerId]
+    } else {
+      nextWatch[playerId] = true
+    }
+    const next: NflDraftNotes = { ...prev, watch: nextWatch }
+
+    notesRef.current = next
+    setNotes(next)
+    saveNotes(next)
+
+    const deviceId = getDeviceId()
+    if (deviceId) {
+      fetch('/api/nfl/draft-notes', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'X-Device-Id': deviceId },
+        body: JSON.stringify({
+          season: CURRENT_SEASON,
+          player_id: playerId,
+          rank: next.rank[playerId] ?? null,
+          watch: nextWatch[playerId] ?? false,
+          fade: next.fade[playerId] ?? false,
+        }),
+      }).then(res => {
+        if (!res.ok) throw new Error(`${res.status}`)
+      }).catch(() => {
+        notesRef.current = prev
+        setNotes(prev)
+        saveNotes(prev)
+        setSyncError('Failed to save watch')
+        setTimeout(() => setSyncError(null), 5000)
+      })
+    }
   }, [])
 
   const toggleFade = useCallback((playerId: number) => {
-    setNotes(current => {
-      const next = { ...current, fade: { ...current.fade } }
-      if (next.fade[playerId]) {
-        delete next.fade[playerId]
-      } else {
-        next.fade[playerId] = true
-      }
-      saveNotes(next)
-      return next
-    })
+    const prev = notesRef.current
+
+    const nextFade = { ...prev.fade }
+    if (nextFade[playerId]) {
+      delete nextFade[playerId]
+    } else {
+      nextFade[playerId] = true
+    }
+    const next: NflDraftNotes = { ...prev, fade: nextFade }
+
+    notesRef.current = next
+    setNotes(next)
+    saveNotes(next)
+
+    const deviceId = getDeviceId()
+    if (deviceId) {
+      fetch('/api/nfl/draft-notes', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'X-Device-Id': deviceId },
+        body: JSON.stringify({
+          season: CURRENT_SEASON,
+          player_id: playerId,
+          rank: next.rank[playerId] ?? null,
+          watch: next.watch[playerId] ?? false,
+          fade: nextFade[playerId] ?? false,
+        }),
+      }).then(res => {
+        if (!res.ok) throw new Error(`${res.status}`)
+      }).catch(() => {
+        notesRef.current = prev
+        setNotes(prev)
+        saveNotes(prev)
+        setSyncError('Failed to save fade')
+        setTimeout(() => setSyncError(null), 5000)
+      })
+    }
   }, [])
 
   const clearQuery = useCallback(() => setQuery(''), [])
@@ -186,6 +323,7 @@ export function useNflDraftBoard(enabled: boolean) {
     offset,
     query,
     notes,
+    syncError,
     selectPosition,
     selectSort,
     setQuery,

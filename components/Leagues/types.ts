@@ -276,6 +276,14 @@ export interface NflDraftNotes {
   fade: Record<number, boolean>
 }
 
+export interface DraftNotesResponse {
+  contract: string
+  season: number
+  notes: NflDraftNotes
+  note_count: number
+  updated_at: number | null
+}
+
 // ── NFL usage trend ────────────────────────────────────────────────────
 
 export interface NflUsageGame {
