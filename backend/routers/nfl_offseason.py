@@ -546,13 +546,36 @@ def _regular_season_aggregates(connection: sqlite3.Connection, season: int) -> D
                   AVG(CAST(json_extract(stats,'$.xfpts_ppr')    AS REAL))    AS xfp_per_game,
                   AVG(CAST(json_extract(stats,'$.off_pct')      AS REAL))    AS snap_pct,
                   AVG(CAST(json_extract(stats,'$.target_share') AS REAL))    AS target_share,
-                  GROUP_CONCAT(game_no)                                      AS weeks
+                  GROUP_CONCAT(game_no)                                      AS weeks,
+                  (SELECT team FROM player_game_logs inner_logs
+                    WHERE inner_logs.player_id = player_game_logs.player_id
+                      AND inner_logs.league='nfl' AND inner_logs.season=?
+                      AND CAST(inner_logs.game_no AS INTEGER) < ?
+                    GROUP BY team ORDER BY COUNT(*) DESC LIMIT 1)             AS primary_team
            FROM player_game_logs
            WHERE league='nfl' AND season=? AND player_id IS NOT NULL
              AND CAST(game_no AS INTEGER) < ?
            GROUP BY player_id""",
-        (season, _POSTSEASON_FIRST_WEEK),
+        (season, _POSTSEASON_FIRST_WEEK, season, _POSTSEASON_FIRST_WEEK),
     ).fetchall()
+
+    # Which weeks each team actually played. An 18-week schedule holds 17 games
+    # and one bye, and the bye is not an absence -- rendering 18 slots and
+    # calling the empty one "missed" would invent a game the player was never
+    # asked to play. Derived from the logs themselves rather than joined to
+    # team_game_results, whose 2025 rows use a different key scheme (B2).
+    team_weeks: Dict[str, Set[int]] = defaultdict(set)
+    for row in connection.execute(
+        """SELECT team, game_no FROM player_game_logs
+           WHERE league='nfl' AND season=? AND team IS NOT NULL
+             AND CAST(game_no AS INTEGER) < ?
+           GROUP BY team, game_no""",
+        (season, _POSTSEASON_FIRST_WEEK),
+    ):
+        try:
+            team_weeks[row["team"]].add(int(row["game_no"]))
+        except (TypeError, ValueError):
+            continue
 
     out: Dict[int, dict] = {}
     for row in rows:
@@ -564,6 +587,10 @@ def _regular_season_aggregates(connection: sqlite3.Connection, season: int) -> D
                 continue
         games = row["games_played"] or 0
         total = row["ppr_total"]
+        # A mid-season mover has logs under two teams. Use the one he appeared
+        # for most; the games-played count is unaffected either way, and only
+        # the bye slot could differ between the two schedules.
+        primary_team = row["primary_team"]
         out[row["player_id"]] = {
             "games_played": games,
             "ppr_total": total,
@@ -571,6 +598,7 @@ def _regular_season_aggregates(connection: sqlite3.Connection, season: int) -> D
             "snap_pct": row["snap_pct"],
             "target_share": row["target_share"],
             "weeks": weeks,
+            "team_weeks": sorted(team_weeks.get(primary_team, set())),
         }
     return out
 
@@ -690,6 +718,9 @@ def nfl_draft_board(
             "games_played": games_played,
             "team_games": _REG_SEASON_TEAM_GAMES,
             "weeks_played": sorted(agg["weeks"]) if agg else [],
+            # The 17 weeks his team actually played, so the strip can show a bye
+            # as a bye rather than as an absence.
+            "team_weeks": agg["team_weeks"] if agg else [],
             # Both averages, always together.
             "ppr_per_game_played": _round(ppr_total / games_played) if ppr_total and games_played else None,
             "ppr_per_team_game": _round(ppr_total / _REG_SEASON_TEAM_GAMES) if ppr_total else None,
