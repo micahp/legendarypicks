@@ -25,7 +25,39 @@ can open. See R7, R8.
 
 ---
 
-## Now — v0.7.0
+## v0.7.0 — scope locked 2026-07-27
+
+Cut as one release, then **deploy to prod (R6)**. Three things:
+
+1. **Slice A** — draft notes to the server, keyed by `device_id`
+   (`SPEC-accounts-and-mock-draft.md` §6). Closes R8.
+2. **Slice D, single-player** — mock draft vs. ADP bots. 12×15 snake, QB/RB/WR/TE/K + FLEX,
+   no D/ST, no IDP.
+3. **NFL schedule 2026 through the API** — R4. Nothing loaded on 2026-07-27 is visible in
+   the UI today.
+
+v0.6.10 (draft board search) already shipped ahead of this and is not part of it.
+
+### Two things this scope does not resolve
+
+- **D is specced as gated behind sign-up, and slice B (accounts) is not in this release.**
+  Without B there is nothing to gate behind. Either B comes along, or the mock draft ships
+  **ungated in v0.7.0** and the gate arrives with accounts in v0.8.0 — which is defensible
+  (it gets the draft in front of people during the draft window and measures whether anyone
+  finishes one before we make it cost something), but it is a different plan from the spec.
+  **Undecided.**
+- **R4 depends on the B2/B3 key-scheme decision, which is still open.** `team_game_results`
+  holds ESPN ids for 2025 and nflverse ids for 2024/2026, and the Rams and Washington fail
+  to join across the two. Exposing `nfl_schedule` before deciding ships that split into the
+  API's contract. **Decide B2/B3 before starting R4.**
+
+### Calendar
+Drafts run mid-Aug → **Labor Day, Sept 5–7**; week 1 opens **Sept 9**. v0.7.0 has to be in
+prod by roughly **Aug 22** for the mock draft to matter this season.
+
+---
+
+## Now — v0.7.0 (detail)
 
 ### R7. Player search on the draft board — **user-blocking**
 522 eligible players, 50 per page, and the only controls are a position filter, a sort, and
