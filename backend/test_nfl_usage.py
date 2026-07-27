@@ -343,6 +343,22 @@ class NflUsageIsolatedTests(unittest.TestCase):
 
     # ── 10. EPA per dropback ─────────────────────────────────────────
 
+    def test_epa_per_dropback_prefers_dropbacks_over_attempts(self):
+        """`att` was only ever the right denominator by accident, back when the
+        ingest counted sacks as attempts. A sacked quarterback has more
+        dropbacks than attempts, and the rate must use the larger number."""
+        _insert_player(self.db_path, 841, "Sacked QB", "nfl", "TST", "QB")
+        for g in ["1", "2", "3", "4"]:
+            _insert_log(self.db_path, 841, 2025, g, "TST", "OPP", {
+                "att": 30, "dropbacks": 35, "cmp": 20, "pass_yds": 210,
+                "pass_epa": 7.0, "off_snaps": 60, "off_pct": 1.0,
+            })
+        game = nfl_usage.nfl_usage(841, season=2025, weeks=4)["games"][0]
+        self.assertAlmostEqual(game["epa_per_db"], 0.2, places=3)   # 7.0 / 35
+        self.assertNotAlmostEqual(game["epa_per_db"], 7.0 / 30, places=3)
+        # The displayed attempt count stays the official one.
+        self.assertEqual(game["pass_att"], 30.0)
+
     def test_epa_per_dropback_divides_by_attempts(self):
         """pass_epa is a game total; the response also carries it per attempt."""
         _insert_player(self.db_path, 840, "Starter QB", "nfl", "TST", "QB")

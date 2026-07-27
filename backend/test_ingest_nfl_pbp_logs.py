@@ -356,6 +356,85 @@ class EligibilityAndLateralTests(unittest.TestCase):
         self.assertNotIn("fpts", s)
         self.assertEqual(0.11, s["off_pct"], "another ingest's data must survive")
 
+    def test_two_point_plays_are_excluded_from_dropbacks(self):
+        """Excluding them from `att` but not `dropbacks` disagreed with the
+        reference on 82 passer-weeks -- the denominator has to be checkable."""
+        self._ingest([self._play(play_id=95, two_point_attempt=1)])
+        s = self._stats("00-0000001")
+        self.assertEqual(1, s["att"])
+        self.assertEqual(1, s["dropbacks"], "a two-point play is not a dropback")
+
+    def test_non_pass_plays_carrying_a_passer_are_excluded_from_epa(self):
+        """Three no_play rows and one field_goal row carry a passer_player_id in
+        2025; including their EPA was the whole of the remaining disagreement."""
+        self._ingest([
+            self._play(play_id=94, play_type="no_play", pass_attempt=0, qb_epa=5.0),
+            self._play(play_id=93, play_type="field_goal", pass_attempt=0, qb_epa=3.0),
+        ])
+        # Only the base frame's single REG pass by QB One contributes.
+        self.assertAlmostEqual(0.5, self._stats("00-0000001")["pass_epa"], places=3)
+
+    def test_sweep_never_touches_another_ingests_rows(self):
+        """A 2024 row from ingest_nfl_logs also has pass_yds and fpts. Stripping
+        those would repeat the destructive write this ingest was fixed for."""
+        con = sqlite3.connect(self.db)
+        self.mod.ensure_table(con)
+        con.execute(
+            """INSERT INTO player_game_logs
+               (player_id, league, season, game_no, game_id, team, opponent,
+                stats, source, source_player_key)
+               VALUES (5, 'nfl', 2025, '9', '2025_09_X_Y', 'SEA', 'ARI',
+                       ?, 'nflverse', '00-0000005')""",
+            (json.dumps({"pass_yds": 300, "fpts": 21.0}),))
+        con.commit(); con.close()
+
+        import nfl_data_py
+        nfl_data_py.import_pbp_data = lambda years: _frame()
+        out = io.StringIO()
+        with redirect_stdout(out):
+            self.mod.ingest(2025)
+
+        con = sqlite3.connect(self.db)
+        s = json.loads(con.execute(
+            """SELECT stats FROM player_game_logs WHERE source_player_key='00-0000005'
+               AND game_no='9'""").fetchone()[0])
+        con.close()
+        self.assertEqual(300, s["pass_yds"], "another source's row was swept")
+        self.assertEqual(21.0, s["fpts"])
+        # The row must not even be a *candidate*. Asserting only on the data
+        # lets this pass on the strength of the UPDATE's redundant source guard,
+        # which leaves the real selection bug undetected.
+        self.assertNotIn("cleared", out.getvalue().lower(),
+                         "another source's row was selected for sweeping")
+
+    def test_sweep_refuses_when_the_source_looks_incomplete(self):
+        """A truncated download makes most of the season look 'not produced'.
+        Stripping it wholesale is worse than leaving stale values behind."""
+        con = sqlite3.connect(self.db)
+        self.mod.ensure_table(con)
+        for i in range(60):
+            con.execute(
+                """INSERT INTO player_game_logs
+                   (player_id, league, season, game_no, game_id, team, opponent,
+                    stats, source, source_player_key)
+                   VALUES (NULL, 'nfl', 2025, ?, 'g', 'SEA', 'ARI', ?, 'nflverse_pbp', ?)""",
+                (str(i + 2), json.dumps({"rec_yds": 40, "fpts": 4.0}), f"00-9{i:06d}"))
+        con.commit(); con.close()
+
+        out = io.StringIO()
+        import nfl_data_py, pandas as pd
+        nfl_data_py.import_pbp_data = lambda years: _frame()
+        with redirect_stdout(out):
+            self.mod.ingest(2025)
+        self.assertIn("refusing to sweep", out.getvalue().lower())
+
+        con = sqlite3.connect(self.db)
+        s = json.loads(con.execute(
+            "SELECT stats FROM player_game_logs WHERE source_player_key='00-9000000'"
+        ).fetchone()[0])
+        con.close()
+        self.assertEqual(40, s["rec_yds"], "gate opened and destroyed good rows")
+
     def test_quarterbacks_do_not_get_a_zero_receiving_line(self):
         """Filling the lateral sum with 0 would put rec_yds on every passer."""
         self._ingest([])

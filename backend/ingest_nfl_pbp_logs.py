@@ -88,7 +88,7 @@ def load_existing_stats(con: sqlite3.Connection, year: int) -> dict:
     """Return the current season rollups keyed by their source natural key."""
     existing = {}
     for row in con.execute(
-        """SELECT source_player_key, game_no, stats
+        """SELECT source_player_key, game_no, stats, source
            FROM player_game_logs
            WHERE league='nfl' AND season=?
              AND source_player_key IS NOT NULL AND game_no IS NOT NULL""",
@@ -108,7 +108,8 @@ def load_existing_stats(con: sqlite3.Connection, year: int) -> dict:
                     row["source_player_key"], row["game_no"]
                 )
             )
-        existing[(str(row["source_player_key"]), str(row["game_no"]))] = stats
+        existing[(str(row["source_player_key"]), str(row["game_no"]))] = (
+            stats, row["source"])
     return existing
 
 
@@ -142,14 +143,31 @@ def ingest(year: int = 2025) -> int:
         name=("passer_player_name", "first")).reset_index().rename(columns={"passer_player_id": "pid"})
 
     # EPA is deliberately NOT restricted to eligible plays: a sack is a real
-    # negative outcome of a dropback and belongs in a quarterback's EPA. That
-    # makes `att` and `pass_epa` different denominators, so the dropback count
-    # is carried explicitly rather than left implicit in `att` -- which is what
-    # `epa_per_db` in routers/nfl_usage.py had been dividing by.
-    db = df[df["passer_player_id"].notna()].groupby(["passer_player_id"] + keys).agg(
-        pass_epa=("qb_epa", "sum"), dropbacks=("pass_attempt", "sum"),
+    # negative outcome of a dropback and belongs in a quarterback's EPA, and
+    # nflverse's own `passing_epa` includes two-point conversions -- excluding
+    # them moves 2025 from 4 disagreeing passer-weeks to 78, which is how this
+    # filter was chosen rather than reasoned about. What does NOT belong is a
+    # play that is not a pass at all: three `no_play` rows and one `field_goal`
+    # row carry a passer_player_id. Dropping exactly those two play types
+    # reconciles pass_epa to zero differences against the artifact.
+    epa_rows = df[df["passer_player_id"].notna()
+                  & ~df["play_type"].isin(["no_play", "field_goal"])]
+    epa = epa_rows.groupby(["passer_player_id"] + keys).agg(
+        pass_epa=("qb_epa", "sum"),
     ).reset_index().rename(columns={"passer_player_id": "pid"})
-    pa = pa.merge(db, on=["pid"] + keys, how="outer")
+
+    # Dropbacks: attempts plus sacks. Two-point plays are excluded here for the
+    # same reason they are excluded from `att` -- keeping them made `dropbacks`
+    # disagree with the artifact's attempts + sacks_suffered on 82 passer-weeks.
+    # With the filter it is exact, so `epa_per_db` has a denominator that can be
+    # checked rather than assumed.
+    dbk = df[df["passer_player_id"].notna() & (df["two_point_attempt"] != 1)
+             & (df["pass_attempt"] == 1)].groupby(["passer_player_id"] + keys).agg(
+        dropbacks=("pass_attempt", "sum"),
+    ).reset_index().rename(columns={"passer_player_id": "pid"})
+
+    pa = pa.merge(epa, on=["pid"] + keys, how="outer") \
+           .merge(dbk, on=["pid"] + keys, how="outer")
 
     # Rushing
     ru = eligible[eligible["rusher_player_id"].notna()].groupby(["rusher_player_id"] + keys).agg(
@@ -173,12 +191,16 @@ def ingest(year: int = 2025) -> int:
         ).reset_index().rename(columns={id_col: "pid"})
         return lat
 
-    # KNOWN RESIDUAL: the pbp schema has exactly one lateral slot per play, so a
-    # play pitched twice cannot be represented. nflverse publishes a separate
-    # `multiple_lateral_yards.rds` supplement for precisely this, which is an R
-    # serialization this venv cannot read. Two 2025 player-games remain off as a
-    # result (00-0034827 wk15, 00-0036252 wk18) out of 5,377. Every other field
-    # reconciles exactly; do not "fix" these two by fudging the lateral sums.
+    # KNOWN RESIDUAL: the pbp schema has exactly one lateral slot per play, and
+    # it holds the LAST lateral player, so a play pitched twice loses the
+    # intermediate one. nflverse publishes `multiple_lateral_yards.rds` for
+    # precisely this, an R serialization this venv cannot read. Two 2025
+    # player-games remain off as a result, both verified play-by-play:
+    #   00-0034827 wk15, play 1934 -- Burden -> Moore -> Monangai
+    #   00-0036252 wk18, play 4468 -- Downs -> Pittman -> Leonard
+    # The 12 box-score fields, pass_epa and dropbacks otherwise reconcile to
+    # zero differences. fpts/fpts_ppr are OURS, not the artifact's, and are not
+    # covered by that check. Do not "fix" these two by fudging the lateral sums.
     lat_re = _lateral("lateral_receiver_player_id", "lateral_receiver_player_name",
                       "lateral_receiving_yards", "lat_rec_yds")
     lat_ru = _lateral("lateral_rusher_player_id", "lateral_rusher_player_name",
@@ -213,8 +235,13 @@ def ingest(year: int = 2025) -> int:
         raise RuntimeError("pbp source is missing expected columns: {}".format(
             sorted(set(_PLAY_COLS) - set(have))))
     plays = df[_PLAY_COLS].astype(object).where(df[_PLAY_COLS].notna(), None)
+    # Name the columns. A positional INSERT binds by ordinal, so a table built
+    # from a different _PLAY_COLS order -- or widened by the ALTER above -- would
+    # silently write values into the wrong columns.
     con.executemany(
-        "INSERT OR REPLACE INTO nfl_pbp VALUES ({})".format(",".join("?" * len(_PLAY_COLS))),
+        "INSERT OR REPLACE INTO nfl_pbp ({}) VALUES ({})".format(
+            ",".join('"{}"'.format(c) for c in _PLAY_COLS),
+            ",".join("?" * len(_PLAY_COLS))),
         plays.itertuples(index=False, name=None))
     con.commit()
     print(f"  retained {con.execute('SELECT COUNT(*) FROM nfl_pbp WHERE season=?', (year,)).fetchone()[0]} plays")
@@ -256,9 +283,10 @@ def ingest(year: int = 2025) -> int:
         owned_stats["fpts"] = fpts(owned_stats)
         owned_stats["fpts_ppr"] = fpts(owned_stats, 1.0)
         game_no = str(int(row["week"]))
+        prior_stats, _prior_source = existing_stats.get((gsis, game_no), ({}, None))
         preserved = {
             key: value
-            for key, value in existing_stats.get((gsis, game_no), {}).items()
+            for key, value in prior_stats.items()
             if key not in _ROLLUP_OWNED_STATS
         }
         if preserved:
@@ -296,21 +324,45 @@ def ingest(year: int = 2025) -> int:
     # because a row that is never produced is never updated. Strip only the
     # rollup-owned keys; snap counts and Next Gen enrichment from other ingests
     # are somebody else's data and stay.
+    # The sweep is only ever allowed to touch rows THIS ingest wrote. Other
+    # sources use the same key names to mean different things -- a 2024 row from
+    # ingest_nfl_logs also has `pass_yds` and `fpts` -- and stripping those would
+    # be the same class of destructive write this ingest was already fixed for
+    # once. Scope by source, not by season.
+    candidates = [
+        (key, old) for key, (old, src) in existing_stats.items()
+        if src == "nflverse_pbp" and key not in produced
+        and any(k in _ROLLUP_OWNED_STATS for k in old)
+    ]
+
+    # Completeness gate. A truncated or partially-failed download produces a
+    # short `merged`, which would make most of the season look "no longer
+    # produced" and strip its owned keys wholesale. Refuse to sweep when the
+    # run does not look complete, and refuse when the deletion set is
+    # implausibly large -- a correction should be a handful of rows, not a
+    # cull. Failing to sweep leaves stale values; failing this gate open
+    # destroys good ones.
+    owned_before = sum(1 for _, (old, src) in existing_stats.items()
+                       if src == "nflverse_pbp" and any(k in _ROLLUP_OWNED_STATS for k in old))
     stale_rows = 0
     stale_keys = 0
-    for (gsis, game_no), old in existing_stats.items():
-        if (gsis, game_no) in produced:
-            continue
-        drop = [k for k in old if k in _ROLLUP_OWNED_STATS]
-        if not drop:
-            continue
-        kept = {k: v for k, v in old.items() if k not in _ROLLUP_OWNED_STATS}
-        con.execute(
-            """UPDATE player_game_logs SET stats=?
-               WHERE league='nfl' AND source_player_key=? AND season=? AND game_no=?""",
-            (json.dumps(kept), gsis, year, game_no))
-        stale_rows += 1
-        stale_keys += len(drop)
+    max_sweep = max(25, int(owned_before * 0.02))
+    if owned_before and len(candidates) > max_sweep:
+        print("  REFUSING to sweep {} rows (>{} allowed of {} pbp-owned rows) -- "
+              "this looks like an incomplete source, not a correction. "
+              "Rollups were still written; re-run once the download is complete."
+              .format(len(candidates), max_sweep, owned_before))
+    else:
+        for (gsis, game_no), old in candidates:
+            drop = [k for k in old if k in _ROLLUP_OWNED_STATS]
+            kept = {k: v for k, v in old.items() if k not in _ROLLUP_OWNED_STATS}
+            con.execute(
+                """UPDATE player_game_logs SET stats=?
+                   WHERE league='nfl' AND source_player_key=? AND season=? AND game_no=?
+                     AND source='nflverse_pbp'""",
+                (json.dumps(kept), gsis, year, game_no))
+            stale_rows += 1
+            stale_keys += len(drop)
 
     con.commit()
     resolved = con.execute(
