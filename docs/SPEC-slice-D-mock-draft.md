@@ -55,8 +55,10 @@ recognises, and the roster in §2 does not fit in it.
 
 Two separate problems, one root:
 
-1. **The position code is `PK`, not `K`.** 42 active in `players`. Anything written against
-   `'K'` matches zero rows.
+1. **The position code is `PK`, not `K`** — and `K` is not empty, which is worse than if it
+   were. `players` holds **336** NFL rows at position `K` and **0** of them are active;
+   `PK` holds **42**, all active. So `position='K' AND active=1` silently returns nothing,
+   and `position='K'` without the active filter returns 336 retired kickers. Filter on `PK`.
 2. **The draft board never serves kickers at all.** `_SKILL_POSITIONS` in
    `backend/routers/nfl_offseason.py:80` is `("QB","RB","WR","TE","FB")`, and
    `/api/nfl/draft-board` hard-filters to it. So the mock draft **cannot** source its pool
@@ -200,7 +202,12 @@ A `POST` of picks for a draft whose `device_id` does not match the header is **4
 
 ---
 
-## 6. What makes it ours
+## 6. UI — designed against `.claude/skills/honest-data-ui`
+
+Load that skill before touching any of this. The rules below are it, applied; where this
+section and the skill disagree, the skill wins.
+
+### 6.1 What makes it ours
 
 The differentiator is the parent spec's, and it is the whole reason to build this rather
 than send people to an incumbent: **you draft from the availability board.** While on the
@@ -217,14 +224,81 @@ Reuse, do not rebuild:
 If a second player-row renderer appears in this slice, the differentiator has been lost to a
 copy-paste and the two will drift.
 
-**Results screen** — the only part that travels, so it is the part worth polishing:
+### 6.2 ⛔ The accent is spoken for. Do not use it for draft chrome.
 
-- The roster, by slot.
-- **"Your roster averaged 14.2 of 17 games available"**, and the same figure for the 12-team
-  field, so the number has a comparison. This is the availability read applied to a roster
-  and it is the one stat no other mock draft tool shows.
-- Best and worst value vs. ADP.
-- A durable URL, because a link is how this gets shared.
+Signature rule, skill §5: **the one saturated colour on the page marks absence, not
+achievement.** A draft room wants to shout in colour at four different things — you're on
+the clock, this is your pick, this player was just taken, the timer is low. Every one of
+those would collide with the strip and, worse, would train the reader that amber means
+"attention" rather than "he wasn't on the field."
+
+- **On the clock / your turn:** weight, position and a rule. Not colour.
+- **Your picks in the pick ledger:** a left rule or a fill one step lighter than the card,
+  the same two-tone move the app already makes between `ink-900` and `zinc-900`.
+- **Drafted / unavailable players:** reduce, don't tint — dim and strike the row.
+- **The clock:** tabular figures, and it may change weight under 10s. It may not go red.
+
+### 6.3 ⛔ 24 of the 181 draftable players have no NFL sample, and 15 of them are kickers
+
+This is the defect this section exists to prevent, and it is not hypothetical. Measured on
+`picks.dev.db`, of the 181 draftable players with real ADP, **24 have zero rows in
+`player_game_logs`** — including **Jeremiyah Love at ADP 17.5**, a first-round pick.
+
+Two different causes that must not be shown the same way:
+
+1. **Rookies** — Love, Carnell Tate, Jordyn Tyson, Makai Lemon, KC Concepcion, Kenyon Sadiq.
+   No NFL sample because they have not played an NFL game.
+2. **Kickers — we simply do not ingest them.** `player_game_logs` for 2025 holds **one** row
+   for **one** kicker against 42 active `PK` players. Cameron Dicker, Jason Myers and
+   Ka'imi Fairbairn are established starters, not rookies, and they have no logs.
+
+**Rendered naively, both groups get an availability strip that reads "played 0 of 17."** For
+a rookie that is a claim about the player that is false. For Cameron Dicker it is simply
+wrong — he played. This is the exact failure the skill bans twice over: rookies read "no NFL
+sample," never zero (§4), and absence is a claim about *us*, not the player.
+
+**Required:**
+
+- The pool contract carries the board's existing `sample: 'full' | 'thin' | 'none'`, and
+  `none` renders as a neutral **"No NFL sample"** — grey, not accent, and visibly distinct
+  from a played-zero-games strip.
+- Rookies get **"Rookie — no NFL sample."** The reason is the information.
+- Kickers get **"Kicker games not tracked"**, which is a statement about our data, not the
+  player. Do not dress it up. If that reads badly next to a kicker we are asking someone to
+  draft, the honest fix is to ingest kicker logs, not to hide the gap — file it, don't
+  paper over it.
+- A dash for no data, never a `0`, and visibly different from one (skill §2).
+
+### 6.4 The results screen
+
+The only part that travels, so it is the part worth getting right — and the part most likely
+to launder a conditional average into a projection.
+
+- **The roster, by slot.** Scan-first: slot label, player, position, availability strip. A
+  reader should rank their own picks by shape before reading a digit.
+- **The availability read, stated as history and not as a forecast.**
+  ✅ *"Your 2026 picks missed 34 of a possible 255 games last season."*
+  ❌ *"Your roster averages 14.2 of 17 games available"* — present tense, no season named,
+  and it reads as a claim about the season being drafted. Skill §4: never label something a
+  projection that is not one. The parent spec's phrasing is the wrong one; this supersedes it.
+- **The same figure for the 12-team field**, so the number has a comparison rather than
+  floating free.
+- **Both figures must exclude the no-sample players from the denominator and say how many
+  were excluded** — with 24 of 181 carrying no logs, and a kicker on all 12 rosters, a
+  silent exclusion changes the headline number. State `n`.
+- **Best and worst value vs. ADP**, as *picked at 47, ADP 31* — the two numbers, not a
+  computed "value score" that hides its arithmetic.
+- **PPR is declared on the surface** (skill §4), not assumed. It is the only scoring the
+  board computes and the results are meaningless without it.
+- **A durable URL**, because a link is how this gets shared.
+
+### 6.5 Restraint
+
+Rams via the skill: the data is the ornament. No gradients behind numbers, no card shadows
+doing a rule's job, no trophy iconography on the results screen. A draft board is closer to
+a depth chart than to a poster — the vernacular is roster sheets, box scores and injury
+reports, not sports-marketing italics. Tabular figures everywhere numbers stack, consistent
+decimals, and the whole page verified by screenshot rather than by the element just edited.
 
 ---
 
@@ -241,9 +315,13 @@ copy-paste and the two will drift.
 4. **Resume.** Reload mid-draft; the board comes back at the right pick with the right
    rosters.
 5. **Device isolation.** A second `X-Device-Id` gets 404 on the first device's draft id.
-6. **Headless render, per AGENTS.md §10** — setup, on-the-clock, and results, asserting zero
+6. **The no-sample states, on the real 24.** Draft Jeremiyah Love and any kicker, and assert
+   neither renders a "0 of 17" strip anywhere — pool row, roster panel, results screen.
+   Check the empty and rookie states explicitly; per the skill, that is where dishonesty
+   hides. This is a screenshot check by a human, not an assertion on a string.
+7. **Headless render, per AGENTS.md §10** — setup, on-the-clock, and results, asserting zero
    `pageerror`s and real data in each. A 200 is not acceptance.
-7. **Payload** — measure the pool response and the resume response, and put the numbers in
+8. **Payload** — measure the pool response and the resume response, and put the numbers in
    the commit message (`docs/DEV-STANDARDS.md`). ~300 players with availability strips is the
    biggest single payload on the site; if it is heavy, trim fields, not players.
 
@@ -273,3 +351,9 @@ C).
 3. **Where it lives in the UI** — a tab on `/leagues/nfl` beside the draft board, or its own
    route `/mock-draft`. Recommendation: its own route, linked from the board. A draft is a
    full-screen focused task, not a tab you skim.
+4. **Do we ingest kicker game logs before shipping, or ship "not tracked"?** §6.3: 42 active
+   kickers, one has a 2025 log row. Every mock draft puts a kicker on all 12 rosters, so
+   this gap is on every results screen. Ingesting is the honest fix and is an ingest-script
+   change, not a product one; shipping the neutral label is the cheap one and is still
+   honest. Recommendation: **ship the label for v0.7.0, file the ingest** — the draft window
+   is the constraint and a kicker's availability is not why anyone drafts one.
