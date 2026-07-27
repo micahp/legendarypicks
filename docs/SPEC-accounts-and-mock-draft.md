@@ -196,6 +196,11 @@ password auth, OAuth/social login, mobile app. None of these are needed for the 
 |---|---|---|
 | A | `nfl_draft_notes` server table + `X-Device-Id` read/write, `localStorage` becomes cache | **v0.7.0** — closes R8 |
 | D | Mock draft: setup → snake w/ ADP bots → results screen, **ungated**, saved to `device_id` | **v0.7.0** — the draft-window bet |
+
+**Build-level specs, written 2026-07-27:** `SPEC-slice-A-draft-notes.md` and
+`SPEC-slice-D-mock-draft.md`. Slice D's spec **corrects two numbers in §3 of this file** —
+the draftable pool is 181, not 248, once IDP and punters are excluded, and our kickers are
+`PK` and are not served by the draft board at all. Read it before starting D.
 | B | Magic-link auth, session cookie, claim-on-sign-in across all device-keyed surfaces | **v0.8.0** — accounts exist |
 | C | Nudges (inline hint, investment banner) + the mock-draft sign-up gate | **v0.8.0** |
 

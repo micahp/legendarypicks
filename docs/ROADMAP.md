@@ -44,13 +44,17 @@ can open. See R7, R8.
 Why the split: A and D are each a real feature, so each earns its own tag under the
 feature-releases-only rule, and A reaching prod does not have to wait on D being finished.
 
-**Open, not yet decided:**
-- **Version numbers.** Suggested: A = **v0.7.0**, D = **v0.8.0**, accounts + subscription +
-  multiplayer = **v0.9.0**. This shifts what this file previously called v0.8.0. Confirm
-  before the first `scripts/release.sh` run.
-- **Where R4 (NFL schedule through the API) goes.** It was the third item in the old single
-  cut and Micah's new sequence does not mention it. It is unblocked (B2/B3 resolved) and
-  currently homeless — attach it to A or D, or ship it separately.
+**~~Open, not yet decided:~~ — neither of these was ever open. Corrected 2026-07-27.**
+
+- ~~Version numbers.~~ **Already decided, and written in two places**: `SPEC-accounts-and-
+  mock-draft.md` §6 ("v0.7.0 = A + D single-player + the NFL schedule API, then a prod
+  deploy. v0.8.0 = B + C + multiplayer") and this file's own v0.7.0 section. **A and D both
+  ship v0.7.0; B and C are v0.8.0.** The renumbering floated above (D = v0.8.0, accounts =
+  v0.9.0) contradicted a decision Micah had already stated repeatedly — do not re-open it.
+- ~~Where R4 goes.~~ **R4 is the third item of v0.7.0**, per the same section. Not homeless.
+
+The two-tag split still stands for *packaging*: A can be tagged and deployed without waiting
+on D. What it does not do is change what v0.8.0 means.
 
 Sequencing note: this puts the **acquisition surface** (mock draft) in front of users before
 the **monetisation** (subscription), which is what `POSITIONING-2026-07-27.md` §6 and §10
