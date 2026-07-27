@@ -33,7 +33,20 @@ prev/next. Draft research is name-driven — "what about Rashee Rice" — and to
 paging. A search input over the board is the smallest change that makes it usable for the
 thing she described doing.
 
-### R8. Decide what happens to a user's draft notes
+### R9. Accounts, with the mock draft as the reason to make one
+Spec written 2026-07-27: **`docs/SPEC-accounts-and-mock-draft.md`**. Gate a mock draft behind
+sign-up; nudge at the moments someone is already investing effort. Supersedes R8's "label it
+and move on" option — R8 becomes slice A of the spec.
+
+**Two decisions are open** and D cannot start without them: live multi-user vs. solo-vs-bots
+(recommendation: solo, it is instantly available and fits the calendar), and which positions
+are draftable (recommendation: 12×15 snake, QB/RB/WR/TE/K + FLEX; **we have no D/ST entity at
+all**, and only 248 players carry a real ADP against 180 picks).
+
+**The calendar decides the scope**: drafts run mid-Aug → Labor Day (Sept 5–7). Anything that
+cannot land by ~Aug 22 is a 2027 feature.
+
+### R8. Decide what happens to a user's draft notes — **folded into R9**
 `rank` / `watch` / `fade` persist to `localStorage` under `lp_nfl_draft_notes`. Device-local:
 gone on a cache clear, invisible between phone and laptop. Doing the research *is* the
 retention hook, so this is the wrong storage for it long-term. Two options — label it
