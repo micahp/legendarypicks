@@ -2,7 +2,8 @@
 
 What is actually stored for the NFL, how much of it there is, who it covers, and what
 nothing in the product has ever rendered. Read off `picks.dev.db` on 2026-07-27 with
-`json_each` over `player_game_logs.stats`, after the weekly-box-score swap.
+`json_each` over `player_game_logs.stats`, after the weekly-box-score swap and legacy
+writer cleanup.
 
 Pre-swap companion snapshot (the counts below supersede it):
 <https://claude.ai/code/artifact/efed2820-383c-4a8a-bd25-ed063544cb74>
@@ -12,8 +13,9 @@ Pre-swap companion snapshot (the counts below supersede it):
 | NFL rows in `player_game_logs` | 11,232 |
 | Distinct players | 785 |
 | Seasons | 2024 (5,597 rows) and 2025 (5,635 rows) — nothing earlier |
-| Distinct stat keys | 41 (includes aliases on 14 legacy 2024 holdovers) |
+| Distinct stat keys | 29 (one canonical box-score vocabulary plus enrichment) |
 | Rows sourced from the published weekly artifact | 11,216 |
+| Enrichment-only rows outside the offensive gate | 16 (14 in 2024, two in 2025) |
 
 ---
 
@@ -29,13 +31,17 @@ defensive and kicking row expansion remains behind `--all-positions`. It added t
 postseason as continued numeric weeks 19–22. Both the 2024 and 2025 artifacts were
 checked to contain REG 1–18 and POST 19–22 with no season-type week collision.
 
-Sixteen enrichment-bearing rows fall outside that gate and therefore were not rewritten:
-14 retain `source='nflverse'` in 2024 and two retain `source='nflverse_pbp'` in 2025.
-Only the 14 old 2024 rows still carry legacy box-score aliases. Readers should keep the
-normalizer until those enrichment-only holdovers are either expanded from the artifact
-or retired.
+Sixteen rows fall outside that gate but carry real snap counts, so deleting them would
+discard another ingest's data. Their box-score keys were removed and their provenance is
+now `source='nflverse_snap_counts'`: 14 in 2024 and two in 2025. The two 2025 rows held
+phantom targets from two-point plays. The 14 dense legacy rows had no offensive
+involvement; 13 have return-touchdown fantasy points in the raw artifact, while one old
+six-point value disagreed with it. Keeping only those fantasy values would silently
+expand the deliberately narrow offensive row contract. A future `--all-positions` run
+can add them canonically; until then the rows are enrichment-only. Their 2024
+`game_id`/team/opponent metadata was aligned with the checksummed artifact.
 
-### Retired alias map
+### Retired alias map (zero stored NFL rows)
 
 | Legacy | Canonical |
 |---|---|
@@ -66,18 +72,18 @@ Coverage is share of the season's 5,635 rows, including 258 postseason rows.
 
 | Key | Coverage | Players | Non-zero | Status |
 |---|---|---|---|---|
-| `fpts_ppr` | 100% | 611 | 5,242 | rendered |
-| `fpts` | 100% | 611 | 5,217 | rendered |
+| `fpts_ppr` | 99.96% | 611 | 5,242 | rendered |
+| `fpts` | 99.96% | 611 | 5,217 | rendered |
 | `off_snaps` | 95.1% | 591 | 5,347 | rendered |
 | `off_pct` | 95.1% | 591 | 5,347 | rendered |
 | `st_snaps` | 95.1% | 591 | 2,123 | **was unused** |
 | `st_pct` | 95.1% | 591 | 2,123 | **was unused** |
 | `def_snaps` | 95.1% | 591 | **17** | noise — drop from ingest |
 | `def_pct` | 95.1% | 591 | **17** | noise — drop from ingest |
-| `targets` | 80.5% | 509 | 4,535 | rendered |
-| `rec` | 80.5% | 509 | 4,059 | rendered |
-| `rec_yds` | 80.5% | 509 | 4,015 | rendered |
-| `rec_td` | 80.5% | 509 | 763 | rendered |
+| `targets` | 80.4% | 509 | 4,533 | rendered |
+| `rec` | 80.4% | 509 | 4,059 | rendered |
+| `rec_yds` | 80.4% | 509 | 4,015 | rendered |
+| `rec_td` | 80.4% | 509 | 763 | rendered |
 | `carries` | 41.8% | 339 | 2,355 | rendered |
 | `rush_yds` | 41.8% | 339 | 2,285 | rendered |
 | `rush_td` | 41.8% | 339 | 425 | rendered |
@@ -99,8 +105,8 @@ Coverage is share of the season's 5,635 rows, including 258 postseason rows.
 "was unused" = surfaced by this pass (`nfl_usage.py` → the Usage card). `air_yds` stays
 unused: the raw total is redundant next to `adot` and `air_yds_share`.
 
-2024 now holds the same sparse canonical blocks, apart from the 14 legacy holdovers
-described above.
+2024 holds the same sparse canonical blocks. Its 14 rows outside the offensive gate
+contain only snap enrichment, not a second box-score vocabulary.
 
 ---
 
@@ -152,6 +158,10 @@ expression of "should I make this pick" available in the data as it stands.
 per-player-game box score. It maps published columns directly, plus the checked
 `dropbacks = attempts + sacks_suffered` value; it does not derive stats from plays.
 
+`ingest_nfl_logs.py` is now only the shared `player_game_logs` schema module; executing
+it is a no-op. Its retired writer fetched the same weekly data, omitted postseason,
+stored legacy aliases, and used row replacement that erased snap and Next Gen fields.
+
 `ingest_nfl_pbp_logs.py` has no rollup or fantasy scorer. It retains regular-season
 plays in the additive `nfl_pbp` table for play-level analysis. The DEV database holds
 46,452 plays from 272 games. Its current physical table predates the latest schema
@@ -174,8 +184,8 @@ position, personnel).
 The weekly artifact supplies `game_id`, team, and opponent, but not `game_date` or an
 explicit home/away field. Existing 2025 regular-season metadata survived the upsert;
 the 258 newly inserted postseason rows have both fields NULL. All 5,597 2024 rows
-still lack both fields. This is schedule enrichment work, not a reason to derive box
-scores from PBP.
+now have `game_id`, but still lack `game_date` and `home_away`. This is schedule
+enrichment work, not a reason to derive box scores from PBP.
 
 ---
 
@@ -187,9 +197,9 @@ scores from PBP.
    downstream forever — 17 non-zero rows out of 5,360.
 3. **Special teams share explains the low-snap players** the usage surfaces otherwise
    make look inert.
-4. **One normalizer, not scattered COALESCE pairs.** Only 14 enrichment-only 2024
-   holdovers still need the legacy aliases, so readers should keep one shared fallback
-   until those rows are expanded or retired.
+4. **One box-score writer, one vocabulary.** `ingest_nfl_logs.py` is schema-only and
+   no NFL row in DEV carries its legacy aliases. Reader fallbacks are now migration
+   compatibility, not a description of current DEV data.
 5. **Two seasons is the ceiling on trend work.** Anything framed as a career arc has
    2024 and 2025 and nothing else.
 6. **Play retention stays additive and separate.** It supports the play-level class of
