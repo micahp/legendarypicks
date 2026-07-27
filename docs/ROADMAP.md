@@ -38,10 +38,10 @@ Spec written 2026-07-27: **`docs/SPEC-accounts-and-mock-draft.md`**. Gate a mock
 sign-up; nudge at the moments someone is already investing effort. Supersedes R8's "label it
 and move on" option — R8 becomes slice A of the spec.
 
-**Two decisions are open** and D cannot start without them: live multi-user vs. solo-vs-bots
-(recommendation: solo, it is instantly available and fits the calendar), and which positions
-are draftable (recommendation: 12×15 snake, QB/RB/WR/TE/K + FLEX; **we have no D/ST entity at
-all**, and only 248 players carry a real ADP against 180 picks).
+**Both decisions made 2026-07-27, nothing is blocked**: v1 is **solo vs. ADP bots** (an empty
+lobby converts nobody, and realtime does not fit before Labor Day), drafting a **12×15 snake,
+QB/RB/WR/TE/K + FLEX, no D/ST, no IDP** (**we have no D/ST entity at all**, and only 248
+players carry a real ADP against 180 picks). Nudges follow the action, they do not block it.
 
 **The calendar decides the scope**: drafts run mid-Aug → Labor Day (Sept 5–7). Anything that
 cannot land by ~Aug 22 is a 2027 feature.

@@ -1,6 +1,11 @@
 # SPEC: accounts, with the mock draft as the reason to make one
 
-Written 2026-07-27. Status: **draft, two decisions open** (marked ⬦).
+Written 2026-07-27. Status: **both decisions made 2026-07-27 — Micah agreed to the
+recommendation on each. Slices A–D are all unblocked.**
+
+> **"Notes"** throughout this doc means the three marks a user puts on a player from the
+> board — their own **rank** number, **watch** (☆), and **fade** (✕). It is the name already
+> in the code (`NflDraftNotes`, `lp_nfl_draft_notes`). There is no free-text note field.
 
 Origin: the 2026-07-26 user conversation (see `ROADMAP.md` → *User evidence*). She had no
 place to do draft research. The board answers that. This spec is about the next question —
@@ -75,7 +80,7 @@ Also fixes R8 on its own: notes now survive a cache clear.
 
 ## 3. The mock draft
 
-### ⬦ Decision 1: "live" multi-user, or solo vs. bots?
+### Decision 1 — **DECIDED 2026-07-27: solo vs. bots for v1.**
 
 Micah said *live* mock draft. Taken literally that means real-time multi-user rooms:
 lobbies, matchmaking, websockets, per-pick timers, disconnect handling, autopick on timeout,
@@ -94,7 +99,7 @@ the job it is being hired to do:
 Multi-user becomes worth building once v1 proves people finish a mock at all. Design the
 draft state so a second human could take a seat later — don't hard-code "seat 1 is you".
 
-### ⬦ Decision 2: what positions can be drafted?
+### Decision 2 — **DECIDED 2026-07-27: 12×15 snake, QB/RB/WR/TE/K + FLEX, no D/ST, no IDP.**
 
 Measured against `picks.dev.db` today (2026 season):
 
@@ -171,9 +176,9 @@ So:
 
 Never more than one nudge visible at a time. Dismissal persists.
 
-⬦ If Micah wants the hard block on rank/watch/fade instead, it is a small change from this
-design — but I'd want to see the nudge version's conversion first, because the hard block
-costs us the anonymous browsing that produced the good conversation in the first place.
+**Agreed 2026-07-27**: nudge after the action, no hard block on rank/watch/fade. The hard
+block stays available as a later change if the nudge under-converts, but it costs the
+anonymous browsing that produced the good conversation in the first place.
 
 ---
 
@@ -194,5 +199,6 @@ password auth, OAuth/social login, mobile app. None of these are needed for the 
 | C | Nudges (inline hint, investment banner) | conversion surface |
 | D | Mock draft: setup → snake w/ ADP bots → results screen, gated, saved to account | the reason to sign up |
 
-A and B are independently useful and neither is blocked on a decision. **Start A now**;
-D cannot start until Decisions 1 and 2 are made.
+Both decisions are now made, so **nothing here is blocked**. Order still holds: A before C
+(a nudge that says "sign up to keep it" is only true once the rows are on the server), and
+B before D (the mock draft saves to an account).
