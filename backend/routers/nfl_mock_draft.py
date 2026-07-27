@@ -139,8 +139,8 @@ def pool(season: int = Query(...)):
     try:
         # ------------------------------------------------------------------
         # Availability aggregates: how many regular-season games each player
-        # appeared in.  Mirrors ``_regular_season_aggregates`` in nfl_offseason.py
-        # but only pulls games_played.
+        # appeared in, and which weeks.  Mirrors ``_regular_season_aggregates``
+        # in nfl_offseason.py.
         # ------------------------------------------------------------------
         # Use prior season for game logs — the draft season hasn't started yet.
         _log_season = _CURRENT_SEASON - 1
@@ -153,6 +153,23 @@ def pool(season: int = Query(...)):
             (_log_season, _POSTSEASON_FIRST_WEEK),
         ).fetchall()
         aggregates = {row["player_id"]: row["games_played"] for row in agg_rows}
+
+        # Weeks each player appeared in (for the availability strip).
+        weeks_rows = connection.execute(
+            """SELECT player_id, CAST(game_no AS INTEGER) AS week
+               FROM player_game_logs
+               WHERE league='nfl' AND season=? AND player_id IS NOT NULL
+                 AND CAST(game_no AS INTEGER) < ?
+               GROUP BY player_id, week
+               ORDER BY player_id, week""",
+            (_log_season, _POSTSEASON_FIRST_WEEK),
+        ).fetchall()
+        weeks_played_map: dict[int, list[int]] = {}
+        for row in weeks_rows:
+            pid = row["player_id"]
+            if pid not in weeks_played_map:
+                weeks_played_map[pid] = []
+            weeks_played_map[pid].append(row["week"])
 
         # ------------------------------------------------------------------
         # Query the pool: draftable positions, active players, from nfl_adp.
@@ -213,6 +230,8 @@ def pool(season: int = Query(...)):
                     "sample": sample,
                     "games_played": games_played,
                     "games_missed": games_missed,
+                    "weeks_played": weeks_played_map.get(pid, []),
+                    "team_weeks": list(range(1, _REG_SEASON_TEAM_GAMES + 1)),
                 }
             )
 
