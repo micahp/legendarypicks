@@ -256,6 +256,7 @@ export interface NflDraftBoard {
   thin_sample_games: number
   sort: string
   position: string | null
+  query: string | null
   limit: number
   offset: number
   eligible_players: number

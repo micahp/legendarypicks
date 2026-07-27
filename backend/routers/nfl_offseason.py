@@ -90,6 +90,10 @@ _SORT_FIELDS = {
     "snap_pct": ("snap_pct", False),
     "target_share": ("target_share", False),
 }
+# Name search. Bounded so a pathological query cannot turn one request into an
+# unbounded pile of LIKE scans.
+_SEARCH_MAX_LEN = 64
+_SEARCH_MAX_TOKENS = 5
 
 
 def _today() -> dt.date:
@@ -607,10 +611,29 @@ def _round(value, places=1):
     return None if value is None else round(value, places)
 
 
+def _escape_like(term: str) -> str:
+    # Otherwise a user typing "%" matches the entire board.
+    return term.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+
+
+def _name_search(raw) -> Tuple[Optional[str], List[str]]:
+    """Normalize a name query into (echo, tokens).
+
+    Every token must appear somewhere in the name, in any order. A drafter types
+    "rice" or "ja gibbs" -- fragments, in whatever order they remember -- not a
+    canonical full name, so prefix matching would miss the way people search.
+    """
+    echo = " ".join(str(raw or "").split())[:_SEARCH_MAX_LEN].strip()
+    if not echo:
+        return None, []
+    return echo, [_escape_like(token) for token in echo.split()][:_SEARCH_MAX_TOKENS]
+
+
 @router.get("/api/nfl/draft-board")
 def nfl_draft_board(
     position: Optional[str] = Query(None),
     sort: str = Query("adp"),
+    q: Optional[str] = Query(None, description="name search; every token must appear"),
     limit: int = Query(50, ge=1, le=100),
     offset: int = Query(0, ge=0),
 ):
@@ -630,6 +653,7 @@ def nfl_draft_board(
     if sort not in _SORT_FIELDS:
         raise HTTPException(400, f"sort must be one of {sorted(_SORT_FIELDS)}")
     sort_field, sort_ascending = _SORT_FIELDS[sort]
+    search, search_tokens = _name_search(q)
 
     with closing(_db()) as connection:
         connection.row_factory = sqlite3.Row
@@ -662,6 +686,14 @@ def nfl_draft_board(
             placeholders = ",".join("?" for _ in _SKILL_POSITIONS)
             where.append(f"{position_expr} IN ({placeholders})")
             params.extend(_SKILL_POSITIONS)
+
+        # Narrow in SQL rather than after: the page a drafter searching for one
+        # player gets back should be one player, not 522 rows filtered in the
+        # browser.
+        for token in search_tokens:
+            where.append(r"p.name LIKE ? ESCAPE '\'")
+            params.append(f"%{token}%")
+
         where_sql = " AND ".join(where)
 
         candidates = connection.execute(
@@ -760,6 +792,7 @@ def nfl_draft_board(
         "thin_sample_games": _THIN_SAMPLE_GAMES,
         "sort": sort,
         "position": selected_position,
+        "query": search,
         "limit": limit,
         "offset": offset,
         "eligible_players": eligible,

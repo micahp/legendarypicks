@@ -149,10 +149,11 @@ class NflOffseasonApiTests(unittest.TestCase):
             connection.row_factory = sqlite3.Row
             return nfl_offseason._build_nfl_season_context(as_of, connection)
 
-    def board(self, position=None, sort="adp", limit=50, offset=0):
+    def board(self, position=None, sort="adp", q=None, limit=50, offset=0):
         return nfl_offseason.nfl_draft_board(
             position=position,
             sort=sort,
+            q=q,
             limit=limit,
             offset=offset,
         )
@@ -267,6 +268,50 @@ class NflOffseasonApiTests(unittest.TestCase):
         flex = self.board(position="FLEX")
         self.assertEqual([player["name"] for player in flex["players"]],
                          ["Alias Receiver", "Camp Rookie"])
+
+    def test_name_search_finds_a_player_without_paging_to_him(self):
+        # The whole point: one player back, not the board filtered client-side.
+        payload = self.board(q="mover")
+        self.assertEqual(payload["query"], "mover")
+        self.assertEqual(payload["eligible_players"], 1)
+        self.assertEqual([p["name"] for p in payload["players"]], ["Actual Mover"])
+
+        # Case-insensitive, and tokens match in any order -- people type
+        # fragments in whatever order they remember them.
+        self.assertEqual(
+            [p["name"] for p in self.board(q="MOVER actual")["players"]],
+            ["Actual Mover"],
+        )
+        # Interior substring, not just a prefix.
+        self.assertEqual(
+            [p["name"] for p in self.board(q="eceiv")["players"]],
+            ["Alias Receiver"],
+        )
+
+    def test_name_search_composes_with_position_and_reports_no_match_honestly(self):
+        # Search and position narrow together; they do not override each other.
+        both = self.board(q="a", position="QB")
+        self.assertEqual([p["name"] for p in both["players"]], ["Actual Mover"])
+
+        empty = self.board(q="nobodyhere")
+        self.assertEqual(empty["eligible_players"], 0)
+        self.assertEqual(empty["players"], [])
+        self.assertEqual(empty["query"], "nobodyhere")
+
+    def test_blank_and_wildcard_searches_cannot_widen_the_board(self):
+        unfiltered = self.board()["eligible_players"]
+
+        for blank in (None, "", "   "):
+            with self.subTest(blank=blank):
+                payload = self.board(q=blank)
+                self.assertIsNone(payload["query"])
+                self.assertEqual(payload["eligible_players"], unfiltered)
+
+        # LIKE wildcards are escaped, so they match themselves and find nothing
+        # rather than matching every player on the board.
+        for wildcard in ("%", "_", "%%%", "\\"):
+            with self.subTest(wildcard=wildcard):
+                self.assertEqual(self.board(q=wildcard)["eligible_players"], 0)
 
     def test_stale_roster_suppresses_team_change_claims(self):
         with sqlite3.connect(self.db_path) as connection:

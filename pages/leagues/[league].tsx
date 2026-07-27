@@ -172,9 +172,12 @@ export default function LeagueHubPage() {
               position={draftBoard.position}
               sort={draftBoard.sort}
               offset={draftBoard.offset}
+              query={draftBoard.query}
               notes={draftBoard.notes}
               onSelectPosition={draftBoard.selectPosition}
               onSelectSort={draftBoard.selectSort}
+              onSetQuery={draftBoard.setQuery}
+              onClearQuery={draftBoard.clearQuery}
               onSetOffset={draftBoard.setOffset}
               onSetRank={draftBoard.setRank}
               onToggleWatch={draftBoard.toggleWatch}

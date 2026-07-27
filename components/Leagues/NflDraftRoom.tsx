@@ -9,9 +9,12 @@ interface Props {
   position: DraftPosition
   sort: NflDraftSort
   offset: number
+  query: string
   notes: NflDraftNotes
   onSelectPosition: (position: DraftPosition) => void
   onSelectSort: (sort: NflDraftSort) => void
+  onSetQuery: (query: string) => void
+  onClearQuery: () => void
   onSetOffset: (offset: number) => void
   onSetRank: (playerId: number, rank: number | null) => void
   onToggleWatch: (playerId: number) => void
@@ -25,9 +28,12 @@ export default function NflDraftRoom({
   position,
   sort,
   offset,
+  query,
   notes,
   onSelectPosition,
   onSelectSort,
+  onSetQuery,
+  onClearQuery,
   onSetOffset,
   onSetRank,
   onToggleWatch,
@@ -35,9 +41,39 @@ export default function NflDraftRoom({
 }: Props) {
   return (
     <section className="space-y-4">
-      <h3 className="text-xl font-bold text-zinc-100 pb-2">
-        Player Rankings
-      </h3>
+      <div className="flex flex-wrap items-center justify-between gap-3 pb-2">
+        <h3 className="text-xl font-bold text-zinc-100">
+          Player Rankings
+        </h3>
+
+        {/* Search. Research is name-driven — you arrive wanting one player. */}
+        <div className="relative w-full sm:w-64">
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-zinc-600"
+          >
+            ⌕
+          </span>
+          <input
+            type="search"
+            value={query}
+            onChange={e => onSetQuery(e.target.value)}
+            placeholder="Search rankings"
+            aria-label="Search player rankings by name"
+            className="w-full rounded-lg border border-zinc-700 bg-zinc-800/60 py-1.5 pl-8 pr-8 text-sm text-zinc-200 placeholder:text-zinc-600 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 [&::-webkit-search-cancel-button]:hidden"
+          />
+          {query !== '' && (
+            <button
+              type="button"
+              onClick={onClearQuery}
+              aria-label="Clear search"
+              className="absolute right-2 top-1/2 -translate-y-1/2 rounded px-1 text-sm leading-none text-zinc-500 transition-colors hover:text-zinc-200"
+            >
+              ✕
+            </button>
+          )}
+        </div>
+      </div>
 
       {/* Position pills */}
       <div
@@ -98,8 +134,28 @@ export default function NflDraftRoom({
         </div>
       )}
 
+      {/* No match. Say which search found nothing, not just "no results". */}
+      {!loading && !error && data && data.players.length === 0 && (
+        <div className="rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-12 text-center">
+          <p className="text-sm text-zinc-400">
+            {data.query
+              ? `No player named “${data.query}” on the board.`
+              : 'No players match these filters.'}
+          </p>
+          {data.query && (
+            <button
+              type="button"
+              onClick={onClearQuery}
+              className="mt-3 rounded-md border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-300 transition-colors hover:border-zinc-600 hover:text-zinc-100"
+            >
+              Clear search
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Table */}
-      {!loading && !error && data && (
+      {!loading && !error && data && data.players.length > 0 && (
         <div className="space-y-3">
           <div className="overflow-x-auto rounded-xl border border-zinc-800 bg-zinc-900 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <table className="w-full text-sm">

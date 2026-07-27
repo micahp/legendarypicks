@@ -16,6 +16,7 @@ const SORT_LABELS: Record<NflDraftSort, string> = {
 }
 
 const STORAGE_KEY = 'lp_nfl_draft_notes'
+const SEARCH_DEBOUNCE_MS = 250
 
 function sanitizeNotes(raw: unknown): NflDraftNotes {
   const empty: NflDraftNotes = { rank: {}, watch: {}, fade: {} }
@@ -69,16 +70,32 @@ export function useNflDraftBoard(enabled: boolean) {
   const [position, setPosition] = useState<DraftPosition>('all')
   const [sort, setSort] = useState<NflDraftSort>('adp')
   const [offset, setOffset] = useState(0)
+  // What the input shows vs. what we've asked the server for. Typing a name is
+  // eight keystrokes; without the delay that is eight round trips.
+  const [query, setQuery] = useState('')
+  const [submittedQuery, setSubmittedQuery] = useState('')
   const [notes, setNotes] = useState<NflDraftNotes>(() => {
     if (typeof window === 'undefined') return { rank: {}, watch: {}, fade: {} }
     return loadNotes()
   })
 
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSubmittedQuery(query)
+      // A new search is a new list; page 4 of the old one means nothing.
+      setOffset(0)
+    }, SEARCH_DEBOUNCE_MS)
+    return () => clearTimeout(timer)
+  }, [query])
+
   const buildUrl = useCallback(() => {
     const params = new URLSearchParams({ sort, limit: '50', offset: String(offset) })
     if (position !== 'all') params.set('position', position)
+    // Searching narrows on the server, so a one-player search costs one player.
+    const trimmed = submittedQuery.trim()
+    if (trimmed) params.set('q', trimmed)
     return `/api/nfl/draft-board?${params.toString()}`
-  }, [position, sort, offset])
+  }, [position, sort, offset, submittedQuery])
 
   useEffect(() => {
     if (!enabled) {
@@ -158,6 +175,8 @@ export function useNflDraftBoard(enabled: boolean) {
     })
   }, [])
 
+  const clearQuery = useCallback(() => setQuery(''), [])
+
   return {
     data,
     loading,
@@ -165,9 +184,12 @@ export function useNflDraftBoard(enabled: boolean) {
     position,
     sort,
     offset,
+    query,
     notes,
     selectPosition,
     selectSort,
+    setQuery,
+    clearQuery,
     setOffset,
     setRank,
     toggleWatch,
