@@ -31,6 +31,20 @@ a failure.
 
 ---
 
+## Context you need before step 1: All Day stopped minting
+
+**On 2026-05-13 Dapper Labs halted primary issuance of NFL All Day NFTs.** Existing Moments
+remain fully tradeable and on-chain; only new supply stopped. So:
+
+- Expect the drops/packs surfaces to look dead. That is correct, not a bug, and not evidence
+  your read path is wrong.
+- The contract, the Moments, and every wallet's collection are **unaffected** — this task
+  reads existing holdings and works exactly as specced.
+- All Day already ships lineup-shaped games (**Playbook**, **One and Done**, **Pick'Em**).
+  Do not try to reproduce or reverse-engineer their scoring. Out of scope.
+
+Full research: `docs/RESEARCH-nfl-allday-state-2026-07-27.md`.
+
 ## Architecture — read the chain from the BACKEND, not the browser
 
 `@onflow/fcl` is **not installed and not in `package.json`** — the legacy Flow imports in
