@@ -320,6 +320,7 @@ def games(league, date=None):
                     }
                 out.append({
                     "game_id": comp.get("id"),
+                    "event_id": str(event.get("id") or ""),
                     "date": comp.get("date") or event_date,
                     "state": st.get("state"),
                     "status": st.get("description") or weight_class or "",
