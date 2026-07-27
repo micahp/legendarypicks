@@ -16,9 +16,16 @@ set -euo pipefail
 
 MAIN=/root/legendarypicks
 DEV_DB="$MAIN/backend/data/picks.dev.db"
-BPORT=8096   # isolated backend
-FPORT=3096   # isolated frontend
-CMD="${1:-}"; TASK="${2:-}"; BASE="${3:-analytics-backbone}"
+# Isolated ports. These MUST NOT be the main dev environment's ports -- `up` binds them,
+# and if the main env is already there the worktree's servers die on startup while the agent
+# happily verifies against the MAIN tree and reports success. 3096/8096 were the defaults
+# here until 2026-07-27, by which point they were exactly what the main dev env was using
+# (the 3095/8095 pair it used to sit on turned out to be zombies from a deleted checkout and
+# was killed, promoting 3096/8096 to primary). Overridable so a second concurrent task can
+# move again without editing this file.
+BPORT="${LP_WT_BPORT:-8097}"
+FPORT="${LP_WT_FPORT:-3097}"
+CMD="${1:-}"; TASK="${2:-}"; BASE="${3:-dev}"
 WT="/root/lp-$TASK"
 BR="feat/$TASK"
 
