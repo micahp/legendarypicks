@@ -40,16 +40,12 @@ v0.6.10 (draft board search) already shipped ahead of this and is not part of it
 
 ### Two things this scope does not resolve
 
-- **D is specced as gated behind sign-up, and slice B (accounts) is not in this release.**
-  Without B there is nothing to gate behind. Either B comes along, or the mock draft ships
-  **ungated in v0.7.0** and the gate arrives with accounts in v0.8.0 — which is defensible
-  (it gets the draft in front of people during the draft window and measures whether anyone
-  finishes one before we make it cost something), but it is a different plan from the spec.
-  **Undecided.**
-- **R4 depends on the B2/B3 key-scheme decision, which is still open.** `team_game_results`
-  holds ESPN ids for 2025 and nflverse ids for 2024/2026, and the Rams and Washington fail
-  to join across the two. Exposing `nfl_schedule` before deciding ships that split into the
-  API's contract. **Decide B2/B3 before starting R4.**
+- **DECIDED 2026-07-27: the mock draft ships UNGATED in v0.7.0.** Accounts (slice B) ship
+  with **multiplayer** mock draft as **v0.8.0**, and the sign-up gate arrives with them.
+  This gets a single-player draft in front of people inside the draft window and measures
+  whether anyone finishes one before we make it cost something.
+- ~~R4 depends on the B2/B3 key-scheme decision~~ — **B2/B3 DECIDED 2026-07-27, see below.**
+  nflverse stays canonical and 2025 gets migrated. R4 is unblocked.
 
 ### Calendar
 Drafts run mid-Aug → **Labor Day, Sept 5–7**; week 1 opens **Sept 9**. v0.7.0 has to be in
@@ -128,10 +124,47 @@ availability query — this would have shipped a visibly wrong number.
   breaking the team-stats aggregate** (34 games per team instead of 17). Do not do this
   without deduplicating first.
 
-**Open question from Micah (2026-07-27): should we repull the schedule from ESPN instead?**
-That would make every season ESPN-keyed and consistent with the existing 2025 rows, at the
-cost of losing what `games.csv` gives free — rest days, roof/surface, spread/total lines,
-coaches, starting-QB gsis ids. Not decided. Weigh before touching B2.
+**RESOLVED 2026-07-27 — neither option was necessary. nflverse publishes the ESPN id.**
+
+`games.csv` carries an `espn` column and it is populated for **285/285 of 2025's games**
+(verified against the live file; our `nfl_schedule` already stores it, 285/285 for 2024).
+The bridge between the two key schemes did not need to be built or repulled — we were
+already ingesting it. See [[feedback_check_if_the_value_is_published]]; this is the fourth
+time that check has paid off on this table.
+
+Measured, with `league='nfl'` applied:
+
+| season | `team_game_results` keys | rows | joins `nfl_schedule`? |
+|---|---|---|---|
+| 2024 | nflverse | 570 | **285/285** |
+| 2025 | **ESPN** | 544 | no — `nfl_schedule` has no 2025 rows at all |
+| 2026 | nflverse | 544 | yes |
+
+**Only 2025 is broken — 544 rows, one season.** (An earlier read that 2026 was ESPN-keyed
+was wrong: those numeric ids belong to other leagues. Always apply `league='nfl'`.)
+
+**Decision: nflverse stays canonical; migrate 2025.** `player_game_logs` is nflverse
+(11,232 rows), the draft board is nflverse, `nfl_schedule` is nflverse. ESPN is only the
+roster/ADP side. Going ESPN-canonical would move the schedule to the opposite side of the
+divide from every player number we compute, to avoid re-keying 544 rows.
+
+Three steps, no repull, nothing lost:
+1. Load 2025 into `nfl_schedule` from `games.csv` — zero rows there today, so no duplication
+   risk. Brings 2025 rest days, roof/surface, spread/total lines, coaches and starting QBs,
+   which we do not currently have, plus the `espn` bridge column.
+2. **UPDATE** (never INSERT) the 544 `team_game_results` 2025 rows' `game_id` from the ESPN
+   id to the nflverse one through that bridge. B2's "544 duplicate rows" trap is an INSERT
+   failure mode and does not apply to an UPDATE.
+3. The same statement closes **B3**: `LAR→LA`, `WSH→WAS`, using the `ESPN_ALIASES` map that
+   already exists in `ingest_nfl_schedule.py`. Confirmed 2025 is the only season using the
+   ESPN codes.
+
+Two things found while measuring, neither blocking:
+- 2025 holds **regular season only** (272 games); 2024 holds regular + postseason (285).
+  Pre-existing inconsistency.
+- **2026 carries no ESPN ids yet** — nflverse publishes them closer to gameday, like the
+  betting lines in R3. Harmless here since 2026 is already nflverse-keyed, but it matters if
+  live scores ever need a 2026 → ESPN mapping.
 
 ### B3. Team abbreviations disagree between tables
 ESPN says `LAR`/`WSH`; nflverse says `LA`/`WAS`. `player_game_logs` is nflverse,

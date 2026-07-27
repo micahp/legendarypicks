@@ -194,10 +194,20 @@ password auth, OAuth/social login, mobile app. None of these are needed for the 
 
 | # | slice | ships |
 |---|---|---|
-| A | `nfl_draft_notes` server table + `X-Device-Id` read/write, `localStorage` becomes cache | closes R8 |
-| B | Magic-link auth, session cookie, claim-on-sign-in across all three device-keyed surfaces | accounts exist |
-| C | Nudges (inline hint, investment banner) | conversion surface |
-| D | Mock draft: setup → snake w/ ADP bots → results screen, gated, saved to account | the reason to sign up |
+| A | `nfl_draft_notes` server table + `X-Device-Id` read/write, `localStorage` becomes cache | **v0.7.0** — closes R8 |
+| D | Mock draft: setup → snake w/ ADP bots → results screen, **ungated**, saved to `device_id` | **v0.7.0** — the draft-window bet |
+| B | Magic-link auth, session cookie, claim-on-sign-in across all device-keyed surfaces | **v0.8.0** — accounts exist |
+| C | Nudges (inline hint, investment banner) + the mock-draft sign-up gate | **v0.8.0** |
+
+**Release split decided 2026-07-27.** v0.7.0 = A + D single-player + the NFL schedule API,
+then a prod deploy. v0.8.0 = B + C + **multiplayer** mock draft, and the gate lands with
+them. So D ships ungated first: a single-player draft reaches people inside the draft
+window, and we learn whether anyone finishes one before charging a sign-up for it.
+
+Because D ships before B, its results **must** be saved against `device_id` on the server
+(not `localStorage`), so slice B's claim-on-sign-in picks up completed drafts along with
+notes and picks. A mock draft stranded in a browser is the exact mistake slice A exists to
+fix.
 
 Both decisions are now made, so **nothing here is blocked**. Order still holds: A before C
 (a nudge that says "sign up to keep it" is only true once the rows are on the server), and
