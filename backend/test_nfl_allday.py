@@ -180,6 +180,79 @@ def test_resolve_player_matches_retired_players():
 
 
 # ---------------------------------------------------------------------------
+# Player resolution — name aliases (step 2 and step 3)
+# ---------------------------------------------------------------------------
+
+
+def test_resolve_full_name_alias_robby_anderson():
+    """Robby Anderson → Robbie Chosen (legal name change, 2022)."""
+    r = _resolver_over([
+        {"id": 10, "name": "Robbie Chosen", "position": "WR", "team": "WAS",
+         "nfl_gsis_id": "00-10", "active": 1}
+    ])
+    result = r.resolve("Robby", "Anderson", "WR")
+    assert result is not None
+    assert result["name"] == "Robbie Chosen"
+    assert result["id"] == 10
+
+
+def test_resolve_first_name_expansion_gabriel_to_gabe():
+    """Gabriel Davis (AllDay) → Gabe Davis (DB spine)."""
+    r = _resolver_over([
+        {"id": 11, "name": "Gabe Davis", "position": "WR", "team": "BUF",
+         "nfl_gsis_id": "00-11", "active": 1}
+    ])
+    result = r.resolve("Gabriel", "Davis", "WR")
+    assert result is not None
+    assert result["name"] == "Gabe Davis"
+
+
+def test_resolve_first_name_expansion_michael_to_mike():
+    """Michael Vick → Mike Vick."""
+    r = _resolver_over([
+        {"id": 12, "name": "Mike Vick", "position": "QB", "team": "PIT",
+         "nfl_gsis_id": "00-12", "active": 1}
+    ])
+    result = r.resolve("Michael", "Vick", "QB")
+    assert result is not None
+    assert result["name"] == "Mike Vick"
+
+
+def test_resolve_first_name_expansion_gregory_to_greg_position_disagrees():
+    """Gregory Rousseau (DL per AllDay) → Greg Rousseau (LB per DB spine).
+    Position disagrees but there is only one candidate — accept it."""
+    r = _resolver_over([
+        {"id": 13, "name": "Greg Rousseau", "position": "LB", "team": "BUF",
+         "nfl_gsis_id": "00-13", "active": 1}
+    ])
+    result = r.resolve("Gregory", "Rousseau", "DL")
+    assert result is not None
+    assert result["name"] == "Greg Rousseau"
+
+
+def test_resolve_scotty_miller_stays_unmatched():
+    """Scotty Miller → Scott Miller matches TWO players. Ambiguous — stay unmatched."""
+    r = _resolver_over([
+        {"id": 14, "name": "Scott Miller", "position": "WR", "team": "MIA",
+         "nfl_gsis_id": "00-14", "active": 1},
+        {"id": 15, "name": "Scott Miller", "position": "WR", "team": "CHI",
+         "nfl_gsis_id": "00-15", "active": 1},
+    ])
+    assert r.resolve("Scotty", "Miller", "WR") is None
+
+
+def test_resolve_exact_match_still_works():
+    """Step 1 (exact match) must not be broken by alias additions."""
+    r = _resolver_over([
+        {"id": 16, "name": "Patrick Mahomes", "position": "QB", "team": "KC",
+         "nfl_gsis_id": "00-16", "active": 1}
+    ])
+    result = r.resolve("Patrick", "Mahomes", "QB")
+    assert result is not None
+    assert result["name"] == "Patrick Mahomes"
+
+
+# ---------------------------------------------------------------------------
 # JSON-Cadence decoder
 # ---------------------------------------------------------------------------
 

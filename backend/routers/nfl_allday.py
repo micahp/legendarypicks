@@ -363,26 +363,70 @@ class PlayerResolver:
             conn.close()
 
     def resolve(self, first: str, last: str, position: str) -> Optional[dict]:
-        rows = self._by_name.get(_norm_name(f"{first} {last}"))
-        if not rows:
-            # Residual misses are a NICKNAME class, not a data hole: AllDay ships the formal
-            # name where our spine carries the familiar one (Gabriel/Gabe Davis, Michael/Mike
-            # Vick, Gregory/Greg Rousseau), plus one legal name change (Robby Anderson is
-            # "Robbie Chosen" since 2022). These are NOT derivable by prefix or initial rules
-            # -- "gabriel".startswith("gabe") is False -- and guessing by surname+position
-            # picks the wrong Scott Miller. The correct fix is an explicit alias table, which
-            # is a data decision; until then an honest miss beats a wrong join.
+        full_key = _norm_name(f"{first} {last}")
+
+        # Step 1 — exact normalised full-name match (existing behaviour, unchanged)
+        rows = self._by_name.get(full_key)
+        if rows:
+            return self._disambiguate(rows, position)
+
+        # Step 2 — FULL_NAME_ALIASES lookup (legal name changes)
+        from .nfl_name_aliases import FULL_NAME_ALIASES
+        aliased = FULL_NAME_ALIASES.get(full_key)
+        if aliased:
+            rows = self._by_name.get(aliased)
+            if rows:
+                return self._disambiguate(rows, position)
+
+        # Step 3 — first-name expansion with exact surname match
+        from .nfl_name_aliases import expand_first_names
+        norm_first = _norm_name(first)
+        norm_last = _norm_name(last)
+        candidates: list[dict] = []
+        for variant in expand_first_names(norm_first):
+            key = f"{variant} {norm_last}"
+            rows = self._by_name.get(key)
+            if rows:
+                candidates.extend(rows)
+
+        if not candidates:
             return None
-        if len(rows) > 1:
-            allowed = POSITION_MAP.get(position, [position])
-            for row in rows:
-                if row["position"] in allowed:
-                    return row
-            # Ambiguous across eras and position did not separate them; prefer
-            # an active player over a retired one rather than an arbitrary row.
-            for row in rows:
-                if row.get("active"):
-                    return row
+
+        # Deduplicate by id
+        seen: dict[int, dict] = {}
+        for c in candidates:
+            seen.setdefault(c["id"], c)
+        unique = list(seen.values())
+
+        if len(unique) == 1:
+            # One candidate — accept even when position disagrees (AllDay says DL
+            # where our spine says LB for Gregory Rousseau — vocabulary difference).
+            return unique[0]
+
+        # Multiple candidates — position disambiguates; it does not reject
+        allowed = POSITION_MAP.get(position, [position])
+        pos_matches = [c for c in unique if c["position"] in allowed]
+        if len(pos_matches) == 1:
+            return pos_matches[0]
+
+        # Either zero or >1 position matches — ambiguous.  Return None rather
+        # than guessing (Scotty Miller must stay unmatched — there are two
+        # Scott Millers and picking either is a wrong join).
+        return None
+
+    def _disambiguate(self, rows: list[dict], position: str) -> Optional[dict]:
+        """Pick the right row when multiple players share a name."""
+        if len(rows) == 1:
+            return rows[0]
+        allowed = POSITION_MAP.get(position, [position])
+        for row in rows:
+            if row["position"] in allowed:
+                return row
+        # Ambiguous across eras and position did not separate them; prefer
+        # an active player over a retired one rather than an arbitrary row.
+        for row in rows:
+            if row.get("active"):
+                return row
         return rows[0]
 
 # ---------------------------------------------------------------------------
