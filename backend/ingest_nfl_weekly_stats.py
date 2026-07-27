@@ -70,6 +70,7 @@ _MAP = {
     "rush_yds": "rushing_yards",
     "rush_td": "rushing_tds",
     "targets": "targets",
+    "target_share": "target_share",
     "rec": "receptions",
     "rec_yds": "receiving_yards",
     "rec_td": "receiving_tds",
@@ -82,7 +83,7 @@ _MAP = {
 _PASS_KEYS = ("att", "cmp", "pass_yds", "pass_td", "intc", "air_yds",
               "pass_epa", "cpoe", "dropbacks")
 _RUSH_KEYS = ("carries", "rush_yds", "rush_td")
-_RECV_KEYS = ("targets", "rec", "rec_yds", "rec_td")
+_RECV_KEYS = ("targets", "target_share", "rec", "rec_yds", "rec_td")
 _TWO_POINT_COLS = (
     "passing_2pt_conversions",
     "rushing_2pt_conversions",

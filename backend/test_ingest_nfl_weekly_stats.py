@@ -39,6 +39,7 @@ def _artifact_row(**overrides):
         "rushing_yards": 0,
         "rushing_tds": 0,
         "targets": 0,
+        "target_share": 0.0,
         "receptions": 0,
         "receiving_yards": 0,
         "receiving_tds": 0,
@@ -85,6 +86,7 @@ class BuildRowsTests(unittest.TestCase):
         self.assertEqual(4, stats["dropbacks"])
         self.assertEqual(0, stats["pass_td"])
         self.assertNotIn("targets", stats)
+        self.assertNotIn("target_share", stats)
         self.assertNotIn("rec", stats)
         self.assertNotIn("rec_yds", stats)
         self.assertNotIn("carries", stats)
