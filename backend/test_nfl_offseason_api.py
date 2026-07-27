@@ -50,7 +50,24 @@ class NflOffseasonApiTests(unittest.TestCase):
                 CREATE TABLE player_game_logs(
                   player_id INTEGER,
                   league TEXT,
-                  season INTEGER
+                  season INTEGER,
+                  game_no TEXT,
+                  game_id TEXT,
+                  team TEXT,
+                  stats TEXT
+                );
+                CREATE TABLE nfl_adp(
+                  player_id INTEGER,
+                  season INTEGER,
+                  adp REAL,
+                  percent_owned REAL
+                );
+                CREATE TABLE nfl_depth_chart(
+                  player_id INTEGER,
+                  season INTEGER,
+                  team TEXT,
+                  pos_abb TEXT,
+                  pos_rank INTEGER
                 );
                 CREATE TABLE team_stats_coverage(
                   run_id TEXT PRIMARY KEY,
@@ -70,6 +87,7 @@ class NflOffseasonApiTests(unittest.TestCase):
                     (2, "Actual Mover", "nfl", "MIN", "QB", 1, "2026-07-20T12:00:00+00:00"),
                     (3, "Inactive Back", "nfl", "DAL", "RB", 0, "2026-07-20T12:00:00+00:00"),
                     (4, "Camp Rookie", "nfl", "NE", "WR", 1, "2026-07-20T12:00:00+00:00"),
+                    (5, "Undrafted Body", "nfl", "NE", "WR", 1, "2026-07-20T12:00:00+00:00"),
                 ],
             )
             connection.executemany(
@@ -80,9 +98,36 @@ class NflOffseasonApiTests(unittest.TestCase):
                     (3, "Inactive Back", "nfl", "DAL", 2025, 17, "RB", "DAL", 18.0, 14.0, 0.0, 82.0, 25.0, 50, 40, 15.0),
                 ],
             )
+            # Alias Receiver played 16 of 17; Actual Mover only 8, plus one
+            # POSTSEASON week that must never count toward availability.
+            logs = []
+            for week in range(1, 17):
+                logs.append((1, "nfl", 2025, str(week), f"2025_{week:02d}_LA_SF", "LA",
+                             '{"fpts_ppr": 20.0, "xfpts_ppr": 18.0, '
+                             '"off_pct": 0.9, "target_share": 0.25}'))
+            for week in range(1, 9):
+                logs.append((2, "nfl", 2025, str(week), f"2025_{week:02d}_ARI_SEA", "ARI",
+                             '{"fpts_ppr": 17.0, "xfpts_ppr": 16.0, "off_pct": 1.0}'))
+            logs.append((2, "nfl", 2025, "19", "2025_19_ARI_SEA", "ARI",
+                         '{"fpts_ppr": 30.0, "xfpts_ppr": 28.0, "off_pct": 1.0}'))
             connection.executemany(
-                "INSERT INTO player_game_logs VALUES(?,?,?)",
-                [(1, "nfl", 2025), (1, "nfl", 2025), (2, "nfl", 2025)],
+                "INSERT INTO player_game_logs VALUES(?,?,?,?,?,?,?)", logs)
+            connection.executemany(
+                "INSERT INTO nfl_adp VALUES(?,?,?,?)",
+                [
+                    (1, 2026, 3.5, 99.0),
+                    (2, 2026, 25.0, 95.0),
+                    (4, 2026, 66.0, 80.0),      # rookie with a real market price
+                    (5, 2026, 170.0, 0.1),      # ESPN's undrafted sentinel
+                ],
+            )
+            connection.executemany(
+                "INSERT INTO nfl_depth_chart VALUES(?,?,?,?,?)",
+                [
+                    (1, 2026, "LA", "WR", 1),
+                    (2, 2026, "ARI", "QB", 1),
+                    (4, 2026, "NE", "WR", 2),
+                ],
             )
             connection.execute(
                 "INSERT INTO team_stats_coverage VALUES(?,?,?,?,?,?,?)",
@@ -104,7 +149,7 @@ class NflOffseasonApiTests(unittest.TestCase):
             connection.row_factory = sqlite3.Row
             return nfl_offseason._build_nfl_season_context(as_of, connection)
 
-    def board(self, position=None, sort="fantasy_ppr_g", limit=50, offset=0):
+    def board(self, position=None, sort="adp", limit=50, offset=0):
         return nfl_offseason.nfl_draft_board(
             position=position,
             sort=sort,
@@ -121,8 +166,8 @@ class NflOffseasonApiTests(unittest.TestCase):
         self.assertEqual(payload["next_event"]["id"], "all_teams_report")
         self.assertEqual(payload["next_event"]["days_until"], 7)
         self.assertEqual(payload["coverage"]["reference_stats"]["players"], 3)
-        self.assertEqual(payload["coverage"]["game_logs"]["rows"], 3)
-        self.assertEqual(payload["coverage"]["current_roster"]["players"], 3)
+        self.assertEqual(payload["coverage"]["game_logs"]["rows"], 25)
+        self.assertEqual(payload["coverage"]["current_roster"]["players"], 4)
         self.assertEqual(
             payload["coverage"]["current_roster"]["skill_players_with_reference_stats"],
             2,
@@ -147,16 +192,69 @@ class NflOffseasonApiTests(unittest.TestCase):
 
     def test_draft_board_uses_active_identity_spine_and_normalizes_aliases(self):
         payload = self.board()
-        self.assertEqual(payload["contract"], "nfl-draft-board-v1")
+        self.assertEqual(payload["contract"], "nfl-draft-board-v2")
         self.assertEqual(payload["reference_season"], 2025)
-        self.assertEqual(payload["eligible_players"], 2)
-        self.assertEqual([player["player_id"] for player in payload["players"]], [1, 2])
+        # Alias Receiver, Actual Mover and Camp Rookie are all eligible. The
+        # inactive back is off the spine and Undrafted Body has neither a season
+        # nor a real market price, so neither appears.
+        self.assertEqual(payload["eligible_players"], 3)
+        self.assertEqual([player["player_id"] for player in payload["players"]], [1, 2, 4])
 
-        alias_receiver, actual_mover = payload["players"]
+        alias_receiver, actual_mover, _rookie = payload["players"]
         self.assertEqual(alias_receiver["current_team"], "LAR")
-        self.assertEqual(alias_receiver["reference_team"], "LAR")
+        self.assertEqual(alias_receiver["depth_team"], "LAR")
         self.assertFalse(alias_receiver["team_changed"])
         self.assertTrue(actual_mover["team_changed"])
+
+    def test_availability_is_the_headline_and_both_averages_ship_together(self):
+        players = {p["name"]: p for p in self.board()["players"]}
+
+        receiver = players["Alias Receiver"]
+        self.assertEqual(receiver["games_played"], 16)
+        self.assertEqual(receiver["team_games"], 17)
+        # Played nearly every game, so the two averages barely differ.
+        self.assertEqual(receiver["ppr_per_game_played"], 20.0)
+        self.assertEqual(receiver["ppr_per_team_game"], 18.8)
+
+        mover = players["Actual Mover"]
+        # Eight regular-season games. The week-19 playoff line must NOT count:
+        # counting it would report 9/17 and inflate both averages.
+        self.assertEqual(mover["games_played"], 8)
+        self.assertEqual(mover["ppr_per_game_played"], 17.0)
+        self.assertEqual(mover["ppr_per_team_game"], 8.0)
+        self.assertNotIn(19, mover["weeks_played"])
+        self.assertEqual(mover["weeks_played"], list(range(1, 9)))
+
+    def test_no_sample_players_read_as_absent_rather_than_zero(self):
+        players = {p["name"]: p for p in self.board()["players"]}
+
+        rookie = players["Camp Rookie"]
+        self.assertEqual(rookie["sample"], "none")
+        self.assertEqual(rookie["games_played"], 0)
+        self.assertEqual(rookie["weeks_played"], [])
+        # A zero here would be a claim about the player. Absence is a claim
+        # about us, and it is the true one.
+        for field in ("ppr_per_game_played", "ppr_per_team_game",
+                      "xfp_per_game", "snap_pct", "target_share"):
+            self.assertIsNone(rookie[field], field)
+        # What he does have: a market price and a current role.
+        self.assertEqual(rookie["adp"], 66.0)
+        self.assertTrue(rookie["adp_is_ranked"])
+        self.assertEqual(rookie["depth_rank"], 2)
+
+    def test_undrafted_sentinel_adp_is_not_treated_as_a_ranking(self):
+        names = [p["name"] for p in self.board()["players"]]
+        # ESPN parks undrafted players at 170.0. A player with no season and
+        # only a sentinel price has nothing true to say and stays off the board.
+        self.assertNotIn("Undrafted Body", names)
+
+    def test_thin_samples_are_marked_not_silently_ranked(self):
+        with sqlite3.connect(self.db_path) as connection:
+            connection.execute(
+                "DELETE FROM player_game_logs WHERE player_id=2 AND CAST(game_no AS INTEGER) > 2")
+        mover = {p["name"]: p for p in self.board()["players"]}["Actual Mover"]
+        self.assertEqual(mover["games_played"], 2)
+        self.assertEqual(mover["sample"], "thin")
 
     def test_draft_board_filters_positions_and_is_bounded(self):
         quarterback = self.board(position="qb", limit=1)
@@ -165,8 +263,10 @@ class NflOffseasonApiTests(unittest.TestCase):
         self.assertEqual(quarterback["returned_players"], 1)
         self.assertEqual(quarterback["players"][0]["name"], "Actual Mover")
 
+        # FLEX carries the rookie too: no season, but a real ADP and a role.
         flex = self.board(position="FLEX")
-        self.assertEqual([player["name"] for player in flex["players"]], ["Alias Receiver"])
+        self.assertEqual([player["name"] for player in flex["players"]],
+                         ["Alias Receiver", "Camp Rookie"])
 
     def test_stale_roster_suppresses_team_change_claims(self):
         with sqlite3.connect(self.db_path) as connection:

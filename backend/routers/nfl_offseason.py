@@ -22,8 +22,30 @@ from _core import _db, _normalize_name, proj_mod
 router = APIRouter()
 
 _CONTEXT_CONTRACT = "nfl-season-context-v1"
-_DRAFT_BOARD_CONTRACT = "nfl-draft-board-v1"
+_DRAFT_BOARD_CONTRACT = "nfl-draft-board-v2"
 _CURRENT_SEASON = 2026
+
+# Availability's denominator is a constant, not a join. Verified on picks.dev.db:
+# in each of 2024 and 2025, all 32 teams played exactly 17 regular-season games,
+# across an 18-week schedule with one bye. Deriving it from team_game_results
+# instead would drag in ROADMAP B1/B2/B3 (Joe Flacco read 13/34 because a
+# mid-season team change summed both teams' seasons) for no gain.
+_REG_SEASON_TEAM_GAMES = 17
+_REG_SEASON_LAST_WEEK = 18
+
+# Weeks 19-22 are the postseason. Counting them would let a deep playoff run
+# report 21/17 games played.
+_POSTSEASON_FIRST_WEEK = 19
+
+# ESPN parks undrafted players at a sentinel: 1,392 of 2,511 ADP rows sit at
+# exactly 170.0. Only 248 players carry a real ADP, so anything at or past this
+# is "not actually ranked" and must not be shown as though it were.
+_ADP_SENTINEL = 169.0
+
+# Below this, a per-game average is one or two games. xFP predicts better than
+# actual points here (r=0.42 vs 0.37 over 2024->2025) but neither is reliable,
+# so the surface must mark the sample rather than quietly rank on it.
+_THIN_SAMPLE_GAMES = 4
 _CALENDAR_VALID_THROUGH = dt.date(2026, 12, 31)
 _NFL_CALENDAR_SOURCE = {
     "name": "NFL Football Operations — Important Dates",
@@ -57,15 +79,16 @@ _TEAM_ALIASES = {
 }
 _SKILL_POSITIONS = ("QB", "RB", "WR", "TE", "FB")
 _POSITION_FILTERS = set(_SKILL_POSITIONS) | {"FLEX"}
+# Sort key -> (player field, ascending). Every one of these is a measurement of
+# something that happened; none is a projection, and none is labelled as one.
 _SORT_FIELDS = {
-    "fantasy_ppr_g": "ps.fantasy_ppr_g",
-    "fantasy_pts_g": "ps.fantasy_pts_g",
-    "pass_yds_g": "ps.pass_yds_g",
-    "rush_yds_g": "ps.rush_yds_g",
-    "rec_yds_g": "ps.rec_yds_g",
-    "targets": "ps.targets",
-    "adp": "na.adp",
-    "season_proj_pts": None,  # computed in Python from player_game_logs
+    "adp": ("adp", True),
+    "ppr_per_team_game": ("ppr_per_team_game", False),
+    "ppr_per_game_played": ("ppr_per_game_played", False),
+    "xfp_per_game": ("xfp_per_game", False),
+    "games_played": ("games_played", False),
+    "snap_pct": ("snap_pct", False),
+    "target_share": ("target_share", False),
 }
 
 
@@ -485,15 +508,21 @@ def nfl_transactions(
 
 
 def _draft_board_schema(connection: sqlite3.Connection) -> None:
+    """v2 reads per-game logs, not the season rollup in player_stats.
+
+    The rollup's ``fantasy_ppr_g`` is points per game *played* -- an average
+    conditioned on the player being healthy enough to play, which is the exact
+    thing a drafter is trying to predict. Availability is only recoverable from
+    the per-game rows, because a missed game has no row at all.
+    """
     player_columns = _table_columns(connection, "players")
-    stat_columns = _table_columns(connection, "player_stats")
-    required_players = {"id", "name", "league", "team", "position", "active", "updated_at"}
-    required_stats = {
-        "player_id", "league", "season", "games", "nfl_position", "nfl_team",
-        "fantasy_ppr_g", "fantasy_pts_g", "pass_yds_g", "rush_yds_g",
-        "rec_yds_g", "targets", "receptions", "carries_g",
-    }
-    missing = sorted((required_players - player_columns) | (required_stats - stat_columns))
+    log_columns = _table_columns(connection, "player_game_logs")
+    required_players = {"id", "name", "league", "team", "position", "active",
+                        "updated_at"}
+    required_logs = {"player_id", "league", "season", "game_no", "game_id",
+                     "team", "stats"}
+    missing = sorted((required_players - player_columns)
+                     | (required_logs - log_columns))
     if missing:
         raise HTTPException(
             503,
@@ -501,97 +530,85 @@ def _draft_board_schema(connection: sqlite3.Connection) -> None:
         )
 
 
-def _compute_season_projections(
-    connection: sqlite3.Connection, player_ids: List[int]
-) -> Dict[int, dict]:
-    """Batch-compute season_proj_pts + games_assumed for a set of players.
+def _regular_season_aggregates(connection: sqlite3.Connection, season: int) -> Dict[int, dict]:
+    """One pass over the reference season's per-game rows.
 
-    Returns a dict keyed by player_id, each value is
-    ``{"season_proj_pts": float | None, "games_assumed": int | None}``.
+    Returns per player: games played, total PPR, mean expected PPR, mean snap
+    share, mean target share, and the set of weeks they appeared in (the strip).
+
+    Postseason weeks are excluded -- see ``_POSTSEASON_FIRST_WEEK``. Missed games
+    contribute nothing here by construction; that absence IS the measurement.
     """
-    if not player_ids:
-        return {}
-    placeholders = ",".join("?" for _ in player_ids)
     rows = connection.execute(
-        f"""SELECT player_id, stats, season, game_date, game_no
-            FROM player_game_logs
-            WHERE league='nfl' AND player_id IN ({placeholders})
-            ORDER BY player_id, season DESC, COALESCE(game_date,'') DESC, CAST(game_no AS INTEGER) DESC""",
-        player_ids,
+        """SELECT player_id,
+                  COUNT(DISTINCT game_id)                                   AS games_played,
+                  SUM(CAST(json_extract(stats,'$.fpts_ppr')     AS REAL))    AS ppr_total,
+                  AVG(CAST(json_extract(stats,'$.xfpts_ppr')    AS REAL))    AS xfp_per_game,
+                  AVG(CAST(json_extract(stats,'$.off_pct')      AS REAL))    AS snap_pct,
+                  AVG(CAST(json_extract(stats,'$.target_share') AS REAL))    AS target_share,
+                  GROUP_CONCAT(game_no)                                      AS weeks
+           FROM player_game_logs
+           WHERE league='nfl' AND season=? AND player_id IS NOT NULL
+             AND CAST(game_no AS INTEGER) < ?
+           GROUP BY player_id""",
+        (season, _POSTSEASON_FIRST_WEEK),
     ).fetchall()
 
-    # Group logs by player, keeping most-recent-first order
-    player_logs: Dict[int, list] = defaultdict(list)
-    for r in rows:
-        player_logs[r["player_id"]].append(r)
-
-    result: Dict[int, dict] = {}
-    for pid, logs in player_logs.items():
-        fpts_vals: List[float] = []
-        season_games: Dict[int, int] = defaultdict(int)
-        for log in logs:
+    out: Dict[int, dict] = {}
+    for row in rows:
+        weeks = set()
+        for token in (row["weeks"] or "").split(","):
             try:
-                s = json.loads(log["stats"])
-                # 2025 pbp ingest uses the canonical short key; 2024 nflverse-weekly
-                # ingest uses the legacy long key (see _NFL_KEY_NORMALIZE in players.py)
-                # — check both or every 2025 game silently drops out of the projection.
-                val = s.get("fpts_ppr", s.get("fantasy_points_ppr"))
-                if val is not None:
-                    fpts_vals.append(float(val))
-                    season_games[log["season"]] += 1
-            except (json.JSONDecodeError, TypeError, ValueError):
+                weeks.add(int(token))
+            except ValueError:
                 continue
-
-        proj = proj_mod.project_stat(fpts_vals, min_games=3)
-        games_assumed: Optional[int] = None
-        season_proj_pts: Optional[float] = None
-
-        if season_games:
-            latest = max(season_games.keys())
-            ga = season_games[latest]
-            if ga > 0:
-                games_assumed = min(ga, 17)
-                if proj and games_assumed:
-                    season_proj_pts = round(proj["projection"] * games_assumed, 1)
-
-        result[pid] = {
-            "season_proj_pts": season_proj_pts,
-            "games_assumed": games_assumed,
+        games = row["games_played"] or 0
+        total = row["ppr_total"]
+        out[row["player_id"]] = {
+            "games_played": games,
+            "ppr_total": total,
+            "xfp_per_game": row["xfp_per_game"],
+            "snap_pct": row["snap_pct"],
+            "target_share": row["target_share"],
+            "weeks": weeks,
         }
+    return out
 
-    return result
+
+def _round(value, places=1):
+    return None if value is None else round(value, places)
 
 
 @router.get("/api/nfl/draft-board")
 def nfl_draft_board(
     position: Optional[str] = Query(None),
-    sort: str = Query("fantasy_ppr_g"),
+    sort: str = Query("adp"),
     limit: int = Query(50, ge=1, le=100),
     offset: int = Query(0, ge=0),
 ):
-    """Bounded 2026 draft-prep population grounded in the latest NFL season.
+    """Availability-first 2026 draft board.
 
-    Current roster identity comes from ``players``; production comes from the
-    latest ``player_stats`` season. A stale roster never produces a definitive
-    ``team_changed`` claim.
+    The headline is how often a player was on the field, not how well he did on
+    the days he was. Both numbers ship together: PPR per game *played* is what
+    every fantasy site shows, PPR per *team game* is what the roster spot
+    actually returned. They diverge exactly when availability drops -- Joe Burrow
+    2025 reads 16.8 and 7.9 off the same season.
+
+    Nothing here is a projection and nothing is labelled as one.
     """
     selected_position = str(position or "").strip().upper() or None
     if selected_position is not None and selected_position not in _POSITION_FILTERS:
         raise HTTPException(400, f"position must be one of {sorted(_POSITION_FILTERS)}")
     if sort not in _SORT_FIELDS:
         raise HTTPException(400, f"sort must be one of {sorted(_SORT_FIELDS)}")
-
-    # season_proj_pts is computed in Python; use fantasy_ppr_g for the SQL
-    # WHERE filter (ensures we only include players with stats to project from).
-    season_proj_sort = sort == "season_proj_pts"
-    sql_sort = "fantasy_ppr_g" if season_proj_sort else sort
-    sort_field = _SORT_FIELDS[sql_sort]
+    sort_field, sort_ascending = _SORT_FIELDS[sort]
 
     with closing(_db()) as connection:
         connection.row_factory = sqlite3.Row
         _draft_board_schema(connection)
+
         season_row = connection.execute(
-            "SELECT MAX(season) FROM player_stats WHERE league='nfl'"
+            "SELECT MAX(season) FROM player_game_logs WHERE league='nfl'"
         ).fetchone()
         season = season_row[0] if season_row else None
         if season is None:
@@ -603,153 +620,122 @@ def nfl_draft_board(
         roster_verified_at = roster_row[0] if roster_row else None
         roster_freshness = _roster_freshness(_today(), roster_verified_at)
 
-        position_expr = "UPPER(COALESCE(NULLIF(p.position,''), ps.nfl_position, ''))"
-        where = [
-            "p.league='nfl'",
-            "p.active=1",
-            "ps.league='nfl'",
-            "ps.season=?",
-            "ps.games>0",
-            f"{sort_field} IS NOT NULL",
-        ]
-        params: list = [season]
+        aggregates = _regular_season_aggregates(connection, season)
+
+        position_expr = "UPPER(COALESCE(NULLIF(p.position,''), ''))"
+        where = ["p.league='nfl'", "p.active=1"]
+        params: list = []
         if selected_position == "FLEX":
             where.append(f"{position_expr} IN ('RB','WR','TE')")
         elif selected_position:
             where.append(f"{position_expr}=?")
             params.append(selected_position)
         else:
-            where.append(f"{position_expr} IN ('QB','RB','WR','TE','FB')")
+            placeholders = ",".join("?" for _ in _SKILL_POSITIONS)
+            where.append(f"{position_expr} IN ({placeholders})")
+            params.extend(_SKILL_POSITIONS)
         where_sql = " AND ".join(where)
-        join_sql = "LEFT JOIN nfl_adp na ON na.player_id=p.id AND na.season=?"
 
-        if season_proj_sort:
-            # ── season_proj_pts sort: compute projections for ALL eligible,
-            #    sort in Python, then fetch player details for the slice ──
-            id_rows = connection.execute(
-                f"""SELECT p.id AS player_id
-                    FROM players p
-                    JOIN player_stats ps ON ps.player_id=p.id
-                    {join_sql}
-                    WHERE {where_sql}""",
-                [_CURRENT_SEASON, *params],
-            ).fetchall()
-            all_ids = [r["player_id"] for r in id_rows]
-            eligible = len(all_ids)
-
-            # Compute projections for the full eligible population
-            proj_map = _compute_season_projections(connection, all_ids)
-
-            # Sort eligible IDs by season_proj_pts DESC, then by games DESC, then name
-            def _sort_key(pid: int) -> tuple:
-                p = proj_map.get(pid, {})
-                pts = p.get("season_proj_pts")
-                return (0 if pts is not None else 1, -(pts or 0))
-
-            all_ids.sort(key=_sort_key)
-            page_ids = all_ids[offset : offset + limit]
-
-            if not page_ids:
-                rows = []
-            else:
-                id_placeholders = ",".join("?" for _ in page_ids)
-                order_clause = f"fantasy_ppr_g DESC"
-                rows = connection.execute(
-                    f"""SELECT p.id AS player_id, p.name, {position_expr} AS position,
-                               p.team AS current_team, COALESCE(NULLIF(ps.nfl_team,''), ps.team) AS reference_team,
-                               ps.games, ps.fantasy_ppr_g, ps.fantasy_pts_g,
-                               ps.pass_yds_g, ps.rush_yds_g, ps.rec_yds_g,
-                               ps.targets, ps.receptions, ps.carries_g,
-                               na.adp, na.percent_owned
-                        FROM players p
-                        JOIN player_stats ps ON ps.player_id=p.id
-                        {join_sql}
-                        WHERE p.id IN ({id_placeholders})
-                        ORDER BY {order_clause}, ps.games DESC, p.name COLLATE NOCASE""",
-                    [_CURRENT_SEASON, *page_ids],
-                ).fetchall()
-                # Reorder rows to match page_ids order
-                row_by_id = {r["player_id"]: r for r in rows}
-                rows = [row_by_id[pid] for pid in page_ids if pid in row_by_id]
-        else:
-            # ── normal sort: SQL ordering, compute projections for returned 50 ──
-            eligible = connection.execute(
-                f"""SELECT COUNT(*) FROM players p
-                    JOIN player_stats ps ON ps.player_id=p.id
-                    {join_sql}
-                    WHERE {where_sql}""",
-                [_CURRENT_SEASON, *params],
-            ).fetchone()[0]
-            order_clause = f"{sort_field} ASC" if sql_sort == "adp" else f"{sort_field} DESC"
-            nulls = "NULLS LAST" if sql_sort == "adp" else ""
-            rows = connection.execute(
-                f"""SELECT p.id AS player_id, p.name, {position_expr} AS position,
-                           p.team AS current_team, COALESCE(NULLIF(ps.nfl_team,''), ps.team) AS reference_team,
-                           ps.games, ps.fantasy_ppr_g, ps.fantasy_pts_g,
-                           ps.pass_yds_g, ps.rush_yds_g, ps.rec_yds_g,
-                           ps.targets, ps.receptions, ps.carries_g,
-                           na.adp, na.percent_owned
-                    FROM players p
-                    JOIN player_stats ps ON ps.player_id=p.id
-                    {join_sql}
-                    WHERE {where_sql}
-                    ORDER BY {order_clause} {nulls}, ps.games DESC, p.name COLLATE NOCASE
-                    LIMIT ? OFFSET ?""",
-                [_CURRENT_SEASON, *params, limit, offset],
-            ).fetchall()
-
-            # Compute projections for just the returned players
-            proj_map = _compute_season_projections(
-                connection, [r["player_id"] for r in rows]
-            )
+        candidates = connection.execute(
+            f"""SELECT p.id AS player_id, p.name, {position_expr} AS position,
+                       p.team AS current_team,
+                       na.adp, na.percent_owned,
+                       d.pos_rank AS depth_rank, d.team AS depth_team
+                FROM players p
+                LEFT JOIN nfl_adp na
+                       ON na.player_id=p.id AND na.season=?
+                LEFT JOIN nfl_depth_chart d
+                       ON d.player_id=p.id AND d.season=?
+                WHERE {where_sql}""",
+            [_CURRENT_SEASON, _CURRENT_SEASON, *params],
+        ).fetchall()
 
     roster_is_current = roster_freshness["status"] == "current"
     players = []
-    for index, row in enumerate(rows):
-        current_team = _normalize_team(row["current_team"])
-        reference_team = _normalize_team(row["reference_team"])
-        team_changed = None
-        if roster_is_current and current_team and reference_team:
-            team_changed = current_team != reference_team
+    for row in candidates:
         pid = row["player_id"]
-        proj = proj_map.get(pid, {})
+        agg = aggregates.get(pid)
+        adp = row["adp"]
+        ranked_adp = adp if (adp is not None and adp < _ADP_SENTINEL) else None
+
+        # Eligible if we have something true to say: a real season, or a real
+        # market price. A rookie with neither is not on the board at all --
+        # better absent than present with a fabricated zero.
+        if agg is None and ranked_adp is None:
+            continue
+
+        games_played = agg["games_played"] if agg else 0
+        ppr_total = (agg["ppr_total"] if agg else None) or None
+        if agg is None:
+            sample = "none"
+        elif games_played < _THIN_SAMPLE_GAMES:
+            sample = "thin"
+        else:
+            sample = "full"
+
         players.append({
-            "rank": offset + index + 1,
             "player_id": pid,
             "name": row["name"],
             "position": row["position"],
-            "current_team": current_team,
-            "reference_team": reference_team,
-            "team_changed": team_changed,
-            "games": row["games"],
-            "fantasy_ppr_g": row["fantasy_ppr_g"],
-            "fantasy_pts_g": row["fantasy_pts_g"],
-            "pass_yds_g": row["pass_yds_g"],
-            "rush_yds_g": row["rush_yds_g"],
-            "rec_yds_g": row["rec_yds_g"],
-            "targets": row["targets"],
-            "receptions": row["receptions"],
-            "carries_g": row["carries_g"],
-            "adp": row["adp"],
+            "current_team": _normalize_team(row["current_team"]),
+            # Current role, from the published depth chart. This is what a rookie
+            # has instead of a season.
+            "depth_rank": row["depth_rank"],
+            "depth_team": _normalize_team(row["depth_team"]) if row["depth_team"] else None,
+            "adp": ranked_adp,
+            "adp_is_ranked": ranked_adp is not None,
             "percent_owned": row["percent_owned"],
-            "season_proj_pts": proj.get("season_proj_pts"),
-            "games_assumed": proj.get("games_assumed"),
+            # Availability: the headline. Denominator is every game the team
+            # played, so a missed game costs the drafter exactly what it cost.
+            "games_played": games_played,
+            "team_games": _REG_SEASON_TEAM_GAMES,
+            "weeks_played": sorted(agg["weeks"]) if agg else [],
+            # Both averages, always together.
+            "ppr_per_game_played": _round(ppr_total / games_played) if ppr_total and games_played else None,
+            "ppr_per_team_game": _round(ppr_total / _REG_SEASON_TEAM_GAMES) if ppr_total else None,
+            "xfp_per_game": _round(agg["xfp_per_game"]) if agg else None,
+            "snap_pct": _round(agg["snap_pct"] * 100, 0) if agg and agg["snap_pct"] is not None else None,
+            "target_share": _round(agg["target_share"] * 100, 1) if agg and agg["target_share"] is not None else None,
+            "sample": sample,
+            "team_changed": None,
         })
+
+    if roster_is_current:
+        for player in players:
+            if player["depth_team"] and player["current_team"]:
+                player["team_changed"] = player["current_team"] != player["depth_team"]
+
+    def _key(player):
+        value = player.get(sort_field)
+        # Missing values sort last under either direction -- never at the top
+        # pretending to be a leader.
+        if value is None:
+            return (1, 0.0, player["name"].lower())
+        return (0, value if sort_ascending else -value, player["name"].lower())
+
+    players.sort(key=_key)
+    eligible = len(players)
+    page = players[offset: offset + limit]
+    for index, player in enumerate(page):
+        player["rank"] = offset + index + 1
+
     return {
         "contract": _DRAFT_BOARD_CONTRACT,
         "league": "nfl",
         "current_season": _CURRENT_SEASON,
         "reference_season": season,
         "scoring": "ppr",
+        "team_games": _REG_SEASON_TEAM_GAMES,
+        "thin_sample_games": _THIN_SAMPLE_GAMES,
         "sort": sort,
         "position": selected_position,
         "limit": limit,
         "offset": offset,
         "eligible_players": eligible,
-        "returned_players": len(players),
+        "returned_players": len(page),
         "roster": {
             "last_verified_at": roster_verified_at,
             "freshness": roster_freshness,
         },
-        "players": players,
+        "players": page,
     }
