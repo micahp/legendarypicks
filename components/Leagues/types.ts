@@ -171,7 +171,7 @@ export interface KnockoutRound {
 }
 
 export type SubView = 'players' | 'teams'
-export type HubTab = 'camp' | 'standings' | 'stats' | 'schedule' | 'rankings' | 'predict'
+export type HubTab = 'camp' | 'standings' | 'stats' | 'schedule' | 'rankings' | 'predict' | 'lineups'
 
 // ── NFL camp-mode contracts ──────────────────────────────────────────────
 
@@ -331,4 +331,55 @@ export interface NflUsageResponse {
   games: NflUsageGame[]
   averages: NflUsageAverages
   trend: NflUsageTrend
+}
+
+// ── NFL All Day (Flow blockchain moments) ────────────────────────────────
+
+export interface AllDayPlayerIdentity {
+  id: number
+  name: string
+  position: string
+  team: string
+  gsisId: string
+  active: boolean
+}
+
+export interface AllDayMoment {
+  momentId: number
+  displayName: string
+  thumbnail: string
+  url: string
+  firstName: string
+  lastName: string
+  position: string
+  teamName: string
+  teamAbbrev: string
+  playerNumber: string
+  playType: string
+  tier: string
+  serial: number
+  seriesName: string
+  setName: string
+  season: string
+  player: AllDayPlayerIdentity | null
+}
+
+// Why a collection is empty. The UI needs this to say something true rather
+// than showing "no moments" for a wallet that does not exist.
+export type AllDayStatus = 'ok' | 'no_account' | 'no_collection' | 'empty'
+
+export interface AllDayCollectionResponse {
+  address: string
+  moments: AllDayMoment[]
+  /** Moments in the whole collection. Can be far larger than `returned`. */
+  total: number
+  /** Moments on this page — what is actually rendered below. */
+  returned: number
+  matched: number
+  unmatched: number
+  offset: number
+  limit: number
+  status: AllDayStatus
+  /** Accounts the moments came from — a Dapper parent reads its child wallets. */
+  sources: string[]
 }

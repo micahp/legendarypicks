@@ -10,6 +10,7 @@ import NflCampHero from '../../components/Leagues/NflCampHero'
 import NflOffseasonMovers from '../../components/Leagues/NflOffseasonMovers'
 import NflDraftRoom from '../../components/Leagues/NflDraftRoom'
 import NflScheduleTab from '../../components/Leagues/NflScheduleTab'
+import LineupsTab from '../../components/Leagues/LineupsTab'
 import { useLeagueRouteState } from '../../components/Leagues/hooks/useLeagueRouteState'
 import { useScheduleData } from '../../components/Leagues/hooks/useScheduleData'
 import { useScheduleAutoDate } from '../../components/Leagues/hooks/useScheduleAutoDate'
@@ -37,6 +38,7 @@ const TAB_LABELS: Record<HubTab, string> = {
   schedule: 'Schedule',
   rankings: 'Rankings',
   predict: 'Predict',
+  lineups: 'Lineups',
 }
 
 export default function LeagueHubPage() {
@@ -284,6 +286,8 @@ export default function LeagueHubPage() {
             onSubmitPick={predict.submitPick}
           />
         )}
+
+        {route.activeTab === 'lineups' && <LineupsTab />}
       </div>
     </>
   )

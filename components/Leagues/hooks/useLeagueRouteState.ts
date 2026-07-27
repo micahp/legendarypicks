@@ -18,7 +18,7 @@ export function useLeagueRouteState() {
     : isWorldCup
       ? ['standings', 'schedule']
       : isNFL
-        ? ['camp', 'standings', 'stats', 'schedule']
+        ? ['camp', 'standings', 'stats', 'schedule', 'lineups']
         : ['standings', 'stats', 'schedule']
 
   const [activeTab, setActiveTab] = useState<HubTab>('standings')

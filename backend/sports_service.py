@@ -62,6 +62,7 @@ from routers import (  # noqa: E402
     ufc_picks,
     nfl_offseason,
     nfl_usage,
+    nfl_allday,
 )
 
 app = FastAPI(title="Legendary Picks Sports API", description="Multi-league sports data (ESPN)", version="2.0.0")
@@ -81,6 +82,7 @@ app.include_router(plays.router)
 app.include_router(ufc_picks.router)
 app.include_router(nfl_offseason.router)
 app.include_router(nfl_usage.router)
+app.include_router(nfl_allday.router)
 
 
 @app.on_event("startup")
