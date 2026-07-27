@@ -1,5 +1,23 @@
 # Changelog
 
+## v0.6.10 — 2026-07-27
+
+### You can look up a player instead of paging to him
+
+- **Search the draft board by name.** The board shipped with a position filter, a sort and
+  prev/next across 522 players at 50 a page — but draft research is name-driven. You arrive
+  wanting to know about one guy. Now you type him.
+- **Every token has to appear in the name, in any order**, because people type fragments in
+  whatever order they remember them: `ja gibbs` finds Jahmyr Gibbs, `rice` finds Rashee Rice.
+- **Narrowing happens in SQL, not in the browser.** Searching for one player costs one
+  player, not 522 rows filtered client-side. The input waits 250ms before asking, so typing
+  a name is one request rather than one per keystroke.
+- **A search that finds nothing says which search found nothing** — "No player named
+  "…" on the board" — instead of rendering an empty table and leaving you to guess whether
+  it broke.
+- Typed `%` and `_` match themselves. LIKE wildcards are escaped, so a stray `%` finds
+  nothing rather than returning the entire board.
+
 ## v0.6.9 — 2026-07-27
 
 ### The draft board is about availability now, not about who scored well when healthy
