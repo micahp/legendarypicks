@@ -25,7 +25,41 @@ can open. See R7, R8.
 
 ---
 
-## v0.7.0 — scope locked 2026-07-27
+## SUPERSEDED 2026-07-27 (later) — see "Build order" below
+
+> **The single-cut plan below was replaced by Micah the same day.** A and D now ship as
+> **two separate tagged releases**, and the prod deploy follows both. The scope of A and D
+> themselves is unchanged — only the packaging and sequence. Read the next section first;
+> everything under this heading is kept for the reasoning, not the plan.
+
+## Build order — set 2026-07-27 (current)
+
+1. **Push `feat/nfl-allday`** once Hermes' alias table lands.
+2. **Slice A** — draft notes to the server, keyed by `device_id`. → **tag a release.**
+3. **Slice D** — single-player mock draft vs ADP bots. → **tag a release.**
+4. **Prod deploy (R6).**
+5. **Data subscription**, which **coincides with accounts (slice B)** — the same auth build
+   supplies billing identity, the sign-up gate, *and* **multiplayer mock drafts**.
+
+Why the split: A and D are each a real feature, so each earns its own tag under the
+feature-releases-only rule, and A reaching prod does not have to wait on D being finished.
+
+**Open, not yet decided:**
+- **Version numbers.** Suggested: A = **v0.7.0**, D = **v0.8.0**, accounts + subscription +
+  multiplayer = **v0.9.0**. This shifts what this file previously called v0.8.0. Confirm
+  before the first `scripts/release.sh` run.
+- **Where R4 (NFL schedule through the API) goes.** It was the third item in the old single
+  cut and Micah's new sequence does not mention it. It is unblocked (B2/B3 resolved) and
+  currently homeless — attach it to A or D, or ship it separately.
+
+Sequencing note: this puts the **acquisition surface** (mock draft) in front of users before
+the **monetisation** (subscription), which is what `POSITIONING-2026-07-27.md` §6 and §10
+argue for — the subscription needs accounts anyway, and accounts are what make multiplayer
+possible, so one auth build pays for all three.
+
+---
+
+## v0.7.0 — scope locked 2026-07-27 (SUPERSEDED as one cut — see above)
 
 Cut as one release, then **deploy to prod (R6)**. Three things:
 
