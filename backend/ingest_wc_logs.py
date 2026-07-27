@@ -22,7 +22,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import espn_client as espn
 from _core import _normalize_name
-from ingest_nfl_logs import ensure_table
+from ingest_nfl_logs import ensure_table  # shared player_game_logs schema
 
 
 DB = os.environ.get("LP_DB_PATH") or os.path.join(
@@ -123,10 +123,15 @@ def _roster_players(summary: dict):
 class WCPlayerResolver:
     """Resolve ESPN names to existing WC players without fabricating rows."""
 
-    def __init__(self, con: sqlite3.Connection):
+    def __init__(self, con: sqlite3.Connection, allowed_player_ids=None):
         self.rows = [dict(row) for row in con.execute(
             "SELECT id, name, team FROM players WHERE league='wc'"
         )]
+        if allowed_player_ids is not None:
+            allowed = {int(player_id) for player_id in allowed_player_ids}
+            self.rows = [
+                row for row in self.rows if int(row["id"]) in allowed
+            ]
         for row in self.rows:
             row["name_norm"] = _normalize_name(row["name"])
             row["team_norm"] = (row.get("team") or "").upper()
@@ -178,7 +183,37 @@ class WCPlayerResolver:
                 or parts[0].startswith(row["name_norm"].split()[0])
             )
         ]
-        return nickname[0]["id"] if len(nickname) == 1 else None
+        if len(nickname) == 1:
+            return nickname[0]["id"]
+
+        # Feed names can combine a nickname with a clipped surname while ESPN
+        # uses the formal first name ("Alex Grimald" vs
+        # "Alejandro Grimaldo"). Allow that only when the team, first initial,
+        # and a surname prefix of at least five characters identify one row.
+        initial_surname = []
+        for row in self.rows:
+            row_parts = row["name_norm"].split()
+            if (
+                row["team_norm"] != team.upper()
+                or len(row_parts) < 2
+                or row_parts[0][:1] != parts[0][:1]
+            ):
+                continue
+            source_surname = parts[-1]
+            row_surname = row_parts[-1]
+            if (
+                min(len(source_surname), len(row_surname)) >= 5
+                and (
+                    source_surname.startswith(row_surname)
+                    or row_surname.startswith(source_surname)
+                )
+            ):
+                initial_surname.append(row)
+        return (
+            initial_surname[0]["id"]
+            if len(initial_surname) == 1
+            else None
+        )
 
 
 def _opponent(team: str, home_away: str, home: str, away: str):
