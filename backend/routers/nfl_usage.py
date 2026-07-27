@@ -348,9 +348,15 @@ def nfl_usage(
             # 20-attempt game are not on the same scale otherwise.
             att = _num(stats, "att", "attempts")
             game["pass_att"] = att
+            # Dropbacks, not attempts. `att` used to double as the dropback count
+            # only because the ingest counted sacks as attempts; now that it does
+            # not, dividing by `att` would overstate EPA per dropback. Fall back
+            # to `att` for rows written before the ingest fix, where the two are
+            # still the same number.
+            dropbacks = _num(stats, "dropbacks") or att
             game["epa_per_db"] = (
-                round(game["pass_epa"] / att, 3)
-                if (game["pass_epa"] is not None and att) else None
+                round(game["pass_epa"] / dropbacks, 3)
+                if (game["pass_epa"] is not None and dropbacks) else None
             )
             games.append(game)
 
