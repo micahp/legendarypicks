@@ -221,21 +221,29 @@ export interface NflDraftPlayer {
   name: string
   position: string
   current_team: string
-  reference_team: string
+  depth_team: string | null
   team_changed: boolean | null
-  games: number
-  fantasy_ppr_g: number
-  fantasy_pts_g: number
-  pass_yds_g: number | null
-  rush_yds_g: number | null
-  rec_yds_g: number | null
-  targets: number | null
-  receptions: number | null
-  carries_g: number | null
+  /** Current role from the published depth chart. 1 = starter. */
+  depth_rank: number | null
   adp: number | null
+  /** False when ADP is only ESPN's undrafted sentinel, not a real ranking. */
+  adp_is_ranked: boolean
   percent_owned: number | null
-  season_proj_pts: number | null
-  games_assumed: number | null
+  /** The headline: regular-season games played out of the team's 17. */
+  games_played: number
+  team_games: number
+  /** Weeks 1-18 he appeared in. The gaps are the story. */
+  weeks_played: number[]
+  /** The 17 weeks his team played, so a bye renders as a bye, not an absence. */
+  team_weeks: number[]
+  /** What every fantasy site shows - conditional on him being available. */
+  ppr_per_game_played: number | null
+  /** What the roster spot actually returned. */
+  ppr_per_team_game: number | null
+  xfp_per_game: number | null
+  snap_pct: number | null
+  target_share: number | null
+  sample: 'full' | 'thin' | 'none'
 }
 
 export interface NflDraftBoard {
@@ -244,6 +252,8 @@ export interface NflDraftBoard {
   current_season: number
   reference_season: number
   scoring: string
+  team_games: number
+  thin_sample_games: number
   sort: string
   position: string | null
   limit: number
@@ -257,7 +267,7 @@ export interface NflDraftBoard {
   players: NflDraftPlayer[]
 }
 
-export type NflDraftSort = 'fantasy_ppr_g' | 'fantasy_pts_g' | 'pass_yds_g' | 'rush_yds_g' | 'rec_yds_g' | 'targets' | 'adp' | 'season_proj_pts'
+export type NflDraftSort = 'adp' | 'ppr_per_team_game' | 'ppr_per_game_played' | 'xfp_per_game' | 'games_played' | 'snap_pct' | 'target_share'
 
 export interface NflDraftNotes {
   rank: Record<number, number>

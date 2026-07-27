@@ -4,15 +4,15 @@ import type { NflDraftBoard, NflDraftNotes, NflDraftPlayer, NflDraftSort } from 
 const POSITIONS = ['all', 'QB', 'RB', 'WR', 'TE', 'FB', 'FLEX'] as const
 export type DraftPosition = typeof POSITIONS[number]
 
+// Named for what the reader controls, not for how we compute it.
 const SORT_LABELS: Record<NflDraftSort, string> = {
   adp: 'ADP',
-  season_proj_pts: 'Season Proj',
-  fantasy_ppr_g: 'PPR/G',
-  fantasy_pts_g: 'Pts/G',
-  pass_yds_g: 'Pass Yds/G',
-  rush_yds_g: 'Rush Yds/G',
-  rec_yds_g: 'Rec Yds/G',
-  targets: 'Targets',
+  ppr_per_team_game: 'PPR / team game',
+  ppr_per_game_played: 'PPR / game played',
+  xfp_per_game: 'Expected PPR',
+  games_played: 'Availability',
+  snap_pct: 'Snap share',
+  target_share: 'Target share',
 }
 
 const STORAGE_KEY = 'lp_nfl_draft_notes'

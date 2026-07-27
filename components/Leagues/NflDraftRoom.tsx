@@ -108,11 +108,33 @@ export default function NflDraftRoom({
                   <th className="text-left py-3 pl-4 pr-2 w-10">#</th>
                   <th className="text-left py-3 px-2">Player</th>
                   <th className="text-center py-3 px-2">Pos</th>
-                  <th className="text-center py-3 px-2">Team</th>
-                  <th className="text-right py-3 px-2">G</th>
+                  <th className="text-left py-3 px-2 min-w-[9.5rem]">
+                    Available
+                    <span className="ml-1 font-normal normal-case tracking-normal text-zinc-600">
+                      of {data.team_games}
+                    </span>
+                  </th>
+                  <th className="text-right py-3 px-2">
+                    PPR
+                    <span className="block font-normal normal-case tracking-normal text-zinc-600">
+                      / game played
+                    </span>
+                  </th>
+                  <th className="text-right py-3 px-2">
+                    PPR
+                    <span className="block font-normal normal-case tracking-normal text-zinc-600">
+                      / team game
+                    </span>
+                  </th>
+                  <th className="text-right py-3 px-2">
+                    Expected
+                    <span className="block font-normal normal-case tracking-normal text-zinc-600">
+                      PPR / game
+                    </span>
+                  </th>
+                  <th className="text-right py-3 px-2">Snap</th>
+                  <th className="text-right py-3 px-2">Tgt</th>
                   <th className="text-right py-3 px-2">ADP</th>
-                  <th className="text-right py-3 px-2">Season Proj</th>
-                  {sort !== 'adp' && sort !== 'season_proj_pts' && <th className="text-right py-3 px-2">{SORT_LABELS[sort]}</th>}
                   <th className="text-right py-3 px-2">
                     <span className="inline-flex items-center gap-1">
                       Rank
@@ -128,7 +150,6 @@ export default function NflDraftRoom({
                   <DraftPlayerRow
                     key={player.player_id}
                     player={player}
-                    sort={sort}
                     noteRank={notes.rank[player.player_id]}
                     watched={notes.watch[player.player_id] === true}
                     faded={notes.fade[player.player_id] === true}
@@ -165,7 +186,6 @@ export default function NflDraftRoom({
 
 function DraftPlayerRow({
   player,
-  sort,
   noteRank,
   watched,
   faded,
@@ -174,7 +194,6 @@ function DraftPlayerRow({
   onToggleFade,
 }: {
   player: NflDraftPlayer
-  sort: NflDraftSort
   noteRank: number | undefined
   watched: boolean
   faded: boolean
@@ -182,13 +201,9 @@ function DraftPlayerRow({
   onToggleWatch: () => void
   onToggleFade: () => void
 }) {
-  const sortValue = player[sort]
-  const sortDisplay =
-    sortValue != null
-      ? typeof sortValue === 'number'
-        ? sortValue.toFixed(1)
-        : String(sortValue)
-      : '—'
+  const noSample = player.sample === 'none'
+  const thin = player.sample === 'thin'
+  const missed = player.team_games - player.games_played
 
   return (
     <tr className="border-b border-zinc-800/50 hover:bg-zinc-800/30">
@@ -202,20 +217,70 @@ function DraftPlayerRow({
         >
           {player.name}
         </a>
+        <div className="text-[10px] text-zinc-600">
+          {player.current_team}
+          {player.depth_rank != null && ` · ${player.position}${player.depth_rank}`}
+          {/* A team change is information, not an achievement — no accent. */}
+          {player.team_changed === true && player.depth_team && (
+            <span className="ml-1 text-zinc-500">from {player.depth_team}</span>
+          )}
+        </div>
       </td>
       <td className="py-2.5 px-2 text-center">
         <span className="rounded bg-zinc-800 px-1.5 py-0.5 text-[11px] font-semibold uppercase text-zinc-400">
           {player.position}
         </span>
       </td>
-      <td className="py-2.5 px-2 text-center text-zinc-400 text-xs">
-        {player.current_team}
-        {player.team_changed === true && (
-          <span className="ml-1 text-emerald-400" title={`Was ${player.reference_team}`}>↗</span>
+
+      {/* Availability — the headline. Accent marks the games he missed. */}
+      <td className="py-2.5 px-2">
+        {noSample ? (
+          <span className="text-[11px] text-zinc-500">No NFL sample</span>
+        ) : (
+          <>
+            <div className="flex items-baseline gap-1.5">
+              <span
+                className={`font-mono tabular-nums text-sm font-semibold ${
+                  missed > 0 ? 'text-amber-400' : 'text-zinc-300'
+                }`}
+              >
+                {player.games_played}/{player.team_games}
+              </span>
+              {missed > 0 && (
+                <span className="text-[10px] text-zinc-600">
+                  missed {missed}
+                </span>
+              )}
+            </div>
+            <AvailabilityStrip
+              weeksPlayed={player.weeks_played}
+              teamWeeks={player.team_weeks}
+              name={player.name}
+            />
+          </>
         )}
       </td>
+
+      {/* Both averages, side by side. They diverge exactly when availability drops. */}
+      <td className="py-2.5 px-2 text-right font-mono tabular-nums">
+        <StatValue value={player.ppr_per_game_played} muted={thin} />
+        {thin && !noSample && (
+          <div className="text-[10px] font-normal text-zinc-600">
+            n={player.games_played}
+          </div>
+        )}
+      </td>
+      <td className="py-2.5 px-2 text-right font-mono tabular-nums">
+        <StatValue value={player.ppr_per_team_game} strong />
+      </td>
+      <td className="py-2.5 px-2 text-right font-mono tabular-nums">
+        <StatValue value={player.xfp_per_game} />
+      </td>
       <td className="py-2.5 px-2 text-right font-mono tabular-nums text-zinc-400 text-xs">
-        {player.games}
+        {player.snap_pct != null ? `${player.snap_pct.toFixed(0)}%` : '—'}
+      </td>
+      <td className="py-2.5 px-2 text-right font-mono tabular-nums text-zinc-400 text-xs">
+        {player.target_share != null ? `${player.target_share.toFixed(1)}%` : '—'}
       </td>
       <td className="py-2.5 px-2 text-right font-mono tabular-nums text-zinc-300 font-semibold">
         {player.adp != null ? player.adp.toFixed(1) : '—'}
@@ -223,17 +288,6 @@ function DraftPlayerRow({
           <div className="text-[10px] font-normal text-zinc-600">{player.percent_owned.toFixed(1)}% owned</div>
         )}
       </td>
-      <td className="py-2.5 px-2 text-right font-mono tabular-nums text-zinc-300 font-semibold">
-        {player.season_proj_pts != null ? player.season_proj_pts.toFixed(1) : '—'}
-        {player.games_assumed != null && (
-          <div className="text-[10px] font-normal text-zinc-600">{player.games_assumed} gms assumed</div>
-        )}
-      </td>
-      {sort !== 'adp' && sort !== 'season_proj_pts' && (
-        <td className="py-2.5 px-2 text-right font-mono tabular-nums text-zinc-300 font-semibold">
-          {sortDisplay}
-        </td>
-      )}
       <td className="py-2.5 px-2 text-right">
         <input
           type="number"
@@ -280,6 +334,69 @@ function DraftPlayerRow({
         </button>
       </td>
     </tr>
+  )
+}
+
+/** A dash that is visibly not a zero. Absence is a claim about us. */
+function StatValue({
+  value,
+  strong,
+  muted,
+}: {
+  value: number | null
+  strong?: boolean
+  muted?: boolean
+}) {
+  if (value == null) return <span className="text-zinc-700">—</span>
+  return (
+    <span
+      className={
+        muted
+          ? 'text-zinc-500'
+          : strong
+            ? 'text-zinc-200 font-semibold'
+            : 'text-zinc-400'
+      }
+    >
+      {value.toFixed(1)}
+    </span>
+  )
+}
+
+/**
+ * One cell per game the player's team actually played — 17, not 18, because a
+ * bye is not an absence. Played renders quiet; the saturated colour is reserved
+ * for the games he missed, which is the information no competitor shows.
+ */
+function AvailabilityStrip({
+  weeksPlayed,
+  teamWeeks,
+  name,
+}: {
+  weeksPlayed: number[]
+  teamWeeks: number[]
+  name: string
+}) {
+  if (teamWeeks.length === 0) return null
+  const played = new Set(weeksPlayed)
+  const missedCount = teamWeeks.filter(week => !played.has(week)).length
+
+  return (
+    <div
+      className="mt-1 flex gap-[2px]"
+      role="img"
+      aria-label={`${name} played ${weeksPlayed.length} of ${teamWeeks.length} games, missing ${missedCount}`}
+    >
+      {teamWeeks.map(week => (
+        <span
+          key={week}
+          title={`Week ${week}: ${played.has(week) ? 'played' : 'did not play'}`}
+          className={`h-3 w-[5px] rounded-[1px] ${
+            played.has(week) ? 'bg-zinc-700' : 'bg-amber-500'
+          }`}
+        />
+      ))}
+    </div>
   )
 }
 
