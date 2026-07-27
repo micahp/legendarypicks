@@ -142,8 +142,14 @@ def pool(season: int = Query(...)):
         # appeared in, and which weeks.  Mirrors ``_regular_season_aggregates``
         # in nfl_offseason.py.
         # ------------------------------------------------------------------
-        # Use prior season for game logs — the draft season hasn't started yet.
-        _log_season = _CURRENT_SEASON - 1
+        # Use the most recent completed season for availability data —
+        # derived from the data itself the way the board does, not hardcoded,
+        # so the pool rolls forward when new logs land.
+        _log_season_row = connection.execute(
+            "SELECT MAX(season) FROM player_game_logs WHERE league='nfl'"
+        ).fetchone()
+        _log_season = (_log_season_row[0] if _log_season_row and _log_season_row[0]
+                       else _CURRENT_SEASON - 1)
         agg_rows = connection.execute(
             """SELECT player_id, COUNT(*) AS games_played
                FROM player_game_logs
@@ -170,6 +176,32 @@ def pool(season: int = Query(...)):
             if pid not in weeks_played_map:
                 weeks_played_map[pid] = []
             weeks_played_map[pid].append(row["week"])
+
+        # ------------------------------------------------------------------
+        # Team weeks — which weeks each team actually played (bye-aware).
+        # Derived from the logs the way the board does
+        # (nfl_offseason.py:571-605), so the availability strip's 18 slots
+        # show the bye as an empty cell rather than a fake absence.
+        # ------------------------------------------------------------------
+        from collections import defaultdict
+        _team_weeks_raw: dict[str, set[int]] = defaultdict(set)
+        for tw_row in connection.execute(
+            """SELECT team, CAST(game_no AS INTEGER) AS week
+               FROM player_game_logs
+               WHERE league='nfl' AND season=? AND team IS NOT NULL
+                 AND CAST(game_no AS INTEGER) < ?
+               GROUP BY team, game_no""",
+            (_log_season, _POSTSEASON_FIRST_WEEK),
+        ):
+            try:
+                _team_weeks_raw[tw_row["team"]].add(tw_row["week"])
+            except (TypeError, ValueError):
+                continue
+        # Fall back for any team not in the logs (mid-season movers, etc.)
+        _team_weeks_fallback = list(range(1, _REG_SEASON_TEAM_GAMES + 1))
+        team_weeks_map: dict[str, list[int]] = {
+            team: sorted(weeks) for team, weeks in _team_weeks_raw.items()
+        }
 
         # ------------------------------------------------------------------
         # Query the pool: draftable positions, active players, from nfl_adp.
@@ -231,7 +263,7 @@ def pool(season: int = Query(...)):
                     "games_played": games_played,
                     "games_missed": games_missed,
                     "weeks_played": weeks_played_map.get(pid, []),
-                    "team_weeks": list(range(1, _REG_SEASON_TEAM_GAMES + 1)),
+                    "team_weeks": team_weeks_map.get(row["team"], _team_weeks_fallback),
                 }
             )
 
