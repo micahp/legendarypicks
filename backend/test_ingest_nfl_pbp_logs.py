@@ -7,12 +7,14 @@ test.
 
 No network: nfl_data_py.import_pbp_data is replaced with a synthetic frame.
 """
+import io
 import json
 import os
 import sqlite3
 import sys
 import tempfile
 import unittest
+from contextlib import redirect_stdout
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
@@ -157,6 +159,52 @@ class PbpRetentionTests(unittest.TestCase):
         self.mod.ingest(2025)
         con = sqlite3.connect(self.db)
         self.assertEqual(con.execute("SELECT COUNT(*) FROM nfl_pbp").fetchone()[0], 3)
+
+    def test_existing_enrichment_and_legacy_keys_are_preserved(self):
+        con = sqlite3.connect(self.db)
+        self.mod.ensure_table(con)
+        existing_stats = {
+            "pass_yds": 999,
+            "fpts": 999,
+            "off_pct": 0.82,
+            "separation": 2.4,
+            "passing_yards": 999,
+        }
+        cursor = con.execute(
+            """INSERT INTO player_game_logs
+               (player_id, league, season, game_no, game_id, game_date, team,
+                opponent, home_away, stats, source, source_player_key)
+               VALUES (1, 'nfl', 2025, '1', '2025_01_ARI_SEA', NULL, 'SEA',
+                       'ARI', NULL, ?, 'nflverse', '00-0000001')""",
+            (json.dumps(existing_stats),),
+        )
+        original_row_id = cursor.lastrowid
+        con.commit()
+        con.close()
+
+        output = io.StringIO()
+        with redirect_stdout(output):
+            self.mod.ingest(2025)
+
+        con = sqlite3.connect(self.db)
+        row = con.execute(
+            """SELECT id, stats FROM player_game_logs
+               WHERE league='nfl' AND source_player_key='00-0000001'
+                 AND season=2025 AND game_no='1'"""
+        ).fetchone()
+        con.close()
+        stats = json.loads(row[1])
+
+        self.assertEqual(original_row_id, row[0])
+        self.assertEqual(12, stats["pass_yds"])
+        self.assertEqual(0.48, stats["fpts"])
+        self.assertEqual(0.82, stats["off_pct"])
+        self.assertEqual(2.4, stats["separation"])
+        self.assertEqual(999, stats["passing_yards"])
+        self.assertIn(
+            "preserved 3 existing stat keys across 1 player-game rows",
+            output.getvalue().lower(),
+        )
 
 
 if __name__ == "__main__":

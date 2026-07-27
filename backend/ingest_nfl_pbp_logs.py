@@ -39,6 +39,12 @@ _PLAY_COLS = [
     "series", "series_result", "drive", "success", "shotgun",
 ]
 
+_ROLLUP_STAT_FIELDS = [
+    "att", "cmp", "pass_yds", "pass_td", "intc", "air_yds", "pass_epa", "cpoe",
+    "carries", "rush_yds", "rush_td", "targets", "rec", "rec_yds", "rec_td",
+]
+_ROLLUP_OWNED_STATS = set(_ROLLUP_STAT_FIELDS) | {"fpts", "fpts_ppr"}
+
 
 def ensure_pbp_table(con: sqlite3.Connection) -> None:
     """Create nfl_pbp (additive, idempotent). One row per play."""
@@ -51,6 +57,34 @@ def ensure_pbp_table(con: sqlite3.Connection) -> None:
     con.execute("CREATE INDEX IF NOT EXISTS idx_pbp_rusher ON nfl_pbp(rusher_player_id, season)")
     con.execute("CREATE INDEX IF NOT EXISTS idx_pbp_receiver ON nfl_pbp(receiver_player_id, season)")
     con.commit()
+
+
+def load_existing_stats(con: sqlite3.Connection, year: int) -> dict:
+    """Return the current season rollups keyed by their source natural key."""
+    existing = {}
+    for row in con.execute(
+        """SELECT source_player_key, game_no, stats
+           FROM player_game_logs
+           WHERE league='nfl' AND season=?
+             AND source_player_key IS NOT NULL AND game_no IS NOT NULL""",
+        (year,),
+    ):
+        try:
+            stats = json.loads(row["stats"])
+        except (TypeError, ValueError) as exc:
+            raise RuntimeError(
+                "invalid NFL stats JSON for source_player_key={} game_no={}".format(
+                    row["source_player_key"], row["game_no"]
+                )
+            ) from exc
+        if not isinstance(stats, dict):
+            raise RuntimeError(
+                "NFL stats must be an object for source_player_key={} game_no={}".format(
+                    row["source_player_key"], row["game_no"]
+                )
+            )
+        existing[(str(row["source_player_key"]), str(row["game_no"]))] = stats
+    return existing
 
 
 def ingest(year: int = 2025) -> int:
@@ -92,6 +126,7 @@ def ingest(year: int = 2025) -> int:
 
     con = sqlite3.connect(DB); con.row_factory = sqlite3.Row
     ensure_table(con)
+    existing_stats = load_existing_stats(con, year)
 
     # Retain the plays before deriving anything from them.
     ensure_pbp_table(con)
@@ -129,35 +164,66 @@ def ingest(year: int = 2025) -> int:
             + s.get("rush_yds", 0) * 0.1 + s.get("rush_td", 0) * 6
             + s.get("rec_yds", 0) * 0.1 + s.get("rec_td", 0) * 6 + s.get("rec", 0) * ppr, 2)
 
-    STAT_FIELDS = ["att", "cmp", "pass_yds", "pass_td", "intc", "air_yds", "pass_epa", "cpoe",
-                   "carries", "rush_yds", "rush_td", "targets", "rec", "rec_yds", "rec_td"]
     ingested = 0
+    preserved_key_count = 0
+    preserved_row_count = 0
+    preserved_key_names = set()
     for _, row in merged.iterrows():
         gsis = str(row["pid"])
         pid = gsis_to_player.get(gsis)
-        s = {}
-        for f in STAT_FIELDS:
+        owned_stats = {}
+        for f in _ROLLUP_STAT_FIELDS:
             v = row.get(f)
             if v is None or v != v:  # NaN
                 continue
             fv = float(v)
-            s[f] = int(fv) if fv.is_integer() else round(fv, 2)
-        s["fpts"] = fpts(s); s["fpts_ppr"] = fpts(s, 1.0)
+            owned_stats[f] = int(fv) if fv.is_integer() else round(fv, 2)
+        owned_stats["fpts"] = fpts(owned_stats)
+        owned_stats["fpts_ppr"] = fpts(owned_stats, 1.0)
+        game_no = str(int(row["week"]))
+        preserved = {
+            key: value
+            for key, value in existing_stats.get((gsis, game_no), {}).items()
+            if key not in _ROLLUP_OWNED_STATS
+        }
+        if preserved:
+            preserved_key_count += len(preserved)
+            preserved_row_count += 1
+            preserved_key_names.update(preserved)
+        stats = dict(preserved)
+        stats.update(owned_stats)
         game_date, home_team = game_meta.get(row["game_id"], (None, None))
         home_away = ("home" if row["posteam"] == home_team else "away") if home_team else None
         con.execute(
-            """INSERT OR REPLACE INTO player_game_logs
+            """INSERT INTO player_game_logs
                (player_id, league, season, game_no, game_id, game_date, team,
                 opponent, home_away, stats, source, source_player_key)
-               VALUES (?,?,?,?,?,?,?,?,?,?,?,?)""",
-            (pid, "nfl", year, str(int(row["week"])), row["game_id"], game_date,
-             row["posteam"], row["defteam"], home_away, json.dumps(s), "nflverse_pbp", gsis))
+               VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
+               ON CONFLICT(league, source_player_key, season, game_no) DO UPDATE SET
+                 player_id=COALESCE(excluded.player_id, player_game_logs.player_id),
+                 game_id=excluded.game_id,
+                 game_date=COALESCE(excluded.game_date, player_game_logs.game_date),
+                 team=excluded.team,
+                 opponent=excluded.opponent,
+                 home_away=COALESCE(excluded.home_away, player_game_logs.home_away),
+                 stats=excluded.stats,
+                 source=excluded.source""",
+            (pid, "nfl", year, game_no, row["game_id"], game_date,
+             row["posteam"], row["defteam"], home_away, json.dumps(stats),
+             "nflverse_pbp", gsis))
         ingested += 1
 
     con.commit()
     resolved = con.execute(
         "SELECT COUNT(*) FROM player_game_logs WHERE league='nfl' AND season=? AND source='nflverse_pbp' AND player_id IS NOT NULL",
         (year,)).fetchone()[0]
+    print(
+        "  Preserved {} existing stat keys across {} player-game rows ({})".format(
+            preserved_key_count,
+            preserved_row_count,
+            ", ".join(sorted(preserved_key_names)) or "none",
+        )
+    )
     print(f"  Ingested {ingested} NFL pbp game-logs ({resolved} spine-resolved)")
     con.close()
     return ingested
