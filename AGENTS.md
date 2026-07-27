@@ -196,6 +196,15 @@ Caught at review (orchestrator), should have been caught by the feature's own va
   not `git add -A`) — they then block merges with dirty-tree errors.
 
 ## 11. Operating rules
+- **Never run `npm`, `npx` or `yarn` from a worktree — not install, not build, not test.** A
+  worktree's `node_modules` is a **symlink to `/root/legendarypicks/node_modules`**, so npm resolves
+  against the shared install and prunes it: on 2026-07-27 an `npm exec next dev` and later an
+  `npm run build`, both from worktrees, each emptied it to **zero packages** and took the main dev
+  frontend and the public tunnel down. Run binaries directly instead —
+  `/root/legendarypicks/node_modules/.bin/next`, `.../.bin/jest`, `.../.bin/tsc`.
+  **If `npm run build` fails with `next: not found`, that is not a missing dependency — it is the
+  install you just deleted. Stop and report it; do not retry and do not reinstall.** Recovery is
+  `npm ci` in the MAIN repo (~45s), then relaunch the server from the binary.
 - **Dev servers are externally managed.** A frontend is already running on `:3096` and a backend on
   `:8096`. Verify against those services and re-request a page or endpoint if it appears stale.
 - **Never start, kill, or restart a dev server.** Never run `kill` or `pkill` against Node or uvicorn;
@@ -244,9 +253,16 @@ a live dev server and tunnel a human is actively browsing.
   own servers never bound (Cloudflare 1033 on the user's end). Quick tunnels get a **new URL** each
   restart, so this is not cheap to undo.
 - If the frontend wedges — a route 500s with `ENOENT ... .next/server/pages/<route>.js` while the
-  process still looks alive — the `.next` build cache is corrupted (memory pressure during a rebuild
-  does this). Recovery is `kill -9` + `rm -rf .next` + relaunch. A plain restart does not unstick it.
-  **Ask first**, per §11 — it's externally managed.
-- Relaunch is `npm run dev -- --port 3096`. **The `--` matters**: `npm run dev --port 3096` silently
-  passes `3096` as a positional and Next treats it as a project directory
-  (`Invalid project directory provided, no such directory: /root/legendarypicks/3096`).
+  process still looks alive — **run `ls node_modules | wc -l` BEFORE touching `.next`.** If it is 0,
+  the cause is a worktree `npm`/`npx` having pruned the shared install (§11), the server has been
+  serving deleted inodes, and `rm -rf .next` alone fixes nothing: recover with `npm ci` in the main
+  repo first. This exact symptom was misdiagnosed as build corruption twice on 2026-07-27. Only once
+  `node_modules` is intact is the answer `kill` + `rm -rf .next` + relaunch — a corrupt cache (from
+  memory pressure during a rebuild, or a branch checkout under the running server) presents the same
+  way. **Ask first**, per §11 — it's externally managed.
+- Relaunch is `./node_modules/.bin/next dev --port 3096`, run from `/root/legendarypicks`.
+  **Not `npx next`** — that decides the pinned `next@13.0.0` is unsatisfying and fetches `next@16`.
+  **Not `npm run dev`** from a worktree, per §11. If you do use `npm run dev` in the main repo, the
+  `--` matters: `npm run dev --port 3096` silently passes `3096` as a positional and Next treats it
+  as a project directory (`Invalid project directory provided, no such directory:
+  /root/legendarypicks/3096`).
