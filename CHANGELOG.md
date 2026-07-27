@@ -1,5 +1,67 @@
 # Changelog
 
+## v0.6.8 — 2026-07-27
+
+### NFL: the numbers now come from the published source, and the calendar exists
+
+- **Per-game NFL stats are copied from nflverse's maintained weekly box score instead of
+  re-derived from play-by-play.** `ingest_nfl_pbp_logs.py` aggregated a 372-column
+  play-by-play feed into per-player-game lines, justified by a docstring claiming the
+  weekly summary "404s for 2025". It does not — the release was renamed `player_stats` →
+  `stats_player`, returns 200 for both 2024 and 2025, and carries 145 columns including
+  `passing_epa` and `passing_cpoe`. Every defect fixed in the previous release was a bug in
+  a reimplementation of arithmetic nflverse already does correctly. Verification against a
+  copied source is tautological; against a derivation it is a permanent project.
+- **The 2025 postseason exists for the first time — 258 player-games.** Weeks 19–22 had
+  zero rows. The play-by-play path had never produced playoff data at all, so no amount of
+  fixing it would have surfaced Stafford's wk19–21 run or Rodgers' wk19.
+- **Fantasy points are correct.** The hand-rolled scorer omitted fumbles lost (184 rows),
+  two-point conversions (83) and special-teams touchdowns (15). All 5,635 stored rows now
+  reconcile against the published artifact with zero mismatches.
+- **The 2026 schedule is ingested** — 272 regular-season games from nflverse's `games.csv`,
+  opener 2026-09-09, into a new `nfl_schedule` table plus reciprocal `team_game_results`
+  rows at `status='scheduled'`. Nothing in the database previously held an NFL schedule:
+  the only writer accepted games whose ESPN status was already `post`, so by construction
+  it could never record a fixture that had not been played. With the season 44 days out,
+  "who does this player face in week 1" was unanswerable.
+- Schedule rows carry kickoff time, rest days, roof and surface, spread and total lines,
+  coaches and starting-QB ids — the inputs a draft or sit/start board needs.
+- **Play retention is unaffected.** `nfl_pbp` keeps its 46,452 plays; only the rollup half
+  of that ingest was retired. Raw plays are additive, the derived summary was not.
+- Guards on the schedule ingest, both mutation-tested: empty source cells read as NULL
+  rather than 0, so an unplayed fixture is never stored as a completed 0–0 tie; and scores
+  upsert through `COALESCE`, so re-running a season in progress cannot blank a result.
+  No `team_stats_coverage` manifest is written for 2026 — the NFL aggregate is bounded by
+  the newest manifest, and one would have pulled 272 unplayed games into season totals.
+- Ingests print their artifact's sha256 on every run. nflverse rewrites files in place, so
+  the digest is the only thing that makes a run reproducible.
+- **+23 tests**, each assertion checked against a deliberately broken implementation rather
+  than only a passing one.
+
+### UFC: the fight-stats ingest can no longer lose data
+
+- **Rebuilt as a planned, additive write.** The whole plan is fetched and validated before a
+  writable connection is opened, then applied in one short transaction, with typed plan
+  structures so what will be written is inspectable first.
+- The only log write is `INSERT OR IGNORE`. There is no `DELETE`, no `DROP` and no
+  `INSERT OR REPLACE` in the module, so a re-run cannot erase another ingest's enrichment —
+  the failure mode that cost the NFL 2024 season its snap and Next Gen keys twice over.
+- `--dry-run` and `--apply` are mutually exclusive with no default write, and `--apply`
+  requires an integrity-checked pre-write backup path. Identity and game-link updates only
+  fill blanks and raise rather than overwrite an existing link.
+- A distinct `SourceUnavailable` error keeps an upstream failure from being recorded as
+  "this fighter had no stats."
+
+### World Cup
+
+- **Clipped-nickname player names resolve.** Feeds can combine a nickname with a shortened
+  surname while ESPN uses the formal first name ("Alex Grimald" vs "Alejandro Grimaldo").
+  The new last-resort match requires same team, matching first initial and a five-character
+  surname prefix identifying exactly one player, and declines rather than guessing.
+
+> Data-layer release. The corrected numbers, the postseason and the 2026 schedule reach
+> users on the next production deploy; prod continues to serve the previous data until then.
+
 ## v0.6.7 — 2026-07-26
 
 ### NFL player page: usage is now its own tab
