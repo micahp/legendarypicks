@@ -361,6 +361,8 @@ export interface AllDayMoment {
   seriesName: string
   setName: string
   season: string
+  /** False for team highlights (e.g. "Team Melt"), which name no player on chain. */
+  isPlayerMoment: boolean
   player: AllDayPlayerIdentity | null
 }
 
@@ -375,8 +377,12 @@ export interface AllDayCollectionResponse {
   total: number
   /** Moments on this page — what is actually rendered below. */
   returned: number
+  /** Player moments we resolved to our spine. */
   matched: number
+  /** Player moments we could NOT resolve — our gap. */
   unmatched: number
+  /** Moments that name no player on chain — not a join failure. */
+  nonPlayer: number
   offset: number
   limit: number
   status: AllDayStatus

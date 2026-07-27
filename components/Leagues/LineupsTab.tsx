@@ -123,6 +123,12 @@ export default function LineupsTab() {
                   {data.unmatched.toLocaleString()} not matched to a player
                 </span>
               )}
+              {data.nonPlayer > 0 && (
+                <span className="text-zinc-500 tabular-nums">
+                  {data.nonPlayer.toLocaleString()} team moment
+                  {data.nonPlayer !== 1 ? 's' : ''}
+                </span>
+              )}
               {data.sources.length > 0 && data.sources[0] !== data.address && (
                 <span className="text-xs text-zinc-500 font-mono">
                   via linked account{data.sources.length !== 1 ? 's' : ''}{' '}
@@ -226,7 +232,10 @@ function EmptyResult({ status, address }: { status: AllDayStatus; address: strin
 
 function MomentCard({ moment }: { moment: AllDayMoment }) {
   const hasPlayer = !!moment.player && moment.player.name
-  const isUnmatched = !moment.player
+  // A team highlight names no player on chain. Calling that "not in player database"
+  // blames our spine for data AllDay never published — the opposite of honest.
+  const isTeamMoment = moment.isPlayerMoment === false
+  const isUnmatched = !moment.player && !isTeamMoment
 
   return (
     <div
@@ -286,6 +295,14 @@ function MomentCard({ moment }: { moment: AllDayMoment }) {
           <div className="mt-1">
             <span className="text-xs text-amber-500/70">
               Unmatched — {moment.firstName} {moment.lastName} not in player database
+            </span>
+          </div>
+        )}
+
+        {isTeamMoment && (
+          <div className="mt-1">
+            <span className="text-xs text-zinc-500">
+              Team moment — All Day names no player for this one
             </span>
           </div>
         )}

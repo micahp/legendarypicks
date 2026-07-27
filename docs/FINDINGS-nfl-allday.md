@@ -228,3 +228,67 @@ has simply never held All Day.
   which loads the NFL spine once per request into a name-indexed dict.
 - **Every player link 404'd.** Moments linked to `/players/{id}`; the route is
   `/player/[id]`.
+
+---
+
+# ADDENDUM 2 — the ~94% match rate was wrong, and wrong in our favour
+
+Measured across **1,591 moments from 8 real mainnet wallets** after paging landed.
+
+## The number
+
+| | count | share |
+|---|---|---|
+| matched to our spine | 1,510 | 94.9% |
+| **team moments — no player on chain** | **51** | **3.2%** |
+| genuine join misses | 30 | 1.9% |
+
+**Player-moment match rate is 98.1%, not 94%.** The earlier figure counted team moments as
+join failures.
+
+## Team moments are not failures
+
+70 of 77 unmatched on one wallet page were `playType: "Team Melt"` in the set **"What a Drive"**,
+with `playerFirstName`/`playerLastName` **empty on chain**. The `Display.name` is literally
+`"  Fumble Recovery"` — two leading spaces where a player name would go. The remaining 7 were
+"One to Remember", same shape.
+
+These are team highlights. AllDay publishes no player for them **by design**. The UI was
+labelling them *"not in player database"*, which blames our spine for data that was never
+published — the exact inversion the honest-data-ui doctrine forbids (absence is a claim about
+us; this is a claim about the source).
+
+Fixed: the API now returns `nonPlayer` alongside `matched`/`unmatched`, each moment carries
+`isPlayerMoment`, and the UI renders *"Team moment — All Day names no player for this one"* in
+neutral grey rather than amber.
+
+**Consequence for the lineup product:** roughly 3% of a collection can never enter a lineup.
+Any "build a lineup from your wallet" flow must classify these, not fail them.
+
+## The 30 genuine misses are a nickname class, not a data hole
+
+All five distinct players **are in our spine**, under a different name form:
+
+| AllDay | our spine | class |
+|---|---|---|
+| Gabriel Davis | Gabe Davis (WR/BUF) | formal → familiar |
+| Gregory Rousseau | Greg Rousseau (**LB**/BUF) | formal → familiar **+ position disagreement** |
+| Michael Vick | Mike Vick (QB/PIT) | formal → familiar |
+| Scotty Miller | Scott Miller (WR) — **two of them** | nickname, genuinely ambiguous |
+| Robby Anderson | **Robbie Chosen** (WR/WAS) | legal name change, 2022 |
+
+So the identity join is ~100% *resolvable*; the residual is an enumerable naming problem.
+
+**A fallback matcher was written and then reverted, because it cannot work.** Nicknames are not
+prefixes — `"gabriel".startswith("gabe")` is `False`, likewise Michael/Mike. Matching on
+surname + position + initial instead picks the wrong Scott Miller, and Gregory Rousseau fails
+on position anyway (AllDay `DL` vs our `LB`). Robby Anderson is unreachable by any inference:
+different surname entirely.
+
+**The correct fix is an explicit alias table** — a standard nickname map plus a small
+legal-name-change list — which is a data decision, not a code trick. Until then an honest miss
+beats a wrong join. Estimated effect: 98.1% → ~99.4%, leaving Scotty Miller (ambiguous) and
+Robby Anderson (needs the name-change entry).
+
+This is the same lesson as the rest of this file: **check whether the value is published before
+building a derivation.**

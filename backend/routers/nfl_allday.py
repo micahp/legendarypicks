@@ -357,13 +357,21 @@ class PlayerResolver:
                 "SELECT id, name, position, team, nfl_gsis_id, active "
                 "FROM players WHERE league='nfl'"
             ):
-                self._by_name.setdefault(_norm_name(row["name"]), []).append(dict(row))
+                r = dict(row)
+                self._by_name.setdefault(_norm_name(r["name"]), []).append(r)
         finally:
             conn.close()
 
     def resolve(self, first: str, last: str, position: str) -> Optional[dict]:
         rows = self._by_name.get(_norm_name(f"{first} {last}"))
         if not rows:
+            # Residual misses are a NICKNAME class, not a data hole: AllDay ships the formal
+            # name where our spine carries the familiar one (Gabriel/Gabe Davis, Michael/Mike
+            # Vick, Gregory/Greg Rousseau), plus one legal name change (Robby Anderson is
+            # "Robbie Chosen" since 2022). These are NOT derivable by prefix or initial rules
+            # -- "gabriel".startswith("gabe") is False -- and guessing by surname+position
+            # picks the wrong Scott Miller. The correct fix is an explicit alias table, which
+            # is a data decision; until then an honest miss beats a wrong join.
             return None
         if len(rows) > 1:
             allowed = POSITION_MAP.get(position, [position])
@@ -377,7 +385,6 @@ class PlayerResolver:
                     return row
         return rows[0]
 
-
 # ---------------------------------------------------------------------------
 # Endpoint
 # ---------------------------------------------------------------------------
@@ -385,7 +392,7 @@ class PlayerResolver:
 def _empty(address: str, status: str, sources: list[str] | None = None) -> dict:
     return {
         "address": address, "moments": [], "total": 0, "returned": 0,
-        "matched": 0, "unmatched": 0, "offset": 0, "limit": 0,
+        "matched": 0, "unmatched": 0, "nonPlayer": 0, "offset": 0, "limit": 0,
         "status": status, "sources": sources or [],
     }
 
@@ -462,6 +469,7 @@ def get_collection(
     resolved: list[dict] = []
     matched = 0
     unmatched = 0
+    non_player = 0
 
     for m in raw_moments:
         first = str(m.get("playerFirstName", "")).strip()
@@ -488,7 +496,20 @@ def get_collection(
             "season": str(m.get("season", "")),
         }
 
-        player = resolver.resolve(first, last, pos) if (first and last) else None
+        # Not every moment is a player moment. AllDay ships team highlights -- e.g. playType
+        # "Team Melt" in the "What a Drive" set -- with playerFirstName/playerLastName empty on
+        # chain. Counting those as a failed join blames our players table for data AllDay never
+        # published, and drags an otherwise ~100% player-moment match rate down to ~94%.
+        is_player_moment = bool(first and last)
+        moment_out["isPlayerMoment"] = is_player_moment
+
+        if not is_player_moment:
+            moment_out["player"] = None
+            non_player += 1
+            resolved.append(moment_out)
+            continue
+
+        player = resolver.resolve(first, last, pos)
         if player:
             moment_out["player"] = {
                 "id": player["id"],
@@ -512,6 +533,7 @@ def get_collection(
         "returned": len(resolved),
         "matched": matched,
         "unmatched": unmatched,
+        "nonPlayer": non_player,
         "offset": offset,
         "limit": limit,
         "status": "ok",
