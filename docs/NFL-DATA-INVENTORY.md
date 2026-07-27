@@ -1,45 +1,43 @@
 # NFL data inventory
 
 What is actually stored for the NFL, how much of it there is, who it covers, and what
-nothing in the product has ever rendered. Read off `picks.dev.db` on 2026-07-26 with
-`json_each` over `player_game_logs.stats`.
+nothing in the product has ever rendered. Read off `picks.dev.db` on 2026-07-27 with
+`json_each` over `player_game_logs.stats`, after the weekly-box-score swap.
 
-Companion page (same numbers, scannable):
+Pre-swap companion snapshot (the counts below supersede it):
 <https://claude.ai/code/artifact/efed2820-383c-4a8a-bd25-ed063544cb74>
 
 | | |
 |---|---|
-| NFL rows in `player_game_logs` | 10,717 |
-| Distinct players | 776 |
-| Seasons | 2024 (5,340 rows) and 2025 (5,377 rows) — nothing earlier |
-| Distinct stat keys | 28 |
-| Ingested and rendered nowhere, before this pass | 8 |
+| NFL rows in `player_game_logs` | 11,232 |
+| Distinct players | 785 |
+| Seasons | 2024 (5,597 rows) and 2025 (5,635 rows) — nothing earlier |
+| Distinct stat keys | 41 (includes aliases on 14 legacy 2024 holdovers) |
+| Rows sourced from the published weekly artifact | 11,216 |
 
 ---
 
-## 1. The two seasons are different schemas
+## 1. The two seasons now share one box-score schema
 
-Not just renamed — differently *shaped*.
+`ingest_nfl_weekly_stats.py` copies both seasons from nflverse's maintained
+`stats_player` weekly artifact (`source='nflverse_weekly'`). The emitted box-score
+blocks are sparse and canonical-keyed in both years: a key exists only when that phase
+applies. Snap counts and Next Gen fields are preserved from their separate ingests.
 
-**2024 is dense and legacy-keyed.** Source is nflverse's pre-built weekly summary
-(`source='nflverse'`). Every row carries all 14 box-score keys, zero-filled.
-`carries` is present on 100% of rows and non-zero on 42%.
+The narrow v1 gate includes passers, rushers, receivers, and conversion-only scorers;
+defensive and kicking row expansion remains behind `--all-positions`. It added the
+postseason as continued numeric weeks 19–22. Both the 2024 and 2025 artifacts were
+checked to contain REG 1–18 and POST 19–22 with no season-type week collision.
 
-**2025 is sparse and canonical-keyed.** Source is nflverse play-by-play
-(`source='nflverse_pbp'`, see `ingest_nfl_pbp_logs.py`). A key exists only when the
-phase applies. `carries` is present on 41.9% of rows and non-zero on every one.
+Sixteen enrichment-bearing rows fall outside that gate and therefore were not rewritten:
+14 retain `source='nflverse'` in 2024 and two retain `source='nflverse_pbp'` in 2025.
+Only the 14 old 2024 rows still carry legacy box-score aliases. Readers should keep the
+normalizer until those enrichment-only holdovers are either expanded from the artifact
+or retired.
 
-> **Presence means nothing in 2024 and everything in 2025.** Any coverage check or
-> "does this player rush" test written against one season is wrong on the other.
+### Retired alias map
 
-No row mixes the two vocabularies, so a player whose only season is 2024 drops out of
-every canonical-key lookup **silently**. This has already caused two real bugs — the
-player-page projections and the game-log table both lost every 2024 player before the
-normalization was added.
-
-### Rename map
-
-| 2024 | 2025 |
+| Legacy | Canonical |
 |---|---|
 | `fantasy_points` | `fpts` |
 | `fantasy_points_ppr` | `fpts_ppr` |
@@ -54,55 +52,55 @@ normalization was added.
 | `completions` | `cmp` |
 | `interceptions` | `intc` |
 
-Spelled **identically** in both, safe to read without a COALESCE: `targets`,
+Spelled identically in both vocabularies: `targets`,
 `carries`, `off_snaps`, `off_pct`, `st_snaps`, `st_pct`, `def_snaps`, `def_pct`,
 `adot`, `air_yds_share`, `cushion`, `separation`, `yac_above_exp`.
 
-Present in **2025 only** — 2024's source does not carry them: `pass_epa`, `cpoe`,
-`air_yds`.
+The weekly source now supplies `pass_epa`, `cpoe`, and `air_yds` for both seasons.
 
 ---
 
 ## 2. Every key, 2025
 
-Coverage is share of the season's 5,377 rows.
+Coverage is share of the season's 5,635 rows, including 258 postseason rows.
 
 | Key | Coverage | Players | Non-zero | Status |
 |---|---|---|---|---|
-| `fpts_ppr` | 100% | 605 | 5,000 | rendered |
-| `fpts` | 100% | 605 | 4,977 | rendered |
-| `off_snaps` | 99.7% | 591 | 5,347 | rendered |
-| `off_pct` | 99.7% | 591 | 5,347 | rendered |
-| `st_snaps` | 99.7% | 591 | 2,123 | **was unused** |
-| `st_pct` | 99.7% | 591 | 2,123 | **was unused** |
-| `def_snaps` | 99.7% | 591 | **17** | noise — drop from ingest |
-| `def_pct` | 99.7% | 591 | **17** | noise — drop from ingest |
-| `targets` | 80.3% | 502 | 4,320 | rendered |
-| `rec` | 80.3% | 502 | 3,872 | rendered |
-| `rec_yds` | 80.3% | 502 | 3,828 | rendered |
-| `rec_td` | 80.3% | 502 | 721 | rendered |
-| `carries` | 41.9% | 335 | 2,254 | rendered |
-| `rush_yds` | 41.9% | 335 | 2,188 | rendered |
-| `rush_td` | 41.9% | 335 | 414 | rendered |
-| `adot` | 22.6% | 210 | 1,213 | rendered |
-| `air_yds_share` | 22.6% | 210 | 1,213 | rendered (feeds WOPR) |
-| `separation` | 22.6% | 210 | 1,213 | **was unused** |
-| `cushion` | 22.6% | 210 | 1,213 | **was unused** |
-| `yac_above_exp` | 22.5% | 210 | 1,202 | **was unused** |
-| `att` | 12.3% | 102 | 662 | rendered |
-| `cmp` | 12.3% | 102 | 624 | rendered |
-| `pass_yds` | 12.3% | 102 | 622 | rendered |
-| `pass_td` | 12.3% | 102 | 437 | rendered |
-| `intc` | 12.3% | 102 | 281 | rendered |
-| `pass_epa` | 12.3% | 102 | 662 | **was unused** |
-| `air_yds` | 12.3% | 102 | 652 | **still unused** |
-| `cpoe` | 12.0% | 92 | 646 | **was unused** |
+| `fpts_ppr` | 100% | 611 | 5,242 | rendered |
+| `fpts` | 100% | 611 | 5,217 | rendered |
+| `off_snaps` | 95.1% | 591 | 5,347 | rendered |
+| `off_pct` | 95.1% | 591 | 5,347 | rendered |
+| `st_snaps` | 95.1% | 591 | 2,123 | **was unused** |
+| `st_pct` | 95.1% | 591 | 2,123 | **was unused** |
+| `def_snaps` | 95.1% | 591 | **17** | noise — drop from ingest |
+| `def_pct` | 95.1% | 591 | **17** | noise — drop from ingest |
+| `targets` | 80.5% | 509 | 4,535 | rendered |
+| `rec` | 80.5% | 509 | 4,059 | rendered |
+| `rec_yds` | 80.5% | 509 | 4,015 | rendered |
+| `rec_td` | 80.5% | 509 | 763 | rendered |
+| `carries` | 41.8% | 339 | 2,355 | rendered |
+| `rush_yds` | 41.8% | 339 | 2,285 | rendered |
+| `rush_td` | 41.8% | 339 | 425 | rendered |
+| `adot` | 21.5% | 210 | 1,213 | rendered |
+| `air_yds_share` | 21.5% | 210 | 1,213 | rendered (feeds WOPR) |
+| `separation` | 21.5% | 210 | 1,213 | **was unused** |
+| `cushion` | 21.5% | 210 | 1,213 | **was unused** |
+| `yac_above_exp` | 21.5% | 210 | 1,202 | **was unused** |
+| `att` | 12.2% | 103 | 684 | rendered |
+| `cmp` | 12.2% | 103 | 653 | rendered |
+| `pass_yds` | 12.2% | 103 | 651 | rendered |
+| `pass_td` | 12.2% | 103 | 459 | rendered |
+| `intc` | 12.2% | 103 | 297 | rendered |
+| `dropbacks` | 12.2% | 103 | 690 | rendered |
+| `pass_epa` | 12.2% | 102 | 689 | **was unused** |
+| `air_yds` | 12.2% | 103 | 681 | **still unused** |
+| `cpoe` | 12.0% | 95 | 677 | **was unused** |
 
 "was unused" = surfaced by this pass (`nfl_usage.py` → the Usage card). `air_yds` stays
 unused: the raw total is redundant next to `adot` and `air_yds_share`.
 
-2024 holds the same blocks under legacy names at 100% presence for every box-score key
-and 23.5% for Next Gen.
+2024 now holds the same sparse canonical blocks, apart from the 14 legacy holdovers
+described above.
 
 ---
 
@@ -112,13 +110,13 @@ Distinct 2025 players with at least one non-empty value.
 
 | Pos | Players | Off snaps | Targets | Carries | NGS recv | NGS pass | ST snaps |
 |---|---|---|---|---|---|---|---|
-| WR | 226 | 224 | 224 | 84 | **151** | 6 | 171 |
-| RB | 137 | 136 | 120 | 136 | **0** | 5 | 98 |
-| TE | 126 | 126 | 125 | 22 | **59** | 2 | 115 |
-| QB | 81 | 80 | 10 | 78 | **0** | 76 | 0 |
-| FB | 11 | 11 | 11 | 9 | 0 | 0 | 11 |
-| P | 6 | 0 | 0 | 2 | 0 | 3 | 6 |
-| OT/G | 9 | 0 | 9 | 0 | 0 | 0 | 0 |
+| WR | 226 | 224 | 224 | 85 | **151** | 10 | 171 |
+| RB | 139 | 136 | 123 | 137 | **0** | 6 | 98 |
+| TE | 126 | 126 | 125 | 24 | **59** | 3 | 115 |
+| QB | 81 | 80 | 10 | 78 | **0** | 78 | 0 |
+| FB | 12 | 11 | 12 | 9 | 0 | 0 | 11 |
+| P | 6 | 0 | 0 | 2 | 0 | 4 | 6 |
+| OT/G/C | 13 | 0 | 13 | 0 | 0 | 0 | 0 |
 
 **Next Gen receiving is a WR/TE dataset. Zero RBs, zero QBs.** A back's blank
 aDOT/AY%/WOPR/Separation is not missing coverage — those columns can never fill for
@@ -148,35 +146,36 @@ expression of "should I make this pick" available in the data as it stands.
 
 ---
 
-## 5. The play-by-play is downloaded and thrown away
+## 5. Weekly box scores and raw plays have separate jobs
 
-`ingest_nfl_pbp_logs.py` calls `nfl.import_pbp_data([year])` — the full nflverse
-play-by-play, every play of the season — then groups it to per-player-per-game lines
-and writes only the rollup. **The plays are never persisted.** There is no play table
-in the schema (`scoring_plays` is unrelated and not NFL play-by-play).
+`ingest_nfl_weekly_stats.py` is the only writer of the maintained offensive
+per-player-game box score. It maps published columns directly, plus the checked
+`dropbacks = attempts + sacks_suffered` value; it does not derive stats from plays.
 
-This is a storage decision, not an access problem. The pipeline already has the data in
-memory each run.
+`ingest_nfl_pbp_logs.py` has no rollup or fantasy scorer. It retains regular-season
+plays in the additive `nfl_pbp` table for play-level analysis. The DEV database holds
+46,452 plays from 272 games. Its current physical table predates the latest schema
+expansion (34 populated columns); the preserved ingest contract is a curated 50
+columns and widens the table on the next PBP refresh.
 
 Two consequences worth knowing before promising anything play-level:
 
-**Reproducible from what is stored today** — anything at per-game or per-week grain:
+**Available from weekly logs** — anything at per-game or per-week grain:
 CPOE vs EPA/dropback scatters, week-over-week efficiency lines, separation and cushion
 distributions, target-share and snap-share trends, position leaderboards.
 
-**Needs the plays retained** — anything at per-play grain: win-probability-added swings
+**Available from retained plays** — anything at per-play grain: win-probability-added swings
 within a game, EPA by run gap or by direction, air-yards pass charts plotting individual
 throws, drive- or series-outcome breakdowns, situational splits (down, distance, field
-position, personnel). Every one of these is a staple of the public NFL analytics
-community, and none of them can be built from the rollup.
+position, personnel).
 
-### Related: `game_date` and `home_away` are NULL on every NFL row
+### Related: postseason date/home-away metadata is still absent
 
-Not a source limitation. `ingest_nfl_pbp_logs.py` passes literal `None` for both
-columns on insert, while the source frame carries the game date and the home/away teams.
-Week (`game_no`) is currently the only thing identifying an NFL game, and a renderer that
-assumed `home_away` printed "@ OPP" for home games until it was removed. Fixing this is
-two values in one INSERT.
+The weekly artifact supplies `game_id`, team, and opponent, but not `game_date` or an
+explicit home/away field. Existing 2025 regular-season metadata survived the upsert;
+the 258 newly inserted postseason rows have both fields NULL. All 5,597 2024 rows
+still lack both fields. This is schedule enrichment work, not a reason to derive box
+scores from PBP.
 
 ---
 
@@ -188,10 +187,10 @@ two values in one INSERT.
    downstream forever — 17 non-zero rows out of 5,360.
 3. **Special teams share explains the low-snap players** the usage surfaces otherwise
    make look inert.
-4. **One normalizer, not scattered COALESCE pairs.** The 2024/2025 split needs a single
-   function every reader goes through; it is currently rediscovered per query.
+4. **One normalizer, not scattered COALESCE pairs.** Only 14 enrichment-only 2024
+   holdovers still need the legacy aliases, so readers should keep one shared fallback
+   until those rows are expanded or retired.
 5. **Two seasons is the ceiling on trend work.** Anything framed as a career arc has
    2024 and 2025 and nothing else.
-6. **Retaining play-by-play is the single highest-leverage ingest change available** —
-   it is already downloaded, and it is the difference between per-game tables and the
-   entire class of play-level analysis.
+6. **Play retention stays additive and separate.** It supports the play-level class of
+   analysis without becoming a second, disagreeing box-score implementation.
