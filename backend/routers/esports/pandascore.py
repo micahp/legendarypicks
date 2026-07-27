@@ -18,6 +18,7 @@ import json
 import os
 import re
 import time
+from functools import lru_cache
 import urllib.request as _u
 import urllib.error as _ue
 
@@ -350,6 +351,20 @@ def _tokset(s):
     return {t for t in _TOK_RE.split(s or "") if len(t) >= 3}
 
 
+@lru_cache(maxsize=4096)
+def _league_tokens(value):
+    """Fold/lowercase/tokenize a league label, memoized.
+
+    Same reason as the _ps_indexed precompute above: the enrich loop runs this over the SAME
+    handful of slate leagues and the SAME ~250 PandaScore labels tens of thousands of times per
+    rebuild, and unicodedata folding plus two regexes per call is not free. Returns a tuple so a
+    cached value cannot be mutated by a caller."""
+    from .common import _fold
+
+    value = re.sub(r"\bunited\s*21\b", "united21", _fold(value or "").lower())
+    return tuple(re.findall(r"[a-z0-9]+", value))
+
+
 def _ps_league_compatible(slate_league, match):
     """Narrow fixture-level league bridge for United21's inconsistent source labels.
 
@@ -357,20 +372,21 @@ def _ps_league_compatible(slate_league, match):
     same identity across league/serie/tournament fields. This is intentionally NOT a general fuzzy
     league matcher: it only recognizes the United21 family and rejects conflicting season numbers.
     """
-    from .common import _fold
+    # Source-first short circuit. The result is False unless BOTH sides are United21, and the
+    # source label is fixed for the whole loop, so a non-United21 slate can reject every candidate
+    # without ever building or tokenizing the PandaScore side. That is the overwhelmingly common
+    # case and it was previously paying for both.
+    source_tokens = _league_tokens(slate_league)
+    if "united21" not in source_tokens:
+        return False
 
-    def _norm(value):
-        value = re.sub(r"\bunited\s*21\b", "united21", _fold(value or "").lower())
-        return re.findall(r"[a-z0-9]+", value)
-
-    source_tokens = _norm(slate_league)
     ps_text = " ".join(filter(None, [
         (match.get("league") or {}).get("name"),
         (match.get("serie") or {}).get("full_name"),
         (match.get("tournament") or {}).get("name"),
     ]))
-    target_tokens = _norm(ps_text)
-    if "united21" not in source_tokens or "united21" not in target_tokens:
+    target_tokens = _league_tokens(ps_text)
+    if "united21" not in target_tokens:
         return False
 
     def _season(tokens):
