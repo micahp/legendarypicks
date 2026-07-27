@@ -1,5 +1,52 @@
 # Changelog
 
+## v0.6.9 — 2026-07-27
+
+### The draft board is about availability now, not about who scored well when healthy
+
+- **The board ranked on an average conditioned on the thing you were trying to predict.**
+  `fantasy_ppr_g` is points per game *played* — it only counts the days a player was
+  healthy enough to appear, which makes injury-prone players look safer than they are.
+  Every fantasy site shows that column. Joe Burrow's 2025 reads **16.8 per game played and
+  7.9 per team game** off the same season; Tyreek Hill's reads 13.4 and 3.2. Both numbers
+  now ship together, always, because the gap between them *is* the information.
+- **Availability is the headline: games played out of the team's 17.** A missed game has no
+  row in `player_game_logs`, so absence is invisible unless you deliberately go get it. The
+  denominator is a constant, verified as 32 teams × exactly 17 games in both 2024 and 2025
+  — which sidesteps the `team_game_results` key-scheme problems entirely. Deriving it from
+  that table is what made Joe Flacco read **13/34**; he now correctly reads 13/17.
+- **Postseason weeks are excluded.** Weeks 19–22 are playoffs; counting them let a deep run
+  report 21/17 and inflated both averages.
+- **Expected fantasy points (xFP), from ffverse/ffopportunity.** A per-game average over a
+  short sample is mostly touchdown variance; xFP prices the opportunity a player was given.
+  Measured 2024 → 2025 on our own data, xFP/g predicts next season's actual PPR/g better
+  than actual PPR/g does, and the margin is widest where the sample is thinnest — r=0.424
+  vs 0.374 at ≤4 games, against r=0.778 vs 0.775 at 10+. Stated honestly: that makes a
+  three-game sample *less misleading*, not reliable, so sample size stays on the surface.
+- **Target share and the 2026 depth chart join snap share**, so a healthy player in a
+  timeshare reads differently from an injured starter. Both are published values copied in,
+  not derived here — nflverse already publishes `target_share` at 100% coverage.
+- **Rookies read "No NFL sample" and never a zero.** A zero is a claim about the player;
+  absence is a claim about us, and only the second one is true. They stay on the board on
+  ADP and depth-chart rank. Jeremiyah Love — going 17th overall, 98% owned, Arizona's RB1 —
+  was invisible under the old `games > 0` filter, along with 147 other ADP-ranked players.
+- **ESPN's undrafted sentinel is no longer treated as a ranking.** 1,392 of 2,511 ADP rows
+  sit at exactly 170.0; only 248 players carry a real ADP.
+- **The accent colour marks absence, not achievement.** Every game played renders quiet;
+  the one saturated colour on a row is the games missed. The availability strip shows one
+  cell per game the team actually played — 17, not 18, because a bye is not an absence.
+- **Nothing is labelled a projection any more**, because nothing on the board is one.
+  `season_proj_pts` and its "games assumed" caption are gone.
+- Three draft-board tests had been red long enough that nobody read them; they were a
+  missing `nfl_adp` fixture. The suite goes from 249 passed / 4 failed to 256 passed / 1.
+
+### Known
+
+- `players.nfl_gsis_id` mixes two id schemes: 651 active players carry an ESPN-style
+  synthetic key (`LOV121782`) in a column named for gsis, and all 651 have zero game logs.
+  The depth-chart ingest works around it via `espn_id`; the spine itself is unrepaired.
+  Recorded as ROADMAP B7 with the measured fix.
+
 ## v0.6.8 — 2026-07-27
 
 ### NFL: the numbers now come from the published source, and the calendar exists
