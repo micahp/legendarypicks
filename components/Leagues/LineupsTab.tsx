@@ -28,8 +28,11 @@ const TIER_COLORS: Record<string, string> = {
 }
 
 export default function LineupsTab() {
-  const { address, inputValue, setInputValue, data, loading, error, submit, clear } =
-    useAllDayCollection()
+  const {
+    address, inputValue, setInputValue, data, loading, pageLoading, error,
+    offset, limit, totalPages, currentPage,
+    submit, clear, goToPage,
+  } = useAllDayCollection()
 
   const hasSearched = !!data || loading
 
@@ -58,7 +61,7 @@ export default function LineupsTab() {
             className="px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded
                        hover:bg-emerald-500 disabled:opacity-50 transition-colors"
           >
-            {loading ? 'Loading…' : 'Look up'}
+            {loading && !pageLoading ? 'Loading…' : 'Look up'}
           </button>
         </div>
         {address && !loading && (
@@ -92,8 +95,8 @@ export default function LineupsTab() {
         </div>
       )}
 
-      {/* Loading skeleton */}
-      {loading && (
+      {/* Loading skeleton — full load only (first search) */}
+      {loading && !pageLoading && !data && (
         <div className="space-y-3 animate-pulse">
           {[1, 2, 3].map(i => (
             <div key={i} className="bg-zinc-900 border border-zinc-800 rounded-lg p-4">
@@ -104,11 +107,10 @@ export default function LineupsTab() {
         </div>
       )}
 
-      {/* Results */}
-      {data && !loading && (
+      {/* Results (kept visible during page transitions with subtle loading indicator) */}
+      {data && (
         <div className="space-y-4">
-          {/* Summary bar. `returned` is what is on screen; `total` is what the
-              wallet holds. Showing only one of them would misstate the other. */}
+          {/* Summary bar */}
           {data.status === 'ok' ? (
             <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 text-sm">
               <span className="text-zinc-300 tabular-nums">
@@ -132,9 +134,16 @@ export default function LineupsTab() {
             <EmptyResult status={data.status} address={data.address} />
           )}
 
+          {/* Page loading bar — subtle, does not blank the list */}
+          {pageLoading && (
+            <div className="h-0.5 bg-zinc-800 rounded-full overflow-hidden">
+              <div className="h-full bg-emerald-500/50 animate-pulse w-1/3 rounded-full" />
+            </div>
+          )}
+
           {/* Moments by position */}
           {data.returned > 0 && (
-            <div className="space-y-6">
+            <div className={`space-y-6 ${pageLoading ? 'opacity-60 transition-opacity' : ''}`}>
               {groupByPosition(data.moments).map(([pos, moments]) => (
                 <div key={pos}>
                   <h3 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider mb-2">
@@ -153,11 +162,33 @@ export default function LineupsTab() {
             </div>
           )}
 
-          {data.returned < data.total && (
-            <p className="text-xs text-zinc-600">
-              Large collections are read one page at a time. Paging controls are
-              not built yet — this is the first {data.limit.toLocaleString()}.
-            </p>
+          {/* Paging controls */}
+          {data.returned > 0 && data.total > limit && (
+            <div className="flex items-center justify-between pt-2">
+              <button
+                onClick={() => goToPage(Math.max(0, offset - limit))}
+                disabled={offset === 0 || pageLoading}
+                className="px-3 py-1.5 text-sm text-zinc-400 bg-zinc-900 border border-zinc-800 rounded
+                           hover:text-zinc-200 hover:border-zinc-700 disabled:opacity-30 disabled:cursor-not-allowed
+                           transition-colors"
+              >
+                ← Previous
+              </button>
+
+              <span className="text-sm text-zinc-500 tabular-nums">
+                Page {currentPage} of {totalPages}
+              </span>
+
+              <button
+                onClick={() => goToPage(offset + limit)}
+                disabled={offset + limit >= data.total || pageLoading}
+                className="px-3 py-1.5 text-sm text-zinc-400 bg-zinc-900 border border-zinc-800 rounded
+                           hover:text-zinc-200 hover:border-zinc-700 disabled:opacity-30 disabled:cursor-not-allowed
+                           transition-colors"
+              >
+                Next →
+              </button>
+            </div>
           )}
         </div>
       )}
