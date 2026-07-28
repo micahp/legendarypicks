@@ -29,6 +29,8 @@ interface Props {
 
 const TEAM_GAMES = 17  // fallback; prefer poolPlayer.team_games when available
 const PICK_LEDGER_LIMIT = 15
+// 15-man roster: QB RB1 RB2 WR1 WR2 TE FLEX K DEF = 9 starters, rest bench.
+const BENCH_SLOTS = 6
 
 /**
  * Main draft UI — pool on left, roster + ledger on right.
@@ -711,6 +713,7 @@ function buildRosterSlots(
     slots.push({ label: 'FLEX', player: null, poolPlayer: null, isStarter: true })
   }
   addSlot('K', 'PK', true)
+  addSlot('DEF', 'DEF', true)
 
   // Bench — remaining players
   const remaining = players.filter(p => !slots.some(s => s.player?.player_id === p.player_id))
@@ -723,8 +726,9 @@ function buildRosterSlots(
     })
   })
 
-  // Pad bench to 7 slots
-  for (let i = remaining.length; i < 7; i++) {
+  // Pad bench out to a full 15-man roster (9 starters + 6 bench, matching
+  // STARTER_COUNT in lib/mockDraft/engine.ts).
+  for (let i = remaining.length; i < BENCH_SLOTS; i++) {
     slots.push({
       label: `BE${i + 1}`,
       player: null,

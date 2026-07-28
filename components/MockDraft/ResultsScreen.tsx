@@ -232,6 +232,7 @@ function buildResultsSlots(
     slots.push({ label: 'FLEX', player: null, poolPlayer: null, isStarter: true, pickNo: null })
   }
   addSlot('K', 'PK', true)
+  addSlot('DEF', 'DEF', true)
 
   const remaining = players.filter(p => !used.has(p.player_id))
   remaining.forEach((p, i) => {
@@ -244,7 +245,8 @@ function buildResultsSlots(
     })
   })
 
-  for (let i = remaining.length; i < 7; i++) {
+  // 9 starters + 6 bench = the 15-man roster (see STARTER_COUNT in lib/mockDraft/engine.ts).
+  for (let i = remaining.length; i < 6; i++) {
     slots.push({
       label: `BE${i + 1}`,
       player: null,
