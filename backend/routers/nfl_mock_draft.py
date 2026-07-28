@@ -34,8 +34,6 @@ _REG_SEASON_TEAM_GAMES = 17
 _POSTSEASON_FIRST_WEEK = 19
 _THIN_SAMPLE_GAMES = 4
 _POOL_CAP = 300
-# Pool index where D/ST start — round 13 in a 12-team draft (~pick 145).
-_DST_SLOT = 150
 
 # Draftable positions: skill positions, kickers, and team defenses.
 _DRAFT_POSITIONS = ("QB", "RB", "WR", "TE", "PK", "DEF")
@@ -273,90 +271,77 @@ def pool(season: int = Query(...)):
             ),
         ).fetchall()
 
-        skill_players = []
-        for row in rows:
-            pid = row["player_id"]
-            games_played = aggregates.get(pid, 0)
-            in_aggregates = pid in aggregates
-
-            if not in_aggregates:
-                sample = "none"
-                games_missed = None
-            elif games_played < _THIN_SAMPLE_GAMES:
-                sample = "thin"
-                games_missed = _REG_SEASON_TEAM_GAMES - games_played
-            else:
-                sample = "full"
-                games_missed = _REG_SEASON_TEAM_GAMES - games_played
-
-            skill_players.append(
-                {
-                    "player_id": pid,
-                    "name": row["name"],
-                    "position": row["position"],
-                    "team": row["team"],
-                    "adp": row["adp"],
-                    "percent_owned": row["percent_owned"],
-                    "sample": sample,
-                    "games_played": games_played,
-                    "games_missed": games_missed,
-                    "weeks_played": weeks_played_map.get(pid, []),
-                    "team_weeks": team_weeks_map.get(primary_team_map.get(pid, ""), []),
-                }
-            )
-
-        # Count D/ST players to reserve pool slots.
-        _dst_count = connection.execute(
-            """SELECT COUNT(*) FROM players
-               WHERE league='nfl' AND active=1 AND position='DEF'"""
-        ).fetchone()[0]
-
-        # D/ST — no published ADP exists. Derive ranking from fantasy totals.
-        dst_players: list[dict] = []
+        # ── D/ST availability from nfl_dst_stats ──
+        dst_avail: dict[int, dict] = {}
         try:
-            dst_rows = connection.execute(
-                """SELECT p.id AS player_id, p.name, p.team,
-                          SUM(d.fantasy_pts) AS dst_total,
+            for dr in connection.execute(
+                """SELECT p.id AS player_id, p.team,
                           GROUP_CONCAT(d.week) AS weeks_csv
                    FROM players p
                    JOIN nfl_dst_stats d ON d.player_id = p.id
                    WHERE p.league = 'nfl' AND p.active = 1
                      AND p.position = 'DEF' AND d.season = ?
-                   GROUP BY p.id
-                   ORDER BY dst_total DESC""",
+                   GROUP BY p.id""",
                 (_log_season,),
-            ).fetchall()
+            ):
+                pid = dr["player_id"]
+                weeks = [int(w) for w in (dr["weeks_csv"] or "").split(",") if w]
+                gp = len(weeks)
+                tw = team_weeks_map.get(dr["team"], [])
+                tg = len(tw) if tw else _REG_SEASON_TEAM_GAMES
+                dst_avail[pid] = {
+                    "games_played": gp,
+                    "games_missed": max(0, tg - gp) if gp > 0 else None,
+                    "weeks_played": weeks,
+                    "team_weeks": tw,
+                }
         except sqlite3.OperationalError:
-            dst_rows = []
+            pass
 
-        for i, dr in enumerate(dst_rows, start=1):
-            pid = dr["player_id"]
-            weeks = [int(w) for w in (dr["weeks_csv"] or "").split(",") if w]
-            gp = len(weeks)
-            tw = team_weeks_map.get(dr["team"], [])
-            tg = len(tw) if tw else _REG_SEASON_TEAM_GAMES
-            dst_players.append({
+        players = []
+        for row in rows:
+            pid = row["player_id"]
+            pos = row["position"]
+
+            if pos == "DEF":
+                avail = dst_avail.get(pid, {})
+                gp = avail.get("games_played", 0)
+                gm = avail.get("games_missed")
+                wp = avail.get("weeks_played", [])
+                tw = avail.get("team_weeks", [])
+                if gp >= _THIN_SAMPLE_GAMES:
+                    sample = "full"
+                elif gp > 0:
+                    sample = "thin"
+                else:
+                    sample = "none"
+            else:
+                gp = aggregates.get(pid, 0)
+                if pid not in aggregates:
+                    sample = "none"
+                    gm = None
+                elif gp < _THIN_SAMPLE_GAMES:
+                    sample = "thin"
+                    gm = _REG_SEASON_TEAM_GAMES - gp
+                else:
+                    sample = "full"
+                    gm = _REG_SEASON_TEAM_GAMES - gp
+                wp = weeks_played_map.get(pid, [])
+                tw = team_weeks_map.get(primary_team_map.get(pid, ""), [])
+
+            players.append({
                 "player_id": pid,
-                "name": dr["name"],
-                "position": "DEF",
-                "team": dr["team"],
-                "adp": None,
-                "percent_owned": None,
-                "dst_rank": i,
-                "sample": "full" if gp >= _THIN_SAMPLE_GAMES else ("thin" if gp > 0 else "none"),
+                "name": row["name"],
+                "position": pos,
+                "team": row["team"],
+                "adp": row["adp"],
+                "percent_owned": row["percent_owned"],
+                "sample": sample,
                 "games_played": gp,
-                "games_missed": max(0, tg - gp) if gp > 0 else None,
-                "weeks_played": weeks,
+                "games_missed": gm,
+                "weeks_played": wp,
                 "team_weeks": tw,
             })
-
-        # Interleave D/ST at _DST_SLOT so they are reachable in a 180-pick draft.
-        remaining_slots = _POOL_CAP - _DST_SLOT - len(dst_players)
-        players = (
-            skill_players[:_DST_SLOT]
-            + dst_players
-            + skill_players[_DST_SLOT:_DST_SLOT + remaining_slots]
-        )
 
         return _json(
             {
@@ -718,6 +703,21 @@ def player_detail(player_id: int):
                     continue
 
         weeks_played.sort()
+
+        # ── D/ST availability from nfl_dst_stats (B17 — player_game_logs has no DEF rows) ──
+        if position == "DEF":
+            dst_columns = connection.execute("PRAGMA table_info(nfl_dst_stats)").fetchall()
+            if dst_columns:
+                dst_row = connection.execute(
+                    """SELECT GROUP_CONCAT(week) AS weeks_csv
+                       FROM nfl_dst_stats
+                       WHERE season=? AND player_id=?""",
+                    (_log_season, player_id),
+                ).fetchone()
+                if dst_row and dst_row["weeks_csv"]:
+                    def_weeks = [int(w) for w in (dst_row["weeks_csv"] or "").split(",") if w]
+                    weeks_played = sorted(def_weeks)
+                    games_played = len(weeks_played)
 
         # Sample classification
         if games_played == 0:
