@@ -6,7 +6,6 @@ from the NFL's published 2026 calendar and must be refreshed for a new league
 year before the contract can claim a current phase.
 """
 import datetime as dt
-import json
 import re
 import sqlite3
 import time
@@ -16,7 +15,7 @@ from typing import Dict, List, Optional, Set, Tuple
 
 from fastapi import APIRouter, HTTPException, Query
 
-from _core import _db, _normalize_name, proj_mod
+from _core import _db, _normalize_name
 
 from team_codes import CANONICAL_POSITIONS, normalize, normalize_optional
 

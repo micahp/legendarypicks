@@ -21,6 +21,9 @@ import sys
 import os
 import json
 import sqlite3
+import warnings
+
+import nfl_data_py as nfl
 
 DB = os.environ.get("LP_DB_PATH") or os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "data", "picks.db"
@@ -72,7 +75,6 @@ def ensure_snap_table(con: sqlite3.Connection) -> None:
 
 def _pfr_to_gsis():
     """Crosswalk PFR player ids -> GSIS ids. nflverse ships both in one id table."""
-    import nfl_data_py as nfl
 
     ids = nfl.import_ids()
     out = {}
@@ -87,10 +89,8 @@ def ingest(year: int = 2025, dry_run: bool = False) -> dict:
 
     Returns counts: {updated_logs, inserted_snaps, ...}
     """
-    import warnings
 
     warnings.filterwarnings("ignore")
-    import nfl_data_py as nfl
 
     print(f"Loading nflverse snap counts {year}...")
     df = nfl.import_snap_counts([year])
