@@ -411,6 +411,8 @@ export interface PlayerDetailResponse {
   percent_owned: number | null
   sample: 'full' | 'thin' | 'none'
   games_played: number
+  games_missed: number | null
+  team_games: number
   weeks_played: number[]
   team_weeks: number[]
   ppr_per_game_played: number | null
@@ -418,11 +420,12 @@ export interface PlayerDetailResponse {
   snap_pct: number | null
   target_share: number | null
   xfp_per_game: number | null
-  /** The QB on the same team — for WR/RB/TE who catch passes */
-  qb: {
-    player_id: number
-    name: string
-    team: string
-    games_played: number
-  } | null
+  /** D/ST fantasy points: total and per-game. Null for non-DEF. */
+  dst_pts_total: number | null
+  dst_pts_per_game: number | null
+  /** PK fantasy points: total and per-game. Null for non-PK. */
+  pk_pts_total: number | null
+  pk_pts_per_game: number | null
+  /** QB throwing to this receiver (WR/RB/TE only). */
+  qb: { player_id: number; name: string; team: string; games_played: number } | null
 }

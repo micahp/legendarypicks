@@ -1,6 +1,8 @@
+import { useState } from 'react'
 import type { NflDraftBoard, NflDraftNotes, NflDraftPlayer, NflDraftSort } from './types'
 import { POSITIONS, SORT_LABELS } from './hooks/useNflDraftBoard'
 import type { DraftPosition } from './hooks/useNflDraftBoard'
+import PlayerDetailOverlay from './PlayerDetailOverlay'
 
 interface Props {
   data: NflDraftBoard | null
@@ -41,6 +43,8 @@ export default function NflDraftRoom({
   onToggleWatch,
   onToggleFade,
 }: Props) {
+  const [selectedPlayerId, setSelectedPlayerId] = useState<number | null>(null)
+
   return (
     <section className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3 pb-2">
@@ -223,6 +227,7 @@ export default function NflDraftRoom({
                     onSetRank={rank => onSetRank(player.player_id, rank)}
                     onToggleWatch={() => onToggleWatch(player.player_id)}
                     onToggleFade={() => onToggleFade(player.player_id)}
+                    onClick={() => setSelectedPlayerId(player.player_id)}
                   />
                 ))}
               </tbody>
@@ -248,6 +253,12 @@ export default function NflDraftRoom({
         </div>
       )}
     </section>
+    {selectedPlayerId != null && (
+      <PlayerDetailOverlay
+        playerId={selectedPlayerId}
+        onClose={() => setSelectedPlayerId(null)}
+      />
+    )}
   )
 }
 
@@ -259,6 +270,7 @@ export function DraftPlayerRow({
   onSetRank,
   onToggleWatch,
   onToggleFade,
+  onClick,
 }: {
   player: NflDraftPlayer
   noteRank: number | undefined
@@ -267,13 +279,17 @@ export function DraftPlayerRow({
   onSetRank: (rank: number | null) => void
   onToggleWatch: () => void
   onToggleFade: () => void
+  onClick?: () => void
 }) {
   const noSample = player.sample === 'none'
   const thin = player.sample === 'thin'
   const missed = player.team_games - player.games_played
 
   return (
-    <tr className="border-b border-zinc-800/50 hover:bg-zinc-800/30">
+    <tr
+      className="border-b border-zinc-800/50 hover:bg-zinc-800/30 cursor-pointer"
+      onClick={onClick}
+    >
       <td className="py-2.5 pl-4 pr-2 text-zinc-500 text-xs tabular-nums">
         {player.rank}
       </td>
