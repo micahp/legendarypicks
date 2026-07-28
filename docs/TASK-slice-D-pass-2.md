@@ -1,8 +1,31 @@
 # TASK: slice D, pass 2 — fix what verification found
 
-Branch: **`feat/slice-D-mock-draft`** (already exists, stacked on `feat/slice-a-draft-notes`).
 Spec: `docs/SPEC-slice-D-mock-draft.md` — its §6 and its guardrail block are binding and
 unchanged. This file is the delta only.
+
+## Your environment — prepared 2026-07-27, work here and nowhere else
+
+| | |
+|---|---|
+| **Worktree** | `/root/lp-slice-D-pass-2` — `cd` here first. Do not work in `/root/legendarypicks`. |
+| **Branch** | `feat/slice-D-pass-2`, branched from `feat/slice-D-mock-draft` at `2be1c7b`. |
+| **Backend** | Already running on **`http://127.0.0.1:8098`** from your worktree, against the shared dev DB. It has `--reload` off, so **kill nothing** — if you need your change live, tell the operator rather than restarting it. Log: `/tmp/hermes-wt-slice-D-pass-2-backend.log`. |
+| **Reference backend** | `:8096` is the MAIN dev environment. **Read-only for you** — it is what `/api/nfl/draft-board` ground truth in item 1 should be fetched from. Never restart it; a human is browsing it through a public tunnel. |
+| **Frontend** | **None started, deliberately.** This task touches no frontend file and the box has ~700MB free. Do not start one. |
+| **pytest** | `cd /root/lp-slice-D-pass-2/backend && venv/bin/python -m pytest test_nfl_mock_draft.py -q` |
+
+Pass 1 ran in the main repo and its branch checkouts took the live dev server down twice.
+That is why you get your own tree this time. It is not optional.
+
+**Why a new branch rather than `feat/slice-D-mock-draft`:** that branch is checked out in
+the main repo under the running dev server, and a second checkout of it would either be
+refused by git or churn what a human is looking at. `feat/slice-D-pass-2` fast-forwards
+back into it when your work is verified.
+
+**Note on the stack:** `feat/slice-a-draft-notes` has moved to `53830bf` — it gained a fix
+after your branch point (the draft-notes sync error is now rendered instead of silently
+reverting). You do not need it and **must not rebase onto it**; the operator will handle the
+stack when both slices merge.
 
 Pass 1 built the right shape. Three things are wrong, one of them badly. Fix these four
 items and nothing else.
@@ -98,7 +121,9 @@ And **never start, kill or restart a dev server**; `:8096` reloads on its own.
 ## Definition of done
 
 - The five-player `team_weeks` comparison against the board, pasted in.
-- Real pytest output for `test_nfl_mock_draft.py`, and `jest lib/mockDraft` still green.
+- Real pytest output for `test_nfl_mock_draft.py`, and the jest suites still green. Run them
+  as `cd /root/lp-slice-D-pass-2 && ./node_modules/.bin/jest lib/mockDraft` — **the binary
+  directly, never `npx jest`**, for the symlinked-`node_modules` reason above.
 - `git diff --stat` against the table above. A diff touching anything else is a failed task.
 - Separate commits per item. Plain commit messages, no AI attribution.
 - Report anything you measured that disagrees with this document rather than matching it.

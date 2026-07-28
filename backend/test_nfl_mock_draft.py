@@ -78,7 +78,8 @@ class TestNflMockDraft(unittest.TestCase):
                     player_id INTEGER,
                     league TEXT,
                     season INTEGER,
-                    game_no TEXT
+                    game_no TEXT,
+                    team TEXT
                 )"""
             )
             # Seed players — all NFL, all active, covering the five draftable positions.
@@ -112,18 +113,18 @@ class TestNflMockDraft(unittest.TestCase):
                 ],
             )
             # Seed game logs for players 1–4 (full sample: 10+ games).
-            for pid in [1, 2]:
+            for pid, team in [(1, 'KC'), (2, 'MIN')]:
                 for g in range(1, 13):
                     connection.execute(
                         "INSERT OR IGNORE INTO player_game_logs "
-                        "(player_id, league, season, game_no) VALUES (?, 'nfl', 2026, ?)",
-                        (pid, str(g)),
+                        "(player_id, league, season, game_no, team) VALUES (?, 'nfl', 2025, ?, ?)",
+                        (pid, str(g), team),
                     )
             # Player 3 has a thin sample (2 games).
             for g in range(1, 3):
                 connection.execute(
                     "INSERT OR IGNORE INTO player_game_logs "
-                    "(player_id, league, season, game_no) VALUES (?, 'nfl', 2026, ?)",
+                    "(player_id, league, season, game_no, team) VALUES (?, 'nfl', 2025, ?, 'BUF')",
                     (3, str(g)),
                 )
             # Player 4 has no logs (sample: none).
@@ -132,7 +133,7 @@ class TestNflMockDraft(unittest.TestCase):
             # Also seed playoff logs for player 1 (should be excluded from games_played).
             connection.execute(
                 "INSERT OR IGNORE INTO player_game_logs "
-                "(player_id, league, season, game_no) VALUES (?, 'nfl', 2026, '19')",
+                "(player_id, league, season, game_no, team) VALUES (?, 'nfl', 2025, '19', 'KC')",
                 (1,),
             )
 
