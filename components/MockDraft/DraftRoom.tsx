@@ -89,11 +89,10 @@ export default function DraftRoom({ pool, draftState, onUserPick, userPicking, q
     return s
   }, [draftState.picks])
 
-  // Available pool, sorted by ADP
-  const availablePool = useMemo(
-    () => [...draftState.availablePool].sort((a, b) => a.adp - b.adp),
-    [draftState.availablePool],
-  )
+  // availablePool is ALREADY sorted by createDraft (numeric ADP ascending, null ADP
+  // last) and applyPick filters, which preserves that order. Do not re-sort here: a
+  // naive `a.adp - b.adp` coerces null to 0 and floats all 32 D/ST above pick 1.
+  const availablePool = draftState.availablePool
 
   // Apply filters to available pool
   const filteredPool = useMemo(() => {
@@ -326,7 +325,7 @@ export default function DraftRoom({ pool, draftState, onUserPick, userPicking, q
                         <PoolAvailability poolPlayer={poolPlayer} />
                       </td>
                       <td className="py-2 pr-3 pl-2 text-right font-mono tabular-nums text-xs text-zinc-400">
-                        {dp.adp.toFixed(1)}
+                        {dp.adp != null ? dp.adp.toFixed(1) : <span className="text-zinc-600">—</span>}
                       </td>
                       <td className="py-2 pr-3 pl-1 text-center">
                         <div className="flex items-center gap-1 justify-center">
