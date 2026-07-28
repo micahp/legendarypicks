@@ -7,10 +7,15 @@ role he HAS. For a rookie those are not the same question -- there is no prior
 role at all, and the board would otherwise have nothing to say about a player
 going 17th overall.
 
-Sizing the gap before building anything: of 2,511 ADP rows, 1,392 sit at exactly
-170.0 -- that is ESPN's undrafted default, not an ADP. Only 248 players carry a
-real ADP, and of those only SEVEN have zero NFL games. All seven are in this
-artifact with a depth rank:
+The original 2026-07-27 sizing treated values around 170 as an undrafted
+sentinel. That reader-side inference was removed after measuring the published
+payload: ESPN supplies distinct ADPs through 170.89 and explicit ranks for
+nearly every row in that range. As of 2026-07-28 the database holds 2,543
+non-null published ADPs, including 733 active QB/RB/WR/TE/PK rows. These values
+must be copied as published, not reclassified by a numeric cutoff.
+
+The original gap check still found seven early-ranked rookies with zero NFL
+games. All seven are in this artifact with a depth rank:
 
     Jeremiyah Love  ARI RB rank 1   (ADP 17.5, 98% owned)
     Carnell Tate    TEN WR rank 1   (ADP 66.9, 94% owned)

@@ -3,7 +3,8 @@ from __future__ import annotations
 """NFL mock draft — pool endpoint + draft CRUD for single-player mock drafts vs. ADP bots.
 
 SPEC-slice-D-mock-draft.md:
-  - Pool: GET /api/nfl/mock-draft/pool?season=2026 — ~300 ranked players (QB/RB/WR/TE/PK).
+  - Pool: GET /api/nfl/mock-draft/pool?season=2026 — 300 players
+    (QB/RB/WR/TE/PK/DEF) with copied published ADP.
   - Draft CRUD: create, append picks, resume, list — keyed by X-Device-Id.
   - Own _DB from LP_DB_PATH (no _core.py dependency).
 """

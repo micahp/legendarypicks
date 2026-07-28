@@ -99,7 +99,16 @@ the job it is being hired to do:
 Multi-user becomes worth building once v1 proves people finish a mock at all. Design the
 draft state so a second human could take a seat later — don't hard-code "seat 1 is you".
 
-### Decision 2 — **DECIDED 2026-07-27: 12×15 snake, QB/RB/WR/TE/K + FLEX, no D/ST, no IDP.**
+### Decision 2 — **SUPERSEDED 2026-07-28: 12×15 snake now includes D/ST.**
+
+Job15 measured the upstream payload and found published ESPN ADP for all 32
+D/ST entities. It resolves ESPN's published negative team IDs through the
+published `proTeams` map and joins them to the canonical DEF rows. The current
+pool contract is 300 players, including all 32 DEF rows, with no null ADP.
+Clients must copy those ADPs and must not derive a substitute rank.
+
+The 2026-07-27 decision and measurements below are retained as the historical
+record that Job15 corrected:
 
 Measured against `picks.dev.db` today (2026 season):
 

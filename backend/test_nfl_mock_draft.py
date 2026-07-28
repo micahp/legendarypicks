@@ -92,9 +92,9 @@ class TestNflMockDraft(unittest.TestCase):
                     (3, "Gamma QB", "QB", "BUF"),
                     (4, "Delta TE", "TE", "SF"),
                     (5, "Epsilon PK", "PK", "BAL"),
-                    (6, "Zeta RB", "RB", "DAL"),    # below sentinel
-                    (7, "Eta WR", "WR", "LAR"),     # below sentinel
-                    (8, "Theta PK", "PK", "GB"),    # at sentinel, no ownership → excluded
+                    (6, "Zeta RB", "RB", "DAL"),
+                    (7, "Eta WR", "WR", "LAR"),
+                    (8, "Theta PK", "PK", "GB"),    # no ADP or ownership → excluded
                 ],
             )
             # Seed ADP rows.
@@ -106,7 +106,7 @@ class TestNflMockDraft(unittest.TestCase):
                     (2, 2026, 5.2, 97.0),
                     (3, 2026, 15.0, 95.0),
                     (4, 2026, 50.0, 80.0),
-                    (5, 2026, 170.0, 10.0),   # PK at sentinel with ownership
+                    (5, 2026, 170.0, 10.0),   # copied published ADP
                     (6, 2026, 2.0, 98.0),
                     (7, 2026, 10.0, 92.0),
                     (8, 2026, None, 0.0),     # no published ADP or ownership → excluded

@@ -28,7 +28,7 @@ import {
  * Build a realistic 300-player pool with proper position distribution.
  * ADP values are spaced roughly like real NFL ADPs:
  *   1–180  have real-ish ADPs (the draftable 180)
- *   181–300 have sentinel+ ADPs (the waiver-ish tail, §0)
+ *   181–300 have later published ADPs (the waiver-ish tail)
  */
 function makeTestPool(size = 300): DraftPlayer[] {
   const pool: DraftPlayer[] = []

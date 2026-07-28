@@ -676,7 +676,7 @@ class DstFollowUpTests(DstDraftBoardTests):
         con.close()
 
     def test_def_adp_ge_169_survives_and_non_null(self):
-        """DEF with published ADP >=169 must survive sentinel."""
+        """DEF with published ADP >=169 must survive without reclassification."""
         payload = self.board(position="DEF")
         defs = [p for p in payload["players"] if p["position"] == "DEF"]
         self.assertGreaterEqual(len(defs), 1)

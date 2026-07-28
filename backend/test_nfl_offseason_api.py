@@ -119,7 +119,7 @@ class NflOffseasonApiTests(unittest.TestCase):
                     (1, 2026, 3.5, 99.0),
                     (2, 2026, 25.0, 95.0),
                     (4, 2026, 66.0, 80.0),      # rookie with a real market price
-                    (5, 2026, 170.0, 0.1),      # ESPN's undrafted sentinel
+                    (5, 2026, 170.0, 0.1),      # copied published ADP
                 ],
             )
             connection.executemany(

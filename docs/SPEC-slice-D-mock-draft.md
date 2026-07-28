@@ -1,13 +1,14 @@
 # SPEC: Slice D — single-player mock draft vs. ADP bots
 
-Status: **specified 2026-07-27, not yet built.** Ships in **v0.7.0** with slice A
-(`SPEC-accounts-and-mock-draft.md` §6), **ungated**. Depends on slice A being in first: a
+Status: **implemented; integration gates pending 2026-07-28.** Ships in **v0.7.0** with
+slice A (`SPEC-accounts-and-mock-draft.md` §6), **ungated**. Depends on slice A being in first: a
 completed draft must save against `device_id` on the server so slice B's claim-on-sign-in
 picks it up.
 
-Parent spec: `SPEC-accounts-and-mock-draft.md` §3. Both scope decisions there are already
-made — **solo vs. bots**, and **12×15 snake, QB/RB/WR/TE/K + FLEX, no D/ST, no IDP**. This
-file is the build-level detail, plus three things the parent spec's numbers get wrong.
+Parent spec: `SPEC-accounts-and-mock-draft.md` §3. The current decisions are **solo vs.
+bots** and **12×15 snake, QB/RB/WR/TE/PK/DEF + FLEX, no IDP**. Job15 superseded the
+original no-D/ST decision after finding published ESPN ADP for all 32 defenses. This file
+retains the older measurements below as a record of what Job15 corrected.
 
 ---
 
@@ -114,6 +115,15 @@ work. Three rules get broken by default if nobody is watching:
 ---
 
 ## 0. Read this before anything else: the pool does not fit
+
+> **Superseded by Job15 on 2026-07-28.** The section below inferred that values
+> around 170 were an undrafted sentinel. Current measurement finds 2,543
+> non-null published ESPN ADPs. Among active QB/RB/WR/TE/PK players, 733 have a
+> published ADP; 553 are at or above 169.0, spanning 169.02–170.89, and 552 of
+> those also carry an explicit published ESPN rank. The reader-side cutoff and
+> ownership-based substitute ordering are removed. The current pool copies
+> published ADP, includes all 32 DEF entities, and requires zero null ADPs.
+> The historical analysis remains below to explain the superseded design.
 
 The parent spec justifies 12×15 with *"only 248 players carry a real ADP against 180 picks."*
 Measured against `picks.dev.db` on 2026-07-27, that number does not survive contact with the
