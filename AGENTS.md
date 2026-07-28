@@ -209,6 +209,10 @@ Caught at review (orchestrator), should have been caught by the feature's own va
   `:8096`. Verify against those services and re-request a page or endpoint if it appears stale.
 - **Never start, kill, or restart a dev server.** Never run `kill` or `pkill` against Node or uvicorn;
   duplicate processes and terminated servers corrupt the shared tunnel.
+- **Skills live in `.claude/skills/`, and they are not optional reading.** Load
+  **`published-first`** before writing anything that derives, aggregates, reconstructs or
+  back-fills a value — including schedules, bye weeks and join keys; **`honest-data-ui`** before
+  designing any surface that shows numbers; **`resource-check`** before batch work.
 - **Follow `docs/DEV-STANDARDS.md`.** In particular, list endpoints must not download substantially
   more data than the UI renders, payload sizes must be measured, and an HTTP 200 alone is not proof
   that a feature works.
