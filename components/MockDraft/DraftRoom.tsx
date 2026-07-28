@@ -729,7 +729,7 @@ function DraftBoardGrid({ draftState }: { draftState: DraftState }) {
    Under the 'All' filter the header stays generic, because one column is
    spanning three different units and the row's position chip says which. */
 
-function headlineStatFor(position: string): { header: string; title: string } {
+export function headlineStatFor(position: string): { header: string; title: string } {
   if (position === 'DEF') return { header: 'D/ST', title: 'D/ST fantasy points per game, 2025' }
   if (position === 'PK') return { header: 'K Pts', title: 'Kicking points per game, 2025' }
   if (position === 'ALL') return { header: 'Pts/G', title: 'Fantasy points per game, 2025 — PPR for skill positions, kicking points for K, D/ST points for defenses' }
@@ -737,7 +737,7 @@ function headlineStatFor(position: string): { header: string; title: string } {
 }
 
 /** The one number, resolved per row so a mixed 'All' view stays correct. */
-function HeadlineStat({ player }: { player: PoolPlayer }) {
+export function HeadlineStat({ player }: { player: PoolPlayer }) {
   const value =
     player.position === 'DEF'
       ? player.dst_pts_per_game

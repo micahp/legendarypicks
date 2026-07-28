@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import type { PoolPlayer } from '../Leagues/types'
 import { AvailabilityStrip } from '../Leagues/NflDraftRoom'
 import { poolToDraftRow } from '../../lib/mockDraft/api'
+import { HeadlineStat } from './DraftRoom'
 
 interface Props {
   players: PoolPlayer[]
@@ -23,6 +24,31 @@ export default function PoolList({ players, onStartDraft }: Props) {
     [players],
   )
 
+  const playerMap = useMemo(() => {
+    const m = new Map<number, PoolPlayer>()
+    for (const p of players) m.set(p.player_id, p)
+    return m
+  }, [players])
+
+  // Positional rank by ADP — same derivation as the draft room, so "RB4" means
+  // the same thing on both screens.
+  const posRank = useMemo(() => {
+    const byPos = new Map<string, PoolPlayer[]>()
+    for (const p of players) {
+      const list = byPos.get(p.position)
+      if (list) list.push(p)
+      else byPos.set(p.position, [p])
+    }
+    const m = new Map<number, number>()
+    for (const list of Array.from(byPos.values())) {
+      list
+        .filter(p => p.adp != null)
+        .sort((a, b) => (a.adp as number) - (b.adp as number))
+        .forEach((p, i) => m.set(p.player_id, i + 1))
+    }
+    return m
+  }, [players])
+
   return (
     <section className="space-y-4">
       <div className="flex items-center justify-between">
@@ -43,9 +69,10 @@ export default function PoolList({ players, onStartDraft }: Props) {
         </button>
       </div>
 
-      {/* Player pool table — same two-tone card, same column structure,
-          but columns that don't apply (PPR, xFP, snap, target, notes) render
-          as dashes because pool data doesn't carry them. */}
+      {/* Player pool table. Carries the same headline stat as the draft room so
+          the pre-draft and in-draft views never disagree about a player. Bye week
+          deliberately stays in the draft room: here the question is what is in the
+          pool, there it is who to pick, and a bye only matters against a roster. */}
       <div className="overflow-x-auto rounded-xl border border-zinc-800 bg-zinc-900 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         <table className="w-full text-sm">
           <thead>
@@ -59,13 +86,19 @@ export default function PoolList({ players, onStartDraft }: Props) {
                   by team schedule
                 </span>
               </th>
+              <th className="text-right py-3 px-2 w-16" title="Fantasy points per game, 2025 — PPR for skill positions, kicking points for K, D/ST points for defenses">Pts/G</th>
               <th className="text-right py-3 px-2">ADP</th>
               <th className="text-right py-3 px-2">Owned</th>
             </tr>
           </thead>
           <tbody>
             {rows.map(row => (
-              <PoolRow key={row.player_id} row={row} />
+              <PoolRow
+                key={row.player_id}
+                row={row}
+                player={playerMap.get(row.player_id)}
+                posRank={posRank.get(row.player_id)}
+              />
             ))}
           </tbody>
         </table>
@@ -78,8 +111,12 @@ export default function PoolList({ players, onStartDraft }: Props) {
  *  then overlays just the columns we need (ADP, percent_owned). */
 function PoolRow({
   row,
+  player,
+  posRank,
 }: {
   row: ReturnType<typeof poolToDraftRow>
+  player?: PoolPlayer
+  posRank?: number
 }) {
   const noSample = row.sample === 'none'
   const isKicker = row.position === 'PK'
@@ -95,7 +132,15 @@ function PoolRow({
         <span className="font-medium text-zinc-200">
           {row.name}
         </span>
-        <div className="text-[10px] text-zinc-600">{row.current_team}</div>
+        <div className="text-[10px] text-zinc-600">
+          {row.current_team}
+          {posRank != null && (
+            <>
+              {' · '}
+              <span className="tabular-nums">{row.position}{posRank}</span>
+            </>
+          )}
+        </div>
       </td>
       <td className="py-2.5 px-2 text-center">
         <span className="rounded bg-zinc-800 px-1.5 py-0.5 text-[11px] font-semibold uppercase text-zinc-400">
@@ -140,6 +185,9 @@ function PoolRow({
         )}
       </td>
 
+      <td className="py-2.5 px-2 text-right font-mono tabular-nums text-xs text-zinc-300">
+        {player ? <HeadlineStat player={player} /> : <span className="text-zinc-700">—</span>}
+      </td>
       <td className="py-2.5 px-2 text-right font-mono tabular-nums text-zinc-300 font-semibold">
         {row.adp != null ? row.adp.toFixed(1) : '—'}
       </td>
