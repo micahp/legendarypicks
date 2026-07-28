@@ -198,7 +198,7 @@ export function botPick(state: DraftState, rng: () => number): DraftPlayer {
   //   D/ST players have null ADP — use pool position as ordinal fallback.
   //   availablePool is sorted by the backend (real ADP first, then
   //   D/ST ordered by dst_rank at indices ~150–181).
-  const poolIndex = new Map(candidates.map((p, i) => [p.player_id, i]))
+  const poolIndex = new Map(state.availablePool.map((p, i) => [p.player_id, i]))
   let best = candidates[0]
   let bestScore = Infinity
   for (const p of candidates) {
