@@ -97,11 +97,6 @@ export default function ResultsScreen({ pool, draftState }: Props) {
   const bestValue = useMemo(() => findBestValue(userRoster.players, draftState, playerMap, 'best'), [userRoster, draftState, playerMap])
   const worstValue = useMemo(() => findBestValue(userRoster.players, draftState, playerMap, 'worst'), [userRoster, draftState, playerMap])
 
-  // ── Durable URL — just the draft id ──
-  const shareUrl = typeof window !== 'undefined'
-    ? `${window.location.origin}/mock-draft?id=${draftState.id}`
-    : ''
-
   return (
     <section className="space-y-6">
       {/* ── Headline — historical with n ── */}
@@ -151,13 +146,25 @@ export default function ResultsScreen({ pool, draftState }: Props) {
         )}
       </div>
 
-      {/* ── Share URL ── */}
-      {shareUrl && (
-        <div className="rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-3">
-          <p className="text-xs text-zinc-500 mb-1">Share this draft</p>
-          <code className="text-sm text-zinc-400 break-all">{shareUrl}</code>
+      {/* A link is generated on request, not printed automatically — the URL is
+          only meaningful once a completed draft has a public read path. Until
+          then the control is disabled and says so, rather than handing over a
+          link that renders a fresh pool for the sender and 404s for anyone else
+          (nfl_mock_draft.py:355). */}
+      <div className="rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-sm font-semibold text-zinc-300">Share this draft</p>
+          <p className="text-xs text-zinc-500 pt-0.5">Coming soon</p>
         </div>
-      )}
+        <button
+          type="button"
+          disabled
+          title="Shareable draft links are not built yet"
+          className="shrink-0 cursor-not-allowed rounded-lg border border-zinc-800 bg-zinc-900 px-4 py-2 text-sm font-semibold text-zinc-600"
+        >
+          Get a link
+        </button>
+      </div>
     </section>
   )
 }
