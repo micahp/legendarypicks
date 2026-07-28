@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from 'react'
+import { useMemo, useState, useEffect, useRef } from 'react'
 import type { PoolPlayer } from '../Leagues/types'
 import type { DraftState, DraftPlayer } from '../../lib/mockDraft/engine'
 import {
@@ -119,6 +119,32 @@ export default function DraftRoom({ pool, draftState, onUserPick, userPicking, q
   const drafter = currentDrafter(draftState)
   const round = Math.ceil(draftState.currentPick / draftState.teams)
 
+  // ── Clock: 30s countdown when user is on the clock ──
+  const CLOCK_SECONDS = 30
+  const [clock, setClock] = useState(CLOCK_SECONDS)
+  const clockRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  useEffect(() => {
+    if (userTurn && !draftState.completed) {
+      setClock(CLOCK_SECONDS)
+      clockRef.current = setInterval(() => {
+        setClock(c => {
+          if (c <= 1) {
+            if (clockRef.current) clearInterval(clockRef.current)
+            return 0
+          }
+          return c - 1
+        })
+      }, 1000)
+    } else {
+      if (clockRef.current) clearInterval(clockRef.current)
+      setClock(CLOCK_SECONDS)
+    }
+    return () => {
+      if (clockRef.current) clearInterval(clockRef.current)
+    }
+  }, [userTurn, draftState.completed])
+
   // Sort user's players into slot order
   const rosterSlots = useMemo(() => buildRosterSlots(userRoster.players, playerMap), [userRoster, playerMap])
 
@@ -156,6 +182,14 @@ export default function DraftRoom({ pool, draftState, onUserPick, userPicking, q
             <>
               <span className="text-sm font-semibold text-zinc-200">
                 Your pick — Pick {draftState.currentPick}
+              </span>
+              <span className="text-xs text-zinc-500">·</span>
+              <span
+                className={`font-mono tabular-nums text-sm ${
+                  clock <= 10 ? 'font-bold text-zinc-200' : 'font-medium text-zinc-400'
+                }`}
+              >
+                0:{clock.toString().padStart(2, '0')}
               </span>
             </>
           ) : (
