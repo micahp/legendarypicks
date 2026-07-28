@@ -227,12 +227,109 @@ class NflOffseasonApiTests(unittest.TestCase):
         self.assertNotIn(19, mover["weeks_played"])
         self.assertEqual(mover["weeks_played"], list(range(1, 9)))
 
+    def test_shared_availability_uses_logs_for_movers_and_snaps_for_snap_only(self):
+        with sqlite3.connect(self.db_path) as connection:
+            connection.executescript(
+                """
+                CREATE TABLE nfl_snap_counts(
+                  player_id INTEGER,
+                  season INTEGER,
+                  week INTEGER,
+                  team TEXT
+                );
+                CREATE TABLE nfl_schedule(
+                  season INTEGER,
+                  week INTEGER,
+                  home_team TEXT,
+                  away_team TEXT
+                );
+                """
+            )
+            # Actual Mover has authoritative ARI log rows. More MIN snap rows
+            # must fill presence without changing the log-derived primary team.
+            connection.executemany(
+                "INSERT INTO nfl_snap_counts VALUES(2,2025,?,'MIN')",
+                [(week,) for week in range(1, 18)],
+            )
+            # Camp Rookie has no logs; its published snap team is the only
+            # grounded source for the schedule denominator.
+            connection.executemany(
+                "INSERT INTO nfl_snap_counts VALUES(4,2025,?,'NE')",
+                [(week,) for week in range(1, 4)],
+            )
+            for week in range(1, 18):
+                connection.execute(
+                    "INSERT INTO nfl_schedule VALUES(2025,?,'ARI','OPP')",
+                    (week,),
+                )
+                connection.execute(
+                    "INSERT INTO nfl_schedule VALUES(2025,?,'MIN','OPP')",
+                    (week,),
+                )
+                connection.execute(
+                    "INSERT INTO nfl_schedule VALUES(2025,?,'NE','OPP')",
+                    (week,),
+                )
+            connection.row_factory = sqlite3.Row
+            availability = nfl_offseason._availability_aggregates(connection, 2025)
+
+        mover = availability[2]
+        self.assertEqual(mover["primary_team"], "ARI")
+        self.assertEqual(mover["games_played"], 17)
+        self.assertEqual(mover["team_games"], 17)
+        self.assertEqual(mover["team_weeks"], list(range(1, 18)))
+
+        rookie = availability[4]
+        self.assertEqual(rookie["primary_team"], "NE")
+        self.assertEqual(rookie["games_played"], 3)
+        self.assertEqual(rookie["team_games"], 17)
+        self.assertEqual(rookie["team_weeks"], list(range(1, 18)))
+
+    def test_kicker_per_game_uses_presence_not_field_goal_attempt_rows(self):
+        with sqlite3.connect(self.db_path) as connection:
+            connection.execute(
+                """CREATE TABLE nfl_snap_counts(
+                     player_id INTEGER,
+                     season INTEGER,
+                     week INTEGER,
+                     team TEXT
+                   )"""
+            )
+            for week in range(1, 17):
+                connection.execute(
+                    "INSERT INTO player_game_logs VALUES(?,?,?,?,?,?,?,?)",
+                    (
+                        6,
+                        "nfl",
+                        2025,
+                        str(week),
+                        f"pk-{week}",
+                        "DAL",
+                        "REG",
+                        '{"fg_att":1,"fg_made_0_19":1}',
+                    ),
+                )
+            connection.executemany(
+                "INSERT INTO nfl_snap_counts VALUES(6,2025,?,'DAL')",
+                [(week,) for week in range(1, 18)],
+            )
+            connection.row_factory = sqlite3.Row
+            availability = nfl_offseason._availability_aggregates(connection, 2025)
+            scoring = nfl_offseason._pk_aggregates(
+                connection, 2025, availability
+            )
+
+        self.assertEqual(availability[6]["games_played"], 17)
+        self.assertEqual(scoring[6]["pk_pts_total"], 48.0)
+        self.assertEqual(scoring[6]["pk_pts_per_game"], 2.8)
+
     def test_no_sample_players_read_as_absent_rather_than_zero(self):
         players = {p["name"]: p for p in self.board()["players"]}
 
         rookie = players["Camp Rookie"]
         self.assertEqual(rookie["sample"], "none")
         self.assertEqual(rookie["games_played"], 0)
+        self.assertIsNone(rookie["games_missed"])
         self.assertEqual(rookie["weeks_played"], [])
         # A zero here would be a claim about the player. Absence is a claim
         # about us, and it is the true one.

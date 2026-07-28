@@ -13,11 +13,16 @@ import os
 import sqlite3
 import time
 import uuid
-from collections import defaultdict
 from typing import Optional
 
 from fastapi import APIRouter, Header, Query, Request
 from fastapi.responses import JSONResponse
+
+from .nfl_offseason import (
+    _availability_aggregates,
+    _dst_aggregates,
+    _pk_aggregates,
+)
 
 # ---------------------------------------------------------------------------
 #  Module-level DB path — mirrors ufc_picks.py / nfl_draft_notes.py
@@ -171,107 +176,10 @@ def pool(season: int = Query(...)):
         _log_season = (_log_season_row[0] if _log_season_row and _log_season_row[0]
                        else _CURRENT_SEASON - 1)
 
-        # Per-player aggregates: games_played, weeks_played, and primary_team
-        # (the team he logged the most games for that season — handles mid-season
-        # trades and team-code mismatches between the players table and the logs,
-        # exactly as nfl_offseason.py:571-605 does).  Ties are broken by
-        # preferring the team with the highest logged week (the one he finished on).
-        agg_rows = connection.execute(
-            """SELECT player_id, COUNT(*) AS games_played,
-                      GROUP_CONCAT(CAST(game_no AS INTEGER)) AS weeks_csv,
-                      team
-               FROM player_game_logs
-               WHERE league='nfl' AND season=? AND player_id IS NOT NULL
-                 AND CAST(game_no AS INTEGER) < ?
-               GROUP BY player_id, team""",
-            (_log_season, _POSTSEASON_FIRST_WEEK),
-        ).fetchall()
-
-        _per_player: dict[int, dict] = {}
-        for row in agg_rows:
-            pid = row["player_id"]
-            team = row["team"]
-            games = row["games_played"]
-            weeks = [int(w) for w in (row["weeks_csv"] or "").split(",") if w]
-            if pid not in _per_player:
-                _per_player[pid] = {
-                    "games_played": 0, "weeks": set(),
-                    "team_counts": {}, "team_max_week": {},
-                }
-            rec = _per_player[pid]
-            rec["games_played"] += games
-            rec["weeks"].update(weeks)
-            rec["team_counts"][team] = rec["team_counts"].get(team, 0) + games
-            max_w = max(weeks) if weeks else 0
-            rec["team_max_week"][team] = max(rec["team_max_week"].get(team, 0), max_w)
-
-        # ── Merge snap-count presence (all positions) ──
-        # Snap counts tell us whether a player dressed, regardless of whether
-        # they recorded a stat.  Fixes kickers/defenders who showed 0-1 games.
-        snap_columns = connection.execute("PRAGMA table_info(nfl_snap_counts)").fetchall()
-        if snap_columns:
-            for sr in connection.execute(
-                """SELECT player_id, COUNT(*) AS snap_games,
-                          GROUP_CONCAT(week) AS snap_weeks,
-                          team
-                   FROM nfl_snap_counts
-                   WHERE season=? AND CAST(week AS INTEGER) < ?
-                   GROUP BY player_id""",
-                (_log_season, _POSTSEASON_FIRST_WEEK),
-            ):
-                pid = sr["player_id"]
-                s_weeks = [int(w) for w in (sr["snap_weeks"] or "").split(",") if w]
-                s_games = sr["snap_games"]
-                s_team = sr["team"]
-                if pid not in _per_player:
-                    _per_player[pid] = {
-                        "games_played": 0, "weeks": set(),
-                        "team_counts": {}, "team_max_week": {},
-                    }
-                rec = _per_player[pid]
-                if s_games > rec["games_played"]:
-                    rec["games_played"] = s_games
-                rec["weeks"].update(s_weeks)
-                if s_team:
-                    rec["team_counts"][s_team] = rec["team_counts"].get(s_team, 0) + s_games
-
-        aggregates: dict[int, int] = {}
-        weeks_played_map: dict[int, list[int]] = {}
-        primary_team_map: dict[int, str] = {}
-        for pid, rec in _per_player.items():
-            aggregates[pid] = rec["games_played"]
-            weeks_played_map[pid] = sorted(rec["weeks"])
-            # Primary team = most games; ties go to the later-week team.
-            primary_team_map[pid] = max(
-                rec["team_counts"],
-                key=lambda t: (rec["team_counts"][t], rec["team_max_week"].get(t, 0)),
-            )
-
-        # ── Team weeks from nfl_schedule (not derived from game logs) ──
-        # The published schedule is the authoritative source for which weeks
-        # a team played — it handles byes, double-headers, and rescheduled
-        # games correctly without depending on log coverage.
-        team_weeks_map: dict[str, list[int]] = defaultdict(list)
-        sched_columns = connection.execute("PRAGMA table_info(nfl_schedule)").fetchall()
-        if sched_columns:
-            for tw_row in connection.execute(
-                """SELECT home_team AS team, week FROM nfl_schedule
-                   WHERE season=? AND week < ?
-                UNION ALL
-                SELECT away_team AS team, week FROM nfl_schedule
-                WHERE season=? AND week < ?""",
-                (_log_season, _POSTSEASON_FIRST_WEEK,
-                 _log_season, _POSTSEASON_FIRST_WEEK),
-            ):
-                try:
-                    wk = int(tw_row["week"])
-                    team = tw_row["team"]
-                    if wk not in team_weeks_map[team]:
-                        team_weeks_map[team].append(wk)
-                except (TypeError, ValueError):
-                    continue
-            for team in team_weeks_map:
-                team_weeks_map[team].sort()
+        availability = _availability_aggregates(connection, _log_season)
+        dst_availability, dst_team_weeks = _dst_aggregates(
+            connection, _log_season
+        )
 
         # ------------------------------------------------------------------
         # Query the pool: draftable positions, active players, from nfl_adp.
@@ -328,63 +236,34 @@ def pool(season: int = Query(...)):
             r["name"],
         ))
 
-        # ── D/ST availability from nfl_dst_stats ──
-        dst_avail: dict[int, dict] = {}
-        try:
-            for dr in connection.execute(
-                """SELECT p.id AS player_id, p.team,
-                          GROUP_CONCAT(d.week) AS weeks_csv
-                   FROM players p
-                   JOIN nfl_dst_stats d ON d.player_id = p.id
-                   WHERE p.league = 'nfl' AND p.active = 1
-                     AND p.position = 'DEF' AND d.season = ?
-                   GROUP BY p.id""",
-                (_log_season,),
-            ):
-                pid = dr["player_id"]
-                weeks = [int(w) for w in (dr["weeks_csv"] or "").split(",") if w]
-                gp = len(weeks)
-                tw = team_weeks_map.get(dr["team"], [])
-                tg = len(tw) if tw else _REG_SEASON_TEAM_GAMES
-                dst_avail[pid] = {
-                    "games_played": gp,
-                    "games_missed": max(0, tg - gp) if gp > 0 else None,
-                    "weeks_played": weeks,
-                    "team_weeks": tw,
-                }
-        except sqlite3.OperationalError:
-            pass
-
         players = []
         for row in rows:
             pid = row["player_id"]
             pos = row["position"]
 
             if pos == "DEF":
-                avail = dst_avail.get(pid, {})
-                gp = avail.get("games_played", 0)
-                gm = avail.get("games_missed")
-                wp = avail.get("weeks_played", [])
-                tw = avail.get("team_weeks", [])
-                if gp >= _THIN_SAMPLE_GAMES:
-                    sample = "full"
-                elif gp > 0:
-                    sample = "thin"
-                else:
-                    sample = "none"
+                avail = dst_availability.get(pid)
+                tw = dst_team_weeks.get(row["team"], [])
+                team_games = len(tw) or _REG_SEASON_TEAM_GAMES
             else:
-                gp = aggregates.get(pid, 0)
-                if pid not in aggregates:
-                    sample = "none"
-                    gm = None
-                elif gp < _THIN_SAMPLE_GAMES:
-                    sample = "thin"
-                    gm = _REG_SEASON_TEAM_GAMES - gp
-                else:
-                    sample = "full"
-                    gm = _REG_SEASON_TEAM_GAMES - gp
-                wp = weeks_played_map.get(pid, [])
-                tw = team_weeks_map.get(primary_team_map.get(pid, ""), [])
+                avail = availability.get(pid)
+                tw = avail.get("team_weeks", []) if avail else []
+                team_games = (
+                    avail.get("team_games", _REG_SEASON_TEAM_GAMES)
+                    if avail
+                    else _REG_SEASON_TEAM_GAMES
+                )
+
+            gp = avail["games_played"] if avail else 0
+            wp = sorted(avail["weeks"]) if avail else []
+            gm = max(0, team_games - gp) if avail else None
+            sample = (
+                "full"
+                if gp >= _THIN_SAMPLE_GAMES
+                else "thin"
+                if gp > 0
+                else "none"
+            )
 
             players.append({
                 "player_id": pid,
@@ -697,6 +576,12 @@ def player_detail(player_id: int):
         ).fetchone()
         _log_season = (_log_season_row[0] if _log_season_row and _log_season_row[0]
                        else _CURRENT_SEASON - 1)
+        availability_by_player = _availability_aggregates(
+            connection, _log_season
+        )
+        dst_by_player, dst_team_weeks = _dst_aggregates(
+            connection, _log_season
+        )
 
         log_rows = connection.execute(
             """SELECT game_no, stats, team
@@ -707,8 +592,6 @@ def player_detail(player_id: int):
             (player_id, _log_season, _POSTSEASON_FIRST_WEEK),
         ).fetchall()
 
-        games_played = len(log_rows)
-        weeks_played: list[int] = []
         ppr_total = 0.0
         snap_pct_sum = 0.0
         snap_pct_count = 0
@@ -718,11 +601,6 @@ def player_detail(player_id: int):
         xfp_count = 0
 
         for row in log_rows:
-            try:
-                week = int(row["game_no"])
-                weeks_played.append(week)
-            except (TypeError, ValueError):
-                pass
             try:
                 stats = json.loads(row["stats"])
                 ppr = stats.get("fpts_ppr")
@@ -743,38 +621,21 @@ def player_detail(player_id: int):
             except Exception:
                 pass
 
-        # 3b. Merge snap-count presence
-        snap_columns = connection.execute("PRAGMA table_info(nfl_snap_counts)").fetchall()
-        if snap_columns:
-            for sr in connection.execute(
-                """SELECT week FROM nfl_snap_counts
-                   WHERE player_id=? AND season=? AND CAST(week AS INTEGER) < ?""",
-                (player_id, _log_season, _POSTSEASON_FIRST_WEEK),
-            ):
-                try:
-                    w = int(sr["week"])
-                    if w not in weeks_played:
-                        weeks_played.append(w)
-                        games_played = max(games_played, len(weeks_played))
-                except (TypeError, ValueError):
-                    continue
-
-        weeks_played.sort()
-
-        # ── D/ST availability from nfl_dst_stats (B17 — player_game_logs has no DEF rows) ──
         if position == "DEF":
-            dst_columns = connection.execute("PRAGMA table_info(nfl_dst_stats)").fetchall()
-            if dst_columns:
-                dst_row = connection.execute(
-                    """SELECT GROUP_CONCAT(week) AS weeks_csv
-                       FROM nfl_dst_stats
-                       WHERE season=? AND player_id=?""",
-                    (_log_season, player_id),
-                ).fetchone()
-                if dst_row and dst_row["weeks_csv"]:
-                    def_weeks = [int(w) for w in (dst_row["weeks_csv"] or "").split(",") if w]
-                    weeks_played = sorted(def_weeks)
-                    games_played = len(weeks_played)
+            availability = dst_by_player.get(player_id)
+            team_weeks = dst_team_weeks.get(team, [])
+            team_games = len(team_weeks) or _REG_SEASON_TEAM_GAMES
+        else:
+            availability = availability_by_player.get(player_id)
+            team_weeks = availability.get("team_weeks", []) if availability else []
+            team_games = (
+                availability.get("team_games", _REG_SEASON_TEAM_GAMES)
+                if availability
+                else _REG_SEASON_TEAM_GAMES
+            )
+
+        games_played = availability["games_played"] if availability else 0
+        weeks_played = sorted(availability["weeks"]) if availability else []
 
         # Sample classification
         if games_played == 0:
@@ -783,22 +644,6 @@ def player_detail(player_id: int):
             sample = "thin"
         else:
             sample = "full"
-
-        # Team weeks from schedule
-        team_weeks: list[int] = []
-        sched_columns = connection.execute("PRAGMA table_info(nfl_schedule)").fetchall()
-        if sched_columns and team:
-            tw_set: set[int] = set()
-            for tw_row in connection.execute(
-                """SELECT week FROM nfl_schedule
-                   WHERE season=? AND week < ? AND (home_team=? OR away_team=?)""",
-                (_log_season, _POSTSEASON_FIRST_WEEK, team, team),
-            ):
-                try:
-                    tw_set.add(int(tw_row["week"]))
-                except (TypeError, ValueError):
-                    continue
-            team_weeks = sorted(tw_set)
 
         # PPR calculations
         ppr_per_game_played = round(ppr_total / games_played, 1) if ppr_total and games_played else None
@@ -822,14 +667,12 @@ def player_detail(player_id: int):
             best_qb = None
             best_games = -1
             for qb_row in qb_rows:
-                qb_agg = connection.execute(
-                    """SELECT COUNT(*) AS g
-                       FROM player_game_logs
-                       WHERE player_id=? AND league='nfl' AND season=?
-                         AND game_type='REG'""",
-                    (qb_row["id"], _log_season),
-                ).fetchone()
-                games = qb_agg["g"] if qb_agg else 0
+                qb_availability = availability_by_player.get(qb_row["id"])
+                games = (
+                    qb_availability["games_played"]
+                    if qb_availability
+                    else 0
+                )
                 if games > best_games:
                     best_games = games
                     best_qb = {
@@ -842,56 +685,33 @@ def player_detail(player_id: int):
             if best_qb is not None and best_games > 0:
                 qb = best_qb
 
-        # 5. PK bucket computation — same formula as _pk_aggregates in nfl_offseason.py
+        # 5. PK scoring, kept separate from the shared presence aggregate.
         pk_pts_total = None
         pk_pts_per_game = None
         if position == "PK":
-            pk_row = connection.execute(
-                f"""SELECT
-                        COUNT(*)                                   AS games_played,
-                        SUM(
-                          COALESCE(CAST(json_extract(stats,'$.fg_made_0_19') AS REAL),0) * 3 +
-                          COALESCE(CAST(json_extract(stats,'$.fg_made_20_29') AS REAL),0) * 3 +
-                          COALESCE(CAST(json_extract(stats,'$.fg_made_30_39') AS REAL),0) * 3 +
-                          COALESCE(CAST(json_extract(stats,'$.fg_made_40_49') AS REAL),0) * 4 +
-                          COALESCE(CAST(json_extract(stats,'$.fg_made_50_59') AS REAL),0) * 5 +
-                          COALESCE(CAST(json_extract(stats,'$.fg_made_60_') AS REAL),0) * 5 +
-                          COALESCE(CAST(json_extract(stats,'$.pat_made') AS REAL),0) * 1 -
-                          COALESCE(CAST(json_extract(stats,'$.fg_missed') AS REAL),0) * 1
-                        )                                            AS pk_pts_total
-                 FROM player_game_logs
-                 WHERE league='nfl' AND season=?
-                   AND player_id=?
-                   AND CAST(game_no AS INTEGER) < ?""",
-                (_log_season, player_id, _POSTSEASON_FIRST_WEEK),
-            ).fetchone()
+            pk_row = _pk_aggregates(
+                connection, _log_season, availability_by_player
+            ).get(player_id)
             if pk_row and pk_row["pk_pts_total"] is not None:
                 pk_pts_total = round(pk_row["pk_pts_total"], 1)
-                gp = pk_row["games_played"] or 0
-                pk_pts_per_game = round(pk_pts_total / gp, 1) if pk_pts_total and gp else None
+                pk_pts_per_game = pk_row["pk_pts_per_game"]
 
-        # 6. DST stats from nfl_dst_stats — same pattern as _dst_aggregates
+        # 6. D/ST scoring from the same position-specific aggregate as the board.
         dst_pts_total = None
         dst_pts_per_game = None
         if position == "DEF":
-            dst_columns = connection.execute("PRAGMA table_info(nfl_dst_stats)").fetchall()
-            if dst_columns:
-                dst_row = connection.execute(
-                    """SELECT COUNT(*) AS games_played,
-                              SUM(fantasy_pts) AS dst_total,
-                              AVG(fantasy_pts) AS dst_avg
-                       FROM nfl_dst_stats
-                       WHERE season=? AND player_id=?""",
-                    (_log_season, player_id),
-                ).fetchone()
-                if dst_row and dst_row["dst_total"] is not None:
-                    dst_pts_total = round(dst_row["dst_total"], 1)
-                    if dst_row["dst_avg"] is not None:
-                        dst_pts_per_game = round(dst_row["dst_avg"], 1)
+            dst_row = dst_by_player.get(player_id)
+            if dst_row and dst_row["dst_total"] is not None:
+                dst_pts_total = round(dst_row["dst_total"], 1)
+                if dst_row["dst_avg"] is not None:
+                    dst_pts_per_game = round(dst_row["dst_avg"], 1)
 
-        # 7. games_missed — mirroring the draft board pattern
-        team_games = len(team_weeks) if team_weeks else _REG_SEASON_TEAM_GAMES
-        games_missed = max(0, team_games - games_played)
+        # 7. No presence means unknown missed games, not a fabricated 17.
+        games_missed = (
+            max(0, team_games - games_played)
+            if availability is not None
+            else None
+        )
 
         # 8. PK/DEF null-override for skill-position fields
         if position in ("PK", "DEF"):

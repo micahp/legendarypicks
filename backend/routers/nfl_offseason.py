@@ -525,78 +525,87 @@ def _draft_board_schema(connection: sqlite3.Connection) -> None:
         )
 
 
-def _regular_season_aggregates(connection: sqlite3.Connection, season: int) -> Dict[int, dict]:
-    """One pass over the reference season's per-game rows.
+def _availability_aggregates(
+    connection: sqlite3.Connection, season: int
+) -> Dict[int, dict]:
+    """Return one shared regular-season presence record per player.
 
-    Returns per player: games played, total PPR, mean expected PPR, mean snap
-    share, mean target share, and the set of weeks they appeared in (the strip).
-
-    Games played and weeks present are read from *both* player_game_logs AND
-    nfl_snap_counts (M2).  player_game_logs only records players who registered
-    a passing/rushing/receiving stat, so kickers, defenders, and linemen who
-    dressed every week but never touched the ball read as absent from that table
-    alone.  nfl_snap_counts records every player who took a snap, regardless of
-    whether they recorded a stat — so the union of the two is the true presence
-    picture.
-
-    Postseason weeks are excluded -- see ``_POSTSEASON_FIRST_WEEK``. Missed games
-    contribute nothing here by construction; that absence IS the measurement.
+    Presence is the union of stat-log weeks and published snap-count weeks.
+    When logs exist, their most-used team owns the schedule denominator; snap
+    teams are consulted only for players with no log rows. Ties prefer the team
+    used in the latest week, then its code, so the choice is deterministic.
     """
     game_type_filter = f"AND CAST(game_no AS INTEGER) < {_POSTSEASON_FIRST_WEEK}"
     if "game_type" in _table_columns(connection, "player_game_logs"):
         game_type_filter = "AND game_type='REG'"
-    rows = connection.execute(
-        f"""SELECT player_id,
-                  COUNT(DISTINCT game_id)                                   AS games_played,
-                  SUM(CAST(json_extract(stats,'$.fpts_ppr')     AS REAL))    AS ppr_total,
-                  AVG(CAST(json_extract(stats,'$.xfpts_ppr')    AS REAL))    AS xfp_per_game,
-                  AVG(CAST(json_extract(stats,'$.off_pct')      AS REAL))    AS snap_pct,
-                  AVG(CAST(json_extract(stats,'$.target_share') AS REAL))    AS target_share,
-                  GROUP_CONCAT(game_no)                                      AS weeks,
-                  (SELECT team FROM player_game_logs inner_logs
-                    WHERE inner_logs.player_id = player_game_logs.player_id
-                      AND inner_logs.league='nfl' AND inner_logs.season=?
-                      AND CAST(inner_logs.game_no AS INTEGER) < ?
-                    GROUP BY team ORDER BY COUNT(*) DESC LIMIT 1)             AS primary_team
-           FROM player_game_logs
-           WHERE league='nfl' AND season=? AND player_id IS NOT NULL
-             {game_type_filter}
-            GROUP BY player_id""",
-        (season, _POSTSEASON_FIRST_WEEK, season),
-    ).fetchall()
 
-    # ── M2: snap-count presence (all positions, not just skill players) ──
-    snap_presence: Dict[int, dict] = {}
+    presence: Dict[int, dict] = {}
+    for row in connection.execute(
+        f"""SELECT player_id, team, GROUP_CONCAT(game_no) AS weeks
+            FROM player_game_logs
+            WHERE league='nfl' AND season=? AND player_id IS NOT NULL
+              {game_type_filter}
+            GROUP BY player_id, team""",
+        (season,),
+    ):
+        weeks: Set[int] = set()
+        for token in (row["weeks"] or "").split(","):
+            try:
+                weeks.add(int(token))
+            except (TypeError, ValueError):
+                continue
+        record = presence.setdefault(
+            row["player_id"],
+            {
+                "weeks": set(),
+                "log_team_counts": {},
+                "log_team_max_week": {},
+                "snap_team_counts": {},
+                "snap_team_max_week": {},
+            },
+        )
+        record["weeks"].update(weeks)
+        if row["team"]:
+            record["log_team_counts"][row["team"]] = len(weeks)
+            record["log_team_max_week"][row["team"]] = max(weeks) if weeks else 0
+
+    # Snap counts fill weeks where a player took the field without recording a
+    # box-score touch. They must not change a logged mover's primary team.
     snap_columns = _table_columns(connection, "nfl_snap_counts")
     if {"player_id", "season", "week"}.issubset(snap_columns):
-        for sr in connection.execute(
-            """SELECT player_id,
-                      COUNT(*)                AS snap_games,
-                      GROUP_CONCAT(week)       AS snap_weeks
+        snap_team = "team" if "team" in snap_columns else "NULL AS team"
+        for row in connection.execute(
+            f"""SELECT player_id, {snap_team}, GROUP_CONCAT(week) AS weeks
                FROM nfl_snap_counts
                WHERE season=? AND week < ?
-               GROUP BY player_id""",
+               GROUP BY player_id, team""",
             (season, _POSTSEASON_FIRST_WEEK),
         ):
-            weeks = set()
-            for token in (sr["snap_weeks"] or "").split(","):
+            weeks: Set[int] = set()
+            for token in (row["weeks"] or "").split(","):
                 try:
                     weeks.add(int(token))
-                except ValueError:
+                except (TypeError, ValueError):
                     continue
-            snap_presence[sr["player_id"]] = {
-                "games": sr["snap_games"],
-                "weeks": weeks,
-            }
+            record = presence.setdefault(
+                row["player_id"],
+                {
+                    "weeks": set(),
+                    "log_team_counts": {},
+                    "log_team_max_week": {},
+                    "snap_team_counts": {},
+                    "snap_team_max_week": {},
+                },
+            )
+            record["weeks"].update(weeks)
+            if row["team"]:
+                record["snap_team_counts"][row["team"]] = len(weeks)
+                record["snap_team_max_week"][row["team"]] = max(weeks) if weeks else 0
 
-    # Which weeks each team actually played, from the published schedule.
-    # After the vocabulary migration the logs speak ESPN, so the schedule join
-    # works and the derivation from player_game_logs is no longer necessary.
-    # If nfl_schedule doesn't exist (test fixture, older DB), fall back to
-    # deriving team_weeks from the weeks present in player_game_logs.
     team_weeks: Dict[str, Set[int]] = defaultdict(set)
     sched_columns = _table_columns(connection, "nfl_schedule")
-    if {"home_team", "away_team", "week"}.issubset(sched_columns):
+    has_schedule = {"home_team", "away_team", "week"}.issubset(sched_columns)
+    if has_schedule:
         for row in connection.execute(
             """SELECT home_team AS team, week FROM nfl_schedule
                WHERE season=? AND week < ?
@@ -610,7 +619,6 @@ def _regular_season_aggregates(connection: sqlite3.Connection, season: int) -> D
             except (TypeError, ValueError):
                 continue
     else:
-        # Fallback: derive team weeks from player_game_logs game_no.
         for row in connection.execute(
             """SELECT team, CAST(game_no AS INTEGER) AS week
                FROM player_game_logs
@@ -625,63 +633,89 @@ def _regular_season_aggregates(connection: sqlite3.Connection, season: int) -> D
                 continue
 
     out: Dict[int, dict] = {}
-    for row in rows:
-        pid = row["player_id"]
-        weeks = set()
-        for token in (row["weeks"] or "").split(","):
-            try:
-                weeks.add(int(token))
-            except ValueError:
-                continue
-        games = row["games_played"] or 0
-
-        # Merge snap-count presence: union of weeks, max of games counts.
-        # A player who had snap rows but zero stat lines (kicker, defender)
-        # now surfaces correctly with games_played > 0.
-        sp = snap_presence.get(pid)
-        if sp:
-            weeks |= sp["weeks"]
-            if sp["games"] > games:
-                games = sp["games"]
-
-        total = row["ppr_total"]
-        # A mid-season mover has logs under two teams. Use the one he appeared
-        # for most; the games-played count is unaffected either way, and only
-        # the bye slot could differ between the two schedules.
-        primary_team = row["primary_team"]
+    for pid, record in presence.items():
+        team_counts = record["log_team_counts"] or record["snap_team_counts"]
+        team_max_week = (
+            record["log_team_max_week"]
+            if record["log_team_counts"]
+            else record["snap_team_max_week"]
+        )
+        primary_team = (
+            max(
+                team_counts,
+                key=lambda team: (
+                    team_counts[team],
+                    team_max_week.get(team, 0),
+                    team,
+                ),
+            )
+            if team_counts
+            else None
+        )
         out[pid] = {
-            "games_played": games,
-            "ppr_total": total,
-            "xfp_per_game": row["xfp_per_game"],
-            "snap_pct": row["snap_pct"],
-            "target_share": row["target_share"],
-            "weeks": weeks,
+            "games_played": len(record["weeks"]),
+            "weeks": record["weeks"],
             "team_weeks": sorted(team_weeks.get(primary_team, set())),
+            "team_games": (
+                len(team_weeks.get(primary_team, set()))
+                if has_schedule and team_weeks.get(primary_team)
+                else _REG_SEASON_TEAM_GAMES
+            ),
             "primary_team": primary_team,
-        }
-
-    # ── Players with snap counts but NO game logs ────────────────────────
-    # These are the kickers, defenders, and linemen who dressed every week
-    # but never recorded a stat.  Before M2 they were invisible; now they get
-    # a presence-only aggregate row (no PPR / snap share / target share).
-    for pid, sp in snap_presence.items():
-        if pid in out:
-            continue
-        out[pid] = {
-            "games_played": sp["games"],
-            "ppr_total": None,
-            "xfp_per_game": None,
-            "snap_pct": None,
-            "target_share": None,
-            "weeks": sp["weeks"],
-            "team_weeks": [],  # no primary team without a log row
-            "primary_team": None,
         }
 
     return out
 
 
-def _pk_aggregates(connection: sqlite3.Connection, season: int) -> Dict[int, dict]:
+def _regular_season_aggregates(connection: sqlite3.Connection, season: int) -> Dict[int, dict]:
+    """Return shared availability plus skill-position scoring aggregates."""
+    availability = _availability_aggregates(connection, season)
+    game_type_filter = f"AND CAST(game_no AS INTEGER) < {_POSTSEASON_FIRST_WEEK}"
+    if "game_type" in _table_columns(connection, "player_game_logs"):
+        game_type_filter = "AND game_type='REG'"
+    rows = connection.execute(
+        f"""SELECT player_id,
+                  SUM(CAST(json_extract(stats,'$.fpts_ppr')     AS REAL)) AS ppr_total,
+                  AVG(CAST(json_extract(stats,'$.xfpts_ppr')    AS REAL)) AS xfp_per_game,
+                  AVG(CAST(json_extract(stats,'$.off_pct')      AS REAL)) AS snap_pct,
+                  AVG(CAST(json_extract(stats,'$.target_share') AS REAL)) AS target_share
+            FROM player_game_logs
+            WHERE league='nfl' AND season=? AND player_id IS NOT NULL
+              {game_type_filter}
+            GROUP BY player_id""",
+        (season,),
+    ).fetchall()
+
+    out: Dict[int, dict] = {}
+    for row in rows:
+        pid = row["player_id"]
+        record = availability[pid]
+        out[pid] = {
+            **record,
+            "ppr_total": row["ppr_total"],
+            "xfp_per_game": row["xfp_per_game"],
+            "snap_pct": row["snap_pct"],
+            "target_share": row["target_share"],
+        }
+
+    for pid, record in availability.items():
+        if pid not in out:
+            out[pid] = {
+                **record,
+                "ppr_total": None,
+                "xfp_per_game": None,
+                "snap_pct": None,
+                "target_share": None,
+            }
+
+    return out
+
+
+def _pk_aggregates(
+    connection: sqlite3.Connection,
+    season: int,
+    availability: Optional[Dict[int, dict]] = None,
+) -> Dict[int, dict]:
     """Compute ESPN-standard kicker fantasy points from ingested bucket columns.
 
     Scoring: 0-39 yd FG = 3, 40-49 = 4, 50+ = 5, PAT = 1, missed FG = -1.
@@ -721,7 +755,8 @@ def _pk_aggregates(connection: sqlite3.Connection, season: int) -> Dict[int, dic
                 weeks.add(int(token))
             except ValueError:
                 continue
-        gp = row["games_played"] or 0
+        presence = availability.get(row["player_id"]) if availability else None
+        gp = presence["games_played"] if presence else row["games_played"] or 0
         total = row["pk_pts_total"]
         out[row["player_id"]] = {
             "games_played": gp,
@@ -867,7 +902,7 @@ def nfl_draft_board(
 
         aggregates = _regular_season_aggregates(connection, season)
         dst_aggregates, dst_team_weeks = _dst_aggregates(connection, season)
-        pk_aggregates = _pk_aggregates(connection, season)
+        pk_aggregates = _pk_aggregates(connection, season, aggregates)
 
         position_expr = "UPPER(COALESCE(NULLIF(p.position,''), ''))"
         where = ["p.league='nfl'", "p.active=1"]
@@ -913,20 +948,27 @@ def nfl_draft_board(
         pid = row["player_id"]
         is_def = row["position"] == "DEF"
         is_pk = row["position"] == "PK"
-        agg = dst_aggregates.get(pid) if is_def else pk_aggregates.get(pid) if is_pk else aggregates.get(pid)
+        availability = dst_aggregates.get(pid) if is_def else aggregates.get(pid)
+        scoring = (
+            dst_aggregates.get(pid)
+            if is_def
+            else pk_aggregates.get(pid)
+            if is_pk
+            else aggregates.get(pid)
+        )
         adp = row["adp"]
         ranked_adp = adp if (adp is not None and (is_def or adp < _ADP_SENTINEL)) else None
 
         # Eligible if we have something true to say: a real season, or a real
         # market price. A rookie with neither is not on the board at all --
         # better absent than present with a fabricated zero.
-        if agg is None and ranked_adp is None:
+        if availability is None and ranked_adp is None:
             continue
 
-        games_played = agg["games_played"] if agg else 0
-        if is_def and agg:
-            dst_total = agg.get("dst_total")
-            dst_pts_per_game = _round(agg["dst_avg"]) if agg["dst_avg"] is not None else None
+        games_played = availability["games_played"] if availability else 0
+        if is_def and scoring:
+            dst_total = scoring.get("dst_total")
+            dst_pts_per_game = _round(scoring["dst_avg"]) if scoring["dst_avg"] is not None else None
             pk_pts_total = None
             pk_pts_per_game = None
             ppr_total = None
@@ -935,10 +977,9 @@ def nfl_draft_board(
             xfp_per_game = None
             snap_pct = None
             target_share = None
-            sample = "full" if games_played >= _THIN_SAMPLE_GAMES else ("thin" if games_played > 0 else "none")
-        elif is_pk and agg:
-            pk_pts_total = agg.get("pk_pts_total")
-            pk_pts_per_game = agg.get("pk_pts_per_game")
+        elif is_pk and scoring:
+            pk_pts_total = scoring.get("pk_pts_total")
+            pk_pts_per_game = scoring.get("pk_pts_per_game")
             dst_total = None
             dst_pts_per_game = None
             ppr_total = None
@@ -947,19 +988,25 @@ def nfl_draft_board(
             xfp_per_game = None
             snap_pct = None
             target_share = None
-            sample = "full" if games_played >= _THIN_SAMPLE_GAMES else ("thin" if games_played > 0 else "none")
         else:
-            ppr_total = (agg["ppr_total"] if agg else None) or None
+            ppr_total = (scoring["ppr_total"] if scoring else None) or None
             dst_total = None
             dst_pts_per_game = None
             pk_pts_total = None
             pk_pts_per_game = None
-            if agg is None:
-                sample = "none"
-            elif games_played < _THIN_SAMPLE_GAMES:
-                sample = "thin"
-            else:
-                sample = "full"
+            xfp_per_game = (
+                scoring["xfp_per_game"] if scoring and not is_pk else None
+            )
+            snap_pct = scoring["snap_pct"] if scoring and not is_pk else None
+            target_share = scoring["target_share"] if scoring and not is_pk else None
+
+        sample = (
+            "full"
+            if games_played >= _THIN_SAMPLE_GAMES
+            else "thin"
+            if games_played > 0
+            else "none"
+        )
 
         # Per-player team_games from actual team_weeks, not the 17-constant.
         # After a mid-season trade the new team may have played a different
@@ -968,16 +1015,21 @@ def nfl_draft_board(
         # most); for D/ST we resolve from the deduplicated dst_team_weeks
         # using current_team (team defenses don't change teams).
         if is_def:
-            team_games_val = len(dst_team_weeks.get(row["current_team"], [])) or _REG_SEASON_TEAM_GAMES
-        elif agg and agg.get("team_weeks"):
-            team_games_val = len(agg["team_weeks"])
+            player_team_weeks = dst_team_weeks.get(row["current_team"], [])
+            team_games_val = len(player_team_weeks) or _REG_SEASON_TEAM_GAMES
+        elif availability:
+            player_team_weeks = availability.get("team_weeks", [])
+            team_games_val = availability.get(
+                "team_games", _REG_SEASON_TEAM_GAMES
+            )
         else:
+            player_team_weeks = []
             team_games_val = _REG_SEASON_TEAM_GAMES
 
         # The team this player actually played most of their games for.
         # Mid-season movers (Flacco) have a different current_team; this
         # is the one whose schedule drives team_games.
-        raw_primary_team = agg.get("primary_team") if agg else None
+        raw_primary_team = availability.get("primary_team") if availability else None
         primary_team = normalize("nfl", raw_primary_team) if raw_primary_team else None
 
         players.append({
@@ -996,19 +1048,22 @@ def nfl_draft_board(
             # Availability: the headline. Denominator is every game the team
             # played, so a missed game costs the drafter exactly what it cost.
             "games_played": games_played,
-            "games_missed": max(0, team_games_val - games_played),
+            "games_missed": (
+                max(0, team_games_val - games_played)
+                if availability is not None
+                else None
+            ),
             "team_games": team_games_val,
-            "weeks_played": sorted(agg["weeks"]) if agg else [],
+            "weeks_played": sorted(availability["weeks"]) if availability else [],
             # The 17 weeks his team actually played, so the strip can show a bye
             # as a bye rather than as an absence.
-            "team_weeks": (dst_team_weeks.get(row["current_team"], []) if is_def
-                           else agg.get("team_weeks", []) if agg else []),
+            "team_weeks": player_team_weeks,
             # Both averages, always together.
             "ppr_per_game_played": _round(ppr_total / games_played) if ppr_total and games_played else None,
             "ppr_per_team_game": _round(ppr_total / _REG_SEASON_TEAM_GAMES) if ppr_total else None,
-            "xfp_per_game": _round(agg["xfp_per_game"]) if agg and not is_def and not is_pk else None,
-            "snap_pct": _round(agg["snap_pct"] * 100, 0) if agg and agg.get("snap_pct") is not None and not is_def and not is_pk else None,
-            "target_share": _round(agg["target_share"] * 100, 1) if agg and agg.get("target_share") is not None and not is_def and not is_pk else None,
+            "xfp_per_game": _round(xfp_per_game) if xfp_per_game is not None else None,
+            "snap_pct": _round(snap_pct * 100, 0) if snap_pct is not None else None,
+            "target_share": _round(target_share * 100, 1) if target_share is not None else None,
             # D/ST-specific fields
             "dst_pts_per_game": dst_pts_per_game,
             "dst_pts_total": _round(dst_total, 1) if dst_total else None,
