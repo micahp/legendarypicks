@@ -1,5 +1,6 @@
 import { useMemo, useState, useEffect, useRef } from 'react'
 import type { PoolPlayer } from '../Leagues/types'
+import PlayerDetailOverlay from '../Leagues/PlayerDetailOverlay'
 import type { DraftState, DraftPlayer } from '../../lib/mockDraft/engine'
 import {
   currentDrafter,
@@ -45,6 +46,7 @@ const BENCH_SLOTS = 6
  */
 export default function DraftRoom({ pool, draftState, onUserPick, onTimeout, userPicking, queue, onAddToQueue, onRemoveFromQueue, onMoveQueueUp, onMoveQueueDown }: Props) {
   // ── Filter state ──
+  const [selectedPlayerId, setSelectedPlayerId] = useState<number | null>(null)
   const [posFilter, setPosFilter] = useState<string>('ALL')
   const [teamFilter, setTeamFilter] = useState<string>('ALL')
   const [byeFilter, setByeFilter] = useState<string>('ALL')
@@ -186,6 +188,7 @@ export default function DraftRoom({ pool, draftState, onUserPick, onTimeout, use
   }, [queue, draftState.playerPool, draftedIds])
 
   return (
+    <>
     <section className="space-y-4">
       {/* Status bar — weight + position + rule, NO colour */}
       <div className="flex items-center gap-3 rounded-lg border border-zinc-800 bg-zinc-900 px-4 py-3">
@@ -325,7 +328,8 @@ export default function DraftRoom({ pool, draftState, onUserPick, onTimeout, use
                   return (
                     <tr
                       key={dp.player_id}
-                      className={`border-b border-zinc-800/40 transition-colors ${
+                      onClick={() => setSelectedPlayerId(dp.player_id)}
+                      className={`border-b border-zinc-800/40 transition-colors cursor-pointer hover:bg-zinc-800/30 ${
                         drafted
                           ? 'opacity-30 line-through'
                           : ''
@@ -532,6 +536,13 @@ export default function DraftRoom({ pool, draftState, onUserPick, onTimeout, use
       <DraftBoardGrid draftState={draftState} />
 
     </section>
+    {selectedPlayerId != null && (
+      <PlayerDetailOverlay
+        playerId={selectedPlayerId}
+        onClose={() => setSelectedPlayerId(null)}
+      />
+    )}
+    </>
   )
 }
 
