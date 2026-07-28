@@ -250,6 +250,83 @@ before the prod deploy, not after.**
 
 ---
 
+## Mock draft v1 — the gaps, set 2026-07-27 (pt.10)
+
+Slice D is merged and tagged in v0.6.11. **Micah's verdict: it is a proof of concept, not
+shippable.** Full detail and evidence in `/root/CONTEXT-2026-07-27-HANDOFF-10.md`.
+
+### M1. D/ST does not exist — **blocking**
+No entity, no ADP, no roster slot. A 15-round roster with no defense is not a fantasy roster.
+Smaller than it sounds: every stat D/ST scoring needs is **published** at
+`nflverse-data/releases/download/stats_team/stats_team_week_2025.parquet` (570 rows, verified
+200) — `def_sacks`, `def_interceptions`, `def_tds`, `def_safeties`, `fumble_recovery_opp`,
+`special_teams_tds`, `pt_return_tds`. Points allowed is already in
+`team_game_results.score_against`. **No pbp reconstruction** (`nfl_pbp` has 7 usable columns
+and none are sack/interception/fumble). What is missing is (a) 32 team-defense entities and
+(b) D/ST ADP — `nfl_adp` has zero. ⚠️ **Check what ESPN publishes as the position code before
+inventing one** — see B9.
+
+### M2. Availability is computed from a table that cannot express it — **blocking**
+`player_game_logs` only holds players who recorded a passing/rushing/receiving stat, so anyone
+who played without touching the ball reads as absent. 2025 actives with logs: WR 196/391,
+RB 120/192 — but LB 2/385, CB 0/333, DT 1/272, **PK 1/42**. Fix: **`nfl_snap_counts` as its own
+table**, all positions, all weeks; availability reads that. **Do not rewrite
+`player_game_logs`** — decided against 2026-07-27. `ingest_nfl_snap_counts.py:16,101` already
+downloads the file and discards every non-skill presence row.
+
+### M3. Familiar UX — six missing objects
+Position/team/bye filters · queue · draft-board grid (teams x rounds) · "your next pick"
+counter · Draft button on the row (today the whole `<tr>` is the click target) · clock.
+⛔ **Familiar structure does not override SPEC-slice-D §6.2** — amber marks absence and may not
+be borrowed for turn/pick/run highlighting. Incumbents colour-code grid cells by position;
+ours uses position chips and two-tone fills.
+
+### M4. Resume and share are both dead
+`pages/mock-draft.tsx:70-79` fetches the draft then discards the response, and returns early
+on `status === 'complete'`. Separately `GET /api/nfl/mock-draft/{id}` is device-scoped
+(`nfl_mock_draft.py:355`), so a shared link could never resolve for a recipient. Resume is
+~30 lines client-side. Share needs a public read for completed drafts (precedent:
+`nfl_mock_draft.py:133`) **or** accounts per R9 — product call. The results screen now shows a
+disabled "Get a link / Coming soon" instead of a dead URL.
+
+### M5. Player detail overlay
+Click the row for projections, last season's game log, injury status — **and the WR's QB**.
+The row shows a team code and nothing else; who throws to him is the actual draft question.
+
+### M6. Camp card becomes the resume state
+Once a draft is in progress, the `/leagues/nfl` entry card should read "Resume your mock draft
+— Round 4, pick 41" instead of the start pitch. Blocked on M4.
+
+### M7. Room polish
+`DraftRoom.tsx:111` hides the scrollbar on a 292-row list inside a fixed-height container on a
+page that does not scroll — it looks like the pool has 10 players. Roster panel spends 7 of 15
+rows on empty bench slots. `:255` hardcodes `TEAM_GAMES - games_played` instead of the API's
+`games_missed` (will break under B1).
+
+---
+
+## Bugs caught 2026-07-27 (pt.10)
+
+### B8. Kicker game data does not exist; Brandon Aubrey renders a false figure
+One row across all 42 active kickers, and it exists because Aubrey **ran the ball once on a
+fake** (`{"carries": 1, "rush_yds": 6}`). He renders `1/17 — missed 16`, which is wrong. The
+`sample === 'none'` guard that would show "Kicker games not tracked" is bypassed because one
+row makes him `'thin'`. **Micah's call: do not relabel him — ingest kicking data.** Answers
+the K half of R5. Listed under Known gaps in the v0.6.11 changelog.
+
+### B9. `players.position` has the same two-vocabulary split as `players.team`
+`PK` (42 rows, **all active**, all with espn_id) is ESPN's placekicker code — confirmed from
+the live roster endpoint; the punter is plain `P`. `K` holds 336 rows, **0 active**. So
+`position='K' AND active=1` silently returns nothing. Same for `OLB`/`FS`/`NT`/`ILB`/`MLB`/
+`SAF`/`OL`. `backend/team_codes.py` (still unwritten) should grow a `positions` sibling.
+
+### B10. Playoff rows in `player_game_logs` are unmarked
+Weeks 19-22 sit alongside regular-season rows with no flag. They drop out of `games_played`
+only because they do not intersect `team_weeks` — there is no explicit filter, so the
+correctness is incidental. Anything counting rows directly gets 20 games for Stafford.
+
+---
+
 ## Next
 
 ### R3. Snapshot betting lines and ADP daily
