@@ -4,6 +4,194 @@ import { POSITIONS, SORT_LABELS } from './hooks/useNflDraftBoard'
 import type { DraftPosition } from './hooks/useNflDraftBoard'
 import PlayerDetailOverlay from './PlayerDetailOverlay'
 
+/* ── Position-aware stat columns ───────────────────────────────────────────
+   ESPN's published gamelog contract shares ZERO columns between a QB and a K.
+   Rendering one universal set means a kicker carries five columns of "—" and a
+   QB carries a target-share column that is null for every quarterback in the
+   league. A column that can never hold a value is not honest emptiness — it is
+   noise that hides the one number that matters.
+
+   Mixed views ('all', which spans every position) keep the merged column set,
+   because there is no single position to specialise to. */
+
+type StatColumn = {
+  key: string
+  header: React.ReactNode
+  cell: (player: NflDraftPlayer, ctx: { thin: boolean; noSample: boolean }) => React.ReactNode
+}
+
+const COL_PPR_PER_GAME: StatColumn = {
+  key: 'ppr_per_game_played',
+  header: (
+    <>
+      PPR
+      <span className="block font-normal normal-case tracking-normal text-zinc-600">
+        / game played
+      </span>
+    </>
+  ),
+  cell: (player, { thin, noSample }) => (
+    <>
+      <StatValue value={player.ppr_per_game_played} muted={thin} />
+      {thin && !noSample && (
+        <div className="text-[10px] font-normal text-zinc-600">n={player.games_played}</div>
+      )}
+    </>
+  ),
+}
+
+const COL_PPR_PER_TEAM_GAME: StatColumn = {
+  key: 'ppr_per_team_game',
+  header: (
+    <>
+      PPR
+      <span className="block font-normal normal-case tracking-normal text-zinc-600">
+        / team game
+      </span>
+    </>
+  ),
+  cell: player => <StatValue value={player.ppr_per_team_game} strong />,
+}
+
+const COL_XFP: StatColumn = {
+  key: 'xfp_per_game',
+  header: (
+    <>
+      Expected
+      <span className="block font-normal normal-case tracking-normal text-zinc-600">
+        PPR / game
+      </span>
+    </>
+  ),
+  cell: player => <StatValue value={player.xfp_per_game} />,
+}
+
+const COL_SNAP: StatColumn = {
+  key: 'snap_pct',
+  header: 'Snap',
+  cell: player =>
+    player.snap_pct != null ? `${player.snap_pct.toFixed(0)}%` : <span className="text-zinc-700">—</span>,
+}
+
+const COL_TARGET_SHARE: StatColumn = {
+  key: 'target_share',
+  header: 'Tgt',
+  cell: player =>
+    player.target_share != null ? `${player.target_share.toFixed(1)}%` : <span className="text-zinc-700">—</span>,
+}
+
+/* The merged points column, for mixed views only: a DEF row and a PK row can
+   share one slot because no single row is ever both. */
+const COL_POINTS_MERGED: StatColumn = {
+  key: 'pts_per_game',
+  header: 'Pts/G',
+  cell: player =>
+    player.position === 'DEF' ? (
+      <StatValue value={player.dst_pts_per_game} strong />
+    ) : player.position === 'PK' ? (
+      <StatValue value={player.pk_pts_per_game} />
+    ) : (
+      <span className="text-zinc-700">—</span>
+    ),
+}
+
+const COL_PK_TOTAL: StatColumn = {
+  key: 'pk_pts_total',
+  header: (
+    <>
+      Kicking
+      <span className="block font-normal normal-case tracking-normal text-zinc-600">
+        pts total
+      </span>
+    </>
+  ),
+  cell: player => <StatValue value={player.pk_pts_total} />,
+}
+
+const COL_PK_PER_GAME: StatColumn = {
+  key: 'pk_pts_per_game',
+  header: (
+    <>
+      Kicking
+      <span className="block font-normal normal-case tracking-normal text-zinc-600">
+        pts / game
+      </span>
+    </>
+  ),
+  cell: player => <StatValue value={player.pk_pts_per_game} strong />,
+}
+
+const COL_DST_TOTAL: StatColumn = {
+  key: 'dst_pts_total',
+  header: (
+    <>
+      D/ST
+      <span className="block font-normal normal-case tracking-normal text-zinc-600">
+        pts total
+      </span>
+    </>
+  ),
+  cell: player => <StatValue value={player.dst_pts_total} />,
+}
+
+const COL_DST_PER_GAME: StatColumn = {
+  key: 'dst_pts_per_game',
+  header: (
+    <>
+      D/ST
+      <span className="block font-normal normal-case tracking-normal text-zinc-600">
+        pts / game
+      </span>
+    </>
+  ),
+  cell: player => <StatValue value={player.dst_pts_per_game} strong />,
+}
+
+const PASS_CATCHERS = ['RB', 'WR', 'TE', 'FB', 'FLEX']
+
+export function statColumnsFor(position: string): StatColumn[] {
+  if (position === 'DEF') return [COL_DST_TOTAL, COL_DST_PER_GAME]
+  if (position === 'PK') return [COL_PK_TOTAL, COL_PK_PER_GAME]
+  // A QB is never targeted, so target share is structurally null, not missing.
+  if (position === 'QB') return [COL_PPR_PER_GAME, COL_PPR_PER_TEAM_GAME, COL_XFP, COL_SNAP]
+  if (PASS_CATCHERS.includes(position)) {
+    return [COL_PPR_PER_GAME, COL_PPR_PER_TEAM_GAME, COL_XFP, COL_SNAP, COL_TARGET_SHARE]
+  }
+  return [
+    COL_PPR_PER_GAME,
+    COL_PPR_PER_TEAM_GAME,
+    COL_XFP,
+    COL_SNAP,
+    COL_TARGET_SHARE,
+    COL_POINTS_MERGED,
+  ]
+}
+
+/* The sort pills have the same defect as the columns: sorting 32 kickers by
+   "Target share" reorders nothing, because the field is null for every one of
+   them. A control that cannot change the result is worse than a missing one. */
+export function sortsFor(position: string, active: NflDraftSort): NflDraftSort[] {
+  const always: NflDraftSort[] = ['adp', 'games_played']
+  let allowed: NflDraftSort[]
+  if (position === 'DEF') allowed = [...always, 'dst_pts_per_game']
+  else if (position === 'PK') allowed = [...always, 'pk_pts_per_game']
+  else if (position === 'QB')
+    allowed = [...always, 'ppr_per_team_game', 'ppr_per_game_played', 'xfp_per_game', 'snap_pct']
+  else if (PASS_CATCHERS.includes(position))
+    allowed = [
+      ...always,
+      'ppr_per_team_game',
+      'ppr_per_game_played',
+      'xfp_per_game',
+      'snap_pct',
+      'target_share',
+    ]
+  else return Object.keys(SORT_LABELS) as NflDraftSort[]
+
+  // Never hide the sort that is actually in effect — that would misreport state.
+  return allowed.includes(active) ? allowed : [...allowed, active]
+}
+
 interface Props {
   data: NflDraftBoard | null
   loading: boolean
@@ -44,6 +232,7 @@ export default function NflDraftRoom({
   onToggleFade,
 }: Props) {
   const [selectedPlayerId, setSelectedPlayerId] = useState<number | null>(null)
+  const statColumns = statColumnsFor(position)
 
   return (
     <>
@@ -109,7 +298,7 @@ export default function NflDraftRoom({
       {/* Sort row */}
       <div className="flex flex-wrap items-center gap-2">
         <span className="text-xs font-medium text-zinc-500">Sort:</span>
-        {(Object.keys(SORT_LABELS) as NflDraftSort[]).map(key => (
+        {sortsFor(position, sort).map(key => (
           <button
             key={key}
             type="button"
@@ -185,27 +374,11 @@ export default function NflDraftRoom({
                       of {data.team_games}
                     </span>
                   </th>
-                  <th className="text-right py-3 px-2">
-                    PPR
-                    <span className="block font-normal normal-case tracking-normal text-zinc-600">
-                      / game played
-                    </span>
-                  </th>
-                  <th className="text-right py-3 px-2">
-                    PPR
-                    <span className="block font-normal normal-case tracking-normal text-zinc-600">
-                      / team game
-                    </span>
-                  </th>
-                  <th className="text-right py-3 px-2">
-                    Expected
-                    <span className="block font-normal normal-case tracking-normal text-zinc-600">
-                      PPR / game
-                    </span>
-                  </th>
-                  <th className="text-right py-3 px-2">Snap</th>
-                  <th className="text-right py-3 px-2">Tgt</th>
-                  <th className="text-right py-3 px-2">Pts/G</th>
+                  {statColumns.map(col => (
+                    <th key={col.key} className="text-right py-3 px-2">
+                      {col.header}
+                    </th>
+                  ))}
                   <th className="text-right py-3 px-2">ADP</th>
                   <th className="text-right py-3 px-2">
                     <span className="inline-flex items-center gap-1">
@@ -229,6 +402,7 @@ export default function NflDraftRoom({
                     onToggleWatch={() => onToggleWatch(player.player_id)}
                     onToggleFade={() => onToggleFade(player.player_id)}
                     onClick={() => setSelectedPlayerId(player.player_id)}
+                    statColumns={statColumns}
                   />
                 ))}
               </tbody>
@@ -273,6 +447,7 @@ export function DraftPlayerRow({
   onToggleWatch,
   onToggleFade,
   onClick,
+  statColumns,
 }: {
   player: NflDraftPlayer
   noteRank: number | undefined
@@ -282,6 +457,7 @@ export function DraftPlayerRow({
   onToggleWatch: () => void
   onToggleFade: () => void
   onClick?: () => void
+  statColumns: StatColumn[]
 }) {
   const noSample = player.sample === 'none'
   const thin = player.sample === 'thin'
@@ -346,37 +522,12 @@ export function DraftPlayerRow({
         )}
       </td>
 
-      {/* Both averages, side by side. They diverge exactly when availability drops. */}
-      <td className="py-2.5 px-2 text-right font-mono tabular-nums">
-        <StatValue value={player.ppr_per_game_played} muted={thin} />
-        {thin && !noSample && (
-          <div className="text-[10px] font-normal text-zinc-600">
-            n={player.games_played}
-          </div>
-        )}
-      </td>
-      <td className="py-2.5 px-2 text-right font-mono tabular-nums">
-        <StatValue value={player.ppr_per_team_game} strong />
-      </td>
-      <td className="py-2.5 px-2 text-right font-mono tabular-nums">
-        <StatValue value={player.xfp_per_game} />
-      </td>
-      <td className="py-2.5 px-2 text-right font-mono tabular-nums text-zinc-400 text-xs">
-        {player.snap_pct != null ? `${player.snap_pct.toFixed(0)}%` : '—'}
-      </td>
-      <td className="py-2.5 px-2 text-right font-mono tabular-nums text-zinc-400 text-xs">
-        {player.target_share != null ? `${player.target_share.toFixed(1)}%` : '—'}
-      </td>
-      {/* D/ST points — only for DEF; PK points — only for PK */}
-      <td className="py-2.5 px-2 text-right font-mono tabular-nums">
-        {player.position === 'DEF' ? (
-          <StatValue value={player.dst_pts_per_game} strong />
-        ) : player.position === 'PK' ? (
-          <StatValue value={player.pk_pts_per_game} />
-        ) : (
-          <span className="text-zinc-600">—</span>
-        )}
-      </td>
+      {/* Columns come from the active position filter — see statColumnsFor. */}
+      {statColumns.map(col => (
+        <td key={col.key} className="py-2.5 px-2 text-right font-mono tabular-nums text-zinc-400">
+          {col.cell(player, { thin, noSample })}
+        </td>
+      ))}
       <td className="py-2.5 px-2 text-right font-mono tabular-nums text-zinc-300 font-semibold">
         {player.adp != null ? player.adp.toFixed(1) : '—'}
         {player.percent_owned != null && (
