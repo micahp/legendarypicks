@@ -527,3 +527,32 @@ is resolved, U2 stays broken. Owned by me (frontend); Hermes is backend-only.
 `feat/job15-dst-published-adp` off `642259a`, backend `:8093` (`/health` 200), frontend
 `:3093` (`/mock-draft` 200), `node_modules` symlink intact at 538 packages. Awaiting Micah's
 relay — `messages_send` cannot prompt the agent.
+
+### U1/U2 resolved · B17 opened · audit dispatched — same session
+
+- **U2 fixed (`c92e5df`).** `MockDraft/DraftRoom.tsx` now opens `PlayerDetailOverlay` on a
+  row tap. The overlay needed no change: `/api/nfl/draft/player/{id}` resolves the same id
+  space the mock draft pool emits (7979 Gibbs 200, 30116 SEA D/ST 200). The row's Draft and
+  +Q buttons already called `stopPropagation`, so the row handler was the intended design
+  and was simply never added. Verified in chromium at 414×896 — real values, 0 console errors.
+- **U1 fixed (`4b21d09`).** Columns and sort pills now come from the position filter.
+  The board payload already carried `pk_pts_*`/`dst_pts_*` per position, so this was purely
+  a rendering gap. Dead columns per filter, before → after: PK 5→0, DEF 5→1 (ADP, real
+  absence), QB 1→0. Sort pills narrowed the same way — sorting 32 kickers by Target share
+  reordered nothing — while never hiding the sort actually in effect.
+  Verified across five filters in chromium, 0 console errors.
+- **B17 opened, folded into job15 (`8220707`).** `/api/nfl/draft/player/30116` returns
+  `games_played=0 sample=none` while `/api/nfl/draft-board?position=DEF` returns
+  `17 full` for the same SEA D/ST — alongside `dst_pts_per_game=9.6`. `player_detail` has
+  no D/ST branch and derives presence from `player_game_logs`, which contains no `DEF` rows
+  at all (`SELECT DISTINCT position` over the join returns 25 positions, none of them DEF).
+  U2 made this user-visible on all 32 defenses, so it is now urgent rather than latent.
+- **job15 §3 was self-contradicting** — it ordered the `dst_rank` block deleted and its
+  `games_played`/`weeks_played` fields kept; they are one loop (`nfl_mock_draft.py:332-351`).
+  Amended in §6a before Hermes started. **The other TASK specs, job9–job14, have not been
+  checked for the same defect and several were executed as written.**
+- **Codex audit dispatched.** `AUDIT-BRIEF-FOR-CODEX-2026-07-28.md` (`b8002f9`) — the merge,
+  the DB, and the six confirmed false-green failures, with runnable repros. Measured DB
+  facts included: D/ST `espn_id` set on **0 of 32** rows, `nfl_adp` carries **0** DEF rows.
+
+Gates after all of the above: 13 PASS, `REG-adp-dst` RED on purpose. No regression.
