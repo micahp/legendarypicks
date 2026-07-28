@@ -25,6 +25,8 @@ import warnings
 
 import nfl_data_py as nfl
 
+from team_codes import normalize_optional
+
 DB = os.environ.get("LP_DB_PATH") or os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "data", "picks.db"
 )
@@ -139,10 +141,10 @@ def ingest(year: int = 2025, dry_run: bool = False) -> dict:
 
     updated = 0
     snap_inserted = 0
-    snap_skipped = 0
+    snap_updated = 0
     no_pfr = no_gsis = no_log = 0
     pending = []  # game-log patches
-    snap_pending = []  # snap-counts table inserts
+    snap_pending = []  # (snap-count record, existing key)
 
     for row in df.itertuples(index=False):
         pfr = getattr(row, "pfr_player_id", None)
@@ -162,7 +164,11 @@ def ingest(year: int = 2025, dry_run: bool = False) -> dict:
         except (TypeError, ValueError):
             continue
 
-        team = getattr(row, "team", None)
+        raw_team = getattr(row, "team", None)
+        if raw_team is not None and raw_team == raw_team:
+            team = normalize_optional("nfl", str(raw_team))
+        else:
+            team = None
 
         # ── Path 1: Game-log enrichment (skill players only) ──────────
         log_id = log_index.get((pid, week))
@@ -180,10 +186,6 @@ def ingest(year: int = 2025, dry_run: bool = False) -> dict:
             no_log += 1
 
         # ── Path 2: Snap-counts table (ALL positions) ─────────────────
-        if (pid, week) in existing_snap_keys:
-            snap_skipped += 1
-            continue
-
         snap_add = {"player_id": pid, "season": year, "week": week, "team": team}
         for src, col in SNAP_TABLE_COLS.items():
             v = getattr(row, src, None)
@@ -191,7 +193,7 @@ def ingest(year: int = 2025, dry_run: bool = False) -> dict:
                 continue
             fv = float(v)
             snap_add[col] = int(fv) if fv.is_integer() else round(fv, 3)
-        snap_pending.append(snap_add)
+        snap_pending.append((snap_add, (pid, week) in existing_snap_keys))
 
     print(
         f"  matched {len(pending)} snap rows to game logs "
@@ -199,8 +201,9 @@ def ingest(year: int = 2025, dry_run: bool = False) -> dict:
         f"{no_log} no game log)"
     )
     print(
-        f"  snap-counts table: {len(snap_pending)} new rows, "
-        f"{snap_skipped} already present"
+        f"  snap-counts table: "
+        f"{sum(not exists for _, exists in snap_pending)} new rows, "
+        f"{sum(exists for _, exists in snap_pending)} existing rows to refresh"
     )
 
     if dry_run:
@@ -211,17 +214,22 @@ def ingest(year: int = 2025, dry_run: bool = False) -> dict:
                 (log_id,),
             ).fetchone()
             print(f"    DRY log-enrich  {r['name']} {r['team']} wk{r['game_no']} += {add}")
-        for s in snap_pending[:5]:
+        for s, exists in snap_pending[:5]:
             r = con.execute(
                 "SELECT name FROM players WHERE id=?", (s["player_id"],)
             ).fetchone()
             name = r["name"] if r else "?"
-            print(f"    DRY snap-table  {name} wk{s['week']} {s['team']}")
+            action = "refresh" if exists else "insert"
+            print(
+                f"    DRY snap-table  {action} {name} "
+                f"wk{s['week']} {s['team']}"
+            )
         con.close()
         return {
             "updated_logs": 0,
             "inserted_snaps": 0,
-            "skipped_snaps": snap_skipped,
+            "updated_snaps": 0,
+            "skipped_snaps": 0,
         }
 
     # ── Apply game-log patches ───────────────────────────────────────────
@@ -235,16 +243,20 @@ def ingest(year: int = 2025, dry_run: bool = False) -> dict:
     # ── Insert snap-count rows ───────────────────────────────────────────
     cols = ["player_id", "season", "week", "team"] + list(SNAP_TABLE_COLS.values())
     placeholders = ", ".join("?" for _ in cols)
-    set_clause = ", ".join(f"{c}=excluded.{c}" for c in SNAP_TABLE_COLS.values())
+    update_cols = ["team"] + list(SNAP_TABLE_COLS.values())
+    set_clause = ", ".join(f"{c}=excluded.{c}" for c in update_cols)
     insert_sql = (
         f"INSERT INTO nfl_snap_counts ({', '.join(cols)}) "
         f"VALUES ({placeholders}) "
         f"ON CONFLICT(player_id, season, week) DO UPDATE SET {set_clause}"
     )
-    for s in snap_pending:
+    for s, exists in snap_pending:
         values = tuple(s.get(c) for c in cols)
         con.execute(insert_sql, values)
-        snap_inserted += 1
+        if exists:
+            snap_updated += 1
+        else:
+            snap_inserted += 1
 
     con.commit()
 
@@ -258,13 +270,17 @@ def ingest(year: int = 2025, dry_run: bool = False) -> dict:
     ).fetchone()[0]
 
     print(f"  Updated {updated} game logs; {have} {year} logs now carry off_snaps")
-    print(f"  Snap-counts table: {snap_total} rows for {year}")
+    print(
+        f"  Snap-counts table: {snap_total} rows for {year} "
+        f"({snap_inserted} inserted, {snap_updated} refreshed)"
+    )
     con.close()
 
     return {
         "updated_logs": updated,
         "inserted_snaps": snap_inserted,
-        "skipped_snaps": snap_skipped,
+        "updated_snaps": snap_updated,
+        "skipped_snaps": 0,
     }
 
 
