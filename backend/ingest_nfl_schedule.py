@@ -38,15 +38,23 @@ request instead of the intent.
 
 Team abbreviations
 ------------------
-Written in nflverse vocabulary, matching `player_game_logs` and the source. Note
-this disagrees with the existing 2025 `team_game_results` rows on exactly two
-teams -- ESPN says `LAR`/`WSH`, nflverse says `LA`/`WAS` -- so those two teams
-already fail to join between the two tables. See ESPN_ALIASES; reconciling the
-2025 rows is a separate change and is deliberately not done here.
+**Normalised to ESPN vocabulary at read time** (2026-07-27), via ESPN_ALIASES:
+`LA` -> `LAR`, `WAS` -> `WSH`. This module used to write nflverse vocabulary,
+which meant the Rams and the Commanders -- 178 active players -- silently failed
+to join against `players` and the ESPN-written 2025 `team_game_results` rows.
+ESPN is the spine of this backend, so ESPN wins and the conversion happens once,
+here, at the boundary.
+
+Still outstanding: `player_game_logs` remains in nflverse vocabulary. Readers
+that join logs to schedule must reconcile, or that table gets migrated too.
 
 Usage:
   cd backend && LP_DB_PATH=/abs/path/picks.dev.db \\
       venv/bin/python ingest_nfl_schedule.py [--season 2026] [--dry-run]
+                                             [--schedule-only]
+
+  2025 MUST use --schedule-only: ESPN already owns that season in
+  team_game_results under different game ids, so writing it would double it.
 """
 from __future__ import annotations
 
@@ -65,8 +73,21 @@ DB = os.environ.get("LP_DB_PATH") or os.path.join(
 SOURCE = "nflverse_games"
 URL = "https://github.com/nflverse/nfldata/raw/master/data/games.csv"
 
-# nflverse abbrev -> the ESPN abbrev used by the 2025 team_game_results rows.
-# Recorded, not applied: this module writes nflverse vocabulary throughout.
+# nflverse abbrev -> the ESPN abbrev used everywhere else in this database.
+#
+# APPLIED at read time, as of 2026-07-27. It used to be recorded and not applied,
+# which left the database speaking two vocabularies: `players`, `player_game_logs`
+# and the 2025 `team_game_results` rows say LAR/WSH (ESPN, via espn_client), while
+# anything this module wrote said LA/WAS. Nothing joined for those two franchises
+# -- 178 active players -- and the failure was silent, because a lookup keyed on
+# "LAR" against nflverse rows does not error, it just misses. The mock draft pool
+# hit exactly that: it fell back to a fabricated 17-week schedule for every Rams
+# and Commanders player and painted byes as missed games.
+#
+# ESPN is the spine of this backend (the whole service was rewritten on it), so
+# ESPN's vocabulary wins. Normalising here, at the ingest boundary, keeps it to
+# one place -- an alias map consulted at each read site would be a second source
+# of truth and would have to be remembered by every future query.
 ESPN_ALIASES = {"LA": "LAR", "WAS": "WSH"}
 
 # CSV column -> (sqlite column, type). The point of this module is a copy, not a
@@ -157,13 +178,27 @@ def read_games(path: str, seasons: set[int] | None):
             row = {name: _cell(name, raw.get(name, "")) for name, _ in COLUMNS}
             if row["season"] is None or row["game_id"] is None:
                 continue
+            # Normalise to ESPN vocabulary before anything downstream sees the row.
+            for side in ("away_team", "home_team"):
+                row[side] = ESPN_ALIASES.get(row[side], row[side])
             if seasons and row["season"] not in seasons:
                 continue
             rows.append(row)
     return rows
 
 
-def write(con: sqlite3.Connection, rows: list[dict]) -> tuple[int, int]:
+def write(con: sqlite3.Connection, rows: list[dict],
+          schedule_only: bool = False) -> tuple[int, int]:
+    """Write nfl_schedule, and team_game_results unless schedule_only.
+
+    schedule_only exists for seasons another ingest already owns in
+    team_game_results. 2025 is the case: 544 rows are there under ESPN game ids
+    (``401772718``), written from ESPN by backfill_team_parity. nflverse keys the
+    same games as ``2025_01_DAL_PHI``, and game_id is part of that table's primary
+    key, so writing both sources would not upsert -- it would double the season.
+    nfl_schedule is keyed on game_id alone and has no 2025 rows at all, so it
+    takes the copy safely.
+    """
     names = [name for name, _ in COLUMNS]
     placeholders = ",".join("?" * (len(names) + 1))
     updates = ",".join(
@@ -190,6 +225,10 @@ def write(con: sqlite3.Connection, rows: list[dict]) -> tuple[int, int]:
                 win = 1 if sf > sa else (0 if sf < sa else None)
             pairs.append((r["game_id"], team, r["gameday"], opp, side,
                           sf, sa, win, r["season"], status))
+
+    if schedule_only:
+        con.commit()
+        return len(rows), 0
 
     # COALESCE on the score columns: re-running with a not-yet-played season must
     # never blank out a real result that another ingest already recorded.
@@ -222,6 +261,9 @@ def main() -> None:
     ap.add_argument("--refresh", action="store_true",
                     help="re-download even if cached")
     ap.add_argument("--cache-dir", default="/tmp")
+    ap.add_argument("--schedule-only", action="store_true",
+                    help="write nfl_schedule but not team_game_results; use for a "
+                         "season another ingest already owns there (2025 is ESPN's)")
     args = ap.parse_args()
 
     seasons = None if args.all_seasons else set(args.season or [2026])
@@ -249,7 +291,7 @@ def main() -> None:
     con = sqlite3.connect(DB, timeout=60)
     con.execute("PRAGMA busy_timeout=60000")
     ensure_schema(con)
-    games, pairs = write(con, rows)
+    games, pairs = write(con, rows, schedule_only=args.schedule_only)
     con.close()
     print("  wrote {} nfl_schedule rows, {} team_game_results rows".format(games, pairs))
     print("  NOTE: no team_stats_coverage manifest is written. The NFL team-stats")
