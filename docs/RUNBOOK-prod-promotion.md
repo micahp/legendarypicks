@@ -4,6 +4,14 @@ Read this before "deploying", "shipping", "promoting to prod", or "tagging to pr
 failure mode here is shipping code whose data isn't in the prod DB (the empty-DB trap: HTTP 200
 ≠ working). Don't skip step 4.
 
+> **Current blocker, measured 2026-07-28:** prod
+> `player_game_logs` lacks `game_type`, has only 5,377 2025 NFL rows, and has
+> zero rows carrying the published `fg_att` field. Do not promote the current
+> draft work until the migration implementation specified by
+> `TASK-schema-migrations-and-drift-audit.md` lands and an authorized prod
+> schema/data migration passes its acceptance. DEV and Hermes
+> each carry 562 `fg_att` rows. No prod mutation was made during this audit.
+
 ## How prod actually runs
 - Prod = the **docker-compose stack on THIS host** (`docker-compose.yml`), behind host nginx:
   `legendarypicks.xyz` → nginx → `127.0.0.1:3100` (frontend container) → `backend:8000` (`127.0.0.1:8100`).
@@ -26,6 +34,8 @@ failure mode here is shipping code whose data isn't in the prod DB (the empty-DB
 3. **Tag** the release (`git tag -a vX.Y.Z`) and push the tag.
 4. **Migrate data into the prod DB FIRST** (additive; never clobber live prop tables). Player IDs are
    ~fully aligned dev↔prod (resolve-by-ID still holds). The proven path:
+   - Run the repository schema migration check first. A create-only table
+     helper is not a migration. Stop if DEV and prod required schemas differ.
    - `cd backend && python3 migrate_logs_to_prod.py` — backs up `picks.db`, creates `player_game_logs`,
      copies the missing player rows + all logs (excluding identity-mismatched shared IDs).
    - `python3 migrate_ufc_rankings_to_prod.py` — validates the complete dev rankings dataset, takes a
