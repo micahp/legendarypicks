@@ -1,5 +1,6 @@
 """Tests for D/ST entities: scoring, ingest, and draft-board integration."""
 import datetime as dt
+import json
 import os
 import sqlite3
 import sys
@@ -9,6 +10,7 @@ import unittest
 sys.path.insert(0, os.path.dirname(__file__))
 
 from routers import nfl_offseason
+from routers import nfl_mock_draft
 import ingest_nfl_dst as dst_mod
 import ingest_nfl_adp
 
@@ -449,6 +451,109 @@ class DstIngestResolutionTests(unittest.TestCase):
             ingest_nfl_adp._build_dst_resolutions(entities, pro_team_map, def_to_pid)
         # 0 D/ST resolved → fails
         self.assertIn("expected 32", str(ctx.exception))
+
+
+class DstPoolSelectionTests(unittest.TestCase):
+    """Tests for the pool builder — DEF-guaranteed selection after job15."""
+
+    def setUp(self):
+        handle = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
+        handle.close()
+        self.db_path = handle.name
+        self.con = sqlite3.connect(self.db_path)
+        self.con.executescript("""
+            CREATE TABLE players(
+              id INTEGER PRIMARY KEY, name TEXT, league TEXT,
+              team TEXT, position TEXT, active INTEGER);
+            CREATE TABLE nfl_adp(
+              player_id INTEGER, season INTEGER, adp REAL, percent_owned REAL);
+            CREATE TABLE player_game_logs(
+              player_id INTEGER, league TEXT, season INTEGER,
+              game_no TEXT, team TEXT);
+            CREATE TABLE nfl_dst_stats(
+              player_id INTEGER, season INTEGER, week INTEGER, fantasy_pts REAL);
+            CREATE TABLE nfl_schedule(
+              season INTEGER, week INTEGER, home_team TEXT, away_team TEXT);
+        """)
+        # 32 DEF — all with ADP
+        for i in range(1, 33):
+            tid = f"T{i:02d}"
+            pid = 30093 + i
+            self.con.execute(
+                "INSERT INTO players VALUES(?,?,?,?,?,?)",
+                (pid, f"{tid} D/ST", "nfl", tid, "DEF", 1))
+            self.con.execute(
+                "INSERT INTO nfl_adp VALUES(?,2026,?,?)",
+                (pid, 100.0 + i, 90.0 - i * 0.5))
+        # 270 skill players
+        for i in range(1, 271):
+            pid = i
+            self.con.execute(
+                "INSERT INTO players VALUES(?,?,?,?,?,?)",
+                (pid, f"Player {i}", "nfl", "T01", "RB", 1))
+            self.con.execute(
+                "INSERT INTO nfl_adp VALUES(?,2026,?,?)",
+                (pid, float(i), 99.0))
+        # Some game logs for skill players
+        for i in range(1, 11):
+            for w in range(1, 13):
+                self.con.execute(
+                    "INSERT INTO player_game_logs VALUES(?,'nfl',2025,?,?)",
+                    (i, str(w), "T01"))
+        # D/ST stats for team weeks
+        for i in range(1, 33):
+            tid = f"T{i:02d}"
+            for w in range(1, 18):
+                self.con.execute(
+                    "INSERT INTO nfl_schedule VALUES(2025,?,?,?)",
+                    (w, tid, "OPP"))
+                self.con.execute(
+                    "INSERT INTO nfl_dst_stats VALUES(?,2025,?,10.0)",
+                    (30093 + i, w))
+        self.con.commit()
+
+        self.orig_db = nfl_mock_draft._DB
+        nfl_mock_draft._DB = self.db_path
+
+    def tearDown(self):
+        nfl_mock_draft._DB = self.orig_db
+        self.con.close()
+        os.unlink(self.db_path)
+
+    def test_pool_count_300_def_32(self):
+        from fastapi.responses import JSONResponse
+        resp = nfl_mock_draft.pool(season=2026)
+        body = json.loads(resp.body)
+        self.assertEqual(body["count"], 300)
+        defs = [p for p in body["players"] if p["position"] == "DEF"]
+        self.assertEqual(len(defs), 32)
+
+    def test_all_def_have_non_null_adp(self):
+        resp = nfl_mock_draft.pool(season=2026)
+        body = json.loads(resp.body)
+        defs = [p for p in body["players"] if p["position"] == "DEF"]
+        for p in defs:
+            self.assertIsNotNone(p["adp"], f"{p['name']} adp is None")
+
+    def test_no_dst_rank_in_pool(self):
+        resp = nfl_mock_draft.pool(season=2026)
+        body = json.loads(resp.body)
+        for p in body["players"]:
+            self.assertNotIn("dst_rank", p)
+
+    def test_def_sorted_by_adp_within_pool(self):
+        resp = nfl_mock_draft.pool(season=2026)
+        body = json.loads(resp.body)
+        defs = [p for p in body["players"] if p["position"] == "DEF"]
+        def_adps = [p["adp"] for p in defs]
+        self.assertEqual(def_adps, sorted(def_adps))
+
+    def test_ordering_tiered_adp_then_ownership(self):
+        resp = nfl_mock_draft.pool(season=2026)
+        body = json.loads(resp.body)
+        # First entry should be skill player (adp=1.0 vs DEF starting at 101.0)
+        self.assertEqual(body["players"][0]["position"], "RB")
+        self.assertEqual(body["players"][0]["adp"], 1.0)
 
 
 if __name__ == "__main__":

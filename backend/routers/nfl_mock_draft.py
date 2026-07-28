@@ -241,35 +241,58 @@ def pool(season: int = Query(...)):
 
         # ------------------------------------------------------------------
         # Query the pool: draftable positions, active players, from nfl_adp.
-        # First tier: ADP < 169.0 (real ADP), sorted by ADP ascending.
-        # Second tier: ADP >= 169.0 AND percent_owned > 0, sorted by
-        #   percent_owned descending then name.
-        # Cap at 300 total.
+        # D/ST are selected separately (all 32) to guarantee they are never
+        # displaced by the global 300-cap; non-DEF fill the remaining slots.
+        # Both sets are then merged and sorted by the same ADP/ownership
+        # ordering — no synthetic ADP, no fixed slot, no dst_rank.
         # ------------------------------------------------------------------
-        placeholders = ",".join("?" for _ in _DRAFT_POSITIONS)
-        rows = connection.execute(
-            f"""SELECT p.id AS player_id, p.name, p.position, p.team,
-                       na.adp, na.percent_owned
-                FROM players p
-                JOIN nfl_adp na ON na.player_id = p.id AND na.season = ?
-                WHERE p.league = 'nfl' AND p.active = 1
-                  AND p.position IN ({placeholders})
-                  AND (na.adp < ? OR na.percent_owned > 0)
-                ORDER BY
-                  CASE WHEN na.adp < ? THEN 0 ELSE 1 END,
-                  CASE WHEN na.adp < ? THEN na.adp ELSE 999999.0 END ASC,
-                  na.percent_owned DESC,
-                  p.name ASC
-                LIMIT ?""",
-            (
-                season,
-                *_DRAFT_POSITIONS,
-                _ADP_SENTINEL,
-                _ADP_SENTINEL,
-                _ADP_SENTINEL,
-                _POOL_CAP,
-            ),
+        _NON_DEF_POSITIONS = ("QB", "RB", "WR", "TE", "PK")
+        _placeholders = ",".join("?" for _ in _NON_DEF_POSITIONS)
+
+        # ── DEF: all 32, guaranteed a slot ──
+        def_rows = connection.execute(
+            """SELECT p.id AS player_id, p.name, p.position, p.team,
+                      na.adp, na.percent_owned
+               FROM players p
+               JOIN nfl_adp na ON na.player_id = p.id AND na.season = ?
+               WHERE p.league = 'nfl' AND p.active = 1
+                 AND p.position = 'DEF'
+                 AND (na.adp < ? OR na.percent_owned > 0)""",
+            (season, _ADP_SENTINEL),
         ).fetchall()
+
+        # ── Non-DEF: top N to fill pool cap ──
+        _non_def_cap = _POOL_CAP - len(def_rows)
+        non_def_rows: list = []
+        if _non_def_cap > 0:
+            non_def_rows = connection.execute(
+                f"""SELECT p.id AS player_id, p.name, p.position, p.team,
+                           na.adp, na.percent_owned
+                    FROM players p
+                    JOIN nfl_adp na ON na.player_id = p.id AND na.season = ?
+                    WHERE p.league = 'nfl' AND p.active = 1
+                      AND p.position IN ({_placeholders})
+                      AND (na.adp < ? OR na.percent_owned > 0)
+                    ORDER BY
+                      CASE WHEN na.adp < ? THEN 0 ELSE 1 END,
+                      CASE WHEN na.adp < ? THEN na.adp ELSE 999999.0 END ASC,
+                      na.percent_owned DESC,
+                      p.name ASC
+                    LIMIT ?""",
+                (season, *_NON_DEF_POSITIONS,
+                 _ADP_SENTINEL, _ADP_SENTINEL, _ADP_SENTINEL, _non_def_cap),
+            ).fetchall()
+
+        # Merge both sets
+        rows = list(def_rows) + list(non_def_rows)
+        # Sort by same ordering: tier (adp<169 first), then adp ASC within tier 0,
+        # then percent_owned DESC, then name ASC
+        rows.sort(key=lambda r: (
+            0 if (r["adp"] or 999999) < _ADP_SENTINEL else 1,
+            (r["adp"] or 999999) if (r["adp"] or 999999) < _ADP_SENTINEL else 999999,
+            -(r["percent_owned"] or 0),
+            r["name"],
+        ))
 
         # ── D/ST availability from nfl_dst_stats ──
         dst_avail: dict[int, dict] = {}
