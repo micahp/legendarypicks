@@ -387,14 +387,13 @@ class DstDraftBoardTests(unittest.TestCase):
 class DstIngestResolutionTests(unittest.TestCase):
     """Tests for _build_dst_resolutions — the fail-closed pre-validation step."""
 
-    def _make_entity(self, pro_team_id, default_position_id=16):
+    def _make_entity(self, pro_team_id, adp=100.0, default_position_id=16):
         return {
             "defaultPositionId": default_position_id,
             "proTeamId": pro_team_id,
             "fullName": f"Team{pro_team_id} D/ST",
-            "ownership": {"averageDraftPosition": 100.0 + pro_team_id,
-                          "percentOwned": 90.0,
-                          "percentStarted": 5.0},
+            "ownership": {"averageDraftPosition": adp,
+                          "percentOwned": 90.0, "percentStarted": 5.0},
             "draftRanksByRankType": {},
         }
 
@@ -419,7 +418,7 @@ class DstIngestResolutionTests(unittest.TestCase):
 
         with self.assertRaises(RuntimeError) as ctx:
             ingest_nfl_adp._build_dst_resolutions(entities, pro_team_map, def_to_pid)
-        self.assertIn("expected 32", str(ctx.exception))
+        self.assertIn("D/ST preflight", str(ctx.exception))
 
     def test_raises_when_not_all_32_resolve(self):
         """Only 20 of 32 teams have DEF player entries → RuntimeError."""
@@ -429,7 +428,7 @@ class DstIngestResolutionTests(unittest.TestCase):
 
         with self.assertRaises(RuntimeError) as ctx:
             ingest_nfl_adp._build_dst_resolutions(entities, pro_team_map, def_to_pid)
-        self.assertIn("expected 32", str(ctx.exception))
+        self.assertIn("D/ST preflight", str(ctx.exception))
 
     def test_raises_when_entity_has_unmapped_pro_team_id(self):
         """Entity has proTeamId not in proTeamMap → skips it → fewer than 32."""
@@ -439,7 +438,7 @@ class DstIngestResolutionTests(unittest.TestCase):
 
         with self.assertRaises(RuntimeError) as ctx:
             ingest_nfl_adp._build_dst_resolutions(entities, pro_team_map, def_to_pid)
-        self.assertIn("expected 32", str(ctx.exception))
+        self.assertIn("expected exactly 32", str(ctx.exception))
 
     def test_ignores_non_def_entities(self):
         """Entities with defaultPositionId != 16 are skipped."""
@@ -449,8 +448,27 @@ class DstIngestResolutionTests(unittest.TestCase):
 
         with self.assertRaises(RuntimeError) as ctx:
             ingest_nfl_adp._build_dst_resolutions(entities, pro_team_map, def_to_pid)
-        # 0 D/ST resolved → fails
-        self.assertIn("expected 32", str(ctx.exception))
+        # 0 D/ST resolved → set mismatch
+        self.assertIn("expected exactly 32", str(ctx.exception))
+
+    def test_raises_when_resolved_entity_has_null_adp(self):
+        """A resolved D/ST with null ADP must be rejected — all 32 need real ADP."""
+        pro_team_map = {i: f"T{i:02d}" for i in range(1, 33)}
+        def_to_pid = {f"T{i:02d}": 30093 + i for i in range(1, 33)}
+        entities = [self._make_entity(i, adp=None) for i in range(1, 33)]
+        with self.assertRaises(RuntimeError) as ctx:
+            ingest_nfl_adp._build_dst_resolutions(entities, pro_team_map, def_to_pid)
+        self.assertIn("expected exactly 32", str(ctx.exception))
+
+    def test_raises_when_def_to_pid_has_33_and_only_32_resolve(self):
+        """33 active DEF rows but feed resolves 32 → still a failure."""
+        pro_team_map = {i: f"T{i:02d}" for i in range(1, 33)}
+        # 33 entries — one extra that won't be in the feed
+        def_to_pid = {f"T{i:02d}": 30093 + i for i in range(1, 34)}
+        entities = [self._make_entity(i) for i in range(1, 33)]
+        with self.assertRaises(RuntimeError) as ctx:
+            ingest_nfl_adp._build_dst_resolutions(entities, pro_team_map, def_to_pid)
+        self.assertIn("D/ST preflight", str(ctx.exception))
 
 
 class DstPoolSelectionTests(unittest.TestCase):
@@ -475,16 +493,25 @@ class DstPoolSelectionTests(unittest.TestCase):
             CREATE TABLE nfl_schedule(
               season INTEGER, week INTEGER, home_team TEXT, away_team TEXT);
         """)
-        # 32 DEF — all with ADP
+        # 32 DEF — MIA and ARI get tier-2 ADP/low ownership so they would
+        # be excluded by a global top-300 cap
+        _MIA_CODE = "MIA"
+        _ARI_CODE = "ARI"
         for i in range(1, 33):
-            tid = f"T{i:02d}"
+            if i == 14:
+                tid, adp, pct = _MIA_CODE, 170.0, 0.5
+            elif i == 1:
+                tid, adp, pct = _ARI_CODE, 169.5, 0.3
+            else:
+                tid = f"T{i:02d}"
+                adp, pct = 95.0 + i, 85.0 - i * 0.3
             pid = 30093 + i
             self.con.execute(
                 "INSERT INTO players VALUES(?,?,?,?,?,?)",
                 (pid, f"{tid} D/ST", "nfl", tid, "DEF", 1))
             self.con.execute(
                 "INSERT INTO nfl_adp VALUES(?,2026,?,?)",
-                (pid, 100.0 + i, 90.0 - i * 0.5))
+                (pid, adp, pct))
         # 270 skill players
         for i in range(1, 271):
             pid = i
@@ -520,40 +547,110 @@ class DstPoolSelectionTests(unittest.TestCase):
         self.con.close()
         os.unlink(self.db_path)
 
-    def test_pool_count_300_def_32(self):
-        from fastapi.responses import JSONResponse
+    _SENTINEL = 169.0
+
+    def _pool_sort_key(self, p):
+        """Production sort key from nfl_mock_draft.py."""
+        adp = p["adp"] if p["adp"] is not None else 999999
+        return (0 if adp < self._SENTINEL else 1,
+                adp if adp < self._SENTINEL else 999999,
+                -(p["percent_owned"] or 0),
+                p["name"])
+
+    def test_count_300_def_32(self):
         resp = nfl_mock_draft.pool(season=2026)
         body = json.loads(resp.body)
         self.assertEqual(body["count"], 300)
         defs = [p for p in body["players"] if p["position"] == "DEF"]
         self.assertEqual(len(defs), 32)
 
-    def test_all_def_have_non_null_adp(self):
+    def test_mia_ari_survive_despite_tier2(self):
+        """MIA and ARI have tier-2 ADP/low ownership — global cap would exclude them."""
         resp = nfl_mock_draft.pool(season=2026)
         body = json.loads(resp.body)
-        defs = [p for p in body["players"] if p["position"] == "DEF"]
-        for p in defs:
-            self.assertIsNotNone(p["adp"], f"{p['name']} adp is None")
+        def_teams = {p["team"] for p in body["players"] if p["position"] == "DEF"}
+        self.assertIn("MIA", def_teams, "MIA must survive reserved merge")
+        self.assertIn("ARI", def_teams, "ARI must survive reserved merge")
 
-    def test_no_dst_rank_in_pool(self):
+    def test_all_def_adp_non_null(self):
+        resp = nfl_mock_draft.pool(season=2026)
+        body = json.loads(resp.body)
+        for p in body["players"]:
+            if p["position"] == "DEF":
+                self.assertIsNotNone(p["adp"], f"{p['name']} adp is None")
+
+    def test_no_dst_rank_in_payload(self):
         resp = nfl_mock_draft.pool(season=2026)
         body = json.loads(resp.body)
         for p in body["players"]:
             self.assertNotIn("dst_rank", p)
 
-    def test_def_sorted_by_adp_within_pool(self):
+    def test_full_300_ordering_matches_production_key(self):
         resp = nfl_mock_draft.pool(season=2026)
         body = json.loads(resp.body)
-        defs = [p for p in body["players"] if p["position"] == "DEF"]
-        def_adps = [p["adp"] for p in defs]
-        self.assertEqual(def_adps, sorted(def_adps))
+        ids = [p["player_id"] for p in body["players"]]
+        expected = sorted(body["players"], key=self._pool_sort_key)
+        expected_ids = [p["player_id"] for p in expected]
+        self.assertEqual(ids, expected_ids,
+            f"Mismatch at idx {next((i for i,(a,b) in enumerate(zip(ids,expected_ids)) if a!=b), -1)}")
 
-    def test_ordering_tiered_adp_then_ownership(self):
-        resp = nfl_mock_draft.pool(season=2026)
+
+class DstB17PlayerDetailTests(unittest.TestCase):
+    """B17: player_detail must use nfl_dst_stats for DEF availability."""
+
+    def setUp(self):
+        handle = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
+        handle.close()
+        self.db_path = handle.name
+        self.con = sqlite3.connect(self.db_path)
+        self.con.executescript("""
+            CREATE TABLE players(id INTEGER PRIMARY KEY, name TEXT, league TEXT,
+              team TEXT, position TEXT, active INTEGER);
+            CREATE TABLE nfl_adp(player_id INTEGER, season INTEGER, adp REAL,
+              percent_owned REAL);
+            CREATE TABLE player_game_logs(player_id INTEGER, league TEXT, season INTEGER,
+              game_no TEXT, stats TEXT, team TEXT);
+            CREATE TABLE nfl_dst_stats(player_id INTEGER, season INTEGER, week INTEGER,
+              fantasy_pts REAL);
+            CREATE TABLE nfl_schedule(season INTEGER, week INTEGER, home_team TEXT,
+              away_team TEXT);
+        """)
+        self.con.execute("INSERT INTO players VALUES(30116,'SEA D/ST','nfl','SEA','DEF',1)")
+        self.con.execute("INSERT INTO nfl_adp VALUES(30116,2026,106.51,98.4)")
+        # Dummy log rows so pool team_weeks_map has SEA entry
+        for w in range(1, 18):
+            self.con.execute("INSERT INTO nfl_dst_stats VALUES(30116,2025,?,10.0)", (w,))
+            self.con.execute("INSERT INTO nfl_schedule VALUES(2025,?,?,?)",
+                             (w, "SEA", "OPP"))
+            self.con.execute("INSERT INTO player_game_logs VALUES(?,?,?,?,?,?)",
+                             (9999, 'nfl', 2025, str(w), '{}', 'SEA'))
+        self.con.commit()
+        self.orig_db = nfl_mock_draft._DB
+        nfl_mock_draft._DB = self.db_path
+
+    def tearDown(self):
+        nfl_mock_draft._DB = self.orig_db
+        self.con.close()
+        os.unlink(self.db_path)
+
+    def test_detail_gp_17_from_dst_stats_no_game_logs(self):
+        resp = nfl_mock_draft.player_detail(player_id=30116)
         body = json.loads(resp.body)
-        # First entry should be skill player (adp=1.0 vs DEF starting at 101.0)
-        self.assertEqual(body["players"][0]["position"], "RB")
-        self.assertEqual(body["players"][0]["adp"], 1.0)
+        self.assertEqual(body["games_played"], 17)
+        self.assertEqual(body["games_missed"], 0)
+        self.assertEqual(body["sample"], "full")
+        self.assertGreater(len(body["weeks_played"]), 0)
+        self.assertEqual(body["dst_pts_total"], 170.0)
+
+    def test_detail_matches_pool_field_for_field(self):
+        detail = json.loads(nfl_mock_draft.player_detail(player_id=30116).body)
+        pool_body = json.loads(nfl_mock_draft.pool(season=2026).body)
+        pool_def = [p for p in pool_body["players"] if p["player_id"] == 30116]
+        self.assertTrue(pool_def, "SEA not in pool")
+        pool = pool_def[0]
+        for field in ["games_played", "games_missed", "sample", "weeks_played", "team_weeks"]:
+            self.assertEqual(detail[field], pool[field],
+                f"{field}: detail={detail[field]} != pool={pool[field]}")
 
 
 if __name__ == "__main__":

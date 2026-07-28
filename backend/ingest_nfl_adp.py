@@ -108,19 +108,35 @@ def _build_dst_resolutions(
         espn_id = -16000 - pro_team_id
         if pid in seen_pids:
             continue  # duplicate D/ST entity
+        # Reject entities whose published ADP is null — all 32 must have real ADP
+        ownership = entity.get("ownership", {}) or {}
+        if ownership.get("averageDraftPosition") is None:
+            unmatched.append(
+                f"{entity.get('fullName','?')} abbrev={abbrev} has null ADP"
+            )
+            continue
         seen_pids.add(pid)
         resolutions.append((pid, espn_id, entity))
 
-    if len(seen_pids) != _EXPECTED_DEF_COUNT:
-        missing = sorted(set(def_to_pid.values()) - seen_pids)
+    # Must resolve ALL active DEF player_ids exactly — no more, no fewer.
+    # A partial match (e.g. 32 of 33) is a failure even if count=32.
+    expected_pids = set(def_to_pid.values())
+    if len(expected_pids) != _EXPECTED_DEF_COUNT:
+        raise RuntimeError(
+            f"D/ST preflight: def_to_pid has {len(expected_pids)} entries, "
+            f"expected {_EXPECTED_DEF_COUNT}"
+        )
+    if seen_pids != expected_pids:
+        missing = sorted(expected_pids - seen_pids)
+        extra = sorted(seen_pids - expected_pids)
         report = (
             f"D/ST resolution failed: resolved {len(seen_pids)} unique player_ids, "
-            f"expected {_EXPECTED_DEF_COUNT}."
+            f"expected exactly {_EXPECTED_DEF_COUNT}."
         )
         if missing:
-            report += f"  Missing player_ids: {missing[:5]}..."
-        if unmatched:
-            report += f"  Unmatched entities: {unmatched[:5]}"
+            report += f"  Missing: {missing[:5]}..."
+        if extra:
+            report += f"  Extra: {extra[:5]}"
         raise RuntimeError(report)
 
     return resolutions
