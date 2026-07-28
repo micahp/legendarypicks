@@ -109,7 +109,15 @@ export default function MockDraftPage() {
         name: p.name,
         position: p.position as 'QB' | 'RB' | 'WR' | 'TE' | 'PK',
         team: p.team,
-        adp: p.adp ?? 999,
+        // Pass the real value through, including null. This array is BOTH the
+        // engine's input and the draft board's display source, so `?? 999` did
+        // not just nudge bot ordering — it put a literal "999.0" in the ADP
+        // column for all 32 D/ST. DraftRoom.tsx:356 already renders `—` for a
+        // null; it never got the chance. EngineDraftPlayer.adp is `number | null`,
+        // so the engine has always accepted the honest value.
+        // A fabricated sentinel that reaches a user is a false measurement, not
+        // a default. The remaining null-ADP ordering is job15's to remove.
+        adp: p.adp,
       }))
 
       const state = engineCreateDraft(id, seat, enginePlayers, seed)
