@@ -10,6 +10,7 @@ sys.path.insert(0, os.path.dirname(__file__))
 
 from routers import nfl_offseason
 import ingest_nfl_dst as dst_mod
+import ingest_nfl_adp
 
 # Use the same NFL_TEAMS the ingest module publishes.
 NFL_TEAMS = dst_mod.NFL_TEAMS
@@ -379,6 +380,75 @@ class DstDraftBoardTests(unittest.TestCase):
         self.assertEqual(wr["position"], "WR")
         self.assertEqual(wr["ppr_per_game_played"], 20.0)
         self.assertIsNone(wr["dst_pts_per_game"])
+
+
+class DstIngestResolutionTests(unittest.TestCase):
+    """Tests for _build_dst_resolutions — the fail-closed pre-validation step."""
+
+    def _make_entity(self, pro_team_id, default_position_id=16):
+        return {
+            "defaultPositionId": default_position_id,
+            "proTeamId": pro_team_id,
+            "fullName": f"Team{pro_team_id} D/ST",
+            "ownership": {"averageDraftPosition": 100.0 + pro_team_id,
+                          "percentOwned": 90.0,
+                          "percentStarted": 5.0},
+            "draftRanksByRankType": {},
+        }
+
+    def test_resolves_all_32_when_map_is_complete(self):
+        """Happy path: 32 entities, complete proTeamMap, all 32 def_to_pid entries."""
+        pro_team_map = {i: f"T{i:02d}" for i in range(1, 33)}
+        def_to_pid = {f"T{i:02d}": 30093 + i for i in range(1, 33)}
+        entities = [self._make_entity(i) for i in range(1, 33)]
+
+        resolutions = ingest_nfl_adp._build_dst_resolutions(
+            entities, pro_team_map, def_to_pid
+        )
+        self.assertEqual(len(resolutions), 32)
+        pids = {pid for pid, _, _ in resolutions}
+        self.assertEqual(len(pids), 32)
+
+    def test_raises_when_pro_team_map_is_empty(self):
+        """proTeamMap with zero entries → RuntimeError."""
+        pro_team_map: dict = {}
+        def_to_pid = {"T01": 30094}
+        entities = [self._make_entity(1)]
+
+        with self.assertRaises(RuntimeError) as ctx:
+            ingest_nfl_adp._build_dst_resolutions(entities, pro_team_map, def_to_pid)
+        self.assertIn("expected 32", str(ctx.exception))
+
+    def test_raises_when_not_all_32_resolve(self):
+        """Only 20 of 32 teams have DEF player entries → RuntimeError."""
+        pro_team_map = {i: f"T{i:02d}" for i in range(1, 33)}
+        def_to_pid = {f"T{i:02d}": 30093 + i for i in range(1, 21)}  # only 20
+        entities = [self._make_entity(i) for i in range(1, 33)]
+
+        with self.assertRaises(RuntimeError) as ctx:
+            ingest_nfl_adp._build_dst_resolutions(entities, pro_team_map, def_to_pid)
+        self.assertIn("expected 32", str(ctx.exception))
+
+    def test_raises_when_entity_has_unmapped_pro_team_id(self):
+        """Entity has proTeamId not in proTeamMap → skips it → fewer than 32."""
+        pro_team_map = {i: f"T{i:02d}" for i in range(1, 32)}  # missing 32
+        def_to_pid = {f"T{i:02d}": 30093 + i for i in range(1, 33)}
+        entities = [self._make_entity(i) for i in range(1, 33)]
+
+        with self.assertRaises(RuntimeError) as ctx:
+            ingest_nfl_adp._build_dst_resolutions(entities, pro_team_map, def_to_pid)
+        self.assertIn("expected 32", str(ctx.exception))
+
+    def test_ignores_non_def_entities(self):
+        """Entities with defaultPositionId != 16 are skipped."""
+        pro_team_map = {i: f"T{i:02d}" for i in range(1, 33)}
+        def_to_pid = {f"T{i:02d}": 30093 + i for i in range(1, 33)}
+        entities = [self._make_entity(1, default_position_id=1)]  # QB entity
+
+        with self.assertRaises(RuntimeError) as ctx:
+            ingest_nfl_adp._build_dst_resolutions(entities, pro_team_map, def_to_pid)
+        # 0 D/ST resolved → fails
+        self.assertIn("expected 32", str(ctx.exception))
 
 
 if __name__ == "__main__":
