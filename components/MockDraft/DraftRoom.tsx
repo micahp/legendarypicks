@@ -504,7 +504,114 @@ export default function DraftRoom({ pool, draftState, onUserPick, userPicking, q
           </div>
         </div>
       </div>
+
+      {/* ── Draft board grid: teams × rounds ── */}
+      <DraftBoardGrid draftState={draftState} />
+
     </section>
+  )
+}
+
+// ── Draft board grid: teams (rows) × rounds (columns) ──
+
+function DraftBoardGrid({ draftState }: { draftState: DraftState }) {
+  const { teams, rounds, picks, playerPool, seat } = draftState
+
+  // Build lookup: pick_by_team_round[team_no][round] = { pick_no, player }
+  const grid = useMemo(() => {
+    const g: Array<Array<{
+      pick_no: number
+      name: string
+      position: string
+      auto: boolean
+    } | null>> = Array.from({ length: teams + 1 }, () => Array(rounds).fill(null))
+
+    const playerLookup = new Map(playerPool.map(p => [p.player_id, p]))
+    for (const pick of picks) {
+      const r = Math.ceil(pick.pick_no / teams) - 1 // 0-based round
+      const player = playerLookup.get(pick.player_id)
+      g[pick.team_no][r] = {
+        pick_no: pick.pick_no,
+        name: player?.name ?? `#${pick.player_id}`,
+        position: player?.position ?? '',
+        auto: pick.auto,
+      }
+    }
+    return g
+  }, [teams, rounds, picks, playerPool])
+
+  // Round headers
+  const roundLabels = Array.from({ length: rounds }, (_, i) => `R${i + 1}`)
+
+  return (
+    <div className="rounded-xl border border-zinc-800 bg-zinc-900 overflow-hidden">
+      <div className="px-4 py-3 border-b border-zinc-800">
+        <h4 className="text-sm font-semibold text-zinc-300">
+          Draft Board
+          <span className="ml-2 text-xs font-normal text-zinc-500 tabular-nums">
+            {picks.length}/{teams * rounds} picks
+          </span>
+        </h4>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full text-xs">
+          <thead>
+            <tr className="border-b border-zinc-800 text-zinc-500">
+              <th className="text-left py-2 pl-4 pr-2 w-12 font-medium uppercase tracking-wider">Team</th>
+              {roundLabels.map(r => (
+                <th key={r} className="text-center py-2 px-1 w-14 font-medium tabular-nums text-[10px]">
+                  {r}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {Array.from({ length: teams }, (_, i) => {
+              const teamNo = i + 1
+              const isUser = teamNo === seat
+              return (
+                <tr
+                  key={teamNo}
+                  className={`border-b border-zinc-800/30 ${
+                    isUser ? 'border-l-2 border-l-zinc-500 bg-zinc-800/20' : ''
+                  }`}
+                >
+                  <td className={`py-2 pl-4 pr-2 font-semibold tabular-nums ${
+                    isUser ? 'text-zinc-200' : 'text-zinc-500'
+                  }`}>
+                    T{teamNo}
+                    {isUser && <span className="ml-1 text-[9px] font-normal text-zinc-600">you</span>}
+                  </td>
+                  {Array.from({ length: rounds }, (_, r) => {
+                    const cell = grid[teamNo][r]
+                    return (
+                      <td key={r} className="text-center py-2 px-1">
+                        {cell ? (
+                          <div className="leading-tight">
+                            <div className={`font-medium truncate max-w-[4.5rem] mx-auto ${
+                              isUser ? 'text-zinc-200' : 'text-zinc-400'
+                            }`}>
+                              {cell.name}
+                            </div>
+                            <span className={`text-[9px] uppercase ${
+                              isUser ? 'text-zinc-500' : 'text-zinc-600'
+                            }`}>
+                              {cell.position}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-zinc-700">—</span>
+                        )}
+                      </td>
+                    )
+                  })}
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
   )
 }
 
