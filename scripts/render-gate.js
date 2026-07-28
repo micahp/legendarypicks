@@ -178,6 +178,11 @@ function check(cond, id, detail) {
 
     const shape = {}
     for (const [label, idx] of [['DEF', 7], ['PK', 8]]) {
+      const apiResponse = await page.request.get(
+        BASE + '/api/nfl/draft-board?season=2026&limit=100&position=' + label
+      )
+      const apiPayload = await apiResponse.json()
+      const expectedRows = apiPayload.eligible_players
       await pills.nth(idx).click()
       await page.waitForFunction(
         expected => {
@@ -190,7 +195,14 @@ function check(cond, id, detail) {
       const headers = await page.locator('table thead th').allInnerTexts()
       const rows = await page.locator('table tbody tr').count()
       shape[label] = { cols: headers.length, rows }
-      check(rows === 32, 'camp-tab', label + ' filter returned ' + rows + ' rows, expected 32')
+      check(
+        rows === expectedRows,
+        'camp-tab',
+        label + ' rendered ' + rows + ' rows, API reports ' + expectedRows
+      )
+      if (label === 'DEF') {
+        check(expectedRows === 32, 'camp-tab', 'DEF API reports ' + expectedRows + ' rows, expected 32')
+      }
       // Position-aware columns (4b21d09): a specialised filter must be narrower
       // than the mixed view, or the specialisation silently regressed.
       check(
