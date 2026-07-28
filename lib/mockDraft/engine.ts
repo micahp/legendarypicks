@@ -100,6 +100,15 @@ export function isUserPick(state: DraftState): boolean {
   return currentDrafter(state) === state.seat
 }
 
+/** Return the user's next pick number, or null if no picks remain. */
+export function userNextPick(state: DraftState): number | null {
+  if (state.completed) return null
+  for (let p = state.currentPick; p <= state.teams * state.rounds; p++) {
+    if (nextTeam(p, state.teams) === state.seat) return p
+  }
+  return null
+}
+
 // ── Pool helpers ──
 export function availableByPosition(pool: DraftPlayer[], position: string): DraftPlayer[] {
   return pool.filter(p => p.position === position)

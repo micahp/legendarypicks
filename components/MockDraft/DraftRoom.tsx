@@ -5,6 +5,7 @@ import {
   currentDrafter,
   isUserPick,
   getRosterState,
+  userNextPick,
 } from '../../lib/mockDraft/engine'
 import { AvailabilityStrip } from '../Leagues/NflDraftRoom'
 
@@ -114,6 +115,7 @@ export default function DraftRoom({ pool, draftState, onUserPick, userPicking, q
   )
 
   const userTurn = isUserPick(draftState)
+  const nextPick = userNextPick(draftState)
   const drafter = currentDrafter(draftState)
   const round = Math.ceil(draftState.currentPick / draftState.teams)
 
@@ -150,13 +152,21 @@ export default function DraftRoom({ pool, draftState, onUserPick, userPicking, q
         <div className="ml-auto flex items-center gap-2">
           {draftState.completed ? (
             <span className="text-sm font-semibold text-zinc-300">Draft complete</span>
-          ) : (
+          ) : userTurn ? (
             <>
               <span className="text-sm font-semibold text-zinc-200">
-                Team {drafter}
-                {userTurn ? ' (you)' : ''}
+                Your pick — Pick {draftState.currentPick}
               </span>
-              <span className="text-xs text-zinc-500">on the clock</span>
+            </>
+          ) : (
+            <>
+              <span className="text-sm text-zinc-400">
+                Team {drafter} picking
+              </span>
+              <span className="text-xs text-zinc-500">·</span>
+              <span className="text-sm text-zinc-400 tabular-nums">
+                Your next: #{nextPick}
+              </span>
             </>
           )}
         </div>
