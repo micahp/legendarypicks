@@ -785,6 +785,63 @@ def player_detail(player_id: int):
             if best_qb is not None and best_games > 0:
                 qb = best_qb
 
+        # 5. PK bucket computation — same formula as _pk_aggregates in nfl_offseason.py
+        pk_pts_total = None
+        pk_pts_per_game = None
+        if position == "PK":
+            pk_row = connection.execute(
+                f"""SELECT
+                        COUNT(*)                                   AS games_played,
+                        SUM(
+                          COALESCE(CAST(json_extract(stats,'$.fg_made_0_19') AS REAL),0) * 3 +
+                          COALESCE(CAST(json_extract(stats,'$.fg_made_20_29') AS REAL),0) * 3 +
+                          COALESCE(CAST(json_extract(stats,'$.fg_made_30_39') AS REAL),0) * 3 +
+                          COALESCE(CAST(json_extract(stats,'$.fg_made_40_49') AS REAL),0) * 4 +
+                          COALESCE(CAST(json_extract(stats,'$.fg_made_50_59') AS REAL),0) * 5 +
+                          COALESCE(CAST(json_extract(stats,'$.fg_made_60_') AS REAL),0) * 5 +
+                          COALESCE(CAST(json_extract(stats,'$.pat_made') AS REAL),0) * 1 -
+                          COALESCE(CAST(json_extract(stats,'$.fg_missed') AS REAL),0) * 1
+                        )                                            AS pk_pts_total
+                 FROM player_game_logs
+                 WHERE league='nfl' AND season=?
+                   AND player_id=?
+                   AND CAST(game_no AS INTEGER) < ?""",
+                (_log_season, player_id, _POSTSEASON_FIRST_WEEK),
+            ).fetchone()
+            if pk_row and pk_row["pk_pts_total"] is not None:
+                pk_pts_total = round(pk_row["pk_pts_total"], 1)
+                gp = pk_row["games_played"] or 0
+                pk_pts_per_game = round(pk_pts_total / gp, 1) if pk_pts_total and gp else None
+
+        # 6. DST stats from nfl_dst_stats — same pattern as _dst_aggregates
+        dst_pts_total = None
+        dst_pts_per_game = None
+        if position == "DEF":
+            dst_columns = connection.execute("PRAGMA table_info(nfl_dst_stats)").fetchall()
+            if dst_columns:
+                dst_row = connection.execute(
+                    """SELECT COUNT(*) AS games_played,
+                              SUM(fantasy_pts) AS dst_total,
+                              AVG(fantasy_pts) AS dst_avg
+                       FROM nfl_dst_stats
+                       WHERE season=? AND player_id=?""",
+                    (_log_season, player_id),
+                ).fetchone()
+                if dst_row and dst_row["dst_total"] is not None:
+                    dst_pts_total = round(dst_row["dst_total"], 1)
+                    if dst_row["dst_avg"] is not None:
+                        dst_pts_per_game = round(dst_row["dst_avg"], 1)
+
+        # 7. games_missed — mirroring the draft board pattern
+        team_games = len(team_weeks) if team_weeks else _REG_SEASON_TEAM_GAMES
+        games_missed = max(0, team_games - games_played)
+
+        # 8. PK/DEF null-override for skill-position fields
+        if position in ("PK", "DEF"):
+            ppr_per_game_played = None
+            snap_pct = None
+            target_share = None
+
         return _json({
             "player_id": player_id,
             "name": name,
@@ -795,6 +852,8 @@ def player_detail(player_id: int):
             "percent_owned": percent_owned,
             "sample": sample,
             "games_played": games_played,
+            "games_missed": games_missed,
+            "team_games": team_games,
             "weeks_played": weeks_played,
             "team_weeks": team_weeks,
             "ppr_per_game_played": ppr_per_game_played,
@@ -802,6 +861,10 @@ def player_detail(player_id: int):
             "snap_pct": snap_pct,
             "target_share": target_share,
             "xfp_per_game": xfp_per_game,
+            "pk_pts_total": pk_pts_total,
+            "pk_pts_per_game": pk_pts_per_game,
+            "dst_pts_total": dst_pts_total,
+            "dst_pts_per_game": dst_pts_per_game,
             "qb": qb,
         })
     finally:
