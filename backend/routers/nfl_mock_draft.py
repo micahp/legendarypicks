@@ -36,8 +36,8 @@ _POSTSEASON_FIRST_WEEK = 19
 _THIN_SAMPLE_GAMES = 4
 _POOL_CAP = 300
 
-# Draftable positions: skill positions plus kickers (code is PK, not K — §1 of spec).
-_DRAFT_POSITIONS = ("QB", "RB", "WR", "TE", "PK")
+# Draftable positions: skill positions, kickers, and team defenses.
+_DRAFT_POSITIONS = ("QB", "RB", "WR", "TE", "PK", "DEF")
 
 
 # ---------------------------------------------------------------------------
