@@ -28,6 +28,7 @@ def ensure_table(con: sqlite3.Connection) -> None:
             team              TEXT,
             opponent          TEXT,
             home_away         TEXT,                -- 'home' | 'away' | NULL
+            game_type         TEXT,                -- 'REG' | 'POST' | NULL (populated from nfl_schedule)
             stats             TEXT NOT NULL,       -- JSON per-game stat line
             source            TEXT,
             source_player_key TEXT,                -- gsis/athlete/mlbam/nhl id for re-resolution

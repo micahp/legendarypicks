@@ -547,9 +547,9 @@ def _regular_season_aggregates(connection: sqlite3.Connection, season: int) -> D
                     GROUP BY team ORDER BY COUNT(*) DESC LIMIT 1)             AS primary_team
            FROM player_game_logs
            WHERE league='nfl' AND season=? AND player_id IS NOT NULL
-             AND CAST(game_no AS INTEGER) < ?
-           GROUP BY player_id""",
-        (season, _POSTSEASON_FIRST_WEEK, season, _POSTSEASON_FIRST_WEEK),
+             AND game_type='REG'
+            GROUP BY player_id""",
+        (season, _POSTSEASON_FIRST_WEEK, season),
     ).fetchall()
 
     # Which weeks each team actually played, from the published schedule.

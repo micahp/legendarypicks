@@ -276,18 +276,20 @@ def upsert_rows(con: sqlite3.Connection, year: int, rows) -> tuple:
         stats.update(row["stats"])
         con.execute(
             """INSERT INTO player_game_logs
-               (player_id, league, season, game_no, game_id, team, opponent,
+               (player_id, league, season, game_no, game_id, game_type, team, opponent,
                 stats, source, source_player_key)
-               VALUES (?,?,?,?,?,?,?,?,?,?)
+               VALUES (?,?,?,?,?,?,?,?,?,?,?)
                ON CONFLICT(league, source_player_key, season, game_no) DO UPDATE SET
                  player_id=COALESCE(excluded.player_id, player_game_logs.player_id),
                  game_id=excluded.game_id,
+                 game_type=excluded.game_type,
                  team=excluded.team,
                  opponent=excluded.opponent,
                  stats=excluded.stats,
                  source=excluded.source""",
             (gsis_to_player.get(row["gsis"]), "nfl", year, game_no,
-             row["game_id"], row["team"], row["opponent"], json.dumps(stats),
+             row["game_id"], row.get("season_type"), row["team"], row["opponent"],
+             json.dumps(stats),
              SOURCE, row["gsis"]))
         written += 1
 
