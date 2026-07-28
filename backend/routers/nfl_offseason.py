@@ -542,8 +542,11 @@ def _regular_season_aggregates(connection: sqlite3.Connection, season: int) -> D
     Postseason weeks are excluded -- see ``_POSTSEASON_FIRST_WEEK``. Missed games
     contribute nothing here by construction; that absence IS the measurement.
     """
+    game_type_filter = ""
+    if "game_type" in _table_columns(connection, "player_game_logs"):
+        game_type_filter = "AND game_type='REG'"
     rows = connection.execute(
-        """SELECT player_id,
+        f"""SELECT player_id,
                   COUNT(DISTINCT game_id)                                   AS games_played,
                   SUM(CAST(json_extract(stats,'$.fpts_ppr')     AS REAL))    AS ppr_total,
                   AVG(CAST(json_extract(stats,'$.xfpts_ppr')    AS REAL))    AS xfp_per_game,
@@ -557,7 +560,7 @@ def _regular_season_aggregates(connection: sqlite3.Connection, season: int) -> D
                     GROUP BY team ORDER BY COUNT(*) DESC LIMIT 1)             AS primary_team
            FROM player_game_logs
            WHERE league='nfl' AND season=? AND player_id IS NOT NULL
-             AND game_type='REG'
+             {game_type_filter}
             GROUP BY player_id""",
         (season, _POSTSEASON_FIRST_WEEK, season),
     ).fetchall()
@@ -821,9 +824,11 @@ def nfl_draft_board(
 
         # Narrow in SQL rather than after: the page a drafter searching for one
         # player gets back should be one player, not 522 rows filtered in the
-        # browser.
+        # browser.  Each token matches either the player name or team name so
+        # "cowboys" returns everyone on Dallas.
         for token in search_tokens:
-            where.append(r"p.name LIKE ? ESCAPE '\'")
+            where.append(r"(p.name LIKE ? ESCAPE '\' OR p.team LIKE ? ESCAPE '\')")
+            params.append(f"%{token}%")
             params.append(f"%{token}%")
 
         where_sql = " AND ".join(where)
@@ -894,6 +899,7 @@ def nfl_draft_board(
             # Availability: the headline. Denominator is every game the team
             # played, so a missed game costs the drafter exactly what it cost.
             "games_played": games_played,
+            "games_missed": _REG_SEASON_TEAM_GAMES - games_played,
             "team_games": _REG_SEASON_TEAM_GAMES,
             "weeks_played": sorted(agg["weeks"]) if agg else [],
             # The 17 weeks his team actually played, so the strip can show a bye
