@@ -18,7 +18,7 @@ from fastapi import APIRouter, HTTPException, Query
 
 from _core import _db, _normalize_name, proj_mod
 
-from team_codes import normalize, normalize_optional
+from team_codes import CANONICAL_POSITIONS, normalize, normalize_optional
 
 
 router = APIRouter()
@@ -72,7 +72,7 @@ _NFL_MILESTONES = (
 )
 
 _SKILL_POSITIONS = ("QB", "RB", "WR", "TE", "FB")
-_POSITION_FILTERS = set(_SKILL_POSITIONS) | {"FLEX"}
+_POSITION_FILTERS = CANONICAL_POSITIONS.get("nfl", set()) | {"FLEX"}
 # Sort key -> (player field, ascending). Every one of these is a measurement of
 # something that happened; none is a projection, and none is labelled as one.
 _SORT_FIELDS = {
@@ -671,9 +671,9 @@ def nfl_draft_board(
             where.append(f"{position_expr}=?")
             params.append(selected_position)
         else:
-            placeholders = ",".join("?" for _ in _SKILL_POSITIONS)
-            where.append(f"{position_expr} IN ({placeholders})")
-            params.extend(_SKILL_POSITIONS)
+            # No position filter — show all positions. (Previously restricted to
+            # _SKILL_POSITIONS; expanded 2026-07-27 when kicker/IDP data landed.)
+            pass
 
         # Narrow in SQL rather than after: the page a drafter searching for one
         # player gets back should be one player, not 522 rows filtered in the
