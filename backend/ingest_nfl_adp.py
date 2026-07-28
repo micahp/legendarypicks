@@ -1,9 +1,14 @@
 #!/usr/bin/env python3
+from __future__ import annotations
 """
 ingest_nfl_adp.py — fetch real ESPN fantasy ADP for the 2026 draft season.
 
 Source: ESPN's public fantasy API (same unauthenticated family as roster_sync).
 Join: players.espn_id = feed.id (already populated by roster_sync.py for NFL).
+D/ST: ESPN keys them with negative ids (-16000 - proTeamId); resolved via the
+  published proTeams map (abbrev → team), joined to players by team + position='DEF'.
+  Fail-closed: proTeams fetch must succeed; all 32 active DEF teams must resolve before
+  any write; partial resolution aborts with exit 1.
 Writes one row per (player_id, season) into nfl_adp — refreshable snapshot.
 
 Usage: python3 ingest_nfl_adp.py
@@ -16,6 +21,8 @@ import urllib.request
 
 URL = ("https://lm-api-reads.fantasy.espn.com/apis/v3/games/ffl/seasons/2026/players"
        "?scoringPeriodId=0&view=kona_player_info")
+PROTEAMS_URL = ("https://lm-api-reads.fantasy.espn.com/apis/v3/games/ffl/seasons/2026"
+                "?view=proTeamSchedules_wl")
 HEADERS = {
     "x-fantasy-filter": json.dumps({
         "players": {
@@ -26,6 +33,7 @@ HEADERS = {
     }),
 }
 SEASON = 2026
+_EXPECTED_DEF_COUNT = 32
 
 DB = os.environ.get("LP_DB_PATH") or os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "data", "picks.db"
@@ -49,6 +57,75 @@ def _fetch_page(offset: int) -> list:
     return json.loads(body)
 
 
+def _build_pro_team_map() -> dict[int, str]:
+    """Fetch the published proTeams endpoint.  Fails closed — raises on error."""
+    with urllib.request.urlopen(PROTEAMS_URL, timeout=60) as r:
+        pro_data = json.loads(r.read().decode("utf-8"))
+    pro_team_map: dict[int, str] = {}
+    for t in pro_data.get("settings", {}).get("proTeams", []):
+        tid = t.get("id")
+        abbr = t.get("abbrev", "")
+        if tid and abbr and tid != 0:
+            pro_team_map[int(tid)] = abbr.upper()
+    if not pro_team_map:
+        raise RuntimeError("proTeams endpoint returned zero teams")
+    print(f"proTeams loaded: {len(pro_team_map)} teams")
+    return pro_team_map
+
+
+def _build_dst_resolutions(
+    all_entities: list,
+    pro_team_map: dict[int, str],
+    def_to_pid: dict[str, int],
+) -> list[tuple[int, int, dict]]:
+    """Scan all fetched entities for D/ST.  Return [(player_id, espn_id, entity), ...].
+
+    Must resolve exactly _EXPECTED_DEF_COUNT unique player_ids, else raises.
+    Nothing is written — pure computation.
+    """
+    seen_pids: set[int] = set()
+    resolutions: list[tuple[int, int, dict]] = []
+    unmatched: list[str] = []
+
+    for entity in all_entities:
+        if entity.get("defaultPositionId") != 16:
+            continue
+        pro_team_id = entity.get("proTeamId")
+        if not pro_team_id:
+            continue
+        abbrev = pro_team_map.get(pro_team_id)
+        if not abbrev:
+            unmatched.append(
+                f"{entity.get('fullName','?')} proTeamId={pro_team_id} not in map"
+            )
+            continue
+        pid = def_to_pid.get(abbrev)
+        if not pid:
+            unmatched.append(
+                f"{entity.get('fullName','?')} abbrev={abbrev} not in players"
+            )
+            continue
+        espn_id = -16000 - pro_team_id
+        if pid in seen_pids:
+            continue  # duplicate D/ST entity
+        seen_pids.add(pid)
+        resolutions.append((pid, espn_id, entity))
+
+    if len(seen_pids) != _EXPECTED_DEF_COUNT:
+        missing = sorted(set(def_to_pid.values()) - seen_pids)
+        report = (
+            f"D/ST resolution failed: resolved {len(seen_pids)} unique player_ids, "
+            f"expected {_EXPECTED_DEF_COUNT}."
+        )
+        if missing:
+            report += f"  Missing player_ids: {missing[:5]}..."
+        if unmatched:
+            report += f"  Unmatched entities: {unmatched[:5]}"
+        raise RuntimeError(report)
+
+    return resolutions
+
+
 def main():
     con = sqlite3.connect(DB)
     con.row_factory = sqlite3.Row
@@ -60,6 +137,17 @@ def main():
     ):
         eid_to_pid[str(r["espn_id"])] = r["id"]
     print(f"NFL players with espn_id: {len(eid_to_pid)}")
+
+    # ── D/ST pre-flight: fetch proTeams map (fail-closed) ──
+    pro_team_map = _build_pro_team_map()
+
+    # ── Build team_abbrev → player_id lookup for active DEF players ──
+    def_to_pid: dict[str, int] = {}
+    for r in con.execute(
+        "SELECT id, team FROM players WHERE league='nfl' AND position='DEF' AND active=1"
+    ):
+        def_to_pid[r["team"]] = r["id"]
+    print(f"DEF players by team: {len(def_to_pid)}")
 
     # Create table
     con.execute(
@@ -89,6 +177,7 @@ def main():
     offset = 0
     page_num = 1
     seen_espn_ids = set()
+    all_entities: list = []  # accumulate for D/ST pass
 
     while True:
         print(f"  Fetching page {page_num} (offset {offset})...")
@@ -99,10 +188,6 @@ def main():
 
         page_ids = {str(p.get("id", "")) for p in page}
         if page_ids and page_ids <= seen_espn_ids:
-            # ESPN's API ignores `limit`/`offset` on this endpoint and just
-            # returns the whole player pool every call — no new ids means
-            # pagination isn't actually advancing, so stop instead of
-            # looping forever re-fetching the same set.
             print("    no new espn ids vs previous page(s) — pagination isn't advancing, stopping")
             break
         seen_espn_ids |= page_ids
@@ -140,6 +225,7 @@ def main():
             )
             total_matched += 1
 
+        all_entities.extend(page)
         con.commit()
         print(f"    page {page_num}: {len(page)} fetched, {total_matched} matched so far")
 
@@ -147,6 +233,43 @@ def main():
             break
         offset += 3000
         page_num += 1
+
+    # ── D/ST pass: build resolution plan, validate, THEN write ──
+    dst_resolutions = _build_dst_resolutions(all_entities, pro_team_map, def_to_pid)
+    print(f"D/ST resolution plan: {len(dst_resolutions)} of {_EXPECTED_DEF_COUNT}")
+
+    for pid, espn_id, entity in dst_resolutions:
+        # Backfill players.espn_id (NULL, zero, or empty-string)
+        con.execute(
+            "UPDATE players SET espn_id=? WHERE id=? AND (espn_id IS NULL OR espn_id = '' OR espn_id = 0)",
+            (espn_id, pid),
+        )
+
+        ownership = entity.get("ownership", {}) or {}
+        adp = ownership.get("averageDraftPosition")
+        pct_owned = ownership.get("percentOwned")
+        pct_started = ownership.get("percentStarted")
+
+        ranks = entity.get("draftRanksByRankType", {}) or {}
+        ppr = ranks.get("PPR", {}) or {}
+        std = ranks.get("STANDARD", {}) or {}
+        ppr_rank = ppr.get("rank")
+        std_rank = std.get("rank")
+
+        con.execute(
+            """INSERT OR REPLACE INTO nfl_adp
+               (player_id, season, espn_player_id, adp, percent_owned,
+                percent_started, espn_ppr_rank, espn_standard_rank, updated_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (pid, SEASON, espn_id, adp, pct_owned, pct_started,
+             ppr_rank, std_rank, now),
+        )
+        if adp is not None:
+            non_null_adp += 1
+
+    con.commit()
+    dst_matched = len(dst_resolutions)
+    print(f"D/ST committed: {dst_matched} of {_EXPECTED_DEF_COUNT}")
 
     # Verify
     row = con.execute(
