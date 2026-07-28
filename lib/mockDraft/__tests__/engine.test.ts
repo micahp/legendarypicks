@@ -298,6 +298,16 @@ describe('botPick', () => {
     expect(state.availablePool.some(p => p.player_id === player.player_id)).toBe(true)
   })
 
+  it('rejects a draftable player without published ADP instead of deriving a rank', () => {
+    const pool = makeTestPool()
+    pool[0] = { ...pool[0], adp: null }
+    const state = createDraft('test', 1, pool, 42)
+
+    expect(() => botPick(state, () => 0.5)).toThrow(
+      `mockDraft: player ${pool[0].player_id} (${pool[0].name}) has no published ADP`,
+    )
+  })
+
   it('never exceeds position limits', () => {
     // Small pool where bots are forced to fill positions
     const tinyPool: DraftPlayer[] = []

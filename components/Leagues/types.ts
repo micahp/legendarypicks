@@ -226,7 +226,7 @@ export interface NflDraftPlayer {
   /** Current role from the published depth chart. 1 = starter. */
   depth_rank: number | null
   adp: number | null
-  /** False when ADP is only ESPN's undrafted sentinel, not a real ranking. */
+  /** True when ESPN published an ADP value for this player. */
   adp_is_ranked: boolean
   percent_owned: number | null
   /** The headline: regular-season games played out of the team's 17. */
@@ -357,8 +357,6 @@ export interface PoolPlayer {
   team: string
   adp: number | null
   percent_owned: number | null
-  /** Derived rank from fantasy totals when no published ADP exists (D/ST). */
-  dst_rank?: number | null
   sample: 'full' | 'thin' | 'none'
   games_played: number
   games_missed: number | null
