@@ -1095,9 +1095,13 @@ def nfl_draft_board(
                 if ppr_total is not None and games_played
                 else None
             ),
+            # team_games_val, not the 17-constant. The metric claims "what this
+            # roster spot actually returned", and after a mid-season trade the
+            # player's team may have played a different number of games -- which
+            # is exactly what the comment at the top of this block says.
             "ppr_per_team_game": (
-                _round(ppr_total / _REG_SEASON_TEAM_GAMES)
-                if ppr_total is not None
+                _round(ppr_total / team_games_val)
+                if ppr_total is not None and team_games_val
                 else None
             ),
             "xfp_per_game": _round(xfp_per_game) if xfp_per_game is not None else None,

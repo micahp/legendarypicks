@@ -310,8 +310,9 @@ def pool(season: int = Query(...)):
                 else None
             )
             ppr_per_team_game = (
-                round(ppr_total / _REG_SEASON_TEAM_GAMES, 1)
-                if ppr_total is not None
+                # Per-player team_games, not the 17-constant (see the board).
+                round(ppr_total / team_games, 1)
+                if ppr_total is not None and team_games
                 else None
             )
             xfp_per_game = (
@@ -729,8 +730,8 @@ def player_detail(player_id: int):
             else None
         )
         ppr_per_team_game = (
-            round(ppr_total / _REG_SEASON_TEAM_GAMES, 1)
-            if ppr_total is not None
+            round(ppr_total / team_games, 1)
+            if ppr_total is not None and team_games
             else None
         )
         snap_pct = (
