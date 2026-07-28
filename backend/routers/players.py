@@ -1,6 +1,7 @@
 """routers/players.py — players endpoints. Handlers only; shared code lives in _core."""
 import json
 import math
+import sqlite3
 import time
 
 from fastapi import APIRouter, HTTPException, Query
@@ -9,6 +10,15 @@ from typing import Optional
 from _core import *
 
 router = APIRouter()
+
+# ── Postseason guard — replicate nfl_offseason.py pattern ──
+def _reg_season_game_filter(connection):
+    """Return (AND_clause, extra_params) that excludes postseason games.
+    Prefers game_type='REG' when the column exists; falls back to game_no < 19."""
+    cols = {row[1] for row in connection.execute("PRAGMA table_info(player_game_logs)").fetchall()}
+    if "game_type" in cols:
+        return "AND game_type='REG'", []
+    return "AND CAST(game_no AS INTEGER) < 19", []
 
 @router.get("/api/players/search")
 def search_players(q: str = Query("", description="Search query")):
@@ -94,12 +104,21 @@ def player_profile(player_id: int):
             (player_id,)).fetchone()
         season = srow["season"] if srow else None
         logs = []
+        postseason_games = 0
         if season is not None:
+            reg_filter, _ = _reg_season_game_filter(con)
             logs = con.execute(
-                """SELECT stats, game_date, opponent, home_away, game_no
+                f"""SELECT stats, game_date, opponent, home_away, game_no
                    FROM player_game_logs WHERE player_id=? AND season=?
+                   {reg_filter}
                    ORDER BY COALESCE(game_date,'') DESC, CAST(game_no AS INTEGER) DESC LIMIT 25""",
                 (player_id, season)).fetchall()
+            # Count postseason games separately (ESPN: separate containers)
+            if "game_type" in {row[1] for row in con.execute("PRAGMA table_info(player_game_logs)").fetchall()}:
+                post_row = con.execute(
+                    "SELECT COUNT(*) FROM player_game_logs WHERE player_id=? AND season=? AND game_type!='REG'",
+                    (player_id, season)).fetchone()
+                postseason_games = post_row[0] if post_row else 0
         props = con.execute(
             """SELECT market, side, line, MAX(captured_at) ca FROM props
                WHERE player_id=? GROUP BY market, side ORDER BY ca DESC LIMIT 30""",
@@ -108,46 +127,33 @@ def player_profile(player_id: int):
     series, recent = {}, []
     for r in logs:
         s = _json.loads(r["stats"])
-        # Required for the allowlist below to be correct, not cosmetic: 2024 rows
-        # carry legacy nflverse keys (`receptions`), 2025 rows canonical pbp keys
-        # (`rec`), and no season mixes the two. A player whose most recent season
-        # is 2024 would miss _NFL_PROJECTION_STATS entirely and lose every
-        # projection. Applied to the game logs too so the game-log table can key
-        # off canonical names alone. /api/projections/player/{id} normalizes the
-        # same way.
         if league == "nfl":
             s = {_NFL_KEY_NORMALIZE.get(k, k): v for k, v in s.items()}
         recent.append({"date": r["game_date"], "opponent": r["opponent"],
                        "home": (r["home_away"] == "home") if r["home_away"] else None,
-                       # NFL rows are week-keyed with a NULL game_date, so the
-                       # week is the only thing that identifies the game.
                        "game_no": r["game_no"], "stats": s})
         for k, v in s.items():
             if isinstance(v, (int, float)):
                 series.setdefault(k, []).append(v)
     projections = {}
     for k, vals in series.items():
-        # NFL blobs carry snap-count and NGS fields alongside production stats.
-        # Projecting a cushion or a special-teams snap % is meaningless, and for
-        # an offensive player those rows are all zeros — 17-20 rows of them,
-        # burying everything below. Usage belongs on the usage trend, not here.
         if league == "nfl" and k not in _NFL_PROJECTION_STATS:
             continue
         pr = proj_mod.project_stat(vals)
         if not pr:
             continue
-        # A stat the player has never recorded projects to zero across the board:
-        # every passing field for a receiver, every defensive field for anyone on
-        # offense. Nothing to say, so say nothing.
         if league == "nfl" and not pr.get("season_avg") and not pr.get("projection"):
             continue
         projections[k] = pr
 
     season_stats = _season_stats_for_profile(p["id"], p["name"], league)
+    regular_season_games = len(logs)
     return {
         "id": p["id"], "name": p["name"], "team": p["team"], "league": league,
-        "position": p["position"], "season": season, "games": len(logs),
-        "recent_games": recent[:15],
+        "position": p["position"], "season": season,
+        "regular_season_games": regular_season_games,
+        "postseason_games": postseason_games,
+        "recent_games": recent,
         "projections": projections,
         "props": [{"market": _base_market(x["market"]), "side": x["side"], "line": x["line"]} for x in props],
         "season_stats": season_stats,
@@ -175,8 +181,9 @@ def player_matchups(player_id: int):
         season = srow["season"] if srow else None
         rows = []
         if season is not None:
+            reg_filter, _ = _reg_season_game_filter(con)
             rows = con.execute(
-                "SELECT opponent, stats FROM player_game_logs WHERE player_id=? AND season=? AND opponent IS NOT NULL",
+                f"SELECT opponent, stats FROM player_game_logs WHERE player_id=? AND season=? AND opponent IS NOT NULL {reg_filter}",
                 (player_id, season)).fetchall()
 
     by_opp: dict = {}
@@ -247,7 +254,8 @@ def player_projections(player_id: int,
                 (player_id,)).fetchone()
             season = srow["season"] if srow else None
         params = [player_id]
-        q = "SELECT stats FROM player_game_logs WHERE player_id=?"
+        reg_filter, _ = _reg_season_game_filter(con)
+        q = f"SELECT stats FROM player_game_logs WHERE player_id=? {reg_filter}"
         if season is not None:
             q += " AND season=?"; params.append(season)
         # most-recent-first; game_date is NULL for NFL (week-keyed) → fall back to week
@@ -602,9 +610,10 @@ def _change_evidence(lg, selected_category, season, leaders):
     try:
         with closing(_db()) as con:
             con.row_factory = sqlite3.Row
+            reg_filter, _ = _reg_season_game_filter(con)
             rows = con.execute(
                 "SELECT player_id, stats, game_date, game_no FROM player_game_logs "
-                f"WHERE league=? AND season=? AND player_id IN ({placeholders})",
+                f"WHERE league=? AND season=? AND player_id IN ({placeholders}) {reg_filter}",
                 [lg, season] + player_ids,
             ).fetchall()
     except sqlite3.OperationalError as exc:
