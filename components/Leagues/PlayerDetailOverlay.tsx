@@ -44,7 +44,7 @@ export default function PlayerDetailOverlay({ playerId, onClose }: Props) {
   const isPassCatcher = player && (player.position === 'WR' || player.position === 'RB' || player.position === 'TE')
   const noSample = player?.sample === 'none'
   const thin = player?.sample === 'thin'
-  const missed = player ? player.team_games - player.games_played : 0
+  const missed = player?.games_missed ?? null
 
   return (
     <div
@@ -141,12 +141,12 @@ export default function PlayerDetailOverlay({ playerId, onClose }: Props) {
                 <div className="mt-1.5 flex items-baseline gap-2">
                   <span
                     className={`font-mono tabular-nums text-sm font-semibold ${
-                      missed > 0 ? 'text-amber-400' : 'text-zinc-300'
+                      missed != null && missed > 0 ? 'text-amber-400' : 'text-zinc-300'
                     }`}
                   >
                     {player.games_played}/{player.team_games} games played
                   </span>
-                  {missed > 0 && (
+                  {missed != null && missed > 0 && (
                     <span className="text-xs text-zinc-500">
                       missed {missed}
                     </span>
@@ -255,17 +255,6 @@ export default function PlayerDetailOverlay({ playerId, onClose }: Props) {
                       {player.qb.games_played} games played
                     </span>
                   </div>
-                </div>
-              </section>
-            )}
-
-            {isPassCatcher && !player.qb && (
-              <section className="space-y-2">
-                <h3 className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
-                  Quarterback
-                </h3>
-                <div className="rounded-lg border border-zinc-800 bg-zinc-800/40 px-3 py-2.5">
-                  <span className="text-xs text-zinc-600">—</span>
                 </div>
               </section>
             )}
