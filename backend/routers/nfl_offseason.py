@@ -752,8 +752,10 @@ def _dst_aggregates(connection: sqlite3.Connection, season: int) -> Tuple[Dict[i
         (season,),
     ).fetchall()
 
-    # Which weeks each team actually played — same logic as _regular_season_aggregates
-    team_weeks: Dict[str, List[int]] = {}
+    # Which weeks each team actually played — same logic as _regular_season_aggregates.
+    # Use a set (not a list) to deduplicate: each team appears twice per week
+    # in the UNION ALL (home + away), so a list would hold 34 entries per team.
+    schedule_team_weeks: Dict[str, Set[int]] = defaultdict(set)
     for row in connection.execute(
         """SELECT home_team AS team, week FROM nfl_schedule
            WHERE season=? AND week < ?
@@ -763,16 +765,16 @@ def _dst_aggregates(connection: sqlite3.Connection, season: int) -> Tuple[Dict[i
         (season, _POSTSEASON_FIRST_WEEK, season, _POSTSEASON_FIRST_WEEK),
     ):
         try:
-            team = row["team"]
-            if team not in team_weeks:
-                team_weeks[team] = []
-            team_weeks[team].append(int(row["week"]))
+            schedule_team_weeks[row["team"]].add(int(row["week"]))
         except (TypeError, ValueError):
             continue
 
-    # Sort each team's weeks
-    for tw in team_weeks.values():
-        tw.sort()
+    # Build a sorted-list version for the return value (used by the board for
+    # team_weeks output field).  Per-player aggregates carry their own resolved
+    # team_weeks so the board doesn't need to re-resolve by current_team.
+    dst_team_weeks: Dict[str, list] = {
+        team: sorted(weeks) for team, weeks in schedule_team_weeks.items()
+    }
 
     out: Dict[int, dict] = {}
     for row in rows:
@@ -782,14 +784,18 @@ def _dst_aggregates(connection: sqlite3.Connection, season: int) -> Tuple[Dict[i
                 weeks.add(int(token))
             except ValueError:
                 continue
-        out[row["player_id"]] = {
+        # For a D/ST player, the "primary team" is the team the defense
+        # belongs to — resolvable from the players table in the board, but
+        # we store it here so the board can scope team_games correctly.
+        pid = row["player_id"]
+        out[pid] = {
             "games_played": row["games_played"] or 0,
             "dst_total": row["dst_total"],
             "dst_avg": row["dst_avg"],
             "weeks": weeks,
-            "team_weeks": team_weeks,  # passed through; resolved in board
+            "team_weeks": [],  # resolved per-player in the board
         }
-    return out, team_weeks
+    return out, dst_team_weeks
 
 
 def _round(value, places=1):
