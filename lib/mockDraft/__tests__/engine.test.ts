@@ -36,7 +36,7 @@ function makeTestPool(size = 300): DraftPlayer[] {
   // This guarantees each position has enough depth for 12 teams:
   //   QB max=2×12=24, RB max=6×12=72, WR max=6×12=72, TE max=3×12=36, PK max=2×12=24
   //   60 per position covers all limits with margin.
-  const posCycle: DraftPlayer['position'][] = ['QB', 'RB', 'WR', 'TE', 'PK']
+  const posCycle: DraftPlayer['position'][] = ['QB', 'RB', 'WR', 'TE', 'PK', 'DEF']
   for (let i = 0; i < size; i++) {
     const pos = posCycle[i % posCycle.length]
     // ADP: 1.5 → ~169 for the first 180 (real ADP range), then tail to ~230
@@ -281,6 +281,7 @@ describe('getTeamRoster / getRosterState', () => {
     expect(roster.startingSlotsFilled.WR).toBe(true)
     expect(roster.startingSlotsFilled.TE).toBe(true)
     expect(roster.startingSlotsFilled.PK).toBe(true)
+    expect(roster.startingSlotsFilled.DEF).toBe(true)
     expect(roster.startingSlotsFilled.FLEX).toBe(true)
   })
 })
@@ -322,6 +323,7 @@ describe('botPick', () => {
         expect(roster.positionCounts['WR'] || 0).toBeLessThanOrEqual(6)
         expect(roster.positionCounts['TE'] || 0).toBeLessThanOrEqual(3)
         expect(roster.positionCounts['PK'] || 0).toBeLessThanOrEqual(2)
+        expect(roster.positionCounts['DEF'] || 0).toBeLessThanOrEqual(1)
       }
     }
   })
@@ -420,6 +422,7 @@ describe('200-draft simulation (§7.2)', () => {
         expect(roster.startingSlotsFilled.WR).toBe(true)
         expect(roster.startingSlotsFilled.TE).toBe(true)
         expect(roster.startingSlotsFilled.PK).toBe(true)
+        expect(roster.startingSlotsFilled.DEF).toBe(true)
         expect(roster.startingSlotsFilled.FLEX).toBe(true)
       }
     }
@@ -429,6 +432,17 @@ describe('200-draft simulation (§7.2)', () => {
 // ── Edge cases ─────────────────────────────────────────────────────────────
 
 describe('edge cases', () => {
+  it('pick 1 is never a defense in full-draft simulations', () => {
+    const pool = makeTestPool()
+    for (let seed = 0; seed < 200; seed++) {
+      const final = simulateFullDraft(seed * 100 + 1, pool)
+      const pick1 = final.picks[0]
+      const player = final.playerPool.find(p => p.player_id === pick1.player_id)
+      expect(player).toBeDefined()
+      expect(player!.position).not.toBe('DEF')
+    }
+  })
+
   it('autopick returns auto:true on the pick', () => {
     const pool = makeTestPool()
     const state = createDraft('test', 1, pool, 42)

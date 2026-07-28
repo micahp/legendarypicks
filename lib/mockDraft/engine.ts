@@ -5,9 +5,9 @@
 export interface DraftPlayer {
   player_id: number
   name: string
-  position: 'QB' | 'RB' | 'WR' | 'TE' | 'PK'
+  position: 'QB' | 'RB' | 'WR' | 'TE' | 'PK' | 'DEF'
   team: string
-  adp: number
+  adp: number | null
 }
 
 export interface DraftPick {
@@ -29,6 +29,7 @@ export interface RosterState {
     WR: boolean
     TE: boolean
     PK: boolean
+    DEF: boolean
     FLEX: boolean
   }
 }
@@ -53,16 +54,18 @@ const POSITION_MAX: Record<string, number> = {
   WR: 6,
   TE: 3,
   PK: 2,
+  DEF: 1,
 }
 
 // ── Starting slot requirements ──
-//   QB(1)  RB(2)  WR(2)  TE(1)  FLEX(RB/WR/TE, 1)  PK(1)  + 7 BE
+//   QB(1)  RB(2)  WR(2)  TE(1)  FLEX(RB/WR/TE, 1)  PK(1)  DEF(1)  + 6 BE
 const STARTER_COUNT: Record<string, number> = {
   QB: 1,
   RB: 2,
   WR: 2,
   TE: 1,
   PK: 1,
+  DEF: 1,
 }
 // FLEX: need total RB+WR+TE >= 6 (2+2+1 dedicated + 1 flex)
 const FLEX_TOTAL_NEED = 6
@@ -134,6 +137,7 @@ export function getRosterState(state: DraftState, teamNo: number): RosterState {
       WR: (positionCounts['WR'] || 0) >= STARTER_COUNT['WR'],
       TE: (positionCounts['TE'] || 0) >= STARTER_COUNT['TE'],
       PK: (positionCounts['PK'] || 0) >= STARTER_COUNT['PK'],
+      DEF: (positionCounts['DEF'] || 0) >= STARTER_COUNT['DEF'],
       FLEX: rbWrTe >= FLEX_TOTAL_NEED,
     },
   }
@@ -165,6 +169,7 @@ export function botPick(state: DraftState, rng: () => number): DraftPlayer {
     if (!roster.startingSlotsFilled.WR) needs.push('WR')
     if (!roster.startingSlotsFilled.TE) needs.push('TE')
     if (!roster.startingSlotsFilled.PK) needs.push('PK')
+    if (!roster.startingSlotsFilled.DEF) needs.push('DEF')
     if (!roster.startingSlotsFilled.FLEX) {
       needs.push('RB', 'WR', 'TE')
     }
@@ -189,13 +194,18 @@ export function botPick(state: DraftState, rng: () => number): DraftPlayer {
     candidates = state.availablePool
   }
 
-  // Rule 3: score by jittered ADP (lower = better)
+  // Rule 3: score by jittered ADP (lower = better).
+  //   D/ST players have null ADP — use pool position as ordinal fallback.
+  //   availablePool is sorted by the backend (real ADP first, then
+  //   D/ST ordered by dst_rank at indices ~150–181).
+  const poolIndex = new Map(candidates.map((p, i) => [p.player_id, i]))
   let best = candidates[0]
   let bestScore = Infinity
   for (const p of candidates) {
     // Map rng() ∈ [0,1) to jitter ∈ [-0.10, +0.10]
     const jitter = (rng() - 0.5) * 0.2
-    const score = p.adp * (1 + jitter)
+    const effectiveAdp = p.adp ?? (poolIndex.get(p.player_id)! + 1)
+    const score = effectiveAdp * (1 + jitter)
     if (score < bestScore) {
       bestScore = score
       best = p
@@ -247,8 +257,14 @@ export function createDraft(
   playerPool: DraftPlayer[],
   seed: number,
 ): DraftState {
-  // availablePool is sorted by ADP ascending (lowest ADP = best, picked first)
-  const sorted = [...playerPool].sort((a, b) => a.adp - b.adp)
+  // availablePool is sorted by ADP ascending (lowest ADP = best, picked first).
+  //   D/ST players have null ADP — sort them after all numeric ADPs.
+  const sorted = [...playerPool].sort((a, b) => {
+    if (a.adp === null && b.adp === null) return 0
+    if (a.adp === null) return 1
+    if (b.adp === null) return -1
+    return a.adp - b.adp
+  })
   return {
     id,
     seat,
