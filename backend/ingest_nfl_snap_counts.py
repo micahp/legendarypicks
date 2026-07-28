@@ -187,9 +187,10 @@ def ingest(year: int = 2025, dry_run: bool = False) -> dict:
         snap_add = {"player_id": pid, "season": year, "week": week, "team": team}
         for src, col in SNAP_TABLE_COLS.items():
             v = getattr(row, src, None)
-            if v is None or v != v:
-                fv = float(v)
-                snap_add[col] = int(fv) if fv.is_integer() else round(fv, 3)
+            if v is None or v != v:  # NaN
+                continue
+            fv = float(v)
+            snap_add[col] = int(fv) if fv.is_integer() else round(fv, 3)
         snap_pending.append(snap_add)
 
     print(
@@ -234,9 +235,11 @@ def ingest(year: int = 2025, dry_run: bool = False) -> dict:
     # ── Insert snap-count rows ───────────────────────────────────────────
     cols = ["player_id", "season", "week", "team"] + list(SNAP_TABLE_COLS.values())
     placeholders = ", ".join("?" for _ in cols)
+    set_clause = ", ".join(f"{c}=excluded.{c}" for c in SNAP_TABLE_COLS.values())
     insert_sql = (
-        f"INSERT OR IGNORE INTO nfl_snap_counts ({', '.join(cols)}) "
-        f"VALUES ({placeholders})"
+        f"INSERT INTO nfl_snap_counts ({', '.join(cols)}) "
+        f"VALUES ({placeholders}) "
+        f"ON CONFLICT(player_id, season, week) DO UPDATE SET {set_clause}"
     )
     for s in snap_pending:
         values = tuple(s.get(c) for c in cols)
