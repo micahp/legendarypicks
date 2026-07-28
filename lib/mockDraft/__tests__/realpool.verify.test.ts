@@ -15,7 +15,8 @@ function sim(seed: number, pool: DraftPlayer[]): DraftState {
 
 describe('REAL pool distribution', () => {
   it('completes 200 drafts against the live pool shape', () => {
-    const pool = realPool as unknown as DraftPlayer[]
+    const raw = realPool as unknown as { players: DraftPlayer[] }
+    const pool = raw.players || (realPool as unknown as DraftPlayer[])
     let ok = 0
     const fails: number[] = []
     for (let seed = 0; seed < 200; seed++) {
