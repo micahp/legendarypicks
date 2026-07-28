@@ -201,8 +201,158 @@ render, and it stays the one that has to go green last.
 
 ---
 
-## Still to qualify
+## CONFIRMED · #8 the merge left two surfaces with two different truths about availability
 
-Findings **8, 9, 10, 17, 18, 19, 20** touch frontend, the merge, or tooling and are mine to
-verify next — #19 (an untracked runtime asset that would vanish in a merge) is urgent, since
-the merge to `dev` is the open decision. Findings 7, 12–16 are backend and are Codex's.
+The most user-visible finding in the report. Re-measured by paginating the board (its cap is
+`limit ≤ 100` + `offset`, which is why a single `limit=700` call 422s):
+
+```
+pool=300  board=800  overlap=237
+disagreements: games_played 37 · games_missed 49 · weeks_played 37 · team_weeks 38
+players with ANY disagreement: 49 of 237
+```
+
+| player | `/mock-draft` says | Player Rankings says |
+|---|---|---|
+| CeeDee Lamb | 13 games | **14** |
+| Josh Allen | 16 games | **17** |
+| Brandon Aubrey | `team_weeks` 17 | **0** |
+| DEN / HOU D/ST | 0 games | **17** |
+
+Codex reported 59 of 269; I measured 49 of 237. Same defect — the counts differ because the
+pool composition changed underneath us when job15 landed (see below).
+
+The mechanism is confirmed in the code, and it is a trap this project has documented before:
+**`player_game_logs` records touches, not presence.** A player who was on the field but
+recorded no pass, rush or reception has no row.
+
+- `nfl_offseason.py:534` — the board gets it right, and says so in its own docstring:
+  *"Games played and weeks present are read from **both** `player_game_logs` AND
+  `nfl_snap_counts` … `nfl_snap_counts` records every player who took a snap."*
+- `e43ca6c`, before the merge — the **pool** did the same, reading `nfl_snap_counts` and
+  taking team weeks from `nfl_schedule`.
+- Current `nfl_mock_draft.py:171–230` — the pool builder reads **`player_game_logs` alone**.
+  The `nfl_snap_counts` / `nfl_schedule` reads still present at :705–736 are inside
+  `player_detail`, a different function, which is why a grep for the table names makes the
+  file look fine.
+
+So the merge silently reverted one of the two consumers. Backend, and Codex's to route.
+
+---
+
+## RESOLVED-IN-PART · #10 Player Rankings D/ST ordering
+
+Codex measured the first DEF row as alphabetical `ARI D/ST` with ADP `—`. **job15 landed
+during this qualification and changed the answer**, so re-measured:
+
+```
+/api/nfl/draft-board?position=DEF  → 32 rows
+  DEN D/ST  adp=89.97   HOU D/ST  adp=91.84   LAR D/ST  adp=98.23
+  SEA D/ST  adp=106.51  PIT D/ST  adp=118.24  BAL D/ST  adp=134.54
+```
+
+Published order, headed by DEN — exactly the expectation Codex wrote. The alphabetical
+fallback is gone.
+
+**But it is 18 of 32, not 32 of 32.** Fourteen defenses still return `adp: null` (ARI, ATL,
+BUF, CAR, CHI, …). The pre-written expectation for `REG-adp-dst` was that *all* 32 carry a
+published ADP, so job15 is incomplete rather than done. Reported to Codex.
+
+---
+
+## CONFIRMED · #17, and it proves a gate is lying
+
+25 diagnostics, matching Codex exactly. The one that matters is `TS2339` on
+`PoolPlayer.team_games`, because it is a live wrong number on screen, not a type nit:
+
+| location | what it does |
+|---|---|
+| `lib/mockDraft/api.ts:69` | `team_games: 17` — hardcoded into every pool row |
+| `components/MockDraft/DraftRoom.tsx:32` | `const TEAM_GAMES = 17` |
+| `DraftRoom.tsx:665` | `poolPlayer.team_games ?? TEAM_GAMES` — **correct**, prefers the API |
+| `DraftRoom.tsx:800` | `{games_played}/{TEAM_GAMES}` — **ignores the API value** |
+| `components/MockDraft/ResultsScreen.tsx:12, 60, 87, 307` | `const TEAM_GAMES = 17`, rendered at :307 |
+
+Gate **B4 asserts `grep -c "TEAM_GAMES - " DraftRoom.tsx` is 0.** It greps one file, for one
+literal with a trailing space and minus sign, and calls that "no runtime hardcoded
+denominator." The denominator is hardcoded in three files and rendered to the user at two of
+them, and B4 has been green throughout. This is finding #6 stated in the concrete: the gate's
+name describes an invariant, its assertion describes a string.
+
+It is masked today because every NFL team played 17 games, so `x/17` happens to be right.
+It stops being right the moment a team's count differs — which is precisely what the
+`team_games` field exists to carry, and what `:800` and `:307` throw away.
+
+---
+
+## CONFIRMED · #18 two WC tests fail, and the gate cannot see them
+
+```
+jest components/Game/WCContext.test.tsx
+  → Tests: 2 failed, 1 passed, 3 total    exit 1
+```
+
+`REG-jest` runs `--testPathPattern='lib/mockDraft'`, reports **36 passed**, and never touches
+this file. Both statements are true at once, which is the whole problem: the gate's green is
+a claim about `lib/mockDraft`, and it gets read as a claim about the frontend.
+
+Codex's characterisation is fair — the component contract moved to `right_now`/phase-aware
+and the tests still assert the old "Opening read" / "Keep this read" strings. That is stale
+tests, not a proven render bug. But the polling behaviour they were written to guard is
+currently unguarded, on `/game/wc/760517`.
+
+---
+
+## CONFIRMED, and sharper than reported · #20 `filterSlotIds`
+
+```python
+# backend/ingest_nfl_adp.py:22, :40
+"filterSlotIds": {"value": [0]},
+```
+
+ESPN lineup slot `0` is **QB**. So the ingest asks ESPN for quarterbacks only and is sent the
+full 9,611-row payload regardless. Codex called this "misleading/dead request filtering" with
+no current defect, and that is right today.
+
+I would put it one step stronger: it is a **loaded gun, not just dead weight**. The
+correctness of every non-QB ADP currently depends on a remote service *continuing to ignore*
+a parameter we send it. The day ESPN honours `filterSlotIds`, every RB, WR, TE, PK and D/ST
+ADP silently vanishes from the ingest — and a missing row does not raise, it misses. Delete
+the parameter rather than leaving it as a filter we are relying on being broken.
+
+---
+
+## The regression that arrived mid-qualification · job15
+
+`REG-pool` had been green all day and is now red. D/ST are being emitted **twice** — once
+from the new published-ADP path, once from the old derived `dst_rank` block that job15 §6a
+was amended to delete:
+
+```
+DEF entities in pool: 59      (32 distinct player_ids, 32 distinct teams, 27 duplicated)
+  DEN id=30099  adp=89.97  dst_rank=None
+  DEN id=30099  adp=None   dst_rank=4      ← the old derived row, still emitting
+```
+
+The pool is capped at 300, so the 27 duplicates **displaced 27 real players out of the
+draft**:
+
+```
+before   RB 73  WR 97  TE 36  QB 37  PK 25  DEF 32
+after    RB 68  WR 86  TE 34  QB 32  PK 21  DEF 59
+```
+
+11 WR, 5 RB, 5 QB, 4 PK and 2 TE are no longer draftable on `/mock-draft`. The data half of
+job15 is good — `espn_id` 0 of 32 → 32 of 32, `nfl_adp` DEF rows 0 → 32, values correct.
+Only the router de-duplication is missing. Reported to Codex with the repro.
+
+Worth noting what caught it: the runner now exits non-zero, so this could not have passed as
+a green suite.
+
+---
+
+## Nothing left unqualified
+
+All 20 findings are now either confirmed, corrected, resolved or handed to Codex. Backend
+items (7, 8, 12–16, and job15's duplicate emission) are his; frontend items 9, 17, 18 and 20
+are mine, of which 9 is fixed and 17's hardcoded denominator is the next one to close.
