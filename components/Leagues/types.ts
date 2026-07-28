@@ -244,6 +244,12 @@ export interface NflDraftPlayer {
   xfp_per_game: number | null
   snap_pct: number | null
   target_share: number | null
+  /** D/ST fantasy points: total and per-game. Null for non-DEF. */
+  dst_pts_total: number | null
+  dst_pts_per_game: number | null
+  /** PK fantasy points: total and per-game. Null for non-PK. */
+  pk_pts_total: number | null
+  pk_pts_per_game: number | null
   sample: 'full' | 'thin' | 'none'
 }
 
@@ -269,7 +275,7 @@ export interface NflDraftBoard {
   players: NflDraftPlayer[]
 }
 
-export type NflDraftSort = 'adp' | 'ppr_per_team_game' | 'ppr_per_game_played' | 'xfp_per_game' | 'games_played' | 'snap_pct' | 'target_share'
+export type NflDraftSort = 'adp' | 'ppr_per_team_game' | 'ppr_per_game_played' | 'xfp_per_game' | 'games_played' | 'snap_pct' | 'target_share' | 'dst_pts_per_game' | 'pk_pts_per_game'
 
 export interface NflDraftNotes {
   rank: Record<number, number>

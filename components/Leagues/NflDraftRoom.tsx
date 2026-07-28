@@ -200,6 +200,7 @@ export default function NflDraftRoom({
                   </th>
                   <th className="text-right py-3 px-2">Snap</th>
                   <th className="text-right py-3 px-2">Tgt</th>
+                  <th className="text-right py-3 px-2">Pts/G</th>
                   <th className="text-right py-3 px-2">ADP</th>
                   <th className="text-right py-3 px-2">
                     <span className="inline-flex items-center gap-1">
@@ -347,6 +348,16 @@ export function DraftPlayerRow({
       </td>
       <td className="py-2.5 px-2 text-right font-mono tabular-nums text-zinc-400 text-xs">
         {player.target_share != null ? `${player.target_share.toFixed(1)}%` : '—'}
+      </td>
+      {/* D/ST points — only for DEF; PK points — only for PK */}
+      <td className="py-2.5 px-2 text-right font-mono tabular-nums">
+        {player.position === 'DEF' ? (
+          <StatValue value={player.dst_pts_per_game} strong />
+        ) : player.position === 'PK' ? (
+          <StatValue value={player.pk_pts_per_game} />
+        ) : (
+          <span className="text-zinc-600">—</span>
+        )}
       </td>
       <td className="py-2.5 px-2 text-right font-mono tabular-nums text-zinc-300 font-semibold">
         {player.adp != null ? player.adp.toFixed(1) : '—'}

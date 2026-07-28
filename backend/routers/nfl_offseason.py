@@ -84,6 +84,7 @@ _SORT_FIELDS = {
     "snap_pct": ("snap_pct", False),
     "target_share": ("target_share", False),
     "dst_pts_per_game": ("dst_pts_per_game", False),
+    "pk_pts_per_game": ("pk_pts_per_game", False),
 }
 # Name search. Bounded so a pathological query cannot turn one request into an
 # unbounded pile of LIKE scans.

@@ -14,6 +14,8 @@ const SORT_LABELS: Record<NflDraftSort, string> = {
   games_played: 'Availability',
   snap_pct: 'Snap share',
   target_share: 'Target share',
+  dst_pts_per_game: 'D/ST pts/g',
+  pk_pts_per_game: 'K pts/g',
 }
 
 const STORAGE_KEY = 'lp_nfl_draft_notes'
