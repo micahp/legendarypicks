@@ -118,9 +118,28 @@ import sys,json,collections
 d=json.load(sys.stdin);p=d['players']
 c=collections.Counter(x['position'] for x in p)
 i=[j for j,x in enumerate(p) if x['position']=='DEF']
-adp=set(x.get('adp') for x in p if x['position']=='DEF')
-okk = len(p)==300 and c['DEF']==32 and 140<=i[0]<=160 and adp=={None}
-print(('PASS REG-pool (300, DEF 32 @%d-%d, adp null)'%(i[0],i[-1])) if okk else ('FAIL REG-pool (%d %s DEF@%s adp=%s)'%(len(p),dict(c),i[:1],adp)))
+okk = len(p)==300 and c['DEF']==32
+print(('PASS REG-pool (300, DEF 32 @%d-%d)'%(i[0],i[-1])) if okk else ('FAIL REG-pool (%d %s DEF@%s)'%(len(p),dict(c),i[:1])))
+"
+  # ── REG-adp-dst — EXPECTED VALUES WRITTEN 2026-07-28, BEFORE THE CODE. ──
+  # Measured directly from ESPN the same day. All 32 D/ST carry a published ADP;
+  # ESPN keys them with NEGATIVE ids (-16000 - proTeamId), which is why the
+  # espn_id join in ingest_nfl_adp.py matched 0 of 32 and the router grew a
+  # derived dst_rank behind the comment "no published ADP exists".
+  # This gate is RED until that ingest lands. Do not relax it to make it green —
+  # a diff to these numbers is a finding. Tolerance is for ESPN drift only.
+  curl -s --max-time 30 "$B/api/nfl/mock-draft/pool?season=2026&limit=400" | $PY -c "
+import sys,json
+d=json.load(sys.stdin);p=d['players']
+dst={x['team']:x for x in p if x['position']=='DEF'}
+nulls=[t for t,x in dst.items() if x.get('adp') is None]
+exp={'DEN':89.9,'HOU':91.8,'LAR':98.2,'SEA':106.5}
+bad=[(t,v,dst.get(t,{}).get('adp')) for t,v in exp.items()
+     if dst.get(t,{}).get('adp') is None or abs(dst[t]['adp']-v)>12]
+if len(dst)==32 and not nulls and not bad:
+    print('PASS REG-adp-dst (32 D/ST, published ADP, DEN=%.1f SEA=%.1f)'%(dst['DEN']['adp'],dst['SEA']['adp']))
+else:
+    print('FAIL REG-adp-dst (n=%d null_adp=%d off_expected=%s)'%(len(dst),len(nulls),bad))
 "
   curl -s --max-time 30 "$B/api/nfl/draft-board?season=2026&limit=100&position=DEF" | $PY -c "
 import sys,json
