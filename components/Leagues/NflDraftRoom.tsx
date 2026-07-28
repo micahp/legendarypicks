@@ -46,6 +46,7 @@ export default function NflDraftRoom({
   const [selectedPlayerId, setSelectedPlayerId] = useState<number | null>(null)
 
   return (
+    <>
     <section className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3 pb-2">
         <h3 className="text-xl font-bold text-zinc-100">
@@ -259,6 +260,7 @@ export default function NflDraftRoom({
         onClose={() => setSelectedPlayerId(null)}
       />
     )}
+    </>
   )
 }
 
