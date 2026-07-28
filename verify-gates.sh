@@ -216,7 +216,13 @@ trap 'rm -f "$out"' EXIT
 
 {
   case "${1:-all}" in
-    A1) a1;; A2) a2;; A3) a3;; B1) b1;; B2) b2;; B4) b4;; reg) reg;; render) regrender;;
+    # Accept the id each gate PRINTS, not just an internal shorthand. Codex ran
+    # `verify-gates.sh REG-render` — the name the gate calls itself — and got no
+    # verdict and exit 0, because the label here was `render`. A gate you cannot
+    # invoke by its own name is a gate that reports green when you ask for it.
+    A1|a1) a1;; A2|a2) a2;; A3|a3) a3;; B1|b1) b1;; B2|b2|B2b) b2;; B4|b4) b4;;
+    reg|REG|regressions) reg;;
+    render|REG-render|regrender) regrender;;
     all) a1; a2; a3; b1; b2; b4; echo "--- regressions ---"; reg; regrender;;
     *) echo "FAIL runner (unknown gate '$1' — nothing ran)";;
   esac

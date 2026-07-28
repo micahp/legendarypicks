@@ -56,6 +56,36 @@ function check(cond, id, detail) {
   }
 
   const page = await browser.newPage({ viewport: { width: 1280, height: 900 } })
+
+  // ── The gate must not write product data. ──────────────────────────────────
+  // Found by Codex's audit 2026-07-28: clicking "Start Draft" below POSTs a real
+  // draft and its picks, and this gate had no interception and no cleanup. Two
+  // runs put 2 drafts and 10 picks into nfl_mock_drafts — the same table someone
+  // then has to reason about when asking why 41 of 41 drafts are 'active'. A
+  // regression gate that pollutes the data it inspects corrupts the next answer,
+  // and the pollution is indistinguishable from a real user.
+  // Reads still go to the real backend; only the two mutating calls are faked,
+  // so the client flow proceeds exactly as it would in production.
+  let intercepted = 0
+  await page.route('**/api/nfl/mock-draft**', async route => {
+    const req = route.request()
+    if (req.method() !== 'POST') return route.continue()
+    intercepted++
+    const url = req.url()
+    if (url.includes('/picks')) {
+      let n = 0
+      try { n = (JSON.parse(req.postData() || '{}').picks || []).length } catch {}
+      return route.fulfill({
+        status: 200, contentType: 'application/json',
+        body: JSON.stringify({ inserted: n }),
+      })
+    }
+    return route.fulfill({
+      status: 200, contentType: 'application/json',
+      body: JSON.stringify({ id: 'render-gate-ephemeral' }),
+    })
+  })
+
   const consoleErrors = []
   page.on('console', m => {
     if (m.type() === 'error') consoleErrors.push(m.text().slice(0, 200))
@@ -184,6 +214,12 @@ function check(cond, id, detail) {
       consoleErrors.length + ' console/page error(s), first: ' + consoleErrors[0]
     )
   }
+
+  // If the draft flow stops POSTing, the interception above silently stops
+  // protecting anything. Assert it fired, so the guard cannot rot into a no-op.
+  check(intercepted > 0, 'write-guard', 'no mock-draft POST was intercepted — either the '
+    + 'draft flow no longer persists, or this gate is writing to the product DB again')
+  notes.push('writes intercepted=' + intercepted)
 
   if (failures.length === 0) {
     console.log('PASS REG-render  (' + notes.join(' · ') + ')')
