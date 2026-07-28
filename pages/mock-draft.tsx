@@ -31,6 +31,9 @@ export default function MockDraftPage() {
   const [userPicking, setUserPicking] = useState(false)
   const [creating, setCreating] = useState(false)
 
+  // ── Queue state ──
+  const [queue, setQueue] = useState<number[]>([])
+
   // RNG ref — stable per draft
   const rngRef = useRef<(() => number) | null>(null)
 
@@ -132,6 +135,23 @@ export default function MockDraftPage() {
     }
   }, [pool])
 
+  // ── Queue handlers ──
+  const handleAddToQueue = useCallback((playerId: number) => {
+    setQueue(q => { if (q.includes(playerId)) return q; return [...q, playerId] })
+  }, [])
+
+  const handleRemoveFromQueue = useCallback((playerId: number) => {
+    setQueue(q => q.filter(id => id !== playerId))
+  }, [])
+
+  const handleMoveQueueUp = useCallback((idx: number) => {
+    setQueue(q => { if (idx <= 0) return q; const next = [...q]; [next[idx-1], next[idx]] = [next[idx], next[idx-1]]; return next })
+  }, [])
+
+  const handleMoveQueueDown = useCallback((idx: number) => {
+    setQueue(q => { if (idx >= q.length - 1) return q; const next = [...q]; [next[idx], next[idx+1]] = [next[idx+1], next[idx]]; return next })
+  }, [])
+
   // ── User makes a pick ──
   const handleUserPick = useCallback(async (playerId: number) => {
     if (!draftState || !rngRef.current || !draftId) return
@@ -164,6 +184,9 @@ export default function MockDraftPage() {
     }
 
     setDraftState(current)
+
+    // Remove drafted players from queue
+    setQueue(q => q.filter(id => current.availablePool.some(p => p.player_id === id)))
 
     if (isComplete(current)) {
       setPhase('results')
@@ -221,6 +244,11 @@ export default function MockDraftPage() {
           draftState={draftState}
           onUserPick={handleUserPick}
           userPicking={userPicking}
+          queue={queue}
+          onAddToQueue={handleAddToQueue}
+          onRemoveFromQueue={handleRemoveFromQueue}
+          onMoveQueueUp={handleMoveQueueUp}
+          onMoveQueueDown={handleMoveQueueDown}
         />
       )}
 

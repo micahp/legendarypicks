@@ -19,6 +19,11 @@ interface Props {
   draftState: DraftState
   onUserPick: (playerId: number) => void
   userPicking: boolean
+  queue: number[]
+  onAddToQueue: (playerId: number) => void
+  onRemoveFromQueue: (playerId: number) => void
+  onMoveQueueUp: (idx: number) => void
+  onMoveQueueDown: (idx: number) => void
 }
 
 const TEAM_GAMES = 17  // fallback; prefer poolPlayer.team_games when available
@@ -34,7 +39,7 @@ const PICK_LEDGER_LIMIT = 15
  *   - Drafted: dim + strike.
  *   - Clock: tabular figures, may change weight under 10s, never red.
  */
-export default function DraftRoom({ pool, draftState, onUserPick, userPicking }: Props) {
+export default function DraftRoom({ pool, draftState, onUserPick, userPicking, queue, onAddToQueue, onRemoveFromQueue, onMoveQueueUp, onMoveQueueDown }: Props) {
   // ── Filter state ──
   const [posFilter, setPosFilter] = useState<string>('ALL')
   const [teamFilter, setTeamFilter] = useState<string>('ALL')
@@ -120,6 +125,14 @@ export default function DraftRoom({ pool, draftState, onUserPick, userPicking }:
     const all = [...draftState.picks].reverse().slice(0, PICK_LEDGER_LIMIT).reverse()
     return all
   }, [draftState.picks])
+
+  // Resolve queue IDs → DraftPlayer objects (only those still available)
+  const queuePlayers = useMemo(() => {
+    const playerLookup = new Map(draftState.playerPool.map(p => [p.player_id, p]))
+    return queue
+      .map(id => playerLookup.get(id))
+      .filter((p): p is DraftPlayer => p != null && !draftedIds.has(p.player_id))
+  }, [queue, draftState.playerPool, draftedIds])
 
   return (
     <section className="space-y-4">
@@ -272,18 +285,41 @@ export default function DraftRoom({ pool, draftState, onUserPick, userPicking }:
                         {dp.adp.toFixed(1)}
                       </td>
                       <td className="py-2 pr-3 pl-1 text-center">
-                        {userTurn && !drafted && (
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              onUserPick(dp.player_id)
-                            }}
-                            className="rounded border border-zinc-700 bg-zinc-800 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-zinc-300 transition-colors hover:border-zinc-500 hover:bg-zinc-700"
-                          >
-                            Draft
-                          </button>
-                        )}
+                        <div className="flex items-center gap-1 justify-center">
+                          {userTurn && !drafted && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                onUserPick(dp.player_id)
+                              }}
+                              className="rounded border border-zinc-700 bg-zinc-800 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-zinc-300 transition-colors hover:border-zinc-500 hover:bg-zinc-700"
+                            >
+                              Draft
+                            </button>
+                          )}
+                          {!drafted && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                if (queue.includes(dp.player_id)) {
+                                  onRemoveFromQueue(dp.player_id)
+                                } else {
+                                  onAddToQueue(dp.player_id)
+                                }
+                              }}
+                              className={`rounded border px-2 py-1 text-[10px] font-semibold uppercase tracking-wider transition-colors ${
+                                queue.includes(dp.player_id)
+                                  ? 'border-amber-500/30 bg-amber-500/10 text-amber-400 hover:border-amber-400 hover:bg-amber-500/20'
+                                  : 'border-zinc-800 bg-zinc-900 text-zinc-600 hover:border-zinc-700 hover:text-zinc-400'
+                              }`}
+                              title={queue.includes(dp.player_id) ? 'Remove from queue' : 'Add to queue'}
+                            >
+                              {queue.includes(dp.player_id) ? '−Q' : '+Q'}
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   )
@@ -295,6 +331,68 @@ export default function DraftRoom({ pool, draftState, onUserPick, userPicking }:
 
         {/* ── Roster + Ledger (right 1/3) ── */}
         <div className="space-y-4">
+          {/* Queue panel */}
+          <div className="rounded-xl border border-zinc-800 bg-zinc-900 overflow-hidden">
+            <div className="px-4 py-3 border-b border-zinc-800">
+              <h4 className="text-sm font-semibold text-zinc-300">
+                Queue
+                <span className="ml-2 text-xs font-normal text-zinc-500 tabular-nums">
+                  {queuePlayers.length}
+                </span>
+              </h4>
+            </div>
+            <div className="divide-y divide-zinc-800/50 max-h-[280px] overflow-y-auto">
+              {queuePlayers.map((qp, idx) => (
+                <div key={qp.player_id} className="flex items-center gap-2 px-3 py-2 text-xs">
+                  <span className="text-zinc-600 tabular-nums w-5 shrink-0 text-right">
+                    {idx + 1}
+                  </span>
+                  <span className="truncate flex-1 font-medium text-zinc-300">
+                    {qp.name}
+                  </span>
+                  <span className="text-[10px] text-zinc-500 shrink-0 uppercase">
+                    {qp.position}
+                  </span>
+                  {/* Move up/down */}
+                  <div className="flex items-center gap-0.5 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => onMoveQueueUp(idx)}
+                      disabled={idx === 0}
+                      className="rounded px-1 text-[10px] text-zinc-600 hover:text-zinc-300 disabled:text-zinc-800 disabled:cursor-not-allowed"
+                      aria-label="Move up"
+                    >
+                      ▲
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onMoveQueueDown(idx)}
+                      disabled={idx === queuePlayers.length - 1}
+                      className="rounded px-1 text-[10px] text-zinc-600 hover:text-zinc-300 disabled:text-zinc-800 disabled:cursor-not-allowed"
+                      aria-label="Move down"
+                    >
+                      ▼
+                    </button>
+                  </div>
+                  {/* Remove */}
+                  <button
+                    type="button"
+                    onClick={() => onRemoveFromQueue(qp.player_id)}
+                    className="rounded px-1 text-[10px] text-zinc-600 hover:text-zinc-400 shrink-0"
+                    aria-label="Remove from queue"
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
+              {queuePlayers.length === 0 && (
+                <div className="px-4 py-4 text-center text-xs text-zinc-600">
+                  Add players with +Q
+                </div>
+              )}
+            </div>
+          </div>
+
           {/* Roster panel */}
           <div className="rounded-xl border border-zinc-800 bg-zinc-900 overflow-hidden">
             <div className="px-4 py-3 border-b border-zinc-800">
