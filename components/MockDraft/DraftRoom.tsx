@@ -117,6 +117,7 @@ export default function DraftRoom({ pool, draftState, onUserPick, userPicking }:
                   <th className="text-center py-2.5 px-2 w-12">Pos</th>
                   <th className="text-left py-2.5 px-2 min-w-[8rem]">Available</th>
                   <th className="text-right py-2.5 px-2 w-16">ADP</th>
+                  <th className="w-16" />
                 </tr>
               </thead>
               <tbody>
@@ -130,13 +131,8 @@ export default function DraftRoom({ pool, draftState, onUserPick, userPicking }:
                       className={`border-b border-zinc-800/40 transition-colors ${
                         drafted
                           ? 'opacity-30 line-through'
-                          : userTurn
-                            ? 'cursor-pointer hover:bg-zinc-800/50'
-                            : ''
+                          : ''
                       }`}
-                      onClick={() => {
-                        if (userTurn && !drafted) onUserPick(dp.player_id)
-                      }}
                     >
                       <td className="py-2 pl-3 pr-2 text-zinc-500 text-xs tabular-nums">
                         {i + 1}
@@ -157,6 +153,20 @@ export default function DraftRoom({ pool, draftState, onUserPick, userPicking }:
                       </td>
                       <td className="py-2 pr-3 pl-2 text-right font-mono tabular-nums text-xs text-zinc-400">
                         {dp.adp.toFixed(1)}
+                      </td>
+                      <td className="py-2 pr-3 pl-1 text-center">
+                        {userTurn && !drafted && (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              onUserPick(dp.player_id)
+                            }}
+                            className="rounded border border-zinc-700 bg-zinc-800 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-zinc-300 transition-colors hover:border-zinc-500 hover:bg-zinc-700"
+                          >
+                            Draft
+                          </button>
+                        )}
                       </td>
                     </tr>
                   )
