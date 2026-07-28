@@ -134,8 +134,17 @@ anomaly. **No code path in the system can produce any other status.**
 
 So the user is told a draft is complete, the row stays `active` forever, and the backend
 gates picks on `if status != 'active': 409` — a guard that can never fire. The column is
-decorative and the guard is theatre. 1,645 picks across 41 drafts and not one finished
-state was ever written.
+decorative and the guard is theatre. Not one finished state was ever written.
+
+**Self-correction, after reading finding #5:** I first wrote "1,645 picks across 41 drafts"
+as if that were user activity. It is not clean. Codex measured 39/1,635 at the start of its
+audit and 41/1,645 now, and my own render gate was the writer — confirmed, because adding
+interception made it report `writes intercepted=2` per run. So at least two of those drafts
+are gate droppings, and the true user count is unknown. That is finding #5's real cost: not
+the rows, but that **the pollution is indistinguishable from a real user**, so the next
+person asking "has anyone ever finished a mock draft?" gets a corrupted denominator. The
+conclusion above survives — no code path can write a non-`active` status — but the counts in
+it should not be quoted as usage.
 
 Mine to fix (the frontend has to call something), but it needs a backend route that does not
 exist yet, so it belongs in Codex's queue as a small spec: a completion endpoint plus the
@@ -143,8 +152,57 @@ exist yet, so it belongs in Codex's queue as a small spec: a completion endpoint
 
 ---
 
-## Not qualified here
+---
 
-Findings 3–10 were lost to tmux truncation before I could read them — which is why the
-first instruction in the orchestration brief is to persist the report to a file. I will
-qualify the frontend/devops ones among them once it exists.
+## CONFIRMED, and fixed · #4 the gate could not be invoked by its own name
+
+`bash verify-gates.sh REG-render` — the id the gate prints — produced no verdict and exit 0,
+because the case label was `render`. Ask for the gate by name, get a silent green. Fixed in
+`5d8cad6`; every gate now answers to its printed id, and after `4827033` an unrecognised
+name is itself a `FAIL runner` with a non-zero exit rather than silence.
+
+---
+
+## CONFIRMED, and fixed · #5 my "read-only" render gate was writing product data
+
+The worst finding against me, and correct. `render-gate.js` clicks **Start Draft** and had
+no route interception and no cleanup, so every run POSTed a real draft and its picks into
+`nfl_mock_drafts` / `nfl_mock_draft_picks`. Codex saw 39/1,635 → 41/1,645 across the audit
+and declined to attribute it; the attribution is mine, and it is confirmed — after adding
+interception the gate reports **`writes intercepted=2` per run**, which is exactly what it
+had been persisting.
+
+Fixed in `5d8cad6`: the two mutating calls are fulfilled locally, reads still hit the real
+backend so the client flow is unchanged, and the guard asserts `intercepted > 0` so it
+cannot rot into a no-op if the draft flow stops POSTing. Verified — a full `REG-render` run
+now leaves the counts at 41/1,645 exactly.
+
+The cost was never the ten rows. A regression gate that writes to the table it inspects
+corrupts the next question anyone asks of that table, and the pollution cannot be told apart
+from a real user. See the correction under the mock-draft section above.
+
+---
+
+## CONFIRMED · #6 the gate assertions are narrower than their names
+
+I accept this one wholesale; it is the rule I already hold — *a green gate is a claim about
+its surface, not about its name* — applied to my own suite, and the table is fair. The
+sharpest instances: `B1` greps for the strings `'DEF'` and `'PK'` in one source file and
+calls that a position filter; `B2` accepts any one target field appearing anywhere outside
+`types.ts`; `REG-dst` asserts a row count and nothing about the rows; `REG-pool` prints the
+D/ST index range in its PASS message **without asserting it** — the range that finding #11
+proves the engine then destroys.
+
+Not fixed in this pass, deliberately. Tightening eleven assertions is its own piece of work,
+and doing it in the same sitting as the exit-code change would mix "the runner now reports
+honestly" with "the gates now assert more", which are separately reviewable. Tracked as the
+next devops item. `REG-render` exists precisely because grep-shaped gates cannot see a
+render, and it stays the one that has to go green last.
+
+---
+
+## Still to qualify
+
+Findings **8, 9, 10, 17, 18, 19, 20** touch frontend, the merge, or tooling and are mine to
+verify next — #19 (an untracked runtime asset that would vanish in a merge) is urgent, since
+the merge to `dev` is the open decision. Findings 7, 12–16 are backend and are Codex's.
