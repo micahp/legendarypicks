@@ -396,7 +396,14 @@ def pool(season: int = Query(...)):
                         dst_pts_per_game = round(dst_row["dst_avg"], 1)
 
             if pos in ("PK", "DEF"):
+                # All five, not three. A kicker who takes a fake-punt carry
+                # picks up real offensive rows, and leaving these two alive
+                # published Brandon Aubrey at 0.0 PPR/team-game and 0.8
+                # xFP/game as though they were kicking output -- while the
+                # research board, which suppresses all five, showed nothing.
                 ppr_per_game_played = None
+                ppr_per_team_game = None
+                xfp_per_game = None
                 snap_pct = None
                 target_share = None
 
@@ -863,9 +870,12 @@ def player_detail(player_id: int):
             else None
         )
 
-        # 8. PK/DEF null-override for skill-position fields
+        # 8. PK/DEF null-override for skill-position fields — all five, so a
+        #    fake-punt carry cannot surface as kicking output (see the pool).
         if position in ("PK", "DEF"):
             ppr_per_game_played = None
+            ppr_per_team_game = None
+            xfp_per_game = None
             snap_pct = None
             target_share = None
 

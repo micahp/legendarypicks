@@ -114,13 +114,18 @@ EXPECTED = {
         "dst_pts_total": None,
         "dst_pts_per_game": None,
     },
+    # Aubrey took a fake-punt carry in week 15, so he owns real offensive rows.
+    # These two were pinned at 0.0 and 0.8 because job16's spec asked for parity
+    # with the player-detail endpoint, and that endpoint leaked them; the
+    # research board suppressed all five skill fields and was the correct
+    # surface to match. Both endpoints now suppress, so the pin follows.
     882: {
         "name": "Brandon Aubrey",
         "position": "PK",
         "team_games": 17,
         "ppr_per_game_played": None,
-        "ppr_per_team_game": 0.0,
-        "xfp_per_game": 0.8,
+        "ppr_per_team_game": None,
+        "xfp_per_game": None,
         "snap_pct": None,
         "target_share": None,
         "pk_pts_total": 181.0,
