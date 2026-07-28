@@ -9,10 +9,12 @@ SPEC-slice-D-mock-draft.md:
   - M4: Resume returns current_round + current_pick. Share endpoint for completed drafts.
 """
 
+import json
 import os
 import sqlite3
 import time
 import uuid
+from collections import defaultdict
 from typing import Optional
 
 from fastapi import APIRouter, Header, Query, Request
@@ -243,11 +245,10 @@ def pool(season: int = Query(...)):
                 key=lambda t: (rec["team_counts"][t], rec["team_max_week"].get(t, 0)),
             )
 
-        # ── Team weeks from nfl_schedule (not derived from game logs) ────
+        # Team weeks from nfl_schedule (not derived from game logs)
         # The published schedule is the authoritative source for which weeks
         # a team played — it handles byes, double-headers, and rescheduled
         # games correctly without depending on log coverage.
-        from collections import defaultdict
         team_weeks_map: dict[str, list[int]] = defaultdict(list)
         sched_columns = connection.execute("PRAGMA table_info(nfl_schedule)").fetchall()
         if sched_columns:
@@ -669,5 +670,199 @@ def list_drafts(x_device_id: Optional[str] = Header(None)):
         ]
 
         return _json({"drafts": drafts})
+    finally:
+        connection.close()
+
+
+# ---------------------------------------------------------------------------
+#  M5: Player detail endpoint — per-player info + QB lookup
+# ---------------------------------------------------------------------------
+
+
+@router.get("/api/nfl/draft/player/{player_id}")
+def player_detail(player_id: int):
+    """Return player detail for the mock draft overlay.
+
+    Includes: name, team, position, ADP, percent owned, 2025 season stats,
+    game strip (weeks played vs team weeks), and for WR/RB/TE the QB on
+    their team.
+    """
+    connection = _conn()
+    try:
+        # 1. Player lookup
+        player = connection.execute(
+            "SELECT id, name, team, position, active FROM players WHERE id=? AND league='nfl'",
+            (player_id,),
+        ).fetchone()
+
+        if player is None:
+            return _json({"error": "Player not found"}, status=404)
+
+        name = player["name"]
+        team = player["team"]
+        position = player["position"]
+        active = bool(player["active"])
+
+        # 2. ADP / percent owned from nfl_adp
+        adp = None
+        percent_owned = None
+        adp_row = connection.execute(
+            "SELECT adp, percent_owned FROM nfl_adp WHERE player_id=? AND season=?",
+            (player_id, _CURRENT_SEASON),
+        ).fetchone()
+        if adp_row:
+            adp = adp_row["adp"]
+            percent_owned = adp_row["percent_owned"]
+
+        # 3. 2025 season stats from player_game_logs
+        _log_season_row = connection.execute(
+            "SELECT MAX(season) FROM player_game_logs WHERE league='nfl'"
+        ).fetchone()
+        _log_season = (_log_season_row[0] if _log_season_row and _log_season_row[0]
+                       else _CURRENT_SEASON - 1)
+
+        log_rows = connection.execute(
+            """SELECT game_no, stats, team
+               FROM player_game_logs
+               WHERE player_id=? AND league='nfl' AND season=?
+                 AND CAST(game_no AS INTEGER) < ?
+               ORDER BY CAST(game_no AS INTEGER)""",
+            (player_id, _log_season, _POSTSEASON_FIRST_WEEK),
+        ).fetchall()
+
+        games_played = len(log_rows)
+        weeks_played: list[int] = []
+        ppr_total = 0.0
+        snap_pct_sum = 0.0
+        snap_pct_count = 0
+        target_share_sum = 0.0
+        target_share_count = 0
+        xfp_sum = 0.0
+        xfp_count = 0
+
+        for row in log_rows:
+            try:
+                week = int(row["game_no"])
+                weeks_played.append(week)
+            except (TypeError, ValueError):
+                pass
+            try:
+                stats = json.loads(row["stats"])
+                ppr = stats.get("fpts_ppr")
+                if ppr is not None:
+                    ppr_total += float(ppr)
+                sp = stats.get("off_pct")
+                if sp is not None:
+                    snap_pct_sum += float(sp)
+                    snap_pct_count += 1
+                ts = stats.get("target_share")
+                if ts is not None:
+                    target_share_sum += float(ts)
+                    target_share_count += 1
+                xf = stats.get("xfpts_ppr")
+                if xf is not None:
+                    xfp_sum += float(xf)
+                    xfp_count += 1
+            except Exception:
+                pass
+
+        # 3b. Merge snap-count presence
+        snap_columns = connection.execute("PRAGMA table_info(nfl_snap_counts)").fetchall()
+        if snap_columns:
+            for sr in connection.execute(
+                """SELECT week FROM nfl_snap_counts
+                   WHERE player_id=? AND season=? AND CAST(week AS INTEGER) < ?""",
+                (player_id, _log_season, _POSTSEASON_FIRST_WEEK),
+            ):
+                try:
+                    w = int(sr["week"])
+                    if w not in weeks_played:
+                        weeks_played.append(w)
+                        games_played = max(games_played, len(weeks_played))
+                except (TypeError, ValueError):
+                    continue
+
+        weeks_played.sort()
+
+        # Sample classification
+        if games_played == 0:
+            sample = "none"
+        elif games_played < _THIN_SAMPLE_GAMES:
+            sample = "thin"
+        else:
+            sample = "full"
+
+        # Team weeks from schedule
+        from collections import defaultdict
+        team_weeks: list[int] = []
+        sched_columns = connection.execute("PRAGMA table_info(nfl_schedule)").fetchall()
+        if sched_columns and team:
+            tw_set = set()
+            for tw_row in connection.execute(
+                """SELECT week FROM nfl_schedule
+                   WHERE season=? AND week < ? AND (home_team=? OR away_team=?)""",
+                (_log_season, _POSTSEASON_FIRST_WEEK, team, team),
+            ):
+                try:
+                    tw_set.add(int(tw_row["week"]))
+                except (TypeError, ValueError):
+                    continue
+            team_weeks = sorted(tw_set)
+
+        # PPR calculations
+        ppr_per_game_played = round(ppr_total / games_played, 1) if ppr_total and games_played else None
+        ppr_per_team_game = round(ppr_total / _REG_SEASON_TEAM_GAMES, 1) if ppr_total else None
+        snap_pct = round(snap_pct_sum / snap_pct_count * 100, 0) if snap_pct_count else None
+        target_share = round(target_share_sum / target_share_count * 100, 1) if target_share_count else None
+        xfp_per_game = round(xfp_sum / xfp_count, 1) if xfp_count else None
+
+        # 4. QB lookup — for WR/RB/TE, find the QB on the same team
+        qb = None
+        if position in ("WR", "RB", "TE") and team:
+            qb_row = connection.execute(
+                """SELECT p.id, p.name, p.team
+                   FROM players p
+                   WHERE p.league='nfl' AND p.active=1
+                     AND p.position='QB' AND p.team=?
+                   LIMIT 1""",
+                (team,),
+            ).fetchone()
+            if qb_row:
+                qb_games = 0
+                qb_agg = connection.execute(
+                    """SELECT COUNT(*) AS g
+                       FROM player_game_logs
+                       WHERE player_id=? AND league='nfl' AND season=?
+                         AND CAST(game_no AS INTEGER) < ?""",
+                    (qb_row["id"], _log_season, _POSTSEASON_FIRST_WEEK),
+                ).fetchone()
+                if qb_agg:
+                    qb_games = qb_agg["g"]
+                qb = {
+                    "player_id": qb_row["id"],
+                    "name": qb_row["name"],
+                    "team": qb_row["team"],
+                    "games_played": qb_games,
+                }
+
+        return _json({
+            "player_id": player_id,
+            "name": name,
+            "team": team,
+            "position": position,
+            "active": active,
+            "adp": adp,
+            "percent_owned": percent_owned,
+            "sample": sample,
+            "games_played": games_played,
+            "weeks_played": weeks_played,
+            "team_weeks": team_weeks,
+            "ppr_per_game_played": ppr_per_game_played,
+            "ppr_per_team_game": ppr_per_team_game,
+            "snap_pct": snap_pct,
+            "target_share": target_share,
+            "xfp_per_game": xfp_per_game,
+            "qb": qb,
+        })
     finally:
         connection.close()

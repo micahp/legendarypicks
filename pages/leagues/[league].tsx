@@ -21,7 +21,6 @@ import { useUfcRankingsData } from '../../components/Leagues/hooks/useUfcRanking
 import { useUfcPredictData } from '../../components/Leagues/hooks/useUfcPredictData'
 import { useNflSeasonContext } from '../../components/Leagues/hooks/useNflSeasonContext'
 import { useNflTransactions } from '../../components/Leagues/hooks/useNflTransactions'
-import { useNflDraftBoard } from '../../components/Leagues/hooks/useNflDraftBoard'
 import {
   LEAGUE_EMOJIS,
   LEAGUE_NAMES,
@@ -126,8 +125,6 @@ export default function LeagueHubPage() {
   const ufc = useUfcRankingsData(route.isUFC, route.league)
   const predict = useUfcPredictData(route.isUFC, route.activeTab)
 
-  const draftBoard = useNflDraftBoard(isNFL && route.activeTab === 'camp')
-
   if (!route.league) return <LeagueHubSkeleton />
 
   const leagueName = LEAGUE_NAMES[route.league] || route.league.toUpperCase()
@@ -165,25 +162,7 @@ export default function LeagueHubPage() {
               loading={transactions.loading}
               error={transactions.error}
             />
-            <NflDraftRoom
-              data={draftBoard.data}
-              loading={draftBoard.loading}
-              error={draftBoard.error}
-              position={draftBoard.position}
-              sort={draftBoard.sort}
-              offset={draftBoard.offset}
-              query={draftBoard.query}
-              notes={draftBoard.notes}
-              syncError={draftBoard.syncError}
-              onSelectPosition={draftBoard.selectPosition}
-              onSelectSort={draftBoard.selectSort}
-              onSetQuery={draftBoard.setQuery}
-              onClearQuery={draftBoard.clearQuery}
-              onSetOffset={draftBoard.setOffset}
-              onSetRank={draftBoard.setRank}
-              onToggleWatch={draftBoard.toggleWatch}
-              onToggleFade={draftBoard.toggleFade}
-            />
+            <NflDraftRoom enabled={isNFL && route.activeTab === 'camp'} />
           </div>
         )}
 

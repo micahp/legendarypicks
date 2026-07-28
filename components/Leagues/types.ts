@@ -341,3 +341,77 @@ export interface NflUsageResponse {
   averages: NflUsageAverages
   trend: NflUsageTrend
 }
+
+// ── NFL mock draft ─────────────────────────────────────────────────────
+
+export interface PoolPlayer {
+  player_id: number
+  name: string
+  position: string
+  team: string
+  adp: number | null
+  percent_owned: number | null
+  sample: 'full' | 'thin' | 'none'
+  games_played: number
+  games_missed: number | null
+  weeks_played: number[]
+  team_weeks: number[]
+}
+
+export interface MockDraftPool {
+  contract: string
+  season: number
+  count: number
+  players: PoolPlayer[]
+}
+
+export interface MockDraftPick {
+  pick_no: number
+  team_no: number
+  player_id: number
+  player_name?: string
+  player_position?: string
+  player_team?: string
+  auto: boolean
+  created_at: number
+}
+
+export interface MockDraftState {
+  id: string
+  season: number
+  seat: number
+  teams: number
+  rounds: number
+  seed: number
+  status: string
+  picks: MockDraftPick[]
+  total_picks: number
+  current_round: number
+  current_pick: number
+}
+
+export interface PlayerDetailResponse {
+  player_id: number
+  name: string
+  team: string
+  position: string
+  active: boolean
+  adp: number | null
+  percent_owned: number | null
+  sample: 'full' | 'thin' | 'none'
+  games_played: number
+  weeks_played: number[]
+  team_weeks: number[]
+  ppr_per_game_played: number | null
+  ppr_per_team_game: number | null
+  snap_pct: number | null
+  target_share: number | null
+  xfp_per_game: number | null
+  /** The QB on the same team — for WR/RB/TE who catch passes */
+  qb: {
+    player_id: number
+    name: string
+    team: string
+    games_played: number
+  } | null
+}

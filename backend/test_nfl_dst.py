@@ -1,0 +1,385 @@
+"""Tests for D/ST entities: scoring, ingest, and draft-board integration."""
+import datetime as dt
+import os
+import sqlite3
+import sys
+import tempfile
+import unittest
+
+sys.path.insert(0, os.path.dirname(__file__))
+
+from routers import nfl_offseason
+import ingest_nfl_dst as dst_mod
+
+# Use the same NFL_TEAMS the ingest module publishes.
+NFL_TEAMS = dst_mod.NFL_TEAMS
+
+
+class DstScoringTests(unittest.TestCase):
+    """Verify the ESPN D/ST scoring formula in isolation."""
+
+    def test_sack_interception_fumble_td_points(self):
+        # Use points_allowed=21 (0-point tier) to isolate individual stat values
+        self.assertEqual(1.0, dst_mod.compute_fantasy_pts(sacks=1, points_allowed=21))
+        self.assertEqual(2.0, dst_mod.compute_fantasy_pts(interceptions=1, points_allowed=21))
+        self.assertEqual(2.0, dst_mod.compute_fantasy_pts(fumble_rec=1, points_allowed=21))
+        self.assertEqual(6.0, dst_mod.compute_fantasy_pts(tds=1, points_allowed=21))
+        self.assertEqual(2.0, dst_mod.compute_fantasy_pts(safeties=1, points_allowed=21))
+        self.assertEqual(6.0, dst_mod.compute_fantasy_pts(st_tds=1, points_allowed=21))
+        self.assertEqual(6.0, dst_mod.compute_fantasy_pts(pr_tds=1, points_allowed=21))
+
+    def test_points_allowed_tiers(self):
+        cases = [
+            (0, 10.0),
+            (1, 7.0),
+            (6, 7.0),
+            (7, 4.0),
+            (13, 4.0),
+            (14, 1.0),
+            (20, 1.0),
+            (21, 0.0),
+            (27, 0.0),
+            (28, -1.0),
+            (34, -1.0),
+            (35, -4.0),
+            (45, -4.0),
+        ]
+        for pa, expected in cases:
+            with self.subTest(points_allowed=pa):
+                self.assertEqual(expected, dst_mod.points_allowed_tier(pa))
+
+    def test_complete_week_example(self):
+        """Reproduce a known D/ST score: 3 sacks, 1 INT, 1 FR, 0 TD, 13 PA."""
+        pts = dst_mod.compute_fantasy_pts(
+            sacks=3, interceptions=1, fumble_rec=1,
+            points_allowed=13,
+        )
+        # 3*1 + 1*2 + 1*2 + 4 (PA tier) = 11
+        self.assertEqual(11.0, pts)
+
+    def test_shutout_bonus(self):
+        """0 points allowed = 10-point bonus."""
+        pts = dst_mod.compute_fantasy_pts(points_allowed=0)
+        self.assertEqual(10.0, pts)
+
+    def test_blowout_penalty(self):
+        """35+ points allowed = -4."""
+        pts = dst_mod.compute_fantasy_pts(points_allowed=35)
+        self.assertEqual(-4.0, pts)
+
+    def test_defensive_touchdown(self):
+        """A defensive TD is worth 6."""
+        pts = dst_mod.compute_fantasy_pts(tds=1, points_allowed=20)
+        self.assertEqual(7.0, pts)  # 6 TD + 1 PA tier
+
+    def test_special_teams_and_punt_return_tds(self):
+        """ST TD and PR TD each worth 6."""
+        pts = dst_mod.compute_fantasy_pts(st_tds=1, pr_tds=1, points_allowed=21)
+        self.assertEqual(12.0, pts)  # 6 + 6 + 0 PA tier
+
+
+class DstEnsurePlayersTests(unittest.TestCase):
+    """The DEF player spine (32 rows, one per team)."""
+
+    def setUp(self):
+        handle = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
+        handle.close()
+        self.db_path = handle.name
+        self.con = sqlite3.connect(self.db_path)
+        self.con.execute("""
+            CREATE TABLE players (
+                id INTEGER PRIMARY KEY,
+                name TEXT NOT NULL,
+                league TEXT NOT NULL,
+                team TEXT,
+                position TEXT,
+                active INTEGER,
+                updated_at TEXT
+            )
+        """)
+        self.con.commit()
+
+    def tearDown(self):
+        self.con.close()
+        os.unlink(self.db_path)
+
+    def test_creates_32_def_players_from_empty_db(self):
+        players = dst_mod.ensure_dst_players(self.con)
+        self.assertEqual(32, len(players))
+        self.assertEqual(set(NFL_TEAMS.keys()), set(players.keys()))
+
+        row = self.con.execute(
+            "SELECT name, team, position, active FROM players WHERE league='nfl' AND position='DEF'"
+        ).fetchall()
+        self.assertEqual(32, len(row))
+        for name, team, position, active in row:
+            self.assertTrue(name.endswith(" D/ST"))
+            self.assertEqual("DEF", position)
+            self.assertEqual(1, active)
+            self.assertIn(team, NFL_TEAMS)
+
+    def test_idempotent_does_not_duplicate(self):
+        first = dst_mod.ensure_dst_players(self.con)
+        second = dst_mod.ensure_dst_players(self.con)
+        self.assertEqual(first, second)
+
+        count = self.con.execute(
+            "SELECT COUNT(*) FROM players WHERE league='nfl' AND position='DEF'"
+        ).fetchone()[0]
+        self.assertEqual(32, count)
+
+    def test_picks_up_existing_def_players(self):
+        # Insert a few by hand
+        self.con.execute(
+            "INSERT INTO players (name, league, team, position, active, updated_at) "
+            "VALUES ('Arizona Cardinals D/ST', 'nfl', 'ARI', 'DEF', 1, datetime('now'))"
+        )
+        self.con.execute(
+            "INSERT INTO players (name, league, team, position, active, updated_at) "
+            "VALUES ('Dallas Cowboys D/ST', 'nfl', 'DAL', 'DEF', 1, datetime('now'))"
+        )
+        self.con.commit()
+
+        players = dst_mod.ensure_dst_players(self.con)
+        self.assertEqual(32, len(players))
+        # Existing players preserved, missing ones created
+        self.assertIn("ARI", players)
+        self.assertIn("DAL", players)
+        self.assertIn("SEA", players)
+
+
+class DstDraftBoardTests(unittest.TestCase):
+    """The nfl/draft-board endpoint returns DEF players with D/ST stats."""
+
+    def setUp(self):
+        handle = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
+        handle.close()
+        self.db_path = handle.name
+        with sqlite3.connect(self.db_path) as connection:
+            connection.executescript("""
+                CREATE TABLE players(
+                  id INTEGER PRIMARY KEY,
+                  name TEXT NOT NULL,
+                  league TEXT NOT NULL,
+                  team TEXT,
+                  position TEXT,
+                  active INTEGER,
+                  updated_at TEXT
+                );
+                CREATE TABLE player_game_logs(
+                  player_id INTEGER,
+                  league TEXT,
+                  season INTEGER,
+                  game_no TEXT,
+                  game_id TEXT,
+                  game_type TEXT,
+                  team TEXT,
+                  stats TEXT
+                );
+                CREATE TABLE nfl_dst_stats(
+                  player_id INTEGER NOT NULL,
+                  season INTEGER NOT NULL,
+                  week INTEGER NOT NULL,
+                  sacks REAL,
+                  interceptions REAL,
+                  tds REAL,
+                  safeties REAL,
+                  fumble_rec REAL,
+                  st_tds REAL,
+                  pr_tds REAL,
+                  points_allowed REAL,
+                  fantasy_pts REAL,
+                  UNIQUE(player_id, season, week)
+                );
+                CREATE TABLE nfl_adp(
+                  player_id INTEGER,
+                  season INTEGER,
+                  adp REAL,
+                  percent_owned REAL
+                );
+                CREATE TABLE nfl_depth_chart(
+                  player_id INTEGER,
+                  season INTEGER,
+                  team TEXT,
+                  pos_abb TEXT,
+                  pos_rank INTEGER
+                );
+                CREATE TABLE team_stats_coverage(
+                  run_id TEXT PRIMARY KEY,
+                  league TEXT,
+                  season INTEGER,
+                  status TEXT,
+                  fetched_teams INTEGER,
+                  fetched_games INTEGER,
+                  completed_at TEXT
+                );
+                CREATE TABLE nfl_schedule(
+                  game_id TEXT,
+                  season INTEGER,
+                  week INTEGER,
+                  home_team TEXT,
+                  away_team TEXT
+                );
+            """)
+            # Two D/ST players
+            connection.executemany(
+                "INSERT INTO players VALUES(?,?,?,?,?,?,?)",
+                [
+                    (101, "Seattle Seahawks D/ST", "nfl", "SEA", "DEF", 1, "2026-07-20T12:00:00+00:00"),
+                    (102, "Kansas City Chiefs D/ST", "nfl", "KC", "DEF", 1, "2026-07-20T12:00:00+00:00"),
+                    # Also a skill player so the board still works for non-DEF
+                    (1, "Alias Receiver", "nfl", "LAR", "WR", 1, "2026-07-20T12:00:00+00:00"),
+                ],
+            )
+            # Skill player game logs
+            for week in range(1, 17):
+                connection.execute(
+                    "INSERT INTO player_game_logs VALUES(?,?,?,?,?,?,?,?)",
+                    (1, "nfl", 2025, str(week), f"2025_{week:02d}_LA_SF", "REG", "LA",
+                     '{"fpts_ppr": 20.0, "xfpts_ppr": 18.0, "off_pct": 0.9, "target_share": 0.25}'),
+                )
+            # D/ST stats for 2025: Seattle played 17 weeks
+            for week in range(1, 18):
+                connection.execute(
+                    "INSERT INTO nfl_dst_stats VALUES(?,?,?,?,?,?,?,?,?,?,?,?)",
+                    (101, 2025, week, 2, 1, 0, 0, 1, 0, 0, 17, 10.0),
+                )
+            # Kansas City only 8 weeks (partial season data)
+            for week in range(1, 9):
+                connection.execute(
+                    "INSERT INTO nfl_dst_stats VALUES(?,?,?,?,?,?,?,?,?,?,?,?)",
+                    (102, 2025, week, 3, 0, 0, 0, 0, 0, 0, 21, 3.0),
+                )
+            # ADP for one D/ST
+            connection.execute(
+                "INSERT INTO nfl_adp VALUES(101,2026,120.0,85.0)"
+            )
+            # Schedule for team weeks
+            for week in range(1, 18):
+                connection.execute(
+                    "INSERT INTO nfl_schedule VALUES(?,?,?,?,?)",
+                    (f"2025_{week:02d}_SEA_OPP", 2025, week, "SEA", "OPP"),
+                )
+                connection.execute(
+                    "INSERT INTO nfl_schedule VALUES(?,?,?,?,?)",
+                    (f"2025_{week:02d}_KC_OPP", 2025, week, "KC", "OPP"),
+                )
+            connection.execute(
+                "INSERT INTO team_stats_coverage VALUES(?,?,?,?,?,?,?)",
+                ("run", "nfl", 2025, "complete", 32, 272, "2026-07-14T21:22:17Z"),
+            )
+
+        self.original_db = nfl_offseason._db
+        self.original_today = nfl_offseason._today
+        nfl_offseason._db = lambda: sqlite3.connect(self.db_path)
+        nfl_offseason._today = lambda: dt.date(2026, 7, 21)
+
+    def tearDown(self):
+        nfl_offseason._db = self.original_db
+        nfl_offseason._today = self.original_today
+        os.unlink(self.db_path)
+
+    def board(self, position=None, sort="adp", q=None, limit=50, offset=0):
+        return nfl_offseason.nfl_draft_board(
+            position=position, sort=sort, q=q, limit=limit, offset=offset,
+        )
+
+    def test_board_includes_def_players(self):
+        payload = self.board()
+        positions = {p["position"] for p in payload["players"]}
+        self.assertIn("DEF", positions)
+
+    def test_board_filters_def_position(self):
+        payload = self.board(position="DEF")
+        self.assertEqual(payload["position"], "DEF")
+        # Only two DEF players in the DB
+        self.assertGreaterEqual(payload["eligible_players"], 2)
+        for player in payload["players"]:
+            self.assertEqual(player["position"], "DEF")
+
+    def test_dst_player_has_dst_fields_and_no_ppr_fields(self):
+        payload = self.board(position="DEF")
+        dst_players = {p["name"]: p for p in payload["players"]}
+
+        seattle = dst_players["Seattle Seahawks D/ST"]
+        self.assertIsNotNone(seattle["dst_pts_per_game"])
+        self.assertIsNotNone(seattle["dst_pts_total"])
+        # PPR fields should be absent for DEF
+        self.assertIsNone(seattle["ppr_per_game_played"])
+        self.assertIsNone(seattle["ppr_per_team_game"])
+        self.assertIsNone(seattle["xfp_per_game"])
+        self.assertIsNone(seattle["snap_pct"])
+        self.assertIsNone(seattle["target_share"])
+
+    def test_dst_seattle_full_season_has_correct_games(self):
+        payload = self.board(position="DEF")
+        dst_players = {p["name"]: p for p in payload["players"]}
+
+        seattle = dst_players["Seattle Seahawks D/ST"]
+        self.assertEqual(seattle["games_played"], 17)
+        self.assertEqual(seattle["team_games"], 17)
+        self.assertEqual(seattle["sample"], "full")
+        # 17 weeks × 10.0 pts = 170 total
+        self.assertEqual(seattle["dst_pts_per_game"], 10.0)
+        self.assertEqual(seattle["dst_pts_total"], 170.0)
+
+    def test_dst_kc_partial_season_has_correct_games(self):
+        payload = self.board(position="DEF")
+        dst_players = {p["name"]: p for p in payload["players"]}
+
+        kc = dst_players["Kansas City Chiefs D/ST"]
+        self.assertEqual(kc["games_played"], 8)
+        # 8 weeks × 3.0 pts = 24 total
+        self.assertEqual(kc["dst_pts_per_game"], 3.0)
+        self.assertEqual(kc["dst_pts_total"], 24.0)
+        self.assertEqual(kc["sample"], "full")
+
+    def test_dst_thin_sample_when_under_4_games(self):
+        with sqlite3.connect(self.db_path) as con:
+            con.execute("DELETE FROM nfl_dst_stats WHERE player_id=102 AND week > 2")
+        payload = self.board(position="DEF")
+        dst_players = {p["name"]: p for p in payload["players"]}
+        kc = dst_players["Kansas City Chiefs D/ST"]
+        self.assertEqual(kc["games_played"], 2)
+        self.assertEqual(kc["sample"], "thin")
+
+    def test_dst_sort_by_dst_pts_per_game(self):
+        payload = self.board(position="DEF", sort="dst_pts_per_game")
+        self.assertGreaterEqual(len(payload["players"]), 2)
+        # Seattle (10.0) should sort before Kansas City (3.0) — both descending
+        names = [p["name"] for p in payload["players"]]
+        self.assertEqual(names[0], "Seattle Seahawks D/ST")
+
+    def test_dst_no_sample_when_no_dst_stats(self):
+        # Delete all D/ST stats — players become "none" sample
+        with sqlite3.connect(self.db_path) as con:
+            con.execute("DELETE FROM nfl_dst_stats")
+        # A D/ST player without stats and without ADP should not appear
+        payload = self.board()
+        names = [p["name"] for p in payload["players"]]
+        # Seattle has ADP (120.0), KC has no ADP
+        self.assertIn("Seattle Seahawks D/ST", names)
+        self.assertNotIn("Kansas City Chiefs D/ST", names)
+
+    def test_dst_no_adp_no_stats_is_absent(self):
+        with sqlite3.connect(self.db_path) as con:
+            con.execute("DELETE FROM nfl_dst_stats")
+            con.execute("DELETE FROM nfl_adp WHERE player_id=101")
+        payload = self.board()
+        names = [p["name"] for p in payload["players"]]
+        self.assertNotIn("Seattle Seahawks D/ST", names)
+        self.assertNotIn("Kansas City Chiefs D/ST", names)
+
+    def test_skill_player_unaffected_by_dst_changes(self):
+        """Ensure the WR player still works normally."""
+        payload = self.board(position="WR")
+        self.assertEqual(payload["position"], "WR")
+        self.assertGreaterEqual(payload["eligible_players"], 1)
+        wr = {p["name"]: p for p in payload["players"]}["Alias Receiver"]
+        self.assertEqual(wr["position"], "WR")
+        self.assertEqual(wr["ppr_per_game_played"], 20.0)
+        self.assertIsNone(wr["dst_pts_per_game"])
+
+
+if __name__ == "__main__":
+    unittest.main()

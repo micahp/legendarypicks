@@ -1,6 +1,6 @@
 # Team Vocabulary Thread — Job Results
 
-Worktree: /root/lp-team-vocab | Branch: fix/team-vocabulary
+Worktree: /root/lp-team-vocab | Branch: feat/dst-and-mock-draft
 DB: /root/picks.hermes.db | Backend: :8098
 
 ---
@@ -50,3 +50,76 @@ DB: /root/picks.hermes.db | Backend: :8098
 - `test_ingest_team_vocabulary.py` — 20 tests, data-integrity guard
 **Pytest:** 65 passed, 5 skipped (MLB/NHL not yet migrated)
 **NFL data-integrity:** all 14 team-bearing columns clean
+
+---
+
+## Job 5 — Expand draft board to all positions (R5/B8)
+**Commit:** `3c16d68`
+**Draft board:** 522 → 1753 eligible players (removed skill-position restriction)
+**Positions now visible:** all 67 ESPN NFL position codes including PK, LB, CB, DT, etc.
+**Kicker data:** 42 active PKs now visible after ingest expansion
+
+---
+
+## Job 6 — Mark playoff rows (B10)
+**Commit:** `ba4ae0b`
+**Added:** `game_type` column to `player_game_logs` (REG/POST)
+**Added:** `mark_playoff_game_types.py` migration script
+**Result:** weeks 19-22 now marked POST, filtered out of availability queries explicitly
+
+---
+
+## Job 7 — Mock draft backend (M4, slice D)
+**Commit:** `8bf1e7c`
+**File:** backend/routers/nfl_mock_draft.py (642 lines)
+**Endpoints:** pool (GET), create (POST), picks (POST), resume (GET), share (GET /public), list (GET)
+**Pool:** 300 ranked players (QB/RB/WR/TE/PK), ADP-sorted, availability-aware
+**Verified:** create → pick → resume → share full lifecycle, 12-team snake, pool returns correct data
+
+---
+
+## Job 8 — Snap counts table (M2)
+**Commits:** `def15fa`, `e43ca6c`, `073e758`
+**Table:** `nfl_snap_counts` — 20,627 rows for 2025, ALL positions, ALL weeks
+**ingest_nfl_snap_counts.py:** dual-path — enriches game logs (skill players) + populates snap table (all players)
+**_regular_season_aggregates:** presence from snap counts ∪ game logs, team_weeks from nfl_schedule (with fallback)
+**Mock draft pool:** integrated M2 (snap counts + nfl_schedule for team weeks)
+**Fix:** Brandon Aubrey 17 games (was 1), all kickers/defenders now show correct availability
+**Pytest:** 80/81 passing (B5 pre-existing MLB failure, unrelated)
+
+---
+
+## Subagent delegation log
+
+| Delegation | Task | Written | Committed |
+|---|---|---|---|
+| 76c2aec0 | team_codes.py | backend/team_codes.py, test_team_codes.py | fe9d6a1 |
+| 3423d471 | normalize() boundaries | 8 ingest files | e40be76 |
+| 3bd397f6 task-0 | team_weeks refactor | nfl_offseason.py | 2c9cb52 |
+| 3bd397f6 task-1 | all-positions board | nfl_offseason.py, ingest | 3c16d68 |
+| 95000bbf | Mock draft notes API | routers/nfl_draft_notes.py | (uncommitted) |
+| 02b4513e | Mock draft engine (TS) | lib/mockDraft/engine.ts + tests | (uncommitted TS) |
+| 64ed8792 | Mock draft UI (TS) | 7 component files | (uncommitted TS) |
+| 3ea704c9 task-0 | D/ST stats ingest | ingest_nfl_dst.py, test_nfl_dst.py | (uncommitted) |
+| 3ea704c9 task-1 | Mock draft backend M4 | routers/nfl_mock_draft.py | 8bf1e7c |
+
+All subagents blocked from terminal — wrote code only, no runtime verification.
+
+---
+
+## Job 9 — Snap ingest NULL fix + game_type guard
+
+### Fix 1 — ingest_nfl_snap_counts.py inverted NaN guard
+**Commit:** `b3d2b29`
+**Before:** 20,627 rows, 0 with non-NULL off_snaps/st_snaps (all NULL)
+**After:** 20,627 rows, 20,627 with non-NULL off_snaps/st_snaps
+**Root cause:** `continue` dropped from NaN guard — assignment body ran only for None/NaN values
+**Also:** Changed INSERT OR IGNORE → ON CONFLICT DO UPDATE (idempotent re-runs)
+**Cross-check:** Aubrey st_snaps wk1=8, wk2=15, wk3=6 — matches game-log stats JSON
+**Board diff:** IDENTICAL (value columns only, presence unchanged)
+
+### Fix 2 — nfl_offseason.py unguarded game_type read
+**Commit:** `348ff2b`
+**Before:** `AND game_type='REG'` hardcoded — 500s against unmigrated DBs (picks.dev.db)
+**After:** guarded behind `_table_columns` check — matches every other schema read in the file
+**Blocker status:** resolved — merge to dev no longer blocked
