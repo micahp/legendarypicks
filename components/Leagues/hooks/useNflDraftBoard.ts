@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { DraftNotesResponse, NflDraftBoard, NflDraftNotes, NflDraftPlayer, NflDraftSort } from '../types'
 import { getDeviceId } from '../../../lib/deviceId'
 
-const POSITIONS = ['all', 'QB', 'RB', 'WR', 'TE', 'FB', 'FLEX'] as const
+const POSITIONS = ['all', 'QB', 'RB', 'WR', 'TE', 'FB', 'FLEX', 'DEF', 'PK'] as const
 export type DraftPosition = typeof POSITIONS[number]
 
 // Named for what the reader controls, not for how we compute it.
