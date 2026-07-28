@@ -276,6 +276,7 @@ def pool(season: int = Query(...)):
                         "snap_pct_count": 0,
                         "target_share_sum": 0.0,
                         "target_share_count": 0,
+                        "target_share_weeks": 0,
                         "xfp_sum": 0.0,
                         "xfp_count": 0,
                     },
@@ -289,10 +290,20 @@ def pool(season: int = Query(...)):
                     if snap is not None:
                         aggregate["snap_pct_sum"] += float(snap)
                         aggregate["snap_pct_count"] += 1
+                    # Every REG week counts, including the ones ingest wrote no
+                    # target_share for -- the published file scores those 0.0.
+                    # Counting only the weeks with a value turns one busy game
+                    # into a season rate.  target_share_weeks tracks the weeks
+                    # that carried the key, because receiving is a season-level
+                    # role: a player who drew no target all year must stay null
+                    # rather than average a real 0.0%.  snap/xfp above must NOT
+                    # copy any of this -- their sources genuinely have no row
+                    # for an absent week.
                     target = stats.get("target_share")
                     if target is not None:
                         aggregate["target_share_sum"] += float(target)
-                        aggregate["target_share_count"] += 1
+                        aggregate["target_share_weeks"] += 1
+                    aggregate["target_share_count"] += 1
                     xfp = stats.get("xfpts_ppr")
                     if xfp is not None:
                         aggregate["xfp_sum"] += float(xfp)
@@ -363,7 +374,7 @@ def pool(season: int = Query(...)):
                     * 100,
                     1,
                 )
-                if stats and stats["target_share_count"]
+                if stats and stats["target_share_weeks"]
                 else None
             )
 
@@ -731,6 +742,7 @@ def player_detail(player_id: int):
         snap_pct_count = 0
         target_share_sum = 0.0
         target_share_count = 0
+        target_share_weeks = 0
         xfp_sum = 0.0
         xfp_count = 0
 
@@ -744,10 +756,14 @@ def player_detail(player_id: int):
                 if sp is not None:
                     snap_pct_sum += float(sp)
                     snap_pct_count += 1
+                # See the pool aggregate above: a missing target_share is a
+                # published 0.0, so the week stays in the denominator, but a
+                # player with no target all season stays null.
                 ts = stats.get("target_share")
                 if ts is not None:
                     target_share_sum += float(ts)
-                    target_share_count += 1
+                    target_share_weeks += 1
+                target_share_count += 1
                 xf = stats.get("xfpts_ppr")
                 if xf is not None:
                     xfp_sum += float(xf)
@@ -783,7 +799,7 @@ def player_detail(player_id: int):
         ppr_per_game_played = round(ppr_total / games_played, 1) if ppr_total and games_played else None
         ppr_per_team_game = round(ppr_total / _REG_SEASON_TEAM_GAMES, 1) if ppr_total else None
         snap_pct = round(snap_pct_sum / snap_pct_count * 100, 0) if snap_pct_count else None
-        target_share = round(target_share_sum / target_share_count * 100, 1) if target_share_count else None
+        target_share = round(target_share_sum / target_share_count * 100, 1) if target_share_weeks else None
         xfp_per_game = round(xfp_sum / xfp_count, 1) if xfp_count else None
 
         # 4. QB lookup — for WR/RB/TE, rank team QBs by games played, return top QB

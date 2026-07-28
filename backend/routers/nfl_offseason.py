@@ -673,7 +673,20 @@ def _regular_season_aggregates(connection: sqlite3.Connection, season: int) -> D
                   SUM(CAST(json_extract(stats,'$.fpts_ppr')     AS REAL)) AS ppr_total,
                   AVG(CAST(json_extract(stats,'$.xfpts_ppr')    AS REAL)) AS xfp_per_game,
                   AVG(CAST(json_extract(stats,'$.off_pct')      AS REAL)) AS snap_pct,
-                  AVG(CAST(json_extract(stats,'$.target_share') AS REAL)) AS target_share
+                  -- A week with zero targets is a week the published file scores
+                  -- 0.0, but ingest omits the key (see _RECV_KEYS in
+                  -- ingest_nfl_weekly_stats), so a bare AVG drops it from the
+                  -- denominator and reports a one-target cameo as a season rate.
+                  -- The COUNT guard keeps the other half of that distinction:
+                  -- receiving is a season-level role, so a player who drew no
+                  -- target all year stays NULL rather than averaging a real 0.0%.
+                  -- snap_pct above deliberately keeps the bare AVG: off_pct comes
+                  -- from the snap artifact, where an absent week means "not on the
+                  -- snap report", and coalescing it would invent measured zeros.
+                  CASE WHEN COUNT(json_extract(stats,'$.target_share')) > 0
+                       THEN AVG(COALESCE(CAST(json_extract(stats,'$.target_share')
+                                              AS REAL), 0))
+                       END AS target_share
             FROM player_game_logs
             WHERE league='nfl' AND season=? AND player_id IS NOT NULL
               {game_type_filter}

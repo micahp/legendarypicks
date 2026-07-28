@@ -108,7 +108,16 @@ _MAP = {
 _PASS_KEYS = ("att", "cmp", "pass_yds", "pass_td", "intc", "air_yds",
               "pass_epa", "cpoe", "dropbacks")
 _RUSH_KEYS = ("carries", "rush_yds", "rush_td")
-_RECV_KEYS = ("targets", "target_share", "rec", "rec_yds", "rec_td")
+_RECV_KEYS = ("targets", "rec", "rec_yds", "rec_td")
+
+# target_share is deliberately outside the gate above.  The gate asks "did this
+# player have this role *this week*" and uses week volume as the proxy -- fine
+# for counting stats, wrong for a share: a receiver who drew no targets in a
+# game has a published target_share of 0.0, and dropping the key takes that week
+# out of the season denominator, so one busy game becomes the season rate (Tom
+# Kennedy read 14.8% against a published 2.5%).  The published artifact carries
+# a non-null target_share on every row, so we write every row.
+_ALWAYS_KEYS = ("target_share",)
 _TWO_POINT_COLS = (
     "passing_2pt_conversions",
     "rushing_2pt_conversions",
@@ -253,7 +262,7 @@ def build_rows(path: str, all_positions: bool = False):
                 v = _num(row[_MAP[k]])
                 if v is not None:
                     stats[k] = v
-        for k in ("fpts", "fpts_ppr"):
+        for k in ("fpts", "fpts_ppr") + _ALWAYS_KEYS:
             v = _num(row[_MAP[k]])
             if v is not None:
                 stats[k] = v
