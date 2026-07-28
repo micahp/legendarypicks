@@ -884,6 +884,17 @@ def nfl_draft_board(
             else:
                 sample = "full"
 
+        # Per-player team_games from actual team_weeks, not the 17-constant.
+        # After a mid-season trade (roadmap B1) the new team may have played
+        # a different number of games, so the denominator must come from the
+        # same source as the team_weeks array.
+        if is_def:
+            team_games_val = len(dst_team_weeks.get(row["current_team"], [])) or _REG_SEASON_TEAM_GAMES
+        elif agg and agg.get("team_weeks"):
+            team_games_val = len(agg["team_weeks"])
+        else:
+            team_games_val = _REG_SEASON_TEAM_GAMES
+
         players.append({
             "player_id": pid,
             "name": row["name"],
@@ -899,8 +910,8 @@ def nfl_draft_board(
             # Availability: the headline. Denominator is every game the team
             # played, so a missed game costs the drafter exactly what it cost.
             "games_played": games_played,
-            "games_missed": _REG_SEASON_TEAM_GAMES - games_played,
-            "team_games": _REG_SEASON_TEAM_GAMES,
+            "games_missed": team_games_val - games_played,
+            "team_games": team_games_val,
             "weeks_played": sorted(agg["weeks"]) if agg else [],
             # The 17 weeks his team actually played, so the strip can show a bye
             # as a bye rather than as an absence.

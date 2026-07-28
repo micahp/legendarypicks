@@ -309,15 +309,19 @@ def pool(season: int = Query(...)):
             games_played = aggregates.get(pid, 0)
             in_aggregates = pid in aggregates
 
+            # Per-player team_games from the same team_weeks source used below.
+            tw = team_weeks_map.get(primary_team_map.get(pid, ""), [])
+            team_games_val = len(tw) if tw else _REG_SEASON_TEAM_GAMES
+
             if not in_aggregates:
                 sample = "none"
                 games_missed = None
             elif games_played < _THIN_SAMPLE_GAMES:
                 sample = "thin"
-                games_missed = _REG_SEASON_TEAM_GAMES - games_played
+                games_missed = team_games_val - games_played
             else:
                 sample = "full"
-                games_missed = _REG_SEASON_TEAM_GAMES - games_played
+                games_missed = team_games_val - games_played
 
             players.append(
                 {
