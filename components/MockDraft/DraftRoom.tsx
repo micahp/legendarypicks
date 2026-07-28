@@ -100,6 +100,28 @@ export default function DraftRoom({ pool, draftState, onUserPick, onTimeout, use
     return m
   }, [pool])
 
+  // Positional rank by ADP, over the WHOLE pool — not the available pool. "RB4"
+  // has to keep meaning the 4th-best back all draft long; recomputing it against
+  // what is left would renumber every remaining player after each pick and turn a
+  // stable identifier into a countdown. Derived from ADP, so it is labelled as
+  // ADP's ranking and not presented as ours.
+  const posRank = useMemo(() => {
+    const byPos = new Map<string, PoolPlayer[]>()
+    for (const p of pool) {
+      const list = byPos.get(p.position)
+      if (list) list.push(p)
+      else byPos.set(p.position, [p])
+    }
+    const m = new Map<number, number>()
+    for (const list of Array.from(byPos.values())) {
+      list
+        .filter(p => p.adp != null)
+        .sort((a, b) => (a.adp as number) - (b.adp as number))
+        .forEach((p, i) => m.set(p.player_id, i + 1))
+    }
+    return m
+  }, [pool])
+
   // Which players have been drafted
   const draftedIds = useMemo(() => {
     const s = new Set<number>()
@@ -130,6 +152,8 @@ export default function DraftRoom({ pool, draftState, onUserPick, onTimeout, use
     () => getRosterState(draftState, draftState.seat),
     [draftState],
   )
+
+  const headlineStat = headlineStatFor(posFilter)
 
   const userTurn = isUserPick(draftState)
   const nextPick = userNextPick(draftState)
@@ -329,6 +353,10 @@ export default function DraftRoom({ pool, draftState, onUserPick, onTimeout, use
                   <th className="text-left py-2.5 px-2">Player</th>
                   <th className="text-center py-2.5 px-2 w-12">Pos</th>
                   <th className="text-left py-2.5 px-2 min-w-[8rem]">Available</th>
+                  <th className="text-right py-2.5 px-2 w-14" title={headlineStat.title}>
+                    {headlineStat.header}
+                  </th>
+                  <th className="text-right py-2.5 px-2 w-12">Bye</th>
                   <th className="text-right py-2.5 px-2 w-16">ADP</th>
                   <th className="w-16" />
                 </tr>
@@ -355,7 +383,18 @@ export default function DraftRoom({ pool, draftState, onUserPick, onTimeout, use
                         <span className={`font-medium ${drafted ? 'text-zinc-600' : 'text-zinc-200'}`}>
                           {dp.name}
                         </span>
-                        <div className="text-[10px] text-zinc-600">{dp.team}</div>
+                        <div className="text-[10px] text-zinc-600">
+                          {dp.team}
+                          {posRank.has(dp.player_id) && (
+                            <>
+                              {' · '}
+                              <span className="tabular-nums">
+                                {dp.position}
+                                {posRank.get(dp.player_id)}
+                              </span>
+                            </>
+                          )}
+                        </div>
                       </td>
                       <td className="py-2 px-2 text-center">
                         <span className="rounded bg-zinc-800 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-zinc-400">
@@ -364,6 +403,12 @@ export default function DraftRoom({ pool, draftState, onUserPick, onTimeout, use
                       </td>
                       <td className="py-2 px-2">
                         <PoolAvailability poolPlayer={poolPlayer} />
+                      </td>
+                      <td className="py-2 px-2 text-right font-mono tabular-nums text-xs text-zinc-300">
+                        <HeadlineStat player={poolPlayer} />
+                      </td>
+                      <td className="py-2 px-2 text-right font-mono tabular-nums text-xs text-zinc-500">
+                        {byeMap.get(dp.team) ?? <span className="text-zinc-700">—</span>}
                       </td>
                       <td className="py-2 pr-3 pl-2 text-right font-mono tabular-nums text-xs text-zinc-400">
                         {dp.adp != null ? dp.adp.toFixed(1) : <span className="text-zinc-600">—</span>}
@@ -659,6 +704,48 @@ function DraftBoardGrid({ draftState }: { draftState: DraftState }) {
         </table>
       </div>
     </div>
+  )
+}
+
+/* ── The headline stat ──────────────────────────────────────────────────────
+   The research board (camp tab) renders five position-aware stat columns, which
+   is right for research. This is not research: at the moment of a pick you are
+   choosing, not studying, and the pool sits in a two-thirds grid column that is
+   full-width-but-cramped on a phone. So the draft room takes ONE decisive number
+   per position and spends the width it saves on bye week, which decides more
+   picks in rounds 8-15 than a third decimal of expected points ever will.
+
+   Per position, the number a drafter actually acts on:
+     QB RB WR TE  → PPR / game played
+     PK           → kicking points / game
+     DEF          → D/ST points / game
+   Under the 'All' filter the header stays generic, because one column is
+   spanning three different units and the row's position chip says which. */
+
+function headlineStatFor(position: string): { header: string; title: string } {
+  if (position === 'DEF') return { header: 'D/ST', title: 'D/ST fantasy points per game, 2025' }
+  if (position === 'PK') return { header: 'K Pts', title: 'Kicking points per game, 2025' }
+  if (position === 'ALL') return { header: 'Pts/G', title: 'Fantasy points per game, 2025 — PPR for skill positions, kicking points for K, D/ST points for defenses' }
+  return { header: 'PPR/G', title: 'PPR points per game played, 2025' }
+}
+
+/** The one number, resolved per row so a mixed 'All' view stays correct. */
+function HeadlineStat({ player }: { player: PoolPlayer }) {
+  const value =
+    player.position === 'DEF'
+      ? player.dst_pts_per_game
+      : player.position === 'PK'
+        ? player.pk_pts_per_game
+        : player.ppr_per_game_played
+
+  // Absent (pre-job16 payload) and null (genuinely no sample) render the same.
+  // Neither is zero and neither may be rendered as zero.
+  if (value == null) return <span className="text-zinc-700">—</span>
+
+  return (
+    <span className={player.sample === 'thin' ? 'text-zinc-500' : 'text-zinc-300'}>
+      {value.toFixed(1)}
+    </span>
   )
 }
 

@@ -362,6 +362,21 @@ export interface PoolPlayer {
   games_missed: number | null
   weeks_played: number[]
   team_weeks: number[]
+
+  /* Production fields — job16 (docs/TASK-job16-pool-payload-parity.md).
+     Optional because the pool payload does not carry them yet; the same ten
+     fields already ship on /api/nfl/draft/player/{id}. Absent and null render
+     identically ("—"), so the row is honest before and after the backend lands. */
+  team_games?: number | null
+  ppr_per_game_played?: number | null
+  ppr_per_team_game?: number | null
+  xfp_per_game?: number | null
+  snap_pct?: number | null
+  target_share?: number | null
+  pk_pts_total?: number | null
+  pk_pts_per_game?: number | null
+  dst_pts_total?: number | null
+  dst_pts_per_game?: number | null
 }
 
 export interface PoolResponse {
