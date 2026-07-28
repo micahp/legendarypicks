@@ -101,6 +101,8 @@ LP_GATE_W=/root/lp-job15-dst-published-adp \
   evidence.
 - `REG-pool` stays green: 300 players, 32 DEF.
 - `REG-pytest` stays green.
+- All 32 DEF rows in the pool have non-null published `adp`; report
+  `DEF null_adp: 0 of 32`.
 - Report **`matched N of 32`** for the D/ST join and the ADP you wrote for DEN, HOU,
   LAR, SEA. "Verified" is not a result; counts are.
 
@@ -183,3 +185,21 @@ all 32 defenses render "No NFL sample" over a real 164-point season.
 **Done means:** `/api/nfl/draft/player/30116` returns `games_played=17`, `games_missed=0`,
 `sample='full'`, `weeks_played` non-empty, and agrees field-for-field with the D/ST entry
 in `/api/nfl/draft-board?position=DEF`. Report both payloads side by side, not "verified".
+
+### 6c. Coordinated acceptance — the client null-ADP fallback must disappear
+
+The audit proved that `lib/mockDraft/engine.ts` does not preserve the backend's old
+fixed-slot ordering. It moves null-ADP defenses to the end, then recomputes their ordinal
+against a shrinking pool, improving that fallback by exactly one point per pick until it
+crosses the real-ADP tail around pick 98.
+
+Do not tune that fallback. Once this task makes all 32 D/ST ADPs non-null, the code has no
+valid caller and the Ponytail answer is that it should not exist.
+
+`lib/` remains frontend-owned and is outside Hermes's backend allowlist. Hermes therefore
+must:
+
+1. prove the backend pool has 32 DEF rows and `null_adp=0`;
+2. avoid adding any replacement fixed-slot or null-ADP fallback in backend code; and
+3. report the backend result so the frontend owner can delete the now-dead
+   `p.adp ?? poolIndex` branch before job15 is considered integrated.
