@@ -30,6 +30,10 @@ interface Props {
   onMoveQueueDown: (idx: number) => void
 }
 
+// The season being drafted. Matches pages/mock-draft.tsx's fetchPool(2026) and
+// apiCreateDraft(2026, ...) — bye weeks must come from the same season as the draft.
+const DRAFT_SEASON = 2026
+
 const PICK_LEDGER_LIMIT = 15
 // 15-man roster: QB RB1 RB2 WR1 WR2 TE FLEX K DEF = 9 starters, rest bench.
 const BENCH_SLOTS = 6
@@ -52,10 +56,13 @@ export default function DraftRoom({ pool, draftState, onUserPick, onTimeout, use
   const [byeFilter, setByeFilter] = useState<string>('ALL')
   const [schedule, setSchedule] = useState<ScheduleTeam[] | null>(null)
 
-  // Fetch schedule for bye filter
+  // Fetch the schedule for bye weeks. This MUST be the season being drafted, not
+  // the season whose stats we show. Byes move every year: for 2026 vs 2025, DEN
+  // 12→10, LAR 8→11, SEA 8→11, CIN 10→6, DAL 10→14. Reading 2025 here — as this
+  // did through v0.6.12 — made the bye filter silently select the wrong teams.
   useEffect(() => {
     let cancelled = false
-    fetch('/api/nfl/schedule/2025')
+    fetch(`/api/nfl/schedule/${DRAFT_SEASON}`)
       .then(r => r.json())
       .then(data => { if (!cancelled) setSchedule(data.teams ?? []) })
       .catch(() => { /* bye filter stays disabled */ })
