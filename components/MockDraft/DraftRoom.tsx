@@ -15,7 +15,7 @@ interface Props {
   userPicking: boolean
 }
 
-const TEAM_GAMES = 17
+const TEAM_GAMES = 17  // fallback; prefer poolPlayer.team_games when available
 const PICK_LEDGER_LIMIT = 15
 
 /**
@@ -108,7 +108,7 @@ export default function DraftRoom({ pool, draftState, onUserPick, userPicking }:
             </span>
           </div>
 
-          <div className="overflow-y-auto max-h-[calc(100vh-300px)] rounded-xl border border-zinc-800 bg-zinc-900 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div className="overflow-y-auto max-h-[calc(100vh-300px)] rounded-xl border border-zinc-800 bg-zinc-900">
             <table className="w-full text-sm">
               <thead className="sticky top-0 z-10 bg-zinc-900">
                 <tr className="border-b border-zinc-800 text-zinc-500 text-[11px] uppercase tracking-wider">
@@ -200,7 +200,7 @@ export default function DraftRoom({ pool, draftState, onUserPick, userPicking }:
                 </span>
               </h4>
             </div>
-            <div className="max-h-[300px] overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div className="max-h-[300px] overflow-y-auto">
               <div className="divide-y divide-zinc-800/30">
                 {recentPicks.map(pick => {
                   const dp = draftState.playerPool.find(p => p.player_id === pick.player_id)
@@ -252,7 +252,8 @@ function PoolAvailability({ poolPlayer }: { poolPlayer: PoolPlayer }) {
     )
   }
 
-  const missed = TEAM_GAMES - poolPlayer.games_played
+  const tg = poolPlayer.team_games ?? TEAM_GAMES
+  const missed = poolPlayer.games_missed ?? (tg - poolPlayer.games_played)
   return (
     <>
       <div className="flex items-baseline gap-1.5">
@@ -261,7 +262,7 @@ function PoolAvailability({ poolPlayer }: { poolPlayer: PoolPlayer }) {
             missed > 0 ? 'text-amber-400' : 'text-zinc-300'
           }`}
         >
-          {poolPlayer.games_played}/{TEAM_GAMES}
+          {poolPlayer.games_played}/{tg}
         </span>
         {missed > 0 && (
           <span className="text-[10px] text-zinc-600">missed {missed}</span>
