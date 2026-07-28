@@ -8,6 +8,29 @@ surface gap, not an ingest job. Do not go fetch anything.
 
 ---
 
+## 0. Read before you write a line
+
+Two sibling questions, in this order. They are not ceremony — the last backend change that
+skipped them produced a fabricated D/ST ranking that shipped behind a false comment.
+
+1. **ponytail** — *"does this code need to exist?"*
+   (https://github.com/DietrichGebert/ponytail). Not installed here; ask it anyway.
+2. **`published-first`** — *"does this value need to be computed?"*
+   `.claude/skills/published-first/SKILL.md`. **Load it.** Walk the ladder before any
+   `SUM()`/`GROUP BY`.
+
+For this task specifically, the ladder resolves at **rung 1** — the values are already
+columns inside `player_game_logs.stats`. You are summing rows over a bound this codebase
+already applies elsewhere. **You are not deriving a definition.** If you find yourself
+reasoning about what *ought* to count as a game, a carry, or a target rather than reading
+what is already there, stop — that is the exact move that cost us eight defects in the
+nflverse rollup.
+
+Also load **`honest-data-ui`** (`.claude/skills/honest-data-ui/SKILL.md`) before choosing how
+absent values render. §2 rule 2 below is its rule, not mine.
+
+---
+
 ## 1. The gap, measured
 
 Everything `/api/nfl/draft-board` and `/api/nfl/draft/player/{id}` return today is a fantasy

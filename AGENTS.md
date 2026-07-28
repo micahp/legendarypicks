@@ -213,6 +213,29 @@ Caught at review (orchestrator), should have been caught by the feature's own va
   **`published-first`** before writing anything that derives, aggregates, reconstructs or
   back-fills a value — including schedules, bye weeks and join keys; **`honest-data-ui`** before
   designing any surface that shows numbers; **`resource-check`** before batch work.
+- **Backend agents (Codex, Hermes): the two questions, asked in this order, before you write a
+  line.** They are siblings and they kill different things.
+  1. **ponytail** — *"does this code need to exist?"*
+     (https://github.com/DietrichGebert/ponytail). **Not installed on this box**; apply the
+     question anyway. It is the cheapest review there is, because the fastest code is the code
+     you delete before writing.
+  2. **`published-first`** — *"does this value need to be computed?"* Walk its ladder. Rung 5 is
+     the one that keeps getting skipped: **a definition — a schedule, a roster, a bye week, a
+     team code, a draft position — is always published somewhere. Never infer it.**
+
+  Both were violated by the same 40 lines. `nfl_mock_draft.py` grew a derived `dst_rank`, a
+  reserved pool slot and a bespoke ordering behind the comment *"D/ST — no published ADP
+  exists."* Measured 2026-07-28: **all 32 D/ST carry a published ADP, inside a payload
+  `ingest_nfl_adp.py` already downloads.** ESPN keys them with negative ids
+  (`-16000 - proTeamId`), so the `espn_id` join matched **0 of 32** — and a wrong join key does
+  not raise, **it misses.** The derivation also disagreed on the merits: it ranked SEA #1 where
+  ESPN ranks DEN #1 and SEA 4th. published-first would have caught the value; ponytail would
+  have caught the code. Neither was asked.
+
+  **Corollary, learned the same day: a comment asserting that data does not exist is a
+  hypothesis, and it ages badly.** That one sentence was load-bearing for a derivation, a
+  reserved slot, a gate assertion and an open product decision, and it was one HTTP call from
+  being falsified. Check the claim before you build on it.
 - **Follow `docs/DEV-STANDARDS.md`.** In particular, list endpoints must not download substantially
   more data than the UI renders, payload sizes must be measured, and an HTTP 200 alone is not proof
   that a feature works.
