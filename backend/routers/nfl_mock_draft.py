@@ -331,10 +331,10 @@ def pool(season: int = Query(...)):
                 games_missed = None
             elif games_played < _THIN_SAMPLE_GAMES:
                 sample = "thin"
-                games_missed = team_games_val - games_played
+                games_missed = max(0, team_games_val - games_played)
             else:
                 sample = "full"
-                games_missed = team_games_val - games_played
+                games_missed = max(0, team_games_val - games_played)
 
             skill_players.append(
                 {
