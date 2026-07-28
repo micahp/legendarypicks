@@ -1,5 +1,41 @@
 # Changelog
 
+## v0.6.11 — 2026-07-27
+
+### Mock draft: draft a roster off the availability board
+
+- **A 12-team, 15-round PPR snake draft against ADP bots**, at `/mock-draft`. QB/RB/WR/TE/K
+  plus FLEX and a bench, solo — no lobby to fill, no waiting on anyone.
+- **You draft from the availability board, not from a name list.** Every player in the pool
+  carries the same amber strip the board uses, so while you are on the clock you can see
+  that the guy you are about to take played 8 of 17 last season. That is the whole reason
+  to draft here rather than somewhere else.
+- **The results screen states history, not a forecast** — "your picks missed N of a possible
+  M games last season", with the same figure for the 12-team field so the number has
+  something to sit against. Players with no NFL sample are excluded from the denominator and
+  the count of exclusions is printed rather than hidden.
+- **Best and worst value are shown as the two numbers** — picked at 81, ADP 92.1 — not as a
+  computed score that hides its arithmetic.
+- **Every draft has a durable URL** so it can be shared or resumed.
+- **The mock draft is reachable from the NFL hub.** It shipped as a route that nothing linked
+  to; there is now a card above Recent Trades on `/leagues/nfl`.
+
+### Draft notes tell you when a save fails
+
+- **A failed save used to revert your input silently.** Ranking a player wrote to the server,
+  and when that write failed the rank rolled back with nothing on screen to say so. The
+  board now says so, in one quiet line under the sort controls.
+
+### Known gaps in this release
+
+- **Kickers have no game data.** `player_game_logs` holds one row across all 42 active
+  kickers. Kickers therefore read "Kicker games not tracked" — except Brandon Aubrey, who
+  reads "1/17, missed 16" because a fake-field-goal carry put a single row in a table built
+  from passing, rushing and receiving stats. That figure is wrong and the fix is to ingest
+  kicking data, not to relabel him.
+- **The draft room has no position filter, no queue, no board grid and no clock.** The pool
+  is a single scrolling list.
+
 ## v0.6.10 — 2026-07-27
 
 ### You can look up a player instead of paging to him
