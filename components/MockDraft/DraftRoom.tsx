@@ -63,8 +63,14 @@ export default function DraftRoom({ pool, draftState, onUserPick, onTimeout, use
   }, [])
 
   // ── Filter options derived from pool + schedule ──
-  const posOptions = useMemo(() => ['ALL', ...new Set(pool.map(p => p.position).sort())], [pool])
-  const teamOptions = useMemo(() => ['ALL', ...new Set(pool.map(p => p.team).sort())], [pool])
+  const posOptions = useMemo(
+    () => ['ALL', ...Array.from(new Set(pool.map(p => p.position).sort()))],
+    [pool],
+  )
+  const teamOptions = useMemo(
+    () => ['ALL', ...Array.from(new Set(pool.map(p => p.team).sort()))],
+    [pool],
+  )
 
   // Bye → team lookup map
   const byeMap = useMemo(() => {
@@ -77,7 +83,7 @@ export default function DraftRoom({ pool, draftState, onUserPick, onTimeout, use
   const byeOptions = useMemo(() => {
     const weeks = new Set<number>()
     for (const t of (schedule ?? [])) { if (t.bye_week != null) weeks.add(t.bye_week) }
-    return ['ALL', ...[...weeks].sort((a, b) => a - b).map(String)]
+    return ['ALL', ...Array.from(weeks).sort((a, b) => a - b).map(String)]
   }, [schedule])
 
   // Build a lookup from player_id → PoolPlayer for O(1) resolution
