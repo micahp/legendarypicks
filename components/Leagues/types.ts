@@ -342,7 +342,7 @@ export interface NflUsageResponse {
   trend: NflUsageTrend
 }
 
-// ── NFL mock draft ─────────────────────────────────────────────────────
+// ── Mock draft contracts ─────────────────────────────────────────────────
 
 export interface PoolPlayer {
   player_id: number
@@ -360,7 +360,7 @@ export interface PoolPlayer {
   team_weeks: number[]
 }
 
-export interface MockDraftPool {
+export interface PoolResponse {
   contract: string
   season: number
   count: number
@@ -375,17 +375,20 @@ export interface MockDraftPick {
   player_position?: string
   player_team?: string
   auto: boolean
-  created_at: number
+  created_at?: number
 }
 
-export interface MockDraftState {
+export interface MockDraft {
   id: string
   season: number
   seat: number
   teams: number
   rounds: number
   seed: number
-  status: string
+  status: 'active' | 'complete' | 'abandoned'
+  created_at: number
+  updated_at: number
+  completed_at: number | null
   picks: MockDraftPick[]
   total_picks: number
   current_round: number

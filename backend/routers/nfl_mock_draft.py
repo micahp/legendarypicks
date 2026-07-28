@@ -6,7 +6,6 @@ SPEC-slice-D-mock-draft.md:
   - Pool: GET /api/nfl/mock-draft/pool?season=2026 — ~300 ranked players (QB/RB/WR/TE/PK).
   - Draft CRUD: create, append picks, resume, list — keyed by X-Device-Id.
   - Own _DB from LP_DB_PATH (no _core.py dependency).
-  - M4: Resume returns current_round + current_pick. Share endpoint for completed drafts.
 """
 
 import json
@@ -36,12 +35,9 @@ _POSTSEASON_FIRST_WEEK = 19
 _THIN_SAMPLE_GAMES = 4
 _POOL_CAP = 300
 # Pool index where D/ST start — round 13 in a 12-team draft (~pick 145).
-# Defenses go in the back third of the pool, not dead last where they are
-# unreachable in a 180-pick draft.
 _DST_SLOT = 150
 
-# Draftable positions: skill positions plus kickers (code is PK, not K — §1 of spec),
-# plus team defense (DEF).  DEF has no ADP; rankings are derived from nfl_dst_stats.
+# Draftable positions: skill positions, kickers, and team defenses.
 _DRAFT_POSITIONS = ("QB", "RB", "WR", "TE", "PK", "DEF")
 
 
@@ -177,8 +173,11 @@ def pool(season: int = Query(...)):
         _log_season = (_log_season_row[0] if _log_season_row and _log_season_row[0]
                        else _CURRENT_SEASON - 1)
 
-        # ── Per-player aggregates from player_game_logs (stats) ──────────
-        # Games played + weeks present + stats from the stat table.
+        # Per-player aggregates: games_played, weeks_played, and primary_team
+        # (the team he logged the most games for that season — handles mid-season
+        # trades and team-code mismatches between the players table and the logs,
+        # exactly as nfl_offseason.py:571-605 does).  Ties are broken by
+        # preferring the team with the highest logged week (the one he finished on).
         agg_rows = connection.execute(
             """SELECT player_id, COUNT(*) AS games_played,
                       GROUP_CONCAT(CAST(game_no AS INTEGER)) AS weeks_csv,
@@ -208,88 +207,46 @@ def pool(season: int = Query(...)):
             max_w = max(weeks) if weeks else 0
             rec["team_max_week"][team] = max(rec["team_max_week"].get(team, 0), max_w)
 
-        # ── M2: merge snap-count presence (all positions) ────────────────
-        # Snap counts tell us whether a player dressed, regardless of whether
-        # they recorded a stat.  This fixes kickers/defenders who showed 0-1
-        # games because they never touched the ball.
-        snap_columns = connection.execute("PRAGMA table_info(nfl_snap_counts)").fetchall()
-        if snap_columns:
-            for sr in connection.execute(
-                """SELECT player_id, COUNT(*) AS snap_games,
-                          GROUP_CONCAT(week) AS snap_weeks,
-                          team
-                   FROM nfl_snap_counts
-                   WHERE season=? AND CAST(week AS INTEGER) < ?
-                   GROUP BY player_id""",
-                (_log_season, _POSTSEASON_FIRST_WEEK),
-            ):
-                pid = sr["player_id"]
-                s_weeks = [int(w) for w in (sr["snap_weeks"] or "").split(",") if w]
-                s_games = sr["snap_games"]
-                s_team = sr["team"]
-                if pid not in _per_player:
-                    _per_player[pid] = {
-                        "games_played": 0, "weeks": set(),
-                        "team_counts": {}, "team_max_week": {},
-                    }
-                rec = _per_player[pid]
-                if s_games > rec["games_played"]:
-                    rec["games_played"] = s_games
-                rec["weeks"].update(s_weeks)
-                if s_team:
-                    rec["team_counts"][s_team] = rec["team_counts"].get(s_team, 0) + s_games
-
         aggregates: dict[int, int] = {}
         weeks_played_map: dict[int, list[int]] = {}
         primary_team_map: dict[int, str] = {}
         for pid, rec in _per_player.items():
             aggregates[pid] = rec["games_played"]
             weeks_played_map[pid] = sorted(rec["weeks"])
+            # Primary team = most games; ties go to the later-week team.
             primary_team_map[pid] = max(
                 rec["team_counts"],
                 key=lambda t: (rec["team_counts"][t], rec["team_max_week"].get(t, 0)),
             )
 
-        # Team weeks from nfl_schedule (not derived from game logs)
-        # The published schedule is the authoritative source for which weeks
-        # a team played — it handles byes, double-headers, and rescheduled
-        # games correctly without depending on log coverage.
-        team_weeks_map: dict[str, list[int]] = defaultdict(list)
-        sched_columns = connection.execute("PRAGMA table_info(nfl_schedule)").fetchall()
-        if sched_columns:
-            for tw_row in connection.execute(
-                """SELECT home_team AS team, week FROM nfl_schedule
-                   WHERE season=? AND week < ?
-                UNION ALL
-                SELECT away_team AS team, week FROM nfl_schedule
-                WHERE season=? AND week < ?""",
-                (_log_season, _POSTSEASON_FIRST_WEEK,
-                 _log_season, _POSTSEASON_FIRST_WEEK),
-            ):
-                try:
-                    wk = int(tw_row["week"])
-                    team = tw_row["team"]
-                    if wk not in team_weeks_map[team]:
-                        team_weeks_map[team].append(wk)
-                except (TypeError, ValueError):
-                    continue
-            for team in team_weeks_map:
-                team_weeks_map[team].sort()
-
-        # ── Count D/ST players to reserve pool slots ──────────────────────
-        # D/ST have no ADP; they are interleaved at _DST_SLOT in the
-        # back third of the pool so they are reachable in a 180-pick draft.
-        _dst_count = connection.execute(
-            """SELECT COUNT(*) FROM players
-               WHERE league='nfl' AND active=1 AND position='DEF'"""
-        ).fetchone()[0]
+        # ------------------------------------------------------------------
+        # Team weeks — which weeks each team actually played (bye-aware).
+        # Keyed by log-season team abbreviation, NOT by players.team, because
+        # those differ (LAR/LA, WSH/WAS, AZ/ARI).
+        # ------------------------------------------------------------------
+        _team_weeks_raw: dict[str, set[int]] = defaultdict(set)
+        for tw_row in connection.execute(
+            """SELECT team, CAST(game_no AS INTEGER) AS week
+               FROM player_game_logs
+               WHERE league='nfl' AND season=? AND team IS NOT NULL
+                 AND CAST(game_no AS INTEGER) < ?
+               GROUP BY team, game_no""",
+            (_log_season, _POSTSEASON_FIRST_WEEK),
+        ):
+            try:
+                _team_weeks_raw[tw_row["team"]].add(tw_row["week"])
+            except (TypeError, ValueError):
+                continue
+        team_weeks_map: dict[str, list[int]] = {
+            team: sorted(weeks) for team, weeks in _team_weeks_raw.items()
+        }
 
         # ------------------------------------------------------------------
         # Query the pool: draftable positions, active players, from nfl_adp.
         # First tier: ADP < 169.0 (real ADP), sorted by ADP ascending.
         # Second tier: ADP >= 169.0 AND percent_owned > 0, sorted by
         #   percent_owned descending then name.
-        # Cap at _POOL_CAP total (skill players + D/ST).
+        # Cap at 300 total.
         # ------------------------------------------------------------------
         placeholders = ",".join("?" for _ in _DRAFT_POSITIONS)
         rows = connection.execute(
@@ -322,7 +279,7 @@ def pool(season: int = Query(...)):
             games_played = aggregates.get(pid, 0)
             in_aggregates = pid in aggregates
 
-            # Per-player team_games from the same team_weeks source used below.
+            # Per-player team_games from the team_weeks_map.
             tw = team_weeks_map.get(primary_team_map.get(pid, ""), [])
             team_games_val = len(tw) if tw else _REG_SEASON_TEAM_GAMES
 
@@ -352,10 +309,14 @@ def pool(season: int = Query(...)):
                 }
             )
 
-        # D/ST — no published ADP exists (verified: 0/9,611 nfl_adp rows).
-        # Derive ranking from 2025 fantasy totals.  Column is `dst_rank`, not
-        # `adp`, so it cannot be mistaken for published ADP.
-        dst_players = []
+        # Count D/ST players to reserve pool slots.
+        _dst_count = connection.execute(
+            """SELECT COUNT(*) FROM players
+               WHERE league='nfl' AND active=1 AND position='DEF'"""
+        ).fetchone()[0]
+
+        # D/ST — no published ADP exists. Derive ranking from fantasy totals.
+        dst_players: list[dict] = []
         dst_rows = connection.execute(
             """SELECT p.id AS player_id, p.name, p.team,
                       SUM(d.fantasy_pts) AS dst_total,
@@ -385,13 +346,12 @@ def pool(season: int = Query(...)):
                 "dst_rank": i,
                 "sample": "full" if gp >= _THIN_SAMPLE_GAMES else ("thin" if gp > 0 else "none"),
                 "games_played": gp,
-                "games_missed": tg - gp if gp > 0 else None,
+                "games_missed": max(0, tg - gp) if gp > 0 else None,
                 "weeks_played": weeks,
                 "team_weeks": tw,
             })
 
-        # Interleave D/ST at _DST_SLOT so they are reachable in a 180-pick
-        # draft.  Top skill players → D/ST block → remaining skill players.
+        # Interleave D/ST at _DST_SLOT so they are reachable in a 180-pick draft.
         remaining_slots = _POOL_CAP - _DST_SLOT - len(dst_players)
         players = (
             skill_players[:_DST_SLOT]
@@ -543,7 +503,7 @@ async def append_picks(
 
 @router.get("/api/nfl/mock-draft/{draft_id}")
 def get_draft(draft_id: str, x_device_id: Optional[str] = Header(None)):
-    """Resume a draft — returns draft metadata + all picks + computed round/pick.
+    """Resume a draft — returns draft metadata + all picks.
 
     X-Device-Id must match the draft's device_id, else 404
     (same reasoning as picks: a device should not be able to probe draft ids).
@@ -580,12 +540,6 @@ def get_draft(draft_id: str, x_device_id: Optional[str] = Header(None)):
             for row in picks_rows
         ]
 
-        # M4: Compute current round and current pick from the pick count.
-        total_picks = len(picks)
-        current_round, current_pick = _compute_round_and_pick(
-            total_picks, draft["teams"]
-        )
-
         return _json(
             {
                 "id": draft["id"],
@@ -599,97 +553,6 @@ def get_draft(draft_id: str, x_device_id: Optional[str] = Header(None)):
                 "updated_at": draft["updated_at"],
                 "completed_at": draft["completed_at"],
                 "picks": picks,
-                "total_picks": total_picks,
-                "current_round": current_round,
-                "current_pick": current_pick,
-            }
-        )
-    finally:
-        connection.close()
-
-
-# ---------------------------------------------------------------------------
-#  M4: Share endpoint — read-only public view of a completed draft
-# ---------------------------------------------------------------------------
-
-
-@router.get("/api/nfl/mock-draft/{draft_id}/public")
-def get_draft_public(draft_id: str):
-    """Read-only endpoint returning completed draft results without device scoping.
-
-    X-Device-Id is NOT required for this endpoint — it is read-only public data.
-    Only completed drafts are returned; in-progress drafts return 404.
-    """
-    connection = _conn()
-    try:
-        draft = connection.execute(
-            "SELECT * FROM nfl_mock_drafts WHERE id = ? AND status = 'complete'",
-            (draft_id,),
-        ).fetchone()
-
-        if draft is None:
-            return _json({"error": "not found"}, status=404)
-
-        picks_rows = connection.execute(
-            "SELECT * FROM nfl_mock_draft_picks WHERE draft_id = ? ORDER BY pick_no",
-            (draft_id,),
-        ).fetchall()
-
-        # Enrich picks with player name/position/team from the players table.
-        pick_player_ids = [row["player_id"] for row in picks_rows]
-        player_lookup: dict[int, dict] = {}
-        if pick_player_ids:
-            placeholders = ",".join("?" for _ in pick_player_ids)
-            player_rows = connection.execute(
-                f"""SELECT id, name, position, team
-                    FROM players
-                    WHERE id IN ({placeholders})""",
-                pick_player_ids,
-            ).fetchall()
-            player_lookup = {
-                row["id"]: {
-                    "name": row["name"],
-                    "position": row["position"],
-                    "team": row["team"],
-                }
-                for row in player_rows
-            }
-
-        picks = []
-        for row in picks_rows:
-            pinfo = player_lookup.get(row["player_id"], {})
-            picks.append(
-                {
-                    "pick_no": row["pick_no"],
-                    "team_no": row["team_no"],
-                    "player_id": row["player_id"],
-                    "player_name": pinfo.get("name"),
-                    "player_position": pinfo.get("position"),
-                    "player_team": pinfo.get("team"),
-                    "auto": bool(row["auto"]),
-                    "created_at": row["created_at"],
-                }
-            )
-
-        total_picks = len(picks)
-        current_round, current_pick = _compute_round_and_pick(
-            total_picks, draft["teams"]
-        )
-
-        return _json(
-            {
-                "id": draft["id"],
-                "season": draft["season"],
-                "teams": draft["teams"],
-                "rounds": draft["rounds"],
-                "seed": draft["seed"],
-                "status": draft["status"],
-                "created_at": draft["created_at"],
-                "completed_at": draft["completed_at"],
-                "picks": picks,
-                "total_picks": total_picks,
-                "current_round": current_round,
-                "current_pick": current_pick,
             }
         )
     finally:
@@ -734,198 +597,5 @@ def list_drafts(x_device_id: Optional[str] = Header(None)):
         ]
 
         return _json({"drafts": drafts})
-    finally:
-        connection.close()
-
-
-# ---------------------------------------------------------------------------
-#  M5: Player detail endpoint — per-player info + QB lookup
-# ---------------------------------------------------------------------------
-
-
-@router.get("/api/nfl/draft/player/{player_id}")
-def player_detail(player_id: int):
-    """Return player detail for the mock draft overlay.
-
-    Includes: name, team, position, ADP, percent owned, 2025 season stats,
-    game strip (weeks played vs team weeks), and for WR/RB/TE the QB on
-    their team.
-    """
-    connection = _conn()
-    try:
-        # 1. Player lookup
-        player = connection.execute(
-            "SELECT id, name, team, position, active FROM players WHERE id=? AND league='nfl'",
-            (player_id,),
-        ).fetchone()
-
-        if player is None:
-            return _json({"error": "Player not found"}, status=404)
-
-        name = player["name"]
-        team = player["team"]
-        position = player["position"]
-        active = bool(player["active"])
-
-        # 2. ADP / percent owned from nfl_adp
-        adp = None
-        percent_owned = None
-        adp_row = connection.execute(
-            "SELECT adp, percent_owned FROM nfl_adp WHERE player_id=? AND season=?",
-            (player_id, _CURRENT_SEASON),
-        ).fetchone()
-        if adp_row:
-            adp = adp_row["adp"]
-            percent_owned = adp_row["percent_owned"]
-
-        # 3. 2025 season stats from player_game_logs
-        _log_season_row = connection.execute(
-            "SELECT MAX(season) FROM player_game_logs WHERE league='nfl'"
-        ).fetchone()
-        _log_season = (_log_season_row[0] if _log_season_row and _log_season_row[0]
-                       else _CURRENT_SEASON - 1)
-
-        log_rows = connection.execute(
-            """SELECT game_no, stats, team
-               FROM player_game_logs
-               WHERE player_id=? AND league='nfl' AND season=?
-                 AND CAST(game_no AS INTEGER) < ?
-               ORDER BY CAST(game_no AS INTEGER)""",
-            (player_id, _log_season, _POSTSEASON_FIRST_WEEK),
-        ).fetchall()
-
-        games_played = len(log_rows)
-        weeks_played: list[int] = []
-        ppr_total = 0.0
-        snap_pct_sum = 0.0
-        snap_pct_count = 0
-        target_share_sum = 0.0
-        target_share_count = 0
-        xfp_sum = 0.0
-        xfp_count = 0
-
-        for row in log_rows:
-            try:
-                week = int(row["game_no"])
-                weeks_played.append(week)
-            except (TypeError, ValueError):
-                pass
-            try:
-                stats = json.loads(row["stats"])
-                ppr = stats.get("fpts_ppr")
-                if ppr is not None:
-                    ppr_total += float(ppr)
-                sp = stats.get("off_pct")
-                if sp is not None:
-                    snap_pct_sum += float(sp)
-                    snap_pct_count += 1
-                ts = stats.get("target_share")
-                if ts is not None:
-                    target_share_sum += float(ts)
-                    target_share_count += 1
-                xf = stats.get("xfpts_ppr")
-                if xf is not None:
-                    xfp_sum += float(xf)
-                    xfp_count += 1
-            except Exception:
-                pass
-
-        # 3b. Merge snap-count presence
-        snap_columns = connection.execute("PRAGMA table_info(nfl_snap_counts)").fetchall()
-        if snap_columns:
-            for sr in connection.execute(
-                """SELECT week FROM nfl_snap_counts
-                   WHERE player_id=? AND season=? AND CAST(week AS INTEGER) < ?""",
-                (player_id, _log_season, _POSTSEASON_FIRST_WEEK),
-            ):
-                try:
-                    w = int(sr["week"])
-                    if w not in weeks_played:
-                        weeks_played.append(w)
-                        games_played = max(games_played, len(weeks_played))
-                except (TypeError, ValueError):
-                    continue
-
-        weeks_played.sort()
-
-        # Sample classification
-        if games_played == 0:
-            sample = "none"
-        elif games_played < _THIN_SAMPLE_GAMES:
-            sample = "thin"
-        else:
-            sample = "full"
-
-        # Team weeks from schedule
-        team_weeks: list[int] = []
-        sched_columns = connection.execute("PRAGMA table_info(nfl_schedule)").fetchall()
-        if sched_columns and team:
-            tw_set = set()
-            for tw_row in connection.execute(
-                """SELECT week FROM nfl_schedule
-                   WHERE season=? AND week < ? AND (home_team=? OR away_team=?)""",
-                (_log_season, _POSTSEASON_FIRST_WEEK, team, team),
-            ):
-                try:
-                    tw_set.add(int(tw_row["week"]))
-                except (TypeError, ValueError):
-                    continue
-            team_weeks = sorted(tw_set)
-
-        # PPR calculations
-        ppr_per_game_played = round(ppr_total / games_played, 1) if ppr_total and games_played else None
-        ppr_per_team_game = round(ppr_total / _REG_SEASON_TEAM_GAMES, 1) if ppr_total else None
-        snap_pct = round(snap_pct_sum / snap_pct_count * 100, 0) if snap_pct_count else None
-        target_share = round(target_share_sum / target_share_count * 100, 1) if target_share_count else None
-        xfp_per_game = round(xfp_sum / xfp_count, 1) if xfp_count else None
-
-        # 4. QB lookup — for WR/RB/TE, find the QB on the same team
-        qb = None
-        if position in ("WR", "RB", "TE") and team:
-            qb_row = connection.execute(
-                """SELECT p.id, p.name, p.team
-                   FROM players p
-                   WHERE p.league='nfl' AND p.active=1
-                     AND p.position='QB' AND p.team=?
-                   LIMIT 1""",
-                (team,),
-            ).fetchone()
-            if qb_row:
-                qb_games = 0
-                qb_agg = connection.execute(
-                    """SELECT COUNT(*) AS g
-                       FROM player_game_logs
-                       WHERE player_id=? AND league='nfl' AND season=?
-                         AND CAST(game_no AS INTEGER) < ?""",
-                    (qb_row["id"], _log_season, _POSTSEASON_FIRST_WEEK),
-                ).fetchone()
-                if qb_agg:
-                    qb_games = qb_agg["g"]
-                qb = {
-                    "player_id": qb_row["id"],
-                    "name": qb_row["name"],
-                    "team": qb_row["team"],
-                    "games_played": qb_games,
-                }
-
-        return _json({
-            "player_id": player_id,
-            "name": name,
-            "team": team,
-            "position": position,
-            "active": active,
-            "adp": adp,
-            "percent_owned": percent_owned,
-            "sample": sample,
-            "games_played": games_played,
-            "weeks_played": weeks_played,
-            "team_weeks": team_weeks,
-            "ppr_per_game_played": ppr_per_game_played,
-            "ppr_per_team_game": ppr_per_team_game,
-            "snap_pct": snap_pct,
-            "target_share": target_share,
-            "xfp_per_game": xfp_per_game,
-            "qb": qb,
-        })
     finally:
         connection.close()
