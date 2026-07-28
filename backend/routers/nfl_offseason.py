@@ -589,19 +589,37 @@ def _regular_season_aggregates(connection: sqlite3.Connection, season: int) -> D
     # Which weeks each team actually played, from the published schedule.
     # After the vocabulary migration the logs speak ESPN, so the schedule join
     # works and the derivation from player_game_logs is no longer necessary.
+    # If nfl_schedule doesn't exist (test fixture, older DB), fall back to
+    # deriving team_weeks from the weeks present in player_game_logs.
     team_weeks: Dict[str, Set[int]] = defaultdict(set)
-    for row in connection.execute(
-        """SELECT home_team AS team, week FROM nfl_schedule
-           WHERE season=? AND week < ?
-        UNION ALL
-        SELECT away_team AS team, week FROM nfl_schedule
-        WHERE season=? AND week < ?""",
-        (season, _POSTSEASON_FIRST_WEEK, season, _POSTSEASON_FIRST_WEEK),
-    ):
-        try:
-            team_weeks[row["team"]].add(int(row["week"]))
-        except (TypeError, ValueError):
-            continue
+    sched_columns = _table_columns(connection, "nfl_schedule")
+    if {"home_team", "away_team", "week"}.issubset(sched_columns):
+        for row in connection.execute(
+            """SELECT home_team AS team, week FROM nfl_schedule
+               WHERE season=? AND week < ?
+            UNION ALL
+            SELECT away_team AS team, week FROM nfl_schedule
+            WHERE season=? AND week < ?""",
+            (season, _POSTSEASON_FIRST_WEEK, season, _POSTSEASON_FIRST_WEEK),
+        ):
+            try:
+                team_weeks[row["team"]].add(int(row["week"]))
+            except (TypeError, ValueError):
+                continue
+    else:
+        # Fallback: derive team weeks from player_game_logs game_no.
+        for row in connection.execute(
+            """SELECT team, CAST(game_no AS INTEGER) AS week
+               FROM player_game_logs
+               WHERE league='nfl' AND season=? AND team IS NOT NULL
+                 AND CAST(game_no AS INTEGER) < ?
+               GROUP BY team, game_no""",
+            (season, _POSTSEASON_FIRST_WEEK),
+        ):
+            try:
+                team_weeks[row["team"]].add(row["week"])
+            except (TypeError, ValueError):
+                continue
 
     out: Dict[int, dict] = {}
     for row in rows:

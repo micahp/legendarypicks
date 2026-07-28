@@ -54,6 +54,7 @@ class NflOffseasonApiTests(unittest.TestCase):
                   game_no TEXT,
                   game_id TEXT,
                   team TEXT,
+                  game_type TEXT,
                   stats TEXT
                 );
                 CREATE TABLE nfl_adp(
@@ -102,16 +103,16 @@ class NflOffseasonApiTests(unittest.TestCase):
             # POSTSEASON week that must never count toward availability.
             logs = []
             for week in range(1, 17):
-                logs.append((1, "nfl", 2025, str(week), f"2025_{week:02d}_LA_SF", "LA",
+                logs.append((1, "nfl", 2025, str(week), f"2025_{week:02d}_LA_SF", "LA", "REG",
                              '{"fpts_ppr": 20.0, "xfpts_ppr": 18.0, '
                              '"off_pct": 0.9, "target_share": 0.25}'))
             for week in range(1, 9):
-                logs.append((2, "nfl", 2025, str(week), f"2025_{week:02d}_ARI_SEA", "ARI",
+                logs.append((2, "nfl", 2025, str(week), f"2025_{week:02d}_ARI_SEA", "ARI", "REG",
                              '{"fpts_ppr": 17.0, "xfpts_ppr": 16.0, "off_pct": 1.0}'))
-            logs.append((2, "nfl", 2025, "19", "2025_19_ARI_SEA", "ARI",
+            logs.append((2, "nfl", 2025, "19", "2025_19_ARI_SEA", "ARI", "POST",
                          '{"fpts_ppr": 30.0, "xfpts_ppr": 28.0, "off_pct": 1.0}'))
             connection.executemany(
-                "INSERT INTO player_game_logs VALUES(?,?,?,?,?,?,?)", logs)
+                "INSERT INTO player_game_logs VALUES(?,?,?,?,?,?,?,?)", logs)
             connection.executemany(
                 "INSERT INTO nfl_adp VALUES(?,?,?,?)",
                 [
