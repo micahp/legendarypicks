@@ -1017,7 +1017,10 @@ def nfl_draft_board(
             snap_pct = None
             target_share = None
         else:
-            ppr_total = (scoring["ppr_total"] if scoring else None) or None
+            # Not `or None`: a player measured across a full season who scored
+            # exactly 0.0 PPR is a fact we hold, and `0 or None` throws it away,
+            # rendering an em dash that claims we know nothing about him.
+            ppr_total = scoring["ppr_total"] if scoring else None
             dst_total = None
             dst_pts_per_game = None
             pk_pts_total = None
@@ -1087,8 +1090,16 @@ def nfl_draft_board(
             # as a bye rather than as an absence.
             "team_weeks": player_team_weeks,
             # Both averages, always together.
-            "ppr_per_game_played": _round(ppr_total / games_played) if ppr_total and games_played else None,
-            "ppr_per_team_game": _round(ppr_total / _REG_SEASON_TEAM_GAMES) if ppr_total else None,
+            "ppr_per_game_played": (
+                _round(ppr_total / games_played)
+                if ppr_total is not None and games_played
+                else None
+            ),
+            "ppr_per_team_game": (
+                _round(ppr_total / _REG_SEASON_TEAM_GAMES)
+                if ppr_total is not None
+                else None
+            ),
             "xfp_per_game": _round(xfp_per_game) if xfp_per_game is not None else None,
             "snap_pct": _round(snap_pct * 100, 0) if snap_pct is not None else None,
             "target_share": _round(target_share * 100, 1) if target_share is not None else None,

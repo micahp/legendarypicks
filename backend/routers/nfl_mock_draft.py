@@ -303,15 +303,15 @@ def pool(season: int = Query(...)):
             # has to be made there too, or the two screens start disagreeing
             # about the same player again.
             stats = season_stats.get(pid)
-            ppr_total = (stats["ppr_total"] if stats else None) or None
+            ppr_total = stats["ppr_total"] if stats else None
             ppr_per_game_played = (
                 round(ppr_total / gp, 1)
-                if ppr_total and gp
+                if ppr_total is not None and gp
                 else None
             )
             ppr_per_team_game = (
                 round(ppr_total / _REG_SEASON_TEAM_GAMES, 1)
-                if ppr_total
+                if ppr_total is not None
                 else None
             )
             xfp_per_game = (
@@ -722,9 +722,17 @@ def player_detail(player_id: int):
             sample = "full"
 
         # PPR calculations
-        ppr_total = (_season_stats["ppr_total"] if _season_stats else None) or None
-        ppr_per_game_played = round(ppr_total / games_played, 1) if ppr_total and games_played else None
-        ppr_per_team_game = round(ppr_total / _REG_SEASON_TEAM_GAMES, 1) if ppr_total else None
+        ppr_total = _season_stats["ppr_total"] if _season_stats else None
+        ppr_per_game_played = (
+            round(ppr_total / games_played, 1)
+            if ppr_total is not None and games_played
+            else None
+        )
+        ppr_per_team_game = (
+            round(ppr_total / _REG_SEASON_TEAM_GAMES, 1)
+            if ppr_total is not None
+            else None
+        )
         snap_pct = (
             round(_season_stats["snap_pct"] * 100, 0)
             if _season_stats and _season_stats["snap_pct"] is not None
