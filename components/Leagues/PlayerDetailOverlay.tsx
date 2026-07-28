@@ -5,9 +5,29 @@ import { AvailabilityStrip } from './NflDraftRoom'
 interface Props {
   playerId: number
   onClose: () => void
+
+  /* Draft-room context. All optional: the camp-tab research board renders this
+     same overlay with none of it, and a research board has no pick to be on. */
+  currentPick?: number
+  posRank?: number
+  byeWeek?: number | null
+  onDraft?: (playerId: number) => void
+  onQueue?: (playerId: number) => void
+  canDraft?: boolean
+  queued?: boolean
 }
 
-export default function PlayerDetailOverlay({ playerId, onClose }: Props) {
+export default function PlayerDetailOverlay({
+  playerId,
+  onClose,
+  currentPick,
+  posRank,
+  byeWeek,
+  onDraft,
+  onQueue,
+  canDraft,
+  queued,
+}: Props) {
   const [player, setPlayer] = useState<PlayerDetailResponse | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -45,6 +65,14 @@ export default function PlayerDetailOverlay({ playerId, onClose }: Props) {
   const noSample = player?.sample === 'none'
   const thin = player?.sample === 'thin'
   const missed = player?.games_missed ?? null
+
+  // The two PPR figures diverge only when availability dropped. Compare at the
+  // precision we render (1dp) so a rounding tie does not print twice.
+  const pprDiverges =
+    player != null &&
+    player.ppr_per_game_played != null &&
+    player.ppr_per_team_game != null &&
+    player.ppr_per_game_played.toFixed(1) !== player.ppr_per_team_game.toFixed(1)
 
   return (
     <div
@@ -118,15 +146,28 @@ export default function PlayerDetailOverlay({ playerId, onClose }: Props) {
               <h2 className="text-lg font-bold text-zinc-100 leading-tight">
                 {player.name}
               </h2>
-              <div className="mt-0.5 flex items-center gap-2">
+              <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1">
                 <span className="rounded bg-zinc-800 px-1.5 py-0.5 text-[11px] font-semibold uppercase text-zinc-400">
-                  {player.position}
+                  {posRank != null ? `${player.position}${posRank}` : player.position}
                 </span>
                 <span className="text-sm text-zinc-400">{player.team}</span>
+                {byeWeek != null && (
+                  <>
+                    <span className="text-xs text-zinc-600">·</span>
+                    <span className="text-xs text-zinc-500">
+                      Bye <span className="tabular-nums">{byeWeek}</span>
+                    </span>
+                  </>
+                )}
                 {!player.active && (
                   <span className="text-[11px] text-zinc-600">(inactive)</span>
                 )}
               </div>
+              {posRank != null && (
+                <p className="mt-1 text-[10px] text-zinc-600">
+                  {player.position}{posRank} by ADP — not our ranking
+                </p>
+              )}
             </header>
 
             {/* ── Availability strip ────────────────────────────────────── */}
@@ -195,7 +236,11 @@ export default function PlayerDetailOverlay({ playerId, onClose }: Props) {
                       strong
                     />
                   </>
-                ) : (
+                ) : pprDiverges ? (
+                  /* The two PPR figures only carry information when they disagree,
+                     and they disagree exactly when a player missed time: per game
+                     played is what he did on the field, per team game is what the
+                     roster spot actually returned. Burrow 2025 is 16.8 and 7.9. */
                   <>
                     <StatRow
                       label="PPR / game played"
@@ -208,6 +253,17 @@ export default function PlayerDetailOverlay({ playerId, onClose }: Props) {
                       strong
                     />
                   </>
+                ) : (
+                  /* Identical figures mean he played every game his team did.
+                     Printing the same number twice reads as a rendering bug, so
+                     say it once and say why it is only one number. */
+                  <StatRow
+                    label="PPR / game"
+                    value={player.ppr_per_game_played ?? player.ppr_per_team_game}
+                    muted={thin}
+                    strong
+                    note="played every team game"
+                  />
                 )}
 
                 {/* Conditional averages — labeled */}
@@ -279,13 +335,84 @@ export default function PlayerDetailOverlay({ playerId, onClose }: Props) {
                       : '\u2014'}
                   </span>
                 </div>
+
+                {/* Reach vs value \u2014 the only question a mock draft exists to
+                    answer. ADP alone cannot answer it without the pick you are
+                    sitting on, which this overlay never used to know. */}
+                {currentPick != null && player.adp != null && (
+                  <div className="flex items-baseline justify-between border-t border-zinc-800/60 pt-1.5">
+                    <span className="text-xs text-zinc-400">
+                      At pick <span className="tabular-nums">{currentPick}</span>
+                    </span>
+                    <span className="text-xs text-zinc-300">
+                      {describeAdpDelta(currentPick, player.adp)}
+                    </span>
+                  </div>
+                )}
               </div>
             </section>
+
+            {/* \u2500\u2500 Actions \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+                Without these the overlay is a dead end: read it, close it, then
+                hunt the row again. */}
+            {(onDraft || onQueue) && (
+              <section className="flex items-center gap-2">
+                {onDraft && (
+                  <button
+                    type="button"
+                    disabled={!canDraft}
+                    onClick={() => { onDraft(playerId); onClose() }}
+                    className={`flex-1 rounded-lg border px-4 py-2.5 text-sm font-semibold transition-colors ${
+                      canDraft
+                        ? 'border-zinc-600 bg-zinc-800 text-zinc-100 hover:border-zinc-500 hover:bg-zinc-700'
+                        : 'cursor-not-allowed border-zinc-800 bg-zinc-900 text-zinc-700'
+                    }`}
+                  >
+                    {canDraft ? 'Draft' : 'Not your pick'}
+                  </button>
+                )}
+                {onQueue && (
+                  <button
+                    type="button"
+                    disabled={queued}
+                    onClick={() => { onQueue(playerId); onClose() }}
+                    className={`rounded-lg border px-4 py-2.5 text-sm font-medium transition-colors ${
+                      queued
+                        ? 'cursor-default border-zinc-800 bg-zinc-900 text-zinc-600'
+                        : 'border-zinc-700 bg-zinc-900 text-zinc-300 hover:border-zinc-600 hover:text-zinc-100'
+                    }`}
+                  >
+                    {queued ? 'Queued' : 'Queue'}
+                  </button>
+                )}
+              </section>
+            )}
           </div>
         )}
       </div>
     </div>
   )
+}
+
+/* Reach vs value, in the unit drafters actually speak: picks, and rounds when the
+   gap is big enough that picks stop being intuitive. 12-team league, so a round is
+   12 picks. Deliberately plain language and no colour — honest-data-ui §6.2 keeps
+   accent for absence, and "reaching" is a judgement, not a missing value. */
+const PICKS_PER_ROUND = 12
+
+function describeAdpDelta(currentPick: number, adp: number): string {
+  const delta = adp - currentPick // positive = he is going later than this pick
+  const picks = Math.round(Math.abs(delta))
+
+  if (picks <= 2) return 'about even with ADP'
+
+  const rounds = Math.abs(delta) / PICKS_PER_ROUND
+  const size =
+    rounds >= 1
+      ? `${rounds.toFixed(1)} rounds`
+      : `${picks} pick${picks === 1 ? '' : 's'}`
+
+  return delta > 0 ? `reaching ${size} early` : `value — ${size} past ADP`
 }
 
 /** A single stat row: label left, monospace value right. Dash for null. */
@@ -295,12 +422,14 @@ function StatRow({
   strong,
   muted,
   format,
+  note,
 }: {
   label: string
   value: number | null
   strong?: boolean
   muted?: boolean
   format?: 'pct0' | 'pct1'
+  note?: string
 }) {
   const display = value != null
     ? format === 'pct0'
@@ -312,7 +441,12 @@ function StatRow({
 
   return (
     <div className="flex items-baseline justify-between px-3 py-2 border-b border-zinc-800/50 last:border-b-0">
-      <span className="text-xs text-zinc-400">{label}</span>
+      <span className="text-xs text-zinc-400">
+        {label}
+        {note && (
+          <span className="ml-1.5 text-[10px] text-zinc-600">{note}</span>
+        )}
+      </span>
       {value == null ? (
         <span className="font-mono tabular-nums text-sm text-zinc-700">{display}</span>
       ) : (

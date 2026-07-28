@@ -598,6 +598,13 @@ export default function DraftRoom({ pool, draftState, onUserPick, onTimeout, use
       <PlayerDetailOverlay
         playerId={selectedPlayerId}
         onClose={() => setSelectedPlayerId(null)}
+        currentPick={draftState.currentPick}
+        posRank={posRank.get(selectedPlayerId)}
+        byeWeek={byeMap.get(playerMap.get(selectedPlayerId)?.team ?? '') ?? null}
+        onDraft={onUserPick}
+        onQueue={onAddToQueue}
+        canDraft={userTurn && !draftState.completed && !draftedIds.has(selectedPlayerId)}
+        queued={queue.includes(selectedPlayerId)}
       />
     )}
     </>
