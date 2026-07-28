@@ -35,9 +35,29 @@ else: print('FAIL A1  (qb=%s gp=%s games_missed_present=%s)'%(name,gp,gm))
 import sys,json
 d=json.load(sys.stdin)
 ppr=d.get('ppr_per_game_played'); snap=d.get('snap_pct'); pk=d.get('pk_pts_per_game')
-# A kicker must not assert a PPR average of 0.0. null or absent is correct.
-if ppr in (None,) and (pk is None or pk>0): print('PASS A1b (Aubrey ppr=%s pk_pts_per_game=%s)'%(ppr,pk))
-else: print('FAIL A1b (Aubrey ppr=%s snap=%s pk=%s  <- 0.0 is a false measurement)'%(ppr,snap,pk))
+gp=d.get('games_played') or 0
+# A kicker must not assert a PPR average of 0.0 — null or absent is correct there.
+#
+# But this gate used to accept 'pk is None' as well, and that made it blind to the
+# opposite failure: it was green against a backend serving 32 of 38 kickers a real
+# points-per-game AND against one serving zero, because absence passed either way.
+# Absence is only honest when the player did not play. Aubrey played 17 games, so a
+# null here is a missing measurement, not an honest one.
+if ppr is None and isinstance(pk,(int,float)) and pk>0: print('PASS A1b (Aubrey ppr=%s gp=%s pk_pts_per_game=%s)'%(ppr,gp,pk))
+elif ppr is not None: print('FAIL A1b (Aubrey ppr=%s snap=%s  <- 0.0 is a false measurement)'%(ppr,snap))
+else: print('FAIL A1b (Aubrey gp=%s but pk_pts_per_game=%s  <- played, so null is data loss not honesty)'%(gp,pk))
+"
+  curl -s --max-time 30 "$B/api/nfl/draft-board?season=2026&position=PK&limit=100" | $PY -c "
+import sys,json
+d=json.load(sys.stdin)
+rows=d.get('players') or []
+# Population form of the same question. One player passing says nothing about the
+# column; assert a COUNT of real values, or the gate certifies an empty database.
+elig=[r for r in rows if (r.get('games_played') or 0)>=8]
+cov=[r for r in elig if isinstance(r.get('pk_pts_per_game'),(int,float))]
+n,c=len(elig),len(cov)
+if n>=20 and c>=int(n*0.8): print('PASS A1c (pk_pts_per_game on %d of %d kickers with gp>=8, n_rows=%d)'%(c,n,len(rows)))
+else: print('FAIL A1c (pk_pts_per_game on %d of %d kickers with gp>=8, n_rows=%d  <- need n>=20 and 80%% covered)'%(c,n,len(rows)))
 "
 }
 
@@ -229,7 +249,7 @@ regrender(){
 #      `all` dispatch ran 14 gates and silently skipped REG-render because the
 #      function was written but never added to the case. The count below is what
 #      makes that structurally impossible to repeat, rather than fixed once.
-ALL_IDS="A1 A1b A2 A3 B1 B2 B2b B4 REG-pool REG-adp-dst REG-dst REG-pytest REG-jest REG-modules REG-render"
+ALL_IDS="A1 A1b A1c A2 A3 B1 B2 B2b B4 REG-pool REG-adp-dst REG-dst REG-pytest REG-jest REG-modules REG-render"
 
 out=$(mktemp) || exit 2
 trap 'rm -f "$out"' EXIT
@@ -240,7 +260,7 @@ trap 'rm -f "$out"' EXIT
     # `verify-gates.sh REG-render` — the name the gate calls itself — and got no
     # verdict and exit 0, because the label here was `render`. A gate you cannot
     # invoke by its own name is a gate that reports green when you ask for it.
-    A1|a1) a1;; A2|a2) a2;; A3|a3) a3;; B1|b1) b1;; B2|b2|B2b) b2;; B4|b4) b4;;
+    A1|a1|A1b|A1c) a1;; A2|a2) a2;; A3|a3) a3;; B1|b1) b1;; B2|b2|B2b) b2;; B4|b4) b4;;
     reg|REG|regressions) reg;;
     render|REG-render|regrender) regrender;;
     all) a1; a2; a3; b1; b2; b4; echo "--- regressions ---"; reg; regrender;;
