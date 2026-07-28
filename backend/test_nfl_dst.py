@@ -547,13 +547,11 @@ class DstPoolSelectionTests(unittest.TestCase):
         self.con.close()
         os.unlink(self.db_path)
 
-    _SENTINEL = 169.0
-
     def _pool_sort_key(self, p):
         """Production sort key from nfl_mock_draft.py."""
-        adp = p["adp"] if p["adp"] is not None else 999999
-        return (0 if adp < self._SENTINEL else 1,
-                adp if adp < self._SENTINEL else 999999,
+        adp = p["adp"]
+        return (0 if adp is not None else 1,
+                adp if adp is not None else 999999,
                 -(p["percent_owned"] or 0),
                 p["name"])
 
@@ -654,7 +652,7 @@ class DstB17PlayerDetailTests(unittest.TestCase):
 
 
 class DstFollowUpTests(DstDraftBoardTests):
-    """Follow-up regression: sentinel position-aware, filterSlotIds removed.
+    """Follow-up regression: published ADP preserved, filterSlotIds removed.
 
     Inherits DstDraftBoardTests setUp/tearDown for complete board schema."""
 
@@ -686,14 +684,14 @@ class DstFollowUpTests(DstDraftBoardTests):
         self.assertEqual(len(late), 1)
         self.assertEqual(late[0]["adp"], 170.0)
 
-    def test_non_def_adp_ge_169_gets_null(self):
-        """Non-DEF with ADP >=169 still gets sentinel null."""
+    def test_non_def_published_adp_ge_169_survives(self):
+        """A copied non-DEF ADP is not discarded by a reader-side cutoff."""
         payload = self.board(position="QB")
         qbs = [p for p in payload["players"] if p["position"] == "QB"]
         self.assertGreaterEqual(len(qbs), 1)
         late = [p for p in qbs if p["name"] == "Late QB"]
         self.assertEqual(len(late), 1)
-        self.assertIsNone(late[0]["adp"])
+        self.assertEqual(late[0]["adp"], 170.0)
 
     def test_filter_slot_ids_absent_from_headers(self):
         """Both HEADERS and per-page filter omit filterSlotIds."""

@@ -38,11 +38,6 @@ _REG_SEASON_LAST_WEEK = 18
 # report 21/17 games played.
 _POSTSEASON_FIRST_WEEK = 19
 
-# ESPN parks undrafted players at a sentinel: 1,392 of 2,511 ADP rows sit at
-# exactly 170.0. Only 248 players carry a real ADP, so anything at or past this
-# is "not actually ranked" and must not be shown as though it were.
-_ADP_SENTINEL = 169.0
-
 # Below this, a per-game average is one or two games. xFP predicts better than
 # actual points here (r=0.42 vs 0.37 over 2024->2025) but neither is reliable,
 # so the surface must mark the sample rather than quietly rank on it.
@@ -956,13 +951,12 @@ def nfl_draft_board(
             if is_pk
             else aggregates.get(pid)
         )
-        adp = row["adp"]
-        ranked_adp = adp if (adp is not None and (is_def or adp < _ADP_SENTINEL)) else None
+        published_adp = row["adp"]
 
         # Eligible if we have something true to say: a real season, or a real
         # market price. A rookie with neither is not on the board at all --
         # better absent than present with a fabricated zero.
-        if availability is None and ranked_adp is None:
+        if availability is None and published_adp is None:
             continue
 
         games_played = availability["games_played"] if availability else 0
@@ -1042,8 +1036,8 @@ def nfl_draft_board(
             # has instead of a season.
             "depth_rank": row["depth_rank"],
             "depth_team": normalize_optional("nfl", row["depth_team"]) if row["depth_team"] else None,
-            "adp": ranked_adp,
-            "adp_is_ranked": ranked_adp is not None,
+            "adp": published_adp,
+            "adp_is_ranked": published_adp is not None,
             "percent_owned": row["percent_owned"],
             # Availability: the headline. Denominator is every game the team
             # played, so a missed game costs the drafter exactly what it cost.

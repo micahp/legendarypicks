@@ -109,7 +109,7 @@ class TestNflMockDraft(unittest.TestCase):
                     (5, 2026, 170.0, 10.0),   # PK at sentinel with ownership
                     (6, 2026, 2.0, 98.0),
                     (7, 2026, 10.0, 92.0),
-                    (8, 2026, 170.0, 0.0),    # at sentinel, no ownership → excluded from pool
+                    (8, 2026, None, 0.0),     # no published ADP or ownership → excluded
                 ],
             )
             # Seed game logs for players 1–4 (full sample: 10+ games).
@@ -154,7 +154,7 @@ class TestNflMockDraft(unittest.TestCase):
         self.assertEqual(body["season"], self.SEASON)
         self.assertGreaterEqual(body["count"], 1)
 
-        # Player 8 (Theta PK, ADP 170.0, percent_owned 0.0) must NOT appear.
+        # Player 8 has neither a published ADP nor ownership and must not appear.
         player_ids = {p["player_id"] for p in body["players"]}
         self.assertNotIn(8, player_ids)
 
@@ -164,9 +164,8 @@ class TestNflMockDraft(unittest.TestCase):
         body = resp.json()
         adp_values = [p["adp"] for p in body["players"]]
 
-        # First N should be strictly below 169.0, sorted ascending.
-        real_adp = [a for a in adp_values if a < nfl_mock_draft._ADP_SENTINEL]
-        self.assertEqual(real_adp, sorted(real_adp))
+        published_adp = [a for a in adp_values if a is not None]
+        self.assertEqual(published_adp, sorted(published_adp))
 
     def test_pool_availability_data(self):
         """Pool includes sample, games_played, games_missed."""

@@ -196,13 +196,15 @@ class NflOffseasonApiTests(unittest.TestCase):
         payload = self.board()
         self.assertEqual(payload["contract"], "nfl-draft-board-v2")
         self.assertEqual(payload["reference_season"], 2025)
-        # Alias Receiver, Actual Mover and Camp Rookie are all eligible. The
-        # inactive back is off the spine and Undrafted Body has neither a season
-        # nor a real market price, so neither appears.
-        self.assertEqual(payload["eligible_players"], 3)
-        self.assertEqual([player["player_id"] for player in payload["players"]], [1, 2, 4])
+        # Every copied ADP is preserved; the inactive player stays off the
+        # identity spine.
+        self.assertEqual(payload["eligible_players"], 4)
+        self.assertEqual(
+            [player["player_id"] for player in payload["players"]],
+            [1, 2, 4, 5],
+        )
 
-        alias_receiver, actual_mover, _rookie = payload["players"]
+        alias_receiver, actual_mover, _rookie, _late = payload["players"]
         self.assertEqual(alias_receiver["current_team"], "LAR")
         self.assertEqual(alias_receiver["depth_team"], "LAR")
         self.assertFalse(alias_receiver["team_changed"])
@@ -341,11 +343,11 @@ class NflOffseasonApiTests(unittest.TestCase):
         self.assertTrue(rookie["adp_is_ranked"])
         self.assertEqual(rookie["depth_rank"], 2)
 
-    def test_undrafted_sentinel_adp_is_not_treated_as_a_ranking(self):
-        names = [p["name"] for p in self.board()["players"]]
-        # ESPN parks undrafted players at 170.0. A player with no season and
-        # only a sentinel price has nothing true to say and stays off the board.
-        self.assertNotIn("Undrafted Body", names)
+    def test_published_late_adp_is_not_discarded_by_the_reader(self):
+        players = {p["name"]: p for p in self.board()["players"]}
+        late = players["Undrafted Body"]
+        self.assertEqual(late["adp"], 170.0)
+        self.assertTrue(late["adp_is_ranked"])
 
     def test_thin_samples_are_marked_not_silently_ranked(self):
         with sqlite3.connect(self.db_path) as connection:
@@ -365,7 +367,7 @@ class NflOffseasonApiTests(unittest.TestCase):
         # FLEX carries the rookie too: no season, but a real ADP and a role.
         flex = self.board(position="FLEX")
         self.assertEqual([player["name"] for player in flex["players"]],
-                         ["Alias Receiver", "Camp Rookie"])
+                         ["Alias Receiver", "Camp Rookie", "Undrafted Body"])
 
     def test_name_search_finds_a_player_without_paging_to_him(self):
         # The whole point: one player back, not the board filtered client-side.

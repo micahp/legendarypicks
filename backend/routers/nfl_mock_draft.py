@@ -34,7 +34,6 @@ _DB = os.environ.get("LP_DB_PATH") or os.path.join(
 
 _CONTRACT = "nfl-mock-draft-v1"
 _CURRENT_SEASON = 2026
-_ADP_SENTINEL = 169.0
 _REG_SEASON_TEAM_GAMES = 17
 _POSTSEASON_FIRST_WEEK = 19
 _THIN_SAMPLE_GAMES = 4
@@ -199,8 +198,8 @@ def pool(season: int = Query(...)):
                JOIN nfl_adp na ON na.player_id = p.id AND na.season = ?
                WHERE p.league = 'nfl' AND p.active = 1
                  AND p.position = 'DEF'
-                 AND (na.adp < ? OR na.percent_owned > 0)""",
-            (season, _ADP_SENTINEL),
+                 AND na.adp IS NOT NULL""",
+            (season,),
         ).fetchall()
 
         # ── Non-DEF: top N to fill pool cap ──
@@ -214,24 +213,23 @@ def pool(season: int = Query(...)):
                     JOIN nfl_adp na ON na.player_id = p.id AND na.season = ?
                     WHERE p.league = 'nfl' AND p.active = 1
                       AND p.position IN ({_placeholders})
-                      AND (na.adp < ? OR na.percent_owned > 0)
+                      AND (na.adp IS NOT NULL OR na.percent_owned > 0)
                     ORDER BY
-                      CASE WHEN na.adp < ? THEN 0 ELSE 1 END,
-                      CASE WHEN na.adp < ? THEN na.adp ELSE 999999.0 END ASC,
+                      CASE WHEN na.adp IS NOT NULL THEN 0 ELSE 1 END,
+                      na.adp ASC,
                       na.percent_owned DESC,
                       p.name ASC
                     LIMIT ?""",
-                (season, *_NON_DEF_POSITIONS,
-                 _ADP_SENTINEL, _ADP_SENTINEL, _ADP_SENTINEL, _non_def_cap),
+                (season, *_NON_DEF_POSITIONS, _non_def_cap),
             ).fetchall()
 
         # Merge both sets
         rows = list(def_rows) + list(non_def_rows)
-        # Sort by same ordering: tier (adp<169 first), then adp ASC within tier 0,
-        # then percent_owned DESC, then name ASC
+        # Sort by the copied ESPN ADP. Nulls, if selected through published
+        # ownership, follow all players with a published ADP.
         rows.sort(key=lambda r: (
-            0 if (r["adp"] or 999999) < _ADP_SENTINEL else 1,
-            (r["adp"] or 999999) if (r["adp"] or 999999) < _ADP_SENTINEL else 999999,
+            0 if r["adp"] is not None else 1,
+            r["adp"] if r["adp"] is not None else 999999,
             -(r["percent_owned"] or 0),
             r["name"],
         ))
