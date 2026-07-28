@@ -8,6 +8,7 @@ import UfcRankingsTab from '../../components/Leagues/UfcRankingsTab'
 import PredictTab from '../../components/Leagues/PredictTab'
 import NflCampHero from '../../components/Leagues/NflCampHero'
 import NflOffseasonMovers from '../../components/Leagues/NflOffseasonMovers'
+import NflMockDraftCard from '../../components/Leagues/NflMockDraftCard'
 import NflDraftRoom from '../../components/Leagues/NflDraftRoom'
 import NflScheduleTab from '../../components/Leagues/NflScheduleTab'
 import { useLeagueRouteState } from '../../components/Leagues/hooks/useLeagueRouteState'
@@ -160,6 +161,7 @@ export default function LeagueHubPage() {
               loading={seasonContext.loading}
               error={seasonContext.error}
             />
+            <NflMockDraftCard />
             <NflOffseasonMovers
               data={transactions.data}
               loading={transactions.loading}

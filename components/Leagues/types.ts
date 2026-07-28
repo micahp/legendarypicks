@@ -340,3 +340,48 @@ export interface NflUsageResponse {
   averages: NflUsageAverages
   trend: NflUsageTrend
 }
+
+// ── Mock draft contracts ─────────────────────────────────────────────────
+
+export interface PoolPlayer {
+  player_id: number
+  name: string
+  position: string
+  team: string
+  adp: number | null
+  percent_owned: number | null
+  sample: 'full' | 'thin' | 'none'
+  games_played: number
+  games_missed: number | null
+  weeks_played: number[]
+  team_weeks: number[]
+}
+
+export interface PoolResponse {
+  contract: string
+  season: number
+  count: number
+  players: PoolPlayer[]
+}
+
+export interface MockDraftPick {
+  pick_no: number
+  team_no: number
+  player_id: number
+  auto: boolean
+  created_at?: number
+}
+
+export interface MockDraft {
+  id: string
+  season: number
+  seat: number
+  teams: number
+  rounds: number
+  seed: number
+  status: 'active' | 'complete' | 'abandoned'
+  created_at: number
+  updated_at: number
+  completed_at: number | null
+  picks: MockDraftPick[]
+}

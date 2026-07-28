@@ -250,7 +250,7 @@ export default function NflDraftRoom({
   )
 }
 
-function DraftPlayerRow({
+export function DraftPlayerRow({
   player,
   noteRank,
   watched,
@@ -404,7 +404,7 @@ function DraftPlayerRow({
 }
 
 /** A dash that is visibly not a zero. Absence is a claim about us. */
-function StatValue({
+export function StatValue({
   value,
   strong,
   muted,
@@ -434,7 +434,7 @@ function StatValue({
  * bye is not an absence. Played renders quiet; the saturated colour is reserved
  * for the games he missed, which is the information no competitor shows.
  */
-function AvailabilityStrip({
+export function AvailabilityStrip({
   weeksPlayed,
   teamWeeks,
   name,
