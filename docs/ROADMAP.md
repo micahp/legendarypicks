@@ -305,6 +305,87 @@ rows on empty bench slots. `:255` hardcodes `TEAM_GAMES - games_played` instead 
 
 ---
 
+## Mock draft v1 — scored 2026-07-28 (pt.14)
+
+Branch `feat/dst-and-mock-draft`, 55 ahead / 0 behind `dev`. Nothing merged, nothing pushed.
+**State of the work is one command**, not this table:
+
+```bash
+bash /root/lp-team-vocab/verify-gates.sh all      # 14 gates; LP_GATE_W/B/F to retarget
+```
+
+The gate suite is the scoreboard. Where this document and a gate disagree, the gate wins.
+
+| item | pt.13 | now | how it was checked |
+|---|---|---|---|
+| M1 D/ST | UI renders it | **UI renders it + has a starting roster slot** (`8234ecb`) | browser: drafting SEA D/ST lands in DEF, not the bench |
+| M2 availability from snaps | done | done | A1/A2 |
+| M3 six objects | 6/6 committed, **never tested** | 6/6 **and the tests actually ran** — 36/36 | jest was SIGBUS-dead 01:54→08:00 |
+| M4 resume/share | scratched | scratched (Micah, 2026-07-28) | — |
+| M5 overlay | built | built | B2 |
+| M6 camp card | blocked on M4 | out | — |
+| M7 polish | B4 green | scrollbar ✓, bench 7→6 ✓, **`TEAM_GAMES` still hardcoded** | see B14 |
+| B8/B9/B10 | fixed | fixed | A1b / B1 / A1+A2 |
+
+**The mock draft has now been opened in a browser** — for the first time. It works: pool,
+filters, queue, board grid, ledger, roster, results screen, zero console errors.
+
+### B11. D/ST ADP is published; we derived it instead — **open, delegated (job15)**
+`nfl_mock_draft.py:314` says *"D/ST — no published ADP exists. Derive ranking from fantasy
+totals."* **Measured 2026-07-28: false.** All 32 carry a published ADP in the payload
+`ingest_nfl_adp.py` already downloads (DEN 89.94, HOU 91.81, LAR 98.19, SEA 106.50). ESPN keys
+D/ST with **negative** ids (`-16000 - proTeamId`) and all 32 `players.espn_id` are empty, so the
+join matched **0 of 32** — a silent miss, papered over with a derivation. The derivation also
+disagrees with the published order: it ranks SEA #1, ESPN ranks DEN #1 and SEA 4th.
+**This retires M1's "(b) D/ST ADP" gap and voids pt.13 finding #6** — the choice between pool
+index 150 and 268 was a choice between two fabrications. Spec:
+`TASK-job15-dst-published-adp.md`. Gate `REG-adp-dst` is committed **RED** with the expected
+numbers written before the code (`b8cc4b1`).
+
+### B12. The camp-tab draft board was never wired to its hook — **FIXED `77de2f1`**
+`/leagues/nfl?tab=camp` rendered "Draft board unavailable." `NflDraftRoom` is presentational
+and takes `data`/`loading`/`error`/…, but the page rendered `<NflDraftRoom enabled={…} />` and
+**`useNflDraftBoard` was never called**. Filed in pt.13 as a cosmetic `TS2322`; it was the bug.
+`next.config.js:9` sets `typescript: { ignoreBuildErrors: true }`, so the only signal that
+would have caught it is configured off. **Corrects pt.13 §4 item 3:** the `TS2802` errors
+cannot break a production build for the same reason — and the identical error already exists
+pre-branch at `pages/scores.tsx:305`.
+
+### B13. The draft clock was a deadlock, not a decoration — **FIXED `1a46101`**
+The 30s countdown reached 0:00 and stopped; nothing picked. Measured: the draft sat on pick 6
+indefinitely, so anyone who stepped away had a dead page. `autopick()` already existed in the
+engine documenting this exact caller. Now picks from the queue first, else best-available with
+zero jitter, recorded `auto: true`. Two ordering traps found only by watching a real draft:
+`userTurn` does not change between consecutive user turns (one timeout cascaded through all 180
+picks — a full draft in 40s), and a stale `seconds` on the turn-change render fired twice and
+silently skipped the back-to-back snake pick.
+
+### B14. `team_games` is absent from the mock-draft pool payload — **open, small**
+`DraftRoom.tsx` falls back to hardcoded `TEAM_GAMES = 17`. The payload has no `team_games`
+(`TS2339`) — but it **does** carry `team_weeks`, so this is a rename, not missing data: use
+`team_weeks.length`. B4 passes anyway because it greps for `"TEAM_GAMES - "` and the code is
+`/{TEAM_GAMES}` — **the gate's pattern is narrower than its claim.** This is M7's third bullet.
+
+### B15. `adp: p.adp ?? 999` fabricates an ADP in the UI — **open, small**
+`pages/mock-draft.tsx:107` coerces the API's honest `null` into `999`, which renders as
+`999.0` on D/ST rows. The null-renders-as-"—" fix in `74b34fd` is dead code because null never
+reaches it. Banned by `honest-data-ui`. Resolves itself once B11 lands a real ADP, but the
+coercion should go regardless.
+
+### B16. Two jest suites fail and no gate covers them — **open**
+`components/Game/WCContext.test.tsx` — 2 failures in WC live-context polling. Pre-existing (the
+import graph is disjoint from MockDraft) and invisible for two reasons at once: jest has been
+dead since 01:54, **and** `REG-jest` only runs `--testPathPattern='lib/mockDraft'`.
+
+### The gate gap that outranks all of the above
+Eight gates were green while the pool table crashed on first render. Every one was true; none
+of them rendered React. `REG-render` — a Playwright smoke gate that loads `/mock-draft` and
+`/leagues/nfl?tab=camp` and fails on any console or page error — is the highest-value
+un-started item on this list. Both bugs above (B12, B13) were found by hand-driving a browser,
+which is exactly the thing no gate does.
+
+---
+
 ## Bugs caught 2026-07-27 (pt.10)
 
 ### B8. Kicker game data does not exist; Brandon Aubrey renders a false figure
