@@ -170,11 +170,8 @@ def pool(season: int = Query(...)):
         _log_season = (_log_season_row[0] if _log_season_row and _log_season_row[0]
                        else _CURRENT_SEASON - 1)
 
-        # Per-player aggregates: games_played, weeks_played, and primary_team
-        # (the team he logged the most games for that season — handles mid-season
-        # trades and team-code mismatches between the players table and the logs,
-        # exactly as nfl_offseason.py:571-605 does).  Ties are broken by
-        # preferring the team with the highest logged week (the one he finished on).
+        # ── Per-player aggregates from player_game_logs (stats) ──────────
+        # Games played + weeks present + stats from the stat table.
         agg_rows = connection.execute(
             """SELECT player_id, COUNT(*) AS games_played,
                       GROUP_CONCAT(CAST(game_no AS INTEGER)) AS weeks_csv,
@@ -204,40 +201,74 @@ def pool(season: int = Query(...)):
             max_w = max(weeks) if weeks else 0
             rec["team_max_week"][team] = max(rec["team_max_week"].get(team, 0), max_w)
 
+        # ── M2: merge snap-count presence (all positions) ────────────────
+        # Snap counts tell us whether a player dressed, regardless of whether
+        # they recorded a stat.  This fixes kickers/defenders who showed 0-1
+        # games because they never touched the ball.
+        snap_columns = connection.execute("PRAGMA table_info(nfl_snap_counts)").fetchall()
+        if snap_columns:
+            for sr in connection.execute(
+                """SELECT player_id, COUNT(*) AS snap_games,
+                          GROUP_CONCAT(week) AS snap_weeks,
+                          team
+                   FROM nfl_snap_counts
+                   WHERE season=? AND CAST(week AS INTEGER) < ?
+                   GROUP BY player_id""",
+                (_log_season, _POSTSEASON_FIRST_WEEK),
+            ):
+                pid = sr["player_id"]
+                s_weeks = [int(w) for w in (sr["snap_weeks"] or "").split(",") if w]
+                s_games = sr["snap_games"]
+                s_team = sr["team"]
+                if pid not in _per_player:
+                    _per_player[pid] = {
+                        "games_played": 0, "weeks": set(),
+                        "team_counts": {}, "team_max_week": {},
+                    }
+                rec = _per_player[pid]
+                if s_games > rec["games_played"]:
+                    rec["games_played"] = s_games
+                rec["weeks"].update(s_weeks)
+                if s_team:
+                    rec["team_counts"][s_team] = rec["team_counts"].get(s_team, 0) + s_games
+
         aggregates: dict[int, int] = {}
         weeks_played_map: dict[int, list[int]] = {}
         primary_team_map: dict[int, str] = {}
         for pid, rec in _per_player.items():
             aggregates[pid] = rec["games_played"]
             weeks_played_map[pid] = sorted(rec["weeks"])
-            # Primary team = most games; ties go to the later-week team.
             primary_team_map[pid] = max(
                 rec["team_counts"],
                 key=lambda t: (rec["team_counts"][t], rec["team_max_week"].get(t, 0)),
             )
 
-        # ------------------------------------------------------------------
-        # Team weeks — which weeks each team actually played (bye-aware).
-        # Keyed by log-season team abbreviation, NOT by players.team, because
-        # those differ (LAR/LA, WSH/WAS, AZ/ARI).
-        # ------------------------------------------------------------------
+        # ── Team weeks from nfl_schedule (not derived from game logs) ────
+        # The published schedule is the authoritative source for which weeks
+        # a team played — it handles byes, double-headers, and rescheduled
+        # games correctly without depending on log coverage.
         from collections import defaultdict
-        _team_weeks_raw: dict[str, set[int]] = defaultdict(set)
-        for tw_row in connection.execute(
-            """SELECT team, CAST(game_no AS INTEGER) AS week
-               FROM player_game_logs
-               WHERE league='nfl' AND season=? AND team IS NOT NULL
-                 AND CAST(game_no AS INTEGER) < ?
-               GROUP BY team, game_no""",
-            (_log_season, _POSTSEASON_FIRST_WEEK),
-        ):
-            try:
-                _team_weeks_raw[tw_row["team"]].add(tw_row["week"])
-            except (TypeError, ValueError):
-                continue
-        team_weeks_map: dict[str, list[int]] = {
-            team: sorted(weeks) for team, weeks in _team_weeks_raw.items()
-        }
+        team_weeks_map: dict[str, list[int]] = defaultdict(list)
+        sched_columns = connection.execute("PRAGMA table_info(nfl_schedule)").fetchall()
+        if sched_columns:
+            for tw_row in connection.execute(
+                """SELECT home_team AS team, week FROM nfl_schedule
+                   WHERE season=? AND week < ?
+                UNION ALL
+                SELECT away_team AS team, week FROM nfl_schedule
+                WHERE season=? AND week < ?""",
+                (_log_season, _POSTSEASON_FIRST_WEEK,
+                 _log_season, _POSTSEASON_FIRST_WEEK),
+            ):
+                try:
+                    wk = int(tw_row["week"])
+                    team = tw_row["team"]
+                    if wk not in team_weeks_map[team]:
+                        team_weeks_map[team].append(wk)
+                except (TypeError, ValueError):
+                    continue
+            for team in team_weeks_map:
+                team_weeks_map[team].sort()
 
         # ------------------------------------------------------------------
         # Query the pool: draftable positions, active players, from nfl_adp.
