@@ -1,5 +1,78 @@
 # Changelog
 
+## v0.6.12 — 2026-07-28
+
+### Defenses are draftable, at the ADP someone else published
+
+- **All 32 D/ST are in the pool**, with a starting roster slot. The mock draft shipped
+  without them, which meant it could not complete a real lineup.
+- **Their draft position is ESPN's published ADP, not our arithmetic** — DEN 90.0, HOU 91.8,
+  LAR 98.2, SEA 106.5. An earlier build ranked defenses by a `dst_rank` we derived ourselves
+  and interleaved into the board; that is deleted, not corrected. Where a definition is
+  published, we read it.
+- **A defense with no published ADP shows `—`, not a number.** The pool used to map missing
+  ADP to `999`, and because that same array feeds the draft board, all 32 defenses rendered
+  a literal `999.0` as their draft position. A fabricated sentinel that reaches a user is a
+  false measurement, not a default.
+- **The ingest fails closed.** It resolves all 32 defenses through ESPN's published
+  `proTeams` map or it writes nothing, because a missing row does not raise — it silently
+  goes missing.
+
+### The draft room is a draft room
+
+Everything v0.6.11 listed as missing:
+
+- **Position, team and bye-week filters** on the pool.
+- **A queue** — pre-rank players, reorder them, and draft off the list when you are on
+  the clock.
+- **A board grid** showing teams × rounds, so you can read the picks that have already gone.
+- **A 30-second clock** with tabular figures that bolds under ten seconds and never turns
+  red, plus **autopick when it expires** so a draft cannot deadlock waiting on you.
+- **A next-pick counter** in the status bar.
+- **A Draft button on each row**, replacing a whole-row click target.
+- **A player detail overlay** — click any row, from the pool or the rankings, for the full
+  card.
+
+### Player Rankings shows the stats the position actually has
+
+- **Columns and sorts are position-aware.** A kicker and a wide receiver no longer share a
+  column set, so the table stops printing blanks where a stat was never going to exist.
+- **Kickers have scoring.** v0.6.11 shipped with one game-log row across 42 kickers, because
+  `player_game_logs` is built from passing, rushing and receiving. Kicking lines are now read
+  from the published weekly box score, and points-per-game is computed from the scoring
+  buckets rather than left empty.
+- **Team QBs rank by games played**, so a team's card shows the quarterback who actually
+  played rather than a third-stringer.
+
+### Both surfaces now agree about who played
+
+- **`/mock-draft` and Player Rankings gave different answers about the same player** — Josh
+  Allen 16 games on one and 17 on the other, CeeDee Lamb 13 against 14, and every D/ST 0
+  against 17. 49 of 237 shared players disagreed on at least one availability figure.
+- **The cause was reading the wrong table.** `player_game_logs` records touches, not presence:
+  a player who dressed but recorded no pass, rush or reception has no row. The rankings board
+  had always merged `nfl_snap_counts` and took team weeks from the published schedule; a
+  hand-resolved merge silently reverted the pool to game logs alone.
+- **Both surfaces now share one availability function**, rather than two implementations that
+  agreed until they didn't. Measured after the change: 0 disagreements of 298.
+- **Games-missed denominators come from the published schedule**, not a hardcoded 17. The
+  constant was live in three files and rendered to the user in two of them; it was correct
+  only because every team happened to play 17 games this season.
+
+### Known gaps in this release
+
+- **The mock draft has no completion state.** No route completes a draft, `status` is written
+  as `active` at insert and never updated, and the backend's `status != 'active'` guard
+  therefore cannot fire — while the results screen tells you "Draft complete" off a
+  client-only flag.
+- **14 of 32 defenses still carry no published ADP** and correctly show `—`. The other 18 are
+  ESPN's own figures.
+- **The share URL still does not restore a draft.** Unchanged from v0.6.11: the picks are
+  saved and the API returns them, but the page renders a fresh pool.
+- **Kicking and weekly stats are a per-database ingest.** The data lives in the published
+  nflverse weekly box score and has been loaded into dev; any other database needs the same
+  ingest run against it, and needs the `game_type` column present before it will.
+
 ## v0.6.11 — 2026-07-27
 
 ### Mock draft: draft a roster off the availability board
