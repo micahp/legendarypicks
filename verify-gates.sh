@@ -108,13 +108,33 @@ else:     print('PASS B2b (no kicker asserts ppr 0.0, n=%d)'%len(p))
   fi
 }
 
-# ── B4 · M7: scrollbar shown, TEAM_GAMES hardcode gone ──
+# ── B4 · M7: scrollbar shown, measured availability fields used ──
 b4(){
-  f=$W/components/MockDraft/DraftRoom.tsx
-  s=$(grep -c "scrollbar-width:none\|::-webkit-scrollbar\]:hidden" "$f")
-  t=$(grep -c "TEAM_GAMES - " "$f")
-  if [ "$s" = "0" ] && [ "$t" = "0" ]; then ok B4 "scrollbar shown, games_missed from API"
-  else no B4 "hidden-scrollbar refs=$s  TEAM_GAMES-arithmetic refs=$t"; fi
+  room=$W/components/MockDraft/DraftRoom.tsx
+  files="$room $W/components/MockDraft/PoolList.tsx $W/components/MockDraft/ResultsScreen.tsx $W/lib/mockDraft/api.ts"
+  hidden=$(grep -En "scrollbar-width:none|::-webkit-scrollbar]:hidden" "$room" 2>/dev/null | wc -l)
+  hardcoded=$(grep -En \
+    "const TEAM_GAMES|team_games:[[:space:]]*17|possible[[:space:]]*\\+=[[:space:]]*TEAM_GAMES|/\\$\\{TEAM_GAMES\\}" \
+    $files 2>/dev/null | wc -l)
+  reconstructed=$(grep -En \
+    "team_games[[:space:]]*-[[:space:]].*games_played|games_played[[:space:]]*<.*team_games|team_games[[:space:]]*-[[:space:]].*games_played" \
+    $files 2>/dev/null | wc -l)
+  schedule_users=$(grep -l "poolTeamGames" \
+    "$room" "$W/components/MockDraft/ResultsScreen.tsx" "$W/lib/mockDraft/api.ts" \
+    2>/dev/null | wc -l)
+  pool_schedule=$(grep -c "row.team_games" "$W/components/MockDraft/PoolList.tsx" 2>/dev/null)
+  api_missed=$(grep -c "games_missed:[[:space:]]*player.games_missed" "$W/lib/mockDraft/api.ts" 2>/dev/null)
+
+  if [ "$hidden" = "0" ] &&
+     [ "$hardcoded" = "0" ] &&
+     [ "$reconstructed" = "0" ] &&
+     [ "$schedule_users" = "3" ] &&
+     [ "$pool_schedule" -ge "1" ] &&
+     [ "$api_missed" = "1" ]; then
+    ok B4 "scrollbar shown; schedule weeks used across all surfaces; games_missed preserved"
+  else
+    no B4 "hidden=$hidden hardcoded=$hardcoded reconstructed=$reconstructed schedule_users=$schedule_users/3 pool_schedule=$pool_schedule api_missed=$api_missed"
+  fi
 }
 
 # ── always-on regressions: nothing already working may break ──
