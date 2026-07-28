@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { PlayerDetailResponse } from './types'
 import { AvailabilityStrip } from './NflDraftRoom'
+import PlayerGameLog from './PlayerGameLog'
 
 interface Props {
   playerId: number
@@ -31,11 +32,13 @@ export default function PlayerDetailOverlay({
   const [player, setPlayer] = useState<PlayerDetailResponse | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [tab, setTab] = useState<'overview' | 'log'>('overview')
 
   useEffect(() => {
     let cancelled = false
     setLoading(true)
     setError(null)
+    setTab('overview')
 
     fetch(`/api/nfl/draft/player/${playerId}`)
       .then(res => {
@@ -89,7 +92,7 @@ export default function PlayerDetailOverlay({
       />
 
       {/* Card */}
-      <div className="relative z-10 w-full max-w-[420px] max-h-[90vh] overflow-y-auto rounded-xl border border-zinc-800 bg-zinc-900 shadow-2xl">
+      <div className="relative z-10 w-full max-w-[520px] max-h-[90vh] overflow-y-auto rounded-xl border border-zinc-800 bg-zinc-900 shadow-2xl">
         {/* Close button */}
         <button
           type="button"
@@ -170,6 +173,33 @@ export default function PlayerDetailOverlay({
               )}
             </header>
 
+            {/* ── Tabs ──────────────────────────────────────────────────────
+                Two views because they answer different questions. Overview is
+                "what is this player worth"; the log is "how did he get there",
+                which a season average cannot show — a 12 PPR/g average hides
+                whether he was rising or falling all year. */}
+            <div className="flex gap-1 border-b border-zinc-800" role="tablist">
+              {([['overview', 'Overview'], ['log', 'Game log']] as const).map(([id, label]) => (
+                <button
+                  key={id}
+                  type="button"
+                  role="tab"
+                  aria-selected={tab === id}
+                  onClick={() => setTab(id)}
+                  className={`-mb-px border-b-2 px-3 py-1.5 text-xs font-medium transition-colors ${
+                    tab === id
+                      ? 'border-zinc-400 text-zinc-100'
+                      : 'border-transparent text-zinc-500 hover:text-zinc-300'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            {tab === 'log' && <PlayerGameLog playerId={playerId} />}
+
+            {tab === 'overview' && (<>
             {/* ── Availability strip ────────────────────────────────────── */}
             {!noSample && player.team_weeks.length > 0 && (
               <section>
@@ -352,7 +382,9 @@ export default function PlayerDetailOverlay({
               </div>
             </section>
 
-            {/* \u2500\u2500 Actions \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+            </>)}
+
+            {/* ── Actions ────────────────────────────────────────────────────
                 Without these the overlay is a dead end: read it, close it, then
                 hunt the row again. */}
             {(onDraft || onQueue) && (

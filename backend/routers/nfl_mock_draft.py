@@ -23,6 +23,7 @@ from .nfl_offseason import (
     _availability_aggregates,
     _dst_aggregates,
     _pk_aggregates,
+    _table_columns,
 )
 
 # ---------------------------------------------------------------------------
@@ -879,3 +880,188 @@ def player_detail(player_id: int):
         })
     finally:
         connection.close()
+
+
+# ---------------------------------------------------------------------------
+#  Per-game log  (the research half of the player overlay)
+# ---------------------------------------------------------------------------
+
+# Which per-game fields matter, by position. Deliberately narrow: the log rows
+# carry ~52 keys and a research table that shows all of them shows none of them.
+_LOG_FIELDS = {
+    "QB": ["off_pct", "cmp", "att", "pass_yds", "pass_td", "intc", "carries",
+           "rush_yds", "rush_td", "fpts_ppr", "xfpts_ppr"],
+    "RB": ["off_pct", "carries", "rush_yds", "rush_td", "targets", "rec",
+           "rec_yds", "rec_td", "fpts_ppr", "xfpts_ppr"],
+    "WR": ["off_pct", "targets", "target_share", "rec", "rec_yds", "rec_td",
+           "adot", "separation", "fpts_ppr", "xfpts_ppr"],
+    # Raw counts only. Kicker fantasy points are computed from distance buckets
+    # in _pk_aggregates; recomputing them here would be a second implementation
+    # of the same number, which is how the board and the pool ended up printing
+    # different figures for the same player. The season rate already ships on
+    # the overview tab -- the log's job is what he actually kicked.
+    "PK": ["fg_made", "fg_att", "fg_long", "pat_made", "pat_att"],
+}
+# D/ST have no player_game_logs rows at all -- their week rows live in
+# nfl_dst_stats. Read that table rather than reporting 17 weeks of absence for a
+# defense that played every one of them.
+_DST_LOG_FIELDS = ["sacks", "interceptions", "tds", "safeties", "fumble_rec",
+                   "points_allowed", "fantasy_pts"]
+_LOG_FIELDS["TE"] = _LOG_FIELDS["WR"]
+_LOG_FIELDS["FB"] = _LOG_FIELDS["RB"]
+
+
+@router.get("/api/nfl/draft/player/{player_id}/game-log")
+def player_game_log(player_id: int):
+    """Per-game log for the player overlay's research tab.
+
+    Returns one entry per week the player's TEAM played -- not one per week he
+    recorded a stat line. A log that lists only the games a player appeared in
+    repeats the exact defect the availability work exists to fix: it makes a
+    12-game season look like a full one, and it hides the weeks that are the
+    most informative thing on the card.
+
+    Weeks with no row are returned with `played: false` and null stats. Weeks
+    absent from the team's schedule entirely (the bye) are simply not present,
+    because a bye is not an absence.
+    """
+    connection = _conn()
+    try:
+        player = connection.execute(
+            "SELECT id, name, team, position FROM players WHERE id=? AND league='nfl'",
+            (player_id,),
+        ).fetchone()
+        if player is None:
+            return _json({"error": "Player not found"}, status=404)
+
+        position = player["position"]
+
+        # Reference season = the most recent season with logs, matching pool().
+        row = connection.execute(
+            "SELECT MAX(season) FROM player_game_logs WHERE league='nfl'"
+        ).fetchone()
+        season = (row[0] if row and row[0] else _CURRENT_SEASON - 1)
+
+        availability = _availability_aggregates(connection, season)
+        if position == "DEF":
+            _dst_avail, dst_team_weeks = _dst_aggregates(connection, season)
+            team_weeks = sorted(dst_team_weeks.get(player["team"], []))
+        else:
+            agg = availability.get(player_id) or {}
+            team_weeks = sorted(agg.get("team_weeks", []))
+
+        if position == "DEF":
+            return _json(_dst_game_log(
+                connection, player, player_id, season, team_weeks,
+            ))
+
+        fields = _LOG_FIELDS.get(position, [])
+
+        by_week = {}
+        for log in connection.execute(
+            """SELECT game_no, opponent, team, stats, game_type
+                 FROM player_game_logs
+                WHERE player_id=? AND season=? AND league='nfl'""",
+            (player_id, season),
+        ):
+            # Playoff rows sit alongside regular-season rows (B10). The team's
+            # week list is regular season, so they drop out on the join -- but
+            # drop them explicitly rather than relying on that coincidence.
+            if log["game_type"] and log["game_type"] != "REG":
+                continue
+            try:
+                week = int(log["game_no"])
+            except (TypeError, ValueError):
+                continue
+            try:
+                stats = json.loads(log["stats"]) if log["stats"] else {}
+            except (TypeError, ValueError):
+                stats = {}
+            by_week[week] = {
+                "opponent": log["opponent"],
+                "team": log["team"],
+                "stats": {f: stats.get(f) for f in fields},
+            }
+
+        games = []
+        for week in team_weeks:
+            entry = by_week.get(week)
+            games.append({
+                "week": week,
+                "played": entry is not None,
+                "opponent": entry["opponent"] if entry else None,
+                "team": entry["team"] if entry else None,
+                "stats": entry["stats"] if entry else {f: None for f in fields},
+            })
+
+        return _json({
+            "contract": "nfl-player-game-log-v1",
+            "player_id": player_id,
+            "name": player["name"],
+            "position": position,
+            "reference_season": season,
+            "fields": fields,
+            "team_games": len(team_weeks),
+            "games_played": sum(1 for g in games if g["played"]),
+            "games": games,
+        })
+    finally:
+        connection.close()
+
+
+def _dst_game_log(connection, player, player_id, season, team_weeks):
+    """Week rows for a team defense, read from nfl_dst_stats.
+
+    Separate from the skill-position path because D/ST never appear in
+    player_game_logs. Routing them through it reported every week of a
+    17-week season as "did not play" for a defense that played all 17 --
+    a fabricated absence, which is the same defect as a fabricated number.
+    """
+    columns = _table_columns(connection, "nfl_dst_stats")
+    if not {"player_id", "season", "week"}.issubset(columns):
+        return {
+            "contract": "nfl-player-game-log-v1",
+            "player_id": player_id,
+            "name": player["name"],
+            "position": "DEF",
+            "reference_season": season,
+            "fields": [],
+            "team_games": len(team_weeks),
+            "games_played": 0,
+            "games": [],
+            "unavailable": "per-week D/ST scoring is not loaded",
+        }
+
+    fields = [f for f in _DST_LOG_FIELDS if f in columns]
+    by_week = {}
+    for row in connection.execute(
+        "SELECT * FROM nfl_dst_stats WHERE player_id=? AND season=?",
+        (player_id, season),
+    ):
+        try:
+            by_week[int(row["week"])] = {f: row[f] for f in fields}
+        except (TypeError, ValueError):
+            continue
+
+    games = []
+    for week in team_weeks:
+        stats = by_week.get(week)
+        games.append({
+            "week": week,
+            "played": stats is not None,
+            "opponent": None,
+            "team": player["team"],
+            "stats": stats if stats else {f: None for f in fields},
+        })
+
+    return {
+        "contract": "nfl-player-game-log-v1",
+        "player_id": player_id,
+        "name": player["name"],
+        "position": "DEF",
+        "reference_season": season,
+        "fields": fields,
+        "team_games": len(team_weeks),
+        "games_played": sum(1 for g in games if g["played"]),
+        "games": games,
+    }
