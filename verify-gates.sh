@@ -5,9 +5,15 @@
 #
 # Each gate prints  PASS <id>  or  FAIL <id>  and nothing else that matters.
 
-W=/root/lp-team-vocab
-B=http://127.0.0.1:8098
-F=http://127.0.0.1:3098
+# Overridable so a delegated worktree can point these at ITS OWN servers. Defaults are
+# the main branch tree. A worktree that runs this without overriding them verifies the
+# MAIN tree and reports success while its own code was never executed — that is the
+# failure mode this parameterisation exists to prevent, so set all three together.
+#   LP_GATE_W=/root/lp-<task> LP_GATE_B=http://127.0.0.1:8093 LP_GATE_F=http://127.0.0.1:3093
+W="${LP_GATE_W:-/root/lp-team-vocab}"
+B="${LP_GATE_B:-http://127.0.0.1:8098}"
+F="${LP_GATE_F:-http://127.0.0.1:3098}"
+echo "── gates against W=$W B=$B F=$F ──"
 PY=/root/legendarypicks/backend/venv/bin/python
 
 ok(){ echo "PASS $1  ($2)"; }

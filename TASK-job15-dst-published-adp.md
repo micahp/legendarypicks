@@ -89,7 +89,9 @@ Exactly these files. Nothing else.
 ## 4. Done means
 
 ```bash
-bash /root/lp-job15-dst-published-adp/verify-gates.sh all
+LP_GATE_W=/root/lp-job15-dst-published-adp \
+  LP_GATE_B=http://127.0.0.1:8093 LP_GATE_F=http://127.0.0.1:3093 \
+  bash /root/lp-job15-dst-published-adp/verify-gates.sh all
 ```
 
 - **`REG-adp-dst` goes green.** It is committed and currently RED, with the expected
