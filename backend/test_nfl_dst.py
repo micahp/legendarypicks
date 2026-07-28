@@ -653,5 +653,56 @@ class DstB17PlayerDetailTests(unittest.TestCase):
                 f"{field}: detail={detail[field]} != pool={pool[field]}")
 
 
+class DstFollowUpTests(DstDraftBoardTests):
+    """Follow-up regression: sentinel position-aware, filterSlotIds removed.
+
+    Inherits DstDraftBoardTests setUp/tearDown for complete board schema."""
+
+    def setUp(self):
+        super().setUp()
+        # Add DEF with ADP>=169 and QB with ADP>=169
+        con = nfl_offseason._db()
+        con.execute("INSERT INTO players VALUES(103,'Late DEF','nfl','ARI','DEF',1,'2026-07-28')")
+        con.execute("INSERT INTO nfl_adp VALUES(103,2026,170.0,98.0)")
+        for w in range(1, 18):
+            con.execute("INSERT INTO nfl_dst_stats VALUES(103,2025,?,2,1,0,0,1,0,0,17,5.0)", (w,))
+            con.execute("INSERT INTO nfl_schedule VALUES(?,?,?,?,?)",
+                       (f"2025_{w:02d}_ARI_OPP", 2025, w, "ARI", "OPP"))
+        con.execute("INSERT INTO players VALUES(2,'Late QB','nfl','SF','QB',1,'2026-07-28')")
+        con.execute("INSERT INTO nfl_adp VALUES(2,2026,170.0,50.0)")
+        for w in range(1, 13):
+            con.execute("INSERT INTO player_game_logs VALUES(?,?,?,?,?,?,?,?)",
+                       (2, 'nfl', 2025, str(w), f'g{w}', 'REG', 'SF',
+                        '{"fpts_ppr":10.0}'))
+        con.commit()
+        con.close()
+
+    def test_def_adp_ge_169_survives_and_non_null(self):
+        """DEF with published ADP >=169 must survive sentinel."""
+        payload = self.board(position="DEF")
+        defs = [p for p in payload["players"] if p["position"] == "DEF"]
+        self.assertGreaterEqual(len(defs), 1)
+        late = [p for p in defs if p["name"] == "Late DEF"]
+        self.assertEqual(len(late), 1)
+        self.assertEqual(late[0]["adp"], 170.0)
+
+    def test_non_def_adp_ge_169_gets_null(self):
+        """Non-DEF with ADP >=169 still gets sentinel null."""
+        payload = self.board(position="QB")
+        qbs = [p for p in payload["players"] if p["position"] == "QB"]
+        self.assertGreaterEqual(len(qbs), 1)
+        late = [p for p in qbs if p["name"] == "Late QB"]
+        self.assertEqual(len(late), 1)
+        self.assertIsNone(late[0]["adp"])
+
+    def test_filter_slot_ids_absent_from_headers(self):
+        """Both HEADERS and per-page filter omit filterSlotIds."""
+        filter_str = ingest_nfl_adp.HEADERS["x-fantasy-filter"]
+        self.assertNotIn("filterSlotIds", filter_str)
+        import inspect
+        src = inspect.getsource(ingest_nfl_adp._fetch_page)
+        self.assertNotIn("filterSlotIds", src)
+
+
 if __name__ == "__main__":
     unittest.main()

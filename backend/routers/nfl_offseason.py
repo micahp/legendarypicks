@@ -915,7 +915,7 @@ def nfl_draft_board(
         is_pk = row["position"] == "PK"
         agg = dst_aggregates.get(pid) if is_def else pk_aggregates.get(pid) if is_pk else aggregates.get(pid)
         adp = row["adp"]
-        ranked_adp = adp if (adp is not None and adp < _ADP_SENTINEL) else None
+        ranked_adp = adp if (adp is not None and (is_def or adp < _ADP_SENTINEL)) else None
 
         # Eligible if we have something true to say: a real season, or a real
         # market price. A rookie with neither is not on the board at all --

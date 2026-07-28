@@ -26,7 +26,6 @@ PROTEAMS_URL = ("https://lm-api-reads.fantasy.espn.com/apis/v3/games/ffl/seasons
 HEADERS = {
     "x-fantasy-filter": json.dumps({
         "players": {
-            "filterSlotIds": {"value": [0]},
             "limit": 3000,
             "sortDraftRanks": {"sortPriority": 1, "sortAsc": True, "value": "STANDARD"},
         }
@@ -45,7 +44,6 @@ def _fetch_page(offset: int) -> list:
     hdrs = dict(HEADERS)
     hdrs["x-fantasy-filter"] = json.dumps({
         "players": {
-            "filterSlotIds": {"value": [0]},
             "limit": 3000,
             "offset": offset,
             "sortDraftRanks": {"sortPriority": 1, "sortAsc": True, "value": "STANDARD"},
