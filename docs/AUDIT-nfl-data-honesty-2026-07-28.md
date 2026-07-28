@@ -1,13 +1,31 @@
 # NFL data-honesty audit — 2026-07-28
 
-Findings only. Nothing here is fixed. Backend items are B*; frontend items marked
-FIXED were mine and are already committed.
+Backend items are B*, frontend items F*. Measured against dev `:8096`, DB
+`backend/data/picks.dev.db`, originally at `dev` @ `387391e`.
 
-Measured against dev `:8096` at `dev` @ `387391e`, DB `backend/data/picks.dev.db`.
+## Status at `c43d347`
+
+| | finding | state |
+|---|---|---|
+| B1 | board and pool disagree about the same player | **fixed** `c43d347` |
+| B2 | Aubrey's fake-punt carry published as kicking output | **fixed** `a740ccf` |
+| B3 | a measured zero rendered as "no data" | open — `or None` at `nfl_offseason.py:986` |
+| B4 | `ppr_per_team_game` divides by a hardcoded 17 | open, latent |
+| B5 | pool contract never states its reference season | open |
+| B6 | target-less weeks dropped from the season denominator | **fixed** `2ca7d57` |
+| B7 | 284 players' snap % wrong — needs the published snap rows | open, needs ingest |
+| B8 | 373 source-absent players rendered `gp=0, team_games=17` | open |
+| F1–F3 | bye weeks, season labels | fixed `ab3490c`, `387391e` |
+| F4, F5 | `RB1` collision, colour-coded judgement | open, design calls |
+
+B6–B8 come from an independent read-only audit against the published nflverse
+artifacts, with SHA-256s recorded for every source file. It is committed at
+`docs/audits/nfl-honesty-2026-07-28/`, including the full `all-disagreements.csv`
+— every surface/field disagreement with ours and published side by side.
 
 ---
 
-## B1. The research board and the mock-draft pool disagree about the same player
+## B1 FIXED (`c43d347`). The research board and the mock-draft pool disagree about the same player
 
 Six live cases, every one a user can hit by checking a player twice:
 
@@ -30,7 +48,15 @@ documented tie rule — not a per-field reconciliation. A gate should assert
 board == pool for every shared player and field, the same cross-endpoint shape
 job16's parity test already uses.
 
-## B2. Brandon Aubrey: one surface withholds, the other prints the artifact
+> **The paragraph above is wrong, and the way it is wrong is the lesson.** Both
+> surfaces already used the same rounder — plain `round()` — so a shared helper
+> would have changed nothing. The inputs differed, not the rounding: Olave's
+> 268.0 PPR over 16 games is an exact 16.75, which SQLite's `SUM` reaches and a
+> Python accumulation loop misses by a last bit. "Two rounding implementations"
+> was inferred from the symptom's shape and never checked. Fixed at `c43d347` by
+> deleting two of the three implementations, not by sharing a rounder.
+
+## B2 FIXED (`a740ccf`). Brandon Aubrey: one surface withholds, the other prints the artifact
 
 `player_id` 882. `/api/nfl/draft-board?position=PK` returns `ppr_per_team_game`
 and `xfp_per_game` as `null`. The pool and `/api/nfl/draft/player/882` return
@@ -83,6 +109,46 @@ nothing about the season the stats come from. A client cannot label the numbers
 truthfully.
 
 Suggest adding `reference_season` to the pool contract, matching the board.
+
+---
+
+## B6 FIXED (`2ca7d57`). A target-less week left the season denominator
+
+Season target share averaged only the weeks that carried a `target_share` key, so
+a receiver's target-less games vanished from the denominator and one busy
+afternoon became his season rate. **243 players** on the board. Tom Kennedy read
+14.8% against a published 2.5%; Britain Covey 11.8% against 2.0%.
+
+Root cause is the ingest, not the aggregate: `_RECV_KEYS` is written only when the
+week's target count is truthy, so a published `0.0` is dropped rather than stored.
+The published artifact carries a non-null `target_share` on all 18,539 REG rows
+and exactly **14,223** are zero — precisely the 14,223 rows where we store no key.
+
+Both halves matter. A target-less week for a receiver is a published zero; a
+player who drew no target *all season* is not a receiver and must stay null. The
+first cut of the fix collapsed those and had Josh Allen reporting 0.0% target
+share, which the pinned expectation caught.
+
+`targets` (14,223) and `carries` (16,286) have the identical drop and are still
+unfixed — they are display-only today, but the per-week game log renders them, so
+a zero-target week still reads "—" there.
+
+## B7. 284 players' snap percentage is wrong — and it is NOT the same fix
+
+`off_pct` comes from the snap artifact, not the weekly stats file, and
+`player_game_logs` only holds weeks a player recorded a touch. So a week with
+snaps but no touch has **no row at all** — the value is not merely absent from the
+row, the row does not exist. Coalescing it to zero would invent measured zeros.
+Kennedy reads 65% against a published 12%; Jalen Royals 67% against 19%.
+
+This needs the published snap rows to exist before it can be averaged correctly.
+The aggregates deliberately keep a bare `AVG` on `snap_pct` and `xfp_per_game`
+until then, and both call sites say so in a comment.
+
+## B8. 373 source-absent players are rendered as `gp=0, team_games=17`
+
+A player the source has never heard of is presented identically to a player
+measured at zero across a full season — the same confusion as B3, one level up.
 
 ---
 
