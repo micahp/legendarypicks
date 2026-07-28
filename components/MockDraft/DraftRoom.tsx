@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import type { PoolPlayer } from '../Leagues/types'
 import type { DraftState, DraftPlayer } from '../../lib/mockDraft/engine'
 import {
@@ -7,6 +7,12 @@ import {
   getRosterState,
 } from '../../lib/mockDraft/engine'
 import { AvailabilityStrip } from '../Leagues/NflDraftRoom'
+
+interface ScheduleTeam {
+  team: string
+  weeks_played: number[]
+  bye_week: number | null
+}
 
 interface Props {
   pool: PoolPlayer[]
@@ -29,6 +35,40 @@ const PICK_LEDGER_LIMIT = 15
  *   - Clock: tabular figures, may change weight under 10s, never red.
  */
 export default function DraftRoom({ pool, draftState, onUserPick, userPicking }: Props) {
+  // ── Filter state ──
+  const [posFilter, setPosFilter] = useState<string>('ALL')
+  const [teamFilter, setTeamFilter] = useState<string>('ALL')
+  const [byeFilter, setByeFilter] = useState<string>('ALL')
+  const [schedule, setSchedule] = useState<ScheduleTeam[] | null>(null)
+
+  // Fetch schedule for bye filter
+  useEffect(() => {
+    let cancelled = false
+    fetch('/api/nfl/schedule/2025')
+      .then(r => r.json())
+      .then(data => { if (!cancelled) setSchedule(data.teams ?? []) })
+      .catch(() => { /* bye filter stays disabled */ })
+    return () => { cancelled = true }
+  }, [])
+
+  // ── Filter options derived from pool + schedule ──
+  const posOptions = useMemo(() => ['ALL', ...new Set(pool.map(p => p.position).sort())], [pool])
+  const teamOptions = useMemo(() => ['ALL', ...new Set(pool.map(p => p.team).sort())], [pool])
+
+  // Bye → team lookup map
+  const byeMap = useMemo(() => {
+    if (!schedule) return new Map<string, number | null>()
+    const m = new Map<string, number | null>()
+    for (const t of schedule) m.set(t.team, t.bye_week)
+    return m
+  }, [schedule])
+
+  const byeOptions = useMemo(() => {
+    const weeks = new Set<number>()
+    for (const t of (schedule ?? [])) { if (t.bye_week != null) weeks.add(t.bye_week) }
+    return ['ALL', ...[...weeks].sort((a, b) => a - b).map(String)]
+  }, [schedule])
+
   // Build a lookup from player_id → PoolPlayer for O(1) resolution
   const playerMap = useMemo(() => {
     const m = new Map<number, PoolPlayer>()
@@ -48,6 +88,19 @@ export default function DraftRoom({ pool, draftState, onUserPick, userPicking }:
     () => [...draftState.availablePool].sort((a, b) => a.adp - b.adp),
     [draftState.availablePool],
   )
+
+  // Apply filters to available pool
+  const filteredPool = useMemo(() => {
+    return availablePool.filter(dp => {
+      if (posFilter !== 'ALL' && dp.position !== posFilter) return false
+      if (teamFilter !== 'ALL' && dp.team !== teamFilter) return false
+      if (byeFilter !== 'ALL') {
+        const bye = byeMap.get(dp.team)
+        if (bye == null || String(bye) !== byeFilter) return false
+      }
+      return true
+    })
+  }, [availablePool, posFilter, teamFilter, byeFilter, byeMap])
 
   // User's roster state
   const userRoster = useMemo(
@@ -104,8 +157,72 @@ export default function DraftRoom({ pool, draftState, onUserPick, userPicking }:
               Player Pool
             </h4>
             <span className="text-xs text-zinc-600 tabular-nums">
-              {availablePool.length} available · {draftedIds.size} drafted
+              {filteredPool.length} of {availablePool.length} available · {draftedIds.size} drafted
             </span>
+          </div>
+
+          {/* ── Filter bar ── */}
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Position pills */}
+            <div className="flex items-center gap-1" role="radiogroup" aria-label="Filter by position">
+              {posOptions.map(pos => (
+                <button
+                  key={pos}
+                  type="button"
+                  role="radio"
+                  aria-checked={posFilter === pos}
+                  onClick={() => setPosFilter(pos)}
+                  className={`rounded-md border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide transition-colors ${
+                    posFilter === pos
+                      ? 'border-zinc-500 bg-zinc-700 text-zinc-200'
+                      : 'border-zinc-800 bg-zinc-900 text-zinc-500 hover:border-zinc-700 hover:text-zinc-400'
+                  }`}
+                >
+                  {pos === 'ALL' ? 'All' : pos}
+                </button>
+              ))}
+            </div>
+
+            <span className="text-zinc-700">|</span>
+
+            {/* Team dropdown */}
+            <select
+              value={teamFilter}
+              onChange={e => setTeamFilter(e.target.value)}
+              className="rounded-md border border-zinc-800 bg-zinc-900 px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide text-zinc-400 focus:border-zinc-600 focus:outline-none"
+              aria-label="Filter by team"
+            >
+              {teamOptions.map(t => (
+                <option key={t} value={t}>{t === 'ALL' ? 'All Teams' : t}</option>
+              ))}
+            </select>
+
+            {/* Bye week dropdown */}
+            <select
+              value={byeFilter}
+              onChange={e => setByeFilter(e.target.value)}
+              disabled={!schedule}
+              className={`rounded-md border border-zinc-800 bg-zinc-900 px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide focus:border-zinc-600 focus:outline-none ${
+                schedule ? 'text-zinc-400' : 'text-zinc-700 cursor-not-allowed'
+              }`}
+              aria-label="Filter by bye week"
+            >
+              <option value="ALL">{schedule ? 'Bye Week' : 'Bye (loading…)'}</option>
+              {byeOptions.filter(b => b !== 'ALL').map(b => (
+                <option key={b} value={b}>Week {b}</option>
+              ))}
+            </select>
+
+            {/* Clear filters */}
+            {(posFilter !== 'ALL' || teamFilter !== 'ALL' || byeFilter !== 'ALL') && (
+              <button
+                type="button"
+                onClick={() => { setPosFilter('ALL'); setTeamFilter('ALL'); setByeFilter('ALL') }}
+                className="rounded-md border border-zinc-800 px-2 py-0.5 text-[10px] font-medium text-zinc-500 transition-colors hover:border-zinc-600 hover:text-zinc-300"
+              >
+                Clear
+              </button>
+            )}
           </div>
 
           <div className="overflow-y-auto max-h-[calc(100vh-300px)] rounded-xl border border-zinc-800 bg-zinc-900">
@@ -121,7 +238,7 @@ export default function DraftRoom({ pool, draftState, onUserPick, userPicking }:
                 </tr>
               </thead>
               <tbody>
-                {availablePool.map((dp, i) => {
+                {filteredPool.map((dp, i) => {
                   const poolPlayer = playerMap.get(dp.player_id)
                   if (!poolPlayer) return null
                   const drafted = draftedIds.has(dp.player_id)
