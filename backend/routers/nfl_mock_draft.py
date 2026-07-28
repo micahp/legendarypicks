@@ -750,34 +750,40 @@ def player_detail(player_id: int):
         target_share = round(target_share_sum / target_share_count * 100, 1) if target_share_count else None
         xfp_per_game = round(xfp_sum / xfp_count, 1) if xfp_count else None
 
-        # 4. QB lookup — for WR/RB/TE, find the QB on the same team
+        # 4. QB lookup — for WR/RB/TE, rank team QBs by games played, return top QB
         qb = None
         if position in ("WR", "RB", "TE") and team:
-            qb_row = connection.execute(
+            qb_rows = connection.execute(
                 """SELECT p.id, p.name, p.team
                    FROM players p
                    WHERE p.league='nfl' AND p.active=1
                      AND p.position='QB' AND p.team=?
-                   LIMIT 1""",
+                   ORDER BY p.id ASC""",
                 (team,),
-            ).fetchone()
-            if qb_row:
-                qb_games = 0
+            ).fetchall()
+
+            best_qb = None
+            best_games = -1
+            for qb_row in qb_rows:
                 qb_agg = connection.execute(
                     """SELECT COUNT(*) AS g
                        FROM player_game_logs
                        WHERE player_id=? AND league='nfl' AND season=?
-                         AND CAST(game_no AS INTEGER) < ?""",
-                    (qb_row["id"], _log_season, _POSTSEASON_FIRST_WEEK),
+                         AND game_type='REG'""",
+                    (qb_row["id"], _log_season),
                 ).fetchone()
-                if qb_agg:
-                    qb_games = qb_agg["g"]
-                qb = {
-                    "player_id": qb_row["id"],
-                    "name": qb_row["name"],
-                    "team": qb_row["team"],
-                    "games_played": qb_games,
-                }
+                games = qb_agg["g"] if qb_agg else 0
+                if games > best_games:
+                    best_games = games
+                    best_qb = {
+                        "player_id": qb_row["id"],
+                        "name": qb_row["name"],
+                        "team": qb_row["team"],
+                        "games_played": games,
+                    }
+
+            if best_qb is not None and best_games > 0:
+                qb = best_qb
 
         return _json({
             "player_id": player_id,
