@@ -77,6 +77,30 @@ _MAP = {
     "rec_td": "receiving_tds",
     "fpts": "fantasy_points",
     "fpts_ppr": "fantasy_points_ppr",
+    # Kicker buckets — published verbatim, never re-derived
+    "fg_made": "fg_made",
+    "fg_att": "fg_att",
+    "fg_missed": "fg_missed",
+    "fg_blocked": "fg_blocked",
+    "fg_long": "fg_long",
+    "fg_pct": "fg_pct",
+    "fg_made_0_19": "fg_made_0_19",
+    "fg_made_20_29": "fg_made_20_29",
+    "fg_made_30_39": "fg_made_30_39",
+    "fg_made_40_49": "fg_made_40_49",
+    "fg_made_50_59": "fg_made_50_59",
+    "fg_made_60_": "fg_made_60_",
+    "fg_missed_0_19": "fg_missed_0_19",
+    "fg_missed_20_29": "fg_missed_20_29",
+    "fg_missed_30_39": "fg_missed_30_39",
+    "fg_missed_40_49": "fg_missed_40_49",
+    "fg_missed_50_59": "fg_missed_50_59",
+    "fg_missed_60_": "fg_missed_60_",
+    "pat_made": "pat_made",
+    "pat_att": "pat_att",
+    "pat_missed": "pat_missed",
+    "gwfg_made": "gwfg_made",
+    "gwfg_att": "gwfg_att",
 }
 
 # Groups are emitted only when the player actually had that role, so a QB does
@@ -91,15 +115,25 @@ _TWO_POINT_COLS = (
     "receiving_2pt_conversions",
 )
 
+_KICK_KEYS = (
+    "fg_made", "fg_att", "fg_missed", "fg_blocked", "fg_long", "fg_pct",
+    "fg_made_0_19", "fg_made_20_29", "fg_made_30_39", "fg_made_40_49",
+    "fg_made_50_59", "fg_made_60_",
+    "fg_missed_0_19", "fg_missed_20_29", "fg_missed_30_39",
+    "fg_missed_40_49", "fg_missed_50_59", "fg_missed_60_",
+    "pat_made", "pat_att", "pat_missed",
+    "gwfg_made", "gwfg_att",
+)
+
 # Replace both the canonical keys and the legacy nflverse names written by
 # ingest_nfl_logs.py.  The 2024 DEV rows still carry those legacy aliases; they
 # are box-score data, not snap/NGS enrichment, and must not survive the swap.
-_OWNED = set(_MAP) | set(_MAP.values()) | {"dropbacks", "interceptions"}
+_OWNED = set(_MAP) | set(_MAP.values()) | {"dropbacks", "interceptions"} | set(_KICK_KEYS)
 
 _NEEDED = sorted(set(_MAP.values()) | {
     "player_id", "player_display_name", "position", "season", "week",
     "season_type", "game_id", "team", "opponent_team", "sacks_suffered",
-} | set(_TWO_POINT_COLS))
+} | set(_TWO_POINT_COLS) | set(_KICK_KEYS))
 
 
 def fetch(year: int, cache_dir: str) -> str:
@@ -200,7 +234,12 @@ def build_rows(path: str, all_positions: bool = False):
         seen_keys[natural_key] = row["game_id"]
 
         stats = {}
-        groups = ((_PASS_KEYS, att or sac), (_RUSH_KEYS, car), (_RECV_KEYS, tgt))
+        # A kicker is anyone who attempted a field goal or PAT
+        fg_att = _num(row["fg_att"]) or 0
+        pat_att_val = _num(row["pat_att"]) or 0
+        is_kicker = bool(fg_att or pat_att_val)
+        groups = ((_PASS_KEYS, att or sac), (_RUSH_KEYS, car),
+                  (_RECV_KEYS, tgt), (_KICK_KEYS, is_kicker))
         for keys, active in groups:
             if not active:
                 continue
@@ -227,6 +266,7 @@ def build_rows(path: str, all_positions: bool = False):
             "team": normalize("nfl", row["team"]),
             "opponent": normalize("nfl", row["opponent_team"]),
             "position": row["position"],
+            "season_type": row["season_type"],
             "stats": stats,
         })
     return out

@@ -678,6 +678,57 @@ def _regular_season_aggregates(connection: sqlite3.Connection, season: int) -> D
     return out
 
 
+def _pk_aggregates(connection: sqlite3.Connection, season: int) -> Dict[int, dict]:
+    """Compute ESPN-standard kicker fantasy points from ingested bucket columns.
+
+    Scoring: 0-39 yd FG = 3, 40-49 = 4, 50+ = 5, PAT = 1, missed FG = -1.
+    Buckets are stored in the game-log JSON blobs from ingest_nfl_weekly_stats.
+    """
+    game_type_filter = f"AND CAST(game_no AS INTEGER) < {_POSTSEASON_FIRST_WEEK}"
+    if "game_type" in _table_columns(connection, "player_game_logs"):
+        game_type_filter = "AND game_type='REG'"
+
+    rows = connection.execute(
+        f"""SELECT player_id,
+                  COUNT(*)                                   AS games_played,
+                  SUM(
+                    COALESCE(CAST(json_extract(stats,'$.fg_made_0_19') AS REAL),0) * 3 +
+                    COALESCE(CAST(json_extract(stats,'$.fg_made_20_29') AS REAL),0) * 3 +
+                    COALESCE(CAST(json_extract(stats,'$.fg_made_30_39') AS REAL),0) * 3 +
+                    COALESCE(CAST(json_extract(stats,'$.fg_made_40_49') AS REAL),0) * 4 +
+                    COALESCE(CAST(json_extract(stats,'$.fg_made_50_59') AS REAL),0) * 5 +
+                    COALESCE(CAST(json_extract(stats,'$.fg_made_60_') AS REAL),0) * 5 +
+                    COALESCE(CAST(json_extract(stats,'$.pat_made') AS REAL),0) * 1 -
+                    COALESCE(CAST(json_extract(stats,'$.fg_missed') AS REAL),0) * 1
+                  )                                            AS pk_pts_total,
+                  GROUP_CONCAT(game_no)                          AS weeks
+           FROM player_game_logs
+           WHERE league='nfl' AND season=?
+             AND json_extract(stats,'$.fg_att') IS NOT NULL
+             {game_type_filter}
+           GROUP BY player_id""",
+        (season,),
+    ).fetchall()
+
+    out: Dict[int, dict] = {}
+    for row in rows:
+        weeks = set()
+        for token in (row["weeks"] or "").split(","):
+            try:
+                weeks.add(int(token))
+            except ValueError:
+                continue
+        gp = row["games_played"] or 0
+        total = row["pk_pts_total"]
+        out[row["player_id"]] = {
+            "games_played": gp,
+            "pk_pts_total": total,
+            "pk_pts_per_game": round(total / gp, 1) if total and gp else None,
+            "weeks": weeks,
+        }
+    return out
+
+
 def _dst_aggregates(connection: sqlite3.Connection, season: int) -> Tuple[Dict[int, dict], Dict[str, list]]:
     """One pass over nfl_dst_stats for the reference season.
 
@@ -807,6 +858,7 @@ def nfl_draft_board(
 
         aggregates = _regular_season_aggregates(connection, season)
         dst_aggregates, dst_team_weeks = _dst_aggregates(connection, season)
+        pk_aggregates = _pk_aggregates(connection, season)
 
         position_expr = "UPPER(COALESCE(NULLIF(p.position,''), ''))"
         where = ["p.league='nfl'", "p.active=1"]
@@ -851,7 +903,8 @@ def nfl_draft_board(
     for row in candidates:
         pid = row["player_id"]
         is_def = row["position"] == "DEF"
-        agg = dst_aggregates.get(pid) if is_def else aggregates.get(pid)
+        is_pk = row["position"] == "PK"
+        agg = dst_aggregates.get(pid) if is_def else pk_aggregates.get(pid) if is_pk else aggregates.get(pid)
         adp = row["adp"]
         ranked_adp = adp if (adp is not None and adp < _ADP_SENTINEL) else None
 
@@ -865,6 +918,20 @@ def nfl_draft_board(
         if is_def and agg:
             dst_total = agg.get("dst_total")
             dst_pts_per_game = _round(agg["dst_avg"]) if agg["dst_avg"] is not None else None
+            pk_pts_total = None
+            pk_pts_per_game = None
+            ppr_total = None
+            ppr_per_game_played = None
+            ppr_per_team_game = None
+            xfp_per_game = None
+            snap_pct = None
+            target_share = None
+            sample = "full" if games_played >= _THIN_SAMPLE_GAMES else ("thin" if games_played > 0 else "none")
+        elif is_pk and agg:
+            pk_pts_total = agg.get("pk_pts_total")
+            pk_pts_per_game = agg.get("pk_pts_per_game")
+            dst_total = None
+            dst_pts_per_game = None
             ppr_total = None
             ppr_per_game_played = None
             ppr_per_team_game = None
@@ -876,6 +943,8 @@ def nfl_draft_board(
             ppr_total = (agg["ppr_total"] if agg else None) or None
             dst_total = None
             dst_pts_per_game = None
+            pk_pts_total = None
+            pk_pts_per_game = None
             if agg is None:
                 sample = "none"
             elif games_played < _THIN_SAMPLE_GAMES:
@@ -915,16 +984,19 @@ def nfl_draft_board(
             # The 17 weeks his team actually played, so the strip can show a bye
             # as a bye rather than as an absence.
             "team_weeks": (dst_team_weeks.get(row["current_team"], []) if is_def
-                           else agg["team_weeks"] if agg else []),
+                           else agg.get("team_weeks", []) if agg else []),
             # Both averages, always together.
             "ppr_per_game_played": _round(ppr_total / games_played) if ppr_total and games_played else None,
             "ppr_per_team_game": _round(ppr_total / _REG_SEASON_TEAM_GAMES) if ppr_total else None,
-            "xfp_per_game": _round(agg["xfp_per_game"]) if agg and not is_def else None,
-            "snap_pct": _round(agg["snap_pct"] * 100, 0) if agg and agg.get("snap_pct") is not None and not is_def else None,
-            "target_share": _round(agg["target_share"] * 100, 1) if agg and agg.get("target_share") is not None and not is_def else None,
+            "xfp_per_game": _round(agg["xfp_per_game"]) if agg and not is_def and not is_pk else None,
+            "snap_pct": _round(agg["snap_pct"] * 100, 0) if agg and agg.get("snap_pct") is not None and not is_def and not is_pk else None,
+            "target_share": _round(agg["target_share"] * 100, 1) if agg and agg.get("target_share") is not None and not is_def and not is_pk else None,
             # D/ST-specific fields
             "dst_pts_per_game": dst_pts_per_game,
             "dst_pts_total": _round(dst_total, 1) if dst_total else None,
+            # PK-specific fields
+            "pk_pts_per_game": pk_pts_per_game,
+            "pk_pts_total": _round(pk_pts_total, 1) if pk_pts_total else None,
             "sample": sample,
             "team_changed": None,
         })
