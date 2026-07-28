@@ -5,6 +5,7 @@ import {
   createDraft as engineCreateDraft,
   applyPick,
   autopick,
+  botPick,
   isUserPick,
   isComplete,
   seededRandom,
@@ -20,6 +21,10 @@ import DraftRoom from '../components/MockDraft/DraftRoom'
 import ResultsScreen from '../components/MockDraft/ResultsScreen'
 
 type Phase = 'pool' | 'drafting' | 'results'
+
+// A timeout pick should be the deterministic best available, not a jittered one:
+// botPick maps rng() to jitter = (rng() - 0.5) * 0.2, so 0.5 → no jitter.
+const ZERO_JITTER = () => 0.5
 
 export default function MockDraftPage() {
   const [phase, setPhase] = useState<Phase>('pool')
@@ -152,14 +157,15 @@ export default function MockDraftPage() {
     setQueue(q => { if (idx >= q.length - 1) return q; const next = [...q]; [next[idx], next[idx+1]] = [next[idx+1], next[idx]]; return next })
   }, [])
 
-  // ── User makes a pick ──
-  const handleUserPick = useCallback(async (playerId: number) => {
+  // ── Commit the user's pick, then run bots up to their next turn ──
+  //   auto=true when the 30s clock expired and we picked for them.
+  const commitPick = useCallback(async (playerId: number, auto: boolean) => {
     if (!draftState || !rngRef.current || !draftId) return
 
     setUserPicking(false)
 
     // Apply user's pick
-    let current = applyPick(draftState, playerId, false)
+    let current = applyPick(draftState, playerId, auto)
 
     // Save user's pick to server
     const userPick = current.picks[current.picks.length - 1]
@@ -194,6 +200,23 @@ export default function MockDraftPage() {
       setUserPicking(true)
     }
   }, [draftState, draftId])
+
+  const handleUserPick = useCallback(
+    (playerId: number) => commitPick(playerId, false),
+    [commitPick],
+  )
+
+  // ── Clock expired — pick for the user rather than stalling the draft ──
+  //   Queue first (that is what the queue is for), else the engine's best
+  //   available with zero jitter, per the autopick contract in engine.ts.
+  const handleTimeout = useCallback(() => {
+    if (!draftState || !isUserPick(draftState) || isComplete(draftState)) return
+    const queued = queue.find(id =>
+      draftState.availablePool.some(p => p.player_id === id),
+    )
+    const playerId = queued ?? botPick(draftState, ZERO_JITTER).player_id
+    void commitPick(playerId, true)
+  }, [draftState, queue, commitPick])
 
   // ── Loading / error states ──
   if (poolLoading) {
@@ -243,6 +266,7 @@ export default function MockDraftPage() {
           pool={pool}
           draftState={draftState}
           onUserPick={handleUserPick}
+          onTimeout={handleTimeout}
           userPicking={userPicking}
           queue={queue}
           onAddToQueue={handleAddToQueue}

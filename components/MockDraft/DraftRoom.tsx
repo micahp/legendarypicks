@@ -19,6 +19,7 @@ interface Props {
   pool: PoolPlayer[]
   draftState: DraftState
   onUserPick: (playerId: number) => void
+  onTimeout: () => void
   userPicking: boolean
   queue: number[]
   onAddToQueue: (playerId: number) => void
@@ -42,7 +43,7 @@ const BENCH_SLOTS = 6
  *   - Drafted: dim + strike.
  *   - Clock: tabular figures, may change weight under 10s, never red.
  */
-export default function DraftRoom({ pool, draftState, onUserPick, userPicking, queue, onAddToQueue, onRemoveFromQueue, onMoveQueueUp, onMoveQueueDown }: Props) {
+export default function DraftRoom({ pool, draftState, onUserPick, onTimeout, userPicking, queue, onAddToQueue, onRemoveFromQueue, onMoveQueueUp, onMoveQueueDown }: Props) {
   // ── Filter state ──
   const [posFilter, setPosFilter] = useState<string>('ALL')
   const [teamFilter, setTeamFilter] = useState<string>('ALL')
@@ -122,29 +123,50 @@ export default function DraftRoom({ pool, draftState, onUserPick, userPicking, q
 
   // ── Clock: 30s countdown when user is on the clock ──
   const CLOCK_SECONDS = 30
-  const [clock, setClock] = useState(CLOCK_SECONDS)
+  // The countdown carries the pick it belongs to. On the render where a new turn
+  // begins, `seconds` still holds the *previous* turn's value — pairing the two in one
+  // state object means a stale 0 can never be read as this turn's expiry. In a snake
+  // draft the user can pick twice in a row (e.g. 22 then 27), and `userTurn` does not
+  // change across those, so neither a boolean guard nor `currentPick` alone is enough.
+  const [clock, setClock] = useState({ pick: draftState.currentPick, seconds: CLOCK_SECONDS })
   const clockRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   useEffect(() => {
+    if (clockRef.current) clearInterval(clockRef.current)
+    setClock({ pick: draftState.currentPick, seconds: CLOCK_SECONDS })
+
     if (userTurn && !draftState.completed) {
-      setClock(CLOCK_SECONDS)
       clockRef.current = setInterval(() => {
         setClock(c => {
-          if (c <= 1) {
+          if (c.seconds <= 1) {
             if (clockRef.current) clearInterval(clockRef.current)
-            return 0
+            return { ...c, seconds: 0 }
           }
-          return c - 1
+          return { ...c, seconds: c.seconds - 1 }
         })
       }, 1000)
-    } else {
-      if (clockRef.current) clearInterval(clockRef.current)
-      setClock(CLOCK_SECONDS)
     }
     return () => {
       if (clockRef.current) clearInterval(clockRef.current)
     }
-  }, [userTurn, draftState.completed])
+  }, [userTurn, draftState.currentPick, draftState.completed])
+
+  // At 0:00 the draft would otherwise stall forever waiting on a user who is not there.
+  // Autopick for them instead — exactly once per pick.
+  const timedOutPick = useRef<number | null>(null)
+  useEffect(() => {
+    if (
+      clock.seconds === 0 &&
+      clock.pick === draftState.currentPick &&
+      timedOutPick.current !== draftState.currentPick &&
+      userTurn &&
+      userPicking &&
+      !draftState.completed
+    ) {
+      timedOutPick.current = draftState.currentPick
+      onTimeout()
+    }
+  }, [clock, draftState.currentPick, userTurn, userPicking, draftState.completed, onTimeout])
 
   // Sort user's players into slot order
   const rosterSlots = useMemo(() => buildRosterSlots(userRoster.players, playerMap), [userRoster, playerMap])
@@ -187,10 +209,10 @@ export default function DraftRoom({ pool, draftState, onUserPick, userPicking, q
               <span className="text-xs text-zinc-500">·</span>
               <span
                 className={`font-mono tabular-nums text-sm ${
-                  clock <= 10 ? 'font-bold text-zinc-200' : 'font-medium text-zinc-400'
+                  clock.seconds <= 10 ? 'font-bold text-zinc-200' : 'font-medium text-zinc-400'
                 }`}
               >
-                0:{clock.toString().padStart(2, '0')}
+                0:{clock.seconds.toString().padStart(2, '0')}
               </span>
             </>
           ) : (
