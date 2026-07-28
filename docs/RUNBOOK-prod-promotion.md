@@ -16,9 +16,13 @@ failure mode here is shipping code whose data isn't in the prod DB (the empty-DB
 - No CI/CD. Deploy = rebuild the images on this host (`docker compose up -d --build`).
 
 ## Promotion steps
-1. **Release on the branch.** Land work on `analytics-backbone`, update `CHANGELOG.md` +
-   `package.json` version, commit. (Tags `v0.MINOR.PATCH`; v0.x = pre-launch.)
-2. **Fast-forward `dev`** to the release commit and push (`dev` is the default/integration branch).
+1. **Land and gate on `dev`.** Complete work in its feature worktree, run the
+   feature's acceptance against that code and data, then fast-forward or merge
+   it into `dev`. `dev` is the integration/release branch;
+   `analytics-backbone` is not a required release waypoint.
+2. **Create the release commit on `dev` when a production promotion is actually
+   requested.** Update `CHANGELOG.md` + `package.json` version, commit, and push
+   `dev`. (Tags `v0.MINOR.PATCH`; v0.x = pre-launch.)
 3. **Tag** the release (`git tag -a vX.Y.Z`) and push the tag.
 4. **Migrate data into the prod DB FIRST** (additive; never clobber live prop tables). Player IDs are
    ~fully aligned dev↔prod (resolve-by-ID still holds). The proven path:
