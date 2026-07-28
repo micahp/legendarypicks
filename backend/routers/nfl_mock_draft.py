@@ -35,6 +35,10 @@ _REG_SEASON_TEAM_GAMES = 17
 _POSTSEASON_FIRST_WEEK = 19
 _THIN_SAMPLE_GAMES = 4
 _POOL_CAP = 300
+# Pool index where D/ST start — round 13 in a 12-team draft (~pick 145).
+# Defenses go in the back third of the pool, not dead last where they are
+# unreachable in a 180-pick draft.
+_DST_SLOT = 150
 
 # Draftable positions: skill positions plus kickers (code is PK, not K — §1 of spec),
 # plus team defense (DEF).  DEF has no ADP; rankings are derived from nfl_dst_stats.
@@ -273,14 +277,12 @@ def pool(season: int = Query(...)):
                 team_weeks_map[team].sort()
 
         # ── Count D/ST players to reserve pool slots ──────────────────────
-        # D/ST have no ADP; they are appended after skill players.  The
-        # skill-player cap is reduced by the D/ST count so the total stays
-        # at _POOL_CAP (300).
+        # D/ST have no ADP; they are interleaved at _DST_SLOT in the
+        # back third of the pool so they are reachable in a 180-pick draft.
         _dst_count = connection.execute(
             """SELECT COUNT(*) FROM players
                WHERE league='nfl' AND active=1 AND position='DEF'"""
         ).fetchone()[0]
-        _skill_cap = max(1, _POOL_CAP - _dst_count)
 
         # ------------------------------------------------------------------
         # Query the pool: draftable positions, active players, from nfl_adp.
@@ -310,11 +312,11 @@ def pool(season: int = Query(...)):
                 _ADP_SENTINEL,
                 _ADP_SENTINEL,
                 _ADP_SENTINEL,
-                _skill_cap,
+                _POOL_CAP,
             ),
         ).fetchall()
 
-        players = []
+        skill_players = []
         for row in rows:
             pid = row["player_id"]
             games_played = aggregates.get(pid, 0)
@@ -334,7 +336,7 @@ def pool(season: int = Query(...)):
                 sample = "full"
                 games_missed = team_games_val - games_played
 
-            players.append(
+            skill_players.append(
                 {
                     "player_id": pid,
                     "name": row["name"],
@@ -352,9 +354,8 @@ def pool(season: int = Query(...)):
 
         # D/ST — no published ADP exists (verified: 0/9,611 nfl_adp rows).
         # Derive ranking from 2025 fantasy totals.  Column is `dst_rank`, not
-        # `adp`, so it cannot be mistaken for published ADP.  D/ST are appended
-        # after the ADP-ranked skill players — they land where defenses
-        # belong in a real draft (late).
+        # `adp`, so it cannot be mistaken for published ADP.
+        dst_players = []
         dst_rows = connection.execute(
             """SELECT p.id AS player_id, p.name, p.team,
                       SUM(d.fantasy_pts) AS dst_total,
@@ -374,7 +375,7 @@ def pool(season: int = Query(...)):
             gp = len(weeks)
             tw = team_weeks_map.get(dr["team"], [])
             tg = len(tw) if tw else _REG_SEASON_TEAM_GAMES
-            players.append({
+            dst_players.append({
                 "player_id": pid,
                 "name": dr["name"],
                 "position": "DEF",
@@ -388,6 +389,15 @@ def pool(season: int = Query(...)):
                 "weeks_played": weeks,
                 "team_weeks": tw,
             })
+
+        # Interleave D/ST at _DST_SLOT so they are reachable in a 180-pick
+        # draft.  Top skill players → D/ST block → remaining skill players.
+        remaining_slots = _POOL_CAP - _DST_SLOT - len(dst_players)
+        players = (
+            skill_players[:_DST_SLOT]
+            + dst_players
+            + skill_players[_DST_SLOT:_DST_SLOT + remaining_slots]
+        )
 
         return _json(
             {
