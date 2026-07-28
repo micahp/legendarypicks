@@ -234,6 +234,17 @@ function buildResultsSlots(
     })
   })
 
+  // Preserve the full 15-slot roster shape even if a draft ends incomplete.
+  for (let i = remaining.length; i < 6; i++) {
+    slots.push({
+      label: `BE${i + 1}`,
+      player: null,
+      poolPlayer: null,
+      isStarter: false,
+      pickNo: null,
+    })
+  }
+
   return slots
 }
 

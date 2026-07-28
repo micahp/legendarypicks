@@ -31,6 +31,8 @@ interface Props {
 }
 
 const PICK_LEDGER_LIMIT = 15
+// 15-man roster: QB RB1 RB2 WR1 WR2 TE FLEX K DEF = 9 starters, rest bench.
+const BENCH_SLOTS = 6
 
 /**
  * Main draft UI — pool on left, roster + ledger on right.
@@ -765,6 +767,16 @@ function buildRosterSlots(
       isStarter: false,
     })
   })
+
+  // Empty bench rows keep the full roster construction visible while drafting.
+  for (let i = remaining.length; i < BENCH_SLOTS; i++) {
+    slots.push({
+      label: `BE${i + 1}`,
+      player: null,
+      poolPlayer: null,
+      isStarter: false,
+    })
+  }
 
   return slots
 }
