@@ -351,6 +351,8 @@ export interface PoolPlayer {
   team: string
   adp: number | null
   percent_owned: number | null
+  /** Derived rank from fantasy totals when no published ADP exists (D/ST). */
+  dst_rank?: number | null
   sample: 'full' | 'thin' | 'none'
   games_played: number
   games_missed: number | null

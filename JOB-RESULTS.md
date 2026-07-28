@@ -123,3 +123,35 @@ All subagents blocked from terminal — wrote code only, no runtime verification
 **Before:** `AND game_type='REG'` hardcoded — 500s against unmigrated DBs (picks.dev.db)
 **After:** guarded behind `_table_columns` check — matches every other schema read in the file
 **Blocker status:** resolved — merge to dev no longer blocked
+
+---
+
+## Job 10 — D/ST players in mock draft pool
+
+**Commit 1:** `9cab170` — add `DEF` to `_DRAFT_POSITIONS` (prerequisite, no-op alone)
+**Commit 2:** (this commit) — query D/ST from `nfl_dst_stats`, derive `dst_rank`, append to pool
+
+**Ranking:** SUM(fantasy_pts) from nfl_dst_stats 2025, descending. Column is `dst_rank`
+(named distinct from `adp` — published D/ST ADP does not exist; 0/9,611 nfl_adp rows).
+
+**Pool cap:** skill-player LIMIT reduced to `_POOL_CAP - dst_count` (268) so total stays 300.
+D/ST land at #269–#300 — where defenses belong in a real draft.
+
+### Before/after (measured, not expected)
+
+| Position | Before | After |
+|----------|--------|-------|
+| RB       | 86     | 73    |
+| WR       | 106    | 97    |
+| TE       | 42     | 36    |
+| QB       | 39     | 37    |
+| PK       | 27     | 25    |
+| **DEF**  | **0**  | **32** |
+| **Total**| **300**| **300**|
+
+### Verification
+
+- **First D/ST:** #269 SEA D/ST (dst_rank=1, 164.0 pts), **Last:** #300 NYJ D/ST (dst_rank=32)
+- **Lifecycle:** create → pick Josh Allen → pick SEA D/ST → resume: 2 picks, status=active ✓
+- **Sanity:** all DEF have `adp: null, percent_owned: null`; no ADP pollution ✓
+- **Regression:** draft board unchanged (1819 eligible, different surface, different code path)
