@@ -155,3 +155,35 @@ D/ST land at #269–#300 — where defenses belong in a real draft.
 - **Lifecycle:** create → pick Josh Allen → pick SEA D/ST → resume: 2 picks, status=active ✓
 - **Sanity:** all DEF have `adp: null, percent_owned: null`; no ADP pollution ✓
 - **Regression:** draft board unchanged (1819 eligible, different surface, different code path)
+
+---
+
+## Job 11 — Fix D/ST ordering so defenses are reachable
+
+**Commit:** `7bee84b`
+
+**Problem:** Job 10 appended D/ST after all 268 ADP-ranked skill players
+(indices 268–299, 0-based). A 12-team 15-round draft is 180 picks — every
+defense was ~88 picks past the end. Surface reported success, behavior unchanged.
+
+**Fix:** Interleave D/ST at `_DST_SLOT` = 150. Pool construction:
+`skill[:150] + dst + skill[150:268]` = 300 total.
+
+### Before/after (measured)
+
+```
+Before (6bc0a1c):  DEF idx 268 -> 299     ← unreachable in 180-pick draft
+After  (7bee84b):  DEF idx 150 -> 181     ← SEA D/ST reachable at pick 151 (round 13)
+```
+
+Verified:
+```
+curl -s http://127.0.0.1:8098/api/nfl/mock-draft/pool?season=2026 | \
+  python3 -c "..."
+300 {'RB': 73, 'WR': 97, 'TE': 36, 'QB': 37, 'PK': 25, 'DEF': 32}
+DEF idx 150 -> 181
+```
+
+- Total: 300 ✓  DEF: 32 ✓  First D/ST: #150 SEA (dst_rank=1) ✓
+- All DEF adp: null ✓  Lifecycle persists ✓  Board: 1819 ✓
+- **Not verified:** client autodraft engine (main tree, not this worktree)
