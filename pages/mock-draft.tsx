@@ -293,6 +293,7 @@ export default function MockDraftPage() {
       {phase === 'results' && draftState && (
         <ResultsScreen
           pool={pool}
+          referenceSeason={referenceSeason}
           draftState={draftState}
         />
       )}

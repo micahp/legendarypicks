@@ -270,6 +270,24 @@ def pool(season: int = Query(...)):
                 player_ids=[row["player_id"] for row in rows],
             )
 
+        # Whether we hold any NFL game log for this player *before* the
+        # reference season. Without it a surface cannot tell a rookie apart
+        # from a veteran who missed the whole year, and the pool called Odell
+        # Beckham Jr. a rookie -- an outright false statement about a player
+        # with eight prior-season rows sitting in this same table.
+        prior_sample_ids = set()
+        if rows:
+            _prior_placeholders = ",".join("?" for _ in rows)
+            prior_sample_ids = {
+                r[0]
+                for r in connection.execute(
+                    f"""SELECT DISTINCT player_id FROM player_game_logs
+                        WHERE league='nfl' AND season < ?
+                          AND player_id IN ({_prior_placeholders})""",
+                    (_log_season, *[row["player_id"] for row in rows]),
+                )
+            }
+
         players = []
         for row in rows:
             pid = row["player_id"]
@@ -368,6 +386,7 @@ def pool(season: int = Query(...)):
                 "adp": row["adp"],
                 "percent_owned": row["percent_owned"],
                 "sample": sample,
+                "has_prior_nfl_sample": pid in prior_sample_ids,
                 "games_played": gp,
                 "games_missed": gm,
                 "weeks_played": wp,
@@ -817,6 +836,16 @@ def player_detail(player_id: int):
             else None
         )
 
+        # 7b. Same prior-sample flag the pool publishes, so the overlay does not
+        #     call a veteran who missed the season a rookie.
+        has_prior_nfl_sample = bool(
+            connection.execute(
+                """SELECT 1 FROM player_game_logs
+                   WHERE league='nfl' AND player_id=? AND season < ? LIMIT 1""",
+                (player_id, _log_season),
+            ).fetchone()
+        )
+
         # 8. PK/DEF null-override for skill-position fields — all five, so a
         #    fake-punt carry cannot surface as kicking output (see the pool).
         if position in ("PK", "DEF"):
@@ -835,6 +864,7 @@ def player_detail(player_id: int):
             "adp": adp,
             "percent_owned": percent_owned,
             "sample": sample,
+            "has_prior_nfl_sample": has_prior_nfl_sample,
             "games_played": games_played,
             "games_missed": games_missed,
             "team_games": team_games,

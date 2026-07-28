@@ -404,7 +404,7 @@ export default function DraftRoom({ pool, referenceSeason, draftState, onUserPic
                         </span>
                       </td>
                       <td className="py-2 px-2">
-                        <PoolAvailability poolPlayer={poolPlayer} />
+                        <PoolAvailability poolPlayer={poolPlayer} referenceSeason={referenceSeason} />
                       </td>
                       <td className="py-2 px-2 text-right font-mono tabular-nums text-xs text-zinc-300">
                         <HeadlineStat player={poolPlayer} />
@@ -731,6 +731,28 @@ function DraftBoardGrid({ draftState }: { draftState: DraftState }) {
    Under the 'All' filter the header stays generic, because one column is
    spanning three different units and the row's position chip says which. */
 
+/** What we can honestly say about a player with no games in the reference season.
+ *
+ * "Rookie" was an inference, and a wrong one for anyone who simply missed the
+ * year: the pool told a drafter Odell Beckham Jr. was a rookie while holding
+ * eight of his prior-season games in the same table. We publish whether a prior
+ * NFL sample exists, so neither branch has to guess — a player we have never
+ * recorded is "no NFL sample" (not necessarily a rookie), and a player we have
+ * recorded before is one who did not play, which is the far more useful fact. */
+export function noSampleLabel(
+  position: string,
+  hasPriorNflSample?: boolean | null,
+  referenceSeason?: number | null,
+): string {
+  if (position === 'PK') return 'Kicker games not tracked'
+  if (hasPriorNflSample) {
+    return referenceSeason != null
+      ? `No ${referenceSeason} games`
+      : 'No games last season'
+  }
+  return 'No NFL sample'
+}
+
 /* The season label comes from the payload's reference_season, never from a
    hardcoded year: a literal "2025" is true today and silently false in twelve
    months, the same class of defect as a stale bye week. The pool contract used
@@ -770,14 +792,16 @@ export function HeadlineStat({ player }: { player: PoolPlayer }) {
 }
 
 /** Availability display for a pool player in the draft room. */
-function PoolAvailability({ poolPlayer }: { poolPlayer: PoolPlayer }) {
+function PoolAvailability({
+  poolPlayer,
+  referenceSeason,
+}: { poolPlayer: PoolPlayer; referenceSeason?: number | null }) {
   const noSample = poolPlayer.sample === 'none'
-  const isKicker = poolPlayer.position === 'PK'
 
   if (noSample) {
     return (
       <span className="text-[11px] text-zinc-500">
-        {isKicker ? 'Kicker games not tracked' : 'Rookie — no NFL sample'}
+        {noSampleLabel(poolPlayer.position, poolPlayer.has_prior_nfl_sample, referenceSeason)}
       </span>
     )
   }

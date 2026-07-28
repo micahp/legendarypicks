@@ -358,6 +358,9 @@ export interface PoolPlayer {
   adp: number | null
   percent_owned: number | null
   sample: 'full' | 'thin' | 'none'
+  /** Whether we hold any NFL game log for this player before the reference
+   *  season. Distinguishes a rookie from a veteran who missed the year. */
+  has_prior_nfl_sample?: boolean
   games_played: number
   games_missed: number | null
   weeks_played: number[]
@@ -426,6 +429,9 @@ export interface PlayerDetailResponse {
   adp: number | null
   percent_owned: number | null
   sample: 'full' | 'thin' | 'none'
+  /** Whether we hold any NFL game log for this player before the reference
+   *  season. Distinguishes a rookie from a veteran who missed the year. */
+  has_prior_nfl_sample?: boolean
   games_played: number
   games_missed: number | null
   team_games: number

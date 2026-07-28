@@ -4,9 +4,12 @@ import type { DraftState, DraftPlayer } from '../../lib/mockDraft/engine'
 import { getRosterState } from '../../lib/mockDraft/engine'
 import { poolTeamGames } from '../../lib/mockDraft/availability'
 import { AvailabilityStrip } from '../Leagues/NflDraftRoom'
+import { noSampleLabel } from './DraftRoom'
 
 interface Props {
   pool: PoolPlayer[]
+  /** The season the pool's statistics describe, from the payload. */
+  referenceSeason?: number | null
   draftState: DraftState
 }
 
@@ -23,7 +26,7 @@ interface Props {
  *   - Durable URL pattern.
  *   - No trophy iconography, no gradients, no card shadows.
  */
-export default function ResultsScreen({ pool, draftState }: Props) {
+export default function ResultsScreen({ pool, draftState, referenceSeason }: Props) {
   const playerMap = useMemo(() => {
     const m = new Map<number, PoolPlayer>()
     for (const p of pool) m.set(p.player_id, p)
@@ -139,7 +142,7 @@ export default function ResultsScreen({ pool, draftState }: Props) {
         </div>
         <div className="divide-y divide-zinc-800/50">
           {slots.map((slot, i) => (
-            <ResultsSlotRow key={i} slot={slot} />
+            <ResultsSlotRow key={i} slot={slot} referenceSeason={referenceSeason} />
           ))}
         </div>
       </div>
@@ -248,10 +251,12 @@ function buildResultsSlots(
   return slots
 }
 
-function ResultsSlotRow({ slot }: { slot: ResultsSlot }) {
+function ResultsSlotRow({
+  slot,
+  referenceSeason,
+}: { slot: ResultsSlot; referenceSeason?: number | null }) {
   const pp = slot.poolPlayer
   const noSample = pp?.sample === 'none'
-  const isKicker = pp?.position === 'PK'
   const teamGames = pp ? poolTeamGames(pp) : null
   const hasAvailability =
     !noSample && teamGames != null && pp?.games_missed != null
@@ -281,7 +286,7 @@ function ResultsSlotRow({ slot }: { slot: ResultsSlot }) {
           <div className="shrink-0">
             {noSample ? (
               <span className="text-[10px] text-zinc-500">
-                {isKicker ? 'Kicker games not tracked' : 'Rookie — no NFL sample'}
+                {noSampleLabel(pp?.position ?? '', pp?.has_prior_nfl_sample, referenceSeason)}
               </span>
             ) : hasAvailability ? (
               <AvailabilityStrip

@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import type { PoolPlayer } from '../Leagues/types'
 import { AvailabilityStrip } from '../Leagues/NflDraftRoom'
 import { poolToDraftRow } from '../../lib/mockDraft/api'
-import { HeadlineStat, headlineStatFor } from './DraftRoom'
+import { HeadlineStat, headlineStatFor, noSampleLabel } from './DraftRoom'
 
 interface Props {
   players: PoolPlayer[]
@@ -101,6 +101,7 @@ export default function PoolList({ players, referenceSeason, onStartDraft }: Pro
                 row={row}
                 player={playerMap.get(row.player_id)}
                 posRank={posRank.get(row.player_id)}
+                referenceSeason={referenceSeason}
               />
             ))}
           </tbody>
@@ -116,13 +117,14 @@ function PoolRow({
   row,
   player,
   posRank,
+  referenceSeason,
 }: {
   row: ReturnType<typeof poolToDraftRow>
   player?: PoolPlayer
   posRank?: number
+  referenceSeason?: number | null
 }) {
   const noSample = row.sample === 'none'
-  const isKicker = row.position === 'PK'
   const hasAvailability =
     !noSample && row.team_games != null && row.games_missed != null
 
@@ -155,9 +157,7 @@ function PoolRow({
       <td className="py-2.5 px-2">
         {noSample ? (
           <span className="text-[11px] text-zinc-500">
-            {isKicker
-              ? 'Kicker games not tracked'
-              : 'Rookie — no NFL sample'}
+            {noSampleLabel(row.position, player?.has_prior_nfl_sample, referenceSeason)}
           </span>
         ) : !hasAvailability ? (
           <span className="text-[11px] text-zinc-500">
