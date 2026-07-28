@@ -65,8 +65,8 @@ Everything v0.6.11 listed as missing:
   as `active` at insert and never updated, and the backend's `status != 'active'` guard
   therefore cannot fire — while the results screen tells you "Draft complete" off a
   client-only flag.
-- **14 of 32 defenses still carry no published ADP** and correctly show `—`. The other 18 are
-  ESPN's own figures.
+- **The em-dash path for an unpublished ADP is currently unexercised.** All 32 defenses carry
+  ESPN's published figure today, so the `—` fallback is correct but untested by real data.
 - **The share URL still does not restore a draft.** Unchanged from v0.6.11: the picks are
   saved and the API returns them, but the page renders a fresh pool.
 - **Kicking and weekly stats are a per-database ingest.** The data lives in the published
