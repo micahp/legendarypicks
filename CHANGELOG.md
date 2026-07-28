@@ -16,7 +16,7 @@
   the count of exclusions is printed rather than hidden.
 - **Best and worst value are shown as the two numbers** — picked at 81, ADP 92.1 — not as a
   computed score that hides its arithmetic.
-- **Every draft has a durable URL** so it can be shared or resumed.
+- **Every draft is persisted server-side** and has its own URL.
 - **The mock draft is reachable from the NFL hub.** It shipped as a route that nothing linked
   to; there is now a card above Recent Trades on `/leagues/nfl`.
 
@@ -35,6 +35,9 @@
   kicking data, not to relabel him.
 - **The draft room has no position filter, no queue, no board grid and no clock.** The pool
   is a single scrolling list.
+- **The share URL does not restore a draft yet.** The picks are saved and the API returns
+  them, but the page discards them and renders a fresh pool, so `?id=` currently leads
+  nowhere. The results screen offers the link regardless.
 
 ## v0.6.10 — 2026-07-27
 
