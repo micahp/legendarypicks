@@ -541,7 +541,7 @@ def _regular_season_aggregates(connection: sqlite3.Connection, season: int) -> D
     Postseason weeks are excluded -- see ``_POSTSEASON_FIRST_WEEK``. Missed games
     contribute nothing here by construction; that absence IS the measurement.
     """
-    game_type_filter = ""
+    game_type_filter = f"AND CAST(game_no AS INTEGER) < {_POSTSEASON_FIRST_WEEK}"
     if "game_type" in _table_columns(connection, "player_game_logs"):
         game_type_filter = "AND game_type='REG'"
     rows = connection.execute(
@@ -909,7 +909,7 @@ def nfl_draft_board(
             # Availability: the headline. Denominator is every game the team
             # played, so a missed game costs the drafter exactly what it cost.
             "games_played": games_played,
-            "games_missed": team_games_val - games_played,
+            "games_missed": max(0, team_games_val - games_played),
             "team_games": team_games_val,
             "weeks_played": sorted(agg["weeks"]) if agg else [],
             # The 17 weeks his team actually played, so the strip can show a bye
