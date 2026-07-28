@@ -657,6 +657,7 @@ def _regular_season_aggregates(connection: sqlite3.Connection, season: int) -> D
             "target_share": row["target_share"],
             "weeks": weeks,
             "team_weeks": sorted(team_weeks.get(primary_team, set())),
+            "primary_team": primary_team,
         }
 
     # ── Players with snap counts but NO game logs ────────────────────────
@@ -674,6 +675,7 @@ def _regular_season_aggregates(connection: sqlite3.Connection, season: int) -> D
             "target_share": None,
             "weeks": sp["weeks"],
             "team_weeks": [],  # no primary team without a log row
+            "primary_team": None,
         }
 
     return out
@@ -960,9 +962,11 @@ def nfl_draft_board(
                 sample = "full"
 
         # Per-player team_games from actual team_weeks, not the 17-constant.
-        # After a mid-season trade (roadmap B1) the new team may have played
-        # a different number of games, so the denominator must come from the
-        # same source as the team_weeks array.
+        # After a mid-season trade the new team may have played a different
+        # number of games.  For skill players the aggregate already stores
+        # team_weeks scoped to the primary team (the one they appeared for
+        # most); for D/ST we resolve from the deduplicated dst_team_weeks
+        # using current_team (team defenses don't change teams).
         if is_def:
             team_games_val = len(dst_team_weeks.get(row["current_team"], [])) or _REG_SEASON_TEAM_GAMES
         elif agg and agg.get("team_weeks"):
@@ -970,11 +974,18 @@ def nfl_draft_board(
         else:
             team_games_val = _REG_SEASON_TEAM_GAMES
 
+        # The team this player actually played most of their games for.
+        # Mid-season movers (Flacco) have a different current_team; this
+        # is the one whose schedule drives team_games.
+        raw_primary_team = agg.get("primary_team") if agg else None
+        primary_team = normalize("nfl", raw_primary_team) if raw_primary_team else None
+
         players.append({
             "player_id": pid,
             "name": row["name"],
             "position": row["position"],
             "current_team": normalize("nfl", row["current_team"]),
+            "primary_team": primary_team,
             # Current role, from the published depth chart. This is what a rookie
             # has instead of a season.
             "depth_rank": row["depth_rank"],
