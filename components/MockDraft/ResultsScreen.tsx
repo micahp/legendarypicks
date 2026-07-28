@@ -134,7 +134,7 @@ export default function ResultsScreen({ pool, draftState }: Props) {
             Your Roster
           </h3>
           <span className="text-xs text-zinc-500">
-            PPR · 2026 season
+            PPR · last completed season
           </span>
         </div>
         <div className="divide-y divide-zinc-800/50">

@@ -86,7 +86,7 @@ export default function PoolList({ players, onStartDraft }: Props) {
                   by team schedule
                 </span>
               </th>
-              <th className="text-right py-3 px-2 w-16" title="Fantasy points per game, 2025 — PPR for skill positions, kicking points for K, D/ST points for defenses">Pts/G</th>
+              <th className="text-right py-3 px-2 w-16" title="Fantasy points per game, last completed season — PPR for skill positions, kicking points for K, D/ST points for defenses">Pts/G</th>
               <th className="text-right py-3 px-2">ADP</th>
               <th className="text-right py-3 px-2">Owned</th>
             </tr>

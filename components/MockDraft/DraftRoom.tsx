@@ -729,11 +729,17 @@ function DraftBoardGrid({ draftState }: { draftState: DraftState }) {
    Under the 'All' filter the header stays generic, because one column is
    spanning three different units and the row's position chip says which. */
 
-export function headlineStatFor(position: string): { header: string; title: string } {
-  if (position === 'DEF') return { header: 'D/ST', title: 'D/ST fantasy points per game, 2025' }
-  if (position === 'PK') return { header: 'K Pts', title: 'Kicking points per game, 2025' }
-  if (position === 'ALL') return { header: 'Pts/G', title: 'Fantasy points per game, 2025 — PPR for skill positions, kicking points for K, D/ST points for defenses' }
-  return { header: 'PPR/G', title: 'PPR points per game played, 2025' }
+export /* The season label says "last completed season" rather than a year on purpose.
+   The pool payload publishes contract/season/count and never states which season
+   its statistics describe — only /api/nfl/draft-board does, as reference_season.
+   A hardcoded "2025" would be true today and silently false in twelve months,
+   which is the same class of defect as a stale bye week. When the pool contract
+   grows reference_season, render the year from it. */
+function headlineStatFor(position: string): { header: string; title: string } {
+  if (position === 'DEF') return { header: 'D/ST', title: 'D/ST fantasy points per game, last completed season' }
+  if (position === 'PK') return { header: 'K Pts', title: 'Kicking points per game, last completed season' }
+  if (position === 'ALL') return { header: 'Pts/G', title: 'Fantasy points per game, last completed season — PPR for skill positions, kicking points for K, D/ST points for defenses' }
+  return { header: 'PPR/G', title: 'PPR points per game played, last completed season' }
 }
 
 /** The one number, resolved per row so a mixed 'All' view stays correct. */
