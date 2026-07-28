@@ -797,7 +797,6 @@ def player_detail(player_id: int):
             sample = "full"
 
         # Team weeks from schedule
-        from collections import defaultdict
         team_weeks: list[int] = []
         sched_columns = connection.execute("PRAGMA table_info(nfl_schedule)").fetchall()
         if sched_columns and team:
