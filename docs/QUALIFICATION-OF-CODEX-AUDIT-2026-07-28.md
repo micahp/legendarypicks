@@ -351,6 +351,45 @@ a green suite.
 
 ---
 
+## Merge audit · `fb0f2cd` lost exactly one thing, and a re-merge is the wrong fix
+
+Prompted by Micah asking whether the merge should have been redone. I checked rather than
+guessed: every top-level symbol in each parent of `fb0f2cd`, against the tree today.
+
+Thirteen symbols were present in a parent and are absent now. **Twelve are false alarms:**
+
+| symbol(s) | verdict |
+|---|---|
+| `DraftGrid`, `PickQueue`, `RosterPanel`, `PlayerPool`, `useMockDraftRoom`, `AvailabilityCell`, `DraftStatus`, `FiltersBar`, `StatBadge` | **Superseded.** They existed only in `5fbaf83`'s 1,042-line `NflDraftRoom.tsx`; `dev` carried a 512-line version. The mock draft room now lives in `components/MockDraft/` as `DraftBoardGrid`, `PoolAvailability`, `RosterSlotRow`. A deliberate split: `NflDraftRoom` is the camp-tab rankings, `MockDraft/DraftRoom` is the room. |
+| `PlayerDetailOverlay` | **Moved**, to `components/Leagues/PlayerDetailOverlay.tsx`. |
+| `MockDraftPool`, `MockDraftState` | **Renamed** to `PoolResponse` / `MockDraft` / `MockDraftPick` / `PoolPlayer`, all present in `types.ts`. |
+| `get_draft_public` | **Scratched on purpose.** It was `GET /api/nfl/mock-draft/{id}/public`, the M4 share endpoint. `docs/ROADMAP.md:324` records M4 as *"scratched (Micah, 2026-07-28)."* |
+
+**The one real loss is the snap-count/schedule block in the pool builder — finding #8.** It
+survives intact at `e43ca6c:backend/routers/nfl_mock_draft.py`, ~55 lines, carrying its own
+rationale in comments:
+
+> *"Snap counts tell us whether a player dressed, regardless of whether they recorded a stat.
+> This fixes kickers/defenders who showed 0-1 games because they never touched the ball."*
+>
+> *"Team weeks from `nfl_schedule` (not derived from game logs) — the published schedule is
+> the authoritative source for which weeks a team played; it handles byes, double-headers and
+> rescheduled games correctly without depending on log coverage."*
+
+So: **do not re-merge.** A re-merge would replay 70-plus commits and job15 to recover one
+extractable block, and it would drag back `get_draft_public` and the superseded
+`NflDraftRoom` internals that were removed on purpose. The correct fix is
+`git show e43ca6c:backend/routers/nfl_mock_draft.py`, lift the two blocks, and reapply them
+to the current pool builder — a targeted restore Codex can spec to Hermes.
+
+The instinct behind the question was right, though, and it generalises: **a hand-resolved
+merge is a rewrite, and nothing verified it.** `fb0f2cd`'s message names the three files it
+resolved by hand, and one of them silently lost a block while its sibling consumer kept it.
+The check above costs one command and should run after any conflict-resolved merge, not once
+a defect surfaces.
+
+---
+
 ## Nothing left unqualified
 
 All 20 findings are now either confirmed, corrected, resolved or handed to Codex. Backend
