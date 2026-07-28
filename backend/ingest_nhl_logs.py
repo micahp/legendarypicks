@@ -11,6 +11,7 @@ Usage: python3 ingest_nhl_logs.py [--season 20252026] [--limit N]
 import sys, os, json, sqlite3, time, urllib.request
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from ingest_nfl_logs import ensure_table
+from team_codes import normalize
 
 DB = os.environ.get("LP_DB_PATH") or os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "picks.db")
 HDR = {"User-Agent": "Mozilla/5.0 (legendarypicks ingest)"}
@@ -53,7 +54,9 @@ def ingest(season: str = "20252026", limit: int = 0) -> int:
                     opponent, home_away, stats, source, source_player_key)
                    VALUES (?,?,?,?,?,?,?,?,?,?,?,?)""",
                 (p["id"], "nhl", season_int, str(g.get("gameId")), str(g.get("gameId")),
-                 g.get("gameDate"), g.get("teamAbbrev"), g.get("opponentAbbrev"),
+                 g.get("gameDate"),
+                 normalize("nhl", g.get("teamAbbrev")) if g.get("teamAbbrev") else None,
+                 normalize("nhl", g.get("opponentAbbrev")) if g.get("opponentAbbrev") else None,
                  "home" if g.get("homeRoadFlag") == "H" else "away",
                  json.dumps(stats), "nhle.com", str(p["nhl_id"])))
             ingested += 1

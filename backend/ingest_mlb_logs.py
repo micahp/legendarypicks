@@ -26,6 +26,7 @@ import sys, os, gc, json, sqlite3, datetime as dt, time as _time, urllib.request
 from typing import Optional
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from ingest_nfl_logs import ensure_table  # reuse the shared schema
+from team_codes import normalize
 
 DB = os.environ.get("LP_DB_PATH") or os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "picks.db")
 
@@ -111,8 +112,8 @@ def _process_day(data, con, mlbam_to_player: dict, season: int) -> int:
         # home/away team abbrevs exist as 'home_team'/'away_team'; batter's team = inferred via inning_topbot
         if "inning_topbot" in g.columns and "home_team" in g.columns and "away_team" in g.columns:
             top = (g["inning_topbot"].iloc[0] == "Top")  # away bats in top
-            team = g["away_team"].iloc[0] if top else g["home_team"].iloc[0]
-            opponent = g["home_team"].iloc[0] if top else g["away_team"].iloc[0]
+            team = normalize("mlb", g["away_team"].iloc[0]) if top else normalize("mlb", g["home_team"].iloc[0])
+            opponent = normalize("mlb", g["home_team"].iloc[0]) if top else normalize("mlb", g["away_team"].iloc[0])
             home_away = "away" if top else "home"
         con.execute(
             """INSERT OR REPLACE INTO player_game_logs

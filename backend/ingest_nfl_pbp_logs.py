@@ -11,6 +11,9 @@ import sqlite3
 import sys
 
 
+from team_codes import normalize
+
+
 DB = os.environ.get("LP_DB_PATH") or os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "data", "picks.db"
 )
@@ -97,6 +100,12 @@ def ingest(year: int = 2025) -> int:
     plays = frame[_PLAY_COLS].astype(object).where(
         frame[_PLAY_COLS].notna(), None
     )
+    # Normalise team columns to ESPN vocabulary before writing.
+    for col in ("posteam", "defteam", "home_team", "away_team"):
+        if col in plays.columns:
+            plays[col] = plays[col].apply(
+                lambda x: normalize("nfl", x) if x is not None else None
+            )
     con.executemany(
         "INSERT OR REPLACE INTO nfl_pbp ({}) VALUES ({})".format(
             ",".join('"{}"'.format(column) for column in _PLAY_COLS),

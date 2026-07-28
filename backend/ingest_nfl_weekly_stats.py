@@ -47,6 +47,7 @@ import urllib.request
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from ingest_nfl_logs import ensure_table  # noqa: E402
+from team_codes import normalize
 
 DB = os.environ.get("LP_DB_PATH") or os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "data", "picks.db")
@@ -223,8 +224,8 @@ def build_rows(path: str, all_positions: bool = False):
             "gsis": row["player_id"],
             "week": week,
             "game_id": row["game_id"],
-            "team": row["team"],
-            "opponent": row["opponent_team"],
+            "team": normalize("nfl", row["team"]),
+            "opponent": normalize("nfl", row["opponent_team"]),
             "position": row["position"],
             "stats": stats,
         })

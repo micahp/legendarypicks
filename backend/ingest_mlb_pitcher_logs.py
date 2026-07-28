@@ -15,6 +15,7 @@ Usage: python3 ingest_mlb_pitcher_logs.py [--days 60]
 import sys, os, json, sqlite3, datetime as dt
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from ingest_nfl_logs import ensure_table  # reuse the shared schema
+from team_codes import normalize
 
 DB = os.environ.get("LP_DB_PATH") or os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "picks.db")
 
@@ -116,8 +117,8 @@ def ingest(days: int = 60) -> int:
         home_away = None
         if "inning_topbot" in g.columns and "home_team" in g.columns and "away_team" in g.columns:
             top = (g["inning_topbot"].iloc[0] == "Top")  # away bats in top → home fields
-            team = g["home_team"].iloc[0] if top else g["away_team"].iloc[0]
-            opponent = g["away_team"].iloc[0] if top else g["home_team"].iloc[0]
+            team = normalize("mlb", g["home_team"].iloc[0]) if top else normalize("mlb", g["away_team"].iloc[0])
+            opponent = normalize("mlb", g["away_team"].iloc[0]) if top else normalize("mlb", g["home_team"].iloc[0])
             home_away = "home" if top else "away"
 
         con.execute(

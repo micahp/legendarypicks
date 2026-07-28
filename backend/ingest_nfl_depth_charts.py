@@ -45,6 +45,8 @@ import sqlite3
 import sys
 import urllib.request
 
+from team_codes import normalize
+
 DB = os.environ.get("LP_DB_PATH") or os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "data", "picks.db")
 
@@ -136,7 +138,7 @@ def build_rows(path: str):
         out[key] = {
             "gsis_id": gsis,
             "espn_id": str(t["espn_id"][i] or "").strip(),
-            "team": t["team"][i],
+            "team": normalize("nfl", t["team"][i]) if t["team"][i] else None,
             "player_name": t["player_name"][i],
             "pos_abb": pos,
             "pos_name": t["pos_name"][i],

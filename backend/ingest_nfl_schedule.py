@@ -67,6 +67,8 @@ import sqlite3
 import sys
 import urllib.request
 
+from team_codes import normalize
+
 DB = os.environ.get("LP_DB_PATH") or os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "data", "picks.db")
 
@@ -88,7 +90,7 @@ URL = "https://github.com/nflverse/nfldata/raw/master/data/games.csv"
 # ESPN's vocabulary wins. Normalising here, at the ingest boundary, keeps it to
 # one place -- an alias map consulted at each read site would be a second source
 # of truth and would have to be remembered by every future query.
-ESPN_ALIASES = {"LA": "LAR", "WAS": "WSH"}
+# ESPN_ALIASES removed 2026-07-27 — team_codes.normalize("nfl", ...) is the single source of truth.
 
 # CSV column -> (sqlite column, type). The point of this module is a copy, not a
 # computation; the only derived value is `status`, from whether a result exists.
@@ -180,7 +182,8 @@ def read_games(path: str, seasons: set[int] | None):
                 continue
             # Normalise to ESPN vocabulary before anything downstream sees the row.
             for side in ("away_team", "home_team"):
-                row[side] = ESPN_ALIASES.get(row[side], row[side])
+                if row[side]:
+                    row[side] = normalize("nfl", row[side])
             if seasons and row["season"] not in seasons:
                 continue
             rows.append(row)
