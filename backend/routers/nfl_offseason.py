@@ -11,7 +11,7 @@ import sqlite3
 import time
 from collections import defaultdict
 from contextlib import closing
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, List, Optional, Sequence, Set, Tuple
 
 from fastapi import APIRouter, HTTPException, Query
 
@@ -662,12 +662,32 @@ def _availability_aggregates(
     return out
 
 
-def _regular_season_aggregates(connection: sqlite3.Connection, season: int) -> Dict[int, dict]:
-    """Return shared availability plus skill-position scoring aggregates."""
-    availability = _availability_aggregates(connection, season)
+def _regular_season_aggregates(
+    connection: sqlite3.Connection,
+    season: int,
+    availability: Optional[Dict[int, dict]] = None,
+    player_ids: Optional[Sequence[int]] = None,
+) -> Dict[int, dict]:
+    """Return shared availability plus skill-position scoring aggregates.
+
+    ``availability`` lets a caller that already built it pass it back in rather
+    than pay for a second scan, matching _pk_aggregates. ``player_ids`` narrows
+    the scan to a known set; it cannot change a result, because the aggregate
+    groups by player, so the mock-draft pool restricts to its own 300 without
+    forking the arithmetic -- which is the whole point of sharing this.
+    """
+    if availability is None:
+        availability = _availability_aggregates(connection, season)
     game_type_filter = f"AND CAST(game_no AS INTEGER) < {_POSTSEASON_FIRST_WEEK}"
     if "game_type" in _table_columns(connection, "player_game_logs"):
         game_type_filter = "AND game_type='REG'"
+    id_filter = ""
+    id_params: Tuple = ()
+    if player_ids is not None:
+        id_filter = "AND player_id IN ({})".format(
+            ",".join("?" for _ in player_ids)
+        )
+        id_params = tuple(player_ids)
     rows = connection.execute(
         f"""SELECT player_id,
                   SUM(CAST(json_extract(stats,'$.fpts_ppr')     AS REAL)) AS ppr_total,
@@ -690,8 +710,9 @@ def _regular_season_aggregates(connection: sqlite3.Connection, season: int) -> D
             FROM player_game_logs
             WHERE league='nfl' AND season=? AND player_id IS NOT NULL
               {game_type_filter}
+              {id_filter}
             GROUP BY player_id""",
-        (season,),
+        (season, *id_params),
     ).fetchall()
 
     out: Dict[int, dict] = {}

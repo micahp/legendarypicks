@@ -23,6 +23,7 @@ from .nfl_offseason import (
     _availability_aggregates,
     _dst_aggregates,
     _pk_aggregates,
+    _regular_season_aggregates,
     _table_columns,
 )
 
@@ -181,9 +182,15 @@ def pool(season: int = Query(...)):
             connection, _log_season
         )
 
-        # Lift player_detail's exact Python accumulation into one set-based
-        # read. SQLite SUM/AVG can round one decimal differently, so using the
-        # detail endpoint's arithmetic is required for payload parity.
+        # One implementation of the season aggregate, shared with the research
+        # board. job16 originally re-accumulated these in Python to guarantee
+        # pool/detail parity, which anchored two surfaces to each other and left
+        # the board -- the surface a drafter consults for truth -- disagreeing
+        # with both on six players. The difference was never rounding mode but
+        # float accumulation order: Chris Olave's 268.0 PPR over 16 games is an
+        # exact 16.75, which SQLite's SUM reaches and a Python loop misses by a
+        # last bit, so one screen said 16.8 and the other 16.7. Deriving all
+        # three from _regular_season_aggregates makes the question moot.
         _log_columns = {
             row["name"]
             for row in connection.execute(
@@ -256,60 +263,12 @@ def pool(season: int = Query(...)):
         ))
 
         if "stats" in _log_columns and rows:
-            _pool_ids = [row["player_id"] for row in rows]
-            _stats_placeholders = ",".join("?" for _ in _pool_ids)
-            log_rows = connection.execute(
-                f"""SELECT player_id, game_no, stats
-                    FROM player_game_logs
-                    WHERE league='nfl' AND season=?
-                      AND player_id IN ({_stats_placeholders})
-                      AND CAST(game_no AS INTEGER) < ?
-                    ORDER BY player_id, CAST(game_no AS INTEGER)""",
-                (_log_season, *_pool_ids, _POSTSEASON_FIRST_WEEK),
-            ).fetchall()
-            for log_row in log_rows:
-                aggregate = season_stats.setdefault(
-                    log_row["player_id"],
-                    {
-                        "ppr_total": 0.0,
-                        "snap_pct_sum": 0.0,
-                        "snap_pct_count": 0,
-                        "target_share_sum": 0.0,
-                        "target_share_count": 0,
-                        "target_share_weeks": 0,
-                        "xfp_sum": 0.0,
-                        "xfp_count": 0,
-                    },
-                )
-                try:
-                    stats = json.loads(log_row["stats"])
-                    ppr = stats.get("fpts_ppr")
-                    if ppr is not None:
-                        aggregate["ppr_total"] += float(ppr)
-                    snap = stats.get("off_pct")
-                    if snap is not None:
-                        aggregate["snap_pct_sum"] += float(snap)
-                        aggregate["snap_pct_count"] += 1
-                    # Every REG week counts, including the ones ingest wrote no
-                    # target_share for -- the published file scores those 0.0.
-                    # Counting only the weeks with a value turns one busy game
-                    # into a season rate.  target_share_weeks tracks the weeks
-                    # that carried the key, because receiving is a season-level
-                    # role: a player who drew no target all year must stay null
-                    # rather than average a real 0.0%.  snap/xfp above must NOT
-                    # copy any of this -- their sources genuinely have no row
-                    # for an absent week.
-                    target = stats.get("target_share")
-                    if target is not None:
-                        aggregate["target_share_sum"] += float(target)
-                        aggregate["target_share_weeks"] += 1
-                    aggregate["target_share_count"] += 1
-                    xfp = stats.get("xfpts_ppr")
-                    if xfp is not None:
-                        aggregate["xfp_sum"] += float(xfp)
-                        aggregate["xfp_count"] += 1
-                except Exception:
-                    pass
+            season_stats = _regular_season_aggregates(
+                connection,
+                _log_season,
+                availability=availability,
+                player_ids=[row["player_id"] for row in rows],
+            )
 
         players = []
         for row in rows:
@@ -340,8 +299,11 @@ def pool(season: int = Query(...)):
                 else "none"
             )
 
+            # Field for field, the research board's derivation. Any change here
+            # has to be made there too, or the two screens start disagreeing
+            # about the same player again.
             stats = season_stats.get(pid)
-            ppr_total = stats["ppr_total"] if stats else 0.0
+            ppr_total = (stats["ppr_total"] if stats else None) or None
             ppr_per_game_played = (
                 round(ppr_total / gp, 1)
                 if ppr_total and gp
@@ -353,28 +315,18 @@ def pool(season: int = Query(...)):
                 else None
             )
             xfp_per_game = (
-                round(stats["xfp_sum"] / stats["xfp_count"], 1)
-                if stats and stats["xfp_count"]
+                round(stats["xfp_per_game"], 1)
+                if stats and stats["xfp_per_game"] is not None
                 else None
             )
             snap_pct = (
-                round(
-                    stats["snap_pct_sum"]
-                    / stats["snap_pct_count"]
-                    * 100,
-                    0,
-                )
-                if stats and stats["snap_pct_count"]
+                round(stats["snap_pct"] * 100, 0)
+                if stats and stats["snap_pct"] is not None
                 else None
             )
             target_share = (
-                round(
-                    stats["target_share_sum"]
-                    / stats["target_share_count"]
-                    * 100,
-                    1,
-                )
-                if stats and stats["target_share_weeks"]
+                round(stats["target_share"] * 100, 1)
+                if stats and stats["target_share"] is not None
                 else None
             )
 
@@ -735,48 +687,15 @@ def player_detail(player_id: int):
             connection, _log_season
         )
 
-        log_rows = connection.execute(
-            """SELECT game_no, stats, team
-               FROM player_game_logs
-               WHERE player_id=? AND league='nfl' AND season=?
-                 AND CAST(game_no AS INTEGER) < ?
-               ORDER BY CAST(game_no AS INTEGER)""",
-            (player_id, _log_season, _POSTSEASON_FIRST_WEEK),
-        ).fetchall()
-
-        ppr_total = 0.0
-        snap_pct_sum = 0.0
-        snap_pct_count = 0
-        target_share_sum = 0.0
-        target_share_count = 0
-        target_share_weeks = 0
-        xfp_sum = 0.0
-        xfp_count = 0
-
-        for row in log_rows:
-            try:
-                stats = json.loads(row["stats"])
-                ppr = stats.get("fpts_ppr")
-                if ppr is not None:
-                    ppr_total += float(ppr)
-                sp = stats.get("off_pct")
-                if sp is not None:
-                    snap_pct_sum += float(sp)
-                    snap_pct_count += 1
-                # See the pool aggregate above: a missing target_share is a
-                # published 0.0, so the week stays in the denominator, but a
-                # player with no target all season stays null.
-                ts = stats.get("target_share")
-                if ts is not None:
-                    target_share_sum += float(ts)
-                    target_share_weeks += 1
-                target_share_count += 1
-                xf = stats.get("xfpts_ppr")
-                if xf is not None:
-                    xfp_sum += float(xf)
-                    xfp_count += 1
-            except Exception:
-                pass
+        # Third surface, same aggregate. This endpoint used to re-accumulate the
+        # season in Python, which is how it ended up telling a drafter 16.7 for
+        # a player the research board showed at 16.8.
+        _season_stats = _regular_season_aggregates(
+            connection,
+            _log_season,
+            availability=availability_by_player,
+            player_ids=[player_id],
+        ).get(player_id)
 
         if position == "DEF":
             availability = dst_by_player.get(player_id)
@@ -803,11 +722,24 @@ def player_detail(player_id: int):
             sample = "full"
 
         # PPR calculations
+        ppr_total = (_season_stats["ppr_total"] if _season_stats else None) or None
         ppr_per_game_played = round(ppr_total / games_played, 1) if ppr_total and games_played else None
         ppr_per_team_game = round(ppr_total / _REG_SEASON_TEAM_GAMES, 1) if ppr_total else None
-        snap_pct = round(snap_pct_sum / snap_pct_count * 100, 0) if snap_pct_count else None
-        target_share = round(target_share_sum / target_share_count * 100, 1) if target_share_weeks else None
-        xfp_per_game = round(xfp_sum / xfp_count, 1) if xfp_count else None
+        snap_pct = (
+            round(_season_stats["snap_pct"] * 100, 0)
+            if _season_stats and _season_stats["snap_pct"] is not None
+            else None
+        )
+        target_share = (
+            round(_season_stats["target_share"] * 100, 1)
+            if _season_stats and _season_stats["target_share"] is not None
+            else None
+        )
+        xfp_per_game = (
+            round(_season_stats["xfp_per_game"], 1)
+            if _season_stats and _season_stats["xfp_per_game"] is not None
+            else None
+        )
 
         # 4. QB lookup — for WR/RB/TE, rank team QBs by games played, return top QB
         qb = None
