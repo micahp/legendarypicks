@@ -479,3 +479,51 @@ verify with a pinned IP, don't restart cloudflared on that signal alone.
 `venv/`. `watchfiles==0.24.0` installed. Restart script written, **never run**. O1 did *not*
 make this moot — `:8096` is the survivor, so this is now the dev backend burning the CPU.
 `--reload-exclude` must be an **absolute** path; relative patterns silently exclude nothing.
+
+---
+
+## 2026-07-28 (09:1x) — user report from mobile, and why the roadmap "isn't done"
+
+Micah, on a phone, reported: *the original roadmap from yesterday is still not done · player
+rankings need relevant stats per position filter · on the draft room I can't click a player
+and its overlay doesn't show up.*
+
+### U0. The roadmap **is** largely done — he cannot see it. Branch/tunnel mismatch.
+
+Measured, not inferred:
+
+| tree | branch | vs `dev` | serves | `PlayerDetailOverlay.tsx` |
+|---|---|---|---|---|
+| `/root/legendarypicks` | `feat/slice-D-mock-draft` | 0 ahead / **9 behind** | `:3096` → `someone-decorative-wearing-produce` | **absent** |
+| `/root/lp-team-vocab` | `feat/dst-and-mock-draft` | **55 ahead** / 0 behind | `:3098` → `altered-era-sold-explain` | present |
+
+`feat/slice-D-mock-draft` is the branch the M1–M7 roadmap was *written* on and it has
+received no work since. Every fix from pt.11–pt.14 — D/ST roster slot, the clock deadlock,
+the camp-tab draft board, the overlay itself — lives only on `feat/dst-and-mock-draft`,
+which is **unpushed and unmerged**. The tunnel Micah has been checking cannot show any of it.
+
+**This is a delivery defect, not a build defect.** Per `deliverable-must-be-visible`: local
+commits behind a URL nobody is looking at are not shipped. Fix is one of — merge to `dev`
+and let `:3096` serve it, or hand him `altered-era-sold-explain`.
+
+### U1. Position-relevant columns — this is **job14**, spec'd and NOT started
+`TASK-job14-position-aware-surfaces.md` (untracked). `NflDraftRoom`'s table renders one
+universal column set — PPR/g, PPR/team-game, games, ADP — for every value of the position
+filter. A QB row and a K row are identical in shape. ESPN's published gamelog contract, which
+job14 measured, shares **zero columns** between a QB and a K. Confirms the spec against a real
+user; promote it above B14/B15.
+
+### U2. `/mock-draft` has no player overlay at all — new, distinct from the camp tab
+`components/MockDraft/DraftRoom.tsx`: **0 references** to `PlayerDetailOverlay`, and no row
+`onClick`. The only clicks on a pool row are the draft and queue buttons. The overlay was
+built for `NflDraftRoom` (camp tab, 2 references) and never carried across.
+
+So U2 reproduces on **both** branches, for different reasons: on `:3096` the component does
+not exist; on `:3098` it exists but was never wired into the mock draft room. Even after U0
+is resolved, U2 stays broken. Owned by me (frontend); Hermes is backend-only.
+
+### Dispatch state
+`job15` (D/ST published ADP) worktree is **up**: `/root/lp-job15-dst-published-adp`, branch
+`feat/job15-dst-published-adp` off `642259a`, backend `:8093` (`/health` 200), frontend
+`:3093` (`/mock-draft` 200), `node_modules` symlink intact at 538 packages. Awaiting Micah's
+relay — `messages_send` cannot prompt the agent.
