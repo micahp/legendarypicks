@@ -18,6 +18,8 @@ from fastapi import APIRouter, HTTPException, Query
 
 from _core import _db, _normalize_name, proj_mod
 
+from team_codes import normalize, normalize_optional
+
 
 router = APIRouter()
 
@@ -69,14 +71,6 @@ _NFL_MILESTONES = (
     ("kickoff_weekend", "Kickoff Weekend begins", dt.date(2026, 9, 9), "regular_season"),
 )
 
-_TEAM_ALIASES = {
-    "JAC": "JAX",
-    "LA": "LAR",
-    "OAK": "LV",
-    "SD": "LAC",
-    "STL": "LAR",
-    "WAS": "WSH",
-}
 _SKILL_POSITIONS = ("QB", "RB", "WR", "TE", "FB")
 _POSITION_FILTERS = set(_SKILL_POSITIONS) | {"FLEX"}
 # Sort key -> (player field, ascending). Every one of these is a measurement of
@@ -108,11 +102,6 @@ def _table_columns(connection: sqlite3.Connection, table: str) -> Set[str]:
         return {row[1] for row in connection.execute(f"PRAGMA table_info({table})")}
     except sqlite3.OperationalError:
         return set()
-
-
-def _normalize_team(value) -> str:
-    team = str(value or "").strip().upper()
-    return _TEAM_ALIASES.get(team, team)
 
 
 def _phase_for(as_of: dt.date) -> Tuple[str, str]:
@@ -563,21 +552,20 @@ def _regular_season_aggregates(connection: sqlite3.Connection, season: int) -> D
         (season, _POSTSEASON_FIRST_WEEK, season, _POSTSEASON_FIRST_WEEK),
     ).fetchall()
 
-    # Which weeks each team actually played. An 18-week schedule holds 17 games
-    # and one bye, and the bye is not an absence -- rendering 18 slots and
-    # calling the empty one "missed" would invent a game the player was never
-    # asked to play. Derived from the logs themselves rather than joined to
-    # team_game_results, whose 2025 rows use a different key scheme (B2).
+    # Which weeks each team actually played, from the published schedule.
+    # After the vocabulary migration the logs speak ESPN, so the schedule join
+    # works and the derivation from player_game_logs is no longer necessary.
     team_weeks: Dict[str, Set[int]] = defaultdict(set)
     for row in connection.execute(
-        """SELECT team, game_no FROM player_game_logs
-           WHERE league='nfl' AND season=? AND team IS NOT NULL
-             AND CAST(game_no AS INTEGER) < ?
-           GROUP BY team, game_no""",
-        (season, _POSTSEASON_FIRST_WEEK),
+        """SELECT home_team AS team, week FROM nfl_schedule
+           WHERE season=? AND week < ?
+        UNION ALL
+        SELECT away_team AS team, week FROM nfl_schedule
+        WHERE season=? AND week < ?""",
+        (season, _POSTSEASON_FIRST_WEEK, season, _POSTSEASON_FIRST_WEEK),
     ):
         try:
-            team_weeks[row["team"]].add(int(row["game_no"]))
+            team_weeks[row["team"]].add(int(row["week"]))
         except (TypeError, ValueError):
             continue
 
@@ -737,11 +725,11 @@ def nfl_draft_board(
             "player_id": pid,
             "name": row["name"],
             "position": row["position"],
-            "current_team": _normalize_team(row["current_team"]),
+            "current_team": normalize("nfl", row["current_team"]),
             # Current role, from the published depth chart. This is what a rookie
             # has instead of a season.
             "depth_rank": row["depth_rank"],
-            "depth_team": _normalize_team(row["depth_team"]) if row["depth_team"] else None,
+            "depth_team": normalize_optional("nfl", row["depth_team"]) if row["depth_team"] else None,
             "adp": ranked_adp,
             "adp_is_ranked": ranked_adp is not None,
             "percent_owned": row["percent_owned"],
