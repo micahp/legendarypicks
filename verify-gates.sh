@@ -178,6 +178,21 @@ print('PASS REG-dst (32 rows)' if len(p)==32 else 'FAIL REG-dst (%d rows)'%len(p
   echo -n "live dev server :3096 "; curl -s -o /dev/null -w "%{http_code}\n" --max-time 10 http://127.0.0.1:3096/
 }
 
+# ── REG-render · the only gate that renders React ──
+# Every other gate above greps source or reads JSON. On 2026-07-28 all eight were green
+# while the pool page crashed on first render. This one drives chromium, clicks, and fails
+# on any console error. Exit code only — never grep its output.
+# Negative control (do not delete this note): pointed at :3096, the branch without the
+# overlay or the DEF/PK filters, it FAILS with "overlay never appeared" and "found 7 pills".
+# A gate that has only ever passed has not been tested.
+regrender(){
+  out=$(cd $W && LP_GATE_F="$F" timeout 400 node scripts/render-gate.js 2>&1); rc=$?
+  line=$(printf '%s' "$out" | grep -E "^(PASS|FAIL) REG-render" | tail -1)
+  if [ $rc -eq 0 ] && [ -n "$line" ]; then echo "$line"
+  elif [ $rc -eq 124 ]; then no REG-render "timed out after 400s — browser never finished"
+  else no REG-render "exit=$rc  ${line:-<no verdict line — the gate itself died>}"; fi
+}
+
 case "${1:-all}" in
   A1) a1;; A2) a2;; A3) a3;; B1) b1;; B2) b2;; B4) b4;; reg) reg;;
   all) a1; a2; a3; b1; b2; b4; echo "--- regressions ---"; reg;;

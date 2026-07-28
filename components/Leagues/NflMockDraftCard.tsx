@@ -17,10 +17,6 @@ export default function NflMockDraftCard() {
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="min-w-0">
           <p className="text-lg font-bold text-white">Mock draft</p>
-          <p className="pt-1 text-sm text-zinc-400">
-            Draft a 12-team PPR roster against ADP bots — off this board, with
-            last season&rsquo;s availability on every player.
-          </p>
         </div>
         <Link
           href="/mock-draft"
