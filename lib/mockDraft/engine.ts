@@ -205,8 +205,21 @@ export function botPick(state: DraftState, rng: () => number): DraftPlayer {
 
   // Rule 3: score by jittered ADP (lower = better).
   //   D/ST players have null ADP — use pool position as ordinal fallback.
-  //   availablePool is sorted by the backend (real ADP first, then
-  //   D/ST ordered by dst_rank at indices ~150–181).
+  //
+  // WARNING: this fallback is broken, and is scheduled for deletion, not repair.
+  // Measured 2026-07-28 against the live pool:
+  //   * The backend does deliver D/ST at indices 150–181, but createDraft()
+  //     re-sorts nulls to the end (below), so botPick never sees them there —
+  //     they arrive here at 268–299. The old comment naming 150–181 was false.
+  //   * poolIndex is rebuilt from availablePool on EVERY call, and applyPick
+  //     shrinks that pool by one each pick. So a defense's effectiveAdp
+  //     improves by exactly 1 per pick made while every real ADP stays frozen:
+  //     269 at pick 1, 230 at pick 40, 150 at pick 120. It crosses the worst
+  //     real ADP (171) around pick ~98 and defenses start going in round 9.
+  //     That timing looks plausible and is pure pool arithmetic.
+  // Comparing a shrinking relative index against fixed absolute ADPs has no
+  // meaning. The fix is job15 (publish real D/ST ADP) — once p.adp is non-null
+  // for defenses this branch is dead code and must be removed, not tuned.
   const poolIndex = new Map(state.availablePool.map((p, i) => [p.player_id, i]))
   let best = candidates[0]
   let bestScore = Infinity
