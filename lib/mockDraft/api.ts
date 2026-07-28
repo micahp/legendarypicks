@@ -1,5 +1,6 @@
 import type { PoolPlayer, PoolResponse, MockDraft, MockDraftPick } from '../../components/Leagues/types'
 import { getDeviceId } from '../deviceId'
+import { poolTeamGames } from './availability'
 
 const BASE = '/api/nfl/mock-draft'
 
@@ -66,7 +67,8 @@ export function poolToDraftRow(player: PoolPlayer, rank: number) {
     adp_is_ranked: true,
     percent_owned: player.percent_owned,
     games_played: player.games_played,
-    team_games: 17,
+    games_missed: player.games_missed,
+    team_games: poolTeamGames(player),
     weeks_played: player.weeks_played,
     team_weeks: player.team_weeks,
     ppr_per_game_played: null as number | null,

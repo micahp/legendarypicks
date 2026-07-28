@@ -461,7 +461,7 @@ export function DraftPlayerRow({
 }) {
   const noSample = player.sample === 'none'
   const thin = player.sample === 'thin'
-  const missed = player.team_games - player.games_played
+  const missed = player.games_missed
 
   return (
     <tr
@@ -502,12 +502,12 @@ export function DraftPlayerRow({
             <div className="flex items-baseline gap-1.5">
               <span
                 className={`font-mono tabular-nums text-sm font-semibold ${
-                  missed > 0 ? 'text-amber-400' : 'text-zinc-300'
+                  missed != null && missed > 0 ? 'text-amber-400' : 'text-zinc-300'
                 }`}
               >
                 {player.games_played}/{player.team_games}
               </span>
-              {missed > 0 && (
+              {missed != null && missed > 0 && (
                 <span className="text-[10px] text-zinc-600">
                   missed {missed}
                 </span>

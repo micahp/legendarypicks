@@ -56,7 +56,7 @@ export default function PoolList({ players, onStartDraft }: Props) {
               <th className="text-left py-3 px-2 min-w-[9.5rem]">
                 Available
                 <span className="ml-1 font-normal normal-case tracking-normal text-zinc-600">
-                  of 17
+                  by team schedule
                 </span>
               </th>
               <th className="text-right py-3 px-2">ADP</th>
@@ -83,6 +83,8 @@ function PoolRow({
 }) {
   const noSample = row.sample === 'none'
   const isKicker = row.position === 'PK'
+  const hasAvailability =
+    !noSample && row.team_games != null && row.games_missed != null
 
   return (
     <tr className="border-b border-zinc-800/50 hover:bg-zinc-800/30">
@@ -109,19 +111,23 @@ function PoolRow({
               ? 'Kicker games not tracked'
               : 'Rookie — no NFL sample'}
           </span>
+        ) : !hasAvailability ? (
+          <span className="text-[11px] text-zinc-500">
+            Availability unavailable
+          </span>
         ) : (
           <>
             <div className="flex items-baseline gap-1.5">
               <span
                 className={`font-mono tabular-nums text-sm font-semibold ${
-                  row.games_played < row.team_games ? 'text-amber-400' : 'text-zinc-300'
+                  row.games_missed > 0 ? 'text-amber-400' : 'text-zinc-300'
                 }`}
               >
                 {row.games_played}/{row.team_games}
               </span>
-              {row.games_played < row.team_games && (
+              {row.games_missed > 0 && (
                 <span className="text-[10px] text-zinc-600">
-                  missed {row.team_games - row.games_played}
+                  missed {row.games_missed}
                 </span>
               )}
             </div>

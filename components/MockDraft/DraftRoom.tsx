@@ -8,6 +8,7 @@ import {
   getRosterState,
   userNextPick,
 } from '../../lib/mockDraft/engine'
+import { poolTeamGames } from '../../lib/mockDraft/availability'
 import { AvailabilityStrip } from '../Leagues/NflDraftRoom'
 
 interface ScheduleTeam {
@@ -29,7 +30,6 @@ interface Props {
   onMoveQueueDown: (idx: number) => void
 }
 
-const TEAM_GAMES = 17  // fallback; prefer poolPlayer.team_games when available
 const PICK_LEDGER_LIMIT = 15
 // 15-man roster: QB RB1 RB2 WR1 WR2 TE FLEX K DEF = 9 starters, rest bench.
 const BENCH_SLOTS = 6
@@ -63,8 +63,14 @@ export default function DraftRoom({ pool, draftState, onUserPick, onTimeout, use
   }, [])
 
   // ── Filter options derived from pool + schedule ──
-  const posOptions = useMemo(() => ['ALL', ...new Set(pool.map(p => p.position).sort())], [pool])
-  const teamOptions = useMemo(() => ['ALL', ...new Set(pool.map(p => p.team).sort())], [pool])
+  const posOptions = useMemo(
+    () => ['ALL', ...Array.from(new Set(pool.map(p => p.position).sort()))],
+    [pool],
+  )
+  const teamOptions = useMemo(
+    () => ['ALL', ...Array.from(new Set(pool.map(p => p.team).sort()))],
+    [pool],
+  )
 
   // Bye → team lookup map
   const byeMap = useMemo(() => {
@@ -77,7 +83,7 @@ export default function DraftRoom({ pool, draftState, onUserPick, onTimeout, use
   const byeOptions = useMemo(() => {
     const weeks = new Set<number>()
     for (const t of (schedule ?? [])) { if (t.bye_week != null) weeks.add(t.bye_week) }
-    return ['ALL', ...[...weeks].sort((a, b) => a - b).map(String)]
+    return ['ALL', ...Array.from(weeks).sort((a, b) => a - b).map(String)]
   }, [schedule])
 
   // Build a lookup from player_id → PoolPlayer for O(1) resolution
@@ -662,8 +668,17 @@ function PoolAvailability({ poolPlayer }: { poolPlayer: PoolPlayer }) {
     )
   }
 
-  const tg = poolPlayer.team_games ?? TEAM_GAMES
-  const missed = poolPlayer.games_missed ?? (tg - poolPlayer.games_played)
+  const teamGames = poolTeamGames(poolPlayer)
+  const missed = poolPlayer.games_missed
+
+  if (teamGames == null || missed == null) {
+    return (
+      <span className="text-[11px] text-zinc-500">
+        Availability unavailable
+      </span>
+    )
+  }
+
   return (
     <>
       <div className="flex items-baseline gap-1.5">
@@ -672,7 +687,7 @@ function PoolAvailability({ poolPlayer }: { poolPlayer: PoolPlayer }) {
             missed > 0 ? 'text-amber-400' : 'text-zinc-300'
           }`}
         >
-          {poolPlayer.games_played}/{tg}
+          {poolPlayer.games_played}/{teamGames}
         </span>
         {missed > 0 && (
           <span className="text-[10px] text-zinc-600">missed {missed}</span>
@@ -759,8 +774,7 @@ function buildRosterSlots(
     })
   })
 
-  // Pad bench out to a full 15-man roster (9 starters + 6 bench, matching
-  // STARTER_COUNT in lib/mockDraft/engine.ts).
+  // Empty bench rows keep the full roster construction visible while drafting.
   for (let i = remaining.length; i < BENCH_SLOTS; i++) {
     slots.push({
       label: `BE${i + 1}`,
@@ -774,6 +788,10 @@ function buildRosterSlots(
 }
 
 function RosterSlotRow({ slot }: { slot: RosterSlot }) {
+  const teamGames = slot.poolPlayer
+    ? poolTeamGames(slot.poolPlayer)
+    : null
+
   return (
     <div
       className={`flex items-center gap-2 px-4 py-2 text-xs ${
@@ -795,9 +813,12 @@ function RosterSlotRow({ slot }: { slot: RosterSlot }) {
           <span className="text-[10px] text-zinc-500 shrink-0">
             {slot.player.position}
           </span>
-          {slot.poolPlayer && slot.poolPlayer.sample !== 'none' && (
+          {slot.poolPlayer &&
+            slot.poolPlayer.sample !== 'none' &&
+            teamGames != null &&
+            slot.poolPlayer.games_missed != null && (
             <span className="text-[10px] text-zinc-600 tabular-nums shrink-0">
-              {slot.poolPlayer.games_played}/{TEAM_GAMES}
+              {slot.poolPlayer.games_played}/{teamGames}
             </span>
           )}
           {slot.poolPlayer && slot.poolPlayer.sample === 'none' && (

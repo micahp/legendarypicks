@@ -2,14 +2,13 @@ import { useMemo } from 'react'
 import type { PoolPlayer } from '../Leagues/types'
 import type { DraftState, DraftPlayer } from '../../lib/mockDraft/engine'
 import { getRosterState } from '../../lib/mockDraft/engine'
+import { poolTeamGames } from '../../lib/mockDraft/availability'
 import { AvailabilityStrip } from '../Leagues/NflDraftRoom'
 
 interface Props {
   pool: PoolPlayer[]
   draftState: DraftState
 }
-
-const TEAM_GAMES = 17
 
 /**
  * Post-draft results screen.
@@ -18,7 +17,7 @@ const TEAM_GAMES = 17
  *   - Roster by slot, scan-first: label, player, position, availability strip.
  *   - Headline: historical with n. "Your 2026 picks missed X of a possible Y games."
  *     NOT present-tense "averages 14.2 of 17 games available".
- *   - Both figures must exclude no-sample players from denominator, state n.
+ *   - Both figures exclude rows without measured availability and state n.
  *   - Best/worst value vs ADP as "picked at X, ADP Y", not a computed score.
  *   - PPR declared on surface.
  *   - Durable URL pattern.
@@ -42,35 +41,37 @@ export default function ResultsScreen({ pool, draftState }: Props) {
   )
 
   // ── Headline computation ──
-  const { totalGamesPlayed, totalPossible, excludedCount, excludedNames } = useMemo(() => {
-    let played = 0
+  const { totalMissed, totalPossible, excludedCount } = useMemo(() => {
+    let missed = 0
     let possible = 0
     let excluded = 0
-    const exNames: string[] = []
 
     for (const p of userRoster.players) {
       const pp = playerMap.get(p.player_id)
       if (!pp) continue
-      if (pp.sample === 'none') {
+      const teamGames = poolTeamGames(pp)
+      if (
+        pp.sample === 'none' ||
+        teamGames == null ||
+        pp.games_missed == null
+      ) {
         excluded++
-        exNames.push(p.name)
         continue
       }
-      played += pp.games_played
-      possible += TEAM_GAMES
+      missed += pp.games_missed
+      possible += teamGames
     }
 
     return {
-      totalGamesPlayed: played,
+      totalMissed: missed,
       totalPossible: possible,
       excludedCount: excluded,
-      excludedNames: exNames,
     }
   }, [userRoster, playerMap])
 
   // Field comparison (all 12 teams)
   const fieldStats = useMemo(() => {
-    let fieldPlayed = 0
+    let fieldMissed = 0
     let fieldPossible = 0
     let fieldExcluded = 0
 
@@ -79,19 +80,26 @@ export default function ResultsScreen({ pool, draftState }: Props) {
       for (const p of roster.players) {
         const pp = playerMap.get(p.player_id)
         if (!pp) continue
-        if (pp.sample === 'none') {
+        const teamGames = poolTeamGames(pp)
+        if (
+          pp.sample === 'none' ||
+          teamGames == null ||
+          pp.games_missed == null
+        ) {
           fieldExcluded++
           continue
         }
-        fieldPlayed += pp.games_played
-        fieldPossible += TEAM_GAMES
+        fieldMissed += pp.games_missed
+        fieldPossible += teamGames
       }
     }
 
-    return { played: fieldPlayed, possible: fieldPossible, excluded: fieldExcluded }
+    return {
+      missed: fieldMissed,
+      possible: fieldPossible,
+      excluded: fieldExcluded,
+    }
   }, [draftState, playerMap])
-
-  const totalMissed = totalPossible - totalGamesPlayed
 
   // ── Best / worst value vs ADP ──
   const bestValue = useMemo(() => findBestValue(userRoster.players, draftState, playerMap, 'best'), [userRoster, draftState, playerMap])
@@ -105,12 +113,12 @@ export default function ResultsScreen({ pool, draftState }: Props) {
           Your 2026 picks missed {totalMissed} of a possible {totalPossible} games last season
           {excludedCount > 0 && (
             <span className="ml-1 text-sm font-normal text-zinc-500">
-              (excluding {excludedCount} player{excludedCount !== 1 ? 's' : ''} with no NFL sample)
+              (excluding {excludedCount} player{excludedCount !== 1 ? 's' : ''} without measured availability)
             </span>
           )}
         </h2>
         <p className="mt-2 text-sm text-zinc-500">
-          League-wide, all 12 rosters missed {fieldStats.possible - fieldStats.played} of{' '}
+          League-wide, all 12 rosters missed {fieldStats.missed} of{' '}
           {fieldStats.possible} possible games
           {fieldStats.excluded > 0 && (
             <span> (excluding {fieldStats.excluded} without data)</span>
@@ -146,25 +154,6 @@ export default function ResultsScreen({ pool, draftState }: Props) {
         )}
       </div>
 
-      {/* A link is generated on request, not printed automatically — the URL is
-          only meaningful once a completed draft has a public read path. Until
-          then the control is disabled and says so, rather than handing over a
-          link that renders a fresh pool for the sender and 404s for anyone else
-          (nfl_mock_draft.py:355). */}
-      <div className="rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-3 flex flex-wrap items-center justify-between gap-3">
-        <div className="min-w-0">
-          <p className="text-sm font-semibold text-zinc-300">Share this draft</p>
-          <p className="text-xs text-zinc-500 pt-0.5">Coming soon</p>
-        </div>
-        <button
-          type="button"
-          disabled
-          title="Shareable draft links are not built yet"
-          className="shrink-0 cursor-not-allowed rounded-lg border border-zinc-800 bg-zinc-900 px-4 py-2 text-sm font-semibold text-zinc-600"
-        >
-          Get a link
-        </button>
-      </div>
     </section>
   )
 }
@@ -245,7 +234,7 @@ function buildResultsSlots(
     })
   })
 
-  // 9 starters + 6 bench = the 15-man roster (see STARTER_COUNT in lib/mockDraft/engine.ts).
+  // Preserve the full 15-slot roster shape even if a draft ends incomplete.
   for (let i = remaining.length; i < 6; i++) {
     slots.push({
       label: `BE${i + 1}`,
@@ -263,6 +252,9 @@ function ResultsSlotRow({ slot }: { slot: ResultsSlot }) {
   const pp = slot.poolPlayer
   const noSample = pp?.sample === 'none'
   const isKicker = pp?.position === 'PK'
+  const teamGames = pp ? poolTeamGames(pp) : null
+  const hasAvailability =
+    !noSample && teamGames != null && pp?.games_missed != null
 
   return (
     <div className={`flex items-center gap-3 px-4 py-2.5 ${slot.isStarter ? '' : 'opacity-60'}`}>
@@ -291,12 +283,16 @@ function ResultsSlotRow({ slot }: { slot: ResultsSlot }) {
               <span className="text-[10px] text-zinc-500">
                 {isKicker ? 'Kicker games not tracked' : 'Rookie — no NFL sample'}
               </span>
-            ) : (
+            ) : hasAvailability ? (
               <AvailabilityStrip
                 weeksPlayed={pp.weeks_played}
                 teamWeeks={pp.team_weeks}
                 name={pp.name}
               />
+            ) : (
+              <span className="text-[10px] text-zinc-500">
+                Availability unavailable
+              </span>
             )}
           </div>
 
@@ -304,7 +300,7 @@ function ResultsSlotRow({ slot }: { slot: ResultsSlot }) {
           <span className={`text-xs tabular-nums shrink-0 w-12 text-right ${
             noSample ? 'text-zinc-600' : 'text-zinc-400'
           }`}>
-            {noSample ? '—' : `${pp.games_played}/${TEAM_GAMES}`}
+            {hasAvailability ? `${pp.games_played}/${teamGames}` : '—'}
           </span>
 
           {/* ADP */}
