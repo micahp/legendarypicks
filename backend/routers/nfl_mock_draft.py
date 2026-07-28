@@ -388,6 +388,12 @@ def pool(season: int = Query(...)):
             {
                 "contract": _CONTRACT,
                 "season": season,
+                # `season` is the season being drafted; every statistic in this
+                # payload describes `reference_season`. Without it a client has
+                # to guess which year it is labelling, and the guess is right
+                # until it silently isn't -- the draft board publishes this for
+                # the same reason.
+                "reference_season": _log_season,
                 "count": len(players),
                 "players": players,
             }

@@ -19,6 +19,8 @@ interface ScheduleTeam {
 
 interface Props {
   pool: PoolPlayer[]
+  /** The season the pool's statistics describe, from the payload. */
+  referenceSeason?: number | null
   draftState: DraftState
   onUserPick: (playerId: number) => void
   onTimeout: () => void
@@ -48,7 +50,7 @@ const BENCH_SLOTS = 6
  *   - Drafted: dim + strike.
  *   - Clock: tabular figures, may change weight under 10s, never red.
  */
-export default function DraftRoom({ pool, draftState, onUserPick, onTimeout, userPicking, queue, onAddToQueue, onRemoveFromQueue, onMoveQueueUp, onMoveQueueDown }: Props) {
+export default function DraftRoom({ pool, referenceSeason, draftState, onUserPick, onTimeout, userPicking, queue, onAddToQueue, onRemoveFromQueue, onMoveQueueUp, onMoveQueueDown }: Props) {
   // ── Filter state ──
   const [selectedPlayerId, setSelectedPlayerId] = useState<number | null>(null)
   const [posFilter, setPosFilter] = useState<string>('ALL')
@@ -153,7 +155,7 @@ export default function DraftRoom({ pool, draftState, onUserPick, onTimeout, use
     [draftState],
   )
 
-  const headlineStat = headlineStatFor(posFilter)
+  const headlineStat = headlineStatFor(posFilter, referenceSeason)
 
   const userTurn = isUserPick(draftState)
   const nextPick = userNextPick(draftState)
@@ -729,17 +731,22 @@ function DraftBoardGrid({ draftState }: { draftState: DraftState }) {
    Under the 'All' filter the header stays generic, because one column is
    spanning three different units and the row's position chip says which. */
 
-export /* The season label says "last completed season" rather than a year on purpose.
-   The pool payload publishes contract/season/count and never states which season
-   its statistics describe — only /api/nfl/draft-board does, as reference_season.
-   A hardcoded "2025" would be true today and silently false in twelve months,
-   which is the same class of defect as a stale bye week. When the pool contract
-   grows reference_season, render the year from it. */
-function headlineStatFor(position: string): { header: string; title: string } {
-  if (position === 'DEF') return { header: 'D/ST', title: 'D/ST fantasy points per game, last completed season' }
-  if (position === 'PK') return { header: 'K Pts', title: 'Kicking points per game, last completed season' }
-  if (position === 'ALL') return { header: 'Pts/G', title: 'Fantasy points per game, last completed season — PPR for skill positions, kicking points for K, D/ST points for defenses' }
-  return { header: 'PPR/G', title: 'PPR points per game played, last completed season' }
+/* The season label comes from the payload's reference_season, never from a
+   hardcoded year: a literal "2025" is true today and silently false in twelve
+   months, the same class of defect as a stale bye week. The pool contract used
+   to publish only contract/season/count, so this hedged with "last completed
+   season"; it now publishes reference_season and the year is rendered from it.
+   The hedge remains the fallback, because a label may not invent a year the
+   server did not state. */
+export function headlineStatFor(
+  position: string,
+  referenceSeason?: number | null,
+): { header: string; title: string } {
+  const when = referenceSeason != null ? `${referenceSeason}` : 'last completed season'
+  if (position === 'DEF') return { header: 'D/ST', title: `D/ST fantasy points per game, ${when}` }
+  if (position === 'PK') return { header: 'K Pts', title: `Kicking points per game, ${when}` }
+  if (position === 'ALL') return { header: 'Pts/G', title: `Fantasy points per game, ${when} — PPR for skill positions, kicking points for K, D/ST points for defenses` }
+  return { header: 'PPR/G', title: `PPR points per game played, ${when}` }
 }
 
 /** The one number, resolved per row so a mixed 'All' view stays correct. */

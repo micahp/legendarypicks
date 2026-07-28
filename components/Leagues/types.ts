@@ -381,7 +381,10 @@ export interface PoolPlayer {
 
 export interface PoolResponse {
   contract: string
+  /** The season being drafted. */
   season: number
+  /** The season every statistic in `players` describes. */
+  reference_season?: number | null
   count: number
   players: PoolPlayer[]
 }

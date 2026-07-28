@@ -30,6 +30,9 @@ export default function MockDraftPage() {
   const [phase, setPhase] = useState<Phase>('pool')
   const [pool, setPool] = useState<PoolPlayer[]>([])
   const [poolLoading, setPoolLoading] = useState(true)
+  // The season the pool's statistics describe, straight from the payload —
+  // never inferred from the drafted season.
+  const [referenceSeason, setReferenceSeason] = useState<number | null>(null)
   const [poolError, setPoolError] = useState<string | null>(null)
   const [draftState, setDraftState] = useState<DraftState | null>(null)
   const [draftId, setDraftId] = useState<string | null>(null)
@@ -49,6 +52,7 @@ export default function MockDraftPage() {
       .then(data => {
         if (!cancelled) {
           setPool(data.players)
+          setReferenceSeason(data.reference_season ?? null)
           setPoolLoading(false)
         }
       })
@@ -264,6 +268,7 @@ export default function MockDraftPage() {
           )}
           <PoolList
             players={pool}
+            referenceSeason={referenceSeason}
             onStartDraft={handleStartDraft}
           />
         </>
@@ -272,6 +277,7 @@ export default function MockDraftPage() {
       {phase === 'drafting' && draftState && (
         <DraftRoom
           pool={pool}
+          referenceSeason={referenceSeason}
           draftState={draftState}
           onUserPick={handleUserPick}
           onTimeout={handleTimeout}

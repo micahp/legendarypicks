@@ -2,10 +2,12 @@ import { useMemo } from 'react'
 import type { PoolPlayer } from '../Leagues/types'
 import { AvailabilityStrip } from '../Leagues/NflDraftRoom'
 import { poolToDraftRow } from '../../lib/mockDraft/api'
-import { HeadlineStat } from './DraftRoom'
+import { HeadlineStat, headlineStatFor } from './DraftRoom'
 
 interface Props {
   players: PoolPlayer[]
+  /** The season these statistics describe, from the pool payload. */
+  referenceSeason?: number | null
   onStartDraft: () => void
 }
 
@@ -18,7 +20,8 @@ interface Props {
  *   - PK → "Kicker games not tracked" (our gap, not theirs)
  *   - all else → "Rookie — no NFL sample" (grey, not accent, not zero)
  */
-export default function PoolList({ players, onStartDraft }: Props) {
+export default function PoolList({ players, referenceSeason, onStartDraft }: Props) {
+  const headlineStat = headlineStatFor('ALL', referenceSeason)
   const rows = useMemo(
     () => players.map((p, i) => poolToDraftRow(p, i + 1)),
     [players],
@@ -86,7 +89,7 @@ export default function PoolList({ players, onStartDraft }: Props) {
                   by team schedule
                 </span>
               </th>
-              <th className="text-right py-3 px-2 w-16" title="Fantasy points per game, last completed season — PPR for skill positions, kicking points for K, D/ST points for defenses">Pts/G</th>
+              <th className="text-right py-3 px-2 w-16" title={headlineStat.title}>{headlineStat.header}</th>
               <th className="text-right py-3 px-2">ADP</th>
               <th className="text-right py-3 px-2">Owned</th>
             </tr>
