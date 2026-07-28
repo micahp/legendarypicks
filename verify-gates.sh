@@ -193,7 +193,50 @@ regrender(){
   else no REG-render "exit=$rc  ${line:-<no verdict line — the gate itself died>}"; fi
 }
 
-case "${1:-all}" in
-  A1) a1;; A2) a2;; A3) a3;; B1) b1;; B2) b2;; B4) b4;; reg) reg;; render) regrender;;
-  all) a1; a2; a3; b1; b2; b4; echo "--- regressions ---"; reg; regrender;;
-esac
+# ── the runner's own verdict ───────────────────────────────────────────────────
+# Until 2026-07-28 this script printed FAIL and exited 0. Every gate, including
+# `all`: ok() and no() are both a bare echo, and nothing summed them. Anything
+# wrapping this in `verify-gates.sh all && deploy` read a red suite as green.
+# Caught by Codex's audit; the repro is one line:
+#   LP_GATE_W=/tmp/nope bash verify-gates.sh B1   ->  "FAIL B1 ()"  exit 0
+#
+# Two rules now, and they are the same rule the gates apply to the code:
+#   1. exit = number of FAIL lines. No allowlist, not even for REG-adp-dst,
+#      which is red on purpose — so `all` legitimately exits 1 until job15
+#      lands. An allowlist is how a suite gets quietly relaxed; a number that
+#      never lies is cheaper to trust than a list someone has to maintain.
+#   2. A gate that emits NO verdict is a FAIL, not a skip. On 2026-07-28 the
+#      `all` dispatch ran 14 gates and silently skipped REG-render because the
+#      function was written but never added to the case. The count below is what
+#      makes that structurally impossible to repeat, rather than fixed once.
+ALL_IDS="A1 A1b A2 A3 B1 B2 B2b B4 REG-pool REG-adp-dst REG-dst REG-pytest REG-jest REG-modules REG-render"
+
+out=$(mktemp) || exit 2
+trap 'rm -f "$out"' EXIT
+
+{
+  case "${1:-all}" in
+    A1) a1;; A2) a2;; A3) a3;; B1) b1;; B2) b2;; B4) b4;; reg) reg;; render) regrender;;
+    all) a1; a2; a3; b1; b2; b4; echo "--- regressions ---"; reg; regrender;;
+    *) echo "FAIL runner (unknown gate '$1' — nothing ran)";;
+  esac
+} 2>&1 | tee "$out"
+
+fails=$(grep -cE '^FAIL +' "$out")
+passes=$(grep -cE '^PASS +' "$out")
+
+# Missing verdicts only checkable for `all`, where the full id set is known.
+missing=""
+if [ "${1:-all}" = "all" ]; then
+  for id in $ALL_IDS; do
+    grep -qE "^(PASS|FAIL) +$id\b" "$out" || missing="$missing $id"
+  done
+fi
+
+if [ -n "$missing" ]; then
+  echo "FAIL runner (no verdict emitted by:$missing — a gate that did not run is not a gate that passed)"
+  fails=$((fails + $(echo $missing | wc -w)))
+fi
+
+echo "── $passes passed, $fails failed ──"
+exit $((fails > 0 ? 1 : 0))
