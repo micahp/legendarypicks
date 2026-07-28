@@ -194,6 +194,6 @@ regrender(){
 }
 
 case "${1:-all}" in
-  A1) a1;; A2) a2;; A3) a3;; B1) b1;; B2) b2;; B4) b4;; reg) reg;;
-  all) a1; a2; a3; b1; b2; b4; echo "--- regressions ---"; reg;;
+  A1) a1;; A2) a2;; A3) a3;; B1) b1;; B2) b2;; B4) b4;; reg) reg;; render) regrender;;
+  all) a1; a2; a3; b1; b2; b4; echo "--- regressions ---"; reg; regrender;;
 esac
