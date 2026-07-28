@@ -176,7 +176,26 @@ def pool(season: int = Query(...)):
         _log_season = (_log_season_row[0] if _log_season_row and _log_season_row[0]
                        else _CURRENT_SEASON - 1)
 
-        availability = _availability_aggregates(connection, _log_season)
+        availability = _availability_aggregates(
+            connection, _log_season
+        )
+
+        # Lift player_detail's exact Python accumulation into one set-based
+        # read. SQLite SUM/AVG can round one decimal differently, so using the
+        # detail endpoint's arithmetic is required for payload parity.
+        _log_columns = {
+            row["name"]
+            for row in connection.execute(
+                "PRAGMA table_info(player_game_logs)"
+            ).fetchall()
+        }
+        season_stats = {}
+        if "stats" in _log_columns:
+            pk_by_player = _pk_aggregates(
+                connection, _log_season, availability
+            )
+        else:
+            pk_by_player = {}
         dst_availability, dst_team_weeks = _dst_aggregates(
             connection, _log_season
         )
@@ -235,6 +254,51 @@ def pool(season: int = Query(...)):
             r["name"],
         ))
 
+        if "stats" in _log_columns and rows:
+            _pool_ids = [row["player_id"] for row in rows]
+            _stats_placeholders = ",".join("?" for _ in _pool_ids)
+            log_rows = connection.execute(
+                f"""SELECT player_id, game_no, stats
+                    FROM player_game_logs
+                    WHERE league='nfl' AND season=?
+                      AND player_id IN ({_stats_placeholders})
+                      AND CAST(game_no AS INTEGER) < ?
+                    ORDER BY player_id, CAST(game_no AS INTEGER)""",
+                (_log_season, *_pool_ids, _POSTSEASON_FIRST_WEEK),
+            ).fetchall()
+            for log_row in log_rows:
+                aggregate = season_stats.setdefault(
+                    log_row["player_id"],
+                    {
+                        "ppr_total": 0.0,
+                        "snap_pct_sum": 0.0,
+                        "snap_pct_count": 0,
+                        "target_share_sum": 0.0,
+                        "target_share_count": 0,
+                        "xfp_sum": 0.0,
+                        "xfp_count": 0,
+                    },
+                )
+                try:
+                    stats = json.loads(log_row["stats"])
+                    ppr = stats.get("fpts_ppr")
+                    if ppr is not None:
+                        aggregate["ppr_total"] += float(ppr)
+                    snap = stats.get("off_pct")
+                    if snap is not None:
+                        aggregate["snap_pct_sum"] += float(snap)
+                        aggregate["snap_pct_count"] += 1
+                    target = stats.get("target_share")
+                    if target is not None:
+                        aggregate["target_share_sum"] += float(target)
+                        aggregate["target_share_count"] += 1
+                    xfp = stats.get("xfpts_ppr")
+                    if xfp is not None:
+                        aggregate["xfp_sum"] += float(xfp)
+                        aggregate["xfp_count"] += 1
+                except Exception:
+                    pass
+
         players = []
         for row in rows:
             pid = row["player_id"]
@@ -264,6 +328,66 @@ def pool(season: int = Query(...)):
                 else "none"
             )
 
+            stats = season_stats.get(pid)
+            ppr_total = stats["ppr_total"] if stats else 0.0
+            ppr_per_game_played = (
+                round(ppr_total / gp, 1)
+                if ppr_total and gp
+                else None
+            )
+            ppr_per_team_game = (
+                round(ppr_total / _REG_SEASON_TEAM_GAMES, 1)
+                if ppr_total
+                else None
+            )
+            xfp_per_game = (
+                round(stats["xfp_sum"] / stats["xfp_count"], 1)
+                if stats and stats["xfp_count"]
+                else None
+            )
+            snap_pct = (
+                round(
+                    stats["snap_pct_sum"]
+                    / stats["snap_pct_count"]
+                    * 100,
+                    0,
+                )
+                if stats and stats["snap_pct_count"]
+                else None
+            )
+            target_share = (
+                round(
+                    stats["target_share_sum"]
+                    / stats["target_share_count"]
+                    * 100,
+                    1,
+                )
+                if stats and stats["target_share_count"]
+                else None
+            )
+
+            pk_pts_total = None
+            pk_pts_per_game = None
+            if pos == "PK":
+                pk_row = pk_by_player.get(pid)
+                if pk_row and pk_row["pk_pts_total"] is not None:
+                    pk_pts_total = round(pk_row["pk_pts_total"], 1)
+                    pk_pts_per_game = pk_row["pk_pts_per_game"]
+
+            dst_pts_total = None
+            dst_pts_per_game = None
+            if pos == "DEF":
+                dst_row = dst_availability.get(pid)
+                if dst_row and dst_row["dst_total"] is not None:
+                    dst_pts_total = round(dst_row["dst_total"], 1)
+                    if dst_row["dst_avg"] is not None:
+                        dst_pts_per_game = round(dst_row["dst_avg"], 1)
+
+            if pos in ("PK", "DEF"):
+                ppr_per_game_played = None
+                snap_pct = None
+                target_share = None
+
             players.append({
                 "player_id": pid,
                 "name": row["name"],
@@ -276,6 +400,16 @@ def pool(season: int = Query(...)):
                 "games_missed": gm,
                 "weeks_played": wp,
                 "team_weeks": tw,
+                "team_games": team_games,
+                "ppr_per_game_played": ppr_per_game_played,
+                "ppr_per_team_game": ppr_per_team_game,
+                "xfp_per_game": xfp_per_game,
+                "snap_pct": snap_pct,
+                "target_share": target_share,
+                "pk_pts_total": pk_pts_total,
+                "pk_pts_per_game": pk_pts_per_game,
+                "dst_pts_total": dst_pts_total,
+                "dst_pts_per_game": dst_pts_per_game,
             })
 
         return _json(
