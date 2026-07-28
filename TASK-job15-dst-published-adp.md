@@ -125,3 +125,61 @@ LP_GATE_W=/root/lp-job15-dst-published-adp \
 The box is tight: swap was 3404/4095 MB when this was written. Your worktree's dev
 servers are on the ports the script prints. Do not start extra ones. Do not run a full
 backfill — this ingest is two HTTP calls and ~9,600 upserts.
+
+---
+
+## 6. ADDENDUM 2026-07-28 09:5x — two corrections to §3, read before starting
+
+### 6a. §3 contradicts itself. Do NOT delete the whole D/ST block.
+
+§3 says *"Delete the derived-D/ST branch: the `dst_rank` block"* and, in the same cell,
+*"Keep `games_played`/`games_missed`/`weeks_played`/`team_weeks` for D/ST exactly as they
+are."* Those are the same loop. `backend/routers/nfl_mock_draft.py:332-351` computes the
+ranking **and** the availability fields in one pass over `dst_rows`:
+
+```python
+for i, dr in enumerate(dst_rows, start=1):
+    weeks = [int(w) for w in (dr["weeks_csv"] or "").split(",") if w]
+    gp = len(weeks)
+    ...
+    "dst_rank": i,                      # <- DELETE this
+    "games_played": gp,                 # <- KEEP these four, they are the only
+    "games_missed": ...,                #    correct source of D/ST availability
+    "weeks_played": weeks,              #    anywhere in the codebase
+    "team_weeks": tw,
+```
+
+**Delete only:** `dst_rank`, `_DST_SLOT`, the interleave, and the false comment at :314.
+**Keep:** the `dst_rows` query and the four availability fields. Merge the D/ST dicts into
+the normal ADP-sorted list instead of splicing them at a fixed slot.
+
+`REG-pool` (300 players, 32 DEF) and `REG-dst` (32 rows) will catch you if the block is
+lost wholesale — but they will catch it *after* you have deleted the derivation, so read
+this first.
+
+### 6b. B17 — `player_detail` reports the opposite of the board for the same D/ST
+
+Add to your scope, same file. Measured 2026-07-28 against `:8098`, SEA D/ST (`player_id`
+30116), same season, same entity:
+
+```
+GET /api/nfl/draft-board?position=DEF   ->  games_played=17  games_missed=0   sample=full
+GET /api/nfl/draft/player/30116         ->  games_played=0   games_missed=17  sample=none
+```
+
+Both cannot be true. The board is right. `player_detail` (:617) has **no D/ST branch at
+all** — it falls through to the generic path at :668, `games_played = len(log_rows)`, over
+`player_game_logs`. **That table holds touches, not presence**: a row exists only when a
+player recorded a pass, rush or reception. A team defense records none, so it returns zero
+rows and the endpoint concludes the defense never played. The payload then contradicts
+itself, carrying `dst_pts_total=164.0` alongside `games_played=0`.
+
+This is now user-visible: the mock draft pool opens this overlay on tap (`c92e5df`), so
+all 32 defenses render "No NFL sample" over a real 164-point season.
+
+**Fix:** give `player_detail` the same `dst_rows` source the pool builder uses, for
+`position='DEF'` only. Do not change the generic path — every other position is correct.
+
+**Done means:** `/api/nfl/draft/player/30116` returns `games_played=17`, `games_missed=0`,
+`sample='full'`, `weeks_played` non-empty, and agrees field-for-field with the D/ST entry
+in `/api/nfl/draft-board?position=DEF`. Report both payloads side by side, not "verified".
