@@ -231,6 +231,7 @@ export interface NflDraftPlayer {
   percent_owned: number | null
   /** The headline: regular-season games played out of the team's 17. */
   games_played: number
+  games_missed: number | null
   team_games: number
   /** Weeks 1-18 he appeared in. The gaps are the story. */
   weeks_played: number[]
