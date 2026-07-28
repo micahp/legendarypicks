@@ -22,6 +22,7 @@ import { useUfcRankingsData } from '../../components/Leagues/hooks/useUfcRanking
 import { useUfcPredictData } from '../../components/Leagues/hooks/useUfcPredictData'
 import { useNflSeasonContext } from '../../components/Leagues/hooks/useNflSeasonContext'
 import { useNflTransactions } from '../../components/Leagues/hooks/useNflTransactions'
+import { useNflDraftBoard } from '../../components/Leagues/hooks/useNflDraftBoard'
 import {
   LEAGUE_EMOJIS,
   LEAGUE_NAMES,
@@ -97,6 +98,7 @@ export default function LeagueHubPage() {
 
   const seasonContext = useNflSeasonContext(isNFL && route.activeTab === 'camp')
   const transactions = useNflTransactions(isNFL && route.activeTab === 'camp')
+  const draftBoard = useNflDraftBoard(isNFL && route.activeTab === 'camp')
   // Resolve prev/next game dates for arrow navigation (non-NFL only)
   const nav = useScheduleNavigation(isNFL || route.activeTab !== 'schedule', route.league, route.scheduleDate)
 
@@ -164,7 +166,25 @@ export default function LeagueHubPage() {
               loading={transactions.loading}
               error={transactions.error}
             />
-            <NflDraftRoom enabled={isNFL && route.activeTab === 'camp'} />
+            <NflDraftRoom
+              data={draftBoard.data}
+              loading={draftBoard.loading}
+              error={draftBoard.error}
+              position={draftBoard.position}
+              sort={draftBoard.sort}
+              offset={draftBoard.offset}
+              query={draftBoard.query}
+              notes={draftBoard.notes}
+              syncError={draftBoard.syncError}
+              onSelectPosition={draftBoard.selectPosition}
+              onSelectSort={draftBoard.selectSort}
+              onSetQuery={draftBoard.setQuery}
+              onClearQuery={draftBoard.clearQuery}
+              onSetOffset={draftBoard.setOffset}
+              onSetRank={draftBoard.setRank}
+              onToggleWatch={draftBoard.toggleWatch}
+              onToggleFade={draftBoard.toggleFade}
+            />
           </div>
         )}
 
