@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""derive_player_stats.py — current-season aggregates from player_game_logs → player_stats.
+"""Publish the NFL season compatibility row from durable weekly logs.
 
-For NBA/NFL/NHL: reads per-game logs, groups by player_id, aggregates stats,
-and upserts into player_stats keyed on (player_name, league, season).
+NFL's source is the published nflverse weekly artifact stored in
+``player_game_logs``. NBA and NHL both publish season totals directly and have
+dedicated ingesters.
 NEVER creates new players rows; NEVER matches by name — uses player_id from logs.
 """
 
@@ -11,55 +12,22 @@ import os
 import sqlite3
 import sys
 
-# ── helpers ────────────────────────────────────────────────
-
-def _normalize_name(name: str) -> str:
-    """Normalize player name for matching: lowercase, strip punctuation + suffixes."""
-    if not name:
-        return ""
-    n = name.lower().strip()
-    # suffixes
-    for sfx in (" jr.", " sr.", " ii", " iii", " iv", " v", " jr", " sr"):
-        if n.endswith(sfx):
-            n = n[: -len(sfx)]
-    # punctuation
-    for ch in ".'-":
-        n = n.replace(ch, "")
-    return " ".join(n.split())  # collapse whitespace
-
-
-def toi_to_seconds(toi: str) -> int:
-    """Convert 'MM:SS' or 'MM' to total seconds."""
-    if not toi:
-        return 0
-    parts = toi.strip().split(":")
-    if len(parts) == 2:
-        return int(parts[0]) * 60 + int(parts[1])
-    try:
-        return int(parts[0]) * 60
-    except (ValueError, IndexError):
-        return 0
-
-
-def seconds_to_toi(secs: int) -> str:
-    """Convert total seconds back to 'MM:SS'."""
-    m = secs // 60
-    s = secs % 60
-    return f"{m}:{s:02d}"
-
-
-def ts_pct(pts, fga, fta):
-    """True shooting percentage: PTS / (2 * (FGA + 0.44 * FTA)) * 100."""
-    denom = 2 * (fga + 0.44 * fta)
-    if denom <= 0:
-        return 0.0
-    return (pts / denom) * 100
-
+from league_stats import (
+    LeagueStatContractError,
+    publish_player_stats,
+    supports_derived_stats,
+)
 
 # ── aggregation logic ──────────────────────────────────────
 
 def derive_league(db_path: str, league: str):
-    """Aggregate player_game_logs for LEAGUE's latest season, upsert into player_stats."""
+    """Publish NFL's latest regular-season rollup in one transaction."""
+    league = str(league or "").lower()
+    if not supports_derived_stats(league):
+        raise LeagueStatContractError(
+            f"{league or 'blank'} season stats are publisher-owned; "
+            "the compatibility rollup supports only nfl"
+        )
     con = sqlite3.connect(db_path)
     con.row_factory = sqlite3.Row
 
@@ -75,13 +43,28 @@ def derive_league(db_path: str, league: str):
     season = latest["season"]
     print(f"  {league}: latest season = {season}")
 
-    # Fetch all game logs for this league + season, grouped by player_id
+    log_columns = {
+        str(row[1])
+        for row in con.execute("PRAGMA table_info(player_game_logs)")
+    }
+    population_clause = ""
+    if "game_type" in log_columns:
+        if "game_no" in log_columns:
+            population_clause = (
+                " AND (pgl.game_type='REG' OR "
+                "(pgl.game_type IS NULL AND pgl.game_no<19))"
+            )
+        else:
+            population_clause = " AND pgl.game_type='REG'"
+
+    # Fetch all regular-season logs, grouped by canonical player identity.
     rows = con.execute(
-        """SELECT pgl.player_id, p.name AS player_name, p.position, pgl.team,
+        f"""SELECT pgl.player_id, p.name AS player_name, p.position, pgl.team,
                   pgl.stats, pgl.game_date
            FROM player_game_logs pgl
            JOIN players p ON p.id = pgl.player_id
            WHERE pgl.league=? AND pgl.season=?
+           {population_clause}
            ORDER BY pgl.player_id, pgl.game_date""",
         (league, season),
     ).fetchall()
@@ -98,94 +81,33 @@ def derive_league(db_path: str, league: str):
         groups[r["player_id"]].append(r)
 
     upserted = 0
-    for player_id, grp in groups.items():
-        player_name = grp[0]["player_name"]
-        name_norm = _normalize_name(player_name)
-        position = grp[0]["position"] or ""
-        # Use most recent team
-        team = grp[-1]["team"] or ""
-        games = len(grp)
-
-        stats = _aggregate(league, grp)
-        if stats is None:
-            continue
-
-        try:
-            if league == "nba":
-                _upsert_nba(con, player_id, player_name, name_norm, team, season, games, stats)
-            elif league == "nfl":
-                _upsert_nfl(con, player_id, player_name, name_norm, team, season, games, stats, position)
-            elif league == "nhl":
-                _upsert_nhl(con, player_id, player_name, name_norm, team, season, games, stats, position)
+    try:
+        con.execute("BEGIN IMMEDIATE")
+        for player_id, grp in groups.items():
+            position = grp[0]["position"] or ""
+            # Use most recent team
+            team = grp[-1]["team"] or ""
+            games = len(grp)
+            stats = _aggregate_nfl(grp)
+            _upsert_nfl(
+                con, player_id, team, season, games, stats, position
+            )
             upserted += 1
-        except Exception as e:
-            print(f"    WARN: {player_name} (id={player_id}): {e}", file=sys.stderr)
-
-    con.commit()
-    con.close()
+        con.commit()
+    except Exception:
+        con.rollback()
+        raise
+    finally:
+        con.close()
     print(f"  {league}: upserted {upserted} player rows for season {season}")
-
-
-def _aggregate(league: str, grp):
-    """Aggregate per-game stats JSON into a flat dict of computed values."""
-    if league == "nba":
-        return _aggregate_nba(grp)
-    elif league == "nfl":
-        return _aggregate_nfl(grp)
-    elif league == "nhl":
-        return _aggregate_nhl(grp)
-    return None
-
-
-def _aggregate_nba(grp):
-    g = len(grp)
-    sum_pts = sum_pts_raw = 0
-    sum_reb = sum_ast = sum_stl = sum_blk = sum_tov = sum_min = 0
-    sum_fgm = sum_fga = sum_fg3m = sum_fg3a = sum_ftm = sum_fta = 0
-    for r in grp:
-        s = json.loads(r["stats"])
-        pts = s.get("PTS", 0)
-        sum_pts_raw += pts  # for ts_pct calculation
-        sum_pts += pts
-        sum_reb += s.get("REB", 0)
-        sum_ast += s.get("AST", 0)
-        sum_stl += s.get("STL", 0)
-        sum_blk += s.get("BLK", 0)
-        sum_tov += s.get("TO", 0)
-        sum_min += s.get("MIN", 0)
-        sum_fgm += s.get("FGM", 0)
-        sum_fga += s.get("FGA", 0)
-        sum_fg3m += s.get("3PM", 0)
-        # NBA game logs don't have 3PA, field-goal attempts include 3PA
-        # we don't have a separate 3PA so we set it to 0
-        sum_fg3a += 0
-        sum_ftm += s.get("FTM", 0)
-        sum_fta += s.get("FTA", 0)
-
-    return {
-        "pts": round(sum_pts / g, 1),
-        "reb": round(sum_reb / g, 1),
-        "ast": round(sum_ast / g, 1),
-        "stl": round(sum_stl / g, 1),
-        "blk": round(sum_blk / g, 1),
-        "tov": round(sum_tov / g, 1),
-        "minutes": round(sum_min / g, 1),
-        "fgm": sum_fgm,
-        "fga": sum_fga,
-        "fg3m": sum_fg3m,
-        "fg3a": sum_fg3a,
-        "ftm": sum_ftm,
-        "fta": sum_fta,
-        "ts_pct": round(ts_pct(sum_pts_raw, sum_fga, sum_fta), 1),
-    }
 
 
 def _aggregate_nfl(grp):
     g = len(grp)
-    sum_pass_yds = sum_pass_td = sum_int = sum_cmp = sum_att = 0
+    sum_pass_yds = sum_pass_td = sum_int = sum_cmp = 0
     sum_pass_epa = 0.0
-    sum_carries = sum_rush_yds = sum_rush_td = 0
-    sum_rec = sum_rec_yds = sum_rec_td = sum_targets = 0
+    sum_carries = sum_rush_yds = 0
+    sum_rec = sum_rec_yds = sum_targets = 0
     sum_fant = sum_fant_ppr = 0.0
     for r in grp:
         s = json.loads(r["stats"])
@@ -195,14 +117,11 @@ def _aggregate_nfl(grp):
         sum_pass_td += s.get("pass_td", s.get("passing_tds", 0))
         sum_int += s.get("intc", s.get("interceptions", 0))
         sum_cmp += s.get("cmp", s.get("completions", 0))
-        sum_att += s.get("att", s.get("attempts", 0))
         sum_pass_epa += float(s.get("pass_epa", s.get("passing_epa", 0)) or 0)
         sum_carries += s.get("carries", 0)
         sum_rush_yds += s.get("rush_yds", s.get("rushing_yards", 0))
-        sum_rush_td += s.get("rush_td", s.get("rushing_tds", 0))
         sum_rec += s.get("rec", s.get("receptions", 0))
         sum_rec_yds += s.get("rec_yds", s.get("receiving_yards", 0))
-        sum_rec_td += s.get("rec_td", s.get("receiving_tds", 0))
         sum_targets += s.get("targets", 0)
         sum_fant += float(s.get("fpts", s.get("fantasy_points", 0)) or 0)
         sum_fant_ppr += float(s.get("fpts_ppr", s.get("fantasy_points_ppr", 0)) or 0)
@@ -223,96 +142,27 @@ def _aggregate_nfl(grp):
     }
 
 
-def _aggregate_nhl(grp):
-    g = len(grp)
-    sum_goals = sum_assists = sum_points = sum_shots = 0
-    sum_pm = sum_pim = sum_ppg = sum_ppp = sum_shg = 0
-    toi_secs = []
-
-    for r in grp:
-        s = json.loads(r["stats"])
-        sum_goals += s.get("goals", 0)
-        sum_assists += s.get("assists", 0)
-        sum_points += s.get("points", 0)
-        sum_shots += s.get("shots", 0)
-        sum_pm += s.get("plusMinus", 0)
-        sum_pim += s.get("pim", 0)
-        sum_ppg += s.get("powerPlayGoals", 0)
-        sum_ppp += s.get("powerPlayPoints", 0)
-        sum_shg += s.get("shorthandedPoints", 0)
-        toi = s.get("toi", "")
-        if toi:
-            toi_secs.append(toi_to_seconds(toi))
-
-    avg_toi_secs = round(sum(toi_secs) / len(toi_secs)) if toi_secs else 0
-    shooting_pct = round((sum_goals / sum_shots) * 100, 1) if sum_shots > 0 else 0.0
-
-    return {
-        "goals": sum_goals,
-        "assists": sum_assists,
-        "points_nhl": sum_points,
-        "shots": sum_shots,
-        "shooting_pct": shooting_pct,
-        "plus_minus": sum_pm,
-        "pim": sum_pim,
-        "ppg": sum_ppg,
-        "ppp": sum_ppp,
-        "shg": sum_shg,
-        "toi": seconds_to_toi(avg_toi_secs),
-        "faceoff_pct": None,  # not in game logs
-    }
-
-
 # ── upsert helpers ─────────────────────────────────────────
 
-def _upsert_nba(con, player_id, name, name_norm, team, season, games, s):
-    con.execute(
-        """INSERT OR REPLACE INTO player_stats
-           (player_name, name_norm, league, team, season, games,
-            pts, reb, ast, stl, blk, tov,
-            fgm, fga, fg3m, fg3a, ftm, fta, minutes,
-            ts_pct, source, player_id)
-           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
-        (name, name_norm, "nba", team, season, games,
-         s["pts"], s["reb"], s["ast"], s["stl"], s["blk"], s["tov"],
-         s["fgm"], s["fga"], s["fg3m"], s["fg3a"], s["ftm"], s["fta"], s["minutes"],
-         s["ts_pct"], "derived", player_id),
-    )
-
-
-def _upsert_nfl(con, player_id, name, name_norm, team, season, games, s, position):
-    con.execute(
-        """INSERT OR REPLACE INTO player_stats
-           (player_name, name_norm, league, team, season, games,
-            nfl_position, nfl_team,
-            pass_yds_g, pass_td, interceptions, cmp_g, pass_epa,
-            carries_g, rush_yds_g, receptions, rec_yds_g, targets,
-            fantasy_pts_g, fantasy_ppr_g,
-            source, player_id)
-           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
-        (name, name_norm, "nfl", team, season, games,
-         position, team,
-         s["pass_yds_g"], s["pass_td"], s["interceptions"], s["cmp_g"], s["pass_epa"],
-         s["carries_g"], s["rush_yds_g"], s["receptions"], s["rec_yds_g"], s["targets"],
-         s["fantasy_pts_g"], s["fantasy_ppr_g"],
-         "derived", player_id),
-    )
-
-
-def _upsert_nhl(con, player_id, name, name_norm, team, season, games, s, position):
-    con.execute(
-        """INSERT OR REPLACE INTO player_stats
-           (player_name, name_norm, league, team, season, games,
-            nhl_position, nhl_team,
-            goals, assists, points_nhl, shots, shooting_pct,
-            plus_minus, pim, ppg, ppp, shg, toi, faceoff_pct,
-            source, player_id)
-           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
-        (name, name_norm, "nhl", team, season, games,
-         position, team,
-         s["goals"], s["assists"], s["points_nhl"], s["shots"], s["shooting_pct"],
-         s["plus_minus"], s["pim"], s["ppg"], s["ppp"], s["shg"], s["toi"], s["faceoff_pct"],
-         "derived", player_id),
+def _upsert_nfl(con, player_id, team, season, games, s, position):
+    publish_player_stats(
+        con,
+        player_id=player_id,
+        league="nfl",
+        season=season,
+        stat_type="season",
+        source="nflverse_weekly_rollup",
+        games=games,
+        values={
+            "nfl_position": position, "nfl_team": team,
+            "pass_yds_g": s["pass_yds_g"], "pass_td": s["pass_td"],
+            "interceptions": s["interceptions"], "cmp_g": s["cmp_g"],
+            "pass_epa": s["pass_epa"], "carries_g": s["carries_g"],
+            "rush_yds_g": s["rush_yds_g"], "receptions": s["receptions"],
+            "rec_yds_g": s["rec_yds_g"], "targets": s["targets"],
+            "fantasy_pts_g": s["fantasy_pts_g"],
+            "fantasy_ppr_g": s["fantasy_ppr_g"],
+        },
     )
 
 
@@ -326,9 +176,9 @@ def main():
     requested = [
         value.lower()
         for value in sys.argv[1:]
-        if value.lower() in ("nba", "nfl", "nhl")
+        if value.lower() == "nfl"
     ]
-    for league in requested or ("nba", "nfl", "nhl"):
+    for league in requested or ("nfl",):
         derive_league(db_path, league)
     print("Done.")
 

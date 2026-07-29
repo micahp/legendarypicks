@@ -41,8 +41,9 @@ class PlayerProfileApiTests(unittest.TestCase):
               id INTEGER PRIMARY KEY, name TEXT, team TEXT, league TEXT, position TEXT
             );
             CREATE TABLE player_game_logs(
-              player_id INTEGER, season INTEGER, stats TEXT, game_date TEXT,
-              opponent TEXT, home_away TEXT, game_no INTEGER
+              player_id INTEGER, league TEXT, season INTEGER, stats TEXT,
+              game_date TEXT, opponent TEXT, home_away TEXT, game_no INTEGER,
+              game_type TEXT
             );
             CREATE TABLE props(
               player_id INTEGER, market TEXT, side TEXT, line REAL, captured_at TEXT
@@ -63,8 +64,11 @@ class PlayerProfileApiTests(unittest.TestCase):
             ],
         )
         con.execute(
-            "INSERT INTO player_game_logs VALUES(?,?,?,?,?,?,?)",
-            (1, 2026, json.dumps({"PTS": 24}), "2026-07-20", "OPP", "home", 1),
+            "INSERT INTO player_game_logs VALUES(?,?,?,?,?,?,?,?,?)",
+            (
+                1, "nba", 2026, json.dumps({"PTS": 24}), "2026-07-20",
+                "OPP", "home", 1, None,
+            ),
         )
         con.execute("INSERT INTO player_stats VALUES(3, 2026)")
         con.execute(
@@ -109,6 +113,38 @@ class PlayerProfileApiTests(unittest.TestCase):
         self.assertTrue(result["coverage"]["game_logs"])
         self.assertTrue(result["coverage"]["season_stats"])
         self.assertEqual(24, result["recent_games"][0]["stats"]["PTS"])
+
+    def test_non_nfl_null_game_type_remains_visible(self):
+        with mock.patch.object(players, "_season_stats_for_profile", return_value=None):
+            result = players.player_profile(1)
+
+        self.assertEqual(1, result["regular_season_games"])
+        self.assertEqual(24, result["recent_games"][0]["stats"]["PTS"])
+
+    def test_nfl_filter_includes_reg_and_compatible_legacy_rows_only(self):
+        con = sqlite3.connect(self.path)
+        rows = [
+            (2, "nfl", 2026, {"pass_yds": 200}, "2026-09-01", "A", "home", 1, "REG"),
+            (2, "nfl", 2026, {"pass_yds": 210}, "2026-09-08", "B", "away", 2, None),
+            (2, "nfl", 2026, {"pass_yds": 220}, "2027-01-10", "C", "home", 20, None),
+            (2, "nfl", 2026, {"pass_yds": 230}, "2027-01-17", "D", "away", 21, "POST"),
+        ]
+        con.executemany(
+            "INSERT INTO player_game_logs VALUES(?,?,?,?,?,?,?,?,?)",
+            [row[:3] + (json.dumps(row[3]),) + row[4:] for row in rows],
+        )
+        con.commit()
+        con.close()
+
+        with mock.patch.object(players, "_season_stats_for_profile", return_value=None):
+            result = players.player_profile(2)
+
+        self.assertEqual(2, result["regular_season_games"])
+        self.assertEqual(2, result["postseason_games"])
+        self.assertEqual(
+            [210, 200],
+            [row["stats"]["pass_yds"] for row in result["recent_games"]],
+        )
 
     def test_direct_blank_identity_is_explicit_not_silently_ready(self):
         with mock.patch.object(players, "_season_stats_for_profile", return_value=None):

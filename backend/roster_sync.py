@@ -16,6 +16,13 @@ import sys, os, sqlite3
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import espn_client as espn
 from sports_service import _normalize_name
+from league_stats import queue_unresolved_player
+from roster_membership import (
+    normalized_source_payload,
+    publish_roster_snapshot,
+    require_roster_schema,
+    roster_season,
+)
 from team_codes import (
     UnknownPositionCode,
     UnknownTeamCode,
@@ -28,6 +35,9 @@ _EXPECTED_TEAM_COUNTS = {"nfl": 32, "nba": 30, "nhl": 32, "mlb": 30}
 
 
 def sync_league(con: sqlite3.Connection, league: str) -> dict:
+    # Schema changes are explicit, backup-first migrations. Do not make source
+    # calls or touch compatibility fields until the roster schema is present.
+    require_roster_schema(con)
     teams = list(dict.fromkeys(
         t.get("abbrev") for t in espn.team_strength(league) if t.get("abbrev")
     ))
@@ -95,60 +105,226 @@ def sync_league(con: sqlite3.Connection, league: str) -> dict:
             "failures": failures,
         }
 
-    # Existing players in this league: index by espn_id (authoritative) and by name_norm.
-    name_to_id = {}
-    eid_to_id = {}
-    for r in con.execute("SELECT id, name, espn_id FROM players WHERE league=?", (league,)):
+    # Plan every identity before mutating active flags. A single ambiguous
+    # crosswalk leaves the previous verified roster intact.
+    name_to_rows = {}
+    eid_to_ids = {}
+    for r in con.execute(
+        "SELECT id,name,team,espn_id FROM players WHERE league=?",
+        (league,),
+    ):
         if r["name"]:
-            name_to_id.setdefault(_normalize_name(r["name"]), r["id"])
+            name_to_rows.setdefault(
+                _normalize_name(r["name"]), []
+            ).append(r)
         if r["espn_id"]:
-            eid_to_id[str(r["espn_id"])] = r["id"]
+            eid_to_ids.setdefault(str(r["espn_id"]), []).append(r["id"])
 
     verified_at = dt.datetime.now(dt.timezone.utc).isoformat()
-    # Reset active only after every team supplied a non-empty roster. Rostered
-    # players get re-activated below with the same verification timestamp.
-    con.execute(
-        "UPDATE players SET active=0, updated_at=? WHERE league=?",
-        (verified_at, league),
-    )
-
-    matched = inserted = updated_espn = 0
-    seen_teams = 0
+    planned = []
+    identity_failures = []
+    seen_roster_ids = set()
     for abbr, roster in rosters.items():
-        seen_teams += 1
         for p in roster:
             name = p.get("name")
             if not name:
+                identity_failures.append({
+                    "team": abbr,
+                    "name": "<missing>",
+                    "source_player_key": p.get("player_id"),
+                    "reason": "missing_display_name",
+                })
                 continue
-            eid = str(p.get("player_id")) if p.get("player_id") else None
+            raw_eid = p.get("player_id")
+            eid = str(raw_eid).strip() if raw_eid is not None else None
+            if eid in ("", "0", "None", "null"):
+                eid = None
             pos = p.get("position")
-            nn = _normalize_name(name)
-            # Resolve by espn_id first (authoritative), then by normalized name.
-            pid = (eid_to_id.get(eid) if eid else None) or name_to_id.get(nn)
-            if pid:
+            if not eid:
+                identity_failures.append({
+                    "team": abbr,
+                    "name": name,
+                    "source_player_key": None,
+                    "reason": "missing_espn_id",
+                })
+                continue
+            if eid in seen_roster_ids:
+                identity_failures.append({
+                    "team": abbr,
+                    "name": name,
+                    "source_player_key": eid,
+                    "reason": "duplicate_source_roster_id",
+                })
+                continue
+            seen_roster_ids.add(eid)
+            exact_ids = eid_to_ids.get(eid, [])
+            if len(exact_ids) > 1:
+                identity_failures.append({
+                    "team": abbr,
+                    "name": name,
+                    "source_player_key": eid,
+                    "reason": "duplicate_spine_espn_id",
+                })
+                continue
+            if exact_ids:
+                planned.append({
+                    "action": "update",
+                    "player_id": exact_ids[0],
+                    "name": name,
+                    "team": abbr,
+                    "position": pos,
+                    "jersey": p.get("jersey"),
+                    "source_player_key": eid,
+                })
+                continue
+
+            candidates = name_to_rows.get(_normalize_name(name), [])
+            if not candidates:
+                planned.append({
+                    "action": "insert",
+                    "player_id": None,
+                    "name": name,
+                    "team": abbr,
+                    "position": pos,
+                    "jersey": p.get("jersey"),
+                    "source_player_key": eid,
+                })
+                continue
+            if len(candidates) != 1:
+                reason = "ambiguous_normalized_name"
+            else:
+                candidate = candidates[0]
+                candidate_eid = (
+                    str(candidate["espn_id"])
+                    if candidate["espn_id"] else None
+                )
+                candidate_team = str(candidate["team"] or "").upper()
+                if candidate_eid and candidate_eid != eid:
+                    reason = "name_match_conflicting_espn_id"
+                elif candidate_team and candidate_team != abbr:
+                    reason = "name_match_team_mismatch"
+                else:
+                    planned.append({
+                        "action": "update",
+                        "player_id": candidate["id"],
+                        "name": name,
+                        "team": abbr,
+                        "position": pos,
+                        "jersey": p.get("jersey"),
+                        "source_player_key": eid,
+                    })
+                    continue
+            identity_failures.append({
+                "team": abbr,
+                "name": name,
+                "source_player_key": eid,
+                "reason": reason,
+            })
+
+    if identity_failures:
+        for failure in identity_failures:
+            queue_unresolved_player(
+                con,
+                source="espn_roster",
+                raw_name=failure["name"],
+                league=league,
+                team=failure["team"],
+                source_player_key=failure["source_player_key"],
+                reason=failure["reason"],
+            )
+        con.commit()
+        active_now = con.execute(
+            "SELECT COUNT(*) FROM players WHERE league=? AND active=1",
+            (league,),
+        ).fetchone()[0]
+        return {
+            "status": "identity_incomplete",
+            "teams": len(rosters),
+            "expected_teams": expected_teams,
+            "matched": 0,
+            "inserted": 0,
+            "espn_id_filled": 0,
+            "active_now": active_now,
+            "verified_at": None,
+            "failures": identity_failures,
+        }
+
+    source_payload = normalized_source_payload(league, rosters)
+    matched = inserted = updated_espn = 0
+    memberships = []
+    snapshot_id = None
+    try:
+        con.execute("BEGIN IMMEDIATE")
+        # Reset active only after every team supplied a non-empty roster and
+        # every source identity has an unambiguous application plan.
+        con.execute(
+            "UPDATE players SET active=0, updated_at=? WHERE league=?",
+            (verified_at, league),
+        )
+
+        for item in planned:
+            if item["action"] == "update":
+                before_eid = con.execute(
+                    "SELECT espn_id FROM players WHERE id=?",
+                    (item["player_id"],),
+                ).fetchone()["espn_id"]
                 con.execute(
-                    """UPDATE players SET active=1, team=?, position=COALESCE(?, position),
-                         espn_id=COALESCE(espn_id, ?), updated_at=? WHERE id=?""",
-                    (abbr, pos, eid, verified_at, pid))
+                    """UPDATE players
+                       SET active=1,team=?,position=COALESCE(?,position),
+                           espn_id=COALESCE(espn_id,?),updated_at=?
+                       WHERE id=?""",
+                    (
+                        item["team"], item["position"],
+                        item["source_player_key"], verified_at,
+                        item["player_id"],
+                    ),
+                )
                 matched += 1
-                if eid:
+                if not before_eid:
                     updated_espn += 1
             else:
-                cur = con.execute(
-                    """INSERT INTO players
-                       (name, league, team, position, espn_id, active, updated_at)
-                       VALUES (?,?,?,?,?,1,?)""",
-                    (name, league, abbr, pos, eid, verified_at))
-                name_to_id[nn] = cur.lastrowid
-                if eid:
-                    eid_to_id[eid] = cur.lastrowid
+                cursor = con.execute(
+                    """INSERT INTO players(
+                         name,league,team,position,espn_id,active,updated_at
+                       ) VALUES(?,?,?,?,?,1,?)""",
+                    (
+                        item["name"], league, item["team"],
+                        item["position"], item["source_player_key"],
+                        verified_at,
+                    ),
+                )
+                item["player_id"] = int(cursor.lastrowid)
                 inserted += 1
-    con.commit()
+            memberships.append({
+                "player_id": item["player_id"],
+                "source_player_key": item["source_player_key"],
+                "team": item["team"],
+                "position": item["position"],
+                "jersey": item["jersey"],
+                "roster_status": "active",
+                "display_name": item["name"],
+            })
+
+        snapshot_id = publish_roster_snapshot(
+            con,
+            league=league,
+            season=roster_season(league, verified_at),
+            source="espn_site_roster",
+            captured_at=verified_at,
+            source_payload=source_payload,
+            team_count=expected_teams,
+            memberships=memberships,
+        )
+        con.commit()
+    except Exception:
+        con.rollback()
+        raise
     active_now = con.execute("SELECT COUNT(*) FROM players WHERE league=? AND active=1", (league,)).fetchone()[0]
-    return {"status": "complete", "teams": seen_teams, "expected_teams": expected_teams,
+    return {"status": "complete", "teams": len(rosters), "expected_teams": expected_teams,
             "matched": matched, "inserted": inserted,
             "espn_id_filled": updated_espn, "active_now": active_now,
-            "verified_at": verified_at, "failures": []}
+            "verified_at": verified_at, "snapshot_id": snapshot_id,
+            "failures": []}
 
 
 def main(leagues):

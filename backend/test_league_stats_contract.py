@@ -50,9 +50,13 @@ def create_schema(path, omitted=(), with_logs=True):
         con.execute(
             "CREATE TABLE player_stats("
             "player_id INTEGER, player_name TEXT, league TEXT, team TEXT, "
-            "season INTEGER, games INTEGER, stat_type TEXT, "
+            "season INTEGER, games INTEGER, stat_type TEXT, source TEXT, "
             + ", ".join(metric_columns)
             + ")"
+        )
+        con.execute(
+            "CREATE TABLE players("
+            "id INTEGER PRIMARY KEY, name TEXT, league TEXT, team TEXT)"
         )
         if with_logs:
             con.execute(
@@ -82,7 +86,25 @@ def metric_values(definition_key, high=True):
 def insert_row(path, player_id, name, league, season, games, stat_type=None, values=None):
     values = values or {}
     with sqlite3.connect(path) as con:
+        con.execute(
+            """INSERT OR REPLACE INTO players(id,name,league,team)
+               VALUES(?,?,?,?)""",
+            (player_id, name, league, "TST"),
+        )
         db_columns = {row[1] for row in con.execute("PRAGMA table_info(player_stats)")}
+        canonical_type = stat_type or (
+            "season" if league in ("nba", "nfl", "nhl") else stat_type
+        )
+        if league == "mlb":
+            source = "statcast"
+        elif league == "nhl":
+            source = "nhle.com"
+        elif league == "nfl":
+            source = "nflverse_weekly_rollup"
+        elif season <= 2023:
+            source = "hoopR"
+        else:
+            source = "espn_core"
         data = {
             "player_id": player_id,
             "player_name": name,
@@ -90,7 +112,8 @@ def insert_row(path, player_id, name, league, season, games, stat_type=None, val
             "team": "TST",
             "season": season,
             "games": games,
-            "stat_type": stat_type,
+            "stat_type": canonical_type,
+            "source": source,
             **{key: value for key, value in values.items() if key in db_columns},
         }
         columns = list(data)
@@ -326,6 +349,42 @@ class LeagueStatsContractTests(unittest.TestCase):
         insert_row(self.db_path, 4, "NBA B", "nba", 2026, 10, values=metric_values("nba", high=False))
         self.assertEqual(len(call("nba", min_games=10, limit=1)["leaders"]), 1)
 
+    def test_denormalized_name_disagreement_fails_closed(self):
+        insert_row(
+            self.db_path, 1, "Canonical Name", "nba", 2026, 20,
+            values=metric_values("nba"),
+        )
+        with sqlite3.connect(self.db_path) as con:
+            con.execute(
+                "UPDATE player_stats SET player_name='Wrong Denormalized Name' "
+                "WHERE player_id=1"
+            )
+
+        with self.assertRaises(HTTPException) as raised:
+            call("nba")
+        self.assertEqual(raised.exception.status_code, 503)
+        self.assertIn("disagree with the player index", raised.exception.detail)
+
+    def test_duplicate_canonical_ownership_fails_closed(self):
+        insert_row(
+            self.db_path, 1, "Canonical Name", "nba", 2026, 20,
+            values=metric_values("nba"),
+        )
+        with sqlite3.connect(self.db_path) as con:
+            con.execute(
+                """INSERT INTO player_stats(
+                     player_id,player_name,league,team,season,games,
+                     stat_type,source,pts
+                   ) VALUES(1,'Duplicate','nba','TST',2026,20,
+                            'season','espn_core',30)"""
+            )
+
+        with self.assertRaises(HTTPException) as raised:
+            call("nba")
+
+        self.assertEqual(raised.exception.status_code, 503)
+        self.assertIn("duplicate ownership", raised.exception.detail)
+
     def test_nba_last_five_math_max_three_and_deterministic_order(self):
         fixtures = [
             (1, "Alpha", 10, 20),
@@ -469,7 +528,7 @@ class LeagueStatsContractTests(unittest.TestCase):
         with self.assertRaises(sqlite3.OperationalError):
             call("nba", category="scoring")
 
-    def test_mlb_never_queries_game_logs_and_always_has_no_comparison(self):
+    def test_mlb_change_evidence_uses_logs_and_fails_closed_when_empty(self):
         insert_row(
             self.db_path, 1, "Batter", "mlb", 2026, 50, "batting",
             metric_values("mlb_batting"),
@@ -487,10 +546,11 @@ class LeagueStatsContractTests(unittest.TestCase):
 
         players._db = monitored_connection
         response = call("mlb", type="batting")
-        self.assertIsNone(response["change_metric"])
-        self.assertIsNone(response["comparison"])
+        self.assertEqual(response["change_metric"]["key"], "hr_g")
+        self.assertEqual(response["comparison"]["eligible_leaders"], 1)
+        self.assertEqual(response["comparison"]["qualified_leaders"], 0)
         self.assertEqual(response["changes"], [])
-        self.assertEqual(log_reads, [])
+        self.assertTrue(log_reads)
 
 
 if __name__ == "__main__":

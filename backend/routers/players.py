@@ -8,16 +8,30 @@ from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import JSONResponse
 from typing import Optional
 from _core import *
+from league_stats import canonical_population_sql
 
 router = APIRouter()
 
 # ── Postseason guard — replicate nfl_offseason.py pattern ──
-def _reg_season_game_filter(connection):
-    """Return (AND_clause, extra_params) that excludes postseason games.
-    Prefers game_type='REG' when the column exists; falls back to game_no < 19."""
+def _reg_season_game_filter(connection, league):
+    """Return the league-aware regular-season predicate.
+
+    ``game_type`` belongs to the NFL publisher contract. Other leagues'
+    historical rows legitimately leave it null and must not be filtered through
+    an NFL-only field. Legacy NFL rows retain the old week-number compatibility
+    rule until they are republished with an explicit type.
+    """
+    if str(league or "").lower() != "nfl":
+        return "", []
     cols = {row[1] for row in connection.execute("PRAGMA table_info(player_game_logs)").fetchall()}
     if "game_type" in cols:
-        return "AND game_type='REG'", []
+        if "game_no" not in cols:
+            return "AND game_type='REG'", []
+        return (
+            "AND (game_type='REG' OR "
+            "(game_type IS NULL AND CAST(game_no AS INTEGER) < 19))",
+            [],
+        )
     return "AND CAST(game_no AS INTEGER) < 19", []
 
 @router.get("/api/players/search")
@@ -106,7 +120,7 @@ def player_profile(player_id: int):
         logs = []
         postseason_games = 0
         if season is not None:
-            reg_filter, _ = _reg_season_game_filter(con)
+            reg_filter, _ = _reg_season_game_filter(con, league)
             logs = con.execute(
                 f"""SELECT stats, game_date, opponent, home_away, game_no
                    FROM player_game_logs WHERE player_id=? AND season=?
@@ -114,9 +128,28 @@ def player_profile(player_id: int):
                    ORDER BY COALESCE(game_date,'') DESC, CAST(game_no AS INTEGER) DESC LIMIT 25""",
                 (player_id, season)).fetchall()
             # Count postseason games separately (ESPN: separate containers)
-            if "game_type" in {row[1] for row in con.execute("PRAGMA table_info(player_game_logs)").fetchall()}:
+            log_columns = {
+                row[1]
+                for row in con.execute(
+                    "PRAGMA table_info(player_game_logs)"
+                ).fetchall()
+            }
+            if league == "nfl" and "game_type" in log_columns:
+                legacy_postseason = (
+                    """OR (
+                         game_type IS NULL
+                         AND CAST(game_no AS INTEGER) >= 19
+                       )"""
+                    if "game_no" in log_columns
+                    else ""
+                )
                 post_row = con.execute(
-                    "SELECT COUNT(*) FROM player_game_logs WHERE player_id=? AND season=? AND game_type!='REG'",
+                    f"""SELECT COUNT(*) FROM player_game_logs
+                       WHERE player_id=? AND season=?
+                         AND (
+                           (game_type IS NOT NULL AND game_type!='REG')
+                           {legacy_postseason}
+                         )""",
                     (player_id, season)).fetchone()
                 postseason_games = post_row[0] if post_row else 0
         props = con.execute(
@@ -181,7 +214,7 @@ def player_matchups(player_id: int):
         season = srow["season"] if srow else None
         rows = []
         if season is not None:
-            reg_filter, _ = _reg_season_game_filter(con)
+            reg_filter, _ = _reg_season_game_filter(con, p["league"])
             rows = con.execute(
                 f"SELECT opponent, stats FROM player_game_logs WHERE player_id=? AND season=? AND opponent IS NOT NULL {reg_filter}",
                 (player_id, season)).fetchall()
@@ -254,7 +287,7 @@ def player_projections(player_id: int,
                 (player_id,)).fetchone()
             season = srow["season"] if srow else None
         params = [player_id]
-        reg_filter, _ = _reg_season_game_filter(con)
+        reg_filter, _ = _reg_season_game_filter(con, prow["league"])
         q = f"SELECT stats FROM player_game_logs WHERE player_id=? {reg_filter}"
         if season is not None:
             q += " AND season=?"; params.append(season)
@@ -610,7 +643,7 @@ def _change_evidence(lg, selected_category, season, leaders):
     try:
         with closing(_db()) as con:
             con.row_factory = sqlite3.Row
-            reg_filter, _ = _reg_season_game_filter(con)
+            reg_filter, _ = _reg_season_game_filter(con, lg)
             rows = con.execute(
                 "SELECT player_id, stats, game_date, game_no FROM player_game_logs "
                 f"WHERE league=? AND season=? AND player_id IN ({placeholders}) {reg_filter}",
@@ -691,10 +724,12 @@ def league_leaders(league: str,
         if stat_type not in ("batting", "pitching"):
             raise HTTPException(400, "type must be batting or pitching for MLB")
         definition_key = f"mlb_{stat_type}"
+        canonical_type = stat_type
     else:
         if type is not None:
             raise HTTPException(400, "type is only supported for MLB leaders")
         stat_type = None
+        canonical_type = "season"
         definition_key = lg
 
     definitions = _LEAGUE_CATEGORIES[definition_key]
@@ -714,15 +749,18 @@ def league_leaders(league: str,
     with closing(_db()) as con:
         con.row_factory = sqlite3.Row
         db_cols = {row[1] for row in con.execute("PRAGMA table_info(player_stats)").fetchall()}
-        season_where = "league=?"
+        ownership_where, ownership_params = canonical_population_sql(
+            lg, canonical_type, alias="ps"
+        )
+        season_where = f"ps.league=? AND {ownership_where}"
         season_params = [lg]
-        if stat_type is not None:
-            season_where += " AND stat_type=?"
-            season_params.append(stat_type)
+        season_params.extend(ownership_params)
         available_seasons = [
             row["season"] for row in con.execute(
-                f"SELECT DISTINCT season FROM player_stats WHERE {season_where} "
-                "ORDER BY season DESC",
+                f"""SELECT DISTINCT ps.season AS season
+                    FROM player_stats ps
+                    WHERE {season_where}
+                    ORDER BY ps.season DESC""",
                 season_params,
             ).fetchall()
         ]
@@ -736,18 +774,50 @@ def league_leaders(league: str,
         else:
             season = available_seasons[0]
 
-        population_where = "league=? AND season=?"
+        population_where = f"ps.league=? AND ps.season=? AND {ownership_where}"
         population_params = [lg, season]
-        if stat_type is not None:
-            population_where += " AND stat_type=?"
-            population_params.append(stat_type)
+        population_params.extend(ownership_params)
+
+        duplicate = con.execute(
+            f"""SELECT ps.player_id
+                FROM player_stats ps
+                WHERE {population_where}
+                GROUP BY ps.player_id
+                HAVING COUNT(*)>1
+                LIMIT 1""",
+            population_params,
+        ).fetchone()
+        if duplicate is not None:
+            raise HTTPException(
+                503,
+                "canonical player stats contain duplicate ownership for "
+                f"{lg} season {season}; rebuild required",
+            )
+        identity_mismatch = con.execute(
+            f"""SELECT ps.player_id
+                FROM player_stats ps
+                JOIN players p
+                  ON p.id=ps.player_id AND p.league=ps.league
+                WHERE {population_where}
+                  AND ps.player_name!=p.name
+                LIMIT 1""",
+            population_params,
+        ).fetchone()
+        if identity_mismatch is not None:
+            raise HTTPException(
+                503,
+                "canonical player stats disagree with the player index for "
+                f"{lg} season {season}; rebuild required",
+            )
 
         available_keys = set()
         for key in approved_stats:
             if key not in db_cols:
                 continue
             count = con.execute(
-                f"SELECT COUNT({key}) FROM player_stats WHERE {population_where}",
+                f"""SELECT COUNT(ps.{key})
+                    FROM player_stats ps
+                    WHERE {population_where}""",
                 population_params,
             ).fetchone()[0]
             if count > 0:
@@ -799,7 +869,12 @@ def league_leaders(league: str,
                 if metric["key"] not in ordered_metric_keys:
                     ordered_metric_keys.append(metric["key"])
 
-        select_cols = ["player_id", "player_name", "team", "games"] + ordered_metric_keys
+        select_cols = [
+            "ps.player_id",
+            "p.name AS player_name",
+            "COALESCE(p.team, ps.team) AS team",
+            "ps.games",
+        ] + [f"ps.{key} AS {key}" for key in ordered_metric_keys]
         select_str = ", ".join(select_cols)
         params = list(population_params)
         where = f"WHERE {population_where}"
@@ -808,12 +883,18 @@ def league_leaders(league: str,
         if effective_min == 0 and lg == "mlb":
             effective_min = 30 if stat_type == "batting" else 10
         if effective_min > 0:
-            where += " AND games >= ?"
+            where += " AND ps.games >= ?"
             params.append(effective_min)
 
         rows = con.execute(
-            f"SELECT {select_str} FROM player_stats {where} "
-            f"AND {sort_stat} IS NOT NULL ORDER BY {sort_stat} DESC, player_name ASC LIMIT ?",
+            f"""SELECT {select_str}
+                FROM player_stats ps
+                JOIN players p
+                  ON p.id=ps.player_id AND p.league=ps.league
+                {where}
+                  AND ps.{sort_stat} IS NOT NULL
+                ORDER BY ps.{sort_stat} DESC, p.name ASC
+                LIMIT ?""",
             params + [limit]
         ).fetchall()
 

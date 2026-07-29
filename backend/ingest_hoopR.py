@@ -8,7 +8,11 @@ Downloads from sportsdataverse/hoopR-data GitHub repo (free, no IP blocks).
 import sys, os, io, urllib.request, sqlite3
 import pyarrow.parquet as pq
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from sports_service import _normalize_name
+from league_stats import (
+    load_unique_source_id_map,
+    publish_player_stats,
+    queue_unresolved_player,
+)
 
 DB = os.environ.get("LP_DB_PATH") or os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "picks.db")
 HOOPR_BASE = "https://raw.githubusercontent.com/sportsdataverse/hoopR-data/main/nba/player_box/parquet/player_box_{season}.parquet"
@@ -54,40 +58,69 @@ def ingest_season(season: int, con: sqlite3.Connection):
     )
 
     # Get dominant team per player
-    teams = df.groupby("athlete_display_name")["team_abbreviation"].agg(
+    teams = df.groupby("athlete_id")["team_abbreviation"].agg(
         lambda x: x.value_counts().index[0] if len(x) > 0 else "???"
     )
 
-    # Pre-load player_id lookup: nba_id → players.id
+    # Pre-load only unambiguous player_id lookups: nba_id → players.id.
     con.row_factory = sqlite3.Row
-    nba_id_to_player = {}
-    for r in con.execute("SELECT id, nba_id FROM players WHERE league='nba' AND nba_id IS NOT NULL"):
-        nba_id_to_player[r["nba_id"]] = r["id"]
+    nba_id_to_player, ambiguous_nba_ids = load_unique_source_id_map(
+        con, league="nba", id_column="nba_id"
+    )
 
     ingested = 0
+    unresolved = 0
     for _, row in grouped.iterrows():
         name = row["athlete_display_name"]
-        team = teams.get(name, "???")
         athlete_id = int(row["athlete_id"]) if row["athlete_id"] == row["athlete_id"] else None
-        player_id = nba_id_to_player.get(athlete_id) if athlete_id else None
-        con.execute(
-            """INSERT OR REPLACE INTO player_stats
-               (player_name, name_norm, league, team, stat_type, season, games,
-                pts, reb, ast, stl, blk, tov,
-                fgm, fga, fg3m, fg3a, ftm, fta, minutes, ts_pct, source, player_id)
-               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
-            (name, _normalize_name(name), "nba", team, "season", season,
-             int(row["games"]),
-             round(float(row["pts"]), 1), round(float(row["reb"]), 1),
-             round(float(row["ast"]), 1), round(float(row["stl"]), 1),
-             round(float(row["blk"]), 1), round(float(row["tov"]), 1),
-             int(row["fgm"]), int(row["fga"]), int(row["fg3m"]), int(row["fg3a"]),
-             int(row["ftm"]), int(row["fta"]), round(float(row["minutes"]), 1),
-             float(row["ts_pct"]), "hoopR", player_id))
+        team = teams.get(athlete_id, "???")
+        source_key = str(athlete_id) if athlete_id is not None else None
+        player_id = nba_id_to_player.get(source_key) if source_key else None
+        if player_id is None:
+            queue_unresolved_player(
+                con,
+                source="hoopR",
+                raw_name=name,
+                league="nba",
+                team=team,
+                source_player_key=source_key,
+                reason=(
+                    "duplicate_spine_nba_id"
+                    if source_key in ambiguous_nba_ids
+                    else "nba_id_not_in_spine"
+                ),
+            )
+            unresolved += 1
+            continue
+        publish_player_stats(
+            con,
+            player_id=player_id,
+            league="nba",
+            season=season,
+            stat_type="season",
+            source="hoopR",
+            games=int(row["games"]),
+            values={
+                "pts": round(float(row["pts"]), 1),
+                "reb": round(float(row["reb"]), 1),
+                "ast": round(float(row["ast"]), 1),
+                "stl": round(float(row["stl"]), 1),
+                "blk": round(float(row["blk"]), 1),
+                "tov": round(float(row["tov"]), 1),
+                "fgm": int(row["fgm"]),
+                "fga": int(row["fga"]),
+                "fg3m": int(row["fg3m"]),
+                "fg3a": int(row["fg3a"]),
+                "ftm": int(row["ftm"]),
+                "fta": int(row["fta"]),
+                "minutes": round(float(row["minutes"]), 1),
+                "ts_pct": float(row["ts_pct"]),
+            },
+        )
         ingested += 1
 
     con.commit()
-    print(f"  Ingested {ingested} players")
+    print(f"  Ingested {ingested} players; queued {unresolved} unresolved IDs")
     return ingested
 
 

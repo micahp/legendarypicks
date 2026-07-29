@@ -11,7 +11,12 @@ Usage: python3 ingest_nhl.py
 import sys, os, sqlite3, json, urllib.request, time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from sports_service import _normalize_name
+from league_stats import (
+    LeagueStatContractError,
+    load_unique_source_id_map,
+    publish_player_stats,
+    queue_unresolved_player,
+)
 
 DB = os.environ.get("LP_DB_PATH") or os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "picks.db")
 HDR = {"User-Agent": "Mozilla/5.0"}
@@ -87,14 +92,18 @@ def ingest():
     con = sqlite3.connect(DB)
     con.row_factory = sqlite3.Row
 
-    # Pre-load player_id lookup: nhl_id → players.id
-    nhl_id_to_player = {}
-    for r in con.execute("SELECT id, nhl_id FROM players WHERE league='nhl' AND nhl_id IS NOT NULL"):
-        nhl_id_to_player[r["nhl_id"]] = r["id"]
-    print(f"Loaded {len(nhl_id_to_player)} nhl_id→player_id mappings")
+    # Duplicate native IDs fail closed instead of silently choosing one owner.
+    nhl_id_to_player, ambiguous_nhl_ids = load_unique_source_id_map(
+        con, league="nhl", id_column="nhl_id"
+    )
+    print(f"Loaded {len(nhl_id_to_player)} unique nhl_id→player_id mappings")
+    if ambiguous_nhl_ids:
+        print(
+            f"WARNING: {len(ambiguous_nhl_ids)} duplicate NHL IDs "
+            "will be queued"
+        )
 
     total_players = 0
-    total_stats = 0
     per_team = {}
 
     for team in NHL_TEAMS:
@@ -108,36 +117,58 @@ def ingest():
         stats_count = 0
         for p in roster:
             total_players += 1
-            # Check if already ingested this season
-            existing = con.execute(
-                "SELECT COUNT(*) FROM player_stats WHERE league='nhl' AND name_norm=? AND season >= 2025",
-                (_normalize_name(p["name"]),)
-            ).fetchone()
-            if existing[0] > 0:
-                stats_count += 1
+            source_key = str(p["id"])
+            player_id = nhl_id_to_player.get(source_key)
+            if player_id is None:
+                queue_unresolved_player(
+                    con,
+                    source="nhle.com",
+                    raw_name=p["name"],
+                    league="nhl",
+                    team=p["team"],
+                    source_player_key=source_key,
+                    reason=(
+                        "duplicate_spine_nhl_id"
+                        if source_key in ambiguous_nhl_ids
+                        else "nhl_id_not_in_spine"
+                    ),
+                )
                 continue
 
             s = fetch_stats(p["id"])
             if s:
-                display = s["name"] or p["name"]
-                player_id = nhl_id_to_player.get(p["id"])
                 try:
-                    con.execute(
-                        """INSERT OR REPLACE INTO player_stats
-                           (player_name, name_norm, league, team, stat_type, season, games,
-                            nhl_position, nhl_team, goals, assists, points_nhl, shots,
-                            shooting_pct, plus_minus, pim, ppg, ppp, shg, toi, faceoff_pct, source, player_id)
-                           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
-                        (display, _normalize_name(display), "nhl", s["team"], "season",
-                         s["season"], s["games"],
-                         s["position"], s["team"],
-                         s["goals"], s["assists"], s["points"], s["shots"],
-                         s["shooting_pct"], s["plus_minus"], s["pim"],
-                         s["ppg"], s["ppp"], s["shg"],
-                         s["toi"], s["faceoff_pct"], "nhle.com", player_id))
+                    publish_player_stats(
+                        con,
+                        player_id=player_id,
+                        league="nhl",
+                        season=s["season"],
+                        stat_type="season",
+                        source="nhle.com",
+                        games=s["games"],
+                        values={
+                            "nhl_position": s["position"],
+                            "nhl_team": s["team"],
+                            "goals": s["goals"],
+                            "assists": s["assists"],
+                            "points_nhl": s["points"],
+                            "shots": s["shots"],
+                            "shooting_pct": s["shooting_pct"],
+                            "plus_minus": s["plus_minus"],
+                            "pim": s["pim"],
+                            "ppg": s["ppg"],
+                            "ppp": s["ppp"],
+                            "shg": s["shg"],
+                            "toi": s["toi"],
+                            "faceoff_pct": s["faceoff_pct"],
+                        },
+                    )
                     stats_count += 1
-                except Exception:
-                    pass
+                except (LeagueStatContractError, sqlite3.Error) as exc:
+                    print(
+                        f"    {p['name']}: publish FAIL ({exc})",
+                        file=sys.stderr,
+                    )
                 time.sleep(0.15)  # gentle rate limit
 
         pct = round(stats_count / size * 100) if size > 0 else 0

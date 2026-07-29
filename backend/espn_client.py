@@ -1023,7 +1023,9 @@ def roster(league, team):
         items = a.get("items") if isinstance(a, dict) and "items" in a else [a]
         for p in items:
             out.append({
-                "player_id": str(p.get("id")),
+                "player_id": (
+                    str(p["id"]) if p.get("id") is not None else None
+                ),
                 "name": p.get("fullName") or p.get("displayName"),
                 "jersey": p.get("jersey"),
                 "position": (p.get("position") or {}).get("abbreviation"),

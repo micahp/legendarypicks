@@ -17,6 +17,7 @@ from pydantic import BaseModel
 
 import espn_client as espn
 from analytics import ev as ev_mod, clv as clv_mod, calibration as calib_mod, projections as proj_mod
+from league_stats import PLAYER_STATS_TABLE_SQL, canonical_player_stats_row
 
 DB = os.environ.get("LP_DB_PATH") or os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "picks.db")
 
@@ -91,15 +92,6 @@ def _init_db():
         CREATE TABLE IF NOT EXISTS prop_results(
           prop_id INTEGER PRIMARY KEY REFERENCES props(id),
           actual_value REAL, hit INTEGER, settled_at TEXT);
-        CREATE TABLE IF NOT EXISTS player_stats(
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          player_name TEXT NOT NULL, league TEXT NOT NULL, team TEXT,
-          season INTEGER, games INTEGER,
-          pts REAL, reb REAL, ast REAL, stl REAL, blk REAL, tov REAL,
-          fgm INTEGER, fga INTEGER, fg3m INTEGER, fg3a INTEGER,
-          ftm INTEGER, fta INTEGER, minutes REAL,
-          ts_pct REAL, source TEXT,
-          UNIQUE(player_name, league, season));
         -- Phase 5: identity resolution queue + alias table
         CREATE TABLE IF NOT EXISTS unresolved_players(
           id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -112,6 +104,7 @@ def _init_db():
           player_id INTEGER NOT NULL REFERENCES players(id),
           alias_norm TEXT NOT NULL);
         """)
+        con.execute(PLAYER_STATS_TABLE_SQL)
         # M6 odds capture: additive schema. CREATE IF NOT EXISTS for the snapshot
         # table, and idempotent ADD COLUMN for props (SQLite has no
         # "ADD COLUMN IF NOT EXISTS", so guard on existing columns).
@@ -461,8 +454,7 @@ def _normalize_name(name: str) -> str:
 
 
 def _get_mlb_stats(player_name: str, player_id: int, statcast_id, now: float):
-    """Pull MLB stats from player_stats table (populated by ingest_statcast.py).
-    Looks up by player_id first (identity spine), falls back to name_norm for un-backfilled rows."""
+    """Pull canonical MLB stats published by ``ingest_statcast.py``."""
     import os, sqlite3 as sq
 
     try:
@@ -470,29 +462,12 @@ def _get_mlb_stats(player_name: str, player_id: int, statcast_id, now: float):
         con = sq.connect(db_path)
         con.row_factory = sq.Row
 
-        # Primary: player_id (identity spine). Fallback: name_norm (un-backfilled rows).
-        bat = con.execute(
-            "SELECT * FROM player_stats WHERE league='mlb' AND stat_type='batting' AND player_id=? ORDER BY season DESC LIMIT 1",
-            (player_id,)
-        ).fetchone()
-        pit = con.execute(
-            "SELECT * FROM player_stats WHERE league='mlb' AND stat_type='pitching' AND player_id=? ORDER BY season DESC LIMIT 1",
-            (player_id,)
-        ).fetchone()
-
-        # Fallback: name_norm for rows missing player_id (pre-spine data)
-        if not bat:
-            nname = _normalize_name(player_name)
-            bat = con.execute(
-                "SELECT * FROM player_stats WHERE league='mlb' AND stat_type='batting' AND name_norm=? ORDER BY season DESC LIMIT 1",
-                (nname,)
-            ).fetchone()
-        if not pit:
-            nname = _normalize_name(player_name)
-            pit = con.execute(
-                "SELECT * FROM player_stats WHERE league='mlb' AND stat_type='pitching' AND name_norm=? ORDER BY season DESC LIMIT 1",
-                (nname,)
-            ).fetchone()
+        bat = canonical_player_stats_row(
+            con, player_id=player_id, league="mlb", stat_type="batting"
+        )
+        pit = canonical_player_stats_row(
+            con, player_id=player_id, league="mlb", stat_type="pitching"
+        )
 
         if not bat and not pit:
             con.close()
@@ -561,8 +536,7 @@ def _nfl_stats_for_position(stats: dict, position):
 
 
 def _get_nfl_stats(player_name: str, player_id: int, now: float):
-    """Pull NFL stats from player_stats table (populated by ingest_nfl.py).
-    Looks up by player_id first (identity spine), falls back to name_norm for un-backfilled rows."""
+    """Pull the canonical NFL weekly-artifact season rollup."""
     import os, sqlite3 as sq
 
     try:
@@ -570,19 +544,9 @@ def _get_nfl_stats(player_name: str, player_id: int, now: float):
         con = sq.connect(db_path)
         con.row_factory = sq.Row
 
-        # Primary: player_id (identity spine)
-        row = con.execute(
-            "SELECT * FROM player_stats WHERE league='nfl' AND player_id=? ORDER BY season DESC LIMIT 1",
-            (player_id,)
-        ).fetchone()
-
-        # Fallback: name_norm for rows missing player_id (pre-spine data)
-        if not row:
-            nname = _normalize_name(player_name)
-            row = con.execute(
-                "SELECT * FROM player_stats WHERE league='nfl' AND name_norm=? ORDER BY season DESC LIMIT 1",
-                (nname,)
-            ).fetchone()
+        row = canonical_player_stats_row(
+            con, player_id=player_id, league="nfl", stat_type="season"
+        )
 
         if not row:
             con.close()
@@ -590,7 +554,7 @@ def _get_nfl_stats(player_name: str, player_id: int, now: float):
 
         out = {
             "window": str(row["season"]),
-            "player_name_nfl": row["player_name"],
+            "player_name_nfl": player_name,
             "position": row["nfl_position"],
             "team": row["nfl_team"],
             "games": row["games"],
@@ -617,8 +581,7 @@ def _get_nfl_stats(player_name: str, player_id: int, now: float):
 
 
 def _get_nba_stats(player_name: str, player_id: int, now: float):
-    """Pull NBA stats from player_stats table (populated by ingest_hoopR.py).
-    Looks up by player_id first (identity spine), falls back to name_norm for un-backfilled rows."""
+    """Pull the canonical NBA season row."""
     import os, sqlite3 as sq
 
     try:
@@ -626,27 +589,23 @@ def _get_nba_stats(player_name: str, player_id: int, now: float):
         con = sq.connect(db_path)
         con.row_factory = sq.Row
 
-        # Primary: player_id (identity spine)
-        row = con.execute(
-            "SELECT * FROM player_stats WHERE league='nba' AND player_id=? ORDER BY season DESC LIMIT 1",
-            (player_id,)
-        ).fetchone()
-
-        # Fallback: name_norm for rows missing player_id (pre-spine data)
-        if not row:
-            nname = _normalize_name(player_name)
-            row = con.execute(
-                "SELECT * FROM player_stats WHERE league='nba' AND name_norm=? ORDER BY season DESC LIMIT 1",
-                (nname,)
-            ).fetchone()
+        row = canonical_player_stats_row(
+            con, player_id=player_id, league="nba", stat_type="season"
+        )
 
         if not row:
             con.close()
-            return {"stats": None, "message": f"Could not find NBA stats for {player_name}. Run ingest_hoopR.py to populate."}
+            return {
+                "stats": None,
+                "message": (
+                    f"Could not find NBA stats for {player_name}. "
+                    "Run the season-appropriate published stats ingest."
+                ),
+            }
 
         out = {
             "window": str(row["season"]),
-            "player_name_nba": row["player_name"],
+            "player_name_nba": player_name,
             "team": row["team"],
             "games": row["games"],
             "source": row["source"] or "hoopR",
@@ -671,8 +630,7 @@ def _get_nba_stats(player_name: str, player_id: int, now: float):
 
 
 def _get_nhl_stats(player_name: str, player_id: int, now: float):
-    """Pull NHL stats from player_stats table (populated by ingest_nhl.py from full rosters).
-    Looks up by player_id first (identity spine), falls back to name_norm for un-backfilled rows."""
+    """Pull NHL's published nhle.com season row."""
     import os, sqlite3 as sq
 
     try:
@@ -680,19 +638,9 @@ def _get_nhl_stats(player_name: str, player_id: int, now: float):
         con = sq.connect(db_path)
         con.row_factory = sq.Row
 
-        # Primary: player_id (identity spine)
-        row = con.execute(
-            "SELECT * FROM player_stats WHERE league='nhl' AND player_id=? ORDER BY season DESC LIMIT 1",
-            (player_id,)
-        ).fetchone()
-
-        # Fallback: name_norm for rows missing player_id (pre-spine data)
-        if not row:
-            nname = _normalize_name(player_name)
-            row = con.execute(
-                "SELECT * FROM player_stats WHERE league='nhl' AND name_norm=? ORDER BY season DESC LIMIT 1",
-                (nname,)
-            ).fetchone()
+        row = canonical_player_stats_row(
+            con, player_id=player_id, league="nhl", stat_type="season"
+        )
 
         if not row:
             con.close()
@@ -700,7 +648,7 @@ def _get_nhl_stats(player_name: str, player_id: int, now: float):
 
         out = {
             "window": str(row["season"]),
-            "player_name_nhl": row["player_name"],
+            "player_name_nhl": player_name,
             "position": row["nhl_position"],
             "team": row["nhl_team"],
             "games": row["games"],

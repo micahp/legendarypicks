@@ -13,6 +13,10 @@ import sys, os, json, sqlite3, time, datetime as dt
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import espn_client as espn
 from ingest_nfl_logs import ensure_table
+from league_stats import (
+    load_unique_source_id_map,
+    queue_unresolved_player,
+)
 
 DB = os.environ.get("LP_DB_PATH") or os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "picks.db")
 
@@ -45,14 +49,13 @@ def _parse_line(names, stats):
 def ingest(start: str, end: str, season: int = 2026) -> int:
     con = sqlite3.connect(DB); con.row_factory = sqlite3.Row
     ensure_table(con)
-    espn_to_player = {
-        str(r["espn_id"]): r["id"]
-        for r in con.execute("SELECT id, espn_id FROM players WHERE league='nba' AND espn_id IS NOT NULL")
-    }
+    espn_to_player, ambiguous_espn_ids = load_unique_source_id_map(
+        con, league="nba", id_column="espn_id"
+    )
 
     d0 = dt.datetime.strptime(start, "%Y-%m-%d").date()
     d1 = dt.datetime.strptime(end, "%Y-%m-%d").date()
-    ingested = 0; resolved = 0; added = 0
+    ingested = 0; resolved = 0; queued = 0
     day = d0
     while day <= d1:
         ds = day.strftime("%Y-%m-%d")
@@ -86,21 +89,34 @@ def ingest(start: str, end: str, season: int = 2026) -> int:
                     names = st.get("names", [])
                     for a in st.get("athletes", []):
                         ath = a.get("athlete", {})
-                        eid = str(ath.get("id"))
+                        raw_eid = ath.get("id")
+                        if raw_eid is None:
+                            continue
+                        eid = str(raw_eid)
                         stats = _parse_line(names, a.get("stats", []))
                         if not stats:
                             continue
                         pid = espn_to_player.get(eid)
-                        if pid is None and not ath.get("displayName"):
-                            continue  # malformed box-score row (no name, not in spine) — skip
                         if pid is None:
-                            cur = con.execute(
-                                "INSERT INTO players(name, league, espn_id, active) VALUES (?,?,?,1)",
-                                (ath.get("displayName"), "nba", eid))
-                            pid = cur.lastrowid
-                            espn_to_player[eid] = pid; added += 1
-                        else:
-                            resolved += 1
+                            queue_unresolved_player(
+                                con,
+                                source="espn_boxscore",
+                                raw_name=(
+                                    ath.get("displayName")
+                                    or f"espn_{eid}"
+                                ),
+                                league="nba",
+                                team=team,
+                                source_player_key=eid,
+                                reason=(
+                                    "duplicate_spine_espn_id"
+                                    if eid in ambiguous_espn_ids
+                                    else "espn_id_not_in_spine"
+                                ),
+                            )
+                            queued += 1
+                            continue
+                        resolved += 1
                         con.execute(
                             """INSERT OR REPLACE INTO player_game_logs
                                (player_id, league, season, game_no, game_id, game_date, team,
@@ -114,7 +130,10 @@ def ingest(start: str, end: str, season: int = 2026) -> int:
         print(f"  {ds}: {len(games)} final games, running total {ingested} logs")
         day += dt.timedelta(days=1)
 
-    print(f"Done. {ingested} NBA game-logs ({resolved} matched existing spine, {added} new players added)")
+    print(
+        f"Done. {ingested} NBA game-logs "
+        f"({resolved} matched existing spine, {queued} unresolved rows queued)"
+    )
     con.close()
     return ingested
 

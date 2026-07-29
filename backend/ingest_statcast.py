@@ -10,7 +10,7 @@ Usage: python3 ingest_statcast.py [--days 30]
 """
 import sys, os, sqlite3, datetime as dt
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from sports_service import _normalize_name
+from league_stats import LeagueStatContractError, publish_player_stats
 
 DB = os.environ.get("LP_DB_PATH") or os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "picks.db")
 
@@ -96,8 +96,6 @@ def _flip_name(name: str) -> str:
 
 def ingest(days: int = 200):
     from pybaseball import statcast
-    import pandas as pd
-    import numpy as np
 
     end = dt.datetime.now()
     start = end - dt.timedelta(days=days)
@@ -169,18 +167,29 @@ def ingest(days: int = 200):
             games = group["game_date"].nunique()
 
             try:
-                con.execute(
-                    """INSERT OR REPLACE INTO player_stats
-                       (player_name, name_norm, league, team, stat_type, season, games,
-                        avg, hr, k_pct, bb_pct, exit_velo, hard_hit_pct, barrel_pct, launch_angle,
-                        woba, xwoba, source, player_id)
-                       VALUES (?,?,?,?,'batting',?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
-                    (str(name), _normalize_name(str(name)), "mlb", "", season, games,
-                     avg, hr, k_pct, bb_pct,
-                     round(avg_ev, 1), round(hard_hit, 1), round(barrel, 1), round(avg_la, 1),
-                     round(woba, 3), round(xwoba, 3), "statcast", player_id))
+                publish_player_stats(
+                    con,
+                    player_id=player_id,
+                    league="mlb",
+                    season=season,
+                    stat_type="batting",
+                    source="statcast",
+                    games=games,
+                    values={
+                        "avg": avg,
+                        "hr": hr,
+                        "k_pct": k_pct,
+                        "bb_pct": bb_pct,
+                        "exit_velo": round(avg_ev, 1),
+                        "hard_hit_pct": round(hard_hit, 1),
+                        "barrel_pct": round(barrel, 1),
+                        "launch_angle": round(avg_la, 1),
+                        "woba": round(woba, 3),
+                        "xwoba": round(xwoba, 3),
+                    },
+                )
                 batting_count += 1
-            except Exception as e:
+            except (LeagueStatContractError, sqlite3.Error) as e:
                 if batting_count <= 3:
                     print(f"  Batting INSERT error: {e}")
                     print(f"    batter={mlbam} name={str(name)[:40]} season={season}")
@@ -222,17 +231,26 @@ def ingest(days: int = 200):
         games_p = group["game_date"].nunique()
 
         try:
-            con.execute(
-                """INSERT OR REPLACE INTO player_stats
-                   (player_name, name_norm, league, team, stat_type, season, games,
-                    k_pct, whiff_pct, exit_velo_against, barrel_pct_against, xwoba_against, source, player_id)
-                   VALUES (?,?,?,?,'pitching',?,?,?,?,?,?,?,?,?)""",
-                (str(name), _normalize_name(str(name)), "mlb", "", season, games_p,
-                 round(k_pct_p, 1), round(whiff, 1),
-                 round(ev_against, 1), round(barrel_against, 1), round(xwoba_against, 3), "statcast", player_id))
+            publish_player_stats(
+                con,
+                player_id=player_id,
+                league="mlb",
+                season=season,
+                stat_type="pitching",
+                source="statcast",
+                games=games_p,
+                values={
+                    "k_pct": round(k_pct_p, 1),
+                    "whiff_pct": round(whiff, 1),
+                    "exit_velo_against": round(ev_against, 1),
+                    "barrel_pct_against": round(barrel_against, 1),
+                    "xwoba_against": round(xwoba_against, 3),
+                },
+            )
             pitching_count += 1
-        except Exception:
-            pass
+        except (LeagueStatContractError, sqlite3.Error) as exc:
+            if pitching_count <= 3:
+                print(f"  Pitching INSERT error: {exc}")
 
     con.commit()
     con.close()
