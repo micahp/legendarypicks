@@ -1,5 +1,46 @@
 # Changelog
 
+## v0.6.13 — 2026-07-29
+
+### The draft room reads like a draft
+
+- **Players, Queue, Board, and Rosters are distinct tabs.** The room keeps one
+  dense player table for decisions, a teams-by-rounds board for draft flow, and
+  roster views that show every manager without making the pool carry three jobs.
+- **Rows have one action.** On the clock they say Draft; off the clock they say
+  Queue. The player card retains both actions because it is the only place a
+  manager can deliberately pre-rank while the synchronous bot engine is between
+  turns.
+- **The clock survives tab changes and still autopicks.** Switching away from
+  Players no longer remounts or deadlocks the countdown.
+- **Draft labels use football vocabulary at the UI boundary.** Kicker renders
+  as `K`, defense renders as `D/ST`, and both draft surfaces share one position
+  ordering and label map while the database retains `PK` and `DEF`.
+
+### The draft data path is promotion-safe
+
+- **Published artifacts own published measurements.** Weekly box scores, team
+  defense, snaps, expected points, depth charts, receiving metrics, schedule,
+  and ESPN ADP each keep separate source contracts instead of being reconstructed
+  from whichever table happens to contain a nearby field.
+- **NFL refreshes fail closed and commit atomically.** Complete source data is
+  materialized and validated before a short write transaction; partial D/ST,
+  roster, ADP, snap, depth-chart, or transaction refreshes leave the prior data
+  intact.
+- **SQLite schema changes are explicit and versioned.** Release migrations are
+  checksummed, backed up, transactional, independently checkable, and separate
+  from the guarded NFL-only data copy.
+- **Production prop data is protected during NFL promotion.** The migration
+  names copied columns, preserves existing enrichment, and verifies count plus
+  content hashes for `props`, `prop_results`, and `prop_games`.
+
+### Known gap
+
+- **Rashid Shaheed can render `18/17` availability.** His 2025 NO-to-SEA trade
+  crosses two different bye weeks, while the denominator follows only his
+  current roster. The data is real; the denominator must eventually follow the
+  player across teams.
+
 ## v0.6.12 — 2026-07-28
 
 ### Defenses are draftable, at the ADP someone else published
