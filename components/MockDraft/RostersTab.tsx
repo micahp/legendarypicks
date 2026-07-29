@@ -82,9 +82,13 @@ export function RosterSlotRow({
       {slot.player ? (
         <>
           <span className="flex-1 truncate font-medium text-zinc-200">{slot.player.name}</span>
-          <span className="shrink-0 text-[10px] text-zinc-500">
-            {positionLabel(slot.player.position)}
-          </span>
+          {/* A defense's name already carries its position, and the slot label
+              on the left says it a third time. Print it once. */}
+          {slot.label !== positionLabel(slot.player.position) && (
+            <span className="shrink-0 text-[10px] text-zinc-500">
+              {positionLabel(slot.player.position)}
+            </span>
+          )}
           {measured && pp && (
             <span
               className={`shrink-0 font-mono text-[10px] tabular-nums ${

@@ -196,8 +196,13 @@ function ResultsSlotRow({
             <span className="font-medium text-zinc-200 truncate block">
               {slot.player.name}
             </span>
+            {/* "Detroit Lions D/ST — D/ST · DET" in a row already labelled D/ST
+                says it three times. A defense's name carries its position, so the
+                repeat is dropped rather than styled smaller. */}
             <span className="text-[10px] text-zinc-600">
-              {positionLabel(pp.position)} · {pp.team}
+              {slot.label === positionLabel(pp.position)
+                ? pp.team
+                : `${positionLabel(pp.position)} · ${pp.team}`}
             </span>
           </div>
 
