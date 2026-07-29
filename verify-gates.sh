@@ -195,7 +195,7 @@ print('PASS REG-dst (32 rows)' if len(p)==32 else 'FAIL REG-dst (%d rows)'%len(p
   # Test runners: capture the EXIT CODE, never just grep the output. A runner that
   # dies (SIGBUS on a corrupt native binary, OOM, import error) prints nothing, and
   # a bare `grep | tail -1` turns that silence into a green line. These fail loud.
-  pyout=$(cd $W/backend && LP_DB_PATH=/root/picks.hermes.db ./venv/bin/python -m pytest test_nfl_mock_draft.py test_nfl_dst.py -q 2>&1); pyrc=$?
+  pyout=$(cd $W/backend && LP_DB_PATH=/root/picks.hermes.db ./venv/bin/python -m pytest test_nfl_mock_draft.py test_nfl_dst.py test_mock_draft_completion.py -q 2>&1); pyrc=$?
   pysum=$(printf '%s' "$pyout" | grep -E "passed|failed|error" | tail -1)
   if [ $pyrc -eq 0 ] && [ -n "$pysum" ]; then ok REG-pytest "$pysum"
   else no REG-pytest "exit=$pyrc  last: ${pysum:-<no output — runner died>}"; fi

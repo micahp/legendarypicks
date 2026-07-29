@@ -551,6 +551,84 @@ async def append_picks(
     return _json({"inserted": inserted})
 
 
+def _missing_picks(pick_numbers):
+    """Which pick numbers are absent from a draft that claims to have got this far.
+
+    Picks arrive in batches over the network and the client's append is
+    best-effort, so a dropped batch leaves a hole: [1,2,3,7,8,9] with nothing
+    anywhere saying 6 picks never made it.  `INSERT OR IGNORE` on
+    (draft_id, pick_no) means the hole is permanent -- later batches still
+    insert, so no error surfaces on either side.
+
+    Reported against the highest pick actually saved, not against the full
+    180: a draft abandoned at pick 40 is incomplete, not holed, and calling
+    those two the same thing would make the field useless.
+    """
+    if not pick_numbers:
+        return []
+    saved = set(pick_numbers)
+    return [n for n in range(1, max(saved) + 1) if n not in saved]
+
+
+@router.post("/api/nfl/mock-draft/{draft_id}/complete")
+async def complete_draft(
+    draft_id: str, x_device_id: Optional[str] = Header(None)
+):
+    """Mark a draft finished.  Idempotent.
+
+    Nothing wrote this before, so `status` sat at 'active' for the life of
+    every draft ever saved and `completed_at` was never set -- the server
+    could not tell a draft abandoned at pick 4 from one that ran all 180.
+    That distinction is the whole point of keeping the row: slice B's
+    claim-on-sign-in inherits these, and "your drafts" cannot list what it
+    cannot classify.
+    """
+    device_id = _device_id(x_device_id)
+    if not device_id:
+        return _json({"error": "X-Device-Id header required"}, status=400)
+
+    now = int(time.time() * 1000)
+    connection = _conn()
+    try:
+        draft = connection.execute(
+            "SELECT device_id, status, teams, rounds FROM nfl_mock_drafts WHERE id = ?",
+            (draft_id,),
+        ).fetchone()
+        if draft is None or draft["device_id"] != device_id:
+            return _json({"error": "not found"}, status=404)
+
+        pick_numbers = [
+            r["pick_no"]
+            for r in connection.execute(
+                "SELECT pick_no FROM nfl_mock_draft_picks WHERE draft_id = ?",
+                (draft_id,),
+            ).fetchall()
+        ]
+        missing = _missing_picks(pick_numbers)
+
+        if draft["status"] != "completed":
+            connection.execute(
+                "UPDATE nfl_mock_drafts SET status = 'completed', completed_at = ?, "
+                "updated_at = ? WHERE id = ?",
+                (now, now, draft_id),
+            )
+            connection.commit()
+
+        return _json(
+            {
+                "id": draft_id,
+                "status": "completed",
+                "pick_count": len(pick_numbers),
+                "picks_expected": draft["teams"] * draft["rounds"],
+                # A completed draft with a hole is a real outcome, not an
+                # error: we record what we hold rather than refusing the write.
+                "missing_picks": missing,
+            }
+        )
+    finally:
+        connection.close()
+
+
 @router.get("/api/nfl/mock-draft/{draft_id}")
 def get_draft(draft_id: str, x_device_id: Optional[str] = Header(None)):
     """Resume a draft — returns draft metadata + all picks + computed round/pick.
@@ -610,6 +688,13 @@ def get_draft(draft_id: str, x_device_id: Optional[str] = Header(None)):
                 "completed_at": draft["completed_at"],
                 "picks": picks,
                 "total_picks": total_picks,
+                "picks_expected": draft["teams"] * draft["rounds"],
+                # Absent pick numbers below the highest one saved. Empty is the
+                # normal case; non-empty means a client append was dropped and
+                # never retried, which nothing else in the payload would reveal.
+                "missing_picks": _missing_picks(
+                    [row["pick_no"] for row in picks_rows]
+                ),
                 "current_round": current_round,
                 "current_pick": current_pick,
             }
@@ -631,14 +716,20 @@ def list_drafts(x_device_id: Optional[str] = Header(None)):
     connection = _conn()
     try:
         rows = connection.execute(
-            """SELECT id, season, seat, teams, rounds, seed, status,
-                      created_at, updated_at, completed_at
-               FROM nfl_mock_drafts
-               WHERE device_id = ?
-               ORDER BY updated_at DESC""",
+            """SELECT d.id, d.season, d.seat, d.teams, d.rounds, d.seed, d.status,
+                      d.created_at, d.updated_at, d.completed_at,
+                      COUNT(p.pick_no)  AS pick_count,
+                      MAX(p.pick_no)    AS highest_pick
+               FROM nfl_mock_drafts d
+               LEFT JOIN nfl_mock_draft_picks p ON p.draft_id = d.id
+               WHERE d.device_id = ?
+               GROUP BY d.id
+               ORDER BY d.updated_at DESC""",
             (device_id,),
         ).fetchall()
 
+        # A list row has to be classifiable without fetching every draft:
+        # how far it got, and whether what we hold is contiguous.
         drafts = [
             {
                 "id": row["id"],
@@ -651,6 +742,11 @@ def list_drafts(x_device_id: Optional[str] = Header(None)):
                 "created_at": row["created_at"],
                 "updated_at": row["updated_at"],
                 "completed_at": row["completed_at"],
+                "pick_count": row["pick_count"],
+                "picks_expected": row["teams"] * row["rounds"],
+                "missing_pick_count": (
+                    (row["highest_pick"] or 0) - row["pick_count"]
+                ),
             }
             for row in rows
         ]
