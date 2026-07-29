@@ -50,10 +50,9 @@ function check(cond, claim, detail) {
 
 function readPool() {
   // Columns are resolved by data-col, not by index. They were read positionally
-  // until 2026-07-29, and c[4] is the points column rather than ADP — which is
-  // why this file's "D/ST carry published ADP (DEN ~90.0)" claim reported
-  // DEN=8.2 and failed. It was reading Denver's points per game and calling it
-  // an average draft position. A column index is not a column.
+  // until 2026-07-29, and c[4] is the points column rather than ADP — which
+  // made this file report DEN=8.2. It was reading Denver's points per game and
+  // calling it an average draft position. A column index is not a column.
   const pool = document.querySelector('[data-testid="pool-table"]')
     || Array.from(document.querySelectorAll('table'))
       .find(t => /PLAYER/.test((t.querySelector('thead') || {}).innerText || ''))
@@ -182,6 +181,13 @@ function boardShape() {
   page.on('pageerror', e => consoleErrors.push('UNCAUGHT: ' + e.message.slice(0, 200)))
 
   try {
+    const poolResponse = await page.request.get(
+      BASE + '/api/nfl/mock-draft/pool?season=2026'
+    )
+    const poolPayload = poolResponse.ok() ? await poolResponse.json() : null
+    const publishedDen = (poolPayload && poolPayload.players || [])
+      .find(p => p.team === 'DEN' && p.position === 'DEF')
+
     await page.goto(BASE + '/mock-draft', { waitUntil: 'networkidle', timeout: NAV_TIMEOUT })
     const start = page.getByRole('button', { name: 'Start Draft' })
     await start.waitFor({ timeout: SEL_TIMEOUT })
@@ -204,8 +210,15 @@ function boardShape() {
 
     // ── "Their draft position is ESPN's published ADP" ────────────────────────
     const den = def.find(d => /Denver|DEN/.test(d.name))
-    check(den && /^9[01]\./.test(den.adp), 'D/ST carry published ADP (DEN ~90.0)',
-      'DEN reads ADP=' + (den ? den.adp : 'ROW MISSING'))
+    const publishedDenAdp = publishedDen && publishedDen.adp != null
+      ? Number(publishedDen.adp).toFixed(1)
+      : null
+    check(
+      den && publishedDenAdp != null && den.adp === publishedDenAdp,
+      'D/ST carry published ADP (DEN matches API)',
+      'DEN renders ADP=' + (den ? den.adp : 'ROW MISSING') +
+        ', API publishes ' + (publishedDenAdp == null ? 'NO VALUE' : publishedDenAdp)
+    )
 
     // ── "A fabricated sentinel that reaches a user is a false measurement" ────
     const fabricated = def.filter(d => /999/.test(d.adp))
