@@ -67,11 +67,19 @@ function check(cond, id, detail) {
   // Reads still go to the real backend; only the two mutating calls are faked,
   // so the client flow proceeds exactly as it would in production.
   let intercepted = 0
+  // The create body is the only place the setup controls become a fact. A pill
+  // that repaints without changing what is sent is exactly the "green gate over
+  // a dead control" failure this file exists for, so the body is captured and
+  // asserted rather than the pill's styling.
+  let createBody = null
   await page.route('**/api/nfl/mock-draft**', async route => {
     const req = route.request()
     if (req.method() !== 'POST') return route.continue()
     intercepted++
     const url = req.url()
+    if (!url.includes('/picks') && !url.includes('/complete')) {
+      try { createBody = JSON.parse(req.postData() || '{}') } catch {}
+    }
     if (url.includes('/picks')) {
       let n = 0
       try { n = (JSON.parse(req.postData() || '{}').picks || []).length } catch {}
@@ -99,6 +107,42 @@ function check(cond, id, detail) {
     // React mounted and the pool loaded: the start control is the client-rendered proof.
     const start = page.getByRole('button', { name: 'Start Draft' })
     await start.waitFor({ timeout: SEL_TIMEOUT })
+
+    // ── Expected fantasy points on the pre-draft pool ──
+    // lib/mockDraft/api.ts wrote `xfp_per_game: null` at the boundary, so this
+    // column rendered "—" for all 300 players while the payload carried a real
+    // number for 206 of them. A header alone would not have caught that: the
+    // header was never the thing that broke. Count populated CELLS.
+    await page.waitForSelector('table tbody tr', { timeout: SEL_TIMEOUT })
+    const xfpPool = await page.evaluate(() => {
+      const headers = Array.from(document.querySelectorAll('table thead th'))
+      const idx = headers.findIndex(h => /Exp PPR\/G/i.test(h.innerText))
+      if (idx < 0) return { idx, populated: 0, rows: 0 }
+      const rows = Array.from(document.querySelectorAll('table tbody tr'))
+      let populated = 0
+      for (const r of rows) {
+        const cell = r.querySelectorAll('td')[idx]
+        if (cell && /^\d+(\.\d+)?$/.test(cell.innerText.trim())) populated++
+      }
+      return { idx, populated, rows: rows.length }
+    })
+    check(xfpPool.idx >= 0, 'mock-draft', 'no "Exp PPR/G" column on the pre-draft pool')
+    // 206 of 300 carried a value on the dev payload of 2026-07-28; K and D/ST
+    // have no xFP series at all, so a healthy board is well over half populated.
+    check(
+      xfpPool.populated >= 150,
+      'mock-draft',
+      'expected fantasy points populated on only ' + xfpPool.populated +
+        ' of ' + xfpPool.rows + ' pool rows — the boundary is nulling it again'
+    )
+
+    // ── The setup controls have to reach the server ──
+    // 14 teams and slot 3: neither is the default, so a hardcoded 12 or a
+    // Math.random() seat both fail here rather than passing by coincidence.
+    const size14 = page.locator('[data-testid="draft-setup"] [role="radio"]', { hasText: '14' })
+    await size14.click()
+    await page.selectOption('#draft-slot', '3')
+
     await start.click()
 
     await page.waitForSelector('table tbody tr', { timeout: SEL_TIMEOUT })
@@ -147,8 +191,60 @@ function check(cond, id, detail) {
       'mock-draft',
       'overlay rendered its error state'
     )
-    notes.push('mock-draft ' + poolRows + ' rows, overlay=' + JSON.stringify(rowName))
     await page.keyboard.press('Escape').catch(() => {})
+
+    check(
+      createBody != null && createBody.teams === 14 && createBody.seat === 3,
+      'mock-draft',
+      'the draft was created as ' + JSON.stringify(createBody) +
+        ' — league size and slot did not reach the server'
+    )
+
+    // ── Draft board axes: rounds down, teams across ──
+    // The previous grid was teams-as-rows. Assert the shape, not a label: the
+    // column headers must be the 14 teams and the row headers the 15 rounds.
+    const grid = await page.evaluate(() => {
+      const t = document.querySelector('[data-testid="draft-board-grid"]')
+      if (!t) return null
+      const colHeads = Array.from(t.querySelectorAll('thead th')).map(h => h.innerText.trim())
+      const rowHeads = Array.from(t.querySelectorAll('tbody tr > th')).map(h => h.innerText.trim())
+      return { colHeads, rowHeads }
+    })
+    check(grid != null, 'mock-draft', 'draft board grid did not render')
+    if (grid) {
+      // 1 corner cell + one column per team.
+      check(
+        grid.colHeads.length === 15 && /^T1\b/.test(grid.colHeads[1]) && /^T14\b/.test(grid.colHeads[14]),
+        'mock-draft',
+        'board columns are not the 14 teams: ' + JSON.stringify(grid.colHeads.slice(0, 4))
+      )
+      check(
+        grid.rowHeads.length === 15 && grid.rowHeads[0] === 'R1' && grid.rowHeads[14] === 'R15',
+        'mock-draft',
+        'board rows are not the 15 rounds: ' + JSON.stringify(grid.rowHeads.slice(0, 4))
+      )
+      // The user's seat must be marked on a COLUMN now, not a row.
+      check(
+        /you/i.test(grid.colHeads[3]),
+        'mock-draft',
+        'seat 3 is not marked on the board column: ' + JSON.stringify(grid.colHeads[3])
+      )
+    }
+
+    // The in-draft pool carries the same column, or the two screens disagree
+    // about a player the moment the draft starts.
+    const xfpRoom = await page.evaluate(() => {
+      const heads = Array.from(document.querySelectorAll('table thead th'))
+      return heads.some(h => /Exp PPR\/G/i.test(h.innerText))
+    })
+    check(xfpRoom, 'mock-draft', 'no "Exp PPR/G" column in the draft room pool')
+
+    notes.push(
+      'mock-draft ' + poolRows + ' rows, overlay=' + JSON.stringify(rowName) +
+        ', xfp=' + xfpPool.populated + '/' + xfpPool.rows +
+        ', created=' + JSON.stringify(createBody) +
+        ', board=' + (grid ? grid.rowHeads.length + 'R x ' + (grid.colHeads.length - 1) + 'T' : 'none')
+    )
   } catch (e) {
     failures.push('mock-draft: ' + e.message.split('\n')[0])
   }

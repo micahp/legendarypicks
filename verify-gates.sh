@@ -195,16 +195,33 @@ print('PASS REG-dst (32 rows)' if len(p)==32 else 'FAIL REG-dst (%d rows)'%len(p
   # Test runners: capture the EXIT CODE, never just grep the output. A runner that
   # dies (SIGBUS on a corrupt native binary, OOM, import error) prints nothing, and
   # a bare `grep | tail -1` turns that silence into a green line. These fail loud.
-  pyout=$(cd $W/backend && LP_DB_PATH=/root/picks.hermes.db ./venv/bin/python -m pytest test_nfl_mock_draft.py test_nfl_dst.py test_mock_draft_completion.py -q 2>&1); pyrc=$?
+  pyout=$(cd $W/backend && LP_DB_PATH=/root/picks.hermes.db ./venv/bin/python -m pytest test_nfl_mock_draft.py test_nfl_dst.py test_mock_draft_completion.py test_mock_draft_setup.py -q 2>&1); pyrc=$?
   pysum=$(printf '%s' "$pyout" | grep -E "passed|failed|error" | tail -1)
   if [ $pyrc -eq 0 ] && [ -n "$pysum" ]; then ok REG-pytest "$pysum"
   else no REG-pytest "exit=$pyrc  last: ${pysum:-<no output — runner died>}"; fi
 
+  # REG-jest was `--testPathPattern='lib/mockDraft'` — 4 of the repo's 8 suites.
+  # "jest 40/40" was therefore a claim about half the frontend, the same defect
+  # REG-pytest has: a green gate is a claim about its SURFACE. Two gates now, so
+  # the narrow one stays the go/no-go for mock-draft work and the wide one makes
+  # the rest impossible to lose again.
   jsout=$(cd $W && /root/legendarypicks/node_modules/.bin/jest --testPathPattern='lib/mockDraft' --no-coverage 2>&1); jsrc=$?
   jssum=$(printf '%s' "$jsout" | grep -E "^Tests:" | tail -1)
   if [ $jsrc -eq 0 ] && [ -n "$jssum" ]; then ok REG-jest "$jssum"
   elif [ $jsrc -ge 128 ]; then no REG-jest "jest died with signal (exit=$jsrc, $( [ $jsrc -eq 135 ] && echo 'SIGBUS — corrupt native binary in the shared node_modules' || echo 'killed' )) — NO frontend tests ran"
   else no REG-jest "exit=$jsrc  ${jssum:-<no 'Tests:' line — nothing ran>}"; fi
+
+  # ── REG-jest-all — RED ON PURPOSE, like REG-adp-dst. ──
+  # The full frontend suite. As of 2026-07-28 it is 2 failed / 70 passed: both
+  # failures are in components/Game/WCContext.test.tsx, introduced by 6719a1f
+  # (WC match-minute chronology), and neither touches the mock draft. It is here
+  # red rather than absent because a suite you cannot see cannot be fixed, and
+  # because the count is what stops the next narrow gate being read as "green".
+  jaout=$(cd $W && /root/legendarypicks/node_modules/.bin/jest --no-coverage 2>&1); jarc=$?
+  jasum=$(printf '%s' "$jaout" | grep -E "^Tests:" | tail -1)
+  if [ $jarc -eq 0 ] && [ -n "$jasum" ]; then ok REG-jest-all "$jasum"
+  elif [ $jarc -ge 128 ]; then no REG-jest-all "jest died with signal (exit=$jarc) — NO frontend tests ran"
+  else no REG-jest-all "exit=$jarc  ${jasum:-<no 'Tests:' line — nothing ran>}"; fi
   # Package COUNT is not package INTEGRITY. On 2026-07-28 an interrupted `npm install`
   # left next-swc truncated while the count stayed 538 and :3096 kept serving 200 off
   # the old (deleted) inode. Load the binary; presence proves nothing.
@@ -241,15 +258,15 @@ regrender(){
 #   LP_GATE_W=/tmp/nope bash verify-gates.sh B1   ->  "FAIL B1 ()"  exit 0
 #
 # Two rules now, and they are the same rule the gates apply to the code:
-#   1. exit = number of FAIL lines. No allowlist, not even for REG-adp-dst,
-#      which is red on purpose — so `all` legitimately exits 1 until job15
-#      lands. An allowlist is how a suite gets quietly relaxed; a number that
+#   1. exit = number of FAIL lines. No allowlist, not even for REG-adp-dst or
+#      REG-jest-all, both of which are red on purpose — so `all` legitimately
+#      exits 2 until job15 and the WCContext defect land. An allowlist is how a suite gets quietly relaxed; a number that
 #      never lies is cheaper to trust than a list someone has to maintain.
 #   2. A gate that emits NO verdict is a FAIL, not a skip. On 2026-07-28 the
 #      `all` dispatch ran 14 gates and silently skipped REG-render because the
 #      function was written but never added to the case. The count below is what
 #      makes that structurally impossible to repeat, rather than fixed once.
-ALL_IDS="A1 A1b A1c A2 A3 B1 B2 B2b B4 REG-pool REG-adp-dst REG-dst REG-pytest REG-jest REG-modules REG-render"
+ALL_IDS="A1 A1b A1c A2 A3 B1 B2 B2b B4 REG-pool REG-adp-dst REG-dst REG-pytest REG-jest REG-jest-all REG-modules REG-render"
 
 out=$(mktemp) || exit 2
 trap 'rm -f "$out"' EXIT
