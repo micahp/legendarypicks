@@ -23,6 +23,9 @@ from .nfl_offseason import (
     _availability_aggregates,
     _dst_aggregates,
     _pk_aggregates,
+    _percentage,
+    _round,
+    _rounded_ratio,
     _regular_season_aggregates,
     _table_columns,
 )
@@ -296,24 +299,28 @@ def pool(season: int = Query(...)):
             if pos == "DEF":
                 avail = dst_availability.get(pid)
                 tw = dst_team_weeks.get(row["team"], [])
-                team_games = len(tw) or _REG_SEASON_TEAM_GAMES
+                team_games = (
+                    len(tw) or _REG_SEASON_TEAM_GAMES
+                    if avail is not None
+                    else None
+                )
             else:
                 avail = availability.get(pid)
                 tw = avail.get("team_weeks", []) if avail else []
                 team_games = (
                     avail.get("team_games", _REG_SEASON_TEAM_GAMES)
                     if avail
-                    else _REG_SEASON_TEAM_GAMES
+                    else None
                 )
 
-            gp = avail["games_played"] if avail else 0
+            gp = avail["games_played"] if avail is not None else None
             wp = sorted(avail["weeks"]) if avail else []
             gm = max(0, team_games - gp) if avail else None
             sample = (
                 "full"
-                if gp >= _THIN_SAMPLE_GAMES
+                if gp is not None and gp >= _THIN_SAMPLE_GAMES
                 else "thin"
-                if gp > 0
+                if gp is not None and gp > 0
                 else "none"
             )
 
@@ -323,28 +330,28 @@ def pool(season: int = Query(...)):
             stats = season_stats.get(pid)
             ppr_total = stats["ppr_total"] if stats else None
             ppr_per_game_played = (
-                round(ppr_total / gp, 1)
+                _rounded_ratio(ppr_total, gp)
                 if ppr_total is not None and gp
                 else None
             )
             ppr_per_team_game = (
                 # Per-player team_games, not the 17-constant (see the board).
-                round(ppr_total / team_games, 1)
+                _rounded_ratio(ppr_total, team_games)
                 if ppr_total is not None and team_games
                 else None
             )
             xfp_per_game = (
-                round(stats["xfp_per_game"], 1)
+                _round(stats["xfp_per_game"], 1)
                 if stats and stats["xfp_per_game"] is not None
                 else None
             )
             snap_pct = (
-                round(stats["snap_pct"] * 100, 0)
+                _percentage(stats["snap_pct"], 0)
                 if stats and stats["snap_pct"] is not None
                 else None
             )
             target_share = (
-                round(stats["target_share"] * 100, 1)
+                _percentage(stats["target_share"], 1)
                 if stats and stats["target_share"] is not None
                 else None
             )
@@ -726,21 +733,27 @@ def player_detail(player_id: int):
         if position == "DEF":
             availability = dst_by_player.get(player_id)
             team_weeks = dst_team_weeks.get(team, [])
-            team_games = len(team_weeks) or _REG_SEASON_TEAM_GAMES
+            team_games = (
+                len(team_weeks) or _REG_SEASON_TEAM_GAMES
+                if availability is not None
+                else None
+            )
         else:
             availability = availability_by_player.get(player_id)
             team_weeks = availability.get("team_weeks", []) if availability else []
             team_games = (
                 availability.get("team_games", _REG_SEASON_TEAM_GAMES)
                 if availability
-                else _REG_SEASON_TEAM_GAMES
+                else None
             )
 
-        games_played = availability["games_played"] if availability else 0
+        games_played = (
+            availability["games_played"] if availability is not None else None
+        )
         weeks_played = sorted(availability["weeks"]) if availability else []
 
         # Sample classification
-        if games_played == 0:
+        if games_played is None or games_played == 0:
             sample = "none"
         elif games_played < _THIN_SAMPLE_GAMES:
             sample = "thin"
@@ -750,27 +763,27 @@ def player_detail(player_id: int):
         # PPR calculations
         ppr_total = _season_stats["ppr_total"] if _season_stats else None
         ppr_per_game_played = (
-            round(ppr_total / games_played, 1)
+            _rounded_ratio(ppr_total, games_played)
             if ppr_total is not None and games_played
             else None
         )
         ppr_per_team_game = (
-            round(ppr_total / team_games, 1)
+            _rounded_ratio(ppr_total, team_games)
             if ppr_total is not None and team_games
             else None
         )
         snap_pct = (
-            round(_season_stats["snap_pct"] * 100, 0)
+            _percentage(_season_stats["snap_pct"], 0)
             if _season_stats and _season_stats["snap_pct"] is not None
             else None
         )
         target_share = (
-            round(_season_stats["target_share"] * 100, 1)
+            _percentage(_season_stats["target_share"], 1)
             if _season_stats and _season_stats["target_share"] is not None
             else None
         )
         xfp_per_game = (
-            round(_season_stats["xfp_per_game"], 1)
+            _round(_season_stats["xfp_per_game"], 1)
             if _season_stats and _season_stats["xfp_per_game"] is not None
             else None
         )

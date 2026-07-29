@@ -160,7 +160,8 @@ def run(year: int, cache_dir: str, dry_run: bool = False) -> int:
 
     con = sqlite3.connect(DB)
     con.row_factory = sqlite3.Row
-    ensure_table(con)
+    if not dry_run:
+        ensure_table(con)
 
     # Two resolution paths, because players.nfl_gsis_id mixes id schemes: 651
     # active players carry an ESPN-style synthetic key ('LOV121782') in a column

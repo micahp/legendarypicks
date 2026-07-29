@@ -323,7 +323,12 @@ def main():
         os.path.dirname(os.path.abspath(__file__)), "data", "picks.dev.db"
     )
     print(f"DB: {db_path}")
-    for league in ("nba", "nfl", "nhl"):
+    requested = [
+        value.lower()
+        for value in sys.argv[1:]
+        if value.lower() in ("nba", "nfl", "nhl")
+    ]
+    for league in requested or ("nba", "nfl", "nhl"):
         derive_league(db_path, league)
     print("Done.")
 

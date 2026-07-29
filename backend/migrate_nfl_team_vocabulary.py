@@ -34,10 +34,6 @@ import os
 import sqlite3
 import sys
 
-# NOT RUNNABLE YET -- team_codes.py has not been written. See
-# CONTEXT-2026-07-27-HANDOFF-9.md §2. The scoping below (which tables, which
-# columns, which league filter) is measured and correct; only the module import
-# is pending.
 from team_codes import ALIASES as _ALL_ALIASES, CANONICAL
 
 ALIASES = _ALL_ALIASES["nfl"]

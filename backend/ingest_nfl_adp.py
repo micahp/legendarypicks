@@ -140,7 +140,7 @@ def _build_dst_resolutions(
     return resolutions
 
 
-def main():
+def ingest():
     con = sqlite3.connect(DB)
     con.row_factory = sqlite3.Row
 
@@ -163,23 +163,6 @@ def main():
         def_to_pid[r["team"]] = r["id"]
     print(f"DEF players by team: {len(def_to_pid)}")
 
-    # Create table
-    con.execute(
-        """CREATE TABLE IF NOT EXISTS nfl_adp (
-            player_id INTEGER NOT NULL,
-            season INTEGER NOT NULL,
-            espn_player_id INTEGER NOT NULL,
-            adp REAL,
-            percent_owned REAL,
-            percent_started REAL,
-            espn_ppr_rank INTEGER,
-            espn_standard_rank INTEGER,
-            updated_at TEXT NOT NULL DEFAULT (datetime('now')),
-            PRIMARY KEY (player_id, season)
-        )"""
-    )
-    con.commit()
-
     import datetime as dt
     now = dt.datetime.now(dt.timezone.utc).isoformat()
 
@@ -192,6 +175,7 @@ def main():
     page_num = 1
     seen_espn_ids = set()
     all_entities: list = []  # accumulate for D/ST pass
+    skill_rows: list[tuple] = []
 
     while True:
         print(f"  Fetching page {page_num} (offset {offset})...")
@@ -229,18 +213,22 @@ def main():
             if adp is not None:
                 non_null_adp += 1
 
-            con.execute(
-                """INSERT OR REPLACE INTO nfl_adp
-                   (player_id, season, espn_player_id, adp, percent_owned,
-                    percent_started, espn_ppr_rank, espn_standard_rank, updated_at)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-                (pid, SEASON, int(eid), adp, pct_owned, pct_started,
-                 ppr_rank, std_rank, now),
+            skill_rows.append(
+                (
+                    pid,
+                    SEASON,
+                    int(eid),
+                    adp,
+                    pct_owned,
+                    pct_started,
+                    ppr_rank,
+                    std_rank,
+                    now,
+                )
             )
             total_matched += 1
 
         all_entities.extend(page)
-        con.commit()
         print(f"    page {page_num}: {len(page)} fetched, {total_matched} matched so far")
 
         if len(page) < 3000:
@@ -252,36 +240,74 @@ def main():
     dst_resolutions = _build_dst_resolutions(all_entities, pro_team_map, def_to_pid)
     print(f"D/ST resolution plan: {len(dst_resolutions)} of {_EXPECTED_DEF_COUNT}")
 
-    for pid, espn_id, entity in dst_resolutions:
-        # Backfill players.espn_id (NULL, zero, or empty-string)
+    try:
+        con.execute("BEGIN IMMEDIATE")
         con.execute(
-            "UPDATE players SET espn_id=? WHERE id=? AND (espn_id IS NULL OR espn_id = '' OR espn_id = 0)",
-            (espn_id, pid),
+            """CREATE TABLE IF NOT EXISTS nfl_adp (
+                player_id INTEGER NOT NULL,
+                season INTEGER NOT NULL,
+                espn_player_id INTEGER NOT NULL,
+                adp REAL,
+                percent_owned REAL,
+                percent_started REAL,
+                espn_ppr_rank INTEGER,
+                espn_standard_rank INTEGER,
+                updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+                PRIMARY KEY (player_id, season)
+            )"""
         )
-
-        ownership = entity.get("ownership", {}) or {}
-        adp = ownership.get("averageDraftPosition")
-        pct_owned = ownership.get("percentOwned")
-        pct_started = ownership.get("percentStarted")
-
-        ranks = entity.get("draftRanksByRankType", {}) or {}
-        ppr = ranks.get("PPR", {}) or {}
-        std = ranks.get("STANDARD", {}) or {}
-        ppr_rank = ppr.get("rank")
-        std_rank = std.get("rank")
-
-        con.execute(
+        con.executemany(
             """INSERT OR REPLACE INTO nfl_adp
                (player_id, season, espn_player_id, adp, percent_owned,
                 percent_started, espn_ppr_rank, espn_standard_rank, updated_at)
                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-            (pid, SEASON, espn_id, adp, pct_owned, pct_started,
-             ppr_rank, std_rank, now),
+            skill_rows,
         )
-        if adp is not None:
-            non_null_adp += 1
+        for pid, espn_id, entity in dst_resolutions:
+            # Backfill players.espn_id (NULL, zero, or empty-string)
+            con.execute(
+                "UPDATE players SET espn_id=? WHERE id=? "
+                "AND (espn_id IS NULL OR espn_id = '' OR espn_id = 0)",
+                (espn_id, pid),
+            )
 
-    con.commit()
+            ownership = entity.get("ownership", {}) or {}
+            adp = ownership.get("averageDraftPosition")
+            pct_owned = ownership.get("percentOwned")
+            pct_started = ownership.get("percentStarted")
+
+            ranks = entity.get("draftRanksByRankType", {}) or {}
+            ppr = ranks.get("PPR", {}) or {}
+            std = ranks.get("STANDARD", {}) or {}
+            ppr_rank = ppr.get("rank")
+            std_rank = std.get("rank")
+
+            con.execute(
+                """INSERT OR REPLACE INTO nfl_adp
+                   (player_id, season, espn_player_id, adp, percent_owned,
+                    percent_started, espn_ppr_rank, espn_standard_rank, updated_at)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (
+                    pid,
+                    SEASON,
+                    espn_id,
+                    adp,
+                    pct_owned,
+                    pct_started,
+                    ppr_rank,
+                    std_rank,
+                    now,
+                ),
+            )
+            if adp is not None:
+                non_null_adp += 1
+        con.execute("COMMIT")
+    except Exception:
+        if con.in_transaction:
+            con.execute("ROLLBACK")
+        con.close()
+        raise
+
     dst_matched = len(dst_resolutions)
     print(f"D/ST committed: {dst_matched} of {_EXPECTED_DEF_COUNT}")
 
@@ -309,6 +335,10 @@ def main():
         print(f"  {t['adp']:7.1f}  {t['name']:25s} {t['position']:3s} {t['team']:4s}  owned {t['percent_owned']:.1f}%")
 
     con.close()
+
+
+def main():
+    ingest()
 
 
 if __name__ == "__main__":

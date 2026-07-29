@@ -48,6 +48,29 @@ def _artifact_row(**overrides):
         "passing_2pt_conversions": 0,
         "rushing_2pt_conversions": 0,
         "receiving_2pt_conversions": 0,
+        "fg_made": 0,
+        "fg_att": 0,
+        "fg_missed": 0,
+        "fg_blocked": 0,
+        "fg_long": 0,
+        "fg_pct": 0.0,
+        "fg_made_0_19": 0,
+        "fg_made_20_29": 0,
+        "fg_made_30_39": 0,
+        "fg_made_40_49": 0,
+        "fg_made_50_59": 0,
+        "fg_made_60_": 0,
+        "fg_missed_0_19": 0,
+        "fg_missed_20_29": 0,
+        "fg_missed_30_39": 0,
+        "fg_missed_40_49": 0,
+        "fg_missed_50_59": 0,
+        "fg_missed_60_": 0,
+        "pat_made": 0,
+        "pat_att": 0,
+        "pat_missed": 0,
+        "gwfg_made": 0,
+        "gwfg_att": 0,
     }
     row.update(overrides)
     return row
@@ -73,7 +96,7 @@ class BuildRowsTests(unittest.TestCase):
         self.assertIsNone(mod._num(float("nan")))
         self.assertEqual(0, mod._num(0.0))
         self.assertEqual(2, mod._num(2.0))
-        self.assertEqual(0.626, mod._num(0.6256))
+        self.assertEqual(0.6256, mod._num(0.6256))
 
     def test_inactive_groups_do_not_add_zero_lines(self):
         _write_artifact(self.path, [_artifact_row()])
@@ -85,11 +108,11 @@ class BuildRowsTests(unittest.TestCase):
         self.assertEqual(3, stats["att"])
         self.assertEqual(4, stats["dropbacks"])
         self.assertEqual(0, stats["pass_td"])
-        self.assertNotIn("targets", stats)
-        self.assertNotIn("target_share", stats)
+        self.assertEqual(0, stats["targets"])
+        self.assertEqual(0, stats["target_share"])
         self.assertNotIn("rec", stats)
         self.assertNotIn("rec_yds", stats)
-        self.assertNotIn("carries", stats)
+        self.assertEqual(0, stats["carries"])
 
     def test_reused_week_across_season_types_fails_loud(self):
         _write_artifact(self.path, [
@@ -131,7 +154,16 @@ class BuildRowsTests(unittest.TestCase):
         rows = mod.build_rows(self.path)
 
         self.assertEqual(1, len(rows))
-        self.assertEqual({"fpts": 2, "fpts_ppr": 2}, rows[0]["stats"])
+        self.assertEqual(
+            {
+                "fpts": 2,
+                "fpts_ppr": 2,
+                "target_share": 0,
+                "targets": 0,
+                "carries": 0,
+            },
+            rows[0]["stats"],
+        )
 
     def test_duplicate_player_week_fails_loud(self):
         _write_artifact(self.path, [
@@ -143,6 +175,24 @@ class BuildRowsTests(unittest.TestCase):
             mod.build_rows(self.path)
 
         self.assertIn("duplicate player/week", str(ctx.exception))
+
+    def test_entityless_source_placeholder_is_not_a_player_log(self):
+        _write_artifact(
+            self.path,
+            [
+                _artifact_row(
+                    player_id=None,
+                    player_display_name=None,
+                    position=None,
+                    attempts=0,
+                    sacks_suffered=0,
+                    fantasy_points=0,
+                    fantasy_points_ppr=0,
+                )
+            ],
+        )
+
+        self.assertEqual(mod.build_rows(self.path, all_positions=True), [])
 
 
 class UpsertTests(unittest.TestCase):
@@ -260,6 +310,34 @@ class UpsertTests(unittest.TestCase):
         ).fetchall()
         self.assertEqual(["19", "20", "21", "22"], [row[0] for row in landed])
         self.assertEqual({mod.SOURCE}, {row[1] for row in landed})
+
+    def test_upsert_removes_entityless_rows_and_stays_idempotent(self):
+        self.con.execute(
+            """INSERT INTO player_game_logs
+               (player_id,league,season,game_no,game_id,game_type,team,opponent,
+                stats,source,source_player_key)
+               VALUES(NULL,'nfl',2025,'1','placeholder','REG','DAL','PHI',
+                      '{"fpts":0}','nflverse_weekly',NULL)"""
+        )
+        row = {
+            "gsis": "00-0000001",
+            "week": 1,
+            "game_id": "2025_01_ARI_SEA",
+            "team": "SEA",
+            "opponent": "ARI",
+            "position": "QB",
+            "season_type": "REG",
+            "stats": {"fpts": 1, "fpts_ppr": 1},
+        }
+
+        mod.upsert_rows(self.con, 2025, [row])
+        mod.upsert_rows(self.con, 2025, [row])
+
+        count = self.con.execute(
+            """SELECT COUNT(*) FROM player_game_logs
+               WHERE league='nfl' AND season=2025"""
+        ).fetchone()[0]
+        self.assertEqual(count, 1)
 
 
 if __name__ == "__main__":

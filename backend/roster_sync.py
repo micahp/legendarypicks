@@ -16,6 +16,12 @@ import sys, os, sqlite3
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import espn_client as espn
 from sports_service import _normalize_name
+from team_codes import (
+    UnknownPositionCode,
+    UnknownTeamCode,
+    normalize,
+    normalize_position_optional,
+)
 
 DB = os.environ.get("LP_DB_PATH") or os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "picks.db")
 _EXPECTED_TEAM_COUNTS = {"nfl": 32, "nba": 30, "nhl": 32, "mlb": 30}
@@ -58,7 +64,20 @@ def sync_league(con: sqlite3.Connection, league: str) -> dict:
         if not roster:
             failures.append({"team": abbr, "reason": "empty roster"})
             continue
-        rosters[abbr] = roster
+        try:
+            team = normalize(league, abbr)
+            normalized_roster = []
+            for player in roster:
+                normalized = dict(player)
+                if league == "nfl":
+                    normalized["position"] = normalize_position_optional(
+                        "nfl", player.get("position")
+                    )
+                normalized_roster.append(normalized)
+        except (UnknownTeamCode, UnknownPositionCode) as exc:
+            failures.append({"team": abbr, "reason": str(exc)})
+            continue
+        rosters[team] = normalized_roster
 
     if failures or len(rosters) != expected_teams:
         active_now = con.execute(

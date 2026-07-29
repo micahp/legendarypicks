@@ -20,7 +20,15 @@ Adds to each matched row's stats blob:
 
 Usage: python3 ingest_nfl_ngs_receiving.py [--year 2025] [--dry-run]
 """
-import sys, os, json, sqlite3
+import argparse
+import hashlib
+import json
+import os
+import sqlite3
+import sys
+from typing import Optional
+
+import nfl_data_py as nfl
 
 DB = os.environ.get("LP_DB_PATH") or os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "data", "picks.db")
@@ -35,12 +43,73 @@ NGS_FIELDS = {
 }
 
 
-def ingest(year: int = 2025, dry_run: bool = False) -> int:
+def _load_ngs(year: int, artifact_path: Optional[str] = None):
+    if artifact_path is None:
+        print("  source: nfl_data_py import_ngs_data")
+        return nfl.import_ngs_data("receiving", [year])
+
+    artifact_path = os.path.abspath(artifact_path)
+    if not os.path.isfile(artifact_path):
+        raise RuntimeError(
+            f"NGS artifact does not exist: {artifact_path}"
+        )
+    with open(artifact_path, "rb") as handle:
+        digest = hashlib.sha256(handle.read()).hexdigest()
+    print(
+        f"  artifact: {artifact_path} "
+        f"({os.path.getsize(artifact_path)} bytes)"
+    )
+    print(f"  sha256  : {digest}")
+    import pandas as pd
+
+    frame = pd.read_parquet(artifact_path)
+    if "season" in frame.columns:
+        frame = frame[frame["season"] == year]
+    return frame
+
+
+def _num(value):
+    if value is None or value != value:
+        return None
+    number = float(value)
+    return int(number) if number.is_integer() else number
+
+
+def _replace_owned_values(
+    con: sqlite3.Connection, year: int, pending: list
+) -> None:
+    paths = ", ".join(
+        "'$.{}'".format(key) for key in NGS_FIELDS.values()
+    )
+    con.execute(
+        "UPDATE player_game_logs SET stats=json_remove(stats, {}) "
+        "WHERE league='nfl' AND season=?".format(paths),
+        (year,),
+    )
+    for log_id, add in pending:
+        con.execute(
+            "UPDATE player_game_logs "
+            "SET stats=json_patch(stats, ?) WHERE id=?",
+            (json.dumps(add), log_id),
+        )
+    con.commit()
+
+
+def ingest(
+    year: int = 2025,
+    dry_run: bool = False,
+    artifact_path: Optional[str] = None,
+) -> int:
     import warnings; warnings.filterwarnings("ignore")
-    import nfl_data_py as nfl
 
     print(f"Loading NGS receiving {year}...")
-    df = nfl.import_ngs_data("receiving", [year])
+    df = _load_ngs(year, artifact_path)
+    needed = {"player_gsis_id", "week"} | set(NGS_FIELDS)
+    missing = sorted(needed - set(df.columns))
+    if missing:
+        raise RuntimeError(
+            f"NGS artifact is missing expected columns: {missing}"
+        )
     if "season_type" in df.columns:
         df = df[df["season_type"] == "REG"]
     df = df[df["week"] > 0]  # week 0 = season aggregate, not a game
@@ -66,6 +135,7 @@ def ingest(year: int = 2025, dry_run: bool = False) -> int:
 
     pending = []
     no_gsis = no_log = 0
+    seen = set()
     for row in df.itertuples(index=False):
         gsis = getattr(row, "player_gsis_id", None)
         pid = gsis_to_player.get(gsis) if isinstance(gsis, str) else None
@@ -75,6 +145,12 @@ def ingest(year: int = 2025, dry_run: bool = False) -> int:
             week = int(getattr(row, "week"))
         except (TypeError, ValueError):
             continue
+        natural_key = (gsis, week)
+        if natural_key in seen:
+            raise RuntimeError(
+                f"NGS artifact has duplicate player/week {natural_key}"
+            )
+        seen.add(natural_key)
         log_id = log_index.get((pid, week))
         if log_id is None:
             no_log += 1; continue
@@ -82,9 +158,9 @@ def ingest(year: int = 2025, dry_run: bool = False) -> int:
         add = {}
         for src, key in NGS_FIELDS.items():
             v = getattr(row, src, None)
-            if v is None or v != v:  # NaN
-                continue
-            add[key] = round(float(v), 2)
+            value = _num(v)
+            if value is not None:
+                add[key] = value
         if add:
             pending.append((log_id, add))
 
@@ -100,12 +176,8 @@ def ingest(year: int = 2025, dry_run: bool = False) -> int:
         con.close()
         return 0
 
-    updated = 0
-    for log_id, add in pending:
-        con.execute("UPDATE player_game_logs SET stats = json_patch(stats, ?) WHERE id=?",
-                    (json.dumps(add), log_id))
-        updated += 1
-    con.commit()
+    _replace_owned_values(con, year, pending)
+    updated = len(pending)
 
     have = con.execute(
         "SELECT COUNT(*) FROM player_game_logs WHERE league='nfl' AND season=? "
@@ -116,7 +188,13 @@ def ingest(year: int = 2025, dry_run: bool = False) -> int:
 
 
 if __name__ == "__main__":
-    year = 2025
-    if "--year" in sys.argv:
-        year = int(sys.argv[sys.argv.index("--year") + 1])
-    ingest(year, dry_run="--dry-run" in sys.argv)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--year", type=int, default=2025)
+    parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument("--artifact")
+    arguments = parser.parse_args()
+    ingest(
+        arguments.year,
+        dry_run=arguments.dry_run,
+        artifact_path=arguments.artifact,
+    )

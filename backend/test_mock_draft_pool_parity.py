@@ -51,7 +51,7 @@ EXPECTED = {
         "ppr_per_game_played": 21.4,
         "ppr_per_team_game": 21.4,
         "xfp_per_game": 20.4,
-        "snap_pct": 98.0,
+        "snap_pct": 92.0,
         "target_share": None,
         "pk_pts_total": None,
         "pk_pts_per_game": None,

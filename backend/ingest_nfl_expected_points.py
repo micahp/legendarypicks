@@ -90,7 +90,7 @@ def _num(v):
     if v is None or v != v:
         return None
     f = float(v)
-    return int(f) if f.is_integer() else round(f, 3)
+    return int(f) if f.is_integer() else f
 
 
 def _assert_ppr_scoring(matched: list) -> None:
@@ -112,6 +112,25 @@ def _assert_ppr_scoring(matched: list) -> None:
             "expected-points artifact no longer agrees with our PPR scoring "
             "({:.1f}% < {:.0f}% floor) -- upstream scoring likely changed; "
             "do not merge".format(agree * 100, _PPR_AGREEMENT_FLOOR * 100))
+
+
+def _replace_owned_values(
+    con: sqlite3.Connection, year: int, pending: list
+) -> None:
+    """Synchronize xFP while preserving every other JSON enrichment."""
+    con.execute(
+        """UPDATE player_game_logs
+           SET stats=json_remove(stats, '$.xfpts_ppr')
+           WHERE league='nfl' AND season=?""",
+        (year,),
+    )
+    for log_id, add in pending:
+        con.execute(
+            "UPDATE player_game_logs "
+            "SET stats=json_patch(stats, ?) WHERE id=?",
+            (json.dumps(add), log_id),
+        )
+    con.commit()
 
 
 def run(year: int, cache_dir: str, dry_run: bool = False) -> int:
@@ -178,13 +197,9 @@ def run(year: int, cache_dir: str, dry_run: bool = False) -> int:
         con.close()
         return 0
 
-    # json_patch merges the new key without disturbing existing ones, so this is
-    # safe to re-run and never clobbers the box score already present.
-    for log_id, add in pending:
-        con.execute(
-            "UPDATE player_game_logs SET stats = json_patch(stats, ?) WHERE id=?",
-            (json.dumps(add), log_id))
-    con.commit()
+    # A publisher correction can remove a row. Synchronize this ingest's key
+    # rather than leaving a stale value behind forever.
+    _replace_owned_values(con, year, pending)
 
     carried = con.execute(
         "SELECT COUNT(*) FROM player_game_logs WHERE league='nfl' AND season=? "

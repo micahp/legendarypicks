@@ -11,6 +11,7 @@ import sqlite3
 import time
 from collections import defaultdict
 from contextlib import closing
+from decimal import Decimal, ROUND_HALF_UP
 from typing import Dict, List, Optional, Sequence, Set, Tuple
 
 from fastapi import APIRouter, HTTPException, Query
@@ -692,18 +693,19 @@ def _regular_season_aggregates(
         f"""SELECT player_id,
                   SUM(CAST(json_extract(stats,'$.fpts_ppr')     AS REAL)) AS ppr_total,
                   AVG(CAST(json_extract(stats,'$.xfpts_ppr')    AS REAL)) AS xfp_per_game,
-                  AVG(CAST(json_extract(stats,'$.off_pct')      AS REAL)) AS snap_pct,
+                  AVG(CAST(json_extract(stats,'$.off_pct')      AS REAL)) AS legacy_snap_pct,
                   -- A week with zero targets is a week the published file scores
                   -- 0.0, but ingest omits the key (see _RECV_KEYS in
                   -- ingest_nfl_weekly_stats), so a bare AVG drops it from the
                   -- denominator and reports a one-target cameo as a season rate.
-                  -- The COUNT guard keeps the other half of that distinction:
+                  -- The MAX guard keeps the other half of that distinction:
                   -- receiving is a season-level role, so a player who drew no
                   -- target all year stays NULL rather than averaging a real 0.0%.
-                  -- snap_pct above deliberately keeps the bare AVG: off_pct comes
-                  -- from the snap artifact, where an absent week means "not on the
-                  -- snap report", and coalescing it would invent measured zeros.
-                  CASE WHEN COUNT(json_extract(stats,'$.target_share')) > 0
+                  -- legacy_snap_pct is used only when the published snap table is
+                  -- unavailable. When present, nfl_snap_counts replaces it below.
+                  CASE WHEN MAX(COALESCE(
+                                   CAST(json_extract(stats,'$.target_share')
+                                        AS REAL), 0)) > 0
                        THEN AVG(COALESCE(CAST(json_extract(stats,'$.target_share')
                                               AS REAL), 0))
                        END AS target_share
@@ -723,7 +725,7 @@ def _regular_season_aggregates(
             **record,
             "ppr_total": row["ppr_total"],
             "xfp_per_game": row["xfp_per_game"],
-            "snap_pct": row["snap_pct"],
+            "snap_pct": row["legacy_snap_pct"],
             "target_share": row["target_share"],
         }
 
@@ -736,6 +738,33 @@ def _regular_season_aggregates(
                 "snap_pct": None,
                 "target_share": None,
             }
+
+    # off_pct is already published in nfl_snap_counts.  Reading that table
+    # directly retains snap-only weeks that have no box-score row; averaging the
+    # JSON enrichment inflated or erased the value for 284 players.  If the
+    # published table exists it is authoritative, including an explicit miss:
+    # do not fall back to the known-incomplete game-log subset.
+    snap_columns = _table_columns(connection, "nfl_snap_counts")
+    if {"player_id", "season", "week", "off_pct"}.issubset(snap_columns):
+        for record in out.values():
+            record["snap_pct"] = None
+        snap_id_filter = ""
+        snap_id_params: Tuple = ()
+        if player_ids is not None:
+            snap_id_filter = "AND player_id IN ({})".format(
+                ",".join("?" for _ in player_ids)
+            )
+            snap_id_params = tuple(player_ids)
+        for row in connection.execute(
+            f"""SELECT player_id, ROUND(AVG(off_pct), 9) AS snap_pct
+                FROM nfl_snap_counts
+                WHERE season=? AND week < ? AND off_pct IS NOT NULL
+                  {snap_id_filter}
+                GROUP BY player_id""",
+            (season, _POSTSEASON_FIRST_WEEK, *snap_id_params),
+        ):
+            if row["player_id"] in out:
+                out[row["player_id"]]["snap_pct"] = row["snap_pct"]
 
     return out
 
@@ -865,7 +894,38 @@ def _dst_aggregates(connection: sqlite3.Connection, season: int) -> Tuple[Dict[i
 
 
 def _round(value, places=1):
-    return None if value is None else round(value, places)
+    if value is None:
+        return None
+    quantum = Decimal(1).scaleb(-places)
+    rounded = Decimal(str(value)).quantize(quantum, rounding=ROUND_HALF_UP)
+    return 0.0 if rounded == 0 else float(rounded)
+
+
+def _rounded_ratio(numerator, denominator, places=1):
+    """Round a published decimal ratio without binary-float tie drift."""
+    if numerator is None or not denominator:
+        return None
+    quantum = Decimal(1).scaleb(-places)
+    # Weekly PPR is published to hundredths (QB yardage is 0.04/yard). SQLite
+    # SUM can return 109.89999999999998 for the exact published 109.90; restore
+    # the publisher's scale before division so a 7.85 tie does not become 7.8.
+    published_total = Decimal(str(numerator)).quantize(
+        Decimal("0.01"), rounding=ROUND_HALF_UP
+    )
+    value = published_total / Decimal(str(denominator))
+    rounded = value.quantize(quantum, rounding=ROUND_HALF_UP)
+    return 0.0 if rounded == 0 else float(rounded)
+
+
+def _percentage(value, places=1):
+    """Convert a published 0-1 share to percent without a float multiply."""
+    if value is None:
+        return None
+    quantum = Decimal(1).scaleb(-places)
+    rounded = (Decimal(str(value)) * Decimal(100)).quantize(
+        quantum, rounding=ROUND_HALF_UP
+    )
+    return 0.0 if rounded == 0 else float(rounded)
 
 
 def _escape_like(term: str) -> str:
@@ -961,12 +1021,21 @@ def nfl_draft_board(
             f"""SELECT p.id AS player_id, p.name, {position_expr} AS position,
                        p.team AS current_team,
                        na.adp, na.percent_owned,
-                       d.pos_rank AS depth_rank, d.team AS depth_team
+                       d.pos_rank AS depth_rank, d.team AS depth_team,
+                       d.pos_abb AS depth_position
                 FROM players p
                 LEFT JOIN nfl_adp na
                        ON na.player_id=p.id AND na.season=?
                 LEFT JOIN nfl_depth_chart d
-                       ON d.player_id=p.id AND d.season=?
+                       ON d.rowid=(
+                           SELECT d2.rowid
+                           FROM nfl_depth_chart d2
+                           WHERE d2.player_id=p.id AND d2.season=?
+                           ORDER BY d2.pos_rank IS NULL,
+                                    d2.pos_rank ASC,
+                                    d2.pos_abb ASC
+                           LIMIT 1
+                       )
                 WHERE {where_sql}""",
             [_CURRENT_SEASON, _CURRENT_SEASON, *params],
         ).fetchall()
@@ -993,7 +1062,9 @@ def nfl_draft_board(
         if availability is None and published_adp is None:
             continue
 
-        games_played = availability["games_played"] if availability else 0
+        games_played = (
+            availability["games_played"] if availability is not None else None
+        )
         if is_def and scoring:
             dst_total = scoring.get("dst_total")
             dst_pts_per_game = _round(scoring["dst_avg"]) if scoring["dst_avg"] is not None else None
@@ -1033,9 +1104,9 @@ def nfl_draft_board(
 
         sample = (
             "full"
-            if games_played >= _THIN_SAMPLE_GAMES
+            if games_played is not None and games_played >= _THIN_SAMPLE_GAMES
             else "thin"
-            if games_played > 0
+            if games_played is not None and games_played > 0
             else "none"
         )
 
@@ -1055,7 +1126,7 @@ def nfl_draft_board(
             )
         else:
             player_team_weeks = []
-            team_games_val = _REG_SEASON_TEAM_GAMES
+            team_games_val = None
 
         # The team this player actually played most of their games for.
         # Mid-season movers (Flacco) have a different current_team; this
@@ -1073,6 +1144,7 @@ def nfl_draft_board(
             # has instead of a season.
             "depth_rank": row["depth_rank"],
             "depth_team": normalize_optional("nfl", row["depth_team"]) if row["depth_team"] else None,
+            "depth_position": row["depth_position"],
             "adp": published_adp,
             "adp_is_ranked": published_adp is not None,
             "percent_owned": row["percent_owned"],
@@ -1091,7 +1163,7 @@ def nfl_draft_board(
             "team_weeks": player_team_weeks,
             # Both averages, always together.
             "ppr_per_game_played": (
-                _round(ppr_total / games_played)
+                _rounded_ratio(ppr_total, games_played)
                 if ppr_total is not None and games_played
                 else None
             ),
@@ -1100,19 +1172,23 @@ def nfl_draft_board(
             # player's team may have played a different number of games -- which
             # is exactly what the comment at the top of this block says.
             "ppr_per_team_game": (
-                _round(ppr_total / team_games_val)
+                _rounded_ratio(ppr_total, team_games_val)
                 if ppr_total is not None and team_games_val
                 else None
             ),
             "xfp_per_game": _round(xfp_per_game) if xfp_per_game is not None else None,
-            "snap_pct": _round(snap_pct * 100, 0) if snap_pct is not None else None,
-            "target_share": _round(target_share * 100, 1) if target_share is not None else None,
+            "snap_pct": _percentage(snap_pct, 0),
+            "target_share": _percentage(target_share, 1),
             # D/ST-specific fields
             "dst_pts_per_game": dst_pts_per_game,
-            "dst_pts_total": _round(dst_total, 1) if dst_total else None,
+            "dst_pts_total": (
+                _round(dst_total, 1) if dst_total is not None else None
+            ),
             # PK-specific fields
             "pk_pts_per_game": pk_pts_per_game,
-            "pk_pts_total": _round(pk_pts_total, 1) if pk_pts_total else None,
+            "pk_pts_total": (
+                _round(pk_pts_total, 1) if pk_pts_total is not None else None
+            ),
             "sample": sample,
             "team_changed": None,
         })

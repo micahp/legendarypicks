@@ -26,10 +26,11 @@ Scope of v1, deliberately narrow
 --------------------------------
 Emits the SAME row set as the pbp rollup -- players with offensive involvement --
 so the swap can be diffed row-for-row against the ingest it replaces. The
-artifact also carries defensive and kicking lines (19,421 player-weeks for 2025
-against the rollup's 5,377), which would fix the 0% IDP/kicker coverage, but
-expanding the row set and verifying a swap at the same time are two changes.
-Expansion is a follow-up, behind `--all-positions`.
+artifact also carries defensive and kicking lines (19,399 identity-bearing
+player-weeks for 2025 against the rollup's 5,377). The artifact has 22
+additional all-zero rows with no player id/name/position; those are source
+placeholders, not player logs, and are rejected. Expansion is behind
+`--all-positions`.
 
 Retention of raw plays (`nfl_pbp`) stays with the pbp ingest. That table is
 genuinely additive for future play-level work; it is only the ROLLUP half this
@@ -117,7 +118,11 @@ _RECV_KEYS = ("targets", "rec", "rec_yds", "rec_td")
 # out of the season denominator, so one busy game becomes the season rate (Tom
 # Kennedy read 14.8% against a published 2.5%).  The published artifact carries
 # a non-null target_share on every row, so we write every row.
-_ALWAYS_KEYS = ("target_share",)
+# These published zeros are measurements, not missing data.  They are useful
+# only on the position-specific fields that render them, but dropping them here
+# makes a zero-target/carry week look unknown in the per-game log and removes
+# target-less weeks from season denominators.
+_ALWAYS_KEYS = ("target_share", "targets", "carries")
 _TWO_POINT_COLS = (
     "passing_2pt_conversions",
     "rushing_2pt_conversions",
@@ -168,7 +173,9 @@ def _num(v):
     if v is None or v != v:
         return None
     f = float(v)
-    return int(f) if f.is_integer() else round(f, 3)
+    # Copy published precision.  Rounding each weekly share before a season AVG
+    # moved user-visible target share by 0.1 percentage points for 23 players.
+    return int(f) if f.is_integer() else f
 
 
 def _assert_unique_weeks(table: dict) -> None:
@@ -218,6 +225,11 @@ def build_rows(path: str, all_positions: bool = False):
     seen_keys = {}
     for i in range(len(t["player_id"])):
         row = {c: t[c][i] for c in _NEEDED}
+        # The 2025 artifact contains one all-zero, identity-free placeholder
+        # per week. A NULL natural key bypasses SQLite uniqueness and duplicated
+        # all 22 rows on every rerun. No stable player means no player log.
+        if not row["player_id"]:
+            continue
         att = _num(row["attempts"]) or 0
         sac = _num(row["sacks_suffered"]) or 0
         car = _num(row["carries"]) or 0
@@ -311,6 +323,15 @@ def upsert_rows(con: sqlite3.Connection, year: int, rows) -> tuple:
                     r["source_player_key"], r["game_no"])
             )
         existing[(r["source_player_key"], r["game_no"])] = prior
+
+    # Retire identity-free rows written by older versions. They cannot belong
+    # to a player and their NULL natural key made every rerun non-idempotent.
+    con.execute(
+        """DELETE FROM player_game_logs
+           WHERE league='nfl' AND season=? AND source=?
+             AND source_player_key IS NULL""",
+        (year, SOURCE),
+    )
 
     written = preserved_rows = 0
     for row in rows:
