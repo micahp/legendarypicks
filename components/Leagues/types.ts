@@ -410,12 +410,21 @@ export interface MockDraft {
   teams: number
   rounds: number
   seed: number
-  status: 'active' | 'complete' | 'abandoned'
+  /* The backend writes exactly these two. This union previously read
+     'active' | 'complete' | 'abandoned' -- two of those three strings are
+     written by nothing, and the page's completion check compared against one
+     of them, so it never matched. */
+  status: 'active' | 'completed'
   created_at: number
   updated_at: number
   completed_at: number | null
   picks: MockDraftPick[]
   total_picks: number
+  /** teams × rounds — what a finished draft holds. */
+  picks_expected: number
+  /** Pick numbers absent below the highest one saved. Empty is the normal case;
+   *  non-empty means an append was dropped and never retried. */
+  missing_picks: number[]
   current_round: number
   current_pick: number
 }

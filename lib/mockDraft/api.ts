@@ -37,6 +37,20 @@ export async function appendPicks(draftId: string, picks: Array<{ pick_no: numbe
   return res.json()
 }
 
+export async function completeDraft(draftId: string): Promise<{
+  status: string
+  pick_count: number
+  picks_expected: number
+  missing_picks: number[]
+}> {
+  const res = await fetch(`${BASE}/${draftId}/complete`, {
+    method: 'POST',
+    headers: headers(),
+  })
+  if (!res.ok) throw new Error(`complete draft failed: ${res.status}`)
+  return res.json()
+}
+
 export async function fetchDraft(draftId: string): Promise<MockDraft> {
   const res = await fetch(`${BASE}/${draftId}`, { headers: headers() })
   if (!res.ok) throw new Error(`fetch draft failed: ${res.status}`)

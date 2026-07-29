@@ -14,6 +14,7 @@ import {
   fetchPool,
   createDraft as apiCreateDraft,
   appendPicks,
+  completeDraft,
   fetchDraft,
 } from '../lib/mockDraft/api'
 import PoolList from '../components/MockDraft/PoolList'
@@ -45,6 +46,38 @@ export default function MockDraftPage() {
   // RNG ref — stable per draft
   const rngRef = useRef<(() => number) | null>(null)
 
+  // ── Pick persistence ──
+  // The server row is the only durable record of a draft; the React state dies
+  // with the tab. These appends used to be `.catch(() => {})`, which is why a
+  // dropped batch produced a permanent hole in the saved draft -- picks are
+  // INSERT OR IGNORE on (draft_id, pick_no), so later batches still land and
+  // nothing on either side ever raised. Retry once, then say so.
+  const unsavedRef = useRef(0)
+  const [unsavedPicks, setUnsavedPicks] = useState(0)
+  // Tracked apart from unsaved picks: a draft whose picks all landed but whose
+  // completion write failed is a different state, and saying "3 picks weren't
+  // saved" when 0 picks were lost would be its own false claim.
+  const [completionUnsaved, setCompletionUnsaved] = useState(false)
+
+  const savePicks = useCallback(
+    async (
+      id: string,
+      picks: Array<{ pick_no: number; team_no: number; player_id: number; auto?: boolean }>,
+    ) => {
+      try {
+        await appendPicks(id, picks)
+      } catch {
+        try {
+          await appendPicks(id, picks)
+        } catch {
+          unsavedRef.current += picks.length
+          setUnsavedPicks(unsavedRef.current)
+        }
+      }
+    },
+    [],
+  )
+
   // ── Load pool on mount ──
   useEffect(() => {
     let cancelled = false
@@ -74,7 +107,10 @@ export default function MockDraftPage() {
 
     fetchDraft(id)
       .then(draft => {
-        if (draft.status === 'complete') {
+        // The backend's vocabulary is 'active' / 'completed'. This read
+        // 'complete' -- a string nothing ever writes -- so the branch was dead
+        // and a finished draft would have been resumed as an in-progress one.
+        if (draft.status === 'completed') {
           // Need pool first
           return
         }
@@ -137,9 +173,7 @@ export default function MockDraftPage() {
       // Save bot picks
       const botPicks = current.picks.filter(p => p.auto)
       if (botPicks.length > 0) {
-        await appendPicks(id, botPicks).catch(() => {
-          // Non-fatal — picks are best-effort
-        })
+        await savePicks(id, botPicks)
       }
 
       setDraftState(current)
@@ -150,7 +184,7 @@ export default function MockDraftPage() {
     } finally {
       setCreating(false)
     }
-  }, [pool])
+  }, [pool, savePicks])
 
   // ── Queue handlers ──
   const handleAddToQueue = useCallback((playerId: number) => {
@@ -181,7 +215,7 @@ export default function MockDraftPage() {
 
     // Save user's pick to server
     const userPick = current.picks[current.picks.length - 1]
-    await appendPicks(draftId, [userPick]).catch(() => {})
+    await savePicks(draftId, [userPick])
 
     // Autopick all remaining bot picks until user's next turn or complete
     const batchPicks: Array<{ pick_no: number; team_no: number; player_id: number; auto: boolean }> = []
@@ -198,7 +232,7 @@ export default function MockDraftPage() {
 
     // Save batch of bot picks
     if (batchPicks.length > 0) {
-      await appendPicks(draftId, batchPicks).catch(() => {})
+      await savePicks(draftId, batchPicks)
     }
 
     setDraftState(current)
@@ -207,11 +241,16 @@ export default function MockDraftPage() {
     setQueue(q => q.filter(id => current.availablePool.some(p => p.player_id === id)))
 
     if (isComplete(current)) {
+      // Tell the server the draft finished. Without this the row stays
+      // 'active' forever and an abandoned draft is indistinguishable from a
+      // completed one -- which is the classification slice B's "your drafts"
+      // list depends on.
+      await completeDraft(draftId).catch(() => setCompletionUnsaved(true))
       setPhase('results')
     } else {
       setUserPicking(true)
     }
-  }, [draftState, draftId])
+  }, [draftState, draftId, savePicks])
 
   const handleUserPick = useCallback(
     (playerId: number) => commitPick(playerId, false),
@@ -288,6 +327,17 @@ export default function MockDraftPage() {
           onMoveQueueUp={handleMoveQueueUp}
           onMoveQueueDown={handleMoveQueueDown}
         />
+      )}
+
+      {/* An incomplete save is the user's business, not just ours: this is the
+          screen where they might close the tab believing the draft is kept.
+          Amber marks what is missing, per the data-UI doctrine. */}
+      {phase === 'results' && (unsavedPicks > 0 || completionUnsaved) && (
+        <p className="mb-3 rounded-lg border border-amber-500/30 bg-amber-500/5 px-4 py-2.5 text-sm text-amber-300">
+          {unsavedPicks > 0
+            ? `${unsavedPicks} ${unsavedPicks === 1 ? 'pick' : 'picks'} could not be saved to your account — this draft is on screen but incomplete on our side.`
+            : 'This draft finished, but we could not record it as complete — it may show as unfinished later.'}
+        </p>
       )}
 
       {phase === 'results' && draftState && (
