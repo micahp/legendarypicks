@@ -3,7 +3,7 @@
 Running list. Add to it, don't rewrite it — mark items superseded rather than deleting,
 so the reasoning stays readable.
 
-Last updated 2026-07-27.
+Last updated 2026-07-29.
 
 ---
 
@@ -556,3 +556,214 @@ relay — `messages_send` cannot prompt the agent.
   facts included: D/ST `espn_id` set on **0 of 32** rows, `nfl_adp` carries **0** DEF rows.
 
 Gates after all of the above: 13 PASS, `REG-adp-dst` RED on purpose. No regression.
+
+---
+
+## 2026-07-29 — v0.6.13 re-cut and cross-league v1 data plan (CURRENT)
+
+This section records the decisions and work from the two Codex sessions:
+
+- `019fadbf-a05d-72d1-89c0-2de6d1718414` — whole-application readiness,
+  other-league review, and backend-data implementation;
+- `019fae3b-aa03-7fb0-b99d-9eb41c0253d3` — DEV landing, verification boundary,
+  and decision to continue league by league.
+
+Companion evidence:
+
+- `/root/CODEX-V0.6.13-WHOLE-APP-READINESS-AUDIT-2026-07-29.md`
+- `/root/CODEX-V0.6.13-OTHER-LEAGUE-DATA-PATH-REVIEW-2026-07-29.md`
+- `/root/CODEX-V0.6.13-RECUT-PLAN-2026-07-29.md`
+- `docs/V0613-PLAYER-IDENTITY-AND-LEAGUE-STATS.md`
+
+### Decisions locked
+
+1. **Re-cut v0.6.13; do not create v0.6.14 to hide an unworthy tag.**
+   The current tag remains provisional and production remains NO-GO until the
+   whole-application clone and browser gates pass.
+2. **Acceptance is whole-application, not NFL-only.** Production is still on
+   v0.6.7, so the re-cut must keep every exposed major surface alive across the
+   accumulated release—not merely prove the mock-draft path.
+3. **Build and verify the v1 contract, not obsolete v0 fixture assumptions.**
+   Each new slice gets purpose-built v1 tests written with the feature, relevant
+   regression tests, and production-shaped API/clone evidence where needed.
+   An unrelated v0 test failure is not a blocker unless it reproduces against a
+   required v1 behavior. Do not spend the schedule modernizing superseded tests.
+4. **Proceed league by league in this order: NBA → NHL → NFL.** MLB's production
+   identity repair is a separate data-migration gate and does not block building
+   the other league slices. DEV already has zero duplicate MLBAM groups.
+5. **Code landing, DEV data migration, and production promotion are separate
+   states.** A green commit on `dev` does not authorize a live database write,
+   tag move, push, service restart, or production deployment.
+
+### Shared v1 backend foundation — **LANDED ON LOCAL `dev`**
+
+Commit `4394bb8` (`fix(data): canonicalize league stats and roster identity`) was
+fast-forwarded onto local `dev` on 2026-07-29. Local `dev` is one commit ahead of
+`origin/dev`; it has not been pushed. No managed service or live database was
+changed.
+
+The landed contract is:
+
+- `players.id` is the durable person identity.
+- A source-native ID must resolve to that person before logs or stats are
+  written; missing or ambiguous identities queue instead of creating a
+  speculative player.
+- `player_stats` is a published display table with one row per
+  `(player_id, league, season, stat_type)`, not a multi-source raw lake.
+- Leader names and links come from the canonical `players` row.
+- The shared game-log reader applies `game_type` only to NFL and preserves
+  MLB, NBA, NHL, UFC, and World Cup history.
+- A roster is not the person index. `roster_snapshots` stores immutable,
+  checksummed release metadata; `roster_memberships` stores canonical
+  `players.id` membership. A partial or ambiguous refresh preserves the last
+  published snapshot.
+- Schema changes are explicit, backup-first migrations that refuse dirty data
+  rather than guessing winners.
+
+Published owner of each league's display stats:
+
+| League / season | Canonical owner |
+|---|---|
+| MLB batting/pitching | Statcast |
+| NBA through 2023 | hoopR |
+| NBA after 2023 | ESPN published regular-season player table |
+| NFL | nflverse weekly rollup |
+| NHL | NHL API / nhle.com |
+
+Purpose-built and relevant landed-tree verification passed. The verification
+rule above supersedes spending time on unrelated v0 test-order, fixture, or
+environment failures.
+
+### Architecture boundary — do not force every product through one pipeline
+
+| Product plane | Contract |
+|---|---|
+| MLB / NBA / NHL / UFC athletes | Shared canonical `players`, logs, stats, props, profiles |
+| Teams and schedules | Stored team results/stats/coverage where published; some request-time ESPN adapters |
+| World Cup | Partly shared athlete/log spine, currently dormant; preserve and regression-test |
+| Esports | Separate event/match identity, result store, streams, and picks; athlete-spine gates do not apply |
+
+An HTTP 200 from a request-time adapter does not prove the durable player joins
+or profile history are correct. Live-source and stored-data evidence must remain
+separate.
+
+### Current data gates — code can continue, migration cannot
+
+The canonical `player_stats` migration remains blocked by existing data:
+
+| Gate | DEV | Production |
+|---|---:|---:|
+| display-name disagreements with `players` | 549 | 176 |
+| duplicate canonical keys | 703 | 519 |
+| duplicate MLBAM-ID groups | 0 | 317 |
+
+There are also legacy invalid stat types and unowned sources in both databases.
+Authoritative league refreshes must replace those populations before the
+canonical table migration can apply.
+
+The additive roster-snapshot migration passed on a disposable production clone:
+backup verified, `quick_check=ok`, one migration record, and protected
+`props`/`prop_results`/`prop_games` fingerprints unchanged. This proves the
+schema operation; it does not authorize applying it to DEV or production.
+
+A follow-on MLB repair prototype exists only as untracked work in
+`/root/lp-v0613-backend-data` plus disposable `/tmp` artifacts. Its rollback
+rehearsal changed no live data. It is parked until the migration/promotion phase
+and is not part of commit `4394bb8`.
+
+### Active build order
+
+#### 1. NBA v1 slice — **NEXT**
+
+- Publish current regular-season values from ESPN's
+  `statistics/byathlete` table; do not recreate them from box scores when ESPN
+  already publishes the season line.
+- Keep hoopR as the historical owner through 2023 only.
+- Resolve ESPN IDs into `players.id`; queue misses and duplicate source IDs.
+- Publish a complete NBA roster snapshot before changing current membership.
+- Preserve ESPN's explicit game phases: `PRE`, `REG`, `PLAYIN`, and `POST`;
+  classify only the NBA Cup Championship as `CUP`, and require
+  `completed=true` independently from a post-state status.
+- Prove unique leader rows, canonical leader-to-profile links, recent games,
+  matchup/projection evidence, and honest null handling.
+- Make NBA Team Stats supported from a bounded, proof-backed season population.
+
+2026-07-29 checkpoint:
+
+- ESPN reports 582 regular-season player rows in one batch request. The
+  disposable NBA clone first resolved 580; the explicit season-identity
+  publisher then backfilled Markelle Fultz (`4066636`), inserted Andersson
+  Garcia (`4702431`) as inactive, and enabled a 582/582 atomic
+  `espn_site_stats` publication with zero unresolved rows.
+- The identity merge rehearsal consolidated 272 split ESPN/hoopR pairs, moved
+  264 historical stat rows, and published an idempotent 545-player, 30-team
+  roster snapshot. DEV and production were not mutated.
+- The guarded phase repair classified 1,017 regular-season games, 6 Play-In
+  games, 85 postseason games, and one Cup final, and removed the postponed
+  ten-row zero-box-score event on the clone. Logs remain intentionally
+  insufficient to derive ESPN's published season table.
+- ESPN standings require 30 teams at 82 games and 1,230 regular-season games.
+  DEV still has the old 1,227-game population and now fails closed as
+  `schedule_not_reconciled`. The clone's standings-backed publisher validated
+  all 1,230 summaries and published 2,460 reciprocal result rows plus 2,460
+  complete stat rows; NBA Team Stats returns 30 supported teams.
+- The focused candidate suite passes 118 backend tests plus the NBA profile
+  render test. The clone passes `quick_check`, produces unique leader links and
+  regular-season-only history, and preserves byte-identical `props`,
+  `prop_results`, and `prop_games`.
+
+#### 2. NHL v1 slice
+
+- Keep NHL API totals as the only season-display owner.
+- Remove/rebuild the competing derived NHL population rather than choosing a
+  duplicate at read time.
+- Publish and verify the canonical NHL roster snapshot.
+- Prove leader uniqueness, canonical profile links, durable game history, and
+  Team Stats coverage.
+
+#### 3. NFL v1 slice
+
+- Keep nflverse as the canonical weekly/stat and schedule vocabulary.
+- Load and expose the pinned 2026 schedule: 272 regular-season games, 32 teams,
+  17 played weeks plus one bye per team.
+- Finish complete 10-, 12-, and 14-team draft persistence.
+- Ingest ESPN's published overall PPR rank and 2026 projected stat lines from
+  the existing `kona_player_info` source. Coverage measured on 2026-07-29 was
+  299/300 ranks and 283/300 projections, including 32/32 D/ST.
+- Compute Legendary Picks PPR totals from the stored published stat line using
+  one explicit tested formula; do not label unstable ESPN `appliedTotal` as the
+  source and do not fabricate missing projections.
+- Restore the intended `RK | PLAYER | BYE | ADP | PROJ | AVAILABLE` contract
+  and the `PROJ 2026` player-card row.
+- Make NFL Team Stats supported from a bounded, proof-backed season population.
+
+#### 4. Parked MLB production repair and cross-league migration
+
+- Rebuild MLB display stats from Statcast after identity-safe consolidation.
+- Rehearse production's 317 duplicate MLBAM groups on a fresh disposable clone.
+- Preserve props, re-resolve logs only from stable source keys, queue ambiguity,
+  and verify every dependent reference and protected-table fingerprint.
+- Apply partial unique native-ID indexes only after all conflicts are clean.
+- Run the strict canonical-stat and roster migrations first on fresh clones,
+  then on DEV only with explicit authorization.
+- Publish one complete current roster snapshot for MLB, NBA, NFL, and NHL.
+
+#### 5. Whole-application gate and tag re-cut
+
+Before moving the v0.6.13 tag:
+
+- every exposed league has unique canonical leaders and correct profile links;
+- profiles, Matchups, projections, and recent history use the same
+  league-correct log population;
+- NBA/NFL/NHL Team Stats are supported and non-empty;
+- the 2026 NFL schedule and bye UI work;
+- 10/12/14-team drafts persist and reload completely;
+- ESPN rank/projection provenance, formula, coverage, and honest nulls pass;
+- UFC rankings/history/Predict, dormant World Cup regressions, esports match
+  identity/results/streams/picks, props, and game detail pass their own gates;
+- a fresh production clone passes backups, migrations, `quick_check`, data
+  invariants, protected-table fingerprints, APIs, and the browser matrix.
+
+Only after those gates pass may the existing v0.6.13 tag be re-cut and
+production promotion be reconsidered. Production writes and deployment still
+require explicit approval.

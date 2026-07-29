@@ -1,7 +1,8 @@
 # v0.6.13 player identity, roster, and league-stat contract
 
 Date: 2026-07-29
-Scope: backend candidate in `/root/lp-v0613-backend-data`
+Scope: backend candidate in `/root/lp-v0613-backend-data`; NBA v1 follow-on
+in `/root/lp-nba-v1`
 Production mutation: not authorized
 
 ## Decision
@@ -132,7 +133,7 @@ Approved owners are:
 |---|---|---|
 | MLB | batting or pitching | Statcast |
 | NBA through 2023 | season | hoopR |
-| NBA after 2023 | season | ESPN Core athlete-season totals |
+| NBA after 2023 | season | ESPN published regular-season player table |
 | NFL | season | nflverse weekly rollup |
 | NHL | season | NHL API |
 
@@ -144,17 +145,122 @@ duplicate source ID is queued; a stat/log collector does not create a player.
 Leader and profile reads filter to the approved population and use canonical
 player display identity. Duplicate canonical ownership fails closed.
 
-The new NBA refresh fetches and validates all active ESPN identities before
-opening the short write transaction. Coverage below the configured threshold
-or any non-404 source/schema error preserves the previous good season
-population.
+The NBA publisher must learn from the ESPN table itself. ESPN's
+`statistics/byathlete` collection is the correct publication shape: one
+season-type request returns the table categories, stable ESPN athlete IDs, and
+each athlete's aligned values. The individual ESPN Core athlete-season
+endpoint agrees with those values, but one request per roster member triggered
+HTTP 403 protection during the clone rehearsal and is not an acceptable
+collection design.
+
+The collection URL is:
+
+`https://site.api.espn.com/apis/common/v3/sports/basketball/nba/statistics/byathlete`
+
+It is requested with explicit `season`, `seasontype=2`, `page`, `limit`, and
+an ESPN table sort. The response currently reports 582 regular-season athlete
+rows for 2026. Its named category schema includes the same dense measures ESPN
+displays: GP, MIN, PTS, FGM/FGA/FG%, 3PM/3PA/3P%, FTM/FTA/FT%, REB, AST, STL,
+BLK, and TO. Shooting makes and attempts are per-game values on the ESPN
+table, not season totals.
+
+The new NBA refresh requires the exact published roster snapshot as its current
+identity gate, validates the collection schema, and then resolves every season
+row against the full canonical NBA ESPN-ID spine before opening the short write
+transaction. This distinction matters: the season table includes players who
+appeared earlier in the year but are not on today's roster. Missing or
+duplicate IDs, coverage below the configured threshold, or any source/schema
+error preserves the previous good season population.
+
+The first collection rehearsal resolved 580 of 582 ESPN rows. The two misses
+were Markelle Fultz (`4066636`) and Andersson Garcia (`4702431`). Fultz already
+existed under the equivalent legacy `nba_id`; Garcia had no canonical row.
+
+The follow-on candidate adds a separate, backup-first season-identity
+publisher. It does not write statistics or membership. On the disposable clone
+its exact plan resolved 580 identities, backfilled Fultz's `espn_id`, inserted
+Garcia as an inactive canonical person, and then allowed the stat publisher to
+replace the legacy population with 582 of 582 `espn_site_stats` rows. The
+resolved queue was empty after publication. DEV and production remain
+unchanged.
+
+## NBA season-phase contract learned from ESPN
+
+ESPN separates NBA games with an explicit event `season.type` and
+`season.slug`:
+
+| ESPN type | ESPN slug | Canonical game type | 2025-26 dates from ESPN |
+|---:|---|---|---|
+| 1 | `pre` | `PRE` | 2025-10-01 through 2025-10-21 |
+| 2 | `reg` | `REG` | 2025-10-21 through 2026-04-13 |
+| 5 | `playin` | `PLAYIN` | 2026-04-13 through 2026-04-18 |
+| 3 | `post` | `POST` | 2026-04-18 through 2026-06-27 |
+| 4 | `off` | no game-log population | offseason |
+
+The NBA Cup needs a narrower exception. Group, quarterfinal, and semifinal
+games remain regular-season games. The event whose competition note is
+`NBA Cup Championship` is `CUP`: ESPN carries it under season type 2, but
+excludes it from regular-season standings.
+
+Completion is independent from phase. A postponed event may have
+`status.type.state = "post"` while `status.type.completed = false`; it must
+not publish a zero box score. DEV currently contains one such event,
+`401810384` (Chicago-Miami), as ten all-zero player rows in addition to its
+makeup game. The NBA cleanup must remove that event.
+
+ESPN's 2025-26 standings are the reconciliation authority for the regular
+season: 30 teams, 82 games per team, and 1,230 games. DEV's current
+`team_game_results` population has 1,227 games, eight team records disagree
+with ESPN, and one team has 83 games. The legacy parity writer cannot certify
+itself by setting `expected_games = games_written`; it must validate against
+the ESPN standings totals, fetch completely before deleting, and fail the
+whole publication on schedule or summary errors.
+
+The follow-on parity publisher now requires the explicit migrated schema,
+fetches ESPN standings, the 30-team directory, every team schedule, and every
+summary before opening its write transaction. It excludes only the Cup
+Championship, requires `completed=true`, reconciles every team to 82 games and
+the standings win record, and requires exact operator-provided game/team counts
+plus a verified backup under `--apply`. A disposable-clone rehearsal validated
+all 1,230 summaries and atomically published 2,460 reciprocal result rows plus
+2,460 complete team-stat rows. The manifest records
+`espn_team_schedules+espn_boxscores+espn_standings`; legacy self-referential
+manifests now fail closed as `schedule_not_reconciled`.
+
+The current player-log population also cannot derive the published season
+table: it contains 1,017 regular-season game IDs, 6 Play-In games, 85
+postseason games, the Cup final, and the postponed zero game. It is missing
+213 of ESPN's 1,230 regular-season games. Published ESPN regular-season stats
+therefore own the season table; phase-tagged box scores own history.
+
+The NBA identity rehearsal found that `players.nba_id` and `players.espn_id`
+are the same ESPN athlete-ID vocabulary. DEV has 272 exact split identity
+pairs. On a disposable clone, the guarded merge moved 264 historical
+`player_stats` rows, then published an idempotent 2026 roster snapshot with
+545 players across 30 teams and zero duplicate ESPN IDs. No DEV or production
+database was mutated.
+
+The completed clone rehearsal then:
+
+- published 582 unique 2026 ESPN season rows and retained 525 hoopR-owned 2023
+  rows;
+- classified 1,017 regular-season games, 6 Play-In games, 85 postseason games,
+  and the Cup final, while removing the ten-row postponed event;
+- returned 100 unique leader links in the 100-row API sample;
+- returned 30 supported NBA Team Stats rows with zero invalid or missing pairs;
+- kept `props`, `prop_results`, and `prop_games` byte-identical to DEV; and
+- passed `PRAGMA quick_check`.
 
 ## Shared log read correction
 
-`player_game_logs.game_type` is an NFL field. The candidate applies:
+`player_game_logs.game_type` is now a shared phase field. The candidate
+applies:
 
 - explicit `REG` plus the bounded legacy regular-season rule for NFL;
-- no NFL predicate to MLB, NBA, NHL, UFC, or WC;
+- explicit `PRE`, `REG`, `PLAYIN`, `POST`, and `CUP` classification for NBA;
+- NBA regular-season displays include only explicit `REG`; legacy null rows
+  fail closed rather than blending phases;
+- no NFL or NBA predicate to MLB, NHL, UFC, or WC;
 - explicit NFL postseason and legacy postseason separation.
 
 The same helper governs profile history, matchup evidence, projections, and
