@@ -3,7 +3,14 @@ import type { PoolPlayer } from '../Leagues/types'
 import { AvailabilityStrip } from '../Leagues/NflDraftRoom'
 import PlayerDetailOverlay from '../Leagues/PlayerDetailOverlay'
 import { poolToDraftRow } from '../../lib/mockDraft/api'
-import { HeadlineStat, headlineStatFor, noSampleLabel } from './DraftRoom'
+import {
+  HeadlineStat,
+  headlineStatFor,
+  noSampleLabel,
+  ExpectedPts,
+  EXPECTED_PTS_HEADER,
+  expectedPtsTitle,
+} from './DraftRoom'
 
 interface Props {
   players: PoolPlayer[]
@@ -97,6 +104,9 @@ export default function PoolList({ players, referenceSeason, onStartDraft }: Pro
                 </span>
               </th>
               <th className="text-right py-3 px-2 w-16" title={headlineStat.title}>{headlineStat.header}</th>
+              <th className="text-right py-3 px-2 w-20" title={expectedPtsTitle(referenceSeason)}>
+                {EXPECTED_PTS_HEADER}
+              </th>
               <th className="text-right py-3 px-2">ADP</th>
               <th className="text-right py-3 px-2">Owned</th>
             </tr>
@@ -211,6 +221,9 @@ function PoolRow({
 
       <td className="py-2.5 px-2 text-right font-mono tabular-nums text-xs text-zinc-300">
         {player ? <HeadlineStat player={player} /> : <span className="text-zinc-700">—</span>}
+      </td>
+      <td className="py-2.5 px-2 text-right font-mono tabular-nums text-xs text-zinc-400">
+        {player ? <ExpectedPts player={player} /> : <span className="text-zinc-700">—</span>}
       </td>
       <td className="py-2.5 px-2 text-right font-mono tabular-nums text-zinc-300 font-semibold">
         {row.adp != null ? row.adp.toFixed(1) : '—'}

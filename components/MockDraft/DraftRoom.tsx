@@ -358,6 +358,12 @@ export default function DraftRoom({ pool, referenceSeason, draftState, onUserPic
                   <th className="text-right py-2.5 px-2 w-14" title={headlineStat.title}>
                     {headlineStat.header}
                   </th>
+                  <th
+                    className="text-right py-2.5 px-2 w-16"
+                    title={expectedPtsTitle(referenceSeason)}
+                  >
+                    {EXPECTED_PTS_HEADER}
+                  </th>
                   <th className="text-right py-2.5 px-2 w-12">Bye</th>
                   <th className="text-right py-2.5 px-2 w-16">ADP</th>
                   <th className="w-16" />
@@ -408,6 +414,9 @@ export default function DraftRoom({ pool, referenceSeason, draftState, onUserPic
                       </td>
                       <td className="py-2 px-2 text-right font-mono tabular-nums text-xs text-zinc-300">
                         <HeadlineStat player={poolPlayer} />
+                      </td>
+                      <td className="py-2 px-2 text-right font-mono tabular-nums text-xs text-zinc-400">
+                        <ExpectedPts player={poolPlayer} />
                       </td>
                       <td className="py-2 px-2 text-right font-mono tabular-nums text-xs text-zinc-500">
                         {byeMap.get(dp.team) ?? <span className="text-zinc-700">—</span>}
@@ -784,6 +793,34 @@ export function HeadlineStat({ player }: { player: PoolPlayer }) {
   // Neither is zero and neither may be rendered as zero.
   if (value == null) return <span className="text-zinc-700">—</span>
 
+  return (
+    <span className={player.sample === 'thin' ? 'text-zinc-500' : 'text-zinc-300'}>
+      {value.toFixed(1)}
+    </span>
+  )
+}
+
+/* ── Expected fantasy points ────────────────────────────────────────────────
+   The published xFP series (nflverse `total_fantasy_points_exp`, PPR), averaged
+   per game. It is an *opportunity* number — what the targets, carries and air
+   yards a player was actually given are worth to an average player — so it sits
+   next to the outcome number rather than replacing it. A back who scored 21.8
+   on 19.3 of opportunity beat his usage; the two columns only mean something
+   together, which is why both ship on every mock-draft surface.
+
+   Not a projection. Nothing here forecasts 2026; the header carries the season.
+   Structurally null for K and D/ST, which have no xFP series at all. */
+
+export const EXPECTED_PTS_HEADER = 'Exp PPR/G'
+
+export function expectedPtsTitle(referenceSeason?: number | null): string {
+  const when = referenceSeason != null ? `${referenceSeason}` : 'last completed season'
+  return `Expected PPR points per game, ${when} — what the player's opportunity (targets, carries, air yards) was worth, not what he scored. Not a projection. No value for K or D/ST.`
+}
+
+export function ExpectedPts({ player }: { player: PoolPlayer }) {
+  const value = player.xfp_per_game
+  if (value == null) return <span className="text-zinc-700">—</span>
   return (
     <span className={player.sample === 'thin' ? 'text-zinc-500' : 'text-zinc-300'}>
       {value.toFixed(1)}
