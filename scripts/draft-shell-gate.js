@@ -197,6 +197,14 @@ const num = s => {
   const m = /-?\d+(\.\d+)?/.exec(String(s).replace(/,/g, ''))
   return m ? Number(m[0]) : null
 }
+// The availability cell is a fraction with a label under it, and the label can
+// legitimately contain a year ("No 2025 games"). Taking the first integer out of
+// that reads 2025 as an availability. Read the measurement or read nothing.
+const games = s => {
+  const m = /^(\d+)\s*\/\s*(\d+)/.exec(String(s == null ? '' : s).trim())
+  return m ? Number(m[1]) : null
+}
+const valueIn = (col, s) => (col === 'avail' ? games(s) : num(s))
 const isBlank = s => s != null && /^[—-]$/.test(String(s).trim())
 
 async function startDraft(page) {
@@ -547,7 +555,7 @@ async function startDraft(page) {
         const rows = (await page.evaluate(readPoolRows) || []).filter(r => !r.divider)
         check(rows.length > 20, step.label + ': only ' + rows.length + ' rows after sorting')
         const vals = rows.map(r => r[step.col])
-        const numeric = vals.map(num)
+        const numeric = vals.map(v => valueIn(step.col, v))
         const firstBlank = vals.findIndex(isBlank)
         const lastValue = numeric.reduce((acc, v, i) => (v != null ? i : acc), -1)
         check(
@@ -555,10 +563,25 @@ async function startDraft(page) {
           step.label + ': a valueless row sorts above a measured one (blank at ' + firstBlank +
             ', last value at ' + lastValue + ') — nulls sort last, always'
         )
-        check(
-          !vals.some(v => /^0\.0$/.test(String(v).trim())) || step.col === 'avail',
-          step.label + ': a row renders 0.0 in the sorted column — a null coerced to zero'
-        )
+        // Not "no cell says 0.0": a measured zero is real data, and calling it a
+        // coercion was this gate's own mistake — a player who played and scored
+        // nothing scored nothing (dev f5e1bb4). What IS provable from the DOM is
+        // the structural case: K and D/ST have no expected-points series at all,
+        // so every one of those rows must be an em dash and never a zero.
+        if (step.col === 'xfp') {
+          const specialists = rows.filter(r => r.pos === 'K' || r.pos === 'D/ST')
+          const zeroed = specialists.filter(r => /^0(\.0)?$/.test(String(r.xfp).trim()))
+          check(
+            zeroed.length === 0,
+            zeroed.length + ' K/D-ST rows render 0.0 expected points — they have no xFP series, ' +
+              'so that is a null coerced to zero'
+          )
+          check(
+            specialists.length === 0 || specialists.every(r => isBlank(r.xfp)),
+            'a K or D/ST row shows a number for expected points: ' +
+              JSON.stringify((specialists.find(r => !isBlank(r.xfp)) || {}).xfp)
+          )
+        }
         const seq = numeric.filter(v => v != null)
         const bad = seq.findIndex((v, i) =>
           i > 0 && (step.dir === 'asc' ? v < seq[i - 1] : v > seq[i - 1])
