@@ -5,6 +5,7 @@ import { getRosterState } from '../../lib/mockDraft/engine'
 import { poolTeamGames } from '../../lib/mockDraft/availability'
 import { AvailabilityStrip } from '../Leagues/NflDraftRoom'
 import { noSampleLabel } from './DraftRoom'
+import { positionLabel } from '../../lib/nfl/positionLabel'
 
 interface Props {
   pool: PoolPlayer[]
@@ -278,7 +279,7 @@ function ResultsSlotRow({
               {slot.player.name}
             </span>
             <span className="text-[10px] text-zinc-600">
-              {pp.position} · {pp.team}
+              {positionLabel(pp.position)} · {pp.team}
             </span>
           </div>
 

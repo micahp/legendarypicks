@@ -3,6 +3,7 @@ import type { PoolPlayer } from '../Leagues/types'
 import { AvailabilityStrip } from '../Leagues/NflDraftRoom'
 import PlayerDetailOverlay from '../Leagues/PlayerDetailOverlay'
 import { poolToDraftRow } from '../../lib/mockDraft/api'
+import { positionLabel, positionRankLabel } from '../../lib/nfl/positionLabel'
 import { LEAGUE_SIZES, ROUNDS, nextTeam } from '../../lib/mockDraft/engine'
 import type { LeagueSize } from '../../lib/mockDraft/engine'
 import {
@@ -278,14 +279,14 @@ function PoolRow({
           {posRank != null && (
             <>
               {' · '}
-              <span className="tabular-nums">{row.position}{posRank}</span>
+              <span className="tabular-nums">{positionRankLabel(row.position, posRank)}</span>
             </>
           )}
         </div>
       </td>
       <td className="py-2.5 px-2 text-center">
         <span className="rounded bg-zinc-800 px-1.5 py-0.5 text-[11px] font-semibold uppercase text-zinc-400">
-          {row.position}
+          {positionLabel(row.position)}
         </span>
       </td>
 

@@ -3,6 +3,7 @@ import type { NflDraftBoard, NflDraftNotes, NflDraftPlayer, NflDraftSort } from 
 import { POSITIONS, SORT_LABELS } from './hooks/useNflDraftBoard'
 import type { DraftPosition } from './hooks/useNflDraftBoard'
 import PlayerDetailOverlay from './PlayerDetailOverlay'
+import { positionLabel, positionRankLabel } from '../../lib/nfl/positionLabel'
 
 /* ── Position-aware stat columns ───────────────────────────────────────────
    ESPN's published gamelog contract shares ZERO columns between a QB and a K.
@@ -290,7 +291,7 @@ export default function NflDraftRoom({
                 : 'border-zinc-700 bg-zinc-800/60 text-zinc-400 hover:border-zinc-600 hover:text-zinc-200'
             }`}
           >
-            {pos === 'all' ? 'All' : pos}
+            {pos === 'all' ? 'All' : positionLabel(pos)}
           </button>
         ))}
       </div>
@@ -480,7 +481,8 @@ export function DraftPlayerRow({
         </a>
         <div className="text-[10px] text-zinc-600">
           {player.current_team}
-          {player.depth_rank != null && ` · ${player.position}${player.depth_rank}`}
+          {player.depth_rank != null &&
+            ` · ${positionRankLabel(player.position, player.depth_rank)}`}
           {/* A team change is information, not an achievement — no accent. */}
           {player.team_changed === true && player.depth_team && (
             <span className="ml-1 text-zinc-500">from {player.depth_team}</span>
@@ -489,7 +491,7 @@ export function DraftPlayerRow({
       </td>
       <td className="py-2.5 px-2 text-center">
         <span className="rounded bg-zinc-800 px-1.5 py-0.5 text-[11px] font-semibold uppercase text-zinc-400">
-          {player.position}
+          {positionLabel(player.position)}
         </span>
       </td>
 

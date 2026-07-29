@@ -10,6 +10,7 @@ import {
 } from '../../lib/mockDraft/engine'
 import { poolTeamGames } from '../../lib/mockDraft/availability'
 import { AvailabilityStrip } from '../Leagues/NflDraftRoom'
+import { positionLabel, positionRankLabel } from '../../lib/nfl/positionLabel'
 
 interface ScheduleTeam {
   team: string
@@ -300,7 +301,7 @@ export default function DraftRoom({ pool, referenceSeason, draftState, onUserPic
                       : 'border-zinc-800 bg-zinc-900 text-zinc-500 hover:border-zinc-700 hover:text-zinc-400'
                   }`}
                 >
-                  {pos === 'ALL' ? 'All' : pos}
+                  {pos === 'ALL' ? 'All' : positionLabel(pos)}
                 </button>
               ))}
             </div>
@@ -397,8 +398,7 @@ export default function DraftRoom({ pool, referenceSeason, draftState, onUserPic
                             <>
                               {' · '}
                               <span className="tabular-nums">
-                                {dp.position}
-                                {posRank.get(dp.player_id)}
+                                {positionRankLabel(dp.position, posRank.get(dp.player_id))}
                               </span>
                             </>
                           )}
@@ -406,7 +406,7 @@ export default function DraftRoom({ pool, referenceSeason, draftState, onUserPic
                       </td>
                       <td className="py-2 px-2 text-center">
                         <span className="rounded bg-zinc-800 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-zinc-400">
-                          {dp.position}
+                          {positionLabel(dp.position)}
                         </span>
                       </td>
                       <td className="py-2 px-2">
@@ -491,7 +491,7 @@ export default function DraftRoom({ pool, referenceSeason, draftState, onUserPic
                     {qp.name}
                   </span>
                   <span className="text-[10px] text-zinc-500 shrink-0 uppercase">
-                    {qp.position}
+                    {positionLabel(qp.position)}
                   </span>
                   {/* Move up/down */}
                   <div className="flex items-center gap-0.5 shrink-0">
@@ -743,7 +743,7 @@ function DraftBoardGrid({ draftState }: { draftState: DraftState }) {
                               isUser ? 'text-zinc-500' : 'text-zinc-600'
                             }`}
                           >
-                            {cell.position}
+                            {positionLabel(cell.position)}
                           </span>
                           {/* The snake means column order is not pick order in
                               even rounds, so the cell states its own pick. */}
@@ -1027,7 +1027,7 @@ function RosterSlotRow({ slot }: { slot: RosterSlot }) {
             {slot.player.name}
           </span>
           <span className="text-[10px] text-zinc-500 shrink-0">
-            {slot.player.position}
+            {positionLabel(slot.player.position)}
           </span>
           {slot.poolPlayer &&
             slot.poolPlayer.sample !== 'none' &&

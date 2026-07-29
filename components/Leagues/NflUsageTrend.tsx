@@ -1,5 +1,6 @@
 import { useNflUsage } from './hooks/useNflUsage'
 import type { NflUsageGame } from './types'
+import { positionLabel } from '../../lib/nfl/positionLabel'
 
 const DASH = '—'
 
@@ -280,7 +281,7 @@ export default function NflUsageTrend({ playerId, season, showHeader = true }: P
       {showHeader && (
         <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 px-6 pt-6">
           <span className="text-base font-semibold text-zinc-100">{name}</span>
-          <span className="text-sm text-zinc-500">{position}</span>
+          <span className="text-sm text-zinc-500">{positionLabel(position)}</span>
           <span className="text-sm text-zinc-500">{team}</span>
           <span className="text-xs text-zinc-600">{resolvedSeason}</span>
         </div>

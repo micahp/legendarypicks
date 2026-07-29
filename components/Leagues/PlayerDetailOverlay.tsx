@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import type { PlayerDetailResponse } from './types'
 import { AvailabilityStrip } from './NflDraftRoom'
 import PlayerGameLog from './PlayerGameLog'
+import { positionRankLabel } from '../../lib/nfl/positionLabel'
 
 interface Props {
   playerId: number
@@ -151,7 +152,7 @@ export default function PlayerDetailOverlay({
               </h2>
               <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1">
                 <span className="rounded bg-zinc-800 px-1.5 py-0.5 text-[11px] font-semibold uppercase text-zinc-400">
-                  {posRank != null ? `${player.position}${posRank}` : player.position}
+                  {positionRankLabel(player.position, posRank)}
                 </span>
                 <span className="text-sm text-zinc-400">{player.team}</span>
                 {byeWeek != null && (
@@ -168,7 +169,7 @@ export default function PlayerDetailOverlay({
               </div>
               {posRank != null && (
                 <p className="mt-1 text-[10px] text-zinc-600">
-                  {player.position}{posRank} by ADP — not our ranking
+                  {positionRankLabel(player.position, posRank)} by ADP — not our ranking
                 </p>
               )}
             </header>
@@ -256,12 +257,12 @@ export default function PlayerDetailOverlay({
                 ) : isPk ? (
                   <>
                     <StatRow
-                      label="PK pts total"
+                      label="K pts total"
                       value={player.pk_pts_total}
                       muted={thin}
                     />
                     <StatRow
-                      label="PK pts / game"
+                      label="K pts / game"
                       value={player.pk_pts_per_game}
                       strong
                     />
