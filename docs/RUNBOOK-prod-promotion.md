@@ -32,21 +32,118 @@ failure mode here is shipping code whose data isn't in the prod DB (the empty-DB
    requested.** Update `CHANGELOG.md` + `package.json` version, commit, and push
    `dev`. (Tags `v0.MINOR.PATCH`; v0.x = pre-launch.)
 3. **Tag** the release (`git tag -a vX.Y.Z`) and push the tag.
-4. **Migrate data into the prod DB FIRST** (additive; never clobber live prop tables). Player IDs are
-   ~fully aligned dev↔prod (resolve-by-ID still holds). The proven path:
-   - Run the repository schema migration check first. A create-only table
-     helper is not a migration. Stop if DEV and prod required schemas differ.
-   - `cd backend && python3 migrate_logs_to_prod.py` — backs up `picks.db`, creates `player_game_logs`,
-     copies the missing player rows + all logs (excluding identity-mismatched shared IDs).
+4. **Migrate data into the prod DB FIRST** (never clobber live prop tables).
+   The 2026 NFL draft promotion was rehearsed from a fresh online copy of prod;
+   use this exact order only in an authorized migration window:
+   - Pin and verify the release artifacts before any write. The rehearsed
+     hashes are:
+     - `stats_player_week_2025.parquet`:
+       `afc45559f6385a3f253887f37efcb1124006db799c91a58d8c7151429136f0cc`
+     - `snap_counts_2025.parquet`:
+       `af7b7b38c8ed0c39a46486941eb919b07adcf8ddf5568a3cb403d263bff4968c`
+     - `stats_team_week_2025.parquet`:
+       `3916967bb228efef7b42bab7eec7d8c956cfe5aaf886828c784cc91f061bb3a7`
+     - `games.csv`:
+       `de3ce5e93087fe8b312e014e48ce872a2adf0224ff4f9a207f1c33b31a16b365`
+     - `ep_weekly_2025.parquet`:
+       `b1d0153f01eb56fd7832f220da600150c0f4315b4cbcda38b9a020c7318fcdd4`
+     - `depth_charts_2026.parquet`:
+       `7af2069bf0b1937cb18fe156663b75930bbf90247797b178065a396c236e2ffa`
+     - `ngs_receiving.parquet`:
+       `a7e2cdaa0303d49b6faa7c35c0408cd8c24a206df0ad333399a2cea2889b4ecb`
+     The immutable local bundle is
+     `/root/lp-release-artifacts/nfl-draft-20260728`; verify it before the
+     migration with:
+     ```bash
+     cd /root/lp-release-artifacts/nfl-draft-20260728
+     sha256sum --check MANIFEST.sha256
+     ```
+   - Run the versioned schema gate first. `--check` is read-only and must
+     report only `APPLIED` before the data copy. `--apply` takes and verifies
+     an online backup:
+     ```bash
+     backend/venv/bin/python backend/migrate_schema.py \
+       --db /root/legendarypicks/backend/data/picks.dev.db --apply
+     backend/venv/bin/python backend/migrate_schema.py \
+       --db /root/legendarypicks/backend/data/picks.db --apply
+     ```
+   - Copy only missing NFL logs/players. The preflight names identity
+     mismatches and stable-ID remaps; the apply path names every column,
+     backs up prod online, preserves existing enrichment JSON, and compares
+     count plus content hash for all three protected prop tables:
+     ```bash
+     backend/venv/bin/python backend/migrate_logs_to_prod.py \
+       --source /root/legendarypicks/backend/data/picks.dev.db \
+       --target /root/legendarypicks/backend/data/picks.db \
+       --league nfl --check
+     backend/venv/bin/python backend/migrate_logs_to_prod.py \
+       --source /root/legendarypicks/backend/data/picks.dev.db \
+       --target /root/legendarypicks/backend/data/picks.db \
+       --league nfl --apply
+     ```
+   - Refresh the complete roster first; it applies the canonical team and
+     position vocabulary (`K` becomes `PK`) only after all 32 ESPN rosters
+     are present:
+     ```bash
+     LP_DB_PATH=/root/legendarypicks/backend/data/picks.db \
+       backend/venv/bin/python backend/roster_sync.py nfl
+     ```
+   - Run the publisher-owned ingests against the pinned artifact directory:
+     ```bash
+     LP_DB_PATH=/root/legendarypicks/backend/data/picks.db \
+       backend/venv/bin/python backend/ingest_nfl_weekly_stats.py \
+       --year 2025 --all-positions \
+       --cache-dir /root/lp-release-artifacts/nfl-draft-20260728
+     LP_DB_PATH=/root/legendarypicks/backend/data/picks.db \
+       backend/venv/bin/python backend/ingest_nfl_schedule.py \
+       --season 2025 --schedule-only \
+       --cache-dir /root/lp-release-artifacts/nfl-draft-20260728
+     LP_DB_PATH=/root/legendarypicks/backend/data/picks.db \
+       backend/venv/bin/python backend/ingest_nfl_dst.py \
+       --year 2025 \
+       --cache-dir /root/lp-release-artifacts/nfl-draft-20260728
+     LP_DB_PATH=/root/legendarypicks/backend/data/picks.db \
+       backend/venv/bin/python backend/ingest_nfl_snap_counts.py \
+       --year 2025 \
+       --artifact /root/lp-release-artifacts/nfl-draft-20260728/snap_counts_2025.parquet
+     LP_DB_PATH=/root/legendarypicks/backend/data/picks.db \
+       backend/venv/bin/python backend/ingest_nfl_expected_points.py \
+       --year 2025 \
+       --cache-dir /root/lp-release-artifacts/nfl-draft-20260728
+     LP_DB_PATH=/root/legendarypicks/backend/data/picks.db \
+       backend/venv/bin/python backend/ingest_nfl_depth_charts.py \
+       --year 2026 \
+       --cache-dir /root/lp-release-artifacts/nfl-draft-20260728
+     LP_DB_PATH=/root/legendarypicks/backend/data/picks.db \
+       backend/venv/bin/python backend/ingest_nfl_ngs_receiving.py \
+       --year 2025 \
+       --artifact /root/lp-release-artifacts/nfl-draft-20260728/ngs_receiving.parquet
+     ```
+   - Refresh the current ESPN ADP snapshot only after all 32 D/ST identities
+     exist. The ingest materializes every page and validates all 32 D/ST rows
+     before its single transaction:
+     ```bash
+     LP_DB_PATH=/root/legendarypicks/backend/data/picks.db \
+       backend/venv/bin/python backend/ingest_nfl_adp.py
+     ```
    - `python3 migrate_ufc_rankings_to_prod.py` — validates the complete dev rankings dataset, takes a
      consistent SQLite online backup of
      `picks.db`, then transactionally replaces only `ufc_rankings`. It is safe to re-run and never
      touches props or other production tables.
-   - `LP_DB_PATH=data/picks.db venv/bin/python derive_player_stats.py` — re-derive `player_stats` from
-     the copied logs.
+   - `LP_DB_PATH=/absolute/path/to/picks.db venv/bin/python derive_player_stats.py nfl`
+     — re-derive only NFL `player_stats` from the copied logs. Omitting `nfl`
+     also rewrites NBA and NHL aggregates and is outside an NFL-only promotion.
    - (NBA opponent splits: `backfill_nba_opponent.py` if logs lack `opponent`/`home_away`.)
-   - **Verify**: `player_game_logs` non-empty, `player_stats` current, `props`/`prop_results` UNCHANGED,
-     and `ufc_rankings` contains both P4P groups plus all 11 weight divisions.
+   - **Verify the NFL candidate before deploying code:** `PRAGMA quick_check`
+     is `ok`; 19,399 identity-bearing 2025 NFL logs; 562 rows carry
+     `fg_att`; 20,642 snap rows; 544 D/ST rows; 32 active DEF with published
+     ADP; zero active legacy `K`; Aubrey has 17 games and positive
+     `pk_pts_per_game`; at least 80% PK coverage for kickers with eight games;
+     zero pool/board availability disagreements; zero orphan/duplicate
+     natural keys; pre-existing snap/NGS enrichment unchanged; and
+     `props`, `prop_results`, `prop_games` unchanged by count and content hash.
+     Also verify `player_stats` is current and UFC rankings contain both P4P
+     groups plus all 11 weight divisions.
 5. **Deploy.** The backend container needs the DeepSeek key (it can't read the host's
    `/root/.hermes/.env`), so pass it at up-time — it's never stored in the repo:
    ```
