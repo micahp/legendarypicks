@@ -72,7 +72,7 @@ export default function ResultsScreen({ pool, draftState, referenceSeason }: Pro
     }
   }, [userRoster, playerMap])
 
-  // Field comparison (all 12 teams)
+  // Field comparison — every roster in the league, at whatever size it is.
   const fieldStats = useMemo(() => {
     let fieldMissed = 0
     let fieldPossible = 0
@@ -121,7 +121,7 @@ export default function ResultsScreen({ pool, draftState, referenceSeason }: Pro
           )}
         </h2>
         <p className="mt-2 text-sm text-zinc-500">
-          League-wide, all 12 rosters missed {fieldStats.missed} of{' '}
+          League-wide, all {draftState.teams} rosters missed {fieldStats.missed} of{' '}
           {fieldStats.possible} possible games
           {fieldStats.excluded > 0 && (
             <span> (excluding {fieldStats.excluded} without data)</span>

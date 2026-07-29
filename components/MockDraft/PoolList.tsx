@@ -3,6 +3,8 @@ import type { PoolPlayer } from '../Leagues/types'
 import { AvailabilityStrip } from '../Leagues/NflDraftRoom'
 import PlayerDetailOverlay from '../Leagues/PlayerDetailOverlay'
 import { poolToDraftRow } from '../../lib/mockDraft/api'
+import { LEAGUE_SIZES, ROUNDS, nextTeam } from '../../lib/mockDraft/engine'
+import type { LeagueSize } from '../../lib/mockDraft/engine'
 import {
   HeadlineStat,
   headlineStatFor,
@@ -12,11 +14,29 @@ import {
   expectedPtsTitle,
 } from './DraftRoom'
 
+/** 'random' is a real choice, not the absence of one — a drafter who wants to
+ *  practise from an unknown slot has to be able to say so. */
+export type SeatChoice = number | 'random'
+
 interface Props {
   players: PoolPlayer[]
   /** The season these statistics describe, from the pool payload. */
   referenceSeason?: number | null
+  teams: LeagueSize
+  onSetTeams: (teams: LeagueSize) => void
+  seat: SeatChoice
+  onSetSeat: (seat: SeatChoice) => void
   onStartDraft: () => void
+}
+
+/** The first few pick numbers a seat owns, so the slot choice is concrete
+ *  before the draft starts rather than a number with no consequence. */
+function firstPicksForSeat(seat: number, teams: number, howMany = 4): number[] {
+  const picks: number[] = []
+  for (let p = 1; p <= teams * ROUNDS && picks.length < howMany; p++) {
+    if (nextTeam(p, teams) === seat) picks.push(p)
+  }
+  return picks
 }
 
 /**
@@ -28,7 +48,15 @@ interface Props {
  *   - PK → "Kicker games not tracked" (our gap, not theirs)
  *   - all else → "Rookie — no NFL sample" (grey, not accent, not zero)
  */
-export default function PoolList({ players, referenceSeason, onStartDraft }: Props) {
+export default function PoolList({
+  players,
+  referenceSeason,
+  teams,
+  onSetTeams,
+  seat,
+  onSetSeat,
+  onStartDraft,
+}: Props) {
   // The pool screen is where someone researches *before* committing to a draft.
   // Until now the only interactive element here was "Start Draft", so the
   // research card was reachable only from inside a draft -- a research surface
@@ -74,16 +102,93 @@ export default function PoolList({ players, referenceSeason, onStartDraft }: Pro
             Mock Draft Pool
           </h3>
           <p className="text-sm text-zinc-500 mt-0.5">
-            {players.length} players · 12 teams · 15 rounds · PPR
+            {players.length} players · {teams} teams · {ROUNDS} rounds · PPR
           </p>
         </div>
-        <button
-          type="button"
-          onClick={onStartDraft}
-          className="rounded-lg border border-zinc-700 bg-zinc-800 px-5 py-2.5 text-sm font-semibold text-zinc-200 transition-colors hover:border-zinc-600 hover:bg-zinc-700"
-        >
-          Start Draft
-        </button>
+      </div>
+
+      {/* ── Draft setup ──
+          League size and slot were both decided for the drafter: teams was a
+          literal 12 in the INSERT and the seat was Math.random(). Neither is a
+          detail — a 10-team draft is a different board from a 14-team one, and
+          practising from the turn is a different exercise from practising from
+          pick 1. */}
+      <div
+        className="rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-3.5"
+        data-testid="draft-setup"
+      >
+        <div className="flex flex-wrap items-end gap-x-8 gap-y-4">
+          <div>
+            <label
+              className="block text-[11px] font-semibold uppercase tracking-wider text-zinc-500"
+              id="league-size-label"
+            >
+              League size
+            </label>
+            <div
+              className="mt-1.5 flex items-center gap-1.5"
+              role="radiogroup"
+              aria-labelledby="league-size-label"
+            >
+              {LEAGUE_SIZES.map(size => (
+                <button
+                  key={size}
+                  type="button"
+                  role="radio"
+                  aria-checked={teams === size}
+                  onClick={() => onSetTeams(size)}
+                  className={`rounded-md border px-3 py-1 text-sm font-semibold tabular-nums transition-colors ${
+                    teams === size
+                      ? 'border-zinc-500 bg-zinc-700 text-zinc-100'
+                      : 'border-zinc-800 bg-zinc-900 text-zinc-500 hover:border-zinc-700 hover:text-zinc-300'
+                  }`}
+                >
+                  {size}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label
+              htmlFor="draft-slot"
+              className="block text-[11px] font-semibold uppercase tracking-wider text-zinc-500"
+            >
+              Your draft slot
+            </label>
+            <select
+              id="draft-slot"
+              value={seat === 'random' ? 'random' : String(seat)}
+              onChange={e =>
+                onSetSeat(e.target.value === 'random' ? 'random' : Number(e.target.value))
+              }
+              className="mt-1.5 rounded-md border border-zinc-800 bg-zinc-900 px-2.5 py-1.5 text-sm font-medium tabular-nums text-zinc-300 focus:border-zinc-600 focus:outline-none"
+            >
+              <option value="random">Random</option>
+              {Array.from({ length: teams }, (_, i) => i + 1).map(n => (
+                <option key={n} value={n}>
+                  Pick {n}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* What the slot actually buys you. Grey, because it is a consequence
+              of the choice, not a rating of it. */}
+          <p className="text-xs text-zinc-600 tabular-nums pb-1.5">
+            {seat === 'random'
+              ? `A slot from 1 to ${teams}, drawn when the draft starts.`
+              : `Your first picks: ${firstPicksForSeat(seat, teams).join(', ')}…`}
+          </p>
+
+          <button
+            type="button"
+            onClick={onStartDraft}
+            className="ml-auto rounded-lg border border-zinc-700 bg-zinc-800 px-5 py-2.5 text-sm font-semibold text-zinc-200 transition-colors hover:border-zinc-600 hover:bg-zinc-700"
+          >
+            Start Draft
+          </button>
+        </div>
       </div>
 
       {/* Player pool table. Carries the same headline stat as the draft room so

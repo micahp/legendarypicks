@@ -45,6 +45,15 @@ _POOL_CAP = 300
 # Draftable positions: skill positions, kickers, and team defenses.
 _DRAFT_POSITIONS = ("QB", "RB", "WR", "TE", "PK", "DEF")
 
+# The league sizes we offer. 11 and 16 are real formats we deliberately do not
+# support: the bot roster ceilings and the 15-round roster construction are
+# sized for these three, and a size the engine was never built for would draft a
+# board we cannot stand behind. 12 stays the default so drafts created before
+# league size existed keep round-tripping.
+_LEAGUE_SIZES = frozenset({10, 12, 14})
+_DEFAULT_TEAMS = 12
+_ROUNDS = 15
+
 
 # ---------------------------------------------------------------------------
 #  Helpers
@@ -430,7 +439,12 @@ def pool(season: int = Query(...)):
 async def create_draft(request: Request, x_device_id: Optional[str] = Header(None)):
     """Create a new mock draft.  Returns the draft id.
 
-    Body: {season, seat, seed}.  X-Device-Id required.
+    Body: {season, seat, seed, teams?}.  X-Device-Id required.
+
+    ``teams`` is optional and defaults to 12, because every draft created before
+    league size existed was a 12-team draft and has to keep round-tripping.
+    ``seat`` is bounded by the league, not by the old literal 12 -- seat 13 is a
+    real seat in a 14-team draft and a nonexistent one in a 12-team draft.
     """
     device_id = _device_id(x_device_id)
     if not device_id:
@@ -446,12 +460,19 @@ async def create_draft(request: Request, x_device_id: Optional[str] = Header(Non
     season = data.get("season")
     seat = data.get("seat")
     seed = data.get("seed")
+    teams = data.get("teams", _DEFAULT_TEAMS)
 
     if not isinstance(season, int) or season != _CURRENT_SEASON:
         return _json({"error": f"season must be {_CURRENT_SEASON}"}, status=400)
-    if not isinstance(seat, int) or seat < 1 or seat > 12:
-        return _json({"error": "seat must be 1..12"}, status=400)
-    if not isinstance(seed, int):
+    # bool is a subclass of int, so True would otherwise pass as the number 1
+    # and create a one-team draft.
+    if isinstance(teams, bool) or not isinstance(teams, int) or teams not in _LEAGUE_SIZES:
+        return _json(
+            {"error": f"teams must be one of {sorted(_LEAGUE_SIZES)}"}, status=400
+        )
+    if isinstance(seat, bool) or not isinstance(seat, int) or seat < 1 or seat > teams:
+        return _json({"error": f"seat must be 1..{teams}"}, status=400)
+    if isinstance(seed, bool) or not isinstance(seed, int):
         return _json({"error": "seed must be an integer"}, status=400)
 
     now = int(time.time() * 1000)
@@ -463,8 +484,8 @@ async def create_draft(request: Request, x_device_id: Optional[str] = Header(Non
             """INSERT INTO nfl_mock_drafts
                (id, device_id, season, seat, teams, rounds, seed, status,
                 created_at, updated_at)
-               VALUES (?, ?, ?, ?, 12, 15, ?, 'active', ?, ?)""",
-            (draft_id, device_id, season, seat, seed, now, now),
+               VALUES (?, ?, ?, ?, ?, ?, ?, 'active', ?, ?)""",
+            (draft_id, device_id, season, seat, teams, _ROUNDS, seed, now, now),
         )
         connection.commit()
     finally:

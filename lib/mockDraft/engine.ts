@@ -11,8 +11,8 @@ export interface DraftPlayer {
 }
 
 export interface DraftPick {
-  pick_no: number   // 1..180 absolute
-  team_no: number   // 1..12
+  pick_no: number   // 1..(teams x rounds) absolute
+  team_no: number   // 1..teams
   player_id: number
   auto: boolean     // bot pick or timeout autopick
 }
@@ -36,16 +36,24 @@ export interface RosterState {
 
 export interface DraftState {
   id: string
-  seat: number       // 1..12, which team the user controls
-  teams: number      // 12
+  seat: number       // 1..teams, which team the user controls
+  teams: number      // 10, 12 or 14
   rounds: number     // 15
   playerPool: DraftPlayer[]  // full reference pool
   availablePool: DraftPlayer[] // subset not yet picked, sorted by ADP
   picks: DraftPick[]
   completed: boolean
-  currentPick: number  // next pick_no to be made (1..180)
+  currentPick: number  // next pick_no to be made (1..teams x rounds)
   seed: number
 }
+
+/** The league sizes the mock draft offers. Must match the backend's
+ *  _LEAGUE_SIZES — a size the server rejects would create a draft on screen
+ *  that no row exists for. */
+export const LEAGUE_SIZES = [10, 12, 14] as const
+export type LeagueSize = typeof LEAGUE_SIZES[number]
+export const DEFAULT_TEAMS: LeagueSize = 12
+export const ROUNDS = 15
 
 // ── Position limits for bots (bench-inclusive ceilings) ──
 const POSITION_MAX: Record<string, number> = {
@@ -82,7 +90,7 @@ export function seededRandom(seed: number): () => number {
 }
 
 // ── Snake order ──
-//   Round 1: 1..12  →  Round 2: 12..1  →  Round 3: 1..12  …
+//   Round 1: 1..N  →  Round 2: N..1  →  Round 3: 1..N  …  at any league width
 export function nextTeam(pickNo: number, teams: number): number {
   const round = Math.ceil(pickNo / teams)
   const posInRound = (pickNo - 1) % teams
@@ -267,6 +275,11 @@ export function createDraft(
   seat: number,
   playerPool: DraftPlayer[],
   seed: number,
+  // Optional so every pre-league-size caller keeps its 12-team draft. The rest
+  // of the engine already reads state.teams -- nextTeam, userNextPick, applyPick
+  // and botPick's round arithmetic all take it as a parameter -- so this literal
+  // was the only thing pinning the whole engine to 12.
+  teams: number = DEFAULT_TEAMS,
 ): DraftState {
   // availablePool is sorted by ADP ascending (lowest ADP = best, picked first).
   //   D/ST players have null ADP — sort them after all numeric ADPs.
@@ -279,8 +292,8 @@ export function createDraft(
   return {
     id,
     seat,
-    teams: 12,
-    rounds: 15,
+    teams,
+    rounds: ROUNDS,
     playerPool,
     availablePool: sorted,
     picks: [],

@@ -9,7 +9,10 @@ import {
   isUserPick,
   isComplete,
   seededRandom,
+  DEFAULT_TEAMS,
 } from '../lib/mockDraft/engine'
+import type { LeagueSize } from '../lib/mockDraft/engine'
+import type { SeatChoice } from '../components/MockDraft/PoolList'
 import {
   fetchPool,
   createDraft as apiCreateDraft,
@@ -39,6 +42,20 @@ export default function MockDraftPage() {
   const [draftId, setDraftId] = useState<string | null>(null)
   const [userPicking, setUserPicking] = useState(false)
   const [creating, setCreating] = useState(false)
+
+  // ── Draft setup ──
+  //   Both of these used to be decided without asking: teams was a literal 12
+  //   in the server's INSERT, and the seat was Math.random() at Start Draft.
+  const [teams, setTeams] = useState<LeagueSize>(DEFAULT_TEAMS)
+  const [seatChoice, setSeatChoice] = useState<SeatChoice>('random')
+
+  // Shrinking the league can strand a chosen slot outside it — pick 13 in a
+  // 10-team draft. Fall back to random rather than silently reassigning them to
+  // a seat they did not choose, or sending the server a seat it will reject.
+  const handleSetTeams = useCallback((next: LeagueSize) => {
+    setTeams(next)
+    setSeatChoice(prev => (prev !== 'random' && prev > next ? 'random' : prev))
+  }, [])
 
   // ── Queue state ──
   const [queue, setQueue] = useState<number[]>([])
@@ -136,11 +153,12 @@ export default function MockDraftPage() {
     setCreating(true)
 
     try {
-      const seat = Math.floor(Math.random() * 12) + 1
+      const seat =
+        seatChoice === 'random' ? Math.floor(Math.random() * teams) + 1 : seatChoice
       const seed = Date.now()
       rngRef.current = seededRandom(seed)
 
-      const { id } = await apiCreateDraft(2026, seat, seed)
+      const { id } = await apiCreateDraft(2026, seat, seed, teams)
       setDraftId(id)
 
       // Build engine pool from PoolPlayer
@@ -160,7 +178,7 @@ export default function MockDraftPage() {
         adp: p.adp,
       }))
 
-      const state = engineCreateDraft(id, seat, enginePlayers, seed)
+      const state = engineCreateDraft(id, seat, enginePlayers, seed, teams)
       setDraftState(state)
 
       // If user isn't first pick, autopick bot picks leading up to user's turn
@@ -184,7 +202,7 @@ export default function MockDraftPage() {
     } finally {
       setCreating(false)
     }
-  }, [pool, savePicks])
+  }, [pool, savePicks, teams, seatChoice])
 
   // ── Queue handlers ──
   const handleAddToQueue = useCallback((playerId: number) => {
@@ -308,6 +326,10 @@ export default function MockDraftPage() {
           <PoolList
             players={pool}
             referenceSeason={referenceSeason}
+            teams={teams}
+            onSetTeams={handleSetTeams}
+            seat={seatChoice}
+            onSetSeat={setSeatChoice}
             onStartDraft={handleStartDraft}
           />
         </>
