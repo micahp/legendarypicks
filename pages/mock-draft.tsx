@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import type { PoolPlayer } from '../components/Leagues/types'
 import type { DraftState, DraftPlayer as EngineDraftPlayer } from '../lib/mockDraft/engine'
 import {
@@ -275,17 +275,30 @@ export default function MockDraftPage() {
     [commitPick],
   )
 
-  // ── Clock expired — pick for the user rather than stalling the draft ──
+  // ── What the clock would take at 0:00 ──
   //   Queue first (that is what the queue is for), else the engine's best
   //   available with zero jitter, per the autopick contract in engine.ts.
-  const handleTimeout = useCallback(() => {
-    if (!draftState || !isUserPick(draftState) || isComplete(draftState)) return
+  //
+  //   This is computed once and used twice: the draft room's header says "your
+  //   auto pick would be X" from it, and the timeout below drafts it. Computing
+  //   it separately in each place is how a header ends up naming a player the
+  //   clock does not take — a promise the product breaks thirty seconds later.
+  const autoPick = useMemo(() => {
+    if (!draftState || !isUserPick(draftState) || isComplete(draftState)) return null
     const queued = queue.find(id =>
       draftState.availablePool.some(p => p.player_id === id),
     )
-    const playerId = queued ?? botPick(draftState, ZERO_JITTER).player_id
-    void commitPick(playerId, true)
-  }, [draftState, queue, commitPick])
+    if (queued != null) {
+      return draftState.availablePool.find(p => p.player_id === queued) ?? null
+    }
+    return botPick(draftState, ZERO_JITTER)
+  }, [draftState, queue])
+
+  const handleTimeout = useCallback(() => {
+    if (!draftState || !isUserPick(draftState) || isComplete(draftState)) return
+    if (!autoPick) return
+    void commitPick(autoPick.player_id, true)
+  }, [draftState, autoPick, commitPick])
 
   // ── Loading / error states ──
   if (poolLoading) {
@@ -343,6 +356,7 @@ export default function MockDraftPage() {
           onUserPick={handleUserPick}
           onTimeout={handleTimeout}
           userPicking={userPicking}
+          autoPick={autoPick}
           queue={queue}
           onAddToQueue={handleAddToQueue}
           onRemoveFromQueue={handleRemoveFromQueue}

@@ -2,15 +2,17 @@ import { useMemo, useState, useEffect, useRef } from 'react'
 import type { PoolPlayer } from '../Leagues/types'
 import PlayerDetailOverlay from '../Leagues/PlayerDetailOverlay'
 import type { DraftState, DraftPlayer } from '../../lib/mockDraft/engine'
-import {
-  currentDrafter,
-  isUserPick,
-  getRosterState,
-  userNextPick,
-} from '../../lib/mockDraft/engine'
-import { poolTeamGames } from '../../lib/mockDraft/availability'
-import { AvailabilityStrip } from '../Leagues/NflDraftRoom'
-import { positionLabel, positionRankLabel } from '../../lib/nfl/positionLabel'
+import { isUserPick, getRosterState, userNextPick, nextTeam } from '../../lib/mockDraft/engine'
+import { orderPositions } from '../../lib/nfl/positionLabel'
+import { headlineStatFor } from './columns'
+import { buildRosterSlots } from './roster'
+import { sortOptions, sortPool, DEFAULT_SORT, type SortKey } from './sort'
+import DraftHeader from './DraftHeader'
+import DraftTabs, { type DraftTabId } from './DraftTabs'
+import PlayersTab, { type PoolRow } from './PlayersTab'
+import QueueTab from './QueueTab'
+import BoardTab from './BoardTab'
+import RostersTab from './RostersTab'
 
 interface ScheduleTeam {
   team: string
@@ -26,6 +28,9 @@ interface Props {
   onUserPick: (playerId: number) => void
   onTimeout: () => void
   userPicking: boolean
+  /** Exactly the player onTimeout will take at 0:00 — passed in rather than
+   *  recomputed, so the header cannot promise one player and deliver another. */
+  autoPick: DraftPlayer | null
   queue: number[]
   onAddToQueue: (playerId: number) => void
   onRemoveFromQueue: (playerId: number) => void
@@ -37,26 +42,39 @@ interface Props {
 // apiCreateDraft(2026, ...) — bye weeks must come from the same season as the draft.
 const DRAFT_SEASON = 2026
 
-const PICK_LEDGER_LIMIT = 15
-// 15-man roster: QB RB1 RB2 WR1 WR2 TE FLEX K DEF = 9 starters, rest bench.
-const BENCH_SLOTS = 6
+const CLOCK_SECONDS = 30
+
+// How many of your upcoming picks get a rule drawn in the list. Four is two
+// snake turns ahead: enough to plan a round, few enough that the deeper ones do
+// not pile up at the bottom of the pool where they would say nothing.
+const DIVIDER_LOOKAHEAD = 4
 
 /**
- * Main draft UI — pool on left, roster + ledger on right.
+ * The draft room shell.
  *
- * Design rules (honest-data-ui §6.2):
- *   - Accent (amber) marks absence only — never on clock, your pick, drafted row.
+ * It owns three things and delegates the rest: the clock, the pool derivation
+ * (filter → sort → your-pick rules), and which tab is open. Everything that
+ * renders lives in DraftHeader / PlayersTab / QueueTab / BoardTab / RostersTab.
+ * This file was 1,053 lines with all of that inline, which is the same shape of
+ * file in which a draft board ended up wired to a hook that was never called
+ * while eight green gates said nothing.
+ *
+ * Design rules (honest-data-ui §5, §6.2):
+ *   - Accent (amber) marks absence only — never on the clock, your pick, or a
+ *     drafted row.
  *   - On the clock: weight + position + rule. NOT colour.
- *   - Your picks: left rule or fill one step lighter.
- *   - Drafted: dim + strike.
  *   - Clock: tabular figures, may change weight under 10s, never red.
  */
-export default function DraftRoom({ pool, referenceSeason, draftState, onUserPick, onTimeout, userPicking, queue, onAddToQueue, onRemoveFromQueue, onMoveQueueUp, onMoveQueueDown }: Props) {
-  // ── Filter state ──
+export default function DraftRoom({
+  pool, referenceSeason, draftState, onUserPick, onTimeout, userPicking, autoPick,
+  queue, onAddToQueue, onRemoveFromQueue, onMoveQueueUp, onMoveQueueDown,
+}: Props) {
+  const [tab, setTab] = useState<DraftTabId>('players')
   const [selectedPlayerId, setSelectedPlayerId] = useState<number | null>(null)
   const [posFilter, setPosFilter] = useState<string>('ALL')
   const [teamFilter, setTeamFilter] = useState<string>('ALL')
   const [byeFilter, setByeFilter] = useState<string>('ALL')
+  const [sortKey, setSortKey] = useState<SortKey>(DEFAULT_SORT)
   const [schedule, setSchedule] = useState<ScheduleTeam[] | null>(null)
 
   // Fetch the schedule for bye weeks. This MUST be the season being drafted, not
@@ -72,21 +90,21 @@ export default function DraftRoom({ pool, referenceSeason, draftState, onUserPic
     return () => { cancelled = true }
   }, [])
 
-  // ── Filter options derived from pool + schedule ──
+  // ── Filter options ──
+  // Authored order, from the shared constant. Deriving this with `.sort()` is
+  // what put D/ST and K ahead of the quarterback.
   const posOptions = useMemo(
-    () => ['ALL', ...Array.from(new Set(pool.map(p => p.position).sort()))],
+    () => ['ALL', ...orderPositions(pool.map(p => p.position))],
     [pool],
   )
   const teamOptions = useMemo(
-    () => ['ALL', ...Array.from(new Set(pool.map(p => p.team).sort()))],
+    () => ['ALL', ...Array.from(new Set(pool.map(p => p.team))).sort()],
     [pool],
   )
 
-  // Bye → team lookup map
   const byeMap = useMemo(() => {
-    if (!schedule) return new Map<string, number | null>()
     const m = new Map<string, number | null>()
-    for (const t of schedule) m.set(t.team, t.bye_week)
+    for (const t of (schedule ?? [])) m.set(t.team, t.bye_week)
     return m
   }, [schedule])
 
@@ -96,7 +114,6 @@ export default function DraftRoom({ pool, referenceSeason, draftState, onUserPic
     return ['ALL', ...Array.from(weeks).sort((a, b) => a - b).map(String)]
   }, [schedule])
 
-  // Build a lookup from player_id → PoolPlayer for O(1) resolution
   const playerMap = useMemo(() => {
     const m = new Map<number, PoolPlayer>()
     for (const p of pool) m.set(p.player_id, p)
@@ -125,7 +142,6 @@ export default function DraftRoom({ pool, referenceSeason, draftState, onUserPic
     return m
   }, [pool])
 
-  // Which players have been drafted
   const draftedIds = useMemo(() => {
     const s = new Set<number>()
     for (const pick of draftState.picks) s.add(pick.player_id)
@@ -133,11 +149,11 @@ export default function DraftRoom({ pool, referenceSeason, draftState, onUserPic
   }, [draftState.picks])
 
   // availablePool is ALREADY sorted by createDraft (numeric ADP ascending, null ADP
-  // last) and applyPick filters, which preserves that order. Do not re-sort here: a
-  // naive `a.adp - b.adp` coerces null to 0 and floats all 32 D/ST above pick 1.
+  // last) and applyPick filters, which preserves that order. Every other order goes
+  // through sortPool, which keeps nulls last in both directions — a naive
+  // `a.adp - b.adp` coerces null to 0 and floats all 32 D/ST above pick 1.
   const availablePool = draftState.availablePool
 
-  // Apply filters to available pool
   const filteredPool = useMemo(() => {
     return availablePool.filter(dp => {
       if (posFilter !== 'ALL' && dp.position !== posFilter) return false
@@ -150,26 +166,89 @@ export default function DraftRoom({ pool, referenceSeason, draftState, onUserPic
     })
   }, [availablePool, posFilter, teamFilter, byeFilter, byeMap])
 
-  // User's roster state
-  const userRoster = useMemo(
-    () => getRosterState(draftState, draftState.seat),
-    [draftState],
+  const sortedPool = useMemo(
+    () => (sortKey === DEFAULT_SORT
+      ? filteredPool
+      : sortPool(filteredPool, sortKey, { playerMap, byeMap })),
+    [filteredPool, sortKey, playerMap, byeMap],
   )
 
-  const headlineStat = headlineStatFor(posFilter, referenceSeason)
-
   const userTurn = isUserPick(draftState)
-  const nextPick = userNextPick(draftState)
-  const drafter = currentDrafter(draftState)
-  const round = Math.ceil(draftState.currentPick / draftState.teams)
+  // Your turn is not the same as being able to pick. Between your click and the
+  // state that comes back, commitPick has already taken your pick and is running
+  // every bot up to your next turn — and through all of it draftState still says
+  // it is your turn. A Draft button left live in that window applies a second
+  // pick against a stale state. `userPicking` is the client's own "I am accepting
+  // a pick" flag, and it is the honest one to render against.
+  const onClock = userTurn && userPicking && !draftState.completed
 
-  // ── Clock: 30s countdown when user is on the clock ──
-  const CLOCK_SECONDS = 30
+  // ── Your upcoming picks, and the rules drawn where ADP expects them ──
+  // Purely derived from userNextPick + ADP, so it is honest exactly as long as it
+  // is labelled an ADP expectation rather than a promise — which the row says.
+  const upcomingPicks = useMemo(() => {
+    if (draftState.completed) return []
+    const total = draftState.teams * draftState.rounds
+    const out: number[] = []
+    for (let p = draftState.currentPick; p <= total && out.length < DIVIDER_LOOKAHEAD; p++) {
+      if (nextTeam(p, draftState.teams) === draftState.seat) out.push(p)
+    }
+    return out
+  }, [
+    draftState.currentPick, draftState.teams, draftState.rounds,
+    draftState.seat, draftState.completed,
+  ])
+
+  const rows = useMemo<PoolRow[]>(() => {
+    // The rules mark where ADP says your turn falls. Under any other sort the
+    // list is no longer in ADP order, so the same rule would be pointing at
+    // nothing — it is dropped rather than left to mislead.
+    if (sortKey !== 'adp') return sortedPool.map(dp => ({ kind: 'player', dp }))
+
+    const divider = (pickNo: number): PoolRow => ({
+      kind: 'divider',
+      pickNo,
+      round: Math.ceil(pickNo / draftState.teams),
+      inRound: ((pickNo - 1) % draftState.teams) + 1,
+    })
+
+    const out: PoolRow[] = []
+    const pending = [...upcomingPicks]
+    for (const dp of sortedPool) {
+      // A null ADP is "no published expectation". It sorts last, so it is below
+      // every one of your remaining picks by construction.
+      while (pending.length > 0 && (dp.adp == null || dp.adp >= pending[0])) {
+        out.push(divider(pending.shift() as number))
+      }
+      out.push({ kind: 'player', dp })
+    }
+    for (const p of pending) out.push(divider(p))
+    return out
+  }, [sortedPool, sortKey, upcomingPicks, draftState.teams])
+
+  const userRoster = useMemo(() => getRosterState(draftState, draftState.seat), [draftState])
+  const rosterSlots = useMemo(
+    () => buildRosterSlots(userRoster.players, playerMap),
+    [userRoster, playerMap],
+  )
+  const openStarters = rosterSlots.filter(s => s.isStarter && !s.player).length
+
+  const queuePlayers = useMemo(() => {
+    const lookup = new Map(draftState.playerPool.map(p => [p.player_id, p]))
+    return queue
+      .map(id => lookup.get(id))
+      .filter((p): p is DraftPlayer => p != null && !draftedIds.has(p.player_id))
+  }, [queue, draftState.playerPool, draftedIds])
+
+  // ── Clock ──
   // The countdown carries the pick it belongs to. On the render where a new turn
   // begins, `seconds` still holds the *previous* turn's value — pairing the two in one
   // state object means a stale 0 can never be read as this turn's expiry. In a snake
   // draft the user can pick twice in a row (e.g. 22 then 27), and `userTurn` does not
   // change across those, so neither a boolean guard nor `currentPick` alone is enough.
+  //
+  // It lives here, above the tabs, and not inside PlayersTab: an effect that unmounts
+  // with a tab is an effect that restarts at 0:30 every time you glance at the board,
+  // which is a clock that never expires.
   const [clock, setClock] = useState({ pick: draftState.currentPick, seconds: CLOCK_SECONDS })
   const clockRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
@@ -210,844 +289,106 @@ export default function DraftRoom({ pool, referenceSeason, draftState, onUserPic
     }
   }, [clock, draftState.currentPick, userTurn, userPicking, draftState.completed, onTimeout])
 
-  // Sort user's players into slot order
-  const rosterSlots = useMemo(() => buildRosterSlots(userRoster.players, playerMap), [userRoster, playerMap])
-
-  // Recent picks for the ledger
-  const recentPicks = useMemo(() => {
-    const all = [...draftState.picks].reverse().slice(0, PICK_LEDGER_LIMIT).reverse()
-    return all
-  }, [draftState.picks])
-
-  // Resolve queue IDs → DraftPlayer objects (only those still available)
-  const queuePlayers = useMemo(() => {
-    const playerLookup = new Map(draftState.playerPool.map(p => [p.player_id, p]))
-    return queue
-      .map(id => playerLookup.get(id))
-      .filter((p): p is DraftPlayer => p != null && !draftedIds.has(p.player_id))
-  }, [queue, draftState.playerPool, draftedIds])
+  const headlineStat = headlineStatFor(posFilter, referenceSeason)
 
   return (
     <>
-    <section className="space-y-4">
-      {/* Status bar — weight + position + rule, NO colour */}
-      <div className="flex items-center gap-3 rounded-lg border border-zinc-800 bg-zinc-900 px-4 py-3">
-        <div className="flex items-baseline gap-2">
-          <span className="text-sm font-semibold text-zinc-300">
-            Round {round}
-          </span>
-          <span className="text-xs text-zinc-500">·</span>
-          <span className="text-sm text-zinc-400">
-            Pick {draftState.currentPick} of {draftState.teams * draftState.rounds}
-          </span>
-        </div>
-        <div className="ml-auto flex items-center gap-2">
-          {draftState.completed ? (
-            <span className="text-sm font-semibold text-zinc-300">Draft complete</span>
-          ) : userTurn ? (
-            <>
-              <span className="text-sm font-semibold text-zinc-200">
-                Your pick — Pick {draftState.currentPick}
-              </span>
-              <span className="text-xs text-zinc-500">·</span>
-              <span
-                className={`font-mono tabular-nums text-sm ${
-                  clock.seconds <= 10 ? 'font-bold text-zinc-200' : 'font-medium text-zinc-400'
-                }`}
-              >
-                0:{clock.seconds.toString().padStart(2, '0')}
-              </span>
-            </>
-          ) : (
-            <>
-              <span className="text-sm text-zinc-400">
-                Team {drafter} picking
-              </span>
-              <span className="text-xs text-zinc-500">·</span>
-              <span className="text-sm text-zinc-400 tabular-nums">
-                Your next: #{nextPick}
-              </span>
-            </>
-          )}
-        </div>
-      </div>
+      <section className="space-y-3">
+        <DraftHeader
+          draftState={draftState}
+          clockSeconds={userTurn ? clock.seconds : null}
+          onClock={onClock}
+          autoPick={autoPick}
+        />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* ── Pool (left 2/3) ── */}
-        <div className="lg:col-span-2 space-y-3">
-          <div className="flex items-center justify-between">
-            <h4 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider">
-              Player Pool
-            </h4>
-            <span className="text-xs text-zinc-600 tabular-nums">
-              {filteredPool.length} of {availablePool.length} available · {draftedIds.size} drafted
-            </span>
-          </div>
+        <DraftTabs value={tab} onChange={setTab} queueCount={queuePlayers.length} />
 
-          {/* ── Filter bar ── */}
-          <div className="flex flex-wrap items-center gap-2">
-            {/* Position pills */}
-            <div className="flex items-center gap-1" role="radiogroup" aria-label="Filter by position">
-              {posOptions.map(pos => (
-                <button
-                  key={pos}
-                  type="button"
-                  role="radio"
-                  aria-checked={posFilter === pos}
-                  onClick={() => setPosFilter(pos)}
-                  className={`rounded-md border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide transition-colors ${
-                    posFilter === pos
-                      ? 'border-zinc-500 bg-zinc-700 text-zinc-200'
-                      : 'border-zinc-800 bg-zinc-900 text-zinc-500 hover:border-zinc-700 hover:text-zinc-400'
-                  }`}
-                >
-                  {pos === 'ALL' ? 'All' : positionLabel(pos)}
-                </button>
-              ))}
-            </div>
-
-            <span className="text-zinc-700">|</span>
-
-            {/* Team dropdown */}
-            <select
-              value={teamFilter}
-              onChange={e => setTeamFilter(e.target.value)}
-              className="rounded-md border border-zinc-800 bg-zinc-900 px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide text-zinc-400 focus:border-zinc-600 focus:outline-none"
-              aria-label="Filter by team"
-            >
-              {teamOptions.map(t => (
-                <option key={t} value={t}>{t === 'ALL' ? 'All Teams' : t}</option>
-              ))}
-            </select>
-
-            {/* Bye week dropdown */}
-            <select
-              value={byeFilter}
-              onChange={e => setByeFilter(e.target.value)}
-              disabled={!schedule}
-              className={`rounded-md border border-zinc-800 bg-zinc-900 px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide focus:border-zinc-600 focus:outline-none ${
-                schedule ? 'text-zinc-400' : 'text-zinc-700 cursor-not-allowed'
-              }`}
-              aria-label="Filter by bye week"
-            >
-              <option value="ALL">{schedule ? 'Bye Week' : 'Bye (loading…)'}</option>
-              {byeOptions.filter(b => b !== 'ALL').map(b => (
-                <option key={b} value={b}>Week {b}</option>
-              ))}
-            </select>
-
-            {/* Clear filters */}
-            {(posFilter !== 'ALL' || teamFilter !== 'ALL' || byeFilter !== 'ALL') && (
-              <button
-                type="button"
-                onClick={() => { setPosFilter('ALL'); setTeamFilter('ALL'); setByeFilter('ALL') }}
-                className="rounded-md border border-zinc-800 px-2 py-0.5 text-[10px] font-medium text-zinc-500 transition-colors hover:border-zinc-600 hover:text-zinc-300"
-              >
-                Clear
-              </button>
-            )}
-          </div>
-
-          <div className="overflow-y-auto max-h-[calc(100vh-300px)] rounded-xl border border-zinc-800 bg-zinc-900">
-            <table className="w-full text-sm">
-              <thead className="sticky top-0 z-10 bg-zinc-900">
-                <tr className="border-b border-zinc-800 text-zinc-500 text-[11px] uppercase tracking-wider">
-                  <th className="text-left py-2.5 pl-3 pr-2 w-10">#</th>
-                  <th className="text-left py-2.5 px-2">Player</th>
-                  <th className="text-center py-2.5 px-2 w-12">Pos</th>
-                  <th className="text-left py-2.5 px-2 min-w-[8rem]">Available</th>
-                  <th className="text-right py-2.5 px-2 w-14" title={headlineStat.title}>
-                    {headlineStat.header}
-                  </th>
-                  <th
-                    className="text-right py-2.5 px-2 w-16"
-                    title={expectedPtsTitle(referenceSeason)}
-                  >
-                    {EXPECTED_PTS_HEADER}
-                  </th>
-                  <th className="text-right py-2.5 px-2 w-12">Bye</th>
-                  <th className="text-right py-2.5 px-2 w-16">ADP</th>
-                  <th className="w-16" />
-                </tr>
-              </thead>
-              <tbody>
-                {filteredPool.map((dp, i) => {
-                  const poolPlayer = playerMap.get(dp.player_id)
-                  if (!poolPlayer) return null
-                  const drafted = draftedIds.has(dp.player_id)
-                  return (
-                    <tr
-                      key={dp.player_id}
-                      onClick={() => setSelectedPlayerId(dp.player_id)}
-                      className={`border-b border-zinc-800/40 transition-colors cursor-pointer hover:bg-zinc-800/30 ${
-                        drafted
-                          ? 'opacity-30 line-through'
-                          : ''
-                      }`}
-                    >
-                      <td className="py-2 pl-3 pr-2 text-zinc-500 text-xs tabular-nums">
-                        {i + 1}
-                      </td>
-                      <td className="py-2 px-2">
-                        <span className={`font-medium ${drafted ? 'text-zinc-600' : 'text-zinc-200'}`}>
-                          {dp.name}
-                        </span>
-                        <div className="text-[10px] text-zinc-600">
-                          {dp.team}
-                          {posRank.has(dp.player_id) && (
-                            <>
-                              {' · '}
-                              <span className="tabular-nums">
-                                {positionRankLabel(dp.position, posRank.get(dp.player_id))}
-                              </span>
-                            </>
-                          )}
-                        </div>
-                      </td>
-                      <td className="py-2 px-2 text-center">
-                        <span className="rounded bg-zinc-800 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-zinc-400">
-                          {positionLabel(dp.position)}
-                        </span>
-                      </td>
-                      <td className="py-2 px-2">
-                        <PoolAvailability poolPlayer={poolPlayer} referenceSeason={referenceSeason} />
-                      </td>
-                      <td className="py-2 px-2 text-right font-mono tabular-nums text-xs text-zinc-300">
-                        <HeadlineStat player={poolPlayer} />
-                      </td>
-                      <td className="py-2 px-2 text-right font-mono tabular-nums text-xs text-zinc-400">
-                        <ExpectedPts player={poolPlayer} />
-                      </td>
-                      <td className="py-2 px-2 text-right font-mono tabular-nums text-xs text-zinc-500">
-                        {byeMap.get(dp.team) ?? <span className="text-zinc-700">—</span>}
-                      </td>
-                      <td className="py-2 pr-3 pl-2 text-right font-mono tabular-nums text-xs text-zinc-400">
-                        {dp.adp != null ? dp.adp.toFixed(1) : <span className="text-zinc-600">—</span>}
-                      </td>
-                      <td className="py-2 pr-3 pl-1 text-center">
-                        <div className="flex items-center gap-1 justify-center">
-                          {userTurn && !drafted && (
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                onUserPick(dp.player_id)
-                              }}
-                              className="rounded border border-zinc-700 bg-zinc-800 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-zinc-300 transition-colors hover:border-zinc-500 hover:bg-zinc-700"
-                            >
-                              Draft
-                            </button>
-                          )}
-                          {!drafted && (
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                if (queue.includes(dp.player_id)) {
-                                  onRemoveFromQueue(dp.player_id)
-                                } else {
-                                  onAddToQueue(dp.player_id)
-                                }
-                              }}
-                              className={`rounded border px-2 py-1 text-[10px] font-semibold uppercase tracking-wider transition-colors ${
-                                queue.includes(dp.player_id)
-                                  ? 'border-amber-500/30 bg-amber-500/10 text-amber-400 hover:border-amber-400 hover:bg-amber-500/20'
-                                  : 'border-zinc-800 bg-zinc-900 text-zinc-600 hover:border-zinc-700 hover:text-zinc-400'
-                              }`}
-                              title={queue.includes(dp.player_id) ? 'Remove from queue' : 'Add to queue'}
-                            >
-                              {queue.includes(dp.player_id) ? '−Q' : '+Q'}
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* ── Roster + Ledger (right 1/3) ── */}
-        <div className="space-y-4">
-          {/* Queue panel */}
-          <div className="rounded-xl border border-zinc-800 bg-zinc-900 overflow-hidden">
-            <div className="px-4 py-3 border-b border-zinc-800">
-              <h4 className="text-sm font-semibold text-zinc-300">
-                Queue
-                <span className="ml-2 text-xs font-normal text-zinc-500 tabular-nums">
-                  {queuePlayers.length}
-                </span>
-              </h4>
-            </div>
-            <div className="divide-y divide-zinc-800/50 max-h-[280px] overflow-y-auto">
-              {queuePlayers.map((qp, idx) => (
-                <div key={qp.player_id} className="flex items-center gap-2 px-3 py-2 text-xs">
-                  <span className="text-zinc-600 tabular-nums w-5 shrink-0 text-right">
-                    {idx + 1}
-                  </span>
-                  <span className="truncate flex-1 font-medium text-zinc-300">
-                    {qp.name}
-                  </span>
-                  <span className="text-[10px] text-zinc-500 shrink-0 uppercase">
-                    {positionLabel(qp.position)}
-                  </span>
-                  {/* Move up/down */}
-                  <div className="flex items-center gap-0.5 shrink-0">
-                    <button
-                      type="button"
-                      onClick={() => onMoveQueueUp(idx)}
-                      disabled={idx === 0}
-                      className="rounded px-1 text-[10px] text-zinc-600 hover:text-zinc-300 disabled:text-zinc-800 disabled:cursor-not-allowed"
-                      aria-label="Move up"
-                    >
-                      ▲
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => onMoveQueueDown(idx)}
-                      disabled={idx === queuePlayers.length - 1}
-                      className="rounded px-1 text-[10px] text-zinc-600 hover:text-zinc-300 disabled:text-zinc-800 disabled:cursor-not-allowed"
-                      aria-label="Move down"
-                    >
-                      ▼
-                    </button>
-                  </div>
-                  {/* Remove */}
-                  <button
-                    type="button"
-                    onClick={() => onRemoveFromQueue(qp.player_id)}
-                    className="rounded px-1 text-[10px] text-zinc-600 hover:text-zinc-400 shrink-0"
-                    aria-label="Remove from queue"
-                  >
-                    ✕
-                  </button>
-                </div>
-              ))}
-              {queuePlayers.length === 0 && (
-                <div className="px-4 py-4 text-center text-xs text-zinc-600">
-                  Add players with +Q
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Roster panel */}
-          <div className="rounded-xl border border-zinc-800 bg-zinc-900 overflow-hidden">
-            <div className="px-4 py-3 border-b border-zinc-800">
-              <h4 className="text-sm font-semibold text-zinc-300">
-                Your Roster
-                <span className="ml-2 text-xs font-normal text-zinc-500 tabular-nums">
-                  {userRoster.totalPicks}/{draftState.rounds} picks
-                </span>
-              </h4>
-            </div>
-            <div className="divide-y divide-zinc-800/50">
-              {rosterSlots.map((slot, i) => (
-                <RosterSlotRow key={i} slot={slot} />
-              ))}
-              {rosterSlots.length === 0 && (
-                <div className="px-4 py-6 text-center text-sm text-zinc-600">
-                  No picks yet
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Pick ledger */}
-          <div className="rounded-xl border border-zinc-800 bg-zinc-900 overflow-hidden">
-            <div className="px-4 py-3 border-b border-zinc-800">
-              <h4 className="text-sm font-semibold text-zinc-300">
-                Pick Ledger
-                <span className="ml-2 text-xs font-normal text-zinc-500 tabular-nums">
-                  {draftState.picks.length} picks
-                </span>
-              </h4>
-            </div>
-            <div className="max-h-[300px] overflow-y-auto">
-              <div className="divide-y divide-zinc-800/30">
-                {recentPicks.map(pick => {
-                  const dp = draftState.playerPool.find(p => p.player_id === pick.player_id)
-                  const isUser = pick.team_no === draftState.seat
-                  return (
-                    <div
-                      key={pick.pick_no}
-                      className={`flex items-center gap-2 px-4 py-2 text-xs ${
-                        isUser ? 'border-l-2 border-l-zinc-600 bg-zinc-800/30' : ''
-                      }`}
-                    >
-                      <span className="text-zinc-600 tabular-nums w-8 shrink-0">
-                        {pick.pick_no}
-                      </span>
-                      <span className="text-zinc-500 tabular-nums w-8 shrink-0">
-                        T{pick.team_no}
-                      </span>
-                      <span className={`truncate ${isUser ? 'font-semibold text-zinc-200' : 'text-zinc-400'}`}>
-                        {dp?.name ?? `#${pick.player_id}`}
-                      </span>
-                      <span className="text-[10px] text-zinc-600 shrink-0">
-                        {dp?.position ?? ''}
-                      </span>
-                      {pick.auto && (
-                        <span className="text-[10px] text-zinc-600 shrink-0 ml-auto">auto</span>
-                      )}
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* ── Draft board grid: teams × rounds ── */}
-      <DraftBoardGrid draftState={draftState} />
-
-    </section>
-    {selectedPlayerId != null && (
-      <PlayerDetailOverlay
-        playerId={selectedPlayerId}
-        onClose={() => setSelectedPlayerId(null)}
-        currentPick={draftState.currentPick}
-        posRank={posRank.get(selectedPlayerId)}
-        byeWeek={byeMap.get(playerMap.get(selectedPlayerId)?.team ?? '') ?? null}
-        onDraft={onUserPick}
-        onQueue={onAddToQueue}
-        canDraft={userTurn && !draftState.completed && !draftedIds.has(selectedPlayerId)}
-        queued={queue.includes(selectedPlayerId)}
-      />
-    )}
-    </>
-  )
-}
-
-// ── Draft board grid: rounds (rows) × teams (columns) ──
-//
-// The axes are this way round because that is how a draft is read. A snake
-// draft advances left-to-right across the teams and then wraps to the next
-// round, so with teams as columns a round is one row and the serpentine is
-// visible as a shape: odd rounds fill left to right, even rounds right to left.
-// With teams as rows — the previous layout — a single round was a vertical
-// slice through fifteen separate rows and the snake was invisible.
-//
-// It also scales the right way. Rounds are fixed at 15; teams vary 10–14. Rows
-// grow down the page for free; columns hit the width of the screen, so the
-// varying axis is the one that gets the horizontal scroller and the sticky
-// round column.
-
-function DraftBoardGrid({ draftState }: { draftState: DraftState }) {
-  const { teams, rounds, picks, playerPool, seat } = draftState
-
-  // grid[round][team] — indexed the way it is rendered.
-  const grid = useMemo(() => {
-    const g: Array<Array<{
-      pick_no: number
-      name: string
-      position: string
-      auto: boolean
-    } | null>> = Array.from({ length: rounds }, () => Array(teams + 1).fill(null))
-
-    const playerLookup = new Map(playerPool.map(p => [p.player_id, p]))
-    for (const pick of picks) {
-      const r = Math.ceil(pick.pick_no / teams) - 1 // 0-based round
-      const player = playerLookup.get(pick.player_id)
-      if (r < 0 || r >= rounds) continue
-      g[r][pick.team_no] = {
-        pick_no: pick.pick_no,
-        name: player?.name ?? `#${pick.player_id}`,
-        position: player?.position ?? '',
-        auto: pick.auto,
-      }
-    }
-    return g
-  }, [teams, rounds, picks, playerPool])
-
-  return (
-    <div className="rounded-xl border border-zinc-800 bg-zinc-900 overflow-hidden">
-      <div className="px-4 py-3 border-b border-zinc-800">
-        <h4 className="text-sm font-semibold text-zinc-300">
-          Draft Board
-          <span className="ml-2 text-xs font-normal text-zinc-500 tabular-nums">
-            {picks.length}/{teams * rounds} picks
-          </span>
-          <span className="ml-2 text-xs font-normal text-zinc-600 tabular-nums">
-            · {teams} teams
-          </span>
-        </h4>
-      </div>
-      <div className="overflow-x-auto">
-        {/* w-full so 10 and 12 teams fill the card rather than leaving a dead
-            strip down the right; min-w-max so 14 teams overflow into the
-            scroller instead of crushing the columns. */}
-        <table className="w-full min-w-max text-xs" data-testid="draft-board-grid">
-          <thead>
-            <tr className="border-b border-zinc-800 text-zinc-500">
-              <th
-                scope="col"
-                className="sticky left-0 z-10 bg-zinc-900 text-left py-2 pl-4 pr-2 w-12 font-medium uppercase tracking-wider"
-              >
-                Rd
-              </th>
-              {Array.from({ length: teams }, (_, i) => {
-                const teamNo = i + 1
-                const isUser = teamNo === seat
-                return (
-                  <th
-                    key={teamNo}
-                    scope="col"
-                    className={`py-2 px-1 min-w-[5rem] font-semibold tabular-nums text-[10px] ${
-                      isUser ? 'text-zinc-200 bg-zinc-800/30' : 'text-zinc-500'
-                    }`}
-                  >
-                    T{teamNo}
-                    {isUser && (
-                      <span className="ml-1 text-[9px] font-normal text-zinc-600">you</span>
-                    )}
-                  </th>
-                )
-              })}
-            </tr>
-          </thead>
-          <tbody>
-            {Array.from({ length: rounds }, (_, r) => (
-              <tr key={r} className="border-b border-zinc-800/30">
-                <th
-                  scope="row"
-                  className="sticky left-0 z-10 bg-zinc-900 text-left py-2 pl-4 pr-2 font-semibold tabular-nums text-zinc-500"
-                >
-                  R{r + 1}
-                </th>
-                {Array.from({ length: teams }, (_, i) => {
-                  const teamNo = i + 1
-                  const isUser = teamNo === seat
-                  const cell = grid[r][teamNo]
-                  return (
-                    <td
-                      key={teamNo}
-                      className={`text-center py-2 px-1 align-top ${
-                        isUser ? 'bg-zinc-800/20' : ''
-                      }`}
-                    >
-                      {cell ? (
-                        <div className="leading-tight">
-                          <div
-                            className={`font-medium truncate max-w-[5rem] mx-auto ${
-                              isUser ? 'text-zinc-200' : 'text-zinc-400'
-                            }`}
-                          >
-                            {cell.name}
-                          </div>
-                          <span
-                            className={`text-[9px] uppercase ${
-                              isUser ? 'text-zinc-500' : 'text-zinc-600'
-                            }`}
-                          >
-                            {positionLabel(cell.position)}
-                          </span>
-                          {/* The snake means column order is not pick order in
-                              even rounds, so the cell states its own pick. */}
-                          <span className="ml-1 text-[9px] tabular-nums text-zinc-700">
-                            {cell.pick_no}
-                          </span>
-                        </div>
-                      ) : (
-                        <span className="text-zinc-700">—</span>
-                      )}
-                    </td>
-                  )
-                })}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  )
-}
-
-/* ── The headline stat ──────────────────────────────────────────────────────
-   The research board (camp tab) renders five position-aware stat columns, which
-   is right for research. This is not research: at the moment of a pick you are
-   choosing, not studying, and the pool sits in a two-thirds grid column that is
-   full-width-but-cramped on a phone. So the draft room takes ONE decisive number
-   per position and spends the width it saves on bye week, which decides more
-   picks in rounds 8-15 than a third decimal of expected points ever will.
-
-   Per position, the number a drafter actually acts on:
-     QB RB WR TE  → PPR / game played
-     PK           → kicking points / game
-     DEF          → D/ST points / game
-   Under the 'All' filter the header stays generic, because one column is
-   spanning three different units and the row's position chip says which. */
-
-/** What we can honestly say about a player with no games in the reference season.
- *
- * "Rookie" was an inference, and a wrong one for anyone who simply missed the
- * year: the pool told a drafter Odell Beckham Jr. was a rookie while holding
- * eight of his prior-season games in the same table. We publish whether a prior
- * NFL sample exists, so neither branch has to guess — a player we have never
- * recorded is "no NFL sample" (not necessarily a rookie), and a player we have
- * recorded before is one who did not play, which is the far more useful fact. */
-export function noSampleLabel(
-  position: string,
-  hasPriorNflSample?: boolean | null,
-  referenceSeason?: number | null,
-): string {
-  if (position === 'PK') return 'Kicker games not tracked'
-  if (hasPriorNflSample) {
-    return referenceSeason != null
-      ? `No ${referenceSeason} games`
-      : 'No games last season'
-  }
-  return 'No NFL sample'
-}
-
-/* The season label comes from the payload's reference_season, never from a
-   hardcoded year: a literal "2025" is true today and silently false in twelve
-   months, the same class of defect as a stale bye week. The pool contract used
-   to publish only contract/season/count, so this hedged with "last completed
-   season"; it now publishes reference_season and the year is rendered from it.
-   The hedge remains the fallback, because a label may not invent a year the
-   server did not state. */
-export function headlineStatFor(
-  position: string,
-  referenceSeason?: number | null,
-): { header: string; title: string } {
-  const when = referenceSeason != null ? `${referenceSeason}` : 'last completed season'
-  if (position === 'DEF') return { header: 'D/ST', title: `D/ST fantasy points per game, ${when}` }
-  if (position === 'PK') return { header: 'K Pts', title: `Kicking points per game, ${when}` }
-  if (position === 'ALL') return { header: 'Pts/G', title: `Fantasy points per game, ${when} — PPR for skill positions, kicking points for K, D/ST points for defenses` }
-  return { header: 'PPR/G', title: `PPR points per game played, ${when}` }
-}
-
-/** The one number, resolved per row so a mixed 'All' view stays correct. */
-export function HeadlineStat({ player }: { player: PoolPlayer }) {
-  const value =
-    player.position === 'DEF'
-      ? player.dst_pts_per_game
-      : player.position === 'PK'
-        ? player.pk_pts_per_game
-        : player.ppr_per_game_played
-
-  // Absent (pre-job16 payload) and null (genuinely no sample) render the same.
-  // Neither is zero and neither may be rendered as zero.
-  if (value == null) return <span className="text-zinc-700">—</span>
-
-  return (
-    <span className={player.sample === 'thin' ? 'text-zinc-500' : 'text-zinc-300'}>
-      {value.toFixed(1)}
-    </span>
-  )
-}
-
-/* ── Expected fantasy points ────────────────────────────────────────────────
-   The published xFP series (nflverse `total_fantasy_points_exp`, PPR), averaged
-   per game. It is an *opportunity* number — what the targets, carries and air
-   yards a player was actually given are worth to an average player — so it sits
-   next to the outcome number rather than replacing it. A back who scored 21.8
-   on 19.3 of opportunity beat his usage; the two columns only mean something
-   together, which is why both ship on every mock-draft surface.
-
-   Not a projection. Nothing here forecasts 2026; the header carries the season.
-   Structurally null for K and D/ST, which have no xFP series at all. */
-
-export const EXPECTED_PTS_HEADER = 'Exp PPR/G'
-
-export function expectedPtsTitle(referenceSeason?: number | null): string {
-  const when = referenceSeason != null ? `${referenceSeason}` : 'last completed season'
-  return `Expected PPR points per game, ${when} — what the player's opportunity (targets, carries, air yards) was worth, not what he scored. Not a projection. No value for K or D/ST.`
-}
-
-export function ExpectedPts({ player }: { player: PoolPlayer }) {
-  const value = player.xfp_per_game
-  if (value == null) return <span className="text-zinc-700">—</span>
-  return (
-    <span className={player.sample === 'thin' ? 'text-zinc-500' : 'text-zinc-300'}>
-      {value.toFixed(1)}
-    </span>
-  )
-}
-
-/** Availability display for a pool player in the draft room. */
-function PoolAvailability({
-  poolPlayer,
-  referenceSeason,
-}: { poolPlayer: PoolPlayer; referenceSeason?: number | null }) {
-  const noSample = poolPlayer.sample === 'none'
-
-  if (noSample) {
-    return (
-      <span className="text-[11px] text-zinc-500">
-        {noSampleLabel(poolPlayer.position, poolPlayer.has_prior_nfl_sample, referenceSeason)}
-      </span>
-    )
-  }
-
-  const teamGames = poolTeamGames(poolPlayer)
-  const missed = poolPlayer.games_missed
-
-  if (teamGames == null || missed == null) {
-    return (
-      <span className="text-[11px] text-zinc-500">
-        Availability unavailable
-      </span>
-    )
-  }
-
-  return (
-    <>
-      <div className="flex items-baseline gap-1.5">
-        <span
-          className={`font-mono tabular-nums text-sm font-semibold ${
-            missed > 0 ? 'text-amber-400' : 'text-zinc-300'
-          }`}
+        <div
+          role="tabpanel"
+          data-tab={tab}
+          id={`panel-${tab}`}
+          aria-labelledby={`tab-${tab}`}
+          tabIndex={0}
         >
-          {poolPlayer.games_played}/{teamGames}
-        </span>
-        {missed > 0 && (
-          <span className="text-[10px] text-zinc-600">missed {missed}</span>
+          {tab === 'players' && (
+            <PlayersTab
+              rows={rows}
+              playerMap={playerMap}
+              posRank={posRank}
+              byeMap={byeMap}
+              referenceSeason={referenceSeason}
+              headlineStat={headlineStat}
+              posOptions={posOptions}
+              posFilter={posFilter}
+              onPosFilter={setPosFilter}
+              teamOptions={teamOptions}
+              teamFilter={teamFilter}
+              onTeamFilter={setTeamFilter}
+              byeOptions={byeOptions}
+              byeFilter={byeFilter}
+              onByeFilter={setByeFilter}
+              scheduleLoaded={schedule != null}
+              sortOptions={sortOptions(referenceSeason)}
+              sortKey={sortKey}
+              onSort={key => setSortKey(key as SortKey)}
+              onClearFilters={() => { setPosFilter('ALL'); setTeamFilter('ALL'); setByeFilter('ALL') }}
+              shown={sortedPool.length}
+              available={availablePool.length}
+              drafted={draftedIds.size}
+              queue={queue}
+              onClock={onClock}
+              completed={draftState.completed}
+              onSelectPlayer={setSelectedPlayerId}
+              onDraft={onUserPick}
+              onQueue={onAddToQueue}
+              onUnqueue={onRemoveFromQueue}
+            />
+          )}
+
+          {tab === 'queue' && (
+            <QueueTab
+              players={queuePlayers}
+              onRemove={onRemoveFromQueue}
+              onMoveUp={onMoveQueueUp}
+              onMoveDown={onMoveQueueDown}
+              onSelect={setSelectedPlayerId}
+            />
+          )}
+
+          {tab === 'board' && <BoardTab draftState={draftState} />}
+
+          {tab === 'rosters' && (
+            <RostersTab
+              draftState={draftState}
+              playerMap={playerMap}
+              referenceSeason={referenceSeason}
+            />
+          )}
+        </div>
+
+        {/* What you still need is the question every pick is answering, so it
+            stays one glance away from the list without costing the list a tab. */}
+        {tab === 'players' && (
+          <p className="text-xs text-zinc-600">
+            {openStarters} starting slot{openStarters === 1 ? '' : 's'} still open · your next
+            pick is #{userNextPick(draftState) ?? '—'}
+          </p>
         )}
-      </div>
-      <AvailabilityStrip
-        weeksPlayed={poolPlayer.weeks_played}
-        teamWeeks={poolPlayer.team_weeks}
-        name={poolPlayer.name}
-      />
-    </>
-  )
-}
+      </section>
 
-// ── Roster slot helpers ──
-
-interface RosterSlot {
-  label: string
-  player: DraftPlayer | null
-  poolPlayer: PoolPlayer | null
-  isStarter: boolean
-}
-
-function buildRosterSlots(
-  players: DraftPlayer[],
-  playerMap: Map<number, PoolPlayer>,
-): RosterSlot[] {
-  const byPos: Record<string, DraftPlayer[]> = {}
-  for (const p of players) {
-    if (!byPos[p.position]) byPos[p.position] = []
-    byPos[p.position].push(p)
-  }
-
-  const slots: RosterSlot[] = []
-
-  function addSlot(label: string, pos: string, isStarter: boolean) {
-    const arr = byPos[pos] ?? []
-    const player = arr.shift() ?? null
-    slots.push({
-      label,
-      player,
-      poolPlayer: player ? playerMap.get(player.player_id) ?? null : null,
-      isStarter,
-    })
-  }
-
-  // Starters in order
-  addSlot('QB', 'QB', true)
-  addSlot('RB1', 'RB', true)
-  addSlot('RB2', 'RB', true)
-  addSlot('WR1', 'WR', true)
-  addSlot('WR2', 'WR', true)
-  addSlot('TE', 'TE', true)
-  // FLEX: next RB/WR/TE
-  const flexPlayer =
-    (byPos['RB'] ?? [])[0] ??
-    (byPos['WR'] ?? [])[0] ??
-    (byPos['TE'] ?? [])[0] ??
-    null
-  if (flexPlayer) {
-    // Remove from its position array
-    const flexArr = byPos[flexPlayer.position]
-    if (flexArr) flexArr.shift()
-    slots.push({
-      label: 'FLEX',
-      player: flexPlayer,
-      poolPlayer: playerMap.get(flexPlayer.player_id) ?? null,
-      isStarter: true,
-    })
-  } else {
-    slots.push({ label: 'FLEX', player: null, poolPlayer: null, isStarter: true })
-  }
-  addSlot('K', 'PK', true)
-  addSlot('DEF', 'DEF', true)
-
-  // Bench — remaining players
-  const remaining = players.filter(p => !slots.some(s => s.player?.player_id === p.player_id))
-  remaining.forEach((p, i) => {
-    slots.push({
-      label: `BE${i + 1}`,
-      player: p,
-      poolPlayer: playerMap.get(p.player_id) ?? null,
-      isStarter: false,
-    })
-  })
-
-  // Empty bench rows keep the full roster construction visible while drafting.
-  for (let i = remaining.length; i < BENCH_SLOTS; i++) {
-    slots.push({
-      label: `BE${i + 1}`,
-      player: null,
-      poolPlayer: null,
-      isStarter: false,
-    })
-  }
-
-  return slots
-}
-
-function RosterSlotRow({ slot }: { slot: RosterSlot }) {
-  const teamGames = slot.poolPlayer
-    ? poolTeamGames(slot.poolPlayer)
-    : null
-
-  return (
-    <div
-      className={`flex items-center gap-2 px-4 py-2 text-xs ${
-        slot.isStarter ? '' : 'opacity-70'
-      }`}
-    >
-      <span
-        className={`w-12 shrink-0 font-semibold tabular-nums ${
-          slot.isStarter ? 'text-zinc-300' : 'text-zinc-500'
-        }`}
-      >
-        {slot.label}
-      </span>
-      {slot.player ? (
-        <>
-          <span className="truncate font-medium text-zinc-200 flex-1">
-            {slot.player.name}
-          </span>
-          <span className="text-[10px] text-zinc-500 shrink-0">
-            {positionLabel(slot.player.position)}
-          </span>
-          {slot.poolPlayer &&
-            slot.poolPlayer.sample !== 'none' &&
-            teamGames != null &&
-            slot.poolPlayer.games_missed != null && (
-            <span className="text-[10px] text-zinc-600 tabular-nums shrink-0">
-              {slot.poolPlayer.games_played}/{teamGames}
-            </span>
-          )}
-          {slot.poolPlayer && slot.poolPlayer.sample === 'none' && (
-            <span className="text-[10px] text-zinc-600 shrink-0">
-              {slot.poolPlayer.position === 'PK'
-                ? 'no logs'
-                : 'rookie'}
-            </span>
-          )}
-        </>
-      ) : (
-        <span className="text-zinc-700 flex-1">—</span>
+      {selectedPlayerId != null && (
+        <PlayerDetailOverlay
+          playerId={selectedPlayerId}
+          onClose={() => setSelectedPlayerId(null)}
+          currentPick={draftState.currentPick}
+          posRank={posRank.get(selectedPlayerId)}
+          byeWeek={byeMap.get(playerMap.get(selectedPlayerId)?.team ?? '') ?? null}
+          onDraft={onUserPick}
+          onQueue={onAddToQueue}
+          canDraft={onClock && !draftedIds.has(selectedPlayerId)}
+          queued={queue.includes(selectedPlayerId)}
+        />
       )}
-    </div>
+    </>
   )
 }

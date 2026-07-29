@@ -3,7 +3,11 @@ import type { PoolPlayer } from '../Leagues/types'
 import { AvailabilityStrip } from '../Leagues/NflDraftRoom'
 import PlayerDetailOverlay from '../Leagues/PlayerDetailOverlay'
 import { poolToDraftRow } from '../../lib/mockDraft/api'
-import { positionLabel, positionRankLabel } from '../../lib/nfl/positionLabel'
+import {
+  positionLabel,
+  positionRankLabel,
+  showsPositionalRank,
+} from '../../lib/nfl/positionLabel'
 import { LEAGUE_SIZES, ROUNDS, nextTeam } from '../../lib/mockDraft/engine'
 import type { LeagueSize } from '../../lib/mockDraft/engine'
 import {
@@ -13,7 +17,7 @@ import {
   ExpectedPts,
   EXPECTED_PTS_HEADER,
   expectedPtsTitle,
-} from './DraftRoom'
+} from './columns'
 
 /** 'random' is a real choice, not the absence of one — a drafter who wants to
  *  practise from an unknown slot has to be able to say so. */
@@ -276,7 +280,7 @@ function PoolRow({
         </span>
         <div className="text-[10px] text-zinc-600">
           {row.current_team}
-          {posRank != null && (
+          {posRank != null && showsPositionalRank(row.position) && (
             <>
               {' · '}
               <span className="tabular-nums">{positionRankLabel(row.position, posRank)}</span>

@@ -157,7 +157,12 @@ function check(cond, id, detail) {
     // gate must fail for the reason it names, so it is removed here rather than tolerated.
     // Row 120 is deep enough that no bot reaches it during the run.
     const rowName = await page.evaluate(() => {
-      const rows = document.querySelectorAll('table tbody tr')
+      // The list now carries YOUR PICK rules between the players. They are <tr>s
+      // with a single spanning cell, so an index into `tbody tr` can land on one
+      // and `td[1]` is then undefined. Take player rows only.
+      const rows = Array.from(document.querySelectorAll('table tbody tr')).filter(
+        r => r.getAttribute('data-testid') !== 'your-pick-divider' && r.querySelectorAll('td').length > 4
+      )
       const row = rows[Math.min(120, rows.length - 1)]
       if (!row) return null
       const name = row.querySelectorAll('td')[1].innerText.split('\n')[0].trim()
@@ -201,6 +206,16 @@ function check(cond, id, detail) {
     )
 
     // ── Draft board axes: rounds down, teams across ──
+    // The grid lives in the Board tab now, so it has to be opened. Asserting it
+    // from the default tab would only prove the tab shell hides things.
+    await page.evaluate(() => {
+      const list = document.querySelector('[role="tablist"]')
+      const tab = list && Array.from(list.querySelectorAll('[role="tab"]'))
+        .find(t => /^board/i.test(t.innerText.trim()))
+      if (tab) tab.click()
+    })
+    await page.waitForSelector('[data-testid="draft-board-grid"]', { timeout: 30000 })
+
     // The previous grid was teams-as-rows. Assert the shape, not a label: the
     // column headers must be the 14 teams and the row headers the 15 rounds.
     const grid = await page.evaluate(() => {
@@ -233,6 +248,13 @@ function check(cond, id, detail) {
 
     // The in-draft pool carries the same column, or the two screens disagree
     // about a player the moment the draft starts.
+    await page.evaluate(() => {
+      const list = document.querySelector('[role="tablist"]')
+      const tab = list && Array.from(list.querySelectorAll('[role="tab"]'))
+        .find(t => /^players/i.test(t.innerText.trim()))
+      if (tab) tab.click()
+    })
+    await page.waitForSelector('[data-testid="pool-table"] tbody tr', { timeout: 30000 })
     const xfpRoom = await page.evaluate(() => {
       const heads = Array.from(document.querySelectorAll('table thead th'))
       return heads.some(h => /Exp PPR\/G/i.test(h.innerText))
@@ -273,9 +295,14 @@ function check(cond, id, detail) {
     check(pillCount >= 9, 'camp-tab', 'expected 9 position pills, found ' + pillCount)
 
     const shape = {}
-    for (const [label, idx] of [['DEF', 7], ['PK', 8]]) {
+    // The stored codes are DEF and PK; the rendered labels are D/ST and K, and the
+    // pills are now in draft order rather than alphabetical order. This gate read
+    // the STORED code out of a rendered cell, so it went red the moment `8e6e7fc`
+    // translated a kicker to K and stayed red — assert the label the user sees,
+    // against the API queried by the code the API speaks.
+    for (const [code, label, idx] of [['PK', 'K', 7], ['DEF', 'D/ST', 8]]) {
       const apiResponse = await page.request.get(
-        BASE + '/api/nfl/draft-board?season=2026&limit=100&position=' + label
+        BASE + '/api/nfl/draft-board?season=2026&limit=100&position=' + code
       )
       const apiPayload = await apiResponse.json()
       const expectedRows = apiPayload.eligible_players
@@ -296,7 +323,7 @@ function check(cond, id, detail) {
         'camp-tab',
         label + ' rendered ' + rows + ' rows, API reports ' + expectedRows
       )
-      if (label === 'DEF') {
+      if (code === 'DEF') {
         check(expectedRows === 32, 'camp-tab', 'DEF API reports ' + expectedRows + ' rows, expected 32')
       }
       // Position-aware columns (4b21d09): a specialised filter must be narrower
@@ -308,8 +335,8 @@ function check(cond, id, detail) {
       )
     }
     notes.push(
-      'camp-tab ' + boardRows + ' rows, DEF=' + JSON.stringify(shape.DEF) +
-      ' PK=' + JSON.stringify(shape.PK)
+      'camp-tab ' + boardRows + ' rows, D/ST=' + JSON.stringify(shape['D/ST']) +
+      ' K=' + JSON.stringify(shape.K)
     )
   } catch (e) {
     failures.push('camp-tab: ' + e.message.split('\n')[0])

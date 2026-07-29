@@ -4,7 +4,8 @@ import type { DraftState, DraftPlayer } from '../../lib/mockDraft/engine'
 import { getRosterState } from '../../lib/mockDraft/engine'
 import { poolTeamGames } from '../../lib/mockDraft/availability'
 import { AvailabilityStrip } from '../Leagues/NflDraftRoom'
-import { noSampleLabel } from './DraftRoom'
+import { noSampleLabel } from './columns'
+import { buildRosterSlots, type RosterSlot } from './roster'
 import { positionLabel } from '../../lib/nfl/positionLabel'
 
 interface Props {
@@ -40,7 +41,7 @@ export default function ResultsScreen({ pool, draftState, referenceSeason }: Pro
   )
 
   const slots = useMemo(
-    () => buildResultsSlots(userRoster.players, playerMap),
+    () => buildRosterSlots(userRoster.players, playerMap),
     [userRoster, playerMap],
   )
 
@@ -164,98 +165,15 @@ export default function ResultsScreen({ pool, draftState, referenceSeason }: Pro
 
 // ── Helpers ──
 
-interface ResultsSlot {
-  label: string
-  player: DraftPlayer | null
-  poolPlayer: PoolPlayer | null
-  isStarter: boolean
-  pickNo: number | null
-}
-
-function buildResultsSlots(
-  players: DraftPlayer[],
-  playerMap: Map<number, PoolPlayer>,
-): ResultsSlot[] {
-  const byPos: Record<string, DraftPlayer[]> = {}
-  for (const p of players) {
-    if (!byPos[p.position]) byPos[p.position] = []
-    byPos[p.position].push(p)
-  }
-
-  const slots: ResultsSlot[] = []
-  const used = new Set<number>()
-
-  function addSlot(label: string, pos: string, isStarter: boolean) {
-    const arr = byPos[pos] ?? []
-    const player = arr.shift() ?? null
-    if (player) used.add(player.player_id)
-    slots.push({
-      label,
-      player,
-      poolPlayer: player ? playerMap.get(player.player_id) ?? null : null,
-      isStarter,
-      pickNo: null,
-    })
-  }
-
-  addSlot('QB', 'QB', true)
-  addSlot('RB1', 'RB', true)
-  addSlot('RB2', 'RB', true)
-  addSlot('WR1', 'WR', true)
-  addSlot('WR2', 'WR', true)
-  addSlot('TE', 'TE', true)
-
-  const flexPlayer =
-    (byPos['RB'] ?? [])[0] ??
-    (byPos['WR'] ?? [])[0] ??
-    (byPos['TE'] ?? [])[0] ??
-    null
-  if (flexPlayer) {
-    const flexArr = byPos[flexPlayer.position]
-    if (flexArr) flexArr.shift()
-    used.add(flexPlayer.player_id)
-    slots.push({
-      label: 'FLEX',
-      player: flexPlayer,
-      poolPlayer: playerMap.get(flexPlayer.player_id) ?? null,
-      isStarter: true,
-      pickNo: null,
-    })
-  } else {
-    slots.push({ label: 'FLEX', player: null, poolPlayer: null, isStarter: true, pickNo: null })
-  }
-  addSlot('K', 'PK', true)
-  addSlot('DEF', 'DEF', true)
-
-  const remaining = players.filter(p => !used.has(p.player_id))
-  remaining.forEach((p, i) => {
-    slots.push({
-      label: `BE${i + 1}`,
-      player: p,
-      poolPlayer: playerMap.get(p.player_id) ?? null,
-      isStarter: false,
-      pickNo: null,
-    })
-  })
-
-  // Preserve the full 15-slot roster shape even if a draft ends incomplete.
-  for (let i = remaining.length; i < 6; i++) {
-    slots.push({
-      label: `BE${i + 1}`,
-      player: null,
-      poolPlayer: null,
-      isStarter: false,
-      pickNo: null,
-    })
-  }
-
-  return slots
-}
+/* The roster builder used to live here as a second copy of DraftRoom's. Two
+   copies of the same slot order is how a D/ST starting slot came to exist on one
+   screen and not the other, and how both had to be found before the bug was
+   fixed. It is now imported from ./roster — one definition, both surfaces. */
 
 function ResultsSlotRow({
   slot,
   referenceSeason,
-}: { slot: ResultsSlot; referenceSeason?: number | null }) {
+}: { slot: RosterSlot; referenceSeason?: number | null }) {
   const pp = slot.poolPlayer
   const noSample = pp?.sample === 'none'
   const teamGames = pp ? poolTeamGames(pp) : null
@@ -278,8 +196,13 @@ function ResultsSlotRow({
             <span className="font-medium text-zinc-200 truncate block">
               {slot.player.name}
             </span>
+            {/* "Detroit Lions D/ST — D/ST · DET" in a row already labelled D/ST
+                says it three times. A defense's name carries its position, so the
+                repeat is dropped rather than styled smaller. */}
             <span className="text-[10px] text-zinc-600">
-              {positionLabel(pp.position)} · {pp.team}
+              {slot.label === positionLabel(pp.position)
+                ? pp.team
+                : `${positionLabel(pp.position)} · ${pp.team}`}
             </span>
           </div>
 

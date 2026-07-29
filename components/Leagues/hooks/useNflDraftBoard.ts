@@ -1,8 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { DraftNotesResponse, NflDraftBoard, NflDraftNotes, NflDraftPlayer, NflDraftSort } from '../types'
 import { getDeviceId } from '../../../lib/deviceId'
+import { POSITION_ORDER } from '../../../lib/nfl/positionLabel'
 
-const POSITIONS = ['all', 'QB', 'RB', 'WR', 'TE', 'FB', 'FLEX', 'DEF', 'PK'] as const
+/* The order was authored here and separately (badly) derived in the mock draft,
+   where `.sort()` on the stored codes put D/ST and K ahead of the quarterback.
+   It now comes from one constant so the two boards cannot drift: skill positions
+   in the order they come off the board, FLEX where it sits in a lineup, then the
+   two positions nobody drafts before round 13 — K then D/ST, last. */
+const POSITIONS = ['all', ...POSITION_ORDER] as const
 export type DraftPosition = typeof POSITIONS[number]
 
 // Named for what the reader controls, not for how we compute it.
