@@ -1,6 +1,7 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import type { PoolPlayer } from '../Leagues/types'
 import { AvailabilityStrip } from '../Leagues/NflDraftRoom'
+import PlayerDetailOverlay from '../Leagues/PlayerDetailOverlay'
 import { poolToDraftRow } from '../../lib/mockDraft/api'
 import { HeadlineStat, headlineStatFor, noSampleLabel } from './DraftRoom'
 
@@ -21,6 +22,12 @@ interface Props {
  *   - all else → "Rookie — no NFL sample" (grey, not accent, not zero)
  */
 export default function PoolList({ players, referenceSeason, onStartDraft }: Props) {
+  // The pool screen is where someone researches *before* committing to a draft.
+  // Until now the only interactive element here was "Start Draft", so the
+  // research card was reachable only from inside a draft -- a research surface
+  // with no way into the research. Same overlay, same row click as the draft
+  // room; the draft/queue actions stay absent because there is no pick to be on.
+  const [selectedPlayerId, setSelectedPlayerId] = useState<number | null>(null)
   const headlineStat = headlineStatFor('ALL', referenceSeason)
   const rows = useMemo(
     () => players.map((p, i) => poolToDraftRow(p, i + 1)),
@@ -102,11 +109,20 @@ export default function PoolList({ players, referenceSeason, onStartDraft }: Pro
                 player={playerMap.get(row.player_id)}
                 posRank={posRank.get(row.player_id)}
                 referenceSeason={referenceSeason}
+                onSelect={() => setSelectedPlayerId(row.player_id)}
               />
             ))}
           </tbody>
         </table>
       </div>
+
+      {selectedPlayerId != null && (
+        <PlayerDetailOverlay
+          playerId={selectedPlayerId}
+          onClose={() => setSelectedPlayerId(null)}
+          posRank={posRank.get(selectedPlayerId)}
+        />
+      )}
     </section>
   )
 }
@@ -118,18 +134,23 @@ function PoolRow({
   player,
   posRank,
   referenceSeason,
+  onSelect,
 }: {
   row: ReturnType<typeof poolToDraftRow>
   player?: PoolPlayer
   posRank?: number
   referenceSeason?: number | null
+  onSelect: () => void
 }) {
   const noSample = row.sample === 'none'
   const hasAvailability =
     !noSample && row.team_games != null && row.games_missed != null
 
   return (
-    <tr className="border-b border-zinc-800/50 hover:bg-zinc-800/30">
+    <tr
+      onClick={onSelect}
+      className="border-b border-zinc-800/50 cursor-pointer transition-colors hover:bg-zinc-800/30"
+    >
       <td className="py-2.5 pl-4 pr-2 text-zinc-500 text-xs tabular-nums">
         {row.rank}
       </td>
