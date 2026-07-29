@@ -49,13 +49,30 @@ function check(cond, claim, detail) {
 // use plain DOM only — Playwright's :text-is() is not valid CSS and throws in evaluate().
 
 function readPool() {
-  const pool = Array.from(document.querySelectorAll('table'))
-    .find(t => /PLAYER/.test((t.querySelector('thead') || {}).innerText || ''))
+  // Columns are resolved by data-col, not by index. They were read positionally
+  // until 2026-07-29, and c[4] is the points column rather than ADP — which is
+  // why this file's "D/ST carry published ADP (DEN ~90.0)" claim reported
+  // DEN=8.2 and failed. It was reading Denver's points per game and calling it
+  // an average draft position. A column index is not a column.
+  const pool = document.querySelector('[data-testid="pool-table"]')
+    || Array.from(document.querySelectorAll('table'))
+      .find(t => /PLAYER/.test((t.querySelector('thead') || {}).innerText || ''))
   if (!pool) return null
+  const heads = Array.from(pool.querySelectorAll('thead th')).map(h => h.getAttribute('data-col') || '')
   return Array.from(pool.querySelectorAll('tbody tr'))
-    .map(r => Array.from(r.querySelectorAll('td')).map(c => c.innerText.trim()))
-    .filter(c => c.length > 4)
-    .map(c => ({ name: c[1].split('\n')[0], pos: c[2], avail: c[3], adp: c[4] }))
+    .filter(r => r.getAttribute('data-testid') !== 'your-pick-divider')
+    .map(r => Array.from(r.querySelectorAll('td')))
+    .filter(tds => tds.length > 4)
+    .map(tds => {
+      const by = {}
+      tds.forEach((td, i) => { by[td.getAttribute('data-col') || heads[i] || ('c' + i)] = td.innerText.trim() })
+      return {
+        name: (by.player || '').split('\n')[0],
+        pos: by.pos,
+        avail: by.avail,
+        adp: by.adp,
+      }
+    })
 }
 
 // Filter chips are dispatched directly rather than via locator.click(): they re-render on
@@ -69,10 +86,11 @@ function clickByText(text) {
 }
 
 function draftFirstDST() {
-  const pool = Array.from(document.querySelectorAll('table'))
-    .find(t => /PLAYER/.test((t.querySelector('thead') || {}).innerText || ''))
+  const pool = document.querySelector('[data-testid="pool-table"]')
   if (!pool) return null
-  const row = Array.from(pool.querySelectorAll('tbody tr')).find(r => r.innerText.indexOf('D/ST') !== -1)
+  const row = Array.from(pool.querySelectorAll('tbody tr'))
+    .filter(r => r.getAttribute('data-testid') !== 'your-pick-divider')
+    .find(r => r.innerText.indexOf('D/ST') !== -1)
   if (!row) return null
   const name = row.querySelectorAll('td')[1].innerText.split('\n')[0].trim()
   const btn = Array.from(row.querySelectorAll('button')).find(b => /DRAFT/i.test(b.innerText))
@@ -81,21 +99,58 @@ function draftFirstDST() {
   return name
 }
 
-function queueFirst() {
-  const pool = Array.from(document.querySelectorAll('table'))
-    .find(t => /PLAYER/.test((t.querySelector('thead') || {}).innerText || ''))
+// Queueing moved off the row. The row holds exactly one button and on the clock
+// that button is Draft — and in this engine it is always your turn, because the
+// bot picks between your turns run in one synchronous loop. So the card is where
+// a player gets queued from, and that is the path this drives.
+function openFirstPlayerCard() {
+  const pool = document.querySelector('[data-testid="pool-table"]')
   if (!pool) return false
-  const btn = Array.from(pool.querySelectorAll('button')).find(b => b.innerText.trim() === '+Q')
+  const row = Array.from(pool.querySelectorAll('tbody tr'))
+    .find(r => r.getAttribute('data-testid') !== 'your-pick-divider' && r.querySelectorAll('td').length > 4)
+  if (!row) return false
+  row.click()
+  return true
+}
+
+function clickDialogQueue() {
+  const dialog = document.querySelector('[role="dialog"]')
+  if (!dialog) return false
+  const btn = Array.from(dialog.querySelectorAll('button')).find(b => b.innerText.trim() === 'Queue')
   if (!btn) return false
   btn.click()
   return true
 }
 
-function boardHeaders() {
-  const grid = Array.from(document.querySelectorAll('table'))
-    .find(t => /TEAM/.test((t.querySelector('thead') || {}).innerText || ''))
+function queueTabCount() {
+  const list = document.querySelector('[role="tablist"]')
+  if (!list) return null
+  const tab = Array.from(list.querySelectorAll('[role="tab"]')).find(t => /^queue/i.test(t.innerText.trim()))
+  if (!tab) return null
+  const m = /(\d+)/.exec(tab.innerText)
+  return m ? Number(m[1]) : null
+}
+
+// The grid is teams-across / rounds-down as of c17eae7, and it lives behind the
+// Board tab. This searched every table for a "TEAM" header, which no table has
+// ever had — the claim "the board grid shows 15 rounds" could not be true or
+// false, only absent, and it read as a failure with the grid right there.
+function openBoardTab() {
+  const list = document.querySelector('[role="tablist"]')
+  if (!list) return false
+  const tab = Array.from(list.querySelectorAll('[role="tab"]')).find(t => /^board/i.test(t.innerText.trim()))
+  if (!tab) return false
+  tab.click()
+  return true
+}
+
+function boardShape() {
+  const grid = document.querySelector('[data-testid="draft-board-grid"]')
   if (!grid) return null
-  return Array.from(grid.querySelectorAll('thead th')).map(h => h.innerText.trim())
+  return {
+    cols: Array.from(grid.querySelectorAll('thead th')).map(h => h.innerText.trim()),
+    rounds: Array.from(grid.querySelectorAll('tbody tr > th')).map(h => h.innerText.trim()),
+  }
 }
 
 ;(async () => {
@@ -140,12 +195,12 @@ function boardHeaders() {
     }
 
     // ── "All 32 D/ST are in the pool" ─────────────────────────────────────────
-    check(await page.evaluate(clickByText, 'DEF'), 'a DEF position filter exists', 'no DEF chip')
+    check(await page.evaluate(clickByText, 'D/ST'), 'a D/ST position filter exists', 'no D/ST chip')
     await page.waitForTimeout(900)
     const def = await page.evaluate(readPool)
     check(def.length === 32, 'all 32 D/ST are in the pool', 'DEF filter returned ' + def.length + ' rows')
-    check(def.every(d => d.pos === 'DEF'), 'the position filter returns only that position',
-      'other positions present: ' + [...new Set(def.filter(d => d.pos !== 'DEF').map(d => d.pos))].join(','))
+    check(def.every(d => d.pos === 'D/ST'), 'the position filter returns only that position',
+      'other positions present: ' + [...new Set(def.filter(d => d.pos !== 'D/ST').map(d => d.pos))].join(','))
 
     // ── "Their draft position is ESPN's published ADP" ────────────────────────
     const den = def.find(d => /Denver|DEN/.test(d.name))
@@ -174,24 +229,40 @@ function boardHeaders() {
       'DEN availability=' + (den ? den.avail : 'ROW MISSING'))
 
     // ── "A queue — pre-rank players" ─────────────────────────────────────────
-    check(await page.evaluate(clickByText, 'ALL'), 'an ALL filter chip exists', 'no ALL chip')
+    check(await page.evaluate(clickByText, 'All'), 'an All filter chip exists', 'no All chip')
     await page.waitForTimeout(700)
     const restored = await page.evaluate(readPool)
     check(restored.length > def.length, 'clearing the filter restores the full pool',
       'ALL returned ' + restored.length + ' rows against ' + def.length + ' filtered')
-    const bodyBefore = await page.locator('body').innerText()
-    check(await page.evaluate(queueFirst), 'a +Q queue control exists on a pool row', 'no +Q button')
+    const queuedBefore = await page.evaluate(queueTabCount)
+    check(queuedBefore != null, 'the Queue tab carries a count', 'no queue count on the tab')
+    check(await page.evaluate(openFirstPlayerCard), 'a pool row opens the player card', 'no player row')
+    await page.waitForSelector('[role="dialog"] h2', { timeout: 30000 })
+    await page.waitForTimeout(600)
+    check(await page.evaluate(clickDialogQueue), 'the player card offers Queue', 'no Queue button on the card')
     await page.waitForTimeout(800)
+    const queuedAfter = await page.evaluate(queueTabCount)
+    check(queuedAfter === (queuedBefore || 0) + 1, 'queueing a player increments the Queue tab count',
+      'count went ' + queuedBefore + ' → ' + queuedAfter)
     const bodyAfter = await page.locator('body').innerText()
-    check(bodyAfter !== bodyBefore, 'the queue responds to +Q', 'the page did not change after queueing')
 
     // ── "A board grid showing teams x rounds" ────────────────────────────────
-    const headers = await page.evaluate(boardHeaders)
-    check(headers != null, 'the board grid is on the page', 'no table with a TEAM header')
-    if (headers) {
-      const rounds = headers.filter(h => /^R\d+$/.test(h))
-      check(rounds.length === 15, 'the board grid shows 15 rounds', 'found ' + rounds.length + ' round columns')
+    check(await page.evaluate(openBoardTab), 'the draft room has a Board tab', 'no Board tab')
+    await page.waitForSelector('[data-testid="draft-board-grid"]', { timeout: 30000 })
+    const board = await page.evaluate(boardShape)
+    check(board != null, 'the board grid is on the page', 'no [data-testid="draft-board-grid"]')
+    if (board) {
+      check(board.rounds.length === 15, 'the board grid shows 15 rounds',
+        'found ' + board.rounds.length + ' round rows')
+      check(board.cols.length >= 11, 'the board grid shows every team',
+        'found ' + (board.cols.length - 1) + ' team columns')
     }
+    await page.evaluate(() => {
+      const list = document.querySelector('[role="tablist"]')
+      const tab = list && Array.from(list.querySelectorAll('[role="tab"]')).find(t => /^players/i.test(t.innerText.trim()))
+      if (tab) tab.click()
+    })
+    await page.waitForSelector('[data-testid="pool-table"] tbody tr', { timeout: 30000 })
 
     // ── "A 30-second clock ... autopick when it expires" ─────────────────────
     await page.waitForTimeout(2600)
@@ -200,18 +271,32 @@ function boardHeaders() {
       'page text is byte-identical across 2.6s — the clock may be frozen')
 
     // ── "Defenses are draftable" — the headline claim ────────────────────────
-    await page.evaluate(clickByText, 'DEF')
+    await page.evaluate(clickByText, 'D/ST')
     await page.waitForTimeout(900)
     const drafted = await page.evaluate(draftFirstDST)
     check(drafted != null, 'a D/ST row offers a DRAFT control', 'no draftable D/ST row found')
     if (drafted) {
       await page.waitForTimeout(1800)
-      const afterDraft = await page.locator('body').innerText()
-      const team = drafted.split(' ')[0]
-      check(afterDraft.includes('D/ST') && (afterDraft.includes(drafted) || afterDraft.includes(team)),
-        'the drafted D/ST lands on the roster',
-        'drafted "' + drafted + '" but it is not on screen afterwards')
-      notes.push('drafted ' + drafted)
+      // The roster is a tab now, not a permanent right-hand panel, so the claim
+      // has to say where it is looking. It also gets stricter for free: the
+      // defense must land in the D/ST STARTING slot, which is the bug that
+      // shipped — buildRosterSlots stopped at K and a bot-drafted defense went
+      // silently to the bench while the engine counted it as a starter.
+      await page.evaluate(() => {
+        const list = document.querySelector('[role="tablist"]')
+        const tab = list && Array.from(list.querySelectorAll('[role="tab"]')).find(t => /^rosters/i.test(t.innerText.trim()))
+        if (tab) tab.click()
+      })
+      await page.waitForTimeout(900)
+      const slot = await page.evaluate(name => {
+        const rows = Array.from(document.querySelectorAll('div'))
+          .filter(d => d.children.length && /^(D\/ST|BE\d+)$/.test((d.firstElementChild.innerText || '').trim()))
+        const row = rows.find(d => d.innerText.indexOf(name) !== -1)
+        return row ? (row.firstElementChild.innerText || '').trim() : null
+      }, drafted)
+      check(slot === 'D/ST', 'the drafted D/ST lands in the starting D/ST slot',
+        'drafted "' + drafted + '" and it is in slot ' + JSON.stringify(slot))
+      notes.push('drafted ' + drafted + ' into ' + slot)
     }
 
     check(intercepted > 0, 'writes were intercepted, not persisted',
