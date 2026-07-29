@@ -541,6 +541,13 @@ async def append_picks(
         if draft["status"] != "active":
             return _json({"error": "draft is not active"}, status=409)
 
+        draft_row = connection.execute(
+            "SELECT teams, rounds FROM nfl_mock_drafts WHERE id = ?",
+            (draft_id,),
+        ).fetchone()
+        max_pick = draft_row["teams"] * draft_row["rounds"]
+        max_team = draft_row["teams"]
+
         inserted = 0
         for pick in picks:
             if not isinstance(pick, dict):
@@ -550,9 +557,9 @@ async def append_picks(
             player_id = pick.get("player_id")
             auto = int(pick.get("auto", 0) or 0)
 
-            if not isinstance(pick_no, int) or pick_no < 1 or pick_no > 180:
+            if not isinstance(pick_no, int) or pick_no < 1 or pick_no > max_pick:
                 continue
-            if not isinstance(team_no, int) or team_no < 1 or team_no > 12:
+            if not isinstance(team_no, int) or team_no < 1 or team_no > max_team:
                 continue
             if not isinstance(player_id, int):
                 continue
