@@ -2,7 +2,11 @@ import { useEffect, useState } from 'react'
 import type { PlayerDetailResponse } from './types'
 import { AvailabilityStrip } from './NflDraftRoom'
 import PlayerGameLog from './PlayerGameLog'
-import { positionRankLabel } from '../../lib/nfl/positionLabel'
+import {
+  positionLabel,
+  positionRankLabel,
+  showsPositionalRank,
+} from '../../lib/nfl/positionLabel'
 
 interface Props {
   playerId: number
@@ -152,7 +156,9 @@ export default function PlayerDetailOverlay({
               </h2>
               <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1">
                 <span className="rounded bg-zinc-800 px-1.5 py-0.5 text-[11px] font-semibold uppercase text-zinc-400">
-                  {positionRankLabel(player.position, posRank)}
+                  {showsPositionalRank(player.position)
+                    ? positionRankLabel(player.position, posRank)
+                    : positionLabel(player.position)}
                 </span>
                 <span className="text-sm text-zinc-400">{player.team}</span>
                 {byeWeek != null && (
@@ -167,7 +173,7 @@ export default function PlayerDetailOverlay({
                   <span className="text-[11px] text-zinc-600">(inactive)</span>
                 )}
               </div>
-              {posRank != null && (
+              {posRank != null && showsPositionalRank(player.position) && (
                 <p className="mt-1 text-[10px] text-zinc-600">
                   {positionRankLabel(player.position, posRank)} by ADP — not our ranking
                 </p>
@@ -388,28 +394,43 @@ export default function PlayerDetailOverlay({
             {/* ── Actions ────────────────────────────────────────────────────
                 Without these the overlay is a dead end: read it, close it, then
                 hunt the row again. */}
+            {/* ── Actions ────────────────────────────────────────────────────
+                The pool row holds exactly one button, and on the clock that
+                button is Draft — ESPN's rule, and ours. The card is where the
+                deliberately kept second option lives, and it has to, because our
+                draft is not ESPN's:
+
+                ESPN replaces QUEUE with DRAFT on your turn and you queue during
+                the eleven turns in between. Here there are no turns in between —
+                every bot pick between yours runs in one synchronous loop, so it
+                is your turn from the moment the room opens until the draft ends.
+                Applying ESPN's rule to every surface would leave nowhere at all
+                to queue from, and the queue is the thing the 30-second clock
+                drafts out of. So: one button on the row, both on the card.
+
+                "Not your pick" is gone. A disabled control whose label states a
+                fact the header already states is noise. */}
             {(onDraft || onQueue) && (
               <section className="flex items-center gap-2">
-                {onDraft && (
+                {canDraft && onDraft && (
                   <button
                     type="button"
-                    disabled={!canDraft}
+                    aria-label={`Draft ${player.name}`}
                     onClick={() => { onDraft(playerId); onClose() }}
-                    className={`flex-1 rounded-lg border px-4 py-2.5 text-sm font-semibold transition-colors ${
-                      canDraft
-                        ? 'border-zinc-600 bg-zinc-800 text-zinc-100 hover:border-zinc-500 hover:bg-zinc-700'
-                        : 'cursor-not-allowed border-zinc-800 bg-zinc-900 text-zinc-700'
-                    }`}
+                    className="flex-1 rounded-lg border border-zinc-600 bg-zinc-800 px-4 py-2.5 text-sm font-semibold text-zinc-100 transition-colors hover:border-zinc-500 hover:bg-zinc-700"
                   >
-                    {canDraft ? 'Draft' : 'Not your pick'}
+                    Draft
                   </button>
                 )}
                 {onQueue && (
                   <button
                     type="button"
                     disabled={queued}
+                    aria-label={queued ? `${player.name} is queued` : `Queue ${player.name}`}
                     onClick={() => { onQueue(playerId); onClose() }}
                     className={`rounded-lg border px-4 py-2.5 text-sm font-medium transition-colors ${
+                      canDraft ? '' : 'flex-1 '
+                    }${
                       queued
                         ? 'cursor-default border-zinc-800 bg-zinc-900 text-zinc-600'
                         : 'border-zinc-700 bg-zinc-900 text-zinc-300 hover:border-zinc-600 hover:text-zinc-100'
