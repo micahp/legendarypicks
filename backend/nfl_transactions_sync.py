@@ -48,38 +48,86 @@ def _fetch_page(page: int) -> dict:
 
 
 def sync(con, pages: int = 3, full: bool = False) -> dict:
-    ensure_tables(con)
+    if pages < 1:
+        return {
+            "status": "error",
+            "reason": "pages must be at least 1",
+            "pages_fetched": 0,
+            "inserted": 0,
+        }
     now = dt.datetime.now(dt.timezone.utc).isoformat()
-    inserted = 0
     seen_pages = 0
     page_count = None
     page = 1
+    fetched_rows = []
     while True:
         try:
             body = _fetch_page(page)
         except (urllib.error.URLError, TimeoutError) as e:
-            return {"status": "error", "reason": str(e), "pages_fetched": seen_pages, "inserted": inserted}
+            return {
+                "status": "error",
+                "reason": str(e),
+                "pages_fetched": seen_pages,
+                "inserted": 0,
+            }
         page_count = body.get("pageCount") or page_count
         rows = body.get("transactions") or []
-        for t in rows:
-            team = t.get("team") or {}
-            cur = con.execute(
-                """INSERT OR IGNORE INTO nfl_transactions
-                   (txn_date, team_id, team_abbr, team_name, description, ingested_at)
-                   VALUES (?,?,?,?,?,?)""",
-                (t.get("date"), team.get("id"), team.get("abbreviation"),
-                 team.get("displayName"), t.get("description"), now),
-            )
-            inserted += cur.rowcount
+        for transaction in rows:
+            if not transaction.get("date") or not transaction.get(
+                "description"
+            ):
+                return {
+                    "status": "error",
+                    "reason": (
+                        f"page {page} has a transaction without "
+                        "date/description"
+                    ),
+                    "pages_fetched": seen_pages,
+                    "inserted": 0,
+                }
+        fetched_rows.extend(rows)
         seen_pages += 1
         page += 1
         if not full and seen_pages >= pages:
             break
         if page_count and page > page_count:
             break
-    con.commit()
+        if not rows:
+            break
+
+    inserted = 0
+    try:
+        con.execute("BEGIN IMMEDIATE")
+        ensure_tables(con)
+        for transaction in fetched_rows:
+            team = transaction.get("team") or {}
+            cur = con.execute(
+                """INSERT OR IGNORE INTO nfl_transactions
+                   (txn_date, team_id, team_abbr, team_name, description, ingested_at)
+                   VALUES (?,?,?,?,?,?)""",
+                (
+                    transaction["date"],
+                    team.get("id"),
+                    team.get("abbreviation"),
+                    team.get("displayName"),
+                    transaction["description"],
+                    now,
+                ),
+            )
+            inserted += cur.rowcount
+        con.execute("COMMIT")
+    except Exception:
+        if con.in_transaction:
+            con.execute("ROLLBACK")
+        raise
     total = con.execute("SELECT COUNT(*) FROM nfl_transactions").fetchone()[0]
-    return {"status": "ok", "pages_fetched": seen_pages, "page_count": page_count, "total_rows": total}
+    return {
+        "status": "ok",
+        "pages_fetched": seen_pages,
+        "page_count": page_count,
+        "inserted": inserted,
+        "total_rows": total,
+    }
 
 
 def main():

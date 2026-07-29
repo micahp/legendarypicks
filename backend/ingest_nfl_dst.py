@@ -137,7 +137,9 @@ def _num(v):
     return int(f) if f.is_integer() else round(f, 3)
 
 
-def ensure_dst_players(con: sqlite3.Connection) -> dict:
+def ensure_dst_players(
+    con: sqlite3.Connection, dry_run: bool = False
+) -> dict:
     """Ensure 32 DEF player rows exist, return {team_code: player_id}."""
     cur = con.execute(
         "SELECT id, team FROM players WHERE league='nfl' AND position='DEF' AND active=1"
@@ -148,15 +150,22 @@ def ensure_dst_players(con: sqlite3.Connection) -> dict:
         code for code in NFL_TEAMS if code not in existing
     ]
     if missing:
-        for code in missing:
-            team_name = NFL_TEAMS[code]
-            cur = con.execute(
-                """INSERT INTO players (name, league, team, position, active, updated_at)
-                   VALUES (?, 'nfl', ?, 'DEF', 1, datetime('now'))""",
-                (f"{team_name} D/ST", code),
-            )
-            existing[code] = cur.lastrowid
-        con.commit()
+        if dry_run:
+            # Stable local placeholders let the row plan be counted without
+            # creating player identities in the database.
+            for index, code in enumerate(missing, start=1):
+                existing[code] = -index
+        else:
+            for code in missing:
+                team_name = NFL_TEAMS[code]
+                cur = con.execute(
+                    """INSERT INTO players
+                       (name, league, team, position, active, updated_at)
+                       VALUES (?, 'nfl', ?, 'DEF', 1, datetime('now'))""",
+                    (f"{team_name} D/ST", code),
+                )
+                existing[code] = cur.lastrowid
+            con.commit()
 
     return existing
 
@@ -283,7 +292,8 @@ def _get_pa_from_team_game_results(con: sqlite3.Connection, season: int) -> dict
 def ingest(con: sqlite3.Connection, year: int, rows: list,
            dst_players: dict, dry_run: bool = False) -> int:
     """Write D/ST stats to nfl_dst_stats."""
-    ensure_dst_table(con)
+    if not dry_run:
+        ensure_dst_table(con)
 
     points_allowed_map = get_points_allowed(con, year)
 
@@ -355,7 +365,7 @@ def main():
     con = sqlite3.connect(DB)
     con.row_factory = sqlite3.Row
 
-    dst_players = ensure_dst_players(con)
+    dst_players = ensure_dst_players(con, dry_run=args.dry_run)
     print(f"  {len(dst_players)} D/ST player rows ready")
 
     written = ingest(con, args.year, rows, dst_players, args.dry_run)

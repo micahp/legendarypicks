@@ -6,6 +6,7 @@ import sqlite3
 import sys
 import tempfile
 import unittest
+from unittest import mock
 
 sys.path.insert(0, os.path.dirname(__file__))
 
@@ -149,6 +150,78 @@ class DstEnsurePlayersTests(unittest.TestCase):
         self.assertIn("ARI", players)
         self.assertIn("DAL", players)
         self.assertIn("SEA", players)
+
+    def test_dry_run_does_not_create_def_players(self):
+        players = dst_mod.ensure_dst_players(
+            self.con, dry_run=True
+        )
+        self.assertEqual(len(players), 32)
+        count = self.con.execute(
+            "SELECT COUNT(*) FROM players"
+        ).fetchone()[0]
+        self.assertEqual(count, 0)
+
+
+class AdpAtomicityTests(unittest.TestCase):
+    def setUp(self):
+        handle = tempfile.NamedTemporaryFile(
+            suffix=".db", delete=False
+        )
+        handle.close()
+        self.db_path = handle.name
+        with sqlite3.connect(self.db_path) as connection:
+            connection.execute(
+                """CREATE TABLE players(
+                     id INTEGER PRIMARY KEY,
+                     name TEXT,
+                     league TEXT,
+                     team TEXT,
+                     position TEXT,
+                     active INTEGER,
+                     espn_id TEXT
+                   )"""
+            )
+            connection.execute(
+                "INSERT INTO players VALUES"
+                "(1,'Fixture Receiver','nfl','ARI','WR',1,'101')"
+            )
+        self.original_db = ingest_nfl_adp.DB
+        ingest_nfl_adp.DB = self.db_path
+
+    def tearDown(self):
+        ingest_nfl_adp.DB = self.original_db
+        os.unlink(self.db_path)
+
+    def test_failed_dst_preflight_writes_no_skill_adp_or_schema(self):
+        page = [
+            {
+                "id": 101,
+                "fullName": "Fixture Receiver",
+                "defaultPositionId": 3,
+                "ownership": {
+                    "averageDraftPosition": 10.5,
+                    "percentOwned": 99.0,
+                },
+            }
+        ]
+        with mock.patch.object(
+            ingest_nfl_adp,
+            "_build_pro_team_map",
+            return_value={1: "ARI"},
+        ), mock.patch.object(
+            ingest_nfl_adp, "_fetch_page", return_value=page
+        ):
+            with self.assertRaisesRegex(
+                RuntimeError, "expected 32"
+            ):
+                ingest_nfl_adp.ingest()
+
+        with sqlite3.connect(self.db_path) as connection:
+            table = connection.execute(
+                "SELECT 1 FROM sqlite_master "
+                "WHERE type='table' AND name='nfl_adp'"
+            ).fetchone()
+        self.assertIsNone(table)
 
 
 class DstDraftBoardTests(unittest.TestCase):

@@ -482,7 +482,7 @@ export function DraftPlayerRow({
         <div className="text-[10px] text-zinc-600">
           {player.current_team}
           {player.depth_rank != null &&
-            ` · ${positionRankLabel(player.position, player.depth_rank)}`}
+            ` · ${positionRankLabel(player.depth_position ?? player.position, player.depth_rank)}`}
           {/* A team change is information, not an achievement — no accent. */}
           {player.team_changed === true && player.depth_team && (
             <span className="ml-1 text-zinc-500">from {player.depth_team}</span>

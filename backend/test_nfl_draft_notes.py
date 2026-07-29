@@ -4,7 +4,8 @@
 
 LP_DB_PATH is pointed at a tempfile BEFORE importing the router so that the
 module-level ``_DB`` resolves to a disposable database rather than a real one.
-``conftest.py`` restores the env var afterwards (per its docstring)."""
+The module restores the env var immediately after import so unittest discovery
+cannot redirect later real-DB suites to this tempfile."""
 
 import os
 import sys
@@ -18,12 +19,18 @@ sys.path.insert(0, HERE)
 # Point LP_DB_PATH at a throwaway file BEFORE importing the router.
 _TEST_DB = tempfile.NamedTemporaryFile(prefix="draft-notes-test-", suffix=".db", delete=False)
 _TEST_DB.close()
+_ORIGINAL_LP_DB_PATH = os.environ.get("LP_DB_PATH")
 os.environ["LP_DB_PATH"] = _TEST_DB.name
 
 from routers import nfl_draft_notes  # noqa: E402
 
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
+
+if _ORIGINAL_LP_DB_PATH is None:
+    os.environ.pop("LP_DB_PATH", None)
+else:
+    os.environ["LP_DB_PATH"] = _ORIGINAL_LP_DB_PATH
 
 # Build a minimal app that only includes the draft-notes router.
 app = FastAPI()

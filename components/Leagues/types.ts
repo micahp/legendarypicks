@@ -225,14 +225,16 @@ export interface NflDraftPlayer {
   team_changed: boolean | null
   /** Current role from the published depth chart. 1 = starter. */
   depth_rank: number | null
+  /** Position attached to depth_rank in the published depth chart. */
+  depth_position: string | null
   adp: number | null
   /** True when ESPN published an ADP value for this player. */
   adp_is_ranked: boolean
   percent_owned: number | null
   /** The headline: regular-season games played out of the team's 17. */
-  games_played: number
+  games_played: number | null
   games_missed: number | null
-  team_games: number
+  team_games: number | null
   /** Weeks 1-18 he appeared in. The gaps are the story. */
   weeks_played: number[]
   /** The 17 weeks his team played, so a bye renders as a bye, not an absence. */
@@ -361,7 +363,7 @@ export interface PoolPlayer {
   /** Whether we hold any NFL game log for this player before the reference
    *  season. Distinguishes a rookie from a veteran who missed the year. */
   has_prior_nfl_sample?: boolean
-  games_played: number
+  games_played: number | null
   games_missed: number | null
   weeks_played: number[]
   team_weeks: number[]
@@ -441,9 +443,9 @@ export interface PlayerDetailResponse {
   /** Whether we hold any NFL game log for this player before the reference
    *  season. Distinguishes a rookie from a veteran who missed the year. */
   has_prior_nfl_sample?: boolean
-  games_played: number
+  games_played: number | null
   games_missed: number | null
-  team_games: number
+  team_games: number | null
   weeks_played: number[]
   team_weeks: number[]
   ppr_per_game_played: number | null

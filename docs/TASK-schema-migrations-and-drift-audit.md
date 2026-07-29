@@ -1,7 +1,7 @@
 # TASK — versioned SQLite migrations and full schema-drift audit
 
 **Owner:** backend  
-**Status:** required before the next production promotion  
+**Status:** implemented and rehearsed; authorized prod application still required
 **Written:** 2026-07-28
 
 ## Why this task exists
@@ -81,6 +81,11 @@ them, and prints each applied or adopted migration ID.
 Do not run migrations implicitly while importing a router or starting the
 service. Startup may check and fail clearly; deployment applies migrations as a
 separate, observable step.
+
+Implementation: `backend/migrate_schema.py` and
+`backend/test_migrate_schema.py`. The checked-in historical inventory and
+three-database classification is
+`docs/SCHEMA-DRIFT-AUDIT-2026-07-28.md`.
 
 ## Migration registry contract
 

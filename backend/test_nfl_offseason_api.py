@@ -128,6 +128,9 @@ class NflOffseasonApiTests(unittest.TestCase):
                     (1, 2026, "LA", "WR", 1),
                     (2, 2026, "ARI", "QB", 1),
                     (4, 2026, "NE", "WR", 2),
+                    # One player can have multiple published roles. The board
+                    # must still emit one entity and attach the best role.
+                    (4, 2026, "NE", "RB", 7),
                 ],
             )
             connection.execute(
@@ -175,6 +178,18 @@ class NflOffseasonApiTests(unittest.TestCase):
             2,
         )
         self.assertEqual(payload["coverage"]["team_reference"]["games"], 272)
+
+    def test_published_decimal_ratios_round_half_up(self):
+        self.assertEqual(nfl_offseason._rounded_ratio(42.4, 16), 2.7)
+        self.assertEqual(nfl_offseason._rounded_ratio(8.1, 6), 1.4)
+        self.assertEqual(nfl_offseason._rounded_ratio(109.9, 14), 7.9)
+        self.assertEqual(
+            nfl_offseason._rounded_ratio(109.89999999999998, 14),
+            7.9,
+        )
+        self.assertEqual(nfl_offseason._rounded_ratio(13.760000000000002, 4), 3.4)
+        self.assertEqual(nfl_offseason._rounded_ratio(-0.08, 2), 0.0)
+        self.assertEqual(nfl_offseason._percentage(0.285, 0), 29.0)
 
     def test_calendar_phases_fail_closed_after_verified_window(self):
         cases = [
@@ -330,8 +345,9 @@ class NflOffseasonApiTests(unittest.TestCase):
 
         rookie = players["Camp Rookie"]
         self.assertEqual(rookie["sample"], "none")
-        self.assertEqual(rookie["games_played"], 0)
+        self.assertIsNone(rookie["games_played"])
         self.assertIsNone(rookie["games_missed"])
+        self.assertIsNone(rookie["team_games"])
         self.assertEqual(rookie["weeks_played"], [])
         # A zero here would be a claim about the player. Absence is a claim
         # about us, and it is the true one.
@@ -342,6 +358,56 @@ class NflOffseasonApiTests(unittest.TestCase):
         self.assertEqual(rookie["adp"], 66.0)
         self.assertTrue(rookie["adp_is_ranked"])
         self.assertEqual(rookie["depth_rank"], 2)
+        self.assertEqual(rookie["depth_position"], "WR")
+
+    def test_multi_position_depth_chart_emits_one_player(self):
+        players = [p for p in self.board()["players"] if p["player_id"] == 4]
+        self.assertEqual(len(players), 1)
+        self.assertEqual(players[0]["depth_rank"], 2)
+        self.assertEqual(players[0]["depth_position"], "WR")
+
+    def test_target_share_keeps_zero_weeks_but_non_receivers_stay_null(self):
+        with sqlite3.connect(self.db_path) as connection:
+            connection.execute(
+                """UPDATE player_game_logs
+                   SET stats=json_set(stats, '$.target_share', 0)
+                   WHERE player_id=1 AND game_type='REG' AND game_no!='1'"""
+            )
+            connection.execute(
+                """UPDATE player_game_logs
+                   SET stats=json_set(stats, '$.target_share', 0)
+                   WHERE player_id=2 AND game_type='REG'"""
+            )
+            connection.row_factory = sqlite3.Row
+            aggregates = nfl_offseason._regular_season_aggregates(
+                connection, 2025
+            )
+
+        self.assertAlmostEqual(aggregates[1]["target_share"], 0.25 / 16)
+        self.assertIsNone(aggregates[2]["target_share"])
+
+    def test_snap_percentage_reads_all_published_snap_rows(self):
+        with sqlite3.connect(self.db_path) as connection:
+            connection.execute(
+                """CREATE TABLE nfl_snap_counts(
+                     player_id INTEGER,
+                     season INTEGER,
+                     week INTEGER,
+                     team TEXT,
+                     off_pct REAL
+                   )"""
+            )
+            connection.executemany(
+                "INSERT INTO nfl_snap_counts VALUES(1,2025,?,'LAR',?)",
+                [(1, 0.9), (2, 0.3), (17, 0.0)],
+            )
+            connection.row_factory = sqlite3.Row
+            aggregates = nfl_offseason._regular_season_aggregates(
+                connection, 2025
+            )
+
+        self.assertAlmostEqual(aggregates[1]["snap_pct"], 0.4)
+        self.assertIsNone(aggregates[2]["snap_pct"])
 
     def test_published_late_adp_is_not_discarded_by_the_reader(self):
         players = {p["name"]: p for p in self.board()["players"]}

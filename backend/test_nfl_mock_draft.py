@@ -20,12 +20,21 @@ _TEST_DB = tempfile.NamedTemporaryFile(
     prefix="mock-draft-test-", suffix=".db", delete=False
 )
 _TEST_DB.close()
+_ORIGINAL_LP_DB_PATH = os.environ.get("LP_DB_PATH")
 os.environ["LP_DB_PATH"] = _TEST_DB.name
 
 from routers import nfl_mock_draft  # noqa: E402
 
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
+
+# Do not poison later real-DB suites in the same unittest process. The router
+# has already bound its own _DB to the tempfile; the shared environment belongs
+# to the caller's test run.
+if _ORIGINAL_LP_DB_PATH is None:
+    os.environ.pop("LP_DB_PATH", None)
+else:
+    os.environ["LP_DB_PATH"] = _ORIGINAL_LP_DB_PATH
 
 # Build a minimal app that only includes the mock-draft router.
 app = FastAPI()
@@ -189,7 +198,9 @@ class TestNflMockDraft(unittest.TestCase):
         if 4 in players_by_id:
             p4 = players_by_id[4]
             self.assertEqual(p4["sample"], "none")
+            self.assertIsNone(p4["games_played"])
             self.assertIsNone(p4["games_missed"])
+            self.assertIsNone(p4["team_games"])
 
     def test_pool_wrong_season(self):
         resp = client.get("/api/nfl/mock-draft/pool?season=2025")
