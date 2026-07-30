@@ -376,19 +376,23 @@ export default function DraftRoom({
         )}
       </section>
 
-      {selectedPlayerId != null && (
+      {selectedPlayerId != null && (() => {
+        const p = playerMap.get(selectedPlayerId)
+        return (
         <PlayerDetailOverlay
           playerId={selectedPlayerId}
           onClose={() => setSelectedPlayerId(null)}
           currentPick={draftState.currentPick}
           posRank={posRank.get(selectedPlayerId)}
-          byeWeek={byeMap.get(playerMap.get(selectedPlayerId)?.team ?? '') ?? null}
+          byeWeek={byeMap.get(p?.team ?? '') ?? null}
           onDraft={onUserPick}
           onQueue={onAddToQueue}
           canDraft={onClock && !draftedIds.has(selectedPlayerId)}
           queued={queue.includes(selectedPlayerId)}
+          stat_ranks={p?.stat_ranks ?? null}
         />
-      )}
+        )
+      })()}
     </>
   )
 }

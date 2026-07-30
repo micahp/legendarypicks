@@ -44,6 +44,60 @@ _REG_SEASON_TEAM_GAMES = 17
 _POSTSEASON_FIRST_WEEK = 19
 _THIN_SAMPLE_GAMES = 4
 _POOL_CAP = 300
+_NFL_RANK_STATS = {
+    "QB": [
+        ("pass_yds_g", "Pass Yds/G"),
+        ("pass_td", "Pass TD"),
+        ("interceptions", "INT"),
+        ("cmp_g", "Cmp/G"),
+    ],
+    "RB": [
+        ("rush_yds_g", "Rush Yds/G"),
+        ("carries_g", "Carries/G"),
+        ("rec_yds_g", "Rec Yds/G"),
+        ("fantasy_ppr_g", "PPR/G"),
+    ],
+    "WR": [
+        ("rec_yds_g", "Rec Yds/G"),
+        ("targets", "Targets"),
+        ("receptions", "Receptions"),
+        ("fantasy_ppr_g", "PPR/G"),
+    ],
+    "TE": [
+        ("rec_yds_g", "Rec Yds/G"),
+        ("targets", "Targets"),
+        ("receptions", "Receptions"),
+        ("fantasy_ppr_g", "PPR/G"),
+    ],
+}
+_RANK_ASC = frozenset(["interceptions"])
+
+
+def _player_stat_ranks(connection, player_id, position):
+    """League-wide rank for the player's 4 position-relevant stats."""
+    pos_ranks = _NFL_RANK_STATS.get(position)
+    if not pos_ranks:
+        return {}
+    results = {}
+    for stat_col, stat_label in pos_ranks:
+        row = connection.execute(
+            f"SELECT {stat_col} AS val FROM player_stats WHERE player_id=? "
+            f"AND league='nfl' AND stat_type='weekly' AND {stat_col} IS NOT NULL",
+            (player_id,),
+        ).fetchone()
+        if row is None:
+            continue
+        player_val = float(row["val"])
+        order = "ASC" if stat_col in _RANK_ASC else "DESC"
+        cmp = "<" if order == "ASC" else ">"
+        rank = connection.execute(
+            f"SELECT COUNT(*) + 1 AS rank FROM player_stats WHERE league='nfl' "
+            f"AND stat_type='weekly' AND {stat_col} IS NOT NULL AND {stat_col} {cmp} ?",
+            (player_val,),
+        ).fetchone()["rank"]
+        results[stat_col] = {"value": player_val, "rank": int(rank), "label": stat_label}
+    return results
+
 
 # Draftable positions: skill positions, kickers, and team defenses.
 _DRAFT_POSITIONS = ("QB", "RB", "WR", "TE", "PK", "DEF")
@@ -394,6 +448,8 @@ def pool(season: int = Query(...)):
                 snap_pct = None
                 target_share = None
 
+            # ESPN-style 4-stat rank card
+            stat_ranks = _player_stat_ranks(connection, pid, pos)
             players.append({
                 "player_id": pid,
                 "name": row["name"],
@@ -417,6 +473,7 @@ def pool(season: int = Query(...)):
                 "pk_pts_per_game": pk_pts_per_game,
                 "dst_pts_total": dst_pts_total,
                 "dst_pts_per_game": dst_pts_per_game,
+                "stat_ranks": stat_ranks,
             })
 
         return _json(

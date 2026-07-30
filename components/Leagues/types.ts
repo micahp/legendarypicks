@@ -382,6 +382,9 @@ export interface PoolPlayer {
   pk_pts_per_game?: number | null
   dst_pts_total?: number | null
   dst_pts_per_game?: number | null
+  /** ESPN-style 4-stat league ranks.
+   * Population field — job16+. */
+  stat_ranks?: Record<string, { value: number | null; rank: number | null; label: string }> | null
 }
 
 export interface PoolResponse {

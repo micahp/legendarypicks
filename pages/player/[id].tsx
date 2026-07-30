@@ -35,6 +35,7 @@ interface PlayerProfile {
   season_stats: SeasonStats | null
   coverage: { game_logs: boolean; props: boolean; season_stats: boolean }
   data_status: 'ready' | 'unavailable'
+  stat_ranks?: Record<string, { value: number | null; rank: number | null; label: string }> | null
 }
 
 const STAT_ORDER = ['pass_yds', 'rush_yds', 'rec_yds', 'PTS', 'REB', 'AST', 'PRA', '3PM',
