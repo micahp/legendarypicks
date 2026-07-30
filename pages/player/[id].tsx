@@ -3,6 +3,7 @@ import { useRouter } from 'next/router'
 import Head from 'next/head'
 import PropChart, { PropHistory } from '../../components/Props/PropChart'
 import NflUsageTrend from '../../components/Leagues/NflUsageTrend'
+import StatRankCard from '../../components/Leagues/StatRankCard'
 import { trackPlayerViewed, trackUsageTrendViewed } from '../../lib/analytics'
 
 interface Projection {
@@ -365,7 +366,26 @@ export default function PlayerPage() {
             season totals rather than per-game rows). */}
         {show('overview') && p.season_stats && <SeasonStatsSection league={p.league} seasonStats={p.season_stats} />}
 
-        {/* Current props (each expands to a chart) */}
+        {/* ESPN-style 4-stat rank card — league rank for the player's position-relevant stats */}
+        {p.stat_ranks && Object.keys(p.stat_ranks).length > 0 && (
+          <section>
+            <h2 className="text-sm font-bold text-zinc-400 uppercase tracking-wider mb-2">Fantasy Ranking</h2>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              {Object.entries(p.stat_ranks).map(([key, data]: [string, { value: number | null; rank: number | null; label: string }]) => (
+                <div key={key} className="bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3">
+                  <div className="text-xs uppercase tracking-wide text-zinc-500 mb-1">{data.label}</div>
+                  <div className="flex items-end gap-2">
+                    <span className="text-xl font-mono font-bold text-zinc-100 tabular-nums">{data.value != null ? (typeof data.value === "number" && Math.abs(data.value - Math.round(data.value)) < 0.01 ? String(Math.round(data.value)) : data.value.toFixed(1)) : "—"}</span>
+                    {data.rank != null && (
+                      <span className="text-xs text-zinc-500 font-mono tabular-nums pb-1">#{data.rank}</span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
         {show('overview') && p.props.length > 0 && (
           <section>
             <h2 className="text-sm font-bold text-zinc-400 uppercase tracking-wider mb-2">Current Props</h2>

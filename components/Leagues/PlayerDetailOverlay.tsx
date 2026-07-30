@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { PlayerDetailResponse } from './types'
 import { AvailabilityStrip } from './NflDraftRoom'
+import StatRankCard from './StatRankCard'
 import PlayerGameLog from './PlayerGameLog'
 import {
   positionLabel,
@@ -11,6 +12,8 @@ import {
 interface Props {
   playerId: number
   onClose: () => void
+  /* External ESPN-style rank data — not part of the /api/nfl/draft/player response */
+  stat_ranks?: Record<string, { value: number | null; rank: number | null; label: string }> | null
 
   /* Draft-room context. All optional: the camp-tab research board renders this
      same overlay with none of it, and a research board has no pick to be on. */
@@ -33,7 +36,11 @@ export default function PlayerDetailOverlay({
   onQueue,
   canDraft,
   queued,
+  stat_ranks,
 }: Props) {
+  /* stat_ranks: optional ESPN-style rank data — not part of the normal
+     player detail endpoint. Passed from parent when overlay is shown in
+     the player card or draft room. */
   const [player, setPlayer] = useState<PlayerDetailResponse | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -185,7 +192,40 @@ export default function PlayerDetailOverlay({
                 "what is this player worth"; the log is "how did he get there",
                 which a season average cannot show — a 12 PPR/g average hides
                 whether he was rising or falling all year. */}
-            <div className="flex gap-1 border-b border-zinc-800" role="tablist">
+            {/* ── ESPN-style 4-stat rank card ───────────────────────────
+                Show the first thing that matters in a draft: how this player
+                compares league-wide on the stats that matter for his position.
+                Matches ESPN overlay style per the design ref. */}
+            {stat_ranks && Object.keys(stat_ranks).length > 0 && (
+              <section>
+                <h3 className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500 mb-2">
+                  League Rankings
+                </h3>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  {Object.entries(stat_ranks).map(([key, data]) => (
+                    <div key={key} className="bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2.5">
+                      <div className="text-[10px] uppercase tracking-wide text-zinc-500 mb-0.5">{data.label}</div>
+                      <div className="flex items-end gap-2">
+                        <span className="text-lg font-mono font-bold text-zinc-100 tabular-nums">
+                          {data.value != null
+                            ? (typeof data.value === "number" && Math.abs(data.value - Math.round(data.value)) < 0.01
+                                ? String(Math.round(data.value))
+                                : data.value.toLocaleString(undefined, { maximumFractionDigits: 1 }))
+                            : '\u2014'}
+                        </span>
+                        {data.rank != null && (
+                          <span className="text-[10px] text-zinc-500 font-mono tabular-nums pb-0.5">
+                            #{data.rank}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+
+                        <div className="flex gap-1 border-b border-zinc-800" role="tablist">
               {([['overview', 'Overview'], ['log', 'Game log']] as const).map(([id, label]) => (
                 <button
                   key={id}
