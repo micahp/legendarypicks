@@ -69,3 +69,7 @@ logs/
 
 # isolated build output
 .next-build
+
+# v0.6.13 re-cut: disposable clone + large pinned artifact (sha256 recorded in PINNED-ARTIFACTS)
+backend/data/rehearsal-v0.6.13.db
+backend/data/espn_2026_snapshot_page1.json

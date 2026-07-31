@@ -103,6 +103,33 @@ def _init_db():
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           player_id INTEGER NOT NULL REFERENCES players(id),
           alias_norm TEXT NOT NULL);
+        -- v0.6.13: ESPN-published 2026 season projections + board ranks.
+        -- One row per (player, season); raw ESPN stat map kept for auditability;
+        -- lp_ppr_projected_points computed by the explicit LP PPR formula.
+        CREATE TABLE IF NOT EXISTS nfl_player_projections(
+          player_id INTEGER NOT NULL,
+          espn_id INTEGER NOT NULL,
+          season INTEGER NOT NULL,
+          scoring_period_id INTEGER NOT NULL DEFAULT 0,
+          stat_source_id INTEGER NOT NULL DEFAULT 1,
+          stat_split_type_id INTEGER NOT NULL DEFAULT 0,
+          raw_projection_json TEXT NOT NULL,
+          projected_games INTEGER,
+          pass_att REAL, pass_cmp REAL,
+          pass_yds REAL, pass_td REAL,
+          interceptions REAL,
+          rush_att REAL, rush_yds REAL, rush_td REAL,
+          receptions REAL, targets REAL,
+          rec_yds REAL, rec_td REAL,
+          fumbles REAL, fumbles_lost REAL,
+          fg_att REAL, fg_made REAL,
+          xp_att REAL, xp_made REAL,
+          def_td REAL, def_int REAL, def_sack REAL, def_fumble_rec REAL,
+          def_points_allowed REAL, def_yds_allowed REAL,
+          lp_ppr_projected_points REAL,
+          fetched_at TEXT NOT NULL DEFAULT (datetime('now')),
+          payload_checksum TEXT,
+          PRIMARY KEY (player_id, season));
         """)
         con.execute(PLAYER_STATS_TABLE_SQL)
         # M6 odds capture: additive schema. CREATE IF NOT EXISTS for the snapshot

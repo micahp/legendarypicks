@@ -91,6 +91,24 @@ class TestNflMockDraft(unittest.TestCase):
                     team TEXT
                 )"""
             )
+            connection.execute(
+                """CREATE TABLE IF NOT EXISTS player_stats (
+                    player_id INTEGER,
+                    league TEXT,
+                    stat_type TEXT,
+                    season INTEGER,
+                    pass_yds_g REAL,
+                    pass_td INTEGER,
+                    interceptions INTEGER,
+                    cmp_g REAL,
+                    carries_g REAL,
+                    rush_yds_g REAL,
+                    rec_yds_g REAL,
+                    targets INTEGER,
+                    receptions INTEGER,
+                    fantasy_ppr_g REAL
+                )"""
+            )
             # Seed players — all NFL, all active, covering the five draftable positions.
             connection.executemany(
                 "INSERT OR IGNORE INTO players (id, name, position, team, league, active) "

@@ -565,6 +565,11 @@ class DstPoolSelectionTests(unittest.TestCase):
               player_id INTEGER, season INTEGER, week INTEGER, fantasy_pts REAL);
             CREATE TABLE nfl_schedule(
               season INTEGER, week INTEGER, home_team TEXT, away_team TEXT);
+            CREATE TABLE player_stats(
+              player_id INTEGER, league TEXT, stat_type TEXT, season INTEGER,
+              pass_yds_g REAL, pass_td INTEGER, interceptions INTEGER, cmp_g REAL,
+              carries_g REAL, rush_yds_g REAL, rec_yds_g REAL, targets INTEGER,
+              receptions INTEGER, fantasy_ppr_g REAL);
         """)
         # 32 DEF — MIA and ARI get tier-2 ADP/low ownership so they would
         # be excluded by a global top-300 cap
