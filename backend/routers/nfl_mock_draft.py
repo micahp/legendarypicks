@@ -73,15 +73,6 @@ _NFL_RANK_STATS = {
 _RANK_ASC = frozenset(["interceptions"])
 
 
-def _player_stat_ranks(connection, player_id, position):
-    """League-wide rank for the player's 4 position-relevant stats (single player).
-
-    Kept for callers that need one player; the pool uses the batched version —
-    one query per stat instead of one per player.
-    """
-    return _player_stat_ranks_batch(connection).get(player_id, {}).get(position, {})
-
-
 def _player_stat_ranks_batch(connection):
     """Rank card for EVERY player, one query per stat (~4 total).
 
