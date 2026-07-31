@@ -255,16 +255,15 @@ before the prod deploy, not after.**
 Slice D is merged and tagged in v0.6.11. **Micah's verdict: it is a proof of concept, not
 shippable.** Full detail and evidence in `/root/CONTEXT-2026-07-27-HANDOFF-10.md`.
 
-### M1. D/ST does not exist — **blocking**
-No entity, no ADP, no roster slot. A 15-round roster with no defense is not a fantasy roster.
-Smaller than it sounds: every stat D/ST scoring needs is **published** at
-`nflverse-data/releases/download/stats_team/stats_team_week_2025.parquet` (570 rows, verified
-200) — `def_sacks`, `def_interceptions`, `def_tds`, `def_safeties`, `fumble_recovery_opp`,
-`special_teams_tds`, `pt_return_tds`. Points allowed is already in
-`team_game_results.score_against`. **No pbp reconstruction** (`nfl_pbp` has 7 usable columns
-and none are sack/interception/fumble). What is missing is (a) 32 team-defense entities and
-(b) D/ST ADP — `nfl_adp` has zero. ⚠️ **Check what ESPN publishes as the position code before
-inventing one** — see B9.
+### M1. D/ST does not exist — **blocking** ✅ **RESOLVED 2026-07-31**
+D/ST entity + roster slot: **DONE** (`8234ecb` — SEA D/ST drafts into DEF slot).
+
+D/ST ADP: **ESPN PUBLISHES IT** — all 32 teams carry PPR ranks (234–519) and ownership % (0.5%–98.9%)
+in `kona_player_info` view. ESPN keys D/ST with negative IDs (`-16000 - proTeamId`).
+Our `ingest_nfl_adp.py` joined on `espn_id` (empty for D/ST) → silent 0/32 match → derived ADP.
+**Fix: ingest ESPN's published D/ST PPR ranks instead of deriving.**
+
+*Supersedes ROADMAP B11 and pt.13 finding #6.*
 
 ### M2. Availability is computed from a table that cannot express it — **blocking**
 `player_game_logs` only holds players who recorded a passing/rushing/receiving stat, so anyone
@@ -383,6 +382,35 @@ of them rendered React. `REG-render` — a Playwright smoke gate that loads `/mo
 `/leagues/nfl?tab=camp` and fails on any console or page error — is the highest-value
 un-started item on this list. Both bugs above (B12, B13) were found by hand-driving a browser,
 which is exactly the thing no gate does.
+
+---
+
+## Tasks for Reasonix (v0.7.0 scope — Aug 22 deadline)
+
+### T1. Fix D/ST ADP ingestion — use ESPN published PPR ranks
+**Worktree:** `/root/lp-v0613-recut` (branch `recut/v0.6.13`)
+**File:** `backend/ingest_nfl_adp.py`
+**Problem:** Current code joins on `espn_id` which is empty for D/ST → 0/32 match → derives ADP from fantasy totals.
+**Fix:** Join on ESPN's negative D/ST IDs (`-16000 - proTeamId`) to get published PPR ranks.
+**Source:** `kona_player_info` view with `limit: 20000` — all 32 D/ST have `draftRanksByRankType.PPR.rank` and `ownership.percentOwned`.
+**Gates:**
+- `REG-adp-dst` (already RED in repo with expected numbers)
+- 32/32 D/ST rows with `adp_ppr` column populated
+- Pool endpoint returns D/ST with real ESPN ADP (DEN 234, SEA 239, etc.)
+
+### T2. Expand mock draft pool to full ESPN player universe (11,515 players)
+**Worktree:** `/root/lp-v0613-recut` (branch `recut/v0.6.13`)
+**Files:** `backend/ingest_nfl_adp.py`, `backend/routers/nfl_mock_draft.py`
+**Problem:** Current pool is ~300 players (only drafted/owned). ESPN `kona_player_info` returns 11,515 players including free agents.
+**Fix:** 
+1. Update `ingest_nfl_adp.py` to fetch with `limit: 20000` (no filter)
+2. Store ALL players in `nfl_adp` table (including `percentOwned=0`)
+3. Pool endpoint returns full universe; UI filters handle "available" vs "drafted"
+**Gates:**
+- `nfl_adp` table has ~11,515 rows for 2026
+- Pool endpoint `GET /api/nfl/mock-draft/pool?season=2026` returns 11,515 players
+- Position breakdown: QB 470, RB 1122, WR 1791, TE 882, K 209, D/ST 32
+- Free agents (percentOwned=0) render as "—" in ADP column per honest-data-ui
 
 ---
 
