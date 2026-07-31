@@ -285,15 +285,32 @@ def pool(season: int = Query(...)):
         _placeholders = ",".join("?" for _ in _NON_DEF_POSITIONS)
 
         # ── DEF: all 32, guaranteed a slot ──
+        # Projections join + rank column are conditional: a DB that has not yet
+        # run the v0.6.13 migrations must not 500 — it serves honest NULLs.
+        _has_proj = bool(_table_columns(connection, "nfl_player_projections"))
+        _has_rank = "espn_ppr_rank" in _table_columns(connection, "nfl_adp")
+        _proj_select = (
+            ", np.lp_ppr_projected_points AS proj_pts"
+            if _has_proj else ", NULL AS proj_pts"
+        )
+        _proj_join = (
+            " LEFT JOIN nfl_player_projections np"
+            " ON np.player_id = p.id AND np.season = ?"
+            if _has_proj else ""
+        )
+        _proj_params = (season,) if _has_proj else ()
+        _rank_select = ", na.espn_ppr_rank" if _has_rank else ", NULL AS espn_ppr_rank"
+
         def_rows = connection.execute(
-            """SELECT p.id AS player_id, p.name, p.position, p.team,
-                      na.adp, na.percent_owned
-               FROM players p
-               JOIN nfl_adp na ON na.player_id = p.id AND na.season = ?
-               WHERE p.league = 'nfl' AND p.active = 1
-                 AND p.position = 'DEF'
-                 AND na.adp IS NOT NULL""",
-            (season,),
+            f"""SELECT p.id AS player_id, p.name, p.position, p.team,
+                          na.adp, na.percent_owned{_rank_select}{_proj_select}
+                   FROM players p
+                   JOIN nfl_adp na ON na.player_id = p.id AND na.season = ?
+                   {_proj_join}
+                   WHERE p.league = 'nfl' AND p.active = 1
+                     AND p.position = 'DEF'
+                     AND na.adp IS NOT NULL""",
+            (season, *_proj_params),
         ).fetchall()
 
         # ── Non-DEF: top N to fill pool cap ──
@@ -302,9 +319,10 @@ def pool(season: int = Query(...)):
         if _non_def_cap > 0:
             non_def_rows = connection.execute(
                 f"""SELECT p.id AS player_id, p.name, p.position, p.team,
-                           na.adp, na.percent_owned
+                           na.adp, na.percent_owned{_rank_select}{_proj_select}
                     FROM players p
                     JOIN nfl_adp na ON na.player_id = p.id AND na.season = ?
+                    {_proj_join}
                     WHERE p.league = 'nfl' AND p.active = 1
                       AND p.position IN ({_placeholders})
                       AND (na.adp IS NOT NULL OR na.percent_owned > 0)
@@ -314,14 +332,17 @@ def pool(season: int = Query(...)):
                       na.percent_owned DESC,
                       p.name ASC
                     LIMIT ?""",
-                (season, *_NON_DEF_POSITIONS, _non_def_cap),
+                (season, *_proj_params, *_NON_DEF_POSITIONS, _non_def_cap),
             ).fetchall()
 
         # Merge both sets
         rows = list(def_rows) + list(non_def_rows)
-        # Sort by the copied ESPN ADP. Nulls, if selected through published
-        # ownership, follow all players with a published ADP.
+        # Sort by the published ESPN PPR rank — the ESPN-shell contract's RK
+        # column. Nulls (e.g. Dominic Zvada, who has ADP but no published rank)
+        # follow every ranked player; ADP/ownership break the tie inside a rank.
         rows.sort(key=lambda r: (
+            0 if r["espn_ppr_rank"] is not None else 1,
+            r["espn_ppr_rank"] if r["espn_ppr_rank"] is not None else 999999,
             0 if r["adp"] is not None else 1,
             r["adp"] if r["adp"] is not None else 999999,
             -(r["percent_owned"] or 0),
@@ -456,6 +477,8 @@ def pool(season: int = Query(...)):
                 "position": pos,
                 "team": row["team"],
                 "adp": row["adp"],
+                "espn_ppr_rank": row["espn_ppr_rank"],
+                "proj_pts": row["proj_pts"],
                 "percent_owned": row["percent_owned"],
                 "sample": sample,
                 "has_prior_nfl_sample": pid in prior_sample_ids,
@@ -888,6 +911,65 @@ def player_detail(player_id: int):
             adp = adp_row["adp"]
             percent_owned = adp_row["percent_owned"]
 
+        # 2b. Published ESPN PPR rank + 2026 season projection (pinned snapshot).
+        #     Both are copies of published values, never derived here. The rank
+        #     columns are conditional — a pre-migration DB serves honest NULLs.
+        espn_ppr_rank = None
+        espn_standard_rank = None
+        if "espn_ppr_rank" in _table_columns(connection, "nfl_adp"):
+            adp_rank_row = connection.execute(
+                "SELECT espn_ppr_rank, espn_standard_rank FROM nfl_adp WHERE player_id=? AND season=?",
+                (player_id, _CURRENT_SEASON),
+            ).fetchone()
+            if adp_rank_row:
+                espn_ppr_rank = adp_rank_row["espn_ppr_rank"]
+                espn_standard_rank = adp_rank_row["espn_standard_rank"]
+
+        proj_2026_pts = None
+        projection_2026 = None
+        if "lp_ppr_projected_points" in _table_columns(connection, "nfl_player_projections"):
+            proj_row = connection.execute(
+                """SELECT lp_ppr_projected_points, projected_games,
+                          pass_att, pass_cmp, pass_yds, pass_td, interceptions,
+                          rush_att, rush_yds, rush_td,
+                          receptions, targets, rec_yds, rec_td,
+                          fg_att, fg_made, xp_att, xp_made,
+                          def_td, def_int, def_sack, def_fumble_rec,
+                          def_points_allowed, def_yds_allowed
+                   FROM nfl_player_projections
+                   WHERE player_id=? AND season=? AND stat_split_type_id=0""",
+                (player_id, _CURRENT_SEASON),
+            ).fetchone()
+        else:
+            proj_row = None
+        if proj_row:
+            proj_2026_pts = proj_row["lp_ppr_projected_points"]
+            projection_2026 = {
+                "games": proj_row["projected_games"],
+                "pass_att": proj_row["pass_att"],
+                "pass_cmp": proj_row["pass_cmp"],
+                "pass_yds": proj_row["pass_yds"],
+                "pass_td": proj_row["pass_td"],
+                "interceptions": proj_row["interceptions"],
+                "rush_att": proj_row["rush_att"],
+                "rush_yds": proj_row["rush_yds"],
+                "rush_td": proj_row["rush_td"],
+                "receptions": proj_row["receptions"],
+                "targets": proj_row["targets"],
+                "rec_yds": proj_row["rec_yds"],
+                "rec_td": proj_row["rec_td"],
+                "fg_att": proj_row["fg_att"],
+                "fg_made": proj_row["fg_made"],
+                "xp_att": proj_row["xp_att"],
+                "xp_made": proj_row["xp_made"],
+                "def_td": proj_row["def_td"],
+                "def_int": proj_row["def_int"],
+                "def_sack": proj_row["def_sack"],
+                "def_fumble_rec": proj_row["def_fumble_rec"],
+                "def_points_allowed": proj_row["def_points_allowed"],
+                "def_yds_allowed": proj_row["def_yds_allowed"],
+            }
+
         # 3. Season stats from player_game_logs
         _log_season_row = connection.execute(
             "SELECT MAX(season) FROM player_game_logs WHERE league='nfl'"
@@ -1056,6 +1138,10 @@ def player_detail(player_id: int):
             "position": position,
             "active": active,
             "adp": adp,
+            "espn_ppr_rank": espn_ppr_rank,
+            "espn_standard_rank": espn_standard_rank,
+            "proj_2026_pts": proj_2026_pts,
+            "projection_2026": projection_2026,
             "percent_owned": percent_owned,
             "sample": sample,
             "has_prior_nfl_sample": has_prior_nfl_sample,
