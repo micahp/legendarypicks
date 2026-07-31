@@ -15,6 +15,10 @@ interface Props {
   /* External ESPN-style rank data — not part of the /api/nfl/draft/player response */
   stat_ranks?: Record<string, { value: number | null; rank: number | null; label: string }> | null
 
+  /* Pool-level name — available immediately so the header + League Rankings
+     can render outside the detail-fetch loading gate. */
+  poolName?: string
+
   /* Draft-room context. All optional: the camp-tab research board renders this
      same overlay with none of it, and a research board has no pick to be on. */
   currentPick?: number
@@ -29,6 +33,7 @@ interface Props {
 export default function PlayerDetailOverlay({
   playerId,
   onClose,
+  poolName,
   currentPick,
   posRank,
   byeWeek,
@@ -128,6 +133,22 @@ export default function PlayerDetailOverlay({
           </svg>
         </button>
 
+        {/* Name header — rendering immediately from pool data when available */}
+        {poolName && (
+          <div className="px-6 pt-5">
+            <h2 className="text-lg font-bold text-zinc-100 leading-tight">
+              {poolName}
+            </h2>
+          </div>
+        )}
+
+        {/* League Rankings — renders from pool data, NOT from overlay fetch */}
+        {stat_ranks && Object.keys(stat_ranks).length > 0 && (
+          <div className={poolName ? 'px-6 pb-3' : 'px-6 py-4'}>
+            <StatRankCard statRanks={stat_ranks} title="League Rankings" />
+          </div>
+        )}
+
         {/* Loading */}
         {loading && (
           <div className="p-6 space-y-3 animate-pulse">
@@ -153,44 +174,18 @@ export default function PlayerDetailOverlay({
           </div>
         )}
 
-        {/* League Rankings — renders from pool data (DraftRoom props), NOT from overlay fetch */}
-        {stat_ranks && Object.keys(stat_ranks).length > 0 && (
-          <section className="px-6 py-4">
-            <h3 className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500 mb-2">
-              League Rankings
-            </h3>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              {Object.entries(stat_ranks).map(([key, data]) => (
-                <div key={key} className="bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2.5">
-                  <div className="text-[10px] uppercase tracking-wide text-zinc-500 mb-0.5">{data.label}</div>
-                  <div className="flex items-end gap-2">
-                    <span className="text-lg font-mono font-bold text-zinc-100 tabular-nums">
-                      {data.value != null
-                        ? (typeof data.value === "number" && Math.abs(data.value - Math.round(data.value)) < 0.01
-                            ? String(Math.round(data.value))
-                            : data.value.toLocaleString(undefined, { maximumFractionDigits: 1 }))
-                        : '\u2014'}
-                    </span>
-                    {data.rank != null && (
-                      <span className="text-[10px] text-zinc-500 font-mono tabular-nums pb-0.5">
-                        #{data.rank}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
-
         {/* Content */}
         {!loading && !error && player && (
-          <div className="p-6 space-y-5">
-            {/* ── Header: name, position, team ─────────────────────────── */}
+          <div className={poolName ? 'px-6 pb-6 space-y-5' : 'p-6 space-y-5'}>
+            {/* ── Header: name, position, team ───────────────────────────
+                 When poolName is set the name is already above; show only
+                 position/team/bye metadata here. */}
             <header className="pr-8">
-              <h2 className="text-lg font-bold text-zinc-100 leading-tight">
-                {player.name}
-              </h2>
+              {!poolName && (
+                <h2 className="text-lg font-bold text-zinc-100 leading-tight">
+                  {player.name}
+                </h2>
+              )}
               <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1">
                 <span className="rounded bg-zinc-800 px-1.5 py-0.5 text-[11px] font-semibold uppercase text-zinc-400">
                   {showsPositionalRank(player.position)

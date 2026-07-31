@@ -382,6 +382,7 @@ export default function DraftRoom({
         <PlayerDetailOverlay
           playerId={selectedPlayerId}
           onClose={() => setSelectedPlayerId(null)}
+          poolName={p?.name}
           currentPick={draftState.currentPick}
           posRank={posRank.get(selectedPlayerId)}
           byeWeek={byeMap.get(p?.team ?? '') ?? null}
