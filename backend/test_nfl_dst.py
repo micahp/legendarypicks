@@ -209,7 +209,7 @@ class AdpAtomicityTests(unittest.TestCase):
             "_build_pro_team_map",
             return_value={1: "ARI"},
         ), mock.patch.object(
-            ingest_nfl_adp, "_fetch_page", return_value=page
+            ingest_nfl_adp, "_fetch_all", return_value=page
         ):
             with self.assertRaisesRegex(
                 RuntimeError, "expected 32"
@@ -460,15 +460,33 @@ class DstDraftBoardTests(unittest.TestCase):
 class DstIngestResolutionTests(unittest.TestCase):
     """Tests for _build_dst_resolutions — the fail-closed pre-validation step."""
 
-    def _make_entity(self, pro_team_id, adp=100.0, default_position_id=16):
+    def _make_entity(self, pro_team_id, adp=100.0, default_position_id=16, ppr_rank=234):
+        rank_block = (
+            {"draftRanksByRankType": {"PPR": {"rank": ppr_rank}}}
+            if ppr_rank else {}
+        )
         return {
             "defaultPositionId": default_position_id,
             "proTeamId": pro_team_id,
             "fullName": f"Team{pro_team_id} D/ST",
             "ownership": {"averageDraftPosition": adp,
                           "percentOwned": 90.0, "percentStarted": 5.0},
-            "draftRanksByRankType": {},
+            **rank_block,
         }
+
+    def _conn(self):
+        con = sqlite3.connect(":memory:")
+        con.row_factory = sqlite3.Row
+        con.execute(
+            "CREATE TABLE players(id INTEGER PRIMARY KEY, name TEXT, league TEXT, "
+            "team TEXT, position TEXT, espn_id TEXT, active INTEGER, updated_at TEXT)"
+        )
+        return con
+
+    def _resolve(self, entities, pro_team_map, def_to_pid, con):
+        return ingest_nfl_adp._build_dst_resolutions(
+            entities, pro_team_map, def_to_pid, {}, con, "2026-07-31T00:00:00Z"
+        )
 
     def test_resolves_all_32_when_map_is_complete(self):
         """Happy path: 32 entities, complete proTeamMap, all 32 def_to_pid entries."""
@@ -476,9 +494,7 @@ class DstIngestResolutionTests(unittest.TestCase):
         def_to_pid = {f"T{i:02d}": 30093 + i for i in range(1, 33)}
         entities = [self._make_entity(i) for i in range(1, 33)]
 
-        resolutions = ingest_nfl_adp._build_dst_resolutions(
-            entities, pro_team_map, def_to_pid
-        )
+        resolutions = self._resolve(entities, pro_team_map, def_to_pid, self._conn())
         self.assertEqual(len(resolutions), 32)
         pids = {pid for pid, _, _ in resolutions}
         self.assertEqual(len(pids), 32)
@@ -490,18 +506,22 @@ class DstIngestResolutionTests(unittest.TestCase):
         entities = [self._make_entity(1)]
 
         with self.assertRaises(RuntimeError) as ctx:
-            ingest_nfl_adp._build_dst_resolutions(entities, pro_team_map, def_to_pid)
+            self._resolve(entities, pro_team_map, def_to_pid, self._conn())
         self.assertIn("D/ST preflight", str(ctx.exception))
 
-    def test_raises_when_not_all_32_resolve(self):
-        """Only 20 of 32 teams have DEF player entries → RuntimeError."""
+    def test_inserts_missing_def_rows(self):
+        """Only 20 of 32 teams have DEF player entries → resolve by inserting the
+        missing 12, keyed on the negative espn_id (identity spine, never a dup)."""
         pro_team_map = {i: f"T{i:02d}" for i in range(1, 33)}
         def_to_pid = {f"T{i:02d}": 30093 + i for i in range(1, 21)}  # only 20
         entities = [self._make_entity(i) for i in range(1, 33)]
+        con = self._conn()
 
-        with self.assertRaises(RuntimeError) as ctx:
-            ingest_nfl_adp._build_dst_resolutions(entities, pro_team_map, def_to_pid)
-        self.assertIn("D/ST preflight", str(ctx.exception))
+        resolutions = self._resolve(entities, pro_team_map, def_to_pid, con)
+        self.assertEqual(len(resolutions), 32)
+        self.assertEqual(len(def_to_pid), 32)
+        rows = con.execute("SELECT COUNT(*) FROM players").fetchone()[0]
+        self.assertEqual(rows, 12)
 
     def test_raises_when_entity_has_unmapped_pro_team_id(self):
         """Entity has proTeamId not in proTeamMap → skips it → fewer than 32."""
@@ -510,7 +530,7 @@ class DstIngestResolutionTests(unittest.TestCase):
         entities = [self._make_entity(i) for i in range(1, 33)]
 
         with self.assertRaises(RuntimeError) as ctx:
-            ingest_nfl_adp._build_dst_resolutions(entities, pro_team_map, def_to_pid)
+            self._resolve(entities, pro_team_map, def_to_pid, self._conn())
         self.assertIn("expected exactly 32", str(ctx.exception))
 
     def test_ignores_non_def_entities(self):
@@ -520,7 +540,7 @@ class DstIngestResolutionTests(unittest.TestCase):
         entities = [self._make_entity(1, default_position_id=1)]  # QB entity
 
         with self.assertRaises(RuntimeError) as ctx:
-            ingest_nfl_adp._build_dst_resolutions(entities, pro_team_map, def_to_pid)
+            self._resolve(entities, pro_team_map, def_to_pid, self._conn())
         # 0 D/ST resolved → set mismatch
         self.assertIn("expected exactly 32", str(ctx.exception))
 
@@ -530,7 +550,17 @@ class DstIngestResolutionTests(unittest.TestCase):
         def_to_pid = {f"T{i:02d}": 30093 + i for i in range(1, 33)}
         entities = [self._make_entity(i, adp=None) for i in range(1, 33)]
         with self.assertRaises(RuntimeError) as ctx:
-            ingest_nfl_adp._build_dst_resolutions(entities, pro_team_map, def_to_pid)
+            self._resolve(entities, pro_team_map, def_to_pid, self._conn())
+        self.assertIn("expected exactly 32", str(ctx.exception))
+
+    def test_raises_when_resolved_entity_has_null_ppr_rank(self):
+        """A resolved D/ST with no published PPR rank must be rejected — the
+        adp_ppr gate requires all 32 (v0.7.0 T1)."""
+        pro_team_map = {i: f"T{i:02d}" for i in range(1, 33)}
+        def_to_pid = {f"T{i:02d}": 30093 + i for i in range(1, 33)}
+        entities = [self._make_entity(i, ppr_rank=None) for i in range(1, 33)]
+        with self.assertRaises(RuntimeError) as ctx:
+            self._resolve(entities, pro_team_map, def_to_pid, self._conn())
         self.assertIn("expected exactly 32", str(ctx.exception))
 
     def test_raises_when_def_to_pid_has_33_and_only_32_resolve(self):
@@ -540,7 +570,7 @@ class DstIngestResolutionTests(unittest.TestCase):
         def_to_pid = {f"T{i:02d}": 30093 + i for i in range(1, 34)}
         entities = [self._make_entity(i) for i in range(1, 33)]
         with self.assertRaises(RuntimeError) as ctx:
-            ingest_nfl_adp._build_dst_resolutions(entities, pro_team_map, def_to_pid)
+            self._resolve(entities, pro_team_map, def_to_pid, self._conn())
         self.assertIn("D/ST preflight", str(ctx.exception))
 
 
@@ -557,7 +587,8 @@ class DstPoolSelectionTests(unittest.TestCase):
               id INTEGER PRIMARY KEY, name TEXT, league TEXT,
               team TEXT, position TEXT, active INTEGER);
             CREATE TABLE nfl_adp(
-              player_id INTEGER, season INTEGER, adp REAL, percent_owned REAL);
+              player_id INTEGER, season INTEGER, adp REAL, percent_owned REAL,
+              adp_ppr INTEGER);
             CREATE TABLE player_game_logs(
               player_id INTEGER, league TEXT, season INTEGER,
               game_no TEXT, team TEXT);
@@ -577,19 +608,19 @@ class DstPoolSelectionTests(unittest.TestCase):
         _ARI_CODE = "ARI"
         for i in range(1, 33):
             if i == 14:
-                tid, adp, pct = _MIA_CODE, 170.0, 0.5
+                tid, adp, pct, ppr = _MIA_CODE, 170.0, 0.5, 510
             elif i == 1:
-                tid, adp, pct = _ARI_CODE, 169.5, 0.3
+                tid, adp, pct, ppr = _ARI_CODE, 169.5, 0.3, 508
             else:
                 tid = f"T{i:02d}"
-                adp, pct = 95.0 + i, 85.0 - i * 0.3
+                adp, pct, ppr = 95.0 + i, 85.0 - i * 0.3, 234 + i
             pid = 30093 + i
             self.con.execute(
                 "INSERT INTO players VALUES(?,?,?,?,?,?)",
                 (pid, f"{tid} D/ST", "nfl", tid, "DEF", 1))
             self.con.execute(
-                "INSERT INTO nfl_adp VALUES(?,2026,?,?)",
-                (pid, adp, pct))
+                "INSERT INTO nfl_adp VALUES(?,2026,?,?,?)",
+                (pid, adp, pct, ppr))
         # 270 skill players
         for i in range(1, 271):
             pid = i
@@ -597,7 +628,7 @@ class DstPoolSelectionTests(unittest.TestCase):
                 "INSERT INTO players VALUES(?,?,?,?,?,?)",
                 (pid, f"Player {i}", "nfl", "T01", "RB", 1))
             self.con.execute(
-                "INSERT INTO nfl_adp VALUES(?,2026,?,?)",
+                "INSERT INTO nfl_adp VALUES(?,2026,?,?,NULL)",
                 (pid, float(i), 99.0))
         # Some game logs for skill players
         for i in range(1, 11):
@@ -633,10 +664,12 @@ class DstPoolSelectionTests(unittest.TestCase):
                 -(p["percent_owned"] or 0),
                 p["name"])
 
-    def test_count_300_def_32(self):
+    def test_count_all_pool_rows_def_32(self):
+        """The pool is the full nfl_adp universe (v0.7.0 T2) — every row, plus
+        all 32 defenses."""
         resp = nfl_mock_draft.pool(season=2026)
         body = json.loads(resp.body)
-        self.assertEqual(body["count"], 300)
+        self.assertEqual(body["count"], 302)
         defs = [p for p in body["players"] if p["position"] == "DEF"]
         self.assertEqual(len(defs), 32)
 
@@ -772,12 +805,15 @@ class DstFollowUpTests(DstDraftBoardTests):
         self.assertEqual(late[0]["adp"], 170.0)
 
     def test_filter_slot_ids_absent_from_headers(self):
-        """Both HEADERS and per-page filter omit filterSlotIds."""
+        """The v0.7.0 fetch (limit 20000, no ownership filter) still omits
+        filterSlotIds — ESPN ignores that filter and a reader-side "fix" would
+        silently narrow the universe."""
         filter_str = ingest_nfl_adp.HEADERS["x-fantasy-filter"]
         self.assertNotIn("filterSlotIds", filter_str)
+        self.assertIn("limit", filter_str)
+        self.assertNotIn("sortDraftRanks", filter_str)
         import inspect
-        src = inspect.getsource(ingest_nfl_adp._fetch_page)
-        self.assertNotIn("filterSlotIds", src)
+        self.assertNotIn("filterSlotIds", inspect.getsource(ingest_nfl_adp._fetch_all))
 
 
 if __name__ == "__main__":

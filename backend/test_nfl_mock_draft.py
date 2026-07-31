@@ -173,7 +173,7 @@ class TestNflMockDraft(unittest.TestCase):
     # ------------------------------------------------------------------
 
     def test_pool_returns_players(self):
-        """Pool returns draftable players with availability data."""
+        """Pool returns the full published universe with availability data."""
         resp = client.get(f"/api/nfl/mock-draft/pool?season={self.SEASON}")
         self.assertEqual(resp.status_code, 200)
         body = resp.json()
@@ -181,9 +181,13 @@ class TestNflMockDraft(unittest.TestCase):
         self.assertEqual(body["season"], self.SEASON)
         self.assertGreaterEqual(body["count"], 1)
 
-        # Player 8 has neither a published ADP nor ownership and must not appear.
-        player_ids = {p["player_id"] for p in body["players"]}
-        self.assertNotIn(8, player_ids)
+        # The pool is every nfl_adp row for the season — player 8 has neither a
+        # published ADP nor ownership, but is still a pool entry rendering a
+        # "—" ADP (v0.7.0 T2: free agents are in the universe, honestly empty).
+        by_id = {p["player_id"]: p for p in body["players"]}
+        self.assertIn(8, by_id)
+        self.assertIsNone(by_id[8]["adp"])
+        self.assertEqual(by_id[8]["percent_owned"], 0.0)
 
     def test_pool_ordering(self):
         """Real ADP players come first, sorted by ADP ascending."""

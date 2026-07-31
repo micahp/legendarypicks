@@ -159,31 +159,33 @@ b4(){
 
 # ── always-on regressions: nothing already working may break ──
 reg(){
-  curl -s --max-time 30 "$B/api/nfl/mock-draft/pool?season=2026&limit=400" | $PY -c "
+  curl -s --max-time 60 "$B/api/nfl/mock-draft/pool?season=2026" | $PY -c "
 import sys,json,collections
 d=json.load(sys.stdin);p=d['players']
 c=collections.Counter(x['position'] for x in p)
-i=[j for j,x in enumerate(p) if x['position']=='DEF']
-okk = len(p)==300 and c['DEF']==32
-print(('PASS REG-pool (300, DEF 32 @%d-%d)'%(i[0],i[-1])) if okk else ('FAIL REG-pool (%d %s DEF@%s)'%(len(p),dict(c),i[:1])))
+exp={'QB':470,'RB':1122,'WR':1791,'TE':882,'PK':209,'DEF':32}
+okk = len(p)==11515 and all(c[k]==v for k,v in exp.items())
+print(('PASS REG-pool (11515, %s)'%dict(c)) if okk else ('FAIL REG-pool (%d %s)'%(len(p),dict(c))))
 "
-  # ── REG-adp-dst — EXPECTED VALUES WRITTEN 2026-07-28, BEFORE THE CODE. ──
-  # Measured directly from ESPN the same day. All 32 D/ST carry a published ADP;
-  # ESPN keys them with NEGATIVE ids (-16000 - proTeamId), which is why the
-  # espn_id join in ingest_nfl_adp.py matched 0 of 32 and the router grew a
-  # derived dst_rank behind the comment "no published ADP exists".
-  # This gate is RED until that ingest lands. Do not relax it to make it green —
-  # a diff to these numbers is a finding. Tolerance is for ESPN drift only.
-  curl -s --max-time 30 "$B/api/nfl/mock-draft/pool?season=2026&limit=400" | $PY -c "
+  # ── REG-adp-dst — EXPECTED VALUES WRITTEN 2026-07-31, BEFORE THE CODE. ──
+  # Measured directly from ESPN the same day (kona_player_info, limit 20000).
+  # All 32 D/ST carry a published PPR rank (234-519) and ESPN keys them with
+  # NEGATIVE ids (-16000 - proTeamId). v0.7.0 T1: the pool's D/ST ADP IS that
+  # published PPR rank (DEN 234, SEA 239, HOU 236, LAR 240) — previously the
+  # pool showed averageDraftPosition (DEN 89.9) which job15 landed.
+  # This gate is RED until the v0.7.0 ingest lands on the served DB. Do not
+  # relax it to make it green — a diff to these numbers is a finding.
+  # Tolerance is for ESPN drift only.
+  curl -s --max-time 60 "$B/api/nfl/mock-draft/pool?season=2026" | $PY -c "
 import sys,json
 d=json.load(sys.stdin);p=d['players']
 dst={x['team']:x for x in p if x['position']=='DEF'}
 nulls=[t for t,x in dst.items() if x.get('adp') is None]
-exp={'DEN':89.9,'HOU':91.8,'LAR':98.2,'SEA':106.5}
+exp={'DEN':234,'HOU':236,'LAR':240,'SEA':239}
 bad=[(t,v,dst.get(t,{}).get('adp')) for t,v in exp.items()
      if dst.get(t,{}).get('adp') is None or abs(dst[t]['adp']-v)>12]
 if len(dst)==32 and not nulls and not bad:
-    print('PASS REG-adp-dst (32 D/ST, published ADP, DEN=%.1f SEA=%.1f)'%(dst['DEN']['adp'],dst['SEA']['adp']))
+    print('PASS REG-adp-dst (32 D/ST, published PPR-rank ADP, DEN=%d SEA=%d)'%(dst['DEN']['adp'],dst['SEA']['adp']))
 else:
     print('FAIL REG-adp-dst (n=%d null_adp=%d off_expected=%s)'%(len(dst),len(nulls),bad))
 "
