@@ -282,7 +282,7 @@ export function createDraft(
   teams: number = DEFAULT_TEAMS,
 ): DraftState {
   // availablePool is sorted by ADP ascending (lowest ADP = best, picked first).
-  //   D/ST players have null ADP — sort them after all numeric ADPs.
+  //   Null-ADP entries (free agents, v0.7.0 T2) sort after all numeric ADPs.
   const sorted = [...playerPool].sort((a, b) => {
     if (a.adp === null && b.adp === null) return 0
     if (a.adp === null) return 1

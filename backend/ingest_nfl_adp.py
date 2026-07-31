@@ -273,32 +273,78 @@ def ingest():
         inserted_players = 0
         rows: list[tuple] = []
         pos_counts: dict[str, int] = {}
+        # Injury columns are optional (a concurrent feature's migration may not
+        # have landed on this DB) — guard once, no-op on DBs without them.
+        _has_injury_cols = {"injury_status", "last_news_date"} <= {
+            r["name"] for r in con.execute("PRAGMA table_info(players)")
+        }
         for p in all_entities:
             if p.get("defaultPositionId") == 16:
                 continue  # owned by the D/ST pass
             eid = str(p.get("id", ""))
             pid = eid_to_pid.get(eid)
             if pid is None:
-                # Resolve-or-INSERT: this entity is in ESPN's published universe but
-                # not in the spine. Insert keyed on espn_id — never a names-only row.
+                # Resolve-or-INSERT, never DUP: the entity is in ESPN's published
+                # universe but has no espn_id row in the spine. If a name-only row
+                # already exists (a prop scraper created it without a source id),
+                # COMPLETE it — backfill the espn_id rather than insert a second
+                # row for the same human. players has UNIQUE(espn_id, league); a
+                # later roster_sync backfill would otherwise collide on the next
+                # run and roll back the whole snapshot. Only an exact name+team
+                # match is merged; anything else is a fresh insert keyed on espn_id.
+                name = p.get("fullName", "?")
                 position = _ESPN_POSITION.get(p.get("defaultPositionId"))
                 team = pro_team_map.get(p.get("proTeamId")) if p.get("proTeamId") else None
-                cur = con.execute(
-                    """INSERT INTO players(name, league, team, position, espn_id, active, updated_at)
-                       VALUES(?, 'nfl', ?, ?, ?, ?, ?)""",
+                name_only = None
+                if team:
+                    name_only = con.execute(
+                        "SELECT id FROM players WHERE league='nfl' "
+                        "AND espn_id IS NULL AND name=? AND team=? LIMIT 1",
+                        (name, team),
+                    ).fetchone()
+                if name_only is not None:
+                    pid = name_only["id"]
+                    con.execute(
+                        "UPDATE players SET espn_id=?, position=COALESCE(?, position), "
+                        "active=?, updated_at=? WHERE id=?",
+                        (eid, position, 1 if p.get("active") else 0, now, pid),
+                    )
+                else:
+                    cur = con.execute(
+                        """INSERT INTO players(name, league, team, position, espn_id, active, updated_at)
+                           VALUES(?, 'nfl', ?, ?, ?, ?, ?)""",
+                        (
+                            name,
+                            team,
+                            position,
+                            eid,
+                            1 if p.get("active") else 0,
+                            now,
+                        ),
+                    )
+                    pid = int(cur.lastrowid)
+                    inserted_players += 1
+                eid_to_pid[eid] = pid
+            total_matched += 1
+
+            # ---- Injury data ingestion (published-first, honest nulls) ----
+            # Runs only where the injury columns exist; absent columns must not
+            # take the whole snapshot down with an OperationalError.
+            injured = p.get("injured")
+            injury_status = p.get("injuryStatus")
+            last_news_date = p.get("lastNewsDate")
+            if _has_injury_cols and (injured is not None or injury_status is not None
+                                     or last_news_date is not None):
+                con.execute(
+                    "UPDATE players SET injury_status=?, last_news_date=?, updated_at=? WHERE id=?",
                     (
-                        p.get("fullName", "?"),
-                        team,
-                        position,
-                        eid,
-                        1 if p.get("active") else 0,
+                        injury_status if injury_status else None,
+                        str(last_news_date) if last_news_date is not None else None,
                         now,
+                        pid,
                     ),
                 )
-                pid = int(cur.lastrowid)
-                eid_to_pid[eid] = pid
-                inserted_players += 1
-            total_matched += 1
+
             position = _ESPN_POSITION.get(p.get("defaultPositionId"))
             pos_counts[position] = pos_counts.get(position, 0) + 1
 

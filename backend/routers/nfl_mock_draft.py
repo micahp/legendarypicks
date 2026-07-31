@@ -44,7 +44,6 @@ _CURRENT_SEASON = 2026
 _REG_SEASON_TEAM_GAMES = 17
 _POSTSEASON_FIRST_WEEK = 19
 _THIN_SAMPLE_GAMES = 4
-_POOL_CAP = 300  # legacy v0.6 cap — the pool now serves the full universe (v0.7.0 T2)
 _NFL_RANK_STATS = {
     "QB": [
         ("pass_yds_g", "Pass Yds/G"),
@@ -75,29 +74,49 @@ _RANK_ASC = frozenset(["interceptions"])
 
 
 def _player_stat_ranks(connection, player_id, position):
-    """League-wide rank for the player's 4 position-relevant stats."""
-    pos_ranks = _NFL_RANK_STATS.get(position)
-    if not pos_ranks:
+    """League-wide rank for the player's 4 position-relevant stats (single player).
+
+    Kept for callers that need one player; the pool uses the batched version —
+    one query per stat instead of one per player.
+    """
+    return _player_stat_ranks_batch(connection).get(player_id, {}).get(position, {})
+
+
+def _player_stat_ranks_batch(connection):
+    """Rank card for EVERY player, one query per stat (~4 total).
+
+    RANK() OVER (ORDER BY ...) is the same competition ranking the per-player
+    COUNT(*) + 1 computed — ties share the higher rank with gaps — so the
+    numbers are identical, only the query count changes: at pool size the old
+    per-player loop ran ~17,000 COUNT queries against player_stats (O(N^2) as
+    that table grows); this is 4 full scans.
+    """
+    if not _table_columns(connection, "player_stats"):
         return {}
-    results = {}
-    for stat_col, stat_label in pos_ranks:
-        row = connection.execute(
-            f"SELECT {stat_col} AS val FROM player_stats WHERE player_id=? "
-            f"AND league='nfl' AND stat_type='weekly' AND {stat_col} IS NOT NULL",
-            (player_id,),
-        ).fetchone()
-        if row is None:
-            continue
-        player_val = float(row["val"])
+    stat_labels = {
+        col: label
+        for pos_stats in _NFL_RANK_STATS.values()
+        for col, label in pos_stats
+    }
+    ranks: dict[tuple[int, str], dict] = {}
+    for stat_col in stat_labels:
         order = "ASC" if stat_col in _RANK_ASC else "DESC"
-        cmp = "<" if order == "ASC" else ">"
-        rank = connection.execute(
-            f"SELECT COUNT(*) + 1 AS rank FROM player_stats WHERE league='nfl' "
-            f"AND stat_type='weekly' AND {stat_col} IS NOT NULL AND {stat_col} {cmp} ?",
-            (player_val,),
-        ).fetchone()["rank"]
-        results[stat_col] = {"value": player_val, "rank": int(rank), "label": stat_label}
-    return results
+        for row in connection.execute(
+            f"""SELECT player_id, {stat_col} AS val,
+                       RANK() OVER (ORDER BY {stat_col} {order}) AS rank
+                FROM player_stats
+                WHERE league='nfl' AND stat_type='weekly'
+                  AND {stat_col} IS NOT NULL"""
+        ):
+            ranks[(row["player_id"], stat_col)] = {
+                "value": float(row["val"]),
+                "rank": int(row["rank"]),
+                "label": stat_labels[stat_col],
+            }
+    by_player: dict[int, dict] = {}
+    for (pid, stat_col), entry in ranks.items():
+        by_player.setdefault(pid, {})[stat_col] = entry
+    return by_player
 
 
 # Draftable positions: skill positions, kickers, and team defenses.
@@ -367,6 +386,10 @@ def pool(season: int = Query(...)):
                 )
             } & {row["player_id"] for row in rows}
 
+        # ESPN-style 4-stat rank card for the whole pool, computed once
+        # (4 queries) instead of once per player (~17,000 at pool size).
+        pool_rank_map = _player_stat_ranks_batch(connection) if rows else {}
+
         players = []
         for row in rows:
             pid = row["player_id"]
@@ -461,8 +484,14 @@ def pool(season: int = Query(...)):
                 snap_pct = None
                 target_share = None
 
-            # ESPN-style 4-stat rank card
-            stat_ranks = _player_stat_ranks(connection, pid, pos)
+            # ESPN-style 4-stat rank card — from the batched rank map computed
+            # once for the whole pool (v0.7.0: 4 queries, not 17,000).
+            stat_ranks = {
+                col: entry
+                for col, _ in _NFL_RANK_STATS.get(pos, [])
+                for entry in [pool_rank_map.get(pid, {}).get(col)]
+                if entry is not None
+            }
             players.append({
                 "player_id": pid,
                 "name": row["name"],
@@ -879,9 +908,19 @@ def player_detail(player_id: int):
     """
     connection = _conn()
     try:
-        # 1. Player lookup
+        # 1. Player lookup. The injury columns are optional (a concurrent
+        # feature's migration may not have landed on this DB) — selected only
+        # where they exist, so a pre-migration DB serves honest NULLs instead
+        # of 500ing on the SELECT.
+        _injury_cols = (
+            ", injury_status, last_news_date"
+            if {"injury_status", "last_news_date"}
+            <= {r["name"] for r in connection.execute("PRAGMA table_info(players)")}
+            else ""
+        )
         player = connection.execute(
-            "SELECT id, name, team, position, active FROM players WHERE id=? AND league='nfl'",
+            f"SELECT id, name, team, position, active{_injury_cols} "
+            f"FROM players WHERE id=? AND league='nfl'",
             (player_id,),
         ).fetchone()
 
@@ -892,6 +931,8 @@ def player_detail(player_id: int):
         team = player["team"]
         position = player["position"]
         active = bool(player["active"])
+        injury_status = player["injury_status"] if _injury_cols else None
+        last_news_date = player["last_news_date"] if _injury_cols else None
 
         # 2. ADP / percent owned from nfl_adp. D/ST's published ADP is ESPN's
         #    PPR rank (v0.7.0 T1) — the same mapping the pool applies, so the
@@ -1162,6 +1203,8 @@ def player_detail(player_id: int):
             "dst_pts_total": dst_pts_total,
             "dst_pts_per_game": dst_pts_per_game,
             "qb": qb,
+            "injury_status": injury_status,
+            "last_news_date": last_news_date,
         })
     finally:
         connection.close()

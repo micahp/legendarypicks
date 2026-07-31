@@ -588,7 +588,7 @@ class DstPoolSelectionTests(unittest.TestCase):
               team TEXT, position TEXT, active INTEGER);
             CREATE TABLE nfl_adp(
               player_id INTEGER, season INTEGER, adp REAL, percent_owned REAL,
-              adp_ppr INTEGER);
+              adp_ppr INTEGER, position TEXT);
             CREATE TABLE player_game_logs(
               player_id INTEGER, league TEXT, season INTEGER,
               game_no TEXT, team TEXT);
@@ -619,7 +619,7 @@ class DstPoolSelectionTests(unittest.TestCase):
                 "INSERT INTO players VALUES(?,?,?,?,?,?)",
                 (pid, f"{tid} D/ST", "nfl", tid, "DEF", 1))
             self.con.execute(
-                "INSERT INTO nfl_adp VALUES(?,2026,?,?,?)",
+                "INSERT INTO nfl_adp VALUES(?,2026,?,?,?, 'DEF')",
                 (pid, adp, pct, ppr))
         # 270 skill players
         for i in range(1, 271):
@@ -628,7 +628,7 @@ class DstPoolSelectionTests(unittest.TestCase):
                 "INSERT INTO players VALUES(?,?,?,?,?,?)",
                 (pid, f"Player {i}", "nfl", "T01", "RB", 1))
             self.con.execute(
-                "INSERT INTO nfl_adp VALUES(?,2026,?,?,NULL)",
+                "INSERT INTO nfl_adp VALUES(?,2026,?,?,NULL, 'RB')",
                 (pid, float(i), 99.0))
         # Some game logs for skill players
         for i in range(1, 11):
