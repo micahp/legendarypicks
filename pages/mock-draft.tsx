@@ -161,22 +161,26 @@ export default function MockDraftPage() {
       const { id } = await apiCreateDraft(2026, seat, seed, teams)
       setDraftId(id)
 
-      // Build engine pool from PoolPlayer
-      const enginePlayers: EngineDraftPlayer[] = pool.map(p => ({
-        player_id: p.player_id,
-        name: p.name,
-        position: p.position as 'QB' | 'RB' | 'WR' | 'TE' | 'PK',
-        team: p.team,
-        // Pass the real value through, including null. This array is BOTH the
-        // engine's input and the draft board's display source, so `?? 999` did
-        // not just nudge bot ordering — it put a literal "999.0" in the ADP
-        // column for all 32 D/ST. DraftRoom.tsx:356 already renders `—` for a
-        // null; it never got the chance. EngineDraftPlayer.adp is `number | null`,
-        // so the engine has always accepted the honest value.
-        // A fabricated sentinel that reaches a user is a false measurement, not
-        // a default. The remaining null-ADP ordering is job15's to remove.
-        adp: p.adp,
-      }))
+      // Build engine pool from PoolPlayer.
+      // The pool is now the FULL published universe — 11,515 players including
+      // IDP, coaches and free agents (v0.7.0 T2). The engine drafts six
+      // positions against ADP, and the bot throws on a candidate with no
+      // published ADP (`mockDraft: player X has no published ADP`), so the
+      // DRAFT pool is the draftable subset: six positions with a non-null ADP.
+      // The browse pool above still shows the whole universe; "available" vs
+      // "drafted" stays the draft room's filters' job.
+      const DRAFT_POSITIONS = new Set(['QB', 'RB', 'WR', 'TE', 'PK', 'DEF'])
+      const enginePlayers: EngineDraftPlayer[] = pool
+        .filter(p => DRAFT_POSITIONS.has(p.position) && p.adp != null)
+        .map(p => ({
+          player_id: p.player_id,
+          name: p.name,
+          position: p.position as 'QB' | 'RB' | 'WR' | 'TE' | 'PK' | 'DEF',
+          team: p.team,
+          // Pass the real value through. A fabricated sentinel that reaches a
+          // user is a false measurement, not a default.
+          adp: p.adp,
+        }))
 
       const state = engineCreateDraft(id, seat, enginePlayers, seed, teams)
       setDraftState(state)
