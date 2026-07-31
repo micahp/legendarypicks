@@ -1,57 +1,72 @@
+function rankOrdinal(n: number): string {
+  const s = ['th', 'st', 'nd', 'rd']
+  const v = n % 100
+  return n + (s[(v - 20) % 10] || s[v] || s[0])
+}
 
-export default function StatRankCard(
-  props: { statRanks: Record<string, { value: number | null; rank: number | null; label: string }> | null; league: string }
-): JSX.Element {
-  const stats = props.statRanks
-  if (!props.statRanks || !Object.keys(stats).length) {
-    return null
-  }
+interface StatRank {
+  value: number | null
+  rank: number | null
+  label: string
+}
 
-  const formatValue = (v: number | null, key: string): string => {
-    if (v == null) return '—'
-    if (key === 'pass_yds_g' || key === 'rush_yds_g' || key === 'rec_yds_g') return v.toFixed(1)
-    if (key === 'ppr_per_game_played' || key === 'fantasy_ppr_g') return v.toFixed(1)
-    if (key === 'targets' || key === 'receptions') return String(v)
-    if (key === 'pass_td' || key === 'pass_td') return String(v)
-    return String(v)
+export default function StatRankCard({
+  statRanks,
+  title = 'Regular Season Stats',
+}: {
+  statRanks: Record<string, StatRank> | null
+  title?: string
+}) {
+  if (!statRanks || !Object.keys(statRanks).length) return null
+
+  const formatValue = (v: number | null, _key: string): string => {
+    if (v == null) return '\u2014'
+    // If close to an integer, show the integer; otherwise 1 decimal
+    if (Math.abs(v - Math.round(v)) < 0.01) return String(Math.round(v))
+    return v.toFixed(1)
   }
 
   const formatLabel = (key: string): string => {
-    // Map DB stat keys to ESPN-style abbreviations
     const keyMap: Record<string, string> = {
-      'pass_yds_g': 'Pass/Y',
-      'pass_td': 'Pass TD',
-      'interceptions': 'INT',
-      'cmp_g': 'Cmp/G',
-      'rush_yds_g': 'Rush/Y',
-      'carries_g': 'Car/G',
-      'rec_yds_g': 'Rec/Y',
-      'targets': 'Tgt',
-      'receptions': 'Rec',
-      'fantasy_ppr_g': 'PPR/G',
+      pass_yds_g: 'Pass Yds/G',
+      pass_td: 'Pass TD',
+      interceptions: 'INT',
+      cmp_g: 'Cmp/G',
+      rush_yds_g: 'Rush Yds/G',
+      carries_g: 'Car/G',
+      rec_yds_g: 'Rec Yds/G',
+      targets: 'Tgt',
+      receptions: 'Rec',
+      fantasy_ppr_g: 'PPR/G',
     }
     return keyMap[key] || key
   }
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-      {Object.entries(stats).map(([key, data]) => (
-        <div key={key} className="bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3">
-          <div className="text-xs uppercase tracking-wide text-zinc-500 mb-1">
-            {formatLabel(key)}
-          </div>
-          <div className="flex items-end gap-2">
-            <span className="text-xl font-mono font-bold text-zinc-100 tabular-nums">
+    <section>
+      <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-2">
+        {title}
+      </h2>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {Object.entries(statRanks).map(([key, data]) => (
+          <div
+            key={key}
+            className="rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2.5"
+          >
+            <div className="text-[10px] uppercase tracking-wide text-zinc-500">
+              {formatLabel(key)}
+            </div>
+            <div className="mt-0.5 text-lg font-mono font-bold tabular-nums text-zinc-100">
               {formatValue(data.value, key)}
-            </span>
+            </div>
             {data.rank != null && (
-              <span className="text-xs text-zinc-500 font-mono tabular-nums pb-1">
-                #{data.rank}
-              </span>
+              <div className="text-[10px] tabular-nums text-zinc-500">
+                {rankOrdinal(data.rank)}
+              </div>
             )}
           </div>
-        </div>
-      ))}
-    </div>
+        ))}
+      </div>
+    </section>
   )
 }
