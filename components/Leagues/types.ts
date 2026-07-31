@@ -464,4 +464,8 @@ export interface PlayerDetailResponse {
   pk_pts_per_game: number | null
   /** QB throwing to this receiver (WR/RB/TE only). */
   qb: { player_id: number; name: string; team: string; games_played: number } | null
+  /** Injury designation from ESPN (ACTIVE, QUESTIONABLE, OUT, INJURY_RESERVE). */
+  injury_status: string | null
+  /** Timestamp of last news update (ms since epoch). */
+  last_news_date: number | null
 }

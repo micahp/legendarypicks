@@ -201,6 +201,14 @@ export default function PlayerDetailOverlay({
                     </span>
                   </>
                 )}
+                {player.injury_status && player.injury_status !== 'ACTIVE' && (
+                  <>
+                    <span className="text-xs text-zinc-600">·</span>
+                    <span className="rounded bg-red-900/30 px-1.5 py-0.5 text-[10px] font-semibold text-red-400">
+                      {injuryLabel(player.injury_status)}
+                    </span>
+                  </>
+                )}
                 {!player.active && (
                   <span className="text-[11px] text-zinc-600">(inactive)</span>
                 )}
@@ -500,6 +508,16 @@ function describeAdpDelta(currentPick: number, adp: number): string {
       : `${picks} pick${picks === 1 ? '' : 's'}`
 
   return delta > 0 ? `reaching ${size} early` : `value — ${size} past ADP`
+}
+
+function injuryLabel(status: string): string {
+  switch (status) {
+    case 'QUESTIONABLE': return 'Q'
+    case 'DOUBTFUL': return 'D'
+    case 'OUT': return 'O'
+    case 'INJURY_RESERVE': return 'IR'
+    default: return status
+  }
 }
 
 /** A single stat row: label left, monospace value right. Dash for null. */
