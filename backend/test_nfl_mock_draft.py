@@ -122,6 +122,7 @@ class TestNflMockDraft(unittest.TestCase):
                     (6, "Zeta RB", "RB", "DAL"),
                     (7, "Eta WR", "WR", "LAR"),
                     (8, "Theta PK", "PK", "GB"),    # no ADP or ownership → excluded
+                    (9, "Team Quarterback", "TQB", "KC"),
                 ],
             )
             # Seed ADP rows.
@@ -137,6 +138,7 @@ class TestNflMockDraft(unittest.TestCase):
                     (6, 2026, 2.0, 98.0),
                     (7, 2026, 10.0, 92.0),
                     (8, 2026, None, 0.0),     # no published ADP or ownership → excluded
+                    (9, 2026, 25.0, 50.0),   # ESPN aggregate slot, not a player position
                 ],
             )
             # Seed game logs for players 1–4 (full sample: 10+ games).
@@ -188,6 +190,11 @@ class TestNflMockDraft(unittest.TestCase):
         self.assertIn(8, by_id)
         self.assertIsNone(by_id[8]["adp"])
         self.assertEqual(by_id[8]["percent_owned"], 0.0)
+        self.assertNotIn(9, by_id)
+        self.assertLessEqual(
+            {p["position"] for p in body["players"]},
+            {"QB", "RB", "WR", "TE", "PK", "DEF"},
+        )
 
     def test_pool_ordering(self):
         """Real ADP players come first, sorted by ADP ascending."""

@@ -307,7 +307,8 @@ def pool(season: int = Query(...)):
             ", p.injury_status, p.last_news_date"
             if _has_injury else ", NULL AS injury_status, NULL AS last_news_date"
         )
-        _pos_select = "na.position AS position" if _has_pos else "p.position AS position"
+        _position_expr = "na.position" if _has_pos else "p.position"
+        _pos_select = f"{_position_expr} AS position"
         _proj_select = (
             ", np.lp_ppr_projected_points AS proj_pts"
             if _has_proj else ", NULL AS proj_pts"
@@ -333,8 +334,9 @@ def pool(season: int = Query(...)):
                     FROM players p
                     JOIN nfl_adp na ON na.player_id = p.id AND na.season = ?
                     {_proj_join}
-                    WHERE p.league = 'nfl'""",
-            (season, *_proj_params),
+                    WHERE p.league = 'nfl'
+                      AND {_position_expr} IN ({','.join('?' for _ in _DRAFT_POSITIONS)})""",
+            (season, *_proj_params, *_DRAFT_POSITIONS),
         ).fetchall()
 
         # Sort by the published ESPN PPR rank — the ESPN-shell contract's RK

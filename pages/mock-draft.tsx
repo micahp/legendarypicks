@@ -162,13 +162,10 @@ export default function MockDraftPage() {
       setDraftId(id)
 
       // Build engine pool from PoolPlayer.
-      // The pool is now the FULL published universe — 11,515 players including
-      // IDP, coaches and free agents (v0.7.0 T2). The engine drafts six
-      // positions against ADP, and the bot throws on a candidate with no
-      // published ADP (`mockDraft: player X has no published ADP`), so the
-      // DRAFT pool is the draftable subset: six positions with a non-null ADP.
-      // The browse pool above still shows the whole universe; "available" vs
-      // "drafted" stays the draft room's filters' job.
+      // The API already limits the browse pool to the six supported fantasy
+      // positions. Keep the same check here as a client-side contract guard,
+      // and omit players without published ADP from the bot engine because it
+      // cannot order them honestly.
       const DRAFT_POSITIONS = new Set(['QB', 'RB', 'WR', 'TE', 'PK', 'DEF'])
       const enginePlayers: EngineDraftPlayer[] = pool
         .filter(p => DRAFT_POSITIONS.has(p.position) && p.adp != null)

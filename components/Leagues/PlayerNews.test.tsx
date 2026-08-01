@@ -62,7 +62,7 @@ describe('PlayerNews', () => {
       '/api/player/7979/fantasy-news?limit=10',
       expect.objectContaining({ signal: expect.anything() }),
     )
-    expect(screen.getByText('Fantasy Spin')).toBeTruthy()
+    expect(screen.getByText('SPIN:')).toBeTruthy()
     expect(screen.getByText('Estimated return: Aug 13')).toBeTruthy()
     expect(screen.getByText('Source: RotoWire')).toBeTruthy()
     expect(screen.queryByRole('link')).toBeNull()

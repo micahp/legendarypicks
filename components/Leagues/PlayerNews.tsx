@@ -139,10 +139,10 @@ export default function PlayerNews({ playerId, compact = false }: Props) {
       {data.articles.map(article => (
         <article
           key={article.id}
-          className={`rounded-lg border border-zinc-800 bg-zinc-900/50 ${compact ? 'p-3 space-y-1.5' : 'p-4 space-y-2'}`}
+          className={`rounded-lg border border-zinc-800 bg-zinc-900/50 ${compact ? 'p-3.5 space-y-2' : 'p-4 space-y-2.5'}`}
         >
           <div className="flex items-start gap-2">
-            <h4 className={`flex-1 min-w-0 ${compact ? 'text-xs' : 'text-sm'} font-semibold text-zinc-100`}>
+            <h4 className="flex-1 min-w-0 text-sm font-semibold text-zinc-100">
               {article.headline}
             </h4>
             {article.injury_status && (
@@ -152,25 +152,23 @@ export default function PlayerNews({ playerId, compact = false }: Props) {
             )}
           </div>
 
-          <p className={`${compact ? 'text-[11px]' : 'text-xs'} text-zinc-400 leading-relaxed`}>
+          <p className="text-xs text-zinc-400 leading-relaxed">
             {article.notes}
           </p>
 
           {article.analysis && (
-            <div className={`rounded-md bg-zinc-800/50 ${compact ? 'px-2.5 py-1.5' : 'px-3 py-2'} border-l-2 border-emerald-500/50`}>
-              <p className={`${compact ? 'text-[10px] mb-0.5' : 'text-[11px] mb-1'} font-semibold uppercase tracking-wider text-emerald-400/70`}>
-                Fantasy Spin
-              </p>
-              <p className={`${compact ? 'text-[11px]' : 'text-xs'} text-zinc-300 leading-relaxed`}>
-                {article.analysis}
-              </p>
-            </div>
+            <p className="text-xs text-zinc-300 leading-relaxed">
+              <span className="font-bold text-zinc-200">SPIN:</span>{' '}
+              {article.analysis}
+            </p>
           )}
 
-          <div className={`flex flex-wrap items-center gap-x-3 gap-y-1 ${compact ? 'text-[9px]' : 'text-[10px]'} text-zinc-600`}>
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px] text-zinc-500">
             <time dateTime={article.published}>
               {formatNewsDate(article.published, !compact)}
             </time>
+            <span aria-hidden="true">•</span>
+            <span>Source: {data.source}</span>
             {article.return_date && (
               <span>Estimated return: {formatNewsDate(article.return_date)}</span>
             )}
@@ -180,10 +178,6 @@ export default function PlayerNews({ playerId, compact = false }: Props) {
           </div>
         </article>
       ))}
-
-      <p className={`${compact ? 'text-[9px]' : 'text-[10px]'} text-zinc-600`}>
-        Source: {data.source}
-      </p>
     </div>
   )
 }
