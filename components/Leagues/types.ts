@@ -511,6 +511,10 @@ export interface PlayerDetailResponse {
   season_outlook_source?: 'espn' | null
   season_totals?: NflSeasonTotals | null
   season_totals_source?: 'espn' | null
+  /** Canonical prior regular-season league ranks and their sample. */
+  stat_ranks?: Record<string, { value: number | null; rank: number | null; label: string }> | null
+  stat_rank_season?: number | null
+  stat_rank_games?: number | null
   sample: 'full' | 'thin' | 'none'
   /** Whether we hold any NFL game log for this player before the reference
    *  season. Distinguishes a rookie from a veteran who missed the year. */

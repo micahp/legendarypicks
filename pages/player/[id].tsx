@@ -43,6 +43,8 @@ interface PlayerProfile {
   injury_status?: string | null
   last_news_date?: number | null
   stat_ranks?: Record<string, { value: number | null; rank: number | null; label: string }> | null
+  stat_rank_season?: number | null
+  stat_rank_games?: number | null
 }
 
 const STAT_ORDER = ['pass_yds', 'rush_yds', 'rec_yds', 'PTS', 'REB', 'AST', 'PRA', '3PM',
@@ -446,7 +448,9 @@ export default function PlayerPage() {
         {show('overview') && p.stat_ranks && Object.keys(p.stat_ranks).length > 0 && (
           <StatRankCard
             statRanks={p.stat_ranks}
-            title={p.season != null ? `${p.season} Regular Season Stats` : 'Regular Season Stats'}
+            title="League Rankings"
+            season={p.stat_rank_season}
+            games={p.stat_rank_games}
           />
         )}
 

@@ -13,9 +13,13 @@ interface StatRank {
 export default function StatRankCard({
   statRanks,
   title = 'Regular Season Stats',
+  season,
+  games,
 }: {
   statRanks: Record<string, StatRank> | null
   title?: string
+  season?: number | null
+  games?: number | null
 }) {
   if (!statRanks || !Object.keys(statRanks).length) return null
 
@@ -44,9 +48,16 @@ export default function StatRankCard({
 
   return (
     <section className="overflow-hidden rounded-xl border border-zinc-700 bg-zinc-900">
-      <h2 className="bg-orange-600 px-3 py-2 text-center text-[11px] font-bold uppercase tracking-[0.12em] text-white">
-        {title}
-      </h2>
+      <div className="bg-orange-600 px-3 py-2 text-center text-white">
+        <h2 className="text-[11px] font-bold uppercase tracking-[0.12em]">
+          {title}
+        </h2>
+        {season != null && (
+          <p className="mt-0.5 text-[9px] font-medium uppercase tracking-wide text-orange-100">
+            {season} regular season{games != null ? ` · n=${games} games` : ''}
+          </p>
+        )}
+      </div>
       <div className="grid grid-cols-4 divide-x divide-zinc-800">
         {Object.entries(statRanks).map(([key, data]) => (
           <div

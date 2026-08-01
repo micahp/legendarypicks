@@ -390,7 +390,6 @@ export default function DraftRoom({
           onQueue={onAddToQueue}
           canDraft={onClock && !draftedIds.has(selectedPlayerId)}
           queued={queue.includes(selectedPlayerId)}
-          stat_ranks={p?.stat_ranks ?? null}
         />
         )
       })()}

@@ -6,6 +6,8 @@ describe('StatRankCard', () => {
     const { container } = render(
       <StatRankCard
         title="2025 Regular Season Stats"
+        season={2025}
+        games={8}
         statRanks={{
           rush_yds_g: { value: 85.6, rank: 4, label: 'Rush Yds/G' },
           carries_g: { value: 17.9, rank: 6, label: 'Carries/G' },
@@ -15,7 +17,8 @@ describe('StatRankCard', () => {
       />,
     )
 
-    expect(screen.getByText('2025 Regular Season Stats').className).toContain('bg-orange-600')
+    expect(screen.getByText('2025 Regular Season Stats').parentElement?.className).toContain('bg-orange-600')
+    expect(screen.getByText('2025 regular season · n=8 games')).toBeTruthy()
     expect(container.querySelectorAll('.grid > div')).toHaveLength(4)
     expect(screen.getByText('4th')).toBeTruthy()
     expect(screen.getByText('154th')).toBeTruthy()

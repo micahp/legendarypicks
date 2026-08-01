@@ -237,7 +237,6 @@ export default function PoolList({
           onClose={() => setSelectedPlayerId(null)}
           poolName={playerMap.get(selectedPlayerId)?.name}
           posRank={posRank.get(selectedPlayerId)}
-          stat_ranks={playerMap.get(selectedPlayerId)?.stat_ranks ?? null}
         />
       )}
     </section>

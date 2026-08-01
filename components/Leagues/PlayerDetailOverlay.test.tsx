@@ -65,6 +65,14 @@ const PLAYER: PlayerDetailResponse = {
     ppr_points: 339.0,
   },
   season_totals_source: 'espn',
+  stat_ranks: {
+    rec_yds_g: { value: 107.2, rank: 1, label: 'Rec Yds/G' },
+    targets: { value: 166, rank: 2, label: 'Targets' },
+    receptions: { value: 129, rank: 1, label: 'Receptions' },
+    fantasy_ppr_g: { value: 21.2, rank: 3, label: 'PPR/G' },
+  },
+  stat_rank_season: 2025,
+  stat_rank_games: 16,
   sample: 'none',
   has_prior_nfl_sample: true,
   games_played: null,
@@ -108,6 +116,8 @@ describe('PlayerDetailOverlay tabs', () => {
     expect(await screen.findByText('Season Stats')).toBeTruthy()
     expect(screen.getByText('2025')).toBeTruthy()
     expect(screen.getByText('1715')).toBeTruthy()
+    expect(screen.getByText('League Rankings')).toBeTruthy()
+    expect(screen.getByText('2025 regular season · n=16 games')).toBeTruthy()
     expect(screen.queryByText('2026 Projection')).toBeNull()
 
     fireEvent.click(screen.getByRole('tab', { name: 'Projections' }))

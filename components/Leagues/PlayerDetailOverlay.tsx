@@ -14,8 +14,6 @@ import {
 interface Props {
   playerId: number
   onClose: () => void
-  /* External ESPN-style rank data — not part of the /api/nfl/draft/player response */
-  stat_ranks?: Record<string, { value: number | null; rank: number | null; label: string }> | null
 
   /* Pool-level name — available immediately so the header can render outside
      the detail-fetch loading gate. */
@@ -43,11 +41,7 @@ export default function PlayerDetailOverlay({
   onQueue,
   canDraft,
   queued,
-  stat_ranks,
 }: Props) {
-  /* stat_ranks: optional ESPN-style rank data — not part of the normal
-     player detail endpoint. Passed from parent when overlay is shown in
-     the player card or draft room. */
   const [player, setPlayer] = useState<PlayerDetailResponse | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -276,10 +270,13 @@ export default function PlayerDetailOverlay({
             )}
 
             {tab === 'overview' && (<>
-            {/* League Rankings comes from pool data, but belongs to the
-                Overview research hierarchy rather than the persistent header. */}
-            {stat_ranks && Object.keys(stat_ranks).length > 0 && (
-              <StatRankCard statRanks={stat_ranks} title="League Rankings" />
+            {player.stat_ranks && Object.keys(player.stat_ranks).length > 0 && (
+              <StatRankCard
+                statRanks={player.stat_ranks}
+                title="League Rankings"
+                season={player.stat_rank_season}
+                games={player.stat_rank_games}
+              />
             )}
 
             <section className="space-y-2">
