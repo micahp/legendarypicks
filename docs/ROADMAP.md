@@ -870,3 +870,45 @@ updates despite not relying on a current rolling-feed match. Both browser checks
 had zero console/page errors. The focused gates pass 27 backend tests and five
 React tests. This remains local/un-pushed and does not authorize production
 deployment.
+
+---
+
+## 2026-08-01 — NFL player UI and news interaction completion
+
+Commits `99553fb`, `1e48461`, and `9895508` close the remaining interaction and player-UI
+requirements on the local DEV candidate:
+
+- RotoWire fantasy-news cards in the mock-draft overlay are display-only. They
+  expose no outbound links; the standalone ESPN general-news cards remain
+  linked.
+- Fantasy analysis follows the saved Gibbs reference as plain editorial copy:
+  notes, then inline bold `SPIN:`, then date and source. The former nested green
+  Fantasy Spin panel is removed.
+- NFL pool rows render compact injury designations, and both the mock-draft
+  detail overlay and standalone NFL player profile render the full designation.
+  `ACTIVE` and null states do not produce warning tags; the stored
+  `INJURY_RESERV` value is normalized to Injured reserve / IR.
+- The four position-aware season metrics are one dark card with a full-width
+  orange season header and four evenly divided value/rank columns, following
+  the Joe Burrow ESPN reference saved from the Hermes Discord session.
+- The season card is confined to Overview. The redundant
+  `RB2 by ADP — not our ranking` sentence is removed, while the compact RB2
+  badge remains.
+- The player-profile contract now consumes `regular_season_games`, eliminating
+  the rendered `undefined games` value.
+- General ESPN results require the verified NFL athlete plus complete-name
+  evidence in NFL article metadata. This preserves Deebo Samuel reporting while
+  rejecting unrelated broad-name results such as Luke Fortner receiving darts
+  or baseball headlines.
+- The mock-draft pool API now enforces the supported position vocabulary:
+  `QB`, `RB`, `WR`, `TE`, `PK`, and `DEF`. The measured DEV/public-tunnel
+  population is 4,507 rows across exactly those six values; `TQB` and every
+  IDP/coach/punter/lineman/blank value measure zero. The larger ESPN universe
+  remains an ingest/source population, not a user-facing fantasy pool.
+
+Evidence: 52 focused backend tests passed; eight Jest suites / 76 tests passed;
+changed-file TypeScript diagnostics were empty; public mobile profile, pool,
+detail overlay, general-news, and fantasy-news checks had zero console/page
+errors. The fantasy overlay contained zero links, while Deebo's standalone ESPN
+headline remained linked. This candidate is served by the managed DEV tunnel,
+remains unpushed, and is not production.
