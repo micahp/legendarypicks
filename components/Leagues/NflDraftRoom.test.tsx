@@ -41,6 +41,27 @@ const PLAYER: NflDraftPlayer = {
 }
 
 describe('DraftPlayerRow', () => {
+  it('shows the player-pool ordinal instead of the gapped source rank', () => {
+    render(
+      <table>
+        <tbody>
+          <DraftPlayerRow
+            player={PLAYER}
+            noteRank={undefined}
+            watched={false}
+            faded={false}
+            onSetRank={() => {}}
+            onToggleWatch={() => {}}
+            onToggleFade={() => {}}
+          />
+        </tbody>
+      </table>,
+    )
+
+    expect(screen.getByText('1')).toBeTruthy()
+    expect(screen.queryByText('36')).toBeNull()
+  })
+
   it('opens the overlay from the player name instead of linking to player detail', () => {
     const onClick = jest.fn()
     render(

@@ -273,7 +273,7 @@ function PoolRow({
       className="border-b border-zinc-800/50 cursor-pointer transition-colors hover:bg-zinc-800/30"
     >
       <td className="py-2.5 pl-4 pr-2 text-zinc-500 text-xs tabular-nums">
-        {player?.espn_ppr_rank ?? <span className="text-zinc-700">—</span>}
+        {row.rank}
       </td>
       <td className="py-2.5 px-2">
         <div className="flex items-center gap-1.5">
@@ -390,7 +390,7 @@ function VirtualPoolTable({
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-zinc-800 text-zinc-500 text-[11px] uppercase tracking-wider sticky top-0 bg-zinc-900 z-10">
-            <th className="text-left py-3 pl-4 pr-2 w-10">RK</th>
+            <th className="text-left py-3 pl-4 pr-2 w-10">#</th>
             <th className="text-left py-3 px-2">Player</th>
             <th className="text-right py-3 px-2 w-12">Bye</th>
             <th className="text-right py-3 px-2">ADP</th>

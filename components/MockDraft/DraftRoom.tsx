@@ -202,7 +202,9 @@ export default function DraftRoom({
     // The rules mark where ADP says your turn falls. Under any other sort the
     // list is no longer in ADP order, so the same rule would be pointing at
     // nothing — it is dropped rather than left to mislead.
-    if (sortKey !== 'adp') return sortedPool.map(dp => ({ kind: 'player', dp }))
+    if (sortKey !== 'adp') {
+      return sortedPool.map((dp, index) => ({ kind: 'player', dp, rank: index + 1 }))
+    }
 
     const divider = (pickNo: number): PoolRow => ({
       kind: 'divider',
@@ -213,13 +215,14 @@ export default function DraftRoom({
 
     const out: PoolRow[] = []
     const pending = [...upcomingPicks]
-    for (const dp of sortedPool) {
+    for (let index = 0; index < sortedPool.length; index += 1) {
+      const dp = sortedPool[index]
       // A null ADP is "no published expectation". It sorts last, so it is below
       // every one of your remaining picks by construction.
       while (pending.length > 0 && (dp.adp == null || dp.adp >= pending[0])) {
         out.push(divider(pending.shift() as number))
       }
-      out.push({ kind: 'player', dp })
+      out.push({ kind: 'player', dp, rank: index + 1 })
     }
     for (const p of pending) out.push(divider(p))
     return out

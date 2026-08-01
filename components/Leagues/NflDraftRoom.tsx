@@ -348,7 +348,7 @@ export default function NflDraftRoom({
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-zinc-800 text-zinc-500 text-[11px] uppercase tracking-wider">
-                  <th className="text-left py-3 pl-4 pr-2 w-10">RK</th>
+                  <th className="text-left py-3 pl-4 pr-2 w-10">#</th>
                   <th className="text-left py-3 px-2">Player</th>
                   <th className="text-right py-3 px-2">Bye</th>
                   <th className="text-right py-3 px-2">ADP</th>
@@ -449,7 +449,7 @@ export function DraftPlayerRow({
       onClick={onClick}
     >
       <td className="py-2.5 pl-4 pr-2 text-zinc-500 text-xs tabular-nums">
-        {player.espn_ppr_rank ?? <span className="text-zinc-700">—</span>}
+        {player.rank}
       </td>
       <td className="py-2.5 px-2">
         <div className="flex items-center gap-1.5">

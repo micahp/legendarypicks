@@ -11,7 +11,7 @@ import type { SortOption } from './sort'
 
 /** A rendered list is players plus the rules drawn between them. */
 export type PoolRow =
-  | { kind: 'player'; dp: DraftPlayer }
+  | { kind: 'player'; dp: DraftPlayer; rank: number }
   | { kind: 'divider'; pickNo: number; round: number; inRound: number }
 
 interface Props {
@@ -149,7 +149,7 @@ export default function PlayersTab(p: Props) {
         <table data-testid="pool-table" className="w-full text-sm">
           <thead className="sticky top-0 z-10 bg-zinc-900">
             <tr className="border-b border-zinc-800 text-zinc-500 text-[11px] uppercase tracking-wider">
-              <th data-col="rank" className="text-left py-2.5 pl-3 pr-2 w-10">RK</th>
+              <th data-col="rank" className="text-left py-2.5 pl-3 pr-2 w-10">#</th>
               <th data-col="player" className="text-left py-2.5 px-2">Player</th>
               <th data-col="bye" className="text-right py-2.5 px-2 w-12">Bye</th>
               <th data-col="adp" className="text-right py-2.5 px-2 w-16">ADP</th>
@@ -181,6 +181,7 @@ export default function PlayersTab(p: Props) {
                 <PoolRowView
                   key={row.dp.player_id}
                   dp={row.dp}
+                  rank={row.rank}
                   poolPlayer={p.playerMap.get(row.dp.player_id) ?? null}
                   posRank={p.posRank.get(row.dp.player_id)}
                   bye={p.byeMap.get(row.dp.team) ?? null}
@@ -203,10 +204,11 @@ export default function PlayersTab(p: Props) {
 }
 
 function PoolRowView({
-  dp, poolPlayer, posRank, bye, referenceSeason, queued, onClock, completed,
+  dp, rank, poolPlayer, posRank, bye, referenceSeason, queued, onClock, completed,
   onSelect, onDraft, onQueue, onUnqueue,
 }: {
   dp: DraftPlayer
+  rank: number
   poolPlayer: PoolPlayer | null
   posRank?: number
   bye: number | null
@@ -226,7 +228,7 @@ function PoolRowView({
       className="border-b border-zinc-800/40 transition-colors cursor-pointer hover:bg-zinc-800/30"
     >
       <td data-col="rank" className="py-2 pl-3 pr-2 text-zinc-500 text-xs tabular-nums">
-        {poolPlayer.espn_ppr_rank ?? <span className="text-zinc-700">—</span>}
+        {rank}
       </td>
       <td data-col="player" className="py-2 px-2">
         <div className="flex items-center gap-1.5">
