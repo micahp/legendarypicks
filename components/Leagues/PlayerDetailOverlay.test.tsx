@@ -114,7 +114,7 @@ describe('PlayerDetailOverlay tabs', () => {
 
     expect(screen.getByText('Season Outlook')).toBeTruthy()
     expect(screen.getByText(PLAYER.season_outlook as string)).toBeTruthy()
-    expect(screen.getByText('ESPN Outlook')).toBeTruthy()
+    expect(screen.getByText('Source: ESPN')).toBeTruthy()
     expect(screen.getByText('2026 Projection')).toBeTruthy()
     expect(screen.getByText('PROJ 2026')).toBeTruthy()
     expect(screen.getByText('PPR 356.2')).toBeTruthy()

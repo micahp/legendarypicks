@@ -282,7 +282,10 @@ const NFL_TABS: { id: PlayerTab; label: string }[] = [
 
 function TabStrip({ tab, setTab }: { tab: PlayerTab; setTab: (t: PlayerTab) => void }) {
   return (
-    <div className="flex gap-1 border-b border-zinc-800" role="tablist">
+    <div
+      className="flex gap-1 overflow-x-auto border-b border-zinc-800 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      role="tablist"
+    >
       {NFL_TABS.map((t) => {
         const active = t.id === tab
         return (
@@ -291,7 +294,7 @@ function TabStrip({ tab, setTab }: { tab: PlayerTab; setTab: (t: PlayerTab) => v
             role="tab"
             aria-selected={active}
             onClick={() => setTab(t.id)}
-            className={`px-4 py-2.5 text-sm font-medium -mb-px border-b-2 transition-colors ${
+            className={`-mb-px shrink-0 whitespace-nowrap border-b-2 px-2 py-2.5 text-sm font-medium transition-colors sm:px-4 ${
               active
                 ? 'border-emerald-400 text-zinc-100'
                 : 'border-transparent text-zinc-500 hover:text-zinc-300'

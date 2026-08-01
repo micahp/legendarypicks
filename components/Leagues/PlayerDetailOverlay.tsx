@@ -212,7 +212,7 @@ export default function PlayerDetailOverlay({
                   role="tab"
                   aria-selected={tab === id}
                   onClick={() => setTab(id)}
-                  className={`-mb-px border-b-2 px-3 py-1.5 text-xs font-medium transition-colors ${
+                  className={`-mb-px shrink-0 whitespace-nowrap border-b-2 px-3 py-1.5 text-xs font-medium transition-colors ${
                     tab === id
                       ? 'border-zinc-400 text-zinc-100'
                       : 'border-transparent text-zinc-500 hover:text-zinc-300'
@@ -242,8 +242,8 @@ export default function PlayerDetailOverlay({
                       <p className="text-sm leading-6 text-zinc-300">
                         {player.season_outlook}
                       </p>
-                      <p className="mt-2 text-[10px] uppercase tracking-wider text-zinc-600">
-                        ESPN Outlook
+                      <p className="mt-2 text-[10px] tracking-wider text-zinc-600">
+                        Source: ESPN
                       </p>
                     </div>
                   ) : (
