@@ -273,7 +273,11 @@ def player_profile(player_id: int):
             (player_id,)).fetchone()
         season = srow["season"] if srow else None
         logs = []
+        postseason_logs = []
+        preseason_logs = []
+        nfl_schedule_games = []
         postseason_games = 0
+        preseason_games = 0
         if season is not None:
             reg_filter, _ = _reg_season_game_filter(con, league)
             logs = con.execute(
@@ -302,11 +306,87 @@ def player_profile(player_id: int):
                     f"""SELECT COUNT(*) FROM player_game_logs
                        WHERE player_id=? AND season=?
                          AND (
-                           (game_type IS NOT NULL AND game_type!='REG')
+                           (game_type IS NOT NULL AND game_type NOT IN ('REG','PRE'))
                            {legacy_postseason}
                          )""",
                     (player_id, season)).fetchone()
                 postseason_games = post_row[0] if post_row else 0
+                postseason_logs = con.execute(
+                    f"""SELECT stats, game_date, opponent, home_away, game_no
+                       FROM player_game_logs WHERE player_id=? AND season=?
+                         AND (
+                           (game_type IS NOT NULL AND game_type NOT IN ('REG','PRE'))
+                           {legacy_postseason}
+                         )
+                       ORDER BY COALESCE(game_date,'') DESC,
+                                CAST(game_no AS INTEGER) DESC LIMIT 25""",
+                    (player_id, season),
+                ).fetchall()
+                preseason_logs = con.execute(
+                    """SELECT stats, game_date, opponent, home_away, game_no
+                       FROM player_game_logs
+                       WHERE player_id=? AND season=? AND game_type='PRE'
+                       ORDER BY COALESCE(game_date,'') DESC,
+                                CAST(game_no AS INTEGER) DESC LIMIT 25""",
+                    (player_id, season),
+                ).fetchall()
+                preseason_games = len(preseason_logs)
+
+                # NFL game logs currently leave home_away null. Resolve venue
+                # and opponent from the published schedule rather than
+                # guessing from row order or treating every game as away.
+                schedule_columns = {
+                    row[1]
+                    for row in con.execute(
+                        "PRAGMA table_info(nfl_schedule)"
+                    ).fetchall()
+                }
+                required_schedule = {
+                    "season", "week", "game_type", "home_team", "away_team"
+                }
+                schedule_team = p["team"]
+                if "team" in log_columns:
+                    primary_team = con.execute(
+                        f"""SELECT team, COUNT(*) AS games,
+                                   MAX(CAST(game_no AS INTEGER)) AS latest_week
+                            FROM player_game_logs
+                            WHERE player_id=? AND season=? AND team IS NOT NULL
+                              {reg_filter}
+                            GROUP BY team
+                            ORDER BY games DESC, latest_week DESC, team DESC
+                            LIMIT 1""",
+                        (player_id, season),
+                    ).fetchone()
+                    if primary_team and primary_team["team"]:
+                        schedule_team = primary_team["team"]
+                if schedule_team and required_schedule.issubset(schedule_columns):
+                    schedule_rows = con.execute(
+                        """SELECT week, game_type, home_team, away_team
+                           FROM nfl_schedule
+                           WHERE season=? AND (home_team=? OR away_team=?)
+                           ORDER BY week DESC, game_type DESC""",
+                        (season, schedule_team, schedule_team),
+                    ).fetchall()
+                    for schedule_row in schedule_rows:
+                        game_type = str(schedule_row["game_type"] or "").upper()
+                        if game_type == "REG":
+                            phase = "regular"
+                        elif game_type == "PRE":
+                            phase = "preseason"
+                        elif game_type:
+                            phase = "postseason"
+                        else:
+                            continue
+                        is_home = schedule_row["home_team"] == schedule_team
+                        nfl_schedule_games.append({
+                            "week": schedule_row["week"],
+                            "phase": phase,
+                            "opponent": (
+                                schedule_row["away_team"]
+                                if is_home else schedule_row["home_team"]
+                            ),
+                            "home": is_home,
+                        })
         # Pre-compute ESPN-style 4-stat rank card data while DB is open.
         stat_ranks = _compute_stat_ranks(con, p["id"], league, p["position"], season)
 
@@ -315,14 +395,30 @@ def player_profile(player_id: int):
                WHERE player_id=? GROUP BY market, side ORDER BY ca DESC LIMIT 30""",
             (player_id,)).fetchall()
 
-    series, recent = {}, []
-    for r in logs:
-        s = _json.loads(r["stats"])
-        if league == "nfl":
-            s = {_NFL_KEY_NORMALIZE.get(k, k): v for k, v in s.items()}
-        recent.append({"date": r["game_date"], "opponent": r["opponent"],
-                       "home": (r["home_away"] == "home") if r["home_away"] else None,
-                       "game_no": r["game_no"], "stats": s})
+    def serialize_game_logs(rows):
+        serialized = []
+        for row in rows:
+            stats = _json.loads(row["stats"])
+            if league == "nfl":
+                stats = {_NFL_KEY_NORMALIZE.get(k, k): v for k, v in stats.items()}
+            serialized.append({
+                "date": row["game_date"],
+                "opponent": row["opponent"],
+                "home": (
+                    row["home_away"] == "home"
+                    if row["home_away"] else None
+                ),
+                "game_no": row["game_no"],
+                "stats": stats,
+            })
+        return serialized
+
+    series = {}
+    recent = serialize_game_logs(logs)
+    postseason_recent = serialize_game_logs(postseason_logs)
+    preseason_recent = serialize_game_logs(preseason_logs)
+    for game in recent:
+        s = game["stats"]
         for k, v in s.items():
             if isinstance(v, (int, float)):
                 series.setdefault(k, []).append(v)
@@ -346,7 +442,11 @@ def player_profile(player_id: int):
         "last_news_date": p["last_news_date"],
         "regular_season_games": regular_season_games,
         "postseason_games": postseason_games,
+        "preseason_games": preseason_games,
         "recent_games": recent,
+        "postseason_recent_games": postseason_recent,
+        "preseason_recent_games": preseason_recent,
+        "nfl_schedule_games": nfl_schedule_games,
         "projections": projections,
         "stat_ranks": stat_ranks,
         "props": [{"market": _base_market(x["market"]), "side": x["side"], "line": x["line"]} for x in props],
@@ -530,9 +630,14 @@ def player_news(player_id: int,
         candidate for candidate in nfl_player_results
         if str(candidate.get("uid") or "").endswith(f"~a:{espn_id}")
     ]
-    # Search articles are name-keyed. If ESPN itself returns two NFL athletes
-    # for that name, the articles cannot be assigned safely to either profile.
-    if len(nfl_player_results) != 1 or len(matched_athlete) != 1:
+    # Search articles are name-keyed, and the article group cannot be split by
+    # name alone when ESPN returns several same-name NFL athletes (e.g. Josh
+    # Allen BUF QB vs Josh Allen TB C vs Josh Hines-Allen). That is not a
+    # reason to blank the tab: the profile's espn_id confirms exactly which
+    # athlete is ours, and the per-article name filter below still applies.
+    # Requiring exactly one NFL athlete for the query name would hide real
+    # published news behind the empty state for every shared-name player.
+    if len(matched_athlete) != 1:
         return {"player_id": player_id, "name": p["name"], "articles": []}
     article_results = next(
         (group.get("contents", []) for group in result_groups if group.get("type") == "article"),

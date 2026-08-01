@@ -13,6 +13,7 @@ SPEC-slice-D-mock-draft.md:
 import json
 import os
 import sqlite3
+import threading
 import time
 import uuid
 from typing import Optional
@@ -44,6 +45,14 @@ _CURRENT_SEASON = 2026
 _REG_SEASON_TEAM_GAMES = 17
 _POSTSEASON_FIRST_WEEK = 19
 _THIN_SAMPLE_GAMES = 4
+
+# Pool endpoint cache — the draft-season pool only changes when nfl_adp or
+# projections are re-ingested (daily timers), so a 5-min TTL is safe and drops
+# repeat requests from ~1.5s to effectively free.
+_POOL_CACHE_TTL = 300
+_pool_cache: dict = {"ts": 0.0, "payload": None}
+_pool_cache_lock = threading.Lock()
+
 _NFL_RANK_STATS = {
     "QB": [
         ("pass_yds_g", "Pass Yds/G"),
@@ -244,6 +253,12 @@ def pool(season: int = Query(...)):
     """
     if season != _CURRENT_SEASON:
         return _json({"error": f"season must be {_CURRENT_SEASON}"}, status=400)
+
+    # Check cache
+    now = time.time()
+    with _pool_cache_lock:
+        if now - _pool_cache["ts"] < _POOL_CACHE_TTL and _pool_cache["payload"] is not None:
+            return _json(_pool_cache["payload"])
 
     connection = _conn()
     try:
@@ -528,8 +543,7 @@ def pool(season: int = Query(...)):
                 "stat_ranks": stat_ranks,
             })
 
-        return _json(
-            {
+        payload = {
                 "contract": _CONTRACT,
                 "season": season,
                 # `season` is the season being drafted; every statistic in this
@@ -541,7 +555,12 @@ def pool(season: int = Query(...)):
                 "count": len(players),
                 "players": players,
             }
-        )
+        # Update cache (before return to ensure it runs)
+        with _pool_cache_lock:
+            _pool_cache["ts"] = time.time()
+            _pool_cache["payload"] = payload
+
+        return _json(payload)
     finally:
         connection.close()
 

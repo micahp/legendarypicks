@@ -194,6 +194,7 @@ class NflNewsIdentityAndApiTests(unittest.TestCase):
                 (5, "Marcus Harris", "TEN", "nfl", "CB", None, None),
                 (6, "Deebo Samuel Sr.", "WSH", "nfl", "WR", "3126486", "00-0035719"),
                 (7, "Alex Skater", "CHI", "nhl", "C", None, None),
+                (8, "Josh Allen", "BUF", "nfl", "QB", "3918298", "00-0034857"),
             ],
         )
         con.commit()
@@ -361,6 +362,84 @@ class NflNewsIdentityAndApiTests(unittest.TestCase):
             [article["headline"] for article in result["articles"]],
         )
         self.assertEqual("By Reporter One", result["articles"][0]["description"])
+
+    def test_general_news_survives_same_name_nfl_athletes(self):
+        # Josh Allen (BUF QB, espn 3918298) shares a name with other NFL
+        # athletes in ESPN search (Josh Hines-Allen a:3915239, Josh Allen
+        # a:17102). The athlete is confirmed by espn_id; the extra same-name
+        # athletes must not blank the whole News tab.
+        payload = {
+            "results": [
+                {
+                    "type": "player",
+                    "contents": [
+                        {"uid": "s:20~l:28~a:3915239"},
+                        {"uid": "s:20~l:28~a:17102"},
+                        {"uid": "s:20~l:28~a:3918298"},
+                    ],
+                },
+                {
+                    "type": "article",
+                    "contents": [
+                        {
+                            "id": "49470315",
+                            "displayName": "Myles Garrett, Josh Allen and more earn spots in Madden 27 99 Club",
+                            "date": "2026-07-28T16:12:50.000+00:00",
+                            "byline": "ESPN Staff",
+                            "link": {"web": "https://www.espn.com/nfl/story/_/id/49470315/madden-27-99-club-myles-garrett-josh-allen-jamarr-chase"},
+                            "images": [],
+                        },
+                        {
+                            "id": "49481725",
+                            "displayName": "Josh Allen on Bills' alternate uniforms: 'Stop hating on the jerseys'",
+                            "date": "2026-07-29T23:02:02.000+00:00",
+                            "byline": "Alaina Getzenberg",
+                            "link": {"web": "https://www.espn.com/nfl/story/_/id/49481725/josh-allen-bills-alternate-uniforms-stop-hating-jerseys"},
+                            "images": [],
+                        },
+                    ],
+                },
+            ]
+        }
+        response = FakeResponse(__import__("json").dumps(payload).encode())
+        with mock.patch("urllib.request.urlopen", return_value=response):
+            result = players.player_news(8, 10)
+
+        self.assertEqual(
+            ["Josh Allen on Bills' alternate uniforms: 'Stop hating on the jerseys'",
+             "Myles Garrett, Josh Allen and more earn spots in Madden 27 99 Club"],
+            [article["headline"] for article in result["articles"]],
+        )
+
+    def test_general_news_requires_confirmed_athlete(self):
+        # The espn_id identity gate stays: if ESPN search does not return the
+        # profile's own athlete, articles are not assigned to it.
+        payload = {
+            "results": [
+                {
+                    "type": "player",
+                    "contents": [{"uid": "s:20~l:28~a:9999999"}],
+                },
+                {
+                    "type": "article",
+                    "contents": [
+                        {
+                            "id": "x",
+                            "displayName": "Josh Allen signs extension",
+                            "date": "2026-07-30T12:00:00Z",
+                            "byline": "Reporter",
+                            "link": {"web": "https://www.espn.com/nfl/story/_/id/x/josh-allen-signs-extension"},
+                            "images": [],
+                        }
+                    ],
+                },
+            ]
+        }
+        response = FakeResponse(__import__("json").dumps(payload).encode())
+        with mock.patch("urllib.request.urlopen", return_value=response):
+            result = players.player_news(8, 10)
+
+        self.assertEqual([], result["articles"])
 
     def test_api_returns_verified_suffix_news_and_rejects_false_prefix(self):
         items = [

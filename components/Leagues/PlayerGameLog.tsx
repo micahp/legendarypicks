@@ -4,8 +4,19 @@ interface GameRow {
   week: number
   played: boolean
   opponent: string | null
+  home?: boolean | null
   team: string | null
   stats: Record<string, number | null>
+}
+
+interface ProfileScheduleResponse {
+  season: number | null
+  nfl_schedule_games?: Array<{
+    week: number
+    phase: 'regular' | 'postseason' | 'preseason'
+    opponent: string
+    home: boolean
+  }>
 }
 
 interface GameLogResponse {
@@ -28,7 +39,7 @@ const HEAD: Record<string, string> = {
   off_pct: 'Snap', targets: 'Tgt', target_share: 'Tgt%', rec: 'Rec',
   rec_yds: 'Yds', rec_td: 'TD', adot: 'aDOT', separation: 'Sep',
   fpts_ppr: 'PPR', xfpts_ppr: 'xPPR', carries: 'Car', rush_yds: 'RuYd',
-  rush_td: 'RuTD', cmp: 'Cmp', att: 'Att', pass_yds: 'PaYd',
+  rush_td: 'RuTD', cmp: 'Comp', att: 'Att', pass_yds: 'PaYd',
   pass_td: 'PaTD', intc: 'INT', fg_made: 'FGM', fg_att: 'FGA',
   fg_long: 'Long', pat_made: 'XPM', pat_att: 'XPA', sacks: 'Sk',
   interceptions: 'INT', tds: 'TD', safeties: 'Sfty', fumble_rec: 'FR',
@@ -71,9 +82,34 @@ export default function PlayerGameLog({ playerId }: { playerId: number }) {
     let cancelled = false
     setData(null)
     setError(null)
-    fetch(`/api/nfl/draft/player/${playerId}/game-log`)
-      .then(r => { if (!r.ok) throw new Error(`Failed to load game log (${r.status})`); return r.json() })
-      .then((d: GameLogResponse) => { if (!cancelled) setData(d) })
+    Promise.all([
+      fetch(`/api/nfl/draft/player/${playerId}/game-log`)
+        .then(r => { if (!r.ok) throw new Error(`Failed to load game log (${r.status})`); return r.json() }),
+      fetch(`/api/player/${playerId}`)
+        .then(r => r.ok ? r.json() : null)
+        .catch(() => null),
+    ])
+      .then(([d, profile]: [GameLogResponse, ProfileScheduleResponse | null]) => {
+        if (profile?.season === d.reference_season) {
+          const schedule = new Map(
+            (profile.nfl_schedule_games ?? [])
+              .filter(game => game.phase === 'regular')
+              .map(game => [game.week, game]),
+          )
+          d = {
+            ...d,
+            games: d.games.map(game => {
+              const scheduled = schedule.get(game.week)
+              return scheduled ? {
+                ...game,
+                opponent: scheduled.opponent,
+                home: scheduled.home,
+              } : game
+            }),
+          }
+        }
+        if (!cancelled) setData(d)
+      })
       .catch(e => { if (!cancelled) setError(e.message) })
     return () => { cancelled = true }
   }, [playerId])
@@ -112,7 +148,7 @@ export default function PlayerGameLog({ playerId }: { playerId: number }) {
           <thead>
             <tr className="border-b border-zinc-800 text-zinc-500 uppercase tracking-wider">
               <th className="py-1.5 pr-2 text-left font-medium">Wk</th>
-              <th className="py-1.5 pr-2 text-left font-medium">Opp</th>
+              <th className="py-1.5 pr-2 text-left font-medium min-w-[5rem] whitespace-nowrap">Opp</th>
               {data.fields.map(f => (
                 <th key={f} className="py-1.5 px-1.5 text-right font-medium">
                   {HEAD[f] ?? f}
@@ -129,8 +165,8 @@ export default function PlayerGameLog({ playerId }: { playerId: number }) {
                 <td className="py-1.5 pr-2 tabular-nums text-zinc-500">{g.week}</td>
                 {g.played ? (
                   <>
-                    <td className="py-1.5 pr-2 text-zinc-500">
-                      {g.opponent ?? '—'}
+                    <td className="py-1.5 pr-2 text-zinc-500 min-w-[5rem] whitespace-nowrap">
+                      {g.opponent ? `${g.home === false ? '@ ' : ''}${g.opponent}` : '—'}
                     </td>
                     {data.fields.map(f => (
                       <td key={f} className="py-1.5 px-1.5 text-right font-mono tabular-nums text-zinc-300">

@@ -31,7 +31,7 @@ export default function StatRankCard({
       pass_yds_g: 'Pass Yds/G',
       pass_td: 'Pass TD',
       interceptions: 'INT',
-      cmp_g: 'Cmp/G',
+      cmp_g: 'Comp/G',
       rush_yds_g: 'Rush Yds/G',
       carries_g: 'Car/G',
       rec_yds_g: 'Rec Yds/G',

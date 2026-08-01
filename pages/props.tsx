@@ -374,7 +374,7 @@ function PerformanceTab({ league, query, setQuery, selectedPlayer, setSelectedPl
                     {stats.stats.passing_yards_pg != null && <StatBox label="Pass Yds/G" value={stats.stats.passing_yards_pg} />}
                     {stats.stats.passing_tds != null && <StatBox label="Pass TD" value={stats.stats.passing_tds} />}
                     {stats.stats.interceptions != null && <StatBox label="INT" value={stats.stats.interceptions} />}
-                    {stats.stats.completions_pg != null && <StatBox label="Cmp/G" value={stats.stats.completions_pg} />}
+                    {stats.stats.completions_pg != null && <StatBox label="Comp/G" value={stats.stats.completions_pg} />}
                     {stats.stats.passing_epa != null && <StatBox label="EPA" value={stats.stats.passing_epa} desc="total" />}
                     {stats.stats.carries_pg != null && <StatBox label="Carries/G" value={stats.stats.carries_pg} />}
                     {stats.stats.rushing_yards_pg != null && <StatBox label="Rush Yds/G" value={stats.stats.rushing_yards_pg} />}

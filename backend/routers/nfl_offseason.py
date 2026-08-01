@@ -8,6 +8,7 @@ year before the contract can claim a current phase.
 import datetime as dt
 import re
 import sqlite3
+import threading
 import time
 from collections import defaultdict
 from contextlib import closing
@@ -26,6 +27,12 @@ router = APIRouter()
 _CONTEXT_CONTRACT = "nfl-season-context-v1"
 _DRAFT_BOARD_CONTRACT = "nfl-draft-board-v2"
 _CURRENT_SEASON = 2026
+
+# Draft board cache — the draft board only changes when nfl_adp, projections,
+# or depth chart are re-ingested (daily timers), so a 5-min TTL is safe.
+_DRAFT_BOARD_CACHE_TTL = 300
+_draft_board_cache: dict = {"ts": 0.0, "payload": None}
+_draft_board_cache_lock = threading.Lock()
 
 # Availability's denominator is a constant, not a join. Verified on picks.dev.db:
 # in each of 2024 and 2025, all 32 teams played exactly 17 regular-season games,
@@ -977,6 +984,15 @@ def nfl_draft_board(
     sort_field, sort_ascending = _SORT_FIELDS[sort]
     search, search_tokens = _name_search(q)
 
+    # Check cache (key includes all query params)
+    cache_key = f"{selected_position}|{sort}|{q}|{limit}|{offset}"
+    now = time.time()
+    with _draft_board_cache_lock:
+        if now - _draft_board_cache["ts"] < _DRAFT_BOARD_CACHE_TTL and _draft_board_cache["payload"] is not None:
+            cached = _draft_board_cache["payload"]
+            if cached.get("cache_key") == cache_key:
+                return cached["response"]
+
     with closing(_db()) as connection:
         connection.row_factory = sqlite3.Row
         _draft_board_schema(connection)
@@ -1288,7 +1304,7 @@ def nfl_draft_board(
     for index, player in enumerate(page):
         player["rank"] = offset + index + 1
 
-    return {
+    response = {
         "contract": _DRAFT_BOARD_CONTRACT,
         "league": "nfl",
         "current_season": _CURRENT_SEASON,
@@ -1309,3 +1325,13 @@ def nfl_draft_board(
         },
         "players": page,
     }
+
+    # Update cache
+    with _draft_board_cache_lock:
+        _draft_board_cache["ts"] = time.time()
+        _draft_board_cache["payload"] = {
+            "cache_key": cache_key,
+            "response": response,
+        }
+
+    return response
