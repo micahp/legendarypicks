@@ -48,7 +48,12 @@ class PlayerProfileApiTests(unittest.TestCase):
             CREATE TABLE props(
               player_id INTEGER, market TEXT, side TEXT, line REAL, captured_at TEXT
             );
-            CREATE TABLE player_stats(player_id INTEGER, season INTEGER);
+            CREATE TABLE player_stats(
+              player_id INTEGER, season INTEGER, league TEXT, stat_type TEXT,
+              pass_yds_g REAL, pass_td INTEGER, interceptions INTEGER, cmp_g REAL,
+              carries_g REAL, rush_yds_g REAL, rec_yds_g REAL, targets INTEGER,
+              receptions INTEGER, fantasy_ppr_g REAL
+            );
             CREATE INDEX idx_test_logs_player ON player_game_logs(player_id);
             CREATE INDEX idx_test_props_player ON props(player_id);
             CREATE INDEX idx_test_stats_player ON player_stats(player_id);
@@ -70,7 +75,7 @@ class PlayerProfileApiTests(unittest.TestCase):
                 "OPP", "home", 1, None,
             ),
         )
-        con.execute("INSERT INTO player_stats VALUES(3, 2026)")
+        con.execute("INSERT INTO player_stats(player_id, season) VALUES(3, 2026)")
         con.execute(
             "INSERT INTO props VALUES(?,?,?,?,?)",
             (4, "points", "over", 20.5, "2026-07-21T12:00:00Z"),

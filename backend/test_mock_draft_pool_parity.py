@@ -216,8 +216,15 @@ class MockDraftPoolParityTests(unittest.TestCase):
         self.assertIsNotNone(defense["dst_pts_per_game"])
         self.assertIsNone(defense["ppr_per_game_played"])
 
-    def test_pool_still_has_300_players_and_32_defenses(self):
-        self.assertEqual(self.pool["count"], 300)
+    def test_pool_is_the_full_nfl_adp_universe_with_32_defenses(self):
+        """The pool is every nfl_adp row for the season (v0.7.0 T2) — no cap,
+        no ownership filter — and all 32 defenses are present."""
+        import sqlite3 as _sqlite3
+        with _sqlite3.connect(self.db_path) as _con:
+            expected = _con.execute(
+                "SELECT COUNT(*) FROM nfl_adp WHERE season=2026"
+            ).fetchone()[0]
+        self.assertEqual(self.pool["count"], expected)
         defenses = [
             row for row in self.pool["players"]
             if row["position"] == "DEF"

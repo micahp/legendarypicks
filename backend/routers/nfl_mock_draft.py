@@ -3,8 +3,9 @@ from __future__ import annotations
 """NFL mock draft — pool endpoint + draft CRUD for single-player mock drafts vs. ADP bots.
 
 SPEC-slice-D-mock-draft.md:
-  - Pool: GET /api/nfl/mock-draft/pool?season=2026 — 300 players
-    (QB/RB/WR/TE/PK/DEF) with copied published ADP.
+  - Pool: GET /api/nfl/mock-draft/pool?season=2026 — the full ESPN player
+    universe (~11,515: QB/RB/WR/TE/PK/DEF + IDP + free agents) with copied
+    published ADP / PPR ranks. Draftable filtering is the UI's job.
   - Draft CRUD: create, append picks, resume, list — keyed by X-Device-Id.
   - Own _DB from LP_DB_PATH (no _core.py dependency).
 """
@@ -43,7 +44,6 @@ _CURRENT_SEASON = 2026
 _REG_SEASON_TEAM_GAMES = 17
 _POSTSEASON_FIRST_WEEK = 19
 _THIN_SAMPLE_GAMES = 4
-_POOL_CAP = 300
 _NFL_RANK_STATS = {
     "QB": [
         ("pass_yds_g", "Pass Yds/G"),
@@ -73,30 +73,41 @@ _NFL_RANK_STATS = {
 _RANK_ASC = frozenset(["interceptions"])
 
 
-def _player_stat_ranks(connection, player_id, position):
-    """League-wide rank for the player's 4 position-relevant stats."""
-    pos_ranks = _NFL_RANK_STATS.get(position)
-    if not pos_ranks:
+def _player_stat_ranks_batch(connection):
+    """Rank card for EVERY player, one query per stat (~4 total).
+
+    RANK() OVER (ORDER BY ...) is the same competition ranking the per-player
+    COUNT(*) + 1 computed — ties share the higher rank with gaps — so the
+    numbers are identical, only the query count changes: at pool size the old
+    per-player loop ran ~17,000 COUNT queries against player_stats (O(N^2) as
+    that table grows); this is 4 full scans.
+    """
+    if not _table_columns(connection, "player_stats"):
         return {}
-    results = {}
-    for stat_col, stat_label in pos_ranks:
-        row = connection.execute(
-            f"SELECT {stat_col} AS val FROM player_stats WHERE player_id=? "
-            f"AND league='nfl' AND stat_type='weekly' AND {stat_col} IS NOT NULL",
-            (player_id,),
-        ).fetchone()
-        if row is None:
-            continue
-        player_val = float(row["val"])
+    stat_labels = {
+        col: label
+        for pos_stats in _NFL_RANK_STATS.values()
+        for col, label in pos_stats
+    }
+    ranks: dict[tuple[int, str], dict] = {}
+    for stat_col in stat_labels:
         order = "ASC" if stat_col in _RANK_ASC else "DESC"
-        cmp = "<" if order == "ASC" else ">"
-        rank = connection.execute(
-            f"SELECT COUNT(*) + 1 AS rank FROM player_stats WHERE league='nfl' "
-            f"AND stat_type='weekly' AND {stat_col} IS NOT NULL AND {stat_col} {cmp} ?",
-            (player_val,),
-        ).fetchone()["rank"]
-        results[stat_col] = {"value": player_val, "rank": int(rank), "label": stat_label}
-    return results
+        for row in connection.execute(
+            f"""SELECT player_id, {stat_col} AS val,
+                       RANK() OVER (ORDER BY {stat_col} {order}) AS rank
+                FROM player_stats
+                WHERE league='nfl' AND stat_type='weekly'
+                  AND {stat_col} IS NOT NULL"""
+        ):
+            ranks[(row["player_id"], stat_col)] = {
+                "value": float(row["val"]),
+                "rank": int(row["rank"]),
+                "label": stat_labels[stat_col],
+            }
+    by_player: dict[int, dict] = {}
+    for (pid, stat_col), entry in ranks.items():
+        by_player.setdefault(pid, {})[stat_col] = entry
+    return by_player
 
 
 # Draftable positions: skill positions, kickers, and team defenses.
@@ -224,9 +235,12 @@ def _compute_round_and_pick(pick_count: int, teams: int) -> tuple[int, int]:
 
 @router.get("/api/nfl/mock-draft/pool")
 def pool(season: int = Query(...)):
-    """Return the ~300-player ranked pool for mock drafts.
+    """Return the full published player universe for mock drafts (v0.7.0 T2).
 
-    X-Device-Id is NOT required for this endpoint — it is read-only public data.
+    No cap, no active/ownership filter: every nfl_adp row for the season is a
+    pool entry — free agents included, rendering a "—" ADP. D/ST carry ESPN's
+    published PPR rank as their ADP (v0.7.0 T1). X-Device-Id is NOT required
+    for this endpoint — it is read-only public data.
     """
     if season != _CURRENT_SEASON:
         return _json({"error": f"season must be {_CURRENT_SEASON}"}, status=400)
@@ -275,84 +289,104 @@ def pool(season: int = Query(...)):
         )
 
         # ------------------------------------------------------------------
-        # Query the pool: draftable positions, active players, from nfl_adp.
-        # D/ST are selected separately (all 32) to guarantee they are never
-        # displaced by the global 300-cap; non-DEF fill the remaining slots.
-        # Both sets are then merged and sorted by the same ADP/ownership
-        # ordering — no synthetic ADP, no fixed slot, no dst_rank.
+        # Query the pool: the FULL published universe for the season, from
+        # nfl_adp (v0.7.0 T2 — 11,515 players incl. free agents). No cap, no
+        # active filter, no ownership filter: the UI filters "available" vs
+        # "drafted", and a free agent is a real pool entry that renders a "—"
+        # ADP. Projections/rank/adp_ppr columns are conditional: a DB that has
+        # not yet run the migrations must not 500 — it serves honest NULLs.
         # ------------------------------------------------------------------
-        _NON_DEF_POSITIONS = ("QB", "RB", "WR", "TE", "PK")
-        _placeholders = ",".join("?" for _ in _NON_DEF_POSITIONS)
+        _has_proj = bool(_table_columns(connection, "nfl_player_projections"))
+        _has_rank = "espn_ppr_rank" in _table_columns(connection, "nfl_adp")
+        _has_ppr = "adp_ppr" in _table_columns(connection, "nfl_adp")
+        _has_pos = "position" in _table_columns(connection, "nfl_adp")
+        _has_injury = {"injury_status", "last_news_date"}.issubset(
+            _table_columns(connection, "players")
+        )
+        _injury_select = (
+            ", p.injury_status, p.last_news_date"
+            if _has_injury else ", NULL AS injury_status, NULL AS last_news_date"
+        )
+        _pos_select = "na.position AS position" if _has_pos else "p.position AS position"
+        _proj_select = (
+            ", np.lp_ppr_projected_points AS proj_pts"
+            if _has_proj else ", NULL AS proj_pts"
+        )
+        _proj_join = (
+            " LEFT JOIN nfl_player_projections np"
+            " ON np.player_id = p.id AND np.season = ?"
+            if _has_proj else ""
+        )
+        _proj_params = (season,) if _has_proj else ()
+        _rank_select = ", na.espn_ppr_rank" if _has_rank else ", NULL AS espn_ppr_rank"
+        _ppr_select = ", na.adp_ppr" if _has_ppr else ", NULL AS adp_ppr"
+        # D/ST's published ADP is ESPN's PPR rank (v0.7.0 T1: DEN 234, SEA 239).
+        # Pre-v0.7.0 DBs have no adp_ppr column and fall back to the ADP column.
+        _adp_select = (
+            "CASE WHEN na.position = 'DEF' THEN na.adp_ppr ELSE na.adp END AS adp"
+            if (_has_ppr and _has_pos) else "na.adp"
+        )
 
-        # ── DEF: all 32, guaranteed a slot ──
-        def_rows = connection.execute(
-            """SELECT p.id AS player_id, p.name, p.position, p.team, p.injury_status, p.last_news_date,
-                      na.adp, na.percent_owned
-               FROM players p
-               JOIN nfl_adp na ON na.player_id = p.id AND na.season = ?
-               WHERE p.league = 'nfl' AND p.active = 1
-                 AND p.position = 'DEF'
-                 AND na.adp IS NOT NULL""",
-            (season,),
-        ).fetchall()
-
-        # ── Non-DEF: top N to fill pool cap ──
-        _non_def_cap = _POOL_CAP - len(def_rows)
-        non_def_rows: list = []
-        if _non_def_cap > 0:
-            non_def_rows = connection.execute(
-                f"""SELECT p.id AS player_id, p.name, p.position, p.team, p.injury_status, p.last_news_date,
-                           na.adp, na.percent_owned
+        rows = connection.execute(
+            f"""SELECT p.id AS player_id, p.name, {_pos_select}, p.team,
+                           {_adp_select}, na.percent_owned{_rank_select}{_ppr_select}{_proj_select}{_injury_select}
                     FROM players p
                     JOIN nfl_adp na ON na.player_id = p.id AND na.season = ?
-                    WHERE p.league = 'nfl' AND p.active = 1
-                      AND p.position IN ({_placeholders})
-                      AND (na.adp IS NOT NULL OR na.percent_owned > 0)
-                    ORDER BY
-                      CASE WHEN na.adp IS NOT NULL THEN 0 ELSE 1 END,
-                      na.adp ASC,
-                      na.percent_owned DESC,
-                      p.name ASC
-                    LIMIT ?""",
-                (season, *_NON_DEF_POSITIONS, _non_def_cap),
-            ).fetchall()
+                    {_proj_join}
+                    WHERE p.league = 'nfl'""",
+            (season, *_proj_params),
+        ).fetchall()
 
-        # Merge both sets
-        rows = list(def_rows) + list(non_def_rows)
-        # Sort by the copied ESPN ADP. Nulls, if selected through published
-        # ownership, follow all players with a published ADP.
+        # Sort by the published ESPN PPR rank — the ESPN-shell contract's RK
+        # column. Nulls (e.g. Dominic Zvada, who has ADP but no published rank)
+        # follow every ranked player; ADP/ownership break the tie inside a rank.
         rows.sort(key=lambda r: (
+            0 if r["espn_ppr_rank"] is not None else 1,
+            r["espn_ppr_rank"] if r["espn_ppr_rank"] is not None else 999999,
             0 if r["adp"] is not None else 1,
             r["adp"] if r["adp"] is not None else 999999,
             -(r["percent_owned"] or 0),
             r["name"],
         ))
 
+        # Season aggregates over the whole log table, keeping the pool's rows.
+        # Passing player_ids would build an IN clause of ~11,500 terms — past
+        # SQLite 3.31's 999-variable limit. The unfiltered scan returns the
+        # same per-player numbers: the aggregate groups by player, so narrowing
+        # the scan cannot change a result (the helper's own contract).
         if "stats" in _log_columns and rows:
-            season_stats = _regular_season_aggregates(
+            _all_season_stats = _regular_season_aggregates(
                 connection,
                 _log_season,
                 availability=availability,
-                player_ids=[row["player_id"] for row in rows],
             )
+            season_stats = {
+                pid: _all_season_stats[pid]
+                for pid in (row["player_id"] for row in rows)
+                if pid in _all_season_stats
+            }
 
         # Whether we hold any NFL game log for this player *before* the
         # reference season. Without it a surface cannot tell a rookie apart
         # from a veteran who missed the whole year, and the pool called Odell
         # Beckham Jr. a rookie -- an outright false statement about a player
-        # with eight prior-season rows sitting in this same table.
+        # with eight prior-season rows sitting in this same table. Intersected
+        # in Python because the IN clause would exceed the variable limit at
+        # pool size.
         prior_sample_ids = set()
         if rows:
-            _prior_placeholders = ",".join("?" for _ in rows)
             prior_sample_ids = {
                 r[0]
                 for r in connection.execute(
-                    f"""SELECT DISTINCT player_id FROM player_game_logs
-                        WHERE league='nfl' AND season < ?
-                          AND player_id IN ({_prior_placeholders})""",
-                    (_log_season, *[row["player_id"] for row in rows]),
+                    """SELECT DISTINCT player_id FROM player_game_logs
+                       WHERE league='nfl' AND season < ?""",
+                    (_log_season,),
                 )
-            }
+            } & {row["player_id"] for row in rows}
+
+        # ESPN-style 4-stat rank card for the whole pool, computed once
+        # (4 queries) instead of once per player (~17,000 at pool size).
+        pool_rank_map = _player_stat_ranks_batch(connection) if rows else {}
 
         players = []
         for row in rows:
@@ -448,8 +482,14 @@ def pool(season: int = Query(...)):
                 snap_pct = None
                 target_share = None
 
-            # ESPN-style 4-stat rank card
-            stat_ranks = _player_stat_ranks(connection, pid, pos)
+            # ESPN-style 4-stat rank card — from the batched rank map computed
+            # once for the whole pool (v0.7.0: 4 queries, not 17,000).
+            stat_ranks = {
+                col: entry
+                for col, _ in _NFL_RANK_STATS.get(pos, [])
+                for entry in [pool_rank_map.get(pid, {}).get(col)]
+                if entry is not None
+            }
             players.append({
                 "player_id": pid,
                 "name": row["name"],
@@ -458,6 +498,9 @@ def pool(season: int = Query(...)):
                 "injury_status": row["injury_status"],
                 "last_news_date": row["last_news_date"],
                 "adp": row["adp"],
+                "espn_ppr_rank": row["espn_ppr_rank"],
+                "adp_ppr": row["adp_ppr"],
+                "proj_pts": row["proj_pts"],
                 "percent_owned": row["percent_owned"],
                 "sample": sample,
                 "has_prior_nfl_sample": pid in prior_sample_ids,
@@ -865,9 +908,19 @@ def player_detail(player_id: int):
     """
     connection = _conn()
     try:
-        # 1. Player lookup
+        # 1. Player lookup. The injury columns are optional (a concurrent
+        # feature's migration may not have landed on this DB) — selected only
+        # where they exist, so a pre-migration DB serves honest NULLs instead
+        # of 500ing on the SELECT.
+        _injury_cols = (
+            ", injury_status, last_news_date"
+            if {"injury_status", "last_news_date"}
+            <= {r["name"] for r in connection.execute("PRAGMA table_info(players)")}
+            else ""
+        )
         player = connection.execute(
-            "SELECT id, name, team, position, active, injury_status, last_news_date FROM players WHERE id=? AND league='nfl'",
+            f"SELECT id, name, team, position, active{_injury_cols} "
+            f"FROM players WHERE id=? AND league='nfl'",
             (player_id,),
         ).fetchone()
 
@@ -878,19 +931,86 @@ def player_detail(player_id: int):
         team = player["team"]
         position = player["position"]
         active = bool(player["active"])
-        injury_status = player["injury_status"]
-        last_news_date = player["last_news_date"]
+        injury_status = player["injury_status"] if _injury_cols else None
+        last_news_date = player["last_news_date"] if _injury_cols else None
 
-        # 2. ADP / percent owned from nfl_adp
+        # 2. ADP / percent owned from nfl_adp. D/ST's published ADP is ESPN's
+        #    PPR rank (v0.7.0 T1) — the same mapping the pool applies, so the
+        #    overlay and the pool can never disagree about a defense. The rank
+        #    columns are conditional: a pre-migration DB serves honest NULLs.
         adp = None
         percent_owned = None
+        espn_ppr_rank = None
+        espn_standard_rank = None
+        adp_ppr = None
+        _has_ppr = "adp_ppr" in _table_columns(connection, "nfl_adp")
+        _ppr_col = ", adp_ppr" if _has_ppr else ""
+        _rank_cols = (
+            ", espn_ppr_rank, espn_standard_rank"
+            if "espn_ppr_rank" in _table_columns(connection, "nfl_adp")
+            else ""
+        )
         adp_row = connection.execute(
-            "SELECT adp, percent_owned FROM nfl_adp WHERE player_id=? AND season=?",
+            f"SELECT adp, percent_owned{_rank_cols}{_ppr_col} "
+            f"FROM nfl_adp WHERE player_id=? AND season=?",
             (player_id, _CURRENT_SEASON),
         ).fetchone()
         if adp_row:
-            adp = adp_row["adp"]
             percent_owned = adp_row["percent_owned"]
+            if _has_ppr and position == "DEF":
+                adp = adp_row["adp_ppr"]
+            else:
+                adp = adp_row["adp"]
+            if _has_ppr:
+                adp_ppr = adp_row["adp_ppr"]
+            if _rank_cols:
+                espn_ppr_rank = adp_row["espn_ppr_rank"]
+                espn_standard_rank = adp_row["espn_standard_rank"]
+
+        proj_2026_pts = None
+        projection_2026 = None
+        if "lp_ppr_projected_points" in _table_columns(connection, "nfl_player_projections"):
+            proj_row = connection.execute(
+                """SELECT lp_ppr_projected_points, projected_games,
+                          pass_att, pass_cmp, pass_yds, pass_td, interceptions,
+                          rush_att, rush_yds, rush_td,
+                          receptions, targets, rec_yds, rec_td,
+                          fg_att, fg_made, xp_att, xp_made,
+                          def_td, def_int, def_sack, def_fumble_rec,
+                          def_points_allowed, def_yds_allowed
+                   FROM nfl_player_projections
+                   WHERE player_id=? AND season=? AND stat_split_type_id=0""",
+                (player_id, _CURRENT_SEASON),
+            ).fetchone()
+        else:
+            proj_row = None
+        if proj_row:
+            proj_2026_pts = proj_row["lp_ppr_projected_points"]
+            projection_2026 = {
+                "games": proj_row["projected_games"],
+                "pass_att": proj_row["pass_att"],
+                "pass_cmp": proj_row["pass_cmp"],
+                "pass_yds": proj_row["pass_yds"],
+                "pass_td": proj_row["pass_td"],
+                "interceptions": proj_row["interceptions"],
+                "rush_att": proj_row["rush_att"],
+                "rush_yds": proj_row["rush_yds"],
+                "rush_td": proj_row["rush_td"],
+                "receptions": proj_row["receptions"],
+                "targets": proj_row["targets"],
+                "rec_yds": proj_row["rec_yds"],
+                "rec_td": proj_row["rec_td"],
+                "fg_att": proj_row["fg_att"],
+                "fg_made": proj_row["fg_made"],
+                "xp_att": proj_row["xp_att"],
+                "xp_made": proj_row["xp_made"],
+                "def_td": proj_row["def_td"],
+                "def_int": proj_row["def_int"],
+                "def_sack": proj_row["def_sack"],
+                "def_fumble_rec": proj_row["def_fumble_rec"],
+                "def_points_allowed": proj_row["def_points_allowed"],
+                "def_yds_allowed": proj_row["def_yds_allowed"],
+            }
 
         # 3. Season stats from player_game_logs
         _log_season_row = connection.execute(
@@ -1060,6 +1180,11 @@ def player_detail(player_id: int):
             "position": position,
             "active": active,
             "adp": adp,
+            "espn_ppr_rank": espn_ppr_rank,
+            "espn_standard_rank": espn_standard_rank,
+            "adp_ppr": adp_ppr,
+            "proj_2026_pts": proj_2026_pts,
+            "projection_2026": projection_2026,
             "percent_owned": percent_owned,
             "sample": sample,
             "has_prior_nfl_sample": has_prior_nfl_sample,
