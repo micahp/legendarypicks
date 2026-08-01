@@ -4,6 +4,7 @@ import Head from 'next/head'
 import PropChart, { PropHistory } from '../../components/Props/PropChart'
 import NflUsageTrend from '../../components/Leagues/NflUsageTrend'
 import StatRankCard from '../../components/Leagues/StatRankCard'
+import InjuryTag from '../../components/Leagues/InjuryTag'
 import { trackPlayerViewed, trackUsageTrendViewed } from '../../lib/analytics'
 
 interface Projection {
@@ -28,13 +29,15 @@ interface MlbSeasonStats {
 type SeasonStats = SeasonStatBlock | MlbSeasonStats
 interface PlayerProfile {
   id: number; name: string; team: string; league: string; position: string | null
-  season: number | null; games: number
+  season: number | null; regular_season_games: number
   recent_games: RecentGame[]
   projections: Record<string, Projection>
   props: PropRow[]
   season_stats: SeasonStats | null
   coverage: { game_logs: boolean; props: boolean; season_stats: boolean }
   data_status: 'ready' | 'unavailable'
+  injury_status?: string | null
+  last_news_date?: number | null
   stat_ranks?: Record<string, { value: number | null; rank: number | null; label: string }> | null
 }
 
@@ -362,9 +365,12 @@ export default function PlayerPage() {
       <div className="space-y-6">
         {/* Header */}
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight">{p.name}</h1>
+          <div className="flex flex-wrap items-center gap-2.5">
+            <h1 className="text-3xl font-extrabold tracking-tight">{p.name}</h1>
+            {isNfl && <InjuryTag status={p.injury_status} />}
+          </div>
           <div className="text-sm text-zinc-500 mt-1">
-            {[p.team, p.position, p.league?.toUpperCase(), p.season ? `${p.season} · ${p.games} games` : null].filter(Boolean).join(' · ')}
+            {[p.team, p.position, p.league?.toUpperCase(), p.season ? `${p.season} · ${p.regular_season_games} games` : null].filter(Boolean).join(' · ')}
           </div>
         </div>
 
@@ -392,7 +398,7 @@ export default function PlayerPage() {
         {show('overview') && p.season_stats && <SeasonStatsSection league={p.league} seasonStats={p.season_stats} />}
 
         {/* ESPN-style orange stat block — league rank for the player's position-relevant stats */}
-        {p.stat_ranks && Object.keys(p.stat_ranks).length > 0 && (
+        {show('overview') && p.stat_ranks && Object.keys(p.stat_ranks).length > 0 && (
           <StatRankCard
             statRanks={p.stat_ranks}
             title={p.season != null ? `${p.season} Regular Season Stats` : 'Regular Season Stats'}

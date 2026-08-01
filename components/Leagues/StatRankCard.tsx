@@ -43,24 +43,24 @@ export default function StatRankCard({
   }
 
   return (
-    <section>
-      <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-2">
+    <section className="overflow-hidden rounded-xl border border-zinc-700 bg-zinc-900">
+      <h2 className="bg-orange-600 px-3 py-2 text-center text-[11px] font-bold uppercase tracking-[0.12em] text-white">
         {title}
       </h2>
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-4 divide-x divide-zinc-800">
         {Object.entries(statRanks).map(([key, data]) => (
           <div
             key={key}
-            className="rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2.5"
+            className="min-w-0 px-2 py-3 text-center sm:px-3"
           >
-            <div className="text-[10px] uppercase tracking-wide text-zinc-500">
+            <div className="truncate text-[9px] font-medium uppercase tracking-wide text-zinc-500 sm:text-[10px]">
               {formatLabel(key)}
             </div>
-            <div className="mt-0.5 text-lg font-mono font-bold tabular-nums text-zinc-100">
+            <div className="mt-1 font-mono text-lg font-bold tabular-nums text-zinc-100 sm:text-xl">
               {formatValue(data.value, key)}
             </div>
             {data.rank != null && (
-              <div className="text-[10px] tabular-nums text-zinc-500">
+              <div className="mt-0.5 text-[10px] tabular-nums text-zinc-500">
                 {rankOrdinal(data.rank)}
               </div>
             )}

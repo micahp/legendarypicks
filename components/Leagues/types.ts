@@ -367,6 +367,9 @@ export interface PoolPlayer {
   games_missed: number | null
   weeks_played: number[]
   team_weeks: number[]
+  /** Current ESPN injury designation. ACTIVE and null render no warning tag. */
+  injury_status?: string | null
+  last_news_date?: number | null
 
   /* Production fields — job16 (docs/TASK-job16-pool-payload-parity.md).
      Optional because the pool payload does not carry them yet; the same ten

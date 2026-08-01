@@ -9,6 +9,7 @@ import {
   expectedPtsTitle,
 } from './columns'
 import PlayerActionButton from './PlayerActionButton'
+import InjuryTag from '../Leagues/InjuryTag'
 import type { SortOption } from './sort'
 
 /** A rendered list is players plus the rules drawn between them. */
@@ -246,7 +247,10 @@ function PoolRowView({
         {index + 1}
       </td>
       <td data-col="player" className="py-2 px-2">
-        <span className="font-medium text-zinc-200">{dp.name}</span>
+        <div className="flex items-center gap-1.5">
+          <span className="font-medium text-zinc-200">{dp.name}</span>
+          <InjuryTag status={poolPlayer.injury_status} compact />
+        </div>
         <div className="text-[10px] text-zinc-600">
           {dp.team}
           {posRank != null && showsPositionalRank(dp.position) && (

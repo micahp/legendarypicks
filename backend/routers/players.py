@@ -249,7 +249,22 @@ def player_profile(player_id: int):
     /api/player/{id}/stats; this is the page-level rollup.)"""
     import json as _json
     with closing(_db()) as con:
-        p = con.execute("SELECT id, name, team, league, position FROM players WHERE id=?", (player_id,)).fetchone()
+        player_columns = {
+            row[1] for row in con.execute("PRAGMA table_info(players)").fetchall()
+        }
+        injury_select = (
+            ", injury_status" if "injury_status" in player_columns
+            else ", NULL AS injury_status"
+        )
+        news_date_select = (
+            ", last_news_date" if "last_news_date" in player_columns
+            else ", NULL AS last_news_date"
+        )
+        p = con.execute(
+            f"SELECT id, name, team, league, position{injury_select}{news_date_select} "
+            "FROM players WHERE id=?",
+            (player_id,),
+        ).fetchone()
         if not p:
             raise HTTPException(404, "Player not found")
         league = p["league"]
@@ -327,6 +342,8 @@ def player_profile(player_id: int):
     return {
         "id": p["id"], "name": p["name"], "team": p["team"], "league": league,
         "position": p["position"], "season": season,
+        "injury_status": p["injury_status"],
+        "last_news_date": p["last_news_date"],
         "regular_season_games": regular_season_games,
         "postseason_games": postseason_games,
         "recent_games": recent,
@@ -521,6 +538,7 @@ def player_news(player_id: int,
         (group.get("contents", []) for group in result_groups if group.get("type") == "article"),
         [],
     )
+    player_tokens = re.findall(r"[a-z0-9]+", search_name.lower())
     for article in sorted(
         article_results,
         key=lambda candidate: str(candidate.get("date") or ""),
@@ -531,7 +549,27 @@ def player_news(player_id: int,
         headline = article.get("displayName")
         if not link or not published or not headline:
             continue
-        if "/fantasy/" in link:
+        parsed_link = urllib.parse.urlparse(link)
+        category_text = " ".join(
+            str(category.get("description") or "")
+            for category in article.get("categories", [])
+        ).lower()
+        if "/fantasy/" in parsed_link.path or "fantasy" in category_text:
+            continue
+        # ESPN search confirms the athlete separately, but its article group can
+        # still contain broad first-name matches from other sports. Keep only NFL
+        # stories whose returned metadata contains the player's complete name.
+        if "/nfl/" not in parsed_link.path:
+            continue
+        evidence = " ".join(
+            [headline, parsed_link.path]
+            + [
+                str(image.get("name") or image.get("caption") or "")
+                for image in article.get("images", [])
+            ]
+        ).lower()
+        evidence_tokens = set(re.findall(r"[a-z0-9]+", evidence))
+        if not player_tokens or not all(token in evidence_tokens for token in player_tokens):
             continue
         images = [
             {"url": image.get("url"), "caption": image.get("caption") or image.get("name")}

@@ -2,6 +2,7 @@ import { useMemo, useState, useRef, useCallback } from 'react'
 import type { PoolPlayer } from '../Leagues/types'
 import { AvailabilityStrip } from '../Leagues/NflDraftRoom'
 import PlayerDetailOverlay from '../Leagues/PlayerDetailOverlay'
+import InjuryTag from '../Leagues/InjuryTag'
 import { poolToDraftRow } from '../../lib/mockDraft/api'
 import {
   positionLabel,
@@ -255,9 +256,12 @@ function PoolRow({
         {row.rank}
       </td>
       <td className="py-2.5 px-2">
-        <span className="font-medium text-zinc-200">
-          {row.name}
-        </span>
+        <div className="flex items-center gap-1.5">
+          <span className="font-medium text-zinc-200">
+            {row.name}
+          </span>
+          <InjuryTag status={player?.injury_status} compact />
+        </div>
         <div className="text-[10px] text-zinc-600">
           {row.current_team}
           {posRank != null && showsPositionalRank(row.position) && (
