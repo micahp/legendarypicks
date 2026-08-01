@@ -1,15 +1,8 @@
 /* ── Ordering the board ─────────────────────────────────────────────────────
-   ESPN's list is not sorted by projected points. It is ordered by RK, their own
-   proprietary board rank, which is neither projection order nor ADP order —
-   measured off the WR-filtered screenshot, RK ascends monotonically while both
-   PROJ and ADP break (Rashee Rice rises past Drake London on projection; A.J.
-   Brown falls past Nico Collins on ADP).
-
-   We have neither of ESPN's two ordering inputs: no proprietary rank, and no
-   2026 projection. So the default is ADP ascending — the published consensus,
-   and the closest honest analogue to RK — and everything else is an explicit
-   choice the drafter makes, named for what they are asking rather than for how
-   we compute it.
+   ESPN now publishes both inputs the executable 2026 plan required: PPR draft
+   rank and a projected stat line. Rank is the default board order; projected
+   PPR is a visible value and an explicit sort. Prior-season actual and xFP stay
+   available as secondary sorts, not as the decision columns.
 
    Two rules the comparator must never break:
 
@@ -29,7 +22,7 @@ import type { DraftPlayer } from '../../lib/mockDraft/engine'
 import type { PoolPlayer } from '../Leagues/types'
 import { headlineValue, availabilityValue } from './columns'
 
-export type SortKey = 'adp' | 'pts' | 'xfp' | 'avail' | 'bye'
+export type SortKey = 'rank' | 'proj' | 'adp' | 'avail' | 'bye' | 'pts' | 'xfp'
 
 export interface SortOption {
   key: SortKey
@@ -37,18 +30,20 @@ export interface SortOption {
   direction: 'asc' | 'desc'
 }
 
-export const DEFAULT_SORT: SortKey = 'adp'
+export const DEFAULT_SORT: SortKey = 'rank'
 
 /** Authored order, default first — never alphabetical, for the same reason the
  *  position filter is authored. The season comes from the payload. */
 export function sortOptions(referenceSeason?: number | null): SortOption[] {
   const season = referenceSeason != null ? `${referenceSeason} ` : ''
   return [
+    { key: 'rank', label: 'Rank', direction: 'asc' },
+    { key: 'proj', label: 'Proj Pts', direction: 'desc' },
     { key: 'adp', label: 'ADP', direction: 'asc' },
-    { key: 'pts', label: `${season}Pts/G`, direction: 'desc' },
-    { key: 'xfp', label: 'Expected Pts/G', direction: 'desc' },
     { key: 'avail', label: 'Availability', direction: 'desc' },
     { key: 'bye', label: 'Bye', direction: 'asc' },
+    { key: 'pts', label: `${season}Pts/G`, direction: 'desc' },
+    { key: 'xfp', label: `${season}xFP/G`, direction: 'desc' },
   ]
 }
 
@@ -58,9 +53,11 @@ interface Context {
 }
 
 function valueOf(key: SortKey, dp: DraftPlayer, ctx: Context): number | null {
+  const pp = ctx.playerMap.get(dp.player_id)
+  if (key === 'rank') return pp?.espn_ppr_rank ?? null
+  if (key === 'proj') return pp?.proj_ppr_points ?? null
   if (key === 'adp') return dp.adp ?? null
   if (key === 'bye') return ctx.byeMap.get(dp.team) ?? null
-  const pp = ctx.playerMap.get(dp.player_id)
   if (!pp) return null
   if (key === 'pts') return headlineValue(pp)
   if (key === 'xfp') return pp.xfp_per_game ?? null

@@ -32,7 +32,7 @@
  *   [role="tablist"] > [role="tab"]       Players | Queue (n) | Board | Rosters
  *   [role="tabpanel"][data-tab="..."]     exactly ONE mounted at a time
  *   [data-testid="pool-table"]            the player list
- *   th/td[data-col="rank|player|pos|avail|pts|xfp|bye|adp|action"]
+ *   th/td[data-col="rank|player|bye|adp|proj|avail|action"]
  *   [data-testid="row-action"]            the action cell — exactly one <button>
  *   [data-testid="your-pick-divider"]     `YOUR PICK (R<r>,P<p>)` rules inside the list
  *   [data-testid="position-filter"]       the position control, authored order
@@ -265,13 +265,16 @@ async function startDraft(page) {
   page.on('console', m => { if (m.type() === 'error') consoleErrors.push(m.text().slice(0, 200)) })
   page.on('pageerror', e => consoleErrors.push('UNCAUGHT: ' + e.message.slice(0, 200)))
 
-  // reference_season decides what REG-no-projection is allowed to see in a header. Read it
-  // from the payload rather than assuming a year — a literal is true today and silently
-  // false in twelve months, which is the defect class the gate is watching for.
+  // Read the projection contract from the payload rather than trusting a header.
   let referenceSeason = null
+  let draftSeason = null
+  let projectedPlayers = 0
   try {
     const r = await page.request.get(BASE + '/api/nfl/mock-draft/pool?season=2026')
-    referenceSeason = (await r.json()).reference_season ?? null
+    const payload = await r.json()
+    referenceSeason = payload.reference_season ?? null
+    draftSeason = payload.season ?? null
+    projectedPlayers = (payload.players || []).filter(p => p.proj_ppr_points != null).length
   } catch (_) {}
 
   try {
@@ -362,37 +365,25 @@ async function startDraft(page) {
     } catch (e) { check(false, 'gate threw: ' + e.message.split('\n')[0]) }
   }
 
-  // ── REG-no-projection ────────────────────────────────────────────────────────────
-  // We have no 2026 projection. Copying ESPN's PROJ header is the obvious mistake the
-  // screenshots invite, and labelling an actual as a projection is the explicit ban in
-  // the data-UI doctrine. Also: no header may name a season the payload does not.
-  if (wanted('REG-no-projection')) {
-    gate('REG-no-projection')
+  // ── REG-projection ───────────────────────────────────────────────────────────────
+  // Published 2026 projections must be a real API field and a visible decision
+  // column. Prior-season actual/xFP columns no longer occupy the draft row.
+  if (wanted('REG-projection')) {
+    gate('REG-projection')
     try {
       const heads = await page.evaluate(readHeaders)
       check(heads != null, 'no pool table to read headers from')
       if (heads) {
         const proj = heads.filter(h => /PROJ/i.test(h.text))
-        check(proj.length === 0, 'projection header(s) present: ' + JSON.stringify(proj.map(h => h.text)))
-        check(referenceSeason != null, 'the pool payload states no reference_season — cannot judge a year in a header')
-        const years = []
-        heads.forEach(h => {
-          const m = String(h.text).match(/\b(19|20)\d{2}\b/g)
-          if (m) m.forEach(y => years.push({ col: h.col, year: Number(y) }))
-        })
-        const ahead = years.filter(y => referenceSeason != null && y.year > referenceSeason)
-        check(
-          ahead.length === 0,
-          'header names a season later than reference_season=' + referenceSeason + ': ' +
-            JSON.stringify(ahead)
-        )
-        // The season belongs IN the header (§5), not only in a tooltip nobody opens.
-        check(
-          years.some(y => y.year === referenceSeason),
-          'no column header carries the reference season ' + referenceSeason +
-            ' — headers are ' + JSON.stringify(heads.map(h => h.text))
-        )
+        check(projectedPlayers > 0, 'pool API returned zero non-null projected players')
+        check(proj.length === 1 && proj[0].col === 'proj', 'expected one proj column: ' + JSON.stringify(proj))
+        check(heads.some(h => h.col === 'rank' && /^RK$/i.test(h.text)), 'published RK header is missing')
+        check(draftSeason != null && proj[0] && proj[0].text.includes(String(draftSeason)),
+          'projection header does not name drafted season ' + draftSeason)
+        check(!heads.some(h => h.col === 'pts' || h.col === 'xfp'),
+          'prior-season actual/xFP still occupies a draft decision column')
         note('headers=' + heads.map(h => h.text).filter(Boolean).join(' | '))
+        note('projected=' + projectedPlayers)
       }
     } catch (e) { check(false, 'gate threw: ' + e.message.split('\n')[0]) }
   }
@@ -413,11 +404,13 @@ async function startDraft(page) {
         const rows = await page.evaluate(readPoolRows)
         const players = (rows || []).filter(r => !r.divider)
         check(players.length > 0, label + ': filter returned no rows')
-        const wrong = players.filter(r => r.pos !== label)
+        const escaped = label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+        const positionInPlayerCell = new RegExp('(?:^|[·\\s])' + escaped + '(?:$|[·\\s])')
+        const wrong = players.filter(r => !positionInPlayerCell.test(r.player || ''))
         check(
           wrong.length === 0,
-          label + ': ' + wrong.length + ' row(s) show a different position chip: ' +
-            JSON.stringify([...new Set(wrong.map(r => r.pos))]).slice(0, 120)
+          label + ': ' + wrong.length + ' row(s) show a different position in the player cell: ' +
+            JSON.stringify((wrong[0] || {}).player).slice(0, 120)
         )
         // Nobody says "D/ST1" out loud, and ESPN prints no positional rank for either.
         const ranked = players.filter(r => new RegExp(label.replace('/', '\\/') + '\\d').test(r.player || ''))
@@ -531,8 +524,8 @@ async function startDraft(page) {
     gate('REG-sort')
     try {
       const options = await page.locator('#pool-sort option').allInnerTexts()
-      check(options.length >= 5, 'the sort control has ' + options.length + ' options, expected 5')
-      const expect = ['ADP', String(referenceSeason) + ' Pts/G', 'Expected Pts/G', 'Availability', 'Bye']
+      check(options.length === 7, 'the sort control has ' + options.length + ' options, expected 7')
+      const expect = ['Rank', 'Proj Pts', 'ADP', 'Availability', 'Bye', String(referenceSeason) + ' Pts/G', String(referenceSeason) + ' xFP/G']
       check(
         JSON.stringify(options) === JSON.stringify(expect),
         'sort options read ' + JSON.stringify(options) + ', expected ' + JSON.stringify(expect) +
@@ -541,9 +534,9 @@ async function startDraft(page) {
 
       // column read for each sort, and the direction it claims
       const plan = [
+        { label: 'Rank', col: 'rank', dir: 'asc' },
+        { label: 'Proj Pts', col: 'proj', dir: 'desc' },
         { label: 'ADP', col: 'adp', dir: 'asc' },
-        { label: String(referenceSeason) + ' Pts/G', col: 'pts', dir: 'desc' },
-        { label: 'Expected Pts/G', col: 'xfp', dir: 'desc' },
         { label: 'Availability', col: 'avail', dir: 'desc' },
         { label: 'Bye', col: 'bye', dir: 'asc' },
       ]
@@ -563,25 +556,6 @@ async function startDraft(page) {
           step.label + ': a valueless row sorts above a measured one (blank at ' + firstBlank +
             ', last value at ' + lastValue + ') — nulls sort last, always'
         )
-        // Not "no cell says 0.0": a measured zero is real data, and calling it a
-        // coercion was this gate's own mistake — a player who played and scored
-        // nothing scored nothing (dev f5e1bb4). What IS provable from the DOM is
-        // the structural case: K and D/ST have no expected-points series at all,
-        // so every one of those rows must be an em dash and never a zero.
-        if (step.col === 'xfp') {
-          const specialists = rows.filter(r => r.pos === 'K' || r.pos === 'D/ST')
-          const zeroed = specialists.filter(r => /^0(\.0)?$/.test(String(r.xfp).trim()))
-          check(
-            zeroed.length === 0,
-            zeroed.length + ' K/D-ST rows render 0.0 expected points — they have no xFP series, ' +
-              'so that is a null coerced to zero'
-          )
-          check(
-            specialists.length === 0 || specialists.every(r => isBlank(r.xfp)),
-            'a K or D/ST row shows a number for expected points: ' +
-              JSON.stringify((specialists.find(r => !isBlank(r.xfp)) || {}).xfp)
-          )
-        }
         const seq = numeric.filter(v => v != null)
         const bad = seq.findIndex((v, i) =>
           i > 0 && (step.dir === 'asc' ? v < seq[i - 1] : v > seq[i - 1])
@@ -603,7 +577,7 @@ async function startDraft(page) {
         previousFirst = firstName
         note(step.label + ' → ' + JSON.stringify(String(firstName).split('\n')[0]))
       }
-      await page.selectOption('#pool-sort', { label: 'ADP' }).catch(() => {})
+      await page.selectOption('#pool-sort', { label: 'Rank' }).catch(() => {})
       await page.waitForTimeout(500)
     } catch (e) { check(false, 'gate threw: ' + e.message.split('\n')[0]) }
   }

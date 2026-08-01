@@ -1,4 +1,4 @@
-import { useMemo, useState, useRef, useCallback } from 'react'
+import { useEffect, useMemo, useState, useRef, useCallback } from 'react'
 import type { PoolPlayer } from '../Leagues/types'
 import { AvailabilityStrip } from '../Leagues/NflDraftRoom'
 import PlayerDetailOverlay from '../Leagues/PlayerDetailOverlay'
@@ -12,12 +12,8 @@ import {
 import { LEAGUE_SIZES, ROUNDS, nextTeam } from '../../lib/mockDraft/engine'
 import type { LeagueSize } from '../../lib/mockDraft/engine'
 import {
-  HeadlineStat,
-  headlineStatFor,
   noSampleLabel,
-  ExpectedPts,
-  EXPECTED_PTS_HEADER,
-  expectedPtsTitle,
+  ProjectedPoints,
 } from './columns'
 
 /** 'random' is a real choice, not the absence of one — a drafter who wants to
@@ -26,6 +22,8 @@ export type SeatChoice = number | 'random'
 
 interface Props {
   players: PoolPlayer[]
+  /** The season being drafted, used for the published bye/projection labels. */
+  draftSeason: number
   /** The season these statistics describe, from the pool payload. */
   referenceSeason?: number | null
   teams: LeagueSize
@@ -61,6 +59,7 @@ const CONTAINER_MAX_H = 600 // px: scrollable container height
  */
 export default function PoolList({
   players,
+  draftSeason,
   referenceSeason,
   teams,
   onSetTeams,
@@ -74,7 +73,25 @@ export default function PoolList({
   // with no way into the research. Same overlay, same row click as the draft
   // room; the draft/queue actions stay absent because there is no pick to be on.
   const [selectedPlayerId, setSelectedPlayerId] = useState<number | null>(null)
-  const headlineStat = headlineStatFor('ALL', referenceSeason)
+  const [schedule, setSchedule] = useState<Array<{ team: string; bye_week: number | null }> | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    fetch(`/api/nfl/schedule/${draftSeason}`)
+      .then(response => {
+        if (!response.ok) throw new Error(`schedule fetch failed: ${response.status}`)
+        return response.json()
+      })
+      .then(data => { if (!cancelled) setSchedule(data.teams ?? []) })
+      .catch(() => { if (!cancelled) setSchedule([]) })
+    return () => { cancelled = true }
+  }, [draftSeason])
+
+  const byeMap = useMemo(() => {
+    const map = new Map<string, number | null>()
+    for (const team of schedule ?? []) map.set(team.team, team.bye_week)
+    return map
+  }, [schedule])
   const rows = useMemo(
     () => players.map((p, i) => poolToDraftRow(p, i + 1)),
     [players],
@@ -202,15 +219,14 @@ export default function PoolList({
         </div>
       </div>
 
-      {/* Player pool table. Carries the same headline stat as the draft room so
-          the pre-draft and in-draft views never disagree about a player. Bye week
-          deliberately stays in the draft room: here the question is what is in the
-          pool, there it is who to pick, and a bye only matters against a roster. */}
+      {/* The pre-draft and in-draft lists share the same decision contract:
+          published rank, 2026 bye/ADP/projection, then availability. */}
       <VirtualPoolTable
         rows={rows}
         playerMap={playerMap}
         posRank={posRank}
-        headlineStat={headlineStat}
+        draftSeason={draftSeason}
+        byeMap={byeMap}
         referenceSeason={referenceSeason}
         onSelect={setSelectedPlayerId}
       />
@@ -234,12 +250,16 @@ function PoolRow({
   row,
   player,
   posRank,
+  bye,
+  draftSeason,
   referenceSeason,
   onSelect,
 }: {
   row: ReturnType<typeof poolToDraftRow>
   player?: PoolPlayer
   posRank?: number
+  bye: number | null
+  draftSeason: number
   referenceSeason?: number | null
   onSelect: () => void
 }) {
@@ -253,7 +273,7 @@ function PoolRow({
       className="border-b border-zinc-800/50 cursor-pointer transition-colors hover:bg-zinc-800/30"
     >
       <td className="py-2.5 pl-4 pr-2 text-zinc-500 text-xs tabular-nums">
-        {row.rank}
+        {player?.espn_ppr_rank ?? <span className="text-zinc-700">—</span>}
       </td>
       <td className="py-2.5 px-2">
         <div className="flex items-center gap-1.5">
@@ -264,6 +284,8 @@ function PoolRow({
         </div>
         <div className="text-[10px] text-zinc-600">
           {row.current_team}
+          {' · '}
+          <span className="font-semibold text-zinc-500">{positionLabel(row.position)}</span>
           {posRank != null && showsPositionalRank(row.position) && (
             <>
               {' · '}
@@ -272,14 +294,18 @@ function PoolRow({
           )}
         </div>
       </td>
-      <td className="py-2.5 px-2 text-center">
-        <span className="rounded bg-zinc-800 px-1.5 py-0.5 text-[11px] font-semibold uppercase text-zinc-400">
-          {positionLabel(row.position)}
-        </span>
+      <td className="py-2.5 px-2 text-right font-mono tabular-nums text-xs text-zinc-500">
+        {bye ?? <span className="text-zinc-700">—</span>}
+      </td>
+      <td className="py-2.5 px-2 text-right font-mono tabular-nums text-zinc-300 font-semibold">
+        {row.adp != null ? row.adp.toFixed(1) : '—'}
+      </td>
+      <td className="py-2.5 px-2 text-right font-mono tabular-nums text-xs" title={`${draftSeason} projected PPR points`}>
+        {player ? <ProjectedPoints player={player} /> : <span className="text-zinc-700">—</span>}
       </td>
 
       {/* Availability — the differentiator. Accent marks missed games. */}
-      <td className="py-2.5 px-2">
+      <td className="py-2.5 pr-4 pl-2">
         {noSample ? (
           <span className="text-[11px] text-zinc-500">
             {noSampleLabel(row.position, player?.has_prior_nfl_sample, referenceSeason)}
@@ -313,18 +339,6 @@ function PoolRow({
         )}
       </td>
 
-      <td className="py-2.5 px-2 text-right font-mono tabular-nums text-xs text-zinc-300">
-        {player ? <HeadlineStat player={player} /> : <span className="text-zinc-700">—</span>}
-      </td>
-      <td className="py-2.5 px-2 text-right font-mono tabular-nums text-xs text-zinc-400">
-        {player ? <ExpectedPts player={player} /> : <span className="text-zinc-700">—</span>}
-      </td>
-      <td className="py-2.5 px-2 text-right font-mono tabular-nums text-zinc-300 font-semibold">
-        {row.adp != null ? row.adp.toFixed(1) : '—'}
-      </td>
-      <td className="py-2.5 pr-4 pl-2 text-right font-mono tabular-nums text-zinc-400 text-xs">
-        {row.percent_owned != null ? `${row.percent_owned.toFixed(1)}%` : '—'}
-      </td>
     </tr>
   )
 }
@@ -335,14 +349,16 @@ function VirtualPoolTable({
   rows,
   playerMap,
   posRank,
-  headlineStat,
+  draftSeason,
+  byeMap,
   referenceSeason,
   onSelect,
 }: {
   rows: ReturnType<typeof poolToDraftRow>[]
   playerMap: Map<number, PoolPlayer>
   posRank: Map<number, number>
-  headlineStat: ReturnType<typeof headlineStatFor>
+  draftSeason: number
+  byeMap: Map<string, number | null>
   referenceSeason?: number | null
   onSelect: (id: number) => void
 }) {
@@ -374,21 +390,19 @@ function VirtualPoolTable({
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-zinc-800 text-zinc-500 text-[11px] uppercase tracking-wider sticky top-0 bg-zinc-900 z-10">
-            <th className="text-left py-3 pl-4 pr-2 w-10">#</th>
+            <th className="text-left py-3 pl-4 pr-2 w-10">RK</th>
             <th className="text-left py-3 px-2">Player</th>
-            <th className="text-center py-3 px-2">Pos</th>
-            <th className="text-left py-3 px-2 min-w-[9.5rem]">
+            <th className="text-right py-3 px-2 w-12">Bye</th>
+            <th className="text-right py-3 px-2">ADP</th>
+            <th className="text-right py-3 px-2 w-20">
+              Proj <span className="block font-normal normal-case tracking-normal text-zinc-600">{draftSeason} PPR</span>
+            </th>
+            <th className="text-left py-3 pr-4 pl-2 min-w-[9.5rem]">
               Available
               <span className="ml-1 font-normal normal-case tracking-normal text-zinc-600">
                 by team schedule
               </span>
             </th>
-            <th className="text-right py-3 px-2 w-16" title={headlineStat.title}>{headlineStat.header}</th>
-            <th className="text-right py-3 px-2 w-20" title={expectedPtsTitle(referenceSeason)}>
-              {EXPECTED_PTS_HEADER}
-            </th>
-            <th className="text-right py-3 px-2">ADP</th>
-            <th className="text-right py-3 px-2">Owned</th>
           </tr>
         </thead>
         <tbody>
@@ -399,6 +413,8 @@ function VirtualPoolTable({
               row={row}
               player={playerMap.get(row.player_id)}
               posRank={posRank.get(row.player_id)}
+              bye={byeMap.get(row.current_team) ?? null}
+              draftSeason={draftSeason}
               referenceSeason={referenceSeason}
               onSelect={() => onSelect(row.player_id)}
             />

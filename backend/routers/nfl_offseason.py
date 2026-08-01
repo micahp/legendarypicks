@@ -70,9 +70,12 @@ _SKILL_POSITIONS = ("QB", "RB", "WR", "TE", "FB")
 _DEF_POSITION = "DEF"
 _FANTASY_DRAFT_POSITIONS = ("QB", "RB", "WR", "TE", "PK", "DEF")
 _POSITION_FILTERS = set(_FANTASY_DRAFT_POSITIONS) | {"FLEX"}
-# Sort key -> (player field, ascending). Every one of these is a measurement of
-# something that happened; none is a projection, and none is labelled as one.
+# Sort key -> (player field, ascending). Rank and projection come from the
+# explicit 2026 ESPN fantasy contract; every missing value remains null and
+# sorts after published values.
 _SORT_FIELDS = {
+    "rank": ("espn_ppr_rank", True),
+    "proj": ("proj_ppr_points", False),
     "adp": ("adp", True),
     "ppr_per_team_game": ("ppr_per_team_game", False),
     "ppr_per_game_played": ("ppr_per_game_played", False),
@@ -950,12 +953,12 @@ def _name_search(raw) -> Tuple[Optional[str], List[str]]:
 @router.get("/api/nfl/draft-board")
 def nfl_draft_board(
     position: Optional[str] = Query(None),
-    sort: str = Query("adp"),
+    sort: str = Query("rank"),
     q: Optional[str] = Query(None, description="name search; every token must appear"),
     limit: int = Query(50, ge=1, le=100),
     offset: int = Query(0, ge=0),
 ):
-    """Availability-first 2026 draft board.
+    """2026 fantasy draft board with published rank and projected PPR.
 
     The headline is how often a player was on the field, not how well he did on
     the days he was. Both numbers ship together: PPR per game *played* is what
@@ -963,7 +966,8 @@ def nfl_draft_board(
     actually returned. They diverge exactly when availability drops -- Joe Burrow
     2025 reads 16.8 and 7.9 off the same season.
 
-    Nothing here is a projection and nothing is labelled as one.
+    The projection is season-long 2026 PPR computed from ESPN's published
+    projected stat line. Missing source projections remain null.
     """
     selected_position = str(position or "").strip().upper() or None
     if selected_position is not None and selected_position not in _POSITION_FILTERS:
@@ -1027,15 +1031,37 @@ def nfl_draft_board(
             if "injury_status" in _table_columns(connection, "players")
             else ", NULL AS injury_status"
         )
+        adp_columns = _table_columns(connection, "nfl_adp")
+        rank_select = (
+            ", na.espn_ppr_rank"
+            if "espn_ppr_rank" in adp_columns
+            else ", NULL AS espn_ppr_rank"
+        )
+        projection_columns = _table_columns(connection, "nfl_player_projections")
+        has_projection = "lp_ppr_projected_points" in projection_columns
+        projection_select = (
+            ", np.lp_ppr_projected_points AS proj_ppr_points"
+            if has_projection
+            else ", NULL AS proj_ppr_points"
+        )
+        projection_join = (
+            "LEFT JOIN nfl_player_projections np "
+            "ON np.player_id=p.id AND np.season=?"
+            if has_projection
+            else ""
+        )
+        projection_params = [_CURRENT_SEASON] if has_projection else []
         candidates = connection.execute(
             f"""SELECT p.id AS player_id, p.name, {position_expr} AS position,
                        p.team AS current_team,
                        na.adp, na.percent_owned,
                        d.pos_rank AS depth_rank, d.team AS depth_team,
                        d.pos_abb AS depth_position{injury_select}
+                       {rank_select}{projection_select}
                 FROM players p
                 LEFT JOIN nfl_adp na
                        ON na.player_id=p.id AND na.season=?
+                {projection_join}
                 LEFT JOIN nfl_depth_chart d
                        ON d.rowid=(
                            SELECT d2.rowid
@@ -1047,8 +1073,38 @@ def nfl_draft_board(
                            LIMIT 1
                        )
                 WHERE {where_sql}""",
-            [_CURRENT_SEASON, _CURRENT_SEASON, *params],
+            [_CURRENT_SEASON, *projection_params, _CURRENT_SEASON, *params],
         ).fetchall()
+
+        # The current-season schedule publishes 17 played weeks in an 18-week
+        # grid. Exactly one missing week is the bye; anything else is
+        # incomplete coverage and remains null.
+        bye_weeks: Dict[str, Optional[int]] = {}
+        schedule_columns = _table_columns(connection, "nfl_schedule")
+        if {"season", "game_type", "week", "home_team", "away_team"}.issubset(
+            schedule_columns
+        ):
+            played: Dict[str, Set[int]] = defaultdict(set)
+            for schedule_row in connection.execute(
+                """SELECT home_team AS team, week FROM nfl_schedule
+                   WHERE season=? AND game_type='REG'
+                UNION ALL
+                   SELECT away_team AS team, week FROM nfl_schedule
+                   WHERE season=? AND game_type='REG'""",
+                (_CURRENT_SEASON, _CURRENT_SEASON),
+            ):
+                try:
+                    played[normalize("nfl", schedule_row["team"])].add(
+                        int(schedule_row["week"])
+                    )
+                except (TypeError, ValueError):
+                    continue
+            all_weeks = set(range(1, 19))
+            for team, weeks in played.items():
+                missing_weeks = all_weeks - weeks
+                bye_weeks[team] = (
+                    next(iter(missing_weeks)) if len(missing_weeks) == 1 else None
+                )
 
     roster_is_current = roster_freshness["status"] == "current"
     players = []
@@ -1157,6 +1213,15 @@ def nfl_draft_board(
             "depth_position": row["depth_position"],
             "adp": published_adp,
             "adp_is_ranked": published_adp is not None,
+            "espn_ppr_rank": row["espn_ppr_rank"],
+            "proj_ppr_points": row["proj_ppr_points"],
+            "proj_season": _CURRENT_SEASON,
+            "proj_source": (
+                "espn" if row["proj_ppr_points"] is not None else None
+            ),
+            "bye_week": bye_weeks.get(
+                normalize_optional("nfl", row["current_team"])
+            ),
             "percent_owned": row["percent_owned"],
             "injury_status": row["injury_status"],
             # Availability: the headline. Denominator is every game the team

@@ -79,7 +79,16 @@ class TestNflMockDraft(unittest.TestCase):
                     season INTEGER,
                     adp REAL,
                     percent_owned REAL,
+                    espn_ppr_rank INTEGER,
                     active INTEGER DEFAULT 1
+                )"""
+            )
+            connection.execute(
+                """CREATE TABLE IF NOT EXISTS nfl_player_projections (
+                    player_id INTEGER,
+                    season INTEGER,
+                    lp_ppr_projected_points REAL,
+                    PRIMARY KEY (player_id, season)
                 )"""
             )
             connection.execute(
@@ -127,19 +136,24 @@ class TestNflMockDraft(unittest.TestCase):
             )
             # Seed ADP rows.
             connection.executemany(
-                "INSERT OR IGNORE INTO nfl_adp (player_id, season, adp, percent_owned, active) "
-                "VALUES (?, ?, ?, ?, 1)",
+                "INSERT OR IGNORE INTO nfl_adp "
+                "(player_id, season, adp, percent_owned, espn_ppr_rank, active) "
+                "VALUES (?, ?, ?, ?, ?, 1)",
                 [
-                    (1, 2026, 1.5, 99.0),
-                    (2, 2026, 5.2, 97.0),
-                    (3, 2026, 15.0, 95.0),
-                    (4, 2026, 50.0, 80.0),
-                    (5, 2026, 170.0, 10.0),   # copied published ADP
-                    (6, 2026, 2.0, 98.0),
-                    (7, 2026, 10.0, 92.0),
-                    (8, 2026, None, 0.0),     # no published ADP or ownership → excluded
-                    (9, 2026, 25.0, 50.0),   # ESPN aggregate slot, not a player position
+                    (1, 2026, 1.5, 99.0, 1),
+                    (2, 2026, 5.2, 97.0, 3),
+                    (3, 2026, 15.0, 95.0, 5),
+                    (4, 2026, 50.0, 80.0, 6),
+                    (5, 2026, 170.0, 10.0, 7),   # copied published ADP
+                    (6, 2026, 2.0, 98.0, 2),
+                    (7, 2026, 10.0, 92.0, 4),
+                    (8, 2026, None, 0.0, None),  # no published rank or ADP
+                    (9, 2026, 25.0, 50.0, 8),   # aggregate slot, not a player
                 ],
+            )
+            connection.executemany(
+                "INSERT OR IGNORE INTO nfl_player_projections VALUES(?,?,?)",
+                [(1, 2026, 321.4), (2, 2026, 287.6), (3, 2026, None)],
             )
             # Seed game logs for players 1–4 (full sample: 10+ games).
             for pid, team in [(1, 'KC'), (2, 'MIN')]:
@@ -195,6 +209,12 @@ class TestNflMockDraft(unittest.TestCase):
             {p["position"] for p in body["players"]},
             {"QB", "RB", "WR", "TE", "PK", "DEF"},
         )
+        self.assertEqual(by_id[1]["espn_ppr_rank"], 1)
+        self.assertEqual(by_id[1]["proj_ppr_points"], 321.4)
+        self.assertEqual(by_id[1]["proj_season"], 2026)
+        self.assertEqual(by_id[1]["proj_source"], "espn")
+        self.assertIsNone(by_id[3]["proj_ppr_points"])
+        self.assertIsNone(by_id[3]["proj_source"])
 
     def test_pool_ordering(self):
         """Real ADP players come first, sorted by ADP ascending."""

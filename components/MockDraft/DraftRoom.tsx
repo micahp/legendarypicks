@@ -4,7 +4,6 @@ import PlayerDetailOverlay from '../Leagues/PlayerDetailOverlay'
 import type { DraftState, DraftPlayer } from '../../lib/mockDraft/engine'
 import { isUserPick, getRosterState, userNextPick, nextTeam } from '../../lib/mockDraft/engine'
 import { orderPositions } from '../../lib/nfl/positionLabel'
-import { headlineStatFor } from './columns'
 import { buildRosterSlots } from './roster'
 import { sortOptions, sortPool, DEFAULT_SORT, type SortKey } from './sort'
 import DraftHeader from './DraftHeader'
@@ -170,9 +169,7 @@ export default function DraftRoom({
   }, [availablePool, posFilter, teamFilter, byeFilter, byeMap])
 
   const sortedPool = useMemo(
-    () => (sortKey === DEFAULT_SORT
-      ? filteredPool
-      : sortPool(filteredPool, sortKey, { playerMap, byeMap })),
+    () => sortPool(filteredPool, sortKey, { playerMap, byeMap }),
     [filteredPool, sortKey, playerMap, byeMap],
   )
 
@@ -292,8 +289,6 @@ export default function DraftRoom({
     }
   }, [clock, draftState.currentPick, userTurn, userPicking, draftState.completed, onTimeout])
 
-  const headlineStat = headlineStatFor(posFilter, referenceSeason)
-
   return (
     <>
       <section className="space-y-3">
@@ -320,7 +315,6 @@ export default function DraftRoom({
               posRank={posRank}
               byeMap={byeMap}
               referenceSeason={referenceSeason}
-              headlineStat={headlineStat}
               posOptions={posOptions}
               posFilter={posFilter}
               onPosFilter={setPosFilter}

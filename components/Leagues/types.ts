@@ -228,6 +228,13 @@ export interface NflDraftPlayer {
   /** Position attached to depth_rank in the published depth chart. */
   depth_position: string | null
   adp: number | null
+  /** ESPN's published 2026 PPR draft rank. */
+  espn_ppr_rank: number | null
+  /** LP PPR total computed from ESPN's published 2026 projected stat line. */
+  proj_ppr_points: number | null
+  proj_season: number
+  proj_source: 'espn' | null
+  bye_week: number | null
   /** True when ESPN published an ADP value for this player. */
   adp_is_ranked: boolean
   percent_owned: number | null
@@ -279,7 +286,7 @@ export interface NflDraftBoard {
   players: NflDraftPlayer[]
 }
 
-export type NflDraftSort = 'adp' | 'ppr_per_team_game' | 'ppr_per_game_played' | 'xfp_per_game' | 'games_played' | 'snap_pct' | 'target_share' | 'dst_pts_per_game' | 'pk_pts_per_game'
+export type NflDraftSort = 'rank' | 'proj' | 'adp' | 'ppr_per_team_game' | 'ppr_per_game_played' | 'xfp_per_game' | 'games_played' | 'snap_pct' | 'target_share' | 'dst_pts_per_game' | 'pk_pts_per_game'
 
 export interface NflDraftNotes {
   rank: Record<number, number>
@@ -360,6 +367,12 @@ export interface PoolPlayer {
   position: string
   team: string
   adp: number | null
+  /** ESPN's published PPR draft rank for the drafted season. */
+  espn_ppr_rank?: number | null
+  /** LP PPR total computed from ESPN's published projected stat line. */
+  proj_ppr_points?: number | null
+  proj_season?: number | null
+  proj_source?: 'espn' | null
   percent_owned: number | null
   sample: 'full' | 'thin' | 'none'
   /** Whether we hold any NFL game log for this player before the reference
@@ -447,6 +460,10 @@ export interface PlayerDetailResponse {
   active: boolean
   adp: number | null
   percent_owned: number | null
+  espn_ppr_rank?: number | null
+  espn_standard_rank?: number | null
+  proj_2026_pts?: number | null
+  projection_2026?: Record<string, number | null> | null
   sample: 'full' | 'thin' | 'none'
   /** Whether we hold any NFL game log for this player before the reference
    *  season. Distinguishes a rookie from a veteran who missed the year. */

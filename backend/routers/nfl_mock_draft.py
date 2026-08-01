@@ -310,8 +310,8 @@ def pool(season: int = Query(...)):
         _position_expr = "na.position" if _has_pos else "p.position"
         _pos_select = f"{_position_expr} AS position"
         _proj_select = (
-            ", np.lp_ppr_projected_points AS proj_pts"
-            if _has_proj else ", NULL AS proj_pts"
+            ", np.lp_ppr_projected_points AS proj_ppr_points"
+            if _has_proj else ", NULL AS proj_ppr_points"
         )
         _proj_join = (
             " LEFT JOIN nfl_player_projections np"
@@ -502,7 +502,12 @@ def pool(season: int = Query(...)):
                 "adp": row["adp"],
                 "espn_ppr_rank": row["espn_ppr_rank"],
                 "adp_ppr": row["adp_ppr"],
-                "proj_pts": row["proj_pts"],
+                # 2026 season-long PPR projection computed from ESPN's
+                # published projected stat line. Null means the source did not
+                # publish a usable projection; it is never coerced to zero.
+                "proj_ppr_points": row["proj_ppr_points"],
+                "proj_season": season,
+                "proj_source": "espn" if row["proj_ppr_points"] is not None else None,
                 "percent_owned": row["percent_owned"],
                 "sample": sample,
                 "has_prior_nfl_sample": pid in prior_sample_ids,

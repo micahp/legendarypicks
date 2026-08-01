@@ -12,6 +12,8 @@ export type DraftPosition = typeof POSITIONS[number]
 
 // Named for what the reader controls, not for how we compute it.
 const SORT_LABELS: Record<NflDraftSort, string> = {
+  rank: 'Rank',
+  proj: 'Proj Pts',
   adp: 'ADP',
   ppr_per_team_game: 'PPR / team game',
   ppr_per_game_played: 'PPR / game played',
@@ -77,7 +79,7 @@ export function useNflDraftBoard(enabled: boolean) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [position, setPosition] = useState<DraftPosition>('all')
-  const [sort, setSort] = useState<NflDraftSort>('adp')
+  const [sort, setSort] = useState<NflDraftSort>('rank')
   const [offset, setOffset] = useState(0)
   // What the input shows vs. what we've asked the server for. Typing a name is
   // eight keystrokes; without the delay that is eight round trips.

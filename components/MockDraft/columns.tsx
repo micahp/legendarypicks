@@ -134,6 +134,16 @@ export function ExpectedPts({ player }: { player: PoolPlayer }) {
   )
 }
 
+/* ── Draft-season projection ───────────────────────────────────────────────
+   This is not last season's xFP. It is the season-long PPR total computed from
+   ESPN's published projected stat line for the drafted season. The API keeps
+   source gaps null, so the UI renders a dash instead of a fabricated zero. */
+export function ProjectedPoints({ player }: { player: PoolPlayer }) {
+  const value = player.proj_ppr_points
+  if (value == null) return <span className="text-zinc-700">—</span>
+  return <span className="text-zinc-200 font-semibold">{value.toFixed(1)}</span>
+}
+
 /** Games played, when we measured them. Null when we did not — a player with no
  *  sample has no availability, and 0/17 would be a claim we cannot support. */
 export function availabilityValue(player: PoolPlayer): number | null {

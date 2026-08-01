@@ -61,7 +61,14 @@ class NflOffseasonApiTests(unittest.TestCase):
                   player_id INTEGER,
                   season INTEGER,
                   adp REAL,
-                  percent_owned REAL
+                  percent_owned REAL,
+                  espn_ppr_rank INTEGER
+                );
+                CREATE TABLE nfl_player_projections(
+                  player_id INTEGER,
+                  season INTEGER,
+                  lp_ppr_projected_points REAL,
+                  PRIMARY KEY(player_id, season)
                 );
                 CREATE TABLE nfl_depth_chart(
                   player_id INTEGER,
@@ -115,14 +122,18 @@ class NflOffseasonApiTests(unittest.TestCase):
             connection.executemany(
                 "INSERT INTO player_game_logs VALUES(?,?,?,?,?,?,?,?)", logs)
             connection.executemany(
-                "INSERT INTO nfl_adp VALUES(?,?,?,?)",
+                "INSERT INTO nfl_adp VALUES(?,?,?,?,?)",
                 [
-                    (1, 2026, 3.5, 99.0),
-                    (2, 2026, 25.0, 95.0),
-                    (4, 2026, 66.0, 80.0),      # rookie with a real market price
-                    (5, 2026, 170.0, 0.1),      # copied published ADP
-                    (6, 2026, 25.0, 50.0),      # aggregate slot, not a player
+                    (1, 2026, 3.5, 99.0, 2),
+                    (2, 2026, 25.0, 95.0, 1),
+                    (4, 2026, 66.0, 80.0, 3),      # rookie with a real market price
+                    (5, 2026, 170.0, 0.1, None),   # copied published ADP
+                    (6, 2026, 25.0, 50.0, 4),      # aggregate slot, not a player
                 ],
+            )
+            connection.executemany(
+                "INSERT INTO nfl_player_projections VALUES(?,?,?)",
+                [(1, 2026, 301.2), (2, 2026, 355.7), (4, 2026, None)],
             )
             connection.executemany(
                 "INSERT INTO nfl_depth_chart VALUES(?,?,?,?,?)",
@@ -378,6 +389,24 @@ class NflOffseasonApiTests(unittest.TestCase):
             player["player_id"]: player for player in self.board()["players"]
         }[1]
         self.assertEqual(receiver["injury_status"], "QUESTIONABLE")
+
+    def test_draft_board_returns_and_sorts_published_2026_projection(self):
+        players = {p["player_id"]: p for p in self.board()["players"]}
+        self.assertEqual(players[1]["espn_ppr_rank"], 2)
+        self.assertEqual(players[1]["proj_ppr_points"], 301.2)
+        self.assertEqual(players[1]["proj_season"], 2026)
+        self.assertEqual(players[1]["proj_source"], "espn")
+        self.assertIsNone(players[4]["proj_ppr_points"])
+        self.assertIsNone(players[4]["proj_source"])
+
+        projected = self.board(sort="proj")
+        self.assertEqual(
+            [p["player_id"] for p in projected["players"][:2]],
+            [2, 1],
+        )
+        self.assertTrue(
+            all(p["proj_ppr_points"] is None for p in projected["players"][2:])
+        )
 
     def test_multi_position_depth_chart_emits_one_player(self):
         players = [p for p in self.board()["players"] if p["player_id"] == 4]

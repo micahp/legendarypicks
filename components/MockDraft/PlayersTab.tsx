@@ -2,11 +2,8 @@ import type { PoolPlayer } from '../Leagues/types'
 import type { DraftPlayer } from '../../lib/mockDraft/engine'
 import { positionLabel, positionRankLabel, showsPositionalRank } from '../../lib/nfl/positionLabel'
 import {
-  HeadlineStat,
-  ExpectedPts,
   PoolAvailability,
-  EXPECTED_PTS_HEADER,
-  expectedPtsTitle,
+  ProjectedPoints,
 } from './columns'
 import PlayerActionButton from './PlayerActionButton'
 import InjuryTag from '../Leagues/InjuryTag'
@@ -23,8 +20,6 @@ interface Props {
   posRank: Map<number, number>
   byeMap: Map<string, number | null>
   referenceSeason?: number | null
-  headlineStat: { header: string; title: string }
-
   posOptions: string[]
   posFilter: string
   onPosFilter: (pos: string) => void
@@ -53,7 +48,7 @@ interface Props {
   onUnqueue: (playerId: number) => void
 }
 
-const COLUMNS = 9
+const COLUMNS = 7
 
 export default function PlayersTab(p: Props) {
   const filtered = p.posFilter !== 'ALL' || p.teamFilter !== 'ALL' || p.byeFilter !== 'ALL'
@@ -154,30 +149,19 @@ export default function PlayersTab(p: Props) {
         <table data-testid="pool-table" className="w-full text-sm">
           <thead className="sticky top-0 z-10 bg-zinc-900">
             <tr className="border-b border-zinc-800 text-zinc-500 text-[11px] uppercase tracking-wider">
-              {/* ESPN calls this RK and it is their own proprietary board rank.
-                  Ours is a position in an ADP-ordered list — ADP's ranking, not
-                  ours — so the header says nothing that would imply otherwise. */}
-              <th data-col="rank" className="text-left py-2.5 pl-3 pr-2 w-10">#</th>
+              <th data-col="rank" className="text-left py-2.5 pl-3 pr-2 w-10">RK</th>
               <th data-col="player" className="text-left py-2.5 px-2">Player</th>
-              <th data-col="pos" className="text-center py-2.5 px-2 w-14">Pos</th>
-              <th data-col="avail" className="text-left py-2.5 px-2 min-w-[8rem]">Available</th>
-              <th data-col="pts" className="text-right py-2.5 px-2 w-20" title={p.headlineStat.title}>
-                {p.headlineStat.header}
-              </th>
-              <th
-                data-col="xfp"
-                className="text-right py-2.5 px-2 w-16"
-                title={expectedPtsTitle(p.referenceSeason)}
-              >
-                {EXPECTED_PTS_HEADER}
-              </th>
               <th data-col="bye" className="text-right py-2.5 px-2 w-12">Bye</th>
               <th data-col="adp" className="text-right py-2.5 px-2 w-16">ADP</th>
+              <th data-col="proj" className="text-right py-2.5 px-2 w-20">
+                Proj <span className="block font-normal normal-case tracking-normal text-zinc-600">2026 PPR</span>
+              </th>
+              <th data-col="avail" className="text-left py-2.5 px-2 min-w-[8rem]">Available</th>
               <th data-col="action" className="w-20" />
             </tr>
           </thead>
           <tbody>
-            {p.rows.map((row, i) =>
+            {p.rows.map(row =>
               row.kind === 'divider' ? (
                 <tr
                   key={`divider-${row.pickNo}`}
@@ -196,7 +180,6 @@ export default function PlayersTab(p: Props) {
               ) : (
                 <PoolRowView
                   key={row.dp.player_id}
-                  index={i}
                   dp={row.dp}
                   poolPlayer={p.playerMap.get(row.dp.player_id) ?? null}
                   posRank={p.posRank.get(row.dp.player_id)}
@@ -220,10 +203,9 @@ export default function PlayersTab(p: Props) {
 }
 
 function PoolRowView({
-  index, dp, poolPlayer, posRank, bye, referenceSeason, queued, onClock, completed,
+  dp, poolPlayer, posRank, bye, referenceSeason, queued, onClock, completed,
   onSelect, onDraft, onQueue, onUnqueue,
 }: {
-  index: number
   dp: DraftPlayer
   poolPlayer: PoolPlayer | null
   posRank?: number
@@ -244,7 +226,7 @@ function PoolRowView({
       className="border-b border-zinc-800/40 transition-colors cursor-pointer hover:bg-zinc-800/30"
     >
       <td data-col="rank" className="py-2 pl-3 pr-2 text-zinc-500 text-xs tabular-nums">
-        {index + 1}
+        {poolPlayer.espn_ppr_rank ?? <span className="text-zinc-700">—</span>}
       </td>
       <td data-col="player" className="py-2 px-2">
         <div className="flex items-center gap-1.5">
@@ -253,6 +235,8 @@ function PoolRowView({
         </div>
         <div className="text-[10px] text-zinc-600">
           {dp.team}
+          {' · '}
+          <span className="font-semibold text-zinc-500">{positionLabel(dp.position)}</span>
           {posRank != null && showsPositionalRank(dp.position) && (
             <>
               {' · '}
@@ -261,25 +245,17 @@ function PoolRowView({
           )}
         </div>
       </td>
-      <td data-col="pos" className="py-2 px-2 text-center">
-        <span className="rounded bg-zinc-800 px-1.5 py-0.5 text-[10px] font-semibold text-zinc-400">
-          {positionLabel(dp.position)}
-        </span>
-      </td>
-      <td data-col="avail" className="py-2 px-2">
-        <PoolAvailability poolPlayer={poolPlayer} referenceSeason={referenceSeason} />
-      </td>
-      <td data-col="pts" className="py-2 px-2 text-right font-mono tabular-nums text-xs text-zinc-300">
-        <HeadlineStat player={poolPlayer} />
-      </td>
-      <td data-col="xfp" className="py-2 px-2 text-right font-mono tabular-nums text-xs text-zinc-400">
-        <ExpectedPts player={poolPlayer} />
-      </td>
       <td data-col="bye" className="py-2 px-2 text-right font-mono tabular-nums text-xs text-zinc-500">
         {bye ?? <span className="text-zinc-700">—</span>}
       </td>
       <td data-col="adp" className="py-2 pr-3 pl-2 text-right font-mono tabular-nums text-xs text-zinc-400">
         {dp.adp != null ? dp.adp.toFixed(1) : <span className="text-zinc-600">—</span>}
+      </td>
+      <td data-col="proj" className="py-2 px-2 text-right font-mono tabular-nums text-xs">
+        <ProjectedPoints player={poolPlayer} />
+      </td>
+      <td data-col="avail" className="py-2 px-2">
+        <PoolAvailability poolPlayer={poolPlayer} referenceSeason={referenceSeason} />
       </td>
       <td data-col="action" data-testid="row-action" className="py-2 pr-3 pl-1 text-center">
         <PlayerActionButton

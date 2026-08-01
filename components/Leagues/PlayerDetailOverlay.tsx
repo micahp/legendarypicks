@@ -244,6 +244,22 @@ export default function PlayerDetailOverlay({
             )}
 
             {tab === 'overview' && (<>
+            {/* Draft-season forecast is distinct from the completed-season
+                actuals below. It comes from ESPN's published 2026 stat line;
+                a missing source row stays an em dash. */}
+            <section className="space-y-2">
+              <h3 className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
+                Projection
+              </h3>
+              <div className="rounded-lg border border-zinc-800 bg-zinc-800/40">
+                <StatRow
+                  label="PROJ 2026 PPR points"
+                  value={player.proj_2026_pts ?? null}
+                  strong
+                />
+              </div>
+            </section>
+
             {/* ── Availability strip ────────────────────────────────────── */}
             {!noSample && player.team_weeks.length > 0 && (
               <section>

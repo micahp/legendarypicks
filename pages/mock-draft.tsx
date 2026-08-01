@@ -339,6 +339,7 @@ export default function MockDraftPage() {
           )}
           <PoolList
             players={pool}
+            draftSeason={2026}
             referenceSeason={referenceSeason}
             teams={teams}
             onSetTeams={handleSetTeams}

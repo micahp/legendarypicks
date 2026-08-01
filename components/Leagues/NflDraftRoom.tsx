@@ -169,29 +169,12 @@ export function statColumnsFor(position: string): StatColumn[] {
   ]
 }
 
-/* The sort pills have the same defect as the columns: sorting 32 kickers by
-   "Target share" reorders nothing, because the field is null for every one of
-   them. A control that cannot change the result is worse than a missing one. */
+/* The decision table exposes only values a drafter can see in the row. Prior-
+   season research remains in the player overlay instead of silently sorting a
+   list by a hidden column. */
 export function sortsFor(position: string, active: NflDraftSort): NflDraftSort[] {
-  const always: NflDraftSort[] = ['adp', 'games_played']
-  let allowed: NflDraftSort[]
-  if (position === 'DEF') allowed = [...always, 'dst_pts_per_game']
-  else if (position === 'PK') allowed = [...always, 'pk_pts_per_game']
-  else if (position === 'QB')
-    allowed = [...always, 'ppr_per_team_game', 'ppr_per_game_played', 'xfp_per_game', 'snap_pct']
-  else if (PASS_CATCHERS.includes(position))
-    allowed = [
-      ...always,
-      'ppr_per_team_game',
-      'ppr_per_game_played',
-      'xfp_per_game',
-      'snap_pct',
-      'target_share',
-    ]
-  else return Object.keys(SORT_LABELS) as NflDraftSort[]
-
-  // Never hide the sort that is actually in effect — that would misreport state.
-  return allowed.includes(active) ? allowed : [...allowed, active]
+  const visible: NflDraftSort[] = ['rank', 'proj', 'adp', 'games_played']
+  return visible.includes(active) ? visible : [...visible, active]
 }
 
 interface Props {
@@ -234,8 +217,6 @@ export default function NflDraftRoom({
   onToggleFade,
 }: Props) {
   const [selectedPlayerId, setSelectedPlayerId] = useState<number | null>(null)
-  const statColumns = statColumnsFor(position)
-
   return (
     <>
     <section className="space-y-4">
@@ -367,21 +348,22 @@ export default function NflDraftRoom({
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-zinc-800 text-zinc-500 text-[11px] uppercase tracking-wider">
-                  <th className="text-left py-3 pl-4 pr-2 w-10">#</th>
+                  <th className="text-left py-3 pl-4 pr-2 w-10">RK</th>
                   <th className="text-left py-3 px-2">Player</th>
-                  <th className="text-center py-3 px-2">Pos</th>
+                  <th className="text-right py-3 px-2">Bye</th>
+                  <th className="text-right py-3 px-2">ADP</th>
+                  <th className="text-right py-3 px-2">
+                    Proj
+                    <span className="block font-normal normal-case tracking-normal text-zinc-600">
+                      {data.current_season} PPR
+                    </span>
+                  </th>
                   <th className="text-left py-3 px-2 min-w-[9.5rem]">
                     Available
                     <span className="ml-1 font-normal normal-case tracking-normal text-zinc-600">
                       of {data.team_games}
                     </span>
                   </th>
-                  {statColumns.map(col => (
-                    <th key={col.key} className="text-right py-3 px-2">
-                      {col.header}
-                    </th>
-                  ))}
-                  <th className="text-right py-3 px-2">ADP</th>
                   <th className="text-right py-3 px-2">
                     <span className="inline-flex items-center gap-1">
                       Rank
@@ -404,7 +386,6 @@ export default function NflDraftRoom({
                     onToggleWatch={() => onToggleWatch(player.player_id)}
                     onToggleFade={() => onToggleFade(player.player_id)}
                     onClick={() => setSelectedPlayerId(player.player_id)}
-                    statColumns={statColumns}
                   />
                 ))}
               </tbody>
@@ -449,7 +430,6 @@ export function DraftPlayerRow({
   onToggleWatch,
   onToggleFade,
   onClick,
-  statColumns,
 }: {
   player: NflDraftPlayer
   noteRank: number | undefined
@@ -459,10 +439,8 @@ export function DraftPlayerRow({
   onToggleWatch: () => void
   onToggleFade: () => void
   onClick?: () => void
-  statColumns: StatColumn[]
 }) {
   const noSample = player.sample === 'none'
-  const thin = player.sample === 'thin'
   const missed = player.games_missed
 
   return (
@@ -471,7 +449,7 @@ export function DraftPlayerRow({
       onClick={onClick}
     >
       <td className="py-2.5 pl-4 pr-2 text-zinc-500 text-xs tabular-nums">
-        {player.rank}
+        {player.espn_ppr_rank ?? <span className="text-zinc-700">—</span>}
       </td>
       <td className="py-2.5 px-2">
         <div className="flex items-center gap-1.5">
@@ -485,6 +463,8 @@ export function DraftPlayerRow({
         </div>
         <div className="text-[10px] text-zinc-600">
           {player.current_team}
+          {' · '}
+          <span className="font-semibold text-zinc-500">{positionLabel(player.position)}</span>
           {player.depth_rank != null &&
             ` · ${positionRankLabel(player.depth_position ?? player.position, player.depth_rank)}`}
           {/* A team change is information, not an achievement — no accent. */}
@@ -493,10 +473,19 @@ export function DraftPlayerRow({
           )}
         </div>
       </td>
-      <td className="py-2.5 px-2 text-center">
-        <span className="rounded bg-zinc-800 px-1.5 py-0.5 text-[11px] font-semibold uppercase text-zinc-400">
-          {positionLabel(player.position)}
-        </span>
+      <td className="py-2.5 px-2 text-right font-mono tabular-nums text-xs text-zinc-500">
+        {player.bye_week ?? <span className="text-zinc-700">—</span>}
+      </td>
+      <td className="py-2.5 px-2 text-right font-mono tabular-nums text-zinc-300 font-semibold">
+        {player.adp != null ? player.adp.toFixed(1) : '—'}
+        {player.percent_owned != null && (
+          <div className="text-[10px] font-normal text-zinc-600">{player.percent_owned.toFixed(1)}% owned</div>
+        )}
+      </td>
+      <td className="py-2.5 px-2 text-right font-mono tabular-nums text-zinc-200 font-semibold">
+        {player.proj_ppr_points != null
+          ? player.proj_ppr_points.toFixed(1)
+          : <span className="text-zinc-700">—</span>}
       </td>
 
       {/* Availability — the headline. Accent marks the games he missed. */}
@@ -528,18 +517,6 @@ export function DraftPlayerRow({
         )}
       </td>
 
-      {/* Columns come from the active position filter — see statColumnsFor. */}
-      {statColumns.map(col => (
-        <td key={col.key} className="py-2.5 px-2 text-right font-mono tabular-nums text-zinc-400">
-          {col.cell(player, { thin, noSample })}
-        </td>
-      ))}
-      <td className="py-2.5 px-2 text-right font-mono tabular-nums text-zinc-300 font-semibold">
-        {player.adp != null ? player.adp.toFixed(1) : '—'}
-        {player.percent_owned != null && (
-          <div className="text-[10px] font-normal text-zinc-600">{player.percent_owned.toFixed(1)}% owned</div>
-        )}
-      </td>
       <td className="py-2.5 px-2 text-right">
         <input
           type="number"
