@@ -172,7 +172,7 @@ def prop_history(player_id: int = Query(...),
             "date": r["game_date"] or "",
             "value": val,
             "opponent": r["opponent"] or "",
-            "home": r["home_away"] == "home",
+            "home": (r["home_away"] == "home") if r["home_away"] else None,
             "hit": hit,
         })
 

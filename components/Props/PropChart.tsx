@@ -6,7 +6,7 @@ export interface GameLog {
   date: string
   value: number
   opponent: string
-  home: boolean
+  home: boolean | null
   hit: boolean
 }
 
@@ -36,8 +36,8 @@ const WINDOWS: { key: Window; label: string }[] = [
 // ── helpers ───────────────────────────────────────────────
 function gameLabel(g: GameLog, i: number, total: number): string {
   const isLast = i === total - 1
-  const loc = g.home ? 'vs' : '@'
-  return isLast ? `${new Date(g.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} · ${loc} ${g.opponent}` : ''
+  const loc = g.home === false ? '@ ' : g.home === true ? 'vs ' : ''
+  return isLast ? `${new Date(g.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} · ${loc}${g.opponent}` : ''
 }
 
 // ── component ─────────────────────────────────────────────
@@ -74,8 +74,8 @@ export default function PropChart({ data, window: initialWindow = 'l10' }: { dat
 
   const displayGames = useMemo(() => {
     let filtered = data.games
-    if (venue === 'home') filtered = filtered.filter(g => g.home)
-    else if (venue === 'away') filtered = filtered.filter(g => !g.home)
+    if (venue === 'home') filtered = filtered.filter(g => g.home === true)
+    else if (venue === 'away') filtered = filtered.filter(g => g.home === false)
     if (vsOpp && opponents.length > 0) {
       const target = opponents[0]
       filtered = filtered.filter(g => g.opponent === target)
@@ -199,10 +199,10 @@ export default function PropChart({ data, window: initialWindow = 'l10' }: { dat
           <div className="flex gap-[6px] text-[10px] text-zinc-600" style={{ paddingLeft: 0 }}>
             {displayGames.map((g, i) => (
               <div key={i} className="text-center overflow-hidden" style={{ width: barW, flexShrink: 0 }}>
-                <span title={`${g.home ? 'vs' : '@'} ${g.opponent} · ${g.date}`}>
+                <span title={`${g.home === false ? '@ ' : g.home === true ? 'vs ' : ''}${g.opponent} · ${g.date}`}>
                   {g.opponent.length > 5 ? g.opponent.slice(0, 5) : g.opponent || '—'}
                 </span>
-                <span className="text-zinc-700 ml-0.5">{g.home ? '' : '↑'}</span>
+                <span className="text-zinc-700 ml-0.5">{g.home === false ? '↑' : ''}</span>
               </div>
             ))}
           </div>

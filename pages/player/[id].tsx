@@ -531,7 +531,7 @@ export default function PlayerPage() {
               <div className="rounded-xl border border-zinc-800 bg-zinc-900 divide-y divide-zinc-800 text-sm">
                 {p.recent_games.map((g, i) => (
                   <div key={i} className="flex items-center justify-between px-4 py-2.5">
-                    <span className="text-zinc-400 text-xs w-32">{g.date} {g.opponent ? `${g.home ? 'vs' : '@'} ${g.opponent}` : ''}</span>
+                    <span className="text-zinc-400 text-xs w-32">{g.date} {g.opponent ? `${g.home === false ? '@ ' : g.home === true ? 'vs ' : ''}${g.opponent}` : ''}</span>
                     <span className="font-mono tabular-nums text-zinc-300 text-xs truncate">
                       {Object.entries(g.stats).filter(([, v]) => typeof v === 'number').slice(0, 6).map(([k, v]) => `${k} ${v}`).join('  ')}
                     </span>
