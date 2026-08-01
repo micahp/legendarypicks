@@ -96,16 +96,12 @@ export default function MockDraftPage() {
   )
 
   // ── Load pool on mount ──
-  // The backend returns the full published universe (11,515 players including
-  // IDP, coaches, punters). Only fantasy-relevant positions belong in a mock
-  // draft — the rest are noise that pollutes position filters and sort options.
-  const FANTASY_POSITIONS = new Set(['QB', 'RB', 'WR', 'TE', 'PK', 'DEF'])
   useEffect(() => {
     let cancelled = false
     fetchPool(2026)
       .then(data => {
         if (!cancelled) {
-          setPool(data.players.filter(p => FANTASY_POSITIONS.has(p.position)))
+          setPool(data.players)
           setReferenceSeason(data.reference_season ?? null)
           setPoolLoading(false)
         }
