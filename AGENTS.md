@@ -196,6 +196,15 @@ Caught at review (orchestrator), should have been caught by the feature's own va
   not `git add -A`) — they then block merges with dirty-tree errors.
 
 ## 11. Operating rules
+- **`/root/legendarypicks` is the managed `dev` worktree. Do not switch it away from `dev` for
+  feature development.** The `:3096` frontend and `:8096` backend read directly from this
+  directory. Create feature branches in isolated worktrees instead, for example:
+  `git worktree add /root/lp-<task> -b feat/<task> dev`. At the start of every task, verify
+  `git -C /root/legendarypicks branch --show-current` prints `dev`. Running `git switch dev`
+  here to restore the designated branch is allowed after preserving conflicting WIP. A deliberate
+  switch away from `dev` requires explicit user authorization, a clean or recoverably preserved
+  worktree, and coordination with the managed services. Prepare and verify feature merges in an
+  isolated worktree; update the main worktree only after the merged `dev` result is ready.
 - **Never run `npm`, `npx` or `yarn` from a worktree — not install, not build, not test.** A
   worktree's `node_modules` is a **symlink to `/root/legendarypicks/node_modules`**, so npm resolves
   against the shared install and prunes it: on 2026-07-27 an `npm exec next dev` and later an
