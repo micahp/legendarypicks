@@ -49,7 +49,9 @@ export default function PlayerDetailOverlay({
   const [player, setPlayer] = useState<PlayerDetailResponse | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [tab, setTab] = useState<'overview' | 'log'>('overview')
+  const [tab, setTab] = useState<'overview' | 'log' | 'news'>('overview')
+  const [news, setNews] = useState<{ articles: Array<{ id: number; headline: string; notes: string; analysis: string; injury_status: string | null; injury_type: string | null; return_date: string | null; published: string; link: string }> } | null>(null)
+  const [newsLoading, setNewsLoading] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -77,6 +79,25 @@ export default function PlayerDetailOverlay({
 
     return () => { cancelled = true }
   }, [playerId])
+
+  // Fetch news when news tab is selected
+  useEffect(() => {
+    if (tab !== 'news') return
+    let cancelled = false
+    setNewsLoading(true)
+    fetch(`/api/player/${playerId}/news?limit=10`)
+      .then(res => res.json())
+      .then(data => {
+        if (!cancelled) {
+          setNews(data)
+          setNewsLoading(false)
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setNewsLoading(false)
+      })
+    return () => { cancelled = true }
+  }, [tab, playerId])
 
   const isDef = player?.position === 'DEF'
   const isPk = player?.position === 'PK'
@@ -227,7 +248,7 @@ export default function PlayerDetailOverlay({
                 whether he was rising or falling all year. */}
 
                         <div className="flex gap-1 border-b border-zinc-800" role="tablist">
-              {([['overview', 'Overview'], ['log', 'Game log']] as const).map(([id, label]) => (
+              {([['overview', 'Overview'], ['log', 'Game log'], ['news', 'News']] as const).map(([id, label]) => (
                 <button
                   key={id}
                   type="button"
@@ -246,6 +267,77 @@ export default function PlayerDetailOverlay({
             </div>
 
             {tab === 'log' && <PlayerGameLog playerId={playerId} />}
+
+            {tab === 'news' && (
+              <div className="space-y-3 py-2">
+                {newsLoading && (
+                  <div className="space-y-3 animate-pulse">
+                    {[0, 1, 2].map(i => (
+                      <div key={i} className="h-16 rounded-lg bg-zinc-800" />
+                    ))}
+                  </div>
+                )}
+                {!newsLoading && news && news.articles.length === 0 && (
+                  <div className="text-center py-4 text-zinc-500">
+                    <p className="text-xs">No recent news for this player</p>
+                  </div>
+                )}
+                {!newsLoading && news && news.articles.length > 0 && (
+                  news.articles.map(article => (
+                    <div key={article.id} className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-3 space-y-1.5">
+                      {/* Headline + injury badge */}
+                      <div className="flex items-start gap-2">
+                        <a
+                          href={article.link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex-1 min-w-0"
+                        >
+                          <h4 className="text-xs font-semibold text-zinc-100 hover:text-emerald-400 transition-colors">
+                            {article.headline}
+                          </h4>
+                        </a>
+                        {article.injury_status && (
+                          <span className="shrink-0 rounded bg-red-500/10 px-1 py-0.5 text-[9px] font-bold text-red-400 uppercase">
+                            {article.injury_status}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* News blurb */}
+                      <p className="text-[11px] text-zinc-400 leading-relaxed">
+                        {article.notes}
+                      </p>
+
+                      {/* Fantasy analysis */}
+                      {article.analysis && (
+                        <div className="rounded-md bg-zinc-800/50 px-2.5 py-1.5 border-l-2 border-emerald-500/50">
+                          <p className="text-[10px] font-semibold uppercase tracking-wider text-emerald-400/70 mb-0.5">
+                            Fantasy Spin
+                          </p>
+                          <p className="text-[11px] text-zinc-300 leading-relaxed">
+                            {article.analysis}
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Meta */}
+                      <div className="flex items-center gap-2 text-[9px] text-zinc-600">
+                        <time dateTime={article.published}>
+                          {new Date(article.published).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                        </time>
+                        {article.return_date && (
+                          <span>Return: {new Date(article.return_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
+                        )}
+                        {article.injury_type && (
+                          <span className="text-red-400/60">{article.injury_type}</span>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
 
             {tab === 'overview' && (<>
             {/* ── Availability strip ────────────────────────────────────── */}
