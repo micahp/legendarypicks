@@ -65,8 +65,11 @@ Recovered task files:
 - `components/Leagues/PlayerGameLog.tsx`
 - `components/Leagues/StatRankCard.tsx`
 - `pages/player/[id].tsx`
+- `pages/props.tsx` (the missed `Comp/G` label hunk)
 
 The separately authored caches are retained in
 `backend/routers/nfl_offseason.py` and `backend/routers/nfl_mock_draft.py` at the
-user's direction. Props, esports, and other stash paths remain excluded and
-preserved.
+user's direction. The venue-tri-state changes in `backend/routers/props.py` and
+`components/Props/PropChart.tsx` already matched the verified merge and were not
+reapplied. The externally managed esports writer file remains excluded and
+preserved in the stash.
