@@ -119,6 +119,30 @@ class PlayerProfileApiTests(unittest.TestCase):
         self.assertTrue(result["coverage"]["season_stats"])
         self.assertEqual(24, result["recent_games"][0]["stats"]["PTS"])
 
+    def test_profile_serializes_home_away_and_null_venue_tri_state(self):
+        con = sqlite3.connect(self.path)
+        con.executemany(
+            "INSERT INTO player_game_logs VALUES(?,?,?,?,?,?,?,?,?)",
+            [
+                (1, "nba", 2026, json.dumps({"PTS": 20}), "2026-07-21", "AWY", "away", 2, None),
+                (1, "nba", 2026, json.dumps({"PTS": 22}), "2026-07-22", "UNK", None, 3, None),
+            ],
+        )
+        con.commit()
+        con.close()
+
+        with mock.patch.object(players, "_season_stats_for_profile", return_value=None):
+            result = players.player_profile(1)
+
+        self.assertEqual(
+            [None, False, True],
+            [row["home"] for row in result["recent_games"]],
+        )
+        self.assertEqual(
+            ["2026-07-22", "2026-07-21", "2026-07-20"],
+            [row["date"] for row in result["recent_games"]],
+        )
+
     def test_nfl_profile_includes_injury_designation_when_columns_exist(self):
         con = sqlite3.connect(self.path)
         con.execute("ALTER TABLE players ADD COLUMN injury_status TEXT")
