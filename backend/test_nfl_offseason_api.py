@@ -89,6 +89,7 @@ class NflOffseasonApiTests(unittest.TestCase):
                     (3, "Inactive Back", "nfl", "DAL", "RB", 0, "2026-07-20T12:00:00+00:00"),
                     (4, "Camp Rookie", "nfl", "NE", "WR", 1, "2026-07-20T12:00:00+00:00"),
                     (5, "Undrafted Body", "nfl", "NE", "WR", 1, "2026-07-20T12:00:00+00:00"),
+                    (6, "Team Quarterback", "nfl", "KC", "TQB", 1, "2026-07-20T12:00:00+00:00"),
                 ],
             )
             connection.executemany(
@@ -120,6 +121,7 @@ class NflOffseasonApiTests(unittest.TestCase):
                     (2, 2026, 25.0, 95.0),
                     (4, 2026, 66.0, 80.0),      # rookie with a real market price
                     (5, 2026, 170.0, 0.1),      # copied published ADP
+                    (6, 2026, 25.0, 50.0),      # aggregate slot, not a player
                 ],
             )
             connection.executemany(
@@ -172,7 +174,7 @@ class NflOffseasonApiTests(unittest.TestCase):
         self.assertEqual(payload["next_event"]["days_until"], 7)
         self.assertEqual(payload["coverage"]["reference_stats"]["players"], 3)
         self.assertEqual(payload["coverage"]["game_logs"]["rows"], 25)
-        self.assertEqual(payload["coverage"]["current_roster"]["players"], 4)
+        self.assertEqual(payload["coverage"]["current_roster"]["players"], 5)
         self.assertEqual(
             payload["coverage"]["current_roster"]["skill_players_with_reference_stats"],
             2,
@@ -218,6 +220,11 @@ class NflOffseasonApiTests(unittest.TestCase):
             [player["player_id"] for player in payload["players"]],
             [1, 2, 4, 5],
         )
+        self.assertEqual(
+            {"QB", "RB", "WR", "TE", "PK", "DEF"},
+            set(nfl_offseason._FANTASY_DRAFT_POSITIONS),
+        )
+        self.assertNotIn("TQB", {player["position"] for player in payload["players"]})
 
         alias_receiver, actual_mover, _rookie, _late = payload["players"]
         self.assertEqual(alias_receiver["current_team"], "LAR")
@@ -359,6 +366,18 @@ class NflOffseasonApiTests(unittest.TestCase):
         self.assertTrue(rookie["adp_is_ranked"])
         self.assertEqual(rookie["depth_rank"], 2)
         self.assertEqual(rookie["depth_position"], "WR")
+
+    def test_draft_board_returns_current_injury_designation_when_available(self):
+        with sqlite3.connect(self.db_path) as connection:
+            connection.execute("ALTER TABLE players ADD COLUMN injury_status TEXT")
+            connection.execute(
+                "UPDATE players SET injury_status='QUESTIONABLE' WHERE id=1"
+            )
+
+        receiver = {
+            player["player_id"]: player for player in self.board()["players"]
+        }[1]
+        self.assertEqual(receiver["injury_status"], "QUESTIONABLE")
 
     def test_multi_position_depth_chart_emits_one_player(self):
         players = [p for p in self.board()["players"] if p["player_id"] == 4]

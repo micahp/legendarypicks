@@ -18,7 +18,7 @@ from fastapi import APIRouter, HTTPException, Query
 
 from _core import _db, _normalize_name
 
-from team_codes import CANONICAL_POSITIONS, normalize, normalize_optional
+from team_codes import normalize, normalize_optional
 
 
 router = APIRouter()
@@ -68,7 +68,8 @@ _NFL_MILESTONES = (
 
 _SKILL_POSITIONS = ("QB", "RB", "WR", "TE", "FB")
 _DEF_POSITION = "DEF"
-_POSITION_FILTERS = CANONICAL_POSITIONS.get("nfl", set()) | {"FLEX"}
+_FANTASY_DRAFT_POSITIONS = ("QB", "RB", "WR", "TE", "PK", "DEF")
+_POSITION_FILTERS = set(_FANTASY_DRAFT_POSITIONS) | {"FLEX"}
 # Sort key -> (player field, ascending). Every one of these is a measurement of
 # something that happened; none is a projection, and none is labelled as one.
 _SORT_FIELDS = {
@@ -1002,9 +1003,13 @@ def nfl_draft_board(
             where.append(f"{position_expr}=?")
             params.append(selected_position)
         else:
-            # No position filter — show all positions. (Previously restricted to
-            # _SKILL_POSITIONS; expanded 2026-07-27 when kicker/IDP data landed.)
-            pass
+            # The all-player fantasy board is still a fantasy board. Aggregate
+            # TQB rows, IDP, coaches, punters, and line positions belong in the
+            # source universe, not in this user-facing pool.
+            where.append(
+                f"{position_expr} IN ({','.join('?' for _ in _FANTASY_DRAFT_POSITIONS)})"
+            )
+            params.extend(_FANTASY_DRAFT_POSITIONS)
 
         # Narrow in SQL rather than after: the page a drafter searching for one
         # player gets back should be one player, not 522 rows filtered in the
@@ -1017,12 +1022,17 @@ def nfl_draft_board(
 
         where_sql = " AND ".join(where)
 
+        injury_select = (
+            ", p.injury_status"
+            if "injury_status" in _table_columns(connection, "players")
+            else ", NULL AS injury_status"
+        )
         candidates = connection.execute(
             f"""SELECT p.id AS player_id, p.name, {position_expr} AS position,
                        p.team AS current_team,
                        na.adp, na.percent_owned,
                        d.pos_rank AS depth_rank, d.team AS depth_team,
-                       d.pos_abb AS depth_position
+                       d.pos_abb AS depth_position{injury_select}
                 FROM players p
                 LEFT JOIN nfl_adp na
                        ON na.player_id=p.id AND na.season=?
@@ -1148,6 +1158,7 @@ def nfl_draft_board(
             "adp": published_adp,
             "adp_is_ranked": published_adp is not None,
             "percent_owned": row["percent_owned"],
+            "injury_status": row["injury_status"],
             # Availability: the headline. Denominator is every game the team
             # played, so a missed game costs the drafter exactly what it cost.
             "games_played": games_played,

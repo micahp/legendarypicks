@@ -3,6 +3,7 @@ import type { NflDraftBoard, NflDraftNotes, NflDraftPlayer, NflDraftSort } from 
 import { POSITIONS, SORT_LABELS } from './hooks/useNflDraftBoard'
 import type { DraftPosition } from './hooks/useNflDraftBoard'
 import PlayerDetailOverlay from './PlayerDetailOverlay'
+import InjuryTag from './InjuryTag'
 import { positionLabel, positionRankLabel } from '../../lib/nfl/positionLabel'
 
 /* ── Position-aware stat columns ───────────────────────────────────────────
@@ -473,12 +474,15 @@ export function DraftPlayerRow({
         {player.rank}
       </td>
       <td className="py-2.5 px-2">
-        <a
-          href={`/player/${player.player_id}`}
-          className="font-medium text-zinc-200 hover:text-emerald-400 transition-colors"
-        >
-          {player.name}
-        </a>
+        <div className="flex items-center gap-1.5">
+          <a
+            href={`/player/${player.player_id}`}
+            className="font-medium text-zinc-200 hover:text-emerald-400 transition-colors"
+          >
+            {player.name}
+          </a>
+          <InjuryTag status={player.injury_status} compact />
+        </div>
         <div className="text-[10px] text-zinc-600">
           {player.current_team}
           {player.depth_rank != null &&

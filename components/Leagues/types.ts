@@ -231,6 +231,8 @@ export interface NflDraftPlayer {
   /** True when ESPN published an ADP value for this player. */
   adp_is_ranked: boolean
   percent_owned: number | null
+  /** Current ESPN injury designation. ACTIVE and null render no warning tag. */
+  injury_status: string | null
   /** The headline: regular-season games played out of the team's 17. */
   games_played: number | null
   games_missed: number | null
