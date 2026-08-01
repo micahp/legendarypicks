@@ -127,19 +127,24 @@ export default function PlayerGameLog({ playerId }: { playerId: number }) {
                 className={`border-b border-zinc-800/40 ${g.played ? '' : 'bg-amber-500/5'}`}
               >
                 <td className="py-1.5 pr-2 tabular-nums text-zinc-500">{g.week}</td>
-                <td className="py-1.5 pr-2 text-zinc-500">
-                  {g.played ? (g.opponent ?? '—') : (
-                    <span className="text-amber-400">did not play</span>
-                  )}
-                </td>
                 {g.played ? (
-                  data.fields.map(f => (
-                    <td key={f} className="py-1.5 px-1.5 text-right font-mono tabular-nums text-zinc-300">
-                      {cell(f, g.stats[f] ?? null)}
+                  <>
+                    <td className="py-1.5 pr-2 text-zinc-500">
+                      {g.opponent ?? '—'}
                     </td>
-                  ))
+                    {data.fields.map(f => (
+                      <td key={f} className="py-1.5 px-1.5 text-right font-mono tabular-nums text-zinc-300">
+                        {cell(f, g.stats[f] ?? null)}
+                      </td>
+                    ))}
+                  </>
                 ) : (
-                  <td colSpan={data.fields.length} />
+                  <td
+                    colSpan={data.fields.length + 1}
+                    className="py-1.5 text-center whitespace-nowrap text-amber-400"
+                  >
+                    did not play
+                  </td>
                 )}
               </tr>
             ))}

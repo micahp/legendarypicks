@@ -17,8 +17,8 @@ interface Props {
   /* External ESPN-style rank data — not part of the /api/nfl/draft/player response */
   stat_ranks?: Record<string, { value: number | null; rank: number | null; label: string }> | null
 
-  /* Pool-level name — available immediately so the header + League Rankings
-     can render outside the detail-fetch loading gate. */
+  /* Pool-level name — available immediately so the header can render outside
+     the detail-fetch loading gate. */
   poolName?: string
 
   /* Draft-room context. All optional: the camp-tab research board renders this
@@ -144,13 +144,6 @@ export default function PlayerDetailOverlay({
           </div>
         )}
 
-        {/* League Rankings — renders from pool data, NOT from overlay fetch */}
-        {stat_ranks && Object.keys(stat_ranks).length > 0 && (
-          <div className={poolName ? 'px-6 pb-3' : 'px-6 py-4'}>
-            <StatRankCard statRanks={stat_ranks} title="League Rankings" />
-          </div>
-        )}
-
         {/* Loading */}
         {loading && (
           <div className="p-6 space-y-3 animate-pulse">
@@ -244,6 +237,12 @@ export default function PlayerDetailOverlay({
             )}
 
             {tab === 'overview' && (<>
+            {/* League Rankings comes from pool data, but belongs to the
+                Overview research hierarchy rather than the persistent header. */}
+            {stat_ranks && Object.keys(stat_ranks).length > 0 && (
+              <StatRankCard statRanks={stat_ranks} title="League Rankings" />
+            )}
+
             {/* Draft-season forecast is distinct from the completed-season
                 actuals below. It comes from ESPN's published 2026 stat line;
                 a missing source row stays an em dash. */}

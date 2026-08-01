@@ -42,6 +42,9 @@ export function sortOptions(referenceSeason?: number | null): SortOption[] {
     { key: 'adp', label: 'ADP', direction: 'asc' },
     { key: 'avail', label: 'Availability', direction: 'desc' },
     { key: 'bye', label: 'Bye', direction: 'asc' },
+    // Product note: prior-season research sorts are candidates for premium
+    // access. Keep their keys stable so entitlement can be added without
+    // changing the board's core rank/projection ordering contract.
     { key: 'pts', label: `${season}Pts/G`, direction: 'desc' },
     { key: 'xfp', label: `${season}xFP/G`, direction: 'desc' },
   ]
