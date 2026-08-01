@@ -12,6 +12,7 @@ import os
 import sys
 import tempfile
 import unittest
+from unittest import mock
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
@@ -75,6 +76,7 @@ class TestNflMockDraft(unittest.TestCase):
 
     def setUp(self):
         """Clean draft tables between tests so counts are deterministic."""
+        nfl_mock_draft._clear_pool_cache()
         connection = nfl_mock_draft._conn()
         try:
             connection.execute("DELETE FROM nfl_mock_draft_picks")
@@ -295,6 +297,53 @@ class TestNflMockDraft(unittest.TestCase):
         self.assertEqual(by_id[1]["proj_source"], "espn")
         self.assertIsNone(by_id[3]["proj_ppr_points"])
         self.assertIsNone(by_id[3]["proj_source"])
+
+    def test_pool_cache_reuses_encoded_response(self):
+        original = nfl_mock_draft._availability_aggregates
+        with mock.patch.object(
+            nfl_mock_draft,
+            "_availability_aggregates",
+            wraps=original,
+        ) as availability:
+            first = client.get(f"/api/nfl/mock-draft/pool?season={self.SEASON}")
+            second = client.get(f"/api/nfl/mock-draft/pool?season={self.SEASON}")
+
+        self.assertEqual(200, first.status_code)
+        self.assertEqual(first.content, second.content)
+        self.assertEqual(1, availability.call_count)
+
+    def test_pool_cache_invalidates_after_database_write(self):
+        first = client.get(f"/api/nfl/mock-draft/pool?season={self.SEASON}")
+        self.assertEqual(1.5, {
+            player["player_id"]: player for player in first.json()["players"]
+        }[1]["adp"])
+
+        connection = nfl_mock_draft._conn()
+        try:
+            connection.execute(
+                "UPDATE nfl_adp SET adp=2.5 WHERE player_id=1 AND season=?",
+                (self.SEASON,),
+            )
+            connection.commit()
+        finally:
+            connection.close()
+
+        try:
+            second = client.get(f"/api/nfl/mock-draft/pool?season={self.SEASON}")
+            self.assertEqual(2.5, {
+                player["player_id"]: player for player in second.json()["players"]
+            }[1]["adp"])
+        finally:
+            connection = nfl_mock_draft._conn()
+            try:
+                connection.execute(
+                    "UPDATE nfl_adp SET adp=1.5 WHERE player_id=1 AND season=?",
+                    (self.SEASON,),
+                )
+                connection.commit()
+            finally:
+                connection.close()
+            nfl_mock_draft._clear_pool_cache()
 
     def test_pool_ordering(self):
         """Real ADP players come first, sorted by ADP ascending."""

@@ -13,16 +13,18 @@ SPEC-slice-D-mock-draft.md:
 import json
 import os
 import sqlite3
+import threading
 import time
 import uuid
 from typing import Optional
 
 from fastapi import APIRouter, Header, Query, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 from ppr_scoring import STAT_IDS, normalize_stats
 
 from .nfl_offseason import (
     _availability_aggregates,
+    _database_cache_token,
     _dst_aggregates,
     _pk_aggregates,
     _percentage,
@@ -45,6 +47,45 @@ _CURRENT_SEASON = 2026
 _REG_SEASON_TEAM_GAMES = 17
 _POSTSEASON_FIRST_WEEK = 19
 _THIN_SAMPLE_GAMES = 4
+_POOL_CACHE_TTL = 300
+_POOL_CACHE_MAX_ENTRIES = 4
+_pool_cache: dict = {}
+_pool_cache_lock = threading.Lock()
+
+
+def _pool_cache_get(key):
+    if key is None:
+        return None
+    now = time.monotonic()
+    with _pool_cache_lock:
+        entry = _pool_cache.get(key)
+        if entry is None:
+            return None
+        created_at, body = entry
+        if now - created_at >= _POOL_CACHE_TTL:
+            del _pool_cache[key]
+            return None
+        del _pool_cache[key]
+        _pool_cache[key] = (created_at, body)
+        return body
+
+
+def _pool_cache_put(key, body):
+    if key is None:
+        return
+    with _pool_cache_lock:
+        _pool_cache.pop(key, None)
+        _pool_cache[key] = (time.monotonic(), bytes(body))
+        while len(_pool_cache) > _POOL_CACHE_MAX_ENTRIES:
+            oldest = next(iter(_pool_cache))
+            del _pool_cache[oldest]
+
+
+def _clear_pool_cache():
+    with _pool_cache_lock:
+        _pool_cache.clear()
+
+
 _NFL_RANK_STATS = {
     "QB": [
         ("pass_yds_g", "Pass Yds/G"),
@@ -309,6 +350,15 @@ def pool(season: int = Query(...)):
 
     connection = _conn()
     try:
+        database_token = _database_cache_token(connection)
+        cache_key = (
+            (database_token, season)
+            if database_token is not None else None
+        )
+        cached_body = _pool_cache_get(cache_key)
+        if cached_body is not None:
+            return Response(content=cached_body, media_type="application/json")
+
         # ------------------------------------------------------------------
         # Availability aggregates — read from the most recent completed
         # season (what the player actually did), not from the draft season
@@ -590,20 +640,23 @@ def pool(season: int = Query(...)):
                 "stat_ranks": stat_ranks,
             })
 
-        return _json(
-            {
-                "contract": _CONTRACT,
-                "season": season,
-                # `season` is the season being drafted; every statistic in this
-                # payload describes `reference_season`. Without it a client has
-                # to guess which year it is labelling, and the guess is right
-                # until it silently isn't -- the draft board publishes this for
-                # the same reason.
-                "reference_season": _log_season,
-                "count": len(players),
-                "players": players,
-            }
-        )
+        payload = {
+            "contract": _CONTRACT,
+            "season": season,
+            # `season` is the season being drafted; every statistic in this
+            # payload describes `reference_season`. Without it a client has
+            # to guess which year it is labelling, and the guess is right
+            # until it silently isn't -- the draft board publishes this for
+            # the same reason.
+            "reference_season": _log_season,
+            "count": len(players),
+            "players": players,
+        }
+        response = _json(payload)
+        # Cache encoded bytes: a cached multi-megabyte dict still pays JSON
+        # serialization on every hit and is mutable by callers.
+        _pool_cache_put(cache_key, response.body)
+        return response
     finally:
         connection.close()
 
