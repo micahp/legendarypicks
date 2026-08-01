@@ -9,6 +9,7 @@ from fastapi.responses import JSONResponse
 from typing import Optional
 from _core import *
 from league_stats import canonical_population_sql
+from nfl_rankings import nfl_player_rank_context
 from nfl_news import (
     ROTOWIRE_LABEL,
     load_news_feed,
@@ -108,138 +109,6 @@ def _season_stats_for_profile(player_id: int, player_name: str, league: str):
         or bool(result.get("pitching"))
     )
     return result if has_stats else None
-
-
-# Position-aware stat columns for the ESPN-style 4-stat rank card.
-_NFL_RANK_STATS = {
-    "QB": [
-        ("pass_yds_g", "Pass Yds/G"),
-        ("pass_td", "Pass TD"),
-        ("interceptions", "INT"),
-        ("cmp_g", "Cmp/G"),
-    ],
-    "RB": [
-        ("rush_yds_g", "Rush Yds/G"),
-        ("carries_g", "Carries/G"),
-        ("rec_yds_g", "Rec Yds/G"),
-        ("fantasy_ppr_g", "PPR/G"),
-    ],
-    "WR": [
-        ("rec_yds_g", "Rec Yds/G"),
-        ("targets", "Targets"),
-        ("receptions", "Receptions"),
-        ("fantasy_ppr_g", "PPR/G"),
-    ],
-    "TE": [
-        ("rec_yds_g", "Rec Yds/G"),
-        ("targets", "Targets"),
-        ("receptions", "Receptions"),
-        ("fantasy_ppr_g", "PPR/G"),
-    ],
-}
-_RANK_ASC = frozenset(["interceptions"])
-
-
-def _compute_stat_ranks(con, player_id, league, position, season):
-    """Compute league-wide rank for NFL position-relevant stats."""
-    if league != "nfl":
-        return {}
-    pos_ranks = _NFL_RANK_STATS.get(position)
-    if not pos_ranks:
-        return {}
-    results = {}
-    for stat_col, stat_label in pos_ranks:
-        row = con.execute(
-            f"SELECT {stat_col} AS val FROM player_stats WHERE player_id=? AND league='nfl' AND stat_type='weekly' AND {stat_col} IS NOT NULL",
-            (player_id,),
-        ).fetchone()
-        if row is None:
-            continue
-        player_val = float(row["val"])
-        order = "ASC" if stat_col in _RANK_ASC else "DESC"
-        cmp = "<" if order == "ASC" else ">"
-        rank = con.execute(
-            f"SELECT COUNT(*) + 1 AS rank FROM player_stats WHERE league='nfl' AND stat_type='weekly' AND {stat_col} IS NOT NULL AND {stat_col} {cmp} ?",
-            (player_val,),
-        ).fetchone()["rank"]
-        results[stat_col] = {"value": player_val, "rank": int(rank), "label": stat_label}
-    return results
-
-
-
-# Position-aware stat columns for the ESPN-style 4-stat rank card.
-# Each position has 4 stats ordered by draft-relevance. For NFL, these map
-# directly to player_stats columns that already exist on the canonical table.
-_NFL_RANK_STATS = {
-    "QB": [        # Passing-first position
-        ("pass_yds_g", "Pass Yds/G"),
-        ("pass_td", "Pass TD"),
-        ("interceptions", "INT"),
-        ("cmp_g", "Cmp/G"),
-    ],
-    "RB": [        # Rushing + receiving hybrid
-        ("rush_yds_g", "Rush Yds/G"),
-        ("carries_g", "Carries/G"),
-        ("rec_yds_g", "Rec Yds/G"),
-        ("fantasy_ppr_g", "PPR/G"),
-    ],
-    "WR": [        # Receiving first, volume stats second
-        ("rec_yds_g", "Rec Yds/G"),
-        ("targets", "Targets"),
-        ("receptions", "Receptions"),
-        ("fantasy_ppr_g", "PPR/G"),
-    ],
-    "TE": [        # Same as WR but fewer eligible
-        ("rec_yds_g", "Rec Yds/G"),
-        ("targets", "Targets"),
-        ("receptions", "Receptions"),
-        ("fantasy_ppr_g", "PPR/G"),
-    ],
-}
-# Stats that use ASC (lower = better) for ranking.
-_RANK_ASC = frozenset(["interceptions"])
-
-
-def _compute_stat_ranks(con, player_id, league, position, season):
-    """Compute league-wide rank for the 4 position-relevant stats.
-    
-    Returns a dict: {stat_key: {"value": ..., "rank": int}}
-    """
-    if league != "nfl":
-        return {}
-    
-    rank_stats = _NFL_RANK_STATS.get(position)
-    if not rank_stats:
-        return {}
-    
-    results = {}
-    for stat_col, stat_label in rank_stats:
-        # Get player's value
-        row = con.execute(f"SELECT {stat_col} AS val FROM player_stats WHERE player_id=? AND league='nfl' AND stat_type='weekly'", (player_id,)).fetchone()
-        if row is None or row["val"] is None:
-            continue
-        player_val = float(row["val"])
-        
-        # Compute rank: count players with a strictly "better" rank
-        order = "DESC" if stat_col not in _RANK_ASC else "ASC"
-        if order == "DESC":
-            rank = con.execute(
-                f"SELECT COUNT(*) + 1 AS rank FROM player_stats ps2 WHERE ps2.league='nfl' AND ps2.stat_type='weekly' AND ps2.{stat_col} IS NOT NULL AND ps2.{stat_col} > ?",
-                (player_val,),
-            ).fetchone()["rank"]
-        else:
-            rank = con.execute(
-                f"SELECT COUNT(*) + 1 AS rank FROM player_stats ps2 WHERE ps2.league='nfl' AND ps2.stat_type='weekly' AND ps2.{stat_col} IS NOT NULL AND ps2.{stat_col} < ?",
-                (player_val,),
-            ).fetchone()["rank"]
-        
-        results[stat_col] = {
-            "value": player_val,
-            "rank": int(rank),
-            "label": stat_label,
-        }
-    
-    return results
 
 
 @router.get("/api/player/{player_id}")
@@ -387,8 +256,12 @@ def player_profile(player_id: int):
                             ),
                             "home": is_home,
                         })
-        # Pre-compute ESPN-style 4-stat rank card data while DB is open.
-        stat_ranks = _compute_stat_ranks(con, p["id"], league, p["position"], season)
+        rank_context = (
+            nfl_player_rank_context(
+                con, p["id"], p["position"], season
+            )
+            if league == "nfl" else {"season": None, "games": None, "stats": {}}
+        )
 
         props = con.execute(
             """SELECT market, side, line, MAX(captured_at) ca FROM props
@@ -448,7 +321,9 @@ def player_profile(player_id: int):
         "preseason_recent_games": preseason_recent,
         "nfl_schedule_games": nfl_schedule_games,
         "projections": projections,
-        "stat_ranks": stat_ranks,
+        "stat_ranks": rank_context["stats"],
+        "stat_rank_season": rank_context["season"],
+        "stat_rank_games": rank_context["games"],
         "props": [{"market": _base_market(x["market"]), "side": x["side"], "line": x["line"]} for x in props],
         "season_stats": season_stats,
         "coverage": {

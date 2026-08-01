@@ -54,6 +54,7 @@ class PlayerProfileApiTests(unittest.TestCase):
             );
             CREATE TABLE player_stats(
               player_id INTEGER, season INTEGER, league TEXT, stat_type TEXT,
+              source TEXT, games INTEGER,
               pass_yds_g REAL, pass_td INTEGER, interceptions INTEGER, cmp_g REAL,
               carries_g REAL, rush_yds_g REAL, rec_yds_g REAL, targets INTEGER,
               receptions INTEGER, fantasy_ppr_g REAL

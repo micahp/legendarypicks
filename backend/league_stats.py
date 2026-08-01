@@ -20,7 +20,7 @@ class LeagueStatContractError(ValueError):
 
 
 _SEASON_STAT_LEAGUES = frozenset(("nba", "nfl", "nhl"))
-_DERIVED_ROLLUP_LEAGUES = frozenset(("nfl",))
+_DERIVED_ROLLUP_LEAGUES = frozenset()
 
 PLAYER_STATS_TABLE_SQL = """
 CREATE TABLE IF NOT EXISTS player_stats(
@@ -143,7 +143,7 @@ def source_owns_stats(
             return normalized_source == "hoopR"
         return normalized_source == "espn_core"
     if normalized_league == "nfl":
-        return normalized_source == "nflverse_weekly_rollup"
+        return normalized_source == "nflverse_regular_season"
     return False
 
 
@@ -166,7 +166,7 @@ def canonical_population_sql(
     elif normalized_league == "nhl":
         clause += f" AND {prefix}source='nhle.com'"
     elif normalized_league == "nfl":
-        clause += f" AND {prefix}source='nflverse_weekly_rollup'"
+        clause += f" AND {prefix}source='nflverse_regular_season'"
     elif normalized_league == "nba":
         clause += (
             f" AND (({prefix}season<=2023 AND {prefix}source='hoopR') "

@@ -152,7 +152,9 @@ class TestNflMockDraft(unittest.TestCase):
                     player_id INTEGER,
                     league TEXT,
                     stat_type TEXT,
+                    source TEXT,
                     season INTEGER,
+                    games INTEGER,
                     pass_yds_g REAL,
                     pass_td INTEGER,
                     interceptions INTEGER,
@@ -208,6 +210,17 @@ class TestNflMockDraft(unittest.TestCase):
                     (1, 1001, 2026, 321.4),
                     (2, 1002, 2026, 287.6),
                     (3, 1003, 2026, None),
+                ],
+            )
+            connection.executemany(
+                """INSERT INTO player_stats(
+                     player_id,player_name,team,league,stat_type,source,season,games,
+                     carries_g,rush_yds_g,rec_yds_g,targets,receptions,
+                     fantasy_ppr_g
+                   ) VALUES(?,?,?,'nfl','season','nflverse_regular_season',2025,?,?,?,?,?,?,?)""",
+                [
+                    (1, "Alpha RB", "KC", 12, 17.0, 75.0, 25.0, 45, 35, 18.0),
+                    (6, "Zeta RB", "DAL", 17, 15.0, 60.0, 30.0, 55, 40, 15.0),
                 ],
             )
             connection.execute(
@@ -407,6 +420,9 @@ class TestNflMockDraft(unittest.TestCase):
         self.assertEqual(body["season_totals"]["passer_rating"], 104.2)
         self.assertEqual(body["season_totals"]["adj_qbr"], 72.1)
         self.assertEqual(body["season_totals"]["ppr_points"], 120.0)
+        self.assertEqual(body["stat_rank_season"], 2025)
+        self.assertEqual(body["stat_rank_games"], 12)
+        self.assertEqual(body["stat_ranks"]["rush_yds_g"]["rank"], 1)
 
     def test_player_detail_keeps_profile_fields_null_on_legacy_row(self):
         resp = client.get("/api/nfl/draft/player/2")

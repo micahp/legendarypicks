@@ -100,7 +100,7 @@ def insert_row(path, player_id, name, league, season, games, stat_type=None, val
         elif league == "nhl":
             source = "nhle.com"
         elif league == "nfl":
-            source = "nflverse_weekly_rollup"
+            source = "nflverse_regular_season"
         elif season <= 2023:
             source = "hoopR"
         else:

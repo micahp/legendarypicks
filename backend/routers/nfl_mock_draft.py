@@ -20,6 +20,11 @@ from typing import Optional
 
 from fastapi import APIRouter, Header, Query, Request
 from fastapi.responses import JSONResponse, Response
+from nfl_rankings import (
+    NFL_RANK_STATS,
+    nfl_player_rank_context,
+    nfl_player_stat_ranks_batch,
+)
 from ppr_scoring import STAT_IDS, normalize_stats
 
 from .nfl_offseason import (
@@ -86,35 +91,6 @@ def _clear_pool_cache():
         _pool_cache.clear()
 
 
-_NFL_RANK_STATS = {
-    "QB": [
-        ("pass_yds_g", "Pass Yds/G"),
-        ("pass_td", "Pass TD"),
-        ("interceptions", "INT"),
-        ("cmp_g", "Cmp/G"),
-    ],
-    "RB": [
-        ("rush_yds_g", "Rush Yds/G"),
-        ("carries_g", "Carries/G"),
-        ("rec_yds_g", "Rec Yds/G"),
-        ("fantasy_ppr_g", "PPR/G"),
-    ],
-    "WR": [
-        ("rec_yds_g", "Rec Yds/G"),
-        ("targets", "Targets"),
-        ("receptions", "Receptions"),
-        ("fantasy_ppr_g", "PPR/G"),
-    ],
-    "TE": [
-        ("rec_yds_g", "Rec Yds/G"),
-        ("targets", "Targets"),
-        ("receptions", "Receptions"),
-        ("fantasy_ppr_g", "PPR/G"),
-    ],
-}
-_RANK_ASC = frozenset(["interceptions"])
-
-
 def _named_stat_line(raw_json, *, include_actual_first_downs=False):
     """Normalize a stored ESPN stat map into the overlay's stable vocabulary."""
     if not raw_json:
@@ -174,43 +150,6 @@ def _named_stat_line(raw_json, *, include_actual_first_downs=False):
         "def_points_allowed": get("def_points_allowed"),
         "def_yds_allowed": get("def_yds_allowed"),
     }
-
-
-def _player_stat_ranks_batch(connection):
-    """Rank card for EVERY player, one query per stat (~4 total).
-
-    RANK() OVER (ORDER BY ...) is the same competition ranking the per-player
-    COUNT(*) + 1 computed — ties share the higher rank with gaps — so the
-    numbers are identical, only the query count changes: at pool size the old
-    per-player loop ran ~17,000 COUNT queries against player_stats (O(N^2) as
-    that table grows); this is 4 full scans.
-    """
-    if not _table_columns(connection, "player_stats"):
-        return {}
-    stat_labels = {
-        col: label
-        for pos_stats in _NFL_RANK_STATS.values()
-        for col, label in pos_stats
-    }
-    ranks: dict[tuple[int, str], dict] = {}
-    for stat_col in stat_labels:
-        order = "ASC" if stat_col in _RANK_ASC else "DESC"
-        for row in connection.execute(
-            f"""SELECT player_id, {stat_col} AS val,
-                       RANK() OVER (ORDER BY {stat_col} {order}) AS rank
-                FROM player_stats
-                WHERE league='nfl' AND stat_type='weekly'
-                  AND {stat_col} IS NOT NULL"""
-        ):
-            ranks[(row["player_id"], stat_col)] = {
-                "value": float(row["val"]),
-                "rank": int(row["rank"]),
-                "label": stat_labels[stat_col],
-            }
-    by_player: dict[int, dict] = {}
-    for (pid, stat_col), entry in ranks.items():
-        by_player.setdefault(pid, {})[stat_col] = entry
-    return by_player
 
 
 # Draftable positions: skill positions, kickers, and team defenses.
@@ -500,7 +439,9 @@ def pool(season: int = Query(...)):
 
         # ESPN-style 4-stat rank card for the whole pool, computed once
         # (4 queries) instead of once per player (~17,000 at pool size).
-        pool_rank_map = _player_stat_ranks_batch(connection) if rows else {}
+        pool_rank_map = (
+            nfl_player_stat_ranks_batch(connection, _log_season) if rows else {}
+        )
 
         players = []
         for row in rows:
@@ -600,7 +541,7 @@ def pool(season: int = Query(...)):
             # once for the whole pool (v0.7.0: 4 queries, not 17,000).
             stat_ranks = {
                 col: entry
-                for col, _ in _NFL_RANK_STATS.get(pos, [])
+                for col, _ in NFL_RANK_STATS.get(pos, ())
                 for entry in [pool_rank_map.get(pid, {}).get(col)]
                 if entry is not None
             }
@@ -1149,6 +1090,9 @@ def player_detail(player_id: int):
         ).fetchone()
         _log_season = (_log_season_row[0] if _log_season_row and _log_season_row[0]
                        else _CURRENT_SEASON - 1)
+        rank_context = nfl_player_rank_context(
+            connection, player_id, position, _log_season
+        )
         availability_by_player = _availability_aggregates(
             connection, _log_season
         )
@@ -1335,6 +1279,9 @@ def player_detail(player_id: int):
             "season_outlook_source": season_outlook_source,
             "season_totals": season_totals,
             "season_totals_source": season_totals_source,
+            "stat_ranks": rank_context["stats"],
+            "stat_rank_season": rank_context["season"],
+            "stat_rank_games": rank_context["games"],
             "percent_owned": percent_owned,
             "sample": sample,
             "has_prior_nfl_sample": has_prior_nfl_sample,

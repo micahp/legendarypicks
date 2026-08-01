@@ -86,15 +86,20 @@ class UnifiedLeagueStatsTests(unittest.TestCase):
         self.assertTrue(
             source_owns_stats("nba", "season", 2026, "espn_core")
         )
+        self.assertTrue(
+            source_owns_stats(
+                "nfl", "season", 2025, "nflverse_regular_season"
+            )
+        )
         self.assertFalse(source_owns_stats("nhl", "season", 20252026, "derived"))
         self.assertFalse(source_owns_stats("mlb", "batting", 2026, "mlb_statsapi"))
 
-    def test_only_nfl_uses_the_current_rollup_writer(self):
+    def test_all_season_stat_derivation_is_retired(self):
         self.assertFalse(supports_derived_stats("nba"))
-        self.assertTrue(supports_derived_stats("nfl"))
+        self.assertFalse(supports_derived_stats("nfl"))
         self.assertFalse(supports_derived_stats("nhl"))
         with self.assertRaisesRegex(
-            LeagueStatContractError, "publisher-owned"
+            LeagueStatContractError, "derivation is retired"
         ):
             derive_player_stats.derive_league(self.path, "nhl")
 
@@ -225,7 +230,7 @@ class UnifiedLeagueStatsTests(unittest.TestCase):
         connection.execute(PLAYER_STATS_TABLE_SQL)
         return path, connection
 
-    def test_nfl_rollup_excludes_explicit_and_legacy_postseason(self):
+    def test_nfl_log_rollup_is_retired(self):
         path, connection = self._nfl_rollup_fixture()
         connection.execute(
             """INSERT INTO players(
@@ -250,18 +255,17 @@ class UnifiedLeagueStatsTests(unittest.TestCase):
         connection.commit()
         connection.close()
 
-        derive_player_stats.derive_league(path, "nfl")
+        with self.assertRaises(LeagueStatContractError):
+            derive_player_stats.derive_league(path, "nfl")
 
         with sqlite3.connect(path) as check:
-            row = check.execute(
-                """SELECT games,fantasy_ppr_g,source
-                   FROM player_stats WHERE player_id=1"""
-            ).fetchone()
-        self.assertEqual(
-            row, (2, 15.0, "nflverse_weekly_rollup")
-        )
+            self.assertIsNone(
+                check.execute(
+                    "SELECT 1 FROM player_stats WHERE player_id=1"
+                ).fetchone()
+            )
 
-    def test_nfl_rollup_rolls_back_every_player_on_bad_log(self):
+    def test_retired_nfl_rollup_preserves_existing_rows(self):
         path, connection = self._nfl_rollup_fixture()
         connection.executemany(
             """INSERT INTO players(
@@ -277,7 +281,7 @@ class UnifiedLeagueStatsTests(unittest.TestCase):
                  player_id,player_name,league,team,stat_type,season,
                  games,fantasy_ppr_g,source
                ) VALUES(1,'Last Good','nfl','BUF','season',2025,
-                        9,9.0,'nflverse_weekly_rollup')"""
+                        9,9.0,'legacy_derived')"""
         )
         connection.executemany(
             """INSERT INTO player_game_logs(
@@ -298,7 +302,7 @@ class UnifiedLeagueStatsTests(unittest.TestCase):
         connection.commit()
         connection.close()
 
-        with self.assertRaises(ValueError):
+        with self.assertRaises(LeagueStatContractError):
             derive_player_stats.derive_league(path, "nfl")
 
         with sqlite3.connect(path) as check:

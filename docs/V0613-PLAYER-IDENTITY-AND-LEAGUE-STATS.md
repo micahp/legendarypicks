@@ -134,11 +134,11 @@ Approved owners are:
 | MLB | batting or pitching | Statcast |
 | NBA through 2023 | season | hoopR |
 | NBA after 2023 | season | ESPN published regular-season player table |
-| NFL | season | nflverse weekly rollup |
+| NFL | season | nflverse published regular-season summary |
 | NHL | season | NHL API |
 
-NBA and NHL no longer share a second derived display writer. The NFL
-compatibility rollup is the only remaining `derive_player_stats.py` owner.
+No league retains a derived display writer. NFL copies the published
+`stats_player_reg` artifact through `ingest_nfl_season_stats.py`.
 
 Collectors resolve source-native IDs to one canonical `players.id`. A miss or
 duplicate source ID is queued; a stat/log collector does not create a player.

@@ -83,6 +83,16 @@ _DRAFT_CACHE_SOURCES = (
         (),
         ("off_snaps", "off_pct", "def_snaps", "def_pct", "st_snaps", "st_pct"),
     ),
+    (
+        "player_stats",
+        "league='nfl' AND stat_type='season'",
+        (),
+        (
+            "season", "games", "pass_yds_g", "pass_td", "interceptions",
+            "cmp_g", "carries_g", "rush_yds_g", "receptions",
+            "rec_yds_g", "targets", "fantasy_ppr_g",
+        ),
+    ),
 )
 
 

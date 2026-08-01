@@ -572,7 +572,7 @@ def _nfl_stats_for_position(stats: dict, position):
 
 
 def _get_nfl_stats(player_name: str, player_id: int, now: float):
-    """Pull the canonical NFL weekly-artifact season rollup."""
+    """Pull the canonical published NFL regular-season totals."""
     import os, sqlite3 as sq
 
     try:

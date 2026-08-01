@@ -130,9 +130,10 @@ failure mode here is shipping code whose data isn't in the prod DB (the empty-DB
      consistent SQLite online backup of
      `picks.db`, then transactionally replaces only `ufc_rankings`. It is safe to re-run and never
      touches props or other production tables.
-   - `LP_DB_PATH=/absolute/path/to/picks.db venv/bin/python derive_player_stats.py nfl`
-     — re-derive only NFL `player_stats` from the copied logs. Omitting `nfl`
-     also rewrites NBA and NHL aggregates and is outside an NFL-only promotion.
+   - `venv/bin/python ingest_nfl_season_stats.py --year 2025 --cache-dir /absolute/artifact/dir --db /absolute/path/to/picks.db --apply`
+     — atomically publish NFL `player_stats` from nflverse's checksummed
+     regular-season summary. Run once without `--apply` first and record the
+     source/resolved counts and checksum. Never reconstruct these totals from logs.
    - (NBA opponent splits: `backfill_nba_opponent.py` if logs lack `opponent`/`home_away`.)
    - **Verify the NFL candidate before deploying code:** `PRAGMA quick_check`
      is `ok`; 19,399 identity-bearing 2025 NFL logs; 562 rows carry
@@ -142,7 +143,8 @@ failure mode here is shipping code whose data isn't in the prod DB (the empty-DB
      zero pool/board availability disagreements; zero orphan/duplicate
      natural keys; pre-existing snap/NGS enrichment unchanged; and
      `props`, `prop_results`, `prop_games` unchanged by count and content hash.
-     Also verify `player_stats` is current and UFC rankings contain both P4P
+     Also verify `player_stats` has the exact resolved regular-season source
+     count under `source='nflverse_regular_season'`, and UFC rankings contain both P4P
      groups plus all 11 weight divisions.
 5. **Deploy.** The backend container needs the DeepSeek key (it can't read the host's
    `/root/.hermes/.env`), so pass it at up-time — it's never stored in the repo:

@@ -36,6 +36,8 @@ class NflOffseasonApiTests(unittest.TestCase):
                   player_name TEXT,
                   league TEXT,
                   team TEXT,
+                  stat_type TEXT,
+                  source TEXT,
                   season INTEGER,
                   games INTEGER,
                   nfl_position TEXT,
@@ -102,11 +104,11 @@ class NflOffseasonApiTests(unittest.TestCase):
                 ],
             )
             connection.executemany(
-                "INSERT INTO player_stats VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                "INSERT INTO player_stats VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                 [
-                    (1, "Alias Receiver", "nfl", "LA", 2025, 16, "WR", "LA", 22.4, 16.1, 0.0, 1.2, 101.2, 160, 120, 0.2),
-                    (2, "Actual Mover", "nfl", "ARI", 2025, 15, "QB", "ARI", 19.8, 19.8, 251.0, 34.2, 0.0, 0, 0, 5.4),
-                    (3, "Inactive Back", "nfl", "DAL", 2025, 17, "RB", "DAL", 18.0, 14.0, 0.0, 82.0, 25.0, 50, 40, 15.0),
+                    (1, "Alias Receiver", "nfl", "LA", "season", "nflverse_regular_season", 2025, 16, "WR", "LA", 22.4, 16.1, 0.0, 1.2, 101.2, 160, 120, 0.2),
+                    (2, "Actual Mover", "nfl", "ARI", "season", "nflverse_regular_season", 2025, 15, "QB", "ARI", 19.8, 19.8, 251.0, 34.2, 0.0, 0, 0, 5.4),
+                    (3, "Inactive Back", "nfl", "DAL", "season", "nflverse_regular_season", 2025, 17, "RB", "DAL", 18.0, 14.0, 0.0, 82.0, 25.0, 50, 40, 15.0),
                 ],
             )
             # Alias Receiver played 16 of 17; Actual Mover only 8, plus one
