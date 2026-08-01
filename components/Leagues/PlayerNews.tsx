@@ -142,16 +142,9 @@ export default function PlayerNews({ playerId, compact = false }: Props) {
           className={`rounded-lg border border-zinc-800 bg-zinc-900/50 ${compact ? 'p-3 space-y-1.5' : 'p-4 space-y-2'}`}
         >
           <div className="flex items-start gap-2">
-            <a
-              href={article.link}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex-1 min-w-0"
-            >
-              <h4 className={`${compact ? 'text-xs' : 'text-sm'} font-semibold text-zinc-100 hover:text-emerald-400 transition-colors`}>
-                {article.headline}
-              </h4>
-            </a>
+            <h4 className={`flex-1 min-w-0 ${compact ? 'text-xs' : 'text-sm'} font-semibold text-zinc-100`}>
+              {article.headline}
+            </h4>
             {article.injury_status && (
               <span className={`shrink-0 rounded bg-red-500/10 px-1.5 py-0.5 ${compact ? 'text-[9px]' : 'text-[10px]'} font-bold text-red-400 uppercase`}>
                 {article.injury_status}

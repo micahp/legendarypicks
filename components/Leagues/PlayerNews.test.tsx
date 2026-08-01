@@ -65,6 +65,7 @@ describe('PlayerNews', () => {
     expect(screen.getByText('Fantasy Spin')).toBeTruthy()
     expect(screen.getByText('Estimated return: Aug 13')).toBeTruthy()
     expect(screen.getByText('Source: RotoWire')).toBeTruthy()
+    expect(screen.queryByRole('link')).toBeNull()
   })
 
   it('distinguishes a source outage from a player with no news', async () => {
