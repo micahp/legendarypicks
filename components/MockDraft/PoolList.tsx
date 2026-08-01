@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useRef, useCallback } from 'react'
 import type { PoolPlayer } from '../Leagues/types'
 import { AvailabilityStrip } from '../Leagues/NflDraftRoom'
 import PlayerDetailOverlay from '../Leagues/PlayerDetailOverlay'
@@ -43,6 +43,11 @@ function firstPicksForSeat(seat: number, teams: number, howMany = 4): number[] {
   }
   return picks
 }
+
+// Virtualization constants — keep DOM footprint ~25 rows regardless of pool size.
+const ROW_HEIGHT = 48       // px: py-2.5 (20px) + text content (~28px)
+const OVERSCAN = 10         // rows to render above/below visible window
+const CONTAINER_MAX_H = 600 // px: scrollable container height
 
 /**
  * The mock-draft pool list. ~300 players, each row reuses DraftPlayerRow
@@ -200,41 +205,14 @@ export default function PoolList({
           the pre-draft and in-draft views never disagree about a player. Bye week
           deliberately stays in the draft room: here the question is what is in the
           pool, there it is who to pick, and a bye only matters against a roster. */}
-      <div className="overflow-x-auto rounded-xl border border-zinc-800 bg-zinc-900 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-zinc-800 text-zinc-500 text-[11px] uppercase tracking-wider">
-              <th className="text-left py-3 pl-4 pr-2 w-10">#</th>
-              <th className="text-left py-3 px-2">Player</th>
-              <th className="text-center py-3 px-2">Pos</th>
-              <th className="text-left py-3 px-2 min-w-[9.5rem]">
-                Available
-                <span className="ml-1 font-normal normal-case tracking-normal text-zinc-600">
-                  by team schedule
-                </span>
-              </th>
-              <th className="text-right py-3 px-2 w-16" title={headlineStat.title}>{headlineStat.header}</th>
-              <th className="text-right py-3 px-2 w-20" title={expectedPtsTitle(referenceSeason)}>
-                {EXPECTED_PTS_HEADER}
-              </th>
-              <th className="text-right py-3 px-2">ADP</th>
-              <th className="text-right py-3 px-2">Owned</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map(row => (
-              <PoolRow
-                key={row.player_id}
-                row={row}
-                player={playerMap.get(row.player_id)}
-                posRank={posRank.get(row.player_id)}
-                referenceSeason={referenceSeason}
-                onSelect={() => setSelectedPlayerId(row.player_id)}
-              />
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <VirtualPoolTable
+        rows={rows}
+        playerMap={playerMap}
+        posRank={posRank}
+        headlineStat={headlineStat}
+        referenceSeason={referenceSeason}
+        onSelect={setSelectedPlayerId}
+      />
 
       {selectedPlayerId != null && (
         <PlayerDetailOverlay
@@ -344,5 +322,86 @@ function PoolRow({
         {row.percent_owned != null ? `${row.percent_owned.toFixed(1)}%` : '—'}
       </td>
     </tr>
+  )
+}
+
+/** Virtualized table — renders only visible rows + overscan (~25 DOM nodes)
+ *  instead of all 11,515. Spacer divs maintain native scrollbar behaviour. */
+function VirtualPoolTable({
+  rows,
+  playerMap,
+  posRank,
+  headlineStat,
+  referenceSeason,
+  onSelect,
+}: {
+  rows: ReturnType<typeof poolToDraftRow>[]
+  playerMap: Map<number, PoolPlayer>
+  posRank: Map<number, number>
+  headlineStat: ReturnType<typeof headlineStatFor>
+  referenceSeason?: number | null
+  onSelect: (id: number) => void
+}) {
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [scrollTop, setScrollTop] = useState(0)
+  const [containerHeight, setContainerHeight] = useState(CONTAINER_MAX_H)
+
+  // Measure container on mount so we know how many rows can fit.
+  const measuredRef = useCallback((node: HTMLDivElement | null) => {
+    ;(containerRef as React.MutableRefObject<HTMLDivElement | null>).current = node
+    if (node) setContainerHeight(node.clientHeight)
+  }, [])
+
+  const totalHeight = rows.length * ROW_HEIGHT
+  const startIdx = Math.max(0, Math.floor(scrollTop / ROW_HEIGHT) - OVERSCAN)
+  const visibleCount = Math.ceil(containerHeight / ROW_HEIGHT) + OVERSCAN * 2
+  const endIdx = Math.min(rows.length, startIdx + visibleCount)
+  const visibleRows = rows.slice(startIdx, endIdx)
+  const topSpacer = startIdx * ROW_HEIGHT
+  const bottomSpacer = Math.max(0, totalHeight - endIdx * ROW_HEIGHT)
+
+  return (
+    <div
+      ref={measuredRef}
+      className="overflow-auto rounded-xl border border-zinc-800 bg-zinc-900 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      style={{ maxHeight: CONTAINER_MAX_H }}
+      onScroll={e => setScrollTop((e.target as HTMLDivElement).scrollTop)}
+    >
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="border-b border-zinc-800 text-zinc-500 text-[11px] uppercase tracking-wider sticky top-0 bg-zinc-900 z-10">
+            <th className="text-left py-3 pl-4 pr-2 w-10">#</th>
+            <th className="text-left py-3 px-2">Player</th>
+            <th className="text-center py-3 px-2">Pos</th>
+            <th className="text-left py-3 px-2 min-w-[9.5rem]">
+              Available
+              <span className="ml-1 font-normal normal-case tracking-normal text-zinc-600">
+                by team schedule
+              </span>
+            </th>
+            <th className="text-right py-3 px-2 w-16" title={headlineStat.title}>{headlineStat.header}</th>
+            <th className="text-right py-3 px-2 w-20" title={expectedPtsTitle(referenceSeason)}>
+              {EXPECTED_PTS_HEADER}
+            </th>
+            <th className="text-right py-3 px-2">ADP</th>
+            <th className="text-right py-3 px-2">Owned</th>
+          </tr>
+        </thead>
+        <tbody>
+          {topSpacer > 0 && <tr style={{ height: topSpacer }} />}
+          {visibleRows.map(row => (
+            <PoolRow
+              key={row.player_id}
+              row={row}
+              player={playerMap.get(row.player_id)}
+              posRank={posRank.get(row.player_id)}
+              referenceSeason={referenceSeason}
+              onSelect={() => onSelect(row.player_id)}
+            />
+          ))}
+          {bottomSpacer > 0 && <tr style={{ height: bottomSpacer }} />}
+        </tbody>
+      </table>
+    </div>
   )
 }
