@@ -844,12 +844,12 @@ not pushed or deployed.
 
 ## 2026-08-01 — Fantasy-news scope correction (supersedes 2026-07-31 surface parity)
 
-Commit `fe1f296` corrects the product boundary that `f4e05fb` and `888fb51`
-got wrong:
+Commits `fe1f296` and `9842792` correct the product boundary that `f4e05fb`
+and `888fb51` got wrong:
 
 - `/player/[id]` is a general player-detail surface. Its News tab again uses
   ESPN general reporting through `/api/player/{id}/news`; it does not render
-  RotoWire fantasy analysis.
+  RotoWire fantasy analysis or ESPN's fantasy vertical.
 - The mock-draft player overlay is the fantasy context. It alone consumes
   `/api/player/{id}/fantasy-news` and renders RotoWire notes and Fantasy Spin.
 - ESPN search results are accepted only when ESPN resolves the query to exactly
