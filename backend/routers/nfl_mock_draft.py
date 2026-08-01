@@ -286,7 +286,7 @@ def pool(season: int = Query(...)):
 
         # ── DEF: all 32, guaranteed a slot ──
         def_rows = connection.execute(
-            """SELECT p.id AS player_id, p.name, p.position, p.team,
+            """SELECT p.id AS player_id, p.name, p.position, p.team, p.injury_status, p.last_news_date,
                       na.adp, na.percent_owned
                FROM players p
                JOIN nfl_adp na ON na.player_id = p.id AND na.season = ?
@@ -301,7 +301,7 @@ def pool(season: int = Query(...)):
         non_def_rows: list = []
         if _non_def_cap > 0:
             non_def_rows = connection.execute(
-                f"""SELECT p.id AS player_id, p.name, p.position, p.team,
+                f"""SELECT p.id AS player_id, p.name, p.position, p.team, p.injury_status, p.last_news_date,
                            na.adp, na.percent_owned
                     FROM players p
                     JOIN nfl_adp na ON na.player_id = p.id AND na.season = ?
@@ -455,6 +455,8 @@ def pool(season: int = Query(...)):
                 "name": row["name"],
                 "position": pos,
                 "team": row["team"],
+                "injury_status": row["injury_status"],
+                "last_news_date": row["last_news_date"],
                 "adp": row["adp"],
                 "percent_owned": row["percent_owned"],
                 "sample": sample,
@@ -865,7 +867,7 @@ def player_detail(player_id: int):
     try:
         # 1. Player lookup
         player = connection.execute(
-            "SELECT id, name, team, position, active FROM players WHERE id=? AND league='nfl'",
+            "SELECT id, name, team, position, active, injury_status, last_news_date FROM players WHERE id=? AND league='nfl'",
             (player_id,),
         ).fetchone()
 
@@ -876,6 +878,8 @@ def player_detail(player_id: int):
         team = player["team"]
         position = player["position"]
         active = bool(player["active"])
+        injury_status = player["injury_status"]
+        last_news_date = player["last_news_date"]
 
         # 2. ADP / percent owned from nfl_adp
         adp = None
@@ -1074,6 +1078,8 @@ def player_detail(player_id: int):
             "dst_pts_total": dst_pts_total,
             "dst_pts_per_game": dst_pts_per_game,
             "qb": qb,
+            "injury_status": injury_status,
+            "last_news_date": last_news_date,
         })
     finally:
         connection.close()

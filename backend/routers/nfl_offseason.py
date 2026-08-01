@@ -1138,7 +1138,7 @@ def nfl_draft_board(
             "player_id": pid,
             "name": row["name"],
             "position": row["position"],
-            "current_team": normalize("nfl", row["current_team"]),
+            "current_team": normalize_optional("nfl", row["current_team"]),
             "primary_team": primary_team,
             # Current role, from the published depth chart. This is what a rookie
             # has instead of a season.

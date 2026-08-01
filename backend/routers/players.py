@@ -455,6 +455,70 @@ def player_projections(player_id: int,
     return {**base, "projections": projections}
 
 
+@router.get("/api/player/{player_id}/news")
+def player_news(player_id: int,
+                limit: int = Query(10, ge=1, le=25)):
+    """Fetch recent NFL news for a player from ESPN's public news API.
+    Filters by athlete ID from our player's espn_id field.
+    """
+    import urllib.request
+    import gzip
+    import json as _json
+    
+    with closing(_db()) as con:
+        p = con.execute("SELECT id, name, espn_id, league FROM players WHERE id=?", (player_id,)).fetchone()
+        if not p:
+            raise HTTPException(404, "Player not found")
+        if p["league"] != "nfl":
+            return {"player_id": player_id, "name": p["name"], "articles": []}
+        espn_id = p["espn_id"]
+        if not espn_id:
+            return {"player_id": player_id, "name": p["name"], "articles": []}
+    
+    # Fetch from ESPN's site API
+    url = f"https://site.api.espn.com/apis/site/v2/sports/football/nfl/news?limit=200"
+    try:
+        req = urllib.request.Request(url, headers={"Accept-Encoding": "gzip, deflate"})
+        with urllib.request.urlopen(req, timeout=8) as resp:
+            raw = resp.read()
+            # Handle gzip compression
+            encoding = resp.headers.get("Content-Encoding", "")
+            if "gzip" in encoding:
+                raw = gzip.decompress(raw)
+            data = _json.loads(raw.decode())
+    except Exception:
+        return {"player_id": player_id, "name": p["name"], "articles": []}
+    
+    articles = []
+    for article in data.get("articles", []):
+        # Check if this article mentions our athlete via categories
+        athlete_found = False
+        for cat in article.get("categories", []):
+            if cat.get("type") == "athlete":
+                athlete = cat.get("athlete", {})
+                if str(athlete.get("id")) == str(espn_id):
+                    athlete_found = True
+                    break
+        if athlete_found:
+            articles.append({
+                "id": article.get("id"),
+                "headline": article.get("headline"),
+                "description": article.get("description"),
+                "published": article.get("published"),
+                "lastModified": article.get("lastModified"),
+                "link": article.get("links", {}).get("web", {}).get("href"),
+                "images": [
+                    {"url": img.get("url"), "caption": img.get("caption")}
+                    for img in article.get("images", [])
+                    if img.get("type") == "header" and img.get("url")
+                ][:1],
+            })
+        if len(articles) >= limit:
+            break
+    
+    return {"player_id": player_id, "name": p["name"], "articles": articles}
+
+
 @router.get("/api/player/{player_id}/stats")
 def player_stats(player_id: int,
                  league: str = Query("mlb"),
