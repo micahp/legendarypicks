@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import type { PlayerDetailResponse } from './types'
+import type { NflPlayerStatLine, PlayerDetailResponse } from './types'
 import { AvailabilityStrip } from './NflDraftRoom'
 import StatRankCard from './StatRankCard'
 import PlayerGameLog from './PlayerGameLog'
@@ -51,7 +51,7 @@ export default function PlayerDetailOverlay({
   const [player, setPlayer] = useState<PlayerDetailResponse | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [tab, setTab] = useState<'overview' | 'log' | 'news'>('overview')
+  const [tab, setTab] = useState<'overview' | 'log' | 'news' | 'projections'>('overview')
 
   useEffect(() => {
     let cancelled = false
@@ -203,14 +203,9 @@ export default function PlayerDetailOverlay({
               </div>
             </header>
 
-            {/* ── Tabs ──────────────────────────────────────────────────────
-                Two views because they answer different questions. Overview is
-                "what is this player worth"; the log is "how did he get there",
-                which a season average cannot show — a 12 PPR/g average hides
-                whether he was rising or falling all year. */}
-
-                        <div className="flex gap-1 border-b border-zinc-800" role="tablist">
-              {([['overview', 'Overview'], ['log', 'Game log'], ['news', 'News']] as const).map(([id, label]) => (
+            {/* ── Tabs ────────────────────────────────────────────────────── */}
+            <div className="flex gap-1 overflow-x-auto border-b border-zinc-800" role="tablist">
+              {([['overview', 'Overview'], ['log', 'Game log'], ['news', 'News'], ['projections', 'Projections']] as const).map(([id, label]) => (
                 <button
                   key={id}
                   type="button"
@@ -236,6 +231,50 @@ export default function PlayerDetailOverlay({
               </div>
             )}
 
+            {tab === 'projections' && (
+              <div className="space-y-5 py-1">
+                <section className="space-y-2">
+                  <h3 className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
+                    Season Outlook
+                  </h3>
+                  {player.season_outlook ? (
+                    <div className="rounded-lg border border-zinc-800 bg-zinc-800/40 px-3 py-3">
+                      <p className="text-sm leading-6 text-zinc-300">
+                        {player.season_outlook}
+                      </p>
+                      <p className="mt-2 text-[10px] uppercase tracking-wider text-zinc-600">
+                        ESPN Outlook
+                      </p>
+                    </div>
+                  ) : (
+                    <p className="rounded-lg border border-zinc-800 bg-zinc-800/40 px-3 py-3 text-sm text-zinc-500">
+                      No ESPN season outlook published.
+                    </p>
+                  )}
+                </section>
+
+                <section className="space-y-2">
+                  <div className="flex items-baseline justify-between gap-3">
+                    <h3 className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
+                      2026 Projection
+                    </h3>
+                    <span className="font-mono text-sm font-semibold tabular-nums text-zinc-200">
+                      PPR {player.proj_2026_pts != null ? player.proj_2026_pts.toFixed(1) : '\u2014'}
+                    </span>
+                  </div>
+                  <SeasonStatsTable
+                    position={player.position}
+                    rowLabel="PROJ 2026"
+                    stats={player.projection_2026 ?? null}
+                    pprPoints={player.proj_2026_pts ?? null}
+                    emptyMessage="No 2026 projection published."
+                    sourceLabel="ESPN stat projection · LP full-PPR scoring"
+                    kind="projection"
+                  />
+                </section>
+              </div>
+            )}
+
             {tab === 'overview' && (<>
             {/* League Rankings comes from pool data, but belongs to the
                 Overview research hierarchy rather than the persistent header. */}
@@ -243,20 +282,19 @@ export default function PlayerDetailOverlay({
               <StatRankCard statRanks={stat_ranks} title="League Rankings" />
             )}
 
-            {/* Draft-season forecast is distinct from the completed-season
-                actuals below. It comes from ESPN's published 2026 stat line;
-                a missing source row stays an em dash. */}
             <section className="space-y-2">
               <h3 className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
-                Projection
+                Season Stats
               </h3>
-              <div className="rounded-lg border border-zinc-800 bg-zinc-800/40">
-                <StatRow
-                  label="PROJ 2026 PPR points"
-                  value={player.proj_2026_pts ?? null}
-                  strong
-                />
-              </div>
+              <SeasonStatsTable
+                position={player.position}
+                rowLabel={player.season_totals?.season != null ? String(player.season_totals.season) : '2025'}
+                stats={player.season_totals ?? null}
+                pprPoints={player.season_totals?.ppr_points ?? null}
+                emptyMessage="No published regular-season totals."
+                sourceLabel="ESPN regular-season totals · Total QBR is not passer rating · PPR from published weekly scoring"
+                kind="actual"
+              />
             </section>
 
             {/* ── Availability strip ────────────────────────────────────── */}
@@ -519,6 +557,193 @@ function describeAdpDelta(currentPick: number, adp: number): string {
       : `${picks} pick${picks === 1 ? '' : 's'}`
 
   return delta > 0 ? `reaching ${size} early` : `value — ${size} past ADP`
+}
+
+type SeasonStatKey = keyof NflPlayerStatLine | 'ppr_points'
+
+const PROJECTION_STAT_COLUMNS: Record<string, { key: SeasonStatKey; label: string }[]> = {
+  QB: [
+    { key: 'pass_cmp', label: 'COMP' },
+    { key: 'pass_att', label: 'ATT' },
+    { key: 'completion_pct', label: 'CMP%' },
+    { key: 'pass_yds', label: 'YDS' },
+    { key: 'pass_td', label: 'TD' },
+    { key: 'interceptions', label: 'INT' },
+    { key: 'sacks', label: 'SACK' },
+    { key: 'fumbles', label: 'FUM' },
+    { key: 'fumbles_lost', label: 'LST' },
+    { key: 'ppr_points', label: 'PPR' },
+  ],
+  RB: [
+    { key: 'rush_att', label: 'CAR' },
+    { key: 'rush_yds', label: 'YDS' },
+    { key: 'rush_td', label: 'TD' },
+    { key: 'receptions', label: 'REC' },
+    { key: 'fumbles', label: 'FUM' },
+    { key: 'fumbles_lost', label: 'LST' },
+    { key: 'ppr_points', label: 'PPR' },
+  ],
+  WR: [
+    { key: 'receptions', label: 'REC' },
+    { key: 'targets', label: 'TAR' },
+    { key: 'rec_yds', label: 'YDS' },
+    { key: 'rec_td', label: 'TD' },
+    { key: 'fumbles', label: 'FUM' },
+    { key: 'fumbles_lost', label: 'LST' },
+    { key: 'ppr_points', label: 'PPR' },
+  ],
+  TE: [
+    { key: 'receptions', label: 'REC' },
+    { key: 'targets', label: 'TAR' },
+    { key: 'rec_yds', label: 'YDS' },
+    { key: 'rec_td', label: 'TD' },
+    { key: 'fumbles', label: 'FUM' },
+    { key: 'fumbles_lost', label: 'LST' },
+    { key: 'ppr_points', label: 'PPR' },
+  ],
+  PK: [
+    { key: 'fg_made', label: 'FGM' },
+    { key: 'fg_att', label: 'FGA' },
+    { key: 'xp_made', label: 'XPM' },
+    { key: 'xp_att', label: 'XPA' },
+    { key: 'ppr_points', label: 'PPR' },
+  ],
+  DEF: [
+    { key: 'def_sack', label: 'SACK' },
+    { key: 'def_int', label: 'INT' },
+    { key: 'def_fumble_rec', label: 'FR' },
+    { key: 'def_td', label: 'TD' },
+    { key: 'ppr_points', label: 'PPR' },
+  ],
+}
+
+const ACTUAL_RECEIVING_COLUMNS: { key: SeasonStatKey; label: string }[] = [
+  { key: 'receptions', label: 'REC' },
+  { key: 'targets', label: 'TAR' },
+  { key: 'rec_yds', label: 'YDS' },
+  { key: 'rec_td', label: 'TD' },
+  { key: 'receiving_first_downs', label: 'REC 1D' },
+  { key: 'fumbles', label: 'FUM' },
+  { key: 'fumbles_lost', label: 'LST' },
+  { key: 'ppr_points', label: 'PPR' },
+]
+
+const ACTUAL_STAT_COLUMNS: Record<string, { key: SeasonStatKey; label: string }[]> = {
+  ...PROJECTION_STAT_COLUMNS,
+  QB: [
+    { key: 'pass_cmp', label: 'COMP' },
+    { key: 'pass_att', label: 'ATT' },
+    { key: 'completion_pct', label: 'CMP%' },
+    { key: 'pass_yds', label: 'YDS' },
+    { key: 'pass_td', label: 'TD' },
+    { key: 'interceptions', label: 'INT' },
+    { key: 'sacks', label: 'SACK' },
+    { key: 'passing_first_downs', label: 'PASS 1D' },
+    { key: 'qbr', label: 'QBR' },
+    { key: 'passer_rating', label: 'RTG' },
+    { key: 'fumbles', label: 'FUM' },
+    { key: 'fumbles_lost', label: 'LST' },
+    { key: 'ppr_points', label: 'PPR' },
+  ],
+  RB: [
+    { key: 'rush_att', label: 'CAR' },
+    { key: 'rush_yds', label: 'YDS' },
+    { key: 'rush_td', label: 'TD' },
+    { key: 'rushing_first_downs', label: 'RUSH 1D' },
+    { key: 'receptions', label: 'REC' },
+    { key: 'receiving_first_downs', label: 'REC 1D' },
+    { key: 'fumbles', label: 'FUM' },
+    { key: 'fumbles_lost', label: 'LST' },
+    { key: 'ppr_points', label: 'PPR' },
+  ],
+  WR: ACTUAL_RECEIVING_COLUMNS,
+  TE: ACTUAL_RECEIVING_COLUMNS,
+}
+
+function SeasonStatsTable({
+  position,
+  rowLabel,
+  stats,
+  pprPoints,
+  emptyMessage,
+  sourceLabel,
+  kind,
+}: {
+  position: string
+  rowLabel: string
+  stats: NflPlayerStatLine | null
+  pprPoints: number | null
+  emptyMessage: string
+  sourceLabel: string
+  kind: 'actual' | 'projection'
+}) {
+  const columnSet = kind === 'actual' ? ACTUAL_STAT_COLUMNS : PROJECTION_STAT_COLUMNS
+  const columns = columnSet[position] ?? columnSet.WR
+  const valueFor = (key: SeasonStatKey): number | null => {
+    if (key === 'ppr_points') return pprPoints
+    return stats?.[key] ?? null
+  }
+  const hasData = columns.some(column => valueFor(column.key) != null)
+
+  if (!hasData) {
+    return (
+      <p className="rounded-lg border border-zinc-800 bg-zinc-800/40 px-3 py-3 text-sm text-zinc-500">
+        {emptyMessage}
+      </p>
+    )
+  }
+
+  return (
+    <div className="rounded-lg border border-zinc-800 bg-zinc-800/40">
+      <div className="overflow-x-auto">
+        <table
+          className="w-full text-xs"
+          style={{ minWidth: Math.max(340, 92 + columns.length * 52) }}
+        >
+          <thead>
+            <tr className="border-b border-zinc-800 text-[10px] uppercase tracking-wider text-zinc-600">
+              <th className="px-3 py-2 text-left font-medium">Season</th>
+              {columns.map(column => (
+                <th key={column.key} className="whitespace-nowrap px-2 py-2 text-right font-medium">
+                  {column.label}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th className="whitespace-nowrap px-3 py-2.5 text-left font-semibold text-zinc-300">
+                {rowLabel}
+              </th>
+              {columns.map(column => {
+                const value = valueFor(column.key)
+                const display = value == null
+                  ? '\u2014'
+                  : column.key === 'ppr_points'
+                    ? value.toFixed(1)
+                    : Number.isInteger(value)
+                      ? value.toFixed(0)
+                      : value.toFixed(1)
+                return (
+                  <td
+                    key={column.key}
+                    className={`px-2 py-2.5 text-right font-mono tabular-nums ${
+                      value == null ? 'text-zinc-700' : 'text-zinc-300'
+                    }`}
+                  >
+                    {display}
+                  </td>
+                )
+              })}
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p className="border-t border-zinc-800/60 px-3 py-1.5 text-[10px] text-zinc-600">
+        {sourceLabel}
+      </p>
+    </div>
+  )
 }
 
 /** A single stat row: label left, monospace value right. Dash for null. */

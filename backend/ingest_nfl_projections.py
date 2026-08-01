@@ -1,11 +1,15 @@
 #!/usr/bin/env python3
 """ingest_nfl_projections.py — load 2026 ESPN projections into nfl_player_projections.
 
-Deterministic, fail-closed. Reads the PINNED ESPN snapshot
-(backend/data/espn_2026_snapshot_page1.json) — never a live fetch — extracts the
+Fail-closed. Reads the PINNED ESPN fantasy snapshot
+(backend/data/espn_2026_snapshot_page1.json) — never a live projection fetch — extracts the
 2026 season projection entry (seasonId=2026, scoringPeriodId=0, statSourceId=1,
-statSplitTypeId=0), maps measured ESPN stat IDs to named fields, computes the
-Legendary Picks PPR projection (backend/ppr_scoring.py), and writes atomically.
+statSplitTypeId=0), the ESPN-authored season outlook, and ESPN's published 2025
+actual season line (statSourceId=0). It also prefetches ESPN's complete published
+quarterback season-stat page to collect explicitly labeled Total QBR and
+Adjusted QBR; that response is validated and checksummed before any write. It
+maps measured projection stat IDs to named fields, computes the Legendary Picks PPR projection
+(backend/ppr_scoring.py), and writes atomically.
 
 Contract (see docs/GOAL-v0.6.13.md):
 - REG-projection-source : every row references the pinned snapshot (payload_checksum)
@@ -39,6 +43,13 @@ SEASON = 2026
 SCORING_PERIOD_ID = 0
 STAT_SOURCE_ID = 1
 STAT_SPLIT_TYPE_ID = 0
+ACTUAL_SEASON = SEASON - 1
+ACTUAL_STAT_SOURCE_ID = 0
+QBR_URL = (
+    "https://site.web.api.espn.com/apis/common/v3/sports/football/nfl/"
+    "statistics/byathlete?region=us&lang=en&contentorigin=espn&page=1&limit=100"
+    f"&season={ACTUAL_SEASON}&seasontype=2"
+)
 _EXPECTED_DEF_COUNT = 32
 
 DB = os.environ.get("LP_DB_PATH") or os.path.join(
@@ -68,6 +79,111 @@ def _projection_stats(entity: dict) -> dict | None:
     return None
 
 
+def _actual_stats(entity: dict) -> dict | None:
+    """Return ESPN's published prior regular-season total, or None."""
+    for s in entity.get("stats") or []:
+        if (
+            s.get("seasonId") == ACTUAL_SEASON
+            and s.get("scoringPeriodId") == SCORING_PERIOD_ID
+            and s.get("statSourceId") == ACTUAL_STAT_SOURCE_ID
+            and s.get("statSplitTypeId") == STAT_SPLIT_TYPE_ID
+        ):
+            return s.get("stats") or None
+    return None
+
+
+def _season_outlook(entity: dict) -> str | None:
+    outlook = entity.get("seasonOutlook")
+    if not isinstance(outlook, str):
+        return None
+    outlook = outlook.strip()
+    return outlook or None
+
+
+def _ensure_profile_columns(con: sqlite3.Connection) -> None:
+    """Add nullable ESPN profile fields to a pre-feature projection table."""
+    columns = {r["name"] for r in con.execute("PRAGMA table_info(nfl_player_projections)")}
+    additions = {
+        "season_outlook": "TEXT",
+        "outlook_source": "TEXT",
+        "actual_season": "INTEGER",
+        "raw_actual_json": "TEXT",
+        "actual_qbr": "REAL",
+        "actual_passer_rating": "REAL",
+        "actual_adj_qbr": "REAL",
+        "qbr_source": "TEXT",
+        "qbr_payload_checksum": "TEXT",
+    }
+    for name, sql_type in additions.items():
+        if name not in columns:
+            con.execute(
+                f"ALTER TABLE nfl_player_projections ADD COLUMN {name} {sql_type}"
+            )
+
+
+def _qbr_values(payload: dict) -> dict[str, dict[str, float | None]]:
+    """Return ESPN athlete IDs mapped to explicitly named QBR fields.
+
+    The response publishes two columns labeled QBR. We deliberately index by
+    its machine names (QBR and adjQBR), never by the duplicate display label,
+    and never substitute QBRating (passer rating).
+    """
+    passing_schema = next(
+        (category for category in payload.get("categories") or []
+         if category.get("name") == "passing"),
+        None,
+    )
+    if not passing_schema:
+        raise RuntimeError("ESPN season-stat response has no passing schema")
+    names = passing_schema.get("names") or []
+    try:
+        qbr_index = names.index("QBR")
+        passer_rating_index = names.index("QBRating")
+        adj_qbr_index = names.index("adjQBR")
+    except ValueError as exc:
+        raise RuntimeError("ESPN season-stat response has no named QBR columns") from exc
+
+    pagination = payload.get("pagination") or {}
+    if pagination.get("pages") != 1:
+        raise RuntimeError(
+            f"ESPN QBR preflight expected one page, got {pagination.get('pages')!r}"
+        )
+    athletes = payload.get("athletes") or []
+    if pagination.get("count") != len(athletes) or not athletes:
+        raise RuntimeError(
+            "ESPN QBR preflight count does not match the complete athlete page"
+        )
+
+    result: dict[str, dict[str, float | None]] = {}
+    for athlete_row in athletes:
+        athlete_id = str((athlete_row.get("athlete") or {}).get("id") or "")
+        passing = next(
+            (category for category in athlete_row.get("categories") or []
+             if category.get("name") == "passing"),
+            None,
+        )
+        if not athlete_id or not passing:
+            continue
+        values = passing.get("values") or []
+        if len(values) <= max(qbr_index, passer_rating_index, adj_qbr_index):
+            raise RuntimeError(f"ESPN QBR row {athlete_id} is shorter than its schema")
+        result[athlete_id] = {
+            "qbr": values[qbr_index],
+            "passer_rating": values[passer_rating_index],
+            "adj_qbr": values[adj_qbr_index],
+        }
+    if not result:
+        raise RuntimeError("ESPN QBR preflight yielded zero named athlete rows")
+    return result
+
+
+def _fetch_qbr_values() -> tuple[dict[str, dict[str, float | None]], str]:
+    with urllib.request.urlopen(QBR_URL, timeout=60) as response:
+        raw = response.read()
+    payload = json.loads(raw.decode("utf-8"))
+    return _qbr_values(payload), hashlib.sha256(raw).hexdigest()
+
+
 def _build_pro_team_map() -> dict[int, str]:
     with urllib.request.urlopen(PROTEAMS_URL, timeout=60) as r:
         pro_data = json.loads(r.read().decode("utf-8"))
@@ -91,6 +207,11 @@ def _position_of(entity: dict) -> str:
 def ingest():
     entities, checksum = _load_snapshot()
     print(f"snapshot: {len(entities)} entities, sha256 {checksum[:12]}…")
+    qbr_by_espn_id, qbr_checksum = _fetch_qbr_values()
+    print(
+        f"ESPN {ACTUAL_SEASON} Total QBR: {len(qbr_by_espn_id)} athletes, "
+        f"sha256 {qbr_checksum[:12]}…"
+    )
 
     con = sqlite3.connect(DB)
     con.row_factory = sqlite3.Row
@@ -158,6 +279,8 @@ def ingest():
     unmatched = 0
     with_proj = 0
     null_proj = 0
+    with_outlook = 0
+    with_actual = 0
     for entity in entities:
         eid = str(entity.get("id", ""))
         pid = eid_to_pid.get(eid)
@@ -169,20 +292,31 @@ def ingest():
         if pid in dst_resolutions:
             entity = dst_resolutions[pid]  # canonical D/ST entity
         sm = _projection_stats(entity)
+        if _season_outlook(entity) is not None:
+            with_outlook += 1
+        if _actual_stats(entity) is not None:
+            with_actual += 1
         position = pid_to_pos.get(pid) or "QB"
         if not sm or position not in ("QB", "RB", "WR", "TE", "PK", "DEF"):
             null_proj += 1
             # Honest null row: no 2026 projection, or a position the room does
             # not draft (IDP/P). Store NULLs — never zeros.
-            rows.append(_row(pid, entity, position, None, None, checksum))
+            rows.append(_row(
+                pid, entity, position, None, None, checksum,
+                qbr_by_espn_id.get(eid), qbr_checksum,
+            ))
             continue
         with_proj += 1
         ppr = project_ppr(position, sm)
-        rows.append(_row(pid, entity, position, sm, ppr, checksum))
+        rows.append(_row(
+            pid, entity, position, sm, ppr, checksum,
+            qbr_by_espn_id.get(eid), qbr_checksum,
+        ))
 
     print(
         f"matched={matched} unmatched={unmatched} "
-        f"with_projection={with_proj} null_projection={null_proj}"
+        f"with_projection={with_proj} null_projection={null_proj} "
+        f"with_outlook={with_outlook} with_{ACTUAL_SEASON}_actual={with_actual}"
     )
     if with_proj + null_proj == 0:
         raise RuntimeError("no rows to write — aborting (fail-closed)")
@@ -190,19 +324,25 @@ def ingest():
     # ── Single atomic transaction ──
     try:
         con.execute("BEGIN IMMEDIATE")
+        _ensure_profile_columns(con)
+        write_columns = (
+            "player_id", "espn_id", "season", "scoring_period_id",
+            "stat_source_id", "stat_split_type_id", "raw_projection_json",
+            "projected_games", "pass_att", "pass_cmp", "pass_yds", "pass_td",
+            "interceptions", "rush_att", "rush_yds", "rush_td", "receptions",
+            "targets", "rec_yds", "rec_td", "fumbles", "fumbles_lost",
+            "fg_att", "fg_made", "xp_att", "xp_made", "def_td", "def_int",
+            "def_sack", "def_fumble_rec", "def_points_allowed",
+            "def_yds_allowed", "lp_ppr_projected_points", "season_outlook",
+            "outlook_source", "actual_season", "raw_actual_json",
+            "actual_qbr", "actual_passer_rating", "actual_adj_qbr", "qbr_source",
+            "qbr_payload_checksum",
+            "payload_checksum",
+        )
+        placeholders = ",".join("?" for _ in write_columns)
         con.executemany(
-            """INSERT OR REPLACE INTO nfl_player_projections
-               (player_id, espn_id, season, scoring_period_id, stat_source_id,
-                stat_split_type_id, raw_projection_json, projected_games,
-                pass_att, pass_cmp, pass_yds, pass_td, interceptions,
-                rush_att, rush_yds, rush_td,
-                receptions, targets, rec_yds, rec_td,
-                fumbles, fumbles_lost,
-                fg_att, fg_made, xp_att, xp_made,
-                def_td, def_int, def_sack, def_fumble_rec,
-                def_points_allowed, def_yds_allowed,
-                lp_ppr_projected_points, fetched_at, payload_checksum)
-               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,datetime('now'),?)""",
+            f"INSERT OR REPLACE INTO nfl_player_projections "
+            f"({','.join(write_columns)}) VALUES ({placeholders})",
             rows,
         )
         con.execute("COMMIT")
@@ -220,8 +360,10 @@ def ingest():
     con.close()
 
 
-def _row(pid, entity, position, sm, ppr, checksum):
+def _row(pid, entity, position, sm, ppr, checksum, qbr_values=None, qbr_checksum=None):
     sm = normalize_stats(sm)
+    actual = normalize_stats(_actual_stats(entity))
+    outlook = _season_outlook(entity)
     ids = STAT_IDS
     g = lambda k: sm.get(ids[k]) if sm else None
     return (
@@ -241,6 +383,15 @@ def _row(pid, entity, position, sm, ppr, checksum):
         g("def_td"), g("def_int"), g("def_sack"), g("def_fumble_rec"),
         g("def_points_allowed"), g("def_yds_allowed"),
         ppr,
+        outlook,
+        "espn" if outlook else None,
+        ACTUAL_SEASON if actual else None,
+        json.dumps(actual, sort_keys=True) if actual else None,
+        qbr_values.get("qbr") if qbr_values else None,
+        qbr_values.get("passer_rating") if qbr_values else None,
+        qbr_values.get("adj_qbr") if qbr_values else None,
+        "espn" if qbr_values else None,
+        qbr_checksum if qbr_values else None,
         checksum,
     )
 

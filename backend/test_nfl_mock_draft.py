@@ -7,6 +7,7 @@ module-level ``_DB`` resolves to a disposable database rather than a real one.
 Same pattern as ``test_nfl_draft_notes.py``.
 """
 
+import json
 import os
 import sys
 import tempfile
@@ -47,6 +48,30 @@ class TestNflMockDraft(unittest.TestCase):
     SEASON = nfl_mock_draft._CURRENT_SEASON
     DEVICE_A = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
     DEVICE_B = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"
+
+    def test_named_stat_line_normalizes_rate_and_keeps_projection_first_downs_null(self):
+        line = nfl_mock_draft._named_stat_line(json.dumps({
+            "21": 0.693478,
+            "64": 40,
+            "68": 7,
+            "72": 3,
+            "211": 177,
+            "212": 46,
+        }))
+
+        self.assertAlmostEqual(line["completion_pct"], 69.3478)
+        self.assertEqual(line["sacks"], 40)
+        self.assertEqual(line["fumbles"], 7)
+        self.assertEqual(line["fumbles_lost"], 3)
+        self.assertIsNone(line["passing_first_downs"])
+        self.assertIsNone(line["rushing_first_downs"])
+
+        actual_line = nfl_mock_draft._named_stat_line(
+            json.dumps({"211": 177, "212": 46}),
+            include_actual_first_downs=True,
+        )
+        self.assertEqual(actual_line["passing_first_downs"], 177)
+        self.assertEqual(actual_line["rushing_first_downs"], 46)
 
     def setUp(self):
         """Clean draft tables between tests so counts are deterministic."""
@@ -97,9 +122,29 @@ class TestNflMockDraft(unittest.TestCase):
                     league TEXT,
                     season INTEGER,
                     game_no TEXT,
-                    team TEXT
+                    team TEXT,
+                    stats TEXT,
+                    game_type TEXT
                 )"""
             )
+            projection_columns = {
+                row["name"]
+                for row in connection.execute("PRAGMA table_info(nfl_player_projections)")
+            }
+            for name, sql_type in (
+                ("season_outlook", "TEXT"),
+                ("outlook_source", "TEXT"),
+                ("actual_season", "INTEGER"),
+                ("raw_actual_json", "TEXT"),
+                ("actual_qbr", "REAL"),
+                ("actual_passer_rating", "REAL"),
+                ("actual_adj_qbr", "REAL"),
+                ("qbr_source", "TEXT"),
+            ):
+                if name not in projection_columns:
+                    connection.execute(
+                        f"ALTER TABLE nfl_player_projections ADD COLUMN {name} {sql_type}"
+                    )
             connection.execute(
                 """CREATE TABLE IF NOT EXISTS player_stats (
                     player_id INTEGER,
@@ -152,8 +197,38 @@ class TestNflMockDraft(unittest.TestCase):
                 ],
             )
             connection.executemany(
-                "INSERT OR IGNORE INTO nfl_player_projections VALUES(?,?,?)",
-                [(1, 2026, 321.4), (2, 2026, 287.6), (3, 2026, None)],
+                """INSERT OR REPLACE INTO nfl_player_projections
+                   (player_id, espn_id, season, scoring_period_id,
+                    stat_source_id, stat_split_type_id, raw_projection_json,
+                    lp_ppr_projected_points)
+                   VALUES(?, ?, ?, 0, 1, 0, '{}', ?)""",
+                [
+                    (1, 1001, 2026, 321.4),
+                    (2, 1002, 2026, 287.6),
+                    (3, 1003, 2026, None),
+                ],
+            )
+            connection.execute(
+                """UPDATE nfl_player_projections
+                   SET season_outlook=?, outlook_source='espn', actual_season=2025,
+                       raw_actual_json=?, actual_qbr=71.4,
+                       actual_passer_rating=104.2, actual_adj_qbr=72.1,
+                       qbr_source='espn'
+                   WHERE player_id=1 AND season=2026""",
+                (
+                    "Alpha enters 2026 with a secure three-down role.",
+                    json.dumps({
+                        "23": 201,
+                        "24": 900,
+                        "25": 8,
+                        "53": 45,
+                        "68": 4,
+                        "72": 2,
+                        "212": 53,
+                        "213": 28,
+                        "210": 12,
+                    }),
+                ),
             )
             # Seed game logs for players 1–4 (full sample: 10+ games).
             for pid, team in [(1, 'KC'), (2, 'MIN')]:
@@ -178,6 +253,11 @@ class TestNflMockDraft(unittest.TestCase):
                 "INSERT OR IGNORE INTO player_game_logs "
                 "(player_id, league, season, game_no, team) VALUES (?, 'nfl', 2025, '19', 'KC')",
                 (1,),
+            )
+            connection.execute(
+                """UPDATE player_game_logs
+                   SET stats='{"fpts_ppr": 10.0}',
+                       game_type=CASE WHEN CAST(game_no AS INTEGER) >= 19 THEN 'POST' ELSE 'REG' END"""
             )
 
             connection.commit()
@@ -254,6 +334,39 @@ class TestNflMockDraft(unittest.TestCase):
     def test_pool_wrong_season(self):
         resp = client.get("/api/nfl/mock-draft/pool?season=2025")
         self.assertEqual(resp.status_code, 400)
+
+    def test_player_detail_publishes_outlook_and_prior_season_totals(self):
+        resp = client.get("/api/nfl/draft/player/1")
+        self.assertEqual(resp.status_code, 200)
+        body = resp.json()
+
+        self.assertEqual(
+            body["season_outlook"],
+            "Alpha enters 2026 with a secure three-down role.",
+        )
+        self.assertEqual(body["season_outlook_source"], "espn")
+        self.assertEqual(body["season_totals_source"], "espn")
+        self.assertEqual(body["season_totals"]["season"], 2025)
+        self.assertEqual(body["season_totals"]["games"], 12)
+        self.assertEqual(body["season_totals"]["rush_att"], 201)
+        self.assertEqual(body["season_totals"]["rush_yds"], 900)
+        self.assertEqual(body["season_totals"]["rushing_first_downs"], 53)
+        self.assertEqual(body["season_totals"]["receiving_first_downs"], 28)
+        self.assertEqual(body["season_totals"]["fumbles"], 4)
+        self.assertEqual(body["season_totals"]["fumbles_lost"], 2)
+        self.assertEqual(body["season_totals"]["qbr"], 71.4)
+        self.assertEqual(body["season_totals"]["passer_rating"], 104.2)
+        self.assertEqual(body["season_totals"]["adj_qbr"], 72.1)
+        self.assertEqual(body["season_totals"]["ppr_points"], 120.0)
+
+    def test_player_detail_keeps_profile_fields_null_on_legacy_row(self):
+        resp = client.get("/api/nfl/draft/player/2")
+        self.assertEqual(resp.status_code, 200)
+        body = resp.json()
+
+        self.assertIsNone(body["season_outlook"])
+        self.assertIsNone(body["season_totals"])
+        self.assertIsNone(body["season_totals_source"])
 
     # ------------------------------------------------------------------
     #  Draft creation

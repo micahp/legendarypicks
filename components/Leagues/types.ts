@@ -452,6 +452,48 @@ export interface MockDraft {
   current_pick: number
 }
 
+export interface NflPlayerStatLine {
+  games: number | null
+  pass_att: number | null
+  pass_cmp: number | null
+  pass_yds: number | null
+  pass_td: number | null
+  interceptions: number | null
+  completion_pct: number | null
+  sacks: number | null
+  rush_att: number | null
+  rush_yds: number | null
+  rush_td: number | null
+  receptions: number | null
+  targets: number | null
+  rec_yds: number | null
+  rec_td: number | null
+  fumbles: number | null
+  fumbles_lost: number | null
+  passing_first_downs: number | null
+  rushing_first_downs: number | null
+  receiving_first_downs: number | null
+  /** ESPN Total QBR, not passer rating. Published for prior-season QBs. */
+  qbr: number | null
+  passer_rating: number | null
+  adj_qbr: number | null
+  fg_att: number | null
+  fg_made: number | null
+  xp_att: number | null
+  xp_made: number | null
+  def_td: number | null
+  def_int: number | null
+  def_sack: number | null
+  def_fumble_rec: number | null
+  def_points_allowed: number | null
+  def_yds_allowed: number | null
+}
+
+export interface NflSeasonTotals extends NflPlayerStatLine {
+  season: number | null
+  ppr_points: number | null
+}
+
 export interface PlayerDetailResponse {
   player_id: number
   name: string
@@ -463,7 +505,12 @@ export interface PlayerDetailResponse {
   espn_ppr_rank?: number | null
   espn_standard_rank?: number | null
   proj_2026_pts?: number | null
-  projection_2026?: Record<string, number | null> | null
+  projection_2026?: NflPlayerStatLine | null
+  projection_source?: 'espn' | null
+  season_outlook?: string | null
+  season_outlook_source?: 'espn' | null
+  season_totals?: NflSeasonTotals | null
+  season_totals_source?: 'espn' | null
   sample: 'full' | 'thin' | 'none'
   /** Whether we hold any NFL game log for this player before the reference
    *  season. Distinguishes a rookie from a veteran who missed the year. */

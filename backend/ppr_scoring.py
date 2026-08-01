@@ -27,6 +27,8 @@ STAT_IDS = {
     "pass_yds": 3,
     "pass_td": 4,
     "interceptions": 20,
+    "completion_pct": 21,
+    "sacks": 64,
     "rush_att": 23,
     "rush_yds": 24,
     "rush_td": 25,
@@ -36,6 +38,12 @@ STAT_IDS = {
     "rec_td": 43,
     "fumbles": 68,
     "fumbles_lost": 72,
+    # Published prior-season totals. ESPN's projection maps do not preserve
+    # these three IDs consistently, so consumers must not label projected
+    # values as first downs without a separately validated projection schema.
+    "passing_first_downs": 211,
+    "rushing_first_downs": 212,
+    "receiving_first_downs": 213,
     # K (distance buckets)
     "fgm_0_39": 80,
     "fgm_40_49": 77,

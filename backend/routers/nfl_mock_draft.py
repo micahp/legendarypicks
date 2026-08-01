@@ -19,6 +19,7 @@ from typing import Optional
 
 from fastapi import APIRouter, Header, Query, Request
 from fastapi.responses import JSONResponse
+from ppr_scoring import STAT_IDS, normalize_stats
 
 from .nfl_offseason import (
     _availability_aggregates,
@@ -71,6 +72,67 @@ _NFL_RANK_STATS = {
     ],
 }
 _RANK_ASC = frozenset(["interceptions"])
+
+
+def _named_stat_line(raw_json, *, include_actual_first_downs=False):
+    """Normalize a stored ESPN stat map into the overlay's stable vocabulary."""
+    if not raw_json:
+        return None
+    try:
+        stats = normalize_stats(json.loads(raw_json))
+    except (TypeError, ValueError, json.JSONDecodeError):
+        return None
+    if not stats:
+        return None
+    get = lambda key: stats.get(STAT_IDS[key])
+    completion_pct = get("completion_pct")
+    if completion_pct is not None and abs(completion_pct) <= 1:
+        completion_pct *= 100
+    return {
+        "games": get("games"),
+        "pass_att": get("pass_att"),
+        "pass_cmp": get("pass_cmp"),
+        "pass_yds": get("pass_yds"),
+        "pass_td": get("pass_td"),
+        "interceptions": get("interceptions"),
+        "completion_pct": completion_pct,
+        "sacks": get("sacks"),
+        "rush_att": get("rush_att"),
+        "rush_yds": get("rush_yds"),
+        "rush_td": get("rush_td"),
+        "receptions": get("receptions"),
+        "targets": get("targets"),
+        "rec_yds": get("rec_yds"),
+        "rec_td": get("rec_td"),
+        "fumbles": get("fumbles"),
+        "fumbles_lost": get("fumbles_lost"),
+        # ESPN's prior-season total map uses these measured IDs. Its fantasy
+        # projection map shifts the extension IDs for some positions, so the
+        # projection contract stays honestly null until that schema is
+        # independently named and validated.
+        "passing_first_downs": (
+            get("passing_first_downs") if include_actual_first_downs else None
+        ),
+        "rushing_first_downs": (
+            get("rushing_first_downs") if include_actual_first_downs else None
+        ),
+        "receiving_first_downs": (
+            get("receiving_first_downs") if include_actual_first_downs else None
+        ),
+        "qbr": None,
+        "passer_rating": None,
+        "adj_qbr": None,
+        "fg_att": get("fg_att"),
+        "fg_made": get("fg_made"),
+        "xp_att": get("xp_att"),
+        "xp_made": get("xp_made"),
+        "def_td": get("def_td"),
+        "def_int": get("def_int"),
+        "def_sack": get("def_sack"),
+        "def_fumble_rec": get("def_fumble_rec"),
+        "def_points_allowed": get("def_points_allowed"),
+        "def_yds_allowed": get("def_yds_allowed"),
+    }
 
 
 def _player_stat_ranks_batch(connection):
@@ -950,12 +1012,12 @@ def player_detail(player_id: int):
         espn_ppr_rank = None
         espn_standard_rank = None
         adp_ppr = None
-        _has_ppr = "adp_ppr" in _table_columns(connection, "nfl_adp")
+        adp_columns = _table_columns(connection, "nfl_adp")
+        _has_ppr = "adp_ppr" in adp_columns
         _ppr_col = ", adp_ppr" if _has_ppr else ""
-        _rank_cols = (
-            ", espn_ppr_rank, espn_standard_rank"
-            if "espn_ppr_rank" in _table_columns(connection, "nfl_adp")
-            else ""
+        _rank_cols = ", " + ", ".join(
+            column if column in adp_columns else f"NULL AS {column}"
+            for column in ("espn_ppr_rank", "espn_standard_rank")
         )
         adp_row = connection.execute(
             f"SELECT adp, percent_owned{_rank_cols}{_ppr_col} "
@@ -970,54 +1032,63 @@ def player_detail(player_id: int):
                 adp = adp_row["adp"]
             if _has_ppr:
                 adp_ppr = adp_row["adp_ppr"]
-            if _rank_cols:
-                espn_ppr_rank = adp_row["espn_ppr_rank"]
-                espn_standard_rank = adp_row["espn_standard_rank"]
+            espn_ppr_rank = adp_row["espn_ppr_rank"]
+            espn_standard_rank = adp_row["espn_standard_rank"]
 
         proj_2026_pts = None
         projection_2026 = None
-        if "lp_ppr_projected_points" in _table_columns(connection, "nfl_player_projections"):
+        projection_source = None
+        season_outlook = None
+        season_outlook_source = None
+        season_totals = None
+        season_totals_source = None
+        projection_columns = _table_columns(connection, "nfl_player_projections")
+        if "lp_ppr_projected_points" in projection_columns:
+            detail_columns = (
+                "lp_ppr_projected_points", "raw_projection_json", "projected_games",
+                "pass_att", "pass_cmp", "pass_yds", "pass_td", "interceptions",
+                "rush_att", "rush_yds", "rush_td", "receptions", "targets",
+                "rec_yds", "rec_td", "fg_att", "fg_made", "xp_att", "xp_made",
+                "def_td", "def_int", "def_sack", "def_fumble_rec",
+                "def_points_allowed", "def_yds_allowed", "season_outlook",
+                "outlook_source", "actual_season", "raw_actual_json",
+                "actual_qbr", "actual_passer_rating", "actual_adj_qbr", "qbr_source",
+            )
+            select_columns = ", ".join(
+                column if column in projection_columns else f"NULL AS {column}"
+                for column in detail_columns
+            )
+            split_filter = (
+                " AND stat_split_type_id=0"
+                if "stat_split_type_id" in projection_columns
+                else ""
+            )
             proj_row = connection.execute(
-                """SELECT lp_ppr_projected_points, projected_games,
-                          pass_att, pass_cmp, pass_yds, pass_td, interceptions,
-                          rush_att, rush_yds, rush_td,
-                          receptions, targets, rec_yds, rec_td,
-                          fg_att, fg_made, xp_att, xp_made,
-                          def_td, def_int, def_sack, def_fumble_rec,
-                          def_points_allowed, def_yds_allowed
-                   FROM nfl_player_projections
-                   WHERE player_id=? AND season=? AND stat_split_type_id=0""",
+                f"SELECT {select_columns} FROM nfl_player_projections "
+                f"WHERE player_id=? AND season=?{split_filter}",
                 (player_id, _CURRENT_SEASON),
             ).fetchone()
         else:
             proj_row = None
         if proj_row:
             proj_2026_pts = proj_row["lp_ppr_projected_points"]
-            projection_2026 = {
-                "games": proj_row["projected_games"],
-                "pass_att": proj_row["pass_att"],
-                "pass_cmp": proj_row["pass_cmp"],
-                "pass_yds": proj_row["pass_yds"],
-                "pass_td": proj_row["pass_td"],
-                "interceptions": proj_row["interceptions"],
-                "rush_att": proj_row["rush_att"],
-                "rush_yds": proj_row["rush_yds"],
-                "rush_td": proj_row["rush_td"],
-                "receptions": proj_row["receptions"],
-                "targets": proj_row["targets"],
-                "rec_yds": proj_row["rec_yds"],
-                "rec_td": proj_row["rec_td"],
-                "fg_att": proj_row["fg_att"],
-                "fg_made": proj_row["fg_made"],
-                "xp_att": proj_row["xp_att"],
-                "xp_made": proj_row["xp_made"],
-                "def_td": proj_row["def_td"],
-                "def_int": proj_row["def_int"],
-                "def_sack": proj_row["def_sack"],
-                "def_fumble_rec": proj_row["def_fumble_rec"],
-                "def_points_allowed": proj_row["def_points_allowed"],
-                "def_yds_allowed": proj_row["def_yds_allowed"],
-            }
+            projection_source = "espn" if proj_2026_pts is not None else None
+            projection_2026 = _named_stat_line(proj_row["raw_projection_json"])
+            season_outlook = proj_row["season_outlook"]
+            season_outlook_source = proj_row["outlook_source"]
+            actual_line = _named_stat_line(
+                proj_row["raw_actual_json"], include_actual_first_downs=True
+            )
+            if actual_line:
+                actual_line["qbr"] = proj_row["actual_qbr"]
+                actual_line["passer_rating"] = proj_row["actual_passer_rating"]
+                actual_line["adj_qbr"] = proj_row["actual_adj_qbr"]
+                season_totals = {
+                    "season": proj_row["actual_season"],
+                    **actual_line,
+                    "ppr_points": None,
+                }
+                season_totals_source = "espn"
 
         # 3. Season stats from player_game_logs
         _log_season_row = connection.execute(
@@ -1154,6 +1225,20 @@ def player_detail(player_id: int):
                 if dst_row["dst_avg"] is not None:
                     dst_pts_per_game = round(dst_row["dst_avg"], 1)
 
+        # ESPN publishes the actual counting-stat season line directly. PPR is
+        # the one value absent from that source row, so pair it with the same
+        # published-weekly scoring total already used everywhere else in this
+        # endpoint. D/ST and kicker retain their position-specific scoring.
+        if season_totals is not None:
+            if position == "DEF":
+                season_totals["ppr_points"] = dst_pts_total
+            elif position == "PK":
+                season_totals["ppr_points"] = pk_pts_total
+            else:
+                season_totals["ppr_points"] = (
+                    round(ppr_total, 1) if ppr_total is not None else None
+                )
+
         # 7. No presence means unknown missed games, not a fabricated 17.
         games_missed = (
             max(0, team_games - games_played)
@@ -1192,6 +1277,11 @@ def player_detail(player_id: int):
             "adp_ppr": adp_ppr,
             "proj_2026_pts": proj_2026_pts,
             "projection_2026": projection_2026,
+            "projection_source": projection_source,
+            "season_outlook": season_outlook,
+            "season_outlook_source": season_outlook_source,
+            "season_totals": season_totals,
+            "season_totals_source": season_totals_source,
             "percent_owned": percent_owned,
             "sample": sample,
             "has_prior_nfl_sample": has_prior_nfl_sample,
