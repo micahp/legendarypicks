@@ -93,8 +93,11 @@ export default function DraftRoom({
   // ── Filter options ──
   // Authored order, from the shared constant. Deriving this with `.sort()` is
   // what put D/ST and K ahead of the quarterback.
+  // Only fantasy-relevant positions get a filter pill — IDP, coaches, and
+  // punters are in the pool for completeness but aren't draftable.
+  const FANTASY_POSITIONS = new Set(['QB', 'RB', 'WR', 'TE', 'PK', 'DEF'])
   const posOptions = useMemo(
-    () => ['ALL', ...orderPositions(pool.map(p => p.position))],
+    () => ['ALL', ...orderPositions(pool.map(p => p.position)).filter(p => FANTASY_POSITIONS.has(p))],
     [pool],
   )
   const teamOptions = useMemo(
