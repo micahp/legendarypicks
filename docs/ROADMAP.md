@@ -795,3 +795,47 @@ Before moving the v0.6.13 tag:
 Only after those gates pass may the existing v0.6.13 tag be re-cut and
 production promotion be reconsidered. Production writes and deployment still
 require explicit approval.
+
+---
+
+## 2026-07-31 — Fantasy news audit repair (CURRENT local candidate)
+
+Commit `888fb51` repairs the RotoWire fantasy-news slice on local `dev`. It is
+not pushed or deployed.
+
+### Closed
+
+- **Cross-player news assignment:** source/player IDs are retained. A persisted
+  RotoWire crosswalk wins when present; until then, name is candidate discovery
+  only and team + position must resolve exactly one canonical NFL player.
+  Carlton Davis no longer leaks into Carl Davis, Marcus Harris resolves to the
+  TEN corner rather than all three same-name rows, and suffixes such as Michael
+  Penix Jr. resolve correctly.
+- **False empty states:** source outage, stale cache, no news, unsupported
+  league, and unresolved identity are separate API/UI states. A malformed or
+  partial feed cannot replace the last validated snapshot.
+- **Ordering and dates:** articles are newest-first before `limit`; date-only
+  estimated returns remain on the source calendar day in viewer-local time.
+- **Surface parity:** player page and mock-draft overlay use one shared news
+  renderer with source attribution and identical error semantics.
+
+### Measured boundary
+
+- Live feed at verification: 172 updates, 157 unique RotoWire players.
+- 135/157 resolve uniquely to canonical `players.id`; zero source-player IDs
+  collide on one canonical player.
+- 22 source players fail closed because the current DB disagrees on team or
+  position, or lacks the person. Ten are fantasy positions (1 RB, 5 WR, 4 TE).
+  Publishing `player_external_ids(source='rotowire')` can recover these only
+  after stable-ID evidence exists; do not weaken matching to hide the gap.
+- Gates: 10 focused backend news tests, 13 existing profile API tests, five
+  React news tests under `America/Chicago`, public desktop player pages, and
+  the 414×896 mock-draft overlay. Browser checks had zero console/page errors.
+
+### Still separate
+
+- The three feature commits ahead of `origin/dev` are `f4e05fb`, `3a5546d`, and
+  `888fb51`, plus this context/roadmap documentation commit; no push occurred.
+- This closes the local feature defect. It does not satisfy the whole-app
+  v0.6.13 re-cut gates above and does not authorize DEV/production data writes,
+  a tag move, service restart, or deployment.
