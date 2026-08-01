@@ -56,14 +56,26 @@ def _database_cache_token(connection: sqlite3.Connection):
 
     resolved = os.path.realpath(main_path)
 
-    def signature(path):
+    def signature(path, *, empty_is_absent=False):
         try:
             stat = os.stat(path)
         except FileNotFoundError:
             return None
+        # In WAL mode SQLite creates a zero-byte -wal file when a connection
+        # opens and removes it when the last connection closes. Its mtime is
+        # therefore connection churn, not a database publication. Treat that
+        # transient placeholder exactly like an absent WAL so repeated reads
+        # share a cache key. A real WAL always has content and keeps its mtime
+        # and size in the token, preserving invalidation after a commit.
+        if empty_is_absent and stat.st_size == 0:
+            return None
         return (stat.st_mtime_ns, stat.st_size)
 
-    return (resolved, signature(resolved), signature(f"{resolved}-wal"))
+    return (
+        resolved,
+        signature(resolved),
+        signature(f"{resolved}-wal", empty_is_absent=True),
+    )
 
 
 def _draft_board_cache_get(key):

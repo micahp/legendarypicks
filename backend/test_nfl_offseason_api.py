@@ -247,6 +247,12 @@ class NflOffseasonApiTests(unittest.TestCase):
         self.assertTrue(actual_mover["team_changed"])
 
     def test_draft_board_cache_keeps_alternating_keys_warm(self):
+        # Match DEV's journal mode. Opening a WAL database creates a transient
+        # zero-byte -wal file with a fresh mtime; that is connection churn, not
+        # a publication, and must not poison every cache key.
+        with sqlite3.connect(self.db_path) as connection:
+            self.assertEqual("wal", connection.execute("PRAGMA journal_mode=WAL").fetchone()[0])
+
         original = nfl_offseason._regular_season_aggregates
         with mock.patch.object(
             nfl_offseason,
@@ -263,6 +269,26 @@ class NflOffseasonApiTests(unittest.TestCase):
             [player["player_id"] for player in projected["players"]],
         )
         self.assertEqual(2, aggregates.call_count)
+
+    def test_database_cache_token_changes_for_nonempty_wal_publication(self):
+        with sqlite3.connect(self.db_path) as writer:
+            self.assertEqual("wal", writer.execute("PRAGMA journal_mode=WAL").fetchone()[0])
+            writer.execute("PRAGMA wal_autocheckpoint=0")
+
+            with sqlite3.connect(self.db_path) as reader:
+                before = nfl_offseason._database_cache_token(reader)
+
+                writer.execute(
+                    "UPDATE players SET updated_at=? WHERE id=1",
+                    ("2026-08-01T17:15:00Z",),
+                )
+                writer.commit()
+
+                after = nfl_offseason._database_cache_token(reader)
+
+        self.assertNotEqual(before, after)
+        self.assertIsNone(before[2])
+        self.assertIsNotNone(after[2])
 
     def test_draft_board_cache_invalidates_after_database_write(self):
         before = {p["name"]: p for p in self.board()["players"]}
