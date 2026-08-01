@@ -1,5 +1,50 @@
 # Changelog
 
+## v0.6.14 — 2026-08-01
+
+### Draft boards show the 2026 decisions
+
+- **Published ESPN PPR rank and the 2026 LP PPR projection are first-class
+  columns.** The pre-draft pool, in-draft Players tab, and NFL Player Rankings
+  now share `RK | PLAYER | BYE | ADP | PROJ 2026 PPR | AVAILABLE`, with rank as
+  the default order and projection as an explicit sort.
+- **Projection nulls remain honest.** The API and UI preserve a missing ESPN
+  source projection as `—`; they never turn missing data into a `0.0` season.
+- **The full ESPN player universe is virtualized without widening the fantasy
+  product.** The API can retain the source population while user-facing pools
+  stay restricted to QB, RB, WR, TE, K, and D/ST, with no TQB or IDP leakage.
+- **Prior-season PPR and xFP remain research evidence, not headline draft
+  columns.** They remain available as secondary sorts and in player detail.
+
+### Player context is available at the decision point
+
+- **Injury status is visible wherever a player is evaluated.** Compact Q, D,
+  O, and IR tags appear in pools and rankings without converting status into a
+  score or hiding availability history.
+- **Fantasy news is separated from general NFL news.** The player overlay has a
+  dedicated RotoWire-backed News tab; fantasy blurbs no longer leak into the
+  general-news surface, and external article links are not presented when the
+  licensed payload does not publish one.
+- **The overlay keeps research in Overview.** League Rankings sits inside the
+  Overview tab, while Game log and News remain focused on their own evidence.
+  Missed weeks render a centered, single-line `did not play` state.
+
+### Projection and Team Stats publication stay guarded
+
+- **The ESPN projection publisher is pinned, checksum-backed, identity-safe,
+  and atomic.** It validates the complete snapshot and all 32 D/ST before one
+  transaction, with position-aware PPR scoring and explicit null rows.
+- **Existing databases have a scoped Team Stats migration path.** Approved
+  NBA, NFL, and NHL windows are copied fail-closed without treating a proof DB
+  or a code tag as evidence that a live database was migrated.
+
+### Deployment note
+
+- **The projection snapshot is per database.** This code release does not by
+  itself populate another environment's `nfl_player_projections` table; publish
+  and verify the pinned snapshot against that database before calling its 2026
+  projections live.
+
 ## v0.6.13 — 2026-07-29
 
 ### The draft room reads like a draft
