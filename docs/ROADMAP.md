@@ -912,3 +912,22 @@ detail overlay, general-news, and fantasy-news checks had zero console/page
 errors. The fantasy overlay contained zero links, while Deebo's standalone ESPN
 headline remained linked. This candidate is served by the managed DEV tunnel,
 remains unpushed, and is not production.
+
+### Correction: separate NFL league-page rankings pool
+
+Commit `09fc934` closes a missed third pool surface. The `/leagues/nfl` Player
+Rankings table is backed by `/api/nfl/draft-board`, not the mock-draft pool API.
+It now:
+
+- returns and renders the same compact NFL injury tags;
+- restricts unfiltered and filtered results to `QB`, `RB`, `WR`, `TE`, `PK`,
+  and `DEF`;
+- removes `TQB` and unsupported-position pills; and
+- rejects `position=TQB` instead of treating it as a valid board filter.
+
+Fresh public-tunnel verification measured 772 eligible players across only the
+six supported positions, zero `TQB` search results, and a rendered red `Q` tag
+for Jahmyr Gibbs in the exact league-page Player Rankings table. The focused
+backend suites passed 71 tests, the shared injury-tag suite passed three tests,
+and the browser check had zero console/page errors. This correction is live on
+managed DEV through auto-reload, remains unpushed, and is not production.
