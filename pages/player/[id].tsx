@@ -574,26 +574,32 @@ export default function PlayerPage() {
             {!isNfl && <h2 className="text-sm font-bold text-zinc-400 uppercase tracking-wider mb-2">Recent Games</h2>}
             {isNfl ? (
               <div className="space-y-6">
-                <div>
-                  <h2 className="text-sm font-bold text-zinc-400 uppercase tracking-wider mb-2">Regular Season</h2>
-                  <NflGameLog
-                    games={p.recent_games}
-                    scheduleGames={nflSchedule.filter(game => game.phase === 'regular')}
-                    fillMissed
-                  />
-                </div>
                 {p.postseason_recent_games.length > 0 && (
                   <div>
-                    <h2 className="text-sm font-bold text-zinc-400 uppercase tracking-wider mb-2">Postseason</h2>
+                    <h2 className="text-sm font-bold text-zinc-400 uppercase tracking-wider mb-2">
+                      {p.season != null ? `${p.season} ` : ''}Postseason
+                    </h2>
                     <NflGameLog
                       games={p.postseason_recent_games}
                       scheduleGames={nflSchedule.filter(game => game.phase === 'postseason')}
                     />
                   </div>
                 )}
+                <div>
+                  <h2 className="text-sm font-bold text-zinc-400 uppercase tracking-wider mb-2">
+                    {p.season != null ? `${p.season} ` : ''}Regular Season
+                  </h2>
+                  <NflGameLog
+                    games={p.recent_games}
+                    scheduleGames={nflSchedule.filter(game => game.phase === 'regular')}
+                    fillMissed
+                  />
+                </div>
                 {p.preseason_recent_games.length > 0 && (
                   <div>
-                    <h2 className="text-sm font-bold text-zinc-400 uppercase tracking-wider mb-2">Preseason</h2>
+                    <h2 className="text-sm font-bold text-zinc-400 uppercase tracking-wider mb-2">
+                      {p.season != null ? `${p.season} ` : ''}Preseason
+                    </h2>
                     <NflGameLog
                       games={p.preseason_recent_games}
                       scheduleGames={nflSchedule.filter(game => game.phase === 'preseason')}
