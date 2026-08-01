@@ -1,9 +1,9 @@
-# Codex context reset — player projections, venue markers, and managed worktree
+# Codex context reset — recovered player detail, player pools, and managed worktree
 
 Date: 2026-08-01
 Repository: `/root/legendarypicks`
 Managed branch: `dev`
-Current committed checkpoint before this document update: `b4ffc81`
+Implementation checkpoint before this document update: `4dbc44c`
 Remote checkpoint: `origin/dev` remains `3cc9487` (`v0.6.14`)
 
 ## Resume contract
@@ -22,8 +22,12 @@ Remote checkpoint: `origin/dev` remains `3cc9487` (`v0.6.14`)
 
 ## Current branch and worktree state
 
-The main worktree was safely returned from `feat/player-game-log-away-markers` to `dev`.
-The feature branch still points at `3cc9487`; it was not reset or deleted.
+The main worktree is on `dev`. The verified implementation ends at `4dbc44c`, 19 commits ahead of
+`origin/dev`; the document-only commit containing this update is its immediate descendant. The
+recovery work was performed in `/root/lp-player-detail-recovery` on
+`fix/recover-player-detail-wip` and fast-forwarded into local `dev` only after focused verification.
+The feature branch
+`feat/player-game-log-away-markers` still points at `3cc9487`; it was not reset or deleted.
 
 Before the checkout, all tracked WIP was preserved in:
 
@@ -31,7 +35,9 @@ Before the checkout, all tracked WIP was preserved in:
 stash@{0}: preserve-main-worktree-before-dev-switch-20260801
 ```
 
-That stash contains 12 tracked files and must not be dropped until its owners confirm recovery:
+That stash contains 12 tracked files and remains intact. Its task-owned hunks were mapped and
+recovered, but the stash must not be dropped because it still serves as containment and includes
+externally owned esports WIP:
 
 - `backend/data/esports_team_logos.json`
 - `backend/routers/nfl_mock_draft.py`
@@ -60,6 +66,18 @@ belongs to this task.
 ## Local `dev` history added in this work
 
 ```text
+4dbc44c fix(player): lead game log with season postseason
+14efc9b fix(player): clarify source and prevent mobile tab wrapping
+59311dd fix(nfl): unify player pool ordinals
+033cec2 perf(nfl): scope draft cache invalidation to source data
+134f556 fix(nfl): keep draft board cache hot in wal mode
+82a200e docs: complete preservation recovery map
+e9a8b2f fix(props): restore completion label
+cc05bdd fix(nfl): open player pool names in overlay
+9a261e5 fix(nfl): recover and harden mock draft pool cache
+453a8b2 docs: record preservation stash recovery gate
+069a9c9 fix(nfl): recover and harden draft board cache
+63a3099 fix(player): recover NFL profile detail work
 b4ffc81 docs: protect managed dev worktree branch
 65a8568 fix(nfl): remove stale projection snapshot rows
 37660d4 merge: verified player opponent venue markers
@@ -71,6 +89,27 @@ a306386 feat(nfl): add player projections tab and season totals
 
 Nothing has been pushed. `origin/dev` and tag `v0.6.14` remain at `3cc9487`.
 
+## Recovery and preservation outcome
+
+The later player-detail, NFL pool, news, schedule, label, and cache work was found only in
+`stash@{0}`, not in active `dev`. It was recovered selectively rather than applying the stash
+wholesale. The stash was kept exactly as requested.
+
+The durable prevention rule is recorded in:
+
+```text
+docs/RETRO-2026-08-01-PLAYER-DETAIL-PRESERVATION.md
+```
+
+Before a preservation stash can be called recovered, require all of the following:
+
+- inspect the stash against its first parent, not only against current `HEAD`;
+- classify every hunk by owner and task;
+- map every task-owned hunk to an active commit or an explicit intentional rejection;
+- require zero unexplained task-owned hunks;
+- run the browser acceptance matrix on the exact managed surfaces;
+- keep the stash until the ownership map is complete.
+
 ## NFL player overlay delivered
 
 `components/Leagues/PlayerDetailOverlay.tsx` now has four tabs:
@@ -80,8 +119,9 @@ Nothing has been pushed. `origin/dev` and tag `v0.6.14` remain at `3cc9487`.
 - News
 - Projections
 
-The Projections tab contains ESPN Season Outlook followed by the 2026 projection table. Overview
-retains the previous research sections and adds the published prior-season totals table.
+The Projections tab contains the ESPN-authored Season Outlook followed by the 2026 projection
+table. The visible attribution now reads `Source: ESPN`. Overview retains the previous research
+sections and adds the published prior-season totals table.
 
 The data/API contract includes:
 
@@ -166,20 +206,82 @@ Managed-browser evidence on `:3096` before the checkout:
 The then-recorded public tunnel hostname was DNS-unavailable, so tunnel verification was not counted
 as passing evidence.
 
+## Recovered player-detail and player-pool behavior
+
+The recovery and follow-up commits now provide all of the following on local `dev`:
+
+- Player Pool names open `PlayerDetailOverlay` and keep the user on `/leagues/nfl`.
+- Both NFL game-log surfaces use the published NFL schedule for opponents and venue.
+- `@` appears only for published away games; home games are unprefixed and unknown venue stays
+  unmarked.
+- Regular season, postseason, and preseason remain separate instead of being blended.
+- Standalone Player Detail orders `2025 POSTSEASON` above `2025 REGULAR SEASON`; every phase heading
+  carries the season year.
+- Mobile `Game Log` tabs are non-shrinking and non-wrapping on both standalone and overlay surfaces.
+- The overlay includes Overview, Game log, News, and Projections, including ESPN news and the
+  same-name article correction.
+- Game-log labels are `Comp`, `Att`, and `Car`; the orange league-rank card uses `Comp/G`.
+- The Props completion label is also `Comp/G`.
+
+The visible player-pool ordinal is now one coherent system. ESPN PPR ranks 37–68 belong to 32 TQB
+aggregate entities, which are intentionally excluded from a player-only pool. Previously the row
+column showed those gapped ESPN ranks while the footer showed filtered row positions. League and
+mock-draft pool tables now display their player-only ordinal under `#`; managed verification showed
+50 rows numbered 1 through 50 with footer `1–50 of 772`.
+
+## Player-pool read-path performance
+
+The draft-board and full mock-draft-pool caches written by Hermes were retained and repaired.
+
+The original invalidation token used the SQLite database and WAL mtimes. In WAL mode, opening a
+read connection creates a transient zero-byte WAL with a new mtime, so every request looked like a
+publication and missed cache. In addition, unrelated Props and esports writes to the shared SQLite
+file evicted the NFL cache.
+
+The current two-layer token:
+
+- normalizes transient zero-byte WAL lifecycle;
+- memoizes unchanged physical database state;
+- fingerprints only the NFL source tables consumed by the draft surfaces;
+- ignores unrelated database writes;
+- still invalidates for relevant NFL row corrections, non-empty WAL publications, and schema
+  changes;
+- retains bounded, monotonic-TTL response caches and encoded full-pool responses.
+
+Measured against the current DEV database:
+
+- cold in-process draft-board read: about 0.39 seconds;
+- hot in-process read: about 6 milliseconds;
+- hot managed `:3096` proxy read: about 26–40 milliseconds;
+- 50 returned rows: 37,694 decoded bytes.
+
+The remaining full-page time on `next dev` includes development hydration and the other concurrent
+camp endpoints; it is not a 2.88 MB Player Pool transfer. The separate full mock-draft payload still
+contains 4,507 players and is protected by its encoded response cache.
+
 ## Final combined verification
 
-- 83 focused backend tests passed.
-- 7 focused frontend tests passed across the player overlay and PropChart.
-- Focused ESLint had zero errors; the existing player-page raw `<img>` warning remained.
-- Combined-code clone API verification returned the expected outlook, projection, completion rate,
-  sacks, first downs, QBR, passer rating, and fumble values.
-- `git diff --check` passed for the committed implementation.
+- Recovery gate: 81 backend tests and 12 frontend tests passed across the recovered player detail,
+  news, schedule, labels, caches, overlay, and game-log behavior.
+- Performance gate: 26 offseason/draft-board tests and 25 mock-draft tests passed in their required
+  separate Python processes.
+- Pool ordinal gate: 8 focused frontend tests passed across league rows, mock-draft rows, and the
+  pool mapper.
+- Final source/mobile/game-log gates: overlay and game-log tests passed; focused ESLint had zero
+  errors with only the pre-existing player-page raw `<img>` warning.
+- Managed browser verification covered the overlay and standalone Player Detail with zero page or
+  console errors, `Source: ESPN`, single-line mobile tabs at 320 px, player ordinals 1–50 matching
+  the footer, and postseason-before-regular headings with the year.
+- Clone API verification returned the expected outlook, projection, completion rate, sacks, first
+  downs, QBR, passer rating, fumble values, regular-season logs, postseason logs, and away markers.
+- `git diff --check` passed for every committed implementation slice.
 
 ## Safe next steps
 
 1. Verify `git -C /root/legendarypicks branch --show-current` prints `dev`.
 2. Do not use `git switch`; use `git checkout` only when a branch change is authorized.
-3. Do not apply or drop the preservation stash without identifying each WIP owner.
+3. Do not apply or drop the preservation stash; its recovery map is complete, but it remains the
+   requested containment copy and still includes externally owned WIP.
 4. Treat candidate, managed DEV, and production as separate states.
 5. Do not push or promote this local `dev` history without explicit authorization and a fresh
    whole-app release gate.
