@@ -410,7 +410,7 @@ async function startDraft(page) {
         check(
           wrong.length === 0,
           label + ': ' + wrong.length + ' row(s) show a different position in the player cell: ' +
-            JSON.stringify((wrong[0] || {}).player).slice(0, 120)
+            String((wrong[0] || {}).player).slice(0, 120)
         )
         // Nobody says "D/ST1" out loud, and ESPN prints no positional rank for either.
         const ranked = players.filter(r => new RegExp(label.replace('/', '\\/') + '\\d').test(r.player || ''))
