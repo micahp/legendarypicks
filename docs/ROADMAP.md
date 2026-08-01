@@ -839,3 +839,34 @@ not pushed or deployed.
 - This closes the local feature defect. It does not satisfy the whole-app
   v0.6.13 re-cut gates above and does not authorize DEV/production data writes,
   a tag move, service restart, or deployment.
+
+---
+
+## 2026-08-01 — Fantasy-news scope correction (supersedes 2026-07-31 surface parity)
+
+Commit `fe1f296` corrects the product boundary that `f4e05fb` and `888fb51`
+got wrong:
+
+- `/player/[id]` is a general player-detail surface. Its News tab again uses
+  ESPN general reporting through `/api/player/{id}/news`; it does not render
+  RotoWire fantasy analysis.
+- The mock-draft player overlay is the fantasy context. It alone consumes
+  `/api/player/{id}/fantasy-news` and renders RotoWire notes and Fantasy Spin.
+- ESPN search results are accepted only when ESPN resolves the query to exactly
+  one NFL athlete with the profile's ESPN ID; same-name NFL players fail closed.
+- RotoWire identity resolves from a persisted mapping when present, otherwise
+  from Sleeper's published ESPN/GSIS-to-RotoWire crosswalk. Team changes do not
+  break stable identity: Deebo Samuel resolves to RotoWire `13429` even while
+  the local team row still says WSH and RotoWire says SF.
+- The 172-update / 157-player league feed is a rolling snapshot, not complete
+  player coverage. Public player-specific RotoWire history is merged with it;
+  locked subscriber analysis is not copied. A true `no_news` state now requires
+  a successfully loaded player history, not mere absence from the rolling feed.
+
+DEV-tunnel evidence: Deebo's standalone page rendered ESPN reporting with no
+RotoWire/Fantasy Spin; the in-draft overlay rendered six RotoWire updates,
+including history, with no ESPN headline. Patrick Mahomes rendered five history
+updates despite not relying on a current rolling-feed match. Both browser checks
+had zero console/page errors. The focused gates pass 27 backend tests and five
+React tests. This remains local/un-pushed and does not authorize production
+deployment.
