@@ -4,6 +4,7 @@ import sqlite3
 import sys
 import tempfile
 import unittest
+from unittest import mock
 
 
 sys.path.insert(0, os.path.dirname(__file__))
@@ -14,6 +15,7 @@ from routers import nfl_offseason
 
 class NflOffseasonApiTests(unittest.TestCase):
     def setUp(self):
+        nfl_offseason._clear_draft_board_cache()
         handle = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
         handle.close()
         self.db_path = handle.name
@@ -157,6 +159,7 @@ class NflOffseasonApiTests(unittest.TestCase):
         nfl_offseason._today = lambda: dt.date(2026, 7, 21)
 
     def tearDown(self):
+        nfl_offseason._clear_draft_board_cache()
         nfl_offseason._db = self.original_db
         nfl_offseason._today = self.original_today
         os.unlink(self.db_path)
@@ -242,6 +245,36 @@ class NflOffseasonApiTests(unittest.TestCase):
         self.assertEqual(alias_receiver["depth_team"], "LAR")
         self.assertFalse(alias_receiver["team_changed"])
         self.assertTrue(actual_mover["team_changed"])
+
+    def test_draft_board_cache_keeps_alternating_keys_warm(self):
+        original = nfl_offseason._regular_season_aggregates
+        with mock.patch.object(
+            nfl_offseason,
+            "_regular_season_aggregates",
+            wraps=original,
+        ) as aggregates:
+            first = self.board(sort="adp")
+            projected = self.board(sort="proj")
+            repeated = self.board(sort="adp")
+
+        self.assertEqual(first, repeated)
+        self.assertNotEqual(
+            [player["player_id"] for player in first["players"]],
+            [player["player_id"] for player in projected["players"]],
+        )
+        self.assertEqual(2, aggregates.call_count)
+
+    def test_draft_board_cache_invalidates_after_database_write(self):
+        before = {p["name"]: p for p in self.board()["players"]}
+        self.assertEqual(8, before["Actual Mover"]["games_played"])
+
+        with sqlite3.connect(self.db_path) as connection:
+            connection.execute(
+                "DELETE FROM player_game_logs WHERE player_id=2 AND CAST(game_no AS INTEGER) > 2"
+            )
+
+        after = {p["name"]: p for p in self.board()["players"]}
+        self.assertEqual(2, after["Actual Mover"]["games_played"])
 
     def test_availability_is_the_headline_and_both_averages_ship_together(self):
         players = {p["name"]: p for p in self.board()["players"]}
