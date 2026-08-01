@@ -453,12 +453,16 @@ export function DraftPlayerRow({
       </td>
       <td className="py-2.5 px-2">
         <div className="flex items-center gap-1.5">
-          <a
-            href={`/player/${player.player_id}`}
+          <button
+            type="button"
+            onClick={event => {
+              event.stopPropagation()
+              onClick?.()
+            }}
             className="font-medium text-zinc-200 hover:text-emerald-400 transition-colors"
           >
             {player.name}
-          </a>
+          </button>
           <InjuryTag status={player.injury_status} compact />
         </div>
         <div className="text-[10px] text-zinc-600">
