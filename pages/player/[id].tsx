@@ -4,6 +4,7 @@ import Head from 'next/head'
 import PropChart, { PropHistory } from '../../components/Props/PropChart'
 import NflUsageTrend from '../../components/Leagues/NflUsageTrend'
 import StatRankCard from '../../components/Leagues/StatRankCard'
+import PlayerNews from '../../components/Leagues/PlayerNews'
 import { trackPlayerViewed, trackUsageTrendViewed } from '../../lib/analytics'
 
 interface Projection {
@@ -270,8 +271,6 @@ export default function PlayerPage() {
   const [openProp, setOpenProp] = useState<string | null>(null)
   const [chart, setChart] = useState<PropHistory | null>(null)
   const [tab, setTab] = useState<PlayerTab>('overview')
-  const [news, setNews] = useState<{ articles: Array<{ id: number; headline: string; notes: string; analysis: string; injury_status: string | null; injury_type: string | null; return_date: string | null; published: string; link: string }> } | null>(null)
-  const [newsLoading, setNewsLoading] = useState(false)
 
   useEffect(() => {
     if (!id) return
@@ -294,25 +293,6 @@ export default function PlayerPage() {
       .catch(() => { if (alive) setState('error') })
     return () => { alive = false }
   }, [id, retryTick])
-
-  // Fetch news when news tab is selected (NFL only)
-  useEffect(() => {
-    if (tab !== 'news') return
-    let cancelled = false
-    setNewsLoading(true)
-    fetch(`/api/player/${id}/news?limit=10`)
-      .then(res => res.json())
-      .then(data => {
-        if (!cancelled) {
-          setNews(data)
-          setNewsLoading(false)
-        }
-      })
-      .catch(() => {
-        if (!cancelled) setNewsLoading(false)
-      })
-    return () => { cancelled = true }
-  }, [tab, id])
 
   const openChart = async (pr: PropRow) => {
     const key = `${pr.market}-${pr.side}`
@@ -537,77 +517,7 @@ export default function PlayerPage() {
         {/* News tab — NFL only, fantasy news from RotoWire */ }
         {show('news') && isNfl && (
           <section>
-            {newsLoading && (
-              <div className="space-y-3 animate-pulse">
-                {[0, 1, 2].map(i => (
-                  <div key={i} className="h-16 rounded-lg bg-zinc-800" />
-                ))}
-              </div>
-            )}
-            {!newsLoading && news && news.articles.length === 0 && (
-              <div className="text-center py-8 text-zinc-500">
-                <p className="text-sm">No recent news for this player</p>
-              </div>
-            )}
-            {!newsLoading && news && news.articles.length > 0 && (
-              <div className="space-y-4">
-                {news.articles.map(article => (
-                  <article
-                    key={article.id}
-                    className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4 space-y-2"
-                  >
-                    {/* Headline + injury badge */}
-                    <div className="flex items-start gap-2">
-                      <a
-                        href={article.link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex-1 min-w-0"
-                      >
-                        <h4 className="text-sm font-semibold text-zinc-100 hover:text-emerald-400 transition-colors">
-                          {article.headline}
-                        </h4>
-                      </a>
-                      {article.injury_status && (
-                        <span className="shrink-0 rounded bg-red-500/10 px-1.5 py-0.5 text-[10px] font-bold text-red-400 uppercase">
-                          {article.injury_status}
-                        </span>
-                      )}
-                    </div>
-
-                    {/* News blurb */}
-                    <p className="text-xs text-zinc-400 leading-relaxed">
-                      {article.notes}
-                    </p>
-
-                    {/* Fantasy analysis — the "SPIN" */}
-                    {article.analysis && (
-                      <div className="rounded-md bg-zinc-800/50 px-3 py-2 border-l-2 border-emerald-500/50">
-                        <p className="text-[11px] font-semibold uppercase tracking-wider text-emerald-400/70 mb-1">
-                          Fantasy Spin
-                        </p>
-                        <p className="text-xs text-zinc-300 leading-relaxed">
-                          {article.analysis}
-                        </p>
-                      </div>
-                    )}
-
-                    {/* Meta line */}
-                    <div className="flex items-center gap-3 text-[10px] text-zinc-600">
-                      <time dateTime={article.published}>
-                        {new Date(article.published).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
-                      </time>
-                      {article.return_date && (
-                        <span>Return: {new Date(article.return_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
-                      )}
-                      {article.injury_type && (
-                        <span className="text-red-400/60">{article.injury_type}</span>
-                      )}
-                    </div>
-                  </article>
-                ))}
-              </div>
-            )}
+            <PlayerNews playerId={Number(id)} />
           </section>
         )}
       </div>

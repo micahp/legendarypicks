@@ -9,6 +9,12 @@ from fastapi.responses import JSONResponse
 from typing import Optional
 from _core import *
 from league_stats import canonical_population_sql
+from nfl_news import (
+    ROTOWIRE_LABEL,
+    load_news_feed,
+    resolve_source_player,
+    source_name_matches_player,
+)
 
 router = APIRouter()
 
@@ -458,143 +464,86 @@ def player_projections(player_id: int,
 @router.get("/api/player/{player_id}/news")
 def player_news(player_id: int,
                 limit: int = Query(10, ge=1, le=25)):
-    """Fetch fantasy-relevant NFL news for a player from RotoWire.
-
-    Pulls the full RotoWire NFL news XML feed (171 items, cached 10 min),
-    then filters by player first + last name match. Each item includes a
-    fantasy analysis blurb — the same "SPIN" section Sleeper renders.
-    """
-    import urllib.request
-    import xml.etree.ElementTree as ET
-    import threading
-    import time as _time
-
-    # ── Module-level cache (TTL = 10 min) ──
-    _RW_CACHE = getattr(player_news, "_cache", None)
-    if _RW_CACHE is None:
-        player_news._cache = {"data": None, "ts": 0, "lock": threading.Lock()}
-        _RW_CACHE = player_news._cache
-
-    _RW_URL = (
-        "https://rotowire-secrets-ebgmaeh8ecc4huhf.canadaeast-01.azurewebsites.net"
-        "/api/proxy?feed=NFLNews"
-    )
-
-    def _fetch_feed():
-        with _RW_CACHE["lock"]:
-            now = _time.time()
-            if _RW_CACHE["data"] is not None and (now - _RW_CACHE["ts"]) < 600:
-                return _RW_CACHE["data"]
-            try:
-                req = urllib.request.Request(_RW_URL)
-                with urllib.request.urlopen(req, timeout=10) as resp:
-                    raw = resp.read()
-                root = ET.fromstring(raw)
-                items = []
-                for u in root.findall(".//Update"):
-                    update_id = u.get("Id")
-                    pid_el = u.find(".//Player/Id")
-                    fn_el = u.find(".//Player/FirstName")
-                    ln_el = u.find(".//Player/LastName")
-                    pos_el = u.find(".//Player/Position")
-                    team_el = u.find(".//Team")
-                    headline_el = u.find("Headline")
-                    notes_el = u.find("Notes")
-                    analysis_el = u.find("Analysis")
-                    injury_el = u.find("Injury")
-                    link_el = u.find(".//Player/Link")
-                    date_el = u.find("DateTime")
-
-                    items.append({
-                        "id": int(update_id) if update_id else None,
-                        "first_name": (fn_el.text or "").strip() if fn_el is not None else "",
-                        "last_name": (ln_el.text or "").strip() if ln_el is not None else "",
-                        "position": pos_el.text if pos_el is not None else "",
-                        "team": team_el.get("Code") if team_el is not None else "",
-                        "headline": _cdata(headline_el),
-                        "notes": _cdata(notes_el),
-                        "analysis": _cdata(analysis_el),
-                        "injury_status": injury_el.get("Status") if injury_el is not None else "",
-                        "injury_type": injury_el.get("Type") if injury_el is not None else "",
-                        "injury_location": injury_el.get("Location") if injury_el is not None else "",
-                        "return_date": injury_el.get("ReturnDate") if injury_el is not None else "",
-                        "published": date_el.text if date_el is not None else "",
-                        "link": link_el.text if link_el is not None else "",
-                    })
-                _RW_CACHE["data"] = items
-                _RW_CACHE["ts"] = now
-            except Exception:
-                if _RW_CACHE["data"] is not None:
-                    return _RW_CACHE["data"]  # stale cache beats nothing
-                return []
-            return _RW_CACHE["data"]
-
-    def _cdata(el):
-        if el is None:
-            return ""
-        return (el.text or "").strip()
-
-    # ── Look up player ──
     with closing(_db()) as con:
         p = con.execute(
-            "SELECT id, name, league FROM players WHERE id=?",
+            "SELECT id, name, team, league, position FROM players WHERE id=?",
             (player_id,),
         ).fetchone()
         if not p:
             raise HTTPException(404, "Player not found")
         if p["league"] != "nfl":
-            return {"player_id": player_id, "name": p["name"], "articles": []}
+            return {
+                "player_id": player_id,
+                "name": p["name"],
+                "source": ROTOWIRE_LABEL,
+                "data_status": "unsupported",
+                "message": "Fantasy news is available for NFL players only.",
+                "articles": [],
+            }
 
-    # Decompose the stored name (e.g. "Jahmyr Gibbs") into parts for matching.
-    full_name = (p["name"] or "").strip()
-    name_parts = full_name.split()
-    if len(name_parts) < 2:
-        return {"player_id": player_id, "name": full_name, "articles": []}
-    first_name, last_name = name_parts[0], name_parts[-1]
+        feed = load_news_feed()
+        if feed["status"] == "unavailable":
+            return {
+                "player_id": player_id,
+                "name": p["name"],
+                "source": ROTOWIRE_LABEL,
+                "data_status": "unavailable",
+                "message": feed["message"],
+                "source_updated_at": None,
+                "articles": [],
+            }
 
-    # ── Fetch feed, filter by name ──
-    feed = _fetch_feed()
-    articles = []
-    for item in feed:
-        if not _name_matches(first_name, last_name,
-                             item["first_name"], item["last_name"]):
-            continue
-        articles.append({
-            "id": item["id"],
-            "headline": item["headline"],
-            "notes": item["notes"],
-            "analysis": item["analysis"],
-            "injury_status": item["injury_status"] or None,
-            "injury_type": item["injury_type"] or None,
-            "injury_location": item["injury_location"] or None,
-            "return_date": item["return_date"] or None,
-            "published": item["published"],
-            "link": item["link"],
-        })
-        if len(articles) >= limit:
-            break
+        articles = []
+        identity_unresolved = False
+        for item in feed["items"]:
+            if not source_name_matches_player(item, p["name"]):
+                continue
+            resolution = resolve_source_player(con, item)
+            if resolution["player_id"] is None:
+                identity_unresolved = True
+                continue
+            if resolution["player_id"] != player_id:
+                continue
+            articles.append(
+                {
+                    "id": item["id"],
+                    "source_player_id": item["source_player_id"],
+                    "headline": item["headline"],
+                    "notes": item["notes"],
+                    "analysis": item["analysis"],
+                    "injury_status": item["injury_status"] or None,
+                    "injury_type": item["injury_type"] or None,
+                    "injury_location": item["injury_location"] or None,
+                    "return_date": item["return_date"] or None,
+                    "published": item["published"],
+                    "link": item["link"],
+                }
+            )
+            if len(articles) >= limit:
+                break
 
-    return {"player_id": player_id, "name": full_name, "articles": articles}
+    if articles:
+        status = "stale" if feed["status"] == "stale" else "ready"
+        message = feed["message"]
+    elif feed["status"] == "stale":
+        status = "unavailable"
+        message = feed["message"]
+    elif identity_unresolved:
+        status = "unavailable"
+        message = "Fantasy news identity could not be verified for this player."
+    else:
+        status = "no_news"
+        message = "No recent fantasy news for this player."
 
-
-def _name_matches(fn1, ln1, fn2, ln2):
-    """Case-insensitive name match with suffix tolerance (Jr, III, etc.)."""
-    f1, l1 = fn1.lower().strip(), ln1.lower().strip()
-    f2, l2 = fn2.lower().strip(), ln2.lower().strip()
-    # Last name must match exactly
-    if l1 != l2:
-        return False
-    # First name: exact match or one is a prefix of the other
-    # (handles "P.J." vs "PJ", "Chris" vs "Christopher" — the RotoWire
-    # feed uses standardised names so prefix-only matching is rare but safe.)
-    if f1 == f2:
-        return True
-    if f1.startswith(f2) or f2.startswith(f1):
-        return True
-    # Handle dotted initials ("P.J." → "pj")
-    f1_clean = f1.replace(".", "")
-    f2_clean = f2.replace(".", "")
-    return f1_clean == f2_clean
+    return {
+        "player_id": player_id,
+        "name": p["name"],
+        "source": ROTOWIRE_LABEL,
+        "data_status": status,
+        "message": message,
+        "source_updated_at": feed["fetched_at"],
+        "articles": articles,
+    }
 
 
 @router.get("/api/player/{player_id}/stats")
