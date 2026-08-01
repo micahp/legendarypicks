@@ -58,6 +58,10 @@ describe('PlayerNews', () => {
     render(<PlayerNews playerId={7979} />)
 
     expect(await screen.findByText('Newest update')).toBeTruthy()
+    expect(global.fetch).toHaveBeenCalledWith(
+      '/api/player/7979/fantasy-news?limit=10',
+      expect.objectContaining({ signal: expect.anything() }),
+    )
     expect(screen.getByText('Fantasy Spin')).toBeTruthy()
     expect(screen.getByText('Estimated return: Aug 13')).toBeTruthy()
     expect(screen.getByText('Source: RotoWire')).toBeTruthy()

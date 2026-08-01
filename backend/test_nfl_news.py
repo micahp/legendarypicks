@@ -126,6 +126,47 @@ class NflNewsFeedTests(unittest.TestCase):
         self.assertEqual([], result["items"])
         self.assertIn("temporarily unavailable", result["message"])
 
+    def test_player_page_parser_adds_history_without_exposing_locked_analysis(self):
+        html = b"""
+        <main><div id="news">
+          <div class="news-update has-no-player-name">
+            <div class="news-update__headline">Back in San Francisco</div>
+            <div class="news-update__timestamp">July 30, 2026</div>
+            <div class="news-update__news">Samuel agreed to a one-year deal.</div>
+            <div class="news-update__analysis"><b>ANALYSIS</b><br>Useful fantasy context.</div>
+          </div>
+          <div class="news-update has-no-player-name">
+            <div class="news-update__headline">Older update</div>
+            <div class="news-update__timestamp">January 4, 2026</div>
+            <div class="news-update__news">Caught two passes.</div>
+            <div class="news-update__analysis"><b>ANALYSIS</b><br><a href="/subscribe/">Subscribe now</a> for analysis.</div>
+          </div>
+          <button class="get-more-player-news">More</button>
+        </div></main>
+        """
+        items = nfl_news.parse_player_news_page(html, "13429")
+
+        self.assertEqual(2, len(items))
+        self.assertEqual("2026-07-30", items[0]["published"])
+        self.assertEqual("Useful fantasy context.", items[0]["analysis"])
+        self.assertEqual("", items[1]["analysis"])
+
+    def test_sleeper_crosswalk_keeps_rotowire_native_ids(self):
+        players = {
+            str(index): {
+                "full_name": f"Player {index}",
+                "position": "WR",
+                "rotowire_id": 10000 + index,
+                "espn_id": 20000 + index,
+                "gsis_id": f"00-{index:07d}",
+            }
+            for index in range(1000)
+        }
+        parsed = nfl_news.parse_sleeper_crosswalk(__import__("json").dumps(players).encode())
+
+        self.assertEqual({"10042"}, parsed["by_espn"]["20042"])
+        self.assertEqual({"10042"}, parsed["by_gsis"]["00-0000042"])
+
 
 class NflNewsIdentityAndApiTests(unittest.TestCase):
     def setUp(self):
@@ -138,20 +179,21 @@ class NflNewsIdentityAndApiTests(unittest.TestCase):
         con.executescript(
             """
             CREATE TABLE players(
-              id INTEGER PRIMARY KEY, name TEXT, team TEXT, league TEXT, position TEXT
+              id INTEGER PRIMARY KEY, name TEXT, team TEXT, league TEXT, position TEXT,
+              espn_id TEXT, nfl_gsis_id TEXT
             );
             """
         )
         con.executemany(
-            "INSERT INTO players VALUES(?,?,?,?,?)",
+            "INSERT INTO players VALUES(?,?,?,?,?,?,?)",
             [
-                (1, "Michael Penix Jr.", "ATL", "nfl", "QB"),
-                (2, "Carl Davis", "WSH", "nfl", "DT"),
-                (3, "Carlton Davis III", "NE", "nfl", "CB"),
-                (4, "Marcus Harris", "KC", "nfl", "DT"),
-                (5, "Marcus Harris", "TEN", "nfl", "CB"),
-                (6, "Deebo Samuel Sr.", "WSH", "nfl", "WR"),
-                (7, "Alex Skater", "CHI", "nhl", "C"),
+                (1, "Michael Penix Jr.", "ATL", "nfl", "QB", "4361653", "00-0039910"),
+                (2, "Carl Davis", "WSH", "nfl", "DT", "16945", "00-0031131"),
+                (3, "Carlton Davis III", "NE", "nfl", "CB", "3122786", "00-0034391"),
+                (4, "Marcus Harris", "KC", "nfl", "DT", None, None),
+                (5, "Marcus Harris", "TEN", "nfl", "CB", None, None),
+                (6, "Deebo Samuel Sr.", "WSH", "nfl", "WR", "3126486", "00-0035719"),
+                (7, "Alex Skater", "CHI", "nhl", "C", None, None),
             ],
         )
         con.commit()
@@ -195,6 +237,20 @@ class NflNewsIdentityAndApiTests(unittest.TestCase):
             "message": "Latest fantasy news refresh is delayed." if status == "stale" else None,
         }
 
+    @staticmethod
+    def crosswalk(**espn_to_rotowire):
+        return {
+            "status": "ready",
+            "crosswalk": {
+                "by_espn": {key: {str(value)} for key, value in espn_to_rotowire.items()},
+                "by_gsis": {},
+                "by_name_position": {},
+                "mapped_players": 1000,
+            },
+            "fetched_at": "2026-07-31T12:01:00-05:00",
+            "message": None,
+        }
+
     def test_suffix_resolves_with_team_and_position_evidence(self):
         item = self.item(17700, "Michael", "Penix", "ATL", "QB")
         with sqlite3.connect(self.path) as con:
@@ -228,48 +284,109 @@ class NflNewsIdentityAndApiTests(unittest.TestCase):
         self.assertEqual(6, result["player_id"])
         self.assertEqual("source_id", result["method"])
 
+    def test_sleeper_native_id_crosswalk_survives_a_team_change(self):
+        con = sqlite3.connect(self.path)
+        con.row_factory = sqlite3.Row
+        player = con.execute("SELECT * FROM players WHERE id=6").fetchone()
+        result = nfl_news.resolve_rotowire_id(
+            con,
+            player,
+            self.crosswalk(**{"3126486": 13429}),
+        )
+        con.close()
+
+        self.assertEqual("13429", result["source_player_id"])
+        self.assertEqual("sleeper_native_id", result["method"])
+
+    def test_general_player_news_keeps_espn_search_on_the_profile(self):
+        payload = {
+            "results": [
+                {
+                    "type": "player",
+                    "contents": [{"uid": "s:20~l:28~a:3126486"}],
+                },
+                {
+                    "type": "article",
+                    "contents": [
+                        {
+                            "id": "older",
+                            "displayName": "Older Deebo report",
+                            "date": "2026-07-30T12:00:00Z",
+                            "byline": "Reporter Two",
+                            "link": {"web": "https://www.espn.com/older"},
+                            "images": [],
+                        },
+                        {
+                            "id": "newer",
+                            "displayName": "Deebo returns to San Francisco",
+                            "date": "2026-07-31T12:00:00Z",
+                            "byline": "Reporter One",
+                            "link": {"web": "https://www.espn.com/newer"},
+                            "images": [],
+                        },
+                    ],
+                }
+            ]
+        }
+        response = FakeResponse(__import__("json").dumps(payload).encode())
+        with mock.patch("urllib.request.urlopen", return_value=response):
+            result = players.player_news(6, 10)
+
+        self.assertEqual(
+            ["Deebo returns to San Francisco", "Older Deebo report"],
+            [article["headline"] for article in result["articles"]],
+        )
+        self.assertEqual("By Reporter One", result["articles"][0]["description"])
+
     def test_api_returns_verified_suffix_news_and_rejects_false_prefix(self):
         items = [
             self.item(17700, "Michael", "Penix", "ATL", "QB", update_id=20),
             self.item(12531, "Carlton", "Davis", "NE", "CB", update_id=21),
         ]
-        with mock.patch.object(players, "load_news_feed", return_value=self.snapshot(items)):
-            penix = players.player_news(1, 10)
-            carl = players.player_news(2, 10)
+        crosswalk = self.crosswalk(**{"4361653": 17700, "16945": 99999})
+        history = {"status": "ready", "items": [], "fetched_at": "now", "message": None}
+        with mock.patch.object(players, "load_sleeper_crosswalk", return_value=crosswalk), \
+             mock.patch.object(players, "load_news_feed", return_value=self.snapshot(items)), \
+             mock.patch.object(players, "load_player_news_page", return_value=history):
+            penix = players.player_fantasy_news(1, 10)
+            carl = players.player_fantasy_news(2, 10)
 
         self.assertEqual("ready", penix["data_status"])
         self.assertEqual([20], [article["id"] for article in penix["articles"]])
         self.assertEqual("no_news", carl["data_status"])
         self.assertEqual([], carl["articles"])
 
-    def test_api_fails_closed_on_identity_disagreement(self):
+    def test_api_uses_stable_crosswalk_despite_team_change(self):
         item = self.item(13429, "Deebo", "Samuel", "SF", "WR")
-        with mock.patch.object(players, "load_news_feed", return_value=self.snapshot([item])):
-            result = players.player_news(6, 10)
+        crosswalk = self.crosswalk(**{"3126486": 13429})
+        history = {"status": "ready", "items": [], "fetched_at": "now", "message": None}
+        with mock.patch.object(players, "load_sleeper_crosswalk", return_value=crosswalk), \
+             mock.patch.object(players, "load_news_feed", return_value=self.snapshot([item])), \
+             mock.patch.object(players, "load_player_news_page", return_value=history):
+            result = players.player_fantasy_news(6, 10)
 
-        self.assertEqual("unavailable", result["data_status"])
-        self.assertEqual([], result["articles"])
-        self.assertIn("identity", result["message"])
+        self.assertEqual("ready", result["data_status"])
+        self.assertEqual([1], [article["id"] for article in result["articles"]])
 
     def test_api_exposes_source_outage_instead_of_no_news(self):
-        with mock.patch.object(
-            players,
-            "load_news_feed",
-            return_value={
+        unavailable = {
                 "status": "unavailable",
                 "items": [],
                 "feed_date": None,
                 "fetched_at": None,
                 "message": "Fantasy news is temporarily unavailable.",
-            },
-        ):
-            result = players.player_news(1, 10)
+            }
+        crosswalk = self.crosswalk(**{"4361653": 17700})
+        with mock.patch.object(players, "load_sleeper_crosswalk", return_value=crosswalk), \
+             mock.patch.object(players, "load_news_feed", return_value=unavailable), \
+             mock.patch.object(players, "load_player_news_page", return_value=unavailable):
+            result = players.player_fantasy_news(1, 10)
 
         self.assertEqual("unavailable", result["data_status"])
         self.assertNotEqual("no_news", result["data_status"])
 
     def test_non_nfl_response_is_explicitly_unsupported(self):
-        result = players.player_news(7, 10)
+        result = players.player_fantasy_news(7, 10)
 
         self.assertEqual("unsupported", result["data_status"])
         self.assertEqual([], result["articles"])

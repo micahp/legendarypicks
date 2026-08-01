@@ -12,8 +12,10 @@ from league_stats import canonical_population_sql
 from nfl_news import (
     ROTOWIRE_LABEL,
     load_news_feed,
-    resolve_source_player,
-    source_name_matches_player,
+    load_player_news_page,
+    load_sleeper_crosswalk,
+    merge_player_news,
+    resolve_rotowire_id,
 )
 
 router = APIRouter()
@@ -464,9 +466,101 @@ def player_projections(player_id: int,
 @router.get("/api/player/{player_id}/news")
 def player_news(player_id: int,
                 limit: int = Query(10, ge=1, le=25)):
+    """Fetch general NFL player reporting from ESPN search."""
+    import json as _json
+    import re
+    import urllib.parse
+    import urllib.request
+
+    with closing(_db()) as con:
+        p = con.execute("SELECT id,name,espn_id,league FROM players WHERE id=?", (player_id,)).fetchone()
+        if not p:
+            raise HTTPException(404, "Player not found")
+        if p["league"] != "nfl":
+            return {"player_id": player_id, "name": p["name"], "articles": []}
+        espn_id = p["espn_id"]
+        if not espn_id:
+            return {"player_id": player_id, "name": p["name"], "articles": []}
+
+    # ESPN's league news endpoint is a short rolling window and routinely drops
+    # current player stories. Its search API is the player page's durable news
+    # surface, including the ESPN athlete result and matching articles.
+    search_name = re.sub(r"\s+(?:Jr\.?|Sr\.?|II|III|IV|V)$", "", p["name"], flags=re.I)
+    url = "https://site.api.espn.com/apis/search/v2?" + urllib.parse.urlencode(
+        {"query": search_name, "limit": max(limit, 20)}
+    )
+    try:
+        request = urllib.request.Request(
+            url,
+            headers={"Accept": "application/json", "User-Agent": "LegendaryPicks/0.7"},
+        )
+        with urllib.request.urlopen(request, timeout=8) as response:
+            data = _json.loads(response.read().decode())
+    except Exception:
+        return {"player_id": player_id, "name": p["name"], "articles": []}
+
+    articles = []
+    result_groups = data.get("results", []) if isinstance(data, dict) else []
+    player_results = next(
+        (group.get("contents", []) for group in result_groups if group.get("type") == "player"),
+        [],
+    )
+    nfl_player_results = [
+        candidate for candidate in player_results
+        if str(candidate.get("uid") or "").startswith("s:20~l:28~a:")
+    ]
+    matched_athlete = [
+        candidate for candidate in nfl_player_results
+        if str(candidate.get("uid") or "").endswith(f"~a:{espn_id}")
+    ]
+    # Search articles are name-keyed. If ESPN itself returns two NFL athletes
+    # for that name, the articles cannot be assigned safely to either profile.
+    if len(nfl_player_results) != 1 or len(matched_athlete) != 1:
+        return {"player_id": player_id, "name": p["name"], "articles": []}
+    article_results = next(
+        (group.get("contents", []) for group in result_groups if group.get("type") == "article"),
+        [],
+    )
+    for article in sorted(
+        article_results,
+        key=lambda candidate: str(candidate.get("date") or ""),
+        reverse=True,
+    ):
+        link = article.get("link", {}).get("web")
+        published = article.get("date")
+        headline = article.get("displayName")
+        if not link or not published or not headline:
+            continue
+        images = [
+            {"url": image.get("url"), "caption": image.get("caption") or image.get("name")}
+            for image in article.get("images", [])
+            if image.get("url")
+        ][:1]
+        byline = str(article.get("byline") or "").strip()
+        articles.append(
+            {
+                "id": article.get("id"),
+                "headline": headline,
+                "description": f"By {byline}" if byline else "",
+                "published": published,
+                "lastModified": None,
+                "link": link,
+                "images": images,
+            }
+        )
+        if len(articles) >= limit:
+            break
+    return {"player_id": player_id, "name": p["name"], "articles": articles}
+
+
+@router.get("/api/player/{player_id}/fantasy-news")
+def player_fantasy_news(player_id: int,
+                        limit: int = Query(10, ge=1, le=25)):
+    """Fetch player-specific RotoWire history for the fantasy draft surface."""
     with closing(_db()) as con:
         p = con.execute(
-            "SELECT id, name, team, league, position FROM players WHERE id=?",
+            """SELECT id,name,team,league,position,espn_id,nfl_gsis_id
+               FROM players WHERE id=?""",
             (player_id,),
         ).fetchone()
         if not p:
@@ -480,60 +574,52 @@ def player_news(player_id: int,
                 "message": "Fantasy news is available for NFL players only.",
                 "articles": [],
             }
+        crosswalk = load_sleeper_crosswalk()
+        resolution = resolve_rotowire_id(con, p, crosswalk)
 
-        feed = load_news_feed()
-        if feed["status"] == "unavailable":
-            return {
-                "player_id": player_id,
-                "name": p["name"],
-                "source": ROTOWIRE_LABEL,
-                "data_status": "unavailable",
-                "message": feed["message"],
-                "source_updated_at": None,
-                "articles": [],
-            }
+    source_player_id = resolution["source_player_id"]
+    if source_player_id is None:
+        message = crosswalk.get("message") or "Fantasy news identity could not be verified for this player."
+        return {
+            "player_id": player_id,
+            "name": p["name"],
+            "source": ROTOWIRE_LABEL,
+            "data_status": "unavailable",
+            "message": message,
+            "source_updated_at": None,
+            "articles": [],
+        }
 
-        articles = []
-        identity_unresolved = False
-        for item in feed["items"]:
-            if not source_name_matches_player(item, p["name"]):
-                continue
-            resolution = resolve_source_player(con, item)
-            if resolution["player_id"] is None:
-                identity_unresolved = True
-                continue
-            if resolution["player_id"] != player_id:
-                continue
-            articles.append(
-                {
-                    "id": item["id"],
-                    "source_player_id": item["source_player_id"],
-                    "headline": item["headline"],
-                    "notes": item["notes"],
-                    "analysis": item["analysis"],
-                    "injury_status": item["injury_status"] or None,
-                    "injury_type": item["injury_type"] or None,
-                    "injury_location": item["injury_location"] or None,
-                    "return_date": item["return_date"] or None,
-                    "published": item["published"],
-                    "link": item["link"],
-                }
-            )
-            if len(articles) >= limit:
-                break
-
+    feed = load_news_feed()
+    history = load_player_news_page(source_player_id)
+    articles = merge_player_news(source_player_id, feed, history, limit)
     if articles:
-        status = "stale" if feed["status"] == "stale" else "ready"
-        message = feed["message"]
-    elif feed["status"] == "stale":
-        status = "unavailable"
-        message = feed["message"]
-    elif identity_unresolved:
-        status = "unavailable"
-        message = "Fantasy news identity could not be verified for this player."
-    else:
+        status = "stale" if history["status"] == "stale" and feed["status"] != "ready" else "ready"
+        message = history["message"] if status == "stale" else None
+    elif history["status"] == "ready":
         status = "no_news"
-        message = "No recent fantasy news for this player."
+        message = "No fantasy news is published for this player."
+    else:
+        status = "unavailable"
+        message = history["message"] or feed["message"] or "Fantasy news is temporarily unavailable."
+
+    response_articles = []
+    for item in articles:
+        response_articles.append(
+            {
+                "id": item["id"],
+                "source_player_id": str(item["source_player_id"]),
+                "headline": item["headline"],
+                "notes": item["notes"],
+                "analysis": item["analysis"],
+                "injury_status": item["injury_status"] or None,
+                "injury_type": item["injury_type"] or None,
+                "injury_location": item["injury_location"] or None,
+                "return_date": item["return_date"] or None,
+                "published": item["published"],
+                "link": item["link"],
+            }
+        )
 
     return {
         "player_id": player_id,
@@ -541,8 +627,8 @@ def player_news(player_id: int,
         "source": ROTOWIRE_LABEL,
         "data_status": status,
         "message": message,
-        "source_updated_at": feed["fetched_at"],
-        "articles": articles,
+        "source_updated_at": history["fetched_at"] or feed["fetched_at"],
+        "articles": response_articles,
     }
 
 

@@ -77,7 +77,7 @@ export default function PlayerNews({ playerId, compact = false }: Props) {
     const controller = new AbortController()
     setState({ kind: 'loading' })
 
-    fetch(`/api/player/${playerId}/news?limit=10`, { signal: controller.signal })
+    fetch(`/api/player/${playerId}/fantasy-news?limit=10`, { signal: controller.signal })
       .then(async response => {
         if (!response.ok) throw new Error(`Fantasy news request failed (${response.status})`)
         const body: unknown = await response.json()

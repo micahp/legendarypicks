@@ -4,7 +4,6 @@ import Head from 'next/head'
 import PropChart, { PropHistory } from '../../components/Props/PropChart'
 import NflUsageTrend from '../../components/Leagues/NflUsageTrend'
 import StatRankCard from '../../components/Leagues/StatRankCard'
-import PlayerNews from '../../components/Leagues/PlayerNews'
 import { trackPlayerViewed, trackUsageTrendViewed } from '../../lib/analytics'
 
 interface Projection {
@@ -271,6 +270,8 @@ export default function PlayerPage() {
   const [openProp, setOpenProp] = useState<string | null>(null)
   const [chart, setChart] = useState<PropHistory | null>(null)
   const [tab, setTab] = useState<PlayerTab>('overview')
+  const [news, setNews] = useState<{ articles: Array<{ id: number; headline: string; description: string; published: string; link: string; images: Array<{ url: string; caption: string | null }> }> } | null>(null)
+  const [newsLoading, setNewsLoading] = useState(false)
 
   useEffect(() => {
     if (!id) return
@@ -293,6 +294,27 @@ export default function PlayerPage() {
       .catch(() => { if (alive) setState('error') })
     return () => { alive = false }
   }, [id, retryTick])
+
+  // The standalone player profile is a general sports surface, so its News
+  // tab keeps ESPN's athlete-tagged reporting. Fantasy analysis belongs only
+  // to the mock-draft overlay.
+  useEffect(() => {
+    if (tab !== 'news' || !id) return
+    let cancelled = false
+    setNewsLoading(true)
+    fetch(`/api/player/${id}/news?limit=10`)
+      .then(res => res.json())
+      .then(data => {
+        if (!cancelled) {
+          setNews(data)
+          setNewsLoading(false)
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setNewsLoading(false)
+      })
+    return () => { cancelled = true }
+  }, [tab, id])
 
   const openChart = async (pr: PropRow) => {
     const key = `${pr.market}-${pr.side}`
@@ -514,10 +536,55 @@ export default function PlayerPage() {
           </section>
         )}
 
-        {/* News tab — NFL only, fantasy news from RotoWire */ }
+        {/* News tab — NFL only, general player news from ESPN */ }
         {show('news') && isNfl && (
           <section>
-            <PlayerNews playerId={Number(id)} />
+            {newsLoading && (
+              <div className="space-y-3 animate-pulse">
+                {[0, 1, 2].map(i => (
+                  <div key={i} className="h-16 rounded-lg bg-zinc-800" />
+                ))}
+              </div>
+            )}
+            {!newsLoading && news && news.articles.length === 0 && (
+              <div className="text-center py-8 text-zinc-500">
+                <p className="text-sm">No recent news for this player</p>
+              </div>
+            )}
+            {!newsLoading && news && news.articles.length > 0 && (
+              <div className="space-y-4">
+                {news.articles.map(article => (
+                  <article
+                    key={article.id}
+                    className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4 space-y-2"
+                  >
+                    <a
+                      href={article.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block"
+                    >
+                      <h4 className="text-sm font-semibold text-zinc-100 hover:text-emerald-400 transition-colors line-clamp-2">
+                        {article.headline}
+                      </h4>
+                      <p className="mt-1 text-xs text-zinc-400 line-clamp-2">
+                        {article.description}
+                      </p>
+                      <time className="block mt-2 text-[10px] text-zinc-600" dateTime={article.published}>
+                        {new Date(article.published).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                      </time>
+                      {article.images[0] && (
+                        <img
+                          src={article.images[0].url}
+                          alt={article.images[0].caption || article.headline}
+                          className="mt-2 rounded-lg w-full aspect-video object-cover"
+                        />
+                      )}
+                    </a>
+                  </article>
+                ))}
+              </div>
+            )}
           </section>
         )}
       </div>
