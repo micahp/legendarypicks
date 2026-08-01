@@ -324,6 +324,14 @@ class NflNewsIdentityAndApiTests(unittest.TestCase):
                             "link": {"web": "https://www.espn.com/newer"},
                             "images": [],
                         },
+                        {
+                            "id": "fantasy",
+                            "displayName": "Fantasy spin on Deebo",
+                            "date": "2026-08-01T12:00:00Z",
+                            "byline": "Fantasy Reporter",
+                            "link": {"web": "https://www.espn.com/fantasy/football/story/_/id/1"},
+                            "images": [],
+                        },
                     ],
                 }
             ]

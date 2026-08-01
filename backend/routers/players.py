@@ -531,6 +531,8 @@ def player_news(player_id: int,
         headline = article.get("displayName")
         if not link or not published or not headline:
             continue
+        if "/fantasy/" in link:
+            continue
         images = [
             {"url": image.get("url"), "caption": image.get("caption") or image.get("name")}
             for image in article.get("images", [])
