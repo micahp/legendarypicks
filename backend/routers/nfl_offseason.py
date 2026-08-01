@@ -36,15 +36,90 @@ _DRAFT_BOARD_CACHE_TTL = 300
 _DRAFT_BOARD_CACHE_MAX_ENTRIES = 64
 _draft_board_cache: dict = {}
 _draft_board_cache_lock = threading.Lock()
+_DATABASE_TOKEN_MEMO_MAX_ENTRIES = 16
+_database_token_memo: dict = {}
+_database_token_memo_lock = threading.Lock()
+
+
+_DRAFT_CACHE_SOURCES = (
+    ("players", "league='nfl'", ("updated_at",), ()),
+    ("player_game_logs", "league='nfl'", ("ingested_at",), ()),
+    (
+        "nfl_adp",
+        None,
+        ("updated_at",),
+        ("adp", "percent_owned", "espn_ppr_rank", "espn_standard_rank", "adp_ppr"),
+    ),
+    (
+        "nfl_player_projections",
+        None,
+        ("fetched_at", "payload_checksum"),
+        ("lp_ppr_projected_points", "projected_games"),
+    ),
+    (
+        "nfl_depth_chart",
+        None,
+        ("ingested_at", "snapshot_at"),
+        ("pos_rank",),
+    ),
+    (
+        "nfl_schedule",
+        None,
+        ("ingested_at",),
+        ("season", "week", "away_score", "home_score"),
+    ),
+    (
+        "nfl_dst_stats",
+        None,
+        (),
+        (
+            "sacks", "interceptions", "tds", "safeties", "fumble_rec",
+            "st_tds", "pr_tds", "points_allowed", "fantasy_pts",
+        ),
+    ),
+    (
+        "nfl_snap_counts",
+        None,
+        (),
+        ("off_snaps", "off_pct", "def_snaps", "def_pct", "st_snaps", "st_pct"),
+    ),
+)
+
+
+def _table_publication_signature(connection, table, where, markers, totals):
+    """Cheap state marker for one table read by the draft surfaces."""
+    columns = {
+        row[1] for row in connection.execute(f'PRAGMA table_info("{table}")')
+    }
+    if not columns:
+        return (table, None)
+
+    select = ["COUNT(*)", "MAX(rowid)"]
+    select.extend(f'MAX("{column}")' for column in markers if column in columns)
+    # The two legacy weekly tables have no publication timestamp. Their small
+    # numeric totals keep in-place stat corrections visible to the cache key;
+    # row count/max(rowid) also catches the normal replace-publication path.
+    select.extend(
+        f'TOTAL(COALESCE("{column}", 0))'
+        for column in totals
+        if column in columns
+    )
+    filter_sql = f" WHERE {where}" if where else ""
+    row = connection.execute(
+        f'SELECT {", ".join(select)} FROM "{table}"{filter_sql}'
+    ).fetchone()
+    return (table, tuple(row))
 
 
 def _database_cache_token(connection: sqlite3.Connection):
-    """Identify the current SQLite publication without trusting wall time.
+    """Identify the NFL publications consumed by the draft surfaces.
 
     The endpoint is tested against multiple databases in one process, and DEV
-    publishers may commit through another connection. The main DB plus its WAL
-    signature keeps those states from sharing a cached response. An in-memory
-    or unresolved database fails open to an uncached read.
+    publishers may commit through another connection. Keying on the whole DB
+    file made unrelated props/esports writes evict this cache; keying on WAL
+    mtime also made a zero-byte WAL created by a read look like a publication.
+    Table-local counts, publication markers, and legacy-table totals preserve
+    relevant invalidation without coupling NFL reads to unrelated writers.
     """
     database_rows = connection.execute("PRAGMA database_list").fetchall()
     main_path = next(
@@ -56,26 +131,41 @@ def _database_cache_token(connection: sqlite3.Connection):
 
     resolved = os.path.realpath(main_path)
 
-    def signature(path, *, empty_is_absent=False):
+    def file_signature(path, *, empty_is_absent=False):
         try:
             stat = os.stat(path)
         except FileNotFoundError:
             return None
-        # In WAL mode SQLite creates a zero-byte -wal file when a connection
-        # opens and removes it when the last connection closes. Its mtime is
-        # therefore connection churn, not a database publication. Treat that
-        # transient placeholder exactly like an absent WAL so repeated reads
-        # share a cache key. A real WAL always has content and keeps its mtime
-        # and size in the token, preserving invalidation after a commit.
         if empty_is_absent and stat.st_size == 0:
             return None
         return (stat.st_mtime_ns, stat.st_size)
 
-    return (
-        resolved,
-        signature(resolved),
-        signature(f"{resolved}-wal", empty_is_absent=True),
+    physical_signature = (
+        file_signature(resolved),
+        file_signature(f"{resolved}-wal", empty_is_absent=True),
     )
+    with _database_token_memo_lock:
+        memoized = _database_token_memo.get(resolved)
+        if memoized is not None and memoized[0] == physical_signature:
+            del _database_token_memo[resolved]
+            _database_token_memo[resolved] = memoized
+            return memoized[1]
+
+        scoped_token = (
+            resolved,
+            connection.execute("PRAGMA schema_version").fetchone()[0],
+            tuple(
+                _table_publication_signature(
+                    connection, table, where, markers, totals
+                )
+                for table, where, markers, totals in _DRAFT_CACHE_SOURCES
+            ),
+        )
+        _database_token_memo[resolved] = (physical_signature, scoped_token)
+        while len(_database_token_memo) > _DATABASE_TOKEN_MEMO_MAX_ENTRIES:
+            oldest = next(iter(_database_token_memo))
+            del _database_token_memo[oldest]
+        return scoped_token
 
 
 def _draft_board_cache_get(key):
@@ -112,6 +202,8 @@ def _clear_draft_board_cache():
     """Test/operator hook; publication signatures invalidate normal writes."""
     with _draft_board_cache_lock:
         _draft_board_cache.clear()
+    with _database_token_memo_lock:
+        _database_token_memo.clear()
 
 # Availability's denominator is a constant, not a join. Verified on picks.dev.db:
 # in each of 2024 and 2025, all 32 teams played exactly 17 regular-season games,

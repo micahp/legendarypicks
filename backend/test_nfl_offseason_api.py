@@ -270,7 +270,7 @@ class NflOffseasonApiTests(unittest.TestCase):
         )
         self.assertEqual(2, aggregates.call_count)
 
-    def test_database_cache_token_changes_for_nonempty_wal_publication(self):
+    def test_database_cache_token_changes_for_relevant_wal_publication(self):
         with sqlite3.connect(self.db_path) as writer:
             self.assertEqual("wal", writer.execute("PRAGMA journal_mode=WAL").fetchone()[0])
             writer.execute("PRAGMA wal_autocheckpoint=0")
@@ -287,8 +287,21 @@ class NflOffseasonApiTests(unittest.TestCase):
                 after = nfl_offseason._database_cache_token(reader)
 
         self.assertNotEqual(before, after)
-        self.assertIsNone(before[2])
-        self.assertIsNotNone(after[2])
+
+    def test_database_cache_token_ignores_unrelated_database_writes(self):
+        with sqlite3.connect(self.db_path) as connection:
+            connection.execute(
+                "CREATE TABLE props_ingest_noise(id INTEGER PRIMARY KEY, value TEXT)"
+            )
+            before = nfl_offseason._database_cache_token(connection)
+            connection.execute(
+                "INSERT INTO props_ingest_noise(value) VALUES(?)",
+                ("unrelated",),
+            )
+            connection.commit()
+            after = nfl_offseason._database_cache_token(connection)
+
+        self.assertEqual(before, after)
 
     def test_draft_board_cache_invalidates_after_database_write(self):
         before = {p["name"]: p for p in self.board()["players"]}
