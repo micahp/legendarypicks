@@ -87,6 +87,35 @@ class TestNflProjectionProfileFields(unittest.TestCase):
         )
         connection.close()
 
+    def test_atomic_publication_removes_rows_from_an_older_snapshot(self):
+        connection = sqlite3.connect(":memory:")
+        connection.execute(
+            """CREATE TABLE nfl_player_projections(
+                   player_id INTEGER,
+                   season INTEGER,
+                   payload_checksum TEXT
+               )"""
+        )
+        connection.executemany(
+            "INSERT INTO nfl_player_projections VALUES(?,?,?)",
+            [
+                (1, ingest.SEASON, "current"),
+                (2, ingest.SEASON, "previous"),
+                (3, ingest.SEASON - 1, "previous"),
+            ],
+        )
+
+        removed = ingest._delete_stale_projection_rows(connection, "current")
+
+        self.assertEqual(1, removed)
+        self.assertEqual(
+            [(1, ingest.SEASON), (3, ingest.SEASON - 1)],
+            connection.execute(
+                "SELECT player_id, season FROM nfl_player_projections ORDER BY player_id"
+            ).fetchall(),
+        )
+        connection.close()
+
 
 if __name__ == "__main__":
     unittest.main()

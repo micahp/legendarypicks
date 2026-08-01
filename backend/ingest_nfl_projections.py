@@ -121,6 +121,19 @@ def _ensure_profile_columns(con: sqlite3.Connection) -> None:
             )
 
 
+def _delete_stale_projection_rows(
+    con: sqlite3.Connection, checksum: str
+) -> int:
+    """Remove rows from older snapshots inside the publication transaction."""
+    cursor = con.execute(
+        """DELETE FROM nfl_player_projections
+           WHERE season=?
+             AND (payload_checksum IS NULL OR payload_checksum!=?)""",
+        (SEASON, checksum),
+    )
+    return cursor.rowcount
+
+
 def _qbr_values(payload: dict) -> dict[str, dict[str, float | None]]:
     """Return ESPN athlete IDs mapped to explicitly named QBR fields.
 
@@ -345,6 +358,7 @@ def ingest():
             f"({','.join(write_columns)}) VALUES ({placeholders})",
             rows,
         )
+        stale_removed = _delete_stale_projection_rows(con, checksum)
         con.execute("COMMIT")
     except Exception:
         if con.in_transaction:
@@ -356,7 +370,10 @@ def ingest():
         "SELECT COUNT(*), COUNT(lp_ppr_projected_points) FROM nfl_player_projections WHERE season=?",
         (SEASON,),
     ).fetchone()
-    print(f"committed: {written[0]} rows ({written[1]} with PPR projection)")
+    print(
+        f"committed: {written[0]} rows ({written[1]} with PPR projection); "
+        f"removed {stale_removed} stale rows"
+    )
     con.close()
 
 
