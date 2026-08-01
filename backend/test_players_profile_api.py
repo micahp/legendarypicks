@@ -45,6 +45,10 @@ class PlayerProfileApiTests(unittest.TestCase):
               game_date TEXT, opponent TEXT, home_away TEXT, game_no INTEGER,
               game_type TEXT
             );
+            CREATE TABLE nfl_schedule(
+              season INTEGER, week INTEGER, game_type TEXT,
+              home_team TEXT, away_team TEXT
+            );
             CREATE TABLE props(
               player_id INTEGER, market TEXT, side TEXT, line REAL, captured_at TEXT
             );
@@ -120,6 +124,9 @@ class PlayerProfileApiTests(unittest.TestCase):
         self.assertEqual(24, result["recent_games"][0]["stats"]["PTS"])
 
     def test_profile_serializes_home_away_and_null_venue_tri_state(self):
+        # The player-profile reader must keep the venue tri-state: 'home' ->
+        # true, 'away' -> false, NULL -> null. A null venue must never
+        # serialize as `false`, which the UI would render as away.
         con = sqlite3.connect(self.path)
         con.executemany(
             "INSERT INTO player_game_logs VALUES(?,?,?,?,?,?,?,?,?)",
@@ -134,13 +141,14 @@ class PlayerProfileApiTests(unittest.TestCase):
         with mock.patch.object(players, "_season_stats_for_profile", return_value=None):
             result = players.player_profile(1)
 
-        self.assertEqual(
-            [None, False, True],
-            [row["home"] for row in result["recent_games"]],
-        )
+        by_date = {g["date"]: g["home"] for g in result["recent_games"]}
+        self.assertEqual(True, by_date["2026-07-20"])   # fixture home row
+        self.assertEqual(False, by_date["2026-07-21"])  # away row
+        self.assertIsNone(by_date["2026-07-22"])        # null-venue row
+        # Newest first, unchanged descending date order.
         self.assertEqual(
             ["2026-07-22", "2026-07-21", "2026-07-20"],
-            [row["date"] for row in result["recent_games"]],
+            [g["date"] for g in result["recent_games"]],
         )
 
     def test_nfl_profile_includes_injury_designation_when_columns_exist(self):
@@ -167,6 +175,27 @@ class PlayerProfileApiTests(unittest.TestCase):
         self.assertEqual(1, result["regular_season_games"])
         self.assertEqual(24, result["recent_games"][0]["stats"]["PTS"])
 
+    def test_non_nfl_recent_games_preserve_tri_state_venue(self):
+        con = sqlite3.connect(self.path)
+        con.executemany(
+            "INSERT INTO player_game_logs VALUES(?,?,?,?,?,?,?,?,?)",
+            [
+                (1, "nba", 2026, json.dumps({"PTS": 18}), "2026-07-21", "OPP2", "away", 2, None),
+                (1, "nba", 2026, json.dumps({"PTS": 21}), "2026-07-22", "OPP3", None, 3, None),
+            ],
+        )
+        con.commit()
+        con.close()
+
+        with mock.patch.object(players, "_season_stats_for_profile", return_value=None):
+            result = players.player_profile(1)
+
+        # Date DESC ordering; the fixture's home row (2026-07-20) sorts last.
+        self.assertEqual(
+            [None, False, True],
+            [row["home"] for row in result["recent_games"]],
+        )
+
     def test_nfl_filter_includes_reg_and_compatible_legacy_rows_only(self):
         con = sqlite3.connect(self.path)
         rows = [
@@ -174,10 +203,21 @@ class PlayerProfileApiTests(unittest.TestCase):
             (2, "nfl", 2026, {"pass_yds": 210}, "2026-09-08", "B", "away", 2, None),
             (2, "nfl", 2026, {"pass_yds": 220}, "2027-01-10", "C", "home", 20, None),
             (2, "nfl", 2026, {"pass_yds": 230}, "2027-01-17", "D", "away", 21, "POST"),
+            (2, "nfl", 2026, {"pass_yds": 190}, "2026-08-20", "E", "home", 2, "PRE"),
         ]
         con.executemany(
             "INSERT INTO player_game_logs VALUES(?,?,?,?,?,?,?,?,?)",
             [row[:3] + (json.dumps(row[3]),) + row[4:] for row in rows],
+        )
+        con.executemany(
+            "INSERT INTO nfl_schedule VALUES(?,?,?,?,?)",
+            [
+                (2026, 1, "REG", "BBB", "A"),
+                (2026, 2, "REG", "B", "BBB"),
+                (2026, 20, "DIV", "C", "BBB"),
+                (2026, 21, "CON", "BBB", "D"),
+                (2026, 2, "PRE", "BBB", "E"),
+            ],
         )
         con.commit()
         con.close()
@@ -187,9 +227,28 @@ class PlayerProfileApiTests(unittest.TestCase):
 
         self.assertEqual(2, result["regular_season_games"])
         self.assertEqual(2, result["postseason_games"])
+        self.assertEqual(1, result["preseason_games"])
         self.assertEqual(
             [210, 200],
             [row["stats"]["pass_yds"] for row in result["recent_games"]],
+        )
+        self.assertEqual(
+            [230, 220],
+            [row["stats"]["pass_yds"] for row in result["postseason_recent_games"]],
+        )
+        self.assertEqual(
+            [190],
+            [row["stats"]["pass_yds"] for row in result["preseason_recent_games"]],
+        )
+        self.assertEqual(
+            [
+                {"week": 21, "phase": "postseason", "opponent": "D", "home": True},
+                {"week": 20, "phase": "postseason", "opponent": "C", "home": False},
+                {"week": 2, "phase": "regular", "opponent": "B", "home": False},
+                {"week": 2, "phase": "preseason", "opponent": "E", "home": True},
+                {"week": 1, "phase": "regular", "opponent": "A", "home": True},
+            ],
+            result["nfl_schedule_games"],
         )
 
     def test_direct_blank_identity_is_explicit_not_silently_ready(self):

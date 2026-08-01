@@ -20,4 +20,17 @@ describe('StatRankCard', () => {
     expect(screen.getByText('4th')).toBeTruthy()
     expect(screen.getByText('154th')).toBeTruthy()
   })
+
+  it('uses the recovered completion label', () => {
+    render(
+      <StatRankCard
+        statRanks={{
+          cmp_g: { value: 19.2, rank: 25, label: 'Cmp/G' },
+        }}
+      />,
+    )
+
+    expect(screen.getByText('Comp/G')).toBeTruthy()
+    expect(screen.queryByText('Cmp/G')).toBeNull()
+  })
 })

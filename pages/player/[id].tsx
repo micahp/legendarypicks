@@ -12,6 +12,7 @@ interface Projection {
   l5_avg: number; season_avg: number; trend: string; last5: number[]
 }
 interface RecentGame { date: string | null; opponent: string | null; home: boolean | null; game_no?: string | number | null; stats: Record<string, number | string> }
+interface NflScheduleGame { week: number; phase: 'regular' | 'postseason' | 'preseason'; opponent: string; home: boolean }
 interface PropRow { market: string; side: string; line: number }
 interface SeasonStatBlock {
   window?: string
@@ -29,8 +30,11 @@ interface MlbSeasonStats {
 type SeasonStats = SeasonStatBlock | MlbSeasonStats
 interface PlayerProfile {
   id: number; name: string; team: string; league: string; position: string | null
-  season: number | null; regular_season_games: number
+  season: number | null; regular_season_games: number; postseason_games: number; preseason_games: number
   recent_games: RecentGame[]
+  postseason_recent_games: RecentGame[]
+  preseason_recent_games: RecentGame[]
+  nfl_schedule_games: NflScheduleGame[]
   projections: Record<string, Projection>
   props: PropRow[]
   season_stats: SeasonStats | null
@@ -165,7 +169,7 @@ function projForMarket(projections: Record<string, Projection>, market: string):
 // and the whole point of this pass is that the page shows too much.
 const NFL_GAMELOG_BANDS: { label: string; cols: { key: string; label: string }[] }[] = [
   { label: 'Passing', cols: [
-    { key: 'cmp', label: 'C' }, { key: 'att', label: 'A' },
+    { key: 'cmp', label: 'Comp' }, { key: 'att', label: 'Att' },
     { key: 'pass_yds', label: 'Yds' }, { key: 'pass_td', label: 'TD' },
     { key: 'intc', label: 'Int' }] },
   { label: 'Rushing', cols: [
@@ -178,9 +182,46 @@ const NFL_GAMELOG_BANDS: { label: string; cols: { key: string; label: string }[]
     { key: 'fpts', label: 'Fpts' }, { key: 'fpts_ppr', label: 'PPR' }] },
 ]
 
-function NflGameLog({ games }: { games: RecentGame[] }) {
+export function NflGameLog({ games, scheduleGames = [], fillMissed = false }: {
+  games: RecentGame[]
+  scheduleGames?: NflScheduleGame[]
+  fillMissed?: boolean
+}) {
+  const byWeek = new Map<number, RecentGame>()
+  games.forEach(game => {
+    const week = Number(game.game_no)
+    if (Number.isInteger(week)) byWeek.set(week, game)
+  })
+  const scheduleByWeek = new Map(scheduleGames.map(game => [game.week, game]))
+  const sortedGames = games.map(game => {
+    const scheduled = scheduleByWeek.get(Number(game.game_no))
+    return scheduled ? {
+      ...game,
+      opponent: scheduled.opponent,
+      home: scheduled.home,
+    } : game
+  }).sort(
+    (a, b) => Number(b.game_no ?? -1) - Number(a.game_no ?? -1),
+  )
+  const displayGames = fillMissed && scheduleGames.length > 0
+    ? [...scheduleGames].sort((a, b) => b.week - a.week).map(scheduled => {
+        const played = byWeek.get(scheduled.week)
+        return played ? {
+          ...played,
+          opponent: scheduled.opponent,
+          home: scheduled.home,
+        } : {
+          date: null,
+          opponent: scheduled.opponent,
+          home: scheduled.home,
+          game_no: scheduled.week,
+          stats: {},
+        }
+      })
+    : sortedGames
+
   const num = (g: RecentGame, k: string) => (typeof g.stats[k] === 'number' ? (g.stats[k] as number) : null)
-  const bands = NFL_GAMELOG_BANDS.filter(b => b.cols.some(c => games.some(g => (num(g, c.key) ?? 0) !== 0)))
+  const bands = NFL_GAMELOG_BANDS.filter(b => b.cols.some(c => displayGames.some(g => (num(g, c.key) ?? 0) !== 0)))
   if (!bands.length) return null
 
   return (
@@ -196,7 +237,7 @@ function NflGameLog({ games }: { games: RecentGame[] }) {
           </tr>
           <tr className="border-b border-zinc-800 text-zinc-500 text-[11px] uppercase tracking-wider">
             <th className="text-left px-3 py-2 font-medium">Wk</th>
-            <th className="text-left px-3 py-2 font-medium">Opp</th>
+            <th className="text-left px-3 py-2 font-medium min-w-[5rem] whitespace-nowrap">Opp</th>
             {bands.map(b => b.cols.map((c, i) => (
               <th key={b.label + c.key}
                   className={`text-right px-3 py-2 font-medium ${i === 0 ? 'border-l border-zinc-800' : ''}`}>{c.label}</th>
@@ -204,12 +245,12 @@ function NflGameLog({ games }: { games: RecentGame[] }) {
           </tr>
         </thead>
         <tbody>
-          {games.map((g, gi) => (
+          {displayGames.map((g, gi) => (
             <tr key={gi} className="border-b border-zinc-800/50 hover:bg-zinc-800/30 transition-colors">
               <td className="px-3 py-2.5 text-zinc-400 font-mono tabular-nums">{g.game_no ?? '—'}</td>
-              {/* No vs/@ — home_away is NULL on every NFL row, and the old
-                  renderer printed "@" for all of them, calling home games away. */}
-              <td className="px-3 py-2.5 text-zinc-300">{g.opponent ?? '—'}</td>
+              <td className="px-3 py-2.5 text-zinc-300 min-w-[5rem] whitespace-nowrap">
+                {g.opponent ? `${g.home === false ? '@ ' : ''}${g.opponent}` : '—'}
+              </td>
               {bands.map(b => b.cols.map((c, ci) => {
                 const v = num(g, c.key)
                 return (
@@ -358,6 +399,7 @@ export default function PlayerPage() {
   // always has, so `show` is unconditionally true off NFL.
   const isNfl = p.league === 'nfl'
   const show = (t: PlayerTab) => !isNfl || tab === t
+  const nflSchedule = p.nfl_schedule_games ?? []
 
   return (
     <>
@@ -527,7 +569,36 @@ export default function PlayerPage() {
         {show('gamelog') && p.league !== 'ufc' && p.recent_games.length > 0 && (
           <section>
             {!isNfl && <h2 className="text-sm font-bold text-zinc-400 uppercase tracking-wider mb-2">Recent Games</h2>}
-            {isNfl ? <NflGameLog games={p.recent_games} /> : (
+            {isNfl ? (
+              <div className="space-y-6">
+                <div>
+                  <h2 className="text-sm font-bold text-zinc-400 uppercase tracking-wider mb-2">Regular Season</h2>
+                  <NflGameLog
+                    games={p.recent_games}
+                    scheduleGames={nflSchedule.filter(game => game.phase === 'regular')}
+                    fillMissed
+                  />
+                </div>
+                {p.postseason_recent_games.length > 0 && (
+                  <div>
+                    <h2 className="text-sm font-bold text-zinc-400 uppercase tracking-wider mb-2">Postseason</h2>
+                    <NflGameLog
+                      games={p.postseason_recent_games}
+                      scheduleGames={nflSchedule.filter(game => game.phase === 'postseason')}
+                    />
+                  </div>
+                )}
+                {p.preseason_recent_games.length > 0 && (
+                  <div>
+                    <h2 className="text-sm font-bold text-zinc-400 uppercase tracking-wider mb-2">Preseason</h2>
+                    <NflGameLog
+                      games={p.preseason_recent_games}
+                      scheduleGames={nflSchedule.filter(game => game.phase === 'preseason')}
+                    />
+                  </div>
+                )}
+              </div>
+            ) : (
               <div className="rounded-xl border border-zinc-800 bg-zinc-900 divide-y divide-zinc-800 text-sm">
                 {p.recent_games.map((g, i) => (
                   <div key={i} className="flex items-center justify-between px-4 py-2.5">
