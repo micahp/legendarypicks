@@ -270,7 +270,7 @@ export default function PlayerPage() {
   const [openProp, setOpenProp] = useState<string | null>(null)
   const [chart, setChart] = useState<PropHistory | null>(null)
   const [tab, setTab] = useState<PlayerTab>('overview')
-  const [news, setNews] = useState<{ articles: Array<{ id: number; headline: string; description: string; published: string; link: string; images: Array<{ url: string; caption: string | null }> }> } | null>(null)
+  const [news, setNews] = useState<{ articles: Array<{ id: number; headline: string; notes: string; analysis: string; injury_status: string | null; injury_type: string | null; return_date: string | null; published: string; link: string }> } | null>(null)
   const [newsLoading, setNewsLoading] = useState(false)
 
   useEffect(() => {
@@ -534,7 +534,7 @@ export default function PlayerPage() {
           </section>
         )}
 
-        {/* News tab — NFL only, general player news from ESPN */ }
+        {/* News tab — NFL only, fantasy news from RotoWire */ }
         {show('news') && isNfl && (
           <section>
             {newsLoading && (
@@ -556,29 +556,54 @@ export default function PlayerPage() {
                     key={article.id}
                     className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4 space-y-2"
                   >
-                    <a
-                      href={article.link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="block"
-                    >
-                      <h4 className="text-sm font-semibold text-zinc-100 hover:text-emerald-400 transition-colors line-clamp-2">
-                        {article.headline}
-                      </h4>
-                      <p className="mt-1 text-xs text-zinc-400 line-clamp-2">
-                        {article.description}
-                      </p>
-                      <time className="block mt-2 text-[10px] text-zinc-600" dateTime={article.published}>
+                    {/* Headline + injury badge */}
+                    <div className="flex items-start gap-2">
+                      <a
+                        href={article.link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex-1 min-w-0"
+                      >
+                        <h4 className="text-sm font-semibold text-zinc-100 hover:text-emerald-400 transition-colors">
+                          {article.headline}
+                        </h4>
+                      </a>
+                      {article.injury_status && (
+                        <span className="shrink-0 rounded bg-red-500/10 px-1.5 py-0.5 text-[10px] font-bold text-red-400 uppercase">
+                          {article.injury_status}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* News blurb */}
+                    <p className="text-xs text-zinc-400 leading-relaxed">
+                      {article.notes}
+                    </p>
+
+                    {/* Fantasy analysis — the "SPIN" */}
+                    {article.analysis && (
+                      <div className="rounded-md bg-zinc-800/50 px-3 py-2 border-l-2 border-emerald-500/50">
+                        <p className="text-[11px] font-semibold uppercase tracking-wider text-emerald-400/70 mb-1">
+                          Fantasy Spin
+                        </p>
+                        <p className="text-xs text-zinc-300 leading-relaxed">
+                          {article.analysis}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Meta line */}
+                    <div className="flex items-center gap-3 text-[10px] text-zinc-600">
+                      <time dateTime={article.published}>
                         {new Date(article.published).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
                       </time>
-                      {article.images[0] && (
-                        <img
-                          src={article.images[0].url}
-                          alt={article.images[0].caption || article.headline}
-                          className="mt-2 rounded-lg w-full aspect-video object-cover"
-                        />
+                      {article.return_date && (
+                        <span>Return: {new Date(article.return_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
                       )}
-                    </a>
+                      {article.injury_type && (
+                        <span className="text-red-400/60">{article.injury_type}</span>
+                      )}
+                    </div>
                   </article>
                 ))}
               </div>

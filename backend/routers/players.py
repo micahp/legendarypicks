@@ -458,65 +458,143 @@ def player_projections(player_id: int,
 @router.get("/api/player/{player_id}/news")
 def player_news(player_id: int,
                 limit: int = Query(10, ge=1, le=25)):
-    """Fetch recent NFL news for a player from ESPN's public news API.
-    Filters by athlete ID from our player's espn_id field.
+    """Fetch fantasy-relevant NFL news for a player from RotoWire.
+
+    Pulls the full RotoWire NFL news XML feed (171 items, cached 10 min),
+    then filters by player first + last name match. Each item includes a
+    fantasy analysis blurb — the same "SPIN" section Sleeper renders.
     """
     import urllib.request
-    import gzip
-    import json as _json
-    
+    import xml.etree.ElementTree as ET
+    import threading
+    import time as _time
+
+    # ── Module-level cache (TTL = 10 min) ──
+    _RW_CACHE = getattr(player_news, "_cache", None)
+    if _RW_CACHE is None:
+        player_news._cache = {"data": None, "ts": 0, "lock": threading.Lock()}
+        _RW_CACHE = player_news._cache
+
+    _RW_URL = (
+        "https://rotowire-secrets-ebgmaeh8ecc4huhf.canadaeast-01.azurewebsites.net"
+        "/api/proxy?feed=NFLNews"
+    )
+
+    def _fetch_feed():
+        with _RW_CACHE["lock"]:
+            now = _time.time()
+            if _RW_CACHE["data"] is not None and (now - _RW_CACHE["ts"]) < 600:
+                return _RW_CACHE["data"]
+            try:
+                req = urllib.request.Request(_RW_URL)
+                with urllib.request.urlopen(req, timeout=10) as resp:
+                    raw = resp.read()
+                root = ET.fromstring(raw)
+                items = []
+                for u in root.findall(".//Update"):
+                    update_id = u.get("Id")
+                    pid_el = u.find(".//Player/Id")
+                    fn_el = u.find(".//Player/FirstName")
+                    ln_el = u.find(".//Player/LastName")
+                    pos_el = u.find(".//Player/Position")
+                    team_el = u.find(".//Team")
+                    headline_el = u.find("Headline")
+                    notes_el = u.find("Notes")
+                    analysis_el = u.find("Analysis")
+                    injury_el = u.find("Injury")
+                    link_el = u.find(".//Player/Link")
+                    date_el = u.find("DateTime")
+
+                    items.append({
+                        "id": int(update_id) if update_id else None,
+                        "first_name": (fn_el.text or "").strip() if fn_el is not None else "",
+                        "last_name": (ln_el.text or "").strip() if ln_el is not None else "",
+                        "position": pos_el.text if pos_el is not None else "",
+                        "team": team_el.get("Code") if team_el is not None else "",
+                        "headline": _cdata(headline_el),
+                        "notes": _cdata(notes_el),
+                        "analysis": _cdata(analysis_el),
+                        "injury_status": injury_el.get("Status") if injury_el is not None else "",
+                        "injury_type": injury_el.get("Type") if injury_el is not None else "",
+                        "injury_location": injury_el.get("Location") if injury_el is not None else "",
+                        "return_date": injury_el.get("ReturnDate") if injury_el is not None else "",
+                        "published": date_el.text if date_el is not None else "",
+                        "link": link_el.text if link_el is not None else "",
+                    })
+                _RW_CACHE["data"] = items
+                _RW_CACHE["ts"] = now
+            except Exception:
+                if _RW_CACHE["data"] is not None:
+                    return _RW_CACHE["data"]  # stale cache beats nothing
+                return []
+            return _RW_CACHE["data"]
+
+    def _cdata(el):
+        if el is None:
+            return ""
+        return (el.text or "").strip()
+
+    # ── Look up player ──
     with closing(_db()) as con:
-        p = con.execute("SELECT id, name, espn_id, league FROM players WHERE id=?", (player_id,)).fetchone()
+        p = con.execute(
+            "SELECT id, name, league FROM players WHERE id=?",
+            (player_id,),
+        ).fetchone()
         if not p:
             raise HTTPException(404, "Player not found")
         if p["league"] != "nfl":
             return {"player_id": player_id, "name": p["name"], "articles": []}
-        espn_id = p["espn_id"]
-        if not espn_id:
-            return {"player_id": player_id, "name": p["name"], "articles": []}
-    
-    # Fetch from ESPN's site API
-    url = f"https://site.api.espn.com/apis/site/v2/sports/football/nfl/news?limit=200"
-    try:
-        req = urllib.request.Request(url, headers={"Accept-Encoding": "gzip, deflate"})
-        with urllib.request.urlopen(req, timeout=8) as resp:
-            raw = resp.read()
-            # Handle gzip compression
-            encoding = resp.headers.get("Content-Encoding", "")
-            if "gzip" in encoding:
-                raw = gzip.decompress(raw)
-            data = _json.loads(raw.decode())
-    except Exception:
-        return {"player_id": player_id, "name": p["name"], "articles": []}
-    
+
+    # Decompose the stored name (e.g. "Jahmyr Gibbs") into parts for matching.
+    full_name = (p["name"] or "").strip()
+    name_parts = full_name.split()
+    if len(name_parts) < 2:
+        return {"player_id": player_id, "name": full_name, "articles": []}
+    first_name, last_name = name_parts[0], name_parts[-1]
+
+    # ── Fetch feed, filter by name ──
+    feed = _fetch_feed()
     articles = []
-    for article in data.get("articles", []):
-        # Check if this article mentions our athlete via categories
-        athlete_found = False
-        for cat in article.get("categories", []):
-            if cat.get("type") == "athlete":
-                athlete = cat.get("athlete", {})
-                if str(athlete.get("id")) == str(espn_id):
-                    athlete_found = True
-                    break
-        if athlete_found:
-            articles.append({
-                "id": article.get("id"),
-                "headline": article.get("headline"),
-                "description": article.get("description"),
-                "published": article.get("published"),
-                "lastModified": article.get("lastModified"),
-                "link": article.get("links", {}).get("web", {}).get("href"),
-                "images": [
-                    {"url": img.get("url"), "caption": img.get("caption")}
-                    for img in article.get("images", [])
-                    if img.get("type") == "header" and img.get("url")
-                ][:1],
-            })
+    for item in feed:
+        if not _name_matches(first_name, last_name,
+                             item["first_name"], item["last_name"]):
+            continue
+        articles.append({
+            "id": item["id"],
+            "headline": item["headline"],
+            "notes": item["notes"],
+            "analysis": item["analysis"],
+            "injury_status": item["injury_status"] or None,
+            "injury_type": item["injury_type"] or None,
+            "injury_location": item["injury_location"] or None,
+            "return_date": item["return_date"] or None,
+            "published": item["published"],
+            "link": item["link"],
+        })
         if len(articles) >= limit:
             break
-    
-    return {"player_id": player_id, "name": p["name"], "articles": articles}
+
+    return {"player_id": player_id, "name": full_name, "articles": articles}
+
+
+def _name_matches(fn1, ln1, fn2, ln2):
+    """Case-insensitive name match with suffix tolerance (Jr, III, etc.)."""
+    f1, l1 = fn1.lower().strip(), ln1.lower().strip()
+    f2, l2 = fn2.lower().strip(), ln2.lower().strip()
+    # Last name must match exactly
+    if l1 != l2:
+        return False
+    # First name: exact match or one is a prefix of the other
+    # (handles "P.J." vs "PJ", "Chris" vs "Christopher" — the RotoWire
+    # feed uses standardised names so prefix-only matching is rare but safe.)
+    if f1 == f2:
+        return True
+    if f1.startswith(f2) or f2.startswith(f1):
+        return True
+    # Handle dotted initials ("P.J." → "pj")
+    f1_clean = f1.replace(".", "")
+    f2_clean = f2.replace(".", "")
+    return f1_clean == f2_clean
 
 
 @router.get("/api/player/{player_id}/stats")
