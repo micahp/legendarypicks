@@ -175,8 +175,9 @@ b4(){
 COVDB="${LP_GATE_DB:-/root/legendarypicks/backend/data/picks.dev.db}"
 cov(){
   $PY - "$COVDB" <<'PY'
-import sqlite3, sys, collections
-con = sqlite3.connect("file:%s?mode=ro" % sys.argv[1], uri=True)
+import sqlite3, sys, os, collections
+DB = sys.argv[1]
+con = sqlite3.connect("file:%s?mode=ro" % DB, uri=True)
 q = lambda s, a=(): con.execute(s, a).fetchall()
 
 # ── COV-nba ── 1231 games, and every team on exactly 82 but the two Cup finalists.
@@ -192,8 +193,13 @@ else:
     print('FAIL COV-nba (games=%d dist=%s at83=%s short=%s)' % (n, dict(dist), at83, short))
 
 # ── COV-nhl ── the same write bug cost NHL one game; the two tables must agree.
+# The player_game_logs side carried NO season filter until 2026-08-02, and that
+# omission is why this gate sat green over the season-key split: unfiltered, it
+# counted 1312 rows keyed '20252026' and called them the 2026 season. A gate
+# that asks a laxer question than its consumers do is not a gate. Both sides now
+# name the season, the same way /api/coverage does.
 tgr = q("SELECT COUNT(DISTINCT game_id) FROM team_game_results WHERE league='nhl' AND season=2026")[0][0]
-pgl = q("SELECT COUNT(DISTINCT game_id) FROM player_game_logs WHERE league='nhl'")[0][0]
+pgl = q("SELECT COUNT(DISTINCT game_id) FROM player_game_logs WHERE league='nhl' AND season=2026")[0][0]
 if tgr == 1312 and pgl == 1312:
     print('PASS COV-nhl (1312 in both tables)')
 else:
@@ -219,6 +225,70 @@ if rows and not bad:
     print('PASS COV-honest (%d coverage rows, none claiming more than its run supports)' % rows)
 else:
     print('FAIL COV-honest (%s)' % ('no coverage rows at all' if not rows else '; '.join(bad)))
+
+# ── COV-keys ── one league, one season vocabulary, across every table that has
+# a season column. NHL carried '20252026' in player_game_logs and player_stats
+# while team_game_results and team_stats_coverage said '2026' — so
+# 'WHERE season=2026' returned 0 for a season we held complete, and the
+# reconcile reported it as missing data. A wrong key does not raise, it misses.
+# Shape (4-digit vs 8-digit) is what is compared; two 4-digit years are just two
+# seasons. This gate has to hold for every league we add, including ones whose
+# publisher we have not met yet.
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(DB)), '..')))
+try:
+    from season_keys import audit_season_keys, SEASON_KEYED_TABLES
+except Exception as e:
+    print('FAIL COV-keys (cannot import season_keys: %s)' % e)
+else:
+    split = audit_season_keys(con)
+    cross = {}
+    for league in sorted({r[0] for t, c in SEASON_KEYED_TABLES
+                          for r in q('SELECT DISTINCT %s FROM %s' % (c, t))}):
+        shapes = {}
+        for table, col in SEASON_KEYED_TABLES:
+            for (s,) in q('SELECT DISTINCT season FROM %s WHERE %s=?'
+                          ' AND season IS NOT NULL AND season != ""' % (table, col),
+                          (league,)):
+                shapes.setdefault(len(str(s)), set()).add(table)
+        if len(shapes) > 1:
+            cross[league] = {k: sorted(v) for k, v in sorted(shapes.items())}
+    if split or cross:
+        parts = ['%s.%s holds shapes %s' % (f['table'], f['league'],
+                                            [s[0] for s in f['shapes']])
+                 for f in split]
+        parts += ['%s: %s' % (lg, d) for lg, d in sorted(cross.items())]
+        print('FAIL COV-keys (%s)' % '; '.join(parts))
+    else:
+        print('PASS COV-keys (every league speaks one season vocabulary in every table)')
+
+# ── COV-source ── RED ON PURPOSE, and it should stay red until the rows below are
+# attributed. Every row in a season-keyed table must say which publisher wrote it.
+# The NHL key split was undetectable because nothing recorded that
+# team_game_results is ESPN while player_game_logs is nhle.com. Known-unattributed
+# as of 2026-08-02: mlb team_game_results (3305) + team_game_stats (16), nfl 2024
+# (570) and 2026 (544) team_game_results, and all team_game_stats rows written
+# before the column existed. They are NOT stamped by guessing — see
+# stamp_team_result_source.py, which attributes only from a recorded run_id.
+try:
+    from provenance import TRACKED
+except Exception as e:
+    print('FAIL COV-source (cannot import provenance: %s)' % e)
+else:
+    unattributed = []
+    for table, league_col, _ts in TRACKED:
+        cols = {r[1] for r in q('PRAGMA table_info(%s)' % table)}
+        if not cols:
+            continue
+        if 'source' not in cols:
+            unattributed.append('%s has no source column at all' % table)
+            continue
+        for lg, n in q('SELECT %s, COUNT(*) FROM %s WHERE source IS NULL OR source=""'
+                       ' GROUP BY %s' % (league_col, table, league_col)):
+            unattributed.append('%s.%s %d rows' % (table, lg, n))
+    if not unattributed:
+        print('PASS COV-source (every row names its publisher)')
+    else:
+        print('FAIL COV-source (%s)' % '; '.join(unattributed))
 PY
 
   # ── COV-api ── the registry has to be reachable, and every league the switcher
@@ -350,7 +420,7 @@ regrender(){
 #      `all` dispatch ran 14 gates and silently skipped REG-render because the
 #      function was written but never added to the case. The count below is what
 #      makes that structurally impossible to repeat, rather than fixed once.
-ALL_IDS="A1 A1b A1c A2 A3 B1 B2 B2b B4 COV-nba COV-nhl COV-honest COV-api REG-pool REG-adp-dst REG-dst REG-pytest REG-jest REG-jest-all REG-modules REG-render"
+ALL_IDS="A1 A1b A1c A2 A3 B1 B2 B2b B4 COV-nba COV-nhl COV-honest COV-keys COV-source COV-api REG-pool REG-adp-dst REG-dst REG-pytest REG-jest REG-jest-all REG-modules REG-render"
 
 out=$(mktemp) || exit 2
 trap 'rm -f "$out"' EXIT
@@ -364,7 +434,7 @@ trap 'rm -f "$out"' EXIT
     A1|a1|A1b|A1c) a1;; A2|a2) a2;; A3|a3) a3;; B1|b1) b1;; B2|b2|B2b) b2;; B4|b4) b4;;
     reg|REG|regressions) reg;;
     render|REG-render|regrender) regrender;;
-    cov|COV|coverage|COV-nba|COV-nhl|COV-honest|COV-api) cov;;
+    cov|COV|coverage|COV-nba|COV-nhl|COV-honest|COV-keys|COV-source|COV-api) cov;;
     all) a1; a2; a3; b1; b2; b4; echo "--- coverage ---"; cov; echo "--- regressions ---"; reg; regrender;;
     *) echo "FAIL runner (unknown gate '$1' — nothing ran)";;
   esac

@@ -509,6 +509,41 @@ def check_generic(conn: sqlite3.Connection, rep: Report, league: str, season: in
         (league, season),
     )
     rep.check(name, ours, gap.expected, "distinct game_id")
+    if ours < gap.expected:
+        _blame_the_key_before_the_data(conn, rep, league, season)
+
+
+def _blame_the_key_before_the_data(
+    conn: sqlite3.Connection, rep: Report, league: str, season: int
+) -> None:
+    """A short count has two causes. Say which one before anyone acts on it.
+
+    `nhl 2026 ... ours=0 published=1312` was printed for a season whose 1,312
+    games were all present — under `season=20252026`, because `ingest_nhl_logs`
+    stored nhle.com's key verbatim. Read literally, that line said "we have no
+    NHL data"; it meant "we asked in the wrong vocabulary". Anyone acting on the
+    first reading would have re-run a 48,000-row ingest to fix a WHERE clause.
+
+    So: before a shortfall is attributed to missing rows, check whether the rows
+    are sitting under a season key we did not ask for. This costs one indexed
+    GROUP BY and it is the difference between a diagnosis and a guess.
+    """
+    other = [
+        (k, n) for k, n in conn.execute(
+            "SELECT season, COUNT(DISTINCT game_id) FROM player_game_logs"
+            " WHERE league=? AND season IS NOT NULL AND season != ? GROUP BY season",
+            (league, season),
+        )
+    ]
+    if not other:
+        return
+    detail = ", ".join(f"season={k!r} holds {n} games" for k, n in sorted(other))
+    rep.note(
+        "  KEY SPLIT",
+        f"{league} also has player_game_logs rows under other season keys — "
+        f"{detail}. A short count here may be a vocabulary mismatch, not missing "
+        f"data. See backend/season_keys.py.",
+    )
 
 
 def write_coverage(conn: sqlite3.Connection, rep: Report, league: str, season: int) -> str:
