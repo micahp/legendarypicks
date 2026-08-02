@@ -251,6 +251,71 @@ is real and it will silently mis-join, but it is **not a prerequisite for adding
 — a new league simply lands on ESPN's key from day one. Sequence it when it blocks
 something; do not front-load a migration.
 
+> **RESOLVED for NHL, 2026-08-02 — and this is what "when it blocks something" looked
+> like.** It blocked within hours: `reconcile_totals` asked
+> `WHERE league='nhl' AND season=2026`, got **0** over a season whose 1,312 games were
+> all present, and NHL sat at `partial` — unofferable — on a misspelled question. The
+> output read `ours=0 published=1312`, i.e. *missing data*, which is the wrong
+> diagnosis and the expensive one: acting on it means re-running a 48,000-row ingest to
+> fix a WHERE clause.
+>
+> Fixed at the boundary, not in queries: **`backend/season_keys.py`**, called by both
+> nhle ingests, plus a one-shot migration of 49,737 historical rows. **Normalise where
+> the foreign value is read — a query that translates keys has to be remembered at every
+> call site; a boundary has to be remembered once.**
+>
+> Two things to carry forward:
+> 1. **Migrate a league entire, or not at all.** `league_stats.py` resolves the live
+>    season with `MAX(season)`. Translating only `20252026 -> 2026` leaves `20242025`
+>    as the maximum — a two-year-old season served as current, from a migration that
+>    reported success.
+> 2. **`normalize_season()` refuses rather than guesses.** There is no general rule to
+>    apply (see the table above), so an unmeasured `(source, league)` raises. Passing an
+>    untranslated value through is what put two vocabularies in one database.
+>
+> `MLB`'s empty `team_game_results.season` (all 3,305 rows) is **still open.**
+
+### Provenance — the thing that made the split invisible
+
+The season-key bug is usually filed as a vocabulary mismatch. It is more precisely a
+**provenance** bug. `team_game_results` is ESPN; `player_game_logs` is nhle.com; the two
+publishers key seasons differently; and **nothing anywhere said so**. Every surface
+treated the two tables as one corpus because nothing recorded that they were not.
+
+Note what `team_stats_coverage.source` contained while this was going on:
+`reconcile_totals+espn_core_api` — the provenance of the **verdict**, not of the data
+the verdict is about. A column that looks like an answer and answers a different
+question is worse than an empty one.
+
+Measured 2026-08-02, `backend/provenance.py`:
+
+| league | publishers |
+|---|---|
+| NFL | `espn_site_api`, `nflverse`, `nflverse_regular_season`, `nflverse_weekly`, `nflverse_snap_counts` |
+| NBA | `espn`, `espn_site_api`, `hoopR` |
+| MLB | `mlb_statsapi`, `statcast`, `statcast_pitcher` |
+| NHL | `espn_site_api`, `nhle.com` |
+
+**Every one of those is a season-key, team-code and game-id vocabulary that has to be
+translated at its own boundary, and all of them are reconciled against ESPN's totals.**
+NHL is not a special case; it is the one that happened to get caught.
+
+Three rules, now enforced:
+
+1. **Every season-keyed table records `source`.** `team_game_results` did not until
+   today. Gate: `COV-source`, **red on purpose** until MLB's 3,305 rows and NFL's 1,114
+   are attributed.
+2. **A table that cannot say where its rows came from reports `unrecorded`, never a
+   guess.** `stamp_team_result_source.py` attributes historical rows *only* from a
+   recorded `run_id`; rows without one stay NULL deliberately.
+3. **`derived` is not a publisher.** `player_stats` holds 580 NBA and 841 NHL rows
+   sourced `derived` — values we computed. Legitimate, and never independent
+   corroboration of themselves. Anything reconciling our numbers against an oracle must
+   exclude them or it is grading its own work.
+
+The readout prints at the end of every `backfill_team_parity` run — the one moment
+someone is definitely looking — and rides on `/api/coverage` as `publishers`.
+
 **`game_type` is the one that does block.** It is populated for NFL 2025 and nothing else —
 NULL for NFL 2024 and for every MLB, NBA, NHL, UFC and WC row — so any `AND
 game_type='REG'` silently returns zero for all of them. Ingest it NOT NULL, from the
@@ -405,11 +470,37 @@ Three lessons, in the order they bite:
    in `team_stats_ingestion_failures` for nineteen days, next to a row claiming zero
    failures. Read what the process already wrote before deriving anything.
 
+### A second defect, found while fixing the first
+
+`enumerate_games()` filtered on `status.type.state == "post"` and then required each
+competitor's score to be non-`None`. **A postponed game is `state="post"` too, and its
+score is `0`, not `null`:**
+
+```
+401810499 | 2026-01-24 | STATUS_POSTPONED completed=False | {'MIN': '0', 'GS': '0'}
+401857824 | 2026-01-25 | STATUS_FINAL     completed=True  | {'MIN': '85', 'GS': '111'}
+```
+
+So all four postponed shells passed the filter and would have been written as played
+0–0 results — crediting both teams a game they did not play, and handing one of them a
+loss — while the makeup was written too, from a different event id. Measured: the
+enumeration yielded **1235** where the season has 1231 games.
+
+Presence taken as integrity, for the third time in this document: the score field was
+*there*. `state` answers "is this in the past". `completed` answers "was it played",
+and it was published in the same object the whole time. The filter now reads
+`completed`, and the enumeration yields **1231**.
+
+Note what caught it: not a test, and not the reconcile. The per-team distribution —
+every team must land on 82 — is the assertion that made 1235 obviously wrong, because
+1235 does not divide into a schedule. **Keep a check whose arithmetic can only close one
+way.**
+
 ### Fix, in order
 
 1. `backfill_team_parity.py` — remove the explicit `BEGIN`/`ROLLBACK` (or open the
    connection with `isolation_level=None` and keep them), so a write cannot be lost to
-   transaction state.
+   transaction state. Filter on `completed`, not `state`.
 2. Make the coverage summary honest per §4, then re-run NBA and NHL and confirm all
    30 teams land on 82 and the NHL pair agrees.
 3. Teach `published_real_games()` that the exhibition type id is per-league — NBA files

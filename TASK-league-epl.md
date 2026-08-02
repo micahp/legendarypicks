@@ -5,6 +5,11 @@
 soccer standings, season-type-driven ingest). This task should be **small** — if it is
 not, the MLS work generalised badly and that is the thing to fix.
 
+**Note before you start:** "soccer publishes one season type" is true for EPL and
+**false for MLS**, which publishes seven with non-contiguous ids (0, 1, 2, 3, 4, 8, 12).
+EPL is the simple case, not the representative one — do not let its shape become the
+soccer assumption on the way in.
+
 Read `docs/DATA-COVERAGE-CONTRACT.md` §6 and §7 first.
 
 **Skills — load before coding:**

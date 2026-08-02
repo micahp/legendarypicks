@@ -21,8 +21,9 @@ Read `docs/DATA-COVERAGE-CONTRACT.md` §6 and §7 first.
 
 `soccer/leagues/usa.1`, **31 seasons published** (measured 2026-08-02).
 
-**Step 0, and it is not optional:** the per-season totals have **not** been measured —
-ESPN rate-limited the sweep. Get them yourself before writing anything:
+**Step 0, and it is not optional:** the type list and event counts below are measured;
+the per-season **team** and **athlete** totals are not — ESPN rate-limited the sweep.
+Get them yourself before writing anything:
 
 ```bash
 # events, teams, athletes — one request each
@@ -35,14 +36,33 @@ Pace them. ESPN 403s a burst with no `Retry-After` and the block outlives a shor
 backoff; `reconcile_totals.py:_get_json` already has the pacing and cache — use it rather
 than writing a fresh fetch loop.
 
-What **is** measured, and what makes soccer not the NFL:
+What **is** measured (2026-08-02), and what makes MLS not the NFL:
 
-1. **One season type.** `soccer/leagues/eng.1/seasons/2025` publishes a single type, id
-   `1`, named *"2025-26 English Premier League"*. Expect the same shape for `usa.1`, and
-   **confirm it** — MLS also runs the Audi MLS Cup Playoffs, so if a second type is
-   published, it is real and must be read from the document, never assumed absent.
-   A hardcoded `types/2` returns nothing for this league; that constant was in
-   `reconcile_totals.py` on the day it was written and is why `season_types()` exists.
+1. **MLS publishes SEVEN season types, and their ids are not contiguous.**
+   `soccer/leagues/usa.1/seasons/2025`:
+
+   ```
+   id  0 | Combined                                  | events=0
+   id  1 | Regular Season                            | events=510   <- the season
+   id  2 | All-Star Game                             | events=1
+   id  3 | Eastern Conference Playoffs - Wild Card    | events=1
+   id  4 | Western Conference Playoffs - Wild Card    | events=1
+   id  8 | Eastern Conference Playoffs - Round One    | events=3
+   id 12 | Western Conference Playoffs - Round One    | events=3
+   ```
+
+   Three assumptions die here, and the doc's own note that MLS has "one season type"
+   was **wrong** — it generalised from EPL:
+   - the regular season is id **1**, not 2;
+   - `for t in range(1, 6)` misses ids 8 and 12 entirely — **iterate the published
+     list, never a range**;
+   - `id 0 "Combined"` publishes 0 events. An empty published collection is a fact,
+     not a fetch failure. Do not treat it as an error and do not skip it silently.
+
+   **MLS files its All-Star Game as its own type (id 2).** NBA files All-Star *inside*
+   the regular-season type. Two leagues, two answers, neither derivable — which is
+   exactly why `explain_gap()` in `reconcile_totals.py` classifies each event from
+   `competitions[].type.abbreviation` rather than trusting a type id.
 2. **Draws.** `team_game_results.win` is `INTEGER` — a 0/1 flag. A draw is neither.
    Storing a draw as a loss silently corrupts every win-rate, streak and momentum
    surface. See §2.

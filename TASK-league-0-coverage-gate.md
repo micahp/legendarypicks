@@ -1,5 +1,19 @@
 # TASK league-0 — make the coverage registry capable of saying no
 
+> **STATUS 2026-08-02: DONE, by Claude, not Hermes.** Kept as the record of what was
+> found and what the gates are. Two things turned up that were not in the original
+> spec and matter to the three league tasks:
+>
+> 1. **A second silent game-loss**, unrelated to the transaction bug: a POSTPONED game
+>    is `state="post"` with a score of **`0`, not null**, so it passed both of
+>    `enumerate_games()`'s filters and would have been written as a played 0–0 result.
+>    The filter now reads `completed`. §9 of the contract has it. **Any new league's
+>    ingest must filter on `completed`.**
+> 2. **`published_real_games()` was replaced by `explain_gap()`**, which diffs the
+>    published event-id set against ours and classifies only the difference — cost
+>    scales with the size of the gap, not the season. New leagues get gap
+>    classification for free; do not write a per-league variant.
+
 **Owner: Hermes. Backend + frontend. This blocks NCAAF, MLS and EPL — do it first.**
 
 Read `docs/DATA-COVERAGE-CONTRACT.md` §4 and §9 before writing a line. §9 is the
