@@ -158,6 +158,7 @@ def player_profile(player_id: int):
         nfl_schedule_games = []
         postseason_games = 0
         preseason_games = 0
+        regular_season_games = 0
         if season is not None:
             reg_filter, _ = _reg_season_game_filter(con, league)
             logs = con.execute(
@@ -166,6 +167,15 @@ def player_profile(player_id: int):
                    {reg_filter}
                    ORDER BY COALESCE(game_date,'') DESC, CAST(game_no AS INTEGER) DESC LIMIT 25""",
                 (player_id, season)).fetchall()
+            # COUNT, not len(logs). `logs` is LIMIT 25 — a page of recent games, not
+            # the season — and `regular_season_games` renders on the player page as
+            # "2026 · N games". For NFL's 17-game season the two agreed and the bug
+            # was unreachable; NHL plays 82, so the header read "2026 · 25 games" for
+            # a player who missed nothing. A page size is not a measurement.
+            regular_season_games = con.execute(
+                f"""SELECT COUNT(*) FROM player_game_logs
+                   WHERE player_id=? AND season=? {reg_filter}""",
+                (player_id, season)).fetchone()[0]
             # Count postseason games separately (ESPN: separate containers)
             log_columns = {
                 row[1]
@@ -220,7 +230,11 @@ def player_profile(player_id: int):
                                 CAST(game_no AS INTEGER) DESC LIMIT 25""",
                     (player_id, season),
                 ).fetchall()
-                preseason_games = len(preseason_logs)
+                # Same LIMIT-25 trap as regular_season_games above.
+                preseason_games = con.execute(
+                    """SELECT COUNT(*) FROM player_game_logs
+                       WHERE player_id=? AND season=? AND game_type='PRE'""",
+                    (player_id, season)).fetchone()[0]
 
             # NFL game logs currently leave home_away null. Resolve venue
             # and opponent from the published schedule rather than
@@ -334,7 +348,6 @@ def player_profile(player_id: int):
         projections[k] = pr
 
     season_stats = _season_stats_for_profile(p["id"], p["name"], league)
-    regular_season_games = len(logs)
     return {
         "id": p["id"], "name": p["name"], "team": p["team"], "league": league,
         "position": p["position"], "season": season,
