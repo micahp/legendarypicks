@@ -235,6 +235,16 @@ Caught at review (orchestrator), should have been caught by the feature's own va
      the one that keeps getting skipped: **a definition — a schedule, a roster, a bye week, a
      team code, a draft position — is always published somewhere. Never infer it.**
 
+  **And after any ingest: the publisher also publishes *how many*.** A partial ingest is
+  invisible — no error, no gap, every row that landed correct. ESPN's core API returns a
+  collection's cardinality in the envelope of a `limit=1` request, so the expected total is one
+  HTTP call away with no traversal and no key
+  (`sports.core.api.espn.com/.../seasons/2025/types/2/events?limit=1` → `count: 272`). Run
+  **`python3 backend/reconcile_totals.py --league nfl --season <yr>`**; it exits non-zero on
+  disagreement. §6 of the skill has the endpoint table and the two traps (the oracle answers its
+  own question — ESPN's postseason count includes the Pro Bowl; and a missing oracle is a FAIL,
+  never a skip).
+
   Both were violated by the same 40 lines. `nfl_mock_draft.py` grew a derived `dst_rank`, a
   reserved pool slot and a bespoke ordering behind the comment *"D/ST — no published ADP
   exists."* Measured 2026-07-28: **all 32 D/ST carry a published ADP, inside a payload

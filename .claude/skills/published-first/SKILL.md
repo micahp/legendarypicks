@@ -1,6 +1,6 @@
 ---
 name: published-first
-description: MUST load before writing any code that derives, aggregates, reconstructs, infers, back-fills or estimates a value — season totals, per-game rates, schedules, bye weeks, standings, rankings, splits, "games played", "weeks missed", team records, ADP tiers, or any join key. Encodes one rule with a measured cost behind it: check whether the value is already published before you compute it, and check whether the key you are joining on is the same word on both sides. Triggers on "let's compute", "derive", "roll up", "aggregate", "reconstruct", "backfill", "infer", "we can calculate that from", any GROUP BY over a raw event table, and any new ingest script.
+description: MUST load before writing any code that derives, aggregates, reconstructs, infers, back-fills or estimates a value — season totals, per-game rates, schedules, bye weeks, standings, rankings, splits, "games played", "weeks missed", team records, ADP tiers, or any join key — AND before trusting any table you just ingested. Encodes one rule with a measured cost behind it: check whether the value is already published before you compute it, check whether the key you are joining on is the same word on both sides, and check your row count against the publisher's count. Triggers on "let's compute", "derive", "roll up", "aggregate", "reconstruct", "backfill", "infer", "we can calculate that from", any GROUP BY over a raw event table, any new ingest script, and on "is this data complete", "did the ingest work", "these numbers look off", "how many should there be".
 ---
 
 # Published first
@@ -112,7 +112,62 @@ concept has a name in someone else's schema — `bye_week`, `games_played`,
 
 ---
 
-## 6. Before you call it done
+## 6. The publisher also publishes *how many* — reconcile against it
+
+Everything above is about a value. This is about a **count**, and it is the same idea
+one level up: before you trust a table, ask the publisher how many rows it should have.
+
+A partial ingest is invisible. It has no error, no gap in the UI, no failing test — it
+looks exactly like a complete one, because the rows that landed are all correct. The
+only thing that distinguishes them is a number you have to go and get.
+
+**You do not need to traverse the API to get it.** ESPN's core API returns the
+cardinality of any collection in the envelope of a `limit=1` request — one HTTP call,
+no key, no paging:
+
+```bash
+B=https://sports.core.api.espn.com/v2/sports/football/leagues/nfl/seasons/2025
+curl -s "$B/types/2/events?limit=1"        | jq .count   # 272  regular-season games
+curl -s "$B/types/3/events?limit=1"        | jq .count   #  14  postseason + Pro Bowl
+curl -s "$B/teams?limit=1"                 | jq .count   #  32
+curl -s "$B/athletes/4431452/eventlog?limit=1" | jq .events.count   # 17 for one player
+```
+
+Same shape for the other leagues — swap the path segment: `basketball/leagues/nba`,
+`baseball/leagues/mlb`, `hockey/leagues/nhl`. (Note `sports.core.api.espn.com` answers
+this box fine; **`www.espn.com` 403s it** — the bot wall is on the website, not the API.)
+
+`backend/reconcile_totals.py` runs these as a suite and exits non-zero on disagreement:
+
+```bash
+LP_DB_PATH=backend/data/picks.dev.db python3 backend/reconcile_totals.py --league nfl --season 2025
+```
+
+**Run it after every ingest, and before believing any season you did not personally
+load.** Measured 2026-08-02: 2025 passes every check; **2024 fails four.** Its 5,597 game
+logs cover all 285 games but only 612 players against 2025's 2,024 — WR/RB/TE/QB and
+almost nothing else, because 2024 was never re-ingested after the all-positions fix. And
+every 2024 row has a **NULL `game_type`**, so any query saying `WHERE game_type='REG'`
+returns zero rows for that season and reports it as an empty result, not an error.
+
+### Two things that will bite you, both found writing that script
+
+**The oracle answers its own question, not yours.** ESPN files the Pro Bowl under season
+type 3, so its postseason count is 14 where the playoff bracket is 13. The `eventlog`
+endpoint is regular-season only, so a Patriot with 17 there played 21 games in a year
+they reached the Super Bowl. The first run of this script reported both as defects and
+named seven healthy players as short. **A disagreement with the publisher is a question,
+not a verdict — reconcile the definitions before you file the bug.** Encode the
+definition once you have measured it, the way `published_real_games()` filters
+`competitions[0].type.abbreviation == "ALLSTAR"`.
+
+**A missing oracle is a FAIL, not a skip.** If the count can't be fetched, the check has
+produced no evidence, and "no evidence" must never render green or shrink a denominator
+until the remainder passes. See the `NO-ORACLE` status and the `(partial)` line.
+
+---
+
+## 7. Before you call it done
 
 - Name the published source you checked, or say plainly that none exists.
 - If you derived: show the comparison against the published value, with counts.
