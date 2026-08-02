@@ -17,6 +17,7 @@ from league_stats import (
     publish_player_stats,
     queue_unresolved_player,
 )
+from season_keys import normalize_season
 
 DB = os.environ.get("LP_DB_PATH") or os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "picks.db")
 HDR = {"User-Agent": "Mozilla/5.0"}
@@ -142,7 +143,11 @@ def ingest():
                         con,
                         player_id=player_id,
                         league="nhl",
-                        season=s["season"],
+                        # ESPN's key, not nhle's. `league_stats` resolves the
+                        # current season with MAX(season), and 20242025 sorts
+                        # above 2026 — mixing the two vocabularies in this
+                        # column serves a two-year-old season as the live one.
+                        season=normalize_season("nhle.com", "nhl", s["season"]),
                         stat_type="season",
                         source="nhle.com",
                         games=s["games"],

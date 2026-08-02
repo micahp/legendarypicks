@@ -12,6 +12,7 @@ import sys, os, json, sqlite3, time, urllib.request
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from ingest_nfl_logs import ensure_table
 from team_codes import normalize
+from season_keys import normalize_season
 
 DB = os.environ.get("LP_DB_PATH") or os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "picks.db")
 HDR = {"User-Agent": "Mozilla/5.0 (legendarypicks ingest)"}
@@ -38,7 +39,12 @@ def ingest(season: str = "20252026", limit: int = 0) -> int:
         players = players[:limit]
     print(f"NHL game-logs {season}: {len(players)} players to pull")
 
-    season_int = int(season)
+    # `season` stays in nhle's vocabulary — it is a path segment in their URL
+    # above. What we STORE is ESPN's key, translated once, here at the boundary.
+    # It was `int(season)`, which put "20252026" in a column where every other
+    # league holds a plain year, and made `WHERE season=2026` return nothing for
+    # a season we had complete.
+    season_int = normalize_season("nhle.com", "nhl", season)
     ingested = 0
     for i, p in enumerate(players):
         log = fetch_game_log(p["nhl_id"], season)
