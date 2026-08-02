@@ -196,6 +196,39 @@ def health():
     return {"status": "ok"}
 
 
+@router.get("/api/coverage")
+def coverage():
+    """The enablement registry: which (league, season) pairs may be offered at all.
+
+    Returns EVERY row, not just the complete ones. A client needs to distinguish
+    "this league exists and we cannot vouch for it yet" from "this league does not
+    exist" — they are different states and they read differently to a user.
+
+    A (league, season) with no row here is `unverified`, which is the default and is
+    never good. See docs/DATA-COVERAGE-CONTRACT.md §4.
+    """
+    with closing(_db()) as con:
+        try:
+            rows = con.execute(
+                "SELECT league, season, status, expected_teams, fetched_teams,"
+                " expected_games, fetched_games, paired_games, paired_stat_games,"
+                " failure_count, season_start, season_end, completed_at, source"
+                " FROM team_stats_coverage ORDER BY league, season"
+            ).fetchall()
+        except sqlite3.Error:
+            # No table is not an error; it means nothing has been verified.
+            return []
+    out = []
+    for r in rows:
+        d = dict(r)
+        # Never let an unrecognised status read as permission. Anything outside the
+        # three-value vocabulary is treated as unverified rather than passed through.
+        if d.get("status") not in ("complete", "partial", "unverified"):
+            d["status"] = "unverified"
+        out.append(d)
+    return out
+
+
 @router.get("/api/ufc/rankings")
 def ufc_rankings():
     """UFC rankings — reads cached ufc_rankings table populated by
