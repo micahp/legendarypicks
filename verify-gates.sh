@@ -552,6 +552,21 @@ if [ -n "$missing" ]; then
   fails=$((fails + $(echo $missing | wc -w)))
 fi
 
+# Rule 2 applied to SINGLE-gate runs, where the id set is not known but the count is.
+# Until 2026-08-02 the check above was the only one, so it covered `all` and nothing
+# else, and a named gate that emitted no verdict at all was scored 0 failed / exit 0:
+#
+#   LP_GATE_B=http://127.0.0.1:9999 bash verify-gates.sh A1
+#     -> a JSONDecodeError traceback, "── 0 passed, 0 failed ──", exit 0
+#
+# Every A/REG gate pipes curl into python, and python given an empty body raises
+# before it can print either verdict. So the one input that means "the thing you are
+# grading is not running" produced the same exit code as a clean pass — for anything
+# shaped like `verify-gates.sh A1 && deploy`. A run that measured nothing is a FAIL.
+if [ $((passes + fails)) -eq 0 ]; then
+  echo "FAIL runner (gate '${1:-all}' emitted no verdict at all — nothing was measured; check W/B/F above are up)"
+  fails=1
+fi
 
 echo "── $passes passed, $fails failed ──"
 exit $((fails > 0 ? 1 : 0))
