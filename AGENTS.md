@@ -245,6 +245,15 @@ Caught at review (orchestrator), should have been caught by the feature's own va
   own question — ESPN's postseason count includes the Pro Bowl; and a missing oracle is a FAIL,
   never a skip).
 
+  **What the UI is then allowed to claim is `docs/DATA-COVERAGE-CONTRACT.md`** — read it before
+  adding a league, adding a season, or touching any surface that shows what a player did or did
+  not do. Three things from it that bind immediately: **a missing row is `unknown`, not `missed`**
+  (an un-ingested week must never draw the absence accent — a boolean `played` cannot express what
+  we know); the canonical season key is **ESPN's start year in every table** (one NHL season is
+  currently four different integers across ours); and **`game_type` is NOT NULL for every league**
+  — it is populated for NFL 2025 and nothing else, so any `AND game_type='REG'` silently returns
+  zero rows everywhere else. **Never guard on a column existing and then filter on its values.**
+
   Both were violated by the same 40 lines. `nfl_mock_draft.py` grew a derived `dst_rank`, a
   reserved pool slot and a bespoke ordering behind the comment *"D/ST — no published ADP
   exists."* Measured 2026-07-28: **all 32 D/ST carry a published ADP, inside a payload
