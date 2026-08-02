@@ -10,10 +10,41 @@
 # MAIN tree and reports success while its own code was never executed — that is the
 # failure mode this parameterisation exists to prevent, so set all three together.
 #   LP_GATE_W=/root/lp-<task> LP_GATE_B=http://127.0.0.1:8093 LP_GATE_F=http://127.0.0.1:3093
-W="${LP_GATE_W:-/root/lp-team-vocab}"
-B="${LP_GATE_B:-http://127.0.0.1:8098}"
-F="${LP_GATE_F:-http://127.0.0.1:3098}"
+#
+# The defaults were `/root/lp-team-vocab` + :8098/:3098 until 2026-08-02 — a task
+# worktree and its servers, all three long gone. `verify-gates.sh all` therefore ran
+# every source gate against a directory that does not exist and every HTTP gate against
+# a closed port, and reported the result as ordinary red gates: FAIL B1, FAIL B4,
+# FAIL A1. Indistinguishable, in the output, from the code being broken. A default that
+# names somebody's finished task is a default with an expiry date on it; these name the
+# main tree and the pair it actually serves on (`next dev -p 3096`, `uvicorn --port 8096`).
+W="${LP_GATE_W:-/root/legendarypicks}"
+B="${LP_GATE_B:-http://127.0.0.1:8096}"
+F="${LP_GATE_F:-http://127.0.0.1:3096}"
 echo "── gates against W=$W B=$B F=$F ──"
+
+# ── the preflight, which is the same rule as the gates ─────────────────────────
+# `grep -c pattern /nonexistent` prints 0 and B4 asks three of its six questions as
+# "is this count 0?". So the shipped default did not merely fail — it answered half
+# of B4 in the affirmative over an empty path. Absence of a file is absence of
+# evidence, and evidence unavailable is a FAIL, not a pass and not a skip.
+#
+# Checked here, once, so no gate has to remember: every W gate calls need_w first.
+w_problem=""
+if [ ! -d "$W" ]; then
+  w_problem="W=$W does not exist"
+elif [ ! -d "$W/components" ] || [ ! -d "$W/backend" ] || [ ! -d "$W/lib" ]; then
+  w_problem="W=$W is not an LP tree (no components/ + backend/ + lib/)"
+elif [ -n "$LP_GATE_W" ] && { [ -z "$LP_GATE_B" ] || [ -z "$LP_GATE_F" ]; }; then
+  # The exact mix the header warns about: a worktree's SOURCE graded by the main
+  # tree's SERVERS. Every HTTP gate then passes on code the worktree never ran.
+  w_problem="LP_GATE_W is set but $( [ -z "$LP_GATE_B" ] && echo LP_GATE_B ) $( [ -z "$LP_GATE_F" ] && echo LP_GATE_F ) is not — this would grade $W's source with $B/$F, which serve a different tree. Set all three."
+fi
+need_w(){ [ -z "$w_problem" ] && return 0; no "$1" "could not run: $w_problem"; return 1; }
+
+# `grep -c` over a missing file is 0, and 0 is the passing answer to half these
+# gates. Assert the surface exists before asking anything about it.
+have_files(){ id=$1; shift; for f in "$@"; do [ -f "$f" ] || { no "$id" "missing file: $f — the gate had nothing to read"; return 1; }; done; return 0; }
 PY=/root/legendarypicks/backend/venv/bin/python
 
 ok(){ echo "PASS $1  ($2)"; }
@@ -96,13 +127,16 @@ except Exception as e: print('FAIL A3  (shape: %s)'%e)
 
 # ── B1 · position filter offers DEF and PK ──
 b1(){
+  need_w B1 || return
   f=$W/components/Leagues/hooks/useNflDraftBoard.ts
+  have_files B1 "$f" || return
   line=$(grep -n "const POSITIONS" "$f" | head -1)
   if grep -q "'DEF'" "$f" && grep -q "'PK'" "$f"; then ok B1 "$line"; else no B1 "$line"; fi
 }
 
 # ── B2 · the branch's fields actually render ──
 b2(){
+  need_w B2 || { no B2b "could not run: $w_problem"; return; }
   hits=$(cd $W && grep -rl "games_missed\|dst_pts_total\|dst_pts_per_game\|pk_pts" components/ pages/ 2>/dev/null | grep -v "types.ts" | tr '\n' ' ')
   if [ -n "$hits" ]; then ok B2 "rendered in: $hits"; else no B2 "zero hits outside types.ts"; fi
   # and a kicker must not print 0.0 through the served page.
@@ -130,8 +164,13 @@ else:     print('PASS B2b (no kicker asserts ppr 0.0, n=%d)'%len(p))
 
 # ── B4 · M7: scrollbar shown, measured availability fields used ──
 b4(){
+  need_w B4 || return
   room=$W/components/MockDraft/DraftRoom.tsx
   files="$room $W/components/MockDraft/PoolList.tsx $W/components/MockDraft/ResultsScreen.tsx $W/lib/mockDraft/api.ts"
+  # Three of the six checks below pass when their count is 0, which is also what a
+  # missing file counts to. Without this line B4 half-agreed with itself over a
+  # deleted worktree for the whole of 2026-07-28..08-02.
+  have_files B4 $files || return
   hidden=$(grep -En "scrollbar-width:none|::-webkit-scrollbar]:hidden" "$room" 2>/dev/null | wc -l)
   hardcoded=$(grep -En \
     "const TEAM_GAMES|team_games:[[:space:]]*17|possible[[:space:]]*\\+=[[:space:]]*TEAM_GAMES|/\\$\\{TEAM_GAMES\\}" \
@@ -398,6 +437,11 @@ print('PASS REG-dst (32 rows)' if len(p)==32 else 'FAIL REG-dst (%d rows)'%len(p
   # Test runners: capture the EXIT CODE, never just grep the output. A runner that
   # dies (SIGBUS on a corrupt native binary, OOM, import error) prints nothing, and
   # a bare `grep | tail -1` turns that silence into a green line. These fail loud.
+  # These three run IN $W. `cd` to a path that is not there fails the whole command
+  # substitution, which reads back as exit≠0 — a runner that died, not a workspace
+  # that was never there. Two different repairs; say which one it is.
+  if ! need_w REG-pytest; then no REG-jest "could not run: $w_problem"; no REG-jest-all "could not run: $w_problem"
+  else
   pyout=$(cd $W/backend && LP_DB_PATH=/root/picks.hermes.db ./venv/bin/python -m pytest test_nfl_mock_draft.py test_nfl_dst.py test_mock_draft_completion.py test_mock_draft_setup.py -q 2>&1); pyrc=$?
   pysum=$(printf '%s' "$pyout" | grep -E "passed|failed|error" | tail -1)
   if [ $pyrc -eq 0 ] && [ -n "$pysum" ]; then ok REG-pytest "$pysum"
@@ -425,6 +469,7 @@ print('PASS REG-dst (32 rows)' if len(p)==32 else 'FAIL REG-dst (%d rows)'%len(p
   if [ $jarc -eq 0 ] && [ -n "$jasum" ]; then ok REG-jest-all "$jasum"
   elif [ $jarc -ge 128 ]; then no REG-jest-all "jest died with signal (exit=$jarc) — NO frontend tests ran"
   else no REG-jest-all "exit=$jarc  ${jasum:-<no 'Tests:' line — nothing ran>}"; fi
+  fi
   # Package COUNT is not package INTEGRITY. On 2026-07-28 an interrupted `npm install`
   # left next-swc truncated while the count stayed 538 and :3096 kept serving 200 off
   # the old (deleted) inode. Load the binary; presence proves nothing.
@@ -446,6 +491,8 @@ print('PASS REG-dst (32 rows)' if len(p)==32 else 'FAIL REG-dst (%d rows)'%len(p
 # overlay or the DEF/PK filters, it FAILS with "overlay never appeared" and "found 7 pills".
 # A gate that has only ever passed has not been tested.
 regrender(){
+  need_w REG-render || return
+  have_files REG-render "$W/scripts/render-gate.js" || return
   out=$(cd $W && LP_GATE_F="$F" timeout 400 node scripts/render-gate.js 2>&1); rc=$?
   line=$(printf '%s' "$out" | grep -E "^(PASS|FAIL) REG-render" | tail -1)
   if [ $rc -eq 0 ] && [ -n "$line" ]; then echo "$line"
@@ -504,6 +551,7 @@ if [ -n "$missing" ]; then
   echo "FAIL runner (no verdict emitted by:$missing — a gate that did not run is not a gate that passed)"
   fails=$((fails + $(echo $missing | wc -w)))
 fi
+
 
 echo "── $passes passed, $fails failed ──"
 exit $((fails > 0 ? 1 : 0))
