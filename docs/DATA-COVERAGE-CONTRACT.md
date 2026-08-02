@@ -112,6 +112,32 @@ Populated once, `2026-07-14`, for `nfl 2025` / `nba 2026` / `nhl 2026`, all
 `team_stats_contract.py` special-cases MLB by parsing `substr(game_date,1,4)` instead of
 reading the manifest. **Nothing in the frontend reads this table at all.**
 
+**And the row it does hold is false.** Measured 2026-08-02, `backfill_team_parity.py`
+writes the summary at `run_league()` like this:
+
+```python
+status = "complete" if fetched_teams == expected else "partial"   # teams only
+...
+fetched_teams, games_written, games_written, games_written, games_written,
+0,                                                                # failure_count
+```
+
+Four columns — `expected_games`, `fetched_games`, `paired_games`, `paired_stat_games` —
+are the **same variable**, so they can never disagree; `expected_games` is the count of
+what landed, not an expectation of what should have. `failure_count` is the **literal
+`0`**, written by a function that had just inserted four failure rows into
+`team_stats_ingestion_failures` during that same run. And `status` is a claim about
+**teams**: 30 of 30 appeared, so `complete`, while four games were lost.
+
+Before this table gates anything, it has to be capable of saying no:
+
+- `expected_games` comes from the publisher (`published_count`), never from the loop.
+- `failure_count` is `SELECT COUNT(*) FROM team_stats_ingestion_failures WHERE run_id=?`.
+- `status='complete'` requires **every** count to equal its published total *and*
+  `failure_count = 0` *and* a reachable oracle.
+
+See §8 for the NBA case that proves each of these three.
+
 Three changes make it the gate:
 
 1. **`reconcile_totals.py` writes it.** It already computes these numbers, and gets
@@ -203,8 +229,22 @@ This is published-first rung 5 — *a definition is always published, never infe
 `REGULAR, POSTSEASON = 2, 3` at module scope. Fixed; the constants now come from the
 season document.
 
-**On the season key:** ESPN already keys by start year and publishes the human label, so
-there is no vocabulary to standardise — there is a value to copy. Our own tables disagree
+**On the season key — corrected 2026-08-02, this doc had it wrong.** There is **no
+league-wide convention**. Measured from `types[].startDate/endDate`:
+
+| league | `seasons/2026` covers | keys by |
+|---|---|---|
+| NBA | `2025-10-21 -> 2026-04-13` | the year it **ends** |
+| NHL | `2025-10-07 -> 2026-04-18` | the year it **ends** |
+| NFL | `2026-09-09 -> 2027-01-13` | the year it **starts** |
+| MLB | `2026-03-25 -> 2026-09-29` | one calendar year |
+| EPL | `seasons/2025` = *"2025-26 English Premier League"* | the year it **starts** |
+
+So "use ESPN's start-year key" is not a rule that can be followed — for NBA and NHL it
+names the wrong season and every count lands on the wrong year. **The rule is: read
+`startDate`/`endDate` from the season document and confirm the key means what you think
+before comparing anything to it.** ESPN publishes the human label too, so there is still
+no vocabulary to standardise — there is a value to copy. Our own tables disagree
 (one NHL season is `20252026` in `player_game_logs`, `2026` in `team_game_results` and
 `team_stats_coverage`; MLB's `team_game_results.season` is empty for all 3,305 rows). That
 is real and it will silently mis-join, but it is **not a prerequisite for adding a league**
@@ -265,11 +305,113 @@ Ordered. Steps 1–3 are cheap and kill most surprises; do them before writing a
 - **The NFL 2024 backfill.** Deferred on purpose: the registry and the third state must
   exist before we fix a season, or we fix this one and learn nothing that protects the
   next.
-- **NBA 1,227 (ours) vs 1,239 (ESPN)** for 2025-26. A 12-game gap, unexplained. Per §6 that
-  is a question about the definition until measured — and there is a lead: **NBA publishes a
-  fifth season type, `Play-In Season` (id 5)**, which the other three leagues do not have.
-  Check whether those games are inside ESPN's type-2 count before calling anything missing.
+- ~~**NBA 1,227 vs 1,239.**~~ **MEASURED AND CLOSED 2026-08-02 — see §9.** The play-in
+  lead was wrong.
 - **MLB's empty `team_game_results.season`** and the special case it forces in
   `team_stats_contract.py`.
 - **The NHL/NBA season-key mismatch** in our own tables. Real, currently harmless, not a
   blocker for a new league.
+
+---
+
+## 9. Worked example — the NBA 12-game gap, measured
+
+Kept in full because every wrong turn in it is a mistake this doc exists to prevent, and
+because the arithmetic closes to the game. Measured 2026-08-02 against
+`picks.dev.db`, ESPN `basketball/leagues/nba/seasons/2026`.
+
+### The lead was wrong
+
+§8 guessed the 12 games were NBA's fifth season type, `Play-In Season` (id 5), leaking
+into the regular-season count. It is not. Pulling both collections' event ids — from the
+`$ref` URLs, no per-event fetch needed — gives:
+
+```
+espn type2 (Regular Season): 1239   type5 (Play-In): 6   type3 (Postseason): 85
+play-in ids inside type2: 0         postseason ids inside type2: 0
+```
+
+The types are disjoint, and the published date ranges say so out loud: type 2 ends
+`2026-04-13`, type 5 runs `2026-04-13 -> 2026-04-18`. **The lead was an inference, and
+one request falsified it.** Two more facts fell out of the same document:
+
+- **ESPN's NBA season key is the year the season *ends*.** `seasons/2026` spans
+  `2025-10-21 -> 2026-04-13` — the 2025-26 season. Same for NHL (`seasons/2026` =
+  `2025-10-07 -> 2026-04-18`); NFL and MLB key by the year the season *starts*. §6's line
+  "ESPN already keys by start year" was **wrong**, and it is corrected there. There is no
+  league-wide convention: read `types[].startDate/endDate` and match it to your own key.
+- Our NBA key (`2026`) therefore already **agrees** with ESPN. The `check_generic()`
+  docstring warning that NBA checks compare the wrong season is wrong too. NHL is the one
+  that genuinely disagrees, and only between our own tables (`20252026` in
+  `player_game_logs`, `2026` in `team_game_results`).
+
+### What the 12 actually are
+
+Diffing 1,239 published ids against our 1,227 `team_game_results` game ids: 12 theirs and
+not ours, **0 ours and not theirs**. Fetching just those 12 classifies all of them.
+
+| n | what | verdict |
+|---|---|---|
+| 4 | `type=ALLSTAR`, 2026-02-15/16 — the 3-team World / Team Stars / Team Stripes round robin plus the final | **definitional.** ESPN files NBA All-Star under type 2; it files the NFL Pro Bowl under type 3, which `published_real_games()` already handles. Same problem, different type id. |
+| 4 | `STATUS_POSTPONED` — MIA@CHI 1/9, GSW@MIN 1/24, DEN@MEM 1/25, DAL@MIL 1/26 | **definitional.** A postponed fixture stays in the collection and its makeup is published as a *new event id*, so ESPN's count carries both. |
+| 4 | `STATUS_FINAL`, played, absent from our table — DAL@CHI 1/11, GSW@MIN 1/25 (`401857824`, the makeup), DET@DEN 1/28, MIN@DAL 1/29 | **a real gap.** |
+
+So the honest reconciliation is:
+
+```
+1239 published = 1230 regular-season fixtures
+               +    1 NBA Cup final (played, does not count toward 82)
+               +    4 All-Star exhibitions
+               +    4 postponed shells superseded by makeups
+```
+
+**Only 4 games were ever missing, not 12.** Our own data confirms it independently:
+per-team game counts are 82 for 22 teams, 83 for NY and SA (the Cup finalists — correct),
+and short for exactly the six teams in those four games — DAL and MIN by two, CHI, DEN,
+DET and GS by one. Adding the four brings **every team to exactly 82**.
+
+### Why they were missing — and why nothing said so
+
+Not a source problem. ESPN's team-schedule feed publishes all four today with
+`state=post`, `completed=true` and both scores — they pass every filter in
+`enumerate_games()`. The rows were never written:
+
+```
+run_id                        game_id    reason
+nba-parity-20260714T212239Z   401810401  write: cannot start a transaction within a transaction
+nba-parity-20260714T212239Z   401810532  write: cannot start a transaction within a transaction
+nba-parity-20260714T212239Z   401810523  write: cannot start a transaction within a transaction
+nba-parity-20260714T212239Z   401857824  write: cannot start a transaction within a transaction
+nhl-parity-20260714T212239Z   401803191  write: cannot start a transaction within a transaction
+```
+
+`run_league()` issues `con.execute("BEGIN")` on a connection in sqlite3's default implicit
+transaction mode; when a prior statement has already opened one, `BEGIN` raises and the
+game is skipped. Sporadic — 4 of 1,231 — which is why it looked like nothing. (The NHL row
+is the same bug, and explains NHL's 1,311 vs 1,312.)
+
+**The failure was recorded, with an exact reason, and the run still reported
+`status=complete, failure_count=0`.** That is §4's defect, demonstrated: the coverage row
+is not a check, it is a restatement.
+
+Three lessons, in the order they bite:
+
+1. **A lead is an inference.** "Play-in must be it" was plausible, cheap to test, and
+   false. Test it before writing it into a plan.
+2. **A gap is usually several things.** 12 = 4 + 4 + 4, three different causes, only one
+   of them a defect. Reconciling to the game is what separates them; stopping at the
+   headline number would have produced a fix for a problem we did not have.
+3. **The run knew.** No inference was needed at any point — the reason string was sitting
+   in `team_stats_ingestion_failures` for nineteen days, next to a row claiming zero
+   failures. Read what the process already wrote before deriving anything.
+
+### Fix, in order
+
+1. `backfill_team_parity.py` — remove the explicit `BEGIN`/`ROLLBACK` (or open the
+   connection with `isolation_level=None` and keep them), so a write cannot be lost to
+   transaction state.
+2. Make the coverage summary honest per §4, then re-run NBA and NHL and confirm all
+   30 teams land on 82 and the NHL pair agrees.
+3. Teach `published_real_games()` that the exhibition type id is per-league — NBA files
+   All-Star under type 2, NFL under type 3 — and read it from the event's
+   `competitions[].type.abbreviation`, which is where the answer already is.

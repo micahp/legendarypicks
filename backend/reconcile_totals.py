@@ -317,11 +317,17 @@ def check_nfl(conn: sqlite3.Connection, rep: Report, season: int, sample: int) -
 def check_generic(conn: sqlite3.Connection, rep: Report, league: str, season: int) -> None:
     """Games-played coverage for the non-NFL leagues, which share player_game_logs.
 
-    Caveat before you trust a MISMATCH here: **our season key is not ESPN's.** We store
-    the NHL 2025-26 season as `20252026` and the NBA 2025-26 season as `2026`; ESPN keys
-    both by the starting year. Until that is normalised these checks will compare the
-    wrong season and report a gap that is really a vocabulary mismatch — the same class
-    of bug as the LAR/LA join key. NFL is unaffected (one calendar year, same key).
+    Caveat before you trust a MISMATCH here: **check which season the key names.** ESPN
+    has no league-wide convention — measured 2026-08-02 from `types[].startDate/endDate`,
+    `nba/seasons/2026` and `nhl/seasons/2026` are the *2025-26* seasons (keyed by the year
+    they end) while `nfl/seasons/2026` starts in Sep 2026 and `eng.1/seasons/2025` is
+    "2025-26". So NBA's `2026` in our tables already agrees with ESPN's `2026`; an earlier
+    version of this docstring claimed the opposite and would have had you dismiss a real
+    mismatch as a vocabulary artefact.
+
+    What is genuinely inconsistent is ours: the NHL 2025-26 season is `20252026` in
+    `player_game_logs` and `2026` in `team_game_results` — two keys, one season, same
+    database. Same class of bug as the LAR/LA join key.
     """
     base = f"{CORE}/{ESPN_PATH[league]}/seasons/{season}"
     name = f"{league} {season} regular-season games in player_game_logs"
