@@ -380,6 +380,42 @@ has no `team_stats_coverage` row at all — an unjudged season is invisible to a
 iterates judged ones. That is the `unverified` state doing its job, and it is also a
 reminder that this gate's reach is exactly the set of seasons we have bothered to judge.
 
+### What the green column was hiding: a phase nobody asked for
+
+Stamping every NHL row `REG` made `COV-gametype` green over a column with exactly one
+value in it, and **a uniformly-`REG` column is indistinguishable from a complete one.**
+`ingest_nhl_logs.py` requests `/game-log/{season}/{gameType}` and had only ever passed
+`2`, so for a season that ended 2026-06-15 we held **none of the 82 playoff games**. No
+count looked wrong, because nothing counted the phase we never asked for. The gate now
+asserts `POST = 82` — `totalPlayoffGames` from the NHL's own season document.
+
+Three consumers had to learn the phase *before* the data landed, and each of them would
+have **misreported** the postseason rather than missed it:
+
+- **`COV-nhl`** compared `team_game_results` — regular season, and no `game_type` column
+  at all — against an unphased `player_game_logs` count. Correct only while one phase
+  existed; playoff rows would have made it report a season that just got more complete as
+  one that broke.
+- **`reconcile_totals.check_generic`** is named "regular-season games in
+  `player_game_logs`" and compared against the regular-season type's published count while
+  counting every row. Where no row carries a phase it now counts everything and **labels
+  the answer `PHASE-BLIND`** — not the column-presence mistake, because it asks what the
+  *values* hold and says so when they hold nothing.
+- **`routers/players.py`** counted a postseason only for NFL, so an NHL player who played
+  22 playoff games rendered as having played none — absence as a claim about the player,
+  in a season where we can prove we looked. Two things stay NFL-only there and both are
+  load-bearing: the legacy fallback reads `game_no` as a *week number* (NHL's `game_no` is
+  a game id, so `>= 19` is true of every NHL row ever written), and the `nfl_schedule`
+  venue lookup matches on bare team codes — **CHI, DAL and LA name a team in both
+  leagues.**
+
+And one number that had been wrong the whole time without being reachable:
+`regular_season_games = len(logs)` where `logs` is `LIMIT 25`. NFL plays 17, so the page
+size was always larger than the season and the two agreed by luck. Offering an 82-game
+league put "2026 · 25 games" on the page of a player who missed nothing. **A page size is
+not a measurement** — and it had the right shape, the right magnitude and the right
+column, which is the hardest kind of wrong to see.
+
 ---
 
 ## 7. Adding a league
