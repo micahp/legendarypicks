@@ -26,9 +26,11 @@ import { useNflDraftBoard } from '../../components/Leagues/hooks/useNflDraftBoar
 import {
   LEAGUE_EMOJIS,
   LEAGUE_NAMES,
-  LEAGUE_SWITCHER,
+  leagueLabel,
+  orderLeagues,
   localToday,
 } from '../../components/Leagues/presentation'
+import { useCoverage } from '../../components/Leagues/hooks/useCoverage'
 import type { HubTab } from '../../components/Leagues/types'
 
 const TAB_LABELS: Record<HubTab, string> = {
@@ -145,6 +147,10 @@ export default function LeagueHubPage() {
           <span className="text-2xl">{leagueEmoji}</span>
           <h1 className="text-3xl font-extrabold tracking-tight">{leagueName}</h1>
         </div>
+        {!route.offerable && !route.coverageLoading ? (
+          <LeagueUnavailable league={route.league} />
+        ) : (
+        <>
         <HubTabs
           tabs={route.validTabs}
           activeTab={route.activeTab}
@@ -286,6 +292,8 @@ export default function LeagueHubPage() {
             onSubmitPick={predict.submitPick}
           />
         )}
+        </>
+        )}
       </div>
     </>
   )
@@ -301,22 +309,61 @@ function LeagueHubSkeleton() {
 }
 
 function LeagueSwitcher({ activeLeague }: { activeLeague: string }) {
+  // Built from the coverage registry, not from a constant. A league appears here only
+  // once something verified a season of it against the publisher — the same mechanism
+  // as ESPN's season dropdown, which lists exactly the seasons it can fill.
+  //
+  // While coverage is loading we show nothing rather than a hardcoded fallback: an
+  // optimistic list that later shrinks is worse than a list that arrives late, and a
+  // fallback is how the gate quietly stops being the gate.
+  const { loading, offeredLeagues } = useCoverage()
+  const leagues = orderLeagues(
+    // The league being viewed stays reachable in the nav even mid-load, so the current
+    // page never lacks its own tab.
+    offeredLeagues.includes(activeLeague) || !activeLeague
+      ? offeredLeagues
+      : [...offeredLeagues, activeLeague],
+  )
+
+  if (loading || !leagues.length) return <nav aria-label="Leagues" className="h-5" />
+
   return (
     <nav
       aria-label="Leagues"
       className="-mx-4 flex items-center gap-3 overflow-x-auto px-4 text-sm sm:gap-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
     >
-      {LEAGUE_SWITCHER.map(league => (
+      {leagues.map(league => (
         <Link
           key={league}
           href={`/leagues/${league}`}
           aria-current={activeLeague === league ? 'page' : undefined}
           className="whitespace-nowrap text-zinc-500 transition-colors hover:text-emerald-400"
         >
-          {LEAGUE_NAMES[league]}
+          {leagueLabel(league)}
         </Link>
       ))}
     </nav>
+  )
+}
+
+/**
+ * What a league we cannot vouch for renders instead of a hub full of numbers.
+ *
+ * Deliberately quiet. Per honest-data-ui §4 and contract §2, our own gap is not
+ * information about the sport, and the amber accent belongs to player absence — the
+ * thing the product exists to show. Dressing our gaps in the same colour trains people
+ * to discount the accent that carries the thesis.
+ */
+function LeagueUnavailable({ league }: { league: string }) {
+  return (
+    <div className="rounded-lg border border-zinc-800 bg-zinc-900/40 px-4 py-8 text-center">
+      <p className="text-sm text-zinc-400">
+        {leagueLabel(league)} isn&apos;t available yet.
+      </p>
+      <p className="mt-1 text-xs text-zinc-600">
+        We only show a season once every game in it has been checked against the source.
+      </p>
+    </div>
   )
 }
 

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/router'
 import { localToday, validScheduleDate } from '../presentation'
+import { useCoverage } from './useCoverage'
 import type { HubTab } from '../types'
 
 type DateIntent = 'default' | 'user' | 'auto'
@@ -12,7 +13,19 @@ export function useLeagueRouteState() {
   const isWorldCup = league === 'wc'
   const isUFC = league === 'ufc'
   const isNFL = league === 'nfl'
-  const supportsTeamStats = ['mlb', 'nba', 'nhl', 'nfl'].includes(league)
+
+  // Whether a league may be shown at all comes from the coverage registry, not from a
+  // list in this file. The literal `['mlb','nba','nhl','nfl']` that used to live here
+  // was a second place to remember, and the failure mode is silent: add a league,
+  // forget the array, and the hub renders empty tabs with no error anywhere.
+  //
+  // UFC and the World Cup are not team-stats leagues and are not in team_stats_coverage
+  // at all, so they are named here as *shape*, not as permission — they render their own
+  // tabs and neither one is gated on a team-stats row it will never have.
+  const coverage = useCoverage()
+  const coverageLoading = coverage.loading
+  const supportsTeamStats = coverage.statusFor(league) === 'complete'
+  const offerable = isUFC || isWorldCup || supportsTeamStats
   const validTabs: HubTab[] = isUFC
     ? ['rankings', 'schedule', 'predict']
     : isWorldCup
@@ -185,6 +198,8 @@ export function useLeagueRouteState() {
     isWorldCup,
     isUFC,
     supportsTeamStats,
+    offerable,
+    coverageLoading,
     validTabs,
     activeTab,
     scheduleDate,

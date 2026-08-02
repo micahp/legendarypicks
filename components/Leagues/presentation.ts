@@ -18,7 +18,35 @@ export const LEAGUE_EMOJIS: Record<string, string> = {
   ufc: '🥊',
 }
 
-export const LEAGUE_SWITCHER = ['mlb', 'nba', 'nhl', 'nfl', 'wc', 'ufc'] as const
+// Presentation order. Which of these are actually OFFERED is decided by the coverage
+// registry at runtime (`useLeagueSwitcher`), not by this list — see
+// docs/DATA-COVERAGE-CONTRACT.md §4. This array only says how to sort and what to call
+// them; a league missing from it still renders, under its uppercased slug.
+export const LEAGUE_ORDER = ['mlb', 'nba', 'nhl', 'nfl', 'wc', 'ufc'] as const
+
+export function leagueLabel(league: string): string {
+  return LEAGUE_NAMES[league] || league.toUpperCase()
+}
+
+export function leagueEmoji(league: string): string {
+  return LEAGUE_EMOJIS[league] || '🏆'
+}
+
+/**
+ * Order a set of league slugs for display.
+ *
+ * Leagues we have a curated position for come first, in that order; anything new sorts
+ * alphabetically after them. This is what stops a newly-ingested league from being
+ * invisible because someone forgot to add it to an array — the old LEAGUE_SWITCHER
+ * const was the single hardcoded list that decided what existed.
+ */
+export function orderLeagues(leagues: string[]): string[] {
+  const rank = (l: string) => {
+    const i = (LEAGUE_ORDER as readonly string[]).indexOf(l)
+    return i === -1 ? LEAGUE_ORDER.length : i
+  }
+  return [...leagues].sort((a, b) => rank(a) - rank(b) || a.localeCompare(b))
+}
 
 export const WEIGHT_CLASS_LBS: Record<string, number> = {
   Flyweight: 125,
