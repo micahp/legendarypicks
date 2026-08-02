@@ -49,14 +49,29 @@ import sqlite3
 import sys
 
 # ---------------------------------------------------------------------------
-#  Scope — approved league/season windows and expected counts (measured 2026-07-14)
+#  Scope — approved league/season windows and expected counts
+#
+#  REVISED 2026-08-02. The previous values were "measured 2026-07-14" — measured,
+#  that is, from a run that had silently lost 4 NBA games and 1 NHL game to a
+#  transaction bug (docs/DATA-COVERAGE-CONTRACT.md §9). Measuring the output of a
+#  broken run and calling it the expectation is how a defect becomes the spec: this
+#  table would have rejected the CORRECT data as out of scope.
+#
+#  The values below are derived independently of any run of ours:
+#    nba 2026 — 30 teams x 82 games / 2 = 1230, + 1 NBA Cup final (played, does not
+#               count toward 82) = 1231 games, 2462 result rows. Confirmed by the
+#               per-team distribution: 28 teams at 82, NY and SA at 83.
+#    nhl 2026 — 1312, the count player_game_logs already held while
+#               team_game_results sat at 1311; exactly one game, and the failure
+#               row naming it is in team_stats_ingestion_failures.
+#    nfl 2025 — 272 = 32 x 17 / 2. Unaffected by the bug.
 # ---------------------------------------------------------------------------
 
 APPROVED: dict[str, dict] = {
     # league -> approved season + expected result rows (games * 2) + teams
-    "nba": {"season": 2026, "results": 2454, "teams": 30, "games": 1227},
+    "nba": {"season": 2026, "results": 2462, "teams": 30, "games": 1231},
     "nfl": {"season": 2025, "results": 544, "teams": 32, "games": 272},
-    "nhl": {"season": 2026, "results": 2622, "teams": 32, "games": 1311},
+    "nhl": {"season": 2026, "results": 2624, "teams": 32, "games": 1312},
 }
 
 
