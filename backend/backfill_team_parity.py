@@ -8,8 +8,15 @@ For each league it:
   2. writes reciprocal team_game_results pairs (scores from the schedule),
   3. fetches each game's /summary and writes paired team_game_stats
      (only games where BOTH teams have every required stat field are kept),
-  4. writes a team_stats_coverage manifest (expected == fetched, internally
-     consistent) so build_team_aggregates reports supported=True.
+  4. records every game it could not write to team_stats_ingestion_failures.
+
+It does NOT write team_stats_coverage. It used to, and the manifest it wrote was
+"expected == fetched, internally consistent" — which was stated as a feature and is
+the defect: an expectation copied from the result cannot fail. The verdict is written
+by `reconcile_totals.py --write-coverage`, which reads the expected total from the
+publisher. Re-running this script clears the league's coverage row, so a re-ingested
+season is `unverified` until it is reconciled again — which is the correct state for a
+season nobody has checked.
 
 MLB is untouched (it is served from team_game_results directly).
 
@@ -144,7 +151,18 @@ def enumerate_games(sport: str, league: str, season: int, stype: int):
             continue
         for e in sched.get("events", []):
             comp = (e.get("competitions") or [{}])[0]
-            if comp.get("status", {}).get("type", {}).get("state") != "post":
+            kind = comp.get("status", {}).get("type", {})
+            # `completed`, not `state`. A POSTPONED game is state="post" too, and it
+            # carries a score of **0**, not null — so the `val is None` guard below
+            # waves it through as a played 0-0 result. Measured 2026-08-02: four NBA
+            # 2025-26 postponements (401810384, 401810499, 401810506, 401810507) all
+            # report {'MIN': '0', 'GS': '0'} with STATUS_POSTPONED, and each was
+            # actually replayed under a NEW event id. Ingesting the shell credits both
+            # teams a game they did not play and hands one of them a loss.
+            #
+            # The field was there the whole time. `state` answers "is this in the past";
+            # `completed` answers "was it played", which is the question being asked.
+            if not kind.get("completed"):
                 continue
             gid = str(e["id"])
             if gid in games:
@@ -177,10 +195,16 @@ def run_league(con: sqlite3.Connection, league: str, run_id: str,
     print(f"[{league}] {len(games)} completed games, {len(team_ids)} teams",
           flush=True)
 
-    # fresh slate for this league (keep MLB + other leagues intact)
+    # fresh slate for this league (keep MLB + other leagues intact). Dropping the
+    # coverage row is deliberate: a re-ingested season is `unverified` — nobody has
+    # checked it yet — until reconcile_totals.py writes a new verdict. The old
+    # failure rows go too, or a clean run inherits a previous run's ghosts and the
+    # verdict is about a run that no longer exists.
     con.execute("DELETE FROM team_game_results WHERE league=?", (league,))
     con.execute("DELETE FROM team_game_stats WHERE league=?", (league,))
     con.execute("DELETE FROM team_stats_coverage WHERE league=?", (league,))
+    con.execute("DELETE FROM team_stats_ingestion_failures WHERE run_id LIKE ?",
+                (f"{league}-%",))
     con.commit()
 
     captured_at = datetime.now(timezone.utc).isoformat()
@@ -260,7 +284,12 @@ def run_league(con: sqlite3.Connection, league: str, run_id: str,
                      s.get("rushing_yards"), s.get("defensive_special_teams_tds")))
             con.commit()
         except Exception as exc:  # noqa: BLE001
-            con.execute("ROLLBACK")
+            # ROLLBACK is only legal if a transaction is actually open. Under
+            # autocommit the BEGIN may itself be what failed, and a bare ROLLBACK
+            # would then raise *inside the handler* and lose the failure record —
+            # the one piece of evidence that made §9 solvable.
+            if con.in_transaction:
+                con.execute("ROLLBACK")
             con.execute(
                 "INSERT INTO team_stats_ingestion_failures(run_id,game_id,team,reason)"
                 " VALUES(?,?,?,?)", (run_id, gid, "", f"write: {exc}"))
@@ -285,23 +314,30 @@ def run_league(con: sqlite3.Connection, league: str, run_id: str,
 
     expected = EXPECTED_TEAMS[league]
     fetched_teams = len(teams_seen)
-    status = "complete" if fetched_teams == expected else "partial"
-    season_start = min(dates) if dates else f"{season-1}-09-01"
-    season_end = max(dates) if dates else f"{season}-06-30"
-    con.execute(
-        "INSERT OR REPLACE INTO team_stats_coverage"
-        "(run_id,league,season,season_start,season_end,status,expected_teams,"
-        "fetched_teams,expected_games,fetched_games,paired_games,paired_stat_games,"
-        "failure_count,completed_at,source) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
-        (run_id, league, season, season_start, season_end, status, expected,
-         fetched_teams, games_written, games_written, games_written, games_written,
-         0, datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-         "espn_team_schedules+espn_boxscores"))
+    failures = con.execute(
+        "SELECT COUNT(*) FROM team_stats_ingestion_failures WHERE run_id=?",
+        (run_id,)).fetchone()[0]
     con.commit()
+
+    # NO team_stats_coverage WRITE HERE. This function is not in a position to
+    # judge its own completeness, and when it tried it wrote
+    # `expected_games = fetched_games = paired_games = games_written` — four columns,
+    # one variable, incapable of disagreeing — alongside a hardcoded
+    # `failure_count=0` while this very loop was recording failures, and a `status`
+    # that only ever compared team counts. The result said `complete` over a season
+    # missing four games for nineteen days.
+    #
+    # The expectation comes from the publisher, so the check belongs where the
+    # publisher is read:  reconcile_totals.py --write-coverage.
     print(f"[{league}] DONE: {games_written} games, {fetched_teams}/{expected} teams, "
-          f"status={status}", flush=True)
+          f"{failures} failures — coverage NOT written; run "
+          f"`reconcile_totals.py --league {league} --write-coverage` to judge it",
+          flush=True)
     return {"league": league, "games": games_written, "teams": fetched_teams,
-            "expected_teams": expected, "status": status}
+            "expected_teams": expected, "failures": failures,
+            "run_id": run_id, "season": season,
+            "season_start": min(dates) if dates else None,
+            "season_end": max(dates) if dates else None}
 
 
 def main() -> None:
@@ -311,7 +347,13 @@ def main() -> None:
     args = ap.parse_args()
 
     ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-    con = sqlite3.connect(DB, timeout=60)
+    # isolation_level=None puts sqlite3 in autocommit and makes BEGIN/COMMIT/ROLLBACK
+    # mean exactly what they say. Under the default (implicit) mode the driver opens a
+    # transaction on its own before a DML statement, and the explicit `BEGIN` in
+    # run_league() then raises "cannot start a transaction within a transaction" — which
+    # is not hypothetical: it silently cost four NBA games and one NHL game on
+    # 2026-07-14. See docs/DATA-COVERAGE-CONTRACT.md §9.
+    con = sqlite3.connect(DB, timeout=60, isolation_level=None)
     con.execute("PRAGMA busy_timeout=60000")
     ensure_schema(con)
 
