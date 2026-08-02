@@ -503,12 +503,29 @@ def check_generic(conn: sqlite3.Connection, rep: Report, league: str, season: in
     )
     report_gap(rep, f"{league} {season}", gap)
 
-    ours = db_count(
+    # `name` says REGULAR-SEASON games, and `gap.expected` is the regular-season type's
+    # count, so the query has to name the phase too — otherwise the moment a league's
+    # playoff logs land, this reports the postseason as a surplus of regular-season
+    # games and demotes a season that just got MORE complete.
+    #
+    # Where no row carries a phase we count everything and say so. That is not the
+    # column-presence mistake: this asks what the VALUES hold, and when they hold
+    # nothing it labels the answer phase-blind rather than passing a laxer question
+    # off as the strict one.
+    phased = db_count(
         conn,
-        "SELECT COUNT(DISTINCT game_id) FROM player_game_logs WHERE league=? AND season=?",
+        "SELECT COUNT(*) FROM player_game_logs WHERE league=? AND season=?"
+        " AND game_type IS NOT NULL",
         (league, season),
     )
-    rep.check(name, ours, gap.expected, "distinct game_id")
+    ours = db_count(
+        conn,
+        "SELECT COUNT(DISTINCT game_id) FROM player_game_logs WHERE league=? AND season=?"
+        + (" AND game_type='REG'" if phased else ""),
+        (league, season),
+    )
+    rep.check(name, ours, gap.expected,
+              "distinct game_id" if phased else "distinct game_id, PHASE-BLIND (no row carries game_type)")
     if ours < gap.expected:
         _blame_the_key_before_the_data(conn, rep, league, season)
 

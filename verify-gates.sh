@@ -198,12 +198,20 @@ else:
 # counted 1312 rows keyed '20252026' and called them the 2026 season. A gate
 # that asks a laxer question than its consumers do is not a gate. Both sides now
 # name the season, the same way /api/coverage does.
+#
+# The player_game_logs side also names the PHASE, for the mirror-image reason. It
+# counted every NHL row as a regular-season game, which was true only because the
+# ingest had never requested any other phase. team_game_results holds the regular
+# season and has no game_type column at all, so an unphased count here starts
+# disagreeing with it the moment playoff logs land — reporting a season that just
+# got more complete as one that broke.
 tgr = q("SELECT COUNT(DISTINCT game_id) FROM team_game_results WHERE league='nhl' AND season=2026")[0][0]
-pgl = q("SELECT COUNT(DISTINCT game_id) FROM player_game_logs WHERE league='nhl' AND season=2026")[0][0]
+pgl = q("SELECT COUNT(DISTINCT game_id) FROM player_game_logs"
+        " WHERE league='nhl' AND season=2026 AND game_type='REG'")[0][0]
 if tgr == 1312 and pgl == 1312:
-    print('PASS COV-nhl (1312 in both tables)')
+    print('PASS COV-nhl (1312 REG in both tables)')
 else:
-    print('FAIL COV-nhl (team_game_results=%d player_game_logs=%d, want 1312/1312)' % (tgr, pgl))
+    print('FAIL COV-nhl (team_game_results=%d player_game_logs REG=%d, want 1312/1312)' % (tgr, pgl))
 
 # ── COV-honest ── a coverage row may not claim more than its run can support.
 # Three ways the 2026-07-14 row lied, each its own assertion:
@@ -316,6 +324,16 @@ reg_games = q("SELECT COUNT(DISTINCT game_id) FROM player_game_logs"
               " WHERE league='nhl' AND season=2026 AND game_type='REG'")[0][0]
 if reg_games != 1312:
     gt_bad.append('nhl 2026 REG games=%d, published 1312' % reg_games)
+# And a phase nobody asked for is a phase nobody has. The ingest requested game
+# type 2 and only game type 2, so for a season that ended 2026-06-15 we held none
+# of the postseason and nothing said so — the column was uniformly REG, which
+# reads exactly like a complete column. 82 is `totalPlayoffGames` from
+# api.nhle.com/stats/rest/en/season?cayenneExp=id=20252026, published by the NHL,
+# not counted off our own rows.
+post_games = q("SELECT COUNT(DISTINCT game_id) FROM player_game_logs"
+               " WHERE league='nhl' AND season=2026 AND game_type='POST'")[0][0]
+if post_games != 82:
+    gt_bad.append('nhl 2026 POST games=%d, published 82' % post_games)
 if not gt_bad:
     print('PASS COV-gametype (every judged season has game_type on every row; nhl 2026 = 1312 REG)')
 else:

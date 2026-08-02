@@ -25,23 +25,34 @@ router = APIRouter()
 def _reg_season_game_filter(connection, league):
     """Return the league-aware regular-season predicate.
 
-    ``game_type`` belongs to the NFL publisher contract. Other leagues'
-    historical rows legitimately leave it null and must not be filtered through
-    an NFL-only field. Legacy NFL rows retain the old week-number compatibility
-    rule until they are republished with an explicit type.
+    ``game_type`` was an NFL-only field when this was written, and non-NFL
+    leagues got an empty predicate: every row is a regular-season row, because
+    there was nothing else in the table. That stopped being true for NHL on
+    2026-08-02, when the phase started being ingested. An empty predicate over a
+    table holding playoff rows does not fail — it quietly adds postseason games
+    to a regular-season count, which is the same shape of defect as the NULL
+    column it replaced, in the opposite direction.
+
+    So the rule is now about the values, not the league: a row that says which
+    phase it belongs to is filtered on what it says. Rows that say nothing keep
+    the old behaviour — for NFL the legacy week-number compatibility rule, for
+    everyone else inclusion, because excluding a NULL would hide every league
+    whose phase has not been ingested yet.
     """
-    if str(league or "").lower() != "nfl":
-        return "", []
     cols = {row[1] for row in connection.execute("PRAGMA table_info(player_game_logs)").fetchall()}
-    if "game_type" in cols:
-        if "game_no" not in cols:
-            return "AND game_type='REG'", []
-        return (
-            "AND (game_type='REG' OR "
-            "(game_type IS NULL AND CAST(game_no AS INTEGER) < 19))",
-            [],
-        )
-    return "AND CAST(game_no AS INTEGER) < 19", []
+    if "game_type" not in cols:
+        if str(league or "").lower() != "nfl":
+            return "", []
+        return "AND CAST(game_no AS INTEGER) < 19", []
+    if str(league or "").lower() != "nfl":
+        return "AND (game_type='REG' OR game_type IS NULL)", []
+    if "game_no" not in cols:
+        return "AND game_type='REG'", []
+    return (
+        "AND (game_type='REG' OR "
+        "(game_type IS NULL AND CAST(game_no AS INTEGER) < 19))",
+        [],
+    )
 
 @router.get("/api/players/search")
 def search_players(q: str = Query("", description="Search query")):
