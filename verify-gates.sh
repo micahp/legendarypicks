@@ -157,6 +157,88 @@ b4(){
   fi
 }
 
+# ── COV · the coverage gate. EXPECTED VALUES WRITTEN 2026-08-02, BEFORE THE CODE. ──
+#
+# Derived from the publisher and from our own per-team counts, NOT from whatever
+# the ingest produces — see docs/DATA-COVERAGE-CONTRACT.md §9 for the arithmetic:
+#
+#   ESPN publishes 1239 nba 2026 type-2 events
+#     = 1230 fixtures + 1 NBA Cup final + 4 All-Star exhibitions + 4 postponed shells
+#   so ours must be 1231, and every team must land on exactly 82 games
+#   (NY and SA at 83 — they played the Cup final, which does not count toward 82).
+#
+# The 4 games missing on 2026-08-02 (401810401, 401810523, 401810532, 401857824) were
+# lost to `BEGIN` inside an open transaction and RECORDED as failures, next to a
+# coverage row claiming failure_count=0. COV-honest is the gate for that specific lie:
+# it does not check that a run succeeded, it checks that the row cannot claim more
+# than the run can support. Do not relax these to make them green.
+COVDB="${LP_GATE_DB:-/root/legendarypicks/backend/data/picks.dev.db}"
+cov(){
+  $PY - "$COVDB" <<'PY'
+import sqlite3, sys, collections
+con = sqlite3.connect("file:%s?mode=ro" % sys.argv[1], uri=True)
+q = lambda s, a=(): con.execute(s, a).fetchall()
+
+# ── COV-nba ── 1231 games, and every team on exactly 82 but the two Cup finalists.
+n = q("SELECT COUNT(DISTINCT game_id) FROM team_game_results WHERE league='nba' AND season=2026")[0][0]
+per = dict(q("SELECT team, COUNT(DISTINCT game_id) FROM team_game_results"
+             " WHERE league='nba' AND season=2026 GROUP BY team"))
+dist = collections.Counter(per.values())
+at83 = sorted(t for t, v in per.items() if v == 83)
+short = sorted((t, v) for t, v in per.items() if v < 82)
+if n == 1231 and dist.get(82) == 28 and at83 == ['NY', 'SA'] and not short:
+    print('PASS COV-nba (1231 games, 28 teams at 82, NY/SA at 83)')
+else:
+    print('FAIL COV-nba (games=%d dist=%s at83=%s short=%s)' % (n, dict(dist), at83, short))
+
+# ── COV-nhl ── the same write bug cost NHL one game; the two tables must agree.
+tgr = q("SELECT COUNT(DISTINCT game_id) FROM team_game_results WHERE league='nhl' AND season=2026")[0][0]
+pgl = q("SELECT COUNT(DISTINCT game_id) FROM player_game_logs WHERE league='nhl'")[0][0]
+if tgr == 1312 and pgl == 1312:
+    print('PASS COV-nhl (1312 in both tables)')
+else:
+    print('FAIL COV-nhl (team_game_results=%d player_game_logs=%d, want 1312/1312)' % (tgr, pgl))
+
+# ── COV-honest ── a coverage row may not claim more than its run can support.
+# Three ways the 2026-07-14 row lied, each its own assertion:
+bad = []
+for run_id, league, status, exp_g, got_g, fc in q(
+        "SELECT run_id, league, status, expected_games, fetched_games, failure_count"
+        " FROM team_stats_coverage"):
+    actual = q("SELECT COUNT(*) FROM team_stats_ingestion_failures WHERE run_id=?", (run_id,))[0][0]
+    if fc != actual:
+        bad.append('%s: failure_count=%s but %d rows recorded' % (league, fc, actual))
+    if status == 'complete' and actual:
+        bad.append('%s: status=complete with %d failures' % (league, actual))
+    if status == 'complete' and exp_g != got_g:
+        bad.append('%s: status=complete with expected=%s fetched=%s' % (league, exp_g, got_g))
+    if status not in ('complete', 'partial', 'unverified'):
+        bad.append('%s: status=%r not in the three-value vocabulary' % (league, status))
+rows = q("SELECT COUNT(*) FROM team_stats_coverage")[0][0]
+if rows and not bad:
+    print('PASS COV-honest (%d coverage rows, none claiming more than its run supports)' % rows)
+else:
+    print('FAIL COV-honest (%s)' % ('no coverage rows at all' if not rows else '; '.join(bad)))
+PY
+
+  # ── COV-api ── the registry has to be reachable, and every league the switcher
+  # offers must have a complete row behind it. A hardcoded switcher passes this
+  # gate by accident today; after the change it can only pass by being derived.
+  curl -s --max-time 20 "$B/api/coverage" | $PY -c "
+import sys, json
+try: d = json.load(sys.stdin)
+except Exception as e: print('FAIL COV-api (no JSON from /api/coverage: %s)' % e); raise SystemExit
+rows = d if isinstance(d, list) else d.get('coverage', [])
+need = {'league','season','status'}
+missing = [r for r in rows if not need <= set(r)]
+complete = sorted({r['league'] for r in rows if r.get('status') == 'complete'})
+if rows and not missing and complete:
+    print('PASS COV-api (%d rows, complete=%s)' % (len(rows), complete))
+else:
+    print('FAIL COV-api (rows=%d malformed=%d complete=%s)' % (len(rows), len(missing), complete))
+"
+}
+
 # ── always-on regressions: nothing already working may break ──
 reg(){
   curl -s --max-time 60 "$B/api/nfl/mock-draft/pool?season=2026" | $PY -c "
@@ -268,7 +350,7 @@ regrender(){
 #      `all` dispatch ran 14 gates and silently skipped REG-render because the
 #      function was written but never added to the case. The count below is what
 #      makes that structurally impossible to repeat, rather than fixed once.
-ALL_IDS="A1 A1b A1c A2 A3 B1 B2 B2b B4 REG-pool REG-adp-dst REG-dst REG-pytest REG-jest REG-jest-all REG-modules REG-render"
+ALL_IDS="A1 A1b A1c A2 A3 B1 B2 B2b B4 COV-nba COV-nhl COV-honest COV-api REG-pool REG-adp-dst REG-dst REG-pytest REG-jest REG-jest-all REG-modules REG-render"
 
 out=$(mktemp) || exit 2
 trap 'rm -f "$out"' EXIT
@@ -282,7 +364,8 @@ trap 'rm -f "$out"' EXIT
     A1|a1|A1b|A1c) a1;; A2|a2) a2;; A3|a3) a3;; B1|b1) b1;; B2|b2|B2b) b2;; B4|b4) b4;;
     reg|REG|regressions) reg;;
     render|REG-render|regrender) regrender;;
-    all) a1; a2; a3; b1; b2; b4; echo "--- regressions ---"; reg; regrender;;
+    cov|COV|coverage|COV-nba|COV-nhl|COV-honest|COV-api) cov;;
+    all) a1; a2; a3; b1; b2; b4; echo "--- coverage ---"; cov; echo "--- regressions ---"; reg; regrender;;
     *) echo "FAIL runner (unknown gate '$1' — nothing ran)";;
   esac
 } 2>&1 | tee "$out"
