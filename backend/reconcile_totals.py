@@ -579,6 +579,7 @@ def write_coverage(conn: sqlite3.Connection, rep: Report, league: str, season: i
         status = "partial" if status == "complete" else status
 
     expected_games = _expected_games_from_report(rep, league, season, fetched_games)
+    window_start, window_end = _published_season_window(league, season)
 
     # READ, never asserted. The previous writer passed a literal 0 here while the
     # same function was inserting rows into this exact table.
@@ -595,7 +596,8 @@ def write_coverage(conn: sqlite3.Connection, rep: Report, league: str, season: i
         "(run_id,league,season,season_start,season_end,status,expected_teams,"
         "fetched_teams,expected_games,fetched_games,paired_games,paired_stat_games,"
         "failure_count,completed_at,source) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
-        (run_id, league, season, None, None, status, fetched_teams, fetched_teams,
+        (run_id, league, season, window_start, window_end, status,
+         fetched_teams, fetched_teams,
          expected_games, fetched_games, paired_games, paired_stat_games,
          failure_count,
          datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
@@ -603,6 +605,46 @@ def write_coverage(conn: sqlite3.Connection, rep: Report, league: str, season: i
     )
     conn.commit()
     return status
+
+
+def _published_season_window(league: str, season: int) -> Tuple[str, str]:
+    """The season's date window, read from `seasons/<year>` — never from our own rows.
+
+    `season_start`/`season_end` are NOT NULL, and the first draft of this writer passed
+    `None, None` for both, which raised on the very first row it tried to write. The
+    tempting repair is `MIN(game_date)/MAX(game_date)` over `team_game_results` — but
+    that answers "when did the games we happen to hold start", which is the ingest
+    describing its own output again, the exact defect this function exists to prevent.
+    A season missing its first week would silently redefine when the season began.
+
+    The regular-season type publishes `startDate`/`endDate`; a single-type competition
+    (soccer) publishes them on its one type. Both are already in the document
+    `season_types()` fetched, so this costs no extra request.
+    """
+    types = season_types(league, season)
+    chosen = None
+    for key, value in types.items():
+        if "regular" in key:
+            chosen = value
+            break
+    if chosen is None:
+        # No phase named "regular": either one type IS the season, or the league names
+        # its phases differently. Take the widest published window over real types —
+        # an empty type (MLS "Combined", 0 events) publishes no useful dates.
+        dated = [v for v in types.values() if v.get("startDate") and v.get("endDate")]
+        if not dated:
+            raise OracleUnreachable(
+                f"{league} {season} publishes no season type with dates"
+            )
+        starts = min(str(v["startDate"]) for v in dated)
+        ends = max(str(v["endDate"]) for v in dated)
+        return starts[:10], ends[:10]
+    start, end = chosen.get("startDate"), chosen.get("endDate")
+    if not start or not end:
+        raise OracleUnreachable(
+            f"{league} {season} regular-season type publishes no date range"
+        )
+    return str(start)[:10], str(end)[:10]
 
 
 def _expected_games_from_report(rep: Report, league: str, season: int, fallback: int) -> int:
