@@ -289,6 +289,37 @@ else:
         print('PASS COV-source (every row names its publisher)')
     else:
         print('FAIL COV-source (%s)' % '; '.join(unattributed))
+
+# ── COV-gametype ── EXPECTED VALUES WRITTEN 2026-08-02, BEFORE THE CODE.
+# `game_type` is the column `routers/nfl_offseason.py` guards on for EXISTENCE and
+# then filters on for VALUE. Where the values are NULL, `AND game_type='REG'` matches
+# nothing, games_played returns 0, and a healthy player renders "missed 82" in amber.
+# So: a league-season we have judged in team_stats_coverage may not hold a single NULL.
+#
+# The NHL number is the publisher's, not the ingest's: ESPN publishes 1312 nhl 2026
+# regular-season events, the same integer COV-nhl asserts. The row count (48,017
+# player-games) is deliberately NOT asserted — nobody publishes it, so it could only
+# be copied back off our own output, which is the ingest grading itself.
+#
+# RED ON PURPOSE for nba 2026 until its ingest stamps the column too. Do not scope
+# this gate to nhl to make it green — the point is that it names what is left.
+gt_bad = []
+judged = q("SELECT DISTINCT league, season FROM team_stats_coverage")
+for lg, season in judged:
+    total, nulls = q("SELECT COUNT(*), SUM(game_type IS NULL) FROM player_game_logs"
+                     " WHERE league=? AND season=?", (lg, season))[0]
+    if not total:
+        continue          # no logs for that season is COV-nhl's problem, not this one
+    if nulls:
+        gt_bad.append('%s %s: %d/%d rows NULL' % (lg, season, nulls, total))
+reg_games = q("SELECT COUNT(DISTINCT game_id) FROM player_game_logs"
+              " WHERE league='nhl' AND season=2026 AND game_type='REG'")[0][0]
+if reg_games != 1312:
+    gt_bad.append('nhl 2026 REG games=%d, published 1312' % reg_games)
+if not gt_bad:
+    print('PASS COV-gametype (every judged season has game_type on every row; nhl 2026 = 1312 REG)')
+else:
+    print('FAIL COV-gametype (%s)' % '; '.join(gt_bad))
 PY
 
   # ── COV-api ── the registry has to be reachable, and every league the switcher
@@ -420,7 +451,7 @@ regrender(){
 #      `all` dispatch ran 14 gates and silently skipped REG-render because the
 #      function was written but never added to the case. The count below is what
 #      makes that structurally impossible to repeat, rather than fixed once.
-ALL_IDS="A1 A1b A1c A2 A3 B1 B2 B2b B4 COV-nba COV-nhl COV-honest COV-keys COV-source COV-api REG-pool REG-adp-dst REG-dst REG-pytest REG-jest REG-jest-all REG-modules REG-render"
+ALL_IDS="A1 A1b A1c A2 A3 B1 B2 B2b B4 COV-nba COV-nhl COV-honest COV-keys COV-source COV-gametype COV-api REG-pool REG-adp-dst REG-dst REG-pytest REG-jest REG-jest-all REG-modules REG-render"
 
 out=$(mktemp) || exit 2
 trap 'rm -f "$out"' EXIT
@@ -434,7 +465,7 @@ trap 'rm -f "$out"' EXIT
     A1|a1|A1b|A1c) a1;; A2|a2) a2;; A3|a3) a3;; B1|b1) b1;; B2|b2|B2b) b2;; B4|b4) b4;;
     reg|REG|regressions) reg;;
     render|REG-render|regrender) regrender;;
-    cov|COV|coverage|COV-nba|COV-nhl|COV-honest|COV-keys|COV-source|COV-api) cov;;
+    cov|COV|coverage|COV-nba|COV-nhl|COV-honest|COV-keys|COV-source|COV-gametype|COV-api) cov;;
     all) a1; a2; a3; b1; b2; b4; echo "--- coverage ---"; cov; echo "--- regressions ---"; reg; regrender;;
     *) echo "FAIL runner (unknown gate '$1' — nothing ran)";;
   esac
