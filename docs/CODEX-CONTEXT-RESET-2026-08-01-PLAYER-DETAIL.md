@@ -285,3 +285,55 @@ contains 4,507 players and is protected by its encoded response cache.
 4. Treat candidate, managed DEV, and production as separate states.
 5. Do not push or promote this local `dev` history without explicit authorization and a fresh
    whole-app release gate.
+
+## Managed DEV 2025 season rankings repair
+
+Later on 2026-08-01, commits `23f2dfe` and `3d8d87e` were fast-forwarded into local managed
+`dev`. They replace the stale 2024/legacy rank reader and restore the League Rankings section on
+every player-overlay entry path.
+
+The authoritative source is nflverse's published regular-season summary, not a reconstruction from
+game logs:
+
+- artifact: `stats_player_reg_2025.parquet`;
+- sha256: `ff2daebd760c2479d42d2f6982b84bb8746cd1106f8f38022a059a75e2ae97f2`;
+- complete QB/RB/WR/TE population: 608 unique GSIS IDs;
+- canonical resolution: 608/608;
+- managed publication: 608 unique `(player_id, nfl, 2025, season)` rows under
+  `source='nflverse_regular_season'`;
+- legacy 2025 NFL `player_stats` rows: zero;
+- denormalized player-name mismatches: zero;
+- `PRAGMA quick_check`: `ok`.
+
+The pre-publication online backup is:
+
+```text
+/root/lp-db-backups/picks.dev.before-nfl-season-rankings-20260801.db
+sha256 08998c9846b450d93589ddfd8b2c3da705851448ebed68be2bf50020ba53cbb1
+```
+
+Clone publication left players, logs, props, prop results/games, and projections byte-for-byte
+unchanged. On managed DEV, Props and `prop_games` advanced between backup and post-check because
+their externally managed writers remained active; players, logs, prop results, and projections
+retained the backup fingerprints.
+
+Managed API, `:3096`, and the public tunnel all returned the same Shedeur Sanders contract:
+
+- 2025 regular season, eight games;
+- 120 completions on 212 attempts, 1,400 passing yards, seven TD, ten INT;
+- 175.0 pass yards/game, league rank 36;
+- 84.9 published season PPR;
+- nonempty rank card with explicit `2025 regular season · n=8 games` sample label.
+
+Browser acceptance passed with zero page or console errors on:
+
+- `https://shortly-calendar-vast-kansas.trycloudflare.com/leagues/nfl?tab=camp` for Shedeur;
+- the same route for true rookie Jeremiyah Love, who correctly has no rank card, no published
+  regular-season totals, and no NFL sample;
+- `https://shortly-calendar-vast-kansas.trycloudflare.com/mock-draft` for Puka Nacua's pre-draft
+  overlay.
+
+The unchanged tunnel process targets `http://localhost:3096`; `:3096` is the externally managed
+Next process in `/root/legendarypicks`, which proxies to the externally managed `:8096` backend
+using `/root/legendarypicks/backend/data/picks.dev.db`. No server or tunnel was restarted. Nothing
+was pushed, and production code/data remain unchanged.
