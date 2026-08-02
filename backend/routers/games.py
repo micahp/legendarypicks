@@ -7,6 +7,7 @@ from fastapi.responses import JSONResponse
 from typing import Optional
 from _core import *
 from team_stats_contract import build_team_aggregates
+from provenance import publishers_for
 
 router = APIRouter()
 
@@ -206,6 +207,14 @@ def coverage():
 
     A (league, season) with no row here is `unverified`, which is the default and is
     never good. See docs/DATA-COVERAGE-CONTRACT.md §4.
+
+    Each row also carries `publishers`: the external sources whose rows actually
+    back that league, measured from the data rather than declared. Note that the
+    row's own `source` column describes the *verdict* ("reconcile_totals+
+    espn_core_api"), not the data — conflating the two is how NHL came to hold
+    ESPN-keyed team rows and nhle.com-keyed player rows with nothing saying so.
+    More than one publisher is not an error; it is a count of vocabulary
+    boundaries this league's joins have to cross.
     """
     with closing(_db()) as con:
         try:
@@ -218,6 +227,14 @@ def coverage():
         except sqlite3.Error:
             # No table is not an error; it means nothing has been verified.
             return []
+        pubs = {}
+        for r in rows:
+            league = r["league"]
+            if league not in pubs:
+                try:
+                    pubs[league] = publishers_for(con, league)
+                except sqlite3.Error:
+                    pubs[league] = []
     out = []
     for r in rows:
         d = dict(r)
@@ -225,6 +242,7 @@ def coverage():
         # three-value vocabulary is treated as unverified rather than passed through.
         if d.get("status") not in ("complete", "partial", "unverified"):
             d["status"] = "unverified"
+        d["publishers"] = pubs.get(d["league"], [])
         out.append(d)
     return out
 

@@ -39,10 +39,17 @@ from datetime import datetime, timezone
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from team_stats_contract import extract_espn_team_stats, STAT_FIELDS, EXPECTED_TEAMS
+from provenance import sources_for, format_provenance, publishers_for
 
 DB = os.environ.get("LP_DB_PATH") or os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "data", "picks.db")
 UA = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/124.0.0.0 Safari/537.36"
+
+# Stamped on every row this script writes. Named for the publisher and the exact
+# endpoints, because "espn" alone does not distinguish the site API used here
+# from the core API reconcile_totals reads — and those two disagree about which
+# events exist (see explain_gap).
+SOURCE = "espn_site_api:scoreboard+summary"
 
 # league -> (espn sport, espn league, season, seasontype)
 LEAGUE_CFG = {
@@ -84,8 +91,18 @@ def ensure_schema(con: sqlite3.Connection) -> None:
 
     add_col("team_game_results", "season INTEGER")
     add_col("team_game_results", "status TEXT")
+    # Provenance. This table is the spine of the coverage contract and until
+    # 2026-08-02 it recorded only WHEN a row landed, never from whom — so nothing
+    # anywhere stated that it is ESPN while player_game_logs is nhle.com, and the
+    # two publishers' disagreement about what the 2025-26 season is called went
+    # unnoticed until it cost NHL its enablement. "One script writes it, so it's
+    # obviously ESPN" stops being true the first time a second script writes it,
+    # and nothing would say so. See backend/provenance.py.
+    add_col("team_game_results", "source TEXT")
+    add_col("team_game_results", "run_id TEXT")
 
     add_col("team_game_stats", "run_id TEXT")
+    add_col("team_game_stats", "source TEXT")
     for col in NFL_STAT_COLUMNS:
         add_col("team_game_stats", f"{col} INTEGER")
 
@@ -253,25 +270,27 @@ def run_league(con: sqlite3.Connection, league: str, run_id: str,
                 con.execute(
                     "INSERT OR REPLACE INTO team_game_results"
                     "(league,game_id,team,game_date,opponent,score_for,score_against,"
-                    "win,season,status,home_away) VALUES(?,?,?,?,?,?,?,?,?,?,?)",
+                    "win,season,status,home_away,source,run_id) "
+                    "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)",
                     (league, gid, me, g["date"], opp, mine["score"],
                      theirs["score"], mine["win"], season, "completed",
-                     mine["home_away"]))
+                     mine["home_away"], SOURCE, run_id))
             # paired stat rows
             for r in rows:
                 s = r["stats"]
                 con.execute(
                     "INSERT OR REPLACE INTO team_game_stats"
-                    "(league,game_id,captured_at,team_abbrev,home_away,run_id,"
+                    "(league,game_id,captured_at,team_abbrev,home_away,run_id,source,"
                     "fgm_fga,tpm_tpa,ftm_fta,rebounds,off_rebounds,def_rebounds,"
                     "assists,steals,blocks,turnovers,"
                     "shots,blocked_shots,hits,takeaways,giveaways,faceoff_pct,"
                     "powerplay_goals,powerplay_opps,shorthanded_goals,penalty_min,"
                     "first_downs,total_offensive_plays,total_yards,net_passing_yards,"
                     "rushing_yards,defensive_special_teams_tds) "
-                    "VALUES(?,?,?,?,?,?, ?,?,?,?,?,?,?,?,?,?, ?,?,?,?,?,?,?,?,?,?, "
+                    "VALUES(?,?,?,?,?,?,?, ?,?,?,?,?,?,?,?,?,?, ?,?,?,?,?,?,?,?,?,?, "
                     "?,?,?,?,?,?)",
                     (league, gid, captured_at, r["team_abbrev"], r["home_away"], run_id,
+                     SOURCE,
                      s.get("fgm_fga"), s.get("tpm_tpa"), s.get("ftm_fta"),
                      s.get("rebounds"), s.get("off_rebounds"), s.get("def_rebounds"),
                      s.get("assists"), s.get("steals"), s.get("blocks"), s.get("turnovers"),
@@ -363,10 +382,28 @@ def main() -> None:
             print(f"skip unknown league {lg}")
             continue
         results.append(run_league(con, lg, f"{lg}-parity-{ts}", args.delay))
-    con.close()
+
     print("\n=== SUMMARY ===")
     for r in results:
         print(r)
+
+    # Provenance, printed at the one moment someone is definitely looking: the
+    # end of the ingest that just wrote. The NHL season-key split survived
+    # because no run ever stated which publisher its rows came from, so nobody
+    # had cause to ask whether two tables were speaking the same language.
+    # Multiple publishers for one league is not an error — it is a list of
+    # boundaries that each need a translation, and it belongs on screen.
+    print("\n=== PROVENANCE (what this database now holds, by source) ===")
+    for r in results:
+        lg = r["league"]
+        pubs = publishers_for(con, lg)
+        for line in format_provenance(sources_for(con, lg)):
+            print(line)
+        if len(pubs) > 1:
+            print(f"  NOTE {lg}: {len(pubs)} publishers — {', '.join(pubs)}. "
+                  f"Every join across their tables crosses a vocabulary boundary "
+                  f"(season keys: season_keys.py, team codes: team_codes.py).")
+    con.close()
 
 
 if __name__ == "__main__":
