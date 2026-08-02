@@ -40,16 +40,15 @@ DB = os.environ.get("LP_DB_PATH") or os.path.join(
 
 CORE = "https://sports.core.api.espn.com/v2/sports"
 
-# league -> ESPN core API path segment
+# league -> ESPN core API path segment. Adding one is step 5 of the add-a-league
+# checklist in docs/DATA-COVERAGE-CONTRACT.md; read §6 first, because the shape of a
+# competition is not the NFL's.
 ESPN_PATH = {
     "nfl": "football/leagues/nfl",
     "nba": "basketball/leagues/nba",
     "mlb": "baseball/leagues/mlb",
     "nhl": "hockey/leagues/nhl",
 }
-
-# ESPN season type ids
-REGULAR, POSTSEASON = 2, 3
 
 TIMEOUT = 20
 
@@ -92,6 +91,37 @@ def _get_json(url: str, attempts: int = 6) -> dict:
             last = f"{type(e).__name__}: {e}"
             time.sleep(min(60, 3 * 2 ** i))
     raise OracleUnreachable(f"{last} after {attempts} attempts")
+
+
+def season_types(league: str, season: int) -> Dict[str, dict]:
+    """The season's own type list, keyed by lowercased name.
+
+    This function exists because the first draft of this script carried
+    `REGULAR, POSTSEASON = 2, 3` at module scope — a definition, inferred, which is
+    exactly what published-first rung 5 forbids. It holds for the four leagues we had
+    and breaks on the three we are adding: measured 2026-08-02, `soccer/leagues/eng.1`
+    season 2025 publishes a *single* type, id 1, named "2025-26 English Premier League".
+    A hardcoded `types/2` would have reported the entire Premier League as missing.
+
+    `GET seasons/<year>` publishes ids, names and date ranges. Read them.
+    """
+    doc = _get_json(f"{CORE}/{ESPN_PATH[league]}/seasons/{season}")
+    types = doc.get("types", {}).get("items", [])
+    if not types:
+        raise OracleUnreachable(f"no season types published for {league} {season}")
+    return {str(t.get("name", "")).lower(): t for t in types}
+
+
+def season_type_id(league: str, season: int, name: str) -> Optional[str]:
+    """Resolve a type id by published name, or None when the league has no such phase.
+
+    None is a real answer, not a failure: a soccer league genuinely has no postseason.
+    """
+    types = season_types(league, season)
+    for key, value in types.items():
+        if name in key:
+            return str(value.get("id"))
+    return None
 
 
 def published_count(url: str, *, path: Optional[List[str]] = None) -> int:
@@ -175,9 +205,23 @@ class Report:
 def check_nfl(conn: sqlite3.Connection, rep: Report, season: int, sample: int) -> None:
     base = f"{CORE}/{ESPN_PATH['nfl']}/seasons/{season}"
 
-    # --- games: schedule table vs ESPN's event count, per season type
-    for type_id, game_type, label in ((REGULAR, "REG", "regular"), (POSTSEASON, "POST", "post")):
+    # --- games: schedule table vs ESPN's event count, per season type.
+    # Type ids come from the season document, not from a constant — see season_types().
+    try:
+        regular_id = season_type_id("nfl", season, "regular")
+        postseason_id = season_type_id("nfl", season, "post")
+    except OracleUnreachable as e:
+        rep.unreachable(f"nfl {season} season types", str(e))
+        return
+
+    for type_id, game_type, label in (
+        (regular_id, "REG", "regular"),
+        (postseason_id, "POST", "post"),
+    ):
         name = f"nfl {season} {label}-season games"
+        if type_id is None:
+            rep.unreachable(name, f"no '{label}' type published for nfl {season}")
+            continue
         ours = db_count(
             conn,
             "SELECT COUNT(*) FROM nfl_schedule WHERE season=? AND game_type "
@@ -185,7 +229,7 @@ def check_nfl(conn: sqlite3.Connection, rep: Report, season: int, sample: int) -
             (season,),
         )
         try:
-            if type_id == POSTSEASON:
+            if type_id == postseason_id:
                 theirs = published_real_games(f"{base}/types/{type_id}/events", ours)
             else:
                 theirs = published_count(f"{base}/types/{type_id}/events")
@@ -282,7 +326,16 @@ def check_generic(conn: sqlite3.Connection, rep: Report, league: str, season: in
     base = f"{CORE}/{ESPN_PATH[league]}/seasons/{season}"
     name = f"{league} {season} regular-season games in player_game_logs"
     try:
-        theirs = published_count(f"{base}/types/{REGULAR}/events")
+        # A competition with a single published type (soccer) has no "regular season"
+        # phase to name; its one type *is* the season.
+        type_id = season_type_id(league, season, "regular")
+        if type_id is None:
+            published = list(season_types(league, season).values())
+            if len(published) != 1:
+                rep.unreachable(name, "no regular-season type and more than one published")
+                return
+            type_id = str(published[0].get("id"))
+        theirs = published_count(f"{base}/types/{type_id}/events")
     except OracleUnreachable as e:
         rep.unreachable(name, str(e))
         return
