@@ -316,11 +316,69 @@ Three rules, now enforced:
 The readout prints at the end of every `backfill_team_parity` run — the one moment
 someone is definitely looking — and rides on `/api/coverage` as `publishers`.
 
-**`game_type` is the one that does block.** It is populated for NFL 2025 and nothing else —
+**`game_type` is the one that does block.** It was populated for NFL 2025 and nothing else —
 NULL for NFL 2024 and for every MLB, NBA, NHL, UFC and WC row — so any `AND
-game_type='REG'` silently returns zero for all of them. Ingest it NOT NULL, from the
-season's published `types[]`, for every league. And **never guard on a column existing and
+game_type='REG'` silently returned zero for all of them. Ingest it NOT NULL, from the
+publisher's own phase field, for every league. And **never guard on a column existing and
 then filter on its values.**
+
+### The game-type boundary (2026-08-02, NHL)
+
+`backend/game_types.py` is the third boundary module, after `team_codes.normalize()` and
+`season_keys.normalize_season()`, and it exists for the third instance of one failure: a
+foreign vocabulary written into a shared column without translation. Ours is
+`PRE` | `REG` | `POST`, the vocabulary the nflverse NFL ingest already put there.
+
+Two rules it enforces, both of which cost something to give up:
+
+1. **A NULL game type is not a game type.** `normalize_game_type` raises. The plausible
+   fallback — treat an unrecognised type as `REG`, since most games are regular-season
+   games — would file preseason exhibitions into the denominator of every per-game rate
+   we serve, and it would do it silently.
+2. **No shared default across publishers.** NHL's `1/2/3` and ESPN's `1/2/3/4` agree by
+   coincidence, not by standard. Each `(source, league)` entry is measured on its own.
+
+**How the NHL mapping was measured, since nhle.com publishes no enum.** The game-log
+envelope carries a bare `gameTypeId` integer and nothing anywhere names 1, 2 and 3. But
+the NHL does publish its phase calendar, at
+`api.nhle.com/stats/rest/en/season?cayenneExp=id=20252026`:
+
+| field | 2025-26 |
+|---|---|
+| `preseasonStartdate` | 2025-09-20 |
+| `startDate` | 2025-10-07 |
+| `regularSeasonEndDate` | 2026-04-17 |
+| `endDate` | 2026-06-15 |
+| `totalRegularSeasonGames` | **1312** |
+| `totalPlayoffGames` | **82** |
+
+Type 2's games run 2025-10-07..2026-04-16, inside the regular-season window; type 3's run
+past `regularSeasonEndDate` toward `endDate`. `verify_nhl_phase()` is that comparison kept
+runnable and printed at the end of every ingest, **not** written down here and trusted — a
+measurement recorded only in a document stops being a measurement the first time the
+publisher changes. That document is also the published answer to "how many regular-season
+games are there", which is otherwise exactly the integer that gets copied back off our own
+ingest and then used to check that same ingest.
+
+**The stamp is read back, never assumed.** `ingest_nhl_logs.py` requests
+`/game-log/{season}/{gameType}` and could have stamped the column from its own path
+segment. That is the ingest describing its *request*, not its data — the same mistake as
+`team_stats_coverage.source` recording the provenance of the verdict instead of the
+provenance of the rows. It reads `gameTypeId` off the envelope, so a publisher that ever
+answers a different phase than the one asked for becomes visible instead of mislabelled.
+
+**Gate: `COV-gametype`**, written red before the code. No league-season judged in
+`team_stats_coverage` may hold a NULL `game_type`, and nhl 2026 must hold 1312 distinct
+`REG` games — the publisher's integer, the same one `COV-nhl` asserts. The 48,017
+player-game rows are deliberately **not** asserted: nobody publishes that figure, so
+copying it in would be the ingest grading its own output. It stays **red on purpose for
+nba 2026** until that ingest stamps the column too. Do not scope it to nhl to make it
+green.
+
+**Still open.** NFL 2024's 5,597 NULL rows are not covered by this gate, because NFL 2024
+has no `team_stats_coverage` row at all — an unjudged season is invisible to a gate that
+iterates judged ones. That is the `unverified` state doing its job, and it is also a
+reminder that this gate's reach is exactly the set of seasons we have bothered to judge.
 
 ---
 
