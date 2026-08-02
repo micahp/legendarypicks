@@ -173,13 +173,23 @@ def player_profile(player_id: int):
                     "PRAGMA table_info(player_game_logs)"
                 ).fetchall()
             }
-            if league == "nfl" and "game_type" in log_columns:
+            # Any league whose rows carry a phase, not just NFL. NHL logs gained one
+            # on 2026-08-02; leaving this NFL-only would render a player who played
+            # 22 playoff games as having played none — absence as a claim about the
+            # player, in a season where we can prove we looked.
+            #
+            # The legacy fallback stays NFL-ONLY and that is load-bearing, not
+            # tidiness: it reads `game_no` as a week number, and NHL's game_no is a
+            # game id ("2025020001"), so `CAST(game_no AS INTEGER) >= 19` is true of
+            # every NHL row ever written. Applied league-wide it would file an entire
+            # unphased league as postseason.
+            if "game_type" in log_columns:
                 legacy_postseason = (
                     """OR (
                          game_type IS NULL
                          AND CAST(game_no AS INTEGER) >= 19
                        )"""
-                    if "game_no" in log_columns
+                    if "game_no" in log_columns and league == "nfl"
                     else ""
                 )
                 post_row = con.execute(
@@ -212,9 +222,15 @@ def player_profile(player_id: int):
                 ).fetchall()
                 preseason_games = len(preseason_logs)
 
-                # NFL game logs currently leave home_away null. Resolve venue
-                # and opponent from the published schedule rather than
-                # guessing from row order or treating every game as away.
+            # NFL game logs currently leave home_away null. Resolve venue
+            # and opponent from the published schedule rather than
+            # guessing from row order or treating every game as away.
+            #
+            # NFL-ONLY, and explicitly so now that the phase block above is not.
+            # `nfl_schedule` is matched on bare team codes, and CHI, DAL, LA and
+            # friends name a team in both leagues — run this for an NHL player and
+            # it silently attaches an NFL schedule to them.
+            if league == "nfl":
                 schedule_columns = {
                     row[1]
                     for row in con.execute(
