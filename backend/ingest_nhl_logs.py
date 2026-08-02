@@ -6,7 +6,7 @@ The season-aggregate ingest (ingest_nhl.py) uses the /landing seasonTotals
 endpoint. This uses /v1/player/{id}/game-log/{season}/{gameType} which returns
 one row per game — goals, assists, points, shots, PP points, TOI, opponent.
 
-Usage: python3 ingest_nhl_logs.py [--season 20252026] [--game-types 2] [--limit N]
+Usage: python3 ingest_nhl_logs.py [--season 20252026] [--game-types 2,3] [--limit N]
 """
 import sys, os, json, sqlite3, time, urllib.request
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -41,7 +41,7 @@ def fetch_game_log(nhl_id: int, season: str, game_type: int):
         return None, []
 
 
-def ingest(season: str = "20252026", limit: int = 0, game_types=(2,)) -> int:
+def ingest(season: str = "20252026", limit: int = 0, game_types=(2, 3)) -> int:
     con = sqlite3.connect(DB); con.row_factory = sqlite3.Row
     ensure_table(con)
 
@@ -113,7 +113,10 @@ if __name__ == "__main__":
     limit = 0
     if "--limit" in sys.argv:
         limit = int(sys.argv[sys.argv.index("--limit") + 1])
-    types = (2,)
+    # Both phases by default. It was 2 alone, hardcoded in the URL, and that is how
+    # a full postseason went missing without a single count looking wrong: the phase
+    # column was uniformly REG, which is indistinguishable from complete.
+    types = (2, 3)
     if "--game-types" in sys.argv:
         types = tuple(int(x) for x in sys.argv[sys.argv.index("--game-types") + 1].split(","))
     ingest(season, limit, types)
