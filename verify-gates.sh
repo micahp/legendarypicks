@@ -455,6 +455,62 @@ if rows and not missing and complete:
 else:
     print('FAIL COV-prod (rows=%d malformed=%d complete=%s)' % (len(rows), len(missing), complete))
 "
+
+  # ── COV-leaders ── every league the registry offers must actually serve stats.
+  #
+  # Added 2026-08-03, when TWO leagues were serving 503 on prod at the same time
+  # while every other gate was green and the leagues page itself looked fine:
+  #   mlb — 71 stale rows stranded under a placeholder name_norm, real duplicates
+  #   nhl — 21 rows the spine had not matched, and ZERO real duplicates; the guard
+  #         was counting NULL player_ids as one co-owning player
+  # Both surfaced as an empty Stats tab, not an error message. The Batting sub-tab
+  # loads first, so a single 503 there rendered zero tables and Pitching was never
+  # reached — which is why "MLB pitching isn't returning" was the report.
+  #
+  # The league list comes from the DEPLOYED registry rather than a literal, so a
+  # league added later cannot quietly escape this gate. Sub-surfaces are listed
+  # per league because a league's second stat type is exactly what the first one
+  # failing hides.
+  $PY - "$P" <<'PY'
+import json, sys, urllib.request
+P = sys.argv[1]
+SUBTYPES = {"mlb": ["batting", "pitching"]}   # extend when a league gains a second type
+
+def get(url):
+    with urllib.request.urlopen(url, timeout=25) as fh:
+        return json.load(fh), fh.status
+
+try:
+    reg, _ = get(P + "/api/coverage")
+except Exception as exc:
+    print("FAIL COV-leaders (prod registry unreachable: %s)" % exc)
+    raise SystemExit
+rows = reg if isinstance(reg, list) else reg.get("coverage", [])
+leagues = sorted({r["league"] for r in rows if r.get("league")})
+if not leagues:
+    print("FAIL COV-leaders (registry named no leagues — nothing was measured)")
+    raise SystemExit
+
+bad, checked = [], 0
+for lg in leagues:
+    for kind in SUBTYPES.get(lg, [None]):
+        url = "%s/api/%s/leaders?limit=5%s" % (P, lg, "&type=" + kind if kind else "")
+        label = lg + ("/" + kind if kind else "")
+        checked += 1
+        try:
+            doc, _ = get(url)
+        except Exception as exc:
+            # An HTTPError carries the detail; a 503 that says WHY is the whole point.
+            detail = getattr(exc, "read", lambda: b"")()[:120].decode("utf-8", "replace")
+            bad.append("%s: %s %s" % (label, exc, detail))
+            continue
+        if not (doc.get("leaders") or []):
+            bad.append("%s: 200 but zero leaders" % label)
+if bad:
+    print("FAIL COV-leaders (%d/%d surfaces broken: %s)" % (len(bad), checked, "; ".join(bad[:4])))
+else:
+    print("PASS COV-leaders (%d surfaces across %s all serve rows)" % (checked, ",".join(leagues)))
+PY
 }
 
 # ── always-on regressions: nothing already working may break ──
@@ -631,7 +687,7 @@ ovlwidth(){
 #      `all` dispatch ran 14 gates and silently skipped REG-render because the
 #      function was written but never added to the case. The count below is what
 #      makes that structurally impossible to repeat, rather than fixed once.
-ALL_IDS="A1 A1b A1c A2 A3 B1 B2 B2b B4 COV-nba COV-nhl COV-honest COV-keys COV-source COV-gametype COV-api COV-prod REG-pool REG-adp-dst REG-dst REG-pytest REG-jest REG-jest-all REG-modules REG-render OVL-width"
+ALL_IDS="A1 A1b A1c A2 A3 B1 B2 B2b B4 COV-nba COV-nhl COV-honest COV-keys COV-source COV-gametype COV-api COV-prod COV-leaders REG-pool REG-adp-dst REG-dst REG-pytest REG-jest REG-jest-all REG-modules REG-render OVL-width"
 
 out=$(mktemp) || exit 2
 trap 'rm -f "$out"' EXIT
@@ -650,7 +706,7 @@ trap 'rm -f "$out"' EXIT
     reg|REG|regressions|REG-pool|REG-adp-dst|REG-dst|REG-pytest|REG-jest|REG-jest-all|REG-modules) reg;;
     render|REG-render|regrender) regrender;;
     OVL-width|ovl|overlay) ovlwidth;;
-    cov|COV|coverage|COV-nba|COV-nhl|COV-honest|COV-keys|COV-source|COV-gametype|COV-api|COV-prod) cov;;
+    cov|COV|coverage|COV-nba|COV-nhl|COV-honest|COV-keys|COV-source|COV-gametype|COV-api|COV-prod|COV-leaders) cov;;
     all) a1; a2; a3; b1; b2; b4; echo "--- coverage ---"; cov; echo "--- regressions ---"; reg; regrender; ovlwidth;;
     *) echo "FAIL runner (unknown gate '$1' — nothing ran)";;
   esac
