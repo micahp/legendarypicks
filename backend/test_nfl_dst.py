@@ -296,6 +296,18 @@ class DstDraftBoardTests(unittest.TestCase):
                   home_team TEXT,
                   away_team TEXT
                 );
+                -- The player-detail payload carries League Rankings, so the
+                -- detail path reads player_stats even for a D/ST that has no
+                -- row in it. Absent table, absent column and empty table are
+                -- three different outcomes; only the third is a fixture saying
+                -- "this player has no ranks", which is what these tests mean.
+                CREATE TABLE player_stats(
+                  player_id INTEGER, league TEXT, stat_type TEXT, season INTEGER,
+                  source TEXT,
+                  pass_yds_g REAL, pass_td INTEGER, interceptions INTEGER, cmp_g REAL,
+                  carries_g REAL, rush_yds_g REAL, rec_yds_g REAL, targets INTEGER,
+                  receptions INTEGER, fantasy_ppr_g REAL
+                );
             """)
             # Two D/ST players
             connection.executemany(
@@ -596,8 +608,15 @@ class DstPoolSelectionTests(unittest.TestCase):
               player_id INTEGER, season INTEGER, week INTEGER, fantasy_pts REAL);
             CREATE TABLE nfl_schedule(
               season INTEGER, week INTEGER, home_team TEXT, away_team TEXT);
+            -- `source` is not decoration: nfl_rankings filters on it, because
+            -- player_stats holds two populations under one league (weekly rows
+            -- from `nflverse`, season rows from `nflverse_regular_season`) and a
+            -- rank computed across both would be nonsense. A fixture without the
+            -- column does not fail a rank assertion — it raises OperationalError
+            -- and takes five unrelated D/ST tests down with it.
             CREATE TABLE player_stats(
               player_id INTEGER, league TEXT, stat_type TEXT, season INTEGER,
+              source TEXT,
               pass_yds_g REAL, pass_td INTEGER, interceptions INTEGER, cmp_g REAL,
               carries_g REAL, rush_yds_g REAL, rec_yds_g REAL, targets INTEGER,
               receptions INTEGER, fantasy_ppr_g REAL);
@@ -723,6 +742,14 @@ class DstB17PlayerDetailTests(unittest.TestCase):
               fantasy_pts REAL);
             CREATE TABLE nfl_schedule(season INTEGER, week INTEGER, home_team TEXT,
               away_team TEXT);
+            -- See the note on the other two fixtures: the detail path reads
+            -- player_stats for League Rankings whatever the position.
+            CREATE TABLE player_stats(
+              player_id INTEGER, league TEXT, stat_type TEXT, season INTEGER,
+              source TEXT,
+              pass_yds_g REAL, pass_td INTEGER, interceptions INTEGER, cmp_g REAL,
+              carries_g REAL, rush_yds_g REAL, rec_yds_g REAL, targets INTEGER,
+              receptions INTEGER, fantasy_ppr_g REAL);
         """)
         self.con.execute("INSERT INTO players VALUES(30116,'SEA D/ST','nfl','SEA','DEF',1)")
         self.con.execute("INSERT INTO nfl_adp VALUES(30116,2026,106.51,98.4)")
