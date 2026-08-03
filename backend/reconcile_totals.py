@@ -68,6 +68,14 @@ _CACHE: Dict[str, dict] = {}
 _MIN_INTERVAL = 0.5
 _last_request = 0.0
 
+# ESPN's core API rejects the bare `python-requests/x.y` User-Agent with a bare 403 —
+# measured 2026-08-03: `requests.get(url)` -> 403 for nba/nhl/mlb while curl and a
+# browser UA return 200 from the same IP. The 403 branch below would then back off
+# six times and report NO-ORACLE, which reads as "publisher unreachable" when the
+# publisher was reachable all along. Same UA as espn_client.py, which has worked
+# against this host for months.
+_HDRS = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/124 Safari/537.36"}
+
 
 def _get_json(url: str, attempts: int = 6) -> dict:
     global _last_request
@@ -80,7 +88,7 @@ def _get_json(url: str, attempts: int = 6) -> dict:
             time.sleep(gap)
         try:
             _last_request = time.monotonic()
-            r = requests.get(url, timeout=TIMEOUT)
+            r = requests.get(url, timeout=TIMEOUT, headers=_HDRS)
             if r.status_code in (403, 429, 500, 502, 503):
                 last = f"HTTP {r.status_code}"
                 time.sleep(min(60, 3 * 2 ** i))
