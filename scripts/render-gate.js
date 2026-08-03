@@ -59,10 +59,12 @@ async function measurePoolLayout(page, tableSel) {
       ? Array.from(table.querySelectorAll('thead th')).map(h => h.innerText.trim())
       : []
     const idxOf = pred => headers.findIndex(pred)
-    const proj = idxOf(h => /^Proj\b/.test(h))
+    // Headers render `uppercase`, so innerText arrives as "PROJ", "BYE" —
+    // match case-insensitively, exactly like the Exp PPR/G check below it.
+    const proj = idxOf(h => /^Proj\b/i.test(h))
     const xfp = idxOf(h => /Exp PPR\/G/i.test(h))
-    const bye = idxOf(h => h === 'Bye')
-    const adp = idxOf(h => h === 'ADP')
+    const bye = idxOf(h => h.toUpperCase() === 'BYE')
+    const adp = idxOf(h => h.toUpperCase() === 'ADP')
     const rows = table
       ? Array.from(table.querySelectorAll('tbody tr')).filter(
           r => r.querySelector('[data-testid="pool-player-name"]'),
