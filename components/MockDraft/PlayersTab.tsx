@@ -1,15 +1,15 @@
 import type { PoolPlayer } from '../Leagues/types'
 import type { DraftPlayer } from '../../lib/mockDraft/engine'
-import { positionLabel, positionRankLabel, showsPositionalRank } from '../../lib/nfl/positionLabel'
+import { positionLabel } from '../../lib/nfl/positionLabel'
 import {
   ExpectedPts,
   EXPECTED_PTS_HEADER,
   expectedPtsTitle,
+  PlayerNameCell,
   PoolAvailability,
   ProjectedPoints,
 } from './columns'
 import PlayerActionButton from './PlayerActionButton'
-import InjuryTag from '../Leagues/InjuryTag'
 import type { SortOption } from './sort'
 
 /** A rendered list is players plus the rules drawn between them. */
@@ -241,21 +241,13 @@ function PoolRowView({
         {rank}
       </td>
       <td data-col="player" className="py-2 px-2">
-        <div className="flex items-center gap-1.5">
-          <span className="font-medium text-zinc-200">{dp.name}</span>
-          <InjuryTag status={poolPlayer.injury_status} compact />
-        </div>
-        <div className="text-[10px] text-zinc-600">
-          {dp.team}
-          {' · '}
-          <span className="font-semibold text-zinc-500">{positionLabel(dp.position)}</span>
-          {posRank != null && showsPositionalRank(dp.position) && (
-            <>
-              {' · '}
-              <span className="tabular-nums">{positionRankLabel(dp.position, posRank)}</span>
-            </>
-          )}
-        </div>
+        <PlayerNameCell
+          name={dp.name}
+          team={dp.team}
+          position={dp.position}
+          posRank={posRank}
+          injuryStatus={poolPlayer.injury_status}
+        />
       </td>
       <td data-col="proj" className="py-2 px-2 text-right font-mono tabular-nums text-xs">
         <ProjectedPoints player={poolPlayer} />

@@ -2,13 +2,7 @@ import { useEffect, useMemo, useState, useRef, useCallback } from 'react'
 import type { PoolPlayer } from '../Leagues/types'
 import { AvailabilityStrip } from '../Leagues/NflDraftRoom'
 import PlayerDetailOverlay from '../Leagues/PlayerDetailOverlay'
-import InjuryTag from '../Leagues/InjuryTag'
 import { poolToDraftRow } from '../../lib/mockDraft/api'
-import {
-  positionLabel,
-  positionRankLabel,
-  showsPositionalRank,
-} from '../../lib/nfl/positionLabel'
 import { LEAGUE_SIZES, ROUNDS, nextTeam } from '../../lib/mockDraft/engine'
 import type { LeagueSize } from '../../lib/mockDraft/engine'
 import {
@@ -16,6 +10,7 @@ import {
   EXPECTED_PTS_HEADER,
   expectedPtsTitle,
   noSampleLabel,
+  PlayerNameCell,
   ProjectedPoints,
 } from './columns'
 
@@ -278,23 +273,13 @@ function PoolRow({
         {row.rank}
       </td>
       <td className="py-2.5 px-2">
-        <div className="flex items-center gap-1.5">
-          <span className="font-medium text-zinc-200">
-            {row.name}
-          </span>
-          <InjuryTag status={player?.injury_status} compact />
-        </div>
-        <div className="text-[10px] text-zinc-600">
-          {row.current_team}
-          {' · '}
-          <span className="font-semibold text-zinc-500">{positionLabel(row.position)}</span>
-          {posRank != null && showsPositionalRank(row.position) && (
-            <>
-              {' · '}
-              <span className="tabular-nums">{positionRankLabel(row.position, posRank)}</span>
-            </>
-          )}
-        </div>
+        <PlayerNameCell
+          name={row.name}
+          team={row.current_team}
+          position={row.position}
+          posRank={posRank}
+          injuryStatus={player?.injury_status}
+        />
       </td>
       <td className="py-2.5 px-2 text-right font-mono tabular-nums text-xs" title={`${draftSeason} projected PPR points`}>
         {player ? <ProjectedPoints player={player} /> : <span className="text-zinc-700">—</span>}

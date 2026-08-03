@@ -9,6 +9,8 @@
 import type { PoolPlayer } from '../Leagues/types'
 import { AvailabilityStrip } from '../Leagues/NflDraftRoom'
 import { poolTeamGames } from '../../lib/mockDraft/availability'
+import { positionLabel, positionRankLabel, showsPositionalRank } from '../../lib/nfl/positionLabel'
+import InjuryTag from '../Leagues/InjuryTag'
 
 /* ── The headline stat ──────────────────────────────────────────────────────
    The research board (camp tab) renders five position-aware stat columns, which
@@ -103,6 +105,50 @@ export function HeadlineStat({ player }: { player: PoolPlayer }) {
     <span className={player.sample === 'thin' ? 'text-zinc-500' : 'text-zinc-300'}>
       {value.toFixed(1)}
     </span>
+  )
+}
+
+/* ── The Player cell, shared by the pre-draft pool and the draft room ────────
+   Two private copies of this cell are exactly how the roster builder ended up
+   existing twice — the moment two surfaces own the same cell they start
+   disagreeing about a player. The subtitle adopts the overlay's rule verbatim
+   (PlayerDetailOverlay.tsx, live for weeks): the rank label already carries
+   the position, so when a rank exists you print `RB1` and nothing else; when
+   it does not (K and D/ST, which have no meaningful positional rank) you print
+   `K` or `D/ST`. Never "RB · RB1" — the same fact twice.
+   Names and subtitles never wrap: a wrapped name is a table that has given up
+   on fitting. The width comes from the Bye/ADP number columns, never from
+   here. */
+export function PlayerNameCell({
+  name,
+  team,
+  position,
+  posRank,
+  injuryStatus,
+}: {
+  name: string
+  team: string
+  position: string
+  posRank?: number
+  injuryStatus?: string | null
+}) {
+  const rankLabel = showsPositionalRank(position)
+    ? positionRankLabel(position, posRank)
+    : positionLabel(position)
+  return (
+    <div>
+      <div className="flex items-center gap-1.5">
+        <span data-testid="pool-player-name" className="whitespace-nowrap font-medium text-zinc-200">
+          {name}
+        </span>
+        <InjuryTag status={injuryStatus} compact />
+      </div>
+      <div data-testid="pool-player-subtitle" className="whitespace-nowrap text-[10px] text-zinc-600">
+        {team}
+        {' · '}
+        <span className="font-semibold text-zinc-500">{rankLabel}</span>
+      </div>
+    </div>
   )
 }
 
