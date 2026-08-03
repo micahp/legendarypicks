@@ -1154,10 +1154,16 @@ def league_leaders(league: str,
         population_params = [lg, season]
         population_params.extend(ownership_params)
 
+        # `player_id IS NOT NULL` is load-bearing. This asks whether one PLAYER owns
+        # two canonical rows; SQL's GROUP BY puts every NULL in one group, so without
+        # it the question silently becomes "are there two rows the spine has not
+        # matched yet", which is a different thing and not an emergency. It fired on
+        # prod 2026-08-03: NHL had 21 unmatched fringe skaters (CJ Suess, 2 games) and
+        # ZERO real duplicates, and the whole league's leaders went 503.
         duplicate = con.execute(
             f"""SELECT ps.player_id
                 FROM player_stats ps
-                WHERE {population_where}
+                WHERE {population_where} AND ps.player_id IS NOT NULL
                 GROUP BY ps.player_id
                 HAVING COUNT(*)>1
                 LIMIT 1""",

@@ -385,6 +385,32 @@ class LeagueStatsContractTests(unittest.TestCase):
         self.assertEqual(raised.exception.status_code, 503)
         self.assertIn("duplicate ownership", raised.exception.detail)
 
+    def test_unmatched_rows_are_not_duplicate_ownership(self):
+        """Two rows the spine has not matched are not one player owning two rows.
+
+        SQL groups every NULL together, so a `GROUP BY player_id HAVING COUNT(*)>1`
+        that does not exclude them answers a different question than the one the
+        guard is asking. On prod 2026-08-03 that turned 21 unmatched NHL fringe
+        skaters into "duplicate ownership" and 503'd an entire league's leaders,
+        with zero actual duplicates in the table.
+        """
+        insert_row(
+            self.db_path, 1, "Canonical Name", "nba", 2026, 20,
+            values=metric_values("nba"),
+        )
+        with sqlite3.connect(self.db_path) as con:
+            for name in ("Unmatched One", "Unmatched Two"):
+                con.execute(
+                    """INSERT INTO player_stats(
+                         player_id,player_name,league,team,season,games,
+                         stat_type,source,pts
+                       ) VALUES(NULL,?,'nba','TST',2026,20,'season','espn_core',12)""",
+                    (name,),
+                )
+
+        payload = call("nba")  # must not raise
+        self.assertTrue(payload["leaders"], "the matched player is still served")
+
     def test_nba_last_five_math_max_three_and_deterministic_order(self):
         fixtures = [
             (1, "Alpha", 10, 20),
