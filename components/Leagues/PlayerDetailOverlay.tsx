@@ -104,8 +104,14 @@ export default function PlayerDetailOverlay({
         aria-hidden="true"
       />
 
-      {/* Card */}
-      <div className="relative z-10 w-full max-w-[520px] max-h-[90vh] overflow-y-auto rounded-xl border border-zinc-800 bg-zinc-900 shadow-2xl">
+      {/* Card.
+
+          520px was the real reason the game log scrolled sideways: after Wk and
+          Opp it leaves room for roughly eight numeric columns, and a WR's log
+          ships ten. Trimming columns to fit a box is the wrong direction when
+          the columns are the point, so the box gets wider where there is room
+          for it. Stays 520 on phones, where nothing wider would fit anyway. */}
+      <div className="relative z-10 w-full max-w-[520px] sm:max-w-3xl max-h-[90vh] overflow-y-auto rounded-xl border border-zinc-800 bg-zinc-900 shadow-2xl">
         {/* Close button */}
         <button
           type="button"

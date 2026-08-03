@@ -1313,13 +1313,26 @@ def player_detail(player_id: int):
 
 # Which per-game fields matter, by position. Deliberately narrow: the log rows
 # carry ~52 keys and a research table that shows all of them shows none of them.
+#
+# Reshaped 2026-08-02 toward ESPN's fantasy log. The brief was "I shouldn't have
+# to scroll to see all the stats", and the binding constraint turned out not to
+# be the column list at all -- it was PlayerDetailOverlay's max-w-[520px], which
+# leaves room for about eight numeric columns after Wk and Opp. The box is now
+# wider on desktop; these lists are still kept tight, because a research table
+# that shows everything shows nothing.
+#
+# aDOT and Separation moved OUT to the player detail's advanced block. They are
+# Next Gen scouting inputs, not box-score facts, and they were costing two of the
+# eight columns on the surface where a fantasy manager is asking "what did he do".
+# Snap %, target share and expected points stay: those are the three that answer
+# a question the raw box score cannot.
 _LOG_FIELDS = {
-    "QB": ["off_pct", "cmp", "att", "pass_yds", "pass_td", "intc", "carries",
-           "rush_yds", "rush_td", "fpts_ppr", "xfpts_ppr"],
+    "QB": ["off_pct", "cmp", "att", "pass_yds", "pass_td", "intc", "sacks_taken",
+           "carries", "rush_yds", "rush_td", "fum_lost", "fpts_ppr", "xfpts_ppr"],
     "RB": ["off_pct", "carries", "rush_yds", "rush_td", "targets", "rec",
-           "rec_yds", "rec_td", "fpts_ppr", "xfpts_ppr"],
+           "rec_yds", "rec_td", "fum_lost", "misc_td", "fpts_ppr", "xfpts_ppr"],
     "WR": ["off_pct", "targets", "target_share", "rec", "rec_yds", "rec_td",
-           "adot", "separation", "fpts_ppr", "xfpts_ppr"],
+           "fum_lost", "misc_td", "fpts_ppr", "xfpts_ppr"],
     # Raw counts only. Kicker fantasy points are computed from distance buckets
     # in _pk_aggregates; recomputing them here would be a second implementation
     # of the same number, which is how the board and the pool ended up printing
@@ -1334,6 +1347,11 @@ _DST_LOG_FIELDS = ["sacks", "interceptions", "tds", "safeties", "fumble_rec",
                    "points_allowed", "fantasy_pts"]
 _LOG_FIELDS["TE"] = _LOG_FIELDS["WR"]
 _LOG_FIELDS["FB"] = _LOG_FIELDS["RB"]
+
+
+# Misc TD is computed, so it is defined once in nfl_stat_derivations and imported
+# by every surface that renders it -- the player page shows the same column.
+from nfl_stat_derivations import DERIVED as _DERIVED  # noqa: E402
 
 
 @router.get("/api/nfl/draft/player/{player_id}/game-log")
@@ -1405,7 +1423,10 @@ def player_game_log(player_id: int):
             by_week[week] = {
                 "opponent": log["opponent"],
                 "team": log["team"],
-                "stats": {f: stats.get(f) for f in fields},
+                "stats": {
+                    f: (_DERIVED[f](stats) if f in _DERIVED else stats.get(f))
+                    for f in fields
+                },
             }
 
         games = []

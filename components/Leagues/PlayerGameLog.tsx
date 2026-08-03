@@ -44,6 +44,10 @@ const HEAD: Record<string, string> = {
   fg_long: 'Long', pat_made: 'XPM', pat_att: 'XPA', sacks: 'Sk',
   interceptions: 'INT', tds: 'TD', safeties: 'Sfty', fumble_rec: 'FR',
   points_allowed: 'PA', fantasy_pts: 'Pts',
+  /* `sacks` above is the D/ST column and means sacks recorded. This one is a
+     quarterback's sacks taken — opposite sign, same word, so it gets its own
+     field name and shares only the abbreviation ESPN uses. */
+  sacks_taken: 'Sk', fum_lost: 'FL', misc_td: 'mTD',
 }
 
 /* Fields that arrive as a 0–1 ratio and must be rendered as a percentage.
@@ -54,7 +58,7 @@ const INTEGER = new Set([
   'targets', 'rec', 'rec_yds', 'rec_td', 'carries', 'rush_yds', 'rush_td',
   'cmp', 'att', 'pass_yds', 'pass_td', 'intc', 'fg_made', 'fg_att', 'fg_long',
   'pat_made', 'pat_att', 'tds', 'safeties', 'fumble_rec', 'points_allowed',
-  'interceptions',
+  'interceptions', 'sacks_taken', 'fum_lost', 'misc_td',
 ])
 
 function cell(field: string, value: number | null) {

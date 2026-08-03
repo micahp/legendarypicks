@@ -173,13 +173,26 @@ const NFL_GAMELOG_BANDS: { label: string; cols: { key: string; label: string }[]
   { label: 'Passing', cols: [
     { key: 'cmp', label: 'Comp' }, { key: 'att', label: 'Att' },
     { key: 'pass_yds', label: 'Yds' }, { key: 'pass_td', label: 'TD' },
-    { key: 'intc', label: 'Int' }] },
+    { key: 'intc', label: 'Int' }, { key: 'sacks_taken', label: 'Sk' }] },
   { label: 'Rushing', cols: [
     { key: 'carries', label: 'Car' }, { key: 'rush_yds', label: 'Yds' },
     { key: 'rush_td', label: 'TD' }] },
   { label: 'Receiving', cols: [
     { key: 'targets', label: 'Tgt' }, { key: 'rec', label: 'Rec' },
     { key: 'rec_yds', label: 'Yds' }, { key: 'rec_td', label: 'TD' }] },
+  // Misc sits before Fantasy because it explains it: a lost fumble is -2 and a
+  // return touchdown +6, and those are the two reasons a PPR number does not
+  // follow from the yardage next to it. The drop-if-all-zero rule above is what
+  // makes the band affordable — 1.3% of player-weeks carry a lost fumble and
+  // 0.14% a misc TD, so for almost every player this band is simply not there.
+  //
+  // st_td and fum_rec_td are stored separately by the ingest and summed by the
+  // API into misc_td; nflverse's pt_return_tds is excluded, being punt-return
+  // TDs *allowed*.
+  { label: 'Misc', cols: [
+    { key: 'fum_lost', label: 'FL' }, { key: 'misc_td', label: 'TD' },
+    { key: 'pass_2pt', label: '2PP' }, { key: 'rush_2pt', label: '2PR' },
+    { key: 'rec_2pt', label: '2PC' }] },
   { label: 'Fantasy', cols: [
     { key: 'fpts', label: 'Fpts' }, { key: 'fpts_ppr', label: 'PPR' }] },
 ]
