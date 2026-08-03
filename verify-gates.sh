@@ -373,8 +373,25 @@ post_games = q("SELECT COUNT(DISTINCT game_id) FROM player_game_logs"
                " WHERE league='nhl' AND season=2026 AND game_type='POST'")[0][0]
 if post_games != 82:
     gt_bad.append('nhl 2026 POST games=%d, published 82' % post_games)
+# NBA, added 2026-08-02. Until now this gate's only claim about nba was 'no NULLs',
+# which a single uniformly-REG column satisfies just as well as a correct one — the
+# exact way NHL held zero postseason games while looking complete. These are counted
+# off ESPN's published season types, not off our rows:
+#   sports.core.api.espn.com/v2/sports/basketball/leagues/nba/seasons/2026/types/N/events?limit=1
+#     type 3 post   -> 85     type 5 playin -> 6
+# REG is 1231 rather than type 2's 1239 because ESPN files All-Star weekend inside
+# type 2; reconcile_totals derives that subtraction from the publisher, and COV-nba
+# asserts the same 1231 against team_game_results.
+for phase, expected, note in (('REG', 1231, 'published 1239 type-2 less exhibition and not-played'),
+                              ('POST', 85, 'published type-3 events'),
+                              ('PLAYIN', 6, 'published type-5 events')):
+    got = q("SELECT COUNT(DISTINCT game_id) FROM player_game_logs"
+            " WHERE league='nba' AND season=2026 AND game_type=?", (phase,))[0][0]
+    if got != expected:
+        gt_bad.append('nba 2026 %s games=%d, %s %d' % (phase, got, note, expected))
 if not gt_bad:
-    print('PASS COV-gametype (every judged season has game_type on every row; nhl 2026 = 1312 REG)')
+    print('PASS COV-gametype (every judged season has game_type on every row;'
+          ' nhl 2026 = 1312 REG / 82 POST; nba 2026 = 1231 REG / 85 POST / 6 PLAYIN)')
 else:
     print('FAIL COV-gametype (%s)' % '; '.join(gt_bad))
 PY
