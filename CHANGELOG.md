@@ -1,5 +1,80 @@
 # Changelog
 
+## v0.7.0 — 2026-08-03
+
+### The mock-draft pool leads with the two numbers a drafter acts on
+
+- **`Exp PPR/G` is back, immediately right of `Proj`.** `6ee27fc` replaced
+  opportunity with outcome; the pool now ships both — `# · PLAYER · PROJ ·
+  EXP PPR/G · BYE · ADP · AVAILABLE` — because a back who scored 21.8 on 19.3
+  of opportunity beat his usage, and one column alone cannot tell you that.
+- **Player names and subtitles never wrap**, and the subtitle stops repeating
+  itself: `BUF · RB · RB1` is now `BUF · RB1`, matching the overlay's
+  long-standing rule. The shared cell was lifted into `columns.tsx` so two
+  private copies cannot disagree again.
+- **REG-render is green for the first time since `6ee27fc`.** Three separate
+  defects, all fixed: the missing column (above), `StatRankCard` claiming a
+  heading level (`h2`) it does not own inside the overlay, and an xFP
+  threshold (`>= 150`) that a virtualized pool table could never meet — now
+  `rows >= 20` with a `populated/rows >= 0.6` ratio that catches the real
+  regression (the boundary nulling the column) at any window size.
+
+### The NFL data spine is complete and provenance is recorded
+
+- **NFL 2025 is a full 285 games** — the postseason (13 games) was never
+  ingested, and ESPN files the Pro Bowl inside postseason type 3 with no
+  competition marker; its only tell is AFC/NFC competitors not in the 32-team
+  list. New `backend/backfill_nfl_postseason.py` writes any past phase and
+  refuses to duplicate a season.
+- **Every row now says which publisher wrote it.** `team_game_results` gained
+  `source` + `run_id`; `stamp_team_result_source.py` attributed 5,630
+  historical rows from recorded evidence only, and the rows with no evidence
+  (MLB 16, NFL 2024 + 2026) stay NULL on purpose — `COV-source` is red
+  honestly until those are re-ingested under a recorded run.
+- **NBA 2026 and NHL 2026 are `complete`.** Both backfills closed their gaps
+  (NBA's was 216 games, not 121, plus a postponed game written as played);
+  `game_type` is stamped at the boundary from the publisher's own phase
+  fields, and `COV-gametype` gates it. A postponed game is no longer a
+  played game in any league.
+- **MLB `team_game_results.season` is populated** — the season was never
+  missing from the source; ESPN publishes it on every event and the ingest
+  was dropping it. 3,364 rows / 1,682 games / 0 one-sided / 0 missing.
+
+### The gates measure the real surface
+
+- `verify-gates.sh` runs end to end again (24 verdicts, 17 pass / 7 fail,
+  all accounted for): the defaults pointed at a deleted worktree and a named
+  gate that emitted no verdict exited 0 — a dead backend could ship. Both
+  fixed.
+- `REG-pool`'s 4,507 check was unsatisfiable, not red (11,515 total vs six
+  counts summing to 4,506); it now asserts `len == sum(counts)`.
+- `B4` asked the right question of a file that stopped answering it; it now
+  names all four surfaces that render a fraction.
+- `OVL-width` is new: the player overlay is measured at the width a phone
+  gives it. The game log fits exactly at both widths; the Overview SEASON
+  STATS table (10 columns / 560px) is still red pending a product decision.
+
+### Player surfaces
+
+- **The NFL game log renders one narrow table per tab** (Wk|Opp|PPR anchor,
+  ≤5 stat fields), and `max-w-[520px]` is restored — the sideways scroll was
+  the width, not the column list. Rushing columns read YDS and TD like the
+  receiving tab.
+- **The rankings card says the season once, in title case** — `2025 Regular
+  Season` — with the sample size (`n=16 games`) on the hover instead of
+  shouting beside the ranks.
+- **The research board stops printing the position twice** and names/subtitles
+  never wrap, measured on the live board at 390px and 1280px.
+
+### Data notes for the prod promotion
+
+- The projection snapshot is per database: publish the pinned
+  `espn_2026_snapshot_page1.json` into the target DB before calling the 2026
+  projections live.
+- NFL 2024's `team_game_results` rows carry no `run_id` to attribute them
+  from; they need a re-ingest under a recorded run (or a vocabulary
+  migration), deferred past this release. `COV-source` stays red honestly.
+
 ## v0.6.14 — 2026-08-01
 
 ### Draft boards show the 2026 decisions
