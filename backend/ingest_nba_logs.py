@@ -12,6 +12,7 @@ Usage: python3 ingest_nba_logs.py --start 2026-04-01 --end 2026-04-12
 import sys, os, json, sqlite3, time, datetime as dt
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import espn_client as espn
+from game_types import espn_event_phase
 from ingest_nfl_logs import ensure_table
 from league_stats import (
     load_unique_source_id_map,
@@ -60,11 +61,19 @@ def ingest(start: str, end: str, season: int = 2026) -> int:
     while day <= d1:
         ds = day.strftime("%Y-%m-%d")
         try:
-            games = [g for g in espn.games("nba", ds) if g.get("state") == "post"]
+            # `completed`, not `state == "post"`. A POSTPONED game is also
+            # state="post" — with a score of 0, not null — so the old filter wrote
+            # it as a played 0-0 result, crediting two teams a game they never
+            # played, while the makeup landed under a different event id. See
+            # docs/DATA-COVERAGE-CONTRACT.md; NHL lost four games this way.
+            games = [g for g in espn.games("nba", ds) if g.get("completed")]
         except Exception:
             games = []
         for g in games:
             gid = g["game_id"]
+            # The phase, read back off the publisher's envelope rather than
+            # assumed from the date range this run was invoked with.
+            phase = espn_event_phase("nba", g)
             home_abbrev = (g.get("home") or {}).get("abbrev", "")
             away_abbrev = (g.get("away") or {}).get("abbrev", "")
             try:
@@ -120,10 +129,10 @@ def ingest(start: str, end: str, season: int = 2026) -> int:
                         con.execute(
                             """INSERT OR REPLACE INTO player_game_logs
                                (player_id, league, season, game_no, game_id, game_date, team,
-                                opponent, home_away, stats, source, source_player_key)
-                               VALUES (?,?,?,?,?,?,?,?,?,?,?,?)""",
+                                opponent, home_away, stats, source, source_player_key, game_type)
+                               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)""",
                             (pid, "nba", season, ds, str(gid), ds, team, opponent, home_away,
-                             json.dumps(stats), "espn", eid))
+                             json.dumps(stats), "espn", eid, phase))
                         ingested += 1
             time.sleep(0.05)
         con.commit()
