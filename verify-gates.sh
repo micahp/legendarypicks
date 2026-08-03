@@ -21,7 +21,12 @@
 W="${LP_GATE_W:-/root/legendarypicks}"
 B="${LP_GATE_B:-http://127.0.0.1:8096}"
 F="${LP_GATE_F:-http://127.0.0.1:3096}"
-echo "── gates against W=$W B=$B F=$F ──"
+# The PROD backend. COV-prod grades the deployed registry, not the dev one —
+# 2026-08-03 proved a dev-green registry can ship prod a leagues page that says
+# "isn't available yet" for every league. A gate that only reads $B certifies the
+# dev tree, and the deploy was exactly the gap between the two.
+P="${LP_GATE_P:-http://127.0.0.1:8100}"
+echo "── gates against W=$W B=$B F=$F P=$P ──"
 
 # ── the preflight, which is the same rule as the gates ─────────────────────────
 # `grep -c pattern /nonexistent` prints 0 and B4 asks three of its six questions as
@@ -422,6 +427,26 @@ if rows and not missing and complete:
 else:
     print('FAIL COV-api (rows=%d malformed=%d complete=%s)' % (len(rows), len(missing), complete))
 "
+
+  # ── COV-prod ── the DEPLOYED registry, not the dev one. Added 2026-08-03 after
+  # v0.7.0 shipped a prod whose /api/coverage returned [] (the team_stats_coverage
+  # tables were never migrated) — the leagues page rendered "isn't available yet"
+  # for every league while every dev gate was green. The fix that closed it was
+  # migrate_team_stats_from_dev.py against a verified clone, then the swap. This
+  # gate exists so the next promotion proves the prod surface, not the dev one.
+  curl -s --max-time 20 "$P/api/coverage" | $PY -c "
+import sys, json
+try: d = json.load(sys.stdin)
+except Exception as e: print('FAIL COV-prod (no JSON from prod /api/coverage: %s)' % e); raise SystemExit
+rows = d if isinstance(d, list) else d.get('coverage', [])
+need = {'league','season','status'}
+missing = [r for r in rows if not need <= set(r)]
+complete = sorted({r['league'] for r in rows if r.get('status') == 'complete'})
+if rows and not missing and complete:
+    print('PASS COV-prod (%d rows, complete=%s)' % (len(rows), complete))
+else:
+    print('FAIL COV-prod (rows=%d malformed=%d complete=%s)' % (len(rows), len(missing), complete))
+"
 }
 
 # ── always-on regressions: nothing already working may break ──
@@ -598,7 +623,7 @@ ovlwidth(){
 #      `all` dispatch ran 14 gates and silently skipped REG-render because the
 #      function was written but never added to the case. The count below is what
 #      makes that structurally impossible to repeat, rather than fixed once.
-ALL_IDS="A1 A1b A1c A2 A3 B1 B2 B2b B4 COV-nba COV-nhl COV-honest COV-keys COV-source COV-gametype COV-api REG-pool REG-adp-dst REG-dst REG-pytest REG-jest REG-jest-all REG-modules REG-render OVL-width"
+ALL_IDS="A1 A1b A1c A2 A3 B1 B2 B2b B4 COV-nba COV-nhl COV-honest COV-keys COV-source COV-gametype COV-api COV-prod REG-pool REG-adp-dst REG-dst REG-pytest REG-jest REG-jest-all REG-modules REG-render OVL-width"
 
 out=$(mktemp) || exit 2
 trap 'rm -f "$out"' EXIT
@@ -617,7 +642,7 @@ trap 'rm -f "$out"' EXIT
     reg|REG|regressions|REG-pool|REG-adp-dst|REG-dst|REG-pytest|REG-jest|REG-jest-all|REG-modules) reg;;
     render|REG-render|regrender) regrender;;
     OVL-width|ovl|overlay) ovlwidth;;
-    cov|COV|coverage|COV-nba|COV-nhl|COV-honest|COV-keys|COV-source|COV-gametype|COV-api) cov;;
+    cov|COV|coverage|COV-nba|COV-nhl|COV-honest|COV-keys|COV-source|COV-gametype|COV-api|COV-prod) cov;;
     all) a1; a2; a3; b1; b2; b4; echo "--- coverage ---"; cov; echo "--- regressions ---"; reg; regrender; ovlwidth;;
     *) echo "FAIL runner (unknown gate '$1' — nothing ran)";;
   esac
