@@ -10,6 +10,7 @@ from typing import Optional
 from _core import *
 from league_stats import canonical_population_sql
 from nfl_rankings import nfl_player_rank_context
+from nfl_stat_derivations import with_derived as _with_derived
 from nfl_news import (
     ROTOWIRE_LABEL,
     load_news_feed,
@@ -315,6 +316,8 @@ def player_profile(player_id: int):
             stats = _json.loads(row["stats"])
             if league == "nfl":
                 stats = {_NFL_KEY_NORMALIZE.get(k, k): v for k, v in stats.items()}
+                # Misc TD, from the same definition the draft overlay renders.
+                stats = _with_derived(stats)
             serialized.append({
                 "date": row["game_date"],
                 "opponent": row["opponent"],
