@@ -46,6 +46,80 @@ function check(cond, id, detail) {
   return cond
 }
 
+// ── The pool layout measurements the column work is held to ─────────────────
+// Column order is asserted on HEADER TEXT — REG-render has been broken twice by
+// ordinal drift (nth(3) etc.) and no longer counts positions. The wrap and
+// scroll checks are the numbers, not an opinion: a name that wraps or is
+// ellipsised, or a table that pushes its container sideways, is a failed
+// layout, and the fix is the layout, never the threshold.
+async function measurePoolLayout(page, tableSel) {
+  return page.evaluate(sel => {
+    const table = document.querySelector(sel)
+    const headers = table
+      ? Array.from(table.querySelectorAll('thead th')).map(h => h.innerText.trim())
+      : []
+    const idxOf = pred => headers.findIndex(pred)
+    const proj = idxOf(h => /^Proj\b/.test(h))
+    const xfp = idxOf(h => /Exp PPR\/G/i.test(h))
+    const bye = idxOf(h => h === 'Bye')
+    const adp = idxOf(h => h === 'ADP')
+    const rows = table
+      ? Array.from(table.querySelectorAll('tbody tr')).filter(
+          r => r.querySelector('[data-testid="pool-player-name"]'),
+        )
+      : []
+    const wrapped = []
+    for (const r of rows) {
+      for (const hook of ['pool-player-name', 'pool-player-subtitle']) {
+        const el = r.querySelector('[data-testid="' + hook + '"]')
+        if (!el) continue
+        const lh = parseFloat(getComputedStyle(el).lineHeight) || 16
+        if (
+          el.getBoundingClientRect().height > 1.4 * lh ||
+          el.scrollWidth > el.clientWidth + 1
+        ) {
+          wrapped.push(hook + ' "' + (el.innerText || '').trim().slice(0, 40) + '"')
+        }
+      }
+    }
+    const scroller = table ? table.parentElement : null
+    const scroll = scroller ? { sw: scroller.scrollWidth, cw: scroller.clientWidth } : null
+    // Never "RB · RB1" — the rank label already carries the position.
+    const repeated = rows
+      .map(r => r.querySelector('[data-testid="pool-player-subtitle"]'))
+      .filter(Boolean)
+      .map(s => s.innerText.trim())
+      .filter(s => /\b(QB|RB|WR|TE|FB)\b.*\b\1\d/.test(s))
+    return { headers, proj, xfp, bye, adp, wrapped, scroll, repeated }
+  }, tableSel)
+}
+
+function assertPoolLayout(layout, surface) {
+  check(
+    layout.proj >= 0 && layout.xfp >= 0 && layout.xfp === layout.proj + 1 &&
+      layout.bye > layout.xfp && layout.adp > layout.xfp,
+    'mock-draft',
+    surface + ' column order is ' + JSON.stringify(layout.headers) +
+      ' — expected Proj immediately before Exp PPR/G, both ahead of Bye and ADP'
+  )
+  check(
+    layout.wrapped.length === 0,
+    'mock-draft',
+    surface + ' wraps or ellipsises: ' + layout.wrapped.join(' | ')
+  )
+  check(
+    layout.scroll != null && layout.scroll.sw <= layout.scroll.cw + 1,
+    'mock-draft',
+    surface + ' scrolls sideways: scrollWidth=' + (layout.scroll && layout.scroll.sw) +
+      ' clientWidth=' + (layout.scroll && layout.scroll.cw)
+  )
+  check(
+    layout.repeated.length === 0,
+    'mock-draft',
+    surface + ' repeats the position in the subtitle: ' + layout.repeated.join(' | ')
+  )
+}
+
 ;(async () => {
   let browser
   try {
@@ -135,6 +209,11 @@ function check(cond, id, detail) {
       'expected fantasy points populated on only ' + xfpPool.populated +
         ' of ' + xfpPool.rows + ' pool rows — the boundary is nulling it again'
     )
+
+    // The five layout measurements: column order, one-line names and subtitles,
+    // no sideways scroll, and no "RB · RB1" repetition.
+    const poolLayout = await measurePoolLayout(page, '[data-testid="pool-table"]')
+    assertPoolLayout(poolLayout, 'pre-draft pool')
 
     // ── The setup controls have to reach the server ──
     // 14 teams and slot 3: neither is the default, so a hardcoded 12 or a
@@ -260,6 +339,10 @@ function check(cond, id, detail) {
       return heads.some(h => /Exp PPR\/G/i.test(h.innerText))
     })
     check(xfpRoom, 'mock-draft', 'no "Exp PPR/G" column in the draft room pool')
+
+    // The same five layout measurements, on the in-draft pool.
+    const roomLayout = await measurePoolLayout(page, '[data-testid="pool-table"]')
+    assertPoolLayout(roomLayout, 'draft room pool')
 
     notes.push(
       'mock-draft ' + poolRows + ' rows, overlay=' + JSON.stringify(rowName) +
