@@ -552,6 +552,33 @@ regrender(){
   else no REG-render "exit=$rc  ${line:-<no verdict line — the gate itself died>}"; fi
 }
 
+# ── OVL-width · the player overlay measured at the width a phone gives it ──
+#
+# "It was nice not to have to scroll to see all the stats" has now been declared
+# fixed twice — once by trimming a column list, once by widening the card — and
+# neither attempt was ever measured against the thing asked about. Nothing in the
+# suite rendered the overlay at all: REG-render drives the mock-draft page and the
+# camp tab, and stops at the row.
+#
+# This opens the real overlay in a real browser at 390px and 1280px, walks every
+# game-log tab, and compares scrollWidth to clientWidth on the actual scroll
+# container. A number, not an opinion, about the only surface the brief names.
+#
+# Currently 28 pass on the game log and 2 fail on Overview's SEASON STATS, which
+# is ten columns / 560px and RED ON PURPOSE — see the note in the script.
+ovlwidth(){
+  need_w OVL-width || return
+  have_files OVL-width "$W/scripts/overlay-width-gate.js" || return
+  out=$(cd $W && LP_GATE_F="$F" timeout 400 node scripts/overlay-width-gate.js 2>&1); rc=$?
+  line=$(printf '%s' "$out" | grep -E "^── [0-9]+ passed" | tail -1)
+  fails=$(printf '%s' "$out" | grep -c '^FAIL ')
+  if [ $rc -eq 0 ] && [ -n "$line" ]; then ok OVL-width "$line"
+  elif [ $rc -eq 124 ]; then no OVL-width "timed out after 400s — browser never finished"
+  elif [ -n "$line" ]; then
+    no OVL-width "$line :: $(printf '%s' "$out" | grep '^FAIL ' | head -2 | tr '\n' ' ')"
+  else no OVL-width "exit=$rc  <no summary line — the gate itself died>  $(printf '%s' "$out" | tail -1)"; fi
+}
+
 # ── the runner's own verdict ───────────────────────────────────────────────────
 # Until 2026-07-28 this script printed FAIL and exited 0. Every gate, including
 # `all`: ok() and no() are both a bare echo, and nothing summed them. Anything
@@ -568,7 +595,7 @@ regrender(){
 #      `all` dispatch ran 14 gates and silently skipped REG-render because the
 #      function was written but never added to the case. The count below is what
 #      makes that structurally impossible to repeat, rather than fixed once.
-ALL_IDS="A1 A1b A1c A2 A3 B1 B2 B2b B4 COV-nba COV-nhl COV-honest COV-keys COV-source COV-gametype COV-api REG-pool REG-adp-dst REG-dst REG-pytest REG-jest REG-jest-all REG-modules REG-render"
+ALL_IDS="A1 A1b A1c A2 A3 B1 B2 B2b B4 COV-nba COV-nhl COV-honest COV-keys COV-source COV-gametype COV-api REG-pool REG-adp-dst REG-dst REG-pytest REG-jest REG-jest-all REG-modules REG-render OVL-width"
 
 out=$(mktemp) || exit 2
 trap 'rm -f "$out"' EXIT
@@ -586,8 +613,9 @@ trap 'rm -f "$out"' EXIT
     # is a name people stop using.
     reg|REG|regressions|REG-pool|REG-adp-dst|REG-dst|REG-pytest|REG-jest|REG-jest-all|REG-modules) reg;;
     render|REG-render|regrender) regrender;;
+    OVL-width|ovl|overlay) ovlwidth;;
     cov|COV|coverage|COV-nba|COV-nhl|COV-honest|COV-keys|COV-source|COV-gametype|COV-api) cov;;
-    all) a1; a2; a3; b1; b2; b4; echo "--- coverage ---"; cov; echo "--- regressions ---"; reg; regrender;;
+    all) a1; a2; a3; b1; b2; b4; echo "--- coverage ---"; cov; echo "--- regressions ---"; reg; regrender; ovlwidth;;
     *) echo "FAIL runner (unknown gate '$1' — nothing ran)";;
   esac
 } 2>&1 | tee "$out"
