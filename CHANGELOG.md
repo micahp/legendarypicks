@@ -1,5 +1,69 @@
 # Changelog
 
+## v0.7.1 — 2026-08-03
+
+### A league can now be offered while its season is still being played
+
+- **`in_progress` is a fourth coverage status** (`1973ed5`), and MLB 2026 is the
+  first row to carry it: 1,682 of 1,682 published games, checked through
+  2026-08-02. The three-value vocabulary had no way to say "complete so far" —
+  a season five months from its last game measured against the full-season
+  total reads as `partial`, and `partial` is not offerable, so a league nobody
+  had any doubt about disappeared from `/leagues` every morning until the next
+  ingest ran. `in_progress` says what is actually true, and carries a
+  `checked_through` date so the claim can be falsified.
+- **The rule is league-agnostic** (`reconcile_totals.py:869`): a season whose
+  published end date has not passed is `in_progress` rather than `complete`.
+  Nothing in it names a league. NFL 2026 will land there the first time
+  reconcile runs against it after kickoff.
+- **`in_progress` pays for itself** (`8523557`). COV-honest went red the moment
+  the status existed — the gate doing its job — and now holds it to both of
+  `complete`'s assertions (no ingestion failures, expected == fetched) plus one
+  of its own: a row claiming `in_progress` without a `checked_through` is
+  rejected, because a claim with no horizon cannot be checked.
+
+### Reconciling a live season stops costing an hour
+
+- **776 per-event fetches became 0** (`88d1811`). Classification fetched one
+  event document per differing event, and a season still being played differs
+  by its entire remaining schedule. Two runs died proving it: the first into a
+  403 of its own making, the second into a 54-minute timeout with nothing to
+  show. The site API publishes the same three fields the classifier reads —
+  date, status, competition type — for a whole month at once. Seven requests
+  return all 2,458 published MLB 2026 events and reconcile exactly against the
+  core API's own `count`, including the single All-Star game hiding inside
+  season type 2. Over an hour became 13 seconds.
+- Best-effort by contract: anything the index misses falls back to its own
+  fetch, so it can change how long a run takes and never what it concludes. A
+  test asserts exactly that — same publisher, both paths, identical `Gap`, zero
+  per-event fetches on the indexed one.
+
+### MLB had no game-type boundary at all
+
+- **`ingest_mlb_logs.py` now stamps `game_type` at the ingest** (`604d39d`).
+  MLB was the one league whose logs went in unphased: 45,551 prod rows NULL,
+  and dev's PRE/REG typed in by a human — correct, and reproducible by nothing.
+  `AND game_type='REG'` over NULL does not raise, it returns zero, which reads
+  as "this player did not play."
+- The phase was always one column away: statcast publishes `game_type` on every
+  pitch. The letters are mapped from two **finished** seasons rather than
+  guessed (`S`/`E` → PRE, `R` → REG, `F`/`D`/`L`/`W` → POST, `A` → ALLSTAR), an
+  unmeasured letter raises instead of defaulting to REG, and the cross-check is
+  that this publisher's 2026 `R` count is 2,458 — the same number ESPN publishes
+  for its own season type 2. Two independent publishers, one number.
+- `backfill_mlb_game_types.py` re-derives the stamp for rows already written and
+  is idempotent; `promote_mlb_to_prod.py` copies team results additively and
+  refuses to copy a coverage verdict, which has to be earned by a reconcile run
+  against the target.
+
+### Fixed
+
+- **The oracle stopped 403ing** (`c6f3bbd`): the ESPN core API rejects a
+  default urllib user-agent from this host, and an unreachable oracle is a FAIL,
+  not a skip — so every check went red for the wrong reason.
+- `/api/coverage` stopped leaking `run_id` and any future column into the API;
+  the explicit column list is back.
+
 ## v0.7.0 — 2026-08-03
 
 ### The mock-draft pool leads with the two numbers a drafter acts on
