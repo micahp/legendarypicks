@@ -97,6 +97,21 @@ _PUBLISHED: Dict[Tuple[str, str], Dict[str, str]] = {
     ("nhle.com", "nhl"): {"1": PRE, "2": REG, "3": POST},
     ("espn", "nba"): {"1": PRE, "2": REG, "3": POST, "5": PLAYIN},
     ("espn", "mlb"): {"1": PRE, "2": REG, "3": POST},
+    # Measured 2026-08-03 from seasons/2025/types[].startDate/endDate and each
+    # type's own `events?limit=1` count — not copied from the MLB row above,
+    # which it happens to match:
+    #     1 Preseason       2025-07-31..2025-09-04    49 events
+    #     2 Regular Season  2025-09-04..2026-01-07   272 events
+    #     3 Postseason      2026-01-07..2026-02-12    14 events
+    #     4 Off Season      2026-02-12..2026-08-06     0 events
+    # No fifth phase, and no NBA-style play-in. Note the 14: the postseason is
+    # 13 games, and ESPN files the **Pro Bowl inside type 3** — the same trick
+    # as MLB's All-Star Game inside type 2. Unlike NBA's All-Star, it publishes
+    # no `competitions[0].type`, so `_COMPETITION_PHASE` cannot catch it; its
+    # only published tell is that its competitors are AFC/NFC, which are not in
+    # the 32-team list. Any NFL ingest that trusts type 3 wholesale writes an
+    # exhibition and two teams that do not exist. See backfill_nfl_postseason.py.
+    ("espn", "nfl"): {"1": PRE, "2": REG, "3": POST},
 }
 
 # Competition-level phases: published on the competition, not the season, and
