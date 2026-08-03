@@ -147,6 +147,48 @@ useful. Don't block the 2024 display on R1.
 
 ## Bugs caught, not yet fixed
 
+### B8. The player page renders the wrong game-log columns for K and D/ST — **user-reported**
+Reported 2026-08-03 as "missing kicker/DEF game logs" and "Brandon Aubrey has 2 games".
+**Not a data gap — the data is present and correct and the page renders the wrong columns.**
+
+`pages/player/[id].tsx:191` `NFL_GAMELOG_BANDS` hardcodes four bands — Passing, Rushing,
+Receiving, Fantasy. **No Kicking, no Defense.** Line 245 keeps only bands holding a
+non-zero value, then `if (!bands.length) return null`. Measured on dev:
+
+| player | returning | displaying |
+|---|---|---|
+| Aubrey (882, PK) | 17 games, `fg_made 4, fg_att 6, fg_long 41, pat 2/2` | 17 rows of `WK OPP CAR YDS TD FPTS PPR` — **rushing**; 16 rows all dashes, **one** populated (wk 15, 1 carry) |
+| Borregales (2217, PK) | 17 games | **no table at all** — zero carries, so no band matches |
+| NO D/ST (30116, DEF) | `recent_games: []` | **no Game Log section** — `player_game_logs` has zero DEF rows, ever |
+
+The single populated row is the reported "2 games".
+
+The backend already publishes the right contract — `/api/nfl/draft/player/{id}/game-log`
+returns `tabs=[Kicking]` with `fg_made/fg_att/fg_long/pat_made/pat_att` for 882/2217 and
+`tabs=[Defense]` with `sacks/interceptions/fumble_rec/safeties/points_allowed` for 30116.
+The player page maintains a second, worse copy of the same idea. Two constraints on the
+fix: the page renders **three phase tables** (post/regular/pre) that a wholesale swap to
+`PlayerGameLog` would delete, and D/ST needs `/api/player/{id}` to read `nfl_dst_stats`
+before any band change can matter.
+
+Also surfaced: **`K` is a live second kicker vocabulary.** `players` holds 336 `K` vs 87
+`PK`; 10 `K`-labelled players have 2025 logs (Carlson 17, Prater 17, McManus 15) and the
+endpoint returns `tabs: []`, `fields: []`, `stats: {}` for every one. Only 3 names appear
+under both labels, so it is a split, not duplication.
+
+**Why the suite stayed green: `REG-render` drives the mock-draft overlay, not
+`/player/[id]`.** The gate's surface never included the broken page — the same lesson as
+[a green gate is a claim about its surface]. Fix ships with a player-page browser gate
+asserting each position sees its own stats *and* that at least one row is non-empty (a
+row-count-only assertion passes both failures above).
+
+Delegated: `TASK-reasonix-nfl-gamelog-coverage.md`.
+
+**Not in that task, flagged separately: kicker fantasy points are wrong.** Aubrey's wk-15
+row reads `fpts 0.6 / fpts_ppr 0.6` for a game with 4 FG and 2 PAT (~16 kicking points) —
+the scoring counts his one carry and ignores every kick, while `pk_pts_per_game` (10.6) is
+computed correctly elsewhere. The log and the pool disagree about the same player.
+
 ### B1. Mid-season team change doubles the availability denominator
 Joe Flacco reads `13/34` for 2025 because he changed teams and the denominator sums both
 teams' full seasons. Denominator must be scoped to team games *while the player was on that
