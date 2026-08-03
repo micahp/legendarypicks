@@ -166,7 +166,19 @@ else:     print('PASS B2b (no kicker asserts ppr 0.0, n=%d)'%len(p))
 b4(){
   need_w B4 || return
   room=$W/components/MockDraft/DraftRoom.tsx
-  files="$room $W/components/MockDraft/PoolList.tsx $W/components/MockDraft/ResultsScreen.tsx $W/lib/mockDraft/api.ts"
+  # The four surfaces that RENDER games_played/team_games, measured 2026-08-03:
+  #   columns.tsx:189, RostersTab.tsx:98, ResultsScreen.tsx:232 — poolTeamGames direct
+  #   PoolList.tsx:324 — row.team_games, which lib/mockDraft/api.ts:100 derives from it
+  #
+  # This list used to be DraftRoom.tsx + PoolList + ResultsScreen + api.ts, and asked
+  # for poolTeamGames in three of them. `5f0e08c` split the 1,053-line DraftRoom into
+  # the shell plus PlayersTab/columns/RostersTab and moved every fraction out of it,
+  # so from 2026-07-29 the gate sat at 2/3 naming a file with no such responsibility
+  # while columns.tsx and RostersTab.tsx — which now carry it — went unmeasured
+  # entirely. Both could have hardcoded 17 without moving this number. The gate was
+  # asking the right question of the wrong files.
+  renderers="$W/components/MockDraft/columns.tsx $W/components/MockDraft/RostersTab.tsx $W/components/MockDraft/ResultsScreen.tsx $W/lib/mockDraft/api.ts"
+  files="$room $W/components/MockDraft/PoolList.tsx $renderers"
   # Three of the six checks below pass when their count is 0, which is also what a
   # missing file counts to. Without this line B4 half-agreed with itself over a
   # deleted worktree for the whole of 2026-07-28..08-02.
@@ -178,21 +190,19 @@ b4(){
   reconstructed=$(grep -En \
     "team_games[[:space:]]*-[[:space:]].*games_played|games_played[[:space:]]*<.*team_games|team_games[[:space:]]*-[[:space:]].*games_played" \
     $files 2>/dev/null | wc -l)
-  schedule_users=$(grep -l "poolTeamGames" \
-    "$room" "$W/components/MockDraft/ResultsScreen.tsx" "$W/lib/mockDraft/api.ts" \
-    2>/dev/null | wc -l)
+  schedule_users=$(grep -l "poolTeamGames" $renderers 2>/dev/null | wc -l)
   pool_schedule=$(grep -c "row.team_games" "$W/components/MockDraft/PoolList.tsx" 2>/dev/null)
   api_missed=$(grep -c "games_missed:[[:space:]]*player.games_missed" "$W/lib/mockDraft/api.ts" 2>/dev/null)
 
   if [ "$hidden" = "0" ] &&
      [ "$hardcoded" = "0" ] &&
      [ "$reconstructed" = "0" ] &&
-     [ "$schedule_users" = "3" ] &&
+     [ "$schedule_users" = "4" ] &&
      [ "$pool_schedule" -ge "1" ] &&
      [ "$api_missed" = "1" ]; then
-    ok B4 "scrollbar shown; schedule weeks used across all surfaces; games_missed preserved"
+    ok B4 "scrollbar shown; schedule weeks used across all four rendering surfaces; games_missed preserved"
   else
-    no B4 "hidden=$hidden hardcoded=$hardcoded reconstructed=$reconstructed schedule_users=$schedule_users/3 pool_schedule=$pool_schedule api_missed=$api_missed"
+    no B4 "hidden=$hidden hardcoded=$hardcoded reconstructed=$reconstructed schedule_users=$schedule_users/4 pool_schedule=$pool_schedule api_missed=$api_missed"
   fi
 }
 
@@ -416,13 +426,38 @@ else:
 
 # ── always-on regressions: nothing already working may break ──
 reg(){
+  # ── REG-pool · the draft pool is the six draftable positions and nothing else ──
+  #
+  # This gate used to read `len(p)==11515` AND those same six per-position counts,
+  # which sum to 4,506. For both halves to hold, 7,009 players would have had to sit
+  # in positions the gate never named. `9895508` (2026-08-01 09:16) constrained the
+  # query to _DRAFT_POSITIONS on purpose and the pool went 11,515 -> 4,507, so from
+  # that minute the gate was not merely red, it was UNSATISFIABLE — its total
+  # asserted the universe while its parts asserted the constraint. A total that
+  # contradicts its own breakdown is not an expectation, it is two.
+  #
+  # Rewritten 2026-08-03 as claims that cannot drift apart:
+  #   - no position outside the six may appear (this is the 9895508 decision itself)
+  #   - len(players) must equal the sum of the counts (catches dupes and truncation)
+  #   - DEF is exactly 32, because the league has exactly 32 defenses
+  #   - the volatile four get a +/-3% band around counts measured against the served
+  #     DB on 2026-08-03. Roster churn moves these by ones (RB was 1122 on 07-31 and
+  #     is 1123 today); a source or join change moves them by hundreds. The band is
+  #     for the first and must stay tight enough to catch the second.
   curl -s --max-time 60 "$B/api/nfl/mock-draft/pool?season=2026" | $PY -c "
 import sys,json,collections
 d=json.load(sys.stdin);p=d['players']
 c=collections.Counter(x['position'] for x in p)
-exp={'QB':470,'RB':1122,'WR':1791,'TE':882,'PK':209,'DEF':32}
-okk = len(p)==11515 and all(c[k]==v for k,v in exp.items())
-print(('PASS REG-pool (11515, %s)'%dict(c)) if okk else ('FAIL REG-pool (%d %s)'%(len(p),dict(c))))
+DRAFTABLE={'QB','RB','WR','TE','PK','DEF'}
+base={'QB':470,'RB':1123,'WR':1791,'TE':882,'PK':209}
+why=[]
+stray=sorted(set(c)-DRAFTABLE)
+if stray: why.append('undraftable positions served: %s'%stray)
+if len(p)!=sum(c.values()): why.append('len=%d but counts sum to %d'%(len(p),sum(c.values())))
+if c['DEF']!=32: why.append('DEF=%d, the league has 32'%c['DEF'])
+for k,v in base.items():
+    if abs(c[k]-v) > max(1, round(v*0.03)): why.append('%s=%d, baseline %d'%(k,c[k],v))
+print(('PASS REG-pool (%d, %s)'%(len(p),dict(c))) if not why else ('FAIL REG-pool (%d %s :: %s)'%(len(p),dict(c),'; '.join(why))))
 "
   # ── REG-adp-dst — EXPECTED VALUES WRITTEN 2026-07-31, BEFORE THE CODE. ──
   # Measured directly from ESPN the same day (kona_player_info, limit 20000).
@@ -545,7 +580,11 @@ trap 'rm -f "$out"' EXIT
     # verdict and exit 0, because the label here was `render`. A gate you cannot
     # invoke by its own name is a gate that reports green when you ask for it.
     A1|a1|A1b|A1c) a1;; A2|a2) a2;; A3|a3) a3;; B1|b1) b1;; B2|b2|B2b) b2;; B4|b4) b4;;
-    reg|REG|regressions) reg;;
+    # Same rule as REG-render below: every id the suite prints must be invocable.
+    # `verify-gates.sh REG-pool` hit the `*)` arm and reported `unknown gate`,
+    # which at least fails loud — but a name you have to know the shorthand for
+    # is a name people stop using.
+    reg|REG|regressions|REG-pool|REG-adp-dst|REG-dst|REG-pytest|REG-jest|REG-jest-all|REG-modules) reg;;
     render|REG-render|regrender) regrender;;
     cov|COV|coverage|COV-nba|COV-nhl|COV-honest|COV-keys|COV-source|COV-gametype|COV-api) cov;;
     all) a1; a2; a3; b1; b2; b4; echo "--- coverage ---"; cov; echo "--- regressions ---"; reg; regrender;;
