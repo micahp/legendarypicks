@@ -2,6 +2,9 @@ import type { PoolPlayer } from '../Leagues/types'
 import type { DraftPlayer } from '../../lib/mockDraft/engine'
 import { positionLabel, positionRankLabel, showsPositionalRank } from '../../lib/nfl/positionLabel'
 import {
+  ExpectedPts,
+  EXPECTED_PTS_HEADER,
+  expectedPtsTitle,
   PoolAvailability,
   ProjectedPoints,
 } from './columns'
@@ -48,7 +51,8 @@ interface Props {
   onUnqueue: (playerId: number) => void
 }
 
-const COLUMNS = 7
+// The divider row's colSpan — one column per td rendered below.
+const COLUMNS = 8
 
 export default function PlayersTab(p: Props) {
   const filtered = p.posFilter !== 'ALL' || p.teamFilter !== 'ALL' || p.byeFilter !== 'ALL'
@@ -151,11 +155,17 @@ export default function PlayersTab(p: Props) {
             <tr className="border-b border-zinc-800 text-zinc-500 text-[11px] uppercase tracking-wider">
               <th data-col="rank" className="text-left py-2.5 pl-3 pr-2 w-10">#</th>
               <th data-col="player" className="text-left py-2.5 px-2">Player</th>
-              <th data-col="bye" className="text-right py-2.5 px-2 w-12">Bye</th>
-              <th data-col="adp" className="text-right py-2.5 px-2 w-16">ADP</th>
               <th data-col="proj" className="text-right py-2.5 px-2 w-20">
                 Proj <span className="block font-normal normal-case tracking-normal text-zinc-600">2026 PPR</span>
               </th>
+              <th data-col="xfp" className="text-right py-2.5 px-2 w-20" title={expectedPtsTitle(p.referenceSeason)}>
+                {EXPECTED_PTS_HEADER}
+                {p.referenceSeason != null && (
+                  <span className="block font-normal normal-case tracking-normal text-zinc-600">{p.referenceSeason} PPR</span>
+                )}
+              </th>
+              <th data-col="bye" className="text-right py-2.5 px-2 w-12">Bye</th>
+              <th data-col="adp" className="text-right py-2.5 px-2 w-16">ADP</th>
               <th data-col="avail" className="text-left py-2.5 px-2 min-w-[8rem]">Available</th>
               <th data-col="action" className="w-20" />
             </tr>
@@ -247,14 +257,17 @@ function PoolRowView({
           )}
         </div>
       </td>
+      <td data-col="proj" className="py-2 px-2 text-right font-mono tabular-nums text-xs">
+        <ProjectedPoints player={poolPlayer} />
+      </td>
+      <td data-col="xfp" className="py-2 px-2 text-right font-mono tabular-nums text-xs">
+        <ExpectedPts player={poolPlayer} />
+      </td>
       <td data-col="bye" className="py-2 px-2 text-right font-mono tabular-nums text-xs text-zinc-500">
         {bye ?? <span className="text-zinc-700">—</span>}
       </td>
       <td data-col="adp" className="py-2 pr-3 pl-2 text-right font-mono tabular-nums text-xs text-zinc-400">
         {dp.adp != null ? dp.adp.toFixed(1) : <span className="text-zinc-600">—</span>}
-      </td>
-      <td data-col="proj" className="py-2 px-2 text-right font-mono tabular-nums text-xs">
-        <ProjectedPoints player={poolPlayer} />
       </td>
       <td data-col="avail" className="py-2 px-2">
         <PoolAvailability poolPlayer={poolPlayer} referenceSeason={referenceSeason} />

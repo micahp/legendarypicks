@@ -12,6 +12,9 @@ import {
 import { LEAGUE_SIZES, ROUNDS, nextTeam } from '../../lib/mockDraft/engine'
 import type { LeagueSize } from '../../lib/mockDraft/engine'
 import {
+  ExpectedPts,
+  EXPECTED_PTS_HEADER,
+  expectedPtsTitle,
   noSampleLabel,
   ProjectedPoints,
 } from './columns'
@@ -293,14 +296,17 @@ function PoolRow({
           )}
         </div>
       </td>
+      <td className="py-2.5 px-2 text-right font-mono tabular-nums text-xs" title={`${draftSeason} projected PPR points`}>
+        {player ? <ProjectedPoints player={player} /> : <span className="text-zinc-700">—</span>}
+      </td>
+      <td className="py-2.5 px-2 text-right font-mono tabular-nums text-xs">
+        {player ? <ExpectedPts player={player} /> : <span className="text-zinc-700">—</span>}
+      </td>
       <td className="py-2.5 px-2 text-right font-mono tabular-nums text-xs text-zinc-500">
         {bye ?? <span className="text-zinc-700">—</span>}
       </td>
       <td className="py-2.5 px-2 text-right font-mono tabular-nums text-zinc-300 font-semibold">
         {row.adp != null ? row.adp.toFixed(1) : '—'}
-      </td>
-      <td className="py-2.5 px-2 text-right font-mono tabular-nums text-xs" title={`${draftSeason} projected PPR points`}>
-        {player ? <ProjectedPoints player={player} /> : <span className="text-zinc-700">—</span>}
       </td>
 
       {/* Availability — the differentiator. Accent marks missed games. */}
@@ -386,16 +392,22 @@ function VirtualPoolTable({
       style={{ maxHeight: CONTAINER_MAX_H }}
       onScroll={e => setScrollTop((e.target as HTMLDivElement).scrollTop)}
     >
-      <table className="w-full text-sm">
+      <table data-testid="pool-table" className="w-full text-sm">
         <thead>
           <tr className="border-b border-zinc-800 text-zinc-500 text-[11px] uppercase tracking-wider sticky top-0 bg-zinc-900 z-10">
             <th className="text-left py-3 pl-4 pr-2 w-10">#</th>
             <th className="text-left py-3 px-2">Player</th>
-            <th className="text-right py-3 px-2 w-12">Bye</th>
-            <th className="text-right py-3 px-2">ADP</th>
             <th className="text-right py-3 px-2 w-20">
               Proj <span className="block font-normal normal-case tracking-normal text-zinc-600">{draftSeason} PPR</span>
             </th>
+            <th className="text-right py-3 px-2 w-20" title={expectedPtsTitle(referenceSeason)}>
+              {EXPECTED_PTS_HEADER}
+              {referenceSeason != null && (
+                <span className="block font-normal normal-case tracking-normal text-zinc-600">{referenceSeason} PPR</span>
+              )}
+            </th>
+            <th className="text-right py-3 px-2 w-12">Bye</th>
+            <th className="text-right py-3 px-2 w-16">ADP</th>
             <th className="text-left py-3 pr-4 pl-2 min-w-[9.5rem]">
               Available
               <span className="ml-1 font-normal normal-case tracking-normal text-zinc-600">
