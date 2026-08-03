@@ -16,9 +16,9 @@ describe('StatRankCard', () => {
       />,
     )
 
-    // One line, sentence case; the sample size qualifies the ranks from the
+    // One line, title case; the sample size qualifies the ranks from the
     // hover instead of shouting alongside them.
-    const heading = screen.getByText('2025 regular season')
+    const heading = screen.getByText('2025 Regular Season')
     expect(heading.parentElement?.className).toContain('bg-orange-600')
     expect(heading.getAttribute('title')).toBe('n=8 games')
     expect(container.querySelectorAll('.grid > div')).toHaveLength(4)

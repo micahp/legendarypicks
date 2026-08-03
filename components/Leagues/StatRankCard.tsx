@@ -53,7 +53,7 @@ export default function StatRankCard({
             reads the dialog's heading to prove the overlay opened on the row it
             clicked, and a second h2 made that locator ambiguous. The sibling
             section directly below this one already uses h3. */}
-        {/* One line, sentence case. This was two shouted lines — LEAGUE RANKINGS
+        {/* One line, title case. This was two shouted lines — LEAGUE RANKINGS
             over 2025 REGULAR SEASON · N=16 GAMES — above a grid of ranks that
             says what it is without being told twice. The sample size is not
             thrown away, it is on the hover: it qualifies the ranks rather than
@@ -62,7 +62,7 @@ export default function StatRankCard({
           className="text-[11px] font-medium tracking-wide"
           title={games != null ? `n=${games} games` : undefined}
         >
-          {season != null ? `${season} regular season` : 'Regular season'}
+          {season != null ? `${season} Regular Season` : 'Regular Season'}
         </h3>
       </div>
       <div className="grid grid-cols-4 divide-x divide-zinc-800">
