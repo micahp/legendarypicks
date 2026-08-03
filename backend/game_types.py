@@ -80,9 +80,23 @@ PHASES = (PRE, REG, POST, PLAYIN, ALLSTAR)
 # Id 4 is absent on purpose. It publishes zero events, so a row claiming it is
 # not a phase we failed to map — it is a row that should not exist, and the
 # raise is the correct outcome.
+# Measured 2026-08-03 against
+# `sports.core.api.espn.com/v2/sports/baseball/leagues/mlb/seasons/2026`:
+#     id=1 pre   Spring Training  2026-02-19..2026-03-25   451 events
+#     id=2 reg   Regular Season   2026-03-25..2026-09-29  2458 events
+#     id=3 post  Postseason       2026-09-29..2026-11-12     0 events (unplayed)
+#     id=4 off   Off Season       2026-11-12..2027-02-18
+#
+# Note what MLB does NOT do: it publishes no fifth phase, and — unlike NBA — it
+# files the All-Star Game outside type 2, which is why the team-schedule document
+# carries a separate top-level `allstarsgame` key. So no _COMPETITION_PHASE entry
+# is needed for baseball, and one added by analogy with basketball would be wrong.
+# Type 3's zero events is the season not having reached October, not a fetch that
+# failed — an empty published collection is a fact.
 _PUBLISHED: Dict[Tuple[str, str], Dict[str, str]] = {
     ("nhle.com", "nhl"): {"1": PRE, "2": REG, "3": POST},
     ("espn", "nba"): {"1": PRE, "2": REG, "3": POST, "5": PLAYIN},
+    ("espn", "mlb"): {"1": PRE, "2": REG, "3": POST},
 }
 
 # Competition-level phases: published on the competition, not the season, and
