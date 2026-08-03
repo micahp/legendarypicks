@@ -85,7 +85,13 @@ CREATE TABLE team_stats_coverage (
     paired_stat_games INTEGER,
     failure_count     INTEGER NOT NULL DEFAULT 0,
     completed_at      TEXT,
-    source            TEXT NOT NULL
+    source            TEXT NOT NULL,
+    -- The date the row's claim actually reaches: every published game from
+    -- season_start through here is present and paired. NULL for rows written
+    -- before the column existed. This is what lets a live season be offered
+    -- without the offer blinking off every time a night's games are played and
+    -- not yet ingested -- the claim is a window, not a timestamp.
+    checked_through   TEXT
 );
 
 CREATE TABLE team_stats_team_inventory (

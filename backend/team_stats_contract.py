@@ -498,8 +498,13 @@ def build_team_aggregates(connection, league: str) -> dict[str, Any]:
     elif lg != "mlb":
         missing_stat_rows = len(result_rows)
 
+    # `in_progress` counts as reconciled: it means every published game through the
+    # row's `checked_through` is present and paired — the same evidence `complete`
+    # carries, over a season that has not ended yet. MLB short-circuits this today,
+    # so leaving it out would not break anything now and would quietly demote the
+    # next league that goes in progress.
     reconciled = lg == "mlb" or bool(
-        manifest and manifest["status"] == "complete"
+        manifest and manifest["status"] in ("complete", "in_progress")
         and manifest["expected_teams"] == manifest["fetched_teams"] == EXPECTED_TEAMS[lg]
         and manifest["expected_games"] == manifest["fetched_games"] == len(games)
     )

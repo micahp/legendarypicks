@@ -221,7 +221,8 @@ def coverage():
             rows = con.execute(
                 "SELECT league, season, status, expected_teams, fetched_teams,"
                 " expected_games, fetched_games, paired_games, paired_stat_games,"
-                " failure_count, season_start, season_end, completed_at, source"
+                " failure_count, season_start, season_end, completed_at, source,"
+                " checked_through"
                 " FROM team_stats_coverage ORDER BY league, season"
             ).fetchall()
         except sqlite3.Error:
@@ -240,7 +241,12 @@ def coverage():
         d = dict(r)
         # Never let an unrecognised status read as permission. Anything outside the
         # three-value vocabulary is treated as unverified rather than passed through.
-        if d.get("status") not in ("complete", "partial", "unverified"):
+        # `in_progress` is a season that passes every check but has not ended yet;
+        # its row carries `checked_through`, the date its claim actually reaches.
+        # It belongs in this list and leaving it out is not a safe default — the
+        # guard would rewrite a verified live season to "we cannot vouch for this"
+        # and the fix would be invisible end to end.
+        if d.get("status") not in ("complete", "in_progress", "partial", "unverified"):
             d["status"] = "unverified"
         d["publishers"] = pubs.get(d["league"], [])
         out.append(d)
