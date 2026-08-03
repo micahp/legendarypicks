@@ -459,18 +459,31 @@ export function DraftPlayerRow({
               event.stopPropagation()
               onClick?.()
             }}
-            className="font-medium text-zinc-200 hover:text-emerald-400 transition-colors"
+            className="whitespace-nowrap font-medium text-zinc-200 hover:text-emerald-400 transition-colors"
           >
             {player.name}
           </button>
           <InjuryTag status={player.injury_status} compact />
         </div>
-        <div className="text-[10px] text-zinc-600">
+        <div className="whitespace-nowrap text-[10px] text-zinc-600">
           {player.current_team}
           {' · '}
-          <span className="font-semibold text-zinc-500">{positionLabel(player.position)}</span>
+          {/* `RB · RB1` is the same fact twice, so the rank label — which already
+              carries its own position — stands alone. It only stands alone when
+              the two positions agree: a tight end listed at WR2 on his depth
+              chart is TWO facts, and collapsing that would delete one. */}
           {player.depth_rank != null &&
-            ` · ${positionRankLabel(player.depth_position ?? player.position, player.depth_rank)}`}
+          (player.depth_position ?? player.position) === player.position ? (
+            <span className="font-semibold text-zinc-500">
+              {positionRankLabel(player.position, player.depth_rank)}
+            </span>
+          ) : (
+            <>
+              <span className="font-semibold text-zinc-500">{positionLabel(player.position)}</span>
+              {player.depth_rank != null &&
+                ` · ${positionRankLabel(player.depth_position ?? player.position, player.depth_rank)}`}
+            </>
+          )}
           {/* A team change is information, not an achievement — no accent. */}
           {player.team_changed === true && player.depth_team && (
             <span className="ml-1 text-zinc-500">from {player.depth_team}</span>
