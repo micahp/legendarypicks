@@ -270,18 +270,26 @@ else:
 # ── COV-honest ── a coverage row may not claim more than its run can support.
 # Three ways the 2026-07-14 row lied, each its own assertion:
 bad = []
-for run_id, league, status, exp_g, got_g, fc in q(
-        "SELECT run_id, league, status, expected_games, fetched_games, failure_count"
-        " FROM team_stats_coverage"):
+for run_id, league, status, exp_g, got_g, fc, through in q(
+        "SELECT run_id, league, status, expected_games, fetched_games, failure_count,"
+        " checked_through FROM team_stats_coverage"):
     actual = q("SELECT COUNT(*) FROM team_stats_ingestion_failures WHERE run_id=?", (run_id,))[0][0]
     if fc != actual:
         bad.append('%s: failure_count=%s but %d rows recorded' % (league, fc, actual))
-    if status == 'complete' and actual:
-        bad.append('%s: status=complete with %d failures' % (league, actual))
-    if status == 'complete' and exp_g != got_g:
-        bad.append('%s: status=complete with expected=%s fetched=%s' % (league, exp_g, got_g))
-    if status not in ('complete', 'partial', 'unverified'):
-        bad.append('%s: status=%r not in the three-value vocabulary' % (league, status))
+    # `in_progress` carries the same burden as `complete`: every published game the
+    # row claims is present and paired, over a season that has not ended. It is a
+    # narrower claim, not a weaker one, so it answers to the same two assertions.
+    if status in ('complete', 'in_progress') and actual:
+        bad.append('%s: status=%s with %d failures' % (league, status, actual))
+    if status in ('complete', 'in_progress') and exp_g != got_g:
+        bad.append('%s: status=%s with expected=%s fetched=%s' % (league, status, exp_g, got_g))
+    # And one of its own. `in_progress` says "checked through a date"; without the
+    # date the claim cannot be falsified, which would make it the loophole the other
+    # three values were written to prevent.
+    if status == 'in_progress' and not through:
+        bad.append('%s: status=in_progress with no checked_through to bound the claim' % league)
+    if status not in ('complete', 'in_progress', 'partial', 'unverified'):
+        bad.append('%s: status=%r not in the four-value vocabulary' % (league, status))
 rows = q("SELECT COUNT(*) FROM team_stats_coverage")[0][0]
 if rows and not bad:
     print('PASS COV-honest (%d coverage rows, none claiming more than its run supports)' % rows)
