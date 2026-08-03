@@ -49,20 +49,22 @@ async function measure(scope) {
     const dialog = page.locator('[role="dialog"]').first()
     await dialog.waitFor({ timeout: 30000 })
 
-    // The Overview table is what opens by default — measure it too, it is the
-    // first thing a user sees. RED ON PURPOSE as of 2026-08-03: SEASON STATS is
-    // ten columns and 560px wide, which is 254px past a phone and 92px past the
-    // desktop card. The game log was fixed with tabs; this one is a single
-    // season row, so tabs are the wrong instrument and the fix is a product
-    // decision. Do not relax this to make the gate green.
+    // Overview's SEASON STATS table is TEN columns and 560px, so it scrolls
+    // sideways at both widths. That is NOT a defect and this gate does not
+    // assert against it: ESPN's own season-stats row scrolls on mobile too, and
+    // Micah ruled it correct on 2026-08-03. The brief was always about the
+    // per-week game log, where a horizontal scroll costs you the comparison
+    // between weeks — a single season row has nothing to compare across.
+    //
+    // Measured anyway, and printed, because a number nobody asserts on is still
+    // the thing that tells you when it changes.
     await dialog.locator('table').first().waitFor({ timeout: 30000 })
     await page.waitForTimeout(1200)
     const overview = await measure(dialog)
     if (overview) {
-      const over = overview.scrollWidth - overview.clientWidth
-      check(over <= 1, `${label}/Overview(season stats): ${overview.cols} cols ` +
-        `[${overview.headers.join(' ')}] ${overview.scrollWidth}px in ${overview.clientWidth}px` +
-        (over > 1 ? `  <-- OVERFLOWS BY ${over}px` : ''))
+      console.log(`note ${label}/Overview(season stats): ${overview.cols} cols ` +
+        `[${overview.headers.join(' ')}] ${overview.scrollWidth}px in ` +
+        `${overview.clientWidth}px — scrolls by design, as ESPN's does`)
     } else {
       check(false, `${label}/Overview: no table rendered at all`)
     }

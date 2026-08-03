@@ -95,11 +95,30 @@ function statLabel(key: string): string {
   return STAT_LABELS[key] || key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
 }
 
+/* Columns holding a fantasy-point total. They carry one decimal ALWAYS, even
+   when the value is whole, because a PPR column reading `18` two rows under
+   `23.2` is the ragged edge this exists to stop. It is the same rule
+   PlayerGameLog's cell() applies, by leaving these out of its INTEGER set —
+   stated here rather than imported so neither surface can quietly drift, since
+   the two disagreeing is what this fixes. */
+const ONE_DECIMAL = new Set([
+  'fpts', 'fpts_ppr', 'xfpts_ppr', 'fantasy_pts', 'proj_pts', 'proj_ppr_points',
+])
+
+function statCell(key: string, value: number | null): string {
+  if (value == null) return '—'
+  if (ONE_DECIMAL.has(key)) return value.toFixed(1)
+  // Rounding is not cosmetic here. The weekly PPR series arrives off the parquet
+  // as binary floats, so week 12 is 8.120000000000001 and week 10 is
+  // 19.340000000000003 — printed raw, which is what the game log was doing.
+  return Number.isInteger(value) ? String(value) : value.toFixed(1)
+}
+
 function formatStatValue(key: string, value: number | string | null): string {
   if (value === null || value === undefined) return '—'
   if (typeof value === 'string') return value
   if (key.endsWith('_pct')) return `${value.toFixed(1)}%`
-  return Number.isInteger(value) ? String(value) : value.toFixed(1)
+  return statCell(key, value)
 }
 
 // Renders one compact stat grid (a flat `stats` dict, or an MLB batting/pitching split).
@@ -258,7 +277,7 @@ export function NflGameLog({ games, scheduleGames = [], fillMissed = false }: {
                 return (
                   <td key={b.label + c.key}
                       className={`px-3 py-2.5 text-right font-mono tabular-nums ${v ? 'text-zinc-300' : 'text-zinc-600'} ${ci === 0 ? 'border-l border-zinc-800' : ''}`}>
-                    {v == null ? '—' : v}
+                    {statCell(c.key, v)}
                   </td>
                 )
               }))}
@@ -617,7 +636,8 @@ export default function PlayerPage() {
                   <div key={i} className="flex items-center justify-between px-4 py-2.5">
                     <span className="text-zinc-400 text-xs w-32">{g.date} {g.opponent ? `${g.home === false ? '@ ' : g.home === true ? 'vs ' : ''}${g.opponent}` : ''}</span>
                     <span className="font-mono tabular-nums text-zinc-300 text-xs truncate">
-                      {Object.entries(g.stats).filter(([, v]) => typeof v === 'number').slice(0, 6).map(([k, v]) => `${k} ${v}`).join('  ')}
+                      {Object.entries(g.stats).filter(([, v]) => typeof v === 'number').slice(0, 6)
+                        .map(([k, v]) => `${k} ${statCell(k, v as number)}`).join('  ')}
                     </span>
                   </div>
                 ))}

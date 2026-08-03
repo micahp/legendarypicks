@@ -564,8 +564,11 @@ regrender(){
 # game-log tab, and compares scrollWidth to clientWidth on the actual scroll
 # container. A number, not an opinion, about the only surface the brief names.
 #
-# Currently 28 pass on the game log and 2 fail on Overview's SEASON STATS, which
-# is ten columns / 560px and RED ON PURPOSE — see the note in the script.
+# Scoped to the game log on purpose. Overview's SEASON STATS is ten columns and
+# 560px and scrolls at both widths — measured and printed by the script, never
+# asserted on. ESPN's own season-stats row scrolls on mobile, and the brief was
+# always the per-week table, where a sideways scroll costs you the comparison
+# between weeks. One season row has nothing to compare across.
 ovlwidth(){
   need_w OVL-width || return
   have_files OVL-width "$W/scripts/overlay-width-gate.js" || return
