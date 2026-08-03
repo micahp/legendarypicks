@@ -1311,40 +1311,75 @@ def player_detail(player_id: int):
 #  Per-game log  (the research half of the player overlay)
 # ---------------------------------------------------------------------------
 
-# Which per-game fields matter, by position. Deliberately narrow: the log rows
-# carry ~52 keys and a research table that shows all of them shows none of them.
+# Which per-game fields matter, by position, as ESPN-style tabs. Deliberately
+# narrow: the log rows carry ~52 keys and a research table that shows all of
+# them shows none of them.
 #
-# Reshaped 2026-08-02 toward ESPN's fantasy log. The brief was "I shouldn't have
-# to scroll to see all the stats", and the binding constraint turned out not to
-# be the column list at all -- it was PlayerDetailOverlay's max-w-[520px], which
-# leaves room for about eight numeric columns after Wk and Opp. The box is now
-# wider on desktop; these lists are still kept tight, because a research table
-# that shows everything shows nothing.
+# The tab layout is the fix for the sideways scroll -- not a wider box and not
+# fewer stats. Wk, Opp and the points anchor are rendered by the component for
+# every tab, so they must NOT appear in a tab's fields; a tab's fields are the
+# only columns that change when it is selected, and no tab may declare more
+# than 5 of them (Wk + Opp + PPR + 5 = 8 columns, the widest the 520px card
+# fits). The published `fields` list stays the ordered union of the tab
+# fields, so the row-building below is unchanged.
 #
 # aDOT and Separation moved OUT to the player detail's advanced block. They are
-# Next Gen scouting inputs, not box-score facts, and they were costing two of the
-# eight columns on the surface where a fantasy manager is asking "what did he do".
-# Snap %, target share and expected points stay: those are the three that answer
-# a question the raw box score cannot.
+# Next Gen scouting inputs, not box-score facts, and they were costing two of
+# the eight columns on the surface where a fantasy manager is asking "what did
+# he do". Snap %, target share and expected points stay: those are the three
+# that answer a question the raw box score cannot.
 _LOG_FIELDS = {
-    "QB": ["off_pct", "cmp", "att", "pass_yds", "pass_td", "intc", "sacks_taken",
-           "carries", "rush_yds", "rush_td", "fum_lost", "fpts_ppr", "xfpts_ppr"],
-    "RB": ["off_pct", "carries", "rush_yds", "rush_td", "targets", "rec",
-           "rec_yds", "rec_td", "fum_lost", "misc_td", "fpts_ppr", "xfpts_ppr"],
-    "WR": ["off_pct", "targets", "target_share", "rec", "rec_yds", "rec_td",
-           "fum_lost", "misc_td", "fpts_ppr", "xfpts_ppr"],
+    "QB": [
+        {"id": "passing", "label": "Passing",
+         "fields": ["cmp", "att", "pass_yds", "pass_td", "intc"]},
+        {"id": "rushing", "label": "Rushing",
+         "fields": ["carries", "rush_yds", "rush_td"]},
+        {"id": "misc", "label": "Misc",
+         "fields": ["sacks_taken", "fum_lost", "misc_td"]},
+        {"id": "usage", "label": "Usage",
+         "fields": ["off_pct", "xfpts_ppr"]},
+    ],
+    "RB": [
+        {"id": "rushing", "label": "Rushing",
+         "fields": ["carries", "rush_yds", "rush_td"]},
+        {"id": "receiving", "label": "Receiving",
+         "fields": ["targets", "rec", "rec_yds", "rec_td"]},
+        {"id": "misc", "label": "Misc",
+         "fields": ["fum_lost", "misc_td"]},
+        {"id": "usage", "label": "Usage",
+         "fields": ["off_pct", "target_share", "xfpts_ppr"]},
+    ],
+    "WR": [
+        {"id": "receiving", "label": "Receiving",
+         "fields": ["targets", "rec", "rec_yds", "rec_td"]},
+        {"id": "rushing", "label": "Rushing",
+         "fields": ["carries", "rush_yds", "rush_td"]},
+        {"id": "misc", "label": "Misc",
+         "fields": ["fum_lost", "misc_td"]},
+        {"id": "usage", "label": "Usage",
+         "fields": ["off_pct", "target_share", "xfpts_ppr"]},
+    ],
     # Raw counts only. Kicker fantasy points are computed from distance buckets
     # in _pk_aggregates; recomputing them here would be a second implementation
     # of the same number, which is how the board and the pool ended up printing
     # different figures for the same player. The season rate already ships on
-    # the overview tab -- the log's job is what he actually kicked.
-    "PK": ["fg_made", "fg_att", "fg_long", "pat_made", "pat_att"],
+    # the overview tab -- the log's job is what he actually kicked. PK has no
+    # PPR field at all, so its anchor is null and the component renders no
+    # points column.
+    "PK": [
+        {"id": "kicking", "label": "Kicking",
+         "fields": ["fg_made", "fg_att", "fg_long", "pat_made", "pat_att"]},
+    ],
 }
 # D/ST have no player_game_logs rows at all -- their week rows live in
 # nfl_dst_stats. Read that table rather than reporting 17 weeks of absence for a
-# defense that played every one of them.
-_DST_LOG_FIELDS = ["sacks", "interceptions", "tds", "safeties", "fumble_rec",
-                   "points_allowed", "fantasy_pts"]
+# defense that played every one of them. D/ST anchor on their own fantasy_pts,
+# not fpts_ppr, which no defense has.
+_DST_LOG_FIELDS = [
+    {"id": "defense", "label": "Defense",
+     "fields": ["sacks", "interceptions", "fumble_rec", "safeties",
+                "points_allowed"]},
+]
 _LOG_FIELDS["TE"] = _LOG_FIELDS["WR"]
 _LOG_FIELDS["FB"] = _LOG_FIELDS["RB"]
 
@@ -1398,7 +1433,13 @@ def player_game_log(player_id: int):
                 connection, player, player_id, season, team_weeks,
             ))
 
-        fields = _LOG_FIELDS.get(position, [])
+        tabs = _LOG_FIELDS.get(position, [])
+        anchor = "fpts_ppr" if position in ("QB", "RB", "WR", "TE", "FB") else None
+        fields = [f for tab in tabs for f in tab["fields"]]
+        # The anchor column (PPR) is rendered by the component for every tab,
+        # so it is deliberately absent from `fields` -- but the row must still
+        # carry it, or the anchor cell would read as an empty dash each week.
+        stat_fields = fields + ([anchor] if anchor else [])
 
         by_week = {}
         for log in connection.execute(
@@ -1425,7 +1466,7 @@ def player_game_log(player_id: int):
                 "team": log["team"],
                 "stats": {
                     f: (_DERIVED[f](stats) if f in _DERIVED else stats.get(f))
-                    for f in fields
+                    for f in stat_fields
                 },
             }
 
@@ -1437,7 +1478,7 @@ def player_game_log(player_id: int):
                 "played": entry is not None,
                 "opponent": entry["opponent"] if entry else None,
                 "team": entry["team"] if entry else None,
-                "stats": entry["stats"] if entry else {f: None for f in fields},
+                "stats": entry["stats"] if entry else {f: None for f in stat_fields},
             })
 
         return _json({
@@ -1446,6 +1487,8 @@ def player_game_log(player_id: int):
             "name": player["name"],
             "position": position,
             "reference_season": season,
+            "anchor": anchor,
+            "tabs": tabs,
             "fields": fields,
             "team_games": len(team_weeks),
             "games_played": sum(1 for g in games if g["played"]),
@@ -1463,6 +1506,8 @@ def _dst_game_log(connection, player, player_id, season, team_weeks):
     17-week season as "did not play" for a defense that played all 17 --
     a fabricated absence, which is the same defect as a fabricated number.
     """
+    tabs = _DST_LOG_FIELDS
+    anchor = "fantasy_pts"
     columns = _table_columns(connection, "nfl_dst_stats")
     if not {"player_id", "season", "week"}.issubset(columns):
         return {
@@ -1471,21 +1516,26 @@ def _dst_game_log(connection, player, player_id, season, team_weeks):
             "name": player["name"],
             "position": "DEF",
             "reference_season": season,
-            "fields": [],
+            "anchor": anchor,
+            "tabs": tabs,
+            "fields": [f for tab in tabs for f in tab["fields"]],
             "team_games": len(team_weeks),
             "games_played": 0,
             "games": [],
             "unavailable": "per-week D/ST scoring is not loaded",
         }
 
-    fields = [f for f in _DST_LOG_FIELDS if f in columns]
+    fields = [f for tab in tabs for f in tab["fields"] if f in columns]
+    # Same rule as the skill-position path: the anchor column (Pts) is rendered
+    # by the component, so it is not a tab field -- but the row carries it.
+    stat_fields = fields + ([anchor] if anchor in columns else [])
     by_week = {}
     for row in connection.execute(
         "SELECT * FROM nfl_dst_stats WHERE player_id=? AND season=?",
         (player_id, season),
     ):
         try:
-            by_week[int(row["week"])] = {f: row[f] for f in fields}
+            by_week[int(row["week"])] = {f: row[f] for f in stat_fields}
         except (TypeError, ValueError):
             continue
 
@@ -1497,7 +1547,7 @@ def _dst_game_log(connection, player, player_id, season, team_weeks):
             "played": stats is not None,
             "opponent": None,
             "team": player["team"],
-            "stats": stats if stats else {f: None for f in fields},
+            "stats": stats if stats else {f: None for f in stat_fields},
         })
 
     return {
@@ -1506,6 +1556,8 @@ def _dst_game_log(connection, player, player_id, season, team_weeks):
         "name": player["name"],
         "position": "DEF",
         "reference_season": season,
+        "anchor": anchor,
+        "tabs": tabs,
         "fields": fields,
         "team_games": len(team_weeks),
         "games_played": sum(1 for g in games if g["played"]),

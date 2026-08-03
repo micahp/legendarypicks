@@ -125,6 +125,7 @@ class TestNflMockDraft(unittest.TestCase):
                     season INTEGER,
                     game_no TEXT,
                     team TEXT,
+                    opponent TEXT,
                     stats TEXT,
                     game_type TEXT
                 )"""
@@ -432,6 +433,88 @@ class TestNflMockDraft(unittest.TestCase):
         self.assertIsNone(body["season_outlook"])
         self.assertIsNone(body["season_totals"])
         self.assertIsNone(body["season_totals_source"])
+
+    # ------------------------------------------------------------------
+    #  Game log tabs
+    # ------------------------------------------------------------------
+
+    def test_game_log_tabs_declare_at_most_five_fields_each(self):
+        """Every tab stays within the 8-column budget (Wk + Opp + anchor + 5),
+        which is what keeps the view off the horizontal scrollbar."""
+        for position, tabs in nfl_mock_draft._LOG_FIELDS.items():
+            for tab in tabs:
+                self.assertLessEqual(
+                    len(tab["fields"]), 5,
+                    f"{position}/{tab['id']} declares {len(tab['fields'])} fields",
+                )
+        for tab in nfl_mock_draft._DST_LOG_FIELDS:
+            self.assertLessEqual(len(tab["fields"]), 5)
+
+    def test_game_log_tab_fields_never_contain_the_anchor(self):
+        """Wk, Opp and the points anchor are rendered by the component for
+        every tab; a tab that also shipped one would print the column twice."""
+        anchors = {"QB": "fpts_ppr", "RB": "fpts_ppr", "WR": "fpts_ppr",
+                   "TE": "fpts_ppr", "FB": "fpts_ppr", "PK": None}
+        for position, tabs in nfl_mock_draft._LOG_FIELDS.items():
+            for tab in tabs:
+                self.assertNotIn(anchors[position], tab["fields"])
+        for tab in nfl_mock_draft._DST_LOG_FIELDS:
+            self.assertNotIn("fantasy_pts", tab["fields"])
+
+    def test_game_log_fields_is_the_ordered_union_of_the_tab_fields(self):
+        """The published `fields` list is exactly the tabs' fields flattened in
+        order, so the row-building code and the contract stay truthful."""
+        for pid in (1, 2, 3, 5):  # RB, WR, QB, PK
+            resp = client.get(f"/api/nfl/draft/player/{pid}/game-log")
+            self.assertEqual(resp.status_code, 200)
+            body = resp.json()
+            union = [f for tab in body["tabs"] for f in tab["fields"]]
+            self.assertEqual(body["fields"], union, f"player {pid}")
+
+    def test_game_log_publishes_the_expected_tabs_per_position(self):
+        """QB / RB / WR / TE / PK each publish the ESPN-style tab set; the
+        anchor follows the position (fpts_ppr for skill positions, null for
+        PK, fantasy_pts for DEF)."""
+        expected = {
+            3: (["Passing", "Rushing", "Misc", "Usage"], "fpts_ppr"),   # QB
+            1: (["Rushing", "Receiving", "Misc", "Usage"], "fpts_ppr"),  # RB
+            2: (["Receiving", "Rushing", "Misc", "Usage"], "fpts_ppr"),  # WR
+            4: (["Receiving", "Rushing", "Misc", "Usage"], "fpts_ppr"),  # TE
+            5: (["Kicking"], None),                                       # PK
+        }
+        for pid, (labels, anchor) in expected.items():
+            resp = client.get(f"/api/nfl/draft/player/{pid}/game-log")
+            self.assertEqual(resp.status_code, 200)
+            body = resp.json()
+            self.assertTrue(body["tabs"], f"player {pid} has no tabs")
+            self.assertEqual(
+                [t["label"] for t in body["tabs"]], labels, f"player {pid}"
+            )
+            self.assertEqual(body["anchor"], anchor, f"player {pid}")
+
+    def test_game_log_publishes_def_tab(self):
+        """D/ST anchor on fantasy_pts and ship a single Defense tab; even when
+        per-week scoring is not loaded the tab shape is still published."""
+        connection = nfl_mock_draft._conn()
+        try:
+            connection.execute(
+                "INSERT OR IGNORE INTO players "
+                "(id, name, position, team, league, active) "
+                "VALUES (9001, 'Delta DEF', 'DEF', 'SF', 'nfl', 1)"
+            )
+            connection.commit()
+        finally:
+            connection.close()
+        resp = client.get("/api/nfl/draft/player/9001/game-log")
+        self.assertEqual(resp.status_code, 200)
+        body = resp.json()
+        self.assertTrue(body["tabs"])
+        self.assertEqual([t["label"] for t in body["tabs"]], ["Defense"])
+        self.assertEqual(body["anchor"], "fantasy_pts")
+        self.assertEqual(
+            body["fields"],
+            [f for tab in body["tabs"] for f in tab["fields"]],
+        )
 
     # ------------------------------------------------------------------
     #  Draft creation
