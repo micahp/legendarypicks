@@ -71,6 +71,10 @@ def _artifact_row(**overrides):
         "pat_missed": 0,
         "gwfg_made": 0,
         "gwfg_att": 0,
+        "fumbles_total": 0,
+        "fumbles_lost_total": 0,
+        "special_teams_tds": 0,
+        "fumble_recovery_tds": 0,
     }
     row.update(overrides)
     return row
@@ -154,6 +158,9 @@ class BuildRowsTests(unittest.TestCase):
         rows = mod.build_rows(self.path)
 
         self.assertEqual(1, len(rows))
+        # The conversion is now *in* the row. It was the reason the row was
+        # emitted at all — build_rows gates on `converted_two_point` — and until
+        # the Misc block existed it was the one thing the row did not record.
         self.assertEqual(
             {
                 "fpts": 2,
@@ -161,6 +168,13 @@ class BuildRowsTests(unittest.TestCase):
                 "target_share": 0,
                 "targets": 0,
                 "carries": 0,
+                "fum": 0,
+                "fum_lost": 0,
+                "st_td": 0,
+                "fum_rec_td": 0,
+                "pass_2pt": 0,
+                "rush_2pt": 0,
+                "rec_2pt": 1,
             },
             rows[0]["stats"],
         )

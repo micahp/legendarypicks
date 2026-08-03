@@ -102,12 +102,33 @@ _MAP = {
     "pat_missed": "pat_missed",
     "gwfg_made": "gwfg_made",
     "gwfg_att": "gwfg_att",
+    # Sacks taken. Already fetched before today — it is in _NEEDED, and has been
+    # since dropbacks needed it — but only ever added to `att` and thrown away.
+    # Named `sacks_taken` rather than `sacks` because the D/ST log already
+    # publishes `sacks`, meaning the opposite thing.
+    "sacks_taken": "sacks_suffered",
+    # The Misc block. Published verbatim and stored unsummed: `special_teams_tds`
+    # and `fumble_recovery_tds` are the two that make up ESPN's Misc TD, and they
+    # are disjoint in the artifact (0 rows carry both). Combining them is
+    # presentation, and belongs in the router — this module is a mapping.
+    #
+    # `pt_return_tds` is deliberately NOT here. It lives in nflverse's punting
+    # namespace and means punt-return TDs *allowed*: all 15 nonzero rows in 2025
+    # are punters. Summing it into a Misc TD would credit a punter with a
+    # touchdown he surrendered.
+    "fum": "fumbles_total",
+    "fum_lost": "fumbles_lost_total",
+    "st_td": "special_teams_tds",
+    "fum_rec_td": "fumble_recovery_tds",
+    "pass_2pt": "passing_2pt_conversions",
+    "rush_2pt": "rushing_2pt_conversions",
+    "rec_2pt": "receiving_2pt_conversions",
 }
 
 # Groups are emitted only when the player actually had that role, so a QB does
 # not acquire a zero receiving line (the pbp ingest has a test for exactly this).
 _PASS_KEYS = ("att", "cmp", "pass_yds", "pass_td", "intc", "air_yds",
-              "pass_epa", "cpoe", "dropbacks")
+              "pass_epa", "cpoe", "dropbacks", "sacks_taken")
 _RUSH_KEYS = ("carries", "rush_yds", "rush_td")
 _RECV_KEYS = ("targets", "rec", "rec_yds", "rec_td")
 
@@ -123,6 +144,15 @@ _RECV_KEYS = ("targets", "rec", "rec_yds", "rec_td")
 # makes a zero-target/carry week look unknown in the per-game log and removes
 # target-less weeks from season denominators.
 _ALWAYS_KEYS = ("target_share", "targets", "carries")
+
+# Written on every row we emit, like _ALWAYS_KEYS and for a related reason: a
+# fumble is not owned by a role. A quarterback, a returner and a receiver can all
+# lose one, so gating these behind the pass/rush/recv groups would drop the event
+# for exactly the player it did not otherwise belong to. They are also rare
+# enough (1.3% of 2025 rows carry a lost fumble, 0.14% a misc TD) that the
+# published zeros are what make an absent value distinguishable from a quiet one.
+_MISC_KEYS = ("fum", "fum_lost", "st_td", "fum_rec_td",
+              "pass_2pt", "rush_2pt", "rec_2pt")
 _TWO_POINT_COLS = (
     "passing_2pt_conversions",
     "rushing_2pt_conversions",
@@ -274,7 +304,7 @@ def build_rows(path: str, all_positions: bool = False):
                 v = _num(row[_MAP[k]])
                 if v is not None:
                     stats[k] = v
-        for k in ("fpts", "fpts_ppr") + _ALWAYS_KEYS:
+        for k in ("fpts", "fpts_ppr") + _ALWAYS_KEYS + _MISC_KEYS:
             v = _num(row[_MAP[k]])
             if v is not None:
                 stats[k] = v
