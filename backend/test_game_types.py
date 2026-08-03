@@ -48,6 +48,44 @@ class NormalizeGameType(unittest.TestCase):
             normalize_game_type("mlb_statsapi", "mlb", "R")
 
 
+class MlbStatsApiPhases(unittest.TestCase):
+    """MLB's log publisher speaks letters, and MLB is the league that had no boundary.
+
+    Its ingest never wrote a game_type at all: 45,551 prod rows NULL, and dev's
+    values typed in by a human. These assertions are the mapping's only durable
+    record that it was measured -- from two FINISHED seasons, because 2026 has
+    played no postseason and an unmeasured letter is a guess.
+    """
+
+    def test_measured_letters(self):
+        for raw, phase in (("S", "PRE"), ("E", "PRE"), ("R", "REG"),
+                           ("F", "POST"), ("D", "POST"), ("L", "POST"),
+                           ("W", "POST"), ("A", "ALLSTAR")):
+            self.assertEqual(normalize_game_type("statsapi", "mlb", raw), phase)
+
+    def test_the_four_postseason_rounds_are_one_phase(self):
+        # F/D/L/W are wild card, division series, LCS and World Series -- four
+        # rounds published in date order, not four phases. Collapsing them is the
+        # claim; if a fifth round appears it must raise rather than join silently.
+        self.assertEqual(
+            {normalize_game_type("statsapi", "mlb", r) for r in "FDLW"}, {"POST"})
+
+    def test_all_star_is_not_a_regular_season_game(self):
+        # One game a year, published as its own type. Filing it REG puts an
+        # exhibition in the denominator of every per-game rate we serve.
+        self.assertEqual(normalize_game_type("statsapi", "mlb", "A"), "ALLSTAR")
+
+    def test_an_unmeasured_letter_raises(self):
+        with self.assertRaises(ValueError):
+            normalize_game_type("statsapi", "mlb", "X")
+
+    def test_espn_ids_do_not_leak_into_the_letter_vocabulary(self):
+        # Both publishers describe MLB and neither speaks the other's vocabulary.
+        # "2" is ESPN's regular season; to statsapi it is not a phase at all.
+        with self.assertRaises(ValueError):
+            normalize_game_type("statsapi", "mlb", "2")
+
+
 class VerifyNhlPhase(unittest.TestCase):
     """`verify_nhl_phase` compares a stamp to the publisher's calendar.
 

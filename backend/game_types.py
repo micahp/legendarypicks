@@ -112,6 +112,39 @@ _PUBLISHED: Dict[Tuple[str, str], Dict[str, str]] = {
     # the 32-team list. Any NFL ingest that trusts type 3 wholesale writes an
     # exhibition and two teams that do not exist. See backfill_nfl_postseason.py.
     ("espn", "nfl"): {"1": PRE, "2": REG, "3": POST},
+    # MLB's OTHER publisher. `ingest_mlb_logs.py` keys every row by statcast's
+    # `game_pk`, which is the MLB Stats API's own id, and that API publishes the
+    # phase as a LETTER -- a vocabulary nothing above shares. Ours came in through
+    # this door with no boundary at all: MLB was the one league whose ingest never
+    # wrote game_type, so 45,551 prod rows sat NULL and dev's PRE/REG had been put
+    # there by hand, reproducible by nothing. `AND game_type='REG'` over NULL is the
+    # exact failure the top of this file describes.
+    #
+    # Measured 2026-08-03 from /api/v1/schedule over two FINISHED seasons, because
+    # 2026 has not played a postseason yet and an unmeasured letter is a guess:
+    #                 2025                          2024
+    #     S    471  02-20..03-25         472  02-22..03-26   spring training
+    #     E     12  02-21..03-25          13  02-23..03-26   spring exhibitions
+    #     R   2464  03-18..09-28        2469  03-20..09-30   regular season
+    #     A      1  07-15                 1  07-16          All-Star Game
+    #     F     11  09-30..10-02          9  10-01..10-03   wild card
+    #     D     18  10-04..10-11         18  10-05..10-12   division series
+    #     L     11  10-12..10-20         11  10-13..10-20   league championship
+    #     W      7  10-24..11-01          5  10-25..10-30   world series
+    #
+    # F/D/L/W are four rounds of one phase, in published date order both seasons,
+    # so they collapse to POST. `E` sits inside the same spring window as `S` in
+    # both seasons and is filed PRE for that reason and no other -- our 2026 logs
+    # contain zero E games, so this is the one entry no row exercises yet.
+    #
+    # Cross-check on the value that matters: this publisher's 2026 R count is 2458,
+    # the same number ESPN publishes for its own season type 2. Two independent
+    # publishers, one number.
+    ("statsapi", "mlb"): {
+        "S": PRE, "E": PRE, "R": REG,
+        "F": POST, "D": POST, "L": POST, "W": POST,
+        "A": ALLSTAR,
+    },
 }
 
 # Competition-level phases: published on the competition, not the season, and

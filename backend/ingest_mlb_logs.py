@@ -27,6 +27,12 @@ from typing import Optional
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from ingest_nfl_logs import ensure_table  # reuse the shared schema
 from team_codes import normalize
+from game_types import normalize_game_type
+
+# game_pks statcast handed us with no phase. Reported at the end of a run rather
+# than per row: a silent NULL here is the whole defect, and a warning nobody
+# aggregates is nearly as easy to miss as no warning at all.
+_unphased: set = set()
 
 DB = os.environ.get("LP_DB_PATH") or os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "picks.db")
 
@@ -115,12 +121,26 @@ def _process_day(data, con, mlbam_to_player: dict, season: int) -> int:
             team = normalize("mlb", g["away_team"].iloc[0]) if top else normalize("mlb", g["home_team"].iloc[0])
             opponent = normalize("mlb", g["home_team"].iloc[0]) if top else normalize("mlb", g["away_team"].iloc[0])
             home_away = "away" if top else "home"
+        # The phase, from the frame we already hold. Statcast publishes `game_type`
+        # on every pitch (verified 2026-08-01: one value per game_pk), so this costs
+        # nothing and closes the hole that made MLB the only league whose logs went
+        # in with game_type NULL -- 45,551 rows of it on prod, and `game_type='REG'`
+        # over NULL returns zero games for a player who played all of them.
+        # normalize_game_type raises on a letter nobody has measured; it does not
+        # fall back to REG.
+        phase = None
+        if "game_type" in g.columns:
+            raw = g["game_type"].iloc[0]
+            if raw is not None and str(raw).strip():
+                phase = normalize_game_type("statsapi", "mlb", raw)
+        if phase is None:
+            _unphased.add(str(int(game_pk)))
         con.execute(
             """INSERT OR REPLACE INTO player_game_logs
-               (player_id, league, season, game_no, game_id, game_date, team,
-                opponent, home_away, stats, source, source_player_key)
-               VALUES (?,?,?,?,?,?,?,?,?,?,?,?)""",
-            (pid, "mlb", season, gdate, str(int(game_pk)), gdate, team,
+               (player_id, league, season, game_no, game_id, game_date, game_type,
+                team, opponent, home_away, stats, source, source_player_key)
+               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+            (pid, "mlb", season, gdate, str(int(game_pk)), gdate, phase, team,
              opponent, home_away, json.dumps(stats), "statcast", str(mlbam)))
         ingested += 1
     del bat
@@ -170,6 +190,13 @@ def ingest(days: int = 60, start_date: Optional[str] = None, end_date: Optional[
         "SELECT COUNT(*) FROM player_game_logs WHERE league='mlb' AND season=? AND player_id IS NOT NULL",
         (season,)).fetchone()[0]
     print(f"  Ingested {ingested} MLB game-logs total ({resolved} spine-resolved for {season})")
+    if _unphased:
+        # Loud, and it names the remedy. The rows are written either way -- a log
+        # without a phase still beats no log -- but an unphased game is invisible
+        # to every `game_type='REG'` consumer until this is run.
+        print(f"  WARNING: {len(_unphased)} game(s) arrived with no published phase "
+              f"and were written NULL: {sorted(_unphased)[:5]}\n"
+              f"           run: backfill_mlb_game_types.py --db <db> --season {season} --apply")
     con.close()
     return ingested
 
