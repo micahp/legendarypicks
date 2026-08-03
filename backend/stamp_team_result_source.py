@@ -71,11 +71,45 @@ def main() -> None:
         for lg, n in unattributable:
             print(f"  {lg}: {n} rows have no parity run_id — LEFT NULL on purpose")
 
-        total = sum(p[2] for p in plan)
+        # ── the evidence table is itself unattributed ────────────────────────
+        # This script read `team_game_stats.run_id` as proof of who wrote a
+        # `team_game_results` row, and did not notice that `team_game_stats` has a
+        # `source` column of its own holding NULL on all 5,646 rows. After the MLB
+        # ingest was fixed on 2026-08-03 that table became the LARGER unattributed
+        # block in COV-source, having been hidden behind MLB the whole time.
+        #
+        # No new inference is involved: a row whose own run_id reads
+        # `<league>-parity-<ts>` names its writer directly, which is a stronger
+        # claim than the join above, not a weaker one. MLB's 16 rows carry no
+        # run_id and stay NULL, for the same reason as always.
+        stats_plan = con.execute(
+            "SELECT league, run_id, COUNT(*) FROM team_game_stats"
+            " WHERE (source IS NULL OR source='') AND run_id LIKE ?"
+            " GROUP BY league, run_id ORDER BY league",
+            (PARITY_RUN,),
+        ).fetchall()
+        for lg, run_id, n in stats_plan:
+            print(f"  team_game_stats {lg}: {n} rows <- {run_id}  source={SOURCE}")
+        for lg, n in con.execute(
+            "SELECT league, COUNT(*) FROM team_game_stats"
+            " WHERE (source IS NULL OR source='')"
+            "   AND (run_id IS NULL OR run_id NOT LIKE ?) GROUP BY league",
+            (PARITY_RUN,),
+        ).fetchall():
+            print(f"  team_game_stats {lg}: {n} rows have no parity run_id — LEFT NULL on purpose")
+
+        total = sum(p[2] for p in plan) + sum(p[2] for p in stats_plan)
         print(f"total rows to stamp: {total}")
         if not args.apply:
             print("dry run; nothing written. re-run with --apply")
             return
+
+        stats_cur = con.execute(
+            "UPDATE team_game_stats SET source=?"
+            " WHERE (source IS NULL OR source='') AND run_id LIKE ?",
+            (SOURCE, PARITY_RUN),
+        )
+        print(f"stamped {stats_cur.rowcount} team_game_stats rows")
 
         cur = con.execute(
             "UPDATE team_game_results AS r SET source=?, run_id=("
@@ -89,7 +123,7 @@ def main() -> None:
             (SOURCE, PARITY_RUN, PARITY_RUN),
         )
         con.commit()
-        print(f"stamped {cur.rowcount} rows")
+        print(f"stamped {cur.rowcount} team_game_results rows")
     finally:
         con.close()
 
