@@ -73,3 +73,8 @@ logs/
 # v0.6.13 re-cut: disposable clone + large pinned artifact (sha256 recorded in PINNED-ARTIFACTS)
 backend/data/rehearsal-v0.6.13.db
 backend/data/espn_2026_snapshot_page1.json
+
+# reconcile_totals run artifacts: an append-only run log and a cache of immutable
+# ESPN event documents. Both are rebuilt on demand and neither is a source of truth.
+backend/data/reconcile.log
+backend/data/reconcile-event-cache.json

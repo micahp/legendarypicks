@@ -26,6 +26,8 @@ Environment:
     LP_DB_PATH — the sqlite database (default: backend/data/picks.db)
 """
 import argparse
+import calendar
+import json
 import os
 import re
 import sqlite3
@@ -41,6 +43,10 @@ DB = os.environ.get("LP_DB_PATH") or os.path.join(
 )
 
 CORE = "https://sports.core.api.espn.com/v2/sports"
+# The site API answers for a whole date range at once. The core API answers one event
+# per request. Both publish the same status, date and competition type; only the cost
+# differs, and for a season still in progress the difference is an hour.
+SITE = "https://site.api.espn.com/apis/site/v2/sports"
 
 # league -> ESPN core API path segment. Adding one is step 5 of the add-a-league
 # checklist in docs/DATA-COVERAGE-CONTRACT.md; read §6 first, because the shape of a
@@ -65,7 +71,13 @@ class OracleUnreachable(Exception):
 # request, back off long, and cache — the whole point of this script is that a phantom
 # gap is worse than a slow check.
 _CACHE: Dict[str, dict] = {}
-_MIN_INTERVAL = 0.5
+# Pace, overridable. A mid-season league is the expensive case: explain_gap costs one
+# request per DIFFERING event, and MLB 2026 mid-season differs by ~776 (the whole rest
+# of the schedule), which at 0.5s is a burst long enough to trip the 403 described
+# above — measured 2026-08-03, and the block then outlived the retry ladder and turned
+# the whole run into a single NO-ORACLE. Slow it down for those runs rather than
+# discovering the ceiling again.
+_MIN_INTERVAL = float(os.environ.get("LP_RECONCILE_MIN_INTERVAL") or 0.5)
 _last_request = 0.0
 
 # ESPN's core API rejects the bare `python-requests/x.y` User-Agent with a bare 403 —
@@ -77,10 +89,70 @@ _last_request = 0.0
 _HDRS = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/124 Safari/537.36"}
 
 
+# Event documents are immutable once a game is final, and a mid-season league costs
+# one fetch per event it differs by -- MLB 2026 differs by ~750, which is 20 minutes
+# of pacing that a re-run pays again from zero because _CACHE dies with the process.
+# That is what turned a rate-limit into a 40-minute retry loop on 2026-08-03. Persist
+# them: the second run of the same season is nearly free, which is what makes this
+# affordable to run on a schedule rather than by hand.
+_DISK_CACHE = os.environ.get("LP_RECONCILE_CACHE") or os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "data", "reconcile-event-cache.json"
+)
+# Progress goes to a FILE, not just stderr. stderr belongs to whoever launched the
+# process -- under nohup, a systemd unit, or a background shell it lands somewhere
+# nobody is looking, and a run with no inspectable output is indistinguishable from a
+# hung one. On 2026-08-03 that produced a 54-minute silence that could not be
+# audited without poking /proc. A path you can tail is the fix.
+_LOG_PATH = os.environ.get("LP_RECONCILE_LOG") or os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "data", "reconcile.log"
+)
+
+
+def _log(message: str) -> None:
+    """Append one timestamped line to the run log, and echo to stderr."""
+    line = f"{datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')}  {message}"
+    print(line, file=sys.stderr, flush=True)
+    try:
+        os.makedirs(os.path.dirname(_LOG_PATH), exist_ok=True)
+        with open(_LOG_PATH, "a") as fh:
+            fh.write(line + "\n")
+    except Exception:  # noqa: BLE001 - logging must never break the run
+        pass
+
+
+_DISK: Dict[str, dict] = {}
+try:
+    with open(_DISK_CACHE) as _fh:
+        _DISK = json.load(_fh)
+except Exception:  # noqa: BLE001 - a missing or corrupt cache is not an error
+    _DISK = {}
+_DISK_DIRTY = False
+
+
+def _disk_flush() -> None:
+    """Best effort. A cache we cannot write is a slow run, never a wrong one."""
+    if not _DISK_DIRTY:
+        return
+    try:
+        os.makedirs(os.path.dirname(_DISK_CACHE), exist_ok=True)
+        tmp = _DISK_CACHE + ".tmp"
+        with open(tmp, "w") as fh:
+            json.dump(_DISK, fh)
+        os.replace(tmp, _DISK_CACHE)
+    except Exception:  # noqa: BLE001
+        pass
+
+
 def _get_json(url: str, attempts: int = 6) -> dict:
-    global _last_request
+    global _last_request, _DISK_DIRTY
     if url in _CACHE:
         return _CACHE[url]
+    # Only individual /events/<id> documents are cached across runs. Collection
+    # envelopes carry counts that must stay live -- caching those would be caching
+    # the answer this script exists to ask for.
+    cacheable = re.search(r"/events/\d+$", url) is not None
+    if cacheable and url in _DISK:
+        return _DISK[url]
     last = None
     for i in range(attempts):
         gap = _MIN_INTERVAL - (time.monotonic() - _last_request)
@@ -96,6 +168,11 @@ def _get_json(url: str, attempts: int = 6) -> dict:
             r.raise_for_status()
             body = r.json()
             _CACHE[url] = body
+            if cacheable:
+                _DISK[url] = body
+                _DISK_DIRTY = True
+                if len(_DISK) % 50 == 0:
+                    _disk_flush()
             return body
         except OSError as e:
             last = f"{type(e).__name__}: {e}"
@@ -173,17 +250,81 @@ def published_event_ids(url: str) -> List[str]:
         page += 1
 
 
+def bulk_event_index(url: str) -> Dict[str, dict]:
+    """Every event of a season, by id, in one request per calendar month.
+
+    The per-event fetch this replaces is the right shape for a finished season, which
+    differs by a handful of events, and exactly the wrong shape for a season still
+    being played: MLB 2026 differs by its entire remaining schedule — 776 events — and
+    at any pace polite enough not to be blocked that is over an hour of requests. Two
+    consecutive runs on 2026-08-03 died that way, the first into a 403 of its own
+    making, the second to its timeout with nothing to show.
+
+    The site API publishes the same three fields the classifier reads — `date`,
+    `competitions[0].type.abbreviation`, `competitions[0].status.type.name` — for a
+    whole date range at once. Measured 2026-08-03: seven requests return all 2,458
+    published MLB 2026 regular-season events, exactly matching the core API's own
+    `count`, and reproduce the single All-Star event hiding inside season type 2.
+
+    Best effort by contract. Anything unindexed falls back to its own fetch, so this
+    only ever changes how long a run takes, never what it concludes.
+    """
+    m = re.search(r"/v2/sports/(.+?)/seasons/(\d+)/types/([^/]+)/events", url)
+    if not m:
+        return {}
+    core_path, season, type_id = m.group(1), m.group(2), m.group(3)
+    try:
+        window = _get_json(f"{CORE}/{core_path}/seasons/{season}/types/{type_id}")
+    except OracleUnreachable:
+        return {}
+    start, end = str(window.get("startDate") or "")[:10], str(window.get("endDate") or "")[:10]
+    if not (start and end):
+        return {}
+
+    # The site API takes `baseball/mlb` where the core API takes `baseball/leagues/mlb`.
+    site_path = core_path.replace("/leagues/", "/")
+    index: Dict[str, dict] = {}
+    requests_made = 0
+    year, month = int(start[:4]), int(start[5:7])
+    last_year, last_month = int(end[:4]), int(end[5:7])
+    while (year, month) <= (last_year, last_month):
+        span = calendar.monthrange(year, month)[1]
+        try:
+            doc = _get_json(
+                f"{SITE}/{site_path}/scoreboard"
+                f"?dates={year}{month:02d}01-{year}{month:02d}{span:02d}&limit=1000"
+            )
+            requests_made += 1
+        except OracleUnreachable:
+            doc = {}
+        for event in doc.get("events") or []:
+            # A month of scoreboard carries every phase that touched those dates —
+            # 321 spring-training events sit alongside the regular season in March.
+            # The type we were asked about is the only one this collection claims.
+            if str((event.get("season") or {}).get("type")) != str(type_id):
+                continue
+            if event.get("id"):
+                index[str(event["id"])] = event
+        month = 1 if month == 12 else month + 1
+        year = year + 1 if month == 1 else year
+    if index:
+        _log(f"  bulk index: {len(index)} events in {requests_made} request(s)")
+    return index
+
+
 class Gap(NamedTuple):
     """What a difference between the published set and ours is actually made of."""
-    published: int      # everything in the publisher's collection
-    exhibition: int     # All-Star and friends: published, played, not a league game
-    not_played: int     # postponed/canceled shells, superseded by a makeup event id
-    expected: int       # published - exhibition - not_played: what we should hold
-    missing: List[str]  # published, real, played, and absent from our table
-    extra: List[str]    # ours and not theirs — always a bug, in us or in the key
+    published: int          # everything in the publisher's collection
+    exhibition: int         # All-Star and friends: published, played, not a league game
+    not_played: int         # postponed/canceled shells, superseded by a makeup event id
+    expected: int           # published - exhibition - not_played - not_yet_played - beyond_horizon
+    missing: List[str]      # published, real, played, and absent from our table
+    extra: List[str]        # ours and not theirs — always a bug, in us or in the key
+    not_yet_played: int = 0  # scheduled/in-progress: published, not finished, not a gap
+    beyond_horizon: int = 0  # finished AFTER the last game we hold: outside the claim
 
 
-def explain_gap(url: str, ours: set) -> Gap:
+def explain_gap(url: str, ours: set, horizon: Optional[str] = None) -> Gap:
     """Diff a published collection against ours and classify only the difference.
 
     The cost is one request per *differing* event, not per event, so a clean season
@@ -200,14 +341,41 @@ def explain_gap(url: str, ours: set) -> Gap:
     """
     published = published_event_ids(url)
     diff = [e for e in published if e not in ours]
-    exhibition = not_played = 0
+    exhibition = not_played = not_yet_played = beyond_horizon = 0
     missing: List[str] = []
-    for event_id in diff:
-        try:
-            ev = _get_json(f"{CORE}/{ESPN_PATH_BY_URL(url)}/events/{event_id}")
-        except OracleUnreachable:
-            missing.append(event_id)  # unclassifiable is not innocent
-            continue
+    # Progress, to stderr, because a run with no output is indistinguishable from a
+    # hung one. A finished season differs by a handful of events and prints nothing
+    # worth reading; a MID-SEASON league differs by its whole remaining schedule --
+    # MLB 2026 differs by ~750, which is 20 minutes of paced requests. The first
+    # version of this printed only at the end, and a 54-minute silence is not
+    # something anyone should be asked to take on faith.
+    total = len(diff)
+    index: Dict[str, dict] = {}
+    if total > 50:
+        _log(f"classifying {total} differing events")
+        # Above this many, the per-event fetch is the wrong instrument. Below it, a
+        # finished season pays three requests and the bulk index would cost more than
+        # it saves.
+        index = bulk_event_index(url)
+        covered = sum(1 for e in diff if e in index)
+        if index:
+            _log(f"  index covers {covered}/{total} differing events; "
+                 f"{total - covered} still need their own fetch "
+                 f"(~{(total - covered) * _MIN_INTERVAL / 60:.0f} min at {_MIN_INTERVAL}s pacing)")
+    started = time.monotonic()
+    for n, event_id in enumerate(diff, 1):
+        if total > 50 and n % 100 == 0:
+            rate = (time.monotonic() - started) / n
+            _log(f"  {n}/{total}  missing={len(missing)} "
+                 f"not-yet-played={not_yet_played} past-horizon={beyond_horizon} "
+                 f"eta={(total - n) * rate / 60:.0f}m")
+        ev = index.get(event_id)
+        if ev is None:
+            try:
+                ev = _get_json(f"{CORE}/{ESPN_PATH_BY_URL(url)}/events/{event_id}")
+            except OracleUnreachable:
+                missing.append(event_id)  # unclassifiable is not innocent
+                continue
         comp = (ev.get("competitions") or [{}])[0]
         if (comp.get("type") or {}).get("abbreviation") == "ALLSTAR":
             exhibition += 1
@@ -216,14 +384,43 @@ def explain_gap(url: str, ours: set) -> Gap:
         if state in ("STATUS_POSTPONED", "STATUS_CANCELED", "STATUS_SUSPENDED"):
             not_played += 1
             continue
+        # Not-yet-played: a season in progress (MLB 2026) publishes its whole
+        # schedule, so the collection holds games that have not been played yet.
+        # They are not missing — they have not happened. Counting them as missing
+        # would report every future MLB game as a defect and demote a season that
+        # is exactly as complete as it can be today. The status type carries the
+        # answer: `completed` False with no terminal name means scheduled or in
+        # progress, and the game we cannot have yet is not a game we lost.
+        if state in ("STATUS_SCHEDULED", "STATUS_IN_PROGRESS", "STATUS_PRE"):
+            not_yet_played += 1
+            continue
+        # Finished, absent from our table, and played AFTER the last game we hold.
+        #
+        # This is the difference between a gap and an edge, and getting it wrong is
+        # what made a live season unofferable. `not_yet_played` above handles
+        # September. It does nothing for last night: those games ARE finished, so
+        # without this branch they count as missing the moment they end, the verdict
+        # drops to `partial`, and the league disappears from /leagues every morning
+        # until the next ingest runs — availability that tracks cron timing rather
+        # than data quality.
+        #
+        # So the coverage row claims a WINDOW, not an instant: every published game
+        # up to `horizon` is present. A game past the horizon is outside the claim,
+        # not a hole in it. A game missing INSIDE the window is still a real miss and
+        # still fails, which is the whole point of keeping the two apart.
+        if horizon and str(ev.get("date") or "")[:10] > horizon:
+            beyond_horizon += 1
+            continue
         missing.append(event_id)
     return Gap(
         published=len(published),
         exhibition=exhibition,
         not_played=not_played,
-        expected=len(published) - exhibition - not_played,
+        expected=len(published) - exhibition - not_played - not_yet_played - beyond_horizon,
         missing=missing,
         extra=sorted(ours - set(published)),
+        not_yet_played=not_yet_played,
+        beyond_horizon=beyond_horizon,
     )
 
 
@@ -258,6 +455,10 @@ def describe_gap(gap: Gap) -> str:
         parts.append(f"-{gap.exhibition} exhibition")
     if gap.not_played:
         parts.append(f"-{gap.not_played} not played")
+    if gap.not_yet_played:
+        parts.append(f"-{gap.not_yet_played} not yet played")
+    if gap.beyond_horizon:
+        parts.append(f"-{gap.beyond_horizon} past our horizon")
     return " ".join(parts)
 
 
@@ -500,7 +701,15 @@ def check_generic(conn: sqlite3.Connection, rep: Report, league: str, season: in
                 (league, season),
             )
         }
-        gap = explain_gap(f"{base}/types/{type_id}/events", our_ids)
+        # The horizon is the last game we hold, and it is what turns this from an
+        # instant into a window. Read from the table rather than from the clock: a
+        # season is as current as its data, not as current as the moment you asked.
+        horizon_row = conn.execute(
+            "SELECT MAX(game_date) FROM team_game_results WHERE league=? AND season=?",
+            (league, season),
+        ).fetchone()
+        horizon = (horizon_row[0] or None) if horizon_row else None
+        gap = explain_gap(f"{base}/types/{type_id}/events", our_ids, horizon=horizon)
     except OracleUnreachable as e:
         rep.unreachable(name, str(e))
         return
@@ -641,6 +850,24 @@ def write_coverage(conn: sqlite3.Connection, rep: Report, league: str, season: i
     expected_games = _expected_games_from_report(rep, league, season, fetched_games)
     window_start, window_end = _published_season_window(league, season)
 
+    # `checked_through` is what the row actually claims: every published game from
+    # season_start up to this date is present and paired. Not "as of now" — as of the
+    # last game we hold.
+    checked_row = conn.execute(
+        "SELECT MAX(game_date) FROM team_game_results WHERE league=? AND season=?",
+        (league, season),
+    ).fetchone()
+    checked_through = (checked_row[0] or None) if checked_row else None
+
+    # A season that passes every check but has not ended yet is `in_progress`, not
+    # `complete`. Keeping them apart is the point: `complete` means the season is over
+    # AND fully checked, and a caller that offers only `complete` would otherwise be
+    # told a September-ending season was finished in August. It also stops the row
+    # from having to lie in order to be offerable.
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    if status == "complete" and window_end and today <= window_end:
+        status = "in_progress"
+
     # READ, never asserted. The previous writer passed a literal 0 here while the
     # same function was inserting rows into this exact table.
     failure_count = count(
@@ -651,17 +878,25 @@ def write_coverage(conn: sqlite3.Connection, rep: Report, league: str, season: i
 
     conn.execute("DELETE FROM team_stats_coverage WHERE league=? AND season=?",
                  (league, season))
+    cov_columns = {r[1] for r in conn.execute("PRAGMA table_info(team_stats_coverage)")}
+    cols = ("run_id,league,season,season_start,season_end,status,expected_teams,"
+            "fetched_teams,expected_games,fetched_games,paired_games,paired_stat_games,"
+            "failure_count,completed_at,source")
+    vals = [run_id, league, season, window_start, window_end, status,
+            fetched_teams, fetched_teams,
+            expected_games, fetched_games, paired_games, paired_stat_games,
+            failure_count,
+            datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "reconcile_totals+espn_core_api"]
+    # Tolerate a database that predates the column rather than refusing to write the
+    # row: an older prod schema should degrade to the previous behaviour, not fail.
+    if "checked_through" in cov_columns:
+        cols += ",checked_through"
+        vals.append(checked_through)
     conn.execute(
-        "INSERT INTO team_stats_coverage"
-        "(run_id,league,season,season_start,season_end,status,expected_teams,"
-        "fetched_teams,expected_games,fetched_games,paired_games,paired_stat_games,"
-        "failure_count,completed_at,source) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
-        (run_id, league, season, window_start, window_end, status,
-         fetched_teams, fetched_teams,
-         expected_games, fetched_games, paired_games, paired_stat_games,
-         failure_count,
-         datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-         "reconcile_totals+espn_core_api"),
+        f"INSERT INTO team_stats_coverage({cols}) "
+        f"VALUES({','.join('?' * len(vals))})",
+        vals,
     )
     conn.commit()
     return status
@@ -738,6 +973,9 @@ def main() -> int:
         print(f"no database at {DB}", file=sys.stderr)
         return 1
 
+    _log(f"run start: db={DB} leagues={args.league or 'all'} "
+         f"seasons={args.season or 'all'} write_coverage={args.write_coverage} "
+         f"pace={_MIN_INTERVAL}s cache={len(_DISK)} events")
     if args.write_coverage:
         conn = sqlite3.connect(DB, timeout=60)
     else:
@@ -771,14 +1009,24 @@ def main() -> int:
         for league, season in checked:
             status = write_coverage(conn, rep, league, season)
             print(f"  {league} {season} -> {status}")
+            _log(f"coverage written: {league} {season} -> {status}")
         print()
 
     if rep.failed:
-        print(f"FAIL — {rep.failed} check(s) disagree with the published total or had no oracle")
+        verdict = f"FAIL — {rep.failed} check(s) disagree with the published total or had no oracle"
+        print(verdict)
+        _log(verdict)
         return 1
     print("PASS — every stored total matches the publisher")
+    _log("PASS — every stored total matches the publisher")
     return 0
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    try:
+        sys.exit(main())
+    finally:
+        # Flush what this run learned even when it failed or was interrupted --
+        # a killed run that discards 40 minutes of fetches is how the same slow
+        # loop repeats.
+        _disk_flush()
