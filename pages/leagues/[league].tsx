@@ -151,6 +151,7 @@ export default function LeagueHubPage() {
           <LeagueUnavailable league={route.league} />
         ) : (
         <>
+        <SeasonInProgressNote league={route.league} />
         <HubTabs
           tabs={route.validTabs}
           activeTab={route.activeTab}
@@ -354,6 +355,31 @@ function LeagueSwitcher({ activeLeague }: { activeLeague: string }) {
  * thing the product exists to show. Dressing our gaps in the same colour trains people
  * to discount the accent that carries the thesis.
  */
+/**
+ * A season we are showing while it is still being played says so.
+ *
+ * Offering an in-progress season is new, and the honest version of it states the
+ * edge of the claim rather than letting a half-season read as a whole one. Kept in
+ * zinc on purpose: per honest-data-ui the accent marks player absence, which is the
+ * thing the product exists to show, and spending it on our own recency trains people
+ * to discount the colour that carries the thesis.
+ */
+function SeasonInProgressNote({ league }: { league: string }) {
+  const { rows } = useCoverage()
+  const row = rows.find(
+    (r) => r.league === league.toLowerCase() && r.status === 'in_progress',
+  )
+  if (!row) return null
+  const through = (row as { checked_through?: string | null }).checked_through
+  return (
+    <p className="text-xs text-zinc-500">
+      {row.season} season in progress
+      {through ? ` — checked through ${through}` : ''}
+      {row.fetched_games != null ? ` · ${row.fetched_games} games` : ''}
+    </p>
+  )
+}
+
 function LeagueUnavailable({ league }: { league: string }) {
   return (
     <div className="rounded-lg border border-zinc-800 bg-zinc-900/40 px-4 py-8 text-center">

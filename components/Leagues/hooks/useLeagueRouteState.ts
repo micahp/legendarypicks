@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/router'
 import { localToday, validScheduleDate } from '../presentation'
-import { useCoverage } from './useCoverage'
+import { useCoverage, isVouched } from './useCoverage'
 import type { HubTab } from '../types'
 
 type DateIntent = 'default' | 'user' | 'auto'
@@ -24,7 +24,7 @@ export function useLeagueRouteState() {
   // tabs and neither one is gated on a team-stats row it will never have.
   const coverage = useCoverage()
   const coverageLoading = coverage.loading
-  const supportsTeamStats = coverage.statusFor(league) === 'complete'
+  const supportsTeamStats = isVouched(coverage.statusFor(league))
   const offerable = isUFC || isWorldCup || supportsTeamStats
   const validTabs: HubTab[] = isUFC
     ? ['rankings', 'schedule', 'predict']

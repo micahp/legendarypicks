@@ -11,7 +11,12 @@ import { useEffect, useState } from 'react'
 // fails, a route that 404s, a league with no row — all land on "we cannot vouch for
 // this", because the alternative is that an outage silently unlocks every season.
 
-export type CoverageStatus = 'complete' | 'partial' | 'unverified'
+// `in_progress` is a season that passes every check but has not ended yet — every
+// published game up to the row's `checked_through` is present and paired. It is kept
+// distinct from `complete` (season over AND fully checked) and from `partial` (we are
+// missing something we should have), because collapsing it into either one loses the
+// signal this registry exists to carry.
+export type CoverageStatus = 'complete' | 'in_progress' | 'partial' | 'unverified'
 
 export type CoverageRow = {
   league: string
@@ -40,7 +45,7 @@ function normalize(raw: any): CoverageRow[] {
       // An unrecognised status is not permission. Anything outside the three-value
       // vocabulary reads as unverified rather than being passed through to a caller
       // that only tests `=== 'complete'`.
-      status: (['complete', 'partial', 'unverified'].includes(r.status)
+      status: (['complete', 'in_progress', 'partial', 'unverified'].includes(r.status)
         ? r.status
         : 'unverified') as CoverageStatus,
     }))
@@ -61,6 +66,11 @@ export function fetchCoverage(): Promise<CoverageRow[]> {
       })
   }
   return inflight
+}
+
+/** A status we are willing to put in front of a user. */
+export function isVouched(status: CoverageStatus): boolean {
+  return status === 'complete' || status === 'in_progress'
 }
 
 export function useCoverage() {
@@ -85,20 +95,23 @@ export function useCoverage() {
       (r) => r.league === l && (season == null || r.season === season),
     )
     if (!matches.length) return 'unverified'
-    // With no season named, a league is only "complete" if it has a complete season.
-    return matches.some((r) => r.status === 'complete') ? 'complete' : matches[0].status
+    // With no season named, a league is offerable if any season is vouched for —
+    // finished-and-checked, or in progress and current to its own horizon.
+    const vouched = matches.find((r) => r.status === 'complete') ||
+      matches.find((r) => r.status === 'in_progress')
+    return vouched ? vouched.status : matches[0].status
   }
 
   // Seasons a picker may offer, newest first. Never includes a season we cannot vouch
   // for, so nothing downstream has to remember to check — the option is not there.
   const offerableSeasons = (league: string): number[] =>
     all
-      .filter((r) => r.league === league.toLowerCase() && r.status === 'complete')
+      .filter((r) => r.league === league.toLowerCase() && isVouched(r.status))
       .map((r) => r.season)
       .sort((a, b) => b - a)
 
   const offeredLeagues = all
-    .filter((r) => r.status === 'complete')
+    .filter((r) => isVouched(r.status))
     .map((r) => r.league)
     .filter((l, i, xs) => xs.indexOf(l) === i)
 
