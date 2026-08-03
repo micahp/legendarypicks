@@ -325,13 +325,31 @@ function check(cond, id, detail) {
       const apiPayload = await apiResponse.json()
       const expectedRows = apiPayload.eligible_players
       await page.getByRole('radio', { name: label, exact: true }).click()
+      // Wait on the ROW COUNT matching the API, not on a fixed cell ordinal. The
+      // old wait read td:nth-child(3) expecting the position, and column 3 has been
+      // Bye since the position moved into the Player cell's subtitle — so it sat
+      // out its full 30s on a board that had already filtered correctly. Row count
+      // is also the thing this check actually means: that the pill re-rendered the
+      // table rather than repainting itself.
       await page.waitForFunction(
-        expected => {
-          const first = document.querySelector('table tbody tr td:nth-child(3)')
-          return first && first.innerText.trim() === expected
-        },
-        label,
+        n => document.querySelectorAll('table tbody tr').length === n,
+        expectedRows,
         { timeout: 30000 }
+      )
+      // ...and that the rows really are that position. Read the label out of the
+      // Player cell's `TEAM · POS · rank` subtitle by splitting on the separator,
+      // rather than matching a substring: 'K' appears inside plenty of team names.
+      const firstRowPositions = await page.evaluate(() => {
+        const cell = document.querySelector('table tbody tr td:nth-child(2)')
+        if (!cell) return []
+        const sub = cell.querySelectorAll('div')
+        const text = sub.length ? sub[sub.length - 1].innerText : cell.innerText
+        return text.split('·').map(s => s.trim())
+      })
+      check(
+        firstRowPositions.includes(label),
+        'camp-tab',
+        label + ' pill: first row reads [' + firstRowPositions.join(' | ') + ']'
       )
       const headers = await page.locator('table thead th').allInnerTexts()
       const rows = await page.locator('table tbody tr').count()
