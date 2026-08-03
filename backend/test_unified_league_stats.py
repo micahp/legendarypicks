@@ -142,6 +142,83 @@ class UnifiedLeagueStatsTests(unittest.TestCase):
             ),
         )
 
+    def _rename_strand(self, connection, verb="INSERT OR REPLACE"):
+        """Write one player twice under two names, skipping the delete.
+
+        This is what the legacy writers did: a write keyed on `name_norm`. The
+        spine resolves `mlbam_680869` into `zack gelof`, the key changes
+        underneath the row, and the second write cannot update the first.
+        Returns the rows the database ended up holding for that one player.
+        """
+        for name_norm, games in (("mlbam_680869", 54), ("canonical guard", 66)):
+            connection.execute(
+                f"""{verb} INTO player_stats(
+                      player_id,player_name,name_norm,league,team,stat_type,
+                      season,games,pts,source
+                    ) VALUES(1,'Canonical Guard',?,'nba','BOS','season',
+                             2026,?,10.0,'espn_core')""",
+                (name_norm, games),
+            )
+        return connection.execute(
+            """SELECT name_norm,games FROM player_stats
+               WHERE player_id=1 AND league='nba' AND season=2026
+                 AND stat_type='season' ORDER BY id"""
+        ).fetchall()
+
+    def _canonical_fixture(self):
+        path = self.path + ".canonical"
+        self.addCleanup(lambda: os.path.exists(path) and os.unlink(path))
+        connection = sqlite3.connect(path)
+        self.addCleanup(connection.close)
+        connection.executescript(
+            """
+            CREATE TABLE players(
+              id INTEGER PRIMARY KEY, name TEXT NOT NULL,
+              team TEXT, league TEXT NOT NULL
+            );
+            INSERT INTO players(id,name,team,league)
+              VALUES(1,'Canonical Guard','BOS','nba');
+            """
+        )
+        connection.execute(PLAYER_STATS_TABLE_SQL)
+        return connection
+
+    def test_legacy_name_key_lets_one_player_own_two_rows(self):
+        """The condition the canonical migration exists to make impossible.
+
+        Kept as the counterpart to the two tests below: without it they prove
+        only that a constraint holds, not that anything was ever at risk. On prod
+        2026-08-03 this shape put Zack Gelof at 54 games beside his current 66
+        and 503'd `/api/mlb/leaders`, which took the whole Stats tab down.
+        """
+        rows = self._rename_strand(self.connection)
+        self.assertEqual(
+            [tuple(row) for row in rows],
+            [("mlbam_680869", 54), ("canonical guard", 66)],
+        )
+
+    def test_canonical_key_makes_the_rename_an_update(self):
+        """Under the player key the second write lands on the first row.
+
+        `publish_player_stats` already deletes by `player_id` before inserting,
+        which is why the strand stopped being produced -- but that is a
+        convention every future writer has to keep. The schema keeps it instead:
+        the same two statements that stranded a row above now resolve to one row
+        carrying the fresher season.
+        """
+        rows = self._rename_strand(self._canonical_fixture())
+        self.assertEqual([tuple(row) for row in rows], [("canonical guard", 66)])
+
+    def test_canonical_key_rejects_a_second_row_for_one_player(self):
+        """A writer that neither deletes nor upserts is refused, not believed."""
+        connection = self._canonical_fixture()
+        with self.assertRaises(sqlite3.IntegrityError):
+            self._rename_strand(connection, verb="INSERT")
+        self.assertEqual(
+            connection.execute("SELECT COUNT(*) FROM player_stats").fetchone()[0],
+            1,
+        )
+
     def test_publish_rejects_wrong_league_and_unowned_source(self):
         with self.assertRaisesRegex(LeagueStatContractError, "belongs to nba"):
             publish_player_stats(
