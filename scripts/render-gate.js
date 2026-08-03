@@ -290,23 +290,41 @@ function check(cond, id, detail) {
     check(boardRows > 10, 'camp-tab', 'only ' + boardRows + ' board rows rendered')
 
     // Position filters must actually re-render the table, not just repaint a pill.
+    //
+    // Assert the SET of pills, not a count and not an index. This check has now
+    // broken twice on the same class of change: `8e6e7fc` relabelled a kicker K and
+    // `5611af5` dropped FB and put the kicker ahead of the defense, taking the list
+    // from nine to eight. Each time the gate reported the shape of the board being
+    // wrong when the board was fine and the gate's own hardcoded ordinal was stale.
+    // A set comparison names exactly which pill appeared or vanished, and survives
+    // any reorder — the order is a product decision, the membership is the claim.
     const pills = page.locator('[role="radio"]')
-    const pillCount = await pills.count()
-    check(pillCount >= 9, 'camp-tab', 'expected 9 position pills, found ' + pillCount)
+    // Upper-cased on read: the pills carry `uppercase`, and innerText returns the
+    // TRANSFORMED text, so the source's 'All' arrives here as 'ALL'. Comparing the
+    // rendered string to the source string is a real trap — it fails while nothing
+    // is wrong, which is the failure mode that makes people stop trusting a gate.
+    const pillLabels = (await pills.allInnerTexts()).map(t => t.trim().toUpperCase())
+    const wantPills = ['ALL', 'QB', 'RB', 'WR', 'TE', 'FLEX', 'K', 'D/ST']
+    const missing = wantPills.filter(l => !pillLabels.includes(l))
+    const extra = pillLabels.filter(l => !wantPills.includes(l))
+    check(
+      missing.length === 0 && extra.length === 0,
+      'camp-tab',
+      'position pills: missing [' + missing + '] unexpected [' + extra + ']'
+    )
 
     const shape = {}
-    // The stored codes are DEF and PK; the rendered labels are D/ST and K, and the
-    // pills are now in draft order rather than alphabetical order. This gate read
-    // the STORED code out of a rendered cell, so it went red the moment `8e6e7fc`
-    // translated a kicker to K and stayed red — assert the label the user sees,
-    // against the API queried by the code the API speaks.
-    for (const [code, label, idx] of [['PK', 'K', 7], ['DEF', 'D/ST', 8]]) {
+    // The stored codes are DEF and PK; the rendered labels are D/ST and K. This gate
+    // read the STORED code out of a rendered cell, so it went red the moment
+    // `8e6e7fc` translated a kicker to K — assert the label the user sees, against
+    // the API queried by the code the API speaks.
+    for (const [code, label] of [['PK', 'K'], ['DEF', 'D/ST']]) {
       const apiResponse = await page.request.get(
         BASE + '/api/nfl/draft-board?season=2026&limit=100&position=' + code
       )
       const apiPayload = await apiResponse.json()
       const expectedRows = apiPayload.eligible_players
-      await pills.nth(idx).click()
+      await page.getByRole('radio', { name: label, exact: true }).click()
       await page.waitForFunction(
         expected => {
           const first = document.querySelector('table tbody tr td:nth-child(3)')
