@@ -25,6 +25,11 @@ services:
     # on the host (visible + backup-able). Not baked into the image (.dockerignore).
     volumes:
       - ./backend/data:/app/data
+      # team_codes.py (and ingest_nfl_dst.py) read the canonical ESPN team/position
+      # vocabularies from ../docs — which exists in the dev tree but not in the
+      # backend image (built from ./backend only). Read-only bind so the container
+      # sees the same files dev does, same pattern as ./backend/data above.
+      - ./docs:/docs:ro
     restart: unless-stopped
 
   frontend:
