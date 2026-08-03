@@ -126,12 +126,24 @@ def main(argv=None) -> int:
         print("dry-run: nothing written")
         return 0
 
+    # One statement, not one per game. The obvious `executemany` of
+    # `WHERE league=? AND season=? AND game_id=?` has no index that reaches
+    # game_id, so every one of the ~1,700 statements re-scans all 49,144
+    # MLB rows -- measured 2026-08-03 on prod: still running after two
+    # minutes, holding an exclusive lock the whole time while the prod
+    # backend reads the same file. Joining against a temp table scans those
+    # rows once and looks each phase up by primary key instead.
     with con:
-        con.executemany(
-            "UPDATE player_game_logs SET game_type=?"
-            " WHERE league='mlb' AND season=? AND game_id=?",
-            [(phase, args.season, gid) for gid, phase in to_write.items()],
+        con.execute("CREATE TEMP TABLE _phase(game_id TEXT PRIMARY KEY, phase TEXT NOT NULL)")
+        con.executemany("INSERT INTO _phase VALUES (?,?)", list(to_write.items()))
+        con.execute(
+            "UPDATE player_game_logs SET game_type ="
+            " (SELECT phase FROM _phase WHERE _phase.game_id = player_game_logs.game_id)"
+            " WHERE league='mlb' AND season=?"
+            "   AND game_id IN (SELECT game_id FROM _phase)",
+            (args.season,),
         )
+        con.execute("DROP TABLE _phase")
     after = dict(con.execute(
         "SELECT COALESCE(game_type,'<NULL>'), COUNT(DISTINCT game_id)"
         " FROM player_game_logs WHERE league='mlb' AND season=? GROUP BY 1",
