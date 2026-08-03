@@ -203,10 +203,29 @@ function assertPoolLayout(layout, surface) {
       return { idx, populated, rows: rows.length }
     })
     check(xfpPool.idx >= 0, 'mock-draft', 'no "Exp PPR/G" column on the pre-draft pool')
-    // 206 of 300 carried a value on the dev payload of 2026-07-28; K and D/ST
-    // have no xFP series at all, so a healthy board is well over half populated.
+    // A RATIO, not a count, and the change is a strengthening rather than a
+    // relaxation — read before assuming otherwise.
+    //
+    // `>= 150` was written on 2026-07-28 against a table that rendered all 300
+    // players. PoolList has been virtualized since: 600px of container over
+    // 48px rows plus overscan means ~34 rows exist in the DOM at any moment, so
+    // 150 was unreachable no matter how healthy the payload — a threshold that
+    // can only fail is not measuring anything. It has been red since the column
+    // was removed, so nothing noticed.
+    //
+    // The bug it was written for was `lib/mockDraft/api.ts` nulling
+    // xfp_per_game at the boundary, which renders "—" in EVERY cell. A ratio
+    // catches that at any window size and the old count could not; the floor on
+    // rendered rows is what stops an empty table from passing as 0 of 0.
+    // K and D/ST have no xFP series at all, so a healthy window is well over
+    // half populated — measured 32 of 34 on 2026-08-03.
     check(
-      xfpPool.populated >= 150,
+      xfpPool.rows >= 20,
+      'mock-draft',
+      'only ' + xfpPool.rows + ' pool rows rendered — too few to judge the column'
+    )
+    check(
+      xfpPool.rows >= 20 && xfpPool.populated / xfpPool.rows >= 0.6,
       'mock-draft',
       'expected fantasy points populated on only ' + xfpPool.populated +
         ' of ' + xfpPool.rows + ' pool rows — the boundary is nulling it again'
