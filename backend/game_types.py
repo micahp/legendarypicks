@@ -9,8 +9,30 @@ game. `docs/DATA-COVERAGE-CONTRACT.md` §1 has the render: every NFL 2024 player
 reading "missed 17" in amber, from a guard that checked the column *existed* and
 then filtered on its *values*.
 
-Ours is `PRE` | `REG` | `POST`, the vocabulary already in the column from the
-nflverse NFL ingest.
+Ours is `PRE` | `REG` | `POST` | `PLAYIN` | `ALLSTAR`. The first three are the
+vocabulary already in the column from the nflverse NFL ingest; the last two were
+added on 2026-08-02 because NBA publishes phases they are the only honest home
+for, and the alternative was to file exhibitions as real games:
+
+- **`PLAYIN`.** ESPN publishes the NBA play-in as its own season type (id 5,
+  `play-in-season`, 2026-04-13..2026-04-18, 6 events), and our
+  `team_game_results` for nba 2026 stops at 2026-04-13 with 82 games per team.
+  Stamping those six games `REG` would give a participant 83 regular-season
+  games against a team schedule of 82 — `games_played` exceeding the team's own
+  game count. Kept distinct because that is the reversible direction: a caller
+  who wants them in regular-season rates writes `game_type IN ('REG','PLAYIN')`,
+  whereas collapsing them into `REG` cannot be undone from the data.
+- **`ALLSTAR`.** ESPN files All-Star weekend *inside* type 2, Regular Season —
+  `WORLD @ STARS` on 2026-02-15 publishes `season.type=2` exactly as opening
+  night does. The only thing separating them is `competitions[0].type
+  .abbreviation == "ALLSTAR"`. Taking the published phase at face value here
+  puts three exhibitions into the denominator of every NBA per-game rate we
+  serve, and accounts for the gap between ESPN's 1239 published type-2 events
+  and the 1231 games `COV-nba` reconciles against.
+
+The lesson generalises past basketball: **a publisher's phase field can be
+right about the calendar and wrong about the question we are asking it.** NHL
+needed only the id; NBA needs the id *and* the competition type.
 
 **Measured, not assumed.** nhle.com publishes the phase as an integer with no
 accompanying enum — `gameTypeId` in the game-log envelope, and nothing anywhere
@@ -38,14 +60,35 @@ import urllib.request
 from typing import Dict, Optional, Tuple
 
 PRE, REG, POST = "PRE", "REG", "POST"
-PHASES = (PRE, REG, POST)
+PLAYIN, ALLSTAR = "PLAYIN", "ALLSTAR"
+PHASES = (PRE, REG, POST, PLAYIN, ALLSTAR)
 
 # One entry per (source, league). Deliberately not a shared default: NHL's 1/2/3
 # and ESPN's 1/2/3/4 agree by coincidence, not by standard, and a league that
 # numbers its phases differently would inherit a silently wrong answer from any
-# rule general enough to cover both.
+# rule general enough to cover both. NBA is the proof: it publishes a *fifth* id
+# that NHL has no equivalent for, and files All-Star inside the second.
+#
+# Measured 2026-08-02 against
+# `sports.core.api.espn.com/v2/sports/basketball/leagues/nba/seasons/2026`:
+#     id=1 pre     Preseason        2025-10-01..2025-10-21    71 events
+#     id=2 reg     Regular Season   2025-10-21..2026-04-13  1239 events
+#     id=3 post    Postseason       2026-04-18..2026-06-27    85 events
+#     id=4 off     Off Season       2026-06-27..2026-09-30     0 events
+#     id=5 playin  Play-In Season   2026-04-13..2026-04-18     6 events
+#
+# Id 4 is absent on purpose. It publishes zero events, so a row claiming it is
+# not a phase we failed to map — it is a row that should not exist, and the
+# raise is the correct outcome.
 _PUBLISHED: Dict[Tuple[str, str], Dict[str, str]] = {
     ("nhle.com", "nhl"): {"1": PRE, "2": REG, "3": POST},
+    ("espn", "nba"): {"1": PRE, "2": REG, "3": POST, "5": PLAYIN},
+}
+
+# Competition-level phases: published on the competition, not the season, and
+# overriding it. Keyed by (league, competitions[0].type.abbreviation).
+_COMPETITION_PHASE: Dict[Tuple[str, str], str] = {
+    ("nba", "ALLSTAR"): ALLSTAR,
 }
 
 _NHL_SEASON_DOC = "https://api.nhle.com/stats/rest/en/season?cayenneExp=id={season}"
@@ -90,6 +133,34 @@ def normalize_game_type(source: str, league: str, value) -> str:
             f"values this boundary was measured against ({sorted(table)}). It may "
             f"be a phase we have never ingested; it is not REG by default."
         ) from None
+
+
+def espn_event_phase(league: str, event) -> str:
+    """Our phase for one normalized ESPN scoreboard event.
+
+    `event` is a row from `espn_client.games()`, which carries `season_type` and
+    `competition_type` straight off the envelope. Read it from there and not
+    from the caller's own request parameters: an ingest that stamps the phase it
+    *asked* for records its URL, not the game, and cannot notice the day the
+    publisher files something somewhere else. That is the same discipline
+    `ingest_nhl_logs.py` follows with `gameTypeId`.
+
+    The competition type is checked first, because when the two disagree the
+    competition is the more specific claim — NBA All-Star publishes
+    `season.type=2` and `type.abbreviation="ALLSTAR"`, and the season field is
+    the one that is wrong for our purposes.
+    """
+    lg = str(league or "").strip().lower()
+    if not isinstance(event, dict):
+        raise ValueError(f"espn_event_phase needs a normalized event dict, got {type(event).__name__}")
+
+    competition_type = str(event.get("competition_type") or "").strip().upper()
+    if competition_type:
+        override = _COMPETITION_PHASE.get((lg, competition_type))
+        if override:
+            return override
+
+    return normalize_game_type("espn", lg, event.get("season_type"))
 
 
 # ---------------------------------------------------------------------------

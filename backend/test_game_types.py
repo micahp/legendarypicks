@@ -10,7 +10,12 @@ import unittest
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from game_types import PHASES, normalize_game_type, verify_nhl_phase
+from game_types import (
+    PHASES,
+    espn_event_phase,
+    normalize_game_type,
+    verify_nhl_phase,
+)
 
 
 class NormalizeGameType(unittest.TestCase):
@@ -81,6 +86,46 @@ class VerifyNhlPhase(unittest.TestCase):
 
     def test_no_dates_is_not_a_failure(self):
         self.assertIsNone(verify_nhl_phase(20252026, "POST", []))
+
+
+class EspnEventPhase(unittest.TestCase):
+    """The NBA cases, measured 2026-08-02 against real scoreboard responses."""
+
+    @staticmethod
+    def _event(season_type, competition_type="STD"):
+        return {"season_type": season_type, "competition_type": competition_type}
+
+    def test_measured_nba_ids(self):
+        self.assertEqual(espn_event_phase("nba", self._event(1)), "PRE")
+        self.assertEqual(espn_event_phase("nba", self._event(2)), "REG")
+        self.assertEqual(espn_event_phase("nba", self._event(3)), "POST")
+        self.assertEqual(espn_event_phase("nba", self._event(5)), "PLAYIN")
+
+    def test_all_star_is_published_as_regular_season_and_must_not_be(self):
+        """ESPN files All-Star weekend *inside* type 2. `WORLD @ STARS` on
+        2026-02-15 publishes season.type=2 exactly as opening night does; the
+        only thing separating them is the competition type. Trusting the season
+        field here puts three exhibitions into the denominator of every NBA
+        per-game rate we serve."""
+        allstar = self._event(2, competition_type="ALLSTAR")
+        self.assertEqual(normalize_game_type("espn", "nba", allstar["season_type"]), "REG")
+        self.assertEqual(espn_event_phase("nba", allstar), "ALLSTAR")
+
+    def test_off_season_id_raises_rather_than_defaulting(self):
+        """Type 4 publishes zero events. A row claiming it is not a phase we
+        failed to map — it is a row that should not exist."""
+        with self.assertRaises(ValueError):
+            espn_event_phase("nba", self._event(4))
+
+    def test_missing_season_type_raises(self):
+        with self.assertRaises(ValueError):
+            espn_event_phase("nba", self._event(None))
+
+    def test_competition_override_is_league_scoped(self):
+        """The override table is keyed by league on purpose: another league's
+        ALLSTAR abbreviation is not automatically ours to reinterpret."""
+        with self.assertRaises(ValueError):
+            espn_event_phase("nhl", self._event(2, competition_type="ALLSTAR"))
 
 
 if __name__ == "__main__":
