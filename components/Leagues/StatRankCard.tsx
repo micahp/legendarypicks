@@ -49,9 +49,15 @@ export default function StatRankCard({
   return (
     <section className="overflow-hidden rounded-xl border border-zinc-700 bg-zinc-900">
       <div className="bg-orange-600 px-3 py-2 text-center text-white">
-        <h2 className="text-[11px] font-bold uppercase tracking-[0.12em]">
+        {/* h3, not h2. This card is nested inside the player overlay, whose
+            own title — the player's name — is the h2. Two h2s in one dialog is
+            wrong for a screen reader and it is what broke REG-render: the gate
+            reads the dialog's heading to prove the overlay opened on the row it
+            clicked, and a second h2 made that locator ambiguous. The sibling
+            section directly below this one already uses h3. */}
+        <h3 className="text-[11px] font-bold uppercase tracking-[0.12em]">
           {title}
-        </h2>
+        </h3>
         {season != null && (
           <p className="mt-0.5 text-[9px] font-medium uppercase tracking-wide text-orange-100">
             {season} regular season{games != null ? ` · n=${games} games` : ''}
