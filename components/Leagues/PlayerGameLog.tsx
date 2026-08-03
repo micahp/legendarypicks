@@ -46,8 +46,8 @@ interface GameLogResponse {
 const HEAD: Record<string, string> = {
   off_pct: 'Snap', targets: 'Tgt', target_share: 'Tgt%', rec: 'Rec',
   rec_yds: 'Yds', rec_td: 'TD', adot: 'aDOT', separation: 'Sep',
-  fpts_ppr: 'PPR', xfpts_ppr: 'xPPR', carries: 'Car', rush_yds: 'RuYd',
-  rush_td: 'RuTD', cmp: 'Comp', att: 'Att', pass_yds: 'PaYd',
+  fpts_ppr: 'PPR', xfpts_ppr: 'xPPR', carries: 'Car', rush_yds: 'Yds',
+  rush_td: 'TD', cmp: 'Comp', att: 'Att', pass_yds: 'PaYd',
   pass_td: 'PaTD', intc: 'INT', fg_made: 'FGM', fg_att: 'FGA',
   fg_long: 'Long', pat_made: 'XPM', pat_att: 'XPA', sacks: 'Sk',
   interceptions: 'INT', tds: 'TD', safeties: 'Sfty', fumble_rec: 'FR',
