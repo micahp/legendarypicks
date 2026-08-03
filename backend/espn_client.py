@@ -137,14 +137,26 @@ def _normalize_team_events(events):
                 "nickname": team.get("name"),
                 "score": _num(competitor.get("score")),
             }
+        event_season = event.get("season") or {}
         out.append({
             "game_id": event.get("id"),
             "date": event.get("date"),
             "state": status_type.get("state"),
+            # `state == "post"` is not "this game was played": a POSTPONED game is
+            # also state="post", with a score of 0 rather than null. ESPN publishes
+            # the question directly; ingests must filter on this, not on state.
+            "completed": bool(status_type.get("completed")),
             "status": status_type.get("description"),
             "period": status.get("period"),
             "clock": status.get("displayClock"),
             "status_detail": status_type.get("shortDetail"),
+            # The phase, as the publisher files it — see backend/game_types.py.
+            # `competition_type` is carried separately because it is the only thing
+            # that distinguishes an NBA All-Star exhibition from a regular-season
+            # game: both are published season.type=2.
+            "season_type": _int(event_season.get("type")),
+            "season_slug": event_season.get("slug"),
+            "competition_type": (competition.get("type") or {}).get("abbreviation"),
             "home": teams.get("home"),
             "away": teams.get("away"),
         })
