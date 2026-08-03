@@ -278,7 +278,6 @@ export default function PlayerDetailOverlay({
             {player.stat_ranks && Object.keys(player.stat_ranks).length > 0 && (
               <StatRankCard
                 statRanks={player.stat_ranks}
-                title="League Rankings"
                 season={player.stat_rank_season}
                 games={player.stat_rank_games}
               />

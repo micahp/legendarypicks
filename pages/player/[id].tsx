@@ -467,7 +467,6 @@ export default function PlayerPage() {
         {show('overview') && p.stat_ranks && Object.keys(p.stat_ranks).length > 0 && (
           <StatRankCard
             statRanks={p.stat_ranks}
-            title="League Rankings"
             season={p.stat_rank_season}
             games={p.stat_rank_games}
           />

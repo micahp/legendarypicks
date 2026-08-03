@@ -5,7 +5,6 @@ describe('StatRankCard', () => {
   it('renders the reference hierarchy as one orange-headed four-stat card', () => {
     const { container } = render(
       <StatRankCard
-        title="2025 Regular Season Stats"
         season={2025}
         games={8}
         statRanks={{
@@ -17,8 +16,11 @@ describe('StatRankCard', () => {
       />,
     )
 
-    expect(screen.getByText('2025 Regular Season Stats').parentElement?.className).toContain('bg-orange-600')
-    expect(screen.getByText('2025 regular season · n=8 games')).toBeTruthy()
+    // One line, sentence case; the sample size qualifies the ranks from the
+    // hover instead of shouting alongside them.
+    const heading = screen.getByText('2025 regular season')
+    expect(heading.parentElement?.className).toContain('bg-orange-600')
+    expect(heading.getAttribute('title')).toBe('n=8 games')
     expect(container.querySelectorAll('.grid > div')).toHaveLength(4)
     expect(screen.getByText('4th')).toBeTruthy()
     expect(screen.getByText('154th')).toBeTruthy()

@@ -12,12 +12,10 @@ interface StatRank {
 
 export default function StatRankCard({
   statRanks,
-  title = 'Regular Season Stats',
   season,
   games,
 }: {
   statRanks: Record<string, StatRank> | null
-  title?: string
   season?: number | null
   games?: number | null
 }) {
@@ -55,14 +53,17 @@ export default function StatRankCard({
             reads the dialog's heading to prove the overlay opened on the row it
             clicked, and a second h2 made that locator ambiguous. The sibling
             section directly below this one already uses h3. */}
-        <h3 className="text-[11px] font-bold uppercase tracking-[0.12em]">
-          {title}
+        {/* One line, sentence case. This was two shouted lines — LEAGUE RANKINGS
+            over 2025 REGULAR SEASON · N=16 GAMES — above a grid of ranks that
+            says what it is without being told twice. The sample size is not
+            thrown away, it is on the hover: it qualifies the ranks rather than
+            competing with them for the band. */}
+        <h3
+          className="text-[11px] font-medium tracking-wide"
+          title={games != null ? `n=${games} games` : undefined}
+        >
+          {season != null ? `${season} regular season` : 'Regular season'}
         </h3>
-        {season != null && (
-          <p className="mt-0.5 text-[9px] font-medium uppercase tracking-wide text-orange-100">
-            {season} regular season{games != null ? ` · n=${games} games` : ''}
-          </p>
-        )}
       </div>
       <div className="grid grid-cols-4 divide-x divide-zinc-800">
         {Object.entries(statRanks).map(([key, data]) => (

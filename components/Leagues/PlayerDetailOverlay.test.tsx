@@ -116,8 +116,12 @@ describe('PlayerDetailOverlay tabs', () => {
     expect(await screen.findByText('Season Stats')).toBeTruthy()
     expect(screen.getByText('2025')).toBeTruthy()
     expect(screen.getByText('1715')).toBeTruthy()
-    expect(screen.getByText('League Rankings')).toBeTruthy()
-    expect(screen.getByText('2025 regular season · n=16 games')).toBeTruthy()
+    // One line, sentence case — the card no longer shouts its own name above
+    // a grid of ranks. The sample size moved to the heading's hover.
+    const ranks = screen.getByText('2025 regular season')
+    expect(ranks).toBeTruthy()
+    expect(ranks.getAttribute('title')).toBe('n=16 games')
+    expect(screen.queryByText('League Rankings')).toBeNull()
     expect(screen.queryByText('2026 Projection')).toBeNull()
 
     fireEvent.click(screen.getByRole('tab', { name: 'Projections' }))
