@@ -26,7 +26,11 @@ F="${LP_GATE_F:-http://127.0.0.1:3096}"
 # "isn't available yet" for every league. A gate that only reads $B certifies the
 # dev tree, and the deploy was exactly the gap between the two.
 P="${LP_GATE_P:-http://127.0.0.1:8100}"
-echo "── gates against W=$W B=$B F=$F P=$P ──"
+# The file the prod backend serves from. COV-identity grades the SCHEMA, which no
+# HTTP surface can report: a table keyed by the player's name serves correct rows
+# right up until the spine renames somebody.
+D="${LP_GATE_D:-/root/legendarypicks/backend/data/picks.db}"
+echo "── gates against W=$W B=$B F=$F P=$P D=$D ──"
 
 # ── the preflight, which is the same rule as the gates ─────────────────────────
 # `grep -c pattern /nonexistent` prints 0 and B4 asks three of its six questions as
@@ -511,6 +515,45 @@ if bad:
 else:
     print("PASS COV-leaders (%d surfaces across %s all serve rows)" % (checked, ",".join(leagues)))
 PY
+
+  # ── COV-identity ── the prod table is keyed by the PLAYER, not by their name.
+  #
+  # COV-leaders catches the outage; this catches the cause, which is the only one
+  # of the two that can be fixed once. `player_stats` was keyed
+  # UNIQUE(name_norm,league,season,stat_type), so when the spine resolved
+  # `mlbam_680869` into `zack gelof` the key moved out from under the row and the
+  # next ingest inserted a second one. Zack Gelof sat at 54 games beside his
+  # current 66 and /api/mlb/leaders failed closed on it.
+  #
+  # This grades the DEPLOYED file rather than the dev one, for the same reason
+  # COV-prod does: the migration is a property of a database, not of a branch, and
+  # a green dev schema says nothing about what prod is serving from. It asserts
+  # the registered migration AND its eight data conditions, so a re-introduced
+  # unowned source or duplicate owner goes red before it can take a league down.
+  $PY - "$D" <<'PY'
+import sys
+sys.path.insert(0, "/root/legendarypicks/backend")
+import migrate_player_stats as mps
+
+path = sys.argv[1]
+try:
+    result = mps.check_database(path)
+except Exception as exc:
+    # An unreadable database is evidence unavailable, which is a FAIL. A gate that
+    # skips here would report green over a schema nobody looked at.
+    print("FAIL COV-identity (cannot read %s: %s)" % (path, exc))
+    raise SystemExit
+dirty = {k: v for k, v in result.issues.items() if v}
+if result.ok and not dirty:
+    print("PASS COV-identity (%s: UNIQUE(player_id,league,season,stat_type), 0 offending rows)"
+          % mps.MIGRATION_ID)
+else:
+    # `detail` already enumerates the offending counts when the state is blocked;
+    # appending them again is how a gate's own output stops being readable.
+    extra = "" if (result.state == "blocked" or not dirty) else \
+        " | " + ", ".join("%s=%d" % kv for kv in sorted(dirty.items()))
+    print("FAIL COV-identity (%s: %s%s)" % (result.state, result.detail, extra))
+PY
 }
 
 # ── always-on regressions: nothing already working may break ──
@@ -687,7 +730,7 @@ ovlwidth(){
 #      `all` dispatch ran 14 gates and silently skipped REG-render because the
 #      function was written but never added to the case. The count below is what
 #      makes that structurally impossible to repeat, rather than fixed once.
-ALL_IDS="A1 A1b A1c A2 A3 B1 B2 B2b B4 COV-nba COV-nhl COV-honest COV-keys COV-source COV-gametype COV-api COV-prod COV-leaders REG-pool REG-adp-dst REG-dst REG-pytest REG-jest REG-jest-all REG-modules REG-render OVL-width"
+ALL_IDS="A1 A1b A1c A2 A3 B1 B2 B2b B4 COV-nba COV-nhl COV-honest COV-keys COV-source COV-gametype COV-api COV-prod COV-leaders COV-identity REG-pool REG-adp-dst REG-dst REG-pytest REG-jest REG-jest-all REG-modules REG-render OVL-width"
 
 out=$(mktemp) || exit 2
 trap 'rm -f "$out"' EXIT
@@ -706,7 +749,7 @@ trap 'rm -f "$out"' EXIT
     reg|REG|regressions|REG-pool|REG-adp-dst|REG-dst|REG-pytest|REG-jest|REG-jest-all|REG-modules) reg;;
     render|REG-render|regrender) regrender;;
     OVL-width|ovl|overlay) ovlwidth;;
-    cov|COV|coverage|COV-nba|COV-nhl|COV-honest|COV-keys|COV-source|COV-gametype|COV-api|COV-prod|COV-leaders) cov;;
+    cov|COV|coverage|COV-nba|COV-nhl|COV-honest|COV-keys|COV-source|COV-gametype|COV-api|COV-prod|COV-leaders|COV-identity) cov;;
     all) a1; a2; a3; b1; b2; b4; echo "--- coverage ---"; cov; echo "--- regressions ---"; reg; regrender; ovlwidth;;
     *) echo "FAIL runner (unknown gate '$1' — nothing ran)";;
   esac
