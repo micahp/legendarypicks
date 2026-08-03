@@ -32,8 +32,24 @@ envelope rather than off our own request, both competitors are written from the
 one document that names both, and the run reconciles against the publisher's own
 count before reporting success.
 
-    ./venv/bin/python backfill_nfl_postseason.py --season 2025
+It also writes a past REGULAR season via `--season-type 2`, because the same
+limitation means `ingest_team_results.py` cannot re-run 2024 either.
+
+**But a season already written in another publisher's game-id vocabulary is not
+re-ingested, it is duplicated.** NFL 2024 and 2026 are keyed `2024_01_BAL_KC` —
+nflverse — while 2025 is keyed by ESPN event id. `INSERT OR REPLACE` keys on
+(league, game_id, team), so an ESPN-keyed write lands *beside* the nflverse row
+for the same game rather than over it: a 2024 type-2 run took the season from
+285 games to 557 and reported "wrote 272 games" while doing it. The row count
+was true and the claim it implied was false.
+
+So this refuses to write into a season whose existing rows speak a different
+vocabulary. Migrating one is a delete-then-write — an explicit decision, not a
+side effect of a backfill — and it is gated behind --replace-vocabulary.
+
     ./venv/bin/python backfill_nfl_postseason.py --season 2025 --dry-run
+    ./venv/bin/python backfill_nfl_postseason.py --season 2025
+    ./venv/bin/python backfill_nfl_postseason.py --season 2024 --season-type 2
 """
 
 from __future__ import annotations
@@ -48,7 +64,7 @@ import urllib.request
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from game_types import normalize_game_type, POST  # noqa: E402
+from game_types import normalize_game_type  # noqa: E402
 from season_keys import normalize_season  # noqa: E402
 
 DB = os.environ.get("LP_DB_PATH", "picks.db")
@@ -99,18 +115,46 @@ def published_event_ids(season: int, season_type: int = 3) -> tuple:
     return expected, ids
 
 
-def backfill(season: int, dry_run: bool = False) -> int:
+def backfill(season: int, dry_run: bool = False, season_type: int = 3,
+             replace_vocabulary: bool = False) -> int:
     teams = real_team_abbrevs()
     if len(teams) != 32:
         raise RuntimeError(f"expected 32 published NFL teams, got {len(teams)}")
 
-    expected, ids = published_event_ids(season)
-    print(f"nfl {season} postseason: publisher says {expected} events, enumerated {len(ids)}")
+    want_phase = normalize_game_type("espn", "nfl", season_type)
+    expected, ids = published_event_ids(season, season_type)
+    print(f"nfl {season} type {season_type} ({want_phase}): "
+          f"publisher says {expected} events, enumerated {len(ids)}")
     if expected != len(ids):
         raise RuntimeError("enumerated a different number of events than published")
 
     con = sqlite3.connect(DB)
-    run_id = f"nfl-postseason-{season}-{int(time.time())}"
+
+    # A game key is a vocabulary boundary with no boundary module, which is
+    # exactly why this check is here and not in a comment. `season_keys` and
+    # `team_codes` exist because a wrong key does not raise — it misses. A wrong
+    # GAME key does something worse: it inserts, and the season silently
+    # doubles. Compare before writing, not after.
+    existing = [r[0] for r in con.execute(
+        "SELECT DISTINCT game_id FROM team_game_results WHERE league='nfl' AND season=?",
+        (season,))]
+    foreign = [g for g in existing if "_" in str(g)]
+    if foreign and not replace_vocabulary:
+        con.close()
+        print(f"  REFUSING to write: nfl {season} already holds {len(foreign)} games "
+              f"keyed in another vocabulary (e.g. {foreign[0]!r}), and ESPN event ids "
+              f"would land beside them, not over them.")
+        print("  Migrate the season deliberately with --replace-vocabulary, or leave it.")
+        return 1
+    if foreign and replace_vocabulary and not dry_run:
+        gone = con.execute(
+            "DELETE FROM team_game_results WHERE league='nfl' AND season=?"
+            " AND game_id LIKE '%!_%' ESCAPE '!'", (season,)).rowcount
+        con.commit()
+        print(f"  --replace-vocabulary: dropped {gone} rows over {len(foreign)} "
+              f"foreign-keyed games before writing")
+
+    run_id = f"nfl-{want_phase.lower()}-{season}-{int(time.time())}"
     wrote, games, excluded, incomplete = 0, 0, [], 0
 
     for eid in ids:
@@ -130,7 +174,7 @@ def backfill(season: int, dry_run: bool = False) -> int:
 
         phase = normalize_game_type("espn", "nfl", (head.get("season") or {}).get("type"))
         yr = normalize_season(SOURCE, "nfl", (head.get("season") or {}).get("year"))
-        if phase != POST:
+        if phase != want_phase:
             excluded.append((eid, f"phase={phase}"))
             continue
         if yr != season:
@@ -190,12 +234,36 @@ def backfill(season: int, dry_run: bool = False) -> int:
         " AND (season IS NULL OR source IS NULL OR source='')", (season,)).fetchone()[0]
     con.close()
 
-    reg, _ = published_event_ids(season, season_type=2)
-    want = reg + games
-    print(f"  nfl {season} now {total_games} games; publisher: {reg} regular + "
-          f"{games} postseason written = {want}")
+    # Two different claims, kept apart on purpose.
+    #
+    # THIS RUN's phase is checked exactly: we enumerated every published event
+    # and inspected each one, so we know how many of them are team games and how
+    # many the table should now hold.
+    non_team = len([e for e in excluded if "/" in e[1]])
+    want_phase_games = expected - non_team
+    print(f"  {want_phase}: publisher {expected} events - {non_team} non-team "
+          f"= {want_phase_games} team games; this run wrote {games}")
+
+    # THE SEASON is only reported, never asserted. The other phase's published
+    # count includes whatever exhibitions ESPN filed inside it — the Pro Bowl is
+    # one, and we only know that because a type-3 run looked at all fourteen.
+    # Subtracting a number we have not measured would be the same guess this
+    # file exists to avoid, and re-fetching 272 summaries to measure it costs
+    # more than the answer is worth. So: state the delta, name what explains it.
+    other = 2 if season_type == 3 else 3
+    other_published, _ = published_event_ids(season, season_type=other)
+    print(f"  nfl {season} now {total_games} games in the table; publisher "
+          f"{expected} (type {season_type}) + {other_published} (type {other}) "
+          f"= {expected + other_published} events, exhibitions included")
+    delta = expected + other_published - total_games
+    if delta:
+        print(f"  delta {delta} — expected to be exhibitions ESPN files inside a "
+              f"phase (2025 type 3 holds the Pro Bowl); a LARGER delta means "
+              f"type {other} is short and needs its own run")
+
     print(f"  one-sided games: {orphans}   rows missing season or source: {unattributed}")
-    if orphans or unattributed or (total_games != want and not dry_run):
+    clean = not orphans and not unattributed and (dry_run or games == want_phase_games)
+    if not clean:
         print("  ^ NOT clean — do not report this run as complete")
         return 1
     return 0
@@ -204,5 +272,12 @@ def backfill(season: int, dry_run: bool = False) -> int:
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--season", type=int, default=2025)
+    ap.add_argument("--season-type", type=int, default=3,
+                    help="ESPN season type: 2 regular, 3 postseason. Both are "
+                         "written the same way; only 3 contains the Pro Bowl.")
     ap.add_argument("--dry-run", action="store_true")
-    raise SystemExit(backfill(ap.parse_args().season, ap.parse_args().dry_run))
+    ap.add_argument("--replace-vocabulary", action="store_true",
+                    help="Drop this season's foreign-keyed rows first. Destructive, "
+                         "and the only way to migrate a season off nflverse game ids.")
+    a = ap.parse_args()
+    raise SystemExit(backfill(a.season, a.dry_run, a.season_type, a.replace_vocabulary))
