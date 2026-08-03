@@ -65,12 +65,19 @@ import sys
 #               team_game_results sat at 1311; exactly one game, and the failure
 #               row naming it is in team_stats_ingestion_failures.
 #    nfl 2025 — 272 = 32 x 17 / 2. Unaffected by the bug.
+#
+#  REVISED 2026-08-03. NFL 2025 is now 285 games / 570 result rows: the 272-game
+#  regular season PLUS the 13-game postseason backfilled by backfill_nfl_postseason.py
+#  (2026-01-10 .. 2026-02-08, Super Bowl 2026-02-08). The old 272/544 expectation
+#  predated that backfill, so it would have rejected the CORRECT, complete data as out
+#  of scope — the same defect this comment exists to prevent. Both halves measured from
+#  team_game_results on dev: 272 games with game_date <= 2026-01-07, 13 after.
 # ---------------------------------------------------------------------------
 
 APPROVED: dict[str, dict] = {
     # league -> approved season + expected result rows (games * 2) + teams
     "nba": {"season": 2026, "results": 2462, "teams": 30, "games": 1231},
-    "nfl": {"season": 2025, "results": 544, "teams": 32, "games": 272},
+    "nfl": {"season": 2025, "results": 570, "teams": 32, "games": 285},
     "nhl": {"season": 2026, "results": 2624, "teams": 32, "games": 1312},
 }
 
