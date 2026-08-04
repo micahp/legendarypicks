@@ -104,6 +104,12 @@ def search_players(q: str = Query("", description="Search query")):
 
 _DST_POSITIONS = ("DEF", "DST", "D/ST")
 
+# The two positions nflverse's `fantasy_points` does not cover, so the only honest
+# source for their weekly score is the scorer's. See
+# `ingest_nfl_published_fantasy.py` -- 446 of 544 D/ST team-weeks disagreed with the
+# number this project used to compute for itself.
+_PUBLISHED_FANTASY_POSITIONS = ("PK", "K", "DEF", "DST", "D/ST")
+
 
 def _dst_game_logs(connection, player_id: int):
     """A defense's weekly log, from `nfl_dst_stats` instead of `player_game_logs`.
@@ -212,6 +218,7 @@ def player_profile(player_id: int):
             (player_id,)).fetchone()
         season = srow["season"] if srow else None
         dst_logs = None
+        published_fantasy = {}
         if (
             league == "nfl"
             and str(p["position"] or "").upper() in _DST_POSITIONS
@@ -318,6 +325,26 @@ def player_profile(player_id: int):
                 logs = dst_logs
                 regular_season_games = len(dst_logs)
 
+            # ESPN's own scored total per week, for the two positions nflverse does
+            # not score. Loaded once here rather than per row. Absent table or absent
+            # season leaves the log's existing value alone -- this overlays a better
+            # number where one is published, it does not blank out anything.
+            if (
+                league == "nfl"
+                and str(p["position"] or "").upper() in _PUBLISHED_FANTASY_POSITIONS
+            ):
+                try:
+                    published_fantasy = {
+                        int(row["week"]): row["points"]
+                        for row in con.execute(
+                            """SELECT week, points FROM nfl_published_fantasy_points
+                               WHERE player_id=? AND season=?""",
+                            (player_id, season),
+                        )
+                    }
+                except sqlite3.OperationalError:
+                    published_fantasy = {}
+
             if league == "nfl":
                 schedule_columns = {
                     row[1]
@@ -383,7 +410,7 @@ def player_profile(player_id: int):
                WHERE player_id=? GROUP BY market, side ORDER BY ca DESC LIMIT 30""",
             (player_id,)).fetchall()
 
-    def serialize_game_logs(rows):
+    def serialize_game_logs(rows, fantasy_by_week=None):
         serialized = []
         for row in rows:
             stats = _json.loads(row["stats"])
@@ -391,6 +418,22 @@ def player_profile(player_id: int):
                 stats = {_NFL_KEY_NORMALIZE.get(k, k): v for k, v in stats.items()}
                 # Misc TD, from the same definition the draft overlay renders.
                 stats = _with_derived(stats)
+            # Kickers and defenses: the fantasy points come from ESPN, who scored
+            # them, rather than from a second implementation of ESPN's rules here.
+            # nflverse's `fantasy_points` is defined over passing/rushing/receiving
+            # only, so every kicker in `player_game_logs` carries a literal 0 --
+            # Aubrey kicked 4 field goals in week 15 and his line read 0.0.
+            if fantasy_by_week:
+                week = row["game_no"]
+                try:
+                    published = fantasy_by_week.get(int(week))
+                except (TypeError, ValueError):
+                    published = None
+                if published is not None:
+                    # A defense catches no passes, so PPR and standard are the
+                    # same number, and a kicker's PPR is likewise his score.
+                    stats["fpts"] = published
+                    stats["fpts_ppr"] = published
             serialized.append({
                 "date": row["game_date"],
                 "opponent": row["opponent"],
@@ -404,9 +447,9 @@ def player_profile(player_id: int):
         return serialized
 
     series = {}
-    recent = serialize_game_logs(logs)
-    postseason_recent = serialize_game_logs(postseason_logs)
-    preseason_recent = serialize_game_logs(preseason_logs)
+    recent = serialize_game_logs(logs, published_fantasy)
+    postseason_recent = serialize_game_logs(postseason_logs, published_fantasy)
+    preseason_recent = serialize_game_logs(preseason_logs, published_fantasy)
     for game in recent:
         s = game["stats"]
         for k, v in s.items():
