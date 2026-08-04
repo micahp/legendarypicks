@@ -3,6 +3,7 @@ import {
   formatMetric,
   formatSignedMetric,
   formatTeamMetric,
+  seasonLabel,
 } from './presentation'
 import type { LeadersData, SubView, TeamAggregatesData } from './types'
 
@@ -65,6 +66,7 @@ export default function StatsTab({
 
       {subView === 'players' && leaders && leaders.available_seasons.length > 1 && (
         <SeasonTabs
+          league={league}
           value={leaders.season}
           seasons={leaders.available_seasons}
           onChange={onSelectSeason}
@@ -153,10 +155,12 @@ function MlbTypeTabs({
 }
 
 function SeasonTabs({
+  league,
   value,
   seasons,
   onChange,
 }: {
+  league: string
   value: number | string | null
   seasons: (number | string)[]
   onChange: (season: string) => void
@@ -174,7 +178,7 @@ function SeasonTabs({
               : 'bg-zinc-900 text-zinc-500 border border-zinc-800 hover:text-zinc-300'
           }`}
         >
-          {season}
+          {seasonLabel(league, season)}
         </button>
       ))}
     </div>
@@ -271,11 +275,6 @@ function WhatChanged({ leaders }: { leaders: LeadersData }) {
             {comparison.recent_label} vs {comparison.baseline_label}
           </p>
         </div>
-        {comparison.status === 'display_only' && (
-          <span className="rounded-full border border-zinc-700 px-2.5 py-1 text-[11px] font-medium text-zinc-400">
-            Display-only trend
-          </span>
-        )}
       </div>
 
       {leaders.changes.length === 0 || comparison.qualified_leaders === 0 ? (
@@ -334,7 +333,7 @@ function PlayerLeadersTable({
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-3 text-xs text-zinc-500">
-        <span>Season {leaders.season}</span>
+        <span>Season {seasonLabel(leaders.league, leaders.season)}</span>
         <span>·</span>
         <span>Sorted by {sortedLabel || leaders.stat}</span>
       </div>
@@ -444,13 +443,6 @@ function TeamStats({
   const columns = activeCategory?.columns ?? aggregates.columns ?? []
   return (
     <div className="space-y-3">
-      <div className="flex flex-wrap items-center gap-2 text-xs text-zinc-500">
-        <span>Season {aggregates.season}</span>
-        <span>·</span>
-        <span>{aggregates.coverage.games} captured completed games</span>
-        <span>·</span>
-        <span>Through {aggregates.coverage.last_game_date}</span>
-      </div>
       {categories.length > 1 && (
         <div className="flex flex-wrap items-center gap-2" aria-label="Team stat categories">
           {categories.map(item => (
@@ -500,11 +492,6 @@ function TeamStats({
           </tbody>
         </table>
       </div>
-      {!aggregates.coverage.external_schedule_reconciled && (
-        <p className="text-xs text-zinc-600">
-          Covers captured completed games; not independently reconciled against the official schedule.
-        </p>
-      )}
     </div>
   )
 }

@@ -151,7 +151,6 @@ export default function LeagueHubPage() {
           <LeagueUnavailable league={route.league} />
         ) : (
         <>
-        <SeasonInProgressNote league={route.league} />
         <HubTabs
           tabs={route.validTabs}
           activeTab={route.activeTab}
@@ -331,7 +330,7 @@ function LeagueSwitcher({ activeLeague }: { activeLeague: string }) {
   return (
     <nav
       aria-label="Leagues"
-      className="-mx-4 flex items-center gap-3 overflow-x-auto px-4 text-sm sm:gap-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      className="-mx-4 flex items-center gap-3 overflow-x-auto overflow-y-hidden px-4 text-sm sm:gap-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
     >
       {leagues.map(league => (
         <Link
@@ -355,30 +354,11 @@ function LeagueSwitcher({ activeLeague }: { activeLeague: string }) {
  * thing the product exists to show. Dressing our gaps in the same colour trains people
  * to discount the accent that carries the thesis.
  */
-/**
- * A season we are showing while it is still being played says so.
- *
- * Offering an in-progress season is new, and the honest version of it states the
- * edge of the claim rather than letting a half-season read as a whole one. Kept in
- * zinc on purpose: per honest-data-ui the accent marks player absence, which is the
- * thing the product exists to show, and spending it on our own recency trains people
- * to discount the colour that carries the thesis.
- */
-function SeasonInProgressNote({ league }: { league: string }) {
-  const { rows } = useCoverage()
-  const row = rows.find(
-    (r) => r.league === league.toLowerCase() && r.status === 'in_progress',
-  )
-  if (!row) return null
-  const through = (row as { checked_through?: string | null }).checked_through
-  return (
-    <p className="text-xs text-zinc-500">
-      {row.season} season in progress
-      {through ? ` — checked through ${through}` : ''}
-      {row.fetched_games != null ? ` · ${row.fetched_games} games` : ''}
-    </p>
-  )
-}
+// There was a `SeasonInProgressNote` here that printed
+// `2026 season in progress — checked through 2026-08-02 · 1682 games`.
+// It is gone on purpose. Coverage still GATES what the hub offers — `useCoverage`
+// and `LeagueUnavailable` below are untouched — but how thoroughly we checked our
+// own ingest is our problem, not a line of copy above a leaderboard.
 
 function LeagueUnavailable({ league }: { league: string }) {
   return (
@@ -405,7 +385,10 @@ function HubTabs({
   labels: Record<HubTab, string>
 }) {
   return (
-    <div className="flex gap-0 overflow-x-auto border-b border-zinc-800 -mx-4 px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+    // `overflow-x-auto` alone makes the box scrollable on BOTH axes, and the buttons'
+    // `-mb-px` against a `border-b-2` leaves it about a pixel of vertical overflow —
+    // enough that the strip drags up and down under a thumb. Pin the y axis.
+    <div className="flex gap-0 overflow-x-auto overflow-y-hidden border-b border-zinc-800 -mx-4 px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
       {tabs.map(tab => (
         <button
           key={tab}
