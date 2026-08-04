@@ -25,7 +25,11 @@ export function useLeagueRouteState() {
   const coverage = useCoverage()
   const coverageLoading = coverage.loading
   const supportsTeamStats = isVouched(coverage.statusFor(league))
-  const offerable = isUFC || isWorldCup || supportsTeamStats
+  // The World Cup used to be offerable unconditionally, alongside UFC. It is not any
+  // more (Micah, 2026-08-04): it keeps /scores, its API and its ingest, but stops
+  // being a hub. Everything below that branches on `isWorldCup` is left in place —
+  // this is the one line that decides whether anyone can get there.
+  const offerable = isUFC || supportsTeamStats
   const validTabs: HubTab[] = isUFC
     ? ['rankings', 'schedule', 'predict']
     : isWorldCup
