@@ -10,7 +10,7 @@ Provides the three things both Legendary Picks and the trading strategy need:
   - team_strength(league)      win%, point/run differential, streak, last-10  = the QUALITY prior
   - boxscore / game_result     per-game detail + a clean winner/state for grading predictions
 """
-import json, os, re, time, unicodedata, urllib.error, urllib.request
+import json, os, re, time, unicodedata, urllib.error, urllib.parse, urllib.request
 
 LEAGUES = {  # our key -> (espn "sport/league" path, regulation periods)
     "nba":  ("basketball/nba", 4),
@@ -109,6 +109,31 @@ _RETRY_WAITS = (5.0, 30.0, 120.0)
 _RETRYABLE = frozenset({403, 429, 500, 502, 503, 504})
 _last_request_at = 0.0
 
+# Pacing alone does not describe the wall. Measured 2026-08-04 at identical 1s
+# spacing: `site.web.api` served 128 requests clean, `sports.core` refused at
+# ~119. Both were ~60 requests/minute, so the ceiling is a COUNT per host, not a
+# rate -- roughly 100. So budget per host and pause when one is spent, instead of
+# spacing every host as if they were the same.
+_HOST_BUDGET = int(os.environ.get("LP_ESPN_HOST_BUDGET", "100"))
+_HOST_COOLDOWN = float(os.environ.get("LP_ESPN_HOST_COOLDOWN", "60"))
+_host_spend = {}          # host -> requests charged since that host's last cooldown
+
+
+def _charge_host(url):
+    """Spend one request against `url`'s host, pausing when its budget is gone.
+
+    A cache hit never gets here, which is the point: the budget counts what we
+    actually ask ESPN for, so a resumed run costs nothing against it.
+    """
+    if _HOST_BUDGET <= 0:
+        return
+    host = urllib.parse.urlsplit(url).netloc
+    spent = _host_spend.get(host, 0)
+    if spent >= _HOST_BUDGET:
+        time.sleep(_HOST_COOLDOWN)
+        _host_spend[host] = 0
+    _host_spend[host] = _host_spend.get(host, 0) + 1
+
 # `_CACHE` is per-process, so its TTLs have never survived a run: every invocation
 # of a batch job re-pays every request to fetch bytes it already had. A roster does
 # not change between two runs ten minutes apart, but we asked ESPN 128 times anyway.
@@ -198,6 +223,7 @@ def _fetch(url):
     beats failing the caller, which is why the retry ladder is minutes not seconds.
     """
     for wait in (*_RETRY_WAITS, None):
+        _charge_host(url)
         _throttle()
         try:
             with urllib.request.urlopen(
