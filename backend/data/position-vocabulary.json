@@ -1,0 +1,1213 @@
+{
+ "_provenance": {
+  "fetched_at": "2026-08-04T20:34:47.121637+00:00",
+  "leagues": [
+   "mlb",
+   "nba",
+   "nfl",
+   "nhl"
+  ],
+  "note": "abbreviation/leaf/parent as published by ESPN; not hand-authored",
+  "source": "https://sports.core.api.espn.com/v2/sports/{sport}/leagues/{league}/positions?limit=200"
+ },
+ "leagues": {
+  "mlb": {
+   "ancestry": {
+    "1B": [
+     "IF",
+     "BA"
+    ],
+    "2B": [
+     "IF",
+     "BA"
+    ],
+    "3B": [
+     "IF",
+     "BA"
+    ],
+    "BA": [],
+    "C": [
+     "IF",
+     "BA"
+    ],
+    "CF": [
+     "OF",
+     "BA"
+    ],
+    "CL": [],
+    "DH": [
+     "BA"
+    ],
+    "DP": [
+     "BA"
+    ],
+    "GM": [],
+    "IF": [
+     "BA"
+    ],
+    "LF": [
+     "OF",
+     "BA"
+    ],
+    "MR": [],
+    "OF": [
+     "BA"
+    ],
+    "P": [],
+    "PH": [
+     "BA"
+    ],
+    "PR": [],
+    "RF": [
+     "OF",
+     "BA"
+    ],
+    "RP": [
+     "P"
+    ],
+    "SP": [
+     "P"
+    ],
+    "SS": [
+     "IF",
+     "BA"
+    ],
+    "UN": [],
+    "UT": []
+   },
+   "positions": {
+    "1B": {
+     "id": "3",
+     "leaf": true,
+     "name": "First Base",
+     "parent_id": "13"
+    },
+    "2B": {
+     "id": "4",
+     "leaf": true,
+     "name": "Second Base",
+     "parent_id": "13"
+    },
+    "3B": {
+     "id": "5",
+     "leaf": true,
+     "name": "Third Base",
+     "parent_id": "13"
+    },
+    "BA": {
+     "id": "18",
+     "leaf": false,
+     "name": "Batter",
+     "parent_id": null
+    },
+    "C": {
+     "id": "2",
+     "leaf": true,
+     "name": "Catcher",
+     "parent_id": "13"
+    },
+    "CF": {
+     "id": "8",
+     "leaf": true,
+     "name": "Center Field",
+     "parent_id": "14"
+    },
+    "CL": {
+     "id": "17",
+     "leaf": true,
+     "name": "Closer",
+     "parent_id": null
+    },
+    "DH": {
+     "id": "10",
+     "leaf": true,
+     "name": "Designated Hitter",
+     "parent_id": "18"
+    },
+    "DP": {
+     "id": "19",
+     "leaf": true,
+     "name": "Designated Player",
+     "parent_id": "18"
+    },
+    "GM": {
+     "id": "34",
+     "leaf": false,
+     "name": "General Manager",
+     "parent_id": null
+    },
+    "IF": {
+     "id": "13",
+     "leaf": true,
+     "name": "Infielder",
+     "parent_id": "18"
+    },
+    "LF": {
+     "id": "7",
+     "leaf": true,
+     "name": "Left Field",
+     "parent_id": "14"
+    },
+    "MR": {
+     "id": "16",
+     "leaf": true,
+     "name": "Middle Reliever",
+     "parent_id": null
+    },
+    "OF": {
+     "id": "14",
+     "leaf": true,
+     "name": "Outfielder",
+     "parent_id": "18"
+    },
+    "P": {
+     "id": "1",
+     "leaf": false,
+     "name": "Pitcher",
+     "parent_id": null
+    },
+    "PH": {
+     "id": "11",
+     "leaf": true,
+     "name": "Pinch Hitter",
+     "parent_id": "18"
+    },
+    "PR": {
+     "id": "12",
+     "leaf": false,
+     "name": "Pinch Runner",
+     "parent_id": null
+    },
+    "RF": {
+     "id": "9",
+     "leaf": true,
+     "name": "Right Field",
+     "parent_id": "14"
+    },
+    "RP": {
+     "id": "0",
+     "leaf": true,
+     "name": "Relief Pitcher",
+     "parent_id": "1"
+    },
+    "SP": {
+     "id": "15",
+     "leaf": true,
+     "name": "Starting Pitcher",
+     "parent_id": "1"
+    },
+    "SS": {
+     "id": "6",
+     "leaf": true,
+     "name": "Shortstop",
+     "parent_id": "13"
+    },
+    "UN": {
+     "id": "99",
+     "leaf": false,
+     "name": "Unspecified Position",
+     "parent_id": null
+    },
+    "UT": {
+     "id": "100",
+     "leaf": false,
+     "name": "Utility Player",
+     "parent_id": null
+    }
+   }
+  },
+  "nba": {
+   "ancestry": {
+    "C": [],
+    "F": [],
+    "FC": [
+     "C"
+    ],
+    "G": [],
+    "GF": [],
+    "HEAD COACH": [],
+    "NA": [],
+    "PF": [
+     "F"
+    ],
+    "PG": [
+     "G"
+    ],
+    "SF": [
+     "F"
+    ],
+    "SG": [
+     "G"
+    ]
+   },
+   "positions": {
+    "C": {
+     "id": "9",
+     "leaf": false,
+     "name": "Center",
+     "parent_id": null
+    },
+    "F": {
+     "id": "7",
+     "leaf": false,
+     "name": "Forward",
+     "parent_id": null
+    },
+    "FC": {
+     "id": "8",
+     "leaf": true,
+     "name": "Forward-Center",
+     "parent_id": "9"
+    },
+    "G": {
+     "id": "3",
+     "leaf": false,
+     "name": "Guard",
+     "parent_id": null
+    },
+    "GF": {
+     "id": "4",
+     "leaf": false,
+     "name": "Guard-Forward",
+     "parent_id": null
+    },
+    "HEAD COACH": {
+     "id": "30",
+     "leaf": false,
+     "name": "Head Coach",
+     "parent_id": null
+    },
+    "NA": {
+     "id": "0",
+     "leaf": false,
+     "name": "Not Available",
+     "parent_id": null
+    },
+    "PF": {
+     "id": "6",
+     "leaf": true,
+     "name": "Power Forward",
+     "parent_id": "7"
+    },
+    "PG": {
+     "id": "1",
+     "leaf": true,
+     "name": "Point Guard",
+     "parent_id": "3"
+    },
+    "SF": {
+     "id": "5",
+     "leaf": true,
+     "name": "Small Forward",
+     "parent_id": "7"
+    },
+    "SG": {
+     "id": "2",
+     "leaf": true,
+     "name": "Shooting Guard",
+     "parent_id": "3"
+    }
+   }
+  },
+  "nfl": {
+   "ancestry": {
+    "-": [],
+    "ATH": [],
+    "B": [],
+    "C": [
+     "OL",
+     "OFF"
+    ],
+    "CB": [
+     "DB",
+     "DEF"
+    ],
+    "DB": [
+     "DEF"
+    ],
+    "DE": [
+     "DEF"
+    ],
+    "DEF": [],
+    "DL": [
+     "DEF"
+    ],
+    "DT": [
+     "DEF"
+    ],
+    "EDGE": [
+     "DEF"
+    ],
+    "FB": [
+     "RB",
+     "OFF"
+    ],
+    "FL": [
+     "OFF"
+    ],
+    "FS": [
+     "S",
+     "DB",
+     "DEF"
+    ],
+    "G": [],
+    "H": [
+     "ST"
+    ],
+    "HB": [
+     "OFF"
+    ],
+    "ILB": [
+     "LB",
+     "DEF"
+    ],
+    "KR": [
+     "ST"
+    ],
+    "LB": [
+     "DEF"
+    ],
+    "LCB": [
+     "CB",
+     "DB",
+     "DEF"
+    ],
+    "LDE": [
+     "DE",
+     "DEF"
+    ],
+    "LDT": [
+     "DT",
+     "DEF"
+    ],
+    "LG": [
+     "OG",
+     "OFF"
+    ],
+    "LHB": [
+     "HB",
+     "OFF"
+    ],
+    "LILB": [
+     "LB",
+     "DEF"
+    ],
+    "LLB": [
+     "LB",
+     "DEF"
+    ],
+    "LOLB": [
+     "LB",
+     "DEF"
+    ],
+    "LS": [
+     "ST"
+    ],
+    "LSF": [
+     "S",
+     "DB",
+     "DEF"
+    ],
+    "LT": [
+     "OT",
+     "OFF"
+    ],
+    "MG": [
+     "OG",
+     "OFF"
+    ],
+    "MLB": [
+     "LB",
+     "DEF"
+    ],
+    "NB": [
+     "DB",
+     "DEF"
+    ],
+    "NG": [
+     "DL",
+     "DEF"
+    ],
+    "NT": [
+     "DT",
+     "DEF"
+    ],
+    "OFF": [],
+    "OG": [
+     "OFF"
+    ],
+    "OL": [
+     "OFF"
+    ],
+    "OLB": [
+     "LB",
+     "DEF"
+    ],
+    "OT": [
+     "OFF"
+    ],
+    "P": [
+     "ST"
+    ],
+    "PK": [
+     "ST"
+    ],
+    "PR": [
+     "ST"
+    ],
+    "QB": [
+     "OFF"
+    ],
+    "RB": [
+     "OFF"
+    ],
+    "RCB": [
+     "CB",
+     "DB",
+     "DEF"
+    ],
+    "RDE": [
+     "DE",
+     "DEF"
+    ],
+    "RDT": [
+     "DT",
+     "DEF"
+    ],
+    "RG": [
+     "OT",
+     "OFF"
+    ],
+    "RHB": [
+     "HB",
+     "OFF"
+    ],
+    "RILB": [
+     "LB",
+     "DEF"
+    ],
+    "RLB": [
+     "LB",
+     "DEF"
+    ],
+    "ROLB": [
+     "LB",
+     "DEF"
+    ],
+    "RSF": [
+     "S",
+     "DB",
+     "DEF"
+    ],
+    "RT": [
+     "OG",
+     "OFF"
+    ],
+    "S": [
+     "DB",
+     "DEF"
+    ],
+    "SE": [
+     "DEF"
+    ],
+    "SETTER": [],
+    "SLB": [
+     "LB",
+     "DEF"
+    ],
+    "SS": [
+     "S",
+     "DB",
+     "DEF"
+    ],
+    "ST": [],
+    "T": [],
+    "TB": [
+     "OFF"
+    ],
+    "TE": [
+     "OFF"
+    ],
+    "UT": [
+     "OT",
+     "OFF"
+    ],
+    "WLB": [
+     "LB",
+     "DEF"
+    ],
+    "WR": [
+     "OFF"
+    ]
+   },
+   "positions": {
+    "-": {
+     "id": "99",
+     "leaf": false,
+     "name": "Unknown",
+     "parent_id": null
+    },
+    "ATH": {
+     "id": "50",
+     "leaf": false,
+     "name": "Athlete",
+     "parent_id": null
+    },
+    "B": {
+     "id": "219",
+     "leaf": false,
+     "name": "Back",
+     "parent_id": null
+    },
+    "C": {
+     "id": "91",
+     "leaf": true,
+     "name": "Center",
+     "parent_id": "45"
+    },
+    "CB": {
+     "id": "29",
+     "leaf": true,
+     "name": "Cornerback",
+     "parent_id": "35"
+    },
+    "DB": {
+     "id": "35",
+     "leaf": true,
+     "name": "Defensive Back",
+     "parent_id": "71"
+    },
+    "DE": {
+     "id": "31",
+     "leaf": true,
+     "name": "Defensive End",
+     "parent_id": "71"
+    },
+    "DEF": {
+     "id": "71",
+     "leaf": false,
+     "name": "Defense",
+     "parent_id": null
+    },
+    "DL": {
+     "id": "37",
+     "leaf": true,
+     "name": "Defensive Lineman",
+     "parent_id": "71"
+    },
+    "DT": {
+     "id": "32",
+     "leaf": true,
+     "name": "Defensive Tackle",
+     "parent_id": "71"
+    },
+    "EDGE": {
+     "id": "264",
+     "leaf": true,
+     "name": "EDGE",
+     "parent_id": "71"
+    },
+    "FB": {
+     "id": "10",
+     "leaf": true,
+     "name": "Fullback",
+     "parent_id": "9"
+    },
+    "FL": {
+     "id": "100",
+     "leaf": true,
+     "name": "Flanker",
+     "parent_id": "70"
+    },
+    "FS": {
+     "id": "21",
+     "leaf": true,
+     "name": "Free Safety",
+     "parent_id": "36"
+    },
+    "G": {
+     "id": "73",
+     "leaf": false,
+     "name": "Guard",
+     "parent_id": null
+    },
+    "H": {
+     "id": "79",
+     "leaf": true,
+     "name": "Holder",
+     "parent_id": "72"
+    },
+    "HB": {
+     "id": "101",
+     "leaf": true,
+     "name": "Halfback",
+     "parent_id": "70"
+    },
+    "ILB": {
+     "id": "90",
+     "leaf": true,
+     "name": "Inside Linebacker",
+     "parent_id": "30"
+    },
+    "KR": {
+     "id": "77",
+     "leaf": true,
+     "name": "Kick Returner",
+     "parent_id": "72"
+    },
+    "LB": {
+     "id": "30",
+     "leaf": true,
+     "name": "Linebacker",
+     "parent_id": "71"
+    },
+    "LCB": {
+     "id": "18",
+     "leaf": true,
+     "name": "Left Cornerback",
+     "parent_id": "29"
+    },
+    "LDE": {
+     "id": "11",
+     "leaf": true,
+     "name": "Left Defensive End",
+     "parent_id": "31"
+    },
+    "LDT": {
+     "id": "24",
+     "leaf": true,
+     "name": "Left Defensive Tackle  ",
+     "parent_id": "32"
+    },
+    "LG": {
+     "id": "3",
+     "leaf": true,
+     "name": "Left Guard  ",
+     "parent_id": "47"
+    },
+    "LHB": {
+     "id": "103",
+     "leaf": true,
+     "name": "Left Halfback",
+     "parent_id": "101"
+    },
+    "LILB": {
+     "id": "15",
+     "leaf": true,
+     "name": "Left Inside Linebacker  ",
+     "parent_id": "30"
+    },
+    "LLB": {
+     "id": "105",
+     "leaf": true,
+     "name": "Left Linebacker",
+     "parent_id": "30"
+    },
+    "LOLB": {
+     "id": "14",
+     "leaf": true,
+     "name": "Left Outside Linebacker  ",
+     "parent_id": "30"
+    },
+    "LS": {
+     "id": "96",
+     "leaf": true,
+     "name": "Long Snapper",
+     "parent_id": "72"
+    },
+    "LSF": {
+     "id": "108",
+     "leaf": true,
+     "name": "Left Safety",
+     "parent_id": "36"
+    },
+    "LT": {
+     "id": "2",
+     "leaf": true,
+     "name": "Left Tackle  ",
+     "parent_id": "46"
+    },
+    "MG": {
+     "id": "110",
+     "leaf": true,
+     "name": "Middle Guard",
+     "parent_id": "47"
+    },
+    "MLB": {
+     "id": "27",
+     "leaf": true,
+     "name": "Middle Linebacker",
+     "parent_id": "30"
+    },
+    "NB": {
+     "id": "34",
+     "leaf": true,
+     "name": "Nickel Back",
+     "parent_id": "35"
+    },
+    "NG": {
+     "id": "75",
+     "leaf": true,
+     "name": "Nose Guard",
+     "parent_id": "37"
+    },
+    "NT": {
+     "id": "12",
+     "leaf": true,
+     "name": "Nose Tackle",
+     "parent_id": "32"
+    },
+    "OFF": {
+     "id": "70",
+     "leaf": false,
+     "name": "Offense",
+     "parent_id": null
+    },
+    "OG": {
+     "id": "47",
+     "leaf": true,
+     "name": "Offensive Guard",
+     "parent_id": "70"
+    },
+    "OL": {
+     "id": "45",
+     "leaf": true,
+     "name": "Offensive Lineman",
+     "parent_id": "70"
+    },
+    "OLB": {
+     "id": "107",
+     "leaf": true,
+     "name": "Outside Linebacker",
+     "parent_id": "30"
+    },
+    "OT": {
+     "id": "46",
+     "leaf": true,
+     "name": "Offensive Tackle",
+     "parent_id": "70"
+    },
+    "P": {
+     "id": "94",
+     "leaf": true,
+     "name": "Punter",
+     "parent_id": "72"
+    },
+    "PK": {
+     "id": "80",
+     "leaf": true,
+     "name": "Place Kicker",
+     "parent_id": "72"
+    },
+    "PR": {
+     "id": "76",
+     "leaf": true,
+     "name": "Punt Returner",
+     "parent_id": "72"
+    },
+    "QB": {
+     "id": "8",
+     "leaf": true,
+     "name": "Quarterback",
+     "parent_id": "70"
+    },
+    "RB": {
+     "id": "9",
+     "leaf": true,
+     "name": "Running Back",
+     "parent_id": "70"
+    },
+    "RCB": {
+     "id": "19",
+     "leaf": true,
+     "name": "Right Cornerback",
+     "parent_id": "29"
+    },
+    "RDE": {
+     "id": "13",
+     "leaf": true,
+     "name": "Right Defensive End",
+     "parent_id": "31"
+    },
+    "RDT": {
+     "id": "25",
+     "leaf": true,
+     "name": "Right Defensive Tackle",
+     "parent_id": "32"
+    },
+    "RG": {
+     "id": "5",
+     "leaf": true,
+     "name": "Right Guard",
+     "parent_id": "46"
+    },
+    "RHB": {
+     "id": "104",
+     "leaf": true,
+     "name": "Right Halfback",
+     "parent_id": "101"
+    },
+    "RILB": {
+     "id": "16",
+     "leaf": true,
+     "name": "Right Inside Linebacker",
+     "parent_id": "30"
+    },
+    "RLB": {
+     "id": "106",
+     "leaf": true,
+     "name": "Right Linebacker",
+     "parent_id": "30"
+    },
+    "ROLB": {
+     "id": "17",
+     "leaf": true,
+     "name": "Right Outside Linebacker",
+     "parent_id": "30"
+    },
+    "RSF": {
+     "id": "109",
+     "leaf": true,
+     "name": "Right Safety",
+     "parent_id": "36"
+    },
+    "RT": {
+     "id": "6",
+     "leaf": true,
+     "name": "Right Tackle",
+     "parent_id": "47"
+    },
+    "S": {
+     "id": "36",
+     "leaf": true,
+     "name": "Safety",
+     "parent_id": "35"
+    },
+    "SE": {
+     "id": "111",
+     "leaf": true,
+     "name": "Split End",
+     "parent_id": "71"
+    },
+    "SETTER": {
+     "id": "218",
+     "leaf": false,
+     "name": "Setter",
+     "parent_id": null
+    },
+    "SLB": {
+     "id": "28",
+     "leaf": true,
+     "name": "Strongside Linebacker  ",
+     "parent_id": "30"
+    },
+    "SS": {
+     "id": "20",
+     "leaf": true,
+     "name": "Strong Safety",
+     "parent_id": "36"
+    },
+    "ST": {
+     "id": "72",
+     "leaf": false,
+     "name": "Special Teams",
+     "parent_id": null
+    },
+    "T": {
+     "id": "74",
+     "leaf": false,
+     "name": "Tackle",
+     "parent_id": null
+    },
+    "TB": {
+     "id": "102",
+     "leaf": true,
+     "name": "Tailback",
+     "parent_id": "70"
+    },
+    "TE": {
+     "id": "7",
+     "leaf": true,
+     "name": "Tight End",
+     "parent_id": "70"
+    },
+    "UT": {
+     "id": "33",
+     "leaf": true,
+     "name": "Under Tackle",
+     "parent_id": "46"
+    },
+    "WLB": {
+     "id": "26",
+     "leaf": true,
+     "name": "Weakside Linebacker  ",
+     "parent_id": "30"
+    },
+    "WR": {
+     "id": "1",
+     "leaf": true,
+     "name": "Wide Receiver",
+     "parent_id": "70"
+    }
+   }
+  },
+  "nhl": {
+   "ancestry": {
+    "ASST": [],
+    "C": [
+     "F",
+     "S"
+    ],
+    "D": [
+     "S"
+    ],
+    "EX": [
+     "S"
+    ],
+    "F": [
+     "S"
+    ],
+    "G": [],
+    "GM": [],
+    "HEAD COACH": [],
+    "IN": [],
+    "L ": [],
+    "LD": [
+     "D",
+     "S"
+    ],
+    "LW": [
+     "F",
+     "S"
+    ],
+    "PPC": [
+     "C",
+     "F",
+     "S"
+    ],
+    "PPLD": [
+     "D",
+     "S"
+    ],
+    "PPLW": [
+     "LW",
+     "F",
+     "S"
+    ],
+    "PPRD": [
+     "D",
+     "S"
+    ],
+    "PPRW": [
+     "RW",
+     "F",
+     "S"
+    ],
+    "R ": [],
+    "RD": [
+     "D",
+     "S"
+    ],
+    "RW": [
+     "F",
+     "S"
+    ],
+    "S": [],
+    "SHC": [
+     "RW",
+     "F",
+     "S"
+    ],
+    "SHLD": [
+     "D",
+     "S"
+    ],
+    "SHRD": [
+     "D",
+     "S"
+    ],
+    "SHW": [
+     "LW",
+     "F",
+     "S"
+    ],
+    "SPA": [],
+    "UN": [],
+    "W": [
+     "F",
+     "S"
+    ]
+   },
+   "positions": {
+    "ASST": {
+     "id": "29",
+     "leaf": false,
+     "name": "Assistant Coach",
+     "parent_id": null
+    },
+    "C": {
+     "id": "1",
+     "leaf": true,
+     "name": "Center",
+     "parent_id": "20"
+    },
+    "D": {
+     "id": "4",
+     "leaf": true,
+     "name": "Defense",
+     "parent_id": "27"
+    },
+    "EX": {
+     "id": "9",
+     "leaf": true,
+     "name": "Extra Attacker",
+     "parent_id": "27"
+    },
+    "F": {
+     "id": "20",
+     "leaf": true,
+     "name": "Forward",
+     "parent_id": "27"
+    },
+    "G": {
+     "id": "5",
+     "leaf": false,
+     "name": "Goaltender",
+     "parent_id": null
+    },
+    "GM": {
+     "id": "30",
+     "leaf": false,
+     "name": "General Manager",
+     "parent_id": null
+    },
+    "HEAD COACH": {
+     "id": "28",
+     "leaf": false,
+     "name": "Head Coach",
+     "parent_id": null
+    },
+    "IN": {
+     "id": "26",
+     "leaf": false,
+     "name": "Injured",
+     "parent_id": null
+    },
+    "L ": {
+     "id": "12",
+     "leaf": false,
+     "name": "Linesman",
+     "parent_id": null
+    },
+    "LD": {
+     "id": "13",
+     "leaf": true,
+     "name": "Left Defense",
+     "parent_id": "4"
+    },
+    "LW": {
+     "id": "2",
+     "leaf": true,
+     "name": "Left Wing",
+     "parent_id": "20"
+    },
+    "PPC": {
+     "id": "15",
+     "leaf": true,
+     "name": "Power Play Center",
+     "parent_id": "1"
+    },
+    "PPLD": {
+     "id": "18",
+     "leaf": true,
+     "name": "Power Play Left Defence",
+     "parent_id": "4"
+    },
+    "PPLW": {
+     "id": "16",
+     "leaf": true,
+     "name": "Power Play Left Wing",
+     "parent_id": "2"
+    },
+    "PPRD": {
+     "id": "19",
+     "leaf": true,
+     "name": "Power Play Right Defence",
+     "parent_id": "4"
+    },
+    "PPRW": {
+     "id": "17",
+     "leaf": true,
+     "name": "Power Play Right Wing",
+     "parent_id": "3"
+    },
+    "R ": {
+     "id": "11",
+     "leaf": false,
+     "name": "Referee",
+     "parent_id": null
+    },
+    "RD": {
+     "id": "14",
+     "leaf": true,
+     "name": "Right Defense",
+     "parent_id": "4"
+    },
+    "RW": {
+     "id": "3",
+     "leaf": true,
+     "name": "Right Wing",
+     "parent_id": "20"
+    },
+    "S": {
+     "id": "27",
+     "leaf": false,
+     "name": "Skater",
+     "parent_id": null
+    },
+    "SHC": {
+     "id": "22",
+     "leaf": true,
+     "name": "Shorthanded Center",
+     "parent_id": "3"
+    },
+    "SHLD": {
+     "id": "23",
+     "leaf": true,
+     "name": "Shorthanded Left Defence",
+     "parent_id": "4"
+    },
+    "SHRD": {
+     "id": "24",
+     "leaf": true,
+     "name": "Shorthanded Right Defence",
+     "parent_id": "4"
+    },
+    "SHW": {
+     "id": "21",
+     "leaf": true,
+     "name": "Shorthanded Wing",
+     "parent_id": "2"
+    },
+    "SPA": {
+     "id": "25",
+     "leaf": false,
+     "name": "Spare",
+     "parent_id": null
+    },
+    "UN": {
+     "id": "99",
+     "leaf": false,
+     "name": "Unspecified Position",
+     "parent_id": null
+    },
+    "W": {
+     "id": "8",
+     "leaf": true,
+     "name": "Winger",
+     "parent_id": "20"
+    }
+   }
+  }
+ }
+}

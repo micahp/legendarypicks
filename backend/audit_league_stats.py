@@ -77,8 +77,12 @@ MANIFEST = {
                 "qualifier": {"unit": "innings", "published": "1.0 IP x team games (162/162)"},
             },
         },
-        "position_content": {},          # MLB positions are 100% NULL -- check C covers it
-        "single_vocabulary": ["team"],
+        "position_content": {},
+        # `position` was excluded here with the note "MLB positions are 100% NULL
+        # -- check C covers it". That stopped being true on 2026-08-04 when
+        # roster_sync applied for MLB for the first time and filled every active
+        # player's position, so the column is now worth asking about.
+        "single_vocabulary": ["position", "team"],
     },
     "nba": {
         "stat_types": {
@@ -156,6 +160,47 @@ MANIFEST = {
 }
 
 PASS, FAIL, UNVERIFIED = "PASS", "FAIL", "UNVERIFIED"
+
+# Written by fetch_position_vocabulary.py and committed. The audit must run
+# offline, and a vocabulary read at audit time could not be reviewed in a diff.
+_VOCABULARY_PATH = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "data", "position-vocabulary.json")
+_VOCABULARY_CACHE = {}
+
+
+def _observed_positions(con, league, active_only=False):
+    """The distinct position codes in use for a league."""
+    scope = " AND active=1" if active_only and "active" in _columns(con, "players") else ""
+    return {
+        r[0] for r in con.execute(
+            f"SELECT position FROM players WHERE league=?{scope} "
+            "AND position IS NOT NULL AND TRIM(position) != '' GROUP BY 1", (league,))
+    }
+
+
+def _position_vocabulary(league):
+    """{positions, ancestry, source} as published, or None if never fetched.
+
+    None is answered honestly as UNVERIFIED rather than falling back to a guess:
+    the guess is what this replaced.
+    """
+    if not _VOCABULARY_CACHE:
+        try:
+            with open(_VOCABULARY_PATH) as f:
+                _VOCABULARY_CACHE["data"] = json.load(f)
+        except (OSError, json.JSONDecodeError):
+            _VOCABULARY_CACHE["data"] = None
+    artifact = _VOCABULARY_CACHE.get("data")
+    if not artifact:
+        return None
+    entry = artifact.get("leagues", {}).get(league)
+    if not entry:
+        return None
+    return {
+        "positions": entry.get("positions", {}),
+        "ancestry": entry.get("ancestry", {}),
+        "source": artifact.get("_provenance", {}).get("source", "ESPN"),
+    }
 
 
 class Result:
@@ -264,6 +309,7 @@ def check_single_vocabulary(con, league, spec, out):
     join, and a join that misses does not raise.
     """
     for column in spec.get("single_vocabulary") or []:
+        vocabulary_note = ""
         if column not in _columns(con, "players"):
             out.add(FAIL, league, f"C/vocabulary[{column}]",
                     f"players.{column} does not exist")
@@ -284,13 +330,63 @@ def check_single_vocabulary(con, league, spec, out):
                     f"every row blank ({blank} players)")
             continue
         if column == "position":
-            coarse = {v for v, _ in values if len(v) == 1}
-            granular = {v for v, _ in values if len(v) == 2}
-            if coarse and granular:
-                out.add(FAIL, league, f"C/vocabulary[{column}]",
-                        "two vocabularies in one column: %s and %s -- each is a "
-                        "different ingest, and they do not join"
-                        % (sorted(coarse), sorted(granular)))
+            # This used to read "one character is coarse, two is granular, both
+            # present means two ingests are fighting". That is a string-length
+            # proxy for a semantic property and it is wrong in three of four
+            # leagues -- hockey's C/D/G/LW/RW is ONE vocabulary, and football's
+            # S/G/C/P belong to the same vocabulary as WR/LB/CB. It failed
+            # leagues that were fine while asking nothing about the leagues that
+            # were not.
+            #
+            # ESPN publishes the hierarchy: every position carries `leaf` and a
+            # `parent`, so the real question is answerable instead of guessed.
+            # Two vocabularies are in play when a position AND one of its own
+            # descendants are both in use -- `G` alongside `PG` -- because those
+            # rows describe the same player population at two levels and never
+            # join. Two codes of different lengths are not evidence of anything.
+            # Scoped to active players for the same reason the blank check below
+            # is: a position is a CURRENT roster spot, and a retired player
+            # carrying a dead code is league history, not a defect. Inactive-only
+            # violations are reported, never dropped -- NHL's `L`/`R` and NFL's
+            # `HC`/`K`/`SAF`/`TQB` live entirely there.
+            vocabulary = _position_vocabulary(league)
+            observed = _observed_positions(con, league, active_only=True)
+            historical = _observed_positions(con, league) - observed
+            if vocabulary:
+                ancestry = vocabulary["ancestry"]
+                overlaps = sorted(
+                    (child, parent)
+                    for child in observed
+                    for parent in ancestry.get(child, [])
+                    if parent in observed
+                )
+                unknown = sorted(observed - set(vocabulary["positions"]))
+                stale = sorted(historical - set(vocabulary["positions"]))
+                # Named in every message so a clean active roster can never be
+                # mistaken for "no dead codes anywhere in the table".
+                trailer = f"; inactive rows also hold {stale}" if stale else ""
+                if overlaps:
+                    out.add(FAIL, league, f"C/vocabulary[{column}]",
+                            "two levels of one vocabulary in the same column: %s "
+                            "-- each pair is a position and its own parent, which "
+                            "describe the same players and do not join%s"
+                            % (", ".join(f"{c} under {p}" for c, p in overlaps),
+                               trailer))
+                    continue
+                if unknown:
+                    out.add(FAIL, league, f"C/vocabulary[{column}]",
+                            "not in the vocabulary %s publishes: %s%s"
+                            % (vocabulary["source"], unknown, trailer))
+                    continue
+                # Clean: fall through to the blank check rather than passing
+                # here, so a tidy vocabulary cannot vouch for a column that is
+                # half empty. The stale note rides along on whatever it reports.
+                vocabulary_note = trailer
+            else:
+                out.add(UNVERIFIED, league, f"C/vocabulary[{column}]",
+                        "no published vocabulary on disk -- run "
+                        "fetch_position_vocabulary.py; refusing to judge "
+                        "positions against a list nobody published")
                 continue
         # `team` and `position` describe a CURRENT roster spot. A retired player
         # has neither, and blank is the honest answer for him -- so counting him
@@ -317,8 +413,8 @@ def check_single_vocabulary(con, league, spec, out):
                     % (active_blank, active_total,
                        100.0 * active_blank / active_total))
             continue
-        note = ("one vocabulary, %d values, 0 blank on active players"
-                % len(values))
+        note = ("one vocabulary, %d values, 0 blank on active players%s"
+                % (len(values), vocabulary_note))
         if inactive_blank:
             note += (" (%d inactive players carry no %s -- they are on no "
                      "roster, which is the honest answer)"
