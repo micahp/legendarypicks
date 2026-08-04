@@ -13,6 +13,7 @@ import argparse
 import json
 import os
 import sqlite3
+import sys
 import time
 import urllib.error
 import urllib.request
@@ -325,6 +326,8 @@ def _refuse_unless_forced() -> None:
     here -- ideally for the few athletes that need it, not all 643.
     """
     if "--i-accept-643-requests" in sys.argv:
+        # Strip it so argparse below does not reject its own escape hatch.
+        sys.argv = [a for a in sys.argv if a != "--i-accept-643-requests"]
         print("WARNING: running the per-athlete NBA ingest on purpose.")
         return
     sys.exit(
