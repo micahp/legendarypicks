@@ -152,14 +152,29 @@ function SlateTab({ league }: { league: League }) {
     return () => controller.abort()
   }, [league])
 
-  const gamesByDate = new Map<string, SlateGame[]>()
+  // League above date, not repeated inside every card. The league was a third
+  // item on each game's subline (`7:05 PM · MLB · 12 props`), which meant a
+  // twelve-game slate said "MLB" twelve times and still made you read each card
+  // to know what you were looking at. It is a property of the group, so it is
+  // rendered once, as the group's heading.
+  const leagueGroups = new Map<string, Map<string, SlateGame[]>>()
   for (const game of slate) {
-    const games = gamesByDate.get(game.date) || []
-    games.push(game)
-    gamesByDate.set(game.date, games)
+    const key = String(game.league || '').toLowerCase()
+    const byDate = leagueGroups.get(key) || new Map<string, SlateGame[]>()
+    byDate.set(game.date, [...(byDate.get(game.date) || []), game])
+    leagueGroups.set(key, byDate)
   }
-  const dateGroups = Array.from(gamesByDate, ([gameDate, games]) => ({ gameDate, games }))
-    .sort((a, b) => a.gameDate.localeCompare(b.gameDate))
+  const groups = Array.from(leagueGroups, ([leagueKey, byDate]) => ({
+    leagueKey,
+    dateGroups: Array.from(byDate, ([gameDate, games]) => ({ gameDate, games }))
+      .sort((a, b) => a.gameDate.localeCompare(b.gameDate)),
+  })).sort((a, b) => {
+    // Soonest first, so the league with a game tonight leads. Ties break on the
+    // league name rather than on Map insertion order, which is fetch order and
+    // therefore not stable between loads.
+    const first = (g: typeof a) => g.dateGroups[0]?.gameDate ?? '9999-99-99'
+    return first(a).localeCompare(first(b)) || a.leagueKey.localeCompare(b.leagueKey)
+  })
 
   const formatDate = (gameDate: string) =>
     new Date(gameDate + 'T12:00:00').toLocaleDateString(undefined, {
@@ -173,19 +188,24 @@ function SlateTab({ league }: { league: League }) {
           {error}
         </div>
       )}
-      {loading ? <Skeleton lines={5} /> : dateGroups.length === 0 ? (
+      {loading ? <Skeleton lines={5} /> : groups.length === 0 ? (
         <div className="py-16 text-center text-sm text-zinc-500">
           No upcoming games with props. Check back closer to game time.
         </div>
       ) : (
-        dateGroups.map(({ gameDate, games }) => {
+        groups.map(({ leagueKey, dateGroups }) => (
+        <section key={leagueKey} data-slate-league={leagueKey} className="space-y-4">
+          <h2 className="text-base font-extrabold uppercase tracking-wide text-zinc-100">
+            {leagueKey.toUpperCase()}
+          </h2>
+          {dateGroups.map(({ gameDate, games }) => {
           const propCount = games.reduce((total, game) => total + game.prop_count, 0)
           return (
             <section key={gameDate} data-slate-date={gameDate} className="space-y-3">
               <div className="flex min-w-0 items-center gap-2">
-                <h2 className="shrink-0 text-sm font-bold uppercase tracking-wide text-zinc-300">
+                <h3 className="shrink-0 text-sm font-bold uppercase tracking-wide text-zinc-300">
                   {formatDate(gameDate)}
-                </h2>
+                </h3>
                 <span className="truncate text-xs tabular-nums text-zinc-600">
                   {games.length} game{games.length === 1 ? '' : 's'} · {propCount} props
                 </span>
@@ -209,7 +229,7 @@ function SlateTab({ league }: { league: League }) {
                             {game.start_time
                               ? `${new Date(game.start_time).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })} · `
                               : ''}
-                            {game.league.toUpperCase()} · {game.prop_count} props
+                            {game.prop_count} props
                           </span>
                         </span>
                         <span aria-hidden="true" className="shrink-0 text-lg text-zinc-500">{expanded ? '▾' : '▸'}</span>
@@ -254,7 +274,9 @@ function SlateTab({ league }: { league: League }) {
               </div>
             </section>
           )
-        })
+          })}
+        </section>
+        ))
       )}
     </div>
   )
