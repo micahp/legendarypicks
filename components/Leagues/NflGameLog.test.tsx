@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react'
 
-import { NflGameLog } from '../../pages/player/[id]'
+import { NflGameLog } from '../Player/NflGameLog'
 
 
 describe('standalone NFL player game log', () => {
