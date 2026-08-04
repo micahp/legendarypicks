@@ -554,6 +554,32 @@ else:
         " | " + ", ".join("%s=%d" % kv for kv in sorted(dirty.items()))
     print("FAIL COV-identity (%s: %s%s)" % (result.state, result.detail, extra))
 PY
+
+  # ── COV-statset ── does each league hold what its pages claim it holds?
+  #
+  # Every other gate here counts something. Every gap found on 2026-08-04 was
+  # invisible to a count: 78 of 90 NHL goalies had game logs and not one save,
+  # because a goalie's log carried skater keys. The rows looked like coverage.
+  # `rush_td` was in every NFL log and in no column. `players.position` held two
+  # vocabularies per league, which is why 472 of 525 NBA leaders clicked through
+  # to an empty page.
+  #
+  # `audit_league_stats.py` asks the claim instead of the count, per league, and
+  # exits with the number of failures. Its UNVERIFIED state counts as a failure —
+  # a league nobody wrote a manifest for must not look like a league that passed.
+  #
+  # This is EXPECTED RED until the stat gaps in docs/LEAGUE-STAT-GAPS.md are
+  # closed. It is committed red on purpose: the number below only ever goes down,
+  # and a drop that nobody earned shows up in the diff.
+  statset_out=$($PY /root/legendarypicks/backend/audit_league_stats.py --db "$D" --quiet 2>&1)
+  statset_failures=$?
+  if [ "$statset_failures" -eq 0 ]; then
+    ok "COV-statset" "every league holds what its pages claim"
+  elif [ "$statset_failures" -le 18 ]; then
+    no "COV-statset" "$statset_failures of a known 18 open (expected red — see docs/LEAGUE-STAT-GAPS.md): $(echo "$statset_out" | grep -c '^FAIL') FAIL, $(echo "$statset_out" | grep -c '^UNVERIFIED') UNVERIFIED"
+  else
+    no "COV-statset" "REGRESSED: $statset_failures failures, was 18 on 2026-08-04 — a league lost something it used to hold"
+  fi
 }
 
 # ── always-on regressions: nothing already working may break ──
@@ -730,7 +756,7 @@ ovlwidth(){
 #      `all` dispatch ran 14 gates and silently skipped REG-render because the
 #      function was written but never added to the case. The count below is what
 #      makes that structurally impossible to repeat, rather than fixed once.
-ALL_IDS="A1 A1b A1c A2 A3 B1 B2 B2b B4 COV-nba COV-nhl COV-honest COV-keys COV-source COV-gametype COV-api COV-prod COV-leaders COV-identity REG-pool REG-adp-dst REG-dst REG-pytest REG-jest REG-jest-all REG-modules REG-render OVL-width"
+ALL_IDS="A1 A1b A1c A2 A3 B1 B2 B2b B4 COV-nba COV-nhl COV-honest COV-keys COV-source COV-gametype COV-api COV-prod COV-leaders COV-identity COV-statset REG-pool REG-adp-dst REG-dst REG-pytest REG-jest REG-jest-all REG-modules REG-render OVL-width"
 
 out=$(mktemp) || exit 2
 trap 'rm -f "$out"' EXIT
@@ -749,7 +775,7 @@ trap 'rm -f "$out"' EXIT
     reg|REG|regressions|REG-pool|REG-adp-dst|REG-dst|REG-pytest|REG-jest|REG-jest-all|REG-modules) reg;;
     render|REG-render|regrender) regrender;;
     OVL-width|ovl|overlay) ovlwidth;;
-    cov|COV|coverage|COV-nba|COV-nhl|COV-honest|COV-keys|COV-source|COV-gametype|COV-api|COV-prod|COV-leaders|COV-identity) cov;;
+    cov|COV|coverage|COV-nba|COV-nhl|COV-honest|COV-keys|COV-source|COV-gametype|COV-api|COV-prod|COV-leaders|COV-identity|COV-statset) cov;;
     all) a1; a2; a3; b1; b2; b4; echo "--- coverage ---"; cov; echo "--- regressions ---"; reg; regrender; ovlwidth;;
     *) echo "FAIL runner (unknown gate '$1' — nothing ran)";;
   esac

@@ -1,0 +1,395 @@
+#!/usr/bin/env python3
+"""Does each league actually hold what its pages claim? One runner, every ingest.
+
+Why this exists
+---------------
+Every gap found on 2026-08-04 was invisible to the checks we already had. Row
+counts were healthy. The API returned 200. Gates were green. And:
+
+  * 78 of 90 NHL goalies had game logs, and not one save. A goalie's log carried
+    `goals, assists, pim, toi` -- skater keys. 64 logged games for Vejmelka, zero
+    saves. **The rows looked like coverage.**
+  * `rush_td` and `rec_td` sat in every NFL game log and in no `player_stats`
+    column, so the leaderboard could not sort by the most-used fantasy stat.
+  * `players.position` held TWO vocabularies for NBA -- coarse `G/F/C` from the
+    ESPN ingest, granular `PG/SG/SF/PF` from the hoopR one -- over nearly
+    disjoint populations, which is why 472 of 525 leaders clicked through to an
+    empty page.
+  * The MLB batting qualifier was `games >= 30` where the published rule is
+    3.1 plate appearances per team game, and `PA` was not a column.
+
+None of those are count problems, so no count would ever have caught them. They
+are all the same shape: **a thing was present and was not what it claimed to
+be.** This asks the claim, per league, and every check is written so that
+missing evidence FAILS rather than skips.
+
+Checks
+------
+A  required stats exist AND are populated       -- the column, not just the row
+B  a position's logs carry that position's keys -- goalies must record saves
+C  one vocabulary per categorical column        -- two ingests, two spellings
+D  the leaderboard's population has game logs   -- a leader you can click into
+E  the qualifier is denominated in the published unit
+
+Adding a league
+---------------
+Add an entry to `MANIFEST`. That is the whole integration -- the runner iterates
+it. A league with no entry is reported as UNVERIFIED, never as passing, because
+"nobody wrote a manifest" and "the data is fine" must not look the same.
+
+Usage
+-----
+    python audit_league_stats.py --db data/picks.db
+    python audit_league_stats.py --db data/picks.db --league nhl
+    python audit_league_stats.py --db data/picks.db --quiet   # only failures
+Exit code is the number of failing checks, so it drops straight into a gate.
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import sqlite3
+import sys
+from collections import Counter
+
+DB = os.environ.get("LP_DB_PATH") or os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "data", "picks.db"
+)
+
+# Every league we serve a stats surface for. Sourced from docs/LEAGUE-STAT-GAPS.md
+# -- which is the measurement, not a wish list. `required` is what a page of this
+# league is not honest without.
+MANIFEST = {
+    "mlb": {
+        "stat_types": {
+            "batting": {
+                # PA is the qualifier's own unit (3.1 x team games). Without the
+                # column there is no way to ask the published question at all.
+                "required": ["games", "avg", "hr", "pa", "hits", "runs", "rbi"],
+                "qualifier": {"unit": "pa", "published": "3.1 PA x team games (502/162)"},
+            },
+            "pitching": {
+                "required": ["games", "k_pct", "innings", "era", "whip"],
+                "qualifier": {"unit": "innings", "published": "1.0 IP x team games (162/162)"},
+            },
+        },
+        "position_content": {},          # MLB positions are 100% NULL -- check C covers it
+        "single_vocabulary": ["team"],
+    },
+    "nba": {
+        "stat_types": {
+            "season": {
+                "required": ["games", "pts", "reb", "ast", "stl", "blk",
+                             "fgm", "fga", "fg3m", "fg3a", "ftm", "fta", "minutes"],
+                "qualifier": {"unit": "games", "published": "58 games; FG% 300 FGM, 3P% 82 3PM, FT% 125 FTM"},
+            },
+        },
+        "position_content": {},
+        "single_vocabulary": ["position", "team"],
+    },
+    "nhl": {
+        "stat_types": {
+            "season": {
+                "required": ["games", "goals", "assists", "points_nhl", "shots",
+                             "plus_minus", "toi",
+                             # Goalies are half this league's stats surface and
+                             # none of these columns exist yet. Red on purpose.
+                             "saves", "shots_against", "save_pct", "gaa"],
+                "qualifier": {"unit": "games",
+                              "published": "NONE PUBLISHED that this project could verify -- 40+ GP is convention"},
+            },
+        },
+        # The check that would have caught the goalie hole. A goalie whose log
+        # holds only skater keys has not been observed goaltending.
+        "position_content": {
+            "G": [["saves"], ["shotsAgainst", "shots_against"]],
+            "D": [["shots"], ["plusMinus", "plus_minus"]],
+            "C": [["goals"], ["assists"], ["shots"]],
+        },
+        "single_vocabulary": ["position", "team"],
+    },
+    "nfl": {
+        "stat_types": {
+            "season": {
+                "required": ["games", "pass_yds_g", "pass_td", "interceptions",
+                             "carries_g", "rush_yds_g", "receptions", "rec_yds_g",
+                             "targets", "fantasy_ppr_g",
+                             # In every game log, in no column.
+                             "rush_td", "rec_td"],
+                "qualifier": {"unit": "attempts",
+                              "published": "passer rating 14 att x team games; per-game stats ~50% of games"},
+            },
+        },
+        # Alternatives, because the raw log key and the served key differ:
+        # `_NFL_KEY_NORMALIZE` renames `rushing_yards` to `rush_yds` on the way
+        # out, and asserting only our spelling made this check fail over a
+        # rename rather than over missing data. The question is whether the
+        # position records rushing yards, not whose word for it is in the JSON.
+        "position_content": {
+            "QB": [["pass_yds", "passing_yards"], ["pass_td", "passing_tds"]],
+            "RB": [["carries"], ["rush_yds", "rushing_yards"]],
+            "WR": [["targets"], ["rec_yds", "receiving_yards"]],
+            "PK": [["fg_made"], ["fg_att"]],
+        },
+        "single_vocabulary": ["position", "team"],
+    },
+}
+
+PASS, FAIL, UNVERIFIED = "PASS", "FAIL", "UNVERIFIED"
+
+
+class Result:
+    def __init__(self):
+        self.rows = []
+
+    def add(self, state, league, check, detail):
+        self.rows.append((state, league, check, detail))
+
+    @property
+    def failures(self):
+        # UNVERIFIED counts as a failure. Evidence unavailable is not a pass and
+        # is not a skip -- that is the rule this whole file exists to enforce.
+        return [r for r in self.rows if r[0] != PASS]
+
+
+def _columns(con, table):
+    try:
+        return {r[1] for r in con.execute(f"PRAGMA table_info({table})")}
+    except sqlite3.OperationalError:
+        return set()
+
+
+def check_required_stats(con, league, spec, out):
+    """A. The column exists AND carries values for this league."""
+    columns = _columns(con, "player_stats")
+    if not columns:
+        out.add(FAIL, league, "A/required-stats", "player_stats is unreadable")
+        return
+    for stat_type, cfg in spec["stat_types"].items():
+        missing, empty = [], []
+        for column in cfg["required"]:
+            if column not in columns:
+                missing.append(column)
+                continue
+            filled = con.execute(
+                f"SELECT COUNT({column}) FROM player_stats "
+                "WHERE league=? AND stat_type=?", (league, stat_type)
+            ).fetchone()[0]
+            if not filled:
+                empty.append(column)
+        if missing or empty:
+            parts = []
+            if missing:
+                parts.append("no such column: " + ", ".join(missing))
+            if empty:
+                parts.append("column exists but 0 rows populated: " + ", ".join(empty))
+            out.add(FAIL, league, f"A/required-stats[{stat_type}]", "; ".join(parts))
+        else:
+            out.add(PASS, league, f"A/required-stats[{stat_type}]",
+                    "%d required stats present and populated" % len(cfg["required"]))
+
+
+def check_position_content(con, league, spec, out):
+    """B. A position's game logs carry that position's defining keys.
+
+    The goalie check. Presence of rows says a player was observed; it does not
+    say he was observed doing his job.
+    """
+    wanted = spec.get("position_content") or {}
+    if not wanted:
+        out.add(UNVERIFIED, league, "B/position-content",
+                "no position_content declared -- nobody has said what this "
+                "league's positions must record")
+        return
+    for position, keys in sorted(wanted.items()):
+        rows = con.execute(
+            """SELECT l.stats FROM player_game_logs l
+               JOIN players p ON p.id = l.player_id
+               WHERE l.league=? AND UPPER(TRIM(p.position))=? LIMIT 500""",
+            (league, position.upper()),
+        ).fetchall()
+        if not rows:
+            out.add(UNVERIFIED, league, f"B/position-content[{position}]",
+                    "no game logs at all for this position -- cannot confirm "
+                    "its stats are recorded")
+            continue
+        seen = Counter()
+        for row in rows:
+            try:
+                payload = json.loads(row[0])
+            except (TypeError, ValueError):
+                continue
+            for key, value in payload.items():
+                if value is not None:
+                    seen[key] += 1
+        # Each entry is a list of acceptable spellings for ONE stat; the stat
+        # is recorded if any spelling appears.
+        absent = [alts for alts in keys if not any(seen.get(k) for k in alts)]
+        if absent:
+            out.add(FAIL, league, f"B/position-content[{position}]",
+                    "%d logs sampled, never records: %s (records: %s)"
+                    % (len(rows), ", ".join(a[0] for a in absent),
+                       ", ".join(sorted(seen)[:8]) or "nothing"))
+        else:
+            out.add(PASS, league, f"B/position-content[{position}]",
+                    "%d logs sampled, all of %s recorded"
+                    % (len(rows), ", ".join(a[0] for a in keys)))
+
+
+def check_single_vocabulary(con, league, spec, out):
+    """C. One categorical column, one vocabulary.
+
+    Two ingests writing `G/F/C` and `PG/SG/SF/PF` into the same column is not a
+    style difference -- it partitions the league into populations that never
+    join, and a join that misses does not raise.
+    """
+    for column in spec.get("single_vocabulary") or []:
+        if column not in _columns(con, "players"):
+            out.add(FAIL, league, f"C/vocabulary[{column}]",
+                    f"players.{column} does not exist")
+            continue
+        values = [
+            (r[0], r[1]) for r in con.execute(
+                f"SELECT {column}, COUNT(*) FROM players WHERE league=? "
+                f"AND {column} IS NOT NULL AND TRIM({column}) != '' "
+                f"GROUP BY 1 ORDER BY 2 DESC", (league,))
+        ]
+        total = sum(n for _, n in values)
+        blank = con.execute(
+            f"SELECT COUNT(*) FROM players WHERE league=? "
+            f"AND ({column} IS NULL OR TRIM({column})='')", (league,)
+        ).fetchone()[0]
+        if not total:
+            out.add(FAIL, league, f"C/vocabulary[{column}]",
+                    f"every row blank ({blank} players)")
+            continue
+        if column == "position":
+            coarse = {v for v, _ in values if len(v) == 1}
+            granular = {v for v, _ in values if len(v) == 2}
+            if coarse and granular:
+                out.add(FAIL, league, f"C/vocabulary[{column}]",
+                        "two vocabularies in one column: %s and %s -- each is a "
+                        "different ingest, and they do not join"
+                        % (sorted(coarse), sorted(granular)))
+                continue
+        if blank:
+            # Report the count first. A bare "0%" next to FAIL reads as a bug in
+            # the gate rather than as two genuinely unlabelled players.
+            out.add(FAIL, league, f"C/vocabulary[{column}]",
+                    "%d of %d players blank (%.2f%%)"
+                    % (blank, blank + total, 100.0 * blank / (blank + total)))
+            continue
+        out.add(PASS, league, f"C/vocabulary[{column}]",
+                "one vocabulary, %d values, 0 blank" % len(values))
+
+
+def check_leaders_reach_logs(con, league, spec, out, floor=0.60):
+    """D. Can you click a leader and see a game?
+
+    A leaderboard whose players have no logs in the season it serves is a page
+    of dead ends. On 2026-08-04 only 53 of 525 NBA leaders had a 2026 log.
+    """
+    served = con.execute(
+        "SELECT MAX(season) FROM player_stats WHERE league=?", (league,)
+    ).fetchone()[0]
+    if served is None:
+        out.add(FAIL, league, "D/leaders-reach-logs", "no player_stats rows at all")
+        return
+    total, reachable = con.execute(
+        """SELECT COUNT(*), SUM(CASE WHEN EXISTS(
+               SELECT 1 FROM player_game_logs g
+                WHERE g.player_id = s.player_id AND g.league = s.league
+           ) THEN 1 ELSE 0 END)
+           FROM player_stats s WHERE s.league=? AND s.season=?""",
+        (league, served),
+    ).fetchone()
+    reachable = reachable or 0
+    share = (reachable / total) if total else 0.0
+    detail = ("season %s: %d of %d leaderboard players have any game log (%.0f%%)"
+              % (served, reachable, total, 100 * share))
+    out.add(PASS if share >= floor else FAIL, league, "D/leaders-reach-logs", detail)
+
+
+def check_qualifier_unit(con, league, spec, out):
+    """E. Is the qualifier's unit a column we hold?
+
+    Every published qualifier is denominated in plate appearances, innings,
+    attempts or made shots. Ours is `min_games`. Games cannot proxy for PA -- a
+    pinch hitter and a leadoff man play the same number of games -- so this
+    asserts the unit's COLUMN exists, which is the precondition for asking the
+    published question at all.
+    """
+    columns = _columns(con, "player_stats")
+    for stat_type, cfg in spec["stat_types"].items():
+        qualifier = cfg.get("qualifier") or {}
+        unit, published = qualifier.get("unit"), qualifier.get("published")
+        if not unit:
+            out.add(UNVERIFIED, league, f"E/qualifier[{stat_type}]",
+                    "no qualifier declared")
+            continue
+        if published and published.startswith("NONE PUBLISHED"):
+            out.add(UNVERIFIED, league, f"E/qualifier[{stat_type}]", published)
+            continue
+        if unit not in columns:
+            out.add(FAIL, league, f"E/qualifier[{stat_type}]",
+                    "published rule is '%s' but there is no `%s` column to "
+                    "measure it with" % (published, unit))
+        else:
+            out.add(PASS, league, f"E/qualifier[{stat_type}]",
+                    "`%s` present; published rule: %s" % (unit, published))
+
+
+CHECKS = (check_required_stats, check_position_content, check_single_vocabulary,
+          check_leaders_reach_logs, check_qualifier_unit)
+
+
+def audit(con, leagues=None) -> Result:
+    out = Result()
+    known = set(MANIFEST)
+    served = {
+        r[0] for r in con.execute(
+            "SELECT DISTINCT league FROM player_stats WHERE league IS NOT NULL")
+    }
+    for league in sorted(served - known):
+        # A league on a stats surface with nobody's manifest behind it. Reported,
+        # never silently skipped.
+        out.add(UNVERIFIED, league, "manifest",
+                "serves player_stats but has no MANIFEST entry -- add one before "
+                "trusting any page of it")
+    for league in sorted(known if leagues is None else set(leagues) & known):
+        for check in CHECKS:
+            check(con, league, MANIFEST[league], out)
+    return out
+
+
+def main(argv=None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--db", default=DB)
+    parser.add_argument("--league", action="append")
+    parser.add_argument("--quiet", action="store_true", help="only non-passing")
+    args = parser.parse_args(argv)
+
+    if not os.path.exists(args.db):
+        # Absence of the file is absence of evidence, and evidence unavailable is
+        # a failure, not a skip.
+        print("FAIL audit (no such database: %s)" % args.db)
+        return 1
+    con = sqlite3.connect(args.db)
+    try:
+        out = audit(con, args.league)
+    finally:
+        con.close()
+
+    for state, league, check, detail in out.rows:
+        if args.quiet and state == PASS:
+            continue
+        print("%-10s %-5s %-28s %s" % (state, league, check, detail))
+    failures = out.failures
+    print("\n%d check(s) failed or unverified, %d passed"
+          % (len(failures), len(out.rows) - len(failures)))
+    return len(failures)
+
+
+if __name__ == "__main__":
+    sys.exit(main())
