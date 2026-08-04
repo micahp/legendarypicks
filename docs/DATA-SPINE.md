@@ -104,3 +104,43 @@ all four `TASK-league-*.md` carry it.
 > A row's existence says a person was observed. It does not say **who observed
 > them**, or what that observer prints. Ask the second question at ingest time,
 > because after that it is a repair.
+
+---
+
+## CORRECTION — 2026-08-04: MLB never needed an ESPN crosswalk
+
+The rows above stand as measured. The **diagnosis** for MLB below them was
+wrong, and it is worth keeping the wrong version visible because it is a
+repeatable mistake: a missing value was attributed to a missing publisher
+without ever asking the publisher the league already has.
+
+> "MLB carries no `espn_id`. ESPN is what publishes team and position, so
+> `players.team` is 89% blank and `players.position` is **100%** blank."
+
+The symptom was real. The cause was not. **MLB publishes team and position
+itself**, on the endpoint we were already using for identity:
+
+```
+statsapi.mlb.com/api/v1/sports/1/players?season=2026
+  -> 1,347 people, each with `primaryPosition` and `currentTeam`
+```
+
+`backend/ingest_mlb_spine_identity.py` fills both. On dev this took
+`players.position` from 100% blank to **0% blank on active players**, in one
+vocabulary (1B 2B 3B C CF DH LF OF P RF RP SP SS TWP), and `team` likewise.
+Every remaining blank belongs to a player MLB does not publish for the season —
+a retired player has no current team, and blank is the honest answer there.
+
+The same mistake covered the counting stats: ERA, AB, PA, IP and the rest were
+recorded as "published nowhere we hold" and are all published by
+`statsapi.mlb.com/api/v1/stats?stats=season&group=hitting|pitching`. See the
+correction in `LEAGUE-STAT-GAPS.md`.
+
+**What this changes about the spine argument.** "A league is only as good as
+the number of publishers that can reach its players" still holds. What does not
+hold is treating `espn_id` as the only route — MLB's own publisher reaches its
+own players perfectly well, and was never asked. Before recording a value as
+unreachable, ask every publisher the league already has.
+
+An `espn_id` crosswalk for MLB is still worth having, but it is no longer what
+stands between this league and a team or a position.

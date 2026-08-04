@@ -178,3 +178,50 @@ Ordered by user-visible harm per unit of work.
 Rank cards for non-NFL leagues (`nfl_rankings.py` generalisation) sit **after**
 (1)–(3): a rank card over a stat set this thin would rank players on `exit_velo`
 and not on RBI.
+
+---
+
+## CORRECTION — 2026-08-04: most of the "no" column above is wrong
+
+Three separate rows in this document record a stat as unpublished or
+underivable. All three were measured against the wrong publisher. Keeping the
+originals above, because the error is more instructive than the fix.
+
+| this document said | actually |
+|---|---|
+| **AB** — "Not derivable", and OBP/SLG/OPS blocked behind it | published directly, with HBP and SF alongside |
+| **ERA** — "nothing publishes earned runs into our logs"; "there is no ERA anywhere in this database" | published, with earned runs, IP, W, L, SV and WHIP |
+| **every goalie stat** — saves, shots against, GAA, SV%, W/L, shutouts | published league-wide by nhle.com, one request |
+
+One request each:
+
+```
+statsapi.mlb.com/api/v1/stats?stats=season&group=hitting&playerPool=All
+   PA 215, AB 184, H, R, RBI, 2B, 3B, BB, K, SB, TB, HBP, SF, .299/.391/.467/.858
+statsapi.mlb.com/api/v1/stats?stats=season&group=pitching&playerPool=All
+   ERA 3.57, IP 128.2, W 9, L 5, SV 0, WHIP 1.19, ER 51
+api.nhle.com/stats/rest/en/goalie/summary
+   saves, shotsAgainst, goalsAgainst, savePct, GAA, shutouts, W, L, OTL, GS
+```
+
+`playerPool=All` matters. The default is `Qualified` — 149 hitters of 679 for
+2026 — so a snapshot built on the default is silently a leaderboard.
+
+**Innings are thirds.** MLB publishes `inningsPitched` as "128.2", meaning 128
+and two thirds. The published qualifier (1.0 IP × team games) is a comparison,
+and comparing 128.2 against a threshold is arithmetic on a number that does not
+mean what it looks like. `outs` is published; `innings` stores outs/3.
+
+Landed on dev: `A/required-stats[batting]`, `A/required-stats[pitching]`,
+`E/qualifier[batting]`, `E/qualifier[pitching]` and NHL
+`A/required-stats[season]` all FAIL → PASS. 78 goalies, 63,525 saves.
+
+**Still open:** `B/position-content[D]`. Blocks and hits ARE published per game,
+by `gamecenter/{gameId}/boxscore` — which also publishes `saves` directly, so
+the derived `saves` in `ingest_nhl_logs.py` (stamped `saves_derived`) should be
+replaced from there. A game can have two goalies; a derivation is exactly where
+that gets punished.
+
+**The lesson, and it is the same one twice:** every "we cannot get this" here
+was a statement about which publisher we asked, not about what is published.
+Check the league's own API before recording a gap.
