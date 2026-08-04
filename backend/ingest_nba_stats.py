@@ -13,6 +13,7 @@ import argparse
 import json
 import os
 import sqlite3
+import time
 import urllib.error
 import urllib.request
 from collections.abc import Callable, Mapping
@@ -35,30 +36,72 @@ HEADERS = {
     )
 }
 
+# One request per athlete, ~520 athletes, and the original loop issued them as
+# fast as the socket allowed.  On 2026-08-04 that run died at 53s on an ESPN
+# 403, and every `sports.core.api.espn.com` read from this box 403'd for the
+# next few hours -- which also took out the live Standings tab, because the
+# same host serves it.  The 403 came back on its own once the box went quiet,
+# so it was volume, not a ban.  Hence: a floor on the gap between requests, and
+# a retry that waits rather than aborting the whole snapshot on one refusal.
+MIN_INTERVAL = float(os.environ.get("LP_ESPN_MIN_INTERVAL", "0.5"))
+RETRY_WAITS = (5.0, 20.0, 60.0)
+_RETRYABLE = frozenset({403, 429, 500, 502, 503, 504})
+_last_request_at = 0.0
+
 
 class NBAStatsIngestError(RuntimeError):
     """The published NBA snapshot was incomplete or invalid."""
 
 
+def _throttle() -> None:
+    """Hold MIN_INTERVAL between consecutive upstream reads."""
+    global _last_request_at
+    gap = time.monotonic() - _last_request_at
+    if gap < MIN_INTERVAL:
+        time.sleep(MIN_INTERVAL - gap)
+    _last_request_at = time.monotonic()
+
+
 def fetch_athlete_stats(espn_id: str, season: int) -> dict | None:
-    """Fetch one published athlete season; a 404 means no published line."""
+    """Fetch one published athlete season; a 404 means no published line.
+
+    Paced, and patient with a refusal: a 403 here means we are asking too
+    fast, and backing off recovers where retrying immediately does not.
+    """
     request = urllib.request.Request(
         URL.format(season=int(season), espn_id=espn_id),
         headers=HEADERS,
     )
-    try:
-        with urllib.request.urlopen(request, timeout=20) as response:
-            return json.loads(response.read().decode())
-    except urllib.error.HTTPError as exc:
-        if exc.code == 404:
-            return None
-        raise NBAStatsIngestError(
-            f"ESPN statistics request failed for {espn_id}: HTTP {exc.code}"
-        ) from exc
-    except (OSError, json.JSONDecodeError) as exc:
-        raise NBAStatsIngestError(
-            f"ESPN statistics request failed for {espn_id}: {exc}"
-        ) from exc
+    for attempt, wait in enumerate((*RETRY_WAITS, None)):
+        _throttle()
+        try:
+            with urllib.request.urlopen(request, timeout=20) as response:
+                return json.loads(response.read().decode())
+        except urllib.error.HTTPError as exc:
+            if exc.code == 404:
+                return None
+            if exc.code in _RETRYABLE and wait is not None:
+                retry_after = exc.headers.get("Retry-After") if exc.headers else None
+                try:
+                    wait = max(wait, float(retry_after))
+                except (TypeError, ValueError):
+                    pass
+                time.sleep(wait)
+                continue
+            raise NBAStatsIngestError(
+                f"ESPN statistics request failed for {espn_id}: "
+                f"HTTP {exc.code} after {attempt + 1} attempt(s)"
+            ) from exc
+        except (OSError, json.JSONDecodeError) as exc:
+            if wait is not None:
+                time.sleep(wait)
+                continue
+            raise NBAStatsIngestError(
+                f"ESPN statistics request failed for {espn_id}: {exc}"
+            ) from exc
+    raise NBAStatsIngestError(
+        f"ESPN statistics request failed for {espn_id}: retries exhausted"
+    )
 
 
 def parse_athlete_stats(payload: Mapping[str, object]) -> dict:

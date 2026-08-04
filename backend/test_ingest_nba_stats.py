@@ -1,12 +1,18 @@
 #!/usr/bin/env python3
 
+import email.message
+import json
 import os
 import sqlite3
 import tempfile
 import unittest
+import urllib.error
+from unittest import mock
 
+import ingest_nba_stats
 from ingest_nba_stats import (
     NBAStatsIngestError,
+    fetch_athlete_stats,
     parse_athlete_stats,
     refresh_nba_stats,
 )
@@ -209,6 +215,84 @@ class NBAStatsIngestTests(unittest.TestCase):
                 fetcher=lambda espn_id, season: calls.append(espn_id),
             )
         self.assertEqual(calls, [])
+
+
+def http_error(code, retry_after=None):
+    headers = None
+    if retry_after is not None:
+        headers = email.message.Message()
+        headers["Retry-After"] = str(retry_after)
+    return urllib.error.HTTPError(
+        "https://sports.core.api.espn.com/", code, "refused", headers, None
+    )
+
+
+class FetchPacingTest(unittest.TestCase):
+    """An ESPN 403 here means we asked too fast, not that we are banned.
+
+    On 2026-08-04 an unpaced run of this ingest 403'd on its first athlete and
+    took `sports.core.api.espn.com` down for this box for hours, including the
+    live Standings tab.  These tests pin the pacing that prevents a repeat.
+    """
+
+    def setUp(self):
+        ingest_nba_stats._last_request_at = 0.0
+        self.slept = []
+        patch_sleep = mock.patch.object(
+            ingest_nba_stats.time, "sleep", self.slept.append
+        )
+        patch_sleep.start()
+        self.addCleanup(patch_sleep.stop)
+
+    def responses(self, *outcomes):
+        """Drive urlopen through a fixed sequence of raises/returns."""
+        remaining = list(outcomes)
+
+        def urlopen(_request, timeout=None):
+            outcome = remaining.pop(0)
+            if isinstance(outcome, Exception):
+                raise outcome
+            body = mock.MagicMock()
+            body.read.return_value = json.dumps(outcome).encode()
+            body.__enter__.return_value = body
+            return body
+
+        return mock.patch.object(ingest_nba_stats.urllib.request, "urlopen", urlopen)
+
+    def test_requests_are_spaced_by_the_minimum_interval(self):
+        with self.responses({"ok": 1}, {"ok": 2}):
+            fetch_athlete_stats("1966", 2026)
+            fetch_athlete_stats("1967", 2026)
+        # Two reads after an idle period means exactly one wait: the first
+        # request owes nothing, the second must not follow it immediately.
+        # Count before inspecting -- `all()` over an empty list is True, so
+        # asserting only the gap sizes would let "no pacing at all" pass.
+        self.assertEqual(
+            len(self.slept), 1,
+            "the second read followed the first with no wait between them",
+        )
+        self.assertGreater(self.slept[0], 0)
+
+    def test_a_403_is_waited_out_rather_than_aborting_the_snapshot(self):
+        with self.responses(http_error(403), http_error(403), {"ok": 1}):
+            self.assertEqual(fetch_athlete_stats("1966", 2026), {"ok": 1})
+        for wait in ingest_nba_stats.RETRY_WAITS[:2]:
+            self.assertIn(wait, self.slept)
+
+    def test_a_retry_after_header_longer_than_our_backoff_wins(self):
+        with self.responses(http_error(429, retry_after=120), {"ok": 1}):
+            fetch_athlete_stats("1966", 2026)
+        self.assertIn(120.0, self.slept)
+
+    def test_a_404_is_not_retried(self):
+        with self.responses(http_error(404)):
+            self.assertIsNone(fetch_athlete_stats("1966", 2026))
+
+    def test_a_403_that_never_clears_still_fails_closed(self):
+        outcomes = [http_error(403)] * (len(ingest_nba_stats.RETRY_WAITS) + 1)
+        with self.responses(*outcomes):
+            with self.assertRaisesRegex(NBAStatsIngestError, "HTTP 403"):
+                fetch_athlete_stats("1966", 2026)
 
 
 if __name__ == "__main__":
