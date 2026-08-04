@@ -28,6 +28,40 @@ measurement this task exists to answer; everything below is reproducible from it
 | `.claude/skills/resource-check/SKILL.md` | before the re-run in §3. It is 1,231 NBA + 1,312 NHL summary fetches against a rate-limiting host on a box with a live dev server. |
 
 
+## Environment — read this before running anything
+
+**`docs/RUNBOOK-heavy-feature-work.md`.** The parts that will bite you, in the order
+they bite:
+
+- **Know which database you opened.** Two real ones, both only in the main tree:
+  `backend/data/picks.db` is **PROD** (~240 MB, served by docker on `:8100`) and
+  `backend/data/picks.dev.db` is dev (~212 MB, served on `:8096`). They have
+  **diverged** — the same player id is a different player in each. Player `30085`
+  is the Buffalo Bills D/ST in prod and Magomed Ankalaev in dev.
+- **`LP_DB_PATH` is relative to the process's cwd**, so the same value opens
+  different files depending on where you launched. **Use an absolute path.**
+- **A worktree usually does NOT have the real dev DB.** Checked across ten
+  worktrees on 2026-08-04: the symlink existed in one. The rest had a ~200 KB stub
+  or nothing. A backend on a stub starts, answers 200, and serves an empty
+  database — nothing raises, and you will verify against it and report success.
+  Confirm before trusting any number:
+  ```
+  tr '\0' '\n' < /proc/<pid>/environ | grep LP_DB_PATH
+  ls -la <worktree>/backend/data/picks.dev.db     # symlink, or a stub?
+  ```
+- **`npm run dev:backend` sets neither `LP_DB_PATH` nor `GRID_API_KEY`**, and both
+  degrade silently. Launch uvicorn with them set explicitly.
+- **Ports:** `3096`/`8096` is the main dev pair and is **externally managed — never
+  restart it**. `3097`/`8097` are `scripts/hermes-worktree.sh` defaults and must be
+  checked free first (`ss -ltnp`). `3100`/`8100` is prod.
+- **`node_modules` in a worktree is a symlink into the main install.** An `npm
+  install` or an `npx` that installs there mutates everybody's, and has emptied it.
+- **Gates:** set `LP_GATE_W`, `LP_GATE_B` and `LP_GATE_F` **together** or
+  `verify-gates.sh` grades the main tree while your code never runs.
+- **Never `git checkout` or `git reset` under a running `next dev`.**
+- **Prod is off-limits** unless the task says otherwise: no `docker compose`, no
+  container restarts, no writes to `picks.db`, no `git push`.
+
 **Before you start, and before you call it done: `docs/NEW-LEAGUE-CHECKLIST.md`.**
 Every item in it is something that shipped green and was wrong. Two are load-bearing
 for this task: write the `audit_league_stats.py` **`MANIFEST` entry before the ingest
@@ -137,8 +171,8 @@ is ESPN's published `displayName`, stored at ingest, never composed client-side.
 
 ```bash
 # resource-check first — this is ~2,500 paced HTTP calls
-LP_DB_PATH=backend/data/picks.dev.db python3 backend/backfill_team_parity.py --league nba
-LP_DB_PATH=backend/data/picks.dev.db python3 backend/reconcile_totals.py \
+LP_DB_PATH=/root/legendarypicks/backend/data/picks.dev.db backend/venv/bin/python backend/backfill_team_parity.py --league nba
+LP_DB_PATH=/root/legendarypicks/backend/data/picks.dev.db backend/venv/bin/python backend/reconcile_totals.py \
     --league nba --season 2026 --write-coverage
 ```
 
@@ -214,3 +248,13 @@ apart as `0.3` each); the header carries the **sample size**; a dash is not a ze
 **a position with no data says so rather than showing a substitute** — a goalie's
 skater line is four true numbers that answer nothing anyone opens a goalie's page for,
 and a populated table reads as coverage.
+6. **`verify-gates.sh COV-statset` run and pasted**, with every red item for this
+   league named in writing. The `MANIFEST` entry in `backend/audit_league_stats.py`
+   was written BEFORE the ingest ran, and the gate's expected-failure count was
+   raised to match. A league with no manifest reports UNVERIFIED, never PASS.
+7. Every game log rendered in a real browser at **375px and 1440px** — a table with
+   columns, not a run of `key value` pairs — including the empty state for the one
+   position this league has no stats for. Paste the URL and what you saw.
+8. `docs/LEAGUE-STAT-GAPS.md` updated with what this league does NOT have, so the
+   next person does not rediscover it.
+
