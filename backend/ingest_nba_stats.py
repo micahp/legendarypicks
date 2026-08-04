@@ -307,5 +307,36 @@ def main() -> None:
     )
 
 
+def _refuse_unless_forced() -> None:
+    """MOSTLY SUPERSEDED 2026-08-04 by ingest_nba_season_stats.py.
+
+    Both write `player_stats` for league `nba` and both are accepted owners
+    of a post-2023 season, so whichever runs last owns every row. The
+    difference is cost: this one asks sports.core.api for ONE ATHLETE AT A
+    TIME -- 643 requests -- which is what tripped ESPN's block (143 athletes
+    in at 1s spacing, 21 at 2s) and why `espn_core` never published a row and
+    the leaderboard served 2022-23 for years. The replacement reads the same
+    season from ESPN's bulk byathlete report: 578 athletes over 6 pages.
+
+    Not a complete duplicate, and that is why this is a guard and not a
+    deletion: the per-athlete endpoint publishes `trueShootingPct`, which the
+    bulk report does not carry and which is not in the NBA MANIFEST. If we
+    ever want TS% from the publisher rather than computed, it comes from
+    here -- ideally for the few athletes that need it, not all 643.
+    """
+    if "--i-accept-643-requests" in sys.argv:
+        print("WARNING: running the per-athlete NBA ingest on purpose.")
+        return
+    sys.exit(
+        "ingest_nba_stats.py issues one request per athlete (643) and is what "
+        "got this box blocked by ESPN. ingest_nba_season_stats.py publishes "
+        "the same season in 6.\n\n"
+        "  Use:  venv/bin/python ingest_nba_season_stats.py "
+        "--season 2026 --db <path>\n\n"
+        "Pass --i-accept-643-requests to run it anyway."
+    )
+
+
 if __name__ == "__main__":
+    _refuse_unless_forced()
     main()

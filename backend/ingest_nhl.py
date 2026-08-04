@@ -189,5 +189,43 @@ def ingest():
     print(f"\nTotal: {total_resolved}/{total_roster} ({round(total_resolved/max(total_roster,1)*100)}%)")
 
 
+def _refuse_unless_forced() -> None:
+    """SUPERSEDED 2026-08-04 by ingest_nhl_season_stats.py.
+
+    Both scripts write `player_stats` for league `nhl` with source
+    `nhle.com` -- the same table, the same league, the same source string --
+    so whichever runs last owns every row and nothing warns. That makes this
+    one silently destructive now, in two specific ways:
+
+      1. It maps forward fields only, so it blanks every goaltender back to
+         0 goals / 0 assists / 0 shots and drops saves, shots against, GAA,
+         save %, W/L and shutouts entirely.
+      2. It reads `seasonTotals[-1]` with no filter on competition. On
+         Frederik Andersen that row is the POSTSEASON (16 GP) while his
+         published regular season is 35 GP, 16-14, .874. For other players
+         it is an AHL, Olympic or Swedish league line.
+
+    The replacement reads nhle.com's own per-type reports (goalie/summary,
+    skater/summary, skater/realtime), asks for gameTypeId=2 explicitly, and
+    costs ~20 requests against this script's ~800.
+
+    Kept rather than deleted because the roster walk above is still the only
+    code that pulls every team's roster from api-web.nhle.com, and something
+    may yet want it. It just must not publish stats again by accident.
+    """
+    if "--i-know-this-overwrites-goalies" in sys.argv:
+        print("WARNING: running the superseded NHL stats ingest on purpose.")
+        return
+    sys.exit(
+        "ingest_nhl.py is superseded by ingest_nhl_season_stats.py and will "
+        "overwrite every goaltender with zeroes and republish postseason "
+        "totals as the season.\n\n"
+        "  Use:  venv/bin/python ingest_nhl_season_stats.py "
+        "--season 20252026 --db <path>\n\n"
+        "Pass --i-know-this-overwrites-goalies to run it anyway."
+    )
+
+
 if __name__ == "__main__":
+    _refuse_unless_forced()
     ingest()
