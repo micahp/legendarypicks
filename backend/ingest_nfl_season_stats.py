@@ -34,6 +34,12 @@ REQUIRED_COLUMNS = frozenset((
     "passing_interceptions", "passing_epa", "carries", "rushing_yards",
     "receptions", "receiving_yards", "targets", "fantasy_points",
     "fantasy_points_ppr",
+    # The artifact publishes 143 columns and this set read 19 of them. These
+    # three were among the 124 dropped, which is the entire reason
+    # A/required-stats[season] failed on "no such column: rush_td, rec_td" and
+    # E/qualifier could not measure "passer rating 14 att x team games". The
+    # data was arriving on every run and being discarded before anyone looked.
+    "attempts", "rushing_tds", "receiving_tds",
 ))
 
 
@@ -149,6 +155,12 @@ def _values(row: dict) -> dict:
             "pass_epa": _number(row["passing_epa"]),
             "carries_g": _per_game(row["carries"], row["games"]),
             "rush_yds_g": _per_game(row["rushing_yards"], row["games"]),
+            # `attempts` is the published qualifier's unit -- "passer rating 14
+            # att x team games". It was in this artifact the whole time and was
+            # dropped on the floor, so the gate could not ask the published
+            # question at all.
+            "attempts": _number(row["attempts"]),
+            "rush_td": _number(row["rushing_tds"]),
         })
     elif position == "RB":
         values.update({
@@ -157,12 +169,19 @@ def _values(row: dict) -> dict:
             "receptions": _number(row["receptions"]),
             "rec_yds_g": _per_game(row["receiving_yards"], row["games"]),
             "targets": _number(row["targets"]),
+            "rush_td": _number(row["rushing_tds"]),
+            "rec_td": _number(row["receiving_tds"]),
         })
     else:
         values.update({
             "receptions": _number(row["receptions"]),
             "rec_yds_g": _per_game(row["receiving_yards"], row["games"]),
             "targets": _number(row["targets"]),
+            # A receiver's rushing touchdown is rare and real (end-arounds),
+            # and it is published per player -- so it is written per player
+            # rather than assumed away by position.
+            "rec_td": _number(row["receiving_tds"]),
+            "rush_td": _number(row["rushing_tds"]),
         })
     return values
 
