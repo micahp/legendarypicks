@@ -102,7 +102,7 @@ def _read_keys(pairs):
 
 def audit(leagues=None):
     import espn_client as paced
-    paced._HOST_BUDGET = 0            # one request per endpoint; no batch here
+    paced.set_host_budget(0)          # one request per endpoint; no batch here
     paced.set_min_interval(0.5)
     paced.set_disk_cache(os.path.join(
         os.path.dirname(os.path.abspath(__file__)), "data", "espn-cache"),

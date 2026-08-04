@@ -408,6 +408,7 @@ def main(leagues):
     # to collapse them into (checked: `byathlete` carries no team or position, and
     # the `core` athlete lists are $ref stubs costing a request each), so the two
     # levers are pacing the first run and not repeating it.
+    espn.set_retry_waits((5.0, 30.0, 120.0))
     espn.set_min_interval(float(os.environ.get("LP_ESPN_MIN_INTERVAL", "1.0")))
     espn.set_disk_cache(
         os.environ.get("LP_ESPN_CACHE_DIR")

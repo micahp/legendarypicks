@@ -55,6 +55,8 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
+import paced_http
+
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from league_stats import (  # noqa: E402
     LeagueStatContractError,
@@ -70,8 +72,12 @@ COUNTING_SOURCE = "statsapi"
 
 MIN_INTERVAL = float(os.environ.get("LP_MLB_MIN_INTERVAL", "0.5"))
 RETRY_WAITS = (5.0, 20.0, 60.0)
-_RETRYABLE = frozenset({403, 429, 500, 502, 503, 504})
-_last_request_at = 0.0
+
+# Pacing, retries and the per-host budget come from `paced_http`, which
+# exists because six modules had each written this block. The interval and
+# ladder below are this publisher's (statsapi.mlb.com), unchanged.
+_FETCH = paced_http.Fetcher(min_interval=MIN_INTERVAL, retry_waits=RETRY_WAITS,
+                            headers=HDR, timeout=30, host_budget=0)
 
 # published key -> our column.
 #
@@ -116,32 +122,13 @@ class MLBStatsIngestError(RuntimeError):
     """The published MLB snapshot was incomplete or invalid."""
 
 
-def _throttle() -> None:
-    global _last_request_at
-    gap = time.monotonic() - _last_request_at
-    if gap < MIN_INTERVAL:
-        time.sleep(MIN_INTERVAL - gap)
-    _last_request_at = time.monotonic()
-
-
 def _get(url: str) -> dict:
-    for wait in (*RETRY_WAITS, None):
-        _throttle()
-        try:
-            request = urllib.request.Request(url, headers=HDR)
-            with urllib.request.urlopen(request, timeout=60) as response:
-                return json.loads(response.read().decode())
-        except urllib.error.HTTPError as exc:
-            if exc.code in _RETRYABLE and wait is not None:
-                time.sleep(wait)
-                continue
-            raise MLBStatsIngestError(f"{url} failed: HTTP {exc.code}") from exc
-        except (OSError, json.JSONDecodeError) as exc:
-            if wait is not None:
-                time.sleep(wait)
-                continue
-            raise MLBStatsIngestError(f"{url} failed: {exc}") from exc
-    raise MLBStatsIngestError(f"{url} failed: retries exhausted")
+    # host_budget=0: the 100-per-host ceiling is a measured ESPN
+    # figure and no refusal has ever been observed from this host.
+    try:
+        return _FETCH.fetch(url)
+    except Exception as exc:
+        raise MLBStatsIngestError(f"{url} failed: {exc}") from exc
 
 
 def fetch_group(group: str, season: int) -> list[dict]:

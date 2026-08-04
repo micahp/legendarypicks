@@ -102,6 +102,7 @@ def main() -> int:
     args = ap.parse_args()
 
     # One-time fetch of ~140 refs. Paced, and cached to disk so a re-run is free.
+    espn.set_retry_waits((5.0, 30.0, 120.0))
     espn.set_min_interval(float(os.environ.get("LP_ESPN_MIN_INTERVAL", "1.0")))
     espn.set_disk_cache(os.environ.get("LP_ESPN_CACHE_DIR") or os.path.join(
         os.path.dirname(os.path.abspath(__file__)), "data", "espn-cache"), ttl=86400 * 7)

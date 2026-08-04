@@ -101,7 +101,8 @@ def main() -> int:
     # fourteen 60s cooldowns to a 1,394-game run for a limit nobody has observed.
     # Pace at the interval `ingest_nhl_season_stats.py` already uses for nhle.com
     # and leave the budget to the host it was measured on.
-    paced._HOST_BUDGET = int(os.environ.get("LP_NHL_HOST_BUDGET", "0"))
+    paced.set_host_budget(int(os.environ.get("LP_NHL_HOST_BUDGET", "0")))
+    paced.set_retry_waits((5.0, 30.0, 120.0))
     paced.set_min_interval(float(os.environ.get("LP_NHL_MIN_INTERVAL", "0.5")))
     paced.set_disk_cache(os.environ.get("LP_ESPN_CACHE_DIR") or os.path.join(
         os.path.dirname(os.path.abspath(__file__)), "data", "espn-cache"),

@@ -1,5 +1,22 @@
 # Changelog
 
+## v0.7.4 — 2026-08-04
+
+### One HTTP client instead of six copies
+
+- **`paced_http.py` is now the single home for pacing, the per-host budget and
+  the retry ladder.** Six modules each carried their own
+  `_throttle` / `RETRY_WAITS` / `_RETRYABLE` block, and `espn_client.py` — the
+  one every serving path and the heaviest batch job go through — had none at
+  all. That asymmetry is what let `roster_sync.py` fire 128 requests back to
+  back and trip ESPN's wall: the discipline existed in the repo, just not where
+  the requests were. All five ingests, the NHL backfill and the vocabulary
+  fetch now import it instead of writing their own.
+- **A serving-path refusal no longer blocks a user for 155 seconds.** The retry
+  ladder belongs to batch jobs; a caller with a stale payload in hand falls
+  straight through to it. Measured: `test_espn_client_degradation` runs in
+  0.006s with this, ~465s without.
+
 ## v0.7.3 — 2026-08-04
 
 ### The NFL board can be sorted by touchdowns

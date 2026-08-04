@@ -12,6 +12,8 @@ Provides the three things both Legendary Picks and the trading strategy need:
 """
 import json, os, re, time, unicodedata, urllib.error, urllib.parse, urllib.request
 
+import paced_http
+
 LEAGUES = {  # our key -> (espn "sport/league" path, regulation periods)
     "nba":  ("basketball/nba", 4),
     "wnba": ("basketball/wnba", 4),
@@ -95,184 +97,71 @@ _COMMON = "https://site.web.api.espn.com/apis/common/v3/sports/{path}"
 _SPORTS_CORE = "https://sports.core.api.espn.com/v2/sports/{sport}"
 _HDRS = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/124 Safari/537.36"}
 
-_CACHE = {}  # url -> (expires_at, data); ESPN is fine but we cache to be polite + fast
-
-# Pacing lives here rather than in each caller. `ingest_nba_season_stats.py` grew
-# a throttle and a backoff of its own and they worked, but this module is what
-# every other caller goes through and it had none -- so `roster_sync.py` issued
-# 128 requests back to back with no gap and tripped the wall on 2026-08-04.
+# Pacing, the per-host budget and the disk cache all live in `paced_http`, which
+# exists because SIX modules had each written their own copy of them and this one
+# -- the module every serving path and the heaviest batch job go through -- had
+# none. That asymmetry is what let `roster_sync.py` fire 128 requests back to
+# back and trip ESPN's wall on 2026-08-04.
 #
-# 0 disables it, which is what a single-request path (a page load, one scoreboard)
-# wants; only a caller that knows it is about to iterate sets an interval.
-_MIN_INTERVAL = float(os.environ.get("LP_ESPN_MIN_INTERVAL", "0") or 0)
-_RETRY_WAITS = (5.0, 30.0, 120.0)
-_RETRYABLE = frozenset({403, 429, 500, 502, 503, 504})
-_last_request_at = 0.0
-
-# Pacing alone does not describe the wall. Measured 2026-08-04 at identical 1s
-# spacing: `site.web.api` served 128 requests clean, `sports.core` refused at
-# ~119. Both were ~60 requests/minute, so the ceiling is a COUNT per host, not a
-# rate -- roughly 100. So budget per host and pause when one is spent, instead of
-# spacing every host as if they were the same.
-_HOST_BUDGET = int(os.environ.get("LP_ESPN_HOST_BUDGET", "100"))
-_HOST_COOLDOWN = float(os.environ.get("LP_ESPN_HOST_COOLDOWN", "60"))
-_host_spend = {}          # host -> requests charged since that host's last cooldown
-
-
-def _charge_host(url):
-    """Spend one request against `url`'s host, pausing when its budget is gone.
-
-    A cache hit never gets here, which is the point: the budget counts what we
-    actually ask ESPN for, so a resumed run costs nothing against it.
-    """
-    if _HOST_BUDGET <= 0:
-        return
-    host = urllib.parse.urlsplit(url).netloc
-    spent = _host_spend.get(host, 0)
-    if spent >= _HOST_BUDGET:
-        time.sleep(_HOST_COOLDOWN)
-        _host_spend[host] = 0
-    _host_spend[host] = _host_spend.get(host, 0) + 1
-
-# `_CACHE` is per-process, so its TTLs have never survived a run: every invocation
-# of a batch job re-pays every request to fetch bytes it already had. A roster does
-# not change between two runs ten minutes apart, but we asked ESPN 128 times anyway.
-#
-# Opt-in for the same reason the throttle is: a serving process wants the in-memory
-# cache only, and must never block on a disk read or serve a payload from hours ago.
-_DISK_CACHE_DIR = os.environ.get("LP_ESPN_CACHE_DIR") or ""
-_DISK_CACHE_TTL = float(os.environ.get("LP_ESPN_CACHE_TTL", "43200") or 0)
-
-
-def set_disk_cache(directory, ttl=None):
-    """Persist fetched payloads under `directory` and re-serve them for `ttl` seconds.
-
-    Returns the previous directory. Pass "" to disable.
-    """
-    global _DISK_CACHE_DIR, _DISK_CACHE_TTL
-    prev = _DISK_CACHE_DIR
-    _DISK_CACHE_DIR = directory or ""
-    if ttl is not None:
-        _DISK_CACHE_TTL = float(ttl or 0)
-    if _DISK_CACHE_DIR:
-        os.makedirs(_DISK_CACHE_DIR, exist_ok=True)
-    return prev
-
-
-def _disk_path(url):
-    import hashlib
-    return os.path.join(
-        _DISK_CACHE_DIR, hashlib.sha256(url.encode()).hexdigest()[:32] + ".json"
-    )
-
-
-def _disk_read(url):
-    if not _DISK_CACHE_DIR or _DISK_CACHE_TTL <= 0:
-        return None
-    p = _disk_path(url)
-    try:
-        if time.time() - os.path.getmtime(p) > _DISK_CACHE_TTL:
-            return None
-        with open(p) as f:
-            return json.load(f)
-    except (OSError, json.JSONDecodeError):
-        # A corrupt or missing cache entry is a cache miss, never an error --
-        # the caller's job is to get the data, not to care where it came from.
-        return None
-
-
-def _disk_write(url, data):
-    if not _DISK_CACHE_DIR:
-        return
-    try:
-        os.makedirs(_DISK_CACHE_DIR, exist_ok=True)
-        tmp = _disk_path(url) + ".tmp"
-        with open(tmp, "w") as f:
-            json.dump(data, f)
-        os.replace(tmp, _disk_path(url))   # atomic: a reader never sees a half file
-    except OSError:
-        pass
+# The defaults here do nothing on purpose: a page load must not pause and must
+# not answer from an hours-old payload. Only a caller that knows it is about to
+# iterate opts in, via set_min_interval() / set_disk_cache().
+# retry_waits is EMPTY by default, for the same reason the interval is 0: a page
+# load must not sit through a 155s ladder while somebody waits. Waiting out a
+# refusal is a batch job's move, so batch callers opt in via set_retry_waits().
+_FETCHER = paced_http.Fetcher(min_interval=0.0, retry_waits=(),
+                              headers=_HDRS, timeout=20,
+                              cache_dir=os.environ.get("LP_ESPN_CACHE_DIR") or "",
+                              cache_ttl=float(os.environ.get("LP_ESPN_CACHE_TTL",
+                                                             "43200") or 0))
 
 
 def set_min_interval(seconds):
-    """Space subsequent requests by at least `seconds`. Returns the previous value.
-
-    A serving path must not pause -- a user is waiting -- so this stays 0 unless a
-    batch caller opts in. `roster_sync` and friends do; the API does not.
-    """
-    global _MIN_INTERVAL
-    prev, _MIN_INTERVAL = _MIN_INTERVAL, float(seconds or 0)
+    """Space subsequent requests by at least `seconds`. Returns the previous value."""
+    prev = _FETCHER.min_interval
+    _FETCHER.min_interval = float(seconds or 0)
     return prev
 
 
-def _throttle():
-    global _last_request_at
-    if _MIN_INTERVAL <= 0:
-        return
-    gap = time.time() - _last_request_at
-    if gap < _MIN_INTERVAL:
-        time.sleep(_MIN_INTERVAL - gap)
-    _last_request_at = time.time()
+def set_disk_cache(directory, ttl=None):
+    """Persist payloads under `directory` and re-serve them for `ttl` seconds.
 
-
-def _fetch(url):
-    """One request, retrying an upstream refusal on a widening wait.
-
-    A 403 here is a temporary wall, not a permanent verdict -- measured 2026-08-04,
-    both hosts refused and were serving again inside ten minutes. Waiting it out
-    beats failing the caller, which is why the retry ladder is minutes not seconds.
+    Returns the previous directory. Pass "" to disable.
     """
-    for wait in (*_RETRY_WAITS, None):
-        _charge_host(url)
-        _throttle()
-        try:
-            with urllib.request.urlopen(
-                urllib.request.Request(url, headers=_HDRS), timeout=20
-            ) as r:
-                return json.loads(r.read().decode())
-        except urllib.error.HTTPError as exc:
-            if exc.code in _RETRYABLE and wait is not None:
-                time.sleep(wait)
-                continue
-            raise
-        except (OSError, json.JSONDecodeError):
-            if wait is not None:
-                time.sleep(wait)
-                continue
-            raise
-    raise RuntimeError(f"{url} failed: retries exhausted")
+    prev = _FETCHER.cache_dir
+    _FETCHER.cache_dir = directory or ""
+    if ttl is not None:
+        _FETCHER.cache_ttl = float(ttl or 0)
+    if _FETCHER.cache_dir:
+        os.makedirs(_FETCHER.cache_dir, exist_ok=True)
+    return prev
+
+
+def set_retry_waits(waits):
+    """Wait out an upstream refusal on this ladder. Returns the previous one."""
+    prev = _FETCHER.retry_waits
+    _FETCHER.retry_waits = tuple(waits or ())
+    return prev
+
+
+def set_host_budget(budget, cooldown=None):
+    """Requests allowed per host before a cooldown. 0 disables the budget."""
+    prev = _FETCHER.host_budget
+    _FETCHER.host_budget = int(budget)
+    if cooldown is not None:
+        _FETCHER.host_cooldown = float(cooldown)
+    return prev
+
+
+# The in-memory cache is the Fetcher's dict, exposed under the name this module
+# has always used. Callers and tests that reach for `espn_client._CACHE` are
+# asserting prod behaviour and should not have to know where the mechanism moved.
+_CACHE = _FETCHER._memory
 
 
 def _get(url, ttl=30):
-    now = time.time()
-    hit = _CACHE.get(url)
-    if hit and hit[0] > now:
-        return hit[1]
-    on_disk = _disk_read(url)
-    if on_disk is not None:
-        _CACHE[url] = (now + ttl, on_disk)
-        return on_disk
-    try:
-        data = _fetch(url)
-    except Exception:
-        # An upstream refusal is not the same as having no data. On 2026-08-04
-        # ESPN 403'd this box and every scores and standings surface returned
-        # 500 the instant the 30s cache expired -- the page then rendered "No
-        # data available", which reads as *we have no standings* rather than
-        # *we could not reach the publisher just now*.
-        #
-        # A stale payload is strictly better than a stack trace, so a failed
-        # refresh falls back to the last good one and is re-offered for a
-        # while. `hit` is kept regardless of expiry for exactly this. When
-        # there is nothing cached the error still propagates -- serving
-        # invented emptiness would be worse than failing.
-        if hit is not None:
-            _CACHE[url] = (now + min(ttl, 60), hit[1])
-            return hit[1]
-        raise
-    _CACHE[url] = (now + ttl, data)
-    _disk_write(url, data)
-    return data
+    return _FETCHER.json(url, ttl=ttl)
+
 
 
 def _check(league):
