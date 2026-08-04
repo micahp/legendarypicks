@@ -333,37 +333,58 @@ export function NflGameLog({ games, scheduleGames = [], fillMissed = false, posi
 
 type FetchState = 'loading' | 'ready' | 'not_found' | 'error'
 
-// NFL only. Every other league keeps the flat stack — their pages are short
-// enough that tabs would add a click and hide nothing worth hiding.
+// This was NFL-only, on the reasoning that every other league's page is "short
+// enough that tabs would add a click and hide nothing worth hiding". That stopped
+// being true: Mark Scheifele's page carries 82 game logs and Andrew Vaughn's 65,
+// stacked under his season line with no way past them. The tab set is now derived
+// from what a player actually has, so a league gets tabs exactly when it has more
+// than one thing to show.
+//
+// Usage and News stay NFL-shaped because their DATA is: `NflUsageTrend` reads snap
+// share, and `/api/player/{id}/news` hard-returns an empty list for every other
+// league. Offering an empty tab is worse than offering none.
 type PlayerTab = 'overview' | 'usage' | 'gamelog' | 'news'
-const NFL_TABS: { id: PlayerTab; label: string }[] = [
-  { id: 'overview', label: 'Overview' },
-  { id: 'usage', label: 'Usage' },
-  { id: 'gamelog', label: 'Game Log' },
-  { id: 'news', label: 'News' },
-]
+const TAB_LABELS: Record<PlayerTab, string> = {
+  overview: 'Overview',
+  usage: 'Usage',
+  gamelog: 'Game Log',
+  news: 'News',
+}
 
-function TabStrip({ tab, setTab }: { tab: PlayerTab; setTab: (t: PlayerTab) => void }) {
+function playerTabs(league: string, hasGameLog: boolean): PlayerTab[] {
+  const isNfl = league === 'nfl'
+  const tabs: PlayerTab[] = ['overview']
+  if (isNfl) tabs.push('usage')
+  if (hasGameLog) tabs.push('gamelog')
+  if (isNfl) tabs.push('news')
+  return tabs
+}
+
+function TabStrip({ tabs, tab, setTab }: {
+  tabs: PlayerTab[]
+  tab: PlayerTab
+  setTab: (t: PlayerTab) => void
+}) {
   return (
     <div
       className="flex gap-1 overflow-x-auto border-b border-zinc-800 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       role="tablist"
     >
-      {NFL_TABS.map((t) => {
-        const active = t.id === tab
+      {tabs.map((id) => {
+        const active = id === tab
         return (
           <button
-            key={t.id}
+            key={id}
             role="tab"
             aria-selected={active}
-            onClick={() => setTab(t.id)}
+            onClick={() => setTab(id)}
             className={`-mb-px shrink-0 whitespace-nowrap border-b-2 px-2 py-2.5 text-sm font-medium transition-colors sm:px-4 ${
               active
                 ? 'border-emerald-400 text-zinc-100'
                 : 'border-transparent text-zinc-500 hover:text-zinc-300'
             }`}
           >
-            {t.label}
+            {TAB_LABELS[id]}
           </button>
         )
       })}
@@ -464,7 +485,11 @@ export default function PlayerPage() {
   // NFL splits into tabs; every other league renders the same flat stack it
   // always has, so `show` is unconditionally true off NFL.
   const isNfl = p.league === 'nfl'
-  const show = (t: PlayerTab) => !isNfl || tab === t
+  const tabs = playerTabs(p.league, p.recent_games.length > 0)
+  // One tab is not a tab strip — a player with nothing but a season line keeps the
+  // flat stack rather than being handed a single button that does nothing.
+  const tabbed = tabs.length > 1
+  const show = (t: PlayerTab) => !tabbed || tab === t
   const nflSchedule = p.nfl_schedule_games ?? []
 
   return (
@@ -482,8 +507,8 @@ export default function PlayerPage() {
           </div>
         </div>
 
-        {isNfl && p.data_status !== 'unavailable' && (
-          <TabStrip tab={tab} setTab={(t) => {
+        {tabbed && p.data_status !== 'unavailable' && (
+          <TabStrip tabs={tabs} tab={tab} setTab={(t) => {
             // Fired on the move into Usage rather than on render, so the event
             // counts deliberate visits and not every re-render of the tab.
             if (t === 'usage' && tab !== 'usage') {
