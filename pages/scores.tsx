@@ -55,24 +55,27 @@ function LiveNow({ games, esportsLive }: { games: Game[]; esportsLive: boolean }
 
       {feat.league === 'WC' ? <ListenLive /> : null}
 
-      {/* compact inline chips + esports link */}
+      {/* One game, then two ways out. This used to inline a chip for every other
+          live game, which on a summer evening is fifteen MLB scores squeezed to
+          70px of team name each — a second, worse scoreboard sitting on top of
+          the scoreboard. The rail picks ONE game and points at the rest. */}
       {(rest.length > 0 || esportsLive) ? (
-        <div className="px-5 pb-4 flex flex-wrap items-center gap-2">
-          {rest.map((g) => (
-            <Link key={g.gameId} href={gameHref(g)}
-                  className="inline-flex items-center gap-1.5 rounded-md border border-zinc-800 bg-zinc-900/70 px-2.5 py-1 text-xs hover:border-zinc-600 transition-colors">
-              <span className="text-[10px] font-semibold text-zinc-500">{g.league}</span>
-              <span className="text-zinc-300 font-medium truncate max-w-[70px]">{teamDisplay(g.awayTeam)}</span>
-              <span className="font-mono text-xs tabular-nums text-zinc-400">{g.awayTeam.score ?? 0}</span>
-              <span className="text-zinc-600">–</span>
-              <span className="font-mono text-xs tabular-nums text-zinc-400">{g.homeTeam.score ?? 0}</span>
-              <span className="text-zinc-300 font-medium truncate max-w-[70px]">{teamDisplay(g.homeTeam)}</span>
+        <div className="flex flex-wrap items-center gap-2 px-5 pb-4">
+          {rest.length > 0 ? (
+            <Link
+              href="/scores?live=1"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-700 bg-zinc-900/70 px-3 py-1.5 text-xs font-medium text-zinc-300 transition-colors hover:border-emerald-500/50 hover:text-emerald-400"
+            >
+              {rest.length} more live game{rest.length === 1 ? '' : 's'} →
             </Link>
-          ))}
-          <div className="flex-1" />
+          ) : null}
           {esportsLive ? (
-            <Link href="/esports" className="text-[11px] font-medium text-zinc-600 hover:text-emerald-400 transition-colors">
-              Live esports →
+            <Link
+              href="/esports"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-1.5 text-xs font-medium text-red-400 transition-colors hover:border-red-500/60"
+            >
+              <span className="block h-1.5 w-1.5 shrink-0 rounded-full bg-red-500 animate-pulse motion-reduce:animate-none" />
+              Watch live esports →
             </Link>
           ) : null}
         </div>
@@ -107,6 +110,11 @@ export default function ScoresPage() {
     const l = router.query.league
     if (typeof l === 'string' && LEAGUES.includes(l)) setLeagueFilter(l)
   }, [router.query.date, router.query.league])
+
+  // ?live=1 — the destination the rail's "more live games" points at. A whole
+  // scoreboard showing only what is in progress, rather than a live game buried
+  // among the finals and the not-yet-started.
+  const liveOnly = router.query.live === '1'
 
   const [games, setGames] = useState<Game[]>([])
   const [loading, setLoading] = useState<boolean>(false)
@@ -190,7 +198,9 @@ export default function ScoresPage() {
     return () => { ignore = true; clearInterval(timer) }
   }, [games, date, leagueFilter])
 
-  const groupedGames = games.reduce((acc, g) => {
+  const visibleGames = liveOnly ? games.filter((g) => g.status === 'LIVE') : games
+
+  const groupedGames = visibleGames.reduce((acc, g) => {
     const l = g.league || 'OTHER'
     if (!acc[l]) acc[l] = []
     acc[l].push(g)
@@ -223,7 +233,9 @@ export default function ScoresPage() {
       </Head>
       <div className="space-y-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <h1 className="text-3xl font-extrabold tracking-tight">Scoreboard</h1>
+            <h1 className="text-3xl font-extrabold tracking-tight">
+            {liveOnly ? 'Live now' : 'Scoreboard'}
+          </h1>
           <div className="flex items-center gap-3">
             <div className="relative">
               <select
@@ -277,11 +289,23 @@ export default function ScoresPage() {
         </div>
         {error && <ErrorBanner message={error} />}
         {isToday ? <LiveDiscounts /> : null}
-        {!loading && games.length > 0 ? <LiveNow games={games} esportsLive={esportsLive} /> : null}
+        {liveOnly ? (
+          <Link href="/scores" className="inline-block text-sm text-zinc-500 transition-colors hover:text-emerald-400">
+            ← Full scoreboard
+          </Link>
+        ) : null}
+        {!liveOnly && !loading && games.length > 0
+          ? <LiveNow games={games} esportsLive={esportsLive} /> : null}
         {loading ? (
           <SkeletonList />
-        ) : games.length === 0 ? (
-          <EmptyState leagueFilter={leagueFilter} onViewAll={() => setLeagueFilter('All')} />
+        ) : visibleGames.length === 0 ? (
+          liveOnly ? (
+            <div className="rounded-xl border border-zinc-800 bg-zinc-900 py-16 text-center text-sm text-zinc-500">
+              Nothing is live right now.
+            </div>
+          ) : (
+            <EmptyState leagueFilter={leagueFilter} onViewAll={() => setLeagueFilter('All')} />
+          )
         ) : (
           <div className="space-y-12">
             {sortedLeagues.map((league) => {
