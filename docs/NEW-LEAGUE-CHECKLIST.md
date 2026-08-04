@@ -34,7 +34,7 @@ never look the same in the output.
 Then `verify-gates.sh COV-statset` and raise the expected-failure count in that
 gate with the new league's known-red items **named in the commit message**.
 
-## 2. The five questions the manifest makes it ask
+## 2. The six questions the manifest makes it ask
 
 | | check | the failure it exists for |
 |---|---|---|
@@ -43,6 +43,7 @@ gate with the new league's known-red items **named in the commit message**.
 | C | one vocabulary per categorical column | `players.position` held `G/F/C` from one ingest beside `PG/SG/SF/PF` from another, over near-disjoint populations. 472 of 525 NBA leaders clicked through to an empty page. NFL has the same split, where `K` and `PK` are both kickers |
 | D | leaderboard players are clickable into a game | see C — a leaderboard of dead ends renders identically to a working one |
 | E | the qualifier's unit is a column we hold | MLB's published rule is 3.1 PA × team games; ours was `games >= 30`, and `pa` was not a column. A 38-game player led a 112-game season's average |
+| F | every publisher can reach the league's players | NBA's two id columns had **zero** rows carrying both, so 269 athletes existed twice — stats on one `players.id`, game logs on another. MLB and NHL carry no `espn_id` at all, which is why MLB has no team or position and no NHL goalie has a save |
 
 ## 2b. Decide the publishers BEFORE the ingest
 
@@ -109,4 +110,5 @@ league did not, until 2026-08-04:
 - [ ] published qualifier found and recorded, or recorded as none
 - [ ] game log renders as a table, verified in a browser at **375px and 1440px**
 - [ ] every position's empty state checked — including the one with no data
+- [ ] `F/identity-crosswalk` green, or the single-publisher choice stated in writing
 - [ ] `docs/LEAGUE-STAT-GAPS.md` updated with what this league does not have
