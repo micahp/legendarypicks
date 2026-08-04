@@ -40,7 +40,36 @@ _MAX_UNRESOLVABLE_SHARE = float(os.environ.get("LP_ROSTER_MAX_UNRESOLVABLE", "0.
 _EXPECTED_TEAM_COUNTS = {"nfl": 32, "nba": 30, "nhl": 32, "mlb": 30}
 
 
+def configure_espn():
+    """Pacing, retries and the shared disk cache for this job's ESPN calls.
+
+    This job is the heaviest ESPN caller in the repo -- one request per team, so
+    ~32 per league and 128 for all four, which is what tripped the wall on
+    2026-08-04 when they went out back to back. There is no bulk roster endpoint
+    to collapse them into (checked: `byathlete` carries no team or position, and
+    the `core` athlete lists are $ref stubs costing a request each), so the two
+    levers are pacing the first run and not repeating it.
+
+    `sync_league` calls this, not just `main`. On 2026-08-04 the prod run paid
+    all 128 requests over again because the cache held no roster entries, and
+    every caller that reaches this module by `import roster_sync; sync_league(...)`
+    -- which is how both that night's runs were launched -- silently ran unpaced
+    and uncached when the settings lived in `main` alone. Configuration that only
+    applies when you enter through one door is configuration you do not have.
+    """
+    espn.set_retry_waits((5.0, 30.0, 120.0))
+    espn.set_min_interval(float(os.environ.get("LP_ESPN_MIN_INTERVAL", "1.0")))
+    espn.set_disk_cache(
+        os.environ.get("LP_ESPN_CACHE_DIR")
+        or os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "espn-cache"),
+        ttl=float(os.environ.get("LP_ESPN_CACHE_TTL", "43200")),
+    )
+
+
 def sync_league(con: sqlite3.Connection, league: str) -> dict:
+    # Idempotent, and it must run before the first `espn.` call below -- see the
+    # docstring: entering here directly is the normal case, not the exception.
+    configure_espn()
     # Schema changes are explicit, backup-first migrations. Do not make source
     # calls or touch compatibility fields until the roster schema is present.
     require_roster_schema(con)
@@ -402,19 +431,7 @@ def sync_league(con: sqlite3.Connection, league: str) -> dict:
 
 
 def main(leagues):
-    # This job is the heaviest ESPN caller in the repo -- one request per team, so
-    # ~32 per league and 128 for all four, which is what tripped the wall on
-    # 2026-08-04 when they went out back to back. There is no bulk roster endpoint
-    # to collapse them into (checked: `byathlete` carries no team or position, and
-    # the `core` athlete lists are $ref stubs costing a request each), so the two
-    # levers are pacing the first run and not repeating it.
-    espn.set_retry_waits((5.0, 30.0, 120.0))
-    espn.set_min_interval(float(os.environ.get("LP_ESPN_MIN_INTERVAL", "1.0")))
-    espn.set_disk_cache(
-        os.environ.get("LP_ESPN_CACHE_DIR")
-        or os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "espn-cache"),
-        ttl=float(os.environ.get("LP_ESPN_CACHE_TTL", "43200")),
-    )
+    configure_espn()
     con = sqlite3.connect(DB)
     con.row_factory = sqlite3.Row
     for lg in leagues:
