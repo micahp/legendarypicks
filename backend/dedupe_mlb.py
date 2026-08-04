@@ -17,7 +17,8 @@ Usage:
 """
 import sys, os, sqlite3
 DB = os.environ.get("LP_DB_PATH") or os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "picks.db")
-REF_TABLES = ["player_game_logs", "props", "player_stats", "predictions"]
+REF_TABLES = ["player_game_logs", "props", "player_stats", "predictions",
+              "roster_memberships", "roster_snap"]
 
 
 def pick_canonical(rows):
