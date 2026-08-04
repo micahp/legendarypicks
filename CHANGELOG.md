@@ -1,5 +1,69 @@
 # Changelog
 
+## v0.7.3 — 2026-08-04
+
+### The NFL board can be sorted by touchdowns
+
+- **`rush_td`, `rec_td` and `attempts` were in a file we already download**
+  (`c424c5f`). `stats_player_reg_2025.parquet` publishes 143 columns and the
+  ingest's whitelist read 19 of them; these three were among the 124 discarded,
+  on every run, before anyone looked. 608 rows filled — Jonathan Taylor 18
+  rushing TD, Davante Adams 14 receiving, Josh Allen 460 attempts. Nothing new
+  is fetched. `A/required-stats[season]` and `E/qualifier[season]` both go
+  FAIL → PASS.
+
+### Every league knows what team its players are on
+
+- **`roster_sync` had never once been able to run** (`627a213`).
+  `migrate_roster_snapshots.py` existed and had never been applied to either
+  database, so the job died on a missing table before reaching a roster. That,
+  not the matching logic, is why `team` was blank league-wide.
+- **One unidentifiable player no longer blocks a league.** Any single identity
+  failure applied nothing: one Connor Ungar, carried on two rosters, blocked all
+  32 NHL teams, and one Max Muncy — there are two of them — blocked all 30 MLB
+  ones. Systemic breakage still blocks, on the signals that indicate it: a team
+  that produced no usable entry, and an unresolvable share above 2% where real
+  rosters sit at 0.00–0.08%. Below that the odd player is queued for review,
+  inside the apply transaction so a review row cannot outlive a rollback.
+- Active players are now **100% populated for `espn_id`, `team` and `position`
+  in all four leagues** — the MLB/NHL spine gap in `DATA-SPINE.md`.
+
+### A defenceman is measured on blocks and hits again
+
+- **The boxscore has been publishing them all along.** `ingest_nhl_logs.py`
+  reads `player/{id}/game-log`, which carries ten skater keys and neither
+  `blockedShots` nor `hits`. The same publisher's
+  `gamecenter/{gameId}/boxscore` carries both for every skater, plus
+  `takeaways`, `giveaways` and `sog`, and for goalies publishes `saves`
+  directly — replacing a subtraction the log ingest's own comment marked
+  INTERIM. One request per game rather than one per player per game type.
+
+### Positions are judged against the vocabulary ESPN publishes
+
+- **The gate was measuring string length** (`0afa1fa`). It called a
+  one-character code coarse and a two-character code granular and failed any
+  league holding both — wrong in three of four, since hockey's `C/D/G/LW/RW` is
+  one vocabulary and football's `S/G/C/P` belong with `WR/LB/CB`. ESPN
+  publishes `leaf` and `parent` per position, so the real question is now
+  asked: a position and one of its own descendants both in use. NHL goes
+  FAIL → PASS because it was never broken; MLB gains the check and fails it on
+  `CF/LF/RF under OF`, which a length rule could not see.
+
+### ESPN's limit is a request count per host, not a rate
+
+- **Pacing, a per-host budget and a disk cache now live in the shared client**
+  (`1c9e77c`, `9484908`), where five ingests had each written their own copy or
+  none. At identical 1s spacing, `site.web.api` served 128 requests clean while
+  `sports.core` refused at ~119 — both ~60/minute, so no rate ceiling explains
+  either. The budget is 100 per host, then a cooldown; cache hits do not charge
+  it, so a refused run resumes for free.
+- `_CACHE` was per-process, so its TTLs had never survived a single run. A
+  repeated job now costs **0 requests** instead of re-paying for bytes it
+  already had, and because `backend/data` is bind-mounted into the container, a
+  dev run and a prod run the same night share it.
+- Two superseded ingests refuse to run rather than silently clobbering their
+  replacements (`4865105`, `4970960`).
+
 ## v0.7.2 — 2026-08-04
 
 ### Three leagues were describing their players with the wrong stats
