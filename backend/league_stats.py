@@ -156,7 +156,22 @@ def source_owns_stats(
         return False
 
     if normalized_league == "mlb":
-        return normalized_source == "statcast"
+        # Two publishers, two halves of one row. Statcast publishes exit
+        # velocity, barrel rate and xwOBA; statsapi publishes the counting
+        # line -- PA, hits, RBI, ERA, innings -- and neither will ever carry
+        # the other's. `statsapi` became an owner when the identity rebuild
+        # landed: the rebuild archives every current-season aggregate for
+        # regeneration (an average computed over half a split identity is
+        # wrong, not merely misfiled), and something has to be allowed to
+        # CREATE the replacement rows.
+        #
+        # Order matters and is not enforceable here: publishing is
+        # delete-then-insert per (player_id, league, season, stat_type), so
+        # whichever of the two runs last owns the row and the other's columns
+        # are gone. `ingest_mlb_counting_stats.py` is idempotent, cheap (two
+        # requests) and preserves Statcast's columns when it finds them, so
+        # the rule is: run it AFTER any Statcast refresh, never before.
+        return normalized_source in ("statcast", "statsapi")
     if normalized_league == "nhl":
         return normalized_source == "nhle.com"
     if normalized_league == "nba":

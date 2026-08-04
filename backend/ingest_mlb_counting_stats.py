@@ -8,18 +8,27 @@ publishes exit velocity and xwOBA and was never going to carry an RBI, and never
 asked MLB. `statsapi.mlb.com` publishes the whole batting line and the whole
 pitching line, for the full player pool, in one request each.
 
-This does not take the row from Statcast
-----------------------------------------
+Where a Statcast row exists, this does not take it
+--------------------------------------------------
 `exit_velo`, `barrel_pct`, `xwoba` and `whiff_pct` are on the props page today.
-This job writes only columns Statcast never had, on rows that already exist, and
-stamps `counting_source` so the row can say which publisher filled which half.
-`source` stays `statcast`; ownership is unchanged and nothing is overwritten.
+On a row that already exists this writes only columns Statcast never had and
+stamps `counting_source`, so the row can say which publisher filled which half.
+`source` stays `statcast` and nothing of theirs is overwritten.
 
-The consequence, stated rather than hidden: a player MLB publishes who has no
-Statcast row gets no row here. Measured 2026-08-04 that is 68 of 679 hitters and
-7 of 777 pitchers. Creating those rows means making `statsapi` an owning source
-in `league_stats.source_owns_stats`, which is a contract change and is not
-smuggled in here. The count is reported on every run.
+Where no row exists, this creates one
+-------------------------------------
+`statsapi` is an owning source for MLB (`league_stats.source_owns_stats`). It
+had to become one: the identity rebuild archives every current-season MLB
+aggregate for regeneration -- an average computed over half a split identity is
+wrong, not merely misfiled -- so after it runs there is nothing to update and
+every row is a create. Creation goes through `publish_player_stats`, not a bare
+INSERT, because that is what enforces ownership, the canonical player key and
+the column whitelist.
+
+**Order matters and nothing can enforce it.** Publishing is delete-then-insert
+per (player_id, league, season, stat_type), so whichever of the two publishers
+runs last owns the row and the other's columns are gone. This job is idempotent
+and costs two requests. Run it AFTER any Statcast refresh, never before.
 
 Innings are stored as true innings
 ----------------------------------
@@ -47,6 +56,10 @@ import urllib.parse
 import urllib.request
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from league_stats import (  # noqa: E402
+    LeagueStatContractError,
+    publish_player_stats,
+)
 
 DB = os.environ.get("LP_DB_PATH") or os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "data", "picks.db"
@@ -60,8 +73,18 @@ RETRY_WAITS = (5.0, 20.0, 60.0)
 _RETRYABLE = frozenset({403, 429, 500, 502, 503, 504})
 _last_request_at = 0.0
 
-# published key -> our column. Only columns Statcast never filled.
+# published key -> our column.
+#
+# `avg` and `hr` were once left to Statcast, on the reasoning that this job
+# should only write columns Statcast never filled. That reasoning breaks the
+# moment the identity rebuild runs: it archives every Statcast row, so a
+# regenerated league had `avg` and `hr` empty on all 1,325 players and
+# `A/required-stats[batting]` failed with "column exists but 0 rows
+# populated". MLB publishes both. A column another publisher also fills is not
+# a reason to leave it blank.
 BATTING_MAP = {
+    "avg": "avg",
+    "homeRuns": "hr",
     "plateAppearances": "pa",
     "atBats": "ab",
     "hits": "mlb_hits",
@@ -209,7 +232,7 @@ def refresh(db_path: str, *, season: int, dry_run: bool = False) -> dict:
 
         for group, (stat_type, mapper) in groups.items():
             splits = fetch_group(group, season)
-            updated = no_spine = no_row = 0
+            updated = no_spine = no_row = created = rejected = 0
             for split in splits:
                 published_id = (split.get("player") or {}).get("id")
                 if published_id is None:
@@ -244,12 +267,45 @@ def refresh(db_path: str, *, season: int, dry_run: bool = False) -> dict:
                 )
                 if cursor.rowcount:
                     updated += cursor.rowcount
-                else:
-                    no_row += 1
+                    continue
+                # No row to fill. Create one through the contract rather than
+                # with a bare INSERT -- publish_player_stats is what enforces
+                # ownership, the canonical player key and the column
+                # whitelist, and going around it is how a row ends up in this
+                # table that no publisher will admit to.
+                #
+                # This is the path the identity rebuild depends on: it
+                # archives every current-season MLB aggregate, so after it
+                # runs there is nothing to update and every row here is a
+                # create.
+                try:
+                    publish_player_stats(
+                        connection,
+                        player_id=player_id,
+                        league="mlb",
+                        season=int(season),
+                        stat_type=stat_type,
+                        source=COUNTING_SOURCE,
+                        games=_number((split.get("stat") or {}).get("gamesPlayed")),
+                        values={k: v for k, v in values.items()
+                                if k != "counting_source"},
+                    )
+                    connection.execute(
+                        """UPDATE player_stats SET counting_source=?
+                           WHERE player_id=? AND lower(league)='mlb'
+                             AND season=? AND stat_type=?""",
+                        (COUNTING_SOURCE, player_id, int(season), stat_type),
+                    )
+                    created += 1
+                except LeagueStatContractError as exc:
+                    rejected += 1
+                    print(f"  rejected {published_id}: {exc}")
             counts[stat_type] = {
                 "published": len(splits),
                 "updated": updated,
                 "not_in_spine": no_spine,
+                "created": created,
+                "rejected": rejected,
                 # Stated, not hidden: MLB publishes these players and we have
                 # no Statcast row to hang the numbers on.
                 "published_but_no_row": no_row,
