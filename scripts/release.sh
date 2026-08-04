@@ -48,6 +48,49 @@ CURRENT=$(sed -n 's/.*"version"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' pack
 
 echo "release: $CURRENT -> $VERSION on $BRANCH${DRY_RUN:+  (dry run)}"
 
+# ── preflight: nothing deprecated is still reachable ──────────────────────
+# A release is when superseded code gets shipped alongside its replacement and
+# nobody notices. v0.7.3 retired two stats ingests that wrote the same table,
+# the same league and the same source string as the ingests replacing them --
+# whichever ran last owned every row, silently, and one of them blanked every
+# goaltender to zeroes. `nba_service.py` is a whole deprecated FastAPI app that
+# still binds port 8000, the port sports_service uses.
+#
+# Being present is fine; being REACHABLE is not. A module marked DEPRECATED or
+# SUPERSEDED in its own docstring must be unreachable three ways: not imported,
+# not scheduled, and -- if it can be run directly -- refusing to run.
+deprecated_reachable=""
+for f in $(git ls-files 'backend/*.py'); do
+  head -20 "$f" | grep -qE '\b(DEPRECATED|SUPERSEDED)\b' || continue
+  module=$(basename "$f" .py)
+
+  # 1. imported by live code? (a docstring mention is not an import)
+  if git grep -qE "^[[:space:]]*(import|from)[[:space:]]+$module\b" -- 'backend/*.py' \
+     ':!'"$f" 2>/dev/null; then
+    deprecated_reachable="$deprecated_reachable\n  $f — still imported"
+  fi
+
+  # 2. named by a systemd unit that could fire it unattended
+  if systemctl list-units --all --no-pager --type=service 2>/dev/null \
+       | grep -q "legendarypicks" \
+     && systemctl cat $(systemctl list-units --all --no-pager --type=service 2>/dev/null \
+          | grep -oE 'legendarypicks[a-z-]*\.service' | sort -u) 2>/dev/null \
+        | grep -q "$module\.py"; then
+    deprecated_reachable="$deprecated_reachable\n  $f — referenced by a systemd unit"
+  fi
+
+  # 3. runnable directly with nothing stopping it
+  if grep -q '^if __name__ == "__main__"' "$f" \
+     && ! grep -qE '_refuse_unless_forced|sys\.exit\(' "$f"; then
+    deprecated_reachable="$deprecated_reachable\n  $f — runnable, no refusal guard"
+  fi
+done
+if [ -n "$deprecated_reachable" ]; then
+  echo "release: deprecated code is still reachable:" >&2
+  printf "$deprecated_reachable\n" >&2
+  die "retire it, guard it, or drop the DEPRECATED/SUPERSEDED marker if it is wrong"
+fi
+
 # ── the atomic part ───────────────────────────────────────────────────────
 if [ -n "$DRY_RUN" ]; then
   echo "  [dry-run] set package.json version to $VERSION"
