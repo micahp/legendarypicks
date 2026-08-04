@@ -1,5 +1,111 @@
 # Changelog
 
+## v0.7.2 — 2026-08-04
+
+### Three leagues were describing their players with the wrong stats
+
+- **Hockey has three player types and `player_stats` had columns for one**
+  (`76556d1`). Every goaltender in the database read `0 goals, 0 assists,
+  0 shots` — a goalie described entirely by things goalies do not do — and a
+  defenceman had nowhere to record a block or a hit. This was carried in
+  `LEAGUE-STAT-GAPS.md` as a missing publisher. It never was: nhle.com
+  publishes goalie and defensive stats league-wide and always has.
+  `ingest_nhl_season_stats.py` reads the report that describes each type
+  (`goalie/summary`, `skater/summary`, `skater/realtime`) — ~20 requests for
+  the league against ~800 for the per-player endpoint. 78 goalies, 63,525
+  saves. `A/required-stats[season]` and `B/position-content[G]` both go
+  FAIL → PASS.
+- **A season was being served that was actually the playoffs.** `ingest_nhl.py`
+  took `seasonTotals[-1]` with no filter on which competition the row belonged
+  to. Measured on Frederik Andersen, that row was the postseason (16 GP) while
+  his published regular season was 35 GP, 16-14, .874; other players' last rows
+  are AHL, Olympic or Swedish league lines. The new ingest asks for
+  `gameTypeId=2` and fails closed on a short page.
+- **MLB's counting stats were published the whole time** (`f07c841`). PA, hits,
+  runs, RBI, ERA, innings and WHIP were recorded as absent, both published
+  qualifier rules as unmeasurable, and AB and ERA as "published nowhere we
+  hold". All wrong: we were reading Statcast, which publishes exit velocity and
+  xwOBA and was never going to carry an RBI, and had never asked MLB.
+  `statsapi.mlb.com` publishes both full lines in one request each. Statcast
+  keeps the row — only columns it never had are written, and `counting_source`
+  records which publisher filled which half, so nothing on the props page
+  moved. Four gates go FAIL → PASS.
+- **MLB team and position never needed an ESPN crosswalk** (`70a1dee`).
+  `players.position` was 100% blank across every MLB player, blamed on the
+  spine carrying no `espn_id`. MLB publishes both itself. On active players
+  both are now 0% blank, in one vocabulary. Team codes are normalised, not
+  copied — MLB publishes `AZ` and `CWS` where this database is `ARI` and `CHW`.
+
+### The NBA leaderboard is current for the first time
+
+- **The ESPN 403 was a request-count problem, not a rate problem** (`6098c2a`).
+  `ingest_nba_stats.py` asked for one athlete at a time: 643 requests per
+  refresh. That is what tripped ESPN — 143 athletes in at 1s spacing, 21 at 2s,
+  and slowing down made it worse — which is why `espn_core` had published zero
+  rows ever, for any league, and why this leaderboard served the 2022-23
+  season. Pacing was never going to fix a total. ESPN publishes the same season
+  in bulk: 578 athletes over 6 pages, same publisher, ~1% of the requests.
+  `D/leaders-reach-logs` goes from *season 2023, 53 of 525 (10%)* to
+  **season 2026, 576 of 576 (100%)**.
+- The bulk payload is positional, with the stat names delivered once at the top
+  level. One column inserted upstream would shift every stat after it, and
+  every number would be someone else's while every row count stayed healthy. So
+  values are zipped by name, never indexed by position, and a category whose
+  name count disagrees with its value count raises rather than being read.
+
+### Scores and standings stop blaming our data for ESPN's outage
+
+- **Both surfaces moved off the host that was refusing us** (`7dc3b05`).
+  `_SITE` and `_CORE` pointed at `site.api.espn.com`, which 403'd this box for
+  a full day and took the live scores page and every standings tab with it —
+  rendering "No data available for NBA", which reads as *we have no standings*.
+  `site.web.api.espn.com` serves the identical paths: verified across all four
+  leagues and both shapes, 8 of 8 return 200 for requests the old host refuses.
+- **An upstream refusal no longer becomes a 500.** `_get` keeps the last good
+  payload past its expiry and re-serves it when a refresh fails, retrying
+  within the minute. With nothing cached it still raises — serving invented
+  emptiness would be worse, since an empty standings table is
+  indistinguishable from a real one with no rows.
+
+### Gates and groundwork
+
+- **COV-statset check F, identity-crosswalk** (`d4daffc`): can every publisher
+  we depend on actually reach this league's players? It distinguishes `split`
+  (one athlete on two `players.id` rows — the damage) from `disjoint` (two id
+  columns populated, no row carrying both — the condition immediately before
+  it).
+- **`C/vocabulary` stops calling retired players a defect** (`70a1dee`). It
+  counted a blank `team` against every player including those who stopped
+  playing years ago, which asserts they should be on a roster. Now scoped to
+  active players, with inactive blanks reported in the PASS note rather than
+  dropped. Not a way to pass by marking rows inactive — a test fails if an
+  active player has no team.
+- **The MLB identity rebuild runs** (`7051d4b`, `1cce908`). Rescued from a
+  worktree that was about to be deleted, it could not even import — its
+  dependency was tracked on four `codex/*` branches. Both documented test
+  failures were one gap in the fixture, not two bugs. Verified against a copy
+  of prod: 317 duplicate MLBAM groups to 0, 517,008 props preserved. **Not in
+  this release** — it archives all 2,653 MLB `player_stats` rows for
+  regeneration, so it ships with its regeneration pass.
+
+### Known, and deliberately not fixed here
+
+- Everything above is verified **on dev**. Prod needs its own migration pass
+  and a container rebuild for the host fix; there is no systematic dev → prod
+  upgrade path yet, and that is the next release.
+- `B/position-content[D]` is red on purpose. Blocks, hits and goaltender
+  `saves` are all published per game — by `gamecenter/{gameId}/boxscore`, not
+  by the endpoint the log ingest reads. Until that pass lands,
+  `ingest_nhl_logs.py` derives `saves` and stamps every such row
+  `saves_derived` so they can be found and replaced. A game can have two
+  goalies, which is exactly where a derivation earns its mistakes.
+- `mlb` and `nhl F/identity-crosswalk` cannot be brought to prod parity by
+  running these scripts. They need `espn_id` on the spine, which only
+  `roster_sync.py` produces, and against a copy of prod it fills zero: it is
+  fail-closed on ambiguous names and prod has 420 ambiguous normalized names.
+  Deduping removes most, but the survivors are genuinely different people who
+  share a name.
+
 ## v0.7.1 — 2026-08-03
 
 ### A league can now be offered while its season is still being played
