@@ -12,7 +12,7 @@ duplicates), upserts, and rebuilds `active` per league.
 Usage: python3 roster_sync.py [nfl nba nhl mlb]   (default: all four)
 """
 import datetime as dt
-import sys, os, sqlite3
+import collections, sys, os, sqlite3
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import espn_client as espn
 from sports_service import _normalize_name
@@ -31,6 +31,12 @@ from team_codes import (
 )
 
 DB = os.environ.get("LP_DB_PATH") or os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "picks.db")
+
+# Above this share of unidentifiable roster entries, stop and change nothing --
+# something is wrong with the source, not with a player. Measured on real rosters
+# the four leagues sit at 0.00%-0.08% (one or two players out of 700-3,000), so a
+# 2% ceiling is ~25x the observed noise and still catches a source gone bad.
+_MAX_UNRESOLVABLE_SHARE = float(os.environ.get("LP_ROSTER_MAX_UNRESOLVABLE", "0.02"))
 _EXPECTED_TEAM_COUNTS = {"nfl": 32, "nba": 30, "nhl": 32, "mlb": 30}
 
 
@@ -252,7 +258,25 @@ def sync_league(con: sqlite3.Connection, league: str) -> dict:
                 "reason": reason,
             })
 
-    if identity_failures:
+    # A player we cannot identify is a fact about THAT player. Failing the league
+    # over it is the same over-correction the name/trade cases were: on 2026-08-04
+    # one Connor Ungar blocked all 32 NHL teams and one Max Muncy blocked all 30
+    # MLB ones, so neither league had a team or an espn_id populated at all.
+    #
+    # The protection that matters is against SYSTEMIC breakage -- a roster fetch
+    # that silently returns junk would deactivate a league, since apply resets
+    # active=0 first. So keep blocking on that, and only on that:
+    #   * any team that produced no usable entry at all, and
+    #   * an unresolvable share above a floor, which no per-player oddity reaches.
+    # Below the floor the players are queued for review, exactly as before, and
+    # the other ~1,300 get the team and espn_id this job exists to give them.
+    planned_by_team = collections.Counter(item["team"] for item in planned)
+    empty_teams = sorted(set(rosters) - set(planned_by_team))
+    total_seen = len(planned) + len(identity_failures)
+    unresolvable_share = (len(identity_failures) / total_seen) if total_seen else 1.0
+    systemic = bool(empty_teams) or unresolvable_share > _MAX_UNRESOLVABLE_SHARE
+
+    if identity_failures and systemic:
         for failure in identity_failures:
             queue_unresolved_player(
                 con,
@@ -278,6 +302,8 @@ def sync_league(con: sqlite3.Connection, league: str) -> dict:
             "active_now": active_now,
             "verified_at": None,
             "failures": identity_failures,
+            "empty_teams": empty_teams,
+            "unresolvable_share": round(unresolvable_share, 4),
             "team_changes": team_changes,
         }
 
@@ -287,6 +313,21 @@ def sync_league(con: sqlite3.Connection, league: str) -> dict:
     snapshot_id = None
     try:
         con.execute("BEGIN IMMEDIATE")
+        # Under the floor: queue the odd players for review and carry on. Inside
+        # this transaction so the queue and the apply commit or roll back together
+        # -- a review row for a sync that never landed would be a lie. They are
+        # reported as `unresolved` rather than `failures` so "we skipped two
+        # people" cannot be read as "the league synced cleanly".
+        for failure in identity_failures:
+            queue_unresolved_player(
+                con,
+                source="espn_roster",
+                raw_name=failure["name"],
+                league=league,
+                team=failure["team"],
+                source_player_key=failure["source_player_key"],
+                reason=failure["reason"],
+            )
         # Reset active only after every team supplied a non-empty roster and
         # every source identity has an unambiguous application plan.
         con.execute(
@@ -356,10 +397,23 @@ def sync_league(con: sqlite3.Connection, league: str) -> dict:
             "matched": matched, "inserted": inserted,
             "espn_id_filled": updated_espn, "active_now": active_now,
             "verified_at": verified_at, "snapshot_id": snapshot_id,
-            "failures": []}
+            "failures": [], "unresolved": identity_failures,
+            "team_changes": team_changes}
 
 
 def main(leagues):
+    # This job is the heaviest ESPN caller in the repo -- one request per team, so
+    # ~32 per league and 128 for all four, which is what tripped the wall on
+    # 2026-08-04 when they went out back to back. There is no bulk roster endpoint
+    # to collapse them into (checked: `byathlete` carries no team or position, and
+    # the `core` athlete lists are $ref stubs costing a request each), so the two
+    # levers are pacing the first run and not repeating it.
+    espn.set_min_interval(float(os.environ.get("LP_ESPN_MIN_INTERVAL", "1.0")))
+    espn.set_disk_cache(
+        os.environ.get("LP_ESPN_CACHE_DIR")
+        or os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "espn-cache"),
+        ttl=float(os.environ.get("LP_ESPN_CACHE_TTL", "43200")),
+    )
     con = sqlite3.connect(DB)
     con.row_factory = sqlite3.Row
     for lg in leagues:
@@ -370,6 +424,8 @@ def main(leagues):
               f"| espn_id filled {s['espn_id_filled']} | now {s['active_now']} active")
         if s["failures"]:
             print(f"    NOT APPLIED — incomplete roster population: {s['failures']}")
+        for u in s.get("unresolved") or []:
+            print(f"    queued for review ({u['reason']}): {u['name']} [{u['team']}]")
     con.close()
 
 

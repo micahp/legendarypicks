@@ -516,6 +516,79 @@ class RosterSyncFreshnessTests(unittest.TestCase):
             tuple(unresolved), (None, "missing_espn_id")
         )
 
+    def test_one_unidentifiable_player_does_not_block_the_league(self):
+        """A player we cannot identify is a fact about that player, not the league.
+
+        On 2026-08-04 one duplicated roster id blocked all 32 NHL teams and one
+        conflicting name blocked all 30 MLB ones, so neither league got a single
+        team or espn_id populated. The odd player is queued; everyone else syncs.
+        """
+        big = [
+            {"player_id": str(900 + i), "name": f"Roster Player {i}", "position": "WR"}
+            for i in range(60)
+        ]
+        # The same source id twice -- ESPN does this when a player is carried on
+        # two rosters mid-move. The second occurrence is unidentifiable.
+        dupe = {"player_id": "900", "name": "Duplicated Person", "position": "TE"}
+
+        def roster(_league, team):
+            return self.complete_roster(_league, team) if team == "ARI" else big + [dupe]
+
+        with patch.object(
+            roster_sync.espn, "team_strength", side_effect=lambda _league: self.teams(),
+        ), patch.object(roster_sync.espn, "roster", side_effect=roster):
+            result = roster_sync.sync_league(self.connection, "nfl")
+
+        self.assertEqual(result["status"], "complete", result.get("failures"))
+        self.assertEqual([u["reason"] for u in result["unresolved"]],
+                         ["duplicate_source_roster_id"])
+        # The point of the whole job: the other players actually got their team.
+        self.assertEqual(
+            self.connection.execute(
+                "SELECT COUNT(*) FROM players WHERE league='nfl' AND team='ATL'"
+            ).fetchone()[0],
+            60,
+        )
+        # Queued for review rather than silently dropped.
+        self.assertEqual(
+            self.connection.execute(
+                "SELECT reason FROM unresolved_players"
+            ).fetchone()[0],
+            "duplicate_source_roster_id",
+        )
+
+    def test_a_team_with_no_usable_entry_still_blocks_the_league(self):
+        """The tolerance is for odd players, not for a source that has gone bad.
+
+        Apply resets active=0 for the whole league first, so a roster fetch
+        returning junk would deactivate everyone. That must still change nothing.
+        """
+        before = [
+            tuple(row) for row in self.connection.execute(
+                "SELECT id,name,team,espn_id,active FROM players ORDER BY id"
+            )
+        ]
+
+        def roster(_league, team):
+            if team == "ARI":
+                return self.complete_roster(_league, team)
+            return [{"player_id": None, "name": "Nameless One", "position": "WR"}]
+
+        with patch.object(
+            roster_sync.espn, "team_strength", side_effect=lambda _league: self.teams(),
+        ), patch.object(roster_sync.espn, "roster", side_effect=roster):
+            result = roster_sync.sync_league(self.connection, "nfl")
+
+        self.assertEqual(result["status"], "identity_incomplete")
+        self.assertEqual(result["empty_teams"], ["ATL"])
+        self.assertIsNone(result["verified_at"])
+        after = [
+            tuple(row) for row in self.connection.execute(
+                "SELECT id,name,team,espn_id,active FROM players ORDER BY id"
+            )
+        ]
+        self.assertEqual(after, before)
+
 
 if __name__ == "__main__":
     unittest.main()
