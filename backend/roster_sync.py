@@ -123,6 +123,9 @@ def sync_league(con: sqlite3.Connection, league: str) -> dict:
     verified_at = dt.datetime.now(dt.timezone.utc).isoformat()
     planned = []
     identity_failures = []
+    # Trades resolved by the roster rather than blocked on -- reported so a
+    # surprising number of them is visible instead of silent.
+    team_changes = []
     seen_roster_ids = set()
     for abbr, roster in rosters.items():
         for p in roster:
@@ -190,6 +193,25 @@ def sync_league(con: sqlite3.Connection, league: str) -> dict:
                     "source_player_key": eid,
                 })
                 continue
+            # Two different people can share a name -- there are two Max
+            # Muncys -- and a bare name collision used to fail the whole
+            # league. The roster publishes which team this one plays for, so
+            # narrow on that before giving up. Narrowing can only ever shrink
+            # the candidate set, so it cannot introduce a match that the name
+            # alone did not already support.
+            if len(candidates) > 1:
+                narrowed = [
+                    c for c in candidates
+                    if c["espn_id"] and str(c["espn_id"]) == eid
+                ]
+                if len(narrowed) != 1:
+                    narrowed = [
+                        c for c in candidates
+                        if str(c["team"] or "").upper() == abbr
+                    ]
+                if len(narrowed) == 1:
+                    candidates = narrowed
+
             if len(candidates) != 1:
                 reason = "ambiguous_normalized_name"
             else:
@@ -201,9 +223,18 @@ def sync_league(con: sqlite3.Connection, league: str) -> dict:
                 candidate_team = str(candidate["team"] or "").upper()
                 if candidate_eid and candidate_eid != eid:
                     reason = "name_match_conflicting_espn_id"
-                elif candidate_team and candidate_team != abbr:
-                    reason = "name_match_team_mismatch"
                 else:
+                    # A team mismatch on a name that is unique in this league
+                    # is a trade, and the published roster is the newer truth.
+                    # This used to fail the league, which made the sync unable
+                    # to do the one thing it exists for: a player changing
+                    # teams blocked every other player's update. The evidence
+                    # standard is unchanged -- unique name, no conflicting
+                    # espn_id -- it is only the conclusion that was wrong.
+                    if candidate_team and candidate_team != abbr:
+                        team_changes.append({
+                            "name": name, "from": candidate_team, "to": abbr,
+                        })
                     planned.append({
                         "action": "update",
                         "player_id": candidate["id"],
@@ -247,6 +278,7 @@ def sync_league(con: sqlite3.Connection, league: str) -> dict:
             "active_now": active_now,
             "verified_at": None,
             "failures": identity_failures,
+            "team_changes": team_changes,
         }
 
     source_payload = normalized_source_payload(league, rosters)

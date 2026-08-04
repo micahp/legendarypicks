@@ -374,6 +374,106 @@ class RosterSyncFreshnessTests(unittest.TestCase):
             ),
         )
 
+
+    def test_same_name_on_different_teams_is_resolved_by_the_roster(self):
+        """Two different people can share a name -- there are two Max Muncys.
+
+        This used to fail the entire league: one unresolvable collision left
+        every other player on the roster unsynced.
+        """
+        self.connection.executemany(
+            """INSERT INTO players(
+                 name,league,team,position,espn_id,active,updated_at
+               ) VALUES(?,?,?,?,?,?,?)""",
+            [
+                ("Max Muncy", "nfl", "ARI", "QB", None, 1, "old"),
+                ("Max Muncy", "nfl", "ATL", "WR", None, 1, "old"),
+            ],
+        )
+        self.connection.commit()
+
+        def roster(_league, team):
+            return {
+                "ARI": [{"player_id": "501", "name": "Max Muncy",
+                         "position": "QB"}],
+                "ATL": [{"player_id": "502", "name": "Max Muncy",
+                         "position": "WR"}],
+            }[team]
+
+        with patch.object(
+            roster_sync.espn, "team_strength",
+            side_effect=lambda _league: self.teams(),
+        ), patch.object(roster_sync.espn, "roster", side_effect=roster):
+            result = roster_sync.sync_league(self.connection, "nfl")
+
+        self.assertEqual(result["status"], "complete", result.get("failures"))
+        # Each was matched to the row already on that team, not to the other.
+        rows = {
+            r["team"]: r["espn_id"]
+            for r in self.connection.execute(
+                "SELECT team, espn_id FROM players WHERE name='Max Muncy'"
+            )
+        }
+        self.assertEqual(rows, {"ARI": "501", "ATL": "502"})
+
+    def test_a_trade_is_applied_rather_than_blocking_the_league(self):
+        """A team mismatch on a unique name is a trade, and the roster is newer.
+
+        Failing on it made the sync unable to do the one thing it exists for.
+        """
+        self.connection.execute(
+            """INSERT INTO players(
+                 name,league,team,position,espn_id,active,updated_at
+               ) VALUES('Traded Player','nfl','ARI','WR',NULL,1,'old')"""
+        )
+        self.connection.commit()
+
+        def roster(_league, team):
+            if team == "ATL":
+                return [{"player_id": "601", "name": "Traded Player",
+                         "position": "WR"}]
+            return [{"player_id": "101", "name": "Existing Quarterback",
+                     "position": "QB"}]
+
+        with patch.object(
+            roster_sync.espn, "team_strength",
+            side_effect=lambda _league: self.teams(),
+        ), patch.object(roster_sync.espn, "roster", side_effect=roster):
+            result = roster_sync.sync_league(self.connection, "nfl")
+
+        self.assertEqual(result["status"], "complete", result.get("failures"))
+        row = self.connection.execute(
+            "SELECT team, espn_id FROM players WHERE name='Traded Player'"
+        ).fetchone()
+        self.assertEqual((row["team"], row["espn_id"]), ("ATL", "601"))
+
+    def test_a_conflicting_espn_id_still_blocks(self):
+        """The evidence standard did not move: a contradicting id is not a trade."""
+        self.connection.execute(
+            """INSERT INTO players(
+                 name,league,team,position,espn_id,active,updated_at
+               ) VALUES('Conflicted Player','nfl','ARI','WR','999',1,'old')"""
+        )
+        self.connection.commit()
+
+        def roster(_league, team):
+            if team == "ATL":
+                return [{"player_id": "602", "name": "Conflicted Player",
+                         "position": "WR"}]
+            return [{"player_id": "101", "name": "Existing Quarterback",
+                     "position": "QB"}]
+
+        with patch.object(
+            roster_sync.espn, "team_strength",
+            side_effect=lambda _league: self.teams(),
+        ), patch.object(roster_sync.espn, "roster", side_effect=roster):
+            result = roster_sync.sync_league(self.connection, "nfl")
+
+        self.assertEqual(result["status"], "identity_incomplete")
+        self.assertEqual(
+            result["failures"][0]["reason"], "name_match_conflicting_espn_id"
+        )
+
     def test_missing_source_identity_queues_and_preserves_roster(self):
         before = [
             tuple(row)
