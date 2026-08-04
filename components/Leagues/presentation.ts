@@ -22,7 +22,11 @@ export const LEAGUE_EMOJIS: Record<string, string> = {
 // registry at runtime (`useLeagueSwitcher`), not by this list — see
 // docs/DATA-COVERAGE-CONTRACT.md §4. This array only says how to sort and what to call
 // them; a league missing from it still renders, under its uppercased slug.
-export const LEAGUE_ORDER = ['mlb', 'nba', 'nhl', 'nfl', 'wc', 'ufc'] as const
+// `wc` is deliberately absent. The World Cup keeps its API, its ingest, and its place
+// on /scores — it just stops being a league hub. Removing it from the ORDER is not what
+// hides it (an unlisted league still renders, under its uppercased slug); the
+// `offerable` check in useLeagueRouteState is. This only stops it being sorted first.
+export const LEAGUE_ORDER = ['mlb', 'nba', 'nhl', 'nfl', 'ufc'] as const
 
 export function leagueLabel(league: string): string {
   return LEAGUE_NAMES[league] || league.toUpperCase()
@@ -30,6 +34,42 @@ export function leagueLabel(league: string): string {
 
 export function leagueEmoji(league: string): string {
   return LEAGUE_EMOJIS[league] || '🏆'
+}
+
+// Leagues whose season crosses a calendar year, and which every publisher — ESPN
+// included — therefore names with both: `2025-26`, never `2026`.
+const SPLIT_YEAR_LEAGUES = new Set(['nhl', 'nba'])
+
+/**
+ * Render a stored season key the way the league publishes it.
+ *
+ * The STORAGE keys are deliberately left alone. NHL game logs are keyed `20252026`
+ * because that is the NHL's own vocabulary, and `player_stats` is keyed `2026`
+ * because that is ESPN's — both are correct, and migrating either would be changing
+ * a publisher's answer to make our display easier. What was actually wrong is that
+ * the player page printed both raw, so one header read
+ * `NHL · 20252026 · 82 games` directly above `SEASON STATS · 2026`: two labels for
+ * one season, neither of them the one a hockey fan uses.
+ *
+ * So this is display-only. An 8-digit key takes its last four digits as the ending
+ * year; a 4-digit key already is the ending year. MLB and NFL seasons sit inside one
+ * calendar year and keep the bare number. Anything unparseable returns unchanged —
+ * never `NaN`, never an empty string in place of something the caller was given.
+ */
+export function seasonLabel(
+  league: string,
+  season: number | string | null | undefined,
+): string {
+  if (season == null || season === '') return ''
+  const raw = String(season).trim()
+  if (!SPLIT_YEAR_LEAGUES.has(league?.toLowerCase())) return raw
+  const end = /^\d{8}$/.test(raw)
+    ? Number(raw.slice(4))
+    : /^\d{4}$/.test(raw)
+      ? Number(raw)
+      : null
+  if (end == null || !Number.isFinite(end)) return raw
+  return `${end - 1}-${String(end).slice(2)}`
 }
 
 /**
