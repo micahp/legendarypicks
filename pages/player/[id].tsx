@@ -6,6 +6,7 @@ import NflUsageTrend from '../../components/Leagues/NflUsageTrend'
 import StatRankCard from '../../components/Leagues/StatRankCard'
 import InjuryTag from '../../components/Leagues/InjuryTag'
 import { trackPlayerViewed, trackUsageTrendViewed } from '../../lib/analytics'
+import { seasonLabel } from '../../components/Leagues/presentation'
 
 interface Projection {
   n: number; projection: number; median: number; floor: number; ceiling: number
@@ -142,7 +143,7 @@ function SeasonStatsSection({ league, seasonStats }: { league: string; seasonSta
   return (
     <section>
       <h2 className="text-sm font-bold text-zinc-400 uppercase tracking-wider mb-2">
-        Season Stats{seasonStats.window ? ` · ${seasonStats.window}` : ''}{meta.games ? ` · ${meta.games} games` : ''}
+        Season Stats{seasonStats.window ? ` · ${seasonLabel(league, seasonStats.window)}` : ''}{meta.games ? ` · ${meta.games} games` : ''}
       </h2>
       <div className="rounded-xl border border-zinc-800 bg-zinc-900 divide-y divide-zinc-800">
         {blocks.map(b => (
@@ -199,14 +200,50 @@ const NFL_GAMELOG_BANDS: { label: string; cols: { key: string; label: string }[]
   { label: 'Receiving', cols: [
     { key: 'targets', label: 'Tgt' }, { key: 'rec', label: 'Rec' },
     { key: 'rec_yds', label: 'Yds' }, { key: 'rec_td', label: 'TD' }] },
+  { label: 'Kicking', cols: [
+    { key: 'fg_made', label: 'FGM' }, { key: 'fg_att', label: 'FGA' },
+    { key: 'fg_long', label: 'Long' },
+    { key: 'pat_made', label: 'XPM' }, { key: 'pat_att', label: 'XPA' }] },
+  // `intc`, not `interceptions` — the backend normalizes that key on the way out
+  // (`_NFL_KEY_NORMALIZE`), and a column naming the raw key renders every pick as an
+  // em dash, which reads as "we did not look" rather than "zero".
+  { label: 'Defense', cols: [
+    { key: 'sacks', label: 'Sck' }, { key: 'intc', label: 'Int' },
+    { key: 'fumble_rec', label: 'FR' }, { key: 'def_td', label: 'TD' },
+    { key: 'safeties', label: 'Sfty' }, { key: 'points_allowed', label: 'PA' }] },
   { label: 'Fantasy', cols: [
     { key: 'fpts', label: 'Fpts' }, { key: 'fpts_ppr', label: 'PPR' }] },
 ]
 
-export function NflGameLog({ games, scheduleGames = [], fillMissed = false }: {
+// Two positions do not survive "keep the bands somebody put a non-zero number in".
+// A kicker's stat line carries `carries` and `targets` like everyone else's, so
+// Brandon Aubrey's one designed carry in week 15 was the only non-zero value in the
+// four bands that existed, and his page rendered a 17-row RUSHING log. Andy
+// Borregales never touched the ball, matched no band, and got no table at all. For
+// PK and DEF the position IS the answer, so it is asked first and the value scan
+// never runs — a kicker who missed every kick still gets a kicking log.
+// First entry is the band the position ALWAYS gets, even if every number in it is
+// zero — a kicker who missed everything still has a kicking log, and a shutout is a
+// defense's best game. The rest still have to earn their place, so a kicker whose
+// fantasy line is zeros all season is not shown two columns of nothing.
+const NFL_POSITION_BANDS: Record<string, string[]> = {
+  PK: ['Kicking', 'Fantasy'],
+  K: ['Kicking', 'Fantasy'],
+  DEF: ['Defense', 'Fantasy'],
+  DST: ['Defense', 'Fantasy'],
+}
+
+// These two are reachable ONLY by pinning, never by the value scan. A defense's
+// interception and a quarterback's are the same normalized key (`intc`), so a scan
+// that merely asks "is this column non-zero" hands every QB who threw a pick a
+// Defense band — six columns of em dashes next to his passing line.
+const NFL_POSITION_ONLY_BANDS = new Set(['Kicking', 'Defense'])
+
+export function NflGameLog({ games, scheduleGames = [], fillMissed = false, position }: {
   games: RecentGame[]
   scheduleGames?: NflScheduleGame[]
   fillMissed?: boolean
+  position?: string | null
 }) {
   const byWeek = new Map<number, RecentGame>()
   games.forEach(game => {
@@ -242,7 +279,12 @@ export function NflGameLog({ games, scheduleGames = [], fillMissed = false }: {
     : sortedGames
 
   const num = (g: RecentGame, k: string) => (typeof g.stats[k] === 'number' ? (g.stats[k] as number) : null)
-  const bands = NFL_GAMELOG_BANDS.filter(b => b.cols.some(c => displayGames.some(g => (num(g, c.key) ?? 0) !== 0)))
+  const touched = (b: typeof NFL_GAMELOG_BANDS[number]) =>
+    b.cols.some(c => displayGames.some(g => (num(g, c.key) ?? 0) !== 0))
+  const pinned = NFL_POSITION_BANDS[String(position || '').toUpperCase()]
+  const bands = pinned
+    ? NFL_GAMELOG_BANDS.filter(b => pinned[0] === b.label || (pinned.includes(b.label) && touched(b)))
+    : NFL_GAMELOG_BANDS.filter(b => !NFL_POSITION_ONLY_BANDS.has(b.label) && touched(b))
   if (!bands.length) return null
 
   return (
@@ -436,7 +478,7 @@ export default function PlayerPage() {
             {isNfl && <InjuryTag status={p.injury_status} />}
           </div>
           <div className="text-sm text-zinc-500 mt-1">
-            {[p.team, p.position, p.league?.toUpperCase(), p.season ? `${p.season} · ${p.regular_season_games} games` : null].filter(Boolean).join(' · ')}
+            {[p.team, p.position, p.league?.toUpperCase(), p.season ? `${seasonLabel(p.league, p.season)} · ${p.regular_season_games} games` : null].filter(Boolean).join(' · ')}
           </div>
         </div>
 
@@ -604,6 +646,7 @@ export default function PlayerPage() {
                     <NflGameLog
                       games={p.postseason_recent_games}
                       scheduleGames={nflSchedule.filter(game => game.phase === 'postseason')}
+                      position={p.position}
                     />
                   </div>
                 )}
@@ -615,6 +658,7 @@ export default function PlayerPage() {
                     games={p.recent_games}
                     scheduleGames={nflSchedule.filter(game => game.phase === 'regular')}
                     fillMissed
+                    position={p.position}
                   />
                 </div>
                 {p.preseason_recent_games.length > 0 && (
@@ -625,6 +669,7 @@ export default function PlayerPage() {
                     <NflGameLog
                       games={p.preseason_recent_games}
                       scheduleGames={nflSchedule.filter(game => game.phase === 'preseason')}
+                      position={p.position}
                     />
                   </div>
                 )}

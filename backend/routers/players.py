@@ -102,6 +102,64 @@ def search_players(q: str = Query("", description="Search query")):
     ]
 
 
+_DST_POSITIONS = ("DEF", "DST", "D/ST")
+
+
+def _dst_game_logs(connection, player_id: int):
+    """A defense's weekly log, from `nfl_dst_stats` instead of `player_game_logs`.
+
+    `player_game_logs` holds zero DEF rows and always will: every row in it comes
+    from a box-score PLAYER line, and a defense is not a player. So the profile's
+    season lookup returned None, and the page rendered no Game Log section at all
+    for a position people draft in the first six rounds.
+
+    `nfl_dst_stats` is where the mock draft already reads them -- one row per team
+    per week. Returns `(season, rows)` shaped like `player_game_logs` rows so the
+    caller's serializer needs no branch. `game_date` is null because the table does
+    not publish one; the NFL schedule block that follows resolves opponent and venue
+    from `game_no`, which is the week.
+    """
+    try:
+        srow = connection.execute(
+            "SELECT MAX(season) AS season FROM nfl_dst_stats WHERE player_id=?",
+            (player_id,),
+        ).fetchone()
+    except sqlite3.OperationalError:
+        return None, None          # table absent: no logs, not a 500
+    season = srow["season"] if srow else None
+    if season is None:
+        return None, None
+    rows = connection.execute(
+        """SELECT week, sacks, interceptions, tds, safeties, fumble_rec,
+                  st_tds, pr_tds, points_allowed, fantasy_pts
+           FROM nfl_dst_stats WHERE player_id=? AND season=?
+           ORDER BY week DESC""",
+        (player_id, season),
+    ).fetchall()
+    logs = []
+    for row in rows:
+        stats = {
+            "sacks": row["sacks"],
+            "interceptions": row["interceptions"],
+            "fumble_rec": row["fumble_rec"],
+            "def_td": row["tds"],
+            "safeties": row["safeties"],
+            "points_allowed": row["points_allowed"],
+            # A defense scores the same in standard and PPR -- it catches no passes.
+            # Both keys carry the published number rather than one being derived.
+            "fpts": row["fantasy_pts"],
+            "fpts_ppr": row["fantasy_pts"],
+        }
+        logs.append({
+            "stats": json.dumps({k: v for k, v in stats.items() if v is not None}),
+            "game_date": None,
+            "opponent": None,
+            "home_away": None,
+            "game_no": row["week"],
+        })
+    return season, logs
+
+
 def _season_stats_for_profile(player_id: int, player_name: str, league: str):
     """Reuse the DB-backed advanced-stat readers for the page-level profile."""
     getter = {
@@ -153,6 +211,13 @@ def player_profile(player_id: int):
             "SELECT season FROM player_game_logs WHERE player_id=? ORDER BY season DESC LIMIT 1",
             (player_id,)).fetchone()
         season = srow["season"] if srow else None
+        dst_logs = None
+        if (
+            league == "nfl"
+            and str(p["position"] or "").upper() in _DST_POSITIONS
+            and season is None
+        ):
+            season, dst_logs = _dst_game_logs(con, player_id)
         logs = []
         postseason_logs = []
         preseason_logs = []
@@ -245,6 +310,14 @@ def player_profile(player_id: int):
             # `nfl_schedule` is matched on bare team codes, and CHI, DAL, LA and
             # friends name a team in both leagues — run this for an NHL player and
             # it silently attaches an NFL schedule to them.
+            # A defense's rows do not live in `player_game_logs`, so every query
+            # above found nothing for it. Substitute the published weekly log here,
+            # before the schedule block, so the defense gets opponent and venue from
+            # exactly the same resolution every other NFL player gets.
+            if dst_logs is not None:
+                logs = dst_logs
+                regular_season_games = len(dst_logs)
+
             if league == "nfl":
                 schedule_columns = {
                     row[1]

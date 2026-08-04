@@ -344,5 +344,79 @@ class NflSeasonStatsPositionTests(unittest.TestCase):
                 players._season_stats_for_profile(1, "Nobody", "nfl"))
 
 
+class DstGameLogTests(unittest.TestCase):
+    """A defense is not a player, so its log does not live in `player_game_logs`.
+
+    Every query in `player_profile` reads that table, found nothing for a D/ST, and
+    the page rendered no Game Log section at all -- for a position drafted in the
+    first six rounds. The weekly rows are published per team-week in `nfl_dst_stats`,
+    which the mock draft already reads. This asserts the profile reaches them.
+    """
+
+    def setUp(self):
+        handle = tempfile.NamedTemporaryFile(prefix="dst-log-", suffix=".db", delete=False)
+        self.path = handle.name
+        handle.close()
+        self.addCleanup(lambda: os.path.exists(self.path) and os.unlink(self.path))
+        con = sqlite3.connect(self.path)
+        con.executescript(
+            """
+            CREATE TABLE nfl_dst_stats(
+              player_id INTEGER, season INTEGER, week INTEGER,
+              sacks REAL, interceptions REAL, tds REAL, safeties REAL,
+              fumble_rec REAL, st_tds REAL, pr_tds REAL,
+              points_allowed REAL, fantasy_pts REAL
+            );
+            """
+        )
+        con.executemany(
+            "INSERT INTO nfl_dst_stats VALUES(?,?,?,?,?,?,?,?,?,?,?,?)",
+            [
+                (30085, 2025, 1, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 8.0, 5.0),
+                (30085, 2025, 2, 3.0, 2.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 19.0),
+                (30085, 2024, 1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 31.0, -2.0),
+            ],
+        )
+        con.commit()
+        con.close()
+        self.con = sqlite3.connect(self.path)
+        self.con.row_factory = sqlite3.Row
+        self.addCleanup(self.con.close)
+
+    def test_reads_the_latest_season_newest_week_first(self):
+        season, logs = players._dst_game_logs(self.con, 30085)
+
+        self.assertEqual(2025, season)
+        self.assertEqual([2, 1], [row["game_no"] for row in logs])
+        self.assertEqual(2, len(logs))
+
+    def test_a_shutout_survives_the_zero_that_used_to_erase_it(self):
+        """`points_allowed: 0` is the best game a defense can have.
+
+        The band filter this feeds kept only bands holding a non-zero number, so a
+        shutout week read as a week with no defensive stats at all.
+        """
+        _, logs = players._dst_game_logs(self.con, 30085)
+        week2 = json.loads(logs[0]["stats"])
+
+        self.assertEqual(0.0, week2["points_allowed"])
+        self.assertEqual(3.0, week2["sacks"])
+        self.assertEqual(1.0, week2["def_td"])
+        # A defense catches no passes, so its PPR score IS its standard score --
+        # both keys carry the published number rather than one being derived.
+        self.assertEqual(19.0, week2["fpts"])
+        self.assertEqual(19.0, week2["fpts_ppr"])
+
+    def test_a_player_with_no_dst_rows_is_not_a_defense(self):
+        self.assertEqual((None, None), players._dst_game_logs(self.con, 999))
+
+    def test_a_missing_table_is_no_logs_rather_than_a_500(self):
+        bare = sqlite3.connect(":memory:")
+        bare.row_factory = sqlite3.Row
+        self.addCleanup(bare.close)
+
+        self.assertEqual((None, None), players._dst_game_logs(bare, 30085))
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
