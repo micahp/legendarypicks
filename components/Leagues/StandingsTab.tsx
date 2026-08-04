@@ -187,7 +187,9 @@ function TeamSportStandings({ teams }: { teams: TeamStats[] }) {
                   {team.streak}
                 </span>
               </td>
-              <td className="py-3 pl-3 pr-4 text-right text-zinc-400 font-mono tabular-nums">
+              {/* NHL's L10 is three parts (`7-2-1`) where every other league's is two,
+                  so it is the one that wraps to a second line on a phone. */}
+              <td className="py-3 pl-3 pr-4 text-right text-zinc-400 font-mono tabular-nums whitespace-nowrap">
                 {team.last10}
               </td>
             </tr>
