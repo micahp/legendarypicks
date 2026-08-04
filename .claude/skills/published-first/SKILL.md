@@ -45,6 +45,51 @@ something you can work out from data you already have.
 
 ---
 
+## 2b. A gap is a question until it is measured — never write it down as a fact
+
+The ladder only works if you actually walk it. The way it gets skipped is not
+laziness, it is **a question getting recorded as a statement.**
+
+Someone asks *"does anyone publish earned runs?"*, doesn't find it in the one
+place they looked, and writes into a document:
+
+> **ERA** — no. Nothing publishes earned runs into our logs.
+
+That sentence is now evidence. The next person reads it, believes it, and plans
+around it. The question is never asked again, because it looks answered.
+
+Audited 2026-08-04, **every** headline data gap in this repo was of exactly this
+kind — a statement about which endpoint someone happened to ask, written down as
+a property of the world:
+
+| written as | actually |
+|---|---|
+| "no goalie source at all" | `api.nhle.com/.../goalie/summary`, league-wide, one request |
+| "no ERA anywhere in this database"; AB "not derivable" | `statsapi.mlb.com`, one request, whole line |
+| MLB team/position "needs an `espn_id` crosswalk" | MLB publishes both itself |
+| NFL "no such column: rush_td, rec_td" | in the nflverse parquet **already on disk** |
+
+Four leagues, four gaps, four wrong. Not one was a missing publisher.
+
+**The rule.** Before recording any value as unavailable, unreachable,
+underivable or unpublished:
+
+1. **Enumerate every publisher the league already has** — not the one that came
+   to mind. Read what each actually returns for that field.
+2. **Write down what you asked**, not just what you concluded: the endpoint, the
+   parameters, the date. `"absent from statsapi /stats?group=pitching on
+   2026-08-04"` is falsifiable. `"nobody publishes ERA"` is not, and it is the
+   sentence that costs a year.
+3. **A gap with no endpoint named next to it is unverified**, no matter which
+   document it is written in or how long it has been there. Treat it as an open
+   question and re-ask.
+
+Corollary for *fixing* a gap: check whether the value is published before
+building the derivation, and check again before believing an old note that says
+it isn't. Documents rot in exactly one direction — toward "we can't."
+
+---
+
 ## 3. Three times this repo paid for skipping it
 
 **The nflverse rollup.** We reimplemented a season rollup that nflverse publishes
