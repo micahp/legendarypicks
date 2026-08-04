@@ -80,8 +80,17 @@ def _is_major(league: str, event_short_name: str) -> bool:
             if alias.lower() in name_lower:
                 return True
     return False
-_SITE = "https://site.api.espn.com/apis/site/v2/sports/{path}"
-_CORE = "https://site.api.espn.com/apis/v2/sports/{path}"
+# These were both `site.api.espn.com`, which refused this box for a full day on
+# 2026-08-04 and took the live scores page and every standings tab down with it
+# -- a 403 here surfaces as a 500 and the page says "No data available", which
+# blames our data for an upstream refusal.
+#
+# `site.web.api.espn.com` serves the identical paths. Verified across all four
+# leagues, both shapes (`/scoreboard` and `/standings`, the only two used):
+# 8 of 8 return 200 while site.api returns 403 for the same request. Same
+# publisher, same payload shape, a host that answers.
+_SITE = "https://site.web.api.espn.com/apis/site/v2/sports/{path}"
+_CORE = "https://site.web.api.espn.com/apis/v2/sports/{path}"
 _COMMON = "https://site.web.api.espn.com/apis/common/v3/sports/{path}"
 _SPORTS_CORE = "https://sports.core.api.espn.com/v2/sports/{sport}"
 _HDRS = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/124 Safari/537.36"}
@@ -94,8 +103,25 @@ def _get(url, ttl=30):
     hit = _CACHE.get(url)
     if hit and hit[0] > now:
         return hit[1]
-    with urllib.request.urlopen(urllib.request.Request(url, headers=_HDRS), timeout=20) as r:
-        data = json.loads(r.read().decode())
+    try:
+        with urllib.request.urlopen(urllib.request.Request(url, headers=_HDRS), timeout=20) as r:
+            data = json.loads(r.read().decode())
+    except Exception:
+        # An upstream refusal is not the same as having no data. On 2026-08-04
+        # ESPN 403'd this box and every scores and standings surface returned
+        # 500 the instant the 30s cache expired -- the page then rendered "No
+        # data available", which reads as *we have no standings* rather than
+        # *we could not reach the publisher just now*.
+        #
+        # A stale payload is strictly better than a stack trace, so a failed
+        # refresh falls back to the last good one and is re-offered for a
+        # while. `hit` is kept regardless of expiry for exactly this. When
+        # there is nothing cached the error still propagates -- serving
+        # invented emptiness would be worse than failing.
+        if hit is not None:
+            _CACHE[url] = (now + min(ttl, 60), hit[1])
+            return hit[1]
+        raise
     _CACHE[url] = (now + ttl, data)
     return data
 
