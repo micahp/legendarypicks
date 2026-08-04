@@ -213,3 +213,9 @@ and a populated table reads as coverage.
 9. `docs/LEAGUE-STAT-GAPS.md` updated with what this league does NOT have, so the
    next person does not rediscover it.
 
+- [ ] **`F/identity-crosswalk` green, or the single-publisher choice stated in
+      writing.** More than one publisher reaching the same `players.id` row is
+      what makes a league good — it is the only reason NFL has team, position,
+      ranks, news and ADP and MLB has none of them. If this league will carry one
+      publisher's id only, say so and say what that publisher does NOT print, so
+      the gap is a decision instead of a discovery. See `docs/DATA-SPINE.md`.

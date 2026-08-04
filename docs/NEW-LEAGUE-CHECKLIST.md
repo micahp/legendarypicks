@@ -44,6 +44,23 @@ gate with the new league's known-red items **named in the commit message**.
 | D | leaderboard players are clickable into a game | see C — a leaderboard of dead ends renders identically to a working one |
 | E | the qualifier's unit is a column we hold | MLB's published rule is 3.1 PA × team games; ours was `games >= 30`, and `pa` was not a column. A 38-game player led a 112-game season's average |
 
+## 2b. Decide the publishers BEFORE the ingest
+
+`players` is a spine and **a league is only as good as the number of publishers
+that can reach it** — check F measures exactly this. NFL is the only league with
+two ids on the same row (16,774 of them) and the only one with team, position,
+stat ranks, news and ADP. That is cause and effect, not coincidence.
+
+NBA has two id columns and **zero** rows carrying both: 269 athletes exist twice,
+stats on one row and game logs on the other. MLB and NHL carry no `espn_id` at
+all, which is why MLB has no team or position and no NHL goalie has ever recorded
+a save.
+
+So, before the ingest: **name the publishers this league will have, and what each
+one prints.** One publisher is a legitimate choice — it is not a legitimate
+accident. Check F reports single-publisher leagues as UNVERIFIED rather than
+passing them, so the choice has to be stated. `docs/DATA-SPINE.md`.
+
 ## 3. Find the published qualifier, or record that there is none
 
 Every league publishes its own minimum, in its own unit — plate appearances,
