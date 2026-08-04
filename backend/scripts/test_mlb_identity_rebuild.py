@@ -87,8 +87,23 @@ class MlbIdentityRebuildTests(unittest.TestCase):
             ],
         )
         candidate.executemany(
+            # Props are not decoration here -- `_canonical_sort_key` ranks a
+            # row by how many durable references (props + aliases) it carries,
+            # so whoever holds the props usually SURVIVES the merge.  That is
+            # why a naive "put a prop on a doomed player" edit silently flips
+            # which row is canonical.
+            #
+            # Group 100 is balanced deliberately: player 1 holds two props,
+            # player 2 holds one prop plus the name_alias below, so both score
+            # 2 and the tie falls to player 1 as the exact official-name match.
+            # Player 2 is therefore deleted while still holding prop 5 -- and
+            # `props.player_id` is a real foreign key with `foreign_keys=ON`,
+            # so without a repoint that delete raises.  This is the row that
+            # makes "preserves props" mean something.
+            #
+            # Props 2 (survivor) and 3 (detached player 6) must not move.
             "INSERT INTO props(id,player_id) VALUES(?,?)",
-            [(1, 1), (2, 3), (3, 6)],
+            [(1, 1), (2, 3), (3, 6), (4, 1), (5, 2)],
         )
         candidate.executemany(
             """INSERT INTO player_game_logs(
@@ -206,8 +221,8 @@ class MlbIdentityRebuildTests(unittest.TestCase):
         )
         connection.commit()
 
-        self.assertEqual(changes["props_before"], 3)
-        self.assertEqual(changes["props_after"], 3)
+        self.assertEqual(changes["props_before"], 5)
+        self.assertEqual(changes["props_after"], 5)
         self.assertEqual(changes["props_repointed"], 1)
         self.assertEqual(changes["duplicate_mlbam_groups"], 0)
         self.assertEqual(
@@ -235,7 +250,7 @@ class MlbIdentityRebuildTests(unittest.TestCase):
                     "SELECT id,player_id FROM props ORDER BY id"
                 )
             ],
-            [(1, 1), (2, 3), (3, 6)],
+            [(1, 1), (2, 3), (3, 6), (4, 1), (5, 1)],
         )
         self.assertEqual(
             connection.execute(
