@@ -356,12 +356,40 @@ def build_plan(
             "source players have unsupported player_id references"
         )
 
-    stats_rows = candidate.execute(
-        """SELECT * FROM player_stats
-           WHERE lower(league)='mlb' AND season=?
-           ORDER BY id""",
-        (int(season),),
-    ).fetchall()
+    # Archive only the aggregates this rebuild actually invalidates.
+    #
+    # This was every current-season MLB row, unconditionally. Measured against
+    # prod on 2026-08-04 that is 2,653 rows to invalidate 412 -- and it is not
+    # free: an aggregate is the only place Statcast's `k_pct`, `exit_velo` and
+    # `xwoba` live, and the regenerating publisher (statsapi) does not carry
+    # them. A blanket archive therefore deletes good numbers from ~1,800
+    # players the merge never touches, and leaves the league with an empty
+    # leaderboard until a full Statcast re-ingest runs.
+    #
+    # Three groups are genuinely invalid and no others:
+    #   - deleted source players: the row's owner is about to stop existing
+    #   - detached players: their MLBAM id is being cleared, so whatever the
+    #     aggregate was attributed to is no longer true of them
+    #   - canonical survivors of a merge: their aggregate was computed over
+    #     one half of a split identity and is now understated
+    #
+    # A row on an untouched player was correct before this ran and is correct
+    # after. Regenerating it would only replace a measured number with a
+    # differently-measured one.
+    invalidated = set(delete_player_ids)
+    invalidated.update(int(item["player_id"]) for item in detachments)
+    invalidated.update(int(merge["canonical_player_id"]) for merge in merges)
+    if invalidated:
+        marks = ",".join("?" * len(invalidated))
+        stats_rows = candidate.execute(
+            f"""SELECT * FROM player_stats
+                WHERE lower(league)='mlb' AND season=?
+                  AND player_id IN ({marks})
+                ORDER BY id""",
+            (int(season), *sorted(invalidated)),
+        ).fetchall()
+    else:
+        stats_rows = []
 
     log_repoints = 0
     log_archives = 0
@@ -470,6 +498,12 @@ def build_plan(
         "player_stats_scope": {
             "league": "mlb",
             "season": int(season),
+            # The applier re-reads this set to prove the database has not moved
+            # under the plan, so it has to be able to reproduce EXACTLY the
+            # rows the digest was taken over -- not "every current-season row",
+            # which is a different and larger set now that the archive is
+            # scoped to the players this rebuild invalidates.
+            "player_ids": sorted(invalidated),
             "row_count": len(stats_rows),
             "rows_sha256": _row_digest(stats_rows),
         },

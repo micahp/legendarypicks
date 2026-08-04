@@ -207,7 +207,12 @@ class MlbIdentityRebuildTests(unittest.TestCase):
         self.assertEqual(
             plan["summary"]["game_log_source_keys_to_queue"], 1
         )
-        self.assertEqual(plan["summary"]["player_stats_to_archive"], 7)
+        # 5, not all 7. Players 5 and 7 are canonical for their own MLBAM and
+        # in no merge group, so their aggregates were correct before this ran
+        # and are correct after. Only the deleted (2, 4), the detached (6) and
+        # the merge survivors whose totals were computed over half an identity
+        # (1, 3) are invalidated.
+        self.assertEqual(plan["summary"]["player_stats_to_archive"], 5)
         self.assertEqual(plan["summary"]["props_to_repoint"], 1)
 
     def test_copy_transaction_preserves_props_and_routes_logs_by_key(self):
@@ -252,11 +257,16 @@ class MlbIdentityRebuildTests(unittest.TestCase):
             ],
             [(1, 1), (2, 3), (3, 6), (4, 1), (5, 1)],
         )
+        # The untouched players keep their numbers -- a blanket archive here
+        # would throw away every stat only the other publisher carries.
         self.assertEqual(
-            connection.execute(
-                "SELECT COUNT(*) FROM player_stats"
-            ).fetchone()[0],
-            0,
+            [
+                tuple(row)
+                for row in connection.execute(
+                    "SELECT player_id FROM player_stats ORDER BY player_id"
+                )
+            ],
+            [(5,), (7,)],
         )
         self.assertEqual(
             connection.execute(

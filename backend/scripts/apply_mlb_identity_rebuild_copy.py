@@ -238,11 +238,26 @@ def _validate_plan(
         )
 
     stats_scope = plan["player_stats_scope"]
-    stats_rows = connection.execute(
-        """SELECT * FROM player_stats
-           WHERE lower(league)=? AND season=? ORDER BY id""",
-        (stats_scope["league"], int(stats_scope["season"])),
-    ).fetchall()
+    # `player_ids` scopes the archive to the players this rebuild invalidates.
+    # Older plans have no such key and meant every current-season row; honour
+    # both rather than silently digesting a different set than the planner did.
+    scoped_ids = stats_scope.get("player_ids")
+    if scoped_ids is None:
+        stats_rows = connection.execute(
+            """SELECT * FROM player_stats
+               WHERE lower(league)=? AND season=? ORDER BY id""",
+            (stats_scope["league"], int(stats_scope["season"])),
+        ).fetchall()
+    elif scoped_ids:
+        stats_rows = connection.execute(
+            f"""SELECT * FROM player_stats
+                WHERE lower(league)=? AND season=?
+                  AND player_id IN ({_marks(scoped_ids)}) ORDER BY id""",
+            (stats_scope["league"], int(stats_scope["season"]),
+             *[int(v) for v in scoped_ids]),
+        ).fetchall()
+    else:
+        stats_rows = []
     if (
         len(stats_rows) != int(stats_scope["row_count"])
         or _row_digest(stats_rows) != stats_scope["rows_sha256"]
