@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import Head from 'next/head'
 import Link from 'next/link'
 import { LiveNow } from '../../pages/esports'
+import LiveDot from '../LiveDot'
 
 type Watch = {
   platform: string
@@ -75,7 +76,7 @@ const DETAIL_ROUTE_SLUGS = new Set(['call-of-duty'])
 function Eyebrow({ children, live = false }: { children: React.ReactNode; live?: boolean }) {
   return (
     <div className={`flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-[0.2em] ${live ? 'text-red-400' : 'text-zinc-500'}`}>
-      {live ? <span className="block h-1.5 w-1.5 shrink-0 rounded-full bg-red-500 animate-pulse motion-reduce:animate-none" /> : null}
+      {live ? <LiveDot /> : null}
       <span>{children}</span>
     </div>
   )
@@ -144,7 +145,7 @@ function StateChip({ match }: { match: LeagueMatch }) {
   if (match.live) {
     return (
       <span className="inline-flex items-center gap-1 rounded border border-red-500/30 bg-red-500/10 px-2 py-1 font-mono text-[10px] font-medium uppercase tracking-wider text-red-400">
-        <span className="block h-1.5 w-1.5 shrink-0 rounded-full bg-red-500 animate-pulse motion-reduce:animate-none" />
+        <LiveDot />
         Live
       </span>
     )
@@ -278,7 +279,7 @@ export default function LeagueDesk({ slug, onSelectTitle }: { slug: string; onSe
           <span className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-emerald-400">Esports</span>
           {liveMatches.length > 0 ? (
             <span className="inline-flex items-center gap-1.5 rounded-full border border-red-500/30 bg-red-500/10 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-red-400">
-              <span className="block h-1.5 w-1.5 shrink-0 rounded-full bg-red-500 animate-pulse motion-reduce:animate-none" />
+              <LiveDot />
               Live
             </span>
           ) : null}

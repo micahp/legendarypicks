@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import Head from 'next/head'
 import Link from 'next/link'
 import { trackStreamWatched } from '../lib/analytics'
+import LiveDot from '../components/LiveDot'
 
 /* ---------------- types ---------------- */
 type Player = { name: string; rating: number | null; clock: number | null }
@@ -37,7 +38,7 @@ const POLL_MS = 10_000
 function Eyebrow({ children, live = false }: { children: React.ReactNode; live?: boolean }) {
   return (
     <div className={`flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-[0.2em] ${live ? 'text-red-400' : 'text-zinc-500'}`}>
-      {live ? <span className="block h-1.5 w-1.5 shrink-0 rounded-full bg-red-500 animate-pulse motion-reduce:animate-none" /> : null}
+      {live ? <LiveDot /> : null}
       <span>{children}</span>
     </div>
   )
@@ -408,7 +409,7 @@ function UpMatchRow({ m, host }: { m: UpMatch; host: string }) {
       <div className="flex items-center gap-3">
         <div className="w-16 shrink-0 font-mono text-[11px] tabular-nums">
           {m.live
-            ? <span className="inline-flex items-center gap-1 text-red-400"><span className="block h-1.5 w-1.5 shrink-0 rounded-full bg-red-500 animate-pulse motion-reduce:animate-none" />LIVE</span>
+            ? <span className="inline-flex items-center gap-1 text-red-400"><LiveDot />LIVE</span>
             : m.finished
             ? <span className="text-zinc-400">Final</span>
             : <span className="text-zinc-500">{fmtClock(m.startTime)}</span>}
@@ -493,7 +494,7 @@ function BoardBuilding() {
   return (
     <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 p-4 sm:p-5">
       <div className="flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-[0.2em] text-red-400">
-        <span className="block h-1.5 w-1.5 shrink-0 rounded-full bg-red-500 animate-pulse motion-reduce:animate-none" />
+        <LiveDot />
         <span>Building the board</span>
       </div>
       <p className="mt-1.5 text-sm text-zinc-500">Pulling live matches, schedule, and results.</p>
@@ -1206,7 +1207,7 @@ export default function EsportsPage() {
             <h1 className="text-3xl font-extrabold tracking-tight text-zinc-50">Esports</h1>
             {anyLive ? (
               <span className="inline-flex items-center gap-1.5 rounded-full border border-red-500/30 bg-red-500/10 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-red-400">
-                <span className="block h-1.5 w-1.5 shrink-0 rounded-full bg-red-500 animate-pulse motion-reduce:animate-none" /> Live
+                <LiveDot /> Live
               </span>
             ) : null}
           </div>

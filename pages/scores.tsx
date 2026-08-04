@@ -7,6 +7,7 @@ import GameCard from '../components/Scores/GameCard'
 import { SkeletonList, ErrorBanner, EmptyState } from '../components/Scores/States'
 import ListenLive from '../components/ListenLive'
 import LiveDiscounts from '../components/LiveDiscounts'
+import LiveDot from '../components/LiveDot'
 
 function gameHref(game: Game) {
   if (game.league === 'COD') {
@@ -74,7 +75,7 @@ function LiveNow({ games, esportsLive }: { games: Game[]; esportsLive: boolean }
               href="/esports"
               className="inline-flex items-center gap-1.5 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-1.5 text-xs font-medium text-red-400 transition-colors hover:border-red-500/60"
             >
-              <span className="block h-1.5 w-1.5 shrink-0 rounded-full bg-red-500 animate-pulse motion-reduce:animate-none" />
+              <LiveDot />
               Watch live esports →
             </Link>
           ) : null}
