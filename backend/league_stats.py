@@ -86,6 +86,27 @@ CREATE TABLE IF NOT EXISTS player_stats(
   shg INTEGER,
   toi TEXT,
   faceoff_pct REAL,
+  -- Hockey has three player types and nhle.com publishes a separate report
+  -- for each: forwards and defencemen come from `skater/summary`, defencemen
+  -- also need `skater/realtime` (blocks and hits are the whole job), and
+  -- goalies come from `goalie/summary`. Everything above this comment is
+  -- forward-shaped, which is why a goalie row read 0 goals, 0 assists, 0
+  -- shots and nothing else -- a goaltender described entirely by things
+  -- goaltenders do not do.
+  blocked_shots INTEGER,
+  hits INTEGER,
+  takeaways INTEGER,
+  giveaways INTEGER,
+  saves INTEGER,
+  shots_against INTEGER,
+  goals_against INTEGER,
+  save_pct REAL,
+  gaa REAL,
+  shutouts INTEGER,
+  wins INTEGER,
+  losses INTEGER,
+  ot_losses INTEGER,
+  games_started INTEGER,
   nhl_position TEXT,
   nhl_team TEXT,
   source TEXT NOT NULL,

@@ -20,6 +20,13 @@ HDR = {"User-Agent": "Mozilla/5.0 (legendarypicks ingest)"}
 STAT_KEYS = ["goals", "assists", "points", "shots", "plusMinus", "powerPlayGoals",
              "powerPlayPoints", "shorthandedPoints", "pim", "toi"]
 
+# Every key above describes a skater, so a goaltender's game read
+# {"goals": 0, "assists": 0, "pim": 0, "toi": "60:00"} -- 60 minutes of doing
+# nothing. These are the goalie keys the same endpoint publishes alongside
+# them, and they cost no extra request.
+GOALIE_STAT_KEYS = ["shotsAgainst", "goalsAgainst", "savePctg", "decision",
+                    "shutouts", "gamesStarted"]
+
 
 def fetch_game_log(nhl_id: int, season: str, game_type: int):
     """(published gameTypeId, rows). The id is READ BACK, never assumed.
@@ -41,15 +48,28 @@ def fetch_game_log(nhl_id: int, season: str, game_type: int):
         return None, []
 
 
-def ingest(season: str = "20252026", limit: int = 0, game_types=(2, 3)) -> int:
+def ingest(season: str = "20252026", limit: int = 0, game_types=(2, 3),
+           positions=None) -> int:
     con = sqlite3.connect(DB); con.row_factory = sqlite3.Row
     ensure_table(con)
 
-    players = con.execute(
-        "SELECT id, name, nhl_id FROM players WHERE league='nhl' AND nhl_id IS NOT NULL ORDER BY id").fetchall()
+    # `positions` narrows the pull to one player type -- one request per player
+    # per game type, so refreshing only the 90 goalies is 180 requests instead
+    # of 1,748. Upstream is a courtesy, not a resource.
+    query = ("SELECT id, name, nhl_id FROM players "
+             "WHERE league='nhl' AND nhl_id IS NOT NULL")
+    params = []
+    if positions:
+        wanted = [str(p).strip().upper() for p in positions]
+        query += (" AND upper(COALESCE(position,'')) IN "
+                  f"({','.join('?' for _ in wanted)})")
+        params = wanted
+    players = con.execute(query + " ORDER BY id", params).fetchall()
     if limit:
         players = players[:limit]
-    print(f"NHL game-logs {season} types={list(game_types)}: {len(players)} players to pull")
+    print(f"NHL game-logs {season} types={list(game_types)}"
+          f"{' positions=' + ','.join(positions) if positions else ''}: "
+          f"{len(players)} players to pull")
 
     # `season` stays in nhle's vocabulary — it is a path segment in their URL
     # above. What we STORE is ESPN's key, translated once, here at the boundary.
@@ -65,10 +85,27 @@ def ingest(season: str = "20252026", limit: int = 0, game_types=(2, 3)) -> int:
             phase = normalize_game_type("nhle.com", "nhl", published_type) if log else None
             for g in log:
                 stats = {}
-                for k in STAT_KEYS:
+                for k in STAT_KEYS + GOALIE_STAT_KEYS:
                     v = g.get(k)
                     if v is not None:
                         stats[k] = v
+                # INTERIM, and marked as such. `saves` is published per game --
+                # gamecenter/{gameId}/boxscore carries it directly, along with
+                # blockedShots, hits, takeaways and giveaways for every skater.
+                # This endpoint publishes none of those, so the value below is
+                # arithmetic over two published numbers, not a read of the
+                # published one. It agrees with the publisher where checked
+                # (game 2025021269: boxscore saves 26, shotsAgainst 27, goals
+                # against 1) -- but "agrees where checked" is not "is the
+                # published value", and a game can have more than one goalie,
+                # which is exactly where a derivation earns its mistakes.
+                #
+                # `saves_derived` marks every such row so the boxscore ingest
+                # can find and replace them. Do not widen this pattern.
+                if stats.get("shotsAgainst") is not None and \
+                        stats.get("goalsAgainst") is not None:
+                    stats["saves"] = int(stats["shotsAgainst"]) - int(stats["goalsAgainst"])
+                    stats["saves_derived"] = True
                 con.execute(
                     """INSERT OR REPLACE INTO player_game_logs
                        (player_id, league, season, game_no, game_id, game_date, team,
@@ -119,4 +156,8 @@ if __name__ == "__main__":
     types = (2, 3)
     if "--game-types" in sys.argv:
         types = tuple(int(x) for x in sys.argv[sys.argv.index("--game-types") + 1].split(","))
-    ingest(season, limit, types)
+    positions = None
+    if "--positions" in sys.argv:
+        positions = [p for p in
+                     sys.argv[sys.argv.index("--positions") + 1].split(",") if p]
+    ingest(season, limit, types, positions)

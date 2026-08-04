@@ -93,8 +93,13 @@ MANIFEST = {
             "season": {
                 "required": ["games", "goals", "assists", "points_nhl", "shots",
                              "plus_minus", "toi",
-                             # Goalies are half this league's stats surface and
-                             # none of these columns exist yet. Red on purpose.
+                             # Hockey has three player types, and the seven
+                             # columns above describe one of them. These four
+                             # were red on purpose until 2026-08-04, when the
+                             # columns were added and `ingest_nhl_season_stats`
+                             # filled them from nhle.com's goalie report --
+                             # which had been publishing all of it the whole
+                             # time.
                              "saves", "shots_against", "save_pct", "gaa"],
                 "qualifier": {"unit": "games",
                               "published": "NONE PUBLISHED that this project could verify -- 40+ GP is convention"},
@@ -102,9 +107,20 @@ MANIFEST = {
         },
         # The check that would have caught the goalie hole. A goalie whose log
         # holds only skater keys has not been observed goaltending.
+        # Three player types, three different jobs, so three different
+        # statements of what a log has to record. A goalie whose log holds only
+        # skater keys has not been observed goaltending -- and a defenceman
+        # measured only on goals is being judged as a forward who is bad at it.
         "position_content": {
             "G": [["saves"], ["shotsAgainst", "shots_against"]],
-            "D": [["shots"], ["plusMinus", "plus_minus"]],
+            # Blocks and hits are what a defenceman is actually measured on,
+            # and they ARE published per game -- just not by the endpoint the
+            # log ingest currently reads. `player/{id}/game-log` has no such
+            # key; `gamecenter/{gameId}/boxscore` publishes blockedShots, hits,
+            # takeaways and giveaways for every skater in the game. Red until
+            # the log ingest reads the boxscore -- see the handoff.
+            "D": [["shots"], ["plusMinus", "plus_minus"],
+                  ["blockedShots", "blocked_shots"], ["hits"]],
             "C": [["goals"], ["assists"], ["shots"]],
         },
         "single_vocabulary": ["position", "team"],
