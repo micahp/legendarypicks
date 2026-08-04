@@ -66,7 +66,10 @@ MANIFEST = {
             "batting": {
                 # PA is the qualifier's own unit (3.1 x team games). Without the
                 # column there is no way to ask the published question at all.
-                "required": ["games", "avg", "hr", "pa", "hits", "runs", "rbi"],
+                # `mlb_hits`, not `hits` -- `hits` is an NHL body check. A base
+                # hit and a body check are different things sharing a word, and
+                # this table is one wide table across four leagues.
+                "required": ["games", "avg", "hr", "pa", "mlb_hits", "runs", "rbi"],
                 "qualifier": {"unit": "pa", "published": "3.1 PA x team games (502/162)"},
             },
             "pitching": {
