@@ -58,18 +58,40 @@ place they looked, and writes into a document:
 That sentence is now evidence. The next person reads it, believes it, and plans
 around it. The question is never asked again, because it looks answered.
 
-Audited 2026-08-04, **every** headline data gap in this repo was of exactly this
+Audited 2026-08-04. Every headline data gap in this repo was of exactly this
 kind — a statement about which endpoint someone happened to ask, written down as
-a property of the world:
+a property of the world.
+
+**Separate two kinds of gap before claiming either**, because conflating them
+overstates the finding and the overstatement is what gets repeated:
+
+*Acquisition gaps* — the value is in no table we hold. These were real:
 
 | written as | actually |
 |---|---|
-| "no goalie source at all" | `api.nhle.com/.../goalie/summary`, league-wide, one request |
-| "no ERA anywhere in this database"; AB "not derivable" | `statsapi.mlb.com`, one request, whole line |
-| MLB team/position "needs an `espn_id` crosswalk" | MLB publishes both itself |
-| NFL "no such column: rush_td, rec_td" | in the nflverse parquet **already on disk** |
+| "no goalie source at all" | `api.nhle.com/.../goalie/summary`, league-wide, one request. Absent from logs AND aggregates — genuinely nowhere |
+| "no ERA anywhere in this database" | `statsapi.mlb.com`, one request. No earned-run key existed in any table |
+| MLB team/position "needs an `espn_id` crosswalk" | MLB publishes both itself; the column was 100% blank |
 
-Four leagues, four gaps, four wrong. Not one was a missing publisher.
+*Surfacing gaps* — the value was already in the building, just not in the table
+the product reads. Equally user-visible, **not** the same claim:
+
+| written as | actually |
+|---|---|
+| NFL "no such column: rush_td, rec_td" | already in `player_game_logs` as `rush_td`, `rec_td`, `att`; only the season row lacked them |
+| MLB "no PA / hits / RBI" | already in the logs as `PA`, `H`, `RBI` |
+| NBA leaderboard three years stale | 23,749 2026 log rows already held |
+
+Both are worth fixing and both trace to the same cause — a question recorded as
+a statement. But **"we have no touchdown data" and "our season table has no
+touchdown column" are different sentences**, and only the second one was true.
+Say which you mean.
+
+For a surfacing gap the fix is still to read the publisher's own total rather
+than roll up our logs — see §3, where a rollup this repo derived from nflverse
+events shipped eight defects, every one a bug in the reimplementation. But the
+justification is *"a published total is a fact and a summed one is a program"*,
+not *"we could not get this data"*.
 
 **The rule.** Before recording any value as unavailable, unreachable,
 underivable or unpublished:
