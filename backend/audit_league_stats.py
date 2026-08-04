@@ -292,15 +292,38 @@ def check_single_vocabulary(con, league, spec, out):
                         "different ingest, and they do not join"
                         % (sorted(coarse), sorted(granular)))
                 continue
-        if blank:
+        # `team` and `position` describe a CURRENT roster spot. A retired player
+        # has neither, and blank is the honest answer for him -- so counting him
+        # as a defect asserts something false and buries the real signal under
+        # league history. The failure is scoped to active players; inactive
+        # blanks are still reported, never dropped.
+        active_blank, inactive_blank = blank, 0
+        if "active" in _columns(con, "players"):
+            active_blank = con.execute(
+                f"SELECT COUNT(*) FROM players WHERE league=? AND active=1 "
+                f"AND ({column} IS NULL OR TRIM({column})='')", (league,)
+            ).fetchone()[0]
+            inactive_blank = blank - active_blank
+        if active_blank:
+            active_total = con.execute(
+                "SELECT COUNT(*) FROM players WHERE league=? AND active=1"
+                if "active" in _columns(con, "players")
+                else "SELECT COUNT(*) FROM players WHERE league=?", (league,)
+            ).fetchone()[0] or (blank + total)
             # Report the count first. A bare "0%" next to FAIL reads as a bug in
             # the gate rather than as two genuinely unlabelled players.
             out.add(FAIL, league, f"C/vocabulary[{column}]",
-                    "%d of %d players blank (%.2f%%)"
-                    % (blank, blank + total, 100.0 * blank / (blank + total)))
+                    "%d of %d ACTIVE players blank (%.2f%%)"
+                    % (active_blank, active_total,
+                       100.0 * active_blank / active_total))
             continue
-        out.add(PASS, league, f"C/vocabulary[{column}]",
-                "one vocabulary, %d values, 0 blank" % len(values))
+        note = ("one vocabulary, %d values, 0 blank on active players"
+                % len(values))
+        if inactive_blank:
+            note += (" (%d inactive players carry no %s -- they are on no "
+                     "roster, which is the honest answer)"
+                     % (inactive_blank, column))
+        out.add(PASS, league, f"C/vocabulary[{column}]", note)
 
 
 def check_leaders_reach_logs(con, league, spec, out, floor=0.60):

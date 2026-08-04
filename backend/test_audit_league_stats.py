@@ -66,6 +66,14 @@ class AuditTests(unittest.TestCase):
         return {check: state for state, lg, check, _ in out.rows
                 if check.startswith(prefix)}
 
+    def row(self, league, check_name):
+        """The state AND the note -- a gate's message is part of its contract."""
+        out = audit.audit(self.con, [league])
+        for state, _lg, check, note in out.rows:
+            if check == check_name:
+                return state, note
+        raise AssertionError(f"{check_name} not reported")
+
     # ── B: a position's logs must carry that position's stats ────────────────
     def test_goalie_logs_full_of_skater_keys_fail(self):
         """The one that was live: 78 of 90 goalies logged, zero saves recorded.
@@ -133,6 +141,28 @@ class AuditTests(unittest.TestCase):
 
         states = self.states("nba", "C/vocabulary[position]")
         self.assertEqual(audit.PASS, states["C/vocabulary[position]"])
+
+
+    def test_an_inactive_player_without_a_team_is_not_a_defect(self):
+        """`team` is a CURRENT roster spot. A retired player has none."""
+        self.con.execute("ALTER TABLE players ADD COLUMN active INTEGER")
+        self.player(1, "C", team="WPG")
+        self.player(2, "D", team=None)
+        self.con.execute("UPDATE players SET active=1 WHERE id=1")
+        self.con.execute("UPDATE players SET active=0 WHERE id=2")
+        state, note = self.row("nhl", "C/vocabulary[team]")
+        self.assertEqual(state, audit.PASS, note)
+        self.assertIn("1 inactive", note)
+
+    def test_an_active_player_without_a_team_still_fails(self):
+        """The scoping must not become a way to pass by marking rows inactive."""
+        self.con.execute("ALTER TABLE players ADD COLUMN active INTEGER")
+        self.player(1, "C", team="WPG")
+        self.player(2, "D", team=None)
+        self.con.execute("UPDATE players SET active=1")
+        state, note = self.row("nhl", "C/vocabulary[team]")
+        self.assertEqual(state, audit.FAIL, note)
+        self.assertIn("ACTIVE", note)
 
     def test_blank_values_fail_even_when_the_vocabulary_is_consistent(self):
         self.player(1, "C")
