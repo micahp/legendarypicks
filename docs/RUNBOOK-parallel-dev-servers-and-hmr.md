@@ -12,6 +12,13 @@ branch, sharing `node_modules` and `backend/venv` via symlink and the dev DB
 worktree gets its own backend (uvicorn) + frontend (`next dev`) pair so an agent can verify its
 own work in isolation.
 
+> **Corrected 2026-08-04:** that last claim holds only for worktrees the SCRIPT made.
+> Checked across all ten then on the box, the dev-DB symlink existed in **one**. The rest
+> had no `picks.dev.db` at all, or a stub — and several carried a ~200 KB `picks.db` that
+> is not prod and never was. A backend there starts, answers 200, and serves an empty
+> database. Verify with `tr '\0' '\n' < /proc/<pid>/environ | grep LP_DB_PATH` before
+> trusting a number out of a worktree. See `RUNBOOK-heavy-feature-work.md`.
+
 **Known gotcha**: the script hardcodes `BPORT=8096 FPORT=3096` — the SAME ports as the main
 dev environment (which serves the live `cloudflared` tunnel someone may be actively looking
 at). If the main servers are already up on those ports, the worktree's `up` command silently
