@@ -340,8 +340,102 @@ def check_qualifier_unit(con, league, spec, out):
                     "`%s` present; published rule: %s" % (unit, published))
 
 
+def check_identity_crosswalk(con, league, spec, out):
+    """F. Can every publisher we depend on actually reach this league's players?
+
+    `players` is the spine: one row per person, carrying our `id` plus one
+    external id per publisher (`espn_id`, `mlbam_id`, `nfl_gsis_id`, `nhl_id`,
+    `nba_id`). Everything else joins on `players.id`. So a publisher can only
+    contribute to a league if the spine carries ITS id -- and a league's entire
+    character is decided by that one fact, silently, at ingest time.
+
+    Measured on prod 2026-08-04, and it explains every gap found this week:
+
+      NFL   18,697 espn_id + 25,007 gsis, 16,774 rows carry BOTH.  Healthy.
+            Team, position, ranks, news and ADP all work because two publishers
+            can reach the same row.
+      NBA   521 espn_id, 541 nba_id, **0 rows carry both.**  Two disjoint
+            populations, 269 athletes split across two `players.id` rows -- one
+            holding the historical stats, the other the current game logs.
+      MLB   2,747 mlbam_id, **0 espn_id.**  ESPN is what publishes team and
+            position, so `players.team` is 89% blank and `position` is 100%.
+      NHL   875 nhl_id, **0 espn_id.**  The nhle.com feed is skater-shaped, so
+            no goalie has ever recorded a save.
+
+    Two failures, and they are different:
+
+    `split` -- one athlete's id appears in a legacy column on one row and in
+    `espn_id` on another. Those are the same person and no join will ever bring
+    them together. This is what `backend/scripts/merge_nba_identities.py` exists
+    to repair.
+
+    `disjoint` -- two id columns are both populated for the league and NO row
+    carries both. Nothing is split yet in the pairwise sense, but there is no
+    crosswalk at all, so the next ingest keyed on the other id creates a second
+    population rather than enriching the first. It is the condition immediately
+    before the damage.
+    """
+    columns = _columns(con, "players")
+    legacy = [c for c in ("mlbam_id", "nfl_gsis_id", "nhl_id", "nba_id") if c in columns]
+    if "espn_id" not in columns or not legacy:
+        out.add(UNVERIFIED, league, "F/identity-crosswalk",
+                "players carries no external id columns to cross-check")
+        return
+
+    def filled(column):
+        return con.execute(
+            f"SELECT COUNT(*) FROM players WHERE league=? "
+            f"AND {column} IS NOT NULL AND TRIM({column})!=''", (league,)
+        ).fetchone()[0]
+
+    espn = filled("espn_id")
+    problems, notes = [], ["espn_id=%d" % espn]
+    for column in legacy:
+        count = filled(column)
+        if not count:
+            continue
+        notes.append("%s=%d" % (column, count))
+        both = con.execute(
+            f"""SELECT COUNT(*) FROM players WHERE league=?
+                AND {column} IS NOT NULL AND TRIM({column})!=''
+                AND espn_id IS NOT NULL AND TRIM(espn_id)!=''""", (league,)
+        ).fetchone()[0]
+        split = con.execute(
+            f"""SELECT COUNT(*) FROM players a JOIN players b
+                  ON a.{column} = b.espn_id AND a.id != b.id
+                WHERE a.league=? AND b.league=?
+                  AND a.{column} IS NOT NULL AND TRIM(a.{column})!=''""",
+            (league, league),
+        ).fetchone()[0]
+        if split:
+            problems.append(
+                "%d athletes split across two players.id rows via %s/espn_id "
+                "-- their stats and their game logs are on different people"
+                % (split, column))
+        elif espn and not both:
+            problems.append(
+                "%s and espn_id are both populated and NO row carries both -- "
+                "no crosswalk exists, so the next ingest keyed on the other id "
+                "builds a second population instead of enriching this one"
+                % column)
+
+    if not espn:
+        # Not a defect by itself -- a single-publisher league is a real choice.
+        # But it is the reason a league cannot have what only the other
+        # publisher prints, so it is reported rather than passed over.
+        out.add(UNVERIFIED, league, "F/identity-crosswalk",
+                "single publisher (%s): no espn_id on any row, so anything only "
+                "ESPN publishes cannot reach this league" % ", ".join(notes))
+        return
+    if problems:
+        out.add(FAIL, league, "F/identity-crosswalk", " | ".join(problems))
+    else:
+        out.add(PASS, league, "F/identity-crosswalk",
+                "publishers cross-referenced (%s)" % ", ".join(notes))
+
+
 CHECKS = (check_required_stats, check_position_content, check_single_vocabulary,
-          check_leaders_reach_logs, check_qualifier_unit)
+          check_leaders_reach_logs, check_qualifier_unit, check_identity_crosswalk)
 
 
 def audit(con, leagues=None) -> Result:

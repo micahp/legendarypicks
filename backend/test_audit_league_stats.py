@@ -19,7 +19,8 @@ import audit_league_stats as audit  # noqa: E402
 
 SCHEMA = """
 CREATE TABLE players(
-  id INTEGER PRIMARY KEY, name TEXT, team TEXT, league TEXT, position TEXT
+  id INTEGER PRIMARY KEY, name TEXT, team TEXT, league TEXT, position TEXT,
+  espn_id TEXT, mlbam_id TEXT, nfl_gsis_id TEXT, nhl_id TEXT, nba_id TEXT
 );
 CREATE TABLE player_stats(
   player_id INTEGER, league TEXT, season INTEGER, stat_type TEXT,
@@ -42,9 +43,13 @@ class AuditTests(unittest.TestCase):
         self.addCleanup(self.con.close)
         self.con.executescript(SCHEMA)
 
-    def player(self, pid, position, team="WPG", league="nhl"):
-        self.con.execute("INSERT INTO players VALUES(?,?,?,?,?)",
-                         (pid, f"Player {pid}", team, league, position))
+    def player(self, pid, position, team="WPG", league="nhl", **ids):
+        self.con.execute(
+            "INSERT INTO players(id,name,team,league,position,espn_id,mlbam_id,"
+            "nfl_gsis_id,nhl_id,nba_id) VALUES(?,?,?,?,?,?,?,?,?,?)",
+            (pid, f"Player {pid}", team, league, position,
+             ids.get("espn_id"), ids.get("mlbam_id"), ids.get("nfl_gsis_id"),
+             ids.get("nhl_id"), ids.get("nba_id")))
 
     def log(self, pid, stats, league="nhl", season=2026):
         self.con.execute("INSERT INTO player_game_logs VALUES(?,?,?,?)",
@@ -218,6 +223,59 @@ class AuditTests(unittest.TestCase):
         result.add(audit.PASS, "nhl", "x", "")
         result.add(audit.UNVERIFIED, "nhl", "y", "")
         self.assertEqual(1, len(result.failures))
+
+    # ── F: can every publisher reach this league's players? ──────────────────
+    def test_one_athlete_on_two_rows_fails(self):
+        """The live NBA condition: 269 athletes split across two players.id rows.
+
+        hoopR's athlete_id IS ESPN's, but legacy imports wrote it to `nba_id`
+        while roster and log jobs wrote it to `espn_id`. When those land on
+        different rows, one real player's historical stats and current game
+        logs belong to two different people and no join reunites them.
+        """
+        self.player(1, "C", league="nba", nba_id="4066261")
+        self.player(2, "C", league="nba", espn_id="4066261")
+        self.con.commit()
+
+        states = self.states("nba", "F/identity-crosswalk")
+        self.assertEqual(audit.FAIL, states["F/identity-crosswalk"])
+
+    def test_two_populated_id_columns_with_no_overlap_fail(self):
+        """The condition immediately BEFORE the damage.
+
+        Nothing is split pairwise yet, but no row carries both ids, so there is
+        no crosswalk — and the next ingest keyed on the other id builds a second
+        population instead of enriching this one.
+        """
+        self.player(1, "C", league="nba", nba_id="111")
+        self.player(2, "C", league="nba", espn_id="222")
+        self.con.commit()
+
+        states = self.states("nba", "F/identity-crosswalk")
+        self.assertEqual(audit.FAIL, states["F/identity-crosswalk"])
+
+    def test_a_real_crosswalk_passes(self):
+        """What NFL looks like: 16,774 rows carrying both ids."""
+        self.player(1, "C", league="nba", nba_id="4066261", espn_id="4066261")
+        self.player(2, "C", league="nba", nba_id="999", espn_id="999")
+        self.con.commit()
+
+        states = self.states("nba", "F/identity-crosswalk")
+        self.assertEqual(audit.PASS, states["F/identity-crosswalk"])
+
+    def test_a_single_publisher_league_is_unverified_not_passing(self):
+        """MLB and NHL carry no espn_id at all.
+
+        Not a defect by itself — one publisher is a legitimate choice. But it
+        is the REASON those leagues cannot have what only the other publisher
+        prints (MLB's team and position; NHL's goalie stats), so it is reported
+        rather than passed over in silence.
+        """
+        self.player(1, "C", league="nhl", nhl_id="8477939")
+        self.con.commit()
+
+        states = self.states("nhl", "F/identity-crosswalk")
+        self.assertEqual(audit.UNVERIFIED, states["F/identity-crosswalk"])
 
     def test_a_missing_database_exits_nonzero(self):
         self.assertEqual(1, audit.main(["--db", "/nonexistent/picks.db"]))
