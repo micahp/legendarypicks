@@ -126,13 +126,42 @@ describe('PlayerDetailOverlay tabs', () => {
 
     fireEvent.click(screen.getByRole('tab', { name: 'Projections' }))
 
-    expect(screen.getByText('Season Outlook')).toBeTruthy()
-    expect(screen.getByText(PLAYER.season_outlook as string)).toBeTruthy()
-    expect(screen.getByText('Source: ESPN')).toBeTruthy()
     expect(screen.getByText('2026 Projection')).toBeTruthy()
     expect(screen.getByText('PROJ 2026')).toBeTruthy()
     expect(screen.getByText('PPR 356.2')).toBeTruthy()
     expect(screen.queryByText('Season Stats')).toBeNull()
+    // The outlook is not repeated here — it lives on Overview now, under the rank
+    // card, which is where you are when you are still deciding to care.
+    expect(screen.queryByText('Season Outlook')).toBeNull()
+  })
+
+  it('shows the season outlook on Overview, under the rank card', async () => {
+    render(<PlayerDetailOverlay playerId={PLAYER.player_id} onClose={() => {}} />)
+
+    expect(await screen.findByText('Season Outlook')).toBeTruthy()
+    expect(screen.getByText(PLAYER.season_outlook as string)).toBeTruthy()
+    expect(screen.getByText('Source: ESPN')).toBeTruthy()
+
+    // Order is the point of the change, not mere presence: the rank card reads
+    // first, the outlook second. Compare document position rather than trusting
+    // that the JSX happens to be in the order somebody intended.
+    const ranks = screen.getByText('2025 Regular Season')
+    const outlook = screen.getByText('Season Outlook')
+    expect(
+      ranks.compareDocumentPosition(outlook) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy()
+  })
+
+  it('says so plainly when no outlook is published', async () => {
+    const noOutlook: PlayerDetailResponse = {
+      ...PLAYER, season_outlook: null, season_outlook_source: null,
+    }
+    ;(global.fetch as jest.Mock).mockImplementation(() =>
+      Promise.resolve({ ok: true, json: () => Promise.resolve(noOutlook) }),
+    )
+    render(<PlayerDetailOverlay playerId={PLAYER.player_id} onClose={() => {}} />)
+
+    expect(await screen.findByText('No ESPN season outlook published.')).toBeTruthy()
   })
 
   it('labels quarterback rates, sacks, first downs, and fumbles without calling passer rating QBR', async () => {

@@ -232,26 +232,8 @@ export default function PlayerDetailOverlay({
 
             {tab === 'projections' && (
               <div className="space-y-5 py-1">
-                <section className="space-y-2">
-                  <h3 className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
-                    Season Outlook
-                  </h3>
-                  {player.season_outlook ? (
-                    <div className="rounded-lg border border-zinc-800 bg-zinc-800/40 px-3 py-3">
-                      <p className="text-sm leading-6 text-zinc-300">
-                        {player.season_outlook}
-                      </p>
-                      <p className="mt-2 text-[10px] tracking-wider text-zinc-600">
-                        Source: ESPN
-                      </p>
-                    </div>
-                  ) : (
-                    <p className="rounded-lg border border-zinc-800 bg-zinc-800/40 px-3 py-3 text-sm text-zinc-500">
-                      No ESPN season outlook published.
-                    </p>
-                  )}
-                </section>
-
+                {/* Season Outlook moved to Overview, under the rank card. It is not
+                    repeated here — one place, the first place you look. */}
                 <section className="space-y-2">
                   <div className="flex items-baseline justify-between gap-3">
                     <h3 className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
@@ -282,6 +264,30 @@ export default function PlayerDetailOverlay({
                 games={player.stat_rank_games}
               />
             )}
+
+            {/* Season Outlook sits directly under the rank card, where the first
+                thing you read about a player is how he ranks and then what ESPN
+                expects of him. It was buried on the Projections tab, which is the
+                tab you open once you have already decided to care. */}
+            <section className="space-y-2">
+              <h3 className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
+                Season Outlook
+              </h3>
+              {player.season_outlook ? (
+                <div className="rounded-lg border border-zinc-800 bg-zinc-800/40 px-3 py-3">
+                  <p className="text-sm leading-6 text-zinc-300">
+                    {player.season_outlook}
+                  </p>
+                  <p className="mt-2 text-[10px] tracking-wider text-zinc-600">
+                    Source: ESPN
+                  </p>
+                </div>
+              ) : (
+                <p className="rounded-lg border border-zinc-800 bg-zinc-800/40 px-3 py-3 text-sm text-zinc-500">
+                  No ESPN season outlook published.
+                </p>
+              )}
+            </section>
 
             <section className="space-y-2">
               <h3 className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
