@@ -62,6 +62,63 @@ one prints.** One publisher is a legitimate choice — it is not a legitimate
 accident. Check F reports single-publisher leagues as UNVERIFIED rather than
 passing them, so the choice has to be stated. `docs/DATA-SPINE.md`.
 
+## 2c. Count the fields the endpoint publishes against the fields you read
+
+**This is the check that would have caught every gap of 2026-08-04**, and none of
+the others would have. Run it:
+
+    ./venv/bin/python audit_field_utilization.py --league <league>
+
+Register the league's endpoints in `ENDPOINTS` **at the same time as its
+`MANIFEST` entry**. An endpoint we read and never registered there is a payload
+nobody has ever counted.
+
+Five gaps were found that day. Every one was a publisher we were **already
+calling**, whose payload we read a fraction of — or an adjacent endpoint of that
+same publisher nobody asked:
+
+| recorded as | actually |
+|---|---|
+| NFL "no such column: `rush_td`, `rec_td`" | in the parquet already on disk: **143 columns published, 19 read** |
+| NHL "a defenceman has nowhere to record a block" | `gamecenter/{id}/boxscore` publishes `blockedShots` and `hits` per game |
+| NHL "no goalie source at all" | `goalie/summary`, league-wide, one request |
+| MLB "no ERA anywhere in this database" | `statsapi.mlb.com`, one request, the whole line |
+| NBA leaderboard three years stale | bulk `byathlete`, 578 athletes in 6 pages |
+
+Not one was a missing publisher.
+
+**Why nothing else catches it.** Row counts were healthy. The endpoint returned
+200. The gates were green. A whitelist that drops 124 of 143 columns looks
+exactly like a whitelist that drops none — the data arrives on every run and is
+discarded before anyone looks. There is no count that distinguishes those two.
+
+**Low utilisation is not itself a defect.** These are bulk requests; the unread
+fields cost nothing. It is a *discovery* metric. **The unread field NAMES are the
+deliverable** — read that list and ask, for each name, whether a document
+somewhere says we do not have it.
+
+Two habits that follow from it:
+
+1. **A key whitelist is where data goes to die.** If an ingest has a
+   `STAT_KEYS`/`REQUIRED_COLUMNS` set, its size relative to the payload is a
+   number someone must have looked at once, on purpose.
+2. **Ask the publisher's OTHER endpoints before concluding anything.** NHL's
+   `player/{id}/game-log` genuinely does not publish blocks or hits. The same
+   host's `gamecenter/{id}/boxscore` does. The gap was never "the NHL", it was
+   "the one URL we happened to call". Write the endpoint next to the gap or the
+   gap is unverified — see `.claude/skills/published-first/SKILL.md` §2b.
+
+## 2d. Apply the migration, do not merely write it
+
+`roster_sync.py` could not run **on either database** for its entire existence:
+`migrate_roster_snapshots.py` was written, reviewed, committed, and never
+applied. The job died on `missing table roster_snapshots` before it reached a
+roster, and `players.team` was blank league-wide as a result — read for months as
+a data-acquisition problem.
+
+A migration in the repo is not a migration in the database. For each one:
+`--check` against **both** `picks.db` and `picks.dev.db`, and record the result.
+
 ## 3. Find the published qualifier, or record that there is none
 
 Every league publishes its own minimum, in its own unit — plate appearances,
@@ -106,6 +163,15 @@ league did not, until 2026-08-04:
 ## 5. Before calling it done
 
 - [ ] `MANIFEST` entry written, and written **before** the ingest ran
+- [ ] league registered in `audit_field_utilization.py`'s `ENDPOINTS`, run, and
+      **every unread field name read out loud** against the gaps we claim (§2c)
+- [ ] every migration this league needs `--check`ed against **both** databases,
+      not just written (§2d)
+- [ ] categorical columns judged against a **published** vocabulary, never a
+      heuristic — `fetch_position_vocabulary.py`; a gate that infers meaning from
+      string length will fail leagues that are fine and miss ones that are not
+- [ ] any enrichment job (one that only ADDS fields) fails per-row, not per-
+      league; only a snapshot-replace may abort wholesale
 - [ ] `verify-gates.sh COV-statset` run, every red item named in writing
 - [ ] published qualifier found and recorded, or recorded as none
 - [ ] game log renders as a table, verified in a browser at **375px and 1440px**
