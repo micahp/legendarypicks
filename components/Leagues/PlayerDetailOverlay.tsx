@@ -232,8 +232,29 @@ export default function PlayerDetailOverlay({
 
             {tab === 'projections' && (
               <div className="space-y-5 py-1">
-                {/* Season Outlook moved to Overview, under the rank card. It is not
-                    repeated here — one place, the first place you look. */}
+                {/* Also on Overview, under the rank card. Copied, not moved: it is
+                    the context you want beside the projection as much as beside the
+                    ranks, and neither tab should send you to the other for it. */}
+                <section className="space-y-2">
+                  <h3 className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
+                    Season Outlook
+                  </h3>
+                  {player.season_outlook ? (
+                    <div className="rounded-lg border border-zinc-800 bg-zinc-800/40 px-3 py-3">
+                      <p className="text-sm leading-6 text-zinc-300">
+                        {player.season_outlook}
+                      </p>
+                      <p className="mt-2 text-[10px] tracking-wider text-zinc-600">
+                        Source: ESPN
+                      </p>
+                    </div>
+                  ) : (
+                    <p className="rounded-lg border border-zinc-800 bg-zinc-800/40 px-3 py-3 text-sm text-zinc-500">
+                      No ESPN season outlook published.
+                    </p>
+                  )}
+                </section>
+
                 <section className="space-y-2">
                   <div className="flex items-baseline justify-between gap-3">
                     <h3 className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
@@ -249,7 +270,6 @@ export default function PlayerDetailOverlay({
                     stats={player.projection_2026 ?? null}
                     pprPoints={player.proj_2026_pts ?? null}
                     emptyMessage="No 2026 projection published."
-                    sourceLabel="ESPN stat projection · LP full-PPR scoring"
                     kind="projection"
                   />
                 </section>
@@ -299,7 +319,6 @@ export default function PlayerDetailOverlay({
                 stats={player.season_totals ?? null}
                 pprPoints={player.season_totals?.ppr_points ?? null}
                 emptyMessage="No published regular-season totals."
-                sourceLabel="ESPN regular-season totals · Total QBR is not passer rating · PPR from published weekly scoring"
                 kind="actual"
               />
             </section>
@@ -681,7 +700,7 @@ function SeasonStatsTable({
   stats: NflPlayerStatLine | null
   pprPoints: number | null
   emptyMessage: string
-  sourceLabel: string
+  sourceLabel?: string
   kind: 'actual' | 'projection'
 }) {
   const columnSet = kind === 'actual' ? ACTUAL_STAT_COLUMNS : PROJECTION_STAT_COLUMNS
@@ -746,9 +765,11 @@ function SeasonStatsTable({
           </tbody>
         </table>
       </div>
-      <p className="border-t border-zinc-800/60 px-3 py-1.5 text-[10px] text-zinc-600">
-        {sourceLabel}
-      </p>
+      {sourceLabel ? (
+        <p className="border-t border-zinc-800/60 px-3 py-1.5 text-[10px] text-zinc-600">
+          {sourceLabel}
+        </p>
+      ) : null}
     </div>
   )
 }

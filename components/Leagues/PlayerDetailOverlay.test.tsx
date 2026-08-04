@@ -130,9 +130,8 @@ describe('PlayerDetailOverlay tabs', () => {
     expect(screen.getByText('PROJ 2026')).toBeTruthy()
     expect(screen.getByText('PPR 356.2')).toBeTruthy()
     expect(screen.queryByText('Season Stats')).toBeNull()
-    // The outlook is not repeated here — it lives on Overview now, under the rank
-    // card, which is where you are when you are still deciding to care.
-    expect(screen.queryByText('Season Outlook')).toBeNull()
+    // Copied, not moved — it reads on both tabs.
+    expect(screen.getByText('Season Outlook')).toBeTruthy()
   })
 
   it('shows the season outlook on Overview, under the rank card', async () => {
@@ -199,6 +198,6 @@ describe('PlayerDetailOverlay tabs', () => {
     expect(screen.getByText('FUM')).toBeTruthy()
     expect(screen.getByText('LST')).toBeTruthy()
     expect(screen.getByText('65.1')).toBeTruthy()
-    expect(screen.getByText(/Total QBR is not passer rating/)).toBeTruthy()
+    expect(screen.queryByText(/Total QBR is not passer rating/)).toBeNull()
   })
 })
