@@ -78,3 +78,6 @@ backend/data/espn_2026_snapshot_page1.json
 # ESPN event documents. Both are rebuilt on demand and neither is a source of truth.
 backend/data/reconcile.log
 backend/data/reconcile-event-cache.json
+
+# Fetched ESPN payloads — a cache, never source.
+backend/data/espn-cache/
