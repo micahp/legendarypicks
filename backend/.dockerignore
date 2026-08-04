@@ -1,7 +1,18 @@
 venv
 __pycache__
 data/cache
+
+# Databases and their backups. `*` does NOT cross a path separator here, so a
+# bare `*.bak` matches only the context root and never `data/picks.db.bak-...`.
+# That is why the image reached 7.45GB on 2026-08-04: ~30 backups of a 230MB
+# database, baked in a layer, while the patterns that were supposed to exclude
+# them sat right here looking correct. Every database pattern must name `data/`.
+# docker-compose bind-mounts ./backend/data over /app/data at runtime, so the
+# live DB is never served from the image regardless.
 data/*.db
+data/*.db-wal
+data/*.db-shm
+data/*.bak*
 *.db
 *.bak
 *.bak-*
