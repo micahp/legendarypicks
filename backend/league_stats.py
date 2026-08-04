@@ -162,7 +162,14 @@ def source_owns_stats(
     if normalized_league == "nba":
         if int(season) <= 2023:
             return normalized_source == "hoopR"
-        return normalized_source == "espn_core"
+        # ESPN owns NBA after 2023, and publishes it from two endpoints.
+        # `espn_core` is sports.core.api, one request PER ATHLETE -- 643 of
+        # them, which is what tripped ESPN's rate block and left this league
+        # serving 2023 for years. `espn_web` is site.web.api's byathlete
+        # report: the same publisher, the same season, 578 athletes in 6
+        # requests. Both are accepted so the row can record which endpoint it
+        # actually came from instead of one lying about the other.
+        return normalized_source in ("espn_core", "espn_web")
     if normalized_league == "nfl":
         return normalized_source == "nflverse_regular_season"
     return False
