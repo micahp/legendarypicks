@@ -7,6 +7,13 @@ work. EPL then adds exactly those two things to a scaffold that already works.
 
 Read `docs/DATA-COVERAGE-CONTRACT.md` §6 and §7 first.
 
+**Before you start, and before you call it done: `docs/NEW-LEAGUE-CHECKLIST.md`.**
+Every item in it is something that shipped green and was wrong. Two are load-bearing
+for this task: write the `audit_league_stats.py` **`MANIFEST` entry before the ingest
+runs** (deciding what a league claims after seeing what an ingest produced is how the
+claim becomes "whatever we got"), and run `verify-gates.sh COV-statset`, naming every
+red item in writing. A league with no manifest reports UNVERIFIED, never PASS.
+
 **Skills — load before coding:**
 
 | skill | when |
@@ -139,6 +146,17 @@ it (it was written against EPL's shape, untested on `usa.1`).
 `NflScheduleTab.tsx`, `NflUsageTrend.tsx`.
 
 ---
+
+### Design pass — part of the league, not a follow-up
+
+`docs/NEW-LEAGUE-CHECKLIST.md` §4. The short version, all of which the NFL had and
+every other league did not until 2026-08-04: the game log is a **table with columns**,
+not a run of `key value` pairs; rate stats render the way the sport publishes them
+(baseball is `.336`, and a one-decimal default rendered three hitters twelve points
+apart as `0.3` each); the header carries the **sample size**; a dash is not a zero; and
+**a position with no data says so rather than showing a substitute** — a goalie's
+skater line is four true numbers that answer nothing anyone opens a goalie's page for,
+and a populated table reads as coverage.
 
 ## 4. Done means
 

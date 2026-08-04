@@ -27,6 +27,14 @@ measurement this task exists to answer; everything below is reproducible from it
 | `.claude/skills/honest-data-ui/SKILL.md` | before §4 of this task. The registry decides what the UI is allowed to offer; §4 of that skill (LP-specific bans) governs how a suppressed league reads. |
 | `.claude/skills/resource-check/SKILL.md` | before the re-run in §3. It is 1,231 NBA + 1,312 NHL summary fetches against a rate-limiting host on a box with a live dev server. |
 
+
+**Before you start, and before you call it done: `docs/NEW-LEAGUE-CHECKLIST.md`.**
+Every item in it is something that shipped green and was wrong. Two are load-bearing
+for this task: write the `audit_league_stats.py` **`MANIFEST` entry before the ingest
+runs** (deciding what a league claims after seeing what an ingest produced is how the
+claim becomes "whatever we got"), and run `verify-gates.sh COV-statset`, naming every
+red item in writing. A league with no manifest reports UNVERIFIED, never PASS.
+
 ---
 
 ## 1. The finding
@@ -195,3 +203,14 @@ a separate task; this one only decides what is *offered*.
    (`feedback_separate_commits_per_slice`).
 5. `git diff --stat` reviewed against the file list above. Anything outside it is out of
    scope and gets reverted.
+
+### Design pass — part of the league, not a follow-up
+
+`docs/NEW-LEAGUE-CHECKLIST.md` §4. The short version, all of which the NFL had and
+every other league did not until 2026-08-04: the game log is a **table with columns**,
+not a run of `key value` pairs; rate stats render the way the sport publishes them
+(baseball is `.336`, and a one-decimal default rendered three hitters twelve points
+apart as `0.3` each); the header carries the **sample size**; a dash is not a zero; and
+**a position with no data says so rather than showing a substitute** — a goalie's
+skater line is four true numbers that answer nothing anyone opens a goalie's page for,
+and a populated table reads as coverage.
