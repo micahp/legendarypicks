@@ -32,6 +32,7 @@ os.environ["LP_DB_PATH"] = _IMPORT_DB.name
 
 from routers import nfl_mock_draft  # noqa: E402
 from routers.nfl_offseason import _regular_season_aggregates  # noqa: E402
+from league_stats import PLAYER_STATS_TABLE_SQL  # noqa: E402
 
 if _ORIGINAL_LP_DB_PATH is None:
     os.environ.pop("LP_DB_PATH", None)
@@ -46,6 +47,7 @@ PPR_PER_WEEK = 10.0
 
 def _build_fixture(path: str) -> None:
     connection = sqlite3.connect(path)
+    connection.execute(PLAYER_STATS_TABLE_SQL)
     connection.executescript(
         """
         CREATE TABLE players (

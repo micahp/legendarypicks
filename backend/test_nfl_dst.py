@@ -10,10 +10,28 @@ from unittest import mock
 
 sys.path.insert(0, os.path.dirname(__file__))
 
+# Point LP_DB_PATH at a throwaway file BEFORE importing the routers (same
+# pattern as test_nfl_mock_draft.py). Otherwise this import binds the
+# module-level _DB / _core.DB to the real data/picks.db for the whole pytest
+# process, and whichever suite runs next inherits a DB it never asked for.
+_TEST_DB = tempfile.NamedTemporaryFile(
+    prefix="nfl-dst-test-", suffix=".db", delete=False
+)
+_TEST_DB.close()
+_ORIGINAL_LP_DB_PATH = os.environ.get("LP_DB_PATH")
+os.environ["LP_DB_PATH"] = _TEST_DB.name
+
 from routers import nfl_offseason
 from routers import nfl_mock_draft
 import ingest_nfl_dst as dst_mod
 import ingest_nfl_adp
+
+# Do not leak the tempfile override into later modules in the same pytest
+# process (conftest.py also restores it between tests).
+if _ORIGINAL_LP_DB_PATH is None:
+    os.environ.pop("LP_DB_PATH", None)
+else:
+    os.environ["LP_DB_PATH"] = _ORIGINAL_LP_DB_PATH
 
 # Use the same NFL_TEAMS the ingest module publishes.
 NFL_TEAMS = dst_mod.NFL_TEAMS

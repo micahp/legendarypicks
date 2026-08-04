@@ -66,7 +66,9 @@ EXPECTED = {
         "ppr_per_team_game": 21.6,
         "xfp_per_game": 18.0,
         "snap_pct": 67.0,
-        "target_share": 16.1,
+        # Re-measured 2026-08-04 after the nflverse re-ingest: 16.1 -> 16.2
+        # (season AVG of per-game published target_share, 17/17 REG games).
+        "target_share": 16.2,
         "pk_pts_total": None,
         "pk_pts_per_game": None,
         "dst_pts_total": None,

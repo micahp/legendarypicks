@@ -27,6 +27,19 @@ os.environ["LP_DB_PATH"] = _TEST_DB.name
 
 from routers import nfl_mock_draft  # noqa: E402
 
+# The router and _core resolve their module-level DB from LP_DB_PATH at import
+# time. In a whole-suite run an earlier module has usually already imported
+# them, binding both to ITS tempfile -- or, worse, to the real data/picks.db
+# (test_nfl_dst.py imports the routers without a tempfile). This file must not
+# depend on being the first importer, so re-point both at this file's own
+# tempfile and apply the canonical schema -- setUpClass then sees exactly the
+# tables it gets when this file runs alone.
+import _core  # noqa: E402
+_core.DB = _TEST_DB.name
+_core._init_db()
+nfl_mock_draft._DB = _TEST_DB.name
+nfl_mock_draft._init_db()
+
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 

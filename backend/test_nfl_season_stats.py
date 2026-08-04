@@ -5,6 +5,7 @@ import unittest
 
 from ingest_nfl_season_stats import publish, resolve_rows
 from league_stats import PLAYER_STATS_TABLE_SQL
+from migrate_nfl_td_columns import NEW_COLUMNS as NFL_TD_COLUMNS
 from nfl_rankings import nfl_player_rank_context, nfl_player_stat_ranks_batch
 
 
@@ -24,8 +25,11 @@ def source_row(source_id, name, **overrides):
         "passing_epa": -32.5,
         "carries": 21,
         "rushing_yards": 169,
+        "rushing_tds": 1,
+        "attempts": 180,
         "receptions": 0,
         "receiving_yards": 0,
+        "receiving_tds": 0,
         "targets": 0,
         "fantasy_points": 84.9,
         "fantasy_points_ppr": 84.9,
@@ -49,6 +53,18 @@ class NflSeasonStatsTests(unittest.TestCase):
                    )"""
             )
             connection.execute(PLAYER_STATS_TABLE_SQL)
+            # The real player_stats carries the v0.7.3 migration columns
+            # (rush_td/rec_td/attempts) added by migrate_nfl_td_columns.py;
+            # mirror that so publish()'s contract check accepts the values.
+            present = {
+                row[1] for row in connection.execute(
+                    "PRAGMA table_info(player_stats)")
+            }
+            for name, sql_type in NFL_TD_COLUMNS.items():
+                if name not in present:
+                    connection.execute(
+                        f"ALTER TABLE player_stats ADD COLUMN {name} {sql_type}"
+                    )
             connection.executemany(
                 "INSERT INTO players VALUES(?,?,?,?,?,?)",
                 [
