@@ -25,13 +25,17 @@ This is that diff. It reports three things with TWO severities:
 
   ADVISORY  (printed, but exit 0 -- legitimate drift, should be a decision)
   3. VOLUME   -- a row count differing by more than --tolerance (default 5%)
+  4. FEATURE  -- a table/column classified "feature not deployed to prod"
+                (docs/SCHEMA-DRIFT-AUDIT-2026-07-28.md) or team-stats ingest
+                columns; exists on dev before promotion by design
 
-A table, column or season present on one database and absent from the other is
-never "dev is deliberately ahead" -- it is always a promotion that did not
-happen. VOLUME is different: live odds (`prop_odds_snapshots` prod 409,617 vs
-dev 3,526) and dev-only mock drafts are legitimate drift, so failing on it
-would train people to skip the check. `--strict-volume` re-arms it for manual
-use / CI that wants full equality.
+A migration-owned table, column or season present on one database and absent
+from the other is never "dev is deliberately ahead" -- it is always a promotion
+that did not happen. VOLUME and FEATURE are different: live odds
+(`prop_odds_snapshots` prod 409,617 vs dev 3,526), dev-only mock drafts, and
+feature tables under development are legitimate drift, so failing on them
+would train people to skip the check. `--strict-volume` re-arms them for
+manual use / CI that wants full equality.
 
 Usage:
   cd backend && venv/bin/python diff_databases.py
@@ -54,8 +58,34 @@ DEFAULT_DEV = os.path.join(HERE, "data", "picks.dev.db")
 # anything a background timer rewrites on its own schedule.
 SKIP = {"sqlite_sequence", "sqlite_stat1"}
 
+# Feature tables classified "feature not deployed to prod" or
+# "environment-local" by docs/SCHEMA-DRIFT-AUDIT-2026-07-28.md. A table or
+# column in this set may legitimately exist on only one database while the
+# feature is being developed on dev; it is ADVISORY drift (a decision to
+# promote later), never a failed migration. The migration ledger
+# (app_schema_migrations) is the source of truth for what MUST match.
+FEATURE_TABLES = {
+    "momentum_state": "momentum job -- feature not deployed to prod",
+    "momentum_crosses": "momentum job -- feature not deployed to prod",
+    "nfl_pbp": "retained-play feature not deployed to prod",
+    "nfl_published_fantasy_points": "published-fantasy feature not deployed to prod",
+    "schema_migrations": "team-stats proof integer registry (not the app registry)",
+    "team_stats_ingestion_failures": "team-stats proof feature",
+    "team_stats_team_inventory": "team-stats proof feature",
+    "history_refresh_state": "environment-local scheduler state (prod-only)",
+}
+
+# Columns on shared tables that belong to the team-stats feature and are
+# added by its ingest (ingest_team_results / stamp_team_result_source), not
+# by a numbered migration.
+FEATURE_COLUMNS = {
+    ("team_game_results", "run_id"): "team-stats ingest feature",
+    ("team_game_results", "source"): "team-stats ingest feature",
+    ("team_game_stats", "source"): "team-stats ingest feature",
+}
+
 BLOCKING_PREFIXES = ("SCHEMA", "SEASONS")
-ADVISORY_PREFIX = "VOLUME"
+ADVISORY_PREFIXES = ("VOLUME", "FEATURE")
 
 
 def _open(path):
@@ -113,16 +143,38 @@ def main(argv=None) -> int:
     # 1. SCHEMA ---------------------------------------------------------------
     pt, dt = _tables(prod), _tables(dev)
     for name in sorted(dt - pt):
+        if name in FEATURE_TABLES:
+            findings.append(
+                f"FEATURE  table {name!r} exists in DEV, missing from PROD "
+                f"({FEATURE_TABLES[name]})")
+            continue
         findings.append(f"SCHEMA   table {name!r} exists in DEV, missing from PROD")
     for name in sorted(pt - dt):
+        if name in FEATURE_TABLES:
+            findings.append(
+                f"FEATURE  table {name!r} exists in PROD, missing from DEV "
+                f"({FEATURE_TABLES[name]})")
+            continue
         findings.append(f"SCHEMA   table {name!r} exists in PROD, missing from DEV")
 
     shared = sorted(pt & dt)
     for table in shared:
         pc, dc = _columns(prod, table), _columns(dev, table)
         for col in sorted(dc - pc):
+            key = (table, col)
+            if key in FEATURE_COLUMNS:
+                findings.append(
+                    f"FEATURE  {table}.{col} exists in DEV, missing from PROD "
+                    f"({FEATURE_COLUMNS[key]})")
+                continue
             findings.append(f"SCHEMA   {table}.{col} exists in DEV, missing from PROD")
         for col in sorted(pc - dc):
+            key = (table, col)
+            if key in FEATURE_COLUMNS:
+                findings.append(
+                    f"FEATURE  {table}.{col} exists in PROD, missing from DEV "
+                    f"({FEATURE_COLUMNS[key]})")
+                continue
             findings.append(f"SCHEMA   {table}.{col} exists in PROD, missing from DEV")
 
     # 2. SEASONS --------------------------------------------------------------
@@ -166,20 +218,21 @@ def main(argv=None) -> int:
     print()
 
     blocking = [f for f in findings if f.startswith(BLOCKING_PREFIXES)]
-    advisory = [f for f in findings if f.startswith(ADVISORY_PREFIX)]
+    advisory = [f for f in findings if f.startswith(ADVISORY_PREFIXES)]
     if blocking:
         print(f"{len(blocking)} blocking difference(s) (SCHEMA/SEASONS): a table, "
               "column or season present on one database and absent from the other "
               "is a promotion that did not happen -- resolve before releasing.")
         return 1
     if advisory and args.strict_volume:
-        print(f"{len(advisory)} volume difference(s) over --tolerance and "
-              "--strict-volume is set.")
+        print(f"{len(advisory)} difference(s) (VOLUME/FEATURE) over --tolerance "
+              "and --strict-volume is set.")
         return 1
-    print(f"{len(advisory)} advisory difference(s) (VOLUME). Drift is often "
-          "legitimate -- live odds and dev-only mock drafts differ by design. "
-          "It should be a decision, not a discovery; re-run with --strict-volume "
-          "to make it blocking.")
+    print(f"{len(advisory)} advisory difference(s) (VOLUME/FEATURE). Drift is "
+          "often legitimate -- live odds and dev-only mock drafts differ by "
+          "design, and feature tables exist on dev before promotion. It should "
+          "be a decision, not a discovery; re-run with --strict-volume to make "
+          "it blocking.")
     return 0
 
 

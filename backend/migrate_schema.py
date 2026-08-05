@@ -26,7 +26,9 @@ REGISTRY_SQL = """
 CREATE TABLE IF NOT EXISTS app_schema_migrations (
     migration_id TEXT PRIMARY KEY,
     checksum TEXT NOT NULL,
-    applied_at TEXT NOT NULL DEFAULT (datetime('now'))
+    applied_at TEXT NOT NULL DEFAULT (datetime('now')),
+    status TEXT NOT NULL DEFAULT 'applied',
+    note TEXT
 )
 """.strip()
 
@@ -110,6 +112,31 @@ MIGRATIONS: tuple[Migration, ...] = (
                 ("rushing_yards", "INTEGER"),
                 ("defensive_special_teams_tds", "INTEGER"),
             )
+        ),
+    ),
+    Migration(
+        migration_id="20260805_002_migration_ledger_status",
+        table="app_schema_migrations",
+        additions=(
+            ColumnAddition(
+                contract=ColumnContract(
+                    "status",
+                    "TEXT",
+                    not_null=True,
+                    default="'applied'",
+                ),
+                sql=(
+                    "ALTER TABLE app_schema_migrations "
+                    "ADD COLUMN status TEXT NOT NULL DEFAULT 'applied'"
+                ),
+            ),
+            ColumnAddition(
+                contract=ColumnContract("note", "TEXT"),
+                sql=(
+                    "ALTER TABLE app_schema_migrations "
+                    "ADD COLUMN note TEXT"
+                ),
+            ),
         ),
     ),
 )
@@ -292,6 +319,18 @@ def inspect_connection(
     for migration in migrations:
         existing = table_columns(connection, migration.table)
         if not existing:
+            if migration.table == REGISTRY_TABLE:
+                # The registry is bootstrapped by the runner itself
+                # (REGISTRY_SQL) before any migration applies; a missing
+                # registry is "pending", never an error.
+                statuses.append(
+                    MigrationStatus(
+                        migration.migration_id,
+                        "pending",
+                        "registry table bootstrap required",
+                    )
+                )
+                continue
             statuses.append(
                 MigrationStatus(
                     migration.migration_id,
