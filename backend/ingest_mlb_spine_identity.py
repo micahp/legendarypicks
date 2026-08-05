@@ -29,7 +29,10 @@ to fill.
 
 Usage:
   cd backend && venv/bin/python ingest_mlb_spine_identity.py \\
-      --season 2026 --db data/picks.dev.db [--dry-run]
+      --season 2026 --db data/picks.dev.db [--apply]
+
+Dry run by default: prints the counts and writes nothing. Pass `--apply` to
+write. (`--dry-run` is still accepted and is the same as the default.)
 """
 from __future__ import annotations
 
@@ -45,6 +48,7 @@ import urllib.request
 import paced_http
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from audit_league_stats import _identity_name_key  # noqa: E402
 from team_codes import normalize  # noqa: E402
 
 DB = os.environ.get("LP_DB_PATH") or os.path.join(
@@ -124,6 +128,69 @@ def refresh(db_path: str, *, season: int, dry_run: bool = False) -> dict:
     connection = sqlite3.connect(db_path)
     connection.row_factory = sqlite3.Row
     try:
+        # Pass 1 -- resolve ESPN-only rows against the published roster.
+        #
+        # roster_sync.py fills espn_id onto rows that already have an mlbam_id,
+        # and on a miss INSERTs a row with no mlbam_id at all. Those rows are
+        # invisible to the fill below (which reads WHERE mlbam_id IS NOT NULL),
+        # so they never get team/position/position_group and keep a stale ESPN
+        # role. The data is published -- we only never asked. Ask now, on every
+        # run, so the hole closes for future roster_sync inserts too.
+        #
+        # The rule, and no clause of it gets loosened:
+        #   * only rows with mlbam_id IS NULL or 0 are considered;
+        #   * the name must match EXACTLY ONE published player (the identity
+        #     key -- same normaliser the audit uses, not a third one);
+        #   * the team must agree (MLB currentTeam vs the row's team);
+        #   * a non-null mlbam_id is never overwritten -- such rows are not
+        #     even candidates here;
+        #   * a player MLB does not publish stays unknown -- counted, never
+        #     widened away.
+        name_index: dict[str, list[dict]] = {}
+        for person in people:
+            name_index.setdefault(
+                _identity_name_key(person.get("fullName") or ""), []
+            ).append(person)
+
+        counts = {"published": len(people), "not_in_spine": 0,
+                  "team_set": 0, "position_set": 0, "unchanged": 0,
+                  "no_current_team": 0, "position_group_set": 0,
+                  "considered": 0, "resolved": 0, "ambiguous": 0,
+                  "team_mismatch": 0, "unpublished": 0}
+        for row in connection.execute(
+                """SELECT id, name, team FROM players
+                   WHERE lower(league)='mlb'
+                     AND (mlbam_id IS NULL OR mlbam_id=0)"""):
+            counts["considered"] += 1
+            candidates = name_index.get(_identity_name_key(row["name"]), [])
+            if not candidates:
+                # MLB does not publish this player for the season. Unknown is
+                # the honest answer, and it is not a failure.
+                counts["unpublished"] += 1
+                continue
+            if len(candidates) > 1:
+                # Two or more published players share the name. Never take the
+                # first; a confident wrong id is exactly what gate G exists to
+                # catch, and it would catch it red.
+                counts["ambiguous"] += 1
+                continue
+            person = candidates[0]
+            published_team = (person.get("currentTeam") or {}).get("id")
+            person_team = teams.get(int(published_team)) if published_team else None
+            if person_team is None or (row["team"] or "").upper() != person_team:
+                # A unique name whose team disagrees is a skip, not a match --
+                # a traded or stale row is where a wrong answer would come from.
+                counts["team_mismatch"] += 1
+                continue
+            if not dry_run:
+                connection.execute(
+                    "UPDATE players SET mlbam_id=? WHERE id=?",
+                    (int(person["id"]), int(row["id"])),
+                )
+            counts["resolved"] += 1
+
+        # Build the spine AFTER pass 1 so the fill below covers the newly
+        # resolved rows in the same run, and they end up complete.
         spine = {
             int(row["mlbam_id"]): row
             for row in connection.execute(
@@ -133,9 +200,6 @@ def refresh(db_path: str, *, season: int, dry_run: bool = False) -> dict:
                      AND mlbam_id!=0"""
             )
         }
-        counts = {"published": len(people), "not_in_spine": 0,
-                  "team_set": 0, "position_set": 0, "unchanged": 0,
-                  "no_current_team": 0, "position_group_set": 0}
         for person in people:
             row = spine.get(int(person.get("id") or 0))
             if row is None:
@@ -187,12 +251,17 @@ def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--season", type=int, required=True)
     parser.add_argument("--db", default=DB)
-    parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument("--apply", action="store_true",
+                        help="write to the database (default is a dry run)")
+    # Accepted for compatibility; identical to the new default behaviour.
+    parser.add_argument("--dry-run", action="store_true",
+                        help=argparse.SUPPRESS)
     args = parser.parse_args(argv)
+    dry_run = not args.apply
     print(f"database: {args.db}  season: {args.season}"
-          f"{'  (dry run)' if args.dry_run else ''}")
+          f"{'  (dry run)' if dry_run else ''}")
     print(json.dumps(refresh(args.db, season=args.season,
-                             dry_run=args.dry_run), indent=2, sort_keys=True))
+                             dry_run=dry_run), indent=2, sort_keys=True))
     return 0
 
 
