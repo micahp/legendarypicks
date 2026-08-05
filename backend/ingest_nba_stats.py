@@ -311,8 +311,12 @@ def main() -> None:
 def _refuse_unless_forced() -> None:
     """MOSTLY SUPERSEDED 2026-08-04 by ingest_nba_season_stats.py.
 
-    Both write `player_stats` for league `nba` and both are accepted owners
-    of a post-2023 season, so whichever runs last owns every row. The
+    Both write `player_stats` for league `nba`. As of 2026-08-05 only ONE is a
+    canonical owner of a post-2023 season: `canonical_population_sql` names
+    `espn_web`, which the replacement writes. This script's `espn_core` rows are
+    no longer read by the leaderboard, so the old "whichever runs last owns
+    every row" ambiguity is gone -- but forcing this script still costs 643
+    requests and now publishes rows nothing displays. The
     difference is cost: this one asks sports.core.api for ONE ATHLETE AT A
     TIME -- 643 requests -- which is what tripped ESPN's block (143 athletes
     in at 1s spacing, 21 at 2s) and why `espn_core` never published a row and

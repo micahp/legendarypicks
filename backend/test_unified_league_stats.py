@@ -84,7 +84,7 @@ class UnifiedLeagueStatsTests(unittest.TestCase):
         self.assertTrue(source_owns_stats("nhl", "season", 20252026, "nhle.com"))
         self.assertTrue(source_owns_stats("nba", "season", 2023, "hoopR"))
         self.assertTrue(
-            source_owns_stats("nba", "season", 2026, "espn_core")
+            source_owns_stats("nba", "season", 2026, "espn_web")
         )
         self.assertTrue(
             source_owns_stats(
@@ -123,7 +123,7 @@ class UnifiedLeagueStatsTests(unittest.TestCase):
             league="nba",
             season=2026,
             stat_type="season",
-            source="espn_core",
+            source="espn_web",
             games=20,
             values={"pts": 24.5},
         )
@@ -138,7 +138,7 @@ class UnifiedLeagueStatsTests(unittest.TestCase):
             tuple(rows[0]),
             (
                 1, "Canonical Guard", "canonical guard", "nba", "BOS",
-                "season", 2026, 20, 24.5, "espn_core",
+                "season", 2026, 20, 24.5, "espn_web",
             ),
         )
 
@@ -156,7 +156,7 @@ class UnifiedLeagueStatsTests(unittest.TestCase):
                       player_id,player_name,name_norm,league,team,stat_type,
                       season,games,pts,source
                     ) VALUES(1,'Canonical Guard',?,'nba','BOS','season',
-                             2026,?,10.0,'espn_core')""",
+                             2026,?,10.0,'espn_web')""",
                 (name_norm, games),
             )
         return connection.execute(

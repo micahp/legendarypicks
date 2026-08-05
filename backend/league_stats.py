@@ -211,10 +211,18 @@ def canonical_population_sql(
     elif normalized_league == "nfl":
         clause += f" AND {prefix}source='nflverse_regular_season'"
     elif normalized_league == "nba":
+        # Post-2023 is `espn_web`, not `espn_core`. `ingest_nba_season_stats.py`
+        # exists *because* the per-athlete `espn_core` path tripped ESPN's block
+        # and published zero rows ever; it was replaced by the bulk
+        # `site.web.api` report, which writes `espn_web` -- and this filter was
+        # never moved with it. The mismatch does not raise, it MISSES: on
+        # 2026-08-05 prod held 565 correct 2026 rows and the leaderboard served
+        # 2023, because `available_seasons` is derived through this predicate.
+        # Only `espn_core` fixtures in the tests kept it looking healthy.
         clause += (
             f" AND (({prefix}season<=2023 AND {prefix}source='hoopR') "
             f"OR ({prefix}season>2023 "
-            f"AND {prefix}source='espn_core'))"
+            f"AND {prefix}source='espn_web'))"
         )
     return clause, params
 

@@ -104,7 +104,7 @@ def insert_row(path, player_id, name, league, season, games, stat_type=None, val
         elif season <= 2023:
             source = "hoopR"
         else:
-            source = "espn_core"
+            source = "espn_web"
         data = {
             "player_id": player_id,
             "player_name": name,
@@ -376,7 +376,7 @@ class LeagueStatsContractTests(unittest.TestCase):
                      player_id,player_name,league,team,season,games,
                      stat_type,source,pts
                    ) VALUES(1,'Duplicate','nba','TST',2026,20,
-                            'season','espn_core',30)"""
+                            'season','espn_web',30)"""
             )
 
         with self.assertRaises(HTTPException) as raised:
@@ -404,7 +404,7 @@ class LeagueStatsContractTests(unittest.TestCase):
                     """INSERT INTO player_stats(
                          player_id,player_name,league,team,season,games,
                          stat_type,source,pts
-                       ) VALUES(NULL,?,'nba','TST',2026,20,'season','espn_core',12)""",
+                       ) VALUES(NULL,?,'nba','TST',2026,20,'season','espn_web',12)""",
                     (name,),
                 )
 

@@ -62,7 +62,7 @@ class PlayerStatsMigrationTests(unittest.TestCase):
             [
                 (
                     "NBA Player", "nba player", "nba", "BOS", "season",
-                    2026, 20, 25.0, "espn_core", 1,
+                    2026, 20, 25.0, "espn_web", 1,
                 ),
                 (
                     "NHL Player", "nhl player", "nhl", "EDM", "season",
@@ -129,7 +129,7 @@ class PlayerStatsMigrationTests(unittest.TestCase):
                      player_name,name_norm,league,team,stat_type,season,
                      games,pts,source,player_id
                    ) VALUES('Duplicate','duplicate','nba','BOS','season',
-                            2026,20,30,'espn_core',1)"""
+                            2026,20,30,'espn_web',1)"""
             )
 
         result = migrate_player_stats.check_database(self.path)
