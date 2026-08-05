@@ -1,5 +1,59 @@
 # Changelog
 
+## v0.7.5 — 2026-08-04
+
+### An external id now has to name the right person
+
+- **223 MLB players carried another player's `mlbam_id`, and nothing had ever
+  checked** (`2947199`, `a53bb93`). `players` holds one id per publisher and
+  every join runs through them, but no test asserted that the id and the name on
+  a row describe the same human. `id=26551` read `Eiberson Castellano` against
+  `mlbam_id=703607`, which MLB publishes as Henry Bolte. A wrong id does not
+  raise — it mis-joins, silently. `COV-statset` check `G/published-identity`
+  now fails on that state, against a committed snapshot of each publisher's own
+  id → name map (`fetch_identity_names.py`, 1,358 MLB pairs). Leagues with no
+  snapshot report UNVERIFIED, never PASS.
+- **Root cause: Statcast's `player_name` column is the pitcher's name.** The
+  pre-`b03b9c9` batter fallback took `player_name.iloc[0]` — whoever threw the
+  first pitch of that batter's group — while `player_id` came correctly from
+  `batter_id`. Right id, stranger's name. The fingerprint is unambiguous: 201 of
+  203 resolvable wrong names belong to a pitcher, and 203 of 203 true owners are
+  position players. Not a positional shift — offset 0 scores 1072 correct and
+  every offset from −5 to +5 scores 0.
+- **Repaired id-first, never by name match** (`1df987c`). Name matching is what
+  produced this. `repair_mlb_identity_names.py` takes the published name for each
+  `mlbam_id` and writes nothing else: 223 prod / 167 dev names changed, **0**
+  `mlbam_id` writes, every row count in `players`, `player_game_logs`, `props`,
+  `player_stats` and `predictions` identical before and after. Gate G green on
+  both databases.
+- **This is what was blocking the MLB dedupe.** `dedupe_mlb.py` documents a
+  shared `mlbam_id` as "provably the same person"; 124 of 317 duplicate groups
+  were in fact two different people, and a merge would have repointed 408,610
+  prop rows and 26,491 game logs onto the wrong players before deleting the
+  originals. A `player_stats` UNIQUE constraint aborted that run by luck, not by
+  design. The count is now 0.
+
+### The backend image is 292MB instead of 7.45GB
+
+- **`.dockerignore` never excluded the database backups it named** (`c6b2728`).
+  A bare `*.bak` does not cross a `/`, so it matched nothing under `data/`, and
+  every build baked 7.7GB of DB backups into the image. `/app/data` is now 52MB
+  and no backup ships. Docker reads `.dockerignore` only — `.gitignore` has no
+  bearing on the build context, which is why the entries looked correct.
+
+### Fixes
+
+- **`roster_sync`'s pacing and disk cache applied only to `main()`** (`408b7b2`).
+  Anything entering through `import roster_sync; sync_league(...)` — which is how
+  the prod run gets in — got neither, and paid 128 requests over 188s against a
+  cache that was right there. `sync_league` now configures them itself:
+  0 requests, 1.7s over 124 rosters.
+- **`dedupe_mlb.py` repoints `roster_memberships` and `roster_snap`** (`e7315a1`).
+  Both carry a `player_id` and neither was in `REF_TABLES`. They hold 0 rows for
+  duplicate-group players only because MLB `roster_sync` has never applied; the
+  loop swallows `sqlite3.OperationalError`, so the omission would have orphaned
+  them without a word.
+
 ## v0.7.4 — 2026-08-04
 
 ### One HTTP client instead of six copies
