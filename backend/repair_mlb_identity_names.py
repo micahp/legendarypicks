@@ -70,6 +70,9 @@ def main():
                     help="absolute path to the database (picks.db or picks.dev.db)")
     ap.add_argument("--apply", action="store_true",
                     help="commit the repair; default is a dry run")
+    ap.add_argument("--exact", action="store_true",
+                    help="also repair rows that differ from the published name only "
+                         "by case or accents, and re-sync player_stats' display copy")
     args = ap.parse_args()
 
     names = load_published_names()
@@ -89,7 +92,21 @@ def main():
             if published is None:
                 not_in_map += 1
                 continue
-            if _identity_name_key(name) == _identity_name_key(published):
+            # Default: only a DIFFERENT PERSON is a defect, so the comparison is
+            # on the normalised key -- 'Max P. Muncy' and 'Max Muncy' are one man.
+            #
+            # `--exact` widens it to any byte difference, which is a different
+            # and narrower job: the 2026-08-05 prod dedupe repointed duplicate
+            # `player_stats` rows to their canonical `player_id` while keeping
+            # the duplicate's spelling ('max muncy', 'salvador pérez'), and the
+            # leaders endpoint's raw-string guard 503s when the display copy
+            # disagrees with the spine. Neither table is the authority there --
+            # the spine held 'Heriberto Hernandez' while the stats row held the
+            # published 'Heriberto Hernández' -- so both are written from the
+            # publisher rather than one copying the other.
+            same = (name == published if args.exact
+                    else _identity_name_key(name) == _identity_name_key(published))
+            if same:
                 already_correct += 1
                 continue
             repairs.append((row_id, name, published, mlbam_id))
@@ -102,15 +119,40 @@ def main():
         for row_id, old, new, mlbam_id in repairs[:10]:
             print(f"  {row_id} / {old} / {new} / {mlbam_id}")
 
-        if repairs and args.apply:
+        # A row whose spine ALREADY matches the publisher can still carry a stale
+        # display copy -- spine 'Alec Bohm', stats 'alec bohm'. Those are skipped
+        # above as already-correct, so the 503 would survive the repair. Collect
+        # them separately rather than widening the repair rule, which is about
+        # who the row is, not how it is spelled.
+        stats_only = []
+        if args.exact:
+            for row_id, name, mlbam_id in rows:
+                published = names.get(str(mlbam_id))
+                if published is None or any(r[0] == row_id for r in repairs):
+                    continue
+                stale = con.execute(
+                    "SELECT COUNT(*) FROM player_stats "
+                    "WHERE player_id=? AND player_name IS NOT NULL AND player_name<>?",
+                    (row_id, published)).fetchone()[0]
+                if stale:
+                    stats_only.append((row_id, published, stale))
+            print(f"display copies to re-sync: {sum(s[2] for s in stats_only)} "
+                  f"player_stats rows across {len(stats_only)} players")
+
+        if (repairs or stats_only) and args.apply:
             con.execute("BEGIN")
             for row_id, _old, published, _mlbam_id in repairs:
                 con.execute("UPDATE players SET name=? WHERE id=?", (published, row_id))
                 con.execute(
                     "UPDATE player_stats SET player_name=?, name_norm=? WHERE player_id=?",
                     (published, _normalize_name(published), row_id))
+            for row_id, published, _n in stats_only:
+                con.execute(
+                    "UPDATE player_stats SET player_name=?, name_norm=? WHERE player_id=?",
+                    (published, _normalize_name(published), row_id))
             con.commit()
-            print(f"applied {len(repairs)} renames to players + player_stats")
+            print(f"applied {len(repairs)} renames to players + player_stats, "
+                  f"and re-synced {len(stats_only)} display copies")
         else:
             con.rollback()  # dry run: discard anything (nothing) staged
             if repairs:
