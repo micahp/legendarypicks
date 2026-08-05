@@ -61,3 +61,38 @@ rows sharing a real source-id, never by name (per "resolve by ID, never name").
 - The real coverage fix for the residual is **mlbam resolution** for unresolved props players
   (Bovada name → mlbam crosswalk), not more dedup.
 - Dedup scripts: `dedupe_nfl.py` (orphan stubs), `dedupe_mlb.py` (source-id merge + repoint).
+
+---
+
+## CORRECTION — 2026-08-04: "identity-safe" was an assumption, not a property
+
+Everything above stands as written on 2026-06-26 except one sentence, and it is the load-bearing one:
+
+> "Identity-safe — only merges rows sharing a real source-id, never by name."
+
+That is safe **only if the source-id on the row names the person on the row.** Nothing had ever
+checked that. **223 prod / 167 dev MLB rows carried another player's `mlbam_id`**, so of the 317
+duplicate `mlbam_id` groups, **124 were two different people.** Running the dedupe would have
+repointed 408,610 prop rows and 26,491 game logs onto the wrong players and then deleted the
+originals. It was stopped by a `player_stats` UNIQUE constraint firing on 188 collisions — luck,
+not the safety property this document claims.
+
+Cause: Statcast's `player_name` is the **pitcher's** name on every pitch row, and the pre-`b03b9c9`
+batter fallback took `player_name.iloc[0]` while `player_id` came correctly from `batter_id`. Right
+id, stranger's name, no error. Full trace and the measured fingerprint in `docs/DATA-SPINE.md`
+(2026-08-04 addendum).
+
+**Repaired in v0.7.5** via `backend/repair_mlb_identity_names.py`, id-first — the published name for
+each `mlbam_id`, nothing else written. Groups that are two different people: **124 → 0**.
+
+### Dup status (verified 2026-08-04, supersedes the 2026-06-26 numbers above)
+- **prod:** 317 duplicate `mlbam_id` groups, **0** of them split across different people.
+  The dedupe is now genuinely identity-safe and has not yet been run.
+- **dev:** 0 duplicate groups.
+
+### What to carry forward
+- **Before trusting any id-keyed merge, run `audit_league_stats.py` check `G/published-identity`
+  for that league.** UNVERIFIED is not a pass — it means no publisher snapshot exists yet and the
+  merge's safety property is unproven for that league. Today only MLB has one
+  (`backend/data/published-identity-names.json`); NFL, NBA and NHL report UNVERIFIED.
+- Generalising `dedupe_mlb.py` to a new league means generalising the identity snapshot **first**.
