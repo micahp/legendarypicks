@@ -156,6 +156,19 @@ def _read_only_connection(path: str) -> sqlite3.Connection:
     return connection
 
 
+def _backup_read_connection(path: str) -> sqlite3.Connection:
+    """Read-only source for VACUUM INTO.
+
+    ``mode=ro`` alone is enough to guarantee the source is never written;
+    ``PRAGMA query_only=ON`` would additionally block VACUUM INTO, which the
+    read-only connection performs against the *destination* file.
+    """
+    connection = sqlite3.connect(
+        "file:{}?mode=ro".format(quote(path, safe="/")), uri=True
+    )
+    return connection
+
+
 def _normalize_type(value: object) -> str:
     return " ".join(str(value or "").upper().split())
 
@@ -384,7 +397,7 @@ def create_verified_backup(
         )
 
     try:
-        with _read_only_connection(absolute) as source:
+        with _backup_read_connection(absolute) as source:
             source_check = source.execute(
                 "PRAGMA quick_check"
             ).fetchone()[0]
@@ -392,11 +405,19 @@ def create_verified_backup(
                 raise MigrationError(
                     f"source quick_check failed: {source_check}"
                 )
-            with sqlite3.connect(backup_path) as backup:
-                source.backup(backup)
-                backup_check = backup.execute(
-                    "PRAGMA quick_check"
-                ).fetchone()[0]
+            # VACUUM INTO, never cp: a plain copy of a live database races
+            # writers and produces a torn snapshot (proved 2026-08-05: the
+            # copy reported `database disk image is malformed` while the
+            # source passed a full integrity_check). VACUUM INTO writes a
+            # consistent snapshot and works from a read-only connection in
+            # both `delete` and `wal` journal modes.
+            source.execute(
+                f"VACUUM INTO {_quote_identifier(backup_path)}"
+            )
+        with sqlite3.connect(backup_path) as backup:
+            backup_check = backup.execute(
+                "PRAGMA quick_check"
+            ).fetchone()[0]
         if backup_check != "ok":
             raise MigrationError(
                 f"backup quick_check failed: {backup_check}"

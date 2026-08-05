@@ -38,6 +38,21 @@ _MOVABLE_TABLES = (
 _PROTECTED_TABLES = ("props", "prop_results", "prop_games")
 
 
+MIGRATION_ID = "20260805_001_merge_nba_identities"
+MIGRATION_CHECKSUM = hashlib.sha256(
+    json.dumps(
+        {
+            "migration_id": MIGRATION_ID,
+            "reason": "hoopR athlete_id == ESPN athlete id; legacy nba_id rows "
+                      "split from espn_id rows must collapse to the ESPN row",
+            "movable_tables": sorted(_MOVABLE_TABLES),
+        },
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("utf-8")
+).hexdigest()
+
+
 def _absolute_db(path: str) -> str:
     candidate = Path(path)
     if not candidate.is_absolute() or not candidate.is_file():
@@ -295,6 +310,14 @@ def apply_plan(
                 raise NBAMergeError(
                     f"protected table {table} changed"
                 )
+        connection.execute(migrate_schema.REGISTRY_SQL)
+        connection.execute(
+            """INSERT INTO app_schema_migrations(
+                 migration_id, checksum
+               ) VALUES(?,?)
+               ON CONFLICT(migration_id) DO UPDATE SET checksum=excluded.checksum""",
+            (MIGRATION_ID, MIGRATION_CHECKSUM),
+        )
         connection.commit()
     except Exception:
         connection.rollback()
