@@ -84,7 +84,10 @@ MANIFEST = {
         # -- check C covers it". That stopped being true on 2026-08-04 when
         # roster_sync applied for MLB for the first time and filled every active
         # player's position, so the column is now worth asking about.
-        "single_vocabulary": ["position", "team"],
+        # `position_group` is asserted the same way: MLB publishes the group
+        # level (Outfielder/Infielder/...) alongside the abbreviation, and a
+        # column that is written should be measured, not trusted.
+        "single_vocabulary": ["position", "position_group", "team"],
     },
     "nba": {
         "stat_types": {
