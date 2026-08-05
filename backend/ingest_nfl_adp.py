@@ -64,6 +64,23 @@ DB = os.environ.get("LP_DB_PATH") or os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "data", "picks.db"
 )
 
+# `players` holds humans and fantasy constructs side by side. ESPN never
+# confuses them -- constructs exist only in the fantasy API and it signs their
+# ids negative -- so record the category the publisher already drew, at the
+# boundary, instead of leaving every reader to infer it from a position label.
+# See migrate_player_entity_type.py for what inferring it cost.
+_ENTITY_BY_POSITION = {"DEF": "team_defense", "TQB": "team_qb", "HC": "coach"}
+
+
+def _entity_type(position, espn_id) -> str:
+    try:
+        negative = espn_id is not None and int(espn_id) < 0
+    except (TypeError, ValueError):
+        negative = False
+    if not negative:
+        return "player"
+    return _ENTITY_BY_POSITION.get((position or "").strip().upper(), "unknown")
+
 
 def _fetch_all() -> list:
     """Fetch the full player universe in one call (limit 20000, no ownership filter)."""
@@ -221,10 +238,19 @@ def ingest():
     # ── D/ST pre-flight: fetch proTeams map (fail-closed) ──
     pro_team_map = _build_pro_team_map()
 
-    # ── Build team_abbrev → player_id lookup for active DEF players ──
+    # ── Build team_abbrev → player_id lookup for team defences ──
+    # Selected by `entity_type`, and deliberately WITHOUT `active=1`. A D/ST is
+    # a fantasy construct, not a roster member, so `active` says nothing about
+    # whether it should be published -- and reading it here is what broke this
+    # ingest on 2026-08-04: `roster_sync` deactivated all 32, this map came
+    # back empty, and the fail-closed D/ST preflight then aborted every run,
+    # taking `injury_status` and `last_news_date` for 6,486 players with it.
     def_to_pid: dict[str, int] = {}
+    _cols = {row[1] for row in con.execute("PRAGMA table_info(players)")}
+    _def_where = ("entity_type='team_defense'" if "entity_type" in _cols
+                  else "position='DEF'")
     for r in con.execute(
-        "SELECT id, team FROM players WHERE league='nfl' AND position='DEF' AND active=1"
+        f"SELECT id, team FROM players WHERE league='nfl' AND {_def_where}"
     ):
         def_to_pid[r["team"]] = r["id"]
     print(f"DEF players by team: {len(def_to_pid)}")
@@ -311,7 +337,8 @@ def ingest():
                     )
                 else:
                     cur = con.execute(
-                        """INSERT INTO players(name, league, team, position, espn_id, active, updated_at)
+                        """INSERT INTO players(name, league, team, position, espn_id,
+                                               active, updated_at)
                            VALUES(?, 'nfl', ?, ?, ?, ?, ?)""",
                         (
                             name,

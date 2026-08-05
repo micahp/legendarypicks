@@ -380,9 +380,20 @@ def sync_league(con: sqlite3.Connection, league: str) -> dict:
         # rostered", so this job has no opinion to offer about it. Excluded
         # here, at the write, rather than by teaching every reader to special-
         # case it -- the same reason season keys are normalised at the ingest.
+        # Keyed on `entity_type` where the column exists -- `position='DEF'` is
+        # the fallback for a database that predates the migration, and it is
+        # narrower: TQB and HC rows are the same kind of thing and would have
+        # been the next two bugs. Presence is checked rather than assumed
+        # because the column arrived after this code did.
+        _has_entity_type = "entity_type" in {
+            row[1] for row in con.execute("PRAGMA table_info(players)")
+        }
+        if _has_entity_type:
+            exclude = "COALESCE(entity_type,'player')='player'"
+        else:
+            exclude = "COALESCE(position,'') != 'DEF'"
         con.execute(
-            "UPDATE players SET active=0, updated_at=? "
-            "WHERE league=? AND COALESCE(position,'') != 'DEF'",
+            f"UPDATE players SET active=0, updated_at=? WHERE league=? AND {exclude}",
             (verified_at, league),
         )
 
