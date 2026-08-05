@@ -17,19 +17,27 @@ separate defects, each of them correct in code and absent from production:
 None of them raised. Both databases answered 200 throughout, and the audit was
 green against dev. The only thing that distinguishes them is a diff nobody ran.
 
-This is that diff. It reports three things and exits non-zero on any of them:
+This is that diff. It reports three things with TWO severities:
 
+  BLOCKING  (exit 1 -- a promotion did not happen, do not release over it)
   1. SCHEMA   -- a table or column one side has and the other does not
   2. SEASONS  -- a (league, season) present on one side and missing on the other
+
+  ADVISORY  (printed, but exit 0 -- legitimate drift, should be a decision)
   3. VOLUME   -- a row count differing by more than --tolerance (default 5%)
 
-Divergence is not automatically wrong: dev is often deliberately ahead. The
-point is that it should be a decision someone made, not a discovery weeks later.
+A table, column or season present on one database and absent from the other is
+never "dev is deliberately ahead" -- it is always a promotion that did not
+happen. VOLUME is different: live odds (`prop_odds_snapshots` prod 409,617 vs
+dev 3,526) and dev-only mock drafts are legitimate drift, so failing on it
+would train people to skip the check. `--strict-volume` re-arms it for manual
+use / CI that wants full equality.
 
 Usage:
   cd backend && venv/bin/python diff_databases.py
   venv/bin/python diff_databases.py --prod data/picks.db --dev data/picks.dev.db
   venv/bin/python diff_databases.py --quiet      # only differences
+  venv/bin/python diff_databases.py --strict-volume   # volume blocks too
 """
 from __future__ import annotations
 
@@ -45,6 +53,9 @@ DEFAULT_DEV = os.path.join(HERE, "data", "picks.dev.db")
 # Tables whose divergence is expected and uninteresting: caches, scratch and
 # anything a background timer rewrites on its own schedule.
 SKIP = {"sqlite_sequence", "sqlite_stat1"}
+
+BLOCKING_PREFIXES = ("SCHEMA", "SEASONS")
+ADVISORY_PREFIX = "VOLUME"
 
 
 def _open(path):
@@ -92,6 +103,8 @@ def main(argv=None) -> int:
                     help="row-count difference to ignore, as a fraction (default 0.05)")
     ap.add_argument("--quiet", action="store_true",
                     help="print only differences")
+    ap.add_argument("--strict-volume", action="store_true",
+                    help="treat VOLUME drift as blocking too (default: advisory)")
     args = ap.parse_args(argv)
 
     prod, dev = _open(args.prod), _open(args.dev)
@@ -151,9 +164,23 @@ def main(argv=None) -> int:
     for line in findings:
         print(line)
     print()
-    print(f"{len(findings)} difference(s). Divergence is not automatically wrong -- "
-          "dev is often deliberately ahead. It should be a decision, not a discovery.")
-    return 1
+
+    blocking = [f for f in findings if f.startswith(BLOCKING_PREFIXES)]
+    advisory = [f for f in findings if f.startswith(ADVISORY_PREFIX)]
+    if blocking:
+        print(f"{len(blocking)} blocking difference(s) (SCHEMA/SEASONS): a table, "
+              "column or season present on one database and absent from the other "
+              "is a promotion that did not happen -- resolve before releasing.")
+        return 1
+    if advisory and args.strict_volume:
+        print(f"{len(advisory)} volume difference(s) over --tolerance and "
+              "--strict-volume is set.")
+        return 1
+    print(f"{len(advisory)} advisory difference(s) (VOLUME). Drift is often "
+          "legitimate -- live odds and dev-only mock drafts differ by design. "
+          "It should be a decision, not a discovery; re-run with --strict-volume "
+          "to make it blocking.")
+    return 0
 
 
 if __name__ == "__main__":
