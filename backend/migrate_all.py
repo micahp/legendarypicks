@@ -61,8 +61,8 @@ def _absolute(path: str) -> str:
     return str(candidate)
 
 
-def _legacy_status(con: sqlite3.Connection, migration) -> str:
-    if migration.applies_to == "prod":
+def _legacy_status(con: sqlite3.Connection, migration, side: str = "dev") -> str:
+    if migration.applies_to == "prod" and side != "prod":
         # dev->prod copy scripts write only the target; the source side has
         # nothing to probe (the effect lives in the target).
         return "not_applicable"
@@ -75,16 +75,19 @@ def _legacy_status(con: sqlite3.Connection, migration) -> str:
 def check_legacy(
     path: str,
     migrations: Sequence[migration_manifest.LegacyMigration] = migration_manifest.LEGACY_MIGRATIONS,
+    side: str = "dev",
 ) -> list[tuple[str, str, str]]:
     """Read-only per-script status for one database.
 
     Returns (migration_id, status, note). Raises if the ledger cannot be read.
+    ``side`` is "prod" or "dev": dev->prod copy scripts are not applicable on
+    the source side and are probed on the target side.
     """
     absolute = _absolute(path)
     rows = []
     with _read_only_connection(absolute) as con:
         for migration in migrations:
-            status = _legacy_status(con, migration)
+            status = _legacy_status(con, migration, side)
             rows.append((migration.migration_id, status, migration.note))
     return rows
 
@@ -153,6 +156,7 @@ def _ledger_rows(
 def apply_legacy(
     path: str,
     migrations: Sequence[migration_manifest.LegacyMigration] = migration_manifest.LEGACY_MIGRATIONS,
+    side: str = "dev",
 ) -> list[tuple[str, str, str]]:
     """Record retroactive ledger rows for the legacy scripts.
 
@@ -171,7 +175,7 @@ def apply_legacy(
         existing = _ledger_rows(con)
         for migration in migrations:
             checksum = migration_manifest.script_checksum(migration.script)
-            status = _legacy_status(con, migration)
+            status = _legacy_status(con, migration, side)
             previous = existing.get(migration.migration_id)
             if previous is not None and previous[0] == checksum and previous[1] == status:
                 continue
@@ -193,7 +197,7 @@ def apply_legacy(
         raise
     finally:
         con.close()
-    return check_legacy(path, migrations)
+    return check_legacy(path, migrations, side=side)
 
 
 def run_database(
@@ -201,10 +205,11 @@ def run_database(
     *,
     apply: bool,
     backups: list[str],
+    side: str = "dev",
 ) -> tuple[CheckResult, list[tuple[str, str, str]]]:
     absolute = _absolute(path)
     schema_before = check_database(absolute)
-    legacy_before = check_legacy(absolute)
+    legacy_before = check_legacy(absolute, side=side)
 
     if apply:
         if not schema_before.ok:
@@ -215,7 +220,7 @@ def run_database(
             schema_after = check_database(absolute)
         else:
             schema_after = schema_before
-        legacy_after = apply_legacy(absolute)
+        legacy_after = apply_legacy(absolute, side=side)
     else:
         schema_after = schema_before
         legacy_after = legacy_before
@@ -263,7 +268,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     for label, path in targets:
         print(f"== {label}: {path} ==")
         try:
-            schema, legacy = run_database(path, apply=args.apply, backups=backups)
+            schema, legacy = run_database(path, apply=args.apply,
+                                          backups=backups, side=label)
         except (migrate_schema.MigrationError, sqlite3.Error) as exc:
             print(f"  ERROR: {exc}", file=sys.stderr)
             exit_code = 1
