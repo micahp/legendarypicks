@@ -1,7 +1,5 @@
 # Changelog
 
-## v0.7.8 — dry-run preflight proof (never released)
-
 ## v0.7.7 — 2026-08-05
 
 ### The v0.7.6 known regression is fixed — MLB leaders serves again
