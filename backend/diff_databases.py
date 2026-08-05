@@ -72,6 +72,7 @@ FEATURE_TABLES = {
     "schema_migrations": "team-stats proof integer registry (not the app registry)",
     "team_stats_ingestion_failures": "team-stats proof feature",
     "team_stats_team_inventory": "team-stats proof feature",
+    "team_game_results": "team-stats proof feature",
     "history_refresh_state": "environment-local scheduler state (prod-only)",
 }
 
@@ -179,15 +180,27 @@ def main(argv=None) -> int:
 
     # 2. SEASONS --------------------------------------------------------------
     # The highest-signal check: a season present on one side and absent on the
-    # other is what "the ingest ran on dev" looks like from the outside.
+    # other is what "the ingest ran on dev" looks like from the outside. A
+    # season divergence in a feature table is feature drift (advisory), the
+    # same decision as FEATURE tables.
     for table in shared:
         ps, ds = _seasons(prod, table), _seasons(dev, table)
         if ps is None or ds is None:
             continue
         for league, season in sorted(ds - ps):
+            if table in FEATURE_TABLES:
+                findings.append(
+                    f"FEATURE  {table}: ({league}, {season}) in DEV, missing from "
+                    f"PROD ({FEATURE_TABLES[table]})")
+                continue
             findings.append(
                 f"SEASONS  {table}: ({league}, {season}) in DEV, missing from PROD")
         for league, season in sorted(ps - ds):
+            if table in FEATURE_TABLES:
+                findings.append(
+                    f"FEATURE  {table}: ({league}, {season}) in PROD, missing from "
+                    f"DEV ({FEATURE_TABLES[table]})")
+                continue
             findings.append(
                 f"SEASONS  {table}: ({league}, {season}) in PROD, missing from DEV")
 
