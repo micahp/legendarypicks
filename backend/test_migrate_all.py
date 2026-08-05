@@ -38,6 +38,32 @@ def _bootstrap(path: str, old_registry: bool = False) -> None:
         con.execute(LEGACY_TEAM_STATS_DDL)
         for addition in migrate_schema.MIGRATIONS[1].additions:
             con.execute(addition.sql)
+        # Minimal app-read schema so refuse_unmigrated sees a genuinely level
+        # database: the legacy schema-adders' columns are what the app reads.
+        con.execute(
+            "CREATE TABLE players("
+            "id INTEGER PRIMARY KEY, name TEXT, league TEXT, team TEXT,"
+            "position TEXT, active INTEGER, espn_id TEXT, nba_id TEXT,"
+            "mlbam_id TEXT, nfl_gsis_id TEXT, nhl_id TEXT,"
+            "position_group TEXT, pitcher_role TEXT, entity_type TEXT,"
+            "injury_status TEXT, last_news_date TEXT)"
+        )
+        con.execute(
+            "CREATE TABLE player_stats("
+            "id INTEGER PRIMARY KEY, player_id INTEGER, player_name TEXT,"
+            "name_norm TEXT, league TEXT, team TEXT, stat_type TEXT,"
+            "season INTEGER, rush_td INTEGER, rec_td INTEGER, attempts INTEGER,"
+            "pa INTEGER, ab INTEGER, mlb_hits INTEGER, runs INTEGER, rbi INTEGER,"
+            "era REAL, innings REAL, whip REAL, saves INTEGER,"
+            "shots_against INTEGER, goals_against INTEGER, save_pct REAL,"
+            "gaa REAL, shutouts INTEGER, wins INTEGER, losses INTEGER,"
+            "ot_losses INTEGER, games_started INTEGER, blocked_shots INTEGER,"
+            "hits INTEGER, takeaways INTEGER, giveaways INTEGER)"
+        )
+        con.execute(
+            "CREATE TABLE prop_games("
+            "id INTEGER PRIMARY KEY, league TEXT, game_id TEXT, start_time TEXT)"
+        )
         con.execute(OLD_REGISTRY_SQL if old_registry else migrate_schema.REGISTRY_SQL)
         for migration in migrate_schema.MIGRATIONS[:2]:
             con.execute(
@@ -187,6 +213,40 @@ class MigrateAllTests(unittest.TestCase):
             ).fetchone()[0]
         self.assertGreater(prod_legacy, 0)
         self.assertEqual(dev_legacy, 0)
+
+    def test_refuse_unmigrated_fails_loudly_on_stale_copy(self):
+        # A stale copy (legacy schema, no registry) must be refused.
+        with sqlite3.connect(self.prod) as con:
+            con.execute("CREATE TABLE player_game_logs (id INTEGER PRIMARY KEY)")
+        with self.assertRaises(migrate_schema.MigrationError) as ctx:
+            migrate_all.refuse_unmigrated(self.prod)
+        message = str(ctx.exception)
+        self.assertIn("not migrated", message)
+        self.assertIn("migrate_all.py --apply", message)
+
+    def test_refuse_unmigrated_passes_on_level_database(self):
+        self._level_pair()
+        migrate_all.main(["--apply", "--prod", self.prod, "--dev", self.dev])
+        # Should not raise
+        migrate_all.refuse_unmigrated(self.prod)
+
+    def test_refuse_unmigrated_catches_missing_schema_column(self):
+        # A level database with one app-read legacy column removed must be
+        # refused, because serving it would be "no such column: pa" again.
+        _bootstrap(self.prod)
+        migrate_all.main(["--apply", "--only", "prod",
+                          "--prod", self.prod, "--dev", self.dev])
+        with sqlite3.connect(self.prod) as con:
+            con.execute("ALTER TABLE players RENAME TO players_orig")
+            con.execute(
+                "CREATE TABLE players AS "
+                "SELECT id,name,league,team,active,espn_id,nba_id "
+                "FROM players_orig"
+            )
+            con.execute("DROP TABLE players_orig")
+        with self.assertRaises(migrate_schema.MigrationError) as ctx:
+            migrate_all.refuse_unmigrated(self.prod)
+        self.assertIn("missing schema the app reads", str(ctx.exception))
 
 
 if __name__ == "__main__":

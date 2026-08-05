@@ -89,6 +89,53 @@ def check_legacy(
     return rows
 
 
+def refuse_unmigrated(path: str) -> None:
+    """Refuse to serve a database the code was not built for.
+
+    Called by the application at startup. Raises ``MigrationError`` with a
+    loud, actionable message when the ledger is missing, a required numbered
+    migration is pending/adoptable, or a legacy script that adds schema the
+    app reads is recorded as not applied. The goal: ``no such column: pa``
+    and its siblings must be impossible to reach in production -- the app
+    fails loudly at boot instead of serving a schema it was not built for.
+    """
+    absolute = _absolute(path)
+    schema = check_database(absolute)
+    problems = []
+    for status in schema.statuses:
+        if status.state in ("pending", "adopt", "error"):
+            problems.append(f"{status.migration_id}: {status.state} - {status.detail}")
+    if problems:
+        raise migrate_schema.MigrationError(
+            f"database {absolute} is not migrated for this build; "
+            "run `backend/venv/bin/python backend/migrate_all.py --apply` "
+            "first. Missing:\n  " + "\n  ".join(problems)
+        )
+
+    # Legacy schema-adders that the app reads. A recorded not_applied means a
+    # column the app queries is missing (or unknown -- the database cannot
+    # prove the script ran); either way, serving would be a lie.
+    required_schema = (
+        "legacy_migrate_mlb_counting_stats",
+        "legacy_migrate_mlb_position_vocabulary",
+        "legacy_migrate_nfl_td_columns",
+        "legacy_migrate_nhl_goalie_columns",
+        "legacy_migrate_player_entity_type",
+        "legacy_migrate_player_injury_columns",
+        "legacy_migrate_prop_games_start_time",
+    )
+    for migration_id, status, note in check_legacy(absolute):
+        if migration_id not in required_schema:
+            continue
+        if status != "applied":
+            raise migrate_schema.MigrationError(
+                f"database {absolute} is missing schema the app reads: "
+                f"{migration_id} is {status} ({note}). Run "
+                "`backend/venv/bin/python backend/migrate_all.py --apply` "
+                "after applying the script to both databases."
+            )
+
+
 def _ledger_rows(
     con: sqlite3.Connection,
 ) -> dict[str, tuple[str, str]]:
