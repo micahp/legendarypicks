@@ -74,11 +74,15 @@ MANIFEST = {
                 # hit and a body check are different things sharing a word, and
                 # this table is one wide table across four leagues.
                 "required": ["games", "avg", "hr", "pa", "mlb_hits", "runs", "rbi"],
-                # Every batting row is a batter, so the counting stats are not
-                # position-specific the way `saves` is -- they should be on
-                # essentially all of them. 2026-08-05: they were on 47%,
-                # and check A read PASS because it only tested for non-zero.
-                "coverage": {"pa": 0.9, "mlb_hits": 0.9, "runs": 0.9, "rbi": 0.9},
+                # NO coverage floor declared, deliberately, and the reason is
+                # the finding. `pa` sits on 684 of 1451 batting rows (47%),
+                # which looks like a hole and is not: all 767 without it are
+                # `source='statcast'` marginal players (3-10 games) that MLB's
+                # season endpoint does not publish a line for at all. PA is on
+                # 100% of the population MLB actually publishes. A floor here
+                # would measure the wrong denominator and block releases over
+                # correct data -- the open question is which population these
+                # 767 rows belong in, not whether the stat is missing.
                 "qualifier": {"unit": "pa", "published": "3.1 PA x team games (502/162)"},
             },
             "pitching": {
