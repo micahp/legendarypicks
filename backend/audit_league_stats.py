@@ -117,19 +117,27 @@ MANIFEST = {
     },
     "nhl": {
         "stat_types": {
+            # Key must match the stored stat_type (season). The qualifier
+            # documents BOTH published rules: skater totals have no games
+            # floor (Art Ross = most points), goalie rate stats require the
+            # well-documented 1/3-of-schedule qualifier (0.3125 x 82 = 25.6 ->
+            # minimum 25 games played, published by Hockey-Reference
+            # rate_stat_req.html and visible on its goalie pages).
             "season": {
                 "required": ["games", "goals", "assists", "points_nhl", "shots",
                              "plus_minus", "toi",
-                             # Hockey has three player types, and the seven
-                             # columns above describe one of them. These four
-                             # were red on purpose until 2026-08-04, when the
+                             # These four describe the goalie report
+                             # (nhle.com publishes them separately). They were
+                             # red on purpose until 2026-08-04, when the
                              # columns were added and `ingest_nhl_season_stats`
-                             # filled them from nhle.com's goalie report --
-                             # which had been publishing all of it the whole
-                             # time.
+                             # filled them -- which had been publishing all of
+                             # it the whole time.
                              "saves", "shots_against", "save_pct", "gaa"],
                 "qualifier": {"unit": "games",
-                              "published": "NONE PUBLISHED that this project could verify -- 40+ GP is convention"},
+                              "published": "skaters: none (raw totals, Art Ross "
+                                           "is most points); goalies: 25 games "
+                                           "played (0.3125 x 82) per "
+                                           "Hockey-Reference rate_stat_req.html"},
             },
         },
         # The check that would have caught the goalie hole. A goalie whose log

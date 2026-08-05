@@ -264,14 +264,21 @@ class AuditTests(unittest.TestCase):
         self.assertEqual(audit.FAIL, by_check["E/qualifier[batting]"])
 
     def test_an_unverifiable_qualifier_is_unverified_not_passing(self):
-        """NHL publishes no minimum this project could confirm.
+        """A qualifier with no published source stays UNVERIFIED.
 
         Convention is not a rule, and a gate must not launder one into the
-        other by going green.
+        other by going green. NHL's rule WAS published though (re-asked
+        2026-08-05): goalie rate stats require 25 games played per
+        Hockey-Reference rate_stat_req.html; skater totals have no floor.
+        The unit column (games) exists, so E passes with the published
+        source named.
         """
         out = audit.audit(self.con, ["nhl"])
         by_check = {check: state for state, _, check, _ in out.rows}
-        self.assertEqual(audit.UNVERIFIED, by_check["E/qualifier[season]"])
+        self.assertEqual(audit.PASS, by_check["E/qualifier[season]"])
+        note = next(note for state, _, check, note in out.rows
+                    if check == "E/qualifier[season]")
+        self.assertIn("rate_stat_req.html", note)
 
     # ── the runner's own contract ────────────────────────────────────────────
     def test_a_league_with_no_manifest_is_reported_not_skipped(self):
