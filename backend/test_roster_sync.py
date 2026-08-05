@@ -416,6 +416,55 @@ class RosterSyncFreshnessTests(unittest.TestCase):
         }
         self.assertEqual(rows, {"ARI": "501", "ATL": "502"})
 
+    def test_middle_initial_homonyms_resolve_to_different_rows(self):
+        """Two Muncys where one DB row carries a bare middle initial.
+
+        'Max P. Muncy' and 'Max Muncy' land in DIFFERENT buckets under a
+        plain name normalize, so an ESPN entry spelled plain 'Max Muncy'
+        on the middle-initial player's team finds only the OTHER Muncy and
+        is silently assigned the wrong player_id. The bucket key must strip
+        the bare middle initial (the identity key does) so both rows are
+        candidates and the team-narrowing ladder separates them.
+        """
+        self.connection.executemany(
+            """INSERT INTO players(
+                 name,league,team,position,espn_id,active,updated_at
+               ) VALUES(?,?,?,?,?,?,?)""",
+            [
+                ("Max P. Muncy", "nfl", "ARI", "QB", None, 1, "old"),
+                ("Max Muncy", "nfl", "ATL", "WR", None, 1, "old"),
+            ],
+        )
+        self.connection.commit()
+
+        def roster(_league, team):
+            return {
+                "ARI": [{"player_id": "701", "name": "Max Muncy",
+                         "position": "QB"}],
+                "ATL": [{"player_id": "702", "name": "Max Muncy",
+                         "position": "WR"}],
+            }[team]
+
+        with patch.object(
+            roster_sync.espn, "team_strength",
+            side_effect=lambda _league: self.teams(),
+        ), patch.object(roster_sync.espn, "roster", side_effect=roster):
+            result = roster_sync.sync_league(self.connection, "nfl")
+
+        self.assertEqual(result["status"], "complete", result.get("failures"))
+        rows = {
+            r["team"]: (r["id"], r["name"], r["espn_id"])
+            for r in self.connection.execute(
+                "SELECT id, name, team, espn_id FROM players "
+                "WHERE name LIKE '%Muncy%'"
+            )
+        }
+        # The two ESPN entries resolved to DIFFERENT players -- each row kept
+        # its own team and took its own source id.
+        self.assertEqual(rows["ARI"], (rows["ARI"][0], "Max P. Muncy", "701"))
+        self.assertEqual(rows["ATL"], (rows["ATL"][0], "Max Muncy", "702"))
+        self.assertNotEqual(rows["ARI"][0], rows["ATL"][0])
+
     def test_a_trade_is_applied_rather_than_blocking_the_league(self):
         """A team mismatch on a unique name is a trade, and the roster is newer.
 

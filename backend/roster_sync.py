@@ -15,7 +15,7 @@ import datetime as dt
 import collections, sys, os, sqlite3
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import espn_client as espn
-from sports_service import _normalize_name
+from audit_league_stats import _identity_name_key
 from league_stats import queue_unresolved_player
 from roster_membership import (
     normalized_source_payload,
@@ -142,6 +142,11 @@ def sync_league(con: sqlite3.Connection, league: str) -> dict:
 
     # Plan every identity before mutating active flags. A single ambiguous
     # crosswalk leaves the previous verified roster intact.
+    # Bucket by the IDENTITY key, not a plain normalize: 'Max P. Muncy' and
+    # 'Max Muncy' must land in the SAME bucket so the team-narrowing ladder
+    # below can separate them. A plain normalize keeps the middle-initial
+    # spelling in its own bucket, the ESPN entry (plain 'Max Muncy') finds
+    # only one candidate, and the wrong player silently gets the match.
     name_to_rows = {}
     eid_to_ids = {}
     for r in con.execute(
@@ -150,7 +155,7 @@ def sync_league(con: sqlite3.Connection, league: str) -> dict:
     ):
         if r["name"]:
             name_to_rows.setdefault(
-                _normalize_name(r["name"]), []
+                _identity_name_key(r["name"]), []
             ).append(r)
         if r["espn_id"]:
             eid_to_ids.setdefault(str(r["espn_id"]), []).append(r["id"])
@@ -216,7 +221,7 @@ def sync_league(con: sqlite3.Connection, league: str) -> dict:
                 })
                 continue
 
-            candidates = name_to_rows.get(_normalize_name(name), [])
+            candidates = name_to_rows.get(_identity_name_key(name), [])
             if not candidates:
                 planned.append({
                     "action": "insert",
