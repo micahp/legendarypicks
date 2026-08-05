@@ -16,6 +16,13 @@ published strings straight in would put two vocabularies in one column, which
 is the exact failure `C/vocabulary` exists to catch. Both aliases already exist
 in the alias table.
 
+Position is written one level per column: `position` gets the specific spot
+(`primaryPosition.abbreviation`, and NULL when the abbreviation is the
+group-level `OF` -- MLB does not designate a spot for those players), and
+`position_group` gets the group (`primaryPosition.type`). `SP`/`RP` never
+appear here: that is ESPN's role vocabulary and lives in `pitcher_role`
+(written by roster_sync.py).
+
 Players MLB does not publish for the season keep whatever they had. A retired
 player has no current team, and a blank there is the honest answer, not a gap
 to fill.
@@ -46,6 +53,14 @@ DB = os.environ.get("LP_DB_PATH") or os.path.join(
 PEOPLE_URL = "https://statsapi.mlb.com/api/v1/sports/1/players?season={season}"
 TEAMS_URL = "https://statsapi.mlb.com/api/v1/teams?sportId=1"
 HDR = {"User-Agent": "legendarypicks/1.0"}
+
+# MLB's `abbreviation` is normally a specific spot, but it can carry one
+# group-level value: `OF` is published only when MLB has no designated
+# outfield spot for the player (today: Cristian Pache). One level per column
+# -- `OF` must not sit in `position` next to its own children LF/CF/RF;
+# `position_group='Outfielder'` carries it instead, and position is written
+# as NULL, which is the honest "MLB does not designate a spot" statement.
+_GROUP_LEVEL_ABBREVIATIONS = {"OF"}
 
 MIN_INTERVAL = float(os.environ.get("LP_MLB_MIN_INTERVAL", "0.5"))
 RETRY_WAITS = (5.0, 20.0, 60.0)
@@ -112,21 +127,28 @@ def refresh(db_path: str, *, season: int, dry_run: bool = False) -> dict:
         spine = {
             int(row["mlbam_id"]): row
             for row in connection.execute(
-                """SELECT id, mlbam_id, team, position FROM players
+                """SELECT id, mlbam_id, team, position, position_group
+                   FROM players
                    WHERE lower(league)='mlb' AND mlbam_id IS NOT NULL
                      AND mlbam_id!=0"""
             )
         }
         counts = {"published": len(people), "not_in_spine": 0,
                   "team_set": 0, "position_set": 0, "unchanged": 0,
-                  "no_current_team": 0}
+                  "no_current_team": 0, "position_group_set": 0}
         for person in people:
             row = spine.get(int(person.get("id") or 0))
             if row is None:
                 counts["not_in_spine"] += 1
                 continue
-            position = ((person.get("primaryPosition") or {})
-                        .get("abbreviation") or "").strip() or None
+            primary = person.get("primaryPosition") or {}
+            position = (primary.get("abbreviation") or "").strip() or None
+            position_group = (primary.get("type") or "").strip() or None
+            # A group-level abbreviation is not a designated spot: it must not
+            # sit in `position` (one level per column). position_group carries
+            # the group, so position becomes NULL for exactly those players.
+            if position in _GROUP_LEVEL_ABBREVIATIONS:
+                position = None
             published_team = (person.get("currentTeam") or {}).get("id")
             team = teams.get(int(published_team)) if published_team else None
             if team is None:
@@ -137,10 +159,14 @@ def refresh(db_path: str, *, season: int, dry_run: bool = False) -> dict:
                 changes.append("team=?")
                 params.append(team)
                 counts["team_set"] += 1
-            if position and position != row["position"]:
+            if position != row["position"]:
                 changes.append("position=?")
                 params.append(position)
                 counts["position_set"] += 1
+            if position_group != row["position_group"]:
+                changes.append("position_group=?")
+                params.append(position_group)
+                counts["position_group_set"] += 1
             if not changes:
                 counts["unchanged"] += 1
                 continue
