@@ -644,7 +644,11 @@ def _get_nba_stats(player_name: str, player_id: int, now: float):
             "player_name_nba": player_name,
             "team": row["team"],
             "games": row["games"],
-            "source": row["source"] or "hoopR",
+            # Never default a publisher. A row with no source has no known
+            # publisher, and naming one is a claim we cannot support -- the old
+            # default said "hoopR" for rows that may never have come from it,
+            # and as of 2026-08-05 there are no hoopR rows left at all.
+            "source": row["source"] or None,
             "stats": {
                 "pts": round(float(row["pts"]), 1),
                 "reb": round(float(row["reb"]), 1),

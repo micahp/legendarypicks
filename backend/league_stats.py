@@ -175,9 +175,14 @@ def source_owns_stats(
     if normalized_league == "nhl":
         return normalized_source == "nhle.com"
     if normalized_league == "nba":
-        if int(season) <= 2023:
-            return normalized_source == "hoopR"
-        # ESPN owns NBA after 2023, and publishes it from two endpoints.
+        # hoopR used to own <=2023. Those 525 rows were deleted 2026-08-05: its
+        # parquet mirror dead-ends at 2023, so they were a dead pipeline's
+        # residue sitting in the same season selector as ESPN's -- two
+        # publishers' definitions presented as one comparable series, with
+        # nothing on the page saying so. ESPN publishes 2025 and 2026 (2024 is
+        # refused by the 80% spine-reach floor, which is a coverage gap, not a
+        # publisher gap). One publisher owns this league now.
+        # ESPN owns NBA, and publishes it from two endpoints.
         # `espn_core` is sports.core.api, one request PER ATHLETE -- 643 of
         # them, which is what tripped ESPN's rate block and left this league
         # serving 2023 for years. `espn_web` is site.web.api's byathlete
@@ -219,11 +224,9 @@ def canonical_population_sql(
         # 2026-08-05 prod held 565 correct 2026 rows and the leaderboard served
         # 2023, because `available_seasons` is derived through this predicate.
         # Only `espn_core` fixtures in the tests kept it looking healthy.
-        clause += (
-            f" AND (({prefix}season<=2023 AND {prefix}source='hoopR') "
-            f"OR ({prefix}season>2023 "
-            f"AND {prefix}source='espn_web'))"
-        )
+        # The <=2023 hoopR branch was dropped with those rows on 2026-08-05 --
+        # see `source_owns_stats`. One publisher, every season.
+        clause += f" AND {prefix}source='espn_web'"
     return clause, params
 
 

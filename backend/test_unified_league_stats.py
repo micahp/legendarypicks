@@ -82,7 +82,8 @@ class UnifiedLeagueStatsTests(unittest.TestCase):
     def test_source_ownership_is_explicit(self):
         self.assertTrue(source_owns_stats("mlb", "batting", 2026, "statcast"))
         self.assertTrue(source_owns_stats("nhl", "season", 20252026, "nhle.com"))
-        self.assertTrue(source_owns_stats("nba", "season", 2023, "hoopR"))
+        # hoopR rows deleted 2026-08-05; ESPN owns every NBA season now.
+        self.assertFalse(source_owns_stats("nba", "season", 2023, "hoopR"))
         self.assertTrue(
             source_owns_stats("nba", "season", 2026, "espn_web")
         )

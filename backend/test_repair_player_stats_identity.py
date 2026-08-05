@@ -90,12 +90,12 @@ class RepairRuleTests(unittest.TestCase):
         """`nba/batting` is a retired rollup's output; the readers pin `season`."""
         insert(self.con, player_id=1, league="nba", season=2026,
                stat_type="batting", source="derived", player_name="Rollup Ghost")
-        insert(self.con, player_id=1, league="nba", season=2023,
-               stat_type="season", source="hoopR", player_name="Kept Guard")
+        insert(self.con, player_id=1, league="nba", season=2026,
+               stat_type="season", source="espn_web", player_name="Kept Guard")
         self.con.commit()
 
         self.assertEqual(self.run_repair(), 0)
-        self.assertEqual(self.rows(), [(1, "nba", 2023, "season", "hoopR", 10)])
+        self.assertEqual(self.rows(), [(1, "nba", 2026, "season", "espn_web", 10)])
 
     def test_a_source_that_does_not_own_the_season_goes(self):
         """`mlb_statsapi` competes with statcast, and the predicate pins statcast."""
