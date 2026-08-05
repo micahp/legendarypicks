@@ -38,6 +38,7 @@ import urllib.request
 from datetime import datetime, timezone
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from game_ids import guard_game_id_vocabulary
 from team_stats_contract import extract_espn_team_stats, STAT_FIELDS, EXPECTED_TEAMS
 from provenance import sources_for, format_provenance, publishers_for
 
@@ -205,9 +206,22 @@ def enumerate_games(sport: str, league: str, season: int, stype: int):
 
 
 def run_league(con: sqlite3.Connection, league: str, run_id: str,
-               delay: float) -> dict:
+               delay: float, replace_vocabulary: bool = False) -> dict:
     sport, esp_league, season, stype = LEAGUE_CFG[league]
     print(f"[{league}] enumerating games (season {season})...", flush=True)
+
+    # A game key is a vocabulary boundary with no boundary module, which is
+    # exactly why the check lives in game_ids.py and not in a comment. This
+    # script wipes the league's rows below, so the guard MUST run before the
+    # delete — otherwise a season keyed nflverse-style would be silently
+    # migrated to ESPN event ids as a side effect of a backfill.
+    if guard_game_id_vocabulary(con, league, season,
+                                replace_vocabulary=replace_vocabulary):
+        return {"league": league, "refused": True, "games": 0, "teams": 0,
+                "expected_teams": EXPECTED_TEAMS[league], "failures": 0,
+                "run_id": run_id, "season": season,
+                "season_start": None, "season_end": None}
+
     team_ids, games = enumerate_games(sport, esp_league, season, stype)
     print(f"[{league}] {len(games)} completed games, {len(team_ids)} teams",
           flush=True)
@@ -363,6 +377,9 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--leagues", default="nba,nhl,nfl")
     ap.add_argument("--delay", type=float, default=0.12)
+    ap.add_argument("--replace-vocabulary", action="store_true",
+                    help="Drop this league's foreign-keyed rows first. Destructive, "
+                         "and the only way to migrate a season off nflverse game ids.")
     args = ap.parse_args()
 
     ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
@@ -381,11 +398,15 @@ def main() -> None:
         if lg not in LEAGUE_CFG:
             print(f"skip unknown league {lg}")
             continue
-        results.append(run_league(con, lg, f"{lg}-parity-{ts}", args.delay))
+        results.append(run_league(con, lg, f"{lg}-parity-{ts}", args.delay,
+                                  args.replace_vocabulary))
 
     print("\n=== SUMMARY ===")
     for r in results:
         print(r)
+
+    if any(r.get("refused") for r in results):
+        raise SystemExit(1)
 
     # Provenance, printed at the one moment someone is definitely looking: the
     # end of the ingest that just wrote. The NHL season-key split survived

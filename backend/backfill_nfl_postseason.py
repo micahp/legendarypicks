@@ -65,6 +65,7 @@ import urllib.request
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from game_types import normalize_game_type  # noqa: E402
+from game_ids import guard_game_id_vocabulary  # noqa: E402
 from season_keys import normalize_season  # noqa: E402
 
 DB = os.environ.get("LP_DB_PATH", "picks.db")
@@ -131,28 +132,15 @@ def backfill(season: int, dry_run: bool = False, season_type: int = 3,
     con = sqlite3.connect(DB)
 
     # A game key is a vocabulary boundary with no boundary module, which is
-    # exactly why this check is here and not in a comment. `season_keys` and
-    # `team_codes` exist because a wrong key does not raise — it misses. A wrong
-    # GAME key does something worse: it inserts, and the season silently
-    # doubles. Compare before writing, not after.
-    existing = [r[0] for r in con.execute(
-        "SELECT DISTINCT game_id FROM team_game_results WHERE league='nfl' AND season=?",
-        (season,))]
-    foreign = [g for g in existing if "_" in str(g)]
-    if foreign and not replace_vocabulary:
+    # exactly why this check lives in game_ids.py and not in a comment.
+    # `season_keys` and `team_codes` exist because a wrong key does not raise —
+    # it misses. A wrong GAME key does something worse: it inserts, and the
+    # season silently doubles. Compare before writing, not after.
+    if guard_game_id_vocabulary(con, "nfl", season,
+                                replace_vocabulary=replace_vocabulary,
+                                dry_run=dry_run):
         con.close()
-        print(f"  REFUSING to write: nfl {season} already holds {len(foreign)} games "
-              f"keyed in another vocabulary (e.g. {foreign[0]!r}), and ESPN event ids "
-              f"would land beside them, not over them.")
-        print("  Migrate the season deliberately with --replace-vocabulary, or leave it.")
         return 1
-    if foreign and replace_vocabulary and not dry_run:
-        gone = con.execute(
-            "DELETE FROM team_game_results WHERE league='nfl' AND season=?"
-            " AND game_id LIKE '%!_%' ESCAPE '!'", (season,)).rowcount
-        con.commit()
-        print(f"  --replace-vocabulary: dropped {gone} rows over {len(foreign)} "
-              f"foreign-keyed games before writing")
 
     run_id = f"nfl-{want_phase.lower()}-{season}-{int(time.time())}"
     wrote, games, excluded, incomplete = 0, 0, [], 0

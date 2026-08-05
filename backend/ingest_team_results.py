@@ -39,6 +39,7 @@ team's schedule an event arrives on stops being able to change what is stored.
 import sys, os, json, sqlite3, argparse, time
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from espn_client import LEAGUES, _get
+from game_ids import guard_game_id_vocabulary
 from season_keys import normalize_season
 from game_types import normalize_game_type, REG, POST
 
@@ -74,7 +75,7 @@ def ensure_table(con):
             con.execute(f"ALTER TABLE team_game_results ADD COLUMN {column} {decl}")
 
 
-def ingest(league: str = "mlb") -> int:
+def ingest(league: str = "mlb", replace_vocabulary: bool = False) -> int:
     path = LEAGUES[league][0]
     teams_doc = _get(f"https://site.api.espn.com/apis/site/v2/sports/{path}/teams", ttl=3600)
     abbrevs = [t["team"]["abbreviation"].lower()
@@ -82,7 +83,7 @@ def ingest(league: str = "mlb") -> int:
     con = sqlite3.connect(DB)
     ensure_table(con)
     run_id = f"{league}-team-results-{int(time.time())}"
-    wrote, skipped_phase, seen = 0, 0, set()
+    wrote, skipped_phase, seen, guarded = 0, 0, set(), set()
     for ab in abbrevs:
         try:
             sched = _get(f"https://site.api.espn.com/apis/site/v2/sports/{path}/teams/{ab}/schedule", ttl=600)
@@ -134,6 +135,17 @@ def ingest(league: str = "mlb") -> int:
                 ))
             if not rows:
                 continue
+            key = (league, season)
+            if key not in guarded:
+                guarded.add(key)
+                # A game id is a vocabulary boundary. Checked once per
+                # (league, season) before the first write to it, via the shared
+                # guard in game_ids.py — not inlined here, or this file becomes
+                # the second place the doubling bug hides.
+                if guard_game_id_vocabulary(con, league, season,
+                                            replace_vocabulary=replace_vocabulary):
+                    con.close()
+                    return -1
             con.executemany("""INSERT OR REPLACE INTO team_game_results
                 (league, game_id, team, game_date, opponent, home_away, score_for,
                  score_against, win, season, status, source, run_id)
@@ -166,5 +178,8 @@ def ingest(league: str = "mlb") -> int:
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--league", default="mlb")
+    ap.add_argument("--replace-vocabulary", action="store_true",
+                    help="Drop this season's foreign-keyed rows first. Destructive, "
+                         "and the only way to migrate a season off nflverse game ids.")
     args = ap.parse_args()
-    ingest(args.league)
+    ingest(args.league, args.replace_vocabulary)
