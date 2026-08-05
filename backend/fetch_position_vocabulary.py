@@ -94,6 +94,16 @@ def ancestry(positions: dict) -> dict:
     return out
 
 
+# ESPN's hierarchy has no `TWP`, but MLB publishes it as a primaryPosition
+# abbreviation (Two-Way Player -- Ohtani) on the same people records
+# `ingest_mlb_spine_identity.py` reads. The vocabulary must know it or a
+# correct fill trips C/vocabulary as "not in the vocabulary ESPN publishes".
+# Supplemented for MLB only; no other league publishes a code ESPN lacks.
+_MLB_SUPPLEMENT = {
+    "TWP": {"id": None, "name": "Two-Way Player", "leaf": True, "parent_id": None},
+}
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", default=os.path.join(
@@ -125,7 +135,9 @@ def main() -> int:
         artifact["_provenance"] = {
             "source": _INDEX,
             "fetched_at": dt.datetime.now(dt.timezone.utc).isoformat(),
-            "note": "abbreviation/leaf/parent as published by ESPN; not hand-authored",
+            "note": "abbreviation/leaf/parent as published by ESPN; not hand-authored. "
+                    "MLB carries one supplement: TWP (MLB-only abbreviation) -- "
+                    "see _MLB_SUPPLEMENT in fetch_position_vocabulary.py.",
             "leagues": sorted(artifact["leagues"]),
         }
         os.makedirs(os.path.dirname(args.out), exist_ok=True)
@@ -142,6 +154,8 @@ def main() -> int:
             print(f"{league}: NOT FETCHED -- {exc}")
             missing.append(league)
             continue
+        if league == "mlb":
+            positions.update(_MLB_SUPPLEMENT)
         artifact["leagues"][league] = {
             "positions": positions,
             "ancestry": ancestry(positions),

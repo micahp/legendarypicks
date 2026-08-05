@@ -172,6 +172,38 @@ class AuditTests(unittest.TestCase):
         states = self.states("nhl", "C/vocabulary[position]")
         self.assertEqual(audit.FAIL, states["C/vocabulary[position]"])
 
+    # ── the parent/child exception (MLB's position_group) ──────────────────
+    def test_mlb_parent_child_coexists_when_group_column_declared(self):
+        """MLB publishes OF (Pache) beside LF/CF/RF. position_group carries the
+        parent, so C accepts the coexistence instead of calling it a clash."""
+        self.con.execute("ALTER TABLE players ADD COLUMN position_group TEXT")
+        for pid, pos in ((1, "OF"), (2, "LF"), (3, "CF"), (4, "RF")):
+            self.player(pid, pos, team="NYM", league="mlb")
+        self.con.execute("UPDATE players SET position_group='Outfielder'")
+        self.con.commit()
+
+        states = self.states("mlb", "C/vocabulary[position]")
+        self.assertEqual(audit.PASS, states["C/vocabulary[position]"])
+
+    def test_mlb_parent_child_still_fails_without_a_group_column(self):
+        """No group column -> the old defect stands: OF beside LF must fail."""
+        for pid, pos in ((1, "OF"), (2, "LF")):
+            self.player(pid, pos, team="NYM", league="mlb")
+        self.con.commit()
+
+        states = self.states("mlb", "C/vocabulary[position]")
+        self.assertEqual(audit.FAIL, states["C/vocabulary[position]"])
+
+    def test_mlb_parent_child_fails_when_group_column_is_empty(self):
+        """A declared column that carries nothing must not vouch for the split."""
+        self.con.execute("ALTER TABLE players ADD COLUMN position_group TEXT")
+        for pid, pos in ((1, "OF"), (2, "LF")):
+            self.player(pid, pos, team="NYM", league="mlb")
+        self.con.commit()
+
+        states = self.states("mlb", "C/vocabulary[position]")
+        self.assertEqual(audit.FAIL, states["C/vocabulary[position]"])
+
     # ── D: a leader you can actually click into ──────────────────────────────
     def test_leaders_without_game_logs_fail(self):
         """The NBA condition: a leaderboard of dead ends."""

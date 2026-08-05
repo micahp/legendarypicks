@@ -15,9 +15,9 @@ class SpinePositionVocabularyTests(unittest.TestCase):
     """`players.position`/`position_group` get MLB's own two levels.
 
     MLB publishes both the specific spot (abbreviation) and the group (type)
-    for every player. The group-level abbreviation `OF` is the trap: it means
-    "outfielder, no designated spot" and must not sit in `position` next to
-    its own children LF/CF/RF -- position_group carries it instead.
+    for every player. The group-level abbreviation `OF` is published fact for
+    players with no designated spot: `position` keeps it verbatim, and
+    `position_group` carries the parent so the levels stay distinguishable.
     """
 
     def setUp(self):
@@ -76,11 +76,12 @@ class SpinePositionVocabularyTests(unittest.TestCase):
         connection.close()
         return row
 
-    def test_group_level_of_abbreviation_yields_null_position_and_group(self):
-        """`abbreviation='OF'` -> position IS NULL, position_group Outfielder.
+    def test_group_level_of_abbreviation_keeps_position_and_group(self):
+        """`abbreviation='OF'` -> position='OF', position_group Outfielder.
 
-        MLB publishes no designated spot for this player; a NULL position is
-        the honest statement, and the group level carries the meaning.
+        MLB publishes OF for players it gives no designated spot (Pache); that
+        is a fact about the player, not a gap -- position keeps the published
+        value and the parent lives in position_group.
         """
         self._insert_player(1, "Cristian Pache", 665506, "OF")
         self.people = [{
@@ -90,7 +91,7 @@ class SpinePositionVocabularyTests(unittest.TestCase):
         }]
         self._run_refresh()
         row = self._row(665506)
-        self.assertIsNone(row["position"])
+        self.assertEqual(row["position"], "OF")
         self.assertEqual(row["position_group"], "Outfielder")
 
     def test_specific_spot_abbreviation_keeps_position_and_group(self):
@@ -119,8 +120,8 @@ class SpinePositionVocabularyTests(unittest.TestCase):
         self.assertEqual(row["position"], "P")
         self.assertEqual(row["position_group"], "Pitcher")
 
-    def test_stale_of_position_is_cleared_to_null(self):
-        """A row that previously carried 'OF' must end up NULL, not keep it."""
+    def test_stale_of_position_is_filled_not_nulled(self):
+        """A row that previously carried 'OF' keeps it -- the value is published."""
         self._insert_player(4, "Cristian Pache", 665506, "OF")
         self._insert_player(5, "A Center Fielder", 999001, "CF")
         self.people = [
@@ -138,7 +139,7 @@ class SpinePositionVocabularyTests(unittest.TestCase):
         self._run_refresh()
         pache = self._row(665506)
         cf = self._row(999001)
-        self.assertIsNone(pache["position"])
+        self.assertEqual(pache["position"], "OF")
         self.assertEqual(pache["position_group"], "Outfielder")
         self.assertEqual(cf["position"], "CF")
         self.assertEqual(cf["position_group"], "Outfielder")

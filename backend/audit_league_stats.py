@@ -232,6 +232,27 @@ def _observed_positions(con, league, active_only=False):
     }
 
 
+def _declares_group_column(con, league, spec):
+    """True when the league declares a populated group column for `position`.
+
+    MLB's `position_group` carries the parent type (Outfielder/Infielder/...)
+    beside the abbreviation in `position`, so a published parent value (OF)
+    coexisting with its children (LF/CF/RF) is addressable -- anyone wanting
+    the group filters position_group -- rather than a vocabulary clash. It
+    must be BOTH in the league's spec AND actually carrying values: an empty
+    column would hide the very split the overlap check exists to catch.
+    """
+    column = "position_group"
+    if column not in (spec.get("single_vocabulary") or []):
+        return False
+    if column not in _columns(con, "players"):
+        return False
+    filled = con.execute(
+        f"SELECT COUNT(*) FROM players WHERE league=? AND {column} IS NOT NULL "
+        f"AND TRIM({column}) != ''", (league,)).fetchone()[0]
+    return filled > 0
+
+
 def _position_vocabulary(league):
     """{positions, ancestry, source} as published, or None if never fetched.
 
@@ -398,6 +419,12 @@ def check_single_vocabulary(con, league, spec, out):
             # descendants are both in use -- `G` alongside `PG` -- because those
             # rows describe the same player population at two levels and never
             # join. Two codes of different lengths are not evidence of anything.
+            #
+            # One exception, learned the hard way: a league that declares a
+            # populated group column (MLB's `position_group`) can legitimately
+            # hold a published parent (OF) beside its children (LF/CF/RF) -- the
+            # levels ARE distinguished, by that column. Without it, the old
+            # defect stands and still fails.
             # Scoped to active players for the same reason the blank check below
             # is: a position is a CURRENT roster spot, and a retired player
             # carrying a dead code is league history, not a defect. Inactive-only
@@ -419,7 +446,7 @@ def check_single_vocabulary(con, league, spec, out):
                 # Named in every message so a clean active roster can never be
                 # mistaken for "no dead codes anywhere in the table".
                 trailer = f"; inactive rows also hold {stale}" if stale else ""
-                if overlaps:
+                if overlaps and not _declares_group_column(con, league, spec):
                     out.add(FAIL, league, f"C/vocabulary[{column}]",
                             "two levels of one vocabulary in the same column: %s "
                             "-- each pair is a position and its own parent, which "
@@ -427,6 +454,16 @@ def check_single_vocabulary(con, league, spec, out):
                             % (", ".join(f"{c} under {p}" for c, p in overlaps),
                                trailer))
                     continue
+                if overlaps:
+                    # The league declares a populated group column, so the
+                    # parent/child split is addressable: position_group carries
+                    # the parent. A published parent beside its children is
+                    # then a fact, not a defect -- and the failure the gate
+                    # exists to catch is the league with NO way to ask the
+                    # group question.
+                    vocabulary_note = ("; parent/child levels coexist -- the "
+                                       "group column carries the parent"
+                                       + trailer)
                 if unknown:
                     out.add(FAIL, league, f"C/vocabulary[{column}]",
                             "not in the vocabulary %s publishes: %s%s"

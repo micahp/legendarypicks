@@ -16,12 +16,13 @@ published strings straight in would put two vocabularies in one column, which
 is the exact failure `C/vocabulary` exists to catch. Both aliases already exist
 in the alias table.
 
-Position is written one level per column: `position` gets the specific spot
-(`primaryPosition.abbreviation`, and NULL when the abbreviation is the
-group-level `OF` -- MLB does not designate a spot for those players), and
-`position_group` gets the group (`primaryPosition.type`). `SP`/`RP` never
-appear here: that is ESPN's role vocabulary and lives in `pitcher_role`
-(written by roster_sync.py).
+Position is written one level per column, but both are the publisher's own:
+`position` gets `primaryPosition.abbreviation` **verbatim** -- `OF` included,
+because MLB publishes it for players it does not give a designated spot (that
+is a fact about the player, not a gap; the group lives in `position_group` so
+anyone wanting all outfielders filters there) -- and `position_group` gets
+`primaryPosition.type`. `SP`/`RP` never appear here: that is ESPN's role
+vocabulary and lives in `pitcher_role` (written by roster_sync.py).
 
 Players MLB does not publish for the season keep whatever they had. A retired
 player has no current team, and a blank there is the honest answer, not a gap
@@ -58,13 +59,9 @@ PEOPLE_URL = "https://statsapi.mlb.com/api/v1/sports/1/players?season={season}"
 TEAMS_URL = "https://statsapi.mlb.com/api/v1/teams?sportId=1"
 HDR = {"User-Agent": "legendarypicks/1.0"}
 
-# MLB's `abbreviation` is normally a specific spot, but it can carry one
-# group-level value: `OF` is published only when MLB has no designated
-# outfield spot for the player (today: Cristian Pache). One level per column
-# -- `OF` must not sit in `position` next to its own children LF/CF/RF;
-# `position_group='Outfielder'` carries it instead, and position is written
-# as NULL, which is the honest "MLB does not designate a spot" statement.
-_GROUP_LEVEL_ABBREVIATIONS = {"OF"}
+# `SP`/`RP` are ESPN's role vocabulary, never MLB's; the fill writes only MLB's
+# `primaryPosition.abbreviation` (P C 1B 2B 3B SS LF CF RF DH TWP OF) and its
+# parent type, so the two vocabularies stay in their own columns.
 
 MIN_INTERVAL = float(os.environ.get("LP_MLB_MIN_INTERVAL", "0.5"))
 RETRY_WAITS = (5.0, 20.0, 60.0)
@@ -208,11 +205,11 @@ def refresh(db_path: str, *, season: int, dry_run: bool = False) -> dict:
             primary = person.get("primaryPosition") or {}
             position = (primary.get("abbreviation") or "").strip() or None
             position_group = (primary.get("type") or "").strip() or None
-            # A group-level abbreviation is not a designated spot: it must not
-            # sit in `position` (one level per column). position_group carries
-            # the group, so position becomes NULL for exactly those players.
-            if position in _GROUP_LEVEL_ABBREVIATIONS:
-                position = None
+            # position is the published abbreviation verbatim -- `OF` included.
+            # The parent/child coexistence this creates (OF beside LF/CF/RF) is
+            # legitimate because `position_group` carries the parent, and check
+            # C/vocabulary knows that. NULLing it here made the data bend to a
+            # gate, which is backwards.
             published_team = (person.get("currentTeam") or {}).get("id")
             team = teams.get(int(published_team)) if published_team else None
             if team is None:

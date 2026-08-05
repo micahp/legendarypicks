@@ -1,13 +1,13 @@
 {
  "_provenance": {
-  "fetched_at": "2026-08-04T20:34:47.121637+00:00",
+  "fetched_at": "2026-08-05T04:47:40.065934+00:00",
   "leagues": [
    "mlb",
    "nba",
    "nfl",
    "nhl"
   ],
-  "note": "abbreviation/leaf/parent as published by ESPN; not hand-authored",
+  "note": "abbreviation/leaf/parent as published by ESPN; not hand-authored. MLB carries one supplement: TWP (MLB-only abbreviation) -- see _MLB_SUPPLEMENT in fetch_position_vocabulary.py.",
   "source": "https://sports.core.api.espn.com/v2/sports/{sport}/leagues/{league}/positions?limit=200"
  },
  "leagues": {
@@ -72,6 +72,7 @@
      "IF",
      "BA"
     ],
+    "TWP": [],
     "UN": [],
     "UT": []
    },
@@ -201,6 +202,12 @@
      "leaf": true,
      "name": "Shortstop",
      "parent_id": "13"
+    },
+    "TWP": {
+     "id": null,
+     "leaf": true,
+     "name": "Two-Way Player",
+     "parent_id": null
     },
     "UN": {
      "id": "99",
