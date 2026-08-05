@@ -444,6 +444,58 @@ Ordered. Steps 1–3 are cheap and kill most surprises; do them before writing a
 8. **Screenshot two players**: one with a genuine missed game, one in a season we have not
    fully ingested. **If those two look the same, the work is not done.**
 
+### 7b. The five defect shapes — run this per league (added 2026-08-05)
+
+Steps 1–8 answer *"are the rows there?"*. This answers *"is what's on them true?"*, which
+is a different question and was never asked until 2026-08-04. Asking it that night turned
+up roughly ten defects across two leagues — and every single one was an instance of one of
+**five shapes**. There is no sixth yet. Treat this as a checklist, not a reading: run each
+one, write the number down, and a league is not `complete` until all five have an answer.
+
+They matter because **not one of them raises.** Each produces rows of the right shape and
+magnitude, in the right column, that nobody spots by looking.
+
+| # | shape | what it looks like | how to measure it |
+|---|---|---|---|
+| 1 | **An id names the wrong person** | every row has an id; some point at someone else | `audit_league_stats.py` check **`G/published-identity`** |
+| 2 | **Two publishers' vocabularies in one column** | `WHERE position='P'` returns only retired players | check **`C/vocabulary[...]`** |
+| 3 | **Two rows for one person** | stats on one row, game logs on the other | check **`F/identity-crosswalk`** |
+| 4 | **A display copy diverged from its source** | a denormalised name/team drifts from the spine | join the copy back to `players` and count `<>` |
+| 5 | **A value is in the logs but not the season table** | "we have no touchdown data" — we do | `published-first` §2b: surfacing vs acquisition gap |
+
+Measured instances, so the sizes are not hypothetical:
+
+1. **223 MLB rows** carried another player's `mlbam_id` — `id=26551 'Eiberson Castellano'`
+   against `mlbam_id=703607`, which MLB publishes as Henry Bolte. Cause: Statcast's
+   `player_name` is the **pitcher's** name on every pitch row, and the pre-`b03b9c9` batter
+   fallback took it while `player_id` came correctly from `batter_id`. NFL (4/24344) and
+   NHL (11/840) show only nickname and legal-name variants — `Kenny`/`Kenneth Gainwell` —
+   which are the same human. **A red G is not automatically corruption; read the pairs.**
+2. **MLB `position`** held ESPN's `SP`/`RP` on active rows and MLB's `P` on the rest, so
+   neither query could ever return both. **NFL has the same defect today** (`FB` under `RB`).
+   Fix is one level from one publisher per column — see `DATA-SPINE.md`.
+3. **MLB 317 duplicate `mlbam_id` groups; NBA 269 athletes** split across two rows via
+   `nba_id`/`espn_id`, their stats and their game logs on different people.
+4. **242 MLB `player_stats` rows** disagreed with `players.name` after the dedupe repointed
+   them but kept the duplicate's spelling. The leaders endpoint's raw-string guard **503'd in
+   production**. Neither table was the authority — the spine held `Heriberto Hernandez`, the
+   stats row held the published `Heriberto Hernández`. Write both from the publisher.
+5. NFL `rush_td`/`rec_td` read "no such column" while already sitting in
+   `player_game_logs`; MLB `pa`/`hits`/`rbi` likewise.
+
+**Order matters, and it is not the order above.** Shape 1 before shape 3, always: a dedupe
+"merges rows that share an id (= provably the same person)", and if shape 1 is unfixed that
+sentence is false. On 2026-08-04, 124 of 317 MLB groups were two *different* people, and the
+merge would have repointed 408,610 prop rows and 26,491 game logs onto the wrong players
+before deleting the originals. A `player_stats` UNIQUE constraint stopped it by luck.
+
+**Diagnosis generalises; repair does not.** The seven audit checks run for every league off a
+per-league declaration — that is why shape 1 was answered for four leagues the day the check
+was written. The *fixes* are all league-specific (`repair_mlb_identity_names.py`,
+`dedupe_mlb.py`, `dedupe_nfl.py`). So audit every league; repair only the ones the product
+needs. As of 2026-08-05 **`atp`, `ufc`, `wc`, `wnba` and `wta` have no MANIFEST entry at all
+— they are unmeasured, not passing.**
+
 ### Known shape notes for the next three
 
 - **NCAAF** — scope to FBS (`groups/80`, 146 teams). 911 regular-season events, uneven
