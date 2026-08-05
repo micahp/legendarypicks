@@ -155,6 +155,28 @@ Every rule below comes from a real mistake on 2026-06-15.
     Kurtz while coverage *looked* fine. See **`docs/IDENTITY-SPINE-STATE.md`** (as-built spine, the rule,
     per-league dup status) + `docs/SPEC-player-identity-spine.md` (design). Cleanup: `dedupe_mlb.py` /
     `dedupe_nfl.py` — merge by shared source-id only, never by name.
+  - **"Join on the id" assumes the id names the right person. ASSERT it.** (2026-08-04)
+    An id-keyed join is only as trustworthy as the pairing on the row, and nothing here had ever
+    checked that `players.name` and `players.mlbam_id` describe the same human. **223 rows did not.**
+    `id=26551` read `Eiberson Castellano` against `mlbam_id=703607`, which MLB publishes as Henry
+    Bolte. A wrong id does not raise — it mis-joins, silently, and it turns every id-keyed *repair*
+    into a corruption: `dedupe_mlb.py` calls a shared `mlbam_id` "provably the same person", and 124
+    of 317 duplicate groups were two different people. A merge would have repointed 408,610 prop
+    rows and 26,491 game logs onto the wrong players before deleting the originals; a `player_stats`
+    UNIQUE constraint aborted it by luck, not by design.
+    The gate is `audit_league_stats.py` check **`G/published-identity`** — every external id must
+    carry the name its own publisher gives it, against the committed snapshot in
+    `backend/data/published-identity-names.json` (refresh with `fetch_identity_names.py`). A league
+    with no snapshot reports **UNVERIFIED, never PASS.** Repair id-first with
+    `repair_mlb_identity_names.py` — take the published name for the id. **Never repair by name
+    match; name matching is what caused this.**
+  - **A publisher's column may describe a different entity than the row you are writing.** The root
+    cause was exactly that: Statcast's `player_name` is the **pitcher's** name on every pitch row.
+    The old batter fallback took `player_name.iloc[0]` — whoever threw the first pitch of that
+    batter's group — while `player_id` came correctly from `batter_id`. Right id, stranger's name,
+    no error. Read the publisher's field semantics before you map a column; a plausible name in a
+    plausible column is not evidence that it belongs to your row. Full trace in
+    `docs/DATA-SPINE.md`.
 - **Don't live-scrape hostile endpoints.** `stats.nba.com` blocks **datacenter IPs** (not geo — this
   box is already US). A new/US VPS or free proxy won't help (all datacenter IPs); only paid residential
   proxies bypass it. Use **ESPN** + **published data releases** (`nfl_data_py`/nflverse,

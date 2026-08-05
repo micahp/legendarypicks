@@ -144,3 +144,81 @@ unreachable, ask every publisher the league already has.
 
 An `espn_id` crosswalk for MLB is still worth having, but it is no longer what
 stands between this league and a team or a position.
+
+---
+
+## ADDENDUM — 2026-08-04 (evening): the spine held ids that named the wrong person
+
+§5 says a row's existence does not tell you who observed the person. This is the
+sharper version, and it cost more:
+
+> **An id on a row is a claim that the row is that person. It had never been
+> checked.** On 223 prod rows and 167 dev rows it was false.
+
+```
+id=26551  name='Eiberson Castellano'  mlbam_id=703607   MLB publishes 703607 = Henry Bolte
+id=26571  name='Mason Miller'         mlbam_id=702616   MLB publishes 702616 = Jackson Holliday
+id=26588  name='Walker Buehler'       mlbam_id=669236   MLB publishes 669236 = Jeremiah Jackson
+```
+
+Everything in §1 keys on these ids. A wrong one does not raise — it mis-joins,
+silently, and it converts every id-keyed *repair* into a corruption.
+`dedupe_mlb.py` documents a shared `mlbam_id` as "provably the same person";
+**124 of 317 duplicate groups were two different people.** A merge would have
+repointed 408,610 prop rows and 26,491 game logs onto the wrong players and then
+deleted the originals. What stopped it was a `player_stats` UNIQUE constraint
+firing on 188 collisions — luck, not design.
+
+### Root cause: Statcast's `player_name` is the PITCHER
+
+`backend/ingest_statcast.py`, before commit `b03b9c9` (2026-06-15 18:49):
+
+```python
+name = pitcher_id_to_name.get(batter_id)
+if not name:
+    name = group["player_name"].dropna()
+    name = name.iloc[0] if len(name) > 0 else None   # <- the first PITCHER faced
+```
+
+`player_name` is the pitcher's name on every pitch row. A two-way player hits the
+first lookup; a pure batter falls through and inherits the name of whoever threw
+their first pitch. `player_id` still came from `batter_id`, which is correct — so
+the row keeps the right id and acquires a stranger's name, with no error anywhere.
+
+The fingerprint, measured rather than argued:
+
+* 208 of 216 bad rows changed **name only** between the 06-15 and 06-24 backups.
+  `mlbam_id` moved on **0** rows — the ids were never the corruption.
+* **201 of 203** resolvable wrong names belong to a **pitcher**; **203 of 203**
+  true owners of the id are position players (C 36, LF 29, RF 27, CF 24, 2B 24,
+  3B 22, SS 18, 1B 14, DH 8, OF 1). Zero pitchers among the owners.
+* Not a positional shift: over the 2,271 placeholder rows in id order, offset 0
+  scores 1072 correct and every offset from −5 to +5 scores **0**.
+
+`b03b9c9` fixed the forward path — batters resolve from `batter_id` against the
+spine, no name guessing — but never repaired what was already written. The pass
+that copied these names from `player_stats` onto `players.name` is **not in git**;
+it was an ad-hoc command. That is precisely when a gate beats a root cause.
+
+### The gate and the repair
+
+* **Gate:** `audit_league_stats.py` check **`G/published-identity`**. Every
+  external id must carry the name its own publisher gives it, against the
+  committed snapshot `backend/data/published-identity-names.json` (refresh with
+  `fetch_identity_names.py`). A league with no snapshot reports **UNVERIFIED,
+  never PASS** — a guess wearing a green badge is worse than a red one.
+* **Repair:** `backend/repair_mlb_identity_names.py`, **id-first**. It takes the
+  published name for each `mlbam_id` and writes nothing else. **Never repair by
+  name match — name matching is what caused this.**
+* **Result (v0.7.5):** 223 prod / 167 dev names changed, **0** `mlbam_id` writes,
+  every row count in `players`, `player_game_logs`, `props`, `player_stats` and
+  `predictions` identical before and after. Gate G green on both databases.
+  Duplicate `mlbam_id` groups that are two different people: **124 → 0.**
+
+### What this adds to the rule
+
+> A publisher's column may describe a **different entity** than the row you are
+> writing. A plausible name in a plausible column is not evidence that it belongs
+> to your row. Read the field semantics at ingest — and assert the pairing, because
+> an id that joins cleanly to the wrong person is indistinguishable from a correct
+> one until something measures it against the publisher.
