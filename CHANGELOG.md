@@ -1,5 +1,25 @@
 # Changelog
 
+## v0.7.9 — 2026-08-05
+
+### Position vocabulary: the release gate is fully green
+
+- **NFL/NBA `position_group`** (`836083e`). The last two release-blocking FAILs
+  were `C/vocabulary[position]` — "two levels of one vocabulary in the same
+  column: FB under RB" (NFL) and "PF under F" (NBA). Same shape MLB solved with
+  `position_group`; this extends it. `migrate_league_position_groups.py` fills
+  the column from the committed publisher vocabulary (the top-level ancestor's
+  name: WR→Offense, CB→Defense, PK→Special Teams, PF→Forward, SG→Guard,
+  C→Center). Additive, idempotent, VACUUM INTO backup first. Applied to both
+  DBs: dev 27,274 rows, prod 27,652 rows, quick_check ok.
+- **Gate scope** (`836083e`): NFL/NBA specs declare `position_group`; the
+  fantasy-construct blank exemption extends to it (a D/ST has no position and
+  no group, and entity_type keeps the populations distinct).
+- **Ledger** (`836083e`): the migration is recorded in the both-DB runner.
+
+**Audit vs prod: 0 FAIL, 40 passed, 3 UNVERIFIED (non-blocking).** The
+release preflight now passes end-to-end.
+
 ## v0.7.8 — 2026-08-05
 
 ### Migration ledger: one invocation, both databases
