@@ -1,5 +1,66 @@
 # Changelog
 
+## v0.7.7 — 2026-08-05
+
+### The v0.7.6 known regression is fixed — MLB leaders serves again
+
+- **`repair_mlb_identity_names.py --exact`** (`7b571c3`). The prod dedupe repointed
+  duplicate `player_stats` rows to their canonical `player_id` while keeping the
+  duplicate's spelling, so 242 rows disagreed byte-for-byte with `players.name` and
+  the leaders endpoint's raw-string guard **503'd in production**. Neither table was
+  the authority — the spine held `Heriberto Hernandez`, the stats row held the
+  published `Heriberto Hernández` — so `--exact` writes **both from the publisher**
+  rather than copying one into the other. 310 renames + 65 display-copy re-syncs,
+  remaining disagreements **0**, gate G still PASS. `/api/mlb/leaders` back to 200.
+
+### `position` keeps what the publisher published
+
+- **The `OF` → NULL rule from v0.7.6 was wrong and is reverted** (`5844413`). ESPN and
+  MLB *both* publish `OF` for Cristian Pache; that is a fact about him, not a gap. The
+  data had been bent to satisfy `C/vocabulary[position]`, which is backwards — **a gate
+  is a check, not a spec.** `position` now holds the published abbreviation verbatim,
+  `position_group` carries the parent, and **check C learned the parent/child model**:
+  a published parent beside its children is legitimate when the league declares a group
+  column, and still a defect when it does not.
+
+### Identity maps for all four leagues, each from the id's own issuer
+
+- `fetch_identity_names.py` fetches NFL (nflverse `players.parquet`, `gsis_id`), NHL
+  (`api.nhle.com` skater **and** goalie summaries — separate reports, separate name
+  keys), NBA (hoopR, newest published season) alongside MLB (`3267fb5`). A league whose
+  fetch fails is omitted with the reason recorded in `_provenance.errors`, so it reports
+  UNVERIFIED rather than silently shrinking the map.
+- **Measured, and this is the point of the exercise:** MLB PASS (1346), NBA PASS (541),
+  NFL 4 of 24344, NHL 11 of 840. **All 15 are the same human under a different published
+  name form** — `Kenny`/`Kenneth Gainwell`, `Josh`/`Joshua Dunne`. The gate is strict,
+  not wrong, and MLB's corruption was singular rather than systemic. Newly found in the
+  same family: `Kenneth Piper` is MLB's `Kenny Piper` (`700652`) — recorded by two of us
+  as "MLB does not publish him" when the truth was "our exact-key match could not see
+  him."
+
+### Docs — the five defect shapes
+
+- `DATA-COVERAGE-CONTRACT.md` §7b (`983b633`). Every defect found across this work was
+  one of **five shapes**: an id naming the wrong person; two publishers' vocabularies in
+  one column; two rows for one person; a display copy diverged from its source; a value
+  in the logs but not the season table. None of them raise. Ordered per league, with the
+  rule that **shape 1 precedes shape 3** — a dedupe's "same id = same person" is false
+  while identities are unverified — and the note that **diagnosis generalises and repair
+  does not**, so audit every league and repair only what the product needs.
+- Recorded as unmeasured, not passing: `atp`, `ufc`, `wc`, `wnba`, `wta` have no MANIFEST
+  entry.
+
+### Live in prod data (no code change)
+
+- **The NFL board can now actually sort by touchdowns.** v0.7.3 shipped the columns and
+  the ingest was never run against prod: `rush_td` and `rec_td` sat at **0 rows** through
+  three releases. Republished 608 rows from the same nflverse artifact dev used —
+  `rush_td` 137, `rec_td` 258, `attempts` 76, Jonathan Taylor 18 / Derrick Henry 16 /
+  Josh Allen 14. `A/required-stats[season]` and `E/qualifier[season]` FAIL → PASS.
+- MLB closed out on both databases: `C/vocabulary[position]`,
+  `C/vocabulary[position_group]`, `C/vocabulary[team]` and `G/published-identity` all
+  **PASS on prod and dev**.
+
 ## v0.7.6 — 2026-08-05
 
 ### MLB position now carries one publisher's vocabulary, one level per column
