@@ -231,6 +231,17 @@ class AuditTests(unittest.TestCase):
         states = self.states("nhl", "D/leaders-reach-logs")
         self.assertEqual(audit.FAIL, states["D/leaders-reach-logs"])
 
+    def test_league_without_leaderboard_surface_is_unverified_not_fail(self):
+        """UFC/WC declare no stat_types (rankings/dormant, not a stats league).
+
+        D previously FAILed them for 'no player_stats rows at all' -- asserting
+        a defect in a leaderboard surface that does not exist. The manifest's
+        'nothing to declare, said out loud' is the contract; D must honor it.
+        """
+        self.con.commit()
+        states = self.states("ufc", "D/leaders-reach-logs")
+        self.assertEqual(audit.UNVERIFIED, states["D/leaders-reach-logs"])
+
     # ── A / E: the columns a claim needs ─────────────────────────────────────
     def test_a_missing_stat_column_fails(self):
         """`saves` is declared required for NHL and does not exist here."""
