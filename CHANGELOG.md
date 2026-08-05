@@ -1,5 +1,68 @@
 # Changelog
 
+## v0.7.6 — 2026-08-05
+
+### MLB position now carries one publisher's vocabulary, one level per column
+
+- **`players.position` held two publishers' vocabularies split by the `active`
+  flag, plus two levels of one vocabulary** (`d68d3d2`, `da63c5a`). `roster_sync`
+  wrote ESPN's `SP`/`RP` on active rows; `ingest_mlb_spine_identity.py` wrote
+  MLB's `P` on the rest, so `WHERE position='P'` returned players who are all
+  retired and `WHERE position IN ('SP','RP')` returned players who are all
+  current — and MLB's group-level `OF` lived in the same column as `LF/CF/RF`,
+  so `WHERE position='OF'` returned 1 of 129 outfielders. Nothing raised.
+- **Fix: three columns, each exactly one level from exactly one publisher.**
+  `position` = MLB `primaryPosition.abbreviation` (specific spots only; the
+  group-level `OF` is written as NULL), `position_group` = MLB
+  `primaryPosition.type` (Pitcher / Catcher / Infielder / Outfielder / Hitter /
+  Two-Way Player), `pitcher_role` = ESPN's `SP`/`RP`, active MLB rows only.
+  `migrate_mlb_position_vocabulary.py` is purely additive (ADD COLUMN only,
+  idempotent, backup-first) and the two writers fill the columns.
+- **`roster_sync` stopped overwriting MLB's published position with ESPN's role
+  vocabulary** (`405a41e`); **ESPN-only rows are now resolved against MLB's
+  published roster in both directions** (`920eed3`); **middle-initial homonyms
+  are bucketed so team-narrowing can separate them** (`401a8e0`).
+
+### Identity maps exist for all four leagues, each from the publisher that issued the id
+
+- `fetch_identity_names.py` now fetches NFL (nflverse `players.parquet`,
+  `gsis_id`), NHL (api.nhle.com skater **and** goalie summaries — goalies are a
+  separate report with a separate name key) and NBA (hoopR, newest published
+  season) on top of the existing MLB map (`9ec78e4`). The fetcher landed in this
+  release; it has not yet been run against the served databases, so
+  `G/published-identity` reports UNVERIFIED for NFL/NHL/NBA until it is.
+
+### Dedupe no longer aborts on `player_stats` key collisions
+
+- 188 of 317 duplicate-mlbam groups had **both** rows carrying a `player_stats`
+  row for the same `UNIQUE(player_id, league, season, stat_type)` key — the
+  repoint UPDATE would have raised. `dedupe_mlb.py` now keeps one row whole per
+  key before repointing (higher `games`, else more non-NULL stat columns, else
+  lower id), deletes the loser in the same transaction, drops `predictions`
+  from `REF_TABLES` (game-level, no `player_id`), and lets a missing table
+  raise instead of reporting a reassuring zero (`d869fa4`).
+
+### Docs
+
+- The identity-pairing defect (right id, stranger's name — Statcast's
+  `player_name` is the pitcher's on every pitch row) and its measured
+  fingerprint, recorded with the gate that would have caught it (`83c9588`);
+  the dedupe's "identity-safe" claim corrected from property to verified state
+  (`72b7ab4`).
+
+### Known regression — MLB leaders 503 on prod after the dedupe run
+
+- The prod MLB dedupe run (2026-08-04/05) repointed duplicate `player_stats`
+  rows to their canonical `player_id` but kept each row's `player_name` — the
+  duplicate's placeholder spelling (`max muncy`, `salvador pérez`), which the
+  v0.7.5 identity repair deliberately left alone because its normalized key
+  already matched. 242 canonical 2026 rows (214 batting, 28 pitching) now
+  disagree byte-for-byte with `players.name` (215 case-only, 27 real: accents,
+  middle-initial, `Jr.`), and the leaders endpoint's raw-string guard 503s:
+  "canonical player stats disagree with the player index for mlb season 2026;
+  rebuild required". Dev is clean. Regenerating the display copy from the spine
+  is its own repair task.
+
 ## v0.7.5 — 2026-08-04
 
 ### An external id now has to name the right person
