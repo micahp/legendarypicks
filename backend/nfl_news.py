@@ -16,6 +16,8 @@ import json
 import logging
 import re
 import threading
+
+from team_codes import normalize_position_optional as _shared_normalize_position
 import time
 import unicodedata
 import urllib.request
@@ -43,10 +45,13 @@ _TEAM_ALIASES = {
     "LA": "LAR",
     "WAS": "WSH",
 }
-_POSITION_ALIASES = {
-    "K": "PK",
-    "G": "OG",
-}
+# Position normalisation lives in `team_codes`, not here. This file used to
+# carry its own table -- {"K": "PK", "G": "OG"} -- written without the shared
+# one in view, and the two disagreed: `team_codes` collapsed `OL` INTO `G`
+# while this mapped `G` FORWARD to `OG`, so a lineman we only knew as
+# "offensive line" matched a news item about a specific guard. Two alias
+# tables are two vocabularies, which is the defect this repo keeps paying for
+# one layer up.
 
 _CACHE = {
     "items": None,
@@ -394,8 +399,16 @@ def normalize_team(value):
 
 
 def normalize_position(value):
+    """ESPN's news position -> the vocabulary `players.position` holds."""
     position = str(value or "").strip().upper()
-    return _POSITION_ALIASES.get(position, position)
+    if not position:
+        return position
+    try:
+        return _shared_normalize_position("nfl", position) or position
+    except Exception:
+        # An unknown code is not a reason to fail a news match; keep the
+        # publisher's own string rather than inventing a substitute.
+        return position
 
 
 def _table_exists(connection, name):
