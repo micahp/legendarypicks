@@ -370,7 +370,61 @@ def sync_league(con: sqlite3.Connection, league: str) -> dict:
         )
 
         for item in planned:
-            if item["action"] == "update":
+            if league == "mlb":
+                # MLB is the exception, and only MLB. ESPN's roster
+                # `position` is a ROLE, not a position: it splits pitchers
+                # SP/RP and spells hitters coarser than MLB does (and it is
+                # the source of the two-vocabularies-in-one-column defect).
+                # MLB publishes the real position itself with the group
+                # (ingest_mlb_spine_identity.py writes primaryPosition
+                # abbreviation -> `position` and type -> `position_group`),
+                # so ESPN's value must never overwrite `players.position`.
+                # The one fact ESPN carries that MLB does not is the
+                # starter/reliever split: that goes to `pitcher_role`, and
+                # only when it is SP or RP -- a hitter role is discarded,
+                # MLB publishes hitters better.
+                # NFL/NBA/NHL are untouched by this branch: ESPN is their
+                # only publisher of position, and breaking them to fix MLB
+                # would be a worse outcome than the defect itself.
+                pitcher_role = (
+                    item["position"]
+                    if item["position"] in ("SP", "RP") else None
+                )
+                if item["action"] == "update":
+                    before_eid = con.execute(
+                        "SELECT espn_id FROM players WHERE id=?",
+                        (item["player_id"],),
+                    ).fetchone()["espn_id"]
+                    con.execute(
+                        """UPDATE players
+                           SET active=1,team=?,
+                               espn_id=COALESCE(espn_id,?),
+                               pitcher_role=?,updated_at=?
+                           WHERE id=?""",
+                        (
+                            item["team"],
+                            item["source_player_key"], pitcher_role,
+                            verified_at, item["player_id"],
+                        ),
+                    )
+                    matched += 1
+                    if not before_eid:
+                        updated_espn += 1
+                else:
+                    cursor = con.execute(
+                        """INSERT INTO players(
+                             name,league,team,espn_id,pitcher_role,
+                             active,updated_at
+                           ) VALUES(?,?,?,?,?,1,?)""",
+                        (
+                            item["name"], league, item["team"],
+                            item["source_player_key"], pitcher_role,
+                            verified_at,
+                        ),
+                    )
+                    item["player_id"] = int(cursor.lastrowid)
+                    inserted += 1
+            elif item["action"] == "update":
                 before_eid = con.execute(
                     "SELECT espn_id FROM players WHERE id=?",
                     (item["player_id"],),

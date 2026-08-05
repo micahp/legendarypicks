@@ -465,6 +465,112 @@ class RosterSyncFreshnessTests(unittest.TestCase):
         self.assertEqual(rows["ATL"], (rows["ATL"][0], "Max Muncy", "702"))
         self.assertNotEqual(rows["ARI"][0], rows["ATL"][0])
 
+    def test_mlb_espn_role_goes_to_pitcher_role_not_position(self):
+        """MLB is the exception: ESPN's roster position is a ROLE.
+
+        ESPN splits pitchers SP/RP and spells hitters coarser than MLB does.
+        MLB publishes position itself (ingest_mlb_spine_identity.py writes
+        primaryPosition abbreviation + type), so an ESPN roster entry must
+        not overwrite `players.position`; the SP/RP role goes to
+        `pitcher_role` instead, and a hitter role is discarded.
+        """
+        original = roster_sync._EXPECTED_TEAM_COUNTS["mlb"]
+        roster_sync._EXPECTED_TEAM_COUNTS["mlb"] = 2
+        self.addCleanup(
+            lambda: roster_sync._EXPECTED_TEAM_COUNTS.__setitem__("mlb", original)
+        )
+        self.connection.execute(
+            "ALTER TABLE players ADD COLUMN position_group TEXT"
+        )
+        self.connection.execute(
+            "ALTER TABLE players ADD COLUMN pitcher_role TEXT"
+        )
+        # The spine has already recorded MLB's position for the matched row.
+        self.connection.execute(
+            """INSERT INTO players(
+                 name,league,team,position,espn_id,active,updated_at
+               ) VALUES('MLB Starter','mlb','ARI','P','777',1,'old')"""
+        )
+        self.connection.commit()
+
+        def roster(_league, team):
+            return {
+                "ARI": [{"player_id": "777", "name": "MLB Starter",
+                         "position": "SP"}],
+                "ATL": [{"player_id": "778", "name": "New MLB Hitter",
+                         "position": "C"}],
+            }[team]
+
+        with patch.object(
+            roster_sync.espn, "team_strength",
+            side_effect=lambda _league: self.teams(),
+        ), patch.object(
+            roster_sync.espn, "roster", side_effect=roster,
+        ):
+            result = roster_sync.sync_league(self.connection, "mlb")
+
+        self.assertEqual(result["status"], "complete", result.get("failures"))
+        # SP: pitcher_role written, position left untouched (stays MLB's 'P').
+        starter = self.connection.execute(
+            "SELECT position, pitcher_role, espn_id FROM players "
+            "WHERE name='MLB Starter'"
+        ).fetchone()
+        self.assertEqual(
+            (starter["position"], starter["pitcher_role"], starter["espn_id"]),
+            ("P", "SP", "777"),
+        )
+        # Hitter role 'C' is discarded: no position written, no pitcher_role.
+        hitter = self.connection.execute(
+            "SELECT position, pitcher_role, espn_id FROM players "
+            "WHERE name='New MLB Hitter'"
+        ).fetchone()
+        self.assertEqual(
+            (hitter["position"], hitter["pitcher_role"], hitter["espn_id"]),
+            (None, None, "778"),
+        )
+
+    def test_nfl_roster_entry_still_writes_position(self):
+        """NFL is unchanged: ESPN is its only publisher of position.
+
+        The MLB-only exception (ESPN position -> pitcher_role) must not leak
+        into other leagues: an NFL entry still writes `players.position`.
+        """
+        self.connection.execute(
+            """UPDATE players SET position='OLD'
+               WHERE name='Existing Quarterback'"""
+        )
+        self.connection.commit()
+
+        def roster(_league, team):
+            return {
+                "ARI": [{"player_id": "101", "name": "Existing Quarterback",
+                         "position": "QB"}],
+                "ATL": [{"player_id": "202", "name": "New Receiver",
+                         "position": "WR"}],
+            }[team]
+
+        with patch.object(
+            roster_sync.espn, "team_strength",
+            side_effect=lambda _league: self.teams(),
+        ), patch.object(
+            roster_sync.espn, "roster", side_effect=roster,
+        ):
+            result = roster_sync.sync_league(self.connection, "nfl")
+
+        self.assertEqual(result["status"], "complete", result.get("failures"))
+        # Update path: ESPN 'QB' overwrote the stale 'OLD'.
+        qb = self.connection.execute(
+            "SELECT position, espn_id FROM players "
+            "WHERE name='Existing Quarterback'"
+        ).fetchone()
+        self.assertEqual((qb["position"], qb["espn_id"]), ("QB", "101"))
+        # Insert path: a new NFL player still gets ESPN's position written.
+        wr = self.connection.execute(
+            "SELECT position, espn_id FROM players "
+            "WHERE name='New Receiver'"
+        ).fetchone()
+        self.assertEqual((wr["position"], wr["espn_id"]), ("WR", "202"))
+
     def test_a_trade_is_applied_rather_than_blocking_the_league(self):
         """A team mismatch on a unique name is a trade, and the roster is newer.
 
