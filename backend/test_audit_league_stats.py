@@ -307,6 +307,76 @@ class AuditTests(unittest.TestCase):
         states = self.states("nhl", "F/identity-crosswalk")
         self.assertEqual(audit.UNVERIFIED, states["F/identity-crosswalk"])
 
+    # ── G: an external id must point at the person named on the row ──────────
+    def _publish(self, names, id_column="mlbam_id", league="mlb"):
+        """Stand in for the committed artifact fetch_identity_names.py writes."""
+        audit._IDENTITY_NAMES_CACHE.clear()
+        audit._IDENTITY_NAMES_CACHE["data"] = {
+            "leagues": {league: {"id_column": id_column, "names": names}}}
+        self.addCleanup(audit._IDENTITY_NAMES_CACHE.clear)
+
+    def named(self, pid, name, mlbam_id, league="mlb"):
+        self.con.execute(
+            "INSERT INTO players(id,name,team,league,position,mlbam_id) "
+            "VALUES(?,?,?,?,?,?)", (pid, name, "LAD", league, "P", mlbam_id))
+
+    def test_an_id_belonging_to_a_different_player_fails(self):
+        # Live on prod 2026-08-04: 224 rows like this one, and dedupe_mlb.py
+        # would have merged them as "provably the same person".
+        self._publish({"702616": "Jackson Holliday"})
+        self.named(1, "Mason Miller", "702616")
+        self.con.commit()
+
+        state, note = self.row("mlb", "G/published-identity")
+        self.assertEqual(audit.FAIL, state)
+        self.assertIn("Jackson Holliday", note)
+
+    def test_an_accent_is_not_a_wrong_id(self):
+        # 25 rows differ from MLB only by diacritics. Calling those corrupt
+        # buries the real signal in noise.
+        self._publish({"665161": "Jeremy Peña", "683083": "Nasim Nuñez"})
+        self.named(1, "Jeremy Pena", "665161")
+        self.named(2, "Nasim Nunez", "683083")
+        self.con.commit()
+
+        self.assertEqual(audit.PASS, self.row("mlb", "G/published-identity")[0])
+
+    def test_a_locally_disambiguated_middle_initial_is_not_a_wrong_id(self):
+        # MLB publishes BOTH Max Muncys as 'Max Muncy'; this database writes
+        # 'Max P. Muncy' for one of them on purpose.
+        self._publish({"691777": "Max Muncy"})
+        self.named(1, "Max P. Muncy", "691777")
+        self.con.commit()
+
+        self.assertEqual(audit.PASS, self.row("mlb", "G/published-identity")[0])
+
+    def test_two_different_people_never_fold_together(self):
+        # The fold must forgive decoration and nothing else. 'Kyle Harrison'
+        # and 'Edmundo Sosa' shared an mlbam_id on prod.
+        self.assertNotEqual(audit._identity_name_key("Kyle Harrison"),
+                            audit._identity_name_key("Edmundo Sosa"))
+
+    def test_an_id_the_publisher_does_not_list_is_not_a_defect(self):
+        # A retired player is absent from a season roster. That is not evidence
+        # of a wrong pairing, and counting it as one would make the gate lie.
+        self._publish({"702616": "Jackson Holliday"})
+        self.named(1, "Some Retired Guy", "111111")
+        self.named(2, "Jackson Holliday", "702616")
+        self.con.commit()
+
+        state, note = self.row("mlb", "G/published-identity")
+        self.assertEqual(audit.PASS, state)
+        self.assertIn("1 checked", note)
+
+    def test_no_published_map_is_unverified_not_passing(self):
+        audit._IDENTITY_NAMES_CACHE.clear()
+        audit._IDENTITY_NAMES_CACHE["data"] = None
+        self.addCleanup(audit._IDENTITY_NAMES_CACHE.clear)
+        self.named(1, "Mason Miller", "702616")
+        self.con.commit()
+
+        self.assertEqual(audit.UNVERIFIED, self.row("mlb", "G/published-identity")[0])
+
     def test_a_missing_database_exits_nonzero(self):
         self.assertEqual(1, audit.main(["--db", "/nonexistent/picks.db"]))
 

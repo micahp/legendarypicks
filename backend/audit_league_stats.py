@@ -49,8 +49,10 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import sqlite3
 import sys
+import unicodedata
 from collections import Counter
 
 DB = os.environ.get("LP_DB_PATH") or os.path.join(
@@ -166,6 +168,55 @@ PASS, FAIL, UNVERIFIED = "PASS", "FAIL", "UNVERIFIED"
 _VOCABULARY_PATH = os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "data", "position-vocabulary.json")
 _VOCABULARY_CACHE = {}
+
+
+# Written by fetch_identity_names.py and committed, for the same reason as the
+# vocabulary above: the audit runs offline and an identity map read at audit
+# time could not be reviewed in a diff.
+_IDENTITY_NAMES_PATH = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "data", "published-identity-names.json")
+_IDENTITY_NAMES_CACHE = {}
+
+
+def _identity_name_key(name):
+    """Compare two spellings of a name without tolerating two different people.
+
+    Publishers disagree on decoration, never on who someone is. MLB writes
+    'Jeremy Peña' and 'Nasim Nuñez' where this database holds ASCII, and a
+    literal comparison called 25 of those a corrupt id -- noise that would have
+    buried the 224 real ones. So fold accents, case, punctuation and generational
+    suffixes, and nothing else. 'Kyle Harrison' and 'Edmundo Sosa' must stay
+    different, because on prod they shared an mlbam_id and they are not the same
+    man.
+    """
+    folded = unicodedata.normalize("NFKD", name or "")
+    folded = "".join(ch for ch in folded if not unicodedata.combining(ch))
+    folded = re.sub(r"[^a-z ]", "", folded.lower())
+    folded = re.sub(r"\b(jr|sr|ii|iii|iv|v)\b", "", folded)
+    # Drop a bare middle initial. MLB publishes BOTH Max Muncys as 'Max Muncy'
+    # (571970 LAD and 691777 ATH), so this database disambiguates one of them
+    # locally as 'Max P. Muncy' -- correct data that a literal comparison calls
+    # a corrupt id. An initial carries no identity the surname does not already
+    # carry; two different people never differ by it alone.
+    folded = re.sub(r"\b[a-z]\b", "", folded)
+    return " ".join(folded.split())
+
+
+def _published_identity_names(league):
+    """{id_column, names} as the publisher publishes them, or None if never fetched."""
+    if not _IDENTITY_NAMES_CACHE:
+        try:
+            with open(_IDENTITY_NAMES_PATH) as f:
+                _IDENTITY_NAMES_CACHE["data"] = json.load(f)
+        except (OSError, json.JSONDecodeError):
+            _IDENTITY_NAMES_CACHE["data"] = None
+    artifact = _IDENTITY_NAMES_CACHE.get("data")
+    if not artifact:
+        return None
+    entry = artifact.get("leagues", {}).get(league)
+    if not entry or not entry.get("names"):
+        return None
+    return {"id_column": entry.get("id_column"), "names": entry["names"]}
 
 
 def _observed_positions(con, league, active_only=False):
@@ -572,8 +623,81 @@ def check_identity_crosswalk(con, league, spec, out):
                 "publishers cross-referenced (%s)" % ", ".join(notes))
 
 
+def check_published_identity(con, league, spec, out):
+    """G. Does each external id point at the person whose name is on the row?
+
+    Check F asks whether a publisher can REACH a league. This asks whether the
+    id it reaches by is the right one. They are different questions and F passing
+    says nothing about G.
+
+    Nothing asserted this until 2026-08-04, when **224 MLB rows were found
+    carrying another player's `mlbam_id`**:
+
+        id=26571 row='Mason Miller'  mlbam=702616  MLB publishes 'Jackson Holliday'
+        id=26573 row='Yennier Cano'  mlbam=701538  MLB publishes 'Jackson Merrill'
+
+    A wrong id here does not raise, it mis-joins -- and it silently converts
+    every id-keyed repair into a corruption. `dedupe_mlb.py` calls a shared
+    `mlbam_id` "provably the same person"; on that data 124 of 317 duplicate
+    groups were two different people, and merging them would have repointed
+    408,610 prop rows onto the wrong players. Only a UNIQUE constraint stopped it.
+
+    The corruption predates every retained backup, so no root cause was
+    identifiable. This check therefore asserts the STATE rather than the cause:
+    it goes green when the spine is repaired and red again the moment anything
+    reintroduces a bad pairing, whatever writes it.
+
+    Comparison is diacritic- and suffix-insensitive on purpose. MLB publishes
+    'Jeremy Peña' and 'Nasim Nuñez'; a naive comparison reports 25 false
+    positives, which is how a real signal gets dismissed as noise. What it must
+    NOT tolerate is a different person.
+    """
+    published = _published_identity_names(league)
+    if not published:
+        out.add(UNVERIFIED, league, "G/published-identity",
+                "no publisher id->name map fetched for this league -- run "
+                "fetch_identity_names.py; an unchecked id is not a correct id")
+        return
+
+    id_column, names = published["id_column"], published["names"]
+    if id_column not in _columns(con, "players"):
+        out.add(UNVERIFIED, league, "G/published-identity",
+                f"players carries no {id_column} to check")
+        return
+
+    checked = wrong = 0
+    examples = []
+    for row_id, name, ext in con.execute(
+            f"SELECT id, name, {id_column} FROM players "
+            f"WHERE league=? AND {id_column} IS NOT NULL AND {id_column} != 0", (league,)):
+        truth = names.get(str(ext))
+        if truth is None:
+            # The publisher does not list this id for the fetched season. That is
+            # a retired or unlisted player, not evidence of a wrong pairing.
+            continue
+        checked += 1
+        if _identity_name_key(truth) != _identity_name_key(name):
+            wrong += 1
+            if len(examples) < 3:
+                examples.append(f"id={row_id} '{name}' has {id_column}={ext} "
+                                f"which publishes as '{truth}'")
+
+    if not checked:
+        out.add(UNVERIFIED, league, "G/published-identity",
+                f"no row's {id_column} appears in the published map -- "
+                "the map and the spine may be different seasons")
+    elif wrong:
+        out.add(FAIL, league, "G/published-identity",
+                f"{wrong} of {checked} rows carry an {id_column} belonging to a "
+                f"different player: {'; '.join(examples)}")
+    else:
+        out.add(PASS, league, "G/published-identity",
+                f"all {checked} checked {id_column}s carry the published name")
+
+
 CHECKS = (check_required_stats, check_position_content, check_single_vocabulary,
-          check_leaders_reach_logs, check_qualifier_unit, check_identity_crosswalk)
+          check_leaders_reach_logs, check_qualifier_unit, check_identity_crosswalk,
+          check_published_identity)
 
 
 def audit(con, leagues=None) -> Result:
