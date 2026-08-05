@@ -74,6 +74,11 @@ MANIFEST = {
                 # hit and a body check are different things sharing a word, and
                 # this table is one wide table across four leagues.
                 "required": ["games", "avg", "hr", "pa", "mlb_hits", "runs", "rbi"],
+                # Every batting row is a batter, so the counting stats are not
+                # position-specific the way `saves` is -- they should be on
+                # essentially all of them. 2026-08-05: they were on 47%,
+                # and check A read PASS because it only tested for non-zero.
+                "coverage": {"pa": 0.9, "mlb_hits": 0.9, "runs": 0.9, "rbi": 0.9},
                 "qualifier": {"unit": "pa", "published": "3.1 PA x team games (502/162)"},
             },
             "pitching": {
@@ -343,14 +348,47 @@ def _columns(con, table):
         return set()
 
 
+
+
 def check_required_stats(con, league, spec, out):
-    """A. The column exists AND carries values for this league."""
+    """A. The column exists AND carries values for enough of this league.
+
+    This measured PRESENCE, not COVERAGE: `if not filled` fails only at exactly
+    zero, so ONE populated row out of thousands passed. Measured 2026-08-05 on
+    prod, both MLB stat types read PASS while half the league had nothing:
+
+        batting   767 of 1451 rows (52%) had no counting stats at all
+        pitching  339 of 1108 rows (30%)
+
+    Both `pa` and `era` are "present and populated" by the old test and absent
+    for most players, which is the same defect check B carried until it was
+    rewritten to filled/sampled. A column that exists for a minority of the
+    league is not a column the product can query.
+
+    The floor is deliberately loose (50%): a stat legitimately absent for a
+    whole class of player -- a pitcher has no batting average -- must not read
+    red. It is a tripwire for "half the league is missing", not a completeness
+    target. A league needing a different floor declares `min_coverage` in its
+    MANIFEST stat_type entry.
+    """
     columns = _columns(con, "player_stats")
     if not columns:
         out.add(FAIL, league, "A/required-stats", "player_stats is unreadable")
         return
     for stat_type, cfg in spec["stat_types"].items():
-        missing, empty = [], []
+        # Coverage is asserted PER COLUMN and only where the manifest says so.
+        # A flat floor across every required stat cannot work: `saves` is 78 of
+        # 874 NHL rows and `pass_yds_g` is 81 of 608 NFL rows because only
+        # goalies make saves and only quarterbacks throw. Those are correct at
+        # 9% and 13%. The number that is wrong is MLB's `pa` at 47%, and the
+        # only thing that distinguishes them is a human saying which stats every
+        # row of a stat_type should carry. So they say it, per column, in
+        # `coverage`; anything undeclared keeps the old must-be-non-zero test.
+        coverage = cfg.get("coverage") or {}
+        total = con.execute(
+            "SELECT COUNT(*) FROM player_stats WHERE league=? AND stat_type=?",
+            (league, stat_type)).fetchone()[0]
+        missing, empty, thin = [], [], []
         for column in cfg["required"]:
             if column not in columns:
                 missing.append(column)
@@ -361,16 +399,26 @@ def check_required_stats(con, league, spec, out):
             ).fetchone()[0]
             if not filled:
                 empty.append(column)
-        if missing or empty:
+                continue
+            floor = coverage.get(column)
+            if floor is not None and total and filled / total < floor:
+                thin.append(f"{column} {filled}/{total} ({filled / total:.0%}, "
+                            f"floor {floor:.0%})")
+        if missing or empty or thin:
             parts = []
             if missing:
                 parts.append("no such column: " + ", ".join(missing))
             if empty:
                 parts.append("column exists but 0 rows populated: " + ", ".join(empty))
+            if thin:
+                parts.append(f"below the {floor:.0%} coverage floor: " + ", ".join(thin))
             out.add(FAIL, league, f"A/required-stats[{stat_type}]", "; ".join(parts))
         else:
+            declared = ", ".join(f"{c} >={f:.0%}" for c, f in sorted(coverage.items()))
             out.add(PASS, league, f"A/required-stats[{stat_type}]",
-                    "%d required stats present and populated" % len(cfg["required"]))
+                    "%d required stats present and populated over %d rows%s"
+                    % (len(cfg["required"]), total,
+                       f"; coverage asserted: {declared}" if declared else ""))
 
 
 def check_position_content(con, league, spec, out):
