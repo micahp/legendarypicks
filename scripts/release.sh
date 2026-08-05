@@ -91,6 +91,32 @@ if [ -n "$deprecated_reachable" ]; then
   die "retire it, guard it, or drop the DEPRECATED/SUPERSEDED marker if it is wrong"
 fi
 
+# ── preflight: what does PROD hold that DEV does not? ─────────────────────
+# Advisory, never blocking. Divergence is frequently correct -- prod captures
+# live odds dev never sees, dev holds test mock-drafts prod should not -- so
+# failing on it would train people to skip the check. The cost of NOT showing
+# it is measured: on 2026-08-05, SIX defects were each correct in code and
+# absent from production, found one at a time by hand over a night.
+#
+#   NFL rush_td/rec_td   0 rows in prod through three releases; v0.7.3
+#                        announced "sort the board by touchdowns" anyway
+#   NBA season stats     dev 576 rows, prod served 2023
+#   MLB counting stats   23 columns dev-only -> `no such column: pa, era`
+#   NHL goalie columns   11 columns dev-only
+#   NHL season keys      48,017 prod rows still on nhle.com's raw 20252026,
+#                        so a season-scoped join returned 0 for that league
+#   NHL goalie logs      2,877 rows with `saves` on dev, 0 in prod
+#
+# Every one of them: fixed on dev, prod never re-run, both databases still
+# answering 200. A changelog entry is a claim about PRODUCTION -- read this
+# before writing one.
+if [ -f backend/diff_databases.py ] && [ -x backend/venv/bin/python ]; then
+  echo
+  echo "release: prod vs dev (advisory -- divergence is often correct, but it should be a decision)"
+  backend/venv/bin/python backend/diff_databases.py --quiet 2>&1 | sed 's/^/  /' || true
+  echo
+fi
+
 # ── the atomic part ───────────────────────────────────────────────────────
 if [ -n "$DRY_RUN" ]; then
   echo "  [dry-run] set package.json version to $VERSION"
