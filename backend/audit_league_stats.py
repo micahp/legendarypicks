@@ -174,6 +174,27 @@ MANIFEST = {
         "injury_population": {"floor": 0.35},
         "single_vocabulary": ["position", "team"],
     },
+    "ufc": {
+        # UFC is fighters + rankings, not a season-stats surface. It holds no
+        # player_stats rows (the leaderboard checks A/D/E have nothing to
+        # serve), fighters carry no position -- they have divisions, stored in
+        # ufc_rankings -- and game logs are per-fight. Nothing to declare,
+        # said out loud rather than omitted: a league the audit cannot see is
+        # a league nobody measured.
+        "stat_types": {},
+        "position_content": {},
+        "single_vocabulary": [],
+    },
+    "wc": {
+        # World Cup 2026 is over and the league is dormant until 2030
+        # (AGENTS.md). The tournament's 3,222 game logs remain in
+        # player_game_logs; there are no player_stats rows and no pages
+        # serving them -- nothing to declare for the stats checks, said out
+        # loud rather than omitted.
+        "stat_types": {},
+        "position_content": {},
+        "single_vocabulary": [],
+    },
 }
 
 _POSITION_CONTENT_FLOOR = 0.8
