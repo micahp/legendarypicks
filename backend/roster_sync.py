@@ -364,8 +364,25 @@ def sync_league(con: sqlite3.Connection, league: str) -> dict:
             )
         # Reset active only after every team supplied a non-empty roster and
         # every source identity has an unambiguous application plan.
+        #
+        # FANTASY ENTITIES ARE NOT ROSTER MEMBERS. A D/ST row is one team's
+        # whole defence -- a fantasy construct that shares this table with real
+        # humans. It will never appear on an ESPN roster, so a blanket
+        # deactivation permanently marks all 32 inactive and nothing ever turns
+        # them back on. That is not a cosmetic flag: `ingest_nfl_adp.py:227`
+        # builds its team->player_id map from `position='DEF' AND active=1`,
+        # so on 2026-08-04 this deactivation (22:37) silently killed every
+        # later ADP run, and with it `injury_status` and `last_news_date` for
+        # all 6,486 NFL players -- a fail-closed D/ST preflight aborting the
+        # whole ingest over rows that were never its business.
+        #
+        # `active` for a D/ST means "this team exists", not "this player is
+        # rostered", so this job has no opinion to offer about it. Excluded
+        # here, at the write, rather than by teaching every reader to special-
+        # case it -- the same reason season keys are normalised at the ingest.
         con.execute(
-            "UPDATE players SET active=0, updated_at=? WHERE league=?",
+            "UPDATE players SET active=0, updated_at=? "
+            "WHERE league=? AND COALESCE(position,'') != 'DEF'",
             (verified_at, league),
         )
 
