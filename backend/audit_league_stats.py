@@ -110,7 +110,10 @@ MANIFEST = {
             },
         },
         "position_content": {},
-        "single_vocabulary": ["position", "team"],
+        # `position_group` carries the parent level (PF -> F, SG -> G) beside
+        # the leaf in `position`, the same split MLB has; see
+        # migrate_league_position_groups.py.
+        "single_vocabulary": ["position", "position_group", "team"],
     },
     "nhl": {
         "stat_types": {
@@ -182,7 +185,10 @@ MANIFEST = {
         # below the measured 2026-08-05 population (dev 2,616/4,508, prod
         # 2,617/4,509; last_news_date 1,994) so it trips only on a collapse.
         "injury_population": {"floor": 0.35},
-        "single_vocabulary": ["position", "team"],
+        # `position_group` carries the parent level (FB -> RB, LB -> DEF)
+        # beside the leaf in `position`, the same split MLB has; see
+        # migrate_league_position_groups.py.
+        "single_vocabulary": ["position", "position_group", "team"],
     },
     "ufc": {
         # UFC is fighters + rankings, not a season-stats surface. It holds no
@@ -510,8 +516,10 @@ def check_single_vocabulary(con, league, spec, out):
         total = sum(n for _, n in values)
         # A fantasy construct (team defence, TQB, coach) plays no position --
         # `position` NULL is the honest answer, so those rows are not blanks.
+        # Same for `position_group`: a team defence has no position and no
+        # group, and entity_type is how the two populations stay distinct.
         entity_scope = ""
-        if column == "position" and "entity_type" in _columns(con, "players"):
+        if column in ("position", "position_group") and "entity_type" in _columns(con, "players"):
             entity_scope = " AND COALESCE(entity_type, 'player') = 'player'"
         blank = con.execute(
             f"SELECT COUNT(*) FROM players WHERE league=? "

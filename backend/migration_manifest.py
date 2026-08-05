@@ -125,6 +125,16 @@ def _probe_nhl_season_keys(con: sqlite3.Connection) -> str:
         "AND CAST(season AS TEXT) LIKE '______'",
     )
 
+
+def _probe_league_position_groups(con: sqlite3.Connection) -> str:
+    """NFL/NBA position_group is applied when active person rows carry it."""
+    return _no_rows(
+        con,
+        "SELECT COUNT(*) FROM players WHERE league IN ('nfl','nba') AND active=1 "
+        "AND COALESCE(entity_type,'player')='player' "
+        "AND (position_group IS NULL OR TRIM(position_group)='')",
+    )
+
 def _probe_player_entity_type(con: sqlite3.Connection) -> str:
     applied = _has_columns(con, "players", ("entity_type",))
     if applied != "applied":
@@ -267,6 +277,13 @@ LEGACY_MIGRATIONS: tuple[LegacyMigration, ...] = (
         description="nflverse team codes -> ESPN",
         probe=_probe_nfl_team_vocabulary,
         note="prod was measured with 869 STL/SD/LA/AZ rows on 2026-08-05",
+    ),
+    LegacyMigration(
+        migration_id="legacy_migrate_league_position_groups",
+        script="backend/migrate_league_position_groups.py",
+        description="NFL/NBA position_group category column (FB->Offense, PF->Forward)",
+        probe=_probe_league_position_groups,
+        note="applied to both DBs 2026-08-05; clears C/vocabulary[position]",
     ),
     LegacyMigration(
         migration_id="legacy_migrate_nhl_goalie_columns",
