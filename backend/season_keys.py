@@ -21,6 +21,29 @@ So there is no rule of the form "use the start year" to apply here, and any
 helper that offered one would be wrong for half the leagues. Each entry below
 records the *measured* correspondence for one publisher, one league.
 
+Re-measured 2026-08-05 from `sports.core.api.espn.com/.../seasons/{year}`, and
+extended a year so the *upcoming*-season case is answered too — that is the one
+that looks like an off-by-one and is not:
+
+    nba  2026 = 2025-10-01 .. 2026-06-27  "2025-26"    2027 = "2026-27"
+    nhl  2026 = 2025-09-20 .. 2026-07-01  "2025-26"    2027 = "2026-27"
+    nfl  2026 = 2026-08-06 .. 2027-02-16  "2026"       (2027 not yet published)
+    mlb  2026 = 2026-02-19 .. 2026-11-12  "2026"       2027 = "2027"
+
+**Why `roster_snapshots` holds 2027 for NHL/NBA and 2026 for NFL/MLB.** It is not
+a bug and it is not two conventions — it is one convention applied to leagues
+whose seasons start in different years. A roster captured in August 2026 belongs
+to the *upcoming* season: for NHL and NBA that season ends in 2027, for NFL and
+MLB it is 2026. Checked and confirmed 2026-08-05, after being flagged twice as a
+suspected inconsistency. Do not "fix" it.
+
+**Status 2026-08-05:** every season value in prod is ESPN's key. The last holdout
+was `player_game_logs` for NHL — 48,017 rows still carrying nhle.com's raw
+`20252026`, because `migrate_nhl_season_keys.py` had been run against dev and
+never against prod. A season-scoped join between `player_stats` and
+`player_game_logs` returned **0** for NHL while returning 6k-52k for every other
+league. Migrated; it now returns 48,017.
+
 Normalise at the boundary — in the ingest, at the moment the foreign value is
 read — never in a query. A query that translates keys has to be remembered at
 every call site; a boundary has to be remembered once.
