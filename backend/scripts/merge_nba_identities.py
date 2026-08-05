@@ -16,8 +16,10 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import sqlite3
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 
 import migrate_schema
@@ -319,6 +321,25 @@ def apply_plan(
             (MIGRATION_ID, MIGRATION_CHECKSUM),
         )
         connection.commit()
+        # A consolidation without a log line is a defect. The artifact is
+        # append-only JSONL so a cat tells the whole merge history.
+        import name_aliases
+        name_aliases.record_consolidation({
+            "ts": datetime.now(timezone.utc).isoformat(),
+            "script": "merge_nba_identities.py",
+            "db": os.path.basename(absolute),
+            "direction": "loser->winner",
+            "from": [
+                {"id": row["loser_id"], "name": row["loser_name"]}
+                for row in plan["pairs"]
+            ],
+            "to": {
+                "id": plan["pairs"][0]["winner_id"],
+                "name": plan["pairs"][0]["winner_name"],
+            } if plan["pairs"] else None,
+            "moved": plan["moved"],
+            "note": f"{plan['pair_count']} split pairs -> 0",
+        })
     except Exception:
         connection.rollback()
         raise

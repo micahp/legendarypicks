@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import sqlite3
 import sys
 from datetime import datetime, timezone
@@ -372,6 +373,19 @@ def main(argv: Sequence[str] | None = None) -> int:
         "integrity_check": integrity,
         "changes": changes,
     }
+    if args.commit_copy:
+        # A consolidation without a log line is a defect.
+        import name_aliases
+        from datetime import datetime, timezone
+        name_aliases.record_consolidation({
+            "ts": datetime.now(timezone.utc).isoformat(),
+            "script": "apply_mlb_identity_repairs_copy.py",
+            "db": os.path.basename(str(db_path)),
+            "run_id": run_id,
+            "direction": "repair",
+            "changes": changes,
+            "note": f"mlb identity repair applied from {artifact_path.name}",
+        })
     Path(args.report).write_text(json.dumps(report, indent=2, sort_keys=True) + "\n")
     print(json.dumps(report, indent=2, sort_keys=True))
     return 0

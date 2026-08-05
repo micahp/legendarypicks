@@ -53,6 +53,7 @@ import argparse
 import json
 import os
 import re
+import name_aliases
 import sqlite3
 import sys
 import unicodedata
@@ -840,6 +841,15 @@ def check_published_identity(con, league, spec, out):
             continue
         checked += 1
         if _identity_name_key(truth) != _identity_name_key(name):
+            # Strict comparison failed. Before reporting a wrong person, ask
+            # whether this id has a recorded accepted alternate spelling
+            # (data/name-aliases.json). The decision (2026-08-05): the
+            # market-facing nickname is canonical on the row -- ESPN fantasy
+            # and Yahoo both publish 'Kenny Gainwell' -- and the publisher's
+            # legal-form spelling is a same-person alias, never a different
+            # person. An id absent from the alias file has no alternates.
+            if name_aliases.matches_published(league, ext, name, truth):
+                continue
             wrong += 1
             if len(examples) < 3:
                 examples.append(f"id={row_id} '{name}' has {id_column}={ext} "
