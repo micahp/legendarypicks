@@ -2,7 +2,7 @@ import { useRouter } from 'next/router'
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { SportsService } from '../../../services/sports'
 import {
-  GameDetail, Tab, isNBA, isNHL, isMLB, isNFL, isWC,
+  GameDetail, Tab, isNBA, isNHL, isMLB, isNFL, isWC, isSoccer,
   hasGameTabs, usesDetailEndpoint, usesPerTabEndpoints,
   BoxScoreData, PbPData, SoccerBoxScoreData, SoccerPbPData, GameInfoData,
 } from '../../../components/Game/types'
@@ -189,7 +189,7 @@ function useTabData(league: string | undefined, gameId: string | undefined, acti
       setLoadingBoxscore(true)
       try {
         const d = await SportsService.getBoxscore(league, gameId)
-        if (lg === 'wc') {
+        if (isSoccer(lg)) {
           setSoccerBoxscore(d as SoccerBoxScoreData)
         } else {
           setBoxscore(d as BoxScoreData)
@@ -201,7 +201,7 @@ function useTabData(league: string | undefined, gameId: string | undefined, acti
       setLoadingPbp(true)
       try {
         const d = await SportsService.getPlayByPlay(league, gameId)
-        if (lg === 'wc') {
+        if (isSoccer(lg)) {
           setSoccerPbp(d as SoccerPbPData)
         } else {
           setPbp(d as PbPData)
@@ -331,7 +331,7 @@ export default function GameDetailPage() {
               ) : usesPerTab ? (
                 tabData.loadingBoxscore ? (
                   <BoxScoreSkeleton league={lg} />
-                ) : lg === 'wc' ? (
+                ) : isSoccer(lg) ? (
                   tabData.soccerBoxscore ? (
                     <SoccerBoxScore data={tabData.soccerBoxscore} />
                   ) : (
@@ -360,7 +360,7 @@ export default function GameDetailPage() {
               ) : usesPerTab ? (
                 tabData.loadingPbp ? (
                   <PbPSkeleton league={lg} />
-                ) : lg === 'wc' ? (
+                ) : isSoccer(lg) ? (
                   <PlayByPlay soccerData={tabData.soccerPbp || undefined} />
                 ) : (
                   <PlayByPlay data={tabData.pbp || undefined} />
