@@ -24,6 +24,8 @@ LEAGUES = {  # our key -> (espn "sport/league" path, regulation periods)
     "wta":  ("tennis/wta", 3),
     "ufc":  ("mma/ufc", 3),
     "wc":   ("soccer/fifa.world", 2),
+    "lcup": ("soccer/concacaf.leagues.cup", 2),
+    "mls":  ("soccer/usa.1", 2),
 }
 
 # ---------------------------------------------------------------------------
@@ -408,8 +410,8 @@ def games(league, date=None):
                     "event": event_name,
                     "card_segment": card_segment,
                 })
-    elif league == "wc":
-        # Soccer (World Cup) - events with group/round context, draws, ET, penalties
+    elif league in ("wc", "lcup", "mls"):
+        # Soccer (World Cup / Leagues Cup / MLS) - events with group/round context, draws, ET, penalties
         for e in d.get("events", []):
             comp = (e.get("competitions") or [{}])[0]
             status = comp.get("status", {})
