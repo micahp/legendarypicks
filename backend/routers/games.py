@@ -768,6 +768,45 @@ def lcup_game_context(game_id: str, limit: int = Query(12, ge=1, le=100)):
     return {"insights": insights[:limit]}
 
 
+# Free Spanish radio for Leagues Cup (Inter Miami's market feed). StreamTheWorld
+# serves raw ADTS AAC that Chrome's <audio> tag won't decode, so the relay
+# transcodes to MP3 with ffmpeg and streams it — one ffmpeg per listener.
+_LCUP_RADIO = {
+    "lcup": "https://27033.live.streamtheworld.com/WMYMAMAAC.aac",  # Unánimo Deportes 990 AM (Miami)
+}
+
+
+@router.get("/api/stream/{league}")
+def stream_league_audio(league: str):
+    from fastapi.responses import StreamingResponse
+    import subprocess
+
+    url = _LCUP_RADIO.get(league.lower())
+    if not url:
+        raise HTTPException(404, "no audio stream for this league")
+    proc = subprocess.Popen(
+        ["ffmpeg", "-loglevel", "error", "-i", url, "-vn",
+         "-ac", "1", "-ar", "44100", "-b:a", "96k", "-f", "mp3", "-"],
+        stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+    )
+
+    def gen():
+        try:
+            while True:
+                chunk = proc.stdout.read(65536)
+                if not chunk:
+                    break
+                yield chunk
+        finally:
+            try:
+                proc.kill()
+            except Exception:
+                pass
+
+    return StreamingResponse(gen(), media_type="audio/mpeg",
+                             headers={"Cache-Control": "no-store"})
+
+
 @router.get("/api/{league}/team-stats")
 def get_team_stats(league: str, game_id: Optional[str] = Query(None)):
     """Per-game team boxscore totals for NBA/NHL/NFL."""
@@ -850,6 +889,22 @@ def get_game_detail(league: str, game_id: str):
             pass
     # Read from DB
     _read_game_detail_from_db(lg, game_id, out)
+
+    # A DB context row means the ESPN fallback below is skipped, but the live
+    # score is not persisted — fill it from ESPN whenever the game is live.
+    if out["state"] == "in" and not out["live_score"]:
+        try:
+            result = espn.game_result(league, game_id)
+            scores = result.get("scores", {})
+            if scores and len(scores) == 2:
+                out["live_score"] = {
+                    "home": scores.get(out["context"]["home_team"], scores.get("home")),
+                    "away": scores.get(out["context"]["away_team"], scores.get("away")),
+                }
+                if not out["live_score"]["home"] or not out["live_score"]["away"]:
+                    out["live_score"] = None
+        except Exception:
+            pass
 
     # ── Fallback: when boxscore snapshots were never captured (empty DB),
     #     pull team names + scores from ESPN's scoreboard/game_result so the
