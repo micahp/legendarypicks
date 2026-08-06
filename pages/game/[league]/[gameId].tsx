@@ -16,7 +16,7 @@ import GameProps from '../../../components/Game/GameProps'
 import GameStory from '../../../components/Game/GameStory'
 import WCContext from '../../../components/Game/WCContext'
 import BoothFeed from '../../../components/Game/BoothFeed'
-import ListenLive from '../../../components/ListenLive'
+import ListenLive, { LCUP_PAGE } from '../../../components/ListenLive'
 
 const TAB_DEFS: { key: Tab; label: string }[] = [
   { key: 'boxscore', label: 'Box Score' },
@@ -308,10 +308,11 @@ export default function GameDetailPage() {
         homeRecord={homeRecord} awayRecord={awayRecord}
       />
 
-      {/* Leagues Cup audio: no reliable free feed found yet — Unánimo (Miami's
-          Spanish station) is not carrying LC games, so no stream card until the
-          right broadcast is located. Booth tab still shows the watcher tapes. */}
-      {lg === 'wc' ? <ListenLive /> : null}
+      {/* Leagues Cup live audio: ESPN 106.3 West Palm (WUUB-FM), Inter Miami's
+          official English radio partner — relayed to MP3 via /api/stream/lcup. */}
+      {lg === 'wc' ? <ListenLive /> : lg === 'lcup' ? (
+        <ListenLive streamUrl="/api/stream/lcup" streamPageUrl={LCUP_PAGE} label="ESPN 106.3 West Palm · English radio (free)" />
+      ) : null}
 
       {/* Game context: WC gets the broadcast+market+form summary; others the AI matchup story */}
       {league && gameId && (lg === 'wc'
@@ -396,7 +397,9 @@ export default function GameDetailPage() {
               <BoothFeed
                 gameId={gameId}
                 contextLeague={lg === 'lcup' ? 'lcup' : 'wc'}
-                showListenLive={lg !== 'lcup'}
+                streamUrl={lg === 'lcup' ? '/api/stream/lcup' : undefined}
+                streamPageUrl={lg === 'lcup' ? LCUP_PAGE : undefined}
+                streamLabel={lg === 'lcup' ? 'ESPN 106.3 West Palm · English radio (free)' : undefined}
               />
             )}
           </div>
