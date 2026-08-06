@@ -1,6 +1,8 @@
 """routers/games.py — games endpoints. Handlers only; shared code lives in _core."""
 import datetime as dt
 import html
+import json
+import os
 
 from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import JSONResponse
@@ -690,6 +692,89 @@ def cod_game_context(game_id: str, limit: int = Query(12, ge=1, le=100)):
     if not ctx:
         raise HTTPException(404, "no Call of Duty context for this game")
     return ctx
+
+
+# Broadcast tapes live in the sibling prediction-market-trading repo. Leagues Cup
+# watchers write <YYYYMMDD>_LCUP_<AWAY><HOME>_{transcript,signals}.jsonl there.
+_BROADCAST_DIR = "/root/prediction-market-trading/data/broadcast"
+
+_SIGNAL_TAGS = {
+    "tilt": "Mentality", "lockin": "Mentality", "fatigue": "Fatigue",
+    "tactical": "Tactical", "morale": "Mentality", "momentum": "Momentum",
+}
+
+
+@router.get("/api/lcup/{game_id}/context")
+def lcup_game_context(game_id: str, limit: int = Query(12, ge=1, le=100)):
+    """Leagues Cup booth: live Spanish radio transcript + soft-signal reads for
+    the game, straight from the broadcast_alpha tapes (legacy insights shape,
+    newest first). 404 when no watcher is running for this game."""
+    import espn_client as _espn
+    try:
+        summary = _espn.summary("lcup", game_id)
+    except Exception:
+        raise HTTPException(404, "no context for this game")
+    comp = (summary.get("header", {}).get("competitions") or [{}])[0]
+    date = (comp.get("date") or "")[:10].replace("-", "")
+    abbrevs = {}
+    for c in comp.get("competitors", []):
+        abbrevs[c.get("homeAway")] = (c.get("team") or {}).get("abbreviation", "")
+    if not date or not abbrevs.get("home") or not abbrevs.get("away"):
+        raise HTTPException(404, "no context for this game")
+    tag = f"{date}_LCUP_{abbrevs['away']}{abbrevs['home']}"
+
+    insights = []
+
+    # Soft signals (DeepSeek-extracted claims) — richer, prefer them first.
+    spath = os.path.join(_BROADCAST_DIR, f"{tag}_signals.jsonl")
+    if os.path.exists(spath):
+        for line in open(spath, encoding="utf-8", errors="replace"):
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                s = json.loads(line)
+            except Exception:
+                continue
+            if not s.get("quote"):
+                continue
+            insights.append({
+                "id": f"{tag}-sig-{len(insights)}",
+                "tag": _SIGNAL_TAGS.get((s.get("type") or "").lower(), "Momentum"),
+                "subject": s.get("subject", "Broadcast"),
+                "quote": s["quote"],
+                "strength": int(s.get("strength") or 1),
+                "ts": s.get("ts"),
+                "analysis": (s.get("direction") or "") and f"Booth lean: {s['direction']}",
+            })
+
+    # Raw transcript lines — the booth's evidence even before extraction runs.
+    tpath = os.path.join(_BROADCAST_DIR, f"{tag}_transcript.jsonl")
+    if os.path.exists(tpath):
+        for line in open(tpath, encoding="utf-8", errors="replace"):
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                t = json.loads(line)
+            except Exception:
+                continue
+            text = (t.get("text") or "").strip()
+            if not text:
+                continue
+            insights.append({
+                "id": f"{tag}-tx-{len(insights)}",
+                "tag": "Live",
+                "subject": "Radio",
+                "quote": text,
+                "strength": 1,
+                "ts": t.get("ts"),
+            })
+
+    if not insights:
+        raise HTTPException(404, "no booth data for this game yet")
+    insights.sort(key=lambda i: i.get("ts") or "", reverse=True)
+    return {"insights": insights[:limit]}
 
 
 @router.get("/api/{league}/team-stats")

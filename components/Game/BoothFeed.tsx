@@ -258,10 +258,13 @@ function LegacyInsightCard({ it }: { it: LegacyInsight }) {
   )
 }
 
-export default function BoothFeed({ gameId, contextLeague = 'wc', showListenLive = true }: {
+export default function BoothFeed({ gameId, contextLeague = 'wc', showListenLive = true, streamUrl, streamPageUrl, streamLabel }: {
   gameId: string
-  contextLeague?: 'wc' | 'cod'
+  contextLeague?: 'wc' | 'cod' | 'lcup'
   showListenLive?: boolean
+  streamUrl?: string
+  streamPageUrl?: string
+  streamLabel?: string
 }) {
   const [ctx, setCtx] = useState<BoothContext | null | undefined>(undefined)
   const [selectedPhase, setSelectedPhase] = useState<MatchPhase | null>(null) // null = following live
@@ -349,7 +352,7 @@ export default function BoothFeed({ gameId, contextLeague = 'wc', showListenLive
   return (
     <div className="space-y-4">
       {/* The audio and its enriched reads are one booth surface. */}
-      {showListenLive ? <ListenLive /> : null}
+      {showListenLive ? <ListenLive streamUrl={streamUrl} streamPageUrl={streamPageUrl} label={streamLabel} /> : null}
 
       {ctx === undefined ? (
         <div className="space-y-3 animate-pulse">
