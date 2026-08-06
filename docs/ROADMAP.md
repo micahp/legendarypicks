@@ -1,4 +1,87 @@
-# Roadmap & bug ledger
+# Roadmap
+
+**The checklist below is the current state. Everything under "Ledger" is the history and the
+reasoning — that section keeps its own rule: add, don't rewrite, mark superseded rather than
+delete.**
+
+Checked = shipped to **production**, not to dev. Checklist last updated 2026-08-06.
+
+The constraint that orders all of it: **NFL fantasy drafts run the next 3-5 weeks**, and NFL
+draft research is the only use case a real user has said yes to (see "User evidence" below).
+Anything that does not serve that window competes with it.
+
+---
+
+## PAST — done and live in prod
+
+**Data correctness**
+- [x] Identity gate: every external id must name the person on the row (`G/published-identity`)
+- [x] 223 MLB rows repaired — they carried another player's `mlbam_id` (Statcast's `player_name` is the *pitcher's*)
+- [x] MLB dedupe: 317 duplicate groups collapsed, 0 remain
+- [x] NHL season keys migrated — 48,017 rows off the publisher's raw key
+- [x] NHL 82 missing games ingested; reconciles against ESPN 1312/1312
+- [x] NBA leaderboard serves 2026, not 2023
+- [x] One spelling per NFL position (`K`->`PK`, `SAF`->`S`)
+- [x] `OL`->`G` fabrication removed — it asserted every unspecified lineman was a guard
+- [x] Fantasy constructs marked `entity_type` — 97 NFL rows are not people
+- [x] `position_group` for MLB, NFL, NBA — the parent level in its own column
+
+**Gates and process**
+- [x] `audit_league_stats.py` — 8 checks, MANIFEST-driven, **0 FAIL on prod** across all four leagues
+- [x] Gates **block** releases — `release.sh` runs the audit + prod/dev diff and refuses on FAIL
+- [x] `diff_databases.py` — prod vs dev; schema/seasons block, volume advisory
+- [x] Migration ledger — one invocation migrates **both** databases; app refuses an un-migrated one
+- [x] Boundary modules: `season_keys.py`, `team_codes.py`, `game_ids.py`
+- [x] Backup retention + `VACUUM INTO` (never `cp` — a live copy races writers)
+- [x] `espn-request-budget` skill for Claude, hermes, reasonix
+
+**Product**
+- [x] NFL board sorts by touchdowns — shipped in v0.7.3, actually **live** 2026-08-05
+- [x] Draft board shows injury status — 2,617 players (was 0 for ~18 hours)
+- [x] NFL 2026 schedule in prod, first kickoff 2026-09-09
+- [x] Prod backend 291MB (was 7.45GB — backups were being baked into the image)
+
+## PRESENT — in flight
+
+- [ ] `B/position-content` for **mlb** and **nba** — a declaration: what must a catcher's / guard's log record?
+- [ ] `DATA-COVERAGE-CONTRACT.md` §7 rewrite — what each of the 8 checks needs from a new league
+- [ ] `ufc` / `wc` UNVERIFIED x6 — likely "no leaderboard surface to serve", not a fetcher
+
+## NEXT — before drafts (3-5 weeks), ordered by whether a drafter notices
+
+- [ ] **Render `PK` as `K`** — storage is right; the UI leaks the publisher's code into the filter chips
+      (`useNflDraftBoard.ts:10`, `NflDraftRoom.tsx:93`, `PlayerDetailOverlay.tsx:78`, `MockDraft/columns.tsx:43`)
+- [ ] **Fullbacks missing from the board** — `ingest_nfl_season_stats.py:30` filters `{QB,RB,WR,TE}`,
+      so Kyle Juszczyk has **zero** `player_stats` rows and an RB filter drops 18 active FBs
+- [ ] **Draft-research screens** — what the one real user asked for, still unbuilt
+- [ ] Only then: more data hygiene
+
+## LATER — deferred on purpose
+
+- [ ] **Source-separated tables** (`espn_core_*` / `espn_fantasy_*`) — **November, not now.** Do the
+      `players_human` *view* first and measure whether the physical split is needed at all. A
+      half-migrated read surface during draft season manufactures the defect class it exists to prevent.
+- [ ] NBA 269 split identities — `merge_nba_identities.py` written and tested; apply via the ledger
+- [ ] NFL 2024 game-id vocabulary migration — deliberately deferred, not shown in the frontend
+- [ ] MLB: 767 Statcast batting rows for players MLB publishes no 2026 line for. **An open question,
+      not a known gap** — Statcast is MLB's own data, so why do we hold them?
+- [ ] 168 pre-existing orphans (`props` 78, `roster_snap` 90)
+- [ ] `atp`, `wnba`, `wta` — no MANIFEST entry, therefore unmeasured, not passing
+
+## The rules this was learned under
+
+1. **A fix on dev is not a fix.** Seven defects reached three releases because prod was never re-run,
+   and both databases answered 200 throughout.
+2. **Presence is not coverage.** Three checks passed on broken data — one row in 500, or one populated
+   row out of thousands, read as green.
+3. **A gap is a statement about which endpoint you asked.** Every "nobody publishes this" here has been wrong.
+4. **One column, one vocabulary, one publisher.** Two writers with no arbitration means whichever ran last owns the row.
+5. **Never repair identity by name match.** That is what caused the damage in the first place.
+6. **UNVERIFIED is a failure, not a skip.** "Nobody wrote a manifest" and "the data is fine" must not look the same.
+
+---
+
+# Ledger
 
 Running list. Add to it, don't rewrite it — mark items superseded rather than deleting,
 so the reasoning stays readable.
