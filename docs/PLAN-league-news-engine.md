@@ -43,6 +43,7 @@ signals before designing the pipeline, DB, or UI.
 | Bluesky post search | `https://api.bsky.app/xrpc/app.bsky.feed.searchPosts?q=...` | none | ✅ narrative queries return real strategy chatter (dodgers salary cap, mls relegation, SEC superleague). `public.api.bsky.app` 403'd this box 2026-08-06; `api.bsky.app` verified working |
 | Bluesky author feeds | `.../app.bsky.feed.getAuthorFeed?actor=...` | none | ✅ works unauth (SB Nation verified) |
 | Google News RSS | `https://news.google.com/rss/search?q=...` | none | ✅ fallback aggregator |
+| CFBD (NCAAF) | `https://api.collegefootballdata.com/...` (Bearer key in ~/.hermes/.env) | free key, 1k calls/mo | ⚠️ key verified 2026-08-06 (/teams/fbs 200). **No /news endpoint** ("Cannot GET /news") → NOT a news source. It is the NCAAF game-log source per the provider audit (separate pipeline decision) |
 | The Athletic | (paywall + robots bans AI/LLM scraping) | — | ❌ use their Bluesky posts (@theathletic.com, 17k posts) instead |
 | Bleacher Report | (no RSS; robots disallows /api) | — | ❌ use Bluesky (@bleacherreport) + Google News |
 | Yahoo Sports | (429) | — | ❌ Google News fallback |
