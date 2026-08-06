@@ -749,6 +749,7 @@ def lcup_game_context(game_id: str, limit: int = Query(12, ge=1, le=100)):
             })
 
     # Raw transcript lines — the booth's evidence even before extraction runs.
+    # Skip silence/noise lines (whisper renders dead air as dots/single chars).
     tpath = os.path.join(_BROADCAST_DIR, f"{tag}_transcript.jsonl")
     if os.path.exists(tpath):
         for line in open(tpath, encoding="utf-8", errors="replace"):
@@ -761,6 +762,9 @@ def lcup_game_context(game_id: str, limit: int = Query(12, ge=1, le=100)):
                 continue
             text = (t.get("text") or "").strip()
             if not text:
+                continue
+            words = [w for w in text.split() if any(ch.isalnum() for ch in w)]
+            if len(words) < 2:
                 continue
             insights.append({
                 "id": f"{tag}-tx-{len(insights)}",
