@@ -36,7 +36,9 @@ from news_classifier import classify  # noqa: E402
 
 UA = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36"
 
-CACHE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "news-cache")
+# Outside the repo so uvicorn --reload (which watches backend/) never restarts
+# the dev server when the collector writes cache files.
+CACHE_DIR = os.path.join(os.path.expanduser("~"), ".hermes", "news-cache")
 
 ESPN_NEWS = {
     "nfl": "https://site.api.espn.com/apis/site/v2/sports/football/nfl/news?limit=25",
