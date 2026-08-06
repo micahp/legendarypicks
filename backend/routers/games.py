@@ -777,11 +777,12 @@ def lcup_game_context(game_id: str, limit: int = Query(12, ge=1, le=100)):
     return {"insights": insights[:limit]}
 
 
-# Free Spanish radio for Leagues Cup (Inter Miami's market feed). StreamTheWorld
-# serves raw ADTS AAC that Chrome's <audio> tag won't decode, so the relay
-# transcodes to MP3 with ffmpeg and streams it — one ffmpeg per listener.
+# Free English radio for Leagues Cup — ESPN 106.3 West Palm (WUUB-FM), Inter
+# Miami's official English-language radio partner (airs every Inter Miami game).
+# amperwave HLS won't play in Chrome's <audio>, so the relay transcodes to MP3
+# with ffmpeg and streams it — one ffmpeg per listener.
 _LCUP_RADIO = {
-    "lcup": "https://27033.live.streamtheworld.com/WMYMAMAAC.aac",  # Unánimo Deportes 990 AM (Miami)
+    "lcup": "https://live.amperwave.net/manifest/goodkarma-wuubfmaac-hlsc2.m3u8?source=tunein&source=TuneIn&gdpr=0&us_privacy=1YNY",
 }
 
 
