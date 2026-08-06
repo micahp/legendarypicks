@@ -23,8 +23,10 @@ AI-generated news per league for Legendary Picks. Two layers, per league:
 2. **Granular layer** — concrete events: trades, staff decisions (coach
    firings/hirings), injuries to key/notable players.
 
-Both layers bubble up: **news per league** → filtered aggregate feed on the
-**homepage**.
+Both layers surface in a **News page in the top-level nav**. The **Home tab is
+the catch-all** across all leagues; **eventually there is one tab per league**
+(NFL, MLB, MLS, NCAAF…). The classifier tags every item with a league, which is
+what makes both views come from one feed.
 
 **Right now: a proof of concept only.** Prove the collector + classifier on real
 signals before designing the pipeline, DB, or UI.
@@ -94,9 +96,11 @@ with links. Judge the detector against the signal, not against our own output
                ▼
 SQLite: news_items(id, league, layer, source, url, headline, body, published, key_player, narrative_score)
                ▼
-API: /api/news/{league}  +  /api/news (homepage aggregate, filtered)
+API: /api/news/{league}  +  /api/news (catch-all Home tab, filtered)
                ▼
-UI: per-league news tab (existing Leagues surface) + homepage feed
+UI: News page in the top-level nav — Home tab = catch-all across leagues;
+    per-league tabs (NFL, MLB, MLS, NCAAF…) land later. The classifier's league
+    tag is what splits one feed into both views.
 ```
 
 Rules to carry forward:

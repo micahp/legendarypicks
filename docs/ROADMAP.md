@@ -80,9 +80,9 @@ because the POC is small and the narrative signal is time-sensitive.
       SEC vs Big Ten consolidation — "is the SEC about to lead the NCAA?");
       (2) granular events: trades, staff decisions (firings/hirings), injuries to
       key/notable players.
-- [ ] **Bubbles to the homepage** — per-league news page, then a filtered
-      aggregate feed on the homepage. Same per-league surface pattern as the rest
-      of the app.
+- [ ] **News page in top-level nav** — Home tab is the catch-all across leagues;
+      per-league tabs (NFL, MLB, MLS, NCAAF…) land eventually. One feed, split
+      by the classifier's league tag.
 - [ ] **POC first** — prove narrative detection + granular capture on one or two
       leagues before building the pipeline. Judge against the signal, not the
       output.
@@ -158,6 +158,11 @@ Deadspin (/rss, carries injuries/extensions/suspensions), plus the ESPN news
 API. The Athletic (paywall + robots bans AI/LLM scraping), Bleacher Report (no
 RSS, /api disallowed), and Yahoo (429) are not usable directly — Google News
 RSS covers them as a fallback. Checklist entry updated accordingly.
+
+**Nav model corrected same day (Micah):** the news surface is a top-level-nav
+News page — Home tab is the catch-all across leagues, per-league tabs come
+eventually. Not per-league pages + homepage feed. Updated the checklist bullet
+and PLAN §1/§4.
 
 ---
 
