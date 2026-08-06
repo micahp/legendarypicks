@@ -58,6 +58,7 @@ from routers import (  # noqa: E402
     esports,
     live_discounts,
     momentum,
+    news,
     plays,
     ufc_picks,
     nfl_offseason,
@@ -80,6 +81,7 @@ app.include_router(game_extras.router)
 app.include_router(esports.router)
 app.include_router(live_discounts.router)
 app.include_router(momentum.router)
+app.include_router(news.router)
 app.include_router(plays.router)
 app.include_router(ufc_picks.router)
 app.include_router(nfl_offseason.router)
@@ -87,6 +89,7 @@ app.include_router(nfl_usage.router)
 app.include_router(nfl_draft_notes.router)
 app.include_router(nfl_mock_draft.router)
 app.include_router(nfl_schedule_api.router)
+# League news engine router registered above (news) — see routers/news.py.
 
 
 @app.on_event("startup")

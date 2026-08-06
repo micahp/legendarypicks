@@ -184,6 +184,25 @@ def _init_db():
             "CREATE INDEX IF NOT EXISTS idx_player_stats_player "
             "ON player_stats(player_id, season)"
         )
+        # League news engine: collected out-of-band by ingest_league_news.py,
+        # served by routers/news.py. url is the dedupe key (idempotent upsert).
+        con.execute("""
+        CREATE TABLE IF NOT EXISTS news_items(
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          league TEXT NOT NULL,
+          layer TEXT NOT NULL,
+          source TEXT NOT NULL,
+          headline TEXT NOT NULL,
+          body TEXT NOT NULL DEFAULT '',
+          url TEXT NOT NULL UNIQUE,
+          published TEXT NOT NULL DEFAULT '',
+          key_player TEXT,
+          first_seen TEXT NOT NULL DEFAULT (datetime('now')));
+        """)
+        con.execute(
+            "CREATE INDEX IF NOT EXISTS idx_news_league_layer "
+            "ON news_items(league, layer, published)"
+        )
         con.commit()
 
 
