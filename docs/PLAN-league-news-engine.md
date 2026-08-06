@@ -43,7 +43,6 @@ signals before designing the pipeline, DB, or UI.
 | Bluesky post search | `https://api.bsky.app/xrpc/app.bsky.feed.searchPosts?q=...` | none | ✅ narrative queries return real strategy chatter (dodgers salary cap, mls relegation, SEC superleague). `public.api.bsky.app` 403'd this box 2026-08-06; `api.bsky.app` verified working |
 | Bluesky author feeds | `.../app.bsky.feed.getAuthorFeed?actor=...` | none | ✅ works unauth (SB Nation verified) |
 | Google News RSS | `https://news.google.com/rss/search?q=...` | none | ✅ fallback aggregator |
-| CFBD (NCAAF) | `https://api.collegefootballdata.com/...` (Bearer key in ~/.hermes/.env) | free key, 1k calls/mo | ⚠️ key verified 2026-08-06 (/teams/fbs 200). **No /news endpoint** ("Cannot GET /news") → NOT a news source. It is the NCAAF game-log source per the provider audit (separate pipeline decision) |
 | The Athletic | (paywall + robots bans AI/LLM scraping) | — | ❌ use their Bluesky posts (@theathletic.com, 17k posts) instead |
 | Bleacher Report | (no RSS; robots disallows /api) | — | ❌ use Bluesky (@bleacherreport) + Google News |
 | Yahoo Sports | (429) | — | ❌ Google News fallback |
@@ -107,6 +106,10 @@ UI: News page in the top-level nav — Home tab = catch-all across leagues;
 Rules to carry forward:
 - **Collection is out-of-band, never per-pageview** (AGENTS.md: ESPN calls belong
   in the collection path, DB-first serving).
+- **O(1) player lookups only** (Micah, 2026-08-06): never scan the players table
+  (15k+ NCAAF names). Player info is pulled only when a news item makes it
+  relevant — an indexed by-name lookup per candidate mention. No pre-loading,
+  no O(n) sweep, no gain from it.
 - ESPN news endpoint is already proven in the codebase (player news tab,
   `backend/routers/players.py` — gzip handling pattern exists). League-level news
   was rejected for the *player* tab as too general — it is exactly right for the
@@ -132,9 +135,11 @@ Rules to carry forward:
 1. **Narrative freshness**: a narrative persists for weeks (the cap debate). Do we
    refresh it per-day (detect drift) or per-week? POC assumption: per-day collect,
    surface the top narrative with a first-seen date.
-2. **Notable-player list**: injuries for "key/notable players" — start from our
-   own `players` table (we already rank by ADP/PPR) or a curated per-league list?
-   POC uses a tiny hardcoded list; the real answer should come from our data.
+2. **Notable-player detection — resolved 2026-08-06 (Micah): no full-table
+   scans.** Never pre-load or sweep the players table (15k+ NCAAF names). A name
+   is pulled only when a news item makes it relevant — an indexed by-name
+   lookup (O(1)) per candidate mention, or the small curated list. O(n) for
+   potentially no gain.
 3. **Underdog strategy content**: the tracker + keyword search is a proxy for the
    unreachable X accounts. Is that enough for the strategy layer, or should the
    POC also test brid.gy mirrors (RSS→Bluesky bridges)?

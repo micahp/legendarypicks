@@ -113,7 +113,9 @@ LAYER_RULES = [
                "swap", "agreement"]),
 ]
 
-# Small notable-name list per league (POC only — real answer comes from our players table)
+# Small notable-name list per league (POC only). Real feature: O(1) on-demand
+# by-name lookup against `players` when a news item makes a name relevant —
+# never a full-table scan (Micah, 2026-08-06).
 NOTABLE = {
     "nfl": ["mahomes", "josh allen", "jalen hurts", "burrow", "lamar", "herbert", "stroud",
             "purdy", "saquon", "mccaffrey", "tyreek", "kelce", "jefferson", "jamarr",
