@@ -40,7 +40,7 @@ signals before designing the pipeline, DB, or UI.
 | Awful Announcing | `https://www.awfulannouncing.com/feed` | none | ✅ 200 — sports-media/strategy niche |
 | FanSided | `https://fansided.com/feed/` | none | ✅ 200 |
 | SB Nation network | `https://www.sbnation.com/rss/index.xml` + team blogs (e.g. bleedcubbieblue.com) | none | ✅ 200 |
-| Bluesky post search | `https://public.api.bsky.app/xrpc/app.bsky.feed.searchPosts?q=...` | none | ✅ narrative queries return real strategy chatter (dodgers salary cap, mls relegation, SEC superleague) |
+| Bluesky post search | `https://api.bsky.app/xrpc/app.bsky.feed.searchPosts?q=...` | none | ✅ narrative queries return real strategy chatter (dodgers salary cap, mls relegation, SEC superleague). `public.api.bsky.app` 403'd this box 2026-08-06; `api.bsky.app` verified working |
 | Bluesky author feeds | `.../app.bsky.feed.getAuthorFeed?actor=...` | none | ✅ works unauth (SB Nation verified) |
 | Google News RSS | `https://news.google.com/rss/search?q=...` | none | ✅ fallback aggregator |
 | The Athletic | (paywall + robots bans AI/LLM scraping) | — | ❌ use their Bluesky posts (@theathletic.com, 17k posts) instead |
@@ -115,9 +115,11 @@ Rules to carry forward:
 
 ## 5. Acceptance criteria (POC)
 
-- [ ] Runs with zero config from a plain `python3` (stdlib only — urllib, xml,
-      json; no new deps).
-- [ ] ≤ 10 external requests total; states the request count before running.
+- [ ] Runs with plain `python3`, no third-party deps — the only import beyond
+      stdlib is the in-repo shared client `backend/paced_http.py`.
+- [ ] States the request count per host **before** running (ESPN ≤ 4 to
+      `site.api.espn.com`, budgeted at 20; re-runs inside the cache TTL cost
+      zero requests).
 - [ ] Output JSON lists per league; MLB shows the Dodgers/cap narrative,
       MLS shows relegation, NCAAF shows SEC/consolidation, or explicitly reports
       which of those signals were NOT found (absence is a finding, not a pass).
