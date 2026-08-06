@@ -47,6 +47,8 @@ function getStatusBadge(status: GameProps['status']) {
 
 function getStatusLabel(status: GameProps['status'], statusDetail?: string) {
   if (status === 'LIVE') return 'LIVE'
+  // Suspended ≠ final: ESPN closes the event (state=post) but the match isn't over.
+  if (status === 'FINAL' && statusDetail && /susp/i.test(statusDetail)) return 'SUSPENDED'
   // Extra innings / OT: ESPN gives "Final/10", "Final/OT" — show it instead of plain FINAL.
   if (status === 'FINAL') return statusDetail && statusDetail.includes('/') ? statusDetail : 'FINAL'
   return 'SCHEDULED'
@@ -92,10 +94,10 @@ export default function GameCard(g: GameProps) {
   // Leagues with a real detail page (box score / play-by-play / game info tabs). NFL + WC were
   // added with the per-tab endpoints, so their cards must be clickable too — else the pages we built
   // are unreachable. CoD is clickable only when its score-source fixture has a verified PandaScore id.
-  const hasDetail = ['NBA', 'NHL', 'MLB', 'NFL', 'WC'].includes(g.league || '')
+  const hasDetail = ['NBA', 'NHL', 'MLB', 'NFL', 'WC', 'LCUP', 'MLS'].includes(g.league || '')
     || (g.league === 'COD' && !!g.detailGameId)
   const isTeamSport = g.league === 'NBA' || g.league === 'NHL' || g.league === 'MLB' || g.league === 'NFL'
-  const isSoccer = g.league === 'WC'
+  const isSoccer = g.league === 'WC' || g.league === 'LCUP' || g.league === 'MLS'
 
   const teamLabel = (t: GameProps['homeTeam']) => {
     if (!isTeamSport) return t.name
