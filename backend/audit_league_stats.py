@@ -91,7 +91,29 @@ MANIFEST = {
                 "qualifier": {"unit": "innings", "published": "1.0 IP x team games (162/162)"},
             },
         },
-        "position_content": {},
+        "position_content": {
+            # Two classes, measured 2026-08-05: every MLB position's log
+            # carries the same ESPN box-score line -- batters (PA/H/R/RBI/HR/
+            # BB/K/2B/3B/TB) and pitchers (batters_faced/hits_allowed/outs/
+            # BB/K), which are different jobs. A catcher and a shortstop need
+            # no different keys; a pitcher's log never carries a batting line
+            # (0 of 500 P logs have PA), so P declares the pitching line.
+            # 100% coverage measured over 500 sampled logs per class; floor
+            # 0.8 trips only on a collapse.
+            "1B": {"keys": [["PA"], ["H"], ["R"], ["RBI"], ["HR"]], "coverage": 0.8},
+            "2B": {"keys": [["PA"], ["H"], ["R"], ["RBI"], ["HR"]], "coverage": 0.8},
+            "3B": {"keys": [["PA"], ["H"], ["R"], ["RBI"], ["HR"]], "coverage": 0.8},
+            "C": {"keys": [["PA"], ["H"], ["R"], ["RBI"], ["HR"]], "coverage": 0.8},
+            "CF": {"keys": [["PA"], ["H"], ["R"], ["RBI"], ["HR"]], "coverage": 0.8},
+            "DH": {"keys": [["PA"], ["H"], ["R"], ["RBI"], ["HR"]], "coverage": 0.8},
+            "LF": {"keys": [["PA"], ["H"], ["R"], ["RBI"], ["HR"]], "coverage": 0.8},
+            "OF": {"keys": [["PA"], ["H"], ["R"], ["RBI"], ["HR"]], "coverage": 0.8},
+            "P": {"keys": [["batters_faced"], ["hits_allowed"], ["outs"]],
+                  "coverage": 0.8},
+            "RF": {"keys": [["PA"], ["H"], ["R"], ["RBI"], ["HR"]], "coverage": 0.8},
+            "SS": {"keys": [["PA"], ["H"], ["R"], ["RBI"], ["HR"]], "coverage": 0.8},
+            "TWP": {"keys": [["PA"], ["H"], ["R"], ["RBI"], ["HR"]], "coverage": 0.8},
+        },
         # `position` was excluded here with the note "MLB positions are 100% NULL
         # -- check C covers it". That stopped being true on 2026-08-04 when
         # roster_sync applied for MLB for the first time and filled every active
@@ -109,7 +131,20 @@ MANIFEST = {
                 "qualifier": {"unit": "games", "published": "58 games; FG% 300 FGM, 3P% 82 3PM, FT% 125 FTM"},
             },
         },
-        "position_content": {},
+        "position_content": {
+            # One class, measured 2026-08-05: every NBA position's log carries
+            # the same box-score line from ESPN (PTS/REB/AST/STL/BLK/FGM/FGA/
+            # FTM/FTA/3PM/MIN/TO) -- a point guard and a center need no
+            # different keys. 100% coverage measured over 500 sampled logs;
+            # floor 0.8 trips only on a collapse.
+            "C": {"keys": [["PTS"], ["REB"], ["AST"], ["MIN"], ["FGM"]], "coverage": 0.8},
+            "F": {"keys": [["PTS"], ["REB"], ["AST"], ["MIN"], ["FGM"]], "coverage": 0.8},
+            "G": {"keys": [["PTS"], ["REB"], ["AST"], ["MIN"], ["FGM"]], "coverage": 0.8},
+            "PF": {"keys": [["PTS"], ["REB"], ["AST"], ["MIN"], ["FGM"]], "coverage": 0.8},
+            "PG": {"keys": [["PTS"], ["REB"], ["AST"], ["MIN"], ["FGM"]], "coverage": 0.8},
+            "SF": {"keys": [["PTS"], ["REB"], ["AST"], ["MIN"], ["FGM"]], "coverage": 0.8},
+            "SG": {"keys": [["PTS"], ["REB"], ["AST"], ["MIN"], ["FGM"]], "coverage": 0.8},
+        },
         # `position_group` carries the parent level (PF -> F, SG -> G) beside
         # the leaf in `position`, the same split MLB has; see
         # migrate_league_position_groups.py.
@@ -202,21 +237,34 @@ MANIFEST = {
         # UFC is fighters + rankings, not a season-stats surface. It holds no
         # player_stats rows (the leaderboard checks A/D/E have nothing to
         # serve), fighters carry no position -- they have divisions, stored in
-        # ufc_rankings -- and game logs are per-fight. Nothing to declare,
-        # said out loud rather than omitted: a league the audit cannot see is
-        # a league nobody measured.
+        # ufc_rankings -- and game logs are per-fight.
         "stat_types": {},
-        "position_content": {},
+        "position_content": {
+            # One class: fighters have no position column, so the declaration
+            # is a single all-logs class -- a fight log must record the
+            # outcome and the clock. Measured 2026-08-05: result/method on
+            # 119/119 logs, round and fight_time_seconds on 118/119.
+            "FIGHTER": {"keys": [["result"], ["method"], ["round"],
+                                 ["fight_time_seconds"]], "coverage": 0.8,
+                        "all_logs": True},
+        },
         "single_vocabulary": [],
     },
     "wc": {
         # World Cup 2026 is over and the league is dormant until 2030
-        # (AGENTS.md). The tournament's 3,222 game logs remain in
+        # (AGENTS.md). The tournament's game logs remain in
         # player_game_logs; there are no player_stats rows and no pages
-        # serving them -- nothing to declare for the stats checks, said out
-        # loud rather than omitted.
+        # serving them.
         "stat_types": {},
-        "position_content": {},
+        "position_content": {
+            # One class: WC footballers carry no position in players (ESPN's
+            # soccer feed does not emit one into our table), so the
+            # declaration is a single all-logs class -- a footballer's log
+            # must record the scoring line. Measured 2026-08-05: goals/
+            # assists/shots/sot on 334/334 logs.
+            "PLAYER": {"keys": [["goals"], ["assists"], ["shots"], ["sot"]],
+                       "coverage": 0.8, "all_logs": True},
+        },
         "single_vocabulary": [],
     },
 }
@@ -462,15 +510,28 @@ def check_position_content(con, league, spec, out):
         if isinstance(entry, dict):
             keys = entry["keys"]
             floor = float(entry.get("coverage", _POSITION_CONTENT_FLOOR))
+            # A league with ONE class and no position column (UFC fighters,
+            # WC footballers) declares that class across every log rather than
+            # per position. all_logs=True samples the whole league, so the
+            # declaration is measurable instead of forever UNVERIFIED by a
+            # position join that can never match.
+            all_logs = bool(entry.get("all_logs", False))
         else:
             keys = entry
             floor = _POSITION_CONTENT_FLOOR
-        rows = con.execute(
-            """SELECT l.stats FROM player_game_logs l
-               JOIN players p ON p.id = l.player_id
-               WHERE l.league=? AND UPPER(TRIM(p.position))=? LIMIT 500""",
-            (league, position.upper()),
-        ).fetchall()
+            all_logs = False
+        if all_logs:
+            rows = con.execute(
+                "SELECT l.stats FROM player_game_logs l "
+                "JOIN players p ON p.id = l.player_id "
+                "WHERE l.league=? LIMIT 500", (league,)).fetchall()
+        else:
+            rows = con.execute(
+                """SELECT l.stats FROM player_game_logs l
+                   JOIN players p ON p.id = l.player_id
+                   WHERE l.league=? AND UPPER(TRIM(p.position))=? LIMIT 500""",
+                (league, position.upper()),
+            ).fetchall()
         if not rows:
             out.add(UNVERIFIED, league, f"B/position-content[{position}]",
                     "no game logs at all for this position -- cannot confirm "

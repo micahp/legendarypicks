@@ -2,7 +2,7 @@
   "_provenance": {
     "written": "2026-08-05",
     "decision": "Micah: keep the market-facing nickname as the canonical row name (ESPN fantasy and Yahoo both publish Kenny Gainwell). Each id below lists BOTH accepted spellings -- the row-side name and the publisher-side name -- because G/published-identity compares our row name to the id's own issuer, and the two disagree on which form is canonical.",
-    "checked": "16 rows measured from audit_league_stats G/published-identity against picks.db on 2026-08-05; every id verified against data/published-identity-names.json; every pair is the same human (nickname / compound surname / legal-name form), none is a wrong-person id.",
+    "checked": "18 rows measured from audit_league_stats G/published-identity against picks.db on 2026-08-05; every id verified against data/published-identity-names.json; every pair is the same human (nickname / compound surname / legal-name form), none is a wrong-person id. ufc/wc pairs added 2026-08-05 after fetch_identity_names.py gained ESPN-core fetchers: Ramazan Temurov/Temirov (transliteration) and Nicolas/Nico Gonzalez (ESPN nickname form).",
     "note": "An id absent from this file has NO accepted alternate spelling -- the gate stays strict about people. Adding an entry here is a human decision, reviewed in diff. The gate accepts a row name that matches the publisher OR any listed alias; a name matching neither is still a FAIL (a wrong person)."
   },
   "nba": {
@@ -26,5 +26,11 @@
     "8477919": ["Frederick Gaudreau", "Freddy Gaudreau"],
     "8479372": ["Joshua Mahura", "Josh Mahura"],
     "8476467": ["Jamie Oleksiak", "Jamieson Oleksiak"]
+  },
+  "ufc": {
+    "4895691": ["Ramazan Temurov", "Ramazan Temirov"]
+  },
+  "wc": {
+    "76017": ["Nicolás González", "Nico González"]
   }
 }

@@ -36,14 +36,19 @@ from __future__ import annotations
 
 import argparse
 import datetime as dt
+import functools
 import json
 import os
+import sqlite3
 import sys
 
 import paced_http
 
 ARTIFACT = os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "data", "published-identity-names.json")
+
+DB = os.environ.get("LP_DB_PATH") or os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "data", "picks.db")
 
 PEOPLE_URL = "https://statsapi.mlb.com/api/v1/sports/1/players?season={season}"
 HDR = {"User-Agent": "legendarypicks/1.0"}
@@ -189,11 +194,62 @@ def nba_identity_names(season: int) -> dict[str, str]:
         f"({'; '.join(errors)})")
 
 
+def espn_identity_names(season: int, *, sport: str, league_path: str,
+                        db_path: str = DB) -> dict[str, str]:
+    """Published `espn_id` -> display name, asked of ESPN core itself.
+
+    ufc and wc rows carry ONLY `espn_id`, and ESPN is the issuer of that id
+    (verified 2026-08-05: the ids match `sports.core.api.espn.com/v2/sports/
+    {sport}/athletes/{id}`). Asking anyone else would only prove two sources
+    agree about a name -- not that the id points at the row's person. So the
+    map is built one request per id we actually hold, from the publisher that
+    issued them. `season` is unused (ESPN athlete ids are not season-scoped)
+    but kept for the LEAGUES tuple's uniform signature.
+    """
+    connection = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
+    try:
+        ids = [
+            str(row[0]) for row in connection.execute(
+                "SELECT DISTINCT espn_id FROM players "
+                "WHERE league=? AND espn_id IS NOT NULL AND espn_id != ''",
+                ("ufc" if sport == "mma" else "wc",))
+        ]
+    finally:
+        connection.close()
+    if not ids:
+        raise IdentityFetchError(f"no espn_id rows for {league_path} in {db_path}")
+
+    out: dict[str, str] = {}
+    errors = []
+    for ext_id in ids:
+        url = ("https://sports.core.api.espn.com/v2/sports/{sport}/athletes/{id}"
+               "?lang=en&region=us").format(sport=sport, id=ext_id)
+        try:
+            document = _FETCH.fetch(url)
+            name = (document.get("displayName") or document.get("fullName") or "").strip()
+        except Exception as exc:  # noqa: BLE001 -- one bad id must not cost the rest
+            errors.append(f"{ext_id}: {type(exc).__name__}")
+            continue
+        if name:
+            out[ext_id] = name
+    if not out:
+        raise IdentityFetchError(
+            f"sports.core.api.espn.com published no names for {league_path} "
+            f"({len(ids)} ids asked; errors: {'; '.join(errors[:3])})")
+    return out
+
+
 LEAGUES = (
     ("mlb", "mlbam_id", mlb_identity_names, PEOPLE_URL),
     ("nfl", "nfl_gsis_id", nfl_identity_names, NFL_PLAYERS_URL),
     ("nhl", "nhl_id", nhl_identity_names, NHL_SUMMARY_URL),
     ("nba", "nba_id", nba_identity_names, NBA_URL),
+    ("ufc", "espn_id",
+     functools.partial(espn_identity_names, sport="mma", league_path="ufc"),
+     "https://sports.core.api.espn.com/v2/sports/mma/leagues/ufc/athletes"),
+    ("wc", "espn_id",
+     functools.partial(espn_identity_names, sport="soccer", league_path="fifa.world"),
+     "https://sports.core.api.espn.com/v2/sports/soccer/leagues/fifa.world/athletes"),
 )
 
 
