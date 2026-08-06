@@ -102,14 +102,14 @@ function normalizeLivePeriod(g: any, league?: string): LivePeriod | undefined {
     else if (lg === 'nhl') type = 'period'
     else if (lg === 'nfl') type = 'quarter'
     else if (lg === 'ufc') type = 'round'
-    else if (lg === 'wc') type = 'half'
+    else if (lg === 'wc' || lg === 'lcup' || lg === 'mls') type = 'half'
     else if (lg === 'cod') type = 'game'
     else if (lg === 'atp' || lg === 'wta') type = 'set'
 
     // For MLB, use ESPN's status_detail which has inning state ("Top 1st", "End 5th", etc.)
     // For soccer, pass through the displayClock / stage label
     let display: string | undefined
-    if (lg === 'wc') {
+    if (lg === 'wc' || lg === 'lcup' || lg === 'mls') {
       display = g?.clock ?? g?.status_detail ?? undefined
     } else if (lg === 'mlb' && g?.status_detail) {
       display = g.status_detail
@@ -132,7 +132,7 @@ function normalizeLivePeriod(g: any, league?: string): LivePeriod | undefined {
   }
 
   // WC: show running match clock even when period number is unavailable from ESPN
-  if (lg === 'wc') {
+  if (lg === 'wc' || lg === 'lcup' || lg === 'mls') {
     const clock = g?.clock ?? g?.status_detail
     if (clock) {
       return { number: 0, type: 'half', display: clock }
@@ -249,7 +249,7 @@ export const SportsService = {
   },
 
   getAllGamesByDate: async (date: string): Promise<Game[]> => {
-    const leagues = ['nba', 'mlb', 'nhl', 'nfl', 'atp', 'wta', 'cod', 'ufc', 'wc']
+    const leagues = ['nba', 'mlb', 'nhl', 'nfl', 'lcup', 'mls', 'atp', 'wta', 'cod', 'ufc', 'wc']
     const promises = leagues.map((l) => SportsService.getGamesByDate(l, date))
     const results = await Promise.all(promises)
     return results.flat()
@@ -303,7 +303,7 @@ export const SportsService = {
   },
 
   getAllGamesByLocalDate: async (localDate: string): Promise<Game[]> => {
-    const leagues = ['nba', 'mlb', 'nhl', 'nfl', 'atp', 'wta', 'cod', 'ufc', 'wc']
+    const leagues = ['nba', 'mlb', 'nhl', 'nfl', 'lcup', 'mls', 'atp', 'wta', 'cod', 'ufc', 'wc']
     const results = await Promise.all(leagues.map((l) => SportsService.getGamesByLocalDate(l, localDate)))
     return results.flat()
   },
