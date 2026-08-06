@@ -16,7 +16,7 @@ import GameProps from '../../../components/Game/GameProps'
 import GameStory from '../../../components/Game/GameStory'
 import WCContext from '../../../components/Game/WCContext'
 import BoothFeed from '../../../components/Game/BoothFeed'
-import ListenLive from '../../../components/ListenLive'
+import ListenLive, { LCUP_STREAM, LCUP_PAGE } from '../../../components/ListenLive'
 
 const TAB_DEFS: { key: Tab; label: string }[] = [
   { key: 'boxscore', label: 'Box Score' },
@@ -233,8 +233,8 @@ export default function GameDetailPage() {
 
   const lg = (league || '').toLowerCase()
   const showTabs = hasGameTabs(lg)
-  // WC gets an extra "From the Booth" tab for the live broadcast reads.
-  const tabDefs = lg === 'wc' ? [...TAB_DEFS, { key: 'booth' as Tab, label: 'From the Booth' }] : TAB_DEFS
+  // WC and Leagues Cup get an extra "From the Booth" tab for the live broadcast reads.
+  const tabDefs = lg === 'wc' || lg === 'lcup' ? [...TAB_DEFS, { key: 'booth' as Tab, label: 'From the Booth' }] : TAB_DEFS
   const usesDetail = usesDetailEndpoint(lg)
   const usesPerTab = usesPerTabEndpoints(lg)
 
@@ -290,6 +290,8 @@ export default function GameDetailPage() {
   const sAway = detail?.strength ? detail.strength[ctx?.away_team || ''] : undefined
   const homeRecord = sHome ? `${sHome.wins}-${sHome.losses}` : ''
   const awayRecord = sAway ? `${sAway.wins}-${sAway.losses}` : ''
+  // The Leagues Cup audio + booth tapes follow Inter Miami's Spanish radio feed.
+  const isMiamiLcup = lg === 'lcup' && (ctx?.home_team === 'MIA' || ctx?.away_team === 'MIA')
 
   return (
     <div className="max-w-4xl mx-auto space-y-5">
@@ -308,7 +310,9 @@ export default function GameDetailPage() {
         homeRecord={homeRecord} awayRecord={awayRecord}
       />
 
-      {lg === 'wc' ? <ListenLive /> : null}
+      {lg === 'wc' ? <ListenLive /> : isMiamiLcup ? (
+        <ListenLive streamUrl={LCUP_STREAM} streamPageUrl={LCUP_PAGE} label="Unánimo Deportes · Spanish radio (free)" />
+      ) : null}
 
       {/* Game context: WC gets the broadcast+market+form summary; others the AI matchup story */}
       {league && gameId && (lg === 'wc'
@@ -389,7 +393,15 @@ export default function GameDetailPage() {
               <GameProps league={league} gameId={gameId} inTab />
             )}
 
-            {tab === 'booth' && gameId && <BoothFeed gameId={gameId} />}
+            {tab === 'booth' && gameId && (
+              <BoothFeed
+                gameId={gameId}
+                contextLeague={lg === 'lcup' ? 'lcup' : 'wc'}
+                streamUrl={isMiamiLcup ? LCUP_STREAM : undefined}
+                streamPageUrl={isMiamiLcup ? LCUP_PAGE : undefined}
+                streamLabel={isMiamiLcup ? 'Unánimo Deportes · Spanish radio (free)' : undefined}
+              />
+            )}
           </div>
         </>
       ) : (
