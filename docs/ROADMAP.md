@@ -164,6 +164,15 @@ News page — Home tab is the catch-all across leagues, per-league tabs come
 eventually. Not per-league pages + homepage feed. Updated the checklist bullet
 and PLAN §1/§4.
 
+**Wired to dev 2026-08-06:** `news_items` table + collector
+(`backend/ingest_league_news.py` — ESPN/RSS/Bluesky, fail-fast per the ESPN
+doctrine, disk-cached re-runs) + `/api/news`, `/api/news/narratives`,
+`/api/news/{league}` + top-nav News page (Home catch-all + per-league tabs).
+Live on :8096/:3096, 302 rows in picks.dev.db. 13/13 tests green. Caveats:
+ESPN news returns ~1 article/league (thin but real); SB Nation is Atom (parser
+handles it now); NBA/NHL narrative signal is weak so far — that's the test
+Micah plans to run (he gives the narrative for some leagues, we find the rest).
+
 ---
 
 ## User evidence — 2026-07-26
