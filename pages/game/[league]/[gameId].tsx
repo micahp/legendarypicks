@@ -16,7 +16,7 @@ import GameProps from '../../../components/Game/GameProps'
 import GameStory from '../../../components/Game/GameStory'
 import WCContext from '../../../components/Game/WCContext'
 import BoothFeed from '../../../components/Game/BoothFeed'
-import ListenLive, { LCUP_STREAM, LCUP_PAGE } from '../../../components/ListenLive'
+import ListenLive from '../../../components/ListenLive'
 
 const TAB_DEFS: { key: Tab; label: string }[] = [
   { key: 'boxscore', label: 'Box Score' },
@@ -290,8 +290,6 @@ export default function GameDetailPage() {
   const sAway = detail?.strength ? detail.strength[ctx?.away_team || ''] : undefined
   const homeRecord = sHome ? `${sHome.wins}-${sHome.losses}` : ''
   const awayRecord = sAway ? `${sAway.wins}-${sAway.losses}` : ''
-  // The Leagues Cup audio + booth tapes follow Inter Miami's Spanish radio feed.
-  const isMiamiLcup = lg === 'lcup' && (ctx?.home_team === 'MIA' || ctx?.away_team === 'MIA')
 
   return (
     <div className="max-w-4xl mx-auto space-y-5">
@@ -310,9 +308,10 @@ export default function GameDetailPage() {
         homeRecord={homeRecord} awayRecord={awayRecord}
       />
 
-      {lg === 'wc' ? <ListenLive /> : isMiamiLcup ? (
-        <ListenLive streamUrl={LCUP_STREAM} streamPageUrl={LCUP_PAGE} label="Unánimo Deportes · Spanish radio (free)" />
-      ) : null}
+      {/* Leagues Cup audio: no reliable free feed found yet — Unánimo (Miami's
+          Spanish station) is not carrying LC games, so no stream card until the
+          right broadcast is located. Booth tab still shows the watcher tapes. */}
+      {lg === 'wc' ? <ListenLive /> : null}
 
       {/* Game context: WC gets the broadcast+market+form summary; others the AI matchup story */}
       {league && gameId && (lg === 'wc'
@@ -397,9 +396,7 @@ export default function GameDetailPage() {
               <BoothFeed
                 gameId={gameId}
                 contextLeague={lg === 'lcup' ? 'lcup' : 'wc'}
-                streamUrl={isMiamiLcup ? LCUP_STREAM : undefined}
-                streamPageUrl={isMiamiLcup ? LCUP_PAGE : undefined}
-                streamLabel={isMiamiLcup ? 'Unánimo Deportes · Spanish radio (free)' : undefined}
+                showListenLive={lg !== 'lcup'}
               />
             )}
           </div>

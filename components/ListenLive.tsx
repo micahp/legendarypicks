@@ -4,7 +4,7 @@
 // so nothing loads until tapped.
 export const WC_STREAM = 'https://stream.revma.ihrhls.com/zc11554'        // iHeart FIFA World Cup 2026 (FOX, AAC)
 export const WC_PAGE = 'https://www.iheart.com/live/fifa-world-cup-2026-11554/'
-export const LCUP_STREAM = 'https://27033.live.streamtheworld.com/WMYMAMAAC.aac'   // Unánimo Deportes (WMYMA 990 AM)
+export const LCUP_STREAM = '/api/stream/lcup'   // same-origin ffmpeg relay (STW raw AAC won't play in Chrome)
 export const LCUP_PAGE = 'https://www.iheart.com/live/unanimo-deportes-radio-8493/'
 
 export default function ListenLive({
