@@ -21,7 +21,14 @@ AI-generated news per league for Legendary Picks. Two layers, per league:
      NCAA?"), playoff legitimacy. Anchored by "From Mayo Showers to Media
      Monopoly: ESPN's Hand in Bowl Mania and the Quest for a True CFB Champion".
 2. **Granular layer** — concrete events: trades, staff decisions (coach
-   firings/hirings), injuries to key/notable players.
+   firings/hirings), injuries to key/notable players. **Speculation is not
+   news (Micah, 2026-08-06):** trade rumors, "realistic packages", "top 10
+   trades that should happen", trade-value/projection listicles are classified
+   `speculation` and never served. Only confirmed transactions (acquired /
+   signed / released / extension) or definitive statements ("no plans to trade
+   X") reach the board. Staff means a decision happened (fired / hired /
+   resigned / stepping down) — commentary that merely mentions coaches is not
+   staff.
 
 Both layers surface in a **News page in the top-level nav**. The **Home tab is
 the catch-all** across all leagues; **eventually there is one tab per league**
@@ -140,7 +147,15 @@ Rules to carry forward:
    is pulled only when a news item makes it relevant — an indexed by-name
    lookup (O(1)) per candidate mention, or the small curated list. O(n) for
    potentially no gain.
-3. **Underdog strategy content**: the tracker + keyword search is a proxy for the
+3. **Narrative generation — LinkedIn-trending style (Micah, 2026-08-06).** The
+   narrative layer's target: AI-generated summaries built from what people are
+   actually talking about — like LinkedIn's trending topics, where the feed is
+   generated from the chatter, not scraped headlines. The raw chatter signal is
+   already collected (Bluesky search posts + headlines); the next step is a
+   DeepSeek (in-repo key) pass that turns each league's chatter cluster into a
+   one-line "here's what everyone's talking about" narrative with sources.
+   Current narratives are real headlines — good, but that's the interim state.
+4. **Underdog strategy content**: the tracker + keyword search is a proxy for the
    unreachable X accounts. Is that enough for the strategy layer, or should the
    POC also test brid.gy mirrors (RSS→Bluesky bridges)?
 
