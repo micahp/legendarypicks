@@ -36,6 +36,7 @@ function leagueLabel(lg: string): string {
 
 type NewsItem = {
   id: number
+  league: string
   headline: string
   url: string
   source: string
@@ -50,6 +51,11 @@ type LeagueNews = {
   other: number
 }
 
+type NewsData = {
+  top: NewsItem[]
+  leagues: Record<string, LeagueNews>
+}
+
 function layerBadgeClass(layer: string): string {
   switch (layer) {
     case 'injury': return 'bg-red-500/15 text-red-400 border-red-500/30'
@@ -60,12 +66,13 @@ function layerBadgeClass(layer: string): string {
 }
 
 const LAYER_LABELS: Record<string, string> = {
+  narrative: 'NARRATIVE',
   injury: 'INJURY',
   trade: 'TRADE',
   staff: 'STAFF',
 }
 
-function NewsCard({ item, showLayer }: { item: NewsItem; showLayer: boolean }) {
+function NewsCard({ item, showLeague, showLayer }: { item: NewsItem; showLeague?: boolean; showLayer: boolean }) {
   return (
     <a
       href={item.url}
@@ -74,8 +81,15 @@ function NewsCard({ item, showLayer }: { item: NewsItem; showLayer: boolean }) {
       className="block rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2.5 hover:border-zinc-700 hover:bg-zinc-800/60 transition-colors"
     >
       <div className="flex items-start justify-between gap-3">
-        <span className="text-sm leading-snug text-zinc-100">{item.headline}</span>
-        {showLayer && item.layer !== 'narrative' && (
+        <span className="text-sm leading-snug text-zinc-100">
+          {showLeague && (
+            <span className="mr-2 whitespace-nowrap text-zinc-500">
+              {LEAGUE_EMOJIS[item.league] || '📰'} {leagueLabel(item.league)}
+            </span>
+          )}
+          {item.headline}
+        </span>
+        {showLayer && (
           <span className={`shrink-0 rounded border px-1.5 py-0.5 text-[10px] font-semibold tracking-wide ${layerBadgeClass(item.layer)}`}>
             {LAYER_LABELS[item.layer] || item.layer.toUpperCase()}
           </span>
@@ -117,7 +131,7 @@ function LeagueSection({ league, data }: { league: string; data: LeagueNews }) {
 }
 
 export default function NewsPage() {
-  const [data, setData] = useState<Record<string, LeagueNews> | null>(null)
+  const [data, setData] = useState<NewsData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [active, setActive] = useState('home')
@@ -130,7 +144,7 @@ export default function NewsPage() {
       try {
         const res = await fetch('/api/news')
         const json = await res.json()
-        if (!ignore) setData(json?.leagues ?? {})
+        if (!ignore) setData({ top: json?.top ?? [], leagues: json?.leagues ?? {} })
       } catch {
         if (!ignore) setError('Unable to load news.')
       } finally {
@@ -143,7 +157,7 @@ export default function NewsPage() {
 
   const leagues = useMemo(() => {
     if (!data) return []
-    const present = Object.keys(data).filter((lg) => lg !== 'unclassified')
+    const present = Object.keys(data.leagues).filter((lg) => lg !== 'unclassified')
     return LEAGUE_ORDER.filter((lg) => present.includes(lg))
       .concat(present.filter((lg) => !LEAGUE_ORDER.includes(lg)).sort())
   }, [data])
@@ -186,11 +200,18 @@ export default function NewsPage() {
 
         {!loading && !error && data && (
           active === 'home' ? (
-            leagues.length === 0
+            data.top.length === 0
               ? <p className="text-sm text-zinc-600">No news collected yet — the collector runs out-of-band (ingest_league_news.py).</p>
-              : <div className="space-y-8">{leagues.map((lg) => <LeagueSection key={lg} league={lg} data={data[lg]} />)}</div>
+              : (
+                <div className="space-y-3">
+                  <h2 className="text-sm font-semibold uppercase tracking-wider text-zinc-500">Top 10 across leagues</h2>
+                  {data.top.map((item) => (
+                    <NewsCard key={item.id} item={item} showLeague showLayer />
+                  ))}
+                </div>
+              )
           ) : (
-            <LeagueSection league={active} data={data[active] || { narratives: [], granular: [], other: 0 }} />
+            <LeagueSection league={active} data={data.leagues[active] || { narratives: [], granular: [], other: 0 }} />
           )
         )}
       </div>

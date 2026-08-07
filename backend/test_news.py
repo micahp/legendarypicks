@@ -101,6 +101,26 @@ class NewsApiTests(unittest.TestCase):
                          "Fox backs out of NFL negotiations")
         self.assertEqual(data["leagues"]["nfl"]["granular"][0]["layer"], "injury")
         self.assertEqual(data["leagues"]["mlb"]["granular"][0]["layer"], "trade")
+        # top feed: flat, recency-ordered, carries league
+        self.assertEqual(len(data["top"]), 4)
+        self.assertEqual({t["league"] for t in data["top"]}, {"nfl", "mlb"})
+        self.assertTrue(all("league" in t for t in data["top"]))
+
+    def test_top_caps_at_10_and_excludes_junk(self):
+        for i in range(12):
+            _insert("Item %d" % i, "nfl" if i % 2 else "mlb", "injury", "http://x/t%d" % i,
+                    published="2026-08-06T%02d:00:00Z" % (23 - i))
+        _insert("Junk row", "unclassified", "other", "http://x/junk",
+                published="2026-08-07T00:00:00Z")
+
+        data = news.news_catch_all(league=None)
+        self.assertEqual(len(data["top"]), 10)
+        # most recent first
+        pubs = [t["published"] for t in data["top"]]
+        self.assertEqual(pubs, sorted(pubs, reverse=True))
+        # junk (other layer / unclassified league) never in top
+        self.assertTrue(all(t["layer"] != "other" for t in data["top"]))
+        self.assertTrue(all(t["league"] != "unclassified" for t in data["top"]))
 
     def test_narratives_one_per_league(self):
         _insert("Fox backs out of NFL negotiations", "nfl", "narrative", "http://x/1")

@@ -25,6 +25,7 @@ _GRANULAR_PER_LEAGUE = 12
 def _item(r) -> dict:
     return {
         "id": r["id"],
+        "league": r["league"],
         "headline": r["headline"],
         "url": r["url"],
         "source": r["source"],
@@ -68,13 +69,25 @@ def _league_report(league: Optional[str] = None) -> dict:
 
 @router.get("/api/news")
 def news_catch_all(league: Optional[str] = Query(None, description="Filter to one league")):
-    """Catch-all feed (Home tab). Optionally ?league=nfl for a single league."""
+    """Catch-all feed (Home tab). `top` = the 10 most recent items across all
+    leagues (recency-ordered, unclassified excluded); `leagues` = per-league
+    grouping for the league tabs. Optionally ?league=nfl for a single league."""
     if league:
         return {
             "generated": datetime.now(timezone.utc).isoformat(),
             "leagues": _league_report(league.strip().lower()),
         }
-    return {"generated": datetime.now(timezone.utc).isoformat(), "leagues": _league_report()}
+    with closing(_db()) as con:
+        rows = con.execute(
+            """SELECT * FROM news_items
+               WHERE league != 'unclassified' AND layer IN ('narrative','trade','staff','injury')
+               ORDER BY published DESC LIMIT 10"""
+        ).fetchall()
+    return {
+        "generated": datetime.now(timezone.utc).isoformat(),
+        "top": [_item(r) for r in rows],
+        "leagues": _league_report(),
+    }
 
 
 @router.get("/api/news/narratives")
