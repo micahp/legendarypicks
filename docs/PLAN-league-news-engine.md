@@ -147,14 +147,14 @@ Rules to carry forward:
    is pulled only when a news item makes it relevant — an indexed by-name
    lookup (O(1)) per candidate mention, or the small curated list. O(n) for
    potentially no gain.
-3. **Narrative generation — LinkedIn-trending style (Micah, 2026-08-06).** The
-   narrative layer's target: AI-generated summaries built from what people are
-   actually talking about — like LinkedIn's trending topics, where the feed is
-   generated from the chatter, not scraped headlines. The raw chatter signal is
-   already collected (Bluesky search posts + headlines); the next step is a
-   DeepSeek (in-repo key) pass that turns each league's chatter cluster into a
-   one-line "here's what everyone's talking about" narrative with sources.
-   Current narratives are real headlines — good, but that's the interim state.
+3. **Narrative generation — LinkedIn-trending style — BUILT 2026-08-06.**
+   `backend/ingest_league_narratives.py` runs a DeepSeek pass (in-repo key,
+   max_tokens=4000 + 1 retry — the reasoning model eats token budgets) over each
+   league's narrative-layer chatter and writes one "here's what everyone's
+   talking about" line + 2-3 points + grounded sources to `news_narratives`.
+   Served via `/api/news/narratives` and rendered as the AI card atop each
+   league tab's Narrative section, honestly labeled "AI-generated from N
+   headlines" with source chips. Raw headlines stay as the fallback surface.
 4. **Underdog strategy content**: the tracker + keyword search is a proxy for the
    unreachable X accounts. Is that enough for the strategy layer, or should the
    POC also test brid.gy mirrors (RSS→Bluesky bridges)?
