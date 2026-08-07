@@ -35,6 +35,35 @@ class ClassifierTests(unittest.TestCase):
         self.assertEqual(c["layer"], "trade")
         self.assertEqual(c["league"], "nfl")
 
+    def test_trade_extension(self):
+        c = classify("Colts, RB Jonathan Taylor agree to extension")
+        self.assertEqual(c["layer"], "trade")
+
+    def test_trade_release(self):
+        c = classify("Pirates release DH Marcell Ozuna")
+        self.assertEqual(c["layer"], "trade")
+
+    def test_trade_definitive_statement(self):
+        # "no plans to trade" is real signal, not speculation
+        c = classify("Bucs GM: No plans to trade Vita Vea, Baker Mayfield a franchise QB")
+        self.assertEqual(c["layer"], "trade")
+
+    def test_trade_speculation_packages(self):
+        c = classify("Realistic trade packages for Jonathan Taylor")
+        self.assertEqual(c["layer"], "speculation")
+
+    def test_trade_speculation_should_happen(self):
+        c = classify("Top 10 trades that should happen this offseason")
+        self.assertEqual(c["layer"], "speculation")
+
+    def test_trade_speculation_projection(self):
+        c = classify("Projecting trade packages for Marcell Ozuna")
+        self.assertEqual(c["layer"], "speculation")
+
+    def test_trade_speculation_rumor(self):
+        c = classify("NFL Rumors: Falcons emerge as Tyreek Hill trade destination")
+        self.assertEqual(c["layer"], "speculation")
+
     def test_injury(self):
         c = classify("Broncos coach: WR Jaylen Waddle (leg) out 4-5 days")
         self.assertEqual(c["layer"], "injury")
@@ -44,6 +73,20 @@ class ClassifierTests(unittest.TestCase):
         c = classify("Eagles fire defensive coordinator after rough start")
         self.assertEqual(c["layer"], "staff")
         self.assertEqual(c["league"], "nfl")
+
+    def test_staff_hired(self):
+        c = classify("Eagles hire new offensive coordinator")
+        self.assertEqual(c["layer"], "staff")
+
+    def test_staff_not_coaches_poll(self):
+        # commentary that merely mentions coaches is not a staff decision
+        c = classify("Preseason coaches poll just inflates SEC, Big Ten egos")
+        self.assertNotEqual(c["layer"], "staff")
+
+    def test_staff_not_fired_up(self):
+        # "fired up" = excited, not terminated
+        c = classify("Jon Gruden 'fired up' for NFL play-by-play opportunity")
+        self.assertNotEqual(c["layer"], "staff")
 
     def test_narrative_cap(self):
         c = classify("With Dodgers in a free fall, should a salary cap be instituted?")
