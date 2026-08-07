@@ -170,10 +170,23 @@ class NewsApiTests(unittest.TestCase):
         _insert("Dodgers salary cap debate", "mlb", "narrative", "http://x/3")
         _insert("Second MLB narrative", "mlb", "narrative", "http://x/5")
 
+        con = sqlite3.connect(_TEST_DB.name)
+        con.execute(
+            """INSERT INTO news_narratives(league, narrative, points, sources, source_count)
+               VALUES ('nfl', 'Media rights talks are shifting.', '[]', '[{"headline":"h","url":"u","source":"s"}]', 1)""")
+        con.execute(
+            """INSERT INTO news_narratives(league, narrative, points, sources, source_count)
+               VALUES ('mlb', 'The cap debate is the story.', '["Dodgers spend"]', '[]', 1)""")
+        con.commit()
+        con.close()
+
         data = news.news_narratives()
         leagues = [n["league"] for n in data["narratives"]]
         self.assertEqual(leagues, ["mlb", "nfl"])  # sorted
         self.assertEqual(len([n for n in data["narratives"] if n["league"] == "mlb"]), 1)
+        self.assertEqual(data["narratives"][0]["narrative"], "The cap debate is the story.")
+        self.assertEqual(data["narratives"][1]["points"], [])
+        self.assertEqual(data["narratives"][1]["sources"][0]["headline"], "h")
 
     def test_league_filter(self):
         _insert("Fox backs out of NFL negotiations", "nfl", "narrative", "http://x/1")

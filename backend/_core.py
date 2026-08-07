@@ -203,6 +203,17 @@ def _init_db():
             "CREATE INDEX IF NOT EXISTS idx_news_league_layer "
             "ON news_items(league, layer, published)"
         )
+        # AI-generated league narratives (LinkedIn-trending style): one row per
+        # league, produced by ingest_league_narratives.py from the chatter.
+        con.execute("""
+        CREATE TABLE IF NOT EXISTS news_narratives(
+          league TEXT PRIMARY KEY,
+          narrative TEXT NOT NULL,
+          points TEXT NOT NULL DEFAULT '[]',
+          sources TEXT NOT NULL DEFAULT '[]',
+          source_count INTEGER NOT NULL DEFAULT 0,
+          generated_at TEXT NOT NULL DEFAULT (datetime('now')));
+        """)
         con.commit()
 
 

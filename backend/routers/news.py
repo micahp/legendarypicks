@@ -8,6 +8,7 @@ Surface model (matches the News page):
   GET /api/news/narratives   one narrative per league (must precede /{league})
   GET /api/news/{league}     single league
 """
+import json
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Query
@@ -55,14 +56,26 @@ def _league_report(league: Optional[str] = None) -> dict:
             for r in rows:
                 groups.setdefault(r["league"], []).append(r)
 
+        # AI-generated narratives (news_narratives), keyed by league
+        ai_rows = con.execute("SELECT * FROM news_narratives").fetchall()
+        ai = {r["league"]: r for r in ai_rows}
+
     out = {}
     for lg, rows in groups.items():
         narratives = [r for r in rows if r["layer"] == "narrative"][:_NARRATIVES_PER_LEAGUE]
         granular = [r for r in rows if r["layer"] in _GRANULAR_LAYERS][:_GRANULAR_PER_LEAGUE]
+        a = ai.get(lg)
         out[lg] = {
             "narratives": [_item(r) for r in narratives],
             "granular": [_item(r) for r in granular],
             "other": max(0, len(rows) - len(narratives) - len(granular)),
+            "ai": {
+                "narrative": a["narrative"],
+                "points": json.loads(a["points"] or "[]"),
+                "sources": json.loads(a["sources"] or "[]"),
+                "generated_at": a["generated_at"],
+                "source_count": a["source_count"],
+            } if a else None,
         }
     return out
 
@@ -92,18 +105,20 @@ def news_catch_all(league: Optional[str] = Query(None, description="Filter to on
 
 @router.get("/api/news/narratives")
 def news_narratives():
-    """One narrative per league — the meta-story each league is telling."""
+    """One AI-generated narrative per league — what people are actually talking
+    about, with the source headlines it was grounded in (LinkedIn-trending)."""
     report = _league_report()
     narratives = []
     for lg in sorted(report):
-        n = report[lg]["narratives"]
-        if n:
+        a = report[lg].get("ai")
+        if a:
             narratives.append({
                 "league": lg,
-                "headline": n[0]["headline"],
-                "url": n[0]["url"],
-                "source": n[0]["source"],
-                "published": n[0]["published"],
+                "narrative": a["narrative"],
+                "points": a["points"],
+                "sources": a["sources"],
+                "generated_at": a["generated_at"],
+                "source_count": a["source_count"],
             })
     return {"generated": datetime.now(timezone.utc).isoformat(), "narratives": narratives}
 
