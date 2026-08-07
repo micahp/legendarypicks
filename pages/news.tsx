@@ -45,10 +45,19 @@ type NewsItem = {
   key_player: string | null
 }
 
+type AiNarrative = {
+  narrative: string
+  points: string[]
+  sources: { headline: string; url: string; source: string }[]
+  generated_at: string
+  source_count: number
+}
+
 type LeagueNews = {
   narratives: NewsItem[]
   granular: NewsItem[]
   other: number
+  ai: AiNarrative | null
 }
 
 type NewsData = {
@@ -104,6 +113,41 @@ function NewsCard({ item, showLeague, showLayer }: { item: NewsItem; showLeague?
   )
 }
 
+function AiNarrativeCard({ ai }: { ai: AiNarrative }) {
+  return (
+    <div className="rounded-lg border border-emerald-500/20 bg-zinc-900 px-4 py-3">
+      <p className="text-sm leading-relaxed text-zinc-100">
+        <span className="mr-2 text-emerald-400">“</span>
+        {ai.narrative}
+        <span className="ml-2 text-emerald-400">”</span>
+      </p>
+      {ai.points.length > 0 && (
+        <ul className="mt-2 space-y-1 text-xs text-zinc-400">
+          {ai.points.map((p, i) => (
+            <li key={i} className="flex gap-2"><span className="text-emerald-500/70">•</span>{p}</li>
+          ))}
+        </ul>
+      )}
+      <div className="mt-3 flex flex-wrap gap-2">
+        {ai.sources.map((s, i) => (
+          <a
+            key={i}
+            href={s.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="rounded border border-zinc-700 px-2 py-1 text-[11px] text-zinc-400 hover:border-zinc-500 hover:text-zinc-200"
+          >
+            {s.source} · {s.headline.slice(0, 42)}
+          </a>
+        ))}
+      </div>
+      <p className="mt-2 text-[10px] uppercase tracking-wide text-zinc-600">
+        AI-generated from {ai.source_count} headlines · {new Date(ai.generated_at).toLocaleDateString()}
+      </p>
+    </div>
+  )
+}
+
 function LeagueSection({ league, data }: { league: string; data: LeagueNews }) {
   return (
     <section className="space-y-3">
@@ -111,6 +155,7 @@ function LeagueSection({ league, data }: { league: string; data: LeagueNews }) {
         <span>{LEAGUE_EMOJIS[league] || '📰'}</span>
         <span>{leagueLabel(league)}</span>
       </h2>
+      {data.ai && <AiNarrativeCard ai={data.ai} />}
       {data.narratives.length > 0 && (
         <div className="space-y-2">
           <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Narrative</h3>
@@ -123,7 +168,7 @@ function LeagueSection({ league, data }: { league: string; data: LeagueNews }) {
           {data.granular.map((g) => <NewsCard key={g.id} item={g} showLayer />)}
         </div>
       )}
-      {data.narratives.length === 0 && data.granular.length === 0 && (
+      {data.narratives.length === 0 && data.granular.length === 0 && !data.ai && (
         <p className="text-sm text-zinc-600">No classified news yet for {leagueLabel(league)}.</p>
       )}
     </section>
@@ -211,7 +256,7 @@ export default function NewsPage() {
                 </div>
               )
           ) : (
-            <LeagueSection league={active} data={data.leagues[active] || { narratives: [], granular: [], other: 0 }} />
+            <LeagueSection league={active} data={data.leagues[active] || { narratives: [], granular: [], other: 0, ai: null }} />
           )
         )}
       </div>
