@@ -115,35 +115,34 @@ function NewsCard({ item, showLeague, showLayer }: { item: NewsItem; showLeague?
 
 function AiNarrativeCard({ ai }: { ai: AiNarrative }) {
   return (
-    <div className="rounded-lg border border-emerald-500/20 bg-zinc-900 px-4 py-3">
-      <p className="text-sm leading-relaxed text-zinc-100">
-        <span className="mr-2 text-emerald-400">“</span>
-        {ai.narrative}
-        <span className="ml-2 text-emerald-400">”</span>
-      </p>
+    <div className="rounded-lg border border-zinc-800 bg-zinc-900 px-4 py-3">
+      <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
+        What everyone's talking about
+      </h3>
+      <p className="mt-1.5 text-[15px] leading-relaxed text-zinc-100">{ai.narrative}</p>
       {ai.points.length > 0 && (
-        <ul className="mt-2 space-y-1 text-xs text-zinc-400">
+        <ul className="mt-2 space-y-1 text-sm text-zinc-400">
           {ai.points.map((p, i) => (
             <li key={i} className="flex gap-2"><span className="text-emerald-500/70">•</span>{p}</li>
           ))}
         </ul>
       )}
-      <div className="mt-3 flex flex-wrap gap-2">
+      <div className="mt-2.5 text-xs text-zinc-500">
         {ai.sources.map((s, i) => (
-          <a
-            key={i}
-            href={s.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="rounded border border-zinc-700 px-2 py-1 text-[11px] text-zinc-400 hover:border-zinc-500 hover:text-zinc-200"
-          >
-            {s.source} · {s.headline.slice(0, 42)}
-          </a>
+          <span key={i}>
+            {i > 0 && <span className="mx-1.5 text-zinc-700">·</span>}
+            <a
+              href={s.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-zinc-400 hover:text-emerald-400"
+            >
+              {s.source}
+            </a>
+          </span>
         ))}
+        <span className="ml-2 text-zinc-600">— AI-generated from {ai.source_count} sources</span>
       </div>
-      <p className="mt-2 text-[10px] uppercase tracking-wide text-zinc-600">
-        AI-generated from {ai.source_count} headlines · {new Date(ai.generated_at).toLocaleDateString()}
-      </p>
     </div>
   )
 }

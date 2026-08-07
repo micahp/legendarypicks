@@ -41,7 +41,8 @@ def _league_report(league: Optional[str] = None) -> dict:
         if league:
             rows = con.execute(
                 """SELECT * FROM news_items
-                   WHERE league=? AND layer IN ('narrative','trade','staff','injury')
+                   WHERE league=? AND source != 'bluesky'
+                     AND layer IN ('narrative','trade','staff','injury')
                    ORDER BY published DESC LIMIT 60""",
                 (league,),
             ).fetchall()
@@ -49,7 +50,8 @@ def _league_report(league: Optional[str] = None) -> dict:
         else:
             rows = con.execute(
                 """SELECT * FROM news_items
-                   WHERE layer IN ('narrative','trade','staff','injury')
+                   WHERE source != 'bluesky'
+                     AND layer IN ('narrative','trade','staff','injury')
                    ORDER BY published DESC LIMIT 300"""
             ).fetchall()
             groups = {}
@@ -93,7 +95,8 @@ def news_catch_all(league: Optional[str] = Query(None, description="Filter to on
     with closing(_db()) as con:
         rows = con.execute(
             """SELECT * FROM news_items
-               WHERE league != 'unclassified' AND layer IN ('narrative','trade','staff','injury')
+               WHERE league != 'unclassified' AND source != 'bluesky'
+                 AND layer IN ('narrative','trade','staff','injury')
                ORDER BY published DESC LIMIT 10"""
         ).fetchall()
     return {

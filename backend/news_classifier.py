@@ -123,6 +123,12 @@ def classify(text: str, source_hint: Optional[str] = None) -> Dict[str, Optional
         league = source_hint
     if league is None:
         league = "unclassified"
+    # "Giants" is ambiguous (NYG = nfl, SF = mlb). A Giants *broadcaster*
+    # retiring/stepping away is the MLB San Francisco Giants.
+    if league == "nfl" and "giants" in t and any(
+            w in t for w in ("broadcast", "broadcasts", "broadcaster", "retiring",
+                             "retirement", "step away")):
+        league = "mlb"
 
     layer = "other"
     if any(w in t for w in STRONG_SPEC):

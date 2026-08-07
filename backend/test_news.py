@@ -108,6 +108,13 @@ class ClassifierTests(unittest.TestCase):
         self.assertEqual(c["key_player"], "Messi")
         self.assertEqual(c["league"], "mls")
 
+    def test_giants_broadcaster_is_mlb(self):
+        # SF Giants broadcaster = MLB, not the NFL Giants
+        c = classify("Longtime Giants broadcaster Mike Krukow retiring after 37 seasons")
+        self.assertEqual(c["league"], "mlb")
+        c2 = classify("Giants sign quarterback to extension")
+        self.assertEqual(c2["league"], "nfl")
+
     def test_unclassified(self):
         c = classify("Local bakery wins regional award")
         self.assertEqual(c["league"], "unclassified")
@@ -197,6 +204,18 @@ class NewsApiTests(unittest.TestCase):
 
         data2 = news.news_for_league("nfl")
         self.assertEqual(set(data2["leagues"].keys()), {"nfl"})
+
+    def test_bluesky_not_served(self):
+        # social posts are signal for the AI narrative, never displayed
+        _insert("[@user] Dodgers salary cap chatter", "mlb", "narrative", "http://bsky/1",
+                source="bluesky", published="2026-08-06T23:00:00Z")
+        _insert("Dodgers salary cap debate", "mlb", "narrative", "http://x/1",
+                published="2026-08-06T12:00:00Z")
+        data = news.news_catch_all(league=None)
+        self.assertEqual(len(data["top"]), 1)
+        self.assertEqual(data["top"][0]["source"], "test")
+        self.assertTrue(all(i["source"] != "bluesky"
+                            for i in data["leagues"]["mlb"]["narratives"]))
 
     def test_other_rows_not_served(self):
         _insert("Local bakery wins award", "unclassified", "other", "http://x/9")

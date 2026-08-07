@@ -200,7 +200,8 @@ def upsert(items, dry_run=False):
             """INSERT INTO news_items(league, layer, source, headline, body, url, published, key_player)
                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                ON CONFLICT(url) DO UPDATE SET
-                 headline=excluded.headline, body=excluded.body, published=excluded.published,
+                 league=excluded.league, headline=excluded.headline, body=excluded.body,
+                 published=excluded.published,
                  layer=excluded.layer, key_player=excluded.key_player, source=excluded.source""",
             (it["league"], it["layer"], it["source"], it["headline"], it["body"],
              it["url"], it["published"], it.get("key_player")),
@@ -215,6 +216,32 @@ def upsert(items, dry_run=False):
     return inserted, updated
 
 
+def reclassify_existing(dry_run=False):
+    """Re-run the classifier over stored rows (headline+body) and update
+    league/layer/key_player — items that fell out of the live feeds keep their
+    old classification otherwise (e.g. the Giants-broadcaster MLB fix)."""
+    import sqlite3
+    db_path = os.environ.get("LP_DB_PATH") or os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), "data", "picks.db")
+    con = sqlite3.connect(db_path)
+    rows = con.execute(
+        "SELECT id, headline, body, source FROM news_items WHERE url != ''").fetchall()
+    changed = 0
+    for rid, headline, body, source in rows:
+        src_league = source.replace("espn-", "") if source.startswith("espn-") else None
+        cls = classify((headline or "") + " " + (body or ""), src_league)
+        if not dry_run:
+            cur = con.execute(
+                "UPDATE news_items SET league=?, layer=?, key_player=? WHERE id=?",
+                (cls["league"], cls["layer"], cls.get("key_player"), rid))
+            changed += cur.rowcount
+        else:
+            changed += 1
+    con.commit()
+    con.close()
+    print("Reclassified %d rows%s" % (changed, " (dry run)" if dry_run else ""))
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--leagues", default="nfl,mlb,mls,ncaaf",
@@ -222,7 +249,13 @@ def main():
     ap.add_argument("--no-espn", action="store_true")
     ap.add_argument("--no-rss", action="store_true")
     ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("--reclassify", action="store_true",
+                    help="re-run the classifier over stored rows (no network)")
     args = ap.parse_args()
+
+    if args.reclassify:
+        reclassify_existing(dry_run=args.dry_run)
+        return
 
     leagues = [l.strip() for l in args.leagues.split(",") if l.strip() in ESPN_NEWS]
 
