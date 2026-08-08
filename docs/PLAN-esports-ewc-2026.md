@@ -20,6 +20,14 @@ list of unrelated matches.
 4. Preserve the work already completed on live streams, match identity, results, picks, and
    viewer-local result days rather than creating a second esports pipeline.
 
+## Information architecture correction — 2026-08-08
+
+- `/esports` remains the live broadcast and match board; it does not host the EWC tournament center.
+- `/leagues/esports` is the Esports league hub and owns the EWC tournament center, Club
+  Championship rail, cross-title schedule, and results.
+- The main `/leagues` directory includes a visible Esports entry linking to that hub.
+- The EWC APIs and CoD scoreboard reconciliation remain shared backend contracts.
+
 ## Research snapshot — 2026-08-08
 
 ### What EWC is right now
