@@ -166,6 +166,10 @@ def _attach_cod_detail_ids(matches):
         return matches
 
     for match in matches:
+        # Rows already reconciled (EWC bracket rows carry a PandaScore id from the indexed
+        # bracket graph) must not trigger a second, per-row fuzzy lookup.
+        if match.get("detail_game_id"):
+            continue
         home = (match.get("home") or {}).get("name")
         away = (match.get("away") or {}).get("name")
         near_ms = _iso_to_ms(match.get("date"))
@@ -412,6 +416,11 @@ def get_games(league: str, date: Optional[str] = Query(None, description="YYYY-M
             import breakingpoint_client
             matches = breakingpoint_client.get_cod_matches(date_str=date)
             if matches:
+                # EWC bracket rows: reconcile against the indexed PandaScore codmw EWC window
+                # (once per refresh) so raw "TBD" participants never reach the scoreboard. Non-EWC
+                # CDL rows pass through unchanged. See routers/esports/cod_ewc.py.
+                from routers.esports.cod_ewc import reconcile_cod_matches
+                matches = reconcile_cod_matches(matches)
                 return _attach_cod_detail_ids(matches)
         except Exception as e:
             print(f"[sports_service] breakingpoint failed ({e}), falling back to cdl_client")
