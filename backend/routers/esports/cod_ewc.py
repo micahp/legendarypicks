@@ -142,24 +142,36 @@ def build_ewc_cod_graph(bracket_matches, serie_matches):
 
 def _feeder_display(graph, feeder_id):
     """A short display for a feeder match: 'A vs B' when both sides are known clubs, else the
-    feeder's bracket node name (e.g. 'Quarterfinal 3')."""
+    feeder's bracket node name (e.g. 'Quarterfinal 3').  When the feeder node is absent from the
+    graph, an honest structural label is used — never a literal 'TBD'."""
     node = graph["nodes"].get(feeder_id)
     if node is None:
-        return "TBD"
+        return "preceding match"
     names = [_side_name(node["opponents"], i) for i in (0, 1)]
     if names[0] and names[1]:
         return f"{names[0]}–{names[1]}"
-    return node["node_name"].split(":")[0].strip() or "TBD"
+    return node["node_name"].split(":")[0].strip() or "preceding match"
 
 
-def _feeder_outcome_club(graph, feeder_id):
-    """The club a decided feeder produces for its downstream slot, or None if undecided."""
+def _feeder_outcome_club(graph, feeder_id, outcome):
+    """The club a decided feeder produces for its downstream slot, or None if undecided.
+
+    ``outcome`` is the predecessor entry type ('winner' or 'loser'): the winner side is the
+    feeder's ``winner_id`` club; the loser side is the *other* named opponent.  Returns
+    ``(club_id, club_name)``, or None when the side cannot be determined (feeder undecided, the
+    loser's identity absent from the feeder's opponent list, or an unknown outcome type)."""
     node = graph["nodes"].get(feeder_id)
     if node is None or not node.get("winner_id"):
         return None
-    for i, opp in enumerate(node["opponents"]):
-        if opp.get("id") == node["winner_id"]:
-            return opp.get("name")
+    if outcome == "loser":
+        others = [opp for opp in node["opponents"] if opp.get("id") != node["winner_id"]]
+        if len(others) == 1 and others[0].get("id") and others[0].get("name"):
+            return (others[0]["id"], others[0]["name"])
+        return None
+    if outcome == "winner":
+        for opp in node["opponents"]:
+            if opp.get("id") == node["winner_id"]:
+                return (opp.get("id"), opp.get("name"))
     return None
 
 
@@ -168,7 +180,9 @@ def resolve_sides(graph, ps_id):
 
     For a node with predecessor entries the sides come from the feeder graph (winner/loser of the
     feeder match), never from the node's own stale ``opponents``/``name`` (PandaScore seeds those
-    with the pre-tournament slot names).  Verified against the 2026-08-08 fixture: PandaScore's
+    with the pre-tournament slot names).  The predecessor's ``type`` decides which side of the
+    feeder fills the slot: ``winner`` for semifinal/grand-final slots, ``loser`` for the 3rd-place
+    decider.  Verified against the 2026-08-08 fixture: PandaScore's
     ``previous_matches`` lists slot 2 first, then slot 1 (e.g. SF1 ``[winner(1609943),
     winner(1609942)]`` while ``opponents[0]``/name put HTCS = winner(1609942) on slot 1), so the
     pair is emitted as ``[prev[1], prev[0]]`` to match the node's own slot order.  Returns
@@ -190,9 +204,9 @@ def resolve_sides(graph, ps_id):
     ordered = [prev[1] if len(prev) > 1 else prev[0], prev[0]]
     sides = []
     for outcome, feeder_id in ordered:
-        club = _feeder_outcome_club(graph, feeder_id)
-        if club is not None:
-            sides.append(named_participant(graph["nodes"][feeder_id].get("winner_id"), club))
+        resolved = _feeder_outcome_club(graph, feeder_id, outcome)
+        if resolved is not None:
+            sides.append(named_participant(resolved[0], resolved[1]))
             continue
         word = "Winner" if outcome == "winner" else "Loser"
         label = f"{word} of {_feeder_display(graph, feeder_id)}"
@@ -263,7 +277,8 @@ def associate_bp_row(bp_row, graph, used_ids):
             if bp_ms and node["scheduled_ms"] and abs(bp_ms - node["scheduled_ms"]) > _TIME_TOL_MS:
                 continue
             hits.append(node["ps_id"])
-        return hits[0] if len(hits) == 1 else (hits[0] if len(hits) > 1 else None)
+        # One exact name match resolves; two or more is ambiguity — never guess the first.
+        return hits[0] if len(hits) == 1 else None
 
     # Tier 2: decided score pair.
     if bp_score is not None:

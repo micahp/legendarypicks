@@ -1,9 +1,9 @@
 # Plan — bring back `/esports` around EWC 2026
 
-**Plan iteration:** 2 — research plus repository-skill review  
-**Date:** 2026-08-08  
-**Implementation status:** NOT STARTED  
-**Release status:** no candidate, DEV, or production change
+**Plan iteration:** 2 — research plus repository-skill review<br>
+**Date:** 2026-08-08<br>
+**Implementation status:** IMPLEMENTED — Phases 0–3 committed in the `lp-ewc-2026` worktree branch (`7afbee2..64711a6`), release-pass cleanup pending final commit<br>
+**Release status:** candidate only — no DEV, production, database, or managed-service change
 
 This plan is the event-specific iteration of `ESPORTS-PRODUCT-DIRECTION.md`. It does not replace
 the long-term Pick Desk thesis. It changes the immediate programming decision: while the Esports
@@ -407,3 +407,49 @@ tournament.
    the cross-title club race matters.
 3. Approve the final standings data provider after the Phase 0 rights/endpoint spike. The current
    research table is evidence, not yet an ingestion contract.
+
+## Release pass evidence — 2026-08-08 (final)
+
+Worktree `/root/lp-ewc-2026` (isolated branch from committed HEAD). Implementation commits:
+`7afbee2` Phase 0 contracts, `184eb21` Phase 1 CoD raw-TBD repair, `e7fd8bd` Phase 2 projection +
+standings routes, `64711a6` Phase 3 EWC-focused page; plus the final release-pass commit below.
+
+**Backend tests (run from `backend/venv`, fixture-driven, no network): 109 passed.**
+`backend/test_cod_ewc_reconcile.py` (26) — includes three new regressions added during review:
+decided-`loser` feeder resolves the other opponent (never the winner), Tier-1 ambiguous name
+association returns `None` (never the first hit), missing feeder node labels structurally
+("Winner/Loser of preceding match", never literal `TBD`). Also `test_ewc_contract.py`,
+`test_ewc_routes.py` (56) and `test_esports_streams.py`, `test_esports_predict_api.py`,
+`test_wc_context.py` (53).
+
+**Browser gate — desktop PASS, mobile FAIL (not claimed as passing).**
+`docs/ewc2026/fixtures/browser-esports-desktop.png` renders (1440×900, pixel-verified non-white);
+the YouTube iframe shows Google's headless-browser sign-in interstitial, which is unrelated to our
+code. The mobile capture was a white "Internal Server Error" page — the isolated backend/API proxy
+was down during that capture — and the invalid PNG was **not** committed. Regeneration is blocked:
+the shared frontend install `/root/legendarypicks/node_modules` is empty and the worktree `.next`
+holds no build output; per AGENTS.md a worktree must not reinstall, so this is recorded as the
+documented Next build blocker, not retried. Frontend jest/next binaries are likewise unavailable,
+so the frontend unit suite was not re-runnable this pass.
+
+**Request counts (this pass: zero external requests — all 109 tests are fixture-driven).**
+Declared per-host matrix unchanged (Phase 0 §4): PandaScore 1 bracket call per 120 s cold window
+plus the existing bulk title feeds (shared caches); Breaking Point existing 300 s cache; ESPN **0**
+(never introduced as fallback); YouTube Data API **0** for standings/scores.
+
+**Candidate vs DEV/production.** Everything above ran in the isolated worktree only. No DEV or
+production DB write (standings persist via the atomic-file snapshot pattern; SQLite was never
+selected, so the VACUUM INTO rehearsal gate is vacuous — Phase 0 §5), no managed-service restart,
+no deployment, no push, no tag move.
+
+**Cleanup and hygiene.** `git diff --check` clean (plan header trailing spaces → `<br>`; probe
+trailing whitespace stripped in `docs/ewc2026/probes/`). Secrets scan (API keys, PEM/private keys,
+bearer tokens, password assignments) across `docs/ewc2026/`, the plan, `scripts/verify-ewc-browser.js`,
+and the backend diff of the four esports commits: zero matches. `backend/data/esports_team_logos.json`
+is tracked and unmodified. Kept: `scripts/verify-ewc-browser.js` (repeatable gate harness),
+`browser-esports-desktop.png`, `candidate-projection-live.json` (live API snapshot). Scratch probes
+moved out of the worktree; no mobile PNG committed.
+
+**Open decision 3 resolution (recorded).** Phase 0 spike found no permitted machine-readable
+standings publisher, so the standings route serves the honest `status: "unavailable"` contract and
+the validation-gated publisher awaits a permitted source — no browser scraping, no hard-coded table.
