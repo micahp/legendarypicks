@@ -435,3 +435,42 @@ guarantees are covered by the Jest suite, and the preview environment is Codex's
 
 **Hygiene.** `git diff --check` clean; secrets scan across the five commits and this plan: zero
 matches; worktree clean at completion.
+
+## Post-review gap and correction — 2026-08-08 (public preview review)
+
+**Reviewer finding:** `cf55c5f` is visibly too shallow. It leaves the EWC block largely unchanged and
+adds a title directory plus outbound links; that is not the complete Esports league page requested.
+**Status:** REJECTED as final; corrected in the follow-up commits on this branch.
+
+### Concrete acceptance criteria for the corrected hub
+
+1. **EWC-first, preserved at top.** The EWC 2026 tournament center (event focus, live, today across
+   titles, results, Club Championship rail with the honest unavailable state) remains the top
+   section and is not degraded.
+2. **Inline all-esports board — no link card.** The hub renders the broader esports live, upcoming,
+   and recent-results content directly below the EWC center, from the existing
+   `GET /api/esports/upcoming` contract, using the existing shared UI (`LiveNow` and the day-grouped
+   `UpcomingSlate` row rendering) wherever practical. Non-EWC live matches render inline, not just
+   via an outbound link.
+3. **Obvious in-page navigation.** Tabs: **EWC · Live & Upcoming · Results · Games · Picks**.
+   Client-side tab state; EWC is the default tab; the tab bar scrolls on mobile and is sticky
+   enough to be unmistakable.
+4. **Interactive title controls that filter content.** The Games tab gives each title useful
+   context — live now, next match, most recent result with teams/times/scores — not counts alone.
+   Selecting a title **filters the rendered live/upcoming/results content** (a visible filter chip
+   with a clear action), and each title keeps deep links to its desk (`/esports/{slug}`) and picks
+   (`/predict?title={slug}`).
+5. **`/leagues` retains Esports; `/esports` is not taken over.** The live board page file stays
+   board-only; the hub's tabs replace the old link-card section.
+6. **Club Championship honesty.** Standings stay `status: "unavailable"` until a permitted
+   machine-readable publisher exists; never invent rows, never show a zero-point table.
+7. **States + responsive.** Loading skeletons, error + retry, and empty states for each data source
+   (projection, standings, titles, upcoming); desktop two-column where useful and clean
+   single-column stacking on mobile.
+8. **Tests.** Focused Jest tests prove: inline live/upcoming/results content renders from the
+   upcoming payload (not merely links), title filtering interactively narrows the board and clears,
+   and tabs switch sections. The existing no-takeover, `/leagues`-card, standings-state, and EWC
+   module suites stay green. The backend suite stays green (no contract change).
+9. **Preview + browser gate.** Rebuild only the disposable preview `/root/lp-ewc-preview-BIEs6Q`
+   (:3105/:8105) and browser-verify the public `/leagues/esports` route with **zero console/page
+   errors**. No managed DEV, no merge/push/deploy, no DB write.
