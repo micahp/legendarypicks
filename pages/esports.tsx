@@ -484,7 +484,7 @@ function BoardBuilding() {
   )
 }
 
-function UpcomingSlate({ data }: { data: UpcomingData | null }) {
+export function UpcomingSlate({ data, variant = 'full' }: { data: UpcomingData | null; variant?: 'full' | 'schedule' | 'results' }) {
   const [host, setHost] = useState('')
   const [tab, setTab] = useState<'scheduled' | 'results'>('scheduled')
   useEffect(() => { setHost(window.location.hostname) }, [])
@@ -501,6 +501,35 @@ function UpcomingSlate({ data }: { data: UpcomingData | null }) {
   const days = groupByDay(sc, 'asc')
   const show = tab === 'results' ? rs : sc
   const resultDays = groupByDay(rs, 'desc')
+
+  // Inline variants for the Esports league hub: render only the scheduled or the results day
+  // groups (no SectionHeader, no tab bar — the hub owns those), reusing the exact same row UI.
+  if (variant !== 'full') {
+    const list = variant === 'results' ? resultDays : days
+    const empty = variant === 'results' ? 'No finished matches yet.' : 'No scheduled matches right now.'
+    return (
+      <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 p-4 sm:p-5">
+        {data?.error ? (
+          <p className="text-sm text-zinc-500">Schedule unavailable right now — retrying.</p>
+        ) : data === null || (data.building && matches.length === 0) ? (
+          <BoardBuilding />
+        ) : list.length === 0 ? (
+          <p className="text-sm text-zinc-500">{empty}</p>
+        ) : (
+          <div className="space-y-5">
+            {list.map((d, di) => (
+              <div key={di}>
+                <Eyebrow live={d.label === 'Live now'}>{d.label}</Eyebrow>
+                <div className="mt-1 divide-y divide-zinc-800/70">
+                  {d.matches.map((m, i) => <UpMatchRow key={i} m={m} host={host} />)}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    )
+  }
 
   return (
     <section className="space-y-5">
@@ -570,7 +599,8 @@ function UpcomingSlate({ data }: { data: UpcomingData | null }) {
       )}
       <p className="max-w-2xl text-xs text-zinc-600">
         Every off-board esports match on the board (LoL, Valorant, CS2, Dota, Rainbow Six, King of Glory),
-        soonest first, priced by the Bovada favorite. Full schedules + standings move to the Leagues hub next.
+        soonest first, priced by the Bovada favorite. The Esports league hub has the EWC tournament
+        center and per-title desks.
       </p>
     </section>
   )
