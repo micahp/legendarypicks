@@ -1,6 +1,6 @@
 import React from 'react'
 import { render, screen, fireEvent } from '@testing-library/react'
-import { EwcModule, ClubStandingsRail, EwcMatchRow } from '../pages/esports'
+import { EwcModule, ClubStandingsRail, EwcMatchRow } from './Esports/EwcModule'
 import GameCard from './Scores/GameCard'
 
 jest.mock('next/router', () => ({ useRouter: () => ({ push: jest.fn(), query: {} }) }))
