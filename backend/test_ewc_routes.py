@@ -24,6 +24,7 @@ os.environ["LP_DB_PATH"] = _TEST_DB.name
 
 from routers.esports import ewc  # noqa: E402
 from routers.esports import slate  # noqa: E402
+from routers.esports.common import _ESPORTS_TITLES  # noqa: E402
 from routers.esports.ewc import (is_ewc_2026_label,  # noqa: E402
                                  is_ewc_2026_serie)
 
@@ -183,6 +184,55 @@ class StandingsRouteTests(unittest.TestCase):
         with mock.patch.object(ewc, "_STANDINGS_PATH", self.path):
             d = self.client.get("/api/esports/events/ewc-2026/club-standings?limit=10").json()
         self.assertEqual(d["status"], "unavailable")
+
+
+class TitlesRouteTests(unittest.TestCase):
+    """GET /api/esports/titles — title discovery from the shared slate (fixture-driven)."""
+
+    def setUp(self):
+        from fastapi import FastAPI
+        from fastapi.testclient import TestClient
+        from routers.esports import predict as predict_module
+        self.predict_module = predict_module
+        self.app = FastAPI()
+        self.app.include_router(predict_module.router)
+        self.client = TestClient(self.app)
+
+    def _board(self, matches, building=False):
+        return {"matches": matches, "building": building}
+
+    def test_titles_derived_from_shared_slate(self):
+        matches = [
+            _match(startTime=1, live=True),          # Call of Duty live
+            _match(startTime=2),                     # Call of Duty upcoming
+            _match(startTime=3, finished=True),      # Call of Duty result
+            {"title": "CS2", "teamA": "A", "teamB": "B", "startTime": 4, "live": True},
+            {"title": "Not A Registered Title", "teamA": "X", "teamB": "Y", "startTime": 5},
+        ]
+        with mock.patch.object(self.predict_module, "esports_upcoming", return_value=self._board(matches)):
+            r = self.client.get("/api/esports/titles")
+        self.assertEqual(r.status_code, 200)
+        body = r.json()
+        self.assertIn("titles", body)
+        titles = {t["slug"]: t for t in body["titles"]}
+        cod = titles["call-of-duty"]
+        self.assertEqual(cod["label"], "Call of Duty")
+        self.assertEqual(cod["live_count"], 1)
+        self.assertEqual(cod["match_count"], 2)      # open matches only (live + upcoming)
+        self.assertEqual(cod["result_count"], 1)
+        self.assertEqual(cod["next_start"], 1)
+        self.assertEqual(len(titles), len(_ESPORTS_TITLES))
+        self.assertNotIn("not-a-registered-title", titles)
+
+    def test_titles_empty_slate_returns_all_registered_zeroed(self):
+        with mock.patch.object(self.predict_module, "esports_upcoming", return_value=self._board([])):
+            r = self.client.get("/api/esports/titles")
+        self.assertEqual(r.status_code, 200)
+        titles = {t["slug"]: t for t in r.json()["titles"]}
+        self.assertEqual(len(titles), len(_ESPORTS_TITLES))
+        self.assertEqual(titles["call-of-duty"]["match_count"], 0)
+        self.assertEqual(titles["call-of-duty"]["live_count"], 0)
+        self.assertIsNone(titles["call-of-duty"]["next_start"])
 
 
 if __name__ == "__main__":
