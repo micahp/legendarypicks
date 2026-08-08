@@ -28,43 +28,14 @@ type CS2Player = { name: string; kills: number | null; deaths: number | null }
 type CS2Team = { name: string; score: number | null; won: boolean; players: CS2Player[] }
 type CS2Live = { live: boolean; title?: string; tournament?: string; stream?: { platform: string; channel: string } | null; teamA?: CS2Team; teamB?: CS2Team }
 
-type UpMatch = { startTime: number | null; endTime: number | null; live: boolean; title: string; league: string; teamA: string; teamB: string; favorite: { name: string; pct: number } | null; watch: { platform: string; url: string; channel: string | null; online?: boolean | null; embedUrl?: string | null; language?: string | null; viewers?: number | null; alternates?: Array<{ platform: string; url: string; channel: string | null; online?: boolean | null; embedUrl?: string | null; language?: string | null }> } | null; score?: { a: number | null; b: number | null } | null; finished?: boolean | null; winner?: 'a' | 'b' | null; pinned?: boolean; model?: { favName: string; modelPct: number; marketPct: number | null; edge: number | null } | null; logoA?: string | null; logoB?: string | null; minorLeague?: boolean; tier?: number; prominence?: number; psId?: number | string | null; streamKey?: string | null; eventId?: number | string | null; ewcEventId?: string | null; foreign?: boolean }
+export type UpMatch = { startTime: number | null; endTime: number | null; live: boolean; title: string; league: string; teamA: string; teamB: string; favorite: { name: string; pct: number } | null; watch: { platform: string; url: string; channel: string | null; online?: boolean | null; embedUrl?: string | null; language?: string | null; viewers?: number | null; alternates?: Array<{ platform: string; url: string; channel: string | null; online?: boolean | null; embedUrl?: string | null; language?: string | null }> } | null; score?: { a: number | null; b: number | null } | null; finished?: boolean | null; winner?: 'a' | 'b' | null; pinned?: boolean; model?: { favName: string; modelPct: number; marketPct: number | null; edge: number | null } | null; logoA?: string | null; logoB?: string | null; minorLeague?: boolean; tier?: number; prominence?: number; psId?: number | string | null; streamKey?: string | null; eventId?: number | string | null; ewcEventId?: string | null; foreign?: boolean }
 type UpcomingData = { matches: UpMatch[]; source?: string; error?: string; building?: boolean }
-
-/* ---------------- EWC 2026 focus module ---------------- */
-export type EwcProjection = {
-  eventId: string
-  eventName: string
-  active: boolean
-  building?: boolean
-  asOf?: string | null
-  matches: { live: UpMatch[]; upcoming: UpMatch[]; completed: UpMatch[] }
-}
-type StandingRow = {
-  rank: number
-  clubId: string
-  clubName: string
-  logo?: string | null
-  points: number | null
-  eligibleTopEightCount?: number | null
-  titleWins?: number | null
-  eligibleToWin?: boolean | null
-  movement?: number | null
-}
-export type Standings = {
-  event: string
-  standings: StandingRow[]
-  asOf: string | null
-  source: { label: string | null; url: string | null } | null
-  status: 'current' | 'stale' | 'unavailable'
-  reason?: string
-}
 
 const POLL_MS = 10_000
 
 /* ---------------- shared primitives ---------------- */
 // One label system: tracked small-caps eyebrows, a red pulse when something is live.
-function Eyebrow({ children, live = false }: { children: React.ReactNode; live?: boolean }) {
+export function Eyebrow({ children, live = false }: { children: React.ReactNode; live?: boolean }) {
   return (
     <div className={`flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-[0.2em] ${live ? 'text-red-400' : 'text-zinc-500'}`}>
       {live ? <LiveDot /> : null}
@@ -73,7 +44,7 @@ function Eyebrow({ children, live = false }: { children: React.ReactNode; live?:
   )
 }
 
-function SectionHeader({ eyebrow, title, meta, live = false }: { eyebrow: string; title: string; meta?: string; live?: boolean }) {
+export function SectionHeader({ eyebrow, title, meta, live = false }: { eyebrow: string; title: string; meta?: string; live?: boolean }) {
   return (
     <div className="space-y-2">
       <div className="flex items-end justify-between gap-3">
@@ -366,7 +337,7 @@ function dayKey(ms: number | null) {
 // this (instead of the display label, and instead of adjacency) guarantees every calendar day gets
 // exactly one heading and days stay chronologically ordered no matter how the backend sorted the
 // combined slate (it sorts by prominence, so same-day matches are NOT contiguous in the raw feed).
-function localDateKey(ms: number | null): string {
+export function localDateKey(ms: number | null): string {
   if (!ms) return '9999-99-99'
   const d = new Date(ms)
   const y = d.getFullYear()
@@ -375,7 +346,7 @@ function localDateKey(ms: number | null): string {
   return `${y}-${mo}-${da}`
 }
 
-function groupTime(m: UpMatch): number | null {
+export function groupTime(m: UpMatch): number | null {
   return m.finished ? (m.endTime ?? m.startTime) : m.startTime
 }
 
@@ -1189,176 +1160,6 @@ export function LiveNow({ matches, host, msi = null, slate = [] }: { matches: Up
                   broadcastKey={featured.key} broadcastState={featured.state} />
       </div>
       {alsoLive}
-    </section>
-  )
-}
-
-/* ---------------- EWC 2026 focus module ---------------- */
-
-export function EwcMatchRow({ m }: { m: UpMatch }) {
-  const t = m.startTime ? new Date(m.startTime) : null
-  const timeLabel = t ? t.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''
-  const score = m.score
-  return (
-    <div className="flex items-baseline gap-3 py-1.5">
-      <span className="w-12 shrink-0 text-[11px] tabular-nums text-zinc-600">{timeLabel}</span>
-      <div className="min-w-0 flex-1 space-y-0.5">
-        <div className="flex items-center justify-between gap-3">
-          <span className={`truncate text-sm ${m.finished && m.winner === 'b' ? 'text-zinc-500' : 'text-zinc-200'}`}>{m.teamA}</span>
-          {m.finished && score ? <span className="shrink-0 font-mono text-sm font-bold tabular-nums text-zinc-200">{score.a ?? '\u2013'}</span> : null}
-        </div>
-        <div className="flex items-center justify-between gap-3">
-          <span className={`truncate text-sm ${m.finished && m.winner === 'a' ? 'text-zinc-500' : 'text-zinc-200'}`}>{m.teamB}</span>
-          {m.finished && score ? <span className="shrink-0 font-mono text-sm font-bold tabular-nums text-zinc-200">{score.b ?? '\u2013'}</span> : null}
-        </div>
-        <div className="text-[11px] text-zinc-600">{m.title} · {m.league}</div>
-      </div>
-    </div>
-  )
-}
-
-export function ClubStandingsRail({ standings, onExpand, expanded, loading }: {
-  standings: Standings | null
-  onExpand: () => void
-  expanded: boolean
-  loading: boolean
-}) {
-  if (loading && !standings) {
-    return (
-      <div className="space-y-3">
-        <Eyebrow>Club Championship</Eyebrow>
-        <div className="space-y-2 animate-pulse">
-          <div className="h-4 w-3/4 rounded bg-zinc-800" />
-          <div className="h-4 w-2/3 rounded bg-zinc-800" />
-          <div className="h-4 w-4/5 rounded bg-zinc-800" />
-        </div>
-      </div>
-    )
-  }
-  if (!standings || standings.status === 'unavailable') {
-    return (
-      <div className="space-y-3">
-        <Eyebrow>Club Championship</Eyebrow>
-        <div className="rounded-lg bg-zinc-900/60 px-4 py-4">
-          <p className="text-sm font-semibold text-zinc-300">Standings unavailable</p>
-          <p className="mt-1 text-xs leading-relaxed text-zinc-500">
-            No licensed machine-readable Club Championship publisher is wired yet. We are not
-            guessing the table — it stays off until a permitted source exists.
-          </p>
-        </div>
-      </div>
-    )
-  }
-  const stale = standings.status === 'stale'
-  const rows = standings.standings
-  const asOf = standings.asOf ? new Date(standings.asOf).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : null
-  return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between gap-2">
-        <Eyebrow>Club Championship</Eyebrow>
-        {stale ? (
-          <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-400">
-            Stale
-          </span>
-        ) : null}
-      </div>
-      {asOf ? <p className="text-[11px] text-zinc-600">Points · as of {asOf}</p> : null}
-      {/* Open, border-light table: no outer border, no vertical rules, aligned tabular numbers. */}
-      <div className="divide-y divide-zinc-800/60">
-        {rows.map((r) => (
-          <div key={r.clubId} className="flex items-baseline gap-3 py-2">
-            <span className="w-5 shrink-0 text-right font-mono text-xs tabular-nums text-zinc-600">{r.rank}</span>
-            <span className="min-w-0 flex-1 truncate text-sm font-medium text-zinc-200">{r.clubName}</span>
-            <span className="shrink-0 font-mono text-sm font-bold tabular-nums text-zinc-100">
-              {r.points === null ? '\u2013' : r.points}
-            </span>
-          </div>
-        ))}
-      </div>
-      {standings.source?.label ? (
-        <p className="text-[11px] text-zinc-600">
-          Source: <a className="text-zinc-400 underline decoration-zinc-700 underline-offset-2 hover:text-zinc-200" href={standings.source.url || '#'} target="_blank" rel="noreferrer">{standings.source.label}</a>
-        </p>
-      ) : null}
-      {!expanded ? (
-        <button type="button" onClick={onExpand}
-                className="text-xs font-semibold text-zinc-400 transition-colors hover:text-zinc-100">
-          Show full top ten →
-        </button>
-      ) : null}
-    </div>
-  )
-}
-
-export function EwcModule({ projection, host, standings, standingsLimit, onExpandStandings, standingsLoading }: {
-  projection: EwcProjection
-  host: string
-  standings: Standings | null
-  standingsLimit: number
-  onExpandStandings: () => void
-  standingsLoading: boolean
-}) {
-  const live = projection.matches.live
-  const upcoming = projection.matches.upcoming
-  const completed = projection.matches.completed
-  const now = Date.now()
-  const broadcasts = buildBroadcastViews([...live, ...upcoming], live, now)
-  const featured = broadcasts[0]
-  const rest = broadcasts.slice(1)
-  const today = localDateKey(now)
-  const todaysUpcoming = upcoming.filter((m) => localDateKey(groupTime(m)) === today)
-  const laterUpcoming = upcoming.filter((m) => localDateKey(groupTime(m)) !== today)
-  const rail = (
-    <ClubStandingsRail standings={standings} onExpand={onExpandStandings}
-                       expanded={standingsLimit >= 10} loading={standingsLoading} />
-  )
-  return (
-    <section className="rounded-xl bg-zinc-900/50 px-4 py-5 sm:px-6 sm:py-6">
-      {/* One subtle plane for the EWC focus; no border, no shadow, no nested card walls. */}
-      <SectionHeader eyebrow={projection.eventName} title="EWC 2026" meta={live.length ? `${live.length} live` : 'Tournament center'} live={live.length > 0} />
-
-      <div className="mt-5 grid gap-8 lg:grid-cols-[minmax(0,1fr)_300px]">
-        <div className="min-w-0 space-y-8">
-          {featured ? (
-            <div className="space-y-3">
-              <LiveCard key={featured.key} m={featured.match} host={host} featured
-                        upNext={featured.upNext} watchOverride={featured.watch}
-                        startingSoon={featured.state === 'starting'}
-                        broadcastKey={featured.key} broadcastState={featured.state} />
-              {rest.length ? (
-                <div className="grid gap-3 sm:grid-cols-2">
-                  {rest.map((b) => (
-                    <LiveCard key={b.key} m={b.match} host={host} upNext={b.upNext}
-                              watchOverride={b.watch} startingSoon={b.state === 'starting'}
-                              broadcastKey={b.key} broadcastState={b.state} />
-                  ))}
-                </div>
-              ) : null}
-            </div>
-          ) : null}
-
-          {upcoming.length ? (
-            <div className="space-y-3">
-              <SectionHeader eyebrow="Schedule" title={todaysUpcoming.length ? 'Today across titles' : 'Next EWC matches'} />
-              <div className="space-y-1">
-                {todaysUpcoming.length ? todaysUpcoming.map((m, i) => <EwcMatchRow key={i} m={m} />)
-                  : laterUpcoming.slice(0, 5).map((m, i) => <EwcMatchRow key={i} m={m} />)}
-              </div>
-            </div>
-          ) : null}
-
-          {completed.length ? (
-            <div className="space-y-3">
-              <SectionHeader eyebrow="Results" title="EWC results" />
-              <div className="space-y-1">
-                {completed.slice(0, 8).map((m, i) => <EwcMatchRow key={i} m={m} />)}
-              </div>
-            </div>
-          ) : null}
-        </div>
-
-        <aside className="min-w-0">{rail}</aside>
-      </div>
     </section>
   )
 }

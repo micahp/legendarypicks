@@ -1,8 +1,8 @@
 import Head from 'next/head'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
-import { EwcModule } from '../esports'
-import type { EwcProjection, Standings } from '../esports'
+import { EwcModule } from '../../components/Esports/EwcModule'
+import type { EwcProjection, Standings } from '../../components/Esports/EwcModule'
 
 export default function EsportsLeaguePage() {
   const [projection, setProjection] = useState<EwcProjection | null>(null)
