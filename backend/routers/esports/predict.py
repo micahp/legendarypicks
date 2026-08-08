@@ -300,3 +300,17 @@ def league_slate(title: str):
     except ValueError as exc:
         allowed = ", ".join(_ESPORTS_TITLES)
         raise HTTPException(400, "title must be one of: {}".format(allowed)) from exc
+
+
+@router.get("/api/esports/titles")
+def esports_titles():
+    """Registered esports titles with counts derived from the shared slate.
+
+    The Esports league hub uses this for title discovery instead of reconstructing
+    title identity in the client: the slug/label registry is the backend's
+    (`_ESPORTS_TITLES`), and the counts come from the same cached slate the board
+    reads. No new collector, no external request.
+    """
+    data = esports_upcoming()
+    all_matches = data.get("matches") if isinstance(data.get("matches"), list) else []
+    return {"titles": _title_options(all_matches)}
