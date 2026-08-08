@@ -28,8 +28,37 @@ type CS2Player = { name: string; kills: number | null; deaths: number | null }
 type CS2Team = { name: string; score: number | null; won: boolean; players: CS2Player[] }
 type CS2Live = { live: boolean; title?: string; tournament?: string; stream?: { platform: string; channel: string } | null; teamA?: CS2Team; teamB?: CS2Team }
 
-type UpMatch = { startTime: number | null; endTime: number | null; live: boolean; title: string; league: string; teamA: string; teamB: string; favorite: { name: string; pct: number } | null; watch: { platform: string; url: string; channel: string | null; online?: boolean | null; embedUrl?: string | null; language?: string | null; viewers?: number | null; alternates?: Array<{ platform: string; url: string; channel: string | null; online?: boolean | null; embedUrl?: string | null; language?: string | null }> } | null; score?: { a: number | null; b: number | null } | null; finished?: boolean | null; winner?: 'a' | 'b' | null; pinned?: boolean; model?: { favName: string; modelPct: number; marketPct: number | null; edge: number | null } | null; logoA?: string | null; logoB?: string | null; minorLeague?: boolean; tier?: number; prominence?: number; psId?: number | string | null; streamKey?: string | null; eventId?: number | string | null; foreign?: boolean }
+type UpMatch = { startTime: number | null; endTime: number | null; live: boolean; title: string; league: string; teamA: string; teamB: string; favorite: { name: string; pct: number } | null; watch: { platform: string; url: string; channel: string | null; online?: boolean | null; embedUrl?: string | null; language?: string | null; viewers?: number | null; alternates?: Array<{ platform: string; url: string; channel: string | null; online?: boolean | null; embedUrl?: string | null; language?: string | null }> } | null; score?: { a: number | null; b: number | null } | null; finished?: boolean | null; winner?: 'a' | 'b' | null; pinned?: boolean; model?: { favName: string; modelPct: number; marketPct: number | null; edge: number | null } | null; logoA?: string | null; logoB?: string | null; minorLeague?: boolean; tier?: number; prominence?: number; psId?: number | string | null; streamKey?: string | null; eventId?: number | string | null; ewcEventId?: string | null; foreign?: boolean }
 type UpcomingData = { matches: UpMatch[]; source?: string; error?: string; building?: boolean }
+
+/* ---------------- EWC 2026 focus module ---------------- */
+type EwcProjection = {
+  eventId: string
+  eventName: string
+  active: boolean
+  building?: boolean
+  asOf?: string | null
+  matches: { live: UpMatch[]; upcoming: UpMatch[]; completed: UpMatch[] }
+}
+type StandingRow = {
+  rank: number
+  clubId: string
+  clubName: string
+  logo?: string | null
+  points: number | null
+  eligibleTopEightCount?: number | null
+  titleWins?: number | null
+  eligibleToWin?: boolean | null
+  movement?: number | null
+}
+type Standings = {
+  event: string
+  standings: StandingRow[]
+  asOf: string | null
+  source: { label: string | null; url: string | null } | null
+  status: 'current' | 'stale' | 'unavailable'
+  reason?: string
+}
 
 const POLL_MS = 10_000
 
@@ -1164,13 +1193,197 @@ export function LiveNow({ matches, host, msi = null, slate = [] }: { matches: Up
   )
 }
 
+/* ---------------- EWC 2026 focus module ---------------- */
+
+export function EwcMatchRow({ m }: { m: UpMatch }) {
+  const t = m.startTime ? new Date(m.startTime) : null
+  const timeLabel = t ? t.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''
+  const score = m.score
+  return (
+    <div className="flex items-baseline gap-3 py-1.5">
+      <span className="w-12 shrink-0 text-[11px] tabular-nums text-zinc-600">{timeLabel}</span>
+      <div className="min-w-0 flex-1 space-y-0.5">
+        <div className="flex items-center justify-between gap-3">
+          <span className={`truncate text-sm ${m.finished && m.winner === 'b' ? 'text-zinc-500' : 'text-zinc-200'}`}>{m.teamA}</span>
+          {m.finished && score ? <span className="shrink-0 font-mono text-sm font-bold tabular-nums text-zinc-200">{score.a ?? '\u2013'}</span> : null}
+        </div>
+        <div className="flex items-center justify-between gap-3">
+          <span className={`truncate text-sm ${m.finished && m.winner === 'a' ? 'text-zinc-500' : 'text-zinc-200'}`}>{m.teamB}</span>
+          {m.finished && score ? <span className="shrink-0 font-mono text-sm font-bold tabular-nums text-zinc-200">{score.b ?? '\u2013'}</span> : null}
+        </div>
+        <div className="text-[11px] text-zinc-600">{m.title} · {m.league}</div>
+      </div>
+    </div>
+  )
+}
+
+export function ClubStandingsRail({ standings, onExpand, expanded, loading }: {
+  standings: Standings | null
+  onExpand: () => void
+  expanded: boolean
+  loading: boolean
+}) {
+  if (loading && !standings) {
+    return (
+      <div className="space-y-3">
+        <Eyebrow>Club Championship</Eyebrow>
+        <div className="space-y-2 animate-pulse">
+          <div className="h-4 w-3/4 rounded bg-zinc-800" />
+          <div className="h-4 w-2/3 rounded bg-zinc-800" />
+          <div className="h-4 w-4/5 rounded bg-zinc-800" />
+        </div>
+      </div>
+    )
+  }
+  if (!standings || standings.status === 'unavailable') {
+    return (
+      <div className="space-y-3">
+        <Eyebrow>Club Championship</Eyebrow>
+        <div className="rounded-lg bg-zinc-900/60 px-4 py-4">
+          <p className="text-sm font-semibold text-zinc-300">Standings unavailable</p>
+          <p className="mt-1 text-xs leading-relaxed text-zinc-500">
+            No licensed machine-readable Club Championship publisher is wired yet. We are not
+            guessing the table — it stays off until a permitted source exists.
+          </p>
+        </div>
+      </div>
+    )
+  }
+  const stale = standings.status === 'stale'
+  const rows = standings.standings
+  const asOf = standings.asOf ? new Date(standings.asOf).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : null
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between gap-2">
+        <Eyebrow>Club Championship</Eyebrow>
+        {stale ? (
+          <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-400">
+            Stale
+          </span>
+        ) : null}
+      </div>
+      {asOf ? <p className="text-[11px] text-zinc-600">Points · as of {asOf}</p> : null}
+      {/* Open, border-light table: no outer border, no vertical rules, aligned tabular numbers. */}
+      <div className="divide-y divide-zinc-800/60">
+        {rows.map((r) => (
+          <div key={r.clubId} className="flex items-baseline gap-3 py-2">
+            <span className="w-5 shrink-0 text-right font-mono text-xs tabular-nums text-zinc-600">{r.rank}</span>
+            <span className="min-w-0 flex-1 truncate text-sm font-medium text-zinc-200">{r.clubName}</span>
+            <span className="shrink-0 font-mono text-sm font-bold tabular-nums text-zinc-100">
+              {r.points === null ? '\u2013' : r.points}
+            </span>
+          </div>
+        ))}
+      </div>
+      {standings.source?.label ? (
+        <p className="text-[11px] text-zinc-600">
+          Source: <a className="text-zinc-400 underline decoration-zinc-700 underline-offset-2 hover:text-zinc-200" href={standings.source.url || '#'} target="_blank" rel="noreferrer">{standings.source.label}</a>
+        </p>
+      ) : null}
+      {!expanded ? (
+        <button type="button" onClick={onExpand}
+                className="text-xs font-semibold text-zinc-400 transition-colors hover:text-zinc-100">
+          Show full top ten →
+        </button>
+      ) : null}
+    </div>
+  )
+}
+
+export function EwcModule({ projection, host, standings, standingsLimit, onExpandStandings, standingsLoading }: {
+  projection: EwcProjection
+  host: string
+  standings: Standings | null
+  standingsLimit: number
+  onExpandStandings: () => void
+  standingsLoading: boolean
+}) {
+  const live = projection.matches.live
+  const upcoming = projection.matches.upcoming
+  const completed = projection.matches.completed
+  const now = Date.now()
+  const broadcasts = buildBroadcastViews([...live, ...upcoming], live, now)
+  const featured = broadcasts[0]
+  const rest = broadcasts.slice(1)
+  const today = localDateKey(now)
+  const todaysUpcoming = upcoming.filter((m) => localDateKey(groupTime(m)) === today)
+  const laterUpcoming = upcoming.filter((m) => localDateKey(groupTime(m)) !== today)
+  const rail = (
+    <ClubStandingsRail standings={standings} onExpand={onExpandStandings}
+                       expanded={standingsLimit >= 10} loading={standingsLoading} />
+  )
+  return (
+    <section className="rounded-xl bg-zinc-900/50 px-4 py-5 sm:px-6 sm:py-6">
+      {/* One subtle plane for the EWC focus; no border, no shadow, no nested card walls. */}
+      <SectionHeader eyebrow={projection.eventName} title="EWC 2026" meta={live.length ? `${live.length} live` : 'Tournament center'} live={live.length > 0} />
+
+      <div className="mt-5 grid gap-8 lg:grid-cols-[minmax(0,1fr)_300px]">
+        <div className="min-w-0 space-y-8">
+          {featured ? (
+            <div className="space-y-3">
+              <LiveCard key={featured.key} m={featured.match} host={host} featured
+                        upNext={featured.upNext} watchOverride={featured.watch}
+                        startingSoon={featured.state === 'starting'}
+                        broadcastKey={featured.key} broadcastState={featured.state} />
+              {rest.length ? (
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {rest.map((b) => (
+                    <LiveCard key={b.key} m={b.match} host={host} upNext={b.upNext}
+                              watchOverride={b.watch} startingSoon={b.state === 'starting'}
+                              broadcastKey={b.key} broadcastState={b.state} />
+                  ))}
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+
+          {upcoming.length ? (
+            <div className="space-y-3">
+              <SectionHeader eyebrow="Schedule" title={todaysUpcoming.length ? 'Today across titles' : 'Next EWC matches'} />
+              <div className="space-y-1">
+                {todaysUpcoming.length ? todaysUpcoming.map((m, i) => <EwcMatchRow key={i} m={m} />)
+                  : laterUpcoming.slice(0, 5).map((m, i) => <EwcMatchRow key={i} m={m} />)}
+              </div>
+            </div>
+          ) : null}
+
+          {completed.length ? (
+            <div className="space-y-3">
+              <SectionHeader eyebrow="Results" title="EWC results" />
+              <div className="space-y-1">
+                {completed.slice(0, 8).map((m, i) => <EwcMatchRow key={i} m={m} />)}
+              </div>
+            </div>
+          ) : null}
+        </div>
+
+        <aside className="min-w-0">{rail}</aside>
+      </div>
+    </section>
+  )
+}
+
 export default function EsportsPage() {
   const [live, setLive] = useState<LiveMatch | null>(null)
   const [upcoming, setUpcoming] = useState<UpcomingData | null>(null)
+  const [projection, setProjection] = useState<EwcProjection | null>(null)
+  const [standings, setStandings] = useState<Standings | null>(null)
+  const [standingsLoading, setStandingsLoading] = useState(false)
+  // The landing page requests only the rows it renders: ten on desktop, five on mobile; the
+  // expand action performs the bounded follow-up to ten.
+  const [standingsLimit, setStandingsLimit] = useState<number | null>(null)
   const [host, setHost] = useState('')
   const timers = useRef<ReturnType<typeof setInterval>[]>([])
 
   useEffect(() => { setHost(window.location.hostname) }, [])
+
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 1024px)')
+    const apply = () => setStandingsLimit(mq.matches ? 10 : 5)
+    apply()
+    mq.addEventListener('change', apply)
+    return () => mq.removeEventListener('change', apply)
+  }, [])
 
   useEffect(() => {
     let alive = true
@@ -1179,14 +1392,32 @@ export default function EsportsPage() {
     }
     const loadLive = j('/api/esports/lol/msi/live', setLive)
     const loadUpcoming = j('/api/esports/upcoming', setUpcoming)
-    loadLive(); loadUpcoming()
-    timers.current = [setInterval(loadLive, 15_000), setInterval(loadUpcoming, POLL_MS)]
+    const loadProjection = j('/api/esports/events/ewc-2026', setProjection)
+    loadLive(); loadUpcoming(); loadProjection()
+    timers.current = [
+      setInterval(loadLive, 15_000),
+      setInterval(loadUpcoming, POLL_MS),
+      setInterval(loadProjection, POLL_MS),
+    ]
     return () => { alive = false; timers.current.forEach(clearInterval) }
   }, [])
 
+  // Club Championship: fetched only while the EWC focus is active, at the limit the page renders.
+  const ewcFocus = Boolean(projection?.active)
+  useEffect(() => {
+    if (!ewcFocus || standingsLimit == null) return
+    let alive = true
+    setStandingsLoading(true)
+    fetch(`/api/esports/events/ewc-2026/club-standings?limit=${standingsLimit}`, { cache: 'no-store' })
+      .then((r) => r.json())
+      .then((d) => { if (alive) setStandings(d) })
+      .catch(() => { /* keep last known; the rail renders unavailable only on a real response */ })
+      .finally(() => { if (alive) setStandingsLoading(false) })
+    return () => { alive = false }
+  }, [ewcFocus, standingsLimit])
+
   // Hero features a live match whose stream we've CONFIRMED is on-air — never a dead embed.
-  // ALL live games go above the fold (not gated on stream availability — show the match, embed the
-  // stream when it's confirmed on-air, else say "no stream"). MSI live keeps its rich dedicated view.
+  // ALL live games go above the fold. MSI keeps its rich dedicated view on the generic board.
   const _n = (s?: string | null) => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '')
   const msiTeams = live?.live
     ? [live.teamA?.name, live.teamA?.code, live.teamB?.name, live.teamB?.code].filter(Boolean).map(_n)
@@ -1194,8 +1425,13 @@ export default function EsportsPage() {
   const isMsi = (m: UpMatch) =>
     msiTeams.length > 0 &&
     [m.teamA, m.teamB].some((t) => msiTeams.some((n) => n && (_n(t) === n || _n(t).includes(n) || n.includes(_n(t)))))
-  const liveMatches = (upcoming?.matches ?? []).filter((m) => m.live && !isMsi(m))
-  const anyLive = !!live?.live || buildBroadcastViews(upcoming?.matches ?? [], liveMatches, Date.now()).length > 0
+  const allMatches = upcoming?.matches ?? []
+  const liveMatches = allMatches.filter((m) => m.live && !isMsi(m))
+  // During the EWC focus the module above owns the EWC live matches; the generic board below
+  // shows the rest (non-EWC live must not disappear, and EWC matches must not duplicate).
+  const genericMatches = ewcFocus ? allMatches.filter((m) => m.ewcEventId !== 'ewc-2026') : allMatches
+  const genericLive = genericMatches.filter((m) => m.live && !isMsi(m))
+  const anyLive = !!live?.live || buildBroadcastViews(allMatches, liveMatches, Date.now()).length > 0
 
   return (
     <>
@@ -1219,9 +1455,22 @@ export default function EsportsPage() {
           </Link>
         </header>
 
-        {/* One unified "Live now" section: MSI leads as the featured rich view when live (it's the
-            marquee event, 5-10x the volume of the regional slate), the rest flow into the grid. */}
-        <LiveNow matches={liveMatches} host={host} msi={live?.live ? live : null} slate={upcoming?.matches ?? []} />
+        {/* Event-focus contract: while EWC 2026 is active the page leads with the EWC tournament
+            center; when the event expires (data-driven) it falls back to the generic
+            broadcast-first board. No MSI-special decision is hard-coded here. */}
+        {ewcFocus && projection ? (
+          <EwcModule projection={projection} host={host} standings={standings}
+                     standingsLimit={standingsLimit ?? 5} onExpandStandings={() => setStandingsLimit(10)}
+                     standingsLoading={standingsLoading} />
+        ) : (
+          <LiveNow matches={liveMatches} host={host} msi={live?.live ? live : null} slate={allMatches} />
+        )}
+
+        {/* The complete generic schedule remains below the EWC module; non-EWC live matches
+            stay reachable above it (genericMatches keeps the EWC module's rows out of the dupes). */}
+        {ewcFocus ? (
+          <LiveNow matches={genericLive} host={host} msi={null} slate={genericMatches} />
+        ) : null}
 
         <UpcomingSlate data={upcoming} />
       </div>

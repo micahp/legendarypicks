@@ -6,6 +6,10 @@ interface TeamInfo {
   nickname?: string
   score?: number
   winner?: boolean
+  // EWC bracket dependency label for an undecided slot ("Winner of X–Y").
+  label?: string
+  pending?: boolean
+  unavailable?: boolean
 }
 
 interface TennisSet {
@@ -98,9 +102,16 @@ export default function GameCard(g: GameProps) {
   const isSoccer = g.league === 'WC'
 
   const teamLabel = (t: GameProps['homeTeam']) => {
+    // An unresolved EWC participant renders its dependency label, never a bare TBD.
+    if (t.label) return t.label
     if (!isTeamSport) return t.name
     if (t.nickname) return `${t.teamId} ${t.nickname}`
     return t.teamId || t.name
+  }
+  // Unresolved participants get quiet, italic dependency text; no invented score/logo.
+  const sideClass = (t: GameProps['homeTeam']) => {
+    if (t.pending || t.unavailable) return 'italic text-zinc-500'
+    return null
   }
 
   // What to show in the top-right area:
@@ -186,7 +197,7 @@ export default function GameCard(g: GameProps) {
       ) : (
         <div className="space-y-3">
           <div className="flex justify-between items-center">
-            <span className={`font-semibold ${isFinal ? (isDraw ? 'text-zinc-200' : homeWon ? 'text-zinc-200' : 'text-zinc-500') : 'text-zinc-200'}`}>{teamLabel(g.homeTeam)}</span>
+            <span className={`font-semibold ${sideClass(g.homeTeam) ?? (isFinal ? (isDraw ? 'text-zinc-200' : homeWon ? 'text-zinc-200' : 'text-zinc-500') : 'text-zinc-200')}`}>{teamLabel(g.homeTeam)}</span>
             {showScore && g.homeTeam.score !== undefined && (
               <span className="flex items-center gap-1.5">
                 <span className={`text-xl font-black ${isFinal ? (isDraw ? 'text-white' : homeWon ? 'text-white' : 'text-zinc-500') : 'text-white'}`}>{g.homeTeam.score}</span>
@@ -194,7 +205,7 @@ export default function GameCard(g: GameProps) {
             )}
           </div>
           <div className="flex justify-between items-center">
-            <span className={`font-semibold ${isFinal ? (isDraw ? 'text-zinc-200' : awayWon ? 'text-zinc-200' : 'text-zinc-500') : 'text-zinc-200'}`}>{teamLabel(g.awayTeam)}</span>
+            <span className={`font-semibold ${sideClass(g.awayTeam) ?? (isFinal ? (isDraw ? 'text-zinc-200' : awayWon ? 'text-zinc-200' : 'text-zinc-500') : 'text-zinc-200')}`}>{teamLabel(g.awayTeam)}</span>
             {showScore && g.awayTeam.score !== undefined && (
               <span className="flex items-center gap-1.5">
                 <span className={`text-xl font-black ${isFinal ? (isDraw ? 'text-white' : awayWon ? 'text-white' : 'text-zinc-500') : 'text-white'}`}>{g.awayTeam.score}</span>
