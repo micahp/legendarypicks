@@ -1,12 +1,6 @@
 import LiveDot from '../LiveDot'
-import {
-  LiveCard,
-  buildBroadcastViews,
-  localDateKey,
-  groupTime,
-  Eyebrow,
-  SectionHeader,
-} from '../../pages/esports'
+import { Eyebrow, SectionHeader } from './primitives'
+import { LiveCard, buildBroadcastViews, localDateKey, groupTime } from '../../pages/esports'
 import type { UpMatch } from '../../pages/esports'
 
 /* ---------------- EWC 2026 focus module ----------------
