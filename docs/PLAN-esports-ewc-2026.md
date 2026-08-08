@@ -1,10 +1,8 @@
 # Plan — Esports league destination (EWC 2026 tournament center under the Leagues system)
 
 **Plan iteration:** 3 — post-correction rewrite (2026-08-08)
-**Implementation status:** PLANNED. The accepted IA was partially applied at `1dab7f7` (EWC module
-moved to `/leagues/esports`, Esports card added to `/leagues`, `/esports` slimmed). This plan is the
-authoritative post-correction contract: finish the complete Esports league destination, prove the
-correction with tests, and preserve every backend contract.
+**Implementation status:** IMPLEMENTED — plan rewrite `4735620`, module extraction `0c74089`,
+titles route `ccbc866`, hub build-out `668a160`, focused tests `c62b40b`; worktree clean.
 **Release status:** candidate only — no DEV, production, database, or managed-service change.
 
 This plan is the event-specific iteration of `ESPORTS-PRODUCT-DIRECTION.md`. It supersedes the
@@ -379,5 +377,61 @@ Rewrite the plan as the authoritative post-correction contract and commit it sep
 
 ## Post-implementation decision record
 
-To be appended at completion: page hierarchy, standings rail content, final standings data provider,
-release-pass evidence, and candidate-vs-DEV/prod status.
+1. **Information architecture — accepted and implemented (2026-08-08).** `/esports` is the live
+   broadcast + match board only: the page file contains no EWC tournament-center code (extracted to
+   `components/Esports/EwcModule.tsx`), never fetches the EWC endpoints, and keeps non-EWC live
+   content. `/leagues` lists Esports with a league card. `/leagues/esports` owns the complete
+   destination: header/nav, EWC tournament center (live/today/results), Club Championship rail with
+   source/`as of`/stale/unavailable honesty, title discovery pills (`/esports/{slug}` +
+   `/predict?title=`), non-EWC live-board context, and the responsive 10/5 standings limit.
+2. **Page hierarchy — accepted.** League header first, EWC tournament center second (one subtle
+   plane), title discovery third, live-board context last; desktop two-column (center + rail),
+   single column below.
+3. **Standings rail content — contribution chips deferred until the source supports them.** No
+   permitted machine-readable Club Championship publisher exists, so the route serves
+   `status: "unavailable"` and neither points nor chips are rendered; the row contract carries
+   `eligibleTopEightCount`/`titleWins` for a future permitted source.
+4. **Final standings data provider — unresolved; honest unavailable.** Research table remains
+   evidence only, never hard-coded, never scraped. Source research continues only through
+   permitted/authoritative channels.
+5. **Title discovery — new read-only `GET /api/esports/titles`.** Reads the shared cached slate and
+   the backend title registry; zero new external requests; client never reconstructs title identity.
+
+### Release-pass evidence — 2026-08-08 (final)
+
+Worktree `/root/lp-ewc-2026` (branch `feat/esports-ewc-2026`, isolated from committed HEAD).
+Implementation commits in order: `4735620` plan rewrite, `0c74089` module extraction,
+`ccbc866` titles route, `668a160` hub build-out, `c62b40b` focused tests.
+
+**Backend (fixture-driven, zero external requests): 111 passed.** `test_ewc_routes.py` (now with the
+titles-route cases), `test_ewc_contract.py`, `test_cod_ewc_reconcile.py`, `test_esports_streams.py`,
+`test_esports_predict_api.py`, `test_wc_context.py`. Run from the worktree `backend/` with the main
+repo venv interpreter (`/root/legendarypicks/backend/venv/bin/python -m pytest`); no network.
+
+**Frontend Jest (shared binary only — `/root/legendarypicks/node_modules/.bin/jest`): full suite
+149/151.** The two failures are the pre-existing `components/Game/WCContext.test.tsx` pair (last
+touched by `2f754e2`, untouched by this work). The EWC/league suites: `EsportsEwcModule.test.tsx`
+(12, incl. TBD/TBA render guard), `EsportsBroadcast.test.tsx` (2), `EsportsPage.test.tsx` (1 —
+no-takeover + non-EWC content), `EsportsLeagueHub.test.tsx` (7 — full product, responsive 5→10
+expand, unavailable/stale/error+retry/inactive-empty/titles-error), `LeaguesList.test.tsx` (1).
+Zero "not wrapped in act" warnings.
+
+**Request counts (this pass: zero external requests).** All backend tests fixture-driven; the Jest
+suites mock `fetch`/`matchMedia`. The per-host matrix is unchanged: PandaScore 1 bracket call per
+120 s cold window plus existing bulk title feeds (shared caches); Breaking Point existing 300 s
+cache; ESPN 0 (never introduced); YouTube Data API 0 for standings/scores. `GET /api/esports/titles`
+adds no collector — it reads the already-cached shared slate.
+
+**Candidate vs DEV/production.** Everything above ran in the isolated worktree only. No DEV or
+production DB write, no managed-service restart, no deploy, no push, no tag move. The disposable
+preview directory `/root/lp-ewc-preview-BIEs6Q` was not touched (Codex rebuilds it). No
+npm/npx/yarn/next/browser command was run from the worktree; `node_modules` is the untouched shared
+symlink.
+
+**Remaining blockers.** (1) Club Championship standings: no permitted machine-readable publisher
+resolved; the honest unavailable state ships until one exists. (2) Hydrated browser verification of
+the hub remains out of scope by constraint (no next/browser commands in the worktree); static render
+guarantees are covered by the Jest suite, and the preview environment is Codex's to rebuild.
+
+**Hygiene.** `git diff --check` clean; secrets scan across the five commits and this plan: zero
+matches; worktree clean at completion.
