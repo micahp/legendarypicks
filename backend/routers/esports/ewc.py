@@ -68,9 +68,15 @@ def is_ewc_2026_serie(serie, league=None):
     end in that suffix and are excluded.  No club, date, or bracket is hard-coded.
     """
     serie = serie or {}
-    slug = (serie.get("slug") or "")
+    slug = (serie.get("slug") or "").lower()
     year = serie.get("year")
     league_name = ((league or {}).get("name") or "").lower()
+    serie_identity = " ".join(
+        str(serie.get(field) or "").lower()
+        for field in ("slug", "name", "full_name")
+    )
+    if "qualifier" in serie_identity or "qualifying" in serie_identity:
+        return False
     if slug.endswith("-esports-world-cup-2026") and year == 2026:
         return True
     return league_name == "esports world cup" and year == 2026

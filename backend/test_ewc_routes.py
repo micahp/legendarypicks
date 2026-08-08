@@ -43,6 +43,11 @@ class EventIdentityTests(unittest.TestCase):
         self.assertTrue(is_ewc_2026_serie({"slug": "cod-mw-esports-world-cup-2026", "year": 2026}))
         self.assertFalse(is_ewc_2026_serie({"slug": "cod-mw-esports-world-cup-2025", "year": 2025}))
         self.assertFalse(is_ewc_2026_serie({"slug": "cs-go-esports-world-cup-open-qualifier-2026", "year": 2026}))
+        self.assertFalse(is_ewc_2026_serie(
+            {"slug": "cs-go-esports-world-cup-open-qualifier-2026", "name": "Open Qualifier",
+             "full_name": "Open Qualifier 2026", "year": 2026},
+            {"name": "Esports World Cup"},
+        ))
         self.assertTrue(is_ewc_2026_serie({"slug": "x", "year": 2026}, {"name": "Esports World Cup"}))
 
     def test_label_detector_excludes_qualifiers(self):
