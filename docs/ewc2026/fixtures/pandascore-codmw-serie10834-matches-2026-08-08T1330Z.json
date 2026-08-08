@@ -1,0 +1,5882 @@
+[
+ {
+  "number_of_games": 7,
+  "streams_list": [
+   {
+    "main": true,
+    "language": "en",
+    "embed_url": "https://www.youtube.com/embed/ciOaZXz8CdQ",
+    "official": true,
+    "raw_url": "https://www.youtube.com/watch?v=ciOaZXz8CdQ"
+   }
+  ],
+  "rescheduled": true,
+  "game_advantage": null,
+  "draw": false,
+  "winner": null,
+  "begin_at": "2026-08-08T19:30:00Z",
+  "slug": "2026-08-08-2c9ae40e-ee3c-4839-896c-c1b3abb6b6ee",
+  "results": [
+   {
+    "score": 0,
+    "team_id": 137201
+   },
+   {
+    "score": 0,
+    "team_id": 137164
+   }
+  ],
+  "winner_id": null,
+  "original_scheduled_at": "2026-08-08T18:00:00Z",
+  "serie_id": 10834,
+  "live": {
+   "supported": false,
+   "url": null,
+   "opens_at": null
+  },
+  "videogame": {
+   "id": 23,
+   "name": "Call of Duty",
+   "slug": "cod-mw"
+  },
+  "league": {
+   "id": 5283,
+   "name": "Esports World Cup",
+   "url": null,
+   "slug": "cod-mw-esports-world-cup",
+   "modified_at": "2024-08-09T13:28:00Z",
+   "image_url": "https://cdn-api.pandascore.co/images/league/image/5283/600px-esports_world_cup_2024_lightmode-png"
+  },
+  "status": "not_started",
+  "scheduled_at": "2026-08-08T19:30:00Z",
+  "games": [
+   {
+    "complete": false,
+    "id": 9665,
+    "position": 1,
+    "status": "not_started",
+    "length": null,
+    "finished": false,
+    "winner": {
+     "id": null,
+     "type": "Team"
+    },
+    "match_id": 1609945,
+    "begin_at": null,
+    "detailed_stats": true,
+    "end_at": null,
+    "forfeit": false,
+    "winner_type": "Team"
+   },
+   {
+    "complete": false,
+    "id": 9666,
+    "position": 2,
+    "status": "not_started",
+    "length": null,
+    "finished": false,
+    "winner": {
+     "id": null,
+     "type": "Team"
+    },
+    "match_id": 1609945,
+    "begin_at": null,
+    "detailed_stats": true,
+    "end_at": null,
+    "forfeit": false,
+    "winner_type": "Team"
+   },
+   {
+    "complete": false,
+    "id": 9667,
+    "position": 3,
+    "status": "not_started",
+    "length": null,
+    "finished": false,
+    "winner": {
+     "id": null,
+     "type": "Team"
+    },
+    "match_id": 1609945,
+    "begin_at": null,
+    "detailed_stats": true,
+    "end_at": null,
+    "forfeit": false,
+    "winner_type": "Team"
+   },
+   {
+    "complete": false,
+    "id": 9668,
+    "position": 4,
+    "status": "not_started",
+    "length": null,
+    "finished": false,
+    "winner": {
+     "id": null,
+     "type": "Team"
+    },
+    "match_id": 1609945,
+    "begin_at": null,
+    "detailed_stats": true,
+    "end_at": null,
+    "forfeit": false,
+    "winner_type": "Team"
+   },
+   {
+    "complete": false,
+    "id": 9669,
+    "position": 5,
+    "status": "not_started",
+    "length": null,
+    "finished": false,
+    "winner": {
+     "id": null,
+     "type": "Team"
+    },
+    "match_id": 1609945,
+    "begin_at": null,
+    "detailed_stats": true,
+    "end_at": null,
+    "forfeit": false,
+    "winner_type": "Team"
+   },
+   {
+    "complete": false,
+    "id": 9670,
+    "position": 6,
+    "status": "not_started",
+    "length": null,
+    "finished": false,
+    "winner": {
+     "id": null,
+     "type": "Team"
+    },
+    "match_id": 1609945,
+    "begin_at": null,
+    "detailed_stats": true,
+    "end_at": null,
+    "forfeit": false,
+    "winner_type": "Team"
+   },
+   {
+    "complete": false,
+    "id": 9671,
+    "position": 7,
+    "status": "not_started",
+    "length": null,
+    "finished": false,
+    "winner": {
+     "id": null,
+     "type": "Team"
+    },
+    "match_id": 1609945,
+    "begin_at": null,
+    "detailed_stats": true,
+    "end_at": null,
+    "forfeit": false,
+    "winner_type": "Team"
+   }
+  ],
+  "forfeit": false,
+  "opponents": [
+   {
+    "type": "Team",
+    "opponent": {
+     "id": 137201,
+     "name": "FaZe Clan",
+     "location": "US",
+     "slug": "faze-clan-cod-mw",
+     "modified_at": "2026-08-07T18:54:33Z",
+     "acronym": "FAZE",
+     "image_url": "https://cdn-api.pandascore.co/images/team/image/137201/fa_ze_clanlogo_square.png",
+     "dark_mode_image_url": null
+    }
+   },
+   {
+    "type": "Team",
+    "opponent": {
+     "id": 137164,
+     "name": "OpTic Gaming",
+     "location": "US",
+     "slug": "optic-gaming-cod-mw",
+     "modified_at": "2026-08-07T18:54:13Z",
+     "acronym": "OG",
+     "image_url": "https://cdn-api.pandascore.co/images/team/image/137164/op_tic_gaming_lightmode.png",
+     "dark_mode_image_url": null
+    }
+   }
+  ],
+  "league_id": 5283,
+  "match_type": "best_of",
+  "end_at": null,
+  "modified_at": "2026-08-08T17:33:04Z",
+  "detailed_stats": true,
+  "id": 1609945,
+  "name": "Quarterfinal 4: FAZE vs OG",
+  "tournament_id": 21576,
+  "tournament": {
+   "id": 21576,
+   "name": "Playoffs",
+   "type": "offline",
+   "country": "FR",
+   "slug": "cod-mw-esports-world-cup-2026-playoffs",
+   "begin_at": "2026-08-08T13:00:00Z",
+   "detailed_stats": true,
+   "end_at": "2026-08-09T21:00:00Z",
+   "winner_id": null,
+   "winner_type": "Team",
+   "serie_id": 10834,
+   "modified_at": "2026-08-07T18:54:13Z",
+   "league_id": 5283,
+   "prizepool": "1800000 United States Dollar",
+   "tier": "s",
+   "has_bracket": true,
+   "region": "WEU",
+   "live_supported": false
+  },
+  "winner_type": "Team",
+  "videogame_version": null,
+  "serie": {
+   "id": 10834,
+   "name": "",
+   "year": 2026,
+   "slug": "cod-mw-esports-world-cup-2026",
+   "begin_at": "2026-08-04T22:00:00Z",
+   "end_at": "2026-08-09T21:00:00Z",
+   "winner_id": null,
+   "winner_type": "Team",
+   "modified_at": "2026-07-28T13:35:14Z",
+   "league_id": 5283,
+   "season": null,
+   "full_name": "2026"
+  },
+  "videogame_title": {
+   "id": 18,
+   "name": "Call of Duty: Black Ops 7",
+   "slug": "cod-bo-7",
+   "videogame_id": 23
+  }
+ },
+ {
+  "number_of_games": 7,
+  "streams_list": [
+   {
+    "main": true,
+    "language": "en",
+    "embed_url": null,
+    "official": true,
+    "raw_url": "https://www.youtube.com/@CODLeague"
+   }
+  ],
+  "rescheduled": false,
+  "game_advantage": null,
+  "draw": false,
+  "winner": null,
+  "begin_at": "2026-08-09T13:00:00Z",
+  "slug": "2026-08-09-5e013e38-1a09-4b52-8250-566b683591d1",
+  "results": [
+   {
+    "score": 0,
+    "team_id": 135377
+   }
+  ],
+  "winner_id": null,
+  "original_scheduled_at": "2026-08-09T13:00:00Z",
+  "serie_id": 10834,
+  "live": {
+   "supported": false,
+   "url": null,
+   "opens_at": null
+  },
+  "videogame": {
+   "id": 23,
+   "name": "Call of Duty",
+   "slug": "cod-mw"
+  },
+  "league": {
+   "id": 5283,
+   "name": "Esports World Cup",
+   "url": null,
+   "slug": "cod-mw-esports-world-cup",
+   "modified_at": "2024-08-09T13:28:00Z",
+   "image_url": "https://cdn-api.pandascore.co/images/league/image/5283/600px-esports_world_cup_2024_lightmode-png"
+  },
+  "status": "not_started",
+  "scheduled_at": "2026-08-09T13:00:00Z",
+  "games": [
+   {
+    "complete": false,
+    "id": 9672,
+    "position": 1,
+    "status": "not_started",
+    "length": null,
+    "finished": false,
+    "winner": {
+     "id": null,
+     "type": "Team"
+    },
+    "match_id": 1609946,
+    "begin_at": null,
+    "detailed_stats": true,
+    "end_at": null,
+    "forfeit": false,
+    "winner_type": "Team"
+   },
+   {
+    "complete": false,
+    "id": 9673,
+    "position": 2,
+    "status": "not_started",
+    "length": null,
+    "finished": false,
+    "winner": {
+     "id": null,
+     "type": "Team"
+    },
+    "match_id": 1609946,
+    "begin_at": null,
+    "detailed_stats": true,
+    "end_at": null,
+    "forfeit": false,
+    "winner_type": "Team"
+   },
+   {
+    "complete": false,
+    "id": 9674,
+    "position": 3,
+    "status": "not_started",
+    "length": null,
+    "finished": false,
+    "winner": {
+     "id": null,
+     "type": "Team"
+    },
+    "match_id": 1609946,
+    "begin_at": null,
+    "detailed_stats": true,
+    "end_at": null,
+    "forfeit": false,
+    "winner_type": "Team"
+   },
+   {
+    "complete": false,
+    "id": 9675,
+    "position": 4,
+    "status": "not_started",
+    "length": null,
+    "finished": false,
+    "winner": {
+     "id": null,
+     "type": "Team"
+    },
+    "match_id": 1609946,
+    "begin_at": null,
+    "detailed_stats": true,
+    "end_at": null,
+    "forfeit": false,
+    "winner_type": "Team"
+   },
+   {
+    "complete": false,
+    "id": 9676,
+    "position": 5,
+    "status": "not_started",
+    "length": null,
+    "finished": false,
+    "winner": {
+     "id": null,
+     "type": "Team"
+    },
+    "match_id": 1609946,
+    "begin_at": null,
+    "detailed_stats": true,
+    "end_at": null,
+    "forfeit": false,
+    "winner_type": "Team"
+   },
+   {
+    "complete": false,
+    "id": 9677,
+    "position": 6,
+    "status": "not_started",
+    "length": null,
+    "finished": false,
+    "winner": {
+     "id": null,
+     "type": "Team"
+    },
+    "match_id": 1609946,
+    "begin_at": null,
+    "detailed_stats": true,
+    "end_at": null,
+    "forfeit": false,
+    "winner_type": "Team"
+   },
+   {
+    "complete": false,
+    "id": 9678,
+    "position": 7,
+    "status": "not_started",
+    "length": null,
+    "finished": false,
+    "winner": {
+     "id": null,
+     "type": "Team"
+    },
+    "match_id": 1609946,
+    "begin_at": null,
+    "detailed_stats": true,
+    "end_at": null,
+    "forfeit": false,
+    "winner_type": "Team"
+   }
+  ],
+  "forfeit": false,
+  "opponents": [
+   {
+    "type": "Team",
+    "opponent": {
+     "id": 135377,
+     "name": "Team Heretics",
+     "location": "ES",
+     "slug": "team-heretics-cod-mw",
+     "modified_at": "2026-08-07T18:54:09Z",
+     "acronym": "HTCS",
+     "image_url": "https://cdn-api.pandascore.co/images/team/image/135377/team_hereticslogo_square.png",
+     "dark_mode_image_url": null
+    }
+   }
+  ],
+  "league_id": 5283,
+  "match_type": "best_of",
+  "end_at": null,
+  "modified_at": "2026-08-08T15:18:29Z",
+  "detailed_stats": true,
+  "id": 1609946,
+  "name": "Semifinal 1: HTCS vs TBD",
+  "tournament_id": 21576,
+  "tournament": {
+   "id": 21576,
+   "name": "Playoffs",
+   "type": "offline",
+   "country": "FR",
+   "slug": "cod-mw-esports-world-cup-2026-playoffs",
+   "begin_at": "2026-08-08T13:00:00Z",
+   "detailed_stats": true,
+   "end_at": "2026-08-09T21:00:00Z",
+   "winner_id": null,
+   "winner_type": "Team",
+   "serie_id": 10834,
+   "modified_at": "2026-08-07T18:54:13Z",
+   "league_id": 5283,
+   "prizepool": "1800000 United States Dollar",
+   "tier": "s",
+   "has_bracket": true,
+   "region": "WEU",
+   "live_supported": false
+  },
+  "winner_type": "Team",
+  "videogame_version": null,
+  "serie": {
+   "id": 10834,
+   "name": "",
+   "year": 2026,
+   "slug": "cod-mw-esports-world-cup-2026",
+   "begin_at": "2026-08-04T22:00:00Z",
+   "end_at": "2026-08-09T21:00:00Z",
+   "winner_id": null,
+   "winner_type": "Team",
+   "modified_at": "2026-07-28T13:35:14Z",
+   "league_id": 5283,
+   "season": null,
+   "full_name": "2026"
+  },
+  "videogame_title": {
+   "id": 18,
+   "name": "Call of Duty: Black Ops 7",
+   "slug": "cod-bo-7",
+   "videogame_id": 23
+  }
+ },
+ {
+  "number_of_games": 7,
+  "streams_list": [
+   {
+    "main": true,
+    "language": "en",
+    "embed_url": null,
+    "official": true,
+    "raw_url": "https://www.youtube.com/@CODLeague"
+   }
+  ],
+  "rescheduled": false,
+  "game_advantage": null,
+  "draw": false,
+  "winner": null,
+  "begin_at": "2026-08-09T14:40:00Z",
+  "slug": "2026-08-09-7f432961-220a-47b3-ba93-d7f07b27d7fe",
+  "results": [
+   {
+    "score": 0,
+    "team_id": 135378
+   }
+  ],
+  "winner_id": null,
+  "original_scheduled_at": "2026-08-09T14:40:00Z",
+  "serie_id": 10834,
+  "live": {
+   "supported": false,
+   "url": null,
+   "opens_at": null
+  },
+  "videogame": {
+   "id": 23,
+   "name": "Call of Duty",
+   "slug": "cod-mw"
+  },
+  "league": {
+   "id": 5283,
+   "name": "Esports World Cup",
+   "url": null,
+   "slug": "cod-mw-esports-world-cup",
+   "modified_at": "2024-08-09T13:28:00Z",
+   "image_url": "https://cdn-api.pandascore.co/images/league/image/5283/600px-esports_world_cup_2024_lightmode-png"
+  },
+  "status": "not_started",
+  "scheduled_at": "2026-08-09T14:40:00Z",
+  "games": [
+   {
+    "complete": false,
+    "id": 9679,
+    "position": 1,
+    "status": "not_started",
+    "length": null,
+    "finished": false,
+    "winner": {
+     "id": null,
+     "type": "Team"
+    },
+    "match_id": 1609947,
+    "begin_at": null,
+    "detailed_stats": true,
+    "end_at": null,
+    "forfeit": false,
+    "winner_type": "Team"
+   },
+   {
+    "complete": false,
+    "id": 9680,
+    "position": 2,
+    "status": "not_started",
+    "length": null,
+    "finished": false,
+    "winner": {
+     "id": null,
+     "type": "Team"
+    },
+    "match_id": 1609947,
+    "begin_at": null,
+    "detailed_stats": true,
+    "end_at": null,
+    "forfeit": false,
+    "winner_type": "Team"
+   },
+   {
+    "complete": false,
+    "id": 9681,
+    "position": 3,
+    "status": "not_started",
+    "length": null,
+    "finished": false,
+    "winner": {
+     "id": null,
+     "type": "Team"
+    },
+    "match_id": 1609947,
+    "begin_at": null,
+    "detailed_stats": true,
+    "end_at": null,
+    "forfeit": false,
+    "winner_type": "Team"
+   },
+   {
+    "complete": false,
+    "id": 9682,
+    "position": 4,
+    "status": "not_started",
+    "length": null,
+    "finished": false,
+    "winner": {
+     "id": null,
+     "type": "Team"
+    },
+    "match_id": 1609947,
+    "begin_at": null,
+    "detailed_stats": true,
+    "end_at": null,
+    "forfeit": false,
+    "winner_type": "Team"
+   },
+   {
+    "complete": false,
+    "id": 9683,
+    "position": 5,
+    "status": "not_started",
+    "length": null,
+    "finished": false,
+    "winner": {
+     "id": null,
+     "type": "Team"
+    },
+    "match_id": 1609947,
+    "begin_at": null,
+    "detailed_stats": true,
+    "end_at": null,
+    "forfeit": false,
+    "winner_type": "Team"
+   },
+   {
+    "complete": false,
+    "id": 9684,
+    "position": 6,
+    "status": "not_started",
+    "length": null,
+    "finished": false,
+    "winner": {
+     "id": null,
+     "type": "Team"
+    },
+    "match_id": 1609947,
+    "begin_at": null,
+    "detailed_stats": true,
+    "end_at": null,
+    "forfeit": false,
+    "winner_type": "Team"
+   },
+   {
+    "complete": false,
+    "id": 9685,
+    "position": 7,
+    "status": "not_started",
+    "length": null,
+    "finished": false,
+    "winner": {
+     "id": null,
+     "type": "Team"
+    },
+    "match_id": 1609947,
+    "begin_at": null,
+    "detailed_stats": true,
+    "end_at": null,
+    "forfeit": false,
+    "winner_type": "Team"
+   }
+  ],
+  "forfeit": false,
+  "opponents": [
+   {
+    "type": "Team",
+    "opponent": {
+     "id": 135378,
+     "name": "100 Thieves",
+     "location": "US",
+     "slug": "100-thieves-cod-mw",
+     "modified_at": "2026-08-07T18:54:11Z",
+     "acronym": "100T",
+     "image_url": "https://cdn-api.pandascore.co/images/team/image/135378/190px_100_thieves_lightmode.png",
+     "dark_mode_image_url": "https://cdn-api.pandascore.co/dark_images/team/dark_image/135378/190px_100_thieves_darkmode.png"
+    }
+   }
+  ],
+  "league_id": 5283,
+  "match_type": "best_of",
+  "end_at": null,
+  "modified_at": "2026-08-08T17:32:21Z",
+  "detailed_stats": true,
+  "id": 1609947,
+  "name": "Semifinal 2: 100T vs TBD",
+  "tournament_id": 21576,
+  "tournament": {
+   "id": 21576,
+   "name": "Playoffs",
+   "type": "offline",
+   "country": "FR",
+   "slug": "cod-mw-esports-world-cup-2026-playoffs",
+   "begin_at": "2026-08-08T13:00:00Z",
+   "detailed_stats": true,
+   "end_at": "2026-08-09T21:00:00Z",
+   "winner_id": null,
+   "winner_type": "Team",
+   "serie_id": 10834,
+   "modified_at": "2026-08-07T18:54:13Z",
+   "league_id": 5283,
+   "prizepool": "1800000 United States Dollar",
+   "tier": "s",
+   "has_bracket": true,
+   "region": "WEU",
+   "live_supported": false
+  },
+  "winner_type": "Team",
+  "videogame_version": null,
+  "serie": {
+   "id": 10834,
+   "name": "",
+   "year": 2026,
+   "slug": "cod-mw-esports-world-cup-2026",
+   "begin_at": "2026-08-04T22:00:00Z",
+   "end_at": "2026-08-09T21:00:00Z",
+   "winner_id": null,
+   "winner_type": "Team",
+   "modified_at": "2026-07-28T13:35:14Z",
+   "league_id": 5283,
+   "season": null,
+   "full_name": "2026"
+  },
+  "videogame_title": {
+   "id": 18,
+   "name": "Call of Duty: Black Ops 7",
+   "slug": "cod-bo-7",
+   "videogame_id": 23
+  }
+ },
+ {
+  "number_of_games": 9,
+  "streams_list": [
+   {
+    "main": true,
+    "language": "en",
+    "embed_url": null,
+    "official": true,
+    "raw_url": "https://www.youtube.com/@CODLeague"
+   }
+  ],
+  "rescheduled": false,
+  "game_advantage": null,
+  "draw": false,
+  "winner": null,
+  "begin_at": "2026-08-09T16:20:00Z",
+  "slug": "2026-08-09-3cb38b4d-4512-4c11-9e44-784a1a70d6d8",
+  "results": [],
+  "winner_id": null,
+  "original_scheduled_at": "2026-08-09T16:20:00Z",
+  "serie_id": 10834,
+  "live": {
+   "supported": false,
+   "url": null,
+   "opens_at": null
+  },
+  "videogame": {
+   "id": 23,
+   "name": "Call of Duty",
+   "slug": "cod-mw"
+  },
+  "league": {
+   "id": 5283,
+   "name": "Esports World Cup",
+   "url": null,
+   "slug": "cod-mw-esports-world-cup",
+   "modified_at": "2024-08-09T13:28:00Z",
+   "image_url": "https://cdn-api.pandascore.co/images/league/image/5283/600px-esports_world_cup_2024_lightmode-png"
+  },
+  "status": "not_started",
+  "scheduled_at": "2026-08-09T16:20:00Z",
+  "games": [
+   {
+    "complete": false,
+    "id": 9695,
+    "position": 1,
+    "status": "not_started",
+    "length": null,
+    "finished": false,
+    "winner": {
+     "id": null,
+     "type": "Team"
+    },
+    "match_id": 1609949,
+    "begin_at": null,
+    "detailed_stats": true,
+    "end_at": null,
+    "forfeit": false,
+    "winner_type": "Team"
+   },
+   {
+    "complete": false,
+    "id": 9696,
+    "position": 2,
+    "status": "not_started",
+    "length": null,
+    "finished": false,
+    "winner": {
+     "id": null,
+     "type": "Team"
+    },
+    "match_id": 1609949,
+    "begin_at": null,
+    "detailed_stats": true,
+    "end_at": null,
+    "forfeit": false,
+    "winner_type": "Team"
+   },
+   {
+    "complete": false,
+    "id": 9697,
+    "position": 3,
+    "status": "not_started",
+    "length": null,
+    "finished": false,
+    "winner": {
+     "id": null,
+     "type": "Team"
+    },
+    "match_id": 1609949,
+    "begin_at": null,
+    "detailed_stats": true,
+    "end_at": null,
+    "forfeit": false,
+    "winner_type": "Team"
+   },
+   {
+    "complete": false,
+    "id": 9698,
+    "position": 4,
+    "status": "not_started",
+    "length": null,
+    "finished": false,
+    "winner": {
+     "id": null,
+     "type": "Team"
+    },
+    "match_id": 1609949,
+    "begin_at": null,
+    "detailed_stats": true,
+    "end_at": null,
+    "forfeit": false,
+    "winner_type": "Team"
+   },
+   {
+    "complete": false,
+    "id": 9699,
+    "position": 5,
+    "status": "not_started",
+    "length": null,
+    "finished": false,
+    "winner": {
+     "id": null,
+     "type": "Team"
+    },
+    "match_id": 1609949,
+    "begin_at": null,
+    "detailed_stats": true,
+    "end_at": null,
+    "forfeit": false,
+    "winner_type": "Team"
+   },
+   {
+    "complete": false,
+    "id": 9700,
+    "position": 6,
+    "status": "not_started",
+    "length": null,
+    "finished": false,
+    "winner": {
+     "id": null,
+     "type": "Team"
+    },
+    "match_id": 1609949,
+    "begin_at": null,
+    "detailed_stats": true,
+    "end_at": null,
+    "forfeit": false,
+    "winner_type": "Team"
+   },
+   {
+    "complete": false,
+    "id": 9701,
+    "position": 7,
+    "status": "not_started",
+    "length": null,
+    "finished": false,
+    "winner": {
+     "id": null,
+     "type": "Team"
+    },
+    "match_id": 1609949,
+    "begin_at": null,
+    "detailed_stats": true,
+    "end_at": null,
+    "forfeit": false,
+    "winner_type": "Team"
+   },
+   {
+    "complete": false,
+    "id": 9702,
+    "position": 8,
+    "status": "not_started",
+    "length": null,
+    "finished": false,
+    "winner": {
+     "id": null,
+     "type": "Team"
+    },
+    "match_id": 1609949,
+    "begin_at": null,
+    "detailed_stats": true,
+    "end_at": null,
+    "forfeit": false,
+    "winner_type": "Team"
+   },
+   {
+    "complete": false,
+    "id": 9703,
+    "position": 9,
+    "status": "not_started",
+    "length": null,
+    "finished": false,
+    "winner": {
+     "id": null,
+     "type": "Team"
+    },
+    "match_id": 1609949,
+    "begin_at": null,
+    "detailed_stats": true,
+    "end_at": null,
+    "forfeit": false,
+    "winner_type": "Team"
+   }
+  ],
+  "forfeit": false,
+  "opponents": [],
+  "league_id": 5283,
+  "match_type": "best_of",
+  "end_at": null,
+  "modified_at": "2026-08-08T13:20:36Z",
+  "detailed_stats": true,
+  "id": 1609949,
+  "name": "3rd place match: TBD vs TBD",
+  "tournament_id": 21576,
+  "tournament": {
+   "id": 21576,
+   "name": "Playoffs",
+   "type": "offline",
+   "country": "FR",
+   "slug": "cod-mw-esports-world-cup-2026-playoffs",
+   "begin_at": "2026-08-08T13:00:00Z",
+   "detailed_stats": true,
+   "end_at": "2026-08-09T21:00:00Z",
+   "winner_id": null,
+   "winner_type": "Team",
+   "serie_id": 10834,
+   "modified_at": "2026-08-07T18:54:13Z",
+   "league_id": 5283,
+   "prizepool": "1800000 United States Dollar",
+   "tier": "s",
+   "has_bracket": true,
+   "region": "WEU",
+   "live_supported": false
+  },
+  "winner_type": "Team",
+  "videogame_version": null,
+  "serie": {
+   "id": 10834,
+   "name": "",
+   "year": 2026,
+   "slug": "cod-mw-esports-world-cup-2026",
+   "begin_at": "2026-08-04T22:00:00Z",
+   "end_at": "2026-08-09T21:00:00Z",
+   "winner_id": null,
+   "winner_type": "Team",
+   "modified_at": "2026-07-28T13:35:14Z",
+   "league_id": 5283,
+   "season": null,
+   "full_name": "2026"
+  },
+  "videogame_title": {
+   "id": 18,
+   "name": "Call of Duty: Black Ops 7",
+   "slug": "cod-bo-7",
+   "videogame_id": 23
+  }
+ },
+ {
+  "number_of_games": 9,
+  "streams_list": [
+   {
+    "main": true,
+    "language": "en",
+    "embed_url": null,
+    "official": true,
+    "raw_url": "https://www.youtube.com/@CODLeague"
+   }
+  ],
+  "rescheduled": false,
+  "game_advantage": null,
+  "draw": false,
+  "winner": null,
+  "begin_at": "2026-08-09T18:00:00Z",
+  "slug": "2026-08-09-9819ad9f-06ff-41b4-b3f1-e022e5adc7b3",
+  "results": [],
+  "winner_id": null,
+  "original_scheduled_at": "2026-08-09T18:00:00Z",
+  "serie_id": 10834,
+  "live": {
+   "supported": false,
+   "url": null,
+   "opens_at": null
+  },
+  "videogame": {
+   "id": 23,
+   "name": "Call of Duty",
+   "slug": "cod-mw"
+  },
+  "league": {
+   "id": 5283,
+   "name": "Esports World Cup",
+   "url": null,
+   "slug": "cod-mw-esports-world-cup",
+   "modified_at": "2024-08-09T13:28:00Z",
+   "image_url": "https://cdn-api.pandascore.co/images/league/image/5283/600px-esports_world_cup_2024_lightmode-png"
+  },
+  "status": "not_started",
+  "scheduled_at": "2026-08-09T18:00:00Z",
+  "games": [
+   {
+    "complete": false,
+    "id": 9686,
+    "position": 1,
+    "status": "not_started",
+    "length": null,
+    "finished": false,
+    "winner": {
+     "id": null,
+     "type": "Team"
+    },
+    "match_id": 1609948,
+    "begin_at": null,
+    "detailed_stats": true,
+    "end_at": null,
+    "forfeit": false,
+    "winner_type": "Team"
+   },
+   {
+    "complete": false,
+    "id": 9687,
+    "position": 2,
+    "status": "not_started",
+    "length": null,
+    "finished": false,
+    "winner": {
+     "id": null,
+     "type": "Team"
+    },
+    "match_id": 1609948,
+    "begin_at": null,
+    "detailed_stats": true,
+    "end_at": null,
+    "forfeit": false,
+    "winner_type": "Team"
+   },
+   {
+    "complete": false,
+    "id": 9688,
+    "position": 3,
+    "status": "not_started",
+    "length": null,
+    "finished": false,
+    "winner": {
+     "id": null,
+     "type": "Team"
+    },
+    "match_id": 1609948,
+    "begin_at": null,
+    "detailed_stats": true,
+    "end_at": null,
+    "forfeit": false,
+    "winner_type": "Team"
+   },
+   {
+    "complete": false,
+    "id": 9689,
+    "position": 4,
+    "status": "not_started",
+    "length": null,
+    "finished": false,
+    "winner": {
+     "id": null,
+     "type": "Team"
+    },
+    "match_id": 1609948,
+    "begin_at": null,
+    "detailed_stats": true,
+    "end_at": null,
+    "forfeit": false,
+    "winner_type": "Team"
+   },
+   {
+    "complete": false,
+    "id": 9690,
+    "position": 5,
+    "status": "not_started",
+    "length": null,
+    "finished": false,
+    "winner": {
+     "id": null,
+     "type": "Team"
+    },
+    "match_id": 1609948,
+    "begin_at": null,
+    "detailed_stats": true,
+    "end_at": null,
+    "forfeit": false,
+    "winner_type": "Team"
+   },
+   {
+    "complete": false,
+    "id": 9691,
+    "position": 6,
+    "status": "not_started",
+    "length": null,
+    "finished": false,
+    "winner": {
+     "id": null,
+     "type": "Team"
+    },
+    "match_id": 1609948,
+    "begin_at": null,
+    "detailed_stats": true,
+    "end_at": null,
+    "forfeit": false,
+    "winner_type": "Team"
+   },
+   {
+    "complete": false,
+    "id": 9692,
+    "position": 7,
+    "status": "not_started",
+    "length": null,
+    "finished": false,
+    "winner": {
+     "id": null,
+     "type": "Team"
+    },
+    "match_id": 1609948,
+    "begin_at": null,
+    "detailed_stats": true,
+    "end_at": null,
+    "forfeit": false,
+    "winner_type": "Team"
+   },
+   {
+    "complete": false,
+    "id": 9693,
+    "position": 8,
+    "status": "not_started",
+    "length": null,
+    "finished": false,
+    "winner": {
+     "id": null,
+     "type": "Team"
+    },
+    "match_id": 1609948,
+    "begin_at": null,
+    "detailed_stats": true,
+    "end_at": null,
+    "forfeit": false,
+    "winner_type": "Team"
+   },
+   {
+    "complete": false,
+    "id": 9694,
+    "position": 9,
+    "status": "not_started",
+    "length": null,
+    "finished": false,
+    "winner": {
+     "id": null,
+     "type": "Team"
+    },
+    "match_id": 1609948,
+    "begin_at": null,
+    "detailed_stats": true,
+    "end_at": null,
+    "forfeit": false,
+    "winner_type": "Team"
+   }
+  ],
+  "forfeit": false,
+  "opponents": [],
+  "league_id": 5283,
+  "match_type": "best_of",
+  "end_at": null,
+  "modified_at": "2026-08-08T13:20:38Z",
+  "detailed_stats": true,
+  "id": 1609948,
+  "name": "Grand final: TBD vs TBD",
+  "tournament_id": 21576,
+  "tournament": {
+   "id": 21576,
+   "name": "Playoffs",
+   "type": "offline",
+   "country": "FR",
+   "slug": "cod-mw-esports-world-cup-2026-playoffs",
+   "begin_at": "2026-08-08T13:00:00Z",
+   "detailed_stats": true,
+   "end_at": "2026-08-09T21:00:00Z",
+   "winner_id": null,
+   "winner_type": "Team",
+   "serie_id": 10834,
+   "modified_at": "2026-08-07T18:54:13Z",
+   "league_id": 5283,
+   "prizepool": "1800000 United States Dollar",
+   "tier": "s",
+   "has_bracket": true,
+   "region": "WEU",
+   "live_supported": false
+  },
+  "winner_type": "Team",
+  "videogame_version": null,
+  "serie": {
+   "id": 10834,
+   "name": "",
+   "year": 2026,
+   "slug": "cod-mw-esports-world-cup-2026",
+   "begin_at": "2026-08-04T22:00:00Z",
+   "end_at": "2026-08-09T21:00:00Z",
+   "winner_id": null,
+   "winner_type": "Team",
+   "modified_at": "2026-07-28T13:35:14Z",
+   "league_id": 5283,
+   "season": null,
+   "full_name": "2026"
+  },
+  "videogame_title": {
+   "id": 18,
+   "name": "Call of Duty: Black Ops 7",
+   "slug": "cod-bo-7",
+   "videogame_id": 23
+  }
+ },
+ {
+  "winner_type": "Team",
+  "draw": false,
+  "game_advantage": null,
+  "detailed_stats": true,
+  "serie": {
+   "id": 10834,
+   "name": "",
+   "year": 2026,
+   "begin_at": "2026-08-04T22:00:00Z",
+   "end_at": "2026-08-09T21:00:00Z",
+   "winner_id": null,
+   "winner_type": "Team",
+   "slug": "cod-mw-esports-world-cup-2026",
+   "modified_at": "2026-07-28T13:35:14Z",
+   "league_id": 5283,
+   "season": null,
+   "full_name": "2026"
+  },
+  "videogame_version": null,
+  "original_scheduled_at": "2026-08-08T16:20:00Z",
+  "opponents": [
+   {
+    "type": "Team",
+    "opponent": {
+     "id": 135378,
+     "name": "100 Thieves",
+     "location": "US",
+     "slug": "100-thieves-cod-mw",
+     "modified_at": "2026-08-07T18:54:11Z",
+     "acronym": "100T",
+     "image_url": "https://cdn-api.pandascore.co/images/team/image/135378/190px_100_thieves_lightmode.png",
+     "dark_mode_image_url": "https://cdn-api.pandascore.co/dark_images/team/dark_image/135378/190px_100_thieves_darkmode.png"
+    }
+   },
+   {
+    "type": "Team",
+    "opponent": {
+     "id": 137163,
+     "name": "Movistar KOI",
+     "location": "ES",
+     "slug": "koi-cod-mw",
+     "modified_at": "2026-08-07T19:00:48Z",
+     "acronym": "KOI",
+     "image_url": "https://cdn-api.pandascore.co/images/team/image/137163/movistar_ko_ilogo_square.png",
+     "dark_mode_image_url": null
+    }
+   }
+  ],
+  "tournament": {
+   "id": 21576,
+   "name": "Playoffs",
+   "type": "offline",
+   "country": "FR",
+   "begin_at": "2026-08-08T13:00:00Z",
+   "detailed_stats": true,
+   "end_at": "2026-08-09T21:00:00Z",
+   "winner_id": null,
+   "winner_type": "Team",
+   "slug": "cod-mw-esports-world-cup-2026-playoffs",
+   "serie_id": 10834,
+   "modified_at": "2026-08-07T18:54:13Z",
+   "league_id": 5283,
+   "prizepool": "1800000 United States Dollar",
+   "tier": "s",
+   "has_bracket": true,
+   "region": "WEU",
+   "live_supported": false
+  },
+  "scheduled_at": "2026-08-08T16:20:00Z",
+  "live": {
+   "supported": false,
+   "url": null,
+   "opens_at": null
+  },
+  "begin_at": "2026-08-08T16:22:37Z",
+  "rescheduled": true,
+  "number_of_games": 7,
+  "streams_list": [
+   {
+    "main": true,
+    "language": "en",
+    "embed_url": "https://www.youtube.com/embed/ciOaZXz8CdQ",
+    "official": true,
+    "raw_url": "https://www.youtube.com/watch?v=ciOaZXz8CdQ"
+   }
+  ],
+  "tournament_id": 21576,
+  "serie_id": 10834,
+  "status": "finished",
+  "winner_id": 135378,
+  "slug": "2026-08-08-c9395fe5-8910-494b-b0c1-6cf9289b877f",
+  "end_at": "2026-08-08T17:32:19Z",
+  "results": [
+   {
+    "score": 4,
+    "team_id": 135378
+   },
+   {
+    "score": 0,
+    "team_id": 137163
+   }
+  ],
+  "videogame": {
+   "id": 23,
+   "name": "Call of Duty",
+   "slug": "cod-mw"
+  },
+  "winner": {
+   "id": 135378,
+   "name": "100 Thieves",
+   "location": "US",
+   "slug": "100-thieves-cod-mw",
+   "modified_at": "2026-08-07T18:54:11Z",
+   "acronym": "100T",
+   "image_url": "https://cdn-api.pandascore.co/images/team/image/135378/190px_100_thieves_lightmode.png",
+   "dark_mode_image_url": "https://cdn-api.pandascore.co/dark_images/team/dark_image/135378/190px_100_thieves_darkmode.png"
+  },
+  "league_id": 5283,
+  "games": [
+   {
+    "complete": false,
+    "id": 9658,
+    "position": 1,
+    "status": "finished",
+    "length": 638,
+    "finished": true,
+    "begin_at": "2026-08-08T16:22:38Z",
+    "detailed_stats": true,
+    "end_at": "2026-08-08T16:33:16Z",
+    "forfeit": false,
+    "match_id": 1609944,
+    "winner_type": "Team",
+    "winner": {
+     "id": 135378,
+     "type": "Team"
+    }
+   },
+   {
+    "complete": false,
+    "id": 9659,
+    "position": 2,
+    "status": "finished",
+    "length": 913,
+    "finished": true,
+    "begin_at": "2026-08-08T16:37:48Z",
+    "detailed_stats": true,
+    "end_at": "2026-08-08T16:53:01Z",
+    "forfeit": false,
+    "match_id": 1609944,
+    "winner_type": "Team",
+    "winner": {
+     "id": 135378,
+     "type": "Team"
+    }
+   },
+   {
+    "complete": false,
+    "id": 9660,
+    "position": 3,
+    "status": "finished",
+    "length": 1073,
+    "finished": true,
+    "begin_at": "2026-08-08T16:58:55Z",
+    "detailed_stats": true,
+    "end_at": "2026-08-08T17:16:48Z",
+    "forfeit": false,
+    "match_id": 1609944,
+    "winner_type": "Team",
+    "winner": {
+     "id": 135378,
+     "type": "Team"
+    }
+   },
+   {
+    "complete": false,
+    "id": 9661,
+    "position": 4,
+    "status": "finished",
+    "length": 715,
+    "finished": true,
+    "begin_at": "2026-08-08T17:20:24Z",
+    "detailed_stats": true,
+    "end_at": "2026-08-08T17:32:20Z",
+    "forfeit": false,
+    "match_id": 1609944,
+    "winner_type": "Team",
+    "winner": {
+     "id": 135378,
+     "type": "Team"
+    }
+   }
+  ],
+  "id": 1609944,
+  "name": "Quarterfinal 3: 100T vs KOI",
+  "league": {
+   "id": 5283,
+   "name": "Esports World Cup",
+   "url": null,
+   "slug": "cod-mw-esports-world-cup",
+   "modified_at": "2024-08-09T13:28:00Z",
+   "image_url": "https://cdn-api.pandascore.co/images/league/image/5283/600px-esports_world_cup_2024_lightmode-png"
+  },
+  "videogame_title": {
+   "id": 18,
+   "name": "Call of Duty: Black Ops 7",
+   "slug": "cod-bo-7",
+   "videogame_id": 23
+  },
+  "match_type": "best_of",
+  "modified_at": "2026-08-08T17:32:20Z",
+  "forfeit": false
+ },
+ {
+  "winner_type": "Team",
+  "draw": false,
+  "game_advantage": null,
+  "detailed_stats": true,
+  "serie": {
+   "id": 10834,
+   "name": "",
+   "year": 2026,
+   "begin_at": "2026-08-04T22:00:00Z",
+   "end_at": "2026-08-09T21:00:00Z",
+   "winner_id": null,
+   "winner_type": "Team",
+   "slug": "cod-mw-esports-world-cup-2026",
+   "modified_at": "2026-07-28T13:35:14Z",
+   "league_id": 5283,
+   "season": null,
+   "full_name": "2026"
+  },
+  "videogame_version": null,
+  "original_scheduled_at": "2026-08-08T13:00:00Z",
+  "opponents": [
+   {
+    "type": "Team",
+    "opponent": {
+     "id": 135375,
+     "name": "G2 Esports",
+     "location": "ES",
+     "slug": "g2-esports-cod-mw",
+     "modified_at": "2026-08-07T18:54:08Z",
+     "acronym": "G2",
+     "image_url": "https://cdn-api.pandascore.co/images/team/image/135375/g2_esportslogo_square.png",
+     "dark_mode_image_url": null
+    }
+   },
+   {
+    "type": "Team",
+    "opponent": {
+     "id": 135377,
+     "name": "Team Heretics",
+     "location": "ES",
+     "slug": "team-heretics-cod-mw",
+     "modified_at": "2026-08-07T18:54:09Z",
+     "acronym": "HTCS",
+     "image_url": "https://cdn-api.pandascore.co/images/team/image/135377/team_hereticslogo_square.png",
+     "dark_mode_image_url": null
+    }
+   }
+  ],
+  "tournament": {
+   "id": 21576,
+   "name": "Playoffs",
+   "type": "offline",
+   "country": "FR",
+   "begin_at": "2026-08-08T13:00:00Z",
+   "detailed_stats": true,
+   "end_at": "2026-08-09T21:00:00Z",
+   "winner_id": null,
+   "winner_type": "Team",
+   "slug": "cod-mw-esports-world-cup-2026-playoffs",
+   "serie_id": 10834,
+   "modified_at": "2026-08-07T18:54:13Z",
+   "league_id": 5283,
+   "prizepool": "1800000 United States Dollar",
+   "tier": "s",
+   "has_bracket": true,
+   "region": "WEU",
+   "live_supported": false
+  },
+  "scheduled_at": "2026-08-08T13:00:00Z",
+  "live": {
+   "supported": false,
+   "url": null,
+   "opens_at": null
+  },
+  "begin_at": "2026-08-08T13:07:17Z",
+  "rescheduled": false,
+  "number_of_games": 7,
+  "streams_list": [
+   {
+    "main": true,
+    "language": "en",
+    "embed_url": "https://www.youtube.com/embed/ciOaZXz8CdQ",
+    "official": true,
+    "raw_url": "https://www.youtube.com/watch?v=ciOaZXz8CdQ"
+   }
+  ],
+  "tournament_id": 21576,
+  "serie_id": 10834,
+  "status": "finished",
+  "winner_id": 135377,
+  "slug": "2026-08-08-d5a566fa-70c1-41e4-a0e0-05ead5dacccf",
+  "end_at": "2026-08-08T15:18:29Z",
+  "results": [
+   {
+    "score": 3,
+    "team_id": 135375
+   },
+   {
+    "score": 4,
+    "team_id": 135377
+   }
+  ],
+  "videogame": {
+   "id": 23,
+   "name": "Call of Duty",
+   "slug": "cod-mw"
+  },
+  "winner": {
+   "id": 135377,
+   "name": "Team Heretics",
+   "location": "ES",
+   "slug": "team-heretics-cod-mw",
+   "modified_at": "2026-08-07T18:54:09Z",
+   "acronym": "HTCS",
+   "image_url": "https://cdn-api.pandascore.co/images/team/image/135377/team_hereticslogo_square.png",
+   "dark_mode_image_url": null
+  },
+  "league_id": 5283,
+  "games": [
+   {
+    "complete": true,
+    "id": 9644,
+    "position": 1,
+    "status": "finished",
+    "length": 695,
+    "finished": true,
+    "begin_at": "2026-08-08T13:07:17Z",
+    "detailed_stats": true,
+    "end_at": "2026-08-08T13:18:53Z",
+    "forfeit": false,
+    "match_id": 1609942,
+    "winner_type": "Team",
+    "winner": {
+     "id": 135375,
+     "type": "Team"
+    }
+   },
+   {
+    "complete": true,
+    "id": 9645,
+    "position": 2,
+    "status": "finished",
+    "length": 1191,
+    "finished": true,
+    "begin_at": "2026-08-08T13:22:51Z",
+    "detailed_stats": true,
+    "end_at": "2026-08-08T13:42:43Z",
+    "forfeit": false,
+    "match_id": 1609942,
+    "winner_type": "Team",
+    "winner": {
+     "id": 135377,
+     "type": "Team"
+    }
+   },
+   {
+    "complete": true,
+    "id": 9646,
+    "position": 3,
+    "status": "finished",
+    "length": 738,
+    "finished": true,
+    "begin_at": "2026-08-08T13:49:40Z",
+    "detailed_stats": true,
+    "end_at": "2026-08-08T14:01:59Z",
+    "forfeit": false,
+    "match_id": 1609942,
+    "winner_type": "Team",
+    "winner": {
+     "id": 135377,
+     "type": "Team"
+    }
+   },
+   {
+    "complete": true,
+    "id": 9647,
+    "position": 4,
+    "status": "finished",
+    "length": 670,
+    "finished": true,
+    "begin_at": "2026-08-08T14:05:11Z",
+    "detailed_stats": true,
+    "end_at": "2026-08-08T14:16:21Z",
+    "forfeit": false,
+    "match_id": 1609942,
+    "winner_type": "Team",
+    "winner": {
+     "id": 135377,
+     "type": "Team"
+    }
+   },
+   {
+    "complete": true,
+    "id": 9648,
+    "position": 5,
+    "status": "finished",
+    "length": 1216,
+    "finished": true,
+    "begin_at": "2026-08-08T14:23:59Z",
+    "detailed_stats": true,
+    "end_at": "2026-08-08T14:44:16Z",
+    "forfeit": false,
+    "match_id": 1609942,
+    "winner_type": "Team",
+    "winner": {
+     "id": 135375,
+     "type": "Team"
+    }
+   },
+   {
+    "complete": true,
+    "id": 9649,
+    "position": 6,
+    "status": "finished",
+    "length": 729,
+    "finished": true,
+    "begin_at": "2026-08-08T14:44:21Z",
+    "detailed_stats": true,
+    "end_at": "2026-08-08T14:56:30Z",
+    "forfeit": false,
+    "match_id": 1609942,
+    "winner_type": "Team",
+    "winner": {
+     "id": 135375,
+     "type": "Team"
+    }
+   },
+   {
+    "complete": true,
+    "id": 9650,
+    "position": 7,
+    "status": "finished",
+    "length": 957,
+    "finished": true,
+    "begin_at": "2026-08-08T15:02:32Z",
+    "detailed_stats": true,
+    "end_at": "2026-08-08T15:18:29Z",
+    "forfeit": false,
+    "match_id": 1609942,
+    "winner_type": "Team",
+    "winner": {
+     "id": 135377,
+     "type": "Team"
+    }
+   }
+  ],
+  "id": 1609942,
+  "name": "Quarterfinal 1: G2 vs HTCS",
+  "league": {
+   "id": 5283,
+   "name": "Esports World Cup",
+   "url": null,
+   "slug": "cod-mw-esports-world-cup",
+   "modified_at": "2024-08-09T13:28:00Z",
+   "image_url": "https://cdn-api.pandascore.co/images/league/image/5283/600px-esports_world_cup_2024_lightmode-png"
+  },
+  "videogame_title": {
+   "id": 18,
+   "name": "Call of Duty: Black Ops 7",
+   "slug": "cod-bo-7",
+   "videogame_id": 23
+  },
+  "match_type": "best_of",
+  "modified_at": "2026-08-08T17:20:55Z",
+  "forfeit": false
+ },
+ {
+  "winner_type": "Team",
+  "draw": false,
+  "game_advantage": null,
+  "detailed_stats": false,
+  "serie": {
+   "id": 10834,
+   "name": "",
+   "year": 2026,
+   "begin_at": "2026-08-04T22:00:00Z",
+   "end_at": "2026-08-09T21:00:00Z",
+   "winner_id": null,
+   "winner_type": "Team",
+   "slug": "cod-mw-esports-world-cup-2026",
+   "modified_at": "2026-07-28T13:35:14Z",
+   "league_id": 5283,
+   "season": null,
+   "full_name": "2026"
+  },
+  "videogame_version": null,
+  "original_scheduled_at": "2026-08-07T16:45:00Z",
+  "opponents": [
+   {
+    "type": "Team",
+    "opponent": {
+     "id": 137164,
+     "name": "OpTic Gaming",
+     "location": "US",
+     "slug": "optic-gaming-cod-mw",
+     "modified_at": "2026-08-07T18:54:13Z",
+     "acronym": "OG",
+     "image_url": "https://cdn-api.pandascore.co/images/team/image/137164/op_tic_gaming_lightmode.png",
+     "dark_mode_image_url": null
+    }
+   },
+   {
+    "type": "Team",
+    "opponent": {
+     "id": 138267,
+     "name": "Project Notorious",
+     "location": "US",
+     "slug": "project-notorious",
+     "modified_at": "2026-07-28T13:25:23Z",
+     "acronym": "PN",
+     "image_url": "https://cdn-api.pandascore.co/images/team/image/138267/316px_project_notorious_lightmode.png",
+     "dark_mode_image_url": "https://cdn-api.pandascore.co/dark_images/team/dark_image/138267/316px_project_notorious_darkmode.png"
+    }
+   }
+  ],
+  "tournament": {
+   "id": 21568,
+   "name": "Group B",
+   "type": "offline",
+   "country": "FR",
+   "begin_at": "2026-08-05T18:00:00Z",
+   "detailed_stats": false,
+   "end_at": "2026-08-07T18:00:00Z",
+   "winner_id": null,
+   "winner_type": "Team",
+   "slug": "cod-mw-esports-world-cup-2026-group-b",
+   "serie_id": 10834,
+   "modified_at": "2026-08-08T06:33:12Z",
+   "league_id": 5283,
+   "prizepool": null,
+   "tier": "s",
+   "has_bracket": true,
+   "region": "WEU",
+   "live_supported": false
+  },
+  "scheduled_at": "2026-08-07T17:15:00Z",
+  "live": {
+   "supported": false,
+   "url": null,
+   "opens_at": null
+  },
+  "begin_at": "2026-08-07T17:15:05Z",
+  "rescheduled": true,
+  "number_of_games": 5,
+  "streams_list": [
+   {
+    "main": true,
+    "language": "en",
+    "embed_url": "https://www.youtube.com/embed/VsU-lSakJJs",
+    "official": true,
+    "raw_url": "https://www.youtube.com/watch?v=VsU-lSakJJs"
+   }
+  ],
+  "tournament_id": 21568,
+  "serie_id": 10834,
+  "status": "finished",
+  "winner_id": 137164,
+  "slug": "optic-gaming-2026-08-07",
+  "end_at": "2026-08-07T18:00:24Z",
+  "results": [
+   {
+    "score": 3,
+    "team_id": 137164
+   },
+   {
+    "score": 0,
+    "team_id": 138267
+   }
+  ],
+  "videogame": {
+   "id": 23,
+   "name": "Call of Duty",
+   "slug": "cod-mw"
+  },
+  "winner": {
+   "id": 137164,
+   "name": "OpTic Gaming",
+   "location": "US",
+   "slug": "optic-gaming-cod-mw",
+   "modified_at": "2026-08-07T18:54:13Z",
+   "acronym": "OG",
+   "image_url": "https://cdn-api.pandascore.co/images/team/image/137164/op_tic_gaming_lightmode.png",
+   "dark_mode_image_url": null
+  },
+  "league_id": 5283,
+  "games": [
+   {
+    "complete": true,
+    "id": 9639,
+    "position": 1,
+    "status": "finished",
+    "length": 582,
+    "finished": true,
+    "begin_at": "2026-08-07T17:15:05Z",
+    "detailed_stats": false,
+    "end_at": "2026-08-07T17:24:48Z",
+    "forfeit": false,
+    "match_id": 1609941,
+    "winner_type": "Team",
+    "winner": {
+     "id": 137164,
+     "type": "Team"
+    }
+   },
+   {
+    "complete": true,
+    "id": 9640,
+    "position": 2,
+    "status": "finished",
+    "length": 890,
+    "finished": true,
+    "begin_at": "2026-08-07T17:29:18Z",
+    "detailed_stats": false,
+    "end_at": "2026-08-07T17:44:09Z",
+    "forfeit": false,
+    "match_id": 1609941,
+    "winner_type": "Team",
+    "winner": {
+     "id": 137164,
+     "type": "Team"
+    }
+   },
+   {
+    "complete": true,
+    "id": 9641,
+    "position": 3,
+    "status": "finished",
+    "length": 674,
+    "finished": true,
+    "begin_at": "2026-08-07T17:49:10Z",
+    "detailed_stats": false,
+    "end_at": "2026-08-07T18:00:25Z",
+    "forfeit": false,
+    "match_id": 1609941,
+    "winner_type": "Team",
+    "winner": {
+     "id": 137164,
+     "type": "Team"
+    }
+   }
+  ],
+  "id": 1609941,
+  "name": "Lower bracket semifinal 2: OG vs PN",
+  "league": {
+   "id": 5283,
+   "name": "Esports World Cup",
+   "url": null,
+   "slug": "cod-mw-esports-world-cup",
+   "modified_at": "2024-08-09T13:28:00Z",
+   "image_url": "https://cdn-api.pandascore.co/images/league/image/5283/600px-esports_world_cup_2024_lightmode-png"
+  },
+  "videogame_title": {
+   "id": 18,
+   "name": "Call of Duty: Black Ops 7",
+   "slug": "cod-bo-7",
+   "videogame_id": 23
+  },
+  "match_type": "best_of",
+  "modified_at": "2026-08-07T18:00:26Z",
+  "forfeit": false
+ },
+ {
+  "winner_type": "Team",
+  "draw": false,
+  "game_advantage": null,
+  "detailed_stats": false,
+  "serie": {
+   "id": 10834,
+   "name": "",
+   "year": 2026,
+   "begin_at": "2026-08-04T22:00:00Z",
+   "end_at": "2026-08-09T21:00:00Z",
+   "winner_id": null,
+   "winner_type": "Team",
+   "slug": "cod-mw-esports-world-cup-2026",
+   "modified_at": "2026-07-28T13:35:14Z",
+   "league_id": 5283,
+   "season": null,
+   "full_name": "2026"
+  },
+  "videogame_version": null,
+  "original_scheduled_at": "2026-08-07T13:00:00Z",
+  "opponents": [
+   {
+    "type": "Team",
+    "opponent": {
+     "id": 135374,
+     "name": "Gentle Mates",
+     "location": "FR",
+     "slug": "gentle-mates-cod-mw",
+     "modified_at": "2026-08-07T18:54:10Z",
+     "acronym": "M8",
+     "image_url": "https://cdn-api.pandascore.co/images/team/image/135374/932px_gentle_mates_lightmode_2024.png",
+     "dark_mode_image_url": "https://cdn-api.pandascore.co/dark_images/team/dark_image/135374/600px_gentle_mates_2024_darkmode.png"
+    }
+   },
+   {
+    "type": "Team",
+    "opponent": {
+     "id": 139047,
+     "name": "The Pit",
+     "location": "",
+     "slug": "the-pit",
+     "modified_at": "2026-08-03T06:30:54Z",
+     "acronym": null,
+     "image_url": "https://cdn-api.pandascore.co/images/team/image/139047/the_pit_lightmode.png",
+     "dark_mode_image_url": "https://cdn-api.pandascore.co/dark_images/team/dark_image/139047/the_pit_darkmode.png"
+    }
+   }
+  ],
+  "tournament": {
+   "id": 21567,
+   "name": "Group A",
+   "type": "offline",
+   "country": "FR",
+   "begin_at": "2026-08-05T13:00:00Z",
+   "detailed_stats": false,
+   "end_at": "2026-08-07T17:00:00Z",
+   "winner_id": null,
+   "winner_type": "Team",
+   "slug": "cod-mw-esports-world-cup-2026-group-a",
+   "serie_id": 10834,
+   "modified_at": "2026-08-03T02:47:28Z",
+   "league_id": 5283,
+   "prizepool": null,
+   "tier": "s",
+   "has_bracket": false,
+   "region": "WEU",
+   "live_supported": false
+  },
+  "scheduled_at": "2026-08-07T15:45:00Z",
+  "live": {
+   "supported": false,
+   "url": null,
+   "opens_at": null
+  },
+  "begin_at": "2026-08-07T15:44:03Z",
+  "rescheduled": true,
+  "number_of_games": 5,
+  "streams_list": [
+   {
+    "main": true,
+    "language": "en",
+    "embed_url": "https://www.youtube.com/embed/VsU-lSakJJs",
+    "official": true,
+    "raw_url": "https://www.youtube.com/watch?v=VsU-lSakJJs"
+   }
+  ],
+  "tournament_id": 21567,
+  "serie_id": 10834,
+  "status": "finished",
+  "winner_id": 135374,
+  "slug": "the-pit-2026-08-07",
+  "end_at": "2026-08-07T16:47:59Z",
+  "results": [
+   {
+    "score": 3,
+    "team_id": 135374
+   },
+   {
+    "score": 1,
+    "team_id": 139047
+   }
+  ],
+  "videogame": {
+   "id": 23,
+   "name": "Call of Duty",
+   "slug": "cod-mw"
+  },
+  "winner": {
+   "id": 135374,
+   "name": "Gentle Mates",
+   "location": "FR",
+   "slug": "gentle-mates-cod-mw",
+   "modified_at": "2026-08-07T18:54:10Z",
+   "acronym": "M8",
+   "image_url": "https://cdn-api.pandascore.co/images/team/image/135374/932px_gentle_mates_lightmode_2024.png",
+   "dark_mode_image_url": "https://cdn-api.pandascore.co/dark_images/team/dark_image/135374/600px_gentle_mates_2024_darkmode.png"
+  },
+  "league_id": 5283,
+  "games": [
+   {
+    "complete": true,
+    "id": 9584,
+    "position": 1,
+    "status": "finished",
+    "length": 707,
+    "finished": true,
+    "begin_at": "2026-08-07T15:44:03Z",
+    "detailed_stats": false,
+    "end_at": "2026-08-07T15:55:51Z",
+    "forfeit": false,
+    "match_id": 1609930,
+    "winner_type": "Team",
+    "winner": {
+     "id": 139047,
+     "type": "Team"
+    }
+   },
+   {
+    "complete": true,
+    "id": 9585,
+    "position": 2,
+    "status": "finished",
+    "length": 566,
+    "finished": true,
+    "begin_at": "2026-08-07T16:01:01Z",
+    "detailed_stats": false,
+    "end_at": "2026-08-07T16:10:28Z",
+    "forfeit": false,
+    "match_id": 1609930,
+    "winner_type": "Team",
+    "winner": {
+     "id": 135374,
+     "type": "Team"
+    }
+   },
+   {
+    "complete": true,
+    "id": 9586,
+    "position": 3,
+    "status": "finished",
+    "length": 669,
+    "finished": true,
+    "begin_at": "2026-08-07T16:18:28Z",
+    "detailed_stats": false,
+    "end_at": "2026-08-07T16:29:38Z",
+    "forfeit": false,
+    "match_id": 1609930,
+    "winner_type": "Team",
+    "winner": {
+     "id": 135374,
+     "type": "Team"
+    }
+   },
+   {
+    "complete": true,
+    "id": 9587,
+    "position": 4,
+    "status": "finished",
+    "length": 718,
+    "finished": true,
+    "begin_at": "2026-08-07T16:36:01Z",
+    "detailed_stats": false,
+    "end_at": "2026-08-07T16:48:00Z",
+    "forfeit": false,
+    "match_id": 1609930,
+    "winner_type": "Team",
+    "winner": {
+     "id": 135374,
+     "type": "Team"
+    }
+   }
+  ],
+  "id": 1609930,
+  "name": "Lower bracket semifinal 1: M8 vs The Pit",
+  "league": {
+   "id": 5283,
+   "name": "Esports World Cup",
+   "url": null,
+   "slug": "cod-mw-esports-world-cup",
+   "modified_at": "2024-08-09T13:28:00Z",
+   "image_url": "https://cdn-api.pandascore.co/images/league/image/5283/600px-esports_world_cup_2024_lightmode-png"
+  },
+  "videogame_title": {
+   "id": 18,
+   "name": "Call of Duty: Black Ops 7",
+   "slug": "cod-bo-7",
+   "videogame_id": 23
+  },
+  "match_type": "best_of",
+  "modified_at": "2026-08-07T16:48:00Z",
+  "forfeit": false
+ },
+ {
+  "winner_type": "Team",
+  "draw": false,
+  "game_advantage": null,
+  "detailed_stats": false,
+  "serie": {
+   "id": 10834,
+   "name": "",
+   "year": 2026,
+   "begin_at": "2026-08-04T22:00:00Z",
+   "end_at": "2026-08-09T21:00:00Z",
+   "winner_id": null,
+   "winner_type": "Team",
+   "slug": "cod-mw-esports-world-cup-2026",
+   "modified_at": "2026-07-28T13:35:14Z",
+   "league_id": 5283,
+   "season": null,
+   "full_name": "2026"
+  },
+  "videogame_version": null,
+  "original_scheduled_at": "2026-08-07T15:30:00Z",
+  "opponents": [
+   {
+    "type": "Team",
+    "opponent": {
+     "id": 135377,
+     "name": "Team Heretics",
+     "location": "ES",
+     "slug": "team-heretics-cod-mw",
+     "modified_at": "2026-08-07T18:54:09Z",
+     "acronym": "HTCS",
+     "image_url": "https://cdn-api.pandascore.co/images/team/image/135377/team_hereticslogo_square.png",
+     "dark_mode_image_url": null
+    }
+   },
+   {
+    "type": "Team",
+    "opponent": {
+     "id": 130850,
+     "name": "Team WaR",
+     "location": "",
+     "slug": "team-war",
+     "modified_at": "2026-07-28T13:25:20Z",
+     "acronym": "WaR",
+     "image_url": "https://cdn-api.pandascore.co/images/team/image/130850/team_wa_rlogo_square.png",
+     "dark_mode_image_url": null
+    }
+   }
+  ],
+  "tournament": {
+   "id": 21568,
+   "name": "Group B",
+   "type": "offline",
+   "country": "FR",
+   "begin_at": "2026-08-05T18:00:00Z",
+   "detailed_stats": false,
+   "end_at": "2026-08-07T18:00:00Z",
+   "winner_id": null,
+   "winner_type": "Team",
+   "slug": "cod-mw-esports-world-cup-2026-group-b",
+   "serie_id": 10834,
+   "modified_at": "2026-08-08T06:33:12Z",
+   "league_id": 5283,
+   "prizepool": null,
+   "tier": "s",
+   "has_bracket": true,
+   "region": "WEU",
+   "live_supported": false
+  },
+  "scheduled_at": "2026-08-07T14:35:00Z",
+  "live": {
+   "supported": false,
+   "url": null,
+   "opens_at": null
+  },
+  "begin_at": "2026-08-07T14:35:39Z",
+  "rescheduled": true,
+  "number_of_games": 5,
+  "streams_list": [
+   {
+    "main": true,
+    "language": "en",
+    "embed_url": "https://www.youtube.com/embed/VsU-lSakJJs",
+    "official": true,
+    "raw_url": "https://www.youtube.com/watch?v=VsU-lSakJJs"
+   }
+  ],
+  "tournament_id": 21568,
+  "serie_id": 10834,
+  "status": "finished",
+  "winner_id": 135377,
+  "slug": "team-war-2026-08-07",
+  "end_at": "2026-08-07T15:18:46Z",
+  "results": [
+   {
+    "score": 3,
+    "team_id": 135377
+   },
+   {
+    "score": 0,
+    "team_id": 130850
+   }
+  ],
+  "videogame": {
+   "id": 23,
+   "name": "Call of Duty",
+   "slug": "cod-mw"
+  },
+  "winner": {
+   "id": 135377,
+   "name": "Team Heretics",
+   "location": "ES",
+   "slug": "team-heretics-cod-mw",
+   "modified_at": "2026-08-07T18:54:09Z",
+   "acronym": "HTCS",
+   "image_url": "https://cdn-api.pandascore.co/images/team/image/135377/team_hereticslogo_square.png",
+   "dark_mode_image_url": null
+  },
+  "league_id": 5283,
+  "games": [
+   {
+    "complete": true,
+    "id": 9634,
+    "position": 1,
+    "status": "finished",
+    "length": 492,
+    "finished": true,
+    "begin_at": "2026-08-07T14:35:39Z",
+    "detailed_stats": false,
+    "end_at": "2026-08-07T14:43:52Z",
+    "forfeit": false,
+    "match_id": 1609940,
+    "winner_type": "Team",
+    "winner": {
+     "id": 135377,
+     "type": "Team"
+    }
+   },
+   {
+    "complete": true,
+    "id": 9635,
+    "position": 2,
+    "status": "finished",
+    "length": 736,
+    "finished": true,
+    "begin_at": "2026-08-07T14:47:55Z",
+    "detailed_stats": false,
+    "end_at": "2026-08-07T15:00:11Z",
+    "forfeit": false,
+    "match_id": 1609940,
+    "winner_type": "Team",
+    "winner": {
+     "id": 135377,
+     "type": "Team"
+    }
+   },
+   {
+    "complete": true,
+    "id": 9636,
+    "position": 3,
+    "status": "finished",
+    "length": 733,
+    "finished": true,
+    "begin_at": "2026-08-07T15:06:33Z",
+    "detailed_stats": false,
+    "end_at": "2026-08-07T15:18:46Z",
+    "forfeit": false,
+    "match_id": 1609940,
+    "winner_type": "Team",
+    "winner": {
+     "id": 135377,
+     "type": "Team"
+    }
+   }
+  ],
+  "id": 1609940,
+  "name": "Lower bracket semifinal 1: HTCS vs WaR",
+  "league": {
+   "id": 5283,
+   "name": "Esports World Cup",
+   "url": null,
+   "slug": "cod-mw-esports-world-cup",
+   "modified_at": "2024-08-09T13:28:00Z",
+   "image_url": "https://cdn-api.pandascore.co/images/league/image/5283/600px-esports_world_cup_2024_lightmode-png"
+  },
+  "videogame_title": {
+   "id": 18,
+   "name": "Call of Duty: Black Ops 7",
+   "slug": "cod-bo-7",
+   "videogame_id": 23
+  },
+  "match_type": "best_of",
+  "modified_at": "2026-08-07T15:23:58Z",
+  "forfeit": false
+ },
+ {
+  "winner_type": "Team",
+  "draw": false,
+  "game_advantage": null,
+  "detailed_stats": false,
+  "serie": {
+   "id": 10834,
+   "name": "",
+   "year": 2026,
+   "begin_at": "2026-08-04T22:00:00Z",
+   "end_at": "2026-08-09T21:00:00Z",
+   "winner_id": null,
+   "winner_type": "Team",
+   "slug": "cod-mw-esports-world-cup-2026",
+   "modified_at": "2026-07-28T13:35:14Z",
+   "league_id": 5283,
+   "season": null,
+   "full_name": "2026"
+  },
+  "videogame_version": null,
+  "original_scheduled_at": "2026-08-07T14:15:00Z",
+  "opponents": [
+   {
+    "type": "Team",
+    "opponent": {
+     "id": 137163,
+     "name": "Movistar KOI",
+     "location": "ES",
+     "slug": "koi-cod-mw",
+     "modified_at": "2026-08-07T19:00:48Z",
+     "acronym": "KOI",
+     "image_url": "https://cdn-api.pandascore.co/images/team/image/137163/movistar_ko_ilogo_square.png",
+     "dark_mode_image_url": null
+    }
+   },
+   {
+    "type": "Team",
+    "opponent": {
+     "id": 135373,
+     "name": "Cloud9",
+     "location": "US",
+     "slug": "cloud9-cod-mw",
+     "modified_at": "2026-07-28T13:28:02Z",
+     "acronym": "C9",
+     "image_url": "https://cdn-api.pandascore.co/images/team/image/135373/cloud9logo_full.png",
+     "dark_mode_image_url": null
+    }
+   }
+  ],
+  "tournament": {
+   "id": 21567,
+   "name": "Group A",
+   "type": "offline",
+   "country": "FR",
+   "begin_at": "2026-08-05T13:00:00Z",
+   "detailed_stats": false,
+   "end_at": "2026-08-07T17:00:00Z",
+   "winner_id": null,
+   "winner_type": "Team",
+   "slug": "cod-mw-esports-world-cup-2026-group-a",
+   "serie_id": 10834,
+   "modified_at": "2026-08-03T02:47:28Z",
+   "league_id": 5283,
+   "prizepool": null,
+   "tier": "s",
+   "has_bracket": false,
+   "region": "WEU",
+   "live_supported": false
+  },
+  "scheduled_at": "2026-08-07T13:00:00Z",
+  "live": {
+   "supported": false,
+   "url": null,
+   "opens_at": null
+  },
+  "begin_at": "2026-08-07T13:05:46Z",
+  "rescheduled": true,
+  "number_of_games": 5,
+  "streams_list": [
+   {
+    "main": true,
+    "language": "en",
+    "embed_url": "https://www.youtube.com/embed/VsU-lSakJJs",
+    "official": true,
+    "raw_url": "https://www.youtube.com/watch?v=VsU-lSakJJs"
+   }
+  ],
+  "tournament_id": 21567,
+  "serie_id": 10834,
+  "status": "finished",
+  "winner_id": 137163,
+  "slug": "koi-2026-08-07",
+  "end_at": "2026-08-07T14:09:46Z",
+  "results": [
+   {
+    "score": 3,
+    "team_id": 137163
+   },
+   {
+    "score": 1,
+    "team_id": 135373
+   }
+  ],
+  "videogame": {
+   "id": 23,
+   "name": "Call of Duty",
+   "slug": "cod-mw"
+  },
+  "winner": {
+   "id": 137163,
+   "name": "Movistar KOI",
+   "location": "ES",
+   "slug": "koi-cod-mw",
+   "modified_at": "2026-08-07T19:00:48Z",
+   "acronym": "KOI",
+   "image_url": "https://cdn-api.pandascore.co/images/team/image/137163/movistar_ko_ilogo_square.png",
+   "dark_mode_image_url": null
+  },
+  "league_id": 5283,
+  "games": [
+   {
+    "complete": true,
+    "id": 9589,
+    "position": 1,
+    "status": "finished",
+    "length": 781,
+    "finished": true,
+    "begin_at": "2026-08-07T13:05:46Z",
+    "detailed_stats": false,
+    "end_at": "2026-08-07T13:18:48Z",
+    "forfeit": false,
+    "match_id": 1609931,
+    "winner_type": "Team",
+    "winner": {
+     "id": 137163,
+     "type": "Team"
+    }
+   },
+   {
+    "complete": true,
+    "id": 9590,
+    "position": 2,
+    "status": "finished",
+    "length": 823,
+    "finished": true,
+    "begin_at": "2026-08-07T13:20:44Z",
+    "detailed_stats": false,
+    "end_at": "2026-08-07T13:34:27Z",
+    "forfeit": false,
+    "match_id": 1609931,
+    "winner_type": "Team",
+    "winner": {
+     "id": 135373,
+     "type": "Team"
+    }
+   },
+   {
+    "complete": true,
+    "id": 9591,
+    "position": 3,
+    "status": "finished",
+    "length": 772,
+    "finished": true,
+    "begin_at": "2026-08-07T13:42:03Z",
+    "detailed_stats": false,
+    "end_at": "2026-08-07T13:54:55Z",
+    "forfeit": false,
+    "match_id": 1609931,
+    "winner_type": "Team",
+    "winner": {
+     "id": 137163,
+     "type": "Team"
+    }
+   },
+   {
+    "complete": true,
+    "id": 9592,
+    "position": 4,
+    "status": "finished",
+    "length": 654,
+    "finished": true,
+    "begin_at": "2026-08-07T13:58:52Z",
+    "detailed_stats": false,
+    "end_at": "2026-08-07T14:09:46Z",
+    "forfeit": false,
+    "match_id": 1609931,
+    "winner_type": "Team",
+    "winner": {
+     "id": 137163,
+     "type": "Team"
+    }
+   }
+  ],
+  "id": 1609931,
+  "name": "Lower bracket semifinal 2: KOI vs C9",
+  "league": {
+   "id": 5283,
+   "name": "Esports World Cup",
+   "url": null,
+   "slug": "cod-mw-esports-world-cup",
+   "modified_at": "2024-08-09T13:28:00Z",
+   "image_url": "https://cdn-api.pandascore.co/images/league/image/5283/600px-esports_world_cup_2024_lightmode-png"
+  },
+  "videogame_title": {
+   "id": 18,
+   "name": "Call of Duty: Black Ops 7",
+   "slug": "cod-bo-7",
+   "videogame_id": 23
+  },
+  "match_type": "best_of",
+  "modified_at": "2026-08-07T14:28:46Z",
+  "forfeit": false
+ },
+ {
+  "winner_type": "Team",
+  "draw": false,
+  "game_advantage": null,
+  "detailed_stats": false,
+  "serie": {
+   "id": 10834,
+   "name": "",
+   "year": 2026,
+   "begin_at": "2026-08-04T22:00:00Z",
+   "end_at": "2026-08-09T21:00:00Z",
+   "winner_id": null,
+   "winner_type": "Team",
+   "slug": "cod-mw-esports-world-cup-2026",
+   "modified_at": "2026-07-28T13:35:14Z",
+   "league_id": 5283,
+   "season": null,
+   "full_name": "2026"
+  },
+  "videogame_version": null,
+  "original_scheduled_at": "2026-08-06T18:00:00Z",
+  "opponents": [
+   {
+    "type": "Team",
+    "opponent": {
+     "id": 135970,
+     "name": "Vancouver Surge",
+     "location": "US",
+     "slug": "vancouver-surge",
+     "modified_at": "2026-07-28T13:25:22Z",
+     "acronym": "VAN",
+     "image_url": "https://cdn-api.pandascore.co/images/team/image/135970/150px_seattle_surgelogo_square.png",
+     "dark_mode_image_url": null
+    }
+   },
+   {
+    "type": "Team",
+    "opponent": {
+     "id": 138267,
+     "name": "Project Notorious",
+     "location": "US",
+     "slug": "project-notorious",
+     "modified_at": "2026-07-28T13:25:23Z",
+     "acronym": "PN",
+     "image_url": "https://cdn-api.pandascore.co/images/team/image/138267/316px_project_notorious_lightmode.png",
+     "dark_mode_image_url": "https://cdn-api.pandascore.co/dark_images/team/dark_image/138267/316px_project_notorious_darkmode.png"
+    }
+   }
+  ],
+  "tournament": {
+   "id": 21568,
+   "name": "Group B",
+   "type": "offline",
+   "country": "FR",
+   "begin_at": "2026-08-05T18:00:00Z",
+   "detailed_stats": false,
+   "end_at": "2026-08-07T18:00:00Z",
+   "winner_id": null,
+   "winner_type": "Team",
+   "slug": "cod-mw-esports-world-cup-2026-group-b",
+   "serie_id": 10834,
+   "modified_at": "2026-08-08T06:33:12Z",
+   "league_id": 5283,
+   "prizepool": null,
+   "tier": "s",
+   "has_bracket": true,
+   "region": "WEU",
+   "live_supported": false
+  },
+  "scheduled_at": "2026-08-06T19:30:00Z",
+  "live": {
+   "supported": false,
+   "url": null,
+   "opens_at": null
+  },
+  "begin_at": "2026-08-06T19:31:41Z",
+  "rescheduled": true,
+  "number_of_games": 5,
+  "streams_list": [
+   {
+    "main": true,
+    "language": "en",
+    "embed_url": "https://www.youtube.com/embed/OnD13trhrYQ",
+    "official": true,
+    "raw_url": "https://www.youtube.com/watch?v=OnD13trhrYQ"
+   }
+  ],
+  "tournament_id": 21568,
+  "serie_id": 10834,
+  "status": "finished",
+  "winner_id": 138267,
+  "slug": "vancouver-surge-2026-08-06",
+  "end_at": "2026-08-06T20:27:37Z",
+  "results": [
+   {
+    "score": 1,
+    "team_id": 135970
+   },
+   {
+    "score": 3,
+    "team_id": 138267
+   }
+  ],
+  "videogame": {
+   "id": 23,
+   "name": "Call of Duty",
+   "slug": "cod-mw"
+  },
+  "winner": {
+   "id": 138267,
+   "name": "Project Notorious",
+   "location": "US",
+   "slug": "project-notorious",
+   "modified_at": "2026-07-28T13:25:23Z",
+   "acronym": "PN",
+   "image_url": "https://cdn-api.pandascore.co/images/team/image/138267/316px_project_notorious_lightmode.png",
+   "dark_mode_image_url": "https://cdn-api.pandascore.co/dark_images/team/dark_image/138267/316px_project_notorious_darkmode.png"
+  },
+  "league_id": 5283,
+  "games": [
+   {
+    "complete": true,
+    "id": 9629,
+    "position": 1,
+    "status": "finished",
+    "length": 448,
+    "finished": true,
+    "begin_at": "2026-08-06T19:31:41Z",
+    "detailed_stats": false,
+    "end_at": "2026-08-06T19:39:10Z",
+    "forfeit": false,
+    "match_id": 1609939,
+    "winner_type": "Team",
+    "winner": {
+     "id": 138267,
+     "type": "Team"
+    }
+   },
+   {
+    "complete": true,
+    "id": 9630,
+    "position": 2,
+    "status": "finished",
+    "length": 664,
+    "finished": true,
+    "begin_at": "2026-08-06T19:42:46Z",
+    "detailed_stats": false,
+    "end_at": "2026-08-06T19:53:50Z",
+    "forfeit": false,
+    "match_id": 1609939,
+    "winner_type": "Team",
+    "winner": {
+     "id": 138267,
+     "type": "Team"
+    }
+   },
+   {
+    "complete": true,
+    "id": 9631,
+    "position": 3,
+    "status": "finished",
+    "length": 758,
+    "finished": true,
+    "begin_at": "2026-08-06T20:02:00Z",
+    "detailed_stats": false,
+    "end_at": "2026-08-06T20:14:39Z",
+    "forfeit": false,
+    "match_id": 1609939,
+    "winner_type": "Team",
+    "winner": {
+     "id": 135970,
+     "type": "Team"
+    }
+   },
+   {
+    "complete": true,
+    "id": 9632,
+    "position": 4,
+    "status": "finished",
+    "length": 616,
+    "finished": true,
+    "begin_at": "2026-08-06T20:17:21Z",
+    "detailed_stats": false,
+    "end_at": "2026-08-06T20:27:38Z",
+    "forfeit": false,
+    "match_id": 1609939,
+    "winner_type": "Team",
+    "winner": {
+     "id": 138267,
+     "type": "Team"
+    }
+   }
+  ],
+  "id": 1609939,
+  "name": "Lower bracket quarterfinal 2: VAN vs PN",
+  "league": {
+   "id": 5283,
+   "name": "Esports World Cup",
+   "url": null,
+   "slug": "cod-mw-esports-world-cup",
+   "modified_at": "2024-08-09T13:28:00Z",
+   "image_url": "https://cdn-api.pandascore.co/images/league/image/5283/600px-esports_world_cup_2024_lightmode-png"
+  },
+  "videogame_title": {
+   "id": 18,
+   "name": "Call of Duty: Black Ops 7",
+   "slug": "cod-bo-7",
+   "videogame_id": 23
+  },
+  "match_type": "best_of",
+  "modified_at": "2026-08-06T20:27:39Z",
+  "forfeit": false
+ },
+ {
+  "winner_type": "Team",
+  "draw": false,
+  "game_advantage": null,
+  "detailed_stats": false,
+  "serie": {
+   "id": 10834,
+   "name": "",
+   "year": 2026,
+   "begin_at": "2026-08-04T22:00:00Z",
+   "end_at": "2026-08-09T21:00:00Z",
+   "winner_id": null,
+   "winner_type": "Team",
+   "slug": "cod-mw-esports-world-cup-2026",
+   "modified_at": "2026-07-28T13:35:14Z",
+   "league_id": 5283,
+   "season": null,
+   "full_name": "2026"
+  },
+  "videogame_version": null,
+  "original_scheduled_at": "2026-08-06T16:45:00Z",
+  "opponents": [
+   {
+    "type": "Team",
+    "opponent": {
+     "id": 135377,
+     "name": "Team Heretics",
+     "location": "ES",
+     "slug": "team-heretics-cod-mw",
+     "modified_at": "2026-08-07T18:54:09Z",
+     "acronym": "HTCS",
+     "image_url": "https://cdn-api.pandascore.co/images/team/image/135377/team_hereticslogo_square.png",
+     "dark_mode_image_url": null
+    }
+   },
+   {
+    "type": "Team",
+    "opponent": {
+     "id": 135379,
+     "name": "Team Falcons",
+     "location": "SA",
+     "slug": "team-falcons-cod-mw",
+     "modified_at": "2026-08-07T18:54:10Z",
+     "acronym": "FAL",
+     "image_url": "https://cdn-api.pandascore.co/images/team/image/135379/team_falconslogo_square.png",
+     "dark_mode_image_url": null
+    }
+   }
+  ],
+  "tournament": {
+   "id": 21568,
+   "name": "Group B",
+   "type": "offline",
+   "country": "FR",
+   "begin_at": "2026-08-05T18:00:00Z",
+   "detailed_stats": false,
+   "end_at": "2026-08-07T18:00:00Z",
+   "winner_id": null,
+   "winner_type": "Team",
+   "slug": "cod-mw-esports-world-cup-2026-group-b",
+   "serie_id": 10834,
+   "modified_at": "2026-08-08T06:33:12Z",
+   "league_id": 5283,
+   "prizepool": null,
+   "tier": "s",
+   "has_bracket": true,
+   "region": "WEU",
+   "live_supported": false
+  },
+  "scheduled_at": "2026-08-06T19:30:00Z",
+  "live": {
+   "supported": false,
+   "url": null,
+   "opens_at": null
+  },
+  "begin_at": "2026-08-06T19:28:23Z",
+  "rescheduled": true,
+  "number_of_games": 5,
+  "streams_list": [
+   {
+    "main": true,
+    "language": "en",
+    "embed_url": "https://www.youtube.com/embed/YjDOClXZDm8",
+    "official": true,
+    "raw_url": "https://www.youtube.com/watch?v=YjDOClXZDm8"
+   }
+  ],
+  "tournament_id": 21568,
+  "serie_id": 10834,
+  "status": "finished",
+  "winner_id": 135379,
+  "slug": "team-heretics-2026-08-06",
+  "end_at": "2026-08-06T20:41:09Z",
+  "results": [
+   {
+    "score": 1,
+    "team_id": 135377
+   },
+   {
+    "score": 3,
+    "team_id": 135379
+   }
+  ],
+  "videogame": {
+   "id": 23,
+   "name": "Call of Duty",
+   "slug": "cod-mw"
+  },
+  "winner": {
+   "id": 135379,
+   "name": "Team Falcons",
+   "location": "SA",
+   "slug": "team-falcons-cod-mw",
+   "modified_at": "2026-08-07T18:54:10Z",
+   "acronym": "FAL",
+   "image_url": "https://cdn-api.pandascore.co/images/team/image/135379/team_falconslogo_square.png",
+   "dark_mode_image_url": null
+  },
+  "league_id": 5283,
+  "games": [
+   {
+    "complete": true,
+    "id": 9619,
+    "position": 1,
+    "status": "finished",
+    "length": 695,
+    "finished": true,
+    "begin_at": "2026-08-06T19:28:23Z",
+    "detailed_stats": false,
+    "end_at": "2026-08-06T19:39:59Z",
+    "forfeit": false,
+    "match_id": 1609937,
+    "winner_type": "Team",
+    "winner": {
+     "id": 135379,
+     "type": "Team"
+    }
+   },
+   {
+    "complete": true,
+    "id": 9620,
+    "position": 2,
+    "status": "finished",
+    "length": 752,
+    "finished": true,
+    "begin_at": "2026-08-06T19:44:14Z",
+    "detailed_stats": false,
+    "end_at": "2026-08-06T19:56:47Z",
+    "forfeit": false,
+    "match_id": 1609937,
+    "winner_type": "Team",
+    "winner": {
+     "id": 135377,
+     "type": "Team"
+    }
+   },
+   {
+    "complete": true,
+    "id": 9621,
+    "position": 3,
+    "status": "finished",
+    "length": 685,
+    "finished": true,
+    "begin_at": "2026-08-06T20:05:47Z",
+    "detailed_stats": false,
+    "end_at": "2026-08-06T20:17:13Z",
+    "forfeit": false,
+    "match_id": 1609937,
+    "winner_type": "Team",
+    "winner": {
+     "id": 135379,
+     "type": "Team"
+    }
+   },
+   {
+    "complete": true,
+    "id": 9622,
+    "position": 4,
+    "status": "finished",
+    "length": 1215,
+    "finished": true,
+    "begin_at": "2026-08-06T20:20:54Z",
+    "detailed_stats": false,
+    "end_at": "2026-08-06T20:41:09Z",
+    "forfeit": false,
+    "match_id": 1609937,
+    "winner_type": "Team",
+    "winner": {
+     "id": 135379,
+     "type": "Team"
+    }
+   }
+  ],
+  "id": 1609937,
+  "name": "Upper bracket semifinal 2: HTCS vs FAL",
+  "league": {
+   "id": 5283,
+   "name": "Esports World Cup",
+   "url": null,
+   "slug": "cod-mw-esports-world-cup",
+   "modified_at": "2024-08-09T13:28:00Z",
+   "image_url": "https://cdn-api.pandascore.co/images/league/image/5283/600px-esports_world_cup_2024_lightmode-png"
+  },
+  "videogame_title": {
+   "id": 18,
+   "name": "Call of Duty: Black Ops 7",
+   "slug": "cod-bo-7",
+   "videogame_id": 23
+  },
+  "match_type": "best_of",
+  "modified_at": "2026-08-06T20:41:10Z",
+  "forfeit": false
+ },
+ {
+  "winner_type": "Team",
+  "draw": false,
+  "game_advantage": null,
+  "detailed_stats": false,
+  "serie": {
+   "id": 10834,
+   "name": "",
+   "year": 2026,
+   "begin_at": "2026-08-04T22:00:00Z",
+   "end_at": "2026-08-09T21:00:00Z",
+   "winner_id": null,
+   "winner_type": "Team",
+   "slug": "cod-mw-esports-world-cup-2026",
+   "modified_at": "2026-07-28T13:35:14Z",
+   "league_id": 5283,
+   "season": null,
+   "full_name": "2026"
+  },
+  "videogame_version": null,
+  "original_scheduled_at": "2026-08-06T18:00:00Z",
+  "opponents": [
+   {
+    "type": "Team",
+    "opponent": {
+     "id": 130850,
+     "name": "Team WaR",
+     "location": "",
+     "slug": "team-war",
+     "modified_at": "2026-07-28T13:25:20Z",
+     "acronym": "WaR",
+     "image_url": "https://cdn-api.pandascore.co/images/team/image/130850/team_wa_rlogo_square.png",
+     "dark_mode_image_url": null
+    }
+   },
+   {
+    "type": "Team",
+    "opponent": {
+     "id": 130158,
+     "name": "Boston Breach",
+     "location": "US",
+     "slug": "boston-cdl",
+     "modified_at": "2026-07-28T13:25:19Z",
+     "acronym": "BOS",
+     "image_url": "https://cdn-api.pandascore.co/images/team/image/130158/632px_boston_breach_lightmode.png",
+     "dark_mode_image_url": "https://cdn-api.pandascore.co/dark_images/team/dark_image/130158/632px_boston_breach_darkmode.png"
+    }
+   }
+  ],
+  "tournament": {
+   "id": 21568,
+   "name": "Group B",
+   "type": "offline",
+   "country": "FR",
+   "begin_at": "2026-08-05T18:00:00Z",
+   "detailed_stats": false,
+   "end_at": "2026-08-07T18:00:00Z",
+   "winner_id": null,
+   "winner_type": "Team",
+   "slug": "cod-mw-esports-world-cup-2026-group-b",
+   "serie_id": 10834,
+   "modified_at": "2026-08-08T06:33:12Z",
+   "league_id": 5283,
+   "prizepool": null,
+   "tier": "s",
+   "has_bracket": true,
+   "region": "WEU",
+   "live_supported": false
+  },
+  "scheduled_at": "2026-08-06T18:00:00Z",
+  "live": {
+   "supported": false,
+   "url": null,
+   "opens_at": null
+  },
+  "begin_at": "2026-08-06T18:02:40Z",
+  "rescheduled": true,
+  "number_of_games": 5,
+  "streams_list": [
+   {
+    "main": true,
+    "language": "en",
+    "embed_url": "https://www.youtube.com/embed/OnD13trhrYQ",
+    "official": true,
+    "raw_url": "https://www.youtube.com/watch?v=OnD13trhrYQ"
+   }
+  ],
+  "tournament_id": 21568,
+  "serie_id": 10834,
+  "status": "finished",
+  "winner_id": 130850,
+  "slug": "team-war-2026-08-06",
+  "end_at": "2026-08-06T18:56:10Z",
+  "results": [
+   {
+    "score": 3,
+    "team_id": 130850
+   },
+   {
+    "score": 0,
+    "team_id": 130158
+   }
+  ],
+  "videogame": {
+   "id": 23,
+   "name": "Call of Duty",
+   "slug": "cod-mw"
+  },
+  "winner": {
+   "id": 130850,
+   "name": "Team WaR",
+   "location": "",
+   "slug": "team-war",
+   "modified_at": "2026-07-28T13:25:20Z",
+   "acronym": "WaR",
+   "image_url": "https://cdn-api.pandascore.co/images/team/image/130850/team_wa_rlogo_square.png",
+   "dark_mode_image_url": null
+  },
+  "league_id": 5283,
+  "games": [
+   {
+    "complete": true,
+    "id": 9624,
+    "position": 1,
+    "status": "finished",
+    "length": 659,
+    "finished": true,
+    "begin_at": "2026-08-06T18:02:40Z",
+    "detailed_stats": false,
+    "end_at": "2026-08-06T18:13:40Z",
+    "forfeit": false,
+    "match_id": 1609938,
+    "winner_type": "Team",
+    "winner": {
+     "id": 130850,
+     "type": "Team"
+    }
+   },
+   {
+    "complete": true,
+    "id": 9625,
+    "position": 2,
+    "status": "finished",
+    "length": 750,
+    "finished": true,
+    "begin_at": "2026-08-06T18:21:29Z",
+    "detailed_stats": false,
+    "end_at": "2026-08-06T18:34:00Z",
+    "forfeit": false,
+    "match_id": 1609938,
+    "winner_type": "Team",
+    "winner": {
+     "id": 130850,
+     "type": "Team"
+    }
+   },
+   {
+    "complete": true,
+    "id": 9626,
+    "position": 3,
+    "status": "finished",
+    "length": 894,
+    "finished": true,
+    "begin_at": "2026-08-06T18:41:16Z",
+    "detailed_stats": false,
+    "end_at": "2026-08-06T18:56:11Z",
+    "forfeit": false,
+    "match_id": 1609938,
+    "winner_type": "Team",
+    "winner": {
+     "id": 130850,
+     "type": "Team"
+    }
+   }
+  ],
+  "id": 1609938,
+  "name": "Lower bracket quarterfinal 1: WaR vs BOS",
+  "league": {
+   "id": 5283,
+   "name": "Esports World Cup",
+   "url": null,
+   "slug": "cod-mw-esports-world-cup",
+   "modified_at": "2024-08-09T13:28:00Z",
+   "image_url": "https://cdn-api.pandascore.co/images/league/image/5283/600px-esports_world_cup_2024_lightmode-png"
+  },
+  "videogame_title": {
+   "id": 18,
+   "name": "Call of Duty: Black Ops 7",
+   "slug": "cod-bo-7",
+   "videogame_id": 23
+  },
+  "match_type": "best_of",
+  "modified_at": "2026-08-06T18:56:12Z",
+  "forfeit": false
+ },
+ {
+  "winner_type": "Team",
+  "draw": false,
+  "game_advantage": null,
+  "detailed_stats": false,
+  "serie": {
+   "id": 10834,
+   "name": "",
+   "year": 2026,
+   "begin_at": "2026-08-04T22:00:00Z",
+   "end_at": "2026-08-09T21:00:00Z",
+   "winner_id": null,
+   "winner_type": "Team",
+   "slug": "cod-mw-esports-world-cup-2026",
+   "modified_at": "2026-07-28T13:35:14Z",
+   "league_id": 5283,
+   "season": null,
+   "full_name": "2026"
+  },
+  "videogame_version": null,
+  "original_scheduled_at": "2026-08-06T16:45:00Z",
+  "opponents": [
+   {
+    "type": "Team",
+    "opponent": {
+     "id": 137164,
+     "name": "OpTic Gaming",
+     "location": "US",
+     "slug": "optic-gaming-cod-mw",
+     "modified_at": "2026-08-07T18:54:13Z",
+     "acronym": "OG",
+     "image_url": "https://cdn-api.pandascore.co/images/team/image/137164/op_tic_gaming_lightmode.png",
+     "dark_mode_image_url": null
+    }
+   },
+   {
+    "type": "Team",
+    "opponent": {
+     "id": 135378,
+     "name": "100 Thieves",
+     "location": "US",
+     "slug": "100-thieves-cod-mw",
+     "modified_at": "2026-08-07T18:54:11Z",
+     "acronym": "100T",
+     "image_url": "https://cdn-api.pandascore.co/images/team/image/135378/190px_100_thieves_lightmode.png",
+     "dark_mode_image_url": "https://cdn-api.pandascore.co/dark_images/team/dark_image/135378/190px_100_thieves_darkmode.png"
+    }
+   }
+  ],
+  "tournament": {
+   "id": 21568,
+   "name": "Group B",
+   "type": "offline",
+   "country": "FR",
+   "begin_at": "2026-08-05T18:00:00Z",
+   "detailed_stats": false,
+   "end_at": "2026-08-07T18:00:00Z",
+   "winner_id": null,
+   "winner_type": "Team",
+   "slug": "cod-mw-esports-world-cup-2026-group-b",
+   "serie_id": 10834,
+   "modified_at": "2026-08-08T06:33:12Z",
+   "league_id": 5283,
+   "prizepool": null,
+   "tier": "s",
+   "has_bracket": true,
+   "region": "WEU",
+   "live_supported": false
+  },
+  "scheduled_at": "2026-08-06T17:25:00Z",
+  "live": {
+   "supported": false,
+   "url": null,
+   "opens_at": null
+  },
+  "begin_at": "2026-08-06T17:27:12Z",
+  "rescheduled": true,
+  "number_of_games": 5,
+  "streams_list": [
+   {
+    "main": false,
+    "language": "ar",
+    "embed_url": "https://player.twitch.tv/?channel=sharkk",
+    "official": false,
+    "raw_url": "https://www.twitch.tv/sharkk"
+   },
+   {
+    "main": false,
+    "language": "es",
+    "embed_url": "https://player.twitch.tv/?channel=tojor",
+    "official": false,
+    "raw_url": "https://www.twitch.tv/tojor"
+   },
+   {
+    "main": false,
+    "language": "fr",
+    "embed_url": "https://player.twitch.tv/?channel=otp",
+    "official": false,
+    "raw_url": "https://www.twitch.tv/otp"
+   },
+   {
+    "main": false,
+    "language": "fr",
+    "embed_url": "https://www.youtube.com/embed/je_cJcQ46vc",
+    "official": false,
+    "raw_url": "https://www.youtube.com/watch?v=je_cJcQ46vc"
+   },
+   {
+    "main": true,
+    "language": "en",
+    "embed_url": "https://www.youtube.com/embed/YjDOClXZDm8",
+    "official": true,
+    "raw_url": "https://www.youtube.com/watch?v=YjDOClXZDm8"
+   }
+  ],
+  "tournament_id": 21568,
+  "serie_id": 10834,
+  "status": "finished",
+  "winner_id": 135378,
+  "slug": "optic-gaming-2026-08-06",
+  "end_at": "2026-08-06T19:02:48Z",
+  "results": [
+   {
+    "score": 2,
+    "team_id": 137164
+   },
+   {
+    "score": 3,
+    "team_id": 135378
+   }
+  ],
+  "videogame": {
+   "id": 23,
+   "name": "Call of Duty",
+   "slug": "cod-mw"
+  },
+  "winner": {
+   "id": 135378,
+   "name": "100 Thieves",
+   "location": "US",
+   "slug": "100-thieves-cod-mw",
+   "modified_at": "2026-08-07T18:54:11Z",
+   "acronym": "100T",
+   "image_url": "https://cdn-api.pandascore.co/images/team/image/135378/190px_100_thieves_lightmode.png",
+   "dark_mode_image_url": "https://cdn-api.pandascore.co/dark_images/team/dark_image/135378/190px_100_thieves_darkmode.png"
+  },
+  "league_id": 5283,
+  "games": [
+   {
+    "complete": true,
+    "id": 9614,
+    "position": 1,
+    "status": "finished",
+    "length": 631,
+    "finished": true,
+    "begin_at": "2026-08-06T17:27:12Z",
+    "detailed_stats": false,
+    "end_at": "2026-08-06T17:37:43Z",
+    "forfeit": false,
+    "match_id": 1609936,
+    "winner_type": "Team",
+    "winner": {
+     "id": 135378,
+     "type": "Team"
+    }
+   },
+   {
+    "complete": true,
+    "id": 9615,
+    "position": 2,
+    "status": "finished",
+    "length": 911,
+    "finished": true,
+    "begin_at": "2026-08-06T17:42:02Z",
+    "detailed_stats": false,
+    "end_at": "2026-08-06T17:57:14Z",
+    "forfeit": false,
+    "match_id": 1609936,
+    "winner_type": "Team",
+    "winner": {
+     "id": 137164,
+     "type": "Team"
+    }
+   },
+   {
+    "complete": true,
+    "id": 9616,
+    "position": 3,
+    "status": "finished",
+    "length": 686,
+    "finished": true,
+    "begin_at": "2026-08-06T18:13:52Z",
+    "detailed_stats": false,
+    "end_at": "2026-08-06T18:25:18Z",
+    "forfeit": false,
+    "match_id": 1609936,
+    "winner_type": "Team",
+    "winner": {
+     "id": 137164,
+     "type": "Team"
+    }
+   },
+   {
+    "complete": true,
+    "id": 9617,
+    "position": 4,
+    "status": "finished",
+    "length": 738,
+    "finished": true,
+    "begin_at": "2026-08-06T18:29:06Z",
+    "detailed_stats": false,
+    "end_at": "2026-08-06T18:41:24Z",
+    "forfeit": false,
+    "match_id": 1609936,
+    "winner_type": "Team",
+    "winner": {
+     "id": 135378,
+     "type": "Team"
+    }
+   },
+   {
+    "complete": true,
+    "id": 9618,
+    "position": 5,
+    "status": "finished",
+    "length": 893,
+    "finished": true,
+    "begin_at": "2026-08-06T18:47:55Z",
+    "detailed_stats": false,
+    "end_at": "2026-08-06T19:02:48Z",
+    "forfeit": false,
+    "match_id": 1609936,
+    "winner_type": "Team",
+    "winner": {
+     "id": 135378,
+     "type": "Team"
+    }
+   }
+  ],
+  "id": 1609936,
+  "name": "Upper bracket semifinal 1: OG vs 100T",
+  "league": {
+   "id": 5283,
+   "name": "Esports World Cup",
+   "url": null,
+   "slug": "cod-mw-esports-world-cup",
+   "modified_at": "2024-08-09T13:28:00Z",
+   "image_url": "https://cdn-api.pandascore.co/images/league/image/5283/600px-esports_world_cup_2024_lightmode-png"
+  },
+  "videogame_title": {
+   "id": 18,
+   "name": "Call of Duty: Black Ops 7",
+   "slug": "cod-bo-7",
+   "videogame_id": 23
+  },
+  "match_type": "best_of",
+  "modified_at": "2026-08-06T19:02:49Z",
+  "forfeit": false
+ },
+ {
+  "winner_type": "Team",
+  "draw": false,
+  "game_advantage": null,
+  "detailed_stats": false,
+  "serie": {
+   "id": 10834,
+   "name": "",
+   "year": 2026,
+   "begin_at": "2026-08-04T22:00:00Z",
+   "end_at": "2026-08-09T21:00:00Z",
+   "winner_id": null,
+   "winner_type": "Team",
+   "slug": "cod-mw-esports-world-cup-2026",
+   "modified_at": "2026-07-28T13:35:14Z",
+   "league_id": 5283,
+   "season": null,
+   "full_name": "2026"
+  },
+  "videogame_version": null,
+  "original_scheduled_at": "2026-08-06T15:30:00Z",
+  "opponents": [
+   {
+    "type": "Team",
+    "opponent": {
+     "id": 135373,
+     "name": "Cloud9",
+     "location": "US",
+     "slug": "cloud9-cod-mw",
+     "modified_at": "2026-07-28T13:28:02Z",
+     "acronym": "C9",
+     "image_url": "https://cdn-api.pandascore.co/images/team/image/135373/cloud9logo_full.png",
+     "dark_mode_image_url": null
+    }
+   },
+   {
+    "type": "Team",
+    "opponent": {
+     "id": 133350,
+     "name": "OMiT",
+     "location": "US",
+     "slug": "omit",
+     "modified_at": "2026-07-28T13:28:01Z",
+     "acronym": "OMiT",
+     "image_url": "https://cdn-api.pandascore.co/images/team/image/133350/100px_o_mi_t_lightmode.png",
+     "dark_mode_image_url": "https://cdn-api.pandascore.co/dark_images/team/dark_image/133350/o_mi_t_darkmode.png"
+    }
+   }
+  ],
+  "tournament": {
+   "id": 21567,
+   "name": "Group A",
+   "type": "offline",
+   "country": "FR",
+   "begin_at": "2026-08-05T13:00:00Z",
+   "detailed_stats": false,
+   "end_at": "2026-08-07T17:00:00Z",
+   "winner_id": null,
+   "winner_type": "Team",
+   "slug": "cod-mw-esports-world-cup-2026-group-a",
+   "serie_id": 10834,
+   "modified_at": "2026-08-03T02:47:28Z",
+   "league_id": 5283,
+   "prizepool": null,
+   "tier": "s",
+   "has_bracket": false,
+   "region": "WEU",
+   "live_supported": false
+  },
+  "scheduled_at": "2026-08-06T16:45:00Z",
+  "live": {
+   "supported": false,
+   "url": null,
+   "opens_at": null
+  },
+  "begin_at": "2026-08-06T16:42:13Z",
+  "rescheduled": true,
+  "number_of_games": 5,
+  "streams_list": [
+   {
+    "main": true,
+    "language": "en",
+    "embed_url": "https://www.youtube.com/embed/OnD13trhrYQ",
+    "official": true,
+    "raw_url": "https://www.youtube.com/watch?v=OnD13trhrYQ"
+   }
+  ],
+  "tournament_id": 21567,
+  "serie_id": 10834,
+  "status": "finished",
+  "winner_id": 135373,
+  "slug": "cloud9-2026-08-06",
+  "end_at": "2026-08-06T17:41:05Z",
+  "results": [
+   {
+    "score": 3,
+    "team_id": 135373
+   },
+   {
+    "score": 1,
+    "team_id": 133350
+   }
+  ],
+  "videogame": {
+   "id": 23,
+   "name": "Call of Duty",
+   "slug": "cod-mw"
+  },
+  "winner": {
+   "id": 135373,
+   "name": "Cloud9",
+   "location": "US",
+   "slug": "cloud9-cod-mw",
+   "modified_at": "2026-07-28T13:28:02Z",
+   "acronym": "C9",
+   "image_url": "https://cdn-api.pandascore.co/images/team/image/135373/cloud9logo_full.png",
+   "dark_mode_image_url": null
+  },
+  "league_id": 5283,
+  "games": [
+   {
+    "complete": true,
+    "id": 9579,
+    "position": 1,
+    "status": "finished",
+    "length": 695,
+    "finished": true,
+    "begin_at": "2026-08-06T16:42:13Z",
+    "detailed_stats": false,
+    "end_at": "2026-08-06T16:53:48Z",
+    "forfeit": false,
+    "match_id": 1609929,
+    "winner_type": "Team",
+    "winner": {
+     "id": 135373,
+     "type": "Team"
+    }
+   },
+   {
+    "complete": true,
+    "id": 9580,
+    "position": 2,
+    "status": "finished",
+    "length": 650,
+    "finished": true,
+    "begin_at": "2026-08-06T16:56:41Z",
+    "detailed_stats": false,
+    "end_at": "2026-08-06T17:07:31Z",
+    "forfeit": false,
+    "match_id": 1609929,
+    "winner_type": "Team",
+    "winner": {
+     "id": 135373,
+     "type": "Team"
+    }
+   },
+   {
+    "complete": true,
+    "id": 9581,
+    "position": 3,
+    "status": "finished",
+    "length": 630,
+    "finished": true,
+    "begin_at": "2026-08-06T17:15:02Z",
+    "detailed_stats": false,
+    "end_at": "2026-08-06T17:25:32Z",
+    "forfeit": false,
+    "match_id": 1609929,
+    "winner_type": "Team",
+    "winner": {
+     "id": 133350,
+     "type": "Team"
+    }
+   },
+   {
+    "complete": true,
+    "id": 9582,
+    "position": 4,
+    "status": "finished",
+    "length": 609,
+    "finished": true,
+    "begin_at": "2026-08-06T17:30:56Z",
+    "detailed_stats": false,
+    "end_at": "2026-08-06T17:41:06Z",
+    "forfeit": false,
+    "match_id": 1609929,
+    "winner_type": "Team",
+    "winner": {
+     "id": 135373,
+     "type": "Team"
+    }
+   }
+  ],
+  "id": 1609929,
+  "name": "Lower bracket quarterfinal 2: C9 vs OMiT",
+  "league": {
+   "id": 5283,
+   "name": "Esports World Cup",
+   "url": null,
+   "slug": "cod-mw-esports-world-cup",
+   "modified_at": "2024-08-09T13:28:00Z",
+   "image_url": "https://cdn-api.pandascore.co/images/league/image/5283/600px-esports_world_cup_2024_lightmode-png"
+  },
+  "videogame_title": {
+   "id": 18,
+   "name": "Call of Duty: Black Ops 7",
+   "slug": "cod-bo-7",
+   "videogame_id": 23
+  },
+  "match_type": "best_of",
+  "modified_at": "2026-08-06T17:41:07Z",
+  "forfeit": false
+ },
+ {
+  "winner_type": "Team",
+  "draw": false,
+  "game_advantage": null,
+  "detailed_stats": false,
+  "serie": {
+   "id": 10834,
+   "name": "",
+   "year": 2026,
+   "begin_at": "2026-08-04T22:00:00Z",
+   "end_at": "2026-08-09T21:00:00Z",
+   "winner_id": null,
+   "winner_type": "Team",
+   "slug": "cod-mw-esports-world-cup-2026",
+   "modified_at": "2026-07-28T13:35:14Z",
+   "league_id": 5283,
+   "season": null,
+   "full_name": "2026"
+  },
+  "videogame_version": null,
+  "original_scheduled_at": "2026-08-06T14:15:00Z",
+  "opponents": [
+   {
+    "type": "Team",
+    "opponent": {
+     "id": 135375,
+     "name": "G2 Esports",
+     "location": "ES",
+     "slug": "g2-esports-cod-mw",
+     "modified_at": "2026-08-07T18:54:08Z",
+     "acronym": "G2",
+     "image_url": "https://cdn-api.pandascore.co/images/team/image/135375/g2_esportslogo_square.png",
+     "dark_mode_image_url": null
+    }
+   },
+   {
+    "type": "Team",
+    "opponent": {
+     "id": 135374,
+     "name": "Gentle Mates",
+     "location": "FR",
+     "slug": "gentle-mates-cod-mw",
+     "modified_at": "2026-08-07T18:54:10Z",
+     "acronym": "M8",
+     "image_url": "https://cdn-api.pandascore.co/images/team/image/135374/932px_gentle_mates_lightmode_2024.png",
+     "dark_mode_image_url": "https://cdn-api.pandascore.co/dark_images/team/dark_image/135374/600px_gentle_mates_2024_darkmode.png"
+    }
+   }
+  ],
+  "tournament": {
+   "id": 21567,
+   "name": "Group A",
+   "type": "offline",
+   "country": "FR",
+   "begin_at": "2026-08-05T13:00:00Z",
+   "detailed_stats": false,
+   "end_at": "2026-08-07T17:00:00Z",
+   "winner_id": null,
+   "winner_type": "Team",
+   "slug": "cod-mw-esports-world-cup-2026-group-a",
+   "serie_id": 10834,
+   "modified_at": "2026-08-03T02:47:28Z",
+   "league_id": 5283,
+   "prizepool": null,
+   "tier": "s",
+   "has_bracket": false,
+   "region": "WEU",
+   "live_supported": false
+  },
+  "scheduled_at": "2026-08-06T16:10:00Z",
+  "live": {
+   "supported": false,
+   "url": null,
+   "opens_at": null
+  },
+  "begin_at": "2026-08-06T16:09:30Z",
+  "rescheduled": true,
+  "number_of_games": 5,
+  "streams_list": [
+   {
+    "main": true,
+    "language": "en",
+    "embed_url": "https://www.youtube.com/embed/YjDOClXZDm8",
+    "official": true,
+    "raw_url": "https://www.youtube.com/watch?v=YjDOClXZDm8"
+   }
+  ],
+  "tournament_id": 21567,
+  "serie_id": 10834,
+  "status": "finished",
+  "winner_id": 135375,
+  "slug": "g2-esports-2026-08-06",
+  "end_at": "2026-08-06T16:56:19Z",
+  "results": [
+   {
+    "score": 3,
+    "team_id": 135375
+   },
+   {
+    "score": 0,
+    "team_id": 135374
+   }
+  ],
+  "videogame": {
+   "id": 23,
+   "name": "Call of Duty",
+   "slug": "cod-mw"
+  },
+  "winner": {
+   "id": 135375,
+   "name": "G2 Esports",
+   "location": "ES",
+   "slug": "g2-esports-cod-mw",
+   "modified_at": "2026-08-07T18:54:08Z",
+   "acronym": "G2",
+   "image_url": "https://cdn-api.pandascore.co/images/team/image/135375/g2_esportslogo_square.png",
+   "dark_mode_image_url": null
+  },
+  "league_id": 5283,
+  "games": [
+   {
+    "complete": true,
+    "id": 9569,
+    "position": 1,
+    "status": "finished",
+    "length": 678,
+    "finished": true,
+    "begin_at": "2026-08-06T16:09:30Z",
+    "detailed_stats": false,
+    "end_at": "2026-08-06T16:20:49Z",
+    "forfeit": false,
+    "match_id": 1609927,
+    "winner_type": "Team",
+    "winner": {
+     "id": 135375,
+     "type": "Team"
+    }
+   },
+   {
+    "complete": true,
+    "id": 9570,
+    "position": 2,
+    "status": "finished",
+    "length": 722,
+    "finished": true,
+    "begin_at": "2026-08-06T16:25:55Z",
+    "detailed_stats": false,
+    "end_at": "2026-08-06T16:37:57Z",
+    "forfeit": false,
+    "match_id": 1609927,
+    "winner_type": "Team",
+    "winner": {
+     "id": 135375,
+     "type": "Team"
+    }
+   },
+   {
+    "complete": true,
+    "id": 9571,
+    "position": 3,
+    "status": "finished",
+    "length": 662,
+    "finished": true,
+    "begin_at": "2026-08-06T16:45:17Z",
+    "detailed_stats": false,
+    "end_at": "2026-08-06T16:56:19Z",
+    "forfeit": false,
+    "match_id": 1609927,
+    "winner_type": "Team",
+    "winner": {
+     "id": 135375,
+     "type": "Team"
+    }
+   }
+  ],
+  "id": 1609927,
+  "name": "Upper bracket semifinal 2: G2 vs M8",
+  "league": {
+   "id": 5283,
+   "name": "Esports World Cup",
+   "url": null,
+   "slug": "cod-mw-esports-world-cup",
+   "modified_at": "2024-08-09T13:28:00Z",
+   "image_url": "https://cdn-api.pandascore.co/images/league/image/5283/600px-esports_world_cup_2024_lightmode-png"
+  },
+  "videogame_title": {
+   "id": 18,
+   "name": "Call of Duty: Black Ops 7",
+   "slug": "cod-bo-7",
+   "videogame_id": 23
+  },
+  "match_type": "best_of",
+  "modified_at": "2026-08-06T16:56:20Z",
+  "forfeit": false
+ },
+ {
+  "winner_type": "Team",
+  "draw": false,
+  "game_advantage": null,
+  "detailed_stats": false,
+  "serie": {
+   "id": 10834,
+   "name": "",
+   "year": 2026,
+   "begin_at": "2026-08-04T22:00:00Z",
+   "end_at": "2026-08-09T21:00:00Z",
+   "winner_id": null,
+   "winner_type": "Team",
+   "slug": "cod-mw-esports-world-cup-2026",
+   "modified_at": "2026-07-28T13:35:14Z",
+   "league_id": 5283,
+   "season": null,
+   "full_name": "2026"
+  },
+  "videogame_version": null,
+  "original_scheduled_at": "2026-08-06T15:30:00Z",
+  "opponents": [
+   {
+    "type": "Team",
+    "opponent": {
+     "id": 133864,
+     "name": "Carolina Royal Ravens",
+     "location": "US",
+     "slug": "carolina-royal-ravens",
+     "modified_at": "2026-07-28T13:28:02Z",
+     "acronym": "CRR",
+     "image_url": "https://cdn-api.pandascore.co/images/team/image/133864/ezgif_3267123c49c2de6c.png",
+     "dark_mode_image_url": null
+    }
+   },
+   {
+    "type": "Team",
+    "opponent": {
+     "id": 139047,
+     "name": "The Pit",
+     "location": "",
+     "slug": "the-pit",
+     "modified_at": "2026-08-03T06:30:54Z",
+     "acronym": null,
+     "image_url": "https://cdn-api.pandascore.co/images/team/image/139047/the_pit_lightmode.png",
+     "dark_mode_image_url": "https://cdn-api.pandascore.co/dark_images/team/dark_image/139047/the_pit_darkmode.png"
+    }
+   }
+  ],
+  "tournament": {
+   "id": 21567,
+   "name": "Group A",
+   "type": "offline",
+   "country": "FR",
+   "begin_at": "2026-08-05T13:00:00Z",
+   "detailed_stats": false,
+   "end_at": "2026-08-07T17:00:00Z",
+   "winner_id": null,
+   "winner_type": "Team",
+   "slug": "cod-mw-esports-world-cup-2026-group-a",
+   "serie_id": 10834,
+   "modified_at": "2026-08-03T02:47:28Z",
+   "league_id": 5283,
+   "prizepool": null,
+   "tier": "s",
+   "has_bracket": false,
+   "region": "WEU",
+   "live_supported": false
+  },
+  "scheduled_at": "2026-08-06T14:45:00Z",
+  "live": {
+   "supported": false,
+   "url": null,
+   "opens_at": null
+  },
+  "begin_at": "2026-08-06T14:45:56Z",
+  "rescheduled": true,
+  "number_of_games": 5,
+  "streams_list": [
+   {
+    "main": true,
+    "language": "en",
+    "embed_url": "https://www.youtube.com/embed/OnD13trhrYQ",
+    "official": true,
+    "raw_url": "https://www.youtube.com/watch?v=OnD13trhrYQ"
+   }
+  ],
+  "tournament_id": 21567,
+  "serie_id": 10834,
+  "status": "finished",
+  "winner_id": 139047,
+  "slug": "carolina-royal-ravens-2026-08-06",
+  "end_at": "2026-08-06T16:18:38Z",
+  "results": [
+   {
+    "score": 2,
+    "team_id": 133864
+   },
+   {
+    "score": 3,
+    "team_id": 139047
+   }
+  ],
+  "videogame": {
+   "id": 23,
+   "name": "Call of Duty",
+   "slug": "cod-mw"
+  },
+  "winner": {
+   "id": 139047,
+   "name": "The Pit",
+   "location": "",
+   "slug": "the-pit",
+   "modified_at": "2026-08-03T06:30:54Z",
+   "acronym": null,
+   "image_url": "https://cdn-api.pandascore.co/images/team/image/139047/the_pit_lightmode.png",
+   "dark_mode_image_url": "https://cdn-api.pandascore.co/dark_images/team/dark_image/139047/the_pit_darkmode.png"
+  },
+  "league_id": 5283,
+  "games": [
+   {
+    "complete": true,
+    "id": 9574,
+    "position": 1,
+    "status": "finished",
+    "length": 783,
+    "finished": true,
+    "begin_at": "2026-08-06T14:45:56Z",
+    "detailed_stats": false,
+    "end_at": "2026-08-06T14:59:00Z",
+    "forfeit": false,
+    "match_id": 1609928,
+    "winner_type": "Team",
+    "winner": {
+     "id": 139047,
+     "type": "Team"
+    }
+   },
+   {
+    "complete": true,
+    "id": 9575,
+    "position": 2,
+    "status": "finished",
+    "length": 703,
+    "finished": true,
+    "begin_at": "2026-08-06T15:05:21Z",
+    "detailed_stats": false,
+    "end_at": "2026-08-06T15:17:04Z",
+    "forfeit": false,
+    "match_id": 1609928,
+    "winner_type": "Team",
+    "winner": {
+     "id": 139047,
+     "type": "Team"
+    }
+   },
+   {
+    "complete": true,
+    "id": 9576,
+    "position": 3,
+    "status": "finished",
+    "length": 879,
+    "finished": true,
+    "begin_at": "2026-08-06T15:24:26Z",
+    "detailed_stats": false,
+    "end_at": "2026-08-06T15:39:06Z",
+    "forfeit": false,
+    "match_id": 1609928,
+    "winner_type": "Team",
+    "winner": {
+     "id": 133864,
+     "type": "Team"
+    }
+   },
+   {
+    "complete": true,
+    "id": 9577,
+    "position": 4,
+    "status": "finished",
+    "length": 930,
+    "finished": true,
+    "begin_at": "2026-08-06T15:40:02Z",
+    "detailed_stats": false,
+    "end_at": "2026-08-06T15:55:32Z",
+    "forfeit": false,
+    "match_id": 1609928,
+    "winner_type": "Team",
+    "winner": {
+     "id": 133864,
+     "type": "Team"
+    }
+   },
+   {
+    "complete": true,
+    "id": 9578,
+    "position": 5,
+    "status": "finished",
+    "length": 832,
+    "finished": true,
+    "begin_at": "2026-08-06T16:04:46Z",
+    "detailed_stats": false,
+    "end_at": "2026-08-06T16:18:38Z",
+    "forfeit": false,
+    "match_id": 1609928,
+    "winner_type": "Team",
+    "winner": {
+     "id": 139047,
+     "type": "Team"
+    }
+   }
+  ],
+  "id": 1609928,
+  "name": "Lower bracket quarterfinal 1: CRR vs The Pit",
+  "league": {
+   "id": 5283,
+   "name": "Esports World Cup",
+   "url": null,
+   "slug": "cod-mw-esports-world-cup",
+   "modified_at": "2024-08-09T13:28:00Z",
+   "image_url": "https://cdn-api.pandascore.co/images/league/image/5283/600px-esports_world_cup_2024_lightmode-png"
+  },
+  "videogame_title": {
+   "id": 18,
+   "name": "Call of Duty: Black Ops 7",
+   "slug": "cod-bo-7",
+   "videogame_id": 23
+  },
+  "match_type": "best_of",
+  "modified_at": "2026-08-06T16:18:39Z",
+  "forfeit": false
+ },
+ {
+  "winner_type": "Team",
+  "draw": false,
+  "game_advantage": null,
+  "detailed_stats": false,
+  "serie": {
+   "id": 10834,
+   "name": "",
+   "year": 2026,
+   "begin_at": "2026-08-04T22:00:00Z",
+   "end_at": "2026-08-09T21:00:00Z",
+   "winner_id": null,
+   "winner_type": "Team",
+   "slug": "cod-mw-esports-world-cup-2026",
+   "modified_at": "2026-07-28T13:35:14Z",
+   "league_id": 5283,
+   "season": null,
+   "full_name": "2026"
+  },
+  "videogame_version": null,
+  "original_scheduled_at": "2026-08-06T14:15:00Z",
+  "opponents": [
+   {
+    "type": "Team",
+    "opponent": {
+     "id": 137163,
+     "name": "Movistar KOI",
+     "location": "ES",
+     "slug": "koi-cod-mw",
+     "modified_at": "2026-08-07T19:00:48Z",
+     "acronym": "KOI",
+     "image_url": "https://cdn-api.pandascore.co/images/team/image/137163/movistar_ko_ilogo_square.png",
+     "dark_mode_image_url": null
+    }
+   },
+   {
+    "type": "Team",
+    "opponent": {
+     "id": 137201,
+     "name": "FaZe Clan",
+     "location": "US",
+     "slug": "faze-clan-cod-mw",
+     "modified_at": "2026-08-07T18:54:33Z",
+     "acronym": "FAZE",
+     "image_url": "https://cdn-api.pandascore.co/images/team/image/137201/fa_ze_clanlogo_square.png",
+     "dark_mode_image_url": null
+    }
+   }
+  ],
+  "tournament": {
+   "id": 21567,
+   "name": "Group A",
+   "type": "offline",
+   "country": "FR",
+   "begin_at": "2026-08-05T13:00:00Z",
+   "detailed_stats": false,
+   "end_at": "2026-08-07T17:00:00Z",
+   "winner_id": null,
+   "winner_type": "Team",
+   "slug": "cod-mw-esports-world-cup-2026-group-a",
+   "serie_id": 10834,
+   "modified_at": "2026-08-03T02:47:28Z",
+   "league_id": 5283,
+   "prizepool": null,
+   "tier": "s",
+   "has_bracket": false,
+   "region": "WEU",
+   "live_supported": false
+  },
+  "scheduled_at": "2026-08-06T14:15:00Z",
+  "live": {
+   "supported": false,
+   "url": null,
+   "opens_at": null
+  },
+  "begin_at": "2026-08-06T14:19:39Z",
+  "rescheduled": false,
+  "number_of_games": 5,
+  "streams_list": [
+   {
+    "main": true,
+    "language": "en",
+    "embed_url": "https://www.youtube.com/embed/YjDOClXZDm8",
+    "official": true,
+    "raw_url": "https://www.youtube.com/watch?v=YjDOClXZDm8"
+   }
+  ],
+  "tournament_id": 21567,
+  "serie_id": 10834,
+  "status": "finished",
+  "winner_id": 137201,
+  "slug": "koi-2026-08-06",
+  "end_at": "2026-08-06T15:30:30Z",
+  "results": [
+   {
+    "score": 1,
+    "team_id": 137163
+   },
+   {
+    "score": 3,
+    "team_id": 137201
+   }
+  ],
+  "videogame": {
+   "id": 23,
+   "name": "Call of Duty",
+   "slug": "cod-mw"
+  },
+  "winner": {
+   "id": 137201,
+   "name": "FaZe Clan",
+   "location": "US",
+   "slug": "faze-clan-cod-mw",
+   "modified_at": "2026-08-07T18:54:33Z",
+   "acronym": "FAZE",
+   "image_url": "https://cdn-api.pandascore.co/images/team/image/137201/fa_ze_clanlogo_square.png",
+   "dark_mode_image_url": null
+  },
+  "league_id": 5283,
+  "games": [
+   {
+    "complete": true,
+    "id": 9564,
+    "position": 1,
+    "status": "finished",
+    "length": 725,
+    "finished": true,
+    "begin_at": "2026-08-06T14:19:40Z",
+    "detailed_stats": false,
+    "end_at": "2026-08-06T14:31:45Z",
+    "forfeit": false,
+    "match_id": 1609926,
+    "winner_type": "Team",
+    "winner": {
+     "id": 137201,
+     "type": "Team"
+    }
+   },
+   {
+    "complete": true,
+    "id": 9565,
+    "position": 2,
+    "status": "finished",
+    "length": 851,
+    "finished": true,
+    "begin_at": "2026-08-06T14:36:20Z",
+    "detailed_stats": false,
+    "end_at": "2026-08-06T14:50:32Z",
+    "forfeit": false,
+    "match_id": 1609926,
+    "winner_type": "Team",
+    "winner": {
+     "id": 137163,
+     "type": "Team"
+    }
+   },
+   {
+    "complete": true,
+    "id": 9566,
+    "position": 3,
+    "status": "finished",
+    "length": 1016,
+    "finished": true,
+    "begin_at": "2026-08-06T14:57:49Z",
+    "detailed_stats": false,
+    "end_at": "2026-08-06T15:14:45Z",
+    "forfeit": false,
+    "match_id": 1609926,
+    "winner_type": "Team",
+    "winner": {
+     "id": 137201,
+     "type": "Team"
+    }
+   },
+   {
+    "complete": true,
+    "id": 9567,
+    "position": 4,
+    "status": "finished",
+    "length": 818,
+    "finished": true,
+    "begin_at": "2026-08-06T15:16:52Z",
+    "detailed_stats": false,
+    "end_at": "2026-08-06T15:30:31Z",
+    "forfeit": false,
+    "match_id": 1609926,
+    "winner_type": "Team",
+    "winner": {
+     "id": 137201,
+     "type": "Team"
+    }
+   }
+  ],
+  "id": 1609926,
+  "name": "Upper bracket semifinal 1: KOI vs FaZe Clan",
+  "league": {
+   "id": 5283,
+   "name": "Esports World Cup",
+   "url": null,
+   "slug": "cod-mw-esports-world-cup",
+   "modified_at": "2024-08-09T13:28:00Z",
+   "image_url": "https://cdn-api.pandascore.co/images/league/image/5283/600px-esports_world_cup_2024_lightmode-png"
+  },
+  "videogame_title": {
+   "id": 18,
+   "name": "Call of Duty: Black Ops 7",
+   "slug": "cod-bo-7",
+   "videogame_id": 23
+  },
+  "match_type": "best_of",
+  "modified_at": "2026-08-06T15:30:32Z",
+  "forfeit": false
+ },
+ {
+  "winner_type": "Team",
+  "draw": false,
+  "game_advantage": null,
+  "detailed_stats": false,
+  "serie": {
+   "id": 10834,
+   "name": "",
+   "year": 2026,
+   "begin_at": "2026-08-04T22:00:00Z",
+   "end_at": "2026-08-09T21:00:00Z",
+   "winner_id": null,
+   "winner_type": "Team",
+   "slug": "cod-mw-esports-world-cup-2026",
+   "modified_at": "2026-07-28T13:35:14Z",
+   "league_id": 5283,
+   "season": null,
+   "full_name": "2026"
+  },
+  "videogame_version": null,
+  "original_scheduled_at": "2026-08-06T13:00:00Z",
+  "opponents": [
+   {
+    "type": "Team",
+    "opponent": {
+     "id": 135377,
+     "name": "Team Heretics",
+     "location": "ES",
+     "slug": "team-heretics-cod-mw",
+     "modified_at": "2026-08-07T18:54:09Z",
+     "acronym": "HTCS",
+     "image_url": "https://cdn-api.pandascore.co/images/team/image/135377/team_hereticslogo_square.png",
+     "dark_mode_image_url": null
+    }
+   },
+   {
+    "type": "Team",
+    "opponent": {
+     "id": 135970,
+     "name": "Vancouver Surge",
+     "location": "US",
+     "slug": "vancouver-surge",
+     "modified_at": "2026-07-28T13:25:22Z",
+     "acronym": "VAN",
+     "image_url": "https://cdn-api.pandascore.co/images/team/image/135970/150px_seattle_surgelogo_square.png",
+     "dark_mode_image_url": null
+    }
+   }
+  ],
+  "tournament": {
+   "id": 21568,
+   "name": "Group B",
+   "type": "offline",
+   "country": "FR",
+   "begin_at": "2026-08-05T18:00:00Z",
+   "detailed_stats": false,
+   "end_at": "2026-08-07T18:00:00Z",
+   "winner_id": null,
+   "winner_type": "Team",
+   "slug": "cod-mw-esports-world-cup-2026-group-b",
+   "serie_id": 10834,
+   "modified_at": "2026-08-08T06:33:12Z",
+   "league_id": 5283,
+   "prizepool": null,
+   "tier": "s",
+   "has_bracket": true,
+   "region": "WEU",
+   "live_supported": false
+  },
+  "scheduled_at": "2026-08-06T13:00:00Z",
+  "live": {
+   "supported": false,
+   "url": null,
+   "opens_at": null
+  },
+  "begin_at": "2026-08-06T13:06:21Z",
+  "rescheduled": false,
+  "number_of_games": 5,
+  "streams_list": [
+   {
+    "main": true,
+    "language": "en",
+    "embed_url": "https://www.youtube.com/embed/YjDOClXZDm8",
+    "official": true,
+    "raw_url": "https://www.youtube.com/watch?v=YjDOClXZDm8"
+   }
+  ],
+  "tournament_id": 21568,
+  "serie_id": 10834,
+  "status": "finished",
+  "winner_id": 135377,
+  "slug": "team-heretics-vs-vancouver-surge-2026-08-06",
+  "end_at": "2026-08-06T13:53:43Z",
+  "results": [
+   {
+    "score": 3,
+    "team_id": 135377
+   },
+   {
+    "score": 0,
+    "team_id": 135970
+   }
+  ],
+  "videogame": {
+   "id": 23,
+   "name": "Call of Duty",
+   "slug": "cod-mw"
+  },
+  "winner": {
+   "id": 135377,
+   "name": "Team Heretics",
+   "location": "ES",
+   "slug": "team-heretics-cod-mw",
+   "modified_at": "2026-08-07T18:54:09Z",
+   "acronym": "HTCS",
+   "image_url": "https://cdn-api.pandascore.co/images/team/image/135377/team_hereticslogo_square.png",
+   "dark_mode_image_url": null
+  },
+  "league_id": 5283,
+  "games": [
+   {
+    "complete": true,
+    "id": 9609,
+    "position": 1,
+    "status": "finished",
+    "length": 713,
+    "finished": true,
+    "begin_at": "2026-08-06T13:06:21Z",
+    "detailed_stats": false,
+    "end_at": "2026-08-06T13:18:15Z",
+    "forfeit": false,
+    "match_id": 1609935,
+    "winner_type": "Team",
+    "winner": {
+     "id": 135377,
+     "type": "Team"
+    }
+   },
+   {
+    "complete": true,
+    "id": 9610,
+    "position": 2,
+    "status": "finished",
+    "length": 793,
+    "finished": true,
+    "begin_at": "2026-08-06T13:22:15Z",
+    "detailed_stats": false,
+    "end_at": "2026-08-06T13:35:29Z",
+    "forfeit": false,
+    "match_id": 1609935,
+    "winner_type": "Team",
+    "winner": {
+     "id": 135377,
+     "type": "Team"
+    }
+   },
+   {
+    "complete": true,
+    "id": 9611,
+    "position": 3,
+    "status": "finished",
+    "length": 688,
+    "finished": true,
+    "begin_at": "2026-08-06T13:42:15Z",
+    "detailed_stats": false,
+    "end_at": "2026-08-06T13:53:44Z",
+    "forfeit": false,
+    "match_id": 1609935,
+    "winner_type": "Team",
+    "winner": {
+     "id": 135377,
+     "type": "Team"
+    }
+   }
+  ],
+  "id": 1609935,
+  "name": "Upper bracket quarterfinal 4: HTCS vs VAN",
+  "league": {
+   "id": 5283,
+   "name": "Esports World Cup",
+   "url": null,
+   "slug": "cod-mw-esports-world-cup",
+   "modified_at": "2024-08-09T13:28:00Z",
+   "image_url": "https://cdn-api.pandascore.co/images/league/image/5283/600px-esports_world_cup_2024_lightmode-png"
+  },
+  "videogame_title": {
+   "id": 18,
+   "name": "Call of Duty: Black Ops 7",
+   "slug": "cod-bo-7",
+   "videogame_id": 23
+  },
+  "match_type": "best_of",
+  "modified_at": "2026-08-06T13:53:45Z",
+  "forfeit": false
+ },
+ {
+  "winner_type": "Team",
+  "draw": false,
+  "game_advantage": null,
+  "detailed_stats": false,
+  "serie": {
+   "id": 10834,
+   "name": "",
+   "year": 2026,
+   "begin_at": "2026-08-04T22:00:00Z",
+   "end_at": "2026-08-09T21:00:00Z",
+   "winner_id": null,
+   "winner_type": "Team",
+   "slug": "cod-mw-esports-world-cup-2026",
+   "modified_at": "2026-07-28T13:35:14Z",
+   "league_id": 5283,
+   "season": null,
+   "full_name": "2026"
+  },
+  "videogame_version": null,
+  "original_scheduled_at": "2026-08-06T13:00:00Z",
+  "opponents": [
+   {
+    "type": "Team",
+    "opponent": {
+     "id": 135379,
+     "name": "Team Falcons",
+     "location": "SA",
+     "slug": "team-falcons-cod-mw",
+     "modified_at": "2026-08-07T18:54:10Z",
+     "acronym": "FAL",
+     "image_url": "https://cdn-api.pandascore.co/images/team/image/135379/team_falconslogo_square.png",
+     "dark_mode_image_url": null
+    }
+   },
+   {
+    "type": "Team",
+    "opponent": {
+     "id": 138267,
+     "name": "Project Notorious",
+     "location": "US",
+     "slug": "project-notorious",
+     "modified_at": "2026-07-28T13:25:23Z",
+     "acronym": "PN",
+     "image_url": "https://cdn-api.pandascore.co/images/team/image/138267/316px_project_notorious_lightmode.png",
+     "dark_mode_image_url": "https://cdn-api.pandascore.co/dark_images/team/dark_image/138267/316px_project_notorious_darkmode.png"
+    }
+   }
+  ],
+  "tournament": {
+   "id": 21568,
+   "name": "Group B",
+   "type": "offline",
+   "country": "FR",
+   "begin_at": "2026-08-05T18:00:00Z",
+   "detailed_stats": false,
+   "end_at": "2026-08-07T18:00:00Z",
+   "winner_id": null,
+   "winner_type": "Team",
+   "slug": "cod-mw-esports-world-cup-2026-group-b",
+   "serie_id": 10834,
+   "modified_at": "2026-08-08T06:33:12Z",
+   "league_id": 5283,
+   "prizepool": null,
+   "tier": "s",
+   "has_bracket": true,
+   "region": "WEU",
+   "live_supported": false
+  },
+  "scheduled_at": "2026-08-06T13:00:00Z",
+  "live": {
+   "supported": false,
+   "url": null,
+   "opens_at": null
+  },
+  "begin_at": "2026-08-06T13:03:56Z",
+  "rescheduled": false,
+  "number_of_games": 5,
+  "streams_list": [
+   {
+    "main": true,
+    "language": "en",
+    "embed_url": "https://www.youtube.com/embed/OnD13trhrYQ",
+    "official": true,
+    "raw_url": "https://www.youtube.com/watch?v=OnD13trhrYQ"
+   }
+  ],
+  "tournament_id": 21568,
+  "serie_id": 10834,
+  "status": "finished",
+  "winner_id": 135379,
+  "slug": "team-falcons-vs-project-notorious-2026-08-06",
+  "end_at": "2026-08-06T14:11:32Z",
+  "results": [
+   {
+    "score": 3,
+    "team_id": 135379
+   },
+   {
+    "score": 1,
+    "team_id": 138267
+   }
+  ],
+  "videogame": {
+   "id": 23,
+   "name": "Call of Duty",
+   "slug": "cod-mw"
+  },
+  "winner": {
+   "id": 135379,
+   "name": "Team Falcons",
+   "location": "SA",
+   "slug": "team-falcons-cod-mw",
+   "modified_at": "2026-08-07T18:54:10Z",
+   "acronym": "FAL",
+   "image_url": "https://cdn-api.pandascore.co/images/team/image/135379/team_falconslogo_square.png",
+   "dark_mode_image_url": null
+  },
+  "league_id": 5283,
+  "games": [
+   {
+    "complete": true,
+    "id": 9604,
+    "position": 1,
+    "status": "finished",
+    "length": 643,
+    "finished": true,
+    "begin_at": "2026-08-06T13:03:56Z",
+    "detailed_stats": false,
+    "end_at": "2026-08-06T13:14:40Z",
+    "forfeit": false,
+    "match_id": 1609934,
+    "winner_type": "Team",
+    "winner": {
+     "id": 135379,
+     "type": "Team"
+    }
+   },
+   {
+    "complete": true,
+    "id": 9605,
+    "position": 2,
+    "status": "finished",
+    "length": 1224,
+    "finished": true,
+    "begin_at": "2026-08-06T13:20:16Z",
+    "detailed_stats": false,
+    "end_at": "2026-08-06T13:40:41Z",
+    "forfeit": false,
+    "match_id": 1609934,
+    "winner_type": "Team",
+    "winner": {
+     "id": 138267,
+     "type": "Team"
+    }
+   },
+   {
+    "complete": true,
+    "id": 9606,
+    "position": 3,
+    "status": "finished",
+    "length": 975,
+    "finished": true,
+    "begin_at": "2026-08-06T13:45:24Z",
+    "detailed_stats": false,
+    "end_at": "2026-08-06T14:01:39Z",
+    "forfeit": false,
+    "match_id": 1609934,
+    "winner_type": "Team",
+    "winner": {
+     "id": 135379,
+     "type": "Team"
+    }
+   },
+   {
+    "complete": true,
+    "id": 9607,
+    "position": 4,
+    "status": "finished",
+    "length": 591,
+    "finished": true,
+    "begin_at": "2026-08-06T14:01:41Z",
+    "detailed_stats": false,
+    "end_at": "2026-08-06T14:11:32Z",
+    "forfeit": false,
+    "match_id": 1609934,
+    "winner_type": "Team",
+    "winner": {
+     "id": 135379,
+     "type": "Team"
+    }
+   }
+  ],
+  "id": 1609934,
+  "name": "Upper bracket quarterfinal 3: FAL vs PN",
+  "league": {
+   "id": 5283,
+   "name": "Esports World Cup",
+   "url": null,
+   "slug": "cod-mw-esports-world-cup",
+   "modified_at": "2024-08-09T13:28:00Z",
+   "image_url": "https://cdn-api.pandascore.co/images/league/image/5283/600px-esports_world_cup_2024_lightmode-png"
+  },
+  "videogame_title": {
+   "id": 18,
+   "name": "Call of Duty: Black Ops 7",
+   "slug": "cod-bo-7",
+   "videogame_id": 23
+  },
+  "match_type": "best_of",
+  "modified_at": "2026-08-06T14:11:33Z",
+  "forfeit": false
+ },
+ {
+  "winner_type": "Team",
+  "draw": false,
+  "game_advantage": null,
+  "detailed_stats": false,
+  "serie": {
+   "id": 10834,
+   "name": "",
+   "year": 2026,
+   "begin_at": "2026-08-04T22:00:00Z",
+   "end_at": "2026-08-09T21:00:00Z",
+   "winner_id": null,
+   "winner_type": "Team",
+   "slug": "cod-mw-esports-world-cup-2026",
+   "modified_at": "2026-07-28T13:35:14Z",
+   "league_id": 5283,
+   "season": null,
+   "full_name": "2026"
+  },
+  "videogame_version": null,
+  "original_scheduled_at": "2026-08-05T19:15:00Z",
+  "opponents": [
+   {
+    "type": "Team",
+    "opponent": {
+     "id": 135378,
+     "name": "100 Thieves",
+     "location": "US",
+     "slug": "100-thieves-cod-mw",
+     "modified_at": "2026-08-07T18:54:11Z",
+     "acronym": "100T",
+     "image_url": "https://cdn-api.pandascore.co/images/team/image/135378/190px_100_thieves_lightmode.png",
+     "dark_mode_image_url": "https://cdn-api.pandascore.co/dark_images/team/dark_image/135378/190px_100_thieves_darkmode.png"
+    }
+   },
+   {
+    "type": "Team",
+    "opponent": {
+     "id": 130158,
+     "name": "Boston Breach",
+     "location": "US",
+     "slug": "boston-cdl",
+     "modified_at": "2026-07-28T13:25:19Z",
+     "acronym": "BOS",
+     "image_url": "https://cdn-api.pandascore.co/images/team/image/130158/632px_boston_breach_lightmode.png",
+     "dark_mode_image_url": "https://cdn-api.pandascore.co/dark_images/team/dark_image/130158/632px_boston_breach_darkmode.png"
+    }
+   }
+  ],
+  "tournament": {
+   "id": 21568,
+   "name": "Group B",
+   "type": "offline",
+   "country": "FR",
+   "begin_at": "2026-08-05T18:00:00Z",
+   "detailed_stats": false,
+   "end_at": "2026-08-07T18:00:00Z",
+   "winner_id": null,
+   "winner_type": "Team",
+   "slug": "cod-mw-esports-world-cup-2026-group-b",
+   "serie_id": 10834,
+   "modified_at": "2026-08-08T06:33:12Z",
+   "league_id": 5283,
+   "prizepool": null,
+   "tier": "s",
+   "has_bracket": true,
+   "region": "WEU",
+   "live_supported": false
+  },
+  "scheduled_at": "2026-08-05T21:15:00Z",
+  "live": {
+   "supported": false,
+   "url": null,
+   "opens_at": null
+  },
+  "begin_at": "2026-08-05T21:16:52Z",
+  "rescheduled": true,
+  "number_of_games": 5,
+  "streams_list": [
+   {
+    "main": true,
+    "language": "en",
+    "embed_url": "https://www.youtube.com/embed/ASPG-e_KtgE",
+    "official": true,
+    "raw_url": "https://www.youtube.com/watch?v=ASPG-e_KtgE"
+   }
+  ],
+  "tournament_id": 21568,
+  "serie_id": 10834,
+  "status": "finished",
+  "winner_id": 135378,
+  "slug": "100-thieves-vs-boston-breach-2026-08-05",
+  "end_at": "2026-08-05T22:04:12Z",
+  "results": [
+   {
+    "score": 3,
+    "team_id": 135378
+   },
+   {
+    "score": 0,
+    "team_id": 130158
+   }
+  ],
+  "videogame": {
+   "id": 23,
+   "name": "Call of Duty",
+   "slug": "cod-mw"
+  },
+  "winner": {
+   "id": 135378,
+   "name": "100 Thieves",
+   "location": "US",
+   "slug": "100-thieves-cod-mw",
+   "modified_at": "2026-08-07T18:54:11Z",
+   "acronym": "100T",
+   "image_url": "https://cdn-api.pandascore.co/images/team/image/135378/190px_100_thieves_lightmode.png",
+   "dark_mode_image_url": "https://cdn-api.pandascore.co/dark_images/team/dark_image/135378/190px_100_thieves_darkmode.png"
+  },
+  "league_id": 5283,
+  "games": [
+   {
+    "complete": true,
+    "id": 9599,
+    "position": 1,
+    "status": "finished",
+    "length": 585,
+    "finished": true,
+    "begin_at": "2026-08-05T21:16:53Z",
+    "detailed_stats": false,
+    "end_at": "2026-08-05T21:26:38Z",
+    "forfeit": false,
+    "match_id": 1609933,
+    "winner_type": "Team",
+    "winner": {
+     "id": 135378,
+     "type": "Team"
+    }
+   },
+   {
+    "complete": true,
+    "id": 9600,
+    "position": 2,
+    "status": "finished",
+    "length": 969,
+    "finished": true,
+    "begin_at": "2026-08-05T21:30:34Z",
+    "detailed_stats": false,
+    "end_at": "2026-08-05T21:46:44Z",
+    "forfeit": false,
+    "match_id": 1609933,
+    "winner_type": "Team",
+    "winner": {
+     "id": 135378,
+     "type": "Team"
+    }
+   },
+   {
+    "complete": true,
+    "id": 9601,
+    "position": 3,
+    "status": "finished",
+    "length": 667,
+    "finished": true,
+    "begin_at": "2026-08-05T21:53:05Z",
+    "detailed_stats": false,
+    "end_at": "2026-08-05T22:04:13Z",
+    "forfeit": false,
+    "match_id": 1609933,
+    "winner_type": "Team",
+    "winner": {
+     "id": 135378,
+     "type": "Team"
+    }
+   }
+  ],
+  "id": 1609933,
+  "name": "Upper bracket quarterfinal 2: 100T vs BOS",
+  "league": {
+   "id": 5283,
+   "name": "Esports World Cup",
+   "url": null,
+   "slug": "cod-mw-esports-world-cup",
+   "modified_at": "2024-08-09T13:28:00Z",
+   "image_url": "https://cdn-api.pandascore.co/images/league/image/5283/600px-esports_world_cup_2024_lightmode-png"
+  },
+  "videogame_title": {
+   "id": 18,
+   "name": "Call of Duty: Black Ops 7",
+   "slug": "cod-bo-7",
+   "videogame_id": 23
+  },
+  "match_type": "best_of",
+  "modified_at": "2026-08-05T22:04:14Z",
+  "forfeit": false
+ },
+ {
+  "winner_type": "Team",
+  "draw": false,
+  "game_advantage": null,
+  "detailed_stats": false,
+  "serie": {
+   "id": 10834,
+   "name": "",
+   "year": 2026,
+   "begin_at": "2026-08-04T22:00:00Z",
+   "end_at": "2026-08-09T21:00:00Z",
+   "winner_id": null,
+   "winner_type": "Team",
+   "slug": "cod-mw-esports-world-cup-2026",
+   "modified_at": "2026-07-28T13:35:14Z",
+   "league_id": 5283,
+   "season": null,
+   "full_name": "2026"
+  },
+  "videogame_version": null,
+  "original_scheduled_at": "2026-08-05T18:00:00Z",
+  "opponents": [
+   {
+    "type": "Team",
+    "opponent": {
+     "id": 137164,
+     "name": "OpTic Gaming",
+     "location": "US",
+     "slug": "optic-gaming-cod-mw",
+     "modified_at": "2026-08-07T18:54:13Z",
+     "acronym": "OG",
+     "image_url": "https://cdn-api.pandascore.co/images/team/image/137164/op_tic_gaming_lightmode.png",
+     "dark_mode_image_url": null
+    }
+   },
+   {
+    "type": "Team",
+    "opponent": {
+     "id": 130850,
+     "name": "Team WaR",
+     "location": "",
+     "slug": "team-war",
+     "modified_at": "2026-07-28T13:25:20Z",
+     "acronym": "WaR",
+     "image_url": "https://cdn-api.pandascore.co/images/team/image/130850/team_wa_rlogo_square.png",
+     "dark_mode_image_url": null
+    }
+   }
+  ],
+  "tournament": {
+   "id": 21568,
+   "name": "Group B",
+   "type": "offline",
+   "country": "FR",
+   "begin_at": "2026-08-05T18:00:00Z",
+   "detailed_stats": false,
+   "end_at": "2026-08-07T18:00:00Z",
+   "winner_id": null,
+   "winner_type": "Team",
+   "slug": "cod-mw-esports-world-cup-2026-group-b",
+   "serie_id": 10834,
+   "modified_at": "2026-08-08T06:33:12Z",
+   "league_id": 5283,
+   "prizepool": null,
+   "tier": "s",
+   "has_bracket": true,
+   "region": "WEU",
+   "live_supported": false
+  },
+  "scheduled_at": "2026-08-05T19:15:00Z",
+  "live": {
+   "supported": false,
+   "url": null,
+   "opens_at": null
+  },
+  "begin_at": "2026-08-05T19:19:39Z",
+  "rescheduled": true,
+  "number_of_games": 5,
+  "streams_list": [
+   {
+    "main": true,
+    "language": "en",
+    "embed_url": "https://www.youtube.com/embed/ASPG-e_KtgE",
+    "official": true,
+    "raw_url": "https://www.youtube.com/watch?v=ASPG-e_KtgE"
+   }
+  ],
+  "tournament_id": 21568,
+  "serie_id": 10834,
+  "status": "finished",
+  "winner_id": 137164,
+  "slug": "optic-gaming-vs-team-war-2026-08-05",
+  "end_at": "2026-08-05T20:36:25Z",
+  "results": [
+   {
+    "score": 3,
+    "team_id": 137164
+   },
+   {
+    "score": 1,
+    "team_id": 130850
+   }
+  ],
+  "videogame": {
+   "id": 23,
+   "name": "Call of Duty",
+   "slug": "cod-mw"
+  },
+  "winner": {
+   "id": 137164,
+   "name": "OpTic Gaming",
+   "location": "US",
+   "slug": "optic-gaming-cod-mw",
+   "modified_at": "2026-08-07T18:54:13Z",
+   "acronym": "OG",
+   "image_url": "https://cdn-api.pandascore.co/images/team/image/137164/op_tic_gaming_lightmode.png",
+   "dark_mode_image_url": null
+  },
+  "league_id": 5283,
+  "games": [
+   {
+    "complete": true,
+    "id": 9594,
+    "position": 1,
+    "status": "finished",
+    "length": 1151,
+    "finished": true,
+    "begin_at": "2026-08-05T19:19:39Z",
+    "detailed_stats": false,
+    "end_at": "2026-08-05T19:38:50Z",
+    "forfeit": false,
+    "match_id": 1609932,
+    "winner_type": "Team",
+    "winner": {
+     "id": 137164,
+     "type": "Team"
+    }
+   },
+   {
+    "complete": true,
+    "id": 9595,
+    "position": 2,
+    "status": "finished",
+    "length": 842,
+    "finished": true,
+    "begin_at": "2026-08-05T19:38:53Z",
+    "detailed_stats": false,
+    "end_at": "2026-08-05T19:52:56Z",
+    "forfeit": false,
+    "match_id": 1609932,
+    "winner_type": "Team",
+    "winner": {
+     "id": 130850,
+     "type": "Team"
+    }
+   },
+   {
+    "complete": true,
+    "id": 9596,
+    "position": 3,
+    "status": "finished",
+    "length": 672,
+    "finished": true,
+    "begin_at": "2026-08-05T20:09:37Z",
+    "detailed_stats": false,
+    "end_at": "2026-08-05T20:20:49Z",
+    "forfeit": false,
+    "match_id": 1609932,
+    "winner_type": "Team",
+    "winner": {
+     "id": 137164,
+     "type": "Team"
+    }
+   },
+   {
+    "complete": true,
+    "id": 9597,
+    "position": 4,
+    "status": "finished",
+    "length": 730,
+    "finished": true,
+    "begin_at": "2026-08-05T20:24:15Z",
+    "detailed_stats": false,
+    "end_at": "2026-08-05T20:36:25Z",
+    "forfeit": false,
+    "match_id": 1609932,
+    "winner_type": "Team",
+    "winner": {
+     "id": 137164,
+     "type": "Team"
+    }
+   }
+  ],
+  "id": 1609932,
+  "name": "Upper bracket quarterfinal 1: OG vs WaR",
+  "league": {
+   "id": 5283,
+   "name": "Esports World Cup",
+   "url": null,
+   "slug": "cod-mw-esports-world-cup",
+   "modified_at": "2024-08-09T13:28:00Z",
+   "image_url": "https://cdn-api.pandascore.co/images/league/image/5283/600px-esports_world_cup_2024_lightmode-png"
+  },
+  "videogame_title": {
+   "id": 18,
+   "name": "Call of Duty: Black Ops 7",
+   "slug": "cod-bo-7",
+   "videogame_id": 23
+  },
+  "match_type": "best_of",
+  "modified_at": "2026-08-05T20:36:26Z",
+  "forfeit": false
+ },
+ {
+  "winner_type": "Team",
+  "draw": false,
+  "game_advantage": null,
+  "detailed_stats": false,
+  "serie": {
+   "id": 10834,
+   "name": "",
+   "year": 2026,
+   "begin_at": "2026-08-04T22:00:00Z",
+   "end_at": "2026-08-09T21:00:00Z",
+   "winner_id": null,
+   "winner_type": "Team",
+   "slug": "cod-mw-esports-world-cup-2026",
+   "modified_at": "2026-07-28T13:35:14Z",
+   "league_id": 5283,
+   "season": null,
+   "full_name": "2026"
+  },
+  "videogame_version": null,
+  "original_scheduled_at": "2026-08-05T16:45:00Z",
+  "opponents": [
+   {
+    "type": "Team",
+    "opponent": {
+     "id": 135374,
+     "name": "Gentle Mates",
+     "location": "FR",
+     "slug": "gentle-mates-cod-mw",
+     "modified_at": "2026-08-07T18:54:10Z",
+     "acronym": "M8",
+     "image_url": "https://cdn-api.pandascore.co/images/team/image/135374/932px_gentle_mates_lightmode_2024.png",
+     "dark_mode_image_url": "https://cdn-api.pandascore.co/dark_images/team/dark_image/135374/600px_gentle_mates_2024_darkmode.png"
+    }
+   },
+   {
+    "type": "Team",
+    "opponent": {
+     "id": 133350,
+     "name": "OMiT",
+     "location": "US",
+     "slug": "omit",
+     "modified_at": "2026-07-28T13:28:01Z",
+     "acronym": "OMiT",
+     "image_url": "https://cdn-api.pandascore.co/images/team/image/133350/100px_o_mi_t_lightmode.png",
+     "dark_mode_image_url": "https://cdn-api.pandascore.co/dark_images/team/dark_image/133350/o_mi_t_darkmode.png"
+    }
+   }
+  ],
+  "tournament": {
+   "id": 21567,
+   "name": "Group A",
+   "type": "offline",
+   "country": "FR",
+   "begin_at": "2026-08-05T13:00:00Z",
+   "detailed_stats": false,
+   "end_at": "2026-08-07T17:00:00Z",
+   "winner_id": null,
+   "winner_type": "Team",
+   "slug": "cod-mw-esports-world-cup-2026-group-a",
+   "serie_id": 10834,
+   "modified_at": "2026-08-03T02:47:28Z",
+   "league_id": 5283,
+   "prizepool": null,
+   "tier": "s",
+   "has_bracket": false,
+   "region": "WEU",
+   "live_supported": false
+  },
+  "scheduled_at": "2026-08-05T17:45:00Z",
+  "live": {
+   "supported": false,
+   "url": null,
+   "opens_at": null
+  },
+  "begin_at": "2026-08-05T17:47:44Z",
+  "rescheduled": true,
+  "number_of_games": 5,
+  "streams_list": [
+   {
+    "main": true,
+    "language": "en",
+    "embed_url": "https://www.youtube.com/embed/ASPG-e_KtgE",
+    "official": true,
+    "raw_url": "https://www.youtube.com/watch?v=ASPG-e_KtgE"
+   }
+  ],
+  "tournament_id": 21567,
+  "serie_id": 10834,
+  "status": "finished",
+  "winner_id": 135374,
+  "slug": "gentle-mates-vs-omit-2026-08-05",
+  "end_at": "2026-08-05T18:49:02Z",
+  "results": [
+   {
+    "score": 3,
+    "team_id": 135374
+   },
+   {
+    "score": 0,
+    "team_id": 133350
+   }
+  ],
+  "videogame": {
+   "id": 23,
+   "name": "Call of Duty",
+   "slug": "cod-mw"
+  },
+  "winner": {
+   "id": 135374,
+   "name": "Gentle Mates",
+   "location": "FR",
+   "slug": "gentle-mates-cod-mw",
+   "modified_at": "2026-08-07T18:54:10Z",
+   "acronym": "M8",
+   "image_url": "https://cdn-api.pandascore.co/images/team/image/135374/932px_gentle_mates_lightmode_2024.png",
+   "dark_mode_image_url": "https://cdn-api.pandascore.co/dark_images/team/dark_image/135374/600px_gentle_mates_2024_darkmode.png"
+  },
+  "league_id": 5283,
+  "games": [
+   {
+    "complete": true,
+    "id": 9559,
+    "position": 1,
+    "status": "finished",
+    "length": 656,
+    "finished": true,
+    "begin_at": "2026-08-05T17:47:44Z",
+    "detailed_stats": false,
+    "end_at": "2026-08-05T17:58:41Z",
+    "forfeit": false,
+    "match_id": 1609925,
+    "winner_type": "Team",
+    "winner": {
+     "id": 135374,
+     "type": "Team"
+    }
+   },
+   {
+    "complete": true,
+    "id": 9560,
+    "position": 2,
+    "status": "finished",
+    "length": 965,
+    "finished": true,
+    "begin_at": "2026-08-05T18:15:08Z",
+    "detailed_stats": false,
+    "end_at": "2026-08-05T18:31:14Z",
+    "forfeit": false,
+    "match_id": 1609925,
+    "winner_type": "Team",
+    "winner": {
+     "id": 135374,
+     "type": "Team"
+    }
+   },
+   {
+    "complete": true,
+    "id": 9561,
+    "position": 3,
+    "status": "finished",
+    "length": 535,
+    "finished": true,
+    "begin_at": "2026-08-05T18:40:07Z",
+    "detailed_stats": false,
+    "end_at": "2026-08-05T18:49:03Z",
+    "forfeit": false,
+    "match_id": 1609925,
+    "winner_type": "Team",
+    "winner": {
+     "id": 135374,
+     "type": "Team"
+    }
+   }
+  ],
+  "id": 1609925,
+  "name": "Upper bracket quarterfinal 4: M8 vs OMiT",
+  "league": {
+   "id": 5283,
+   "name": "Esports World Cup",
+   "url": null,
+   "slug": "cod-mw-esports-world-cup",
+   "modified_at": "2024-08-09T13:28:00Z",
+   "image_url": "https://cdn-api.pandascore.co/images/league/image/5283/600px-esports_world_cup_2024_lightmode-png"
+  },
+  "videogame_title": {
+   "id": 18,
+   "name": "Call of Duty: Black Ops 7",
+   "slug": "cod-bo-7",
+   "videogame_id": 23
+  },
+  "match_type": "best_of",
+  "modified_at": "2026-08-05T18:49:04Z",
+  "forfeit": false
+ },
+ {
+  "winner_type": "Team",
+  "draw": false,
+  "game_advantage": null,
+  "detailed_stats": false,
+  "serie": {
+   "id": 10834,
+   "name": "",
+   "year": 2026,
+   "begin_at": "2026-08-04T22:00:00Z",
+   "end_at": "2026-08-09T21:00:00Z",
+   "winner_id": null,
+   "winner_type": "Team",
+   "slug": "cod-mw-esports-world-cup-2026",
+   "modified_at": "2026-07-28T13:35:14Z",
+   "league_id": 5283,
+   "season": null,
+   "full_name": "2026"
+  },
+  "videogame_version": null,
+  "original_scheduled_at": "2026-08-05T15:30:00Z",
+  "opponents": [
+   {
+    "type": "Team",
+    "opponent": {
+     "id": 135375,
+     "name": "G2 Esports",
+     "location": "ES",
+     "slug": "g2-esports-cod-mw",
+     "modified_at": "2026-08-07T18:54:08Z",
+     "acronym": "G2",
+     "image_url": "https://cdn-api.pandascore.co/images/team/image/135375/g2_esportslogo_square.png",
+     "dark_mode_image_url": null
+    }
+   },
+   {
+    "type": "Team",
+    "opponent": {
+     "id": 135373,
+     "name": "Cloud9",
+     "location": "US",
+     "slug": "cloud9-cod-mw",
+     "modified_at": "2026-07-28T13:28:02Z",
+     "acronym": "C9",
+     "image_url": "https://cdn-api.pandascore.co/images/team/image/135373/cloud9logo_full.png",
+     "dark_mode_image_url": null
+    }
+   }
+  ],
+  "tournament": {
+   "id": 21567,
+   "name": "Group A",
+   "type": "offline",
+   "country": "FR",
+   "begin_at": "2026-08-05T13:00:00Z",
+   "detailed_stats": false,
+   "end_at": "2026-08-07T17:00:00Z",
+   "winner_id": null,
+   "winner_type": "Team",
+   "slug": "cod-mw-esports-world-cup-2026-group-a",
+   "serie_id": 10834,
+   "modified_at": "2026-08-03T02:47:28Z",
+   "league_id": 5283,
+   "prizepool": null,
+   "tier": "s",
+   "has_bracket": false,
+   "region": "WEU",
+   "live_supported": false
+  },
+  "scheduled_at": "2026-08-05T16:20:00Z",
+  "live": {
+   "supported": false,
+   "url": null,
+   "opens_at": null
+  },
+  "begin_at": "2026-08-05T16:19:59Z",
+  "rescheduled": true,
+  "number_of_games": 5,
+  "streams_list": [
+   {
+    "main": true,
+    "language": "en",
+    "embed_url": "https://www.youtube.com/embed/ASPG-e_KtgE",
+    "official": true,
+    "raw_url": "https://www.youtube.com/watch?v=ASPG-e_KtgE"
+   }
+  ],
+  "tournament_id": 21567,
+  "serie_id": 10834,
+  "status": "finished",
+  "winner_id": 135375,
+  "slug": "g2-esports-vs-cloud9-2026-08-05",
+  "end_at": "2026-08-05T17:05:47Z",
+  "results": [
+   {
+    "score": 3,
+    "team_id": 135375
+   },
+   {
+    "score": 0,
+    "team_id": 135373
+   }
+  ],
+  "videogame": {
+   "id": 23,
+   "name": "Call of Duty",
+   "slug": "cod-mw"
+  },
+  "winner": {
+   "id": 135375,
+   "name": "G2 Esports",
+   "location": "ES",
+   "slug": "g2-esports-cod-mw",
+   "modified_at": "2026-08-07T18:54:08Z",
+   "acronym": "G2",
+   "image_url": "https://cdn-api.pandascore.co/images/team/image/135375/g2_esportslogo_square.png",
+   "dark_mode_image_url": null
+  },
+  "league_id": 5283,
+  "games": [
+   {
+    "complete": true,
+    "id": 9554,
+    "position": 1,
+    "status": "finished",
+    "length": 681,
+    "finished": true,
+    "begin_at": "2026-08-05T16:19:59Z",
+    "detailed_stats": false,
+    "end_at": "2026-08-05T16:31:21Z",
+    "forfeit": false,
+    "match_id": 1609924,
+    "winner_type": "Team",
+    "winner": {
+     "id": 135375,
+     "type": "Team"
+    }
+   },
+   {
+    "complete": true,
+    "id": 9555,
+    "position": 2,
+    "status": "finished",
+    "length": 780,
+    "finished": true,
+    "begin_at": "2026-08-05T16:35:40Z",
+    "detailed_stats": false,
+    "end_at": "2026-08-05T16:48:41Z",
+    "forfeit": false,
+    "match_id": 1609924,
+    "winner_type": "Team",
+    "winner": {
+     "id": 135375,
+     "type": "Team"
+    }
+   },
+   {
+    "complete": true,
+    "id": 9556,
+    "position": 3,
+    "status": "finished",
+    "length": 625,
+    "finished": true,
+    "begin_at": "2026-08-05T16:55:22Z",
+    "detailed_stats": false,
+    "end_at": "2026-08-05T17:05:48Z",
+    "forfeit": false,
+    "match_id": 1609924,
+    "winner_type": "Team",
+    "winner": {
+     "id": 135375,
+     "type": "Team"
+    }
+   }
+  ],
+  "id": 1609924,
+  "name": "Upper bracket quarterfinal 3: G2 vs C9",
+  "league": {
+   "id": 5283,
+   "name": "Esports World Cup",
+   "url": null,
+   "slug": "cod-mw-esports-world-cup",
+   "modified_at": "2024-08-09T13:28:00Z",
+   "image_url": "https://cdn-api.pandascore.co/images/league/image/5283/600px-esports_world_cup_2024_lightmode-png"
+  },
+  "videogame_title": {
+   "id": 18,
+   "name": "Call of Duty: Black Ops 7",
+   "slug": "cod-bo-7",
+   "videogame_id": 23
+  },
+  "match_type": "best_of",
+  "modified_at": "2026-08-05T17:05:49Z",
+  "forfeit": false
+ },
+ {
+  "winner_type": "Team",
+  "draw": false,
+  "game_advantage": null,
+  "detailed_stats": false,
+  "serie": {
+   "id": 10834,
+   "name": "",
+   "year": 2026,
+   "begin_at": "2026-08-04T22:00:00Z",
+   "end_at": "2026-08-09T21:00:00Z",
+   "winner_id": null,
+   "winner_type": "Team",
+   "slug": "cod-mw-esports-world-cup-2026",
+   "modified_at": "2026-07-28T13:35:14Z",
+   "league_id": 5283,
+   "season": null,
+   "full_name": "2026"
+  },
+  "videogame_version": null,
+  "original_scheduled_at": "2026-08-05T14:15:00Z",
+  "opponents": [
+   {
+    "type": "Team",
+    "opponent": {
+     "id": 137201,
+     "name": "FaZe Clan",
+     "location": "US",
+     "slug": "faze-clan-cod-mw",
+     "modified_at": "2026-08-07T18:54:33Z",
+     "acronym": "FAZE",
+     "image_url": "https://cdn-api.pandascore.co/images/team/image/137201/fa_ze_clanlogo_square.png",
+     "dark_mode_image_url": null
+    }
+   },
+   {
+    "type": "Team",
+    "opponent": {
+     "id": 139047,
+     "name": "The Pit",
+     "location": "",
+     "slug": "the-pit",
+     "modified_at": "2026-08-03T06:30:54Z",
+     "acronym": null,
+     "image_url": "https://cdn-api.pandascore.co/images/team/image/139047/the_pit_lightmode.png",
+     "dark_mode_image_url": "https://cdn-api.pandascore.co/dark_images/team/dark_image/139047/the_pit_darkmode.png"
+    }
+   }
+  ],
+  "tournament": {
+   "id": 21567,
+   "name": "Group A",
+   "type": "offline",
+   "country": "FR",
+   "begin_at": "2026-08-05T13:00:00Z",
+   "detailed_stats": false,
+   "end_at": "2026-08-07T17:00:00Z",
+   "winner_id": null,
+   "winner_type": "Team",
+   "slug": "cod-mw-esports-world-cup-2026-group-a",
+   "serie_id": 10834,
+   "modified_at": "2026-08-03T02:47:28Z",
+   "league_id": 5283,
+   "prizepool": null,
+   "tier": "s",
+   "has_bracket": false,
+   "region": "WEU",
+   "live_supported": false
+  },
+  "scheduled_at": "2026-08-05T15:05:00Z",
+  "live": {
+   "supported": false,
+   "url": null,
+   "opens_at": null
+  },
+  "begin_at": "2026-08-05T15:03:31Z",
+  "rescheduled": true,
+  "number_of_games": 5,
+  "streams_list": [
+   {
+    "main": true,
+    "language": "en",
+    "embed_url": "https://www.youtube.com/embed/ASPG-e_KtgE",
+    "official": true,
+    "raw_url": "https://www.youtube.com/watch?v=ASPG-e_KtgE"
+   }
+  ],
+  "tournament_id": 21567,
+  "serie_id": 10834,
+  "status": "finished",
+  "winner_id": 137201,
+  "slug": "faze-clan-2026-08-05",
+  "end_at": "2026-08-05T15:52:29Z",
+  "results": [
+   {
+    "score": 3,
+    "team_id": 137201
+   },
+   {
+    "score": 0,
+    "team_id": 139047
+   }
+  ],
+  "videogame": {
+   "id": 23,
+   "name": "Call of Duty",
+   "slug": "cod-mw"
+  },
+  "winner": {
+   "id": 137201,
+   "name": "FaZe Clan",
+   "location": "US",
+   "slug": "faze-clan-cod-mw",
+   "modified_at": "2026-08-07T18:54:33Z",
+   "acronym": "FAZE",
+   "image_url": "https://cdn-api.pandascore.co/images/team/image/137201/fa_ze_clanlogo_square.png",
+   "dark_mode_image_url": null
+  },
+  "league_id": 5283,
+  "games": [
+   {
+    "complete": true,
+    "id": 9544,
+    "position": 1,
+    "status": "finished",
+    "length": 779,
+    "finished": true,
+    "begin_at": "2026-08-05T15:03:31Z",
+    "detailed_stats": false,
+    "end_at": "2026-08-05T15:16:30Z",
+    "forfeit": false,
+    "match_id": 1609922,
+    "winner_type": "Team",
+    "winner": {
+     "id": 137201,
+     "type": "Team"
+    }
+   },
+   {
+    "complete": true,
+    "id": 9545,
+    "position": 2,
+    "status": "finished",
+    "length": 933,
+    "finished": true,
+    "begin_at": "2026-08-05T15:17:36Z",
+    "detailed_stats": false,
+    "end_at": "2026-08-05T15:33:09Z",
+    "forfeit": false,
+    "match_id": 1609922,
+    "winner_type": "Team",
+    "winner": {
+     "id": 137201,
+     "type": "Team"
+    }
+   },
+   {
+    "complete": true,
+    "id": 9546,
+    "position": 3,
+    "status": "finished",
+    "length": 843,
+    "finished": true,
+    "begin_at": "2026-08-05T15:38:26Z",
+    "detailed_stats": false,
+    "end_at": "2026-08-05T15:52:29Z",
+    "forfeit": false,
+    "match_id": 1609922,
+    "winner_type": "Team",
+    "winner": {
+     "id": 137201,
+     "type": "Team"
+    }
+   }
+  ],
+  "id": 1609922,
+  "name": "Upper bracket quarterfinal 1: FaZe Clan vs The Pit",
+  "league": {
+   "id": 5283,
+   "name": "Esports World Cup",
+   "url": null,
+   "slug": "cod-mw-esports-world-cup",
+   "modified_at": "2024-08-09T13:28:00Z",
+   "image_url": "https://cdn-api.pandascore.co/images/league/image/5283/600px-esports_world_cup_2024_lightmode-png"
+  },
+  "videogame_title": {
+   "id": 18,
+   "name": "Call of Duty: Black Ops 7",
+   "slug": "cod-bo-7",
+   "videogame_id": 23
+  },
+  "match_type": "best_of",
+  "modified_at": "2026-08-05T15:52:50Z",
+  "forfeit": false
+ },
+ {
+  "winner_type": "Team",
+  "draw": false,
+  "game_advantage": null,
+  "detailed_stats": false,
+  "serie": {
+   "id": 10834,
+   "name": "",
+   "year": 2026,
+   "begin_at": "2026-08-04T22:00:00Z",
+   "end_at": "2026-08-09T21:00:00Z",
+   "winner_id": null,
+   "winner_type": "Team",
+   "slug": "cod-mw-esports-world-cup-2026",
+   "modified_at": "2026-07-28T13:35:14Z",
+   "league_id": 5283,
+   "season": null,
+   "full_name": "2026"
+  },
+  "videogame_version": null,
+  "original_scheduled_at": "2026-08-05T13:00:00Z",
+  "opponents": [
+   {
+    "type": "Team",
+    "opponent": {
+     "id": 137163,
+     "name": "Movistar KOI",
+     "location": "ES",
+     "slug": "koi-cod-mw",
+     "modified_at": "2026-08-07T19:00:48Z",
+     "acronym": "KOI",
+     "image_url": "https://cdn-api.pandascore.co/images/team/image/137163/movistar_ko_ilogo_square.png",
+     "dark_mode_image_url": null
+    }
+   },
+   {
+    "type": "Team",
+    "opponent": {
+     "id": 133864,
+     "name": "Carolina Royal Ravens",
+     "location": "US",
+     "slug": "carolina-royal-ravens",
+     "modified_at": "2026-07-28T13:28:02Z",
+     "acronym": "CRR",
+     "image_url": "https://cdn-api.pandascore.co/images/team/image/133864/ezgif_3267123c49c2de6c.png",
+     "dark_mode_image_url": null
+    }
+   }
+  ],
+  "tournament": {
+   "id": 21567,
+   "name": "Group A",
+   "type": "offline",
+   "country": "FR",
+   "begin_at": "2026-08-05T13:00:00Z",
+   "detailed_stats": false,
+   "end_at": "2026-08-07T17:00:00Z",
+   "winner_id": null,
+   "winner_type": "Team",
+   "slug": "cod-mw-esports-world-cup-2026-group-a",
+   "serie_id": 10834,
+   "modified_at": "2026-08-03T02:47:28Z",
+   "league_id": 5283,
+   "prizepool": null,
+   "tier": "s",
+   "has_bracket": false,
+   "region": "WEU",
+   "live_supported": false
+  },
+  "scheduled_at": "2026-08-05T13:45:00Z",
+  "live": {
+   "supported": false,
+   "url": null,
+   "opens_at": null
+  },
+  "begin_at": "2026-08-05T13:43:31Z",
+  "rescheduled": true,
+  "number_of_games": 5,
+  "streams_list": [
+   {
+    "main": true,
+    "language": "en",
+    "embed_url": "https://www.youtube.com/embed/ASPG-e_KtgE",
+    "official": true,
+    "raw_url": "https://www.youtube.com/watch?v=ASPG-e_KtgE"
+   }
+  ],
+  "tournament_id": 21567,
+  "serie_id": 10834,
+  "status": "finished",
+  "winner_id": 137163,
+  "slug": "koi-vs-carolina-royal-ravens-2026-08-05",
+  "end_at": "2026-08-05T14:34:57Z",
+  "results": [
+   {
+    "score": 3,
+    "team_id": 137163
+   },
+   {
+    "score": 0,
+    "team_id": 133864
+   }
+  ],
+  "videogame": {
+   "id": 23,
+   "name": "Call of Duty",
+   "slug": "cod-mw"
+  },
+  "winner": {
+   "id": 137163,
+   "name": "Movistar KOI",
+   "location": "ES",
+   "slug": "koi-cod-mw",
+   "modified_at": "2026-08-07T19:00:48Z",
+   "acronym": "KOI",
+   "image_url": "https://cdn-api.pandascore.co/images/team/image/137163/movistar_ko_ilogo_square.png",
+   "dark_mode_image_url": null
+  },
+  "league_id": 5283,
+  "games": [
+   {
+    "complete": true,
+    "id": 9549,
+    "position": 1,
+    "status": "finished",
+    "length": 543,
+    "finished": true,
+    "begin_at": "2026-08-05T13:43:31Z",
+    "detailed_stats": false,
+    "end_at": "2026-08-05T13:52:35Z",
+    "forfeit": false,
+    "match_id": 1609923,
+    "winner_type": "Team",
+    "winner": {
+     "id": 137163,
+     "type": "Team"
+    }
+   },
+   {
+    "complete": true,
+    "id": 9550,
+    "position": 2,
+    "status": "finished",
+    "length": 1042,
+    "finished": true,
+    "begin_at": "2026-08-05T13:58:30Z",
+    "detailed_stats": false,
+    "end_at": "2026-08-05T14:15:52Z",
+    "forfeit": false,
+    "match_id": 1609923,
+    "winner_type": "Team",
+    "winner": {
+     "id": 137163,
+     "type": "Team"
+    }
+   },
+   {
+    "complete": true,
+    "id": 9551,
+    "position": 3,
+    "status": "finished",
+    "length": 898,
+    "finished": true,
+    "begin_at": "2026-08-05T14:19:59Z",
+    "detailed_stats": false,
+    "end_at": "2026-08-05T14:34:58Z",
+    "forfeit": false,
+    "match_id": 1609923,
+    "winner_type": "Team",
+    "winner": {
+     "id": 137163,
+     "type": "Team"
+    }
+   }
+  ],
+  "id": 1609923,
+  "name": "Upper bracket quarterfinal 2: KOI vs CRR",
+  "league": {
+   "id": 5283,
+   "name": "Esports World Cup",
+   "url": null,
+   "slug": "cod-mw-esports-world-cup",
+   "modified_at": "2024-08-09T13:28:00Z",
+   "image_url": "https://cdn-api.pandascore.co/images/league/image/5283/600px-esports_world_cup_2024_lightmode-png"
+  },
+  "videogame_title": {
+   "id": 18,
+   "name": "Call of Duty: Black Ops 7",
+   "slug": "cod-bo-7",
+   "videogame_id": 23
+  },
+  "match_type": "best_of",
+  "modified_at": "2026-08-05T15:03:13Z",
+  "forfeit": false
+ }
+]
