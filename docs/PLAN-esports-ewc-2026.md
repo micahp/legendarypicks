@@ -1,34 +1,45 @@
-# Plan — bring back `/esports` around EWC 2026
+# Plan — Esports league destination (EWC 2026 tournament center under the Leagues system)
 
-**Plan iteration:** 2 — research plus repository-skill review<br>
-**Date:** 2026-08-08<br>
-**Implementation status:** IMPLEMENTED — Phases 0–3 committed in the `lp-ewc-2026` worktree branch
-(`7afbee2..64711a6`), release-pass commit `36d1846` (+ final hygiene commit) on top; worktree clean
-**Release status:** candidate only — no DEV, production, database, or managed-service change
+**Plan iteration:** 3 — post-correction rewrite (2026-08-08)
+**Implementation status:** PLANNED. The accepted IA was partially applied at `1dab7f7` (EWC module
+moved to `/leagues/esports`, Esports card added to `/leagues`, `/esports` slimmed). This plan is the
+authoritative post-correction contract: finish the complete Esports league destination, prove the
+correction with tests, and preserve every backend contract.
+**Release status:** candidate only — no DEV, production, database, or managed-service change.
 
-This plan is the event-specific iteration of `ESPORTS-PRODUCT-DIRECTION.md`. It does not replace
-the long-term Pick Desk thesis. It changes the immediate programming decision: while the Esports
-World Cup is active, `/esports` should behave like an EWC tournament center rather than a generic
-list of unrelated matches.
+This plan is the event-specific iteration of `ESPORTS-PRODUCT-DIRECTION.md`. It supersedes the
+iteration-2 framing ("/esports behaves like an EWC tournament center"), which was **rejected**.
+The Esports World Cup remains the editorial centerpiece of the product, but it lives in the Leagues
+system, not on the live board.
+
+## The correction — accepted information architecture (2026-08-08)
+
+1. **`/esports` is the existing live broadcast and match board.** It keeps its confirmed-live hero,
+   broadcast continuity, upcoming slate, results, and picks entry — with **no EWC tournament-center
+   takeover**. EWC matches appear only as ordinary board rows with their existing live/final/up-next
+   behavior. The page file contains no EWC tournament-center module.
+2. **`/leagues/esports` is the Esports league destination.** It owns the EWC 2026 tournament center:
+   event focus, today/results across titles, the Club Championship rail, and the honest unavailable
+   state until a permitted publisher exists.
+3. **The main `/leagues` list includes Esports**, using the existing league-card design system.
+4. **The EWC backend APIs are preserved as shared contracts**: the projection route, the Club
+   Championship reader, explicit `ewcEventId` identity, qualifier exclusion (`c64f6df`), the CoD
+   structural pending-participant/TBD repair, and the request budgets.
 
 ## Requested outcome
 
-1. Bring the esports page back as a first-class surface, with EWC as its editorial and navigation
-   focus through the end of EWC 2026.
-2. Show the EWC Club Championship standings with honest source and freshness information.
-3. Fix `/scores` Call of Duty cards that expose raw `TBD` participants during the EWC bracket.
-4. Preserve the work already completed on live streams, match identity, results, picks, and
-   viewer-local result days rather than creating a second esports pipeline.
+1. A complete Esports league destination at `/leagues/esports`: league-style header/navigation,
+   game/title discovery and links, the EWC 2026 tournament center, Club Championship standings with
+   source/freshness honesty, live and upcoming EWC schedule, completed results, broader non-EWC
+   esports context, direct paths to title pages and picks/prediction, responsive desktop/mobile
+   hierarchy, and loading/error/empty/stale states — with continuity to existing streams, results,
+   and match identity.
+2. Focused tests proving: `/esports` no longer renders the EWC module, `/leagues` links Esports, and
+   `/leagues/esports` renders the complete product and all data states responsively.
+3. Preserve the EWC APIs, qualifier exclusion, CoD pending-participant repair, request budgets, and
+   honest unavailable standings until a permitted publisher is found.
 
-## Information architecture correction — 2026-08-08
-
-- `/esports` remains the live broadcast and match board; it does not host the EWC tournament center.
-- `/leagues/esports` is the Esports league hub and owns the EWC tournament center, Club
-  Championship rail, cross-title schedule, and results.
-- The main `/leagues` directory includes a visible Esports entry linking to that hub.
-- The EWC APIs and CoD scoreboard reconciliation remain shared backend contracts.
-
-## Research snapshot — 2026-08-08
+## Research snapshot — 2026-08-08 (preserved from iteration 2)
 
 ### What EWC is right now
 
@@ -74,100 +85,124 @@ The rules and calendar have authoritative official sources. The current standing
 research is a third-party live table. Source rights and a stable machine-readable contract must be
 resolved before automating ingestion; the browser must not scrape third-party HTML.
 
-## What we already have
+## What we already have (as of iteration 3)
 
 This is a reprogramming and contract-hardening job, not a greenfield esports build.
 
-- `pages/esports.tsx` already renders confirmed live broadcasts, continuous multi-match broadcast
-  identity, upcoming matches, results, and links into picks.
-- `backend/routers/esports/streams.py` and `yt_live_resolver.py` already handle the EWC official
-  channel, simultaneous arenas, game-first narrowing, YouTube preference, Twitch/Kick fallbacks,
-  language ranking, and bounded YouTube API use.
-- `backend/routers/esports/pandascore.py` already fetches the `codmw` feed and retains enough past
-  matches to close the earlier EWC result hole.
-- `league_tier.py` already treats the EWC main event as Tier 0 and keeps qualifiers demoted.
-- The title-scoped routes `/esports/[title]` and `/predict/[title]` already support Call of Duty and
-  the other registered titles.
-- Finished esports rows already carry `endTime`, and `/esports` groups results by viewer-local end
-  day.
-- `/scores` has a separate CoD path: `GET /api/cod/games` uses Breaking Point first, then the CDL
-  site, and only attaches a PandaScore detail ID afterward. That separation is the source of the
-  present EWC placeholder problem.
+- `pages/esports.tsx` already renders the live board: confirmed live broadcasts, continuous
+  multi-match broadcast identity, upcoming matches, results, and links into picks. It no longer
+  renders the EWC module (removed at `1dab7f7`), but the module code still lives in that file —
+  Phase B moves it out.
+- `pages/leagues/esports.tsx` already exists as a thin wrapper (breadcrumb, header, live link,
+  `EwcModule` + standings rail with the responsive 5/10 limit). It is not yet the complete
+  destination: no title discovery, no non-EWC context, thin loading/error/empty states.
+- `pages/leagues.tsx` already lists Esports with a league card (added at `1dab7f7`).
+- `backend/routers/esports/ewc.py` owns the EWC projection
+  (`GET /api/esports/events/ewc-2026`) and the Club Championship reader
+  (`GET /api/esports/events/ewc-2026/club-standings`), including the honest `unavailable` state.
+- `backend/routers/esports/streams.py` and `yt_live_resolver.py` handle the EWC official channel,
+  simultaneous arenas, game-first narrowing, YouTube preference, Twitch/Kick fallbacks, language
+  ranking, and bounded YouTube API use.
+- `backend/routers/esports/pandascore.py` fetches the `codmw` feed and retains enough past matches
+  to close the earlier EWC result hole.
+- `league_tier.py` treats the EWC main event as Tier 0 and keeps qualifiers demoted.
+- The title-scoped routes `/esports/[title]` and `/predict/[title]` support all registered titles;
+  `components/Esports/LeagueDesk.tsx` is the per-title desk (title pills, streams, results, picks).
+- Finished esports rows carry `endTime`, and `/esports` groups results by viewer-local end day.
+- `/scores` CoD path uses Breaking Point first, then the CDL site, then attaches a PandaScore detail
+  ID; the EWC bracket reconciliation in `backend/routers/esports/cod_ewc.py` resolves structural
+  pending participants so no card shows a raw `TBD`/`TBA`.
+- Backend tests (fixture-driven, zero external requests): `test_ewc_routes.py`,
+  `test_ewc_contract.py`, `test_cod_ewc_reconcile.py`, `test_esports_streams.py`,
+  `test_esports_predict_api.py`, `test_wc_context.py`. Frontend: `components/EsportsEwcModule.test.tsx`
+  (rail states, module render, GameCard pending labels).
 
 ## Skill-driven constraints
 
 This iteration incorporates the local `delightful-design`, `build-league-data-pipelines`,
-`sqlite-database-ops`, `espn-request-budget`, and `legendarypicks-esports` skills.
+`espn-request-budget`, and `legendarypicks-esports` skills.
 
 - **Published first:** ingest and validate the complete Club Championship population before one
   atomic publication. The UI top ten is a projection of that population, not the stored universe.
-- **One writer:** name the standings publisher and every reader. No request handler or browser may
-  become a competing writer or reconstruct totals from match fragments.
+- **One writer:** the standings publisher and every reader are named. No request handler or browser
+  may become a competing writer or reconstruct totals from match fragments.
 - **Source-native identity:** retain the provider's stable club ID and competition contribution IDs.
   Names are labels and matching candidates, never primary identity.
 - **Last good survives:** incomplete pages, duplicate IDs, contradictory totals, or source failures
   do not replace a valid published run.
-- **Bounded requests:** use one bulk standings request where possible, shared caches/single-flight,
-  and a declared per-host request budget. This feature requires **zero ESPN requests**; adding ESPN
-  as a fallback would spend the wrong publisher's budget and is out of scope.
-- **Esports package ownership:** the event routes belong in a self-contained
-  `backend/routers/esports/ewc.py` module wired through the package `__init__.py`, not directly in
+- **Bounded requests:** one bulk standings request where possible, shared caches/single-flight, and
+  a declared per-host request budget. This feature requires **zero new external requests**; the
+  title-discovery route reads the already-cached shared slate. ESPN stays out of the esports
+  request path entirely.
+- **Esports package ownership:** the event routes live in the self-contained
+  `backend/routers/esports/` package (`ewc.py`, `predict.py`, `slate.py`), not in
   `sports_service.py` or grafted onto `slate.py`.
-- **Matcher scope:** do not loosen shared `_team_match`/`_same_team` behavior to make the EWC CoD
-  bracket fit. Use stable IDs first and a narrow EWC reconciliation layer with focused fixtures.
+- **Matcher scope:** shared `_team_match`/`_same_team` behavior is not loosened for the EWC CoD
+  bracket; reconciliation stays local to `cod_ewc.py` with stable IDs first.
 - **Quiet interface:** hierarchy comes from type, spacing, alignment, and subtle background shifts.
-  Do not turn the EWC module into another wall of bordered cards.
+  The tournament center is one subtle plane, not another wall of bordered cards.
 
-## Verified defect: raw `TBD` on the EWC CoD scoreboard
+## Verified defect: raw `TBD` on the EWC CoD scoreboard (status: fixed, regression-tested)
 
-Breaking Point currently identifies the active EWC quarterfinals but intentionally leaves future
-bracket participants unresolved. On Aug 8 its public bracket showed:
+Breaking Point identifies the active EWC quarterfinals but intentionally leaves future bracket
+participants unresolved. `breakingpoint_client.py` previously converted a missing team lookup
+directly to the literal string `"TBD"`. The Phase 1 repair (`184eb21`) introduced structural
+pending participants in the backend normalization boundary (`participant: {state: "pending",
+feederGameId, outcome, label}`), a narrow EWC/CoD reconciliation layer in `cod_ewc.py`, and
+`GameCard` rendering of dependency labels — never a fabricated club, never a bare `TBD`/`TBA`.
+The regression suite (`test_cod_ewc_reconcile.py`, incl. `test_no_raw_tbd_anywhere` covering both
+`TBD` and `TBA`) pins this. This plan adds one frontend guard so the assertion holds at render too.
 
-- Team Falcons vs Gentle Mates and FaZe vs OpTic as named quarterfinals;
-- Team Heretics vs `TBD` and 100 Thieves vs `TBD` in the Aug 9 semifinals;
-- `TBD` vs `TBD` in the third-place match and grand final.
+## Product shape (corrected IA)
 
-`breakingpoint_client.py` converts a missing team lookup directly to the literal string `"TBD"`.
-`GET /api/cod/games` returns that shape, `services/sports.ts` preserves it, and `GameCard` renders
-it as though it were a team name.
+### `/esports` — live broadcast + match board only
 
-There are two different states that must not be conflated:
+The existing board already answers, in order:
 
-1. **Stale/unresolved identity:** the tournament has determined the participant but one source has
-   not populated it. Resolve from the canonical EWC/PandaScore match index.
-2. **Genuinely undecided bracket slot:** the feeder match is not final. Display a bracket dependency
-   such as `Winner of Falcons–Gentle Mates`, never a fabricated club and never a bare `TBD`.
+1. **What is live now?** One stable featured official broadcast, every other confirmed-live arena
+   immediately reachable (broadcast continuity, gap states, up-next).
+2. **What is this competition?** Game, stage, teams, series score, and start/live/final state.
+3. **What happens today and what finished?** Day-grouped upcoming slate and viewer-local result days.
+4. **Where do I make a call?** The existing picks entry.
 
-## Product shape
+Contract for this plan: the `/esports` page renders **no** EWC tournament-center elements — no event
+focus module, no Club Championship rail. EWC matches are ordinary board rows. `pages/esports.tsx`
+contains no EWC module code (Phase B). Non-EWC live content must never disappear.
 
-### `/esports` during EWC
+### `/leagues` — the Esports entry
 
-The first screen should answer four questions in order:
+An Esports card in the `LEAGUES` list (existing league-card design system) linking to
+`/leagues/esports`. Already present at `1dab7f7`; kept and verified by test.
 
-1. **What is live now?** One stable featured official broadcast, with every other confirmed-live
-   arena immediately reachable.
-2. **What EWC competition is this?** Game, stage, teams, series score, and start/live/final state.
-3. **What happens today?** A compact EWC-only day slate across titles, followed by results.
-4. **Who is winning the Club Championship?** A standings rail with points, movement when known,
-   eligibility state, `as of` time, and source link.
+### `/leagues/esports` — the complete Esports league destination
 
-Desktop layout: live/event content in the main column and Club Championship top ten in a visually
-quiet right rail. Mobile layout: live content, today's EWC slate, then a collapsed top-five standings
-section with an expand action. The complete generic esports schedule remains below the EWC module;
-non-EWC live matches must not disappear.
+Section order (desktop; stacking the same order on mobile):
 
-The standings treatment has no outer border and no vertical grid lines. Use aligned tabular numbers,
-strong rank/club typography, generous row spacing, and at most low-contrast horizontal row rules.
-Give the EWC focus one subtle background plane; do not stack border + shadow + tint on the same
-element. Status pills are reserved for meaningful `LIVE`, `STALE`, and eligibility states, not
-decoration.
+1. **League-style header/navigation** — breadcrumb to `/leagues`, page title "Esports", one-line
+   description, and a persistent "Live esports →" link to the live board.
+2. **EWC 2026 tournament center** — the event-focus module: featured live broadcast via the shared
+   `LiveCard`/`buildBroadcastViews` machinery (continuity with the board), today's EWC slate across
+   titles, and EWC results. One subtle background plane; no nested card walls.
+3. **Club Championship rail** — the honest standings surface: rank, club, tabular points, `as of`
+   time, source link, visible stale badge, loading skeleton, and the explicit unavailable state
+   ("no licensed machine-readable publisher is wired yet — we are not guessing the table"). Real
+   `0` points render as `0`; unknown renders as an em dash. Desktop requests ten rows, mobile five
+   with an expand action to ten (bounded follow-up request).
+4. **Game/title discovery** — pills for every registered title with live/match counts, from the new
+   `GET /api/esports/titles` route (one source of truth: the backend registry + the shared slate).
+   Each pill links to its title desk `/esports/{slug}`; a secondary link takes the user to
+   `/predict?title={slug}`.
+5. **Broader non-EWC esports context** — a quiet section linking to the live board (`/esports`, the
+   full schedule) and the picks board (`/predict`), so the destination is a league hub, not an
+   EWC-only island. No duplicated collectors; the links point at the existing surfaces.
+6. **States** — loading skeletons, a fetch-error card with retry, an honest empty state when the
+   EWC event is inactive or has no matches, and the rail's current/stale/unavailable states.
 
-Replace the hard-coded MSI-special decision in `pages/esports.tsx` with an event-focus contract.
-For EWC dates the focus is `ewc-2026`; after Aug 23 the module expires automatically and the page
-falls back to the existing generic broadcast-first board. Do not encode the current week or current
-leader in React.
+Responsive contract: `lg:` two-column (center + rail), single column below; the title pills and any
+horizontal nav scroll rather than cram (`overflow-x-auto`); the rail limit follows the viewport
+(`matchMedia`), 10 on `>=1024px`, 5 below, expand → 10.
 
-### Club Championship table
+### Club Championship table (preserved contract)
 
 Minimum row contract:
 
@@ -198,308 +233,151 @@ Top-level response contract:
 ```
 
 `eligibleToWin` stays `null` unless the publisher contains enough per-title placements to compute
-the rulebook conditions. Do not infer eligibility from total points. If refresh fails, serve the last
-known good snapshot with `status: "stale"`; if no valid snapshot exists, show an honest unavailable
-state rather than an empty table or zero points.
-
-Display semantics are explicit:
-
-- `0` points means the source published a real zero; `null` renders as an em dash and means unknown.
-- Movement is computed only between two comparable complete published runs; otherwise it is absent,
-  not zero.
-- Eligibility reads `Eligible`, `Not yet eligible`, or `Eligibility unavailable` only when the source
-  evidence supports that exact statement.
-- The points heading includes the standings `as of` time. A stale badge must be visible without
-  opening a tooltip.
-- Rank ordering follows the publisher's official tiebreak result. The UI does not break equal-point
-  clubs alphabetically and imply a sporting order.
+the rulebook conditions. If refresh fails, serve the last known good snapshot with
+`status: "stale"`; if no valid snapshot exists, show the honest unavailable state rather than an
+empty table or zero points. Display semantics are explicit: `0` points means a published real zero;
+`null` renders as an em dash and means unknown; movement only between two comparable complete
+published runs; eligibility reads only what the source evidence supports; rank ordering follows the
+publisher's official tiebreak.
 
 ## Data and API design
 
-### 1. One EWC projection over the existing match slate
+### Preserved backend contracts (do not regress)
 
-Add a server-side EWC projection, not a new collector. Candidate route:
+- `GET /api/esports/events/ewc-2026` — the EWC projection over the shared slate, filtered by the
+  normalized `ewcEventId` stamped at the backend boundary (never a UI substring search); explicit
+  `eventId: "ewc-2026"`; live/upcoming/completed buckets; `active`/`building` so the UI falls back
+  honestly when the event expires. Qualifier series stay excluded (`c64f6df`).
+- `GET /api/esports/events/ewc-2026/club-standings` — bounded `limit` (1–100) over the published
+  snapshot; desktop 10, mobile 5 expanding to 10; honest `unavailable` when no valid publication
+  exists; never a self-certified empty success; never silently converts unknown eligibility to
+  `false`.
+- CoD scoreboard arbitration (`cod_ewc.py` + Breaking Point + PandaScore detail IDs) unchanged.
 
-`GET /api/esports/events/ewc-2026`
+### New read-only route — `GET /api/esports/titles`
 
-It filters the existing normalized esports slate by a normalized event ID and returns live, upcoming,
-and completed matches plus current/next competition metadata. Tournament identity must be explicit
-(`eventId: "ewc-2026"`) at the backend boundary; a UI substring search for `"world cup"` is not an
-acceptable contract.
+Lives in `backend/routers/esports/predict.py` next to `_title_options` (one source of truth), reads
+the already-built shared slate (`esports_upcoming()`, shared cache), and returns:
 
-### 2. A published Club Championship snapshot
+```json
+{
+  "titles": [
+    { "slug": "call-of-duty", "label": "Call of Duty",
+      "match_count": 3, "live_count": 1, "result_count": 5, "next_start": 1786215600000 }
+  ]
+}
+```
 
-Candidate route:
+No new collector, no new external request — the slate is already fetched and cached by the existing
+board path. The client never reconstructs title identity from match labels.
 
-`GET /api/esports/events/ewc-2026/club-standings`
-
-The route accepts a bounded `limit` over the complete published population. Desktop requests ten;
-mobile requests five and requests ten only when the user expands. A complete full-table route may be
-added when there is a design that renders it; the landing page must not download an unrendered full
-leaderboard.
-
-Before implementation, complete a source spike in this order:
-
-1. Identify an official EWC JSON/data endpoint or licensed feed used by the official standings
-   surface and document its terms and identifiers.
-2. If no usable official machine-readable endpoint exists, choose an allowed provider and document
-   attribution, refresh limits, and redistribution terms.
-3. Publish atomically to a complete validated snapshot. The request path reads only the last valid
-   publication; it does not scrape external pages or recalculate the championship.
-
-Proposed SQLite ownership, if the source spike confirms durable movement/history is useful:
-
-- `ewc_standings_runs`: `run_id`, event, source, source timestamp, fetched/published timestamps,
-  source-reported/fetched club counts, payload checksum, status, and validation note.
-- `ewc_standing_rows`: `run_id`, source club ID, canonical slug, rank, points, contribution payload,
-  title wins, eligibility evidence, and display metadata.
-- The API selects exactly one `published` run. A failed candidate run is recorded for diagnosis but
-  never becomes readable. Publication of run + complete rows + active marker is one transaction.
-
-If movement/history is not required, use the existing esports atomic-file pattern instead of adding
-schema. Make this an explicit Phase 0 decision; do not create both stores.
-
-Validation rejects duplicate ranks/club IDs, negative points, rank inversions, missing timestamps,
-an incomplete source population, fetched/source count disagreement, and a point total regression
-unless explicitly identified as a publisher correction. Record the stable normalized source payload
-and checksum so the published run reproduces.
-
-Before any SQLite rehearsal, resolve an absolute existing `LP_DB_PATH`, inspect the schema and writer
-ownership read-only, and capture `PRAGMA quick_check` plus protected-table fingerprints. Create a
-disposable clone with `VACUUM INTO` from a read-only connection—never plain `cp` against a live/WAL
-database—and verify the clone before applying additive schema.
-
-### 3. Repair CoD scoreboard source arbitration
-
-Keep Breaking Point's useful CDL history, but stop treating it as the sole participant authority for
-EWC bracket games.
-
-- Fetch/index the PandaScore `codmw` EWC window once per refresh, not once per scoreboard row.
-- Match by explicit source ID when available; otherwise require event + bounded start time + both
-  known participants. Never resolve an EWC game using time alone.
-- For a matched row, use the freshest trustworthy participant, state, score, and winner fields and
-  retain Breaking Point's ID separately from PandaScore's detail ID.
-- Represent unresolved sides structurally, for example
-  `participant: { state: "pending", feederGameId, outcome: "winner", label }`, rather than placing
-  `"TBD"` in `team.name`.
-- Extend the frontend `Game` boundary with an optional participant label. `GameCard` renders the
-  dependency label; it never invents a score, logo, or detail link for an unresolved participant.
-- Once a feeder match becomes final, the next refresh must replace the dependency with the real
-  club. No restart or build should be required.
-- Keep reconciliation local to the CoD/EWC adapter. Do not add another fuzzy tier to shared esports
-  identity functions, and do not treat zero prefix-duplicates as sufficient identity evidence.
-
-If PandaScore lacks the bracket dependency graph, derive that graph only from a source that exposes
-round/slot/predecessor IDs. Do not hard-code the Aug 9 clubs or bracket in application code.
-
-### 4. Request and cache contract
-
-Phase 0 must publish a request matrix before any collector is run:
+### Request and cache contract (unchanged — this iteration adds zero external requests)
 
 | Host/source | Operation | Calls per cold refresh | Cache/freshness | Failure behavior |
 |---|---|---:|---|---|
-| Club standings provider | complete standings population | target: 1 bulk call | publisher cadence, not request-path TTL | retain last good |
+| Club standings provider | complete standings population | target: 1 bulk call (not yet wired) | publisher cadence, not request-path TTL | retain last good |
 | PandaScore `codmw` | bounded EWC match window | reuse existing bulk fetch | existing shared cache | retain BP row/pending state |
 | Breaking Point | current/history bracket feed | reuse existing bulk fetch | existing shared cache | existing CDL fallback |
 | ESPN hosts | none | 0 | n/a | never introduced as fallback |
 | YouTube Data API | none for standings/scores | 0 | existing resolver only | free resolver/fallback policy unchanged |
 
-The final source spike must replace `target: 1` with a measured count and print actual requests spent
-per host. Configure budgets in the callable fetch function, not only a CLI entrypoint. Cache keys
-include event and source generation; elapsed TTLs use a monotonic clock; concurrent cold misses use
-single-flight; failures never poison or replace the last-good generation. State worker-local versus
-cross-process behavior explicitly.
-
-Read-path budgets for the two new routes must name maximum rows/bytes, cold and warm latency, and
-maximum staleness after a successful publication. Measure database read, transformation, JSON
-serialization, proxy transfer, and browser render separately before calling the route fast.
+The standings publisher remains unwired: Phase 0 resolved that no permitted machine-readable Club
+Championship publisher exists on this box (official EWC API is Bearer-gated; PandaScore publishes no
+cross-title Club Championship; third-party HTML scraping is out of scope). See
+`docs/ewc2026/PHASE0-SOURCE-AND-CONTRACTS.md`. Continue source research only through
+permitted/authoritative channels; never hard-code or scrape the research top ten.
 
 ## Implementation sequence
 
-### Phase 0 — source contracts and fixtures
+### Phase A — plan iteration (this document)
 
-- Capture current EWC event, standings, and CoD bracket fixtures with source timestamps.
-- Decide and document the Club Championship publisher and usage rights.
-- Map EWC event IDs and CoD match IDs across the current esports slate, PandaScore, and Breaking
-  Point; record collisions and unresolved rows.
-- Write the complete source/ID/writer/reader/request matrix, including reported and fetched club
-  counts, pagination/sorting behavior, nullability, checksum, and per-host cold-refresh cost.
-- Choose exactly one standings persistence contract: versioned SQLite runs when history/movement is
-  required, otherwise the existing atomic esports snapshot pattern.
-- Add contract tests first for named, stale, pending-winner, pending-loser, and fully unavailable
-  participants.
+Rewrite the plan as the authoritative post-correction contract and commit it separately.
 
-### Phase 1 — scoreboard repair
+### Phase B — extract the EWC module out of `/esports`
 
-- Introduce structured pending participants in the backend normalization boundary.
-- Reconcile EWC CoD rows against the indexed canonical match feed.
-- Render feeder labels on `/scores`; retain real names as soon as they resolve.
-- Keep non-EWC CDL behavior unchanged.
+- Move `EwcProjection`, `Standings`, `EwcMatchRow`, `ClubStandingsRail`, and `EwcModule` from
+  `pages/esports.tsx` into `components/Esports/EwcModule.tsx` (self-contained, importing the shared
+  `LiveCard`/`buildBroadcastViews` machinery and primitives from the board page — one-direction
+  dependency, no cycle).
+- `pages/esports.tsx` keeps only board code: no EWC types, no EWC components. `Eyebrow`,
+  `SectionHeader`, `TeamCrest`, `localDateKey`, `groupTime` remain available to the module (exported
+  or copied as pure helpers).
+- Update `components/EsportsEwcModule.test.tsx` imports to the new location.
 
-This phase ships independently because it fixes a visible correctness problem during the active CoD
-tournament.
+### Phase C — titles route
 
-### Phase 2 — EWC event and standings APIs
+- Add `GET /api/esports/titles` to `predict.py`; bounded, reads the shared slate.
+- Add fixture-driven backend tests (no network): titles derived from the slate, live/match/result
+  counts, unknown titles excluded, zero external requests.
 
-- Add explicit EWC event identity to normalized match rows.
-- Add `backend/routers/esports/ewc.py`, wire its router through `routers/esports/__init__.py`, and
-  keep the existing slate response contract stable.
-- Add the EWC projection route and one atomic standings publisher/reader.
-- Add stale/unavailable telemetry and last-good behavior.
+### Phase D — league hub build-out
 
-### Phase 3 — EWC-focused page
+- Rework `pages/leagues/esports.tsx` into the complete destination per "Product shape": header,
+  title discovery, EWC center, Club Championship rail, non-EWC context, picks links, and the full
+  loading/error/empty/stale state set. Keep the responsive 5/10 standings limit.
+- Keep the existing EWC fetch logic (projection + standings) and add the titles fetch; poll the
+  projection at the existing cadence; no new collectors.
 
-- Replace the MSI-specific hero switch with the event-focus module.
-- Add EWC live/today/results sections and Club Championship rail.
-- Preserve generic non-EWC live broadcasts and full schedule below.
-- Add title and club deep links only where canonical destinations exist.
-- Use an open, border-light standings table and verify the hierarchy at mobile and desktop widths;
-  do not nest cards inside the live module.
+### Phase E — focused tests
 
-### Phase 4 — release gates
+- `/esports`: render the board with mocked fetch; assert no `EWC 2026` module header and no
+  `Club Championship` rail, while non-EWC live content still renders (live/non-EWC content not
+  lost).
+- `/leagues`: render the list; assert the Esports card links to `/leagues/esports`.
+- `/leagues/esports`: render the hub with mocked fetch (projection, standings, titles); assert the
+  complete product (header, title pills → `/esports/{slug}`, picks links, EWC center, rail) and all
+  data states (loading, current, stale, unavailable, inactive/empty, error) plus the responsive
+  limit (matchMedia 10 vs 5).
+- GameCard: assert pending labels never render raw `TBD`/`TBA`.
+- Backend: qualifiers stay excluded (existing suite), titles route (new), projection/standings
+  contracts (existing suite) — all fixture-driven.
 
-- Fixture/unit tests for projection, standings validation, CoD reconciliation, and pending labels.
-- Targeted frontend tests for top-ten/top-five layouts, loading, stale, unavailable, and bracket
-  dependency states, including zero-versus-unknown and eligibility-unknown distinctions.
-- Browser verification at desktop and mobile widths for `/esports`, `/scores`, date navigation,
-  `?league=Call%20of%20Duty`, and a CoD detail link.
-- Capture before/after esports JSON and compare response keys/contracts separately from volatile live
-  values. Verify `watch` remains `{platform, url, channel, online}`.
-- Verify each local-calendar day label appears once and in chronological order; backend prominence
-  ordering must not split one day into multiple groups.
-- Live comparison against the chosen standings publisher and two independent CoD bracket sources.
-- Verify official YouTube selection for each concurrent EWC arena without spending routine YouTube
-  Data API quota.
-- Confirm no unrelated sports route, managed process, database, or production service changed.
-- If SQLite is selected, rehearse additive schema/publication on a verified `VACUUM INTO` clone,
-  re-run `PRAGMA quick_check`, and compare protected fingerprints. A passing clone is candidate
-  evidence only and grants no permission to mutate DEV or production.
-- Run backend checks from `backend/venv`; use the repository/shared frontend binaries in an isolated
-  worktree rather than installing dependencies. Verify the static `/esports` HTML produced by the
-  build as well as hydrated browser behavior.
+### Phase F — release gates
+
+- Backend: run the EWC-adjacent pytest suite from the venv interpreter with cwd in `backend/`
+  (fixture-driven, zero external requests). All green.
+- Frontend: run Jest via the shared binary only (`/root/legendarypicks/node_modules/.bin/jest`)
+  from the worktree. All green.
+- `git diff --check` clean; secrets scan clean; worktree clean at the end.
+- No DEV/production DB write, no managed-service restart, no deploy, no push, no tag move; the
+  disposable preview directory `/root/lp-ewc-preview-BIEs6Q` is untouched (Codex rebuilds it).
+- Browser verification is out of scope for this iteration by constraint (no next/browser commands in
+  the worktree); the static render guarantees are covered by the Jest suite.
 
 ## Acceptance criteria
 
-- `/esports` visibly identifies EWC 2026 as the active focus and shows all current EWC broadcasts
-  without hiding non-EWC live matches.
-- Club standings display at least the current top ten on desktop and top five on mobile, with source,
-  `as of`, and honest stale/unavailable states.
+- `/esports` renders no EWC tournament-center elements — proven by test, and by the page file
+  containing no EWC module code.
+- Non-EWC live content is not lost on `/esports`.
+- `/leagues` shows an Esports card linking to `/leagues/esports`.
+- `/leagues/esports` renders the complete destination: header/nav, title discovery (pills linking to
+  title desks and picks), EWC tournament center (live, today, results), Club Championship rail with
+  source/`as of`/stale/unavailable honesty, non-EWC context links, and responsive desktop/mobile
+  hierarchy.
 - The standings API never emits a self-certified empty success and never silently converts unknown
-  eligibility to `false`.
-- The published standings population matches the source-reported club count, has unique stable club
-  IDs, and reproduces its checksum; the UI display limit does not define completeness.
-- The landing page requests only the five or ten standings rows it renders, and expanding mobile
+  eligibility to `false`; the UI shows the honest unavailable state until a permitted publisher
+  exists.
+- EWC qualifiers stay excluded from the event focus (`c64f6df` preserved, suite green).
+- No `/scores` EWC CoD card displays a raw `TBD`/`TBA` team name — backend suite and the new
+  frontend guard both prove it.
+- The landing page requests only the five or ten standings rows it renders; expanding mobile
   standings performs the bounded follow-up request.
-- No `/scores` EWC CoD card displays a raw `TBD`/`TBA` team name.
-- A decided participant resolves to the real club on refresh; an undecided slot displays its bracket
-  dependency; an unresolvable data fault displays `Participant unavailable` and is logged.
-- EWC CoD live/final series scores agree with the selected authoritative feed for every card in the
-  verification window.
+- Zero new external requests; the declared per-host matrix is unchanged.
 - Existing Call of Duty league pages, picks, result grouping, stream continuity, and other sports
   scoreboard cards retain their current behavior.
-- Cold/warm latency, response bytes, request counts per host, cache generation, concurrency, and
-  maximum stale age meet the bounds recorded in Phase 0.
+- The EWC APIs and CoD scoreboard reconciliation remain shared backend contracts, unchanged.
 
 ## Explicit non-goals for this iteration
 
-- No Ultimate Team, packs, marketplace, or new monetization system.
-- No model probabilities or new live-stat vendor integration.
-- No rewrite of the existing esports state machine or stream resolver.
+- No new collector, no second esports pipeline, no rewrite of the existing esports state machine or
+  stream resolver.
+- No Ultimate Team, packs, marketplace, or new monetization system; no model probabilities.
 - No browser-side scraping and no hard-coded standings, bracket winners, dates, or club totals.
 - No DEV/production restart, deployment, database write, or tag move without separate authorization.
+- No npm/npx/yarn/next/browser commands from `/root/lp-ewc-2026`; no alteration of
+  `/root/legendarypicks/node_modules` or the managed `:3096`/`:8096`/tunnel services.
 
-## Decisions — post-implementation decision record
+## Post-implementation decision record
 
-1. **Page hierarchy — accepted by implementation.** EWC live/today first, Club Championship second,
-   generic board below, exactly as specified in Phase 3 (`pages/esports.tsx` EWC focus module + rail,
-   generic schedule preserved below).
-2. **Standings rail content — contribution chips deferred until the source supports them.** The
-   Phase 0 spike found no permitted machine-readable standings publisher, so the route serves
-   `status: "unavailable"` and neither points nor contribution chips are rendered. The row contract
-   already carries `eligibleTopEightCount`/`titleWins` so chips can be added when a permitted source
-   exists; the original recommendation (include chips) stands for that future source.
-3. **Final standings data provider — unresolved; honest unavailable.** No permitted machine-readable
-   source exists, so no provider is approved; the validation-gated publisher awaits one and the route
-   serves the honest unavailable contract. The research table is evidence only, never hard-coded, and
-   never ingested from scraped HTML.
-
-## Release pass evidence — 2026-08-08 (final)
-
-Worktree `/root/lp-ewc-2026` (isolated branch from committed HEAD). Implementation commits:
-`7afbee2` Phase 0 contracts, `184eb21` Phase 1 CoD raw-TBD repair, `e7fd8bd` Phase 2 projection +
-standings routes, `64711a6` Phase 3 EWC-focused page; plus the final release-pass commit below.
-
-**Backend tests (run from `backend/venv`, fixture-driven, no network): 109 passed.**
-`backend/test_cod_ewc_reconcile.py` (26) — includes three new regressions added during review:
-decided-`loser` feeder resolves the other opponent (never the winner), Tier-1 ambiguous name
-association returns `None` (never the first hit), missing feeder node labels structurally
-("Winner/Loser of preceding match", never literal `TBD`). Also `test_ewc_contract.py`,
-`test_ewc_routes.py` (56) and `test_esports_streams.py`, `test_esports_predict_api.py`,
-`test_wc_context.py` (53).
-
-**Browser gate — historical desktop render only; hydrated gate BLOCKED/NOT PASS (no new screenshots).**
-`docs/ewc2026/fixtures/browser-esports-desktop.png` is a **historical** desktop render (1440×900,
-pixel-verified non-white) captured before the 14:06 build-output loss; it is not a current live
-pass.
-The YouTube iframe shows Google's headless-browser sign-in interstitial, which is unrelated to our
-code. The earlier mobile capture was a white "Internal Server Error" page — the isolated frontend
-then had no static build output (backend `:8105` was healthy) — and that invalid PNG was **not**
-committed. The final refresh attempt is recorded in the re-check section below; the hydrated EWC
-browser gate remains **BLOCKED/NOT PASS** and no new screenshots are claimed.
-
-**Request counts (this pass: zero external requests — all 109 tests are fixture-driven).**
-Declared per-host matrix unchanged (Phase 0 §4): PandaScore 1 bracket call per 120 s cold window
-plus the existing bulk title feeds (shared caches); Breaking Point existing 300 s cache; ESPN **0**
-(never introduced as fallback); YouTube Data API **0** for standings/scores.
-
-**Candidate vs DEV/production.** Everything above ran in the isolated worktree only. No DEV or
-production DB write (standings persist via the atomic-file snapshot pattern; SQLite was never
-selected, so the VACUUM INTO rehearsal gate is vacuous — Phase 0 §5), no managed-service restart,
-no deployment, no push, no tag move.
-
-**Cleanup and hygiene.** `git diff --check` clean (plan header trailing spaces → `<br>`; probe
-trailing whitespace stripped in `docs/ewc2026/probes/`). Secrets scan (API keys, PEM/private keys,
-bearer tokens, password assignments) across `docs/ewc2026/`, the plan, `scripts/verify-ewc-browser.js`,
-and the backend diff of the four esports commits: zero matches. `backend/data/esports_team_logos.json`
-is tracked and unmodified. Kept: `scripts/verify-ewc-browser.js` (repeatable gate harness),
-`browser-esports-desktop.png`, `candidate-projection-live.json` (live API snapshot). Scratch probes
-moved out of the worktree; no mobile PNG committed.
-
-**Open decision 3 resolution (recorded).** Phase 0 spike found no permitted machine-readable
-standings publisher, so the standings route serves the honest `status: "unavailable"` contract and
-the validation-gated publisher awaits a permitted source — no browser scraping, no hard-coded table.
-
-### Release-pass re-check — 2026-08-08 (final)
-
-**Backend re-verified.** Full EWC-adjacent suite re-run from the repo venv
-(`/root/legendarypicks/backend/venv`, fixture-driven, zero external requests): **109/109 passed**
-(`test_cod_ewc_reconcile.py` + `test_ewc_contract.py` + `test_ewc_routes.py` +
-`test_esports_streams.py` + `test_esports_predict_api.py` + `test_wc_context.py`).
-
-**Frontend unit + build (verified after the shared install was restored).** The Jest EWC suite
-passed **10/10** (`components/EsportsEwcModule.test.tsx`), and a direct Next build compiled
-**20/20** static pages including `/esports` and `/scores`. This supersedes the earlier
-"frontend not runnable" blocker: the shared install had been emptied at 14:06, then restored.
-
-**Hydrated browser gate — BLOCKED/NOT PASS (no new screenshots).** The isolated worktree
-production gate attempt (:8105 backend + :3105 `next start` from `/root/lp-ewc-2026`) coincided
-with the shared `/root/legendarypicks/node_modules` symlink target being **emptied again**, which
-broke managed DEV `:3096` (`Cannot find module next/dist/pages/_app`). Per AGENTS.md §11 this is
-the worktree-npm symptom; the candidate gate was therefore stopped without producing a hydrated
-pass, and no new screenshots are claimed. The committed `browser-esports-desktop.png` remains
-**historical evidence only** (captured 14:06 before the earlier build-output loss). The earlier
-`:3105` HTTP 500 diagnosis (`MissingStaticPage ENOENT .next/server/pages/esports.html`, no build
-output while backend `:8105` was healthy) stands as the recorded root cause for that window.
-
-**Repair (user-authorized, main repo only).** `npm ci` was run **only** in `/root/legendarypicks`;
-managed DEV `:3096` was restarted; the public tunnel
-`https://bone-mls-ink-salvation.trycloudflare.com` was verified returning HTTP 200 for both
-`/news` and `/esports` (twice each). Isolated candidate processes `:8105`/`:3105` were stopped and
-the runtime logo cache restored.
-
-**Hygiene.** `backend/data/esports_team_logos.json` (a runtime disk cache written by
-`pandascore._ps_team_logo_api`) restored to the tracked HEAD snapshot; worktree clean. Two
-0-byte failed probes (`probes/ewc-api-body.txt`, `probes/wayback-main.html`) removed and the
-Phase 0 fixture table updated. `git diff --check` clean; secrets scan across `docs/ewc2026/`,
-the plan, and the esports commits: zero matches. No DEV/production DB write, no deploy, no push,
-no tag move.
+To be appended at completion: page hierarchy, standings rail content, final standings data provider,
+release-pass evidence, and candidate-vs-DEV/prod status.
