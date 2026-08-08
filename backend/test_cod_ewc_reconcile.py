@@ -97,6 +97,116 @@ class ResolveSidesTests(unittest.TestCase):
         self.assertEqual(participant_label(a), "Loser of Semifinal 2")
         self.assertEqual(participant_label(b), "Loser of Semifinal 1")
 
+    def test_missing_feeder_node_label_is_structural_not_tbd(self):
+        # Regression: a predecessor whose match node is absent from the graph must label the slot
+        # honestly ('preceding match'), never the literal 'TBD' (no-TBD surface gate).
+        g = {
+            "nodes": {
+                99: {"ps_id": 99, "node_name": "Grand final", "round_key": "grand final",
+                     "opponents": [], "prev": [("winner", 9999), ("winner", 9998)],
+                     "status": "upcoming"},
+            },
+            "by_round": {"grand final": []},
+            "group_matches": [],
+        }
+        a, b = cod_ewc.resolve_sides(g, 99)
+        self.assertEqual(a["state"], "pending")
+        self.assertEqual(participant_label(a), "Winner of preceding match")
+        self.assertNotIn("TBD", participant_label(a))
+        self.assertNotIn("TBD", participant_label(b))
+
+    def test_decided_loser_feeder_resolves_loser_not_winner(self):
+        # Regression: once a semifinal finishes, the 3rd-place slot fed by type='loser' must get
+        # the *other* opponent (the loser), never the winner (resolve_sides used to ignore the
+        # predecessor outcome and always emit the feeder's winner).
+        g = {
+            "nodes": {
+                1: {"ps_id": 1, "node_name": "Semifinal 1: Alpha vs Beta",
+                    "round_key": "semifinal",
+                    "opponents": [{"id": 10, "name": "Alpha"}, {"id": 11, "name": "Beta"}],
+                    "winner_id": 10, "prev": [], "status": "finished"},
+                2: {"ps_id": 2, "node_name": "Semifinal 2: Gamma vs Delta",
+                    "round_key": "semifinal",
+                    "opponents": [{"id": 20, "name": "Gamma"}, {"id": 21, "name": "Delta"}],
+                    "winner_id": None, "prev": [], "status": "upcoming"},
+                99: {"ps_id": 99, "node_name": "3rd place match", "round_key": "3rd place",
+                     "opponents": [], "prev": [("loser", 1), ("loser", 2)],
+                     "status": "upcoming"},
+            },
+            "by_round": {"semifinal": [], "3rd place": []},
+            "group_matches": [],
+        }
+        a, b = cod_ewc.resolve_sides(g, 99)
+        # Slot mapping mirrors the fixture: [prev[1], prev[0]] = [loser(SF2), loser(SF1)].
+        self.assertEqual(participant_label(a), "Loser of Gamma–Delta")
+        self.assertEqual(a["state"], "pending")
+        self.assertEqual(participant_label(b), "Beta")  # loser of decided SF1, NOT Alpha
+        self.assertEqual(b["state"], "named")
+        self.assertEqual(b["clubId"], 11)
+
+    def test_decided_loser_with_partial_feeder_opponents_stays_pending(self):
+        # When the decided feeder lists only one opponent (as today's semifinal nodes do), the
+        # loser's identity is genuinely unknown — stay structurally pending, never guess.
+        g = {
+            "nodes": {
+                1: {"ps_id": 1, "node_name": "Semifinal 1: Alpha vs TBD",
+                    "round_key": "semifinal",
+                    "opponents": [{"id": 10, "name": "Alpha"}],
+                    "winner_id": 10, "prev": [], "status": "finished"},
+                99: {"ps_id": 99, "node_name": "3rd place match", "round_key": "3rd place",
+                     "opponents": [], "prev": [("loser", 1), ("loser", 1)],
+                     "status": "upcoming"},
+            },
+            "by_round": {"semifinal": [], "3rd place": []},
+            "group_matches": [],
+        }
+        a, b = cod_ewc.resolve_sides(g, 99)
+        self.assertEqual(a["state"], "pending")
+        self.assertEqual(a["outcome"], "loser")
+        self.assertNotEqual(participant_label(a), "Alpha")
+
+
+class AssociateBpRowTests(unittest.TestCase):
+    def setUp(self):
+        t0 = cod_ewc._iso_to_ms("2026-08-08T12:00:00Z")
+        self.row = {"game_id": "BP-99", "date": "2026-08-08T12:00:00Z", "state": "pre",
+                    "status": "Upcoming", "event": "Esports World Cup 2026",
+                    "round": "Quarterfinals",
+                    "home": {"name": "Alpha", "score": None},
+                    "away": {"name": "Beta", "score": None}}
+
+        def node(ps_id, name, a_id, a_name, b_id, b_name):
+            return {"ps_id": ps_id, "node_name": name, "round_key": "quarterfinal",
+                    "opponents": [{"id": a_id, "name": a_name}, {"id": b_id, "name": b_name}],
+                    "scheduled_ms": t0, "prev": [], "status": "upcoming"}
+
+        self.duplicate = {
+            "nodes": {
+                1: node(1, "Quarterfinal 1: Alpha vs Beta", 10, "Alpha", 11, "Beta"),
+                2: node(2, "Quarterfinal 2: Alpha vs Beta", 10, "Alpha", 11, "Beta"),
+            },
+            "by_round": {"quarterfinal": []},
+            "group_matches": [],
+        }
+        self.duplicate["by_round"] = {"quarterfinal": list(self.duplicate["nodes"].values())}
+        self.distinct = {
+            "nodes": {
+                1: node(1, "Quarterfinal 1: Alpha vs Beta", 10, "Alpha", 11, "Beta"),
+                2: node(2, "Quarterfinal 2: Gamma vs Delta", 20, "Gamma", 21, "Delta"),
+            },
+            "by_round": {"quarterfinal": []},
+            "group_matches": [],
+        }
+        self.distinct["by_round"] = {"quarterfinal": list(self.distinct["nodes"].values())}
+
+    def test_tier1_ambiguous_name_match_returns_none(self):
+        # Regression: two bracket nodes in the same round matching the same participant names
+        # within the time tolerance must resolve to None (ambiguity), never the first hit.
+        self.assertIsNone(cod_ewc.associate_bp_row(self.row, self.duplicate, set()))
+
+    def test_tier1_single_exact_match_resolves(self):
+        self.assertEqual(cod_ewc.associate_bp_row(self.row, self.distinct, set()), 1)
+
 
 class ReconcileTests(unittest.TestCase):
     def setUp(self):
