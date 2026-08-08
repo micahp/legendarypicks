@@ -429,18 +429,15 @@ association returns `None` (never the first hit), missing feeder node labels str
 `test_ewc_routes.py` (56) and `test_esports_streams.py`, `test_esports_predict_api.py`,
 `test_wc_context.py` (53).
 
-**Browser gate — historical desktop render only; current gate blocked/failed for both widths.**
+**Browser gate — historical desktop render only; hydrated gate BLOCKED/NOT PASS (no new screenshots).**
 `docs/ewc2026/fixtures/browser-esports-desktop.png` is a **historical** desktop render (1440×900,
 pixel-verified non-white) captured before the 14:06 build-output loss; it is not a current live
 pass.
 The YouTube iframe shows Google's headless-browser sign-in interstitial, which is unrelated to our
-code. The mobile capture was a white "Internal Server Error" page — the isolated frontend had no
-static build output (backend `:8105` was healthy) — and the invalid PNG was **not** committed.
-Regeneration is blocked: the shared frontend install `/root/legendarypicks/node_modules` is
-incomplete (its `next`/`jest` binaries are missing) and the worktree `.next` holds no build output;
-per AGENTS.md a worktree must not reinstall, so this is recorded as the documented Next build
-blocker, not retried. Frontend jest/next binaries are likewise unavailable, so the frontend unit
-suite was not re-runnable this pass.
+code. The earlier mobile capture was a white "Internal Server Error" page — the isolated frontend
+then had no static build output (backend `:8105` was healthy) — and that invalid PNG was **not**
+committed. The final refresh attempt is recorded in the re-check section below; the hydrated EWC
+browser gate remains **BLOCKED/NOT PASS** and no new screenshots are claimed.
 
 **Request counts (this pass: zero external requests — all 109 tests are fixture-driven).**
 Declared per-host matrix unchanged (Phase 0 §4): PandaScore 1 bracket call per 120 s cold window
@@ -464,39 +461,37 @@ moved out of the worktree; no mobile PNG committed.
 standings publisher, so the standings route serves the honest `status: "unavailable"` contract and
 the validation-gated publisher awaits a permitted source — no browser scraping, no hard-coded table.
 
-### Release-pass re-check — 2026-08-08 (final hygiene commit)
+### Release-pass re-check — 2026-08-08 (final)
 
-**Backend re-verified.** Full EWC-adjacent suite re-run this pass from the repo venv
+**Backend re-verified.** Full EWC-adjacent suite re-run from the repo venv
 (`/root/legendarypicks/backend/venv`, fixture-driven, zero external requests): **109/109 passed**
 (`test_cod_ewc_reconcile.py` + `test_ewc_contract.py` + `test_ewc_routes.py` +
 `test_esports_streams.py` + `test_esports_predict_api.py` + `test_wc_context.py`).
 
-**`:3105` HTTP 500 — root cause measured (browser pass still NOT claimed).** The isolated frontend
-(`next start -p 3105`, node pid alive since 14:05) serves a worktree whose `.next/` contains only
-`cache/`, `package.json`, `routes-manifest.json` — **no build output** — so every page 500s with
-`MissingStaticPage ENOENT .../.next/server/pages/esports.html` (same for `/scores`). This is the
-AGENTS.md §11 symptom exactly ("route 500s with ENOENT ... while the process still looks alive"):
-the shared install `/root/legendarypicks/node_modules` is incomplete and lacks the required
-next/jest binaries (worktree `node_modules` is a
-symlink to it), so `./node_modules/.bin/next` is gone — `logs/candidate-build2.log` and
-`logs/candidate-build4.log` both fail with `No such file or directory` — and `playwright` is
-unresolvable from the worktree, so `scripts/verify-ewc-browser.js` cannot run. The last successful
-build (`logs/candidate-build3.log`, 14:05, 20/20 static pages including `/esports` and `/scores`)
-had its `.next` output reduced to cache+manifests at 14:06. Per AGENTS.md §11 the recovery is
-`npm ci` in the main repo + relaunch — an externally managed action not taken here. Backend `:8105`
-(uvicorn) is healthy; `GET /api/esports/events/ewc-2026` returns 200. At stop time `:3105`
-returned **HTTP 500 for desktop and mobile alike** (the old `next start` had no build output), so the
-committed `browser-esports-desktop.png` is **historical evidence only** — captured 14:06 before the
-build-output loss — **not** a current live pass; mobile remains unverified this pass.
+**Frontend unit + build (verified after the shared install was restored).** The Jest EWC suite
+passed **10/10** (`components/EsportsEwcModule.test.tsx`), and a direct Next build compiled
+**20/20** static pages including `/esports` and `/scores`. This supersedes the earlier
+"frontend not runnable" blocker: the shared install had been emptied at 14:06, then restored.
+
+**Hydrated browser gate — BLOCKED/NOT PASS (no new screenshots).** The isolated worktree
+production gate attempt (:8105 backend + :3105 `next start` from `/root/lp-ewc-2026`) coincided
+with the shared `/root/legendarypicks/node_modules` symlink target being **emptied again**, which
+broke managed DEV `:3096` (`Cannot find module next/dist/pages/_app`). Per AGENTS.md §11 this is
+the worktree-npm symptom; the candidate gate was therefore stopped without producing a hydrated
+pass, and no new screenshots are claimed. The committed `browser-esports-desktop.png` remains
+**historical evidence only** (captured 14:06 before the earlier build-output loss). The earlier
+`:3105` HTTP 500 diagnosis (`MissingStaticPage ENOENT .next/server/pages/esports.html`, no build
+output while backend `:8105` was healthy) stands as the recorded root cause for that window.
+
+**Repair (user-authorized, main repo only).** `npm ci` was run **only** in `/root/legendarypicks`;
+managed DEV `:3096` was restarted; the public tunnel
+`https://bone-mls-ink-salvation.trycloudflare.com` was verified returning HTTP 200 for both
+`/news` and `/esports` (twice each). Isolated candidate processes `:8105`/`:3105` were stopped and
+the runtime logo cache restored.
 
 **Hygiene.** `backend/data/esports_team_logos.json` (a runtime disk cache written by
-`pandascore._ps_team_logo_api`) had grown 7 runtime-only keys in the working tree; restored to the
-tracked HEAD snapshot so the tree is clean. The running candidate backend rewrote the cache once
-more after the hygiene commit, so the isolated candidate processes were **stopped** at the end of
-this pass — node `:3105` (pid 3040792) and uvicorn `:8105` (pid 3016757), both launched from the
-worktree — and the tracked file re-verified at HEAD with a clean tree; no candidate process remains
-running. Managed dev services (`:3096`/`:8096`/`:8097`, nginx, tunnels) were not touched. Two
-0-byte failed probes (`probes/ewc-api-body.txt`, `probes/wayback-main.html`) removed and the Phase
-0 fixture table updated to name only the real captures. `git diff --check` clean; secrets scan
-across `docs/ewc2026/`, the plan, and this commit's diff: zero matches. No DEV/production change,
-no managed-service restart, no deploy, no push.
+`pandascore._ps_team_logo_api`) restored to the tracked HEAD snapshot; worktree clean. Two
+0-byte failed probes (`probes/ewc-api-body.txt`, `probes/wayback-main.html`) removed and the
+Phase 0 fixture table updated. `git diff --check` clean; secrets scan across `docs/ewc2026/`,
+the plan, and the esports commits: zero matches. No DEV/production DB write, no deploy, no push,
+no tag move.
