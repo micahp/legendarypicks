@@ -400,14 +400,19 @@ tournament.
 - No browser-side scraping and no hard-coded standings, bracket winners, dates, or club totals.
 - No DEV/production restart, deployment, database write, or tag move without separate authorization.
 
-## Decisions still needed before implementation
+## Decisions — resolution status (completed candidate)
 
-1. Approve this page hierarchy: EWC live/today first, Club Championship second, generic board below.
-2. Decide whether the standings rail should show only points or points plus per-title contribution
-   chips when the source contract supports them. Recommendation: include the chips; they explain why
-   the cross-title club race matters.
-3. Approve the final standings data provider after the Phase 0 rights/endpoint spike. The current
-   research table is evidence, not yet an ingestion contract.
+1. **Page hierarchy — approved and implemented.** EWC live/today first, Club Championship second,
+   generic board below, exactly as specified in Phase 3 (`pages/esports.tsx` EWC focus module + rail,
+   generic schedule preserved below).
+2. **Standings rail content — moot pending a permitted source.** The Phase 0 spike found no
+   permitted machine-readable standings publisher, so the route serves `status: "unavailable"` and
+   neither points nor contribution chips are rendered. The row contract already carries
+   `eligibleTopEightCount`/`titleWins` so chips can be added when a permitted source exists; the
+   original recommendation (include chips) stands for that future source.
+3. **Final standings data provider — resolved: none approved.** No permitted machine-readable
+   source exists; the validation-gated publisher awaits one. The research table is evidence only,
+   never hard-coded, and never ingested from scraped HTML.
 
 ## Release pass evidence — 2026-08-08 (final)
 
@@ -474,13 +479,19 @@ unresolvable from the worktree, so `scripts/verify-ewc-browser.js` cannot run. T
 build (`logs/candidate-build3.log`, 14:05, 20/20 static pages including `/esports` and `/scores`)
 had its `.next` output reduced to cache+manifests at 14:06. Per AGENTS.md §11 the recovery is
 `npm ci` in the main repo + relaunch — an externally managed action not taken here. Backend `:8105`
-(uvicorn) is healthy; `GET /api/esports/events/ewc-2026` returns 200. The committed desktop fixture
-(`browser-esports-desktop.png`) was captured before the 14:06 build-output loss and stands as the
-desktop render evidence; mobile remains unverified this pass.
+(uvicorn) is healthy; `GET /api/esports/events/ewc-2026` returns 200. At stop time `:3105`
+returned **HTTP 500 for desktop and mobile alike** (the old `next start` had no build output), so the
+committed `browser-esports-desktop.png` is **historical evidence only** — captured 14:06 before the
+build-output loss — **not** a current live pass; mobile remains unverified this pass.
 
 **Hygiene.** `backend/data/esports_team_logos.json` (a runtime disk cache written by
 `pandascore._ps_team_logo_api`) had grown 7 runtime-only keys in the working tree; restored to the
-tracked HEAD snapshot so the tree is clean. Two 0-byte failed probes (`probes/ewc-api-body.txt`,
-`probes/wayback-main.html`) removed and the Phase 0 fixture table updated to name only the real
-captures. `git diff --check` clean; secrets scan across `docs/ewc2026/`, the plan, and this commit's
-diff: zero matches. No DEV/production change, no managed-service restart, no deploy, no push.
+tracked HEAD snapshot so the tree is clean. The running candidate backend rewrote the cache once
+more after the hygiene commit, so the isolated candidate processes were **stopped** at the end of
+this pass — node `:3105` (pid 3040792) and uvicorn `:8105` (pid 3016757), both launched from the
+worktree — and the tracked file re-verified at HEAD with a clean tree; no candidate process remains
+running. Managed dev services (`:3096`/`:8096`/`:8097`, nginx, tunnels) were not touched. Two
+0-byte failed probes (`probes/ewc-api-body.txt`, `probes/wayback-main.html`) removed and the Phase
+0 fixture table updated to name only the real captures. `git diff --check` clean; secrets scan
+across `docs/ewc2026/`, the plan, and this commit's diff: zero matches. No DEV/production change,
+no managed-service restart, no deploy, no push.
