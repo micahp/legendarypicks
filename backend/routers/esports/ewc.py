@@ -231,3 +231,71 @@ def read_standings(path=None, stale_after_s=None):
         "source": {"label": src.get("label"), "url": src.get("url")},
         "status": status,
     }
+
+# ---------------------------------------------------------------------------
+# EWC router — projection + published Club Championship reader
+# ---------------------------------------------------------------------------
+from fastapi import APIRouter, Query
+
+router = APIRouter()
+
+_EVENT_NAME = "Esports World Cup 2026"
+# A completed EWC match keeps the module active for this long after it ends; the module then
+# expires automatically and the page falls back to the generic board. No hard-coded dates.
+_ACTIVE_RESULT_TAIL_S = 24 * 3600
+
+
+@router.get("/api/esports/events/ewc-2026")
+def ewc_projection():
+    """The EWC 2026 projection over the existing normalized esports slate.
+
+    Filters the shared board by the normalized event identity (``ewcEventId``) stamped at the
+    backend boundary — never a UI substring search. Returns live / upcoming / completed buckets
+    plus ``active`` so the page can fall back to the generic board when the event expires.
+    """
+    from .slate import esports_upcoming
+
+    board = esports_upcoming()
+    matches = board.get("matches") or []
+    if board.get("building") and not matches:
+        return {"eventId": EVENT_ID, "eventName": _EVENT_NAME, "active": False,
+                "building": True, "matches": {"live": [], "upcoming": [], "completed": []},
+                "asOf": None}
+    now_ms = time.time() * 1000
+    live, upcoming, completed = [], [], []
+    for m in matches:
+        if m.get("ewcEventId") != EVENT_ID:
+            continue
+        if m.get("live"):
+            live.append(m)
+        elif m.get("finished"):
+            completed.append(m)
+        else:
+            upcoming.append(m)
+    def _sort(bucket, desc=False):
+        return sorted(bucket, key=lambda x: (x.get("startTime") or 0), reverse=desc)
+    completed = _sort(completed, desc=True)
+    upcoming = _sort(upcoming)
+    active = bool(live or upcoming) or any(
+        (m.get("endTime") or 0) >= now_ms - _ACTIVE_RESULT_TAIL_S * 1000 for m in completed)
+    return {
+        "eventId": EVENT_ID,
+        "eventName": _EVENT_NAME,
+        "active": active,
+        "matches": {"live": live, "upcoming": upcoming, "completed": completed},
+        "asOf": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+    }
+
+
+@router.get("/api/esports/events/ewc-2026/club-standings")
+def ewc_club_standings(limit: int = Query(10, ge=1, le=100)):
+    """The published Club Championship reader: exactly one published snapshot, bounded limit.
+
+    Desktop requests ten; mobile requests five and expands to ten. The complete published
+    population is never served in full by the landing page. With no valid publication the route
+    serves the honest unavailable state (never a self-certified empty success, never zero points).
+    """
+    out = read_standings()
+    if out["status"] != "unavailable":
+        out["standings"] = out["standings"][:limit]
+    return out
