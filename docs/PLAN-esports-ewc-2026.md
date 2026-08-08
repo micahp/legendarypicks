@@ -2,7 +2,8 @@
 
 **Plan iteration:** 2 — research plus repository-skill review<br>
 **Date:** 2026-08-08<br>
-**Implementation status:** IMPLEMENTED — Phases 0–3 committed in the `lp-ewc-2026` worktree branch (`7afbee2..64711a6`), release-pass cleanup pending final commit<br>
+**Implementation status:** IMPLEMENTED — Phases 0–3 committed in the `lp-ewc-2026` worktree branch
+(`7afbee2..64711a6`), release-pass commit `36d1846` (+ final hygiene commit) on top; worktree clean
 **Release status:** candidate only — no DEV, production, database, or managed-service change
 
 This plan is the event-specific iteration of `ESPORTS-PRODUCT-DIRECTION.md`. It does not replace
@@ -453,3 +454,33 @@ moved out of the worktree; no mobile PNG committed.
 **Open decision 3 resolution (recorded).** Phase 0 spike found no permitted machine-readable
 standings publisher, so the standings route serves the honest `status: "unavailable"` contract and
 the validation-gated publisher awaits a permitted source — no browser scraping, no hard-coded table.
+
+### Release-pass re-check — 2026-08-08 (final hygiene commit)
+
+**Backend re-verified.** Full EWC-adjacent suite re-run this pass from the repo venv
+(`/root/legendarypicks/backend/venv`, fixture-driven, zero external requests): **109/109 passed**
+(`test_cod_ewc_reconcile.py` + `test_ewc_contract.py` + `test_ewc_routes.py` +
+`test_esports_streams.py` + `test_esports_predict_api.py` + `test_wc_context.py`).
+
+**`:3105` HTTP 500 — root cause measured (browser pass still NOT claimed).** The isolated frontend
+(`next start -p 3105`, node pid alive since 14:05) serves a worktree whose `.next/` contains only
+`cache/`, `package.json`, `routes-manifest.json` — **no build output** — so every page 500s with
+`MissingStaticPage ENOENT .../.next/server/pages/esports.html` (same for `/scores`). This is the
+AGENTS.md §11 symptom exactly ("route 500s with ENOENT ... while the process still looks alive"):
+the shared install `/root/legendarypicks/node_modules` is empty (worktree `node_modules` is a
+symlink to it), so `./node_modules/.bin/next` is gone — `logs/candidate-build2.log` and
+`logs/candidate-build4.log` both fail with `No such file or directory` — and `playwright` is
+unresolvable from the worktree, so `scripts/verify-ewc-browser.js` cannot run. The last successful
+build (`logs/candidate-build3.log`, 14:05, 20/20 static pages including `/esports` and `/scores`)
+had its `.next` output reduced to cache+manifests at 14:06. Per AGENTS.md §11 the recovery is
+`npm ci` in the main repo + relaunch — an externally managed action not taken here. Backend `:8105`
+(uvicorn) is healthy; `GET /api/esports/events/ewc-2026` returns 200. The committed desktop fixture
+(`browser-esports-desktop.png`) was captured before the 14:06 build-output loss and stands as the
+desktop render evidence; mobile remains unverified this pass.
+
+**Hygiene.** `backend/data/esports_team_logos.json` (a runtime disk cache written by
+`pandascore._ps_team_logo_api`) had grown 7 runtime-only keys in the working tree; restored to the
+tracked HEAD snapshot so the tree is clean. Two 0-byte failed probes (`probes/ewc-api-body.txt`,
+`probes/wayback-main.html`) removed and the Phase 0 fixture table updated to name only the real
+captures. `git diff --check` clean; secrets scan across `docs/ewc2026/`, the plan, and this commit's
+diff: zero matches. No DEV/production change, no managed-service restart, no deploy, no push.

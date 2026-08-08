@@ -14,7 +14,7 @@
 | `fixtures/pandascore-codmw-upcoming-2026-08-08T1325Z.json` | `GET api.pandascore.co/codmw/matches/upcoming` | 13:25 |
 | `fixtures/pandascore-codmw-serie10834-matches-2026-08-08T1330Z.json` | codmw upcoming+past feeds, serie 10834 filter | 13:30 |
 | `fixtures/pandascore-ewc-league-series-2026-08-08T1326Z.json` | `GET api.pandascore.co/leagues/5283/series` | 13:26 |
-| `probes/rulebooks-page-2026-08-08T1325Z.html`, `probes/bundle-index.js`, `probes/wayback-*.html`, `probes/api-root-probe.txt`, `probes/ewc-api-body.txt` | official EWC hosts + web archive | 13:23–13:25 |
+| `probes/rulebooks-page-2026-08-08T1325Z.html`, `probes/bundle-index.js`, `probes/wayback-club-championship.html`, `probes/api-root-probe.txt` | official EWC hosts + web archive | 13:23–13:25 |
 
 ### 1a. Verified defect (reproduced on the live dev feed, 13:20 UTC)
 
