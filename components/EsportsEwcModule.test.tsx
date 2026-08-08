@@ -120,4 +120,11 @@ describe('GameCard pending participants', () => {
     const { container } = render(<GameCard {...game({ teamId: '', name: '', label: 'Winner of Team Falcons–Gentle Mates', pending: true })} />)
     expect(container.querySelector('.cursor-pointer')).toBeTruthy()
   })
+
+  it('never renders a raw TBD/TBA string next to a dependency label', () => {
+    render(<GameCard {...game({ teamId: '', name: '', label: 'Winner of Team Falcons–Gentle Mates', pending: true })} />)
+    expect(screen.getByText('Winner of Team Falcons–Gentle Mates')).toBeTruthy()
+    expect(screen.queryByText('TBD')).toBeNull()
+    expect(screen.queryByText('TBA')).toBeNull()
+  })
 })
