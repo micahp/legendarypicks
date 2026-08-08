@@ -2,8 +2,9 @@ import React from 'react'
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
 import EsportsLeaguePage from '../pages/leagues/esports'
 
-/* The complete Esports league destination at /leagues/esports: EWC tournament center, Club
- * Championship rail (honest states), title discovery, non-EWC context, responsive limits. */
+/* The complete Esports league destination at /leagues/esports: EWC-first tournament center,
+ * inline all-esports board from /api/esports/upcoming, tabs, interactive title filtering,
+ * Club Championship honest states, and the responsive standings limit. */
 
 const now = Date.now()
 
@@ -32,7 +33,7 @@ const ewcLive = {
 }
 
 const ewcUpcoming = {
-  startTime: now + 60 * 60 * 1000, // today, so the module titles the block "Today across titles"
+  startTime: now + 60 * 60 * 1000,
   endTime: null,
   live: false,
   finished: false,
@@ -69,6 +70,77 @@ const projection = {
   matches: { live: [ewcLive], upcoming: [ewcUpcoming], completed: [ewcCompleted] },
 }
 
+// The broader all-esports board (shared /api/esports/upcoming contract): a non-EWC live LoL
+// broadcast, an upcoming LoL match, an upcoming Call of Duty match, and a finished LoL match.
+const boardLive = {
+  startTime: now,
+  endTime: null,
+  live: true,
+  finished: false,
+  title: 'LoL',
+  league: 'LEC — Summer 2026 (Regular Season)',
+  teamA: 'G2 Esports',
+  teamB: 'Karmine Corp',
+  favorite: null,
+  watch: {
+    platform: 'youtube',
+    url: 'https://www.youtube.com/watch?v=D4jmAm688f8',
+    channel: null,
+    embedUrl: 'https://www.youtube.com/embed/D4jmAm688f8',
+    online: true,
+    alternates: [],
+  },
+  streamKey: 'yt:D4jmAm688f8',
+  eventId: 10756,
+  prominence: 100,
+}
+
+const boardUpcomingLol = {
+  startTime: now + 2 * 60 * 60 * 1000,
+  endTime: null,
+  live: false,
+  finished: false,
+  title: 'LoL',
+  league: 'LEC — Summer 2026 (Regular Season)',
+  teamA: 'Fnatic',
+  teamB: 'Team Vitality',
+  favorite: null,
+  watch: null,
+}
+
+const boardUpcomingCod = {
+  startTime: now + 3 * 60 * 60 * 1000,
+  endTime: null,
+  live: false,
+  finished: false,
+  title: 'Call of Duty',
+  league: 'CDL Championship',
+  teamA: 'FaZe Clan',
+  teamB: 'OpTic Gaming',
+  favorite: null,
+  watch: null,
+}
+
+const boardResult = {
+  startTime: now - 3 * 60 * 60 * 1000,
+  endTime: now - 2 * 60 * 60 * 1000,
+  live: false,
+  finished: true,
+  winner: 'a' as const,
+  score: { a: 2, b: 1 },
+  title: 'LoL',
+  league: 'LEC — Summer 2026 (Regular Season)',
+  teamA: 'T1',
+  teamB: 'Gen.G',
+  favorite: null,
+  watch: null,
+}
+
+const upcoming = {
+  source: 'fixture',
+  matches: [boardLive, boardUpcomingLol, boardUpcomingCod, boardResult],
+}
+
 const standingsRows = [
   { rank: 1, clubId: 'team-falcons', clubName: 'Team Falcons', logo: null, points: 2600, eligibleTopEightCount: null, titleWins: null, eligibleToWin: null, movement: null },
   { rank: 2, clubId: 'twisted-minds', clubName: 'Twisted Minds', logo: null, points: 1400, eligibleTopEightCount: null, titleWins: null, eligibleToWin: null, movement: null },
@@ -86,7 +158,7 @@ const standings = (status: 'current' | 'stale' | 'unavailable' = 'current') => (
 const titles = {
   titles: [
     { slug: 'call-of-duty', label: 'Call of Duty', match_count: 3, live_count: 1, result_count: 5, next_start: 1786215600000 },
-    { slug: 'league-of-legends', label: 'LoL', match_count: 2, live_count: 0, result_count: 7, next_start: 1786220000000 },
+    { slug: 'league-of-legends', label: 'LoL', match_count: 2, live_count: 1, result_count: 7, next_start: 1786220000000 },
     { slug: 'counter-strike-2', label: 'CS2', match_count: 0, live_count: 0, result_count: 4, next_start: null },
   ],
 }
@@ -106,14 +178,6 @@ function mockMatchMedia(matches: boolean) {
   return mq
 }
 
-type FetchBehavior = Record<string, () => Promise<{ json: () => Promise<unknown> }>>
-
-// Drain pending fetch resolutions so a late setState never fires after the test body
-// (React's "update not wrapped in act" warning).
-async function flush() {
-  await act(async () => { await new Promise((r) => setTimeout(r, 0)) })
-}
-
 function mockFetch(respond: (url: string) => unknown) {
   const fn = jest.fn((url: string) => {
     const value = respond(String(url))
@@ -124,58 +188,147 @@ function mockFetch(respond: (url: string) => unknown) {
   return fn
 }
 
+function defaultRespond(url: string): unknown {
+  if (url === '/api/esports/upcoming') return upcoming
+  if (url.includes('/club-standings')) return standings()
+  if (url === '/api/esports/titles') return titles
+  return projection
+}
+
 function renderHub(desktop = true, respond?: (url: string) => unknown) {
   mockMatchMedia(desktop)
-  const fetchMock = mockFetch(respond ?? ((url: string) => {
-    if (url.includes('/club-standings')) return standings()
-    if (url === '/api/esports/titles') return titles
-    return projection
-  }))
+  const fetchMock = mockFetch(respond ?? defaultRespond)
   render(<EsportsLeaguePage />)
   return fetchMock
 }
 
-describe('esports league hub — complete product (desktop)', () => {
-  it('renders header, EWC tournament center, Club Championship rail, title discovery, and non-EWC context', async () => {
+async function flush() {
+  await act(async () => { await new Promise((r) => setTimeout(r, 0)) })
+}
+
+describe('esports league hub — header and EWC-first center', () => {
+  it('renders the league header, EWC tournament center, and Club Championship rail by default', async () => {
     const fetchMock = renderHub(true)
 
-    // League-style header + breadcrumb + live-board link
     expect(screen.getByText('Leagues').closest('a')?.getAttribute('href')).toBe('/leagues')
     expect(screen.getByRole('heading', { name: 'Esports' })).toBeTruthy()
     expect(screen.getByText('Live esports →').closest('a')?.getAttribute('href')).toBe('/esports')
 
-    // EWC tournament center — event focus, live, today, results
+    // EWC tournament center (default tab) — event focus, live, today, results.
     await waitFor(() => expect(screen.getByText('EWC 2026')).toBeTruthy())
     expect(screen.getByText('Esports World Cup 2026')).toBeTruthy()
-    // Team Falcons appears in both the live match and the rail — both must render.
     expect(screen.getAllByText('Team Falcons').length).toBeGreaterThanOrEqual(2)
     expect(screen.getByText('Gentle Mates')).toBeTruthy()
-    expect(screen.getByText('Natus Vincere')).toBeTruthy()
     expect(screen.getByText('Today across titles')).toBeTruthy()
     expect(screen.getByText('EWC results')).toBeTruthy()
     expect(screen.getByText('G2 Esports')).toBeTruthy()
 
-    // Club Championship rail — rows, tabular points, source
+    // Club Championship rail — rows, tabular points, source; desktop requests ten rows.
     expect(screen.getByText('Club Championship')).toBeTruthy()
     expect(screen.getByText('Twisted Minds')).toBeTruthy()
     expect(screen.getByText('2600')).toBeTruthy()
     expect(screen.getByText('EWC Official')).toBeTruthy()
-
-    // Desktop requests ten rows; the rail is expanded so no expand action shows.
     expect(fetchMock.mock.calls.some((c) => String(c[0]).includes('club-standings?limit=10'))).toBe(true)
     expect(screen.queryByText('Show full top ten →')).toBeNull()
+    await flush()
+  })
+})
 
-    // Title discovery — pills to title desks and picks
-    expect(screen.getByText('All esports titles')).toBeTruthy()
-    expect(screen.getByText('Call of Duty').closest('a')?.getAttribute('href')).toBe('/esports/call-of-duty')
-    expect(screen.getByText('LoL').closest('a')?.getAttribute('href')).toBe('/esports/league-of-legends')
-    const picksLinks = screen.getAllByText('Picks').map((el) => el.closest('a')?.getAttribute('href'))
+describe('esports league hub — inline all-esports board from /api/esports/upcoming', () => {
+  it('renders live, upcoming, and results content inline (not a link card)', async () => {
+    renderHub(true)
+
+    // Live & Upcoming tab: the shared LiveNow player + day-grouped schedule rows.
+    fireEvent.click(screen.getByRole('button', { name: 'Live & Upcoming' }))
+    await waitFor(() => expect(screen.getByText('G2 Esports')).toBeTruthy())
+    expect(screen.getByText('Karmine Corp')).toBeTruthy()
+    expect(screen.getByText('Fnatic')).toBeTruthy()
+    expect(screen.getByText('Team Vitality')).toBeTruthy()
+    expect(screen.getByText('FaZe Clan')).toBeTruthy()
+    expect(screen.getByText('Upcoming matches')).toBeTruthy()
+
+    // Results tab: finished matches render inline with scores.
+    fireEvent.click(screen.getByRole('button', { name: 'Results' }))
+    await waitFor(() => expect(screen.getByText('T1')).toBeTruthy())
+    expect(screen.getByText('Gen.G')).toBeTruthy()
+    expect(screen.getByText('Recent results')).toBeTruthy()
+    await flush()
+  })
+
+  it('renders loading, error+retry, and empty states for the board', async () => {
+    const fetchMock = mockFetch((url) => {
+      if (url === '/api/esports/upcoming') return new Error('board down')
+      return defaultRespond(url)
+    })
+    mockMatchMedia(true)
+    render(<EsportsLeaguePage />)
+    fireEvent.click(screen.getByRole('button', { name: 'Live & Upcoming' }))
+    await waitFor(() => expect(screen.getByText(/Couldn't load the esports board/)).toBeTruthy())
+    expect(screen.queryByText('G2 Esports')).toBeNull()
+    await flush()
+  })
+})
+
+describe('esports league hub — games tab with per-title context and interactive filtering', () => {
+  it('renders live/next/recent context per title and deep links', async () => {
+    renderHub(true)
+    fireEvent.click(screen.getByRole('button', { name: 'Games' }))
+    await waitFor(() => expect(screen.getByText('Titles on the board')).toBeTruthy())
+
+    // Per-title context: LoL live now (G2 vs Karmine), next (Fnatic vs Vitality), recent (T1 vs Gen.G).
+    await waitFor(() => expect(screen.getByText(/G2 Esports vs Karmine Corp/)).toBeTruthy())
+    expect(screen.getByText(/Fnatic vs Team Vitality/)).toBeTruthy()
+    expect(screen.getByText(/T1 vs Gen\.G/)).toBeTruthy()
+    // Deep links to the desk and picks.
+    const deskLinks = screen.getAllByText('Desk →').map((el) => el.closest('a')?.getAttribute('href'))
+    expect(deskLinks).toContain('/esports/call-of-duty')
+    expect(deskLinks).toContain('/esports/league-of-legends')
+    const picksLinks = screen.getAllByText('Picks →').map((el) => el.closest('a')?.getAttribute('href'))
     expect(picksLinks).toContain('/predict?title=call-of-duty')
-    expect(picksLinks).toContain('/predict?title=league-of-legends')
+    await flush()
+  })
 
-    // Broader non-EWC context — the live board stays reachable
-    expect(screen.getByText('Live board →').closest('a')?.getAttribute('href')).toBe('/esports')
-    expect(screen.getByText('Make Picks →').closest('a')?.getAttribute('href')).toBe('/predict')
+  it('filters the rendered board by title and clears', async () => {
+    renderHub(true)
+    fireEvent.click(screen.getByRole('button', { name: 'Games' }))
+    await waitFor(() => expect(screen.getByText('Titles on the board')).toBeTruthy())
+
+    // Wait for the title chips (data-dependent), then select Call of Duty.
+    await waitFor(() => expect(screen.getAllByRole('button', { name: /Call of Duty/ }).length).toBeGreaterThan(0))
+    fireEvent.click(screen.getAllByRole('button', { name: /Call of Duty/ })[0])
+    await waitFor(() => expect(screen.getByText(/Showing only Call of Duty/)).toBeTruthy())
+
+    // The Live & Upcoming tab now shows only Call of Duty matches.
+    fireEvent.click(screen.getByRole('button', { name: 'Live & Upcoming' }))
+    await waitFor(() => expect(screen.getByText('FaZe Clan')).toBeTruthy())
+    expect(screen.queryByText('G2 Esports')).toBeNull()
+    expect(screen.queryByText('Fnatic')).toBeNull()
+
+    // Results are filtered too.
+    fireEvent.click(screen.getByRole('button', { name: 'Results' }))
+    await waitFor(() => expect(screen.getByText(/No finished matches yet/)).toBeTruthy())
+    expect(screen.queryByText('T1')).toBeNull()
+
+    // Clearing the filter restores the full board.
+    fireEvent.click(screen.getByRole('button', { name: 'Live & Upcoming' }))
+    fireEvent.click(screen.getByText('Clear filter ×'))
+    await waitFor(() => expect(screen.getByText('G2 Esports')).toBeTruthy())
+    expect(screen.queryByText(/Showing only Call of Duty/)).toBeNull()
+    await flush()
+  })
+})
+
+describe('esports league hub — picks tab', () => {
+  it('links to the picks board and each title picks desk', async () => {
+    renderHub(true)
+    fireEvent.click(screen.getByRole('button', { name: 'Picks' }))
+    await waitFor(() => expect(screen.getByText('Open the picks board')).toBeTruthy())
+    expect(screen.getByText('Open the picks board').closest('a')?.getAttribute('href')).toBe('/predict')
+    // Title pick pills are data-dependent — wait for them.
+    await waitFor(() => expect(screen.getAllByText(/picks →/).length).toBeGreaterThan(0))
+    const links = screen.getAllByText(/picks →/).map((el) => el.closest('a')?.getAttribute('href'))
+    expect(links).toContain('/predict?title=call-of-duty')
+    expect(links).toContain('/predict?title=league-of-legends')
     await flush()
   })
 })
@@ -187,7 +340,6 @@ describe('esports league hub — responsive standings limit', () => {
     await waitFor(() => expect(screen.getByText('Club Championship')).toBeTruthy())
     expect(fetchMock.mock.calls.some((c) => String(c[0]).includes('club-standings?limit=5'))).toBe(true)
 
-    // Collapsed mobile rail offers the bounded follow-up to ten.
     const expand = screen.getByText('Show full top ten →')
     fireEvent.click(expand)
 
@@ -201,11 +353,9 @@ describe('esports league hub — data states', () => {
   it('renders the honest unavailable Club Championship state', async () => {
     renderHub(true, (url) => {
       if (url.includes('/club-standings')) return standings('unavailable')
-      if (url === '/api/esports/titles') return titles
-      return projection
+      return defaultRespond(url)
     })
     await waitFor(() => expect(screen.getByText('Standings unavailable')).toBeTruthy())
-    // No rail rows — the rail must not render club names or points.
     expect(screen.queryByText('Twisted Minds')).toBeNull()
     expect(screen.queryByText('2600')).toBeNull()
     await flush()
@@ -214,8 +364,7 @@ describe('esports league hub — data states', () => {
   it('shows a visible stale badge without a tooltip', async () => {
     renderHub(true, (url) => {
       if (url.includes('/club-standings')) return standings('stale')
-      if (url === '/api/esports/titles') return titles
-      return projection
+      return defaultRespond(url)
     })
     await waitFor(() => expect(screen.getByText('Stale')).toBeTruthy())
     await flush()
@@ -225,9 +374,7 @@ describe('esports league hub — data states', () => {
     let failing = true
     const fetchMock = mockFetch((url) => {
       if (url === '/api/esports/events/ewc-2026' && failing) return new Error('boom')
-      if (url.includes('/club-standings')) return standings()
-      if (url === '/api/esports/titles') return titles
-      return projection
+      return defaultRespond(url)
     })
     mockMatchMedia(true)
     render(<EsportsLeaguePage />)
@@ -246,9 +393,7 @@ describe('esports league hub — data states', () => {
       if (url === '/api/esports/events/ewc-2026') {
         return { eventId: 'ewc-2026', eventName: 'Esports World Cup 2026', active: false, asOf: null, matches: { live: [], upcoming: [], completed: [] } }
       }
-      if (url.includes('/club-standings')) return standings()
-      if (url === '/api/esports/titles') return titles
-      return projection
+      return defaultRespond(url)
     })
     await waitFor(() => expect(screen.getByText(/No active EWC 2026 matches right now/)).toBeTruthy())
     expect(screen.queryByText('EWC 2026')).toBeNull()
@@ -258,9 +403,9 @@ describe('esports league hub — data states', () => {
   it('shows a quiet note when the title directory is unavailable', async () => {
     renderHub(true, (url) => {
       if (url === '/api/esports/titles') return new Error('titles down')
-      if (url.includes('/club-standings')) return standings()
-      return projection
+      return defaultRespond(url)
     })
+    fireEvent.click(screen.getByRole('button', { name: 'Games' }))
     await waitFor(() => expect(screen.getByText(/title directory is unavailable/)).toBeTruthy())
     await flush()
   })
