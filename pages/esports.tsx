@@ -32,7 +32,7 @@ type UpMatch = { startTime: number | null; endTime: number | null; live: boolean
 type UpcomingData = { matches: UpMatch[]; source?: string; error?: string; building?: boolean }
 
 /* ---------------- EWC 2026 focus module ---------------- */
-type EwcProjection = {
+export type EwcProjection = {
   eventId: string
   eventName: string
   active: boolean
@@ -51,7 +51,7 @@ type StandingRow = {
   eligibleToWin?: boolean | null
   movement?: number | null
 }
-type Standings = {
+export type Standings = {
   event: string
   standings: StandingRow[]
   asOf: string | null
@@ -1366,24 +1366,10 @@ export function EwcModule({ projection, host, standings, standingsLimit, onExpan
 export default function EsportsPage() {
   const [live, setLive] = useState<LiveMatch | null>(null)
   const [upcoming, setUpcoming] = useState<UpcomingData | null>(null)
-  const [projection, setProjection] = useState<EwcProjection | null>(null)
-  const [standings, setStandings] = useState<Standings | null>(null)
-  const [standingsLoading, setStandingsLoading] = useState(false)
-  // The landing page requests only the rows it renders: ten on desktop, five on mobile; the
-  // expand action performs the bounded follow-up to ten.
-  const [standingsLimit, setStandingsLimit] = useState<number | null>(null)
   const [host, setHost] = useState('')
   const timers = useRef<ReturnType<typeof setInterval>[]>([])
 
   useEffect(() => { setHost(window.location.hostname) }, [])
-
-  useEffect(() => {
-    const mq = window.matchMedia('(min-width: 1024px)')
-    const apply = () => setStandingsLimit(mq.matches ? 10 : 5)
-    apply()
-    mq.addEventListener('change', apply)
-    return () => mq.removeEventListener('change', apply)
-  }, [])
 
   useEffect(() => {
     let alive = true
@@ -1392,29 +1378,13 @@ export default function EsportsPage() {
     }
     const loadLive = j('/api/esports/lol/msi/live', setLive)
     const loadUpcoming = j('/api/esports/upcoming', setUpcoming)
-    const loadProjection = j('/api/esports/events/ewc-2026', setProjection)
-    loadLive(); loadUpcoming(); loadProjection()
+    loadLive(); loadUpcoming()
     timers.current = [
       setInterval(loadLive, 15_000),
       setInterval(loadUpcoming, POLL_MS),
-      setInterval(loadProjection, POLL_MS),
     ]
     return () => { alive = false; timers.current.forEach(clearInterval) }
   }, [])
-
-  // Club Championship: fetched only while the EWC focus is active, at the limit the page renders.
-  const ewcFocus = Boolean(projection?.active)
-  useEffect(() => {
-    if (!ewcFocus || standingsLimit == null) return
-    let alive = true
-    setStandingsLoading(true)
-    fetch(`/api/esports/events/ewc-2026/club-standings?limit=${standingsLimit}`, { cache: 'no-store' })
-      .then((r) => r.json())
-      .then((d) => { if (alive) setStandings(d) })
-      .catch(() => { /* keep last known; the rail renders unavailable only on a real response */ })
-      .finally(() => { if (alive) setStandingsLoading(false) })
-    return () => { alive = false }
-  }, [ewcFocus, standingsLimit])
 
   // Hero features a live match whose stream we've CONFIRMED is on-air — never a dead embed.
   // ALL live games go above the fold. MSI keeps its rich dedicated view on the generic board.
@@ -1427,10 +1397,6 @@ export default function EsportsPage() {
     [m.teamA, m.teamB].some((t) => msiTeams.some((n) => n && (_n(t) === n || _n(t).includes(n) || n.includes(_n(t)))))
   const allMatches = upcoming?.matches ?? []
   const liveMatches = allMatches.filter((m) => m.live && !isMsi(m))
-  // During the EWC focus the module above owns the EWC live matches; the generic board below
-  // shows the rest (non-EWC live must not disappear, and EWC matches must not duplicate).
-  const genericMatches = ewcFocus ? allMatches.filter((m) => m.ewcEventId !== 'ewc-2026') : allMatches
-  const genericLive = genericMatches.filter((m) => m.live && !isMsi(m))
   const anyLive = !!live?.live || buildBroadcastViews(allMatches, liveMatches, Date.now()).length > 0
 
   return (
@@ -1455,22 +1421,7 @@ export default function EsportsPage() {
           </Link>
         </header>
 
-        {/* Event-focus contract: while EWC 2026 is active the page leads with the EWC tournament
-            center; when the event expires (data-driven) it falls back to the generic
-            broadcast-first board. No MSI-special decision is hard-coded here. */}
-        {ewcFocus && projection ? (
-          <EwcModule projection={projection} host={host} standings={standings}
-                     standingsLimit={standingsLimit ?? 5} onExpandStandings={() => setStandingsLimit(10)}
-                     standingsLoading={standingsLoading} />
-        ) : (
-          <LiveNow matches={liveMatches} host={host} msi={live?.live ? live : null} slate={allMatches} />
-        )}
-
-        {/* The complete generic schedule remains below the EWC module; non-EWC live matches
-            stay reachable above it (genericMatches keeps the EWC module's rows out of the dupes). */}
-        {ewcFocus ? (
-          <LiveNow matches={genericLive} host={host} msi={null} slate={genericMatches} />
-        ) : null}
+        <LiveNow matches={liveMatches} host={host} msi={live?.live ? live : null} slate={allMatches} />
 
         <UpcomingSlate data={upcoming} />
       </div>
