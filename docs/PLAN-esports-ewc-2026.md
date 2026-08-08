@@ -474,3 +474,47 @@ adds a title directory plus outbound links; that is not the complete Esports lea
 9. **Preview + browser gate.** Rebuild only the disposable preview `/root/lp-ewc-preview-BIEs6Q`
    (:3105/:8105) and browser-verify the public `/leagues/esports` route with **zero console/page
    errors**. No managed DEV, no merge/push/deploy, no DB write.
+
+### Post-review implementation evidence — 2026-08-08 (final)
+
+Commits on this branch after the gap record: `46409bb` (this gap + acceptance criteria), `78eb91b`
+(hub completion), `559a698` (focused tests).
+
+**Implementation.** `/leagues/esports` is now a materially complete league destination: EWC 2026
+tournament center stays the default (first) tab; Live & Upcoming and Results tabs render the
+broader all-esports board inline from the existing `/api/esports/upcoming` contract using the
+shared `LiveNow` player and `UpcomingSlate` `schedule`/`results` variants (no link card); Games tab
+shows per-title live/next/recent context with desk + picks deep links and the title controls
+filter the rendered live/upcoming/results content (visible chip + clear); Picks tab links the picks
+board and every title flow; loading skeletons, error + retry, and empty states per data source; the
+tab bar scrolls on mobile. `/esports` page file was touched only to make `UpcomingSlate` reusable
+(`variant` prop) and fix a stale footnote — no tournament-center takeover. Club Championship
+standings stay honest `unavailable` (no permitted machine-readable publisher; no invented rows).
+
+**Backend: 111/111** (fixture-driven, zero external requests) — unchanged contracts.
+
+**Frontend Jest: 154/156** — the two failures are the pre-existing `components/Game/WCContext.test.tsx`
+pair (untouched). The hub suite (12 tests) now proves: inline live/upcoming/results content renders
+from the upcoming payload (not merely links), interactive title filtering narrows the board and
+clears, tabs switch sections, board loading/error states, plus the earlier EWC-first, standings
+honesty, and responsive 10/5 guarantees. Zero "not wrapped in act" warnings.
+
+**Browser gate (public route) — PASS, zero console/page errors.** `scripts/verify-hub-browser.js`
+(playwright + installed chromium, run from the preview dir) against
+`http://5.252.52.108:3105/leagues/esports`: desktop walk renders the EWC module, Club Championship
+rail with the honest unavailable state, all five tabs, 8 Games desk links + 13 context lines, the
+filter chip and its persistence on the Live tab, and the Picks board link — `errors: []`; mobile
+(390px) renders the EWC center with a scrollable tab bar — `errors: []`; `/esports` shows no EWC
+module (no takeover) — `errors: []`; `/leagues` lists the Esports card. The only excluded events are
+third-party (YouTube embed telemetry) and `net::ERR_ABORTED` image teardown aborts, both verified
+non-failures (sample logo URLs return 200).
+
+**Preview environment fix (root cause, documented).** The preview frontend's `/api` rewrite target
+is baked into `.next/standalone/.next/routes-manifest.json` at `next build` time — `next start` does
+not re-evaluate `next.config.js` `rewrites()`. The first rebuild baked the default
+`http://localhost:8000` (nothing listens there) → all esports APIs 500'd through the proxy. Rebuilt
+with `API_PROXY_TARGET=http://127.0.0.1:8105`; all four esports endpoints now proxy 200.
+
+**Candidate vs DEV/production.** All of the above ran in the isolated preview and worktree only. No
+managed DEV change, no merge/push/deploy, no DB write, no tag move; `/root/legendarypicks` and the
+managed `:3096`/`:8096`/tunnels untouched. Worktree clean; `git diff --check` clean.
