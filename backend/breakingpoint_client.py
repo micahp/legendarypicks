@@ -69,10 +69,14 @@ def _fetch_all():
     for t in pp.get("allTeams", []):
         teams[t["id"]] = t
 
-    # Event lookup: id → name
+    # Event lookup: id → name. allEvents ids arrive as strings while match.event_id is an
+    # int; normalize so the match lookup resolves (previously every event name came back empty).
     events = {}
     for ev in pp.get("allEvents", []):
-        events[ev["id"]] = ev.get("name", "")
+        try:
+            events[int(ev["id"])] = ev.get("name", "")
+        except (KeyError, TypeError, ValueError):
+            events[ev["id"]] = ev.get("name", "")
 
     # Collect all matches from trpcState queries
     trpc = pp.get("trpcState", {})
@@ -195,6 +199,8 @@ def get_cod_matches(date_str=None):
             "date": match_dt.strftime("%Y-%m-%dT%H:%M:%SZ"),
             "state": state,
             "status": status_display,
+            "event": events.get(m.get("event_id")) or "",
+            "round": round_name,
             "home": {
                 "abbrev": t1_abbrev,
                 "name": t1_name,
