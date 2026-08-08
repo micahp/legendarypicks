@@ -1,0 +1,1558 @@
+[
+ {
+  "id": 1609949,
+  "name": "3rd place match: TBD vs TBD",
+  "status": "not_started",
+  "results": [],
+  "live": {
+   "supported": false,
+   "url": null,
+   "opens_at": null
+  },
+  "slug": "2026-08-09-3cb38b4d-4512-4c11-9e44-784a1a70d6d8",
+  "games": [
+   {
+    "complete": false,
+    "id": 9695,
+    "position": 1,
+    "status": "not_started",
+    "length": null,
+    "finished": false,
+    "winner": {
+     "id": null,
+     "type": "Team"
+    },
+    "match_id": 1609949,
+    "begin_at": null,
+    "detailed_stats": true,
+    "end_at": null,
+    "forfeit": false,
+    "winner_type": "Team"
+   },
+   {
+    "complete": false,
+    "id": 9696,
+    "position": 2,
+    "status": "not_started",
+    "length": null,
+    "finished": false,
+    "winner": {
+     "id": null,
+     "type": "Team"
+    },
+    "match_id": 1609949,
+    "begin_at": null,
+    "detailed_stats": true,
+    "end_at": null,
+    "forfeit": false,
+    "winner_type": "Team"
+   },
+   {
+    "complete": false,
+    "id": 9697,
+    "position": 3,
+    "status": "not_started",
+    "length": null,
+    "finished": false,
+    "winner": {
+     "id": null,
+     "type": "Team"
+    },
+    "match_id": 1609949,
+    "begin_at": null,
+    "detailed_stats": true,
+    "end_at": null,
+    "forfeit": false,
+    "winner_type": "Team"
+   },
+   {
+    "complete": false,
+    "id": 9698,
+    "position": 4,
+    "status": "not_started",
+    "length": null,
+    "finished": false,
+    "winner": {
+     "id": null,
+     "type": "Team"
+    },
+    "match_id": 1609949,
+    "begin_at": null,
+    "detailed_stats": true,
+    "end_at": null,
+    "forfeit": false,
+    "winner_type": "Team"
+   },
+   {
+    "complete": false,
+    "id": 9699,
+    "position": 5,
+    "status": "not_started",
+    "length": null,
+    "finished": false,
+    "winner": {
+     "id": null,
+     "type": "Team"
+    },
+    "match_id": 1609949,
+    "begin_at": null,
+    "detailed_stats": true,
+    "end_at": null,
+    "forfeit": false,
+    "winner_type": "Team"
+   },
+   {
+    "complete": false,
+    "id": 9700,
+    "position": 6,
+    "status": "not_started",
+    "length": null,
+    "finished": false,
+    "winner": {
+     "id": null,
+     "type": "Team"
+    },
+    "match_id": 1609949,
+    "begin_at": null,
+    "detailed_stats": true,
+    "end_at": null,
+    "forfeit": false,
+    "winner_type": "Team"
+   },
+   {
+    "complete": false,
+    "id": 9701,
+    "position": 7,
+    "status": "not_started",
+    "length": null,
+    "finished": false,
+    "winner": {
+     "id": null,
+     "type": "Team"
+    },
+    "match_id": 1609949,
+    "begin_at": null,
+    "detailed_stats": true,
+    "end_at": null,
+    "forfeit": false,
+    "winner_type": "Team"
+   },
+   {
+    "complete": false,
+    "id": 9702,
+    "position": 8,
+    "status": "not_started",
+    "length": null,
+    "finished": false,
+    "winner": {
+     "id": null,
+     "type": "Team"
+    },
+    "match_id": 1609949,
+    "begin_at": null,
+    "detailed_stats": true,
+    "end_at": null,
+    "forfeit": false,
+    "winner_type": "Team"
+   },
+   {
+    "complete": false,
+    "id": 9703,
+    "position": 9,
+    "status": "not_started",
+    "length": null,
+    "finished": false,
+    "winner": {
+     "id": null,
+     "type": "Team"
+    },
+    "match_id": 1609949,
+    "begin_at": null,
+    "detailed_stats": true,
+    "end_at": null,
+    "forfeit": false,
+    "winner_type": "Team"
+   }
+  ],
+  "begin_at": "2026-08-09T16:20:00Z",
+  "detailed_stats": true,
+  "draw": false,
+  "end_at": null,
+  "forfeit": false,
+  "winner_id": null,
+  "winner_type": "Team",
+  "tournament_id": 21576,
+  "modified_at": "2026-08-08T13:20:36Z",
+  "match_type": "best_of",
+  "number_of_games": 9,
+  "scheduled_at": "2026-08-09T16:20:00Z",
+  "opponents": [],
+  "previous_matches": [
+   {
+    "type": "loser",
+    "match_id": 1609946
+   },
+   {
+    "type": "loser",
+    "match_id": 1609947
+   }
+  ],
+  "original_scheduled_at": "2026-08-09T16:20:00Z",
+  "game_advantage": null,
+  "streams_list": [
+   {
+    "main": true,
+    "language": "en",
+    "embed_url": null,
+    "official": true,
+    "raw_url": "https://www.youtube.com/@CODLeague"
+   }
+  ]
+ },
+ {
+  "id": 1609948,
+  "name": "Grand final: TBD vs TBD",
+  "status": "not_started",
+  "results": [],
+  "live": {
+   "supported": false,
+   "url": null,
+   "opens_at": null
+  },
+  "slug": "2026-08-09-9819ad9f-06ff-41b4-b3f1-e022e5adc7b3",
+  "games": [
+   {
+    "complete": false,
+    "id": 9686,
+    "position": 1,
+    "status": "not_started",
+    "length": null,
+    "finished": false,
+    "winner": {
+     "id": null,
+     "type": "Team"
+    },
+    "match_id": 1609948,
+    "begin_at": null,
+    "detailed_stats": true,
+    "end_at": null,
+    "forfeit": false,
+    "winner_type": "Team"
+   },
+   {
+    "complete": false,
+    "id": 9687,
+    "position": 2,
+    "status": "not_started",
+    "length": null,
+    "finished": false,
+    "winner": {
+     "id": null,
+     "type": "Team"
+    },
+    "match_id": 1609948,
+    "begin_at": null,
+    "detailed_stats": true,
+    "end_at": null,
+    "forfeit": false,
+    "winner_type": "Team"
+   },
+   {
+    "complete": false,
+    "id": 9688,
+    "position": 3,
+    "status": "not_started",
+    "length": null,
+    "finished": false,
+    "winner": {
+     "id": null,
+     "type": "Team"
+    },
+    "match_id": 1609948,
+    "begin_at": null,
+    "detailed_stats": true,
+    "end_at": null,
+    "forfeit": false,
+    "winner_type": "Team"
+   },
+   {
+    "complete": false,
+    "id": 9689,
+    "position": 4,
+    "status": "not_started",
+    "length": null,
+    "finished": false,
+    "winner": {
+     "id": null,
+     "type": "Team"
+    },
+    "match_id": 1609948,
+    "begin_at": null,
+    "detailed_stats": true,
+    "end_at": null,
+    "forfeit": false,
+    "winner_type": "Team"
+   },
+   {
+    "complete": false,
+    "id": 9690,
+    "position": 5,
+    "status": "not_started",
+    "length": null,
+    "finished": false,
+    "winner": {
+     "id": null,
+     "type": "Team"
+    },
+    "match_id": 1609948,
+    "begin_at": null,
+    "detailed_stats": true,
+    "end_at": null,
+    "forfeit": false,
+    "winner_type": "Team"
+   },
+   {
+    "complete": false,
+    "id": 9691,
+    "position": 6,
+    "status": "not_started",
+    "length": null,
+    "finished": false,
+    "winner": {
+     "id": null,
+     "type": "Team"
+    },
+    "match_id": 1609948,
+    "begin_at": null,
+    "detailed_stats": true,
+    "end_at": null,
+    "forfeit": false,
+    "winner_type": "Team"
+   },
+   {
+    "complete": false,
+    "id": 9692,
+    "position": 7,
+    "status": "not_started",
+    "length": null,
+    "finished": false,
+    "winner": {
+     "id": null,
+     "type": "Team"
+    },
+    "match_id": 1609948,
+    "begin_at": null,
+    "detailed_stats": true,
+    "end_at": null,
+    "forfeit": false,
+    "winner_type": "Team"
+   },
+   {
+    "complete": false,
+    "id": 9693,
+    "position": 8,
+    "status": "not_started",
+    "length": null,
+    "finished": false,
+    "winner": {
+     "id": null,
+     "type": "Team"
+    },
+    "match_id": 1609948,
+    "begin_at": null,
+    "detailed_stats": true,
+    "end_at": null,
+    "forfeit": false,
+    "winner_type": "Team"
+   },
+   {
+    "complete": false,
+    "id": 9694,
+    "position": 9,
+    "status": "not_started",
+    "length": null,
+    "finished": false,
+    "winner": {
+     "id": null,
+     "type": "Team"
+    },
+    "match_id": 1609948,
+    "begin_at": null,
+    "detailed_stats": true,
+    "end_at": null,
+    "forfeit": false,
+    "winner_type": "Team"
+   }
+  ],
+  "begin_at": "2026-08-09T18:00:00Z",
+  "detailed_stats": true,
+  "draw": false,
+  "end_at": null,
+  "forfeit": false,
+  "winner_id": null,
+  "winner_type": "Team",
+  "tournament_id": 21576,
+  "modified_at": "2026-08-08T13:20:38Z",
+  "match_type": "best_of",
+  "number_of_games": 9,
+  "scheduled_at": "2026-08-09T18:00:00Z",
+  "opponents": [],
+  "previous_matches": [
+   {
+    "type": "winner",
+    "match_id": 1609946
+   },
+   {
+    "type": "winner",
+    "match_id": 1609947
+   }
+  ],
+  "original_scheduled_at": "2026-08-09T18:00:00Z",
+  "game_advantage": null,
+  "streams_list": [
+   {
+    "main": true,
+    "language": "en",
+    "embed_url": null,
+    "official": true,
+    "raw_url": "https://www.youtube.com/@CODLeague"
+   }
+  ]
+ },
+ {
+  "id": 1609947,
+  "name": "Semifinal 2: 100T vs TBD",
+  "status": "not_started",
+  "results": [
+   {
+    "team_id": 135378,
+    "score": 0
+   }
+  ],
+  "live": {
+   "supported": false,
+   "url": null,
+   "opens_at": null
+  },
+  "slug": "2026-08-09-7f432961-220a-47b3-ba93-d7f07b27d7fe",
+  "games": [
+   {
+    "complete": false,
+    "id": 9679,
+    "position": 1,
+    "status": "not_started",
+    "length": null,
+    "finished": false,
+    "winner": {
+     "id": null,
+     "type": "Team"
+    },
+    "match_id": 1609947,
+    "begin_at": null,
+    "detailed_stats": true,
+    "end_at": null,
+    "forfeit": false,
+    "winner_type": "Team"
+   },
+   {
+    "complete": false,
+    "id": 9680,
+    "position": 2,
+    "status": "not_started",
+    "length": null,
+    "finished": false,
+    "winner": {
+     "id": null,
+     "type": "Team"
+    },
+    "match_id": 1609947,
+    "begin_at": null,
+    "detailed_stats": true,
+    "end_at": null,
+    "forfeit": false,
+    "winner_type": "Team"
+   },
+   {
+    "complete": false,
+    "id": 9681,
+    "position": 3,
+    "status": "not_started",
+    "length": null,
+    "finished": false,
+    "winner": {
+     "id": null,
+     "type": "Team"
+    },
+    "match_id": 1609947,
+    "begin_at": null,
+    "detailed_stats": true,
+    "end_at": null,
+    "forfeit": false,
+    "winner_type": "Team"
+   },
+   {
+    "complete": false,
+    "id": 9682,
+    "position": 4,
+    "status": "not_started",
+    "length": null,
+    "finished": false,
+    "winner": {
+     "id": null,
+     "type": "Team"
+    },
+    "match_id": 1609947,
+    "begin_at": null,
+    "detailed_stats": true,
+    "end_at": null,
+    "forfeit": false,
+    "winner_type": "Team"
+   },
+   {
+    "complete": false,
+    "id": 9683,
+    "position": 5,
+    "status": "not_started",
+    "length": null,
+    "finished": false,
+    "winner": {
+     "id": null,
+     "type": "Team"
+    },
+    "match_id": 1609947,
+    "begin_at": null,
+    "detailed_stats": true,
+    "end_at": null,
+    "forfeit": false,
+    "winner_type": "Team"
+   },
+   {
+    "complete": false,
+    "id": 9684,
+    "position": 6,
+    "status": "not_started",
+    "length": null,
+    "finished": false,
+    "winner": {
+     "id": null,
+     "type": "Team"
+    },
+    "match_id": 1609947,
+    "begin_at": null,
+    "detailed_stats": true,
+    "end_at": null,
+    "forfeit": false,
+    "winner_type": "Team"
+   },
+   {
+    "complete": false,
+    "id": 9685,
+    "position": 7,
+    "status": "not_started",
+    "length": null,
+    "finished": false,
+    "winner": {
+     "id": null,
+     "type": "Team"
+    },
+    "match_id": 1609947,
+    "begin_at": null,
+    "detailed_stats": true,
+    "end_at": null,
+    "forfeit": false,
+    "winner_type": "Team"
+   }
+  ],
+  "begin_at": "2026-08-09T14:40:00Z",
+  "detailed_stats": true,
+  "draw": false,
+  "end_at": null,
+  "forfeit": false,
+  "winner_id": null,
+  "winner_type": "Team",
+  "tournament_id": 21576,
+  "modified_at": "2026-08-08T17:32:21Z",
+  "match_type": "best_of",
+  "number_of_games": 7,
+  "scheduled_at": "2026-08-09T14:40:00Z",
+  "opponents": [
+   {
+    "type": "Team",
+    "opponent": {
+     "id": 135378,
+     "name": "100 Thieves",
+     "location": "US",
+     "slug": "100-thieves-cod-mw",
+     "modified_at": "2026-08-07T18:54:11Z",
+     "acronym": "100T",
+     "image_url": "https://cdn-api.pandascore.co/images/team/image/135378/190px_100_thieves_lightmode.png",
+     "dark_mode_image_url": "https://cdn-api.pandascore.co/dark_images/team/dark_image/135378/190px_100_thieves_darkmode.png"
+    }
+   }
+  ],
+  "previous_matches": [
+   {
+    "type": "winner",
+    "match_id": 1609945
+   },
+   {
+    "type": "winner",
+    "match_id": 1609944
+   }
+  ],
+  "original_scheduled_at": "2026-08-09T14:40:00Z",
+  "game_advantage": null,
+  "streams_list": [
+   {
+    "main": true,
+    "language": "en",
+    "embed_url": null,
+    "official": true,
+    "raw_url": "https://www.youtube.com/@CODLeague"
+   }
+  ]
+ },
+ {
+  "id": 1609946,
+  "name": "Semifinal 1: HTCS vs TBD",
+  "status": "not_started",
+  "results": [
+   {
+    "team_id": 135377,
+    "score": 0
+   }
+  ],
+  "live": {
+   "supported": false,
+   "url": null,
+   "opens_at": null
+  },
+  "slug": "2026-08-09-5e013e38-1a09-4b52-8250-566b683591d1",
+  "games": [
+   {
+    "complete": false,
+    "id": 9672,
+    "position": 1,
+    "status": "not_started",
+    "length": null,
+    "finished": false,
+    "winner": {
+     "id": null,
+     "type": "Team"
+    },
+    "match_id": 1609946,
+    "begin_at": null,
+    "detailed_stats": true,
+    "end_at": null,
+    "forfeit": false,
+    "winner_type": "Team"
+   },
+   {
+    "complete": false,
+    "id": 9673,
+    "position": 2,
+    "status": "not_started",
+    "length": null,
+    "finished": false,
+    "winner": {
+     "id": null,
+     "type": "Team"
+    },
+    "match_id": 1609946,
+    "begin_at": null,
+    "detailed_stats": true,
+    "end_at": null,
+    "forfeit": false,
+    "winner_type": "Team"
+   },
+   {
+    "complete": false,
+    "id": 9674,
+    "position": 3,
+    "status": "not_started",
+    "length": null,
+    "finished": false,
+    "winner": {
+     "id": null,
+     "type": "Team"
+    },
+    "match_id": 1609946,
+    "begin_at": null,
+    "detailed_stats": true,
+    "end_at": null,
+    "forfeit": false,
+    "winner_type": "Team"
+   },
+   {
+    "complete": false,
+    "id": 9675,
+    "position": 4,
+    "status": "not_started",
+    "length": null,
+    "finished": false,
+    "winner": {
+     "id": null,
+     "type": "Team"
+    },
+    "match_id": 1609946,
+    "begin_at": null,
+    "detailed_stats": true,
+    "end_at": null,
+    "forfeit": false,
+    "winner_type": "Team"
+   },
+   {
+    "complete": false,
+    "id": 9676,
+    "position": 5,
+    "status": "not_started",
+    "length": null,
+    "finished": false,
+    "winner": {
+     "id": null,
+     "type": "Team"
+    },
+    "match_id": 1609946,
+    "begin_at": null,
+    "detailed_stats": true,
+    "end_at": null,
+    "forfeit": false,
+    "winner_type": "Team"
+   },
+   {
+    "complete": false,
+    "id": 9677,
+    "position": 6,
+    "status": "not_started",
+    "length": null,
+    "finished": false,
+    "winner": {
+     "id": null,
+     "type": "Team"
+    },
+    "match_id": 1609946,
+    "begin_at": null,
+    "detailed_stats": true,
+    "end_at": null,
+    "forfeit": false,
+    "winner_type": "Team"
+   },
+   {
+    "complete": false,
+    "id": 9678,
+    "position": 7,
+    "status": "not_started",
+    "length": null,
+    "finished": false,
+    "winner": {
+     "id": null,
+     "type": "Team"
+    },
+    "match_id": 1609946,
+    "begin_at": null,
+    "detailed_stats": true,
+    "end_at": null,
+    "forfeit": false,
+    "winner_type": "Team"
+   }
+  ],
+  "begin_at": "2026-08-09T13:00:00Z",
+  "detailed_stats": true,
+  "draw": false,
+  "end_at": null,
+  "forfeit": false,
+  "winner_id": null,
+  "winner_type": "Team",
+  "tournament_id": 21576,
+  "modified_at": "2026-08-08T15:18:29Z",
+  "match_type": "best_of",
+  "number_of_games": 7,
+  "scheduled_at": "2026-08-09T13:00:00Z",
+  "opponents": [
+   {
+    "type": "Team",
+    "opponent": {
+     "id": 135377,
+     "name": "Team Heretics",
+     "location": "ES",
+     "slug": "team-heretics-cod-mw",
+     "modified_at": "2026-08-07T18:54:09Z",
+     "acronym": "HTCS",
+     "image_url": "https://cdn-api.pandascore.co/images/team/image/135377/team_hereticslogo_square.png",
+     "dark_mode_image_url": null
+    }
+   }
+  ],
+  "previous_matches": [
+   {
+    "type": "winner",
+    "match_id": 1609943
+   },
+   {
+    "type": "winner",
+    "match_id": 1609942
+   }
+  ],
+  "original_scheduled_at": "2026-08-09T13:00:00Z",
+  "game_advantage": null,
+  "streams_list": [
+   {
+    "main": true,
+    "language": "en",
+    "embed_url": null,
+    "official": true,
+    "raw_url": "https://www.youtube.com/@CODLeague"
+   }
+  ]
+ },
+ {
+  "id": 1609945,
+  "name": "Quarterfinal 4: FAZE vs OG",
+  "status": "not_started",
+  "results": [
+   {
+    "team_id": 137164,
+    "score": 0
+   },
+   {
+    "team_id": 137201,
+    "score": 0
+   }
+  ],
+  "live": {
+   "supported": false,
+   "url": null,
+   "opens_at": null
+  },
+  "slug": "2026-08-08-2c9ae40e-ee3c-4839-896c-c1b3abb6b6ee",
+  "games": [
+   {
+    "complete": false,
+    "id": 9665,
+    "position": 1,
+    "status": "not_started",
+    "length": null,
+    "finished": false,
+    "winner": {
+     "id": null,
+     "type": "Team"
+    },
+    "match_id": 1609945,
+    "begin_at": null,
+    "detailed_stats": true,
+    "end_at": null,
+    "forfeit": false,
+    "winner_type": "Team"
+   },
+   {
+    "complete": false,
+    "id": 9666,
+    "position": 2,
+    "status": "not_started",
+    "length": null,
+    "finished": false,
+    "winner": {
+     "id": null,
+     "type": "Team"
+    },
+    "match_id": 1609945,
+    "begin_at": null,
+    "detailed_stats": true,
+    "end_at": null,
+    "forfeit": false,
+    "winner_type": "Team"
+   },
+   {
+    "complete": false,
+    "id": 9667,
+    "position": 3,
+    "status": "not_started",
+    "length": null,
+    "finished": false,
+    "winner": {
+     "id": null,
+     "type": "Team"
+    },
+    "match_id": 1609945,
+    "begin_at": null,
+    "detailed_stats": true,
+    "end_at": null,
+    "forfeit": false,
+    "winner_type": "Team"
+   },
+   {
+    "complete": false,
+    "id": 9668,
+    "position": 4,
+    "status": "not_started",
+    "length": null,
+    "finished": false,
+    "winner": {
+     "id": null,
+     "type": "Team"
+    },
+    "match_id": 1609945,
+    "begin_at": null,
+    "detailed_stats": true,
+    "end_at": null,
+    "forfeit": false,
+    "winner_type": "Team"
+   },
+   {
+    "complete": false,
+    "id": 9669,
+    "position": 5,
+    "status": "not_started",
+    "length": null,
+    "finished": false,
+    "winner": {
+     "id": null,
+     "type": "Team"
+    },
+    "match_id": 1609945,
+    "begin_at": null,
+    "detailed_stats": true,
+    "end_at": null,
+    "forfeit": false,
+    "winner_type": "Team"
+   },
+   {
+    "complete": false,
+    "id": 9670,
+    "position": 6,
+    "status": "not_started",
+    "length": null,
+    "finished": false,
+    "winner": {
+     "id": null,
+     "type": "Team"
+    },
+    "match_id": 1609945,
+    "begin_at": null,
+    "detailed_stats": true,
+    "end_at": null,
+    "forfeit": false,
+    "winner_type": "Team"
+   },
+   {
+    "complete": false,
+    "id": 9671,
+    "position": 7,
+    "status": "not_started",
+    "length": null,
+    "finished": false,
+    "winner": {
+     "id": null,
+     "type": "Team"
+    },
+    "match_id": 1609945,
+    "begin_at": null,
+    "detailed_stats": true,
+    "end_at": null,
+    "forfeit": false,
+    "winner_type": "Team"
+   }
+  ],
+  "begin_at": "2026-08-08T19:30:00Z",
+  "detailed_stats": true,
+  "draw": false,
+  "end_at": null,
+  "forfeit": false,
+  "winner_id": null,
+  "winner_type": "Team",
+  "tournament_id": 21576,
+  "modified_at": "2026-08-08T17:33:04Z",
+  "match_type": "best_of",
+  "number_of_games": 7,
+  "scheduled_at": "2026-08-08T19:30:00Z",
+  "opponents": [
+   {
+    "type": "Team",
+    "opponent": {
+     "id": 137201,
+     "name": "FaZe Clan",
+     "location": "US",
+     "slug": "faze-clan-cod-mw",
+     "modified_at": "2026-08-07T18:54:33Z",
+     "acronym": "FAZE",
+     "image_url": "https://cdn-api.pandascore.co/images/team/image/137201/fa_ze_clanlogo_square.png",
+     "dark_mode_image_url": null
+    }
+   },
+   {
+    "type": "Team",
+    "opponent": {
+     "id": 137164,
+     "name": "OpTic Gaming",
+     "location": "US",
+     "slug": "optic-gaming-cod-mw",
+     "modified_at": "2026-08-07T18:54:13Z",
+     "acronym": "OG",
+     "image_url": "https://cdn-api.pandascore.co/images/team/image/137164/op_tic_gaming_lightmode.png",
+     "dark_mode_image_url": null
+    }
+   }
+  ],
+  "previous_matches": [],
+  "original_scheduled_at": "2026-08-08T18:00:00Z",
+  "game_advantage": null,
+  "streams_list": [
+   {
+    "main": true,
+    "language": "en",
+    "embed_url": "https://www.youtube.com/embed/ciOaZXz8CdQ",
+    "official": true,
+    "raw_url": "https://www.youtube.com/watch?v=ciOaZXz8CdQ"
+   }
+  ]
+ },
+ {
+  "id": 1609944,
+  "name": "Quarterfinal 3: 100T vs KOI",
+  "status": "finished",
+  "results": [
+   {
+    "team_id": 137163,
+    "score": 0
+   },
+   {
+    "team_id": 135378,
+    "score": 4
+   }
+  ],
+  "live": {
+   "supported": false,
+   "url": null,
+   "opens_at": null
+  },
+  "slug": "2026-08-08-c9395fe5-8910-494b-b0c1-6cf9289b877f",
+  "games": [
+   {
+    "complete": false,
+    "id": 9658,
+    "position": 1,
+    "status": "finished",
+    "length": 638,
+    "finished": true,
+    "winner": {
+     "id": 135378,
+     "type": "Team"
+    },
+    "match_id": 1609944,
+    "begin_at": "2026-08-08T16:22:38Z",
+    "detailed_stats": true,
+    "end_at": "2026-08-08T16:33:16Z",
+    "forfeit": false,
+    "winner_type": "Team"
+   },
+   {
+    "complete": false,
+    "id": 9659,
+    "position": 2,
+    "status": "finished",
+    "length": 913,
+    "finished": true,
+    "winner": {
+     "id": 135378,
+     "type": "Team"
+    },
+    "match_id": 1609944,
+    "begin_at": "2026-08-08T16:37:48Z",
+    "detailed_stats": true,
+    "end_at": "2026-08-08T16:53:01Z",
+    "forfeit": false,
+    "winner_type": "Team"
+   },
+   {
+    "complete": false,
+    "id": 9660,
+    "position": 3,
+    "status": "finished",
+    "length": 1073,
+    "finished": true,
+    "winner": {
+     "id": 135378,
+     "type": "Team"
+    },
+    "match_id": 1609944,
+    "begin_at": "2026-08-08T16:58:55Z",
+    "detailed_stats": true,
+    "end_at": "2026-08-08T17:16:48Z",
+    "forfeit": false,
+    "winner_type": "Team"
+   },
+   {
+    "complete": false,
+    "id": 9661,
+    "position": 4,
+    "status": "finished",
+    "length": 715,
+    "finished": true,
+    "winner": {
+     "id": 135378,
+     "type": "Team"
+    },
+    "match_id": 1609944,
+    "begin_at": "2026-08-08T17:20:24Z",
+    "detailed_stats": true,
+    "end_at": "2026-08-08T17:32:20Z",
+    "forfeit": false,
+    "winner_type": "Team"
+   }
+  ],
+  "begin_at": "2026-08-08T16:22:37Z",
+  "detailed_stats": true,
+  "draw": false,
+  "end_at": "2026-08-08T17:32:19Z",
+  "forfeit": false,
+  "winner_id": 135378,
+  "winner_type": "Team",
+  "tournament_id": 21576,
+  "modified_at": "2026-08-08T17:32:20Z",
+  "match_type": "best_of",
+  "number_of_games": 7,
+  "scheduled_at": "2026-08-08T16:20:00Z",
+  "opponents": [
+   {
+    "type": "Team",
+    "opponent": {
+     "id": 135378,
+     "name": "100 Thieves",
+     "location": "US",
+     "slug": "100-thieves-cod-mw",
+     "modified_at": "2026-08-07T18:54:11Z",
+     "acronym": "100T",
+     "image_url": "https://cdn-api.pandascore.co/images/team/image/135378/190px_100_thieves_lightmode.png",
+     "dark_mode_image_url": "https://cdn-api.pandascore.co/dark_images/team/dark_image/135378/190px_100_thieves_darkmode.png"
+    }
+   },
+   {
+    "type": "Team",
+    "opponent": {
+     "id": 137163,
+     "name": "Movistar KOI",
+     "location": "ES",
+     "slug": "koi-cod-mw",
+     "modified_at": "2026-08-07T19:00:48Z",
+     "acronym": "KOI",
+     "image_url": "https://cdn-api.pandascore.co/images/team/image/137163/movistar_ko_ilogo_square.png",
+     "dark_mode_image_url": null
+    }
+   }
+  ],
+  "previous_matches": [],
+  "original_scheduled_at": "2026-08-08T16:20:00Z",
+  "game_advantage": null,
+  "streams_list": [
+   {
+    "main": true,
+    "language": "en",
+    "embed_url": "https://www.youtube.com/embed/ciOaZXz8CdQ",
+    "official": true,
+    "raw_url": "https://www.youtube.com/watch?v=ciOaZXz8CdQ"
+   }
+  ]
+ },
+ {
+  "id": 1609943,
+  "name": "Quarterfinal 2: FAL vs M8",
+  "status": "running",
+  "results": [
+   {
+    "team_id": 135374,
+    "score": 0
+   },
+   {
+    "team_id": 135379,
+    "score": 1
+   }
+  ],
+  "live": {
+   "supported": false,
+   "url": null,
+   "opens_at": null
+  },
+  "slug": "2026-08-08-3b43e7e4-d301-49ee-8c94-7e0b340028bd",
+  "games": [
+   {
+    "complete": false,
+    "id": 9651,
+    "position": 1,
+    "status": "finished",
+    "length": 762,
+    "finished": true,
+    "winner": {
+     "id": 135379,
+     "type": "Team"
+    },
+    "match_id": 1609943,
+    "begin_at": "2026-08-08T18:01:39Z",
+    "detailed_stats": true,
+    "end_at": "2026-08-08T18:14:22Z",
+    "forfeit": false,
+    "winner_type": "Team"
+   },
+   {
+    "complete": false,
+    "id": 9652,
+    "position": 2,
+    "status": "running",
+    "length": null,
+    "finished": false,
+    "winner": {
+     "id": null,
+     "type": "Team"
+    },
+    "match_id": 1609943,
+    "begin_at": "2026-08-08T18:18:37Z",
+    "detailed_stats": true,
+    "end_at": null,
+    "forfeit": false,
+    "winner_type": "Team"
+   },
+   {
+    "complete": false,
+    "id": 9653,
+    "position": 3,
+    "status": "not_started",
+    "length": null,
+    "finished": false,
+    "winner": {
+     "id": null,
+     "type": "Team"
+    },
+    "match_id": 1609943,
+    "begin_at": null,
+    "detailed_stats": true,
+    "end_at": null,
+    "forfeit": false,
+    "winner_type": "Team"
+   },
+   {
+    "complete": false,
+    "id": 9654,
+    "position": 4,
+    "status": "not_started",
+    "length": null,
+    "finished": false,
+    "winner": {
+     "id": null,
+     "type": "Team"
+    },
+    "match_id": 1609943,
+    "begin_at": null,
+    "detailed_stats": true,
+    "end_at": null,
+    "forfeit": false,
+    "winner_type": "Team"
+   },
+   {
+    "complete": false,
+    "id": 9655,
+    "position": 5,
+    "status": "not_started",
+    "length": null,
+    "finished": false,
+    "winner": {
+     "id": null,
+     "type": "Team"
+    },
+    "match_id": 1609943,
+    "begin_at": null,
+    "detailed_stats": true,
+    "end_at": null,
+    "forfeit": false,
+    "winner_type": "Team"
+   },
+   {
+    "complete": false,
+    "id": 9656,
+    "position": 6,
+    "status": "not_started",
+    "length": null,
+    "finished": false,
+    "winner": {
+     "id": null,
+     "type": "Team"
+    },
+    "match_id": 1609943,
+    "begin_at": null,
+    "detailed_stats": true,
+    "end_at": null,
+    "forfeit": false,
+    "winner_type": "Team"
+   },
+   {
+    "complete": false,
+    "id": 9657,
+    "position": 7,
+    "status": "not_started",
+    "length": null,
+    "finished": false,
+    "winner": {
+     "id": null,
+     "type": "Team"
+    },
+    "match_id": 1609943,
+    "begin_at": null,
+    "detailed_stats": true,
+    "end_at": null,
+    "forfeit": false,
+    "winner_type": "Team"
+   }
+  ],
+  "begin_at": "2026-08-08T18:01:39Z",
+  "detailed_stats": true,
+  "draw": false,
+  "end_at": null,
+  "forfeit": false,
+  "winner_id": null,
+  "winner_type": "Team",
+  "tournament_id": 21576,
+  "modified_at": "2026-08-08T18:18:37Z",
+  "match_type": "best_of",
+  "number_of_games": 7,
+  "scheduled_at": "2026-08-08T18:00:00Z",
+  "opponents": [
+   {
+    "type": "Team",
+    "opponent": {
+     "id": 135379,
+     "name": "Team Falcons",
+     "location": "SA",
+     "slug": "team-falcons-cod-mw",
+     "modified_at": "2026-08-07T18:54:10Z",
+     "acronym": "FAL",
+     "image_url": "https://cdn-api.pandascore.co/images/team/image/135379/team_falconslogo_square.png",
+     "dark_mode_image_url": null
+    }
+   },
+   {
+    "type": "Team",
+    "opponent": {
+     "id": 135374,
+     "name": "Gentle Mates",
+     "location": "FR",
+     "slug": "gentle-mates-cod-mw",
+     "modified_at": "2026-08-07T18:54:10Z",
+     "acronym": "M8",
+     "image_url": "https://cdn-api.pandascore.co/images/team/image/135374/932px_gentle_mates_lightmode_2024.png",
+     "dark_mode_image_url": "https://cdn-api.pandascore.co/dark_images/team/dark_image/135374/600px_gentle_mates_2024_darkmode.png"
+    }
+   }
+  ],
+  "previous_matches": [],
+  "original_scheduled_at": "2026-08-08T14:40:00Z",
+  "game_advantage": null,
+  "streams_list": [
+   {
+    "main": true,
+    "language": "en",
+    "embed_url": "https://www.youtube.com/embed/ciOaZXz8CdQ",
+    "official": true,
+    "raw_url": "https://www.youtube.com/watch?v=ciOaZXz8CdQ"
+   }
+  ]
+ },
+ {
+  "id": 1609942,
+  "name": "Quarterfinal 1: G2 vs HTCS",
+  "status": "finished",
+  "results": [
+   {
+    "team_id": 135377,
+    "score": 4
+   },
+   {
+    "team_id": 135375,
+    "score": 3
+   }
+  ],
+  "live": {
+   "supported": false,
+   "url": null,
+   "opens_at": null
+  },
+  "slug": "2026-08-08-d5a566fa-70c1-41e4-a0e0-05ead5dacccf",
+  "games": [
+   {
+    "complete": true,
+    "id": 9644,
+    "position": 1,
+    "status": "finished",
+    "length": 695,
+    "finished": true,
+    "winner": {
+     "id": 135375,
+     "type": "Team"
+    },
+    "match_id": 1609942,
+    "begin_at": "2026-08-08T13:07:17Z",
+    "detailed_stats": true,
+    "end_at": "2026-08-08T13:18:53Z",
+    "forfeit": false,
+    "winner_type": "Team"
+   },
+   {
+    "complete": true,
+    "id": 9645,
+    "position": 2,
+    "status": "finished",
+    "length": 1191,
+    "finished": true,
+    "winner": {
+     "id": 135377,
+     "type": "Team"
+    },
+    "match_id": 1609942,
+    "begin_at": "2026-08-08T13:22:51Z",
+    "detailed_stats": true,
+    "end_at": "2026-08-08T13:42:43Z",
+    "forfeit": false,
+    "winner_type": "Team"
+   },
+   {
+    "complete": true,
+    "id": 9646,
+    "position": 3,
+    "status": "finished",
+    "length": 738,
+    "finished": true,
+    "winner": {
+     "id": 135377,
+     "type": "Team"
+    },
+    "match_id": 1609942,
+    "begin_at": "2026-08-08T13:49:40Z",
+    "detailed_stats": true,
+    "end_at": "2026-08-08T14:01:59Z",
+    "forfeit": false,
+    "winner_type": "Team"
+   },
+   {
+    "complete": true,
+    "id": 9647,
+    "position": 4,
+    "status": "finished",
+    "length": 670,
+    "finished": true,
+    "winner": {
+     "id": 135377,
+     "type": "Team"
+    },
+    "match_id": 1609942,
+    "begin_at": "2026-08-08T14:05:11Z",
+    "detailed_stats": true,
+    "end_at": "2026-08-08T14:16:21Z",
+    "forfeit": false,
+    "winner_type": "Team"
+   },
+   {
+    "complete": true,
+    "id": 9648,
+    "position": 5,
+    "status": "finished",
+    "length": 1216,
+    "finished": true,
+    "winner": {
+     "id": 135375,
+     "type": "Team"
+    },
+    "match_id": 1609942,
+    "begin_at": "2026-08-08T14:23:59Z",
+    "detailed_stats": true,
+    "end_at": "2026-08-08T14:44:16Z",
+    "forfeit": false,
+    "winner_type": "Team"
+   },
+   {
+    "complete": true,
+    "id": 9649,
+    "position": 6,
+    "status": "finished",
+    "length": 729,
+    "finished": true,
+    "winner": {
+     "id": 135375,
+     "type": "Team"
+    },
+    "match_id": 1609942,
+    "begin_at": "2026-08-08T14:44:21Z",
+    "detailed_stats": true,
+    "end_at": "2026-08-08T14:56:30Z",
+    "forfeit": false,
+    "winner_type": "Team"
+   },
+   {
+    "complete": true,
+    "id": 9650,
+    "position": 7,
+    "status": "finished",
+    "length": 957,
+    "finished": true,
+    "winner": {
+     "id": 135377,
+     "type": "Team"
+    },
+    "match_id": 1609942,
+    "begin_at": "2026-08-08T15:02:32Z",
+    "detailed_stats": true,
+    "end_at": "2026-08-08T15:18:29Z",
+    "forfeit": false,
+    "winner_type": "Team"
+   }
+  ],
+  "begin_at": "2026-08-08T13:07:17Z",
+  "detailed_stats": true,
+  "draw": false,
+  "end_at": "2026-08-08T15:18:29Z",
+  "forfeit": false,
+  "winner_id": 135377,
+  "winner_type": "Team",
+  "tournament_id": 21576,
+  "modified_at": "2026-08-08T17:20:55Z",
+  "match_type": "best_of",
+  "number_of_games": 7,
+  "scheduled_at": "2026-08-08T13:00:00Z",
+  "opponents": [
+   {
+    "type": "Team",
+    "opponent": {
+     "id": 135375,
+     "name": "G2 Esports",
+     "location": "ES",
+     "slug": "g2-esports-cod-mw",
+     "modified_at": "2026-08-07T18:54:08Z",
+     "acronym": "G2",
+     "image_url": "https://cdn-api.pandascore.co/images/team/image/135375/g2_esportslogo_square.png",
+     "dark_mode_image_url": null
+    }
+   },
+   {
+    "type": "Team",
+    "opponent": {
+     "id": 135377,
+     "name": "Team Heretics",
+     "location": "ES",
+     "slug": "team-heretics-cod-mw",
+     "modified_at": "2026-08-07T18:54:09Z",
+     "acronym": "HTCS",
+     "image_url": "https://cdn-api.pandascore.co/images/team/image/135377/team_hereticslogo_square.png",
+     "dark_mode_image_url": null
+    }
+   }
+  ],
+  "previous_matches": [],
+  "original_scheduled_at": "2026-08-08T13:00:00Z",
+  "game_advantage": null,
+  "streams_list": [
+   {
+    "main": true,
+    "language": "en",
+    "embed_url": "https://www.youtube.com/embed/ciOaZXz8CdQ",
+    "official": true,
+    "raw_url": "https://www.youtube.com/watch?v=ciOaZXz8CdQ"
+   }
+  ]
+ }
+]
