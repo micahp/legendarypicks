@@ -400,19 +400,20 @@ tournament.
 - No browser-side scraping and no hard-coded standings, bracket winners, dates, or club totals.
 - No DEV/production restart, deployment, database write, or tag move without separate authorization.
 
-## Decisions — resolution status (completed candidate)
+## Decisions — post-implementation decision record
 
-1. **Page hierarchy — approved and implemented.** EWC live/today first, Club Championship second,
+1. **Page hierarchy — accepted by implementation.** EWC live/today first, Club Championship second,
    generic board below, exactly as specified in Phase 3 (`pages/esports.tsx` EWC focus module + rail,
    generic schedule preserved below).
-2. **Standings rail content — moot pending a permitted source.** The Phase 0 spike found no
-   permitted machine-readable standings publisher, so the route serves `status: "unavailable"` and
-   neither points nor contribution chips are rendered. The row contract already carries
-   `eligibleTopEightCount`/`titleWins` so chips can be added when a permitted source exists; the
-   original recommendation (include chips) stands for that future source.
-3. **Final standings data provider — resolved: none approved.** No permitted machine-readable
-   source exists; the validation-gated publisher awaits one. The research table is evidence only,
-   never hard-coded, and never ingested from scraped HTML.
+2. **Standings rail content — contribution chips deferred until the source supports them.** The
+   Phase 0 spike found no permitted machine-readable standings publisher, so the route serves
+   `status: "unavailable"` and neither points nor contribution chips are rendered. The row contract
+   already carries `eligibleTopEightCount`/`titleWins` so chips can be added when a permitted source
+   exists; the original recommendation (include chips) stands for that future source.
+3. **Final standings data provider — unresolved; honest unavailable.** No permitted machine-readable
+   source exists, so no provider is approved; the validation-gated publisher awaits one and the route
+   serves the honest unavailable contract. The research table is evidence only, never hard-coded, and
+   never ingested from scraped HTML.
 
 ## Release pass evidence — 2026-08-08 (final)
 
@@ -428,15 +429,18 @@ association returns `None` (never the first hit), missing feeder node labels str
 `test_ewc_routes.py` (56) and `test_esports_streams.py`, `test_esports_predict_api.py`,
 `test_wc_context.py` (53).
 
-**Browser gate — desktop PASS, mobile FAIL (not claimed as passing).**
-`docs/ewc2026/fixtures/browser-esports-desktop.png` renders (1440×900, pixel-verified non-white);
-the YouTube iframe shows Google's headless-browser sign-in interstitial, which is unrelated to our
-code. The mobile capture was a white "Internal Server Error" page — the isolated backend/API proxy
-was down during that capture — and the invalid PNG was **not** committed. Regeneration is blocked:
-the shared frontend install `/root/legendarypicks/node_modules` is empty and the worktree `.next`
-holds no build output; per AGENTS.md a worktree must not reinstall, so this is recorded as the
-documented Next build blocker, not retried. Frontend jest/next binaries are likewise unavailable,
-so the frontend unit suite was not re-runnable this pass.
+**Browser gate — historical desktop render only; current gate blocked/failed for both widths.**
+`docs/ewc2026/fixtures/browser-esports-desktop.png` is a **historical** desktop render (1440×900,
+pixel-verified non-white) captured before the 14:06 build-output loss; it is not a current live
+pass.
+The YouTube iframe shows Google's headless-browser sign-in interstitial, which is unrelated to our
+code. The mobile capture was a white "Internal Server Error" page — the isolated frontend had no
+static build output (backend `:8105` was healthy) — and the invalid PNG was **not** committed.
+Regeneration is blocked: the shared frontend install `/root/legendarypicks/node_modules` is
+incomplete (its `next`/`jest` binaries are missing) and the worktree `.next` holds no build output;
+per AGENTS.md a worktree must not reinstall, so this is recorded as the documented Next build
+blocker, not retried. Frontend jest/next binaries are likewise unavailable, so the frontend unit
+suite was not re-runnable this pass.
 
 **Request counts (this pass: zero external requests — all 109 tests are fixture-driven).**
 Declared per-host matrix unchanged (Phase 0 §4): PandaScore 1 bracket call per 120 s cold window
@@ -472,7 +476,8 @@ the validation-gated publisher awaits a permitted source — no browser scraping
 `cache/`, `package.json`, `routes-manifest.json` — **no build output** — so every page 500s with
 `MissingStaticPage ENOENT .../.next/server/pages/esports.html` (same for `/scores`). This is the
 AGENTS.md §11 symptom exactly ("route 500s with ENOENT ... while the process still looks alive"):
-the shared install `/root/legendarypicks/node_modules` is empty (worktree `node_modules` is a
+the shared install `/root/legendarypicks/node_modules` is incomplete and lacks the required
+next/jest binaries (worktree `node_modules` is a
 symlink to it), so `./node_modules/.bin/next` is gone — `logs/candidate-build2.log` and
 `logs/candidate-build4.log` both fail with `No such file or directory` — and `playwright` is
 unresolvable from the worktree, so `scripts/verify-ewc-browser.js` cannot run. The last successful
