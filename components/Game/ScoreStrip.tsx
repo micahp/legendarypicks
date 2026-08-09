@@ -1,12 +1,18 @@
 import { GameContext } from './types'
 
 // ── score strip (compact ESPN-style) ──
-export default function ScoreStrip({ ctx, score, state, homeName, awayName, homeRecord, awayRecord }: {
+export default function ScoreStrip({ ctx, score, state, statusDetail, homeName, awayName, homeRecord, awayRecord }: {
   ctx: GameContext | null; score: { away: number; home: number } | null; state?: string | null
+  statusDetail?: string | null
   homeName: string; awayName: string; homeRecord: string; awayRecord: string
 }) {
   const isFinal = state === 'post'
   const isLive = state === 'in'
+  const statusLabel = isFinal
+    ? (statusDetail && /susp/i.test(statusDetail) ? 'SUSPENDED' : statusDetail || 'FINAL')
+    : isLive
+    ? statusDetail || 'LIVE'
+    : 'SCHEDULED'
   // Dim the loser only when the game is final; keep both bright while live/scheduled.
   const homeWon = isFinal && score ? score.home > score.away : false
   const awayWon = isFinal && score ? score.away > score.home : false
@@ -27,7 +33,7 @@ export default function ScoreStrip({ ctx, score, state, homeName, awayName, home
       {/* Center: status */}
       <div className="flex items-center shrink-0">
         <span className={`text-xs font-bold uppercase tracking-widest ${isLive ? 'text-red-500' : 'text-zinc-500'}`}>
-          {isFinal ? 'FINAL' : isLive ? 'LIVE' : 'SCHEDULED'}
+          {statusLabel}
         </span>
       </div>
 
