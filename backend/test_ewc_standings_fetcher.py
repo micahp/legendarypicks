@@ -60,6 +60,25 @@ def _snapshot(rows, source_count=None, published_at=None):
     }
 
 
+def _row_html(rank=1, slug="Team_Falcons", name="Team Falcons", points=2600,
+              img_src=None, movement=None):
+    """A minimal current-stage table row (data-toggle-area-content=19) for parser tests."""
+    mv = ""
+    if movement is not None:
+        cls = "up" if movement > 0 else ("down" if movement < 0 else "steady")
+        mv = ('<td><span class="standings-position-indicator movement-%s">'
+              '<i class="fas fa-chevron-double-up"></i><span>%d</span></span></td>'
+              % (cls, abs(movement)))
+    if img_src is not None:
+        club = ('<span><a href="/esports/%s" title="%s">'
+                '<img alt="%s" src="%s" /></a></span>' % (slug, name, name, img_src))
+    else:
+        club = '<span><a href="/esports/%s" title="%s">%s</a></span>' % (slug, name, name)
+    return ('<tr data-toggle-area-content="19"><td style="font-weight:bold">%d.</td>%s'
+            '<td>%s</td><td style="font-weight:bold">%d</td></tr>'
+            % (rank, mv, club, points))
+
+
 class StageSelectionTests(unittest.TestCase):
     def test_fixture_stage_is_5_cutoff_19(self):
         self.assertEqual(fetcher.parse_stage(_fixture_wikitext()), (5, 19))
@@ -116,6 +135,92 @@ class PopulationParseTests(unittest.TestCase):
     def test_no_rows_for_unknown_cutoff_is_malformed(self):
         with self.assertRaises(fetcher.StandingsSourceError):
             fetcher.parse_rows(_fixture_html(), 999)
+
+
+class LogoNormalizationTests(unittest.TestCase):
+    def test_relative_url_normalized_to_https(self):
+        self.assertEqual(fetcher.normalize_logo_url("/commons/images/x.png"),
+                         "https://liquipedia.net/commons/images/x.png")
+
+    def test_protocol_relative_url_normalized_to_https(self):
+        self.assertEqual(fetcher.normalize_logo_url("//liquipedia.net/commons/images/x.png"),
+                         "https://liquipedia.net/commons/images/x.png")
+
+    def test_absolute_https_url_unchanged(self):
+        self.assertEqual(fetcher.normalize_logo_url("https://cdn.example.com/logo.png"),
+                         "https://cdn.example.com/logo.png")
+
+    def test_http_url_upgraded_to_https(self):
+        self.assertEqual(fetcher.normalize_logo_url("http://cdn.example.com/logo.png"),
+                         "https://cdn.example.com/logo.png")
+
+    def test_missing_or_junk_returns_none(self):
+        self.assertIsNone(fetcher.normalize_logo_url(None))
+        self.assertIsNone(fetcher.normalize_logo_url(""))
+        self.assertIsNone(fetcher.normalize_logo_url("data:image/png;base64,xx"))
+        self.assertIsNone(fetcher.normalize_logo_url("   "))
+
+    def test_parse_rows_normalizes_protocol_relative_logo(self):
+        html = _row_html(img_src="//liquipedia.net/commons/images/thumb/x.png")
+        rows = fetcher.parse_rows(html, 19)
+        self.assertEqual(rows[0]["logo"], "https://liquipedia.net/commons/images/thumb/x.png")
+
+    def test_parse_rows_missing_logo_is_none(self):
+        html = _row_html(img_src=None)
+        rows = fetcher.parse_rows(html, 19)
+        self.assertEqual(len(rows), 1)
+        self.assertIsNone(rows[0]["logo"])
+        self.assertEqual(rows[0]["clubName"], "Team Falcons")
+        self.assertEqual(rows[0]["points"], 2600)
+
+
+class LogoReconciliationTests(unittest.TestCase):
+    def test_verified_local_mapping_wins_over_publisher_logo(self):
+        rows = fetcher.parse_rows(_row_html(img_src="/commons/images/publisher.png"), 19)
+        snap = fetcher.build_snapshot(rows, REV, 5, 19, "2026-08-09T00:00:00+00:00",
+                                      logos_map={"falcons": "https://local.example/falcons.png"})
+        self.assertEqual(snap["standings"][0]["logo"], "https://local.example/falcons.png")
+
+    def test_no_local_mapping_keeps_publisher_logo(self):
+        rows = fetcher.parse_rows(_row_html(img_src="/commons/images/publisher.png"), 19)
+        snap = fetcher.build_snapshot(rows, REV, 5, 19, "2026-08-09T00:00:00+00:00",
+                                      logos_map={"nemiga": "https://local.example/nemiga.png"})
+        self.assertEqual(snap["standings"][0]["logo"],
+                         "https://liquipedia.net/commons/images/publisher.png")
+
+    def test_empty_local_mapping_is_not_used(self):
+        # Cached negatives (empty strings) never replace a publisher logo.
+        rows = fetcher.parse_rows(_row_html(img_src="/commons/images/publisher.png"), 19)
+        snap = fetcher.build_snapshot(rows, REV, 5, 19, "2026-08-09T00:00:00+00:00",
+                                      logos_map={"falcons": ""})
+        self.assertEqual(snap["standings"][0]["logo"],
+                         "https://liquipedia.net/commons/images/publisher.png")
+
+    def test_no_loose_display_name_guessing(self):
+        # A near-miss key ('teamfalcons') is NOT the canonical key ('falcons') — no match,
+        # the publisher logo stays. Ambiguous clubs are never matched by loose guesses.
+        rows = fetcher.parse_rows(_row_html(img_src="/commons/images/publisher.png"), 19)
+        snap = fetcher.build_snapshot(rows, REV, 5, 19, "2026-08-09T00:00:00+00:00",
+                                      logos_map={"teamfalcons": "https://local.example/x.png",
+                                                 "team": "https://local.example/y.png"})
+        self.assertEqual(snap["standings"][0]["logo"],
+                         "https://liquipedia.net/commons/images/publisher.png")
+
+    def test_local_logo_fills_missing_publisher_logo(self):
+        rows = fetcher.parse_rows(_row_html(img_src=None), 19)
+        snap = fetcher.build_snapshot(rows, REV, 5, 19, "2026-08-09T00:00:00+00:00",
+                                      logos_map={"falcons": "https://local.example/falcons.png"})
+        self.assertEqual(snap["standings"][0]["logo"], "https://local.example/falcons.png")
+
+    def test_real_fixture_reconciles_with_empty_local_index(self):
+        # The maintained index is loaded via load_local_logo_index; today no EWC club has a
+        # verified local mapping, so every row keeps its normalized publisher logo.
+        rows = fetcher.parse_rows(_fixture_html(), 19)
+        logos_map = fetcher.load_local_logo_index()
+        snap = fetcher.build_snapshot(rows, REV, 5, 19, "2026-08-09T00:00:00+00:00",
+                                      logos_map=logos_map)
+        self.assertEqual(len(snap["standings"]), 90)
+        self.assertTrue(all(r["logo"] and r["logo"].startswith("https://") for r in snap["standings"]))
 
 
 class PublisherTests(unittest.TestCase):

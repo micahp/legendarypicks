@@ -67,6 +67,40 @@ describe('EWC standings rail', () => {
     render(<ClubStandingsRail standings={null} onExpand={() => {}} expanded={false} loading />)
     expect(screen.getByText('Club Championship')).toBeTruthy()
   })
+
+  it('renders a compact logo image with alt text when the row has a verified logo', () => {
+    const withLogo = standings('current')
+    withLogo.standings = [
+      { rank: 1, clubId: 'team-falcons', clubName: 'Team Falcons', logo: 'https://example.invalid/falcons.png', points: 2600, eligibleTopEightCount: null, titleWins: null, eligibleToWin: null, movement: null },
+      { rank: 2, clubId: 'natus-vincere', clubName: 'Natus Vincere', logo: 'https://example.invalid/navi.png', points: 2250, eligibleTopEightCount: null, titleWins: null, eligibleToWin: null, movement: null },
+    ]
+    render(<ClubStandingsRail standings={withLogo} onExpand={() => {}} expanded={false} loading={false} />)
+    const imgs = screen.getAllByAltText(/logo/)
+    expect(imgs).toHaveLength(2)
+    expect(imgs[0].getAttribute('src')).toBe('https://example.invalid/falcons.png')
+    expect(imgs[0].getAttribute('width')).toBe('20')
+    expect(screen.queryByText('TF')).toBeNull()
+  })
+
+  it('renders a neutral initials fallback when no logo exists', () => {
+    const noLogo = standings('current')  // fixture rows carry logo: null
+    render(<ClubStandingsRail standings={noLogo} onExpand={() => {}} expanded={false} loading={false} />)
+    expect(screen.getByText('TF')).toBeTruthy()   // Team Falcons
+    expect(screen.getByText('NV')).toBeTruthy()   // Natus Vincere
+    expect(document.querySelectorAll('img')).toHaveLength(0)
+  })
+
+  it('falls back to initials when the logo image fails to load', () => {
+    const withLogo = standings('current')
+    withLogo.standings = [
+      { rank: 1, clubId: 'team-falcons', clubName: 'Team Falcons', logo: 'https://example.invalid/broken.png', points: 2600, eligibleTopEightCount: null, titleWins: null, eligibleToWin: null, movement: null },
+    ]
+    render(<ClubStandingsRail standings={withLogo} onExpand={() => {}} expanded={false} loading={false} />)
+    const img = screen.getByAltText('Team Falcons logo')
+    fireEvent.error(img)
+    expect(screen.queryByAltText('Team Falcons logo')).toBeNull()
+    expect(screen.getByText('TF')).toBeTruthy()
+  })
 })
 
 describe('EWC module', () => {
