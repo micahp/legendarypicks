@@ -289,7 +289,7 @@ export default function EsportsLeaguePage() {
 
         {activeTab === 'games' && (
           <GamesSection projection={projection} projectionError={projectionError} titles={titles}
-                        activeSlug={titleFilter} onToggle={(slug) => setTitleFilter(titleFilter === slug ? null : slug)} />
+                        activeSlug={titleFilter} onSelect={setTitleFilter} />
         )}
 
         {activeTab === 'picks' && (
@@ -302,13 +302,16 @@ export default function EsportsLeaguePage() {
 
 /* ---------------- Games — complete EWC event population ---------------- */
 
-function GamesSection({ projection, projectionError, titles, activeSlug, onToggle }: {
+type MatchView = 'all' | 'live' | 'upcoming' | 'finals'
+
+function GamesSection({ projection, projectionError, titles, activeSlug, onSelect }: {
   projection: EwcProjection | null
   projectionError: boolean
   titles: TitleOption[] | null
   activeSlug: string | null
-  onToggle: (slug: string) => void
+  onSelect: (slug: string | null) => void
 }) {
+  const [matchView, setMatchView] = useState<MatchView>('all')
   const buckets = projection?.matches
   const all = buckets ? [...buckets.live, ...buckets.upcoming, ...buckets.completed] : []
   const labels = Array.from(new Set(all.map((m) => m.title))).sort((a, b) => a.localeCompare(b))
@@ -332,9 +335,13 @@ function GamesSection({ projection, projectionError, titles, activeSlug, onToggl
   const filter = (matches: UpMatch[]) => activeOption
     ? matches.filter((m) => activeOption.feedTitles.includes(m.title))
     : matches
-  const live = filter(buckets?.live ?? [])
-  const upcoming = filter(buckets?.upcoming ?? [])
-  const completed = filter(buckets?.completed ?? [])
+  const titleLive = filter(buckets?.live ?? [])
+  const titleUpcoming = filter(buckets?.upcoming ?? [])
+  const titleCompleted = filter(buckets?.completed ?? [])
+  const titleMatchCount = titleLive.length + titleUpcoming.length + titleCompleted.length
+  const live = matchView === 'all' || matchView === 'live' ? titleLive : []
+  const upcoming = matchView === 'all' || matchView === 'upcoming' ? titleUpcoming : []
+  const completed = matchView === 'all' || matchView === 'finals' ? titleCompleted : []
   const visibleCount = live.length + upcoming.length + completed.length
   const representedTitleCount = options.filter((option) => option.count > 0).length
   const tournamentCount = projection?.tournamentCount
@@ -350,6 +357,16 @@ function GamesSection({ projection, projectionError, titles, activeSlug, onToggl
     m.teamA,
     m.teamB,
   ].join(':')
+  const matchViews: { key: MatchView; label: string; count: number }[] = [
+    { key: 'all', label: 'All', count: titleMatchCount },
+    { key: 'live', label: 'Live', count: titleLive.length },
+    { key: 'upcoming', label: 'Upcoming', count: titleUpcoming.length },
+    { key: 'finals', label: 'Finals', count: titleCompleted.length },
+  ]
+  const selectTitle = (slug: string | null) => {
+    setMatchView('all')
+    onSelect(slug)
+  }
 
   return (
     <section className="space-y-5">
@@ -374,7 +391,23 @@ function GamesSection({ projection, projectionError, titles, activeSlug, onToggl
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4" data-ewc-title-catalog="true">
+          <div className="space-y-2 sm:hidden">
+            <label htmlFor="ewc-title-select" className="block text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
+              Jump to a title
+            </label>
+            <select id="ewc-title-select" aria-label="EWC title" value={activeSlug ?? ''}
+                    onChange={(event) => selectTitle(event.target.value || null)}
+                    className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-3 text-sm font-medium text-zinc-100 outline-none focus:border-emerald-500">
+              <option value="">All 24 game titles</option>
+              {options.map((option) => (
+                <option key={option.slug} value={option.slug}>
+                  {option.label} — {option.count > 0 ? `${option.count} matches` : 'feed pending'}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="hidden grid-cols-3 gap-2 sm:grid lg:grid-cols-4" data-ewc-title-catalog="true">
             {options.map((option) => {
               const active = option.slug === activeSlug
               const weekLabel = option.weeks.length
@@ -384,7 +417,7 @@ function GamesSection({ projection, projectionError, titles, activeSlug, onToggl
                 <button
                   key={option.slug}
                   type="button"
-                  onClick={() => onToggle(option.slug)}
+                  onClick={() => selectTitle(active ? null : option.slug)}
                   aria-pressed={active}
                   className={`min-h-[78px] rounded-lg border p-3 text-left transition-colors ${
                     active
@@ -404,13 +437,32 @@ function GamesSection({ projection, projectionError, titles, activeSlug, onToggl
             })}
           </div>
 
-          {activeOption && visibleCount === 0 ? (
+          {all.length > 0 && titleMatchCount > 0 ? (
+            <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                 aria-label="EWC match view">
+              {matchViews.map((view) => (
+                <button key={view.key} type="button" onClick={() => setMatchView(view.key)}
+                        aria-pressed={matchView === view.key}
+                        className={`whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-semibold ${
+                          matchView === view.key
+                            ? 'border-emerald-500/40 bg-emerald-500/15 text-emerald-300'
+                            : 'border-zinc-800 bg-zinc-900 text-zinc-500'
+                        }`}>
+                  {view.label} {view.count}
+                </button>
+              ))}
+            </div>
+          ) : null}
+
+          {activeOption && titleMatchCount === 0 ? (
             <div className="rounded-lg border border-zinc-800 bg-zinc-900/40 px-4 py-4">
               <p className="text-sm font-semibold text-zinc-300">{activeLabel} is in the official EWC program.</p>
               <p className="mt-1 text-xs text-zinc-500">Its match schedule is not available in the normalized live feed yet.</p>
             </div>
           ) : all.length === 0 ? (
             <p className="text-sm text-zinc-500">No EWC match rows are published in the live feed right now.</p>
+          ) : visibleCount === 0 ? (
+            <p className="text-sm text-zinc-500">No {matchViews.find((view) => view.key === matchView)?.label.toLowerCase()} matches are available for this title.</p>
           ) : (
             <div className="space-y-8">
               {live.length > 0 ? (

@@ -339,6 +339,27 @@ describe('esports league hub — Games tab tracks the official 24-title EWC prog
     expect(screen.getByText(/match schedule is not available/)).toBeTruthy()
     await flush()
   })
+
+  it('provides direct mobile title and match-status navigation', async () => {
+    renderHub(false)
+    fireEvent.click(screen.getByRole('button', { name: 'Games' }))
+    await waitFor(() => expect(screen.getByLabelText('EWC title')).toBeTruthy())
+
+    const titleSelect = screen.getByLabelText('EWC title') as HTMLSelectElement
+    expect(titleSelect.options.length).toBe(25)
+    fireEvent.change(titleSelect, { target: { value: 'counter-strike-2' } })
+    await waitFor(() => expect(screen.getByText(/Showing only Counter-Strike 2/)).toBeTruthy())
+    expect(screen.getByText('Natus Vincere')).toBeTruthy()
+    expect(screen.queryByText('Gentle Mates')).toBeNull()
+
+    fireEvent.change(titleSelect, { target: { value: '' } })
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Finals 1' })).toBeTruthy())
+    fireEvent.click(screen.getByRole('button', { name: 'Finals 1' }))
+    expect(screen.getByText('Team Heretics')).toBeTruthy()
+    expect(screen.queryByText('Gentle Mates')).toBeNull()
+    expect(screen.queryByText('Natus Vincere')).toBeNull()
+    await flush()
+  })
 })
 
 describe('esports league hub — picks tab', () => {
