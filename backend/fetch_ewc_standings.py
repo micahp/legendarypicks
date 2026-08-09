@@ -38,6 +38,7 @@ import urllib.parse
 import urllib.request
 
 from routers.esports import ewc
+from routers.esports.common import _canon_team
 
 API_URL = "https://liquipedia.net/esports/api.php"
 PAGE = "Esports_World_Cup/2026/Club_Championship_Standings"
@@ -46,10 +47,68 @@ SOURCE_URL = "https://liquipedia.net/esports/" + PAGE
 USER_AGENT = "LegendaryPicks/1.0 (esports standings ingest; contact via github.com/legendarypicks)"
 STANDINGS_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                               "data", "esports_ewc_standings.json")
+LOGO_INDEX_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                               "data", "esports_team_logos.json")
 
 
 class StandingsSourceError(ValueError):
     """A source-parsing or population validation failure — the run must not publish."""
+
+
+def normalize_logo_url(src):
+    """Normalize a publisher (MediaWiki) image URL to an absolute HTTPS URL, else None.
+
+    Handles protocol-relative (``//liquipedia.net/...``), relative (``/commons/...``),
+    and absolute (``https://`` / ``http://``) forms. Anything else is not a usable
+    logo URL and returns None.
+    """
+    if not src or not isinstance(src, str):
+        return None
+    s = src.strip()
+    if not s:
+        return None
+    if s.startswith("//"):
+        return "https:" + s
+    if s.startswith("/"):
+        return "https://liquipedia.net" + s
+    if s.startswith("http://"):
+        return "https://" + s[len("http://"):]
+    if s.startswith("https://"):
+        return s
+    return None
+
+
+def load_local_logo_index(path=None):
+    """The maintained local logo index ({canonical team key: logo URL}, PandaScore-derived).
+
+    Empty-string entries are cached negatives (the publisher has no crest) and are
+    treated as absent. A missing/unreadable file is an empty index, never an error.
+    """
+    path = path or LOGO_INDEX_PATH
+    try:
+        with open(path) as f:
+            raw = json.load(f)
+    except Exception:
+        return {}
+    if not isinstance(raw, dict):
+        return {}
+    return {k: v for k, v in raw.items() if isinstance(v, str) and v.strip()}
+
+
+def resolve_logo(club_name, publisher_logo, logos_map):
+    """The snapshot logo for one club.
+
+    The local index wins ONLY on an exact canonical-key match with a verified non-empty
+    HTTPS URL (same identity function the index is built with). Ambiguous clubs are never
+    matched by loose display-name guesses; otherwise the normalized publisher logo is kept.
+    """
+    if logos_map:
+        key = _canon_team(club_name or "")
+        if key and key in logos_map:
+            local = logos_map[key]
+            if local.startswith(("http://", "https://")):
+                return local
+    return publisher_logo
 
 
 def fetch_source():
@@ -130,12 +189,15 @@ def parse_rows(html, cutoff):
         if None in (rank, club_id, club_name, points):
             raise StandingsSourceError(
                 "unparseable standings row: rank=%r club=%r points=%r" % (rank, club_id, points))
-        m_logo = re.search(r'<img[^>]*src="(/commons/images/thumb/[^"]+\.png)"', row_html)
+        # The first image in the row is the club's team icon; normalize to HTTPS (may be
+        # protocol-relative, relative, or absolute). Absent image -> logo stays None.
+        m_logo = re.search(r'<img[^>]*src="([^"]+)"', row_html)
+        logo = normalize_logo_url(m_logo.group(1)) if m_logo else None
         rows.append({
             "rank": rank,
             "clubId": club_id,
             "clubName": club_name,
-            "logo": ("https://liquipedia.net" + m_logo.group(1)) if m_logo else None,
+            "logo": logo,
             "points": points,
             "eligibleTopEightCount": None,
             "titleWins": None,
@@ -145,8 +207,17 @@ def parse_rows(html, cutoff):
     return rows
 
 
-def build_snapshot(rows, revid, stage, cutoff, fetched_at, correction=False):
-    """Assemble the snapshot with source attribution and a reproducible checksum."""
+def build_snapshot(rows, revid, stage, cutoff, fetched_at, correction=False, logos_map=None):
+    """Assemble the snapshot with source attribution and a reproducible checksum.
+
+    ``logos_map`` is the maintained local logo index (canonical team key -> URL); when a
+    club has a verified non-empty local mapping it wins over the publisher logo, otherwise
+    the normalized publisher logo (or None) is kept. Exact canonical-key matches only —
+    never loose display-name guesses.
+    """
+    logos_map = logos_map or {}
+    for row in rows:
+        row["logo"] = resolve_logo(row.get("clubName"), row.get("logo"), logos_map)
     payload = json.dumps(rows, sort_keys=True, separators=(",", ":")).encode("utf-8")
     published_at = time.strftime("%Y-%m-%dT%H:%M:%S+00:00", time.gmtime())
     snapshot = {
@@ -186,7 +257,8 @@ def main(argv=None):
     stage, cutoff = parse_stage(wikitext)
     rows = parse_rows(html, cutoff)
     snapshot = build_snapshot(rows, revid, stage, cutoff, fetched_at,
-                              correction=args.correction)
+                              correction=args.correction,
+                              logos_map=load_local_logo_index())
     # Full validation: population count, unique clubIds, monotonic ranks/points, event,
     # timestamps — exactly what publish_standings enforces before the atomic replace.
     ewc._validate_snapshot(snapshot)

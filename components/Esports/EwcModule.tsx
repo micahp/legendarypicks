@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import LiveDot from '../LiveDot'
 import { Eyebrow, SectionHeader } from './primitives'
 import { LiveCard, buildBroadcastViews, localDateKey, groupTime } from '../../pages/esports'
@@ -64,6 +65,34 @@ export function EwcMatchRow({ m }: { m: UpMatch }) {
   )
 }
 
+/* ---------------- Club logo — compact crest beside the club name ---------------- */
+
+function initialsOf(name: string): string {
+  const words = (name || '').split(/\s+/).filter(Boolean).slice(0, 2)
+  const chars = words.map((w) => w.replace(/[^A-Za-z0-9]/g, '').charAt(0).toUpperCase()).filter(Boolean)
+  return chars.join('') || '?'
+}
+
+/* A fixed 20px crest slot (layout-shift prevention): the verified logo renders object-contain
+ * with alt text; a neutral initials fallback shows when there is no verified logo or the image
+ * fails to load. The slot is always reserved, so rows never reflow. */
+function ClubLogo({ clubName, logo }: { clubName: string; logo?: string | null }) {
+  const [failed, setFailed] = useState(false)
+  const show = Boolean(logo) && !failed
+  return (
+    <span className="flex h-5 w-5 shrink-0 items-center justify-center overflow-hidden rounded bg-zinc-800"
+          data-club-logo={show ? 'image' : 'fallback'}>
+      {show ? (
+        <img src={logo as string} alt={`${clubName} logo`} width={20} height={20}
+             loading="lazy" onError={() => setFailed(true)}
+             className="h-5 w-5 object-contain" />
+      ) : (
+        <span className="text-[9px] font-bold uppercase tracking-wide text-zinc-400">{initialsOf(clubName)}</span>
+      )}
+    </span>
+  )
+}
+
 export function ClubStandingsRail({ standings, onExpand, expanded, loading }: {
   standings: Standings | null
   onExpand: () => void
@@ -89,8 +118,8 @@ export function ClubStandingsRail({ standings, onExpand, expanded, loading }: {
         <div className="rounded-lg bg-zinc-900/60 px-4 py-4">
           <p className="text-sm font-semibold text-zinc-300">Standings unavailable</p>
           <p className="mt-1 text-xs leading-relaxed text-zinc-500">
-            No licensed machine-readable Club Championship publisher is wired yet. We are not
-            guessing the table — it stays off until a permitted source exists.
+            The published Club Championship snapshot is not readable right now. We are not
+            guessing the table — it stays off until a valid published run exists.
           </p>
         </div>
       </div>
@@ -113,8 +142,9 @@ export function ClubStandingsRail({ standings, onExpand, expanded, loading }: {
       {/* Open, border-light table: no outer border, no vertical rules, aligned tabular numbers. */}
       <div className="divide-y divide-zinc-800/60">
         {rows.map((r) => (
-          <div key={r.clubId} className="flex items-baseline gap-3 py-2">
+          <div key={r.clubId} className="flex items-center gap-3 py-2">
             <span className="w-5 shrink-0 text-right font-mono text-xs tabular-nums text-zinc-600">{r.rank}</span>
+            <ClubLogo clubName={r.clubName} logo={r.logo} />
             <span className="min-w-0 flex-1 truncate text-sm font-medium text-zinc-200">{r.clubName}</span>
             <span className="shrink-0 font-mono text-sm font-bold tabular-nums text-zinc-100">
               {r.points === null ? '\u2013' : r.points}
