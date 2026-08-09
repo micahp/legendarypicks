@@ -10,6 +10,9 @@ export function useLeagueRouteState() {
   const router = useRouter()
   const leagueQuery = router.query.league
   const league = (typeof leagueQuery === 'string' ? leagueQuery : '').toLowerCase()
+  // Soccer-shaped leagues — P W D L standings and draws. MLS shares the shape with
+  // the World Cup; `isWorldCup` below stays for the knockout-specific consumers.
+  const isSoccer = league === 'wc' || league === 'mls'
   const isWorldCup = league === 'wc'
   const isUFC = league === 'ufc'
   const isNFL = league === 'nfl'
@@ -32,8 +35,8 @@ export function useLeagueRouteState() {
   const offerable = isUFC || supportsTeamStats
   const validTabs: HubTab[] = isUFC
     ? ['rankings', 'schedule', 'predict']
-    : isWorldCup
-      ? ['standings', 'schedule']
+    : isSoccer
+      ? ['standings', 'stats', 'schedule']
       : isNFL
         ? ['camp', 'standings', 'stats', 'schedule']
         : ['standings', 'stats', 'schedule']
@@ -199,6 +202,7 @@ export function useLeagueRouteState() {
 
   return {
     league,
+    isSoccer,
     isWorldCup,
     isUFC,
     supportsTeamStats,

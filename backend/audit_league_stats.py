@@ -162,6 +162,71 @@ MANIFEST = {
         },
         "single_vocabulary": ["position", "team"],
     },
+    "mls": {
+        "stat_types": {
+            "season": {
+                # The four keys ingest_soccer_logs._TARGET_STATS maps and
+                # writes (zero-filled) for every line. `games` is deliberately
+                # absent: the log is one row per game, so a games count is
+                # derived, not a key the ingest writes -- and declaring a
+                # column nothing writes would fail on a lie.
+                "required": ["goals", "assists", "shots", "sot"],
+                "qualifier": {"unit": "games",
+                              "published": "NONE PUBLISHED that this project "
+                              "could verify -- soccer publishes no playing-time "
+                              "qualifier"},
+            },
+        },
+        # Soccer's split is GK vs outfield, and the ingest cannot tell them
+        # apart today: _TARGET_STATS maps goals/assists/shots/sot for every
+        # line and drops saves/minutes, so a GK whose stat row carries only
+        # saves and minutes is not written at all. Saves is red on purpose
+        # until the ingest maps them -- the same shape as the NHL goalie hole.
+        "position_content": {
+            "GK": [["saves"], ["minutesPlayed", "minutes"]],
+            "D": [["goals"], ["assists"]],
+            "M": [["goals"], ["assists"]],
+            "F": [["goals"], ["assists"]],
+        },
+        "single_vocabulary": ["position", "team"],
+    },
+    "ncaaf": {
+        "stat_types": {
+            "season": {
+                # The nine keys ingest_ncaaf_logs._STAT_MAP/_KEY_MAP write:
+                # passing att/pass_yds/pass_td/intc, rushing rush_yds/rush_td,
+                # receiving rec/rec_yds/rec_td. Same `games` caveat as mls:
+                # one log row per game, so no games column is written to
+                # declare.
+                "required": ["att", "pass_yds", "pass_td", "intc",
+                             "rush_yds", "rush_td", "rec", "rec_yds", "rec_td"],
+                "qualifier": {"unit": "games",
+                              "published": "NONE PUBLISHED that this project "
+                              "could verify -- college football publishes no "
+                              "playing-time qualifier"},
+            },
+        },
+        # Offense + defense, matching what the ingests actually write. The
+        # ESPN-summary ingest mapped offense only (QB/RB/WR/TE); the CFBD
+        # re-source (2026-08-07) also maps the defensive and interceptions
+        # categories (tackles/tackles_solo/sacks/tfl/pd/qbhur/def_td,
+        # def_int/def_int_yds/def_int_td) into the stats JSON line, so
+        # defensive positions are declared too.
+        "position_content": {
+            "QB": [["att"], ["pass_yds"], ["pass_td"]],
+            "RB": [["rush_yds"], ["rush_td"]],
+            "WR": [["rec_yds"], ["rec_td"]],
+            "TE": [["rec_yds"], ["rec_td"]],
+            "DL": [["tackles"], ["sacks"], ["tfl"]],
+            "DE": [["tackles"], ["sacks"], ["tfl"]],
+            "DT": [["tackles"], ["sacks"], ["tfl"]],
+            "LB": [["tackles"], ["tackles_solo"], ["sacks"]],
+            "DB": [["tackles"], ["pd"], ["def_int"]],
+            "CB": [["tackles"], ["pd"], ["def_int"]],
+            "S": [["tackles"], ["pd"], ["def_int"]],
+        },
+        "single_vocabulary": ["position", "team"],
+    },
 }
 
 PASS, FAIL, UNVERIFIED = "PASS", "FAIL", "UNVERIFIED"

@@ -225,3 +225,47 @@ that gets punished.
 **The lesson, and it is the same one twice:** every "we cannot get this" here
 was a statement about which publisher we asked, not about what is published.
 Check the league's own API before recording a gap.
+
+---
+
+## 4. MLS and NCAAF — added 2026-08-06/07
+
+Measured against the dev DB (`picks.dev.db`) 2026-08-07.
+
+### MLS
+
+Have: player game logs with `goals, assists, shots, sot` (16,661 rows, 100%
+player_id resolved); team results 1,020 (W/D/L, 256 draws); team stats `shots,
+blocked_shots` (1,020 rows); player leaders (goals/assists/shots/sot) via
+`/api/mls/leaders`; team aggregates (Record + Scoring & shooting) via
+`/api/mls/team-aggregates`.
+
+| missing | in the logs? | note |
+|---|---|---|
+| **saves / goalsConceded / shotsFaced (GK)** | **yes — published, unmapped** | the summary publishes them per keeper (measured event 727308: Pantemis saves=2); `ingest_soccer_logs` maps only goals/assists/shots/sot. GK-saves gap flagged in MANIFEST. Needs a position-G mapping + `position_group` on log rows |
+| **xG / xA / possession-adjacent player stats** | **no** | ESPN's soccer feed does not publish player xG in the summary line |
+| shots_on_target / possession / corners **team** stats | **no** | soccer-native team stat columns have no schema column yet; `team_game_stats` holds shots + blocked_shots only |
+| **draws on the standings surface** | yes (256 draws in results) | `/api/mls/standings` returns W/L/win_pct with no draws field, and the UI renders the generic W-L table for mls (the soccer P W D L table only renders for `isWorldCup`). **Open gap — MLS is paused with this unfixed** |
+
+Qualifier: **NONE PUBLISHED** that this project could verify (MANIFEST records
+this). No playing-time minimum is published for MLS leaderboards.
+
+### NCAAF
+
+Have (2026-08-07, after the FBS push): players spine 15,029 (all espn_id);
+player game logs with the offense keys `att, pass_yds, pass_td, intc, rush_yds,
+rush_td, rec, rec_yds, rec_td` (from the 888-game FBS regular season, REG only,
+game_type NOT NULL); team results + team stats (`first_downs, total_yards,
+net_passing_yards, rushing_yards, turnovers`) after backfill; conference
+standings and schedule surfaces.
+
+| missing | in the logs? | note |
+|---|---|---|
+| **tackles / sacks / defensive keys (DL/LB/DB)** | **yes (mapped 2026-08-07)** | `ingest_cfbd_logs` maps the defensive + interceptions categories into the stats JSON (`tackles, tackles_solo, sacks, tfl, pd, qbhur, def_td, def_int, def_int_yds, def_int_td`) — closed the gap the ESPN-summary ingest left. UI mapping of the defensive keys is a later slice |
+| ~~**Army-Navy 2025-12-13 (401762521) player logs**~~ | **CLOSED 2026-08-07** | the empty passing/rushing/receiving groups were an ESPN-summary artifact — the CFBD re-source publishes the game (42 rows). PLAYER_LOG_GAP_GAMES entry removed; COV-ncaaf expects 888 logs again |
+| **receiving C/ATT splits, rushing LONG, per-play EPA** | **yes (published, unmapped)** | summary publishes C/ATT, LONG, AVG; `_STAT_MAP` keeps only the nine offense keys |
+| **kick returns / punt returns / FGs** | **no** | special-teams player stats not mapped |
+| **playing-time qualifier** | **no** | college football publishes no per-player minimum; MANIFEST records NONE PUBLISHED |
+| **CFBD as second publisher** | **yes — the NCAAF log source (2026-08-07)** | key exists; the DO-NOT-use was news-engine-only (Micah, confirmed 08-07). `ingest_cfbd_logs.py` re-sourced the 2025 FBS logs (~139 calls vs 888 ESPN summaries): ESPN game ids + athlete ids (direct spine joins, 100% resolved), defensive stats mapped, FCS buy-game players included (230 teams) |
+
+Qualifier: **NONE PUBLISHED** that this project could verify.

@@ -279,6 +279,15 @@ _MARKET_STAT_KEY = {
     # category as MLB's home_run_any/hit_any etc — none of those are chartable either,
     # this isn't a new gap. All fall back to "chart not available" via lookup returning None.
     "ufc": {"significant_strikes": "sigStrikesLanded", "fight_time": "fight_time"},
+    # Tennis has no game-log ingest — docs/LEAGUE-SOURCES-FIELDS.md "Tennis — Bovada prop markets":
+    # charting requires tennis game logs that don't exist, so every market maps to None (the chart
+    # lookup returns "market not chartable") until that lands. Never fabricate a stat key.
+    # total_sets is a match-level Bovada market (O/U 2.5, no player attribution) deferred from
+    # _parse_tennis_props; listed here so the intent is explicit.
+    "atp": {"match_winner": None, "total_games": None, "set_betting": None,
+            "win_a_set": None, "total_sets": None},
+    "wta": {"match_winner": None, "total_games": None, "set_betting": None,
+            "win_a_set": None, "total_sets": None},
 }
 
 

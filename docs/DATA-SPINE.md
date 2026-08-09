@@ -43,6 +43,8 @@ players silently.
 | **NHL** | 877 | **0** | 875 nhl_id | — | single publisher |
 | UFC | 47 | 45 | — | — | single publisher |
 | WC | 63 | 61 | — | — | single publisher |
+| **MLS** | 1,236 | 1,236 | — | — | single publisher (ESPN) |
+| **NCAAF** | 15,029 | 15,029 | — | — | single publisher (ESPN) |
 
 Read that table next to the symptom list and every line matches:
 
@@ -58,6 +60,26 @@ Read that table next to the symptom list and every line matches:
 - **NHL carries no `espn_id`.** The nhle.com feed we do have is skater-shaped, so
   a goalie's game log holds `goals, assists, pim, toi` and **no goalie has ever
   recorded a save**.
+
+**MLS and NCAAF (added 2026-08-06/07) are currently single-publisher (ESPN)**
+(checklist F/identity-crosswalk): the whole spine carries `espn_id` — 1,236
+MLS rows and 15,029 NCAAF rows, every one keyed by ESPN's athlete id — and no
+second publisher has been wired to them yet. For NCAAF a second publisher is
+permitted: Micah's 2026-08-06 "DO NOT use cfbd key" was scoped to the news
+engine only (confirmed 2026-08-07 — see CORRECTION below), and the provider
+audit recommends CFBD `/games/players` as the NCAAF log source (~1-6
+calls/season vs 888 ESPN summaries). The ESPN-only spine is a build state, not
+a locked decision. What ESPN does NOT print for these leagues, so what they
+will never have until a second publisher lands:
+
+- MLS: no advanced metrics in the log feed (xG/xA, possession-adjacent player
+  stats); the summary publishes saves/goalsConceded/shotsFaced for keepers but the
+  ingest does not yet map them (GK saves gap — documented in LEAGUE-STAT-GAPS).
+- NCAAF: no tackle/sack/defensive keys are mapped by the log ingest (offense-only
+  scope, declared in the MANIFEST), and no playing-time qualifier is published.
+- Both: ESPN publishes team + position + news, so unlike MLB/NHL these leagues DO
+  get team/position/news; what they lack is the *cross-publisher* richness (a
+  second id column, ADP-style external feeds) that only a second publisher brings.
 
 ## 3. So: are we ready to add leagues?
 
@@ -222,3 +244,24 @@ it was an ad-hoc command. That is precisely when a gate beats a root cause.
 > to your row. Read the field semantics at ingest — and assert the pairing, because
 > an id that joins cleanly to the wrong person is indistinguishable from a correct
 > one until something measures it against the publisher.
+
+---
+
+## CORRECTION — 2026-08-07: the NCAAF "single-publisher" was not a deliberate choice
+
+§2 called MLS and NCAAF "deliberately single-publisher (ESPN)... a choice, not
+an accident." For NCAAF that framing was wrong. The reasoning behind it was
+Micah's 2026-08-06 "DO NOT use cfbd key" — which, on the record, was scoped to
+the **news engine**: it was said right after CFBD was confirmed to have no
+/news endpoint, and the same message's O(1)-player-lookup rule is a news-engine
+rule too. Micah confirmed 2026-08-07: **news-only**.
+
+What that means for the pipeline: CFBD is permitted for NCAAF logs. The provider
+audit (PROVIDER-AUDIT-2026-08-06.md) recommends it as the log source
+(`GET /games/players?year=&seasonType=regular&classification=fbs`, free tier,
+~1-6 calls/season vs 888 ESPN summaries), and it publishes defensive stats
+(tackles/sacks) the ESPN summaries lack. The current ESPN-only spine stands as
+measured — but it is a build state, not a decision. **RESOLVED 2026-08-07: the
+NCAAF log ingest lands on CFBD** — `ingest_cfbd_logs.py` re-sourced the 2025
+FBS season (888 games, 56,577 rows, 100% linked, defensive stats mapped, ~139
+calls total). ESPN summaries remain the team backfill/reconcile source.

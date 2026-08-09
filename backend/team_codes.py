@@ -59,7 +59,28 @@ ALIASES: dict[str, dict[str, str]] = {
 
 NON_FRANCHISE: dict[str, frozenset[str]] = {
     "nba": frozenset({"STRIPES", "STARS", "WORLD"}),
+    # MLS All-Star rosters are published as teams ("MLS All-Stars", "Liga MX
+    # All-Stars") with their own codes in the season's team collection. They
+    # are not franchises; pass them through so an All-Star game row does not
+    # raise, and `is_canonical` still answers False for them.
+    "mls": frozenset({"MLS", "LMX"}),
+    # NCAAF group-80 team list carries post-season all-star / combine sides
+    # (Senior Bowl Team Gaither / Team Robinson, East/West/North All-Stars,
+    # South/North Florida Stars, "American", "National") that never play a
+    # regular-season game. They appear in no team_game_results and must not
+    # count toward FBS coverage.
+    "ncaaf": frozenset({"AMER", "EAST", "GAIT", "NAT", "NOR", "ROB", "SFX", "UNF", "WEST"}),
 }
+
+# All-star / combine sides are published in some leagues' team lists but never
+# play a league game. Keep them pass-through (normalize accepts them) but strip
+# them from CANONICAL so is_canonical — the count used by coverage gates and
+# team aggregates — answers False. NBA STRIPES/STARS/WORLD and the MLS
+# All-Star sides were already absent from their lists; NCAAF group 80 carries
+# nine of them inside the JSON, so subtract everywhere.
+for _league, _nf in NON_FRANCHISE.items():
+    if _league in CANONICAL:
+        CANONICAL[_league] = frozenset(CANONICAL[_league] - _nf)
 
 # ---------------------------------------------------------------------------
 # Exceptions

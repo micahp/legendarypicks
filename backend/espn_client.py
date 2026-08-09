@@ -20,10 +20,12 @@ LEAGUES = {  # our key -> (espn "sport/league" path, regulation periods)
     "nhl":  ("hockey/nhl", 3),
     "mlb":  ("baseball/mlb", 9),
     "nfl":  ("football/nfl", 4),
+    "ncaaf": ("football/college-football", 4),
     "atp":  ("tennis/atp", 3),
     "wta":  ("tennis/wta", 3),
     "ufc":  ("mma/ufc", 3),
     "wc":   ("soccer/fifa.world", 2),
+    "mls":  ("soccer/usa.1", 2),
 }
 
 # ---------------------------------------------------------------------------
@@ -408,8 +410,8 @@ def games(league, date=None):
                     "event": event_name,
                     "card_segment": card_segment,
                 })
-    elif league == "wc":
-        # Soccer (World Cup) - events with group/round context, draws, ET, penalties
+    elif league in ("wc", "mls"):
+        # Soccer (World Cup / MLS) - events with group/round context, draws, ET, penalties
         for e in d.get("events", []):
             comp = (e.get("competitions") or [{}])[0]
             status = comp.get("status", {})
@@ -441,10 +443,15 @@ def games(league, date=None):
                 stage = "et"
             if "SHOOTOUT" in status_name:
                 stage = "pens"
+            suspended = "SUSPEND" in status_name
 
             status_display = st.get("description") or ""
             if is_post:
-                if is_draw and winner_abbrev:
+                if suspended:
+                    # Weather/other suspension: ESPN closes the event (state=post)
+                    # but the match is NOT over — never label it "FT".
+                    status_display = "Suspended"
+                elif is_draw and winner_abbrev:
                     status_display = "FT (Pens)"
                 elif stage == "et":
                     status_display = "FT (AET)"
@@ -1113,9 +1120,12 @@ def game_result(league, game_id):
     """Clean grading info for one game: {state, scores{abbrev:score}, winner|None}.
 
     Robust to date (queries the game directly), so it grades predictions regardless of when
-    the game was played. winner is None until the game is final. Soccer uses competitor.winner flag.
+    the game was played. winner is None until the game is final. Soccer (wc, mls) uses the
+    competitor.winner flag — penalty/AET aware, and the only honest grade for a drawn match:
+    the score heuristic below would file an MLS Cup final decided on penalties by the
+    90-minute scoreline.
     """
-    if league == "wc":
+    if league in ("wc", "mls"):
         return game_result_soccer(league, game_id)
     d = summary(league, game_id)
     comp = (d.get("header", {}).get("competitions") or [{}])[0]
