@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.7.10 — 2026-08-09
+
+### The full EWC tournament center is live
+
+- The Esports league destination now carries the EWC 2026 tournament center: live and upcoming
+  matches across titles, results, title discovery, and the published Club Championship table with
+  explicit source, freshness, stale, and unavailable states.
+- EWC Call of Duty bracket slots are reconciled against the PandaScore bracket graph. Undecided
+  participants render structurally as `Winner of ...` or `Loser of ...`, while completed clubs use
+  their canonical identities; raw `TBD` values no longer reach the CoD scoreboard.
+- `/esports` remains the broadcast-first live board, while `/leagues/esports` owns the EWC
+  tournament-center experience and `/leagues` provides its entry point.
+- This release is intentionally isolated from the unfinished news engine and the MLS/NCAAF work.
+
 ## v0.7.9 — 2026-08-09
 
 ### EWC CoD finals show the clubs that actually played
