@@ -46,6 +46,18 @@ Anything that does not serve that window competes with it.
 - [ ] `B/position-content` for **mlb** and **nba** — a declaration: what must a catcher's / guard's log record?
 - [ ] `DATA-COVERAGE-CONTRACT.md` §7 rewrite — what each of the 8 checks needs from a new league
 - [ ] `ufc` / `wc` UNVERIFIED x6 — likely "no leaderboard surface to serve", not a fetcher
+- [ ] **MLS + NCAAF pipelines** (`feat/league-mls-ncaaf`) — ingests, draw handling, MANIFEST, frontend
+      built; blocked on the identity spine. Corrected order: types → schedule → season-dates →
+      standings → (upcoming: previous-season stats) → rosters → position groups → logs. Handoff:
+      `lp-league-mls-ncaaf/HANDOFF-2026-08-06.md`.
+- [ ] **Tournament games under their own league key** (decided 2026-08-06) — Leagues Cup
+      (`concacaf.leagues.cup`), CCC (`concacaf.champions`), Campeones Cup are SEPARATE ESPN
+      league slugs; file their logs under their own league key so MLS regular-season denominators
+      stay clean (a Leagues Cup goal must not inflate `games_played` for REG). Schedule watcher for
+      postponements/reschedules is a SEPARATE mechanism, deferred.
+- [ ] **Player detail: year + league selectors** — on an MLS player's page, show one season at a
+      time (pre/regular/post for that league) with dropdowns to switch year or league (MLS,
+      Leagues Cup, CCC...). Keys off `position_group` so a GK surface shows saves, not shots.
 
 ## NEXT — before drafts (3-5 weeks), ordered by whether a drafter notices
 
@@ -55,6 +67,38 @@ Anything that does not serve that window competes with it.
       so Kyle Juszczyk has **zero** `player_stats` rows and an RB filter drops 18 active FBs
 - [ ] **Draft-research screens** — what the one real user asked for, still unbuilt
 - [ ] Only then: more data hygiene
+
+## POST-DRAFT — league news engine (POC, decided 2026-08-06)
+
+Not draft-serving — this window belongs to fantasy drafts. On the roadmap now
+because the POC is small and the narrative signal is time-sensitive.
+
+- [ ] **Per-league AI news** — two layers per league: (1) the league's dominant
+      narrative — what actually matters right now (MLB: the Dodgers' "Avengers"
+      superteam and the salary cap/floor debate — "does baseball need saving?";
+      MLS: relegation/promotion, the post-Messi competitive-balance story; NCAAF:
+      SEC vs Big Ten consolidation — "is the SEC about to lead the NCAA?");
+      (2) granular events: trades, staff decisions (firings/hirings), injuries to
+      key/notable players.
+- [ ] **News page in top-level nav** — Home tab is the catch-all across leagues;
+      per-league tabs (NFL, MLB, MLS, NCAAF…) land eventually. One feed, split
+      by the classifier's league tag.
+- [ ] **POC first** — prove narrative detection + granular capture on one or two
+      leagues before building the pipeline. Judge against the signal, not the
+      output.
+- [ ] **Signal sources — verified 2026-08-06** — X/Twitter (the Underdog league
+      accounts) is locked, but the ecosystem is on Bluesky: post search works
+      without auth (narrative queries return real strategy chatter) and full
+      author feeds pull unauth too. Active accounts: @awfulannouncing (37.9k
+      posts), @theathletic.com (17k), @sbnation (1.3k). Underdog's own accounts
+      are registered-but-dormant (0 posts); the live Underdog signal is
+      @underdogtracker (280 posts) + Underdog CPO @wsul + keyword search. RSS
+      verified: ESPN news API (nfl / mlb / usa.1 / college-football), SB Nation
+      network (/rss/index.xml + team blogs), Awful Announcing (/feed), FanSided
+      (/feed/), Deadspin (/rss — carries injuries/extensions/suspensions).
+      Not usable: The Athletic (paywall + robots bans AI scraping), Bleacher
+      Report (no RSS, /api disallowed), Yahoo (429). Google News RSS as the
+      universal fallback. Pick the mix when the POC starts.
 
 ## LATER — deferred on purpose
 
@@ -86,7 +130,48 @@ Anything that does not serve that window competes with it.
 Running list. Add to it, don't rewrite it — mark items superseded rather than deleting,
 so the reasoning stays readable.
 
-Last updated 2026-07-29.
+Last updated 2026-08-06.
+
+---
+
+## League news engine — 2026-08-06
+
+Micah wants AI-generated per-league news that (1) understands each league's
+dominant narrative and (2) captures trades, staff decisions, and injuries to
+notable players, bubbling per-league → homepage feed. Anchored on his own
+Innovative Hype articles: the Messi/MLS piece (competitive balance, the
+Jordan-style deal, a new era for MLS) and the CFB piece (playoff legitimacy,
+bowl bloat, ESPN's bowl monopoly, super-conference consolidation). Status: POC.
+The ideal strategy signal — X/Twitter's Underdog Sports league accounts — is
+unreachable (search locked down); verified ESPN's news API per league as the
+base source, Google News RSS as an auth-free narrative tracker. Full entry in
+the POST-DRAFT section above.
+
+**Update, same day — Bluesky verified as the X workaround.** Post search works
+without auth and narrative queries return real strategy chatter; full author
+feeds pull unauthenticated too. Active official accounts: @awfulannouncing
+(37.9k posts), @theathletic.com (17k), @sbnation (1.3k). Underdog's own accounts
+are registered-but-dormant (0 posts each) — the live Underdog signal is
+@underdogtracker (280 posts, fan-run) + Underdog CPO @wsul + keyword search.
+RSS article pull verified: SB Nation network, Awful Announcing, FanSided,
+Deadspin (/rss, carries injuries/extensions/suspensions), plus the ESPN news
+API. The Athletic (paywall + robots bans AI/LLM scraping), Bleacher Report (no
+RSS, /api disallowed), and Yahoo (429) are not usable directly — Google News
+RSS covers them as a fallback. Checklist entry updated accordingly.
+
+**Nav model corrected same day (Micah):** the news surface is a top-level-nav
+News page — Home tab is the catch-all across leagues, per-league tabs come
+eventually. Not per-league pages + homepage feed. Updated the checklist bullet
+and PLAN §1/§4.
+
+**Wired to dev 2026-08-06:** `news_items` table + collector
+(`backend/ingest_league_news.py` — ESPN/RSS/Bluesky, fail-fast per the ESPN
+doctrine, disk-cached re-runs) + `/api/news`, `/api/news/narratives`,
+`/api/news/{league}` + top-nav News page (Home catch-all + per-league tabs).
+Live on :8096/:3096, 302 rows in picks.dev.db. 13/13 tests green. Caveats:
+ESPN news returns ~1 article/league (thin but real); SB Nation is Atom (parser
+handles it now); NBA/NHL narrative signal is weak so far — that's the test
+Micah plans to run (he gives the narrative for some leagues, we find the rest).
 
 ---
 
