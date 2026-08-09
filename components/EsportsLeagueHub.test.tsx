@@ -269,50 +269,45 @@ describe('esports league hub — inline all-esports board from /api/esports/upco
   })
 })
 
-describe('esports league hub — games tab with per-title context and interactive filtering', () => {
-  it('renders live/next/recent context per title and deep links', async () => {
+describe('esports league hub — Games tab tracks the complete EWC population', () => {
+  it('renders every EWC live, upcoming, and completed match without generic-board games', async () => {
     renderHub(true)
     fireEvent.click(screen.getByRole('button', { name: 'Games' }))
-    await waitFor(() => expect(screen.getByText('Titles on the board')).toBeTruthy())
+    await waitFor(() => expect(screen.getByText('3 games · 2 titles')).toBeTruthy())
+    expect(screen.getByText('Gentle Mates')).toBeTruthy()
+    expect(screen.getByText('Natus Vincere')).toBeTruthy()
+    expect(screen.getByText('Virtus.pro')).toBeTruthy()
+    expect(screen.getByText('G2 Esports')).toBeTruthy()
+    expect(screen.getByText('Team Heretics')).toBeTruthy()
+    expect(screen.getByText('Live now')).toBeTruthy()
+    expect(screen.getByText('Upcoming')).toBeTruthy()
+    expect(screen.getByText('Finals')).toBeTruthy()
+    expect(screen.getAllByText('LIVE').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('FINAL').length).toBeGreaterThan(0)
 
-    // Per-title context: LoL live now (G2 vs Karmine), next (Fnatic vs Vitality), recent (T1 vs Gen.G).
-    await waitFor(() => expect(screen.getByText(/G2 Esports vs Karmine Corp/)).toBeTruthy())
-    expect(screen.getByText(/Fnatic vs Team Vitality/)).toBeTruthy()
-    expect(screen.getByText(/T1 vs Gen\.G/)).toBeTruthy()
-    // Deep links to the desk and picks.
-    const deskLinks = screen.getAllByText('Desk →').map((el) => el.closest('a')?.getAttribute('href'))
-    expect(deskLinks).toContain('/esports/call-of-duty')
-    expect(deskLinks).toContain('/esports/league-of-legends')
-    const picksLinks = screen.getAllByText('Picks →').map((el) => el.closest('a')?.getAttribute('href'))
-    expect(picksLinks).toContain('/predict?title=call-of-duty')
+    // Generic-board-only matches must not leak into the EWC tracker.
+    expect(screen.queryByText('Karmine Corp')).toBeNull()
+    expect(screen.queryByText('Fnatic')).toBeNull()
+    expect(screen.queryByText('FaZe Clan')).toBeNull()
     await flush()
   })
 
-  it('filters the rendered board by title and clears', async () => {
+  it('filters the complete EWC population by represented title and clears', async () => {
     renderHub(true)
     fireEvent.click(screen.getByRole('button', { name: 'Games' }))
-    await waitFor(() => expect(screen.getByText('Titles on the board')).toBeTruthy())
+    await waitFor(() => expect(screen.getByText('3 games · 2 titles')).toBeTruthy())
 
-    // Wait for the title chips (data-dependent), then select Call of Duty.
-    await waitFor(() => expect(screen.getAllByRole('button', { name: /Call of Duty/ }).length).toBeGreaterThan(0))
-    fireEvent.click(screen.getAllByRole('button', { name: /Call of Duty/ })[0])
+    fireEvent.click(screen.getByRole('button', { name: /Call of Duty 2/ }))
     await waitFor(() => expect(screen.getByText(/Showing only Call of Duty/)).toBeTruthy())
+    expect(screen.getByText('2 of 3 games')).toBeTruthy()
+    expect(screen.getByText('Gentle Mates')).toBeTruthy()
+    expect(screen.getByText('G2 Esports')).toBeTruthy()
+    expect(screen.queryByText('Natus Vincere')).toBeNull()
+    expect(screen.queryByText('Virtus.pro')).toBeNull()
 
-    // The Live & Upcoming tab now shows only Call of Duty matches.
-    fireEvent.click(screen.getByRole('button', { name: 'Live & Upcoming' }))
-    await waitFor(() => expect(screen.getByText('FaZe Clan')).toBeTruthy())
-    expect(screen.queryByText('G2 Esports')).toBeNull()
-    expect(screen.queryByText('Fnatic')).toBeNull()
-
-    // Results are filtered too.
-    fireEvent.click(screen.getByRole('button', { name: 'Results' }))
-    await waitFor(() => expect(screen.getByText(/No finished matches yet/)).toBeTruthy())
-    expect(screen.queryByText('T1')).toBeNull()
-
-    // Clearing the filter restores the full board.
-    fireEvent.click(screen.getByRole('button', { name: 'Live & Upcoming' }))
     fireEvent.click(screen.getByText('Clear filter ×'))
-    await waitFor(() => expect(screen.getByText('G2 Esports')).toBeTruthy())
+    await waitFor(() => expect(screen.getByText('Natus Vincere')).toBeTruthy())
+    expect(screen.getByText('3 games · 2 titles')).toBeTruthy()
     expect(screen.queryByText(/Showing only Call of Duty/)).toBeNull()
     await flush()
   })
@@ -400,13 +395,15 @@ describe('esports league hub — data states', () => {
     await flush()
   })
 
-  it('shows a quiet note when the title directory is unavailable', async () => {
+  it('keeps the complete EWC Games tracker available when the title directory is unavailable', async () => {
     renderHub(true, (url) => {
       if (url === '/api/esports/titles') return new Error('titles down')
       return defaultRespond(url)
     })
     fireEvent.click(screen.getByRole('button', { name: 'Games' }))
-    await waitFor(() => expect(screen.getByText(/title directory is unavailable/)).toBeTruthy())
+    await waitFor(() => expect(screen.getByText('3 games · 2 titles')).toBeTruthy())
+    expect(screen.getByRole('button', { name: /Call of Duty 2/ })).toBeTruthy()
+    expect(screen.getByRole('button', { name: /CS2 1/ })).toBeTruthy()
     await flush()
   })
 })

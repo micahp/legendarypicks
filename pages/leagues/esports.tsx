@@ -1,7 +1,7 @@
 import Head from 'next/head'
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
-import { EwcModule } from '../../components/Esports/EwcModule'
+import { EwcMatchRow, EwcModule } from '../../components/Esports/EwcModule'
 import type { EwcProjection, Standings } from '../../components/Esports/EwcModule'
 import { Eyebrow, SectionHeader } from '../../components/Esports/primitives'
 import LiveDot from '../../components/LiveDot'
@@ -30,6 +30,10 @@ const TABS: { key: HubTab; label: string }[] = [
   { key: 'games', label: 'Games' },
   { key: 'picks', label: 'Picks' },
 ]
+
+function titleSlug(label: string): string {
+  return label.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+}
 
 /* The Esports league destination under the Leagues system. EWC 2026 tournament center first
  * (event focus, today/results, Club Championship rail), then the broader all-esports board
@@ -126,8 +130,16 @@ export default function EsportsLeaguePage() {
   const liveCount = projection?.matches.live.length ?? 0
 
   const allMatches = upcoming?.matches ?? []
+  const ewcMatches = useMemo(
+    () => projection
+      ? [...projection.matches.live, ...projection.matches.upcoming, ...projection.matches.completed]
+      : [],
+    [projection],
+  )
   const filteredLabel = titleFilter
-    ? (titles?.find((t) => t.slug === titleFilter)?.label ?? null)
+    ? (titles?.find((t) => t.slug === titleFilter)?.label
+      ?? ewcMatches.find((m) => titleSlug(m.title) === titleFilter)?.title
+      ?? null)
     : null
   const boardMatches = useMemo(
     () => (filteredLabel ? allMatches.filter((m) => m.title === filteredLabel) : allMatches),
@@ -271,7 +283,7 @@ export default function EsportsLeaguePage() {
         )}
 
         {activeTab === 'games' && (
-          <GamesSection titles={titles} titlesError={titlesError} matches={allMatches}
+          <GamesSection projection={projection} projectionError={projectionError} titles={titles}
                         activeSlug={titleFilter} onToggle={(slug) => setTitleFilter(titleFilter === slug ? null : slug)} />
         )}
 
@@ -283,67 +295,68 @@ export default function EsportsLeaguePage() {
   )
 }
 
-/* ---------------- Games — per-title context + filter ---------------- */
+/* ---------------- Games — complete EWC event population ---------------- */
 
-type TitleContext = {
-  title: TitleOption
-  live: UpMatch | null
-  next: UpMatch | null
-  recent: UpMatch | null
-}
-
-function titleContexts(titles: TitleOption[], matches: UpMatch[]): TitleContext[] {
-  return titles.map((title) => {
-    const ms = matches.filter((m) => m.title === title.label)
-    const live = ms.find((m) => m.live) ?? null
-    const next = ms
-      .filter((m) => !m.live && !m.finished)
-      .sort((a, b) => (a.startTime ?? Infinity) - (b.startTime ?? Infinity))[0] ?? null
-    const recent = ms
-      .filter((m) => m.finished)
-      .sort((a, b) => (b.startTime ?? 0) - (a.startTime ?? 0))[0] ?? null
-    return { title, live, next, recent }
-  })
-}
-
-function startLabel(ms: number | null): string {
-  if (!ms) return 'Time TBD'
-  const d = new Date(ms)
-  const isToday = d.toDateString() === new Date().toDateString()
-  return isToday
-    ? d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
-    : d.toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
-}
-
-function GamesSection({ titles, titlesError, matches, activeSlug, onToggle }: {
+function GamesSection({ projection, projectionError, titles, activeSlug, onToggle }: {
+  projection: EwcProjection | null
+  projectionError: boolean
   titles: TitleOption[] | null
-  titlesError: boolean
-  matches: UpMatch[]
   activeSlug: string | null
   onToggle: (slug: string) => void
 }) {
+  const buckets = projection?.matches
+  const all = buckets ? [...buckets.live, ...buckets.upcoming, ...buckets.completed] : []
+  const labels = Array.from(new Set(all.map((m) => m.title))).sort((a, b) => a.localeCompare(b))
+  const options = labels.map((label) => ({
+    label,
+    slug: titles?.find((t) => t.label === label)?.slug ?? titleSlug(label),
+    count: all.filter((m) => m.title === label).length,
+  }))
+  const activeLabel = options.find((option) => option.slug === activeSlug)?.label ?? null
+  const filter = (matches: UpMatch[]) => activeLabel ? matches.filter((m) => m.title === activeLabel) : matches
+  const live = filter(buckets?.live ?? [])
+  const upcoming = filter(buckets?.upcoming ?? [])
+  const completed = filter(buckets?.completed ?? [])
+  const visibleCount = live.length + upcoming.length + completed.length
+  // PandaScore ids are not globally unique across titles, so identity must include
+  // the event context. A bare psId causes React to retain a row when title filters
+  // change if two EWC games from different titles share the same provider id.
+  const matchKey = (m: UpMatch) => [
+    m.psId ?? 'no-ps-id',
+    m.title,
+    m.league,
+    m.startTime ?? 'tbd',
+    m.teamA,
+    m.teamB,
+  ].join(':')
+
   return (
     <section className="space-y-5">
-      <SectionHeader eyebrow="Games" title="Titles on the board" meta={titles ? `${titles.length} titles` : undefined} />
-      {titlesError ? (
-        <p className="text-sm text-zinc-500">The title directory is unavailable right now — the live board still works.</p>
-      ) : !titles ? (
-        <div className="flex flex-wrap gap-2 animate-pulse">
-          <div className="h-8 w-28 rounded-full bg-zinc-800" />
-          <div className="h-8 w-24 rounded-full bg-zinc-800" />
-          <div className="h-8 w-32 rounded-full bg-zinc-800" />
+      <SectionHeader eyebrow="Games" title="All EWC games"
+                     meta={projection ? (activeLabel ? `${visibleCount} of ${all.length} games` : `${all.length} games · ${labels.length} titles`) : undefined} />
+      <p className="max-w-2xl text-sm text-zinc-500">
+        Every EWC match currently tracked by the tournament feed—live, scheduled, and final.
+      </p>
+      {projectionError ? (
+        <p className="text-sm text-red-300">The EWC game tracker is unavailable right now.</p>
+      ) : !projection ? (
+        <div className="space-y-3 animate-pulse">
+          <div className="h-8 w-64 rounded bg-zinc-800" />
+          <div className="h-48 rounded-xl bg-zinc-900/50" />
         </div>
+      ) : all.length === 0 ? (
+        <p className="text-sm text-zinc-500">No EWC games are published in the tournament feed right now.</p>
       ) : (
         <>
-          {/* Filter controls — selecting a title filters the Live/Upcoming/Results content */}
+          {/* Only titles represented in the EWC event population are offered as filters. */}
           <div className="flex flex-wrap gap-2">
-            {titles.map((t) => {
-              const active = t.slug === activeSlug
+            {options.map((option) => {
+              const active = option.slug === activeSlug
               return (
                 <button
-                  key={t.slug}
+                  key={option.slug}
                   type="button"
-                  onClick={() => onToggle(t.slug)}
+                  onClick={() => onToggle(option.slug)}
                   aria-pressed={active}
                   className={`rounded-full border px-3 py-1.5 text-[12px] font-medium transition-colors ${
                     active
@@ -351,70 +364,45 @@ function GamesSection({ titles, titlesError, matches, activeSlug, onToggle }: {
                       : 'border-zinc-800 bg-zinc-900/60 text-zinc-500 hover:text-zinc-300'
                   }`}
                 >
-                  {t.live_count > 0 && <span className="mr-1 text-emerald-400">●</span>}
-                  {t.label}
+                  {option.label} <span className="text-zinc-600">{option.count}</span>
                 </button>
               )
             })}
           </div>
 
-          {/* Per-title context: live now / next / most recent */}
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {titleContexts(titles, matches).map((ctx) => (
-              <div key={ctx.title.slug}
-                   className={`rounded-xl border p-4 ${activeSlug === ctx.title.slug ? 'border-emerald-500/40 bg-zinc-900/60' : 'border-zinc-800 bg-zinc-900/40'}`}>
-                <div className="flex items-center justify-between gap-2">
-                  <button type="button" onClick={() => onToggle(ctx.title.slug)}
-                          className="text-sm font-bold text-zinc-100 transition-colors hover:text-emerald-400">
-                    {ctx.title.label}
-                  </button>
-                  {ctx.live ? (
-                    <span className="inline-flex items-center gap-1 rounded border border-red-500/30 bg-red-500/10 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-red-400">
-                      <LiveDot /> Live
-                    </span>
-                  ) : null}
+          {visibleCount === 0 ? (
+            <p className="text-sm text-zinc-500">No {activeLabel} games are published in the EWC feed.</p>
+          ) : (
+            <div className="space-y-8">
+              {live.length > 0 ? (
+                <div className="space-y-2">
+                  <SectionHeader live eyebrow="Live" title="Live now" meta={`${live.length} games`} />
+                  <div className="divide-y divide-zinc-800/60">
+                    {live.map((m) => <EwcMatchRow key={matchKey(m)} m={m} />)}
+                  </div>
                 </div>
-                <div className="mt-3 space-y-2 text-xs">
-                  <ContextLine label="Live now" match={ctx.live} />
-                  <ContextLine label="Next" match={ctx.next} />
-                  <ContextLine label="Recent" match={ctx.recent} />
+              ) : null}
+              {upcoming.length > 0 ? (
+                <div className="space-y-2">
+                  <SectionHeader eyebrow="Schedule" title="Upcoming" meta={`${upcoming.length} games`} />
+                  <div className="divide-y divide-zinc-800/60">
+                    {upcoming.map((m) => <EwcMatchRow key={matchKey(m)} m={m} />)}
+                  </div>
                 </div>
-                <div className="mt-3 flex items-center gap-3">
-                  <Link href={`/esports/${ctx.title.slug}`} className="text-[11px] font-semibold text-zinc-400 transition-colors hover:text-emerald-400">
-                    Desk →
-                  </Link>
-                  <Link href={`/predict?title=${ctx.title.slug}`} className="text-[11px] font-semibold text-zinc-400 transition-colors hover:text-emerald-400">
-                    Picks →
-                  </Link>
+              ) : null}
+              {completed.length > 0 ? (
+                <div className="space-y-2">
+                  <SectionHeader eyebrow="Results" title="Finals" meta={`${completed.length} games`} />
+                  <div className="divide-y divide-zinc-800/60">
+                    {completed.map((m) => <EwcMatchRow key={matchKey(m)} m={m} />)}
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ) : null}
+            </div>
+          )}
         </>
       )}
     </section>
-  )
-}
-
-function ContextLine({ label, match }: { label: string; match: UpMatch | null }) {
-  if (!match) {
-    return (
-      <div className="flex items-baseline justify-between gap-2 text-zinc-600">
-        <span className="uppercase tracking-wider text-[10px]">{label}</span>
-        <span>—</span>
-      </div>
-    )
-  }
-  const meta = match.live
-    ? 'live'
-    : match.finished
-      ? `${match.score?.a ?? '–'} – ${match.score?.b ?? '–'}`
-      : startLabel(match.startTime)
-  return (
-    <div className="flex items-baseline justify-between gap-2">
-      <span className="shrink-0 uppercase tracking-wider text-[10px] text-zinc-500">{label}</span>
-      <span className="min-w-0 truncate text-right text-zinc-300">{match.teamA} vs {match.teamB} <span className="text-zinc-500">· {meta}</span></span>
-    </div>
   )
 }
 

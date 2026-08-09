@@ -46,10 +46,13 @@ export type Standings = {
 export function EwcMatchRow({ m }: { m: UpMatch }) {
   const t = m.startTime ? new Date(m.startTime) : null
   const timeLabel = t ? t.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''
+  const stateLabel = m.live ? 'LIVE' : m.finished ? 'FINAL' : timeLabel || 'TIME TBD'
   const score = m.score
   return (
-    <div className="flex items-baseline gap-3 py-1.5">
-      <span className="w-12 shrink-0 text-[11px] tabular-nums text-zinc-600">{timeLabel}</span>
+    <div className="flex items-baseline gap-3 py-1.5" data-ewc-game-row="true">
+      <span className={`w-12 shrink-0 text-[11px] font-semibold tabular-nums ${m.live ? 'text-red-400' : 'text-zinc-600'}`}>
+        {stateLabel}
+      </span>
       <div className="min-w-0 flex-1 space-y-0.5">
         <div className="flex items-center justify-between gap-3">
           <span className={`truncate text-sm ${m.finished && m.winner === 'b' ? 'text-zinc-500' : 'text-zinc-200'}`}>{m.teamA}</span>
