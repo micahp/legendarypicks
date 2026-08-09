@@ -151,9 +151,21 @@ class StandingsPublishContractTests(unittest.TestCase):
         self.assertEqual(out["status"], "unavailable")
         self.assertEqual(out["standings"], [])
 
-    def test_validation_rejects_duplicate_rank(self):
+    def test_validation_accepts_tied_ranks_with_equal_points(self):
+        # Real published rankings tie: equal points share a rank (Liquipedia rev 15997 ties 4th
+        # and 6th). A duplicate rank with EQUAL points is a legitimate tie.
+        self._publish(_snapshot([
+            _row(1, points=2600),
+            _row(1, "team-vitality", "Team Vitality", 2600),
+        ]))
+        out = self._read()
+        self.assertEqual(out["status"], "current")
+        self.assertEqual(len(out["standings"]), 2)
+
+    def test_validation_rejects_duplicate_rank_with_different_points(self):
+        # Same rank, different points is a tie mismatch / rank inversion.
         with self.assertRaises(ValueError):
-            self._publish(_snapshot([_row(1), _row(1, "team-vitality", "Team Vitality")]))
+            self._publish(_snapshot([_row(1), _row(1, "team-vitality", "Team Vitality", 2000)]))
 
     def test_validation_rejects_duplicate_club_id(self):
         with self.assertRaises(ValueError):
@@ -167,6 +179,23 @@ class StandingsPublishContractTests(unittest.TestCase):
         # Rank 1 must not carry fewer points than rank 2 unless a publisher correction is marked.
         with self.assertRaises(ValueError):
             self._publish(_snapshot([_row(1, points=1000), _row(2, "team-vitality", "Team Vitality", 2000)]))
+
+    def test_validation_rejects_tie_mismatch_after_drop(self):
+        # Fewer points must strictly increase the rank — equal rank after a drop is an inversion.
+        with self.assertRaises(ValueError):
+            self._publish(_snapshot([
+                _row(1, points=2600),
+                _row(2, "team-vitality", "Team Vitality", 2000),
+                _row(2, "natus-vincere", "Natus Vincere", 1500),
+            ]))
+
+    def test_validation_rejects_rank_regression(self):
+        # Ranks must be non-decreasing.
+        with self.assertRaises(ValueError):
+            self._publish(_snapshot([
+                _row(2, points=2600),
+                _row(1, "team-vitality", "Team Vitality", 2200),
+            ]))
 
     def test_validation_rejects_missing_timestamp(self):
         snap = _snapshot([_row(1)])

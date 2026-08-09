@@ -103,7 +103,7 @@ def is_ewc_2026_label(label):
 # ---------------------------------------------------------------------------
 # Published standings snapshot store — one writer, atomic replace, last good survives
 # ---------------------------------------------------------------------------
-def _validate_row(row, seen_ranks, seen_ids):
+def _validate_row(row, seen_ids):
     if not isinstance(row, dict):
         raise ValueError("standings row must be an object")
     rank = row.get("rank")
@@ -118,11 +118,8 @@ def _validate_row(row, seen_ranks, seen_ids):
     points = row.get("points")
     if points is not None and (not isinstance(points, (int, float)) or points < 0):
         raise ValueError(f"negative or invalid points {points!r}")
-    if rank in seen_ranks:
-        raise ValueError(f"duplicate rank {rank}")
     if club_id in seen_ids:
         raise ValueError(f"duplicate clubId {club_id!r}")
-    seen_ranks.add(rank)
     seen_ids.add(club_id)
 
 
@@ -141,19 +138,36 @@ def _validate_snapshot(snapshot):
     if expected is not None and len(rows) != expected:
         raise ValueError(
             f"count disagreement: source reported {expected}, fetched {len(rows)}")
-    seen_ranks, seen_ids = set(), set()
+    seen_ids = set()
     for row in rows:
-        _validate_row(row, seen_ranks, seen_ids)
-    # Rank ordering follows the publisher's official tiebreak: points must be non-increasing by rank.
+        _validate_row(row, seen_ids)
+    # Rank/points ordering follows the publisher's official tiebreak. Real published rankings
+    # contain TIED ranks (equal points share a rank — Liquipedia rev 15997 has tied 4th and
+    # tied 6th), so duplicate ranks are legitimate. Contract:
+    #   - ranks are non-decreasing;
+    #   - points are non-increasing;
+    #   - equal points -> equal rank (a tie);
+    #   - strictly fewer points -> strictly greater rank.
+    prev_rank = None
     prev_points = None
     for row in rows:
+        rank = row.get("rank")
         points = row.get("points")
-        if points is None:
-            continue
-        if prev_points is not None and points > prev_points:
-            raise ValueError(
-                f"rank inversion: rank {row.get('rank')} has {points} > rank above with {prev_points}")
-        prev_points = points
+        if prev_rank is not None and rank < prev_rank:
+            raise ValueError(f"rank regression: rank {rank} after rank {prev_rank}")
+        if points is not None:
+            if prev_points is not None:
+                if points > prev_points:
+                    raise ValueError(
+                        f"point regression: rank {rank} has {points} > rank above with {prev_points}")
+                if points == prev_points and rank != prev_rank:
+                    raise ValueError(
+                        f"tie mismatch: equal points {points} with ranks {prev_rank} and {rank}")
+                if points < prev_points and rank <= prev_rank:
+                    raise ValueError(
+                        f"rank inversion: rank {rank} has {points} < rank above with {prev_points}")
+            prev_points = points
+        prev_rank = rank
 
 
 def _load_raw(path):
