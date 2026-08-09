@@ -54,7 +54,7 @@ repository history. A group on one row shares the same creator.
 | `_core.py` | `unresolved_players`, `name_alias` | `36c6f58` | core; guarded unresolved columns exist |
 | `_core.py` | `prop_odds_snapshots` | `b8455ed` | core; guarded prop odds columns exist |
 | `_core.py` | `game_story` | `7afa201` | core, present everywhere |
-| `team_stats_schema.py` / `backfill_team_parity.py` | `schema_migrations`, `team_game_results`, `team_stats_coverage`, `team_stats_team_inventory`, `team_stats_ingestion_failures` | `c8198d8` (`team_game_results` first appeared in `9f8c914`) | team-stats proof feature; its integer registry is not the app registry |
+| `team_stats_schema.py` / `backfill_team_parity.py` | `schema_migrations`, `team_game_results`, `team_stats_coverage`, `team_stats_team_inventory`, `team_stats_ingestion_failures` | `c8198d8` (`team_game_results` first appeared in `9f8c914`) | team-stats proof feature; its integer registry is not the app registry; **nfl 2024 window (570 rows) promoted dev->prod 2026-08-05** |
 | `ingest_nfl_logs.py` / UFC declaration | `player_game_logs` | `e04745c` | migration 001; schemas otherwise exact |
 | `ingest_nfl_adp.py` | `nfl_adp` | `ac1d673` | NFL feature; present everywhere |
 | `ingest_nfl_schedule.py` | `nfl_schedule` | `f771751` | NFL draft feature not yet populated/deployed to prod |

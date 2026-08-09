@@ -364,8 +364,36 @@ def sync_league(con: sqlite3.Connection, league: str) -> dict:
             )
         # Reset active only after every team supplied a non-empty roster and
         # every source identity has an unambiguous application plan.
+        #
+        # FANTASY ENTITIES ARE NOT ROSTER MEMBERS. A D/ST row is one team's
+        # whole defence -- a fantasy construct that shares this table with real
+        # humans. It will never appear on an ESPN roster, so a blanket
+        # deactivation permanently marks all 32 inactive and nothing ever turns
+        # them back on. That is not a cosmetic flag: `ingest_nfl_adp.py:227`
+        # builds its team->player_id map from `position='DEF' AND active=1`,
+        # so on 2026-08-04 this deactivation (22:37) silently killed every
+        # later ADP run, and with it `injury_status` and `last_news_date` for
+        # all 6,486 NFL players -- a fail-closed D/ST preflight aborting the
+        # whole ingest over rows that were never its business.
+        #
+        # `active` for a D/ST means "this team exists", not "this player is
+        # rostered", so this job has no opinion to offer about it. Excluded
+        # here, at the write, rather than by teaching every reader to special-
+        # case it -- the same reason season keys are normalised at the ingest.
+        # Keyed on `entity_type` where the column exists -- `position='DEF'` is
+        # the fallback for a database that predates the migration, and it is
+        # narrower: TQB and HC rows are the same kind of thing and would have
+        # been the next two bugs. Presence is checked rather than assumed
+        # because the column arrived after this code did.
+        _has_entity_type = "entity_type" in {
+            row[1] for row in con.execute("PRAGMA table_info(players)")
+        }
+        if _has_entity_type:
+            exclude = "COALESCE(entity_type,'player')='player'"
+        else:
+            exclude = "COALESCE(position,'') != 'DEF'"
         con.execute(
-            "UPDATE players SET active=0, updated_at=? WHERE league=?",
+            f"UPDATE players SET active=0, updated_at=? WHERE league=? AND {exclude}",
             (verified_at, league),
         )
 

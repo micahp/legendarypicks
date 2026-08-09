@@ -246,10 +246,15 @@ def ingest():
         for r in con.execute("SELECT id, position FROM players WHERE league='nfl'")
     }
 
+    # A team defence plays no position: key on `entity_type` where the column
+    # exists, falling back to the legacy `position='DEF'` marker.
+    _players_cols = {r[1] for r in con.execute("PRAGMA table_info(players)")}
+    _def_pred = ("entity_type='team_defense'" if "entity_type" in _players_cols
+                 else "position='DEF'")
     def_to_pid = {
         r["team"]: r["id"]
         for r in con.execute(
-            "SELECT id, team FROM players WHERE league='nfl' AND position='DEF' AND active=1"
+            f"SELECT id, team FROM players WHERE league='nfl' AND {_def_pred} AND active=1"
         )
     }
     pro_team_map = _build_pro_team_map()

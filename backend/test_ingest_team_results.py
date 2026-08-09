@@ -130,3 +130,33 @@ def test_an_unmapped_season_type_is_skipped_not_guessed(ingest_against):
         _event("1", "2026-12-01T20:05Z", "NYY", "BOS", 5, 3, season_type="4"),
     ], "bos": []})
     assert rows == []
+
+
+def test_refuses_to_double_a_season_keyed_in_another_vocabulary(ingest_against, tmp_path):
+    """A season already holding nflverse-style game ids must not gain ESPN
+    event-id rows beside them.
+
+    This is the 285 -> 557 bug, as a regression test. The target season is
+    pre-seeded with a foreign-vocabulary row; the ingest must refuse to write
+    rather than INSERT OR REPLACE its way past the vocabulary boundary.
+    """
+    db = tmp_path / "t.db"
+    con = sqlite3.connect(db)
+    con.execute("""CREATE TABLE team_game_results(
+        league TEXT NOT NULL, game_id TEXT NOT NULL, team TEXT NOT NULL,
+        game_date TEXT, opponent TEXT, home_away TEXT,
+        score_for REAL, score_against REAL, win INTEGER,
+        ingested_at TEXT DEFAULT (datetime('now')),
+        season INTEGER, status TEXT, source TEXT, run_id TEXT,
+        PRIMARY KEY(league, game_id, team))""")
+    con.execute(
+        "INSERT INTO team_game_results(league, game_id, team, season, status, source)"
+        " VALUES ('nfl', '2026_01_BAL_KC', 'BAL', 2026, 'completed', 'nflverse')")
+    con.commit()
+    con.close()
+
+    rows = ingest_against({"bal": [
+        _event("401772718", "2026-09-10T23:05Z", "BAL", "KC", 24, 17, season=2026),
+    ], "kc": []}, league="nfl")
+    # Nothing landed: the only row is the pre-seeded foreign one.
+    assert [r["game_id"] for r in rows] == ["2026_01_BAL_KC"]

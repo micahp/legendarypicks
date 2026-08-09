@@ -31,3 +31,10 @@ def _restore_db_path_env():
     else:
         os.environ["LP_DB_PATH"] = _SESSION_DB_PATH
     yield
+
+
+# The app refuses to serve an un-migrated database at startup
+# (sports_service._refuse_unmigrated_database). Tests point LP_DB_PATH at
+# throwaway files and construct routers directly -- they are not real boots,
+# so the migration check must not fire. See TASK-P1-migration-ledger.md.
+os.environ.setdefault("LP_SKIP_MIGRATION_CHECK", "1")

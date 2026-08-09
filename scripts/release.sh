@@ -91,6 +91,64 @@ if [ -n "$deprecated_reachable" ]; then
   die "retire it, guard it, or drop the DEPRECATED/SUPERSEDED marker if it is wrong"
 fi
 
+# ── preflight: what does PROD hold that DEV does not? ─────────────────────
+# SCHEMA and SEASONS block, VOLUME does not (diff_databases.py splits them).
+# A table, column or season present on one database and absent from the other
+# is never "dev is deliberately ahead" -- it is a promotion that did not
+# happen, and the cost of shipping over it is measured: on 2026-08-05, SIX
+# defects were each correct in code and absent from production, found one at a
+# time by hand over a night.
+#
+#   NFL rush_td/rec_td   0 rows in prod through three releases; v0.7.3
+#                        announced "sort the board by touchdowns" anyway
+#   NBA season stats     dev 576 rows, prod served 2023
+#   MLB counting stats   23 columns dev-only -> `no such column: pa, era`
+#   NHL goalie columns   11 columns dev-only
+#   NHL season keys      48,017 prod rows still on nhle.com's raw 20252026,
+#                        so a season-scoped join returned 0 for that league
+#   NHL goalie logs      2,877 rows with `saves` on dev, 0 in prod
+#
+# Every one of them: fixed on dev, prod never re-run, both databases still
+# answering 200. A changelog entry is a claim about PRODUCTION -- read this
+# before writing one.
+#
+# VOLUME drift is legitimately divergent (live odds prod captures dev never
+# sees; dev-only mock drafts) and stays advisory inside the tool -- failing on
+# it would train people to skip the check.
+if [ -f backend/diff_databases.py ] && [ -x backend/venv/bin/python ]; then
+  echo
+  echo "release: prod vs dev (schema/seasons BLOCK; volume is advisory)"
+  if backend/venv/bin/python backend/diff_databases.py --quiet 2>&1 | sed 's/^/  /'; then
+    echo "  no blocking divergence: schema and seasons agree"
+  else
+    echo
+    die "prod and dev disagree on schema or seasons -- a promotion did not happen; migrate prod before releasing"
+  fi
+  echo
+fi
+
+# ── preflight: does PROD's own data pass the stats audit? ────────────────
+# A release is a claim about production, so the audit that verify-gates.sh runs
+# against dev must run against prod here -- and FAIL blocks, UNVERIFIED does
+# not. UNVERIFIED is "nobody has fetched the evidence yet" (NFL trips it today
+# for accepted nickname-vs-legal-name reasons) and blocking on it would just
+# get the check disabled; FAIL is a measured defect in the data a release
+# would ship.
+if [ -f backend/audit_league_stats.py ] && [ -x backend/venv/bin/python ]; then
+  echo
+  echo "release: audit_league_stats vs prod (nfl/mlb/nba/nhl; FAIL blocks, UNVERIFIED does not)"
+  audit_out=$(backend/venv/bin/python backend/audit_league_stats.py \
+    --db backend/data/picks.db \
+    --league nfl --league mlb --league nba --league nhl --quiet 2>&1) || true
+  printf '%s\n' "$audit_out" | sed 's/^/  /'
+  audit_fails=$(printf '%s\n' "$audit_out" | grep -c '^FAIL' || true)
+  if [ "$audit_fails" -gt 0 ]; then
+    echo
+    die "$audit_fails audit check(s) FAIL against prod data -- promote or repair before releasing"
+  fi
+  echo
+fi
+
 # ── the atomic part ───────────────────────────────────────────────────────
 if [ -n "$DRY_RUN" ]; then
   echo "  [dry-run] set package.json version to $VERSION"

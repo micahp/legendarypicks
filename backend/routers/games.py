@@ -1,6 +1,8 @@
 """routers/games.py — games endpoints. Handlers only; shared code lives in _core."""
 import datetime as dt
 import html
+import json
+import os
 
 from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import JSONResponse
@@ -683,6 +685,133 @@ def cod_game_context(game_id: str, limit: int = Query(12, ge=1, le=100)):
     return ctx
 
 
+# Broadcast tapes live in the sibling prediction-market-trading repo. Leagues Cup
+# watchers write <YYYYMMDD>_LCUP_<AWAY><HOME>_{transcript,signals}.jsonl there.
+_BROADCAST_DIR = "/root/prediction-market-trading/data/broadcast"
+
+_SIGNAL_TAGS = {
+    "tilt": "Mentality", "lockin": "Mentality", "fatigue": "Fatigue",
+    "tactical": "Tactical", "morale": "Mentality", "momentum": "Momentum",
+}
+
+
+@router.get("/api/lcup/{game_id}/context")
+def lcup_game_context(game_id: str, limit: int = Query(12, ge=1, le=100)):
+    """Leagues Cup booth: live Spanish radio transcript + soft-signal reads for
+    the game, straight from the broadcast_alpha tapes (legacy insights shape,
+    newest first). 404 when no watcher is running for this game."""
+    import espn_client as _espn
+    try:
+        summary = _espn.summary("lcup", game_id)
+    except Exception:
+        raise HTTPException(404, "no context for this game")
+    comp = (summary.get("header", {}).get("competitions") or [{}])[0]
+    date = (comp.get("date") or "")[:10].replace("-", "")
+    abbrevs = {}
+    for c in comp.get("competitors", []):
+        abbrevs[c.get("homeAway")] = (c.get("team") or {}).get("abbreviation", "")
+    if not date or not abbrevs.get("home") or not abbrevs.get("away"):
+        raise HTTPException(404, "no context for this game")
+    tag = f"{date}_LCUP_{abbrevs['away']}{abbrevs['home']}"
+
+    insights = []
+
+    # Soft signals (DeepSeek-extracted claims) — richer, prefer them first.
+    spath = os.path.join(_BROADCAST_DIR, f"{tag}_signals.jsonl")
+    if os.path.exists(spath):
+        for line in open(spath, encoding="utf-8", errors="replace"):
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                s = json.loads(line)
+            except Exception:
+                continue
+            if not s.get("quote"):
+                continue
+            insights.append({
+                "id": f"{tag}-sig-{len(insights)}",
+                "tag": _SIGNAL_TAGS.get((s.get("type") or "").lower(), "Momentum"),
+                "subject": s.get("subject", "Broadcast"),
+                "quote": s["quote"],
+                "strength": int(s.get("strength") or 1),
+                "ts": s.get("ts"),
+                "analysis": (s.get("direction") or "") and f"Booth lean: {s['direction']}",
+            })
+
+    # Raw transcript lines — the booth's evidence even before extraction runs.
+    # Skip silence/noise lines (whisper renders dead air as dots/single chars).
+    tpath = os.path.join(_BROADCAST_DIR, f"{tag}_transcript.jsonl")
+    if os.path.exists(tpath):
+        for line in open(tpath, encoding="utf-8", errors="replace"):
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                t = json.loads(line)
+            except Exception:
+                continue
+            text = (t.get("text") or "").strip()
+            if not text:
+                continue
+            words = [w for w in text.split() if any(ch.isalnum() for ch in w)]
+            if len(words) < 2:
+                continue
+            insights.append({
+                "id": f"{tag}-tx-{len(insights)}",
+                "tag": "Live",
+                "subject": "Radio",
+                "quote": text,
+                "strength": 1,
+                "ts": t.get("ts"),
+            })
+
+    if not insights:
+        raise HTTPException(404, "no booth data for this game yet")
+    insights.sort(key=lambda i: i.get("ts") or "", reverse=True)
+    return {"insights": insights[:limit]}
+
+
+# Free English radio for Leagues Cup — ESPN 106.3 West Palm (WUUB-FM), Inter
+# Miami's official English-language radio partner (airs every Inter Miami game).
+# amperwave HLS won't play in Chrome's <audio>, so the relay transcodes to MP3
+# with ffmpeg and streams it — one ffmpeg per listener.
+_LCUP_RADIO = {
+    "lcup": "https://live.amperwave.net/manifest/goodkarma-wuubfmaac-hlsc2.m3u8?source=tunein&source=TuneIn&gdpr=0&us_privacy=1YNY",
+}
+
+
+@router.get("/api/stream/{league}")
+def stream_league_audio(league: str):
+    from fastapi.responses import StreamingResponse
+    import subprocess
+
+    url = _LCUP_RADIO.get(league.lower())
+    if not url:
+        raise HTTPException(404, "no audio stream for this league")
+    proc = subprocess.Popen(
+        ["ffmpeg", "-loglevel", "error", "-i", url, "-vn",
+         "-ac", "1", "-ar", "44100", "-b:a", "96k", "-f", "mp3", "-"],
+        stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+    )
+
+    def gen():
+        try:
+            while True:
+                chunk = proc.stdout.read(65536)
+                if not chunk:
+                    break
+                yield chunk
+        finally:
+            try:
+                proc.kill()
+            except Exception:
+                pass
+
+    return StreamingResponse(gen(), media_type="audio/mpeg",
+                             headers={"Cache-Control": "no-store"})
+
+
 @router.get("/api/{league}/team-stats")
 def get_team_stats(league: str, game_id: Optional[str] = Query(None)):
     """Per-game team boxscore totals for NBA/NHL/NFL."""
@@ -765,6 +894,22 @@ def get_game_detail(league: str, game_id: str):
             pass
     # Read from DB
     _read_game_detail_from_db(lg, game_id, out)
+
+    # A DB context row means the ESPN fallback below is skipped, but the live
+    # score is not persisted — fill it from ESPN whenever the game is live.
+    if out["state"] == "in" and not out["live_score"]:
+        try:
+            result = espn.game_result(league, game_id)
+            scores = result.get("scores", {})
+            if scores and len(scores) == 2:
+                out["live_score"] = {
+                    "home": scores.get(out["context"]["home_team"], scores.get("home")),
+                    "away": scores.get(out["context"]["away_team"], scores.get("away")),
+                }
+                if not out["live_score"]["home"] or not out["live_score"]["away"]:
+                    out["live_score"] = None
+        except Exception:
+            pass
 
     # ── Fallback: when boxscore snapshots were never captured (empty DB),
     #     pull team names + scores from ESPN's scoreboard/game_result so the
@@ -889,8 +1034,8 @@ def get_game_boxscore(league: str, game_id: str):
         return {"available": False, "notStarted": True}
     bs = sm["boxscore"]
 
-    # ── Soccer (WC) shape ──
-    if lg == "wc":
+    # ── Soccer (WC / Leagues Cup / MLS) shape ──
+    if lg in ("wc", "lcup", "mls"):
         team_stats_raw = []
         for t in bs.get("teams", []):
             ha = t.get("homeAway", "")
@@ -978,8 +1123,8 @@ def get_game_playbyplay(league: str, game_id: str):
     if not sm:
         return {"available": False}
 
-    # ── Soccer (WC) shape ──
-    if lg == "wc":
+    # ── Soccer (WC / Leagues Cup / MLS) shape ──
+    if lg in ("wc", "lcup", "mls"):
         try:
             ev = espn.match_events(league, game_id)
         except Exception:

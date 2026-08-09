@@ -16,8 +16,10 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import sqlite3
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 
 import migrate_schema
@@ -36,6 +38,21 @@ _MOVABLE_TABLES = (
     "roster_memberships",
 )
 _PROTECTED_TABLES = ("props", "prop_results", "prop_games")
+
+
+MIGRATION_ID = "20260805_001_merge_nba_identities"
+MIGRATION_CHECKSUM = hashlib.sha256(
+    json.dumps(
+        {
+            "migration_id": MIGRATION_ID,
+            "reason": "hoopR athlete_id == ESPN athlete id; legacy nba_id rows "
+                      "split from espn_id rows must collapse to the ESPN row",
+            "movable_tables": sorted(_MOVABLE_TABLES),
+        },
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("utf-8")
+).hexdigest()
 
 
 def _absolute_db(path: str) -> str:
@@ -295,7 +312,34 @@ def apply_plan(
                 raise NBAMergeError(
                     f"protected table {table} changed"
                 )
+        connection.execute(migrate_schema.REGISTRY_SQL)
+        connection.execute(
+            """INSERT INTO app_schema_migrations(
+                 migration_id, checksum
+               ) VALUES(?,?)
+               ON CONFLICT(migration_id) DO UPDATE SET checksum=excluded.checksum""",
+            (MIGRATION_ID, MIGRATION_CHECKSUM),
+        )
         connection.commit()
+        # A consolidation without a log line is a defect. The artifact is
+        # append-only JSONL so a cat tells the whole merge history.
+        import name_aliases
+        name_aliases.record_consolidation({
+            "ts": datetime.now(timezone.utc).isoformat(),
+            "script": "merge_nba_identities.py",
+            "db": os.path.basename(absolute),
+            "direction": "loser->winner",
+            "from": [
+                {"id": row["loser_id"], "name": row["loser_name"]}
+                for row in plan["pairs"]
+            ],
+            "to": {
+                "id": plan["pairs"][0]["winner_id"],
+                "name": plan["pairs"][0]["winner_name"],
+            } if plan["pairs"] else None,
+            "moved": plan["moved"],
+            "note": f"{plan['pair_count']} split pairs -> 0",
+        })
     except Exception:
         connection.rollback()
         raise

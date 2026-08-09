@@ -90,6 +90,14 @@ def fetch_stats(nhl_id: int) -> dict:
 
 
 def ingest():
+    # The refusal belongs HERE, not only under `__main__`. A guard that fires on
+    # one entry point is not a guard: `import ingest_nhl; ingest_nhl.ingest()`
+    # would walk straight past it and republish postseason totals as the season
+    # -- which is how Aleksander Barkov ended up as a one-row NHL "2025" season
+    # (23 GP, not his 67-game 2024-25 line) that the leaders endpoint would have
+    # offered as a selectable year. Same shape as roster_sync's pacing living in
+    # `main()` only, fixed in 408b7b2.
+    _refuse_unless_forced()
     con = sqlite3.connect(DB)
     con.row_factory = sqlite3.Row
 

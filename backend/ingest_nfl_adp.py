@@ -64,6 +64,23 @@ DB = os.environ.get("LP_DB_PATH") or os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "data", "picks.db"
 )
 
+# `players` holds humans and fantasy constructs side by side. ESPN never
+# confuses them -- constructs exist only in the fantasy API and it signs their
+# ids negative -- so record the category the publisher already drew, at the
+# boundary, instead of leaving every reader to infer it from a position label.
+# See migrate_player_entity_type.py for what inferring it cost.
+_ENTITY_BY_POSITION = {"DEF": "team_defense", "TQB": "team_qb", "HC": "coach"}
+
+
+def _entity_type(position, espn_id) -> str:
+    try:
+        negative = espn_id is not None and int(espn_id) < 0
+    except (TypeError, ValueError):
+        negative = False
+    if not negative:
+        return "player"
+    return _ENTITY_BY_POSITION.get((position or "").strip().upper(), "unknown")
+
 
 def _fetch_all() -> list:
     """Fetch the full player universe in one call (limit 20000, no ownership filter)."""
@@ -106,8 +123,11 @@ def _build_dst_resolutions(
     """Resolve every D/ST entity to a players row.  Return [(player_id, espn_id, entity), ...].
 
     Resolution order: (1) players.espn_id == -16000 - proTeamId (already backfilled),
-    (2) players.team == published abbrev AND position='DEF', (3) insert a new DEF
-    players row keyed on the negative espn_id. Never a names-only duplicate.
+    (2) players.team == published abbrev AND entity_type='team_defense'
+        (position='DEF' on databases that predate the entity_type migration),
+    (3) insert a new DEF players row keyed on the negative espn_id -- with
+    entity_type='team_defense' and position NULL, because a team defence plays
+    no position. Never a names-only duplicate.
 
     Must resolve exactly _EXPECTED_DEF_COUNT unique player_ids and every one must
     carry a published PPR rank (the adp_ppr gate), else raises. Nothing is written
@@ -116,6 +136,9 @@ def _build_dst_resolutions(
     seen_pids: set[int] = set()
     resolutions: list[tuple[int, int, dict]] = []
     unmatched: list[str] = []
+
+    _cols = {row[1] for row in con.execute("PRAGMA table_info(players)")}
+    _has_entity = "entity_type" in _cols
 
     for entity in all_entities:
         if entity.get("defaultPositionId") != 16:
@@ -137,12 +160,26 @@ def _build_dst_resolutions(
         if pid is None:
             # Not in the spine at all — resolve by inserting a DEF row keyed on
             # the negative espn_id (identity spine: insert with the source id,
-            # never a names-only row, never a dup).
-            cur = con.execute(
-                """INSERT INTO players(name, league, team, position, espn_id, active, updated_at)
-                   VALUES(?, 'nfl', ?, 'DEF', ?, 1, ?)""",
-                (entity.get("fullName", f"{abbrev} D/ST"), abbrev, str(espn_id), now),
-            )
+            # never a names-only row, never a dup). A team defence plays no
+            # position: `entity_type` records what it is, `position` stays NULL.
+            if _has_entity:
+                cur = con.execute(
+                    """INSERT INTO players(name, league, team, position, entity_type,
+                                           espn_id, active, updated_at)
+                       VALUES(?, 'nfl', ?, NULL, 'team_defense', ?, 1, ?)""",
+                    (entity.get("fullName", f"{abbrev} D/ST"), abbrev,
+                     str(espn_id), now),
+                )
+            else:
+                # Pre-entity_type database: the old shape, fixed by
+                # migrate_player_entity_type.py on the way to the new one.
+                cur = con.execute(
+                    """INSERT INTO players(name, league, team, position, espn_id,
+                                           active, updated_at)
+                       VALUES(?, 'nfl', ?, 'DEF', ?, 1, ?)""",
+                    (entity.get("fullName", f"{abbrev} D/ST"), abbrev,
+                     str(espn_id), now),
+                )
             pid = int(cur.lastrowid)
             eid_to_pid[str(espn_id)] = pid
             def_to_pid[abbrev] = pid
@@ -221,10 +258,19 @@ def ingest():
     # ── D/ST pre-flight: fetch proTeams map (fail-closed) ──
     pro_team_map = _build_pro_team_map()
 
-    # ── Build team_abbrev → player_id lookup for active DEF players ──
+    # ── Build team_abbrev → player_id lookup for team defences ──
+    # Selected by `entity_type`, and deliberately WITHOUT `active=1`. A D/ST is
+    # a fantasy construct, not a roster member, so `active` says nothing about
+    # whether it should be published -- and reading it here is what broke this
+    # ingest on 2026-08-04: `roster_sync` deactivated all 32, this map came
+    # back empty, and the fail-closed D/ST preflight then aborted every run,
+    # taking `injury_status` and `last_news_date` for 6,486 players with it.
     def_to_pid: dict[str, int] = {}
+    _cols = {row[1] for row in con.execute("PRAGMA table_info(players)")}
+    _def_where = ("entity_type='team_defense'" if "entity_type" in _cols
+                  else "position='DEF'")
     for r in con.execute(
-        "SELECT id, team FROM players WHERE league='nfl' AND position='DEF' AND active=1"
+        f"SELECT id, team FROM players WHERE league='nfl' AND {_def_where}"
     ):
         def_to_pid[r["team"]] = r["id"]
     print(f"DEF players by team: {len(def_to_pid)}")
@@ -311,7 +357,8 @@ def ingest():
                     )
                 else:
                     cur = con.execute(
-                        """INSERT INTO players(name, league, team, position, espn_id, active, updated_at)
+                        """INSERT INTO players(name, league, team, position, espn_id,
+                                               active, updated_at)
                            VALUES(?, 'nfl', ?, ?, ?, ?, ?)""",
                         (
                             name,
@@ -428,11 +475,15 @@ def ingest():
     for pos in sorted(pos_counts, key=lambda x: (x is None, x or "")):
         print(f"  {pos or 'NULL'}: {pos_counts[pos]}")
 
-    # D/ST gate: 32/32 with adp_ppr populated
+    # D/ST gate: 32/32 with adp_ppr populated. The defence predicate is
+    # `entity_type` where the column exists (a team defence plays no position),
+    # falling back to the legacy `position='DEF'` marker.
+    _def_pred = ("p.entity_type='team_defense'" if "entity_type" in _cols
+                 else "p.position = 'DEF'")
     dst_rows = con.execute(
-        """SELECT p.team, na.adp, na.adp_ppr FROM nfl_adp na
+        f"""SELECT p.team, na.adp, na.adp_ppr FROM nfl_adp na
            JOIN players p ON p.id = na.player_id
-           WHERE na.season = ? AND p.position = 'DEF' AND na.adp_ppr IS NULL""",
+           WHERE na.season = ? AND {_def_pred} AND na.adp_ppr IS NULL""",
         (SEASON,),
     ).fetchall()
     if dst_rows:
@@ -455,13 +506,13 @@ def ingest():
         print(f"  {t['adp']:7.1f}  {t['name']:25s} {t['position']:3s} {t['team']:4s}  owned {t['percent_owned']:.1f}%")
 
     den = con.execute(
-        """SELECT na.adp_ppr FROM nfl_adp na JOIN players p ON p.id=na.player_id
-           WHERE na.season=? AND p.team='DEN' AND p.position='DEF'""",
+        f"""SELECT na.adp_ppr FROM nfl_adp na JOIN players p ON p.id=na.player_id
+           WHERE na.season=? AND p.team='DEN' AND {_def_pred}""",
         (SEASON,),
     ).fetchone()
     sea = con.execute(
-        """SELECT na.adp_ppr FROM nfl_adp na JOIN players p ON p.id=na.player_id
-           WHERE na.season=? AND p.team='SEA' AND p.position='DEF'""",
+        f"""SELECT na.adp_ppr FROM nfl_adp na JOIN players p ON p.id=na.player_id
+           WHERE na.season=? AND p.team='SEA' AND {_def_pred}""",
         (SEASON,),
     ).fetchone()
     print(f"\nD/ST published PPR ranks: DEN={den['adp_ppr'] if den else '?'} "

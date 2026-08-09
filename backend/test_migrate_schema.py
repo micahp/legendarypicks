@@ -74,7 +74,7 @@ class SchemaMigrationTests(unittest.TestCase):
         self.assertTrue(os.path.exists(backup))
         self.assertEqual(
             [status.state for status in first],
-            ["adopted", "adopted"],
+            ["adopted", "adopted", "adopted"],
         )
         _, second = migrate_schema.apply_database(
             self.db_path,
@@ -82,7 +82,7 @@ class SchemaMigrationTests(unittest.TestCase):
         )
         self.assertEqual(
             [status.state for status in second],
-            ["applied", "applied"],
+            ["applied", "applied", "applied"],
         )
         with sqlite3.connect(self.db_path) as connection:
             rows = connection.execute(

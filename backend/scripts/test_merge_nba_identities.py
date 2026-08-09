@@ -4,8 +4,10 @@ import os
 import sqlite3
 import tempfile
 import unittest
+from pathlib import Path
 
 import merge_nba_identities
+import name_aliases
 
 
 class NBAMergeTests(unittest.TestCase):
@@ -13,6 +15,11 @@ class NBAMergeTests(unittest.TestCase):
         self.temporary = tempfile.TemporaryDirectory()
         self.addCleanup(self.temporary.cleanup)
         self.path = os.path.join(self.temporary.name, "nba.db")
+        # The merge logs consolidations to the artifact; a test must never
+        # append to the real one.
+        self._orig_consolidations = name_aliases.CONSOLIDATIONS_PATH
+        name_aliases.CONSOLIDATIONS_PATH = Path(self.temporary.name) / "consolidations.jsonl"
+        self.addCleanup(self._restore_consolidations)
         connection = sqlite3.connect(self.path)
         connection.executescript(
             """
@@ -78,6 +85,9 @@ class NBAMergeTests(unittest.TestCase):
         )
         connection.commit()
         connection.close()
+
+    def _restore_consolidations(self):
+        name_aliases.CONSOLIDATIONS_PATH = self._orig_consolidations
 
     def test_stable_id_merge_moves_history_and_preserves_protected_rows(self):
         plan = merge_nba_identities.build_plan(self.path)

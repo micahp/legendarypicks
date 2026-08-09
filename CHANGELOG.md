@@ -1,5 +1,66 @@
 # Changelog
 
+## v0.7.9 — 2026-08-05
+
+### Position vocabulary: the release gate is fully green
+
+- **NFL/NBA `position_group`** (`836083e`). The last two release-blocking FAILs
+  were `C/vocabulary[position]` — "two levels of one vocabulary in the same
+  column: FB under RB" (NFL) and "PF under F" (NBA). Same shape MLB solved with
+  `position_group`; this extends it. `migrate_league_position_groups.py` fills
+  the column from the committed publisher vocabulary (the top-level ancestor's
+  name: WR→Offense, CB→Defense, PK→Special Teams, PF→Forward, SG→Guard,
+  C→Center). Additive, idempotent, VACUUM INTO backup first. Applied to both
+  DBs: dev 27,274 rows, prod 27,652 rows, quick_check ok.
+- **Gate scope** (`836083e`): NFL/NBA specs declare `position_group`; the
+  fantasy-construct blank exemption extends to it (a D/ST has no position and
+  no group, and entity_type keeps the populations distinct).
+- **Ledger** (`836083e`): the migration is recorded in the both-DB runner.
+
+**Audit vs prod: 0 FAIL, 40 passed, 3 UNVERIFIED (non-blocking).** The
+release preflight now passes end-to-end.
+
+## v0.7.8 — 2026-08-05
+
+### Migration ledger: one invocation, both databases
+
+- **`backend/migrate_all.py`** (`322b5e9`). Six of the seven 2026-08-05 defects were
+  "verified on dev, never shipped to prod" — two manual actions with nothing coupling
+  them. The runner removes the second action: `--check` / `--apply` target **both**
+  databases by default, apply every numbered migration through the ledger
+  (`app_schema_migrations`), and record the 20 legacy hand-run migration scripts with
+  an honest per-database status (applied / not_applicable / explicit unknown — never
+  guessed). Re-running is a no-op.
+- **Startup guard** (`758c82d`): the app refuses to serve an un-migrated database —
+  `no such column: pa` is now impossible to reach in production. Tests opt out via
+  `LP_SKIP_MIGRATION_CHECK=1`.
+- **Backup policy** (`b0bffae`): every backup is `VACUUM INTO`, never `cp` (a plain
+  copy of a live DB races writers — proved malformed 2026-08-05). `prune_backups.py`
+  keeps the 10 most recent per prefix; doc-referenced baselines are never pruned.
+  Applied: 98 files / 16GB → 24 files / 4.1GB.
+- **diff_databases** (`089a014`): feature-not-deployed tables classify as advisory
+  FEATURE drift; migration-owned SCHEMA/SEASONS is the only blocker. Zero SCHEMA and
+  zero SEASONS differences between prod and dev.
+
+### Identity: nickname aliases + consolidation artifact
+
+- **NBA identity merge applied to prod** (`c177ff3`): 269 split pairs → 0 (was the
+  F/identity-crosswalk FAIL), NBA players 1140 → 871 matching dev.
+- **NFL team vocabulary promoted** (`73f4396`): nfl 2024 team-game-results window
+  (570 rows) + the earlier 2,495 nflverse→ESPN code rewrites. `team_game_results` now
+  serves all six league/season windows on prod.
+- **`G/published-identity` nickname aliases** (`90e3bdd`): 16 rows across NBA/NFL/NHL
+  were the same human under a different published name form (Kenny vs Kenneth
+  Gainwell, Nate vs Jeenathan Williams). Decision: the market-facing nickname is
+  canonical (ESPN fantasy and Yahoo both publish Kenny Gainwell) — rows stay, the gate
+  learns accepted alternates from `data/name-aliases.json`. The gate stays strict
+  about people; an id absent from the file has no alternates. G now PASSes on all four
+  leagues on prod and dev (NBA 541 / NFL 24,344 / NHL 840 / MLB 1,346 ids checked).
+- **Consolidation artifact** (`90e3bdd`): `data/identity-consolidations.jsonl`,
+  append-only. Every merge path (merge_nba_identities, dedupe_mlb, MLB repair copy)
+  logs what got consolidated — from/to names, repointed counts. A consolidation
+  without a log line is a defect.
+
 ## v0.7.7 — 2026-08-05
 
 ### The v0.7.6 known regression is fixed — MLB leaders serves again

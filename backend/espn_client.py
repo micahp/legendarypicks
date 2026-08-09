@@ -24,6 +24,8 @@ LEAGUES = {  # our key -> (espn "sport/league" path, regulation periods)
     "wta":  ("tennis/wta", 3),
     "ufc":  ("mma/ufc", 3),
     "wc":   ("soccer/fifa.world", 2),
+    "lcup": ("soccer/concacaf.leagues.cup", 2),
+    "mls":  ("soccer/usa.1", 2),
 }
 
 # ---------------------------------------------------------------------------
@@ -408,8 +410,8 @@ def games(league, date=None):
                     "event": event_name,
                     "card_segment": card_segment,
                 })
-    elif league == "wc":
-        # Soccer (World Cup) - events with group/round context, draws, ET, penalties
+    elif league in ("wc", "lcup", "mls"):
+        # Soccer (World Cup / Leagues Cup / MLS) - events with group/round context, draws, ET, penalties
         for e in d.get("events", []):
             comp = (e.get("competitions") or [{}])[0]
             status = comp.get("status", {})
@@ -441,10 +443,15 @@ def games(league, date=None):
                 stage = "et"
             if "SHOOTOUT" in status_name:
                 stage = "pens"
+            suspended = "SUSPEND" in status_name
 
             status_display = st.get("description") or ""
             if is_post:
-                if is_draw and winner_abbrev:
+                if suspended:
+                    # Weather/other suspension: ESPN closes the event (state=post)
+                    # but the match is NOT over — never label it "FT".
+                    status_display = "Suspended"
+                elif is_draw and winner_abbrev:
                     status_display = "FT (Pens)"
                 elif stage == "et":
                     status_display = "FT (AET)"

@@ -93,6 +93,28 @@ app.include_router(nfl_schedule_api.router)
 
 
 @app.on_event("startup")
+def _refuse_unmigrated_database():
+    """Refuse to serve a database this build was not migrated for.
+
+    The 2026-08-05 defects each shipped because the database lagged the code:
+    ``no such column: pa`` and its siblings are only reachable when the app
+    serves a schema it was not built against. Fail loudly at boot instead.
+    Migrations are applied as a separate, observable step
+    (``backend/migrate_all.py --apply`` targets prod and dev together), never
+    implicitly here.
+
+    Tests point LP_DB_PATH at throwaway files and construct routers directly;
+    they opt out with LP_SKIP_MIGRATION_CHECK=1 (set in backend/conftest.py).
+    """
+    if os.environ.get("LP_SKIP_MIGRATION_CHECK") == "1":
+        return
+    import migrate_all
+    from _core import DB as _app_db
+
+    migrate_all.refuse_unmigrated(_app_db)
+
+
+@app.on_event("startup")
 def _start_background_warmers():
     # Keep the lazily-cached esports board fresh without depending on organic traffic (prod has ~0).
     # No-op unless enabled — see routers/esports/slate.ESPORTS_WARMER_INTERVAL_S.
