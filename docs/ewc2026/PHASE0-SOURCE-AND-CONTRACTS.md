@@ -15,6 +15,8 @@
 | `fixtures/pandascore-codmw-serie10834-matches-2026-08-08T1330Z.json` | codmw upcoming+past feeds, serie 10834 filter | 13:30 |
 | `fixtures/pandascore-ewc-league-series-2026-08-08T1326Z.json` | `GET api.pandascore.co/leagues/5283/series` | 13:26 |
 | `probes/rulebooks-page-2026-08-08T1325Z.html`, `probes/bundle-index.js`, `probes/wayback-club-championship.html`, `probes/api-root-probe.txt` | official EWC hosts + web archive | 13:23–13:25 |
+| `fixtures/liquipedia-ewc-standings-20260809.json` | Liquipedia MediaWiki `api.php` `action=parse` `prop=text`, rev **15997** (rendered HTML) | 2026-08-09 ~00:2x UTC |
+| `fixtures/liquipedia-ewc-wikitext-20260809.json` | same call `prop=wikitext`, rev **15997** (`current-stage=5`, `stage5cutoff=19`) | 2026-08-09 ~00:2x UTC |
 
 ### 1a. Verified defect (reproduced on the live dev feed, 13:20 UTC)
 
@@ -25,34 +27,50 @@ Root cause: `breakingpoint_client.get_cod_matches()` falls back to the literal s
 dict only covers the 12 CDL franchise ids; EWC matches reference EWC-specific team ids
 (51, 58, 99, 712–715, 1103–1105, …) that never resolve.
 
-## 2. Standings source spike — decision: NO permitted machine-readable source (blocker)
+## 2. Standings source spike — RESOLVED: Liquipedia MediaWiki API (2026-08-09)
 
-Probed 2026-08-08 13:23–13:26 UTC. **Zero ESPN requests issued** (no ESPN host contacted).
+### 2a. Original probe (2026-08-08 13:23–13:26 UTC) — superseded conclusion
+
+The original spike found **no permitted machine-readable publisher** and recorded a blocker:
 
 | Host | Result | Meaning |
 |---|---|---|
 | `esportsworldcup.com` (official standings surface host) | 403 | Cloudflare bot wall from this box; page JS (and its data API) not inspectable |
-| `api.esportsworldcup.com` | 401 on every probed path (`/`, `/api/v1/standings`, `/api/standings`, `/v1/clubs/standings`, `/api/v1/club-standings`, `/api/v1/club-championship`, `/openapi.json`) with `WWW-Authenticate: Bearer` | Official API exists but is **Bearer-auth-gated**; no public credentials available |
-| `api.resources.esportsworldcup.com` | 302 → `/admin` (CMS admin); no public data endpoints | Rulebook/media-guide CMS only; no standings |
-| `cms.esportsworldcup.com` | 302 → `/admin` | CMS admin |
-| `cdn.esportsworldcup.com` / `resources.esportsworldcup.com` | 200 | static assets/PDFs (rulebooks, media guide) |
-| PandaScore `api.pandascore.co` (our licensed feed) | `series/10834/standings`, `tournaments/21576/standings`, `leagues/5283/standings` — per-tournament placement rows only (2 teams), **no cross-title Club Championship points** | PandaScore does not publish the Club Championship |
-| web.archive.org | no capture of `/en/club-championship` or `/en` | dead end |
-| escharts.com (third-party table from plan research) | not contacted | plan forbids scraping third-party HTML |
+| `api.esportsworldcup.com` | 401 on every probed path with `WWW-Authenticate: Bearer` | Official API exists but is **Bearer-auth-gated**; no public credentials |
+| `api.resources.esportsworldcup.com` / `cms.esportsworldcup.com` | 302 → `/admin` | CMS admin; no public data |
+| PandaScore `api.pandascore.co` (our licensed feed) | per-tournament placement rows only (2 teams), **no cross-title Club Championship points** | PandaScore does not publish the Club Championship |
+| web.archive.org / escharts.com | no usable capture / third-party HTML (scraping forbidden) | dead ends |
 
-**Decision (plan-sanctioned):** no permitted machine-readable Club Championship publisher
-exists on this box today. Per `PLAN-esports-ewc-2026.md` §"Data and API design" item 2:
-*"If no usable official machine-readable endpoint exists, choose an allowed provider … if no
-permitted source exists, preserve an honest unavailable state and report the blocker instead
-of scraping in the browser or hard-coding standings."* → the standings **route, validation,
-atomic publication store, and last-good/stale/unavailable reader are implemented and tested**,
-but **no external publisher is wired**. The route serves `status: "unavailable"` with a
-machine-readable `reason` until a permitted source is resolved. The research top-ten table is
-**not** hard-coded anywhere.
+That conclusion is **superseded** by the Liquipedia resolution below. The probe history is kept
+for audit; the blocker is closed. **Zero ESPN requests issued (no ESPN host contacted) — unchanged.**
 
-**Re-open conditions:** (a) a public/official EWC API key or public endpoint; (b) a licensed
-feed that publishes the Club Championship (PandaScore or another licensed provider); (c) an
-explicit redistribution contract for a third-party table. Until then the blocker stands.
+### 2b. Resolution — Liquipedia (MediaWiki API), permitted and machine-readable
+
+| Field | Value |
+|---|---|
+| Host / API | `liquipedia.net/esports` — MediaWiki `api.php` (`action=parse`) |
+| Page | `Esports_World_Cup/2026/Club_Championship_Standings` |
+| API call (one, operator-run) | `api.php?action=parse&page=Esports_World_Cup/2026/Club_Championship_Standings&prop=text%7Cwikitext%7Crevid&format=json` |
+| Transport | gzip `Accept-Encoding`, descriptive `User-Agent: LegendaryPicks/1.0 …` |
+| Terms | Liquipedia's terms explicitly allow access through the MediaWiki API; **no HTML page scraping, no browser request-path fetching** |
+| Live revision (research + ingest) | **15997** — `current-stage=5`, `stage5cutoff=19`; rendered current-stage table has **exactly 90 rows** (`data-toggle-area-content="19"`) |
+| Population semantics | the current-stage table **is** the source's full population for the active stage; `sourceReportedClubs` = `fetchedClubs` = parsed row count (90 at rev 15997). No independent count literal exists on the page |
+| clubId | stable Liquipedia team page slug from the row's team link (`/esports/<slug>`), e.g. `AG.AL_International`, `Team_Falcons`, `Virtus.pro` |
+| Points | the row's bold total-points cell (`<td style="font-weight:bold">N</td>` after the club cell); numeric, nonnegative |
+| Ties | real published rankings contain tied ranks (e.g. tied 4th Team Vitality 2200 / Virtus.pro 2200; tied 6th T1 1750 / Team Vision 1750); the validator accepts equal ranks with equal points |
+| Snapshot file | `backend/data/esports_ewc_standings.json` — atomic last-good publication (tmp + `os.replace`), one writer (`backend/fetch_ewc_standings.py`) |
+| Freshness | `publishedAt` = ingest time; route serves `current` until the publisher cadence (default 6 h), then `stale` — **rows are retained either way**; a failed/corrupt candidate never becomes readable |
+
+Top rows at rev 15997 (also what the committed snapshot publishes): 1 AG.AL International 3350;
+2 Team Falcons 2900; 3 Natus Vincere 2250; tied 4 Team Vitality 2200 and Virtus.pro 2200;
+tied 6 T1 1750 and Team Vision 1750; 8 Twisted Minds 1700; 9 ZETA DIVISION 1500;
+10 100 Thieves 1300.
+
+Eligibility fields (`eligibleTopEightCount`, `titleWins`, `eligibleToWin`) stay `null` — the
+page does not directly expose per-club eligibility evidence.
+
+Fixtures committed: `fixtures/liquipedia-ewc-standings-20260809.json` (rendered HTML, rev 15997)
+and `fixtures/liquipedia-ewc-wikitext-20260809.json` (wikitext, rev 15997).
 
 ## 3. Source-native ID map (EWC 2026 Call of Duty + event identity)
 
@@ -104,16 +122,16 @@ and reconciles all rows in memory. The only marginal request is +1 PandaScore br
 **Chosen: existing esports atomic-file snapshot pattern — NO SQLite, NO new schema.**
 
 Rationale: (a) the plan's SQLite option exists only "if the source spike confirms durable
-movement/history is useful"; with **no permitted publisher resolved**, there is no history to
-store; (b) the atomic-file pattern matches `results_store.py` (tmp file + `os.replace`); (c)
-zero database writes anywhere — no DEV/prod DB risk, and the "if SQLite is selected, rehearse
-on a VACUUM INTO clone" gate is vacuous (never selected).
+movement/history is useful"; (b) the atomic-file pattern matches `results_store.py` (tmp file +
+`os.replace`); (c) zero database writes anywhere — no DEV/prod DB risk, and the "if SQLite is
+selected, rehearse on a VACUUM INTO clone" gate is vacuous (never selected).
 
 The published-snapshot reader: `GET /api/esports/events/ewc-2026/club-standings` reads exactly
 one published snapshot file; with no valid snapshot it returns the honest
-`status: "unavailable"` contract. A validation-gated publisher function exists for when a
-permitted source is resolved; a failed candidate run is recorded for diagnosis and never
-becomes readable.
+`status: "unavailable"` contract. Since 2026-08-09 a **real publisher is wired** — the
+operator-run `backend/fetch_ewc_standings.py` (Liquipedia MediaWiki API, §2b) validates and
+atomically publishes to `backend/data/esports_ewc_standings.json`. A failed candidate run is
+recorded for diagnosis and never becomes readable; the last good snapshot survives.
 
 ## 6. Phase 0 contract tests (written first)
 

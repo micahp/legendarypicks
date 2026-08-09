@@ -273,17 +273,17 @@ board path. The client never reconstructs title identity from match labels.
 
 | Host/source | Operation | Calls per cold refresh | Cache/freshness | Failure behavior |
 |---|---|---:|---|---|
-| Club standings provider | complete standings population | target: 1 bulk call (not yet wired) | publisher cadence, not request-path TTL | retain last good |
+| Liquipedia MediaWiki API (standings) | complete current-stage population (action=parse, prop=text\|wikitext\|revid) | **1** per operator run (not request-path) | published snapshot; route status current → stale after publisher cadence | retain last good; failed candidate never readable |
 | PandaScore `codmw` | bounded EWC match window | reuse existing bulk fetch | existing shared cache | retain BP row/pending state |
 | Breaking Point | current/history bracket feed | reuse existing bulk fetch | existing shared cache | existing CDL fallback |
 | ESPN hosts | none | 0 | n/a | never introduced as fallback |
 | YouTube Data API | none for standings/scores | 0 | existing resolver only | free resolver/fallback policy unchanged |
 
-The standings publisher remains unwired: Phase 0 resolved that no permitted machine-readable Club
-Championship publisher exists on this box (official EWC API is Bearer-gated; PandaScore publishes no
-cross-title Club Championship; third-party HTML scraping is out of scope). See
-`docs/ewc2026/PHASE0-SOURCE-AND-CONTRACTS.md`. Continue source research only through
-permitted/authoritative channels; never hard-code or scrape the research top ten.
+The standings publisher is now wired: Liquipedia's MediaWiki API (`action=parse` on
+`Esports_World_Cup/2026/Club_Championship_Standings`, gzip + descriptive User-Agent; terms
+allow API access, no HTML scraping, no request-path fetching). See
+`docs/ewc2026/PHASE0-SOURCE-AND-CONTRACTS.md` §2b. Continue to treat the research top ten as
+evidence only — the snapshot is the published population.
 
 ## Implementation sequence
 
@@ -387,13 +387,15 @@ Rewrite the plan as the authoritative post-correction contract and commit it sep
 2. **Page hierarchy — accepted.** League header first, EWC tournament center second (one subtle
    plane), title discovery third, live-board context last; desktop two-column (center + rail),
    single column below.
-3. **Standings rail content — contribution chips deferred until the source supports them.** No
-   permitted machine-readable Club Championship publisher exists, so the route serves
-   `status: "unavailable"` and neither points nor chips are rendered; the row contract carries
-   `eligibleTopEightCount`/`titleWins` for a future permitted source.
-4. **Final standings data provider — unresolved; honest unavailable.** Research table remains
-   evidence only, never hard-coded, never scraped. Source research continues only through
-   permitted/authoritative channels.
+3. **Standings rail content — LIVE as of 2026-08-09.** The Liquipedia MediaWiki API (rev 15997)
+   publishes the full current-stage population (90 rows) with total points, so the route now
+   serves `status: "current"` rows and the rail renders the top ten with source attribution.
+   Contribution chips (`eligibleTopEightCount`/`titleWins`) remain `null` — the source does not
+   directly expose per-club eligibility evidence.
+4. **Final standings data provider — RESOLVED: Liquipedia MediaWiki API.** Terms explicitly allow
+   access through the MediaWiki API (no HTML scraping, no browser request-path fetching). The
+   operator-run published-first fetcher (`backend/fetch_ewc_standings.py`) is the single writer;
+   the research table was never hard-coded or scraped.
 5. **Title discovery — new read-only `GET /api/esports/titles`.** Reads the shared cached slate and
    the backend title registry; zero new external requests; client never reconstructs title identity.
 
