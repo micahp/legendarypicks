@@ -85,8 +85,8 @@ function LiveNow({ games, esportsLive }: { games: Game[]; esportsLive: boolean }
   )
 }
 
-const LEAGUE_PRIORITY = ['NBA', 'MLB', 'NHL', 'NFL', 'COD', 'WC', 'ATP', 'WTA', 'UFC']
-const LEAGUES = ['All', 'NBA', 'MLB', 'NHL', 'NFL', 'ATP', 'WTA', 'UFC', 'Call of Duty', 'FIFA World Cup']
+const LEAGUE_PRIORITY = ['NBA', 'MLB', 'NHL', 'NFL', 'MLS', 'NCAAF', 'COD', 'WC', 'ATP', 'WTA', 'UFC']
+const LEAGUES = ['All', 'NBA', 'MLB', 'NHL', 'NFL', 'MLS', 'NCAAF', 'ATP', 'WTA', 'UFC', 'Call of Duty', 'FIFA World Cup']
 
 // Revalidate interval for live games (ms) — must not be statically cached
 const LIVE_POLL_MS = 30_000
@@ -147,7 +147,7 @@ export default function ScoresPage() {
           // Progressive: paint each league as it resolves so the fast ones (<200ms) show
           // immediately instead of the whole board waiting on the slowest (cod ~1.3s).
           setGames([])
-          const leagues = ['nba', 'mlb', 'nhl', 'nfl', 'atp', 'wta', 'cod', 'ufc', 'wc']
+          const leagues = ['nba', 'mlb', 'nhl', 'nfl', 'mls', 'ncaaf', 'atp', 'wta', 'cod', 'ufc', 'wc']
           let cleared = false
           const clearOnce = () => { if (!cleared && !ignore) { cleared = true; setLoading(false) } }
           const settled = await Promise.allSettled(leagues.map(async (l) => {

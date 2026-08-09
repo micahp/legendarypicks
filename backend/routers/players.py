@@ -925,6 +925,16 @@ _LEAGUE_CATEGORIES = {
             _metric("faceoff_pct", "Faceoff %", "percent_1"),
         ]},
     ],
+    "mls": [
+        {"key": "scoring", "label": "Scoring", "stats": [
+            _metric("goals", "Goals", "integer"),
+            _metric("assists", "Assists", "integer"),
+        ]},
+        {"key": "shooting", "label": "Shooting", "stats": [
+            _metric("shots", "Shots", "integer"),
+            _metric("sot", "Shots on Target", "integer"),
+        ]},
+    ],
     "mlb_batting": [
         {"key": "production", "label": "Production", "stats": [
             _metric("avg", "Batting Average", "decimal_3"),
@@ -960,6 +970,7 @@ _LEAGUE_DEFAULTS = {
     "nba": ("scoring", "pts"),
     "nfl": ("passing", "pass_yds_g"),
     "nhl": ("scoring", "points_nhl"),
+    "mls": ("scoring", "goals"),
     "mlb_batting": ("production", "avg"),
     "mlb_pitching": ("strikeouts", "k_pct"),
 }
@@ -1190,6 +1201,146 @@ def _change_evidence(lg, selected_category, season, leaders):
     return change_metric, comparison, changes
 
 
+def _mls_leaders(*, stat, category, season, min_games, limit):
+    """MLS leaderboard aggregated live from player_game_logs.
+
+    MLS publishes no materialized player_stats rows; its box-score lines live
+    in player_game_logs with a JSON ``stats`` column (goals/assists/shots/sot).
+    Aggregating ~16k rows on read is cheaper and safer than a new materialized
+    surface, and this endpoint already depends on player_game_logs for change
+    evidence. Same response contract as the materialized path, including the
+    league-aware regular-season filter.
+    """
+    definitions = _LEAGUE_CATEGORIES["mls"]
+    category_defs = {item["key"]: item for item in definitions}
+    approved_stats = {
+        metric["key"] for item in definitions for metric in item["stats"]
+    }
+    if category is not None and category not in category_defs:
+        raise HTTPException(400, f"Unknown category {category!r} for mls")
+    if stat is not None and stat not in approved_stats:
+        raise HTTPException(400, f"Unknown stat {stat!r} for mls")
+    if category is not None and stat is not None:
+        category_stats = {metric["key"] for metric in category_defs[category]["stats"]}
+        if stat not in category_stats:
+            raise HTTPException(400, f"Stat {stat!r} does not belong to category {category!r}")
+
+    with closing(_db()) as con:
+        con.row_factory = sqlite3.Row
+        available_seasons = [
+            row["season"] for row in con.execute(
+                "SELECT DISTINCT season FROM player_game_logs "
+                "WHERE league=? AND player_id IS NOT NULL ORDER BY season DESC",
+                ("mls",),
+            ).fetchall()
+        ]
+        if not available_seasons:
+            return _empty_leaders("mls", None, None)
+        if season is not None:
+            if season not in available_seasons:
+                raise HTTPException(
+                    400,
+                    f"season {season} has no data for mls; available: {available_seasons}",
+                )
+        else:
+            season = available_seasons[0]
+
+        reg_filter, _ = _reg_season_game_filter(con, "mls")
+        sum_cols = ", ".join(
+            f"SUM(CAST(json_extract(g.stats, '$.{key}') AS INTEGER)) AS {key}"
+            for key in ("goals", "assists", "shots", "sot")
+        )
+        rows = con.execute(
+            f"""SELECT g.player_id, p.name AS player_name,
+                       COALESCE(p.team, g.team) AS team,
+                       COUNT(*) AS games,
+                       {sum_cols}
+                FROM player_game_logs g
+                JOIN players p ON p.id=g.player_id AND p.league=g.league
+                WHERE g.league=? AND g.season=? AND g.player_id IS NOT NULL
+                  {reg_filter}
+                GROUP BY g.player_id""",
+            ("mls", season),
+        ).fetchall()
+    if not rows:
+        return _empty_leaders("mls", season, None, available_seasons)
+
+    available_keys = set()
+    for key in approved_stats:
+        if any(r[key] is not None for r in rows):
+            available_keys.add(key)
+
+    categories = []
+    for item in definitions:
+        metrics = [dict(metric) for metric in item["stats"] if metric["key"] in available_keys]
+        if metrics:
+            categories.append({"key": item["key"], "label": item["label"], "stats": metrics})
+    if not categories:
+        return _empty_leaders("mls", season, None, available_seasons)
+
+    available_categories = {item["key"]: item for item in categories}
+    if stat is not None and stat not in available_keys:
+        raise HTTPException(400, f"Stat {stat!r} is unavailable for season {season}")
+    if category is not None:
+        if category not in available_categories:
+            raise HTTPException(400, f"Category {category!r} is unavailable for season {season}")
+        selected_category = category
+    elif stat is not None:
+        selected_category = next(
+            item["key"] for item in definitions
+            if any(metric["key"] == stat for metric in item["stats"])
+        )
+    else:
+        default_category, _default_stat = _LEAGUE_DEFAULTS["mls"]
+        selected_category = (
+            default_category if default_category in available_categories else categories[0]["key"]
+        )
+
+    columns = available_categories[selected_category]["stats"]
+    if stat is not None:
+        sort_stat = stat
+    elif category is not None:
+        sort_stat = columns[0]["key"]
+    else:
+        default_category, default_stat = _LEAGUE_DEFAULTS["mls"]
+        sort_stat = default_stat if (
+            selected_category == default_category and default_stat in available_keys
+        ) else columns[0]["key"]
+
+    metric_metadata = {}
+    ordered_metric_keys = []
+    for item in categories:
+        for metric in item["stats"]:
+            metric_metadata.setdefault(metric["key"], metric)
+            if metric["key"] not in ordered_metric_keys:
+                ordered_metric_keys.append(metric["key"])
+
+    candidates = []
+    for r in rows:
+        if r[sort_stat] is None:
+            continue
+        games = r["games"]
+        if min_games > 0 and games < min_games:
+            continue
+        entry = {"player_id": r["player_id"], "name": r["player_name"],
+                 "team": r["team"] or "", "games": games}
+        for key in ordered_metric_keys:
+            entry[key] = _format_leader_value(r[key], metric_metadata[key]["format"])
+        candidates.append(entry)
+    candidates.sort(key=lambda item: (-item[sort_stat], item["name"]))
+    leaders = candidates[:limit]
+
+    change_metric, comparison, changes = _change_evidence(
+        "mls", selected_category, season, leaders
+    )
+    return {"league": "mls", "season": season, "available_seasons": available_seasons,
+            "stat": sort_stat, "stat_type": None,
+            "category": selected_category, "categories": categories,
+            "columns": columns, "leaders": leaders,
+            "change_metric": change_metric, "comparison": comparison,
+            "changes": changes}
+
+
 @router.get("/api/{league}/leaders")
 def league_leaders(league: str,
                    stat: Optional[str] = Query(None),
@@ -1208,8 +1359,14 @@ def league_leaders(league: str,
     ?min_games=N — minimum games played (default: 0 for all, 10 for MLB batting)
     """
     lg = league.lower()
-    if lg not in ("nba", "nfl", "nhl", "mlb"):
+    if lg not in ("nba", "nfl", "nhl", "mlb", "mls"):
         return JSONResponse({"error": f"Unsupported league: {league}"}, 404)
+
+    if lg == "mls":
+        return _mls_leaders(
+            stat=stat, category=category, season=season,
+            min_games=min_games, limit=limit,
+        )
 
     if lg == "mlb":
         stat_type = (type or "batting").lower()

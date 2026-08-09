@@ -25,6 +25,11 @@ CREATE TABLE team_game_results (
     score_for      REAL NOT NULL,
     score_against  REAL NOT NULL,
     win            INTEGER NOT NULL,
+    -- Three-valued outcome ('W'/'D'/'L') for leagues with draws (soccer).
+    -- `win` above is kept as a 0/1 compat flag for readers that predate
+    -- this column: 1 for W, 0 for D and L. `result` is the honest source —
+    -- a draw must never be storable as a loss.
+    result         TEXT CHECK (result IN ('W','D','L')),
     season         INTEGER,
     status         TEXT,
     home_away      TEXT,

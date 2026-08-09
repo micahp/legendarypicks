@@ -271,6 +271,41 @@ if tgr == 1312 and pgl == 1312:
 else:
     print('FAIL COV-nhl (team_game_results=%d player_game_logs REG=%d, want 1312/1312)' % (tgr, pgl))
 
+# ── COV-ncaaf ── 888 FBS (group 80) regular-season games, 137 FBS teams, zero NULL game_type.
+# EXPECTED VALUES WRITTEN 2026-08-07 BEFORE the ncaaf ingest/backfill/reconcile ran,
+# from the publisher's own count envelope (sports.core .../groups/80/events?limit=1):
+# 888 published events, 146 published team-list ids — of which nine are all-star/combine
+# sides (team_codes.NON_FRANCHISE: Team Gaither/Team Robinson, East/West/North All-Stars,
+# South/North Florida Stars, American, National) that never play a regular-season game,
+# so the played-FBS count is 137 (measured 2026-08-07: all 137 appear in results).
+# FCS buy-game opponents (Mercer etc.) play real games but are not FBS: their rows stay,
+# and the team count is canonical-scoped via team_codes.is_canonical, so 230 total rows
+# still pass this gate at 137 teams. The team_game_results side is written by
+# backfill_team_parity (group-scoped enumeration) and judged by reconcile_totals
+# --write-coverage. The player_game_logs side is written by ingest_cfbd_logs (REG
+# only) — the CFBD re-source replaced the ESPN summaries on 2026-08-07 and fills
+# every one of the 888 games (incl. Army-Navy 401762521, which ESPN published with
+# empty player groups). Every log row must carry game_type (never NULL).
+ncaaf_pgl = q("SELECT COUNT(DISTINCT game_id) FROM player_game_logs"
+              " WHERE league='ncaaf' AND season=2025 AND game_type='REG'")[0][0]
+ncaaf_null_gt = q("SELECT COUNT(*) FROM player_game_logs"
+                  " WHERE league='ncaaf' AND game_type IS NULL")[0][0]
+ncaaf_tgr = q("SELECT COUNT(DISTINCT game_id) FROM team_game_results"
+              " WHERE league='ncaaf' AND season=2025")[0][0]
+try:
+    sys.path.insert(0, os.path.abspath(
+        os.path.join(os.path.dirname(os.path.abspath(DB)), '..')))
+    from team_codes import is_canonical
+    ncaaf_all = [r[0] for r in q("SELECT DISTINCT team FROM team_game_results WHERE league='ncaaf'")]
+    ncaaf_teams = len([t for t in ncaaf_all if is_canonical('ncaaf', t)])
+except Exception:
+    ncaaf_teams = -1  # absence of the vocabulary is a FAIL, not a skip
+if ncaaf_pgl == 888 and ncaaf_tgr == 888 and ncaaf_teams == 137 and ncaaf_null_gt == 0:
+    print('PASS COV-ncaaf (888 REG logs, 888 results, 137 FBS teams, 0 NULL game_type)')
+else:
+    print('FAIL COV-ncaaf (logs=%d results=%d teams=%d null_gt=%d, want 888/888/137/0)' % (
+        ncaaf_pgl, ncaaf_tgr, ncaaf_teams, ncaaf_null_gt))
+
 # ── COV-honest ── a coverage row may not claim more than its run can support.
 # Three ways the 2026-07-14 row lied, each its own assertion:
 bad = []

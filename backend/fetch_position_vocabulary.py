@@ -43,6 +43,10 @@ import espn_client as espn
 # The `positions` collection lives on sports.core, which addresses leagues by
 # sport rather than by the site API's path, so the mapping is spelled out here.
 _SPORT = {"nhl": "hockey", "nba": "basketball", "nfl": "football", "mlb": "baseball"}
+# ESPN's core API addresses soccer and college football by their core slugs,
+# not by the site API's league keys.
+_CORE_LEAGUE = {"mls": "usa.1", "ncaaf": "college-football"}
+_SPORT.update({"mls": "soccer", "ncaaf": "football"})
 
 _INDEX = ("https://sports.core.api.espn.com/v2/sports/{sport}"
           "/leagues/{league}/positions?limit=200")
@@ -55,7 +59,8 @@ def _position_id(ref: str) -> str:
 
 def fetch_league(league: str) -> dict:
     sport = _SPORT[league]
-    index = espn._get(_INDEX.format(sport=sport, league=league), ttl=86400)
+    core_league = _CORE_LEAGUE.get(league, league)
+    index = espn._get(_INDEX.format(sport=sport, league=core_league), ttl=86400)
     positions = {}
     for item in index.get("items", []):
         ref = item.get("$ref")

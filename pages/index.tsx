@@ -6,11 +6,11 @@ export default function Home() {
     <>
       <Head>
         <title>Legendary Picks: Every play. Every stat. One scoreboard.</title>
-        <meta name="description" content="Live scores, prop lines, daily slates, and player stats across the NBA, NFL, MLB & NHL. Every play. Every stat. One scoreboard." />
+        <meta name="description" content="Live scores, prop lines, daily slates, and player stats across the NBA, NFL, MLB, NHL & MLS. Every play. Every stat. One scoreboard." />
         <link rel="canonical" href="https://legendarypicks.xyz/" />
         {/* Open Graph (Facebook/LinkedIn/iMessage/etc.) */}
         <meta property="og:title" content="Legendary Picks: Every play. Every stat. One scoreboard." />
-        <meta property="og:description" content="Live scores, prop lines, daily slates, and player stats across the NBA, NFL, MLB & NHL." />
+        <meta property="og:description" content="Live scores, prop lines, daily slates, and player stats across the NBA, NFL, MLB, NHL & MLS." />
         <meta property="og:image" content="https://legendarypicks.xyz/og-image.png" />
         <meta property="og:image:width" content="1200" />
         <meta property="og:image:height" content="630" />
@@ -20,7 +20,7 @@ export default function Home() {
         {/* Twitter / X card */}
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="Legendary Picks: Every play. Every stat. One scoreboard." />
-        <meta name="twitter:description" content="Live scores, prop lines, daily slates, and player stats across the NBA, NFL, MLB & NHL." />
+        <meta name="twitter:description" content="Live scores, prop lines, daily slates, and player stats across the NBA, NFL, MLB, NHL & MLS." />
         <meta name="twitter:image" content="https://legendarypicks.xyz/og-image.png" />
       </Head>
 
@@ -30,7 +30,7 @@ export default function Home() {
             Every play. Every stat. One scoreboard.
           </h1>
           <p className="mt-4 text-zinc-300 max-w-xl">
-            Live scores, box scores, and play-by-play across the NBA, NFL, MLB, NHL and more.
+            Live scores, box scores, and play-by-play across the NBA, NFL, MLB, NHL, MLS and more.
             Fast, clean, no noise.
           </p>
           <div className="mt-6 flex flex-wrap gap-3">

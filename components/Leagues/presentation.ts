@@ -5,6 +5,8 @@ export const LEAGUE_NAMES: Record<string, string> = {
   nba: 'NBA',
   nhl: 'NHL',
   nfl: 'NFL',
+  mls: 'MLS',
+  ncaaf: 'NCAAF',
   wc: 'FIFA World Cup',
   ufc: 'UFC',
 }
@@ -14,6 +16,8 @@ export const LEAGUE_EMOJIS: Record<string, string> = {
   nba: '🏀',
   nhl: '🏒',
   nfl: '🏈',
+  mls: '⚽',
+  ncaaf: '🏈',
   wc: '⚽',
   ufc: '🥊',
 }
@@ -26,7 +30,7 @@ export const LEAGUE_EMOJIS: Record<string, string> = {
 // on /scores — it just stops being a league hub. Removing it from the ORDER is not what
 // hides it (an unlisted league still renders, under its uppercased slug); the
 // `offerable` check in useLeagueRouteState is. This only stops it being sorted first.
-export const LEAGUE_ORDER = ['mlb', 'nba', 'nhl', 'nfl', 'ufc'] as const
+export const LEAGUE_ORDER = ['mlb', 'nba', 'nhl', 'nfl', 'mls', 'ncaaf', 'ufc'] as const
 
 export function leagueLabel(league: string): string {
   return LEAGUE_NAMES[league] || league.toUpperCase()
@@ -39,6 +43,10 @@ export function leagueEmoji(league: string): string {
 // Leagues whose season crosses a calendar year, and which every publisher — ESPN
 // included — therefore names with both: `2025-26`, never `2026`.
 const SPLIT_YEAR_LEAGUES = new Set(['nhl', 'nba'])
+
+// MLS is a calendar-year season and NCAAF a start-year season — both stored and
+// published under the bare season key (`2025`) — so neither joins the split-year
+// set; both display the bare key.
 
 /**
  * Render a stored season key the way the league publishes it.

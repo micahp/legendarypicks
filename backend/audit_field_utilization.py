@@ -72,6 +72,30 @@ ENDPOINTS = {
             "reads": [("backfill_nhl_boxscore_stats", "GOALIE_KEYS")],
         },
     },
+    # The event ids below are placeholders (shape-only). Both ingests
+    # enumerate real ids from the core API at runtime -- see
+    # ingest_soccer_logs._type_events / ingest_ncaaf_logs._group_events --
+    # so swap in a real 2025 id from player_game_logs.game_id once the
+    # ingest has run. The stat names live inside each record's `stats`
+    # array and are alias-mapped (_TARGET_STATS / _STAT_MAP), so the flat
+    # published-vs-read intersection here undercounts on purpose; the
+    # mapping whitelists are the thing under audit and are read from the
+    # source, not guessed at.
+    "mls": {
+        "summary (soccer roster contract)": {
+            "url": "https://site.web.api.espn.com/apis/site/v2/sports/soccer/leagues/usa.1/summary?event=000000000",
+            "sample": "rosters.0.roster.0",
+            "reads": [("ingest_soccer_logs", "_TARGET_STATS")],
+        },
+    },
+    "ncaaf": {
+        "summary (football boxscore contract)": {
+            "url": "https://site.web.api.espn.com/apis/site/v2/sports/football/leagues/college-football/summary?event=000000000",
+            "sample": "boxscore.players.0.statistics.0.athletes.0",
+            "reads": [("ingest_ncaaf_logs", "_STAT_MAP"),
+                      ("ingest_ncaaf_logs", "_KEY_MAP")],
+        },
+    },
 }
 
 

@@ -7,6 +7,7 @@ Usage:
   python3 bovada_scraper.py nba     # NBA (when in season)
   python3 bovada_scraper.py nfl     # NFL
   python3 bovada_scraper.py nhl     # NHL
+  python3 bovada_scraper.py mls     # MLS soccer player props
   python3 bovada_scraper.py all     # all available
   python3 bovada_scraper.py mlb --ingest   # scrape + POST to ingest API
 
@@ -27,6 +28,7 @@ LEAGUES = {
     "nhl":  ("hockey", "nhl"),
     "wnba": ("basketball", "wnba"),
     "wc":   ("soccer", "fifa-world-cup/fifa-world-cup-matches"),
+    "mls":  ("soccer", "north-america/united-states/mls"),
     "ufc":  ("ufc-mma", "ufc"),
 }
 
@@ -113,8 +115,8 @@ def fetch_events(sport: str, league: str) -> list:
 
 def parse_player_props(event: dict, league: str) -> list:
     """Extract all player props from a single Bovada event."""
-    if league == "wc":
-        return _parse_wc_props(event)
+    if league in ("wc", "mls"):
+        return _parse_soccer_props(event, league)
     if league == "ufc":
         return _parse_ufc_props(event)
     return _parse_standard_props(event, league)
@@ -171,8 +173,8 @@ def _parse_ufc_props(event: dict) -> list:
     return props
 
 
-def _parse_wc_props(event: dict) -> list:
-    """Parse World Cup soccer player props from a Bovada event.
+def _parse_soccer_props(event: dict, league: str) -> list:
+    """Parse soccer player props from a Bovada event (World Cup, MLS).
 
     Two patterns:
       1. Yes/no (goalscorer/assists): player = outcome desc (e.g. "Lionel Messi (ARG)"),
@@ -244,7 +246,7 @@ def _parse_wc_props(event: dict) -> list:
                         "line": 0.5,
                         "side": "over",
                         "odds": odds,
-                        "league": "wc",
+                        "league": league,
                         "game_desc": game_desc,
                         "home_team": home_team,
                         "away_team": away_team,
@@ -280,7 +282,7 @@ def _parse_wc_props(event: dict) -> list:
                         "line": line_val,
                         "side": "over",
                         "odds": odds,
-                        "league": "wc",
+                        "league": league,
                         "game_desc": game_desc,
                         "home_team": home_team,
                         "away_team": away_team,
@@ -400,10 +402,11 @@ def _event_start_iso(prop: dict):
         return None
 
 
-def _wc_direct_ingest(all_props: list, today: str):
-    """Direct DB insert for WC props — bypasses ingest API since WC players
-    don't exist in the players table yet (Phase 1: name-match only).
-    Creates player rows as needed."""
+def _wc_direct_ingest(all_props: list, today: str, league: str = "wc") -> int:
+    """Direct DB insert for soccer props (WC, MLS) — bypasses ingest API since WC/MLS players
+    aren't guaranteed to pre-exist in the players table (Phase 1: name-match only).
+    Creates player rows as needed. ESPN game linking is WC-only: MLS must not call ESPN
+    (hosts off-limits), and the props/slate UI works off prop_games/props directly."""
     import sqlite3, os as _os
     DB = _os.environ.get("LP_DB_PATH") or _os.path.join(
         _os.path.dirname(_os.path.abspath(__file__)), "data", "picks.db")
@@ -433,7 +436,7 @@ def _wc_direct_ingest(all_props: list, today: str):
             cur = con.execute(
                 "SELECT id,league,date,home,away,espn_event_id,start_time FROM prop_games "
                 "WHERE league=? AND date=? AND home=? AND away=?",
-                ("wc", batch["date"], batch["home"], batch["away"]))
+                (league, batch["date"], batch["home"], batch["away"]))
             game_row = cur.fetchone()
             if game_row:
                 game_id = game_row["id"]
@@ -442,13 +445,13 @@ def _wc_direct_ingest(all_props: list, today: str):
             else:
                 cur = con.execute(
                     "INSERT INTO prop_games(league,date,home,away,espn_event_id,start_time) VALUES(?,?,?,?,?,?)",
-                    ("wc", batch["date"], batch["home"], batch["away"], "", game_start))
+                    (league, batch["date"], batch["home"], batch["away"], "", game_start))
                 game_id = cur.lastrowid
                 game_row = con.execute(
                     "SELECT id,league,date,home,away,espn_event_id,start_time FROM prop_games WHERE id=?",
                     (game_id,)).fetchone()
 
-            if not game_row["espn_event_id"]:
+            if not game_row["espn_event_id"] and league == "wc":
                 if batch["date"] not in espn_by_date:
                     try:
                         espn_by_date[batch["date"]] = espn.games("wc", batch["date"])
@@ -467,13 +470,13 @@ def _wc_direct_ingest(all_props: list, today: str):
                 pteam = p.get("team", "")
                 pl = con.execute(
                     "SELECT id FROM players WHERE name=? AND league=?",
-                    (pname, "wc")).fetchone()
+                    (pname, league)).fetchone()
                 if pl:
                     player_id = pl["id"]
                 else:
                     cur = con.execute(
                         "INSERT INTO players(name, team, league) VALUES(?,?,?)",
-                        (pname, pteam if pteam else None, "wc"))
+                        (pname, pteam if pteam else None, league))
                     player_id = cur.lastrowid
 
                 odds_val = p.get("odds")
@@ -662,12 +665,12 @@ def main():
             for p in all_props:
                 by_league.setdefault(p["league"], []).append(p)
             for lg, lprops in by_league.items():
-                if lg == "wc":
-                    print(f"\nDirect-ingesting WC props into DB...")
+                if lg in ("wc", "mls"):
+                    print(f"\nDirect-ingesting {lg.upper()} props into DB...")
                     try:
-                        print(f"  {_wc_direct_ingest(lprops, today)} props ingested")
+                        print(f"  {_wc_direct_ingest(lprops, today, league=lg)} props ingested")
                     except Exception as e:
-                        print(f"  FAIL ingest (wc): {e}")
+                        print(f"  FAIL ingest ({lg}): {e}")
                 elif lg == "ufc":
                     print(f"\nDirect-ingesting UFC props into DB...")
                     try:

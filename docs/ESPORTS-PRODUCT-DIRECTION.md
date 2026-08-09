@@ -1,5 +1,10 @@
 # Esports Product Direction
 
+> **Active event plan (2026-08-08):** `PLAN-esports-ewc-2026.md` specifies the scoped return of
+> `/esports` as an EWC 2026 tournament center, the Club Championship standings contract, and the
+> EWC Call of Duty scoreboard repair. It is an event-programming iteration of this long-term thesis,
+> not a replacement for the Pick Desk build order below.
+
 **Date:** 2026-07-14
 **Author:** Claude (with Micah), esports counterpart to Codex's `feat/leagues-hub`
 recommendations. That doc designs a cross-sport stats hub and reaches esports by analogy.

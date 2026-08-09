@@ -15,6 +15,8 @@ import unittest
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import backfill_team_parity as bp
+import reconcile_core as rc
+import reconcile_gap as rg
 import reconcile_totals as rt
 
 
@@ -211,11 +213,11 @@ class GapClassificationTests(unittest.TestCase):
             "3": ("2026-08-03T00:00Z", "STATUS_FINAL"),
             "4": ("2026-09-01T00:00Z", "STATUS_SCHEDULED"),
         }
-        orig_ids, orig_get = rt.published_event_ids, rt._get_json
-        orig_path = getattr(rt, "ESPN_PATH_BY_URL", None)
-        rt.published_event_ids = lambda url: list(pub)
-        rt.ESPN_PATH_BY_URL = lambda url: "baseball/leagues/mlb"
-        rt._get_json = lambda url, attempts=6: {
+        orig_ids, orig_get = rg.published_event_ids, rg._get_json
+        orig_path = getattr(rg, "ESPN_PATH_BY_URL", None)
+        rg.published_event_ids = lambda url: list(pub)
+        rg.ESPN_PATH_BY_URL = lambda url: "baseball/leagues/mlb"
+        rg._get_json = lambda url, attempts=6: {
             "date": pub[url.rsplit("/", 1)[-1]][0],
             "competitions": [
                 {"status": {"type": {"name": pub[url.rsplit("/", 1)[-1]][1]}}}
@@ -225,9 +227,9 @@ class GapClassificationTests(unittest.TestCase):
             withh = rt.explain_gap("u", {"1"}, horizon="2026-08-02")
             without = rt.explain_gap("u", {"1"}, horizon=None)
         finally:
-            rt.published_event_ids, rt._get_json = orig_ids, orig_get
+            rg.published_event_ids, rg._get_json = orig_ids, orig_get
             if orig_path is not None:
-                rt.ESPN_PATH_BY_URL = orig_path
+                rg.ESPN_PATH_BY_URL = orig_path
 
         self.assertEqual(withh.beyond_horizon, 1)
         self.assertEqual(withh.not_yet_played, 1)
@@ -286,19 +288,23 @@ class GapClassificationTests(unittest.TestCase):
             per_event_fetches.append(event_id)
             return event_doc(event_id)
 
-        orig_ids, orig_get = rt.published_event_ids, rt._get_json
-        rt.published_event_ids = lambda u: list(pub)
+        orig_ids, orig_get = rg.published_event_ids, rg._get_json
+        orig_core_get = rc._get_json
+        rg.published_event_ids = lambda u: list(pub)
         try:
-            rt._get_json = lambda u, attempts=6: fake_get(u, attempts, bulk=False)
+            rg._get_json = lambda u, attempts=6: fake_get(u, attempts, bulk=False)
+            rc._get_json = lambda u, attempts=6: fake_get(u, attempts, bulk=False)
             slow = rt.explain_gap(url, ours, horizon="2026-07-31")
             slow_fetches = len(per_event_fetches)
 
             per_event_fetches.clear()
-            rt._get_json = lambda u, attempts=6: fake_get(u, attempts, bulk=True)
+            rg._get_json = lambda u, attempts=6: fake_get(u, attempts, bulk=True)
+            rc._get_json = lambda u, attempts=6: fake_get(u, attempts, bulk=True)
             fast = rt.explain_gap(url, ours, horizon="2026-07-31")
             fast_fetches = len(per_event_fetches)
         finally:
-            rt.published_event_ids, rt._get_json = orig_ids, orig_get
+            rg.published_event_ids, rg._get_json = orig_ids, orig_get
+            rc._get_json = orig_core_get
 
         self.assertEqual(slow, fast, "the bulk index must not change the verdict")
         self.assertEqual(sorted(fast.missing), sorted(f"m{i}" for i in range(40)))
