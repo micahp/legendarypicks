@@ -7,6 +7,31 @@ offered to users the moment it has rows.
 Read `docs/DATA-COVERAGE-CONTRACT.md` §6 and §7 first. §7 is the ordered checklist; this
 file is that checklist applied to NCAAF, with the shape measurements already done.
 
+## STATUS — 2026-08-08 (after the NCAAF push)
+
+**Backend/data pipeline DONE in the worktree; frontend verification blocked on landing.**
+
+- Players spine + CFBD log re-source: 56,577 log rows, 888/888 games, 137/137 canonical FBS
+  teams, 100% linked (CFBD athlete ids ARE spine espn_ids — no resolution pass), defensive
+  stats mapped (tackles/sacks/INTs into the stats JSON), ~139 CFBD calls. FCS buy-game
+  opponents kept (230 teams in results). Source stamped 'cfbd'.
+- Coverage: `ncaaf 2025` = **complete**, written by `reconcile_totals.py --write-coverage`
+  (2026-08-08). `/leagues/ncaaf` will flip from "isn't available yet" to a real hub once
+  the coverage row lands in main dev.
+- Gates on the worktree DB: COV-ncaaf PASS (888/888/137/0), COV-honest PASS (6 rows),
+  COV-keys PASS, COV-api PASS.
+- Reconcile: per-team oracle is internal (logs vs team_game_results); whitelist falls back
+  to the recorded canonical vocabulary when the host is walled (137 codes); host budget
+  LP_RECONCILE_HOST_BUDGET=100 refuses before the wall, 403 fails fast (run: 2m40s → 6.6s).
+  reconcile_totals.py SPLIT into reconcile_core/gap/report/coverage/checks + slim entry —
+  landing must copy ALL six files.
+- Tests: 708 passed / 20 skipped / 2 deselected (pre-existing mock-draft parity fail;
+  espn_client degradation test slowed by the wall cooldown). test_coverage_gate 22/22
+  (patches reconcile_gap + reconcile_core now).
+- **Still open:** ~~land to main dev (handoff item 6)~~ **DONE 2026-08-08** — backend code (espn_client ncaaf entry, espn_leagues.py, ingest_cfbd_logs.py, 6-file reconcile suite, team_codes NON_FRANCHISE, season_keys, team_stats_contract/schema, backfill_team_parity group-scoped enumeration, audit MANIFEST/endpoints, verify-gates COV-ncaaf), frontend (presentation.ts LEAGUE_ORDER, StandingsTab Soccer/Conference, PlayerGameLog league-aware, useLeagueRouteState, useStandingsData, PredictTab draw-gating, leagues.tsx hub card, scores.tsx filter), DB rows (20,926 players incl. 183 id-collision re-map, 56,577 logs, 1,776 results + stats, coverage row) all copied to main dev + verified. Browser checks (task §4 items 4/5/8) now PASS on main dev: league page clickable, standings + schedule tabs render, player game log table with columns, honest empty states, Stats tab hidden (no ncaaf leaders backend — dead surface rule).
+
+Prior state (kept for history): 2026-08-07 — NCAAF ~10% done, spine only, nothing clickable.
+
 ## Environment — read this before running anything
 
 **`docs/RUNBOOK-heavy-feature-work.md`.** The parts that will bite you, in the order
@@ -176,30 +201,40 @@ and a populated table reads as coverage.
 
 ## 4. Done means
 
-1. Coverage row for `ncaaf 2025` reads `status='complete'` — and got there through
-   `reconcile_totals.py --write-coverage`, not by hand.
-2. `reconcile_totals.py --league ncaaf --season 2025` exits 0, output pasted with its
-   exit code (`feedback_presence_is_not_integrity`).
-3. Zero rows in `player_game_logs` where `league='ncaaf' AND game_type IS NULL`.
-4. **Two players screenshotted in a browser**: one with a genuine missed game, one in a
+Status per item, updated 2026-08-08 (worktree state; browser items blocked on landing).
+
+- [x] 1. Coverage row for `ncaaf 2025` reads `status='complete'` — and got there through
+   `reconcile_totals.py --write-coverage`, not by hand. (Done 2026-08-08, worktree DB.)
+- [x] 2. `reconcile_totals.py --league ncaaf --season 2025` exits 0, output pasted with its
+   exit code (`feedback_presence_is_not_integrity`). (Done 2026-08-08: exit 0, PASS,
+   888/888 games, 137/137 teams; re-verified after the host-budget fix, 6.6s.)
+- [x] 3. Zero rows in `player_game_logs` where `league='ncaaf' AND game_type IS NULL`.
+   (COV-ncaaf null_gt=0.)
+- [ ] 4. **Two players screenshotted in a browser**: one with a genuine missed game, one in a
    season we have not fully ingested. **If they look the same, the work is not done**
-   (contract §7 step 8).
-5. A conference standings table and a Saturday schedule opened in a browser, payload size
-   noted.
-6. `git diff --stat` matches the file list above.
-7. **`verify-gates.sh COV-statset` run and pasted**, with every red item for this
+   (contract §7 step 8). — BLOCKED on landing to main dev.
+- [ ] 5. A conference standings table and a Saturday schedule opened in a browser, payload size
+   noted. — BLOCKED on landing to main dev.
+- [ ] 6. `git diff --stat` matches the file list above. — PARTIAL: matches in the worktree;
+   landing to main dev pending (handoff item 6 — note the reconcile suite is now SIX files:
+   reconcile_core/gap/report/coverage/checks + entry).
+- [ ] 7. **`verify-gates.sh COV-statset` run and pasted**, with every red item for this
    league named in writing. The `MANIFEST` entry in `backend/audit_league_stats.py`
    was written BEFORE the ingest ran, and the gate's expected-failure count was
    raised to match. A league with no manifest reports UNVERIFIED, never PASS.
-8. Every game log rendered in a real browser at **375px and 1440px** — a table with
+   — MANIFEST written before ingest (incl. defensive positions); COV-statset remains the
+   known pre-existing red list (6 FAIL/3 UNVERIFIED, documented in LEAGUE-STAT-GAPS);
+   final sign-off pending after landing.
+- [ ] 8. Every game log rendered in a real browser at **375px and 1440px** — a table with
    columns, not a run of `key value` pairs — including the empty state for the one
    position this league has no stats for. Paste the URL and what you saw.
-9. `docs/LEAGUE-STAT-GAPS.md` updated with what this league does NOT have, so the
-   next person does not rediscover it.
+   — BLOCKED on landing to main dev.
+- [x] 9. `docs/LEAGUE-STAT-GAPS.md` updated with what this league does NOT have, so the
+   next person does not rediscover it. (Done 2026-08-08: defensive gap CLOSED via CFBD,
+   Army-Navy CLOSED, CFBD-as-source row, remaining gaps: receiving C/ATT, rushing LONG,
+   per-play EPA, special teams, playing-time qualifier.)
 
-- [ ] **`F/identity-crosswalk` green, or the single-publisher choice stated in
-      writing.** More than one publisher reaching the same `players.id` row is
-      what makes a league good — it is the only reason NFL has team, position,
-      ranks, news and ADP and MLB has none of them. If this league will carry one
-      publisher's id only, say so and say what that publisher does NOT print, so
-      the gap is a decision instead of a discovery. See `docs/DATA-SPINE.md`.
+- [x] **`F/identity-crosswalk` green, or the single-publisher choice stated in
+      writing.** (Stated 2026-08-08 in docs/DATA-SPINE.md: NCAAF logs land on CFBD;
+      CFBD athlete ids ARE spine espn_ids, direct join, no resolution pass; ESPN
+      summaries kept for team backfill/reconcile.)

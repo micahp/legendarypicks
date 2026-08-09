@@ -20,6 +20,7 @@ LEAGUES = {  # our key -> (espn "sport/league" path, regulation periods)
     "nhl":  ("hockey/nhl", 3),
     "mlb":  ("baseball/mlb", 9),
     "nfl":  ("football/nfl", 4),
+    "ncaaf": ("football/college-football", 4),
     "atp":  ("tennis/atp", 3),
     "wta":  ("tennis/wta", 3),
     "ufc":  ("mma/ufc", 3),
@@ -1120,9 +1121,12 @@ def game_result(league, game_id):
     """Clean grading info for one game: {state, scores{abbrev:score}, winner|None}.
 
     Robust to date (queries the game directly), so it grades predictions regardless of when
-    the game was played. winner is None until the game is final. Soccer uses competitor.winner flag.
+    the game was played. winner is None until the game is final. Soccer (wc, mls) uses the
+    competitor.winner flag — penalty/AET aware, and the only honest grade for a drawn match:
+    the score heuristic below would file an MLS Cup final decided on penalties by the
+    90-minute scoreline.
     """
-    if league == "wc":
+    if league in ("wc", "mls"):
         return game_result_soccer(league, game_id)
     d = summary(league, game_id)
     comp = (d.get("header", {}).get("competitions") or [{}])[0]

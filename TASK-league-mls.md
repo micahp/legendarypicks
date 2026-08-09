@@ -7,6 +7,41 @@ work. EPL then adds exactly those two things to a scaffold that already works.
 
 Read `docs/DATA-COVERAGE-CONTRACT.md` §6 and §7 first.
 
+## STATUS — 2026-08-07 (before NCAAF work resumes; MLS paused, not closed)
+
+**MLS is ~40-50% done by this task's own "Done means".** The data pipeline and
+clickable surfaces all work on the main dev tree (feat/league-news-engine), but the
+two task-critical items are still open. Everything below was re-verified 08-07
+against the live dev DB (:8096) and browser (:3096).
+
+DONE (verified):
+- Coverage row `mls 2025` = complete (30/30 teams, 510/510 games, written by
+  reconcile_totals --write-coverage 08-06). [Done #1]
+- Zero `mls` rows with NULL game_type. [Done #3]
+- docs/LEAGUE-STAT-GAPS.md exists (10.4 KB, 08-06). [Done #9]
+- Team-stats backend works (added 08-07; was broken — contract lacked mls
+  LEAGUE_CATEGORIES/_aggregate_rows branch, patched in BOTH trees).
+- Props end-to-end (Bovada scraper, /api/props, /props filter, dev cron).
+
+NOT DONE — do NOT claim this league closed without these:
+- **#4 Draw rendering — THE gap.** 256 draws in team_game_results but
+  /api/mls/standings returns W/L/win_pct with NO draws field, and the UI renders the
+  generic TeamSportStandings (W L WIN%) for mls — the soccer P W D L GF GA GD Pts
+  table (WorldCupGroups) only renders when isWorldCup=true. Draws are invisible
+  everywhere. Fix = backend emit draws/GF/GA/GD/Pts for mls + frontend isSoccer
+  branch (like isWorldCup). This is the item the task warns "will silently be
+  wrong" and it IS wrong.
+- #5 Two-player absence screenshot — not done.
+- #6 git diff --stat vs file list — nothing committed (dirty working tree on
+  feat/league-news-engine; Micah's git, his call).
+- #7 verify-gates.sh COV-statset run+pasted — script exists, no run pasted.
+- #8 375px/1440px browser renders pasted — not done.
+- identity-crosswalk checkbox — unchecked, no single-publisher statement.
+
+Other open: result='D' column not migrated on main dev DB; soccer-native team stat
+columns (shots_on_target, possession, corners) have no schema column yet (documented
+gap); nothing pushed.
+
 ## Environment — read this before running anything
 
 **`docs/RUNBOOK-heavy-feature-work.md`.** The parts that will bite you, in the order

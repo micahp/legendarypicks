@@ -32,15 +32,28 @@ def test_every_alias_target_is_canonical():
             )
 
 
-def test_non_franchise_only_nba():
-    """NON_FRANCHISE currently only has the 'nba' key."""
-    assert set(NON_FRANCHISE) == {"nba"}
+def test_non_franchise_known_set():
+    """NON_FRANCHISE holds exactly the pass-through non-franchise sides."""
+    assert set(NON_FRANCHISE) == {"nba", "mls", "ncaaf"}
 
 
 def test_non_franchise_codes_are_not_canonical():
-    """STRIPES, STARS, WORLD are not canonical (even though normalize returns them)."""
-    for code in NON_FRANCHISE["nba"]:
-        assert not is_canonical("nba", code)
+    """Pass-through sides (NBA All-Star, MLS All-Star, NCAAF all-star/combine)
+    are never canonical, even though normalize() returns them unchanged."""
+    for league, codes in NON_FRANCHISE.items():
+        for code in codes:
+            assert not is_canonical(league, code)
+
+
+def test_ncaaf_all_star_sides_pass_through_not_canonical():
+    """NCAAF group-80 all-star/combine sides never play a regular-season game:
+    normalize() passes them through but is_canonical() answers False, while
+    real FBS codes stay canonical (the 137-team coverage count depends on this)."""
+    for code in ("AMER", "GAIT", "ROB", "SFX", "WEST"):
+        assert normalize("ncaaf", code) == code
+        assert not is_canonical("ncaaf", code)
+    assert is_canonical("ncaaf", "ALA")
+    assert is_canonical("ncaaf", "APP")
 
 
 def test_position_alias_targets_are_canonical():

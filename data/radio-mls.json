@@ -1,0 +1,47 @@
+{
+  "_meta": {
+    "updated": "2026-08-06",
+    "note": "MLS radio map. MIA (Inter Miami) is the reference entry with the verified WUUB stream used by the booth pipeline. All other entries are skeleton placeholders — verified:false until a stream URL is confirmed. NEVER fabricate a callsign or URL."
+  },
+  "_wc": {
+    "station": "iHeart FIFA World Cup 2026 (FOX Sports English)",
+    "city": "National",
+    "stream": "https://stream.revma.ihrhls.com/zc11554",
+    "verified": true
+  },
+  "MIA": {
+    "station": "WUUB-FM ESPN 106.3",
+    "city": "West Palm Beach, FL",
+    "stream": "https://live.amperwave.net/manifest/goodkarma-wuubfmaac-hlsc2.m3u8?source=tunein&source=TuneIn&gdpr=0&us_privacy=1YNY",
+    "verified": true
+  },
+  "ATL": {"station": null, "city": null, "stream": null, "verified": false},
+  "ATX": {"station": null, "city": null, "stream": null, "verified": false},
+  "CHI": {"station": null, "city": null, "stream": null, "verified": false},
+  "CIN": {"station": null, "city": null, "stream": null, "verified": false},
+  "CLB": {"station": null, "city": null, "stream": null, "verified": false},
+  "CLT": {"station": null, "city": null, "stream": null, "verified": false},
+  "COL": {"station": null, "city": null, "stream": null, "verified": false},
+  "DAL": {"station": null, "city": null, "stream": null, "verified": false},
+  "DC": {"station": null, "city": null, "stream": null, "verified": false},
+  "HOU": {"station": null, "city": null, "stream": null, "verified": false},
+  "LA": {"station": null, "city": null, "stream": null, "verified": false},
+  "LAFC": {"station": null, "city": null, "stream": null, "verified": false},
+  "MIN": {"station": null, "city": null, "stream": null, "verified": false},
+  "MTL": {"station": null, "city": null, "stream": null, "verified": false},
+  "NE": {"station": null, "city": null, "stream": null, "verified": false},
+  "NSH": {"station": null, "city": null, "stream": null, "verified": false},
+  "NYC": {"station": null, "city": null, "stream": null, "verified": false},
+  "ORL": {"station": null, "city": null, "stream": null, "verified": false},
+  "PHI": {"station": null, "city": null, "stream": null, "verified": false},
+  "POR": {"station": null, "city": null, "stream": null, "verified": false},
+  "RBNY": {"station": null, "city": null, "stream": null, "verified": false},
+  "RSL": {"station": null, "city": null, "stream": null, "verified": false},
+  "SD": {"station": null, "city": null, "stream": null, "verified": false},
+  "SEA": {"station": null, "city": null, "stream": null, "verified": false},
+  "SJ": {"station": null, "city": null, "stream": null, "verified": false},
+  "SKC": {"station": null, "city": null, "stream": null, "verified": false},
+  "STL": {"station": null, "city": null, "stream": null, "verified": false},
+  "TOR": {"station": null, "city": null, "stream": null, "verified": false},
+  "VAN": {"station": null, "city": null, "stream": null, "verified": false}
+}

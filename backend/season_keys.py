@@ -29,6 +29,28 @@ that looks like an off-by-one and is not:
     nhl  2026 = 2025-09-20 .. 2026-07-01  "2025-26"    2027 = "2026-27"
     nfl  2026 = 2026-08-06 .. 2027-02-16  "2026"       (2027 not yet published)
     mlb  2026 = 2026-02-19 .. 2026-11-12  "2026"       2027 = "2027"
+    mls  2025 = 2025-01-01 .. 2025-10-20  (Regular Season)  keys by the year it STARTS
+    mls  2026 = 2026-01-01 .. 2026-10-20  (Regular Season type; MLS Cup runs to Dec 31)
+    ncaaf 2025 = 2025-08-23 .. 2025-12-13  (FBS regular season, group 80) keys by START year
+    lcup 2025 = 2025-01-01 .. 2025-09-01  (Leagues Cup; League Phase starts Aug)  calendar year
+    ccc  2025 = 2025-01-01 .. 2026-01-01  (Concacaf Champions Cup; spans the year)  START year
+    campeones 2025 = 2025-01-01 .. 2026-01-01  (Campeones Cup — single match)      calendar year
+
+MLS, its tournaments, and NCAAF are all START-year leagues like NFL (the season
+opens in the calendar year its key names). Measured 2026-08-06 from
+`sports.core.api.espn.com/.../seasons/{year}/types`: MLS type 1 (Regular
+Season) runs Jan 1..Oct 20 and the knockout types (3-17) extend to Dec 31.
+NCAAF publishes 4 types: 1 Preseason (Feb 1..Aug 23), 2 Regular Season
+(Aug 23..Dec 13), 3 Postseason (Dec 13..Jan 21 — bowls + CFP), 4 Off Season.
+So NCAAF's postseason is its OWN type, not a second calendar year: a Jan 2026
+bowl carries key 2025, published under type 3 — do not re-key by game_date.
+
+Tournament slugs (own league keys per the tournament decision): Leagues Cup
+(`concacaf.leagues.cup`) files League Phase + QF + SF + 3rd-Place + Final all in
+season 2025 ending Sep 1; CCC (`concacaf.champions`) Round One..Final runs
+Feb..May but its published endDate says 2026-01-01, so key by START year;
+Campeones Cup is one match with a season doc spanning the whole year. All key by
+the year the tournament's season doc names — same START-year rule as MLS.
 
 **Why `roster_snapshots` holds 2027 for NHL/NBA and 2026 for NFL/MLB.** It is not
 a bug and it is not two conventions — it is one convention applied to leagues

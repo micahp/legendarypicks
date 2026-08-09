@@ -10,7 +10,14 @@ import type {
 
 const METHODS: UfcPickMethod[] = ['KO/TKO', 'SUB', 'DEC']
 
+/* A two-outcome pick surface cannot grade a three-valued result. Soccer
+   leagues publish draws, so the surface is suppressed there rather than
+   shipping a binary control over a ternary outcome (TASK-league-mls.md §3).
+   MLS today; WC joins when it returns to the hub. */
+const DRAW_LEAGUES: Record<string, string> = { mls: 'MLS', wc: 'World Cup' }
+
 interface PredictTabProps {
+  league?: string
   fights: UfcFight[]
   myPicks: UfcPick[]
   record: UfcPickRecord
@@ -27,6 +34,7 @@ interface PredictTabProps {
 }
 
 export default function PredictTab({
+  league = 'ufc',
   fights,
   myPicks,
   record,
@@ -37,6 +45,7 @@ export default function PredictTab({
   submittingKey,
   onSubmitPick,
 }: PredictTabProps) {
+  const drawLabel = DRAW_LEAGUES[league] ?? null
   const [draftMethods, setDraftMethods] = useState<Record<string, UfcPickMethod | null>>({})
   const picksByFight = new Map(myPicks.map(pick => [pick.fightKey, pick]))
   const currentFightKeys = new Set(fights.map(fight => fight.fightKey))
@@ -58,6 +67,18 @@ export default function PredictTab({
       return
     }
     void onSubmitPick(fight.fightKey, pick.side, nextMethod)
+  }
+
+  // Draws make a binary winner pick ungradeable. Quiet neutral note, not an
+  // error: the surface is unavailable for this league, nothing is broken.
+  if (drawLabel) {
+    return (
+      <div className="rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-12 text-center">
+        <p className="text-sm text-zinc-500">
+          Draws mean this surface is unavailable for {drawLabel}.
+        </p>
+      </div>
+    )
   }
 
   return (
