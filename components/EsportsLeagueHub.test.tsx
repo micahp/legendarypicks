@@ -74,10 +74,22 @@ const officialTitles = officialTitleNames.map((name) => ({
   slug: name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''),
   name,
   tournaments: name === 'Mobile Legends: Bang Bang' ? ['MSC', 'MWI'] : [name],
-  weeks: [1],
   feedTitles: name === 'Call of Duty: Black Ops 7'
     ? ['Call of Duty']
     : name === 'Counter-Strike 2' ? ['CS2'] : [name],
+  // Data-derived coverage: no published schedule snapshot in these tests -> 'Schedule pending';
+  // feedCount mirrors what the slate carries for the fixture matches (CoD x2, CS2 x1).
+  schedule: {
+    status: 'unavailable' as const,
+    count: 0,
+    datedCount: 0,
+    firstStart: null,
+    lastStart: null,
+    weeks: [],
+    reason: 'no published schedule snapshot',
+    source: null,
+  },
+  feedCount: name === 'Call of Duty: Black Ops 7' ? 2 : name === 'Counter-Strike 2' ? 1 : 0,
 }))
 
 const projection = {
@@ -322,6 +334,10 @@ describe('esports league hub — Games tab tracks the official 24-title EWC prog
     fireEvent.click(screen.getByRole('button', { name: 'Games' }))
     await waitFor(() => expect(screen.getByText('24 titles · 25 tournaments')).toBeTruthy())
 
+    // Data-derived week label: no published schedule snapshot -> 'Schedule pending' on every
+    // program tile (the hardcoded program weeks are gone from the payload).
+    expect(screen.getAllByText(/Schedule pending/).length).toBeGreaterThanOrEqual(24)
+
     fireEvent.click(screen.getByRole('button', { name: /Call of Duty: Black Ops 7.*2 tracked matches/ }))
     await waitFor(() => expect(screen.getByText(/Showing only Call of Duty: Black Ops 7/)).toBeTruthy())
     expect(screen.getByText('Gentle Mates')).toBeTruthy()
@@ -337,6 +353,43 @@ describe('esports league hub — Games tab tracks the official 24-title EWC prog
     fireEvent.click(screen.getByRole('button', { name: /Apex Legends.*Match feed pending/ }))
     await waitFor(() => expect(screen.getByText('Apex Legends is in the official EWC program.')).toBeTruthy())
     expect(screen.getByText(/match schedule is not available/)).toBeTruthy()
+    await flush()
+  })
+
+  it('derives the week label from the published schedule snapshot, not program weeks', async () => {
+    const withSchedule = {
+      ...projection,
+      titles: officialTitles.map((t) => t.slug === 'chess'
+        ? {
+            ...t,
+            schedule: {
+              status: 'published' as const,
+              count: 13,
+              datedCount: 13,
+              firstStart: Date.UTC(2026, 7, 11, 12, 0),
+              lastStart: Date.UTC(2026, 7, 13, 12, 0),
+              weeks: [33],
+              reason: null,
+              source: { label: 'Liquipedia — EWC 2026', urls: ['https://liquipedia.net/chess/Esports_World_Cup/2026'], revisions: [34705], publishedAt: '2026-08-09T00:00:00+00:00' },
+            },
+            feedCount: 0,
+          }
+        : t),
+    }
+    mockFetch((url: string) => {
+      if (url === '/api/esports/upcoming') return upcoming
+      if (url.includes('/club-standings')) return standings()
+      if (url === '/api/esports/titles') return titles
+      return withSchedule
+    })
+    mockMatchMedia(true)
+    render(<EsportsLeaguePage />)
+    fireEvent.click(screen.getByRole('button', { name: 'Games' }))
+    await waitFor(() => expect(screen.getByText('24 titles · 25 tournaments')).toBeTruthy())
+    // Chess has a published schedule (week 33) but no feed rows -> Week 33 · Match feed pending.
+    expect(screen.getByRole('button', { name: /Chess.*Week 33.*Match feed pending/ })).toBeTruthy()
+    // A title with no published snapshot still says Schedule pending.
+    expect(screen.getByRole('button', { name: /Apex Legends.*Schedule pending.*Match feed pending/ })).toBeTruthy()
     await flush()
   })
 

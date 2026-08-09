@@ -301,29 +301,107 @@ _EVENT_NAME = "Esports World Cup 2026"
 _ACTIVE_RESULT_TAIL_S = 24 * 3600
 
 
+# ---------------------------------------------------------------------------
+# Data-derived title coverage — published schedule snapshots + slate feed counts
+# ---------------------------------------------------------------------------
+def _title_coverage():
+    """Per-title schedule coverage from the published per-title schedule snapshots.
+
+    Reads ONLY local published snapshot files (``backend/data/esports_ewc_schedules/``) —
+    no request-path network calls. A title with no snapshot is honestly ``unavailable``.
+    """
+    from fetch_ewc_title_schedules import SCHEDULES_DIR
+
+    out = {}
+    for title in EWC_TITLES:
+        slug = title["slug"]
+        snap = None
+        try:
+            with open(os.path.join(SCHEDULES_DIR, "%s.json" % slug)) as f:
+                snap = json.load(f)
+        except Exception:
+            snap = None
+        if not snap or not isinstance(snap, dict):
+            out[slug] = {
+                "status": "unavailable", "count": 0, "datedCount": 0,
+                "firstStart": None, "lastStart": None, "weeks": [],
+                "reason": "no published schedule snapshot",
+                "source": None,
+            }
+            continue
+        sched = snap.get("schedule") or {}
+        src = snap.get("source") or {}
+        out[slug] = {
+            "status": sched.get("status", "published"),
+            "count": sched.get("count", 0),
+            "datedCount": sched.get("datedCount", 0),
+            "firstStart": sched.get("firstStart"),
+            "lastStart": sched.get("lastStart"),
+            "weeks": sched.get("weeks", []),
+            "reason": None,
+            "source": {"label": src.get("label"), "urls": src.get("urls"),
+                        "revisions": src.get("revisions"),
+                        "publishedAt": src.get("publishedAt")},
+        }
+    return out
+
+
+def _titles_payload(ewc_matches, coverage):
+    """The Games-tab title list: catalog identity + data-derived schedule + feed counts.
+
+    The hardcoded program ``weeks`` are NOT exposed here — tile labels must reflect data
+    coverage (published schedule window / feed rows), never program branding claims.
+    """
+    titles = []
+    for title in EWC_TITLES:
+        slug = title["slug"]
+        cov = coverage.get(slug, {})
+        feed_count = sum(1 for m in ewc_matches if m.get("title") in title["feedTitles"])
+        titles.append({
+            "slug": slug,
+            "name": title["name"],
+            "tournaments": title["tournaments"],
+            "feedTitles": title["feedTitles"],
+            "schedule": {
+                "status": cov.get("status", "unavailable"),
+                "count": cov.get("count", 0),
+                "datedCount": cov.get("datedCount", 0),
+                "firstStart": cov.get("firstStart"),
+                "lastStart": cov.get("lastStart"),
+                "weeks": cov.get("weeks", []),
+                "reason": cov.get("reason"),
+                "source": cov.get("source"),
+            },
+            "feedCount": feed_count,
+        })
+    return titles
+
+
 @router.get("/api/esports/events/ewc-2026")
 def ewc_projection():
     """The EWC 2026 projection over the existing normalized esports slate.
 
     Filters the shared board by the normalized event identity (``ewcEventId``) stamped at the
     backend boundary — never a UI substring search. Returns live / upcoming / completed buckets
-    plus ``active`` so the page can fall back to the generic board when the event expires.
+    plus ``active`` so the page can fall back to the generic board when the event expires, and
+    per-title data coverage (published schedule snapshots + feed counts) for the Games tab.
     """
     from .slate import esports_upcoming
 
     board = esports_upcoming()
     matches = board.get("matches") or []
+    ewc_matches = [m for m in matches if m.get("ewcEventId") == EVENT_ID]
+    coverage = _title_coverage()
+    titles = _titles_payload(ewc_matches, coverage)
     if board.get("building") and not matches:
         return {"eventId": EVENT_ID, "eventName": _EVENT_NAME, "active": False,
                 "building": True, "matches": {"live": [], "upcoming": [], "completed": []},
-                "titles": EWC_TITLES, "titleCount": _EWC_TITLE_COUNT,
+                "titles": titles, "titleCount": _EWC_TITLE_COUNT,
                 "tournamentCount": _EWC_TOURNAMENT_COUNT,
                 "programSource": _PROGRAM_SOURCE, "asOf": None}
     now_ms = time.time() * 1000
     live, upcoming, completed = [], [], []
-    for m in matches:
-        if m.get("ewcEventId") != EVENT_ID:
-            continue
+    for m in ewc_matches:
         if m.get("live"):
             live.append(m)
         elif m.get("finished"):
@@ -340,7 +418,7 @@ def ewc_projection():
         "eventId": EVENT_ID,
         "eventName": _EVENT_NAME,
         "active": active,
-        "titles": EWC_TITLES,
+        "titles": titles,
         "titleCount": _EWC_TITLE_COUNT,
         "tournamentCount": _EWC_TOURNAMENT_COUNT,
         "programSource": _PROGRAM_SOURCE,

@@ -111,6 +111,26 @@ class ProjectionRouteTests(unittest.TestCase):
         mlbb = next(row for row in d["titles"] if row["slug"] == "mobile-legends-bang-bang")
         self.assertEqual(mlbb["tournaments"], ["MSC", "MWI"])
 
+    def test_projection_title_coverage_is_data_derived(self):
+        # No published schedule snapshots in the test env -> every tile is honestly unavailable
+        # ('Schedule pending'), and feedCount is derived from the EWC slate rows, never from the
+        # hardcoded program weeks (which are NOT exposed in the payload at all).
+        live = _match(startTime=1, live=True)  # title "Call of Duty" -> call-of-duty-black-ops-7
+        board = self._board([live])
+        with mock.patch.object(slate, "esports_upcoming", return_value=board):
+            d = self.client.get("/api/esports/events/ewc-2026").json()
+        titles = {row["slug"]: row for row in d["titles"]}
+        for slug, row in titles.items():
+            self.assertNotIn("weeks", row, "hardcoded program weeks must not reach the payload")
+            self.assertEqual(row["schedule"]["status"], "unavailable")
+            self.assertEqual(row["schedule"]["count"], 0)
+            self.assertIn("reason", row["schedule"])
+        cod = titles["call-of-duty-black-ops-7"]
+        self.assertEqual(cod["feedCount"], 1)  # the live 'Call of Duty' EWC row
+        apex = titles["apex-legends"]
+        self.assertEqual(apex["feedCount"], 0)
+        self.assertEqual(len(titles), 24)
+
     def test_projection_inactive_when_event_expired(self):
         # Only old completed matches (beyond the 24h tail) -> module expires automatically.
         old_done = _match(startTime=1, finished=True, endTime=1)
