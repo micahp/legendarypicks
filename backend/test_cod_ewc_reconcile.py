@@ -207,6 +207,16 @@ class AssociateBpRowTests(unittest.TestCase):
     def test_tier1_single_exact_match_resolves(self):
         self.assertEqual(cod_ewc.associate_bp_row(self.row, self.distinct, set()), 1)
 
+    def test_tier1_accepts_current_cross_publisher_clock_drift(self):
+        # Live 2026-08-08 evidence: Breaking Point's QF4 timestamp trails PandaScore by 4h20m.
+        # Exact participants + round still resolve inside the explicit five-hour bound.
+        self.row["date"] = "2026-08-08T16:20:00Z"
+        self.assertEqual(cod_ewc.associate_bp_row(self.row, self.distinct, set()), 1)
+
+    def test_tier1_rejects_names_beyond_clock_drift_bound(self):
+        self.row["date"] = "2026-08-08T17:01:00Z"
+        self.assertIsNone(cod_ewc.associate_bp_row(self.row, self.distinct, set()))
+
 
 class ReconcileTests(unittest.TestCase):
     def setUp(self):
