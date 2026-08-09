@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Network-free regression tests for Breaking Point normalization."""
+"""Breaking Point normalization regressions; fixture-shaped and network-free."""
 
 import unittest
 from unittest import mock

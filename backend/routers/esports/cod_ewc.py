@@ -34,7 +34,10 @@ _BP_ROUND_KEYS = {
     "3rd place decider": "3rd place",
     "grand finals": "grand final",
 }
-_TIME_TOL_MS = 3 * 3600 * 1000      # absorbs the observed 1h30m-1h40m BP/PS schedule shift
+# Breaking Point's current completed EWC rows can be 4h20m later than PandaScore's bracket
+# timestamps.  Both-participant or score evidence is still mandatory; this merely bounds the
+# cross-publisher clock drift and never permits time-only identity.
+_TIME_TOL_MS = 5 * 3600 * 1000
 _CACHE_TTL_S = 120
 
 _cache = {"t": 0.0, "data": None}

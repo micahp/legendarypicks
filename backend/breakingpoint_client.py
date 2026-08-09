@@ -166,10 +166,10 @@ def get_cod_matches(date_str=None):
         else:
             state = "pre"
 
-        # EWC club ids are not always present in the page-level ``allTeams`` dictionary,
-        # but Breaking Point includes the authoritative team objects on each match. Prefer
-        # the shared dictionary and fall back to those embedded objects before treating a
-        # genuinely unknown participant as TBD.
+        # EWC club ids are not always present in the page-level ``allTeams`` dictionary, but
+        # Breaking Point includes the authoritative team objects directly on each match.  Prefer
+        # the shared dictionary when available and fall back to those embedded objects before
+        # degrading a genuinely unknown side to TBD.
         t1 = teams.get(m.get("team_1_id")) or m.get("team1") or {}
         t2 = teams.get(m.get("team_2_id")) or m.get("team2") or {}
 
