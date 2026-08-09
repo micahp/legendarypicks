@@ -62,11 +62,32 @@ const ewcCompleted = {
   ewcEventId: 'ewc-2026',
 }
 
+const officialTitleNames = [
+  'Apex Legends', 'Call of Duty: Black Ops 7', 'Call of Duty: Warzone', 'Chess',
+  'Counter-Strike 2', 'Crossfire', 'Dota 2', 'EA Sports FC 26',
+  'Fatal Fury: City of the Wolves', 'Fortnite Reload', 'Free Fire', 'Honor of Kings',
+  'League of Legends', 'Mobile Legends: Bang Bang', 'Overwatch 2', 'PUBG: Battlegrounds',
+  'PUBG Mobile', 'Rainbow Six Siege', 'Rocket League', 'Street Fighter 6',
+  'Teamfight Tactics', 'Tekken 8', 'Trackmania', 'Valorant',
+]
+const officialTitles = officialTitleNames.map((name) => ({
+  slug: name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''),
+  name,
+  tournaments: name === 'Mobile Legends: Bang Bang' ? ['MSC', 'MWI'] : [name],
+  weeks: [1],
+  feedTitles: name === 'Call of Duty: Black Ops 7'
+    ? ['Call of Duty']
+    : name === 'Counter-Strike 2' ? ['CS2'] : [name],
+}))
+
 const projection = {
   eventId: 'ewc-2026',
   eventName: 'Esports World Cup 2026',
   active: true,
   asOf: new Date().toISOString(),
+  titles: officialTitles,
+  titleCount: 24,
+  tournamentCount: 25,
   matches: { live: [ewcLive], upcoming: [ewcUpcoming], completed: [ewcCompleted] },
 }
 
@@ -269,11 +290,15 @@ describe('esports league hub — inline all-esports board from /api/esports/upco
   })
 })
 
-describe('esports league hub — Games tab tracks the complete EWC population', () => {
-  it('renders every EWC live, upcoming, and completed match without generic-board games', async () => {
+describe('esports league hub — Games tab tracks the official 24-title EWC program', () => {
+  it('renders all 24 titles plus every available match without generic-board games', async () => {
     renderHub(true)
     fireEvent.click(screen.getByRole('button', { name: 'Games' }))
-    await waitFor(() => expect(screen.getByText('3 games · 2 titles')).toBeTruthy())
+    await waitFor(() => expect(screen.getByText('24 titles · 25 tournaments')).toBeTruthy())
+    expect(screen.getAllByRole('button').filter((button) => button.closest('[data-ewc-title-catalog="true"]')).length).toBe(24)
+    expect(screen.getByText('Apex Legends')).toBeTruthy()
+    expect(screen.getByText('Trackmania')).toBeTruthy()
+    expect(screen.getByText('Mobile Legends: Bang Bang')).toBeTruthy()
     expect(screen.getByText('Gentle Mates')).toBeTruthy()
     expect(screen.getByText('Natus Vincere')).toBeTruthy()
     expect(screen.getByText('Virtus.pro')).toBeTruthy()
@@ -292,14 +317,13 @@ describe('esports league hub — Games tab tracks the complete EWC population', 
     await flush()
   })
 
-  it('filters the complete EWC population by represented title and clears', async () => {
+  it('filters available matches by official title and reports pending title feeds honestly', async () => {
     renderHub(true)
     fireEvent.click(screen.getByRole('button', { name: 'Games' }))
-    await waitFor(() => expect(screen.getByText('3 games · 2 titles')).toBeTruthy())
+    await waitFor(() => expect(screen.getByText('24 titles · 25 tournaments')).toBeTruthy())
 
-    fireEvent.click(screen.getByRole('button', { name: /Call of Duty 2/ }))
-    await waitFor(() => expect(screen.getByText(/Showing only Call of Duty/)).toBeTruthy())
-    expect(screen.getByText('2 of 3 games')).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: /Call of Duty: Black Ops 7.*2 tracked matches/ }))
+    await waitFor(() => expect(screen.getByText(/Showing only Call of Duty: Black Ops 7/)).toBeTruthy())
     expect(screen.getByText('Gentle Mates')).toBeTruthy()
     expect(screen.getByText('G2 Esports')).toBeTruthy()
     expect(screen.queryByText('Natus Vincere')).toBeNull()
@@ -307,8 +331,12 @@ describe('esports league hub — Games tab tracks the complete EWC population', 
 
     fireEvent.click(screen.getByText('Clear filter ×'))
     await waitFor(() => expect(screen.getByText('Natus Vincere')).toBeTruthy())
-    expect(screen.getByText('3 games · 2 titles')).toBeTruthy()
+    expect(screen.getByText('24 titles · 25 tournaments')).toBeTruthy()
     expect(screen.queryByText(/Showing only Call of Duty/)).toBeNull()
+
+    fireEvent.click(screen.getByRole('button', { name: /Apex Legends.*Match feed pending/ }))
+    await waitFor(() => expect(screen.getByText('Apex Legends is in the official EWC program.')).toBeTruthy())
+    expect(screen.getByText(/match schedule is not available/)).toBeTruthy()
     await flush()
   })
 })
@@ -401,9 +429,9 @@ describe('esports league hub — data states', () => {
       return defaultRespond(url)
     })
     fireEvent.click(screen.getByRole('button', { name: 'Games' }))
-    await waitFor(() => expect(screen.getByText('3 games · 2 titles')).toBeTruthy())
-    expect(screen.getByRole('button', { name: /Call of Duty 2/ })).toBeTruthy()
-    expect(screen.getByRole('button', { name: /CS2 1/ })).toBeTruthy()
+    await waitFor(() => expect(screen.getByText('24 titles · 25 tournaments')).toBeTruthy())
+    expect(screen.getByRole('button', { name: /Call of Duty: Black Ops 7.*2 tracked matches/ })).toBeTruthy()
+    expect(screen.getByRole('button', { name: /Counter-Strike 2.*1 tracked match/ })).toBeTruthy()
     await flush()
   })
 })

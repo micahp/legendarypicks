@@ -136,14 +136,19 @@ export default function EsportsLeaguePage() {
       : [],
     [projection],
   )
+  const activeProgramTitle = titleFilter
+    ? projection?.titles?.find((title) => title.slug === titleFilter) ?? null
+    : null
   const filteredLabel = titleFilter
-    ? (titles?.find((t) => t.slug === titleFilter)?.label
+    ? (activeProgramTitle?.name
+      ?? titles?.find((t) => t.slug === titleFilter)?.label
       ?? ewcMatches.find((m) => titleSlug(m.title) === titleFilter)?.title
       ?? null)
     : null
+  const boardTitleLabels = activeProgramTitle?.feedTitles ?? (filteredLabel ? [filteredLabel] : [])
   const boardMatches = useMemo(
-    () => (filteredLabel ? allMatches.filter((m) => m.title === filteredLabel) : allMatches),
-    [allMatches, filteredLabel],
+    () => (boardTitleLabels.length ? allMatches.filter((m) => boardTitleLabels.includes(m.title)) : allMatches),
+    [allMatches, boardTitleLabels],
   )
   const boardLive = boardMatches.filter((m) => m.live)
 
@@ -307,17 +312,33 @@ function GamesSection({ projection, projectionError, titles, activeSlug, onToggl
   const buckets = projection?.matches
   const all = buckets ? [...buckets.live, ...buckets.upcoming, ...buckets.completed] : []
   const labels = Array.from(new Set(all.map((m) => m.title))).sort((a, b) => a.localeCompare(b))
-  const options = labels.map((label) => ({
+  const options = projection?.titles?.map((title) => ({
+    label: title.name,
+    slug: title.slug,
+    tournaments: title.tournaments,
+    weeks: title.weeks,
+    feedTitles: title.feedTitles,
+    count: all.filter((m) => title.feedTitles.includes(m.title)).length,
+  })) ?? labels.map((label) => ({
     label,
     slug: titles?.find((t) => t.label === label)?.slug ?? titleSlug(label),
+    tournaments: [label],
+    weeks: [],
+    feedTitles: [label],
     count: all.filter((m) => m.title === label).length,
   }))
-  const activeLabel = options.find((option) => option.slug === activeSlug)?.label ?? null
-  const filter = (matches: UpMatch[]) => activeLabel ? matches.filter((m) => m.title === activeLabel) : matches
+  const activeOption = options.find((option) => option.slug === activeSlug) ?? null
+  const activeLabel = activeOption?.label ?? null
+  const filter = (matches: UpMatch[]) => activeOption
+    ? matches.filter((m) => activeOption.feedTitles.includes(m.title))
+    : matches
   const live = filter(buckets?.live ?? [])
   const upcoming = filter(buckets?.upcoming ?? [])
   const completed = filter(buckets?.completed ?? [])
   const visibleCount = live.length + upcoming.length + completed.length
+  const representedTitleCount = options.filter((option) => option.count > 0).length
+  const tournamentCount = projection?.tournamentCount
+    ?? options.reduce((total, option) => total + option.tournaments.length, 0)
   // PandaScore ids are not globally unique across titles, so identity must include
   // the event context. A bare psId causes React to retain a row when title filters
   // change if two EWC games from different titles share the same provider id.
@@ -332,11 +353,18 @@ function GamesSection({ projection, projectionError, titles, activeSlug, onToggl
 
   return (
     <section className="space-y-5">
-      <SectionHeader eyebrow="Games" title="All EWC games"
-                     meta={projection ? (activeLabel ? `${visibleCount} of ${all.length} games` : `${all.length} games · ${labels.length} titles`) : undefined} />
+      <SectionHeader eyebrow="Games" title="EWC 2026 game titles"
+                     meta={projection ? `${options.length} titles · ${tournamentCount} tournaments` : undefined} />
       <p className="max-w-2xl text-sm text-zinc-500">
-        Every EWC match currently tracked by the tournament feed—live, scheduled, and final.
+        The complete official EWC program. Match coverage currently includes {all.length} live,
+        scheduled, and final rows across {representedTitleCount} titles.
       </p>
+      {projection?.programSource ? (
+        <a href={projection.programSource.url} target="_blank" rel="noreferrer"
+           className="inline-block text-xs font-medium text-zinc-500 transition-colors hover:text-zinc-300">
+          Source: {projection.programSource.label} ↗
+        </a>
+      ) : null}
       {projectionError ? (
         <p className="text-sm text-red-300">The EWC game tracker is unavailable right now.</p>
       ) : !projection ? (
@@ -344,34 +372,45 @@ function GamesSection({ projection, projectionError, titles, activeSlug, onToggl
           <div className="h-8 w-64 rounded bg-zinc-800" />
           <div className="h-48 rounded-xl bg-zinc-900/50" />
         </div>
-      ) : all.length === 0 ? (
-        <p className="text-sm text-zinc-500">No EWC games are published in the tournament feed right now.</p>
       ) : (
         <>
-          {/* Only titles represented in the EWC event population are offered as filters. */}
-          <div className="flex flex-wrap gap-2">
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4" data-ewc-title-catalog="true">
             {options.map((option) => {
               const active = option.slug === activeSlug
+              const weekLabel = option.weeks.length
+                ? `Week${option.weeks.length > 1 ? 's' : ''} ${option.weeks.join('–')}`
+                : 'Schedule pending'
               return (
                 <button
                   key={option.slug}
                   type="button"
                   onClick={() => onToggle(option.slug)}
                   aria-pressed={active}
-                  className={`rounded-full border px-3 py-1.5 text-[12px] font-medium transition-colors ${
+                  className={`min-h-[78px] rounded-lg border p-3 text-left transition-colors ${
                     active
                       ? 'border-emerald-500/40 bg-emerald-500/15 text-emerald-300'
                       : 'border-zinc-800 bg-zinc-900/60 text-zinc-500 hover:text-zinc-300'
                   }`}
                 >
-                  {option.label} <span className="text-zinc-600">{option.count}</span>
+                  <span className="block text-xs font-semibold leading-snug text-zinc-200">{option.label}</span>
+                  <span className="mt-1 block text-[10px] uppercase tracking-wide text-zinc-600">
+                    {weekLabel} · {option.tournaments.length} tournament{option.tournaments.length === 1 ? '' : 's'}
+                  </span>
+                  <span className="mt-1 block text-[11px] text-zinc-500">
+                    {option.count > 0 ? `${option.count} tracked matches` : 'Match feed pending'}
+                  </span>
                 </button>
               )
             })}
           </div>
 
-          {visibleCount === 0 ? (
-            <p className="text-sm text-zinc-500">No {activeLabel} games are published in the EWC feed.</p>
+          {activeOption && visibleCount === 0 ? (
+            <div className="rounded-lg border border-zinc-800 bg-zinc-900/40 px-4 py-4">
+              <p className="text-sm font-semibold text-zinc-300">{activeLabel} is in the official EWC program.</p>
+              <p className="mt-1 text-xs text-zinc-500">Its match schedule is not available in the normalized live feed yet.</p>
+            </div>
+          ) : all.length === 0 ? (
+            <p className="text-sm text-zinc-500">No EWC match rows are published in the live feed right now.</p>
           ) : (
             <div className="space-y-8">
               {live.length > 0 ? (

@@ -23,6 +23,42 @@ _UNAVAILABLE_LABEL = "Participant unavailable"
 
 EVENT_ID = "ewc-2026"
 
+# Official EWC 2026 program: 25 tournaments across 24 game titles.  This catalog is the
+# completeness authority for the Games tab; the normalized match slate below is coverage,
+# not the title directory.  Mobile Legends has two tournaments (MSC and MWI).
+_PROGRAM_SOURCE = {
+    "label": "EWC 2026 Media Guide",
+    "url": "https://cdn.esportsworldcup.com/resources/uploads/EWC_26_Media_Guide_short_d6f73c0f8a.pdf",
+}
+EWC_TITLES = [
+    {"slug": "apex-legends", "name": "Apex Legends", "tournaments": ["ALGS Split 1"], "weeks": [1], "feedTitles": ["Apex Legends"]},
+    {"slug": "call-of-duty-black-ops-7", "name": "Call of Duty: Black Ops 7", "tournaments": ["Call of Duty: Black Ops 7"], "weeks": [5], "feedTitles": ["Call of Duty"]},
+    {"slug": "call-of-duty-warzone", "name": "Call of Duty: Warzone", "tournaments": ["Warzone Resurgence Series"], "weeks": [4], "feedTitles": ["Call of Duty: Warzone", "Warzone"]},
+    {"slug": "chess", "name": "Chess", "tournaments": ["Chess"], "weeks": [6], "feedTitles": ["Chess"]},
+    {"slug": "counter-strike-2", "name": "Counter-Strike 2", "tournaments": ["Counter-Strike 2"], "weeks": [7], "feedTitles": ["CS2"]},
+    {"slug": "crossfire", "name": "Crossfire", "tournaments": ["Crossfire"], "weeks": [7], "feedTitles": ["Crossfire"]},
+    {"slug": "dota-2", "name": "Dota 2", "tournaments": ["Dota 2"], "weeks": [1, 2], "feedTitles": ["Dota 2"]},
+    {"slug": "ea-sports-fc-26", "name": "EA Sports FC 26", "tournaments": ["FC26"], "weeks": [3], "feedTitles": ["EA Sports FC 26", "EA FC"]},
+    {"slug": "fatal-fury-city-of-the-wolves", "name": "Fatal Fury: City of the Wolves", "tournaments": ["Fatal Fury: City of the Wolves"], "weeks": [1], "feedTitles": ["Fatal Fury"]},
+    {"slug": "fortnite-reload", "name": "Fortnite Reload", "tournaments": ["Fortnite Reload Elite Series"], "weeks": [7], "feedTitles": ["Fortnite"]},
+    {"slug": "free-fire", "name": "Free Fire", "tournaments": ["Free Fire"], "weeks": [2], "feedTitles": ["Free Fire"]},
+    {"slug": "honor-of-kings", "name": "Honor of Kings", "tournaments": ["KWC"], "weeks": [5], "feedTitles": ["King of Glory", "Honor of Kings"]},
+    {"slug": "league-of-legends", "name": "League of Legends", "tournaments": ["League of Legends"], "weeks": [2], "feedTitles": ["LoL", "League of Legends"]},
+    {"slug": "mobile-legends-bang-bang", "name": "Mobile Legends: Bang Bang", "tournaments": ["MSC", "MWI"], "weeks": [2, 3, 4], "feedTitles": ["Mobile Legends: Bang Bang", "MLBB"]},
+    {"slug": "overwatch-2", "name": "Overwatch 2", "tournaments": ["Overwatch Champions Series"], "weeks": [4], "feedTitles": ["Overwatch", "Overwatch 2"]},
+    {"slug": "pubg-battlegrounds", "name": "PUBG: Battlegrounds", "tournaments": ["PUBG: Battlegrounds"], "weeks": [3], "feedTitles": ["PUBG"]},
+    {"slug": "pubg-mobile", "name": "PUBG Mobile", "tournaments": ["PUBG Mobile World Cup"], "weeks": [5, 6], "feedTitles": ["PUBG Mobile"]},
+    {"slug": "rainbow-six-siege", "name": "Rainbow Six Siege", "tournaments": ["R6 Siege"], "weeks": [6], "feedTitles": ["Rainbow Six", "Rainbow Six Siege"]},
+    {"slug": "rocket-league", "name": "Rocket League", "tournaments": ["Rocket League"], "weeks": [6], "feedTitles": ["Rocket League"]},
+    {"slug": "street-fighter-6", "name": "Street Fighter 6", "tournaments": ["Street Fighter 6"], "weeks": [4], "feedTitles": ["Street Fighter 6"]},
+    {"slug": "teamfight-tactics", "name": "Teamfight Tactics", "tournaments": ["Teamfight Tactics"], "weeks": [3], "feedTitles": ["Teamfight Tactics", "TFT"]},
+    {"slug": "tekken-8", "name": "Tekken 8", "tournaments": ["Tekken 8"], "weeks": [5], "feedTitles": ["Tekken 8"]},
+    {"slug": "trackmania", "name": "Trackmania", "tournaments": ["Trackmania"], "weeks": [7], "feedTitles": ["Trackmania"]},
+    {"slug": "valorant", "name": "Valorant", "tournaments": ["Valorant"], "weeks": [1], "feedTitles": ["Valorant"]},
+]
+_EWC_TITLE_COUNT = len(EWC_TITLES)
+_EWC_TOURNAMENT_COUNT = sum(len(title["tournaments"]) for title in EWC_TITLES)
+
 
 # ---------------------------------------------------------------------------
 # Participant model — structural pending participants, never a literal "TBD" name
@@ -280,7 +316,9 @@ def ewc_projection():
     if board.get("building") and not matches:
         return {"eventId": EVENT_ID, "eventName": _EVENT_NAME, "active": False,
                 "building": True, "matches": {"live": [], "upcoming": [], "completed": []},
-                "asOf": None}
+                "titles": EWC_TITLES, "titleCount": _EWC_TITLE_COUNT,
+                "tournamentCount": _EWC_TOURNAMENT_COUNT,
+                "programSource": _PROGRAM_SOURCE, "asOf": None}
     now_ms = time.time() * 1000
     live, upcoming, completed = [], [], []
     for m in matches:
@@ -302,6 +340,10 @@ def ewc_projection():
         "eventId": EVENT_ID,
         "eventName": _EVENT_NAME,
         "active": active,
+        "titles": EWC_TITLES,
+        "titleCount": _EWC_TITLE_COUNT,
+        "tournamentCount": _EWC_TOURNAMENT_COUNT,
+        "programSource": _PROGRAM_SOURCE,
         "matches": {"live": live, "upcoming": upcoming, "completed": completed},
         "asOf": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
     }

@@ -98,6 +98,19 @@ class ProjectionRouteTests(unittest.TestCase):
         self.assertEqual(len(d["matches"]["completed"]), 1)
         self.assertNotIn(non_ewc, d["matches"]["live"] + d["matches"]["upcoming"] + d["matches"]["completed"])
 
+    def test_projection_publishes_complete_official_game_catalog(self):
+        with mock.patch.object(slate, "esports_upcoming", return_value=self._board([])):
+            d = self.client.get("/api/esports/events/ewc-2026").json()
+        self.assertEqual(d["titleCount"], 24)
+        self.assertEqual(d["tournamentCount"], 25)
+        self.assertEqual(len(d["titles"]), 24)
+        self.assertEqual(len({row["slug"] for row in d["titles"]}), 24)
+        self.assertEqual(sum(len(row["tournaments"]) for row in d["titles"]), 25)
+        self.assertIn("Apex Legends", {row["name"] for row in d["titles"]})
+        self.assertIn("Trackmania", {row["name"] for row in d["titles"]})
+        mlbb = next(row for row in d["titles"] if row["slug"] == "mobile-legends-bang-bang")
+        self.assertEqual(mlbb["tournaments"], ["MSC", "MWI"])
+
     def test_projection_inactive_when_event_expired(self):
         # Only old completed matches (beyond the 24h tail) -> module expires automatically.
         old_done = _match(startTime=1, finished=True, endTime=1)

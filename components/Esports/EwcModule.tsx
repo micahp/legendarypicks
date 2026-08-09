@@ -19,7 +19,19 @@ export type EwcProjection = {
   active: boolean
   building?: boolean
   asOf?: string | null
+  titles?: EwcTitle[]
+  titleCount?: number
+  tournamentCount?: number
+  programSource?: { label: string; url: string }
   matches: { live: UpMatch[]; upcoming: UpMatch[]; completed: UpMatch[] }
+}
+
+export type EwcTitle = {
+  slug: string
+  name: string
+  tournaments: string[]
+  weeks: number[]
+  feedTitles: string[]
 }
 
 type StandingRow = {
