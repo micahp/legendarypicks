@@ -391,20 +391,37 @@ function GamesSection({ projection, projectionError, titles, activeSlug, onSelec
         </div>
       ) : (
         <>
-          <div className="space-y-2 sm:hidden">
-            <label htmlFor="ewc-title-select" className="block text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
-              Jump to a title
-            </label>
-            <select id="ewc-title-select" aria-label="EWC title" value={activeSlug ?? ''}
-                    onChange={(event) => selectTitle(event.target.value || null)}
-                    className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-3 text-sm font-medium text-zinc-100 outline-none focus:border-emerald-500">
-              <option value="">All 24 game titles</option>
-              {options.map((option) => (
-                <option key={option.slug} value={option.slug}>
-                  {option.label} — {option.count > 0 ? `${option.count} matches` : 'feed pending'}
-                </option>
-              ))}
-            </select>
+          <div className="-mx-4 flex snap-x snap-mandatory gap-2 overflow-x-auto px-4 pb-2 sm:hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+               aria-label="EWC title row" data-ewc-mobile-title-row="true">
+            <button type="button" onClick={() => selectTitle(null)} aria-pressed={!activeSlug}
+                    className={`min-w-max shrink-0 snap-start rounded-lg border px-3 py-2.5 text-left ${
+                      !activeSlug
+                        ? 'border-emerald-500/40 bg-emerald-500/15'
+                        : 'border-zinc-800 bg-zinc-900/60'
+                    }`}>
+              <span className="block whitespace-nowrap text-xs font-semibold text-zinc-200">All 24 titles</span>
+              <span className="mt-1 block whitespace-nowrap text-[11px] text-zinc-500">{all.length} tracked matches</span>
+            </button>
+            {options.map((option) => {
+              const active = option.slug === activeSlug
+              const weekLabel = option.weeks.length
+                ? `Week${option.weeks.length > 1 ? 's' : ''} ${option.weeks.join('–')}`
+                : 'Schedule pending'
+              return (
+                <button key={option.slug} type="button" onClick={() => selectTitle(active ? null : option.slug)}
+                        aria-pressed={active}
+                        className={`min-w-max shrink-0 snap-start rounded-lg border px-3 py-2.5 text-left ${
+                          active
+                            ? 'border-emerald-500/40 bg-emerald-500/15'
+                            : 'border-zinc-800 bg-zinc-900/60'
+                        }`}>
+                  <span className="block whitespace-nowrap text-xs font-semibold text-zinc-200">{option.label}</span>
+                  <span className="mt-1 block whitespace-nowrap text-[11px] text-zinc-500">
+                    {weekLabel} · {option.count > 0 ? `${option.count} matches` : 'feed pending'}
+                  </span>
+                </button>
+              )
+            })}
           </div>
 
           <div className="hidden grid-cols-3 gap-2 sm:grid lg:grid-cols-4" data-ewc-title-catalog="true">

@@ -296,9 +296,9 @@ describe('esports league hub — Games tab tracks the official 24-title EWC prog
     fireEvent.click(screen.getByRole('button', { name: 'Games' }))
     await waitFor(() => expect(screen.getByText('24 titles · 25 tournaments')).toBeTruthy())
     expect(screen.getAllByRole('button').filter((button) => button.closest('[data-ewc-title-catalog="true"]')).length).toBe(24)
-    expect(screen.getByText('Apex Legends')).toBeTruthy()
-    expect(screen.getByText('Trackmania')).toBeTruthy()
-    expect(screen.getByText('Mobile Legends: Bang Bang')).toBeTruthy()
+    expect(screen.getAllByText('Apex Legends').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Trackmania').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Mobile Legends: Bang Bang').length).toBeGreaterThan(0)
     expect(screen.getByText('Gentle Mates')).toBeTruthy()
     expect(screen.getByText('Natus Vincere')).toBeTruthy()
     expect(screen.getByText('Virtus.pro')).toBeTruthy()
@@ -340,19 +340,19 @@ describe('esports league hub — Games tab tracks the official 24-title EWC prog
     await flush()
   })
 
-  it('provides direct mobile title and match-status navigation', async () => {
+  it('provides a scrollable mobile title row and match-status navigation', async () => {
     renderHub(false)
     fireEvent.click(screen.getByRole('button', { name: 'Games' }))
-    await waitFor(() => expect(screen.getByLabelText('EWC title')).toBeTruthy())
+    await waitFor(() => expect(screen.getByLabelText('EWC title row')).toBeTruthy())
 
-    const titleSelect = screen.getByLabelText('EWC title') as HTMLSelectElement
-    expect(titleSelect.options.length).toBe(25)
-    fireEvent.change(titleSelect, { target: { value: 'counter-strike-2' } })
+    const titleRow = screen.getByLabelText('EWC title row')
+    expect(titleRow.querySelectorAll('button').length).toBe(25)
+    fireEvent.click(screen.getAllByRole('button', { name: /Counter-Strike 2.*1 matches/ })[0])
     await waitFor(() => expect(screen.getByText(/Showing only Counter-Strike 2/)).toBeTruthy())
     expect(screen.getByText('Natus Vincere')).toBeTruthy()
     expect(screen.queryByText('Gentle Mates')).toBeNull()
 
-    fireEvent.change(titleSelect, { target: { value: '' } })
+    fireEvent.click(screen.getByRole('button', { name: /All 24 titles.*3 tracked matches/ }))
     await waitFor(() => expect(screen.getByRole('button', { name: 'Finals 1' })).toBeTruthy())
     fireEvent.click(screen.getByRole('button', { name: 'Finals 1' }))
     expect(screen.getByText('Team Heretics')).toBeTruthy()
