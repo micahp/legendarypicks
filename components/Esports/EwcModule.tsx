@@ -30,8 +30,20 @@ export type EwcTitle = {
   slug: string
   name: string
   tournaments: string[]
-  weeks: number[]
   feedTitles: string[]
+  /** Data-derived schedule coverage from the published per-title snapshot (never program weeks). */
+  schedule: {
+    status: 'published' | 'unavailable'
+    count: number
+    datedCount: number
+    firstStart: number | null
+    lastStart: number | null
+    weeks: number[]
+    reason: string | null
+    source: { label: string | null; urls: string[] | null; revisions: number[] | null; publishedAt: string | null } | null
+  }
+  /** EWC match rows currently in the normalized slate feed for this title. */
+  feedCount: number
 }
 
 type StandingRow = {

@@ -331,15 +331,19 @@ function GamesSection({ projection, projectionError, titles, activeSlug, onSelec
     label: title.name,
     slug: title.slug,
     tournaments: title.tournaments,
-    weeks: title.weeks,
     feedTitles: title.feedTitles,
-    count: all.filter((m) => title.feedTitles.includes(m.title)).length,
+    scheduleStatus: title.schedule?.status ?? 'unavailable',
+    scheduleCount: title.schedule?.count ?? 0,
+    scheduleWeeks: title.schedule?.weeks ?? [],
+    count: title.feedCount ?? all.filter((m) => title.feedTitles.includes(m.title)).length,
   })) ?? labels.map((label) => ({
     label,
     slug: titles?.find((t) => t.label === label)?.slug ?? titleSlug(label),
     tournaments: [label],
-    weeks: [],
     feedTitles: [label],
+    scheduleStatus: 'unavailable' as const,
+    scheduleCount: 0,
+    scheduleWeeks: [],
     count: all.filter((m) => m.title === label).length,
   }))
   const activeOption = options.find((option) => option.slug === activeSlug) ?? null
@@ -416,8 +420,10 @@ function GamesSection({ projection, projectionError, titles, activeSlug, onSelec
             </button>
             {options.map((option) => {
               const active = option.slug === activeSlug
-              const weekLabel = option.weeks.length
-                ? `Week${option.weeks.length > 1 ? 's' : ''} ${option.weeks.join('–')}`
+              // Week label is DATA-derived from the published schedule snapshot (ISO weeks of
+              // dated matches); 'Schedule pending' when the source has not published dates.
+              const weekLabel = option.scheduleWeeks.length
+                ? `Week${option.scheduleWeeks.length > 1 ? 's' : ''} ${option.scheduleWeeks.join('–')}`
                 : 'Schedule pending'
               return (
                 <button key={option.slug} type="button" onClick={() => selectTitle(active ? null : option.slug)}
@@ -439,8 +445,10 @@ function GamesSection({ projection, projectionError, titles, activeSlug, onSelec
           <div className="hidden grid-cols-3 gap-2 sm:grid lg:grid-cols-4" data-ewc-title-catalog="true">
             {options.map((option) => {
               const active = option.slug === activeSlug
-              const weekLabel = option.weeks.length
-                ? `Week${option.weeks.length > 1 ? 's' : ''} ${option.weeks.join('–')}`
+              // Week label is DATA-derived from the published schedule snapshot (ISO weeks of
+              // dated matches); 'Schedule pending' when the source has not published dates.
+              const weekLabel = option.scheduleWeeks.length
+                ? `Week${option.scheduleWeeks.length > 1 ? 's' : ''} ${option.scheduleWeeks.join('–')}`
                 : 'Schedule pending'
               return (
                 <button
