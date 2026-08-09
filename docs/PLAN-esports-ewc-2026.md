@@ -520,3 +520,66 @@ with `API_PROXY_TARGET=http://127.0.0.1:8105`; all four esports endpoints now pr
 **Candidate vs DEV/production.** All of the above ran in the isolated preview and worktree only. No
 managed DEV change, no merge/push/deploy, no DB write, no tag move; `/root/legendarypicks` and the
 managed `:3096`/`:8096`/tunnels untouched. Worktree clean; `git diff --check` clean.
+
+## Club Championship standings — source resolution and live snapshot (2026-08-09)
+
+The earlier blocker ("no permitted machine-readable publisher") is **closed**. The accepted
+source is **Liquipedia's MediaWiki API** (terms explicitly allow API access; no HTML scraping,
+no request-path fetching). See `docs/ewc2026/PHASE0-SOURCE-AND-CONTRACTS.md` §2b for the full
+contract.
+
+### Fetcher contract (published-first, one writer)
+
+- `backend/fetch_ewc_standings.py` — operator-run; **one** `action=parse` call
+  (`prop=text|wikitext|revid&format=json`, gzip `Accept-Encoding`, descriptive
+  `User-Agent: LegendaryPicks/1.0 …`).
+- Stage selection from wikitext: `current-stage=N` → `stageNcutoff=C` → the current-stage table
+  (`data-toggle-area-content="C"`). Malformed/missing stage or cutoff → the run fails, nothing
+  is published.
+- Population: **every** row of the current-stage table must parse (rank, stable Liquipedia
+  team-page slug as `clubId`, `clubName`, bold total points, optional movement/logo). A single
+  unparseable row fails the run — no silent partial ingest. `sourceReportedClubs` =
+  `fetchedClubs` = the parsed count (90 at rev 15997); for this source the table IS the
+  population.
+- Validation (before atomic `os.replace`): revision present, unique clubIds, exact count,
+  numeric nonnegative points, publisher ordering (ranks non-decreasing, points non-increasing,
+  equal points → equal rank, fewer points → strictly greater rank), event/publishedAt, and the
+  point-regression gate (override with `--correction`). A failed candidate never becomes
+  readable; the last good snapshot survives. `--dry-run` fetches + validates without writing.
+- Source attribution in the snapshot: label, page URL, API revision, stage/cutoff,
+  fetched/published timestamps, `sourceReportedClubs`, checksum (sha256 of the sorted rows).
+
+### Validator change (ties)
+
+Real published rankings contain **tied ranks** (rev 15997: tied 4th Team Vitality 2200 /
+Virtus.pro 2200; tied 6th T1 1750 / Team Vision 1750). The old validator rejected duplicate
+ranks outright; it now accepts equal ranks with equal points and rejects tie mismatches
+(equal points / different rank), rank regression, and point regression.
+
+### Committed snapshot + behavior
+
+`backend/data/esports_ewc_standings.json` (rev 15997, stage 5, 90 clubs) is committed, so
+`GET /api/esports/events/ewc-2026/club-standings` immediately serves `status: "current"` with
+rows and source attribution; the hub rail renders the top ten (10 desktop / 5 mobile + expand)
+with the Liquipedia source link. When the snapshot ages past the publisher cadence the route
+serves `status: "stale"` and **retains the rows**. Eligibility fields stay `null` (the page
+does not expose per-club eligibility evidence).
+
+### Release-pass evidence — 2026-08-09
+
+- Backend suite: **130/130** (fixture-driven, zero external requests at test time) including the
+  new `test_ewc_standings_fetcher.py` (13 tests: stage selection + malformed stage, exact
+  90-row population, top rows vs the research snapshot, stable slugs, ties accepted, tie
+  mismatch / rank regression / point regression / duplicate clubId / incomplete population
+  rejected, last-good survival, stale retains rows) and the tie-aware contract tests.
+- Jest: **154/156** (only the pre-existing `WCContext` pair fails; the rail suites are
+  fixture-mocked and unaffected).
+- Live run: `venv/bin/python fetch_ewc_standings.py` fetched rev 15997, parsed stage 5
+  (cutoff 19, 90 clubs), validated, and published the committed snapshot
+  (`sourceReportedClubs=90`, checksum `c4ad5932bb7c…`). Route read-back:
+  `status: "current"`, 10-row limit, top 5 incl. ties, source label/url, `asOf` timestamp.
+- Browser gate on the rebuilt preview: standings rows render (top 10), the Liquipedia source
+  link is present and opens the source page, mobile requests 5 rows and expands to 10, zero
+  page/console errors (verified on the public route `http://5.252.52.108:3105/leagues/esports`).
+- Constraints: no request-path network calls (the route reads only the snapshot file), no HTML
+  scraping, no DB write, no managed DEV change, no merge/push/deploy.
