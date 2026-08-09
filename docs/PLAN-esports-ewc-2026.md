@@ -583,3 +583,29 @@ does not expose per-club eligibility evidence).
   page/console errors (verified on the public route `http://5.252.52.108:3105/leagues/esports`).
 - Constraints: no request-path network calls (the route reads only the snapshot file), no HTML
   scraping, no DB write, no managed DEV change, no merge/push/deploy.
+
+### Club logos on every standings row — 2026-08-09 (follow-up)
+
+- **Fetcher:** `normalize_logo_url` upgrades protocol-relative (`//liquipedia.net/…`), relative
+  (`/commons/…`), and `http://` publisher image URLs to absolute HTTPS; junk/missing → `None`.
+  `parse_rows` takes the row's first team image. `build_snapshot` reconciles against the
+  maintained `backend/data/esports_team_logos.json` index by **exact canonical-key match**
+  (`_canon_team`, the identity the index is built with) — a verified non-empty local mapping
+  wins, empty cached negatives never replace a publisher logo, and ambiguous clubs are never
+  matched by loose display-name guesses. Re-published rev 15997: 90/90 logos, row payload
+  checksum unchanged (`c4ad5932bb7c…`) — today no EWC club has a local mapping, so publisher
+  logos carry every row.
+- **Rail:** `ClubLogo` renders a fixed 20px slot (layout-shift prevention), `object-contain`,
+  alt text (`<Club> logo`), lazy loading, and a neutral initials fallback when no verified logo
+  exists or the image fails (`onError`). Unavailable-state copy updated (snapshot readability is
+  the gate; the publisher is wired).
+- **Tests:** 13 new fixture-driven fetcher tests (relative/protocol-relative/absolute/http
+  normalization, junk → None, missing logo, local-wins / absent-keeps / empty-not-used /
+  no-fuzzy-match / local-fills-missing / real-fixture reconcile) and 3 new Jest rail tests (logo
+  + alt + fixed width; initials fallback with zero `<img>`; `onError` → initials). Backend
+  **143/143**; Jest **157/159** (pre-existing `WCContext` pair only).
+- **Preview (disposable):** browser gate on `127.0.0.1:3105/leagues/esports` — desktop rail
+  renders **10 club logos** (top ten), mobile renders **5** collapsed and **10** after expand,
+  standings rows/points/source link intact, `errors: []` everywhere. (The preview frontend was
+  externally restarted loopback-only at 19:34, so the gate ran against the preview itself on
+  `127.0.0.1`; the public `:3105` exposure is no longer bound.)
