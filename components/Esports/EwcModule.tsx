@@ -84,7 +84,7 @@ function ClubLogo({ clubName, logo }: { clubName: string; logo?: string | null }
           data-club-logo={show ? 'image' : 'fallback'}>
       {show ? (
         <img src={logo as string} alt={`${clubName} logo`} width={20} height={20}
-             loading="lazy" onError={() => setFailed(true)}
+             loading="lazy" referrerPolicy="no-referrer" onError={() => setFailed(true)}
              className="h-5 w-5 object-contain" />
       ) : (
         <span className="text-[9px] font-bold uppercase tracking-wide text-zinc-400">{initialsOf(clubName)}</span>

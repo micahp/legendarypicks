@@ -79,6 +79,7 @@ describe('EWC standings rail', () => {
     expect(imgs).toHaveLength(2)
     expect(imgs[0].getAttribute('src')).toBe('https://example.invalid/falcons.png')
     expect(imgs[0].getAttribute('width')).toBe('20')
+    expect(imgs[0].getAttribute('referrerpolicy')).toBe('no-referrer')
     expect(screen.queryByText('TF')).toBeNull()
   })
 
