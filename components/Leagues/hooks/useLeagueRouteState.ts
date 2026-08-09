@@ -35,11 +35,13 @@ export function useLeagueRouteState() {
   const offerable = isUFC || supportsTeamStats
   const validTabs: HubTab[] = isUFC
     ? ['rankings', 'schedule', 'predict']
-    : isSoccer
+    : isWorldCup
       ? ['standings', 'stats', 'schedule']
       : isNFL
         ? ['camp', 'standings', 'stats', 'schedule']
-        : ['standings', 'stats', 'schedule']
+        : league === 'mls' || league === 'ncaaf'
+          ? ['standings', 'schedule']
+          : ['standings', 'stats', 'schedule']
 
   const [activeTab, setActiveTab] = useState<HubTab>('standings')
   const [scheduleDate, setScheduleDate] = useState(() => localToday())
