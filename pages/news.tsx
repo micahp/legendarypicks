@@ -14,21 +14,11 @@ const LEAGUE_LABELS: Record<string, string> = {
   mls: 'MLS',
   ncaaf: 'NCAAF',
   ufc: 'UFC',
+  esports: 'Esports',
   wc: 'FIFA World Cup',
 }
 
-const LEAGUE_EMOJIS: Record<string, string> = {
-  nfl: '🏈',
-  mlb: '⚾',
-  nba: '🏀',
-  nhl: '🏒',
-  mls: '⚽',
-  ncaaf: '🏈',
-  ufc: '🥊',
-  wc: '⚽',
-}
-
-const LEAGUE_ORDER = ['nfl', 'mlb', 'nba', 'nhl', 'mls', 'ncaaf', 'ufc']
+const LEAGUE_ORDER = ['nfl', 'mlb', 'nba', 'nhl', 'mls', 'ncaaf', 'ufc', 'esports']
 
 function leagueLabel(lg: string): string {
   return LEAGUE_LABELS[lg] || lg.toUpperCase()
@@ -46,42 +36,49 @@ type NewsItem = {
 }
 
 type AiNarrative = {
+  conv_id: string
+  league: string
+  title: string
   narrative: string
-  points: string[]
+  fan_voice: string
+  paragraph: string
   sources: { headline: string; url: string; source: string }[]
   generated_at: string
   source_count: number
 }
 
 type LeagueNews = {
+  conversations: AiNarrative[]
   narratives: NewsItem[]
   granular: NewsItem[]
   other: number
-  ai: AiNarrative | null
 }
 
 type NewsData = {
-  top: NewsItem[]
+  conversations: AiNarrative[]
   leagues: Record<string, LeagueNews>
 }
 
-function layerBadgeClass(layer: string): string {
-  switch (layer) {
-    case 'injury': return 'bg-red-500/15 text-red-400 border-red-500/30'
-    case 'trade': return 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
-    case 'staff': return 'bg-amber-500/15 text-amber-400 border-amber-500/30'
-    default: return 'bg-zinc-700/40 text-zinc-400 border-zinc-600/40'
-  }
+function relativeTime(iso: string): string {
+  if (!iso) return ''
+  const t = new Date(iso).getTime()
+  if (Number.isNaN(t)) return ''
+  const diff = Date.now() - t
+  const min = Math.floor(diff / 60000)
+  if (min < 1) return 'now'
+  if (min < 60) return `${min}m`
+  const hr = Math.floor(min / 60)
+  if (hr < 24) return `${hr}h`
+  const day = Math.floor(hr / 24)
+  if (day < 7) return `${day}d`
+  const wk = Math.floor(day / 7)
+  if (wk < 5) return `${wk}w`
+  const mo = Math.floor(day / 30)
+  if (mo < 12) return `${mo}mo`
+  return `${Math.floor(day / 365)}y`
 }
 
-const LAYER_LABELS: Record<string, string> = {
-  narrative: 'NARRATIVE',
-  injury: 'INJURY',
-  trade: 'TRADE',
-  staff: 'STAFF',
-}
-
-function NewsCard({ item, showLeague, showLayer }: { item: NewsItem; showLeague?: boolean; showLayer: boolean }) {
+function NewsCard({ item, showLeague }: { item: NewsItem; showLeague?: boolean }) {
   return (
     <a
       href={item.url}
@@ -93,42 +90,34 @@ function NewsCard({ item, showLeague, showLayer }: { item: NewsItem; showLeague?
         <span className="text-sm leading-snug text-zinc-100">
           {showLeague && (
             <span className="mr-2 whitespace-nowrap text-zinc-500">
-              {LEAGUE_EMOJIS[item.league] || '📰'} {leagueLabel(item.league)}
+              {leagueLabel(item.league)}
             </span>
           )}
           {item.headline}
         </span>
-        {showLayer && (
-          <span className={`shrink-0 rounded border px-1.5 py-0.5 text-[10px] font-semibold tracking-wide ${layerBadgeClass(item.layer)}`}>
-            {LAYER_LABELS[item.layer] || item.layer.toUpperCase()}
-          </span>
-        )}
       </div>
       <div className="mt-1 flex items-center gap-2 text-[11px] text-zinc-500">
         <span>{item.source}</span>
         {item.key_player && <span className="text-emerald-400/90">★ {item.key_player}</span>}
-        {item.published && <span className="truncate">{new Date(item.published).toLocaleDateString()}</span>}
+        {item.published && <span className="truncate">{relativeTime(item.published)}</span>}
       </div>
     </a>
   )
 }
 
-function AiNarrativeCard({ ai }: { ai: AiNarrative }) {
+function AiNarrativeCard({ ai, showLeague }: { ai: AiNarrative; showLeague?: boolean }) {
   return (
     <div className="rounded-lg border border-zinc-800 bg-zinc-900 px-4 py-3">
-      <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
-        What everyone's talking about
-      </h3>
-      <p className="mt-1.5 text-[15px] leading-relaxed text-zinc-100">{ai.narrative}</p>
-      {ai.points.length > 0 && (
-        <ul className="mt-2 space-y-1 text-sm text-zinc-400">
-          {ai.points.map((p, i) => (
-            <li key={i} className="flex gap-2"><span className="text-emerald-500/70">•</span>{p}</li>
-          ))}
-        </ul>
-      )}
-      <div className="mt-2.5 text-xs text-zinc-500">
-        {ai.sources.map((s, i) => (
+      <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
+        {showLeague && ai.league ? `${leagueLabel(ai.league)} · ` : ''}{ai.title || "What everyone's talking about"}
+      </p>
+      <p className="mt-1 text-[15px] font-semibold leading-snug text-zinc-100">{ai.narrative}</p>
+      <p className="mt-1.5 text-sm leading-relaxed text-zinc-400">
+        {ai.paragraph}
+      </p>
+      <div className="mt-2.5 flex items-center gap-2 text-xs text-zinc-500">
+        <span className="truncate">{relativeTime(ai.generated_at)}</span>
+        {ai.sources.slice(0, 2).map((s, i) => (
           <span key={i}>
             {i > 0 && <span className="mx-1.5 text-zinc-700">·</span>}
             <a
@@ -141,33 +130,33 @@ function AiNarrativeCard({ ai }: { ai: AiNarrative }) {
             </a>
           </span>
         ))}
-        <span className="ml-2 text-zinc-600">— AI-generated from {ai.source_count} sources</span>
+        {ai.source_count > 2 && (
+          <span className="ml-1.5 text-zinc-600">and more</span>
+        )}
       </div>
     </div>
   )
 }
 
 function LeagueSection({ league, data }: { league: string; data: LeagueNews }) {
+  // One flat news list: narrative headlines + trades/staff/injuries mixed,
+  // newest first, no layer tags (Micah, 2026-08-08).
+  const news = [...data.narratives, ...data.granular].sort(
+    (a, b) => new Date(b.published).getTime() - new Date(a.published).getTime()
+  )
   return (
     <section className="space-y-3">
       <h2 className="flex items-center gap-2 text-lg font-bold text-zinc-100">
-        <span>{LEAGUE_EMOJIS[league] || '📰'}</span>
         <span>{leagueLabel(league)}</span>
       </h2>
-      {data.ai && <AiNarrativeCard ai={data.ai} />}
-      {data.narratives.length > 0 && (
+      {data.conversations.map((c) => <AiNarrativeCard key={c.conv_id} ai={c} />)}
+      {news.length > 0 && (
         <div className="space-y-2">
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Narrative</h3>
-          {data.narratives.map((n) => <NewsCard key={n.id} item={n} showLayer={false} />)}
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-500">More news</h3>
+          {news.map((n) => <NewsCard key={n.id} item={n} />)}
         </div>
       )}
-      {data.granular.length > 0 && (
-        <div className="space-y-2">
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Trades · Staff · Injuries</h3>
-          {data.granular.map((g) => <NewsCard key={g.id} item={g} showLayer />)}
-        </div>
-      )}
-      {data.narratives.length === 0 && data.granular.length === 0 && !data.ai && (
+      {data.conversations.length === 0 && news.length === 0 && (
         <p className="text-sm text-zinc-600">No classified news yet for {leagueLabel(league)}.</p>
       )}
     </section>
@@ -188,7 +177,7 @@ export default function NewsPage() {
       try {
         const res = await fetch('/api/news')
         const json = await res.json()
-        if (!ignore) setData({ top: json?.top ?? [], leagues: json?.leagues ?? {} })
+        if (!ignore) setData({ conversations: json?.conversations ?? [], leagues: json?.leagues ?? {} })
       } catch {
         if (!ignore) setError('Unable to load news.')
       } finally {
@@ -213,7 +202,7 @@ export default function NewsPage() {
         <div>
           <h1 className="text-2xl font-extrabold tracking-tight text-zinc-100">News</h1>
           <p className="mt-1 text-sm text-zinc-500">
-            League narratives and the moves that matter — trades, coaching changes, key injuries.
+            The conversations that matter in each league — the official story and what fans are saying about it.
           </p>
         </div>
 
@@ -234,7 +223,7 @@ export default function NewsPage() {
                 active === lg ? 'bg-emerald-500/15 text-emerald-400' : 'text-zinc-400 hover:text-zinc-200'
               }`}
             >
-              {LEAGUE_EMOJIS[lg] || ''} {leagueLabel(lg)}
+              {leagueLabel(lg)}
             </button>
           ))}
         </div>
@@ -244,18 +233,35 @@ export default function NewsPage() {
 
         {!loading && !error && data && (
           active === 'home' ? (
-            data.top.length === 0
-              ? <p className="text-sm text-zinc-600">No news collected yet — the collector runs out-of-band (ingest_league_news.py).</p>
-              : (
-                <div className="space-y-3">
-                  <h2 className="text-sm font-semibold uppercase tracking-wider text-zinc-500">Top 10 across leagues</h2>
-                  {data.top.map((item) => (
-                    <NewsCard key={item.id} item={item} showLeague showLayer />
-                  ))}
-                </div>
-              )
+            (() => {
+              // Esports cards stay off Home until their quality is there
+              // (Micah, 2026-08-07) — they still live on the Esports tab.
+              const homeConvs = data.conversations.filter((c) => c.league !== 'esports')
+              // One flat news feed below the conversations: narrative
+              // headlines + trades/staff/injuries mixed, newest first, no tags.
+              const homeNews = Object.values(data.leagues)
+                .flatMap((lg) => [...lg.narratives, ...lg.granular])
+                .filter((n) => n.league !== 'esports')
+                .sort((a, b) => new Date(b.published).getTime() - new Date(a.published).getTime())
+              return homeConvs.length === 0 && homeNews.length === 0
+                ? <p className="text-sm text-zinc-600">No conversations collected yet — the collector runs out-of-band (ingest_league_news.py).</p>
+                : (
+                  <div className="space-y-3">
+                    <h2 className="text-sm font-semibold uppercase tracking-wider text-zinc-500">Conversations across leagues</h2>
+                    {homeConvs.map((c) => (
+                      <AiNarrativeCard key={c.conv_id} ai={c} showLeague />
+                    ))}
+                    {homeNews.length > 0 && (
+                      <div className="space-y-2">
+                        <h2 className="text-sm font-semibold uppercase tracking-wider text-zinc-500">More news</h2>
+                        {homeNews.map((n) => <NewsCard key={n.id} item={n} showLeague />)}
+                      </div>
+                    )}
+                  </div>
+                )
+            })()
           ) : (
-            <LeagueSection league={active} data={data.leagues[active] || { narratives: [], granular: [], other: 0, ai: null }} />
+            <LeagueSection league={active} data={data.leagues[active] || { conversations: [], narratives: [], granular: [], other: 0 }} />
           )
         )}
       </div>

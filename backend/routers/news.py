@@ -36,12 +36,34 @@ def _item(r) -> dict:
     }
 
 
+def _conv_card(r) -> dict:
+    """One conversation card (AI-generated) as the API serves it."""
+    return {
+        "conv_id": r["conv_id"],
+        "league": r["league"],
+        "title": r["title"],
+        "narrative": r["narrative"],
+        "fan_voice": r["fan_voice"],
+        "paragraph": r["paragraph"],
+        "sources": json.loads(r["sources"] or "[]"),
+        "generated_at": r["generated_at"],
+        "source_count": r["source_count"],
+    }
+
+
 def _league_report(league: Optional[str] = None) -> dict:
+    """Per-league grouping for the league tabs.
+
+    `conversations` = the AI conversation cards for that league (one per
+    important conversation — each gets to breathe, Micah 2026-08-07);
+    `narratives`/`granular` = the classified items feeding them.
+    """
     with closing(_db()) as con:
         if league:
             rows = con.execute(
                 """SELECT * FROM news_items
-                   WHERE league=? AND source != 'bluesky'
+                   WHERE league=? AND league != 'unclassified'
+                     AND source != 'bluesky'
                      AND layer IN ('narrative','trade','staff','injury')
                    ORDER BY published DESC LIMIT 60""",
                 (league,),
@@ -50,7 +72,8 @@ def _league_report(league: Optional[str] = None) -> dict:
         else:
             rows = con.execute(
                 """SELECT * FROM news_items
-                   WHERE source != 'bluesky'
+                   WHERE league != 'unclassified'
+                     AND source != 'bluesky'
                      AND layer IN ('narrative','trade','staff','injury')
                    ORDER BY published DESC LIMIT 300"""
             ).fetchall()
@@ -58,34 +81,37 @@ def _league_report(league: Optional[str] = None) -> dict:
             for r in rows:
                 groups.setdefault(r["league"], []).append(r)
 
-        # AI-generated narratives (news_narratives), keyed by league
+        # AI-generated conversation cards (news_narratives), keyed by conv_id
         ai_rows = con.execute("SELECT * FROM news_narratives").fetchall()
-        ai = {r["league"]: r for r in ai_rows}
+        convs_by_league: dict = {}
+        for r in ai_rows:
+            convs_by_league.setdefault(r["league"], []).append(_conv_card(r))
 
     out = {}
+    # A league with AI conversation cards but only bluesky chatter (no
+    # real-article rows) must still appear — the conversation is the point
+    # (Micah: chatter IS the signal).
+    for lg in convs_by_league:
+        out.setdefault(lg, {"conversations": [], "narratives": [], "granular": [], "other": 0})
     for lg, rows in groups.items():
         narratives = [r for r in rows if r["layer"] == "narrative"][:_NARRATIVES_PER_LEAGUE]
         granular = [r for r in rows if r["layer"] in _GRANULAR_LAYERS][:_GRANULAR_PER_LEAGUE]
-        a = ai.get(lg)
-        out[lg] = {
-            "narratives": [_item(r) for r in narratives],
-            "granular": [_item(r) for r in granular],
-            "other": max(0, len(rows) - len(narratives) - len(granular)),
-            "ai": {
-                "narrative": a["narrative"],
-                "points": json.loads(a["points"] or "[]"),
-                "sources": json.loads(a["sources"] or "[]"),
-                "generated_at": a["generated_at"],
-                "source_count": a["source_count"],
-            } if a else None,
-        }
+        entry = out.setdefault(lg, {"conversations": [], "narratives": [], "granular": [], "other": 0})
+        entry["narratives"] = [_item(r) for r in narratives]
+        entry["granular"] = [_item(r) for r in granular]
+        entry["other"] = max(0, len(rows) - len(narratives) - len(granular))
+    # Conversations for leagues that also had grouped items.
+    for lg, cards in convs_by_league.items():
+        out.setdefault(lg, {"conversations": [], "narratives": [], "granular": [], "other": 0})[
+            "conversations"] = cards
     return out
 
 
 @router.get("/api/news")
 def news_catch_all(league: Optional[str] = Query(None, description="Filter to one league")):
-    """Catch-all feed (Home tab). `top` = the 10 most recent items across all
-    leagues (recency-ordered, unclassified excluded); `leagues` = per-league
+    """Catch-all feed (Home tab). `conversations` = every AI conversation card,
+    each with its own anchor + fan voice (each gets to breathe — we do NOT
+    merge a league's conversations into one summary). `leagues` = per-league
     grouping for the league tabs. Optionally ?league=nfl for a single league."""
     if league:
         return {
@@ -94,41 +120,51 @@ def news_catch_all(league: Optional[str] = Query(None, description="Filter to on
         }
     with closing(_db()) as con:
         rows = con.execute(
-            """SELECT * FROM news_items
-               WHERE league != 'unclassified' AND source != 'bluesky'
-                 AND layer IN ('narrative','trade','staff','injury')
-               ORDER BY published DESC LIMIT 10"""
+            """SELECT * FROM news_narratives ORDER BY generated_at DESC"""
         ).fetchall()
     return {
         "generated": datetime.now(timezone.utc).isoformat(),
-        "top": [_item(r) for r in rows],
+        "conversations": [_conv_card(r) for r in rows],
         "leagues": _league_report(),
     }
 
 
 @router.get("/api/news/narratives")
 def news_narratives():
-    """One AI-generated narrative per league — what people are actually talking
-    about, with the source headlines it was grounded in (LinkedIn-trending)."""
-    report = _league_report()
-    narratives = []
-    for lg in sorted(report):
-        a = report[lg].get("ai")
-        if a:
-            narratives.append({
-                "league": lg,
-                "narrative": a["narrative"],
-                "points": a["points"],
-                "sources": a["sources"],
-                "generated_at": a["generated_at"],
-                "source_count": a["source_count"],
-            })
-    return {"generated": datetime.now(timezone.utc).isoformat(), "narratives": narratives}
+    """Every AI conversation card — what people are actually talking about,
+    with the source headlines each was grounded in (LinkedIn-trending)."""
+    with closing(_db()) as con:
+        rows = con.execute(
+            "SELECT * FROM news_narratives ORDER BY league, generated_at DESC"
+        ).fetchall()
+    return {
+        "generated": datetime.now(timezone.utc).isoformat(),
+        "narratives": [_conv_card(r) for r in rows],
+    }
+
+
+@router.get("/api/news/runs")
+def news_narratives_runs(conv_id: Optional[str] = Query(None, description="Filter to one conversation")):
+    """Every saved generation run for comparison — never overwritten."""
+    with closing(_db()) as con:
+        if conv_id:
+            rows = con.execute(
+                "SELECT * FROM news_narratives_runs WHERE conv_id=? ORDER BY generated_at DESC",
+                (conv_id,),
+            ).fetchall()
+        else:
+            rows = con.execute(
+                "SELECT * FROM news_narratives_runs ORDER BY conv_id, generated_at DESC"
+            ).fetchall()
+    return {
+        "generated": datetime.now(timezone.utc).isoformat(),
+        "runs": [_conv_card(r) for r in rows],
+    }
 
 
 @router.get("/api/news/{league}")
 def news_for_league(league: str):
-    """Single-league feed: narratives + granular (trades/staff/injuries)."""
+    """Single-league feed: conversation cards + granular (trades/staff/injuries)."""
     return {
         "generated": datetime.now(timezone.utc).isoformat(),
         "leagues": _league_report(league.strip().lower()),

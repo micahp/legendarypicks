@@ -45,24 +45,84 @@ ESPN_NEWS = {
     "mlb": "https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/news?limit=25",
     "mls": "https://site.api.espn.com/apis/site/v2/sports/soccer/usa.1/news?limit=25",
     "ncaaf": "https://site.api.espn.com/apis/site/v2/sports/football/college-football/news?limit=25",
+    "nba": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/news?limit=25",
+    "nhl": "https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/news?limit=25",
+    "ufc": "https://site.api.espn.com/apis/site/v2/sports/mma/ufc/news?limit=25",
 }
 RSS_FEEDS = [
     ("deadspin", "https://deadspin.com/rss/"),  # /rss 308→/rss/ (Py3.8 urllib won't follow 308)
     ("awfulannouncing", "https://www.awfulannouncing.com/feed"),
     ("fansided", "https://fansided.com/feed/"),
     ("sbnation", "https://www.sbnation.com/rss/index.xml"),
+    ("dotesports", "https://dotesports.com/feed"),
 ]
-BLUESKY_QUERIES = [
-    "dodgers salary cap",
-    "mls relegation promotion",
+# Conversations — Micah's dictated narratives ARE the seed (2026-08-07):
+# "dodgers salary cap" and "mls relegation promotion" are the two canonical
+# examples of what an important conversation looks like. Each conversation is
+# its own card on the site and gets to breathe — we do NOT merge them into one
+# league summary. Add new conversations HERE (e.g. NFL turf vs grass, 2026-08-07).
+# `title` is the short human label; `seed` is the query that anchors it.
+CONVERSATIONS = [
+    {"id": "mlb-salary-cap", "league": "mlb", "title": "Salary cap debate",
+     "seed": "dodgers salary cap"},
+    {"id": "mls-pro-rel", "league": "mls", "title": "Promotion/relegation",
+     "seed": "mls relegation promotion"},
+    {"id": "nfl-media-rights", "league": "nfl", "title": "Media rights talks",
+     "seed": "nfl media rights deal"},
+    {"id": "nfl-turf-grass", "league": "nfl", "title": "Turf vs. grass",
+     "seed": "nfl turf grass"},
+    {"id": "nba-expansion", "league": "nba", "title": "Expansion",
+     "seed": "nba expansion"},
+    {"id": "nhl-salary-cap", "league": "nhl", "title": "Salary cap",
+     "seed": "nhl salary cap"},
+    {"id": "ufc-title-fight", "league": "ufc", "title": "Title picture",
+     "seed": "ufc title fight"},
+    {"id": "ncaaf-realignment", "league": "ncaaf", "title": "Realignment",
+     "seed": "ncaaf conference realignment"},
+    {"id": "esports-worlds", "league": "esports", "title": "Worlds",
+     "seed": "esports worlds"},
+    {"id": "esports-valorant", "league": "esports", "title": "Valorant",
+     "seed": "valorant champions"},
 ]
+
+# Generic texture dimensions: the ways a story shows up in fans' lives. Any
+# conversation's seed is searched against these to find the ADJACENT
+# conversation — the packed stadium, the lower-division energy, the highlight
+# clip, the player quote — because those posts carry the story's keywords too
+# (Micah, 2026-08-07). This list is sport-agnostic; it is not per-league
+# hardcoding.
+_TEXTURE_DIMENSIONS = [
+    "stadium",
+    "attendance",
+    "fans",
+    "lower division",
+    "highlight",
+]
+
+# Each (conversation, dimension) pair is its own bluesky query, tagged with the
+# conversation so collected items can be attributed back to it.
+def _conversation_queries() -> list:
+    out = []
+    for conv in CONVERSATIONS:
+        out.append((conv["id"], conv["seed"]))
+        for dim in _TEXTURE_DIMENSIONS:
+            out.append((conv["id"], "%s %s" % (conv["seed"], dim)))
+    return out
+
+CONVERSATION_QUERIES = _conversation_queries()
+ALL_BLUESKY_QUERIES = [q for _c, q in CONVERSATION_QUERIES]
 BLUESKY_SEARCH = "https://api.bsky.app/xrpc/app.bsky.feed.searchPosts"  # public.api 403'd 2026-08-06
 
 # Ingest path: NO retry ladder (espn-request-budget doctrine §6) — a 403 means
 # "this host is spent"; fail fast, record the FETCH ERROR row, move on. A
 # sleeping ladder is how a batch job burns 10 minutes discovering a wall.
+# UA matters: measured 2026-08-07 — site.api.espn.com/news 403s the Chrome UA
+# but answers the curl UA (200, full article lists). DEFAULT_HDRS (Chrome)
+# is what the shared Fetcher uses; override headers here so the news endpoint
+# is actually reachable. One request per league, count-budgeted like the rest.
 _ESPN_FETCHER = Fetcher(min_interval=0.5, retry_waits=(), cache_dir=CACHE_DIR,
-                        cache_ttl=3600, host_budget=20)
+                        cache_ttl=3600, host_budget=20,
+                        headers={"User-Agent": "curl/8.5.0"})
 _BLUE_FETCHER = Fetcher(min_interval=0.5, retry_waits=(), cache_dir=CACHE_DIR,
                         cache_ttl=3600, host_budget=0)
 
@@ -136,7 +196,7 @@ def collect_rss():
 
 def collect_bluesky():
     items = []
-    for q in BLUESKY_QUERIES:
+    for conv_id, q in CONVERSATION_QUERIES:
         url = BLUESKY_SEARCH + "?q=%s&limit=8" % urllib.parse.quote(q)
         try:
             d = _BLUE_FETCHER.json(url)
@@ -147,6 +207,7 @@ def collect_bluesky():
                 post_uri = p.get("uri", "") or rec.get("uri", "")
                 items.append({
                     "source": "bluesky",
+                    "conv_id": conv_id,
                     "headline": "[@%s] %s" % (author, text[:140]),
                     "body": text,
                     "url": "https://bsky.app/profile/%s/post/%s"
@@ -154,7 +215,8 @@ def collect_bluesky():
                     "published": _iso(rec.get("indexedAt", "")),
                 })
         except Exception as e:
-            items.append({"source": "bluesky", "headline": "FETCH ERROR: %s" % e,
+            items.append({"source": "bluesky", "conv_id": conv_id,
+                          "headline": "FETCH ERROR: %s" % e,
                           "body": "", "url": "", "published": ""})
     return items
 
@@ -184,6 +246,7 @@ def upsert(items, dry_run=False):
           url TEXT NOT NULL UNIQUE,
           published TEXT NOT NULL DEFAULT '',
           key_player TEXT,
+          conv_id TEXT,
           first_seen TEXT NOT NULL DEFAULT (datetime('now')));
         """)
         con.commit()
@@ -197,14 +260,15 @@ def upsert(items, dry_run=False):
             continue
         before = con.total_changes
         con.execute(
-            """INSERT INTO news_items(league, layer, source, headline, body, url, published, key_player)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """INSERT INTO news_items(league, layer, source, headline, body, url, published, key_player, conv_id)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                ON CONFLICT(url) DO UPDATE SET
                  league=excluded.league, headline=excluded.headline, body=excluded.body,
                  published=excluded.published,
-                 layer=excluded.layer, key_player=excluded.key_player, source=excluded.source""",
+                 layer=excluded.layer, key_player=excluded.key_player, source=excluded.source,
+                 conv_id=excluded.conv_id""",
             (it["league"], it["layer"], it["source"], it["headline"], it["body"],
-             it["url"], it["published"], it.get("key_player")),
+             it["url"], it["published"], it.get("key_player"), it.get("conv_id")),
         )
         delta = con.total_changes - before
         if delta == 1:
@@ -244,7 +308,7 @@ def reclassify_existing(dry_run=False):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--leagues", default="nfl,mlb,mls,ncaaf",
+    ap.add_argument("--leagues", default="nfl,mlb,mls,ncaaf,nba,nhl,ufc",
                     help="comma list of ESPN leagues to collect")
     ap.add_argument("--no-espn", action="store_true")
     ap.add_argument("--no-rss", action="store_true")
@@ -263,7 +327,7 @@ def main():
     print("  site.api.espn.com: %d  (host_budget=20, disk cache -> re-runs cost 0)" % len(leagues))
     if not args.no_rss:
         print("  deadspin.com: 1 | awfulannouncing.com: 1 | fansided.com: 1 | sbnation.com: 1")
-    print("  api.bsky.app: %d" % len(BLUESKY_QUERIES))
+    print("  api.bsky.app: %d" % len(ALL_BLUESKY_QUERIES))
 
     all_items = []
     if not args.no_espn:

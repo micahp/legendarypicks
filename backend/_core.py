@@ -197,23 +197,50 @@ def _init_db():
           url TEXT NOT NULL UNIQUE,
           published TEXT NOT NULL DEFAULT '',
           key_player TEXT,
+          conv_id TEXT,
           first_seen TEXT NOT NULL DEFAULT (datetime('now')));
         """)
         con.execute(
             "CREATE INDEX IF NOT EXISTS idx_news_league_layer "
             "ON news_items(league, layer, published)"
         )
-        # AI-generated league narratives (LinkedIn-trending style): one row per
-        # league, produced by ingest_league_narratives.py from the chatter.
+        # AI-generated league conversations (LinkedIn-trending style): one row
+        # per CONVERSATION (not per league — each narrative gets to breathe,
+        # Micah 2026-08-07), produced by ingest_league_narratives.py from the
+        # chatter. `paragraph` is the card's prose — leads with the news anchor
+        # and carries the fan voice WITH attribution (\"Fans argue…\", \"Supporters
+        # point to…\") so the site never sounds like it is making the fan's claim
+        # itself (Micah, 2026-08-07). `narrative`/`fan_voice` stay as structured
+        # fields for the future league-summary pass.
         con.execute("""
         CREATE TABLE IF NOT EXISTS news_narratives(
-          league TEXT PRIMARY KEY,
+          conv_id TEXT PRIMARY KEY,
+          league TEXT NOT NULL,
+          title TEXT NOT NULL DEFAULT '',
           narrative TEXT NOT NULL,
-          points TEXT NOT NULL DEFAULT '[]',
+          fan_voice TEXT NOT NULL DEFAULT '',
+          paragraph TEXT NOT NULL DEFAULT '',
           sources TEXT NOT NULL DEFAULT '[]',
           source_count INTEGER NOT NULL DEFAULT 0,
           generated_at TEXT NOT NULL DEFAULT (datetime('now')));
         """)
+        # Run history: EVERY generation is appended here (never overwritten)
+        # so versions can be compared and rolled back (Micah, 2026-08-07:
+        # "i hope you are saving every single run so we can compare").
+        con.execute("""
+        CREATE TABLE IF NOT EXISTS news_narratives_runs(
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          conv_id TEXT NOT NULL,
+          league TEXT NOT NULL,
+          title TEXT NOT NULL DEFAULT '',
+          narrative TEXT NOT NULL,
+          fan_voice TEXT NOT NULL DEFAULT '',
+          paragraph TEXT NOT NULL DEFAULT '',
+          sources TEXT NOT NULL DEFAULT '[]',
+          source_count INTEGER NOT NULL DEFAULT 0,
+          generated_at TEXT NOT NULL DEFAULT (datetime('now')));
+        """)
+        con.execute("CREATE INDEX IF NOT EXISTS idx_nnruns_conv ON news_narratives_runs(conv_id, generated_at)")
         con.commit()
 
 
@@ -303,6 +330,9 @@ _MARKET_STAT_KEY = {
             "receiving_tds": "receiving_tds", "interceptions": "interceptions"},
     "wc": {"goals": "goals", "assists": "assists", "shots": "shots",
            "shots_on_target": "sot", "shots_on_goal": "sot"},
+    # MLS game logs store the same soccer stat shape as WC (goals/assists/shots/sot)
+    "mls": {"goals": "goals", "assists": "assists", "shots": "shots",
+            "shots_on_target": "sot", "shots_on_goal": "sot"},
     # fight_time (minutes, from round+clock at the ESPN status endpoint -- see
     # ingest_ufc_fight_stats.py) now backfillable same as significant_strikes.
     # finishes/win_by_ko/win_by_submission are win-by-method yes/no props, same

@@ -21,6 +21,17 @@ by-name lookup against `players` only when a news item makes a name relevant
 (Micah, 2026-08-06). Never a full-table scan.
 """
 from typing import Dict, List, Optional
+import re
+
+
+def _term_present(t: str, term: str) -> bool:
+    """Word-boundary substring match for league/notable terms.
+
+    Plain `term in t` collides with common substrings: "acc" matched
+    "accepting" (stealing an NHL story into NCAAF), "nba" matched "wnba",
+    "stars" matched "superstar", "alba" matched "Albarado" (2026-08-08).
+    """
+    return re.search(r"\b" + re.escape(term) + r"\b", t) is not None
 
 LEAGUE_TERMS: Dict[str, List[str]] = {
     "nfl": ["nfl", "chiefs", "eagles", "49ers", "cowboys", "ravens", "bills", "lions",
@@ -34,18 +45,26 @@ LEAGUE_TERMS: Dict[str, List[str]] = {
             "royals", "athletics", "pirates", "reds", "rockies", "diamondbacks", "marlins",
             "nationals", "angels", "world series"],
     "mls": ["mls", "inter miami", "lafc", "galaxy", "sounders", "timbers", "atlanta united",
-            "toronto", "austin fc", "charlotte", "cincinnati", "colorado", "columbus",
-            "dallas", "dc united", "dynamo", "kansas city", "minnesota", "montreal",
-            "nashville", "new england", "new york", "orlando", "philadelphia",
-            "real salt lake", "san jose", "st. louis", "vancouver", "relegation"],
+            "austin fc", "dc united", "dynamo", "real salt lake", "relegation",
+            "pro/rel", "usl", "usl championship", "lower division soccer", "mls next pro",
+            "leagues cup"],
     "ncaaf": ["sec", "big ten", "big 12", "acc", "pac-12", "college football", "cfp",
               "playoff", "bowl game", "alabama", "georgia", "ohio state", "michigan",
-              "texas", "notre dame", "lsu", "clemson", "oklahoma", "oregon", "usc",
-              "saban", "super conference", "superleague"],
+              "notre dame", "lsu", "clemson", "oklahoma", "oregon", "usc",
+              "longhorns", "texas a&m", "texas tech", "aggies", "red raiders",
+              "baylor", "tcu", "smu", "purdue", "saban", "super conference", "superleague"],
     "nba": ["nba", "lakers", "celtics", "warriors", "nuggets", "bucks", "heat", "knicks",
-            "76ers", "suns", "mavericks", "thunder", "cavaliers", "timberwolves"],
+            "76ers", "suns", "mavericks", "thunder", "cavaliers", "timberwolves",
+            "clippers", "kawhi", "lebron"],
     "nhl": ["nhl", "bruins", "rangers", "maple leafs", "oilers", "avalanche", "golden knights",
-            "panthers", "hurricanes", "stars", "penguins"],
+            "panthers", "hurricanes", "stars", "penguins", "blues", "red wings"],
+    "ufc": ["ufc", "mma", "octagon", "paddy pimblett", "islam makhachev", "jon jones",
+            "alex pereira", "conor mcgregor", "dana white"],
+    "esports": ["esports", "league of legends", "lol esports", "lcs", "lec", "worlds",
+                "valorant", "vct", "champions tour", "counter-strike", "cs2", "csgo",
+                "dota 2", "the international", "rainbow six", "overwatch league", "owl",
+                "call of duty league", "cdl", "giantx", "fnatic", "g2 esports", "t1 esports",
+                "faker", "sentinels", "navi", "vitality", "team liquid", "cloud9"],
 }
 
 # Non-trade layers first (most specific). Staff = decision verbs only; "fired up"
@@ -62,7 +81,9 @@ NARRATIVE_RULES = ["salary cap", "salary floor", "relegation", "promotion",
                    "super conference", "superleague", "realignment", "expansion",
                    "cba", "lockout", "media rights", "broadcast", "tv deal",
                    "negotiations", "lawsuit", "settlement", "playoff format",
-                   "rule change", "cap and floor", "cap debate", "conference"]
+                   "rule change", "cap and floor", "cap debate", "conference",
+                   "worlds", "champions tour", "major", "grand final",
+                   "roster move", "offseason"]
 
 # A transaction actually happened (or was announced): the verb asserts it.
 TRADE_ACTUAL = ["traded", "acquire", "acquired", "acquires", "sign", "signed", "signing",
@@ -95,12 +116,13 @@ NOTABLE: Dict[str, List[str]] = {
     "nfl": ["mahomes", "josh allen", "jalen hurts", "burrow", "lamar", "herbert", "stroud",
             "purdy", "saquon", "mccaffrey", "tyreek", "kelce", "jefferson", "jamarr",
             "aja brown", "jettas"],
-    "mlb": ["ohtani", "shohei", "mookie", "betts", "freeman", "judge", "soto", "harper",
+    "mlb": ["ohtani", "shohei", "mookie", "betts", "freeman", "aaron judge", "soto", "harper",
             "acuna", "trout", "wheeler", "burnes"],
     "mls": ["messi", "suarez", "busquets", "alba", "reus", "pulisic", "lodeiro"],
     "ncaaf": ["saban", "kirby smart", "ryan day", "james franklin", "lane kiffin", "dabo"],
     "nba": ["lebron", "luka", "giannis", "jokic", "tatum", "curry", "shai", "ant man"],
     "nhl": ["mcdavid", "draisaitl", "mackinnon", "pastrnak", "panarin"],
+    "esports": ["faker", "caps", "chovy", "s1mple", "zywoo", "demon1", "tenz", "aspas"],
 }
 
 
@@ -116,7 +138,7 @@ def classify(text: str, source_hint: Optional[str] = None) -> Dict[str, Optional
 
     league: Optional[str] = None
     for lg, terms in LEAGUE_TERMS.items():
-        if any(term in t for term in terms):
+        if any(_term_present(t, term) for term in terms):
             league = lg
             break
     if league is None and source_hint in LEAGUE_TERMS:
@@ -125,7 +147,7 @@ def classify(text: str, source_hint: Optional[str] = None) -> Dict[str, Optional
         league = "unclassified"
     # "Giants" is ambiguous (NYG = nfl, SF = mlb). A Giants *broadcaster*
     # retiring/stepping away is the MLB San Francisco Giants.
-    if league == "nfl" and "giants" in t and any(
+    if league == "nfl" and _term_present(t, "giants") and any(
             w in t for w in ("broadcast", "broadcasts", "broadcaster", "retiring",
                              "retirement", "step away")):
         league = "mlb"
@@ -158,7 +180,7 @@ def classify(text: str, source_hint: Optional[str] = None) -> Dict[str, Optional
     key_player: Optional[str] = None
     for lg, names in NOTABLE.items():
         for n in names:
-            if n in t:
+            if _term_present(t, n):
                 key_player = n.title()
                 break
         if key_player:
