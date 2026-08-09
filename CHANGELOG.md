@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.7.9 — 2026-08-09
+
+### EWC CoD finals show the clubs that actually played
+
+- Breaking Point's EWC match rows carry authoritative `team1` and `team2` objects even
+  when those clubs are absent from its page-level `allTeams` dictionary. The CoD
+  scoreboard now uses those embedded participants as its fallback, so completed EWC
+  series render club names and scores instead of `TBD` versus `TBD`.
+- This production hotfix is intentionally limited to the CoD scoreboard normalizer; the
+  news engine and the broader new-leagues work are not included.
+
 ## v0.7.4 — 2026-08-04
 
 ### One HTTP client instead of six copies
