@@ -44,6 +44,8 @@ from .grid import _grid_score_index
 from .kalshi import _kalshi_esports_matchups
 from .league_tier import apply_tier_and_filter
 from .lol import msi_predictions
+from .ewc import is_ewc_2026_label as _is_ewc_2026_label
+from .ewc import is_ewc_2026_serie as _is_ewc_2026_serie
 from .match_identity import (_is_map_market, _normalize_match_metadata,
                              _repair_logos_by_psid, _same_pair, _same_team)
 from .pandascore import (_ps_enrich, _ps_logo_for, _ps_surface_matches, _ps_team_logo_api,
@@ -303,6 +305,7 @@ def _rebuild_upcoming():
     # (title, team-pair) fallback for archived finished rows that lost their ps id by output time.
     ps_meta_by_id = {}    # ps match id -> {"streamKey", "eventId"}
     ps_meta_by_pair = {}  # (title, frozenset(canonA, canonB)) -> same meta
+    ewc_serie_ids = set()
     for m in _fetch_ps(include_running=live_window):
         if m.get("id") is None:
             continue
@@ -312,6 +315,9 @@ def _rebuild_upcoming():
         meta = {"streamKey": _stable_stream_key(sl), "eventId": eid,
                 "endTime": _iso_to_ms(m.get("end_at"))}
         ps_meta_by_id[m["id"]] = meta
+        # EWC 2026 main-event serie ids (data-driven; qualifier slugs excluded by is_ewc_2026_serie)
+        if _is_ewc_2026_serie(m.get("serie"), m.get("league")):
+            ewc_serie_ids.add(eid)
         title = (_PS_VG_TITLE.get((m.get("videogame") or {}).get("slug"))
                  or _PS_VG_TITLE.get(((m.get("videogame") or {}).get("name") or "").lower()))
         opps = m.get("opponents") or []
@@ -665,6 +671,10 @@ def _rebuild_upcoming():
             # the stale flag so the output isn't self-contradictory (finished+resultUnknown+a winner).
             m["resultUnknown"] = False
         _normalize_match_metadata(m)
+        # Normalized EWC event identity (additive; the existing `eventId` serie id is preserved
+        # for broadcast grouping). EWC 2026 main event only — qualifiers stay outside.
+        if (m.get("eventId") in ewc_serie_ids or _is_ewc_2026_label(m.get("league"))):
+            m["ewcEventId"] = "ewc-2026"
         # Stable identity for the client (picks + crowd + settlement all key on this exact string).
         m["matchKey"] = _key(m)
         for k in [kk for kk in m if kk.startswith("_")]:

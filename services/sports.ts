@@ -29,14 +29,27 @@ export interface LivePeriod {
 // The unified ESPN backend (sports_service.py) returns games as
 //   { game_id, date, state: 'pre'|'in'|'post', home/away: { abbrev, name, score } }
 // The UI works against a stable internal shape; we translate here (anti-corruption layer).
+export interface TeamSide {
+  teamId: string
+  name: string
+  nickname?: string
+  score?: number
+  winner?: boolean
+  // EWC bracket participants: a decided club renders by name; an undecided slot renders the
+  // dependency label ("Winner of X–Y") and never a score, logo, or detail link.
+  label?: string
+  pending?: boolean
+  unavailable?: boolean
+}
+
 export interface Game {
   gameId: string
   // Optional canonical id for a league-specific detail source. CoD scores use
   // BreakingPoint gameId values while the grounded detail page uses PandaScore.
   detailGameId?: string
   league?: string
-  homeTeam: { teamId: string; name: string; nickname?: string; score?: number; winner?: boolean }
-  awayTeam: { teamId: string; name: string; nickname?: string; score?: number; winner?: boolean }
+  homeTeam: TeamSide
+  awayTeam: TeamSide
   startTime: string
   status: 'SCHEDULED' | 'LIVE' | 'FINAL'
   // ESPN short detail, e.g. "Final/10" (extra innings) or "Final/OT" — shown on the FINAL badge
@@ -55,7 +68,21 @@ function statusFromState(state?: string): Game['status'] {
 function side(s: any): Game['homeTeam'] {
   const name = s?.name ?? s?.abbrev ?? ''
   const record = s?.record ? ` (${s.record})` : ''
-  return { teamId: s?.abbrev ?? '', name: name + record, nickname: s?.nickname, score: s?.score ?? undefined, winner: s?.winner ?? undefined }
+  const p = s?.participant
+  const state = p?.state
+  const label = state === 'named'
+    ? (p?.clubName ?? name)
+    : (p?.label ?? name)
+  return {
+    teamId: s?.abbrev ?? '',
+    name: name + record,
+    nickname: s?.nickname,
+    score: s?.score ?? undefined,
+    winner: s?.winner ?? undefined,
+    label: label || undefined,
+    pending: state === 'pending',
+    unavailable: state === 'unavailable',
+  }
 }
 
 function normalizeSets(g: any): TennisSet[] | undefined {
