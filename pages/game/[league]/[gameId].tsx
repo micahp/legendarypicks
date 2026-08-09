@@ -303,6 +303,7 @@ export default function GameDetailPage() {
       {/* Score strip */}
       <ScoreStrip
         ctx={ctx || null} score={displayScore} state={gameState}
+        statusDetail={gameState === 'in' ? detail?.clock || detail?.status_detail : detail?.status_detail}
         homeName={sHome?.name || ctx?.home_team || ''}
         awayName={sAway?.name || ctx?.away_team || ''}
         homeRecord={homeRecord} awayRecord={awayRecord}

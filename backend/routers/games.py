@@ -887,11 +887,15 @@ def get_game_detail(league: str, game_id: str):
     has_boxscore = lg in ("nba", "nhl")
     out = {"game_id": game_id, "league": lg,
            "team_stats": [], "scoring_plays": [], "context": None, "strength": {},
-           "final_score": None, "live_score": None, "state": None}
+           "final_score": None, "live_score": None, "state": None,
+           "period": None, "clock": None, "status_detail": None}
     # Game state up front so we NEVER label a live/upcoming game "final".
     try:
         _gr = espn.game_result(league, game_id)
         out["state"] = _gr.get("state")
+        out["period"] = _gr.get("period")
+        out["clock"] = _gr.get("clock")
+        out["status_detail"] = _gr.get("status_detail")
     except Exception:
         _gr = {}
     is_final = out["state"] == "post"

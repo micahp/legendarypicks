@@ -35,6 +35,9 @@ export interface GameDetail {
   final_score: { home: number; away: number } | null
   live_score?: { home: number; away: number } | null
   state?: string | null
+  period?: number | null
+  clock?: string | null
+  status_detail?: string | null
 }
 
 export type Tab = 'boxscore' | 'playbyplay' | 'props' | 'info' | 'booth'
