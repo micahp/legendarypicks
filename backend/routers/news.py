@@ -96,7 +96,7 @@ def _league_report(league: Optional[str] = None) -> dict:
             rows = con.execute(
                 """SELECT * FROM news_items
                    WHERE league=? AND league != 'unclassified'
-                     AND source != 'bluesky'
+                     AND source NOT IN ('bluesky','x-search')
                      AND layer IN ('narrative','trade','staff','injury','notable')
                    ORDER BY published DESC LIMIT 60""",
                 (league,),
@@ -106,7 +106,7 @@ def _league_report(league: Optional[str] = None) -> dict:
             rows = con.execute(
                 """SELECT * FROM news_items
                    WHERE league != 'unclassified'
-                     AND source != 'bluesky'
+                     AND source NOT IN ('bluesky','x-search')
                      AND layer IN ('narrative','trade','staff','injury','notable')
                    ORDER BY published DESC LIMIT 300"""
             ).fetchall()

@@ -406,7 +406,7 @@ def _base_market(m: str) -> str:
 # beat reporter is a publisher with a byline and a permalink; a random Bluesky
 # account arguing about the cap is signal. Micah, 2026-08-10: "these posts we're
 # getting might make more sense for the more news section."
-SOCIAL_SOURCES = ("bluesky",)
+SOCIAL_SOURCES = ("bluesky", "x-search")
 
 
 def _deepseek_key():

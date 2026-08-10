@@ -524,6 +524,50 @@ def collect_x():
     return items
 
 
+# X SEARCH, via Google News. Nitter's /search/rss returns an empty document,
+# every RSSHub twitter route is 404/503, and the SearxNG JSON instances refuse
+# us — but Google indexes x.com, and `site:x.com <topic>` through the Google
+# News RSS endpoint returns real post text on the topic we asked for. That is
+# the search we could not otherwise buy (2026-08-10, after Micah: "we need
+# search on x ... we need to try try and try again").
+#
+# The results are CHATTER, never receipts. Google's link is a redirect whose
+# guid stopped decoding to the target URL in 2024, so we have the post's words
+# and date but no verified permalink or author — signal, not a citable source.
+GOOGLE_NEWS_RSS = ("https://news.google.com/rss/search"
+                   "?q=%s&hl=en-US&gl=US&ceid=US:en")
+_GNEWS_FETCHER = Fetcher(min_interval=1.0, retry_waits=(2,), cache_dir=CACHE_DIR,
+                         cache_ttl=1800, host_budget=0)
+
+
+def collect_x_search(conversations=None):
+    """One `site:x.com <seed>` query per conversation."""
+    out = []
+    for conv in (conversations if conversations is not None else load_conversations()):
+        query = "site:x.com %s" % conv["seed"]
+        try:
+            root = ET.fromstring(_GNEWS_FETCHER.text(
+                GOOGLE_NEWS_RSS % urllib.parse.quote(query)))
+        except Exception as e:
+            out.append({"source": "x-search", "conv_id": conv["id"],
+                        "headline": "FETCH ERROR: %s" % e,
+                        "body": "", "url": "", "published": ""})
+            continue
+        for it in root.iter("item"):
+            def txt(tag):
+                el = it.find(tag)
+                return (el.text or "").strip() if el is not None else ""
+            text = _clean(txt("title"))
+            # Google pads results with X's own corporate and profile pages once
+            # it runs out of matching posts.
+            if not text or text.startswith("X Business") or " / Posts - x.com" in text:
+                continue
+            out.append({"source": "x-search", "conv_id": conv["id"],
+                        "headline": text[:200], "body": text,
+                        "url": txt("link"), "published": _iso(txt("pubDate"))})
+    return out
+
+
 def tag_conversations(items):
     """Attach X posts to the conversations they are actually about.
 
@@ -828,6 +872,10 @@ def main():
     all_items += x_items
     if x_items:
         print("  collected %d from x" % len(x_items))
+    before = len(all_items)
+    all_items += collect_x_search()
+    print("  collected %d from x search (site:x.com via google news)"
+          % (len(all_items) - before))
 
     # A failed fetch is recorded as an item with an empty url, and upsert skips
     # exactly those rows — so a source that died looked identical to a source

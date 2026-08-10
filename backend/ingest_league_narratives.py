@@ -278,7 +278,7 @@ def _load_chatter(con, conv):
 
     anchors = con.execute(
         """SELECT headline, url, source, published, body FROM news_items
-           WHERE league=? AND source NOT IN ('bluesky','x') AND url != ''
+           WHERE league=? AND source NOT IN ('bluesky','x-search') AND url != ''
            ORDER BY published DESC LIMIT 40""",
         (league,),
     ).fetchall()
