@@ -372,3 +372,40 @@ Verified: the new card generates clean (plain language, attributed fan voice,
   the original command, or authorize it.
 - Prod promotion (still): migrate `news_narratives` + `news_league_summaries`
   on prod `picks.db` before any release that ships news.
+
+---
+
+## 10. Cross-league tournaments are not modelled (2026-08-10)
+
+Micah:
+
+> tournaments like leagues cup and ewc are weird because they don't just span
+> one league.
+
+He is right, and today the data model has no answer for it. `news_items.league`
+and `news_conversations.league` are both a single value, so every conversation
+belongs to exactly one league tab. That works for a salary-cap fight inside MLB
+and breaks for anything that crosses a border:
+
+- **Leagues Cup** is MLS *and* Liga MX. We do not carry Liga MX as a league at
+  all, so a Leagues Cup story can only be filed under `mls`, which quietly
+  states that it is an MLS story — half true at best. The
+  `mls-ligamx-spending` conversation is exactly this case: its subject is the
+  boundary between two leagues, and it renders on the MLS tab.
+- **Esports World Cup** spans every title (CS, LoL, Valorant, CoD, RL); we
+  flatten all of them into one `esports` league, which is the same compromise
+  one level up.
+- The same problem is coming for the World Cup, the Club World Cup, and any
+  cross-conference college event.
+
+**Decision for now (Micah, 2026-08-10): file it under MLS and move on.** The
+card is live on the MLS tab and reads correctly. This section exists so the
+compromise is written down rather than discovered later as a bug.
+
+**When it is worth fixing**, the shape is a `competition` dimension that is
+independent of `league` — an item and a conversation each carry an optional
+competition (`leagues-cup`, `ewc`, `world-cup`) alongside their league, and a
+tournament gets its own tab that draws from every league feeding it. That also
+gives the esports hub a way to stop pretending CS and LoL are one league. It is
+a schema change plus a nav change, not a rewrite — but it should not be done
+until a second cross-league conversation actually needs it.
