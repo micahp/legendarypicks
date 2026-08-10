@@ -198,6 +198,51 @@ class StandingsRouteTests(unittest.TestCase):
             d = self.client.get("/api/esports/events/ewc-2026/club-standings?limit=10").json()
         self.assertEqual(d["status"], "unavailable")
 
+    def test_refresh_route_publishes_and_returns_new_snapshot(self):
+        refreshed = self._snapshot(12)
+        refreshed["publishedAt"] = "2030-01-01T00:00:00+00:00"
+
+        def publish_refresh():
+            ewc.publish_standings(refreshed, path=self.path)
+            return {"attempted": True, "succeeded": True}
+
+        with mock.patch.object(ewc, "_STANDINGS_PATH", self.path), \
+             mock.patch.object(ewc, "refresh_standings", side_effect=publish_refresh):
+            d = self.client.post(
+                "/api/esports/events/ewc-2026/club-standings/refresh?limit=10"
+            ).json()
+        self.assertEqual(len(d["standings"]), 10)
+        self.assertEqual(d["asOf"], refreshed["publishedAt"])
+        self.assertTrue(d["refresh"]["succeeded"])
+
+    def test_failed_refresh_preserves_last_good_snapshot(self):
+        with mock.patch.object(ewc, "_STANDINGS_PATH", self.path):
+            ewc.publish_standings(self._snapshot(12), path=self.path)
+            with mock.patch.object(ewc, "refresh_standings", return_value={
+                "attempted": True, "succeeded": False, "reason": "upstream_refresh_failed",
+            }):
+                d = self.client.post(
+                    "/api/esports/events/ewc-2026/club-standings/refresh?limit=5"
+                ).json()
+        self.assertEqual(len(d["standings"]), 5)
+        self.assertEqual(d["status"], "current")
+        self.assertFalse(d["refresh"]["succeeded"])
+
+    def test_refresh_cooldown_prevents_duplicate_upstream_calls(self):
+        import fetch_ewc_standings as fetcher
+        snapshot = self._snapshot(12)
+        previous_attempt = ewc._refresh_last_attempt
+        ewc._refresh_last_attempt = 0.0
+        try:
+            with mock.patch.object(fetcher, "fetch_validated_snapshot", return_value=snapshot) as fetch:
+                first = ewc.refresh_standings(path=self.path, cooldown_s=300)
+                second = ewc.refresh_standings(path=self.path, cooldown_s=300)
+        finally:
+            ewc._refresh_last_attempt = previous_attempt
+        self.assertTrue(first["succeeded"])
+        self.assertEqual(second["reason"], "refresh_cooldown")
+        fetch.assert_called_once_with()
+
 
 class TitlesRouteTests(unittest.TestCase):
     """GET /api/esports/titles — title discovery from the shared slate (fixture-driven)."""

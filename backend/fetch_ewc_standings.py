@@ -244,6 +244,19 @@ def build_snapshot(rows, revid, stage, cutoff, fetched_at, correction=False, log
     return snapshot
 
 
+def fetch_validated_snapshot(correction=False):
+    """Fetch and fully validate one candidate without publishing it."""
+    fetched_at = time.strftime("%Y-%m-%dT%H:%M:%S+00:00", time.gmtime())
+    revid, html, wikitext = fetch_source()
+    stage, cutoff = parse_stage(wikitext)
+    rows = parse_rows(html, cutoff)
+    snapshot = build_snapshot(rows, revid, stage, cutoff, fetched_at,
+                              correction=correction,
+                              logos_map=load_local_logo_index())
+    ewc._validate_snapshot(snapshot)
+    return snapshot
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--dry-run", action="store_true",
@@ -252,19 +265,12 @@ def main(argv=None):
                     help="allow a publisher point correction vs the last published run")
     args = ap.parse_args(argv)
 
-    fetched_at = time.strftime("%Y-%m-%dT%H:%M:%S+00:00", time.gmtime())
-    revid, html, wikitext = fetch_source()
-    stage, cutoff = parse_stage(wikitext)
-    rows = parse_rows(html, cutoff)
-    snapshot = build_snapshot(rows, revid, stage, cutoff, fetched_at,
-                              correction=args.correction,
-                              logos_map=load_local_logo_index())
-    # Full validation: population count, unique clubIds, monotonic ranks/points, event,
-    # timestamps — exactly what publish_standings enforces before the atomic replace.
-    ewc._validate_snapshot(snapshot)
+    snapshot = fetch_validated_snapshot(correction=args.correction)
+    source = snapshot["source"]
+    rows = snapshot["standings"]
 
     print("stage %d (cutoff %d) at revision %d — %d clubs parsed"
-          % (stage, cutoff, revid, len(rows)))
+          % (source["stage"], source["stageCutoff"], source["revision"], len(rows)))
     for r in rows[:10]:
         print("  %2d. %-24s %s" % (r["rank"], r["clubName"], r["points"]))
 

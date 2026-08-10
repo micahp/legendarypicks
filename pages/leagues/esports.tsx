@@ -1,6 +1,6 @@
 import Head from 'next/head'
 import Link from 'next/link'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { EwcMatchRow, EwcModule } from '../../components/Esports/EwcModule'
 import type { EwcProjection, Standings } from '../../components/Esports/EwcModule'
 import { Eyebrow, SectionHeader } from '../../components/Esports/primitives'
@@ -48,6 +48,8 @@ export default function EsportsLeaguePage() {
   const [projectionError, setProjectionError] = useState(false)
   const [standings, setStandings] = useState<Standings | null>(null)
   const [standingsLoading, setStandingsLoading] = useState(true)
+  const [standingsRefreshTick, setStandingsRefreshTick] = useState(0)
+  const standingsRefreshStarted = useRef(false)
   // The page requests only the rows it renders: ten on desktop, five on mobile; the expand
   // action performs the bounded follow-up request to ten.
   const [standingsLimit, setStandingsLimit] = useState(5)
@@ -91,7 +93,17 @@ export default function EsportsLeaguePage() {
       .catch(() => { /* keep last known; the rail renders unavailable only on a real response */ })
       .finally(() => { if (alive) setStandingsLoading(false) })
     return () => { alive = false }
-  }, [standingsLimit])
+  }, [standingsLimit, standingsRefreshTick])
+
+  // Render the last-good snapshot immediately, then ask the backend publisher for a refresh once
+  // per page load. A completed attempt triggers a bounded re-read, including after an upstream 429.
+  useEffect(() => {
+    if (standingsRefreshStarted.current) return
+    standingsRefreshStarted.current = true
+    fetch('/api/esports/events/ewc-2026/club-standings/refresh', {
+      method: 'POST', cache: 'no-store',
+    }).catch(() => null).finally(() => setStandingsRefreshTick((tick) => tick + 1))
+  }, [])
 
   // Title directory — one source of truth: the backend registry + the shared slate.
   useEffect(() => {

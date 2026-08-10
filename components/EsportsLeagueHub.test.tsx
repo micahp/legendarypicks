@@ -200,7 +200,7 @@ function mockMatchMedia(matches: boolean) {
 }
 
 function mockFetch(respond: (url: string) => unknown) {
-  const fn = jest.fn((url: string) => {
+  const fn = jest.fn((url: string, _init?: RequestInit) => {
     const value = respond(String(url))
     if (value instanceof Error) return Promise.reject(value)
     return Promise.resolve({ json: () => Promise.resolve(value) })
@@ -250,6 +250,9 @@ describe('esports league hub — header and EWC-first center', () => {
     expect(screen.getByText('2600')).toBeTruthy()
     expect(screen.getByText('EWC Official')).toBeTruthy()
     expect(fetchMock.mock.calls.some((c) => String(c[0]).includes('club-standings?limit=10'))).toBe(true)
+    expect(fetchMock.mock.calls.some((c) =>
+      String(c[0]).endsWith('/club-standings/refresh') && c[1]?.method === 'POST',
+    )).toBe(true)
     expect(screen.queryByText('Show full top ten →')).toBeNull()
     await flush()
   })

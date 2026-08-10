@@ -1,24 +1,23 @@
 """ewc.py — EWC 2026 tournament-center contract: participant model, event identity, and the
 published Club Championship snapshot store.
 
-This module is the single owner of the Club Championship publication.  No request handler and no
-browser may become a competing writer or reconstruct totals from match fragments.  The API reads
-exactly one published snapshot; with no valid snapshot it serves the honest ``unavailable`` state
-per PLAN-esports-ewc-2026.md.
-
-The standings publisher is intentionally NOT wired to an external source: Phase 0 resolved that no
-permitted machine-readable Club Championship publisher exists on this box (official EWC API is
-Bearer-gated; PandaScore publishes no cross-title Club Championship; third-party HTML scraping is
-out of scope).  See docs/ewc2026/PHASE0-SOURCE-AND-CONTRACTS.md.
+This module is the single owner of Club Championship publication. The refresh route invokes the
+validated Liquipedia publisher at most once per cooldown window; the ordinary GET remains a fast
+snapshot read. A failed refresh never replaces the last good snapshot or reconstructs standings
+from match fragments.
 """
 
 import json
 import os
+import threading
 import time
 
 _STANDINGS_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
                                "data", "esports_ewc_standings.json")
 _DEFAULT_STALE_AFTER_S = int(os.environ.get("LP_EWC_STANDINGS_STALE_AFTER_S", "21600"))  # 6h publisher cadence
+_REFRESH_COOLDOWN_S = 5 * 60
+_refresh_lock = threading.Lock()
+_refresh_last_attempt = 0.0
 _UNAVAILABLE_LABEL = "Participant unavailable"
 
 EVENT_ID = "ewc-2026"
@@ -288,6 +287,44 @@ def read_standings(path=None, stale_after_s=None):
         "status": status,
     }
 
+
+def refresh_standings(path=None, cooldown_s=None):
+    """Attempt one upstream publication while preserving the last good snapshot."""
+    global _refresh_last_attempt
+    cooldown_s = _REFRESH_COOLDOWN_S if cooldown_s is None else cooldown_s
+    if not _refresh_lock.acquire(blocking=False):
+        return {"attempted": False, "succeeded": False, "reason": "refresh_in_progress"}
+    try:
+        now = time.monotonic()
+        retry_after = cooldown_s - (now - _refresh_last_attempt)
+        if _refresh_last_attempt and retry_after > 0:
+            return {
+                "attempted": False,
+                "succeeded": False,
+                "reason": "refresh_cooldown",
+                "retryAfterSeconds": int(retry_after) + 1,
+            }
+        _refresh_last_attempt = now
+        try:
+            import fetch_ewc_standings as fetcher
+            snapshot = fetcher.fetch_validated_snapshot()
+            publish_standings(snapshot, path=path or _STANDINGS_PATH)
+            return {
+                "attempted": True,
+                "succeeded": True,
+                "publishedAt": snapshot["publishedAt"],
+                "sourceRevision": snapshot["source"].get("revision"),
+            }
+        except Exception as exc:
+            return {
+                "attempted": True,
+                "succeeded": False,
+                "reason": "upstream_refresh_failed",
+                "error": str(exc),
+            }
+    finally:
+        _refresh_lock.release()
+
 # ---------------------------------------------------------------------------
 # EWC router — projection + published Club Championship reader
 # ---------------------------------------------------------------------------
@@ -360,4 +397,15 @@ def ewc_club_standings(limit: int = Query(10, ge=1, le=100)):
     out = read_standings()
     if out["status"] != "unavailable":
         out["standings"] = out["standings"][:limit]
+    return out
+
+
+@router.post("/api/esports/events/ewc-2026/club-standings/refresh")
+def ewc_club_standings_refresh(limit: int = Query(10, ge=1, le=100)):
+    """Refresh from the publisher, then return the refreshed or last-good snapshot."""
+    refresh = refresh_standings()
+    out = read_standings()
+    if out["status"] != "unavailable":
+        out["standings"] = out["standings"][:limit]
+    out["refresh"] = refresh
     return out
