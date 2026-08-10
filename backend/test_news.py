@@ -341,3 +341,33 @@ def test_notable_does_not_override_a_real_layer():
     from news_classifier import classify
     c = classify("Lionel Messi out for three weeks with hamstring injury", "mls")
     assert c["layer"] == "injury"
+
+
+# ---------------------------------------------------- unsupported allegations
+# 2026-08-10: an anonymous X post claiming Inter Miami suspended Messi and
+# Suarez over racial-harassment allegations — unconfirmed by the club, the
+# league or any outlet — was written up as fact and served on a card.
+
+def test_allegation_without_a_receipt_is_refused():
+    from ingest_league_narratives import unsupported_allegation
+    assert unsupported_allegation({
+        "narrative": "Inter Miami suspends Messi and Suarez for a racial harassment probe",
+        "paragraph": "Beckham announced the suspensions pending a full investigation.",
+        "source_count": 0}) is True
+
+
+def test_allegation_with_a_receipt_is_allowed():
+    from ingest_league_narratives import unsupported_allegation
+    assert unsupported_allegation({
+        "narrative": "NBA investigates Kawhi Leonard over salary-cap circumvention",
+        "paragraph": "Pablo Torre reported the arrangement.",
+        "source_count": 2}) is False
+
+
+def test_ordinary_card_without_a_receipt_still_serves():
+    """Chatter-only cards stay legal — the bar is on allegations, not on cards."""
+    from ingest_league_narratives import unsupported_allegation
+    assert unsupported_allegation({
+        "narrative": "MLS commissioner rules out promotion and relegation",
+        "paragraph": "Fans argue an open pyramid would raise stakes.",
+        "source_count": 0}) is False

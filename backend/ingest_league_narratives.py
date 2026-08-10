@@ -95,6 +95,19 @@ _SYSTEM = (
     "You are the narrative desk for a sports news app. You are given the "
     "chatter around ONE important conversation in a league — real headlines "
     "and what people are posting. Write the card for it as a short paragraph. "
+    "NEVER STATE AN UNVERIFIED CLAIM AS FACT. Items marked UNVERIFIED SOCIAL "
+    "POST are anonymous posts a search engine surfaced: no byline, no "
+    "publisher, no permalink we can check. They show what is being SAID, and "
+    "nothing more. On 2026-08-10 one such post claimed Inter Miami had "
+    "suspended Messi and Suarez over racial-harassment allegations; it was "
+    "never confirmed by the club, the league or any outlet, and the desk wrote "
+    "it up as fact about named people. That must never happen again. A claim "
+    "about a person — an accusation, a suspension, an investigation, a firing, "
+    "an injury, a signing — may only be stated plainly if a REAL publisher item "
+    "in the list carries it. If only social posts carry it, either attribute it "
+    "as unconfirmed in so many words (\'an unconfirmed post claimed…\') or, "
+    "better, leave it out and write about what is confirmed. If that leaves "
+    "nothing worth saying, return narrative: null. "
     "ONE TOPIC PER CARD. This card covers exactly the conversation named in the "
     "header and nothing else. A card is NOT a roundup of everything happening "
     "in the league — that is a different feature. If an item in the list is "
@@ -347,7 +360,8 @@ def _numbered(items, limit=None):
         # sending to model so it's able to understand time").
         when = (it.get("published") or "")[:10]
         stamp = (" (%s)" % when) if when else " (date unknown)"
-        line = "%d. %s [%s]%s%s" % (i + 1, it["headline"], it["source"], stamp, url)
+        tag = it["source"] if real else ("UNVERIFIED SOCIAL POST/%s" % it["source"])
+        line = "%d. %s [%s]%s%s" % (i + 1, it["headline"], tag, stamp, url)
         body = ((it.get("body") if isinstance(it, dict) else "") or "").strip()
         if real and body and body[:40] not in it["headline"]:
             excerpt = body[:_BODY_CHARS]
@@ -356,6 +370,34 @@ def _numbered(items, limit=None):
             line += "\n   excerpt: %s" % excerpt
         out.append(line)
     return "\n".join(out)
+
+
+# Words that mark a card as making an ALLEGATION about people rather than
+# reporting an event: an accusation, a punishment, a legal or disciplinary
+# process. A card like that is exactly the kind that must not rest on anonymous
+# social chatter.
+_ALLEGATION_WORDS = (
+    "harass", "racist", "racial", "abuse", "misconduct", "assault",
+    "allegation", "alleged", "accus", "investigat", "probe", "lawsuit",
+    "sued", "arrest", "charged", "suspend", "banned", "fired", "misconduct",
+    "scandal", "circumvent", "cheat", "fraud",
+)
+
+
+def unsupported_allegation(gen):
+    """True when a card makes an allegation about people and cites nobody.
+
+    2026-08-10: an anonymous post claiming Inter Miami had suspended Messi and
+    Suarez over racial-harassment allegations — never confirmed by the club,
+    the league or any outlet — was written up as fact and served. The prompt
+    now forbids it, but a prompt is a request. This is the refusal: if a card
+    alleges something about people and no publisher item backs it, it does not
+    serve, whatever the model returned.
+    """
+    if gen.get("source_count"):
+        return False
+    text = ("%s %s" % (gen.get("narrative", ""), gen.get("paragraph", ""))).lower()
+    return any(w in text for w in _ALLEGATION_WORDS)
 
 
 def _cited_sources(items, parsed):
@@ -623,6 +665,13 @@ def main():
             print("  %-18s no narrative worth mentioning (%s)" % (conv["id"], reason))
             continue
         if gen.get("keep"):
+            continue
+        if unsupported_allegation(gen):
+            print("  %-18s REFUSED — alleges something about people with no "
+                  "publisher receipt: %s" % (conv["id"], gen["narrative"][:70]))
+            if not args.dry_run:
+                _log_deletion(con, conv, "unsupported-allegation")
+                con.execute("DELETE FROM news_narratives WHERE conv_id=?", (conv["id"],))
             continue
         if args.dry_run:
             print("  %-18s [dry-run] %s" % (conv["id"], gen["narrative"][:80]))
