@@ -32,7 +32,7 @@ decision (2026-08-09).
 | 10 | Drop "AI-generated from 0 sources"; list the sources, "and more" past two (08-07) | **Built** | `AiNarrativeCard` renders up to 2 source chips + "and more" |
 | 11 | Extrapolate beyond direct support — the packed stadium, the highlight, the lower-division energy (08-07) | **Built** | `_TEXTURE_DIMENSIONS` crossed with every seed; sport-agnostic, not per-league hardcoding |
 | 12 | Keep esports off the Home tab until it is good enough (08-07) | **Built** | `homeConvs` filter in `pages/news.tsx` |
-| 13 | A fan's opinion must not read as if Legendary Picks is saying it (08-07) | **Partly built — see §2.1** | Prompt demands attribution and the paragraphs carry it, but the dedicated `fan_voice` sentence is generated, stored, served — and never rendered |
+| 13 | A fan's opinion must not read as if Legendary Picks is saying it (08-07) | **Built** | The paragraph carries the attribution; the separate `fan_voice` line was considered and declined 2026-08-09 (§2.1) |
 | 14 | A paragraph, not bullet points and a one-liner (08-07) | **Built** | `paragraph` field is the card body |
 | 15 | Save every run so versions can be compared (08-07) | **Built** | `news_narratives_runs`, 73 runs, append-only |
 | 16 | The headlines all sound the same — vary them (08-07) | **Built** | One batch DeepSeek call across all conversations + explicit variety instruction; current 8 titles are varied |
@@ -44,14 +44,19 @@ decision (2026-08-09).
 | 22 | An editor's pass — "that was bad, do less of that" — without having to define the boundary (08-09) | **Built** | `news_feedback.py` + few-shot marks; documented in `NEWS-FEEDBACK.md` |
 | 23 | Keep news out of production (08-09) | **Held** | `/news` is dev-only; prod has no news tables |
 
-**Verdict: 21 of 23 delivered.** One is a rendering gap (#13), one is a
-workflow gap (#2). Both are in §3.
+**Verdict: 22 of 23 delivered.** The one gap is #2 — adding a topic still needs
+a code edit (§3).
 
 ---
 
 ## 2. Defects found in this audit
 
 ### 2.1 `fan_voice` is generated, stored, served — and never displayed
+
+> **Closed 2026-08-09 — Micah: "we don't need to build fan voice, it's already
+> in there."** The attribution the requirement asked for is carried by the
+> paragraph itself; the card is not getting a second line. No action.
+
 
 `AiNarrativeCard` renders `title`, `narrative` and `paragraph`. `ai.fan_voice`
 is in the type, in the API payload, and in every run of history — nothing
@@ -126,11 +131,8 @@ in git while already wired into the host. It is committed now.
 
 ## 3. Recommendations, in the order worth doing
 
-1. **Decide the `fan_voice` line** (§2.1). Either render it under the title as
-   the attributed "what people are saying" line, or drop the field from the
-   prompt and the schema. Right now the model spends tokens on a sentence
-   nobody reads, and the editor's verdicts are cast on a card that does not
-   include it.
+1. ~~Decide the `fan_voice` line~~ — **decided 2026-08-09: not building it.**
+   The paragraph already carries the attribution (§2.1).
 2. **Watch the first cron run** (03:35 tonight), then read
    `news_feedback.py --deletions` before reading the page — a declined
    conversation silently drops its served card, and that log is the only
