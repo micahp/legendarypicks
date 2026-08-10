@@ -158,3 +158,43 @@ rg -n "EwcProjection|projection|scheduleCount|scheduleStatus|scheduleWeeks" \
 
 Start by writing the strict schema/lifecycle tests and the no-feed-title API/UI behavior test.
 Those tests expose the actual gap before restructuring the fetcher or UI.
+
+## Continuation checkpoint — 2026-08-09 evening
+
+Commit `882daa8 fix(esports): serve validated EWC title history` implements the corrected
+repository-side contract:
+
+- strict versioned title snapshots and an exact 24-title manifest;
+- source URL/revision identity, checksums, match uniqueness, date/score/template rejection,
+  lifecycle and finality evidence, active/upcoming freshness limits, and immutable final data;
+- versioned snapshot files with the manifest as the atomic reader boundary, so failed candidates
+  preserve the last good publication;
+- a bounded `/api/esports/events/ewc-2026/titles/{slug}/matches` route that loads only the selected
+  title, merges local snapshot history with current slate rows, and prefers the live slate only
+  when stable source identity or participant-plus-time/result evidence proves a duplicate;
+- selected-title UI loading/error/pending behavior and published date ranges instead of ISO week
+  labels;
+- `EwcEventData` / `eventData` naming while preserving the public event route;
+- a committed manifest whose 24 entries are explicitly `unavailable` until validated snapshots
+  are published.
+
+Verification at this checkpoint:
+
+- `104` EWC backend tests passed, including operator nonzero exit, frozen-final skip, tamper and
+  stale-snapshot fail-closed behavior, no-feed history, and slate/snapshot deduplication;
+- `29` focused frontend tests passed;
+- Python compilation and `git diff --check` passed;
+- repository-wide `tsc --noEmit` remains blocked by pre-existing unrelated Flow package, CSS
+  module, removed service, and `pages/scores.tsx` target errors; no reported error named an EWC
+  task file;
+- build and isolated browser verification were not run because the host had only `1.2 GiB`
+  available, `2.7 GiB` swap in use, and an unrelated multiprocessing job consuming about 34% CPU.
+
+Source acquisition is still pending. A one-title Chess dry run and a later single no-retry probe
+both received Liquipedia HTTP 429, so no snapshot was written. The official API terms require
+`action=parse` requests to be limited to one per 30 seconds; the prior candidate used roughly a
+2–3 second cadence. Commit `882daa8` corrects the client to a shared opener and a 30-second parse
+slot. Do not run the 24-title acquisition until the temporary publisher throttle clears and host
+headroom is safe. Start with one title, verify its revision/row population and rendered selected
+title, then run sequentially. Do not convert search-engine HTML or cached page summaries into
+snapshots.
