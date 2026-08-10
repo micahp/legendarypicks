@@ -34,6 +34,30 @@ def _term_present(t: str, term: str) -> bool:
     return re.search(r"\b" + re.escape(term) + r"\b", t) is not None
 
 
+_HANDLE_RE = re.compile(r"^\[@[^\]]+\]\s*")
+_ENTITY_RE = re.compile(r"\b([A-Z][a-zA-Z'\u2019.-]{2,})(?:\s+([A-Z][a-zA-Z'\u2019.-]{2,}))?")
+
+
+def entities(headline: str) -> set:
+    """Capitalized TWO-word sequences from a headline — a proper-noun proxy.
+
+    Two words, not one: single capitalized tokens are first names and sentence
+    openers ("larry", "mike", "red", "after") and they swamp any ranking built
+    on them. Lives here because both the discovery pass and the collector's
+    article-derived social queries need the same extraction (2026-08-10).
+    """
+    h = _HANDLE_RE.sub("", headline or "")
+    out = set()
+    for m in _ENTITY_RE.finditer(h):
+        one, two = m.group(1), m.group(2)
+        if not two:
+            continue
+        if one.lower() in _ENTITY_STOPWORDS or two.lower() in _ENTITY_STOPWORDS:
+            continue
+        out.add(("%s %s" % (one, two)).lower())
+    return out
+
+
 def _norm(s: str) -> str:
     """Lowercase, hyphens to spaces, whitespace collapsed.
 
@@ -55,6 +79,17 @@ def _any_term(t_norm: str, terms: List[str]) -> bool:
     Micah reported). Inflections are listed explicitly in the rules instead.
     """
     return any(_term_present(t_norm, _norm(term)) for term in terms)
+
+# Words that look like entities but never name a story.
+_ENTITY_STOPWORDS = {
+    "the", "this", "that", "what", "why", "how", "when", "who", "his", "her",
+    "new", "top", "best", "first", "last", "next", "one", "two", "three",
+    "game", "games", "highlights", "week", "season", "day", "night", "report",
+    "reports", "sources", "source", "news", "update", "updates", "live",
+    "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday",
+    "january", "february", "march", "april", "may", "june", "july", "august",
+    "september", "october", "november", "december", "espn", "vs",
+}
 
 LEAGUE_TERMS: Dict[str, List[str]] = {
     "nfl": ["nfl", "chiefs", "eagles", "49ers", "cowboys", "ravens", "bills", "lions",

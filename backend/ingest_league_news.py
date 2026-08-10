@@ -35,7 +35,7 @@ import xml.etree.ElementTree as ET
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from paced_http import Fetcher  # noqa: E402
-from news_classifier import classify  # noqa: E402
+from news_classifier import classify, entities  # noqa: E402
 
 UA = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36"
 
@@ -318,9 +318,33 @@ def collect_rss():
     return items
 
 
-def collect_bluesky():
+def trending_queries(article_items, limit=12):
+    """Search social for what the ARTICLES are about this run.
+
+    Micah, 2026-08-10: "maybe we use topics in the articles we find in that run
+    and search social media about them." This is the third leg of the corpus:
+    seeded queries follow topics we named, open league queries sample broadly,
+    and these follow the news itself — so chatter arrives on a story the day it
+    breaks instead of only where a seed happens to sit.
+
+    A topic must appear in TWO different articles to qualify: one headline is an
+    event, two is a story.
+    """
+    from collections import Counter
+    counts = Counter()
+    for it in article_items:
+        if it.get("source") == "bluesky":
+            continue
+        if (it.get("headline") or "").startswith("FETCH ERROR"):
+            continue
+        for e in entities(it.get("headline", "")):
+            counts[e] += 1
+    return [(None, e) for e, n in counts.most_common(limit * 3) if n >= 2][:limit]
+
+
+def collect_bluesky(extra_queries=()):
     items = []
-    for conv_id, q in CONVERSATION_QUERIES + OPEN_QUERIES:
+    for conv_id, q in list(CONVERSATION_QUERIES) + list(OPEN_QUERIES) + list(extra_queries):
         url = BLUESKY_SEARCH + "?q=%s&limit=8" % urllib.parse.quote(q)
         try:
             d = _BLUE_FETCHER.json(url)
@@ -513,7 +537,11 @@ def main():
             n = sum(1 for i in all_items[before:] if i["source"] == name)
             print("  collected %d from %s" % (n, name))
     before = len(all_items)
-    all_items += collect_bluesky()
+    trending = trending_queries(all_items)
+    if trending:
+        print("  article-derived social queries: %s"
+              % ", ".join(q for _c, q in trending))
+    all_items += collect_bluesky(trending)
     print("  collected %d from bluesky" % (len(all_items) - before))
 
     # A failed fetch is recorded as an item with an empty url, and upsert skips

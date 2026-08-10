@@ -46,7 +46,7 @@ from collections import defaultdict
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from _core import _deepseek_chat, _init_db  # noqa: E402
-from news_classifier import LEAGUE_TERMS  # noqa: E402
+from news_classifier import LEAGUE_TERMS, entities as _shared_entities  # noqa: E402
 
 # Team and league names are CONTAINERS, not conversations: "brewers" recurs
 # every day across every outlet and says nothing. Reuse the classifier's own
@@ -94,26 +94,8 @@ def _db():
 # ---------------------------------------------------------------- stage 1
 
 def _entities(headline):
-    """Capitalized TWO-word sequences — a cheap proper-noun proxy.
-
-    Two words, not one: single capitalized tokens are first names and sentence
-    openers ("larry", "mike", "red", "after"), and they dominated the ranking
-    when they were allowed (2026-08-10). A person or a policy worth a card
-    survives as a pair — "tarik skubal", "salary cap".
-
-    Bluesky headlines are prefixed with `[@handle] `; that prefix is stripped
-    so a poster's handle never becomes the topic.
-    """
-    h = re.sub(r"^\[@[^\]]+\]\s*", "", headline or "")
-    out = set()
-    for m in _ENTITY_RE.finditer(h):
-        one, two = m.group(1), m.group(2)
-        if not two:
-            continue
-        if one.lower() in _STOP_ENTITIES or two.lower() in _STOP_ENTITIES:
-            continue
-        out.add(("%s %s" % (one, two)).lower())
-    return out
+    """Delegates to news_classifier.entities — one extractor, two callers."""
+    return set(_shared_entities(headline))
 
 
 def _covered_by_existing(key, convs):
