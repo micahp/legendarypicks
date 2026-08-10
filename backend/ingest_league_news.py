@@ -432,7 +432,20 @@ X_ACCOUNTS = [
     ("TheAthleticNHL", "nhl"),
     ("TheAthleticCFB", "ncaaf"),
     ("BleacherReport", None),
-    ("AdamSchefter", "nfl"),         # news breaker
+    # The people who BREAK the news. Measured 2026-08-10, usable share of 20
+    # rows: Shams 80%, TomBogert 44%, Rosenthal 40%, Friedman 36%, Rapoport 35%,
+    # Passan 35%, Yates 25% — the best per-item signal of anything we read, and
+    # they are the ones who post availability ("sat out practice", "not
+    # travelling") hours before a brand account repackages it.
+    ("AdamSchefter", "nfl"), ("RapSheet", "nfl"), ("FieldYates", "nfl"),
+    ("ShamsCharania", "nba"),
+    ("JeffPassan", "mlb"), ("Ken_Rosenthal", "mlb"),
+    ("FriedgeHNIC", "nhl"),
+    ("TomBogert", "mls"),
+    # Not taken, measured the same way: arielhelwani 0% usable, Brett_McMurphy
+    # 5%, PeteThamel 10%, TomPelissero 10% (and ~1 post/day). FabrizioRomano
+    # scores well at 63% but is European club soccer — competitions we do not
+    # cover, the same trap as the ESPN soccer rollup.
     # NO prediction-market accounts, not even the sport-specific ones. Measured
     # 2026-08-10 on one ruler, rows unclassified / usable: Kalshi 100%/0%,
     # Polymarket 95%/10%, KalshiSports 75%/15%, PrizePicks 65%/5%,
@@ -562,12 +575,14 @@ def upsert(items, dry_run=False):
         con.close()
     con = sqlite3.connect(db_path)
     inserted = updated = 0
+    rows_before = con.execute("SELECT count(*) FROM news_items").fetchone()[0]
+    written = 0
     for it in items:
         if not it.get("url"):
             continue
         if dry_run:
             continue
-        before = con.total_changes
+        before = con.total_changes  # noqa: F841 (kept for the delta below)
         con.execute(
             """INSERT INTO news_items(league, layer, source, headline, body, url, published, key_player, conv_id)
                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -579,13 +594,18 @@ def upsert(items, dry_run=False):
             (it["league"], it["layer"], it["source"], it["headline"], it["body"],
              it["url"], it["published"], it.get("key_player"), it.get("conv_id")),
         )
-        delta = con.total_changes - before
-        if delta == 1:
-            inserted += 1
-        else:
-            updated += 1
+        written += 1
+        # NOT total_changes: SQLite counts an ON CONFLICT DO UPDATE as one
+        # change exactly like an insert, so every run reported "N new, 0
+        # refreshed" — including a re-run seconds later that inserted nothing
+        # (2026-08-10). A count of the table either side is the honest measure;
+        # anything else silently turns "we collected nothing new" into "337 new".
+        pass
     con.commit()
+    rows_after = con.execute("SELECT count(*) FROM news_items").fetchone()[0]
     con.close()
+    inserted = rows_after - rows_before
+    updated = written - inserted
     return inserted, updated
 
 
@@ -659,9 +679,31 @@ def main():
                     help="re-clean stored headline/body + normalize published (no network)")
     ap.add_argument("--sync-conversations", action="store_true",
                     help="write the built-in conversation defaults into the DB")
+    ap.add_argument("--x-only", action="store_true",
+                    help="collect only the X timelines (cheap, run hourly)")
     ap.add_argument("--ingest-story", default="",
                     help="ESPN article URL or id -> full body into news_items")
     args = ap.parse_args()
+
+    if args.x_only:
+        # X accounts post far faster than the nightly cadence: @UnderdogNFL
+        # runs ~83 posts/day against a 20-post RSS window, so the feed only
+        # holds about six hours and a daily run sees a quarter of it. This path
+        # is 10 requests, no ESPN, no bluesky, no model — cheap enough to run
+        # every few hours (2026-08-10).
+        items = collect_x()
+        errors = [i for i in items if i["headline"].startswith("FETCH ERROR")]
+        for e in errors:
+            print("  FETCH FAILURE: %s" % e["headline"][:100])
+        for it in items:
+            it.update(classify(it["headline"] + " " + it["body"],
+                               it.get("league_hint")))
+        if args.dry_run:
+            print("DRY RUN — %d x posts" % len(items))
+            return
+        print("x-only: collected %d, wrote %d new / %d refreshed"
+              % (len(items), *upsert(items)))
+        return
 
     if args.ingest_story:
         it = fetch_espn_story(args.ingest_story)
