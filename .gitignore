@@ -85,3 +85,4 @@ backend/data/espn-cache/
 # News engine POC fetch cache
 sketches/.news_cache/
 backend/data/news-cache/
+backend/data/news-deletions.log

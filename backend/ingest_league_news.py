@@ -73,6 +73,12 @@ CONVERSATIONS = [
      "seed": "nfl turf grass"},
     {"id": "nba-expansion", "league": "nba", "title": "Expansion",
      "seed": "nba expansion"},
+    # Added 2026-08-09 from evidence in the collected feed (Pablo Torre
+    # bombshell + Stephen A. "banishment" call): a live, recurring NBA
+    # conversation distinct from expansion. Seeded only because 3+ collected
+    # items recur on it — not a dictated narrative this time.
+    {"id": "nba-kawhi-cap", "league": "nba", "title": "Kawhi salary-cap case",
+     "seed": "Kawhi Leonard salary cap circumvention Clippers"},
     {"id": "nhl-salary-cap", "league": "nhl", "title": "Salary cap",
      "seed": "nhl salary cap"},
     {"id": "ufc-title-fight", "league": "ufc", "title": "Title picture",

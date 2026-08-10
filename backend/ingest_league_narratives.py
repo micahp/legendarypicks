@@ -24,6 +24,7 @@ Usage:
   LP_DB_PATH=/path/to/db python3 ingest_league_narratives.py [--convs mls-pro-rel] [--dry-run]
 """
 import argparse
+import datetime
 import json
 import os
 import re
@@ -36,6 +37,44 @@ from ingest_league_news import CONVERSATIONS  # noqa: E402
 
 _MAX_SOURCES = 12
 _MIN_ITEMS = 2  # fewer than this and there's no "chatter" to summarize
+
+# A declined/failed conversation wipes its served news_narratives row — that's
+# the "some are missing now" mechanism. The full served card that vanished is
+# appended here so the editor can review what was lost during the run (Micah
+# 2026-08-09: "during the run it should document the full of what cards were
+# deleted just log it to a file and we can read that file when we run the
+# review"). Run history keeps the OLD version, but not that it was SERVED then
+# dropped — this log is that record.
+_DELETIONS_LOG = os.environ.get("LP_NEWS_DELETIONS_LOG") or os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "data", "news-deletions.log")
+
+
+def _log_deletion(con, conv, reason):
+    """Append the full served card being deleted to the deletions log. Reads
+    the row BEFORE the delete (same connection, pre-commit, sees the served
+    state). No-op if nothing was served for the conv."""
+    row = con.execute(
+        """SELECT narrative, fan_voice, paragraph, sources, source_count,
+                  generated_at FROM news_narratives WHERE conv_id=?""",
+        (conv["id"],)).fetchone()
+    if not row:
+        return  # nothing served to delete
+    os.makedirs(os.path.dirname(_DELETIONS_LOG), exist_ok=True)
+    ts = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    block = (
+        "\n[{ts}] DELETED conv={cid} league={lg} reason={reason}\n"
+        "  served-since: {since}\n"
+        "  narrative: {narr}\n"
+        "  fan_voice: {fv}\n"
+        "  paragraph: {para}\n"
+        "  sources: {src}\n"
+        "  source_count: {sc}\n".format(
+            ts=ts, cid=conv["id"], lg=conv["league"], reason=reason,
+            since=row["generated_at"], narr=row["narrative"],
+            fv=row["fan_voice"], para=row["paragraph"],
+            src=row["sources"], sc=row["source_count"]))
+    with open(_DELETIONS_LOG, "a", encoding="utf-8") as f:
+        f.write(block)
 
 _SYSTEM = (
     "You are the narrative desk for a sports news app. You are given the "
@@ -109,6 +148,8 @@ _SYSTEM = (
     "sentence with colons — one fact per clause, comma-connected, and if a "
     "sentence gets crowded, split it. A longer sentence that reads easily "
     "beats a short one the reader has to unpack. "
+    "Each numbered item is `N. HEADLINE [source]` and real (non-bluesky) "
+    "articles also carry their URL after the source. "
     "Output STRICT JSON only: "
     '{"narrative": "<one sentence: the conversation, anchored on the news — '
     'the title; unique voice, not a repeated template>", '
@@ -116,10 +157,22 @@ _SYSTEM = (
     '"paragraph": "<2-4 sentences of plain ESPN-style body prose — fan voice '
     'with evidence, concrete names and numbers, room to flow; do NOT repeat '
     'the narrative>", '
+    '"source_urls": ["<url>", ...]}, where source_urls lists the URLs of the '
+    "REAL (non-bluesky) articles from the items that THIS card actually grounds "
+    "in — only those whose content you used for the anchor or the evidence. "
+    "Empty list if the card is built from social chatter with no real article. "
+    "Never invent a URL; only cite URLs that appear in the items. "
     "Only if the items are truly unrelated (no shared theme at all) output "
     '{"narrative": null}. '
     "Ground ONLY in the provided items. Do not invent topics, facts, or names "
-    "not present in the list. Do not speculate about what might happen."
+    "not present in the list. Do not speculate about what might happen. "
+    "The card follows THIS conversation's theme. The user may have marked "
+    "prior cards for this conversation GOOD or BAD (an editor's pass — 'more "
+    "of this' / 'less of that'); where those marks appear in the prompt they "
+    "show what on-theme and off-theme LOOK like here. Infer the boundary from "
+    "the contrast between the good and bad examples — do not apply a fixed "
+    "rule, and never just echo a bad example's wording. With no marks yet, "
+    "use the conversation title as the theme."
 )
 
 
@@ -145,15 +198,22 @@ def _parse_response(text):
 
 def _load_chatter(con, conv):
     """Items for one conversation: the tagged bluesky chatter + the league's
-    real-article narrative headlines.
+    recent real articles.
 
     The conversation's bluesky posts are tagged with conv_id by the collector
-    and are the fan-voice signal. Real-article headlines for the league
-    (narrative layer, non-bluesky) are added as the OFFICIAL ANCHOR material
-    the fan posts are reacting to — a conversation whose chatter is all
-    social still needs the real story to anchor the card (MLB salary-cap had
-    zero real articles in its tagged bucket, so the desk had nothing to anchor
-    on and correctly declined rather than fabricate; Micah 2026-08-07).
+    and are the fan-voice signal. The league's recent real (non-bluesky)
+    articles are added as OFFICIAL ANCHOR material the fan posts are reacting
+    to — a conversation whose chatter is all social still needs the real story
+    to anchor the card (MLB salary-cap had zero real articles in its tagged
+    bucket, so the desk had nothing to anchor on and correctly declined rather
+    than fabricate; Micah 2026-08-07).
+
+    The anchor pool is the league's recent real articles — NOT a seed-word
+    headline match. Seed-word matching was too narrow: the MLS pro/rel card is
+    anchored by the "commissioner Berg in charge" article, but that headline
+    contains neither "relegation" nor "promotion", so it never reached the card
+    (2026-08-09). The model picks which of these it actually grounds in (see
+    _generate), so a broad pool does not attach irrelevant receipts.
     """
     conv_id, league = conv["id"], conv["league"]
     rows = con.execute(
@@ -163,17 +223,11 @@ def _load_chatter(con, conv):
         (conv_id, _MAX_SOURCES),
     ).fetchall()
     out = [dict(r) for r in rows]
-    # Real-article anchors: league's narrative layer, not bluesky, that carry
-    # the conversation's seed terms (fallback: any league narrative article).
-    seed_terms = [t for t in conv["seed"].split() if len(t) > 3]
-    like = " OR ".join("headline LIKE ?" for _ in seed_terms) or "1=1"
-    params = ["%" + t + "%" for t in seed_terms]
     anchors = con.execute(
         """SELECT headline, url, source, published FROM news_items
-           WHERE league=? AND layer='narrative' AND source != 'bluesky'
-             AND url != '' AND (%s)
-           ORDER BY published DESC LIMIT 5""" % like,
-        [league] + params,
+           WHERE league=? AND source != 'bluesky' AND url != ''
+           ORDER BY published DESC LIMIT 8""",
+        (league,),
     ).fetchall()
     seen = {r["url"] for r in out}
     for r in anchors:
@@ -183,19 +237,65 @@ def _load_chatter(con, conv):
     return out
 
 
-def _generate(conv, items):
+def _cited_sources(items, parsed):
+    """Resolve the model's cited source_urls to the real-article receipts.
+    Only URLs that are actually in the (non-bluesky) items become chips — a
+    hallucinated URL never reaches the card (Micah, 2026-08-09)."""
+    real = {it["url"]: it for it in items if it["source"] != "bluesky" and it.get("url")}
+    cited = parsed.get("source_urls") or []
+    if isinstance(cited, str):
+        cited = [cited]
+    out = []
+    for url in cited:
+        it = real.get(url)
+        if it:
+            out.append({"headline": it["headline"], "url": it["url"], "source": it["source"]})
+    return out
+
+
+def _editor_marks(con, conv_id):
+    """The user's good/bad verdicts on prior runs of this conversation, joined
+    to the run cards. These are the few-shot 'editor preferences' — Micah
+    2026-08-09: 'i just want to come in as an editor every now and then and
+    say that was bad do less of that, this was good do more of this'. The
+    model infers the on-theme/off-theme boundary from the CONTRAST between
+    good and bad cards; no hardcoded rule. Returns a block to prepend to the
+    user prompt, or '' when there are no marks yet (today's behavior)."""
+    rows = con.execute(
+        """SELECT f.verdict, r.narrative FROM news_card_feedback f
+           JOIN news_narratives_runs r ON r.id = f.run_id
+           WHERE f.conv_id=? ORDER BY f.created_at DESC LIMIT 6""",
+        (conv_id,)).fetchall()
+    good = [r["narrative"] for r in rows if r["verdict"] == "good"]
+    bad = [r["narrative"] for r in rows if r["verdict"] == "bad"]
+    if not good and not bad:
+        return ""
+    parts = []
+    if good:
+        parts.append("GOOD cards for this conversation — match this kind of "
+                     "framing (more of this):\n" +
+                     "\n".join("- %s" % n for n in good[:3]))
+    if bad:
+        parts.append("BAD cards — do NOT frame it this way (less of this):\n" +
+                     "\n".join("- %s" % n for n in bad[:2]))
+    return "Editor marks:\n" + "\n".join(parts) + "\n\n"
+
+
+def _generate(conv, items, marks=""):
+    # Real (non-bluesky) items carry their URL so the model can cite the exact
+    # article it grounded in; bluesky posts are signal only (never a chip).
     numbered = "\n".join(
-        "%d. %s [%s]" % (i + 1, it["headline"], it["source"])
+        "%d. %s [%s]%s" % (i + 1, it["headline"], it["source"],
+                           (" " + it["url"]) if it["source"] != "bluesky" and it.get("url") else "")
         for i, it in enumerate(items)
     )
-    user = "Conversation: %s (%s)\n\nRecent chatter:\n%s" % (
-        conv["title"], conv["league"], numbered)
+    user = "%sConversation: %s (%s)\n\nRecent chatter:\n%s" % (
+        marks, conv["title"], conv["league"], numbered)
     # Social posts feed the model's signal but are never shown as receipts —
-    # only real articles become source chips (Micah, 2026-08-06). A
+    # only real articles the model actually cited become source chips. A
     # conversation whose chatter is ALL social still gets a card — that
     # chatter IS the signal (e.g. MLS relegation/promotion talk) — it just
     # renders with no source chips rather than being dropped entirely.
-    real_sources = [it for it in items if it["source"] != "bluesky"]
     for attempt in (0, 1):
         raw = _deepseek_chat(_SYSTEM, user, max_tokens=4000)
         parsed = _parse_response(raw)
@@ -203,18 +303,18 @@ def _generate(conv, items):
             continue  # unparseable — retry once
         if not parsed.get("narrative"):
             return {"declined": True}
+        sources = _cited_sources(items, parsed)
         return {
             "narrative": parsed["narrative"].strip(),
             "fan_voice": str(parsed.get("fan_voice") or "").strip(),
             "paragraph": str(parsed.get("paragraph") or "").strip(),
-            "sources": [{"headline": it["headline"], "url": it["url"], "source": it["source"]}
-                        for it in real_sources],
-            "source_count": len(real_sources),
+            "sources": sources,
+            "source_count": len(sources),
         }
     return None
 
 
-def _generate_batch(convs_with_items):
+def _generate_batch(convs_with_marks):
     """One DeepSeek call for the WHOLE set of conversations.
 
     Per-conversation calls each see only their own chatter, so the model
@@ -226,7 +326,7 @@ def _generate_batch(convs_with_items):
     or {conv_id: null} when a conversation is genuinely unrelated chatter.
     """
     blocks = []
-    for conv, items in convs_with_items:
+    for conv, items, marks in convs_with_marks:
         # Dedupe by headline first — the collector stores the same post from
         # multiple feeds (duplicate Kupp posts were crowding out the Will
         # Anderson injury item and the model never saw it).
@@ -239,11 +339,13 @@ def _generate_batch(convs_with_items):
             seen_h.add(h)
             unique.append(it)
         numbered = "\n".join(
-            "%d. %s [%s]" % (i + 1, it["headline"], it["source"])
+            "%d. %s [%s]%s" % (i + 1, it["headline"], it["source"],
+                               (" " + it["url"]) if it["source"] != "bluesky" and it.get("url") else "")
             for i, it in enumerate(unique[:10])
         )
-        blocks.append("### %s (%s) — %s\n%s" % (
-            conv["id"], conv["league"], conv["title"], numbered))
+        header = "### %s (%s) — %s" % (conv["id"], conv["league"], conv["title"])
+        blocks.append(("%s%s\n%s" % (marks, header, numbered)) if marks else
+                      ("%s\n%s" % (header, numbered)))
     user = (
         "Here are ALL the conversations to write cards for. They are part of "
         "one batch: read every block, then write every card. The titles MUST "
@@ -255,7 +357,7 @@ def _generate_batch(convs_with_items):
         + "\n\n".join(blocks)
     )
     for attempt in (0, 1):
-        raw = _deepseek_chat(_SYSTEM, user, max_tokens=6000)
+        raw = _deepseek_chat(_SYSTEM, user, max_tokens=10000)
         parsed = _parse_response(raw)
         if parsed is None:
             continue
@@ -291,7 +393,8 @@ def main():
         if len(items) < _MIN_ITEMS:
             print("  %-18s skipped (%d sources < %d)" % (conv["id"], len(items), _MIN_ITEMS))
             continue
-        loaded.append((conv, items))
+        marks = _editor_marks(con, conv["id"])
+        loaded.append((conv, items, marks))
 
     # Batch path: ONE model call across all conversations so the model can
     # vary titles against each other (per-call generation repeats templates).
@@ -304,40 +407,43 @@ def main():
             # still delete only that conversation's stale card.
             print("  BATCH FAILED (model returned nothing parseable after retry) — keeping existing cards")
             results = {}
-            for conv, items in loaded:
+            for conv, items, marks in loaded:
                 results[conv["id"]] = {"declined": False, "keep": True}
         else:
-            for conv, items in loaded:
+            for conv, items, marks in loaded:
                 entry = parsed.get(conv["id"])
                 if not entry or not entry.get("narrative"):
                     results[conv["id"]] = {"declined": True}
                     continue
-                real_sources = [it for it in items if it["source"] != "bluesky"]
+                sources = _cited_sources(items, entry)
                 results[conv["id"]] = {
                     "narrative": entry["narrative"].strip(),
                     "fan_voice": str(entry.get("fan_voice") or "").strip(),
                     "paragraph": str(entry.get("paragraph") or "").strip(),
-                    "sources": [{"headline": it["headline"], "url": it["url"], "source": it["source"]}
-                                for it in real_sources],
-                    "source_count": len(real_sources),
+                    "sources": sources,
+                    "source_count": len(sources),
                 }
     else:
-        for conv, items in loaded:
-            gen = _generate(conv, items)
+        for conv, items, marks in loaded:
+            gen = _generate(conv, items, marks)
             if gen is None:
                 print("  %-18s FAILED (model returned nothing parseable after retry)" % conv["id"])
                 continue
             results[conv["id"]] = gen
 
     written = 0
-    for conv, items in loaded:
+    for conv, items, marks in loaded:
         gen = results.get(conv["id"])
         if gen is None or gen.get("declined"):
             # A conversation that declines/fails this run must not keep
             # serving an old card (which may carry bluesky source chips).
+            # Log the full served card being dropped first, so the editor can
+            # review what vanished (Micah 2026-08-09).
+            reason = "model-failure" if gen is None else "model-declined"
             if not args.dry_run:
+                _log_deletion(con, conv, reason)
                 con.execute("DELETE FROM news_narratives WHERE conv_id=?", (conv["id"],))
-            print("  %-18s no narrative worth mentioning" % conv["id"])
+            print("  %-18s no narrative worth mentioning (%s)" % (conv["id"], reason))
             continue
         if gen.get("keep"):
             continue

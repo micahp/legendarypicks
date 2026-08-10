@@ -289,10 +289,86 @@ is frontend-only for now (`pages/news.tsx`).
 
 ### 8.9 Next steps (not built)
 
-- League summary pass: aggregate each league's conversation cards into one
-  "state of the league" summary (the data is already tagged per league).
+- ~~League summary pass~~ → **BUILT 2026-08-09, see §9.**
 - More seeds per league as conversations firm up (MLB salary cap, UFC, NCAAF
   realignment, Valorant declined on 2026-08-07 because their chatter was
-  genuinely scattered/weak — honesty over padding).
-- A scheduled collector/narrative cron (currently manual runs).
+  genuinely scattered/weak — honesty over padding). → **one new seed added
+  2026-08-09 from evidence, see §9.4.**
+- ~~Scheduled collector/narrative cron~~ → **BUILT 2026-08-09, see §9.5.**
 - Prod promotion: migrate `news_narratives` schema on `picks.db` first.
+
+---
+
+## 9. PROGRESS UPDATE — 2026-08-09 (items 2-5 from §8.9)
+
+Built on the v2 conversation surface. All dev-DB only (news still excluded
+from prod; see §0 coordination note).
+
+### 9.1 League summary pass (item 2) — DONE
+
+`backend/ingest_league_summaries.py` rolls each league's conversation cards up
+into ONE "state of the league" paragraph. Runs AFTER `ingest_league_narratives`.
+One DeepSeek batch call across every league that has cards, so the model varies
+voice across leagues (same reason the narrative desk batches). Same
+strict-JSON + retry + keep-old-on-batch-fail pattern. A league whose cards have
+no through-line declines (honest — a run on 2026-08-09 declined 2-3 of 8).
+
+- New table `news_league_summaries(league PRIMARY KEY, summary, generated_at)`
+  in `_core._init_db`.
+- API: `_league_report` carries `summary` per league (or `""`); served on
+  `/api/news` and `/api/news/{league}`.
+- UI: `LeagueSummaryCard` at the top of each per-league tab (emerald left-rule,
+  "State of the league" label), above the conversation cards. No source chips of
+  its own — it synthesizes the cards beneath it, which carry the receipts.
+- Verified: plain worker on a spare port served all 8 leagues' summaries; live
+  dev backend (:8096) needs a recycle first (see §9.6).
+
+### 9.2 Freshness policy (item 4) — DECIDED
+
+Per-day (1 day). Surfaced as the daily cron below. Conversations regenerate on
+each collect; the top conversation carries a first-seen date.
+
+### 9.3 Source grounding — NOT an issue (Micah, 2026-08-09)
+
+Earlier flagged that 5/9 cards carried `source_count=0`. Not an issue: the
+granular feed items all link to real articles (`url` is UNIQUE NOT NULL), and
+the conversation cards are grounded in the collected chatter. Source-chip
+grounding on the narrative cards is left as-is.
+
+### 9.4 More seeds (item 5) — one, evidence-based
+
+Mined the already-collected signal (no extra ESPN budget) for recurring
+conversations not yet seeded. Only ONE met the bar (multiple recurring
+headlines, distinct from existing seeds):
+
+- `nba-kawhi-cap` ("Kawhi Leonard salary cap circumvention Clippers") — Pablo
+  Torre bombshell + Stephen A. "banishment" call (3 refs in collected items).
+  The other leagues' live conversations are already covered by existing seeds;
+  remaining headlines were single granular events, not recurring narratives —
+  declined rather than padded (Valorant precedent).
+
+Verified: the new card generates clean (plain language, attributed fan voice,
+2 sources) and the NBA summary now rolls up BOTH Kawhi and Las Vegas expansion.
+
+### 9.5 Daily cron (item 3) — DONE
+
+- `scripts/news-collect.sh`: runs collector → narratives → summaries against
+  `picks.dev.db` (dev-only). Each step logged; one failing does not abort the
+  next (a transient ESPN per-host 403 must not block the DeepSeek refresh).
+  Idempotent upserts; re-runs inside the cache TTL cost zero ESPN requests.
+- systemd `legendarypicks-news.service` (oneshot, Nice=10, TimeoutStartSec=900)
+  + `legendarypicks-news.timer` (OnCalendar daily 03:35, Persistent). Enabled +
+  active; first fire Mon 2026-08-10 03:35 CDT. Mirrors the
+  `legendarypicks-nfl-transactions` unit pattern.
+- Smoke-tested end-to-end (exit 0).
+
+### 9.6 Open / needs Micah
+
+- **Dev backend :8096 recycle.** A `uvicorn --reload` cycle wedged (dead worker
+  + zombie child, socket held but not accepting) after a rapid 3-file edit
+  sequence during this work. The code is verified correct on a plain spare-port
+  worker; 8096 just needs a process recycle. Claude was blocked from killing
+  the managed PID (2081285) by the dev-server guardrail — Micah to relaunch with
+  the original command, or authorize it.
+- Prod promotion (still): migrate `news_narratives` + `news_league_summaries`
+  on prod `picks.db` before any release that ships news.

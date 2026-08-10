@@ -241,6 +241,20 @@ def _init_db():
           generated_at TEXT NOT NULL DEFAULT (datetime('now')));
         """)
         con.execute("CREATE INDEX IF NOT EXISTS idx_nnruns_conv ON news_narratives_runs(conv_id, generated_at)")
+        # Card feedback (audit trail of the user's verdicts on a specific run;
+        # Micah 2026-08-09: "i need a way to give it feedback as we go"). A
+        # verdict on a run DERIVES labels for the run's cited sources (good ->
+        # positives, tangent/bad -> negatives) — see news_feedback.py.
+        con.execute("""
+        CREATE TABLE IF NOT EXISTS news_card_feedback(
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          run_id INTEGER NOT NULL,
+          conv_id TEXT NOT NULL,
+          verdict TEXT NOT NULL,
+          note TEXT NOT NULL DEFAULT '',
+          created_at TEXT NOT NULL DEFAULT (datetime('now')));
+        """)
+        con.execute("CREATE INDEX IF NOT EXISTS idx_ncfb_run ON news_card_feedback(run_id)")
         con.commit()
 
 
