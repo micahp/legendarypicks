@@ -1,5 +1,112 @@
 # Changelog
 
+## v0.7.11 — 2026-08-10
+
+### Kick viewer counts, silently null since the keys were never hydrated
+
+- **`KICK_CLIENT_ID` / `KICK_CLIENT_SECRET`** (`83bf00d`). `_hydrate_esports_keys()`
+  self-hydrates missing esports keys from the dev secrets file at startup, but its
+  allowlist omitted both Kick OAuth credentials. Liveness kept working, so nothing looked
+  broken — the official viewer-count lookup just had no token and degraded to null with
+  `token_unavailable`. Both keys are now on the allowlist. The shape is the familiar one:
+  the surface answered, so the absence never surfaced.
+
+### League news engine
+
+The engine went from a POC to something that serves cards, and most of the work was
+learning what it is allowed to say.
+
+- **What it reads** — ESPN league feeds plus the story bodies the `www` host refuses
+  (`71b094c`), RSS, Bluesky, 13 X accounts where the handle supplies the league
+  (`54096e8`, `b87acb0`), and topic-matched Google News articles (`2c15559`). The
+  sport-wide soccer rollup is collected but deliberately kept out of the nightly run
+  (`e3b6433`) — it poisons the corpus with leagues and players we do not cover.
+- **What a card is** — one topic, not a league roundup (`efcd60a`). Cards are organized by
+  conversation (`e037bd5`), and the pool is ranked rather than gated (`c1e790e`): chatter
+  ranked on the seed, anchors ranked on the seed plus the entities the best chatter
+  actually mentions. Ranking cannot rescue an item that was never a candidate, so anything
+  carrying a seed word is a candidate at any age.
+- **Topic discovery** (`c8c956d`, `323545b`) — the seeds became training data rather than a
+  fixed list, and each league is also sampled un-seeded so discovery is not anchored to
+  topics we thought of first.
+- **The trust model, after it failed in public.** A card asserted that Inter Miami had
+  suspended Messi and Suárez over a racial-harassment probe. Suárez's six-game Leagues Cup
+  ban is real and published; the cause is published nowhere; the Messi suspension is false
+  — he was in Argentina after his father's death, which publisher items *in the same pool*
+  reported. Not unsupported: contradicted. Fixes, in code rather than instruction:
+  `x-search` unwired and its 1,056 unattributable rows purged (`d3d6ab6`), since Google
+  hands over a post's words and a redirect and nothing else — no author, no handle, no
+  permalink; `unsupported_allegation()` refuses to serve an allegation about a person with
+  no publisher receipt; `had_publisher_material()` refuses a card whose pool holds no
+  published reporting (`c7d13e4`). Where a publisher and a social post disagree, the
+  publisher wins.
+- **And the correction to that fix** (`6ae85e8`). Requiring the *model* to cite a publisher
+  dropped 11 of 14 otherwise-good cards over a missing JSON field — trusting model output
+  as a control, the same mistake in a new place. What is checked is whether a publisher
+  item was in the pool, which we can verify ourselves. The safety wording in the prompt was
+  then trimmed 1,536 → 585 characters after the long incident narrative pushed the desk to
+  decline 10 of 14 conversations that each had 12 chatter items and 6 publisher anchors.
+  Declining is not safety when there is real reporting to write from. Declines: 10 → 2.
+- **Editor feedback loop** (`8dc19cf`) — run-level good/bad verdicts steer generation.
+- Timestamps served as real UTC (`fe132cc`), publisher text and dates normalized at ingest
+  (`114c914`), whole-word matching in the layer rules (`c63add6`), and a wide batch that
+  will not parse now retries in chunks (`7f4a155`).
+
+### Soccer: Leagues Cup and MLS
+
+- **On the scoreboard** (`b0179d5`), with game-detail tabs (`61c87c6`), the live stream and
+  From the Booth on the right feed (`5101dd7`, `2ccc59b`), the live minute on game detail
+  (`f8620d4`), and suspended matches labelled SUSPENDED rather than FINAL (`e69188e`).
+- **MLS on the hub** (`ad7a9df`). Standings, schedule-dates and coverage have vouched MLS
+  for a while — it simply had no card on `/leagues`, so the only way in was to type the
+  URL. It now carries its own name and crest rather than falling back to a generic trophy.
+  Which tabs appear is still the coverage registry's call: team-stats is nba/nhl/nfl only.
+- **NCAAF is deliberately absent.** The card was written but the backend has no such
+  league — `/api/ncaaf/standings` answers 404 with its supported list — so it would have
+  led to a dead hub.
+
+### Esports and EWC 2026
+
+- The Esports league destination at `/leagues/esports` (`668a160`, `78eb91b`) with tabs, an
+  inline all-esports board and interactive title filtering; `GET /api/esports/titles`
+  (`ccbc866`); the EWC center moved out of the `/esports` page and into the hub
+  (`0c74089`, `1dab7f7`).
+- Club Championship standings from the Liquipedia MediaWiki API (`4d19ef0`) with club logos
+  on every row — HTTPS-normalized publisher logos, local index reconciliation and a crest
+  fallback (`2ce6c62`), loaded without hotlink referrers (`ba422ca`).
+- Verified EWC title schedules and history from PandaScore and Lichess (`d6591ee`,
+  `12ceef9`), data-derived title coverage (`ec70cd1`), and qualifier series excluded from
+  event focus (`c64f6df`).
+- **Logo index** (`8864af9`): 265 → 288 entries, append-only. Seven of the new teams
+  resolve to a crest; the other sixteen are recorded as an empty string, which means
+  "asked, none published" rather than "not asked yet".
+
+### Audit and contract
+
+- **NHL qualifier was published all along** (`4ff583a`) — re-asked the right endpoint, now
+  PASS. A gap is a statement about which endpoint we asked.
+- Leagues with no leaderboard surface are UNVERIFIED rather than FAIL (`84cefac`);
+  `B/position-content` declared for mlb/nba/ufc/wc (`01e6986`); section 7 of the coverage
+  contract rewritten so adding a league is a declared, checkable path (`c0ca67d`).
+
+### Docs
+
+- **`docs/BROADCAST-CAPTURE-ECONOMICS.md`** (`58c0eb0`) — what it would cost to capture
+  every audio feed and pay for the video subscriptions, plus the cross-league tournament
+  gap: Leagues Cup and EWC do not sit inside one league's news section.
+- **Roadmap: who is actually playing** (`13e031a`) — soccer availability before kickoff.
+  The engine reports absences after the fact; the game detail page should say who is out
+  before the match. Deferred to its own session.
+- **The X account list, documented** (`3bfc32b`) — `docs/PLAN-league-news-engine.md` now
+  records which accounts we cover and why each one is on the list.
+
+### Version note
+
+`package.json` was on 0.7.7: v0.7.8 was tagged on a docs commit without a bump, and v0.7.9
+and v0.7.10 were cut on `release/ewc-v0.7.10`, which is not an ancestor of `dev`. This
+release takes the next unused number rather than reusing one, so dev goes 0.7.7 → 0.7.11
+in one step. The EWC release line still needs reconciling with dev.
+
 ## v0.7.9 — 2026-08-05
 
 ### Position vocabulary: the release gate is fully green
