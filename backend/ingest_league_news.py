@@ -578,7 +578,8 @@ def collect_news_search(conversations=None):
     Variety, CNBC, Yahoo, SI, MLB.com, Goal.com, Front Office Sports.
 
     These are publishers, not chatter: `source` is the real outlet name from the
-    feed, so a receipt reads "The New York Times". The link is Google's redirect
+    feed, so a receipt reads "The New York Times". They are deliberately left
+    UNTAGGED so the conversation-relevance filter judges them. The link is Google's redirect
     — its guid stopped decoding to the target in 2024 and the batchexecute
     resolver no longer answers us — so the chip links through Google rather than
     straight to the outlet. Working link, honest attribution (2026-08-10).
@@ -605,7 +606,15 @@ def collect_news_search(conversations=None):
             # already its own field, so drop the duplicate.
             if title.endswith(" - " + publisher):
                 title = title[: -(len(publisher) + 3)].strip()
-            out.append({"source": publisher.lower()[:40], "conv_id": conv["id"],
+            # NOT tagged with conv_id. Google's relevance is topical but loose
+            # — "nba expansion" returns Ice Cube on BIG3, "Leagues Cup
+            # scouting" returns matchday previews, "esports worlds" returns a
+            # trading-card launch — and a tagged item is chatter, which skips
+            # the relevance filter and anchors the card. Leaving them untagged
+            # sends them through the anchor path, where the entity bridge that
+            # already keeps Messi out of the scouting card judges them too
+            # (2026-08-10).
+            out.append({"source": publisher.lower()[:40],
                         "headline": title, "body": "", "url": txt("link"),
                         "published": _iso(txt("pubDate"))})
     return out

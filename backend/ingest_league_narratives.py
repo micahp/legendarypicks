@@ -45,6 +45,13 @@ _MAX_SOURCES = 12
 _MIN_ITEMS = 2  # fewer than this and there's no "chatter" to summarize
 _BATCH_MAX_TOKENS = 24000  # reasoning shares this budget; 10000 truncated 13 cards
 _BATCH_CHUNK = 4           # fallback width when the wide batch will not parse
+_ANCHORS = 6               # real articles shown per card, best-scoring first
+# Words that are in every seed and every headline, so a hit on them means
+# nothing. Same lesson as the classifier's substring bug.
+_GENERIC_WORDS = {"deal", "deals", "talks", "rights", "season", "league",
+                  "team", "teams", "game", "games", "news", "player",
+                  "players", "sports", "picture", "debate", "case", "about",
+                  "after", "before", "their", "there", "these", "those"}
 
 # A declined/failed conversation wipes its served news_narratives row — that's
 # the "some are missing now" mechanism. The full served card that vanished is
@@ -257,43 +264,64 @@ def _load_chatter(con, conv):
     conversation's chatter never mentions.
     """
     conv_id, league = conv["id"], conv["league"]
-    rows = con.execute(
-        """SELECT headline, url, source, published, body FROM news_items
-           WHERE conv_id=? AND url != ''
-           ORDER BY published DESC LIMIT ?""",
-        (conv_id, _MAX_SOURCES),
-    ).fetchall()
-    out = [dict(r) for r in rows]
-    # What this conversation is ABOUT: its own seed and title, plus every
-    # entity its chatter actually talks about.
-    # Seed and title words are deliberate, so they may match loosely. Chatter
-    # contributes ENTITIES only: matching on its ordinary words let "Messi
-    # tracker" and a pile of game highlights into a scouting card, because any
-    # two MLS headlines share words (2026-08-10).
+
+    # RANK, do not gate (Micah, 2026-08-10). A threshold worked when the pool
+    # was six articles and fails at a hundred: everything clears a low bar, so
+    # a BIG3 story reached the NBA-expansion card and a matchday preview took
+    # over the Leagues Cup scouting card. Scoring instead means a loosely
+    # related item still loses to three closely related ones.
     topic_words = {w for w in _norm_words("%s %s" % (conv["seed"], conv["title"]))
-                   if len(w) > 4}
+                   if len(w) > 4 and w not in _GENERIC_WORDS}
+
+    def _score(row, extra_entities=()):
+        head = row["headline"] or ""
+        words = {w for w in _norm_words(head) if len(w) > 4}
+        return (3 * len(topic_words & words)
+                + 2 * len(entities(head) & set(extra_entities)))
+
+    # Pass 1 — the conversation's own chatter, ranked on the seed itself. There
+    # can be ~100 tagged posts now, so "most recent 12" was arbitrary.
+    chatter = [dict(r) for r in con.execute(
+        """SELECT headline, url, source, published, body FROM news_items
+           WHERE conv_id=? AND url != '' ORDER BY published DESC LIMIT 200""",
+        (conv_id,)).fetchall()]
+    chatter.sort(key=lambda r: (_score(r), r["published"] or ""), reverse=True)
+    out = chatter[:_MAX_SOURCES]
+
+    # Pass 2 — anchors scored on the seed AND on the entities the best chatter
+    # actually talks about. Two passes, so the entity set comes from chatter
+    # that already matched the seed rather than from whatever was tagged.
     topic_entities = set()
     for r in out:
         topic_entities |= entities(r["headline"])
 
-    anchors = con.execute(
-        """SELECT headline, url, source, published, body FROM news_items
-           WHERE league=? AND source NOT IN ('bluesky','x-search') AND url != ''
-           ORDER BY published DESC LIMIT 40""",
-        (league,),
-    ).fetchall()
     seen = {r["url"] for r in out}
-    kept = 0
-    for r in anchors:
-        if r["url"] in seen or kept >= 6:
+    # Candidates: the recent league feed PLUS anything whose headline carries a
+    # seed word, at any age. Recency alone cut the ESPN scouting feature — the
+    # single best source this conversation has — because it is from 2025 and
+    # fell outside the 120 most recent MLS rows (2026-08-10).
+    sql = ("""SELECT headline, url, source, published, body FROM news_items
+              WHERE league=? AND source NOT IN ('bluesky','x-search')
+                AND url != '' ORDER BY published DESC LIMIT 120""")
+    rows = list(con.execute(sql, (league,)).fetchall())
+    if topic_words:
+        like = " OR ".join(["lower(headline) LIKE ?"] * len(topic_words))
+        rows += list(con.execute(
+            """SELECT headline, url, source, published, body FROM news_items
+               WHERE league=? AND source NOT IN ('bluesky','x-search')
+                 AND url != '' AND (%s) LIMIT 60""" % like,
+            (league, *["%%%s%%" % w for w in topic_words])).fetchall())
+    candidates, urls = [], set()
+    for r in rows:
+        if r["url"] in seen or r["url"] in urls:
             continue
-        head = r["headline"] or ""
-        if not (entities(head) & topic_entities
-                or {w for w in _norm_words(head) if len(w) > 4} & topic_words):
-            continue  # unrelated to this conversation — never show it to the desk
-        out.append(dict(r))
-        seen.add(r["url"])
-        kept += 1
+        urls.add(r["url"])
+        candidates.append(dict(r))
+    scored = [(_score(r, topic_entities), r["published"] or "", r)
+              for r in candidates]
+    scored = [t for t in scored if t[0] > 0]
+    scored.sort(key=lambda t: (t[0], t[1]), reverse=True)
+    out.extend(r for _s, _p, r in scored[:_ANCHORS])
     return out
 
 
