@@ -1,0 +1,979 @@
+{
+ "_meta": {
+  "note": "verified:true requires a working stream URL. verified:false means name-level or unknown \u2014 never fabricated.",
+  "sources": [
+   "Wikipedia flagship radio lists",
+   "TuneIn",
+   "iHeart",
+   "team sites",
+   "WUUB-FM reference (Inter Miami)",
+   "iHeart FIFA WC 2026 (FOX)"
+  ],
+  "updated": "2026-08-06"
+ },
+ "atp": {
+  "_none": {
+   "note": "no team radio",
+   "station": null,
+   "stream": null,
+   "verified": false
+  }
+ },
+ "mlb": {
+  "ARI": {
+   "city": "Phoenix",
+   "station": "KTAR (620 AM, day games) / KMVP-FM (98.7, evening/weekend)",
+   "stream": null,
+   "verified": false
+  },
+  "ATH": {
+   "city": "Sacramento",
+   "station": "A's Cast (streaming) / KSTE (650 AM, Sacramento) / KNEW (960 AM, Bay Area)",
+   "stream": null,
+   "verified": false
+  },
+  "ATL": {
+   "city": "Atlanta",
+   "station": "WCNN (680 AM) / WNNX",
+   "stream": null,
+   "verified": false
+  },
+  "BAL": {
+   "city": "Baltimore",
+   "station": "WBAL (1090 AM / 101.5 FM) & WIYY-FM (97.9)",
+   "stream": null,
+   "verified": false
+  },
+  "BOS": {
+   "city": "Boston",
+   "station": "WEEI-FM (93.7)",
+   "stream": "https://www.audacy.com/weei",
+   "verified": true
+  },
+  "CHC": {
+   "city": "Chicago",
+   "station": "WSCR (670 AM, The Score)",
+   "stream": "https://www.audacy.com/670thescore",
+   "verified": true
+  },
+  "CHW": {
+   "city": "Chicago",
+   "station": "WMVP (1000 AM, ESPN Chicago)",
+   "stream": null,
+   "verified": false
+  },
+  "CIN": {
+   "city": "Cincinnati",
+   "station": "WLW (700 AM)",
+   "stream": null,
+   "verified": false
+  },
+  "CLE": {
+   "city": "Cleveland",
+   "station": "WTAM (1100 AM) / WMMS",
+   "stream": null,
+   "verified": false
+  },
+  "COL": {
+   "city": "Denver",
+   "station": "KOA (850 AM / 94.1 FM)",
+   "stream": null,
+   "verified": false
+  },
+  "DET": {
+   "city": "Detroit",
+   "station": "WXYT-FM (97.1, The Ticket)",
+   "stream": "https://www.audacy.com/971theticket",
+   "verified": true
+  },
+  "HOU": {
+   "city": "Houston",
+   "station": "KBME (790 AM) / KTRH (740 AM)",
+   "stream": null,
+   "verified": false
+  },
+  "KC": {
+   "city": "Kansas City",
+   "station": "KFNZ (610 AM) / KFNZ-FM",
+   "stream": null,
+   "verified": false
+  },
+  "LAA": {
+   "city": "Anaheim",
+   "station": "KLAA (830 AM) / KSPN (710 AM)",
+   "stream": null,
+   "verified": false
+  },
+  "LAD": {
+   "city": "Los Angeles",
+   "station": "KLAC (570 AM)",
+   "stream": null,
+   "verified": false
+  },
+  "MIA": {
+   "city": "Miami",
+   "station": "WQAM (560 AM)",
+   "stream": "https://www.audacy.com/wqam",
+   "verified": true
+  },
+  "MIL": {
+   "city": "Milwaukee",
+   "station": "WTMJ (620 AM)",
+   "stream": null,
+   "verified": false
+  },
+  "MIN": {
+   "city": "Minneapolis-Saint Paul",
+   "station": "WCCO (830 AM) / KMNB (102.9 FM)",
+   "stream": null,
+   "verified": false
+  },
+  "NYM": {
+   "city": "New York",
+   "station": "WHSQ (880 AM)",
+   "stream": null,
+   "verified": false
+  },
+  "NYY": {
+   "city": "New York",
+   "station": "WFAN (660 AM / 101.9 FM)",
+   "stream": "https://www.audacy.com/wfan",
+   "verified": true
+  },
+  "PHI": {
+   "city": "Philadelphia",
+   "station": "WIP-FM (94.1)",
+   "stream": null,
+   "verified": false
+  },
+  "PIT": {
+   "city": "Pittsburgh",
+   "station": "KDKA-FM (93.7) / KDKA (1020 AM, day games)",
+   "stream": null,
+   "verified": false
+  },
+  "SD": {
+   "city": "San Diego",
+   "station": "KWFN (97.3, The Fan)",
+   "stream": null,
+   "verified": false
+  },
+  "SEA": {
+   "city": "Seattle",
+   "station": "KIRO (710 AM)",
+   "stream": null,
+   "verified": false
+  },
+  "SF": {
+   "city": "San Francisco",
+   "station": "KNBR (680 AM) / KNBR-FM (104.5)",
+   "stream": null,
+   "verified": false
+  },
+  "STL": {
+   "city": "St. Louis",
+   "station": "KMOX (1120 AM)",
+   "stream": "https://www.audacy.com/kmox",
+   "verified": true
+  },
+  "TB": {
+   "city": "Tampa Bay",
+   "station": "WDAE (95.3 FM / 620 AM)",
+   "stream": null,
+   "verified": false
+  },
+  "TEX": {
+   "city": "Dallas-Fort Worth",
+   "station": "KRLD-FM (105.3, The Fan)",
+   "stream": null,
+   "verified": false
+  },
+  "TOR": {
+   "city": "Toronto",
+   "station": "CJCL (590 AM, Sportsnet 590)",
+   "stream": null,
+   "verified": false
+  },
+  "WSH": {
+   "city": "Washington, D.C.",
+   "station": "WJFK-FM (106.7, The Fan) / WFED (1500 AM)",
+   "stream": null,
+   "verified": false
+  }
+ },
+ "mls": {
+  "ATL": {
+   "city": null,
+   "station": null,
+   "stream": null,
+   "verified": false
+  },
+  "ATX": {
+   "city": null,
+   "station": null,
+   "stream": null,
+   "verified": false
+  },
+  "CHI": {
+   "city": null,
+   "station": null,
+   "stream": null,
+   "verified": false
+  },
+  "CIN": {
+   "city": null,
+   "station": null,
+   "stream": null,
+   "verified": false
+  },
+  "CLB": {
+   "city": null,
+   "station": null,
+   "stream": null,
+   "verified": false
+  },
+  "CLT": {
+   "city": null,
+   "station": null,
+   "stream": null,
+   "verified": false
+  },
+  "COL": {
+   "city": null,
+   "station": null,
+   "stream": null,
+   "verified": false
+  },
+  "DAL": {
+   "city": null,
+   "station": null,
+   "stream": null,
+   "verified": false
+  },
+  "DC": {
+   "city": null,
+   "station": null,
+   "stream": null,
+   "verified": false
+  },
+  "HOU": {
+   "city": null,
+   "station": null,
+   "stream": null,
+   "verified": false
+  },
+  "LA": {
+   "city": null,
+   "station": null,
+   "stream": null,
+   "verified": false
+  },
+  "LAFC": {
+   "city": null,
+   "station": null,
+   "stream": null,
+   "verified": false
+  },
+  "MIA": {
+   "city": "West Palm Beach, FL",
+   "station": "WUUB-FM ESPN 106.3",
+   "stream": "https://live.amperwave.net/manifest/goodkarma-wuubfmaac-hlsc2.m3u8?source=tunein&source=TuneIn&gdpr=0&us_privacy=1YNY",
+   "verified": true
+  },
+  "MIN": {
+   "city": null,
+   "station": null,
+   "stream": null,
+   "verified": false
+  },
+  "MTL": {
+   "city": null,
+   "station": null,
+   "stream": null,
+   "verified": false
+  },
+  "NE": {
+   "city": null,
+   "station": null,
+   "stream": null,
+   "verified": false
+  },
+  "NSH": {
+   "city": null,
+   "station": null,
+   "stream": null,
+   "verified": false
+  },
+  "NYC": {
+   "city": null,
+   "station": null,
+   "stream": null,
+   "verified": false
+  },
+  "ORL": {
+   "city": null,
+   "station": null,
+   "stream": null,
+   "verified": false
+  },
+  "PHI": {
+   "city": null,
+   "station": null,
+   "stream": null,
+   "verified": false
+  },
+  "POR": {
+   "city": null,
+   "station": null,
+   "stream": null,
+   "verified": false
+  },
+  "RBNY": {
+   "city": null,
+   "station": null,
+   "stream": null,
+   "verified": false
+  },
+  "RSL": {
+   "city": null,
+   "station": null,
+   "stream": null,
+   "verified": false
+  },
+  "SD": {
+   "city": null,
+   "station": null,
+   "stream": null,
+   "verified": false
+  },
+  "SEA": {
+   "city": null,
+   "station": null,
+   "stream": null,
+   "verified": false
+  },
+  "SJ": {
+   "city": null,
+   "station": null,
+   "stream": null,
+   "verified": false
+  },
+  "SKC": {
+   "city": null,
+   "station": null,
+   "stream": null,
+   "verified": false
+  },
+  "STL": {
+   "city": null,
+   "station": null,
+   "stream": null,
+   "verified": false
+  },
+  "TOR": {
+   "city": null,
+   "station": null,
+   "stream": null,
+   "verified": false
+  },
+  "VAN": {
+   "city": null,
+   "station": null,
+   "stream": null,
+   "verified": false
+  }
+ },
+ "nba": {
+  "ATL": {
+   "city": "Atlanta",
+   "station": "WZGC (92.9, The Game) / WVEE",
+   "stream": null,
+   "verified": false
+  },
+  "BKN": {
+   "city": "New York",
+   "station": "WFAN (660 AM / 101.9 FM)",
+   "stream": "https://www.audacy.com/wfan",
+   "verified": true
+  },
+  "BOS": {
+   "city": "Boston",
+   "station": "WBZ-FM (98.5, The Sports Hub)",
+   "stream": "https://www.audacy.com/985thesportshub",
+   "verified": true
+  },
+  "CHA": {
+   "city": "Charlotte",
+   "station": "WFNZ (610 AM / 92.7 FM)",
+   "stream": null,
+   "verified": false
+  },
+  "CHI": {
+   "city": "Chicago",
+   "station": "WSCR (670 AM, The Score)",
+   "stream": "https://www.audacy.com/670thescore",
+   "verified": true
+  },
+  "CLE": {
+   "city": "Cleveland",
+   "station": "WTAM (1100 AM) / WMMS",
+   "stream": null,
+   "verified": false
+  },
+  "DAL": {
+   "city": "Dallas",
+   "station": "KEGL (97.1, The Freak)",
+   "stream": null,
+   "verified": false
+  },
+  "DEN": {
+   "city": "Denver",
+   "station": "Altitude Sports 92.5 FM / 950 AM (KKSE)",
+   "stream": null,
+   "verified": false
+  },
+  "DET": {
+   "city": "Detroit",
+   "station": "WXYT-FM (97.1, The Ticket)",
+   "stream": "https://www.audacy.com/971theticket",
+   "verified": true
+  },
+  "GS": {
+   "city": "San Francisco",
+   "station": "KGMZ-FM (95.7, The Game)",
+   "stream": "https://www.audacy.com/957thegame",
+   "verified": true
+  },
+  "HOU": {
+   "city": "Houston",
+   "station": "KBME (790 AM) / KTRH (740 AM)",
+   "stream": null,
+   "verified": false
+  },
+  "IND": {
+   "city": "Indianapolis",
+   "station": "WIBC-HD2 / W228CX / W298BB (The Fan)",
+   "stream": null,
+   "verified": false
+  },
+  "LAC": {
+   "city": "Los Angeles",
+   "station": "KLAC (570 AM) / KEIB (conflicts)",
+   "stream": null,
+   "verified": false
+  },
+  "LAL": {
+   "city": "Los Angeles",
+   "station": "KSPN (710 AM, ESPN LA)",
+   "stream": null,
+   "verified": false
+  },
+  "MEM": {
+   "city": "Memphis",
+   "station": "WMFS-FM (92.9, ESPN Memphis)",
+   "stream": null,
+   "verified": false
+  },
+  "MIA": {
+   "city": "Miami",
+   "station": "WQAM (560 AM)",
+   "stream": "https://www.audacy.com/wqam",
+   "verified": true
+  },
+  "MIL": {
+   "city": "Milwaukee",
+   "station": "WTMJ (620 AM) / W277CV",
+   "stream": null,
+   "verified": false
+  },
+  "MIN": {
+   "city": "Minneapolis-Saint Paul",
+   "station": "KFXN (100.3, KFAN; selected games)",
+   "stream": null,
+   "verified": false
+  },
+  "NO": {
+   "city": "New Orleans",
+   "station": "WWL (870 AM / 105.3 FM)",
+   "stream": "https://www.audacy.com/wwl",
+   "verified": true
+  },
+  "NY": {
+   "city": "New York",
+   "station": "WHSQ (880 AM)",
+   "stream": null,
+   "verified": false
+  },
+  "OKC": {
+   "city": "Oklahoma City",
+   "station": "WWLS (640 AM / 98.1 FM, The Sports Animal)",
+   "stream": null,
+   "verified": false
+  },
+  "ORL": {
+   "city": "Orlando",
+   "station": "WYGM (740 AM / 96.9 FM) / WTKS-HD2",
+   "stream": null,
+   "verified": false
+  },
+  "PHI": {
+   "city": "Philadelphia",
+   "station": "WPEN (97.5, The Fanatic)",
+   "stream": "https://www.audacy.com/975thefanatic",
+   "verified": true
+  },
+  "PHX": {
+   "city": "Phoenix",
+   "station": "KTAR (620 AM) / KMVP-FM (98.7)",
+   "stream": null,
+   "verified": false
+  },
+  "POR": {
+   "city": "Portland",
+   "station": "KPOJ (620 AM, Rip City Radio)",
+   "stream": null,
+   "verified": false
+  },
+  "SA": {
+   "city": "San Antonio",
+   "station": "WOAI (1200 AM)",
+   "stream": null,
+   "verified": false
+  },
+  "SAC": {
+   "city": "Sacramento",
+   "station": "KHTK (1140 AM, Sactown Sports)",
+   "stream": null,
+   "verified": false
+  },
+  "TOR": {
+   "city": "Toronto",
+   "station": "CJCL (590 AM, Sportsnet 590)",
+   "stream": null,
+   "verified": false
+  },
+  "UTAH": {
+   "city": "Salt Lake City",
+   "station": "KSL (radio network)",
+   "stream": null,
+   "verified": false
+  },
+  "WSH": {
+   "city": "Washington, D.C.",
+   "station": "WTEM (980 AM) / WDCH-FM / WFED (select games)",
+   "stream": null,
+   "verified": false
+  }
+ },
+ "ncaaf": {},
+ "nfl": {
+  "ARI": {
+   "city": "Phoenix, AZ",
+   "station": "Arizona Sports 98.7 FM (KMVP-FM)",
+   "stream": "https://www.iheart.com/live/11724/?autoplay=true",
+   "verified": true
+  },
+  "ATL": {
+   "city": "Atlanta, GA",
+   "station": "92.9 The Game (WZGC-FM)",
+   "stream": "https://www.iheart.com/live/10795/?autoplay=true",
+   "verified": true
+  },
+  "BAL": {
+   "city": "Baltimore, MD",
+   "station": "98 Rock WIYY 97.9 FM / WBAL 1090 AM",
+   "stream": "https://tunein.com/radio/98-ROCK-979-s29726/",
+   "verified": true
+  },
+  "BUF": {
+   "city": "Buffalo, NY",
+   "station": "WGRF 96.9 FM (Bills Radio Network flagship, 2026)",
+   "stream": "https://www.iheart.com/live/5355/?autoplay=true",
+   "verified": true
+  },
+  "CAR": {
+   "city": "Charlotte, NC",
+   "station": "99.7 The Fox (WRFX-FM)",
+   "stream": "https://www.iheart.com/live/1613/?autoplay=true",
+   "verified": true
+  },
+  "CHI": {
+   "city": "Chicago, IL",
+   "station": "ESPN 1000 (WMVP-AM)",
+   "stream": "https://www.iheart.com/live/7907/?autoplay=true",
+   "verified": true
+  },
+  "CIN": {
+   "city": "Cincinnati, OH",
+   "station": "ESPN 1530 WCKY / 700 WLW",
+   "stream": "https://www.iheart.com/live/1697/?autoplay=true",
+   "verified": true
+  },
+  "CLE": {
+   "city": "Cleveland, OH",
+   "station": "92.3 The Fan (WKRK-FM)",
+   "stream": "https://www.iheart.com/live/10821/?autoplay=true",
+   "verified": true
+  },
+  "DAL": {
+   "city": "Dallas, TX",
+   "station": "105.3 The Fan (KRLD-FM)",
+   "stream": "https://www.iheart.com/live/10840/?autoplay=true",
+   "verified": true
+  },
+  "DEN": {
+   "city": "Denver, CO",
+   "station": "850 KOA (KOA-AM / 94.1 FM)",
+   "stream": "https://www.iheart.com/live/389/?autoplay=true",
+   "verified": true
+  },
+  "DET": {
+   "city": "Detroit, MI",
+   "station": "97.1 The Ticket (WXYT-FM)",
+   "stream": "https://www.iheart.com/live/10827/?autoplay=true",
+   "verified": true
+  },
+  "GB": {
+   "city": "Green Bay, WI",
+   "station": "Packers Radio Network: WRIT-FM 95.7 (network flagship); WTAQ 1360 / WIXX 101.1 (Green Bay)",
+   "stream": "https://www.iheart.com/live/2689/?autoplay=true",
+   "verified": true
+  },
+  "HOU": {
+   "city": "Houston, TX",
+   "station": "SportsRadio 610 (KILT-AM)",
+   "stream": "https://www.iheart.com/live/10864/?autoplay=true",
+   "verified": true
+  },
+  "IND": {
+   "city": "Indianapolis, IN",
+   "station": "93.1 WIBC (HD2) / 97.1 Hank FM (WLHK-FM)",
+   "stream": null,
+   "verified": false
+  },
+  "JAX": {
+   "city": "Jacksonville, FL",
+   "station": "1010 XL (WJXL-AM / WJXL-FM 92.5)",
+   "stream": "https://tunein.com/radio/1010-XL-s29630/",
+   "verified": true
+  },
+  "KC": {
+   "city": "Kansas City, MO",
+   "station": "106.5 The Wolf (WDAF-FM)",
+   "stream": "https://www.iheart.com/live/10872/?autoplay=true",
+   "verified": true
+  },
+  "LAC": {
+   "city": "Los Angeles, CA",
+   "station": "KFI AM 640",
+   "stream": "https://www.iheart.com/live/177/?autoplay=true",
+   "verified": true
+  },
+  "LAR": {
+   "city": "Los Angeles, CA",
+   "station": "ESPN LA 710 (KSPN-AM) / 93.1 Jack FM (KCBS-FM)",
+   "stream": "https://www.iheart.com/live/7906/?autoplay=true",
+   "verified": true
+  },
+  "LV": {
+   "city": "Las Vegas, NV",
+   "station": "Raider Nation Radio 920 AM (KRLV) / KOMP 92.3 FM",
+   "stream": "https://tunein.com/radio/Stream-Las-Vegas-Raiders-a37477/",
+   "verified": true
+  },
+  "MIA": {
+   "city": "Miami, FL",
+   "station": "Fox Sports 940 (WINZ-AM) / BIG 105.9 (WBGG-FM)",
+   "stream": "https://www.iheart.com/live/565/?autoplay=true",
+   "verified": true
+  },
+  "MIN": {
+   "city": "Minneapolis, MN",
+   "station": "KFAN 100.3 (KFXN-FM)",
+   "stream": "https://www.iheart.com/live/1209/?autoplay=true",
+   "verified": true
+  },
+  "NE": {
+   "city": "Boston, MA",
+   "station": "98.5 The Sports Hub (WBZ-FM)",
+   "stream": "https://www.iheart.com/live/8808/?autoplay=true",
+   "verified": true
+  },
+  "NO": {
+   "city": "New Orleans, LA",
+   "station": "WWL 870 AM / WWL-FM 105.3",
+   "stream": "https://www.iheart.com/live/10981/?autoplay=true",
+   "verified": true
+  },
+  "NYG": {
+   "city": "New York, NY",
+   "station": "WFAN 660 AM / 101.9 FM",
+   "stream": "https://www.iheart.com/live/10930/?autoplay=true",
+   "verified": true
+  },
+  "NYJ": {
+   "city": "New York, NY",
+   "station": "Q104.3 (WAXQ-FM)",
+   "stream": "https://www.iheart.com/live/1465/?autoplay=true",
+   "verified": true
+  },
+  "PHI": {
+   "city": "Philadelphia, PA",
+   "station": "SportsRadio 94WIP (WIP-FM)",
+   "stream": "https://www.iheart.com/live/10934/?autoplay=true",
+   "verified": true
+  },
+  "PIT": {
+   "city": "Pittsburgh, PA",
+   "station": "102.5 WDVE / Fox Sports 970 (WBGG-AM)",
+   "stream": "https://www.iheart.com/live/2017/?autoplay=true",
+   "verified": true
+  },
+  "SEA": {
+   "city": "Seattle, WA",
+   "station": "Seattle Sports 710 (KIRO-AM) / 97.3 KIRO-FM",
+   "stream": "https://www.iheart.com/live/11726/?autoplay=true",
+   "verified": true
+  },
+  "SF": {
+   "city": "San Francisco, CA",
+   "station": "KNBR 680 AM / KNBR-FM 104.5",
+   "stream": "https://www.iheart.com/live/5530/?autoplay=true",
+   "verified": true
+  },
+  "TB": {
+   "city": "Tampa, FL",
+   "station": "98ROCK (WXTB-FM 97.9)",
+   "stream": "https://www.iheart.com/live/697/?autoplay=true",
+   "verified": true
+  },
+  "TEN": {
+   "city": "Nashville, TN",
+   "station": "104.5 The Zone (WGFX-FM)",
+   "stream": "https://www.iheart.com/live/5453/?autoplay=true",
+   "verified": true
+  },
+  "WSH": {
+   "city": "Washington, DC",
+   "station": "Big 100.3 (WBIG-FM)",
+   "stream": "https://www.iheart.com/live/2505/?autoplay=true",
+   "verified": true
+  }
+ },
+ "nhl": {
+  "ANA": {
+   "city": "Anaheim",
+   "station": "Anaheim Ducks Stream (TuneIn; no terrestrial flagship)",
+   "stream": null,
+   "verified": false
+  },
+  "BOS": {
+   "city": "Boston",
+   "station": "WBZ-FM (98.5, The Sports Hub)",
+   "stream": "https://www.audacy.com/985thesportshub",
+   "verified": true
+  },
+  "BUF": {
+   "city": "Buffalo",
+   "station": "WGR (550 AM)",
+   "stream": "https://www.audacy.com/wgr550",
+   "verified": true
+  },
+  "CAR": {
+   "city": "Raleigh",
+   "station": "WCMC-FM (99.9, The Fan)",
+   "stream": null,
+   "verified": false
+  },
+  "CBJ": {
+   "city": "Columbus",
+   "station": "WBNS-FM (97.1, The Fan)",
+   "stream": null,
+   "verified": false
+  },
+  "CGY": {
+   "city": "Calgary",
+   "station": null,
+   "stream": null,
+   "verified": false
+  },
+  "CHI": {
+   "city": "Chicago",
+   "station": "WGN (720 AM)",
+   "stream": "https://wgnradio.com/on-air/",
+   "verified": true
+  },
+  "COL": {
+   "city": "Denver",
+   "station": "Altitude Sports 92.5 FM / 950 AM (KKSE)",
+   "stream": null,
+   "verified": false
+  },
+  "DAL": {
+   "city": "Dallas",
+   "station": "KTCK (1310 AM, The Ticket)",
+   "stream": "https://www.theticket.com/",
+   "verified": true
+  },
+  "DET": {
+   "city": "Detroit",
+   "station": "WXYT-FM (97.1, The Ticket)",
+   "stream": "https://www.audacy.com/971theticket",
+   "verified": true
+  },
+  "EDM": {
+   "city": "Edmonton",
+   "station": "CHED (880 AM)",
+   "stream": "https://www.iheart.com/live/880-ched-10316/",
+   "verified": true
+  },
+  "FLA": {
+   "city": "Sunrise-Miami",
+   "station": "WQAM (560 AM, 560 Sports) / WAXY (790, conflicts)",
+   "stream": "https://www.audacy.com/wqam",
+   "verified": true
+  },
+  "LA": {
+   "city": "Los Angeles",
+   "station": "KSPN (710 AM, ESPN LA; stream/app only)",
+   "stream": null,
+   "verified": false
+  },
+  "MIN": {
+   "city": "Minneapolis-Saint Paul",
+   "station": "KFXN-FM (100.3, KFAN)",
+   "stream": null,
+   "verified": false
+  },
+  "MTL": {
+   "city": "Montreal",
+   "station": "TSN 690 (CKGM, English) / 98.5 FM (CHMP, French)",
+   "stream": null,
+   "verified": false
+  },
+  "NJ": {
+   "city": "Newark",
+   "station": "Devils Hockey Network Radio (NewJerseyDevils.com)",
+   "stream": null,
+   "verified": false
+  },
+  "NSH": {
+   "city": "Nashville",
+   "station": "WPRT-FM (102.5, The Game)",
+   "stream": null,
+   "verified": false
+  },
+  "NYI": {
+   "city": "New York (Long Island)",
+   "station": "WRCN-FM (103.9) / WRHU (88.7)",
+   "stream": null,
+   "verified": false
+  },
+  "NYR": {
+   "city": "New York",
+   "station": "WHSQ (880 AM) / WEPN-AM (1050, conflicts)",
+   "stream": null,
+   "verified": false
+  },
+  "OTT": {
+   "city": "Ottawa",
+   "station": "TSN 1200 (CFGO, English) / 104.7 FM (CKOF, French)",
+   "stream": null,
+   "verified": false
+  },
+  "PHI": {
+   "city": "Philadelphia",
+   "station": "WPEN (97.5, The Fanatic) / WMMR (93.3)",
+   "stream": "https://www.audacy.com/975thefanatic",
+   "verified": true
+  },
+  "PIT": {
+   "city": "Pittsburgh",
+   "station": "WXDX-FM (105.9, The X)",
+   "stream": null,
+   "verified": false
+  },
+  "SEA": {
+   "city": "Seattle",
+   "station": "KJR-FM (93.3)",
+   "stream": null,
+   "verified": false
+  },
+  "SJ": {
+   "city": "San Jose",
+   "station": "Sharks Audio Network (sjsharks.com/listen)",
+   "stream": null,
+   "verified": false
+  },
+  "STL": {
+   "city": "St. Louis",
+   "station": "WXOS (101.1, 101 ESPN)",
+   "stream": null,
+   "verified": false
+  },
+  "TB": {
+   "city": "Tampa Bay",
+   "station": "WHPT (102.5, The Bone)",
+   "stream": null,
+   "verified": false
+  },
+  "TOR": {
+   "city": "Toronto",
+   "station": "Sportsnet 590 (CJCL) / TSN 1050 (CHUM)",
+   "stream": null,
+   "verified": false
+  },
+  "UTAH": {
+   "city": "Salt Lake City",
+   "station": "KZNS (The Zone) / KSL (conflicts)",
+   "stream": null,
+   "verified": false
+  },
+  "VAN": {
+   "city": "Vancouver",
+   "station": null,
+   "stream": null,
+   "verified": false
+  },
+  "VGK": {
+   "city": "Las Vegas",
+   "station": "KKGK (98.9 FM / 1340 AM)",
+   "stream": null,
+   "verified": false
+  },
+  "WPG": {
+   "city": "Winnipeg",
+   "station": "CJOB (680 AM) / CJKR-FM (Power 97)",
+   "stream": "https://www.iheart.com/live/680-cjob-10299/",
+   "verified": true
+  },
+  "WSH": {
+   "city": "Washington, D.C.",
+   "station": "WFED (1500 AM) / WJFK-FM (106.7, select games)",
+   "stream": null,
+   "verified": false
+  }
+ },
+ "ufc": {
+  "_none": {
+   "note": "no team radio",
+   "station": null,
+   "stream": null,
+   "verified": false
+  }
+ },
+ "wc": {
+  "city": "National",
+  "station": "iHeart FIFA World Cup 2026 (FOX Sports English)",
+  "stream": "https://stream.revma.ihrhls.com/zc11554",
+  "verified": true
+ },
+ "wta": {
+  "_none": {
+   "note": "no team radio",
+   "station": null,
+   "stream": null,
+   "verified": false
+  }
+ }
+}

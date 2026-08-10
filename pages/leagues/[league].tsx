@@ -203,6 +203,7 @@ export default function LeagueHubPage() {
             groups={standings.groups}
             teams={standings.teams}
             leagueName={leagueName}
+            league={route.league}
           />
         )}
 
@@ -281,6 +282,7 @@ export default function LeagueHubPage() {
 
         {route.activeTab === 'predict' && (
           <PredictTab
+            league={route.league}
             fights={predict.fights}
             myPicks={predict.myPicks}
             record={predict.record}

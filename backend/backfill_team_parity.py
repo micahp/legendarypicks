@@ -39,6 +39,7 @@ from datetime import datetime, timezone
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from game_ids import guard_game_id_vocabulary
+import espn_client as espn
 from team_stats_contract import extract_espn_team_stats, STAT_FIELDS, EXPECTED_TEAMS
 from provenance import sources_for, format_provenance, publishers_for
 
@@ -49,33 +50,49 @@ UA = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/124.0.0.0 Safari
 # Stamped on every row this script writes. Named for the publisher and the exact
 # endpoints, because "espn" alone does not distinguish the site API used here
 # from the core API reconcile_totals reads — and those two disagree about which
-# events exist (see explain_gap).
-SOURCE = "espn_site_api:scoreboard+summary"
+# events exist (see explain_gap). Switched from site.api.espn.com to
+# site.web.api.espn.com 2026-08-06 (site.api is walled from this box per the
+# espn-request-budget skill; the shared fetcher on site.web adds the disk cache).
+SOURCE = "espn_site_web_api:scoreboard+summary"
 
 # league -> (espn sport, espn league, season, seasontype)
 LEAGUE_CFG = {
     "nba": ("basketball", "nba", 2026, 2),
     "nhl": ("hockey", "nhl", 2026, 2),
     "nfl": ("football", "nfl", 2025, 2),
+    "mls": ("soccer", "usa.1", 2025, 1),
+    # NCAAF is group-scoped (FBS = group 80). The per-team schedule path
+    # below would walk all 807 league-wide teams — FBS AND FCS — and write
+    # FCS games into the FBS table. ncaaf enumerates from the group-scoped
+    # events collection instead (see enumerate_games_group).
+    "ncaaf": ("football", "college-football", 2025, 2),
 }
+
+# Leagues whose games enumerate from a published group (FBS etc.) rather than
+# per-team schedules. Mirrors espn_leagues.ESPN_LEAGUES scope_group.
+GROUP_SCOPED = {"ncaaf": "80"}
 
 NFL_STAT_COLUMNS = (
     "first_downs", "total_offensive_plays", "total_yards",
     "net_passing_yards", "rushing_yards", "defensive_special_teams_tds",
 )
 
+# Leagues whose games can end in a draw. `win INTEGER` is a 0/1 flag and a
+# draw is neither 0 nor 1 — it must never be stored as a loss. Soccer rows
+# carry the honest three-valued `result` ('W'/'D'/'L') plus a compat `win`
+# (1 for W, 0 for D and L) so the integer readers that predate the column
+# keep working; `result` is the source of truth. Non-soccer leagues keep
+# their historical winner-flag behavior and write NULL result.
+SOCCER_LEAGUES = frozenset(("mls",))
+
 
 def _get(url: str, tries: int = 3, timeout: int = 20):
-    last = None
-    for attempt in range(tries):
-        try:
-            req = urllib.request.Request(url, headers={"User-Agent": UA})
-            with urllib.request.urlopen(req, timeout=timeout) as r:
-                return json.loads(r.read().decode())
-        except Exception as exc:  # noqa: BLE001
-            last = exc
-            time.sleep(0.6 * (attempt + 1))
-    raise last
+    # Route through the shared paced_http fetcher (espn_client), not raw
+    # urllib: site.api.espn.com is walled from this box (espn-request-budget
+    # skill, measured 2026-08-06), while site.web.api.espn.com answers and
+    # the shared fetcher adds pacing + the disk cache so re-runs are free.
+    # Configured where the work happens (see main), per the skill.
+    return espn._get(url, ttl=3600)
 
 
 # ---------------------------------------------------------------------------
@@ -101,6 +118,10 @@ def ensure_schema(con: sqlite3.Connection) -> None:
     # and nothing would say so. See backend/provenance.py.
     add_col("team_game_results", "source TEXT")
     add_col("team_game_results", "run_id TEXT")
+    # Three-valued outcome for draw-capable leagues (soccer). Additive: the
+    # 0/1 `win` column stays for existing readers; a draw is written as
+    # win=0 + result='D', never as a loss.
+    add_col("team_game_results", "result TEXT CHECK (result IN ('W','D','L'))")
 
     add_col("team_game_stats", "run_id TEXT")
     add_col("team_game_stats", "source TEXT")
@@ -154,7 +175,7 @@ def enumerate_games(sport: str, league: str, season: int, stype: int):
     """Return {game_id: {date, teams:{abbrev:{score,home_away,win}}}} for
     completed regular-season games, plus the set of team ids seen."""
     teams = _get(
-        f"https://site.api.espn.com/apis/site/v2/sports/{sport}/{league}/teams"
+        f"https://site.web.api.espn.com/apis/site/v2/sports/{sport}/{league}/teams?limit=50"
     )["sports"][0]["leagues"][0]["teams"]
     team_ids = [(t["team"]["id"], t["team"].get("abbreviation")) for t in teams]
 
@@ -162,7 +183,7 @@ def enumerate_games(sport: str, league: str, season: int, stype: int):
     for tid, _abbrev in team_ids:
         try:
             sched = _get(
-                f"https://site.api.espn.com/apis/site/v2/sports/{sport}/{league}"
+                f"https://site.web.api.espn.com/apis/site/v2/sports/{sport}/{league}"
                 f"/teams/{tid}/schedule?season={season}&seasontype={stype}"
             )
         except Exception:  # noqa: BLE001
@@ -199,10 +220,110 @@ def enumerate_games(sport: str, league: str, season: int, stype: int):
                     "score": float(val),
                     "home_away": c.get("homeAway"),
                     "win": 1 if c.get("winner") else 0,
+                    # raw flag, kept for the three-valued result write: a
+                    # draw has winner unset/false on both sides, and `win`
+                    # alone cannot express it
+                    "winner": c.get("winner"),
                 }
             if ok and len(side) == 2:
                 games[gid] = {"date": date, "teams": side}
     return team_ids, games
+
+
+def enumerate_games_group(sport: str, league: str, esp_league: str,
+                          season: int, stype: int, group_id: str):
+    """Group-scoped game enumeration (NCAAF FBS). Returns the same
+    {game_id: {date, teams:{abbrev:{score, home_away, win, winner}}}} shape
+    as enumerate_games, but from the published group's events collection —
+    one request per page — instead of one request per team (807 league-wide
+    teams for college football, FBS + FCS: the FCS games would pollute the
+    FBS table). team_ids is populated from the group's teams collection.
+    ``league`` is our key (espn_leagues registry lookup); ``esp_league`` is
+    the site-API path segment (football/college-football) for the summary URL.
+    """
+    from espn_leagues import ESPN_LEAGUES
+    core_path = ESPN_LEAGUES[league]["path"]
+    base = (
+        "https://sports.core.api.espn.com/v2/sports/{0}/seasons/{1}"
+        "/types/{2}/groups/{3}".format(core_path, season, stype, group_id)
+    )
+    teams_doc = _get(f"{base}/teams?limit=200")
+    team_ids = []
+    for item in teams_doc.get("items", []):
+        m = __import__("re").search(r"/teams/(\d+)", item.get("$ref", ""))
+        if m:
+            team_ids.append((m.group(1), ""))
+    games: dict[str, dict] = {}
+    events_doc = _get(f"{base}/events?limit=1")
+    total = int(events_doc.get("count") or 0)
+    page = 1
+    seen: set[str] = set()
+    while True:
+        doc = _get(f"{base}/events?limit=100&page={page}")
+        items = doc.get("items") or []
+        if not items:
+            break
+        for item in items:
+            m = __import__("re").search(r"/events/(\d+)", item.get("$ref", ""))
+            if not m:
+                continue
+            gid = m.group(1)
+            if gid in seen:
+                continue
+            seen.add(gid)
+            try:
+                sm = _get(
+                    "https://site.web.api.espn.com/apis/site/v2/sports/"
+                    f"{sport}/{esp_league}/summary?event={gid}"
+                )
+            except Exception:  # noqa: BLE001
+                continue
+            comp = ((sm.get("header") or {}).get("competitions") or [{}])[0]
+            kind = comp.get("status", {}).get("type", {})
+            if not kind.get("completed"):
+                continue
+            date = (comp.get("date") or "")[:10]
+            side = {}
+            ok = True
+            for c in comp.get("competitors", []):
+                ab = (c.get("team") or {}).get("abbreviation")
+                sc = (c.get("score") or {})
+                val = sc.get("value") if isinstance(sc, dict) else sc
+                if ab is None or val is None:
+                    ok = False
+                    break
+                side[ab] = {
+                    "score": float(val),
+                    "home_away": c.get("homeAway"),
+                    "win": 1 if c.get("winner") else 0,
+                    "winner": c.get("winner"),
+                }
+            if ok and len(side) == 2:
+                games[gid] = {"date": date, "teams": side}
+        if page >= int(doc.get("pageCount", 1) or 1):
+            break
+        page += 1
+    print(f"  group {group_id}: {total} published events, {len(games)} completed")
+    return team_ids, games
+
+
+def _result_for(league: str, mine: dict, theirs: dict) -> tuple:
+    """Return (result, win) for one team's row.
+
+    Soccer: `result` is the honest three-valued outcome — 'W' when the
+    competitor's winner flag is set, 'D' when the completed game's scores
+    are level (both teams get 'D'), 'L' otherwise. `win` stays integer-
+    compatible for the readers that predate `result`: 1 for W, 0 for D
+    and L — a draw is a not-win, never a loss. Non-soccer leagues keep
+    the historical winner-flag behavior and write NULL result.
+    """
+    if league not in SOCCER_LEAGUES:
+        return None, mine["win"]
+    if mine.get("winner") is True:
+        return "W", 1
+    if mine["score"] == theirs["score"]:
+        return "D", 0
+    return "L", 0
 
 
 def run_league(con: sqlite3.Connection, league: str, run_id: str,
@@ -222,7 +343,12 @@ def run_league(con: sqlite3.Connection, league: str, run_id: str,
                 "run_id": run_id, "season": season,
                 "season_start": None, "season_end": None}
 
-    team_ids, games = enumerate_games(sport, esp_league, season, stype)
+    group_id = GROUP_SCOPED.get(league)
+    if group_id:
+        team_ids, games = enumerate_games_group(
+            sport, league, esp_league, season, stype, group_id)
+    else:
+        team_ids, games = enumerate_games(sport, esp_league, season, stype)
     print(f"[{league}] {len(games)} completed games, {len(team_ids)} teams",
           flush=True)
 
@@ -249,7 +375,7 @@ def run_league(con: sqlite3.Connection, league: str, run_id: str,
         g = games[gid]
         path = f"{sport}/{esp_league}"
         try:
-            sm = _get(f"https://site.api.espn.com/apis/site/v2/sports/{path}"
+            sm = _get(f"https://site.web.api.espn.com/apis/site/v2/sports/{path}"
                       f"/summary?event={gid}")
         except Exception as exc:  # noqa: BLE001
             con.execute(
@@ -281,13 +407,14 @@ def run_league(con: sqlite3.Connection, league: str, run_id: str,
                 opp = abbrevs[1] if abbrevs[0] == me else abbrevs[0]
                 mine = g["teams"][me]
                 theirs = g["teams"][opp]
+                result, win = _result_for(league, mine, theirs)
                 con.execute(
                     "INSERT OR REPLACE INTO team_game_results"
                     "(league,game_id,team,game_date,opponent,score_for,score_against,"
-                    "win,season,status,home_away,source,run_id) "
-                    "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                    "win,result,season,status,home_away,source,run_id) "
+                    "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                     (league, gid, me, g["date"], opp, mine["score"],
-                     theirs["score"], mine["win"], season, "completed",
+                     theirs["score"], win, result, season, "completed",
                      mine["home_away"], SOURCE, run_id))
             # paired stat rows
             for r in rows:
@@ -381,6 +508,19 @@ def main() -> None:
                     help="Drop this league's foreign-keyed rows first. Destructive, "
                          "and the only way to migrate a season off nflverse game ids.")
     args = ap.parse_args()
+
+    # The shared fetcher's settings must be configured where the work happens
+    # (espn-request-budget skill §4): roster_sync burned 128 requests by
+    # configuring in main only and being entered through another door. This
+    # backfill is the same shape — run_league() calls espn._get directly.
+    espn.set_retry_waits((5.0, 30.0, 120.0))
+    espn.set_min_interval(float(os.environ.get("LP_ESPN_MIN_INTERVAL", "0.5")))
+    espn.set_disk_cache(
+        os.environ.get("LP_ESPN_CACHE_DIR")
+        or os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                        "data", "espn-cache"),
+        ttl=float(os.environ.get("LP_ESPN_CACHE_TTL", "43200")),
+    )
 
     ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     # isolation_level=None puts sqlite3 in autocommit and makes BEGIN/COMMIT/ROLLBACK

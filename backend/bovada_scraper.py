@@ -7,6 +7,8 @@ Usage:
   python3 bovada_scraper.py nba     # NBA (when in season)
   python3 bovada_scraper.py nfl     # NFL
   python3 bovada_scraper.py nhl     # NHL
+  python3 bovada_scraper.py atp     # ATP tennis props
+  python3 bovada_scraper.py wta     # WTA tennis props
   python3 bovada_scraper.py all     # all available
   python3 bovada_scraper.py mlb --ingest   # scrape + POST to ingest API
 
@@ -28,6 +30,8 @@ LEAGUES = {
     "wnba": ("basketball", "wnba"),
     "wc":   ("soccer", "fifa-world-cup/fifa-world-cup-matches"),
     "ufc":  ("ufc-mma", "ufc"),
+    "atp":  ("tennis", "atp"),
+    "wta":  ("tennis", "wta"),
 }
 
 HDR = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/131 Safari/537.36"}
@@ -117,6 +121,8 @@ def parse_player_props(event: dict, league: str) -> list:
         return _parse_wc_props(event)
     if league == "ufc":
         return _parse_ufc_props(event)
+    if league in ("atp", "wta"):
+        return _parse_tennis_props(event, league)
     return _parse_standard_props(event, league)
 
 
@@ -169,6 +175,106 @@ def _parse_ufc_props(event: dict) -> list:
                     "league": "ufc",
                 })
     return props
+
+
+# Tennis (atp/wta) — player-attributed markets on Bovada's tennis feed (verified live 2026-08-06:
+# ATP Montreal + WTA Toronto). Four match-level markets carry player attribution:
+#   Moneyline                             -> match_winner  (each outcome = a player; yes/no "wins the match")
+#   Total Games O/U - <Player>            -> total_games   (player's games won over/under; handicap = line)
+#   Set Betting                           -> set_betting   (exact-set-score ladder: "<Player> 2 - 0")
+#   Will <Player> Win At Least One Set?   -> win_a_set     (yes/no; "Yes" outcome carries the player)
+# Match-level only: markets are filtered to period.abbreviation == "MT" (pre-match "Match" and live
+# "Live Match"); per-set variants (" - S1" / " - LS2" outcome suffixes) are out of scope for the
+# props schema. Match-level markets with NO player attribution (Total Sets O/U 2.5, match Total
+# games, Game/Set spreads, tie-break, odd/even, tournament Outrights) are deferred — the same
+# deferral as UFC fight-level markets (see _UFC_METHOD). Set-betting scores ride in the market key
+# ("set_betting___2_0") so the per-player ladders don't collide on the ingest dedup key
+# (game_id, player_id, market, line, side, source); _base_market() still groups them under
+# "set_betting" for boards/charting.
+def _parse_tennis_props(event: dict, league: str) -> list:
+    """Extract player-attributed tennis props from a single Bovada tennis event."""
+    import re
+    comps = [c.get("name") for c in event.get("competitors", []) if c.get("name")]
+    if len(comps) < 2:
+        return []
+    fa, fb = comps[0], comps[1]
+    comp_by_id = {c.get("id"): c.get("name") for c in event.get("competitors", []) if c.get("id")}
+    desc = event.get("description") or f"{fa} vs {fb}"
+    start_time = event.get("startTime")
+    results = []
+    for dg in event.get("displayGroups", []):
+        for m in dg.get("markets", []):
+            period_abbr = (m.get("period") or {}).get("abbreviation") or ""
+            if period_abbr != "MT":
+                continue  # match-level only; skip per-set / live-set periods (S1/S2/S3/LS*)
+            mdesc = (m.get("description") or "").strip()
+            mdesc_lower = mdesc.lower()
+            if mdesc_lower == "moneyline":
+                canonical, kind = "match_winner", "win"
+            elif mdesc_lower.startswith("total games o/u - "):
+                canonical, kind = "total_games", "ou"
+            elif mdesc_lower == "set betting":
+                canonical, kind = "set_betting", "setscore"
+            elif mdesc_lower.startswith("will ") and mdesc_lower.endswith(" win at least one set?"):
+                canonical, kind = "win_a_set", "winset"
+            else:
+                continue
+            for o in m.get("outcomes", []):
+                od = (o.get("description") or "").strip()
+                price = o.get("price") or {}
+                odds = price.get("american")
+                cid = o.get("competitorId")
+                player = comp_by_id.get(cid) if cid else None
+                if kind == "win":
+                    if not player:
+                        player = od
+                    if not player:
+                        continue
+                    market = canonical
+                    line, side = 0.5, "over"
+                elif kind == "ou":
+                    if not player:
+                        # fallback: player rides in the market desc ("Total Games O/U - <Player>")
+                        player = mdesc.split(" - ", 1)[1].strip() if " - " in mdesc else ""
+                    if not player:
+                        continue
+                    handicap = price.get("handicap")
+                    market = canonical
+                    line = float(handicap) if handicap is not None else None
+                    side = "over" if od.lower() == "over" else "under"
+                elif kind == "setscore":
+                    sm = re.search(r"(\d+)\s*-\s*(\d+)\s*$", od)
+                    if not sm or not player:
+                        continue
+                    market = "set_betting___{}_{}".format(sm.group(1), sm.group(2))
+                    line, side = 0.5, "over"
+                else:  # winset — the "No" outcome is the complement; keep the "Yes" price only
+                    if od.lower() != "yes":
+                        continue
+                    if not player:
+                        pm = re.match(r"Will (.+?) Win At Least One Set\?", mdesc)
+                        player = pm.group(1).strip() if pm else ""
+                    if not player:
+                        continue
+                    market = canonical
+                    line, side = 0.5, "over"
+                opp = fb if player == fa else (fa if player == fb else "")
+                results.append({
+                    "player_name": player,
+                    "team": opp,
+                    "market": market,
+                    "line": line,
+                    "side": side,
+                    "odds": odds,
+                    "league": league,
+                    "game_desc": desc,
+                    "home_team": fa,
+                    "away_team": fb,
+                    "start_time": start_time,
+                    "source": "bovada",
+                    "market_raw": mdesc,
+                })
+    return results
 
 
 def _parse_wc_props(event: dict) -> list:

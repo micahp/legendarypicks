@@ -8,6 +8,7 @@ interface StandingsTabProps {
   groups: StandingGroup[]
   teams: TeamStats[]
   leagueName: string
+  league: string
 }
 
 export default function StandingsTab({
@@ -18,7 +19,12 @@ export default function StandingsTab({
   groups,
   teams,
   leagueName,
+  league,
 }: StandingsTabProps) {
+  // A grouped table is the signature for the World Cup, MLS (Eastern/Western
+  // conferences) and NCAAF (conferences). The loading skeleton follows it.
+  const grouped = isWorldCup || league === 'mls' || league === 'ncaaf'
+
   return (
     <>
       {error && (
@@ -28,14 +34,20 @@ export default function StandingsTab({
       )}
 
       {loading ? (
-        <div className="text-zinc-500 text-sm py-8 text-center">Loading standings...</div>
+        <StandingsSkeleton grouped={grouped} />
       ) : isWorldCup ? (
         knockout.length > 0 ? (
           <WorldCupKnockout rounds={knockout} />
         ) : groups.length > 0 ? (
-          <WorldCupGroups groups={groups} />
+          <SoccerStandings groups={groups} />
         ) : (
           <div className="text-zinc-500 text-sm">No standings available.</div>
+        )
+      ) : groups.length > 0 ? (
+        league === 'mls' ? (
+          <SoccerStandings groups={groups} />
+        ) : (
+          <ConferenceStandings groups={groups} />
         )
       ) : teams.length > 0 ? (
         <TeamSportStandings teams={teams} />
@@ -95,7 +107,12 @@ function WorldCupKnockout({ rounds }: { rounds: KnockoutRound[] }) {
   )
 }
 
-function WorldCupGroups({ groups }: { groups: StandingGroup[] }) {
+/**
+ * Soccer P W D L table — the World Cup group table, reused for MLS, whose
+ * Eastern/Western conferences map 1:1 onto the group shape. Points are the
+ * published value; this component never derives them from a 3/1/0 rule.
+ */
+function SoccerStandings({ groups }: { groups: StandingGroup[] }) {
   return (
     <div className="space-y-8">
       {groups.map(group => (
@@ -142,6 +159,96 @@ function WorldCupGroups({ groups }: { groups: StandingGroup[] }) {
               </tbody>
             </table>
           </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+/**
+ * Per-conference standings for NCAAF — 146 teams is not one table. Same
+ * structure as the soccer tables, football columns only: rank, team, games
+ * played, wins, losses. No GF/GA/GD/Pts: those are soccer stats, and no
+ * points column exists in published college-football standings, so rendering
+ * one would be a fabricated zero (honest-data-ui: dash ≠ zero).
+ */
+function ConferenceStandings({ groups }: { groups: StandingGroup[] }) {
+  return (
+    <div className="space-y-8">
+      {groups.map(group => (
+        <div key={group.group}>
+          <h2 className="text-lg font-bold text-white mb-3">{group.group}</h2>
+          <div className="overflow-x-auto rounded-xl border border-zinc-800 bg-zinc-900 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-zinc-800 text-zinc-400 text-xs uppercase tracking-wider">
+                  <th className="text-left py-3 px-3">#</th>
+                  <th className="text-left py-3 px-3">Team</th>
+                  <th className="text-center py-3 px-2">GP</th>
+                  <th className="text-center py-3 px-2">W</th>
+                  <th className="text-center py-3 px-2">L</th>
+                </tr>
+              </thead>
+              <tbody>
+                {group.rows.map(row => (
+                  <tr key={row.abbrev} className="border-b border-zinc-800/50 hover:bg-zinc-800/30">
+                    <td className="py-3 px-3 text-zinc-500">{row.rank}</td>
+                    <td className="py-3 px-3">
+                      <span className="font-semibold text-zinc-200">{row.abbrev}</span>
+                      <span className="text-zinc-500 ml-2">{row.name}</span>
+                    </td>
+                    <td className="py-3 px-2 text-center text-zinc-300">{row.played}</td>
+                    <td className="py-3 px-2 text-center text-zinc-300">{row.wins}</td>
+                    <td className="py-3 px-2 text-center text-zinc-300">{row.losses}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+/**
+ * Loading state that matches the component's own signature — a standings card
+ * of shimmer bars, two cards for the grouped leagues. Never a bare spinner,
+ * never a silent null.
+ */
+function StandingsSkeleton({ grouped }: { grouped: boolean }) {
+  return (
+    <div className="space-y-8 animate-pulse" role="status" aria-label="Loading standings">
+      {grouped ? (
+        <>
+          {[0, 1].map(i => (
+            <div key={i}>
+              <div className="h-5 w-48 bg-zinc-800 rounded mb-3" />
+              <TableSkeleton />
+            </div>
+          ))}
+        </>
+      ) : (
+        <TableSkeleton />
+      )}
+    </div>
+  )
+}
+
+function TableSkeleton() {
+  return (
+    <div className="rounded-xl border border-zinc-800 bg-zinc-900">
+      <div className="flex items-center gap-4 border-b border-zinc-800 px-3 py-3">
+        <div className="h-3 w-6 bg-zinc-800 rounded" />
+        <div className="h-3 w-28 bg-zinc-800 rounded" />
+        <div className="ml-auto h-3 w-16 bg-zinc-800 rounded" />
+      </div>
+      {Array.from({ length: 8 }).map((_, i) => (
+        <div key={i} className="flex items-center gap-4 border-b border-zinc-800/50 px-3 py-3">
+          <div className="h-3 w-6 bg-zinc-800 rounded" />
+          <div className="h-3 w-24 bg-zinc-800 rounded" />
+          <div className="h-3 w-20 bg-zinc-800/70 rounded" />
+          <div className="ml-auto h-3 w-24 bg-zinc-800/70 rounded" />
         </div>
       ))}
     </div>

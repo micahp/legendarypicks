@@ -7,6 +7,7 @@ const LEAGUES = [
   { key: 'nhl', name: 'NHL', desc: 'National Hockey League, points leaders, goalie stats, division races', emoji: '🏒' },
   { key: 'nfl', name: 'NFL', desc: 'National Football League, passing, rushing, receiving leaders, team power rankings', emoji: '🏈' },
   { key: 'mls', name: 'MLS', desc: 'Major League Soccer, standings, schedules, and player game logs', emoji: '⚽' },
+  { key: 'ncaaf', name: 'NCAAF', desc: 'College Football, FBS teams, conference standings, player game logs', emoji: '🏈' },
   { key: 'ufc', name: 'UFC', desc: 'Ultimate Fighting Championship, pound-for-pound rankings, division champions', emoji: '🥊' },
   { key: 'esports', name: 'Esports', desc: 'Esports World Cup, Club Championship, cross-title schedule and results', emoji: '🎮' },
   // World Cup card hidden 2026-08-04 (Micah): it stays on /scores and keeps its API
