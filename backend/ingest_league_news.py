@@ -433,18 +433,18 @@ X_ACCOUNTS = [
     ("TheAthleticCFB", "ncaaf"),
     ("BleacherReport", None),
     ("AdamSchefter", "nfl"),         # news breaker
-    # The prediction-market signal, from the SPORT desk — @PolymarketSport,
-    # singular (Micah, 2026-08-10: "sport. remove the s"). Its posts are
-    # Mahomes, Rashford, Rodgers; the parent @Polymarket account posts politics
-    # and crypto.
-    ("PolymarketSport", None),
-    # Dropped 2026-08-10 on measured yield. Of 20 rows each: Kalshi 100%
-    # unclassified and 0% usable, Polymarket 95%/10%, PrizePicks 65%/5% — they
-    # post markets on politics, crypto and streamers, and every one of those
-    # rows is noise the classifier and the desk have to wade through. Micah:
-    # "take off polymarket. i don't want to make it harder on the model."
-    # @PolymarketSports does not exist; @KalshiSports does, if a markets feed
-    # is ever wanted back.
+    # NO prediction-market accounts, not even the sport-specific ones. Measured
+    # 2026-08-10 on one ruler, rows unclassified / usable: Kalshi 100%/0%,
+    # Polymarket 95%/10%, KalshiSports 75%/15%, PrizePicks 65%/5%,
+    # PolymarketSport 60%/10% — against 0% unclassified for every
+    # league-labelled account above. The sport desks beat their parents and are
+    # still below the bar: about half their posts are the brand's own marketing
+    # ("Track the Chiefs' championship odds on Polymarket"), and much of the
+    # rest is competitions we do not cover.
+    #
+    # Market signal is a different class of data anyway — probabilities, not
+    # news. If we want it, it belongs in the odds pipeline beside the Bovada
+    # scraper, not in the narrative desk's chatter pool.
 ]
 # The paid fallback (twitterapi.io, ~$0.15/1k reads) is used ONLY when a key is
 # set. Micah, 2026-08-10: "i'm not trying to pay" — so the free mirror is the
