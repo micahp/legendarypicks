@@ -1184,16 +1184,51 @@ if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", "8000")))
 
 
+_TIMESTAMP_PREFIX = re.compile(r"^\d{4}-\d{2}-\d{2}")
+
+
+def _story_is_stale_preview(generated_at, state, start_time) -> bool:
+    """True when a cached story was written BEFORE kickoff and the game has since finished.
+
+    A preview and a recap are different pieces of writing, and the cache could not tell
+    them apart: the first story written for a game was final forever, so a game detail page
+    kept previewing a match that ended hours ago. There is no column recording which kind a
+    row holds, and there does not need to be — a story generated before the opening whistle
+    is a preview by construction.
+
+    Both sides are compared in UTC: generated_at is written by SQLite's datetime('now'),
+    which is UTC, and ESPN's start time is a Zulu instant."""
+    if (state or "").lower() != "post" or not generated_at or not start_time:
+        return False
+    try:
+        written = str(generated_at).strip().replace("T", " ").rstrip("Z")[:16]
+        kickoff = str(start_time).strip().replace("T", " ").rstrip("Z")[:16]
+        # Both must actually look like timestamps. A lexical compare on anything else is
+        # not a time comparison: "12345" sorts before "2026-08-10", which would call a
+        # malformed row a stale preview and regenerate it on every single view.
+        if not (_TIMESTAMP_PREFIX.match(written) and _TIMESTAMP_PREFIX.match(kickoff)):
+            return False
+        return written < kickoff
+    except Exception:
+        return False
+
+
 def generate_game_story(lg: str, game_id: str, refresh: bool = False,
-                        home: str = None, away: str = None) -> dict:
-    """Generate (or fetch cached) the AI matchup blurb for one game, grounded ONLY in
-    our records/streaks/form. Shared by the /story endpoint (lazy, on view) and the
+                        home: str = None, away: str = None,
+                        state: str = None, start_time: str = None) -> dict:
+    """Generate (or fetch cached) the AI blurb for one game, grounded ONLY in our
+    records/streaks/form. Shared by the /story endpoint (lazy, on view) and the
     pregenerate_game_stories job (eager, when a game is first discovered).
 
     home/away (team abbrevs) let the pre-game path work: a scheduled game has no
-    `scores` yet, so the team abbrevs come from the scoreboard instead."""
+    `scores` yet, so the team abbrevs come from the scoreboard instead.
+
+    state/start_time come from the same scoreboard row and cost no extra request. They are
+    what lets a preview be replaced by a recap once the game is final — without them the
+    behaviour is exactly as before, so every existing caller keeps working."""
     lg = lg.lower()
     cached = None
+    stale_preview = False
     with closing(_db()) as con:
         con.execute("""CREATE TABLE IF NOT EXISTS game_story(
             league TEXT, game_id TEXT, story TEXT, generated_at TEXT, has_form INTEGER DEFAULT 0,
@@ -1209,9 +1244,12 @@ def generate_game_story(lg: str, game_id: str, refresh: bool = False,
             con.execute("ALTER TABLE game_story ADD COLUMN has_stakes INTEGER DEFAULT 0")
             con.commit()
         if not refresh:
-            cached = con.execute("SELECT story, has_form, has_stakes FROM game_story WHERE league=? AND game_id=?",
-                                 (lg, game_id)).fetchone()
-            if cached and cached["has_form"]:
+            cached = con.execute(
+                "SELECT story, has_form, has_stakes, generated_at FROM game_story "
+                "WHERE league=? AND game_id=?", (lg, game_id)).fetchone()
+            stale_preview = cached and _story_is_stale_preview(
+                cached["generated_at"], state, start_time)
+            if cached and cached["has_form"] and not stale_preview:
                 import stakes as _stakes_mod
                 # Final unless this league HAS a stakes model and the story predates it —
                 # that one case regenerates once (below) and becomes final with has_stakes=1.
@@ -1317,10 +1355,18 @@ def generate_game_story(lg: str, game_id: str, refresh: bool = False,
     if cached:
         new_form = bool(form_lines or context_lines) and not cached["has_form"]
         new_stakes = bool(stakes_lines) and not cached["has_stakes"]
-        if not new_form and not new_stakes:
+        if not new_form and not new_stakes and not stale_preview:
             return {"league": lg, "game_id": game_id, "story": cached["story"], "cached": True}
 
-    system = ("You are a sharp sports writer. Set up this matchup using ONLY the facts given. "
+    # A finished game gets a recap, not a preview. Without this the writer keeps setting up
+    # a match whose result is sitting in the facts it was handed — "Chicago look to advance"
+    # under a scoreline that says they already did.
+    finished = (state or "").lower() == "post" or (gr.get("state") or "").lower() == "post"
+    opening = ("You are a sharp sports writer. This game is OVER — write the recap, in past "
+               "tense, using ONLY the facts given. Lead with what decided it and what it "
+               "changed. " if finished else
+               "You are a sharp sports writer. Set up this matchup using ONLY the facts given. ")
+    system = (opening +
               "Lead priority: (1) what's at stake in this game, (2) a player or team on a clear "
               "hot or cold run, (3) how the two sides' leagues are faring against each other "
               "when the competition pairs two leagues, (4) record/quality context. Name the "
@@ -1358,7 +1404,8 @@ def kick_game_stories(lg: str, games: list):
     This is the 'write the preview whenever we find out about the game' hook: games are
     lazy-loaded via /api/{league}/games, so that fetch is exactly when we find out."""
     lg = lg.lower()
-    ids = [(str(g.get("game_id")), (g.get("home") or {}).get("abbrev"), (g.get("away") or {}).get("abbrev"))
+    ids = [(str(g.get("game_id")), (g.get("home") or {}).get("abbrev"),
+            (g.get("away") or {}).get("abbrev"), g.get("state"), g.get("date"))
            for g in (games or []) if g.get("game_id")]
     if not ids:
         return
@@ -1369,22 +1416,26 @@ def kick_game_stories(lg: str, games: list):
                 league TEXT, game_id TEXT, story TEXT, generated_at TEXT,
                 PRIMARY KEY(league, game_id))""")
             qs = ",".join("?" * len(gid_list))
-            cached = {r[0] for r in con.execute(
-                f"SELECT game_id FROM game_story WHERE league=? AND game_id IN ({qs})",
+            cached = {r[0]: r[1] for r in con.execute(
+                f"SELECT game_id, generated_at FROM game_story WHERE league=? AND game_id IN ({qs})",
                 [lg] + gid_list)}
     except Exception:
-        cached = set()
-    for gid, home, away in ids:
-        if gid in cached:
+        cached = {}
+    for gid, home, away, state, start_time in ids:
+        # A cached story is enough UNLESS it is a preview of a game that has since ended —
+        # then this scoreboard load is exactly when we find out the recap is owed, the same
+        # way it is when we first find out the game exists.
+        if gid in cached and not _story_is_stale_preview(cached[gid], state, start_time):
             continue
         with _story_lock:
             if gid in _story_inflight:
                 continue
             _story_inflight.add(gid)
-        def _run(gid=gid, home=home, away=away):
+        def _run(gid=gid, home=home, away=away, state=state, start_time=start_time):
             try:
                 with _story_sema:
-                    generate_game_story(lg, gid, home=home, away=away)
+                    generate_game_story(lg, gid, home=home, away=away,
+                                        state=state, start_time=start_time)
             except Exception as e:
                 print(f"[story] bg gen failed {lg} {gid}: {e}")
             finally:

@@ -1,0 +1,12 @@
+[Unit]
+Description=Write recaps for finished games whose story still previews them (dev DB)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/root/legendarypicks/backend
+Environment=LP_DB_PATH=/root/legendarypicks/backend/data/picks.dev.db
+ExecStart=/root/legendarypicks/scripts/game-recaps.sh
+TimeoutStartSec=1800
+Nice=10
