@@ -22,9 +22,12 @@ Usage:
   python3 ingest_league_news.py --dry-run                          # collect+classify, no write
 """
 import argparse
+import datetime
 import email.utils
+import html
 import json
 import os
+import re
 import sys
 import urllib.parse
 import urllib.request
@@ -133,17 +136,55 @@ _BLUE_FETCHER = Fetcher(min_interval=0.5, retry_waits=(), cache_dir=CACHE_DIR,
                         cache_ttl=3600, host_budget=0)
 
 
+_TAG_RE = re.compile(r"<[a-zA-Z/!][^>]{0,200}>")
+
+
+def _clean(text: str) -> str:
+    """Publisher text as a reader should see it.
+
+    Feeds hand us escaped entities, and SB Nation's Atom escapes them TWICE —
+    the reader saw the literal `Purdue&#8217;s new AD` on the news page
+    (Micah, 2026-08-09). Unescape until stable (bounded), drop any markup the
+    unescape revealed, collapse whitespace.
+    """
+    s = (text or "").strip()
+    for _ in range(3):
+        if "&" not in s:
+            break
+        u = html.unescape(s)
+        if u == s:
+            break
+        s = u
+    if "<" in s:
+        s = _TAG_RE.sub(" ", s)
+    return " ".join(s.split())
+
+
 def _iso(published: str) -> str:
-    """Normalize RFC822 (RSS) dates to ISO 8601 so ORDER BY published works."""
+    """Normalize any publisher date to UTC ISO 8601 so ORDER BY published works.
+
+    `published` is sorted as TEXT in SQL, so every row must share one shape.
+    RFC 822 ("Thu, 06 Aug 2026 23:00:40 +0000"), ISO with an offset
+    ("2026-08-06T17:39:23-04:00") and ISO Zulu all become "...THH:MM:SSZ".
+    An unparseable value is returned as-is rather than dropped.
+    """
     p = (published or "").strip()
     if not p:
         return ""
-    if p[0].isdigit() and "," in p:
+    dt = None
+    if "," in p or p[:3].isalpha():
         try:
-            return email.utils.parsedate_to_datetime(p).astimezone().isoformat()
+            dt = email.utils.parsedate_to_datetime(p)
+        except Exception:
+            dt = None
+    if dt is None:
+        try:
+            dt = datetime.datetime.fromisoformat(p.replace("Z", "+00:00"))
         except Exception:
             return p
-    return p
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=datetime.timezone.utc)
+    return dt.astimezone(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 def _http_text(url: str) -> str:
@@ -161,8 +202,8 @@ def collect_espn(leagues):
             for a in d.get("articles", []):
                 items.append({
                     "source": "espn-" + league,
-                    "headline": a.get("headline", ""),
-                    "body": a.get("description", ""),
+                    "headline": _clean(a.get("headline", "")),
+                    "body": _clean(a.get("description", "")),
                     "url": (a.get("links", {}).get("web", {}).get("href")
                             or a.get("link", {}).get("href") or ""),
                     "published": _iso(a.get("published", "")),
@@ -192,8 +233,9 @@ def collect_rss():
                     link_el = it.find("{http://www.w3.org/2005/Atom}link")
                     if link_el is not None:
                         link = link_el.get("href", "")
-                items.append({"source": name, "headline": title, "body": desc,
-                              "url": link, "published": _iso(txt("pubDate") or txt("updated"))})
+                items.append({"source": name, "headline": _clean(title),
+                              "body": _clean(desc), "url": link,
+                              "published": _iso(txt("pubDate") or txt("updated"))})
         except Exception as e:
             items.append({"source": name, "headline": "FETCH ERROR: %s" % e,
                           "body": "", "url": "", "published": ""})
@@ -208,7 +250,7 @@ def collect_bluesky():
             d = _BLUE_FETCHER.json(url)
             for p in d.get("posts", []):
                 rec = p.get("record", {})
-                text = rec.get("text", "")
+                text = _clean(rec.get("text", ""))
                 author = p.get("author", {}).get("handle", "?")
                 post_uri = p.get("uri", "") or rec.get("uri", "")
                 items.append({
@@ -312,6 +354,36 @@ def reclassify_existing(dry_run=False):
     print("Reclassified %d rows%s" % (changed, " (dry run)" if dry_run else ""))
 
 
+def repair_stored_text(dry_run=False):
+    """Re-clean headline/body and re-normalize published for stored rows.
+
+    The collector now cleans on the way in; rows collected before that carry
+    the raw publisher text (`Purdue&#8217;s`) and mixed date shapes (RFC 822
+    from three feeds, ISO from the rest), and `published` is sorted as TEXT —
+    so "Thu, 06 Aug..." outranked every ISO row regardless of date. No network.
+    """
+    import sqlite3
+    db_path = os.environ.get("LP_DB_PATH") or os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), "data", "picks.db")
+    con = sqlite3.connect(db_path)
+    rows = con.execute("SELECT id, headline, body, published FROM news_items").fetchall()
+    text_fixed = date_fixed = 0
+    for rid, headline, body, published in rows:
+        h, b, p = _clean(headline), _clean(body), _iso(published)
+        if h != (headline or "") or b != (body or ""):
+            text_fixed += 1
+        if p != (published or ""):
+            date_fixed += 1
+        if not dry_run and (h != headline or b != body or p != published):
+            con.execute(
+                "UPDATE news_items SET headline=?, body=?, published=? WHERE id=?",
+                (h, b, p, rid))
+    con.commit()
+    con.close()
+    print("Repaired text on %d rows, dates on %d rows (%d scanned)%s"
+          % (text_fixed, date_fixed, len(rows), " (dry run)" if dry_run else ""))
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--leagues", default="nfl,mlb,mls,ncaaf,nba,nhl,ufc",
@@ -321,10 +393,16 @@ def main():
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--reclassify", action="store_true",
                     help="re-run the classifier over stored rows (no network)")
+    ap.add_argument("--repair-text", action="store_true",
+                    help="re-clean stored headline/body + normalize published (no network)")
     args = ap.parse_args()
 
     if args.reclassify:
         reclassify_existing(dry_run=args.dry_run)
+        return
+
+    if args.repair_text:
+        repair_stored_text(dry_run=args.dry_run)
         return
 
     leagues = [l.strip() for l in args.leagues.split(",") if l.strip() in ESPN_NEWS]
