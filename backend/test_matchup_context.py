@@ -71,11 +71,50 @@ def test_form_is_most_recent_first():
 def test_origin_split_names_the_unlabelled_group_from_the_match():
     """ESPN labels Liga MX and leaves MLS as None. The label has to come from the clubs'
     own recent fixtures, not from a hardcoded assumption about which group is which."""
-    line = mc._origin_split(_payload())[0]
+    line = [l for l in mc._origin_split(_payload()) if "BACKGROUND" in l][0]
     assert "Liga MX against MLS" in line
     assert "Liga MX clubs 11-22-3" in line
     assert "MLS clubs 22-11-3" in line
-    assert "Across 36 matches" in line
+    assert "36 matches" in line
+
+
+def test_a_finished_game_is_not_given_the_league_wide_split():
+    """The number is a snapshot read at generation time, so a recap citing it claims both
+    that it was that at full time and that this match moved it. Regenerating one slate
+    produced '23-11-3' on one card and '22 wins, 12 losses' on another for the same
+    afternoon. Per-club standings stay — those are about this game."""
+    lines = mc.context_lines("lcup", "1", summary=_payload(), state="post")
+    assert not any("BACKGROUND" in l for l in lines)
+    assert not any("22-11-3" in l for l in lines)
+    assert any(l.startswith("Santos in this tournament") for l in lines)
+
+
+def test_a_scheduled_game_still_gets_it_as_scene_setting():
+    lines = mc.context_lines("lcup", "1", summary=_payload(), state="pre")
+    assert any("BACKGROUND" in l for l in lines)
+
+
+def test_the_split_says_matches_played_before_this_one():
+    line = [l for l in mc._origin_split(_payload()) if "BACKGROUND" in l][0]
+    assert "BEFORE this one" in line
+
+
+def test_the_league_wide_split_is_labelled_background():
+    """It is true of every fixture in the tournament, so handed over plain it wrote the
+    same sentence into all eight recaps of one slate."""
+    line = [l for l in mc._origin_split(_payload()) if "22-11-3" in l][0]
+    assert line.startswith("BACKGROUND")
+
+
+def test_each_club_gets_its_own_position_in_the_table():
+    """The part of the table that differs from card to card, and the reason the slate stops
+    reading like one sentence repeated."""
+    lines = mc._origin_split(_payload())
+    chicago = [l for l in lines if l.startswith("Chicago Fire FC in this tournament")]
+    santos = [l for l in lines if l.startswith("Santos in this tournament")]
+    assert chicago and santos
+    assert "among MLS clubs" in chicago[0]
+    assert "among Liga MX clubs" in santos[0]
 
 
 def test_origin_split_silent_when_the_groups_describe_different_match_counts():

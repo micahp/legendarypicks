@@ -1343,11 +1343,39 @@ def generate_game_story(lg: str, game_id: str, refresh: bool = False,
     # alone: "#7 in the 36-team table" instead of "Santos have lost five straight".
     try:
         import matchup_context as _mctx
-        context_lines = _mctx.context_lines(lg, game_id)
+        context_lines = _mctx.context_lines(
+            lg, game_id, state=state or gr.get("state"))
     except Exception:
         context_lines = []
     if context_lines:
         grounding += "\nMatchup context:\n" + "\n".join(context_lines)
+
+    # Settled props — recap only. Props are the product, and until now the recap could not
+    # mention the one thing this site knows better than a wire report: whether the lines it
+    # published were any good. "Judge went over 1.5 total bases (3)" is a sentence no other
+    # recap of that game can write.
+    settled_lines = []
+    if (state or "").lower() == "post" or (gr.get("state") or "").lower() == "post":
+        try:
+            with closing(_db()) as con:
+                for r in con.execute(
+                        """SELECT pl.name, p.market, p.line, p.side, r.actual_value, r.hit
+                           FROM props p
+                           JOIN prop_games pg ON pg.id = p.game_id
+                           JOIN players pl ON pl.id = p.player_id
+                           JOIN prop_results r ON r.prop_id = p.id
+                           WHERE pg.espn_event_id = ? AND r.hit IS NOT NULL
+                           GROUP BY pl.id, p.market, p.side
+                           ORDER BY r.hit DESC LIMIT 6""", (str(game_id),)):
+                    verdict = "HIT" if r["hit"] else "missed"
+                    settled_lines.append(
+                        f"{r['name']} {_base_market(r['market'])} {r['side']} {r['line']}: "
+                        f"actual {r['actual_value']} — {verdict}.")
+        except Exception:
+            settled_lines = []
+    if settled_lines:
+        grounding += ("\nHow our published props landed in this game (state these exactly as "
+                      "given; never round or restate a line):\n" + "\n".join(settled_lines))
 
     # Regenerate a cached story ONLY when genuinely new context arrived since it was written
     # (form for a pre-form story, stakes for a pre-stakes story). Otherwise keep it — never
@@ -1364,13 +1392,17 @@ def generate_game_story(lg: str, game_id: str, refresh: bool = False,
     finished = (state or "").lower() == "post" or (gr.get("state") or "").lower() == "post"
     opening = ("You are a sharp sports writer. This game is OVER — write the recap, in past "
                "tense, using ONLY the facts given. Lead with what decided it and what it "
-               "changed. " if finished else
+               "changed. If settled props are given, work at least one in — a line and the "
+               "number it landed on is the most specific thing in the facts. "
+               if finished else
                "You are a sharp sports writer. Set up this matchup using ONLY the facts given. ")
     system = (opening +
               "Lead priority: (1) what's at stake in this game, (2) a player or team on a clear "
-              "hot or cold run, (3) how the two sides' leagues are faring against each other "
-              "when the competition pairs two leagues, (4) record/quality context. Name the "
-              "players the facts name. Be specific with numbers, but NEVER "
+              "hot or cold run, (3) record/quality context, including where these two clubs "
+              "sit in the competition. Name the players the facts name. A fact marked "
+              "BACKGROUND is true of every game in the competition — it is scenery, not the "
+              "story, and belongs in this card only if this game is what changed it. Be "
+              "specific with numbers, but NEVER "
               "state the same stat twice in different units, and never pad — if the facts are "
               "thin, one sharp sentence beats four generic ones. 1-4 sentences. Do NOT invent "
               "injuries, trades, lineup news, or anything not in the facts. No clichés, no hype, "

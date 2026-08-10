@@ -39,8 +39,11 @@ _MAX_LEADER_CATS = 2
 _LEADER_PRIORITY = ("goals", "assists", "points", "total shots", "shots")
 
 
-def context_lines(league, game_id, summary=None, fetch=None):
-    """-> list of grounding strings for this matchup. Empty when nothing is derivable."""
+def context_lines(league, game_id, summary=None, fetch=None, state=None):
+    """-> list of grounding strings for this matchup. Empty when nothing is derivable.
+
+    `state` is the game's ESPN state. A finished game does NOT get the league-wide split —
+    see _origin_split for why that number is preview material only."""
     try:
         if summary is None:
             if fetch is None:
@@ -52,10 +55,14 @@ def context_lines(league, game_id, summary=None, fetch=None):
     except Exception:
         return []
 
+    finished = (state or "").lower() == "post"
     lines = []
     for producer in (_phase, _origin_split, _form, _leaders):
         try:
-            lines.extend(producer(summary) or [])
+            if producer is _origin_split:
+                lines.extend(_origin_split(summary, include_split=not finished) or [])
+            else:
+                lines.extend(producer(summary) or [])
         except Exception:
             continue
     return lines
@@ -102,10 +109,20 @@ def _group_totals(group):
     return tot
 
 
-def _origin_split(d):
-    """For a tournament whose groups are two different leagues, how each league is faring
-    against the other. Only meaningful with exactly two groups — that is the cross-league
-    shape. A normal league table has one group or many, and gets nothing here."""
+def _origin_split(d, include_split=True):
+    """For a tournament whose groups are two different leagues: where each of THIS match's
+    clubs sits, and — before kickoff only — how the two leagues are faring against each
+    other. Only meaningful with exactly two groups, the cross-league shape. A normal league
+    table has one group or many and gets nothing here.
+
+    `include_split` is False for a finished game, and that is not about repetition. The
+    league-wide record is a snapshot read at generation time, so a recap that cites it
+    asserts two things the data does not support: that the number was that at the final
+    whistle, and that this match is what moved it. Regenerating one slate produced exactly
+    that — "extended MLS's record to 23-11-3" on one card and "shifting the inter-league
+    record to 22 wins, 12 losses" on another, describing the same afternoon. Before
+    kickoff the same number is honest scene-setting: this is the form the visitors arrive
+    in. Afterwards it is a claim about causation nobody measured."""
     groups = ((d.get("standings") or {}).get("groups")) or []
     if len(groups) != 2:
         return []
@@ -138,8 +155,45 @@ def _origin_split(d):
     parts = []
     for label, t in zip(names, totals):
         parts.append(f"{label} clubs {t['wins']}-{t['losses']}-{t['ties']}")
-    return [f"This tournament is {names[0]} against {names[1]}. Across {played} matches "
-            f"played so far: {', '.join(parts)} (W-L-D)."]
+
+    # The split is true of every fixture in the tournament, so handing it over plain put
+    # the same sentence in all eight recaps of one slate — "MLS clubs 22-11-3" read as the
+    # headline of a match it was only the backdrop to. It is labelled BACKGROUND, and the
+    # per-club standing goes in front of it, because where THESE two sit is the fact that
+    # differs from card to card.
+    out = _club_standings(d, groups, names)
+    if include_split:
+        out.append(
+            f"BACKGROUND, true of every fixture in this tournament and not news about this "
+            f"one — it is the form the two sides arrive in, never something this match did: "
+            f"the competition is {names[0]} against {names[1]}, and across {played} matches "
+            f"played BEFORE this one {', '.join(parts)} (W-L-D).")
+    return out
+
+
+def _club_standings(d, groups, names):
+    """Where each of THIS match's two clubs sits in the tournament — the part of the table
+    that is about this game rather than about the competition."""
+    out = []
+    for entry in d.get("lastFiveGames") or []:
+        team = entry.get("team") or {}
+        display = (team.get("displayName") or "").strip()
+        if not display:
+            continue
+        for group, label in zip(groups, names):
+            rows = (group.get("standings") or {}).get("entries") or []
+            for rank, row in enumerate(rows, start=1):
+                if (row.get("team") or "").strip() != display:
+                    continue
+                s = {x.get("name"): x.get("value") for x in row.get("stats") or []}
+                gd = int(s.get("pointDifferential") or 0)
+                out.append(
+                    f"{display} in this tournament: {int(s.get('wins') or 0)}-"
+                    f"{int(s.get('losses') or 0)}-{int(s.get('ties') or 0)}, "
+                    f"{int(s.get('points') or 0)} pts, {'+' if gd >= 0 else ''}{gd} goal "
+                    f"difference, {rank} of {len(rows)} among {label} clubs.")
+                break
+    return out
 
 
 def _abbrev_in(abbrev, member_names, d):
