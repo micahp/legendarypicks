@@ -190,11 +190,12 @@ _SYSTEM = (
     '"paragraph": "<2-4 sentences of plain ESPN-style body prose — fan voice '
     'with evidence, concrete names and numbers, room to flow; do NOT repeat '
     'the narrative>", '
-    '"source_urls": ["<url>", ...]}, where source_urls lists the URLs of the '
-    "REAL (non-bluesky) articles from the items that THIS card actually grounds "
-    "in — only those whose content you used for the anchor or the evidence. "
-    "Empty list if the card is built from social chatter with no real article. "
-    "Never invent a URL; only cite URLs that appear in the items. "
+    '"source_ids": [<n>, ...]}, where source_ids are the NUMBERS of the REAL '
+    "(non-social) items that THIS card actually grounds in — just the integers "
+    "from the numbered list, e.g. [1, 4]. Only those whose content you used for "
+    "the anchor or the evidence. Empty list if the card is built from social "
+    "chatter with no real article. Never invent a number that is not in the "
+    "list. "
     "Only if the items are truly unrelated (no shared theme at all) output "
     '{"narrative": null}. '
     "Ground ONLY in the provided items. Do not invent topics, facts, or names "
@@ -335,14 +336,40 @@ def _cited_sources(items, parsed):
     hallucinated URL never reaches the card (Micah, 2026-08-09)."""
     real = {it["url"]: it for it in items
             if it["source"] not in SOCIAL_SOURCES and it.get("url")}
+    out = []
+    seen = set()
+
+    def _add(it):
+        if it and it["url"] not in seen and it["source"] not in SOCIAL_SOURCES:
+            seen.add(it["url"])
+            out.append({"headline": it["headline"], "url": it["url"],
+                        "source": it["source"]})
+
+    # By ITEM NUMBER first. The model sees a numbered list, and citing "1, 4" is
+    # something it gets right; reproducing a 90-character URL exactly is not,
+    # and an exact-match lookup drops a near-miss silently — 9 of 12 cards
+    # served no receipts while holding 3-6 real articles each (2026-08-10).
+    ids = parsed.get("source_ids") or []
+    if isinstance(ids, (int, str)):
+        ids = [ids]
+    for n in ids:
+        try:
+            idx = int(str(n).strip().lstrip("#")) - 1
+        except ValueError:
+            continue
+        if 0 <= idx < len(items):
+            _add(items[idx])
+
+    # URLs still accepted, now normalised so a trailing slash is not a miss.
+    def _norm_url(u):
+        return (u or "").strip().rstrip("/").split("?")[0].lower()
+
+    by_norm = {_norm_url(u): it for u, it in real.items()}
     cited = parsed.get("source_urls") or []
     if isinstance(cited, str):
         cited = [cited]
-    out = []
     for url in cited:
-        it = real.get(url)
-        if it:
-            out.append({"headline": it["headline"], "url": it["url"], "source": it["source"]})
+        _add(real.get(url) or by_norm.get(_norm_url(url)))
     return out
 
 
@@ -444,11 +471,11 @@ def _generate_batch(convs_with_marks):
         # twelve cards came back with no receipts at all while their pools held
         # three to six real articles each (2026-08-10).
         "Output STRICT JSON: {\"conv_id\": {\"narrative\": ..., \"fan_voice\": "
-        "..., \"paragraph\": ..., \"source_urls\": [\"<url>\", ...]}, ...}\n"
-        "source_urls lists the URLs of the real (non-social) items above that "
-        "THIS card actually grounds in. Cite every article you drew a fact "
-        "from; empty list only when the card is built purely from social "
-        "chatter.\n\n"
+        "..., \"paragraph\": ..., \"source_ids\": [<n>, ...]}, ...}\n"
+        "source_ids are the NUMBERS of the real (non-social) items above that "
+        "THIS card actually grounds in — just the integers from the numbered "
+        "list, e.g. [1, 4]. Cite every article you drew a fact from; empty "
+        "list only when the card is built purely from social chatter.\n\n"
         + "\n\n".join(blocks)
     )
     for attempt in (0, 1):
