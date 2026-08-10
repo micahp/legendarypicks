@@ -121,7 +121,35 @@ already served by existing conversations. The engine currently covers the money
 stories in its own feed. Yield should be judged over weeks, at one or two good
 proposals, not fourteen.
 
-## 7. Known limits
+## 7. How much of this is seed-bound (measured 2026-08-10)
+
+Micah asked the right question: *"we aren't just searching for topics i
+mentioned right?"*
+
+| Layer | Seed-bound? |
+|---|---|
+| Article corpus (ESPN news + 5 RSS feeds), 1,047 rows | **No.** Broad league feeds; no seed touches them |
+| Social corpus | **Was 100% seeded.** Now 42% un-seeded — see below |
+| Conversation **cards** | **Yes, by design.** A card is only ever written for a row in `news_conversations` |
+| Discovery | **No.** Scans the whole corpus and explicitly excludes covered topics |
+
+The bias worth naming: every Bluesky row used to come from a conversation's own
+query, and `convergence` — chatter and articles landing on the same thing — is
+the heaviest single term in the discovery score (5.0). So the strongest signal
+could only fire *next to a topic already named*. A conversation living mainly in
+social, away from any seed, was invisible to it.
+
+Fixed with `OPEN_QUERIES`: 16 league-level searches tied to no conversation
+(8 leagues × plain name + "fans"). Social went from 0% to 42% un-seeded on the
+first run. The effect on yield is delayed by one day by design — the pass
+requires a topic to recur across two days, and un-seeded sampling only started
+today.
+
+Yield is limited by corpus density, not by the gates. Relaxing the persistence
+gate entirely moves the count from 1 to 2; 783 of 836 clusters die at "fewer
+than 3 items". More sources is the lever, not looser thresholds.
+
+## 8. Known limits
 
 - **Corpus density is the binding constraint.** 783 of 836 clusters die on
   "fewer than 3 items". More sources (a transfer-news feed, more Bluesky

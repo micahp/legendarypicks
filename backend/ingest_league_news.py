@@ -177,6 +177,18 @@ def _conversation_queries() -> list:
             out.append((conv["id"], "%s %s" % (conv["seed"], dim)))
     return out
 
+# OPEN queries — deliberately tied to NO conversation. Every social row used to
+# come from a seed, which meant the corpus's chatter could only ever be about
+# topics we had already named, and "chatter converges with articles" — the
+# heaviest term in the discovery score — could only fire next to an existing
+# seed. These sample each league broadly so a conversation nobody named can
+# still show up in social (Micah, 2026-08-10: "we aren't just searching for
+# topics i mentioned right?").
+_OPEN_LEAGUES = ["NFL", "MLB", "NBA", "NHL", "MLS", "UFC",
+                 "college football", "esports"]
+OPEN_QUERIES = [(None, lg) for lg in _OPEN_LEAGUES] + \
+               [(None, "%s fans" % lg) for lg in _OPEN_LEAGUES]
+
 CONVERSATION_QUERIES = _conversation_queries()
 ALL_BLUESKY_QUERIES = [q for _c, q in CONVERSATION_QUERIES]
 BLUESKY_SEARCH = "https://api.bsky.app/xrpc/app.bsky.feed.searchPosts"  # public.api 403'd 2026-08-06
@@ -308,7 +320,7 @@ def collect_rss():
 
 def collect_bluesky():
     items = []
-    for conv_id, q in CONVERSATION_QUERIES:
+    for conv_id, q in CONVERSATION_QUERIES + OPEN_QUERIES:
         url = BLUESKY_SEARCH + "?q=%s&limit=8" % urllib.parse.quote(q)
         try:
             d = _BLUE_FETCHER.json(url)
@@ -486,7 +498,9 @@ def main():
     print("  site.api.espn.com: %d  (host_budget=20, disk cache -> re-runs cost 0)" % len(leagues))
     if not args.no_rss:
         print("  deadspin.com: 1 | awfulannouncing.com: 1 | fansided.com: 1 | sbnation.com: 1")
-    print("  api.bsky.app: %d" % len(ALL_BLUESKY_QUERIES))
+    print("  api.bsky.app: %d (%d seeded + %d open)"
+          % (len(ALL_BLUESKY_QUERIES) + len(OPEN_QUERIES),
+             len(ALL_BLUESKY_QUERIES), len(OPEN_QUERIES)))
 
     all_items = []
     if not args.no_espn:
