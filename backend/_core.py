@@ -1270,18 +1270,33 @@ def generate_game_story(lg: str, game_id: str, refresh: bool = False,
     if form_lines:
         grounding += "\nRecent player form (most recent first):\n" + "\n".join(form_lines)
 
+    # Matchup context: team form, who is producing, and — for a tournament that pairs two
+    # leagues — how those leagues are faring against each other. All of it read off the
+    # summary payload this game already fetches. Soccer has no props, so form_lines above
+    # is always empty there and a Leagues Cup story was being written from strength ranks
+    # alone: "#7 in the 36-team table" instead of "Santos have lost five straight".
+    try:
+        import matchup_context as _mctx
+        context_lines = _mctx.context_lines(lg, game_id)
+    except Exception:
+        context_lines = []
+    if context_lines:
+        grounding += "\nMatchup context:\n" + "\n".join(context_lines)
+
     # Regenerate a cached story ONLY when genuinely new context arrived since it was written
     # (form for a pre-form story, stakes for a pre-stakes story). Otherwise keep it — never
     # burn an LLM call re-writing the same blurb, and never loop when a source is down.
     if cached:
-        new_form = bool(form_lines) and not cached["has_form"]
+        new_form = bool(form_lines or context_lines) and not cached["has_form"]
         new_stakes = bool(stakes_lines) and not cached["has_stakes"]
         if not new_form and not new_stakes:
             return {"league": lg, "game_id": game_id, "story": cached["story"], "cached": True}
 
     system = ("You are a sharp sports writer. Set up this matchup using ONLY the facts given. "
               "Lead priority: (1) what's at stake in this game, (2) a player or team on a clear "
-              "hot or cold run, (3) record/quality context. Be specific with numbers, but NEVER "
+              "hot or cold run, (3) how the two sides' leagues are faring against each other "
+              "when the competition pairs two leagues, (4) record/quality context. Name the "
+              "players the facts name. Be specific with numbers, but NEVER "
               "state the same stat twice in different units, and never pad — if the facts are "
               "thin, one sharp sentence beats four generic ones. 1-4 sentences. Do NOT invent "
               "injuries, trades, lineup news, or anything not in the facts. No clichés, no hype, "
@@ -1291,13 +1306,14 @@ def generate_game_story(lg: str, game_id: str, refresh: bool = False,
         with closing(_db()) as con:
             con.execute("INSERT OR REPLACE INTO game_story(league, game_id, story, generated_at, has_form, has_stakes) "
                         "VALUES (?,?,?,datetime('now'),?,?)",
-                        (lg, game_id, story, 1 if form_lines else 0, 1 if stakes_lines else 0))
+                        (lg, game_id, story, 1 if (form_lines or context_lines) else 0,
+                         1 if stakes_lines else 0))
             con.commit()
     elif cached:
         # generation failed this time — keep the previous story rather than blanking it
         return {"league": lg, "game_id": game_id, "story": cached["story"], "cached": True}
     return {"league": lg, "game_id": game_id, "story": story,
-            "cached": False, "has_form": bool(form_lines)}
+            "cached": False, "has_form": bool(form_lines or context_lines)}
 
 
 import threading as _threading
