@@ -72,7 +72,7 @@ export type Standings = {
 export function EwcMatchRow({ m }: { m: UpMatch }) {
   const t = m.startTime ? new Date(m.startTime) : null
   const timeLabel = t ? t.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''
-  const stateLabel = m.live ? 'LIVE' : m.finished ? 'FINAL' : timeLabel || 'TIME TBD'
+  const stateLabel = m.live ? 'LIVE' : m.canceled ? 'Canceled' : m.finished ? 'FINAL' : timeLabel || 'TIME TBD'
   const score = m.score
   return (
     <div className="flex items-baseline gap-3 py-1.5" data-ewc-game-row="true">

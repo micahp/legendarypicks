@@ -436,15 +436,24 @@ def _snapshot_match(row, title):
     score_a = row.get("scoreA")
     score_b = row.get("scoreB")
     finished = bool(row.get("finished"))
+    canceled = bool(row.get("canceled"))
     winner = None
     if finished and score_a is not None and score_b is not None and score_a != score_b:
         winner = "a" if score_a > score_b else "b"
     stage = row.get("stage")
+    source_match_id = row.get("sourceMatchId") or ""
+    if source_match_id.startswith("pandascore:"):
+        source_label = "pandascore-snapshot"
+    elif source_match_id.startswith("lichess:"):
+        source_label = "lichess-snapshot"
+    else:
+        source_label = "liquipedia-snapshot"
     return {
         "startTime": row.get("startTime"),
         "endTime": row.get("startTime") if finished else None,
         "live": False,
         "finished": finished,
+        "canceled": canceled,
         "title": title["name"],
         "league": "%s%s" % (_EVENT_NAME, " — %s" % stage if stage else ""),
         "teamA": row.get("teamA") or "Participant pending",
@@ -454,9 +463,9 @@ def _snapshot_match(row, title):
         "score": {"a": score_a, "b": score_b} if score_a is not None else None,
         "winner": winner,
         "ewcEventId": EVENT_ID,
-        "eventId": row.get("sourceMatchId"),
-        "sourceMatchId": row.get("sourceMatchId"),
-        "source": "liquipedia-snapshot",
+        "eventId": source_match_id,
+        "sourceMatchId": source_match_id,
+        "source": source_label,
     }
 
 
@@ -516,9 +525,13 @@ def ewc_title_matches(slug: str):
     rows = _merge_title_matches(snapshot_rows, slate_rows)
     live = sorted((row for row in rows if row.get("live")),
                   key=lambda row: row.get("startTime") or 0)
-    completed = sorted((row for row in rows if not row.get("live") and row.get("finished")),
+    # Canceled matches are resolved terminal facts: they belong with completed rows, not
+    # with upcoming (they will never be played) and not in a fake result state.
+    completed = sorted((row for row in rows
+                        if not row.get("live") and (row.get("finished") or row.get("canceled"))),
                        key=lambda row: row.get("startTime") or 0, reverse=True)
-    upcoming = sorted((row for row in rows if not row.get("live") and not row.get("finished")),
+    upcoming = sorted((row for row in rows
+                       if not row.get("live") and not row.get("finished") and not row.get("canceled")),
                       key=lambda row: row.get("startTime") or 0)
     source = (snapshot or {}).get("source") or {}
     return {

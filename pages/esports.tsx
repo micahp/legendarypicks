@@ -29,7 +29,7 @@ type CS2Player = { name: string; kills: number | null; deaths: number | null }
 type CS2Team = { name: string; score: number | null; won: boolean; players: CS2Player[] }
 type CS2Live = { live: boolean; title?: string; tournament?: string; stream?: { platform: string; channel: string } | null; teamA?: CS2Team; teamB?: CS2Team }
 
-export type UpMatch = { startTime: number | null; endTime: number | null; live: boolean; title: string; league: string; teamA: string; teamB: string; favorite: { name: string; pct: number } | null; watch: { platform: string; url: string; channel: string | null; online?: boolean | null; embedUrl?: string | null; language?: string | null; viewers?: number | null; alternates?: Array<{ platform: string; url: string; channel: string | null; online?: boolean | null; embedUrl?: string | null; language?: string | null }> } | null; score?: { a: number | null; b: number | null } | null; finished?: boolean | null; winner?: 'a' | 'b' | null; pinned?: boolean; model?: { favName: string; modelPct: number; marketPct: number | null; edge: number | null } | null; logoA?: string | null; logoB?: string | null; minorLeague?: boolean; tier?: number; prominence?: number; psId?: number | string | null; streamKey?: string | null; eventId?: number | string | null; ewcEventId?: string | null; sourceMatchId?: string | null; source?: string | null; foreign?: boolean }
+export type UpMatch = { startTime: number | null; endTime: number | null; live: boolean; title: string; league: string; teamA: string; teamB: string; favorite: { name: string; pct: number } | null; watch: { platform: string; url: string; channel: string | null; online?: boolean | null; embedUrl?: string | null; language?: string | null; viewers?: number | null; alternates?: Array<{ platform: string; url: string; channel: string | null; online?: boolean | null; embedUrl?: string | null; language?: string | null }> } | null; score?: { a: number | null; b: number | null } | null; finished?: boolean | null; canceled?: boolean | null; winner?: 'a' | 'b' | null; pinned?: boolean; model?: { favName: string; modelPct: number; marketPct: number | null; edge: number | null } | null; logoA?: string | null; logoB?: string | null; minorLeague?: boolean; tier?: number; prominence?: number; psId?: number | string | null; streamKey?: string | null; eventId?: number | string | null; ewcEventId?: string | null; sourceMatchId?: string | null; source?: string | null; foreign?: boolean }
 type UpcomingData = { matches: UpMatch[]; source?: string; error?: string; building?: boolean }
 
 const POLL_MS = 10_000
@@ -379,6 +379,8 @@ function UpMatchRow({ m, host }: { m: UpMatch; host: string }) {
         <div className="w-16 shrink-0 font-mono text-[11px] tabular-nums">
           {m.live
             ? <span className="inline-flex items-center gap-1 text-red-400"><LiveDot />LIVE</span>
+            : m.canceled
+            ? <span className="text-zinc-500">Canceled</span>
             : m.finished
             ? <span className="text-zinc-400">Final</span>
             : <span className="text-zinc-500">{fmtClock(m.startTime)}</span>}

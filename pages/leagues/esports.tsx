@@ -398,8 +398,11 @@ function GamesSection({ eventData, eventDataError, titles, activeSlug, onSelect 
   // PandaScore ids are not globally unique across titles, so identity must include
   // the event context. A bare psId causes React to retain a row when title filters
   // change if two EWC games from different titles share the same provider id.
+  // Snapshot rows carry their own stable source identity (liquipedia:<sha>); prefer
+  // it when present so identical published rows (same time, pending participants)
+  // never collapse onto one React key.
   const matchKey = (m: UpMatch) => [
-    m.psId ?? 'no-ps-id',
+    m.sourceMatchId ?? m.psId ?? 'no-ps-id',
     m.title,
     m.league,
     m.startTime ?? 'tbd',
