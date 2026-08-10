@@ -326,9 +326,9 @@ def refresh_standings(path=None, cooldown_s=None):
         _refresh_lock.release()
 
 # ---------------------------------------------------------------------------
-# EWC router — projection + published Club Championship reader
+# EWC router — event payload + published Club Championship reader
 # ---------------------------------------------------------------------------
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, HTTPException, Query
 
 router = APIRouter()
 
@@ -347,21 +347,17 @@ def _title_coverage():
     Reads ONLY local published snapshot files (``backend/data/esports_ewc_schedules/``) —
     no request-path network calls. A title with no snapshot is honestly ``unavailable``.
     """
-    from fetch_ewc_title_schedules import SCHEDULES_DIR
+    from fetch_ewc_title_schedules import read_snapshot
 
     out = {}
     for title in EWC_TITLES:
         slug = title["slug"]
-        snap = None
-        try:
-            with open(os.path.join(SCHEDULES_DIR, "%s.json" % slug)) as f:
-                snap = json.load(f)
-        except Exception:
-            snap = None
+        snap = read_snapshot(slug)
         if not snap or not isinstance(snap, dict):
             out[slug] = {
                 "status": "unavailable", "count": 0, "datedCount": 0,
-                "firstStart": None, "lastStart": None, "weeks": [],
+                "firstStart": None, "lastStart": None,
+                "firstDate": None, "lastDate": None, "lifecycle": None,
                 "reason": "no published schedule snapshot",
                 "source": None,
             }
@@ -374,7 +370,9 @@ def _title_coverage():
             "datedCount": sched.get("datedCount", 0),
             "firstStart": sched.get("firstStart"),
             "lastStart": sched.get("lastStart"),
-            "weeks": sched.get("weeks", []),
+            "firstDate": sched.get("firstDate"),
+            "lastDate": sched.get("lastDate"),
+            "lifecycle": snap.get("lifecycle"),
             "reason": None,
             "source": {"label": src.get("label"), "urls": src.get("urls"),
                         "revisions": src.get("revisions"),
@@ -405,7 +403,9 @@ def _titles_payload(ewc_matches, coverage):
                 "datedCount": cov.get("datedCount", 0),
                 "firstStart": cov.get("firstStart"),
                 "lastStart": cov.get("lastStart"),
-                "weeks": cov.get("weeks", []),
+                "firstDate": cov.get("firstDate"),
+                "lastDate": cov.get("lastDate"),
+                "lifecycle": cov.get("lifecycle"),
                 "reason": cov.get("reason"),
                 "source": cov.get("source"),
             },
@@ -415,8 +415,8 @@ def _titles_payload(ewc_matches, coverage):
 
 
 @router.get("/api/esports/events/ewc-2026")
-def ewc_projection():
-    """The EWC 2026 projection over the existing normalized esports slate.
+def ewc_event_data():
+    """The EWC 2026 event payload over the existing normalized esports slate.
 
     Filters the shared board by the normalized event identity (``ewcEventId``) stamped at the
     backend boundary — never a UI substring search. Returns live / upcoming / completed buckets
@@ -461,6 +461,111 @@ def ewc_projection():
         "programSource": _PROGRAM_SOURCE,
         "matches": {"live": live, "upcoming": upcoming, "completed": completed},
         "asOf": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+    }
+
+
+def _title_by_slug(slug):
+    return next((title for title in EWC_TITLES if title["slug"] == slug), None)
+
+
+def _snapshot_match(row, title):
+    """Map a validated local snapshot row onto the shared frontend match contract."""
+    score_a = row.get("scoreA")
+    score_b = row.get("scoreB")
+    finished = bool(row.get("finished"))
+    winner = None
+    if finished and score_a is not None and score_b is not None and score_a != score_b:
+        winner = "a" if score_a > score_b else "b"
+    stage = row.get("stage")
+    return {
+        "startTime": row.get("startTime"),
+        "endTime": row.get("startTime") if finished else None,
+        "live": False,
+        "finished": finished,
+        "title": title["name"],
+        "league": "%s%s" % (_EVENT_NAME, " — %s" % stage if stage else ""),
+        "teamA": row.get("teamA") or "Participant pending",
+        "teamB": row.get("teamB") or "Participant pending",
+        "favorite": None,
+        "watch": None,
+        "score": {"a": score_a, "b": score_b} if score_a is not None else None,
+        "winner": winner,
+        "ewcEventId": EVENT_ID,
+        "eventId": row.get("sourceMatchId"),
+        "sourceMatchId": row.get("sourceMatchId"),
+        "source": "liquipedia-snapshot",
+    }
+
+
+def _norm_name(value):
+    return " ".join((value or "").casefold().split())
+
+
+def _same_published_match(left, right):
+    """Cross-source duplicate evidence; a timestamp by itself is never sufficient."""
+    left_id = left.get("sourceMatchId")
+    right_id = right.get("sourceMatchId")
+    if left_id and right_id and left_id == right_id:
+        return True
+    left_teams = (_norm_name(left.get("teamA")), _norm_name(left.get("teamB")))
+    right_teams = (_norm_name(right.get("teamA")), _norm_name(right.get("teamB")))
+    if not all(left_teams + right_teams) or left_teams != right_teams:
+        return False
+    left_start = left.get("startTime")
+    right_start = right.get("startTime")
+    if isinstance(left_start, (int, float)) and isinstance(right_start, (int, float)):
+        if abs(left_start - right_start) <= 6 * 3600 * 1000:
+            return True
+    if left.get("finished") and right.get("finished"):
+        return left.get("score") is not None and left.get("score") == right.get("score")
+    return False
+
+
+def _merge_title_matches(snapshot_rows, slate_rows):
+    """Prefer actively changing slate rows over frozen duplicates, retaining distinct rows."""
+    merged = list(snapshot_rows)
+    for slate_row in slate_rows:
+        duplicate = next((i for i, row in enumerate(merged)
+                          if _same_published_match(row, slate_row)), None)
+        if duplicate is None:
+            merged.append(slate_row)
+        else:
+            merged[duplicate] = slate_row
+    return merged
+
+
+@router.get("/api/esports/events/ewc-2026/titles/{slug}/matches")
+def ewc_title_matches(slug: str):
+    """Bounded selected-title rows from a local snapshot plus the current normalized slate."""
+    from fetch_ewc_title_schedules import read_snapshot
+    from .slate import esports_upcoming
+
+    title = _title_by_slug(slug)
+    if title is None:
+        raise HTTPException(status_code=404, detail="unknown EWC title")
+    snapshot = read_snapshot(slug)
+    snapshot_rows = [_snapshot_match(row, title) for row in (snapshot or {}).get("matches", [])]
+    board = esports_upcoming()
+    slate_rows = [
+        row for row in (board.get("matches") or [])
+        if row.get("ewcEventId") == EVENT_ID and row.get("title") in title["feedTitles"]
+    ]
+    rows = _merge_title_matches(snapshot_rows, slate_rows)
+    live = sorted((row for row in rows if row.get("live")),
+                  key=lambda row: row.get("startTime") or 0)
+    completed = sorted((row for row in rows if not row.get("live") and row.get("finished")),
+                       key=lambda row: row.get("startTime") or 0, reverse=True)
+    upcoming = sorted((row for row in rows if not row.get("live") and not row.get("finished")),
+                      key=lambda row: row.get("startTime") or 0)
+    source = (snapshot or {}).get("source") or {}
+    return {
+        "eventId": EVENT_ID,
+        "title": {"slug": slug, "name": title["name"]},
+        "status": "published" if snapshot else "unavailable",
+        "lifecycle": (snapshot or {}).get("lifecycle"),
+        "source": {"label": source.get("label"), "urls": source.get("urls"),
+                   "revisions": source.get("revisions")} if snapshot else None,
+        "matches": {"live": live, "upcoming": upcoming, "completed": completed},
     }
 
 

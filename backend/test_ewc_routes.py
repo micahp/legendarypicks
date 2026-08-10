@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Phase 2 tests — EWC projection route, published standings reader, and event identity.
+"""Phase 2 tests — EWC event route, published standings reader, and event identity.
 
-The projection reads the shared esports board (mocked here); the standings reader is the real
+The event payload reads the shared esports board (mocked here); the standings reader is the real
 atomic-snapshot store with a temp path. No network calls.
 """
 
@@ -27,6 +27,7 @@ from routers.esports import slate  # noqa: E402
 from routers.esports.common import _ESPORTS_TITLES  # noqa: E402
 from routers.esports.ewc import (is_ewc_2026_label,  # noqa: E402
                                  is_ewc_2026_serie)
+import fetch_ewc_title_schedules as schedule_store  # noqa: E402
 
 FIX = os.path.join(HERE, "..", "docs", "ewc2026", "fixtures")
 
@@ -64,13 +65,13 @@ class SlateStampingTests(unittest.TestCase):
     def test_slate_stamps_ewc_event_id(self):
         # Drive the real _rebuild_upcoming stamping logic through its helper path: the detector
         # decides from serie id + label. The stamping line is exercised end-to-end by the
-        # projection test; here we pin the boundary rules.
+        # event-route test; here we pin the boundary rules.
         self.assertTrue(slate._is_ewc_2026_label("Esports World Cup"))
         self.assertFalse(slate._is_ewc_2026_label("CCT League"))
         self.assertTrue(slate._is_ewc_2026_serie({"slug": "cod-mw-esports-world-cup-2026", "year": 2026}))
 
 
-class ProjectionRouteTests(unittest.TestCase):
+class EventRouteTests(unittest.TestCase):
     def setUp(self):
         from fastapi import FastAPI
         from fastapi.testclient import TestClient
@@ -81,7 +82,7 @@ class ProjectionRouteTests(unittest.TestCase):
     def _board(self, matches, building=False):
         return {"matches": matches, "building": building}
 
-    def test_projection_filters_and_buckets(self):
+    def test_event_payload_filters_and_buckets(self):
         live = _match(startTime=1, live=True)
         up = _match(startTime=2)
         done = _match(startTime=3, finished=True, endTime=1786215600000)
@@ -98,7 +99,7 @@ class ProjectionRouteTests(unittest.TestCase):
         self.assertEqual(len(d["matches"]["completed"]), 1)
         self.assertNotIn(non_ewc, d["matches"]["live"] + d["matches"]["upcoming"] + d["matches"]["completed"])
 
-    def test_projection_publishes_complete_official_game_catalog(self):
+    def test_event_payload_publishes_complete_official_game_catalog(self):
         with mock.patch.object(slate, "esports_upcoming", return_value=self._board([])):
             d = self.client.get("/api/esports/events/ewc-2026").json()
         self.assertEqual(d["titleCount"], 24)
@@ -111,7 +112,7 @@ class ProjectionRouteTests(unittest.TestCase):
         mlbb = next(row for row in d["titles"] if row["slug"] == "mobile-legends-bang-bang")
         self.assertEqual(mlbb["tournaments"], ["MSC", "MWI"])
 
-    def test_projection_title_coverage_is_data_derived(self):
+    def test_event_title_coverage_is_data_derived(self):
         # No published schedule snapshots in the test env -> every tile is honestly unavailable
         # ('Schedule pending'), and feedCount is derived from the EWC slate rows, never from the
         # hardcoded program weeks (which are NOT exposed in the payload at all).
@@ -131,7 +132,7 @@ class ProjectionRouteTests(unittest.TestCase):
         self.assertEqual(apex["feedCount"], 0)
         self.assertEqual(len(titles), 24)
 
-    def test_projection_inactive_when_event_expired(self):
+    def test_event_inactive_when_event_expired(self):
         # Only old completed matches (beyond the 24h tail) -> module expires automatically.
         old_done = _match(startTime=1, finished=True, endTime=1)
         board = self._board([old_done])
@@ -140,19 +141,89 @@ class ProjectionRouteTests(unittest.TestCase):
         self.assertFalse(d["active"])
         self.assertEqual(len(d["matches"]["completed"]), 1)
 
-    def test_projection_building_state(self):
+    def test_event_building_state(self):
         with mock.patch.object(slate, "esports_upcoming", return_value=self._board([], building=True)):
             d = self.client.get("/api/esports/events/ewc-2026").json()
         self.assertTrue(d["building"])
         self.assertFalse(d["active"])
 
-    def test_projection_completed_sorted_desc(self):
+    def test_event_completed_sorted_desc(self):
         older = _match(startTime=100, finished=True, endTime=100)
         newer = _match(startTime=200, finished=True, endTime=200)
         with mock.patch.object(slate, "esports_upcoming", return_value=self._board([older, newer])):
             d = self.client.get("/api/esports/events/ewc-2026").json()
         starts = [m["startTime"] for m in d["matches"]["completed"]]
         self.assertEqual(starts, sorted(starts, reverse=True))
+
+
+class TitleMatchesRouteTests(unittest.TestCase):
+    def setUp(self):
+        from fastapi import FastAPI
+        from fastapi.testclient import TestClient
+        self.app = FastAPI()
+        self.app.include_router(ewc.router)
+        self.client = TestClient(self.app)
+        self.dir = tempfile.mkdtemp(prefix="ewc-title-route-")
+        self.old_dir = schedule_store.SCHEDULES_DIR
+        schedule_store.SCHEDULES_DIR = self.dir
+
+    def tearDown(self):
+        schedule_store.SCHEDULES_DIR = self.old_dir
+
+    def _publish_chess(self):
+        wikitext = (
+            "{{Stage|Playoffs}}\n{{Match\n|date=2026-08-11\n"
+            "|opponent1={{1Opponent|Magnus Carlsen}}\n"
+            "|opponent2={{1Opponent|Hikaru Nakamura}}\n}}\n"
+        )
+        rows = schedule_store.build_rows(wikitext, source_key="chess:Esports World Cup/2026")
+        snap = schedule_store.build_snapshot(
+            "chess", rows, [34705], "2026-08-09T00:00:00+00:00", lifecycle="upcoming")
+        schedule_store.publish("chess", snap)
+        return rows[0]
+
+    def test_selected_no_feed_title_returns_snapshot_rows(self):
+        self._publish_chess()
+        with mock.patch.object(slate, "esports_upcoming", return_value={"matches": []}):
+            r = self.client.get("/api/esports/events/ewc-2026/titles/chess/matches")
+        self.assertEqual(r.status_code, 200)
+        d = r.json()
+        self.assertEqual(d["status"], "published")
+        self.assertEqual(d["lifecycle"], "upcoming")
+        self.assertEqual(len(d["matches"]["upcoming"]), 1)
+        self.assertEqual(d["matches"]["upcoming"][0]["teamA"], "Magnus Carlsen")
+        self.assertEqual(d["matches"]["upcoming"][0]["source"], "liquipedia-snapshot")
+
+    def test_slate_duplicate_wins_and_time_alone_does_not_match(self):
+        row = self._publish_chess()
+        duplicate = _match(
+            title="Chess", teamA="Magnus Carlsen", teamB="Hikaru Nakamura",
+            startTime=row["startTime"], live=True,
+        )
+        same_time_other_players = _match(
+            title="Chess", teamA="Player C", teamB="Player D",
+            startTime=row["startTime"], live=False,
+        )
+        with mock.patch.object(
+            slate, "esports_upcoming",
+            return_value={"matches": [duplicate, same_time_other_players]},
+        ):
+            d = self.client.get("/api/esports/events/ewc-2026/titles/chess/matches").json()
+        combined = d["matches"]["live"] + d["matches"]["upcoming"] + d["matches"]["completed"]
+        self.assertEqual(len(combined), 2)
+        self.assertEqual(sum(1 for m in combined if m["teamA"] == "Magnus Carlsen"), 1)
+        self.assertTrue(next(m for m in combined if m["teamA"] == "Magnus Carlsen")["live"])
+        self.assertTrue(any(m["teamA"] == "Player C" for m in combined))
+
+    def test_missing_snapshot_remains_pending(self):
+        with mock.patch.object(slate, "esports_upcoming", return_value={"matches": []}):
+            d = self.client.get("/api/esports/events/ewc-2026/titles/apex-legends/matches").json()
+        self.assertEqual(d["status"], "unavailable")
+        self.assertEqual(d["matches"], {"live": [], "upcoming": [], "completed": []})
+
+    def test_unknown_title_is_404(self):
+        r = self.client.get("/api/esports/events/ewc-2026/titles/not-a-title/matches")
+        self.assertEqual(r.status_code, 404)
 
 
 class StandingsRouteTests(unittest.TestCase):

@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "event": "ewc-2026",
+  "publishedAt": "2026-08-09T00:00:00+00:00",
+  "titles": {
+    "apex-legends": { "status": "unavailable" },
+    "call-of-duty-black-ops-7": { "status": "unavailable" },
+    "call-of-duty-warzone": { "status": "unavailable" },
+    "chess": { "status": "unavailable" },
+    "counter-strike-2": { "status": "unavailable" },
+    "crossfire": { "status": "unavailable" },
+    "dota-2": { "status": "unavailable" },
+    "ea-sports-fc-26": { "status": "unavailable" },
+    "fatal-fury-city-of-the-wolves": { "status": "unavailable" },
+    "fortnite-reload": { "status": "unavailable" },
+    "free-fire": { "status": "unavailable" },
+    "honor-of-kings": { "status": "unavailable" },
+    "league-of-legends": { "status": "unavailable" },
+    "mobile-legends-bang-bang": { "status": "unavailable" },
+    "overwatch-2": { "status": "unavailable" },
+    "pubg-battlegrounds": { "status": "unavailable" },
+    "pubg-mobile": { "status": "unavailable" },
+    "rainbow-six-siege": { "status": "unavailable" },
+    "rocket-league": { "status": "unavailable" },
+    "street-fighter-6": { "status": "unavailable" },
+    "teamfight-tactics": { "status": "unavailable" },
+    "tekken-8": { "status": "unavailable" },
+    "trackmania": { "status": "unavailable" },
+    "valorant": { "status": "unavailable" }
+  }
+}

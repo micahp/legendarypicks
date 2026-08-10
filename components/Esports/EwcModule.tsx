@@ -13,7 +13,7 @@ import type { UpMatch } from '../../pages/esports'
  * LiveCard/buildBroadcastViews machinery so the tournament center and the board
  * share one stream/result/match-identity pipeline; nothing is duplicated. */
 
-export type EwcProjection = {
+export type EwcEventData = {
   eventId: string
   eventName: string
   active: boolean
@@ -38,7 +38,9 @@ export type EwcTitle = {
     datedCount: number
     firstStart: number | null
     lastStart: number | null
-    weeks: number[]
+    firstDate: string | null
+    lastDate: string | null
+    lifecycle: 'upcoming' | 'active' | 'final' | null
     reason: string | null
     source: { label: string | null; urls: string[] | null; revisions: number[] | null; publishedAt: string | null } | null
   }
@@ -194,17 +196,17 @@ export function ClubStandingsRail({ standings, onExpand, expanded, loading }: {
   )
 }
 
-export function EwcModule({ projection, host, standings, standingsLimit, onExpandStandings, standingsLoading }: {
-  projection: EwcProjection
+export function EwcModule({ eventData, host, standings, standingsLimit, onExpandStandings, standingsLoading }: {
+  eventData: EwcEventData
   host: string
   standings: Standings | null
   standingsLimit: number
   onExpandStandings: () => void
   standingsLoading: boolean
 }) {
-  const live = projection.matches.live
-  const upcoming = projection.matches.upcoming
-  const completed = projection.matches.completed
+  const live = eventData.matches.live
+  const upcoming = eventData.matches.upcoming
+  const completed = eventData.matches.completed
   const now = Date.now()
   const broadcasts = buildBroadcastViews([...live, ...upcoming], live, now)
   const featured = broadcasts[0]
@@ -219,7 +221,7 @@ export function EwcModule({ projection, host, standings, standingsLimit, onExpan
   return (
     <section className="rounded-xl bg-zinc-900/50 px-4 py-5 sm:px-6 sm:py-6">
       {/* One subtle plane for the EWC focus; no border, no shadow, no nested card walls. */}
-      <SectionHeader eyebrow={projection.eventName} title="EWC 2026" meta={live.length ? `${live.length} live` : 'Tournament center'} live={live.length > 0} />
+      <SectionHeader eyebrow={eventData.eventName} title="EWC 2026" meta={live.length ? `${live.length} live` : 'Tournament center'} live={live.length > 0} />
 
       <div className="mt-5 grid gap-8 lg:grid-cols-[minmax(0,1fr)_300px]">
         <div className="min-w-0 space-y-8">

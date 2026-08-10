@@ -106,7 +106,7 @@ describe('EWC standings rail', () => {
 
 describe('EWC module', () => {
   it('renders the EWC focus header and today’s slate when active', () => {
-    const projection = {
+    const eventData = {
       eventId: 'ewc-2026',
       eventName: 'Esports World Cup 2026',
       active: true,
@@ -117,7 +117,7 @@ describe('EWC module', () => {
         completed: [{ ...baseMatch, startTime: Date.UTC(2026, 7, 8, 13, 0), finished: true, teamA: 'G2 Esports', teamB: 'Team Heretics', score: { a: 3, b: 4 } }],
       },
     }
-    render(<EwcModule projection={projection as any} host="localhost" standings={standings('current')} standingsLimit={10} onExpandStandings={() => {}} standingsLoading={false} />)
+    render(<EwcModule eventData={eventData as any} host="localhost" standings={standings('current')} standingsLimit={10} onExpandStandings={() => {}} standingsLoading={false} />)
     expect(screen.getByText('EWC 2026')).toBeTruthy()
     expect(screen.getByText('Esports World Cup 2026')).toBeTruthy()
     expect(screen.getByText('FaZe Clan')).toBeTruthy()
