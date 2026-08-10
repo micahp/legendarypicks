@@ -56,11 +56,17 @@ ESPN_NEWS = {
     # itself were invisible to us.
     "leaguescup": "https://site.api.espn.com/apis/site/v2/sports/soccer/concacaf.leagues.cup/news?limit=25",
     "ligamx": "https://site.api.espn.com/apis/site/v2/sports/soccer/mex.1/news?limit=25",
+    # ESPN publishes a SPORT-WIDE rollup for soccer — every competition in one
+    # feed, which is where cross-border transfer stories actually surface.
+    # Probed 2026-08-10: soccer, baseball and mma have populated rollups;
+    # basketball/football/hockey return an empty article list, so there is
+    # nothing to add for them.
+    "soccerall": "https://site.api.espn.com/apis/site/v2/sports/soccer/all/news?limit=50",
 }
 # ESPN's feed key -> the league we file it under. Leagues Cup is MLS *and*
 # Liga MX; per PLAN §10 it files under mls for now. Liga MX items get no hint —
 # the classifier decides from the text rather than us mislabelling them.
-_ESPN_LEAGUE_HINT = {"leaguescup": "mls", "ligamx": None}
+_ESPN_LEAGUE_HINT = {"leaguescup": "mls", "ligamx": None, "soccerall": None}
 RSS_FEEDS = [
     ("deadspin", "https://deadspin.com/rss/"),  # /rss 308→/rss/ (Py3.8 urllib won't follow 308)
     ("awfulannouncing", "https://www.awfulannouncing.com/feed"),
@@ -535,7 +541,8 @@ def repair_stored_text(dry_run=False):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--leagues", default="nfl,mlb,mls,ncaaf,nba,nhl,ufc",
+    ap.add_argument("--leagues",
+                    default="nfl,mlb,mls,ncaaf,nba,nhl,ufc,leaguescup,ligamx,soccerall",
                     help="comma list of ESPN leagues to collect")
     ap.add_argument("--no-espn", action="store_true")
     ap.add_argument("--no-rss", action="store_true")
