@@ -1254,6 +1254,15 @@ def generate_game_story(lg: str, game_id: str, refresh: bool = False,
     if stakes_lines:
         grounding += "\nWhat's at stake in this game:\n" + "\n".join(stakes_lines)
 
+    # Player form, from the prop board first and then from our own game logs.
+    #
+    # The prop path stays because it is TARGETED: it surfaces the players whose markets we
+    # actually price, which is what a reader of this product is looking at. But it was the
+    # only path, and props exist for MLB, MLS, UFC and the World Cup — nowhere else. Every
+    # NBA, NFL and NHL story was written with an empty form section while 232,669 player
+    # game logs sat one table over. player_form reads those directly, keyed on the two
+    # clubs, and states the season it read so an out-of-date league (MLS logs stop at 2025)
+    # cannot be passed off as current.
     form_lines, seen = [], set()
     with closing(_db()) as con:
         prs = con.execute(
@@ -1276,6 +1285,16 @@ def generate_game_story(lg: str, game_id: str, refresh: bool = False,
             if len(vals) >= 3:
                 form_lines.append(f"{r['name']} — last 5 {_base_market(r['market'])}: {vals}")
                 seen.add(r["id"])
+
+        if len(form_lines) < 6:
+            try:
+                import player_form as _pform
+                for line in _pform.lines(lg, teams, con=con):
+                    if len(form_lines) >= 6:
+                        break
+                    form_lines.append(line)
+            except Exception:
+                pass
     if form_lines:
         grounding += "\nRecent player form (most recent first):\n" + "\n".join(form_lines)
 
