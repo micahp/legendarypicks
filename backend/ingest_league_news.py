@@ -56,11 +56,15 @@ ESPN_NEWS = {
     # itself were invisible to us.
     "leaguescup": "https://site.api.espn.com/apis/site/v2/sports/soccer/concacaf.leagues.cup/news?limit=25",
     "ligamx": "https://site.api.espn.com/apis/site/v2/sports/soccer/mex.1/news?limit=25",
-    # ESPN publishes a SPORT-WIDE rollup for soccer — every competition in one
-    # feed, which is where cross-border transfer stories actually surface.
-    # Probed 2026-08-10: soccer, baseball and mma have populated rollups;
-    # basketball/football/hockey return an empty article list, so there is
-    # nothing to add for them.
+    # ESPN's SPORT-WIDE soccer rollup. NOT in the default league list — measured
+    # 2026-08-10 and it is a net negative today: of 50 items, 84% are
+    # competitions we do not cover (Premier League, La Liga, WAFCON, A-League,
+    # NWSL), and the 16% that DO classify are mostly wrong — "Rangers CEO" went
+    # to mlb (Texas Rangers), "Chicago Stars vs Bay FC" to nhl (Dallas Stars),
+    # a WAFCON report to nfl. Soccer club names collide with North American
+    # ones across every sport, and the classifier has no sport context to
+    # separate them. Opt in with --leagues soccerall to test; wiring it into
+    # the nightly run needs that guard first.
     "soccerall": "https://site.api.espn.com/apis/site/v2/sports/soccer/all/news?limit=50",
 }
 # ESPN's feed key -> the league we file it under. Leagues Cup is MLS *and*
@@ -542,7 +546,7 @@ def repair_stored_text(dry_run=False):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--leagues",
-                    default="nfl,mlb,mls,ncaaf,nba,nhl,ufc,leaguescup,ligamx,soccerall",
+                    default="nfl,mlb,mls,ncaaf,nba,nhl,ufc,leaguescup,ligamx",
                     help="comma list of ESPN leagues to collect")
     ap.add_argument("--no-espn", action="store_true")
     ap.add_argument("--no-rss", action="store_true")
