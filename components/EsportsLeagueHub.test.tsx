@@ -85,14 +85,16 @@ const officialTitles = officialTitleNames.map((name) => ({
     datedCount: 0,
     firstStart: null,
     lastStart: null,
-    weeks: [],
+    firstDate: null,
+    lastDate: null,
+    lifecycle: null,
     reason: 'no published schedule snapshot',
     source: null,
   },
   feedCount: name === 'Call of Duty: Black Ops 7' ? 2 : name === 'Counter-Strike 2' ? 1 : 0,
 }))
 
-const projection = {
+const eventData = {
   eventId: 'ewc-2026',
   eventName: 'Esports World Cup 2026',
   active: true,
@@ -224,8 +226,20 @@ function mockFetch(respond: (url: string) => unknown) {
 function defaultRespond(url: string): unknown {
   if (url === '/api/esports/upcoming') return upcoming
   if (url.includes('/club-standings')) return standings()
+  if (url.includes('/api/esports/events/ewc-2026/titles/')) {
+    if (url.endsWith('/titles/call-of-duty-black-ops-7/matches')) {
+      return { eventId: 'ewc-2026', status: 'unavailable', lifecycle: null,
+        matches: { live: [ewcLive], upcoming: [], completed: [ewcCompleted] } }
+    }
+    if (url.endsWith('/titles/counter-strike-2/matches')) {
+      return { eventId: 'ewc-2026', status: 'unavailable', lifecycle: null,
+        matches: { live: [], upcoming: [ewcUpcoming], completed: [] } }
+    }
+    return { eventId: 'ewc-2026', status: 'unavailable', lifecycle: null,
+      matches: { live: [], upcoming: [], completed: [] } }
+  }
   if (url === '/api/esports/titles') return titles
-  return projection
+  return eventData
 }
 
 function renderHub(desktop = true, respond?: (url: string) => unknown) {
@@ -340,7 +354,7 @@ describe('esports league hub — Games tab tracks the official 24-title EWC prog
 
     fireEvent.click(screen.getByRole('button', { name: /Call of Duty: Black Ops 7.*2 tracked matches/ }))
     await waitFor(() => expect(screen.getByText(/Showing only Call of Duty: Black Ops 7/)).toBeTruthy())
-    expect(screen.getByText('Gentle Mates')).toBeTruthy()
+    await waitFor(() => expect(screen.getByText('Gentle Mates')).toBeTruthy())
     expect(screen.getByText('G2 Esports')).toBeTruthy()
     expect(screen.queryByText('Natus Vincere')).toBeNull()
     expect(screen.queryByText('Virtus.pro')).toBeNull()
@@ -352,13 +366,13 @@ describe('esports league hub — Games tab tracks the official 24-title EWC prog
 
     fireEvent.click(screen.getByRole('button', { name: /Apex Legends.*Match feed pending/ }))
     await waitFor(() => expect(screen.getByText('Apex Legends is in the official EWC program.')).toBeTruthy())
-    expect(screen.getByText(/match schedule is not available/)).toBeTruthy()
+    expect(screen.getByText(/No validated local schedule\/results snapshot/)).toBeTruthy()
     await flush()
   })
 
-  it('derives the week label from the published schedule snapshot, not program weeks', async () => {
+  it('shows the published schedule date range, not ISO week numbers', async () => {
     const withSchedule = {
-      ...projection,
+      ...eventData,
       titles: officialTitles.map((t) => t.slug === 'chess'
         ? {
             ...t,
@@ -368,7 +382,9 @@ describe('esports league hub — Games tab tracks the official 24-title EWC prog
               datedCount: 13,
               firstStart: Date.UTC(2026, 7, 11, 12, 0),
               lastStart: Date.UTC(2026, 7, 13, 12, 0),
-              weeks: [33],
+              firstDate: '2026-08-11',
+              lastDate: '2026-08-13',
+              lifecycle: 'upcoming' as const,
               reason: null,
               source: { label: 'Liquipedia — EWC 2026', urls: ['https://liquipedia.net/chess/Esports_World_Cup/2026'], revisions: [34705], publishedAt: '2026-08-09T00:00:00+00:00' },
             },
@@ -386,10 +402,47 @@ describe('esports league hub — Games tab tracks the official 24-title EWC prog
     render(<EsportsLeaguePage />)
     fireEvent.click(screen.getByRole('button', { name: 'Games' }))
     await waitFor(() => expect(screen.getByText('24 titles · 25 tournaments')).toBeTruthy())
-    // Chess has a published schedule (week 33) but no feed rows -> Week 33 · Match feed pending.
-    expect(screen.getByRole('button', { name: /Chess.*Week 33.*Match feed pending/ })).toBeTruthy()
+    expect(screen.getByRole('button', { name: /Chess.*Aug 11.*Aug 13.*13 tracked matches/ })).toBeTruthy()
+    expect(screen.queryByText(/Week 33/)).toBeNull()
     // A title with no published snapshot still says Schedule pending.
     expect(screen.getByRole('button', { name: /Apex Legends.*Schedule pending.*Match feed pending/ })).toBeTruthy()
+    await flush()
+  })
+
+  it('loads real snapshot rows for a selected no-feed title', async () => {
+    const withSchedule = {
+      ...eventData,
+      titles: officialTitles.map((t) => t.slug === 'chess'
+        ? { ...t, schedule: { ...t.schedule, status: 'published' as const, count: 1,
+            datedCount: 1, firstStart: Date.UTC(2026, 7, 11), lastStart: Date.UTC(2026, 7, 11),
+            firstDate: '2026-08-11', lastDate: '2026-08-11', reason: null } }
+        : t),
+    }
+    const snapshotMatch = {
+      startTime: Date.UTC(2026, 7, 11), endTime: null, live: false, finished: false,
+      title: 'Chess', league: 'Esports World Cup — Playoffs', teamA: 'Magnus Carlsen',
+      teamB: 'Hikaru Nakamura', favorite: null, watch: null, ewcEventId: 'ewc-2026',
+      source: 'liquipedia-snapshot', sourceMatchId: 'liq:chess:1',
+    }
+    const fetchMock = mockFetch((url: string) => {
+      if (url === '/api/esports/upcoming') return upcoming
+      if (url.includes('/club-standings')) return standings()
+      if (url === '/api/esports/titles') return titles
+      if (url.endsWith('/titles/chess/matches')) return {
+        eventId: 'ewc-2026', status: 'published', lifecycle: 'upcoming',
+        matches: { live: [], upcoming: [snapshotMatch], completed: [] },
+      }
+      return withSchedule
+    })
+    mockMatchMedia(true)
+    render(<EsportsLeaguePage />)
+    fireEvent.click(screen.getByRole('button', { name: 'Games' }))
+    await waitFor(() => expect(screen.getByRole('button', { name: /Chess.*1 tracked match/ })).toBeTruthy())
+    fireEvent.click(screen.getByRole('button', { name: /Chess.*1 tracked match/ }))
+    await waitFor(() => expect(screen.getByText('Magnus Carlsen')).toBeTruthy())
+    expect(screen.getByText('Hikaru Nakamura')).toBeTruthy()
+    expect(fetchMock.mock.calls.some((c) => String(c[0]).endsWith('/titles/chess/matches'))).toBe(true)
+    expect(screen.queryByText(/match schedule is not available/)).toBeNull()
     await flush()
   })
 
@@ -402,7 +455,7 @@ describe('esports league hub — Games tab tracks the official 24-title EWC prog
     expect(titleRow.querySelectorAll('button').length).toBe(25)
     fireEvent.click(screen.getAllByRole('button', { name: /Counter-Strike 2.*1 matches/ })[0])
     await waitFor(() => expect(screen.getByText(/Showing only Counter-Strike 2/)).toBeTruthy())
-    expect(screen.getByText('Natus Vincere')).toBeTruthy()
+    await waitFor(() => expect(screen.getByText('Natus Vincere')).toBeTruthy())
     expect(screen.queryByText('Gentle Mates')).toBeNull()
 
     fireEvent.click(screen.getByRole('button', { name: /All 24 titles.*3 tracked matches/ }))
@@ -467,7 +520,7 @@ describe('esports league hub — data states', () => {
     await flush()
   })
 
-  it('renders an error card with retry when the projection fails, then recovers', async () => {
+  it('renders an error card with retry when the event payload fails, then recovers', async () => {
     let failing = true
     const fetchMock = mockFetch((url) => {
       if (url === '/api/esports/events/ewc-2026' && failing) return new Error('boom')

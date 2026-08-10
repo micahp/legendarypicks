@@ -14,6 +14,8 @@ import sys
 import tempfile
 import time
 import unittest
+import urllib.error
+from unittest import mock
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
@@ -44,11 +46,16 @@ class DateParsingTests(unittest.TestCase):
         self.assertEqual(iso, "2026-08-12")
         self.assertIsNotNone(ms)
 
-    def test_empty_or_unparseable_is_none(self):
+    def test_empty_is_none(self):
         self.assertEqual(fetcher.parse_date(""), (None, None))
         self.assertEqual(fetcher.parse_date(" "), (None, None))
-        self.assertEqual(fetcher.parse_date("TBD"), (None, None))
         self.assertEqual(fetcher.parse_date(None), (None, None))
+
+    def test_malformed_published_date_is_rejected(self):
+        with self.assertRaises(fetcher.ScheduleSourceError):
+            fetcher.parse_date("August 41, 2026")
+        with self.assertRaises(fetcher.ScheduleSourceError):
+            fetcher.parse_date("TBD")
 
 
 class OpponentParsingTests(unittest.TestCase):
@@ -80,6 +87,14 @@ class OpponentParsingTests(unittest.TestCase):
     def test_empty_value_is_pending(self):
         kind, name, _, _ = fetcher.parse_opponent("")
         self.assertEqual((kind, name), ("pending", None))
+
+    def test_unknown_opponent_template_is_rejected(self):
+        with self.assertRaises(fetcher.ScheduleSourceError):
+            fetcher.parse_opponent("{{MysteryOpponent|Team X}}")
+
+    def test_malformed_score_is_rejected(self):
+        with self.assertRaises(fetcher.ScheduleSourceError):
+            fetcher.parse_opponent("{{TeamOpponent|Team X|score=won}}")
 
 
 class FixtureParseTests(unittest.TestCase):
@@ -125,6 +140,14 @@ class FixtureParseTests(unittest.TestCase):
         self.assertEqual(fetcher.build_rows("{{Infobox league|name=X}}"), [])
         self.assertEqual(fetcher.build_rows(""), [])
 
+    def test_unknown_numbered_match_template_rejects_mixed_page(self):
+        w = ("{{Match\n|date=2026-08-12\n|opponent1={{TeamOpponent|A}}\n"
+             "|opponent2={{TeamOpponent|B}}\n}}\n"
+             "{{Match3\n|date=2026-08-13\n|opponent1={{TeamOpponent|C}}\n"
+             "|opponent2={{TeamOpponent|D}}\n}}")
+        with self.assertRaises(fetcher.ScheduleSourceError):
+            fetcher.build_rows(w)
+
     def test_scores_only_marked_finished_when_dated(self):
         w = ("{{Match\n|date=2026-08-12\n|opponent1={{TeamOpponent|A|score=3}}\n"
              "|opponent2={{TeamOpponent|B|score=1}}\n|finished=true\n}}\n"
@@ -147,25 +170,46 @@ class SnapshotTests(unittest.TestCase):
     def tearDown(self):
         fetcher.SCHEDULES_DIR = self.old_dir
 
-    def test_snapshot_build_weeks_and_counts(self):
-        rows = fetcher.build_rows(_fixture("chess"))
-        snap = fetcher.build_snapshot("chess", rows, [34705], "2026-08-09T00:00:00+00:00")
+    def test_snapshot_build_dates_lifecycle_and_checksum(self):
+        rows = fetcher.build_rows(_fixture("chess"), source_key="chess:Esports World Cup/2026")
+        snap = fetcher.build_snapshot("chess", rows, [34705], "2026-08-09T00:00:00+00:00",
+                                      lifecycle="upcoming")
+        fetcher.validate_snapshot(snap, expected_slug="chess")
+        self.assertEqual(snap["schemaVersion"], 1)
         self.assertEqual(snap["event"], "ewc-2026")
         self.assertEqual(snap["slug"], "chess")
+        self.assertEqual(snap["lifecycle"], "upcoming")
         self.assertEqual(snap["schedule"]["status"], "published")
         self.assertEqual(snap["schedule"]["count"], 13)
         self.assertEqual(snap["schedule"]["datedCount"], 13)
-        self.assertTrue(snap["schedule"]["weeks"])
+        self.assertEqual(snap["schedule"]["firstDate"], "2026-08-11")
+        self.assertEqual(snap["schedule"]["lastDate"], "2026-08-11")
         self.assertEqual(snap["source"]["revisions"], [34705])
         self.assertTrue(snap["source"]["checksum"])
+        self.assertEqual(len({row["sourceMatchId"] for row in snap["matches"]}), 13)
 
-    def test_empty_snapshot_is_unavailable(self):
-        snap = fetcher.build_snapshot("apex-legends", [], [123], "2026-08-09T00:00:00+00:00")
-        self.assertEqual(snap["schedule"]["status"], "unavailable")
-        self.assertEqual(snap["schedule"]["count"], 0)
+    def test_empty_snapshot_is_rejected(self):
+        with self.assertRaises(fetcher.ScheduleSourceError):
+            fetcher.build_snapshot("apex-legends", [], [123], "2026-08-09T00:00:00+00:00")
+
+    def test_final_snapshot_requires_completion_evidence(self):
+        rows = fetcher.build_rows(
+            "{{Match\n|date=2026-08-11\n|opponent1={{1Opponent|Magnus Carlsen}}\n"
+            "|opponent2={{1Opponent|Hikaru Nakamura}}\n|finished=true\n}}",
+            source_key="chess:Esports World Cup/2026",
+        )
+        with self.assertRaises(fetcher.ScheduleSourceError):
+            fetcher.build_snapshot("chess", rows, [34705], "2026-08-09T00:00:00+00:00",
+                                   lifecycle="final")
+        snap = fetcher.build_snapshot(
+            "chess", rows, [34705], "2026-08-09T00:00:00+00:00", lifecycle="final",
+            finality={"allMatchesResolved": True, "participantsComplete": True,
+                      "sourceRevisionRecorded": True},
+        )
+        fetcher.validate_snapshot(snap, expected_slug="chess")
 
     def test_publish_read_roundtrip_and_last_good(self):
-        rows = fetcher.build_rows(_fixture("chess"))
+        rows = fetcher.build_rows(_fixture("chess"), source_key="chess:Esports World Cup/2026")
         snap = fetcher.build_snapshot("chess", rows, [34705], "2026-08-09T00:00:00+00:00")
         path = fetcher.publish("chess", snap)
         self.assertTrue(os.path.exists(path))
@@ -173,9 +217,116 @@ class SnapshotTests(unittest.TestCase):
         got = fetcher.read_snapshot("chess")
         self.assertEqual(got["schedule"]["count"], 13)
         self.assertEqual(got["source"]["checksum"], snap["source"]["checksum"])
+        manifest = fetcher.read_manifest()
+        self.assertEqual(set(manifest["titles"]), set(fetcher.TITLE_PAGES))
+        self.assertEqual(manifest["titles"]["chess"]["checksum"], snap["source"]["checksum"])
+
+        bad = json.loads(json.dumps(snap))
+        bad["matches"].append(dict(bad["matches"][0]))
+        with self.assertRaises(fetcher.ScheduleSourceError):
+            fetcher.publish("chess", bad)
+        self.assertEqual(fetcher.read_snapshot("chess")["source"]["checksum"],
+                         snap["source"]["checksum"])
+
+    def test_manifest_rejects_wrong_catalog_and_checksum(self):
+        manifest = fetcher.build_manifest()
+        fetcher.validate_manifest(manifest)
+        del manifest["titles"]["valorant"]
+        with self.assertRaises(fetcher.ScheduleSourceError):
+            fetcher.validate_manifest(manifest)
+
+    def test_tampered_snapshot_fails_closed(self):
+        rows = fetcher.build_rows(_fixture("chess"), source_key="chess:Esports World Cup/2026")
+        snap = fetcher.build_snapshot("chess", rows, [34705], "2026-08-09T00:00:00+00:00")
+        path = fetcher.publish("chess", snap)
+        with open(path) as f:
+            tampered = json.load(f)
+        tampered["matches"][0]["teamA"] = "Changed after publication"
+        with open(path, "w") as f:
+            json.dump(tampered, f)
+        self.assertIsNone(fetcher.read_snapshot("chess"))
+
+    def test_stale_upcoming_snapshot_fails_closed_but_final_does_not_expire(self):
+        rows = fetcher.build_rows(_fixture("chess"), source_key="chess:Esports World Cup/2026")
+        upcoming = fetcher.build_snapshot("chess", rows, [34705], "2020-01-01T00:00:00+00:00")
+        upcoming["publishedAt"] = "2020-01-01T00:00:00+00:00"
+        upcoming["source"]["publishedAt"] = upcoming["publishedAt"]
+        upcoming["source"]["checksum"] = fetcher._snapshot_checksum(upcoming)
+        fetcher.publish("chess", upcoming)
+        self.assertIsNone(fetcher.read_snapshot("chess"))
+
+        final_rows = fetcher.build_rows(
+            "{{Match\n|date=2026-08-11\n|opponent1={{1Opponent|Magnus Carlsen}}\n"
+            "|opponent2={{1Opponent|Hikaru Nakamura}}\n|finished=true\n}}",
+            source_key="chess:Esports World Cup/2026",
+        )
+        final = fetcher.build_snapshot(
+            "chess", final_rows, [34705], "2020-01-01T00:00:00+00:00", lifecycle="final",
+            finality={"allMatchesResolved": True, "participantsComplete": True,
+                      "sourceRevisionRecorded": True},
+        )
+        final["publishedAt"] = "2020-01-01T00:00:00+00:00"
+        final["source"]["publishedAt"] = final["publishedAt"]
+        final["source"]["checksum"] = fetcher._snapshot_checksum(final)
+        fetcher.publish("chess", final)
+        self.assertEqual(fetcher.read_snapshot("chess")["lifecycle"], "final")
 
     def test_read_missing_snapshot_is_none(self):
         self.assertIsNone(fetcher.read_snapshot("does-not-exist"))
+
+
+class OperatorCommandTests(unittest.TestCase):
+    def setUp(self):
+        self.dir = tempfile.mkdtemp(prefix="ewc-operator-")
+        self.old_dir = fetcher.SCHEDULES_DIR
+        fetcher.SCHEDULES_DIR = self.dir
+
+    def tearDown(self):
+        fetcher.SCHEDULES_DIR = self.old_dir
+
+    def test_requested_failure_returns_nonzero(self):
+        with mock.patch.object(fetcher, "_api_get", side_effect=RuntimeError("source down")):
+            self.assertEqual(fetcher.main(["--slug", "chess", "--dry-run"]), 1)
+
+    def test_parse_requests_wait_for_the_publisher_slot(self):
+        old_last = fetcher._LAST_PARSE_REQUEST
+        fetcher._LAST_PARSE_REQUEST = 100.0
+        try:
+            with mock.patch.object(fetcher.time, "monotonic", side_effect=[110.0, 130.0]), \
+                    mock.patch.object(fetcher.time, "sleep") as sleep:
+                fetcher._wait_for_parse_slot()
+            sleep.assert_called_once_with(20.0)
+            self.assertEqual(fetcher._LAST_PARSE_REQUEST, 130.0)
+        finally:
+            fetcher._LAST_PARSE_REQUEST = old_last
+
+    def test_final_rate_limit_attempt_fails_without_an_extra_sleep(self):
+        error = urllib.error.HTTPError(
+            "https://liquipedia.invalid", 429, "Too Many Requests",
+            {"Retry-After": "60"}, None,
+        )
+        with mock.patch.object(fetcher, "_wait_for_parse_slot"), \
+                mock.patch.object(fetcher._API_OPENER, "open", side_effect=error), \
+                mock.patch.object(fetcher.time, "sleep") as sleep:
+            with self.assertRaisesRegex(fetcher.ScheduleSourceError, "Retry-After=60"):
+                fetcher._api_get("chess", "Esports World Cup/2026", retries=1)
+        sleep.assert_not_called()
+
+    def test_final_snapshot_is_skipped_without_override(self):
+        rows = fetcher.build_rows(
+            "{{Match\n|date=2026-08-11\n|opponent1={{1Opponent|Magnus Carlsen}}\n"
+            "|opponent2={{1Opponent|Hikaru Nakamura}}\n|finished=true\n}}",
+            source_key="chess:Esports World Cup/2026",
+        )
+        snap = fetcher.build_snapshot(
+            "chess", rows, [34705], "2026-08-09T00:00:00+00:00", lifecycle="final",
+            finality={"allMatchesResolved": True, "participantsComplete": True,
+                      "sourceRevisionRecorded": True},
+        )
+        fetcher.publish("chess", snap)
+        with mock.patch.object(fetcher, "_api_get") as api_get:
+            self.assertEqual(fetcher.main(["--slug", "chess", "--dry-run"]), 0)
+        api_get.assert_not_called()
 
 
 if __name__ == "__main__":
