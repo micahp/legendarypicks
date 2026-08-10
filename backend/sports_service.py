@@ -22,7 +22,8 @@ import os
 # presence loudly so a degraded launch is never silent again. Must run before `from routers ...`
 # because routers/esports/grid.py reads GRID_API_KEY at IMPORT time.
 def _hydrate_esports_keys():
-    keys = ("PANDASCORE_API_KEY", "GRID_API_KEY", "YOUTUBE_API_KEY", "DEEPSEEK_API_KEY")
+    keys = ("PANDASCORE_API_KEY", "GRID_API_KEY", "YOUTUBE_API_KEY", "DEEPSEEK_API_KEY",
+            "KICK_CLIENT_ID", "KICK_CLIENT_SECRET")
     envfile = "/root/.hermes/.env"
     if any(not os.environ.get(k) for k in keys) and os.path.exists(envfile):
         try:
