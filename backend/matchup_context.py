@@ -31,6 +31,13 @@ not expect returns fewer lines or none. A thin story is acceptable; a wrong one 
 # match's own teams: lastFiveGames carries each club's home-league abbreviation.
 _MAX_LEADER_CATS = 2
 
+# ESPN's category ORDER depends on the game's state, and taking the first two blindly gets
+# the wrong player. Before kickoff the list starts with Goals; after full time it starts
+# with Total Shots, so a finished Chicago match surfaced "Robert Lewandowski (6 shots)"
+# while the club's actual scorer is Hugo Cuypers, 13 goals in 11 matches — a name that
+# never reached the desk. Production leads; volume follows.
+_LEADER_PRIORITY = ("goals", "assists", "points", "total shots", "shots")
+
 
 def context_lines(league, game_id, summary=None, fetch=None):
     """-> list of grounding strings for this matchup. Empty when nothing is derivable."""
@@ -192,6 +199,15 @@ def _streak(results):
     return f"{verb} {n} straight"
 
 
+def _by_priority(cats):
+    """Categories in production order, with anything unlisted keeping its published place
+    behind them. Stable, so ESPN's own ordering breaks ties."""
+    def rank(cat):
+        label = (cat.get("displayName") or cat.get("name") or "").strip().lower()
+        return _LEADER_PRIORITY.index(label) if label in _LEADER_PRIORITY else len(_LEADER_PRIORITY)
+    return sorted(cats, key=rank)
+
+
 def _leaders(d):
     """Who is producing for each side. Before kickoff these are tournament-to-date and
     ESPN says so in the value itself ('Matches: 2, Goals: 2'); after full time they are the
@@ -201,7 +217,7 @@ def _leaders(d):
         team = entry.get("team") or {}
         name = (team.get("displayName") or team.get("abbreviation") or "").strip()
         cats = []
-        for cat in (entry.get("leaders") or [])[:_MAX_LEADER_CATS]:
+        for cat in _by_priority(entry.get("leaders") or [])[:_MAX_LEADER_CATS]:
             label = (cat.get("displayName") or cat.get("name") or "").strip()
             top = (cat.get("leaders") or [])
             if not label or not top:

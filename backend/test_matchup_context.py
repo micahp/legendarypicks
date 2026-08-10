@@ -102,6 +102,33 @@ def test_leaders_carry_the_publishers_own_value_wording():
     assert "Robert Lewandowski (Matches: 2, Goals: 2)" in line
 
 
+def test_goals_outrank_shots_whatever_order_espn_used():
+    """After full time ESPN puts Total Shots first, so taking the first category surfaced
+    Lewandowski's 6 shots for Chicago while the club's scorer — Cuypers, 13 in 11 — never
+    reached the desk. Production leads."""
+    d = _payload()
+    d["leaders"][0]["leaders"] = [
+        {"displayName": "Total Shots", "leaders": [
+            {"displayValue": "6", "athlete": {"displayName": "Robert Lewandowski"}}]},
+        {"displayName": "Goals", "leaders": [
+            {"displayValue": "Matches: 11, Goals: 13", "athlete": {"displayName": "Hugo Cuypers"}}]},
+    ]
+    line = mc._leaders(d)[0]
+    assert line.index("Cuypers") < line.index("Lewandowski")
+
+
+def test_an_unranked_category_keeps_its_published_place_behind_the_ranked_ones():
+    d = _payload()
+    d["leaders"][0]["leaders"] = [
+        {"displayName": "Accurate Passes", "leaders": [
+            {"displayValue": "76", "athlete": {"displayName": "Joel Waterman"}}]},
+        {"displayName": "Goals", "leaders": [
+            {"displayValue": "2", "athlete": {"displayName": "A Scorer"}}]},
+    ]
+    line = mc._leaders(d)[0]
+    assert line.index("A Scorer") < line.index("Joel Waterman")
+
+
 def test_phase_and_advancement_note():
     lines = mc._phase(_payload())
     assert "Competition: 2026 Leagues Cup, League Phase." in lines
