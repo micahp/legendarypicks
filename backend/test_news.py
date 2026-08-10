@@ -282,3 +282,41 @@ class NewsApiTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+# ---------------------------------------------------------------- discovery
+# The discovery pass turns Micah's approved topics into labels for finding NEW
+# conversations (discover_topics.py). These guard the stage-1 gates that were
+# each added because the pass surfaced junk without them (2026-08-10).
+
+def test_entities_drops_single_capitalized_tokens():
+    """Single tokens are first names and sentence openers, never topics."""
+    import discover_topics as d
+    ents = d._entities("Larry Berg rules out promotion")
+    assert "larry berg" in ents
+    assert "larry" not in ents and "berg" not in ents
+
+
+def test_entities_strips_bluesky_handle_prefix():
+    import discover_topics as d
+    ents = d._entities("[@zooomsports.bsky.social] Kevin Kelsy joins Portland Timbers")
+    assert not any("bsky" in e for e in ents)
+    assert "kevin kelsy" in ents
+
+
+def test_covered_by_existing_needs_two_shared_words():
+    """One shared generic word ('cap') must not hide a new conversation."""
+    import discover_topics as d
+    convs = [{"seed": "dodgers salary cap", "title": "Salary cap debate"}]
+    # One shared token ("dodgers") is not enough to call it covered...
+    assert d._covered_by_existing("the dodgers", convs) is False
+    # ...two are, and so is a full phrase match.
+    assert d._covered_by_existing("salary cap", convs) is True
+    assert d._covered_by_existing("kevin kelsy", convs) is False
+
+
+def test_container_entities_come_from_the_classifier_vocabulary():
+    """Team names are containers, and we reuse the one list we already have."""
+    import discover_topics as d
+    assert "red sox" in d._CONTAINER_ENTITIES
+    assert "lakers" in d._CONTAINER_ENTITIES

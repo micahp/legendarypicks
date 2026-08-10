@@ -7,6 +7,8 @@
 #                                  (ESPN 7 req/host-budget-20 disk-cached 1h,
 #                                   RSS, Bluesky)
 #   2. ingest_league_narratives.py  conversation cards (1 DeepSeek batch call)
+#   3. discover_topics.py           propose NEW conversations from the corpus
+#                                  (review with --list; nothing auto-publishes)
 #
 # (A league-summary "state of the league" pass was built then reverted
 # 2026-08-09 — redundant with the per-conversation cards, which each carry
@@ -28,4 +30,7 @@ log(){ printf '[%s] %s\n' "$(date -Is)" "$*" | tee -a "$LOG"; }
 log "=== news collect start ==="
 "$PY" ingest_league_news.py        2>&1 | tee -a "$LOG" || log "  WARN: collector exited non-zero"
 "$PY" ingest_league_narratives.py  2>&1 | tee -a "$LOG" || log "  WARN: narratives exited non-zero"
+# 3. Discovery: propose conversations nobody named. Nothing is published from
+#    this — it writes candidates for review (discover_topics.py --list).
+"$PY" discover_topics.py           2>&1 | tee -a "$LOG" || log "  WARN: discovery exited non-zero"
 log "=== news collect done ==="

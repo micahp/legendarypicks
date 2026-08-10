@@ -255,6 +255,43 @@ def _init_db():
           created_at TEXT NOT NULL DEFAULT (datetime('now')));
         """)
         con.execute("CREATE INDEX IF NOT EXISTS idx_ncfb_run ON news_card_feedback(run_id)")
+        # Conversations live in the DB, not in a Python list (Micah 2026-08-10:
+        # a topic must not need a code edit). `origin` records where the topic
+        # came from — 'dictated' is Micah naming it, and those rows are the
+        # POSITIVE exemplars the discovery pass learns "what counts as an
+        # important conversation" from. See discover_topics.py.
+        con.execute("""
+        CREATE TABLE IF NOT EXISTS news_conversations(
+          id TEXT PRIMARY KEY,
+          league TEXT NOT NULL,
+          title TEXT NOT NULL,
+          seed TEXT NOT NULL,
+          origin TEXT NOT NULL DEFAULT 'dictated',
+          active INTEGER NOT NULL DEFAULT 1,
+          note TEXT NOT NULL DEFAULT '',
+          created_at TEXT NOT NULL DEFAULT (datetime('now')));
+        """)
+        # Discovered topic candidates awaiting a verdict. A rejected candidate
+        # is a NEGATIVE exemplar and is kept forever for exactly that reason —
+        # the selector learns the boundary from the contrast, the same way the
+        # card feedback loop does.
+        con.execute("""
+        CREATE TABLE IF NOT EXISTS news_topic_candidates(
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          key TEXT NOT NULL,
+          league TEXT NOT NULL,
+          title TEXT NOT NULL DEFAULT '',
+          seed TEXT NOT NULL DEFAULT '',
+          rationale TEXT NOT NULL DEFAULT '',
+          features TEXT NOT NULL DEFAULT '{}',
+          score REAL NOT NULL DEFAULT 0,
+          evidence TEXT NOT NULL DEFAULT '[]',
+          status TEXT NOT NULL DEFAULT 'proposed',
+          note TEXT NOT NULL DEFAULT '',
+          created_at TEXT NOT NULL DEFAULT (datetime('now')),
+          decided_at TEXT);
+        """)
+        con.execute("CREATE INDEX IF NOT EXISTS idx_ntc_status ON news_topic_candidates(status, score)")
         con.commit()
 
 
