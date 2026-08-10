@@ -34,6 +34,12 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from _core import SOCIAL_SOURCES, _deepseek_chat, _init_db  # noqa: E402
 from ingest_league_news import CONVERSATIONS  # noqa: E402
+from news_classifier import entities  # noqa: E402
+
+def _norm_words(text):
+    """Lowercase word set, punctuation stripped."""
+    return set(re.sub(r"[^a-z0-9 ]", " ", (text or "").lower()).split())
+
 
 _MAX_SOURCES = 12
 _MIN_ITEMS = 2  # fewer than this and there's no "chatter" to summarize
@@ -82,6 +88,13 @@ _SYSTEM = (
     "You are the narrative desk for a sports news app. You are given the "
     "chatter around ONE important conversation in a league — real headlines "
     "and what people are posting. Write the card for it as a short paragraph. "
+    "ONE TOPIC PER CARD. This card covers exactly the conversation named in the "
+    "header and nothing else. A card is NOT a roundup of everything happening "
+    "in the league — that is a different feature. If an item in the list is "
+    "about a different story, LEAVE IT OUT, even when it is dramatic and even "
+    "when it is the freshest thing there: a star's bereavement does not belong "
+    "in a card about scouting economics, it is its own conversation. A shorter "
+    "card that stays on one subject beats a longer one that wanders. "
     "THE STORY IS ALWAYS ABOUT PEOPLE (Micah, 2026-08-10). Every power move, "
     "rule change, expansion vote, media-rights deal and transfer fee lands on "
     "someone: the player whose career it redirects, the smaller club whose "
@@ -228,12 +241,19 @@ def _load_chatter(con, conv):
     bucket, so the desk had nothing to anchor on and correctly declined rather
     than fabricate; Micah 2026-08-07).
 
-    The anchor pool is the league's recent real articles — NOT a seed-word
-    headline match. Seed-word matching was too narrow: the MLS pro/rel card is
-    anchored by the "commissioner Berg in charge" article, but that headline
-    contains neither "relegation" nor "promotion", so it never reached the card
-    (2026-08-09). The model picks which of these it actually grounds in (see
-    _generate), so a broad pool does not attach irrelevant receipts.
+    The anchor pool is RELEVANCE-FILTERED. "The league's 8 most recent
+    articles" put Messi's father's death into the Leagues Cup scouting card,
+    and the model dutifully used it — Micah, 2026-08-10: "messi is a separate
+    topic ... these cards aren't like a newsletter saying everything going on
+    in a league." Trusting the model to ignore off-topic material it was
+    explicitly told to mine does not work; do not hand it the material.
+
+    Relevance is bridged through the conversation's OWN chatter, not through
+    seed words. Seed-word matching alone was too narrow: the pro/rel card is
+    anchored by the "commissioner Berg in charge" article, whose headline
+    contains neither "relegation" nor "promotion". But the chatter talks about
+    Berg, so the entity bridge keeps it — and drops Messi, whom this
+    conversation's chatter never mentions.
     """
     conv_id, league = conv["id"], conv["league"]
     rows = con.execute(
@@ -243,17 +263,36 @@ def _load_chatter(con, conv):
         (conv_id, _MAX_SOURCES),
     ).fetchall()
     out = [dict(r) for r in rows]
+    # What this conversation is ABOUT: its own seed and title, plus every
+    # entity its chatter actually talks about.
+    # Seed and title words are deliberate, so they may match loosely. Chatter
+    # contributes ENTITIES only: matching on its ordinary words let "Messi
+    # tracker" and a pile of game highlights into a scouting card, because any
+    # two MLS headlines share words (2026-08-10).
+    topic_words = {w for w in _norm_words("%s %s" % (conv["seed"], conv["title"]))
+                   if len(w) > 4}
+    topic_entities = set()
+    for r in out:
+        topic_entities |= entities(r["headline"])
+
     anchors = con.execute(
         """SELECT headline, url, source, published, body FROM news_items
            WHERE league=? AND source NOT IN ('bluesky','x') AND url != ''
-           ORDER BY published DESC LIMIT 8""",
+           ORDER BY published DESC LIMIT 40""",
         (league,),
     ).fetchall()
     seen = {r["url"] for r in out}
+    kept = 0
     for r in anchors:
-        if r["url"] not in seen:
-            out.append(dict(r))
-            seen.add(r["url"])
+        if r["url"] in seen or kept >= 6:
+            continue
+        head = r["headline"] or ""
+        if not (entities(head) & topic_entities
+                or {w for w in _norm_words(head) if len(w) > 4} & topic_words):
+            continue  # unrelated to this conversation — never show it to the desk
+        out.append(dict(r))
+        seen.add(r["url"])
+        kept += 1
     return out
 
 
