@@ -9,24 +9,43 @@ router = APIRouter()
 @router.get("/api/game/{league}/{game_id}/props")
 def game_props(league: str, game_id: str):
     """Props for an ESPN game (linked via prop_games.espn_event_id), grouped by
-    player — the Game page's betting view. Each player's props expand to a chart."""
+    player — the Game page's betting view. Each player's props expand to a chart.
+
+    Once a game is settled each prop also carries how it LANDED: the actual value and
+    whether it hit. That is the half of the product a reader could not see before — the
+    board showed what was offered and then went quiet, so the one page where we could show
+    that our lines were worth reading showed nothing after the final whistle. The counts
+    ride along at the top level so the page can lead with them.
+
+    Unsettled props carry result: null. An unsettled prop is not a miss, and a page that
+    cannot tell the two apart would be claiming a loss we never took."""
     with closing(_db()) as con:
         rows = con.execute(
             """SELECT pl.id AS player_id, pl.name, pl.team, p.market, p.line, p.side,
-                      MAX(p.captured_at) ca
+                      MAX(p.captured_at) ca, r.actual_value, r.hit, r.settled_at
                FROM props p
                JOIN prop_games g ON g.id = p.game_id
                JOIN players pl ON pl.id = p.player_id
+               LEFT JOIN prop_results r ON r.prop_id = p.id
                WHERE g.espn_event_id = ?
                GROUP BY pl.id, p.market, p.side
                ORDER BY pl.name""",
             (str(game_id),)).fetchall()
     players: dict = {}
+    settled = hits = 0
     for r in rows:
         d = players.setdefault(r["player_id"], {"player_id": r["player_id"], "name": r["name"],
                                                 "team": r["team"], "props": []})
-        d["props"].append({"market": _base_market(r["market"]), "line": r["line"], "side": r["side"]})
-    return {"league": league, "game_id": str(game_id), "players": list(players.values())}
+        result = None
+        if r["settled_at"] is not None and r["hit"] is not None:
+            result = {"actual": r["actual_value"], "hit": bool(r["hit"]),
+                      "settled_at": r["settled_at"]}
+            settled += 1
+            hits += 1 if r["hit"] else 0
+        d["props"].append({"market": _base_market(r["market"]), "line": r["line"],
+                           "side": r["side"], "result": result})
+    return {"league": league, "game_id": str(game_id), "players": list(players.values()),
+            "settled_count": settled, "hit_count": hits}
 
 
 @router.get("/api/game/{league}/{game_id}/story")
