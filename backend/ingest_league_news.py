@@ -568,6 +568,49 @@ def collect_x_search(conversations=None):
     return out
 
 
+def collect_news_search(conversations=None):
+    """Real ARTICLES on each conversation's topic, via Google News search.
+
+    Our anchor pool was whatever the six RSS feeds happened to publish — 1 to 6
+    articles per conversation, which is why cards kept serving no receipts. One
+    Google News query per seed returns ~100 topic-matched articles from
+    publishers we have no feed for at all: the New York Times, the Guardian,
+    Variety, CNBC, Yahoo, SI, MLB.com, Goal.com, Front Office Sports.
+
+    These are publishers, not chatter: `source` is the real outlet name from the
+    feed, so a receipt reads "The New York Times". The link is Google's redirect
+    — its guid stopped decoding to the target in 2024 and the batchexecute
+    resolver no longer answers us — so the chip links through Google rather than
+    straight to the outlet. Working link, honest attribution (2026-08-10).
+    """
+    out = []
+    for conv in (conversations if conversations is not None else load_conversations()):
+        try:
+            root = ET.fromstring(_GNEWS_FETCHER.text(
+                GOOGLE_NEWS_RSS % urllib.parse.quote(conv["seed"])))
+        except Exception as e:
+            out.append({"source": "google-news", "conv_id": conv["id"],
+                        "headline": "FETCH ERROR: %s" % e,
+                        "body": "", "url": "", "published": ""})
+            continue
+        for it in list(root.iter("item"))[:25]:
+            def txt(tag):
+                el = it.find(tag)
+                return (el.text or "").strip() if el is not None else ""
+            title = _clean(txt("title"))
+            if not title:
+                continue
+            publisher = txt("source") or "google-news"
+            # Google appends " - Publisher" to every title; the publisher is
+            # already its own field, so drop the duplicate.
+            if title.endswith(" - " + publisher):
+                title = title[: -(len(publisher) + 3)].strip()
+            out.append({"source": publisher.lower()[:40], "conv_id": conv["id"],
+                        "headline": title, "body": "", "url": txt("link"),
+                        "published": _iso(txt("pubDate"))})
+    return out
+
+
 def tag_conversations(items):
     """Attach X posts to the conversations they are actually about.
 
@@ -875,6 +918,10 @@ def main():
     before = len(all_items)
     all_items += collect_x_search()
     print("  collected %d from x search (site:x.com via google news)"
+          % (len(all_items) - before))
+    before = len(all_items)
+    all_items += collect_news_search()
+    print("  collected %d topic-matched articles from google news"
           % (len(all_items) - before))
 
     # A failed fetch is recorded as an item with an empty url, and upsert skips
