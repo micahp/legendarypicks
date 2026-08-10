@@ -51,7 +51,16 @@ ESPN_NEWS = {
     "nba": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/news?limit=25",
     "nhl": "https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/news?limit=25",
     "ufc": "https://site.api.espn.com/apis/site/v2/sports/mma/ufc/news?limit=25",
+    # Added 2026-08-10. The cross-border conversation had no article anchors
+    # because usa.1 is the MLS wire and nothing else: Liga MX and the tournament
+    # itself were invisible to us.
+    "leaguescup": "https://site.api.espn.com/apis/site/v2/sports/soccer/concacaf.leagues.cup/news?limit=25",
+    "ligamx": "https://site.api.espn.com/apis/site/v2/sports/soccer/mex.1/news?limit=25",
 }
+# ESPN's feed key -> the league we file it under. Leagues Cup is MLS *and*
+# Liga MX; per PLAN §10 it files under mls for now. Liga MX items get no hint —
+# the classifier decides from the text rather than us mislabelling them.
+_ESPN_LEAGUE_HINT = {"leaguescup": "mls", "ligamx": None}
 RSS_FEEDS = [
     ("deadspin", "https://deadspin.com/rss/"),  # /rss 308→/rss/ (Py3.8 urllib won't follow 308)
     ("awfulannouncing", "https://www.awfulannouncing.com/feed"),
@@ -267,6 +276,41 @@ def _http_text(url: str) -> str:
     req = urllib.request.Request(url, headers={"User-Agent": UA})
     with urllib.request.urlopen(req, timeout=20) as r:
         return r.read().decode("utf-8", "replace")
+
+
+# ESPN's www host 403s this datacenter IP for every user agent (measured
+# 2026-08-10: identical 919-byte refusal for curl, Safari, Googlebot and
+# facebookexternalhit — it is an edge block, not UA sniffing). The article
+# itself is served as JSON, with the FULL story body, by the now.core API host,
+# which answers us fine. ESPN blocks per host, not per IP.
+_STORY_API = "https://now.core.api.espn.com/v1/sports/news/%s"
+_STORY_ID_RE = re.compile(r"/id/(\d+)")
+
+
+def fetch_espn_story(url_or_id):
+    """Full text of one ESPN story, by article URL or id.
+
+    The news feeds carry a headline and a one-line description; the argument
+    lives in the body. This is how a feature we find by hand becomes a real
+    citable receipt in the corpus instead of a link we cannot read.
+    """
+    m = _STORY_ID_RE.search(str(url_or_id))
+    story_id = m.group(1) if m else str(url_or_id).strip()
+    d = _ESPN_FETCHER.json(_STORY_API % story_id)
+    heads = d.get("headlines") or []
+    if not heads:
+        return None
+    h = heads[0]
+    body = _clean(_TAG_RE.sub(" ", h.get("story") or ""))
+    links = h.get("links") or {}
+    web = (links.get("web") or {}).get("href") or ""
+    return {
+        "source": "espn-feature",
+        "headline": _clean(h.get("headline", "")),
+        "body": body or _clean(h.get("description", "")),
+        "url": web or "https://www.espn.com/story/_/id/%s" % story_id,
+        "published": _iso(h.get("published", "")),
+    }
 
 
 def collect_espn(leagues):
@@ -502,7 +546,21 @@ def main():
                     help="re-clean stored headline/body + normalize published (no network)")
     ap.add_argument("--sync-conversations", action="store_true",
                     help="write the built-in conversation defaults into the DB")
+    ap.add_argument("--ingest-story", default="",
+                    help="ESPN article URL or id -> full body into news_items")
     args = ap.parse_args()
+
+    if args.ingest_story:
+        it = fetch_espn_story(args.ingest_story)
+        if not it:
+            print("no story found for %s" % args.ingest_story)
+            return
+        it.update(classify(it["headline"] + " " + it["body"], None))
+        print("  %s [%s/%s] %d chars" % (it["headline"][:70], it["league"],
+                                         it["layer"], len(it["body"])))
+        if not args.dry_run:
+            print("  wrote %d new, %d refreshed" % upsert([it]))
+        return
 
     if args.sync_conversations:
         sync_conversations()
@@ -558,6 +616,8 @@ def main():
 
     for it in all_items:
         src_league = it["source"].replace("espn-", "") if it["source"].startswith("espn-") else None
+        if src_league in _ESPN_LEAGUE_HINT:
+            src_league = _ESPN_LEAGUE_HINT[src_league]
         cls = classify(it["headline"] + " " + it["body"], src_league)
         it.update(cls)
 

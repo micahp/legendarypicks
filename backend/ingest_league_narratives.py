@@ -148,8 +148,17 @@ _SYSTEM = (
     "sentence with colons — one fact per clause, comma-connected, and if a "
     "sentence gets crowded, split it. A longer sentence that reads easily "
     "beats a short one the reader has to unpack. "
-    "Each numbered item is `N. HEADLINE [source]` and real (non-bluesky) "
-    "articles also carry their URL after the source. "
+    "Each numbered item is `N. HEADLINE [source] (published date)`; real "
+    "(non-bluesky) articles carry their URL and an `excerpt:` of the article "
+    "body. USE THE EXCERPTS - the named people, direct quotes and figures in "
+    "them are the strongest material you have, and a card built from headlines "
+    "alone will be vague. "
+    "MIND THE DATES. You are told today's date. An item published months or "
+    "years ago is BACKGROUND, not news: never write it as though it happened "
+    "now. If the best evidence for a conversation is old, say when it was said "
+    "- \'ESPN reported last year\', \'in the 2025 tournament\' - and let the "
+    "recent items carry the present tense. Never imply an old article is a "
+    "current development. "
     "Output STRICT JSON only: "
     '{"narrative": "<one sentence: the conversation, anchored on the news — '
     'the title; unique voice, not a repeated template>", '
@@ -217,14 +226,14 @@ def _load_chatter(con, conv):
     """
     conv_id, league = conv["id"], conv["league"]
     rows = con.execute(
-        """SELECT headline, url, source, published FROM news_items
+        """SELECT headline, url, source, published, body FROM news_items
            WHERE conv_id=? AND url != ''
            ORDER BY published DESC LIMIT ?""",
         (conv_id, _MAX_SOURCES),
     ).fetchall()
     out = [dict(r) for r in rows]
     anchors = con.execute(
-        """SELECT headline, url, source, published FROM news_items
+        """SELECT headline, url, source, published, body FROM news_items
            WHERE league=? AND source != 'bluesky' AND url != ''
            ORDER BY published DESC LIMIT 8""",
         (league,),
@@ -235,6 +244,39 @@ def _load_chatter(con, conv):
             out.append(dict(r))
             seen.add(r["url"])
     return out
+
+
+_BODY_CHARS = 600
+
+
+def _numbered(items, limit=None):
+    """The item list as the model sees it.
+
+    Real articles carry an EXCERPT of their body, not just a headline. The
+    argument lives in the body: a 7,500-character ESPN feature quoting MLS
+    executives on the record reached the model as a single headline, so the
+    card could not use one quote or figure from it (2026-08-10). Bluesky posts
+    are already their own full text and need no excerpt.
+    """
+    out = []
+    for i, it in enumerate(items if limit is None else items[:limit]):
+        real = it["source"] != "bluesky"
+        url = (" " + it["url"]) if real and it.get("url") else ""
+        # The DATE, always. The ESPN scouting feature is from 2025 and the card
+        # reported it as current, because the model had no way to know (Micah,
+        # 2026-08-10: "it's dated in 2025. we must include that info when
+        # sending to model so it's able to understand time").
+        when = (it.get("published") or "")[:10]
+        stamp = (" (%s)" % when) if when else " (date unknown)"
+        line = "%d. %s [%s]%s%s" % (i + 1, it["headline"], it["source"], stamp, url)
+        body = ((it.get("body") if isinstance(it, dict) else "") or "").strip()
+        if real and body and body[:40] not in it["headline"]:
+            excerpt = body[:_BODY_CHARS]
+            if len(body) > _BODY_CHARS:
+                excerpt += "..."
+            line += "\n   excerpt: %s" % excerpt
+        out.append(line)
+    return "\n".join(out)
 
 
 def _cited_sources(items, parsed):
@@ -284,13 +326,10 @@ def _editor_marks(con, conv_id):
 def _generate(conv, items, marks=""):
     # Real (non-bluesky) items carry their URL so the model can cite the exact
     # article it grounded in; bluesky posts are signal only (never a chip).
-    numbered = "\n".join(
-        "%d. %s [%s]%s" % (i + 1, it["headline"], it["source"],
-                           (" " + it["url"]) if it["source"] != "bluesky" and it.get("url") else "")
-        for i, it in enumerate(items)
-    )
-    user = "%sConversation: %s (%s)\n\nRecent chatter:\n%s" % (
-        marks, conv["title"], conv["league"], numbered)
+    numbered = _numbered(items)
+    user = "%sToday is %s.\n\nConversation: %s (%s)\n\nRecent chatter:\n%s" % (
+        marks, datetime.date.today().isoformat(), conv["title"], conv["league"],
+        numbered)
     # Social posts feed the model's signal but are never shown as receipts —
     # only real articles the model actually cited become source chips. A
     # conversation whose chatter is ALL social still gets a card — that
@@ -338,15 +377,12 @@ def _generate_batch(convs_with_marks):
                 continue
             seen_h.add(h)
             unique.append(it)
-        numbered = "\n".join(
-            "%d. %s [%s]%s" % (i + 1, it["headline"], it["source"],
-                               (" " + it["url"]) if it["source"] != "bluesky" and it.get("url") else "")
-            for i, it in enumerate(unique[:10])
-        )
+        numbered = _numbered(unique, limit=10)
         header = "### %s (%s) — %s" % (conv["id"], conv["league"], conv["title"])
         blocks.append(("%s%s\n%s" % (marks, header, numbered)) if marks else
                       ("%s\n%s" % (header, numbered)))
     user = (
+        "Today is %s.\n\n" % datetime.date.today().isoformat() +
         "Here are ALL the conversations to write cards for. They are part of "
         "one batch: read every block, then write every card. The titles MUST "
         "be varied across the batch — different verbs, different structures, "
