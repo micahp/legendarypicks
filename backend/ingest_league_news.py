@@ -10,6 +10,14 @@ Out-of-band collection path (never per-pageview). Sources (all verified
   - FanSided           https://fansided.com/feed/
   - SB Nation          https://www.sbnation.com/rss/index.xml
   - Bluesky search     https://api.bsky.app/xrpc/app.bsky.feed.searchPosts
+  - X timelines        https://nitter.net/{handle}/rss — 17 accounts, see
+                       X_ACCOUNTS below and PLAN §2.1 for why each one is on
+                       the list and what it scored. Timelines only; Nitter's
+                       search returns an empty document.
+
+Two cadences. The full run (this file, no flags) is nightly. `--x-only` is the
+fast lane every 2 hours: the X feeds hold ~6 hours at current post rates, so a
+daily run would miss most of them.
 
 ESPN requests go through the shared paced_http Fetcher (espn-request-budget
 doctrine §4: one home for pacing, per-host budget and disk cache; re-runs
@@ -20,6 +28,11 @@ Usage:
   LP_DB_PATH=/path/to/db python3 ingest_league_news.py            # all leagues
   python3 ingest_league_news.py --leagues nfl,mlb --no-espn        # subset
   python3 ingest_league_news.py --dry-run                          # collect+classify, no write
+  python3 ingest_league_news.py --x-only                           # X timelines only (2-hourly)
+  python3 ingest_league_news.py --reclassify                       # re-run the classifier, no network
+  python3 ingest_league_news.py --repair-text                      # re-clean stored text + dates
+  python3 ingest_league_news.py --sync-conversations               # code defaults -> DB
+  python3 ingest_league_news.py --ingest-story <espn-url|id>       # one article, full body
 """
 import argparse
 import datetime

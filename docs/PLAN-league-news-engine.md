@@ -65,14 +65,84 @@ signals before designing the pipeline, DB, or UI.
 | The Athletic | (paywall + robots bans AI/LLM scraping) | — | ❌ use their Bluesky posts (@theathletic.com, 17k posts) instead |
 | Bleacher Report | (no RSS; robots disallows /api) | — | ❌ use Bluesky (@bleacherreport) + Google News |
 | Yahoo Sports | (429) | — | ❌ Google News fallback |
-| X/Twitter | (search locked) | — | ❌ **the Underdog accounts Micah wanted are unreachable** — see below |
+| X/Twitter timelines | `https://nitter.net/{handle}/rss` | none | ✅ **SOLVED 2026-08-10** — see §2.1. Free Nitter mirror, 17 accounts |
+| X/Twitter search | `nitter.net/search/rss?f=tweets&q=...` | none | ❌ returns an empty document — X's search endpoint is closed to Nitter. Keyword queries stay on Bluesky |
 
-**The Underdog signal, specifically:** Underdog's official Bluesky accounts
-(`@underdogsports.bsky.social`, `@underdog-sports.bsky.social`) are
-registered-but-dormant — 0 posts each. The live Underdog signal on Bluesky:
-`@underdogtracker` (fan-run, 280 posts), Underdog CPO William Lovely (`@wsul`),
-and keyword search (bestball, underdog fantasy, league strategy). Worth watching
-— the accounts may activate; the tracker is the current proxy.
+**The Underdog signal — resolved 2026-08-10.** The earlier conclusion here
+("unreachable", "registered-but-dormant") was **wrong on the handle**:
+Underdog's X account is **@Underdog**, not @UnderdogFantasy, and it is live.
+Its Bluesky presence really is dormant (`underdogfantasy.bsky.social`: 0 posts,
+3 followers), and PrizePicks and Polymarket have no Bluesky presence at all —
+so X was the only way to reach them, and a Nitter mirror reaches it for free.
+
+Eleven mirrors were tried; **nitter.net is the only one that answers** this box.
+The rest are 502, expired certs, NXDOMAIN, or a JS browser challenge that
+replies "Automated verification failed" to headless Chrome. Self-hosting is not
+a fallback: X killed guest accounts, so an instance now needs real session
+tokens. `twitterapi.io` (~$0.15/1k reads) stays wired as a paid fallback behind
+`LP_XAPI_KEY`, unused by default.
+
+## 2.1 The X accounts we cover (measured 2026-08-10)
+
+Every account was scored on the same ruler — 20 rows each, share that classify
+into a served layer (narrative/trade/staff/injury/notable), and share that fail
+to classify into a league at all.
+
+**Beat reporters — the best per-item signal we have.** They also post
+availability ("sat out practice", "not travelling") hours before a brand
+account repackages it.
+
+| Handle | League | Usable | Note |
+|---|---|---|---|
+| `@ShamsCharania` | nba | **80%** | highest of anything we read |
+| `@TomBogert` | mls | 44% | MLS transfers specifically |
+| `@Ken_Rosenthal` | mlb | 40% | |
+| `@FriedgeHNIC` | nhl | 36% | |
+| `@RapSheet` | nfl | 35% | 19 posts/day |
+| `@JeffPassan` | mlb | 35% | |
+| `@AdamSchefter` | nfl | 45% | |
+| `@FieldYates` | nfl | 25% | |
+
+**Props desks — league-specific, and the reason we came to X at all.** The
+handle states its own league, which beats the classifier guessing: these are
+0% unclassified where cross-league accounts run 25–40%.
+
+| Handle | League | Usable | Rate |
+|---|---|---|---|
+| `@UnderdogNFL` | nfl | 35% | **83/day** — densest feed we have |
+| `@UnderdogMLB` | mlb | 20% | 22/day |
+| `@UnderdogNBA` | nba | 60% | 4/day |
+| `@Underdog` | — | 5% | 7/day, cross-league |
+
+**Publishers.** The Athletic's league desks share **zero** posts with the
+parent account (0 of 20 each) — they are separate desks, not mirrors.
+
+| Handle | League | Usable |
+|---|---|---|
+| `@TheAthletic` | — | 16% |
+| `@TheAthleticNFL` | nfl | 30% |
+| `@TheAthleticNHL` | nhl | 25% |
+| `@TheAthleticCFB` | ncaaf | 15% |
+| `@BleacherReport` | — | 20% |
+
+**Deliberately NOT carried**, same ruler:
+
+| Handle | Why |
+|---|---|
+| `@Kalshi` 100% unclassified / 0% usable, `@Polymarket` 95%/10%, `@PrizePicks` 65%/5% | politics, crypto, streamer news |
+| `@KalshiSports` 75%/15%, `@PolymarketSport` 60%/10% | the sport desks beat their parents and still miss the bar; ~half their posts are the brand's own marketing. Market signal is probabilities, not news — it belongs in the odds pipeline beside the Bovada scraper |
+| `@FabrizioRomano` 63% usable | scores well but covers European club competitions we do not carry — the same trap as the ESPN soccer rollup |
+| `@arielhelwani` 0%, `@Brett_McMurphy` 5%, `@PeteThamel` 10%, `@TomPelissero` 10% | low yield; Pelissero posts ~once a day |
+
+**Handles that do not exist:** `@UnderdogNHL`, `@UnderdogCFB`, `@BR_NFL`,
+`@BR_NBA`, `@PolymarketSports` (plural), `@UnderdogMLS`, `@TheAthleticSoccer`.
+
+**Cadence — two lanes.** X posts far faster than the nightly run: @UnderdogNFL
+at 83/day against a 20-post RSS window means its feed holds about six hours, so
+a daily run captures a quarter of it. `legendarypicks-news-x.timer` runs
+`--x-only` **every 2 hours** (17 requests, no ESPN, no Bluesky, no model;
+~200 requests/day against a free mirror). The full collector plus narrative
+generation stays on the nightly `legendarypicks-news.timer` at 03:35.
 
 ## 3. POC scope (DONE — superseded by §8)
 
