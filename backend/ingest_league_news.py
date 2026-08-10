@@ -65,7 +65,7 @@ RSS_FEEDS = [
 # its own card on the site and gets to breathe — we do NOT merge them into one
 # league summary. Add new conversations HERE (e.g. NFL turf vs grass, 2026-08-07).
 # `title` is the short human label; `seed` is the query that anchors it.
-CONVERSATIONS = [
+_DEFAULT_CONVERSATIONS = [
     {"id": "mlb-salary-cap", "league": "mlb", "title": "Salary cap debate",
      "seed": "dodgers salary cap"},
     {"id": "mls-pro-rel", "league": "mls", "title": "Promotion/relegation",
@@ -102,6 +102,56 @@ CONVERSATIONS = [
     {"id": "esports-valorant", "league": "esports", "title": "Valorant",
      "seed": "valorant champions"},
 ]
+
+
+def load_conversations():
+    """Conversations come from `news_conversations`, not from this file.
+
+    A topic must not need a code edit and a deploy (Micah, 2026-08-10) — and
+    the DB rows are also what the discovery pass learns from, since an approved
+    topic is a positive label (see discover_topics.py). The list above is the
+    seed data for a fresh DB and the fallback when the table is empty or
+    unreachable; `--sync-conversations` writes it in.
+    """
+    try:
+        import sqlite3
+        db_path = os.environ.get("LP_DB_PATH") or os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), "data", "picks.db")
+        con = sqlite3.connect(db_path)
+        rows = con.execute(
+            """SELECT id, league, title, seed FROM news_conversations
+               WHERE active=1 ORDER BY created_at""").fetchall()
+        con.close()
+        if rows:
+            return [{"id": r[0], "league": r[1], "title": r[2], "seed": r[3]}
+                    for r in rows]
+    except Exception:
+        pass
+    return list(_DEFAULT_CONVERSATIONS)
+
+
+def sync_conversations():
+    """Write the built-in defaults into news_conversations (idempotent)."""
+    import sqlite3
+    from _core import _init_db as _core_init_db
+    _core_init_db()
+    db_path = os.environ.get("LP_DB_PATH") or os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), "data", "picks.db")
+    con = sqlite3.connect(db_path)
+    n = 0
+    for c in _DEFAULT_CONVERSATIONS:
+        cur = con.execute(
+            """INSERT INTO news_conversations(id, league, title, seed, origin)
+               VALUES (?,?,?,?, 'dictated') ON CONFLICT(id) DO NOTHING""",
+            (c["id"], c["league"], c["title"], c["seed"]))
+        n += cur.rowcount
+    con.commit()
+    total = con.execute("SELECT count(*) FROM news_conversations WHERE active=1").fetchone()[0]
+    con.close()
+    print("Synced %d new conversations (%d active)" % (n, total))
+
+
+CONVERSATIONS = load_conversations()
 
 # Generic texture dimensions: the ways a story shows up in fans' lives. Any
 # conversation's seed is searched against these to find the ADJACENT
@@ -141,7 +191,12 @@ BLUESKY_SEARCH = "https://api.bsky.app/xrpc/app.bsky.feed.searchPosts"  # public
 _ESPN_FETCHER = Fetcher(min_interval=0.5, retry_waits=(), cache_dir=CACHE_DIR,
                         cache_ttl=3600, host_budget=20,
                         headers={"User-Agent": "curl/8.5.0"})
-_BLUE_FETCHER = Fetcher(min_interval=0.5, retry_waits=(), cache_dir=CACHE_DIR,
+# Bluesky is a RATE limit, not ESPN's count wall, so the no-retry rule does not
+# transfer: measured 2026-08-10, 46 of 72 sequential searches at 0.5s came back
+# 403 and every one of them was dropped silently (a failed fetch has no url, and
+# upsert skips those rows). Slower pacing plus a short ladder; the whole pass is
+# still under three minutes on a nightly cron.
+_BLUE_FETCHER = Fetcher(min_interval=1.5, retry_waits=(2, 5), cache_dir=CACHE_DIR,
                         cache_ttl=3600, host_budget=0)
 
 
@@ -269,7 +324,12 @@ def collect_bluesky():
                     "body": text,
                     "url": "https://bsky.app/profile/%s/post/%s"
                            % (author, post_uri.rsplit("/", 1)[-1]),
-                    "published": _iso(rec.get("indexedAt", "")),
+                    # indexedAt lives on the POST; the record carries createdAt.
+                    # Reading rec["indexedAt"] gave every bluesky row an EMPTY
+                    # published (244 of them), which hid social from the
+                    # discovery window and made "chatter converges with
+                    # articles" impossible to ever detect (2026-08-10).
+                    "published": _iso(p.get("indexedAt") or rec.get("createdAt") or ""),
                 })
         except Exception as e:
             items.append({"source": "bluesky", "conv_id": conv_id,
@@ -404,7 +464,13 @@ def main():
                     help="re-run the classifier over stored rows (no network)")
     ap.add_argument("--repair-text", action="store_true",
                     help="re-clean stored headline/body + normalize published (no network)")
+    ap.add_argument("--sync-conversations", action="store_true",
+                    help="write the built-in conversation defaults into the DB")
     args = ap.parse_args()
+
+    if args.sync_conversations:
+        sync_conversations()
+        return
 
     if args.reclassify:
         reclassify_existing(dry_run=args.dry_run)
