@@ -111,6 +111,17 @@ because the POC is small and the narrative signal is time-sensitive.
       not a known gap** — Statcast is MLB's own data, so why do we hold them?
 - [ ] 168 pre-existing orphans (`props` 78, `roster_snap` 90)
 - [ ] `atp`, `wnba`, `wta` — no MANIFEST entry, therefore unmeasured, not passing
+- [ ] **Who is actually playing — soccer availability before kickoff** (raised 2026-08-10, own
+      session). The news engine surfaces absences after the fact; the game detail page should say
+      who is out BEFORE the match. Soccer is the hard case and the valuable one: there is no
+      questionable/doubtful convention the way the NFL has one and the NBA has an injury report, so
+      an MLS or Leagues Cup starter can vanish at the last minute for an international call-up, a
+      rest day, or something no one saw coming — Messi missing the Monterrey match after his
+      father's death, Suárez serving a six-game Leagues Cup ban that Micah only discovered mid-match.
+      Unknown whether ESPN simply does not display it, whether the reporting rules differ, or whether
+      nobody publishes it via an API at all; establishing which of those is true is step one. The
+      signal we already collect is close — @UnderdogNFL posts practice and availability notes all day
+      — we file it as history instead of serving it as a heads-up.
 
 ## The rules this was learned under
 
