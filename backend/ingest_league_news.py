@@ -541,7 +541,13 @@ _GNEWS_FETCHER = Fetcher(min_interval=1.0, retry_waits=(2,), cache_dir=CACHE_DIR
 
 
 def collect_x_search(conversations=None):
-    """One `site:x.com <seed>` query per conversation."""
+    """One `site:x.com <seed>` query per conversation.
+
+    NOT WIRED INTO THE RUN, on purpose — see the call site in main(). Google
+    returns the post's words with no author and no permalink, so nothing
+    downstream can tell a beat reporter from an anonymous account. Kept only
+    because it becomes usable the day we can attribute a post to a handle.
+    """
     out = []
     for conv in (conversations if conversations is not None else load_conversations()):
         query = "site:x.com %s" % conv["seed"]
@@ -924,10 +930,13 @@ def main():
     all_items += x_items
     if x_items:
         print("  collected %d from x" % len(x_items))
-    before = len(all_items)
-    all_items += collect_x_search()
-    print("  collected %d from x search (site:x.com via google news)"
-          % (len(all_items) - before))
+    # collect_x_search() is deliberately NOT called. It works — one Google query
+    # per seed returns ~95 on-topic X posts — but Google hands us the post text
+    # and a redirect and nothing else: no author, no handle, no permalink. Trust
+    # cannot be established even in principle, and on 2026-08-10 one of those
+    # posts put "Inter Miami suspends Messi" on a card, contradicting publisher
+    # items in the same pool. Micah: "we need trustworthy sources and can't
+    # expect the model to fact check every post." Facts come from publishers.
     before = len(all_items)
     all_items += collect_news_search()
     print("  collected %d topic-matched articles from google news"

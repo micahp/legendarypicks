@@ -389,6 +389,20 @@ _ALLEGATION_WORDS = (
 )
 
 
+def had_publisher_material(items):
+    """True when the card was written with published reporting in front of it.
+
+    Facts come from published reporting; social supplies the fan voice and
+    nothing more (Micah, 2026-08-10). But requiring the MODEL to cite is the
+    wrong lever: asking for it dropped 11 of 14 otherwise-good cards because a
+    JSON field went missing, which is a worse failure than the one it prevents.
+    Whether a publisher item was in the pool is something WE can verify, so we
+    check that instead — and allegations, the dangerous class, still have to
+    cite one (see unsupported_allegation).
+    """
+    return any(it["source"] not in SOCIAL_SOURCES for it in items)
+
+
 def unsupported_allegation(gen):
     """True when a card makes an allegation about people and cites nobody.
 
@@ -670,6 +684,19 @@ def main():
             print("  %-18s no narrative worth mentioning (%s)" % (conv["id"], reason))
             continue
         if gen.get("keep"):
+            continue
+        # A card must rest on published reporting. Social supplies the fan
+        # voice; it never supplies the facts. Micah, 2026-08-10: "we need
+        # trustworthy sources and can't expect the model to fact check every
+        # post." This supersedes the earlier "chatter IS the signal" allowance
+        # (2026-08-07) — chatter still shapes a card, it just cannot be the only
+        # thing holding one up.
+        if not had_publisher_material(items):
+            print("  %-18s NOT SERVED — nothing published to stand on: %s"
+                  % (conv["id"], gen["narrative"][:60]))
+            if not args.dry_run:
+                _log_deletion(con, conv, "no-publisher-material")
+                con.execute("DELETE FROM news_narratives WHERE conv_id=?", (conv["id"],))
             continue
         if unsupported_allegation(gen):
             print("  %-18s REFUSED — alleges something about people with no "

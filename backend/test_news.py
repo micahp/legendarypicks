@@ -371,3 +371,11 @@ def test_ordinary_card_without_a_receipt_still_serves():
         "narrative": "MLS commissioner rules out promotion and relegation",
         "paragraph": "Fans argue an open pyramid would raise stakes.",
         "source_count": 0}) is False
+
+
+def test_card_built_only_from_social_does_not_serve():
+    """Facts come from publishers: a pool of pure chatter cannot hold a card up."""
+    from ingest_league_narratives import had_publisher_material
+    chatter = [{"source": "bluesky"}, {"source": "x-search"}]
+    assert had_publisher_material(chatter) is False
+    assert had_publisher_material(chatter + [{"source": "espn-mlb"}]) is True
