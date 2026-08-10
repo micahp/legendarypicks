@@ -36,6 +36,25 @@ def _item(r) -> dict:
     }
 
 
+def _utc_iso(v) -> str:
+    """SQLite's datetime('now') writes naive UTC ("2026-08-10 00:31:56").
+
+    The browser parses that shape as LOCAL time, so a card generated an hour
+    ago read as being from the future and the relative stamp said "now"
+    forever. Serve it with the offset the value actually has (2026-08-09).
+    """
+    s = (v or "").strip()
+    if not s:
+        return ""
+    try:
+        dt = datetime.fromisoformat(s.replace("Z", "+00:00"))
+    except ValueError:
+        return s
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
 def _conv_card(r) -> dict:
     """One conversation card (AI-generated) as the API serves it."""
     return {
@@ -46,7 +65,7 @@ def _conv_card(r) -> dict:
         "fan_voice": r["fan_voice"],
         "paragraph": r["paragraph"],
         "sources": json.loads(r["sources"] or "[]"),
-        "generated_at": r["generated_at"],
+        "generated_at": _utc_iso(r["generated_at"]),
         "source_count": r["source_count"],
     }
 
