@@ -37,6 +37,8 @@ from ingest_league_news import CONVERSATIONS  # noqa: E402
 
 _MAX_SOURCES = 12
 _MIN_ITEMS = 2  # fewer than this and there's no "chatter" to summarize
+_BATCH_MAX_TOKENS = 24000  # reasoning shares this budget; 10000 truncated 13 cards
+_BATCH_CHUNK = 4           # fallback width when the wide batch will not parse
 
 # A declined/failed conversation wipes its served news_narratives row — that's
 # the "some are missing now" mechanism. The full served card that vanished is
@@ -403,12 +405,39 @@ def _generate_batch(convs_with_marks):
         + "\n\n".join(blocks)
     )
     for attempt in (0, 1):
-        raw = _deepseek_chat(_SYSTEM, user, max_tokens=10000)
+        raw = _deepseek_chat(_SYSTEM, user, max_tokens=_BATCH_MAX_TOKENS)
         parsed = _parse_response(raw)
         if parsed is None:
             continue
         return parsed
     return None
+
+
+def _generate_batch_chunked(convs_with_marks, size=_BATCH_CHUNK):
+    """One call for the whole set, falling back to chunks if that fails.
+
+    Measured 2026-08-10: 3 conversations parse fine, 13 come back unparseable.
+    DeepSeek runs at reasoning_effort=high and reasoning shares the max_tokens
+    budget, so a wide batch spends it thinking and the JSON arrives truncated.
+    A whole run of stale cards is the worst outcome — worse than losing some
+    cross-card title variety — so retry in chunks before giving up.
+    """
+    parsed = _generate_batch(convs_with_marks)
+    if parsed is not None:
+        return parsed
+    if len(convs_with_marks) <= size:
+        return None
+    print("  batch of %d unparseable — retrying in chunks of %d"
+          % (len(convs_with_marks), size))
+    merged = {}
+    for i in range(0, len(convs_with_marks), size):
+        chunk = convs_with_marks[i:i + size]
+        got = _generate_batch(chunk)
+        if got:
+            merged.update(got)
+        else:
+            print("    chunk %d-%d failed" % (i, i + len(chunk)))
+    return merged or None
 
 
 def main():
@@ -446,7 +475,7 @@ def main():
     # vary titles against each other (per-call generation repeats templates).
     results = {}
     if len(loaded) > 1:
-        parsed = _generate_batch(loaded)
+        parsed = _generate_batch_chunked(loaded)
         if parsed is None:
             # A totally failed batch must NOT wipe the live cards: leave the
             # old set serving and report. Per-conversation failures below
