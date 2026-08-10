@@ -25,13 +25,25 @@ _NARRATIVES_PER_LEAGUE = 6
 _GRANULAR_PER_LEAGUE = 12
 
 
+_HANDLE_RE = __import__("re").compile(r"^\[@([^\]]+)\]\s*")
+
+
 def _item(r) -> dict:
+    """One board row. X posts carry their handle in the headline as
+    `[@AdamSchefter] ...`; move it into the source label so the card reads
+    "@AdamSchefter" rather than the bare "x"."""
+    headline, source = r["headline"], r["source"]
+    if source == "x":
+        m = _HANDLE_RE.match(headline or "")
+        if m:
+            source = "@" + m.group(1)
+            headline = _HANDLE_RE.sub("", headline)
     return {
         "id": r["id"],
         "league": r["league"],
-        "headline": r["headline"],
+        "headline": headline,
         "url": r["url"],
-        "source": r["source"],
+        "source": source,
         "published": r["published"],
         "layer": r["layer"],
         "key_player": r["key_player"],
@@ -84,7 +96,7 @@ def _league_report(league: Optional[str] = None) -> dict:
             rows = con.execute(
                 """SELECT * FROM news_items
                    WHERE league=? AND league != 'unclassified'
-                     AND source NOT IN ('bluesky','x')
+                     AND source != 'bluesky'
                      AND layer IN ('narrative','trade','staff','injury','notable')
                    ORDER BY published DESC LIMIT 60""",
                 (league,),
@@ -94,7 +106,7 @@ def _league_report(league: Optional[str] = None) -> dict:
             rows = con.execute(
                 """SELECT * FROM news_items
                    WHERE league != 'unclassified'
-                     AND source NOT IN ('bluesky','x')
+                     AND source != 'bluesky'
                      AND layer IN ('narrative','trade','staff','injury','notable')
                    ORDER BY published DESC LIMIT 300"""
             ).fetchall()

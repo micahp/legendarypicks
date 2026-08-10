@@ -397,12 +397,16 @@ def _base_market(m: str) -> str:
     return (m or "").split("___")[0].strip().lower()
 
 
-# Sources that are SOCIAL chatter, not publishers. They feed the signal but are
-# never served on the news board and never become a card's source chip. Kept
-# here because the collector, the narrative desk and the router all need the
-# same answer (2026-08-10: adding X made "source != 'bluesky'" wrong in three
-# separate places).
-SOCIAL_SOURCES = ("bluesky", "x")
+# Sources that are ANONYMOUS chatter, not publishers: they feed the signal but
+# are never served on the board and never become a card's receipt.
+#
+# X is NOT in this list (2026-08-10). Lumping it in with Bluesky meant 401
+# collected posts — 126 of them real trades, injuries and staff moves from
+# Schefter, Shams, Rapoport and Passan — were displayed nowhere at all. A vetted
+# beat reporter is a publisher with a byline and a permalink; a random Bluesky
+# account arguing about the cap is signal. Micah, 2026-08-10: "these posts we're
+# getting might make more sense for the more news section."
+SOCIAL_SOURCES = ("bluesky",)
 
 
 def _deepseek_key():

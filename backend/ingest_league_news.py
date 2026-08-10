@@ -524,6 +524,59 @@ def collect_x():
     return items
 
 
+def tag_conversations(items):
+    """Attach X posts to the conversations they are actually about.
+
+    X search is closed to us — Nitter's /search/rss returns an empty document —
+    so a timeline pull gives whatever those reporters happened to post, and we
+    are left hoping it overlaps the topics the articles are on (Micah,
+    2026-08-10). We do not have to hope: the 400 posts we capture every two
+    hours are a corpus we own, so search THAT instead. A post that carries a
+    conversation's seed terms is chatter for that conversation and reaches its
+    card; everything else stays a board item.
+
+    Two guards, both learned the hard way on 2026-08-10:
+
+    - The LEAGUE must match. Without it, TomBogert's MLS transfer posts landed
+      in `nfl-media-rights` because "finalizing a deal" and "advanced talks"
+      hit the generic words in that seed.
+    - Generic sports words never count toward the match. "deal", "talks",
+      "rights", "season", "league" and their like appear in every seed and
+      every post, so a hit on them means nothing.
+    """
+    convs = load_conversations()
+    generic = {"deal", "deals", "talks", "rights", "season", "league", "team",
+               "teams", "game", "games", "news", "player", "players", "sports",
+               "picture", "debate", "case", "next", "back", "with", "from"}
+    topics = []
+    for c in convs:
+        words = {w for w in re.sub(r"[^a-z0-9 ]", " ", "%s %s" % (c["seed"], c["title"])).lower().split()
+                 if len(w) > 3 and w not in generic}
+        if words:
+            topics.append((c["id"], c["league"], words))
+    tagged = 0
+    for it in items:
+        if it.get("conv_id"):
+            continue
+        item_league = it.get("league_hint") or it.get("league")
+        if not item_league or item_league == "unclassified":
+            continue  # cannot place it; leave it as a board item
+        text = re.sub(r"[^a-z0-9 ]", " ", ("%s %s" % (it.get("headline", ""), it.get("body", ""))).lower())
+        present = set(text.split())
+        best, best_hits = None, 0
+        for conv_id, conv_league, words in topics:
+            if conv_league != item_league:
+                continue
+            hits = len(words & present)
+            need = 2 if len(words) > 1 else 1
+            if hits >= need and hits > best_hits:
+                best, best_hits = conv_id, hits
+        if best:
+            it["conv_id"] = best
+            tagged += 1
+    return tagged
+
+
 def collect_bluesky(extra_queries=()):
     items = []
     for conv_id, q in list(CONVERSATION_QUERIES) + list(OPEN_QUERIES) + list(extra_queries):
@@ -711,6 +764,7 @@ def main():
         for it in items:
             it.update(classify(it["headline"] + " " + it["body"],
                                it.get("league_hint")))
+        print("  matched %d posts to a conversation" % tag_conversations(items))
         if args.dry_run:
             print("DRY RUN — %d x posts" % len(items))
             return
@@ -770,10 +824,10 @@ def main():
     all_items += collect_bluesky(trending)
     print("  collected %d from bluesky" % (len(all_items) - before))
     before = len(all_items)
-    all_items += collect_x()
-    got = len(all_items) - before
-    if got:
-        print("  collected %d from x" % got)
+    x_items = collect_x()
+    all_items += x_items
+    if x_items:
+        print("  collected %d from x" % len(x_items))
 
     # A failed fetch is recorded as an item with an empty url, and upsert skips
     # exactly those rows — so a source that died looked identical to a source
@@ -796,6 +850,8 @@ def main():
             src_league = it["league_hint"]
         cls = classify(it["headline"] + " " + it["body"], src_league)
         it.update(cls)
+
+    print("  matched %d x posts to a conversation" % tag_conversations(all_items))
 
     if args.dry_run:
         from collections import Counter
