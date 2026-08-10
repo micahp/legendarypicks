@@ -70,6 +70,15 @@ CONVERSATIONS = [
      "seed": "dodgers salary cap"},
     {"id": "mls-pro-rel", "league": "mls", "title": "Promotion/relegation",
      "seed": "mls relegation promotion"},
+    # Seeded 2026-08-09 from the FS1 booth during América–Portland (Leagues Cup):
+    # MLS clubs are spending real transfer fees on Liga MX players, and the
+    # broadcast's argument was that Leagues Cup makes that spend SAFER — you now
+    # watch the player against both leagues' opposition on a regular basis — while
+    # for a smaller Liga MX club the few million coming back can make or break a
+    # season. Receipts in the window: Berterame Monterrey->Inter Miami ~$15M,
+    # Bogusz Cruz Azul->Houston ~$10M.
+    {"id": "mls-ligamx-spending", "league": "mls", "title": "Cross-border spending",
+     "seed": "MLS Liga MX transfer"},
     {"id": "nfl-media-rights", "league": "nfl", "title": "Media rights talks",
      "seed": "nfl media rights deal"},
     {"id": "nfl-turf-grass", "league": "nfl", "title": "Turf vs. grass",
@@ -426,6 +435,18 @@ def main():
     before = len(all_items)
     all_items += collect_bluesky()
     print("  collected %d from bluesky" % (len(all_items) - before))
+
+    # A failed fetch is recorded as an item with an empty url, and upsert skips
+    # exactly those rows — so a source that died looked identical to a source
+    # with no news: no row, no error, no log line. Say it out loud instead
+    # (2026-08-09: a conversation collected nothing and nothing reported it).
+    errors = [i for i in all_items if i["headline"].startswith("FETCH ERROR")]
+    if errors:
+        from collections import Counter as _C
+        print("  FETCH FAILURES (not stored, not counted above):")
+        for src, n in _C(i["source"] for i in errors).most_common():
+            first = next(i["headline"] for i in errors if i["source"] == src)
+            print("    %-16s %d  %s" % (src, n, first[:90]))
 
     for it in all_items:
         src_league = it["source"].replace("espn-", "") if it["source"].startswith("espn-") else None
