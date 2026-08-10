@@ -5,6 +5,7 @@ export const LEAGUE_NAMES: Record<string, string> = {
   nba: 'NBA',
   nhl: 'NHL',
   nfl: 'NFL',
+  mls: 'MLS',
   wc: 'FIFA World Cup',
   ufc: 'UFC',
 }
@@ -14,6 +15,7 @@ export const LEAGUE_EMOJIS: Record<string, string> = {
   nba: '🏀',
   nhl: '🏒',
   nfl: '🏈',
+  mls: '⚽',
   wc: '⚽',
   ufc: '🥊',
 }
@@ -26,7 +28,7 @@ export const LEAGUE_EMOJIS: Record<string, string> = {
 // on /scores — it just stops being a league hub. Removing it from the ORDER is not what
 // hides it (an unlisted league still renders, under its uppercased slug); the
 // `offerable` check in useLeagueRouteState is. This only stops it being sorted first.
-export const LEAGUE_ORDER = ['mlb', 'nba', 'nhl', 'nfl', 'ufc'] as const
+export const LEAGUE_ORDER = ['mlb', 'nba', 'nhl', 'nfl', 'mls', 'ufc'] as const
 
 export function leagueLabel(league: string): string {
   return LEAGUE_NAMES[league] || league.toUpperCase()
