@@ -412,12 +412,29 @@ NITTER_INSTANCES = [
     "https://nitter.privacyredirect.com",
     "https://nitter.tiekoetter.com",
 ]
+# (handle, league) — the league is the handle's OWN label, which beats guessing.
+# @UnderdogMLB is MLB with certainty, where the classifier has to infer it from
+# words and gets "Rangers" and "Stars" wrong. None = cross-league, classify it.
+#
+# Measured 2026-08-10 on the mirror: the league accounts share ZERO posts with
+# their parent brand (0 of 20 for each of UnderdogNFL/MLB/NBA against @Underdog,
+# and TheAthleticNFL against @TheAthletic), so carrying both is not duplication.
+# Posting rates over the 20-post window: UnderdogNFL 83/day, TheAthletic 23,
+# UnderdogMLB 22, Underdog 7, TheAthleticNFL 6, UnderdogNBA 4, BleacherReport 3.
+# @UnderdogNHL, @UnderdogCFB, @BR_NFL and @BR_NBA do not exist.
 X_ACCOUNTS = [
-    "Underdog", "UnderdogNFL",      # props desk + its NFL feed
-    "PrizePicks",                    # props
-    "Polymarket", "Kalshi",          # prediction markets
-    "ActionNetworkHQ",               # betting media
-    "AdamSchefter",                  # NFL news breaker
+    ("UnderdogNFL", "nfl"),          # 83/day — the densest player-news feed we have
+    ("UnderdogMLB", "mlb"),
+    ("UnderdogNBA", "nba"),
+    ("Underdog", None),              # cross-league desk
+    ("TheAthletic", None),
+    ("TheAthleticNFL", "nfl"),
+    ("TheAthleticNHL", "nhl"),
+    ("TheAthleticCFB", "ncaaf"),
+    ("BleacherReport", None),
+    ("AdamSchefter", "nfl"),         # news breaker
+    ("PrizePicks", None),
+    ("Polymarket", None), ("Kalshi", None),   # prediction markets
 ]
 # The paid fallback (twitterapi.io, ~$0.15/1k reads) is used ONLY when a key is
 # set. Micah, 2026-08-10: "i'm not trying to pay" — so the free mirror is the
@@ -439,7 +456,7 @@ def collect_x():
     instance = None
     for base in NITTER_INSTANCES:
         try:
-            _X_FETCHER.text("%s/%s/rss" % (base, X_ACCOUNTS[0]))
+            _X_FETCHER.text("%s/%s/rss" % (base, X_ACCOUNTS[0][0]))
             instance = base
             break
         except Exception:
@@ -447,7 +464,7 @@ def collect_x():
     if instance is None:
         print("  x: no working nitter mirror (tried %d)" % len(NITTER_INSTANCES))
         return []
-    for handle in X_ACCOUNTS:
+    for handle, league in X_ACCOUNTS:
         try:
             root = ET.fromstring(_X_FETCHER.text("%s/%s/rss" % (instance, handle)))
             for it in root.iter("item"):
@@ -459,6 +476,7 @@ def collect_x():
                     continue
                 items.append({
                     "source": "x",
+                    "league_hint": league,
                     "headline": "[@%s] %s" % (handle, text[:140]),
                     "body": _clean(txt("description")) or text,
                     "url": txt("link"),
@@ -708,6 +726,9 @@ def main():
         src_league = it["source"].replace("espn-", "") if it["source"].startswith("espn-") else None
         if src_league in _ESPN_LEAGUE_HINT:
             src_league = _ESPN_LEAGUE_HINT[src_league]
+        # An account that IS a league desk tells us the league outright.
+        if it.get("league_hint"):
+            src_league = it["league_hint"]
         cls = classify(it["headline"] + " " + it["body"], src_league)
         it.update(cls)
 
