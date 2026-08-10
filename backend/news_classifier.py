@@ -187,6 +187,21 @@ WEAK_SPEC = ["rumor", "rumours", "speculation", "speculate", "could land",
 
 # POC placeholder — real feature: O(1) by-name lookup against `players` per
 # candidate mention. Never a full-table scan.
+# A big name alone is not a story. "How important are preseason reps for Patrick
+# Mahomes?" and a Spurs season preview both got promoted on the name and neither
+# is narrative-worthy (Micah, 2026-08-10). Something has to HAPPEN to the person:
+# these are the human events that make a name news.
+NOTABLE_EVENTS = [
+    "dies", "died", "death", "funeral", "mourns", "honors", "honours", "tribute",
+    "absent", "misses", "missed", "out", "returns", "return", "debut", "retires",
+    "retirement", "arrested", "charged", "lawsuit", "sues", "suspended", "ban",
+    "banned", "fined", "ejected", "benched", "cut", "released", "waived",
+    "apologizes", "apologises", "responds", "hits back", "feud", "dispute",
+    "holdout", "holds out", "contract", "extension", "trade request", "requests",
+    "signs", "signed", "hospitalized", "hospitalised", "surgery", "injury",
+    "engaged", "married", "welcomes", "donates", "steps away", "walks back",
+]
+
 # A name here PROMOTES an item onto the board (see classify). Junk entries were
 # removed 2026-08-10: "aja brown" and "jettas" are not players, "ant man" and
 # "caps" match ordinary words, and "alba" collided with Albarado. Names are
@@ -274,7 +289,7 @@ def classify(text: str, source_hint: Optional[str] = None) -> Dict[str, Optional
     # the board (Micah, 2026-08-10: "add messi as a signal, maybe that should
     # be promoted"). Promotion is only ever OUT OF `other`: a "top 10 trades"
     # listicle that name-drops a star stays speculation.
-    if layer == "other" and key_player:
+    if layer == "other" and key_player and _any_term(t, NOTABLE_EVENTS):
         layer = "notable"
 
     return {"league": league, "layer": layer, "key_player": key_player}

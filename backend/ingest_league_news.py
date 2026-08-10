@@ -396,59 +396,76 @@ def trending_queries(article_items, limit=12):
     return [(None, e) for e, n in counts.most_common(limit * 3) if n >= 2][:limit]
 
 
-# X / Twitter via twitterapi.io — the props and prediction-market accounts Micah
-# actually wants (Underdog, PrizePicks, Polymarket) never moved to Bluesky:
-# verified 2026-08-10, `underdogfantasy.bsky.social` has 0 posts and 3
-# followers, and there is no PrizePicks or Polymarket presence at all. X has no
-# free tier, and the unofficial route through Nitter is dead (X killed guest
-# accounts, so an instance needs real session tokens). twitterapi.io resells
-# read access at ~$0.15 per 1,000 tweets under its own legal posture.
+# X / Twitter, free, via a Nitter mirror. The accounts that sent us to social in
+# the first place are all here: Underdog, PrizePicks, Polymarket, Kalshi.
 #
-# NO KEY -> this source is skipped and says so. Nothing here signs anyone up.
+# Two corrections from 2026-08-10 worth keeping. The handle is @Underdog, NOT
+# @UnderdogFantasy — testing the wrong handle is what produced an earlier "not
+# on any mirror" conclusion. And nitter.net serves these timelines fine; most
+# other instances are dead (502, expired certs, NXDOMAIN) or challenge us.
+#
+# TIMELINES ONLY. Nitter's /search/rss returns an empty document — X's search
+# endpoint is closed to it — so keyword queries stay on Bluesky. That is fine:
+# we came here for these accounts' own posts, not for search.
+NITTER_INSTANCES = [
+    "https://nitter.net",
+    "https://nitter.privacyredirect.com",
+    "https://nitter.tiekoetter.com",
+]
+X_ACCOUNTS = [
+    "Underdog", "UnderdogNFL",      # props desk + its NFL feed
+    "PrizePicks",                    # props
+    "Polymarket", "Kalshi",          # prediction markets
+    "ActionNetworkHQ",               # betting media
+    "AdamSchefter",                  # NFL news breaker
+]
+# The paid fallback (twitterapi.io, ~$0.15/1k reads) is used ONLY when a key is
+# set. Micah, 2026-08-10: "i'm not trying to pay" — so the free mirror is the
+# default path and this exists for the day nitter.net goes down again.
 X_SEARCH = "https://api.twitterapi.io/twitter/tweet/advanced_search"
-X_ACCOUNTS = ["UnderdogFantasy", "PrizePicks", "Polymarket", "Kalshi",
-              "ActionNetworkHQ", "FantasyLabs"]
 
 
 def _x_key():
     return os.environ.get("LP_XAPI_KEY", "").strip()
 
 
-def collect_x(extra_queries=()):
-    """Account timelines + conversation seeds from X.
+_X_FETCHER = Fetcher(min_interval=1.5, retry_waits=(2,), cache_dir=CACHE_DIR,
+                     cache_ttl=1800, host_budget=0)
 
-    Accounts first: a props desk posting its own lines is a different signal
-    from fans reacting, and it is the reason we went looking at social at all.
-    """
-    key = _x_key()
-    if not key:
-        print("  x: skipped (no LP_XAPI_KEY set)")
-        return []
-    fetcher = Fetcher(min_interval=1.0, retry_waits=(2,), cache_dir=CACHE_DIR,
-                      cache_ttl=1800, host_budget=0,
-                      headers={"X-API-Key": key, "User-Agent": UA})
-    queries = [(None, "from:%s" % h) for h in X_ACCOUNTS] + list(extra_queries)
+
+def collect_x():
+    """Timelines for X_ACCOUNTS through whichever Nitter mirror is alive."""
     items = []
-    for conv_id, q in queries:
-        url = "%s?query=%s&queryType=Latest" % (X_SEARCH, urllib.parse.quote(q))
+    instance = None
+    for base in NITTER_INSTANCES:
         try:
-            d = fetcher.json(url)
-            for tw in (d.get("tweets") or []):
-                author = ((tw.get("author") or {}).get("userName") or "?")
-                text = _clean(tw.get("text", ""))
+            _X_FETCHER.text("%s/%s/rss" % (base, X_ACCOUNTS[0]))
+            instance = base
+            break
+        except Exception:
+            continue
+    if instance is None:
+        print("  x: no working nitter mirror (tried %d)" % len(NITTER_INSTANCES))
+        return []
+    for handle in X_ACCOUNTS:
+        try:
+            root = ET.fromstring(_X_FETCHER.text("%s/%s/rss" % (instance, handle)))
+            for it in root.iter("item"):
+                def txt(tag):
+                    el = it.find(tag)
+                    return (el.text or "").strip() if el is not None else ""
+                text = _clean(txt("title"))
                 if not text:
                     continue
                 items.append({
                     "source": "x",
-                    "conv_id": conv_id,
-                    "headline": "[@%s] %s" % (author, text[:140]),
-                    "body": text,
-                    "url": "https://x.com/%s/status/%s" % (author, tw.get("id", "")),
-                    "published": _iso(tw.get("createdAt", "")),
+                    "headline": "[@%s] %s" % (handle, text[:140]),
+                    "body": _clean(txt("description")) or text,
+                    "url": txt("link"),
+                    "published": _iso(txt("pubDate")),
                 })
         except Exception as e:
-            items.append({"source": "x", "conv_id": conv_id,
-                          "headline": "FETCH ERROR: %s" % e,
+            items.append({"source": "x", "headline": "FETCH ERROR: @%s %s" % (handle, e),
                           "body": "", "url": "", "published": ""})
     return items
 
@@ -670,7 +687,7 @@ def main():
     all_items += collect_bluesky(trending)
     print("  collected %d from bluesky" % (len(all_items) - before))
     before = len(all_items)
-    all_items += collect_x(list(CONVERSATION_QUERIES) + list(trending))
+    all_items += collect_x()
     got = len(all_items) - before
     if got:
         print("  collected %d from x" % got)
