@@ -32,7 +32,7 @@ import sqlite3
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from _core import _deepseek_chat, _init_db  # noqa: E402
+from _core import SOCIAL_SOURCES, _deepseek_chat, _init_db  # noqa: E402
 from ingest_league_news import CONVERSATIONS  # noqa: E402
 
 _MAX_SOURCES = 12
@@ -234,7 +234,7 @@ def _load_chatter(con, conv):
     out = [dict(r) for r in rows]
     anchors = con.execute(
         """SELECT headline, url, source, published, body FROM news_items
-           WHERE league=? AND source != 'bluesky' AND url != ''
+           WHERE league=? AND source NOT IN ('bluesky','x') AND url != ''
            ORDER BY published DESC LIMIT 8""",
         (league,),
     ).fetchall()
@@ -260,7 +260,7 @@ def _numbered(items, limit=None):
     """
     out = []
     for i, it in enumerate(items if limit is None else items[:limit]):
-        real = it["source"] != "bluesky"
+        real = it["source"] not in SOCIAL_SOURCES
         url = (" " + it["url"]) if real and it.get("url") else ""
         # The DATE, always. The ESPN scouting feature is from 2025 and the card
         # reported it as current, because the model had no way to know (Micah,
@@ -283,7 +283,8 @@ def _cited_sources(items, parsed):
     """Resolve the model's cited source_urls to the real-article receipts.
     Only URLs that are actually in the (non-bluesky) items become chips — a
     hallucinated URL never reaches the card (Micah, 2026-08-09)."""
-    real = {it["url"]: it for it in items if it["source"] != "bluesky" and it.get("url")}
+    real = {it["url"]: it for it in items
+            if it["source"] not in SOCIAL_SOURCES and it.get("url")}
     cited = parsed.get("source_urls") or []
     if isinstance(cited, str):
         cited = [cited]

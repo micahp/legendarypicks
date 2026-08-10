@@ -396,6 +396,63 @@ def trending_queries(article_items, limit=12):
     return [(None, e) for e, n in counts.most_common(limit * 3) if n >= 2][:limit]
 
 
+# X / Twitter via twitterapi.io — the props and prediction-market accounts Micah
+# actually wants (Underdog, PrizePicks, Polymarket) never moved to Bluesky:
+# verified 2026-08-10, `underdogfantasy.bsky.social` has 0 posts and 3
+# followers, and there is no PrizePicks or Polymarket presence at all. X has no
+# free tier, and the unofficial route through Nitter is dead (X killed guest
+# accounts, so an instance needs real session tokens). twitterapi.io resells
+# read access at ~$0.15 per 1,000 tweets under its own legal posture.
+#
+# NO KEY -> this source is skipped and says so. Nothing here signs anyone up.
+X_SEARCH = "https://api.twitterapi.io/twitter/tweet/advanced_search"
+X_ACCOUNTS = ["UnderdogFantasy", "PrizePicks", "Polymarket", "Kalshi",
+              "ActionNetworkHQ", "FantasyLabs"]
+
+
+def _x_key():
+    return os.environ.get("LP_XAPI_KEY", "").strip()
+
+
+def collect_x(extra_queries=()):
+    """Account timelines + conversation seeds from X.
+
+    Accounts first: a props desk posting its own lines is a different signal
+    from fans reacting, and it is the reason we went looking at social at all.
+    """
+    key = _x_key()
+    if not key:
+        print("  x: skipped (no LP_XAPI_KEY set)")
+        return []
+    fetcher = Fetcher(min_interval=1.0, retry_waits=(2,), cache_dir=CACHE_DIR,
+                      cache_ttl=1800, host_budget=0,
+                      headers={"X-API-Key": key, "User-Agent": UA})
+    queries = [(None, "from:%s" % h) for h in X_ACCOUNTS] + list(extra_queries)
+    items = []
+    for conv_id, q in queries:
+        url = "%s?query=%s&queryType=Latest" % (X_SEARCH, urllib.parse.quote(q))
+        try:
+            d = fetcher.json(url)
+            for tw in (d.get("tweets") or []):
+                author = ((tw.get("author") or {}).get("userName") or "?")
+                text = _clean(tw.get("text", ""))
+                if not text:
+                    continue
+                items.append({
+                    "source": "x",
+                    "conv_id": conv_id,
+                    "headline": "[@%s] %s" % (author, text[:140]),
+                    "body": text,
+                    "url": "https://x.com/%s/status/%s" % (author, tw.get("id", "")),
+                    "published": _iso(tw.get("createdAt", "")),
+                })
+        except Exception as e:
+            items.append({"source": "x", "conv_id": conv_id,
+                          "headline": "FETCH ERROR: %s" % e,
+                          "body": "", "url": "", "published": ""})
+    return items
+
+
 def collect_bluesky(extra_queries=()):
     items = []
     for conv_id, q in list(CONVERSATION_QUERIES) + list(OPEN_QUERIES) + list(extra_queries):
@@ -612,6 +669,11 @@ def main():
               % ", ".join(q for _c, q in trending))
     all_items += collect_bluesky(trending)
     print("  collected %d from bluesky" % (len(all_items) - before))
+    before = len(all_items)
+    all_items += collect_x(list(CONVERSATION_QUERIES) + list(trending))
+    got = len(all_items) - before
+    if got:
+        print("  collected %d from x" % got)
 
     # A failed fetch is recorded as an item with an empty url, and upsert skips
     # exactly those rows — so a source that died looked identical to a source

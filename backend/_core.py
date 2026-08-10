@@ -397,6 +397,14 @@ def _base_market(m: str) -> str:
     return (m or "").split("___")[0].strip().lower()
 
 
+# Sources that are SOCIAL chatter, not publishers. They feed the signal but are
+# never served on the news board and never become a card's source chip. Kept
+# here because the collector, the narrative desk and the router all need the
+# same answer (2026-08-10: adding X made "source != 'bluesky'" wrong in three
+# separate places).
+SOCIAL_SOURCES = ("bluesky", "x")
+
+
 def _deepseek_key():
     k = os.environ.get("DEEPSEEK_API_KEY")
     if k:
