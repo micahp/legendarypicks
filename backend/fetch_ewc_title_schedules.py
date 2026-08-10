@@ -53,6 +53,70 @@ LIFECYCLES = ("upcoming", "active", "final")
 UPCOMING_MAX_AGE_S = int(os.environ.get("LP_EWC_UPCOMING_MAX_AGE_S", "86400"))
 ACTIVE_MAX_AGE_S = int(os.environ.get("LP_EWC_ACTIVE_MAX_AGE_S", "21600"))
 
+# Provider-verified EWC 2026 series identity (PandaScore). Each entry maps an EWC title
+# slug to its EWC 2026 main-event serie id(s) + serie slug + league id/name, verified
+# against live PandaScore endpoints on 2026-08-10 (slug suffix "-esports-world-cup-2026"
+# with year 2026, or the EWC catalog event league for OW/FC/HoK/MLBB which publish under
+# their event league names). Qualifier series are NEVER included.
+PANDASCORE_SERIES = {
+    "call-of-duty-black-ops-7": [{
+        "id": 10834, "slug": "cod-mw-esports-world-cup-2026",
+        "leagueId": 5283, "leagueName": "Esports World Cup", "feed": "codmw",
+    }],
+    "counter-strike-2": [{
+        "id": 10846, "slug": "cs-go-esports-world-cup-2026",
+        "leagueId": 5234, "leagueName": "Esports World Cup", "feed": "csgo",
+    }],
+    "dota-2": [{
+        "id": 10728, "slug": "dota-2-esports-world-cup-2026",
+        "leagueId": 5404, "leagueName": "Esports World Cup", "feed": "dota2",
+    }],
+    "ea-sports-fc-26": [{
+        "id": 10831, "slug": "fifa-fc-pro-5229664d-111d-4058-a27f-7158057153ff-2026",
+        "leagueId": 5271, "leagueName": "FC Pro World Championship", "feed": "fifa",
+    }],
+    "honor-of-kings": [{
+        "id": 10786, "slug": "kog-honor-of-kings-world-champion-cup-world-cup-2026",
+        "leagueId": 4606, "leagueName": "Honor of Kings", "feed": "kog",
+    }],
+    "league-of-legends": [{
+        "id": 10765, "slug": "league-of-legends-esports-world-cup-2026",
+        "leagueId": 5262, "leagueName": "Esports World Cup", "feed": "lol",
+    }],
+    "mobile-legends-bang-bang": [
+        {"id": 10754, "slug": "mlbb-mid-season-cup-2026",
+         "leagueId": 5264, "leagueName": "Mid Season Cup", "feed": "mlbb"},
+        {"id": 10787, "slug": "mlbb-mlbb-women-s-international-2026",
+         "leagueId": 5543, "leagueName": "MLBB Women's International", "feed": "mlbb"},
+    ],
+    "overwatch-2": [{
+        "id": 10807, "slug": "ow-overwatch-champions-series-midseason-championship-2026",
+        "leagueId": 5223, "leagueName": "OCS", "feed": "ow",
+    }],
+    "rainbow-six-siege": [{
+        "id": 10826, "slug": "r6-siege-esports-world-cup-2026",
+        "leagueId": 5267, "leagueName": "Esports World Cup", "feed": "r6siege",
+    }],
+    "rocket-league": [{
+        "id": 10850, "slug": "rl-esports-world-cup-2026",
+        "leagueId": 5284, "leagueName": "Esports World Cup", "feed": "rl",
+    }],
+    "valorant": [{
+        "id": 10741, "slug": "valorant-esports-world-cup-2026",
+        "leagueId": 5400, "leagueName": "Esports World Cup", "feed": "valorant",
+    }],
+}
+PANDASCORE_LABEL = "PandaScore — EWC 2026"
+
+# Lichess official EWC 2026 Chess broadcast: group + main-event tours (Play-in; the LCQ
+# tours are qualifiers and are excluded exactly like Liquipedia qualifier rows).
+LICHESS_CHESS = {
+    "group": {"id": "iGPj2vkU", "slug": "esports-world-cup-2026"},
+    "tours": [{"id": "Ywo3zsIE", "slug": "esports-world-cup-2026-play-in",
+               "name": "Play-in"}],
+}
+LICHESS_LABEL = "Lichess — EWC 2026 Chess broadcast"
+
 # Official EWC 2026 program page map: slug -> [(liquipedia subwiki, page)].  Mobile Legends
 # spans two tournaments (MSC + MWI) so it has two pages merged into one snapshot.  These page
 # names come from the EWC 2026 Club Championship page's own competition index (captured
@@ -341,11 +405,40 @@ def _source_urls(slug):
             for sub, page in TITLE_PAGES[slug]]
 
 
+def _pandascore_urls(slug):
+    return ["https://api.pandascore.co/series/%d" % s["id"]
+            for s in PANDASCORE_SERIES[slug]]
+
+
+def _lichess_urls(_slug):
+    return ["https://lichess.org/broadcast/%s/%s" % (t["slug"], t["id"])
+            for t in LICHESS_CHESS["tours"]]
+
+
+def _source_identity(slug, provider):
+    """Provider-aware source URL/revision/label identity for a title slug."""
+    if provider == "liquipedia":
+        return {"label": SOURCE_LABEL, "urls": _source_urls(slug),
+                "revisions": [0] * len(_source_urls(slug))}  # revisions filled by caller
+    if provider == "pandascore":
+        return {"label": PANDASCORE_LABEL, "urls": _pandascore_urls(slug),
+                "revisions": [s["id"] for s in PANDASCORE_SERIES[slug]]}
+    if provider == "lichess":
+        if slug != "chess":
+            raise ScheduleSourceError("lichess provider identity is chess-only")
+        return {"label": LICHESS_LABEL, "urls": _lichess_urls(slug),
+                "revisions": [t["id"] for t in LICHESS_CHESS["tours"]]}
+    raise ScheduleSourceError("unsupported source provider %r" % provider)
+
+
+_MATCH_ID_PREFIXES = ("liquipedia:", "pandascore:", "lichess:")
+
+
 def _validate_match(row, seen):
     if not isinstance(row, dict):
         raise ScheduleSourceError("match row must be an object")
     source_id = row.get("sourceMatchId")
-    if not isinstance(source_id, str) or not source_id.startswith("liquipedia:"):
+    if not isinstance(source_id, str) or not source_id.startswith(_MATCH_ID_PREFIXES):
         raise ScheduleSourceError("invalid sourceMatchId %r" % source_id)
     if source_id in seen:
         raise ScheduleSourceError("duplicate sourceMatchId %r" % source_id)
@@ -375,6 +468,13 @@ def _validate_match(row, seen):
         raise ScheduleSourceError("partial published score")
     if not isinstance(row.get("finished"), bool):
         raise ScheduleSourceError("finished must be boolean")
+    canceled = row.get("canceled", False)
+    if canceled is not True and canceled is not False:
+        raise ScheduleSourceError("canceled must be boolean")
+    if canceled and row.get("finished"):
+        raise ScheduleSourceError("a canceled match must not be finished")
+    if canceled and (row.get("scoreA") is not None or row.get("scoreB") is not None):
+        raise ScheduleSourceError("a canceled match must not carry a score")
 
 
 def validate_snapshot(snapshot, expected_slug=None):
@@ -391,11 +491,18 @@ def validate_snapshot(snapshot, expected_slug=None):
     source = snapshot.get("source") or {}
     urls = source.get("urls")
     revisions = source.get("revisions")
-    if urls != _source_urls(slug):
+    provider = source.get("provider") or "liquipedia"
+    identity = _source_identity(slug, provider)
+    if urls != identity["urls"]:
         raise ScheduleSourceError("source URL identity mismatch")
-    if not isinstance(revisions, list) or len(revisions) != len(urls) or not all(
-            isinstance(rev, int) and rev > 0 for rev in revisions):
+    if not isinstance(revisions, list) or len(revisions) != len(urls):
         raise ScheduleSourceError("source revision population mismatch")
+    for rev in revisions:
+        if provider == "lichess":
+            if not isinstance(rev, str) or not rev:
+                raise ScheduleSourceError("invalid lichess revision %r" % rev)
+        elif not isinstance(rev, int) or rev <= 0:
+            raise ScheduleSourceError("invalid source revision %r" % rev)
     if (not source.get("fetchedAt") or not snapshot.get("publishedAt") or
             source.get("publishedAt") != snapshot.get("publishedAt")):
         raise ScheduleSourceError("missing source timestamps")
@@ -424,7 +531,10 @@ def validate_snapshot(snapshot, expected_slug=None):
         required = ("allMatchesResolved", "participantsComplete", "sourceRevisionRecorded")
         if not all(finality.get(key) is True for key in required):
             raise ScheduleSourceError("final lifecycle requires source-backed completion evidence")
-        if not all(row.get("finished") for row in rows):
+        # A canceled match is a resolved terminal fact (the source decided it will not be
+        # played) — it is NOT an unresolved match. Only non-canceled unfinished rows block
+        # finality.
+        if not all(row.get("finished") or row.get("canceled") for row in rows):
             raise ScheduleSourceError("final snapshot contains unresolved matches")
         if any(row.get("teamAPending") or row.get("teamBPending") for row in rows):
             raise ScheduleSourceError("final snapshot contains unpublished participants")
@@ -434,13 +544,15 @@ def validate_snapshot(snapshot, expected_slug=None):
     return snapshot
 
 
-def build_snapshot(slug, rows, revisions, fetched_at, lifecycle="upcoming", finality=None):
+def build_snapshot(slug, rows, revisions, fetched_at, lifecycle="upcoming", finality=None,
+                   provider="liquipedia"):
     if slug not in TITLE_PAGES:
         raise ScheduleSourceError("unknown EWC title slug %r" % slug)
     if not rows:
         raise ScheduleSourceError("published snapshot must contain matches")
     published_at = time.strftime("%Y-%m-%dT%H:%M:%S+00:00", time.gmtime())
     dated = [r for r in rows if r["startTime"]]
+    identity = _source_identity(slug, provider)
     snapshot = {
         "schemaVersion": SCHEMA_VERSION,
         "event": "ewc-2026",
@@ -449,8 +561,9 @@ def build_snapshot(slug, rows, revisions, fetched_at, lifecycle="upcoming", fina
         "finality": finality,
         "publishedAt": published_at,
         "source": {
-            "label": SOURCE_LABEL,
-            "urls": _source_urls(slug),
+            "provider": provider,
+            "label": identity["label"],
+            "urls": identity["urls"],
             "revisions": revisions,
             "fetchedAt": fetched_at,
             "publishedAt": published_at,

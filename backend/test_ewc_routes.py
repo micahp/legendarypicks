@@ -78,6 +78,14 @@ class EventRouteTests(unittest.TestCase):
         self.app = FastAPI()
         self.app.include_router(ewc.router)
         self.client = TestClient(self.app)
+        # Isolate the schedule store: the event payload reads the published per-title
+        # snapshots, so this suite must not depend on whatever is published in the repo.
+        self.dir = tempfile.mkdtemp(prefix="ewc-event-route-")
+        self.old_dir = schedule_store.SCHEDULES_DIR
+        schedule_store.SCHEDULES_DIR = self.dir
+
+    def tearDown(self):
+        schedule_store.SCHEDULES_DIR = self.old_dir
 
     def _board(self, matches, building=False):
         return {"matches": matches, "building": building}

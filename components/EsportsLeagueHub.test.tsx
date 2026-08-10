@@ -449,6 +449,45 @@ describe('esports league hub — Games tab tracks the official 24-title EWC prog
     await flush()
   })
 
+  it('renders a source-canceled snapshot row as Canceled, not as a result or upcoming', async () => {
+    // A PandaScore canceled match is a resolved terminal fact: it must render with the
+    // Canceled label (never Final with a fabricated score, never a scheduled row).
+    const withSchedule = {
+      ...eventData,
+      titles: officialTitles.map((t) => t.slug === 'dota-2'
+        ? { ...t, schedule: { ...t.schedule, status: 'published' as const, count: 1,
+            datedCount: 0, firstStart: null, lastStart: null,
+            firstDate: null, lastDate: null, reason: null } }
+        : t),
+    }
+    const canceledMatch = {
+      startTime: null, endTime: null, live: false, finished: false, canceled: true,
+      title: 'Dota 2', league: 'Esports World Cup — Survival', teamA: 'Vici Gaming',
+      teamB: 'PlayTime', favorite: null, watch: null, ewcEventId: 'ewc-2026',
+      source: 'pandascore-snapshot', sourceMatchId: 'pandascore:1565692',
+    }
+    mockFetch((url: string) => {
+      if (url === '/api/esports/upcoming') return upcoming
+      if (url.includes('/club-standings')) return standings()
+      if (url === '/api/esports/titles') return titles
+      if (url.endsWith('/titles/dota-2/matches')) return {
+        eventId: 'ewc-2026', status: 'published', lifecycle: 'final',
+        matches: { live: [], upcoming: [], completed: [canceledMatch] },
+      }
+      return withSchedule
+    })
+    mockMatchMedia(true)
+    render(<EsportsLeaguePage />)
+    fireEvent.click(screen.getByRole('button', { name: 'Games' }))
+    await waitFor(() => expect(screen.getByRole('button', { name: /Dota 2.*1 tracked match/ })).toBeTruthy())
+    fireEvent.click(screen.getByRole('button', { name: /Dota 2.*1 tracked match/ }))
+    await waitFor(() => expect(screen.getByText('Vici Gaming')).toBeTruthy())
+    expect(screen.getByText('PlayTime')).toBeTruthy()
+    expect(screen.getByText('Canceled')).toBeTruthy()
+    expect(screen.queryByText('Final')).toBeNull()
+    await flush()
+  })
+
   it('provides a scrollable mobile title row and match-status navigation', async () => {
     renderHub(false)
     fireEvent.click(screen.getByRole('button', { name: 'Games' }))
