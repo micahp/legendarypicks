@@ -320,3 +320,24 @@ def test_container_entities_come_from_the_classifier_vocabulary():
     import discover_topics as d
     assert "red sox" in d._CONTAINER_ENTITIES
     assert "lakers" in d._CONTAINER_ENTITIES
+
+
+def test_notable_player_story_is_promoted_out_of_other():
+    """Messi's father dying is news even though it matches no trade/injury rule."""
+    from news_classifier import classify
+    c = classify("Miami honors absent Lionel Messi in loss after father's death", "mls")
+    assert c["key_player"] == "Messi"
+    assert c["layer"] == "notable"
+
+
+def test_notable_never_rescues_speculation():
+    """A listicle that name-drops a star stays speculation."""
+    from news_classifier import classify
+    c = classify("Top 10 realistic trade packages for Lionel Messi", "mls")
+    assert c["layer"] == "speculation"
+
+
+def test_notable_does_not_override_a_real_layer():
+    from news_classifier import classify
+    c = classify("Lionel Messi out for three weeks with hamstring injury", "mls")
+    assert c["layer"] == "injury"

@@ -17,7 +17,9 @@ from _core import *
 
 router = APIRouter()
 
-_GRANULAR_LAYERS = ("trade", "staff", "injury")
+# `notable` = a story about one of the sport's biggest names that matched no
+# transaction rule. It is news on the strength of who it is about.
+_GRANULAR_LAYERS = ("trade", "staff", "injury", "notable")
 _SERVE_LAYERS = ("narrative",) + _GRANULAR_LAYERS
 _NARRATIVES_PER_LEAGUE = 6
 _GRANULAR_PER_LEAGUE = 12
@@ -83,7 +85,7 @@ def _league_report(league: Optional[str] = None) -> dict:
                 """SELECT * FROM news_items
                    WHERE league=? AND league != 'unclassified'
                      AND source != 'bluesky'
-                     AND layer IN ('narrative','trade','staff','injury')
+                     AND layer IN ('narrative','trade','staff','injury','notable')
                    ORDER BY published DESC LIMIT 60""",
                 (league,),
             ).fetchall()
@@ -93,7 +95,7 @@ def _league_report(league: Optional[str] = None) -> dict:
                 """SELECT * FROM news_items
                    WHERE league != 'unclassified'
                      AND source != 'bluesky'
-                     AND layer IN ('narrative','trade','staff','injury')
+                     AND layer IN ('narrative','trade','staff','injury','notable')
                    ORDER BY published DESC LIMIT 300"""
             ).fetchall()
             groups = {}

@@ -187,17 +187,24 @@ WEAK_SPEC = ["rumor", "rumours", "speculation", "speculate", "could land",
 
 # POC placeholder — real feature: O(1) by-name lookup against `players` per
 # candidate mention. Never a full-table scan.
+# A name here PROMOTES an item onto the board (see classify). Junk entries were
+# removed 2026-08-10: "aja brown" and "jettas" are not players, "ant man" and
+# "caps" match ordinary words, and "alba" collided with Albarado. Names are
+# whole-word matched, so add the form people actually write.
 NOTABLE: Dict[str, List[str]] = {
-    "nfl": ["mahomes", "josh allen", "jalen hurts", "burrow", "lamar", "herbert", "stroud",
-            "purdy", "saquon", "mccaffrey", "tyreek", "kelce", "jefferson", "jamarr",
-            "aja brown", "jettas"],
-    "mlb": ["ohtani", "shohei", "mookie", "betts", "freeman", "aaron judge", "soto", "harper",
-            "acuna", "trout", "wheeler", "burnes"],
-    "mls": ["messi", "suarez", "busquets", "alba", "reus", "pulisic", "lodeiro"],
+    "nfl": ["mahomes", "josh allen", "jalen hurts", "burrow", "lamar jackson", "herbert",
+            "stroud", "purdy", "saquon", "mccaffrey", "tyreek", "kelce", "jefferson",
+            "ja'marr chase", "aaron rodgers"],
+    "mlb": ["ohtani", "shohei", "mookie", "betts", "freeman", "aaron judge", "soto",
+            "harper", "acuna", "trout", "wheeler", "skubal"],
+    "mls": ["messi", "suarez", "busquets", "jordi alba", "pulisic", "lewandowski",
+            "son heung-min", "muller", "griezmann", "de paul"],
     "ncaaf": ["saban", "kirby smart", "ryan day", "james franklin", "lane kiffin", "dabo"],
-    "nba": ["lebron", "luka", "giannis", "jokic", "tatum", "curry", "shai", "ant man"],
-    "nhl": ["mcdavid", "draisaitl", "mackinnon", "pastrnak", "panarin"],
-    "esports": ["faker", "caps", "chovy", "s1mple", "zywoo", "demon1", "tenz", "aspas"],
+    "nba": ["lebron", "luka", "giannis", "jokic", "tatum", "curry", "wembanyama",
+            "kawhi", "durant"],
+    "nhl": ["mcdavid", "draisaitl", "mackinnon", "pastrnak", "panarin", "bedard"],
+    "ufc": ["mcgregor", "makhachev", "jon jones", "pereira", "dana white"],
+    "esports": ["faker", "chovy", "s1mple", "zywoo", "demon1", "tenz", "aspas"],
 }
 
 
@@ -260,5 +267,14 @@ def classify(text: str, source_hint: Optional[str] = None) -> Dict[str, Optional
                 break
         if key_player:
             break
+
+    # A story about one of the sport's biggest names IS news, even when it
+    # matches no transaction rule. Messi's father dying, Messi missing a
+    # Leagues Cup match — 48 key-player items sat in `other` and never reached
+    # the board (Micah, 2026-08-10: "add messi as a signal, maybe that should
+    # be promoted"). Promotion is only ever OUT OF `other`: a "top 10 trades"
+    # listicle that name-drops a star stays speculation.
+    if layer == "other" and key_player:
+        layer = "notable"
 
     return {"league": league, "layer": layer, "key_player": key_player}
