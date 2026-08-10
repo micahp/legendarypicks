@@ -439,8 +439,16 @@ def _generate_batch(convs_with_marks):
         "be varied across the batch — different verbs, different structures, "
         "different cadence. If two cards would sound alike, rephrase one. "
         "Decline (null) only for a block whose chatter is genuinely unrelated. "
+        # source_urls MUST be in this schema. It was missing, and since the
+        # batch prompt's schema is what the model actually follows, nine of
+        # twelve cards came back with no receipts at all while their pools held
+        # three to six real articles each (2026-08-10).
         "Output STRICT JSON: {\"conv_id\": {\"narrative\": ..., \"fan_voice\": "
-        "..., \"paragraph\": ...}, ...}\n\n"
+        "..., \"paragraph\": ..., \"source_urls\": [\"<url>\", ...]}, ...}\n"
+        "source_urls lists the URLs of the real (non-social) items above that "
+        "THIS card actually grounds in. Cite every article you drew a fact "
+        "from; empty list only when the card is built purely from social "
+        "chatter.\n\n"
         + "\n\n".join(blocks)
     )
     for attempt in (0, 1):
