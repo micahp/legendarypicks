@@ -102,6 +102,12 @@ _API_OPENER = urllib.request.build_opener()
 _LAST_PARSE_REQUEST = None
 
 
+def _operator_log(message):
+    """Emit source-attempt progress immediately for durable operator transcripts."""
+    stamp = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+    print("[%s] %s" % (stamp, message), flush=True)
+
+
 # ---------------------------------------------------------------------------
 # Wikitext parsing helpers (balanced-brace aware)
 # ---------------------------------------------------------------------------
@@ -585,16 +591,23 @@ def _api_get(sub, page, retries=4):
     for attempt in range(retries):
         try:
             _wait_for_parse_slot()
+            _operator_log("source request attempt=%d/%d wiki=%s page=%s" % (
+                attempt + 1, retries, sub, page))
             req = urllib.request.Request(url, headers={
                 "Accept-Encoding": "gzip", "User-Agent": API_UA})
             with _API_OPENER.open(req, timeout=45) as r:
                 raw = r.read()
                 if r.headers.get("Content-Encoding") == "gzip":
                     raw = gzip.decompress(raw)
+            _operator_log("source response status=success wiki=%s page=%s bytes=%d" % (
+                sub, page, len(raw)))
             return json.loads(raw.decode("utf-8"))
         except urllib.error.HTTPError as exc:
             if exc.code == 429:
                 retry_after = exc.headers.get("Retry-After")
+                _operator_log("source response status=rate-limited wiki=%s page=%s "
+                              "retry-after=%s" % (
+                                  sub, page, retry_after or "not-supplied"))
                 if attempt + 1 >= retries:
                     raise ScheduleSourceError(
                         "rate limited by Liquipedia (Retry-After=%s) for %s:%s" %
@@ -605,8 +618,12 @@ def _api_get(sub, page, retries=4):
                     wait = 30 * (2 ** attempt)
                 time.sleep(wait)
                 continue
+            _operator_log("source response status=http-error code=%s wiki=%s page=%s" % (
+                exc.code, sub, page))
             raise
-        except (urllib.error.URLError, ConnectionError, OSError):
+        except (urllib.error.URLError, ConnectionError, OSError) as exc:
+            _operator_log("source response status=transport-error wiki=%s page=%s error=%s" % (
+                sub, page, type(exc).__name__))
             if attempt + 1 >= retries:
                 raise ScheduleSourceError("source request failed after retries: %s:%s" %
                                           (sub, page))
