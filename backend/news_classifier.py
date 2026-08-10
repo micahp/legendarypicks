@@ -33,6 +33,29 @@ def _term_present(t: str, term: str) -> bool:
     """
     return re.search(r"\b" + re.escape(term) + r"\b", t) is not None
 
+
+def _norm(s: str) -> str:
+    """Lowercase, hyphens to spaces, whitespace collapsed.
+
+    Hyphens are a publisher's style choice, not a meaning: "way-too-early"
+    and "way too early" are the same phrase, and only one of them was ever in
+    a rule list. Normalizing both the text and the terms means a rule is
+    written once (2026-08-09).
+    """
+    return " ".join(re.sub(r"[-‐-―]", " ", (s or "").lower()).split())
+
+
+def _any_term(t_norm: str, terms: List[str]) -> bool:
+    """True if any term appears as a WHOLE WORD (or whole phrase) in t_norm.
+
+    The layer rules used bare `term in t`, so "sign" matched *assignment*,
+    "deal" matched *dealing*, "broadcast" matched *broadcaster*, and "out for"
+    matched *standout forward* — 44 of the served rows rested on a match like
+    that (measured 2026-08-09, the "multiple tags having a false positive"
+    Micah reported). Inflections are listed explicitly in the rules instead.
+    """
+    return any(_term_present(t_norm, _norm(term)) for term in terms)
+
 LEAGUE_TERMS: Dict[str, List[str]] = {
     "nfl": ["nfl", "chiefs", "eagles", "49ers", "cowboys", "ravens", "bills", "lions",
             "vikings", "packers", "bengals", "dolphins", "jets", "giants", "steelers",
@@ -69,27 +92,36 @@ LEAGUE_TERMS: Dict[str, List[str]] = {
 
 # Non-trade layers first (most specific). Staff = decision verbs only; "fired up"
 # is stripped before matching so Gruden-style clickbait never reads as a firing.
-INJURY_RULES = ["injury", "injured", "out for", "out 4-5", "surgery", "torn", "sprain",
-                "strain", "doubtful", "questionable", "day-to-day", "injured reserve",
-                "hamstring", "ankle", "knee", "shoulder", "fracture", "concussion",
-                "placed on ir"]
-STAFF_RULES = ["fired", "fire", "fires", "firing", "hired", "hire", "hiring",
-               "named", "appointed", "resigns", "resigned", "stepping down",
-               "departs", "departure", "dismissed", "let go", "parting ways",
+INJURY_RULES = ["injury", "injuries", "injured", "out for", "out 4 5", "surgery",
+                "torn", "sprain", "sprains", "strain", "strains", "doubtful",
+                "questionable", "day to day", "injured reserve",
+                "hamstring", "ankle", "knee", "shoulder", "fracture", "fractured",
+                "concussion", "placed on ir", "15 day injured list",
+                "10 day injured list"]
+STAFF_RULES = ["fired", "fire", "fires", "firing", "hired", "hires", "hire", "hiring",
+               "named", "names", "appointed", "appoints", "resigns", "resigned",
+               "stepping down", "steps down", "dismissed", "let go", "parting ways",
                "promoted to", "takes over as"]
+# A league-level storyline, not a transaction and not a media-business item.
+# Bare "conference"/"major"/"offseason"/"broadcast" were removed 2026-08-09:
+# "press conference", "major league", "offseason" and "broadcaster" appear in
+# ordinary wire copy and dragged unrelated items onto the board.
 NARRATIVE_RULES = ["salary cap", "salary floor", "relegation", "promotion",
                    "super conference", "superleague", "realignment", "expansion",
-                   "cba", "lockout", "media rights", "broadcast", "tv deal",
+                   "cba", "lockout", "media rights", "broadcast rights", "tv deal",
                    "negotiations", "lawsuit", "settlement", "playoff format",
-                   "rule change", "cap and floor", "cap debate", "conference",
-                   "worlds", "champions tour", "major", "grand final",
-                   "roster move", "offseason"]
+                   "rule change", "cap and floor", "cap debate",
+                   "conference realignment", "worlds", "champions tour",
+                   "grand final"]
 
 # A transaction actually happened (or was announced): the verb asserts it.
-TRADE_ACTUAL = ["traded", "acquire", "acquired", "acquires", "sign", "signed", "signing",
-                "extension", "re-sign", "free agent", "contract", "deal", "swap",
-                "released", "release", "waive", "waived", "loan", "loaned", "inks",
-                "agree to", "agreed to"]
+# Whole-word matching is what makes "sign" safe here: as a substring it matched
+# *assignment*, *design* and *signal*; as a word it only matches the verb.
+TRADE_ACTUAL = ["traded", "acquire", "acquired", "acquires", "sign", "signed",
+                "signing", "signs", "extension", "re-sign", "re-signs", "free agent",
+                "contract", "deal", "deals", "swap", "released", "release",
+                "waive", "waived", "waives", "loan", "loaned", "inks",
+                "agree to", "agreed to", "for assignment", "claimed off waivers"]
 # Definitive roster-status statements — "no plans to trade X" is real signal.
 TRADE_DEFINITIVE = ["no plans to trade", "refuses to trade", "not trading",
                     "won't trade", "will not trade", "ruled out", "no intention",
@@ -99,11 +131,19 @@ TRADE_DEFINITIVE = ["no plans to trade", "refuses to trade", "not trading",
 # body mentions a real transaction or a fired coach.
 STRONG_SPEC = ["projecting", "projection", "predict", "prediction", "ranked",
                "ranking", "the 10 best", "10 best", "top 10", "realistic",
-               "packages", "should happen", "under-the-radar", "landing spots",
-               "destinations", "trade value", "way too early", "mock trade",
-               "fantasy trade", "biggest impact", "next in line", "that'll make",
-               "would be the best", "who should", "watch list", "winners and losers",
-               "could actually", "steals"]
+               "package", "packages", "should happen", "under-the-radar",
+               "landing spots", "destinations", "trade value", "way too early",
+               "mock trade", "fantasy trade", "biggest impact", "next in line",
+               "that'll make", "would be the best", "who should", "watch list",
+               "winners and losers", "could actually", "steals",
+               # 2026-08-09: the pieces that still reached the board because a
+               # later rule (injury/narrative) matched first.
+               "trade candidates", "trade deadline plans", "is needed",
+               "should target", "wish list", "best remaining", "grades",
+               # inflections — whole-word matching means each form is its own
+               # rule ("predict" no longer covers "predicting").
+               "predicting", "predictions", "projections", "ranks", "rankings",
+               "realistically", "candidates"]
 # Weak speculation markers — only meaningful with a bare trade mention.
 WEAK_SPEC = ["rumor", "rumours", "speculation", "speculate", "could land",
              "could be", "might be", "would be", "potential", "buzz", "mulling",
@@ -133,7 +173,7 @@ def classify(text: str, source_hint: Optional[str] = None) -> Dict[str, Optional
     `speculation` is never served by the API — it exists so the board stays
     clean (trade rumors/packages/projections are not news).
     """
-    t = (text or "").lower()
+    t = _norm(text)
     t_no_fired_up = t.replace("fired up", " ")
 
     league: Optional[str] = None
@@ -153,27 +193,27 @@ def classify(text: str, source_hint: Optional[str] = None) -> Dict[str, Optional
         league = "mlb"
 
     layer = "other"
-    if any(w in t for w in STRONG_SPEC):
+    if _any_term(t, STRONG_SPEC):
         layer = "speculation"
-    elif any(w in t for w in INJURY_RULES):
+    elif _any_term(t, INJURY_RULES):
         layer = "injury"
-    elif any(w in t_no_fired_up for w in STAFF_RULES):
+    elif _any_term(t_no_fired_up, STAFF_RULES):
         layer = "staff"
-    elif any(w in t for w in NARRATIVE_RULES):
+    elif _any_term(t, NARRATIVE_RULES):
         layer = "narrative"
     else:
-        if any(w in t for w in TRADE_ACTUAL):
+        if _any_term(t, TRADE_ACTUAL):
             layer = "trade"
-        elif "trade" in t or "trades" in t:
-            if any(w in t for w in TRADE_DEFINITIVE):
+        elif _term_present(t, "trade") or _term_present(t, "trades"):
+            if _any_term(t, TRADE_DEFINITIVE):
                 layer = "trade"
-            elif any(w in t for w in WEAK_SPEC):
+            elif _any_term(t, WEAK_SPEC):
                 layer = "speculation"
             else:
                 # bare trade mention with no transaction verb and no definitive
                 # stance — a rumor or a generic mention; do not serve it
                 layer = "speculation"
-        elif any(w in t for w in WEAK_SPEC):
+        elif _any_term(t, WEAK_SPEC):
             # rumor-flavored piece without the word trade
             layer = "speculation"
 
