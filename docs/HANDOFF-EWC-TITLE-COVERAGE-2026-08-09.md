@@ -198,3 +198,111 @@ slot. Do not run the 24-title acquisition until the temporary publisher throttle
 headroom is safe. Start with one title, verify its revision/row population and rendered selected
 title, then run sequentially. Do not convert search-engine HTML or cached page summaries into
 snapshots.
+
+## Implementation checkpoint — 2026-08-10 (commit `0963be4`)
+
+Liquipedia `action=parse` remained HTTP 429 from this host (probe transcript
+`/tmp/ewc-rocket-probe-20260810T0029Z.log`; four bounded attempts, no Retry-After, zero snapshot
+data). Acquisition therefore moved to the verified machine-readable providers already configured
+and documented in the task brief, and 12 titles are now published with verified data. The
+fixture-derived candidate snapshots from the prior preview were unproven (they reused the exact
+test-fixture revisions) and were deleted, not republished.
+
+### What was published
+
+12 verified per-title snapshots in `backend/data/esports_ewc_schedules/` (manifest entry per
+title with file/checksum/lifecycle/fetchedAt/revisions):
+
+| Title | Source identity (revision) | Rows | Lifecycle | Dates |
+|---|---|---|---|---|
+| Call of Duty: Black Ops 7 | PandaScore serie 10834 | 28 | final | 08-05..08-09 |
+| Chess | Lichess Play-in tour Ywo3zsIE | 7 | upcoming | 08-11 |
+| Counter-Strike 2 | PandaScore serie 10846 | 56 | upcoming | 08-12..08-23 |
+| Dota 2 | PandaScore serie 10728 | 76 (1 canceled) | final | 07-07..07-19 |
+| EA Sports FC 26 | PandaScore serie 10831 (FC Pro World Championship) | 24 | final | 07-25..07-26 |
+| Honor of Kings | PandaScore serie 10786 (KWC) | 38 | final | 07-30..08-08 |
+| League of Legends | PandaScore serie 10765 | 28 | final | 07-15..07-19 |
+| Mobile Legends: Bang Bang | PandaScore series 10754 (MSC) + 10787 (MWI) | 83 | final | 07-01..08-01 |
+| Overwatch 2 | PandaScore serie 10807 (OWCS Midseason) | 28 | final | 07-29..08-02 |
+| Rainbow Six Siege | PandaScore serie 10826 | 40 (32 finished + 8 upcoming) | active | 08-04..08-15 |
+| Rocket League | PandaScore serie 10850 | 28 | upcoming | 08-12..08-16 |
+| Valorant | PandaScore serie 10741 | 28 | final | 07-02..07-12 |
+
+All 457 PandaScore rows were re-validated 1:1 against the raw API (`begin_at` → `startTime`,
+`status` → `finished`/`canceled`); 100% matched. CS2's population (56) matches GRID's independent
+count of 56 EWC main-event series. Chess rows equal the official Lichess broadcast's 7 published
+Play-in rounds (LCQ qualifier tours excluded). Counts also match the task brief's verified scan
+(r6siege 32 past + 8 upcoming, csgo 56, codmw 28, rl 28).
+
+### Implementation notes
+
+- `backend/fetch_ewc_title_schedules.py` — the snapshot schema is now provider-aware:
+  `source.provider` ∈ liquipedia/pandascore/lichess; provider-specific URL identity and revisions
+  (PandaScore serie ids as ints; Lichess tour ids as strings); `sourceMatchId` prefixes
+  `pandascore:` / `lichess:`; a `canceled` row is validated as terminal (never finished, never
+  carries a score) and counts as resolved for `final` finality.
+- `backend/fetch_ewc_provider_schedules.py` — the current operator acquisition path. PandaScore
+  serie fetch with full pagination, placeholder-zero suppression (a not_started match can carry a
+  `results` score 0 with one known opponent; never published), lifecycle derived from published
+  population (final only when every row resolved and participants complete), Lichess chess round
+  mapping (a round with no games = one honest pending slot; a round with games = one row per game,
+  a draw is finished with no fabricated score), lifecycle-aware CLI (frozen final skipped without
+  `--refresh-final`), atomic publish, nonzero exit on any failure.
+- `backend/routers/esports/ewc.py` — `_snapshot_match` derives the source label from the match id
+  prefix; canceled rows land in `completed` (resolved terminal facts), never `upcoming`.
+- Frontend — `canceled` added to the `UpMatch` contract; `UpMatchRow` and `EwcMatchRow` render a
+  Canceled label; `matchKey` prefers `sourceMatchId` when present (stable snapshot identity), falls
+  back to `psId` for live slate rows (pre-existing candidate fix, kept and verified).
+- `backend/test_ewc_provider_schedules.py` — 17 new tests (placeholder zero, canceled-terminal,
+  lifecycle derivation, provider identity, publish/read roundtrip, Lichess round/game mapping).
+
+### Verification results
+
+- Backend: 149 EWC-focused tests pass (132 existing + 17 new). Repository-wide discover shows 7
+  `test_news` errors that are **pre-existing at the base commit** (reproduced on a detached HEAD
+  worktree of `0ae8aeb`): an import-order `LP_DB_PATH` binding issue in `test_news.py` vs
+  `_core._init_db()`; no EWC file is involved.
+- Frontend: 30 focused Jest tests pass (29 + new canceled-row test), including the
+  `mockMatchMedia` mobile suite (scrollable title row, match-status navigation).
+- `tsc --noEmit`: no errors in any EWC/esports file; remaining repository errors are pre-existing
+  (`@onflow/fcl`, `pages/scores.tsx` target, etc.).
+- `git diff --check` clean; isolated preview on :8098/:3098 with a temp copied DB and warmers
+  disabled (`LP_ESPORTS_WARMER_INTERVAL_S=0`); preview torn down, temp DB removed, ports freed,
+  `esports_team_logos.json` runtime mutation reverted.
+- Browser gate (desktop, isolated preview): all 24 tiles render; 12 show date ranges + tracked
+  matches (464 published matches); 12 show honest `Schedule pending / Match feed pending`;
+  selected-title loads real snapshot rows (Dota 2: 76 completed incl. the Vici Gaming vs PlayTime
+  canceled row rendered as `Canceled`); CS2 selected title dedupes to 56 with zero duplicates;
+  zero JS console errors; no horizontal overflow (`scrollWidth == clientWidth`). Mobile is covered
+  by the `mockMatchMedia` Jest suite because the headless browser session blocks `window.resizeTo`
+  and no CDP emulation hook is exposed.
+- Club Championship: verified separately — status `stale`, visible STALE badge, 10 rows served,
+  Liquipedia source label. Not hidden and no freshness threshold was extended.
+
+### Remaining limitations (recorded, not papered over)
+
+12 titles remain honestly `unavailable` (Schedule pending / Match feed pending): Apex Legends,
+Call of Duty: Warzone, Crossfire, Fatal Fury: City of the Wolves, Fortnite Reload, Free Fire,
+PUBG: Battlegrounds, PUBG Mobile, Street Fighter 6, Teamfight Tactics, Tekken 8, Trackmania. No
+permitted machine-readable provider exists from this host: no PandaScore feed or EWC 2026 series
+for them (all aliases 404, PUBG feed has no EWC series), GRID Open Access covers only CS2,
+the official EWC API is Bearer-gated, the official site is Cloudflare-403, start.gg and FACEIT
+require tokens not present on this host, and Liquipedia remains 429-blocked. These are
+documented in the manifest as `unavailable` and were not cosmetically renamed.
+
+Routine refresh: upcoming/active snapshots (CS2, RL, R6, Chess) expire per the freshness policy
+(24h upcoming / 6h active) and should be re-acquired with
+`backend/venv/bin/python backend/fetch_ewc_provider_schedules.py` as their events approach;
+final titles are immutable. Acquire from this host only when host headroom allows.
+
+### First commands for the next session
+
+```bash
+cd /root/lp-ewc-coverage
+git status --short --branch
+git log -4 --oneline
+/root/legendarypicks/backend/venv/bin/python -m unittest backend/test_ewc_provider_schedules.py \
+  backend/test_ewc_title_schedules.py backend/test_ewc_routes.py backend/test_ewc_contract.py
+/root/legendarypicks/node_modules/.bin/jest components/EsportsEwcModule.test.tsx \
+  components/EsportsLeagueHub.test.tsx
+```
