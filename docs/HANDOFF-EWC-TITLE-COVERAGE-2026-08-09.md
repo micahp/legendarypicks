@@ -295,6 +295,12 @@ Routine refresh: upcoming/active snapshots (CS2, RL, R6, Chess) expire per the f
 `backend/venv/bin/python backend/fetch_ewc_provider_schedules.py` as their events approach;
 final titles are immutable. Acquire from this host only when host headroom allows.
 
+Liquipedia throttle persistence evidence: `scripts/ewc_patient_acquisition.py` (untracked WIP)
+probed the Chess page on a ~5-minute cadence for its full 21600s budget (43 probes,
+2026-08-10 03:40:50Z through 07:14:32Z); every probe returned HTTP 429 and the script exited 1
+("throttle did not clear within 21600s budget"). The block is sustained, not transient — keep
+PandaScore + Lichess as the acquisition path for this host.
+
 ### First commands for the next session
 
 ```bash
