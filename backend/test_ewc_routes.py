@@ -114,6 +114,8 @@ class EventRouteTests(unittest.TestCase):
         self.assertEqual(d["tournamentCount"], 25)
         self.assertEqual(len(d["titles"]), 24)
         self.assertEqual(len({row["slug"] for row in d["titles"]}), 24)
+        self.assertEqual(len({row["logo"] for row in d["titles"]}), 24)
+        self.assertEqual(d["brandSource"]["label"], "EWC Resource Center")
         self.assertEqual(sum(len(row["tournaments"]) for row in d["titles"]), 25)
         self.assertIn("Apex Legends", {row["name"] for row in d["titles"]})
         self.assertIn("Trackmania", {row["name"] for row in d["titles"]})
@@ -121,9 +123,8 @@ class EventRouteTests(unittest.TestCase):
         self.assertEqual(mlbb["tournaments"], ["MSC", "MWI"])
 
     def test_event_title_coverage_is_data_derived(self):
-        # No published schedule snapshots in the test env -> every tile is honestly unavailable
-        # ('Schedule pending'), and feedCount is derived from the EWC slate rows, never from the
-        # hardcoded program weeks (which are NOT exposed in the payload at all).
+        # No match snapshots in the test env: official program dates remain available, while
+        # feedCount is derived from actual EWC slate rows.
         live = _match(startTime=1, live=True)  # title "Call of Duty" -> call-of-duty-black-ops-7
         board = self._board([live])
         with mock.patch.object(slate, "esports_upcoming", return_value=board):
@@ -131,8 +132,10 @@ class EventRouteTests(unittest.TestCase):
         titles = {row["slug"]: row for row in d["titles"]}
         for slug, row in titles.items():
             self.assertNotIn("weeks", row, "hardcoded program weeks must not reach the payload")
-            self.assertEqual(row["schedule"]["status"], "unavailable")
+            self.assertEqual(row["schedule"]["status"], "program")
             self.assertEqual(row["schedule"]["count"], 0)
+            self.assertRegex(row["schedule"]["firstDate"], r"^2026-\d\d-\d\d$")
+            self.assertRegex(row["schedule"]["lastDate"], r"^2026-\d\d-\d\d$")
             self.assertIn("reason", row["schedule"])
         cod = titles["call-of-duty-black-ops-7"]
         self.assertEqual(cod["feedCount"], 1)  # the live 'Call of Duty' EWC row

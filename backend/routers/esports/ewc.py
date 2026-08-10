@@ -29,6 +29,62 @@ _PROGRAM_SOURCE = {
     "label": "EWC 2026 Media Guide",
     "url": "https://cdn.esportsworldcup.com/resources/uploads/EWC_26_Media_Guide_short_d6f73c0f8a.pdf",
 }
+_BRAND_SOURCE = {
+    "label": "EWC Resource Center",
+    "url": "https://resources.esportsworldcup.com/en/competitive-ops/rulebooks",
+}
+_PROGRAM_DATES = {
+    "apex-legends": ("2026-07-07", "2026-07-11"),
+    "call-of-duty-black-ops-7": ("2026-08-05", "2026-08-09"),
+    "call-of-duty-warzone": ("2026-07-30", "2026-08-02"),
+    "chess": ("2026-08-11", "2026-08-15"),
+    "counter-strike-2": ("2026-08-12", "2026-08-23"),
+    "crossfire": ("2026-08-18", "2026-08-22"),
+    "dota-2": ("2026-07-07", "2026-07-19"),
+    "ea-sports-fc-26": ("2026-07-22", "2026-07-26"),
+    "fatal-fury-city-of-the-wolves": ("2026-07-08", "2026-07-11"),
+    "fortnite-reload": ("2026-08-19", "2026-08-22"),
+    "free-fire": ("2026-07-15", "2026-07-18"),
+    "honor-of-kings": ("2026-07-30", "2026-08-08"),
+    "league-of-legends": ("2026-07-15", "2026-07-19"),
+    "mobile-legends-bang-bang": ("2026-07-14", "2026-08-01"),
+    "overwatch-2": ("2026-07-29", "2026-08-02"),
+    "pubg-battlegrounds": ("2026-07-21", "2026-07-26"),
+    "pubg-mobile": ("2026-08-06", "2026-08-16"),
+    "rainbow-six-siege": ("2026-08-04", "2026-08-15"),
+    "rocket-league": ("2026-08-12", "2026-08-16"),
+    "street-fighter-6": ("2026-07-29", "2026-08-01"),
+    "teamfight-tactics": ("2026-07-21", "2026-07-25"),
+    "tekken-8": ("2026-08-05", "2026-08-08"),
+    "trackmania": ("2026-08-19", "2026-08-22"),
+    "valorant": ("2026-07-02", "2026-07-12"),
+}
+_TITLE_BRAND_ASSETS = {
+    "apex-legends": "https://cdn.esportsworldcup.com/resources/uploads/ALGS_Split_1_Playoff_Logo_Black_b705b1f3d8_b8523341f1.png",
+    "call-of-duty-black-ops-7": "https://cdn.esportsworldcup.com/resources/uploads/COD_BO_7_Logo_Black_6b63bf75bc_1_eb18752f50.svg",
+    "call-of-duty-warzone": "https://cdn.esportsworldcup.com/resources/uploads/CODWRS_Black_Launch_1_13f0a133a0_b4bdb97d8d.webp",
+    "chess": "https://cdn.esportsworldcup.com/resources/uploads/Chess_Black_Final_a1c10fc918_697453b0ba.webp",
+    "counter-strike-2": "https://cdn.esportsworldcup.com/resources/uploads/CS_2_Logo_Black_807905760f_bdedc62380.svg",
+    "crossfire": "https://cdn.esportsworldcup.com/resources/uploads/cf_mfc_Logo_Black_f2c8fb7605_4b28815c3d.svg",
+    "dota-2": "https://cdn.esportsworldcup.com/resources/uploads/dota2_c67f3d9478.svg",
+    "ea-sports-fc-26": "https://cdn.esportsworldcup.com/resources/uploads/EA_FC_PRO_Horizontal_Lockup_Pitch_Black_RGB_545c0e3207_2501dbd4b6.webp",
+    "fatal-fury-city-of-the-wolves": "https://cdn.esportsworldcup.com/resources/uploads/fatalfury_cotw_Logo_Black_f768ff3bae_9ce0cbfb95.webp",
+    "fortnite-reload": "https://cdn.esportsworldcup.com/resources/uploads/Fortnite_dark_2_6c9812a8c1_0545a4cbe2.webp",
+    "free-fire": "https://cdn.esportsworldcup.com/resources/uploads/FF_Logo_Black_05118535e6_4611ce292f.svg",
+    "honor-of-kings": "https://cdn.esportsworldcup.com/resources/uploads/KWC_38dffebcbf_b7fd9c022f.webp",
+    "league-of-legends": "https://cdn.esportsworldcup.com/resources/uploads/Logo_League_of_Legends_debae84876_074b09f1ef.webp",
+    "mobile-legends-bang-bang": "https://cdn.esportsworldcup.com/resources/uploads/MSC_LOGO_SECONDARY_FULL_NAME_BLACK_RESIZED_03c08dadf8_a6b1e3a2d3.webp",
+    "overwatch-2": "https://cdn.esportsworldcup.com/resources/uploads/OVERWATCH_CHAMPIONS_Logo_BLACK_HORIZONTAL_beb9deaf1d_bcc73ec957.svg",
+    "pubg-battlegrounds": "https://cdn.esportsworldcup.com/resources/uploads/PUBG_BG_Full_Flat_Black_2048_b8d4567746_05ecfc8cc4.webp",
+    "pubg-mobile": "https://cdn.esportsworldcup.com/resources/uploads/PMWC_upscale_137a127272_f1ad7d484a.webp",
+    "rainbow-six-siege": "https://cdn.esportsworldcup.com/resources/uploads/R6_Siege_R6_Lockup_Horizontal_Black_f05af03efd_1fea4410ce.webp",
+    "rocket-league": "https://cdn.esportsworldcup.com/resources/uploads/Rocket_League_dark_no_feature_0629c6b8eb_74c46dfbdc.webp",
+    "street-fighter-6": "https://cdn.esportsworldcup.com/resources/uploads/SF_6_Logo_Black_24545f66e4_df8b7a3c92.svg",
+    "teamfight-tactics": "https://cdn.esportsworldcup.com/resources/uploads/TFT_Logo_Black_c117699175_e19dc5e3be.svg",
+    "tekken-8": "https://cdn.esportsworldcup.com/resources/uploads/T8_Logo_Black_a48fb5abec_c0134a15b1.svg",
+    "trackmania": "https://cdn.esportsworldcup.com/resources/uploads/TM_Logo_BLACK_Text_HD_A_Ubisoft_Original_d4bc566fac_25e5fdf547.webp",
+    "valorant": "https://cdn.esportsworldcup.com/resources/uploads/Valorant_Logo_Black_c849e41882_20a3d9711f.svg",
+}
 EWC_TITLES = [
     {"slug": "apex-legends", "name": "Apex Legends", "tournaments": ["ALGS Split 1"], "weeks": [1], "feedTitles": ["Apex Legends"]},
     {"slug": "call-of-duty-black-ops-7", "name": "Call of Duty: Black Ops 7", "tournaments": ["Call of Duty: Black Ops 7"], "weeks": [5], "feedTitles": ["Call of Duty"]},
@@ -55,6 +111,9 @@ EWC_TITLES = [
     {"slug": "trackmania", "name": "Trackmania", "tournaments": ["Trackmania"], "weeks": [7], "feedTitles": ["Trackmania"]},
     {"slug": "valorant", "name": "Valorant", "tournaments": ["Valorant"], "weeks": [1], "feedTitles": ["Valorant"]},
 ]
+for _title in EWC_TITLES:
+    _title["logo"] = _TITLE_BRAND_ASSETS[_title["slug"]]
+    _title["programFirstDate"], _title["programLastDate"] = _PROGRAM_DATES[_title["slug"]]
 _EWC_TITLE_COUNT = len(EWC_TITLES)
 _EWC_TOURNAMENT_COUNT = sum(len(title["tournaments"]) for title in EWC_TITLES)
 
@@ -355,11 +414,12 @@ def _title_coverage():
         snap = read_snapshot(slug)
         if not snap or not isinstance(snap, dict):
             out[slug] = {
-                "status": "unavailable", "count": 0, "datedCount": 0,
+                "status": "program", "count": 0, "datedCount": 0,
                 "firstStart": None, "lastStart": None,
-                "firstDate": None, "lastDate": None, "lifecycle": None,
-                "reason": "no published schedule snapshot",
-                "source": None,
+                "firstDate": title["programFirstDate"],
+                "lastDate": title["programLastDate"], "lifecycle": None,
+                "reason": "match-level schedule not published",
+                "source": _PROGRAM_SOURCE,
             }
             continue
         sched = snap.get("schedule") or {}
@@ -397,6 +457,7 @@ def _titles_payload(ewc_matches, coverage):
             "name": title["name"],
             "tournaments": title["tournaments"],
             "feedTitles": title["feedTitles"],
+            "logo": title["logo"],
             "schedule": {
                 "status": cov.get("status", "unavailable"),
                 "count": cov.get("count", 0),
@@ -435,7 +496,7 @@ def ewc_event_data():
                 "building": True, "matches": {"live": [], "upcoming": [], "completed": []},
                 "titles": titles, "titleCount": _EWC_TITLE_COUNT,
                 "tournamentCount": _EWC_TOURNAMENT_COUNT,
-                "programSource": _PROGRAM_SOURCE, "asOf": None}
+                "programSource": _PROGRAM_SOURCE, "brandSource": _BRAND_SOURCE, "asOf": None}
     now_ms = time.time() * 1000
     live, upcoming, completed = [], [], []
     for m in ewc_matches:
@@ -459,6 +520,7 @@ def ewc_event_data():
         "titleCount": _EWC_TITLE_COUNT,
         "tournamentCount": _EWC_TOURNAMENT_COUNT,
         "programSource": _PROGRAM_SOURCE,
+        "brandSource": _BRAND_SOURCE,
         "matches": {"live": live, "upcoming": upcoming, "completed": completed},
         "asOf": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
     }

@@ -77,19 +77,19 @@ const officialTitles = officialTitleNames.map((name) => ({
   feedTitles: name === 'Call of Duty: Black Ops 7'
     ? ['Call of Duty']
     : name === 'Counter-Strike 2' ? ['CS2'] : [name],
-  // Data-derived coverage: no published schedule snapshot in these tests -> 'Schedule pending';
-  // feedCount mirrors what the slate carries for the fixture matches (CoD x2, CS2 x1).
+  logo: `https://cdn.esportsworldcup.com/resources/uploads/${name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.svg`,
+  // Official program dates remain visible without a match-level snapshot.
   schedule: {
-    status: 'unavailable' as const,
+    status: 'program' as const,
     count: 0,
     datedCount: 0,
     firstStart: null,
     lastStart: null,
-    firstDate: null,
-    lastDate: null,
+    firstDate: '2026-07-07',
+    lastDate: '2026-07-11',
     lifecycle: null,
-    reason: 'no published schedule snapshot',
-    source: null,
+    reason: 'match-level schedule not published',
+    source: { label: 'EWC 2026 Media Guide', urls: null, revisions: null, publishedAt: null },
   },
   feedCount: name === 'Call of Duty: Black Ops 7' ? 2 : name === 'Counter-Strike 2' ? 1 : 0,
 }))
@@ -102,6 +102,8 @@ const eventData = {
   titles: officialTitles,
   titleCount: 24,
   tournamentCount: 25,
+  programSource: { label: 'EWC 2026 Media Guide', url: 'https://cdn.esportsworldcup.com/media-guide.pdf' },
+  brandSource: { label: 'EWC Resource Center', url: 'https://resources.esportsworldcup.com/en/competitive-ops/rulebooks' },
   matches: { live: [ewcLive], upcoming: [ewcUpcoming], completed: [ewcCompleted] },
 }
 
@@ -325,6 +327,8 @@ describe('esports league hub — Games tab tracks the official 24-title EWC prog
     fireEvent.click(screen.getByRole('button', { name: 'Games' }))
     await waitFor(() => expect(screen.getByText('24 titles · 25 tournaments')).toBeTruthy())
     expect(screen.getAllByRole('button').filter((button) => button.closest('[data-ewc-title-catalog="true"]')).length).toBe(24)
+    expect(document.querySelectorAll('[data-ewc-title-catalog="true"] [data-ewc-title-logo="image"] img').length).toBe(24)
+    expect(screen.getByText('Game marks: EWC Resource Center ↗')).toBeTruthy()
     expect(screen.getAllByText('Apex Legends').length).toBeGreaterThan(0)
     expect(screen.getAllByText('Trackmania').length).toBeGreaterThan(0)
     expect(screen.getAllByText('Mobile Legends: Bang Bang').length).toBeGreaterThan(0)
@@ -346,14 +350,13 @@ describe('esports league hub — Games tab tracks the official 24-title EWC prog
     await flush()
   })
 
-  it('filters available matches by official title and reports pending title feeds honestly', async () => {
+  it('filters available matches and shows official dates without fake pending states', async () => {
     renderHub(true)
     fireEvent.click(screen.getByRole('button', { name: 'Games' }))
     await waitFor(() => expect(screen.getByText('24 titles · 25 tournaments')).toBeTruthy())
 
-    // Data-derived week label: no published schedule snapshot -> 'Schedule pending' on every
-    // program tile (the hardcoded program weeks are gone from the payload).
-    expect(screen.getAllByText(/Schedule pending/).length).toBeGreaterThanOrEqual(24)
+    expect(screen.queryByText(/Schedule pending/)).toBeNull()
+    expect(screen.getAllByText(/Jul 7–Jul 11/).length).toBeGreaterThanOrEqual(24)
 
     fireEvent.click(screen.getByRole('button', { name: /Call of Duty: Black Ops 7.*2 tracked matches/ }))
     await waitFor(() => expect(screen.getByText(/Showing only Call of Duty: Black Ops 7/)).toBeTruthy())
@@ -367,9 +370,9 @@ describe('esports league hub — Games tab tracks the official 24-title EWC prog
     expect(screen.getByText('24 titles · 25 tournaments')).toBeTruthy()
     expect(screen.queryByText(/Showing only Call of Duty/)).toBeNull()
 
-    fireEvent.click(screen.getByRole('button', { name: /Apex Legends.*Match feed pending/ }))
+    fireEvent.click(screen.getByRole('button', { name: /Apex Legends.*Match details unavailable/ }))
     await waitFor(() => expect(screen.getByText('Apex Legends is in the official EWC program.')).toBeTruthy())
-    expect(screen.getByText(/No validated local schedule\/results snapshot/)).toBeTruthy()
+    expect(screen.getByText(/official tournament dates are published/)).toBeTruthy()
     await flush()
   })
 
@@ -407,8 +410,7 @@ describe('esports league hub — Games tab tracks the official 24-title EWC prog
     await waitFor(() => expect(screen.getByText('24 titles · 25 tournaments')).toBeTruthy())
     expect(screen.getByRole('button', { name: /Chess.*Aug 11.*Aug 13.*13 tracked matches/ })).toBeTruthy()
     expect(screen.queryByText(/Week 33/)).toBeNull()
-    // A title with no published snapshot still says Schedule pending.
-    expect(screen.getByRole('button', { name: /Apex Legends.*Schedule pending.*Match feed pending/ })).toBeTruthy()
+    expect(screen.getByRole('button', { name: /Apex Legends.*Jul 7.*Jul 11.*Match details unavailable/ })).toBeTruthy()
     await flush()
   })
 

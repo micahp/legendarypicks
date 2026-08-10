@@ -36,7 +36,7 @@ function titleSlug(label: string): string {
 }
 
 function scheduleDateLabel(firstDate: string | null, lastDate: string | null): string {
-  if (!firstDate) return 'Schedule pending'
+  if (!firstDate) return 'Dates unavailable'
   const format = (value: string) => new Date(`${value}T00:00:00Z`).toLocaleDateString([], {
     month: 'short', day: 'numeric', timeZone: 'UTC',
   })
@@ -324,6 +324,34 @@ export default function EsportsLeaguePage() {
 /* ---------------- Games — complete EWC event population ---------------- */
 
 type MatchView = 'all' | 'live' | 'upcoming' | 'finals'
+
+function titleInitials(title: string): string {
+  return title.split(/\s+/).map((word) => word.replace(/[^A-Za-z0-9]/g, '').charAt(0))
+    .filter(Boolean).slice(0, 2).join('').toUpperCase() || '?'
+}
+
+function TitleLogo({ title, logo, compact = false }: {
+  title: string
+  logo?: string | null
+  compact?: boolean
+}) {
+  const [failed, setFailed] = useState(false)
+  const show = Boolean(logo) && !failed
+  return (
+    <span aria-hidden="true" data-ewc-title-logo={show ? 'image' : 'fallback'}
+          className={`flex shrink-0 items-center ${compact ? 'h-7 w-12 justify-center' : 'h-9 w-full justify-start'}`}>
+      {show ? (
+        <img src={logo as string} alt="" loading="lazy" referrerPolicy="no-referrer"
+             onError={() => setFailed(true)}
+             className={`${compact ? 'max-h-6 max-w-12' : 'max-h-8 max-w-[132px]'} object-contain opacity-80 [filter:brightness(0)_invert(1)]`} />
+      ) : (
+        <span className={`${compact ? 'h-7 w-10 text-[10px]' : 'h-8 w-12 text-xs'} flex items-center justify-center rounded bg-zinc-800 font-bold tracking-wide text-zinc-400`}>
+          {titleInitials(title)}
+        </span>
+      )}
+    </span>
+  )
+}
 type SelectedTitleMatches = {
   status: 'published' | 'unavailable'
   lifecycle: 'upcoming' | 'active' | 'final' | null
@@ -373,6 +401,7 @@ function GamesSection({ eventData, eventDataError, titles, activeSlug, onSelect 
     slug: title.slug,
     tournaments: title.tournaments,
     feedTitles: title.feedTitles,
+    logo: title.logo,
     scheduleStatus: title.schedule?.status ?? 'unavailable',
     scheduleCount: title.schedule?.count ?? 0,
     scheduleFirstDate: title.schedule?.firstDate ?? null,
@@ -384,6 +413,7 @@ function GamesSection({ eventData, eventDataError, titles, activeSlug, onSelect 
     slug: titles?.find((t) => t.label === label)?.slug ?? titleSlug(label),
     tournaments: [label],
     feedTitles: [label],
+    logo: null,
     scheduleStatus: 'unavailable' as const,
     scheduleCount: 0,
     scheduleFirstDate: null,
@@ -442,10 +472,18 @@ function GamesSection({ eventData, eventDataError, titles, activeSlug, onSelect 
         Select a title to load its schedule and results.
       </p>
       {eventData?.programSource ? (
-        <a href={eventData.programSource.url} target="_blank" rel="noreferrer"
-           className="inline-block text-xs font-medium text-zinc-500 transition-colors hover:text-zinc-300">
-          Source: {eventData.programSource.label} ↗
-        </a>
+        <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs font-medium text-zinc-500">
+          <a href={eventData.programSource.url} target="_blank" rel="noreferrer"
+             className="transition-colors hover:text-zinc-300">
+            Program: {eventData.programSource.label} ↗
+          </a>
+          {eventData.brandSource ? (
+            <a href={eventData.brandSource.url} target="_blank" rel="noreferrer"
+               className="transition-colors hover:text-zinc-300">
+              Game marks: {eventData.brandSource.label} ↗
+            </a>
+          ) : null}
+        </div>
       ) : null}
       {eventDataError ? (
         <p className="text-sm text-red-300">The EWC game tracker is unavailable right now.</p>
@@ -478,9 +516,12 @@ function GamesSection({ eventData, eventDataError, titles, activeSlug, onSelect 
                             ? 'border-emerald-500/40 bg-emerald-500/15'
                             : 'border-zinc-800 bg-zinc-900/60'
                         }`}>
-                  <span className="block whitespace-nowrap text-xs font-semibold text-zinc-200">{option.label}</span>
+                  <span className="flex items-center gap-2">
+                    <TitleLogo title={option.label} logo={option.logo} compact />
+                    <span className="block whitespace-nowrap text-xs font-semibold text-zinc-200">{option.label}</span>
+                  </span>
                   <span className="mt-1 block whitespace-nowrap text-[11px] text-zinc-500">
-                    {dateLabel} · {option.count > 0 ? `${option.count} matches` : 'feed pending'}
+                    {dateLabel} · {option.count > 0 ? `${option.count} matches` : 'match details unavailable'}
                   </span>
                 </button>
               )
@@ -497,18 +538,19 @@ function GamesSection({ eventData, eventDataError, titles, activeSlug, onSelect 
                   type="button"
                   onClick={() => selectTitle(active ? null : option.slug)}
                   aria-pressed={active}
-                  className={`min-h-[78px] rounded-lg border p-3 text-left transition-colors ${
+                  className={`min-h-[112px] rounded-lg border p-3 text-left transition-colors ${
                     active
                       ? 'border-emerald-500/40 bg-emerald-500/15 text-emerald-300'
                       : 'border-zinc-800 bg-zinc-900/60 text-zinc-500 hover:text-zinc-300'
                   }`}
                 >
+                  <TitleLogo title={option.label} logo={option.logo} />
                   <span className="block text-xs font-semibold leading-snug text-zinc-200">{option.label}</span>
                   <span className="mt-1 block text-[10px] uppercase tracking-wide text-zinc-600">
                     {dateLabel} · {option.tournaments.length} tournament{option.tournaments.length === 1 ? '' : 's'}
                   </span>
                   <span className="mt-1 block text-[11px] text-zinc-500">
-                    {option.count > 0 ? `${option.count} tracked matches` : 'Match feed pending'}
+                    {option.count > 0 ? `${option.count} tracked matches` : 'Match details unavailable'}
                   </span>
                 </button>
               )
@@ -544,7 +586,7 @@ function GamesSection({ eventData, eventDataError, titles, activeSlug, onSelect 
           ) : activeOption && titleMatchCount === 0 ? (
             <div className="rounded-lg border border-zinc-800 bg-zinc-900/40 px-4 py-4">
               <p className="text-sm font-semibold text-zinc-300">{activeLabel} is in the official EWC program.</p>
-              <p className="mt-1 text-xs text-zinc-500">No validated local schedule/results snapshot or normalized live row is available yet.</p>
+              <p className="mt-1 text-xs text-zinc-500">The official tournament dates are published; match-level schedule and results are unavailable from the current feed.</p>
             </div>
           ) : all.length === 0 ? (
             <p className="text-sm text-zinc-500">No EWC match rows are published in the live feed right now.</p>

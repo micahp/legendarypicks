@@ -23,6 +23,7 @@ export type EwcEventData = {
   titleCount?: number
   tournamentCount?: number
   programSource?: { label: string; url: string }
+  brandSource?: { label: string; url: string }
   matches: { live: UpMatch[]; upcoming: UpMatch[]; completed: UpMatch[] }
 }
 
@@ -31,9 +32,10 @@ export type EwcTitle = {
   name: string
   tournaments: string[]
   feedTitles: string[]
-  /** Data-derived schedule coverage from the published per-title snapshot (never program weeks). */
+  logo?: string | null
+  /** Published match-snapshot coverage, with official program dates as the honest fallback. */
   schedule: {
-    status: 'published' | 'unavailable'
+    status: 'published' | 'program' | 'unavailable'
     count: number
     datedCount: number
     firstStart: number | null

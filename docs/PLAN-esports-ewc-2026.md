@@ -565,6 +565,17 @@ with the Liquipedia source link. When the snapshot ages past the publisher caden
 serves `status: "stale"` and **retains the rows**. Eligibility fields stay `null` (the page
 does not expose per-club eligibility evidence).
 
+### Dev-tunnel recovery — 2026-08-10
+
+- The acceptance surface is the rendered `/leagues/esports` page on the managed `:3096` tunnel.
+- Recover the previously isolated official game-title marks into `dev`; each of the 24 catalog
+  entries keeps its text label and falls back to neutral initials if the publisher image fails.
+- Keep match snapshots and the official tournament calendar separate. When match-level rows are
+  unavailable, show the published tournament date range and the explicit phrase “Match details
+  unavailable”; never collapse a known official date into the false generic state “Schedule pending.”
+- Club Championship freshness remains fail-closed: a blocked publisher refresh must not be relabeled
+  current or reconstructed from partial match results.
+
 ### Release-pass evidence — 2026-08-09
 
 - Backend suite: **130/130** (fixture-driven, zero external requests at test time) including the
