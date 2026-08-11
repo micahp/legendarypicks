@@ -393,24 +393,6 @@ def had_publisher_material(items):
     return any(it["source"] not in SOCIAL_SOURCES for it in items)
 
 
-def sources_unchanged(existing_sources_json, new_sources):
-    """True when the freshly generated card cites no source the already-served
-    card didn't already have.
-
-    This job runs on a schedule and regenerates every conversation that still
-    clears `_MIN_ITEMS`, which for a curated conv_id (the seeded "low hanging
-    fruit" conversations, Micah 2026-08-11) is every run forever — the chatter
-    never drops below the floor even when nothing new has happened. Without
-    this check every run rewrote `generated_at` to now regardless of whether
-    the story had moved, so a card written days ago kept re-pinning itself to
-    the top of a feed sorted by `generated_at DESC`, and "updated an hour ago"
-    on stale content read as a bug because it was one.
-    """
-    old_urls = {s.get("url") for s in json.loads(existing_sources_json or "[]")}
-    new_urls = {s.get("url") for s in new_sources}
-    return new_urls <= old_urls
-
-
 def unsupported_allegation(gen):
     """True when a card makes an allegation about people and cites nobody.
 
@@ -439,8 +421,13 @@ def _cited_sources(items, parsed):
     def _add(it):
         if it and it["url"] not in seen and it["source"] not in SOCIAL_SOURCES:
             seen.add(it["url"])
+            # `published` is the PUBLISHER's timestamp, carried onto the receipt so
+            # the card can be dated by when its story last moved rather than by
+            # when this job happened to run. Sorting a feed on generation time put
+            # days-old cards back on top every scheduled run (Micah, 2026-08-11).
             out.append({"headline": it["headline"], "url": it["url"],
-                        "source": it["source"]})
+                        "source": it["source"],
+                        "published": it.get("published") or ""})
 
     # By ITEM NUMBER first. The model sees a numbered list, and citing "1, 4" is
     # something it gets right; reproducing a 90-character URL exactly is not,
@@ -712,13 +699,6 @@ def main():
             if not args.dry_run:
                 _log_deletion(con, conv, "unsupported-allegation")
                 con.execute("DELETE FROM news_narratives WHERE conv_id=?", (conv["id"],))
-            continue
-        existing = con.execute(
-            "SELECT sources FROM news_narratives WHERE conv_id=?", (conv["id"],)).fetchone()
-        if existing and sources_unchanged(existing["sources"], gen["sources"]):
-            # Nothing new to report — leave the served card and its generated_at
-            # exactly as they are rather than re-timestamping the same story.
-            print("  %-18s unchanged — no new sources, generated_at kept" % conv["id"])
             continue
         if args.dry_run:
             print("  %-18s [dry-run] %s" % (conv["id"], gen["narrative"][:80]))

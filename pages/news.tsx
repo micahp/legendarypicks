@@ -42,8 +42,12 @@ type AiNarrative = {
   narrative: string
   fan_voice: string
   paragraph: string
-  sources: { headline: string; url: string; source: string }[]
+  sources: { headline: string; url: string; source: string; published?: string }[]
   generated_at: string
+  // When the card's STORY last moved (newest cited publish time), not when the
+  // writer last ran. Dating cards by generation time re-stamped days-old stories
+  // on every scheduled run. Falls back to generated_at server-side.
+  story_time: string
   source_count: number
 }
 
@@ -116,7 +120,7 @@ function AiNarrativeCard({ ai, showLeague }: { ai: AiNarrative; showLeague?: boo
         {ai.paragraph}
       </p>
       <div className="mt-2.5 flex items-center gap-2 text-xs text-zinc-500">
-        <span className="truncate">{relativeTime(ai.generated_at)}</span>
+        <span className="truncate">{relativeTime(ai.story_time || ai.generated_at)}</span>
         {ai.sources.slice(0, 2).map((s, i) => (
           <span key={i}>
             {i > 0 && <span className="mx-1.5 text-zinc-700">·</span>}

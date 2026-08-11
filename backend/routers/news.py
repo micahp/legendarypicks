@@ -69,8 +69,47 @@ def _utc_iso(v) -> str:
     return dt.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
-def _conv_card(r) -> dict:
+def _story_time(sources, generated_at, pool_published=None) -> str:
+    """When this card's STORY last moved: the newest publish time among the
+    receipts it cites.
+
+    `generated_at` answers a different question — when we last ran the writer.
+    The generator regenerates every conversation that still clears its source
+    floor, which for a curated conv_id is every scheduled run forever, so
+    dating a card by it meant a story from days ago re-stamped itself hourly
+    and re-pinned itself above genuinely newer cards (Micah, 2026-08-11).
+
+    Two fallbacks, both preferring a PUBLISHED value over our own clock:
+
+    1. `pool_published` — the newest item in the conversation the card was
+       written from. Used when the model cited nothing, which 5 of 13 dev cards
+       currently do; without it those cards keep re-pinning on every run, which
+       is the original bug surviving in the rows least able to justify a spot.
+    2. `generated_at` — last resort, for a conversation with no dated items at
+       all. Keeps an old card where it was rather than sorting it to the bottom.
+    """
+    stamps = [_utc_iso(s.get("published")) for s in sources if s.get("published")]
+    if stamps:
+        return max(stamps)
+    if pool_published:
+        return _utc_iso(pool_published)
+    return _utc_iso(generated_at)
+
+
+def _conv_pool_published(con) -> dict:
+    """{conv_id: newest published item in that conversation}. One grouped pass,
+    used only to date cards whose model cited no receipts."""
+    return {r["conv_id"]: r["latest"] for r in con.execute(
+        """SELECT conv_id, MAX(published) AS latest FROM news_items
+           WHERE conv_id IS NOT NULL AND conv_id != ''
+             AND published IS NOT NULL AND published != ''
+           GROUP BY conv_id""")}
+
+
+def _conv_card(r, pool=None) -> dict:
     """One conversation card (AI-generated) as the API serves it."""
+    sources = json.loads(r["sources"] or "[]")
+    pool = pool or {}
     return {
         "conv_id": r["conv_id"],
         "league": r["league"],
@@ -78,8 +117,11 @@ def _conv_card(r) -> dict:
         "narrative": r["narrative"],
         "fan_voice": r["fan_voice"],
         "paragraph": r["paragraph"],
-        "sources": json.loads(r["sources"] or "[]"),
+        "sources": sources,
         "generated_at": _utc_iso(r["generated_at"]),
+        # What the card is DATED by on the page and what the feed sorts on.
+        "story_time": _story_time(sources, r["generated_at"],
+                                  pool.get(r["conv_id"])),
         "source_count": r["source_count"],
     }
 
@@ -116,9 +158,13 @@ def _league_report(league: Optional[str] = None) -> dict:
 
         # AI-generated conversation cards (news_narratives), keyed by conv_id
         ai_rows = con.execute("SELECT * FROM news_narratives").fetchall()
+        pool = _conv_pool_published(con)
         convs_by_league: dict = {}
         for r in ai_rows:
-            convs_by_league.setdefault(r["league"], []).append(_conv_card(r))
+            convs_by_league.setdefault(r["league"], []).append(_conv_card(r, pool))
+        # Newest story first within each league tab, same ruler as the Home feed.
+        for cards in convs_by_league.values():
+            cards.sort(key=lambda c: c["story_time"], reverse=True)
 
     out = {}
     # A league with AI conversation cards but only bluesky chatter (no
@@ -152,12 +198,15 @@ def news_catch_all(league: Optional[str] = Query(None, description="Filter to on
             "leagues": _league_report(league.strip().lower()),
         }
     with closing(_db()) as con:
-        rows = con.execute(
-            """SELECT * FROM news_narratives ORDER BY generated_at DESC"""
-        ).fetchall()
+        rows = con.execute("""SELECT * FROM news_narratives""").fetchall()
+        pool = _conv_pool_published(con)
+    # Sorted on story_time, not generated_at — see _story_time. Ordering happens
+    # here rather than in SQL because the value lives inside the sources JSON.
+    cards = sorted((_conv_card(r, pool) for r in rows),
+                   key=lambda c: c["story_time"], reverse=True)
     return {
         "generated": datetime.now(timezone.utc).isoformat(),
-        "conversations": [_conv_card(r) for r in rows],
+        "conversations": cards,
         "leagues": _league_report(),
     }
 
@@ -167,12 +216,16 @@ def news_narratives():
     """Every AI conversation card — what people are actually talking about,
     with the source headlines each was grounded in (LinkedIn-trending)."""
     with closing(_db()) as con:
-        rows = con.execute(
-            "SELECT * FROM news_narratives ORDER BY league, generated_at DESC"
-        ).fetchall()
+        rows = con.execute("SELECT * FROM news_narratives").fetchall()
+        pool = _conv_pool_published(con)
+    # Python's sort is stable, so newest-first within each league falls out of
+    # sorting on story_time and then grouping by league.
+    cards = sorted((_conv_card(r, pool) for r in rows),
+                   key=lambda c: c["story_time"], reverse=True)
+    cards.sort(key=lambda c: c["league"])
     return {
         "generated": datetime.now(timezone.utc).isoformat(),
-        "narratives": [_conv_card(r) for r in rows],
+        "narratives": cards,
     }
 
 
