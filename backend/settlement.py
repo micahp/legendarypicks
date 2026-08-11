@@ -425,11 +425,20 @@ def _fetch_mlb_gamepk(date_str: str, home_team: str, away_team: str,
                 matches.append((pk, _instant(game.get("gameDate"))))
 
     if want is not None:
-        # Guard 1: the instant decides. 15 minutes absorbs a published-time revision
-        # without reaching the next day's game in the same series.
-        near = [(abs((gd - want).total_seconds()), pk) for pk, gd in matches if gd is not None]
-        near = [(d, pk) for d, pk in near if d <= 15 * 60]
-        return min(near)[1] if near else None
+        # Guard 1: the instant decides — but our start_time comes from ESPN and the
+        # candidates come from MLB, and the two publishers disagree by up to ~35
+        # minutes on a revised first pitch (measured: event 401815922 is 20:40Z to
+        # ESPN and 20:05Z to MLB; 401816096 is 23:50Z vs 23:15Z). A 15-minute window
+        # rejected both and settled nothing for those games.
+        #
+        # 90 minutes absorbs that drift and still cannot reach the other half of a
+        # doubleheader, which is hours away (the 2026-06-17 pair is 18:00Z and
+        # 23:15Z). Two candidates inside the window means the window is not doing its
+        # job — fail closed rather than take the nearer one.
+        near = sorted((abs((gd - want).total_seconds()), pk)
+                      for pk, gd in matches if gd is not None)
+        near = [(d, pk) for d, pk in near if d <= 90 * 60]
+        return near[0][1] if len(near) == 1 else None
 
     if len(matches) == 1:
         return matches[0][0]
@@ -655,7 +664,11 @@ def settle_game(con: sqlite3.Connection, game_id: int) -> dict:
     import espn_client as espn
 
     game = con.execute(
-        "SELECT id, league, home, away, date, espn_event_id, final_home, final_away FROM prop_games WHERE id=?",
+        # start_time is the exact key _fetch_mlb_gamepk resolves on; leaving it out of
+        # this SELECT made every MLB settle fall back to the ambiguous date+teams path
+        # and then fail closed, writing nothing.
+        "SELECT id, league, home, away, date, espn_event_id, final_home, final_away, "
+        "start_time FROM prop_games WHERE id=?",
         (game_id,)
     ).fetchone()
     if not game:

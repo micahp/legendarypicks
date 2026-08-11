@@ -117,6 +117,45 @@ def test_a_small_clock_drift_still_matches(schedule):
                                         start_time="2026-08-11T01:47:00+00:00") == 825045
 
 
+def test_two_publishers_disagreeing_by_35_minutes_still_match(schedule):
+    """Our start_time comes from ESPN; the candidates come from MLB. Measured: event
+    401815922 is 20:40Z to ESPN and 20:05Z to MLB, 401816096 is 23:50Z vs 23:15Z. A
+    15-minute window rejected both and left those games ungraded."""
+    schedule({"2026-06-27": [_game(823364, "2026-06-27T20:05:00Z", "Pittsburgh Pirates",
+                                   "Cincinnati Reds")]})
+    assert settlement._fetch_mlb_gamepk("2026-06-27", "Pittsburgh Pirates", "Cincinnati Reds",
+                                        start_time="2026-06-27T20:40:00+00:00") == 823364
+
+
+def test_the_window_cannot_reach_the_other_half_of_a_doubleheader(schedule):
+    """The drift allowance only works if it stays smaller than the gap it must not
+    cross. The 2026-06-17 pair is 18:00Z and 23:15Z."""
+    first = _game(824912, "2026-06-17T18:00:00Z", "Atlanta Braves", "San Francisco Giants")
+    second = _game(824913, "2026-06-17T23:15:00Z", "Atlanta Braves", "San Francisco Giants")
+    schedule({"2026-06-17": [first, second]})
+    assert settlement._fetch_mlb_gamepk("2026-06-17", "Atlanta Braves", "San Francisco Giants",
+                                        start_time="2026-06-17T18:35:00+00:00") == 824912
+
+
+def test_two_candidates_inside_the_window_fail_closed(schedule):
+    """If the window admits two games it is not identifying anything."""
+    a = _game(1, "2026-06-17T18:00:00Z", "Atlanta Braves", "San Francisco Giants")
+    b = _game(2, "2026-06-17T18:30:00Z", "Atlanta Braves", "San Francisco Giants")
+    schedule({"2026-06-17": [a, b]})
+    assert settlement._fetch_mlb_gamepk("2026-06-17", "Atlanta Braves", "San Francisco Giants",
+                                        start_time="2026-06-17T18:10:00+00:00") is None
+
+
+def test_settle_game_selects_the_start_time():
+    """The plumbing bug this file did not catch the first time: the row query left
+    `start_time` out of its SELECT, so every MLB settle fell back to the ambiguous
+    path and then failed closed, writing nothing for 248 games."""
+    import inspect
+    src = inspect.getsource(settlement.settle_game)
+    assert "start_time" in src.split("FROM prop_games WHERE id=?")[0], \
+        "the game row must carry the exact key"
+
+
 def test_settle_passes_the_start_time_it_already_has(monkeypatch):
     """The key was on the row the whole time. Regression pin on the plumbing."""
     seen = {}
