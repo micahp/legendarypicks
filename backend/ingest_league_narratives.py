@@ -36,6 +36,35 @@ from _core import SOCIAL_SOURCES, _deepseek_chat, _init_db  # noqa: E402
 from ingest_league_news import CONVERSATIONS  # noqa: E402
 from news_classifier import entities  # noqa: E402
 
+def _norm_url(u):
+    """Fold the drift, keep the identity.
+
+    This used to be `(u or "").strip().rstrip("/").split("?")[0].lower()` — which
+    threw away the query string. ESPN's recap, preview and clip URLs differ ONLY
+    there (`/mlb/recap?gameId=401816477`), so on the dev DB **65 news_items
+    collapsed onto 3 keys**: 35 previews, 21 recaps, 9 clips. `by_norm` keeps
+    whichever landed last, so a near-miss citation could attach a different
+    game's recap to a card as its receipt — a citation the reader will trust.
+
+    Safe to fold: trailing slash, host and scheme case, `utm_*` tracking
+    parameters, parameter order. Not safe: the rest of the query, or path case.
+    See test_news_receipt_url_identity.
+    """
+    from urllib.parse import urlsplit, urlunsplit, parse_qsl, urlencode
+    text = (u or "").strip()
+    if not text:
+        return ""
+    try:
+        parts = urlsplit(text)
+    except ValueError:
+        return text.rstrip("/")
+    query = urlencode(sorted(
+        (k, v) for k, v in parse_qsl(parts.query, keep_blank_values=True)
+        if not k.lower().startswith("utm_")))
+    return urlunsplit((parts.scheme.lower(), parts.netloc.lower(),
+                       parts.path.rstrip("/"), query, ""))
+
+
 def _norm_words(text):
     """Lowercase word set, punctuation stripped."""
     return set(re.sub(r"[^a-z0-9 ]", " ", (text or "").lower()).split())
@@ -444,10 +473,8 @@ def _cited_sources(items, parsed):
         if 0 <= idx < len(items):
             _add(items[idx])
 
-    # URLs still accepted, now normalised so a trailing slash is not a miss.
-    def _norm_url(u):
-        return (u or "").strip().rstrip("/").split("?")[0].lower()
-
+    # URLs still accepted, normalised so a trailing slash is not a miss — see
+    # _norm_url, which must NOT drop the query string.
     by_norm = {_norm_url(u): it for u, it in real.items()}
     cited = parsed.get("source_urls") or []
     if isinstance(cited, str):
