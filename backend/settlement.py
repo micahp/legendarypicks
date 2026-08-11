@@ -302,9 +302,9 @@ def _mlb_schedule(date_str: str) -> dict:
     return _MLB_SCHEDULE_CACHE[date_str]
 
 
-def _fetch_mlb_gamepk(date_str: str, home_team: str, away_team: str) -> Optional[int]:
-    """Look up MLB gamePk from the schedule API by teams, searching the day BEFORE and AFTER
-    as well as the day itself.
+def _fetch_mlb_gamepk(date_str: str, home_team: str, away_team: str,
+                      start_time: Optional[str] = None) -> Optional[int]:
+    """Look up MLB gamePk by FIRST PITCH, falling back to the calendar day.
 
     Publishers do not agree on which calendar day a game belongs to. A first pitch at 22:15
     ET is the next day in UTC, and our prop_games rows and the MLB schedule land on opposite
@@ -314,11 +314,42 @@ def _fetch_mlb_gamepk(date_str: str, home_team: str, away_team: str) -> Optional
     graded to zeros against a box score their players never appeared in. 39 of 210 props
     across them disagreed with Statcast even after the finality fix.
 
-    The date is a hint, the teams are the identity. Same day first so an exact match always
-    wins; a doubleheader still resolves to the first game of the pair, which is the existing
-    behaviour and a separate question.
+    The date is a hint, the teams are NOT the identity: a series plays the same two clubs on
+    consecutive days. Searching day-1/day/day+1 on teams alone and returning the first match
+    picked a different game between the same clubs — measured 2026-08-11, an hour after the
+    props timer ran:
+
+        _fetch_mlb_gamepk('2026-08-11', 'Arizona Diamondbacks', 'Colorado Rockies')
+          -> 825046 = 2026-08-12T01:40Z, "Pre-Game"
+
+    while the game that happened was 2026-08-11T01:40Z, Final 9-0. An unplayed game still
+    publishes a lineup with zeroed batting lines, so every player resolved, every stat read
+    0 and every prop graded: **every UNDER cashed**. 7,857 props over 6 games.
+
+    `prop_games.start_time` is the exact key, on the same row, and the schedule publishes
+    `gameDate` on the same object. Match instants and there is nothing to guess. Two guards,
+    because either alone leaves the other hole open:
+
+      1. When we have the instant, it decides — within a few minutes of drift, since a
+         published first pitch moves. No instant match, no gamePk.
+      2. A game that is not Final is never the answer, instant or not. That covers the
+         rows with no start_time (everything before 2026-07-17) and postponed games, which
+         are `Preview` forever.
+
+    Ambiguity with no instant to resolve it fails closed. An unsettled prop is recoverable;
+    one graded against the wrong game is not. See test_mlb_gamepk_by_instant.
     """
     import datetime as _dt
+
+    def _instant(text):
+        if not text:
+            return None
+        try:
+            return _dt.datetime.fromisoformat(str(text).replace("Z", "+00:00"))
+        except ValueError:
+            return None
+
+    want = _instant(start_time)
     try:
         base = _dt.date.fromisoformat(date_str)
         candidates = [date_str,
@@ -327,20 +358,43 @@ def _fetch_mlb_gamepk(date_str: str, home_team: str, away_team: str) -> Optional
     except Exception:
         candidates = [date_str]
 
+    matches = []  # [(gamePk, gameDate instant or None)]
+    seen = set()
     for day in candidates:
         try:
             data = _mlb_schedule(day)
         except Exception:
+            # A failed schedule fetch is not "no game that day". Everything below reads
+            # `matches`, so an empty result here returns None rather than a wrong pk.
             continue
         for dt_entry in data.get("dates", []):
             for game in dt_entry.get("games", []):
+                pk = game.get("gamePk")
+                if pk in seen:
+                    continue
                 teams = game.get("teams", {})
                 away = teams.get("away", {}).get("team", {})
                 home = teams.get("home", {}).get("team", {})
-                for key in ("name", "abbreviation"):
-                    if (home_team.lower() == (home.get(key) or "").lower()
-                            and away_team.lower() == (away.get(key) or "").lower()):
-                        return game["gamePk"]
+                if not any(home_team.lower() == (home.get(key) or "").lower()
+                           and away_team.lower() == (away.get(key) or "").lower()
+                           for key in ("name", "abbreviation")):
+                    continue
+                # Guard 2: a box score for a game that has not been played to a result is
+                # not a result. Postponed games sit at Preview permanently.
+                if (game.get("status") or {}).get("abstractGameState") != "Final":
+                    continue
+                seen.add(pk)
+                matches.append((pk, _instant(game.get("gameDate"))))
+
+    if want is not None:
+        # Guard 1: the instant decides. 15 minutes absorbs a published-time revision
+        # without reaching the next day's game in the same series.
+        near = [(abs((gd - want).total_seconds()), pk) for pk, gd in matches if gd is not None]
+        near = [(d, pk) for d, pk in near if d <= 15 * 60]
+        return min(near)[1] if near else None
+
+    if len(matches) == 1:
+        return matches[0][0]
     return None
 
 
@@ -362,10 +416,17 @@ def _settle_mlb_props(con, game_row, props) -> dict:
     home = game_row["home"]
     away = game_row["away"]
 
-    gamePk = _fetch_mlb_gamepk(date_str, home, away)
+    # start_time is the exact key and it is already on this row. Passing the date alone
+    # made the lookup guess between games of the same series; see _fetch_mlb_gamepk.
+    try:
+        start_time = game_row["start_time"]
+    except (KeyError, IndexError):
+        start_time = None
+    gamePk = _fetch_mlb_gamepk(date_str, home, away, start_time=start_time)
     if not gamePk:
         return {"settled": 0, "void": 0, "unmappable": 0, "errors": 0,
-                "msg": f"MLB gamePk not found for {away}@{home} on {date_str}"}
+                "msg": f"MLB gamePk not found for {away}@{home} on {date_str} "
+                       f"(start_time={start_time or 'none'})"}
 
     box = _fetch_mlb_boxscore(gamePk)
     if not box:
