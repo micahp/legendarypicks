@@ -33,13 +33,25 @@ def con():
     return c
 
 
-def _state(monkeypatch, state, winner="WSH"):
+def _state(monkeypatch, state, winner="WSH", completed=None):
+    """Stub `game_result` in the shape it actually returns.
+
+    This stub used to key `scores` by DISPLAY NAME and omit home_score/away_score,
+    which is not what ESPN publishes or what the client returns — so it passed the
+    gate while proving nothing about the write below it. `completed` defaults to
+    `state == "post"`; pass it explicitly to model a POSTPONED game, which ESPN
+    also files as state="post". See test_finality_gate_completed.
+    """
     # settle_game imports espn_client inside the function, so patch the module it reaches.
     import espn_client
     monkeypatch.setattr(espn_client, "game_result",
-                        lambda lg, gid: {"state": state, "winner": winner,
-                                         "scores": {"Washington Nationals": 7,
-                                                    "Cincinnati Reds": 1}})
+                        lambda lg, gid: {"state": state,
+                                         "completed": (state == "post") if completed is None
+                                                      else completed,
+                                         "winner": winner,
+                                         "scores": {"WSH": 7, "CIN": 1},
+                                         "home": "WSH", "away": "CIN",
+                                         "home_score": 7, "away_score": 1})
 
 
 def test_a_game_in_progress_settles_nothing(con, monkeypatch):
@@ -77,6 +89,28 @@ def test_the_final_score_is_recorded_when_the_gate_passes(con, monkeypatch):
     settlement.settle_game(con, 1)
     row = con.execute("SELECT final_home, final_away FROM prop_games WHERE id=1").fetchone()
     assert (row["final_home"], row["final_away"]) == (7, 1)
+
+
+def test_a_postponed_game_settles_nothing(con, monkeypatch):
+    """ESPN files POSTPONED as state="post" with completed=false and 0-0. The gate
+    read `state`, so it admitted one and the MLB grader ran on an unplayed game."""
+    _state(monkeypatch, "post", winner=None, completed=False)
+    monkeypatch.setattr(settlement, "_settle_mlb_props",
+                        lambda *a, **k: pytest.fail("graded a game that was postponed"))
+    out = settlement.settle_game(con, 1)
+    assert out["settled"] == 0
+    row = con.execute("SELECT final_home, final_away FROM prop_games WHERE id=1").fetchone()
+    assert (row["final_home"], row["final_away"]) == (None, None)
+
+
+def test_a_draw_settles(con, monkeypatch):
+    """The gate also required a winner, which refused an honest draw — a real
+    result in soccer and NHL. Measured: MLS event 726528 is completed, 2-2, no
+    winner, and could never have settled."""
+    _state(monkeypatch, "post", winner=None)
+    monkeypatch.setattr(settlement, "_settle_mlb_props",
+                        lambda *a, **k: {"settled": 1, "void": 0, "unmappable": 0})
+    assert settlement.settle_game(con, 1)["settled"] == 1
 
 
 def test_the_gate_applies_to_mlb_which_is_where_it_was_being_skipped(con, monkeypatch):

@@ -26,7 +26,9 @@ import espn_client
 
 def _summary(home_abbr, home_score, away_abbr, away_score, state="post"):
     return {"header": {"competitions": [{
-        "status": {"type": {"state": state, "shortDetail": "Final"}, "period": 9,
+        # `completed` decides finality, not `state` — see test_finality_gate_completed.
+        "status": {"type": {"state": state, "completed": state == "post",
+                            "shortDetail": "Final"}, "period": 9,
                    "displayClock": "0:00"},
         "competitors": [
             {"homeAway": "home", "score": home_score,
@@ -83,7 +85,7 @@ def test_a_game_in_progress_still_reports_home_and_away(espn):
 
 def test_soccer_also_reports_home_and_away(monkeypatch):
     doc = {"header": {"competitions": [{
-        "status": {"type": {"state": "post", "shortDetail": "FT"}, "period": 2,
+        "status": {"type": {"state": "post", "completed": True, "shortDetail": "FT"}, "period": 2,
                    "displayClock": "90'"},
         "competitors": [
             {"homeAway": "home", "score": "1", "winner": False,

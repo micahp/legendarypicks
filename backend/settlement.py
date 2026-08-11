@@ -546,9 +546,17 @@ def settle_game(con: sqlite3.Connection, game_id: int) -> dict:
     if game["final_home"] is None:
         try:
             result = espn.game_result(league, espn_event_id)
-            if result["state"] != "post" or result["winner"] is None:
+            # Gate on `completed`, not on state=="post": ESPN files POSTPONED,
+            # canceled and suspended games under post as well, with completed=false
+            # and a score of 0 on both sides. This gate admitted one (event
+            # 401815805) and stamped it final 0-0, which would have graded every
+            # prop on an unplayed game against zeros. The old `winner is None`
+            # clause was a proxy for the same question that also refused an honest
+            # DRAW — a real result in soccer and NHL. See test_finality_gate_completed.
+            if not result.get("completed"):
                 return {"settled": 0, "void": 0, "unmappable": 0, "errors": 0,
-                        "msg": f"game {game_id}: not final yet (state={result['state']})"}
+                        "msg": f"game {game_id}: not final yet (state={result['state']}, "
+                               f"completed={result.get('completed')})"}
             # `scores` is keyed by ESPN ABBREVIATION ("ATH"); game["home"] is a
             # display name ("Athletics"). The old lookup `scores.get(game["home"])`
             # could never hit, so final_home/final_away were written NULL on every

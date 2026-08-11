@@ -11,13 +11,14 @@ from routers import games
 
 
 class GameResultStatusTests(unittest.TestCase):
-    def test_leagues_cup_preserves_publisher_clock_and_soccer_winner(self):
-        summary = {
+    @staticmethod
+    def _lcup(state, completed, detail):
+        return {
             "header": {"competitions": [{
                 "status": {
                     "period": 2,
-                    "displayClock": "67'",
-                    "type": {"state": "in", "shortDetail": "67'"},
+                    "displayClock": detail,
+                    "type": {"state": state, "completed": completed, "shortDetail": detail},
                 },
                 "competitors": [
                     {"team": {"abbreviation": "MIA"}, "score": "1", "winner": False},
@@ -25,13 +26,36 @@ class GameResultStatusTests(unittest.TestCase):
                 ],
             }]},
         }
-        with patch.object(espn_client, "summary", return_value=summary):
+
+    def test_leagues_cup_preserves_publisher_clock(self):
+        with patch.object(espn_client, "summary",
+                          return_value=self._lcup("in", False, "67'")):
             result = espn_client.game_result("lcup", "401000001")
 
         self.assertEqual(result["state"], "in")
         self.assertEqual(result["period"], 2)
         self.assertEqual(result["clock"], "67'")
         self.assertEqual(result["status_detail"], "67'")
+
+    def test_a_match_in_progress_has_no_winner(self):
+        """This case previously asserted winner == "PUM" at 67 minutes, from a
+        `winner: true` flag on a competitor in a live fixture. A match in progress
+        has no winner, and the non-soccer path already refused to name one (see
+        test_game_result_home_away). `completed` decides for both now, so a live
+        match cannot report a decided one to the game page."""
+        with patch.object(espn_client, "summary",
+                          return_value=self._lcup("in", False, "67'")):
+            result = espn_client.game_result("lcup", "401000001")
+        self.assertIsNone(result["winner"])
+
+    def test_a_finished_match_keeps_the_publishers_winner_flag(self):
+        """The guarantee this test exists for: soccer's winner comes from the
+        publisher's flag, not from the scoreline, so a tie decided on penalties
+        still grades to the side that actually advanced."""
+        with patch.object(espn_client, "summary",
+                          return_value=self._lcup("post", True, "FT")):
+            result = espn_client.game_result("lcup", "401000001")
+        self.assertTrue(result["completed"])
         self.assertEqual(result["winner"], "PUM")
 
 

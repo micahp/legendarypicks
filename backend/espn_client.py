@@ -890,8 +890,14 @@ def game_result_soccer(league, game_id):
             away_abbr = abbr
         if c.get("winner") is True:
             winner = abbr
+    # See game_result: a postponed match is state="post" too. `completed` is the
+    # published answer to "was this played to a result".
+    completed = bool(st.get("completed"))
+    if not completed:
+        winner = None
     return {
         "state": st.get("state"),
+        "completed": completed,
         "scores": scores,
         "home": home_abbr,
         "away": away_abbr,
@@ -1161,11 +1167,21 @@ def game_result(league, game_id):
             home_abbr = ab
         elif c.get("homeAway") == "away":
             away_abbr = ab
+    # `state == "post"` is not "this game was played". A POSTPONED game is also
+    # state="post" — with completed=false and a score of "0" on both sides rather
+    # than null — so the old gate admitted one, `max(scores)` on a 0-0 tie handed
+    # the win to whichever key sorted first, and settlement stamped final 0-0 on a
+    # game nobody played. Measured on event 401815805 (SF at ATL, 2026-06-18).
+    # `completed` is published on this same object; see test_finality_gate_completed.
+    completed = bool(st.get("completed"))
     winner = None
-    if st.get("state") == "post" and len(scores) == 2 and all(v is not None for v in scores.values()):
-        winner = max(scores, key=scores.get)
+    if completed and len(scores) == 2 and all(v is not None for v in scores.values()):
+        hi, lo = sorted(scores.values(), reverse=True)
+        if hi != lo:  # max() on a tie returns the first key, which is not a result
+            winner = max(scores, key=scores.get)
     return {
         "state": st.get("state"),
+        "completed": completed,
         "scores": scores,
         "home": home_abbr,
         "away": away_abbr,
