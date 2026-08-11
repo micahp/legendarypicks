@@ -1,13 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import PropChart, { PropHistory } from '../Props/PropChart'
+import { GamePropPlayer, Prop } from './useGameProps'
 
-// `result` is null until the prop settles. An unsettled prop is NOT a miss, and the two
-// have to stay distinguishable all the way to the pixel — a page that renders them the
-// same is claiming a loss we never took.
-interface PropResult { actual: number | null; hit: boolean; settled_at: string; cashed: string }
-interface GamePropPlayer { player_id: number; name: string; team: string; props: { market: string; side: string; line: number; result?: PropResult | null }[] }
-
-type Prop = GamePropPlayer['props'][0]
+export type { Prop }
 
 /**
  * One chip per settled LINE instead of one per side.
@@ -31,40 +26,19 @@ export function collapseSettledSides(props: Prop[]): Prop[] {
   })
 }
 
-export default function GameProps({ league, gameId, inTab = false }: { league: string; gameId: string; inTab?: boolean }) {
-  const [players, setPlayers] = useState<GamePropPlayer[]>([])
+/** Presentational: the page owns the single fetch (see useGameProps). */
+export default function GameProps({
+  league, players, settledLines, edgeLabel, loading, inTab = false,
+}: {
+  league: string
+  players: GamePropPlayer[]
+  settledLines: number
+  edgeLabel: boolean
+  loading: boolean
+  inTab?: boolean
+}) {
   const [openKey, setOpenKey] = useState<string | null>(null)
   const [chart, setChart] = useState<PropHistory | null>(null)
-  const [edgeLabel, setEdgeLabel] = useState(false)
-  const [settledLines, setSettledLines] = useState(0)
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    let alive = true
-    setLoading(true)
-    setPlayers([])
-    setEdgeLabel(false)
-    setSettledLines(0)
-    fetch(`/api/game/${league}/${gameId}/props`)
-      .then(r => r.json()).then(d => {
-        if (d.players?.length) {
-          if (alive) {
-            setPlayers(d.players)
-            setSettledLines(d.settled_lines || 0)
-          }
-          return
-        }
-        // NBA fallback: no Bovada props — show projected stat lines
-        if (league === 'nba') {
-          return fetch(`/api/game/${league}/${gameId}/edge`)
-            .then(r => r.json()).then(e => {
-              if (alive) { setPlayers(e.players || []); setEdgeLabel(true) }
-            }).catch(() => {})
-        }
-      }).catch(() => {})
-      .finally(() => { if (alive) setLoading(false) })
-    return () => { alive = false }
-  }, [league, gameId])
 
   if (loading) return inTab ? (
     <div className="space-y-3 animate-pulse">
@@ -75,7 +49,7 @@ export default function GameProps({ league, gameId, inTab = false }: { league: s
     <p className="py-8 text-center text-sm text-zinc-500">No player props available for this game.</p>
   ) : null
 
-  const openChart = async (pid: number, pr: GamePropPlayer['props'][0]) => {
+  const openChart = async (pid: number, pr: Prop) => {
     const key = `${pid}-${pr.market}-${pr.side}`
     if (openKey === key) { setOpenKey(null); setChart(null); return }
     setOpenKey(key); setChart(null)

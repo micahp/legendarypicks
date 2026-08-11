@@ -46,7 +46,9 @@ def game_props(league: str, game_id: str):
                ORDER BY pl.name""",
             (str(game_id),)).fetchall()
     players: dict = {}
-    settled_lines = set()
+    # Keyed by (player, market, line) — the same identity `settled_lines` counts, so the
+    # count and the leader set can never disagree about what a settled line is.
+    settled: dict = {}
     for r in rows:
         d = players.setdefault(r["player_id"], {"player_id": r["player_id"], "name": r["name"],
                                                 "team": r["team"], "props": []})
@@ -56,37 +58,31 @@ def game_props(league: str, game_id: str):
             # `cashed` is the side the number actually landed on, derived from this row's
             # own side and verdict — so a line stored on one side only still says which way
             # it went, and the page never has to infer it from a missing sibling.
+            cashed = r["side"] if r["hit"] else _other_side(r["side"])
             result = {"actual": r["actual_value"], "hit": bool(r["hit"]),
-                      "settled_at": r["settled_at"],
-                      "cashed": r["side"] if r["hit"] else _other_side(r["side"])}
-            settled_lines.add((r["player_id"], market, r["line"]))
+                      "settled_at": r["settled_at"], "cashed": cashed}
+            key = (r["player_id"], market, r["line"])
+            if key not in settled:
+                # Both stored sides of a line carry the same actual and the same line, so
+                # whichever row arrives first yields the same margin and the same `cashed`.
+                try:
+                    margin = abs(float(r["actual_value"]) - float(r["line"]))
+                except (TypeError, ValueError):
+                    margin = 0.0
+                settled[key] = {
+                    "player_id": r["player_id"], "name": r["name"], "team": r["team"],
+                    "market": market, "line": r["line"], "actual": r["actual_value"],
+                    "cashed": cashed, "margin": margin}
         d["props"].append({"market": market, "line": r["line"],
                            "side": r["side"], "result": result})
 
-    # "What decided it" — the settled lines that moved furthest past their own number,
-    # regardless of side. One entry per (player, market, line): the first settled row
-    # for a line fixes which side cashed, same as `result.cashed` above, so a line held
-    # on only one side still reports correctly.
-    leader_candidates: dict = {}
-    for r in rows:
-        if r["settled_at"] is None or r["hit"] is None:
-            continue
-        market = _base_market(r["market"])
-        key = (r["player_id"], market, r["line"])
-        if key in leader_candidates:
-            continue
-        try:
-            margin = abs(float(r["actual_value"]) - float(r["line"]))
-        except (TypeError, ValueError):
-            margin = 0.0
-        leader_candidates[key] = {
-            "player_id": r["player_id"], "name": r["name"], "team": r["team"],
-            "market": market, "line": r["line"], "actual": r["actual_value"],
-            "cashed": r["side"] if r["hit"] else _other_side(r["side"]), "margin": margin}
-    leaders = sorted(leader_candidates.values(), key=lambda x: x["margin"], reverse=True)[:3]
+    # "What decided it" — the settled lines that finished furthest from their own number,
+    # in either direction. Not a record: we hold both sides of most lines, so which side
+    # cashed is a fact about the game rather than a call of ours (see the docstring).
+    leaders = sorted(settled.values(), key=lambda x: x["margin"], reverse=True)[:3]
 
     return {"league": league, "game_id": str(game_id), "players": list(players.values()),
-            "settled_lines": len(settled_lines), "leaders": leaders}
+            "settled_lines": len(settled), "leaders": leaders}
 
 
 def _other_side(side):

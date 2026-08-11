@@ -17,16 +17,22 @@ const payload = {
   }],
 }
 
-function mockFetch(body: any) {
-  ;(global as any).fetch = jest.fn(() => Promise.resolve({ json: () => Promise.resolve(body) }))
+// GameProps is presentational now — the page owns the single fetch (useGameProps), so
+// these render it directly with the data the hook would have handed it.
+function renderProps(body: any = payload) {
+  return render(
+    <GameProps
+      league="mlb" players={body.players} settledLines={body.settled_lines}
+      edgeLabel={false} loading={false} inTab
+    />,
+  )
 }
 
 describe('GameProps after the game settles', () => {
   it('reports lines settled and never a hit rate', async () => {
     // We hold both sides of most lines, so a win-loss record here would describe our
     // storage layout rather than our judgement.
-    mockFetch(payload)
-    render(<GameProps league="mlb" gameId="999" inTab />)
+    renderProps()
     await waitFor(() => expect(screen.getByText('How the props landed')).toBeTruthy())
     expect(screen.getByText('2 lines settled')).toBeTruthy()
     expect(screen.queryByText(/hit$/)).toBeNull()
@@ -35,8 +41,7 @@ describe('GameProps after the game settles', () => {
   it('shows a settled line once, not once per side', async () => {
     // "total bases over 1.5 -> 0" beside "total bases under 1.5 -> 0" is one result
     // printed twice, with a guaranteed 50% success rate attached.
-    mockFetch(payload)
-    const { container } = render(<GameProps league="mlb" gameId="999" inTab />)
+    const { container } = renderProps()
     await waitFor(() => expect(screen.getByText('How the props landed')).toBeTruthy())
     const chips = Array.from(container.querySelectorAll('button'))
       .filter(b => b.textContent?.includes('total bases'))
@@ -45,16 +50,14 @@ describe('GameProps after the game settles', () => {
   })
 
   it('shows the number each settled prop landed on', async () => {
-    mockFetch(payload)
-    render(<GameProps league="mlb" gameId="999" inTab />)
+    renderProps()
     await waitFor(() => expect(screen.getByText('→ 3')).toBeTruthy())
     expect(screen.getByText('→ 0')).toBeTruthy()
   })
 
   it('leaves an unsettled prop unmarked rather than showing it as a miss', async () => {
     // The distinction the feature rests on: no verdict is not a loss.
-    mockFetch(payload)
-    const { container } = render(<GameProps league="mlb" gameId="999" inTab />)
+    const { container } = renderProps()
     await waitFor(() => expect(screen.getByText('How the props landed')).toBeTruthy())
     const chip = Array.from(container.querySelectorAll('button'))
       .find(b => b.textContent?.includes('strikeouts'))!
@@ -63,9 +66,8 @@ describe('GameProps after the game settles', () => {
   })
 
   it('keeps the plain heading while nothing has settled', async () => {
-    mockFetch({ ...payload, settled_lines: 0,
+    renderProps({ ...payload, settled_lines: 0,
       players: [{ ...payload.players[0], props: [{ market: 'hits', line: 0.5, side: 'over', result: null }] }] })
-    render(<GameProps league="mlb" gameId="999" inTab />)
     await waitFor(() => expect(screen.getByText('Player Props')).toBeTruthy())
     expect(screen.queryByText(/hit$/)).toBeNull()
   })

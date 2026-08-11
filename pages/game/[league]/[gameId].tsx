@@ -15,6 +15,7 @@ import GameInfo from '../../../components/Game/GameInfo'
 import GameProps from '../../../components/Game/GameProps'
 import GameStory from '../../../components/Game/GameStory'
 import WhatDecidedIt from '../../../components/Game/WhatDecidedIt'
+import { useGameProps } from '../../../components/Game/useGameProps'
 import WCContext from '../../../components/Game/WCContext'
 import BoothFeed from '../../../components/Game/BoothFeed'
 import ListenLive, { LCUP_PAGE } from '../../../components/ListenLive'
@@ -242,6 +243,10 @@ export default function GameDetailPage() {
   // Per-tab data
   const tabData = useTabData(league, gameId, !usesDetail)
 
+  // ONE props fetch for the page. Both the "What decided it" panel and the Props tab
+  // are views over the same response — fetching per component downloaded it twice.
+  const gameProps = useGameProps(league, gameId)
+
   // Fetch detail (NBA/NHL path) or minimal context (other leagues)
   useEffect(() => {
     if (!league || !gameId) return
@@ -323,7 +328,9 @@ export default function GameDetailPage() {
 
       {/* The settled lines that moved furthest past their own number — the "leaders"
           slot on a finished game, self-hides until anything has settled. */}
-      {league && gameId && <WhatDecidedIt league={league} gameId={gameId} />}
+      {league && gameId && (
+        <WhatDecidedIt leaders={gameProps.leaders} settledLines={gameProps.settledLines} />
+      )}
 
       {/* Tab gating: supported leagues get tabs; others get "not available" */}
       {showTabs ? (
@@ -396,7 +403,11 @@ export default function GameDetailPage() {
             )}
 
             {tab === 'props' && league && gameId && (
-              <GameProps league={league} gameId={gameId} inTab />
+              <GameProps
+                league={league} players={gameProps.players}
+                settledLines={gameProps.settledLines} edgeLabel={gameProps.edgeLabel}
+                loading={gameProps.loading} inTab
+              />
             )}
 
             {tab === 'booth' && gameId && (
@@ -413,7 +424,13 @@ export default function GameDetailPage() {
       ) : (
         <>
           {/* Leagues without detail tabs retain the existing standalone props surface. */}
-          {league && gameId && <GameProps league={league} gameId={gameId} />}
+          {league && gameId && (
+            <GameProps
+              league={league} players={gameProps.players}
+              settledLines={gameProps.settledLines} edgeLabel={gameProps.edgeLabel}
+              loading={gameProps.loading}
+            />
+          )}
           <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-12 text-center">
             <p className="text-zinc-500 text-sm">Detailed stats aren&apos;t available for this sport yet.</p>
             <p className="text-zinc-600 text-xs mt-2">Check back for future updates.</p>
