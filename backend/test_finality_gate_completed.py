@@ -146,3 +146,37 @@ def test_settlement_records_the_final_of_a_completed_game(espn):
     row = con.execute("SELECT final_home, final_away FROM prop_games WHERE id=1").fetchone()
     assert (row["final_home"], row["final_away"]) == (5, 3), \
         "the end-to-end write the gate exists to perform"
+
+
+# ── MLB rows with no ESPN link still pass a gate ───────────────────────────────
+
+def _db_unlinked():
+    con = _db()
+    con.execute("UPDATE prop_games SET espn_event_id='' WHERE id=1")
+    con.commit()
+    return con
+
+
+def test_an_mlb_game_with_no_espn_link_is_still_gated(monkeypatch):
+    """settle_game returned early whenever espn_event_id was empty, which skipped the
+    finality gate entirely rather than enforcing it. Game 550 carries 2,052 graded
+    props and no ESPN link: nothing ever asked whether that game was over. MLB grades
+    from the MLB Stats API, so the ESPN link is not needed to settle — the resolved
+    gamePk (Final only) is the gate."""
+    monkeypatch.setattr(settlement, "_fetch_mlb_gamepk", lambda *a, **k: None)
+    con = _db_unlinked()
+    out = settlement.settle_game(con, 1)
+    assert out["settled"] == 0
+    assert "not final" in out["msg"]
+    row = con.execute("SELECT final_home FROM prop_games WHERE id=1").fetchone()
+    assert row["final_home"] is None
+
+
+def test_an_mlb_game_with_no_espn_link_records_its_final(monkeypatch):
+    monkeypatch.setattr(settlement, "_fetch_mlb_gamepk", lambda *a, **k: 825048)
+    monkeypatch.setattr(settlement, "_fetch_mlb_final", lambda pk: (9, 0))
+    monkeypatch.setattr(settlement, "_fetch_mlb_boxscore", lambda pk: {"teams": {}})
+    con = _db_unlinked()
+    settlement.settle_game(con, 1)
+    row = con.execute("SELECT final_home, final_away FROM prop_games WHERE id=1").fetchone()
+    assert (row["final_home"], row["final_away"]) == (9, 0)

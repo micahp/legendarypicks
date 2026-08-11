@@ -676,9 +676,31 @@ def settle_game(con: sqlite3.Connection, game_id: int) -> dict:
 
     league = game["league"]
     espn_event_id = game["espn_event_id"]
-    if not espn_event_id:
+    if not espn_event_id and league != "mlb":
         return {"settled": 0, "void": 0, "unmappable": 0, "errors": 0,
                 "msg": f"game {game_id}: no espn_event_id, cannot pull boxscore"}
+    if not espn_event_id:
+        # MLB grades from the MLB Stats API, not from ESPN, so an ESPN link is not
+        # required to settle it — and requiring one skipped the finality gate entirely
+        # for these rows. Game 550 carries 2,052 graded props and no ESPN link at all;
+        # they were written by a path that never asked whether the game was over.
+        # _fetch_mlb_gamepk resolves by first pitch and returns Final games only, so it
+        # IS the gate here; _fetch_mlb_final supplies the score the ESPN branch would
+        # have written. See test_finality_gate_completed.
+        if game["final_home"] is None:
+            pk = _fetch_mlb_gamepk(game["date"], game["home"], game["away"],
+                                   start_time=game["start_time"])
+            final = _fetch_mlb_final(pk) if pk else None
+            if not final:
+                return {"settled": 0, "void": 0, "unmappable": 0, "errors": 0,
+                        "msg": f"game {game_id}: not final yet (no ESPN link; MLB "
+                               f"gamePk={pk or 'unresolved'})"}
+            con.execute("UPDATE prop_games SET final_home=?, final_away=? WHERE id=?",
+                        (final[0], final[1], game_id))
+            con.commit()
+            game = dict(game, final_home=final[0], final_away=final[1])
+        # Falls through to the MLB branch below; the ESPN gate is skipped because
+        # final_home is now set.
 
     # ── Is the game actually over? ──────────────────────────────────────────────
     # This gate used to live BELOW the MLB branch, which returns before reaching it — so
