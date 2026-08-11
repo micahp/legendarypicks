@@ -14,6 +14,7 @@ import PlayByPlay from '../../../components/Game/PlayByPlay'
 import GameInfo from '../../../components/Game/GameInfo'
 import GameProps from '../../../components/Game/GameProps'
 import GameStory from '../../../components/Game/GameStory'
+import WhatDecidedIt from '../../../components/Game/WhatDecidedIt'
 import WCContext from '../../../components/Game/WCContext'
 import BoothFeed from '../../../components/Game/BoothFeed'
 import ListenLive, { LCUP_PAGE } from '../../../components/ListenLive'
@@ -319,6 +320,10 @@ export default function GameDetailPage() {
       {league && gameId && (lg === 'wc'
         ? <WCContext gameId={gameId} />
         : <GameStory league={league} gameId={gameId} />)}
+
+      {/* The settled lines that moved furthest past their own number — the "leaders"
+          slot on a finished game, self-hides until anything has settled. */}
+      {league && gameId && <WhatDecidedIt league={league} gameId={gameId} />}
 
       {/* Tab gating: supported leagues get tabs; others get "not available" */}
       {showTabs ? (

@@ -99,3 +99,26 @@ def test_a_game_with_no_props_reports_zero_rather_than_omitting_the_counts(api):
     out = api("mlb", "no-such-game")
     assert out["players"] == []
     assert out["settled_lines"] == 0
+
+
+def test_leaders_are_settled_lines_sorted_by_margin(api):
+    """total_bases: line 1.5, actual 3.0 -> margin 1.5. hits: line 0.5, actual 0.0 ->
+    margin 0.5. The bigger margin leads."""
+    out = api("mlb", "999")
+    markets = [l["market"] for l in out["leaders"]]
+    assert markets == ["total_bases", "hits"]
+    assert out["leaders"][0]["margin"] == 1.5
+    assert out["leaders"][0]["cashed"] == "over"
+
+
+def test_leaders_exclude_unsettled_and_nameless_rows(api):
+    """strikeouts never settled and player 11 has no name — neither belongs in the
+    surface that's meant to explain what decided a finished game."""
+    out = api("mlb", "999")
+    assert "strikeouts" not in [l["market"] for l in out["leaders"]]
+    assert all(l["name"] for l in out["leaders"])
+
+
+def test_leaders_cap_at_three(api):
+    out = api("mlb", "999")
+    assert len(out["leaders"]) <= 3

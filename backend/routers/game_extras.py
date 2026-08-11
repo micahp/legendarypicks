@@ -62,8 +62,31 @@ def game_props(league: str, game_id: str):
             settled_lines.add((r["player_id"], market, r["line"]))
         d["props"].append({"market": market, "line": r["line"],
                            "side": r["side"], "result": result})
+
+    # "What decided it" — the settled lines that moved furthest past their own number,
+    # regardless of side. One entry per (player, market, line): the first settled row
+    # for a line fixes which side cashed, same as `result.cashed` above, so a line held
+    # on only one side still reports correctly.
+    leader_candidates: dict = {}
+    for r in rows:
+        if r["settled_at"] is None or r["hit"] is None:
+            continue
+        market = _base_market(r["market"])
+        key = (r["player_id"], market, r["line"])
+        if key in leader_candidates:
+            continue
+        try:
+            margin = abs(float(r["actual_value"]) - float(r["line"]))
+        except (TypeError, ValueError):
+            margin = 0.0
+        leader_candidates[key] = {
+            "player_id": r["player_id"], "name": r["name"], "team": r["team"],
+            "market": market, "line": r["line"], "actual": r["actual_value"],
+            "cashed": r["side"] if r["hit"] else _other_side(r["side"]), "margin": margin}
+    leaders = sorted(leader_candidates.values(), key=lambda x: x["margin"], reverse=True)[:3]
+
     return {"league": league, "game_id": str(game_id), "players": list(players.values()),
-            "settled_lines": len(settled_lines)}
+            "settled_lines": len(settled_lines), "leaders": leaders}
 
 
 def _other_side(side):
