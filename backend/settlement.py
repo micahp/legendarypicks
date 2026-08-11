@@ -500,6 +500,30 @@ def settle_game(con: sqlite3.Connection, game_id: int) -> dict:
         return {"settled": 0, "void": 0, "unmappable": 0, "errors": 0,
                 "msg": f"game {game_id}: no espn_event_id, cannot pull boxscore"}
 
+    # ── Is the game actually over? ──────────────────────────────────────────────
+    # This gate used to live BELOW the MLB branch, which returns before reaching it — so
+    # for the one league that has real prop volume it was dead code, and MLB props were
+    # graded against whatever the box score held at the moment the job ran. Measured on
+    # 401816457 (Reds at Nationals, 2026-08-09): first pitch 16:15Z, every prop settled at
+    # 17:00Z, 45 minutes in. Brady Singer was graded at 6 outs and 0 strikeouts; he
+    # finished with 18 and 3. Games that had not started yet were graded as zeros — two
+    # examples settled roughly 22 HOURS before first pitch.
+    #
+    # A live box score is not a result. Nothing settles until the publisher says Final.
+    if game["final_home"] is None:
+        try:
+            result = espn.game_result(league, espn_event_id)
+            if result["state"] != "post" or result["winner"] is None:
+                return {"settled": 0, "void": 0, "unmappable": 0, "errors": 0,
+                        "msg": f"game {game_id}: not final yet (state={result['state']})"}
+            con.execute(
+                "UPDATE prop_games SET final_home=?, final_away=? WHERE id=?",
+                (result["scores"].get(game["home"]), result["scores"].get(game["away"]), game_id))
+            con.commit()
+        except Exception as e:
+            return {"settled": 0, "void": 0, "unmappable": 0, "errors": 1,
+                    "error_msg": f"game {game_id}: ESPN pull failed: {e}"}
+
     # ── MLB: use MLB Stats API for accurate TB/doubles/strikeouts ──
     if league == "mlb":
         # Find unsettled props
@@ -518,22 +542,7 @@ def settle_game(con: sqlite3.Connection, game_id: int) -> dict:
         result.setdefault("errors", 0)
         return result
 
-    # Ensure game is final
-    if game["final_home"] is None:
-        # Try to get final from ESPN
-        try:
-            result = espn.game_result(league, espn_event_id)
-            if result["state"] != "post" or result["winner"] is None:
-                return {"settled": 0, "void": 0, "unmappable": 0, "errors": 0,
-                        "msg": f"game {game_id}: not final yet (state={result['state']})"}
-            # Update final scores in DB
-            con.execute(
-                "UPDATE prop_games SET final_home=?, final_away=? WHERE id=?",
-                (result["scores"].get(game["home"]), result["scores"].get(game["away"]), game_id))
-            con.commit()
-        except Exception as e:
-            return {"settled": 0, "void": 0, "unmappable": 0, "errors": 1,
-                    "error_msg": f"game {game_id}: ESPN pull failed: {e}"}
+    # (finality is checked above, before the MLB branch, so every league passes through it)
 
     # Pull boxscore
     try:
