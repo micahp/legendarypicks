@@ -11,8 +11,17 @@ ESPN's scoreboard is keyed by LOCAL date, so a 01:40Z start (the previous evenin
 in the US) is looked up against the NEXT day's slate, which in a series holds the
 same two teams. The team match then succeeds on the wrong game.
 
-Measured on picks.dev.db 2026-08-11: 85 of 286 dated MLB rows bound to an event
-starting at a different time. Two harms:
+Measured on picks.dev.db 2026-08-11, dry run against a warm backend: of 316 MLB
+rows carrying a start_time, **191 correct, 89 bound to the wrong event, 36
+unresolved**. (An earlier note said "85 of 286" from a different query; the
+89/316 figure is this script's own ruler and supersedes it.)
+
+Every one of the 89 is off by exactly 15 event ids — MLB's slate size — i.e.
+bound to the same time slot on the FOLLOWING day's card. That regular offset is
+the UTC/local boundary showing through, and it is what makes the team match
+succeed on the wrong game rather than fail.
+
+Two harms:
 
   1. The played game shows NO props (Micah opened /game/mlb/401816477 — empty,
      while its props sat on 401816492, which had not been played).
@@ -22,12 +31,24 @@ starting at a different time. Two harms:
 `link_prop_games.py` now prefers `start_time` and fails closed, which stops NEW
 bad links. This script corrects the rows already written.
 
-WHY IT DOES NOT USE espn_client
--------------------------------
-`espn_client.games()` returns HTTP 403 from this host when called by a direct
-importer — the pacing/cache that makes it work lives on the serving path. The
-local backend answers the same query correctly, so slates are read from it. That
-also means this script needs the dev backend running.
+WHY IT READS SLATES FROM THE LOCAL BACKEND
+-----------------------------------------
+Not because ESPN blocks this box — it does not. `site.web.api.espn.com` (what
+`_SITE` uses) and `sports.core.api.espn.com` both answer 200; only `site.api`
+is walled and we stopped using it. The backend already has the slate cache and
+the per-host budget, so a warm cache costs ESPN nothing at all. Requires the dev
+backend running.
+
+The ceiling is a request COUNT per host, ~100 then a cooldown — not a rate. A
+sweep of these dates tripped it and made every date 500, which reads exactly
+like an ESPN outage and is not one. See reference_espn_host_map.
+
+So the cost is stated before it is spent: one request per DISTINCT day (not per
+row), printed up front, and the script refuses outright above 100. There is no
+pacing and no retry ladder — neither buys budget, and a retry spends more of it
+to rediscover that it is gone. A slate that cannot be read is FATAL, because an
+empty slate is indistinguishable from "no games that day" and would quietly
+turn every blocked request into a row this script claims it could not resolve.
 
 Usage:
   LP_DB_PATH=data/picks.dev.db python3 relink_prop_games_by_start_time.py \
@@ -48,16 +69,68 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from link_prop_games import _instant, _norm_team, _neighbour_days  # noqa: E402
 
 
-def _slate(api, league, day, cache):
-    key = (league, day)
-    if key in cache:
-        return cache[key]
-    try:
-        with urllib.request.urlopen("%s/api/%s/games?date=%s" % (api, league, day), timeout=30) as r:
-            cache[key] = json.load(r)
-    except Exception:
-        cache[key] = []
-    return cache[key]
+class SlateUnavailable(RuntimeError):
+    """A slate could not be read. Fatal, never absorbed into an empty slate."""
+
+
+def _load_slates(api, league, days, cache_path=""):
+    """Fetch every needed slate ONCE, up front, and fail loudly.
+
+    ESPN's ceiling is a request COUNT per host (~100, then a cooldown), not a
+    rate. Two consequences the earlier version of this function got wrong:
+
+      * Pacing does not buy budget. A sleep between requests spends the same
+        count more slowly, so `pace=` was pure cost. Removed.
+      * A retry ladder makes it WORSE. Each retry is another request against
+        the same exhausted host, so backing off "into the cooldown" spends
+        budget to discover the budget is spent. Removed.
+
+    The only lever is issuing fewer requests: one per DISTINCT day, resolved
+    before the row loop, so a 30-row series costs one fetch and not thirty.
+
+    A failure raises. The previous version returned `[]`, which is
+    indistinguishable from "ESPN listed no games that day" -- so every swallowed
+    403 silently demoted its row to `unresolved` and the script still printed a
+    tidy summary. `total CORRECTED: 0` could mean the matcher found nothing or
+    that no slate was ever read, and the output could not tell you which.
+
+    See the espn-request-budget skill and reference_espn_host_map.
+    """
+    slates = {}
+    # Rung 4 of the skill's ladder: a cached slate costs the publisher nothing.
+    # A dry run, an analysis pass and the --apply run all want the SAME 29
+    # slates; re-fetching them per invocation is three times the spend for one
+    # question. The backend's own cache is in-memory with a 12h TTL, so it does
+    # not survive a restart and cannot be relied on across sittings.
+    if cache_path and os.path.exists(cache_path):
+        with open(cache_path) as f:
+            slates = {k: v for k, v in json.load(f).items() if k in days}
+        if slates:
+            print("slate cache             : %d/%d from %s (0 requests)"
+                  % (len(slates), len(days), cache_path))
+
+    todo = [d for d in sorted(days) if d not in slates]
+    if cache_path:
+        print("slates to FETCH         : %d" % len(todo))
+    for day in todo:
+        url = "%s/api/%s/games?date=%s" % (api, league, day)
+        try:
+            with urllib.request.urlopen(url, timeout=90) as r:
+                slates[day] = json.load(r)
+        except Exception as e:
+            if cache_path and slates:   # keep what we paid for
+                with open(cache_path, "w") as f:
+                    json.dump(slates, f)
+            raise SlateUnavailable(
+                "%s returned %s.\nThe host budget may be spent (~100 requests, then a "
+                "cooldown) or the backend is down. Do NOT retry in a loop -- that spends "
+                "more of the same budget. Wait out the cooldown, or warm the backend's "
+                "slate cache, then re-run.\nRead %d/%d slates before failing."
+                % (url, e, len(slates), len(days))) from e
+    if cache_path:
+        with open(cache_path, "w") as f:
+            json.dump(slates, f)
+    return slates
 
 
 def _same_matchup(row, eg):
@@ -75,6 +148,8 @@ def main():
     ap.add_argument("--api", default="http://127.0.0.1:8096")
     ap.add_argument("--league", default="mlb")
     ap.add_argument("--apply", action="store_true")
+    ap.add_argument("--slate-cache", default="",
+                    help="JSON file of slates, reused across runs at zero request cost")
     args = ap.parse_args()
 
     db = os.environ.get("LP_DB_PATH") or os.path.join(
@@ -88,7 +163,22 @@ def main():
            WHERE league=? AND start_time IS NOT NULL AND start_time!=''""",
         (args.league,)).fetchall()
 
-    cache = {}
+    # Every distinct day these rows could sit on, resolved BEFORE the row loop.
+    # The request count is a function of the calendar, not of the row count: a
+    # 30-row series shares one slate. State the number before spending it, per
+    # the espn-request-budget skill.
+    days = set()
+    for r in rows:
+        if _instant(r["start_time"]) is not None:
+            days |= set(_neighbour_days(r["date"]))
+    print("%s rows with start_time: %d" % (args.league, len(rows)))
+    print("distinct slates to read : %d  (1 request each, to %s)" % (len(days), args.api))
+    if len(days) > 100:
+        sys.exit("refusing: %d requests exceeds the ~100-per-host budget. Narrow the "
+                 "date range and run it in sittings." % len(days))
+    slates = _load_slates(args.api, args.league, days, args.slate_cache)
+    print("slates read             : %d" % len(slates))
+
     fixes, already, unresolved = [], 0, []
     for r in rows:
         want = _instant(r["start_time"])
@@ -96,7 +186,7 @@ def main():
             continue
         found = None
         for day in _neighbour_days(r["date"]):
-            for eg in _slate(args.api, r["league"], day, cache):
+            for eg in slates.get(day, []):
                 if _same_matchup(r, eg) and _instant(eg.get("date")) == want:
                     found = str(eg["game_id"])
                     break
@@ -110,7 +200,6 @@ def main():
             fixes.append((r["id"], r["date"], r["start_time"], r["espn_event_id"] or "", found,
                           "%s @ %s" % (r["away"], r["home"])))
 
-    print("%s rows with start_time: %d" % (args.league, len(rows)))
     print("  already correct : %d" % already)
     print("  WOULD CORRECT   : %d" % len(fixes))
     print("  unresolved      : %d (left alone)" % len(unresolved))
