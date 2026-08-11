@@ -1,0 +1,168 @@
+{
+  "date": "2026-07-17",
+  "window": "7d",
+  "ref_analyzed": "origin/dev",
+  "note": "Window = committer dates 2026-07-10..2026-07-17 (git --since filters on committer date). 1 commit carries a stale author date 2026-06-29 (rebase artifact); excluded from session timing. git fetch was blocked by harness security scan; metrics use local origin/dev remote-tracking ref HEAD 32a0a49 (2026-07-17 11:39 CDT). Prior retro (2026-06-27) ran against origin/analytics-backbone, not origin/dev \u2014 trend comparison is across different refs/windows. CORRECTED: initial run reported 0% test ratio due to a JS-only test regex (test.*/__tests__/) that missed Python test_*.py convention. Actual test insertions this window = 2089 LOC across 9 files (7.8%). 10 test files exist on branch. Ship-of-week commit is proposal-doc + planner scripts, not pure logic.",
+  "metrics": {
+    "commits": 87,
+    "contributors": 1,
+    "prs_merged": 3,
+    "pr_refs": 0,
+    "insertions": 26924,
+    "deletions": 2941,
+    "net_loc": 23983,
+    "test_loc": 2089,
+    "test_ratio": 0.078,
+    "logical_sloc_added": 24602,
+    "active_days": 8,
+    "sessions": 28,
+    "deep_sessions": 3,
+    "medium_sessions": 7,
+    "micro_sessions": 18,
+    "avg_session_minutes": 25,
+    "loc_per_session_hour": 2346,
+    "weighted_commits": 233,
+    "peak_hour": 11,
+    "focus_score": 0.494,
+    "focus_dir": "backend",
+    "fix_pct": 0.126,
+    "feat_pct": 0.184,
+    "docs_pct": 0.138,
+    "type_counts": {
+      "release": 6,
+      "esports": 5,
+      "cod": 1,
+      "docs": 12,
+      "wc": 15,
+      "revert": 1,
+      "ground": 1,
+      "game": 1,
+      "predict": 1,
+      "layout": 1,
+      "leagues": 4,
+      "mlb": 1,
+      "team": 1,
+      "fix": 11,
+      "feat": 16,
+      "add": 3,
+      "review": 1,
+      "queue": 1,
+      "document": 1,
+      "chore": 3,
+      "refactor": 1
+    },
+    "size_buckets": {
+      "Medium(100-499)": 27,
+      "Small(<100)": 47,
+      "XL(1500+)": 4,
+      "Large(500-1499)": 9
+    },
+    "ai_assisted_commits": 0,
+    "test_files_changed": 9,
+    "test_files_total_on_branch": 10
+  },
+  "authors": {
+    "micahp": 87
+  },
+  "version_range": [
+    "0.4.0",
+    "0.4.4"
+  ],
+  "streak_days": 26,
+  "personal_streak_days": 26,
+  "commit_hours": [
+    1,
+    6,
+    3,
+    3,
+    0,
+    0,
+    0,
+    0,
+    1,
+    3,
+    6,
+    11,
+    6,
+    1,
+    10,
+    3,
+    8,
+    0,
+    2,
+    7,
+    3,
+    2,
+    7,
+    4
+  ],
+  "top_hotspots": [
+    [
+      "backend/wc_context.py",
+      13
+    ],
+    [
+      "backend/routers/games.py",
+      10
+    ],
+    [
+      "pages/leagues/[league].tsx",
+      10
+    ],
+    [
+      "CHANGELOG.md",
+      9
+    ],
+    [
+      "backend/routers/esports/slate.py",
+      9
+    ],
+    [
+      "package.json",
+      8
+    ],
+    [
+      "pages/esports.tsx",
+      8
+    ],
+    [
+      "components/Game/BoothFeed.tsx",
+      8
+    ],
+    [
+      "backend/bovada_scraper.py",
+      6
+    ],
+    [
+      "components/Game/WCContext.tsx",
+      6
+    ]
+  ],
+  "ship_of_week": "add proposal-only MLB identity repair planner",
+  "ship_loc": 7701,
+  "rel_in_window": [
+    "release: v0.4.4 \u2014 UFC props (custom individual-sport system) + all-leagues ingest routing",
+    "release: v0.4.3 \u2014 props upcoming slate grouped by date + game times",
+    "release: v0.4.2 \u2014 demote non-English broadcasts from the hero",
+    "release: v0.4.1 \u2014 stable broadcast identity + per-broadcast /esports + docs",
+    "release: v0.4.0 changelog rolls up the full 0.3 -> 0.4 arc",
+    "release: v0.4.0 \u2014 Call of Duty on the board"
+  ],
+  "prior_ref": "origin/analytics-backbone",
+  "prior_version_range": [
+    "0.1.0",
+    "0.2.1"
+  ],
+  "stale_author_date_commit": [
+    "225d3521",
+    "34c6e4bf"
+  ],
+  "test_correction": {
+    "initial_claim": "0% test ratio, 0 test LOC",
+    "actual_test_loc": 2089,
+    "actual_test_ratio": 0.078,
+    "test_files_changed_this_window": 9,
+    "test_files_total": 10,
+    "cause": "regex matched only JS test conventions, not Python test_*.py"
+  }
+}
