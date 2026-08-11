@@ -880,15 +880,23 @@ def game_result_soccer(league, game_id):
     status = comp.get("status", {})
     st = status.get("type", {})
     scores = {}
-    winner = None
+    winner = home_abbr = away_abbr = None
     for c in comp.get("competitors", []):
         abbr = c.get("team", {}).get("abbreviation")
         scores[abbr] = _num(c.get("score"))
+        if c.get("homeAway") == "home":
+            home_abbr = abbr
+        elif c.get("homeAway") == "away":
+            away_abbr = abbr
         if c.get("winner") is True:
             winner = abbr
     return {
         "state": st.get("state"),
         "scores": scores,
+        "home": home_abbr,
+        "away": away_abbr,
+        "home_score": scores.get(home_abbr),
+        "away_score": scores.get(away_abbr),
         "winner": winner,
         "period": status.get("period"),
         "clock": status.get("displayClock"),
@@ -1140,15 +1148,29 @@ def game_result(league, game_id):
     comp = (d.get("header", {}).get("competitions") or [{}])[0]
     status = comp.get("status", {})
     st = status.get("type", {})
-    scores = {}
+    scores, home_abbr, away_abbr = {}, None, None
     for c in comp.get("competitors", []):
-        scores[c.get("team", {}).get("abbreviation")] = _num(c.get("score"))
+        ab = c.get("team", {}).get("abbreviation")
+        scores[ab] = _num(c.get("score"))
+        # ESPN states which side is home on the same object as the score. Read it
+        # rather than asking the caller to supply a key: every caller that had to
+        # supply one supplied a display name against this abbrev-keyed dict, and
+        # `.get("Athletics")` into `{"ATH": 5}` misses silently. See
+        # test_game_result_home_away.
+        if c.get("homeAway") == "home":
+            home_abbr = ab
+        elif c.get("homeAway") == "away":
+            away_abbr = ab
     winner = None
     if st.get("state") == "post" and len(scores) == 2 and all(v is not None for v in scores.values()):
         winner = max(scores, key=scores.get)
     return {
         "state": st.get("state"),
         "scores": scores,
+        "home": home_abbr,
+        "away": away_abbr,
+        "home_score": scores.get(home_abbr),
+        "away_score": scores.get(away_abbr),
         "winner": winner,
         "period": status.get("period"),
         "clock": status.get("displayClock"),

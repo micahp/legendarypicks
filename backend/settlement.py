@@ -549,9 +549,17 @@ def settle_game(con: sqlite3.Connection, game_id: int) -> dict:
             if result["state"] != "post" or result["winner"] is None:
                 return {"settled": 0, "void": 0, "unmappable": 0, "errors": 0,
                         "msg": f"game {game_id}: not final yet (state={result['state']})"}
+            # `scores` is keyed by ESPN ABBREVIATION ("ATH"); game["home"] is a
+            # display name ("Athletics"). The old lookup `scores.get(game["home"])`
+            # could never hit, so final_home/final_away were written NULL on every
+            # game that came through here — WC had 3 of 3 linked games with no
+            # final, and MLB's 605 finals all came from regrade_props instead.
+            # A wrong key does not raise, it misses. game_result now reports which
+            # side is home from ESPN's own homeAway flag, so there is no name to
+            # match. See test_game_result_home_away.
             con.execute(
                 "UPDATE prop_games SET final_home=?, final_away=? WHERE id=?",
-                (result["scores"].get(game["home"]), result["scores"].get(game["away"]), game_id))
+                (result.get("home_score"), result.get("away_score"), game_id))
             con.commit()
         except Exception as e:
             return {"settled": 0, "void": 0, "unmappable": 0, "errors": 1,

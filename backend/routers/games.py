@@ -915,11 +915,15 @@ def get_game_detail(league: str, game_id: str):
             result = espn.game_result(league, game_id)
             scores = result.get("scores", {})
             if scores and len(scores) == 2:
+                # `scores` is keyed by ESPN abbreviation, so looking it up with a
+                # team NAME missed and the fallback key "home" never existed in
+                # it either — the score silently came back None. Take the sides
+                # from ESPN's own homeAway flag instead of matching vocabularies.
                 out["live_score"] = {
-                    "home": scores.get(out["context"]["home_team"], scores.get("home")),
-                    "away": scores.get(out["context"]["away_team"], scores.get("away")),
+                    "home": result.get("home_score"),
+                    "away": result.get("away_score"),
                 }
-                if not out["live_score"]["home"] or not out["live_score"]["away"]:
+                if out["live_score"]["home"] is None or out["live_score"]["away"] is None:
                     out["live_score"] = None
         except Exception:
             pass
@@ -947,35 +951,16 @@ def get_game_detail(league: str, game_id: str):
             try:
                 result = espn.game_result(league, game_id)
                 scores = result.get("scores", {})
-                home_abbrev = ""
-                away_abbrev = ""
-                try:
-                    summary = _fetch_summary(lg, game_id)
-                    comp = (summary.get("header", {}).get("competitions") or [{}])[0]
-                    for c in comp.get("competitors", []):
-                        ab = c.get("team", {}).get("abbreviation", "")
-                        if c.get("homeAway") == "home":
-                            home_abbrev = ab
-                        else:
-                            away_abbrev = ab
-                    if not scores:
-                        for c in comp.get("competitors", []):
-                            ab = c.get("team", {}).get("abbreviation", "")
-                            sc = _num(c.get("score"))
-                            if ab and sc is not None:
-                                scores[ab] = int(sc)
-                except Exception:
-                    if len(scores) == 2:
-                        score_keys = sorted(scores.keys())
-                        home_abbrev = score_keys[0]
-                        away_abbrev = score_keys[1]
+                # game_result already reports which side is home, from ESPN's own
+                # homeAway flag. This used to re-fetch the summary purely to read
+                # that flag — a second request for a value we were handed — and
+                # when the fetch failed it guessed home by ALPHABETICAL order of
+                # the abbreviations, which is a coin flip wearing a sort().
+                home_abbrev = result.get("home") or ""
+                away_abbrev = result.get("away") or ""
 
-                if scores and len(scores) == 2:
-                    abbrevs = list(scores.keys())
-                    if home_abbrev and away_abbrev and home_abbrev in scores and away_abbrev in scores:
-                        sc = {"home": scores[home_abbrev], "away": scores[away_abbrev]}
-                    else:
-                        sc = {"home": scores[abbrevs[0]], "away": scores[abbrevs[1]]}
+                if result.get("home_score") is not None and result.get("away_score") is not None:
+                    sc = {"home": result["home_score"], "away": result["away_score"]}
                     # Only "final" when the game is over; otherwise it's the live score.
                     if is_final:
                         out["final_score"] = sc
