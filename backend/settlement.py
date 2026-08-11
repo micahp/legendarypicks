@@ -303,23 +303,44 @@ def _mlb_schedule(date_str: str) -> dict:
 
 
 def _fetch_mlb_gamepk(date_str: str, home_team: str, away_team: str) -> Optional[int]:
-    """Look up MLB gamePk from the schedule API by date + team names."""
+    """Look up MLB gamePk from the schedule API by teams, searching the day BEFORE and AFTER
+    as well as the day itself.
+
+    Publishers do not agree on which calendar day a game belongs to. A first pitch at 22:15
+    ET is the next day in UTC, and our prop_games rows and the MLB schedule land on opposite
+    sides of it: the Braves-Giants fixture is 2026-06-17 to Statcast and the MLB schedule,
+    and 2026-06-18 in prop_games. Matching on the exact date therefore found either nothing
+    or, worse, a DIFFERENT game involving one of the same clubs — which is how ten games were
+    graded to zeros against a box score their players never appeared in. 39 of 210 props
+    across them disagreed with Statcast even after the finality fix.
+
+    The date is a hint, the teams are the identity. Same day first so an exact match always
+    wins; a doubleheader still resolves to the first game of the pair, which is the existing
+    behaviour and a separate question.
+    """
+    import datetime as _dt
     try:
-        data = _mlb_schedule(date_str)
+        base = _dt.date.fromisoformat(date_str)
+        candidates = [date_str,
+                      (base - _dt.timedelta(days=1)).isoformat(),
+                      (base + _dt.timedelta(days=1)).isoformat()]
+    except Exception:
+        candidates = [date_str]
+
+    for day in candidates:
+        try:
+            data = _mlb_schedule(day)
+        except Exception:
+            continue
         for dt_entry in data.get("dates", []):
             for game in dt_entry.get("games", []):
                 teams = game.get("teams", {})
-                away_name = (teams.get("away", {}).get("team", {}).get("name") or "").lower()
-                home_name = (teams.get("home", {}).get("team", {}).get("name") or "").lower()
-                if home_team.lower() == home_name and away_team.lower() == away_name:
-                    return game["gamePk"]
-                # Also try abbreviation match
-                away_abbr = (teams.get("away", {}).get("team", {}).get("abbreviation") or "").lower()
-                home_abbr = (teams.get("home", {}).get("team", {}).get("abbreviation") or "").lower()
-                if home_team.lower() == home_abbr and away_team.lower() == away_abbr:
-                    return game["gamePk"]
-    except Exception:
-        pass
+                away = teams.get("away", {}).get("team", {})
+                home = teams.get("home", {}).get("team", {})
+                for key in ("name", "abbreviation"):
+                    if (home_team.lower() == (home.get(key) or "").lower()
+                            and away_team.lower() == (away.get(key) or "").lower()):
+                        return game["gamePk"]
     return None
 
 
