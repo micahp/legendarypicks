@@ -5,7 +5,10 @@ link_prop_games.py — Crosswalk: match prop_games to ESPN games and populate es
 Matches by: league + date + normalized team abbreviation.
 Runs on existing rows AND usable as a library for ingest_props.py going forward.
 
-Usage: venv/bin/python link_prop_games.py [--dry-run]
+Usage: venv/bin/python link_prop_games.py [--dry-run] [--relink]
+
+--relink also re-checks rows that already carry an espn_event_id, correcting any
+bound to the wrong game of a series (85 MLB rows on 2026-08-11).
 """
 import sys, os, sqlite3, re
 
@@ -124,33 +127,105 @@ def _norm_team(team_name: str, league: str) -> str:
     return team_name.strip()[:3].upper()
 
 
+def _instant(value):
+    """Parse a timestamp to a UTC datetime truncated to the minute, or None.
+
+    prop_games writes `2026-08-11T01:40:00+00:00`; ESPN writes `2026-08-11T01:40Z`.
+    Both name the same instant and must compare equal.
+    """
+    import datetime as _dt
+    s = (value or "").strip()
+    if not s:
+        return None
+    try:
+        dt = _dt.datetime.fromisoformat(s.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=_dt.timezone.utc)
+    return dt.astimezone(_dt.timezone.utc).replace(second=0, microsecond=0)
+
+
 def link_prop_game(con: sqlite3.Connection, game_row, espn_games: list) -> str:
-    """Try to link one prop_game to an ESPN game. Returns espn_event_id or ''."""
+    """Link one prop_game to an ESPN game. Returns espn_event_id or ''.
+
+    Teams identify the MATCHUP; `start_time` identifies WHICH GAME of it.
+
+    Matching on teams within a day's slate is ambiguous for the case baseball
+    produces constantly -- the same two clubs on consecutive days. `prop_games.date`
+    comes from a UTC first pitch while ESPN's scoreboard is keyed by LOCAL date, so
+    a 01:40Z start (the previous evening locally) is looked up against the NEXT
+    day's slate, which in a series holds the same two teams. The team match then
+    succeeds on the wrong game: 85 of 286 dated MLB rows were bound to a game they
+    were not, hiding a played game's props on an unplayed one and leaving them
+    permanently ungraded (2026-08-11, /game/mlb/401816477).
+
+    When `start_time` is known it is decisive, and a matchup whose instant matches
+    nothing here returns '' rather than falling back to the team match. A wrong
+    link is strictly worse than no link -- it is invisible, it hides the props from
+    the game that was played, and settlement can never resolve it. An unlinked row
+    is visibly missing and can be fixed.
+    """
     league = game_row["league"]
-    date = game_row["date"]
     home_norm = _norm_team(game_row["home"], league)
     away_norm = _norm_team(game_row["away"], league)
+    pg_home_name = (game_row["home"] or "").lower()
+    pg_away_name = (game_row["away"] or "").lower()
 
-    for eg in espn_games:
-        eg_home = eg["home"]["abbrev"].upper()
-        eg_away = eg["away"]["abbrev"].upper()
-        if eg_home == home_norm and eg_away == away_norm:
-            return eg["game_id"]
-        # Also try displayName match
-        eg_home_name = (eg["home"].get("displayName") or "").lower()
-        eg_away_name = (eg["away"].get("displayName") or "").lower()
-        pg_home_name = (game_row["home"] or "").lower()
-        pg_away_name = (game_row["away"] or "").lower()
-        if eg_home_name == pg_home_name and eg_away_name == pg_away_name:
-            return eg["game_id"]
-    return ""
+    def _same_matchup(eg):
+        if eg["home"]["abbrev"].upper() == home_norm and eg["away"]["abbrev"].upper() == away_norm:
+            return True
+        return ((eg["home"].get("displayName") or "").lower() == pg_home_name
+                and (eg["away"].get("displayName") or "").lower() == pg_away_name)
+
+    candidates = [eg for eg in espn_games if _same_matchup(eg)]
+    if not candidates:
+        return ""
+
+    try:
+        want = _instant(game_row["start_time"])
+    except (KeyError, IndexError):
+        want = None  # caller selected the row without start_time
+
+    if want is not None:
+        for eg in candidates:
+            if _instant(eg.get("date")) == want:
+                return eg["game_id"]
+        return ""  # fail closed: known instant, no event at it
+
+    return candidates[0]["game_id"]
 
 
-def link_existing_games(con: sqlite3.Connection, dry_run: bool = False) -> int:
-    """Link all prop_games that have empty espn_event_id."""
-    unlinked = con.execute("""
-        SELECT id, league, date, home, away FROM prop_games 
-        WHERE espn_event_id IS NULL OR espn_event_id = ''
+def _neighbour_days(date_str):
+    """The day itself first, then the day before and after.
+
+    prop_games.date is derived from a UTC first pitch; ESPN's scoreboard is keyed
+    by LOCAL date. A 01:40Z start is the previous evening in the US, so the event
+    sits on the day BEFORE the one our row is filed under. Same day first so an
+    exact match still wins.
+    """
+    import datetime as _dt
+    try:
+        base = _dt.date.fromisoformat(date_str)
+    except (TypeError, ValueError):
+        return [date_str]
+    return [date_str,
+            (base - _dt.timedelta(days=1)).isoformat(),
+            (base + _dt.timedelta(days=1)).isoformat()]
+
+
+def link_existing_games(con: sqlite3.Connection, dry_run: bool = False,
+                        relink: bool = False) -> int:
+    """Link prop_games to ESPN events.
+
+    `relink=True` also re-examines rows that already carry an espn_event_id, which
+    is how the 85 rows bound to the wrong game of a series get corrected. It only
+    writes when the answer actually changes.
+    """
+    where = "" if relink else "WHERE espn_event_id IS NULL OR espn_event_id = ''"
+    unlinked = con.execute(f"""
+        SELECT id, league, date, start_time, home, away, espn_event_id
+        FROM prop_games {where}
     """).fetchall()
 
     if not unlinked:
@@ -164,23 +239,41 @@ def link_existing_games(con: sqlite3.Connection, dry_run: bool = False) -> int:
         by_date_league[(g["date"], g["league"])].append(g)
 
     linked = 0
+    changed = 0
     for (date, league), games in by_date_league.items():
         print(f"\n  {date} {league}: {len(games)} games to link")
-        try:
-            espn_games = espn.games(league, date)
-        except Exception as e:
-            print(f"    ESPN pull failed: {e}")
+        # The neighbouring slates matter: prop_games.date comes from a UTC first
+        # pitch, ESPN's scoreboard is keyed by LOCAL date, so the event we want is
+        # routinely filed under the day before. Without this the correct game is
+        # not even a candidate and the team match lands on the wrong one.
+        espn_games = []
+        seen_ids = set()
+        for day in _neighbour_days(date):
+            try:
+                for eg in espn.games(league, day):
+                    if str(eg.get("game_id")) not in seen_ids:
+                        seen_ids.add(str(eg.get("game_id")))
+                        espn_games.append(eg)
+            except Exception as e:
+                print(f"    ESPN pull failed for {day}: {e}")
+        if not espn_games:
             continue
 
         for g in games:
             espn_id = link_prop_game(con, g, espn_games)
+            prev = g["espn_event_id"] or ""
             if espn_id:
-                if not dry_run:
-                    con.execute("UPDATE prop_games SET espn_event_id=? WHERE id=?", (espn_id, g["id"]))
+                if espn_id != prev:
+                    if not dry_run:
+                        con.execute("UPDATE prop_games SET espn_event_id=? WHERE id=?", (espn_id, g["id"]))
+                    changed += 1
+                    tag = f"→ {espn_id}" if not prev else f"{prev} → {espn_id}  CORRECTED"
+                    print(f"    game {g['id']}: {g['away']} @ {g['home']} {tag}")
                 linked += 1
-                print(f"    game {g['id']}: {g['away']} @ {g['home']} → {espn_id}")
             else:
-                print(f"    game {g['id']}: {g['away']} @ {g['home']} → NO MATCH")
+                print(f"    game {g['id']}: {g['away']} @ {g['home']} → NO MATCH"
+                      + (f" (was {prev}, left alone)" if prev else ""))
+    print(f"\n  {linked} linked, {changed} changed")
 
     if not dry_run:
         con.commit()
@@ -189,12 +282,13 @@ def link_existing_games(con: sqlite3.Connection, dry_run: bool = False) -> int:
 
 def main():
     dry_run = "--dry-run" in sys.argv
+    relink = "--relink" in sys.argv
 
     con = sqlite3.connect(DB)
     con.row_factory = sqlite3.Row
 
     print("Linking prop_games → ESPN event IDs...")
-    linked = link_existing_games(con, dry_run=dry_run)
+    linked = link_existing_games(con, dry_run=dry_run, relink=relink)
 
     if dry_run:
         print(f"\nDRY RUN — {linked} would be linked")
