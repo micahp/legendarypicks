@@ -24,6 +24,10 @@ DB = os.environ.get("LP_DB_PATH") or os.path.join(os.path.dirname(os.path.abspat
 # ESPN MLB boxscore label sets (used to identify stat group when name is None)
 _BATTING_LABELS  = {'AB', 'R', 'H', 'RBI', 'HR', 'BB', 'K', 'AVG', 'OBP', 'SLG', 'H-AB', '#P', 'TB', '2B', '3B', 'SB', 'CS'}
 _PITCHING_LABELS = {'IP', 'H', 'R', 'ER', 'BB', 'K', 'HR', 'ERA', 'PC-ST', 'PC', 'SO', 'outs', 'BF'}
+# The two sets share {BB, H, HR, K, R}, so membership in either proves nothing. Only
+# the labels unique to one group identify it. See test_stat_group_identity.
+_BATTING_ONLY = _BATTING_LABELS - _PITCHING_LABELS
+_PITCHING_ONLY = _PITCHING_LABELS - _BATTING_LABELS
 
 MARKET_STAT: Dict[Tuple[str, str], Tuple[str, str]] = {
     # ── MLB pitching ──
@@ -201,11 +205,17 @@ def _find_player_stat(boxscore: dict, player_name: str, team: str,
                     if stats_name.lower().replace(" ", "_") != category_norm:
                         continue
                 else:
-                    # Unnamed — identify by labels
-                    if category_norm in ("batting", "offensive") and not (label_set & _BATTING_LABELS):
-                        continue
-                    if category_norm == "pitching" and not (label_set & _PITCHING_LABELS):
-                        continue
+                    # Unnamed — identify by a label the OTHER group does not have.
+                    # A non-empty intersection is not identity: the two sets share
+                    # {BB, H, HR, K, R}, so every pitching line satisfied the batting
+                    # test and a batter's "hits" read the pitcher's hits allowed.
+                    # See test_stat_group_identity.
+                    if category_norm in ("batting", "offensive"):
+                        if not (label_set & _BATTING_ONLY) or (label_set & _PITCHING_ONLY):
+                            continue
+                    elif category_norm == "pitching":
+                        if not (label_set & _PITCHING_ONLY) or (label_set & _BATTING_ONLY):
+                            continue
 
             entries = stats_group.get("athletes", []) or []
             matched = None
@@ -227,20 +237,12 @@ def _find_player_stat(boxscore: dict, player_name: str, team: str,
                 stats_list = athlete_entry.get("stats", [])
                 labels = stats_group.get("labels") or []
                 if isinstance(stats_list, list) and len(stats_list) > 0:
-                    # Compute TB from SLG * AB if not directly in labels
-                    if stat_key == "TB" and "TB" not in labels and "SLG" in labels and "AB" in labels:
-                        try:
-                            slg_idx = labels.index("SLG")
-                            ab_idx = labels.index("AB")
-                            slg = float(stats_list[slg_idx]) if stats_list[slg_idx] not in (None, "") else 0.0
-                            ab = float(stats_list[ab_idx]) if stats_list[ab_idx] not in (None, "") else 0.0
-                            return round(slg * ab)
-                        except (ValueError, TypeError, IndexError):
-                            pass
-
-                    # Compute 2B similarly if not available
-                    if stat_key == "2B" and "2B" not in labels:
-                        return None  # can't compute without expanded boxscore
+                    # TB was derived here as round(SLG * AB). MLB publishes totalBases
+                    # directly and _MLB_BATTING_STATS already reads it, so this forked a
+                    # definition for no gain — and ESPN's box-score AVG/OBP/SLG are
+                    # season-to-date, making it a season rate times one game's at-bats.
+                    # A box score that does not report TB is a void, like any other
+                    # unreported stat. Same for 2B, which was already handled this way.
 
                     # Standard label-based lookup
                     if labels and stat_key in labels:
