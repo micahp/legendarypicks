@@ -16,6 +16,17 @@ os.environ["LP_DB_PATH"] = _TEST_DB.name
 import sqlite3  # noqa: E402
 from news_classifier import classify  # noqa: E402
 from routers import news  # noqa: E402
+import _core  # noqa: E402
+
+# `_core.DB` is read from LP_DB_PATH at IMPORT time and never again, and a module is
+# imported once per pytest session — so whichever test module imports `_core` first
+# owns the path for the whole run, and under a full-suite run that is not this file.
+# These seven tests failed with "no such table: news_items" in the suite and passed
+# in isolation: an import-order dependency, not a defect in the code under test.
+# Point `_core.DB` at our temp file (every reader calls `_db()`, which reads it at
+# call time) and create the schema here rather than relying on an import side effect.
+_core.DB = _TEST_DB.name
+_core._init_db()
 
 
 def _insert(headline, league, layer, url, body="", source="test", key_player=None,
@@ -181,11 +192,22 @@ class NewsApiTests(unittest.TestCase):
             pass
 
     def setUp(self):
+        # Per TEST, not at import: `_core.DB` is a module global that several suites
+        # claim at import time (test_nfl_mock_draft.py:38 among them), and the last
+        # import of the session wins for every test that runs afterwards. Claiming it
+        # here — after all imports, before each test — is the only placement that does
+        # not depend on collection order. Restored in tearDown so the next suite gets
+        # back whatever it set.
+        self._core_db = _core.DB
+        _core.DB = _TEST_DB.name
         con = sqlite3.connect(_TEST_DB.name)
         con.execute("DELETE FROM news_items")
         con.execute("DELETE FROM news_narratives")
         con.commit()
         con.close()
+
+    def tearDown(self):
+        _core.DB = self._core_db
 
     def test_catch_all_groups_by_league(self):
         _insert("Fox backs out of NFL negotiations", "nfl", "narrative", "http://x/1")
