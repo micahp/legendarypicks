@@ -31,6 +31,22 @@ Two harms:
 `link_prop_games.py` now prefers `start_time` and fails closed, which stops NEW
 bad links. This script corrects the rows already written.
 
+UNRESOLVED IS NOT "LEAVE IT ALONE"
+----------------------------------
+A row whose true event cannot be found still holds whatever it held before, and
+that value may be provably wrong: if the id it carries belongs to an event we
+CAN see, starting at a different instant, it is not this row's game. Keeping it
+is the same defect the script exists to repair — the played game shows no props
+and they never grade — so the link is CLEARED. An empty link is visibly missing
+and fixable; a wrong one is invisible and permanent. Same fail-closed rule
+`link_prop_game` applies to new links.
+
+Two of these were also aliasing a legitimately-linked row onto one event id.
+
+APPLIED TO DEV 2026-08-11: 89 rows corrected, then a second pass cleared 12
+provably-wrong links. Final state: 280 correct, 0 event-id collisions, 24
+unresolved with no evidence either way (left alone).
+
 WHY IT READS SLATES FROM THE LOCAL BACKEND
 -----------------------------------------
 Not because ESPN blocks this box — it does not. `site.web.api.espn.com` (what
@@ -179,7 +195,14 @@ def main():
     slates = _load_slates(args.api, args.league, days, args.slate_cache)
     print("slates read             : %d" % len(slates))
 
-    fixes, already, unresolved = [], 0, []
+    # {event_id: start instant} for everything the slates showed us, so an
+    # unresolved row can still be checked against the id it already holds.
+    events = {}
+    for day_games in slates.values():
+        for eg in day_games:
+            events[str(eg.get("game_id"))] = eg.get("date")
+
+    fixes, already, unresolved, provably_wrong = [], 0, [], []
     for r in rows:
         want = _instant(r["start_time"])
         if want is None:
@@ -193,7 +216,20 @@ def main():
             if found:
                 break
         if not found:
-            unresolved.append(r["id"])
+            # Unresolved does NOT mean "leave whatever is there". If the id the
+            # row currently holds belongs to an event we CAN see, and that event
+            # starts at a different instant, the link is provably wrong — keeping
+            # it hides the props from the game that was played and guarantees they
+            # never grade. Clearing is the honest state: visibly missing and
+            # fixable, which is the same fail-closed rule link_prop_game applies
+            # to new links.
+            cur = r["espn_event_id"] or ""
+            cur_ev = events.get(cur)
+            if cur and cur_ev is not None and _instant(cur_ev) != want:
+                provably_wrong.append((r["id"], r["date"], cur,
+                                       "%s @ %s" % (r["away"], r["home"])))
+            else:
+                unresolved.append(r["id"])
         elif found == (r["espn_event_id"] or ""):
             already += 1
         else:
@@ -202,7 +238,11 @@ def main():
 
     print("  already correct : %d" % already)
     print("  WOULD CORRECT   : %d" % len(fixes))
-    print("  unresolved      : %d (left alone)" % len(unresolved))
+    print("  unresolved      : %d (left alone — no evidence either way)" % len(unresolved))
+    print("  PROVABLY WRONG  : %d (id belongs to an event at another instant -> cleared)"
+          % len(provably_wrong))
+    for w in provably_wrong[:10]:
+        print("    id=%-5s %s holds %s which is a different game   (%s)" % w)
     for f in fixes[:20]:
         print("    id=%-5s %s start=%s  %s -> %s   (%s)" % f)
     if len(fixes) > 20:
@@ -212,7 +252,7 @@ def main():
         print("\nDRY RUN — nothing written. Re-run with --apply.")
         return
 
-    if not fixes:
+    if not fixes and not provably_wrong:
         print("\nNothing to write.")
         return
 
@@ -226,8 +266,11 @@ def main():
 
     for gid, _d, _s, _old, new, _m in fixes:
         con.execute("UPDATE prop_games SET espn_event_id=? WHERE id=?", (new, gid))
+    for gid, _d, _old, _m in provably_wrong:
+        con.execute("UPDATE prop_games SET espn_event_id='' WHERE id=?", (gid,))
     con.commit()
-    print("corrected %d rows" % len(fixes))
+    print("corrected %d rows, cleared %d provably-wrong links"
+          % (len(fixes), len(provably_wrong)))
 
 
 if __name__ == "__main__":
