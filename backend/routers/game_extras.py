@@ -18,7 +18,14 @@ def game_props(league: str, game_id: str):
     ride along at the top level so the page can lead with them.
 
     Unsettled props carry result: null. An unsettled prop is not a miss, and a page that
-    cannot tell the two apart would be claiming a loss we never took."""
+    cannot tell the two apart would be claiming a loss we never took.
+
+    Nameless players are excluded. Not cosmetic: one MLB row (id 28987, no name, no team, no
+    external id) is a bucket the Bovada parser filled whenever it could not attribute a
+    market — 3,729 props belonging to Cooper Pratt, Raynel Delgado, Kahlil Watson and others
+    on a single fake identity. The parser no longer produces them; a row with no name is by
+    definition a prop we cannot say is anyone's, and serving it would attribute a stranger's
+    line to a player page."""
     with closing(_db()) as con:
         rows = con.execute(
             """SELECT pl.id AS player_id, pl.name, pl.team, p.market, p.line, p.side,
@@ -27,7 +34,7 @@ def game_props(league: str, game_id: str):
                JOIN prop_games g ON g.id = p.game_id
                JOIN players pl ON pl.id = p.player_id
                LEFT JOIN prop_results r ON r.prop_id = p.id
-               WHERE g.espn_event_id = ?
+               WHERE g.espn_event_id = ? AND TRIM(COALESCE(pl.name, '')) <> ''
                GROUP BY pl.id, p.market, p.side
                ORDER BY pl.name""",
             (str(game_id),)).fetchall()

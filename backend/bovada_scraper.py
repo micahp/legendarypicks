@@ -14,7 +14,7 @@ Usage:
 
 Source: Bovada's internal API — no auth, no Cloudflare, live odds.
 """
-import sys, json, os, urllib.request, datetime as dt
+import sys, json, os, re, urllib.request, datetime as dt
 
 from link_prop_games import link_prop_game
 import espn_client as espn
@@ -398,6 +398,30 @@ def _parse_wc_props(event: dict) -> list:
     return results
 
 
+def _split_market_and_player(market_desc: str):
+    """"Total Strikeouts - Ryan Gusto (MIA)" -> ("Total Strikeouts", "Ryan Gusto", "MIA").
+
+    Bovada is not consistent about the team parenthetical. It writes "Total Strikeouts -
+    Ryan Gusto (MIA)" and it also writes "Total Hits, Runs and RBIs - Cooper Pratt" with no
+    team at all, and team codes are not reliably all-caps ("D-Backs"). The old regex
+    required `\\([A-Z]+\\)` and returned nothing for every other shape, so the name was
+    dropped and left welded into the market key instead.
+
+    The team is optional. The NAME is the part that matters, because it is what the prop is
+    about. Returns ("", "") for the player when the description carries no " - " separator
+    at all — that is a game-level market, not a parse failure.
+    """
+    desc = (market_desc or "").strip()
+    if " - " not in desc:
+        return desc, "", ""
+    head, player_part = desc.split(" - ", 1)
+    player_part = player_part.strip()
+    m = re.match(r"(.+?)\s*\(([^)]+)\)\s*$", player_part)
+    if m:
+        return head.strip(), m.group(1).strip(), m.group(2).strip().upper()
+    return head.strip(), player_part, ""
+
+
 def _parse_standard_props(event: dict, league: str) -> list:
     """Extract all player props from a single Bovada event (non-WC leagues)."""
     results = []
@@ -424,14 +448,20 @@ def _parse_standard_props(event: dict, league: str) -> list:
         for market in dg.get("markets", []):
             market_desc = (market.get("description") or "").strip()
 
+            # Split the player off BEFORE canonicalising. An unmapped market slugs its whole
+            # description, so leaving the name attached minted market keys like
+            # "total_hits,_runs_and_rbis___cooper_pratt" — one key per player, and a market
+            # nothing could group by.
+            market_head, desc_player, desc_team = _split_market_and_player(market_desc)
+
             # Find canonical market name
             canonical = None
             for pattern, name in MARKET_MAP.items():
-                if pattern in market_desc.lower():
+                if pattern in market_head.lower():
                     canonical = name
                     break
             if not canonical:
-                canonical = market_desc.lower().replace(" ", "_").replace("-", "_")
+                canonical = market_head.lower().replace(" ", "_").replace("-", "_")
 
             for outcome in market.get("outcomes", []):
                 desc = (outcome.get("description") or "").strip()
@@ -451,18 +481,22 @@ def _parse_standard_props(event: dict, league: str) -> list:
                     # For yes/no props, the player IS the outcome, side varies by market
                     continue  # skip player-name outcomes for now; we'd need to restructure
 
-                # Extract player name from market description
-                # e.g., "Total Strikeouts - Ryan Gusto (MIA)" → "Ryan Gusto"
-                player_name = ""
-                team_abbrev = ""
-                if " - " in market_desc:
-                    player_part = market_desc.split(" - ", 1)[1].strip()
-                    # Parse "Ryan Gusto (MIA)"
-                    import re
-                    pm = re.match(r"(.+?)\s*\(([A-Z]+)\)", player_part)
-                    if pm:
-                        player_name = pm.group(1).strip()
-                        team_abbrev = pm.group(2)
+                # The player was already parsed off the market description above.
+                player_name, team_abbrev = desc_player, desc_team
+
+                # A player-prop row with no player is not a player prop. Emitting one anyway
+                # is how 3,729 props from Cooper Pratt, Raynel Delgado, Kahlil Watson and
+                # others ended up on ONE nameless players row: the old regex demanded an
+                # uppercase team parenthetical, and every market written without one fell
+                # through to an empty name that nothing downstream rejected. The World Cup
+                # path has always skipped these; this one silently kept them.
+                #
+                # Two shapes land here and both should be dropped rather than bucketed:
+                # genuinely game-level markets in a props group ("Total Hits, Runs and
+                # Errors"), and anything whose description we cannot parse. A prop we cannot
+                # attribute is not a prop we can serve.
+                if not player_name:
+                    continue
 
                 results.append({
                     "player_name": player_name,

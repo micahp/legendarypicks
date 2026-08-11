@@ -26,6 +26,9 @@ def api(monkeypatch):
                                   settled_at TEXT);
         INSERT INTO prop_games VALUES (1, '999');
         INSERT INTO players VALUES (10, 'Aaron Judge', 'NYY');
+        INSERT INTO players VALUES (11, '', '');
+        INSERT INTO props VALUES (103, 1, 11, 'total_doubles', 0.5, 'over', '2026-08-09T00:00Z');
+        INSERT INTO prop_results VALUES (103, 1.0, 1, '2026-08-09T04:00Z');
         INSERT INTO props VALUES (100, 1, 10, 'total_bases', 1.5, 'over',  '2026-08-09T00:00Z');
         INSERT INTO props VALUES (101, 1, 10, 'hits',        0.5, 'over',  '2026-08-09T00:00Z');
         INSERT INTO props VALUES (102, 1, 10, 'strikeouts',  1.5, 'under', '2026-08-09T00:00Z');
@@ -66,6 +69,16 @@ def test_counts_describe_settled_props_only(api):
     out = api("mlb", "999")
     assert out["settled_count"] == 2
     assert out["hit_count"] == 1
+
+
+def test_a_nameless_player_is_not_served_at_all(api):
+    """Row 28987 in the real DB is a bucket the Bovada parser filled whenever it could not
+    attribute a market — 3,729 props from several different players on one fake identity.
+    Serving it would put a stranger's line under a blank name, and its settled props would
+    inflate the hit count with results nobody can attribute."""
+    out = api("mlb", "999")
+    assert [p["name"] for p in out["players"]] == ["Aaron Judge"]
+    assert out["settled_count"] == 2
 
 
 def test_a_game_with_no_props_reports_zero_rather_than_omitting_the_counts(api):
