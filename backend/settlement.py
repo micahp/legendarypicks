@@ -123,9 +123,31 @@ def resolve_market(league: str, raw_market: str) -> Optional[Tuple[str, str]]:
     return MARKET_STAT.get((league, canonical))
 
 
+def _norm_name(text: str) -> str:
+    """Lowercase, drop punctuation, collapse whitespace — so "Michael Porter Jr."
+    and "michael porter jr" are the same name and nothing else is."""
+    return " ".join("".join(c for c in (text or "").lower() if c.isalnum() or c.isspace()).split())
+
+
 def _find_player_stat(boxscore: dict, player_name: str, team: str,
-                       category: str, stat_key: str) -> Optional[float]:
+                       category: str, stat_key: str,
+                       espn_id: Optional[str] = None) -> Optional[float]:
     """Extract a single stat for a player from ESPN's boxscore JSON.
+
+    Identity, exact key first — ESPN publishes `athlete.id` on the same object as
+    the stats, so there is no name to match:
+
+      1. `espn_id` against `athlete.id`. Absent from the box score means the player
+         did not appear: a void, not a licence to guess.
+      2. No espn_id on our row: exact name match after normalising case,
+         punctuation and whitespace.
+      3. Two athletes answering to the same name: void.
+
+    This used to accept a SUBSTRING of the display name and, failing that, the
+    player's LAST TOKEN anywhere in it. For "Michael Porter Jr." that token is
+    "jr.", which matches the first suffixed athlete on the team — 1,568 players
+    have a suffix as their match token and NFL has 2,619 same-team surname groups.
+    See test_boxscore_player_match_by_id.
 
     The ESPN boxscore structure:
       boxscore.players[team_abbrev] = {
@@ -185,20 +207,22 @@ def _find_player_stat(boxscore: dict, player_name: str, team: str,
                     if category_norm == "pitching" and not (label_set & _PITCHING_LABELS):
                         continue
 
-            for athlete_entry in stats_group.get("athletes", []):
-                athlete = athlete_entry.get("athlete", {})
-                display_name = (athlete.get("displayName") or "").strip()
-                # Match by display name (case-insensitive subset match)
-                if player_name.lower() not in display_name.lower():
-                    # Also try last-name match
-                    pn_parts = player_name.strip().split()
-                    if len(pn_parts) >= 2:
-                        last = pn_parts[-1].lower()
-                        if last not in display_name.lower():
-                            continue
-                    else:
-                        continue
+            entries = stats_group.get("athletes", []) or []
+            matched = None
+            if espn_id:
+                wanted = str(espn_id)
+                matched = next(
+                    (e for e in entries
+                     if str((e.get("athlete") or {}).get("id") or "") == wanted), None)
+            else:
+                want = _norm_name(player_name)
+                by_name = [e for e in entries
+                           if _norm_name((e.get("athlete") or {}).get("displayName")) == want]
+                # Exactly one, or nobody. Two people answering to one name is the
+                # case the old surname rule silently resolved by taking the first.
+                matched = by_name[0] if len(by_name) == 1 else None
 
+            for athlete_entry in ([matched] if matched else []):
                 # Found the player — extract the stat
                 stats_list = athlete_entry.get("stats", [])
                 labels = stats_group.get("labels") or []
@@ -241,14 +265,15 @@ def _find_player_stat(boxscore: dict, player_name: str, team: str,
 
 
 def _find_player_compound_stat(boxscore: dict, player_name: str, team: str,
-                                categories: List[str], stat_keys: List[str]) -> Optional[float]:
+                                categories: List[str], stat_keys: List[str],
+                                espn_id: Optional[str] = None) -> Optional[float]:
     """Sum multiple stats across categories (e.g. hits_runs_rbis = H + R + RBI)."""
     # EVERY part, not any part: a sum missing one of its terms is not a total, it is
     # a smaller number that grades. H + R + (missing RBI) settled as H+R and the
     # UNDER cashed on the difference.
     total = 0.0
     for cat, key in zip(categories, stat_keys):
-        val = _find_player_stat(boxscore, player_name, team, cat, key)
+        val = _find_player_stat(boxscore, player_name, team, cat, key, espn_id=espn_id)
         if val is None:
             return None
         total += val
@@ -658,7 +683,8 @@ def settle_game(con: sqlite3.Connection, game_id: int) -> dict:
     if league == "mlb":
         # Find unsettled props
         props = con.execute("""
-            SELECT p.id, p.market, p.line, p.side, p.player_id, pl.name as player_name, pl.team as player_team
+            SELECT p.id, p.market, p.line, p.side, p.player_id, pl.name as player_name, pl.team as player_team,
+                   pl.espn_id as espn_id
             FROM props p
             JOIN players pl ON pl.id = p.player_id
             LEFT JOIN prop_results pr ON pr.prop_id = p.id
@@ -687,7 +713,8 @@ def settle_game(con: sqlite3.Connection, game_id: int) -> dict:
 
     # Find unsettled props for this game
     props = con.execute("""
-        SELECT p.id, p.market, p.line, p.side, p.player_id, pl.name as player_name, pl.team as player_team
+        SELECT p.id, p.market, p.line, p.side, p.player_id, pl.name as player_name, pl.team as player_team,
+                   pl.espn_id as espn_id
         FROM props p
         JOIN players pl ON pl.id = p.player_id
         LEFT JOIN prop_results pr ON pr.prop_id = p.id
@@ -716,7 +743,8 @@ def settle_game(con: sqlite3.Connection, game_id: int) -> dict:
             if "hits_runs_rbis" in normalize_market(prop["market"]):
                 actual = _find_player_compound_stat(
                     box, prop["player_name"], prop["player_team"],
-                    ["batting", "batting", "batting"], ["H", "R", "RBI"])
+                    ["batting", "batting", "batting"], ["H", "R", "RBI"],
+                    espn_id=prop["espn_id"])
             else:
                 con.execute(
                     "INSERT INTO prop_results(prop_id, actual_value, hit, settled_at) VALUES (?,NULL,NULL,?)",
@@ -726,7 +754,7 @@ def settle_game(con: sqlite3.Connection, game_id: int) -> dict:
         else:
             actual = _find_player_stat(
                 box, prop["player_name"], prop["player_team"],
-                category, stat_key)
+                category, stat_key, espn_id=prop["espn_id"])
 
         # Void: player DNP or stat not found
         if actual is None:

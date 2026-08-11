@@ -118,7 +118,7 @@ def _db():
             start_time TEXT);
         CREATE TABLE props (id INTEGER PRIMARY KEY, game_id INTEGER, market TEXT, line REAL,
             side TEXT, player_id INTEGER);
-        CREATE TABLE players (id INTEGER PRIMARY KEY, name TEXT, team TEXT);
+        CREATE TABLE players (id INTEGER PRIMARY KEY, name TEXT, team TEXT, espn_id TEXT);
         CREATE TABLE prop_results (prop_id INTEGER PRIMARY KEY, hit INTEGER, actual REAL);
     """)
     con.execute("INSERT INTO prop_games (id, league, espn_event_id, home, away, date,"
