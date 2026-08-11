@@ -223,25 +223,36 @@ def _find_player_stat(boxscore: dict, player_name: str, team: str,
                         idx = labels.index(stat_key)
                         if idx < len(stats_list):
                             val = stats_list[idx]
+                            # An empty cell is ESPN declining to report the stat for
+                            # this athlete, not a measured zero. Every prop is over/
+                            # under a line, so a 0 here does not fail — it grades, and
+                            # the UNDER cashes. Void instead. See
+                            # test_missing_stat_is_void_not_zero.
+                            if val in (None, ""):
+                                return None
                             try:
-                                return float(val) if val not in (None, "") else 0.0
+                                return float(val)
                             except (ValueError, TypeError):
-                                return 0.0
-                return 0.0
+                                return None
+                # The athlete is in this box score but the stat is not among its
+                # labels — "not reported" became "recorded zero" here.
+                return None
     return None
 
 
 def _find_player_compound_stat(boxscore: dict, player_name: str, team: str,
                                 categories: List[str], stat_keys: List[str]) -> Optional[float]:
     """Sum multiple stats across categories (e.g. hits_runs_rbis = H + R + RBI)."""
+    # EVERY part, not any part: a sum missing one of its terms is not a total, it is
+    # a smaller number that grades. H + R + (missing RBI) settled as H+R and the
+    # UNDER cashed on the difference.
     total = 0.0
-    found_any = False
     for cat, key in zip(categories, stat_keys):
         val = _find_player_stat(boxscore, player_name, team, cat, key)
-        if val is not None:
-            total += val
-            found_any = True
-    return total if found_any else None
+        if val is None:
+            return None
+        total += val
+    return total
 
 
 # ── MLB Stats API boxscore integration ─────────────────────────────
@@ -493,11 +504,20 @@ def _settle_mlb_props(con, game_row, props) -> dict:
         if not mapping or mapping == (None, None):
             # Compound markets: sum multiple stats
             if canonical in ("hits_runs_rbis", "hits_runs_rbis"):
-                bat = ps.get("batting", {})
-                h = bat.get("hits", 0) or 0
-                r = bat.get("runs", 0) or 0
-                rbi = bat.get("rbi", 0) or 0
-                actual = float(h + r + rbi)
+                # `.get(x, 0)` on a player with no batting object at all read as a
+                # hitless day. That is how an unplayed game — which still publishes a
+                # lineup, with no batting lines — graded every prop 0.0 and cashed
+                # every UNDER. A player who really went 0-for-4 HAS a batting object
+                # with hits: 0, so the two are distinguishable; read the difference.
+                bat = ps.get("batting") or {}
+                parts = [bat.get(k) for k in ("hits", "runs", "rbi")]
+                if any(v is None for v in parts):
+                    con.execute(
+                        "INSERT INTO prop_results(prop_id, actual_value, hit, settled_at) VALUES (?,NULL,NULL,?)",
+                        (prop["id"], now))
+                    void += 1
+                    continue
+                actual = float(sum(parts))
             else:
                 con.execute(
                     "INSERT INTO prop_results(prop_id, actual_value, hit, settled_at) VALUES (?,NULL,NULL,?)",
