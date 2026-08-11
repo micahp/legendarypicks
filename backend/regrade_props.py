@@ -91,20 +91,24 @@ def measure(con, sample):
 
 
 # ── the repair ───────────────────────────────────────────────────────────────────────────
-def finals_for(date_str):
-    """{(home_name, away_name): (home_score, away_score)} for games the schedule calls Final."""
-    out = {}
-    for entry in settlement._mlb_schedule(date_str).get("dates", []):
-        for g in entry.get("games", []):
-            if ((g.get("status") or {}).get("abstractGameState") or "") != "Final":
-                continue
-            t = g.get("teams") or {}
-            home = ((t.get("home") or {}).get("team") or {}).get("name")
-            away = ((t.get("away") or {}).get("team") or {}).get("name")
-            if home and away:
-                out[(home, away)] = ((t.get("home") or {}).get("score"),
-                                     (t.get("away") or {}).get("score"))
-    return out
+def final_for(game_row):
+    """(home_score, away_score) for one prop_games row, or None if it is not Final.
+
+    This used to build a per-DATE dict keyed `(home_name, away_name)`. Two things were
+    wrong with that key. A doubleheader publishes two games with identical teams on one
+    date, so the dict kept whichever landed last and both halves took the same final —
+    4 groups in the dev DB. And the row's own calendar date is not the schedule's: a
+    22:15 ET first pitch is the next day in UTC, so a played game read as "not final"
+    and its results were purged.
+
+    Both disappear by resolving the gamePk the way settlement does — by first pitch,
+    Final only — and reading the score off the game we resolved.
+    """
+    pk = settlement._fetch_mlb_gamepk(game_row["date"], game_row["home"], game_row["away"],
+                                      start_time=game_row["start_time"])
+    if not pk:
+        return None
+    return settlement._fetch_mlb_final(pk)
 
 
 def main():
@@ -119,7 +123,7 @@ def main():
     con.row_factory = sqlite3.Row
 
     games = con.execute("""
-        SELECT DISTINCT g.id, g.espn_event_id, g.date, g.home, g.away
+        SELECT DISTINCT g.id, g.espn_event_id, g.date, g.home, g.away, g.start_time
         FROM prop_games g JOIN props p ON p.game_id = g.id
         WHERE g.league = 'mlb' AND g.espn_event_id IS NOT NULL
         ORDER BY g.date""").fetchall()
@@ -157,17 +161,15 @@ def main():
     print(f"\nbackup     {backup}\n")
 
     print("── RE-GRADING ─────────────────────────────────────────")
-    finals_cache, settled_games, skipped, errors = {}, 0, 0, 0
+    settled_games, skipped, errors = 0, 0, 0
     purged = [0]
     for i, g in enumerate(games, 1):
-        date = g["date"]
-        if date not in finals_cache:
-            try:
-                finals_cache[date] = finals_for(date)
-            except Exception as e:
-                print(f"  schedule {date} failed: {e}")
-                finals_cache[date] = {}
-        final = finals_cache[date].get((g["home"], g["away"]))
+        try:
+            final = final_for(g)
+        except Exception as e:
+            print(f"  schedule lookup failed for game {g['id']} ({g['date']}): {e}")
+            errors += 1
+            continue
         if final is None:
             # Not final — and any result sitting on it is a fabrication, written before the
             # game was played. Delete it. A game that has not finished has no results, and

@@ -436,6 +436,32 @@ def _fetch_mlb_gamepk(date_str: str, home_team: str, away_team: str,
     return None
 
 
+def _fetch_mlb_final(gamePk: int) -> Optional[Tuple[int, int]]:
+    """(home_score, away_score) for a gamePk the schedule reports Final, else None.
+
+    Keyed on the gamePk rather than on (date, home, away): a doubleheader publishes two
+    games with identical teams on one date, so a dict keyed by the triple keeps whichever
+    landed last and hands both halves the same final. See test_regrade_finals_by_gamepk.
+    """
+    import urllib.request as _ur
+    try:
+        url = f"{_MLB_SCHEDULE}?gamePk={gamePk}&sportId=1"
+        with _ur.urlopen(_ur.Request(url, headers=_MLB_HDR), timeout=15) as r:
+            data = json.loads(r.read().decode())
+    except Exception:
+        return None
+    for entry in data.get("dates", []):
+        for game in entry.get("games", []):
+            if (game.get("status") or {}).get("abstractGameState") != "Final":
+                continue
+            teams = game.get("teams") or {}
+            home = (teams.get("home") or {}).get("score")
+            away = (teams.get("away") or {}).get("score")
+            if home is not None and away is not None:
+                return (home, away)
+    return None
+
+
 def _fetch_mlb_boxscore(gamePk: int) -> Optional[dict]:
     """Pull the MLB Stats API boxscore for a game."""
     import urllib.request as _ur
