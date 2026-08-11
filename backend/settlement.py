@@ -286,14 +286,26 @@ _MLB_MARKET_MAP = {
 }
 
 
-def _fetch_mlb_gamepk(date_str: str, home_team: str, away_team: str) -> Optional[int]:
-    """Look up MLB gamePk from the schedule API by date + team names."""
-    import urllib.request as _ur
-    try:
+_MLB_SCHEDULE_CACHE: Dict[str, dict] = {}
+
+
+def _mlb_schedule(date_str: str) -> dict:
+    """One schedule fetch per DATE, not per game. A slate is fifteen games and this was
+    pulling the same document fifteen times; re-grading a season did it 709 times for 55
+    distinct dates."""
+    if date_str not in _MLB_SCHEDULE_CACHE:
+        import urllib.request as _ur
         url = f"{_MLB_SCHEDULE}?date={date_str}&sportId=1"
         req = _ur.Request(url, headers=_MLB_HDR)
-        with _ur.urlopen(req, timeout=10) as r:
-            data = json.loads(r.read().decode())
+        with _ur.urlopen(req, timeout=15) as r:
+            _MLB_SCHEDULE_CACHE[date_str] = json.loads(r.read().decode())
+    return _MLB_SCHEDULE_CACHE[date_str]
+
+
+def _fetch_mlb_gamepk(date_str: str, home_team: str, away_team: str) -> Optional[int]:
+    """Look up MLB gamePk from the schedule API by date + team names."""
+    try:
+        data = _mlb_schedule(date_str)
         for dt_entry in data.get("dates", []):
             for game in dt_entry.get("games", []):
                 teams = game.get("teams", {})
