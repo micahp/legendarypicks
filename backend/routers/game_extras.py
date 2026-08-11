@@ -14,8 +14,15 @@ def game_props(league: str, game_id: str):
     Once a game is settled each prop also carries how it LANDED: the actual value and
     whether it hit. That is the half of the product a reader could not see before — the
     board showed what was offered and then went quiet, so the one page where we could show
-    that our lines were worth reading showed nothing after the final whistle. The counts
-    ride along at the top level so the page can lead with them.
+    that our lines were worth reading showed nothing after the final whistle.
+
+    `settled_lines` counts distinct (player, market, line) — NOT settled rows, and there is
+    deliberately no hit count. We store both sides of most lines: for game 401816457, 35 of
+    51 lines are held as both over and under, so exactly 35 hit and 35 missed by
+    construction. A "33 of 81 hit" headline built on that measures our storage layout, not
+    our judgement, and putting it on the page would be claiming a track record we have not
+    earned. We do not publish a side, so we cannot report a record. What we CAN report, and
+    what is genuinely ours, is where the line was and where the number landed.
 
     Unsettled props carry result: null. An unsettled prop is not a miss, and a page that
     cannot tell the two apart would be claiming a loss we never took.
@@ -39,20 +46,28 @@ def game_props(league: str, game_id: str):
                ORDER BY pl.name""",
             (str(game_id),)).fetchall()
     players: dict = {}
-    settled = hits = 0
+    settled_lines = set()
     for r in rows:
         d = players.setdefault(r["player_id"], {"player_id": r["player_id"], "name": r["name"],
                                                 "team": r["team"], "props": []})
+        market = _base_market(r["market"])
         result = None
         if r["settled_at"] is not None and r["hit"] is not None:
+            # `cashed` is the side the number actually landed on, derived from this row's
+            # own side and verdict — so a line stored on one side only still says which way
+            # it went, and the page never has to infer it from a missing sibling.
             result = {"actual": r["actual_value"], "hit": bool(r["hit"]),
-                      "settled_at": r["settled_at"]}
-            settled += 1
-            hits += 1 if r["hit"] else 0
-        d["props"].append({"market": _base_market(r["market"]), "line": r["line"],
+                      "settled_at": r["settled_at"],
+                      "cashed": r["side"] if r["hit"] else _other_side(r["side"])}
+            settled_lines.add((r["player_id"], market, r["line"]))
+        d["props"].append({"market": market, "line": r["line"],
                            "side": r["side"], "result": result})
     return {"league": league, "game_id": str(game_id), "players": list(players.values()),
-            "settled_count": settled, "hit_count": hits}
+            "settled_lines": len(settled_lines)}
+
+
+def _other_side(side):
+    return {"over": "under", "under": "over"}.get((side or "").lower(), side)
 
 
 @router.get("/api/game/{league}/{game_id}/story")

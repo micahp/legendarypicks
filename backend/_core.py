@@ -1283,6 +1283,19 @@ def generate_game_story(lg: str, game_id: str, refresh: bool = False,
     grounding = (f"Matchup: {teams[0]} vs {teams[1]}. Game state: {gr.get('state')}.\n"
                  f"{facts(teams[0])}\n{facts(teams[1])}")
 
+    # THE RESULT. It was never in the grounding — `gr` carried scores and a winner and none
+    # of it was passed on, so a finished game's facts said only "state: post". The soccer
+    # recaps read fine because matchup_context's form line happens to include the scoreline;
+    # MLB has no such line, so the Reds-Nationals recap opened on a prop and never said the
+    # Nationals won 7-1. A recap that omits the score is not a recap.
+    scores = gr.get("scores") or {}
+    if scores and (gr.get("state") or "").lower() == "post":
+        line = ", ".join(f"{ab} {int(v) if float(v).is_integer() else v}"
+                         for ab, v in scores.items())
+        winner = gr.get("winner")
+        grounding += (f"\nFINAL SCORE: {line}."
+                      + (f" {winner} won." if winner else " The game was drawn."))
+
     # Stakes: what each team is playing for in THIS game (stakes.py — certain facts only).
     try:
         import stakes as _stakes
@@ -1350,12 +1363,22 @@ def generate_game_story(lg: str, game_id: str, refresh: bool = False,
     if context_lines:
         grounding += "\nMatchup context:\n" + "\n".join(context_lines)
 
-    # Settled props — recap only. Props are the product, and until now the recap could not
-    # mention the one thing this site knows better than a wire report: whether the lines it
-    # published were any good. "Judge went over 1.5 total bases (3)" is a sentence no other
-    # recap of that game can write.
+    # Settled props are NOT given to the recap writer.
+    #
+    # They were, briefly, and the rendered page settled the question. The Reds-Nationals
+    # recap came out as "CJ Abrams's 0 total bases cashed the under on his 1.5 total bases
+    # line, as the Nationals, riding a three-game win streak, faced the Reds" — three prop
+    # outcomes and not one mention of the 7-1 result. Handing a writer the most specific
+    # numbers in the pile makes it write about them, and a prop is never the biggest thing
+    # that happened in a game.
+    #
+    # The panel below the recap now carries every settled line with its actual value, which
+    # is a better home for it: complete rather than a sampled three, and it cannot crowd out
+    # the score. Re-enabling is one flag if the recap ever earns it back.
+    RECAP_MENTIONS_PROPS = False
     settled_lines = []
-    if (state or "").lower() == "post" or (gr.get("state") or "").lower() == "post":
+    if RECAP_MENTIONS_PROPS and (
+            (state or "").lower() == "post" or (gr.get("state") or "").lower() == "post"):
         try:
             with closing(_db()) as con:
                 for r in con.execute(
@@ -1391,9 +1414,9 @@ def generate_game_story(lg: str, game_id: str, refresh: bool = False,
     # under a scoreline that says they already did.
     finished = (state or "").lower() == "post" or (gr.get("state") or "").lower() == "post"
     opening = ("You are a sharp sports writer. This game is OVER — write the recap, in past "
-               "tense, using ONLY the facts given. Lead with what decided it and what it "
-               "changed. If settled props are given, work at least one in — a line and the "
-               "number it landed on is the most specific thing in the facts. "
+               "tense, using ONLY the facts given. The FINAL SCORE and who won come first; "
+               "a recap that does not say who won is not a recap. Then what decided it and "
+               "what it changed. "
                if finished else
                "You are a sharp sports writer. Set up this matchup using ONLY the facts given. ")
     system = (opening +

@@ -49,7 +49,16 @@ def api(monkeypatch):
 def test_a_hit_carries_its_actual_value(api):
     props = {p["market"]: p for p in api("mlb", "999")["players"][0]["props"]}
     assert props["total_bases"]["result"] == {"actual": 3.0, "hit": True,
-                                              "settled_at": "2026-08-09T04:00Z"}
+                                              "settled_at": "2026-08-09T04:00Z",
+                                              "cashed": "over"}
+
+
+def test_cashed_is_the_side_the_number_landed_on_even_for_a_losing_row(api):
+    """Derived from the row's own side and verdict, so a line we hold on one side only
+    still says which way it went rather than leaving the page to infer it."""
+    props = {p["market"]: p for p in api("mlb", "999")["players"][0]["props"]}
+    assert props["total_bases"]["result"]["cashed"] == "over"   # over 1.5, actual 3, hit
+    assert props["hits"]["result"]["cashed"] == "under"          # over 0.5, actual 0, missed
 
 
 def test_a_miss_is_recorded_as_a_miss_not_as_missing(api):
@@ -65,10 +74,15 @@ def test_an_unsettled_prop_is_null_rather_than_a_loss(api):
     assert props["strikeouts"]["result"] is None
 
 
-def test_counts_describe_settled_props_only(api):
+def test_settled_lines_counts_lines_not_rows_and_there_is_no_hit_rate(api):
+    """We hold both sides of most lines, so exactly one side of each pair hits by
+    construction. A win-loss record built on that describes our storage layout, not our
+    judgement — for game 401816457, 35 of 51 lines are stored both ways. The endpoint
+    reports lines settled and deliberately publishes no hit count."""
     out = api("mlb", "999")
-    assert out["settled_count"] == 2
-    assert out["hit_count"] == 1
+    assert out["settled_lines"] == 2
+    assert "hit_count" not in out
+    assert "settled_count" not in out
 
 
 def test_a_nameless_player_is_not_served_at_all(api):
@@ -78,10 +92,10 @@ def test_a_nameless_player_is_not_served_at_all(api):
     inflate the hit count with results nobody can attribute."""
     out = api("mlb", "999")
     assert [p["name"] for p in out["players"]] == ["Aaron Judge"]
-    assert out["settled_count"] == 2
+    assert out["settled_lines"] == 2
 
 
 def test_a_game_with_no_props_reports_zero_rather_than_omitting_the_counts(api):
     out = api("mlb", "no-such-game")
     assert out["players"] == []
-    assert out["settled_count"] == 0 and out["hit_count"] == 0
+    assert out["settled_lines"] == 0
