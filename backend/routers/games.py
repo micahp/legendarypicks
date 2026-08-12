@@ -898,6 +898,20 @@ def get_game_detail(league: str, game_id: str):
         out["status_detail"] = _gr.get("status_detail")
     except Exception:
         _gr = {}
+    if out["state"] is None:
+        # ESPN is the only thing that ever told this page a game was over, so a
+        # walled host (403s are routine here) made every finished game render as
+        # if it had not kicked off. For the leagues whose results we ingest by
+        # season rather than capture live, the DB already knows: a
+        # team_game_results row reaching status='completed' IS the published
+        # final. Ask it rather than letting a fetch failure decide.
+        #
+        # Only 'completed' promotes to "post" — the invariant above still holds,
+        # because that ingest never writes a row for a game still being played.
+        try:
+            out["state"] = _state_from_db(lg, game_id)
+        except Exception:
+            pass
     is_final = out["state"] == "post"
     # Final score from OUR DB (scoring_plays) — only when the game is actually over.
     if is_final:

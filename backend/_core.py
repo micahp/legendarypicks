@@ -1006,9 +1006,56 @@ def _final_score_from_db(league: str, game_id: str):
             "WHERE league=? AND game_id=?",
             (lg, game_id),
         ).fetchone()
-    if row and row["home"] is not None and row["away"] is not None:
-        return {"home": int(row["home"]), "away": int(row["away"])}
+        if row and row["home"] is not None and row["away"] is not None:
+            return {"home": int(row["home"]), "away": int(row["away"])}
+
+        # scoring_plays is populated by the ESPN /boxscore snapshot, which only ever
+        # ran for the leagues we capture live: on 2026-08-11 it held mlb/nba/nhl and
+        # ZERO rows for ncaaf, nfl and mls. Those three finished-game pages therefore
+        # rendered as if the game had not been played — the score was never missing
+        # from our data, it was in a table nobody asked.
+        #
+        # team_game_results carries the finals for every league (score_for /
+        # score_against, one row per side). It is the season-results ingest rather
+        # than a live capture, so it stays the FALLBACK: scoring_plays is what a
+        # live game updates, and a game in progress must not be served a final.
+        rows = con.execute(
+            "SELECT home_away, score_for, score_against FROM team_game_results "
+            "WHERE league=? AND game_id=? AND status='completed' "
+            "AND score_for IS NOT NULL AND score_against IS NOT NULL",
+            (lg, game_id),
+        ).fetchall()
+    # Either side answers the whole question, so one surviving row is enough — but
+    # read the pair off the side we actually matched, never assume the home row.
+    for r in rows:
+        if r["home_away"] == "home":
+            return {"home": int(r["score_for"]), "away": int(r["score_against"])}
+    for r in rows:
+        if r["home_away"] == "away":
+            return {"home": int(r["score_against"]), "away": int(r["score_for"])}
     return None
+
+
+def _state_from_db(league: str, game_id: str):
+    """Return "post" when OUR DB shows this game finished, else None.
+
+    DB-ONLY, same contract as _final_score_from_db: never touches ESPN on the
+    request path. Exists because game state had exactly one source — a live
+    espn.game_result() call — so a 403 (routine on this host) downgraded every
+    finished game to "not started" on the detail page.
+
+    Deliberately one-way: it can promote an unknown state to "post", never
+    demote or invent "in"/"pre". A game still being played has no completed
+    team_game_results row, so this cannot label a live game final.
+    """
+    lg = league.lower()
+    with closing(_db()) as con:
+        row = con.execute(
+            "SELECT 1 FROM team_game_results "
+            "WHERE league=? AND game_id=? AND status='completed' LIMIT 1",
+            (lg, game_id),
+        ).fetchone()
+    return "post" if row else None
 
 
 def _snapshot_strength(league, rows):
