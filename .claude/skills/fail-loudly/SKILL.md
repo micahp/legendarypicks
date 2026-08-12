@@ -143,6 +143,42 @@ Note the two tempting non-fixes:
 > *absence* from a list fails open — anything unknown is trusted. Prefer a
 > question that fails closed.
 
+### 2f. The rank that has no opinion about time, and the rewrite that has no record
+
+Two halves of one failure, both found on the news cards 2026-08-12.
+
+**The rank.** `_load_chatter` scores anchors on topic-word overlap. A feature
+written *about exactly this conversation* therefore scores highest — and the
+best such article MLS has is a 2025 ESPN piece, "How Leagues Cup is becoming a
+hotbed for global scouting". It supplied the card's one-sentence hook, so in
+August 2026 the app announced that the Leagues Cup "becomes a global scouting
+stage". Micah: *"as if that article didn't come out last year. Leagues Cup is
+already a proving ground and them signing him is proof. it's maturing."*
+
+Every item already carried its publish date, and the prompt already said
+`MIND THE DATES`. That was not enough, and the reason generalises: **a fact
+placed among nine other facts is something the consumer has to act on.** The
+items are now printed under `DEVELOPMENTS` and `BACKGROUND` headers, and
+`stale_anchor()` reports any card that cites only background while fresh
+reporting was in front of it.
+
+**The rewrite.** Nothing recorded what a served card was built from, so "did
+anything change since last night?" was unanswerable — and the only available
+answer was to generate it again. Every run rewrote every card: new title, new
+prose, same story, no error, no signal. A headline that moves nightly while the
+story stands still trains the reader that a change means nothing, which is the
+exact opposite of what a news surface is for. Fixed with `pool_key` — a hash of
+the shown item urls plus the editor marks — stored on the row and compared
+before generating.
+
+> **Rule.** If a ranking feeds something that speaks in the present tense, age
+> is part of the rank, not a footnote you pass along and hope gets read.
+>
+> **Rule.** Anything that regenerates must record what it generated FROM. A
+> pipeline that cannot tell "unchanged" from "not checked" will do the
+> expensive thing every time and call the churn an update. Print the count:
+> `14 cards (11 unchanged, not rewritten)`.
+
 ---
 
 ## 3. Writing it so it fails loudly

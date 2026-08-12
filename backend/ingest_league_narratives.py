@@ -25,6 +25,7 @@ Usage:
 """
 import argparse
 import datetime
+import hashlib
 import json
 import os
 import re
@@ -313,6 +314,16 @@ _SYSTEM = (
     "- \'ESPN reported last year\', \'in the 2025 tournament\' - and let the "
     "recent items carry the present tense. Never imply an old article is a "
     "current development. "
+    "THE ITEMS ARE SPLIT INTO DEVELOPMENTS AND BACKGROUND. The narrative "
+    "sentence must be anchored on a DEVELOPMENT. A BACKGROUND item is what is "
+    "ALREADY TRUE — it may explain why the development matters, and it may "
+    "never supply the verb that makes the card sound like news. Above all, "
+    "never announce a background item as though it were beginning now: if a "
+    "year-old feature said a competition IS BECOMING a scouting stage, then "
+    "today it already IS one, and the new results are evidence of it maturing "
+    "- write that it is deepening, holding or being borne out, not that it is "
+    "starting. When every item is background, write the standing state of "
+    "play in the present tense and do not manufacture a development. "
     "Output STRICT JSON only: "
     '{"narrative": "<one sentence: the conversation, anchored on the news — '
     'the title; unique voice, not a repeated template>", '
@@ -557,16 +568,105 @@ def _prompt_items(items, limit=_PROMPT_ITEMS):
     return anchors[:n_anchor] + chatter[:n_chat]
 
 
-def _numbered(items, limit=None):
-    """The item list as the model sees it.
+_FRESH_DAYS = 21     # newer than this is a DEVELOPMENT; older is BACKGROUND
+
+
+def _age_days(it, today=None):
+    """Days between an item's publish date and today. None when undated."""
+    when = (it.get("published") or "")[:10]
+    try:
+        pub = datetime.date.fromisoformat(when)
+    except ValueError:
+        return None
+    return ((today or datetime.date.today()) - pub).days
+
+
+def is_background(it, today=None):
+    """True when this item describes an already-established state, not news.
+
+    The distinction the card kept getting wrong. A 2025 ESPN feature titled
+    "How Leagues Cup is becoming a hotbed for global scouting" scored highest
+    in its conversation — it is the single most on-topic article we hold — so
+    it supplied the card's one-sentence hook, and the card announced that the
+    Leagues Cup "becomes a global scouting stage" in August 2026. Micah:
+    "as if that article that talked about it being a proving ground didn't
+    come out last year. Leagues Cup is already a proving ground and them
+    signing him is proof. it's maturing."
+
+    Relevance ranking has no opinion about time, so the oldest item in a pool
+    can be its strongest, and nothing downstream noticed the tense was a year
+    late. An undated item is treated as background: we cannot claim it is new.
+    """
+    age = _age_days(it, today)
+    return age is None or age > _FRESH_DAYS
+
+
+def split_by_age(items, today=None):
+    """(developments, background), each as (index, item) with the index the
+    item holds in `items` — the number the prompt shows and `_cited_sources`
+    resolves against. Grouping must never renumber."""
+    fresh, old = [], []
+    for i, it in enumerate(items):
+        (old if is_background(it, today) else fresh).append((i, it))
+    return fresh, old
+
+
+def stale_anchor(gen, shown, today=None):
+    """True when a card cites ONLY background while fresh reporting was in
+    front of it — the shape that dated the Leagues Cup card by a year.
+
+    Reported, never fatal: a card standing entirely on background can be
+    correct (the state of play has not moved). It is a finding when there were
+    developments available and the card reached past them anyway.
+    """
+    cited = {(s.get("url") or "") for s in gen.get("sources") or []}
+    if not cited:
+        return False
+    fresh, _old = split_by_age(shown, today)
+    if not fresh:
+        return False
+    return not any((it.get("url") or "") in cited for _i, it in fresh)
+
+
+def pool_key(shown, marks=""):
+    """Fingerprint of the material a card was written from.
+
+    Same fingerprint means the same items and the same editor marks, so
+    regenerating can only produce different WORDS for an unchanged story. The
+    urls, not the count: an item swapped for another of equal age would leave a
+    count identical and the story different.
+    """
+    urls = sorted((it.get("url") or "") for it in shown)
+    h = hashlib.sha1()
+    h.update("\n".join(urls).encode("utf-8"))
+    h.update(b"\x00")
+    h.update((marks or "").encode("utf-8"))
+    return h.hexdigest()
+
+
+def newest_item(shown):
+    """The publish timestamp of the freshest item shown, '' if none is dated."""
+    return max([(it.get("published") or "") for it in shown] or [""])
+
+
+def _numbered(items, limit=None, today=None):
+    """The item list as the model sees it, split into DEVELOPMENTS and
+    BACKGROUND.
 
     Real articles carry an EXCERPT of their body, not just a headline. The
     argument lives in the body: a 7,500-character ESPN feature quoting MLS
     executives on the record reached the model as a single headline, so the
     card could not use one quote or figure from it (2026-08-10). Bluesky posts
     are already their own full text and need no excerpt.
+
+    The DATE alone was not enough. Every item already carried its publish date
+    and the instruction to mind it, and the card still wrote a year-old feature
+    as today's development — a date on line 1 of ten is a fact the model has to
+    act on, a header it has to read past. The two groups say which items the
+    present tense belongs to. Numbering is the item's index in `items` either
+    way, because `_cited_sources` resolves citations by that number.
     """
-    out = []
+    lines = {}
     for i, it in enumerate(items if limit is None else items[:limit]):
         real = not is_social(it)
         url = (" " + it["url"]) if real and it.get("url") else ""
@@ -584,7 +684,20 @@ def _numbered(items, limit=None):
             if len(body) > _BODY_CHARS:
                 excerpt += "..."
             line += "\n   excerpt: %s" % excerpt
-        out.append(line)
+        lines[i] = line
+    shown = (items if limit is None else items[:limit])
+    fresh, old = split_by_age(shown, today)
+    out = []
+    if fresh:
+        out.append("DEVELOPMENTS — new since the last card. The news is here:")
+        out += [lines[i] for i, _it in fresh]
+    if old:
+        out.append("BACKGROUND — already established, reported %d+ days ago. "
+                   "Context only, never the news:" % _FRESH_DAYS)
+        out += [lines[i] for i, _it in old]
+    if not fresh:
+        out.append("(NOTHING NEW. Every item above is background — write the "
+                   "state of play, not a development.)")
     return "\n".join(out)
 
 
@@ -951,6 +1064,8 @@ def main():
     ap.add_argument("--convs", default="",
                     help="comma list of conv ids to generate (default: all)")
     ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("--force", action="store_true",
+                    help="regenerate even when the item pool has not changed")
     args = ap.parse_args()
 
     db_path = os.environ.get("LP_DB_PATH") or os.path.join(
@@ -969,7 +1084,7 @@ def main():
 
     # Load chatter for every conversation once; keep the ones with enough items.
     loaded = []
-    leaks = 0
+    leaks = unchanged = 0
     for conv in convs:
         items = _load_chatter(con, conv)
         # A post that the `source` column calls published would be served as a
@@ -983,6 +1098,20 @@ def main():
             print("  %-18s skipped (%d sources < %d)" % (conv["id"], len(items), _MIN_ITEMS))
             continue
         marks = _editor_marks(con, conv["id"])
+        # Nothing new to say → say the same thing. A rewrite off an unchanged
+        # pool can only change the WORDS, and a card whose title moves nightly
+        # while the story stands still teaches a reader that a change means
+        # nothing (Micah, 2026-08-12). --force regenerates anyway, which is what
+        # you want after changing the prompt.
+        key = pool_key(_prompt_items(items), marks)
+        served = con.execute(
+            "SELECT pool_key, generated_at FROM news_narratives WHERE conv_id=?",
+            (conv["id"],)).fetchone()
+        if served and served["pool_key"] == key and not args.force:
+            unchanged += 1
+            print("  %-18s unchanged — no new items since %s"
+                  % (conv["id"], served["generated_at"]))
+            continue
         loaded.append((conv, items, marks))
 
     # Batch path: ONE model call across all conversations so the model can
@@ -1022,7 +1151,7 @@ def main():
                 continue
             results[conv["id"]] = gen
 
-    written = unattributed = ignored = 0
+    written = unattributed = ignored = stale = 0
     for conv, items, marks in loaded:
         # The items the model was actually shown — every check below is
         # about what it saw, not about what sat unread in the pool.
@@ -1068,17 +1197,19 @@ def main():
             print("  %-18s [dry-run] %s" % (conv["id"], gen["narrative"][:80]))
             continue
         con.execute(
-            """INSERT INTO news_narratives(conv_id, league, title, narrative, fan_voice, paragraph, sources, source_count)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """INSERT INTO news_narratives(conv_id, league, title, narrative, fan_voice, paragraph, sources, source_count, pool_key, newest_item)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                ON CONFLICT(conv_id) DO UPDATE SET
                 league=excluded.league, title=excluded.title,
                 narrative=excluded.narrative, fan_voice=excluded.fan_voice,
                 paragraph=excluded.paragraph, sources=excluded.sources,
                 source_count=excluded.source_count,
+                pool_key=excluded.pool_key, newest_item=excluded.newest_item,
                 generated_at=datetime('now')""",
             (conv["id"], conv["league"], conv["title"], gen["narrative"],
              gen.get("fan_voice", ""), gen.get("paragraph", ""),
-             json.dumps(gen["sources"]), gen["source_count"]),
+             json.dumps(gen["sources"]), gen["source_count"],
+             pool_key(shown, marks), newest_item(shown)),
         )
         # Append to run history — every generation is kept, never overwritten,
         # so versions can be compared (Micah, 2026-08-07).
@@ -1105,14 +1236,23 @@ def main():
             ignored += 1
             print("    IGNORED %d publisher items — card cites nothing"
                   % sum(1 for i in shown if not is_social(i)))
+        # A card that reached past this week's reporting to stand on an old
+        # article — how a 2025 feature became an August 2026 development.
+        if stale_anchor(gen, shown):
+            stale += 1
+            print("    STALE ANCHOR: cites only background while %d "
+                  "development(s) were shown"
+                  % len(split_by_age(shown)[0]))
     con.commit()
     con.close()
-    print("Wrote %d conversation cards to news_narratives" % written)
+    print("Wrote %d conversation cards to news_narratives (%d unchanged, "
+          "not rewritten)" % (written, unchanged))
     # Zero has to be said out loud, or "no warnings" and "never checked" look
     # identical in the log.
     print("Checks: %d social leaks, %d cards naming an uncited outlet, "
-          "%d cards ignoring their own publisher items"
-          % (leaks, unattributed, ignored))
+          "%d cards ignoring their own publisher items, "
+          "%d cards anchored on background while newer reporting was shown"
+          % (leaks, unattributed, ignored, stale))
 
 
 if __name__ == "__main__":

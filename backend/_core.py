@@ -248,6 +248,21 @@ def _init_db():
           generated_at TEXT NOT NULL DEFAULT (datetime('now')));
         """)
         con.execute("CREATE INDEX IF NOT EXISTS idx_nnruns_conv ON news_narratives_runs(conv_id, generated_at)")
+        # `pool_key` is a fingerprint of the exact material the served card was
+        # written from (the shown items + the editor marks). Without it a run
+        # cannot answer "did anything change?", so every run rewrote every card
+        # — new title, new prose, same story, and no way to tell a real
+        # development from churn (Micah, 2026-08-12: "i hate that the titles and
+        # text change for previously generated narratives even when there's no
+        # new news"). `newest_item` is the publish timestamp of the freshest
+        # item in that pool: what the card's present tense is entitled to.
+        _cols = {r[1] for r in con.execute(
+            "PRAGMA table_info(news_narratives)").fetchall()}
+        for _c in ("pool_key", "newest_item"):
+            if _c not in _cols:
+                con.execute(
+                    "ALTER TABLE news_narratives ADD COLUMN %s TEXT NOT NULL "
+                    "DEFAULT ''" % _c)
         # Card feedback (audit trail of the user's verdicts on a specific run;
         # Micah 2026-08-09: "i need a way to give it feedback as we go"). A
         # verdict on a run DERIVES labels for the run's cited sources (good ->
