@@ -491,7 +491,7 @@ def ingest_props(batch: PropIngest):
             # Resolve player via identity spine (NEVER silently create)
             player_id, confidence = _resolve_player_for_ingest(
                 con, p["player_name"], p.get("team", ""), batch.league,
-                source=p.get("source", "props"))
+                source=p.get("source", "props"), game_id=game_id)
             if player_id is None:
                 unresolved += 1
                 continue  # logged to unresolved_players by the resolver

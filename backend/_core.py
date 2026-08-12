@@ -839,7 +839,51 @@ def _get_nhl_stats(player_name: str, player_id: int, now: float):
         return {"stats": None, "message": f"NHL stats error: {str(e)[:200]}"}
 
 
-def _resolve_player_for_ingest(con, player_name: str, team: str, league: str, source: str = "props"):
+def _game_team_abbrevs(con, game_id, league: str) -> set:
+    """The two teams of a prop_games row as ESPN abbrevs, or an empty set.
+
+    prop_games writes home/away in two vocabularies — "Los Angeles Dodgers" from the
+    Bovada competitor list, "LAD" from other callers — so both are folded through the
+    same published map link_prop_games already uses for the ESPN crosswalk.
+    """
+    if not game_id:
+        return set()
+    row = con.execute("SELECT home, away FROM prop_games WHERE id=?", (game_id,)).fetchone()
+    if not row:
+        return set()
+    try:
+        from link_prop_games import _TEAM_MAPS
+    except Exception:
+        return set()
+    tmap = _TEAM_MAPS.get(league, {})
+    out = set()
+    for value in (row["home"], row["away"]):
+        value = (value or "").strip()
+        if value:
+            out.add(tmap.get(value.lower(), value.upper()))
+    return out
+
+
+def _pick_one(rows, nteam: str, game_teams: set):
+    """Choose a single candidate row, or None when the name stays ambiguous.
+
+    Two same-named players are separated by the team the prop was written for, and
+    failing that by which of them is actually IN the game. Neither signal present
+    means we do not know, and guessing writes the prop onto the wrong man.
+    """
+    if len(rows) == 1:
+        return rows[0]["id"]
+    for probe in ({nteam} if nteam else set(), game_teams):
+        if not probe:
+            continue
+        hits = [r for r in rows if (r["team"] or "").strip().upper() in probe]
+        if len(hits) == 1:
+            return hits[0]["id"]
+    return None
+
+
+def _resolve_player_for_ingest(con, player_name: str, team: str, league: str, source: str = "props",
+                               game_id=None):
     """Resolve a player name to players.id via the identity spine.
 
     Resolution order (deterministic, NO silent creates):
@@ -847,6 +891,10 @@ def _resolve_player_for_ingest(con, player_name: str, team: str, league: str, so
     2. Normalized name + team + league (deterministic spine match)
     3. name_alias table (known nicknames/alternate spellings)
     4. If nothing matches → write to unresolved_players, return None
+
+    A name that matches more than one row in the league is NOT a match. `game_id`
+    is what breaks the tie when the source's team parenthetical is missing or in a
+    foreign vocabulary; without it the name goes to the review queue unresolved.
 
     Returns (player_id, confidence) where confidence is 'high', 'low', or None.
     NEVER inserts a new player — that's the whole point of the spine.
@@ -857,23 +905,29 @@ def _resolve_player_for_ingest(con, player_name: str, team: str, league: str, so
     now = _dt.now(_tz.utc).isoformat()
     nname = _normalize_name(player_name)
     nteam = team.strip().upper() if team else ""
+    game_teams = _game_team_abbrevs(con, game_id, league)
 
     # 1. Fast path: exact name + league (already-matched players)
-    row = con.execute(
-        "SELECT id FROM players WHERE name=? AND league=?",
+    rows = con.execute(
+        "SELECT id, team FROM players WHERE name=? AND league=?",
         (player_name, league)
-    ).fetchone()
-    if row:
-        return (row["id"], "high")
+    ).fetchall()
+    if rows:
+        picked = _pick_one(rows, nteam, game_teams)
+        if picked is not None:
+            return (picked, "high")
+        # The name exists but points at more than one player. Fall through to the
+        # review queue rather than take whichever row SQLite happened to yield.
+        rows = []
 
     # 2. Deterministic: normalized name + team + league
     if nteam:
-        row = con.execute(
-            "SELECT id FROM players WHERE LOWER(REPLACE(name,'.','')) LIKE ? AND league=? AND UPPER(team)=? LIMIT 1",
+        cands = con.execute(
+            "SELECT id, team FROM players WHERE LOWER(REPLACE(name,'.','')) LIKE ? AND league=? AND UPPER(team)=?",
             (f"%{nname.replace(' ', '%')}%", league, nteam)
-        ).fetchone()
-        if row:
-            return (row["id"], "high")
+        ).fetchall()
+        if len(cands) == 1:
+            return (cands[0]["id"], "high")
 
     # 3. name_alias lookup
     row = con.execute(
