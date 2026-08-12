@@ -94,8 +94,19 @@ to know it exists and why it is dark.
   duplicating `attempts`/`receptions`; `pass_yds` is a season total and is *not* a
   duplicate of the per-game `pass_yds_g`). `ncaaf_conference_standings()` lives only in the
   worktree and derives rank from array position. `C/vocabulary[position]` holds two levels
-  of one vocabulary in one column. None of this reaches production, which holds zero ncaaf
-  rows.
+  of one vocabulary in one column.
+- **Production is not empty of NCAAF, and search was serving it.** Measured 2026-08-11:
+  prod holds **11,914 ncaaf players and 56,577 ncaaf game logs** (`player_stats`,
+  `team_game_results`, `team_game_stats` and `team_stats_coverage` are all zero there).
+  With no coverage row the hub correctly hid the league — and `/api/players/search`
+  returned it anyway: `?q=Bates` gave 4 NFL players and **7 NCAAF**, each linking to a
+  working player page. Having data for a league is not the same as offering it, and until
+  now only the client asked which. `backend/league_offering.py` answers it on the server
+  from `team_stats_coverage`, and search filters on it (UFC and WC are named as shape,
+  since they are not team-stats leagues and will never have a row). It is derived, never a
+  league list: a league turns on when its coverage row is promoted and off when it is not
+  vouched. Prod now offers mlb/nba/nfl/nhl/ufc/wc; dev additionally offers mls and ncaaf,
+  so development is unaffected. A database with no registry fails closed.
 
 ### Esports and EWC 2026
 

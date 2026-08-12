@@ -8,6 +8,7 @@ from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import JSONResponse
 from typing import Optional
 from _core import *
+from league_offering import offered_leagues, sql_league_filter
 from league_stats import canonical_population_sql
 from nfl_rankings import nfl_player_rank_context
 from nfl_stat_derivations import with_derived as _with_derived
@@ -63,6 +64,12 @@ def search_players(q: str = Query("", description="Search query")):
     contains = "%{}%".format(query)
     prefix = "{}%".format(query)
     with closing(_db()) as con:
+        # Only leagues this database is willing to offer. Search was the way into
+        # a league the hub refuses to link to: on prod 2026-08-11 the hub offered
+        # mlb/nba/nfl/nhl while `?q=Bates` returned 7 NCAAF players, each with a
+        # working player page. Having data for a league is not the same as
+        # offering it, and the registry is the only thing that knows which.
+        league_sql, league_params = sql_league_filter(offered_leagues(con))
         rows = con.execute(
             """SELECT p.id, p.name, p.team, p.league,
                       EXISTS(SELECT 1 FROM player_game_logs g WHERE g.player_id=p.id) AS has_logs,
@@ -74,7 +81,9 @@ def search_players(q: str = Query("", description="Search query")):
                    EXISTS(SELECT 1 FROM player_game_logs g WHERE g.player_id=p.id)
                    OR EXISTS(SELECT 1 FROM props pr WHERE pr.player_id=p.id)
                    OR EXISTS(SELECT 1 FROM player_stats s WHERE s.player_id=p.id)
-                 )
+                 )"""
+            + league_sql
+            + """
                ORDER BY
                  CASE
                    WHEN p.name = ? COLLATE NOCASE THEN 0
@@ -84,7 +93,9 @@ def search_players(q: str = Query("", description="Search query")):
                  has_props DESC, has_logs DESC, has_stats DESC,
                  p.name COLLATE NOCASE, p.id
                LIMIT 20""",
-            (contains, query, prefix),
+            # Order matters: the league filter's placeholders sit in the WHERE
+            # clause, between the name LIKE and the ORDER BY's two.
+            [contains, *league_params, query, prefix],
         ).fetchall()
     return [
         {
