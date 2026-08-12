@@ -113,6 +113,69 @@ def _linked_prop_games(con, league: str, tables: set[str]) -> tuple[int, int] | 
     return (row[0] or 0, row[1] or 0)
 
 
+# ── product surfaces ──────────────────────────────────────────────────────────
+#
+# Rows in a table do not prove a page works. These ask the next question: is
+# there anything BEHIND each surface a user actually opens, and can they reach
+# it? Every one is measured from the database, deliberately — the ESPN-backed
+# surfaces (standings, scoreboard) cannot be probed without spending a request
+# budget that is a count per host, so they are listed as UNPROBED rather than
+# guessed at. See .claude/skills/espn-request-budget.
+SURFACE_SQL = {
+    # A player page is worth opening if the person has anything on it at all.
+    "player detail": """
+        SELECT COUNT(*) FROM players p WHERE LOWER(p.league)=?
+          AND (EXISTS(SELECT 1 FROM player_game_logs g WHERE g.player_id=p.id)
+            OR EXISTS(SELECT 1 FROM player_stats s WHERE s.player_id=p.id)
+            OR EXISTS(SELECT 1 FROM props pr WHERE pr.player_id=p.id))""",
+    # The game-log tab specifically.
+    "  w/ game log": """
+        SELECT COUNT(DISTINCT g.player_id) FROM player_game_logs g
+         WHERE LOWER(g.league)=? AND g.player_id IS NOT NULL""",
+    # Leaders / season-stats tab.
+    "  w/ season stats": """
+        SELECT COUNT(DISTINCT s.player_id) FROM player_stats s
+         WHERE LOWER(s.league)=? AND s.player_id IS NOT NULL""",
+    # A game page needs a finished game with a score to show anything.
+    "game detail": """
+        SELECT COUNT(DISTINCT game_id) FROM team_game_results
+         WHERE LOWER(league)=? AND status='completed' AND score_for IS NOT NULL""",
+    # Props anywhere for the league.
+    "props (any)": """
+        SELECT COUNT(*) FROM props p JOIN prop_games g ON g.id=p.game_id
+         WHERE LOWER(g.league)=?""",
+    # SETTLED props — the half of the product that shows how the board did.
+    "settled props": """
+        SELECT COUNT(*) FROM props p
+          JOIN prop_games g ON g.id=p.game_id
+          JOIN prop_results r ON r.prop_id=p.id
+         WHERE LOWER(g.league)=? AND r.settled_at IS NOT NULL""",
+    # Settled props REACHABLE on a game page: the page joins on espn_event_id,
+    # so a settled prop on an unlinked game exists and is invisible. This is the
+    # cell that separates "we have the data" from "a user can see it".
+    "  on game detail": """
+        SELECT COUNT(*) FROM props p
+          JOIN prop_games g ON g.id=p.game_id
+          JOIN prop_results r ON r.prop_id=p.id
+         WHERE LOWER(g.league)=? AND r.settled_at IS NOT NULL
+           AND g.espn_event_id IS NOT NULL AND g.espn_event_id!=''""",
+    # The recap/preview on the game page.
+    "game story": """
+        SELECT COUNT(*) FROM game_story WHERE LOWER(league)=?""",
+}
+
+# Surfaces we cannot measure without an ESPN request. Never render these as a
+# pass or a fail: "evidence unavailable" is neither.
+UNPROBED = ("standings", "scoreboard / scores", "live game state")
+
+
+def _surface(con, sql: str, league: str, tables: set[str]) -> int | None:
+    try:
+        return con.execute(sql, (league,)).fetchone()[0]
+    except sqlite3.Error:
+        return None
+
+
 def measure(path: str) -> dict:
     with closing(sqlite3.connect(f"file:{path}?mode=ro", uri=True)) as con:
         con.row_factory = sqlite3.Row
@@ -134,10 +197,12 @@ def measure(path: str) -> dict:
             cells = {label: _count(con, table, lg, tables)
                      for label, table, _ in FEATURES}
             cells["props"] = _props_count(con, lg, tables)
+            surfaces = {k: _surface(con, q, lg, tables) for k, q in SURFACE_SQL.items()}
             out[lg] = {
                 "offered": lg in offered,
                 "cells": cells,
                 "prop_link": _linked_prop_games(con, lg, tables),
+                "surfaces": surfaces,
             }
         return out
 
