@@ -24,8 +24,8 @@ import datetime
 import pytest
 
 from ingest_league_narratives import (
-    _numbered, _topic_hits, _topic_words, is_background, newest_item, pool_key,
-    split_by_age, stale_anchor,
+    _norm_words, _numbered, _significant, _topic_hits, _topic_words,
+    is_background, newest_item, pool_key, split_by_age, stale_anchor, weak_seed,
 )
 
 TODAY = datetime.date(2026, 8, 12)
@@ -202,3 +202,45 @@ class TestTopicWords:
 
     def test_a_generic_word_still_counts_for_nothing(self):
         assert "league" not in _topic_words(self.conv("league news"))
+
+    def test_the_ranker_uses_the_same_filter_as_the_alarm(self):
+        """The first pass at this fixed `_topic_words` and `_topic_hits` and
+        left the RANKER's own inline `len(w) > 4` at ingest_league_narratives
+        :448 untouched — so the alarm measured a discrimination the scorer
+        never actually got. Both sides read `_significant` or the alarm is
+        reporting on a scorer that does not exist.
+        """
+        head = "Patriots turf ruled noncompliant"
+        assert _significant(head) == {w for w in _norm_words(head)
+                                      if len(w) > 2} - {"the", "and"}
+        assert "turf" in _significant(head)
+
+
+class TestWeakSeed:
+    """A tie at the top means recency picked the winner, not the seed."""
+
+    def test_a_wide_tie_is_reported(self):
+        """`esports worlds`: 57 candidates tied, because `esports` matches
+        everything in its own league and "Esports World Cup" catches `worlds`
+        too. The card was about the wrong tournament."""
+        assert weak_seed("Lenovo joins Esports World Cup 2026",
+                         {"esports", "worlds"}, 57)
+
+    def test_a_seed_that_discriminates_is_silent(self):
+        assert not weak_seed(
+            "Berg says no to promotion and relegation for MLS",
+            {"promotion", "relegation", "division"}, 1)
+
+    def test_a_one_word_seed_is_not_convicted_of_its_own_ceiling(self):
+        """`realignment` can never land two hits, so demanding two flagged a
+        seed whose top three results were all realignment stories."""
+        assert not weak_seed("College Football Realignment: ranking G6 teams",
+                             {"realignment"}, 2)
+
+    def test_a_one_word_seed_that_misses_entirely_is_still_reported(self):
+        assert weak_seed("College Football Power Rankings for 2026",
+                         {"realignment"}, 2)
+
+    def test_one_hit_out_of_several_words_is_recency_in_disguise(self):
+        assert weak_seed("College Football Conference Power Rankings",
+                         {"ncaaf", "conference", "realignment"}, 3)

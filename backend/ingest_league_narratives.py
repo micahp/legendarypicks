@@ -106,6 +106,24 @@ def _topic_hits(headline, topic_words):
     return len(topic_words & _significant(headline))
 
 
+def weak_seed(headline, topic_words, tied):
+    """Did the SEED pick this winner, or did recency pick it?
+
+    A tie at the top is a finding, not a result: when the best candidates all
+    score the same the sort falls through to recency, and the card is built
+    from "the most recent league article containing one common word".
+
+    Measured on the raw seed hits, never on the composite `_score`
+    (`3*topic + 2*entity`) — the question is whether the SEED discriminated,
+    and a composite of 3 is one topic word doing all the work. And a one-word
+    seed can never land more than one hit, so demanding two convicts it for a
+    ceiling it cannot clear.
+    """
+    hits = _topic_hits(headline, topic_words)
+    want = max(1, min(2, len(topic_words)))
+    return hits < want or tied >= _TIE_ALARM
+
+
 def _better_home(con, conv, headline, own_entities=(), _cache={}):
     """The sibling conversation this anchor belongs to more than `conv`, or None.
 
@@ -445,7 +463,7 @@ def _load_chatter(con, conv):
 
     def _score(row, extra_entities=()):
         head = row["headline"] or ""
-        words = {w for w in _norm_words(head) if len(w) > 4}
+        words = _significant(head)
         return (3 * len(topic_words & words)
                 + 2 * len(entities(head) & set(extra_entities)))
 
@@ -504,11 +522,8 @@ def _load_chatter(con, conv):
     if scored:
         top = scored[0][0]
         tied = sum(1 for t in scored if t[0] == top)
-        # Raw SEED hits, not the composite `_score` (which is
-        # 3*topic + 2*entity) — the question is whether the SEED discriminated,
-        # and a composite of 3 is one topic word doing all the work.
         seed_hits = _topic_hits(scored[0][2]["headline"], topic_words)
-        if seed_hits <= 1 or tied >= _TIE_ALARM:
+        if weak_seed(scored[0][2]["headline"], topic_words, tied):
             print("    WEAK SEED: %s — best candidate matches %d seed word(s), "
                   "%d tied at that rank (ranking fell through to recency); "
                   "topic words: %s"
