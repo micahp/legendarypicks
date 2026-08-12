@@ -241,3 +241,12 @@ until the remainder passes. See the `NO-ORACLE` status and the `(partial)` line.
   "Byte-identical for 243 of 243 shared rows" is a result. "Verified" is not.
 - If a number in a spec or handoff disagrees with what you measured, **the
   measurement wins** and the document gets corrected in the same commit.
+
+---
+
+## 8. The sibling rule
+
+Everything above is about getting the right number. `.claude/skills/fail-loudly/SKILL.md`
+is about what happens when you cannot: a system that degrades instead of erroring keeps
+the bug and loses the evidence. Load it before writing any ingest, any join that feeds a
+page, or any `except: pass`.
