@@ -13,9 +13,13 @@
 # At the 2-hour cadence that is ~200 requests/day against a free Nitter mirror.
 set -uo pipefail
 cd /root/legendarypicks/backend
-export LP_DB_PATH=/root/legendarypicks/backend/data/picks.dev.db
+# Honour an inherited LP_DB_PATH; default to dev. Was an unconditional export
+# that silently overrode its own unit's Environment= — the same bug as
+# news-collect.sh, and the reason a prod news job could not have worked even if
+# somebody had written one.
+export LP_DB_PATH="${LP_DB_PATH:-/root/legendarypicks/backend/data/picks.dev.db}"
 PY=/root/legendarypicks/backend/venv/bin/python
-LOG=/var/log/legendarypicks-news.log
+LOG="${LP_NEWS_LOG:-/var/log/legendarypicks-news.log}"
 
 log(){ printf '[%s] %s\n' "$(date -Is)" "$*" | tee -a "$LOG"; }
 log "=== x collect start ==="

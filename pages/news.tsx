@@ -205,9 +205,6 @@ export default function NewsPage() {
       <div className="mx-auto max-w-4xl space-y-6">
         <div>
           <h1 className="text-2xl font-extrabold tracking-tight text-zinc-100">News</h1>
-          <p className="mt-1 text-sm text-zinc-500">
-            The conversations that matter in each league — the official story and what fans are saying about it.
-          </p>
         </div>
 
         <div className="flex items-center gap-2 overflow-x-auto border-b border-zinc-800 pb-2 text-sm [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
