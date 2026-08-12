@@ -5,7 +5,10 @@ link_prop_games.py — Crosswalk: match prop_games to ESPN games and populate es
 Matches by: league + date + normalized team abbreviation.
 Runs on existing rows AND usable as a library for ingest_props.py going forward.
 
-Usage: venv/bin/python link_prop_games.py [--dry-run] [--relink]
+Usage: venv/bin/python link_prop_games.py [--dry-run] [--relink] [--league LG]
+
+--league scopes the run to one league, which is a REQUEST BUDGET control: an
+unscoped run fetches a scoreboard per league+date across every league with props.
 
 --relink also re-checks rows that already carry an espn_event_id, correcting any
 bound to the wrong game of a series (85 MLB rows on 2026-08-11).
@@ -123,6 +126,17 @@ def _norm_team(team_name: str, league: str) -> str:
     for name, abbrev in team_map.items():
         if key in name or name in key:
             return abbrev
+    # No map for this league at all: say "unknown" instead of inventing one.
+    #
+    # The first-three-letters fallback below is a last resort AMONG KNOWN TEAMS,
+    # where a near miss still lands in the right league's vocabulary. Applied to
+    # a league we have no map for it manufactures collisions: MLS alone gives
+    # "San Diego FC" -> SAN and "San Jose Earthquakes" -> SAN, and a matcher that
+    # accepts either would bind a game's props to the wrong club silently. An
+    # unlinked row is visibly missing and fixable; a wrongly linked one is not.
+    # Callers match on the published team NAME for these leagues instead.
+    if not team_map:
+        return ""
     # Fallback: first 3 letters uppercase
     return team_name.strip()[:3].upper()
 
@@ -172,11 +186,33 @@ def link_prop_game(con: sqlite3.Connection, game_row, espn_games: list) -> str:
     pg_home_name = (game_row["home"] or "").lower()
     pg_away_name = (game_row["away"] or "").lower()
 
+    def _team_names(side):
+        """Every name this payload publishes for a team, lowercased.
+
+        The name fallback used to read `displayName` alone, which the scoreboard
+        payload does not carry — measured 2026-08-11 against a real MLS response,
+        whose team objects hold abbrev/name/nickname/score/winner and no
+        displayName. So the fallback compared against None for every game and the
+        whole branch was dead. That is why MLS linked 2 of 15: the abbrev path
+        has no MLS map, and the name path was reading a key that isn't there.
+        Read all of them; a publisher naming a field differently is not absence.
+        """
+        return {
+            (side.get(k) or "").lower()
+            for k in ("displayName", "name", "shortDisplayName", "nickname")
+            if side.get(k)
+        }
+
     def _same_matchup(eg):
-        if eg["home"]["abbrev"].upper() == home_norm and eg["away"]["abbrev"].upper() == away_norm:
-            return True
-        return ((eg["home"].get("displayName") or "").lower() == pg_home_name
-                and (eg["away"].get("displayName") or "").lower() == pg_away_name)
+        # Abbrevs only when BOTH sides normalised to something real. _norm_team
+        # returns "" for a league with no map, and ""=="" would otherwise call
+        # every game on the slate a match.
+        if home_norm and away_norm:
+            if (eg["home"]["abbrev"].upper() == home_norm
+                    and eg["away"]["abbrev"].upper() == away_norm):
+                return True
+        return (pg_home_name in _team_names(eg["home"])
+                and pg_away_name in _team_names(eg["away"]))
 
     candidates = [eg for eg in espn_games if _same_matchup(eg)]
     if not candidates:
@@ -215,18 +251,30 @@ def _neighbour_days(date_str):
 
 
 def link_existing_games(con: sqlite3.Connection, dry_run: bool = False,
-                        relink: bool = False) -> int:
+                        relink: bool = False, league: str = "") -> int:
     """Link prop_games to ESPN events.
 
     `relink=True` also re-examines rows that already carry an espn_event_id, which
     is how the 85 rows bound to the wrong game of a series get corrected. It only
     writes when the answer actually changes.
+
+    `league` scopes the run to one league. This is a REQUEST BUDGET control, not a
+    convenience: ESPN's limit is a count per host (~100), not a rate, so the only
+    lever that works is issuing fewer requests. An unscoped run fetches a
+    scoreboard for every distinct date across every league that has props —
+    tennis alone contributes dozens — and spends that budget whether or not you
+    care about the league you are fixing. See .claude/skills/espn-request-budget.
     """
-    where = "" if relink else "WHERE espn_event_id IS NULL OR espn_event_id = ''"
+    clauses = [] if relink else ["(espn_event_id IS NULL OR espn_event_id = '')"]
+    params: list = []
+    if league:
+        clauses.append("league = ?")
+        params.append(league.lower())
+    where = ("WHERE " + " AND ".join(clauses)) if clauses else ""
     unlinked = con.execute(f"""
         SELECT id, league, date, start_time, home, away, espn_event_id
         FROM prop_games {where}
-    """).fetchall()
+    """, params).fetchall()
 
     if not unlinked:
         print("All prop_games already linked.")
@@ -283,12 +331,54 @@ def link_existing_games(con: sqlite3.Connection, dry_run: bool = False,
 def main():
     dry_run = "--dry-run" in sys.argv
     relink = "--relink" in sys.argv
+    league = ""
+    for i, a in enumerate(sys.argv):
+        if a == "--league" and i + 1 < len(sys.argv):
+            league = sys.argv[i + 1]
+        elif a.startswith("--league="):
+            league = a.split("=", 1)[1]
 
     con = sqlite3.connect(DB)
     con.row_factory = sqlite3.Row
 
-    print("Linking prop_games → ESPN event IDs...")
-    linked = link_existing_games(con, dry_run=dry_run, relink=relink)
+    # State the request count BEFORE issuing any of it. ESPN's ceiling is a count
+    # per host, so a job that cannot say what it will spend is a job nobody can
+    # size afterwards (espn-request-budget skill, §6).
+    clauses = [] if relink else ["(espn_event_id IS NULL OR espn_event_id = '')"]
+    params: list = []
+    if league:
+        clauses.append("league = ?")
+        params.append(league.lower())
+    where = ("WHERE " + " AND ".join(clauses)) if clauses else ""
+    slate_rows = con.execute(
+        f"SELECT DISTINCT league, date FROM prop_games {where}", params
+    ).fetchall()
+    # Each slate fetches THREE scoreboards, not one: the day plus its neighbours,
+    # because prop_games.date is a UTC start and ESPN keys by local date. Counting
+    # slates would understate the spend by 3x, and a budget line that lies is
+    # worse than no budget line.
+    slates = len(slate_rows)
+    requests = slates * 3
+    distinct_days = {(r["league"], d) for r in slate_rows for d in _neighbour_days(r["date"])}
+    scope = league.lower() if league else "ALL leagues"
+    print(f"Linking prop_games → ESPN event IDs [{scope}]")
+    print(f"  budget: {requests} scoreboard requests to site.web.api.espn.com "
+          f"({slates} slates x 3 neighbour days)")
+    print(f"  {len(distinct_days)} are distinct; the repeats cost nothing only if "
+          f"LP_ESPN_CACHE_DIR is set (it is "
+          f"{'set' if os.environ.get('LP_ESPN_CACHE_DIR') else 'NOT set'})")
+    # The guard applies to --dry-run TOO. A dry run skips the DB write, not the
+    # HTTP: it issues every request a real run would. Measured 2026-08-11, an
+    # unscoped run over this database is 189 requests against a host whose
+    # ceiling is about 100, so the tool tripped the wall by design and two
+    # "harmless" dry runs are what spent it. A 403 is often one you caused.
+    if requests > 50 and not os.environ.get("LP_LINK_ALLOW_BIG_RUN"):
+        print(f"  REFUSING: {requests} requests to one host, ceiling is ~100.")
+        print("  Scope it with --league. Pacing does not buy budget — only")
+        print("  issuing fewer requests does. Override: LP_LINK_ALLOW_BIG_RUN=1")
+        con.close()
+        return
+    linked = link_existing_games(con, dry_run=dry_run, relink=relink, league=league)
 
     if dry_run:
         print(f"\nDRY RUN — {linked} would be linked")
