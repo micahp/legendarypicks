@@ -18,6 +18,7 @@ from pydantic import BaseModel
 import espn_client as espn
 from analytics import ev as ev_mod, clv as clv_mod, calibration as calib_mod, projections as proj_mod
 from league_stats import PLAYER_STATS_TABLE_SQL, canonical_player_stats_row
+from team_stats_json import stats_to_json
 
 DB = os.environ.get("LP_DB_PATH") or os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "picks.db")
 
@@ -1196,40 +1197,78 @@ def _snapshot_rosters(league, team_abbrev, players):
         con.commit()
 
 
+# Column order for the team_game_stats INSERT, paired with the ESPN key and the
+# parser each one needs. Was 38 positional `?` against a 38-item tuple, which is
+# a correctness hazard nobody can eyeball: insert a column in the middle and every
+# value after it shifts one to the left, silently, into a column of the same type.
+_TEAM_STAT_COLUMNS = (
+    # (column, espn key, parser)
+    ("fgm_fga", "fieldGoalsMade-fieldGoalsAttempted", None),
+    ("fg_pct", "fieldGoalPct", _parse_real),
+    ("tpm_tpa", "threePointFieldGoalsMade-threePointFieldGoalsAttempted", None),
+    ("tp_pct", "threePointFieldGoalPct", _parse_real),
+    ("ftm_fta", "freeThrowsMade-freeThrowsAttempted", None),
+    ("ft_pct", "freeThrowPct", _parse_real),
+    ("rebounds", "totalRebounds", _parse_int),
+    ("off_rebounds", "offensiveRebounds", _parse_int),
+    ("def_rebounds", "defensiveRebounds", _parse_int),
+    ("assists", "assists", _parse_int),
+    ("steals", "steals", _parse_int),
+    ("blocks", "blocks", _parse_int),
+    ("turnovers", "turnovers", _parse_int),
+    ("fouls", "fouls", _parse_int),
+    ("pts_off_to", "turnoverPoints", _parse_int),
+    ("fast_break_pts", "fastBreakPoints", _parse_int),
+    ("pts_in_paint", "pointsInPaint", _parse_int),
+    ("largest_lead", "largestLead", _parse_int),
+    ("lead_changes", "leadChanges", _parse_int),
+    ("lead_pct", "leadPercentage", _parse_real),
+    ("shots", "shotsTotal", _parse_int),
+    ("blocked_shots", "blockedShots", _parse_int),
+    ("hits", "hits", _parse_int),
+    ("takeaways", "takeaways", _parse_int),
+    ("giveaways", "giveaways", _parse_int),
+    ("faceoffs_won", "faceoffsWon", _parse_int),
+    ("faceoff_pct", "faceoffPercent", _parse_real),
+    ("powerplay_goals", "powerPlayGoals", _parse_int),
+    ("powerplay_opps", "powerPlayOpportunities", _parse_int),
+    ("powerplay_pct", "powerPlayPct", _parse_real),
+    ("shorthanded_goals", "shortHandedGoals", _parse_int),
+    ("penalties", "penalties", _parse_int),
+    ("penalty_min", "penaltyMinutes", _parse_int),
+)
+
+
 def _snapshot_team_game_stats(league, game_id, team_stats_list):
     now = dt.datetime.now(dt.timezone.utc).isoformat()
+    # DUAL WRITE during the JSON migration: the blob is the new home, the columns
+    # stay populated so a database migrated later than this code still reads
+    # correctly. See team_stats_json — readers prefer the blob and fall back.
+    # The columns are frozen, not deprecated-in-place: dropping them is a separate
+    # step, after prod is backfilled.
     with closing(_db()) as con:
+        has_stats = any(
+            r[1] == "stats" for r in con.execute("PRAGMA table_info(team_game_stats)")
+        )
+        names = [c for c, _, _ in _TEAM_STAT_COLUMNS]
         for t in team_stats_list:
             s = t["stats"]
+            values = {
+                col: (parse(s.get(key)) if parse else s.get(key))
+                for col, key, parse in _TEAM_STAT_COLUMNS
+            }
+            cols = ["league", "game_id", "captured_at", "team_abbrev", "home_away"] + names
+            row = [league, game_id, now, t["team_abbrev"], t["home_away"]] + [
+                values[c] for c in names
+            ]
+            if has_stats:
+                cols.append("stats")
+                row.append(stats_to_json(league, values))
             con.execute(
-                "INSERT OR REPLACE INTO team_game_stats("
-                "league,game_id,captured_at,team_abbrev,home_away,"
-                "fgm_fga,fg_pct,tpm_tpa,tp_pct,ftm_fta,ft_pct,"
-                "rebounds,off_rebounds,def_rebounds,assists,steals,blocks,"
-                "turnovers,fouls,pts_off_to,fast_break_pts,pts_in_paint,"
-                "largest_lead,lead_changes,lead_pct,"
-                "shots,blocked_shots,hits,takeaways,giveaways,faceoffs_won,"
-                "faceoff_pct,powerplay_goals,powerplay_opps,powerplay_pct,"
-                "shorthanded_goals,penalties,penalty_min"
-                ") VALUES(?,?,?,?,?,  ?,?,?,?,?,?,  ?,?,?,?,?,?,  ?,?,?,?,?,  ?,?,?,  ?,?,?,?,?,?,  ?,?,?,?,  ?,?,?)",
-                (league, game_id, now, t["team_abbrev"], t["home_away"],
-                 s.get("fieldGoalsMade-fieldGoalsAttempted"), _parse_real(s.get("fieldGoalPct")),
-                 s.get("threePointFieldGoalsMade-threePointFieldGoalsAttempted"), _parse_real(s.get("threePointFieldGoalPct")),
-                 s.get("freeThrowsMade-freeThrowsAttempted"), _parse_real(s.get("freeThrowPct")),
-                 _parse_int(s.get("totalRebounds")), _parse_int(s.get("offensiveRebounds")),
-                 _parse_int(s.get("defensiveRebounds")), _parse_int(s.get("assists")),
-                 _parse_int(s.get("steals")), _parse_int(s.get("blocks")),
-                 _parse_int(s.get("turnovers")), _parse_int(s.get("fouls")),
-                 _parse_int(s.get("turnoverPoints")), _parse_int(s.get("fastBreakPoints")),
-                 _parse_int(s.get("pointsInPaint")), _parse_int(s.get("largestLead")),
-                 _parse_int(s.get("leadChanges")), _parse_real(s.get("leadPercentage")),
-                 _parse_int(s.get("shotsTotal")), _parse_int(s.get("blockedShots")),
-                 _parse_int(s.get("hits")), _parse_int(s.get("takeaways")),
-                 _parse_int(s.get("giveaways")), _parse_int(s.get("faceoffsWon")),
-                 _parse_real(s.get("faceoffPercent")), _parse_int(s.get("powerPlayGoals")),
-                 _parse_int(s.get("powerPlayOpportunities")), _parse_real(s.get("powerPlayPct")),
-                 _parse_int(s.get("shortHandedGoals")), _parse_int(s.get("penalties")),
-                 _parse_int(s.get("penaltyMinutes"))))
+                "INSERT OR REPLACE INTO team_game_stats(%s) VALUES(%s)"
+                % (",".join(cols), ",".join("?" * len(cols))),
+                row,
+            )
         con.commit()
 
 
