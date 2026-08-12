@@ -30,6 +30,30 @@ P="${LP_GATE_P:-http://127.0.0.1:8100}"
 # HTTP surface can report: a table keyed by the player's name serves correct rows
 # right up until the spine renames somebody.
 D="${LP_GATE_D:-/root/legendarypicks/backend/data/picks.db}"
+
+# LP_DB_PATH is what every *backend* process reads, so it is the variable anyone
+# reaching for "point this at dev" types first. This script has never read it: the
+# knob is LP_GATE_D, and its default is PROD. Set the wrong one and nothing raises
+# — the gates run happily against picks.db and report a confident number about a
+# database you did not mean to grade.
+#
+# 2026-08-11: `LP_DB_PATH=…/picks.dev.db ./verify-gates.sh COV-statset` printed
+# "14 of a known 21", which read as the ncaaf stats landing clearing seven items.
+# It was measured against prod, which holds zero ncaaf player_stats rows. The
+# baseline it was compared to came off a different database again — two numbers,
+# two rulers, and the gate had no way to say so.
+#
+# So: refuse. Not a warning, because a warning scrolls past above a PASS line.
+# Setting BOTH is fine — that names the real knob, and LP_DB_PATH is then just
+# inherited environment.
+if [ -n "$LP_DB_PATH" ] && [ -z "$LP_GATE_D" ]; then
+  echo "REFUSING: LP_DB_PATH=$LP_DB_PATH is set, but this script does not read it." >&2
+  echo "  The DB knob here is LP_GATE_D, which would otherwise default to $D — PROD." >&2
+  echo "  Every DB-reading gate would grade prod while the output implied your DB." >&2
+  echo "  Fix: LP_GATE_D=\"\$LP_DB_PATH\" $0 $*" >&2
+  echo "  Or, if you did mean prod: unset LP_DB_PATH, or set LP_GATE_D explicitly." >&2
+  exit 2
+fi
 echo "── gates against W=$W B=$B F=$F P=$P D=$D ──"
 
 # ── the preflight, which is the same rule as the gates ─────────────────────────
