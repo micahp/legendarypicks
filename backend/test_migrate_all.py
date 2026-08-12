@@ -22,6 +22,27 @@ CREATE TABLE team_game_stats (
 """
 
 
+# Tables the 20260812 migrations target. They exist on every real database --
+# that is precisely why `CREATE TABLE IF NOT EXISTS` never widened them.
+NEWS_ITEMS_DDL = """
+CREATE TABLE news_items (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    league TEXT NOT NULL,
+    layer TEXT NOT NULL,
+    url TEXT NOT NULL UNIQUE
+)
+"""
+
+
+TEAM_GAME_RESULTS_DDL = """
+CREATE TABLE team_game_results (
+    league TEXT NOT NULL,
+    game_id TEXT NOT NULL,
+    team TEXT NOT NULL
+)
+"""
+
+
 OLD_REGISTRY_SQL = """
 CREATE TABLE app_schema_migrations (
     migration_id TEXT PRIMARY KEY,
@@ -36,8 +57,14 @@ def _bootstrap(path: str, old_registry: bool = False) -> None:
     with sqlite3.connect(path) as con:
         ensure_table(con)
         con.execute(LEGACY_TEAM_STATS_DDL)
+        con.execute(NEWS_ITEMS_DDL)
+        con.execute(TEAM_GAME_RESULTS_DDL)
         for addition in migrate_schema.MIGRATIONS[1].additions:
             con.execute(addition.sql)
+        for migration in migrate_schema.MIGRATIONS:
+            if migration.table in ("news_items", "team_game_results"):
+                for addition in migration.additions:
+                    con.execute(addition.sql)
         # Minimal app-read schema so refuse_unmigrated sees a genuinely level
         # database: the legacy schema-adders' columns are what the app reads.
         con.execute(
@@ -168,6 +195,8 @@ class MigrateAllTests(unittest.TestCase):
         with sqlite3.connect(self.prod) as con:
             con.execute(LEGACY_LOG_DDL)
             con.execute(LEGACY_TEAM_STATS_DDL)
+            con.execute(NEWS_ITEMS_DDL)
+            con.execute(TEAM_GAME_RESULTS_DDL)
 
         result = migrate_all.main(
             ["--apply", "--only", "prod", "--prod", self.prod, "--dev", self.dev]

@@ -74,6 +74,16 @@ class LogMigrationTests(unittest.TestCase):
                 "CREATE TABLE team_game_stats("
                 "league TEXT NOT NULL, game_id TEXT NOT NULL)"
             )
+            # Present on every real database, which is why the 20260812
+            # migrations had to widen them rather than create them.
+            connection.execute(
+                "CREATE TABLE news_items("
+                "id INTEGER PRIMARY KEY, league TEXT NOT NULL, url TEXT)"
+            )
+            connection.execute(
+                "CREATE TABLE team_game_results("
+                "league TEXT NOT NULL, game_id TEXT NOT NULL, team TEXT NOT NULL)"
+            )
             for addition in migrate_schema.MIGRATIONS[1].additions:
                 connection.execute(addition.sql)
             for table in migrate_logs_to_prod.PROTECTED_TABLES:

@@ -139,6 +139,35 @@ MIGRATIONS: tuple[Migration, ...] = (
             ),
         ),
     ),
+    # The news schema is created by `CREATE TABLE IF NOT EXISTS` at
+    # _core.py:216. Prod's tables were created under the older shape, so every
+    # column added since has been skipped silently -- the table exists, so the
+    # guard fires and nothing reports a gap. `conv_id` is what ties an item to
+    # the conversation it belongs to; without it prod's news serves items that
+    # can never be grouped.
+    Migration(
+        migration_id="20260812_001_news_items_conv_id",
+        table="news_items",
+        additions=(
+            ColumnAddition(
+                contract=ColumnContract("conv_id", "TEXT"),
+                sql="ALTER TABLE news_items ADD COLUMN conv_id TEXT",
+            ),
+        ),
+    ),
+    # Soccer draws: `win` cannot express one, so a three-valued result rides
+    # alongside it. Nullable and unbackfilled by design -- a blank means the
+    # ingest never wrote one, not that the game was a draw.
+    Migration(
+        migration_id="20260812_002_team_game_results_result",
+        table="team_game_results",
+        additions=(
+            ColumnAddition(
+                contract=ColumnContract("result", "TEXT"),
+                sql="ALTER TABLE team_game_results ADD COLUMN result TEXT",
+            ),
+        ),
+    ),
 )
 
 REGISTRY_CONTRACT = (
