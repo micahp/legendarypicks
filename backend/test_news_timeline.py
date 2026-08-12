@@ -24,8 +24,8 @@ import datetime
 import pytest
 
 from ingest_league_narratives import (
-    _numbered, is_background, newest_item, pool_key, split_by_age,
-    stale_anchor,
+    _numbered, _topic_hits, _topic_words, is_background, newest_item, pool_key,
+    split_by_age, stale_anchor,
 )
 
 TODAY = datetime.date(2026, 8, 12)
@@ -164,3 +164,41 @@ def test_the_leagues_cup_regression(published, expected):
     """The card that started this: a 2025 ESPN feature must never be the
     thing a card announces as happening now."""
     assert is_background(item(published), TODAY) is expected
+
+
+class TestTopicWords:
+    """The length floor threw away the word the conversation is NAMED for.
+
+    `len(w) > 4` was applied on BOTH sides — to the seed and to every headline
+    — so a word had to be five characters to exist at all. `nfl-turf-grass`
+    kept `grass` and lost **turf**; both salary-cap conversations kept `salary`
+    and lost **cap**. Measured across the 14 live conversations 2026-08-12,
+    restoring them moved 10 of 14 to a higher top score with fewer candidates
+    tied on it (turf 1/25 -> 3/11, cap 1/22 -> 3/18).
+    """
+
+    def conv(self, seed, title=""):
+        return {"id": "c", "league": "nfl", "seed": seed, "title": title}
+
+    def test_the_word_the_conversation_is_named_for_survives(self):
+        assert "turf" in _topic_words(self.conv("nfl turf grass"))
+        assert "cap" in _topic_words(self.conv("nhl salary cap"))
+
+    def test_it_matches_that_word_in_a_headline_too(self):
+        """Both sides, or the seed word has nothing to match against."""
+        tw = _topic_words(self.conv("nfl turf grass"))
+        assert _topic_hits("Patriots turf ruled noncompliant", tw) >= 1
+
+    def test_turf_beats_a_headline_that_only_shares_the_league(self):
+        tw = _topic_words(self.conv("nfl turf grass"))
+        assert (_topic_hits("NFL turf and grass fight returns", tw)
+                > _topic_hits("NFL schedule released", tw))
+
+    def test_short_stopwords_are_named_not_guessed_by_length(self):
+        tw = _topic_words(self.conv("the cap and the new deal"))
+        assert "cap" in tw
+        for w in ("the", "and", "new", "deal"):
+            assert w not in tw
+
+    def test_a_generic_word_still_counts_for_nothing(self):
+        assert "league" not in _topic_words(self.conv("league news"))

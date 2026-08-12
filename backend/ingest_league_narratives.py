@@ -71,19 +71,39 @@ def _norm_words(text):
     return set(re.sub(r"[^a-z0-9 ]", " ", (text or "").lower()).split())
 
 
+_MIN_TOPIC_LEN = 2   # was 4, which threw away the word naming the conversation
+
+
+def _significant(text):
+    """The words in `text` that can identify a topic.
+
+    The length floor used to be 4, applied on BOTH sides — to the seed and to
+    every headline — so a word had to be five characters to exist at all. That
+    discarded the word the conversation is NAMED for: `nfl-turf-grass` kept
+    `grass` and lost **turf**; `nhl-salary-cap` and `mlb-salary-cap` kept
+    `salary` and lost **cap**. Measured 2026-08-12 across the 14 live
+    conversations, restoring them moved 10 of 14 to a higher top score with
+    fewer candidates tied on it (turf 1/25 -> 3/11, cap 1/22 -> 3/18).
+
+    A floor that low needs the common short words named instead of guessed at,
+    which is what `_STOPWORDS` is for.
+    """
+    return {w for w in _norm_words(text or "")
+            if len(w) > _MIN_TOPIC_LEN
+            and w not in _GENERIC_WORDS and w not in _STOPWORDS}
+
+
 def _topic_words(conv):
     """The words that identify one conversation, from its seed and title.
 
     Module-level rather than a closure because anchor routing has to compute it
     for a conversation's SIBLINGS, not just for itself (see `_better_home`).
     """
-    return {w for w in _norm_words("%s %s" % (conv["seed"], conv["title"]))
-            if len(w) > 4 and w not in _GENERIC_WORDS}
+    return _significant("%s %s" % (conv["seed"], conv["title"]))
 
 
 def _topic_hits(headline, topic_words):
-    words = {w for w in _norm_words(headline or "") if len(w) > 4}
-    return len(topic_words & words)
+    return len(topic_words & _significant(headline))
 
 
 def _better_home(con, conv, headline, own_entities=(), _cache={}):
@@ -147,12 +167,29 @@ _MIN_ITEMS = 2  # fewer than this and there's no "chatter" to summarize
 _BATCH_MAX_TOKENS = 24000  # reasoning shares this budget; 10000 truncated 13 cards
 _BATCH_CHUNK = 4           # fallback width when the wide batch will not parse
 _ANCHORS = 6               # real articles shown per card, best-scoring first
+_TIE_ALARM = 8             # candidates tied at the top score = the seed did nothing
 # Words that are in every seed and every headline, so a hit on them means
 # nothing. Same lesson as the classifier's substring bug.
 _GENERIC_WORDS = {"deal", "deals", "talks", "rights", "season", "league",
                   "team", "teams", "game", "games", "news", "player",
                   "players", "sports", "picture", "debate", "case", "about",
                   "after", "before", "their", "there", "these", "those"}
+
+# The short common words, named explicitly. Length used to stand in for
+# significance — anything of four characters or fewer was assumed to be a
+# stopword, which is true of "the" and "with" and false of "turf", "cap",
+# "NIL" and "cup". Naming them is the only way to keep the short words that
+# carry a topic while dropping the short words that carry nothing.
+_STOPWORDS = {
+    "the", "and", "for", "was", "are", "his", "her", "its", "new", "two",
+    "one", "out", "off", "not", "but", "who", "how", "why", "all", "has",
+    "had", "him", "she", "they", "won", "top", "big", "set", "say", "says",
+    "get", "got", "now", "can", "will", "from", "with", "this", "that",
+    "have", "been", "more", "than", "over", "into", "just", "when", "what",
+    "said", "year", "week", "day", "days", "time", "back", "down", "here",
+    "him", "make", "made", "take", "takes", "look", "looks", "could", "would",
+    "should", "amid", "still", "next", "last", "first", "full", "way",
+}
 
 # A declined/failed conversation wipes its served news_narratives row — that's
 # the "some are missing now" mechanism. The full served card that vanished is
@@ -454,6 +491,29 @@ def _load_chatter(con, conv):
               for r in candidates]
     scored = [t for t in scored if t[0] > 0]
     scored.sort(key=lambda t: (t[0], t[1]), reverse=True)
+
+    # A TIE AT THE TOP is a finding, not a result. When the best-scoring
+    # candidates all score the same, the sort falls through to recency and the
+    # card is built from "the most recent league article containing one common
+    # word" — which is exactly how `esports worlds` produced a card about the
+    # Esports World Cup instead of League of Legends Worlds: 57 articles tied
+    # at 1, because `esports` matches everything in the esports league and
+    # "Esports World Cup" also catches `worlds`. Nothing failed; the seed
+    # simply did no work, and no run said so (Micah, 2026-08-12: "worlds does
+    # seem too generic").
+    if scored:
+        top = scored[0][0]
+        tied = sum(1 for t in scored if t[0] == top)
+        # Raw SEED hits, not the composite `_score` (which is
+        # 3*topic + 2*entity) — the question is whether the SEED discriminated,
+        # and a composite of 3 is one topic word doing all the work.
+        seed_hits = _topic_hits(scored[0][2]["headline"], topic_words)
+        if seed_hits <= 1 or tied >= _TIE_ALARM:
+            print("    WEAK SEED: %s — best candidate matches %d seed word(s), "
+                  "%d tied at that rank (ranking fell through to recency); "
+                  "topic words: %s"
+                  % (conv_id, seed_hits, tied,
+                     ",".join(sorted(topic_words)) or "none"))
 
     # Route: an anchor that fits a sibling conversation better belongs to that
     # sibling, not to both. Dropped OUT LOUD — a card quietly annexing another
