@@ -19,6 +19,7 @@ import { useGameProps } from '../../../components/Game/useGameProps'
 import WCContext from '../../../components/Game/WCContext'
 import BoothFeed from '../../../components/Game/BoothFeed'
 import ListenLive, { LCUP_PAGE } from '../../../components/ListenLive'
+import { SHOW_BOOTH } from '../../../lib/featureFlags'
 
 const TAB_DEFS: { key: Tab; label: string }[] = [
   { key: 'boxscore', label: 'Box Score' },
@@ -235,8 +236,11 @@ export default function GameDetailPage() {
 
   const lg = (league || '').toLowerCase()
   const showTabs = hasGameTabs(lg)
-  // WC and Leagues Cup get an extra "From the Booth" tab for the live broadcast reads.
-  const tabDefs = lg === 'wc' || lg === 'lcup' ? [...TAB_DEFS, { key: 'booth' as Tab, label: 'From the Booth' }] : TAB_DEFS
+  // WC and Leagues Cup get an extra "From the Booth" tab for the live broadcast
+  // reads — dev only, behind SHOW_BOOTH. Production does not run the broadcast
+  // capture the tab reads from, so there it would open onto nothing.
+  const showBooth = SHOW_BOOTH && (lg === 'wc' || lg === 'lcup')
+  const tabDefs = showBooth ? [...TAB_DEFS, { key: 'booth' as Tab, label: 'From the Booth' }] : TAB_DEFS
   const usesDetail = usesDetailEndpoint(lg)
   const usesPerTab = usesPerTabEndpoints(lg)
 
@@ -410,7 +414,10 @@ export default function GameDetailPage() {
               />
             )}
 
-            {tab === 'booth' && gameId && (
+            {/* Gated on showBooth too, not just the tab list: hiding a tab does
+                not unreach it — `tab` is state, and a stale value or a restored
+                one would render the feed with no tab visible above it. */}
+            {showBooth && tab === 'booth' && gameId && (
               <BoothFeed
                 gameId={gameId}
                 contextLeague={lg === 'lcup' ? 'lcup' : 'wc'}

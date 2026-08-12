@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/router'
 
 import BoothFeed from '../../../components/Game/BoothFeed'
+import { SHOW_BOOTH } from '../../../lib/featureFlags'
 
 type SeriesResult = {
   match_id: number
@@ -400,10 +401,13 @@ export default function CodGameDetailPage() {
           </div>
         </section>
 
-        <section className="space-y-5">
-          <SectionHeader eyebrow="Timestamp-matched broadcast reads" title="From the Booth" />
-          <BoothFeed gameId={context.game_id} contextLeague="cod" showListenLive={false} />
-        </section>
+        {/* Dev only: production does not run the broadcast capture this reads. */}
+        {SHOW_BOOTH && (
+          <section className="space-y-5">
+            <SectionHeader eyebrow="Timestamp-matched broadcast reads" title="From the Booth" />
+            <BoothFeed gameId={context.game_id} contextLeague="cod" showListenLive={false} />
+          </section>
+        )}
 
         <section className="space-y-5">
           <SectionHeader eyebrow="Context plus broadcast" title="The Read" />
