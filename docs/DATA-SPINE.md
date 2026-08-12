@@ -2,6 +2,48 @@
 
 Measured against prod `backend/data/picks.db`, 2026-08-04.
 
+> ## ⚠ CORRECTION — re-measured against prod 2026-08-11
+>
+> The §2 table below and three of the diagnoses drawn from it are **stale**. The
+> mechanism it describes is still exactly right; several of its facts are not. Re-measured
+> on the same file, same query, one week later:
+>
+> | league | rows | espn_id | legacy | BOTH | was |
+> |---|---|---|---|---|---|
+> | NFL | 26,947 | 18,713 | 25,007 | 16,774 | ~unchanged |
+> | NBA | 871 | 649 | 541 | **320** | was "**0** — no overlap at all" |
+> | MLB | 2,451 | **783** | 2,449 | 783 | was "carries **no** `espn_id`" |
+> | NHL | 1,072 | **1,048** | 875 | 853 | was "carries **no** `espn_id`" |
+> | UFC | 49 | 47 | — | — | 47 |
+> | WC | 63 | 61 | — | — | 63 |
+> | MLS | 888 | **357** | — | — | was 1,236, "the whole spine carries `espn_id`" |
+> | NCAAF | 11,914 | 11,914 | — | — | was 15,029 |
+>
+> **The three headline diagnoses that are no longer true.** Each drove a stated
+> consequence, and the consequences moved with them:
+>
+> - *"MLB carries no `espn_id`… `players.team` is 89% blank and `players.position` is
+>   100% blank."* MLB now carries 783 `espn_id`s, and team/position are **45% blank**,
+>   not 89%/100%. The MLB identity work this cycle (`03d906b`, `4f405db`) is why.
+> - *"NHL carries no `espn_id`."* NHL now carries 1,048 of 1,072 — the most complete
+>   crosswalk after NFL. Team is 0% blank and position 2 rows blank.
+> - *"NBA has two ids and no overlap at all."* 320 rows now carry both.
+>
+> **MLS and NCAAF counts fell** because these are prod numbers and the promotions were
+> partial: MLS excluded 520 identity-mismatched ids, and dev holds 1,240 MLS / 20,926
+> NCAAF against prod's 888 / 11,914. Prod NCAAF also has **zero** `player_stats`,
+> `team_game_results`, `team_game_stats` and `team_stats_coverage` — the missing coverage
+> row is what keeps the league off the hub, and as of 2026-08-11 off search too
+> (`backend/league_offering.py`).
+>
+> **MLS is no longer "the whole spine carries `espn_id`"** — 357 of 888 on prod. Any plan
+> that assumed a complete MLS crosswalk needs re-checking against the number, not this
+> sentence.
+>
+> Left in place below rather than rewritten, so the evolution is readable. Treat every
+> number past this box as "true on 2026-08-04" and re-measure before planning on it —
+> that is the point of §2b of the published-first skill, applied to this file.
+
 Short version: **`players` is a spine, and a league is only as good as the number
 of publishers that can reach it.** Every gap documented this week is downstream of
 that one fact, and until 2026-08-04 nothing measured it.
