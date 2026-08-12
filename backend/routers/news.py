@@ -14,6 +14,7 @@ from datetime import datetime, timezone
 from fastapi import APIRouter, Query
 from typing import Optional
 from _core import *
+from news_quality import rank_items
 
 router = APIRouter()
 
@@ -154,7 +155,12 @@ def _league_report(league: Optional[str] = None) -> dict:
             ).fetchall()
             groups = {}
             for r in rows:
-                groups.setdefault(r["league"], []).append(r)
+                groups.setdefault(r["league"], []).append(dict(r))
+            # The bar for items we did NOT write. Recency was the whole ranking
+            # until 2026-08-12, which served retweets of retweets, a reporter
+            # announcing a holiday, and stories from 2025. Ranked PER LEAGUE so a
+            # busy league cannot trim a quiet one down to nothing.
+            groups = {lg: rank_items(v) for lg, v in groups.items()}
 
         # AI-generated conversation cards (news_narratives), keyed by conv_id
         ai_rows = con.execute("SELECT * FROM news_narratives").fetchall()
@@ -163,6 +169,19 @@ def _league_report(league: Optional[str] = None) -> dict:
         for r in ai_rows:
             convs_by_league.setdefault(r["league"], []).append(_conv_card(r, pool))
         # Newest story first within each league tab, same ruler as the Home feed.
+        # Cards carry their own floor: a synthesized card with no published
+        # receipt behind it does not display, whatever it says. 6 of 14 on dev
+        # had sources=[] and were served anyway, because the generation-time
+        # guard has no say over rows already in the table.
+        # A league this database does not offer must not reach a user through
+        # the news feed either. The hub reads the coverage registry and hides
+        # NCAAF; without this, news served it anyway — the same one-surface-only
+        # gap that let /api/players/search return 7 NCAAF players per query.
+        # Newest story first within each league tab, same ruler as the Home feed.
+        # NO quality floor here on purpose: a card is not worse because its
+        # `sources` column is empty. Requiring a citation already cost 11 of 14
+        # good cards once (see the v0.8.0 CHANGELOG) and an empty column is a
+        # RECORDING gap, not evidence the card was ungrounded.
         for cards in convs_by_league.values():
             cards.sort(key=lambda c: c["story_time"], reverse=True)
 
