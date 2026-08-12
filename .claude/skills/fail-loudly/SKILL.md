@@ -107,6 +107,42 @@ per query. **A rule enforced on one surface only is not enforced.**
 > **Rule.** When a tool has a knob, make the wrong knob refuse. When a rule has
 > more than one surface, derive it from one source both surfaces read.
 
+### 2e. The allowlist that decides trust, checked by NAME
+
+`_core.SOCIAL_SOURCES` is the list of feeds whose items are posts rather than
+reporting. Everything downstream asks one question — `source not in
+SOCIAL_SOURCES` — and treats the answer as **"this is a verified publisher."**
+
+It said `("bluesky", "x-search")`. The collector writes tweets with
+`source = "x"`. **855 rows.** Every tweet in the corpus was therefore a verified
+publisher: eligible to be shown to the writer as published reporting, eligible
+to become a source chip a reader would click as a receipt. A tweet carrying a
+false claim was read as a publisher and served as fact (Micah, 2026-08-12).
+
+Nothing could detect this. The rows were present, well-formed and correctly
+classified in every other respect. The only thing wrong was a string that was
+never added to a tuple, and the failure of that string to be there looks
+*exactly* like a feed that is genuinely a publisher.
+
+Note the two tempting non-fixes:
+
+* **Add `"x"` to the tuple.** Fixes 855 rows, leaves the mechanism — the next
+  feed anyone adds is one forgotten string away from being trusted, and the
+  person adding it will not know this list decides trust.
+* **Trust the guard alone.** A shape check that silently corrects the column
+  means the list is never corrected, and every other reader of that column
+  (there were seven) keeps the bug.
+
+> **Rule.** A list that decides TRUST may never be keyed on a name alone.
+> Check the shape of the thing as well — our posts all carry an `[@handle]`
+> prefix and a social host in the URL — and **report the disagreement** so the
+> list gets fixed rather than quietly compensated for. `is_social()` refuses;
+> `social_leaks()` prints. Both, or you get one bug back later.
+>
+> Corollary: an allowlist is safer inverted. "Is this a publisher?" answered by
+> *absence* from a list fails open — anything unknown is trusted. Prefer a
+> question that fails closed.
+
 ---
 
 ## 3. Writing it so it fails loudly
@@ -131,6 +167,15 @@ per query. **A rule enforced on one surface only is not enforced.**
 6. **A green gate is a claim about its surface.** Read what the assertion
    actually asserts before believing it. 1,187 tests passed the entire time all
    29 of these defects existed.
+7. **Say the zero.** Print the count of every check even when it is zero —
+   `Checks: 0 social leaks, 0 cards naming an uncited outlet`. A log that only
+   speaks up on failure cannot distinguish "clean" from "never ran", which is
+   the state the news collector was in for its entire existence.
+8. **Two lists that must agree will drift.** If a prompt numbers one list and a
+   resolver indexes another, they are the same list or they are a bug. Ours
+   drifted the moment dedupe removed an item, and the receipts it attached
+   pointed at real articles that did not say the thing being cited — a wrong
+   citation, which is worse than none, and invisible in every count.
 
 ---
 

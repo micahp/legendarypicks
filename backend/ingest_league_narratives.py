@@ -203,6 +203,21 @@ _SYSTEM = (
     "Otherwise say it is unconfirmed or leave it out and write from what IS "
     "supported; that is the normal case, not a failure, and never a reason to "
     "decline the conversation. "
+    "NAME ONLY OUTLETS YOU ARE CITING. Write an outlet's name — ESPN, The "
+    "Athletic, Sky Sports — only when that outlet is one of the numbered "
+    "publisher items and you are listing it in source_ids. A social post that "
+    "LINKS to an outlet is not that outlet reporting to you: you have read the "
+    "post, not the article, so write \"posts cited a report that…\" and name no "
+    "masthead. Never credit the account, aggregator or site that reposted "
+    "someone else's article as though it were the publisher. "
+    "A PUBLISHED CONFIRMATION OUTRANKS A RUMOUR, INCLUDING ITS TENSE. When a "
+    "publisher item says a move is DONE and the posts still call it pending, "
+    "the move is done: write it in the past tense and drop the hedge. Do not "
+    "call something \"unconfirmed\" or \"reportedly\" or \"being finalized\" "
+    "when a numbered publisher item in your own list confirms it, and do not "
+    "carry an old superlative (\"currently leads the league\") past the date "
+    "the publisher items support. Check the dates on the items: they are given "
+    "to you for this. "
     "ONE TOPIC PER CARD. This card covers exactly the conversation named in the "
     "header and nothing else. A card is NOT a roundup of everything happening "
     "in the league — that is a different feature. If an item in the list is "
@@ -448,6 +463,98 @@ def _load_chatter(con, conv):
 
 
 _BODY_CHARS = 600
+_PROMPT_ITEMS = 10   # how many pool items reach the model, per card
+_SHOW_ANCHORS = 6    # of those, reserved for published articles
+
+# Hosts that serve posts, whatever the row's `source` column happens to say.
+_SOCIAL_HOSTS = ("bsky.app", "bsky.social", "twitter.com", "x.com", "nitter",
+                 "mastodon", "threads.net", "reddit.com", "t.co")
+
+
+def is_social(it):
+    """True when this item is a POST, not published reporting.
+
+    Membership in `SOCIAL_SOURCES` is checked first, then the SHAPE of the item,
+    because the name list has already failed once in the way that matters: `x`
+    was not in it while 855 rows carried that source, so every tweet in the
+    corpus counted as a verified publisher. A tweet with a false claim reached a
+    card as fact that way (Micah, 2026-08-12), and the same hole let two tweets
+    into the publisher half of the MLS spending pool.
+
+    Adding the missing string would fix those 855 rows and leave the mechanism
+    intact for the next feed someone adds. So this also refuses anything that
+    LOOKS like a post — our collector prefixes every one with `[@handle]`, and
+    social hosts are recognisable in the URL — and a caller can report the
+    disagreement rather than silently trusting the column
+    (see `social_leaks`). An item only has to look like a post ONCE, anywhere,
+    to be kept out of the receipts.
+    """
+    if (it.get("source") or "") in SOCIAL_SOURCES:
+        return True
+    if (it.get("headline") or "").lstrip().startswith("[@"):
+        return True
+    url = (it.get("url") or "").lower()
+    return any(h in url for h in _SOCIAL_HOSTS)
+
+
+def social_leaks(items):
+    """Items the `source` column calls published but that are posts by shape.
+
+    Every one of these is a row that would have been served as a receipt. This
+    is the loud half of `is_social`: the guard stops them silently, and this
+    reports them so the source list actually gets fixed instead of the guard
+    quietly carrying the hole forever.
+    """
+    return [it for it in items
+            if (it.get("source") or "") not in SOCIAL_SOURCES and is_social(it)]
+
+
+def _prompt_items(items, limit=_PROMPT_ITEMS):
+    """The EXACT list the model is shown — published articles first.
+
+    Two defects lived in the four lines this replaces, both measured on dev
+    2026-08-12.
+
+    **The model was never shown the reporting.** `_load_chatter` returns social
+    chatter first (up to 12) and appends the publisher anchors after it, and the
+    prompt took `[:10]`. So for any conversation with a busy social lane, the
+    anchors fell off the end and the card was written from bluesky alone. Six of
+    fourteen conversations were in that state, and they are EXACTLY the six
+    cards serving `source_count = 0`:
+
+        esports-worlds  mls-ligamx-spending  mls-messi-absence
+        nba-expansion   nfl-media-rights     nhl-salary-cap
+
+    The spending card called a completed transfer "unconfirmed social reports"
+    while The Athletic, USA Today and mlssoccer.com sat in its pool unread. That
+    is `published-first` §1 exactly: we had the published fact and used the
+    chatter about it. Reserving anchor slots is the fix — a card may still be
+    chatter-only, but only when there is genuinely nothing published to show it.
+
+    **Citations resolved against the wrong list.** The prompt numbered the
+    DEDUPED items while `_cited_sources` indexed the raw pool, so every number
+    after a dropped duplicate pointed one article too early. Two of fourteen
+    conversations were misaligned — mlb-salary-cap's "#7" was a Skubal salary-cap
+    piece in the prompt and a bluesky post in the resolver. A wrong receipt is
+    worse than no receipt: it is a citation to something that does not say it.
+    Callers now number and resolve against this one list.
+    """
+    seen, uniq = set(), []
+    for it in items:
+        # The collector stores the same post from several feeds; duplicates
+        # crowded a real injury item out of the window once already.
+        h = (it["headline"] or "").strip()
+        if h in seen:
+            continue
+        seen.add(h)
+        uniq.append(it)
+    anchors = [i for i in uniq if not is_social(i)]
+    chatter = [i for i in uniq if is_social(i)]
+    n_anchor = min(len(anchors), _SHOW_ANCHORS)
+    n_chat = min(len(chatter), limit - n_anchor)
+    # Slots the chatter did not need go back to the anchors, never wasted.
+    n_anchor = min(len(anchors), limit - n_chat)
+    return anchors[:n_anchor] + chatter[:n_chat]
 
 
 def _numbered(items, limit=None):
@@ -461,7 +568,7 @@ def _numbered(items, limit=None):
     """
     out = []
     for i, it in enumerate(items if limit is None else items[:limit]):
-        real = it["source"] not in SOCIAL_SOURCES
+        real = not is_social(it)
         url = (" " + it["url"]) if real and it.get("url") else ""
         # The DATE, always. The ESPN scouting feature is from 2025 and the card
         # reported it as current, because the model had no way to know (Micah,
@@ -504,7 +611,7 @@ def had_publisher_material(items):
     check that instead — and allegations, the dangerous class, still have to
     cite one (see unsupported_allegation).
     """
-    return any(it["source"] not in SOCIAL_SOURCES for it in items)
+    return any(not is_social(it) for it in items)
 
 
 def unsupported_allegation(gen):
@@ -523,17 +630,116 @@ def unsupported_allegation(gen):
     return any(w in text for w in _ALLEGATION_WORDS)
 
 
+def _squash(text):
+    return re.sub(r"[^a-z0-9]+", "", (text or "").lower())
+
+
+def _outlet_vocab(con, _cache={}):
+    """Every outlet name this corpus knows, from our own rows.
+
+    Built from the data rather than hand-listed, because the names that need
+    catching are precisely the ones nobody thought to list: `rawchili.com` is a
+    scraper that republishes other outlets through bot accounts, and it reached
+    a card as "Raw Chili and other outlets". Sources give us the mastheads we
+    ingest; URL hosts give us the ones we only ever see LINKED from a post,
+    which is the whole problem class.
+    """
+    if "v" not in _cache:
+        names = set()
+        for (s,) in con.execute("SELECT DISTINCT source FROM news_items"):
+            if s:
+                names.add(_squash(s))
+        for (u,) in con.execute(
+                "SELECT DISTINCT url FROM news_items WHERE url != ''"):
+            host = _domain_of(u)
+            if host:
+                # "www.pcgamesn.com" -> "pcgamesn": the name a writer would use.
+                names.add(_squash(host.rsplit(".", 1)[0].split(".")[-1]))
+        # Domains written INSIDE a post, which the url column never sees: a
+        # bluesky row's url is its bsky permalink, so `rawchili.com` and
+        # `pcgamesn.com` — the two outlets cards actually miscredited — appear
+        # only in the post text. Harvesting urls alone missed both, which would
+        # have made this check pass on the very cases it was written for.
+        for (h,) in con.execute(
+                "SELECT DISTINCT headline FROM news_items WHERE headline != ''"):
+            for dom in _INLINE_DOMAIN.findall(h or ""):
+                names.add(_squash(dom.rsplit(".", 1)[0].split(".")[-1]))
+        # Short names collide with ordinary words ("as", "si", "the sun"), and a
+        # false positive here is a warning about nothing on every future run.
+        _cache["v"] = {n for n in names if len(n) >= 6} - _NOT_OUTLETS
+    return _cache["v"]
+
+
+_NOT_OUTLETS = {"bluesky", "xsearch", "twitter", "reddit", "google",
+                "newsgoogle", "youtube", "nitter"}
+
+# A domain written in running text, e.g. "https://www.rawchili.com/nfl/961970/"
+# or a bare "zooomsports.com" — the form a post links in.
+_INLINE_DOMAIN = re.compile(
+    r"(?:https?://)?(?:www\.)?((?:[a-z0-9-]+\.)+[a-z]{2,})", re.I)
+
+
+def _domain_of(url):
+    from urllib.parse import urlparse
+    try:
+        host = (urlparse(url or "").hostname or "").lower()
+    except ValueError:
+        return ""
+    return host[4:] if host.startswith("www.") else host
+
+
+def uncited_outlets(gen, vocab):
+    """Outlets the card NAMES but does not cite. A card claiming provenance it
+    does not hold.
+
+    Measured 2026-08-12, before the pool fix: `nba-expansion` and
+    `nhl-salary-cap` both credited "Raw Chili" — a content farm reposting other
+    people's articles through `@rawnba`/`@rawnfl` bots — and `esports-worlds`
+    credited PCGamesN for a report we never read, all three while serving
+    `source_count = 0`. Naming a masthead is an assertion of provenance; making
+    it with no receipt is the prose form of the same defect the receipt chips
+    were built to prevent.
+
+    Reported, never used to delete a card. Chatter-only cards are a deliberate
+    feature (Micah) and a wrong ATTRIBUTION is a reason to fix the sentence, not
+    to drop the conversation.
+    """
+    # Match CAPITALISED runs of 1-3 words, not a squashed blob. Squashing the
+    # whole prose flagged `nba-kawhi-cap` for "complex" — the ordinary English
+    # word in "the already complex case" — against complex.com. A masthead in
+    # running prose is capitalised; "complex" is not, and "El Paso Inc." is.
+    text = " ".join(str(gen.get(f) or "") for f in
+                    ("narrative", "paragraph", "fan_voice"))
+    tokens = re.findall(r"[A-Za-z0-9.'&]+", text)
+    phrases = set()
+    for i, tok in enumerate(tokens):
+        if not tok[:1].isupper():
+            continue
+        for n in (1, 2, 3):
+            if i + n <= len(tokens):
+                phrases.add(_squash("".join(tokens[i:i + n])))
+    cited = set()
+    for s in gen.get("sources") or []:
+        cited.add(_squash(s.get("source")))
+        host = _domain_of(s.get("url", ""))
+        if host:
+            cited.add(_squash(host.rsplit(".", 1)[0].split(".")[-1]))
+    named = vocab & phrases
+    return sorted(n for n in named
+                  if not any(n in c or c in n for c in cited if c))
+
+
 def _cited_sources(items, parsed):
     """Resolve the model's cited source_urls to the real-article receipts.
     Only URLs that are actually in the (non-bluesky) items become chips — a
     hallucinated URL never reaches the card (Micah, 2026-08-09)."""
     real = {it["url"]: it for it in items
-            if it["source"] not in SOCIAL_SOURCES and it.get("url")}
+            if not is_social(it) and it.get("url")}
     out = []
     seen = set()
 
     def _add(it):
-        if it and it["url"] not in seen and it["source"] not in SOCIAL_SOURCES:
+        if it and it["url"] not in seen and not is_social(it):
             seen.add(it["url"])
             # `published` is the PUBLISHER's timestamp, carried onto the receipt so
             # the card can be dated by when its story last moved rather than by
@@ -600,6 +806,10 @@ def _editor_marks(con, conv_id):
 def _generate(conv, items, marks=""):
     # Real (non-bluesky) items carry their URL so the model can cite the exact
     # article it grounded in; bluesky posts are signal only (never a chip).
+    # Same selection as the batch path, so citation numbers mean the same thing
+    # on both — and so a single-conversation run cannot be shown a different
+    # pool than a batched one.
+    items = _prompt_items(items)
     numbered = _numbered(items)
     user = "%sToday is %s.\n\nConversation: %s (%s)\n\nRecent chatter:\n%s" % (
         marks, datetime.date.today().isoformat(), conv["title"], conv["league"],
@@ -640,18 +850,7 @@ def _generate_batch(convs_with_marks):
     """
     blocks = []
     for conv, items, marks in convs_with_marks:
-        # Dedupe by headline first — the collector stores the same post from
-        # multiple feeds (duplicate Kupp posts were crowding out the Will
-        # Anderson injury item and the model never saw it).
-        seen_h = set()
-        unique = []
-        for it in items:
-            h = (it["headline"] or "").strip()
-            if h in seen_h:
-                continue
-            seen_h.add(h)
-            unique.append(it)
-        numbered = _numbered(unique, limit=10)
+        numbered = _numbered(_prompt_items(items))
         header = "### %s (%s) — %s" % (conv["id"], conv["league"], conv["title"])
         blocks.append(("%s%s\n%s" % (marks, header, numbered)) if marks else
                       ("%s\n%s" % (header, numbered)))
@@ -733,8 +932,16 @@ def main():
 
     # Load chatter for every conversation once; keep the ones with enough items.
     loaded = []
+    leaks = 0
     for conv in convs:
         items = _load_chatter(con, conv)
+        # A post that the `source` column calls published would be served as a
+        # receipt. Say so — the guard keeps it out of the anchors either way,
+        # but a silent guard means the source list never gets corrected.
+        for it in social_leaks(_prompt_items(items)):
+            leaks += 1
+            print("    SOCIAL LEAK: source=%r is a post, not a publisher | %s"
+                  % (it.get("source"), (it.get("headline") or "")[:60]))
         if len(items) < _MIN_ITEMS:
             print("  %-18s skipped (%d sources < %d)" % (conv["id"], len(items), _MIN_ITEMS))
             continue
@@ -760,7 +967,9 @@ def main():
                 if not entry or not entry.get("narrative"):
                     results[conv["id"]] = {"declined": True}
                     continue
-                sources = _cited_sources(items, entry)
+                # Resolve against the list the PROMPT numbered, not the raw
+                # pool — see _prompt_items. These had drifted apart.
+                sources = _cited_sources(_prompt_items(items), entry)
                 results[conv["id"]] = {
                     "narrative": entry["narrative"].strip(),
                     "fan_voice": str(entry.get("fan_voice") or "").strip(),
@@ -776,8 +985,11 @@ def main():
                 continue
             results[conv["id"]] = gen
 
-    written = 0
+    written = unattributed = ignored = 0
     for conv, items, marks in loaded:
+        # The items the model was actually shown — every check below is
+        # about what it saw, not about what sat unread in the pool.
+        shown = _prompt_items(items)
         gen = results.get(conv["id"])
         if gen is None or gen.get("declined"):
             # A conversation that declines/fails this run must not keep
@@ -798,7 +1010,10 @@ def main():
         # post." This supersedes the earlier "chatter IS the signal" allowance
         # (2026-08-07) — chatter still shapes a card, it just cannot be the only
         # thing holding one up.
-        if not had_publisher_material(items):
+        # Judged on what the model was SHOWN, not on what sat unread in
+        # the pool — the gate has to ask about the material the card was
+        # actually written from.
+        if not had_publisher_material(shown):
             print("  %-18s NOT SERVED — nothing published to stand on: %s"
                   % (conv["id"], gen["narrative"][:60]))
             if not args.dry_run:
@@ -839,9 +1054,28 @@ def main():
         )
         written += 1
         print("  %-18s %s" % (conv["id"], gen["narrative"][:80]))
+        # Provenance the card claims in prose but cannot show. Reported, never
+        # fatal — see uncited_outlets.
+        loose = uncited_outlets(gen, _outlet_vocab(con))
+        if loose:
+            unattributed += 1
+            print("    UNCITED OUTLET: names %s with no receipt for it"
+                  % ", ".join(loose))
+        # A card that had reporting in front of it and cited none of it. Not
+        # fatal either, but it is the signature of the six blind pools, so it
+        # must be visible if it comes back.
+        if not gen["source_count"] and had_publisher_material(shown):
+            ignored += 1
+            print("    IGNORED %d publisher items — card cites nothing"
+                  % sum(1 for i in shown if not is_social(i)))
     con.commit()
     con.close()
     print("Wrote %d conversation cards to news_narratives" % written)
+    # Zero has to be said out loud, or "no warnings" and "never checked" look
+    # identical in the log.
+    print("Checks: %d social leaks, %d cards naming an uncited outlet, "
+          "%d cards ignoring their own publisher items"
+          % (leaks, unattributed, ignored))
 
 
 if __name__ == "__main__":

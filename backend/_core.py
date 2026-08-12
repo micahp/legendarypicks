@@ -360,7 +360,15 @@ def _read_game_detail_from_db(lg, game_id, out):
     return False
 
 
-SOCIAL_SOURCES = ("bluesky", "x-search")
+# Feeds whose items are POSTS, not reporting. Nothing here may ever be treated
+# as a verified publisher: a tweet carrying a false claim was once read as one
+# and served as fact (Micah, 2026-08-12). `x` was missing from this tuple while
+# 855 rows carried it, so every one of those tweets counted as published
+# reporting. Membership by name is necessary but not sufficient — see
+# `ingest_league_narratives.is_social`, which also refuses anything SHAPED like
+# a post, so the next feed added does not have to be remembered here to be safe.
+SOCIAL_SOURCES = ("bluesky", "x-search", "x", "twitter", "nitter", "mastodon",
+                  "threads", "reddit")
 
 
 def _deepseek_key():
