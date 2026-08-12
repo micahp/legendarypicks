@@ -148,8 +148,22 @@ def _select_columns(columns: Iterable[str]) -> str:
 
 
 def _identity(row: sqlite3.Row) -> tuple[str, str]:
+    """Name + league, normalized the way the identity spine normalizes them.
+
+    This is a veto on a match already established by publisher id, so it must
+    not fire on spelling. Prod holds 'Pedro Ramírez' and dev holds 'Pedro
+    Ramirez' for one man who carries the same mlbam_id AND the same espn_id on
+    both databases; a raw string compare called that a collision and refused
+    the whole promotion. An accent is not evidence of a second player.
+
+    It still catches what it is for: a publisher id that points at somebody
+    else entirely -- 'Ryan Waldschmidt' against 'Chase Petty' -- fails this
+    check no matter how either name is spelled.
+    """
+    from _core import _normalize_name
+
     return (
-        str(row["name"] or "").strip().casefold(),
+        _normalize_name(str(row["name"] or "")),
         str(row["league"] or "").strip().casefold(),
     )
 
@@ -479,13 +493,34 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument(
         "--league",
         action="append",
-        choices=("nfl", "nba", "nhl", "mlb", "ufc", "wc"),
-        help="repeatable; omit to preserve the legacy all-league behavior",
+        help="repeatable; omit to preserve the legacy all-league behavior. "
+             "Validated against the leagues the source database actually "
+             "holds, not a hardcoded list.",
     )
     action = parser.add_mutually_exclusive_group(required=True)
     action.add_argument("--check", action="store_true")
     action.add_argument("--apply", action="store_true")
     args = parser.parse_args(argv)
+    if args.league:
+        # The old argparse `choices` tuple was written before MLS and NCAAF
+        # existed, so the two leagues this tool was next needed for were the
+        # two it rejected. Ask the database what it holds instead.
+        with sqlite3.connect(f"file:{quote(args.source)}?mode=ro", uri=True) as probe:
+            known = {
+                str(row[0]).strip().casefold()
+                for row in probe.execute(
+                    "SELECT DISTINCT league FROM player_game_logs "
+                    "WHERE league IS NOT NULL AND TRIM(league) <> ''"
+                )
+            }
+        unknown = sorted({l.strip().casefold() for l in args.league} - known)
+        if unknown:
+            print(
+                f"ERROR: source has no player_game_logs for {', '.join(unknown)}; "
+                f"it holds: {', '.join(sorted(known))}",
+                file=sys.stderr,
+            )
+            return 1
     try:
         plan = build_plan(
             args.source, args.target, leagues=args.league

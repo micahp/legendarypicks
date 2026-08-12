@@ -3,6 +3,8 @@
 
 from __future__ import annotations
 
+import contextlib
+import io
 import json
 import os
 import sqlite3
@@ -273,6 +275,93 @@ class LogMigrationTests(unittest.TestCase):
         self.assertEqual(mismatch_count, 0)
         self.assertEqual(inserted["player_id"], 4)
         self.assertEqual(after, before)
+
+
+class IdentityVetoTests(unittest.TestCase):
+    """The name check vetoes a match already made by publisher id.
+
+    So it must fire on a different man and not on a different spelling. Prod
+    held 'Pedro Ramírez' and dev held 'Pedro Ramirez' for one player carrying
+    the same mlbam_id and the same espn_id on both databases, and the raw
+    string compare refused the entire promotion over the accent.
+    """
+
+    @staticmethod
+    def _row(name, league="mlb"):
+        class Row(dict):
+            def __getitem__(self, key):
+                return dict.get(self, key)
+
+        return Row(name=name, league=league)
+
+    def test_accent_is_not_a_second_player(self):
+        self.assertEqual(
+            migrate_logs_to_prod._identity(self._row("Pedro Ramírez")),
+            migrate_logs_to_prod._identity(self._row("Pedro Ramirez")),
+        )
+
+    def test_suffix_is_not_a_second_player(self):
+        self.assertEqual(
+            migrate_logs_to_prod._identity(self._row("Ken Griffey Jr.")),
+            migrate_logs_to_prod._identity(self._row("Ken Griffey")),
+        )
+
+    def test_a_different_man_still_fails_the_veto(self):
+        self.assertNotEqual(
+            migrate_logs_to_prod._identity(self._row("Ryan Waldschmidt")),
+            migrate_logs_to_prod._identity(self._row("Chase Petty")),
+        )
+
+    def test_a_different_league_still_fails_the_veto(self):
+        self.assertNotEqual(
+            migrate_logs_to_prod._identity(self._row("Josh Allen", "nfl")),
+            migrate_logs_to_prod._identity(self._row("Josh Allen", "nba")),
+        )
+
+
+class LeagueArgumentTests(unittest.TestCase):
+    """--league is validated against the source, not a hardcoded tuple.
+
+    The old argparse `choices` was written before MLS and NCAAF existed, so
+    the two leagues this tool was next needed for were the two it rejected.
+    """
+
+    def setUp(self):
+        self.tempdir = tempfile.TemporaryDirectory(prefix="league-arg-")
+        self.addCleanup(self.tempdir.cleanup)
+        self.source = os.path.join(self.tempdir.name, "source.db")
+        with sqlite3.connect(self.source) as con:
+            con.execute(
+                "CREATE TABLE player_game_logs("
+                "id INTEGER PRIMARY KEY, league TEXT, season INTEGER)"
+            )
+            con.executemany(
+                "INSERT INTO player_game_logs(league, season) VALUES(?, 2025)",
+                [("mls",), ("ncaaf",), ("mlb",)],
+            )
+
+    def _run(self, league):
+        return migrate_logs_to_prod.main([
+            "--source", self.source,
+            "--target", os.path.join(self.tempdir.name, "target.db"),
+            "--league", league,
+            "--check",
+        ])
+
+    def test_a_league_the_source_holds_is_accepted(self):
+        # Passes validation and fails later on the missing target, not here.
+        with contextlib.redirect_stdout(io.StringIO()), \
+                contextlib.redirect_stderr(io.StringIO()) as err:
+            self._run("mls")
+        self.assertNotIn("source has no player_game_logs", err.getvalue())
+
+    def test_a_league_the_source_lacks_is_rejected_by_name(self):
+        with contextlib.redirect_stdout(io.StringIO()), \
+                contextlib.redirect_stderr(io.StringIO()) as err:
+            code = self._run("cricket")
+        self.assertEqual(code, 1)
+        self.assertIn("source has no player_game_logs for cricket", err.getvalue())
+        self.assertIn("mls", err.getvalue())
 
 
 if __name__ == "__main__":
