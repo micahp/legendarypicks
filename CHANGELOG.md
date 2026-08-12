@@ -61,9 +61,41 @@ learning what it is allowed to say.
   for a while — it simply had no card on `/leagues`, so the only way in was to type the
   URL. It now carries its own name and crest rather than falling back to a generic trophy.
   Which tabs appear is still the coverage registry's call: team-stats is nba/nhl/nfl only.
-- **NCAAF is deliberately absent.** The card was written but the backend has no such
-  league — `/api/ncaaf/standings` answers 404 with its supported list — so it would have
-  led to a dead hub.
+- **NCAAF is deliberately absent** — see its own section below. The reason changed during
+  this release and the earlier one is no longer true: the backend now answers for ncaaf
+  (`/api/ncaaf/standings` and `/api/ncaaf/team-aggregates` both 200 on dev, 137 teams).
+  It stays hidden by decision, not by absence.
+
+### NCAAF: built, banked, and not shipped
+
+College football was built end to end this cycle and **does not ship in this release**. It
+is recorded here rather than left out, because the work is real and the next person needs
+to know it exists and why it is dark.
+
+- **What landed on dev** (`2d6ab86` and the league-ncaaf task): 20,926 players, 56,577
+  player game logs across 888 games and 137 canonical FBS teams, 1,776 team results and
+  1,776 team stat rows, and 4,267 season stat rows sourced from CFBD. Logs carry defensive
+  stats — tackles, sacks, INTs — and every log has a non-NULL `game_type`.
+- **FBS is a published group, not a filter.** ESPN's college-football `teams` collection is
+  807; FBS is `types/2/groups/80/teams` = 146. Checking 911 games against 807 teams invents
+  a 660-team gap. The group id is recorded as data in the league registry rather than
+  sprinkled through queries. There is also no games-per-team constant — schedules are
+  uneven, so any "N of M team games" line takes M from that team's own published count or
+  does not render.
+- **Conference standings** read the published sub-groups rather than a hand-maintained
+  conference map, and omit the soccer-only fields instead of fabricating zeros.
+- **Why it is dark** (Micah, 2026-08-11). Not a data verdict — the remaining work is in the
+  surfaces and the schema, and other features outrank it. Narrowing to three conferences
+  was considered and rejected: we already hold all 137 FBS teams, so a smaller scope saves
+  nothing on the ingest and does not shrink what is actually left.
+- **Known open, recorded so it is not rediscovered.** `league_stats.py`'s ncaaf contract
+  never landed in main, so dev holds 4,267 rows its own code calls unsupported and
+  `COV-identity` fails there. `player_stats` grew a second column family (`att`/`rec`
+  duplicating `attempts`/`receptions`; `pass_yds` is a season total and is *not* a
+  duplicate of the per-game `pass_yds_g`). `ncaaf_conference_standings()` lives only in the
+  worktree and derives rank from array position. `C/vocabulary[position]` holds two levels
+  of one vocabulary in one column. None of this reaches production, which holds zero ncaaf
+  rows.
 
 ### Esports and EWC 2026
 
@@ -80,6 +112,72 @@ learning what it is allowed to say.
 - **Logo index** (`8864af9`): 265 → 288 entries, append-only. Seven of the new teams
   resolve to a crest; the other sixteen are recorded as an empty string, which means
   "asked, none published" rather than "not asked yet".
+
+### Backend and database, everything since v0.7.0
+
+343 commits. Grouped by what actually changed underneath, because most of these are
+invisible from the UI right up until they are not.
+
+**Schema and migrations.** A migration *runner* replaced hand-application: one invocation
+migrates both databases and adopts the 20 legacy scripts (`322b5e9`), each recorded in
+`app_schema_migrations` with a hash and an explicit `applied` / `not_applicable` verdict —
+"dev is the source; the script only writes the prod target" is now a recorded state rather
+than a thing someone remembered. The app **refuses to serve an un-migrated database at
+startup** (`758c82d`) instead of answering 200 over a missing column. Dev→prod copy scripts
+are probed on the prod side of the ledger (`5924ab9`), after a run of fixes that landed on
+dev and never reached prod.
+
+New columns and tables across the cycle: `news_items` and the whole news store (`7dbf63c`),
+`news_items.conv_id` and `team_game_results.result` (`597033b` — prod never got what dev
+added), NFL TD columns (`047496b`, zero rows in prod through three releases), NHL goalie
+columns, MLB counting stats (`pa/ab/hits/runs/rbi/era/innings/whip`), player injury columns,
+player entity type, fantasy positions, and NFL/NBA `position_group` (`836083e`).
+
+**team_game_stats moved to JSON** (`b227781`), matching `player_game_logs`. It was one wide
+table encoding NBA's and NHL's idea of a game — NCAAF filled 5 of ~45 columns, MLS filled 2
+by borrowing NHL's `shots`/`blocked_shots`. Additive and two-sided: writers fill the blob
+and the frozen columns, readers prefer the blob and fall back, so a database migrated at a
+different time from its code is redundant rather than wrong. 8,452 of 8,468 rows migrated;
+the 16 mlb rows are skipped as UNVERIFIED rather than emptied. Verified by comparing the
+pre-migration backup against the migrated file with the same code — every team's every
+aggregate identical across all six leagues — then by proving the blob is the live source,
+since identical numbers would also be what "the blob is ignored" looks like.
+
+**Identity, which is where the real bugs were.** Props landing on the wrong same-named
+player (`674f178`, `4edb64f`); MLB rows holding a same-named person's `mlbam_id` (`4f405db`,
+one of them a man who debuted in 1945); publisher-sourced MLB team refresh with identity
+invariant tests (`03d906b`); a promotion tool that matched on publisher id and then vetoed
+on a raw name string, so Pedro Ramírez and Pedro Ramirez — one man, same ids in both
+databases — refused an entire league's promotion (`7cb9fbd`). `player_stats` is keyed by
+`player_id`. The shape repeats: **an ambiguous key never raises, it misses.**
+
+**Settlement and grading.** MLB was skipping the finality gate and grading against live box
+scores (`e20b736`); every MLB prop re-graded against a final (`53021ae`); a game matched by
+its teams rather than the calendar day it was filed under (`651176e`); the final keyed on
+`gamePk` rather than `(date, home, away)` (`989153e`); box-score athletes matched by ESPN id
+rather than surname (`7c44f06`); an absent stat voids a prop instead of grading it 0.0
+(`fb0927b`); a game is final when the publisher says `completed`, not `"post"` (`cbacc7a`);
+home/away read off ESPN's own flag instead of matching names (`dac9fbf`). The player name
+was stripped out of **561,543 market keys** and everything re-graded (`5bee747`).
+
+**ESPN request budget.** The limit is a request *count* per host (~100), not a rate, so
+pacing does not buy budget — only issuing fewer requests does. The relink repair obeys it
+and fails loud (`c59e9b6`); `link_prop_games` now states its spend before issuing any of it
+and refuses over 50 requests to one host, including on `--dry-run`, which skips the write
+but not the HTTP (`b8886e9`). An unscoped run was 189 requests against a ~100 ceiling.
+
+**Fail-closed reads, after a night of walled hosts.** Game detail had two independent
+single-source dependencies on ESPN — `is_final` came only from a live call, and the final
+score read only `scoring_plays`, which holds zero rows for ncaaf, nfl and mls. Both now ask
+our own database first (`405ebe8`). `prop_games.start_time` backfilled from the published
+scoreboard (`e634890`) and settlement allows for two publishers' clock drift (`f6fed51`).
+
+**Build and gates.** Databases excluded from the Docker context **by name**, gated with a
+test (`ad90392`) — `*.bak` never matched `data/*.bak`, which baked 7GB of backups into the
+production image. The release preflight blocks on schema/season divergence and the data
+audit (`f82bdd1`). `verify-gates.sh` refuses to run when `LP_DB_PATH` is set but `LP_GATE_D`
+is not (`271534b`): it never read `LP_DB_PATH`, and its own default is **prod**, so pointing
+the wrong knob produced a confident number about a database you did not mean to grade.
 
 ### Audit and contract
 
@@ -99,6 +197,35 @@ learning what it is allowed to say.
   before the match. Deferred to its own session.
 - **The X account list, documented** (`3bfc32b`) — `docs/PLAN-league-news-engine.md` now
   records which accounts we cover and why each one is on the list.
+
+### From the Booth is dev-only
+
+`NEXT_PUBLIC_SHOW_BOOTH` (`bf36fcf`). Production does not run the broadcast capture the
+feed reads from, so the tab opened onto nothing there. Off unless explicitly `true` —
+absence must read as hidden, since a missing var is exactly what production looks like.
+Dev sets it in `.env.local`, which is gitignored *and* excluded from the Docker build
+context by `.dockerignore`, so the production bundle is built without it and the feature
+compiles out. The render is gated as well as the tab list: hiding a tab does not unreach
+it.
+
+### MLS props reached the database but not the page
+
+`b8886e9`. MLS game detail said "props aren't available" while the database held 714 props
+across 15 games. The page joins on `prop_games.espn_event_id` and 13 of 15 MLS rows had
+none, so the props existed and were unreachable. Two independent reasons the crosswalk
+never matched:
+
+- The name fallback read `displayName`, which the scoreboard payload does not publish —
+  its team objects carry `abbrev`/`name`/`nickname` and no `displayName`. The branch
+  compared against `None` for every game and was dead code.
+- `_norm_team` has no MLS map and fell through to "first three letters", which for MLS
+  manufactures collisions: "San Diego FC" and "San Jose Earthquakes" both become `SAN`.
+  That is worse than a miss — a wrong link is invisible, hides the props from the game that
+  was played, and settlement can never resolve it. Unmapped leagues now return "unknown"
+  and match on the published name instead.
+
+The rows are not linked yet: `site.web.api.espn.com` is refusing, and a spent host is not
+restored by waiting. Re-run `link_prop_games.py --league mls` when it recovers.
 
 ### Version note
 
