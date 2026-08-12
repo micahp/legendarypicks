@@ -4,11 +4,24 @@
 reasoning — that section keeps its own rule: add, don't rewrite, mark superseded rather than
 delete.**
 
-Checked = shipped to **production**, not to dev. Checklist last updated 2026-08-06.
+Checked = shipped to **production**, not to dev. Checklist last updated **2026-08-12**.
 
 The constraint that orders all of it: **NFL fantasy drafts run the next 3-5 weeks**, and NFL
 draft research is the only use case a real user has said yes to (see "User evidence" below).
-Anything that does not serve that window competes with it.
+Anything that does not serve that window competes with it. *That window is now mostly spent
+— set 2026-08-06, and it is 08-12. Weigh anything below against how few days are left in it.*
+
+> **The defect list is not here.** `docs/BACKLOG-holes.md` holds 25 measured holes,
+> severity-ranked, generated from `backend/league_feature_matrix.py`. Re-run the matrix
+> before working any of them; every line is a count, and counts move:
+>
+> ```
+> venv/bin/python league_feature_matrix.py --db data/picks.db --compare data/picks.dev.db
+> ```
+>
+> The one-line summary of that list: **most P0s are the same defect.** Data lands, the link
+> that makes it reachable does not, and nobody took the count that would have shown it —
+> four items are `prop_games.espn_event_id`, two are settlement coverage.
 
 ---
 
@@ -46,10 +59,21 @@ Anything that does not serve that window competes with it.
 - [ ] `B/position-content` for **mlb** and **nba** — a declaration: what must a catcher's / guard's log record?
 - [ ] `DATA-COVERAGE-CONTRACT.md` §7 rewrite — what each of the 8 checks needs from a new league
 - [ ] `ufc` / `wc` UNVERIFIED x6 — likely "no leaderboard surface to serve", not a fetcher
-- [ ] **MLS + NCAAF pipelines** (`feat/league-mls-ncaaf`) — ingests, draw handling, MANIFEST, frontend
-      built; blocked on the identity spine. Corrected order: types → schedule → season-dates →
-      standings → (upcoming: previous-season stats) → rosters → position groups → logs. Handoff:
-      `lp-league-mls-ncaaf/HANDOFF-2026-08-06.md`.
+- [~] **MLS + NCAAF pipelines** (`feat/league-mls-ncaaf`) — **superseded 2026-08-12, both built.**
+      No longer blocked on the identity spine; that resolved. Current state, measured:
+      - **NCAAF: built and deliberately DARK** (Micah, 2026-08-11). 20,926 players, 56,577 logs,
+        888 games, 137 FBS teams, 4,267 season rows, 1,776 team results + stats on dev. Does not
+        ship. Three-conference narrowing was considered and rejected — we hold all 137 FBS teams,
+        so scope reduction saves nothing; the remaining work is surfaces and schema.
+        `/root/lp-league-mls-ncaaf/.ralph/request.md` is the governing doc and §4 is now a
+        *resumption* list, not a release gate.
+      - **MLS: complete on dev, absent from prod.** Dev has coverage + game detail + team stats;
+        prod has none of the three, so MLS is HIDDEN there. Promotion is a data job — the code
+        already shipped.
+      - **The one real gap in either league: MLS has zero `player_stats` on BOTH databases.**
+        Everything else on the list is a promotion or a relink; this is the only item needing a
+        publisher decision.
+      Backlog items 6–12, 21–25.
 - [ ] **Tournament games under their own league key** (decided 2026-08-06) — Leagues Cup
       (`concacaf.leagues.cup`), CCC (`concacaf.champions`), Campeones Cup are SEPARATE ESPN
       league slugs; file their logs under their own league key so MLS regular-season denominators
@@ -68,7 +92,36 @@ Anything that does not serve that window competes with it.
 - [ ] **Draft-research screens** — what the one real user asked for, still unbuilt
 - [ ] Only then: more data hygiene
 
+### Release-blocking, added 2026-08-12
+
+Not draft work, but v0.8.0 cannot honestly ship past them. Full detail in
+`docs/BACKLOG-holes.md`; these are the ones where the release notes claim something
+production does not have.
+
+- [ ] **Prod news is empty** (#1). The release headlines the news engine; prod has 0 rows.
+- [ ] **MLS is hidden on prod** (#6). The release calls out MLS; prod has no coverage row,
+      no team results, no team stats — so nobody sees it.
+- [ ] **Settled props are unreachable or absent** (#21–23). MLB has 57,392 settled props on
+      dev that no game page can reach; UFC and MLS settle **zero** of their props. The board
+      shows a line and never says how it landed, which is the half of the product that
+      demonstrates the lines were worth reading.
+- [ ] **Relink `prop_games`** (#3, #4, #5, #21) — one root cause behind four items. Blocked
+      on the ESPN host recovering; the matcher and the budget guards already landed
+      (`b8886e9`).
+
 ## POST-DRAFT — league news engine (POC, decided 2026-08-06)
+
+> **STATUS 2026-08-12 — BUILT, and empty in production.** This stopped being a POC: it
+> ships in v0.8.0 with topic-matched cards, conversation grouping, topic discovery, an
+> editor feedback loop, and a trust model rewritten after a card asserted a false Messi
+> suspension. Dev holds **3,908 news items** across 7 leagues.
+>
+> **`news_items` on prod is empty for every league.** The headline feature of the release
+> has nothing behind it there. Backlog #1, and it gates calling the release done.
+>
+> The bullets below are the original POC plan, kept for the reasoning. Read the v0.8.0
+> CHANGELOG section for what was actually built — in particular the part the plan did not
+> anticipate: most of the work was deciding what a card is *allowed to say*.
 
 Not draft-serving — this window belongs to fantasy drafts. On the roadmap now
 because the POC is small and the narrative signal is time-sensitive.
@@ -110,7 +163,16 @@ because the POC is small and the narrative signal is time-sensitive.
 - [ ] MLB: 767 Statcast batting rows for players MLB publishes no 2026 line for. **An open question,
       not a known gap** — Statcast is MLB's own data, so why do we hold them?
 - [ ] 168 pre-existing orphans (`props` 78, `roster_snap` 90)
-- [ ] `atp`, `wnba`, `wta` — no MANIFEST entry, therefore unmeasured, not passing
+- [ ] `atp`, `wnba`, `wta` — no MANIFEST entry, therefore unmeasured, not passing.
+      **Root cause found 2026-08-12, and it is not the manifest.** Bovada serves ATP/WTA
+      markets and `_parse_tennis_props` reads them correctly (moneyline, total games, set
+      betting, win-a-set). Every prop is then discarded at ingest because `players` holds
+      **zero atp/wta rows**, so `_resolve_player_for_ingest` cannot attach them to anyone and
+      correctly refuses to invent a player. 169 names sit in `unresolved_players` — Swiatek
+      rejected 244 times, Gauff 238. The result is 101 `prop_games` with **0 props**, and a
+      scrape that reports `0 ingested` rather than an error. `espn_client` already has `atp`
+      and `wta` configured, so the fix is one athlete-spine ingest, not a parser change.
+      Backlog #2 and #20.
 - [ ] **Who is actually playing — soccer availability before kickoff** (raised 2026-08-10, own
       session). The news engine surfaces absences after the fact; the game detail page should say
       who is out BEFORE the match. Soccer is the hard case and the valuable one: there is no

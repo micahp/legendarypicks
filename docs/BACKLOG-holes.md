@@ -54,6 +54,15 @@ Rows in a table do not prove a page works. These are the surfaces a user opens.
 | 13 | **NFL has no `scoring_plays` / `game_context`** — game detail leans entirely on the DB-first final (`405ebe8`). Same for MLS and NCAAF. | ✗ on both DBs | boxscore snapshot only ever ran for nba/nhl/mlb |
 | 14 | **WC has no coverage row** and no game detail; offered via the ALWAYS_OFFERED shape exception. | ✗/✗ | decide whether WC is still a product surface |
 
+## P2 — integrity sweep (added 2026-08-12)
+
+| # | defect | evidence | fix |
+|---|---|---|---|
+| 26 | **6,818 players have a game log and a blank `position`.** Position drives which columns a game log renders — a QB's passing line vs a WR's receiving line — so a blank one renders a generic or wrong table. Worst by far is NCAAF at **5,897 (49% of its players)**. | prod: ncaaf 5,897, mlb 767, wc 61, nba 47, ufc 45, mls 1 | backfill from the publisher that already prints it; MLB's 767 may be the same population as the known Statcast-only rows |
+| 27 | **550 players (prod) / 262 (dev) have props but no game log.** Their prop chart cannot render — the page offers a line with no history behind it. | measured both DBs | confirm how many are genuinely pre-debut vs missing a log; only the second group is a defect |
+| 28 | **78 props point at a `players.id` that does not exist.** Same count on both databases, so it is old. | prod 78 / dev 78 | already on the roadmap as "168 pre-existing orphans (props 78, roster_snap 90)" — still 78 |
+| 29 | **815 players have a log and a blank `team`.** | prod | same shape as #26 |
+
 ## P3 — cleanup
 
 | # | defect | evidence | fix |
