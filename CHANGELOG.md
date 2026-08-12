@@ -1,6 +1,6 @@
 # Changelog
 
-## v0.7.11 — 2026-08-10
+## v0.8.0 — 2026-08-11
 
 ### Kick viewer counts, silently null since the keys were never hydrated
 
@@ -102,12 +102,42 @@ learning what it is allowed to say.
 
 ### Version note
 
-`package.json` was on 0.7.7: v0.7.8 was tagged on a docs commit without a bump, and v0.7.9
-and v0.7.10 were cut on `release/ewc-v0.7.10`, which is not an ancestor of `dev`. This
-release takes the next unused number rather than reusing one, so dev goes 0.7.7 → 0.7.11
-in one step. The EWC release line still needs reconciling with dev.
+The version line had forked four ways: `package.json` read 0.7.7, `git describe` from dev
+said v0.7.8, the tags at v0.7.9 and v0.7.10 sat on `release/ewc-v0.7.10` — not an ancestor
+of dev — and this file already carried an untagged v0.7.11 section. `release/ewc-v0.7.10`
+is now merged back, so dev's history contains every shipped tag and goes 0.7.10 → 0.8.0.
 
-## v0.7.9 — 2026-08-05
+Two numbers had to be untangled. The position-vocabulary work above was written up as
+"v0.7.9 — 2026-08-05" but `836083e` is in no tag at all, and the EWC CoD hotfix later took
+the real v0.7.9 on 08-09; those notes are now a section of this release rather than a
+number already spoken for. The esports files conflicted add/add because dev had
+re-developed them further — `routers/esports/ewc.py` is 669 lines on dev against 321 on
+the branch — so dev's versions were kept and the branch supplied only its release notes.
+
+### Two players with one name: props landed on the wrong man
+
+- **The resolver refuses to guess** (`674f178`). `_resolve_player_for_ingest` opened with
+  `SELECT id FROM players WHERE name=? AND league=?` and `fetchone()`. Two men named Max
+  Muncy play in MLB, so every Muncy prop collapsed onto whichever row the database yielded
+  first — row 96, the Athletics one. Nothing raised; an ambiguous key never raises, it
+  misses. A name matching more than one row is no longer a match: it is separated by the
+  source's team, else by which candidate's team is actually in the game (`game_id` is now
+  threaded through from the ingest and folded through the same published team map the ESPN
+  crosswalk uses, because `prop_games` holds both `"Los Angeles Dodgers"` and `"LAD"`), and
+  failing both it goes to `unresolved_players` instead of onto the wrong player. Step 2's
+  `LIMIT 1` got the same treatment.
+- **The repair** (`4edb64f`). `repair_mislinked_same_name_props.py` moves props off a
+  same-named player who was not in the game, and deletes their results rather than
+  rewriting them — they were graded against a box score the man never appeared in, and the
+  grader decides the new value. On prod: **438 props** moved from the Athletics Muncy to
+  the Dodgers Muncy across five Dodgers-only games, **276 wrong results dropped** and
+  re-settled correctly against his real box score. Row 96 now holds 329 props and not one
+  of them is on a game the Athletics did not play.
+- **What it refuses to touch.** A row with no publisher id is a stub someone's ingest
+  minted, not a second man; repointing props across it would hide a duplicate that wants
+  deduping. Three same-name collisions are named by the script and still open: James
+  Outman (row 29097, 584 props, no `mlbam_id`), Luis Castillo (row 27342, 266 props, none
+  of them grading) and Jared Jones (row 27809, no team).
 
 ### Position vocabulary: the release gate is fully green
 
@@ -126,6 +156,31 @@ in one step. The EWC release line still needs reconciling with dev.
 
 **Audit vs prod: 0 FAIL, 40 passed, 3 UNVERIFIED (non-blocking).** The
 release preflight now passes end-to-end.
+
+## v0.7.10 — 2026-08-09
+
+### The full EWC tournament center is live
+
+- The Esports league destination now carries the EWC 2026 tournament center: live and upcoming
+  matches across titles, results, title discovery, and the published Club Championship table with
+  explicit source, freshness, stale, and unavailable states.
+- EWC Call of Duty bracket slots are reconciled against the PandaScore bracket graph. Undecided
+  participants render structurally as `Winner of ...` or `Loser of ...`, while completed clubs use
+  their canonical identities; raw `TBD` values no longer reach the CoD scoreboard.
+- `/esports` remains the broadcast-first live board, while `/leagues/esports` owns the EWC
+  tournament-center experience and `/leagues` provides its entry point.
+- This release is intentionally isolated from the unfinished news engine and the MLS/NCAAF work.
+
+## v0.7.9 — 2026-08-09
+
+### EWC CoD finals show the clubs that actually played
+
+- Breaking Point's EWC match rows carry authoritative `team1` and `team2` objects even
+  when those clubs are absent from its page-level `allTeams` dictionary. The CoD
+  scoreboard now uses those embedded participants as its fallback, so completed EWC
+  series render club names and scores instead of `TBD` versus `TBD`.
+- This production hotfix is intentionally limited to the CoD scoreboard normalizer; the
+  news engine and the broader new-leagues work are not included.
 
 ## v0.7.8 — 2026-08-05
 
