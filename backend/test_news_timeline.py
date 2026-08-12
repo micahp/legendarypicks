@@ -118,6 +118,26 @@ class TestStaleAnchor:
         shown = [item("2025-08-21T00:00:00Z", url="espn-2025")]
         assert not stale_anchor(self.card("espn-2025"), shown, TODAY)
 
+    def test_a_pool_whose_only_developments_are_posts_is_not_stale(self):
+        """A social post can never become a source chip, so demanding the card
+        cite one asks for the very leak the SOCIAL LEAK check forbids.
+        `mls-leaguescup-proving` 2026-08-12: three developments, all posts, and
+        the card was already carrying them correctly as fan voice."""
+        shown = [item("2025-08-21T00:00:00Z", url="https://espn.com/feature"),
+                 item("2026-08-06T00:00:00Z", url="https://bsky.app/p/1",
+                      source="bluesky"),
+                 item("2026-08-12T00:00:00Z", url="https://x.com/p/2",
+                      source="x")]
+        assert not stale_anchor(self.card("https://espn.com/feature"), shown,
+                                TODAY)
+
+    def test_a_published_development_alongside_posts_still_counts(self):
+        shown = [item("2025-08-21T00:00:00Z", url="https://espn.com/feature"),
+                 item("2026-08-06T00:00:00Z", url="https://bsky.app/p/1",
+                      source="bluesky"),
+                 item("2026-08-10T00:00:00Z", url="https://espn.com/report")]
+        assert stale_anchor(self.card("https://espn.com/feature"), shown, TODAY)
+
     def test_a_card_citing_nothing_is_another_checks_problem(self):
         assert not stale_anchor(self.card(), [item("2026-08-10T00:00:00Z")],
                                 TODAY)

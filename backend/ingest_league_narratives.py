@@ -706,11 +706,22 @@ def stale_anchor(gen, shown, today=None):
     Reported, never fatal: a card standing entirely on background can be
     correct (the state of play has not moved). It is a finding when there were
     developments available and the card reached past them anyway.
+
+    Only PUBLISHED developments count. A social post can never legitimately
+    become a source chip — that is what the SOCIAL LEAK check exists to stop —
+    so a pool whose only fresh items are posts leaves the card no citable
+    development, and citing background is then the correct answer rather than
+    a defect. Measured 2026-08-12: `mls-leaguescup-proving` was flagged with
+    three developments in front of it, all three of them bluesky/x posts, while
+    the card was already carrying them properly as fan voice ("posts note
+    Santos Laguna has lost three straight"). A check that demands a citation
+    the rules forbid is asking for the leak.
     """
     cited = {(s.get("url") or "") for s in gen.get("sources") or []}
     if not cited:
         return False
     fresh, _old = split_by_age(shown, today)
+    fresh = [(i, it) for i, it in fresh if not is_social(it)]
     if not fresh:
         return False
     return not any((it.get("url") or "") in cited for _i, it in fresh)
