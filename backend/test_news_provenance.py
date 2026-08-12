@@ -28,7 +28,8 @@ we never read — we had read a bluesky post linking to it.
 import pytest
 
 from ingest_league_narratives import (
-    _outlet_vocab, _prompt_items, had_publisher_material, is_social,
+    _outlet_vocab, _prompt_items, credited_outlets, had_publisher_material,
+    is_social,
     social_leaks, uncited_outlets,
 )
 
@@ -208,3 +209,85 @@ class TestVocabulary:
 def _clear_vocab_cache():
     yield
     _outlet_vocab.__defaults__[0].clear()
+
+
+class TestCreditedOutlets:
+    """Accurate attribution is still attribution.
+
+    `uncited_outlets` asks whether a credit is honest and passed on all 14 live
+    cards. Nothing asked whether the credit belonged in the prose at all, and
+    the answer on 2026-08-12 was 45 attributions across 14 cards — every card,
+    five in one. Micah: "im having a really hard time with us name dropping
+    publishers."
+    """
+
+    VOCAB = {"bleacherreport", "yahoosports", "startribune", "sherdog",
+             "bloodyelbow", "foxsports", "fccincinnati", "lagalaxy"}
+
+    def card(self, paragraph, sources=()):
+        return {"narrative": "", "paragraph": paragraph, "fan_voice": "",
+                "sources": list(sources)}
+
+    def test_the_ufc_card_that_started_it(self):
+        """Five mastheads in five sentences, every one of them cited, so every
+        existing check was green."""
+        gen = self.card(
+            "Sherdog reported Ian Garry detailed his motivation before "
+            "challenging Islam Makhachev, and Yahoo Sports covered the "
+            "faceoffs in Philadelphia. Bloody Elbow reported Joe Rogan "
+            "believes Makhachev could retire, while Fox Sports said "
+            "Alexander Volkanovski gave a hint on his next fight.")
+        assert credited_outlets(gen, self.VOCAB) == [
+            "bloodyelbow", "foxsports", "sherdog", "yahoosports"]
+
+    def test_the_same_fact_without_the_masthead_is_clean(self):
+        gen = self.card(
+            "Ian Garry detailed his motivation before challenging Islam "
+            "Makhachev, and the two faced off in Philadelphia.")
+        assert credited_outlets(gen, self.VOCAB) == []
+
+    def test_a_cited_outlet_still_counts_as_a_name_drop(self):
+        """The difference from uncited_outlets: having the receipt makes the
+        attribution HONEST, not necessary."""
+        gen = self.card("Bleacher Report reported the surface was ruled "
+                        "noncompliant.",
+                        [{"source": "bleacher report",
+                          "url": "https://bleacherreport.com/1"}])
+        assert uncited_outlets(gen, self.VOCAB) == []
+        assert credited_outlets(gen, self.VOCAB) == ["bleacherreport"]
+
+    def test_naming_a_club_is_not_crediting_a_publisher(self):
+        """Both clubs run sites that are in the vocabulary. A card about a
+        match is not claiming a source."""
+        gen = self.card("FC Cincinnati host Santos Laguna, and the LA Galaxy "
+                        "moved Edwin Cerrillo to Club America.")
+        assert credited_outlets(gen, self.VOCAB) == []
+
+    def test_one_attribution_is_allowed_through(self):
+        """The rule is a ceiling, not a ban — the run only flags a PILE-UP,
+        because a contested single-source report is a real reason to name who
+        made it."""
+        gen = self.card("Star Tribune reported the claim, which the league "
+                        "denies.")
+        assert len(credited_outlets(gen, self.VOCAB)) == 1
+
+    def test_a_club_confirming_its_own_transfer_is_not_a_masthead(self):
+        """lagalaxy.com is in the vocabulary because we ingest the club feed.
+        The club announcing its own business is the actor in the story."""
+        gen = self.card("LA Galaxy confirmed on Aug 8 that midfielder Edwin "
+                        "Cerrillo was transferred to Club America.")
+        assert credited_outlets(gen, self.VOCAB) == []
+
+    def test_passive_attribution_is_caught(self):
+        """"as reported by X" puts the verb before the name, so every active
+        pattern missed it and the card credited an outlet for free."""
+        gen = self.card("The move follows the July transfer of Hugo Cuypers, "
+                        "as reported by Yahoo Sports.")
+        assert credited_outlets(gen, self.VOCAB) == ["yahoosports"]
+
+    def test_a_club_speaking_still_counts_for_the_honesty_check(self):
+        """The verb split is only about whether the credit BELONGS. A card
+        claiming provenance it cannot show is a separate defect and must stay
+        catchable however the sentence is phrased."""
+        gen = self.card("Bleacher Report confirmed the fee.")
+        assert uncited_outlets(gen, self.VOCAB) == ["bleacherreport"]

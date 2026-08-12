@@ -259,9 +259,21 @@ _SYSTEM = (
     "Otherwise say it is unconfirmed or leave it out and write from what IS "
     "supported; that is the normal case, not a failure, and never a reason to "
     "decline the conversation. "
-    "NAME ONLY OUTLETS YOU ARE CITING. Write an outlet's name — ESPN, The "
-    "Athletic, Sky Sports — only when that outlet is one of the numbered "
-    "publisher items and you are listing it in source_ids. A social post that "
+    "THE OUTLET IS NOT THE STORY (Micah, 2026-08-12). The source chips under "
+    "the card already say who reported it, so the prose does not have to. A "
+    "paragraph built out of \"Bleacher Report reported… Yahoo Sports quoted… "
+    "Axios reported…\" is a media-monitoring digest, not a story about the "
+    "sport, and it puts the newsroom in the subject slot where the player, the "
+    "club or the league belongs. Write the FACT as the subject: \"The Patriots' "
+    "surface at Gillette Stadium was ruled noncompliant\", never \"Bleacher "
+    "Report reported the Patriots' surface was ruled noncompliant\". Name a "
+    "masthead ONLY when who reported it is itself the fact — one outlet's "
+    "exclusive that nobody else has matched, a claim another outlet disputes, a "
+    "report the league or the player has denied. That is rare. MOST CARDS "
+    "SHOULD NAME NO OUTLET AT ALL, and no card should name more than one. "
+    "NAME ONLY OUTLETS YOU ARE CITING. When you do name one, it must be one of "
+    "the numbered publisher items and you must list it in source_ids. A social "
+    "post that "
     "LINKS to an outlet is not that outlet reporting to you: you have read the "
     "post, not the article, so write \"posts cited a report that…\" and name no "
     "masthead. Never credit the account, aggregator or site that reposted "
@@ -365,10 +377,11 @@ _SYSTEM = (
     "alone will be vague. "
     "MIND THE DATES. You are told today's date. An item published months or "
     "years ago is BACKGROUND, not news: never write it as though it happened "
-    "now. If the best evidence for a conversation is old, say when it was said "
-    "- \'ESPN reported last year\', \'in the 2025 tournament\' - and let the "
-    "recent items carry the present tense. Never imply an old article is a "
-    "current development. "
+    "now. If the best evidence for a conversation is old, say WHEN - \'reported "
+    "last year\', \'in the 2025 tournament\', \'since last season\' - and let "
+    "the recent items carry the present tense. Date it, do not credit it: the "
+    "reader needs to know the claim is a year old, not which masthead made it. "
+    "Never imply an old article is a current development. "
     "THE ITEMS ARE SPLIT INTO DEVELOPMENTS AND BACKGROUND. The narrative "
     "sentence must be anchored on a DEVELOPMENT. A BACKGROUND item is what is "
     "ALREADY TRUE — it may explain why the development matters, and it may "
@@ -884,6 +897,42 @@ def _domain_of(url):
     return host[4:] if host.startswith("www.") else host
 
 
+# Verbs a PARTICIPANT uses to speak for itself. "LA Galaxy confirmed on Aug 8
+# that Edwin Cerrillo was transferred" is the club announcing its own business —
+# the actor in the story, not a newsroom observing it — and lagalaxy.com is in
+# the outlet vocabulary because we ingest the club's feed. Excluded from the
+# name-drop count, kept in `uncited_outlets`, where "Raw Chili said" is exactly
+# the false claim of provenance that check exists to catch.
+_SELF_REPORTING_VERBS = {"confirmed", "confirms", "announced", "added",
+                         "claimed", "revealed"}
+_OBSERVER_VERBS = _REPORTING_VERBS - _SELF_REPORTING_VERBS
+
+
+def credited_outlets(gen, vocab):
+    """Every masthead the card ATTRIBUTES something to, cited or not.
+
+    `uncited_outlets` asks whether an attribution is HONEST. This asks whether
+    it should be there at all, which is a different question and the one that
+    was never posed. Measured 2026-08-12 across the 14 live cards: **45
+    attributions, every card carrying at least one**, five in the UFC card
+    alone — "Sherdog reported… Yahoo Sports covered… The Times of India laid
+    out… Bloody Elbow reported… Fox Sports said…". Every one was accurate, so
+    every existing check passed. Micah: "im having a really hard time with us
+    name dropping publishers."
+
+    The receipt chips under the card already carry provenance. Repeating it in
+    the prose puts the newsroom in the subject slot that belongs to the player,
+    the club or the league, and turns a story about the sport into a summary of
+    who wrote about the sport.
+
+    Attribution, not mention: shares the proper-noun-plus-reporting-verb matcher
+    with `uncited_outlets`, so "FC Cincinnati host Santos Laguna" and "the LA
+    Galaxy moved Edwin Cerrillo" do not count against cards that never claimed
+    a source — both clubs run websites that are in the vocabulary.
+    """
+    return sorted(vocab & _attributed_names(gen, _OBSERVER_VERBS))
+
+
 def uncited_outlets(gen, vocab):
     """Outlets the card NAMES but does not cite. A card claiming provenance it
     does not hold.
@@ -900,6 +949,35 @@ def uncited_outlets(gen, vocab):
     feature (Micah) and a wrong ATTRIBUTION is a reason to fix the sentence, not
     to drop the conversation.
     """
+    named = vocab & _attributed_names(gen)
+    cited = set()
+    for s in gen.get("sources") or []:
+        cited.add(_squash(s.get("source")))
+        host = _domain_of(s.get("url", ""))
+        if host:
+            cited.add(_squash(host.rsplit(".", 1)[0].split(".")[-1]))
+        # The receipt's own headline counts as an alias for its outlet. We
+        # ingest The Athletic under `source = "the new york times"` (the NYT
+        # owns it and the feed is nytimes.com), so a card correctly citing that
+        # row and correctly writing "The Athletic reported" looked like a
+        # miscredit. The headline ends "- The Athletic", which settles it
+        # without a hand-maintained ownership map.
+        cited.add(_squash(s.get("headline")))
+    return sorted(n for n in named
+                  if not any(n in c or c in n for c in cited if c))
+
+
+def _attributed_names(gen, verbs=None):
+    """The proper nouns this card CREDITS something to, squashed for lookup.
+
+    An attribution, not a mention — a name only counts when a reporting verb
+    sits beside it. Shared by `uncited_outlets` (is the credit honest?) and
+    `credited_outlets` (should the credit be there at all?), so the two can
+    never disagree about what the card claimed. They differ only in `verbs`:
+    the honesty check takes anything that asserts provenance, the name-drop
+    count takes only what an OBSERVER can say.
+    """
+    verbs = _REPORTING_VERBS if verbs is None else verbs
     # Match CAPITALISED runs of 1-3 words, not a squashed blob. Squashing the
     # whole prose flagged `nba-kawhi-cap` for "complex" — the ordinary English
     # word in "the already complex case" — against complex.com. A masthead in
@@ -930,28 +1008,18 @@ def uncited_outlets(gen, vocab):
                     break
             before = lower[max(0, i - 3):i]
             attributed = (
-                any(w in _REPORTING_VERBS for w in after)
+                any(w in verbs for w in after)
                 or any(w in ("report", "reports", "outlet", "outlets") for w in after)
                 or any(w in ("according", "per", "via", "cited", "citing")
-                       for w in before))
+                       for w in before)
+                # PASSIVE attribution, which the active patterns above all
+                # missed: "as reported by The Athletic" puts the verb BEFORE
+                # the masthead, so the card credited an outlet and the check
+                # counted nothing (mls-ligamx-spending, 2026-08-12).
+                or ("by" in before and any(w in verbs for w in before)))
             if attributed:
                 phrases.add(_squash("".join(tokens[i:i + n])))
-    cited = set()
-    for s in gen.get("sources") or []:
-        cited.add(_squash(s.get("source")))
-        host = _domain_of(s.get("url", ""))
-        if host:
-            cited.add(_squash(host.rsplit(".", 1)[0].split(".")[-1]))
-        # The receipt's own headline counts as an alias for its outlet. We
-        # ingest The Athletic under `source = "the new york times"` (the NYT
-        # owns it and the feed is nytimes.com), so a card correctly citing that
-        # row and correctly writing "The Athletic reported" looked like a
-        # miscredit. The headline ends "- The Athletic", which settles it
-        # without a hand-maintained ownership map.
-        cited.add(_squash(s.get("headline")))
-    named = vocab & phrases
-    return sorted(n for n in named
-                  if not any(n in c or c in n for c in cited if c))
+    return phrases
 
 
 def _cited_sources(items, parsed):
@@ -1227,6 +1295,7 @@ def main():
             results[conv["id"]] = gen
 
     written = unattributed = ignored = stale = 0
+    namedrops = piled = 0
     for conv, items, marks in loaded:
         # The items the model was actually shown — every check below is
         # about what it saw, not about what sat unread in the pool.
@@ -1304,6 +1373,16 @@ def main():
             unattributed += 1
             print("    UNCITED OUTLET: names %s with no receipt for it"
                   % ", ".join(loose))
+        # Mastheads in the subject slot. The chips already carry provenance, so
+        # a second one is a digest of who wrote about the sport rather than a
+        # story about it. Counted, never fatal — one attribution can be
+        # legitimate when the reporting is itself the fact.
+        credited = credited_outlets(gen, _outlet_vocab(con))
+        namedrops += len(credited)
+        if len(credited) > 1:
+            piled += 1
+            print("    MASTHEAD PILE-UP: attributes to %d outlets — %s"
+                  % (len(credited), ", ".join(credited)))
         # A card that had reporting in front of it and cited none of it. Not
         # fatal either, but it is the signature of the six blind pools, so it
         # must be visible if it comes back.
@@ -1326,8 +1405,9 @@ def main():
     # identical in the log.
     print("Checks: %d social leaks, %d cards naming an uncited outlet, "
           "%d cards ignoring their own publisher items, "
-          "%d cards anchored on background while newer reporting was shown"
-          % (leaks, unattributed, ignored, stale))
+          "%d cards anchored on background while newer reporting was shown, "
+          "%d masthead attributions across %d cards piling them up"
+          % (leaks, unattributed, ignored, stale, namedrops, piled))
 
 
 if __name__ == "__main__":
