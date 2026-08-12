@@ -150,6 +150,32 @@ class TestUncitedOutlets:
         gen = self.card("Yahoo Sports and El Paso Inc. have both covered it.")
         assert uncited_outlets(gen, self.VOCAB) == ["elpasoinc"]
 
+    def test_a_team_or_event_that_runs_a_website_is_not_an_attribution(self):
+        """Naming a club is not crediting a publisher. "the LA Galaxy moved
+        Edwin Cerrillo" was flagged against lagalaxy.com."""
+        gen = self.card("MLSsoccer.com confirmed the LA Galaxy moved Cerrillo.",
+                        [{"source": "mlssoccer.com",
+                          "url": "https://mlssoccer.com/1", "headline": "x"}])
+        assert uncited_outlets(gen, self.VOCAB | {"lagalaxy"}) == []
+
+    def test_a_reporting_verb_across_a_sentence_break_does_not_attribute(self):
+        """"...of the Esports World Cup 2026. Dust2.us listed BetBoom..." put a
+        reporting verb three tokens after an event name in the PREVIOUS
+        sentence."""
+        gen = self.card("Lenovo joined the Esports World Cup 2026. "
+                        "Dust2.us listed the schedule.")
+        assert "esportsworldcup" not in uncited_outlets(
+            gen, self.VOCAB | {"esportsworldcup", "dust2"})
+
+    def test_the_receipts_headline_is_an_alias_for_its_outlet(self):
+        """We ingest The Athletic under source "the new york times", so a card
+        citing that row and writing "The Athletic reported" is correct."""
+        gen = self.card("The Athletic reported the fee.",
+                        [{"source": "the new york times",
+                          "url": "https://nytimes.com/1",
+                          "headline": "Monterrey agree fee - The Athletic"}])
+        assert uncited_outlets(gen, self.VOCAB) == []
+
     def test_it_reports_and_never_deletes(self):
         """Deliberately not a refusal. Chatter-only cards are a feature, and a
         wrong attribution is a reason to fix the sentence, not drop the card."""

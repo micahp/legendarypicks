@@ -678,6 +678,14 @@ _NOT_OUTLETS = {"bluesky", "xsearch", "twitter", "reddit", "google",
 _INLINE_DOMAIN = re.compile(
     r"(?:https?://)?(?:www\.)?((?:[a-z0-9-]+\.)+[a-z]{2,})", re.I)
 
+# The verbs that turn a proper noun into a claim of provenance.
+_REPORTING_VERBS = {
+    "reported", "report", "reports", "reporting", "said", "says", "wrote",
+    "writes", "covered", "confirmed", "confirms", "noted", "notes", "quoted",
+    "detailed", "published", "broke", "argued", "argues", "listed", "profiled",
+    "highlighted", "described", "revealed", "added", "claimed", "announced",
+}
+
 
 def _domain_of(url):
     from urllib.parse import urlparse
@@ -711,12 +719,34 @@ def uncited_outlets(gen, vocab):
     text = " ".join(str(gen.get(f) or "") for f in
                     ("narrative", "paragraph", "fan_voice"))
     tokens = re.findall(r"[A-Za-z0-9.'&]+", text)
+    lower = [t.lower().strip(".") for t in tokens]
     phrases = set()
     for i, tok in enumerate(tokens):
         if not tok[:1].isupper():
             continue
         for n in (1, 2, 3):
-            if i + n <= len(tokens):
+            if i + n > len(tokens):
+                continue
+            # Only an ATTRIBUTION counts. Naming a team or an event is not
+            # crediting a publisher, and both run websites that land in the
+            # vocabulary: "the LA Galaxy moved Edwin Cerrillo" was flagged
+            # against lagalaxy.com, and "Esports World Cup 2026 adds Lenovo"
+            # against esportsworldcup.com. Neither card was claiming a source.
+            # Stop at the end of the sentence. "…of the Esports World Cup 2026.
+            # Dust2.us listed BetBoom…" put a reporting verb three tokens after
+            # an event name that belongs to the previous sentence entirely.
+            after = []
+            for tok_after in tokens[i + n:i + n + 3]:
+                after.append(tok_after.lower().strip("."))
+                if tok_after.endswith("."):
+                    break
+            before = lower[max(0, i - 3):i]
+            attributed = (
+                any(w in _REPORTING_VERBS for w in after)
+                or any(w in ("report", "reports", "outlet", "outlets") for w in after)
+                or any(w in ("according", "per", "via", "cited", "citing")
+                       for w in before))
+            if attributed:
                 phrases.add(_squash("".join(tokens[i:i + n])))
     cited = set()
     for s in gen.get("sources") or []:
@@ -724,6 +754,13 @@ def uncited_outlets(gen, vocab):
         host = _domain_of(s.get("url", ""))
         if host:
             cited.add(_squash(host.rsplit(".", 1)[0].split(".")[-1]))
+        # The receipt's own headline counts as an alias for its outlet. We
+        # ingest The Athletic under `source = "the new york times"` (the NYT
+        # owns it and the feed is nytimes.com), so a card correctly citing that
+        # row and correctly writing "The Athletic reported" looked like a
+        # miscredit. The headline ends "- The Athletic", which settles it
+        # without a hand-maintained ownership map.
+        cited.add(_squash(s.get("headline")))
     named = vocab & phrases
     return sorted(n for n in named
                   if not any(n in c or c in n for c in cited if c))
