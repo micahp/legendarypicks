@@ -19,7 +19,7 @@ class LeagueStatContractError(ValueError):
     """A writer attempted to publish outside the canonical stats contract."""
 
 
-_SEASON_STAT_LEAGUES = frozenset(("nba", "nfl", "nhl"))
+_SEASON_STAT_LEAGUES = frozenset(("nba", "nfl", "nhl", "ncaaf", "mls"))
 _DERIVED_ROLLUP_LEAGUES = frozenset()
 
 PLAYER_STATS_TABLE_SQL = """
@@ -192,6 +192,17 @@ def source_owns_stats(
         return normalized_source in ("espn_core", "espn_web")
     if normalized_league == "nfl":
         return normalized_source == "nflverse_regular_season"
+    if normalized_league == "ncaaf":
+        # NCAAF season stats are the CFBD per-game values we already hold,
+        # summed per player by ingest_ncaaf_season_stats.py. CFBD athlete ids
+        # ARE spine espn_ids (direct join), so one publisher owns the row.
+        return normalized_source == "cfbd"
+    if normalized_league == "mls":
+        # MLS season stats are the ESPN per-game values ingest_soccer_logs
+        # writes (goals/assists/shots/sot, zero-filled), summed per player by
+        # ingest_mls_season_stats.py. The logs are source 'espn', so espn owns
+        # the row.
+        return normalized_source == "espn"
     return False
 
 
@@ -227,6 +238,10 @@ def canonical_population_sql(
         # The <=2023 hoopR branch was dropped with those rows on 2026-08-05 --
         # see `source_owns_stats`. One publisher, every season.
         clause += f" AND {prefix}source='espn_web'"
+    elif normalized_league == "ncaaf":
+        clause += f" AND {prefix}source='cfbd'"
+    elif normalized_league == "mls":
+        clause += f" AND {prefix}source='espn'"
     return clause, params
 
 
