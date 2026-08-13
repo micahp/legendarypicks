@@ -36,6 +36,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from _core import (REPORTER_ROSTER, SOCIAL_SOURCES,  # noqa: E402
                    _deepseek_chat, _init_db)
 from ingest_league_news import CONVERSATIONS  # noqa: E402
+from narrative_variety import (report as variety_report,  # noqa: E402
+                               resolve as variety_resolve)
 from news_classifier import entities  # noqa: E402
 
 def _norm_url(u):
@@ -307,8 +309,9 @@ _SYSTEM = (
     "1) LEAD with the NEWS ANCHOR: the official, high-importance story "
     "(a commissioner's decision, a signing, a rule change, a lawsuit). State "
     "it plainly — this is what actually happened. "
-    "ATTRIBUTION IS NOT VERIFICATION (Micah, 2026-08-13). \"Fans argue…\" does "
-    "not make a claim safe to carry — it only moves who is blamed for it. If a "
+    "ATTRIBUTION IS NOT VERIFICATION (Micah, 2026-08-13). Putting a claim in "
+    "someone's mouth does not make it safe to carry — it only moves who is "
+    "blamed for it. If a "
     "figure, a transfer, a contract or an allegation is not in a publisher "
     "item, putting it in a fan's mouth does not get it into the card. Attribute "
     "only what a numbered post actually SAYS, and never invent the "
@@ -317,11 +320,21 @@ _SYSTEM = (
     "failure — most of these cards have a real story to tell without a chorus. "
     "2) Then carry the FAN VOICE with attribution. Fans have a voice: just "
     "because the league/commissioner decided something does not mean fans "
-    "agree or have stopped wanting the alternative. Attribute their side "
-    "explicitly — \"Fans argue…\", \"Supporters point to…\", \"Critics say…\" — "
-    "and name the evidence (the packed stadium, the lower-division crowds, "
-    "the player quote, a poll number) so the reader sees WHY they have a "
-    "point. It must never sound like the app itself is making the fan's claim. "
+    "agree or have stopped wanting the alternative. The reader must be able to "
+    "tell who is speaking and see the evidence (the packed stadium, the "
+    "lower-division crowds, the player quote, a poll number) so they see WHY "
+    "those people have a point. It must never sound like the app itself is "
+    "making the fan's claim. "
+    "Do NOT open the fan sentence by naming the constituency. Over 344 stored "
+    "generations, 87% of these sentences began with a bare collective noun — "
+    "the crowd, the critics, the supporters — because an earlier version of "
+    "this instruction supplied three such openers as examples and every card "
+    "copied them. Lead instead with the THING BEING SAID, or with the specific "
+    "person or group saying it, and let the attribution fall where it reads "
+    "naturally. A season-ticket holder in Seattle, a supporters' trust, the "
+    "replies under the commissioner's own post and a former player are four "
+    "different speakers; treat them as different, and never flatten a named "
+    "person into 'fans'. "
     "`narrative` is the card's TITLE — one sentence that names the CONVERSATION "
     "anchored on the official story. Lead with the news event but frame it as "
     "the story people are talking about — the reader should see what the fight "
@@ -335,18 +348,37 @@ _SYSTEM = (
     "Spell out jargon — never abbreviate: write \\\"promotion and relegation\\\", "
     "not \\\"pro/rel\\\"; a reader skimming a title must not have to decode a "
     "shortened term. "
-    "CRITICAL — vary the VOICE and STRUCTURE across cards. Do NOT copy the same "
-    "template for every league. These are all acceptable shapes; pick the one "
-    "that fits THIS conversation, and never reuse a shape you already used: "
-    "- \\\"Skubal trade to Dodgers reignites the salary-cap debate\\\" (event → "
-    "debate) "
-    "- \\\"NHL free agency leaves proven players unsigned as cap money dries up\\\" "
-    "(statement about the situation) "
-    "- \\\"MLS commissioner rules out promotion and relegation, but fan demand "
-    "for it grows\\\" "
-    "(decision → but → fan pushback) "
-    "- \\\"Worlds ticket resale prices hit $169,000 amid scalping complaints\\\" "
-    "(controversy → concrete number) "
+    "WRITE DRAFTS, THEN CHOOSE. For each card, write TWO different `narrative` "
+    "sentences and TWO different `fan_voice` sentences before you settle on "
+    "one. The two drafts must differ in SHAPE, not just in wording — if both "
+    "put the same clause in the same place, you have written one draft twice. "
+    "Then judge your drafts against this rubric, in order: "
+    "1) does it say what actually happened, plainly, without needing a second "
+    "read; "
+    "2) does it name a person, club or number rather than an abstraction; "
+    "3) would a reader who saw the other cards on this page notice these two "
+    "were written by the same hand; "
+    "4) does it open the same way as another card in this run. "
+    "Then write the final. The final may be one of your drafts unchanged or a "
+    "third sentence the comparison suggested — say which by putting the final "
+    "in `narrative` and both drafts in `narrative_drafts`. "
+    "Shapes that work, described rather than written out, because worked "
+    "examples inside these leagues get copied word for word instead of "
+    "imitated (measured 2026-08-13: the four examples this instruction used to "
+    "carry accounted for a third of all titles): "
+    "- the event, then the argument it restarts; "
+    "- a flat statement of the situation, no subordinate clause at all; "
+    "- the decision, then the people it did not satisfy; "
+    "- the concrete number first, then who is affected by it. "
+    "Any of these is fine, including twice in a run when it genuinely fits — "
+    "the goal is that the shape is CHOSEN, not defaulted to. One of the four "
+    "is a plain declarative with no dependent clause; it is the most "
+    "under-used. A title does not need a second half. "
+    "Watch \\\"X happens as Y happens\\\" specifically: it was 36% of titles in "
+    "the stored history, which is a rut rather than a style. It is a good "
+    "sentence when the two facts really are simultaneous and the second one "
+    "explains the first. When it is just two facts stacked, state one plainly "
+    "and move the other into the body where it has room. "
     "Vary the CADENCE too, not just the verb: some titles can use a colon, "
     "some a question, some a short clause — but all plain and literal, no "
     "figurative verbs. If two titles in the same "
@@ -404,7 +436,9 @@ _SYSTEM = (
     "Output STRICT JSON only: "
     '{"narrative": "<one sentence: the conversation, anchored on the news — '
     'the title; unique voice, not a repeated template>", '
+    '"narrative_drafts": ["<draft 1>", "<draft 2>"], '
     '"fan_voice": "<the attributed fan side, one sentence>", '
+    '"fan_voice_drafts": ["<draft 1>", "<draft 2>"], '
     '"paragraph": "<2-4 sentences of plain ESPN-style body prose — fan voice '
     'with evidence, concrete names and numbers, room to flow; do NOT repeat '
     'the narrative>", '
@@ -1303,6 +1337,21 @@ def _attributed_names(gen, verbs=None):
     return phrases
 
 
+def _drafts(blob, field):
+    """The alternates the model offered for one field, cleaned.
+
+    A model that ignores the drafts instruction, or emits a string where a list
+    belongs, must not break a run — it just means selection has nothing to pick
+    from and the model's own final ships, which is the old behaviour.
+    """
+    raw = blob.get(field + "_drafts")
+    if isinstance(raw, str):
+        raw = [raw]
+    if not isinstance(raw, list):
+        return []
+    return [str(d).strip() for d in raw if str(d or "").strip()]
+
+
 def _cited_sources(items, parsed):
     """Resolve the model's cited source_urls to the real-article receipts.
     Only URLs that are actually in the (non-bluesky) items become chips — a
@@ -1403,7 +1452,9 @@ def _generate(conv, items, marks=""):
         sources = _cited_sources(items, parsed)
         return {
             "narrative": parsed["narrative"].strip(),
+            "narrative_drafts": _drafts(parsed, "narrative"),
             "fan_voice": str(parsed.get("fan_voice") or "").strip(),
+            "fan_voice_drafts": _drafts(parsed, "fan_voice"),
             "paragraph": str(parsed.get("paragraph") or "").strip(),
             "sources": sources,
             "source_count": len(sources),
@@ -1570,7 +1621,9 @@ def main():
                 sources = _cited_sources(_prompt_items(items), entry)
                 results[conv["id"]] = {
                     "narrative": entry["narrative"].strip(),
+                    "narrative_drafts": _drafts(entry, "narrative"),
                     "fan_voice": str(entry.get("fan_voice") or "").strip(),
+                    "fan_voice_drafts": _drafts(entry, "fan_voice"),
                     "paragraph": str(entry.get("paragraph") or "").strip(),
                     "sources": sources,
                     "source_count": len(sources),
@@ -1583,7 +1636,25 @@ def main():
                 continue
             results[conv["id"]] = gen
 
+    # Choose between the drafts BEFORE anything is written. Sameness is the one
+    # defect a model cannot see from inside a single card: each sentence is
+    # fine alone, and the reader meets them stacked on one page. Selection runs
+    # in batch order, so the first card to use a shape keeps it and later cards
+    # move to an alternate they already wrote — nothing is rewritten here, and
+    # a card with no alternates simply keeps the model's own final.
+    _order = [c["id"] for c, _i, _m in loaded if results.get(c["id"])
+              and not results[c["id"]].get("declined")
+              and not results[c["id"]].get("keep")]
+    _resolved, _swaps = variety_resolve(
+        [dict(results[cid], conv_id=cid) for cid in _order])
+    for _card in _resolved:
+        results[_card["conv_id"]].update(
+            narrative=_card["narrative"], fan_voice=_card["fan_voice"])
+    for _line in _swaps:
+        print(_line)
+
     written = unattributed = ignored = stale = voiceless = 0
+    surveyed = []
     namedrops = piled = 0
     for conv, items, marks in loaded:
         # The items the model was actually shown — every check below is
@@ -1693,6 +1764,12 @@ def main():
             voiceless += 1
             print("    NO SPEAKER: speaks for fans with no post in the pool "
                   "| %s" % (gen.get("fan_voice") or "")[:70])
+        surveyed.append(dict(gen, conv_id=conv["id"]))
+    # Sameness is the one defect that is invisible per card. Each of these
+    # sentences is fine on its own; the reader meets them stacked on one page,
+    # so the check has to run across the batch, after every card is written.
+    for line in variety_report(surveyed):
+        print(line)
     con.commit()
     con.close()
     print("Wrote %d conversation cards to news_narratives (%d unchanged, "
