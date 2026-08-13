@@ -27,25 +27,42 @@ a sentence for its form. The model writes alternates, and we only intervene
 when two cards in the SAME run collide — because that collision is the thing
 the reader actually sees, and it is invisible to a model judging one card.
 
-The one exception is `SEEDED_PHRASES`: strings the old prompt supplied as
-examples and the cards handed straight back (78/344 fan_voice lines, 22.7%,
-opened with one of three literal example strings). That is not a style
-judgment. An echoed example is the `the outlet is not the story` shape — a rule
-phrased as a constraint on X teaches X — and it is scored down rather than
-banned, so a draft can still win on the strength of everything else.
+The one exception is `SEEDED_PHRASES`: three fan-sentence OPENERS the old
+prompt supplied as examples and the cards handed straight back, 78/344 fan_voice
+lines, 22.7%. That is not a style judgment about any one sentence — it is the
+`the outlet is not the story` shape, a rule phrased as a constraint on X
+teaching X — and it is scored down rather than banned, so a draft can still win
+on the strength of everything else.
+
+It is deliberately three strings and not a style blocklist. A headline that
+happens to match one of the prompt's old examples is not thereby bad; being
+copied and being weak are different findings, and only the first is measurable
+here.
 """
 import collections
 import re
 
-# Phrases the prompt used to supply verbatim, and the cards copied. Removed
-# from `_SYSTEM`; `test_narrative_variety` asserts they stay out, so the prompt
-# and this list cannot drift apart.
+# Fan-sentence OPENERS the prompt used to supply verbatim, and the cards handed
+# back: 78 of 344 stored fan_voice lines (22.7%) begin with one of these three.
+# Removed from `_SYSTEM`; `test_narrative_variety` asserts they stay out, so the
+# prompt and this list cannot drift apart.
+#
+# This list held two headline phrases as well — "reignites the salary-cap
+# debate" and "but fan demand". They are gone, because they did not belong.
+# Micah, 2026-08-13: "'Skubal trade to Dodgers reignites the salary-cap debate'
+# is a good headline." It is. It names the event, the argument it restarts and
+# the stakes in plain words, which is what the prompt asks for. Penalising it
+# smuggled a quality judgment in behind a repetition finding.
+#
+# The distinction this list has to keep: a good sentence used ONCE is not a
+# defect. Repetition is the defect, and repetition is measured by `resolve`
+# comparing cards against each other — not by matching a blocklist. What earns
+# a place here is a string with evidence that supplying it CAUSED monotony
+# across many cards, which the three openers have and a headline does not.
 SEEDED_PHRASES = (
     "fans argue",
     "supporters point to",
     "critics say",
-    "reignites the salary-cap debate",
-    "but fan demand",
 )
 
 _COLLECTIVE = re.compile(
@@ -74,7 +91,8 @@ def rubric_score(text, taken_openings=()):
     if not t:
         return 0
     score = 100
-    # Echoing an example we supplied is the one hard signal.
+    # An opener we supplied and 22.7% of cards handed back. Costly, but not
+    # disqualifying: with no alternate written, this sentence still ships.
     score -= 40 * len(seeded_hits(t))
     # A shape another card in this same run already used.
     if opening_bigram(t) in taken_openings:
