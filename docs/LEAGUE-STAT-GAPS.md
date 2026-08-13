@@ -240,6 +240,18 @@ blocked_shots` (1,020 rows); player leaders (goals/assists/shots/sot) via
 `/api/mls/leaders`; team aggregates (Record + Scoring & shooting) via
 `/api/mls/team-aggregates`.
 
+**MLS season player_stats landed 2026-08-12 (worktree copy):** the `sot`
+column was added to `player_stats` (`migrate_mls_season_columns.py`), the mls
+season contract + `espn` source ownership were added to `league_stats.py`, and
+`ingest_mls_season_stats.py` summed the publisher's own per-game values into
+850 season rows (source `espn`, season 2025). Gate flip on the copy:
+`A/required-stats[season]` FAIL→PASS (4 stats) and `D/leaders-reach-logs`
+FAIL→PASS (850/850 = 100%). `/api/mls/leaders` (which the MANIFEST already
+declared) was wired: it had 404'd for mls — the route allowlist plus an mls
+category/default/change-metric definition now serve it (Messi 29G/16A, MIA).
+Rollup verified by independent recompute from raw logs (Messi 29/16/157/71,
+28 games).
+
 | missing | in the logs? | note |
 |---|---|---|
 | **saves / goalsConceded / shotsFaced (GK)** | **yes — published, unmapped** | the summary publishes them per keeper (measured event 727308: Pantemis saves=2); `ingest_soccer_logs` maps only goals/assists/shots/sot. GK-saves gap flagged in MANIFEST. Needs a position-G mapping + `position_group` on log rows |
@@ -269,3 +281,23 @@ standings and schedule surfaces.
 | **CFBD as second publisher** | **yes — the NCAAF log source (2026-08-07)** | key exists; the DO-NOT-use was news-engine-only (Micah, confirmed 08-07). `ingest_cfbd_logs.py` re-sourced the 2025 FBS logs (~139 calls vs 888 ESPN summaries): ESPN game ids + athlete ids (direct spine joins, 100% resolved), defensive stats mapped, FCS buy-game players included (230 teams) |
 
 Qualifier: **NONE PUBLISHED** that this project could verify.
+
+### NCAAF — gate findings 2026-08-10
+
+The COV-statset audit (`audit_league_stats.py`) grades the surfaces the task
+doc calls "done". Current ncaaf row, run against `picks.dev.db`:
+
+| check | verdict | note |
+|---|---|---|
+| A/required-stats[season] | **FAIL** | no `att/pass_yds/intc/rush_yds/rec/rec_yds` columns on `player_stats`; `pass_td/rush_td/rec_td` exist but 0 rows — **zero ncaaf `player_stats` rows at all** (the props/leaders acquisition gap) |
+| B/position-content | PASS (all positions) | **def_int floor fixed 2026-08-10**: CFBD publishes the interceptions category only when an INT was recorded (measured: 198 of 366 game blocks), so a DB log without `def_int` is an honest zero. DB/CB/S declare `key_coverage: {def_int: 0.05}` — tackles/pd still hold the 80% floor; a total collapse to 0% interceptions still trips. Measured presence: CB 6.6%, DB 6.5%, S 7.6% |
+| C/vocabulary[position] | **FAIL** | two levels of one vocabulary in `players.position`: C under OL, CB under DB, FB under RB, NT under DT, S under DB — each pair is a position and its own parent (same class of defect NBA had; needs the position_group split, see `migrate_league_position_groups.py`) |
+| D/leaders-reach-logs | **FAIL** | no `player_stats` rows at all — same root cause as A |
+| E/qualifier[season] | UNVERIFIED | NONE PUBLISHED — college football publishes no playing-time qualifier |
+| G/published-identity | UNVERIFIED | no publisher id→name map fetched — run `fetch_identity_names.py` |
+
+The pipeline data itself is green: COV-ncaaf passes 888/888 logs, 888 results,
+137 FBS teams, 0 NULL game_type. What is missing is the **season-aggregate
+surface** (`player_stats` → props tab, leaders, player season stats) — that is
+an acquisition job, not an ingest-corruption job. Until it lands, those
+surfaces render honest empty states by design.
