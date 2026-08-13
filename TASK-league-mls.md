@@ -7,7 +7,76 @@ work. EPL then adds exactly those two things to a scaffold that already works.
 
 Read `docs/DATA-COVERAGE-CONTRACT.md` §6 and §7 first.
 
-## STATUS — 2026-08-07 (before NCAAF work resumes; MLS paused, not closed)
+## STATUS — 2026-08-13 (standings draws CLOSED and committed; league still not closed)
+
+Branch `feat/league-mls-ncaaf` @ `/root/lp-league-mls-ncaaf`. **Committed to the
+branch, NOT landed to main dev (`/root/legendarypicks`) and NOT pushed.**
+The 08-07 status below is kept as written and is superseded on items #4, #6 and
+#7 only — every other line in it still stands.
+
+**#4 draw rendering — the standings half is DONE and independently verified.**
+`/api/mls/standings` no longer calls live ESPN; `_mls_standings_from_db(season)`
+aggregates the published per-game rows in `team_game_results` (P/W/D/L are counts
+of the publisher's own `result` values, GF/GA sums of its own scores, GD = GF-GA,
+Pts = 3W+D). `StandingsTab.tsx` renders P W D L GF GA GD Pts through an
+`isSoccer` branch — mls was **not** bolted onto `isWorldCup`, so EPL extends the
+branch without touching the WC path. Commit `98c60e1` (3 files); the unrelated
+EWC/LCUP hunks that shared `games.py` went in first as `8988345` so the MLS
+commit stayed clean.
+
+Verified 08-13, not just claimed:
+- DB: 1020 team-game rows / 30 teams / 510 games; 256 `result='D'` rows, every
+  draw paired 2-per-game (128 drawn matches); every team P == W+D+L.
+- **Reconciled against ESPN's published 2025 standings — 30/30 teams identical**
+  on group, rank, P, W, D, L, GF, GA and Pts; zero disagreements. The raw
+  unmodified publisher body is committed at
+  `render-evidence/espn-mls-2025-standings-raw.json` (134,794 bytes, URL and
+  fetch timestamp recorded in `REPORT-mls-draws.md` §3); re-shaped copies are
+  labelled `-normalised-derivative.json` so the payload can't be confused with a
+  derivative. Note the *bare* `/standings` endpoint serves the in-progress 2026
+  season — `?season=2025` is the apples-to-apples comparison.
+- Renders opened, not just captured: genuine 1440x900 and a true 375x812
+  viewport, D column populated in both.
+- Fail-loud both ways, and both directions exercised on a temp DB: `played !=
+  W+D+L` 503s naming the team; a DB team set that differs from the recorded
+  Eastern/Western frozensets 503s naming the unmapped/missing abbrevs. **Never a
+  partial table with a 200.** The SQL is explicit (`season = ?` and
+  `status='completed'`), season derived from the coverage record, not a literal.
+- Conference split and display names are recorded vocabulary from ESPN's
+  published standings payload (measured 08-12), because `team_game_results` has
+  no conference or name column. The coverage assertion is what keeps that
+  recorded list from silently dropping a club.
+
+**#4 is NOT fully closed.** This item asks for a draw rendering correctly on the
+standings table, **the game log AND momentum**. Only the standings surface was in
+scope and only it has been done — the game-log and momentum draw surfaces are
+untouched and unverified.
+
+**#6 — now committed.** 8 commits on the branch (`git log 2d6ab86..HEAD`), one
+per logical slice, no `venv` or logs, no AI attribution, author micahp.
+Deliberately left dirty: pre-existing ncaaf/leagues work (`TASK-league-ncaaf.md`,
+`esports_team_logos.json`, `useLeagueRouteState.ts`, `LeagueGameLog.tsx`,
+`pages/leagues.tsx`, `pages/scores.tsx`), `RALPH-NCAAF-PLAN.md`, the context and
+PRESERVE docs, logs and `venv`. Recorded in `REPORT-mls-draws.md` §10.
+
+**#7 — partially answered.** A/required-stats[season] and D/leaders-reach-logs
+flipped FAIL -> PASS, but **on the worktree DB copy, not canonical dev**. Still
+red for mls, named: `C/vocabulary[position]` (two levels in one column, needs the
+position_group split), `B/position-content[GK]` (GK saves published but
+unmapped), `E/qualifier[season]`, `G/published-identity`.
+
+Still open, unchanged: **#5** two-player absence screenshot; **#8** 375/1440
+renders of the **game logs** (the standings renders do not satisfy this item);
+**F/identity-crosswalk** single-publisher statement; result='D' not migrated on
+the canonical dev DB; soccer-native team stat columns (shots_on_target,
+possession, corners) still have no schema column.
+
+**Next step and its hazard:** landing to `/root/legendarypicks`. Main has the
+**newer** coverage-floor `audit_league_stats.py` — copy the mls/ncaaf MANIFEST
+hunks *into* it. Copying this worktree's older file wholesale regresses the
+coverage-floor machinery for every league. See `docs/PRESERVE-MLS-NCAAF-LANDING.md`.
+
+## STATUS — 2026-08-07 (superseded on #4/#6/#7 by the 08-13 entry above)
 
 **MLS is ~40-50% done by this task's own "Done means".** The data pipeline and
 clickable surfaces all work on the main dev tree (feat/league-news-engine), but the
