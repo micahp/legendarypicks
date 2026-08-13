@@ -25,6 +25,7 @@ LEAGUES = {  # our key -> (espn "sport/league" path, regulation periods)
     "wta":  ("tennis/wta", 3),
     "ufc":  ("mma/ufc", 3),
     "wc":   ("soccer/fifa.world", 2),
+    "lcup": ("soccer/concacaf.leagues.cup", 2),
     "mls":  ("soccer/usa.1", 2),
 }
 
@@ -410,8 +411,8 @@ def games(league, date=None):
                     "event": event_name,
                     "card_segment": card_segment,
                 })
-    elif league in ("wc", "mls"):
-        # Soccer (World Cup / MLS) - events with group/round context, draws, ET, penalties
+    elif league in ("wc", "lcup", "mls"):
+        # Soccer (World Cup / Leagues Cup / MLS) - events with group/round context, draws, ET, penalties
         for e in d.get("events", []):
             comp = (e.get("competitions") or [{}])[0]
             status = comp.get("status", {})
@@ -876,7 +877,8 @@ def game_result_soccer(league, game_id):
     """Soccer-specific game result — uses competitor.winner flag (penalty/AET aware)."""
     d = summary(league, game_id)
     comp = (d.get("header", {}).get("competitions") or [{}])[0]
-    st = comp.get("status", {}).get("type", {})
+    status = comp.get("status", {})
+    st = status.get("type", {})
     scores = {}
     winner = None
     for c in comp.get("competitors", []):
@@ -884,7 +886,14 @@ def game_result_soccer(league, game_id):
         scores[abbr] = _num(c.get("score"))
         if c.get("winner") is True:
             winner = abbr
-    return {"state": st.get("state"), "scores": scores, "winner": winner}
+    return {
+        "state": st.get("state"),
+        "scores": scores,
+        "winner": winner,
+        "period": status.get("period"),
+        "clock": status.get("displayClock"),
+        "status_detail": st.get("shortDetail"),
+    }
 
 
 def lineups(league, game_id):
@@ -1120,23 +1129,31 @@ def game_result(league, game_id):
     """Clean grading info for one game: {state, scores{abbrev:score}, winner|None}.
 
     Robust to date (queries the game directly), so it grades predictions regardless of when
-    the game was played. winner is None until the game is final. Soccer (wc, mls) uses the
+    the game was played. winner is None until the game is final. Soccer (wc, lcup, mls) uses the
     competitor.winner flag — penalty/AET aware, and the only honest grade for a drawn match:
     the score heuristic below would file an MLS Cup final decided on penalties by the
     90-minute scoreline.
     """
-    if league in ("wc", "mls"):
+    if league in ("wc", "lcup", "mls"):
         return game_result_soccer(league, game_id)
     d = summary(league, game_id)
     comp = (d.get("header", {}).get("competitions") or [{}])[0]
-    st = comp.get("status", {}).get("type", {})
+    status = comp.get("status", {})
+    st = status.get("type", {})
     scores = {}
     for c in comp.get("competitors", []):
         scores[c.get("team", {}).get("abbreviation")] = _num(c.get("score"))
     winner = None
     if st.get("state") == "post" and len(scores) == 2 and all(v is not None for v in scores.values()):
         winner = max(scores, key=scores.get)
-    return {"state": st.get("state"), "scores": scores, "winner": winner}
+    return {
+        "state": st.get("state"),
+        "scores": scores,
+        "winner": winner,
+        "period": status.get("period"),
+        "clock": status.get("displayClock"),
+        "status_detail": st.get("shortDetail"),
+    }
 
 
 if __name__ == "__main__":
