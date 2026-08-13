@@ -954,6 +954,16 @@ _LEAGUE_CATEGORIES = {
             _metric("barrel_pct_against", "Barrel % Against", "percent_1"),
         ]},
     ],
+    "mls": [
+        {"key": "scoring", "label": "Scoring", "stats": [
+            _metric("goals", "Goals", "integer"),
+            _metric("assists", "Assists", "integer"),
+        ]},
+        {"key": "shooting", "label": "Shooting", "stats": [
+            _metric("shots", "Shots", "integer"),
+            _metric("sot", "Shots on Target", "integer"),
+        ]},
+    ],
 }
 
 _LEAGUE_DEFAULTS = {
@@ -962,6 +972,7 @@ _LEAGUE_DEFAULTS = {
     "nhl": ("scoring", "points_nhl"),
     "mlb_batting": ("production", "avg"),
     "mlb_pitching": ("strikeouts", "k_pct"),
+    "mls": ("scoring", "goals"),
 }
 
 _CHANGE_METRICS = {
@@ -986,6 +997,10 @@ _CHANGE_METRICS = {
         "shooting": {"metric": _metric("shots", "Shots/Game", "decimal_1"), "raw_keys": ("shots",)},
         "special_teams": {"metric": _metric("ppp", "Power-Play Points/Game", "decimal_1"), "raw_keys": ("powerPlayPoints",)},
         "possession": {"metric": _metric("plus_minus", "Plus/Minus per Game", "decimal_1"), "raw_keys": ("plusMinus",)},
+    },
+    "mls": {
+        "scoring": {"metric": _metric("goals", "Goals/Game", "decimal_1"), "raw_keys": ("goals",)},
+        "shooting": {"metric": _metric("shots", "Shots/Game", "decimal_1"), "raw_keys": ("shots",)},
     },
 }
 
@@ -1208,7 +1223,7 @@ def league_leaders(league: str,
     ?min_games=N — minimum games played (default: 0 for all, 10 for MLB batting)
     """
     lg = league.lower()
-    if lg not in ("nba", "nfl", "nhl", "mlb"):
+    if lg not in ("nba", "nfl", "nhl", "mlb", "mls"):
         return JSONResponse({"error": f"Unsupported league: {league}"}, 404)
 
     if lg == "mlb":
