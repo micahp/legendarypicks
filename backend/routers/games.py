@@ -597,6 +597,15 @@ def get_standings(league: str):
     stage; the canonical knockout bracket/results once the season phase leaves
     'Group' (progression gate via espn.wc_is_knockout — never serve stale groups
     once knockouts have begun)."""
+    if league.lower() == "ncaaf":
+        # Conference-grouped tables - CFB's /standings payload has no
+        # rank/gamesPlayed/losses keys; the record lives in `overall` and
+        # entries arrive pre-ordered by conference standing. See
+        # espn_client.ncaaf_conference_standings.
+        try:
+            return espn.ncaaf_conference_standings()
+        except ValueError as e:
+            raise HTTPException(404, str(e))
     if league.lower() != "wc":
         try:
             return espn.team_strength(league)

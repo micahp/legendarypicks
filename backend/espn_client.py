@@ -863,6 +863,64 @@ def group_standings(league):
     return groups
 
 
+def ncaaf_conference_standings():
+    """NCAAF per-conference standings — the {group, rows} shape the league
+    hub's ConferenceStandings table renders.
+
+    College football's ESPN /standings payload differs from every other
+    league's: there is no rank/gamesPlayed/losses stat key, the overall
+    record lives in the `overall` displayValue ("12-2"), and entries come
+    pre-ordered by conference standing. We read the published order and
+    parse the record; we never recompute it. Football has no draws, no
+    points column and no gf/ga/gd — those soccer-only fields are omitted
+    rather than fabricated as zeros (honest-data-ui: dash != zero).
+
+    Returns [{group: "Big Ten Conference", rows: [{rank, abbrev, name,
+    played, wins, losses}]}]. Conferences with no published entries are
+    skipped entirely (a table with zero rows is a dead surface).
+    """
+    _, path = _check("ncaaf")
+    d = _get(_CORE.format(path=path) + "/standings", ttl=900)
+    groups = []
+    for child in d.get("children", []):
+        gname = child.get("name", "")
+        entries = (child.get("standings") or {}).get("entries", [])
+        if not entries:
+            continue
+        rows = []
+        for rank, ent in enumerate(entries, start=1):
+            s = {x.get("name"): x.get("value") for x in ent.get("stats", [])}
+            disp = {x.get("name"): x.get("displayValue") for x in ent.get("stats", [])}
+            t = ent.get("team", {})
+            w, l = _parse_record(disp.get("overall"))
+            rows.append({
+                "rank": rank,
+                "abbrev": t.get("abbreviation"),
+                "name": t.get("displayName"),
+                "played": (w + l) if (w is not None and l is not None) else None,
+                "wins": w,
+                "losses": l,
+            })
+        groups.append({"group": gname, "rows": rows})
+    return groups
+
+
+def _parse_record(display_value):
+    """Parse ESPN's 'W-L' displayValue ('12-2') into (wins, losses) ints.
+
+    Returns (None, None) for anything unparseable — a missing record must
+    read as absence, never as a fabricated 0-0.
+    """
+    if not isinstance(display_value, str):
+        return None, None
+    parts = display_value.strip().split("-")
+    if len(parts) != 2:
+        return None, None
+    try:
+        return int(parts[0]), int(parts[1])
+    except ValueError:
+        return None, None
+
 
 def summary(league, game_id):
     """Cached raw ESPN /summary JSON for one game. TTL 20s.
