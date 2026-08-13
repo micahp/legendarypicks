@@ -11,6 +11,7 @@ import sqlite3
 
 import pytest
 
+from conftest import real_db
 from league_offering import ALWAYS_OFFERED, offered_leagues, sql_league_filter
 
 
@@ -81,8 +82,9 @@ class TestSqlLeagueFilter:
 class TestSearchAgainstTheRealDatabases:
     """The regression itself, against the files that had it."""
 
-    @pytest.mark.parametrize("path", ["data/picks.db", "data/picks.dev.db"])
-    def test_search_never_returns_an_unoffered_league(self, path):
+    @pytest.mark.parametrize("name", ["picks.db", "picks.dev.db"])
+    def test_search_never_returns_an_unoffered_league(self, name):
+        path = real_db(name)
         try:
             con = sqlite3.connect(f"file:{path}?mode=ro", uri=True)
         except sqlite3.OperationalError:
@@ -97,5 +99,9 @@ class TestSearchAgainstTheRealDatabases:
             ).fetchall()
         finally:
             con.close()
+        # An empty result set satisfies "no league leaked" without having looked
+        # at anything. This test's subject is the real file, so say so: a stub
+        # standing in for the database must fail here, not pass quietly.
+        assert rows, f"{path} returned no players — that is not a passing gate"
         leaked = {r["lg"] for r in rows} - offered
         assert not leaked, f"{path} would serve unoffered leagues: {leaked}"

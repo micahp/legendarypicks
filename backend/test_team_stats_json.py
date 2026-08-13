@@ -10,6 +10,7 @@ import sqlite3
 
 import pytest
 
+from conftest import real_db
 from team_stats_json import stats_from_row, stats_to_json
 from team_stats_schema import all_stat_keys, stat_keys_for
 
@@ -91,7 +92,7 @@ class TestRegistryIsSingleSource:
 class TestAgainstTheRealDatabase:
     """The blob must be what the aggregates actually read on dev."""
 
-    DB = "data/picks.dev.db"
+    DB = real_db("picks.dev.db")
 
     @pytest.fixture
     def con(self):

@@ -22,6 +22,25 @@ import pytest
 
 _SESSION_DB_PATH = os.environ.get("LP_DB_PATH")
 
+# The real-database suites named their targets "data/picks.dev.db" — relative to
+# the working directory, not to the code. Run from backend/ that is the 357MB
+# dev database; run from the repo root (`pytest backend`, which is how CI and a
+# whole-suite run invoke it) it is /root/legendarypicks/data/picks.dev.db, a
+# 0-byte file some script created on 2026-08-11 by opening the same relative
+# path from the wrong directory. sqlite3 opens an empty file happily, so the
+# "not present" guards did not fire: test_league_offering failed on "no such
+# table: players", and test_team_stats_json read no columns and skipped itself
+# as "not migrated yet" — a suite whose entire subject is the real database
+# quietly asserting nothing. Anchoring to this file's directory makes a
+# repo-root run mean the same thing as a per-file run, the same invariant the
+# LP_DB_PATH fixture above exists to hold.
+BACKEND_DIR = os.path.dirname(os.path.abspath(__file__))
+
+
+def real_db(name):
+    """Absolute path to a checked-in database, independent of the caller's cwd."""
+    return os.path.join(BACKEND_DIR, "data", name)
+
 
 @pytest.fixture(autouse=True)
 def _restore_db_path_env():
