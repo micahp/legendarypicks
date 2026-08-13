@@ -386,6 +386,51 @@ SOCIAL_SOURCES = ("bluesky", "x-search", "x", "twitter", "nitter", "mastodon",
                   "threads", "reddit")
 
 
+# Accounts whose FIRSTHAND posts are reporting, not chatter. Curated BY HAND and
+# only by hand (Micah, 2026-08-13) — nothing here is inferred from behaviour,
+# volume or engagement, because an automatic route into this table is an
+# automatic route into the receipts.
+#
+# The distinction this table encodes is NOT the platform. Adam Schefter breaking
+# a trade on X is the reporting; the ESPN article is downstream of him, and a
+# chip reading "Adam Schefter, ESPN" is better provenance than one reading
+# `espn.com`, not worse. What earns a place here is an accountable identity —
+# a named person, a masthead that employs them, and a reputation that costs them
+# when they are wrong. `rawchili` has none of the three.
+#
+# `outlet=None` means the account is not a named journalist (a league desk, a
+# regional news account). Those may still ORIGINATE a claim and carry a card,
+# but the chip names the account rather than a person, so a reader can see the
+# difference between Ken Rosenthal and an anonymous aggregator.
+#
+# HARD RULE — this table may only UPGRADE. An account that is absent is treated
+# as ordinary voice, never as trusted, so forgetting to add one costs us a
+# story and never costs a reader a false receipt. That asymmetry is the whole
+# safety argument: `SOCIAL_SOURCES` failed once by MISSING `x` while 855 tweets
+# rode through as verified publishers, and the fix is not a better list, it is
+# a list whose absent entries fail closed. Corroboration is computed
+# independently of this table for the same reason: a wrong entry here still
+# cannot make a single-source claim look confirmed.
+#
+# TODO(micah): confirm the outlets marked (?) before these reach a chip — they
+# are displayed to readers and beat moves are not something to guess at.
+REPORTER_ROSTER = {
+    # handle:        (display name,        outlet,          beat)
+    "AdamSchefter":  ("Adam Schefter",     "ESPN",          "nfl"),
+    "RapSheet":      ("Ian Rapoport",      "NFL Network",   "nfl"),
+    "FieldYates":    ("Field Yates",       "ESPN",          "nfl"),
+    "ShamsCharania": ("Shams Charania",    "ESPN",          "nba"),
+    "JeffPassan":    ("Jeff Passan",       "ESPN",          "mlb"),
+    "Ken_Rosenthal": ("Ken Rosenthal",     "The Athletic",  "mlb"),   # (?)
+    "FriedgeHNIC":   ("Elliotte Friedman", "Sportsnet",     "nhl"),
+    "TomBogert":     ("Tom Bogert",        "The Athletic",  "mls"),   # (?)
+    # Not a named journalist — a Liga MX/CONCACAF desk. Added 2026-08-13 for
+    # the Gold Cup/Netflix->CONMEBOL story, which our publisher feeds did not
+    # have at all. Originates, so it can carry a card; names itself on the chip.
+    "AllFutbolMX":   ("@AllFutbolMX",      None,            "mls"),
+}
+
+
 def _deepseek_key():
     k = os.environ.get("DEEPSEEK_API_KEY")
     if k:
