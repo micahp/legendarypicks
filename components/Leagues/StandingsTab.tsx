@@ -21,9 +21,14 @@ export default function StandingsTab({
   leagueName,
   league,
 }: StandingsTabProps) {
+  // A soccer league's standings are the P W D L GF GA GD Pts table. The World
+  // Cup keeps its own branch (knockout bracket / group tables); MLS is soccer
+  // without the knockout stage — rendered through an isSoccer branch, not by
+  // bolting mls onto the World Cup condition.
+  const isSoccer = league === 'mls'
   // A grouped table is the signature for the World Cup, MLS (Eastern/Western
   // conferences) and NCAAF (conferences). The loading skeleton follows it.
-  const grouped = isWorldCup || league === 'mls' || league === 'ncaaf'
+  const grouped = isWorldCup || isSoccer || league === 'ncaaf'
 
   return (
     <>
@@ -44,7 +49,7 @@ export default function StandingsTab({
           <div className="text-zinc-500 text-sm">No standings available.</div>
         )
       ) : groups.length > 0 ? (
-        league === 'mls' ? (
+        isSoccer ? (
           <SoccerStandings groups={groups} />
         ) : (
           <ConferenceStandings groups={groups} />
