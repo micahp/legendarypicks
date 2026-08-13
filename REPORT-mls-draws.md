@@ -171,7 +171,54 @@ endpoint reflects the filtered + asserted code):
 - Soccer-native team stat columns (shots_on_target, possession, corners) —
   no schema column yet (documented gap, unchanged).
 
-## 10. Servers left running (branch preview)
+## 10. Commits (worktree only, NO landing, NO push)
+
+Route taken per review: the pre-existing unrelated hunks in games.py were
+committed FIRST as their own clearly-labelled commits, because the ncaaf
+standings branch is glued to the mls branch in the same get_standings hunk
+and cannot split cleanly. The mls draw work is its own commit. No
+git add -A / -u; explicit file paths only. No venv, no logs, no next3110
+committed.
+
+New commits on feat/league-mls-ncaaf (oldest first):
+- 8988345 feat(esports): EWC bracket reconcile + LCUP broadcast context +
+  soccer game shapes — pre-existing worktree work (games.py EWC/LCUP hunks
+  + espn_client lcup/soccer hunks), committed first so it never touches the
+  MLS commit.
+- afe3984 feat(leagues): NCAAF conference-grouped standings route —
+  pre-existing ncaaf work (espn_client.ncaaf_conference_standings + the
+  get_standings ncaaf branch + test [6]); the branch is glued to the mls
+  branch in one hunk, so it shipped first as its own labelled commit.
+- 98c60e1 feat(leagues): MLS standings render draws from team_game_results
+  — THE MLS DRAW WORK. games.py mls hunk (_mls_standings_from_db +
+  _mls_standings_season + recorded vocabulary + mls branch) + StandingsTab
+  isSoccer branch + test [7]/[8].
+- 587ec01 feat(leagues): season-stats contracts for mls and ncaaf —
+  league_stats.py only; the _SEASON_STAT_LEAGUES frozenset line adds both
+  leagues in one line and cannot be split at hunk level.
+- e26d372 feat(leagues): MLS season player_stats + /api/mls/leaders —
+  migrate_mls_season_columns.py + ingest_mls_season_stats.py +
+  routers/players.py mls leaders allowlist/categories.
+- e130ee5 feat(leagues): NCAAF season player_stats from CFBD logs —
+  migrate_ncaaf_season_columns.py + ingest_ncaaf_season_stats.py.
+- 96ba0d2 docs(leagues): record MLS season-stats landing + remaining gaps
+  — docs/LEAGUE-STAT-GAPS.md.
+- 8b4a6cf docs(leagues): MLS draw-rendering report + falsifiable evidence
+  — REPORT-mls-draws.md + render-evidence/ (raw ESPN payload, reconcile
+  result, normalized derivatives, 1440px + 375px renders).
+
+Deliberately left dirty (pre-existing, NOT part of this task, none of it
+mine): TASK-league-ncaaf.md (ncaaf task status), backend/data/esports_
+team_logos.json, components/Leagues/hooks/useLeagueRouteState.ts,
+components/Player/LeagueGameLog.tsx, pages/leagues.tsx, pages/scores.tsx
+(ncaaf/mls league frontend work from the earlier landing), plus untracked
+RALPH-NCAAF-PLAN.md, docs/PRESERVE-MLS-NCAAF-LANDING.md, docs/CONTEXT-
+2026-08-12-mls-season-stats.md, backend/be8110.log, next3110.log,
+backend/venv.
+
+Commit messages are plain and human; no AI attribution anywhere.
+
+## 11. Servers left running (branch preview)
 
 - backend: 127.0.0.1:8098 (LP_DB_PATH -> worktree DB copy; running the
   post-fix code)
