@@ -151,15 +151,23 @@ SURFACE_SQL = {
     # settled_at on a prop it could not map, leaving hit and actual_value NULL —
     # so a prop that FAILED to settle is recorded in the same shape as one that
     # landed. Measured 2026-08-14: every one of the World Cup's 1,128 "settled"
-    # props has hit IS NULL, i.e. WC settles nothing and has been reported at
+    # props has a NULL outcome, i.e. WC settles nothing and has been reported at
     # 100% by every count anyone has taken, this one included. Production MLB is
     # 279,404 of 700,549 the same way. The outcome is the claim; the timestamp is
     # only evidence that something ran.
+    #
+    # The test is `actual_value IS NOT NULL`, not `hit IS NOT NULL`. A PUSH — the
+    # stat landing exactly on the line — is a graded prop that correctly stores
+    # hit=NULL beside a real actual_value (settlement.py:_grade_actual), so
+    # keying on `hit` would count a legitimate result as a failed settlement.
+    # There are zero pushes in either database today, because these books price
+    # almost everything at .5, so this changes no current number — it is the
+    # difference between a filter that is right and one that happens to agree.
     "settled props": """
         SELECT COUNT(*) FROM props p
           JOIN prop_games g ON g.id=p.game_id
           JOIN prop_results r ON r.prop_id=p.id
-         WHERE LOWER(g.league)=? AND r.settled_at IS NOT NULL AND r.hit IS NOT NULL""",
+         WHERE LOWER(g.league)=? AND r.settled_at IS NOT NULL AND r.actual_value IS NOT NULL""",
     # Settled props REACHABLE on a game page: the page joins on espn_event_id,
     # so a settled prop on an unlinked game exists and is invisible. This is the
     # cell that separates "we have the data" from "a user can see it".
@@ -167,7 +175,7 @@ SURFACE_SQL = {
         SELECT COUNT(*) FROM props p
           JOIN prop_games g ON g.id=p.game_id
           JOIN prop_results r ON r.prop_id=p.id
-         WHERE LOWER(g.league)=? AND r.settled_at IS NOT NULL AND r.hit IS NOT NULL
+         WHERE LOWER(g.league)=? AND r.settled_at IS NOT NULL AND r.actual_value IS NOT NULL
            AND g.espn_event_id IS NOT NULL AND g.espn_event_id!=''""",
     # The recap/preview on the game page.
     "game story": """
@@ -217,12 +225,12 @@ LIFECYCLE_SQL = {
         SELECT COUNT(*) FROM props p
           JOIN prop_games g ON g.id=p.game_id
           JOIN prop_results r ON r.prop_id=p.id
-         WHERE LOWER(g.league)=? AND r.settled_at IS NOT NULL AND r.hit IS NOT NULL""",
+         WHERE LOWER(g.league)=? AND r.settled_at IS NOT NULL AND r.actual_value IS NOT NULL""",
     "  shown on the page": """
         SELECT COUNT(*) FROM props p
           JOIN prop_games g ON g.id=p.game_id
           JOIN prop_results r ON r.prop_id=p.id
-         WHERE LOWER(g.league)=? AND r.settled_at IS NOT NULL AND r.hit IS NOT NULL
+         WHERE LOWER(g.league)=? AND r.settled_at IS NOT NULL AND r.actual_value IS NOT NULL
            AND g.espn_event_id IS NOT NULL AND g.espn_event_id!=''""",
 }
 
