@@ -72,11 +72,40 @@ class TestMLSLinksOnThePublishedName:
 
 
 class TestNoGuessedAbbreviationsForUnmappedLeagues:
-    def test_unmapped_league_returns_unknown_not_a_prefix(self):
-        # "San Diego FC" and "San Jose Earthquakes" both used to normalise to
-        # SAN, so either could match a game belonging to the other.
-        assert _norm_team("San Diego FC", "mls") == ""
-        assert _norm_team("San Jose Earthquakes", "mls") == ""
+    def test_the_san_collision_is_impossible(self):
+        # "San Diego FC" and "San Jose Earthquakes" both used to normalise to SAN,
+        # so either could match a game belonging to the other. This asserted both
+        # were "" back when MLS had no map at all — the only way to be safe then.
+        # MLS now carries the publisher's recorded club list, so the guarantee gets
+        # stronger rather than weaker: both resolve, and they resolve DIFFERENTLY.
+        # Keep the inequality, not just the two values: a future map edit that
+        # collapsed them would still satisfy two separate equality checks.
+        sd, sj = _norm_team("San Diego FC", "mls"), _norm_team("San Jose Earthquakes", "mls")
+        assert (sd, sj) == ("SD", "SJ")
+        assert sd != sj
+
+    def test_a_club_outside_the_recorded_list_is_still_unknown(self):
+        # The prefix fallback stays refused for MLS. An unrecognised club name must
+        # not become three letters that read like an answer.
+        assert _norm_team("Zzz Unknown Club", "mls") == ""
+
+    def test_an_ambiguous_substring_refuses_rather_than_picks(self):
+        # "new york" is inside both "new york city fc" and "new york red bulls".
+        # Dict order deciding which club gets the props is a mislink that looks
+        # exactly like a successful one.
+        assert _norm_team("New York", "mls") == ""
+
+    def test_the_spellings_that_were_actually_missing_now_resolve(self):
+        # The eight games that stayed unlinked after the 08-11 fix, by the shape of
+        # the disagreement. Measured against ESPN's published names 2026-08-15/16.
+        assert _norm_team("New York Red Bulls", "mls") == "RBNY"   # word order
+        assert _norm_team("DC United", "mls") == "DC"              # punctuation
+        assert _norm_team("Los Angeles FC", "mls") == "LAFC"       # contraction
+        assert _norm_team("Inter Miami", "mls") == "MIA"           # dropped CF
+        assert _norm_team("Orlando City", "mls") == "ORL"          # dropped SC
+        assert _norm_team("Minnesota United", "mls") == "MIN"      # dropped FC
+        # ...and the LA pair the contraction sits next to.
+        assert _norm_team("LA Galaxy", "mls") == "LA"
 
     def test_mapped_league_behaviour_is_unchanged(self):
         assert _norm_team("Philadelphia Phillies", "mlb") == "PHI"

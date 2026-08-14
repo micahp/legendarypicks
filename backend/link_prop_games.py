@@ -107,7 +107,48 @@ _WC_TEAM_MAP = {
     "china": "CHN", "india": "IND",
 }
 
-_TEAM_MAPS = {"mlb": _MLB_TEAM_MAP, "nba": _NBA_TEAM_MAP, "nfl": _NFL_TEAM_MAP, "nhl": _NHL_TEAM_MAP, "wc": _WC_TEAM_MAP}
+# MLS: Bovada's club name -> ESPN's abbreviation, recorded from the publisher's own
+# scoreboard payload on 2026-08-15/16 (all 30 clubs appeared across those two slates).
+#
+# The name-equality path added on 08-11 fixed the dead `displayName` read but still
+# required the two publishers to spell a club the same way, and for 8 of 13 unlinked
+# games they do not: Bovada says "New York Red Bulls" where ESPN says "Red Bull New
+# York" (different word order), "DC United" vs "D.C. United" (punctuation), "Los
+# Angeles FC" vs "LAFC" (contraction), and a whole family of dropped corporate
+# suffixes — Atlanta United/Inter Miami/Minnesota United/Houston Dynamo/Orlando City
+# all carry FC, CF or SC on ESPN's side and none on Bovada's.
+#
+# Written as a recorded vocabulary rather than a normaliser on purpose. A suffix
+# stripper plus fuzzy matching gets all eight of these and also silently accepts
+# "San Diego FC" for San Jose, which is a wrongly linked game — props bound to the
+# wrong club, settling against the wrong boxscore, with nothing to notice it. An
+# unlinked row is visibly missing; a mislinked one is not.
+_MLS_TEAM_MAP = {
+    "atlanta united": "ATL", "austin fc": "ATX", "cf montréal": "MTL",
+    "cf montreal": "MTL", "charlotte fc": "CLT", "chicago fire": "CHI",
+    "colorado rapids": "COL", "columbus crew": "CLB", "dc united": "DC",
+    "d.c. united": "DC", "fc cincinnati": "CIN", "fc dallas": "DAL",
+    "houston dynamo": "HOU", "inter miami": "MIA", "la galaxy": "LA",
+    "los angeles fc": "LAFC", "lafc": "LAFC", "minnesota united": "MIN",
+    "nashville sc": "NSH", "new england revolution": "NE",
+    "new york city fc": "NYC", "new york red bulls": "RBNY",
+    "red bull new york": "RBNY", "orlando city": "ORL",
+    "philadelphia union": "PHI", "portland timbers": "POR",
+    "real salt lake": "RSL", "san diego fc": "SD",
+    "san jose earthquakes": "SJ", "seattle sounders": "SEA",
+    "sporting kansas city": "SKC", "st. louis city sc": "STL",
+    "toronto fc": "TOR", "vancouver whitecaps": "VAN",
+}
+
+_TEAM_MAPS = {"mlb": _MLB_TEAM_MAP, "nba": _NBA_TEAM_MAP, "nfl": _NFL_TEAM_MAP,
+              "nhl": _NHL_TEAM_MAP, "wc": _WC_TEAM_MAP, "mls": _MLS_TEAM_MAP}
+
+# Leagues whose map is the publisher's COMPLETE club list, so a name that misses it
+# is a name we have never seen — not a near miss to guess at. The first-three-letters
+# fallback stays available to the leagues whose maps are admittedly partial, and is
+# refused here: MLS is precisely where it collides ("San Diego FC" and "San Jose
+# Earthquakes" both yield SAN).
+_EXHAUSTIVE_MAPS = frozenset({"mls"})
 
 
 def _norm_team(team_name: str, league: str) -> str:
@@ -122,10 +163,17 @@ def _norm_team(team_name: str, league: str) -> str:
     team_map = _TEAM_MAPS.get(league, {})
     if key in team_map:
         return team_map[key]
-    # Fuzzy: try substring match
-    for name, abbrev in team_map.items():
-        if key in name or name in key:
-            return abbrev
+    # Fuzzy: try substring match. Where the map is the publisher's complete club
+    # list, an ambiguous substring is a refusal rather than a coin flip — "new york"
+    # is inside both "new york city fc" and "new york red bulls", and whichever one
+    # dict order happened to reach first would bind the props to that club and look
+    # exactly like a successful link.
+    hits = [abbrev for name, abbrev in team_map.items()
+            if key in name or name in key]
+    if len(set(hits)) > 1 and league in _EXHAUSTIVE_MAPS:
+        return ""
+    if hits:
+        return hits[0]
     # No map for this league at all: say "unknown" instead of inventing one.
     #
     # The first-three-letters fallback below is a last resort AMONG KNOWN TEAMS,
@@ -136,6 +184,12 @@ def _norm_team(team_name: str, league: str) -> str:
     # unlinked row is visibly missing and fixable; a wrongly linked one is not.
     # Callers match on the published team NAME for these leagues instead.
     if not team_map:
+        return ""
+    # Nor where the map IS the publisher's full club list. This comment's own example
+    # is now a live map rather than a hypothetical, so the guard has to hold: a name
+    # that missed 34 recorded spellings of 30 clubs is an unknown club, and three
+    # letters of it is a guess that reads as an answer.
+    if league in _EXHAUSTIVE_MAPS:
         return ""
     # Fallback: first 3 letters uppercase
     return team_name.strip()[:3].upper()
