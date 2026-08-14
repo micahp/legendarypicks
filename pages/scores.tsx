@@ -147,25 +147,30 @@ export default function ScoresPage() {
     const load = async () => {
       setLoading(true)
       setError(null)
+      // Never let the prior selection remain the page's data while a different
+      // calendar day is resolving. Loading has a skeleton; stale games do not.
+      setGames([])
       try {
         if (leagueFilter === 'All') {
           // Progressive: paint each league as it resolves so the fast ones (<200ms) show
           // immediately instead of the whole board waiting on the slowest (cod ~1.3s).
-          setGames([])
           const leagues = ['nba', 'mlb', 'nhl', 'nfl', 'lcup', 'mls', 'atp', 'wta', 'cod', 'ufc', 'wc']
           let cleared = false
           const clearOnce = () => { if (!cleared && !ignore) { cleared = true; setLoading(false) } }
           const settled = await Promise.allSettled(leagues.map(async (l) => {
-            const g = await SportsService.getGamesByLocalDate(l, date)
+            const g = await SportsService.getGamesByLocalDate(l, date, { strict: true })
             if (!ignore && g.length) { setGames((prev) => [...prev, ...g]); clearOnce() }
           }))
-          if (!ignore && settled.every((r) => r.status === 'rejected')) {
-            setError('Unable to load games right now. Try another date.')
+          const failures = settled.filter((result) => result.status === 'rejected').length
+          if (!ignore && failures > 0) {
+            setError(failures === leagues.length
+              ? 'Unable to load games right now. Try another date.'
+              : `${failures} league${failures === 1 ? '' : 's'} could not be loaded for this date.`)
           }
           clearOnce() // clear even if every league was empty
         } else {
           const l = leagueFilter === 'Call of Duty' ? 'cod' : leagueFilter === 'FIFA World Cup' ? 'wc' : leagueFilter === 'Leagues Cup' ? 'lcup' : leagueFilter.toLowerCase()
-          const data = await SportsService.getGamesByLocalDate(l, date)
+          const data = await SportsService.getGamesByLocalDate(l, date, { strict: true })
           if (!ignore) setGames(Array.isArray(data) ? data : [])
         }
       } catch (e: any) {
@@ -191,10 +196,10 @@ export default function ScoresPage() {
         try {
           let data: Game[]
           if (leagueFilter === 'All') {
-            data = await SportsService.getAllGamesByLocalDate(date)
+            data = await SportsService.getAllGamesByLocalDate(date, { strict: true })
           } else {
             const l = leagueFilter === 'Call of Duty' ? 'cod' : leagueFilter === 'FIFA World Cup' ? 'wc' : leagueFilter === 'Leagues Cup' ? 'lcup' : leagueFilter.toLowerCase()
-            data = await SportsService.getGamesByLocalDate(l, date)
+            data = await SportsService.getGamesByLocalDate(l, date, { strict: true })
           }
           if (!ignore) setGames(Array.isArray(data) ? data : [])
         } catch { /* silent — keep stale scores rather than blank */ }

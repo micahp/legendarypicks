@@ -260,7 +260,12 @@ export const SportsService = {
           ...normalizeGame(g, league),
           league: league.toUpperCase(),
         }))
-        _gamesCache.set(key, { ts: Date.now(), data })
+        // An outage with no persisted fallback is intentionally a 200 [] so it
+        // cannot take every league page down. Do not turn that temporary state
+        // into a five-minute past-date cache entry after the publisher recovers.
+        if (res.headers?.['x-lp-data-source'] !== 'unavailable') {
+          _gamesCache.set(key, { ts: Date.now(), data })
+        }
         return data
       } catch (err) {
         console.error(`Error fetching ${league} games for ${date}`, err)
@@ -289,6 +294,10 @@ export const SportsService = {
   getGamesByLocalDate: async (league: string, localDate: string, opts?: { strict?: boolean }): Promise<Game[]> => {
     const localDayOf = (iso: string): string | null => {
       if (!iso) return null
+      // Persisted team_game_results knows the published game date, not an exact
+      // start instant. Parsing YYYY-MM-DD as UTC midnight moves it to the prior
+      // date in US timezones. Keep day-precision rows in their requested bucket.
+      if (/^\d{4}-\d{2}-\d{2}$/.test(iso)) return null
       const d = new Date(iso)
       return isNaN(d.getTime()) ? null : d.toLocaleDateString('en-CA')
     }
@@ -329,9 +338,9 @@ export const SportsService = {
     return kept
   },
 
-  getAllGamesByLocalDate: async (localDate: string): Promise<Game[]> => {
+  getAllGamesByLocalDate: async (localDate: string, opts?: { strict?: boolean }): Promise<Game[]> => {
     const leagues = ['nba', 'mlb', 'nhl', 'nfl', 'lcup', 'mls', 'atp', 'wta', 'cod', 'ufc', 'wc']
-    const results = await Promise.all(leagues.map((l) => SportsService.getGamesByLocalDate(l, localDate)))
+    const results = await Promise.all(leagues.map((l) => SportsService.getGamesByLocalDate(l, localDate, opts)))
     return results.flat()
   },
 
@@ -505,6 +514,9 @@ export interface ScheduleDatesResponse {
   league: string
   anchor_date: string
   event_start_timezone: string
+  available?: boolean
+  source?: 'espn' | 'unavailable'
+  error?: 'publisher_unavailable'
   future_event_starts: string[]
   past_event_starts: string[]
   search: {

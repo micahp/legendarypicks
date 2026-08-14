@@ -132,6 +132,114 @@ def _cap_schedule_candidates(starts, anchor: dt.date, direction: str):
     return sorted(set(selected))
 
 
+def _games_from_db(league: str, game_date: str):
+    """Return completed publisher results in the scoreboard's shared shape.
+
+    ``team_game_results.game_date`` is day-precision data.  Keep it that way:
+    inventing ``T00:00:00Z`` would move the result onto the prior viewer-local
+    day throughout the Americas.  The browser recognizes a date-only value and
+    keeps it in the backend bucket that was requested.
+
+    A game is usable only when the published result holds exactly one home row
+    and one away row with reciprocal scores.  A partial or contradictory pair
+    is not a scoreboard result and is reported rather than rendered.
+    """
+    try:
+        with closing(_db()) as con:
+            rows = con.execute(
+                "SELECT game_id, game_date, team, opponent, home_away,"
+                " score_for, score_against, status"
+                " FROM team_game_results WHERE league=? AND game_date=?"
+                " AND status='completed'"
+                " ORDER BY game_id, home_away, team",
+                (league.lower(), game_date),
+            ).fetchall()
+    except sqlite3.Error as exc:
+        print(
+            f"[scores] DB fallback unavailable league={league.lower()} "
+            f"date={game_date} error={type(exc).__name__}: {exc}"
+        )
+        return []
+
+    grouped = {}
+    for row in rows:
+        grouped.setdefault(str(row["game_id"]), []).append(row)
+
+    games = []
+    rejected = []
+    for game_id, pair in grouped.items():
+        homes = [row for row in pair if row["home_away"] == "home"]
+        aways = [row for row in pair if row["home_away"] == "away"]
+        if len(homes) != 1 or len(aways) != 1:
+            rejected.append(game_id)
+            continue
+        home, away = homes[0], aways[0]
+        if (
+            home["score_for"] is None
+            or away["score_for"] is None
+            or home["score_against"] != away["score_for"]
+            or away["score_against"] != home["score_for"]
+        ):
+            rejected.append(game_id)
+            continue
+
+        games.append({
+            "game_id": game_id,
+            "date": str(home["game_date"]),
+            "date_precision": "day",
+            "state": "post",
+            "completed": True,
+            "status": home["status"],
+            "home": {"abbrev": home["team"], "score": home["score_for"]},
+            "away": {"abbrev": away["team"], "score": away["score_for"]},
+        })
+
+    if rejected:
+        print(
+            f"[scores] DB fallback rejected {len(rejected)} unpaired or "
+            f"contradictory games league={league.lower()} date={game_date}: "
+            f"{','.join(rejected[:10])}"
+        )
+    return games
+
+
+def _strength_from_db(league: str):
+    """Latest ESPN-published strength snapshot, without deriving missing fields."""
+    try:
+        with closing(_db()) as con:
+            rows = con.execute(
+                "SELECT captured_at, abbrev, win_pct, differential, wins, losses"
+                " FROM strength_snap WHERE league=? AND captured_at=("
+                " SELECT MAX(captured_at) FROM strength_snap WHERE league=?"
+                ") ORDER BY win_pct DESC, abbrev",
+                (league.lower(), league.lower()),
+            ).fetchall()
+    except sqlite3.Error as exc:
+        print(
+            f"[strength] DB fallback unavailable league={league.lower()} "
+            f"error={type(exc).__name__}: {exc}"
+        )
+        return []
+
+    return [
+        {
+            "abbrev": row["abbrev"],
+            "name": None,
+            "wins": row["wins"],
+            "losses": row["losses"],
+            "win_pct": row["win_pct"],
+            "differential": row["differential"],
+            "streak": None,
+            "last10": None,
+            "games_played": None,
+            "captured_at": row["captured_at"],
+            "source": "strength_snap",
+        }
+        for row in rows
+        if row["abbrev"] and row["win_pct"] is not None
+    ]
+
+
 def _schedule_candidates(league: str, anchor: dt.date, direction: str):
     attempts = []
     candidates = []
@@ -428,31 +536,50 @@ def get_games(league: str, date: Optional[str] = Query(None, description="YYYY-M
             print(f"[sports_service] breakingpoint failed ({e}), falling back to cdl_client")
         import cdl_client
         return _attach_cod_detail_ids(cdl_client.get_matches(date_str=date))
+    lg = league.lower()
+    data_source = "espn"
     try:
         games = espn.games(league, date)
     except ValueError as e:
         raise HTTPException(404, str(e))
-    # ── finished-game final score: DB-first, no ESPN on the request path ──
-    # For a post-state game, prefer OUR captured final (scoring_plays) over the
-    # scoreboard tick. DB-only — no per-request ESPN calls. If the DB has no record
-    # (we never snapshotted it), leave the scoreboard score as-is. An occasional
-    # out-of-band job can reconcile DB vs ESPN; the page request never does.
-    lg = league.lower()
-    for g in games:
-        if g.get("state") != "post":
-            continue
-        final = _final_score_from_db(lg, g["game_id"])
-        if final:
-            if g.get("home"):
-                g["home"]["score"] = final["home"]
-            if g.get("away"):
-                g["away"]["score"] = final["away"]
+    except Exception as exc:
+        fallback_date = date or dt.date.today().isoformat()
+        games = _games_from_db(lg, fallback_date)
+        data_source = "team_game_results" if games else "unavailable"
+        print(
+            f"[scores] publisher unavailable league={lg} date={fallback_date} "
+            f"error={type(exc).__name__}: {exc}; "
+            f"fallback_games={len(games)} source={data_source}"
+        )
+
+    # ── finished-game final score: prefer our captured final ───────────────
+    # The schedule above is ESPN-first because live and upcoming games are not
+    # persisted.  For a post-state game, however, prefer OUR captured final
+    # (scoring_plays, then team_game_results) over the scoreboard tick. These
+    # helpers are DB-only; they make no additional ESPN request.
+    if data_source == "espn":
+        for g in games:
+            if g.get("state") != "post":
+                continue
+            final = _final_score_from_db(lg, g["game_id"])
+            if final:
+                if g.get("home"):
+                    g["home"]["score"] = final["home"]
+                if g.get("away"):
+                    g["away"]["score"] = final["away"]
     # "Write the preview whenever we find out about the game": loading the scoreboard is
     # exactly when we find out, so warm the AI-story cache in the background here. Non-
     # blocking — the games response returns now; stories generate in daemon threads.
     if lg in ("nba", "nhl", "mlb", "nfl"):
         kick_game_stories(lg, games)
-    return JSONResponse(content=games, headers={"Cache-Control": "public, max-age=30"})
+    max_age = 15 if data_source == "unavailable" else 30
+    return JSONResponse(
+        content=games,
+        headers={
+            "Cache-Control": f"public, max-age={max_age}",
+            "X-LP-Data-Source": data_source,
+        },
+    )
 
 
 @router.get("/api/{league}/schedule-dates")
@@ -475,7 +602,29 @@ def get_schedule_dates(
         future_starts, future_search = _schedule_candidates(lg, anchor_date, "future")
         past_starts, past_search = _schedule_candidates(lg, anchor_date, "past")
     except Exception as exc:
-        raise HTTPException(502, "schedule date discovery unavailable") from exc
+        print(
+            f"[schedule-dates] publisher unavailable league={lg} "
+            f"anchor={anchor_date.isoformat()} error={type(exc).__name__}: {exc}"
+        )
+        return JSONResponse(
+            content={
+                "contract": _SCHEDULE_DATES_CONTRACT,
+                "league": lg,
+                "anchor_date": anchor_date.isoformat(),
+                "event_start_timezone": "UTC",
+                "available": False,
+                "source": "unavailable",
+                "error": "publisher_unavailable",
+                "future_event_starts": [],
+                "past_event_starts": [],
+                "search": {
+                    "future": [],
+                    "past": [],
+                    "max_horizon_days": 370,
+                },
+            },
+            headers={"Cache-Control": "public, max-age=15"},
+        )
 
     return JSONResponse(
         content={
@@ -483,6 +632,8 @@ def get_schedule_dates(
             "league": lg,
             "anchor_date": anchor_date.isoformat(),
             "event_start_timezone": "UTC",
+            "available": True,
+            "source": "espn",
             "future_event_starts": future_starts,
             "past_event_starts": past_starts,
             "search": {
@@ -587,8 +738,29 @@ def get_strength(league: str):
         rows = espn.team_strength(league)
     except ValueError as e:
         raise HTTPException(404, str(e))
+    except Exception as exc:
+        rows = _strength_from_db(league)
+        data_source = "strength_snap" if rows else "unavailable"
+        print(
+            f"[strength] publisher unavailable league={league.lower()} "
+            f"error={type(exc).__name__}: {exc}; fallback_rows={len(rows)} "
+            f"source={data_source}"
+        )
+        return JSONResponse(
+            content=rows,
+            headers={
+                "Cache-Control": "public, max-age=30",
+                "X-LP-Data-Source": data_source,
+            },
+        )
     _snapshot_strength(league.lower(), rows)
-    return rows
+    return JSONResponse(
+        content=rows,
+        headers={
+            "Cache-Control": "public, max-age=300",
+            "X-LP-Data-Source": "espn",
+        },
+    )
 
 
 @router.get("/api/{league}/standings")
