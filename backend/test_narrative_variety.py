@@ -34,8 +34,9 @@ import re
 
 import pytest
 
-from narrative_variety import (SEEDED_PHRASES, choose, opening_bigram, report,
-                               resolve, rubric_score, seeded_hits, survey)
+from narrative_variety import (SEEDED_PHRASES, choose, dominant_frame, frame,
+                               opening_bigram, report, resolve, rubric_score,
+                               seeded_hits, survey)
 
 
 def card(conv_id="c", narrative="", fan_voice=""):
@@ -165,3 +166,53 @@ class TestAgainstTheStoredHistory:
         # and should push these DOWN. A rise means the fix regressed.
         assert seeded >= 70, "the historical echo count moved: %d" % seeded
         assert as_share >= 0.30, "the historical ' as ' share moved: %.3f" % as_share
+
+
+class TestFrameIsShapeAgnostic:
+    """The check that does not need to know the habit's name in advance.
+
+    `_COLLECTIVE` was written against 86.9% collective-noun openers. One run
+    after that was fixed it scored 0% while 82% of fan sentences had settled
+    into "'<quote>,' one <someone> posted" — a different single shape, and a
+    named blocklist is blind to it by construction.
+    """
+
+    def test_two_sentences_with_different_facts_share_a_frame(self):
+        a = "'A salary cap is a nonstarter,' one Braves fan posted after the deal."
+        b = "'Grabbitz is back, but not alone,' one fan account posted at the reveal."
+        assert frame(a) == frame(b)
+
+    def test_genuinely_different_shapes_do_not_share_a_frame(self):
+        a = "'A salary cap is a nonstarter,' one Braves fan posted."
+        b = "Season-ticket holders cancelled in numbers the club has not seen."
+        assert frame(a) != frame(b)
+
+    def test_numbers_are_content_not_shape(self):
+        assert frame("Only 430 Worlds tickets were released") == \
+               frame("Only 900 Worlds tickets were released")
+
+    def test_names_after_the_first_word_are_content_not_shape(self):
+        # The FIRST token stays literal on purpose. Normalising it too would
+        # collapse "Tarik Skubal's trade" and "Islam Makhachev and Garry meet"
+        # into one frame, and they are not the same shape — that choice is why
+        # the 14 real titles scored 14% here rather than clustering on <name>.
+        assert frame("The Lakers sale closes") == frame("The Celtics sale closes")
+        assert frame("Vikings players renew") != frame("Ravens players renew")
+
+    def test_dominant_frame_reports_the_biggest_cluster_and_its_share(self):
+        texts = ["'A salary cap is a nonstarter,' one fan posted.",
+                 "'Grabbitz is back, but not alone,' one supporter posted.",
+                 "Ticket holders cancelled in numbers."]
+        sig, n, share = dominant_frame(texts)
+        assert n == 2 and 0.66 < share < 0.67, (sig, n, share)
+
+    def test_empty_input_is_zero_not_an_error(self):
+        assert dominant_frame([]) == ("", 0, 0.0)
+
+    def test_report_names_the_new_habit_while_the_old_check_reads_clean(self):
+        cards = [card(conv_id=str(i), fan_voice="'Point %d,' one fan posted today." % i)
+                 for i in range(4)]
+        lines = report(cards)
+        assert any("open with a collective noun (0%)" in l for l in lines), \
+            "the named check should read clean here — that is the point"
+        assert any("share one frame (100%)" in l for l in lines)

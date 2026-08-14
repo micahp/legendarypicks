@@ -75,6 +75,51 @@ def opening_bigram(text):
     return " ".join((text or "").split()[:2]).lower()
 
 
+def frame(text):
+    """A structural signature of a sentence, with its content removed.
+
+    Lowercased, quoted spans collapsed to <q>, numbers to <n>, capitalised
+    tokens to <name>, then the first two tokens. Two sentences with the same
+    frame are the same sentence with different facts in it.
+
+    This exists because a named blocklist can only catch the habit that already
+    happened. `_COLLECTIVE` was written against 86.9% collective-noun openers;
+    the next run scored 0% on it while 72.7% of fan sentences had settled into
+    "'<quote>,' one <someone> posted" — a different single shape, invisible to a
+    check that knew the old one by name. Measuring the size of the largest
+    cluster, whatever that cluster turns out to be, does not go stale.
+    """
+    t = (text or "").strip()
+    if not t:
+        return ""
+    t = re.sub(r"[\u2018\u2019\u201c\u201d'\"][^\u2018\u2019\u201c\u201d'\"]{8,}[\u2018\u2019\u201c\u201d'\"]", " <q> ", t)
+    out = []
+    for tok in t.split():
+        bare = tok.strip(".,;:!?()")
+        if not bare:
+            continue
+        if bare == "<q>":
+            out.append("<q>")
+        elif re.search(r"\d", bare):
+            out.append("<n>")
+        elif bare[:1].isupper() and len(out) > 0:
+            out.append("<name>")
+        else:
+            out.append(bare.lower())
+        if len(out) == 2:
+            break
+    return " ".join(out)
+
+
+def dominant_frame(texts):
+    """(signature, count, share) of the most common frame in a list."""
+    frames = collections.Counter(frame(t) for t in texts if (t or "").strip())
+    if not frames:
+        return ("", 0, 0.0)
+    sig, n = frames.most_common(1)[0]
+    return (sig, n, n / sum(frames.values()))
+
+
 def seeded_hits(text):
     low = (text or "").lower()
     return [p for p in SEEDED_PHRASES if p in low]
@@ -180,6 +225,8 @@ def survey(cards):
         "collective_openers": collective,
         "collective_share": collective / len(voices) if voices else 0.0,
         "as_clauses": sum(1 for h in heads if re.search(r"\bas\b", h, re.I)),
+        "voice_frame": dominant_frame(voices),
+        "head_frame": dominant_frame(heads),
         "seeded": seeded,
     }
 
@@ -195,6 +242,14 @@ def report(cards):
     if s["n_voices"]:
         lines.append("    VARIETY: %d/%d fan sentences open with a collective noun (%.0f%%)"
                      % (s["collective_openers"], s["n_voices"], 100 * s["collective_share"]))
+    # Shape-agnostic: catches whatever the current habit is, including one that
+    # forms after this file was last edited.
+    for label, key in (("fan", "voice_frame"), ("title", "head_frame")):
+        sig, n, share = s[key]
+        if n > 1:
+            lines.append("    VARIETY: %d/%d %s sentences share one frame (%.0f%%) — %r"
+                         % (n, s["n_voices"] if label == "fan" else s["n"],
+                            label, 100 * share, sig))
     lines.append("    VARIETY: %d/%d titles carry an ' as ' subordinate"
                  % (s["as_clauses"], s["n"]))
     for label, key in (("title", "repeated_head_openings"), ("fan", "repeated_voice_openings")):
