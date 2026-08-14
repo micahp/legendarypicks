@@ -27,12 +27,22 @@ DB = os.environ.get("LP_DB_PATH") or os.path.join(os.path.dirname(os.path.abspat
 # Static MLB team name → abbreviation map (covers common names)
 _MLB_TEAM_MAP = {
     "arizona diamondbacks": "ARI", "atlanta braves": "ATL", "baltimore orioles": "BAL",
-    "boston red sox": "BOS", "chicago cubs": "CHC", "chicago white sox": "CWS",
+    # CHW, not CWS. ESPN publishes CHW and this repo is canonically CHW —
+    # team_codes.py:43 carries the CWS -> CHW correction and
+    # refresh_mlb_player_teams.py states the rule outright. This map was the one
+    # place that never got it, and because the abbrev is what the linker matches
+    # on, every White Sox game silently failed to link.
+    "boston red sox": "BOS", "chicago cubs": "CHC", "chicago white sox": "CHW",
     "cincinnati reds": "CIN", "cleveland guardians": "CLE", "colorado rockies": "COL",
     "detroit tigers": "DET", "houston astros": "HOU", "kansas city royals": "KC",
     "los angeles angels": "LAA", "los angeles dodgers": "LAD", "miami marlins": "MIA",
     "milwaukee brewers": "MIL", "minnesota twins": "MIN", "new york mets": "NYM",
-    "new york yankees": "NYY", "oakland athletics": "OAK", "athletics": "ATH",
+    "new york yankees": "NYY",
+    # The club left Oakland; ESPN publishes it as ATH and no longer publishes OAK
+    # at all. Both spellings are kept because a sportsbook may still say the old
+    # name, but they resolve to the code the publisher actually uses — an alias
+    # pointing at a retired code is a name that looks handled and links nothing.
+    "oakland athletics": "ATH", "athletics": "ATH",
     "philadelphia phillies": "PHI", "pittsburgh pirates": "PIT",
     "san diego padres": "SD", "san francisco giants": "SF",
     "seattle mariners": "SEA", "st. louis cardinals": "STL",
