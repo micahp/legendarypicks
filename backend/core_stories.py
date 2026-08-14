@@ -19,6 +19,12 @@ import threading as _threading
 from contextlib import closing
 
 import espn_client as espn
+# The 08-12 split moved the prop-form block here and left these two behind in
+# core_markets. `routers/props.py` still reached them through `from _core import *`,
+# so nothing raised until a code path that ran outside a request did — the recap
+# sweep, which then crashed on its first MLB game every three hours for two days.
+# core_markets imports nothing, so this is a leaf import and cannot cycle.
+from core_markets import _MARKET_STAT_KEY, _base_market
 
 
 def _db():

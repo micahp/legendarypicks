@@ -12,6 +12,11 @@ import os
 import re
 import unicodedata
 
+# Same 08-12 split orphan as the one in core_stories: five call sites reach this
+# and none of them imported it. league_stats imports nothing from the core
+# modules, so this is a leaf import and cannot cycle.
+from league_stats import canonical_player_stats_row
+
 
 def _normalize_name(name: str) -> str:
     """Normalize player name for matching: lowercase, strip punctuation + suffixes + accents."""

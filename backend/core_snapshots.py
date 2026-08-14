@@ -277,9 +277,11 @@ def _snapshot_boxscore_full(league, game_id):
     _snapshot_game_context(league, game_id, ctx)
 
 
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", "8000")))
+# The god-module's `if __name__ == "__main__": uvicorn.run(app, ...)` block rode
+# along in the 08-12 split. This module is a snapshot helper, never an entrypoint,
+# and it has neither `app` nor `os` — the block was two NameErrors that could only
+# fire if someone ran the file directly. Removed rather than imported: serving the
+# API from here is not a thing we want to become possible.
 
 
 # Export the underscore-prefixed helpers; `from _core import *` must keep
