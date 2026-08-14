@@ -652,6 +652,153 @@ def _settle_mlb_props(con, game_row, props) -> dict:
     return {"settled": settled, "void": void, "unmappable": unmappable, "errors": errors}
 
 
+_UFC_NUMERIC_MARKETS = {
+    "significant_strikes": "sigStrikesLanded",
+    "fight_time": "fight_time",
+}
+
+_UFC_METHOD_MARKETS = {
+    "win_by_decision": "DEC",
+    "win_by_ko": "KO/TKO",
+    "knockouts": "KO/TKO",
+    "win_by_submission": "SUB",
+    "submissions": "SUB",
+}
+
+
+def _ufc_scoreboard_competition(espn, date_text: str, fight_id: str) -> dict:
+    """Return the exact fight object from ESPN's card-level UFC scoreboard.
+
+    UFC links store a competition (fight) id, not a summary event id. MMA has no
+    working site-summary endpoint, so finality must be read from the competition
+    nested in the date scoreboard. Keep the publisher's ``completed`` bit intact;
+    ``state == post`` alone also includes canceled events in ESPN's taxonomy.
+    """
+    path = espn.LEAGUES["ufc"][0]
+    date_key = str(date_text or "").replace("-", "")
+    payload = espn._get(
+        espn._SITE.format(path=path) + f"/scoreboard?dates={date_key}", ttl=60)
+    wanted = str(fight_id)
+    for event in payload.get("events") or []:
+        for competition in event.get("competitions") or []:
+            if str(competition.get("id") or "") == wanted:
+                return competition
+    raise ValueError(f"UFC fight {wanted} absent from {date_text} scoreboard")
+
+
+def _ufc_actual(stats: dict, market: str) -> Optional[float]:
+    """Read a supported UFC actual from one durable per-fight log.
+
+    Method markets are yes/no events. Both the win/loss and method are publisher
+    fields persisted by ``ingest_ufc_fight_stats.py``; no outcome is inferred from
+    strike counts or clock values here.
+    """
+    canonical = normalize_market(market)
+    canonical = MARKET_ALIASES.get(canonical, canonical)
+    stat_key = _UFC_NUMERIC_MARKETS.get(canonical)
+    if stat_key:
+        value = stats.get(stat_key)
+        if value in (None, ""):
+            return None
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            return None
+
+    wanted_method = _UFC_METHOD_MARKETS.get(canonical)
+    if not wanted_method:
+        return None
+    result = str(stats.get("result") or "").strip().upper()
+    method = str(stats.get("method") or "").strip().upper()
+    if result == "W":
+        if not method:
+            return None
+        return 1.0 if method == wanted_method else 0.0
+    if result in {"L", "D", "NC"}:
+        return 0.0
+    return None
+
+
+def _grade_actual(con: sqlite3.Connection, prop, actual: float, now: str) -> bool:
+    """Write one numeric actual. Return False when the prop side is unsupported."""
+    line = prop["line"]
+    side = (prop["side"] or "").lower()
+    if side == "over":
+        hit = 1 if actual > line else (0 if actual < line else None)
+    elif side == "under":
+        hit = 1 if actual < line else (0 if actual > line else None)
+    else:
+        return False
+    con.execute(
+        "INSERT INTO prop_results(prop_id, actual_value, hit, settled_at) VALUES (?,?,?,?)",
+        (prop["id"], actual, hit, now))
+    return True
+
+
+def _settle_ufc_props(con: sqlite3.Connection, game, props: list) -> dict:
+    """Grade UFC props from durable per-fighter, per-fight actuals.
+
+    Missing logs remain unsettled: absence means the ingest has not published an
+    actual into this database, not that the fighter recorded zero or did not play.
+    Likewise an unsupported market remains retryable instead of receiving the null
+    ``prop_results`` placeholder used by the legacy generic path.
+    """
+    logs = con.execute(
+        "SELECT player_id, source_player_key, stats FROM player_game_logs "
+        "WHERE league='ufc' AND game_id=?",
+        (str(game["espn_event_id"]),)).fetchall()
+    by_player_id = {}
+    by_espn_id = {}
+    for row in logs:
+        if row["player_id"] is not None:
+            by_player_id.setdefault(str(row["player_id"]), []).append(row)
+        if row["source_player_key"]:
+            by_espn_id.setdefault(str(row["source_player_key"]), []).append(row)
+
+    settled = 0
+    unmappable = 0
+    pending = 0
+    errors = 0
+    now = dt.datetime.now(dt.timezone.utc).isoformat()
+    supported = set(_UFC_NUMERIC_MARKETS) | set(_UFC_METHOD_MARKETS)
+
+    for prop in props:
+        canonical = normalize_market(prop["market"])
+        canonical = MARKET_ALIASES.get(canonical, canonical)
+        if canonical not in supported:
+            unmappable += 1
+            continue
+
+        if prop["espn_id"]:
+            matches = by_espn_id.get(str(prop["espn_id"]), [])
+        else:
+            matches = by_player_id.get(str(prop["player_id"]), [])
+        if len(matches) != 1:
+            pending += 1
+            continue
+
+        try:
+            stats = json.loads(matches[0]["stats"] or "")
+        except (TypeError, ValueError, json.JSONDecodeError):
+            errors += 1
+            continue
+        actual = _ufc_actual(stats, canonical)
+        if actual is None:
+            pending += 1
+            continue
+        try:
+            if _grade_actual(con, prop, actual, now):
+                settled += 1
+            else:
+                unmappable += 1
+        except Exception:
+            errors += 1
+
+    con.commit()
+    return {"settled": settled, "void": 0, "unmappable": unmappable,
+            "pending": pending, "errors": errors}
+
+
 def settle_game(con: sqlite3.Connection, game_id: int) -> dict:
     """Settle all unsettled props for one prop_games row.
 
@@ -714,7 +861,16 @@ def settle_game(con: sqlite3.Connection, game_id: int) -> dict:
     # A live box score is not a result. Nothing settles until the publisher says Final.
     if game["final_home"] is None:
         try:
-            result = espn.game_result(league, espn_event_id)
+            if league == "ufc":
+                competition = _ufc_scoreboard_competition(
+                    espn, game["date"], espn_event_id)
+                status_type = ((competition.get("status") or {}).get("type") or {})
+                result = {
+                    "state": status_type.get("state"),
+                    "completed": status_type.get("completed") is True,
+                }
+            else:
+                result = espn.game_result(league, espn_event_id)
             # Gate on `completed`, not on state=="post": ESPN files POSTPONED,
             # canceled and suspended games under post as well, with completed=false
             # and a score of 0 on both sides. This gate admitted one (event
@@ -734,10 +890,14 @@ def settle_game(con: sqlite3.Connection, game_id: int) -> dict:
             # A wrong key does not raise, it misses. game_result now reports which
             # side is home from ESPN's own homeAway flag, so there is no name to
             # match. See test_game_result_home_away.
-            con.execute(
-                "UPDATE prop_games SET final_home=?, final_away=? WHERE id=?",
-                (result.get("home_score"), result.get("away_score"), game_id))
-            con.commit()
+            # UFC competitors have no team scores. Writing winner booleans into
+            # final_home/final_away would mislabel the columns, so UFC retains the
+            # publisher finality gate without fabricating a score.
+            if league != "ufc":
+                con.execute(
+                    "UPDATE prop_games SET final_home=?, final_away=? WHERE id=?",
+                    (result.get("home_score"), result.get("away_score"), game_id))
+                con.commit()
         except Exception as e:
             return {"settled": 0, "void": 0, "unmappable": 0, "errors": 1,
                     "error_msg": f"game {game_id}: ESPN pull failed: {e}"}
@@ -760,6 +920,21 @@ def settle_game(con: sqlite3.Connection, game_id: int) -> dict:
         # Merge with standard result keys
         result.setdefault("errors", 0)
         return result
+
+    if league == "ufc":
+        props = con.execute("""
+            SELECT p.id, p.market, p.line, p.side, p.player_id,
+                   pl.name as player_name, pl.team as player_team,
+                   pl.espn_id as espn_id
+            FROM props p
+            JOIN players pl ON pl.id = p.player_id
+            LEFT JOIN prop_results pr ON pr.prop_id = p.id
+            WHERE p.game_id = ? AND pr.prop_id IS NULL
+        """, (game_id,)).fetchall()
+        if not props:
+            return {"settled": 0, "void": 0, "unmappable": 0, "pending": 0,
+                    "errors": 0, "msg": f"game {game_id}: no unsettled props"}
+        return _settle_ufc_props(con, game, props)
 
     # (finality is checked above, before the MLB branch, so every league passes through it)
 

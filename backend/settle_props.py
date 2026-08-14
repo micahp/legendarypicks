@@ -58,7 +58,8 @@ def main(dry_run: bool = False):
         games = games_with_espn
 
     print(f"Games to settle: {len(games)}")
-    totals = {"settled": 0, "void": 0, "unmappable": 0, "errors": 0, "skipped": 0}
+    totals = {"settled": 0, "void": 0, "unmappable": 0, "pending": 0,
+              "errors": 0, "skipped": 0}
 
     for g in games:
         gid = g["id"]
@@ -73,13 +74,14 @@ def main(dry_run: bool = False):
 
         result = settle_game(con, gid)
         print(f"    settled={result.get('settled',0)} void={result.get('void',0)} "
-              f"unmappable={result.get('unmappable',0)} errors={result.get('errors',0)}")
+              f"unmappable={result.get('unmappable',0)} pending={result.get('pending',0)} "
+              f"errors={result.get('errors',0)}")
         if result.get("msg"):
             print(f"    {result['msg']}")
         if result.get("error_msg"):
             print(f"    ERROR: {result['error_msg']}")
 
-        for k in ("settled", "void", "unmappable", "errors"):
+        for k in ("settled", "void", "unmappable", "pending", "errors"):
             totals[k] += result.get(k, 0)
 
     # Summary
@@ -92,6 +94,7 @@ def main(dry_run: bool = False):
     print(f"  Settled:   {totals['settled']}")
     print(f"  Void/DNP:  {totals['void']}")
     print(f"  Unmappable:{totals['unmappable']}")
+    print(f"  Pending:   {totals['pending']}")
     print(f"  Errors:    {totals['errors']}")
     print(f"  prop_results total: {total_results} / {total_props} props graded")
     if dry_run:
