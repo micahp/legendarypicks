@@ -436,10 +436,23 @@ def main():
     # unscoped run over this database is 189 requests against a host whose
     # ceiling is about 100, so the tool tripped the wall by design and two
     # "harmless" dry runs are what spent it. A 403 is often one you caused.
-    if requests > 50 and not os.environ.get("LP_LINK_ALLOW_BIG_RUN"):
-        print(f"  REFUSING: {requests} requests to one host, ceiling is ~100.")
+    # Judge the guard on what will actually be ISSUED. The three neighbour days of
+    # adjacent slates overlap heavily, so a cached run spends `distinct_days` and
+    # the raw `requests` figure it used to refuse on is a number that never leaves
+    # the process — MLB scoped to one league reads 153 and issues 60. Refusing a
+    # run that fits the budget is not a safe error: it pushes you toward the
+    # override, which turns the guard off entirely for the run where it might
+    # otherwise have mattered.
+    #
+    # Without a cache dir every repeat IS a request, so the raw count stands.
+    spend = len(distinct_days) if os.environ.get("LP_ESPN_CACHE_DIR") else requests
+    if spend > 50 and not os.environ.get("LP_LINK_ALLOW_BIG_RUN"):
+        print(f"  REFUSING: {spend} requests to one host, ceiling is ~100.")
         print("  Scope it with --league. Pacing does not buy budget — only")
         print("  issuing fewer requests does. Override: LP_LINK_ALLOW_BIG_RUN=1")
+        if spend == requests and len(distinct_days) <= 50:
+            print(f"  (set LP_ESPN_CACHE_DIR and this run is {len(distinct_days)} "
+                  f"requests, which is under the guard.)")
         con.close()
         return
     linked = link_existing_games(con, dry_run=dry_run, relink=relink, league=league)
