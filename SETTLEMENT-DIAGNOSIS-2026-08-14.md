@@ -165,3 +165,55 @@ whose `actual_value` and `hit` are both null for every unmapped prop. In the wor
 database all 1,128 WC props have result rows, but all 1,128 have null actuals and null
 hits. Production has the same pattern for its 392 WC result rows. That is false settled
 coverage, not successful grading, and it is not a pattern to copy into MLS or UFC.
+
+## Implemented and verified
+
+The diagnosis was committed alone as `0e2c2aa` before either runtime fix.
+
+The UFC slice (`aa6be88`) now:
+
+- finds the stored fight competition id inside the date's site scoreboard and gates on
+  that fight's own `status.type.completed` value;
+- does not invent team scores for fighter competitions;
+- reads supported actuals from the unique `player_game_logs` row selected by ESPN
+  athlete id first, or `player_id` only when the player has no ESPN id;
+- leaves missing logs and unsupported markets without a `prop_results` row so they
+  remain retryable; and
+- reports those data-availability gaps as `pending` separately from DNP/void and
+  unmappable counts.
+
+An in-memory replay copied game 376, its players, props, and UFC logs through the
+production `mode=ro` connection and used the cached real scoreboard. It graded all six
+props with zero errors: Temirov `win_by_ko=1`; Temirov submission/decision and all three
+Erceg method props `=0`. Production itself was not written.
+
+The MLS slice (`4cf77b0`) now reads the measured roster-stat surface instead of adding
+an ineffective generic boxscore map. It uses ESPN athlete id first and unique,
+accent-folded exact name matching only for players without an ESPN id. Absent roster
+players retain the existing DNP/void result; a present roster whose requested stat is
+not published stays pending rather than becoming zero.
+
+An in-memory replay of all 68 worktree game-692 props, linked only in memory to the real
+cached event 761469, returned:
+
+```text
+settled=57 void=11 unmappable=0 pending=0 errors=0
+final_home=0.0 final_away=2.0
+```
+
+It wrote 57 numeric actuals and 11 DNP voids. The three over-0.5 hits were Agustin Resch
+goal, Guilherme Augusto goal, and Jack McGlynn assist, matching the published payload.
+
+Focused settlement/finality coverage passed `18 passed`. A plain full-suite run exposed
+the worktree's unrelated 164 KiB `backend/data/picks.db` stub: 14 real-data assertions
+failed while 1,372 tests passed. The tests intentionally hard-code both database
+filenames and provide no environment override. The authoritative rerun created a
+disposable SQLite backup from a production `mode=ro` connection, verified
+`PRAGMA quick_check=ok`, and overlaid only that disposable copy at the stub pathname in
+a Bubblewrap mount namespace. The real production file remained outside the writable
+test view; the worktree's real `picks.dev.db` remained the second database under test.
+The exact full backend result was:
+
+```text
+1386 passed, 4 skipped, 6 xfailed in 64.65s
+```
