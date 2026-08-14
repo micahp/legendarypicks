@@ -6,22 +6,42 @@ a scoreboard fires background generation for that league's games, so previews ar
 click-time. That hook now also re-fires for a game that has ENDED while its cached story is
 still a preview, so the recap arrives the same way.
 
-What the hook cannot do is guarantee a recap for a game nobody looked at. `--finals` is
-that guarantee, and it is what belongs on a timer: sweep back over the last day or two and
-write the recap for anything final whose story still previews it. Idempotent — a game whose
-story was written after the final whistle is skipped, so re-running costs nothing.
+What the hook cannot do is cover a game nobody looked at. The timer sweep is that
+guarantee, in both directions: the forward run (no --finals) writes the PREVIEW for a game
+nobody opened yet, so one exists by kickoff; `--finals` sweeps back over the last day or
+two and writes the recap for anything final whose story still previews it. Idempotent — a
+game whose story was written after the final whistle is skipped, so re-running costs
+nothing.
 
 Usage:
   LP_DB_PATH=data/picks.dev.db python3 pregenerate_game_stories.py [league ...] [--days N]
   LP_DB_PATH=data/picks.dev.db python3 pregenerate_game_stories.py --finals [league ...]
-  (default leagues: nba nhl mlb nfl; default --days 2 = today + tomorrow,
-   and --days 2 with --finals = today + yesterday)
+  (default leagues: league_offering.offered_leagues — the vouched coverage set plus
+   ufc/wc; default --days 2 = today + tomorrow, and --days 2 with --finals =
+   today + yesterday)
 """
 import sys, datetime as dt
 import espn_client as espn
 from _core import generate_game_story
+from league_offering import offered_leagues
 
-DEFAULT_LEAGUES = ["nba", "nhl", "mlb", "nfl"]
+
+def default_leagues(con=None):
+    """The leagues this database offers, read from the enablement registry.
+
+    This used to be a literal list (`nba nhl mlb nfl`), and it went stale exactly
+    the way league_offering's docstring predicts: mls, ncaaf and ufc were offered
+    on the hub and silently never got a timer sweep. One question, one answer —
+    `offered_leagues` reads team_stats_coverage's vouched statuses plus the
+    always-offered shape set (ufc/wc), so a league turns on the moment its
+    coverage row is promoted. There is deliberately no fallback list here: if
+    the registry is unreadable the job fails loudly instead of quietly sweeping
+    a stale subset.
+    """
+    if con is None:
+        from _core import _db
+        con = _db()
+    return sorted(offered_leagues(con))
 
 
 def discover(lg: str, days: int, backwards: bool = False):
@@ -57,7 +77,7 @@ def main():
             days = int(sys.argv[i + 1]); args = [a for a in args if a != sys.argv[i + 1]]
         except (IndexError, ValueError):
             pass
-    leagues = args or DEFAULT_LEAGUES
+    leagues = args or default_leagues()
 
     total_new, total_seen = 0, 0
     for lg in leagues:
