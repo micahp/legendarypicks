@@ -68,6 +68,43 @@ def _story_is_stale_preview(generated_at, state, start_time) -> bool:
         return False
 
 
+_SEASON_YEAR = re.compile(r"\b(19|20)\d{2}\b")
+
+
+def _season_year_from_name(name):
+    m = _SEASON_YEAR.search(str(name or ""))
+    return int(m.group(0)) if m else None
+
+
+def _game_season_year(lg: str, game_id: str):
+    """The season this game belongs to, per the publisher — an int year or None.
+
+    Read from the summary payload's header.season, NOT from start_time: an NFL
+    game in January belongs to the prior season, and the calendar year of
+    kickoff would call last season's logs stale. The summary was already fetched
+    by game_result earlier in generate_game_story, so this is an in-memory hit.
+    """
+    try:
+        d = espn.summary(lg, game_id)
+        season = (d or {}).get("header", {}).get("season") or {}
+        year = season.get("year")
+        if isinstance(year, int):
+            return year
+        return _season_year_from_name(season.get("name"))
+    except Exception:
+        return None
+
+
+def _logs_predate_season(game_season, newest_log_season) -> bool:
+    """True when a league's newest game log is older than the season a game is in.
+
+    Only True when BOTH are known: an unknown game season or an unknown newest
+    log must not suppress the form section on a guess.
+    """
+    return (game_season is not None and newest_log_season is not None
+            and newest_log_season < game_season)
+
+
 def generate_game_story(lg: str, game_id: str, refresh: bool = False,
                         home: str = None, away: str = None,
                         state: str = None, start_time: str = None) -> dict:
@@ -98,13 +135,22 @@ def generate_game_story(lg: str, game_id: str, refresh: bool = False,
         if "has_stakes" not in cols:
             con.execute("ALTER TABLE game_story ADD COLUMN has_stakes INTEGER DEFAULT 0")
             con.commit()
+        # form_suppressed: the form section was SKIPPED because the league's newest
+        # player_game_logs season is older than this game's season (mls/ncaaf/nfl logs
+        # stop at 2025). has_form stays 1 when matchup context is present, so the cache
+        # would otherwise treat the story as final and it would never come back to pick
+        # up the form it was denied the day the logs catch up. This flag is the reason
+        # it is allowed — and required — to regenerate once.
+        if "form_suppressed" not in cols:
+            con.execute("ALTER TABLE game_story ADD COLUMN form_suppressed INTEGER DEFAULT 0")
+            con.commit()
         if not refresh:
             cached = con.execute(
-                "SELECT story, has_form, has_stakes, generated_at FROM game_story "
+                "SELECT story, has_form, has_stakes, form_suppressed, generated_at FROM game_story "
                 "WHERE league=? AND game_id=?", (lg, game_id)).fetchone()
             stale_preview = cached and _story_is_stale_preview(
                 cached["generated_at"], state, start_time)
-            if cached and cached["has_form"] and not stale_preview:
+            if cached and cached["has_form"] and not cached["form_suppressed"] and not stale_preview:
                 import stakes as _stakes_mod
                 # Final unless this league HAS a stakes model and the story predates it —
                 # that one case regenerates once (below) and becomes final with has_stakes=1.
@@ -169,52 +215,67 @@ def generate_game_story(lg: str, game_id: str, refresh: bool = False,
     # game logs sat one table over. player_form reads those directly, keyed on the two
     # clubs, and states the season it read so an out-of-date league (MLS logs stop at 2025)
     # cannot be passed off as current.
-    form_lines, seen = [], set()
+    # The form section is only honest if the logs are from the season this game
+    # is in. MLS logs stop at 2025 while 2026 games are being previewed; the
+    # season label player_form adds was being stripped by the writer, so "last
+    # five" from nine months ago read as current form (measured: game 761719,
+    # "Kelvin Yeboah ... no goals in his last five matches" — those five are
+    # 2025-09-14..2025-11-25). Suppress the whole section instead: a preview
+    # with no form line is honest; one with last year's form presented as this
+    # year's is not. The records and the matchup context are current and stay.
+    game_season = _game_season_year(lg, game_id)
     with closing(_db()) as con:
-        prs = con.execute(
-            """SELECT pl.id, pl.name, p.market, COUNT(*) c FROM props p
-               JOIN prop_games g ON g.id = p.game_id JOIN players pl ON pl.id = p.player_id
-               WHERE g.espn_event_id = ? GROUP BY pl.id, p.market ORDER BY c DESC""",
-            (str(game_id),)).fetchall()
-        for r in prs:
-            if r["id"] in seen or len(form_lines) >= 8:
-                continue
-            sk = _MARKET_STAT_KEY.get(lg, {}).get(_base_market(r["market"]))
-            if not sk:
-                continue
-            logs = con.execute(
-                """SELECT stats FROM player_game_logs WHERE player_id=?
-                   ORDER BY COALESCE(game_date,'') DESC, CAST(game_no AS INTEGER) DESC LIMIT 5""",
-                (r["id"],)).fetchall()
-            # `sk` is a stat key OR a list of them: two MLB markets are compound
-            # ("total_hits,_runs_and_rbis" -> ["H","R","RBI"]). The chart path in
-            # routers/props.py already reads both shapes; this one assumed a string
-            # and raised `unhashable type: 'list'` the moment it saw a compound —
-            # which is every MLB slate, so no story ever got past this line.
-            # Same rule as the chart, deliberately: sum the keys treating a missing
-            # one as 0, and keep the game only if at least one key was published.
-            vals = []
-            for x in logs:
-                st = json.loads(x["stats"])
-                if isinstance(sk, list):
-                    if any(st.get(k) is not None for k in sk):
-                        vals.append(sum(st.get(k) or 0 for k in sk))
-                else:
-                    if st.get(sk) is not None:
-                        vals.append(st[sk])
-            if len(vals) >= 3:
-                form_lines.append(f"{r['name']} — last 5 {_base_market(r['market'])}: {vals}")
-                seen.add(r["id"])
+        newest_log_season = con.execute(
+            "SELECT MAX(season) FROM player_game_logs WHERE league=?", (lg,)).fetchone()[0]
+    logs_stale = _logs_predate_season(game_season, newest_log_season)
 
-        if len(form_lines) < 6:
-            try:
-                import player_form as _pform
-                for line in _pform.lines(lg, teams, con=con):
-                    if len(form_lines) >= 6:
-                        break
-                    form_lines.append(line)
-            except Exception:
-                pass
+    form_lines, seen = [], set()
+    if not logs_stale:
+        with closing(_db()) as con:
+            prs = con.execute(
+                """SELECT pl.id, pl.name, p.market, COUNT(*) c FROM props p
+                  JOIN prop_games g ON g.id = p.game_id JOIN players pl ON pl.id = p.player_id
+                  WHERE g.espn_event_id = ? GROUP BY pl.id, p.market ORDER BY c DESC""",
+                (str(game_id),)).fetchall()
+            for r in prs:
+                if r["id"] in seen or len(form_lines) >= 8:
+                    continue
+                sk = _MARKET_STAT_KEY.get(lg, {}).get(_base_market(r["market"]))
+                if not sk:
+                    continue
+                logs = con.execute(
+                    """SELECT stats FROM player_game_logs WHERE player_id=?
+                       ORDER BY COALESCE(game_date,'') DESC, CAST(game_no AS INTEGER) DESC LIMIT 5""",
+                    (r["id"],)).fetchall()
+                # `sk` is a stat key OR a list of them: two MLB markets are compound
+                # ("total_hits,_runs_and_rbis" -> ["H","R","RBI"]). The chart path in
+                # routers/props.py already reads both shapes; this one assumed a string
+                # and raised `unhashable type: 'list'` the moment it saw a compound —
+                # which is every MLB slate, so no story ever got past this line.
+                # Same rule as the chart, deliberately: sum the keys treating a missing
+                # one as 0, and keep the game only if at least one key was published.
+                vals = []
+                for x in logs:
+                    st = json.loads(x["stats"])
+                    if isinstance(sk, list):
+                        if any(st.get(k) is not None for k in sk):
+                            vals.append(sum(st.get(k) or 0 for k in sk))
+                    else:
+                        if st.get(sk) is not None:
+                            vals.append(st[sk])
+                if len(vals) >= 3:
+                    form_lines.append(f"{r['name']} — last 5 {_base_market(r['market'])}: {vals}")
+                    seen.add(r["id"])
+
+            if len(form_lines) < 6:
+                try:
+                    import player_form as _pform
+                    for line in _pform.lines(lg, teams, con=con):
+                        if len(form_lines) >= 6:
+                            break
+                        form_lines.append(line)
+                except Exception:
+                    pass
     if form_lines:
         grounding += "\nRecent player form (most recent first):\n" + "\n".join(form_lines)
 
@@ -273,7 +334,11 @@ def generate_game_story(lg: str, game_id: str, refresh: bool = False,
     # (form for a pre-form story, stakes for a pre-stakes story). Otherwise keep it — never
     # burn an LLM call re-writing the same blurb, and never loop when a source is down.
     if cached:
-        new_form = bool(form_lines or context_lines) and not cached["has_form"]
+        new_form = ((bool(form_lines or context_lines) and not cached["has_form"])
+                    # A suppressed-form story is deliberately not final: the moment the
+                    # logs catch up to the game's season it regenerates once and takes
+                    # the form it was denied, then becomes final with form_suppressed=0.
+                    or (bool(form_lines) and cached["form_suppressed"]))
         new_stakes = bool(stakes_lines) and not cached["has_stakes"]
         if not new_form and not new_stakes and not stale_preview:
             return {"league": lg, "game_id": game_id, "story": cached["story"], "cached": True}
@@ -302,10 +367,10 @@ def generate_game_story(lg: str, game_id: str, refresh: bool = False,
     story = _deepseek_chat(system, grounding)
     if story:
         with closing(_db()) as con:
-            con.execute("INSERT OR REPLACE INTO game_story(league, game_id, story, generated_at, has_form, has_stakes) "
-                        "VALUES (?,?,?,datetime('now'),?,?)",
+            con.execute("INSERT OR REPLACE INTO game_story(league, game_id, story, generated_at, has_form, has_stakes, form_suppressed) "
+                        "VALUES (?,?,?,datetime('now'),?,?,?)",
                         (lg, game_id, story, 1 if (form_lines or context_lines) else 0,
-                         1 if stakes_lines else 0))
+                         1 if stakes_lines else 0, 1 if logs_stale else 0))
             con.commit()
     elif cached:
         # generation failed this time — keep the previous story rather than blanking it
