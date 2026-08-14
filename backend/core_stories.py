@@ -186,8 +186,22 @@ def generate_game_story(lg: str, game_id: str, refresh: bool = False,
                 """SELECT stats FROM player_game_logs WHERE player_id=?
                    ORDER BY COALESCE(game_date,'') DESC, CAST(game_no AS INTEGER) DESC LIMIT 5""",
                 (r["id"],)).fetchall()
-            vals = [json.loads(x["stats"]).get(sk) for x in logs]
-            vals = [v for v in vals if v is not None]
+            # `sk` is a stat key OR a list of them: two MLB markets are compound
+            # ("total_hits,_runs_and_rbis" -> ["H","R","RBI"]). The chart path in
+            # routers/props.py already reads both shapes; this one assumed a string
+            # and raised `unhashable type: 'list'` the moment it saw a compound —
+            # which is every MLB slate, so no story ever got past this line.
+            # Same rule as the chart, deliberately: sum the keys treating a missing
+            # one as 0, and keep the game only if at least one key was published.
+            vals = []
+            for x in logs:
+                st = json.loads(x["stats"])
+                if isinstance(sk, list):
+                    if any(st.get(k) is not None for k in sk):
+                        vals.append(sum(st.get(k) or 0 for k in sk))
+                else:
+                    if st.get(sk) is not None:
+                        vals.append(st[sk])
             if len(vals) >= 3:
                 form_lines.append(f"{r['name']} — last 5 {_base_market(r['market'])}: {vals}")
                 seen.add(r["id"])
