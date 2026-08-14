@@ -383,24 +383,6 @@ def link_prop_game(con: sqlite3.Connection, game_row, espn_games: list) -> str:
     return candidates[0]["game_id"]
 
 
-def _neighbour_days(date_str):
-    """The day itself first, then the day before and after.
-
-    prop_games.date is derived from a UTC first pitch; ESPN's scoreboard is keyed
-    by LOCAL date. A 01:40Z start is the previous evening in the US, so the event
-    sits on the day BEFORE the one our row is filed under. Same day first so an
-    exact match still wins.
-    """
-    import datetime as _dt
-    try:
-        base = _dt.date.fromisoformat(date_str)
-    except (TypeError, ValueError):
-        return [date_str]
-    return [date_str,
-            (base - _dt.timedelta(days=1)).isoformat(),
-            (base + _dt.timedelta(days=1)).isoformat()]
-
-
 def link_existing_games(con: sqlite3.Connection, dry_run: bool = False,
                         relink: bool = False, league: str = "") -> int:
     """Link prop_games to ESPN events.
@@ -447,7 +429,7 @@ def link_existing_games(con: sqlite3.Connection, dry_run: bool = False,
         # not even a candidate and the team match lands on the wrong one.
         espn_games = []
         seen_ids = set()
-        for day in _neighbour_days(date):
+        for day in espn.neighbor_dates(date):
             try:
                 for eg in espn.games(league, day):
                     if str(eg.get("game_id")) not in seen_ids:
@@ -510,7 +492,8 @@ def main():
     # worse than no budget line.
     slates = len(slate_rows)
     requests = slates * 3
-    distinct_days = {(r["league"], d) for r in slate_rows for d in _neighbour_days(r["date"])}
+    distinct_days = {(r["league"], d) for r in slate_rows
+                     for d in espn.neighbor_dates(r["date"])}
     scope = league.lower() if league else "ALL leagues"
     print(f"Linking prop_games → ESPN event IDs [{scope}]")
     print(f"  budget: {requests} scoreboard requests to site.web.api.espn.com "
