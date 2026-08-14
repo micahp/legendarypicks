@@ -13,7 +13,7 @@ unscoped run fetches a scoreboard per league+date across every league with props
 --relink also re-checks rows that already carry an espn_event_id, correcting any
 bound to the wrong game of a series (85 MLB rows on 2026-08-11).
 """
-import sys, os, sqlite3, re
+import sys, os, sqlite3, re, unicodedata
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import espn_client as espn
@@ -224,6 +224,90 @@ def _instant(value):
     return dt.astimezone(_dt.timezone.utc).replace(second=0, microsecond=0)
 
 
+def _fighter_key(name):
+    """Accent-fold a fighter name to its alphanumeric identity key."""
+    value = unicodedata.normalize("NFKD", str(name or "")).encode(
+        "ascii", "ignore").decode("ascii")
+    return re.sub(r"[^a-z0-9]+", "", value.lower())
+
+
+def _fighter_parts(name):
+    value = unicodedata.normalize("NFKD", str(name or "")).encode(
+        "ascii", "ignore").decode("ascii")
+    return re.findall(r"[a-z0-9]+", value.lower())
+
+
+def _same_fighter(prop_name, espn_name):
+    """Match exact, bookmaker-truncated, or first/last UFC fighter names.
+
+    Bovada truncates the displayed fighter names (``Christian Ler``), while
+    ESPN retains accents and middle names (``Jose Miguel Delgado``).  A prefix
+    needs at least seven normalized characters; shorter prefixes are too easy to
+    collide on one card.
+    """
+    prop_key = _fighter_key(prop_name)
+    espn_key = _fighter_key(espn_name)
+    if not prop_key or not espn_key:
+        return False
+    if prop_key == espn_key:
+        return True
+    if min(len(prop_key), len(espn_key)) >= 7:
+        if prop_key.startswith(espn_key) or espn_key.startswith(prop_key):
+            return True
+    prop_parts = _fighter_parts(prop_name)
+    espn_parts = _fighter_parts(espn_name)
+    return (len(prop_parts) >= 2 and len(espn_parts) >= 2
+            and prop_parts[0] == espn_parts[0]
+            and prop_parts[-1] == espn_parts[-1])
+
+
+def _link_ufc_fight(game_row, espn_games):
+    """Resolve an unordered fighter pair to one UFC competition id.
+
+    UFC ``home``/``away`` is an artificial slot and the two publishers reverse
+    it on real fights.  ESPN also publishes a card-segment start for several
+    bouts at once, while the prop feed publishes rolling bout estimates, so time
+    is not an identity key here.  Prefer both fighter names.  Permit one name
+    only when it identifies exactly one fight on the slate and the other prop
+    name matches no published fighter at all (the measured nickname case is
+    Eduardo Henrique / Eduardo Chapolin).  Every ambiguity fails closed.
+    """
+    prop_names = [game_row["away"], game_row["home"]]
+
+    def names(game):
+        return [((game.get("away") or {}).get("name") or ""),
+                ((game.get("home") or {}).get("name") or "")]
+
+    strong = {}
+    for game in espn_games:
+        published = names(game)
+        if ((_same_fighter(prop_names[0], published[0])
+             and _same_fighter(prop_names[1], published[1]))
+                or (_same_fighter(prop_names[0], published[1])
+                    and _same_fighter(prop_names[1], published[0]))):
+            strong[str(game.get("game_id") or "")] = game
+    strong.pop("", None)
+    if len(strong) == 1:
+        return next(iter(strong.values()))["game_id"]
+    if strong:
+        return ""
+
+    matches = []
+    for prop_name in prop_names:
+        hits = {}
+        for game in espn_games:
+            if any(_same_fighter(prop_name, published) for published in names(game)):
+                hits[str(game.get("game_id") or "")] = game
+        hits.pop("", None)
+        matches.append(hits)
+
+    if len(matches[0]) == 1 and not matches[1]:
+        return next(iter(matches[0].values()))["game_id"]
+    if len(matches[1]) == 1 and not matches[0]:
+        return next(iter(matches[1].values()))["game_id"]
+    return ""
+
+
 def link_prop_game(con: sqlite3.Connection, game_row, espn_games: list) -> str:
     """Link one prop_game to an ESPN game. Returns espn_event_id or ''.
 
@@ -245,6 +329,9 @@ def link_prop_game(con: sqlite3.Connection, game_row, espn_games: list) -> str:
     is visibly missing and can be fixed.
     """
     league = game_row["league"]
+    if league == "ufc":
+        return _link_ufc_fight(game_row, espn_games)
+
     home_norm = _norm_team(game_row["home"], league)
     away_norm = _norm_team(game_row["away"], league)
     pg_home_name = (game_row["home"] or "").lower()
