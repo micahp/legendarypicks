@@ -13,6 +13,8 @@ unscoped run fetches a scoreboard per league+date across every league with props
 --relink also re-checks rows that already carry an espn_event_id, correcting any
 bound to the wrong game of a series (85 MLB rows on 2026-08-11).
 """
+from __future__ import annotations  # this box runs 3.8; `int | None` is 3.10 syntax
+
 import sys, os, sqlite3, re
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -314,8 +316,33 @@ def _neighbour_days(date_str):
             (base + _dt.timedelta(days=1)).isoformat()]
 
 
+def _scope(league: str, relink: bool, days: int | None) -> tuple[str, list]:
+    """The WHERE that decides which prop_games a run considers, and its params.
+
+    Built once and used by both the budget estimate and the run itself. They used
+    to be two copies of the same clause list, which is a quiet way for a tool to
+    spend a budget it did not announce.
+
+    `days` is the window that makes the nightly job possible at all. Without it
+    every run reconsiders every slate ever ingested — 54 of them, most from games
+    that finished in June and will never link — and that is what tripped the
+    ceiling. A game that has been unlinked for two months is not going to link
+    tonight; a backfill is a deliberate, scoped, human-run thing.
+    """
+    clauses = [] if relink else ["(espn_event_id IS NULL OR espn_event_id = '')"]
+    params: list = []
+    if league:
+        clauses.append("league = ?")
+        params.append(league.lower())
+    if days is not None:
+        clauses.append("date >= DATE('now', ?)")
+        params.append(f"-{int(days)} days")
+    return (("WHERE " + " AND ".join(clauses)) if clauses else ""), params
+
+
 def link_existing_games(con: sqlite3.Connection, dry_run: bool = False,
-                        relink: bool = False, league: str = "") -> int:
+                        relink: bool = False, league: str = "",
+                        days: int | None = None) -> int:
     """Link prop_games to ESPN events.
 
     `relink=True` also re-examines rows that already carry an espn_event_id, which
@@ -329,12 +356,7 @@ def link_existing_games(con: sqlite3.Connection, dry_run: bool = False,
     tennis alone contributes dozens — and spends that budget whether or not you
     care about the league you are fixing. See .claude/skills/espn-request-budget.
     """
-    clauses = [] if relink else ["(espn_event_id IS NULL OR espn_event_id = '')"]
-    params: list = []
-    if league:
-        clauses.append("league = ?")
-        params.append(league.lower())
-    where = ("WHERE " + " AND ".join(clauses)) if clauses else ""
+    where, params = _scope(league, relink, days)
     unlinked = con.execute(f"""
         SELECT id, league, date, start_time, home, away, espn_event_id
         FROM prop_games {where}
@@ -396,11 +418,16 @@ def main():
     dry_run = "--dry-run" in sys.argv
     relink = "--relink" in sys.argv
     league = ""
+    days: int | None = None
     for i, a in enumerate(sys.argv):
         if a == "--league" and i + 1 < len(sys.argv):
             league = sys.argv[i + 1]
         elif a.startswith("--league="):
             league = a.split("=", 1)[1]
+        elif a == "--days" and i + 1 < len(sys.argv):
+            days = int(sys.argv[i + 1])
+        elif a.startswith("--days="):
+            days = int(a.split("=", 1)[1])
 
     con = sqlite3.connect(DB)
     con.row_factory = sqlite3.Row
@@ -408,12 +435,7 @@ def main():
     # State the request count BEFORE issuing any of it. ESPN's ceiling is a count
     # per host, so a job that cannot say what it will spend is a job nobody can
     # size afterwards (espn-request-budget skill, §6).
-    clauses = [] if relink else ["(espn_event_id IS NULL OR espn_event_id = '')"]
-    params: list = []
-    if league:
-        clauses.append("league = ?")
-        params.append(league.lower())
-    where = ("WHERE " + " AND ".join(clauses)) if clauses else ""
+    where, params = _scope(league, relink, days)
     slate_rows = con.execute(
         f"SELECT DISTINCT league, date FROM prop_games {where}", params
     ).fetchall()
@@ -453,9 +475,16 @@ def main():
         if spend == requests and len(distinct_days) <= 50:
             print(f"  (set LP_ESPN_CACHE_DIR and this run is {len(distinct_days)} "
                   f"requests, which is under the guard.)")
+        print("  Or scope the window with --days N; the nightly job wants ~3.")
         con.close()
-        return
-    linked = link_existing_games(con, dry_run=dry_run, relink=relink, league=league)
+        # Exit NON-ZERO. This used to return 0, and run_pipeline.py checks the exit
+        # code — so the nightly cron has been printing "link: ✅" on top of a refusal
+        # every 30 minutes. That is why nothing was ever linked and why the state
+        # got blamed on ESPN being down: the run that would have said otherwise
+        # reported success. A refusal is a job that did not do its work.
+        return 2
+    linked = link_existing_games(con, dry_run=dry_run, relink=relink, league=league,
+                                 days=days)
 
     if dry_run:
         print(f"\nDRY RUN — {linked} would be linked")
@@ -467,7 +496,8 @@ def main():
         print(f"  {with_id}/{total} games now have espn_event_id")
 
     con.close()
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main() or 0)
