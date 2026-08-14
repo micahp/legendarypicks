@@ -23,6 +23,12 @@
 set -uo pipefail
 cd /root/legendarypicks/backend
 export LP_DB_PATH=/root/legendarypicks/backend/data/picks.dev.db
+# The sweep fetches scoreboards for up to 8 leagues x 2 days, twice (forward +
+# backward overlap on today), and ESPN's limit is a COUNT per host, not a rate —
+# the timer's job is to not spend the budget. A disk cache makes the second
+# sweep's overlap nearly free and makes re-runs (every 3 hours) free inside the
+# 12h TTL.
+export LP_ESPN_CACHE_DIR=/root/legendarypicks/backend/.espn-cache
 PY=/root/legendarypicks/backend/venv/bin/python
 LOG=/var/log/legendarypicks-recaps.log
 
