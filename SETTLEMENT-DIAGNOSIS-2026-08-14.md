@@ -351,7 +351,7 @@ Dulatov is absent from ESPN's card and remains unlinked. A no-write dev dry run 
 production oracle rows and the corresponding live ESPN names/times. No
 `_MLB_TEAM_MAP` or `_MLS_TEAM_MAP` entry was changed.
 
-### The seven errors in the canonical-dev settlement run
+### The seven errors in the canonical-dev settlement run, and the fix
 
 The real run reported `Settled=8893, Void=0, Unmappable=206, Pending=614,
 Errors=7`. All seven errors are the already-measured UFC card-date shape, not a new
@@ -363,12 +363,21 @@ UFC fight <competition id> absent from 2026-08-16 scoreboard
 ```
 
 ESPN publishes all seven competition ids inside the card indexed under
-`2026-08-15`; the August 16 scoreboard contains zero events. The linker handles this
-with neighbor-day enumeration, but `_ufc_scoreboard_competition()` still queries only
-`game["date"]` during settlement finality. The exception is fail-closed: it wrote no
-result rows, so all 14 affected props remain retryable. This is a remaining reuse-the-
-neighbor-days follow-up in the known UFC shape, not evidence of an MLS regression or a
-new source payload.
+`2026-08-15`; the August 16 scoreboard contains zero events. The linker handled this
+with neighbor-day enumeration, but `_ufc_scoreboard_competition()` queried only
+`game["date"]` during settlement finality. The exception was fail-closed: it wrote no
+result rows, so all 14 affected props remained retryable. This was the same known UFC
+publisher shape, not evidence of an MLS regression or a new source payload.
+
+Commit `bd09b57` removes the inconsistency. The date window now lives once as
+`espn_client.neighbor_dates()` and both the linker and settlement use it in the same
+order: stored date, previous day, next day. A regression starts with an August 16 prop
+game whose competition exists only in the August 15 payload and proves that the full
+settlement path reaches grading with zero errors. A cached live replay resolved all
+seven real competition ids through that path; no new network request was issued. They
+currently publish `completed=false`, so the corrected behavior before the card is
+"not final" with no write; after the card the same lookup can reach their final status
+and durable logs.
 
 ## Implemented and verified
 
@@ -445,3 +454,15 @@ worktree picks.dev   fc9bdd131b76808204d27d80c997fb74a1c660fe5849d4ca646cb60dd0d
 Both source databases returned `PRAGMA quick_check=ok`. The disposable test copies
 were removed. The user's `league_feature_matrix.py` read-side fix (`18ed3e1`) was merged
 from `dev` and was not edited in this branch.
+
+After the shared UFC neighbor-date fix, the focused linker/settlement set passed
+`39 passed`. The final isolated full backend suite passed:
+
+```text
+1406 passed, 4 skipped, 6 xfailed in 46.75s
+```
+
+The production and canonical-dev database hashes were identical before and after that
+run (`edfec59d...29979` and `9c85a2af...65634d`, respectively), and both returned
+`PRAGMA quick_check=ok`. The full suite again used and then removed disposable copies;
+no database row was changed by this final fix or its verification.
