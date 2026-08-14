@@ -24,13 +24,13 @@ def main(dry_run: bool = False):
         SELECT DISTINCT pg.id, pg.league, pg.home, pg.away, pg.espn_event_id,
                pg.final_home, pg.final_away, pg.date,
                COUNT(p.id) as total_props,
-               COUNT(pr.prop_id) as settled_props
+               COUNT(pr.prop_id) as result_rows
         FROM prop_games pg
         JOIN props p ON p.game_id = pg.id
         LEFT JOIN prop_results pr ON pr.prop_id = p.id
         WHERE pg.final_home IS NOT NULL OR pg.espn_event_id != ''
         GROUP BY pg.id
-        HAVING settled_props < total_props
+        HAVING result_rows < total_props
         ORDER BY pg.date DESC
     """).fetchall()
 
@@ -40,13 +40,13 @@ def main(dry_run: bool = False):
         games_with_espn = con.execute("""
             SELECT DISTINCT pg.id, pg.league, pg.home, pg.away, pg.espn_event_id,
                    pg.date, COUNT(p.id) as total_props,
-                   COUNT(pr.prop_id) as settled_props
+                   COUNT(pr.prop_id) as result_rows
             FROM prop_games pg
             JOIN props p ON p.game_id = pg.id
             LEFT JOIN prop_results pr ON pr.prop_id = p.id
             WHERE pg.espn_event_id != '' AND pg.espn_event_id IS NOT NULL
             GROUP BY pg.id
-            HAVING settled_props < total_props
+            HAVING result_rows < total_props
             ORDER BY pg.date DESC
         """).fetchall()
         if games_with_espn:
@@ -64,7 +64,7 @@ def main(dry_run: bool = False):
     for g in games:
         gid = g["id"]
         league = g["league"]
-        unsettled_count = g["total_props"] - (g["settled_props"] or 0)
+        unsettled_count = g["total_props"] - (g["result_rows"] or 0)
         print(f"\n  Game {gid}: {g['away']} @ {g['home']} ({league}, {g['date']}) "
               f"— {unsettled_count} unsettled props")
 
@@ -85,7 +85,11 @@ def main(dry_run: bool = False):
             totals[k] += result.get(k, 0)
 
     # Summary
-    total_results = con.execute("SELECT COUNT(*) FROM prop_results").fetchone()[0]
+    numeric_results, null_results = con.execute("""
+        SELECT COALESCE(SUM(actual_value IS NOT NULL), 0),
+               COALESCE(SUM(actual_value IS NULL), 0)
+        FROM prop_results
+    """).fetchone()
     total_props = con.execute("SELECT COUNT(*) FROM props").fetchone()[0]
     con.close()
 
@@ -96,7 +100,8 @@ def main(dry_run: bool = False):
     print(f"  Unmappable:{totals['unmappable']}")
     print(f"  Pending:   {totals['pending']}")
     print(f"  Errors:    {totals['errors']}")
-    print(f"  prop_results total: {total_results} / {total_props} props graded")
+    print(f"  Numeric outcomes: {numeric_results} / {total_props} props")
+    print(f"  Null outcome rows (void or legacy placeholder): {null_results}")
     if dry_run:
         print(f"  (DRY RUN — no changes written)")
 

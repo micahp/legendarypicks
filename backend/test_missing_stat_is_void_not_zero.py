@@ -8,7 +8,7 @@ wrong gamePk into 7,827 wrong grades on 2026-08-11 rather than 7,827 missing
 ones: the unplayed game published a lineup, the lineup published no batting
 lines, and `bat.get("hits", 0) or 0` read that as a hitless day.
 
-Two sites, one rule — an absent stat voids (actual NULL, hit NULL):
+Two sites, one rule — an absent stat is not zero and is not a terminal result:
 
   settlement._settle_mlb_props  compound `hits_runs_rbis` summed three `.get(x, 0)`
                                 against a player with no batting object at all.
@@ -55,7 +55,7 @@ def _prop(pid=1, market="total_hits,_runs_and_rbis", line=1.5, side="over"):
             "player_id": 10, "player_name": "Austin Riley", "player_team": "ATL"}
 
 
-def _run(monkeypatch, batting):
+def _run(monkeypatch, batting, prop=None, crosswalk=True):
     """Settle one hits+runs+RBIs prop against a player whose batting dict is `batting`."""
     con = _Con()
     monkeypatch.setattr(settlement, "_fetch_mlb_gamepk", lambda *a, **k: 825048)
@@ -69,22 +69,23 @@ def _run(monkeypatch, batting):
     class _C(_Con):
         def execute(self, sql, params=()):
             if sql.strip().upper().startswith("SELECT ID, MLBAM_ID"):
-                return [{"id": 10, "mlbam_id": 12345}]
+                return [{"id": 10, "mlbam_id": 12345}] if crosswalk else []
             return _Con.execute(self, sql, params)
 
     c = _C()
     out = settlement._settle_mlb_props(
         c, {"date": "2026-08-11", "home": "Atlanta Braves", "away": "San Francisco Giants",
-            "start_time": "2026-08-11T01:40:00+00:00"}, [_prop()])
+            "start_time": "2026-08-11T01:40:00+00:00"}, [prop or _prop()])
     return out, c.rows
 
 
-def test_a_player_with_no_batting_object_voids(monkeypatch):
+def test_a_player_with_no_batting_object_stays_pending(monkeypatch):
     """The 2026-08-11 case: an unplayed game's lineup carries no batting lines."""
     out, rows = _run(monkeypatch, {})
     assert out["settled"] == 0
-    assert out["void"] == 1
-    assert rows and rows[0][1] is None and rows[0][2] is None, "actual and hit both NULL"
+    assert out["void"] == 0
+    assert out["pending"] == 1
+    assert rows == [], "absence must not create a terminal prop_results row"
 
 
 def test_a_genuine_0_for_4_still_grades(monkeypatch):
@@ -103,7 +104,44 @@ def test_a_real_line_grades(monkeypatch):
 def test_a_partial_batting_line_is_not_padded_with_zeros(monkeypatch):
     """If the publisher reports hits but not RBI, we do not invent the RBI."""
     out, rows = _run(monkeypatch, {"hits": 2})
-    assert out["void"] == 1, "an incomplete sum is not a total"
+    assert out["void"] == 0
+    assert out["pending"] == 1, "an incomplete sum is not a terminal result"
+    assert rows == []
+
+
+def test_a_missing_mlbam_crosswalk_stays_pending(monkeypatch):
+    out, rows = _run(monkeypatch, {"hits": 2, "runs": 1, "rbi": 0},
+                     crosswalk=False)
+    assert out["pending"] == 1
+    assert out["void"] == 0
+    assert rows == []
+
+
+def test_an_unsupported_mlb_market_stays_retryable(monkeypatch):
+    out, rows = _run(
+        monkeypatch, {"hits": 2, "runs": 1, "rbi": 0},
+        prop=_prop(market="total_pitcher_walks"),
+    )
+    assert out["unmappable"] == 1
+    assert rows == []
+
+
+def test_a_malformed_published_value_stays_pending(monkeypatch):
+    out, rows = _run(
+        monkeypatch, {"hits": "not-a-number"},
+        prop=_prop(market="total_hits"),
+    )
+    assert out["pending"] == 1
+    assert rows == []
+
+
+def test_an_invalid_mlb_side_stays_retryable(monkeypatch):
+    out, rows = _run(
+        monkeypatch, {"hits": 2},
+        prop=_prop(market="total_hits", side="yes"),
+    )
+    assert out["unmappable"] == 1
+    assert rows == []
 
 
 # ── ESPN box score path ────────────────────────────────────────────────────────

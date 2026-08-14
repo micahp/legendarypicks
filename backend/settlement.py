@@ -484,7 +484,14 @@ def _fetch_mlb_boxscore(gamePk: int) -> Optional[dict]:
 
 
 def _settle_mlb_props(con, game_row, props) -> dict:
-    """Settle MLB props using the MLB Stats API boxscore (mlbam_id-based matching)."""
+    """Settle MLB props using the MLB Stats API boxscore (mlbam_id-based matching).
+
+    A ``prop_results`` row is terminal: the driver excludes that prop from every
+    later run.  Only write one for a numeric outcome.  This payload has no
+    positive DNP field: absence from its player/stat dictionaries is not enough
+    to distinguish a true DNP from identity drift or incomplete publisher data.
+    Those states stay pending so a later repair can retry them.
+    """
     date_str = game_row["date"]
     home = game_row["home"]
     away = game_row["away"]
@@ -497,13 +504,15 @@ def _settle_mlb_props(con, game_row, props) -> dict:
         start_time = None
     gamePk = _fetch_mlb_gamepk(date_str, home, away, start_time=start_time)
     if not gamePk:
-        return {"settled": 0, "void": 0, "unmappable": 0, "errors": 0,
+        return {"settled": 0, "void": 0, "unmappable": 0, "pending": 0,
+                "errors": 0,
                 "msg": f"MLB gamePk not found for {away}@{home} on {date_str} "
                        f"(start_time={start_time or 'none'})"}
 
     box = _fetch_mlb_boxscore(gamePk)
     if not box:
-        return {"settled": 0, "void": 0, "unmappable": 0, "errors": 1,
+        return {"settled": 0, "void": 0, "unmappable": 0, "pending": 0,
+                "errors": 1,
                 "error_msg": f"MLB boxscore failed for gamePk={gamePk}"}
 
     # Build lookup: mlbam_id → {"batting": {...}, "pitching": {...}}
@@ -538,24 +547,23 @@ def _settle_mlb_props(con, game_row, props) -> dict:
     settled = 0
     void = 0
     unmappable = 0
+    pending = 0
     errors = 0
     now = dt.datetime.now(dt.timezone.utc).isoformat()
 
     for prop in props:
         mlbam_id = player_mlbam.get(prop["player_id"])
         if not mlbam_id:
-            con.execute(
-                "INSERT INTO prop_results(prop_id, actual_value, hit, settled_at) VALUES (?,NULL,NULL,?)",
-                (prop["id"], now))
-            void += 1
+            # A missing local crosswalk is not evidence that the player did not
+            # appear.  It is repairable identity data, so leave the prop retryable.
+            pending += 1
             continue
 
         ps = player_stats.get(mlbam_id)
         if not ps:
-            con.execute(
-                "INSERT INTO prop_results(prop_id, actual_value, hit, settled_at) VALUES (?,NULL,NULL,?)",
-                (prop["id"], now))
-            void += 1  # DNP
+            # Absence is not a positive DNP signal.  It can also mean that the
+            # identity or publisher payload is incomplete.
+            pending += 1
             continue
 
         # Resolve market to (category, mlb_api_field)
@@ -574,16 +582,10 @@ def _settle_mlb_props(con, game_row, props) -> dict:
                 bat = ps.get("batting") or {}
                 parts = [bat.get(k) for k in ("hits", "runs", "rbi")]
                 if any(v is None for v in parts):
-                    con.execute(
-                        "INSERT INTO prop_results(prop_id, actual_value, hit, settled_at) VALUES (?,NULL,NULL,?)",
-                        (prop["id"], now))
-                    void += 1
+                    pending += 1
                     continue
                 actual = float(sum(parts))
             else:
-                con.execute(
-                    "INSERT INTO prop_results(prop_id, actual_value, hit, settled_at) VALUES (?,NULL,NULL,?)",
-                    (prop["id"], now))
                 unmappable += 1
                 continue
         else:
@@ -598,32 +600,20 @@ def _settle_mlb_props(con, game_row, props) -> dict:
                     try:
                         actual = float(ip_str) * 3
                     except (ValueError, TypeError):
-                        con.execute(
-                            "INSERT INTO prop_results(prop_id, actual_value, hit, settled_at) VALUES (?,NULL,NULL,?)",
-                            (prop["id"], now))
-                        void += 1
+                        pending += 1
                         continue
                 else:
-                    con.execute(
-                        "INSERT INTO prop_results(prop_id, actual_value, hit, settled_at) VALUES (?,NULL,NULL,?)",
-                        (prop["id"], now))
-                    void += 1
+                    pending += 1
                     continue
             else:
                 actual = stats_dict.get(mlb_field)
                 if actual is None:
-                    con.execute(
-                        "INSERT INTO prop_results(prop_id, actual_value, hit, settled_at) VALUES (?,NULL,NULL,?)",
-                        (prop["id"], now))
-                    void += 1
+                    pending += 1
                     continue
                 try:
                     actual = float(actual)
                 except (ValueError, TypeError):
-                    con.execute(
-                        "INSERT INTO prop_results(prop_id, actual_value, hit, settled_at) VALUES (?,NULL,NULL,?)",
-                        (prop["id"], now))
-                    void += 1
+                    pending += 1
                     continue
 
         # Grade
@@ -634,9 +624,6 @@ def _settle_mlb_props(con, game_row, props) -> dict:
         elif side == "under":
             hit = 1 if actual < line else (0 if actual > line else None)
         else:
-            con.execute(
-                "INSERT INTO prop_results(prop_id, actual_value, hit, settled_at) VALUES (?,NULL,NULL,?)",
-                (prop["id"], now))
             unmappable += 1
             continue
 
@@ -649,7 +636,8 @@ def _settle_mlb_props(con, game_row, props) -> dict:
             errors += 1
 
     con.commit()
-    return {"settled": settled, "void": void, "unmappable": unmappable, "errors": errors}
+    return {"settled": settled, "void": void, "unmappable": unmappable,
+            "pending": pending, "errors": errors}
 
 
 _UFC_NUMERIC_MARKETS = {
@@ -859,10 +847,10 @@ def _settle_mls_props(con: sqlite3.Connection, props: list, summary: dict) -> di
         else:
             matches = by_name.get(_soccer_name(prop["player_name"]), [])
         if not matches:
-            con.execute(
-                "INSERT INTO prop_results(prop_id, actual_value, hit, settled_at) "
-                "VALUES (?,NULL,NULL,?)", (prop["id"], now))
-            void += 1
+            # Roster absence is not a DNP flag.  It can be a partial roster or a
+            # stale ESPN id, and neither may permanently exclude the prop from a
+            # later settlement run.
+            pending += 1
             continue
         if len(matches) != 1:
             pending += 1
@@ -895,7 +883,7 @@ def settle_game(con: sqlite3.Connection, game_id: int) -> dict:
     Pulls the ESPN boxscore for the game, resolves each prop's market,
     finds the player's actual stat, grades over/under, writes prop_results.
 
-    Returns: {settled: N, void: N, unmappable: N, errors: N}
+    Returns: {settled: N, void: N, unmappable: N, pending: N, errors: N}
     Idempotent: skips props that already have a prop_results row.
     """
     import espn_client as espn
@@ -1073,15 +1061,13 @@ def settle_game(con: sqlite3.Connection, game_id: int) -> dict:
     settled = 0
     void = 0
     unmappable = 0
+    pending = 0
     errors = 0
     now = dt.datetime.now(dt.timezone.utc).isoformat()
 
     for prop in props:
         mapping = resolve_market(league, prop["market"])
         if mapping is None:
-            con.execute(
-                "INSERT INTO prop_results(prop_id, actual_value, hit, settled_at) VALUES (?,NULL,NULL,?)",
-                (prop["id"], now))
             unmappable += 1
             continue
 
@@ -1095,9 +1081,6 @@ def settle_game(con: sqlite3.Connection, game_id: int) -> dict:
                     ["batting", "batting", "batting"], ["H", "R", "RBI"],
                     espn_id=prop["espn_id"])
             else:
-                con.execute(
-                    "INSERT INTO prop_results(prop_id, actual_value, hit, settled_at) VALUES (?,NULL,NULL,?)",
-                    (prop["id"], now))
                 unmappable += 1
                 continue
         else:
@@ -1105,12 +1088,12 @@ def settle_game(con: sqlite3.Connection, game_id: int) -> dict:
                 box, prop["player_name"], prop["player_team"],
                 category, stat_key, espn_id=prop["espn_id"])
 
-        # Void: player DNP or stat not found
+        # The generic ESPN reader deliberately returns one sentinel for several
+        # different states: athlete absent, category absent, label absent, empty
+        # value, or ambiguous identity.  It cannot prove a terminal DNP, so none
+        # of those states may write the same null row used by a real void.
         if actual is None:
-            con.execute(
-                "INSERT INTO prop_results(prop_id, actual_value, hit, settled_at) VALUES (?,NULL,NULL,?)",
-                (prop["id"], now))
-            void += 1
+            pending += 1
             continue
 
         # Grade
@@ -1121,9 +1104,6 @@ def settle_game(con: sqlite3.Connection, game_id: int) -> dict:
         elif side == "under":
             hit = 1 if actual < line else (0 if actual > line else None)
         else:
-            con.execute(
-                "INSERT INTO prop_results(prop_id, actual_value, hit, settled_at) VALUES (?,NULL,NULL,?)",
-                (prop["id"], now))
             unmappable += 1
             continue
 
@@ -1136,7 +1116,8 @@ def settle_game(con: sqlite3.Connection, game_id: int) -> dict:
             errors += 1
 
     con.commit()
-    return {"settled": settled, "void": void, "unmappable": unmappable, "errors": errors}
+    return {"settled": settled, "void": void, "unmappable": unmappable,
+            "pending": pending, "errors": errors}
 
 
 if __name__ == "__main__":

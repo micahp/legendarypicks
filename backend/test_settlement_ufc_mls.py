@@ -201,21 +201,22 @@ def test_mls_uses_roster_stats_not_team_boxscore(monkeypatch):
 
     result = settlement.settle_game(con, 2)
 
-    assert result == {"settled": 3, "void": 2, "unmappable": 1,
-                      "pending": 1, "errors": 0}
+    assert result == {"settled": 3, "void": 0, "unmappable": 1,
+                      "pending": 3, "errors": 0}
     rows = {row["prop_id"]: (row["actual_value"], row["hit"])
             for row in con.execute("SELECT * FROM prop_results")}
     assert rows == {
         200: (0.0, 0),
         201: (1.0, 1),
         202: (1.0, 1),
-        203: (None, None),
-        206: (None, None),
     }
-    # A roster row with no published assists and an unsupported market stay
-    # retryable; neither is silently converted to a zero/null result.
+    # Roster absence (including a stale non-null ESPN id), a roster row with no
+    # published assists, and an unsupported market stay retryable. None is
+    # silently converted to a zero/null terminal result.
+    assert 203 not in rows
     assert 204 not in rows
     assert 205 not in rows
+    assert 206 not in rows
     final = con.execute(
         "SELECT final_home, final_away FROM prop_games WHERE id=2").fetchone()
     assert (final["final_home"], final["final_away"]) == (0.0, 2.0)
