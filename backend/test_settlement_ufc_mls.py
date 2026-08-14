@@ -61,9 +61,9 @@ def _ufc_connection():
     return con
 
 
-def _ufc_scoreboard(completed=True):
+def _ufc_scoreboard(completed=True, fight_id="401874315"):
     return {"events": [{"id": "600059667", "competitions": [{
-        "id": "401874315",
+        "id": fight_id,
         "status": {"type": {"state": "post" if completed else "pre",
                               "completed": completed}},
         "competitors": [
@@ -118,6 +118,37 @@ def test_ufc_does_not_settle_a_nonfinal_fight(monkeypatch):
     assert result["errors"] == 0
     assert "completed=False" in result["msg"]
     assert con.execute("SELECT COUNT(*) FROM prop_results").fetchone()[0] == 0
+
+
+def test_ufc_finds_a_next_utc_day_fight_on_the_previous_card_date(monkeypatch):
+    """The linker and settler must use the same date window.
+
+    Real UFC 330 fights dated 2026-08-16 in prop_games exist only inside ESPN's
+    2026-08-15 scoreboard.  The old finality lookup retried 08-16 alone forever.
+    """
+    con = _ufc_connection()
+    fight_id = "401909737"
+    con.execute(
+        "UPDATE prop_games SET date='2026-08-16', espn_event_id=? WHERE id=1",
+        (fight_id,),
+    )
+    con.execute("UPDATE player_game_logs SET game_id=?", (fight_id,))
+    seen = []
+
+    def fake_get(url, ttl=0):
+        seen.append(url)
+        if "dates=20260815" in url:
+            return _ufc_scoreboard(fight_id=fight_id)
+        return {"events": []}
+
+    monkeypatch.setattr(espn_client, "_get", fake_get)
+
+    result = settlement.settle_game(con, 1)
+
+    assert result == {"settled": 5, "void": 0, "unmappable": 1,
+                      "pending": 1, "errors": 0}
+    assert [url.rsplit("=", 1)[-1] for url in seen] == ["20260816", "20260815"]
+    assert con.execute("SELECT COUNT(*) FROM prop_results").fetchone()[0] == 5
 
 
 def test_ufc_method_markets_require_published_outcome_and_method():

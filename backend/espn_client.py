@@ -188,6 +188,23 @@ def _int(x):
         return None
 
 
+def neighbor_dates(date_text):
+    """Return an ESPN scoreboard date followed by its previous and next day.
+
+    Book/game dates are often UTC while ESPN indexes US events by the local card
+    or slate date.  UFC cards routinely cross midnight UTC, so both linking and
+    later competition lookup must use this exact same window.
+    """
+    import datetime as _dt
+    try:
+        base = _dt.date.fromisoformat(str(date_text))
+    except (TypeError, ValueError):
+        return [date_text]
+    return [base.isoformat(),
+            (base - _dt.timedelta(days=1)).isoformat(),
+            (base + _dt.timedelta(days=1)).isoformat()]
+
+
 def _normalize_team_events(events):
     """Normalize team-vs-team scoreboard events into the shared game shape."""
     out = []

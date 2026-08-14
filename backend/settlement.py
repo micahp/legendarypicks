@@ -664,19 +664,26 @@ def _ufc_scoreboard_competition(espn, date_text: str, fight_id: str) -> dict:
 
     UFC links store a competition (fight) id, not a summary event id. MMA has no
     working site-summary endpoint, so finality must be read from the competition
-    nested in the date scoreboard. Keep the publisher's ``completed`` bit intact;
+    nested in a nearby date scoreboard. ESPN indexes the card by its US-local
+    date while late fights routinely start on the next UTC date used by the prop
+    feed. Use the same shared date window as the linker so a link it creates can
+    also be resolved here. Keep the publisher's ``completed`` bit intact;
     ``state == post`` alone also includes canceled events in ESPN's taxonomy.
     """
     path = espn.LEAGUES["ufc"][0]
-    date_key = str(date_text or "").replace("-", "")
-    payload = espn._get(
-        espn._SITE.format(path=path) + f"/scoreboard?dates={date_key}", ttl=60)
     wanted = str(fight_id)
-    for event in payload.get("events") or []:
-        for competition in event.get("competitions") or []:
-            if str(competition.get("id") or "") == wanted:
-                return competition
-    raise ValueError(f"UFC fight {wanted} absent from {date_text} scoreboard")
+    checked = []
+    for day in espn.neighbor_dates(date_text):
+        checked.append(day)
+        date_key = str(day or "").replace("-", "")
+        payload = espn._get(
+            espn._SITE.format(path=path) + f"/scoreboard?dates={date_key}", ttl=60)
+        for event in payload.get("events") or []:
+            for competition in event.get("competitions") or []:
+                if str(competition.get("id") or "") == wanted:
+                    return competition
+    raise ValueError(
+        f"UFC fight {wanted} absent from scoreboards {', '.join(checked)}")
 
 
 def _ufc_actual(stats: dict, market: str) -> Optional[float]:
