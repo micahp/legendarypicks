@@ -129,3 +129,105 @@ def test_ufc_method_markets_require_published_outcome_and_method():
     assert settlement._ufc_actual({"result": "W"}, "win_by_ko") is None
     assert settlement._ufc_actual({"result": "W", "method": "KO/TKO"},
                                   "finishes") is None
+
+
+def _mls_summary(completed=True):
+    def player(athlete_id, name, stats):
+        return {
+            "athlete": {"id": athlete_id, "displayName": name},
+            "stats": [{"name": key, "value": value} for key, value in stats.items()],
+        }
+
+    return {
+        "header": {"competitions": [{
+            "id": "761469",
+            "status": {"type": {"state": "post" if completed else "pre",
+                                  "completed": completed}},
+            "competitors": [
+                {"homeAway": "home", "winner": False, "score": "0",
+                 "team": {"abbreviation": "NE"}},
+                {"homeAway": "away", "winner": True, "score": "2",
+                 "team": {"abbreviation": "HOU"}},
+            ],
+        }]},
+        "boxscore": {"teams": []},
+        "rosters": [
+            {"team": {"abbreviation": "NE"}, "roster": [
+                player("303512", "Jack McGlynn",
+                       {"totalGoals": 0.0, "goalAssists": 1.0}),
+                player("555", "Stats Missing", {"totalGoals": 0.0}),
+            ]},
+            {"team": {"abbreviation": "HOU"}, "roster": [
+                player("419253", "Agustín Resch",
+                       {"totalGoals": 1.0, "goalAssists": 0.0}),
+            ]},
+        ],
+    }
+
+
+def _mls_connection():
+    con = sqlite3.connect(":memory:")
+    _schema(con)
+    con.execute(
+        "INSERT INTO prop_games VALUES(2,'mls','New England Revolution',"
+        "'Houston Dynamo','2026-08-08','761469',NULL,NULL,"
+        "'2026-08-08T20:30:00+00:00')")
+    con.executemany(
+        "INSERT INTO players VALUES(?,?,?,?,?)",
+        [(20, "Jack McGlynn", "HOU", "mls", "303512"),
+         (21, "Agustin Resch", "HOU", "mls", None),
+         (22, "Not On Roster", "NE", "mls", None),
+         (23, "Stats Missing", "NE", "mls", "555"),
+         (24, "Jack McGlynn", "HOU", "mls", "wrong-id")])
+    con.executemany(
+        "INSERT INTO props VALUES(?,?,?,?,?,?)",
+        [(200, 2, 20, "goals", 0.5, "over"),
+         (201, 2, 20, "assists", 0.5, "over"),
+         (202, 2, 21, "goals", 0.5, "over"),
+         (203, 2, 22, "goals", 0.5, "over"),
+         (204, 2, 23, "assists", 0.5, "over"),
+         (205, 2, 20, "shots", 0.5, "over"),
+         (206, 2, 24, "goals", 0.5, "over")])
+    return con
+
+
+def test_mls_uses_roster_stats_not_team_boxscore(monkeypatch):
+    con = _mls_connection()
+    summary = _mls_summary()
+    monkeypatch.setattr(espn_client, "summary", lambda league, event_id: summary)
+    monkeypatch.setattr(
+        espn_client, "boxscore",
+        lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("boxscore called")))
+
+    result = settlement.settle_game(con, 2)
+
+    assert result == {"settled": 3, "void": 2, "unmappable": 1,
+                      "pending": 1, "errors": 0}
+    rows = {row["prop_id"]: (row["actual_value"], row["hit"])
+            for row in con.execute("SELECT * FROM prop_results")}
+    assert rows == {
+        200: (0.0, 0),
+        201: (1.0, 1),
+        202: (1.0, 1),
+        203: (None, None),
+        206: (None, None),
+    }
+    # A roster row with no published assists and an unsupported market stay
+    # retryable; neither is silently converted to a zero/null result.
+    assert 204 not in rows
+    assert 205 not in rows
+    final = con.execute(
+        "SELECT final_home, final_away FROM prop_games WHERE id=2").fetchone()
+    assert (final["final_home"], final["final_away"]) == (0.0, 2.0)
+
+
+def test_mls_does_not_settle_before_full_time(monkeypatch):
+    con = _mls_connection()
+    monkeypatch.setattr(
+        espn_client, "summary", lambda league, event_id: _mls_summary(False))
+
+    result = settlement.settle_game(con, 2)
+
+    assert result["settled"] == 0
+    assert "completed=False" in result["msg"]
+    assert con.execute("SELECT COUNT(*) FROM prop_results").fetchone()[0] == 0

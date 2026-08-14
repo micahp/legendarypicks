@@ -9,7 +9,7 @@ Phase 3: read-side wired through sports_service.py's existing /api/props/stats +
 CRITICAL: settlement uses per-GAME box-score stats (espn.boxscore), NOT season aggregates
 from player_stats. A prop is graded against what that player did in THAT specific game.
 """
-import os, sqlite3, datetime as dt, re, json
+import os, sqlite3, datetime as dt, re, json, unicodedata
 from typing import Optional, Dict, Tuple, List
 
 DB = os.environ.get("LP_DB_PATH") or os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "picks.db")
@@ -665,6 +665,11 @@ _UFC_METHOD_MARKETS = {
     "submissions": "SUB",
 }
 
+_MLS_ROSTER_MARKETS = {
+    "goals": "totalGoals",
+    "assists": "goalAssists",
+}
+
 
 def _ufc_scoreboard_competition(espn, date_text: str, fight_id: str) -> dict:
     """Return the exact fight object from ESPN's card-level UFC scoreboard.
@@ -796,6 +801,91 @@ def _settle_ufc_props(con: sqlite3.Connection, game, props: list) -> dict:
 
     con.commit()
     return {"settled": settled, "void": 0, "unmappable": unmappable,
+            "pending": pending, "errors": errors}
+
+
+def _soccer_name(text: str) -> str:
+    """Accent-fold an exact soccer roster name without using substring matching."""
+    ascii_text = unicodedata.normalize("NFKD", str(text or "")).encode(
+        "ascii", "ignore").decode("ascii")
+    return " ".join("".join(
+        char for char in ascii_text.lower()
+        if char.isalnum() or char.isspace()).split())
+
+
+def _settle_mls_props(con: sqlite3.Connection, props: list, summary: dict) -> dict:
+    """Grade MLS goals/assists from the summary roster-stat surface.
+
+    Soccer summaries publish only team aggregates under ``boxscore``. Player
+    actuals live alongside athlete identity in ``rosters[].roster[].stats``.
+    """
+    roster_rows = [
+        row
+        for group in summary.get("rosters") or []
+        for row in group.get("roster") or []
+    ]
+    if not roster_rows:
+        return {"settled": 0, "void": 0, "unmappable": 0, "pending": 0,
+                "errors": 1, "error_msg": "MLS summary has no player rosters"}
+
+    by_espn_id = {}
+    by_name = {}
+    for row in roster_rows:
+        athlete = row.get("athlete") or {}
+        athlete_id = str(athlete.get("id") or "")
+        if athlete_id:
+            by_espn_id.setdefault(athlete_id, []).append(row)
+        name_key = _soccer_name(athlete.get("displayName"))
+        if name_key:
+            by_name.setdefault(name_key, []).append(row)
+
+    settled = 0
+    void = 0
+    unmappable = 0
+    pending = 0
+    errors = 0
+    now = dt.datetime.now(dt.timezone.utc).isoformat()
+
+    for prop in props:
+        canonical = normalize_market(prop["market"])
+        canonical = MARKET_ALIASES.get(canonical, canonical)
+        stat_name = _MLS_ROSTER_MARKETS.get(canonical)
+        if not stat_name:
+            unmappable += 1
+            continue
+
+        if prop["espn_id"]:
+            matches = by_espn_id.get(str(prop["espn_id"]), [])
+        else:
+            matches = by_name.get(_soccer_name(prop["player_name"]), [])
+        if not matches:
+            con.execute(
+                "INSERT INTO prop_results(prop_id, actual_value, hit, settled_at) "
+                "VALUES (?,NULL,NULL,?)", (prop["id"], now))
+            void += 1
+            continue
+        if len(matches) != 1:
+            pending += 1
+            continue
+
+        published = [stat.get("value") for stat in matches[0].get("stats") or []
+                     if stat.get("name") == stat_name]
+        if len(published) != 1 or published[0] in (None, ""):
+            pending += 1
+            continue
+        try:
+            actual = float(published[0])
+            if _grade_actual(con, prop, actual, now):
+                settled += 1
+            else:
+                unmappable += 1
+        except (TypeError, ValueError):
+            pending += 1
+        except Exception:
+            errors += 1
+
+    con.commit()
+    return {"settled": settled, "void": void, "unmappable": unmappable,
             "pending": pending, "errors": errors}
 
 
@@ -935,6 +1025,27 @@ def settle_game(con: sqlite3.Connection, game_id: int) -> dict:
             return {"settled": 0, "void": 0, "unmappable": 0, "pending": 0,
                     "errors": 0, "msg": f"game {game_id}: no unsettled props"}
         return _settle_ufc_props(con, game, props)
+
+    if league == "mls":
+        try:
+            summary = espn.summary(league, espn_event_id)
+        except Exception as e:
+            return {"settled": 0, "void": 0, "unmappable": 0, "pending": 0,
+                    "errors": 1,
+                    "error_msg": f"game {game_id}: MLS summary pull failed: {e}"}
+        props = con.execute("""
+            SELECT p.id, p.market, p.line, p.side, p.player_id,
+                   pl.name as player_name, pl.team as player_team,
+                   pl.espn_id as espn_id
+            FROM props p
+            JOIN players pl ON pl.id = p.player_id
+            LEFT JOIN prop_results pr ON pr.prop_id = p.id
+            WHERE p.game_id = ? AND pr.prop_id IS NULL
+        """, (game_id,)).fetchall()
+        if not props:
+            return {"settled": 0, "void": 0, "unmappable": 0, "pending": 0,
+                    "errors": 0, "msg": f"game {game_id}: no unsettled props"}
+        return _settle_mls_props(con, props, summary)
 
     # (finality is checked above, before the MLB branch, so every league passes through it)
 
