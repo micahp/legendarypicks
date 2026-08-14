@@ -1697,8 +1697,17 @@ def main():
                 _log_deletion(con, conv, "unsupported-allegation")
                 con.execute("DELETE FROM news_narratives WHERE conv_id=?", (conv["id"],))
             continue
+        # Survey before the dry-run exit, not after the write. A dry run is
+        # where you look at variety BEFORE committing a batch, so it has to see
+        # the same cards a real run does — this used to report 0/0 because the
+        # only append sat past the `continue` below.
+        surveyed.append(dict(gen, conv_id=conv["id"]))
         if args.dry_run:
             print("  %-18s [dry-run] %s" % (conv["id"], gen["narrative"][:80]))
+            print("  %-18s   drafts: %d title, %d fan | fan_voice: %s"
+                  % ("", len(gen.get("narrative_drafts") or []),
+                     len(gen.get("fan_voice_drafts") or []),
+                     (gen.get("fan_voice") or "(none)")[:60]))
             continue
         con.execute(
             """INSERT INTO news_narratives(conv_id, league, title, narrative, fan_voice, paragraph, sources, source_count, pool_key, newest_item)
@@ -1764,7 +1773,6 @@ def main():
             voiceless += 1
             print("    NO SPEAKER: speaks for fans with no post in the pool "
                   "| %s" % (gen.get("fan_voice") or "")[:70])
-        surveyed.append(dict(gen, conv_id=conv["id"]))
     # Sameness is the one defect that is invisible per card. Each of these
     # sentences is fine on its own; the reader meets them stacked on one page,
     # so the check has to run across the batch, after every card is written.
