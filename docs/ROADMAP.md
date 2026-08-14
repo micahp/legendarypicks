@@ -109,6 +109,48 @@ production does not have.
       on the ESPN host recovering; the matcher and the budget guards already landed
       (`b8886e9`).
 
+#### Corrected 2026-08-14 — the two items above were measured, and both were wrong
+
+Kept as written above so the reasoning stays legible; read these instead.
+
+- **"Blocked on the ESPN host recovering" is false, and was false when written.**
+  `site.web.api.espn.com` answers 200 and is the host `link_prop_games.py` actually
+  uses (`espn_client.py:97`). `sports.core.api.espn.com` is the one still 403, and
+  the linker never touches it. Nothing was blocked; the linker had simply never been
+  re-run after `b8886e9`.
+- **MLS: now 15/15 linked** on dev (`025ee05`). The remaining cause was not the host
+  but a vocabulary gap — Bovada and ESPN spell 8 of 13 clubs differently. A second
+  vocabulary bug in the MLB map (`CWS` for a repo that is canonically `CHW`, plus a
+  retired `OAK`) is fixed in `ece6b9d`.
+- **"MLB has 57,392 settled props no game page can reach" misreads the number.**
+  MLB settles 747,498 on dev and 690,106 of those ARE reachable; 57,392 is the 7.7%
+  remainder. MLB was never the problem here.
+- **The real finding is worse and applies to every league.** `settlement.py` stamps
+  `settled_at` on a prop it could not map and leaves `hit`/`actual_value` NULL, so a
+  FAILED settlement is stored in the same shape as a landed one. Every "settled
+  props" count ever taken — this roadmap's, `league_feature_matrix.py`'s, and the
+  report that produced this correction — counted failures as successes:
+
+  | league | rows with `settled_at` | rows with a real outcome |
+  |---|---|---|
+  | wc | 1,128 | **0** |
+  | mlb (dev) | 747,498 | 642,348 |
+  | mlb (prod) | 700,549 | **421,145** |
+
+  So the World Cup settles nothing and has been reported at 100% throughout, and
+  40% of production MLB is empty. **MLB is the only league that settles anything at
+  all.** The read side is fixed (`f1604e6` — the matrix now requires
+  `hit IS NOT NULL`); the write side is open.
+- **And an unmappable prop is currently unsettleable forever.** `settle_props.py`
+  selects games `HAVING settled_props < total_props` against `prop_results`, so a
+  prop stamped with a NULL outcome is permanently excluded from retry — adding the
+  market mapping it was missing will not bring it back. This needs deciding before
+  any league's settlement is called fixed.
+- **ATP and WTA are empty shells**, not a linking gap: 206 `prop_games` between them
+  and **zero** `props` rows. Both are HIDDEN, so not release-blocking, but the
+  linked/total counts in this document read as partial coverage of something that
+  does not exist.
+
 ## POST-DRAFT — league news engine (POC, decided 2026-08-06)
 
 > **STATUS 2026-08-12 — BUILT, and empty in production.** This stopped being a POC: it

@@ -145,11 +145,29 @@ SURFACE_SQL = {
         SELECT COUNT(*) FROM props p JOIN prop_games g ON g.id=p.game_id
          WHERE LOWER(g.league)=?""",
     # SETTLED props — the half of the product that shows how the board did.
+    #
+    # `settled_at IS NOT NULL` is NOT the test, and using it was this file's own
+    # instance of the mistake it exists to prevent. settlement.py stamps
+    # settled_at on a prop it could not map, leaving hit and actual_value NULL —
+    # so a prop that FAILED to settle is recorded in the same shape as one that
+    # landed. Measured 2026-08-14: every one of the World Cup's 1,128 "settled"
+    # props has a NULL outcome, i.e. WC settles nothing and has been reported at
+    # 100% by every count anyone has taken, this one included. Production MLB is
+    # 279,404 of 700,549 the same way. The outcome is the claim; the timestamp is
+    # only evidence that something ran.
+    #
+    # The test is `actual_value IS NOT NULL`, not `hit IS NOT NULL`. A PUSH — the
+    # stat landing exactly on the line — is a graded prop that correctly stores
+    # hit=NULL beside a real actual_value (settlement.py:_grade_actual), so
+    # keying on `hit` would count a legitimate result as a failed settlement.
+    # There are zero pushes in either database today, because these books price
+    # almost everything at .5, so this changes no current number — it is the
+    # difference between a filter that is right and one that happens to agree.
     "settled props": """
         SELECT COUNT(*) FROM props p
           JOIN prop_games g ON g.id=p.game_id
           JOIN prop_results r ON r.prop_id=p.id
-         WHERE LOWER(g.league)=? AND r.settled_at IS NOT NULL""",
+         WHERE LOWER(g.league)=? AND r.settled_at IS NOT NULL AND r.actual_value IS NOT NULL""",
     # Settled props REACHABLE on a game page: the page joins on espn_event_id,
     # so a settled prop on an unlinked game exists and is invisible. This is the
     # cell that separates "we have the data" from "a user can see it".
@@ -157,16 +175,74 @@ SURFACE_SQL = {
         SELECT COUNT(*) FROM props p
           JOIN prop_games g ON g.id=p.game_id
           JOIN prop_results r ON r.prop_id=p.id
-         WHERE LOWER(g.league)=? AND r.settled_at IS NOT NULL
+         WHERE LOWER(g.league)=? AND r.settled_at IS NOT NULL AND r.actual_value IS NOT NULL
            AND g.espn_event_id IS NOT NULL AND g.espn_event_id!=''""",
     # The recap/preview on the game page.
     "game story": """
         SELECT COUNT(*) FROM game_story WHERE LOWER(league)=?""",
 }
 
+# ── the game page is not one surface, it is four ──────────────────────────────
+#
+# "prop games: 15" says props exist for a league. It does not say a reader ever
+# sees them, and it says nothing at all about the three other things that page is
+# supposed to do. A game detail page has a life cycle:
+#
+#   before   the preview text, and the props posted for the game
+#   during   what is happening right now
+#   after    the recap text, and how those props actually landed
+#
+# A league can pass one state and fail the rest — MLS carried 714 props against
+# 2 of 15 linked games and zero settlements, which the old single "prop games"
+# cell rendered as a healthy 15.
+#
+# On preview-vs-recap: `core_stories._story_is_stale_preview` decides that from
+# the game's live state and start time, which are scoreboard values, not columns.
+# From the database alone the honest split is whether we hold a COMPLETED result
+# row for the game the story is attached to — so these two rows are named for
+# what they measure and not for what we wish they measured. A story on a game
+# with no result row is a preview OR a recap of a game we never ingested, and
+# those are not distinguishable here.
+LIFECYCLE_SQL = {
+    "BEFORE — props posted": """
+        SELECT COUNT(*) FROM props p JOIN prop_games g ON g.id=p.game_id
+         WHERE LOWER(g.league)=? AND g.date >= DATE('now')""",
+    "  reachable on the page": """
+        SELECT COUNT(*) FROM props p JOIN prop_games g ON g.id=p.game_id
+         WHERE LOWER(g.league)=? AND g.date >= DATE('now')
+           AND g.espn_event_id IS NOT NULL AND g.espn_event_id!=''""",
+    "BEFORE — story, no final": """
+        SELECT COUNT(*) FROM game_story s WHERE LOWER(s.league)=?
+           AND NOT EXISTS(SELECT 1 FROM team_game_results r
+                           WHERE r.game_id=s.game_id AND LOWER(r.league)=LOWER(s.league)
+                             AND r.status='completed')""",
+    "AFTER — story, w/ final": """
+        SELECT COUNT(*) FROM game_story s WHERE LOWER(s.league)=?
+           AND EXISTS(SELECT 1 FROM team_game_results r
+                       WHERE r.game_id=s.game_id AND LOWER(r.league)=LOWER(s.league)
+                         AND r.status='completed')""",
+    "AFTER — props settled": """
+        SELECT COUNT(*) FROM props p
+          JOIN prop_games g ON g.id=p.game_id
+          JOIN prop_results r ON r.prop_id=p.id
+         WHERE LOWER(g.league)=? AND r.settled_at IS NOT NULL AND r.actual_value IS NOT NULL""",
+    "  shown on the page": """
+        SELECT COUNT(*) FROM props p
+          JOIN prop_games g ON g.id=p.game_id
+          JOIN prop_results r ON r.prop_id=p.id
+         WHERE LOWER(g.league)=? AND r.settled_at IS NOT NULL AND r.actual_value IS NOT NULL
+           AND g.espn_event_id IS NOT NULL AND g.espn_event_id!=''""",
+}
+
 # Surfaces we cannot measure without an ESPN request. Never render these as a
 # pass or a fail: "evidence unavailable" is neither.
 UNPROBED = ("standings", "scoreboard / scores", "live game state")
+
+# The DURING state is one of them, and it is not an oversight. Whether a page
+# says anything useful mid-game is answered by the live scoreboard, and probing
+# it costs a request budget that is a COUNT per host. Rendered as UNPROBED so the
+# gap stays visible instead of reading as a zero.
+LIFECYCLE_UNPROBED = "DURING — live state"
 
 
 def _surface(con, sql: str, league: str, tables: set[str]) -> int | None:
@@ -198,11 +274,13 @@ def measure(path: str) -> dict:
                      for label, table, _ in FEATURES}
             cells["props"] = _props_count(con, lg, tables)
             surfaces = {k: _surface(con, q, lg, tables) for k, q in SURFACE_SQL.items()}
+            lifecycle = {k: _surface(con, q, lg, tables) for k, q in LIFECYCLE_SQL.items()}
             out[lg] = {
                 "offered": lg in offered,
                 "cells": cells,
                 "prop_link": _linked_prop_games(con, lg, tables),
                 "surfaces": surfaces,
+                "lifecycle": lifecycle,
             }
         return out
 
@@ -217,7 +295,10 @@ def mark(label: str, league: str, n: int | None) -> str:
 
 def render(data: dict, title: str) -> None:
     labels = [l for l, _, _ in FEATURES] + ["props"]
-    width = max(len(l) for l in labels) + 2
+    # Every block shares one label column so the league columns line up down the
+    # whole page — a row that shifts by two characters is a row you read wrong.
+    width = max(len(l) for l in
+                labels + list(SURFACE_SQL) + list(LIFECYCLE_SQL) + [LIFECYCLE_UNPROBED]) + 2
     leagues = list(data)
     colw = max(9, max(len(l) for l in leagues) + 2)
 
@@ -232,12 +313,38 @@ def render(data: dict, title: str) -> None:
                       for l in leagues)
         print(f"{label:<{width}}{row}")
 
+    # Everything above counts rows. Everything below asks whether a reader can
+    # reach them — which is a different question and the one that kept being
+    # answered by assumption. These were computed on every run since this file
+    # was written and never printed.
+    _block(data, leagues, width, colw, "player surfaces — is the page worth opening",
+           list(SURFACE_SQL)[:3])
+    _block(data, leagues, width, colw,
+           "game detail, by state — the page does four jobs, not one",
+           list(LIFECYCLE_SQL), unprobed=LIFECYCLE_UNPROBED)
+
     print("\nprop_games linked to an ESPN event (unlinked props never reach a game page):")
     for l in leagues:
         pl = data[l]["prop_link"]
         if pl and pl[1]:
             flag = "" if pl[0] == pl[1] else "   <-- gap"
             print(f"  {l:<8} {pl[0]:>4} / {pl[1]:<4}{flag}")
+
+    print(f"\nnot measured here: {', '.join(UNPROBED)} — every one is an ESPN read,")
+    print("and the budget is a count per host. Absent evidence is not a zero.")
+
+
+def _block(data, leagues, width, colw, title, labels, unprobed=None):
+    """One titled section of rows, drawn against the same league columns."""
+    print(f"\n{title}")
+    print("-" * (width + colw * len(leagues)))
+    for label in labels:
+        key = "lifecycle" if label in LIFECYCLE_SQL else "surfaces"
+        row = "".join(f"{mark(label, l, data[l][key].get(label)):>{colw}}"
+                      for l in leagues)
+        print(f"{label:<{width}}{row}")
+    if unprobed:
+        print(f"{unprobed:<{width}}" + "".join(f"{'UNPROBED':>{colw}}" for _ in leagues))
 
 
 def main() -> int:

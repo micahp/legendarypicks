@@ -35,6 +35,55 @@ Rows in a table do not prove a page works. These are the surfaces a user opens.
 | 24 | **UFC/MLS/NCAAF/WC have no game story.** No recap, no preview. | `game_story` 0 | the story generator is wired for mlb/nba/nfl/nhl/wc only |
 | 25 | **MLS player game logs are half-promoted.** 878 players with a log on dev, 358 on prod. | prod 358 / dev 878 | part of #6's promotion |
 
+### Corrected 2026-08-14 — measured, and rows 3/4/21/22/23/24 were partly wrong
+
+Rows kept as written; these supersede them. The prescriptions in 3, 4 and 22 would
+each have sent the next person somewhere that does not work.
+
+- **#3, #4 — "when ESPN recovers" / "once `site.web.api` recovers" was never the
+  blocker.** `site.web.api.espn.com` answers 200 and is the host the linker uses
+  (`espn_client.py:97`); `sports.core.api` is the 403 one and the linker never
+  touches it. **MLS is now 15/15 linked** (`025ee05`). The real cause was a
+  vocabulary gap: Bovada and ESPN spell 8 of 13 clubs differently ("New York Red
+  Bulls"/"Red Bull New York", "DC United"/"D.C. United", "Los Angeles FC"/"LAFC",
+  five dropped FC/SC/CF suffixes). A second one in the MLB map — `CWS` in a repo
+  that is canonically `CHW`, plus a retired `OAK` — is fixed in `ece6b9d`.
+- **#3 — UFC is not a copy-from-prod job.** Its scoreboard enumeration is the wrong
+  shape: `espn_client.games('ufc', '2026-08-16')` returns **zero** events for a date
+  carrying a full card, because a card is one event containing many fights rather
+  than many events on a date. Prod's 33 correct links are useful as an **oracle** to
+  grade a new matcher against, not as rows to copy.
+- **#21 misreads its own number.** MLB settles 747,498 on dev and 690,106 of those
+  ARE reachable — 57,392 is the 7.7% remainder, not the whole. MLB is the healthiest
+  league here, not a regression.
+- **#22's fix instruction is the dangerous one: "WC settles 1,128/1,128" is false.**
+  `settlement.py` stamps `settled_at` on a prop it could not map and leaves `hit`
+  and `actual_value` NULL, so a failed settlement is stored in the same shape as a
+  landed one. Every count of "settled props" in this document counted failures as
+  successes. Requiring a real outcome:
+
+  | league | rows with `settled_at` | rows with a real outcome |
+  |---|---|---|
+  | wc | 1,128 | **0** |
+  | mlb (dev) | 747,498 | 642,348 |
+  | mlb (prod) | 700,549 | **421,145** |
+
+  **MLB is the only league that settles anything.** There is no working WC path to
+  wire UFC or MLS into. `league_feature_matrix.py` now requires `hit IS NOT NULL`
+  (`f1604e6`); the write side is open.
+- **New, and it gates 22 and 23:** an unmappable prop is currently **unsettleable
+  forever**. `settle_props.py` selects games `HAVING settled_props < total_props`
+  against `prop_results`, so a prop stamped with a NULL outcome is permanently
+  excluded from retry — adding the market mapping it lacked will not bring it back.
+- **#24 — the generator was not the problem, a crash was.** `scripts/game-recaps.sh`
+  already passed `mls` and `lcup`. The sweep had been dying with a `NameError` on
+  its first MLB game every three hours since `25391c7` (08-12) left three modules
+  reaching for names they never imported, so nothing after MLB ever ran. Fixed in
+  `8c63459` and `39063a0`; recaps resumed immediately (mlb 531→541, nfl 26→33,
+  lcup +1). Previews remain genuinely unwired — nothing generates them on a timer.
+- **ATP and WTA are empty shells**, not partial coverage: 206 `prop_games` between
+  them and **zero** `props`. Both HIDDEN, so not release-blocking.
+
 ## P1 — shipped or shipping, but empty
 
 | # | defect | evidence | fix |
