@@ -142,10 +142,19 @@ stats[] = [
 ]
 ```
 
-There are two roster groups and 40 unique athlete ids. Against game 692's 68 prop
-rows, ESPN-id-first and unique-normalized-name fallback matches 57 rows (39 by id, 18
-by name); 11 players are absent from the match roster and should follow the existing
-DNP/void contract. The non-zero facts include:
+There are two roster groups and 40 unique athlete ids. Game 692 has 68 prop rows for
+41 distinct players. Only 23 of those 41 players match the roster by stored ESPN id;
+18 do not. Four of the 18 have a non-null but non-matching ESPN id (`Sam Vines
+260912`, `Ilay Feingold 343191`, `Leonardo Campana 284834`, and `Luca Langoni
+338883`), so the id-first branch correctly refuses to fall back to a name. Of the 14
+players with no ESPN id, exact normalized-name fallback recovers 10. The final result
+is 57 settleable prop rows and 11 absent/id-drift rows belonging to eight distinct
+players.
+
+Absence from this roster is **not** a positive DNP signal. It can be a partial roster
+or stale identity, as the four non-matching ids demonstrate. The original MLS change
+incorrectly turned all 11 absent rows into permanent null-result voids. They now stay
+pending with no `prop_results` row. The non-zero published facts include:
 
 | athlete | `totalGoals` | `goalAssists` |
 |---|---:|---:|
@@ -165,6 +174,201 @@ whose `actual_value` and `hit` are both null for every unmapped prop. In the wor
 database all 1,128 WC props have result rows, but all 1,128 have null actuals and null
 hits. Production has the same pattern for its 392 WC result rows. That is false settled
 coverage, not successful grading, and it is not a pattern to copy into MLS or UFC.
+
+## Terminal-result contract and the legacy generic/MLB paths
+
+The same pending-instead-of-placeholder treatment applies to the generic path and to
+every MLB failure state. There is no reason for an inability to grade to create a
+`prop_results` row: row existence is the driver's terminal-state marker, so writing a
+row necessarily prevents a later retry.
+
+The corrected contract is:
+
+| observed state | write | counter |
+|---|---|---|
+| numeric actual, including a push whose `hit` is null | numeric `prop_results` row | `settled` |
+| unsupported market or invalid side | no row | `unmappable` |
+| missing local identity, absent athlete/stat group, incomplete or malformed published value | no row | `pending` |
+| explicit publisher DNP/void | no current write; no path measured here publishes that positive signal | `pending` |
+
+The generic ESPN reader returns the same `None` for athlete absence, ambiguous
+identity, category absence, label absence, and empty values. It cannot prove DNP.
+The MLB box score likewise publishes player/stat dictionaries but no positive DNP
+field used by this code; absence is not sufficient evidence. All former null inserts
+for those states have therefore been removed. The MLS roster-absence insert was
+removed for the same reason. New inability-to-grade cases remain eligible under
+`settle_props.py` on every later run.
+
+The current four-column schema cannot safely encode a distinct terminal void. Using
+`hit=-1` was considered and rejected: `routers/props.py`, `routers/analytics.py`,
+`regrade_props.py`, and `core_stories.py` select every non-null `hit` as a graded
+attempt, while `routers/game_extras.py` converts it through `bool(hit)`. A negative
+sentinel would silently become a loss in some places and a win in another. A fake
+numeric `actual_value` would contaminate averages and margins. The correct future
+shape is an explicit result-status column (for example `graded`, `push`, `void`) plus
+an audited reader migration. That schema work is outside this task's authorized files;
+until it exists, no path writes a terminal void without both a positive publisher
+signal and an unambiguous representation.
+
+`settle_props.py` still counts a result row as terminal, which is correct for all new
+rows because the corrected writers create only numeric outcomes. Its summary no longer
+calls raw row count "props graded"; it prints numeric outcomes separately from null
+outcome rows so legacy placeholders remain visible.
+
+### Existing ambiguous rows and the would-delete plan
+
+Read-only measurement on 2026-08-14 found:
+
+| database / league | all result rows | numeric actual | `actual_value IS NULL AND hit IS NULL` |
+|---|---:|---:|---:|
+| canonical dev / MLB, after the real settlement run | 756,334 | 651,184 | 105,150 |
+| canonical dev / MLS, after the real settlement run | 57 | 57 | 0 |
+| canonical dev / WC | 1,128 | 0 | 1,128 |
+| production / MLB | 700,549 | 421,145 | 279,404 |
+| production / WC | 392 | 0 | 392 |
+
+All 106,278 dev candidates and all 279,796 production candidates have a non-null
+`settled_at`. Neither database has an orphan `prop_results` row or an
+`actual_value=NULL, hit!=NULL` row. Both currently have zero pushes, but the predicate
+below is structurally safe for future legitimate pushes: a push has
+`actual_value IS NOT NULL AND hit IS NULL`, so it cannot satisfy
+`actual_value IS NULL`. Numeric wins and losses likewise have a non-null actual and
+cannot match.
+
+There is one limit no SQL predicate can overcome: the old failure and true-void
+encodings are byte-identical. No query can prove which historical null-both rows were
+genuine voids. If retaining an intended historical void is a requirement, there is no
+safe bulk delete. The plan below instead adopts the corrected contract: without a
+positive DNP signal and distinct status, every old null-both terminal row is an invalid
+placeholder and should become retryable. Current mapping inspection can classify likely
+causes, but cannot prove the historical branch:
+dev MLB includes 23,076 currently unmapped `total_pitcher_walks` rows, 4,335 rows whose
+player currently lacks MLBAM identity, 5,672 incomplete compound rows, and 72,067 other
+mapped-market nulls; production has 18,868, 3,414, 5,468, and 251,654 respectively.
+Every WC null is currently unmapped.
+
+I would delete **only** the known MLB/WC ambiguous rows, after approval, with this
+predicate (not run during this task):
+
+```sql
+DELETE FROM prop_results
+ WHERE actual_value IS NULL
+   AND hit IS NULL
+   AND prop_id IN (
+       SELECT p.id
+         FROM props p
+         JOIN prop_games g ON g.id = p.game_id
+        WHERE LOWER(g.league) IN ('mlb', 'wc')
+   );
+```
+
+The preflight count query is the delete predicate expressed without mutation:
+
+```sql
+SELECT LOWER(g.league) AS league, COUNT(*) AS rows_to_delete
+  FROM prop_results r
+  JOIN props p ON p.id = r.prop_id
+  JOIN prop_games g ON g.id = p.game_id
+ WHERE r.actual_value IS NULL
+   AND r.hit IS NULL
+   AND LOWER(g.league) IN ('mlb', 'wc')
+ GROUP BY LOWER(g.league)
+ ORDER BY LOWER(g.league);
+```
+
+It must return exactly `mlb=105150, wc=1128` on dev and
+`mlb=279404, wc=392` on production immediately before execution. After attaching the
+immutable pre-delete backup as `before`, both of these must return zero:
+
+```sql
+SELECT COUNT(*) AS numeric_rows_missing_after
+  FROM (
+      SELECT prop_id, actual_value, hit, settled_at
+        FROM before.prop_results WHERE actual_value IS NOT NULL
+      EXCEPT
+      SELECT prop_id, actual_value, hit, settled_at
+        FROM main.prop_results WHERE actual_value IS NOT NULL
+  );
+
+SELECT COUNT(*) AS numeric_rows_added_or_changed
+  FROM (
+      SELECT prop_id, actual_value, hit, settled_at
+        FROM main.prop_results WHERE actual_value IS NOT NULL
+      EXCEPT
+      SELECT prop_id, actual_value, hit, settled_at
+        FROM before.prop_results WHERE actual_value IS NOT NULL
+  );
+```
+
+That deliberately deletes possible genuine historical voids too: the legacy encoding
+makes them unknowable, and leaving them would preserve permanent false terminal state.
+They become retryable, not graded as anything. I would verify it as follows:
+
+1. Quiesce settlement writes and make a SQLite `.backup`; run `PRAGMA quick_check` on
+   the backup. Rehearse the delete on a second disposable copy first, never on
+   production.
+2. Capture candidate counts by league plus the numeric-result fingerprints. The exact
+   expected deletes are dev MLB `105150`, dev WC `1128` (total `106278`), production
+   MLB `279404`, and production WC `392` (total `279796`). Current numeric fingerprints
+   are dev `count=651241, sum(prop_id)=257091309541, min=485, max=768858` and
+   production `count=421145, sum(prop_id)=166897803522, min=485, max=757010`.
+3. In one `BEGIN IMMEDIATE` transaction, assert the candidate count is still exactly
+   106,278 on dev or 279,796 on production, execute the predicate, and assert
+   `changes()` equals that same count before committing. A changed precondition aborts.
+4. Verify `PRAGMA quick_check='ok'`, zero remaining MLB/WC null-both rows, unchanged
+   numeric fingerprints, and an empty two-way `EXCEPT` diff of
+   `(prop_id, actual_value, hit, settled_at)` for every pre/post row with a non-null
+   actual. That tuple-level comparison is the proof that no real outcome or push moved.
+5. Run `settle_props.py --dry-run` to prove affected games re-enter the queue, then a
+   bounded league/date settlement. Verify that numeric outcomes increase, unsupported
+   and unavailable rows remain absent/retryable, and zero new null-both rows appear.
+
+No row was deleted from either database during this work.
+
+## UFC linker: card enumeration versus fight identity
+
+The live publisher shape confirms two linker defects. UFC 330 contains 12 fight
+competitions under the card dated `2026-08-15`; `espn_client.games('ufc',
+'2026-08-16')` returns zero. The existing neighbor-day fetch does eventually see the
+August 15 card, but ESPN gives several competitions one card-segment time (`21:30`,
+`23:00`, or `01:00`) while the prop feed gives rolling bout estimates. The generic
+linker treated the mismatched instant as decisive and rejected valid fighter pairs.
+UFC's home/away slots are also not stable between publishers: the real Cody
+Gibson/Abdul Hussein fight is reversed between the two payloads.
+
+The UFC-specific matcher now treats the fighter pair as unordered, folds accents,
+accepts a conservative seven-character bookmaker truncation and first/last match, and
+ignores card-segment time. Both fighter names are preferred. A one-name match is used
+only when it identifies exactly one fight on the slate and the other prop name matches
+no published fighter; every ambiguity returns no link.
+
+The production database was opened `mode=ro` with `query_only=ON`. Against cached live
+cards, the matcher reproduced all 33 stored production fight ids exactly with zero
+mismatches. It proposes 34/35 production links because the duplicate Eduardo Henrique
+/ Charles Johnson row can now share the published fight id; Wellington Turman / Islam
+Dulatov is absent from ESPN's card and remains unlinked. A no-write dev dry run linked
+47/48, with that same matchup as the sole refusal. The test fixture records all 33
+production oracle rows and the corresponding live ESPN names/times. No
+`_MLB_TEAM_MAP` or `_MLS_TEAM_MAP` entry was changed.
+
+### The seven errors in the canonical-dev settlement run
+
+The real run reported `Settled=8893, Void=0, Unmappable=206, Pending=614,
+Errors=7`. All seven errors are the already-measured UFC card-date shape, not a new
+MLS, generic, or MLB failure. They are games `801`, `880`, `881`, `882`, `883`, `885`,
+and `954`; each game is dated `2026-08-16`, and each returned:
+
+```text
+UFC fight <competition id> absent from 2026-08-16 scoreboard
+```
+
+ESPN publishes all seven competition ids inside the card indexed under
+`2026-08-15`; the August 16 scoreboard contains zero events. The linker handles this
+with neighbor-day enumeration, but `_ufc_scoreboard_competition()` still queries only
+`game["date"]` during settlement finality. The exception is fail-closed: it wrote no
+result rows, so all 14 affected props remain retryable. This is a remaining reuse-the-
+neighbor-days follow-up in the known UFC shape, not evidence of an MLS regression or a
+new source payload.
 
 ## Implemented and verified
 
@@ -189,20 +393,25 @@ Erceg method props `=0`. Production itself was not written.
 
 The MLS slice (`4cf77b0`) now reads the measured roster-stat surface instead of adding
 an ineffective generic boxscore map. It uses ESPN athlete id first and unique,
-accent-folded exact name matching only for players without an ESPN id. Absent roster
-players retain the existing DNP/void result; a present roster whose requested stat is
-not published stays pending rather than becoming zero.
+accent-folded exact name matching only for players without an ESPN id. The follow-up
+settlement contract (`02b45ef`) leaves absent roster players and missing published
+stats pending rather than turning either state into a permanent null result.
 
 An in-memory replay of all 68 worktree game-692 props, linked only in memory to the real
 cached event 761469, returned:
 
 ```text
-settled=57 void=11 unmappable=0 pending=0 errors=0
-final_home=0.0 final_away=2.0
+settled=57 void=0 unmappable=0 pending=11 errors=0
+result_rows=57 numeric=57 null_both=0
 ```
 
-It wrote 57 numeric actuals and 11 DNP voids. The three over-0.5 hits were Agustin Resch
-goal, Guilherme Augusto goal, and Jack McGlynn assist, matching the published payload.
+It wrote only the 57 numeric actuals. The 11 absent/id-drift prop rows wrote nothing
+and remain retryable. The three over-0.5 hits were Agustin Resch goal, Guilherme Augusto
+goal, and Jack McGlynn assist, matching the published payload.
+
+The UFC linker follow-up (`bd548ed`) reproduced the production oracle and the 47/48
+dev dry-run result described above. The ESPN investigation used 15 cached requests to
+`site.web.api.espn.com` in total; subsequent oracle checks were cache hits.
 
 Focused settlement/finality coverage passed `18 passed`. A plain full-suite run exposed
 the worktree's unrelated 164 KiB `backend/data/picks.db` stub: 14 real-data assertions
@@ -217,3 +426,22 @@ The exact full backend result was:
 ```text
 1386 passed, 4 skipped, 6 xfailed in 64.65s
 ```
+
+After the retryability and linker follow-ups, the same isolation procedure overlaid
+disposable backups at **both** test database paths and mounted the real production file
+read-only inside the namespace. The current exact full backend result is:
+
+```text
+1405 passed, 4 skipped, 6 xfailed in 50.97s
+```
+
+Before and after that run, the real database SHA-256 values were unchanged:
+
+```text
+production picks.db  edfec59dade379d42cbd8e6bf9e360d687a26707c725f0c0b6f0188992029979
+worktree picks.dev   fc9bdd131b76808204d27d80c997fb74a1c660fe5849d4ca646cb60dd0dbac26
+```
+
+Both source databases returned `PRAGMA quick_check=ok`. The disposable test copies
+were removed. The user's `league_feature_matrix.py` read-side fix (`18ed3e1`) was merged
+from `dev` and was not edited in this branch.
