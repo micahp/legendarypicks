@@ -778,9 +778,15 @@ def get_standings(league: str):
     stage; the canonical knockout bracket/results once the season phase leaves
     'Group' (progression gate via espn.wc_is_knockout — never serve stale groups
     once knockouts have begun)."""
-    if league.lower() != "wc":
+    lg = league.lower()
+    if lg in ("mls", "ncaaf"):
         try:
-            return espn.team_strength(league)
+            return espn.group_standings(lg)
+        except ValueError as e:
+            raise HTTPException(404, str(e))
+    if lg != "wc":
+        try:
+            return espn.team_strength(lg)
         except ValueError as e:
             raise HTTPException(404, str(e))
     # WC: group tables are ONLY valid during the Group phase. Once knockouts

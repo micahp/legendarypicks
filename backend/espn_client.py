@@ -849,34 +849,62 @@ def team_strength_map(league):
 
 
 
+def _standing_int(value):
+    """Copy a published integer-like standings field, preserving absence."""
+    if value is None or value == "":
+        return None
+    return int(value)
+
+
+def _standing_rows(entries):
+    rows = []
+    for ent in entries:
+        s = {x.get("name"): x.get("value") for x in ent.get("stats", [])}
+        t = ent.get("team", {})
+        rows.append({
+            "rank": _standing_int(s.get("rank")),
+            "abbrev": t.get("abbreviation"),
+            "name": t.get("displayName"),
+            "played": _standing_int(s.get("gamesPlayed")),
+            "wins": _standing_int(s.get("wins")),
+            "draws": _standing_int(s.get("ties")),
+            "losses": _standing_int(s.get("losses")),
+            "gf": _standing_int(s.get("pointsFor")),
+            "ga": _standing_int(s.get("pointsAgainst")),
+            "gd": _standing_int(s.get("pointDifferential")),
+            "points": _standing_int(s.get("points")),
+        })
+    # ESPN publishes standings in rank order. Preserve that order rather than
+    # inventing an order from a nullable rank field during preseason.
+    return rows
+
+
 def group_standings(league):
-    """World Cup group tables — per-group standings with draws.
-    Returns [{group: "Group A", rows: [{rank, abbrev, name, played, wins, draws, losses, gf, ga, gd, points}]}]
+    """Published leaf-group standings for soccer and conference-shaped leagues.
+
+    Returns [{group, rows}] and copies the publisher's values without deriving
+    records, points, or membership. A container such as the Sun Belt Conference
+    can hold published East/West child tables instead of direct entries, so only
+    empty containers are descended; every populated leaf remains separately
+    visible. Missing publisher stats stay ``None`` for an honest UI dash.
     """
     _, path = _check(league)
     d = _get(_CORE.format(path=path) + "/standings", ttl=900)
     groups = []
-    for child in d.get("children", []):
-        gname = child.get("name", "")
-        rows = []
-        for ent in child.get("standings", {}).get("entries", []):
-            s = {x.get("name"): x.get("value") for x in ent.get("stats", [])}
-            t = ent.get("team", {})
-            rows.append({
-                "rank": int(s.get("rank", 0)),
-                "abbrev": t.get("abbreviation"),
-                "name": t.get("displayName"),
-                "played": int(s.get("gamesPlayed", 0)),
-                "wins": int(s.get("wins", 0)),
-                "draws": int(s.get("ties", 0)),
-                "losses": int(s.get("losses", 0)),
-                "gf": int(s.get("pointsFor", 0)),
-                "ga": int(s.get("pointsAgainst", 0)),
-                "gd": int(s.get("pointDifferential", 0)),
-                "points": int(s.get("points", 0)),
+
+    def add_leaf_groups(node):
+        entries = (node.get("standings") or {}).get("entries") or []
+        if entries:
+            groups.append({
+                "group": node.get("name", ""),
+                "rows": _standing_rows(entries),
             })
-        rows.sort(key=lambda r: r["rank"])
-        groups.append({"group": gname, "rows": rows})
+            return
+        for child in node.get("children") or []:
+            add_leaf_groups(child)
+
+    for child in d.get("children", []):
+        add_leaf_groups(child)
     return groups
 
 

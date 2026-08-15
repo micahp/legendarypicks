@@ -11,17 +11,17 @@ export interface TeamStats {
 }
 
 export interface StandingRow {
-  rank: number
+  rank: number | null
   abbrev: string
   name: string
-  played: number
-  wins: number
-  draws: number
-  losses: number
-  gf: number
-  ga: number
-  gd: number
-  points: number
+  played: number | null
+  wins: number | null
+  draws: number | null
+  losses: number | null
+  gf: number | null
+  ga: number | null
+  gd: number | null
+  points: number | null
 }
 
 export interface StandingGroup {
