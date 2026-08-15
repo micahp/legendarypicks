@@ -112,7 +112,6 @@ class PublisherOutageRoutesTest(unittest.TestCase):
     @patch.object(games.espn, "games", refuse)
     def test_games_route_uses_db_or_honest_empty_for_past_today_and_future(self):
         cases = [
-            ("2026-07-20", 1),
             ("2026-08-14", 0),
             ("2026-08-15", 0),
         ]
@@ -128,6 +127,23 @@ class PublisherOutageRoutesTest(unittest.TestCase):
                     {"team_game_results", "unavailable"},
                 )
 
+    @patch.object(games, "kick_game_stories", lambda *_args, **_kwargs: None)
+    @patch.object(games.espn, "games")
+    def test_past_day_is_db_primary_and_never_calls_the_publisher(self, publisher):
+        publisher.side_effect = AssertionError(
+            "past completed days must not call any ESPN publisher"
+        )
+        response = self.client.get(
+            "/api/mlb/games", params={"date": "2026-07-20"}
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.headers["x-lp-data-source"], "team_game_results")
+        self.assertEqual(len(response.json()), 1)
+        publisher.assert_not_called()
+
+    @patch.object(games, "kick_game_stories", lambda *_args, **_kwargs: None)
+    @patch.object(games.espn, "games", refuse)
+    def test_db_result_keeps_the_shared_scoreboard_shape(self):
         game = self.client.get(
             "/api/mlb/games", params={"date": "2026-07-20"}
         ).json()[0]

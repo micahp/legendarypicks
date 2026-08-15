@@ -538,19 +538,28 @@ def get_games(league: str, date: Optional[str] = Query(None, description="YYYY-M
         return _attach_cod_detail_ids(cdl_client.get_matches(date_str=date))
     lg = league.lower()
     data_source = "espn"
+    requested_date = date or dt.date.today().isoformat()
     try:
-        games = espn.games(league, date)
-    except ValueError as e:
-        raise HTTPException(404, str(e))
-    except Exception as exc:
-        fallback_date = date or dt.date.today().isoformat()
-        games = _games_from_db(lg, fallback_date)
-        data_source = "team_game_results" if games else "unavailable"
-        print(
-            f"[scores] publisher unavailable league={lg} date={fallback_date} "
-            f"error={type(exc).__name__}: {exc}; "
-            f"fallback_games={len(games)} source={data_source}"
-        )
+        is_completed_day = date is not None and dt.date.fromisoformat(date) < dt.date.today()
+    except ValueError:
+        is_completed_day = False
+
+    games = _games_from_db(lg, requested_date) if is_completed_day else None
+    if games:
+        data_source = "team_game_results"
+    else:
+        try:
+            games = espn.games(league, date)
+        except ValueError as e:
+            raise HTTPException(404, str(e))
+        except Exception as exc:
+            games = _games_from_db(lg, requested_date)
+            data_source = "team_game_results" if games else "unavailable"
+            print(
+                f"[scores] publisher unavailable league={lg} date={requested_date} "
+                f"error={type(exc).__name__}: {exc}; "
+                f"fallback_games={len(games)} source={data_source}"
+            )
 
     # ── finished-game final score: prefer our captured final ───────────────
     # The schedule above is ESPN-first because live and upcoming games are not
@@ -570,7 +579,7 @@ def get_games(league: str, date: Optional[str] = Query(None, description="YYYY-M
     # "Write the preview whenever we find out about the game": loading the scoreboard is
     # exactly when we find out, so warm the AI-story cache in the background here. Non-
     # blocking — the games response returns now; stories generate in daemon threads.
-    if lg in ("nba", "nhl", "mlb", "nfl"):
+    if data_source == "espn" and lg in ("nba", "nhl", "mlb", "nfl"):
         kick_game_stories(lg, games)
     max_age = 15 if data_source == "unavailable" else 30
     return JSONResponse(
