@@ -486,6 +486,25 @@ export const SportsService = {
     return request
   },
 
+  // W3 — day navigation jumps to the neighbouring date that actually has games
+  // instead of calendar ±1. Resolves the nearest local date strictly before
+  // (delta -1) / after (delta +1) the anchor across the given leagues, from the
+  // schedule-dates contract. Returns null when no league reports a game in that
+  // direction or discovery fails — callers decide the fallback.
+  getNeighbourGameDate: async (leagues: string[], anchor: string, delta: -1 | 1): Promise<string | null> => {
+    const perLeague = await Promise.all(leagues.map(async (league) => {
+      const data = await SportsService.getScheduleDates(league, anchor)
+      if (!data) return [] as string[]
+      const starts = delta < 0 ? data.past_event_starts : data.future_event_starts
+      return (starts || [])
+        .map(iso => new Date(iso).toLocaleDateString('en-CA'))
+        .filter(d => delta < 0 ? d < anchor : d > anchor)
+    }))
+    const candidates = perLeague.flat().sort()
+    if (!candidates.length) return null
+    return delta < 0 ? candidates[candidates.length - 1] : candidates[0]
+  },
+
   getNflScheduleWeeks: async (anchor: string): Promise<NflScheduleWeeksResponse | null> => {
     try {
       const res = await axios.get(`${API_BASE_URL}/nfl/schedule-weeks`, { params: { anchor } })

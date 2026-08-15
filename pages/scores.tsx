@@ -87,6 +87,16 @@ function LiveNow({ games, esportsLive }: { games: Game[]; esportsLive: boolean }
 
 const LEAGUE_PRIORITY = ['NBA', 'MLB', 'NHL', 'NFL', 'LCUP', 'MLS', 'COD', 'WC', 'ATP', 'WTA', 'UFC']
 const LEAGUES = ['All', 'NBA', 'MLB', 'NHL', 'NFL', 'Leagues Cup', 'MLS', 'ATP', 'WTA', 'UFC', 'Call of Duty', 'FIFA World Cup']
+// API keys for the board's league fan-out — shared by the games load and the
+// W3 schedule-dates navigation so a day change asks the same leagues it renders.
+const LEAGUE_KEYS = ['nba', 'mlb', 'nhl', 'nfl', 'lcup', 'mls', 'atp', 'wta', 'cod', 'ufc', 'wc']
+// The visible filter label → API key. Filter names are user-facing; keys are not.
+function leagueKeyFor(filter: string): string {
+  return filter === 'Call of Duty' ? 'cod'
+    : filter === 'FIFA World Cup' ? 'wc'
+    : filter === 'Leagues Cup' ? 'lcup'
+    : filter.toLowerCase()
+}
 // Section headings use raw league codes; only the new soccer leagues get a friendlier label.
 const LEAGUE_LABELS: Record<string, string> = {
   LCUP: 'Leagues Cup',
@@ -103,9 +113,19 @@ export default function ScoresPage() {
   const [leagueFilter, setLeagueFilter] = useState<string>('All')
   const isToday = date === today
   const shiftDay = (delta: number) => {
-    const d = new Date(date + 'T12:00:00')   // noon-anchored to dodge TZ rollover
-    d.setDate(d.getDate() + delta)
-    setDate(d.toLocaleDateString('en-CA'))
+    // W3 — the arrows jump to the neighbouring date that actually has games
+    // (schedule-dates contract) instead of calendar ±1. Strictness from
+    // ec5872e is preserved: when the target resolves, the load effect clears
+    // stale cards immediately, and partial vs full load failure stays
+    // distinguishable. When schedule discovery cannot answer or finds no game
+    // in that direction, we do NOT invent a calendar date — the board stays
+    // on the anchor, honestly showing what the anchor has.
+    const leagues = leagueFilter === 'All' ? LEAGUE_KEYS : [leagueKeyFor(leagueFilter)]
+    SportsService.getNeighbourGameDate(leagues, date, delta as -1 | 1)
+      .then((target) => {
+        if (target) setDate(target)
+      })
+      .catch(() => { /* discovery unavailable — stay on the anchor */ })
   }
   const goToday = () => setDate(today)
 

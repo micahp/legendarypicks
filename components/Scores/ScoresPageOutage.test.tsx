@@ -34,6 +34,24 @@ describe('/scores partial date-window outage', () => {
     const today = new Date().toLocaleDateString('en-CA')
     const previous = shift(today, -1)
     get.mockImplementation((url: string, config: any) => {
+      // W3 navigation resolves the neighbour via schedule-dates before loading
+      // games; answer it so the arrow lands on `previous`, then the games
+      // window for that day rejects below (the outage under test).
+      if (url.includes('/schedule-dates')) {
+        return Promise.resolve({
+          data: {
+            contract: 'league-schedule-dates-v1',
+            league: 'mlb',
+            anchor_date: today,
+            event_start_timezone: 'UTC',
+            available: true,
+            source: 'espn',
+            future_event_starts: [],
+            past_event_starts: [new Date(`${previous}T12:00:00`).toISOString()],
+            search: { future: [], past: [], max_horizon_days: 370 },
+          },
+        })
+      }
       const league = url.match(/\/([^/]+)\/games$/)?.[1]
       const date = config?.params?.date
       if (date === previous) return Promise.reject(new Error('publisher refused'))
