@@ -19,7 +19,7 @@ interface PerfRow {
 }
 
 type Tab = 'slate' | 'props' | 'performance' | 'matchups' | 'model'
-type League = 'All' | 'nba' | 'mlb' | 'nfl' | 'nhl' | 'wc' | 'ufc'
+type League = 'All' | 'nba' | 'mlb' | 'mls' | 'nfl' | 'nhl' | 'wc' | 'ufc'
 
 const TABS: { key: Tab; label: string }[] = [
   { key: 'slate', label: 'Slate' },
@@ -28,7 +28,7 @@ const TABS: { key: Tab; label: string }[] = [
   { key: 'matchups', label: 'Matchups' },
   { key: 'model', label: 'Model' },
 ]
-const LEAGUES: League[] = ['All', 'mlb', 'nba', 'nfl', 'nhl', 'wc', 'ufc']
+export const LEAGUES: League[] = ['All', 'mlb', 'mls', 'nba', 'nfl', 'nhl', 'wc', 'ufc']
 
 function Skeleton({ lines = 4 }: { lines?: number }) {
   return (
