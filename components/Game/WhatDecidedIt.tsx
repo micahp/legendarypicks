@@ -80,8 +80,11 @@ export default function WhatDecidedIt({
 }: { leaders: Leader[]; settledLines: number }) {
   if (!leaders.length) return null
 
+  // No outer frame or panel fill: this sits inside the game detail page, which
+  // already supplies the surface. The inner grid keeps its own hairline rules, so
+  // the three cells still read as a set without a second box around them.
   return (
-    <section className="rounded-xl border border-zinc-800 bg-zinc-900 p-4">
+    <section className="py-4">
       <div className="mb-3 flex items-baseline justify-between gap-3">
         <h2 className="text-sm font-bold uppercase tracking-wider text-zinc-400">What decided it</h2>
         {/* Sample size on the surface, always (honest-data-ui §4). Three of forty-eight

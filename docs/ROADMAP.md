@@ -4,7 +4,7 @@
 reasoning — that section keeps its own rule: add, don't rewrite, mark superseded rather than
 delete.**
 
-Checked = shipped to **production**, not to dev. Checklist last updated **2026-08-12**.
+Checked = shipped to **production**, not to dev. Checklist last updated **2026-08-14**.
 
 The constraint that orders all of it: **NFL fantasy drafts run the next 3-5 weeks**, and NFL
 draft research is the only use case a real user has said yes to (see "User evidence" below).
@@ -150,6 +150,57 @@ Kept as written above so the reasoning stays legible; read these instead.
   and **zero** `props` rows. Both are HIDDEN, so not release-blocking, but the
   linked/total counts in this document read as partial coverage of something that
   does not exist.
+
+### Added 2026-08-14 — the request path is doing expensive upstream work
+
+Two tasks opened the same day from the same root cause: **work that should be scheduled is
+happening on the page request instead.** One costs availability (ESPN), the other costs money
+(DeepSeek).
+
+- [ ] **`/scores` rebuilt on the ESPN model** → `TASK-scores-schedule-espn-model.md`.
+      Measured: the schedule has **no DB path** and never has (`7668c5e`, June 2025). Every
+      schedule read is a live ESPN call; the board fans out to **11 leagues × a two-day
+      window = up to 22 upstream calls for one day change**; `schedule-dates` walks up to 8
+      ranges sequentially (1.1s in-season, worse out of season). DB-backed `strength` answers
+      in **0.10s** against 0.56–1.11s for anything touching ESPN — that gap is the finding.
+
+      **Ten minutes of ESPN refusing on 08-14 took every past-date scores page down.** A
+      finished game's score never changes; we should not ask ESPN for it twice. The work:
+      completed days become **DB-primary** (not the fallback `ec5872e` added), an ESPN-style
+      **Top Events** page with a show-all link and no date picker, date navigation that jumps
+      to the next day the league **actually has games**, and **week-grouped navigation for
+      NFL/NCAAF**. Target: **zero** ESPN requests to load a past date, enforced by a
+      request-count gate.
+
+      Two primitives already exist and must be reused, not rebuilt:
+      `docs/API-nfl-schedule-weeks-v1.md` (ESPN's own week calendar, live today on
+      `pages/leagues/[league].tsx`) and `docs/API-league-schedule-dates-v1.md` (neighbour
+      dates that have games).
+
+- [ ] **DeepSeek spend moved off peak — deadline 2026-08-16** →
+      `TASK-deepseek-offpeak-scheduling.md`. DeepSeek introduces peak/off-peak billing on
+      08-16: peak is **01:00–04:00 and 06:00–10:00 UTC**, and off-peak is **half price** on
+      both `v4-flash` and `v4-pro` (verified against their pricing docs, not remembered).
+
+      Measured: **4 of 10 scheduled DeepSeek runs/day land in peak**, including both news
+      timers at 100% (08:35 and 09:20 UTC) and 3 of 8 `game-recaps` sweeps — the latter being
+      our largest consumer (`deepseek-v4-pro`, `max_tokens=8000`, high reasoning effort, per
+      game). Timers are written in **local** time, so the November CST switch will walk them
+      into peak silently; they must be pinned in **UTC**.
+
+      And scheduling alone is not enough: `kick_game_stories()` in `routers/games.py` fires
+      `v4-pro` from the **request path** whenever a user loads a scoreboard, so page traffic
+      generates uncontrolled spend at any hour. That moves to a queue.
+
+      Not in scope, verified so nobody re-checks: `run_pipeline.py` has no LLM step, and
+      `news-x` (`ingest_league_news.py --x-only`) makes no DeepSeek call.
+
+- [x] **`/scores` previous-day bug + the 500** — fixed in `ec5872e` (`/root/lp-scores-prev-day`),
+      **awaiting merge**, not in prod. Was not stale games persisting: the arrow moved the date
+      correctly and all 11 fetches 500'd, rendering an empty board. `get_games` caught only
+      `ValueError`, so any publisher refusal reached the user as `Internal Server Error`. Also
+      fixed a date-only comparison that rolled the prior day backward in Central time. This is
+      the floor the task above builds on, not a replacement for it.
 
 ## POST-DRAFT — league news engine (POC, decided 2026-08-06)
 
