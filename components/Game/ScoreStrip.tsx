@@ -1,8 +1,10 @@
 import { GameContext } from './types'
+import { formatLiveStatus, livePeriodTypeForLeague } from '../../lib/liveGameStatus'
 
 // ── score strip (compact ESPN-style) ──
-export default function ScoreStrip({ ctx, score, state, statusDetail, homeName, awayName, homeRecord, awayRecord }: {
+export default function ScoreStrip({ ctx, score, state, league, period, clock, statusDetail, homeName, awayName, homeRecord, awayRecord }: {
   ctx: GameContext | null; score: { away: number; home: number } | null; state?: string | null
+  league?: string | null; period?: number | null; clock?: string | null
   statusDetail?: string | null
   homeName: string; awayName: string; homeRecord: string; awayRecord: string
 }) {
@@ -11,7 +13,12 @@ export default function ScoreStrip({ ctx, score, state, statusDetail, homeName, 
   const statusLabel = isFinal
     ? (statusDetail && /susp/i.test(statusDetail) ? 'SUSPENDED' : statusDetail || 'FINAL')
     : isLive
-    ? statusDetail || 'LIVE'
+    ? formatLiveStatus({
+        type: livePeriodTypeForLeague(league || undefined),
+        number: period,
+        display: league?.toLowerCase() === 'mlb' ? statusDetail : undefined,
+        clock,
+      }, statusDetail)
     : 'SCHEDULED'
   // Dim the loser only when the game is final; keep both bright while live/scheduled.
   const homeWon = isFinal && score ? score.home > score.away : false

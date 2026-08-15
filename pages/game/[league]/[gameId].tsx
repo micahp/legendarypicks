@@ -28,6 +28,8 @@ const TAB_DEFS: { key: Tab; label: string }[] = [
   { key: 'info', label: 'Game Info' },
 ]
 
+const LIVE_DETAIL_POLL_MS = 30_000
+
 // ── Loading skeletons ──
 function BoxScoreSkeleton({ league }: { league: string }) {
   const isMLBLeague = league === 'mlb'
@@ -268,6 +270,23 @@ export default function GameDetailPage() {
     })()
   }, [league, gameId])
 
+  // The scoreboard refreshes live results; the detail header must not freeze
+  // at the moment the user opened it. Stop as soon as the publisher says the
+  // game is no longer in progress.
+  useEffect(() => {
+    if (!league || !gameId || detail?.state !== 'in') return
+    let alive = true
+    const refresh = async () => {
+      const next = await SportsService.getGameDetail(league, gameId)
+      if (alive && next) setDetail(next)
+    }
+    const timer = setInterval(refresh, LIVE_DETAIL_POLL_MS)
+    return () => {
+      alive = false
+      clearInterval(timer)
+    }
+  }, [league, gameId, detail?.state])
+
   // Lazy-fetch tab data on first open for per-tab leagues
   useEffect(() => {
     if (usesPerTab && showTabs) {
@@ -313,7 +332,8 @@ export default function GameDetailPage() {
       {/* Score strip */}
       <ScoreStrip
         ctx={ctx || null} score={displayScore} state={gameState}
-        statusDetail={gameState === 'in' ? detail?.clock || detail?.status_detail : detail?.status_detail}
+        league={detail?.league || lg} period={detail?.period} clock={detail?.clock}
+        statusDetail={detail?.status_detail}
         homeName={sHome?.name || ctx?.home_team || ''}
         awayName={sAway?.name || ctx?.away_team || ''}
         homeRecord={homeRecord} awayRecord={awayRecord}

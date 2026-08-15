@@ -1,4 +1,6 @@
 import axios from 'axios'
+import { livePeriodTypeForLeague } from '../lib/liveGameStatus'
+import type { LivePeriod } from '../lib/liveGameStatus'
 
 function normalizeBaseUrl(raw?: string): string {
   // Relative same-origin default: browser -> nginx -> backend. A 'localhost:8000'
@@ -19,12 +21,7 @@ export interface TennisSet {
   awayScore: number
 }
 
-// Live game period detail
-export interface LivePeriod {
-  number: number
-  type: 'inning' | 'period' | 'quarter' | 'round' | 'game' | 'half' | 'set'
-  display?: string
-}
+export type { LivePeriod } from '../lib/liveGameStatus'
 
 // The unified ESPN backend (sports_service.py) returns games as
 //   { game_id, date, state: 'pre'|'in'|'post', home/away: { abbrev, name, score } }
@@ -122,30 +119,17 @@ function normalizeLivePeriod(g: any, league?: string): LivePeriod | undefined {
   const lg = (league || g?.league || '').toLowerCase()
 
   if (period !== undefined && period !== null) {
-    // Determine type from league
-    let type: LivePeriod['type'] = 'period'
-    if (lg === 'mlb') type = 'inning'
-    else if (lg === 'nba') type = 'quarter'
-    else if (lg === 'nhl') type = 'period'
-    else if (lg === 'nfl') type = 'quarter'
-    else if (lg === 'ufc') type = 'round'
-    else if (lg === 'wc' || lg === 'lcup' || lg === 'mls') type = 'half'
-    else if (lg === 'cod') type = 'game'
-    else if (lg === 'atp' || lg === 'wta') type = 'set'
-
-    // For MLB, use ESPN's status_detail which has inning state ("Top 1st", "End 5th", etc.)
-    // For soccer, pass through the displayClock / stage label
-    let display: string | undefined
-    if (lg === 'wc' || lg === 'lcup' || lg === 'mls') {
-      display = g?.clock ?? g?.status_detail ?? undefined
-    } else if (lg === 'mlb' && g?.status_detail) {
-      display = g.status_detail
-    }
+    const type = livePeriodTypeForLeague(lg)
+    // ESPN's baseball display clock is often exactly "0:00" while the
+    // authoritative inning state lives in shortDetail. Keep them separate so
+    // the UI never treats the placeholder clock as the phase.
+    const display = lg === 'mlb' ? g?.status_detail ?? undefined : undefined
 
     return {
       number: typeof period === 'number' ? period : parseInt(String(period), 10),
       type,
       display,
+      clock: g?.clock ?? undefined,
     }
   }
 
@@ -155,14 +139,15 @@ function normalizeLivePeriod(g: any, league?: string): LivePeriod | undefined {
       number: g.inning,
       type: 'inning',
       display: g?.inning_state ? `Inning ${g.inning} (${g.inning_state})` : `Inning ${g.inning}`,
+      clock: g?.clock ?? undefined,
     }
   }
 
-  // WC: show running match clock even when period number is unavailable from ESPN
+  // Soccer: preserve the running match clock even when ESPN omits a half number.
   if (lg === 'wc' || lg === 'lcup' || lg === 'mls') {
     const clock = g?.clock ?? g?.status_detail
     if (clock) {
-      return { number: 0, type: 'half', display: clock }
+      return { type: 'half', clock }
     }
   }
 

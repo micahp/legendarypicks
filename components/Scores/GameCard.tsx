@@ -1,4 +1,6 @@
 import { useRouter } from 'next/router'
+import { formatLiveStatus } from '../../lib/liveGameStatus'
+import type { LivePeriod } from '../../lib/liveGameStatus'
 
 interface TeamInfo {
   teamId: string
@@ -31,14 +33,7 @@ interface GameProps {
   // Tennis: array of set scores [home, away] for each set
   sets?: TennisSet[]
   // Live game period details (only present when LIVE)
-  livePeriod?: {
-    // MLB: current inning (1-9+), NHL: period (1-3+), NBA: quarter (1-4+)
-    // UFC: round (1-5), COD: game (1-5+)
-    number: number
-    type: 'inning' | 'period' | 'quarter' | 'round' | 'game' | 'half' | 'set'
-    // Optional: time remaining in period, outs (MLB), etc.
-    display?: string
-  }
+  livePeriod?: LivePeriod
 }
 
 function getStatusBadge(status: GameProps['status']) {
@@ -56,35 +51,6 @@ function getStatusLabel(status: GameProps['status'], statusDetail?: string) {
   // Extra innings / OT: ESPN gives "Final/10", "Final/OT" — show it instead of plain FINAL.
   if (status === 'FINAL') return statusDetail && statusDetail.includes('/') ? statusDetail : 'FINAL'
   return 'SCHEDULED'
-}
-
-function getPeriodLabel(league?: string, livePeriod?: GameProps['livePeriod']) {
-  if (!livePeriod) return null
-
-  const { type, number, display } = livePeriod
-
-  // Use display if provided (MLB status_detail: "Top 1st", "End 5th", etc.)
-  if (display) return display
-
-  // Format based on type
-  switch (type) {
-    case 'inning':
-      return `${number}`
-    case 'period':
-      return `P${number}`
-    case 'quarter':
-      return `Q${number}`
-    case 'round':
-      return `R${number}`
-    case 'set':
-      return `Set ${number}`
-    case 'half':
-      return number === 1 ? '1st Half' : number === 2 ? '2nd Half' : `Half ${number}`
-    case 'game':
-      return `Game ${number}`
-    default:
-      return `${type} ${number}`
-  }
 }
 
 export default function GameCard(g: GameProps) {
@@ -118,7 +84,7 @@ export default function GameCard(g: GameProps) {
 
   // What to show in the top-right area:
   // - SCHEDULED: show time (except UFC)
-  // - LIVE: show LIVE badge (no time), plus period info if available
+  // - LIVE: show the explicit LIVE state plus publisher phase/clock
   // - FINAL: show FINAL badge (no time)
   const showTime = g.status === 'SCHEDULED' && (!isUFC || g.showScheduledTime)
   const showStatusBadge = g.status === 'LIVE' || g.status === 'FINAL'
@@ -167,7 +133,7 @@ export default function GameCard(g: GameProps) {
         <span
           className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${showStatusBadge ? getStatusBadge(g.status) : 'hidden'}`}
         >
-          {g.status === 'LIVE' && getPeriodLabel(g.league, g.livePeriod) ? getPeriodLabel(g.league, g.livePeriod) : (showStatusBadge ? getStatusLabel(g.status, g.statusDetail) : '')}
+          {g.status === 'LIVE' ? formatLiveStatus(g.livePeriod, g.statusDetail) : (showStatusBadge ? getStatusLabel(g.status, g.statusDetail) : '')}
         </span>
       </div>
 
