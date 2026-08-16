@@ -165,6 +165,55 @@ try:
 finally:
     games_router._db = _orig_db
 
+print("== [6] ncaaf standings: conference-grouped {group, rows} shape ==")
+ncaaf = games_router.get_standings("ncaaf")
+check("ncaaf standings is a list", isinstance(ncaaf, list), type(ncaaf))
+check("ncaaf has conference groups", len(ncaaf) >= 8, f"got {len(ncaaf)} groups")
+if ncaaf:
+    first = ncaaf[0]
+    check("first group has group+rows", isinstance(first, dict)
+          and isinstance(first.get("group"), str) and first.get("group")
+          and isinstance(first.get("rows"), list) and first["rows"],
+          f"first={str(first)[:120]}")
+    # every row carries the football columns; no fabricated soccer fields
+    bad = []
+    for g in ncaaf:
+        for r in g["rows"]:
+            for key in ("rank", "abbrev", "name", "played", "wins", "losses"):
+                if key not in r:
+                    bad.append(f"{g['group']}:{r.get('abbrev')} missing {key}")
+            if "points" in r or "draws" in r or "gf" in r:
+                bad.append(f"{g['group']}:{r.get('abbrev')} has soccer-only field")
+    check("every row has football columns and no soccer-only fields", not bad, f"{bad[:3]}")
+    ranks = [r["rank"] for g in ncaaf for r in g["rows"]]
+    per_group_ok = all(
+        [r["rank"] for r in g["rows"]] == list(range(1, len(g["rows"]) + 1))
+        for g in ncaaf
+    )
+    check("ranks are 1..N per conference", per_group_ok,
+          f"first ranks {ranks[:5]}")
+
+print("== [7] mls standings: conference-grouped soccer shape ==")
+mls = games_router.get_standings("mls")
+check("mls standings is a list", isinstance(mls, list), type(mls))
+check("mls has Eastern+Western groups", len(mls) == 2, f"got {len(mls)} groups")
+if len(mls) == 2:
+    names = sorted(g["group"] for g in mls)
+    check("groups are Eastern/Western Conference",
+          names == ["Eastern Conference", "Western Conference"], str(names))
+    sample = mls[0]["rows"][0]
+    for key in ("rank", "abbrev", "name", "played", "wins", "draws", "losses",
+                "gf", "ga", "gd", "points"):
+        check(f"mls row has {key}", key in sample, f"missing {key}")
+
+print("== [8] non-grouped leagues still flat (regression) ==")
+nba = games_router.get_standings("nba")
+check("nba standings is a flat list", isinstance(nba, list) and len(nba) > 0,
+      f"got {type(nba)} len={len(nba) if isinstance(nba, list) else 'n/a'}")
+if nba:
+    check("nba row has no group key",
+          "group" not in nba[0] and "rows" not in nba[0], f"first={str(nba[0])[:100]}")
+
 print()
 if FAILURES:
     print(f"FAILED {len(FAILURES)} check(s): {FAILURES}")

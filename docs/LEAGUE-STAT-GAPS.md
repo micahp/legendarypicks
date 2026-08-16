@@ -240,6 +240,18 @@ blocked_shots` (1,020 rows); player leaders (goals/assists/shots/sot) via
 `/api/mls/leaders`; team aggregates (Record + Scoring & shooting) via
 `/api/mls/team-aggregates`.
 
+**MLS season player_stats landed 2026-08-12 (worktree copy):** the `sot`
+column was added to `player_stats` (`migrate_mls_season_columns.py`), the mls
+season contract + `espn` source ownership were added to `league_stats.py`, and
+`ingest_mls_season_stats.py` summed the publisher's own per-game values into
+850 season rows (source `espn`, season 2025). Gate flip on the copy:
+`A/required-stats[season]` FAIL→PASS (4 stats) and `D/leaders-reach-logs`
+FAIL→PASS (850/850 = 100%). `/api/mls/leaders` (which the MANIFEST already
+declared) was wired: it had 404'd for mls — the route allowlist plus an mls
+category/default/change-metric definition now serve it (Messi 29G/16A, MIA).
+Rollup verified by independent recompute from raw logs (Messi 29/16/157/71,
+28 games).
+
 | missing | in the logs? | note |
 |---|---|---|
 | **saves / goalsConceded / shotsFaced (GK)** | **yes — published, unmapped** | the summary publishes them per keeper (measured event 727308: Pantemis saves=2); `ingest_soccer_logs` maps only goals/assists/shots/sot. GK-saves gap flagged in MANIFEST. Needs a position-G mapping + `position_group` on log rows |

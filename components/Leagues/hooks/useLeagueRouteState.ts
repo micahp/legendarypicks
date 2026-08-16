@@ -40,6 +40,8 @@ export function useLeagueRouteState() {
       : isNFL
         ? ['camp', 'standings', 'stats', 'schedule']
         : league === 'mls' || league === 'ncaaf'
+          // Neither has a leaders backend yet. An empty Stats tab reads as "no
+          // leaders exist" rather than "we have not built it" — so omit the tab.
           ? ['standings', 'schedule']
           : ['standings', 'stats', 'schedule']
 

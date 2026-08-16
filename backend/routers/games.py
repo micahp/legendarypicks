@@ -772,19 +772,172 @@ def get_strength(league: str):
     )
 
 
+# ── MLS standings: recorded vocabulary (espn-request-budget §7) ─────────────
+# team_game_results has no conference or team-name columns. The Eastern/Western
+# split and display names are recorded from ESPN's published /standings payload
+# (measured 2026-08-12, site.web.api.espn.com — a stable, publisher-measured
+# vocabulary for a completed season; used at zero requests). The numbers below
+# come from our DB's published per-game rows, never from a live ESPN call.
+_MLS_CONFERENCES = {
+    "Eastern": frozenset({
+        "NSH", "MIA", "NE", "CHI", "NYC", "CIN", "CLT", "RBNY", "DC",
+        "ORL", "CLB", "TOR", "PHI", "MTL", "ATL",
+    }),
+    "Western": frozenset({
+        "VAN", "LAFC", "SJ", "HOU", "RSL", "DAL", "STL", "POR", "SEA",
+        "MIN", "COL", "LA", "SD", "ATX", "SKC",
+    }),
+}
+_MLS_TEAM_NAMES = {
+    "NSH": "Nashville SC", "MIA": "Inter Miami CF", "NE": "New England Revolution",
+    "CHI": "Chicago Fire FC", "NYC": "New York City FC", "CIN": "FC Cincinnati",
+    "CLT": "Charlotte FC", "RBNY": "Red Bull New York", "DC": "D.C. United",
+    "ORL": "Orlando City SC", "CLB": "Columbus Crew", "TOR": "Toronto FC",
+    "PHI": "Philadelphia Union", "MTL": "CF Montréal", "ATL": "Atlanta United FC",
+    "VAN": "Vancouver Whitecaps", "LAFC": "LAFC", "SJ": "San Jose Earthquakes",
+    "HOU": "Houston Dynamo FC", "RSL": "Real Salt Lake", "DAL": "FC Dallas",
+    "STL": "St. Louis CITY SC", "POR": "Portland Timbers", "SEA": "Seattle Sounders FC",
+    "MIN": "Minnesota United FC", "COL": "Colorado Rapids", "LA": "LA Galaxy",
+    "SD": "San Diego FC", "ATX": "Austin FC", "SKC": "Sporting Kansas City",
+}
+
+
+def _mls_standings_season():
+    """The mls season the DB actually holds, derived from the canonical
+    coverage record; falls back to the newest season present in the results
+    table. Returns an int or None when the league has no rows at all."""
+    with closing(_db()) as con:
+        try:
+            row = con.execute(
+                "SELECT season FROM team_stats_coverage"
+                " WHERE league='mls' AND status='complete'"
+                " ORDER BY season DESC LIMIT 1"
+            ).fetchone()
+            if row is not None:
+                return int(row["season"])
+        except sqlite3.Error:
+            pass
+        row = con.execute(
+            "SELECT MAX(season) AS season FROM team_game_results"
+            " WHERE league='mls'"
+        ).fetchone()
+        return int(row["season"]) if row and row["season"] is not None else None
+
+
+def _mls_standings_from_db(season):
+    """MLS Eastern/Western tables from the published per-game rows in
+    team_game_results for ONE explicit season (the coverage-canonical one),
+    restricted to status='completed' — the query does exactly what the
+    docstring claims, never "whatever happens to be in the table".
+
+    Published-first: P/W/D/L are counts of the publisher's own result values,
+    GF/GA are sums of the publisher's own scores, GD = GF - GA, Pts = 3W + D
+    (MLS's published 3/1/0 rule). No live ESPN call — the DB is the source.
+
+    Returns [{group, rows: [{rank, abbrev, name, played, wins, draws, losses,
+    gf, ga, gd, points}]}]. Sort: points desc, then wins, then GD, then GF
+    (standard MLS tiebreakers); rank is the row's position in that order.
+
+    Fail-loud posture, both directions:
+    - If any team's played != wins + draws + losses, a 503 names the team —
+      never silently normalized.
+    - If the set of distinct mls teams in the DB for that season does not
+      equal the union of the recorded conference frozensets, a 503 names the
+      unmapped abbrevs — never a partial table with a 200.
+    """
+    with closing(_db()) as con:
+        rows = con.execute(
+            """
+            SELECT team,
+                   COUNT(*) AS played,
+                   SUM(CASE WHEN result='W' THEN 1 ELSE 0 END) AS wins,
+                   SUM(CASE WHEN result='D' THEN 1 ELSE 0 END) AS draws,
+                   SUM(CASE WHEN result='L' THEN 1 ELSE 0 END) AS losses,
+                   SUM(score_for) AS gf,
+                   SUM(score_against) AS ga
+            FROM team_game_results
+            WHERE league = 'mls' AND season = ? AND status = 'completed'
+            GROUP BY team
+            """,
+            (season,),
+        ).fetchall()
+        db_teams = {r["team"] for r in rows}
+    recorded = _MLS_CONFERENCES["Eastern"] | _MLS_CONFERENCES["Western"]
+    missing_from_db = sorted(recorded - db_teams)
+    unmapped = sorted(db_teams - recorded)
+    if missing_from_db or unmapped:
+        raise HTTPException(
+            503,
+            "MLS standings coverage: "
+            + (f"no rows for {missing_from_db}" if missing_from_db else "")
+            + ("; " if missing_from_db and unmapped else "")
+            + (f"unmapped abbrevs {unmapped}" if unmapped else ""),
+        )
+    by_abbrev = {r["team"]: r for r in rows}
+    groups = []
+    for conf, members in _MLS_CONFERENCES.items():
+        conf_rows = []
+        for team in sorted(members):
+            r = by_abbrev[team]
+            wins = int(r["wins"] or 0)
+            draws = int(r["draws"] or 0)
+            losses = int(r["losses"] or 0)
+            gf = int(r["gf"] or 0)
+            ga = int(r["ga"] or 0)
+            played = int(r["played"] or 0)
+            if played != wins + draws + losses:
+                raise HTTPException(
+                    503,
+                    f"MLS standings integrity: {team} played={played} != "
+                    f"W+D+L={wins + draws + losses}",
+                )
+            conf_rows.append({
+                "rank": 0,
+                "abbrev": team,
+                "name": _MLS_TEAM_NAMES.get(team, team),
+                "played": played,
+                "wins": wins,
+                "draws": draws,
+                "losses": losses,
+                "gf": gf,
+                "ga": ga,
+                "gd": gf - ga,
+                "points": 3 * wins + draws,
+            })
+        conf_rows.sort(key=lambda x: (x["points"], x["wins"], x["gd"], x["gf"]),
+                       reverse=True)
+        for i, row in enumerate(conf_rows, start=1):
+            row["rank"] = i
+        groups.append({"group": f"{conf} Conference", "rows": conf_rows})
+    return groups
+
+
 @router.get("/api/{league}/standings")
 def get_standings(league: str):
     """Group/division standings. For World Cup: group tables during the group
     stage; the canonical knockout bracket/results once the season phase leaves
     'Group' (progression gate via espn.wc_is_knockout — never serve stale groups
     once knockouts have begun)."""
-    lg = league.lower()
-    if lg in ("mls", "ncaaf"):
+    if league.lower() == "ncaaf":
+        # Conference-grouped tables - CFB's /standings payload has no
+        # rank/gamesPlayed/losses keys; the record lives in `overall` and
+        # entries arrive pre-ordered by conference standing. See
+        # espn_client.ncaaf_conference_standings.
         try:
-            return espn.group_standings(lg)
+            return espn.ncaaf_conference_standings()
         except ValueError as e:
             raise HTTPException(404, str(e))
-    if lg != "wc":
+    if league.lower() == "mls":
+        # Eastern/Western conference tables (P W D L GF GA GD Pts), aggregated
+        # from the published per-game rows in team_game_results — DB-first, no
+        # live ESPN call per pageview. Points use the league's published 3/1/0
+        # rule applied to the publisher's own result rows. Season comes from
+        # the coverage record, not a magic literal.
+        mls_season = _mls_standings_season()
+        if mls_season is None:
+            raise HTTPException(503, "MLS standings: no mls rows in the DB")
+        return _mls_standings_from_db(mls_season)
+    if league.lower() != "wc":
         try:
             return espn.team_strength(lg)
         except ValueError as e:

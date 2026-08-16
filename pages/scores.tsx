@@ -85,11 +85,11 @@ function LiveNow({ games, esportsLive }: { games: Game[]; esportsLive: boolean }
   )
 }
 
-const LEAGUE_PRIORITY = ['NBA', 'MLB', 'NHL', 'NFL', 'LCUP', 'MLS', 'COD', 'WC', 'ATP', 'WTA', 'UFC']
-const LEAGUES = ['All', 'NBA', 'MLB', 'NHL', 'NFL', 'Leagues Cup', 'MLS', 'ATP', 'WTA', 'UFC', 'Call of Duty', 'FIFA World Cup']
+const LEAGUE_PRIORITY = ['NBA', 'MLB', 'NHL', 'NFL', 'LCUP', 'MLS', 'NCAAF', 'COD', 'WC', 'ATP', 'WTA', 'UFC']
+const LEAGUES = ['All', 'NBA', 'MLB', 'NHL', 'NFL', 'Leagues Cup', 'MLS', 'NCAAF', 'ATP', 'WTA', 'UFC', 'Call of Duty', 'FIFA World Cup']
 // API keys for the board's league fan-out — shared by the games load and the
 // W3 schedule-dates navigation so a day change asks the same leagues it renders.
-const LEAGUE_KEYS = ['nba', 'mlb', 'nhl', 'nfl', 'lcup', 'mls', 'atp', 'wta', 'cod', 'ufc', 'wc']
+const LEAGUE_KEYS = ['nba', 'mlb', 'nhl', 'nfl', 'lcup', 'mls', 'ncaaf', 'atp', 'wta', 'cod', 'ufc', 'wc']
 // The visible filter label → API key. Filter names are user-facing; keys are not.
 function leagueKeyFor(filter: string): string {
   return filter === 'Call of Duty' ? 'cod'
@@ -174,7 +174,7 @@ export default function ScoresPage() {
         if (leagueFilter === 'All') {
           // Progressive: paint each league as it resolves so the fast ones (<200ms) show
           // immediately instead of the whole board waiting on the slowest (cod ~1.3s).
-          const leagues = ['nba', 'mlb', 'nhl', 'nfl', 'lcup', 'mls', 'atp', 'wta', 'cod', 'ufc', 'wc']
+          const leagues = LEAGUE_KEYS
           let cleared = false
           const clearOnce = () => { if (!cleared && !ignore) { cleared = true; setLoading(false) } }
           const settled = await Promise.allSettled(leagues.map(async (l) => {
@@ -189,7 +189,7 @@ export default function ScoresPage() {
           }
           clearOnce() // clear even if every league was empty
         } else {
-          const l = leagueFilter === 'Call of Duty' ? 'cod' : leagueFilter === 'FIFA World Cup' ? 'wc' : leagueFilter === 'Leagues Cup' ? 'lcup' : leagueFilter.toLowerCase()
+          const l = leagueKeyFor(leagueFilter)
           const data = await SportsService.getGamesByLocalDate(l, date, { strict: true })
           if (!ignore) setGames(Array.isArray(data) ? data : [])
         }
@@ -218,7 +218,7 @@ export default function ScoresPage() {
           if (leagueFilter === 'All') {
             data = await SportsService.getAllGamesByLocalDate(date, { strict: true })
           } else {
-            const l = leagueFilter === 'Call of Duty' ? 'cod' : leagueFilter === 'FIFA World Cup' ? 'wc' : leagueFilter === 'Leagues Cup' ? 'lcup' : leagueFilter.toLowerCase()
+            const l = leagueKeyFor(leagueFilter)
             data = await SportsService.getGamesByLocalDate(l, date, { strict: true })
           }
           if (!ignore) setGames(Array.isArray(data) ? data : [])

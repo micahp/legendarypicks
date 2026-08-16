@@ -36,6 +36,18 @@ const LEAGUE_LOG_COLS: Record<string, { key: string; label: string }[]> = {
     { key: 'hits_allowed', label: 'H' }, { key: 'BB', label: 'BB' },
     { key: 'K', label: 'K' },
   ],
+  ncaaf: [
+    { key: 'att', label: 'C/ATT' }, { key: 'pass_yds', label: 'YDS' },
+    { key: 'pass_td', label: 'TD' }, { key: 'intc', label: 'INT' },
+    { key: 'rush_yds', label: 'RUSH' }, { key: 'rush_td', label: 'RUSH TD' },
+    { key: 'rec', label: 'REC' }, { key: 'rec_yds', label: 'REC YDS' },
+    { key: 'rec_td', label: 'REC TD' },
+    { key: 'tackles', label: 'TKL' }, { key: 'tackles_solo', label: 'SOLO' },
+    { key: 'sacks', label: 'SACK' }, { key: 'tfl', label: 'TFL' },
+    { key: 'pd', label: 'PD' }, { key: 'def_int', label: 'INT' },
+    { key: 'def_int_yds', label: 'INT YDS' }, { key: 'def_int_td', label: 'INT TD' },
+    { key: 'def_td', label: 'DEF TD' }, { key: 'qbhur', label: 'QB HUR' },
+  ],
 }
 
 export default function LeagueGameLog({ games, league, position }: {
