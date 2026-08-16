@@ -39,7 +39,9 @@ export function useLeagueRouteState() {
       ? ['standings', 'stats', 'schedule']
       : isNFL
         ? ['camp', 'standings', 'stats', 'schedule']
-        : ['standings', 'stats', 'schedule']
+        : league === 'ncaaf'
+          ? ['standings', 'schedule']  // Stats tab needs a leaders backend (ncaaf has none yet — honest-data-ui: a 404 surface is worse than an absent one)
+          : ['standings', 'stats', 'schedule']
 
   const [activeTab, setActiveTab] = useState<HubTab>('standings')
   const [scheduleDate, setScheduleDate] = useState(() => localToday())

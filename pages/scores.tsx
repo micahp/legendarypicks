@@ -85,8 +85,13 @@ function LiveNow({ games, esportsLive }: { games: Game[]; esportsLive: boolean }
   )
 }
 
-const LEAGUE_PRIORITY = ['NBA', 'MLB', 'NHL', 'NFL', 'COD', 'WC', 'ATP', 'WTA', 'UFC']
-const LEAGUES = ['All', 'NBA', 'MLB', 'NHL', 'NFL', 'ATP', 'WTA', 'UFC', 'Call of Duty', 'FIFA World Cup']
+const LEAGUE_PRIORITY = ['NBA', 'MLB', 'NHL', 'NFL', 'LCUP', 'MLS', 'NCAAF', 'COD', 'WC', 'ATP', 'WTA', 'UFC']
+const LEAGUES = ['All', 'NBA', 'MLB', 'NHL', 'NFL', 'Leagues Cup', 'MLS', 'NCAAF', 'ATP', 'WTA', 'UFC', 'Call of Duty', 'FIFA World Cup']
+// Section headings use raw league codes; only the new soccer leagues get a friendlier label.
+const LEAGUE_LABELS: Record<string, string> = {
+  LCUP: 'Leagues Cup',
+  MLS: 'MLS',
+}
 
 // Revalidate interval for live games (ms) — must not be statically cached
 const LIVE_POLL_MS = 30_000
@@ -147,7 +152,7 @@ export default function ScoresPage() {
           // Progressive: paint each league as it resolves so the fast ones (<200ms) show
           // immediately instead of the whole board waiting on the slowest (cod ~1.3s).
           setGames([])
-          const leagues = ['nba', 'mlb', 'nhl', 'nfl', 'atp', 'wta', 'cod', 'ufc', 'wc']
+          const leagues = ['nba', 'mlb', 'nhl', 'nfl', 'lcup', 'mls', 'ncaaf', 'atp', 'wta', 'cod', 'ufc', 'wc']
           let cleared = false
           const clearOnce = () => { if (!cleared && !ignore) { cleared = true; setLoading(false) } }
           const settled = await Promise.allSettled(leagues.map(async (l) => {
@@ -159,7 +164,7 @@ export default function ScoresPage() {
           }
           clearOnce() // clear even if every league was empty
         } else {
-          const l = leagueFilter === 'Call of Duty' ? 'cod' : leagueFilter === 'FIFA World Cup' ? 'wc' : leagueFilter.toLowerCase()
+          const l = leagueFilter === 'Call of Duty' ? 'cod' : leagueFilter === 'FIFA World Cup' ? 'wc' : leagueFilter === 'Leagues Cup' ? 'lcup' : leagueFilter.toLowerCase()
           const data = await SportsService.getGamesByLocalDate(l, date)
           if (!ignore) setGames(Array.isArray(data) ? data : [])
         }
@@ -188,7 +193,7 @@ export default function ScoresPage() {
           if (leagueFilter === 'All') {
             data = await SportsService.getAllGamesByLocalDate(date)
           } else {
-            const l = leagueFilter === 'Call of Duty' ? 'cod' : leagueFilter === 'FIFA World Cup' ? 'wc' : leagueFilter.toLowerCase()
+            const l = leagueFilter === 'Call of Duty' ? 'cod' : leagueFilter === 'FIFA World Cup' ? 'wc' : leagueFilter === 'Leagues Cup' ? 'lcup' : leagueFilter.toLowerCase()
             data = await SportsService.getGamesByLocalDate(l, date)
           }
           if (!ignore) setGames(Array.isArray(data) ? data : [])
@@ -321,7 +326,7 @@ export default function ScoresPage() {
               return (
                 <div key={league} className="space-y-4">
                   <div className="flex items-center gap-4">
-                    <h2 className="text-xl font-bold tracking-tight text-white">{league}</h2>
+                    <h2 className="text-xl font-bold tracking-tight text-white">{LEAGUE_LABELS[league] || league}</h2>
                     <div className="h-px flex-1 bg-zinc-800" />
                   </div>
                   {subKeys.map((sub) => {
