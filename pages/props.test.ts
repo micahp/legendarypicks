@@ -48,5 +48,6 @@ describe('Props slate grouping', () => {
     expect(dates[0].textContent).toContain('NHL1 game · 4 props')
     expect(dates[1].textContent).toContain('NBA1 game · 6 props')
     expect(dates[1].textContent).toContain('NFL2 games · 22 props')
+    expect(document.querySelectorAll('[data-slate-date] .h-px')).toHaveLength(0)
   })
 })

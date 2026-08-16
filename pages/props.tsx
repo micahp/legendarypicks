@@ -211,7 +211,6 @@ function SlateTab({ league }: { league: League }) {
               <h2 className="shrink-0 text-sm font-bold uppercase tracking-wide text-zinc-300">
                 {formatDate(gameDate)}
               </h2>
-              <div className="h-px min-w-4 flex-1 bg-gradient-to-r from-zinc-800 to-transparent" />
             </div>
 
             {leagueGroups.map(({ leagueKey, games }) => {
@@ -225,7 +224,6 @@ function SlateTab({ league }: { league: League }) {
                     <span className="truncate text-xs tabular-nums text-zinc-600">
                       {games.length} game{games.length === 1 ? '' : 's'} · {propCount} props
                     </span>
-                    <div className="h-px min-w-4 flex-1 bg-gradient-to-r from-zinc-800 to-transparent" />
                   </div>
                   <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                     {games.map(game => {
