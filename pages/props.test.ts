@@ -3,8 +3,8 @@ import { render, waitFor } from '@testing-library/react'
 import PropsPage, { LEAGUES } from './props'
 
 describe('Props league selector', () => {
-  it('offers MLS as a first-class filter', () => {
-    expect(LEAGUES).toContain('mls')
+  it('omits World Cup and puts UFC first with MLB after NHL', () => {
+    expect(LEAGUES).toEqual(['All', 'ufc', 'mls', 'nba', 'nfl', 'nhl', 'mlb'])
   })
 })
 
