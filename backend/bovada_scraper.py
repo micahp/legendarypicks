@@ -14,7 +14,7 @@ Usage:
 
 Source: Bovada's internal API — no auth, no Cloudflare, live odds.
 """
-import sys, json, os, re, urllib.request, datetime as dt
+import sys, json, os, re, unicodedata, urllib.request, datetime as dt
 
 from link_prop_games import link_prop_game
 import espn_client as espn
@@ -655,6 +655,35 @@ def _wc_direct_ingest(all_props: list, today: str):
     return ingested
 
 
+def _normalize_identity_name(value: str) -> str:
+    value = unicodedata.normalize("NFKD", value or "").encode("ascii", "ignore").decode("ascii")
+    return re.sub(r"\s+", " ", re.sub(r"[^\w\s]", "", value.lower())).strip()
+
+
+def _resolve_ufc_player_for_bovada(con, player_name: str) -> int:
+    """Use a reviewed alias before creating a Bovada-only UFC player row."""
+    exact = con.execute(
+        "SELECT id FROM players WHERE name=? AND league='ufc' ORDER BY id", (player_name,)
+    ).fetchall()
+    if len(exact) == 1:
+        return exact[0]["id"]
+    if len(exact) > 1:
+        raise RuntimeError("ambiguous UFC canonical name from Bovada: {}".format(player_name))
+    aliases = con.execute(
+        "SELECT DISTINCT p.id FROM name_alias na JOIN players p ON p.id=na.player_id "
+        "WHERE p.league='ufc' AND na.alias_norm=? ORDER BY p.id",
+        (_normalize_identity_name(player_name),),
+    ).fetchall()
+    if len(aliases) == 1:
+        return aliases[0]["id"]
+    if len(aliases) > 1:
+        raise RuntimeError("ambiguous UFC reviewed alias from Bovada: {}".format(player_name))
+    return con.execute(
+        "INSERT INTO players(name, team, league) VALUES(?,?,?)",
+        (player_name, None, "ufc"),
+    ).lastrowid
+
+
 def _ufc_direct_ingest(all_props: list, today: str) -> int:
     """Direct DB insert for UFC method-of-victory props — fighters are created as players (league
     'ufc') as needed, like WC. Game home/away = the two fighters; start_time stored. No ESPN linking."""
@@ -689,11 +718,7 @@ def _ufc_direct_ingest(all_props: list, today: str) -> int:
                     ("ufc", batch["date"], batch["home"], batch["away"], "", game_start)).lastrowid
             print(f"  {batch['away']} vs {batch['home']}: {len(batch['props'])} props")
             for p in batch["props"]:
-                pname = p["player_name"]
-                pl = con.execute("SELECT id FROM players WHERE name=? AND league=?", (pname, "ufc")).fetchone()
-                player_id = pl["id"] if pl else con.execute(
-                    "INSERT INTO players(name, team, league) VALUES(?,?,?)",
-                    (pname, p.get("team") or None, "ufc")).lastrowid
+                player_id = _resolve_ufc_player_for_bovada(con, p["player_name"])
                 line_val = p.get("line") or 0
                 side = p.get("side", "over")
                 market = p.get("market", "")
