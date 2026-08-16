@@ -150,6 +150,18 @@ class UnderdogIdentityTests(unittest.TestCase):
 
     def test_reviewed_identity_corrects_display_name_and_preserves_bovada_alias(self):
         original_id = self.player("Kaua Fernandes")
+        turner_id = self.player("Jalin Turner")
+        game_id = self.con.execute(
+            "INSERT INTO prop_games(league,date,home,away) VALUES('ufc','2026-08-16',?,?)",
+            ("Jalin Turner", "Kaua Fernandes"),
+        ).lastrowid
+        for player_id in (original_id, turner_id):
+            self.con.execute(
+                "INSERT INTO props(game_id,player_id,market,line,side,source,captured_at) "
+                "VALUES(?,?, 'win_by_decision',0.5,'over','bovada','2026-08-15T00:00:00Z')",
+                (game_id, player_id),
+            )
+        self.con.commit()
 
         reviewed_id = reviewed.apply_review(self.con)
         self.con.commit()
@@ -163,11 +175,32 @@ class UnderdogIdentityTests(unittest.TestCase):
             bovada_scraper._resolve_ufc_player_for_bovada(self.con, "Kaua Fernandes"),
             original_id,
         )
-        self.assertEqual(self.scalar("SELECT COUNT(*) FROM players"), 1)
+        self.assertEqual(
+            self.con.execute("SELECT away FROM prop_games WHERE id=?", (game_id,)).fetchone()["away"],
+            "Kauê Fernandes",
+        )
+        self.assertEqual(self.scalar("SELECT COUNT(*) FROM players"), 2)
         source_key = self.con.execute(
             "SELECT source_player_key FROM player_source_ids WHERE player_id=?", (original_id,)
         ).fetchone()["source_player_key"]
         self.assertEqual(source_key, reviewed.REVIEW["source_player_key"])
+
+        old_path = os.environ["LP_DB_PATH"]
+        os.environ["LP_DB_PATH"] = self.db_path
+        try:
+            bovada_scraper._ufc_direct_ingest([
+                {"player_name": "Jalin Turner", "game_desc": "Turner vs Fernandes",
+                 "home_team": "Jalin Turner", "away_team": "Kaua Fernandes",
+                 "line": 0.5, "side": "over", "market": "win_by_decision",
+                 "odds": 100, "start_time": None},
+                {"player_name": "Kaua Fernandes", "game_desc": "Turner vs Fernandes",
+                 "home_team": "Jalin Turner", "away_team": "Kaua Fernandes",
+                 "line": 0.5, "side": "over", "market": "win_by_decision",
+                 "odds": 100, "start_time": None},
+            ], "2026-08-16")
+        finally:
+            os.environ["LP_DB_PATH"] = old_path
+        self.assertEqual(self.scalar("SELECT COUNT(*) FROM prop_games"), 1)
 
 
 if __name__ == "__main__":
