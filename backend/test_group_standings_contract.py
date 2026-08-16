@@ -65,15 +65,53 @@ class GroupStandingsContractTest(unittest.TestCase):
 
 
 class StandingsRouteContractTest(unittest.TestCase):
-    def test_mls_and_ncaaf_use_groups_while_other_leagues_keep_strength(self):
-        grouped = [{"group": "Eastern Conference", "rows": []}]
+    """Routing contract, updated 2026-08-16 when MLS standings became DB-first.
+
+    The previous version asserted MLS and NCAAF both went through
+    `espn.group_standings`. That is no longer the contract and asserting it
+    would lock in a live ESPN call on every standings pageview. The invariant
+    worth holding is stronger: MLS is served from our own rows and touches no
+    ESPN host at all.
+    """
+
+    def test_ncaaf_uses_its_own_conference_endpoint_and_other_leagues_keep_strength(self):
+        grouped = [{"group": "Sun Belt - East", "rows": []}]
         flat = [{"abbrev": "BOS"}]
-        with patch.object(games.espn, "group_standings", return_value=grouped) as group_call, \
+        with patch.object(games.espn, "ncaaf_conference_standings", return_value=grouped) as ncaaf_call, \
              patch.object(games.espn, "team_strength", return_value=flat) as strength_call:
-            self.assertEqual(games.get_standings("mls"), grouped)
             self.assertEqual(games.get_standings("ncaaf"), grouped)
             self.assertEqual(games.get_standings("mlb"), flat)
 
-        self.assertEqual(group_call.call_args_list[0].args, ("mls",))
-        self.assertEqual(group_call.call_args_list[1].args, ("ncaaf",))
+        ncaaf_call.assert_called_once_with()
         strength_call.assert_called_once_with("mlb")
+
+    def test_mls_is_served_from_our_own_rows_and_never_calls_espn(self):
+        grouped = [{"group": "Eastern Conference", "rows": []}]
+        with patch.object(games, "_mls_standings_season", return_value=2025), \
+             patch.object(games, "_mls_standings_from_db", return_value=grouped) as db_call, \
+             patch.object(games.espn, "group_standings") as group_call, \
+             patch.object(games.espn, "team_strength") as strength_call:
+            self.assertEqual(games.get_standings("mls"), grouped)
+
+        db_call.assert_called_once_with(2025)
+        # The point of the change: a standings pageview spends no ESPN budget.
+        group_call.assert_not_called()
+        strength_call.assert_not_called()
+
+    def test_mls_without_rows_is_an_honest_503_not_a_500(self):
+        """A database holding no MLS rows must say so, loudly.
+
+        The fallback query used to raise a bare sqlite3.OperationalError on a
+        database with no team_game_results table, which reached the user as a
+        500 that said nothing. Absence of data is a 503 with a reason.
+        """
+        from fastapi import HTTPException
+        with patch.object(games, "_mls_standings_season", return_value=None):
+            with self.assertRaises(HTTPException) as caught:
+                games.get_standings("mls")
+        self.assertEqual(caught.exception.status_code, 503)
+        self.assertIn("mls", str(caught.exception.detail).lower())
+
+
+if __name__ == "__main__":
+    unittest.main()

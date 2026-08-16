@@ -817,10 +817,17 @@ def _mls_standings_season():
                 return int(row["season"])
         except sqlite3.Error:
             pass
-        row = con.execute(
-            "SELECT MAX(season) AS season FROM team_game_results"
-            " WHERE league='mls'"
-        ).fetchone()
+        try:
+            row = con.execute(
+                "SELECT MAX(season) AS season FROM team_game_results"
+                " WHERE league='mls'"
+            ).fetchone()
+        except sqlite3.Error:
+            # No results table at all (a database that was never migrated for
+            # this league). That is "we hold no MLS rows", which the caller
+            # turns into an honest 503 — not an uncaught OperationalError that
+            # reaches the user as a 500 saying nothing.
+            return None
         return int(row["season"]) if row and row["season"] is not None else None
 
 
@@ -918,7 +925,8 @@ def get_standings(league: str):
     stage; the canonical knockout bracket/results once the season phase leaves
     'Group' (progression gate via espn.wc_is_knockout — never serve stale groups
     once knockouts have begun)."""
-    if league.lower() == "ncaaf":
+    lg = league.lower()
+    if lg == "ncaaf":
         # Conference-grouped tables - CFB's /standings payload has no
         # rank/gamesPlayed/losses keys; the record lives in `overall` and
         # entries arrive pre-ordered by conference standing. See
@@ -927,7 +935,7 @@ def get_standings(league: str):
             return espn.ncaaf_conference_standings()
         except ValueError as e:
             raise HTTPException(404, str(e))
-    if league.lower() == "mls":
+    if lg == "mls":
         # Eastern/Western conference tables (P W D L GF GA GD Pts), aggregated
         # from the published per-game rows in team_game_results — DB-first, no
         # live ESPN call per pageview. Points use the league's published 3/1/0
@@ -937,7 +945,7 @@ def get_standings(league: str):
         if mls_season is None:
             raise HTTPException(503, "MLS standings: no mls rows in the DB")
         return _mls_standings_from_db(mls_season)
-    if league.lower() != "wc":
+    if lg != "wc":
         try:
             return espn.team_strength(lg)
         except ValueError as e:

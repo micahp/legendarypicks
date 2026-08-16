@@ -185,7 +185,10 @@ class UnderdogIdentityTests(unittest.TestCase):
         ).fetchone()["source_player_key"]
         self.assertEqual(source_key, reviewed.REVIEW["source_player_key"])
 
-        old_path = os.environ["LP_DB_PATH"]
+        # Another module in a full-suite run restores LP_DB_PATH to *absent*, so
+        # reading it unconditionally raises KeyError and this test's result then
+        # depends on collection order rather than on the code under test.
+        old_path = os.environ.get("LP_DB_PATH")
         os.environ["LP_DB_PATH"] = self.db_path
         try:
             bovada_scraper._ufc_direct_ingest([
@@ -199,7 +202,10 @@ class UnderdogIdentityTests(unittest.TestCase):
                  "odds": 100, "start_time": None},
             ], "2026-08-16")
         finally:
-            os.environ["LP_DB_PATH"] = old_path
+            if old_path is None:
+                os.environ.pop("LP_DB_PATH", None)
+            else:
+                os.environ["LP_DB_PATH"] = old_path
         self.assertEqual(self.scalar("SELECT COUNT(*) FROM prop_games"), 1)
 
 
