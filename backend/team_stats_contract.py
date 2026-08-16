@@ -7,6 +7,7 @@ presented as season-to-date coverage.
 """
 from __future__ import annotations
 
+import json
 from collections import defaultdict
 from datetime import date
 from typing import Any, Iterable
@@ -311,6 +312,23 @@ def extract_espn_team_stats(league: str, summary: dict[str, Any]) -> list[dict[s
     return out
 
 
+def _json_stats(raw: Any) -> dict[str, Any] | None:
+    """Parse a `team_game_stats.stats` blob, or None when there isn't a usable one.
+
+    None means "fall back to the columns" — an absent, empty or malformed blob
+    must not blank out a row whose columns are still populated. Distinguishing
+    that from an empty dict matters: {} is a row we migrated and found nothing
+    in, which is genuinely no stats.
+    """
+    if not raw:
+        return None
+    try:
+        parsed = json.loads(raw)
+    except (ValueError, TypeError):
+        return None
+    return parsed if isinstance(parsed, dict) else None
+
+
 def _table_columns(connection, table: str) -> set[str]:
     return {row[1] for row in connection.execute(f"PRAGMA table_info({table})")}
 
@@ -582,8 +600,14 @@ def build_team_aggregates(connection, league: str) -> dict[str, Any]:
         game_ids = list(games)
         if game_ids:
             placeholders = ",".join("?" for _ in game_ids)
+            # `stats` is the JSON home for per-game stats (see team_stats_json).
+            # Selected only when the database actually has the column, so code
+            # newer than its database keeps working — the migration is additive
+            # and a DB may legitimately be behind.
+            has_blob = "stats" in stats_columns
             selected = ",".join(
                 ("game_id", "team_abbrev", "home_away", "captured_at", *required_stats)
+                + (("stats",) if has_blob else ())
             )
             rows = connection.execute(
                 f"SELECT {selected} FROM team_game_stats WHERE league=? AND game_id IN ({placeholders}) "
@@ -591,6 +615,14 @@ def build_team_aggregates(connection, league: str) -> dict[str, Any]:
             )
             for row in rows:
                 item = dict(row)
+                blob = _json_stats(item.pop("stats", None))
+                # Blob first, columns second, and only for keys this league
+                # declares. A blob missing a key means that stat was absent, so
+                # the column value must not be resurrected under it — that is how
+                # a stale column silently outlives the value it used to hold.
+                if blob is not None:
+                    for key in required_stats:
+                        item[key] = blob.get(key)
                 stats[(str(item.pop("game_id")), item.pop("team_abbrev"))] = item
         stat_game_teams: dict[str, set[str]] = defaultdict(set)
         stat_game_sides: dict[str, set[str]] = defaultdict(set)

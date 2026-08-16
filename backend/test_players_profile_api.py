@@ -59,10 +59,23 @@ class PlayerProfileApiTests(unittest.TestCase):
               carries_g REAL, rush_yds_g REAL, rec_yds_g REAL, targets INTEGER,
               receptions INTEGER, fantasy_ppr_g REAL
             );
+            -- The enablement registry. search_players only returns leagues this
+            -- database vouches for, so a fixture that omits this table is a
+            -- database offering nothing (ufc/wc aside) -- which is the correct
+            -- fail-closed behaviour, not something to loosen. Declare the
+            -- leagues this fixture's players are in.
+            CREATE TABLE team_stats_coverage(
+              league TEXT, season INTEGER, status TEXT
+            );
             CREATE INDEX idx_test_logs_player ON player_game_logs(player_id);
             CREATE INDEX idx_test_props_player ON props(player_id);
             CREATE INDEX idx_test_stats_player ON player_stats(player_id);
             """
+        )
+        con.executemany(
+            "INSERT INTO team_stats_coverage VALUES(?,?,?)",
+            [("nba", 2026, "complete"), ("nfl", 2025, "complete"),
+             ("nhl", 2026, "complete")],
         )
         con.executemany(
             "INSERT INTO players VALUES(?,?,?,?,?)",

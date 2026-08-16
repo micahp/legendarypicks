@@ -30,6 +30,9 @@ B  a position's logs carry that position's keys -- goalies must record saves
 C  one vocabulary per categorical column        -- two ingests, two spellings
 D  the leaderboard's population has game logs   -- a leader you can click into
 E  the qualifier is denominated in the published unit
+F  every publisher can reach the league's players -- one row per person
+G  an external id points at the person named on the row
+H  the NFL pool's injury fields are populated   -- a board with nobody listed injured
 
 Adding a league
 ---------------
@@ -50,10 +53,10 @@ import argparse
 import json
 import os
 import re
+import name_aliases
 import sqlite3
 import sys
 import unicodedata
-from collections import Counter
 
 DB = os.environ.get("LP_DB_PATH") or os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "data", "picks.db"
@@ -72,6 +75,15 @@ MANIFEST = {
                 # hit and a body check are different things sharing a word, and
                 # this table is one wide table across four leagues.
                 "required": ["games", "avg", "hr", "pa", "mlb_hits", "runs", "rbi"],
+                # NO coverage floor declared, deliberately, and the reason is
+                # the finding. `pa` sits on 684 of 1451 batting rows (47%),
+                # which looks like a hole and is not: all 767 without it are
+                # `source='statcast'` marginal players (3-10 games) that MLB's
+                # season endpoint does not publish a line for at all. PA is on
+                # 100% of the population MLB actually publishes. A floor here
+                # would measure the wrong denominator and block releases over
+                # correct data -- the open question is which population these
+                # 767 rows belong in, not whether the stat is missing.
                 "qualifier": {"unit": "pa", "published": "3.1 PA x team games (502/162)"},
             },
             "pitching": {
@@ -79,7 +91,29 @@ MANIFEST = {
                 "qualifier": {"unit": "innings", "published": "1.0 IP x team games (162/162)"},
             },
         },
-        "position_content": {},
+        "position_content": {
+            # Two classes, measured 2026-08-05: every MLB position's log
+            # carries the same ESPN box-score line -- batters (PA/H/R/RBI/HR/
+            # BB/K/2B/3B/TB) and pitchers (batters_faced/hits_allowed/outs/
+            # BB/K), which are different jobs. A catcher and a shortstop need
+            # no different keys; a pitcher's log never carries a batting line
+            # (0 of 500 P logs have PA), so P declares the pitching line.
+            # 100% coverage measured over 500 sampled logs per class; floor
+            # 0.8 trips only on a collapse.
+            "1B": {"keys": [["PA"], ["H"], ["R"], ["RBI"], ["HR"]], "coverage": 0.8},
+            "2B": {"keys": [["PA"], ["H"], ["R"], ["RBI"], ["HR"]], "coverage": 0.8},
+            "3B": {"keys": [["PA"], ["H"], ["R"], ["RBI"], ["HR"]], "coverage": 0.8},
+            "C": {"keys": [["PA"], ["H"], ["R"], ["RBI"], ["HR"]], "coverage": 0.8},
+            "CF": {"keys": [["PA"], ["H"], ["R"], ["RBI"], ["HR"]], "coverage": 0.8},
+            "DH": {"keys": [["PA"], ["H"], ["R"], ["RBI"], ["HR"]], "coverage": 0.8},
+            "LF": {"keys": [["PA"], ["H"], ["R"], ["RBI"], ["HR"]], "coverage": 0.8},
+            "OF": {"keys": [["PA"], ["H"], ["R"], ["RBI"], ["HR"]], "coverage": 0.8},
+            "P": {"keys": [["batters_faced"], ["hits_allowed"], ["outs"]],
+                  "coverage": 0.8},
+            "RF": {"keys": [["PA"], ["H"], ["R"], ["RBI"], ["HR"]], "coverage": 0.8},
+            "SS": {"keys": [["PA"], ["H"], ["R"], ["RBI"], ["HR"]], "coverage": 0.8},
+            "TWP": {"keys": [["PA"], ["H"], ["R"], ["RBI"], ["HR"]], "coverage": 0.8},
+        },
         # `position` was excluded here with the note "MLB positions are 100% NULL
         # -- check C covers it". That stopped being true on 2026-08-04 when
         # roster_sync applied for MLB for the first time and filled every active
@@ -97,24 +131,48 @@ MANIFEST = {
                 "qualifier": {"unit": "games", "published": "58 games; FG% 300 FGM, 3P% 82 3PM, FT% 125 FTM"},
             },
         },
-        "position_content": {},
-        "single_vocabulary": ["position", "team"],
+        "position_content": {
+            # One class, measured 2026-08-05: every NBA position's log carries
+            # the same box-score line from ESPN (PTS/REB/AST/STL/BLK/FGM/FGA/
+            # FTM/FTA/3PM/MIN/TO) -- a point guard and a center need no
+            # different keys. 100% coverage measured over 500 sampled logs;
+            # floor 0.8 trips only on a collapse.
+            "C": {"keys": [["PTS"], ["REB"], ["AST"], ["MIN"], ["FGM"]], "coverage": 0.8},
+            "F": {"keys": [["PTS"], ["REB"], ["AST"], ["MIN"], ["FGM"]], "coverage": 0.8},
+            "G": {"keys": [["PTS"], ["REB"], ["AST"], ["MIN"], ["FGM"]], "coverage": 0.8},
+            "PF": {"keys": [["PTS"], ["REB"], ["AST"], ["MIN"], ["FGM"]], "coverage": 0.8},
+            "PG": {"keys": [["PTS"], ["REB"], ["AST"], ["MIN"], ["FGM"]], "coverage": 0.8},
+            "SF": {"keys": [["PTS"], ["REB"], ["AST"], ["MIN"], ["FGM"]], "coverage": 0.8},
+            "SG": {"keys": [["PTS"], ["REB"], ["AST"], ["MIN"], ["FGM"]], "coverage": 0.8},
+        },
+        # `position_group` carries the parent level (PF -> F, SG -> G) beside
+        # the leaf in `position`, the same split MLB has; see
+        # migrate_league_position_groups.py.
+        "single_vocabulary": ["position", "position_group", "team"],
     },
     "nhl": {
         "stat_types": {
+            # Key must match the stored stat_type (season). The qualifier
+            # documents BOTH published rules: skater totals have no games
+            # floor (Art Ross = most points), goalie rate stats require the
+            # well-documented 1/3-of-schedule qualifier (0.3125 x 82 = 25.6 ->
+            # minimum 25 games played, published by Hockey-Reference
+            # rate_stat_req.html and visible on its goalie pages).
             "season": {
                 "required": ["games", "goals", "assists", "points_nhl", "shots",
                              "plus_minus", "toi",
-                             # Hockey has three player types, and the seven
-                             # columns above describe one of them. These four
-                             # were red on purpose until 2026-08-04, when the
+                             # These four describe the goalie report
+                             # (nhle.com publishes them separately). They were
+                             # red on purpose until 2026-08-04, when the
                              # columns were added and `ingest_nhl_season_stats`
-                             # filled them from nhle.com's goalie report --
-                             # which had been publishing all of it the whole
-                             # time.
+                             # filled them -- which had been publishing all of
+                             # it the whole time.
                              "saves", "shots_against", "save_pct", "gaa"],
                 "qualifier": {"unit": "games",
-                              "published": "NONE PUBLISHED that this project could verify -- 40+ GP is convention"},
+                              "published": "skaters: none (raw totals, Art Ross "
+                                           "is most points); goalies: 25 games "
+                                           "played (0.3125 x 82) per "
+                                           "Hockey-Reference rate_stat_req.html"},
             },
         },
         # The check that would have caught the goalie hole. A goalie whose log
@@ -124,16 +182,17 @@ MANIFEST = {
         # skater keys has not been observed goaltending -- and a defenceman
         # measured only on goals is being judged as a forward who is bad at it.
         "position_content": {
-            "G": [["saves"], ["shotsAgainst", "shots_against"]],
-            # Blocks and hits are what a defenceman is actually measured on,
-            # and they ARE published per game -- just not by the endpoint the
-            # log ingest currently reads. `player/{id}/game-log` has no such
-            # key; `gamecenter/{gameId}/boxscore` publishes blockedShots, hits,
-            # takeaways and giveaways for every skater in the game. Red until
-            # the log ingest reads the boxscore -- see the handoff.
-            "D": [["shots"], ["plusMinus", "plus_minus"],
-                  ["blockedShots", "blocked_shots"], ["hits"]],
-            "C": [["goals"], ["assists"], ["shots"]],
+            # coverage: the share of sampled logs that must record the stat.
+            # The keys below are published per game, so a defenceman whose log
+            # never records blockedShots or hits is a log that did not observe
+            # him -- red until the log ingest reads the boxscore, see handoff.
+            "G": {"keys": [["saves"], ["shotsAgainst", "shots_against"]],
+                  "coverage": 0.8},
+            "D": {"keys": [["shots"], ["plusMinus", "plus_minus"],
+                             ["blockedShots", "blocked_shots"], ["hits"]],
+                  "coverage": 0.8},
+            "C": {"keys": [["goals"], ["assists"], ["shots"]],
+                  "coverage": 0.8},
         },
         "single_vocabulary": ["position", "team"],
     },
@@ -155,12 +214,58 @@ MANIFEST = {
         # rename rather than over missing data. The question is whether the
         # position records rushing yards, not whose word for it is in the JSON.
         "position_content": {
-            "QB": [["pass_yds", "passing_yards"], ["pass_td", "passing_tds"]],
-            "RB": [["carries"], ["rush_yds", "rushing_yards"]],
-            "WR": [["targets"], ["rec_yds", "receiving_yards"]],
-            "PK": [["fg_made"], ["fg_att"]],
+            "QB": {"keys": [["pass_yds", "passing_yards"],
+                             ["pass_td", "passing_tds"]], "coverage": 0.8},
+            "RB": {"keys": [["carries"], ["rush_yds", "rushing_yards"]],
+                    "coverage": 0.8},
+            "WR": {"keys": [["targets"], ["rec_yds", "receiving_yards"]],
+                    "coverage": 0.8},
+            "PK": {"keys": [["fg_made"], ["fg_att"]], "coverage": 0.8},
         },
-        "single_vocabulary": ["position", "team"],
+        # The draft pool's injury fields. On 2026-08-04 prod served 4,508 pool
+        # players with injury_status on 0 of them for ~18 hours -- keys present,
+        # always null, no error, no empty state. The floor (0.35) sits far
+        # below the measured 2026-08-05 population (dev 2,616/4,508, prod
+        # 2,617/4,509; last_news_date 1,994) so it trips only on a collapse.
+        "injury_population": {"floor": 0.35},
+        # `position_group` carries the parent level (FB -> RB, LB -> DEF)
+        # beside the leaf in `position`, the same split MLB has; see
+        # migrate_league_position_groups.py.
+        "single_vocabulary": ["position", "position_group", "team"],
+    },
+    "ufc": {
+        # UFC is fighters + rankings, not a season-stats surface. It holds no
+        # player_stats rows (the leaderboard checks A/D/E have nothing to
+        # serve), fighters carry no position -- they have divisions, stored in
+        # ufc_rankings -- and game logs are per-fight.
+        "stat_types": {},
+        "position_content": {
+            # One class: fighters have no position column, so the declaration
+            # is a single all-logs class -- a fight log must record the
+            # outcome and the clock. Measured 2026-08-05: result/method on
+            # 119/119 logs, round and fight_time_seconds on 118/119.
+            "FIGHTER": {"keys": [["result"], ["method"], ["round"],
+                                 ["fight_time_seconds"]], "coverage": 0.8,
+                        "all_logs": True},
+        },
+        "single_vocabulary": [],
+    },
+    "wc": {
+        # World Cup 2026 is over and the league is dormant until 2030
+        # (AGENTS.md). The tournament's game logs remain in
+        # player_game_logs; there are no player_stats rows and no pages
+        # serving them.
+        "stat_types": {},
+        "position_content": {
+            # One class: WC footballers carry no position in players (ESPN's
+            # soccer feed does not emit one into our table), so the
+            # declaration is a single all-logs class -- a footballer's log
+            # must record the scoring line. Measured 2026-08-05: goals/
+            # assists/shots/sot on 334/334 logs.
+            "PLAYER": {"keys": [["goals"], ["assists"], ["shots"], ["sot"]],
+                       "coverage": 0.8, "all_logs": True},
+        },
+        "single_vocabulary": [],
     },
     "mls": {
         "stat_types": {
@@ -229,6 +334,9 @@ MANIFEST = {
     },
 }
 
+_POSITION_CONTENT_FLOOR = 0.8
+
+
 PASS, FAIL, UNVERIFIED = "PASS", "FAIL", "UNVERIFIED"
 
 # Written by fetch_position_vocabulary.py and committed. The audit must run
@@ -288,8 +396,16 @@ def _published_identity_names(league):
 
 
 def _observed_positions(con, league, active_only=False):
-    """The distinct position codes in use for a league."""
+    """The distinct position codes in use for a league.
+
+    Fantasy constructs (team defences, TQB, coaches) are excluded once
+    `entity_type` exists: a D/ST plays no position, and its former
+    `position='DEF'` must not read as a second vocabulary fighting the real
+    defensive positions.
+    """
     scope = " AND active=1" if active_only and "active" in _columns(con, "players") else ""
+    if "entity_type" in _columns(con, "players"):
+        scope += " AND COALESCE(entity_type, 'player') = 'player'"
     return {
         r[0] for r in con.execute(
             f"SELECT position FROM players WHERE league=?{scope} "
@@ -364,14 +480,47 @@ def _columns(con, table):
         return set()
 
 
+
+
 def check_required_stats(con, league, spec, out):
-    """A. The column exists AND carries values for this league."""
+    """A. The column exists AND carries values for enough of this league.
+
+    This measured PRESENCE, not COVERAGE: `if not filled` fails only at exactly
+    zero, so ONE populated row out of thousands passed. Measured 2026-08-05 on
+    prod, both MLB stat types read PASS while half the league had nothing:
+
+        batting   767 of 1451 rows (52%) had no counting stats at all
+        pitching  339 of 1108 rows (30%)
+
+    Both `pa` and `era` are "present and populated" by the old test and absent
+    for most players, which is the same defect check B carried until it was
+    rewritten to filled/sampled. A column that exists for a minority of the
+    league is not a column the product can query.
+
+    The floor is deliberately loose (50%): a stat legitimately absent for a
+    whole class of player -- a pitcher has no batting average -- must not read
+    red. It is a tripwire for "half the league is missing", not a completeness
+    target. A league needing a different floor declares `min_coverage` in its
+    MANIFEST stat_type entry.
+    """
     columns = _columns(con, "player_stats")
     if not columns:
         out.add(FAIL, league, "A/required-stats", "player_stats is unreadable")
         return
     for stat_type, cfg in spec["stat_types"].items():
-        missing, empty = [], []
+        # Coverage is asserted PER COLUMN and only where the manifest says so.
+        # A flat floor across every required stat cannot work: `saves` is 78 of
+        # 874 NHL rows and `pass_yds_g` is 81 of 608 NFL rows because only
+        # goalies make saves and only quarterbacks throw. Those are correct at
+        # 9% and 13%. The number that is wrong is MLB's `pa` at 47%, and the
+        # only thing that distinguishes them is a human saying which stats every
+        # row of a stat_type should carry. So they say it, per column, in
+        # `coverage`; anything undeclared keeps the old must-be-non-zero test.
+        coverage = cfg.get("coverage") or {}
+        total = con.execute(
+            "SELECT COUNT(*) FROM player_stats WHERE league=? AND stat_type=?",
+            (league, stat_type)).fetchone()[0]
+        missing, empty, thin = [], [], []
         for column in cfg["required"]:
             if column not in columns:
                 missing.append(column)
@@ -382,16 +531,26 @@ def check_required_stats(con, league, spec, out):
             ).fetchone()[0]
             if not filled:
                 empty.append(column)
-        if missing or empty:
+                continue
+            floor = coverage.get(column)
+            if floor is not None and total and filled / total < floor:
+                thin.append(f"{column} {filled}/{total} ({filled / total:.0%}, "
+                            f"floor {floor:.0%})")
+        if missing or empty or thin:
             parts = []
             if missing:
                 parts.append("no such column: " + ", ".join(missing))
             if empty:
                 parts.append("column exists but 0 rows populated: " + ", ".join(empty))
+            if thin:
+                parts.append(f"below the {floor:.0%} coverage floor: " + ", ".join(thin))
             out.add(FAIL, league, f"A/required-stats[{stat_type}]", "; ".join(parts))
         else:
+            declared = ", ".join(f"{c} >={f:.0%}" for c, f in sorted(coverage.items()))
             out.add(PASS, league, f"A/required-stats[{stat_type}]",
-                    "%d required stats present and populated" % len(cfg["required"]))
+                    "%d required stats present and populated over %d rows%s"
+                    % (len(cfg["required"]), total,
+                       f"; coverage asserted: {declared}" if declared else ""))
 
 
 def check_position_content(con, league, spec, out):
@@ -399,6 +558,12 @@ def check_position_content(con, league, spec, out):
 
     The goalie check. Presence of rows says a player was observed; it does not
     say he was observed doing his job.
+
+    Measures COVERAGE, not presence: a stat recorded in 1 of 500 sampled logs
+    is a 0.2% observation, not a pass. Each position declares its floor in the
+    MANIFEST (dict form); legacy list entries default to `_POSITION_CONTENT_FLOOR`.
+    This check read PASS for NHL at 30% coverage on 2026-08-05 because the old
+    logic only failed a stat that never appeared at all.
     """
     wanted = spec.get("position_content") or {}
     if not wanted:
@@ -406,39 +571,61 @@ def check_position_content(con, league, spec, out):
                 "no position_content declared -- nobody has said what this "
                 "league's positions must record")
         return
-    for position, keys in sorted(wanted.items()):
-        rows = con.execute(
-            """SELECT l.stats FROM player_game_logs l
-               JOIN players p ON p.id = l.player_id
-               WHERE l.league=? AND UPPER(TRIM(p.position))=? LIMIT 500""",
-            (league, position.upper()),
-        ).fetchall()
+    for position, entry in sorted(wanted.items()):
+        if isinstance(entry, dict):
+            keys = entry["keys"]
+            floor = float(entry.get("coverage", _POSITION_CONTENT_FLOOR))
+            # A league with ONE class and no position column (UFC fighters,
+            # WC footballers) declares that class across every log rather than
+            # per position. all_logs=True samples the whole league, so the
+            # declaration is measurable instead of forever UNVERIFIED by a
+            # position join that can never match.
+            all_logs = bool(entry.get("all_logs", False))
+        else:
+            keys = entry
+            floor = _POSITION_CONTENT_FLOOR
+            all_logs = False
+        if all_logs:
+            rows = con.execute(
+                "SELECT l.stats FROM player_game_logs l "
+                "JOIN players p ON p.id = l.player_id "
+                "WHERE l.league=? LIMIT 500", (league,)).fetchall()
+        else:
+            rows = con.execute(
+                """SELECT l.stats FROM player_game_logs l
+                   JOIN players p ON p.id = l.player_id
+                   WHERE l.league=? AND UPPER(TRIM(p.position))=? LIMIT 500""",
+                (league, position.upper()),
+            ).fetchall()
         if not rows:
             out.add(UNVERIFIED, league, f"B/position-content[{position}]",
                     "no game logs at all for this position -- cannot confirm "
                     "its stats are recorded")
             continue
-        seen = Counter()
+        sampled = len(rows)
+        # Each entry is a list of acceptable spellings for ONE stat; a log
+        # records the stat when any spelling carries a non-null value.
+        filled = [0] * len(keys)
         for row in rows:
             try:
                 payload = json.loads(row[0])
             except (TypeError, ValueError):
                 continue
-            for key, value in payload.items():
-                if value is not None:
-                    seen[key] += 1
-        # Each entry is a list of acceptable spellings for ONE stat; the stat
-        # is recorded if any spelling appears.
-        absent = [alts for alts in keys if not any(seen.get(k) for k in alts)]
-        if absent:
+            for i, alts in enumerate(keys):
+                if any(payload.get(k) is not None for k in alts):
+                    filled[i] += 1
+        counts = ["%s %d/%d (%.0f%%)" % (alts[0], filled[i], sampled,
+                                          100.0 * filled[i] / sampled)
+                  for i, alts in enumerate(keys)]
+        low = [c for i, c in enumerate(counts) if filled[i] < floor * sampled]
+        if low:
             out.add(FAIL, league, f"B/position-content[{position}]",
-                    "%d logs sampled, never records: %s (records: %s)"
-                    % (len(rows), ", ".join(a[0] for a in absent),
-                       ", ".join(sorted(seen)[:8]) or "nothing"))
+                    "%d logs sampled, below the %.0f%% floor: %s"
+                    % (sampled, 100 * floor, "; ".join(low)))
         else:
             out.add(PASS, league, f"B/position-content[{position}]",
-                    "%d logs sampled, all of %s recorded"
-                    % (len(rows), ", ".join(a[0] for a in keys)))
+                    "%d logs sampled, all recorded at >=%.0f%%: %s"
+                    % (sampled, 100 * floor, ", ".join(counts)))
 
 
 def check_single_vocabulary(con, league, spec, out):
@@ -461,9 +648,16 @@ def check_single_vocabulary(con, league, spec, out):
                 f"GROUP BY 1 ORDER BY 2 DESC", (league,))
         ]
         total = sum(n for _, n in values)
+        # A fantasy construct (team defence, TQB, coach) plays no position --
+        # `position` NULL is the honest answer, so those rows are not blanks.
+        # Same for `position_group`: a team defence has no position and no
+        # group, and entity_type is how the two populations stay distinct.
+        entity_scope = ""
+        if column in ("position", "position_group") and "entity_type" in _columns(con, "players"):
+            entity_scope = " AND COALESCE(entity_type, 'player') = 'player'"
         blank = con.execute(
             f"SELECT COUNT(*) FROM players WHERE league=? "
-            f"AND ({column} IS NULL OR TRIM({column})='')", (league,)
+            f"AND ({column} IS NULL OR TRIM({column})=''){entity_scope}", (league,)
         ).fetchone()[0]
         if not total:
             out.add(FAIL, league, f"C/vocabulary[{column}]",
@@ -553,12 +747,12 @@ def check_single_vocabulary(con, league, spec, out):
         if "active" in _columns(con, "players"):
             active_blank = con.execute(
                 f"SELECT COUNT(*) FROM players WHERE league=? AND active=1 "
-                f"AND ({column} IS NULL OR TRIM({column})='')", (league,)
+                f"AND ({column} IS NULL OR TRIM({column})=''){entity_scope}", (league,)
             ).fetchone()[0]
             inactive_blank = blank - active_blank
         if active_blank:
             active_total = con.execute(
-                "SELECT COUNT(*) FROM players WHERE league=? AND active=1"
+                f"SELECT COUNT(*) FROM players WHERE league=? AND active=1{entity_scope}"
                 if "active" in _columns(con, "players")
                 else "SELECT COUNT(*) FROM players WHERE league=?", (league,)
             ).fetchone()[0] or (blank + total)
@@ -583,7 +777,22 @@ def check_leaders_reach_logs(con, league, spec, out, floor=0.60):
 
     A leaderboard whose players have no logs in the season it serves is a page
     of dead ends. On 2026-08-04 only 53 of 525 NBA leaders had a 2026 log.
+
+    The join is season-scoped on BOTH sides: a log from three seasons ago
+    counts as reachable for nothing a leaderboard serves today. This check read
+    PASS for NHL twice on 2026-08-05 while a season-scoped join returned 0 --
+    prod still held 48,017 rows on nhle.com's raw `20252026` season key.
     """
+    # A league whose manifest declares no stat_types has no leaderboard surface
+    # to serve (UFC is fighters + rankings; WC is dormant until 2030) -- D has
+    # nothing to measure, and a FAIL here would assert a defect in a surface
+    # that does not exist. The manifest's "nothing to declare, said out loud"
+    # is the contract; honor it rather than contradicting it.
+    if not spec.get("stat_types"):
+        out.add(UNVERIFIED, league, "D/leaders-reach-logs",
+                "no stat_types declared -- this league has no leaderboard "
+                "surface to serve (rankings/dormant, not a stats league)")
+        return
     served = con.execute(
         "SELECT MAX(season) FROM player_stats WHERE league=?", (league,)
     ).fetchone()[0]
@@ -594,13 +803,15 @@ def check_leaders_reach_logs(con, league, spec, out, floor=0.60):
         """SELECT COUNT(*), SUM(CASE WHEN EXISTS(
                SELECT 1 FROM player_game_logs g
                 WHERE g.player_id = s.player_id AND g.league = s.league
+                  AND g.season = s.season
            ) THEN 1 ELSE 0 END)
            FROM player_stats s WHERE s.league=? AND s.season=?""",
         (league, served),
     ).fetchone()
     reachable = reachable or 0
     share = (reachable / total) if total else 0.0
-    detail = ("season %s: %d of %d leaderboard players have any game log (%.0f%%)"
+    detail = ("season %s: %d of %d leaderboard players have a game log "
+              "in that same season (%.0f%%)"
               % (served, reachable, total, 100 * share))
     out.add(PASS if share >= floor else FAIL, league, "D/leaders-reach-logs", detail)
 
@@ -782,6 +993,15 @@ def check_published_identity(con, league, spec, out):
             continue
         checked += 1
         if _identity_name_key(truth) != _identity_name_key(name):
+            # Strict comparison failed. Before reporting a wrong person, ask
+            # whether this id has a recorded accepted alternate spelling
+            # (data/name-aliases.json). The decision (2026-08-05): the
+            # market-facing nickname is canonical on the row -- ESPN fantasy
+            # and Yahoo both publish 'Kenny Gainwell' -- and the publisher's
+            # legal-form spelling is a same-person alias, never a different
+            # person. An id absent from the alias file has no alternates.
+            if name_aliases.matches_published(league, ext, name, truth):
+                continue
             wrong += 1
             if len(examples) < 3:
                 examples.append(f"id={row_id} '{name}' has {id_column}={ext} "
@@ -800,9 +1020,61 @@ def check_published_identity(con, league, spec, out):
                 f"all {checked} checked {id_column}s carry the published name")
 
 
+def check_injury_population(con, league, spec, out):
+    """H. The NFL pool's injury fields are populated, not just present.
+
+    On 2026-08-04 the production draft pool served 4,508 players with
+    `injury_status` set on 0 of them for ~18 hours -- the API returned the
+    keys, always null, no error, no empty state. A check that asks whether the
+    column exists cannot catch a column that exists and carries nothing.
+
+    Measures the share of the draft POOL (the nfl_adp rows the board actually
+    renders) carrying a non-empty injury_status / last_news_date, against the
+    floor declared in the manifest. Only a league with a fantasy pool declares
+    this (nfl); leagues that never had the check do not skip -- they never had
+    it.
+    """
+    cfg = spec.get("injury_population")
+    if not cfg:
+        return
+    floor = float(cfg.get("floor", 0.35))
+    if not {"injury_status", "last_news_date"} <= _columns(con, "players"):
+        out.add(FAIL, league, "H/injury-population",
+                "players has no injury_status/last_news_date columns")
+        return
+    if not _columns(con, "nfl_adp"):
+        out.add(FAIL, league, "H/injury-population",
+                "no nfl_adp table to define the pool population")
+        return
+    season = con.execute("SELECT MAX(season) FROM nfl_adp").fetchone()[0]
+    if season is None:
+        out.add(FAIL, league, "H/injury-population", "nfl_adp has no rows")
+        return
+    total, with_status, with_news = con.execute(
+        """SELECT COUNT(*),
+                  SUM(injury_status IS NOT NULL AND TRIM(injury_status) != ''),
+                  SUM(last_news_date IS NOT NULL AND TRIM(last_news_date) != '')
+             FROM players p JOIN nfl_adp na ON na.player_id = p.id AND na.season = ?
+            WHERE p.league = ? AND na.position IN ('QB','RB','WR','TE','PK','DEF')""",
+        (season, league),
+    ).fetchone()
+    total = total or 0
+    status_share = (with_status or 0) / total if total else 0.0
+    news_share = (with_news or 0) / total if total else 0.0
+    detail = ("season %s pool: injury_status %d/%d (%.0f%%), "
+              "last_news_date %d/%d (%.0f%%)"
+              % (season, with_status or 0, total, 100 * status_share,
+                 with_news or 0, total, 100 * news_share))
+    if status_share < floor or news_share < floor:
+        out.add(FAIL, league, "H/injury-population",
+                detail + " -- below the %.0f%% floor" % (100 * floor))
+    else:
+        out.add(PASS, league, "H/injury-population", detail)
+
+
 CHECKS = (check_required_stats, check_position_content, check_single_vocabulary,
           check_leaders_reach_logs, check_qualifier_unit, check_identity_crosswalk,
-          check_published_identity)
+          check_published_identity, check_injury_population)
 
 
 def audit(con, leagues=None) -> Result:

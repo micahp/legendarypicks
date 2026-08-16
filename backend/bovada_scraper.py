@@ -14,7 +14,7 @@ Usage:
 
 Source: Bovada's internal API — no auth, no Cloudflare, live odds.
 """
-import sys, json, os, urllib.request, datetime as dt
+import sys, json, os, re, unicodedata, urllib.request, datetime as dt
 
 from link_prop_games import link_prop_game
 import espn_client as espn
@@ -398,6 +398,30 @@ def _parse_wc_props(event: dict) -> list:
     return results
 
 
+def _split_market_and_player(market_desc: str):
+    """"Total Strikeouts - Ryan Gusto (MIA)" -> ("Total Strikeouts", "Ryan Gusto", "MIA").
+
+    Bovada is not consistent about the team parenthetical. It writes "Total Strikeouts -
+    Ryan Gusto (MIA)" and it also writes "Total Hits, Runs and RBIs - Cooper Pratt" with no
+    team at all, and team codes are not reliably all-caps ("D-Backs"). The old regex
+    required `\\([A-Z]+\\)` and returned nothing for every other shape, so the name was
+    dropped and left welded into the market key instead.
+
+    The team is optional. The NAME is the part that matters, because it is what the prop is
+    about. Returns ("", "") for the player when the description carries no " - " separator
+    at all — that is a game-level market, not a parse failure.
+    """
+    desc = (market_desc or "").strip()
+    if " - " not in desc:
+        return desc, "", ""
+    head, player_part = desc.split(" - ", 1)
+    player_part = player_part.strip()
+    m = re.match(r"(.+?)\s*\(([^)]+)\)\s*$", player_part)
+    if m:
+        return head.strip(), m.group(1).strip(), m.group(2).strip().upper()
+    return head.strip(), player_part, ""
+
+
 def _parse_standard_props(event: dict, league: str) -> list:
     """Extract all player props from a single Bovada event (non-WC leagues)."""
     results = []
@@ -424,14 +448,20 @@ def _parse_standard_props(event: dict, league: str) -> list:
         for market in dg.get("markets", []):
             market_desc = (market.get("description") or "").strip()
 
+            # Split the player off BEFORE canonicalising. An unmapped market slugs its whole
+            # description, so leaving the name attached minted market keys like
+            # "total_hits,_runs_and_rbis___cooper_pratt" — one key per player, and a market
+            # nothing could group by.
+            market_head, desc_player, desc_team = _split_market_and_player(market_desc)
+
             # Find canonical market name
             canonical = None
             for pattern, name in MARKET_MAP.items():
-                if pattern in market_desc.lower():
+                if pattern in market_head.lower():
                     canonical = name
                     break
             if not canonical:
-                canonical = market_desc.lower().replace(" ", "_").replace("-", "_")
+                canonical = market_head.lower().replace(" ", "_").replace("-", "_")
 
             for outcome in market.get("outcomes", []):
                 desc = (outcome.get("description") or "").strip()
@@ -451,18 +481,22 @@ def _parse_standard_props(event: dict, league: str) -> list:
                     # For yes/no props, the player IS the outcome, side varies by market
                     continue  # skip player-name outcomes for now; we'd need to restructure
 
-                # Extract player name from market description
-                # e.g., "Total Strikeouts - Ryan Gusto (MIA)" → "Ryan Gusto"
-                player_name = ""
-                team_abbrev = ""
-                if " - " in market_desc:
-                    player_part = market_desc.split(" - ", 1)[1].strip()
-                    # Parse "Ryan Gusto (MIA)"
-                    import re
-                    pm = re.match(r"(.+?)\s*\(([A-Z]+)\)", player_part)
-                    if pm:
-                        player_name = pm.group(1).strip()
-                        team_abbrev = pm.group(2)
+                # The player was already parsed off the market description above.
+                player_name, team_abbrev = desc_player, desc_team
+
+                # A player-prop row with no player is not a player prop. Emitting one anyway
+                # is how 3,729 props from Cooper Pratt, Raynel Delgado, Kahlil Watson and
+                # others ended up on ONE nameless players row: the old regex demanded an
+                # uppercase team parenthetical, and every market written without one fell
+                # through to an empty name that nothing downstream rejected. The World Cup
+                # path has always skipped these; this one silently kept them.
+                #
+                # Two shapes land here and both should be dropped rather than bucketed:
+                # genuinely game-level markets in a props group ("Total Hits, Runs and
+                # Errors"), and anything whose description we cannot parse. A prop we cannot
+                # attribute is not a prop we can serve.
+                if not player_name:
+                    continue
 
                 results.append({
                     "player_name": player_name,
@@ -621,6 +655,50 @@ def _wc_direct_ingest(all_props: list, today: str):
     return ingested
 
 
+def _normalize_identity_name(value: str) -> str:
+    value = unicodedata.normalize("NFKD", value or "").encode("ascii", "ignore").decode("ascii")
+    return re.sub(r"\s+", " ", re.sub(r"[^\w\s]", "", value.lower())).strip()
+
+
+def _resolve_ufc_player_for_bovada(con, player_name: str) -> int:
+    """Use a reviewed alias before creating a Bovada-only UFC player row."""
+    exact = con.execute(
+        "SELECT id FROM players WHERE name=? AND league='ufc' ORDER BY id", (player_name,)
+    ).fetchall()
+    if len(exact) == 1:
+        return exact[0]["id"]
+    if len(exact) > 1:
+        raise RuntimeError("ambiguous UFC canonical name from Bovada: {}".format(player_name))
+    aliases = con.execute(
+        "SELECT DISTINCT p.id FROM name_alias na JOIN players p ON p.id=na.player_id "
+        "WHERE p.league='ufc' AND na.alias_norm=? ORDER BY p.id",
+        (_normalize_identity_name(player_name),),
+    ).fetchall()
+    if len(aliases) == 1:
+        return aliases[0]["id"]
+    if len(aliases) > 1:
+        raise RuntimeError("ambiguous UFC reviewed alias from Bovada: {}".format(player_name))
+    return con.execute(
+        "INSERT INTO players(name, team, league) VALUES(?,?,?)",
+        (player_name, None, "ufc"),
+    ).lastrowid
+
+
+def _find_existing_ufc_game_for_players(con, game_date: str, player_ids: set):
+    """Find one canonical fight by its resolved fighters when display names changed."""
+    if len(player_ids) != 2:
+        return None
+    candidates = con.execute(
+        "SELECT pg.id,pg.start_time FROM prop_games pg JOIN props pr ON pr.game_id=pg.id "
+        "WHERE pg.league='ufc' AND pg.date=? AND pr.player_id IN (?,?) "
+        "GROUP BY pg.id HAVING COUNT(DISTINCT pr.player_id)=2",
+        (game_date, *sorted(player_ids)),
+    ).fetchall()
+    if len(candidates) > 1:
+        raise RuntimeError("ambiguous UFC canonical game for Bovada fighter ids")
+    return candidates[0] if candidates else None
+
+
 def _ufc_direct_ingest(all_props: list, today: str) -> int:
     """Direct DB insert for UFC method-of-victory props — fighters are created as players (league
     'ufc') as needed, like WC. Game home/away = the two fighters; start_time stored. No ESPN linking."""
@@ -642,9 +720,17 @@ def _ufc_direct_ingest(all_props: list, today: str) -> int:
 
         for batch in by_game.values():
             game_start = _event_start_iso(batch["props"][0]) if batch["props"] else None
+            resolved_props = [
+                (p, _resolve_ufc_player_for_bovada(con, p["player_name"]))
+                for p in batch["props"]
+            ]
             row = con.execute(
                 "SELECT id,start_time FROM prop_games WHERE league=? AND date=? AND home=? AND away=?",
                 ("ufc", batch["date"], batch["home"], batch["away"])).fetchone()
+            if not row:
+                row = _find_existing_ufc_game_for_players(
+                    con, batch["date"], {player_id for _, player_id in resolved_props}
+                )
             if row:
                 game_id = row["id"]
                 if game_start and not row["start_time"]:
@@ -654,12 +740,7 @@ def _ufc_direct_ingest(all_props: list, today: str) -> int:
                     "INSERT INTO prop_games(league,date,home,away,espn_event_id,start_time) VALUES(?,?,?,?,?,?)",
                     ("ufc", batch["date"], batch["home"], batch["away"], "", game_start)).lastrowid
             print(f"  {batch['away']} vs {batch['home']}: {len(batch['props'])} props")
-            for p in batch["props"]:
-                pname = p["player_name"]
-                pl = con.execute("SELECT id FROM players WHERE name=? AND league=?", (pname, "ufc")).fetchone()
-                player_id = pl["id"] if pl else con.execute(
-                    "INSERT INTO players(name, team, league) VALUES(?,?,?)",
-                    (pname, p.get("team") or None, "ufc")).lastrowid
+            for p, player_id in resolved_props:
                 line_val = p.get("line") or 0
                 side = p.get("side", "over")
                 market = p.get("market", "")

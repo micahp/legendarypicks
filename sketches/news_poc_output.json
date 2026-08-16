@@ -1,0 +1,717 @@
+{
+  "generated": "2026-08-06T22:21:04.898455+00:00",
+  "leagues": {
+    "mlb": {
+      "narratives": [
+        {
+          "headline": "Phillies auction winner wows fans in radio broadcast",
+          "url": "https://awfulannouncing.com/mlb/phillies-auction-winner-wows-fans-radio-broadcast.html",
+          "source": "awfulannouncing",
+          "published": "Thu, 06 Aug 2026 19:00:05 +0000"
+        },
+        {
+          "headline": "[@tippingpitchespod.com] If you're looking for a comprehensive conversation about how the Dodgers have become the face of MLB's player wage suppression salary cap pr",
+          "url": "https://bsky.app/profile/tippingpitchespod.com/post/",
+          "source": "bluesky",
+          "published": "2026-08-06T21:12:38.779Z"
+        },
+        {
+          "headline": "[@tippingpitchespod.com] In Feb '25, we did an episode called \"Dodgers Myths, Busted\" where we addressed many core myths, including:\n\n-How salary deferrals work for ",
+          "url": "https://bsky.app/profile/tippingpitchespod.com/post/",
+          "source": "bluesky",
+          "published": "2026-08-06T21:12:38.263Z"
+        },
+        {
+          "headline": "[@daledoback.bsky.social] With Dodgers in a free fall, perhaps money can't buy Wins? Should a salary cap be instituted to prevent the whims of karmic retribution? The",
+          "url": "https://bsky.app/profile/daledoback.bsky.social/post/",
+          "source": "bluesky",
+          "published": "2026-08-06T00:28:05.971Z"
+        },
+        {
+          "headline": "[@daledoback.bsky.social] With Dodgers in a free fall, perhaps money can't buy Wins? Should a salary cap be instituted to prevent the whims of karmic retribution? The",
+          "url": "https://bsky.app/profile/daledoback.bsky.social/post/",
+          "source": "bluesky",
+          "published": "2026-08-05T23:16:21.375Z"
+        },
+        {
+          "headline": "[@roderickgraham.bsky.social] I don\u2019t need to put on my tinfoil hat to believe this. It is a believable ploy by a small-market owner to strengthen the argument that baseb",
+          "url": "https://bsky.app/profile/roderickgraham.bsky.social/post/",
+          "source": "bluesky",
+          "published": "2026-08-05T22:30:01.272Z"
+        },
+        {
+          "headline": "[@nickyflowers.com] \"oughh the Dodgers are unfair, we need a salary cap\" GIT GUD, SKILL ISSUE, THINGS OF THAT NATURE",
+          "url": "https://bsky.app/profile/nickyflowers.com/post/",
+          "source": "bluesky",
+          "published": "2026-08-05T21:34:42.573Z"
+        },
+        {
+          "headline": "[@tatertottenham.bsky.social] Interesting sports parallel to life, this FIFA scandal and the Dodgers continuing to exploit no salary cap makes me wonder when the wealthy ",
+          "url": "https://bsky.app/profile/tatertottenham.bsky.social/post/",
+          "source": "bluesky",
+          "published": "2026-08-05T10:15:10.170Z"
+        }
+      ],
+      "granular": [
+        {
+          "layer": "injury",
+          "headline": "Reds RHP Hunter Greene (elbow) has 'slim chance' to return in '26",
+          "url": "https://deadspin.com/reds-rhp-hunter-greene-elbow-has-slim-chance-to-return-in-26/",
+          "source": "deadspin",
+          "published": "2026-08-06T17:57:38.005Z",
+          "key_player": null
+        },
+        {
+          "layer": "injury",
+          "headline": "Red Sox 1B Triston Casas undergoes surgery on left wrist",
+          "url": "https://deadspin.com/red-sox-1b-triston-casas-undergoes-surgery-on-left-wrist/",
+          "source": "deadspin",
+          "published": "2026-08-06T16:12:32.708Z",
+          "key_player": null
+        },
+        {
+          "layer": "trade",
+          "headline": "White Sox ask newcomer Luis Castillo to stop the unstoppable Red Sox",
+          "url": "https://deadspin.com/white-sox-ask-newcomer-luis-castillo-to-stop-the-unstoppable-red-sox/",
+          "source": "deadspin",
+          "published": "2026-08-06T12:42:19.921Z",
+          "key_player": null
+        },
+        {
+          "layer": "trade",
+          "headline": "Dustin May ready to make Brewers debut against rival Pirates",
+          "url": "https://deadspin.com/dustin-may-ready-to-make-brewers-debut-against-rival-pirates/",
+          "source": "deadspin",
+          "published": "2026-08-06T09:02:13.239Z",
+          "key_player": null
+        },
+        {
+          "layer": "trade",
+          "headline": "Behind newcomer Foster Griffin, Guardians aim to salvage finale vs. Mets",
+          "url": "https://deadspin.com/behind-newcomer-foster-griffin-guardians-aim-to-salvage-finale-vs-mets/",
+          "source": "deadspin",
+          "published": "2026-08-06T07:42:16.235Z",
+          "key_player": null
+        },
+        {
+          "layer": "trade",
+          "headline": "While going for sweep of Angels, Orioles search for consistent offense",
+          "url": "https://deadspin.com/while-going-for-sweep-of-angels-orioles-search-for-consistent-offense/",
+          "source": "deadspin",
+          "published": "2026-08-06T07:17:15.246Z",
+          "key_player": null
+        },
+        {
+          "layer": "injury",
+          "headline": "Kyle Harrison returns to pitch Brewers past Pirates",
+          "url": "https://deadspin.com/kyle-harrison-returns-to-pitch-brewers-past-pirates/",
+          "source": "deadspin",
+          "published": "2026-08-06T02:52:08.878Z",
+          "key_player": null
+        },
+        {
+          "layer": "trade",
+          "headline": "Pirates release DH Marcell Ozuna in midst of woeful season",
+          "url": "https://deadspin.com/pirates-release-dh-marcell-ozuna-in-midst-of-woeful-season/",
+          "source": "deadspin",
+          "published": "2026-08-06T02:51:49.621Z",
+          "key_player": null
+        },
+        {
+          "layer": "injury",
+          "headline": "Yankees slugger Aaron Judge takes positive steps in rehab from rib injury",
+          "url": "https://deadspin.com/yankees-slugger-aaron-judge-takes-positive-steps-in-rehab-from-rib-injury/",
+          "source": "deadspin",
+          "published": "2026-08-05T23:18:06.913Z",
+          "key_player": "Judge"
+        },
+        {
+          "layer": "injury",
+          "headline": "Reds RHP Hunter Greene (elbow) returns to injured list",
+          "url": "https://deadspin.com/reds-rhp-hunter-greene-elbow-returns-to-injured-list/",
+          "source": "deadspin",
+          "published": "2026-08-05T21:58:08.220Z",
+          "key_player": null
+        },
+        {
+          "layer": "injury",
+          "headline": "Rangers activate LHP Cody Bradford in return from elbow surgery",
+          "url": "https://deadspin.com/rangers-activate-lhp-cody-bradford-in-return-from-elbow-surgery/",
+          "source": "deadspin",
+          "published": "2026-08-05T19:02:45.653Z",
+          "key_player": null
+        },
+        {
+          "layer": "injury",
+          "headline": "White Sox designate veteran OF Austin Hays for assignment",
+          "url": "https://deadspin.com/white-sox-designate-veteran-of-austin-hays-for-assignment/",
+          "source": "deadspin",
+          "published": "2026-08-05T18:27:44.601Z",
+          "key_player": null
+        },
+        {
+          "layer": "staff",
+          "headline": "Purdue hires Rice's Tommy McClelland as new AD",
+          "url": "https://deadspin.com/purdue-hires-rices-tommy-mcclelland-as-new-ad/",
+          "source": "deadspin",
+          "published": "2026-08-05T17:12:48.949Z",
+          "key_player": null
+        },
+        {
+          "layer": "trade",
+          "headline": "Reports: Pirates to release DH Marcell Ozuna",
+          "url": "https://deadspin.com/reports-pirates-to-release-dh-marcell-ozuna/",
+          "source": "deadspin",
+          "published": "2026-08-05T15:27:34.715Z",
+          "key_player": null
+        },
+        {
+          "layer": "trade",
+          "headline": "How the Dodgers Landed Tarik Skubal and Won the MLB Trade Deadline",
+          "url": "https://deadspin.com/how-the-dodgers-landed-tarik-skubal-and-won-the-mlb-trade-deadline/",
+          "source": "deadspin",
+          "published": "2026-08-05T14:44:50.789Z",
+          "key_player": null
+        },
+        {
+          "layer": "trade",
+          "headline": "After losing friends, Tigers aim to continue winning ways vs. M's",
+          "url": "https://deadspin.com/after-losing-friends-tigers-aim-to-continue-winning-ways-vs-ms/",
+          "source": "deadspin",
+          "published": "2026-08-05T13:02:42.992Z",
+          "key_player": null
+        },
+        {
+          "layer": "staff",
+          "headline": "Casey Mize makes Padres debut against fellow wild-card contender D-backs",
+          "url": "https://deadspin.com/casey-mize-makes-padres-debut-against-fellow-wild-card-contender-d-backs/",
+          "source": "deadspin",
+          "published": "2026-08-05T13:02:30.248Z",
+          "key_player": null
+        },
+        {
+          "layer": "trade",
+          "headline": "Phillies put trust in rookie Andrew Painter vs. reeling Nationals",
+          "url": "https://deadspin.com/phillies-put-trust-in-rookie-andrew-painter-vs-reeling-nationals/",
+          "source": "deadspin",
+          "published": "2026-08-05T12:22:21.933Z",
+          "key_player": null
+        },
+        {
+          "layer": "trade",
+          "headline": "Angels, Orioles trying to adjust to new-look lineups",
+          "url": "https://deadspin.com/angels-orioles-trying-to-adjust-to-new-look-lineups/",
+          "source": "deadspin",
+          "published": "2026-08-05T08:17:24.151Z",
+          "key_player": null
+        },
+        {
+          "layer": "injury",
+          "headline": "Dodgers C Dalton Rushing diagnosed with partial UCL tear",
+          "url": "https://deadspin.com/dodgers-c-dalton-rushing-diagnosed-with-partial-ucl-tear/",
+          "source": "deadspin",
+          "published": "2026-08-05T05:52:18.363Z",
+          "key_player": null
+        },
+        {
+          "layer": "injury",
+          "headline": "Bobby Witt Jr. returns to lead Royals past Twins",
+          "url": "https://deadspin.com/bobby-witt-jr-returns-to-lead-royals-past-twins/",
+          "source": "deadspin",
+          "published": "2026-08-05T03:12:04.491Z",
+          "key_player": null
+        },
+        {
+          "layer": "injury",
+          "headline": "Blue Jays RHP Trey Yesavage (knee) exits after 2 innings vs. Astros",
+          "url": "https://deadspin.com/blue-jays-rhp-trey-yesavage-knee-exits-after-2-innings-vs-astros/",
+          "source": "deadspin",
+          "published": "2026-08-05T01:42:08.405Z",
+          "key_player": null
+        },
+        {
+          "layer": "injury",
+          "headline": "Blue Jays RHP Trey Yesavage exits after 2 innings vs. Astros",
+          "url": "https://deadspin.com/blue-jays-rhp-trey-yesavage-exits-after-2-innings-vs-astros/",
+          "source": "deadspin",
+          "published": "2026-08-05T01:11:55.758Z",
+          "key_player": null
+        },
+        {
+          "layer": "injury",
+          "headline": "Nationals All-Star OF James Wood (oblique) on MLB's IL for 1st time",
+          "url": "https://deadspin.com/nationals-all-star-of-james-wood-oblique-on-mlbs-il-for-1st-time/",
+          "source": "deadspin",
+          "published": "2026-08-05T00:12:01.048Z",
+          "key_player": null
+        },
+        {
+          "layer": "trade",
+          "headline": "Mariners cut loose veterans Rob Refsnyder, Mitch Garver",
+          "url": "https://deadspin.com/mariners-cut-loose-veterans-rob-refsnyder-mitch-garver/",
+          "source": "deadspin",
+          "published": "2026-08-04T23:08:05.327Z",
+          "key_player": null
+        },
+        {
+          "layer": "trade",
+          "headline": "Mickey Moniak agrees to two-year, reported $16.5M extension with Rockies",
+          "url": "https://deadspin.com/mickey-moniak-agrees-to-two-year-reported-165m-extension-with-rockies/",
+          "source": "deadspin",
+          "published": "2026-08-04T22:13:00.393Z",
+          "key_player": null
+        },
+        {
+          "layer": "trade",
+          "headline": "Yankees top prospect George Lombard Jr. promoted, to start at SS",
+          "url": "https://deadspin.com/yankees-top-prospect-george-lombard-jr-promoted-to-start-at-ss/",
+          "source": "deadspin",
+          "published": "2026-08-04T20:47:50.862Z",
+          "key_player": null
+        },
+        {
+          "layer": "injury",
+          "headline": "Athletics 1B Nick Kurtz (thumb) returns to injured list",
+          "url": "https://deadspin.com/athletics-1b-nick-kurtz-thumb-returns-to-injured-list/",
+          "source": "deadspin",
+          "published": "2026-08-04T20:13:00.083Z",
+          "key_player": null
+        }
+      ],
+      "other": 53
+    },
+    "mls": {
+      "narratives": [
+        {
+          "headline": "Tempo, Fire both out to emerge from expansion blues",
+          "url": "https://deadspin.com/tempo-fire-both-out-to-emerge-from-expansion-blues/",
+          "source": "deadspin",
+          "published": "2026-08-05T20:37:53.851Z"
+        },
+        {
+          "headline": "[@blckdgrd.bsky.social] American professional soccer blows and will until it goes to 20 team leagues with promotion/relegation, which it never ever will\n\nwww.thegua",
+          "url": "https://bsky.app/profile/blckdgrd.bsky.social/post/",
+          "source": "bluesky",
+          "published": "2026-08-05T13:42:50.872Z"
+        },
+        {
+          "headline": "[@kshahyd.bsky.social] And this is a big reason people who love the sport, hate your league... \n\nNew MLS commissioner says promotion and relegation won\u2019t be coming",
+          "url": "https://bsky.app/profile/kshahyd.bsky.social/post/",
+          "source": "bluesky",
+          "published": "2026-08-05T03:19:37.670Z"
+        },
+        {
+          "headline": "[@zooomsports.bsky.social] MLS commissioner Larry Berg rules out promotion and relegation \u2018anytime soon\u2019\n\nhttps://zooomsports.com/en/mls-commissioner-larry-berg-rules-",
+          "url": "https://bsky.app/profile/zooomsports.bsky.social/post/",
+          "source": "bluesky",
+          "published": "2026-08-04T21:04:39.268Z"
+        },
+        {
+          "headline": "[@sports.skyfleet.blue] New MLS commissioner says promotion and relegation won\u2019t be coming \u2018anytime soon\u2019",
+          "url": "https://bsky.app/profile/sports.skyfleet.blue/post/",
+          "source": "bluesky",
+          "published": "2026-08-04T19:58:54.469Z"
+        },
+        {
+          "headline": "[@adicicco.bsky.social] Cleaner way to do it:\nMLS 1, MLS 2 - 15 teams each, 28 game, home and away, regular season. Promotion/Relegation 5 up, 5 down, increases the",
+          "url": "https://bsky.app/profile/adicicco.bsky.social/post/",
+          "source": "bluesky",
+          "published": "2026-08-04T17:46:50.223Z"
+        },
+        {
+          "headline": "[@pcattry.bsky.social] Larry Berg teases a new playoff format but offers little specifics because he\u2019d like to collaborate with MLS owners first, doesn\u2019t have a ti",
+          "url": "https://bsky.app/profile/pcattry.bsky.social/post/",
+          "source": "bluesky",
+          "published": "2026-08-04T16:43:12.365Z"
+        },
+        {
+          "headline": "[@kshahyd.bsky.social] Protests erupt after drastic decision further condemns Mexican soccer\n\nPromotion, Relegation Death Sentence Inspires Protests\n\nThe Growing D",
+          "url": "https://bsky.app/profile/kshahyd.bsky.social/post/",
+          "source": "bluesky",
+          "published": "2026-07-29T15:12:18.574Z"
+        }
+      ],
+      "granular": [
+        {
+          "layer": "trade",
+          "headline": "Reports: Galaxy acquiring Hirving Lozano from San Diego FC",
+          "url": "https://deadspin.com/reports-galaxy-acquiring-hirving-lozano-from-san-diego-fc/",
+          "source": "deadspin",
+          "published": "2026-08-06T15:27:25.616Z",
+          "key_player": null
+        },
+        {
+          "layer": "injury",
+          "headline": "NYCFC F Arnau Farnos has surgery for broken leg",
+          "url": "https://deadspin.com/nycfc-f-arnau-farnos-has-surgery-for-broken-leg/",
+          "source": "deadspin",
+          "published": "2026-08-05T18:42:54.316Z",
+          "key_player": null
+        },
+        {
+          "layer": "trade",
+          "headline": "Crew acquire Chilean F Gonzalo Tapia on loan",
+          "url": "https://deadspin.com/crew-acquire-chilean-f-gonzalo-tapia-on-loan/",
+          "source": "deadspin",
+          "published": "2026-08-05T16:07:37.457Z",
+          "key_player": null
+        },
+        {
+          "layer": "injury",
+          "headline": "Frustrated Denis Shapovalov bows out of Montreal in injury blow",
+          "url": "https://deadspin.com/frustrated-denis-shapovalov-bows-out-of-montreal-in-injury-blow/",
+          "source": "deadspin",
+          "published": "2026-08-04T23:02:56.346Z",
+          "key_player": null
+        },
+        {
+          "layer": "trade",
+          "headline": "Liberty believe in their Big 3 as they go for another win over Storm",
+          "url": "https://deadspin.com/liberty-believe-in-their-big-3-as-they-go-for-another-win-over-storm/",
+          "source": "deadspin",
+          "published": "2026-08-04T22:18:12.266Z",
+          "key_player": null
+        },
+        {
+          "layer": "staff",
+          "headline": "Blue Jackets defend controversial media departures after fan outcry",
+          "url": "https://awfulannouncing.com/nhl/blue-jackets-defend-media-departures-fan-outcry.html",
+          "source": "awfulannouncing",
+          "published": "Thu, 06 Aug 2026 21:00:43 +0000",
+          "key_player": null
+        },
+        {
+          "layer": "staff",
+          "headline": "Aliyah Boston, Candace Parker hype up Holly Rowe\u2019s dance moves",
+          "url": "https://awfulannouncing.com/wnba/aliyah-boston-candace-parker-hype-up-holly-rowe.html",
+          "source": "awfulannouncing",
+          "published": "Thu, 06 Aug 2026 15:30:13 +0000",
+          "key_player": null
+        }
+      ],
+      "other": 11
+    },
+    "nba": {
+      "narratives": [],
+      "granular": [
+        {
+          "layer": "trade",
+          "headline": "Suns give Dillon Brooks 3-year, $73M extension",
+          "url": "https://deadspin.com/suns-give-dillon-brooks-3-year-73m-extension/",
+          "source": "deadspin",
+          "published": "2026-08-06T04:12:08.257Z",
+          "key_player": null
+        }
+      ],
+      "other": 1
+    },
+    "ncaaf": {
+      "narratives": [
+        {
+          "headline": "Pac-12, Mountain West announce poaching lawsuit settlement",
+          "url": "https://deadspin.com/pac-12-mountain-west-announce-poaching-lawsuit-settlement/",
+          "source": "deadspin",
+          "published": "2026-08-04T23:18:01.552Z"
+        },
+        {
+          "headline": "Mountain West, Pac-12 finalize lawsuit settlement",
+          "url": "https://awfulannouncing.com/ncaa/mountain-west-pac-12-finalize-lawsuit-settlement.html",
+          "source": "awfulannouncing",
+          "published": "Thu, 06 Aug 2026 16:30:09 +0000"
+        }
+      ],
+      "granular": [],
+      "other": 6
+    },
+    "nfl": {
+      "narratives": [
+        {
+          "headline": "Longtime Giants broadcaster Mike Krukow retiring after 37 seasons",
+          "url": "https://deadspin.com/longtime-giants-broadcaster-mike-krukow-retiring-after-37-seasons/",
+          "source": "deadspin",
+          "published": "2026-08-06T19:02:57.248Z"
+        },
+        {
+          "headline": "With Fox backing out of early NFL negotiations, will other networks follow?",
+          "url": "https://awfulannouncing.com/nfl/fox-backing-out-early-negotiations-other-networks-follow.html",
+          "source": "awfulannouncing",
+          "published": "Thu, 06 Aug 2026 20:00:59 +0000"
+        },
+        {
+          "headline": "Mike Krukow to step away from Giants broadcasts following 2026 season",
+          "url": "https://awfulannouncing.com/mlb/mike-krukow-step-away-retire-giants-broadcasts-2026-season.html",
+          "source": "awfulannouncing",
+          "published": "Thu, 06 Aug 2026 18:00:31 +0000"
+        }
+      ],
+      "granular": [
+        {
+          "layer": "injury",
+          "headline": "Broncos coach: WR Jaylen Waddle (leg) out 4-5 days",
+          "url": "https://deadspin.com/broncos-coach-wr-jaylen-waddle-leg-out-4-5-days/",
+          "source": "deadspin",
+          "published": "2026-08-06T19:43:36.084Z",
+          "key_player": null
+        },
+        {
+          "layer": "trade",
+          "headline": "Colts, RB Jonathan Taylor agree to extension",
+          "url": "https://deadspin.com/colts-rb-jonathan-taylor-agree-to-extension/",
+          "source": "deadspin",
+          "published": "2026-08-06T19:32:27.459Z",
+          "key_player": null
+        },
+        {
+          "layer": "trade",
+          "headline": "OT Kion Smith inks 1-year deal with 49ers",
+          "url": "https://deadspin.com/ot-kion-smith-inks-1-year-deal-with-49ers/",
+          "source": "deadspin",
+          "published": "2026-08-06T18:47:43.257Z",
+          "key_player": null
+        },
+        {
+          "layer": "staff",
+          "headline": "Bucs GM: No plans to trade Vita Vea, Baker Mayfield a franchise QB",
+          "url": "https://deadspin.com/bucs-gm-no-plans-to-trade-vita-vea-baker-mayfield-a-franchise-qb/",
+          "source": "deadspin",
+          "published": "2026-08-06T18:42:38.032Z",
+          "key_player": null
+        },
+        {
+          "layer": "injury",
+          "headline": "Titans WR Elic Ayomanor injures shoulder in practice",
+          "url": "https://deadspin.com/titans-wr-elic-ayomanor-injures-shoulder-in-practice/",
+          "source": "deadspin",
+          "published": "2026-08-06T17:52:35.167Z",
+          "key_player": null
+        },
+        {
+          "layer": "injury",
+          "headline": "Jets coach: Rookie TE Kenyon Sadiq to return in 'couple weeks'",
+          "url": "https://deadspin.com/jets-coach-rookie-te-kenyon-sadiq-to-return-in-couple-weeks/",
+          "source": "deadspin",
+          "published": "2026-08-06T16:47:32.576Z",
+          "key_player": null
+        },
+        {
+          "layer": "trade",
+          "headline": "Report: Texans, LB Henry To'oTo'o agree to extension",
+          "url": "https://deadspin.com/report-texans-lb-henry-tootoo-agree-to-extension/",
+          "source": "deadspin",
+          "published": "2026-08-06T16:42:41.104Z",
+          "key_player": null
+        },
+        {
+          "layer": "trade",
+          "headline": "Report: Patriots working out veteran G Greg Van Roten",
+          "url": "https://deadspin.com/report-patriots-working-out-veteran-g-greg-van-roten/",
+          "source": "deadspin",
+          "published": "2026-08-06T16:42:35.261Z",
+          "key_player": null
+        },
+        {
+          "layer": "trade",
+          "headline": "Raiders sign former Texans RB Dare Ogunbowale",
+          "url": "https://deadspin.com/raiders-sign-former-texans-rb-dare-ogunbowale/",
+          "source": "deadspin",
+          "published": "2026-08-06T15:12:50.777Z",
+          "key_player": null
+        },
+        {
+          "layer": "trade",
+          "headline": "Reports: Colts, RB Jonathan Taylor agree to two-year, $44M extension",
+          "url": "https://deadspin.com/reports-colts-rb-jonathan-taylor-agree-to-two-year-44m-extension/",
+          "source": "deadspin",
+          "published": "2026-08-06T12:47:20.925Z",
+          "key_player": null
+        },
+        {
+          "layer": "injury",
+          "headline": "Aaron Donald, Rams reunion nearing reality with official workout",
+          "url": "https://deadspin.com/aaron-donald-rams-reunion-nearing-reality-with-official-workout/",
+          "source": "deadspin",
+          "published": "2026-08-06T00:17:04.681Z",
+          "key_player": null
+        },
+        {
+          "layer": "trade",
+          "headline": "Tank Dell practices with Texans for first time since '24",
+          "url": "https://deadspin.com/tank-dell-practices-with-texans-for-first-time-since-24/",
+          "source": "deadspin",
+          "published": "2026-08-05T22:08:39.606Z",
+          "key_player": null
+        },
+        {
+          "layer": "injury",
+          "headline": "Angels place RHP Sam Bachman (forearm) on 15-day injured list",
+          "url": "https://deadspin.com/angels-place-rhp-sam-bachman-forearm-on-15-day-injured-list/",
+          "source": "deadspin",
+          "published": "2026-08-05T21:12:57.801Z",
+          "key_player": null
+        },
+        {
+          "layer": "trade",
+          "headline": "Reports: WR Stefon Diggs to sign with Commanders",
+          "url": "https://deadspin.com/reports-wr-stefon-diggs-to-sign-with-commanders/",
+          "source": "deadspin",
+          "published": "2026-08-05T18:42:46.275Z",
+          "key_player": null
+        },
+        {
+          "layer": "injury",
+          "headline": "Blue Jays place RHP Trey Yesavage (knee) on injured list",
+          "url": "https://deadspin.com/blue-jays-place-rhp-trey-yesavage-knee-on-injured-list/",
+          "source": "deadspin",
+          "published": "2026-08-05T17:57:49.149Z",
+          "key_player": null
+        },
+        {
+          "layer": "trade",
+          "headline": "49ers sign WR KhaDarel Hodge, DL Ogbo Okoronkwo",
+          "url": "https://deadspin.com/49ers-sign-wr-khadarel-hodge-dl-ogbo-okoronkwo/",
+          "source": "deadspin",
+          "published": "2026-08-05T17:52:41.190Z",
+          "key_player": null
+        },
+        {
+          "layer": "injury",
+          "headline": "Falcons' Jalon Walker out for season with torn ACL",
+          "url": "https://deadspin.com/falcons-jalon-walker-out-for-season-with-torn-acl/",
+          "source": "deadspin",
+          "published": "2026-08-05T15:52:35.973Z",
+          "key_player": null
+        },
+        {
+          "layer": "trade",
+          "headline": "Report: 49ers reach deal with WR KhaDarel Hodge",
+          "url": "https://deadspin.com/report-49ers-reach-deal-with-wr-khadarel-hodge/",
+          "source": "deadspin",
+          "published": "2026-08-05T15:32:40.877Z",
+          "key_player": null
+        },
+        {
+          "layer": "injury",
+          "headline": "Report: Falcons' Jalon Walker sustained torn ACL",
+          "url": "https://deadspin.com/report-falcons-jalon-walker-sustained-torn-acl/",
+          "source": "deadspin",
+          "published": "2026-08-05T14:52:35.752Z",
+          "key_player": null
+        },
+        {
+          "layer": "trade",
+          "headline": "Falcons RB Bijan Robinson: A 'dream' to stay with one team",
+          "url": "https://deadspin.com/falcons-rb-bijan-robinson-a-dream-to-stay-with-one-team/",
+          "source": "deadspin",
+          "published": "2026-08-05T14:47:29.772Z",
+          "key_player": null
+        },
+        {
+          "layer": "trade",
+          "headline": "Bears, RT Darnell Wright agree on deal with reported $93M guaranteed",
+          "url": "https://deadspin.com/bears-rt-darnell-wright-agree-on-deal-with-reported-93m-guaranteed/",
+          "source": "deadspin",
+          "published": "2026-08-05T01:37:00.150Z",
+          "key_player": null
+        },
+        {
+          "layer": "injury",
+          "headline": "Cowboys TE Princeton Fant out for year with torn ACL",
+          "url": "https://deadspin.com/cowboys-te-princeton-fant-out-for-year-with-torn-acl/",
+          "source": "deadspin",
+          "published": "2026-08-05T00:42:00.470Z",
+          "key_player": null
+        },
+        {
+          "layer": "injury",
+          "headline": "Cards All-Star OF Jordan Walker (knee) pulled from lineup vs. Yanks",
+          "url": "https://deadspin.com/cards-all-star-of-jordan-walker-knee-pulled-from-lineup-vs-yanks/",
+          "source": "deadspin",
+          "published": "2026-08-04T22:53:12.149Z",
+          "key_player": null
+        },
+        {
+          "layer": "trade",
+          "headline": "Reports: Bears, RT Darnell Wright agree on record-breaking deal",
+          "url": "https://deadspin.com/reports-bears-rt-darnell-wright-agree-on-record-breaking-deal/",
+          "source": "deadspin",
+          "published": "2026-08-04T21:12:58.784Z",
+          "key_player": null
+        },
+        {
+          "layer": "trade",
+          "headline": "George Lombard Jr., Heliot Ramos to debut for Yankees vs. Cardinals",
+          "url": "https://deadspin.com/george-lombard-jr-heliot-ramos-to-debut-for-yankees-vs-cardinals/",
+          "source": "deadspin",
+          "published": "2026-08-04T20:52:32.040Z",
+          "key_player": null
+        },
+        {
+          "layer": "staff",
+          "headline": "Jon Gruden \u2018fired up\u2019 for NFL play-by-play opportunity",
+          "url": "https://awfulannouncing.com/nfl/jon-gruden-play-by-play-opportunity.html",
+          "source": "awfulannouncing",
+          "published": "Thu, 06 Aug 2026 19:30:53 +0000",
+          "key_player": null
+        }
+      ],
+      "other": 25
+    },
+    "nhl": {
+      "narratives": [],
+      "granular": [
+        {
+          "layer": "trade",
+          "headline": "Penguins sign F Ville Koivunen to eight-year, $32M deal",
+          "url": "https://deadspin.com/penguins-sign-f-ville-koivunen-to-eight-year-32m-deal/",
+          "source": "deadspin",
+          "published": "2026-08-06T16:17:32.259Z",
+          "key_player": null
+        }
+      ],
+      "other": 1
+    },
+    "unclassified": {
+      "narratives": [
+        {
+          "headline": "Akron Football Reaches New Low Allowing Fans To Call Plays",
+          "url": "https://deadspin.com/akron-football-reaches-new-low-allowing-fans-to-call-plays/",
+          "source": "deadspin",
+          "published": "2026-08-05T14:50:41.205Z"
+        },
+        {
+          "headline": "Dream aim to have defense in order vs. Kelsey Plum-led Mercury",
+          "url": "https://deadspin.com/dream-aim-to-have-defense-in-order-vs-kelsey-plum-led-mercury/",
+          "source": "deadspin",
+          "published": "2026-08-04T21:42:56.377Z"
+        }
+      ],
+      "granular": [
+        {
+          "layer": "trade",
+          "headline": "Gotham FC sign veteran Meredith Speck through end of season",
+          "url": "https://deadspin.com/gotham-fc-sign-veteran-meredith-speck-through-end-of-season/",
+          "source": "deadspin",
+          "published": "2026-08-06T15:42:33.918Z",
+          "key_player": null
+        },
+        {
+          "layer": "injury",
+          "headline": "Report: TE Zach Ertz (torn ACL) cleared for football activities",
+          "url": "https://deadspin.com/report-te-zach-ertz-torn-acl-cleared-for-football-activities/",
+          "source": "deadspin",
+          "published": "2026-08-05T01:01:55.998Z",
+          "key_player": null
+        },
+        {
+          "layer": "trade",
+          "headline": "Kansas extends Players Era relationship thru 2030-31",
+          "url": "https://deadspin.com/kansas-extends-players-era-relationship-thru-2030-31/",
+          "source": "deadspin",
+          "published": "2026-08-04T21:13:06.155Z",
+          "key_player": null
+        }
+      ],
+      "other": 17
+    }
+  }
+}

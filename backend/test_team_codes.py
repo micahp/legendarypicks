@@ -247,8 +247,19 @@ def test_normalize_position_nt_to_dt():
     assert normalize_position("nfl", "NT") == "DT"
 
 
-def test_normalize_position_ol_to_g():
-    assert normalize_position("nfl", "OL") == "G"
+def test_normalize_position_ol_passes_through():
+    """`OL` is not a guard, and was never published as one.
+
+    This asserted `OL -> "G"` until 2026-08-05. Every other alias maps a code
+    to its OWN published parent (ESPN: NT->DT, FS/SS->S, OLB/ILB/MLB->LB), but
+    ESPN publishes OL->OFF and gives G no parent at all -- so that mapping
+    invented a specific position for every lineman we only knew as "offensive
+    line". The test encoded the fabrication as the expectation, which is why
+    nothing caught it: check C detects a code beside its own ancestor, and G is
+    not OL's ancestor.
+    """
+    assert normalize_position("nfl", "OL") == "OL"
+    assert normalize_position("nfl", "G") == "G"
 
 
 def test_normalize_position_ilb_to_lb():

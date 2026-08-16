@@ -1,0 +1,124 @@
+"""Tests for settled prop results on the game props endpoint.
+
+The board showed what was offered and then went quiet. Props are the product, so the one
+page where we can show the lines were worth reading has to show how they landed — and it
+has to keep 'not settled yet' distinguishable from 'missed'.
+"""
+import os
+import sqlite3
+import tempfile
+
+import pytest
+
+
+@pytest.fixture()
+def api(monkeypatch):
+    """A throwaway DB with one game, three props, two of them settled."""
+    fd, path = tempfile.mkstemp(suffix=".db")
+    os.close(fd)
+    con = sqlite3.connect(path)
+    con.executescript("""
+        CREATE TABLE prop_games(id INTEGER PRIMARY KEY, espn_event_id TEXT);
+        CREATE TABLE players(id INTEGER PRIMARY KEY, name TEXT, team TEXT);
+        CREATE TABLE props(id INTEGER PRIMARY KEY, game_id INTEGER, player_id INTEGER,
+                           market TEXT, line REAL, side TEXT, captured_at TEXT);
+        CREATE TABLE prop_results(prop_id INTEGER, actual_value REAL, hit INTEGER,
+                                  settled_at TEXT);
+        INSERT INTO prop_games VALUES (1, '999');
+        INSERT INTO players VALUES (10, 'Aaron Judge', 'NYY');
+        INSERT INTO players VALUES (11, '', '');
+        INSERT INTO props VALUES (103, 1, 11, 'total_doubles', 0.5, 'over', '2026-08-09T00:00Z');
+        INSERT INTO prop_results VALUES (103, 1.0, 1, '2026-08-09T04:00Z');
+        INSERT INTO props VALUES (100, 1, 10, 'total_bases', 1.5, 'over',  '2026-08-09T00:00Z');
+        INSERT INTO props VALUES (101, 1, 10, 'hits',        0.5, 'over',  '2026-08-09T00:00Z');
+        INSERT INTO props VALUES (102, 1, 10, 'strikeouts',  1.5, 'under', '2026-08-09T00:00Z');
+        INSERT INTO prop_results VALUES (100, 3.0, 1, '2026-08-09T04:00Z');
+        INSERT INTO prop_results VALUES (101, 0.0, 0, '2026-08-09T04:00Z');
+    """)
+    con.commit()
+    con.close()
+
+    import _core
+    monkeypatch.setattr(_core, "DB", path)
+    from routers import game_extras
+    monkeypatch.setattr(game_extras, "DB", path, raising=False)
+    yield game_extras.game_props
+    os.unlink(path)
+
+
+def test_a_hit_carries_its_actual_value(api):
+    props = {p["market"]: p for p in api("mlb", "999")["players"][0]["props"]}
+    assert props["total_bases"]["result"] == {"actual": 3.0, "hit": True,
+                                              "settled_at": "2026-08-09T04:00Z",
+                                              "cashed": "over"}
+
+
+def test_cashed_is_the_side_the_number_landed_on_even_for_a_losing_row(api):
+    """Derived from the row's own side and verdict, so a line we hold on one side only
+    still says which way it went rather than leaving the page to infer it."""
+    props = {p["market"]: p for p in api("mlb", "999")["players"][0]["props"]}
+    assert props["total_bases"]["result"]["cashed"] == "over"   # over 1.5, actual 3, hit
+    assert props["hits"]["result"]["cashed"] == "under"          # over 0.5, actual 0, missed
+
+
+def test_a_miss_is_recorded_as_a_miss_not_as_missing(api):
+    props = {p["market"]: p for p in api("mlb", "999")["players"][0]["props"]}
+    assert props["hits"]["result"]["hit"] is False
+    assert props["hits"]["result"]["actual"] == 0.0
+
+
+def test_an_unsettled_prop_is_null_rather_than_a_loss(api):
+    """The distinction the whole feature rests on. A prop with no row in prop_results has
+    not been graded; rendering it as a miss would claim a loss we never took."""
+    props = {p["market"]: p for p in api("mlb", "999")["players"][0]["props"]}
+    assert props["strikeouts"]["result"] is None
+
+
+def test_settled_lines_counts_lines_not_rows_and_there_is_no_hit_rate(api):
+    """We hold both sides of most lines, so exactly one side of each pair hits by
+    construction. A win-loss record built on that describes our storage layout, not our
+    judgement — for game 401816457, 35 of 51 lines are stored both ways. The endpoint
+    reports lines settled and deliberately publishes no hit count."""
+    out = api("mlb", "999")
+    assert out["settled_lines"] == 2
+    assert "hit_count" not in out
+    assert "settled_count" not in out
+
+
+def test_a_nameless_player_is_not_served_at_all(api):
+    """Row 28987 in the real DB is a bucket the Bovada parser filled whenever it could not
+    attribute a market — 3,729 props from several different players on one fake identity.
+    Serving it would put a stranger's line under a blank name, and its settled props would
+    inflate the hit count with results nobody can attribute."""
+    out = api("mlb", "999")
+    assert [p["name"] for p in out["players"]] == ["Aaron Judge"]
+    assert out["settled_lines"] == 2
+
+
+def test_a_game_with_no_props_reports_zero_rather_than_omitting_the_counts(api):
+    out = api("mlb", "no-such-game")
+    assert out["players"] == []
+    assert out["settled_lines"] == 0
+
+
+def test_leaders_are_settled_lines_sorted_by_margin(api):
+    """total_bases: line 1.5, actual 3.0 -> margin 1.5. hits: line 0.5, actual 0.0 ->
+    margin 0.5. The bigger margin leads."""
+    out = api("mlb", "999")
+    markets = [l["market"] for l in out["leaders"]]
+    assert markets == ["total_bases", "hits"]
+    assert out["leaders"][0]["margin"] == 1.5
+    assert out["leaders"][0]["cashed"] == "over"
+
+
+def test_leaders_exclude_unsettled_and_nameless_rows(api):
+    """strikeouts never settled and player 11 has no name — neither belongs in the
+    surface that's meant to explain what decided a finished game."""
+    out = api("mlb", "999")
+    assert "strikeouts" not in [l["market"] for l in out["leaders"]]
+    assert all(l["name"] for l in out["leaders"])
+
+
+def test_leaders_cap_at_three(api):
+    out = api("mlb", "999")
+    assert len(out["leaders"]) <= 3

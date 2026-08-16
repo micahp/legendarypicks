@@ -38,6 +38,23 @@ CREATE TABLE team_game_stats (
     game_id TEXT NOT NULL
 )
 """
+# Prod's shape before 20260812_001/002: the tables exist, which is exactly why
+# `CREATE TABLE IF NOT EXISTS` never added the columns that came later.
+LEGACY_NEWS_ITEMS_DDL = """
+CREATE TABLE news_items (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    league TEXT NOT NULL,
+    layer TEXT NOT NULL,
+    url TEXT NOT NULL UNIQUE
+)
+"""
+LEGACY_TEAM_GAME_RESULTS_DDL = """
+CREATE TABLE team_game_results (
+    league TEXT NOT NULL,
+    game_id TEXT NOT NULL,
+    team TEXT NOT NULL
+)
+"""
 
 
 class SchemaMigrationTests(unittest.TestCase):
@@ -54,13 +71,20 @@ class SchemaMigrationTests(unittest.TestCase):
         with sqlite3.connect(self.db_path) as connection:
             connection.execute(LEGACY_LOG_DDL)
             connection.execute(LEGACY_TEAM_STATS_DDL)
+            connection.execute(LEGACY_NEWS_ITEMS_DDL)
+            connection.execute(LEGACY_TEAM_GAME_RESULTS_DDL)
 
     def _create_current(self):
         with sqlite3.connect(self.db_path) as connection:
             ensure_table(connection)
             connection.execute(LEGACY_TEAM_STATS_DDL)
-            for addition in migrate_schema.MIGRATIONS[1].additions:
-                connection.execute(addition.sql)
+            connection.execute(LEGACY_NEWS_ITEMS_DDL)
+            connection.execute(LEGACY_TEAM_GAME_RESULTS_DDL)
+            for migration in migrate_schema.MIGRATIONS:
+                if migration.table in ("player_game_logs", "app_schema_migrations"):
+                    continue
+                for addition in migration.additions:
+                    connection.execute(addition.sql)
 
     def _backup(self, name):
         return os.path.join(self.tempdir.name, name)
@@ -74,7 +98,7 @@ class SchemaMigrationTests(unittest.TestCase):
         self.assertTrue(os.path.exists(backup))
         self.assertEqual(
             [status.state for status in first],
-            ["adopted", "adopted"],
+            ["adopted"] * len(migrate_schema.MIGRATIONS),
         )
         _, second = migrate_schema.apply_database(
             self.db_path,
@@ -82,7 +106,7 @@ class SchemaMigrationTests(unittest.TestCase):
         )
         self.assertEqual(
             [status.state for status in second],
-            ["applied", "applied"],
+            ["applied"] * len(migrate_schema.MIGRATIONS),
         )
         with sqlite3.connect(self.db_path) as connection:
             rows = connection.execute(

@@ -60,13 +60,18 @@ failure mode here is shipping code whose data isn't in the prod DB (the empty-DB
      ```
    - Run the versioned schema gate first. `--check` is read-only and must
      report only `APPLIED` before the data copy. `--apply` takes and verifies
-     an online backup:
+     an online backup. **One invocation targets BOTH databases by default**
+     (six of the seven 2026-08-05 defects were "verified on dev, never shipped
+     to prod" — the runner removes the second action rather than reminding you
+     to take it):
      ```bash
-     backend/venv/bin/python backend/migrate_schema.py \
-       --db /root/legendarypicks/backend/data/picks.dev.db --apply
-     backend/venv/bin/python backend/migrate_schema.py \
-       --db /root/legendarypicks/backend/data/picks.db --apply
+     backend/venv/bin/python backend/migrate_all.py --check
+     backend/venv/bin/python backend/migrate_all.py --apply
      ```
+     The runner applies every numbered schema migration and records/adopts the
+     20 legacy hand-run migration scripts into `app_schema_migrations` on both
+     databases. Re-running is a no-op. `--only prod` / `--only dev` restrict
+     to one side when a single database is the actual target.
    - Copy only missing NFL logs/players. The preflight names identity
      mismatches and stable-ID remaps; the apply path names every column,
      backs up prod online, preserves existing enrichment JSON, and compares

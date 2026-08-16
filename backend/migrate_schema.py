@@ -26,7 +26,9 @@ REGISTRY_SQL = """
 CREATE TABLE IF NOT EXISTS app_schema_migrations (
     migration_id TEXT PRIMARY KEY,
     checksum TEXT NOT NULL,
-    applied_at TEXT NOT NULL DEFAULT (datetime('now'))
+    applied_at TEXT NOT NULL DEFAULT (datetime('now')),
+    status TEXT NOT NULL DEFAULT 'applied',
+    note TEXT
 )
 """.strip()
 
@@ -112,6 +114,60 @@ MIGRATIONS: tuple[Migration, ...] = (
             )
         ),
     ),
+    Migration(
+        migration_id="20260805_002_migration_ledger_status",
+        table="app_schema_migrations",
+        additions=(
+            ColumnAddition(
+                contract=ColumnContract(
+                    "status",
+                    "TEXT",
+                    not_null=True,
+                    default="'applied'",
+                ),
+                sql=(
+                    "ALTER TABLE app_schema_migrations "
+                    "ADD COLUMN status TEXT NOT NULL DEFAULT 'applied'"
+                ),
+            ),
+            ColumnAddition(
+                contract=ColumnContract("note", "TEXT"),
+                sql=(
+                    "ALTER TABLE app_schema_migrations "
+                    "ADD COLUMN note TEXT"
+                ),
+            ),
+        ),
+    ),
+    # The news schema is created by `CREATE TABLE IF NOT EXISTS` at
+    # _core.py:216. Prod's tables were created under the older shape, so every
+    # column added since has been skipped silently -- the table exists, so the
+    # guard fires and nothing reports a gap. `conv_id` is what ties an item to
+    # the conversation it belongs to; without it prod's news serves items that
+    # can never be grouped.
+    Migration(
+        migration_id="20260812_001_news_items_conv_id",
+        table="news_items",
+        additions=(
+            ColumnAddition(
+                contract=ColumnContract("conv_id", "TEXT"),
+                sql="ALTER TABLE news_items ADD COLUMN conv_id TEXT",
+            ),
+        ),
+    ),
+    # Soccer draws: `win` cannot express one, so a three-valued result rides
+    # alongside it. Nullable and unbackfilled by design -- a blank means the
+    # ingest never wrote one, not that the game was a draw.
+    Migration(
+        migration_id="20260812_002_team_game_results_result",
+        table="team_game_results",
+        additions=(
+            ColumnAddition(
+                contract=ColumnContract("result", "TEXT"),
+                sql="ALTER TABLE team_game_results ADD COLUMN result TEXT",
+            ),
+        ),
+    ),
 )
 
 REGISTRY_CONTRACT = (
@@ -153,6 +209,19 @@ def _read_only_connection(path: str) -> sqlite3.Connection:
     )
     connection.row_factory = sqlite3.Row
     connection.execute("PRAGMA query_only=ON")
+    return connection
+
+
+def _backup_read_connection(path: str) -> sqlite3.Connection:
+    """Read-only source for VACUUM INTO.
+
+    ``mode=ro`` alone is enough to guarantee the source is never written;
+    ``PRAGMA query_only=ON`` would additionally block VACUUM INTO, which the
+    read-only connection performs against the *destination* file.
+    """
+    connection = sqlite3.connect(
+        "file:{}?mode=ro".format(quote(path, safe="/")), uri=True
+    )
     return connection
 
 
@@ -279,6 +348,18 @@ def inspect_connection(
     for migration in migrations:
         existing = table_columns(connection, migration.table)
         if not existing:
+            if migration.table == REGISTRY_TABLE:
+                # The registry is bootstrapped by the runner itself
+                # (REGISTRY_SQL) before any migration applies; a missing
+                # registry is "pending", never an error.
+                statuses.append(
+                    MigrationStatus(
+                        migration.migration_id,
+                        "pending",
+                        "registry table bootstrap required",
+                    )
+                )
+                continue
             statuses.append(
                 MigrationStatus(
                     migration.migration_id,
@@ -384,7 +465,7 @@ def create_verified_backup(
         )
 
     try:
-        with _read_only_connection(absolute) as source:
+        with _backup_read_connection(absolute) as source:
             source_check = source.execute(
                 "PRAGMA quick_check"
             ).fetchone()[0]
@@ -392,11 +473,19 @@ def create_verified_backup(
                 raise MigrationError(
                     f"source quick_check failed: {source_check}"
                 )
-            with sqlite3.connect(backup_path) as backup:
-                source.backup(backup)
-                backup_check = backup.execute(
-                    "PRAGMA quick_check"
-                ).fetchone()[0]
+            # VACUUM INTO, never cp: a plain copy of a live database races
+            # writers and produces a torn snapshot (proved 2026-08-05: the
+            # copy reported `database disk image is malformed` while the
+            # source passed a full integrity_check). VACUUM INTO writes a
+            # consistent snapshot and works from a read-only connection in
+            # both `delete` and `wal` journal modes.
+            source.execute(
+                f"VACUUM INTO {_quote_identifier(backup_path)}"
+            )
+        with sqlite3.connect(backup_path) as backup:
+            backup_check = backup.execute(
+                "PRAGMA quick_check"
+            ).fetchone()[0]
         if backup_check != "ok":
             raise MigrationError(
                 f"backup quick_check failed: {backup_check}"

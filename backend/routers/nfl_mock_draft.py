@@ -976,15 +976,27 @@ def player_detail(player_id: int):
         # where they exist, so a pre-migration DB serves honest NULLs instead
         # of 500ing on the SELECT.
         _injury_cols = (
-            ", injury_status, last_news_date"
+            ", p.injury_status, p.last_news_date"
             if {"injury_status", "last_news_date"}
             <= {r["name"] for r in connection.execute("PRAGMA table_info(players)")}
             else ""
         )
+        # Position comes from nfl_adp (the fantasy table) with players as the
+        # fallback: a team defence plays no position, so `players.position` is
+        # NULL for the 32 D/ST rows, and the fantasy label lives in nfl_adp.
+        _pos_expr = (
+            "COALESCE(na.position, p.position)"
+            if "position" in _table_columns(connection, "nfl_adp")
+            else "p.position"
+        )
         player = connection.execute(
-            f"SELECT id, name, team, position, active{_injury_cols} "
-            f"FROM players WHERE id=? AND league='nfl'",
-            (player_id,),
+            f"""SELECT p.id, p.name, p.team,
+                       {_pos_expr} AS position,
+                       p.active{_injury_cols}
+                  FROM players p
+                  LEFT JOIN nfl_adp na ON na.player_id = p.id AND na.season = ?
+                 WHERE p.id=? AND p.league='nfl'""",
+            (_CURRENT_SEASON, player_id),
         ).fetchone()
 
         if player is None:
@@ -1405,9 +1417,18 @@ def player_game_log(player_id: int):
     """
     connection = _conn()
     try:
+        _pos_expr = (
+            "COALESCE(na.position, p.position)"
+            if "position" in _table_columns(connection, "nfl_adp")
+            else "p.position"
+        )
         player = connection.execute(
-            "SELECT id, name, team, position FROM players WHERE id=? AND league='nfl'",
-            (player_id,),
+            f"""SELECT p.id, p.name, p.team,
+                      {_pos_expr} AS position
+                 FROM players p
+                 LEFT JOIN nfl_adp na ON na.player_id = p.id AND na.season = ?
+                WHERE p.id=? AND p.league='nfl'""",
+            (_CURRENT_SEASON, player_id),
         ).fetchone()
         if player is None:
             return _json({"error": "Player not found"}, status=404)

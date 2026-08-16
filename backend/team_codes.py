@@ -185,7 +185,17 @@ POSITION_ALIASES: dict[str, dict[str, str]] = {
         "SS": "S",
         "SAF": "S",
         "NT": "DT",
-        "OL": "G",
+        # "OL": "G" was here and it was a fabrication, not a collapse. Every
+        # other entry maps a code to its OWN published parent -- ESPN's
+        # hierarchy says NT->DT, FS/SS->S, OLB/ILB/MLB->LB. It says OL->OFF,
+        # and G has no parent at all. So this asserted that every lineman we
+        # only know as "offensive line" is specifically a guard, inventing a
+        # position the publisher never gave us. `OL` is already in
+        # CANONICAL_POSITIONS, so it now passes through as itself.
+        #
+        # Check C could never have caught this: it detects a code sitting
+        # beside its own ancestor, and G is not OL's ancestor. A gate built to
+        # catch coarsening cannot catch a wrong answer dressed as one.
     },
     "mlb": {},
     "nba": {},

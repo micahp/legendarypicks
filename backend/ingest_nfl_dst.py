@@ -141,8 +141,13 @@ def ensure_dst_players(
     con: sqlite3.Connection, dry_run: bool = False
 ) -> dict:
     """Ensure 32 DEF player rows exist, return {team_code: player_id}."""
+    # A team defence plays no position: key on `entity_type` where the column
+    # exists, falling back to the legacy `position='DEF'` marker.
+    cols = {row[1] for row in con.execute("PRAGMA table_info(players)")}
+    def_where = ("entity_type='team_defense'" if "entity_type" in cols
+                 else "position='DEF'")
     cur = con.execute(
-        "SELECT id, team FROM players WHERE league='nfl' AND position='DEF' AND active=1"
+        f"SELECT id, team FROM players WHERE league='nfl' AND {def_where} AND active=1"
     )
     existing = {row[1]: row[0] for row in cur.fetchall()}
 
@@ -158,12 +163,22 @@ def ensure_dst_players(
         else:
             for code in missing:
                 team_name = NFL_TEAMS[code]
-                cur = con.execute(
-                    """INSERT INTO players
-                       (name, league, team, position, active, updated_at)
-                       VALUES (?, 'nfl', ?, 'DEF', 1, datetime('now'))""",
-                    (f"{team_name} D/ST", code),
-                )
+                if "entity_type" in cols:
+                    cur = con.execute(
+                        """INSERT INTO players
+                           (name, league, team, position, entity_type, active,
+                            updated_at)
+                           VALUES (?, 'nfl', ?, NULL, 'team_defense', 1,
+                                   datetime('now'))""",
+                        (f"{team_name} D/ST", code),
+                    )
+                else:
+                    cur = con.execute(
+                        """INSERT INTO players
+                           (name, league, team, position, active, updated_at)
+                           VALUES (?, 'nfl', ?, 'DEF', 1, datetime('now'))""",
+                        (f"{team_name} D/ST", code),
+                    )
                 existing[code] = cur.lastrowid
             con.commit()
 

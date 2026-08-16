@@ -35,6 +35,9 @@ export interface GameDetail {
   final_score: { home: number; away: number } | null
   live_score?: { home: number; away: number } | null
   state?: string | null
+  period?: number | null
+  clock?: string | null
+  status_detail?: string | null
 }
 
 export type Tab = 'boxscore' | 'playbyplay' | 'props' | 'info' | 'booth'
@@ -109,11 +112,11 @@ export function isNHL(lg: string) { return lg === 'nhl' }
 export function isMLB(lg: string) { return lg === 'mlb' }
 export function isNFL(lg: string) { return lg === 'nfl' }
 export function isWC(lg: string) { return lg === 'wc' }
-export function isSoccer(lg: string) { return isWC(lg) }
+export function isSoccer(lg: string) { return isWC(lg) || lg === 'lcup' || lg === 'mls' }
 export function isUSTeamSport(lg: string) { return isNBA(lg) || isNHL(lg) || isMLB(lg) || isNFL(lg) }
-export function hasGameTabs(lg: string) { return isNBA(lg) || isNHL(lg) || isMLB(lg) || isNFL(lg) || isWC(lg) }
+export function hasGameTabs(lg: string) { return isNBA(lg) || isNHL(lg) || isMLB(lg) || isNFL(lg) || isSoccer(lg) }
 export function usesDetailEndpoint(lg: string) { return isNBA(lg) || isNHL(lg) }
-export function usesPerTabEndpoints(lg: string) { return isMLB(lg) || isNFL(lg) || isWC(lg) }
+export function usesPerTabEndpoints(lg: string) { return isMLB(lg) || isNFL(lg) || isSoccer(lg) }
 
 export function fmt(v: any, dec?: boolean): string {
   if (v === null || v === undefined) return '-'

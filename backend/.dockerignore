@@ -9,6 +9,14 @@ data/cache
 # them sat right here looking correct. Every database pattern must name `data/`.
 # docker-compose bind-mounts ./backend/data over /app/data at runtime, so the
 # live DB is never served from the image regardless.
+# Match on the DATABASE NAME, not on a suffix. The suffix list was the bug the
+# second time: on 2026-08-11, 0.93GB of backups still reached the context because
+# `regrade`/`backfill` scripts name their copies `picks.db.pre-<label>-<stamp>`
+# with no `.bak` at all, so `data/*.bak*` missed them and `data/*.db` missed them
+# too (the name ends in a digit, not in `.db`). Anything derived from picks.db is
+# a database, whatever it is called.
+data/picks.db*
+data/picks.dev.db*
 data/*.db
 data/*.db-wal
 data/*.db-shm

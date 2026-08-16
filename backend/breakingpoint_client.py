@@ -69,10 +69,14 @@ def _fetch_all():
     for t in pp.get("allTeams", []):
         teams[t["id"]] = t
 
-    # Event lookup: id → name
+    # Event lookup: id → name. allEvents ids arrive as strings while match.event_id is an
+    # int; normalize so the match lookup resolves (previously every event name came back empty).
     events = {}
     for ev in pp.get("allEvents", []):
-        events[ev["id"]] = ev.get("name", "")
+        try:
+            events[int(ev["id"])] = ev.get("name", "")
+        except (KeyError, TypeError, ValueError):
+            events[ev["id"]] = ev.get("name", "")
 
     # Collect all matches from trpcState queries
     trpc = pp.get("trpcState", {})
@@ -162,8 +166,12 @@ def get_cod_matches(date_str=None):
         else:
             state = "pre"
 
-        t1 = teams.get(m.get("team_1_id"), {})
-        t2 = teams.get(m.get("team_2_id"), {})
+        # EWC club ids are not always present in the page-level ``allTeams`` dictionary, but
+        # Breaking Point includes the authoritative team objects directly on each match.  Prefer
+        # the shared dictionary when available and fall back to those embedded objects before
+        # degrading a genuinely unknown side to TBD.
+        t1 = teams.get(m.get("team_1_id")) or m.get("team1") or {}
+        t2 = teams.get(m.get("team_2_id")) or m.get("team2") or {}
 
         t1_name = t1.get("name", "TBD")
         t2_name = t2.get("name", "TBD")
@@ -191,6 +199,8 @@ def get_cod_matches(date_str=None):
             "date": match_dt.strftime("%Y-%m-%dT%H:%M:%SZ"),
             "state": state,
             "status": status_display,
+            "event": events.get(m.get("event_id")) or "",
+            "round": round_name,
             "home": {
                 "abbrev": t1_abbrev,
                 "name": t1_name,

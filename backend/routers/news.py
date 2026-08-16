@@ -1,0 +1,276 @@
+"""routers/news.py — league news endpoints (news engine).
+
+Serves what ingest_league_news.py collected into `news_items`. DB-first:
+this router never touches ESPN or any network — collection happens out-of-band.
+
+Surface model (matches the News page):
+  GET /api/news              catch-all, grouped per league (Home tab)
+  GET /api/news/narratives   one narrative per league (must precede /{league})
+  GET /api/news/{league}     single league
+"""
+import json
+from datetime import datetime, timezone
+
+from fastapi import APIRouter, Query
+from typing import Optional
+from _core import *
+from news_quality import rank_items
+
+router = APIRouter()
+
+# `notable` = a story about one of the sport's biggest names that matched no
+# transaction rule. It is news on the strength of who it is about.
+_GRANULAR_LAYERS = ("trade", "staff", "injury", "notable")
+_SERVE_LAYERS = ("narrative",) + _GRANULAR_LAYERS
+_NARRATIVES_PER_LEAGUE = 6
+_GRANULAR_PER_LEAGUE = 12
+
+
+_HANDLE_RE = __import__("re").compile(r"^\[@([^\]]+)\]\s*")
+
+
+def _item(r) -> dict:
+    """One board row. X posts carry their handle in the headline as
+    `[@AdamSchefter] ...`; move it into the source label so the card reads
+    "@AdamSchefter" rather than the bare "x"."""
+    headline, source = r["headline"], r["source"]
+    if source == "x":
+        m = _HANDLE_RE.match(headline or "")
+        if m:
+            source = "@" + m.group(1)
+            headline = _HANDLE_RE.sub("", headline)
+    return {
+        "id": r["id"],
+        "league": r["league"],
+        "headline": headline,
+        "url": r["url"],
+        "source": source,
+        "published": r["published"],
+        "layer": r["layer"],
+        "key_player": r["key_player"],
+    }
+
+
+def _utc_iso(v) -> str:
+    """SQLite's datetime('now') writes naive UTC ("2026-08-10 00:31:56").
+
+    The browser parses that shape as LOCAL time, so a card generated an hour
+    ago read as being from the future and the relative stamp said "now"
+    forever. Serve it with the offset the value actually has (2026-08-09).
+    """
+    s = (v or "").strip()
+    if not s:
+        return ""
+    try:
+        dt = datetime.fromisoformat(s.replace("Z", "+00:00"))
+    except ValueError:
+        return s
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def _story_time(sources, generated_at, pool_published=None) -> str:
+    """When this card's STORY last moved: the newest publish time among the
+    receipts it cites.
+
+    `generated_at` answers a different question — when we last ran the writer.
+    The generator regenerates every conversation that still clears its source
+    floor, which for a curated conv_id is every scheduled run forever, so
+    dating a card by it meant a story from days ago re-stamped itself hourly
+    and re-pinned itself above genuinely newer cards (Micah, 2026-08-11).
+
+    Two fallbacks, both preferring a PUBLISHED value over our own clock:
+
+    1. `pool_published` — the newest item in the conversation the card was
+       written from. Used when the model cited nothing, which 5 of 13 dev cards
+       currently do; without it those cards keep re-pinning on every run, which
+       is the original bug surviving in the rows least able to justify a spot.
+    2. `generated_at` — last resort, for a conversation with no dated items at
+       all. Keeps an old card where it was rather than sorting it to the bottom.
+    """
+    stamps = [_utc_iso(s.get("published")) for s in sources if s.get("published")]
+    if stamps:
+        return max(stamps)
+    if pool_published:
+        return _utc_iso(pool_published)
+    return _utc_iso(generated_at)
+
+
+def _conv_pool_published(con) -> dict:
+    """{conv_id: newest published item in that conversation}. One grouped pass,
+    used only to date cards whose model cited no receipts."""
+    return {r["conv_id"]: r["latest"] for r in con.execute(
+        """SELECT conv_id, MAX(published) AS latest FROM news_items
+           WHERE conv_id IS NOT NULL AND conv_id != ''
+             AND published IS NOT NULL AND published != ''
+           GROUP BY conv_id""")}
+
+
+def _conv_card(r, pool=None) -> dict:
+    """One conversation card (AI-generated) as the API serves it."""
+    sources = json.loads(r["sources"] or "[]")
+    pool = pool or {}
+    return {
+        "conv_id": r["conv_id"],
+        "league": r["league"],
+        "title": r["title"],
+        "narrative": r["narrative"],
+        "fan_voice": r["fan_voice"],
+        "paragraph": r["paragraph"],
+        "sources": sources,
+        "generated_at": _utc_iso(r["generated_at"]),
+        # What the card is DATED by on the page and what the feed sorts on.
+        "story_time": _story_time(sources, r["generated_at"],
+                                  pool.get(r["conv_id"])),
+        "source_count": r["source_count"],
+    }
+
+
+def _league_report(league: Optional[str] = None) -> dict:
+    """Per-league grouping for the league tabs.
+
+    `conversations` = the AI conversation cards for that league (one per
+    important conversation — each gets to breathe, Micah 2026-08-07);
+    `narratives`/`granular` = the classified items feeding them.
+    """
+    with closing(_db()) as con:
+        if league:
+            rows = con.execute(
+                """SELECT * FROM news_items
+                   WHERE league=? AND league != 'unclassified'
+                     AND source NOT IN ('bluesky','x-search')
+                     AND layer IN ('narrative','trade','staff','injury','notable')
+                   ORDER BY published DESC LIMIT 60""",
+                (league,),
+            ).fetchall()
+            groups = {league: rows}
+        else:
+            rows = con.execute(
+                """SELECT * FROM news_items
+                   WHERE league != 'unclassified'
+                     AND source NOT IN ('bluesky','x-search')
+                     AND layer IN ('narrative','trade','staff','injury','notable')
+                   ORDER BY published DESC LIMIT 300"""
+            ).fetchall()
+            groups = {}
+            for r in rows:
+                groups.setdefault(r["league"], []).append(dict(r))
+            # The bar for items we did NOT write. Recency was the whole ranking
+            # until 2026-08-12, which served retweets of retweets, a reporter
+            # announcing a holiday, and stories from 2025. Ranked PER LEAGUE so a
+            # busy league cannot trim a quiet one down to nothing.
+            groups = {lg: rank_items(v) for lg, v in groups.items()}
+
+        # AI-generated conversation cards (news_narratives), keyed by conv_id
+        ai_rows = con.execute("SELECT * FROM news_narratives").fetchall()
+        pool = _conv_pool_published(con)
+        convs_by_league: dict = {}
+        for r in ai_rows:
+            convs_by_league.setdefault(r["league"], []).append(_conv_card(r, pool))
+        # Newest story first within each league tab, same ruler as the Home feed.
+        # Cards carry their own floor: a synthesized card with no published
+        # receipt behind it does not display, whatever it says. 6 of 14 on dev
+        # had sources=[] and were served anyway, because the generation-time
+        # guard has no say over rows already in the table.
+        # A league this database does not offer must not reach a user through
+        # the news feed either. The hub reads the coverage registry and hides
+        # NCAAF; without this, news served it anyway — the same one-surface-only
+        # gap that let /api/players/search return 7 NCAAF players per query.
+        # Newest story first within each league tab, same ruler as the Home feed.
+        # NO quality floor here on purpose: a card is not worse because its
+        # `sources` column is empty. Requiring a citation already cost 11 of 14
+        # good cards once (see the v0.8.0 CHANGELOG) and an empty column is a
+        # RECORDING gap, not evidence the card was ungrounded.
+        for cards in convs_by_league.values():
+            cards.sort(key=lambda c: c["story_time"], reverse=True)
+
+    out = {}
+    # A league with AI conversation cards but only bluesky chatter (no
+    # real-article rows) must still appear — the conversation is the point
+    # (Micah: chatter IS the signal).
+    for lg in convs_by_league:
+        out.setdefault(lg, {"conversations": [], "narratives": [], "granular": [], "other": 0})
+    for lg, rows in groups.items():
+        narratives = [r for r in rows if r["layer"] == "narrative"][:_NARRATIVES_PER_LEAGUE]
+        granular = [r for r in rows if r["layer"] in _GRANULAR_LAYERS][:_GRANULAR_PER_LEAGUE]
+        entry = out.setdefault(lg, {"conversations": [], "narratives": [], "granular": [], "other": 0})
+        entry["narratives"] = [_item(r) for r in narratives]
+        entry["granular"] = [_item(r) for r in granular]
+        entry["other"] = max(0, len(rows) - len(narratives) - len(granular))
+    # Conversations for leagues that also had grouped items.
+    for lg, cards in convs_by_league.items():
+        out.setdefault(lg, {"conversations": [], "narratives": [], "granular": [], "other": 0})[
+            "conversations"] = cards
+    return out
+
+
+@router.get("/api/news")
+def news_catch_all(league: Optional[str] = Query(None, description="Filter to one league")):
+    """Catch-all feed (Home tab). `conversations` = every AI conversation card,
+    each with its own anchor + fan voice (each gets to breathe — we do NOT
+    merge a league's conversations into one summary). `leagues` = per-league
+    grouping for the league tabs. Optionally ?league=nfl for a single league."""
+    if league:
+        return {
+            "generated": datetime.now(timezone.utc).isoformat(),
+            "leagues": _league_report(league.strip().lower()),
+        }
+    with closing(_db()) as con:
+        rows = con.execute("""SELECT * FROM news_narratives""").fetchall()
+        pool = _conv_pool_published(con)
+    # Sorted on story_time, not generated_at — see _story_time. Ordering happens
+    # here rather than in SQL because the value lives inside the sources JSON.
+    cards = sorted((_conv_card(r, pool) for r in rows),
+                   key=lambda c: c["story_time"], reverse=True)
+    return {
+        "generated": datetime.now(timezone.utc).isoformat(),
+        "conversations": cards,
+        "leagues": _league_report(),
+    }
+
+
+@router.get("/api/news/narratives")
+def news_narratives():
+    """Every AI conversation card — what people are actually talking about,
+    with the source headlines each was grounded in (LinkedIn-trending)."""
+    with closing(_db()) as con:
+        rows = con.execute("SELECT * FROM news_narratives").fetchall()
+        pool = _conv_pool_published(con)
+    # Python's sort is stable, so newest-first within each league falls out of
+    # sorting on story_time and then grouping by league.
+    cards = sorted((_conv_card(r, pool) for r in rows),
+                   key=lambda c: c["story_time"], reverse=True)
+    cards.sort(key=lambda c: c["league"])
+    return {
+        "generated": datetime.now(timezone.utc).isoformat(),
+        "narratives": cards,
+    }
+
+
+@router.get("/api/news/runs")
+def news_narratives_runs(conv_id: Optional[str] = Query(None, description="Filter to one conversation")):
+    """Every saved generation run for comparison — never overwritten."""
+    with closing(_db()) as con:
+        if conv_id:
+            rows = con.execute(
+                "SELECT * FROM news_narratives_runs WHERE conv_id=? ORDER BY generated_at DESC",
+                (conv_id,),
+            ).fetchall()
+        else:
+            rows = con.execute(
+                "SELECT * FROM news_narratives_runs ORDER BY conv_id, generated_at DESC"
+            ).fetchall()
+    return {
+        "generated": datetime.now(timezone.utc).isoformat(),
+        "runs": [_conv_card(r) for r in rows],
+    }
+
+
+@router.get("/api/news/{league}")
+def news_for_league(league: str):
+    """Single-league feed: conversation cards + granular (trades/staff/injuries)."""
+    return {
+        "generated": datetime.now(timezone.utc).isoformat(),
+        "leagues": _league_report(league.strip().lower()),
+    }

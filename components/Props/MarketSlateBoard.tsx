@@ -339,6 +339,21 @@ export default function MarketSlateBoard({ league, date }: { league: string; dat
       if (sortKey === 'hit-rate') return history.hit_rate.l10
       return history.projection === null ? null : Math.abs(history.projection - row.line)
     }
+    // Hit rate over ten games takes eleven distinct values, so ties are the common
+    // case, not the edge case: a real slate put six rows on 40% at once. Falling
+    // through to the player's name turned the research board into an alphabetical
+    // list — the reader sees an order and reads meaning into it, and there is none.
+    // So every tie breaks on another number, in a stated order, and the row key is
+    // only ever a determinism guard so React keys stay stable across renders.
+    const tiebreakers: ((row: BoardRow) => number)[] = [
+      row => {
+        const h = historyByRow[row.key]?.data
+        return h?.projection == null ? -Infinity : Math.abs(h.projection - row.line)
+      },
+      row => historyByRow[row.key]?.data?.hit_rate.season ?? -Infinity,
+      row => historyByRow[row.key]?.data?.games.length ?? -Infinity,
+      row => row.line,
+    ]
     return [...marketRows].sort((a, b) => {
       const av = valueFor(a)
       const bv = valueFor(b)
@@ -347,7 +362,12 @@ export default function MarketSlateBoard({ league, date }: { league: string; dat
       if (av !== null && bv !== null && av !== bv) {
         return sortDirection === 'desc' ? bv - av : av - bv
       }
-      return a.player.localeCompare(b.player)
+      // Ties always resolve most-evidence-first, whichever way the primary points.
+      for (const key of tiebreakers) {
+        const d = key(b) - key(a)
+        if (d) return d
+      }
+      return a.key.localeCompare(b.key)
     })
   }, [historyByRow, marketRows, sortDirection, sortKey])
 

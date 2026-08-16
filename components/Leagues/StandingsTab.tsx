@@ -142,23 +142,23 @@ function SoccerStandings({ groups }: { groups: StandingGroup[] }) {
               <tbody>
                 {group.rows.map(row => (
                   <tr key={row.abbrev} className="border-b border-zinc-800/50 hover:bg-zinc-800/30">
-                    <td className="py-3 px-3 text-zinc-500">{row.rank}</td>
+                    <td className="py-3 px-3 text-zinc-500">{standingsValue(row.rank)}</td>
                     <td className="py-3 px-3">
                       <span className="font-semibold text-zinc-200">{row.abbrev}</span>
                       <span className="text-zinc-500 ml-2">{row.name}</span>
                     </td>
-                    <td className="py-3 px-2 text-center text-zinc-300">{row.played}</td>
-                    <td className="py-3 px-2 text-center text-zinc-300">{row.wins}</td>
-                    <td className="py-3 px-2 text-center text-zinc-300">{row.draws}</td>
-                    <td className="py-3 px-2 text-center text-zinc-300">{row.losses}</td>
-                    <td className="py-3 px-2 text-center text-zinc-300">{row.gf}</td>
-                    <td className="py-3 px-2 text-center text-zinc-300">{row.ga}</td>
+                    <td className="py-3 px-2 text-center text-zinc-300">{standingsValue(row.played)}</td>
+                    <td className="py-3 px-2 text-center text-zinc-300">{standingsValue(row.wins)}</td>
+                    <td className="py-3 px-2 text-center text-zinc-300">{standingsValue(row.draws)}</td>
+                    <td className="py-3 px-2 text-center text-zinc-300">{standingsValue(row.losses)}</td>
+                    <td className="py-3 px-2 text-center text-zinc-300">{standingsValue(row.gf)}</td>
+                    <td className="py-3 px-2 text-center text-zinc-300">{standingsValue(row.ga)}</td>
                     <td className="py-3 px-2 text-center">
-                      <span className={row.gd > 0 ? 'text-emerald-400' : row.gd < 0 ? 'text-red-400' : 'text-zinc-400'}>
-                        {row.gd > 0 ? '+' : ''}{row.gd}
+                      <span className={row.gd != null && row.gd > 0 ? 'text-emerald-400' : row.gd != null && row.gd < 0 ? 'text-red-400' : 'text-zinc-400'}>
+                        {row.gd != null && row.gd > 0 ? '+' : ''}{standingsValue(row.gd)}
                       </span>
                     </td>
-                    <td className="py-3 px-2 text-center font-bold text-white">{row.points}</td>
+                    <td className="py-3 px-2 text-center font-bold text-white">{standingsValue(row.points)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -197,14 +197,14 @@ function ConferenceStandings({ groups }: { groups: StandingGroup[] }) {
               <tbody>
                 {group.rows.map(row => (
                   <tr key={row.abbrev} className="border-b border-zinc-800/50 hover:bg-zinc-800/30">
-                    <td className="py-3 px-3 text-zinc-500">{row.rank}</td>
+                    <td className="py-3 px-3 text-zinc-500">{standingsValue(row.rank)}</td>
                     <td className="py-3 px-3">
                       <span className="font-semibold text-zinc-200">{row.abbrev}</span>
                       <span className="text-zinc-500 ml-2">{row.name}</span>
                     </td>
-                    <td className="py-3 px-2 text-center text-zinc-300">{row.played}</td>
-                    <td className="py-3 px-2 text-center text-zinc-300">{row.wins}</td>
-                    <td className="py-3 px-2 text-center text-zinc-300">{row.losses}</td>
+                    <td className="py-3 px-2 text-center text-zinc-300">{standingsValue(row.played)}</td>
+                    <td className="py-3 px-2 text-center text-zinc-300">{standingsValue(row.wins)}</td>
+                    <td className="py-3 px-2 text-center text-zinc-300">{standingsValue(row.losses)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -214,6 +214,10 @@ function ConferenceStandings({ groups }: { groups: StandingGroup[] }) {
       ))}
     </div>
   )
+}
+
+function standingsValue(value: number | null): string | number {
+  return value == null ? '—' : value
 }
 
 /**

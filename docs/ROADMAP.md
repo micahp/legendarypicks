@@ -1,9 +1,343 @@
-# Roadmap & bug ledger
+# Roadmap
+
+**The checklist below is the current state. Everything under "Ledger" is the history and the
+reasoning — that section keeps its own rule: add, don't rewrite, mark superseded rather than
+delete.**
+
+Checked = shipped to **production**, not to dev. Checklist last updated **2026-08-14**.
+
+The constraint that orders all of it: **NFL fantasy drafts run the next 3-5 weeks**, and NFL
+draft research is the only use case a real user has said yes to (see "User evidence" below).
+Anything that does not serve that window competes with it. *That window is now mostly spent
+— set 2026-08-06, and it is 08-12. Weigh anything below against how few days are left in it.*
+
+> **The defect list is not here.** `docs/BACKLOG-holes.md` holds 25 measured holes,
+> severity-ranked, generated from `backend/league_feature_matrix.py`. Re-run the matrix
+> before working any of them; every line is a count, and counts move:
+>
+> ```
+> venv/bin/python league_feature_matrix.py --db data/picks.db --compare data/picks.dev.db
+> ```
+>
+> The one-line summary of that list: **most P0s are the same defect.** Data lands, the link
+> that makes it reachable does not, and nobody took the count that would have shown it —
+> four items are `prop_games.espn_event_id`, two are settlement coverage.
+
+---
+
+## PAST — done and live in prod
+
+**Data correctness**
+- [x] Identity gate: every external id must name the person on the row (`G/published-identity`)
+- [x] 223 MLB rows repaired — they carried another player's `mlbam_id` (Statcast's `player_name` is the *pitcher's*)
+- [x] MLB dedupe: 317 duplicate groups collapsed, 0 remain
+- [x] NHL season keys migrated — 48,017 rows off the publisher's raw key
+- [x] NHL 82 missing games ingested; reconciles against ESPN 1312/1312
+- [x] NBA leaderboard serves 2026, not 2023
+- [x] One spelling per NFL position (`K`->`PK`, `SAF`->`S`)
+- [x] `OL`->`G` fabrication removed — it asserted every unspecified lineman was a guard
+- [x] Fantasy constructs marked `entity_type` — 97 NFL rows are not people
+- [x] `position_group` for MLB, NFL, NBA — the parent level in its own column
+
+**Gates and process**
+- [x] `audit_league_stats.py` — 8 checks, MANIFEST-driven, **0 FAIL on prod** across all four leagues
+- [x] Gates **block** releases — `release.sh` runs the audit + prod/dev diff and refuses on FAIL
+- [x] `diff_databases.py` — prod vs dev; schema/seasons block, volume advisory
+- [x] Migration ledger — one invocation migrates **both** databases; app refuses an un-migrated one
+- [x] Boundary modules: `season_keys.py`, `team_codes.py`, `game_ids.py`
+- [x] Backup retention + `VACUUM INTO` (never `cp` — a live copy races writers)
+- [x] `espn-request-budget` skill for Claude, hermes, reasonix
+
+**Product**
+- [x] NFL board sorts by touchdowns — shipped in v0.7.3, actually **live** 2026-08-05
+- [x] Draft board shows injury status — 2,617 players (was 0 for ~18 hours)
+- [x] NFL 2026 schedule in prod, first kickoff 2026-09-09
+- [x] Prod backend 291MB (was 7.45GB — backups were being baked into the image)
+
+## PRESENT — in flight
+
+- [ ] `B/position-content` for **mlb** and **nba** — a declaration: what must a catcher's / guard's log record?
+- [ ] `DATA-COVERAGE-CONTRACT.md` §7 rewrite — what each of the 8 checks needs from a new league
+- [ ] `ufc` / `wc` UNVERIFIED x6 — likely "no leaderboard surface to serve", not a fetcher
+- [~] **MLS + NCAAF pipelines** (`feat/league-mls-ncaaf`) — **superseded 2026-08-12, both built.**
+      No longer blocked on the identity spine; that resolved. Current state, measured:
+      - **NCAAF: built and deliberately DARK** (Micah, 2026-08-11). 20,926 players, 56,577 logs,
+        888 games, 137 FBS teams, 4,267 season rows, 1,776 team results + stats on dev. Does not
+        ship. Three-conference narrowing was considered and rejected — we hold all 137 FBS teams,
+        so scope reduction saves nothing; the remaining work is surfaces and schema.
+        `/root/lp-league-mls-ncaaf/.ralph/request.md` is the governing doc and §4 is now a
+        *resumption* list, not a release gate.
+      - **MLS: complete on dev, absent from prod.** Dev has coverage + game detail + team stats;
+        prod has none of the three, so MLS is HIDDEN there. Promotion is a data job — the code
+        already shipped.
+      - **The one real gap in either league: MLS has zero `player_stats` on BOTH databases.**
+        Everything else on the list is a promotion or a relink; this is the only item needing a
+        publisher decision.
+      Backlog items 6–12, 21–25.
+- [ ] **Tournament games under their own league key** (decided 2026-08-06) — Leagues Cup
+      (`concacaf.leagues.cup`), CCC (`concacaf.champions`), Campeones Cup are SEPARATE ESPN
+      league slugs; file their logs under their own league key so MLS regular-season denominators
+      stay clean (a Leagues Cup goal must not inflate `games_played` for REG). Schedule watcher for
+      postponements/reschedules is a SEPARATE mechanism, deferred.
+- [ ] **Player detail: year + league selectors** — on an MLS player's page, show one season at a
+      time (pre/regular/post for that league) with dropdowns to switch year or league (MLS,
+      Leagues Cup, CCC...). Keys off `position_group` so a GK surface shows saves, not shots.
+
+## NEXT — before drafts (3-5 weeks), ordered by whether a drafter notices
+
+- [ ] **Render `PK` as `K`** — storage is right; the UI leaks the publisher's code into the filter chips
+      (`useNflDraftBoard.ts:10`, `NflDraftRoom.tsx:93`, `PlayerDetailOverlay.tsx:78`, `MockDraft/columns.tsx:43`)
+- [ ] **Fullbacks missing from the board** — `ingest_nfl_season_stats.py:30` filters `{QB,RB,WR,TE}`,
+      so Kyle Juszczyk has **zero** `player_stats` rows and an RB filter drops 18 active FBs
+- [ ] **Draft-research screens** — what the one real user asked for, still unbuilt
+- [ ] Only then: more data hygiene
+
+### Release-blocking, added 2026-08-12
+
+Not draft work, but v0.8.0 cannot honestly ship past them. Full detail in
+`docs/BACKLOG-holes.md`; these are the ones where the release notes claim something
+production does not have.
+
+- [ ] **Prod news is empty** (#1). The release headlines the news engine; prod has 0 rows.
+- [ ] **MLS is hidden on prod** (#6). The release calls out MLS; prod has no coverage row,
+      no team results, no team stats — so nobody sees it.
+- [ ] **Settled props are unreachable or absent** (#21–23). MLB has 57,392 settled props on
+      dev that no game page can reach; UFC and MLS settle **zero** of their props. The board
+      shows a line and never says how it landed, which is the half of the product that
+      demonstrates the lines were worth reading.
+- [ ] **Relink `prop_games`** (#3, #4, #5, #21) — one root cause behind four items. Blocked
+      on the ESPN host recovering; the matcher and the budget guards already landed
+      (`b8886e9`).
+
+#### Corrected 2026-08-14 — the two items above were measured, and both were wrong
+
+Kept as written above so the reasoning stays legible; read these instead.
+
+- **"Blocked on the ESPN host recovering" is false, and was false when written.**
+  `site.web.api.espn.com` answers 200 and is the host `link_prop_games.py` actually
+  uses (`espn_client.py:97`). `sports.core.api.espn.com` is the one still 403, and
+  the linker never touches it. Nothing was blocked; the linker had simply never been
+  re-run after `b8886e9`.
+- **MLS: now 15/15 linked** on dev (`025ee05`). The remaining cause was not the host
+  but a vocabulary gap — Bovada and ESPN spell 8 of 13 clubs differently. A second
+  vocabulary bug in the MLB map (`CWS` for a repo that is canonically `CHW`, plus a
+  retired `OAK`) is fixed in `ece6b9d`.
+- **"MLB has 57,392 settled props no game page can reach" misreads the number.**
+  MLB settles 747,498 on dev and 690,106 of those ARE reachable; 57,392 is the 7.7%
+  remainder. MLB was never the problem here.
+- **The real finding is worse and applies to every league.** `settlement.py` stamps
+  `settled_at` on a prop it could not map and leaves `hit`/`actual_value` NULL, so a
+  FAILED settlement is stored in the same shape as a landed one. Every "settled
+  props" count ever taken — this roadmap's, `league_feature_matrix.py`'s, and the
+  report that produced this correction — counted failures as successes:
+
+  | league | rows with `settled_at` | rows with a real outcome |
+  |---|---|---|
+  | wc | 1,128 | **0** |
+  | mlb (dev) | 747,498 | 642,348 |
+  | mlb (prod) | 700,549 | **421,145** |
+
+  So the World Cup settles nothing and has been reported at 100% throughout, and
+  40% of production MLB is empty. **MLB is the only league that settles anything at
+  all.** The read side is fixed (`f1604e6` — the matrix now requires
+  `hit IS NOT NULL`); the write side is open.
+- **And an unmappable prop is currently unsettleable forever.** `settle_props.py`
+  selects games `HAVING settled_props < total_props` against `prop_results`, so a
+  prop stamped with a NULL outcome is permanently excluded from retry — adding the
+  market mapping it was missing will not bring it back. This needs deciding before
+  any league's settlement is called fixed.
+- **ATP and WTA are empty shells**, not a linking gap: 206 `prop_games` between them
+  and **zero** `props` rows. Both are HIDDEN, so not release-blocking, but the
+  linked/total counts in this document read as partial coverage of something that
+  does not exist.
+
+### Added 2026-08-14 — the request path is doing expensive upstream work
+
+Two tasks opened the same day from the same root cause: **work that should be scheduled is
+happening on the page request instead.** One costs availability (ESPN), the other costs money
+(DeepSeek).
+
+- [ ] **`/scores` rebuilt on the ESPN model** → `TASK-scores-schedule-espn-model.md`.
+      Measured: the schedule has **no DB path** and never has (`7668c5e`, June 2025). Every
+      schedule read is a live ESPN call; the board fans out to **11 leagues × a two-day
+      window = up to 22 upstream calls for one day change**; `schedule-dates` walks up to 8
+      ranges sequentially (1.1s in-season, worse out of season). DB-backed `strength` answers
+      in **0.10s** against 0.56–1.11s for anything touching ESPN — that gap is the finding.
+
+      **Ten minutes of ESPN refusing on 08-14 took every past-date scores page down.** A
+      finished game's score never changes; we should not ask ESPN for it twice. The work:
+      completed days become **DB-primary** (not the fallback `ec5872e` added), an ESPN-style
+      **Top Events** page with a show-all link and no date picker, date navigation that jumps
+      to the next day the league **actually has games**, and **week-grouped navigation for
+      NFL/NCAAF**. Target: **zero** ESPN requests to load a past date, enforced by a
+      request-count gate.
+
+      Two primitives already exist and must be reused, not rebuilt:
+      `docs/API-nfl-schedule-weeks-v1.md` (ESPN's own week calendar, live today on
+      `pages/leagues/[league].tsx`) and `docs/API-league-schedule-dates-v1.md` (neighbour
+      dates that have games).
+
+- [ ] **DeepSeek spend moved off peak — deadline 2026-08-16** →
+      `TASK-deepseek-offpeak-scheduling.md`. DeepSeek introduces peak/off-peak billing on
+      08-16: peak is **01:00–04:00 and 06:00–10:00 UTC**, and off-peak is **half price** on
+      both `v4-flash` and `v4-pro` (verified against their pricing docs, not remembered).
+
+      Measured: **4 of 10 scheduled DeepSeek runs/day land in peak**, including both news
+      timers at 100% (08:35 and 09:20 UTC) and 3 of 8 `game-recaps` sweeps — the latter being
+      our largest consumer (`deepseek-v4-pro`, `max_tokens=8000`, high reasoning effort, per
+      game). Timers are written in **local** time, so the November CST switch will walk them
+      into peak silently; they must be pinned in **UTC**.
+
+      And scheduling alone is not enough: `kick_game_stories()` in `routers/games.py` fires
+      `v4-pro` from the **request path** whenever a user loads a scoreboard, so page traffic
+      generates uncontrolled spend at any hour. That moves to a queue.
+
+      Not in scope, verified so nobody re-checks: `run_pipeline.py` has no LLM step, and
+      `news-x` (`ingest_league_news.py --x-only`) makes no DeepSeek call.
+
+- [x] **`/scores` previous-day bug + the 500** — fixed in `ec5872e` (`/root/lp-scores-prev-day`),
+      **awaiting merge**, not in prod. Was not stale games persisting: the arrow moved the date
+      correctly and all 11 fetches 500'd, rendering an empty board. `get_games` caught only
+      `ValueError`, so any publisher refusal reached the user as `Internal Server Error`. Also
+      fixed a date-only comparison that rolled the prior day backward in Central time. This is
+      the floor the task above builds on, not a replacement for it.
+
+## POST-DRAFT — league news engine (POC, decided 2026-08-06)
+
+> **STATUS 2026-08-12 — BUILT, and empty in production.** This stopped being a POC: it
+> ships in v0.8.0 with topic-matched cards, conversation grouping, topic discovery, an
+> editor feedback loop, and a trust model rewritten after a card asserted a false Messi
+> suspension. Dev holds **3,908 news items** across 7 leagues.
+>
+> **`news_items` on prod is empty for every league.** The headline feature of the release
+> has nothing behind it there. Backlog #1, and it gates calling the release done.
+>
+> The bullets below are the original POC plan, kept for the reasoning. Read the v0.8.0
+> CHANGELOG section for what was actually built — in particular the part the plan did not
+> anticipate: most of the work was deciding what a card is *allowed to say*.
+
+Not draft-serving — this window belongs to fantasy drafts. On the roadmap now
+because the POC is small and the narrative signal is time-sensitive.
+
+- [ ] **Per-league AI news** — two layers per league: (1) the league's dominant
+      narrative — what actually matters right now (MLB: the Dodgers' "Avengers"
+      superteam and the salary cap/floor debate — "does baseball need saving?";
+      MLS: relegation/promotion, the post-Messi competitive-balance story; NCAAF:
+      SEC vs Big Ten consolidation — "is the SEC about to lead the NCAA?");
+      (2) granular events: trades, staff decisions (firings/hirings), injuries to
+      key/notable players.
+- [ ] **News page in top-level nav** — Home tab is the catch-all across leagues;
+      per-league tabs (NFL, MLB, MLS, NCAAF…) land eventually. One feed, split
+      by the classifier's league tag.
+- [ ] **POC first** — prove narrative detection + granular capture on one or two
+      leagues before building the pipeline. Judge against the signal, not the
+      output.
+- [ ] **Signal sources — verified 2026-08-06** — X/Twitter (the Underdog league
+      accounts) is locked, but the ecosystem is on Bluesky: post search works
+      without auth (narrative queries return real strategy chatter) and full
+      author feeds pull unauth too. Active accounts: @awfulannouncing (37.9k
+      posts), @theathletic.com (17k), @sbnation (1.3k). Underdog's own accounts
+      are registered-but-dormant (0 posts); the live Underdog signal is
+      @underdogtracker (280 posts) + Underdog CPO @wsul + keyword search. RSS
+      verified: ESPN news API (nfl / mlb / usa.1 / college-football), SB Nation
+      network (/rss/index.xml + team blogs), Awful Announcing (/feed), FanSided
+      (/feed/), Deadspin (/rss — carries injuries/extensions/suspensions).
+      Not usable: The Athletic (paywall + robots bans AI scraping), Bleacher
+      Report (no RSS, /api disallowed), Yahoo (429). Google News RSS as the
+      universal fallback. Pick the mix when the POC starts.
+
+## LATER — deferred on purpose
+
+- [ ] **Source-separated tables** (`espn_core_*` / `espn_fantasy_*`) — **November, not now.** Do the
+      `players_human` *view* first and measure whether the physical split is needed at all. A
+      half-migrated read surface during draft season manufactures the defect class it exists to prevent.
+- [ ] NBA 269 split identities — `merge_nba_identities.py` written and tested; apply via the ledger
+- [ ] NFL 2024 game-id vocabulary migration — deliberately deferred, not shown in the frontend
+- [ ] MLB: 767 Statcast batting rows for players MLB publishes no 2026 line for. **An open question,
+      not a known gap** — Statcast is MLB's own data, so why do we hold them?
+- [ ] 168 pre-existing orphans (`props` 78, `roster_snap` 90)
+- [ ] `atp`, `wnba`, `wta` — no MANIFEST entry, therefore unmeasured, not passing.
+      **Root cause found 2026-08-12, and it is not the manifest.** Bovada serves ATP/WTA
+      markets and `_parse_tennis_props` reads them correctly (moneyline, total games, set
+      betting, win-a-set). Every prop is then discarded at ingest because `players` holds
+      **zero atp/wta rows**, so `_resolve_player_for_ingest` cannot attach them to anyone and
+      correctly refuses to invent a player. 169 names sit in `unresolved_players` — Swiatek
+      rejected 244 times, Gauff 238. The result is 101 `prop_games` with **0 props**, and a
+      scrape that reports `0 ingested` rather than an error. `espn_client` already has `atp`
+      and `wta` configured, so the fix is one athlete-spine ingest, not a parser change.
+      Backlog #2 and #20.
+- [ ] **Who is actually playing — soccer availability before kickoff** (raised 2026-08-10, own
+      session). The news engine surfaces absences after the fact; the game detail page should say
+      who is out BEFORE the match. Soccer is the hard case and the valuable one: there is no
+      questionable/doubtful convention the way the NFL has one and the NBA has an injury report, so
+      an MLS or Leagues Cup starter can vanish at the last minute for an international call-up, a
+      rest day, or something no one saw coming — Messi missing the Monterrey match after his
+      father's death, Suárez serving a six-game Leagues Cup ban that Micah only discovered mid-match.
+      Unknown whether ESPN simply does not display it, whether the reporting rules differ, or whether
+      nobody publishes it via an API at all; establishing which of those is true is step one. The
+      signal we already collect is close — @UnderdogNFL posts practice and availability notes all day
+      — we file it as history instead of serving it as a heads-up.
+
+## The rules this was learned under
+
+1. **A fix on dev is not a fix.** Seven defects reached three releases because prod was never re-run,
+   and both databases answered 200 throughout.
+2. **Presence is not coverage.** Three checks passed on broken data — one row in 500, or one populated
+   row out of thousands, read as green.
+3. **A gap is a statement about which endpoint you asked.** Every "nobody publishes this" here has been wrong.
+4. **One column, one vocabulary, one publisher.** Two writers with no arbitration means whichever ran last owns the row.
+5. **Never repair identity by name match.** That is what caused the damage in the first place.
+6. **UNVERIFIED is a failure, not a skip.** "Nobody wrote a manifest" and "the data is fine" must not look the same.
+
+---
+
+# Ledger
 
 Running list. Add to it, don't rewrite it — mark items superseded rather than deleting,
 so the reasoning stays readable.
 
-Last updated 2026-07-29.
+Last updated 2026-08-06.
+
+---
+
+## League news engine — 2026-08-06
+
+Micah wants AI-generated per-league news that (1) understands each league's
+dominant narrative and (2) captures trades, staff decisions, and injuries to
+notable players, bubbling per-league → homepage feed. Anchored on his own
+Innovative Hype articles: the Messi/MLS piece (competitive balance, the
+Jordan-style deal, a new era for MLS) and the CFB piece (playoff legitimacy,
+bowl bloat, ESPN's bowl monopoly, super-conference consolidation). Status: POC.
+The ideal strategy signal — X/Twitter's Underdog Sports league accounts — is
+unreachable (search locked down); verified ESPN's news API per league as the
+base source, Google News RSS as an auth-free narrative tracker. Full entry in
+the POST-DRAFT section above.
+
+**Update, same day — Bluesky verified as the X workaround.** Post search works
+without auth and narrative queries return real strategy chatter; full author
+feeds pull unauthenticated too. Active official accounts: @awfulannouncing
+(37.9k posts), @theathletic.com (17k), @sbnation (1.3k). Underdog's own accounts
+are registered-but-dormant (0 posts each) — the live Underdog signal is
+@underdogtracker (280 posts, fan-run) + Underdog CPO @wsul + keyword search.
+RSS article pull verified: SB Nation network, Awful Announcing, FanSided,
+Deadspin (/rss, carries injuries/extensions/suspensions), plus the ESPN news
+API. The Athletic (paywall + robots bans AI/LLM scraping), Bleacher Report (no
+RSS, /api disallowed), and Yahoo (429) are not usable directly — Google News
+RSS covers them as a fallback. Checklist entry updated accordingly.
+
+**Nav model corrected same day (Micah):** the news surface is a top-level-nav
+News page — Home tab is the catch-all across leagues, per-league tabs come
+eventually. Not per-league pages + homepage feed. Updated the checklist bullet
+and PLAN §1/§4.
+
+**Wired to dev 2026-08-06:** `news_items` table + collector
+(`backend/ingest_league_news.py` — ESPN/RSS/Bluesky, fail-fast per the ESPN
+doctrine, disk-cached re-runs) + `/api/news`, `/api/news/narratives`,
+`/api/news/{league}` + top-nav News page (Home catch-all + per-league tabs).
+Live on :8096/:3096, 302 rows in picks.dev.db. 13/13 tests green. Caveats:
+ESPN news returns ~1 article/league (thin but real); SB Nation is Atom (parser
+handles it now); NBA/NHL narrative signal is weak so far — that's the test
+Micah plans to run (he gives the narrative for some leagues, we find the rest).
 
 ---
 

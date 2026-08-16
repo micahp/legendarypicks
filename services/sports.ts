@@ -1,4 +1,6 @@
 import axios from 'axios'
+import { livePeriodTypeForLeague } from '../lib/liveGameStatus'
+import type { LivePeriod } from '../lib/liveGameStatus'
 
 function normalizeBaseUrl(raw?: string): string {
   // Relative same-origin default: browser -> nginx -> backend. A 'localhost:8000'
@@ -19,24 +21,32 @@ export interface TennisSet {
   awayScore: number
 }
 
-// Live game period detail
-export interface LivePeriod {
-  number: number
-  type: 'inning' | 'period' | 'quarter' | 'round' | 'game' | 'half' | 'set'
-  display?: string
-}
+export type { LivePeriod } from '../lib/liveGameStatus'
 
 // The unified ESPN backend (sports_service.py) returns games as
 //   { game_id, date, state: 'pre'|'in'|'post', home/away: { abbrev, name, score } }
 // The UI works against a stable internal shape; we translate here (anti-corruption layer).
+export interface TeamSide {
+  teamId: string
+  name: string
+  nickname?: string
+  score?: number
+  winner?: boolean
+  // EWC bracket participants: a decided club renders by name; an undecided slot renders the
+  // dependency label ("Winner of X–Y") and never a score, logo, or detail link.
+  label?: string
+  pending?: boolean
+  unavailable?: boolean
+}
+
 export interface Game {
   gameId: string
   // Optional canonical id for a league-specific detail source. CoD scores use
   // BreakingPoint gameId values while the grounded detail page uses PandaScore.
   detailGameId?: string
   league?: string
-  homeTeam: { teamId: string; name: string; nickname?: string; score?: number; winner?: boolean }
-  awayTeam: { teamId: string; name: string; nickname?: string; score?: number; winner?: boolean }
+  homeTeam: TeamSide
+  awayTeam: TeamSide
   startTime: string
   status: 'SCHEDULED' | 'LIVE' | 'FINAL'
   // ESPN short detail, e.g. "Final/10" (extra innings) or "Final/OT" — shown on the FINAL badge
@@ -55,7 +65,21 @@ function statusFromState(state?: string): Game['status'] {
 function side(s: any): Game['homeTeam'] {
   const name = s?.name ?? s?.abbrev ?? ''
   const record = s?.record ? ` (${s.record})` : ''
-  return { teamId: s?.abbrev ?? '', name: name + record, nickname: s?.nickname, score: s?.score ?? undefined, winner: s?.winner ?? undefined }
+  const p = s?.participant
+  const state = p?.state
+  const label = state === 'named'
+    ? (p?.clubName ?? name)
+    : (p?.label ?? name)
+  return {
+    teamId: s?.abbrev ?? '',
+    name: name + record,
+    nickname: s?.nickname,
+    score: s?.score ?? undefined,
+    winner: s?.winner ?? undefined,
+    label: label || undefined,
+    pending: state === 'pending',
+    unavailable: state === 'unavailable',
+  }
 }
 
 function normalizeSets(g: any): TennisSet[] | undefined {
@@ -95,30 +119,17 @@ function normalizeLivePeriod(g: any, league?: string): LivePeriod | undefined {
   const lg = (league || g?.league || '').toLowerCase()
 
   if (period !== undefined && period !== null) {
-    // Determine type from league
-    let type: LivePeriod['type'] = 'period'
-    if (lg === 'mlb') type = 'inning'
-    else if (lg === 'nba') type = 'quarter'
-    else if (lg === 'nhl') type = 'period'
-    else if (lg === 'nfl') type = 'quarter'
-    else if (lg === 'ufc') type = 'round'
-    else if (lg === 'wc') type = 'half'
-    else if (lg === 'cod') type = 'game'
-    else if (lg === 'atp' || lg === 'wta') type = 'set'
-
-    // For MLB, use ESPN's status_detail which has inning state ("Top 1st", "End 5th", etc.)
-    // For soccer, pass through the displayClock / stage label
-    let display: string | undefined
-    if (lg === 'wc') {
-      display = g?.clock ?? g?.status_detail ?? undefined
-    } else if (lg === 'mlb' && g?.status_detail) {
-      display = g.status_detail
-    }
+    const type = livePeriodTypeForLeague(lg)
+    // ESPN's baseball display clock is often exactly "0:00" while the
+    // authoritative inning state lives in shortDetail. Keep them separate so
+    // the UI never treats the placeholder clock as the phase.
+    const display = lg === 'mlb' ? g?.status_detail ?? undefined : undefined
 
     return {
       number: typeof period === 'number' ? period : parseInt(String(period), 10),
       type,
       display,
+      clock: g?.clock ?? undefined,
     }
   }
 
@@ -128,14 +139,15 @@ function normalizeLivePeriod(g: any, league?: string): LivePeriod | undefined {
       number: g.inning,
       type: 'inning',
       display: g?.inning_state ? `Inning ${g.inning} (${g.inning_state})` : `Inning ${g.inning}`,
+      clock: g?.clock ?? undefined,
     }
   }
 
-  // WC: show running match clock even when period number is unavailable from ESPN
-  if (lg === 'wc') {
+  // Soccer: preserve the running match clock even when ESPN omits a half number.
+  if (lg === 'wc' || lg === 'lcup' || lg === 'mls') {
     const clock = g?.clock ?? g?.status_detail
     if (clock) {
-      return { number: 0, type: 'half', display: clock }
+      return { type: 'half', clock }
     }
   }
 
@@ -233,7 +245,12 @@ export const SportsService = {
           ...normalizeGame(g, league),
           league: league.toUpperCase(),
         }))
-        _gamesCache.set(key, { ts: Date.now(), data })
+        // An outage with no persisted fallback is intentionally a 200 [] so it
+        // cannot take every league page down. Do not turn that temporary state
+        // into a five-minute past-date cache entry after the publisher recovers.
+        if (res.headers?.['x-lp-data-source'] !== 'unavailable') {
+          _gamesCache.set(key, { ts: Date.now(), data })
+        }
         return data
       } catch (err) {
         console.error(`Error fetching ${league} games for ${date}`, err)
@@ -249,7 +266,7 @@ export const SportsService = {
   },
 
   getAllGamesByDate: async (date: string): Promise<Game[]> => {
-    const leagues = ['nba', 'mlb', 'nhl', 'nfl', 'atp', 'wta', 'cod', 'ufc', 'wc']
+    const leagues = ['nba', 'mlb', 'nhl', 'nfl', 'lcup', 'mls', 'atp', 'wta', 'cod', 'ufc', 'wc']
     const promises = leagues.map((l) => SportsService.getGamesByDate(l, date))
     const results = await Promise.all(promises)
     return results.flat()
@@ -262,6 +279,10 @@ export const SportsService = {
   getGamesByLocalDate: async (league: string, localDate: string, opts?: { strict?: boolean }): Promise<Game[]> => {
     const localDayOf = (iso: string): string | null => {
       if (!iso) return null
+      // Persisted team_game_results knows the published game date, not an exact
+      // start instant. Parsing YYYY-MM-DD as UTC midnight moves it to the prior
+      // date in US timezones. Keep day-precision rows in their requested bucket.
+      if (/^\d{4}-\d{2}-\d{2}$/.test(iso)) return null
       const d = new Date(iso)
       return isNaN(d.getTime()) ? null : d.toLocaleDateString('en-CA')
     }
@@ -302,9 +323,9 @@ export const SportsService = {
     return kept
   },
 
-  getAllGamesByLocalDate: async (localDate: string): Promise<Game[]> => {
-    const leagues = ['nba', 'mlb', 'nhl', 'nfl', 'atp', 'wta', 'cod', 'ufc', 'wc']
-    const results = await Promise.all(leagues.map((l) => SportsService.getGamesByLocalDate(l, localDate)))
+  getAllGamesByLocalDate: async (localDate: string, opts?: { strict?: boolean }): Promise<Game[]> => {
+    const leagues = ['nba', 'mlb', 'nhl', 'nfl', 'lcup', 'mls', 'atp', 'wta', 'cod', 'ufc', 'wc']
+    const results = await Promise.all(leagues.map((l) => SportsService.getGamesByLocalDate(l, localDate, opts)))
     return results.flat()
   },
 
@@ -450,6 +471,25 @@ export const SportsService = {
     return request
   },
 
+  // W3 — day navigation jumps to the neighbouring date that actually has games
+  // instead of calendar ±1. Resolves the nearest local date strictly before
+  // (delta -1) / after (delta +1) the anchor across the given leagues, from the
+  // schedule-dates contract. Returns null when no league reports a game in that
+  // direction or discovery fails — callers decide the fallback.
+  getNeighbourGameDate: async (leagues: string[], anchor: string, delta: -1 | 1): Promise<string | null> => {
+    const perLeague = await Promise.all(leagues.map(async (league) => {
+      const data = await SportsService.getScheduleDates(league, anchor)
+      if (!data) return [] as string[]
+      const starts = delta < 0 ? data.past_event_starts : data.future_event_starts
+      return (starts || [])
+        .map(iso => new Date(iso).toLocaleDateString('en-CA'))
+        .filter(d => delta < 0 ? d < anchor : d > anchor)
+    }))
+    const candidates = perLeague.flat().sort()
+    if (!candidates.length) return null
+    return delta < 0 ? candidates[candidates.length - 1] : candidates[0]
+  },
+
   getNflScheduleWeeks: async (anchor: string): Promise<NflScheduleWeeksResponse | null> => {
     try {
       const res = await axios.get(`${API_BASE_URL}/nfl/schedule-weeks`, { params: { anchor } })
@@ -478,6 +518,9 @@ export interface ScheduleDatesResponse {
   league: string
   anchor_date: string
   event_start_timezone: string
+  available?: boolean
+  source?: 'espn' | 'unavailable'
+  error?: 'publisher_unavailable'
   future_event_starts: string[]
   past_event_starts: string[]
   search: {

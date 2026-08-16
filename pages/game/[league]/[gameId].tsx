@@ -2,7 +2,7 @@ import { useRouter } from 'next/router'
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { SportsService } from '../../../services/sports'
 import {
-  GameDetail, Tab, isNBA, isNHL, isMLB, isNFL, isWC,
+  GameDetail, Tab, isNBA, isNHL, isMLB, isNFL, isWC, isSoccer,
   hasGameTabs, usesDetailEndpoint, usesPerTabEndpoints,
   BoxScoreData, PbPData, SoccerBoxScoreData, SoccerPbPData, GameInfoData,
 } from '../../../components/Game/types'
@@ -14,9 +14,12 @@ import PlayByPlay from '../../../components/Game/PlayByPlay'
 import GameInfo from '../../../components/Game/GameInfo'
 import GameProps from '../../../components/Game/GameProps'
 import GameStory from '../../../components/Game/GameStory'
+import WhatDecidedIt from '../../../components/Game/WhatDecidedIt'
+import { useGameProps } from '../../../components/Game/useGameProps'
 import WCContext from '../../../components/Game/WCContext'
 import BoothFeed from '../../../components/Game/BoothFeed'
-import ListenLive from '../../../components/ListenLive'
+import ListenLive, { LCUP_PAGE } from '../../../components/ListenLive'
+import { SHOW_BOOTH } from '../../../lib/featureFlags'
 
 const TAB_DEFS: { key: Tab; label: string }[] = [
   { key: 'boxscore', label: 'Box Score' },
@@ -24,6 +27,8 @@ const TAB_DEFS: { key: Tab; label: string }[] = [
   { key: 'props', label: 'Props' },
   { key: 'info', label: 'Game Info' },
 ]
+
+const LIVE_DETAIL_POLL_MS = 30_000
 
 // ── Loading skeletons ──
 function BoxScoreSkeleton({ league }: { league: string }) {
@@ -189,7 +194,7 @@ function useTabData(league: string | undefined, gameId: string | undefined, acti
       setLoadingBoxscore(true)
       try {
         const d = await SportsService.getBoxscore(league, gameId)
-        if (lg === 'wc') {
+        if (isSoccer(lg)) {
           setSoccerBoxscore(d as SoccerBoxScoreData)
         } else {
           setBoxscore(d as BoxScoreData)
@@ -201,7 +206,7 @@ function useTabData(league: string | undefined, gameId: string | undefined, acti
       setLoadingPbp(true)
       try {
         const d = await SportsService.getPlayByPlay(league, gameId)
-        if (lg === 'wc') {
+        if (isSoccer(lg)) {
           setSoccerPbp(d as SoccerPbPData)
         } else {
           setPbp(d as PbPData)
@@ -233,13 +238,20 @@ export default function GameDetailPage() {
 
   const lg = (league || '').toLowerCase()
   const showTabs = hasGameTabs(lg)
-  // WC gets an extra "From the Booth" tab for the live broadcast reads.
-  const tabDefs = lg === 'wc' ? [...TAB_DEFS, { key: 'booth' as Tab, label: 'From the Booth' }] : TAB_DEFS
+  // WC and Leagues Cup get an extra "From the Booth" tab for the live broadcast
+  // reads — dev only, behind SHOW_BOOTH. Production does not run the broadcast
+  // capture the tab reads from, so there it would open onto nothing.
+  const showBooth = SHOW_BOOTH && (lg === 'wc' || lg === 'lcup')
+  const tabDefs = showBooth ? [...TAB_DEFS, { key: 'booth' as Tab, label: 'From the Booth' }] : TAB_DEFS
   const usesDetail = usesDetailEndpoint(lg)
   const usesPerTab = usesPerTabEndpoints(lg)
 
   // Per-tab data
   const tabData = useTabData(league, gameId, !usesDetail)
+
+  // ONE props fetch for the page. Both the "What decided it" panel and the Props tab
+  // are views over the same response — fetching per component downloaded it twice.
+  const gameProps = useGameProps(league, gameId)
 
   // Fetch detail (NBA/NHL path) or minimal context (other leagues)
   useEffect(() => {
@@ -257,6 +269,23 @@ export default function GameDetailPage() {
       setLoading(false)
     })()
   }, [league, gameId])
+
+  // The scoreboard refreshes live results; the detail header must not freeze
+  // at the moment the user opened it. Stop as soon as the publisher says the
+  // game is no longer in progress.
+  useEffect(() => {
+    if (!league || !gameId || detail?.state !== 'in') return
+    let alive = true
+    const refresh = async () => {
+      const next = await SportsService.getGameDetail(league, gameId)
+      if (alive && next) setDetail(next)
+    }
+    const timer = setInterval(refresh, LIVE_DETAIL_POLL_MS)
+    return () => {
+      alive = false
+      clearInterval(timer)
+    }
+  }, [league, gameId, detail?.state])
 
   // Lazy-fetch tab data on first open for per-tab leagues
   useEffect(() => {
@@ -303,17 +332,29 @@ export default function GameDetailPage() {
       {/* Score strip */}
       <ScoreStrip
         ctx={ctx || null} score={displayScore} state={gameState}
+        league={detail?.league || lg} period={detail?.period} clock={detail?.clock}
+        statusDetail={detail?.status_detail}
         homeName={sHome?.name || ctx?.home_team || ''}
         awayName={sAway?.name || ctx?.away_team || ''}
         homeRecord={homeRecord} awayRecord={awayRecord}
       />
 
-      {lg === 'wc' ? <ListenLive /> : null}
+      {/* Leagues Cup live audio: ESPN 106.3 West Palm (WUUB-FM), Inter Miami's
+          official English radio partner — relayed to MP3 via /api/stream/lcup. */}
+      {lg === 'wc' ? <ListenLive /> : lg === 'lcup' ? (
+        <ListenLive streamUrl="/api/stream/lcup" streamPageUrl={LCUP_PAGE} label="ESPN 106.3 West Palm · English radio (free)" />
+      ) : null}
 
       {/* Game context: WC gets the broadcast+market+form summary; others the AI matchup story */}
       {league && gameId && (lg === 'wc'
         ? <WCContext gameId={gameId} />
         : <GameStory league={league} gameId={gameId} />)}
+
+      {/* The settled lines that moved furthest past their own number — the "leaders"
+          slot on a finished game, self-hides until anything has settled. */}
+      {league && gameId && (
+        <WhatDecidedIt leaders={gameProps.leaders} settledLines={gameProps.settledLines} />
+      )}
 
       {/* Tab gating: supported leagues get tabs; others get "not available" */}
       {showTabs ? (
@@ -331,7 +372,7 @@ export default function GameDetailPage() {
               ) : usesPerTab ? (
                 tabData.loadingBoxscore ? (
                   <BoxScoreSkeleton league={lg} />
-                ) : lg === 'wc' ? (
+                ) : isSoccer(lg) ? (
                   tabData.soccerBoxscore ? (
                     <SoccerBoxScore data={tabData.soccerBoxscore} />
                   ) : (
@@ -360,7 +401,7 @@ export default function GameDetailPage() {
               ) : usesPerTab ? (
                 tabData.loadingPbp ? (
                   <PbPSkeleton league={lg} />
-                ) : lg === 'wc' ? (
+                ) : isSoccer(lg) ? (
                   <PlayByPlay soccerData={tabData.soccerPbp || undefined} />
                 ) : (
                   <PlayByPlay data={tabData.pbp || undefined} />
@@ -386,16 +427,37 @@ export default function GameDetailPage() {
             )}
 
             {tab === 'props' && league && gameId && (
-              <GameProps league={league} gameId={gameId} inTab />
+              <GameProps
+                league={league} players={gameProps.players}
+                settledLines={gameProps.settledLines} edgeLabel={gameProps.edgeLabel}
+                loading={gameProps.loading} inTab
+              />
             )}
 
-            {tab === 'booth' && gameId && <BoothFeed gameId={gameId} />}
+            {/* Gated on showBooth too, not just the tab list: hiding a tab does
+                not unreach it — `tab` is state, and a stale value or a restored
+                one would render the feed with no tab visible above it. */}
+            {showBooth && tab === 'booth' && gameId && (
+              <BoothFeed
+                gameId={gameId}
+                contextLeague={lg === 'lcup' ? 'lcup' : 'wc'}
+                streamUrl={lg === 'lcup' ? '/api/stream/lcup' : undefined}
+                streamPageUrl={lg === 'lcup' ? LCUP_PAGE : undefined}
+                streamLabel={lg === 'lcup' ? 'ESPN 106.3 West Palm · English radio (free)' : undefined}
+              />
+            )}
           </div>
         </>
       ) : (
         <>
           {/* Leagues without detail tabs retain the existing standalone props surface. */}
-          {league && gameId && <GameProps league={league} gameId={gameId} />}
+          {league && gameId && (
+            <GameProps
+              league={league} players={gameProps.players}
+              settledLines={gameProps.settledLines} edgeLabel={gameProps.edgeLabel}
+              loading={gameProps.loading}
+            />
+          )}
           <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-12 text-center">
             <p className="text-zinc-500 text-sm">Detailed stats aren&apos;t available for this sport yet.</p>
             <p className="text-zinc-600 text-xs mt-2">Check back for future updates.</p>

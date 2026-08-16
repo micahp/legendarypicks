@@ -1,4 +1,6 @@
 import { useRouter } from 'next/router'
+import { formatLiveStatus } from '../../lib/liveGameStatus'
+import type { LivePeriod } from '../../lib/liveGameStatus'
 
 interface TeamInfo {
   teamId: string
@@ -6,6 +8,10 @@ interface TeamInfo {
   nickname?: string
   score?: number
   winner?: boolean
+  // EWC bracket dependency label for an undecided slot ("Winner of X–Y").
+  label?: string
+  pending?: boolean
+  unavailable?: boolean
 }
 
 interface TennisSet {
@@ -27,14 +33,7 @@ interface GameProps {
   // Tennis: array of set scores [home, away] for each set
   sets?: TennisSet[]
   // Live game period details (only present when LIVE)
-  livePeriod?: {
-    // MLB: current inning (1-9+), NHL: period (1-3+), NBA: quarter (1-4+)
-    // UFC: round (1-5), COD: game (1-5+)
-    number: number
-    type: 'inning' | 'period' | 'quarter' | 'round' | 'game' | 'half' | 'set'
-    // Optional: time remaining in period, outs (MLB), etc.
-    display?: string
-  }
+  livePeriod?: LivePeriod
 }
 
 function getStatusBadge(status: GameProps['status']) {
@@ -47,38 +46,11 @@ function getStatusBadge(status: GameProps['status']) {
 
 function getStatusLabel(status: GameProps['status'], statusDetail?: string) {
   if (status === 'LIVE') return 'LIVE'
+  // Suspended ≠ final: ESPN closes the event (state=post) but the match isn't over.
+  if (status === 'FINAL' && statusDetail && /susp/i.test(statusDetail)) return 'SUSPENDED'
   // Extra innings / OT: ESPN gives "Final/10", "Final/OT" — show it instead of plain FINAL.
   if (status === 'FINAL') return statusDetail && statusDetail.includes('/') ? statusDetail : 'FINAL'
   return 'SCHEDULED'
-}
-
-function getPeriodLabel(league?: string, livePeriod?: GameProps['livePeriod']) {
-  if (!livePeriod) return null
-
-  const { type, number, display } = livePeriod
-
-  // Use display if provided (MLB status_detail: "Top 1st", "End 5th", etc.)
-  if (display) return display
-
-  // Format based on type
-  switch (type) {
-    case 'inning':
-      return `${number}`
-    case 'period':
-      return `P${number}`
-    case 'quarter':
-      return `Q${number}`
-    case 'round':
-      return `R${number}`
-    case 'set':
-      return `Set ${number}`
-    case 'half':
-      return number === 1 ? '1st Half' : number === 2 ? '2nd Half' : `Half ${number}`
-    case 'game':
-      return `Game ${number}`
-    default:
-      return `${type} ${number}`
-  }
 }
 
 export default function GameCard(g: GameProps) {
@@ -92,20 +64,27 @@ export default function GameCard(g: GameProps) {
   // Leagues with a real detail page (box score / play-by-play / game info tabs). NFL + WC were
   // added with the per-tab endpoints, so their cards must be clickable too — else the pages we built
   // are unreachable. CoD is clickable only when its score-source fixture has a verified PandaScore id.
-  const hasDetail = ['NBA', 'NHL', 'MLB', 'NFL', 'WC'].includes(g.league || '')
+  const hasDetail = ['NBA', 'NHL', 'MLB', 'NFL', 'WC', 'LCUP', 'MLS'].includes(g.league || '')
     || (g.league === 'COD' && !!g.detailGameId)
   const isTeamSport = g.league === 'NBA' || g.league === 'NHL' || g.league === 'MLB' || g.league === 'NFL'
-  const isSoccer = g.league === 'WC'
+  const isSoccer = g.league === 'WC' || g.league === 'LCUP' || g.league === 'MLS'
 
   const teamLabel = (t: GameProps['homeTeam']) => {
+    // An unresolved EWC participant renders its dependency label, never a bare TBD.
+    if (t.label) return t.label
     if (!isTeamSport) return t.name
     if (t.nickname) return `${t.teamId} ${t.nickname}`
     return t.teamId || t.name
   }
+  // Unresolved participants get quiet, italic dependency text; no invented score/logo.
+  const sideClass = (t: GameProps['homeTeam']) => {
+    if (t.pending || t.unavailable) return 'italic text-zinc-500'
+    return null
+  }
 
   // What to show in the top-right area:
   // - SCHEDULED: show time (except UFC)
-  // - LIVE: show LIVE badge (no time), plus period info if available
+  // - LIVE: show the explicit LIVE state plus publisher phase/clock
   // - FINAL: show FINAL badge (no time)
   const showTime = g.status === 'SCHEDULED' && (!isUFC || g.showScheduledTime)
   const showStatusBadge = g.status === 'LIVE' || g.status === 'FINAL'
@@ -154,7 +133,7 @@ export default function GameCard(g: GameProps) {
         <span
           className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${showStatusBadge ? getStatusBadge(g.status) : 'hidden'}`}
         >
-          {g.status === 'LIVE' && getPeriodLabel(g.league, g.livePeriod) ? getPeriodLabel(g.league, g.livePeriod) : (showStatusBadge ? getStatusLabel(g.status, g.statusDetail) : '')}
+          {g.status === 'LIVE' ? formatLiveStatus(g.livePeriod, g.statusDetail) : (showStatusBadge ? getStatusLabel(g.status, g.statusDetail) : '')}
         </span>
       </div>
 
@@ -186,7 +165,7 @@ export default function GameCard(g: GameProps) {
       ) : (
         <div className="space-y-3">
           <div className="flex justify-between items-center">
-            <span className={`font-semibold ${isFinal ? (isDraw ? 'text-zinc-200' : homeWon ? 'text-zinc-200' : 'text-zinc-500') : 'text-zinc-200'}`}>{teamLabel(g.homeTeam)}</span>
+            <span className={`font-semibold ${sideClass(g.homeTeam) ?? (isFinal ? (isDraw ? 'text-zinc-200' : homeWon ? 'text-zinc-200' : 'text-zinc-500') : 'text-zinc-200')}`}>{teamLabel(g.homeTeam)}</span>
             {showScore && g.homeTeam.score !== undefined && (
               <span className="flex items-center gap-1.5">
                 <span className={`text-xl font-black ${isFinal ? (isDraw ? 'text-white' : homeWon ? 'text-white' : 'text-zinc-500') : 'text-white'}`}>{g.homeTeam.score}</span>
@@ -194,7 +173,7 @@ export default function GameCard(g: GameProps) {
             )}
           </div>
           <div className="flex justify-between items-center">
-            <span className={`font-semibold ${isFinal ? (isDraw ? 'text-zinc-200' : awayWon ? 'text-zinc-200' : 'text-zinc-500') : 'text-zinc-200'}`}>{teamLabel(g.awayTeam)}</span>
+            <span className={`font-semibold ${sideClass(g.awayTeam) ?? (isFinal ? (isDraw ? 'text-zinc-200' : awayWon ? 'text-zinc-200' : 'text-zinc-500') : 'text-zinc-200')}`}>{teamLabel(g.awayTeam)}</span>
             {showScore && g.awayTeam.score !== undefined && (
               <span className="flex items-center gap-1.5">
                 <span className={`text-xl font-black ${isFinal ? (isDraw ? 'text-white' : awayWon ? 'text-white' : 'text-zinc-500') : 'text-white'}`}>{g.awayTeam.score}</span>

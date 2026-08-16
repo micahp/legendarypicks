@@ -1,5 +1,366 @@
 # Changelog
 
+## v0.8.0 — 2026-08-11
+
+### Kick viewer counts, silently null since the keys were never hydrated
+
+- **`KICK_CLIENT_ID` / `KICK_CLIENT_SECRET`** (`83bf00d`). `_hydrate_esports_keys()`
+  self-hydrates missing esports keys from the dev secrets file at startup, but its
+  allowlist omitted both Kick OAuth credentials. Liveness kept working, so nothing looked
+  broken — the official viewer-count lookup just had no token and degraded to null with
+  `token_unavailable`. Both keys are now on the allowlist. The shape is the familiar one:
+  the surface answered, so the absence never surfaced.
+
+### League news engine
+
+The engine went from a POC to something that serves cards, and most of the work was
+learning what it is allowed to say.
+
+- **What it reads** — ESPN league feeds plus the story bodies the `www` host refuses
+  (`71b094c`), RSS, Bluesky, 13 X accounts where the handle supplies the league
+  (`54096e8`, `b87acb0`), and topic-matched Google News articles (`2c15559`). The
+  sport-wide soccer rollup is collected but deliberately kept out of the nightly run
+  (`e3b6433`) — it poisons the corpus with leagues and players we do not cover.
+- **What a card is** — one topic, not a league roundup (`efcd60a`). Cards are organized by
+  conversation (`e037bd5`), and the pool is ranked rather than gated (`c1e790e`): chatter
+  ranked on the seed, anchors ranked on the seed plus the entities the best chatter
+  actually mentions. Ranking cannot rescue an item that was never a candidate, so anything
+  carrying a seed word is a candidate at any age.
+- **Topic discovery** (`c8c956d`, `323545b`) — the seeds became training data rather than a
+  fixed list, and each league is also sampled un-seeded so discovery is not anchored to
+  topics we thought of first.
+- **The trust model, after it failed in public.** A card asserted that Inter Miami had
+  suspended Messi and Suárez over a racial-harassment probe. Suárez's six-game Leagues Cup
+  ban is real and published; the cause is published nowhere; the Messi suspension is false
+  — he was in Argentina after his father's death, which publisher items *in the same pool*
+  reported. Not unsupported: contradicted. Fixes, in code rather than instruction:
+  `x-search` unwired and its 1,056 unattributable rows purged (`d3d6ab6`), since Google
+  hands over a post's words and a redirect and nothing else — no author, no handle, no
+  permalink; `unsupported_allegation()` refuses to serve an allegation about a person with
+  no publisher receipt; `had_publisher_material()` refuses a card whose pool holds no
+  published reporting (`c7d13e4`). Where a publisher and a social post disagree, the
+  publisher wins.
+- **And the correction to that fix** (`6ae85e8`). Requiring the *model* to cite a publisher
+  dropped 11 of 14 otherwise-good cards over a missing JSON field — trusting model output
+  as a control, the same mistake in a new place. What is checked is whether a publisher
+  item was in the pool, which we can verify ourselves. The safety wording in the prompt was
+  then trimmed 1,536 → 585 characters after the long incident narrative pushed the desk to
+  decline 10 of 14 conversations that each had 12 chatter items and 6 publisher anchors.
+  Declining is not safety when there is real reporting to write from. Declines: 10 → 2.
+- **Editor feedback loop** (`8dc19cf`) — run-level good/bad verdicts steer generation.
+- Timestamps served as real UTC (`fe132cc`), publisher text and dates normalized at ingest
+  (`114c914`), whole-word matching in the layer rules (`c63add6`), and a wide batch that
+  will not parse now retries in chunks (`7f4a155`).
+
+### Soccer: Leagues Cup and MLS
+
+- **On the scoreboard** (`b0179d5`), with game-detail tabs (`61c87c6`), the live stream and
+  From the Booth on the right feed (`5101dd7`, `2ccc59b`), the live minute on game detail
+  (`f8620d4`), and suspended matches labelled SUSPENDED rather than FINAL (`e69188e`).
+- **MLS on the hub** (`ad7a9df`). Standings, schedule-dates and coverage have vouched MLS
+  for a while — it simply had no card on `/leagues`, so the only way in was to type the
+  URL. It now carries its own name and crest rather than falling back to a generic trophy.
+  Which tabs appear is still the coverage registry's call: team-stats is nba/nhl/nfl only.
+- **NCAAF is deliberately absent** — see its own section below. The reason changed during
+  this release and the earlier one is no longer true: the backend now answers for ncaaf
+  (`/api/ncaaf/standings` and `/api/ncaaf/team-aggregates` both 200 on dev, 137 teams).
+  It stays hidden by decision, not by absence.
+
+### NCAAF: built, banked, and not shipped
+
+College football was built end to end this cycle and **does not ship in this release**. It
+is recorded here rather than left out, because the work is real and the next person needs
+to know it exists and why it is dark.
+
+- **What landed on dev** (`2d6ab86` and the league-ncaaf task): 20,926 players, 56,577
+  player game logs across 888 games and 137 canonical FBS teams, 1,776 team results and
+  1,776 team stat rows, and 4,267 season stat rows sourced from CFBD. Logs carry defensive
+  stats — tackles, sacks, INTs — and every log has a non-NULL `game_type`.
+- **FBS is a published group, not a filter.** ESPN's college-football `teams` collection is
+  807; FBS is `types/2/groups/80/teams` = 146. Checking 911 games against 807 teams invents
+  a 660-team gap. The group id is recorded as data in the league registry rather than
+  sprinkled through queries. There is also no games-per-team constant — schedules are
+  uneven, so any "N of M team games" line takes M from that team's own published count or
+  does not render.
+- **Conference standings** read the published sub-groups rather than a hand-maintained
+  conference map, and omit the soccer-only fields instead of fabricating zeros.
+- **Why it is dark** (Micah, 2026-08-11). Not a data verdict — the remaining work is in the
+  surfaces and the schema, and other features outrank it. Narrowing to three conferences
+  was considered and rejected: we already hold all 137 FBS teams, so a smaller scope saves
+  nothing on the ingest and does not shrink what is actually left.
+- **Known open, recorded so it is not rediscovered.** `league_stats.py`'s ncaaf contract
+  never landed in main, so dev holds 4,267 rows its own code calls unsupported and
+  `COV-identity` fails there. `player_stats` grew a second column family (`att`/`rec`
+  duplicating `attempts`/`receptions`; `pass_yds` is a season total and is *not* a
+  duplicate of the per-game `pass_yds_g`). `ncaaf_conference_standings()` lives only in the
+  worktree and derives rank from array position. `C/vocabulary[position]` holds two levels
+  of one vocabulary in one column.
+- **Production is not empty of NCAAF, and search was serving it.** Measured 2026-08-11:
+  prod holds **11,914 ncaaf players and 56,577 ncaaf game logs** (`player_stats`,
+  `team_game_results`, `team_game_stats` and `team_stats_coverage` are all zero there).
+  With no coverage row the hub correctly hid the league — and `/api/players/search`
+  returned it anyway: `?q=Bates` gave 4 NFL players and **7 NCAAF**, each linking to a
+  working player page. Having data for a league is not the same as offering it, and until
+  now only the client asked which. `backend/league_offering.py` answers it on the server
+  from `team_stats_coverage`, and search filters on it (UFC and WC are named as shape,
+  since they are not team-stats leagues and will never have a row). It is derived, never a
+  league list: a league turns on when its coverage row is promoted and off when it is not
+  vouched. Prod now offers mlb/nba/nfl/nhl/ufc/wc; dev additionally offers mls and ncaaf,
+  so development is unaffected. A database with no registry fails closed.
+
+### Esports and EWC 2026
+
+- The Esports league destination at `/leagues/esports` (`668a160`, `78eb91b`) with tabs, an
+  inline all-esports board and interactive title filtering; `GET /api/esports/titles`
+  (`ccbc866`); the EWC center moved out of the `/esports` page and into the hub
+  (`0c74089`, `1dab7f7`).
+- Club Championship standings from the Liquipedia MediaWiki API (`4d19ef0`) with club logos
+  on every row — HTTPS-normalized publisher logos, local index reconciliation and a crest
+  fallback (`2ce6c62`), loaded without hotlink referrers (`ba422ca`).
+- Verified EWC title schedules and history from PandaScore and Lichess (`d6591ee`,
+  `12ceef9`), data-derived title coverage (`ec70cd1`), and qualifier series excluded from
+  event focus (`c64f6df`).
+- **Logo index** (`8864af9`): 265 → 288 entries, append-only. Seven of the new teams
+  resolve to a crest; the other sixteen are recorded as an empty string, which means
+  "asked, none published" rather than "not asked yet".
+
+### Backend and database, everything since v0.7.0
+
+343 commits. Grouped by what actually changed underneath, because most of these are
+invisible from the UI right up until they are not.
+
+**Schema and migrations.** A migration *runner* replaced hand-application: one invocation
+migrates both databases and adopts the 20 legacy scripts (`322b5e9`), each recorded in
+`app_schema_migrations` with a hash and an explicit `applied` / `not_applicable` verdict —
+"dev is the source; the script only writes the prod target" is now a recorded state rather
+than a thing someone remembered. The app **refuses to serve an un-migrated database at
+startup** (`758c82d`) instead of answering 200 over a missing column. Dev→prod copy scripts
+are probed on the prod side of the ledger (`5924ab9`), after a run of fixes that landed on
+dev and never reached prod.
+
+New columns and tables across the cycle: `news_items` and the whole news store (`7dbf63c`),
+`news_items.conv_id` and `team_game_results.result` (`597033b` — prod never got what dev
+added), NFL TD columns (`047496b`, zero rows in prod through three releases), NHL goalie
+columns, MLB counting stats (`pa/ab/hits/runs/rbi/era/innings/whip`), player injury columns,
+player entity type, fantasy positions, and NFL/NBA `position_group` (`836083e`).
+
+**team_game_stats moved to JSON** (`b227781`), matching `player_game_logs`. It was one wide
+table encoding NBA's and NHL's idea of a game — NCAAF filled 5 of ~45 columns, MLS filled 2
+by borrowing NHL's `shots`/`blocked_shots`. Additive and two-sided: writers fill the blob
+and the frozen columns, readers prefer the blob and fall back, so a database migrated at a
+different time from its code is redundant rather than wrong. 8,452 of 8,468 rows migrated;
+the 16 mlb rows are skipped as UNVERIFIED rather than emptied. Verified by comparing the
+pre-migration backup against the migrated file with the same code — every team's every
+aggregate identical across all six leagues — then by proving the blob is the live source,
+since identical numbers would also be what "the blob is ignored" looks like.
+
+**Identity, which is where the real bugs were.** Props landing on the wrong same-named
+player (`674f178`, `4edb64f`); MLB rows holding a same-named person's `mlbam_id` (`4f405db`,
+one of them a man who debuted in 1945); publisher-sourced MLB team refresh with identity
+invariant tests (`03d906b`); a promotion tool that matched on publisher id and then vetoed
+on a raw name string, so Pedro Ramírez and Pedro Ramirez — one man, same ids in both
+databases — refused an entire league's promotion (`7cb9fbd`). `player_stats` is keyed by
+`player_id`. The shape repeats: **an ambiguous key never raises, it misses.**
+
+**Settlement and grading.** MLB was skipping the finality gate and grading against live box
+scores (`e20b736`); every MLB prop re-graded against a final (`53021ae`); a game matched by
+its teams rather than the calendar day it was filed under (`651176e`); the final keyed on
+`gamePk` rather than `(date, home, away)` (`989153e`); box-score athletes matched by ESPN id
+rather than surname (`7c44f06`); an absent stat voids a prop instead of grading it 0.0
+(`fb0927b`); a game is final when the publisher says `completed`, not `"post"` (`cbacc7a`);
+home/away read off ESPN's own flag instead of matching names (`dac9fbf`). The player name
+was stripped out of **561,543 market keys** and everything re-graded (`5bee747`).
+
+**ESPN request budget.** The limit is a request *count* per host (~100), not a rate, so
+pacing does not buy budget — only issuing fewer requests does. The relink repair obeys it
+and fails loud (`c59e9b6`); `link_prop_games` now states its spend before issuing any of it
+and refuses over 50 requests to one host, including on `--dry-run`, which skips the write
+but not the HTTP (`b8886e9`). An unscoped run was 189 requests against a ~100 ceiling.
+
+**Fail-closed reads, after a night of walled hosts.** Game detail had two independent
+single-source dependencies on ESPN — `is_final` came only from a live call, and the final
+score read only `scoring_plays`, which holds zero rows for ncaaf, nfl and mls. Both now ask
+our own database first (`405ebe8`). `prop_games.start_time` backfilled from the published
+scoreboard (`e634890`) and settlement allows for two publishers' clock drift (`f6fed51`).
+
+**Build and gates.** Databases excluded from the Docker context **by name**, gated with a
+test (`ad90392`) — `*.bak` never matched `data/*.bak`, which baked 7GB of backups into the
+production image. The release preflight blocks on schema/season divergence and the data
+audit (`f82bdd1`). `verify-gates.sh` refuses to run when `LP_DB_PATH` is set but `LP_GATE_D`
+is not (`271534b`): it never read `LP_DB_PATH`, and its own default is **prod**, so pointing
+the wrong knob produced a confident number about a database you did not mean to grade.
+
+### Audit and contract
+
+- **NHL qualifier was published all along** (`4ff583a`) — re-asked the right endpoint, now
+  PASS. A gap is a statement about which endpoint we asked.
+- Leagues with no leaderboard surface are UNVERIFIED rather than FAIL (`84cefac`);
+  `B/position-content` declared for mlb/nba/ufc/wc (`01e6986`); section 7 of the coverage
+  contract rewritten so adding a league is a declared, checkable path (`c0ca67d`).
+
+### Docs
+
+- **`docs/BROADCAST-CAPTURE-ECONOMICS.md`** (`58c0eb0`) — what it would cost to capture
+  every audio feed and pay for the video subscriptions, plus the cross-league tournament
+  gap: Leagues Cup and EWC do not sit inside one league's news section.
+- **Roadmap: who is actually playing** (`13e031a`) — soccer availability before kickoff.
+  The engine reports absences after the fact; the game detail page should say who is out
+  before the match. Deferred to its own session.
+- **The X account list, documented** (`3bfc32b`) — `docs/PLAN-league-news-engine.md` now
+  records which accounts we cover and why each one is on the list.
+
+### From the Booth is dev-only
+
+`NEXT_PUBLIC_SHOW_BOOTH` (`bf36fcf`). Production does not run the broadcast capture the
+feed reads from, so the tab opened onto nothing there. Off unless explicitly `true` —
+absence must read as hidden, since a missing var is exactly what production looks like.
+Dev sets it in `.env.local`, which is gitignored *and* excluded from the Docker build
+context by `.dockerignore`, so the production bundle is built without it and the feature
+compiles out. The render is gated as well as the tab list: hiding a tab does not unreach
+it.
+
+### MLS props reached the database but not the page
+
+`b8886e9`. MLS game detail said "props aren't available" while the database held 714 props
+across 15 games. The page joins on `prop_games.espn_event_id` and 13 of 15 MLS rows had
+none, so the props existed and were unreachable. Two independent reasons the crosswalk
+never matched:
+
+- The name fallback read `displayName`, which the scoreboard payload does not publish —
+  its team objects carry `abbrev`/`name`/`nickname` and no `displayName`. The branch
+  compared against `None` for every game and was dead code.
+- `_norm_team` has no MLS map and fell through to "first three letters", which for MLS
+  manufactures collisions: "San Diego FC" and "San Jose Earthquakes" both become `SAN`.
+  That is worse than a miss — a wrong link is invisible, hides the props from the game that
+  was played, and settlement can never resolve it. Unmapped leagues now return "unknown"
+  and match on the published name instead.
+
+The rows are not linked yet: `site.web.api.espn.com` is refusing, and a spent host is not
+restored by waiting. Re-run `link_prop_games.py --league mls` when it recovers.
+
+### Version note
+
+The version line had forked four ways: `package.json` read 0.7.7, `git describe` from dev
+said v0.7.8, the tags at v0.7.9 and v0.7.10 sat on `release/ewc-v0.7.10` — not an ancestor
+of dev — and this file already carried an untagged v0.7.11 section. `release/ewc-v0.7.10`
+is now merged back, so dev's history contains every shipped tag and goes 0.7.10 → 0.8.0.
+
+Two numbers had to be untangled. The position-vocabulary work above was written up as
+"v0.7.9 — 2026-08-05" but `836083e` is in no tag at all, and the EWC CoD hotfix later took
+the real v0.7.9 on 08-09; those notes are now a section of this release rather than a
+number already spoken for. The esports files conflicted add/add because dev had
+re-developed them further — `routers/esports/ewc.py` is 669 lines on dev against 321 on
+the branch — so dev's versions were kept and the branch supplied only its release notes.
+
+### Two players with one name: props landed on the wrong man
+
+- **The resolver refuses to guess** (`674f178`). `_resolve_player_for_ingest` opened with
+  `SELECT id FROM players WHERE name=? AND league=?` and `fetchone()`. Two men named Max
+  Muncy play in MLB, so every Muncy prop collapsed onto whichever row the database yielded
+  first — row 96, the Athletics one. Nothing raised; an ambiguous key never raises, it
+  misses. A name matching more than one row is no longer a match: it is separated by the
+  source's team, else by which candidate's team is actually in the game (`game_id` is now
+  threaded through from the ingest and folded through the same published team map the ESPN
+  crosswalk uses, because `prop_games` holds both `"Los Angeles Dodgers"` and `"LAD"`), and
+  failing both it goes to `unresolved_players` instead of onto the wrong player. Step 2's
+  `LIMIT 1` got the same treatment.
+- **The repair** (`4edb64f`). `repair_mislinked_same_name_props.py` moves props off a
+  same-named player who was not in the game, and deletes their results rather than
+  rewriting them — they were graded against a box score the man never appeared in, and the
+  grader decides the new value. On prod: **438 props** moved from the Athletics Muncy to
+  the Dodgers Muncy across five Dodgers-only games, **276 wrong results dropped** and
+  re-settled correctly against his real box score. Row 96 now holds 329 props and not one
+  of them is on a game the Athletics did not play.
+- **What it refuses to touch.** A row with no publisher id is a stub someone's ingest
+  minted, not a second man; repointing props across it would hide a duplicate that wants
+  deduping. Three same-name collisions are named by the script and still open: James
+  Outman (row 29097, 584 props, no `mlbam_id`), Luis Castillo (row 27342, 266 props, none
+  of them grading) and Jared Jones (row 27809, no team).
+
+### Position vocabulary: the release gate is fully green
+
+- **NFL/NBA `position_group`** (`836083e`). The last two release-blocking FAILs
+  were `C/vocabulary[position]` — "two levels of one vocabulary in the same
+  column: FB under RB" (NFL) and "PF under F" (NBA). Same shape MLB solved with
+  `position_group`; this extends it. `migrate_league_position_groups.py` fills
+  the column from the committed publisher vocabulary (the top-level ancestor's
+  name: WR→Offense, CB→Defense, PK→Special Teams, PF→Forward, SG→Guard,
+  C→Center). Additive, idempotent, VACUUM INTO backup first. Applied to both
+  DBs: dev 27,274 rows, prod 27,652 rows, quick_check ok.
+- **Gate scope** (`836083e`): NFL/NBA specs declare `position_group`; the
+  fantasy-construct blank exemption extends to it (a D/ST has no position and
+  no group, and entity_type keeps the populations distinct).
+- **Ledger** (`836083e`): the migration is recorded in the both-DB runner.
+
+**Audit vs prod: 0 FAIL, 40 passed, 3 UNVERIFIED (non-blocking).** The
+release preflight now passes end-to-end.
+
+## v0.7.10 — 2026-08-09
+
+### The full EWC tournament center is live
+
+- The Esports league destination now carries the EWC 2026 tournament center: live and upcoming
+  matches across titles, results, title discovery, and the published Club Championship table with
+  explicit source, freshness, stale, and unavailable states.
+- EWC Call of Duty bracket slots are reconciled against the PandaScore bracket graph. Undecided
+  participants render structurally as `Winner of ...` or `Loser of ...`, while completed clubs use
+  their canonical identities; raw `TBD` values no longer reach the CoD scoreboard.
+- `/esports` remains the broadcast-first live board, while `/leagues/esports` owns the EWC
+  tournament-center experience and `/leagues` provides its entry point.
+- This release is intentionally isolated from the unfinished news engine and the MLS/NCAAF work.
+
+## v0.7.9 — 2026-08-09
+
+### EWC CoD finals show the clubs that actually played
+
+- Breaking Point's EWC match rows carry authoritative `team1` and `team2` objects even
+  when those clubs are absent from its page-level `allTeams` dictionary. The CoD
+  scoreboard now uses those embedded participants as its fallback, so completed EWC
+  series render club names and scores instead of `TBD` versus `TBD`.
+- This production hotfix is intentionally limited to the CoD scoreboard normalizer; the
+  news engine and the broader new-leagues work are not included.
+
+## v0.7.8 — 2026-08-05
+
+### Migration ledger: one invocation, both databases
+
+- **`backend/migrate_all.py`** (`322b5e9`). Six of the seven 2026-08-05 defects were
+  "verified on dev, never shipped to prod" — two manual actions with nothing coupling
+  them. The runner removes the second action: `--check` / `--apply` target **both**
+  databases by default, apply every numbered migration through the ledger
+  (`app_schema_migrations`), and record the 20 legacy hand-run migration scripts with
+  an honest per-database status (applied / not_applicable / explicit unknown — never
+  guessed). Re-running is a no-op.
+- **Startup guard** (`758c82d`): the app refuses to serve an un-migrated database —
+  `no such column: pa` is now impossible to reach in production. Tests opt out via
+  `LP_SKIP_MIGRATION_CHECK=1`.
+- **Backup policy** (`b0bffae`): every backup is `VACUUM INTO`, never `cp` (a plain
+  copy of a live DB races writers — proved malformed 2026-08-05). `prune_backups.py`
+  keeps the 10 most recent per prefix; doc-referenced baselines are never pruned.
+  Applied: 98 files / 16GB → 24 files / 4.1GB.
+- **diff_databases** (`089a014`): feature-not-deployed tables classify as advisory
+  FEATURE drift; migration-owned SCHEMA/SEASONS is the only blocker. Zero SCHEMA and
+  zero SEASONS differences between prod and dev.
+
+### Identity: nickname aliases + consolidation artifact
+
+- **NBA identity merge applied to prod** (`c177ff3`): 269 split pairs → 0 (was the
+  F/identity-crosswalk FAIL), NBA players 1140 → 871 matching dev.
+- **NFL team vocabulary promoted** (`73f4396`): nfl 2024 team-game-results window
+  (570 rows) + the earlier 2,495 nflverse→ESPN code rewrites. `team_game_results` now
+  serves all six league/season windows on prod.
+- **`G/published-identity` nickname aliases** (`90e3bdd`): 16 rows across NBA/NFL/NHL
+  were the same human under a different published name form (Kenny vs Kenneth
+  Gainwell, Nate vs Jeenathan Williams). Decision: the market-facing nickname is
+  canonical (ESPN fantasy and Yahoo both publish Kenny Gainwell) — rows stay, the gate
+  learns accepted alternates from `data/name-aliases.json`. The gate stays strict
+  about people; an id absent from the file has no alternates. G now PASSes on all four
+  leagues on prod and dev (NBA 541 / NFL 24,344 / NHL 840 / MLB 1,346 ids checked).
+- **Consolidation artifact** (`90e3bdd`): `data/identity-consolidations.jsonl`,
+  append-only. Every merge path (merge_nba_identities, dedupe_mlb, MLB repair copy)
+  logs what got consolidated — from/to names, repointed counts. A consolidation
+  without a log line is a defect.
+
 ## v0.7.7 — 2026-08-05
 
 ### The v0.7.6 known regression is fixed — MLB leaders serves again

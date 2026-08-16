@@ -3,6 +3,7 @@ import Head from 'next/head'
 import Link from 'next/link'
 import { trackStreamWatched } from '../lib/analytics'
 import LiveDot from '../components/LiveDot'
+import { Eyebrow, SectionHeader, TeamCrest } from '../components/Esports/primitives'
 
 /* ---------------- types ---------------- */
 type Player = { name: string; rating: number | null; clock: number | null }
@@ -28,42 +29,10 @@ type CS2Player = { name: string; kills: number | null; deaths: number | null }
 type CS2Team = { name: string; score: number | null; won: boolean; players: CS2Player[] }
 type CS2Live = { live: boolean; title?: string; tournament?: string; stream?: { platform: string; channel: string } | null; teamA?: CS2Team; teamB?: CS2Team }
 
-type UpMatch = { startTime: number | null; endTime: number | null; live: boolean; title: string; league: string; teamA: string; teamB: string; favorite: { name: string; pct: number } | null; watch: { platform: string; url: string; channel: string | null; online?: boolean | null; embedUrl?: string | null; language?: string | null; viewers?: number | null; alternates?: Array<{ platform: string; url: string; channel: string | null; online?: boolean | null; embedUrl?: string | null; language?: string | null }> } | null; score?: { a: number | null; b: number | null } | null; finished?: boolean | null; winner?: 'a' | 'b' | null; pinned?: boolean; model?: { favName: string; modelPct: number; marketPct: number | null; edge: number | null } | null; logoA?: string | null; logoB?: string | null; minorLeague?: boolean; tier?: number; prominence?: number; psId?: number | string | null; streamKey?: string | null; eventId?: number | string | null; foreign?: boolean }
+export type UpMatch = { startTime: number | null; endTime: number | null; live: boolean; title: string; league: string; teamA: string; teamB: string; favorite: { name: string; pct: number } | null; watch: { platform: string; url: string; channel: string | null; online?: boolean | null; embedUrl?: string | null; language?: string | null; viewers?: number | null; alternates?: Array<{ platform: string; url: string; channel: string | null; online?: boolean | null; embedUrl?: string | null; language?: string | null }> } | null; score?: { a: number | null; b: number | null } | null; finished?: boolean | null; canceled?: boolean | null; winner?: 'a' | 'b' | null; pinned?: boolean; model?: { favName: string; modelPct: number; marketPct: number | null; edge: number | null } | null; logoA?: string | null; logoB?: string | null; minorLeague?: boolean; tier?: number; prominence?: number; psId?: number | string | null; streamKey?: string | null; eventId?: number | string | null; ewcEventId?: string | null; sourceMatchId?: string | null; source?: string | null; foreign?: boolean }
 type UpcomingData = { matches: UpMatch[]; source?: string; error?: string; building?: boolean }
 
 const POLL_MS = 10_000
-
-/* ---------------- shared primitives ---------------- */
-// One label system: tracked small-caps eyebrows, a red pulse when something is live.
-function Eyebrow({ children, live = false }: { children: React.ReactNode; live?: boolean }) {
-  return (
-    <div className={`flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-[0.2em] ${live ? 'text-red-400' : 'text-zinc-500'}`}>
-      {live ? <LiveDot /> : null}
-      <span>{children}</span>
-    </div>
-  )
-}
-
-function SectionHeader({ eyebrow, title, meta, live = false }: { eyebrow: string; title: string; meta?: string; live?: boolean }) {
-  return (
-    <div className="space-y-2">
-      <div className="flex items-end justify-between gap-3">
-        <div className="space-y-1.5">
-          {eyebrow ? <Eyebrow live={live}>{eyebrow}</Eyebrow> : null}
-          <h2 className="text-xl font-bold tracking-tight text-zinc-50">{title}</h2>
-        </div>
-        {meta ? <span className="shrink-0 pb-0.5 font-mono text-[10px] uppercase tracking-wider text-zinc-600">{meta}</span> : null}
-      </div>
-      <div className="h-px w-full bg-gradient-to-r from-zinc-700 to-transparent" />
-    </div>
-  )
-}
-
-function TeamCrest({ src, size = 'h-6 w-6' }: { src: string | null | undefined; size?: string }) {
-  return src
-    ? <img src={src} alt="" className={`${size} shrink-0 object-contain`} />
-    : <span className={`${size} shrink-0 rounded bg-zinc-800`} />
-}
 
 function clock(s: number | null | undefined) {
   if (s === null || s === undefined) return '—'
@@ -337,7 +306,7 @@ function dayKey(ms: number | null) {
 // this (instead of the display label, and instead of adjacency) guarantees every calendar day gets
 // exactly one heading and days stay chronologically ordered no matter how the backend sorted the
 // combined slate (it sorts by prominence, so same-day matches are NOT contiguous in the raw feed).
-function localDateKey(ms: number | null): string {
+export function localDateKey(ms: number | null): string {
   if (!ms) return '9999-99-99'
   const d = new Date(ms)
   const y = d.getFullYear()
@@ -346,7 +315,7 @@ function localDateKey(ms: number | null): string {
   return `${y}-${mo}-${da}`
 }
 
-function groupTime(m: UpMatch): number | null {
+export function groupTime(m: UpMatch): number | null {
   return m.finished ? (m.endTime ?? m.startTime) : m.startTime
 }
 
@@ -410,6 +379,8 @@ function UpMatchRow({ m, host }: { m: UpMatch; host: string }) {
         <div className="w-16 shrink-0 font-mono text-[11px] tabular-nums">
           {m.live
             ? <span className="inline-flex items-center gap-1 text-red-400"><LiveDot />LIVE</span>
+            : m.canceled
+            ? <span className="text-zinc-500">Canceled</span>
             : m.finished
             ? <span className="text-zinc-400">Final</span>
             : <span className="text-zinc-500">{fmtClock(m.startTime)}</span>}
@@ -515,7 +486,7 @@ function BoardBuilding() {
   )
 }
 
-function UpcomingSlate({ data }: { data: UpcomingData | null }) {
+export function UpcomingSlate({ data, variant = 'full' }: { data: UpcomingData | null; variant?: 'full' | 'schedule' | 'results' }) {
   const [host, setHost] = useState('')
   const [tab, setTab] = useState<'scheduled' | 'results'>('scheduled')
   useEffect(() => { setHost(window.location.hostname) }, [])
@@ -532,6 +503,35 @@ function UpcomingSlate({ data }: { data: UpcomingData | null }) {
   const days = groupByDay(sc, 'asc')
   const show = tab === 'results' ? rs : sc
   const resultDays = groupByDay(rs, 'desc')
+
+  // Inline variants for the Esports league hub: render only the scheduled or the results day
+  // groups (no SectionHeader, no tab bar — the hub owns those), reusing the exact same row UI.
+  if (variant !== 'full') {
+    const list = variant === 'results' ? resultDays : days
+    const empty = variant === 'results' ? 'No finished matches yet.' : 'No scheduled matches right now.'
+    return (
+      <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 p-4 sm:p-5">
+        {data?.error ? (
+          <p className="text-sm text-zinc-500">Schedule unavailable right now — retrying.</p>
+        ) : data === null || (data.building && matches.length === 0) ? (
+          <BoardBuilding />
+        ) : list.length === 0 ? (
+          <p className="text-sm text-zinc-500">{empty}</p>
+        ) : (
+          <div className="space-y-5">
+            {list.map((d, di) => (
+              <div key={di}>
+                <Eyebrow live={d.label === 'Live now'}>{d.label}</Eyebrow>
+                <div className="mt-1 divide-y divide-zinc-800/70">
+                  {d.matches.map((m, i) => <UpMatchRow key={i} m={m} host={host} />)}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    )
+  }
 
   return (
     <section className="space-y-5">
@@ -601,7 +601,8 @@ function UpcomingSlate({ data }: { data: UpcomingData | null }) {
       )}
       <p className="max-w-2xl text-xs text-zinc-600">
         Every off-board esports match on the board (LoL, Valorant, CS2, Dota, Rainbow Six, King of Glory),
-        soonest first, priced by the Bovada favorite. Full schedules + standings move to the Leagues hub next.
+        soonest first, priced by the Bovada favorite. The Esports league hub has the EWC tournament
+        center and per-title desks.
       </p>
     </section>
   )
@@ -1180,13 +1181,15 @@ export default function EsportsPage() {
     const loadLive = j('/api/esports/lol/msi/live', setLive)
     const loadUpcoming = j('/api/esports/upcoming', setUpcoming)
     loadLive(); loadUpcoming()
-    timers.current = [setInterval(loadLive, 15_000), setInterval(loadUpcoming, POLL_MS)]
+    timers.current = [
+      setInterval(loadLive, 15_000),
+      setInterval(loadUpcoming, POLL_MS),
+    ]
     return () => { alive = false; timers.current.forEach(clearInterval) }
   }, [])
 
   // Hero features a live match whose stream we've CONFIRMED is on-air — never a dead embed.
-  // ALL live games go above the fold (not gated on stream availability — show the match, embed the
-  // stream when it's confirmed on-air, else say "no stream"). MSI live keeps its rich dedicated view.
+  // ALL live games go above the fold. MSI keeps its rich dedicated view on the generic board.
   const _n = (s?: string | null) => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '')
   const msiTeams = live?.live
     ? [live.teamA?.name, live.teamA?.code, live.teamB?.name, live.teamB?.code].filter(Boolean).map(_n)
@@ -1194,8 +1197,9 @@ export default function EsportsPage() {
   const isMsi = (m: UpMatch) =>
     msiTeams.length > 0 &&
     [m.teamA, m.teamB].some((t) => msiTeams.some((n) => n && (_n(t) === n || _n(t).includes(n) || n.includes(_n(t)))))
-  const liveMatches = (upcoming?.matches ?? []).filter((m) => m.live && !isMsi(m))
-  const anyLive = !!live?.live || buildBroadcastViews(upcoming?.matches ?? [], liveMatches, Date.now()).length > 0
+  const allMatches = upcoming?.matches ?? []
+  const liveMatches = allMatches.filter((m) => m.live && !isMsi(m))
+  const anyLive = !!live?.live || buildBroadcastViews(allMatches, liveMatches, Date.now()).length > 0
 
   return (
     <>
@@ -1219,9 +1223,7 @@ export default function EsportsPage() {
           </Link>
         </header>
 
-        {/* One unified "Live now" section: MSI leads as the featured rich view when live (it's the
-            marquee event, 5-10x the volume of the regional slate), the rest flow into the grid. */}
-        <LiveNow matches={liveMatches} host={host} msi={live?.live ? live : null} slate={upcoming?.matches ?? []} />
+        <LiveNow matches={liveMatches} host={host} msi={live?.live ? live : null} slate={allMatches} />
 
         <UpcomingSlate data={upcoming} />
       </div>

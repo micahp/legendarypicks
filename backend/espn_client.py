@@ -188,6 +188,23 @@ def _int(x):
         return None
 
 
+def neighbor_dates(date_text):
+    """Return an ESPN scoreboard date followed by its previous and next day.
+
+    Book/game dates are often UTC while ESPN indexes US events by the local card
+    or slate date.  UFC cards routinely cross midnight UTC, so both linking and
+    later competition lookup must use this exact same window.
+    """
+    import datetime as _dt
+    try:
+        base = _dt.date.fromisoformat(str(date_text))
+    except (TypeError, ValueError):
+        return [date_text]
+    return [base.isoformat(),
+            (base - _dt.timedelta(days=1)).isoformat(),
+            (base + _dt.timedelta(days=1)).isoformat()]
+
+
 def _normalize_team_events(events):
     """Normalize team-vs-team scoreboard events into the shared game shape."""
     out = []
@@ -832,94 +849,64 @@ def team_strength_map(league):
 
 
 
+def _standing_int(value):
+    """Copy a published integer-like standings field, preserving absence."""
+    if value is None or value == "":
+        return None
+    return int(value)
+
+
+def _standing_rows(entries):
+    rows = []
+    for ent in entries:
+        s = {x.get("name"): x.get("value") for x in ent.get("stats", [])}
+        t = ent.get("team", {})
+        rows.append({
+            "rank": _standing_int(s.get("rank")),
+            "abbrev": t.get("abbreviation"),
+            "name": t.get("displayName"),
+            "played": _standing_int(s.get("gamesPlayed")),
+            "wins": _standing_int(s.get("wins")),
+            "draws": _standing_int(s.get("ties")),
+            "losses": _standing_int(s.get("losses")),
+            "gf": _standing_int(s.get("pointsFor")),
+            "ga": _standing_int(s.get("pointsAgainst")),
+            "gd": _standing_int(s.get("pointDifferential")),
+            "points": _standing_int(s.get("points")),
+        })
+    # ESPN publishes standings in rank order. Preserve that order rather than
+    # inventing an order from a nullable rank field during preseason.
+    return rows
+
+
 def group_standings(league):
-    """World Cup group tables — per-group standings with draws.
-    Returns [{group: "Group A", rows: [{rank, abbrev, name, played, wins, draws, losses, gf, ga, gd, points}]}]
+    """Published leaf-group standings for soccer and conference-shaped leagues.
+
+    Returns [{group, rows}] and copies the publisher's values without deriving
+    records, points, or membership. A container such as the Sun Belt Conference
+    can hold published East/West child tables instead of direct entries, so only
+    empty containers are descended; every populated leaf remains separately
+    visible. Missing publisher stats stay ``None`` for an honest UI dash.
     """
     _, path = _check(league)
     d = _get(_CORE.format(path=path) + "/standings", ttl=900)
     groups = []
-    for child in d.get("children", []):
-        gname = child.get("name", "")
-        rows = []
-        for ent in child.get("standings", {}).get("entries", []):
-            s = {x.get("name"): x.get("value") for x in ent.get("stats", [])}
-            t = ent.get("team", {})
-            rows.append({
-                "rank": int(s.get("rank", 0)),
-                "abbrev": t.get("abbreviation"),
-                "name": t.get("displayName"),
-                "played": int(s.get("gamesPlayed", 0)),
-                "wins": int(s.get("wins", 0)),
-                "draws": int(s.get("ties", 0)),
-                "losses": int(s.get("losses", 0)),
-                "gf": int(s.get("pointsFor", 0)),
-                "ga": int(s.get("pointsAgainst", 0)),
-                "gd": int(s.get("pointDifferential", 0)),
-                "points": int(s.get("points", 0)),
+
+    def add_leaf_groups(node):
+        entries = (node.get("standings") or {}).get("entries") or []
+        if entries:
+            groups.append({
+                "group": node.get("name", ""),
+                "rows": _standing_rows(entries),
             })
-        rows.sort(key=lambda r: r["rank"])
-        groups.append({"group": gname, "rows": rows})
+            return
+        for child in node.get("children") or []:
+            add_leaf_groups(child)
+
+    for child in d.get("children", []):
+        add_leaf_groups(child)
     return groups
 
-
-def ncaaf_conference_standings():
-    """NCAAF per-conference standings — the {group, rows} shape the league
-    hub's ConferenceStandings table renders.
-
-    College football's ESPN /standings payload differs from every other
-    league's: there is no rank/gamesPlayed/losses stat key, the overall
-    record lives in the `overall` displayValue ("12-2"), and entries come
-    pre-ordered by conference standing. We read the published order and
-    parse the record; we never recompute it. Football has no draws, no
-    points column and no gf/ga/gd — those soccer-only fields are omitted
-    rather than fabricated as zeros (honest-data-ui: dash != zero).
-
-    Returns [{group: "Big Ten Conference", rows: [{rank, abbrev, name,
-    played, wins, losses}]}]. Conferences with no published entries are
-    skipped entirely (a table with zero rows is a dead surface).
-    """
-    _, path = _check("ncaaf")
-    d = _get(_CORE.format(path=path) + "/standings", ttl=900)
-    groups = []
-    for child in d.get("children", []):
-        gname = child.get("name", "")
-        entries = (child.get("standings") or {}).get("entries", [])
-        if not entries:
-            continue
-        rows = []
-        for rank, ent in enumerate(entries, start=1):
-            s = {x.get("name"): x.get("value") for x in ent.get("stats", [])}
-            disp = {x.get("name"): x.get("displayValue") for x in ent.get("stats", [])}
-            t = ent.get("team", {})
-            w, l = _parse_record(disp.get("overall"))
-            rows.append({
-                "rank": rank,
-                "abbrev": t.get("abbreviation"),
-                "name": t.get("displayName"),
-                "played": (w + l) if (w is not None and l is not None) else None,
-                "wins": w,
-                "losses": l,
-            })
-        groups.append({"group": gname, "rows": rows})
-    return groups
-
-
-def _parse_record(display_value):
-    """Parse ESPN's 'W-L' displayValue ('12-2') into (wins, losses) ints.
-
-    Returns (None, None) for anything unparseable — a missing record must
-    read as absence, never as a fabricated 0-0.
-    """
-    if not isinstance(display_value, str):
-        return None, None
-    parts = display_value.strip().split("-")
-    if len(parts) != 2:
-        return None, None
-    try:
-        return int(parts[0]), int(parts[1])
-    except ValueError:
-        return None, None
 
 
 def summary(league, game_id):
@@ -938,15 +925,29 @@ def game_result_soccer(league, game_id):
     status = comp.get("status", {})
     st = status.get("type", {})
     scores = {}
-    winner = None
+    winner = home_abbr = away_abbr = None
     for c in comp.get("competitors", []):
         abbr = c.get("team", {}).get("abbreviation")
         scores[abbr] = _num(c.get("score"))
+        if c.get("homeAway") == "home":
+            home_abbr = abbr
+        elif c.get("homeAway") == "away":
+            away_abbr = abbr
         if c.get("winner") is True:
             winner = abbr
+    # See game_result: a postponed match is state="post" too. `completed` is the
+    # published answer to "was this played to a result".
+    completed = bool(st.get("completed"))
+    if not completed:
+        winner = None
     return {
         "state": st.get("state"),
+        "completed": completed,
         "scores": scores,
+        "home": home_abbr,
+        "away": away_abbr,
+        "home_score": scores.get(home_abbr),
+        "away_score": scores.get(away_abbr),
         "winner": winner,
         "period": status.get("period"),
         "clock": status.get("displayClock"),
@@ -1198,15 +1199,39 @@ def game_result(league, game_id):
     comp = (d.get("header", {}).get("competitions") or [{}])[0]
     status = comp.get("status", {})
     st = status.get("type", {})
-    scores = {}
+    scores, home_abbr, away_abbr = {}, None, None
     for c in comp.get("competitors", []):
-        scores[c.get("team", {}).get("abbreviation")] = _num(c.get("score"))
+        ab = c.get("team", {}).get("abbreviation")
+        scores[ab] = _num(c.get("score"))
+        # ESPN states which side is home on the same object as the score. Read it
+        # rather than asking the caller to supply a key: every caller that had to
+        # supply one supplied a display name against this abbrev-keyed dict, and
+        # `.get("Athletics")` into `{"ATH": 5}` misses silently. See
+        # test_game_result_home_away.
+        if c.get("homeAway") == "home":
+            home_abbr = ab
+        elif c.get("homeAway") == "away":
+            away_abbr = ab
+    # `state == "post"` is not "this game was played". A POSTPONED game is also
+    # state="post" — with completed=false and a score of "0" on both sides rather
+    # than null — so the old gate admitted one, `max(scores)` on a 0-0 tie handed
+    # the win to whichever key sorted first, and settlement stamped final 0-0 on a
+    # game nobody played. Measured on event 401815805 (SF at ATL, 2026-06-18).
+    # `completed` is published on this same object; see test_finality_gate_completed.
+    completed = bool(st.get("completed"))
     winner = None
-    if st.get("state") == "post" and len(scores) == 2 and all(v is not None for v in scores.values()):
-        winner = max(scores, key=scores.get)
+    if completed and len(scores) == 2 and all(v is not None for v in scores.values()):
+        hi, lo = sorted(scores.values(), reverse=True)
+        if hi != lo:  # max() on a tie returns the first key, which is not a result
+            winner = max(scores, key=scores.get)
     return {
         "state": st.get("state"),
+        "completed": completed,
         "scores": scores,
+        "home": home_abbr,
+        "away": away_abbr,
+        "home_score": scores.get(home_abbr),
+        "away_score": scores.get(away_abbr),
         "winner": winner,
         "period": status.get("period"),
         "clock": status.get("displayClock"),
@@ -1225,3 +1250,62 @@ if __name__ == "__main__":
     for g in games(lg):
         h, a = g["home"], g["away"]
         print(f"  {a['abbrev']}@{h['abbrev']} {g['state']:4} {a['score']}-{h['score']} ({g['status']})")
+
+
+def _parse_record(display_value):
+    """Parse ESPN's 'W-L' displayValue ('12-2') into (wins, losses) ints.
+
+    Returns (None, None) for anything unparseable — a missing record must
+    read as absence, never as a fabricated 0-0.
+    """
+    if not isinstance(display_value, str):
+        return None, None
+    parts = display_value.strip().split("-")
+    if len(parts) != 2:
+        return None, None
+    try:
+        return int(parts[0]), int(parts[1])
+    except ValueError:
+        return None, None
+
+
+def ncaaf_conference_standings():
+    """NCAAF per-conference standings — the {group, rows} shape the league
+    hub's ConferenceStandings table renders.
+
+    College football's ESPN /standings payload differs from every other
+    league's: there is no rank/gamesPlayed/losses stat key, the overall
+    record lives in the `overall` displayValue ("12-2"), and entries come
+    pre-ordered by conference standing. We read the published order and
+    parse the record; we never recompute it. Football has no draws, no
+    points column and no gf/ga/gd — those soccer-only fields are omitted
+    rather than fabricated as zeros (honest-data-ui: dash != zero).
+
+    Returns [{group: "Big Ten Conference", rows: [{rank, abbrev, name,
+    played, wins, losses}]}]. Conferences with no published entries are
+    skipped entirely (a table with zero rows is a dead surface).
+    """
+    _, path = _check("ncaaf")
+    d = _get(_CORE.format(path=path) + "/standings", ttl=900)
+    groups = []
+    for child in d.get("children", []):
+        gname = child.get("name", "")
+        entries = (child.get("standings") or {}).get("entries", [])
+        if not entries:
+            continue
+        rows = []
+        for rank, ent in enumerate(entries, start=1):
+            s = {x.get("name"): x.get("value") for x in ent.get("stats", [])}
+            disp = {x.get("name"): x.get("displayValue") for x in ent.get("stats", [])}
+            t = ent.get("team", {})
+            w, l = _parse_record(disp.get("overall"))
+            rows.append({
+                "rank": rank,
+                "abbrev": t.get("abbreviation"),
+                "name": t.get("displayName"),
+                "played": (w + l) if (w is not None and l is not None) else None,
+                "wins": w,
+                "losses": l,
+            })
+        groups.append({"group": gname, "rows": rows})
+    return groups

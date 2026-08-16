@@ -231,6 +231,17 @@ class AuditTests(unittest.TestCase):
         states = self.states("nhl", "D/leaders-reach-logs")
         self.assertEqual(audit.FAIL, states["D/leaders-reach-logs"])
 
+    def test_league_without_leaderboard_surface_is_unverified_not_fail(self):
+        """UFC/WC declare no stat_types (rankings/dormant, not a stats league).
+
+        D previously FAILed them for 'no player_stats rows at all' -- asserting
+        a defect in a leaderboard surface that does not exist. The manifest's
+        'nothing to declare, said out loud' is the contract; D must honor it.
+        """
+        self.con.commit()
+        states = self.states("ufc", "D/leaders-reach-logs")
+        self.assertEqual(audit.UNVERIFIED, states["D/leaders-reach-logs"])
+
     # ── A / E: the columns a claim needs ─────────────────────────────────────
     def test_a_missing_stat_column_fails(self):
         """`saves` is declared required for NHL and does not exist here."""
@@ -253,14 +264,21 @@ class AuditTests(unittest.TestCase):
         self.assertEqual(audit.FAIL, by_check["E/qualifier[batting]"])
 
     def test_an_unverifiable_qualifier_is_unverified_not_passing(self):
-        """NHL publishes no minimum this project could confirm.
+        """A qualifier with no published source stays UNVERIFIED.
 
         Convention is not a rule, and a gate must not launder one into the
-        other by going green.
+        other by going green. NHL's rule WAS published though (re-asked
+        2026-08-05): goalie rate stats require 25 games played per
+        Hockey-Reference rate_stat_req.html; skater totals have no floor.
+        The unit column (games) exists, so E passes with the published
+        source named.
         """
         out = audit.audit(self.con, ["nhl"])
         by_check = {check: state for state, _, check, _ in out.rows}
-        self.assertEqual(audit.UNVERIFIED, by_check["E/qualifier[season]"])
+        self.assertEqual(audit.PASS, by_check["E/qualifier[season]"])
+        note = next(note for state, _, check, note in out.rows
+                    if check == "E/qualifier[season]")
+        self.assertIn("rate_stat_req.html", note)
 
     # ── the runner's own contract ────────────────────────────────────────────
     def test_a_league_with_no_manifest_is_reported_not_skipped(self):
@@ -411,6 +429,130 @@ class AuditTests(unittest.TestCase):
 
     def test_a_missing_database_exits_nonzero(self):
         self.assertEqual(1, audit.main(["--db", "/nonexistent/picks.db"]))
+
+    # ── B (rewritten): coverage, not presence ────────────────────────────────
+    def test_30_percent_coverage_fails(self):
+        """The live NHL shape. The old check read PASS at 30% coverage because
+        it only failed a stat that never appeared; a goalie whose log records
+        saves in 150 of 500 games is not being observed goaltending."""
+        self.player(1, "G")
+        for i in range(500):
+            self.log(1, {"goals": 0, "assists": 0, "pim": 0,
+                         "saves": 30 if i < 150 else None})
+        self.con.commit()
+
+        state, note = self.row("nhl", "B/position-content[G]")
+        self.assertEqual(audit.FAIL, state)
+        self.assertIn("30%", note)
+
+    def test_one_row_in_five_hundred_is_not_a_pass(self):
+        """1 of 500 logs carrying the key is a 0.2% observation, not a pass."""
+        self.player(1, "G")
+        for i in range(500):
+            self.log(1, {"goals": 0, "assists": 0,
+                         "saves": 28 if i == 0 else None})
+        self.con.commit()
+
+        self.assertEqual(audit.FAIL, self.row("nhl", "B/position-content[G]")[0])
+
+    def test_legacy_list_form_entries_still_work(self):
+        """A position_content entry in the old list shape defaults to the floor."""
+        spec = {"position_content": {"G": [["saves"], ["shotsAgainst", "shots_against"]]}}
+        self.player(1, "G")
+        for _ in range(5):
+            self.log(1, {"saves": 31, "shotsAgainst": 33})
+        self.con.commit()
+
+        out = audit.Result()
+        audit.check_position_content(self.con, "nhl", spec, out)
+        self.assertEqual(audit.PASS, out.rows[0][0])
+
+    # ── D (rewritten): the join is season-scoped on BOTH sides ───────────────
+    def test_logs_from_a_different_season_do_not_count_as_reachable(self):
+        """The NHL prod shape: 48,017 rows on nhle.com's raw '20252026' key
+        meant a season-scoped join returned 0 while the unscoped check read
+        PASS. A 2025 log is not reachable for a 2026 leaderboard."""
+        for pid in range(1, 11):
+            self.player(pid, "C")
+            self.stat_row(pid)                        # player_stats in 2026
+            self.log(pid, {"goals": 1}, season=2025)  # logs ONLY in 2025
+        self.con.commit()
+
+        states = self.states("nhl", "D/leaders-reach-logs")
+        self.assertEqual(audit.FAIL, states["D/leaders-reach-logs"])
+
+    def test_same_season_logs_still_count(self):
+        for pid in range(1, 11):
+            self.player(pid, "C")
+            self.stat_row(pid)
+            self.log(pid, {"goals": 1})               # season 2026
+        self.con.commit()
+
+        states = self.states("nhl", "D/leaders-reach-logs")
+        self.assertEqual(audit.PASS, states["D/leaders-reach-logs"])
+
+    # ── C (entity-aware): a team defence plays no position ──────────────────
+    def test_fantasy_constructs_are_not_blank_positions(self):
+        """entity_type='team_defense' with position NULL is the honest answer
+        for a D/ST, not a blank to fail. This is what item 5 of P0 produces."""
+        self.con.execute("ALTER TABLE players ADD COLUMN active INTEGER")
+        self.con.execute("ALTER TABLE players ADD COLUMN entity_type TEXT")
+        self.con.execute(
+            "INSERT INTO players(id,name,team,league,position,espn_id,mlbam_id,"
+            "nfl_gsis_id,nhl_id,nba_id,active,entity_type) "
+            "VALUES(1,'Dak Prescott','DAL','nfl','QB','1',NULL,NULL,NULL,NULL,1,'player')")
+        self.con.execute(
+            "INSERT INTO players(id,name,team,league,position,espn_id,mlbam_id,"
+            "nfl_gsis_id,nhl_id,nba_id,active,entity_type) "
+            "VALUES(2,'DAL D/ST','DAL','nfl',NULL,'-16000',NULL,NULL,NULL,NULL,1,'team_defense')")
+        self.con.commit()
+
+        state, note = self.row("nfl", "C/vocabulary[position]")
+        self.assertEqual(state, audit.PASS, note)
+
+    def test_a_null_position_on_a_real_player_still_fails(self):
+        """The entity exclusion must not become a way to pass by relabelling."""
+        self.con.execute("ALTER TABLE players ADD COLUMN active INTEGER")
+        self.con.execute("ALTER TABLE players ADD COLUMN entity_type TEXT")
+        self.con.execute(
+            "INSERT INTO players(id,name,team,league,position,espn_id,mlbam_id,"
+            "nfl_gsis_id,nhl_id,nba_id,active,entity_type) "
+            "VALUES(1,'Some Wideout','DAL','nfl',NULL,'1',NULL,NULL,NULL,NULL,1,'player')")
+        self.con.commit()
+
+        state, note = self.row("nfl", "C/vocabulary[position]")
+        self.assertEqual(audit.FAIL, state)
+
+    # ── H: the pool's injury fields are populated ────────────────────────────
+    def _injury_db(self, with_status=True):
+        self.con.execute("ALTER TABLE players ADD COLUMN injury_status TEXT")
+        self.con.execute("ALTER TABLE players ADD COLUMN last_news_date TEXT")
+        self.con.execute(
+            "CREATE TABLE nfl_adp(player_id INTEGER, season INTEGER, position TEXT)")
+        for pid in range(1, 6):
+            status = ("Probable", "2026-08-01") if with_status else (None, None)
+            self.con.execute(
+                "INSERT INTO players(id,name,team,league,position,injury_status,"
+                "last_news_date) VALUES(?,?,?,'nfl','QB',?,?)",
+                (pid, f"Player {pid}", "DAL", *status))
+            self.con.execute("INSERT INTO nfl_adp VALUES(?,2026,'QB')", (pid,))
+        self.con.commit()
+
+    def test_injury_population_below_floor_fails(self):
+        """The prod shape: a 4,508-player pool with injury_status on 0 of them
+        served for ~18 hours with no error anywhere."""
+        self._injury_db(with_status=False)
+
+        state, note = self.row("nfl", "H/injury-population")
+        self.assertEqual(audit.FAIL, state)
+        self.assertIn("0%", note)
+
+    def test_injury_population_healthy_passes(self):
+        self._injury_db(with_status=True)
+
+        state, note = self.row("nfl", "H/injury-population")
+        self.assertEqual(audit.PASS, state)
+        self.assertIn("100%", note)
 
 
 if __name__ == "__main__":

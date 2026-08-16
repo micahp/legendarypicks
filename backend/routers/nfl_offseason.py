@@ -1203,7 +1203,14 @@ def nfl_draft_board(
         dst_aggregates, dst_team_weeks = _dst_aggregates(connection, season)
         pk_aggregates = _pk_aggregates(connection, season, aggregates)
 
-        position_expr = "UPPER(COALESCE(NULLIF(p.position,''), ''))"
+        # Position comes from nfl_adp (the fantasy table) with players as the
+        # fallback: a team defence plays no position, so `players.position` is
+        # NULL for the 32 D/ST rows, and the fantasy label lives in nfl_adp.
+        position_expr = (
+            "UPPER(COALESCE(NULLIF(COALESCE(na.position, p.position), ''), ''))"
+            if "position" in _table_columns(connection, "nfl_adp")
+            else "UPPER(COALESCE(NULLIF(p.position,''), ''))"
+        )
         where = ["p.league='nfl'", "p.active=1"]
         params: list = []
         if selected_position == "FLEX":

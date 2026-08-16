@@ -115,3 +115,12 @@ Not "sports = aggressive italics and speed lines."
 Avoid the three looks AI design defaults into regardless of brief: cream + high
 contrast serif + terracotta; near-black + one acid accent; broadsheet hairlines
 with zero radius. They are defaults, not choices.
+
+---
+
+## 7. The sibling rule
+
+This skill governs what a surface may *show*. `.claude/skills/fail-loudly/SKILL.md` governs
+what happens upstream when the data is not there — the blank `position` that makes a game
+log render a generic table instead of the sport's is a fail-loudly defect that arrives as
+an honest-data-ui symptom. 6,818 players are in that state today.

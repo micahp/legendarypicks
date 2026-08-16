@@ -25,13 +25,36 @@ os.makedirs(LOG_DIR, exist_ok=True)
 API_BASE = os.environ.get("LP_API_BASE", "http://localhost:8000")
 
 
-def _run(cmd: list, step_name: str, timeout: int = 300) -> bool:
+def _link_leagues() -> list:
+    """The leagues that actually have prop_games, read from the database.
+
+    A literal list here would be the third one in this repo to go stale — MLS
+    props existed for months before anything swept them. Falls back to nothing
+    rather than to a guess: if the database cannot be read there is no work to
+    scope, and inventing a league list would spend budget on leagues that may not
+    have a single row.
+    """
+    import sqlite3
+    db = os.environ.get("LP_DB_PATH") or os.path.join(BACKEND, "data", "picks.db")
+    try:
+        with sqlite3.connect(f"file:{db}?mode=ro", uri=True) as con:
+            return [r[0] for r in con.execute(
+                "SELECT DISTINCT LOWER(league) FROM prop_games "
+                "WHERE date >= DATE('now', '-3 days') AND league IS NOT NULL "
+                "ORDER BY 1")]
+    except sqlite3.Error as e:
+        print(f"    WARN: cannot read prop_games leagues ({e}); linking nothing")
+        return []
+
+
+def _run(cmd: list, step_name: str, timeout: int = 300, env: dict = None) -> bool:
     """Run a command, log output, return success."""
     log_file = os.path.join(LOG_DIR, f"pipeline_{dt.datetime.now().strftime('%Y%m%d_%H%M%S')}_{step_name}.log")
     print(f"  [{step_name}] {cmd[0]}...")
     try:
         result = subprocess.run(
-            cmd, cwd=BACKEND, capture_output=True, text=True, timeout=timeout
+            cmd, cwd=BACKEND, capture_output=True, text=True, timeout=timeout,
+            env=env
         )
         with open(log_file, "w") as f:
             f.write(result.stdout)
@@ -67,14 +90,30 @@ def step_ingest_props(dry_run: bool = False) -> bool:
 
 
 def step_link_games(dry_run: bool = False) -> bool:
-    """Crosswalk prop_games → ESPN event IDs."""
+    """Crosswalk prop_games → ESPN event IDs, one league at a time.
+
+    This called the linker unscoped, which asks it to reconsider every slate ever
+    ingested — 54 of them, 162 requests against a host whose ceiling is ~100. The
+    linker refused, correctly, on every run since the guard landed, and because a
+    refusal used to exit 0 this step printed "link: ✅" on top of it every thirty
+    minutes. Months of unlinked prop_games were then blamed on ESPN being down.
+
+    Scoped per league and windowed to recent slates, each call is a handful of
+    requests. The shared cache directory means the leagues that share a date pay
+    for it once. A league that fails does not stop the rest: they are independent
+    crosswalks and one bad vocabulary should not cost the others their run.
+    """
     if dry_run:
-        print("  [dry-run] Would run link_prop_games.py")
+        print("  [dry-run] Would run link_prop_games.py --league <lg> --days 3")
         return True
-    return _run(
-        [VENV_PY, "link_prop_games.py"],
-        "link_games", timeout=60
-    )
+    env = dict(os.environ)
+    env.setdefault("LP_ESPN_CACHE_DIR", os.path.join(LOG_DIR, "espn-cache"))
+    ok = True
+    for lg in _link_leagues():
+        if not _run([VENV_PY, "link_prop_games.py", "--league", lg, "--days", "3"],
+                    f"link_games_{lg}", timeout=120, env=env):
+            ok = False
+    return ok
 
 
 def step_settle(dry_run: bool = False) -> bool:

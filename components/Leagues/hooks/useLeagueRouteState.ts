@@ -35,12 +35,14 @@ export function useLeagueRouteState() {
   const offerable = isUFC || supportsTeamStats
   const validTabs: HubTab[] = isUFC
     ? ['rankings', 'schedule', 'predict']
-    : isSoccer
+    : isWorldCup
       ? ['standings', 'stats', 'schedule']
       : isNFL
         ? ['camp', 'standings', 'stats', 'schedule']
-        : league === 'ncaaf'
-          ? ['standings', 'schedule']  // Stats tab needs a leaders backend (ncaaf has none yet — honest-data-ui: a 404 surface is worse than an absent one)
+        : league === 'mls' || league === 'ncaaf'
+          // Neither has a leaders backend yet. An empty Stats tab reads as "no
+          // leaders exist" rather than "we have not built it" — so omit the tab.
+          ? ['standings', 'schedule']
           : ['standings', 'stats', 'schedule']
 
   const [activeTab, setActiveTab] = useState<HubTab>('standings')

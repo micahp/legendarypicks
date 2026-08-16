@@ -9,10 +9,9 @@ const LEAGUES = [
   { key: 'mls', name: 'MLS', desc: 'Major League Soccer, standings, schedules, and player game logs', emoji: '⚽' },
   { key: 'ncaaf', name: 'NCAAF', desc: 'College Football, FBS teams, conference standings, player game logs', emoji: '🏈' },
   { key: 'ufc', name: 'UFC', desc: 'Ultimate Fighting Championship, pound-for-pound rankings, division champions', emoji: '🥊' },
+  { key: 'esports', name: 'Esports', desc: 'Esports World Cup, Club Championship, cross-title schedule and results', emoji: '🎮' },
   // World Cup card hidden 2026-08-04 (Micah): it stays on /scores and keeps its API
   // and ingest — it just is not a league hub. See useLeagueRouteState's `offerable`.
-  // Esports card hidden 2026-07-22 (Micah): tab defaulting/content-awareness unresolved,
-  // leagues surface needs organization before esports goes back up here.
 ]
 
 export default function LeaguesPage() {

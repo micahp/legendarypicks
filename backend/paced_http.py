@@ -160,6 +160,49 @@ class Fetcher:
                 raise
         raise RuntimeError(f"{url} failed: retries exhausted")
 
+    def fetch_text(self, url, retry=True):
+        """One request, returning the raw body as text.
+
+        `fetch` json-decodes, which is wrong for RSS and XML. Added 2026-08-10
+        for the Nitter mirror; the RSS collectors were making bare urlopen calls
+        with no pacing, no retry and no cache at all.
+        """
+        for wait in (*(self.retry_waits if retry else ()), None):
+            _charge(url, self.host_budget, self.host_cooldown)
+            self._throttle()
+            try:
+                request = urllib.request.Request(url, headers=self.headers)
+                with urllib.request.urlopen(request, timeout=self.timeout) as r:
+                    return r.read().decode("utf-8", "replace")
+            except urllib.error.HTTPError as exc:
+                if exc.code in RETRYABLE and wait is not None:
+                    time.sleep(wait)
+                    continue
+                raise
+            except OSError:
+                if wait is not None:
+                    time.sleep(wait)
+                    continue
+                raise
+        raise RuntimeError(f"{url} failed: retries exhausted")
+
+    def text(self, url, ttl=None):
+        """Cached text GET. Shares the disk cache, wrapped so it stays JSON."""
+        now = time.time()
+        ttl = self.cache_ttl if ttl is None else float(ttl)
+        key = "text:" + url
+        hit = self._memory.get(key)
+        if hit and hit[0] > now:
+            return hit[1]
+        on_disk = self._read_disk(key)
+        if isinstance(on_disk, dict) and "text" in on_disk:
+            self._memory[key] = (now + ttl, on_disk["text"])
+            return on_disk["text"]
+        body = self.fetch_text(url)
+        self._write_disk(key, {"text": body})
+        self._memory[key] = (now + ttl, body)
+        return body
+
     def json(self, url, ttl=None):
         """Cached GET. `ttl` overrides the in-memory lifetime for this URL."""
         now = time.time()

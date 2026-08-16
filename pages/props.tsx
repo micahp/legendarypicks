@@ -19,7 +19,7 @@ interface PerfRow {
 }
 
 type Tab = 'slate' | 'props' | 'performance' | 'matchups' | 'model'
-type League = 'All' | 'nba' | 'mlb' | 'nfl' | 'nhl' | 'wc' | 'ufc'
+type League = 'All' | 'nba' | 'mlb' | 'mls' | 'nfl' | 'nhl' | 'ufc'
 
 const TABS: { key: Tab; label: string }[] = [
   { key: 'slate', label: 'Slate' },
@@ -28,7 +28,7 @@ const TABS: { key: Tab; label: string }[] = [
   { key: 'matchups', label: 'Matchups' },
   { key: 'model', label: 'Model' },
 ]
-const LEAGUES: League[] = ['All', 'mlb', 'nba', 'nfl', 'nhl', 'wc', 'ufc']
+export const LEAGUES: League[] = ['All', 'ufc', 'mls', 'nba', 'nfl', 'nhl', 'mlb']
 
 function Skeleton({ lines = 4 }: { lines?: number }) {
   return (
@@ -152,29 +152,41 @@ function SlateTab({ league }: { league: League }) {
     return () => controller.abort()
   }, [league])
 
-  // League above date, not repeated inside every card. The league was a third
-  // item on each game's subline (`7:05 PM · MLB · 12 props`), which meant a
-  // twelve-game slate said "MLB" twelve times and still made you read each card
-  // to know what you were looking at. It is a property of the group, so it is
-  // rendered once, as the group's heading.
-  const leagueGroups = new Map<string, Map<string, SlateGame[]>>()
-  for (const game of slate) {
-    const key = String(game.league || '').toLowerCase()
-    const byDate = leagueGroups.get(key) || new Map<string, SlateGame[]>()
-    byDate.set(game.date, [...(byDate.get(game.date) || []), game])
-    leagueGroups.set(key, byDate)
+  // Group by the same browser-local day shown next to each game time. The API's
+  // `date` is a UTC calendar date, so it would put an evening local game under
+  // the following day.
+  const groupDateForGame = (game: SlateGame) => {
+    if (!game.start_time) return game.date
+    const startTime = new Date(game.start_time)
+    if (Number.isNaN(startTime.getTime())) return game.date
+    const parts = new Intl.DateTimeFormat('en-CA', {
+      year: 'numeric', month: '2-digit', day: '2-digit',
+    }).formatToParts(startTime)
+    const year = parts.find(part => part.type === 'year')?.value
+    const month = parts.find(part => part.type === 'month')?.value
+    const day = parts.find(part => part.type === 'day')?.value
+    return year && month && day ? `${year}-${month}-${day}` : game.date
   }
-  const groups = Array.from(leagueGroups, ([leagueKey, byDate]) => ({
-    leagueKey,
-    dateGroups: Array.from(byDate, ([gameDate, games]) => ({ gameDate, games }))
-      .sort((a, b) => a.gameDate.localeCompare(b.gameDate)),
-  })).sort((a, b) => {
-    // Soonest first, so the league with a game tonight leads. Ties break on the
-    // league name rather than on Map insertion order, which is fetch order and
-    // therefore not stable between loads.
-    const first = (g: typeof a) => g.dateGroups[0]?.gameDate ?? '9999-99-99'
-    return first(a).localeCompare(first(b)) || a.leagueKey.localeCompare(b.leagueKey)
-  })
+
+  // Day above league, with each label rendered once rather than repeated on
+  // every game card.
+  const leagueRank = (leagueKey: string) => {
+    const rank = LEAGUES.indexOf(leagueKey as League)
+    return rank === -1 ? LEAGUES.length : rank
+  }
+  const dateGroups = new Map<string, Map<string, SlateGame[]>>()
+  for (const game of slate) {
+    const gameDate = groupDateForGame(game)
+    const leagueKey = String(game.league || '').toLowerCase()
+    const byLeague = dateGroups.get(gameDate) || new Map<string, SlateGame[]>()
+    byLeague.set(leagueKey, [...(byLeague.get(leagueKey) || []), game])
+    dateGroups.set(gameDate, byLeague)
+  }
+  const groups = Array.from(dateGroups, ([gameDate, byLeague]) => ({
+    gameDate,
+    leagueGroups: Array.from(byLeague, ([leagueKey, games]) => ({ leagueKey, games }))
+      .sort((a, b) => leagueRank(a.leagueKey) - leagueRank(b.leagueKey) || a.leagueKey.localeCompare(b.leagueKey)),
+  })).sort((a, b) => a.gameDate.localeCompare(b.gameDate))
 
   const formatDate = (gameDate: string) =>
     new Date(gameDate + 'T12:00:00').toLocaleDateString(undefined, {
@@ -193,89 +205,90 @@ function SlateTab({ league }: { league: League }) {
           No upcoming games with props. Check back closer to game time.
         </div>
       ) : (
-        groups.map(({ leagueKey, dateGroups }) => (
-        <section key={leagueKey} data-slate-league={leagueKey} className="space-y-4">
-          <h2 className="text-base font-extrabold uppercase tracking-wide text-zinc-100">
-            {leagueKey.toUpperCase()}
-          </h2>
-          {dateGroups.map(({ gameDate, games }) => {
-          const propCount = games.reduce((total, game) => total + game.prop_count, 0)
-          return (
-            <section key={gameDate} data-slate-date={gameDate} className="space-y-3">
-              <div className="flex min-w-0 items-center gap-2">
-                <h3 className="shrink-0 text-sm font-bold uppercase tracking-wide text-zinc-300">
-                  {formatDate(gameDate)}
-                </h3>
-                <span className="truncate text-xs tabular-nums text-zinc-600">
-                  {games.length} game{games.length === 1 ? '' : 's'} · {propCount} props
-                </span>
-                <div className="h-px min-w-4 flex-1 bg-gradient-to-r from-zinc-800 to-transparent" />
-              </div>
+        groups.map(({ gameDate, leagueGroups }) => (
+          <section key={gameDate} data-slate-date={gameDate} className="space-y-3">
+            <div className="flex min-w-0 items-center gap-2">
+              <h2 className="shrink-0 text-sm font-bold uppercase tracking-wide text-zinc-300">
+                {formatDate(gameDate)}
+              </h2>
+            </div>
 
-              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                {games.map(game => {
-                  const expanded = expandedGame === game.game_id
-                  return (
-                    <article key={game.game_id} data-slate-game className="min-w-0 overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900">
-                      <button
-                        type="button"
-                        onClick={() => openGame(game.game_id)}
-                        aria-expanded={expanded}
-                        className="flex w-full min-w-0 items-center justify-between gap-3 px-4 py-3 text-left transition-colors hover:bg-zinc-800/50"
-                      >
-                        <span className="min-w-0">
-                          <span className="block break-words text-sm font-semibold">{game.away} @ {game.home}</span>
-                          <span className="mt-0.5 block text-xs tabular-nums text-zinc-500">
-                            {game.start_time
-                              ? `${new Date(game.start_time).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })} · `
-                              : ''}
-                            {game.prop_count} props
-                          </span>
-                        </span>
-                        <span aria-hidden="true" className="shrink-0 text-lg text-zinc-500">{expanded ? '▾' : '▸'}</span>
-                      </button>
+            {leagueGroups.map(({ leagueKey, games }) => {
+              const propCount = games.reduce((total, game) => total + game.prop_count, 0)
+              return (
+                <section key={leagueKey} data-slate-league={leagueKey} className="space-y-4">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <h3 className="text-base font-extrabold uppercase tracking-wide text-zinc-100">
+                      {leagueKey.toUpperCase()}
+                    </h3>
+                    <span className="truncate text-xs tabular-nums text-zinc-600">
+                      {games.length} game{games.length === 1 ? '' : 's'} · {propCount} props
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                    {games.map(game => {
+                      const expanded = expandedGame === game.game_id
+                      return (
+                        <article key={game.game_id} data-slate-game className="min-w-0 overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900">
+                          <button
+                            type="button"
+                            onClick={() => openGame(game.game_id)}
+                            aria-expanded={expanded}
+                            className="flex w-full min-w-0 items-center justify-between gap-3 px-4 py-3 text-left transition-colors hover:bg-zinc-800/50"
+                          >
+                            <span className="min-w-0">
+                              <span className="block break-words text-sm font-semibold">{game.away} @ {game.home}</span>
+                              <span className="mt-0.5 block text-xs tabular-nums text-zinc-500">
+                                {game.start_time
+                                  ? `${new Date(game.start_time).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })} · `
+                                  : ''}
+                                {game.prop_count} props
+                              </span>
+                            </span>
+                            <span aria-hidden="true" className="shrink-0 text-lg text-zinc-500">{expanded ? '▾' : '▸'}</span>
+                          </button>
 
-                      {expanded && (() => {
-                        const gp = gameProps[game.game_id]
-                        if (!gp || gp.loading) {
-                          return <div data-slate-props className="border-t border-zinc-800 px-4 py-3"><Skeleton lines={3} /></div>
-                        }
-                        if (!gp.players.length) {
-                          return <div data-slate-props className="border-t border-zinc-800 px-4 py-3 text-xs text-zinc-500">No props for this game yet.</div>
-                        }
-                        return (
-                          <div data-slate-props className="max-h-96 space-y-4 overflow-y-auto border-t border-zinc-800 px-4 py-3">
-                            {gp.players.map(player => (
-                              <div key={`${player.team}-${player.name}`}>
-                                <div className="mb-1.5 flex flex-wrap items-baseline gap-x-1.5 text-xs">
-                                  <span className="font-bold text-zinc-300">{player.name}</span>
-                                  <span className="text-zinc-600">{player.team}</span>
-                                </div>
-                                <div className="flex flex-wrap gap-1.5">
-                                  {Array.from(new Map(player.props.map(prop => [
-                                    `${prop.market}-${prop.side}-${prop.line}-${prop.source}`, prop,
-                                  ] as const)).values()).map((prop, index) => (
-                                    <span
-                                      key={`${prop.market}-${prop.side}-${prop.line}-${index}`}
-                                      className={`inline-flex max-w-full items-center gap-1 break-all rounded px-2 py-1 text-[11px] font-mono tabular-nums ${prop.side === 'over' || prop.side === 'yes' ? 'bg-emerald-900/30 text-emerald-300' : 'bg-red-900/30 text-red-300'}`}
-                                    >
-                                      {prop.market.replace(/_/g, ' ')} {prop.line} {prop.side.toUpperCase()}
-                                    </span>
-                                  ))}
-                                </div>
+                          {expanded && (() => {
+                            const gp = gameProps[game.game_id]
+                            if (!gp || gp.loading) {
+                              return <div data-slate-props className="border-t border-zinc-800 px-4 py-3"><Skeleton lines={3} /></div>
+                            }
+                            if (!gp.players.length) {
+                              return <div data-slate-props className="border-t border-zinc-800 px-4 py-3 text-xs text-zinc-500">No props for this game yet.</div>
+                            }
+                            return (
+                              <div data-slate-props className="max-h-96 space-y-4 overflow-y-auto border-t border-zinc-800 px-4 py-3">
+                                {gp.players.map(player => (
+                                  <div key={`${player.team}-${player.name}`}>
+                                    <div className="mb-1.5 flex flex-wrap items-baseline gap-x-1.5 text-xs">
+                                      <span className="font-bold text-zinc-300">{player.name}</span>
+                                      <span className="text-zinc-600">{player.team}</span>
+                                    </div>
+                                    <div className="flex flex-wrap gap-1.5">
+                                      {Array.from(new Map(player.props.map(prop => [
+                                        `${prop.market}-${prop.side}-${prop.line}-${prop.source}`, prop,
+                                      ] as const)).values()).map((prop, index) => (
+                                        <span
+                                          key={`${prop.market}-${prop.side}-${prop.line}-${index}`}
+                                          className={`inline-flex max-w-full items-center gap-1 break-all rounded px-2 py-1 text-[11px] font-mono tabular-nums ${prop.side === 'over' || prop.side === 'yes' ? 'bg-emerald-900/30 text-emerald-300' : 'bg-red-900/30 text-red-300'}`}
+                                        >
+                                          {prop.market.replace(/_/g, ' ')} {prop.line} {prop.side.toUpperCase()}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  </div>
+                                ))}
                               </div>
-                            ))}
-                          </div>
-                        )
-                      })()}
-                    </article>
-                  )
-                })}
-              </div>
-            </section>
-          )
-          })}
-        </section>
+                            )
+                          })()}
+                        </article>
+                      )
+                    })}
+                  </div>
+                </section>
+              )
+            })}
+          </section>
         ))
       )}
     </div>

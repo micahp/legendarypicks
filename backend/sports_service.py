@@ -22,7 +22,8 @@ import os
 # presence loudly so a degraded launch is never silent again. Must run before `from routers ...`
 # because routers/esports/grid.py reads GRID_API_KEY at IMPORT time.
 def _hydrate_esports_keys():
-    keys = ("PANDASCORE_API_KEY", "GRID_API_KEY", "YOUTUBE_API_KEY", "DEEPSEEK_API_KEY")
+    keys = ("PANDASCORE_API_KEY", "GRID_API_KEY", "YOUTUBE_API_KEY", "DEEPSEEK_API_KEY",
+            "KICK_CLIENT_ID", "KICK_CLIENT_SECRET")
     envfile = "/root/.hermes/.env"
     if any(not os.environ.get(k) for k in keys) and os.path.exists(envfile):
         try:
@@ -58,6 +59,7 @@ from routers import (  # noqa: E402
     esports,
     live_discounts,
     momentum,
+    news,
     plays,
     ufc_picks,
     nfl_offseason,
@@ -80,6 +82,7 @@ app.include_router(game_extras.router)
 app.include_router(esports.router)
 app.include_router(live_discounts.router)
 app.include_router(momentum.router)
+app.include_router(news.router)
 app.include_router(plays.router)
 app.include_router(ufc_picks.router)
 app.include_router(nfl_offseason.router)
@@ -87,6 +90,29 @@ app.include_router(nfl_usage.router)
 app.include_router(nfl_draft_notes.router)
 app.include_router(nfl_mock_draft.router)
 app.include_router(nfl_schedule_api.router)
+# League news engine router registered above (news) — see routers/news.py.
+
+
+@app.on_event("startup")
+def _refuse_unmigrated_database():
+    """Refuse to serve a database this build was not migrated for.
+
+    The 2026-08-05 defects each shipped because the database lagged the code:
+    ``no such column: pa`` and its siblings are only reachable when the app
+    serves a schema it was not built against. Fail loudly at boot instead.
+    Migrations are applied as a separate, observable step
+    (``backend/migrate_all.py --apply`` targets prod and dev together), never
+    implicitly here.
+
+    Tests point LP_DB_PATH at throwaway files and construct routers directly;
+    they opt out with LP_SKIP_MIGRATION_CHECK=1 (set in backend/conftest.py).
+    """
+    if os.environ.get("LP_SKIP_MIGRATION_CHECK") == "1":
+        return
+    import migrate_all
+    from _core import DB as _app_db
+
+    migrate_all.refuse_unmigrated(_app_db)
 
 
 @app.on_event("startup")

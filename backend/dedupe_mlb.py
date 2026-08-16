@@ -158,6 +158,29 @@ def main(apply: bool):
           f"(canonical kept {collisions_canonical_kept}, duplicate kept {collisions_duplicate_kept})")
     print(f"  rows merged/deleted: {deleted}")
     print(f"  references repointed: {repointed}")
+    if apply:
+        # A consolidation without a log line is a defect.
+        import name_aliases
+        from datetime import datetime, timezone
+        name_aliases.record_consolidation({
+            "ts": datetime.now(timezone.utc).isoformat(),
+            "script": "dedupe_mlb.py",
+            "db": os.path.basename(DB),
+            "direction": "dup->canonical",
+            "groups": [
+                {
+                    "mlbam": str(mlbam),
+                    "keep": {"id": pick_canonical(rows)["id"],
+                             "name": pick_canonical(rows)["name"]},
+                    "merged": [{"id": r["id"], "name": r["name"]}
+                               for r in rows if r["id"] != pick_canonical(rows)["id"]],
+                }
+                for mlbam, rows in dup_groups.items()
+            ],
+            "deleted": deleted,
+            "repointed": repointed,
+            "note": f"{len(dup_groups)} mlbam_ids with duplicate rows -> 0",
+        })
     con.close()
 
 
