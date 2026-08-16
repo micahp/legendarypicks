@@ -1,7 +1,45 @@
-import { LEAGUES } from './props'
+import React from 'react'
+import { render, waitFor } from '@testing-library/react'
+import PropsPage, { LEAGUES } from './props'
 
 describe('Props league selector', () => {
   it('offers MLS as a first-class filter', () => {
     expect(LEAGUES).toContain('mls')
+  })
+})
+
+describe('Props slate grouping', () => {
+  const slate = [
+    { game_id: 1, home: 'DAL', away: 'PHI', date: '2026-08-17', league: 'nfl', prop_count: 12, players: [] },
+    { game_id: 2, home: 'NYY', away: 'BOS', date: '2026-08-16', league: 'mlb', prop_count: 8, players: [] },
+    { game_id: 3, home: 'GB', away: 'CHI', date: '2026-08-17', league: 'nfl', prop_count: 10, players: [] },
+    { game_id: 4, home: 'LAL', away: 'BOS', date: '2026-08-16', league: 'nba', prop_count: 6, players: [] },
+  ]
+  const originalFetch = global.fetch
+
+  beforeEach(() => {
+    global.fetch = jest.fn(() => Promise.resolve({
+      ok: true,
+      json: () => Promise.resolve(slate),
+    })) as any
+  })
+
+  afterEach(() => {
+    global.fetch = originalFetch
+  })
+
+  it('renders each day before its league sections', async () => {
+    render(React.createElement(PropsPage))
+
+    await waitFor(() => {
+      expect(document.querySelectorAll('[data-slate-game]')).toHaveLength(slate.length)
+    })
+
+    const dates = Array.from(document.querySelectorAll<HTMLElement>('[data-slate-date]'))
+    expect(dates.map(section => section.dataset.slateDate)).toEqual(['2026-08-16', '2026-08-17'])
+    expect(Array.from(dates[0].querySelectorAll(':scope > [data-slate-league]'))
+      .map(section => (section as HTMLElement).dataset.slateLeague)).toEqual(['mlb', 'nba'])
+    expect(Array.from(dates[1].querySelectorAll(':scope > [data-slate-league]'))
+      .map(section => (section as HTMLElement).dataset.slateLeague)).toEqual(['nfl'])
   })
 })
