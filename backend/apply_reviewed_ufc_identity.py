@@ -6,9 +6,10 @@ matcher. ESPN's published UFC 330 event 600059185 (2026-08-15) names the
 fighter ``Kauê Fernandes``. The existing Bovada-created canonical row says
 ``Kaua Fernandes``; Underdog's native player key publishes ``Kaue Fernandes``.
 
-The command corrects the canonical display name, preserves the Bovada spelling
-as an alias, and binds only the reviewed Underdog native id. It refuses to
-choose if the database contains multiple candidates or a conflicting source id.
+The command corrects the canonical display name and its existing fight labels,
+preserves the Bovada spelling as an alias, and binds only the reviewed Underdog
+native id. It refuses to choose if the database contains multiple candidates or
+a conflicting source id.
 """
 import os
 import sqlite3
@@ -76,6 +77,19 @@ def apply_review(con):
         con.execute(
             "UPDATE players SET name=? WHERE id=?",
             (REVIEW["canonical_name"], player["id"]),
+        )
+    game_ids = [
+        row["game_id"]
+        for row in con.execute("SELECT DISTINCT game_id FROM props WHERE player_id=?", (player["id"],))
+    ]
+    for game_id in game_ids:
+        con.execute(
+            "UPDATE prop_games SET home=? WHERE id=? AND home=?",
+            (REVIEW["canonical_name"], game_id, REVIEW["existing_name"]),
+        )
+        con.execute(
+            "UPDATE prop_games SET away=? WHERE id=? AND away=?",
+            (REVIEW["canonical_name"], game_id, REVIEW["existing_name"]),
         )
     _insert_alias(con, player["id"], normalize_name(REVIEW["existing_name"]))
     _insert_alias(con, player["id"], normalize_name(REVIEW["source_name"]))

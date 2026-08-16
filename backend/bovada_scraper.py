@@ -684,6 +684,21 @@ def _resolve_ufc_player_for_bovada(con, player_name: str) -> int:
     ).lastrowid
 
 
+def _find_existing_ufc_game_for_players(con, game_date: str, player_ids: set):
+    """Find one canonical fight by its resolved fighters when display names changed."""
+    if len(player_ids) != 2:
+        return None
+    candidates = con.execute(
+        "SELECT pg.id,pg.start_time FROM prop_games pg JOIN props pr ON pr.game_id=pg.id "
+        "WHERE pg.league='ufc' AND pg.date=? AND pr.player_id IN (?,?) "
+        "GROUP BY pg.id HAVING COUNT(DISTINCT pr.player_id)=2",
+        (game_date, *sorted(player_ids)),
+    ).fetchall()
+    if len(candidates) > 1:
+        raise RuntimeError("ambiguous UFC canonical game for Bovada fighter ids")
+    return candidates[0] if candidates else None
+
+
 def _ufc_direct_ingest(all_props: list, today: str) -> int:
     """Direct DB insert for UFC method-of-victory props — fighters are created as players (league
     'ufc') as needed, like WC. Game home/away = the two fighters; start_time stored. No ESPN linking."""
@@ -705,9 +720,17 @@ def _ufc_direct_ingest(all_props: list, today: str) -> int:
 
         for batch in by_game.values():
             game_start = _event_start_iso(batch["props"][0]) if batch["props"] else None
+            resolved_props = [
+                (p, _resolve_ufc_player_for_bovada(con, p["player_name"]))
+                for p in batch["props"]
+            ]
             row = con.execute(
                 "SELECT id,start_time FROM prop_games WHERE league=? AND date=? AND home=? AND away=?",
                 ("ufc", batch["date"], batch["home"], batch["away"])).fetchone()
+            if not row:
+                row = _find_existing_ufc_game_for_players(
+                    con, batch["date"], {player_id for _, player_id in resolved_props}
+                )
             if row:
                 game_id = row["id"]
                 if game_start and not row["start_time"]:
@@ -717,8 +740,7 @@ def _ufc_direct_ingest(all_props: list, today: str) -> int:
                     "INSERT INTO prop_games(league,date,home,away,espn_event_id,start_time) VALUES(?,?,?,?,?,?)",
                     ("ufc", batch["date"], batch["home"], batch["away"], "", game_start)).lastrowid
             print(f"  {batch['away']} vs {batch['home']}: {len(batch['props'])} props")
-            for p in batch["props"]:
-                player_id = _resolve_ufc_player_for_bovada(con, p["player_name"])
+            for p, player_id in resolved_props:
                 line_val = p.get("line") or 0
                 side = p.get("side", "over")
                 market = p.get("market", "")
