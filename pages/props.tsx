@@ -152,14 +152,31 @@ function SlateTab({ league }: { league: League }) {
     return () => controller.abort()
   }, [league])
 
+  // Group by the same browser-local day shown next to each game time. The API's
+  // `date` is a UTC calendar date, so it would put an evening local game under
+  // the following day.
+  const groupDateForGame = (game: SlateGame) => {
+    if (!game.start_time) return game.date
+    const startTime = new Date(game.start_time)
+    if (Number.isNaN(startTime.getTime())) return game.date
+    const parts = new Intl.DateTimeFormat('en-CA', {
+      year: 'numeric', month: '2-digit', day: '2-digit',
+    }).formatToParts(startTime)
+    const year = parts.find(part => part.type === 'year')?.value
+    const month = parts.find(part => part.type === 'month')?.value
+    const day = parts.find(part => part.type === 'day')?.value
+    return year && month && day ? `${year}-${month}-${day}` : game.date
+  }
+
   // Day above league, with each label rendered once rather than repeated on
   // every game card.
   const dateGroups = new Map<string, Map<string, SlateGame[]>>()
   for (const game of slate) {
+    const gameDate = groupDateForGame(game)
     const leagueKey = String(game.league || '').toLowerCase()
-    const byLeague = dateGroups.get(game.date) || new Map<string, SlateGame[]>()
+    const byLeague = dateGroups.get(gameDate) || new Map<string, SlateGame[]>()
     byLeague.set(leagueKey, [...(byLeague.get(leagueKey) || []), game])
-    dateGroups.set(game.date, byLeague)
+    dateGroups.set(gameDate, byLeague)
   }
   const groups = Array.from(dateGroups, ([gameDate, byLeague]) => ({
     gameDate,
@@ -184,26 +201,28 @@ function SlateTab({ league }: { league: League }) {
           No upcoming games with props. Check back closer to game time.
         </div>
       ) : (
-        groups.map(({ gameDate, leagueGroups }) => {
-          const games = leagueGroups.flatMap(group => group.games)
-          const propCount = games.reduce((total, game) => total + game.prop_count, 0)
-          return (
-            <section key={gameDate} data-slate-date={gameDate} className="space-y-3">
-              <div className="flex min-w-0 items-center gap-2">
-                <h2 className="shrink-0 text-sm font-bold uppercase tracking-wide text-zinc-300">
-                  {formatDate(gameDate)}
-                </h2>
-                <span className="truncate text-xs tabular-nums text-zinc-600">
-                  {games.length} game{games.length === 1 ? '' : 's'} · {propCount} props
-                </span>
-                <div className="h-px min-w-4 flex-1 bg-gradient-to-r from-zinc-800 to-transparent" />
-              </div>
+        groups.map(({ gameDate, leagueGroups }) => (
+          <section key={gameDate} data-slate-date={gameDate} className="space-y-3">
+            <div className="flex min-w-0 items-center gap-2">
+              <h2 className="shrink-0 text-sm font-bold uppercase tracking-wide text-zinc-300">
+                {formatDate(gameDate)}
+              </h2>
+              <div className="h-px min-w-4 flex-1 bg-gradient-to-r from-zinc-800 to-transparent" />
+            </div>
 
-              {leagueGroups.map(({ leagueKey, games }) => (
+            {leagueGroups.map(({ leagueKey, games }) => {
+              const propCount = games.reduce((total, game) => total + game.prop_count, 0)
+              return (
                 <section key={leagueKey} data-slate-league={leagueKey} className="space-y-4">
-                  <h3 className="text-base font-extrabold uppercase tracking-wide text-zinc-100">
-                    {leagueKey.toUpperCase()}
-                  </h3>
+                  <div className="flex min-w-0 items-center gap-2">
+                    <h3 className="text-base font-extrabold uppercase tracking-wide text-zinc-100">
+                      {leagueKey.toUpperCase()}
+                    </h3>
+                    <span className="truncate text-xs tabular-nums text-zinc-600">
+                      {games.length} game{games.length === 1 ? '' : 's'} · {propCount} props
+                    </span>
+                    <div className="h-px min-w-4 flex-1 bg-gradient-to-r from-zinc-800 to-transparent" />
+                  </div>
                   <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                     {games.map(game => {
                       const expanded = expandedGame === game.game_id
@@ -265,10 +284,10 @@ function SlateTab({ league }: { league: League }) {
                     })}
                   </div>
                 </section>
-              ))}
-            </section>
-          )
-        })
+              )
+            })}
+          </section>
+        ))
       )}
     </div>
   )

@@ -10,10 +10,10 @@ describe('Props league selector', () => {
 
 describe('Props slate grouping', () => {
   const slate = [
-    { game_id: 1, home: 'DAL', away: 'PHI', date: '2026-08-17', league: 'nfl', prop_count: 12, players: [] },
-    { game_id: 2, home: 'NYY', away: 'BOS', date: '2026-08-16', league: 'mlb', prop_count: 8, players: [] },
-    { game_id: 3, home: 'GB', away: 'CHI', date: '2026-08-17', league: 'nfl', prop_count: 10, players: [] },
-    { game_id: 4, home: 'LAL', away: 'BOS', date: '2026-08-16', league: 'nba', prop_count: 6, players: [] },
+    { game_id: 1, home: 'DAL', away: 'PHI', date: '2026-08-17', start_time: '2026-08-17T00:30:00+00:00', league: 'nfl', prop_count: 12, players: [] },
+    { game_id: 2, home: 'NYY', away: 'BOS', date: '2026-08-16', start_time: '2026-08-16T00:30:00+00:00', league: 'mlb', prop_count: 8, players: [] },
+    { game_id: 3, home: 'GB', away: 'CHI', date: '2026-08-17', start_time: '2026-08-17T02:30:00+00:00', league: 'nfl', prop_count: 10, players: [] },
+    { game_id: 4, home: 'LAL', away: 'BOS', date: '2026-08-16', start_time: '2026-08-16T22:00:00+00:00', league: 'nba', prop_count: 6, players: [] },
   ]
   const originalFetch = global.fetch
 
@@ -28,7 +28,7 @@ describe('Props slate grouping', () => {
     global.fetch = originalFetch
   })
 
-  it('renders each day before its league sections', async () => {
+  it('uses each game’s local start date and keeps totals per league', async () => {
     render(React.createElement(PropsPage))
 
     await waitFor(() => {
@@ -36,10 +36,13 @@ describe('Props slate grouping', () => {
     })
 
     const dates = Array.from(document.querySelectorAll<HTMLElement>('[data-slate-date]'))
-    expect(dates.map(section => section.dataset.slateDate)).toEqual(['2026-08-16', '2026-08-17'])
+    expect(dates.map(section => section.dataset.slateDate)).toEqual(['2026-08-15', '2026-08-16'])
     expect(Array.from(dates[0].querySelectorAll(':scope > [data-slate-league]'))
-      .map(section => (section as HTMLElement).dataset.slateLeague)).toEqual(['mlb', 'nba'])
+      .map(section => (section as HTMLElement).dataset.slateLeague)).toEqual(['mlb'])
     expect(Array.from(dates[1].querySelectorAll(':scope > [data-slate-league]'))
-      .map(section => (section as HTMLElement).dataset.slateLeague)).toEqual(['nfl'])
+      .map(section => (section as HTMLElement).dataset.slateLeague)).toEqual(['nba', 'nfl'])
+    expect(dates[0].textContent).toContain('MLB1 game · 8 props')
+    expect(dates[1].textContent).toContain('NBA1 game · 6 props')
+    expect(dates[1].textContent).toContain('NFL2 games · 22 props')
   })
 })
