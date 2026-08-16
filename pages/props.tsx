@@ -170,6 +170,10 @@ function SlateTab({ league }: { league: League }) {
 
   // Day above league, with each label rendered once rather than repeated on
   // every game card.
+  const leagueRank = (leagueKey: string) => {
+    const rank = LEAGUES.indexOf(leagueKey as League)
+    return rank === -1 ? LEAGUES.length : rank
+  }
   const dateGroups = new Map<string, Map<string, SlateGame[]>>()
   for (const game of slate) {
     const gameDate = groupDateForGame(game)
@@ -181,7 +185,7 @@ function SlateTab({ league }: { league: League }) {
   const groups = Array.from(dateGroups, ([gameDate, byLeague]) => ({
     gameDate,
     leagueGroups: Array.from(byLeague, ([leagueKey, games]) => ({ leagueKey, games }))
-      .sort((a, b) => a.leagueKey.localeCompare(b.leagueKey)),
+      .sort((a, b) => leagueRank(a.leagueKey) - leagueRank(b.leagueKey) || a.leagueKey.localeCompare(b.leagueKey)),
   })).sort((a, b) => a.gameDate.localeCompare(b.gameDate))
 
   const formatDate = (gameDate: string) =>

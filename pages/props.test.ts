@@ -14,6 +14,8 @@ describe('Props slate grouping', () => {
     { game_id: 2, home: 'NYY', away: 'BOS', date: '2026-08-16', start_time: '2026-08-16T00:30:00+00:00', league: 'mlb', prop_count: 8, players: [] },
     { game_id: 3, home: 'GB', away: 'CHI', date: '2026-08-17', start_time: '2026-08-17T02:30:00+00:00', league: 'nfl', prop_count: 10, players: [] },
     { game_id: 4, home: 'LAL', away: 'BOS', date: '2026-08-16', start_time: '2026-08-16T22:00:00+00:00', league: 'nba', prop_count: 6, players: [] },
+    { game_id: 5, home: 'A', away: 'B', date: '2026-08-16', start_time: '2026-08-16T01:30:00+00:00', league: 'ufc', prop_count: 2, players: [] },
+    { game_id: 6, home: 'C', away: 'D', date: '2026-08-16', start_time: '2026-08-16T02:30:00+00:00', league: 'nhl', prop_count: 4, players: [] },
   ]
   const originalFetch = global.fetch
 
@@ -38,10 +40,12 @@ describe('Props slate grouping', () => {
     const dates = Array.from(document.querySelectorAll<HTMLElement>('[data-slate-date]'))
     expect(dates.map(section => section.dataset.slateDate)).toEqual(['2026-08-15', '2026-08-16'])
     expect(Array.from(dates[0].querySelectorAll(':scope > [data-slate-league]'))
-      .map(section => (section as HTMLElement).dataset.slateLeague)).toEqual(['mlb'])
+      .map(section => (section as HTMLElement).dataset.slateLeague)).toEqual(['ufc', 'nhl', 'mlb'])
     expect(Array.from(dates[1].querySelectorAll(':scope > [data-slate-league]'))
       .map(section => (section as HTMLElement).dataset.slateLeague)).toEqual(['nba', 'nfl'])
     expect(dates[0].textContent).toContain('MLB1 game · 8 props')
+    expect(dates[0].textContent).toContain('UFC1 game · 2 props')
+    expect(dates[0].textContent).toContain('NHL1 game · 4 props')
     expect(dates[1].textContent).toContain('NBA1 game · 6 props')
     expect(dates[1].textContent).toContain('NFL2 games · 22 props')
   })
