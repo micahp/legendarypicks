@@ -1,77 +1,76 @@
-This is a scaffold for an FCL NextJS Dapp on the Flow Blockchain.
+# Legendary Picks
 
-## Features Provided
+Legendary Picks is a sports data and prediction product for following live games, player performance, props, league standings, and esports.
 
-- FCL setup and configuration
-- "flow dev" integration for automatic local account creation and contract deployment
-- Wallet Discovery (including Dev Wallet on Emulator)
-- CLI private key separation for security
-- Flow.json loading for contract placeholders
-- Authentication
-- CDC file loader
-- Custom hooks
-- Deployment 
+This repository began as an FCL / NBA Top Shot experiment. NBA Top Shot moved into the core product space, so Legendary Picks pivoted away from that dependency and became an independent, data-first sports product. The old Flow setup is historical scaffolding, not the product architecture or a supported development path.
 
-## Featues TODO
+## Architecture
 
-- Mainnet deployment
-- JS Testing
-
-## Running the App
-
-First run:
-
-```
-npm install
+```text
+Publishers and data releases
+        |
+        v
+Ingest scripts (the only data writers)
+        |
+        v
+SQLite canonical data store
+        |
+        v
+FastAPI /api/*
+        |
+        v
+Next.js application
 ```
 
-### Local with Flow Dev, the Emulator, and Dev Wallet
+The browser request path is database-backed. It must not scrape ESPN, load large data libraries, or construct replacement data on demand. Source collection belongs in explicit ingest jobs; the UI and API serve published or last-known-good data honestly.
 
-Run the following to run Flow Dev, the Emulator, and Dev Wallet:
+## Repository map
+
+| Location | Responsibility |
+| --- | --- |
+| `pages/` | Next.js routes: scores, game detail, leagues, players, props, esports, and NFL tools. |
+| `components/` | Reusable UI, including score cards, game-detail tabs, league desks, props, and mock draft. |
+| `services/sports.ts` | Frontend client for the FastAPI contract. |
+| `backend/sports_service.py` | FastAPI application shell; mounts the focused API routers. |
+| `backend/routers/` | API endpoints for games, players, props, analytics, news, esports, and league-specific features. |
+| `backend/_core.py` | Shared DB access, models, helpers, and API contracts. |
+| `backend/ingest_*.py` | Explicit source-to-database ingestion jobs. |
+| `backend/data/` | SQLite databases and checked data artifacts. Databases are never baked into an image. |
+| `docs/` | Product specifications, runbooks, data contracts, migration plans, and handoffs. |
+
+## Development
+
+The normal development stack is Next.js plus FastAPI:
 
 ```bash
-npm run dev:local
+# Terminal 1 — from the repository root
+npm run dev
+
+# Terminal 2 — backend dependencies live in the project virtualenv
+cd backend
+venv/bin/python -m uvicorn sports_service:app --reload
 ```
 
-### Sports Data Backend
+The frontend proxies `/api/*` through `API_PROXY_TARGET`; use the environment configuration for the active stack rather than hardcoding a backend host in browser code.
 
-A FastAPI service provides multi-league game and player data. It attempts to pull real stats using the `sportsipy` library and falls back to bundled sample data if live stats aren't available. It also handles basic prediction tracking. Start it with:
+For managed development, the shared `dev` worktree normally serves the frontend on `:3096` and backend on `:8096`. Production is a separate Docker Compose stack, normally `:3100` and `:8100`. Do not restart, deploy, or migrate either environment as part of ordinary feature work.
 
-```
-npm run dev:sports-backend
-```
+## Data and release rules
 
-Note: Flow Dev will will automatically create new accounts and deploy for you while developing. Your flow.json will be updated automatically. Committing these changes for local development is unncessary.
+- Ingest scripts are the only database writers. API handlers and pages are read-only consumers.
+- Resolve people, teams, and games using stable source IDs—not display names. Unresolved records go to review; they are not silently duplicated or discarded.
+- Code and data promotion are separate steps. A successful build or HTTP 200 does not prove a page has real data.
+- Verify a change in the rendered route and against an independent source where correctness matters.
+- Keep feature work in an isolated `/root/lp-*` worktree. Preserve concurrent WIP and stage only the intended paths.
 
-### Testnet
+## Key documents
 
-If you haven't yet created a testnet account, in the CLI run:
+- [`ORIENTATION.md`](ORIENTATION.md) — current architecture and safe onboarding path.
+- [`AGENTS.md`](AGENTS.md) — mandatory engineering, UI, data, and operations rules.
+- [`docs/RUNBOOK-prod-promotion.md`](docs/RUNBOOK-prod-promotion.md) — required procedure before a production promotion.
+- [`docs/IDENTITY-SPINE-STATE.md`](docs/IDENTITY-SPINE-STATE.md) — canonical player identity status and safeguards.
+- [`docs/SPEC-player-identity-spine.md`](docs/SPEC-player-identity-spine.md) — identity model and migration design.
 
-```
-flow accounts create
-```
+## Testing
 
-Follow the steps and select testnet. This will create a `[name].pkey` file (make sure this is gitignored) and add your account to flow.json.
-
-Then in `flow.json`, add the contracts you'd like to be deployed to testnet under this account:
-
-```
-// Inside of "deployments"
-"testnet": {
-  "testnet-account": [
-    "HelloWorld"
-  ]
-}
-```
-
-Then run:
-
-```
-npm run dev:testnet:deploy
-``` 
-
-Whenever you need to redeploy changed contracts to Testnet while seeing the diff between deployed contracts and updates being pushed, you can run:
-
-```
-npm run dev:testnet:update
-```
+Run focused tests for the surface you change. Backend tests use the backend virtualenv; frontend tests use Jest from the repository root. Before declaring a feature complete, check the real API payload and render the corresponding page in a browser.

@@ -269,3 +269,23 @@ standings and schedule surfaces.
 | **CFBD as second publisher** | **yes — the NCAAF log source (2026-08-07)** | key exists; the DO-NOT-use was news-engine-only (Micah, confirmed 08-07). `ingest_cfbd_logs.py` re-sourced the 2025 FBS logs (~139 calls vs 888 ESPN summaries): ESPN game ids + athlete ids (direct spine joins, 100% resolved), defensive stats mapped, FCS buy-game players included (230 teams) |
 
 Qualifier: **NONE PUBLISHED** that this project could verify.
+
+### NCAAF — gate findings 2026-08-10
+
+The COV-statset audit (`audit_league_stats.py`) grades the surfaces the task
+doc calls "done". Current ncaaf row, run against `picks.dev.db`:
+
+| check | verdict | note |
+|---|---|---|
+| A/required-stats[season] | **FAIL** | no `att/pass_yds/intc/rush_yds/rec/rec_yds` columns on `player_stats`; `pass_td/rush_td/rec_td` exist but 0 rows — **zero ncaaf `player_stats` rows at all** (the props/leaders acquisition gap) |
+| B/position-content | PASS (all positions) | **def_int floor fixed 2026-08-10**: CFBD publishes the interceptions category only when an INT was recorded (measured: 198 of 366 game blocks), so a DB log without `def_int` is an honest zero. DB/CB/S declare `key_coverage: {def_int: 0.05}` — tackles/pd still hold the 80% floor; a total collapse to 0% interceptions still trips. Measured presence: CB 6.6%, DB 6.5%, S 7.6% |
+| C/vocabulary[position] | **FAIL** | two levels of one vocabulary in `players.position`: C under OL, CB under DB, FB under RB, NT under DT, S under DB — each pair is a position and its own parent (same class of defect NBA had; needs the position_group split, see `migrate_league_position_groups.py`) |
+| D/leaders-reach-logs | **FAIL** | no `player_stats` rows at all — same root cause as A |
+| E/qualifier[season] | UNVERIFIED | NONE PUBLISHED — college football publishes no playing-time qualifier |
+| G/published-identity | UNVERIFIED | no publisher id→name map fetched — run `fetch_identity_names.py` |
+
+The pipeline data itself is green: COV-ncaaf passes 888/888 logs, 888 results,
+137 FBS teams, 0 NULL game_type. What is missing is the **season-aggregate
+surface** (`player_stats` → props tab, leaders, player season stats) — that is
+an acquisition job, not an ingest-corruption job. Until it lands, those
+surfaces render honest empty states by design.

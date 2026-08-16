@@ -7,7 +7,34 @@ offered to users the moment it has rows.
 Read `docs/DATA-COVERAGE-CONTRACT.md` §6 and §7 first. §7 is the ordered checklist; this
 file is that checklist applied to NCAAF, with the shape measurements already done.
 
-## STATUS — 2026-08-08 (after the NCAAF push)
+## CURRENT PUBLIC FEATURE MATRIX — 2026-08-15
+
+This is a managed-DEV UI and read-only database snapshot, not a release, push,
+or production claim. Browser evidence used
+`https://coat-develop-rooms-prague.trycloudflare.com`; at this checkpoint it was
+the temporary `:3105 -> :3096` public proxy for managed `dev` commit `5d4b207`.
+The companion MLS task is [`TASK-league-mls.md`](TASK-league-mls.md).
+
+| Feature | **MLS** | **NCAAF** | Current evidence / follow-up |
+|---|---|---|---|
+| Offered hub route | Yes: `/leagues/mls` | Yes: `/leagues/ncaaf` | Both tiles and destinations rendered through the public URL without browser errors. |
+| Visible league tabs | Standings, Schedule | Standings, Schedule | Stats/leaders are intentionally hidden for both: do not advertise a dead endpoint. |
+| Coverage evidence | `2025 complete`: 30/30 teams, 510/510 games, zero failures | `2025 complete`: 137/137 teams, 888/888 games, zero failures | Read-only `team_stats_coverage` query on managed DEV. |
+| Published history | 16,661 logs; zero NULL `game_type` / `player_id` | 56,577 logs; zero NULL `game_type` / `player_id` | Data exists; the player-detail acceptance screens still need their task-specific browser proof. |
+| Standings UI | **RED:** 30 flat generic rows: `W L Win% Diff Streak L10`; no `D/GF/GA/GD/Pts` | **RED:** 124 flat generic rows: no conference groups | The endpoint returns a flat array, so the grouped MLS/NCAAF UI falls back. MLS draw rendering and NCAAF conference standings are both current blockers. |
+| Schedule UI | Verified: 7 completed matches on `2025-10-19` | Verified: 41 completed games on `2025-11-29` | Public schedule routes, `schedule-dates`, and game payloads each returned 200 with no browser errors. |
+| Result semantics | **RED:** 256 draw result rows exist among 1,020 team-result rows, but the public standings hide them | No draw semantics required | A correct data row is not a correct soccer surface. |
+| Props / predictions | Props are a separate flow; no league-page Predict tab | No league-page Predict tab | Neither was re-verified in this pass; do not infer it from the hub. |
+
+**Decision from this matrix:** NCAAF is safely discoverable for verified coverage
+and schedules, but its public standings do not meet this task's conference-group
+contract. The next implementation slice is a grouped standings contract for
+published NCAAF conferences, coordinated with the MLS soccer-standings contract.
+It must be followed by the existing player-detail, mobile/desktop, and gate
+evidence below; no DB migration, legacy Ralph resumption, or service restart is
+authorized by this documentation update.
+
+## HISTORICAL STATUS — 2026-08-08 (after the NCAAF push)
 
 **Backend/data pipeline DONE in the worktree; frontend verification blocked on landing.**
 

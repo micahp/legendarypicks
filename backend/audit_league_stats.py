@@ -326,9 +326,18 @@ MANIFEST = {
             "DE": [["tackles"], ["sacks"], ["tfl"]],
             "DT": [["tackles"], ["sacks"], ["tfl"]],
             "LB": [["tackles"], ["tackles_solo"], ["sacks"]],
-            "DB": [["tackles"], ["pd"], ["def_int"]],
-            "CB": [["tackles"], ["pd"], ["def_int"]],
-            "S": [["tackles"], ["pd"], ["def_int"]],
+            # CFBD publishes the interceptions category only when an INT was
+            # recorded (measured 2026-08-10: 198 of 366 game blocks carry it),
+            # so a DB log without def_int is an honest zero, not a missing
+            # observation. tackles/pd keep the 80% floor; def_int gets a low
+            # floor that still trips on a total collapse (0% interceptions).
+            # Measured 2026-08-10: CB 6.6%, DB 6.5%, S 7.6%.
+            "DB": {"keys": [["tackles"], ["pd"], ["def_int"]],
+                   "coverage": 0.8, "key_coverage": {"def_int": 0.05}},
+            "CB": {"keys": [["tackles"], ["pd"], ["def_int"]],
+                   "coverage": 0.8, "key_coverage": {"def_int": 0.05}},
+            "S": {"keys": [["tackles"], ["pd"], ["def_int"]],
+                  "coverage": 0.8, "key_coverage": {"def_int": 0.05}},
         },
         "single_vocabulary": ["position", "team"],
     },
@@ -605,6 +614,13 @@ def check_position_content(con, league, spec, out):
         sampled = len(rows)
         # Each entry is a list of acceptable spellings for ONE stat; a log
         # records the stat when any spelling carries a non-null value.
+        # `key_coverage` (dict form only) overrides the floor per stat: a stat
+        # the publisher only emits when it happened (CFBD omits the
+        # interceptions category entirely when no INT was recorded) is honest
+        # at a low presence rate, while the position's always-published stats
+        # keep the strict floor. Absence of an override keeps the entry floor.
+        key_coverage = entry.get("key_coverage") or {} if isinstance(entry, dict) else {}
+        floors = [key_coverage.get(alts[0], floor) for alts in keys]
         filled = [0] * len(keys)
         for row in rows:
             try:
@@ -617,15 +633,15 @@ def check_position_content(con, league, spec, out):
         counts = ["%s %d/%d (%.0f%%)" % (alts[0], filled[i], sampled,
                                           100.0 * filled[i] / sampled)
                   for i, alts in enumerate(keys)]
-        low = [c for i, c in enumerate(counts) if filled[i] < floor * sampled]
+        low = [c for i, c in enumerate(counts) if filled[i] < floors[i] * sampled]
         if low:
             out.add(FAIL, league, f"B/position-content[{position}]",
-                    "%d logs sampled, below the %.0f%% floor: %s"
-                    % (sampled, 100 * floor, "; ".join(low)))
+                    "%d logs sampled, below the declared floor: %s"
+                    % (sampled, "; ".join(low)))
         else:
             out.add(PASS, league, f"B/position-content[{position}]",
                     "%d logs sampled, all recorded at >=%.0f%%: %s"
-                    % (sampled, 100 * floor, ", ".join(counts)))
+                    % (sampled, 100 * min(floors), ", ".join(counts)))
 
 
 def check_single_vocabulary(con, league, spec, out):
