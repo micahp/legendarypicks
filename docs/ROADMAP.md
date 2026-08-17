@@ -51,22 +51,85 @@ understands it** (see `feedback_schema_must_not_outrun_prod_code`). Additive nul
 safe; constraints and indexes are not, because the writer that has to satisfy them is frozen at
 image-build time.
 
-### Release gates — 7 red as of 2026-08-17
+### Release gates — 8 red as of 2026-08-17 (evening), and only ONE blocks the cut
 
-`./verify-gates.sh all` → 24 passed, 6 failed, plus one added the same day:
+`./verify-gates.sh` → **24 passed, 8 failed**. The count is the wrong thing to read. What
+decides whether v0.8.0 can be cut is the question in "Sequencing" below — *does this need code
+or a constraint to be correct?* Sorted that way, the eight fall into three groups and only the
+last one holds the release:
+
+**Group 1 — deploy skew. The release IS the fix; they cannot go green before it.**
+
+| gate | state | note |
+|---|---|---|
+| BOARD-stale-prod | FAIL | Prod serves 16 of 56 games as upcoming after they finished. |
+| COV-leaders | FAIL | 2/7 surfaces: prod answers `Unsupported league: mls` / `ncaaf`. **This gate targets PROD (:8100), not dev** — worth knowing before diagnosing it as a code bug, which cost an hour on 08-17. Prod's image was built 08-12; MLS leaders landed 08-13 and NCAAF 08-17, so its code predates both. Both serve 200 on dev and against `picks.db` in-process. |
+
+**Group 2 — data. Each reaches prod the moment it runs; none needs a deploy, so none may
+hold the cut.**
 
 | gate | state | note |
 |---|---|---|
 | COV-source | FAIL | `team_game_results.nfl` 1114 rows; `team_game_stats.mlb` 16 |
 | COV-gametype | FAIL | mlb 2026: 1,579 of 53,895 rows NULL |
 | COV-identity | FAIL | blocked on `orphan_players=1` |
-| COV-statset | FAIL | 12 of a known 21 open — **expected red**, see `docs/LEAGUE-STAT-GAPS.md` |
 | REG-adp-dst | FAIL | `HOU` off expected (236 vs 223) |
-| REG-jest-all | FAIL | 2 failing tests in 1 suite, not yet identified |
-| BOARD-stale-prod | FAIL | **new 2026-08-17.** Prod serves 2 finished games as upcoming. Red *by design* until a release carries the fix — the redness is the deploy skew, reported rather than assumed. |
+| COV-statset | FAIL | 9 of a known 21 open — **expected red**, see `docs/LEAGUE-STAT-GAPS.md` |
+
+**Group 3 — code. This one, and only this one, must be green before the tag.**
+
+| gate | state | note |
+|---|---|---|
+| REG-jest-all | FAIL | **Identified 2026-08-17**: `components/Game/WCContext.test.tsx`, 2 polling tests, both failing on `Unable to find an element with the text: Opening read`. The component renders (Game Context, Live, team blocks all present), so it is the asserted copy, not a broken render. Pre-existing and unrelated to the MLS/NCAAF work. |
 
 `BOARD-stale-dev` passes. That pairing is the point: the two are different code, so a green dev
 gate says nothing about the deployed board.
+
+**A green gate here is still only a claim about its surface.** `REG-pytest` reports
+"98 passed" — the full backend suite is **1,503 tests**, and the 6.5% the gate runs excludes a
+real failure (`test_story_form_season.py::...[mls-2026]`, red on BOTH databases, pre-existing).
+Do not read `REG-pytest` as "the tests pass".
+
+### ⛔ RELEASE-BLOCKING, found 2026-08-17 (evening): MLS standings would ship LAST season
+
+Not on any previous list, and it is the one item here a user would notice within a second of
+opening the page in mid-August.
+
+`team_game_results` holds **only MLS 2025** — 1,020 completed rows, 30 teams — on **both**
+databases. Zero 2026 rows. `_mls_standings_season()` resolves the coverage-canonical season and
+gets 2025, so the DB-primary standings that ship in v0.8.0 can only ever serve **last season's
+final table** (34 played, Philadelphia 66 pts).
+
+Production today does *not* have this problem, which is what makes it a regression rather than
+a known gap: prod's older live-ESPN path serves the **current** 2026 season (~19 played), and
+the release would replace that with a completed 2025 table. Shipping the better-shaped page
+(P/W/D/L/GF/GA/GD/Pts, Eastern/Western) with the wrong season is worse than what is live.
+
+Related and separate — **`rank` is not the publisher's rank.** `_mls_standings_from_db`'s own
+docstring says it: *"rank is the row's position in that order"*, the order being points → wins →
+GD → GF. So the `#` column restates our sort instead of reporting the league's standing. ESPN
+publishes a real per-team `rank` in its standings payload (verified: Eastern/Western, 15 entries
+each, `rank` and `points` as separate stats), and per `published-first` that is the value to
+serve. Micah asked for the table sorted by rank, 2026-08-17; doing that honestly means ingesting
+the published rank, not re-deriving a different sort.
+
+**Both halves need the 2026 season ingested first, and that is an ESPN-budget problem**, so it
+needs a design decision before anyone writes the loop — see the skill, `.claude/skills/
+espn-request-budget`, §3:
+
+- `site.api.espn.com/.../teams/{id}/schedule` — the path `ingest_team_results.py` uses — is
+  **403 for this box**, matching the skill's "walled from this box" note for that host.
+- `sports.core.api.espn.com` answers 200 and publishes the count in a `?limit=1` envelope:
+  **511 MLS 2026 events**. One request to learn that.
+- 511 events at one request each is ~10x the skill's ~50-per-host threshold, so a per-event
+  loop is **not** the answer. Find the bulk endpoint, or a cheaper publisher, before writing it.
+
+### Correction 2026-08-17 — `sports.core.api.espn.com` is NOT 403 any more
+
+The 08-14 note below says it is "the one still 403". Remeasured 2026-08-17: it answers **200**,
+on both a browser and a plain User-Agent, and it is the host that carries the MLS 2026 event
+count above. `site.api.espn.com` is the walled one. Fixing which host is blocked matters because
+the wrong name here sends the next person to the wrong workaround.
 
 ### Release-blocking list from 2026-08-12 — remeasured 2026-08-17
 
@@ -77,9 +140,12 @@ Two of the four cleared themselves; the counts, not the intentions, are what cha
   read under its real name.
 - ~~**Tennis discards a working feed** (#2)~~ — **CLOSED on prod.** 1,022 tennis props on
   `picks.db`; the ATP/WTA spine is 150 per tour, every row carrying an ESPN id.
-- **MLS is hidden on prod** (#6) — **still open, unchanged.** `team_stats_coverage` where
-  `league='mls'` is **0 rows on prod, 1 on dev**. The release calls MLS out; nobody sees it.
-  Promotion is a data job, so this one *can* land without a deploy.
+- ~~**MLS is hidden on prod** (#6)~~ — **CLOSED 2026-08-17.** Remeasured: `team_stats_coverage`
+  now holds `('mls','complete')` on **both** databases, and `league_offering.offered_leagues()`
+  returns mls AND ncaaf on both. The registry was never the thing still hiding them — two
+  hardcoded lists elsewhere were (`routers/players.py`'s own league tuple, and
+  `useLeagueRouteState`'s "neither has a leaders backend yet"). Both removed, so the hub links
+  and the Stats tab render for both leagues. See the 08-17 evening block below.
 - **Settlement writes failures in the shape of successes** (#21–23) — still open, and it is
   the most expensive item on this page. See the 08-14 correction below.
 
@@ -283,9 +349,12 @@ Scope, in order. Full detail in `TASK-next-release-player-identity.md`.
       - **MLS: complete on dev, absent from prod.** Dev has coverage + game detail + team stats;
         prod has none of the three, so MLS is HIDDEN there. Promotion is a data job — the code
         already shipped.
-      - **The one real gap in either league: MLS has zero `player_stats` on BOTH databases.**
-        Everything else on the list is a promotion or a relink; this is the only item needing a
-        publisher decision.
+      - ~~**The one real gap in either league: MLS has zero `player_stats` on BOTH databases.**~~
+        **STALE — remeasured 2026-08-17.** MLS holds 850 `player_stats` rows on dev and, after
+        `promote_mls_player_stats.py` ran, **851 on prod**. The real gap was the 518-row
+        prod/dev delta behind it, which put Anders Dreyer at the top of prod's scoring
+        leaderboard because Messi's row was one of the 518. Closed; prod now leads Messi
+        29g/16a. **The remaining MLS gap is a SEASON, not a stat** — see below.
       Backlog items 6–12, 21–25.
 - [ ] **Tournament games under their own league key** (decided 2026-08-06) — Leagues Cup
       (`concacaf.leagues.cup`), CCC (`concacaf.champions`), Campeones Cup are SEPARATE ESPN
