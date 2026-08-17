@@ -118,6 +118,9 @@ def main(argv=None) -> int:
     parser.add_argument("--db", required=True)
     parser.add_argument("--years", default="2025,2026")
     parser.add_argument("--apply", action="store_true")
+    parser.add_argument("--deactivate-unrostered", action="store_true",
+                        help="mark blank-position players inactive when NO publisher "
+                             "rosters them; never writes a position")
     args = parser.parse_args(argv)
 
     vocab = _vocabulary()
@@ -162,7 +165,25 @@ def main(argv=None) -> int:
             print("  REJECTED {} rows: CFBD position not in ESPN's published "
                   "vocabulary: {}".format(len(unknown_position),
                                           sorted(set(unknown_position))))
-        if not updates:
+        # A row CFBD cannot label is not necessarily a defect. These athletes exist because
+        # they appeared in ONE game log; `ingest_cfbd_logs` then minted them `active=1`,
+        # which was an assumption rather than a measurement. When neither publisher rosters
+        # somebody -- ESPN's team rosters do not list them and CFBD's own roster (tens of
+        # thousands of rows per year) does not either -- the false claim is `active`, not the
+        # blank position. A position is a CURRENT roster spot, which is exactly why the
+        # audit scopes its blank check to active players.
+        #
+        # So this corrects the flag we asserted without evidence, and never invents a
+        # position. Opt-in, because deactivating a player is not a side effect anyone should
+        # get from a script whose name says "backfill positions".
+        unrostered = [row["id"] for row in blank
+                      if not published.get(str(row["espn_id"]))]
+        if args.deactivate_unrostered and unrostered:
+            print("  --deactivate-unrostered: {} players on NO roster either publisher "
+                  "publishes will be marked inactive (their blank position stays blank -- "
+                  "it is the honest value)".format(len(unrostered)))
+
+        if not updates and not (args.deactivate_unrostered and unrostered):
             print("FAIL: {} blank rows and CFBD labelled none of them."
                   .format(len(blank)))
             return 2
@@ -170,6 +191,11 @@ def main(argv=None) -> int:
         if not args.apply:
             print("\ndry run -- nothing written. re-run with --apply")
             return 0
+
+        if args.deactivate_unrostered and unrostered:
+            con.executemany("UPDATE players SET active=0 WHERE id=?",
+                            [(i,) for i in unrostered])
+            print("  marked {} unrostered players inactive".format(len(unrostered)))
 
         con.executemany(
             "UPDATE players SET position=?, position_group=? WHERE id=?", updates)
@@ -180,7 +206,11 @@ def main(argv=None) -> int:
             "AND (position IS NULL OR TRIM(position)='')", (LEAGUE,)).fetchone()[0]
         # Reconcile rather than trust the write: the count that matters is the
         # one the gate reads, not the one we intended.
-        expected = len(blank) - len(updates)
+        # Deactivated rows leave the ACTIVE population too, so they come out of the
+        # expectation as well. Leaving them in made a correct run report MISMATCH and exit 2 --
+        # a reconciliation that cries wolf is one people stop reading.
+        deactivated = len(unrostered) if (args.deactivate_unrostered and unrostered) else 0
+        expected = len(blank) - len(updates) - deactivated
         print("\nwrote {} rows".format(len(updates)))
         print("blank ACTIVE positions now: {} (expected {}){}".format(
             remaining, expected,

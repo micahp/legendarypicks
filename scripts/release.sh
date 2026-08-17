@@ -154,8 +154,13 @@ fi
 #
 # ufc is BLOCKING from the start: it audits 3 passed / 0 FAIL today. Its one UNVERIFIED
 # (no leaderboard surface) is correct by design -- it is a rankings league, not a stats one.
-AUDIT_BLOCKING="nfl mlb nba nhl ufc"
-AUDIT_REPORTED="mls ncaaf"
+# ncaaf promoted to BLOCKING 2026-08-17, the same day it was added as REPORTED: it went to
+# 0 FAIL / 17 passed once the position vocabulary was split and 17 players who appear on no
+# roster either publisher publishes stopped claiming to be active. Its 2 remaining checks are
+# UNVERIFIED, which does not block -- one is a publisher gap (college football publishes no
+# playing-time qualifier) and one needs fetch_identity_names.py to learn ncaaf.
+AUDIT_BLOCKING="nfl mlb nba nhl ufc ncaaf"
+AUDIT_REPORTED="mls"
 if [ -f backend/audit_league_stats.py ] && [ -x backend/venv/bin/python ]; then
   echo
   echo "release: audit_league_stats vs prod — BLOCKING: $AUDIT_BLOCKING (FAIL blocks, UNVERIFIED does not)"

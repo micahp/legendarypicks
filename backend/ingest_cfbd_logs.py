@@ -336,10 +336,27 @@ def _resolve_or_create(con, spine, athlete_id, name, team, positions=None):
         return player_id
     now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     position, position_group = (positions or {}).get(str(athlete_id), (None, None))
+    # `active` used to be hardcoded 1 here, which is an assumption rather than a
+    # measurement: appearing in one game log is evidence that somebody PLAYED, not that
+    # they are on a roster now. 17 athletes reached 2026-08-17 flagged active with no
+    # position, and neither publisher could supply one -- ESPN does not roster them and
+    # CFBD's own roster (30,072 rows for 2025, 15,441 for 2026) does not list them. Mostly
+    # single-appearance players, several at FCS schools. `active` was the false claim; the
+    # blank position was the honest one, and the audit scopes its blank check to active
+    # players precisely because a position is a CURRENT roster spot.
+    #
+    # So say what we measured. In the roster map -> active. Absent from a map we DID read
+    # -> not active. And when the map is empty at all (no CFBD key) fall back to 1 rather
+    # than deactivating a whole league on the strength of a missing credential -- an
+    # unavailable roster is not evidence that nobody is on one.
+    if positions:
+        active = 1 if str(athlete_id) in positions else 0
+    else:
+        active = 1
     con.execute(
         "INSERT INTO players(name, team, league, espn_id, position, position_group, active, updated_at)"
-        " VALUES(?,?,?,?,?,?,1,?)",
-        (name, team, LEAGUE, athlete_id, position, position_group, now),
+        " VALUES(?,?,?,?,?,?,?,?)",
+        (name, team, LEAGUE, athlete_id, position, position_group, active, now),
     )
     player_id = con.execute("SELECT last_insert_rowid()").fetchone()[0]
     spine[athlete_id] = player_id
