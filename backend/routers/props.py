@@ -435,6 +435,39 @@ def player_performance(player_id: int, market: Optional[str] = Query(None)):
     return {"player_id": player_id, "performance": result}
 
 
+def _link_or_fold(con, game_id, league, espn_id):
+    """Attach `espn_id` to `game_id`, folding into the row that already holds it.
+
+    `ux_prop_games_event` makes (league, espn_event_id) unique, so this UPDATE raises
+    IntegrityError exactly when another row IS this event -- the day-early twin the
+    ingest created a moment ago because prop_games.date is a UTC first pitch while the
+    board is keyed on the local one.
+
+    That is not an error to swallow. The caller used to wrap the UPDATE in
+    `except Exception: pass`, which under the new index leaves the twin sitting there
+    permanently UNLINKED: no event id, so settlement never resolves a gamePk for it and
+    every prop on it is stranded. Silent, and indistinguishable from a game ESPN has not
+    published yet.
+
+    So fold instead, the same way link_prop_games does on its nightly pass -- repoint the
+    props onto the row that already carries the id and drop the twin. Returns the id of
+    the row that survived.
+    """
+    try:
+        con.execute("UPDATE prop_games SET espn_event_id=? WHERE id=?", (espn_id, game_id))
+        return game_id
+    except sqlite3.IntegrityError:
+        holder = con.execute(
+            "SELECT id FROM prop_games WHERE league=? AND espn_event_id=? AND id!=?",
+            (league, espn_id, game_id)).fetchone()
+        if not holder:
+            raise
+        keep = holder["id"] if hasattr(holder, "keys") else holder[0]
+        con.execute("UPDATE props SET game_id=? WHERE game_id=?", (keep, game_id))
+        con.execute("DELETE FROM prop_games WHERE id=?", (game_id,))
+        return keep
+
+
 @router.post("/api/props/ingest")
 def ingest_props(batch: PropIngest):
     """Ingest a batch of props for one game. Creates player/game rows as needed."""
@@ -465,7 +498,7 @@ def ingest_props(batch: PropIngest):
                     espn_games = _espn.games(batch.league, batch.date)
                     espn_id = link_prop_game(con, new_row, espn_games)
                     if espn_id:
-                        con.execute("UPDATE prop_games SET espn_event_id=? WHERE id=?", (espn_id, game_id))
+                        game_id = _link_or_fold(con, game_id, batch.league, espn_id)
                 except Exception:
                     pass
         else:
@@ -482,7 +515,7 @@ def ingest_props(batch: PropIngest):
                     espn_games = _espn.games(batch.league, batch.date)
                     espn_id = link_prop_game(con, game_row, espn_games)
                     if espn_id:
-                        con.execute("UPDATE prop_games SET espn_event_id=? WHERE id=?", (espn_id, game_id))
+                        game_id = _link_or_fold(con, game_id, batch.league, espn_id)
                 except Exception:
                     pass  # crosswalk is best-effort; don't block ingest
         ingested = 0
