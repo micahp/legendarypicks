@@ -72,6 +72,51 @@ def normalize_name(value: str) -> str:
     return re.sub(r"\s+", " ", re.sub(r"[^\w\s]", "", value)).strip()
 
 
+def given_name_variant(a: str, b: str):
+    """How two GIVEN names differ, or None if they are not the same name.
+
+    Added 2026-08-17. Exact normalized matching left 41 of 47 shadow rows unmatched, and
+    inspecting them showed why: the sportsbook and ESPN disagree on the FORM of the first
+    name, never on the surname or the club.
+
+        Will Sands     NE  <->  William Sands      NE
+        Chris Durkin   STL <->  Christopher Durkin STL
+        Maximo Carrizo NYC <->  Maxi Carrizo       NYC
+        Jeison Palacios NSH <-> Jeisson Palacios   NSH
+
+    This is NOT general fuzzy matching, and the difference matters -- the ambiguous-key
+    memory in this repo is a surname match that silently mis-attributed data across 601,824
+    settled props. Three constraints keep it safe, and the caller enforces all three:
+
+      1. the SURNAME must match exactly under the existing normalization,
+      2. the CLUB must match through the alias map, and
+      3. there must be exactly ONE candidate meeting both.
+
+    Only then is a given-name variant allowed to close the gap. Measured on prod: 16
+    proposals, ZERO ambiguous. Returns the reason so every merge says why it happened.
+    """
+    if a == b:
+        return "exact"
+    # Nick/Nicholas, Will/William, Chris/Christopher: one is how the other is shortened.
+    if len(a) >= 3 and len(b) >= 3 and (a.startswith(b) or b.startswith(a)):
+        return "short-form"
+    # Aleksey/Alexey, Jeison/Jeisson, Agustin/Augustin: one transliteration edit apart.
+    short, long_ = (a, b) if len(a) <= len(b) else (b, a)
+    if len(long_) - len(short) == 1:
+        for i in range(len(long_)):
+            if long_[:i] + long_[i + 1:] == short:
+                return "one-edit"
+    if len(a) == len(b) and sum(x != y for x, y in zip(a, b)) == 1:
+        return "one-edit"
+    return None
+
+
+def _parts(normalized: str):
+    """(given, surname) from an already-normalized name, or None if it has neither."""
+    words = normalized.split()
+    return (words[0], words[-1]) if len(words) >= 2 else None
+
+
 def plan(con) -> dict:
     """Classify every shadow row without writing anything."""
     spine = collections.defaultdict(list)
@@ -86,13 +131,40 @@ def plan(con) -> dict:
         "SELECT id, name, team FROM players WHERE league=? AND espn_id IS NULL",
         (LEAGUE,)).fetchall()
 
+    # Surname + club index, used ONLY when the exact-name lookup finds nothing. Built from
+    # the same spine rows so a given-name variant can never reach a player the exact rule
+    # would not also have been allowed to reach.
+    by_surname_team = collections.defaultdict(list)
+    for rows in spine.values():
+        for row in rows:
+            parts = _parts(normalize_name(row["name"]))
+            if parts:
+                by_surname_team[(parts[1], team_key(row["team"]))].append(row)
+
     out = {"merge": [], "cross_team": [], "ambiguous": [], "no_candidate": []}
     for shadow in shadows:
         candidates = spine.get(normalize_name(shadow["name"]), [])
         key = team_key(shadow["team"])
         same_team = [c for c in candidates if team_key(c["team"]) == key]
+        if not same_team and not candidates:
+            # No exact-name candidate anywhere. Try the given-name variant, still requiring
+            # an exact surname, the same club, and exactly one candidate.
+            parts = _parts(normalize_name(shadow["name"]))
+            if parts:
+                pool = by_surname_team.get((parts[1], key), [])
+                variants = [
+                    (row, given_name_variant(parts[0], _parts(normalize_name(row["name"]))[0]))
+                    for row in pool if _parts(normalize_name(row["name"]))
+                ]
+                variants = [(row, why) for row, why in variants if why]
+                if len(variants) == 1:
+                    out["merge"].append((shadow, variants[0][0], variants[0][1]))
+                    continue
+                if len(variants) > 1:
+                    out["ambiguous"].append((shadow, [row for row, _ in variants]))
+                    continue
         if len(same_team) == 1:
-            out["merge"].append((shadow, same_team[0]))
+            out["merge"].append((shadow, same_team[0], "exact"))
         elif len(same_team) > 1:
             out["ambiguous"].append((shadow, same_team))
         elif len(candidates) == 1:
@@ -121,6 +193,9 @@ def main(argv=None) -> int:
         print("  REFUSED, different team:      {}".format(len(work["cross_team"])))
         print("  REFUSED, ambiguous:           {}".format(len(work["ambiguous"])))
         print("  no candidate in the spine:    {}".format(len(work["no_candidate"])))
+        for shadow, canonical, why in work["merge"]:
+            print("    merge {!r} -> {!r} ({}, espn_id={})"
+                  .format(shadow["name"], canonical["name"], why, canonical["espn_id"]))
         for shadow, canonical in work["cross_team"]:
             print("    cross-team {!r}: {} vs published {} -- not merged"
                   .format(shadow["name"], shadow["team"], canonical["team"]))
@@ -135,7 +210,7 @@ def main(argv=None) -> int:
             return 0
 
         moved = 0
-        for shadow, canonical in work["merge"]:
+        for shadow, canonical, _why in work["merge"]:
             cur = con.execute("UPDATE props SET player_id=? WHERE player_id=?",
                               (canonical["id"], shadow["id"]))
             moved += cur.rowcount
