@@ -21,7 +21,15 @@ export LP_DB_PATH="${LP_DB_PATH:-/root/legendarypicks/backend/data/picks.dev.db}
 PY=/root/legendarypicks/backend/venv/bin/python
 LOG="${LP_NEWS_LOG:-/var/log/legendarypicks-news.log}"
 
-log(){ printf '[%s] %s\n' "$(date -Is)" "$*" | tee -a "$LOG"; }
+. /root/legendarypicks/scripts/news-lib.sh   # log(), run_step()
+
 log "=== x collect start ==="
-"$PY" ingest_league_news.py --x-only 2>&1 | tee -a "$LOG" || log "  WARN: x collect exited non-zero"
+# 480s, against a measured 585s on 2026-08-17 08:19 — the run that took nine
+# handles to `<urlopen error timed out>`. That run finished 15 SECONDS inside
+# the unit's TimeoutStartSec=600, and the worst case for 17 handles is ~1100s
+# (2 attempts x 30s socket timeout + 2s retry + 1.5s interval, each), so this
+# job was about to start failing the same way news-collect.sh already was.
+# Budgeting it here means a dead mirror costs one skipped run, not a red unit:
+# the timer fires every 2 hours and the upserts are idempotent.
+run_step 480 ingest_league_news.py --x-only
 log "=== x collect done ==="
