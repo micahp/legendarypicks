@@ -331,13 +331,24 @@ MANIFEST = {
             # so a DB log without def_int is an honest zero, not a missing
             # observation. tackles/pd keep the 80% floor; def_int gets a low
             # floor that still trips on a total collapse (0% interceptions).
-            # Measured 2026-08-10: CB 6.6%, DB 6.5%, S 7.6%.
+            # Measured 2026-08-10: CB 6.6%, DB 6.5%, S 7.6% -- on a population
+            # where 27% of active ncaaf players carried NO position at all, so
+            # thousands of defensive backs were absent from every sample.
+            # Re-measured 2026-08-16 after backfill_ncaaf_positions_cfbd.py
+            # labelled 5,360 of them from CFBD's published roster:
+            # CB 30/500 (6.0%), DB 24/500 (4.8%), S 26/500 (5.2%).
+            # The rate did not degrade -- the sample became representative, and
+            # a 5% floor set 1.4 points above a 6.5% reading had no headroom for
+            # any of the three. def_int is an EVENT rate (most DBs record zero
+            # interceptions in a game), not a recording rate, so the floor's job
+            # is only to trip on a total collapse. 0.025 is half the lowest
+            # current reading and still fails at 0%.
             "DB": {"keys": [["tackles"], ["pd"], ["def_int"]],
-                   "coverage": 0.8, "key_coverage": {"def_int": 0.05}},
+                   "coverage": 0.8, "key_coverage": {"def_int": 0.025}},
             "CB": {"keys": [["tackles"], ["pd"], ["def_int"]],
-                   "coverage": 0.8, "key_coverage": {"def_int": 0.05}},
+                   "coverage": 0.8, "key_coverage": {"def_int": 0.025}},
             "S": {"keys": [["tackles"], ["pd"], ["def_int"]],
-                  "coverage": 0.8, "key_coverage": {"def_int": 0.05}},
+                  "coverage": 0.8, "key_coverage": {"def_int": 0.025}},
         },
         "single_vocabulary": ["position", "team"],
     },
