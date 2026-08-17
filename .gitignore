@@ -114,3 +114,14 @@ backend/data/news-deletions.log
 # a v0.8.0 dry-run). `_load_backoff()` returns {} when the file is absent, so a
 # fresh checkout or image simply fetches every league — it fails open by design.
 backend/data/bovada-league-backoff.json
+
+# ESPN response disk cache. 96MB of hashed request/response JSON, rewritten by any
+# script that calls a publisher — tracking it dirtied the tree on every run and blocked
+# `release.sh`'s clean-tree preflight (2026-08-17).
+#
+# It was never meant to be tracked: it rode into 8b296db, a one-line build fix, as 218
+# of that commit's 292 files. Note line 88 already ignored `backend/data/espn-cache/` —
+# the intent was there, the path was wrong. The cache lives at `backend/.espn-cache`,
+# which that pattern never matched. Same miss as `backend/backups/` dodging
+# `backend/data/picks.db*` the same day: an ignore rule only protects the path it names.
+backend/.espn-cache/
