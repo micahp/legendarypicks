@@ -51,6 +51,14 @@ ALIASES: dict[str, dict[str, str]] = {
         "NJD": "NJ",
     },
     "nba": {},
+    "mls": {
+        # ESPN publishes RBNY for the New York Red Bulls; Bovada writes NYRB.
+        # Measured 2026-08-16: the split held 41 players under RBNY and 4 under
+        # NYRB, and it blocked three otherwise-unambiguous identity merges
+        # (Cade Cowell, Jorge Ruvalcaba, Justin Che) because same-name matching
+        # is scoped to the same team on purpose. ESPN is canonical.
+        "NYRB": "RBNY",
+    },
 }
 
 # ---------------------------------------------------------------------------
