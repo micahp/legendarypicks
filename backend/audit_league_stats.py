@@ -293,7 +293,15 @@ MANIFEST = {
             "M": [["goals"], ["assists"]],
             "F": [["goals"], ["assists"]],
         },
-        "single_vocabulary": ["position", "team"],
+        # `position_group` declared 2026-08-17. ESPN publishes the soccer position
+        # hierarchy -- CD/LB/RB/SW all carry D as their parent, AM/CM/DM carry M -- and
+        # C/vocabulary[position] was failing because both levels shared one column, so a
+        # filter on D silently missed every centre-back stored as CD. The group column
+        # now carries the published parent name (Defender/Midfielder/Forward/Goalkeeper),
+        # filled by backfill_position_group.py from the fetched vocabulary, never inferred.
+        # The rule was verified before it was used: re-deriving the rows that ALREADY had
+        # a group reproduced 1,256 of 1,256 with zero disagreements.
+        "single_vocabulary": ["position", "position_group", "team"],
     },
     "ncaaf": {
         "stat_types": {
@@ -350,7 +358,13 @@ MANIFEST = {
             "S": {"keys": [["tackles"], ["pd"], ["def_int"]],
                   "coverage": 0.8, "key_coverage": {"def_int": 0.025}},
         },
-        "single_vocabulary": ["position", "team"],
+        # `position_group` declared 2026-08-17, same reason as mls. ESPN publishes the
+        # football hierarchy -- CB/S under DB, C under OL, NT under DT, FB under RB -- and
+        # both levels shared one column, so a DB filter missed every corner stored as CB.
+        # The group column carries the published root name (Offense/Defense/Special Teams),
+        # filled by backfill_position_group.py from the fetched vocabulary. Verified before
+        # use: re-deriving the rows that already had a group reproduced 21,489 of 21,489.
+        "single_vocabulary": ["position", "position_group", "team"],
     },
 }
 
