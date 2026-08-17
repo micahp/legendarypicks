@@ -658,6 +658,23 @@ _MLS_ROSTER_MARKETS = {
     "assists": "goalAssists",
 }
 
+# Markets whose actual is the SUM of published stats rather than one of them. Bovada prices
+# both of these on MLS and neither has a single ESPN stat behind it: a player "shown a card"
+# is one who took a yellow or a red, and "to score or assist" is exactly what it says.
+# Summing two published numbers is not deriving a value the publisher already gives — it is
+# the market's own definition, applied to published inputs.
+_MLS_ROSTER_SUM_MARKETS = {
+    "card_shown": ("yellowCards", "redCards"),
+    "goal_or_assist": ("totalGoals", "goalAssists"),
+}
+
+# Markets that no box score can answer, because they are about ORDER. The scorer of the
+# match's first goal comes from the summary's keyEvents, and the derivation is imported
+# rather than re-written here: ingest_soccer_logs writes first_goal into player_game_logs
+# from the same document, and two implementations of "who scored first" would drift the
+# first time one of them learned about shootouts (fail-loudly §3.8).
+_MLS_EVENT_MARKETS = {"first_goal_scorer"}
+
 
 def _ufc_scoreboard_competition(espn, date_text: str, fight_id: str) -> dict:
     """Return the exact fight object from ESPN's card-level UFC scoreboard.
@@ -841,11 +858,19 @@ def _settle_mls_props(con: sqlite3.Connection, props: list, summary: dict) -> di
     errors = 0
     now = dt.datetime.now(dt.timezone.utc).isoformat()
 
+    # Who scored first, from the same document and the same code that writes first_goal
+    # into player_game_logs. `events_published` False means ESPN published no events for
+    # this match: the market stays PENDING rather than grading everyone as not-first,
+    # which would be a fabricated answer that looks exactly like a real one.
+    from ingest_soccer_logs import _first_goal_scorer
+    first_scorer, goal_events_published = _first_goal_scorer(summary)
+
     for prop in props:
         canonical = normalize_market(prop["market"])
         canonical = MARKET_ALIASES.get(canonical, canonical)
         stat_name = _MLS_ROSTER_MARKETS.get(canonical)
-        if not stat_name:
+        sum_stats = _MLS_ROSTER_SUM_MARKETS.get(canonical)
+        if not stat_name and not sum_stats and canonical not in _MLS_EVENT_MARKETS:
             unmappable += 1
             continue
 
@@ -863,13 +888,40 @@ def _settle_mls_props(con: sqlite3.Connection, props: list, summary: dict) -> di
             pending += 1
             continue
 
-        published = [stat.get("value") for stat in matches[0].get("stats") or []
-                     if stat.get("name") == stat_name]
-        if len(published) != 1 or published[0] in (None, ""):
-            pending += 1
-            continue
+        stats_by_name = {stat.get("name"): stat.get("value")
+                         for stat in matches[0].get("stats") or []}
+
+        if canonical in _MLS_EVENT_MARKETS:
+            if not goal_events_published:
+                pending += 1
+                continue
+            actual_value = 1.0 if str(prop["espn_id"] or "") == str(first_scorer or "") \
+                else 0.0
+            # Without an espn_id the prop cannot be tied to the scorer the events name,
+            # and a name comparison here would be a second identity path. Leave it.
+            if not prop["espn_id"]:
+                pending += 1
+                continue
+        elif sum_stats:
+            values = [stats_by_name.get(name) for name in sum_stats]
+            if any(v in (None, "") for v in values):
+                pending += 1
+                continue
+            try:
+                actual_value = float(sum(float(v) for v in values))
+            except (TypeError, ValueError):
+                pending += 1
+                continue
+        else:
+            published = [value for name, value in stats_by_name.items()
+                         if name == stat_name]
+            if len(published) != 1 or published[0] in (None, ""):
+                pending += 1
+                continue
+            actual_value = published[0]
+
         try:
-            actual = float(published[0])
+            actual = float(actual_value)
             if _grade_actual(con, prop, actual, now):
                 settled += 1
             else:

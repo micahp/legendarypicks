@@ -253,6 +253,95 @@ def test_mls_uses_roster_stats_not_team_boxscore(monkeypatch):
     assert (final["final_home"], final["final_away"]) == (0.0, 2.0)
 
 
+def _mls_new_market_connection():
+    """The markets added when MLS went from 2 Bovada markets to 8."""
+    con = sqlite3.connect(":memory:")
+    _schema(con)
+    con.execute(
+        "INSERT INTO prop_games VALUES(2,'mls','New England Revolution',"
+        "'Houston Dynamo','2026-08-08','761469',NULL,NULL,"
+        "'2026-08-08T20:30:00+00:00')")
+    con.executemany(
+        "INSERT INTO players VALUES(?,?,?,?,?)",
+        [(20, "Jack McGlynn", "HOU", "mls", "303512"),
+         (21, "Agustin Resch", "HOU", "mls", "419253"),
+         (25, "No Espn Id", "HOU", "mls", None)])
+    con.executemany(
+        "INSERT INTO props VALUES(?,?,?,?,?,?)",
+        [(300, 2, 20, "card_shown", 0.5, "over"),        # yellow 1 + red 0 -> shown
+         (301, 2, 21, "card_shown", 0.5, "over"),        # no cards -> not shown
+         (302, 2, 20, "goal_or_assist", 0.5, "over"),    # 0 goals + 1 assist -> yes
+         (303, 2, 21, "first_goal_scorer", 0.5, "over"),  # scored the opener
+         (304, 2, 20, "first_goal_scorer", 0.5, "over"),  # did not
+         (305, 2, 25, "first_goal_scorer", 0.5, "over")])  # no espn_id -> retryable
+    return con
+
+
+def _mls_summary_with_cards_and_events(with_events=True):
+    summary = _mls_summary()
+    for group in summary["rosters"]:
+        for row in group["roster"]:
+            extra = {"yellowCards": 0.0, "redCards": 0.0}
+            if row["athlete"]["id"] == "303512":
+                extra["yellowCards"] = 1.0
+            row["stats"] += [{"name": k, "value": v} for k, v in extra.items()]
+    if with_events:
+        summary["keyEvents"] = [
+            {"type": {"text": "Kickoff"}, "period": {"number": 1},
+             "clock": {"value": 0.0}},
+            {"type": {"text": "Goal"}, "scoringPlay": True, "shootout": False,
+             "period": {"number": 2}, "clock": {"value": 3000.0},
+             "participants": [{"athlete": {"id": "303512"}}]},
+            {"type": {"text": "Goal"}, "scoringPlay": True, "shootout": False,
+             "period": {"number": 1}, "clock": {"value": 1200.0},
+             "participants": [{"athlete": {"id": "419253"}}]},
+        ]
+    return summary
+
+
+def test_mls_settles_cards_goal_or_assist_and_the_first_goal(monkeypatch):
+    """Three markets Bovada prices that no single published stat answers.
+
+    A card is a yellow OR a red; score-or-assist is a sum; and the first goal is about
+    ORDER, which a box score does not carry. The first-goal answer comes from keyEvents
+    via the same helper the log ingest uses, so the two cannot drift.
+    """
+    con = _mls_new_market_connection()
+    summary = _mls_summary_with_cards_and_events()
+    monkeypatch.setattr(espn_client, "summary", lambda league, event_id: summary)
+
+    result = settlement.settle_game(con, 2)
+
+    rows = {row["prop_id"]: (row["actual_value"], row["hit"])
+            for row in con.execute("SELECT * FROM prop_results")}
+    assert rows == {
+        300: (1.0, 1),   # McGlynn took a yellow
+        301: (0.0, 0),   # Resch took none
+        302: (1.0, 1),   # 0 goals + 1 assist
+        303: (1.0, 1),   # Resch scored in the 20th; McGlynn's came in the 50th
+        304: (0.0, 0),
+    }
+    # No espn_id means the events cannot name him. Comparing on name here would be a
+    # second identity path, so it stays retryable rather than guessing.
+    assert 305 not in rows
+    assert result["pending"] >= 1
+
+
+def test_mls_first_goal_stays_pending_when_espn_published_no_events(monkeypatch):
+    """Grading everyone as not-first would invent an answer that looks real."""
+    con = _mls_new_market_connection()
+    summary = _mls_summary_with_cards_and_events(with_events=False)
+    monkeypatch.setattr(espn_client, "summary", lambda league, event_id: summary)
+
+    settlement.settle_game(con, 2)
+
+    graded = {row["prop_id"] for row in con.execute("SELECT * FROM prop_results")}
+    assert 303 not in graded
+    assert 304 not in graded
+    # The markets that do not depend on event order still settle.
+    assert {300, 301, 302} <= graded
+
+
 def test_mls_does_not_settle_before_full_time(monkeypatch):
     con = _mls_connection()
     monkeypatch.setattr(
