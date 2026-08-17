@@ -277,6 +277,20 @@ def _exemplars(con):
     return "\n\n".join(parts)
 
 
+# Reasoning SHARES this budget, and `reasoning_effort=high` spends it first.
+# Measured 2026-08-17 on 14 candidates: at 4000 the model returned
+# finish_reason='length' with reasoning_tokens=4000 and an EMPTY answer -- the
+# whole ceiling went to hidden reasoning before a single character of JSON. That
+# had been every nightly run: billed for 4000 reasoning tokens, nothing written,
+# and reported as "model returned nothing parseable", which was never true.
+#
+# At 24000: finish_reason='stop', reasoning 6362, completion 7085, answer parses,
+# 14 of 14 judged. Matching _BATCH_MAX_TOKENS in ingest_league_narratives.py,
+# where this same lesson was already learned and left uncopied ("10000 truncated
+# 13 cards"). max_tokens is a CEILING, not a spend -- unused budget is not billed.
+_JUDGE_MAX_TOKENS = 24000
+
+
 def judge(con, candidates):
     """Ask the model which candidates are conversations, given the labels."""
     if not candidates:
@@ -296,7 +310,7 @@ def judge(con, candidates):
     marks = _exemplars(con)
     user = ("%s\n\nCandidates to judge:\n\n%s" % (marks, "\n\n".join(blocks))
             if marks else "Candidates to judge:\n\n%s" % "\n\n".join(blocks))
-    raw = _deepseek_chat(_JUDGE_SYSTEM, user, max_tokens=4000)
+    raw = _deepseek_chat(_JUDGE_SYSTEM, user, max_tokens=_JUDGE_MAX_TOKENS)
     if not raw:
         return None
     t = raw.strip()
@@ -332,11 +346,15 @@ def run(dry_run=False, window_days=_WINDOW_DAYS, no_judge=False):
                  "y" if f["convergence"] else "n", ",".join(f["stakes"][:3])))
     if dry_run or no_judge or not top:
         print("(stage 2 skipped)")
-        return
+        return True
     verdicts = judge(con, top)
     if verdicts is None:
-        print("Stage 2 FAILED (model returned nothing parseable) — no writes")
-        return
+        # False, not None. This used to return like any other path, so main()
+        # exited 0 and systemd recorded Result=success on a run that wrote
+        # nothing -- the failure was visible only to whoever read the log line.
+        # _deepseek_chat now prints WHY above this; see fail-loudly skill.
+        print("Stage 2 FAILED — no writes. The reason is on stderr above.")
+        return False
     kept = 0
     for c in top:
         v = verdicts.get(c["key"]) or {}
@@ -365,6 +383,7 @@ def run(dry_run=False, window_days=_WINDOW_DAYS, no_judge=False):
                                              v.get("rationale", "")[:80]))
     con.commit()
     print("Stage 2 — %d of %d proposed" % (kept, len(top)))
+    return True
 
 
 def list_candidates(con, status="proposed"):
@@ -432,8 +451,11 @@ def main():
     if args.reject:
         decide(con, args.reject, "rejected", args.note)
         return
-    run(dry_run=args.dry_run, window_days=args.days, no_judge=args.no_judge)
+    ok = run(dry_run=args.dry_run, window_days=args.days, no_judge=args.no_judge)
+    # A stage that reports its own failure must reach the exit code, or the timer,
+    # `systemctl status` and `Result=` all agree the run worked.
+    return 0 if ok else 1
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
