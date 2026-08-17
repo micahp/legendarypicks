@@ -1,9 +1,6 @@
 # Changelog
 
-## v0.8.1 — 2026-08-17
-
-Cut hours after v0.8.0 and before it was ever deployed, so that what ships to production is what
-was actually fixed. v0.8.0's tag stands; this is the same release with the afternoon's work in it.
+## v0.8.0 — 2026-08-17
 
 ### Every league the release ships is now audited
 
@@ -39,8 +36,6 @@ was actually fixed. v0.8.0's tag stands; this is the same release with the after
   `TOL`, `NFO` — Club América, Chivas, Puebla, Toluca, Nottingham Forest — filed under
   `league='mls'` because the props feed covered Leagues Cup fixtures. A tournament is not a
   league, and modelling it as one is what makes them unresolvable. Scheduled post-release.
-
-## v0.8.0 — 2026-08-17
 
 ### The props board stopped showing yesterday
 
