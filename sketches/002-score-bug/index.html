@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Variant B: Score Bug Strip</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700;800&family=Inter:wght@400;500;600;700&display=swap');
+  body { background: #09090b; font-family: 'Inter', -apple-system, sans-serif; }
+  .font-mono { font-family: 'JetBrains Mono', monospace; }
+
+  @keyframes breathe {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
+  }
+  .live-pulse { animation: breathe 2s ease-in-out infinite; }
+  @media (prefers-reduced-motion: reduce) {
+    .live-pulse { animation: none; opacity: 1; }
+  }
+</style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-8">
+
+<div class="w-full max-w-2xl space-y-8">
+
+  <!-- label -->
+  <div class="flex items-center gap-3">
+    <h2 class="text-sm font-semibold uppercase tracking-[0.15em] text-zinc-500">Variant B — Score Bug Strip</h2>
+    <div class="h-px flex-1 bg-zinc-800"></div>
+  </div>
+
+  <!-- === VARIANT B: Score Bug Strip === -->
+  <!-- Horizontal broadcast-style strip — like the top-of-screen bug on ESPN -->
+
+  <div class="rounded-xl bg-zinc-900 border border-zinc-800 overflow-hidden">
+
+    <!-- header row: live indicator + league label -->
+    <div class="flex items-center gap-2 px-4 pt-3 pb-2">
+      <span class="h-1.5 w-1.5 rounded-sm bg-emerald-500 live-pulse"></span>
+      <span class="text-[10px] font-semibold uppercase tracking-[0.2em] text-emerald-400">Live</span>
+      <span class="text-[10px] text-zinc-700">·</span>
+      <span class="text-[10px] font-medium text-zinc-500">5 games in progress</span>
+    </div>
+
+    <!-- featured game — sits larger in the strip -->
+    <a href="#" class="flex items-center justify-between px-4 py-3 hover:bg-zinc-800/50 transition-colors group border-t border-zinc-800/50">
+      <div class="flex items-center gap-3 min-w-0">
+        <span class="text-[10px] font-semibold uppercase tracking-wide text-zinc-500 w-8 shrink-0">MLB</span>
+        <span class="font-semibold text-zinc-100 truncate">Pirates</span>
+      </div>
+      <div class="flex items-center gap-3 shrink-0">
+        <span class="font-mono text-2xl font-bold tabular-nums text-zinc-100">3</span>
+        <span class="text-zinc-700 text-sm font-medium">–</span>
+        <span class="font-mono text-2xl font-bold tabular-nums text-zinc-100">3</span>
+      </div>
+      <div class="flex items-center gap-3 min-w-0 justify-end">
+        <span class="font-semibold text-zinc-100 truncate">Yankees</span>
+        <span class="text-[10px] font-semibold uppercase tracking-wide text-zinc-500 w-8 shrink-0 text-right">NYY</span>
+      </div>
+    </a>
+
+    <!-- divider with "more live" label -->
+    <div class="flex items-center gap-2 px-4">
+      <div class="h-px flex-1 bg-zinc-800"></div>
+      <span class="text-[10px] font-medium text-zinc-600">more live</span>
+      <div class="h-px flex-1 bg-zinc-800"></div>
+    </div>
+
+    <!-- secondary live chips — compact inline row -->
+    <div class="px-4 py-3 flex flex-wrap items-center gap-x-6 gap-y-2">
+      <a href="#" class="inline-flex items-center gap-2 text-xs hover:opacity-80 transition-opacity">
+        <span class="text-[10px] font-semibold text-zinc-500 w-7">NBA</span>
+        <span class="font-medium text-zinc-300">BOS</span>
+        <span class="font-mono tabular-nums text-zinc-400">102</span>
+        <span class="text-zinc-600">–</span>
+        <span class="font-mono tabular-nums text-zinc-400">98</span>
+        <span class="font-medium text-zinc-300">MIA</span>
+      </a>
+      <a href="#" class="inline-flex items-center gap-2 text-xs hover:opacity-80 transition-opacity">
+        <span class="text-[10px] font-semibold text-zinc-500 w-7">NHL</span>
+        <span class="font-medium text-zinc-300">TOR</span>
+        <span class="font-mono tabular-nums text-zinc-400">2</span>
+        <span class="text-zinc-600">–</span>
+        <span class="font-mono tabular-nums text-zinc-400">1</span>
+        <span class="font-medium text-zinc-300">MTL</span>
+      </a>
+      <a href="#" class="inline-flex items-center gap-2 text-xs hover:opacity-80 transition-opacity">
+        <span class="text-[10px] font-semibold text-zinc-500 w-7">ATP</span>
+        <span class="font-medium text-zinc-300">Alcaraz</span>
+        <span class="font-mono tabular-nums text-zinc-400">6–4</span>
+        <span class="font-medium text-zinc-300">Sinner</span>
+      </a>
+      <a href="#" class="inline-flex items-center gap-2 text-xs hover:opacity-80 transition-opacity">
+        <span class="text-[10px] font-semibold text-zinc-500 w-7">UFC</span>
+        <span class="font-medium text-zinc-300">Pereira</span>
+        <span class="text-zinc-500 text-[10px]">vs</span>
+        <span class="font-medium text-zinc-300">Adesanya</span>
+      </a>
+
+      <!-- esports link, subtle right -->
+      <div class="flex-1"></div>
+      <a href="#" class="text-[11px] font-medium text-zinc-600 hover:text-emerald-400 transition-colors">
+        Esports →
+      </a>
+    </div>
+
+  </div>
+
+</div>
+
+</body>
+</html>

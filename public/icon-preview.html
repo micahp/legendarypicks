@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LP icon preview</title>
+<style>
+  :root { color-scheme: dark; }
+  body { margin:0; font-family:system-ui,sans-serif; background:#0b0b0f; color:#aaa; }
+  h2 { text-align:center; font-weight:600; margin:24px 0 4px; color:#ddd; }
+  p  { text-align:center; margin:0 0 20px; font-size:13px; }
+  .row { display:flex; flex-direction:column; align-items:center; gap:8px; padding:18px 0; }
+  .label { font-size:12px; letter-spacing:.04em; text-transform:uppercase; color:#888; }
+  img { width:240px; height:240px; }
+  .checker {
+    background-image:
+      linear-gradient(45deg,#333 25%,transparent 25%),
+      linear-gradient(-45deg,#333 25%,transparent 25%),
+      linear-gradient(45deg,transparent 75%,#333 75%),
+      linear-gradient(-45deg,transparent 75%,#333 75%);
+    background-size:24px 24px;
+    background-position:0 0,0 12px,12px -12px,-12px 0;
+    border-radius:12px;
+  }
+  .dark   { background:#0b0b0f; }
+  .light  { background:#fff; border-radius:12px; }
+</style>
+</head>
+<body>
+  <h2>Legendary Picks icon</h2>
+  <p>transparent corners shown on 3 backgrounds</p>
+  <div class="row"><span class="label">on dark</span><img class="dark"    src="/logo-512.png" alt="LP on dark"></div>
+  <div class="row"><span class="label">on checkerboard</span><img class="checker" src="/logo-512.png" alt="LP on checker"></div>
+  <div class="row"><span class="label">on white</span><img class="light"  src="/logo-512.png" alt="LP on white"></div>
+</body>
+</html>

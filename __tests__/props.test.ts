@@ -1,6 +1,6 @@
 import React from 'react'
 import { render, waitFor } from '@testing-library/react'
-import PropsPage, { LEAGUES } from './props'
+import PropsPage, { LEAGUES } from '../pages/props'
 
 describe('Props league selector', () => {
   it('omits World Cup, puts UFC first with MLB after NHL, and carries tennis', () => {
