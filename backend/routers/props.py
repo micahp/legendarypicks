@@ -524,10 +524,9 @@ def ingest_props(batch: PropIngest):
                     pass
         else:
             game_id = game_row["id"]
-            if batch.start_time and not game_row["start_time"]:
-                con.execute(
-                    "UPDATE prop_games SET start_time=? WHERE id=?",
-                    (batch.start_time, game_id))
+            from link_prop_games import apply_start_time
+            apply_start_time(con, game_id, batch.start_time, game_row["start_time"],
+                             label="%s @ %s" % (batch.away, batch.home))
             # If existing game has no espn_event_id, try to link it now
             if not game_row["espn_event_id"] and not batch.espn_event_id:
                 try:

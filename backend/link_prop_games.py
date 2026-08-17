@@ -226,6 +226,51 @@ def _instant(value):
     return dt.astimezone(_dt.timezone.utc).replace(second=0, microsecond=0)
 
 
+def apply_start_time(con, game_id, published, stored, label=""):
+    """Store the publisher's kickoff instant, overwriting ours only when it DISAGREES.
+
+    Policy set by Micah 2026-08-17, replacing write-once. All three ingest paths
+    (`routers/props.py`, `bovada_scraper.py` x2) guarded on `if published and not stored`,
+    so the first value we ever saw was permanent: a publisher revising first pitch could
+    never propagate, which is ~20 of prod's 95 start_time disagreements. That is the +17h
+    /+19h class, separate from the +24h UTC-rollover class.
+
+    Write-once and last-writer-wins are both wrong here for the same reason -- neither asks
+    whether the two values differ:
+
+      * write-once  freezes a bad instant forever, and a wrong kickoff is not a cosmetic
+                    defect: the board files the game on the wrong day and settlement looks
+                    for it at the wrong time.
+      * last-writer every scrape rewrites the row on its 30-minute timer, so `mtime` and any
+        -wins     "what changed?" audit become noise, and a stale board can overwrite a
+                  good instant with an old one.
+
+    So: compare INSTANTS, not strings. `prop_games` stores `2026-08-11T01:40:00+00:00` and
+    ESPN sends `2026-08-11T01:40Z`; they are the same moment and must not count as a change.
+    A real disagreement is written and ANNOUNCED, because a moved kickoff is exactly the
+    signal a human wants to see in a run log -- it is usually a reschedule.
+
+    Note what this does NOT do: a game moved to a DIFFERENT DAY is not this function's
+    problem. Every ingest path looks its row up by (league, date, home, away), so a new date
+    creates a second row and leaves the original holding its props. Nothing in the pipeline
+    records postponements at all -- `team_game_results.status` only ever holds 'completed'
+    or 'scheduled' -- and ESPN issues makeups under a NEW event id, so the original can
+    never link to one. See BACKLOG-holes #46.
+
+    Returns "set", "moved", "same" or "skipped" so callers can count.
+    """
+    if not published:
+        return "skipped"          # never blank a known instant with a publisher's silence
+    if not stored:
+        con.execute("UPDATE prop_games SET start_time=? WHERE id=?", (published, game_id))
+        return "set"
+    if _instant(published) == _instant(stored):
+        return "same"
+    con.execute("UPDATE prop_games SET start_time=? WHERE id=?", (published, game_id))
+    print("    start_time moved%s: %s -> %s" % (label and " " + label, stored, published))
+    return "moved"
+
+
 def _fighter_key(name):
     """Accent-fold a fighter name to its alphanumeric identity key."""
     value = unicodedata.normalize("NFKD", str(name or "")).encode(

@@ -16,7 +16,7 @@ Source: Bovada's internal API — no auth, no Cloudflare, live odds.
 """
 import sys, json, os, re, collections, unicodedata, urllib.request, datetime as dt
 
-from link_prop_games import link_prop_game
+from link_prop_games import link_prop_game, apply_start_time
 import espn_client as espn
 
 API_BASE = os.environ.get("LP_API_BASE", "http://localhost:8000")
@@ -853,8 +853,8 @@ def _wc_direct_ingest(all_props: list, today: str):
             game_row = cur.fetchone()
             if game_row:
                 game_id = game_row["id"]
-                if game_start and not game_row["start_time"]:   # backfill a known kickoff time
-                    con.execute("UPDATE prop_games SET start_time=? WHERE id=?", (game_start, game_id))
+                apply_start_time(con, game_id, game_start, game_row["start_time"],
+                                 label="%s @ %s" % (batch["away"], batch["home"]))
             else:
                 cur = con.execute(
                     "INSERT INTO prop_games(league,date,home,away,espn_event_id,start_time) VALUES(?,?,?,?,?,?)",
@@ -1024,8 +1024,8 @@ def _ufc_direct_ingest(all_props: list, today: str) -> int:
                 )
             if row:
                 game_id = row["id"]
-                if game_start and not row["start_time"]:
-                    con.execute("UPDATE prop_games SET start_time=? WHERE id=?", (game_start, game_id))
+                apply_start_time(con, game_id, game_start, row["start_time"],
+                                 label="%s @ %s" % (batch["away"], batch["home"]))
             else:
                 game_id = con.execute(
                     "INSERT INTO prop_games(league,date,home,away,espn_event_id,start_time) VALUES(?,?,?,?,?,?)",
