@@ -41,6 +41,37 @@ Usage:
 
 Dry run by default. Idempotent: ADD COLUMN is skipped when present, and the
 backfill only writes rows whose value would change.
+
+Why this no longer classifies from `position` (2026-08-17)
+----------------------------------------------------------
+The first version read `players.position`, because on 2026-08-05 the constructs
+still carried 'DEF'/'TQB'/'HC' there. They do not any more, and the reason is
+this repo: `migrate_player_fantasy_positions.py` moved those labels out of
+`players.position` into `nfl_adp.position`, and it selects the rows to blank
+BY `entity_type`. So the two migrations were mutually destructive and
+order-dependent -- run fantasy_positions, then re-run this one, and all 96
+constructs are reclassified `unknown` because the column it reads is now empty
+by design.
+
+That is not hypothetical. It is what prod and dev were in this morning, and it
+is why `ingest_nfl_adp.py` had been failing every run since ~04:10 with
+`D/ST preflight: def_to_pid has 0 entries, expected 32`: that map is built
+`WHERE entity_type='team_defense'`, which matched nothing.
+
+So classify from the publisher's own encoding instead. ESPN's fantasy-football
+constructs are `-BASE - proTeamId`, a fact the feed states rather than one we
+derive, and no migration in this repo can empty it:
+
+    -16001..-16034   team_defense   (defaultPositionId 16)
+    -15001..-15034   team_qb        (15)
+    -14001..-14034   coach          (14)
+
+`position` remains a fallback for a database migrated in the other order, where
+the labels are still in place and the ids may not be.
+
+Second guard, independent of the first: this never downgrades a row that
+already carries a known category to `unknown`. Losing a classification must
+take an explicit decision, not a re-run.
 """
 from __future__ import annotations
 
@@ -61,14 +92,40 @@ POSITION_TO_ENTITY = {
 }
 
 
-def classify(position, espn_id) -> str:
-    """A negative ESPN id is the publisher saying 'this is not an athlete'."""
+# ESPN's fantasy-football construct ids are `-BASE - proTeamId`. The base is
+# the category; only NFL has these, so `league` gates it -- two NCAAF team rows
+# (-15591 CCU, -14550 FIU) sit inside the same numeric window and are not
+# fantasy constructs.
+ID_BASE_TO_ENTITY = {
+    -16000: "team_defense",
+    -15000: "team_qb",
+    -14000: "coach",
+}
+
+# A category, once recorded, is not taken away by a re-run. Only these may be
+# overwritten by a classification.
+_UNSET = (None, "", "unknown")
+
+
+def classify(position, espn_id, league=None) -> str:
+    """A negative ESPN id is the publisher saying 'this is not an athlete'.
+
+    Which construct it is comes from the id's base, not from `position` --
+    see the module docstring for what reading `position` cost. `position`
+    stays as the fallback for a database where the labels survive.
+    """
     try:
         negative = espn_id is not None and int(espn_id) < 0
     except (TypeError, ValueError):
         negative = False
     if not negative:
         return "player"
+    if (league or "").strip().lower() == "nfl":
+        magnitude = -int(espn_id)
+        base, offset = -(magnitude // 1000) * 1000, magnitude % 1000
+        # offset 0 would be the bare base, which is no team at all.
+        if offset and base in ID_BASE_TO_ENTITY:
+            return ID_BASE_TO_ENTITY[base]
     return POSITION_TO_ENTITY.get((position or "").strip().upper(), "unknown")
 
 
@@ -102,16 +159,26 @@ def main(argv=None) -> int:
 
         changes: dict[str, int] = {}
         updates = []
+        kept = 0
         for row in con.execute(
-                "SELECT id, position, espn_id, entity_type FROM players"):
-            want = classify(row["position"], row["espn_id"])
-            if row["entity_type"] != want:
-                updates.append((want, row["id"]))
-                changes[want] = changes.get(want, 0) + 1
+                "SELECT id, position, espn_id, entity_type, league FROM players"):
+            want = classify(row["position"], row["espn_id"], row["league"])
+            if row["entity_type"] == want:
+                continue
+            if want == "unknown" and row["entity_type"] not in _UNSET:
+                # Never downgrade. A row already classified stays classified;
+                # this run simply has less to go on than the one that set it.
+                kept += 1
+                continue
+            updates.append((want, row["id"]))
+            changes[want] = changes.get(want, 0) + 1
 
         for value, count in sorted(changes.items(), key=lambda kv: -kv[1]):
             print(f"  {value:14s} {count}")
         print(f"rows to set: {len(updates)}")
+        if kept:
+            print(f"rows left alone: {kept} already classified, would have "
+                  f"become 'unknown' (never downgrade)")
 
         if not args.apply:
             print("\ndry run -- nothing written. re-run with --apply")
