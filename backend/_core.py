@@ -661,6 +661,43 @@ def _pick_one(rows, nteam: str, game_teams: set):
     return None
 
 
+_FOLDED_NAME_INDEX = {}
+
+
+def _folded_name_index(con, league: str) -> dict:
+    """{folded_name: [player rows]} for one league, rebuilt when the league changes.
+
+    There is no stored normalized column to index, and adding one would need every writer
+    to maintain it -- a second definition of "the same name" that drifts silently, which is
+    the defect this exists to fix. So the fold is computed from `players` itself and cached
+    per process, stamped with (row count, max id, max updated_at). Any insert, delete or
+    rename moves the stamp and the map is rebuilt; a stale map can never outlive a write.
+
+    The API server is long-lived, so the stamp query runs per resolve. It is one aggregate
+    over an indexed column, and it is what makes the cache safe to keep.
+    """
+    has_updated_at = any(
+        r[1] == "updated_at" for r in con.execute("PRAGMA table_info(players)"))
+    if has_updated_at:
+        stamp = tuple(con.execute(
+            "SELECT COUNT(*), COALESCE(MAX(id),0), COALESCE(MAX(updated_at),'') "
+            "FROM players WHERE league=?", (league,)).fetchone())
+        cached = _FOLDED_NAME_INDEX.get(league)
+        if cached is not None and cached[0] == stamp:
+            return cached[1]
+    else:
+        # A `players` without updated_at (test fixtures, and any future schema that drops
+        # it) gives no signal that a row was RENAMED in place, and a cache that can go
+        # stale without knowing it is worse than no cache. Rebuild every call instead.
+        stamp = None
+    index = {}
+    for row in con.execute("SELECT id, name, team FROM players WHERE league=?", (league,)):
+        index.setdefault(_normalize_name(row["name"]), []).append(row)
+    if stamp is not None:
+        _FOLDED_NAME_INDEX[league] = (stamp, index)
+    return index
+
+
 def _resolve_player_for_ingest(con, player_name: str, team: str, league: str, source: str = "props",
                                game_id=None):
     """Resolve a player name to players.id via the identity spine.
@@ -668,6 +705,7 @@ def _resolve_player_for_ingest(con, player_name: str, team: str, league: str, so
     Resolution order (deterministic, NO silent creates):
     1. Exact name + league (fast path for already-matched players)
     2. Normalized name + team + league (deterministic spine match)
+    2b. Folded name on both sides + league (diacritics/case/punctuation)
     3. name_alias table (known nicknames/alternate spellings)
     4. If nothing matches → write to unresolved_players, return None
 
@@ -707,6 +745,26 @@ def _resolve_player_for_ingest(con, player_name: str, team: str, league: str, so
         ).fetchall()
         if len(cands) == 1:
             return (cands[0]["id"], "high")
+
+    # 2b. Folded name on BOTH sides.
+    #
+    # Step 2 folds accents off the INCOMING name and then compares it to the stored name
+    # unfolded, so `Thomas Muller` from a sportsbook never matches `Thomas Müller` as ESPN
+    # publishes him -- and the miss is silent, because a name that resolves to nothing is
+    # indistinguishable from a player we do not carry. Measured on the MLS board
+    # 2026-08-16: 53 of 74 unresolved names had an exact same-team match in the spine
+    # differing only by a diacritic or a capital (Christian Ramírez, Andrés Cubas, Albert
+    # Rusnák, Kim Kee-Hee). This is the "ambiguous key never raises -- it MISSES" shape.
+    #
+    # Deliberately NOT name_alias: that table is for reviewed judgment calls ("Matt" for
+    # "Matthew"), and it holds 2 rows. Folding a diacritic is not a judgment call, so it
+    # belongs on the deterministic path where every league gets it. Ambiguity is still
+    # refused -- _pick_one is the same tiebreak the exact-name path uses.
+    cands = _folded_name_index(con, league).get(nname) or []
+    if cands:
+        picked = _pick_one(cands, nteam, game_teams)
+        if picked is not None:
+            return (picked, "high")
 
     # 3. name_alias lookup
     row = con.execute(
