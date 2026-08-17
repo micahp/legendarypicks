@@ -93,8 +93,15 @@ def _init_db():
         -- An ESPN event id IS the identity of a game, so two rows carrying one must not
         -- exist. Prod held 59 events across 124 rows, and it was not tidiness: settlement
         -- works one prop_games row at a time, so the props that landed on the second row
-        -- were never graded against anything. That is prod's June hole -- 14,046 unsettled
-        -- MLB props against 693 settled.
+        -- were never graded against anything.
+        --
+        -- Sized honestly, because an earlier version of this comment claimed the duplicates
+        -- WERE prod's June hole and that was wrong. Of June's 14,124 unsettled MLB props
+        -- (against 693 settled), the partition on 2026-08-17 was: 827 on rows never linked,
+        -- 4,467 on linked rows holding no final score, 2,212 on duplicated rows, and 6,618
+        -- on rows that are linked, unique, and final -- unexplained by any of this. The
+        -- duplicates are 16% of it. Removing them is worth doing on its own terms; it is
+        -- not the fix for June.
         --
         -- They arise honestly. prop_games.date comes from a UTC first pitch while ESPN's
         -- scoreboard is keyed by LOCAL date, so one fixture arrives under two calendar
