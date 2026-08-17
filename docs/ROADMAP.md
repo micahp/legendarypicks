@@ -51,12 +51,44 @@ understands it** (see `feedback_schema_must_not_outrun_prod_code`). Additive nul
 safe; constraints and indexes are not, because the writer that has to satisfy them is frozen at
 image-build time.
 
-### Release gates — 8 red as of 2026-08-17 (evening), and only ONE blocks the cut
+### ⛔ STOP — `verify-gates.sh` IS NOT THE RELEASE BLOCKER LIST. Corrected 2026-08-17 (night).
 
-`./verify-gates.sh` → **24 passed, 8 failed**. The count is the wrong thing to read. What
-decides whether v0.8.0 can be cut is the question in "Sequencing" below — *does this need code
-or a constraint to be correct?* Sorted that way, the eight fall into three groups and only the
-last one holds the release:
+**Everything in this section was measured against the wrong list.** The blockers named below —
+including "only REG-jest-all holds the tag" — were read off `verify-gates.sh`, which is the
+dev-side gate suite. The release preflight is a **different and shorter** list, defined in
+`scripts/release.sh` and restated in `TASK-codex-v080-release.md` §2:
+
+1. working tree clean, `v0.8.0` absent locally and on origin
+2. `CHANGELOG.md` has a `## v0.8.0` section (the script deliberately does not generate notes)
+3. nothing DEPRECATED/SUPERSEDED still reachable
+4. `diff_databases.py --quiet` → zero SCHEMA/SEASONS (volume is advisory)
+5. `audit_league_stats.py` vs **prod** → zero FAIL (UNVERIFIED does not block)
+
+**Measured 2026-08-17 night: `scripts/release.sh 0.8.0 --dry-run` exits 0.** Schema and seasons
+agree; the blocking league set (nfl mlb nba nhl ufc ncaaf) reports **80 passed, 0 FAIL**, 3
+UNVERIFIED. So none of the gates below were ever standing between us and the tag.
+
+Two specific corrections to what this file said for a week:
+
+- **"2 gate FAILs, mls and ncaaf `C/vocabulary[position]`" is dead.** NCAAF now reports **zero
+  FAIL**. MLS still has 3 (position, position_group, leaders-reach-logs at 39%) but MLS is
+  **REPORTED, not blocking** — the audit prints `^ mls is REPORTED, not blocking. 3 FAIL to go.`
+- **`REG-jest-all` does not block a release.** WCContext is worth fixing on its merits; it is
+  not a gate the preflight reads.
+
+**What actually blocked the cut, for a week, was none of this.** It was three tracked files that
+a runtime process rewrites — `backend/.espn-cache` (96MB, 218 files, swept in accidentally by
+`8b296db`), the Bovada backoff state, and one esports logo key — failing the clean-tree check;
+plus `package.json` sitting at 0.8.0 from a hand-bump that was never tagged, which makes
+`release.sh` refuse (`nothing to bump`). All four fixed in `fdf9032`, `737bc0a`, `5da04d7`,
+`29e5283`. The lesson is the general one: **we were reading a green/red board that no one had
+checked was the board the release actually consults.**
+
+Keep the sections below for the gate detail — they are accurate *about the gates*. Just do not
+read them as release blockers.
+
+`./verify-gates.sh` → **24 passed, 8 failed**. Sorted by *does this need code or a constraint to
+be correct?* the eight fall into three groups:
 
 **Group 1 — deploy skew. The release IS the fix; they cannot go green before it.**
 
@@ -76,7 +108,8 @@ hold the cut.**
 | REG-adp-dst | FAIL | `HOU` off expected (236 vs 223) |
 | COV-statset | FAIL | 9 of a known 21 open — **expected red**, see `docs/LEAGUE-STAT-GAPS.md` |
 
-**Group 3 — code. This one, and only this one, must be green before the tag.**
+**Group 3 — code.** (Previously headed "this one, and only this one, must be green before the
+tag." That was wrong — see the correction at the top of this section. It is not a preflight check.)
 
 | gate | state | note |
 |---|---|---|
