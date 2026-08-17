@@ -1,0 +1,32 @@
+{
+ "atp": {
+  "empty_runs": 0
+ },
+ "mlb": {
+  "empty_runs": 2,
+  "last_empty_at": "2026-08-17T04:55:51.553554+00:00"
+ },
+ "nba": {
+  "empty_runs": 1,
+  "last_empty_at": "2026-08-17T04:55:33.544443+00:00"
+ },
+ "nfl": {
+  "empty_runs": 0
+ },
+ "nhl": {
+  "empty_runs": 0
+ },
+ "ufc": {
+  "empty_runs": 0
+ },
+ "wc": {
+  "empty_runs": 1,
+  "last_empty_at": "2026-08-17T04:55:34.152533+00:00"
+ },
+ "wnba": {
+  "empty_runs": 0
+ },
+ "wta": {
+  "empty_runs": 0
+ }
+}

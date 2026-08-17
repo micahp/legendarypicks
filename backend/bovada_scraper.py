@@ -29,10 +29,21 @@ LEAGUES = {
     "nhl":  ("hockey", "nhl"),
     "wnba": ("basketball", "wnba"),
     "wc":   ("soccer", "fifa-world-cup/fifa-world-cup-matches"),
-    # Bovada files MLS by continent, not by country code. `soccer/usa/mls` and
-    # `soccer/united-states/mls` both 404, which is how a probe on 2026-08-16 first
-    # concluded "Bovada has no MLS" -- it has 14 fixtures and 1,464 player outcomes.
-    "mls":  ("soccer", "north-america/united-states/mls"),
+    # MLS was here from 2026-08-16 until later the same day, on the continent path
+    # `soccer/north-america/united-states/mls` (`soccer/usa/mls` 404s). It scraped fine —
+    # 1,461 of 1,464 published player outcomes, 8 markets.
+    #
+    # It is REMOVED because Bovada cannot price the markets this league is being built for.
+    # Of the eleven that matter — shots, shots on target, passes attempted, goals, goalie
+    # saves, clearances, assists, attempted dribbles, tackles, crosses, fouls — Bovada
+    # publishes two. MLS props now come from the RotoWire/PrizePicks relay, which prices
+    # seven (see docs/ROTOWIRE-PICKS-RELAY.md and ingest_rotowire_mls_props.py). Keeping a
+    # second book writing goals and assists into the same board would mean two sources
+    # disagreeing on a league where one of them answers almost none of the question.
+    #
+    # Historical Bovada MLS rows are kept, not deleted; the reader's source policy selects
+    # the relay. `_parse_mls_props` stays in this file — it is measured, tested, and the
+    # league is one line away if the relay does not work out.
     "ufc":  ("ufc-mma", "ufc"),
     "atp":  ("tennis", "atp"),
     "wta":  ("tennis", "wta"),
@@ -105,6 +116,73 @@ MARKET_MAP = {
     "player to record a double": "double_any",
     "player to record a triple": "triple_any",
 }
+
+
+# Per-league backoff state: {league: {"last_empty_at": iso, "empty_runs": n}}.
+# Kept beside the DB rather than in it — it is operational scheduling, not app data.
+_BACKOFF_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                             "data", "bovada-league-backoff.json")
+
+# An out-of-season league is asked for again after this long. UFC sits at zero players
+# between cards, tennis between tournaments, WNBA/NBA out of season — and this scraper ran
+# `all` every 30 minutes regardless, so each of those cost 48 requests a day to be told
+# "no board" 48 times. Bovada gives this API away with no auth and no key; asking it 48
+# times for an answer that changed once is a cost we push onto them for nothing.
+_EMPTY_RUNS_BEFORE_BACKOFF = 3
+_BACKOFF_HOURS = 6
+
+
+def _load_backoff() -> dict:
+    try:
+        with open(_BACKOFF_PATH) as fh:
+            return json.load(fh)
+    except (OSError, ValueError):
+        return {}
+
+
+def _save_backoff(state: dict):
+    try:
+        with open(_BACKOFF_PATH, "w") as fh:
+            json.dump(state, fh, indent=1, sort_keys=True)
+    except OSError as exc:  # noqa: BLE001 - never let scheduling state break a scrape
+        print(f"  (could not persist backoff state: {exc})")
+
+
+def _should_fetch(league: str, state: dict):
+    """(fetch?, why) — has this league been empty often enough to deserve a rest?
+
+    Fails OPEN. A league with no recorded history is always fetched: this coupon is how we
+    DISCOVER that a season started, so refusing to look would make the backoff
+    self-fulfilling. Only a league that has actually answered "no board" several times in a
+    row gets rested, and only for a few hours.
+    """
+    entry = state.get(league) or {}
+    if (entry.get("empty_runs") or 0) < _EMPTY_RUNS_BEFORE_BACKOFF:
+        return True, ""
+    last = entry.get("last_empty_at")
+    if not last:
+        return True, ""
+    try:
+        when = dt.datetime.fromisoformat(last)
+    except ValueError:
+        return True, ""
+    if when.tzinfo is None:
+        when = when.replace(tzinfo=dt.timezone.utc)
+    rested = (dt.datetime.now(dt.timezone.utc) - when).total_seconds() / 3600.0
+    if rested < _BACKOFF_HOURS:
+        return False, (f"no board on the last {entry['empty_runs']} runs; "
+                       f"resting {_BACKOFF_HOURS - rested:.1f}h more")
+    return True, ""
+
+
+def _record_result(league: str, state: dict, event_count: int):
+    entry = state.setdefault(league, {})
+    if event_count:
+        entry["empty_runs"] = 0
+        entry.pop("last_empty_at", None)
+    else:
+        entry["empty_runs"] = (entry.get("empty_runs") or 0) + 1
+        entry["last_empty_at"] = dt.datetime.now(dt.timezone.utc).isoformat()
 
 
 def fetch_events(sport: str, league: str) -> list:
@@ -343,6 +421,10 @@ _STALE_TEAM_TAGS = {}
 # too -- a mint that reads the same as a match in the log is how 531 shadow MLS players
 # reached prod without anyone noticing.
 _MINTED_PLAYERS = []
+
+# Leagues skipped this run by the backoff, named in the report so a rest is never
+# mistaken for a league that produced nothing.
+_RESTED_LEAGUES = []
 
 
 def _report_unmapped_market(league: str, group: str, market_desc: str, n_outcomes: int):
@@ -1025,7 +1107,13 @@ def main():
     resolve_counts = {}
     today = dt.date.today().isoformat()
 
+    backoff = _load_backoff()
     for key, (sport, lg) in targets:
+        fetch, why = _should_fetch(key, backoff)
+        if not fetch:
+            print(f"Skipping {key.upper()} — {why}")
+            _RESTED_LEAGUES.append(key)
+            continue
         print(f"Fetching {key.upper()} from Bovada...")
         try:
             events = fetch_events(sport, lg)
@@ -1033,6 +1121,7 @@ def main():
             print(f"  FAIL: {e}")
             continue
 
+        _record_result(key, backoff, len(events))
         print(f"  {len(events)} events")
 
         for ev in events:
@@ -1042,6 +1131,7 @@ def main():
                 print(f"  {game_desc}: {len(props)} props")
                 all_props.extend(props)
 
+    _save_backoff(backoff)
     print(f"\nTotal props scraped: {len(all_props)}")
 
     if all_props:
@@ -1147,6 +1237,8 @@ def _run_report(resolve_counts: dict, did_ingest: bool) -> int:
     problems = []
 
     print("\n--- run report ---")
+    print(f"  leagues rested this run (no request made): {len(_RESTED_LEAGUES)}"
+          + (" — " + ", ".join(_RESTED_LEAGUES) if _RESTED_LEAGUES else ""))
     print(f"  unmapped player markets: {len(_UNMAPPED_PLAYER_MARKETS)}")
     for (lg, group, desc), n in sorted(_UNMAPPED_PLAYER_MARKETS.items()):
         print(f"      UNMAPPED {lg} [{group}] {desc!r}"

@@ -44,9 +44,22 @@ row for a fixture we already have, splitting one game's board across two ids —
 shape that made 714 MLS props unreachable. A fixture that does not resolve is REPORTED and
 skipped.
 
+STATUS 2026-08-16: OFF. Not scheduled, and refuses to run without --enable.
+
+MLS props come from the RotoWire/PrizePicks relay. Of the eleven markets this league is
+being built for — shots, shots on target, passes attempted, goals, goalie saves,
+clearances, assists, attempted dribbles, tackles, crosses, fouls — Kambi prices goals,
+assists, and a shots-on-target market that appeared on one fixture of thirty-two. The relay
+prices seven. Two sources writing goals and assists into the same board, where one of them
+answers almost none of the question, is a disagreement to adjudicate for no gain.
+
+The file is kept because the measurement in it is real and the league is one flag away if
+the relay does not work out. It is inert rather than deleted for the same reason
+`_parse_mls_props` stays in bovada_scraper.py.
+
 Usage:
-  python3 ingest_kambi_mls_props.py                 # scrape and report, write nothing
-  python3 ingest_kambi_mls_props.py --ingest        # POST to the resolver API
+  python3 ingest_kambi_mls_props.py --enable            # scrape and report, write nothing
+  python3 ingest_kambi_mls_props.py --enable --ingest   # POST to the resolver API
 """
 import argparse
 import collections
@@ -287,7 +300,20 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     parser.add_argument("--ingest", action="store_true",
                         help="POST to the resolver API (writes props)")
+    parser.add_argument("--enable", action="store_true",
+                        help="required: this source is OFF (MLS props come from the "
+                             "RotoWire/PrizePicks relay)")
     args = parser.parse_args(argv)
+
+    if not args.enable:
+        # Refuses rather than quietly doing nothing. A disabled ingest that exits 0 with no
+        # output is indistinguishable from one that ran and found an empty board, and this
+        # repo has paid for that confusion before.
+        print("DISABLED — Kambi is not the MLS source. It prices 3 of the 11 markets this "
+              "league needs; the RotoWire/PrizePicks relay prices 7.")
+        print("  Pass --enable to run it anyway (manual comparison only). Nothing was "
+              "fetched and nothing was written.")
+        return 4
 
     scraped, unmapped, skipped_inplay, unknown_types = scrape()
     total = sum(len(props) for _, props in scraped)

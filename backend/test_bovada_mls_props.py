@@ -43,10 +43,20 @@ class MLSPropParsingTests(unittest.TestCase):
         bs._UNMAPPED_PLAYER_MARKETS.clear()
         bs._STALE_TEAM_TAGS.clear()
 
-    def test_mls_is_a_known_league_on_the_continent_path(self):
-        """`soccer/usa/mls` 404s; the live board is filed under North America."""
-        self.assertEqual(bs.LEAGUES["mls"],
-                         ("soccer", "north-america/united-states/mls"))
+    def test_mls_is_not_scraped_from_bovada_but_the_parser_is_kept(self):
+        """Bovada is no longer the MLS source; the parser stays usable.
+
+        MLS props come from the RotoWire/PrizePicks relay, which prices 7 of the 11 markets
+        this league is being built for against Bovada's 2. The league was in LEAGUES for a
+        few hours on 2026-08-16 under `soccer/north-america/united-states/mls` — the
+        continent path, since `soccer/usa/mls` 404s — and that route is recorded here
+        because rediscovering it cost real time once already.
+
+        The parser is not deleted with the route. It is measured and tested, and the league
+        is one line away if the relay does not work out.
+        """
+        self.assertNotIn("mls", bs.LEAGUES)
+        self.assertTrue(callable(bs._parse_mls_props))
 
     def test_goal_ladder_is_one_market_at_three_lines(self):
         """Anytime / 2+ / hat trick all settle from the published `goals` stat."""
