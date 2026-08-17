@@ -186,6 +186,10 @@ def _better_home(con, conv, headline, own_entities=(), _cache={}):
 _MAX_SOURCES = 12
 _MIN_ITEMS = 2  # fewer than this and there's no "chatter" to summarize
 _BATCH_MAX_TOKENS = 24000  # reasoning shares this budget; 10000 truncated 13 cards
+# One card, not thirteen — but reasoning_effort=high spends the ceiling BEFORE
+# the answer, so the floor is set by the reasoning, not by the output size.
+# Measured 2026-08-17: a comparable single call spent 6362 reasoning tokens.
+_SINGLE_MAX_TOKENS = 12000
 _BATCH_CHUNK = 4           # fallback width when the wide batch will not parse
 _ANCHORS = 6               # real articles shown per card, best-scoring first
 _TIE_ALARM = 8             # candidates tied at the top score = the seed did nothing
@@ -1451,8 +1455,16 @@ def _generate(conv, items, marks=""):
     # conversation whose chatter is ALL social still gets a card — that
     # chatter IS the signal (e.g. MLS relegation/promotion talk) — it just
     # renders with no source chips rather than being dropped entirely.
+    # _SINGLE_MAX_TOKENS, not 4000. Reasoning shares this budget and spends it
+    # first, so a ceiling the reasoning alone can exhaust returns an EMPTY answer
+    # with finish_reason='length' -- which `_parse_response` cannot tell from a
+    # malformed one, so this loop burned the ceiling TWICE and called it
+    # unparseable. Measured on discover_topics' judge call, the same shape and
+    # the same day: 4000 -> reasoning_tokens 4000, content length 0.
+    # _BATCH_MAX_TOKENS above already carried this lesson ("10000 truncated 13
+    # cards"); it just never reached this path.
     for attempt in (0, 1):
-        raw = _deepseek_chat(_SYSTEM, user, max_tokens=4000)
+        raw = _deepseek_chat(_SYSTEM, user, max_tokens=_SINGLE_MAX_TOKENS)
         parsed = _parse_response(raw)
         if parsed is None:
             continue  # unparseable — retry once
