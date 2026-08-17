@@ -337,6 +337,13 @@ _UNMAPPED_PLAYER_MARKETS = {}
 # never given a fair chance at.
 _STALE_TEAM_TAGS = {}
 
+# [(league, name)] for every `players` row this run created from a sportsbook display name
+# with no publisher id behind it. Only the wc and ufc direct-DB paths can do this; every
+# other league goes through the resolver, which never creates. Printed by main() at zero
+# too -- a mint that reads the same as a match in the log is how 531 shadow MLS players
+# reached prod without anyone noticing.
+_MINTED_PLAYERS = []
+
 
 def _report_unmapped_market(league: str, group: str, market_desc: str, n_outcomes: int):
     """Record a player-attributed market we have no mapping for.
@@ -798,10 +805,22 @@ def _wc_direct_ingest(all_props: list, today: str):
                 if pl:
                     player_id = pl["id"]
                 else:
+                    # Minting a `players` row out of a sportsbook display name, with no
+                    # publisher id behind it. This is the shape that put 531 shadow players
+                    # into prod MLS: rows with no espn_id, no game logs and props attached,
+                    # duplicating athletes the spine already held, so prop -> player ->
+                    # game_log never joined for any of them.
+                    #
+                    # It stays for `wc` because the World Cup spine is genuinely built this
+                    # way (Phase 1, name-match only) and there is no ESPN id to resolve
+                    # against. What changed is that it is COUNTED. A mint used to be
+                    # indistinguishable from a match in the run output, which is why nobody
+                    # noticed 531 of them.
                     cur = con.execute(
                         "INSERT INTO players(name, team, league) VALUES(?,?,?)",
                         (pname, pteam if pteam else None, "wc"))
                     player_id = cur.lastrowid
+                    _MINTED_PLAYERS.append(("wc", pname))
 
                 odds_val = p.get("odds")
                 line_val = p.get("line") or 0
@@ -865,6 +884,9 @@ def _resolve_ufc_player_for_bovada(con, player_name: str) -> int:
         return aliases[0]["id"]
     if len(aliases) > 1:
         raise RuntimeError("ambiguous UFC reviewed alias from Bovada: {}".format(player_name))
+    # Same mint, same accounting: a fighter Bovada names that no canonical row and no
+    # reviewed alias matches becomes a new row, and the run says so.
+    _MINTED_PLAYERS.append(("ufc", player_name))
     return con.execute(
         "INSERT INTO players(name, team, league) VALUES(?,?,?)",
         (player_name, None, "ufc"),
@@ -1130,6 +1152,13 @@ def _run_report(resolve_counts: dict, did_ingest: bool) -> int:
         print(f"      UNMAPPED {lg} [{group}] {desc!r}"
               f" — {n['outcomes']} outcomes across {n['events']} events, NOT ingested")
         problems.append(f"unmapped market {lg}:{desc}")
+
+    print(f"  players minted from a sportsbook name (no publisher id): "
+          f"{len(_MINTED_PLAYERS)}")
+    for league, name in _MINTED_PLAYERS[:20]:
+        print(f"      MINTED {league} {name!r} — no espn_id, no game logs")
+    if len(_MINTED_PLAYERS) > 20:
+        print(f"      ... and {len(_MINTED_PLAYERS) - 20} more")
 
     print(f"  outcomes tagged with a club not in the fixture: {len(_STALE_TEAM_TAGS)}")
     for (name, code), game in sorted(_STALE_TEAM_TAGS.items()):
