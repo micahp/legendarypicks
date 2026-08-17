@@ -59,7 +59,6 @@ import sqlite3
 import sys
 
 import espn_client as espn
-import paced_http
 
 TOLERANCE_SECONDS = 60
 
@@ -236,12 +235,6 @@ def main():
     espn.set_min_interval(float(os.environ.get("LP_ESPN_MIN_INTERVAL", "0.5")))
     espn.set_disk_cache(os.environ.get("LP_ESPN_CACHE_DIR") or os.path.join(
         os.path.dirname(os.path.abspath(__file__)), ".espn-cache"), ttl=86400)
-    # Count against the ledger every process on this box shares, so this run refuses at
-    # the wall instead of discovering it partway through a write.
-    espn.set_persist_spend(True)
-    spent = paced_http.host_spend_report()
-    if spent:
-        print(f"host spend in the last {paced_http.SPEND_WINDOW:.0f}s (all processes): {spent}")
 
     con = sqlite3.connect(os.path.abspath(args.db))
     con.row_factory = sqlite3.Row
