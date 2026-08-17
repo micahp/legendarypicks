@@ -7,6 +7,27 @@ from _core import *
 router = APIRouter()
 
 
+# What "still on the board" means, in ONE place because the slate has two query paths (summary and
+# fully-nested) and they must not drift apart.
+#
+# It used to be `pg.date >= date('now')`, and that is two different rulers in one board: `pg.date`
+# is a UTC calendar date, but the client groups and labels every game by its LOCAL date derived
+# from start_time. A match at 2026-08-17T00:30Z is stored under Aug 17 and rendered as "Sun,
+# Aug 16, 7:30 PM" -- so on 2026-08-17 the first thing on the board was a header for YESTERDAY
+# holding four games that had already finished (both Sunday-night MLS fixtures, Tiafoe/Sonego,
+# Svitolina/Valentova). The board looked frozen in time.
+#
+# So filter on the instant, not the calendar date. The 3-hour grace keeps a game that is currently
+# being played on the board and drops it once it is over; a pregame props board that still lists a
+# finished game is offering a bet nobody can take.
+#
+# COALESCE matters: 17 of the 75 upcoming MLS rows carry no start_time at all (2026-08-17), and a
+# bare start_time comparison would silently delete them from the board. Those fall back to the end
+# of their stored date, so a row with no time survives the whole day it is dated for.
+_UPCOMING = ("datetime(COALESCE(NULLIF(pg.start_time, ''), pg.date || 'T23:59:59Z')) "
+             ">= datetime('now', '-3 hours')")
+
+
 _CorePropIngest = PropIngest
 
 
@@ -255,7 +276,7 @@ def props_slate(league: Optional[str] = Query(None),
             filters += " AND pg.date = ?"
             filter_params.append(date)
         else:
-            filters += " AND pg.date >= date('now')"
+            filters += " AND " + _UPCOMING
 
         gsql = ("SELECT pg.id AS game_id, pg.home, pg.away, pg.date AS game_date, pg.start_time, "
                 "pg.league, COUNT(p.id) AS prop_count "
@@ -312,7 +333,7 @@ def props_slate(league: Optional[str] = Query(None),
         # No specific date → the UPCOMING slate: today forward only. This both drops stale past games
         # (e.g. months-old MLB that never pruned) and lets the client show the whole slate grouped by
         # date, Bovada-style. The exact-date path stays for deep links / the date navigator.
-        sql += " AND pg.date >= date('now')"
+        sql += " AND " + _UPCOMING
     sql += " ORDER BY pg.date, pg.home, pg.away, pl.name, p.market, p.side"
     with closing(_db()) as con:
         rows = con.execute(sql, params).fetchall()
