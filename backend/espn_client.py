@@ -156,6 +156,21 @@ def set_host_budget(budget, cooldown=None):
     return prev
 
 
+def set_persist_spend(enabled=True):
+    """Count this process's requests against a ledger every process shares.
+
+    For batch callers. ESPN counts per host across everything on the box, so a series of
+    short-lived scripts each staying under 100 can still spend 400 between them and get a
+    403 nobody's guard predicted — measured 2026-08-17. With this on, the budget refuses
+    instead, raising paced_http.HostBudgetExhausted before the request goes out.
+
+    Leave it off for serving paths: they must not inherit a batch job's spend.
+    """
+    prev = _FETCHER.persist_spend
+    _FETCHER.persist_spend = bool(enabled)
+    return prev
+
+
 # The in-memory cache is the Fetcher's dict, exposed under the name this module
 # has always used. Callers and tests that reach for `espn_client._CACHE` are
 # asserting prod behaviour and should not have to know where the mechanism moved.
