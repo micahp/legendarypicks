@@ -66,11 +66,45 @@ _CORE_PATH = {
 }
 _SCOPE_GROUP = {"mls": None, "ncaaf": "80"}
 _REG_TYPE_ID = {"mls": "1", "ncaaf": "2"}
-_SEASON = {"mls": 2025, "ncaaf": 2025}
+_SEASON_CACHE = {}
 
 
 def _get(url: str, ttl: int = 43200) -> dict:
     return espn._get(url, ttl=ttl)
+
+
+def _season(league: str) -> int:
+    """The season ESPN currently publishes for this league.
+
+    This was `_SEASON = {"mls": 2025, "ncaaf": 2025}`. A season is a definition,
+    and a definition is always published (published-first rung 5) -- hardcoding
+    one means the roster sync silently serves last year's squads the moment the
+    calendar turns. Measured 2026-08-16: ESPN published 2026 for both leagues
+    while this constant still said 2025, so every MLS roster fetch returned the
+    2025 squad (Atlanta: Brad Guzan present, Lucas Hoyos absent) and 146 players
+    carrying live 2026 Bovada props matched nothing in the spine.
+
+    `/seasons?limit=1` returns newest-first, so the year in the first $ref is
+    the current season. There is deliberately no fallback: a stale constant is
+    exactly the failure this replaces, and guessing a year would reintroduce it
+    quietly. LP_ROSTER_SEASON overrides for backfills of a specific season.
+    """
+    override = os.environ.get("LP_ROSTER_SEASON")
+    if override:
+        return int(override)
+    if league in _SEASON_CACHE:
+        return _SEASON_CACHE[league]
+    path = _CORE_PATH[league]
+    d = _get(f"{_CORE.format(path=path)}/seasons?limit=1", ttl=43200)
+    items = d.get("items") or []
+    ref = items[0].get("$ref") if items and isinstance(items[0], dict) else None
+    m = re.search(r"/seasons/(\d{4})", ref or "")
+    if not m:
+        raise RuntimeError(
+            "ESPN published no current season for {} (asked {}/seasons?limit=1)"
+            .format(league, path))
+    _SEASON_CACHE[league] = int(m.group(1))
+    return _SEASON_CACHE[league]
 
 
 def _vocabulary():
@@ -153,7 +187,7 @@ def _core_team_abbrev(league, team_id):
     """Abbreviation from the core team doc (one request per team)."""
     path = _CORE_PATH[league]
     try:
-        d = _get(f"{_CORE.format(path=path)}/seasons/{_SEASON[league]}"
+        d = _get(f"{_CORE.format(path=path)}/seasons/{_season(league)}"
                  f"/teams/{team_id}")
         return str(d.get("abbreviation") or "").upper() or None
     except Exception:  # noqa: BLE001
@@ -198,7 +232,7 @@ def _group_whitelist(league):
     scope = _SCOPE_GROUP[league]
     if not scope:
         return None
-    season = _SEASON[league]
+    season = _season(league)
     type_id = _REG_TYPE_ID[league]
     base = _CORE.format(path=_CORE_PATH[league])
     d = _get(f"{base}/seasons/{season}/types/{type_id}"
@@ -222,7 +256,7 @@ def _fetch_roster(league, team_id, limit=200):
     path = _SITE_PATH[league]
     url = _SITE.format(path=path) + f"/teams/{team_id}/roster?limit={limit}"
     if league == "mls":
-        url += f"&season={_SEASON[league]}"
+        url += f"&season={_season(league)}"
     d = _get(url)
     out = []
     for a in d.get("athletes", []) or []:
