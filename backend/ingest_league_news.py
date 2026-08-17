@@ -227,27 +227,54 @@ BLUESKY_SEARCH = "https://api.bsky.app/xrpc/app.bsky.feed.searchPosts"  # public
 BLUESKY_PDS = "https://bsky.social"
 
 
-def _bsky_credential():
-    """(handle, app_password) or (None, None). Same convention as _core._deepseek_key.
+# The secret has been spelled more than one way. `BLSKY_PASS` is what is actually
+# in /root/.hermes/.env (2026-08-17); `BSKY_APP_PASSWORD` is what this code asked
+# for first. Reading only one spelling is how a credential that IS present reads
+# as absent, and the failure is silent -- the collector would just keep reporting
+# "no credential" with the value sitting right there. Accept the known spellings
+# and SAY which one was used, so the mismatch is visible instead of fatal.
+_BSKY_PASS_KEYS = ("BSKY_APP_PASSWORD", "BSKY_PASS", "BLSKY_PASS")
+_BSKY_HANDLE_KEYS = ("BSKY_HANDLE", "BLSKY_HANDLE")
 
-    An APP PASSWORD, never the account password: it is scoped, revocable from the
-    Bluesky UI, and cannot change the account. Generate at
-    Settings -> Privacy and Security -> App Passwords.
+
+def _env_or_hermes(keys):
+    """First of `keys` set in the environment, else in the shared .env.
+
+    Returns (key_name, value) so the caller can report WHICH spelling matched.
+    Same .env convention as _core._deepseek_key.
     """
-    handle = os.environ.get("BSKY_HANDLE")
-    secret = os.environ.get("BSKY_APP_PASSWORD")
-    if handle and secret:
-        return handle, secret
-    found = {}
+    for k in keys:
+        v = os.environ.get(k)
+        if v:
+            return k, v.strip()
     try:
         with open("/root/.hermes/.env") as f:
-            for line in f:
-                for k in ("BSKY_HANDLE", "BSKY_APP_PASSWORD"):
-                    if line.startswith(k + "="):
-                        found[k] = line.split("=", 1)[1].strip().strip('"').strip("'")
+            lines = f.readlines()
     except Exception:
         return None, None
-    return found.get("BSKY_HANDLE"), found.get("BSKY_APP_PASSWORD")
+    for k in keys:                       # key order is priority, not file order
+        for line in lines:
+            if line.startswith(k + "="):
+                v = line.split("=", 1)[1].strip().strip('"').strip("'")
+                if v:
+                    return k, v
+    return None, None
+
+
+def _bsky_credential():
+    """(handle, secret) or (None, None).
+
+    Prefer an APP PASSWORD over the account password: it is scoped, revocable
+    from the Bluesky UI, and cannot change the account. Generate one at
+    Settings -> Privacy and Security -> App Passwords. `createSession` accepts
+    either, so this works regardless -- but a leaked app password costs a
+    revocation and a leaked account password costs the account.
+    """
+    hkey, handle = _env_or_hermes(_BSKY_HANDLE_KEYS)
+    pkey, secret = _env_or_hermes(_BSKY_PASS_KEYS)
+    if handle and secret:
+        print("  bluesky: credential from %s / %s" % (hkey, pkey))
+    return handle, secret
 
 
 _BSKY_TOKEN = {"jwt": None, "tried": False}
@@ -274,10 +301,15 @@ def _bsky_token():
     _BSKY_TOKEN["tried"] = True
     handle, secret = _bsky_credential()
     if not (handle and secret):
-        print("  bluesky: no BSKY_HANDLE/BSKY_APP_PASSWORD — search is gated to "
-              "unauthenticated callers, so this run will collect nothing from it. "
-              "Set them in /root/.hermes/.env (app password, not the account "
-              "password).", file=sys.stderr, flush=True)
+        missing = []
+        if not handle:
+            missing.append("handle (%s)" % "/".join(_BSKY_HANDLE_KEYS))
+        if not secret:
+            missing.append("password (%s)" % "/".join(_BSKY_PASS_KEYS))
+        print("  bluesky: missing %s — searchPosts is gated to unauthenticated "
+              "callers, so this run collects nothing from it. Set them in "
+              "/root/.hermes/.env (an app password, not the account password)."
+              % " and ".join(missing), file=sys.stderr, flush=True)
         return None
     body = json.dumps({"identifier": handle, "password": secret}).encode()
     req = urllib.request.Request(
