@@ -307,3 +307,100 @@ measured — but it is a build state, not a decision. **RESOLVED 2026-08-07: the
 NCAAF log ingest lands on CFBD** — `ingest_cfbd_logs.py` re-sourced the 2025
 FBS season (888 games, 56,577 rows, 100% linked, defensive stats mapped, ~139
 calls total). ESPN summaries remain the team backfill/reconcile source.
+
+---
+
+## ADDENDUM — 2026-08-16: the props feed was minting its own spine, and the resolver was folding one side only
+
+Four defects found in one pass, while putting MLS player props on a live board.
+They are one family: **every one of them produced a plausible output**, and none
+raised. Recorded here rather than only in commit messages because §5's rule needs
+the new instances.
+
+### 1. A sportsbook display name is not an identity
+
+Prod carried **531 MLS `players` rows with no `espn_id`, no game logs and props
+attached** (dev 183 before repair). They were shadow copies of athletes already in
+the spine, so `prop -> player -> game_log` joined for none of them: the props
+existed, the players existed, and the two were different rows.
+
+The minting code **is not in git history at all** — no MLS player insert was ever
+committed. It was written and run off-repo, against both databases. That is its own
+finding, and it is the second time (see `feedback_agents_left_prod_code_untracked`):
+after any session that touched data, `git status` is not optional.
+
+`_wc_direct_ingest` in `bovada_scraper.py` is the same shape, legitimately, for the
+World Cup — that spine really is name-matched, Phase 1, with no ESPN id to resolve
+against. What was wrong is that a mint printed **exactly like a match**. It is now
+counted and named in the run report, at zero too.
+
+Everything else routes through `/api/props/ingest`, whose resolver never creates:
+an unresolved name lands in `unresolved_players` where it can be read.
+
+### 2. The resolver folded accents off one side of the comparison
+
+`_resolve_player_for_ingest` normalised the INCOMING name — lowercase, strip
+punctuation, strip accents — and then compared it to the STORED name unfolded. So
+`Thomas Muller` from Bovada never matched `Thomas Müller` as ESPN publishes him.
+
+Measured on the MLS board: **53 of 74 unresolved names had an exact same-team match
+already in the spine**, differing only by a diacritic or a capital — Christian
+Ramírez, Andrés Cubas, Albert Rusnák, Jesús Ferreira, Kim Kee-Hee. Re-ingesting the
+same board after folding both sides took resolution from **1,322 of 1,461 to 1,438**.
+
+This is the §5 rule again, one level in: a wrong join key does not raise, it misses.
+The fold is deliberately NOT in `name_alias` — that table is for reviewed judgment
+calls ("Matt" for "Matthew") and holds 2 rows. A diacritic is not a judgment call.
+
+### 3. The props table had no upsert, and the scrapers run every 30 minutes
+
+`/api/props/ingest` INSERTed unconditionally into a table with no UNIQUE constraint.
+Dev held **47,827 `(game_id, player_id, market, line, side, source)` groups with more
+than one row.** The board reads latest-per-key so it rendered correctly the whole
+time, while every hit-rate denominator counted the same prop once per scrape.
+
+The two leagues that bypass the API (`wc`, `ufc`) were the two that stayed clean —
+their direct-DB paths had always done the existing-row check.
+
+**Still outstanding: the pre-existing duplicates outside MLS have not been cleaned.**
+The mechanism is fixed; the backlog is not.
+
+### 4. We were reading 4 of 15 published stats, and 2 of 8 published markets
+
+Bovada publishes **eight** player-attributed MLS markets (1,464 outcomes across 14
+fixtures). We ingested two. ESPN publishes **15 per-player stats** on a soccer
+summary. We read four.
+
+Those two gaps were the same gap. `To be Shown a Card` could not be ingested because
+no card column existed to settle it — and the card column did not exist because
+nobody had asked ESPN for it. The publisher had already answered.
+
+`First Goal Scorer` (332 outcomes) needed something a box score cannot give: ORDER.
+`keyEvents` carries each goal with its scorer and a clock, in the same document we
+were already fetching for the stat lines.
+
+> **The rule this adds.** A league's coverage is not "what we ingest", it is "what we
+> ingest ÷ what the publisher publishes", and until you take that ratio you cannot
+> tell a thin league from a thin read. MLS looked like a thin league for nine days.
+
+### What MLS holds now
+
+| | before | after |
+|---|---|---|
+| Bovada player markets | 2 | 8 (5 canonical + a 3-line goal ladder) |
+| props on the board | 714, captured 08-07..08-09, never refreshed | 1,542 refreshed every 30 min |
+| refreshed by a timer | no timer covered MLS | the existing `all` timer — `mls` was simply absent from `LEAGUES` |
+| stats per game log | 4 | 16 (15 published + derived `first_goal`) |
+| markets settlement can grade | goals, assists | + card_shown, goal_or_assist, first_goal_scorer |
+| shadow players (dev) | 183 | 0 |
+| 2026 game logs | 0 | backfilling (511 published events, chunked against ESPN's per-host ceiling) |
+
+### Two things left standing
+
+- **`roster_season()` in `roster_membership.py` infers a season from a timestamp**
+  with a hardcoded month rule. That is the same class as the `_SEASON = {"mls": 2025}`
+  constant fixed on 2026-08-16 — a definition inferred rather than read. It has not
+  been changed; nothing has measured it wrong yet.
+- **47 MLS and 17 NCAAF players still carry no position.** The MLS 47 are genuine name
+  variants needing reviewed aliases (Bovada's "Matthew Edwards" vs ESPN's "Matt
+  Edwards"); the NCAAF 17 are on no roster any publisher we read carries.

@@ -133,3 +133,26 @@ each have sent the next person somewhere that does not work.
 - **`scoring_plays`/`game_context` only fill for games captured live**, so a league we
   backfilled by season will always read ✗ there.
 - **UFC/WC have no `team_stats_coverage` row by design** — not team-stats leagues.
+
+---
+
+## Added / closed 2026-08-16 — the MLS props pass
+
+Rows above are kept as written. These supersede where they overlap.
+
+### Closed
+
+| # | was | now |
+|---|---|---|
+| 23 | **MLS props never settle.** 714 props, 0 settled. | Settlement grades `goals` (0.5/1.5/2.5), `assists`, `card_shown`, `goal_or_assist` and `first_goal_scorer`. The blocker was never the settlement path — it was that MLS logs carried 4 stats, so a card prop had nothing to grade against. |
+| — | **MLS props were a one-off.** 714 props captured 08-07..08-09, nothing refreshed them. | `mls` was absent from `bovada_scraper.LEAGUES`; the `all` timer covers it now with no new unit. 1,542 props, refreshed every 30 min. |
+
+### New
+
+| # | severity | defect | evidence | fix |
+|---|---|---|---|---|
+| 40 | **P0** | **`props` holds 47,827 duplicate groups.** `/api/props/ingest` INSERTed unconditionally into a table with no UNIQUE constraint while the scrapers run on 30-minute timers. Every hit-rate denominator counts the same prop once per scrape. | dev: 47,827 `(game_id, player_id, market, line, side, source)` groups with >1 row | **Mechanism fixed** (the endpoint upserts). The existing duplicates are NOT cleaned — MLS was deduped, no other league was. Needs a per-league dedupe keeping MAX(id). |
+| 41 | **P1** | **Tennis now fails the timer loudly.** `atp` resolves 0 of 171, `wta` 0 of 139, every 30 minutes. This is row 2, unchanged — but the scraper exits 3 now, so `legendarypicks-props.service` is RED until a tennis spine exists. | `systemctl status legendarypicks-props.service` → exit-code 3 | ingest an atp/wta athlete spine (row 2), or the unit stays red. **Do not silence it by reverting the exit code** — that is the state the feed has always been in. |
+| 42 | **P2** | **531 shadow MLS players on PROD.** No `espn_id`, no game logs, props attached; duplicates of athletes already in the spine. Dev repaired (183 → 0). | prod `players` where league='mls' and espn_id IS NULL: 531 | run `merge_mls_prop_players.py --db data/picks.db --apply` (blocked: needs authorisation to write prod) |
+| 43 | **P2** | **Prod MLS/NCAAF repairs never applied.** Prod still has 0 MLS `player_stats`, the 159 team-entity rows mislabeled as active players, and the NCAAF position blanks. | dev clean, prod unchanged | `migrate_mls_season_columns.py`, `ingest_mls_season_stats.py`, `migrate_player_entity_type.py`, `backfill_ncaaf_positions_cfbd.py`, each `--db data/picks.db --apply` |
+| 44 | **P3** | **`roster_season()` infers a season from a timestamp** with a hardcoded month rule — the same class as the `_SEASON = {"mls": 2025}` constant that served last year's squads all season. | `roster_membership.py:218` | read the published current season, as `ingest_mls_ncaaf_rosters._season()` now does |
