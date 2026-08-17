@@ -240,8 +240,41 @@ _ESPN_FETCHER = Fetcher(min_interval=0.5, retry_waits=(), cache_dir=CACHE_DIR,
 # 403 and every one of them was dropped silently (a failed fetch has no url, and
 # upsert skips those rows). Slower pacing plus a short ladder; the whole pass is
 # still under three minutes on a nightly cron.
-_BLUE_FETCHER = Fetcher(min_interval=1.5, retry_waits=(2, 5), cache_dir=CACHE_DIR,
-                        cache_ttl=3600, host_budget=0)
+# `host_budget=0` used to sit here, which means "this publisher has no ceiling".
+# Bluesky is a free provider and we are a guest on it; declaring no ceiling on a
+# free host is the thing we should never do. 120 covers the 100 queries below
+# with headroom, and makes the job announce a pause rather than keep pulling.
+#
+# `retry_waits` went (2, 5) -> (2,). See _BSKY_GIVE_UP: a ladder that treats
+# every refusal as transient turned 100 queries into 300 requests, all of them
+# to an endpoint that is permanently closed to us.
+_BLUE_FETCHER = Fetcher(min_interval=1.5, retry_waits=(2,), cache_dir=CACHE_DIR,
+                        cache_ttl=3600, host_budget=120)
+
+# Stop asking after this many consecutive refusals. A publisher that has refused
+# three times in a row is not having a bad moment.
+#
+# Measured 2026-08-17, from this box, same IP, same second:
+#
+#     public.api.bsky.app  app.bsky.actor.getProfile    200
+#     public.api.bsky.app  app.bsky.feed.searchActors   200
+#     public.api.bsky.app  app.bsky.feed.getAuthorFeed  200
+#     public.api.bsky.app  app.bsky.feed.searchPosts    403   <-- and api.bsky.app too
+#
+# So this is NOT a rate block and NOT our IP: a volume block refuses the host,
+# and every other endpoint on that host answers. `app.bsky.feed.searchPosts` is
+# gated behind authentication, and the 403 is a BunnyCDN edge page rather than
+# Bluesky's JSON error envelope -- the request never reaches the API. It is
+# permanent at any rate from any address, so retrying it is not perseverance,
+# it is 300 pointless requests a day aimed at somebody who is hosting us free.
+#
+# (Line 226's host swap on 2026-08-06 was the same 403 answered by moving hosts
+# without first establishing what it meant. Both hosts refuse it.)
+#
+# The endpoints that DO answer are the way back in: `getAuthorFeed` is one
+# request per account we already follow, against 100 keyword searches. That is
+# a product change, not a repair, so it is written up rather than done here.
+_BSKY_GIVE_UP = 3
 
 
 _TAG_RE = re.compile(r"<[a-zA-Z/!][^>]{0,200}>")
@@ -681,8 +714,22 @@ def tag_conversations(items):
 
 def collect_bluesky(extra_queries=()):
     items = []
-    for conv_id, q in list(CONVERSATION_QUERIES) + list(OPEN_QUERIES) + list(extra_queries):
+    queries = list(CONVERSATION_QUERIES) + list(OPEN_QUERIES) + list(extra_queries)
+    refusals = 0
+    spent = 0
+    for i, (conv_id, q) in enumerate(queries):
+        if refusals >= _BSKY_GIVE_UP:
+            # Fail loudly, and name what was skipped. A collector that quietly
+            # returns fewer items is indistinguishable from a quiet news day.
+            print("  bluesky: %d consecutive refusals — STOPPING, %d queries "
+                  "skipped. See _BSKY_GIVE_UP: app.bsky.feed.searchPosts is "
+                  "gated, not rate-limited, so the remaining %d requests would "
+                  "all fail the same way." % (refusals, len(queries) - i,
+                                              len(queries) - i),
+                  file=sys.stderr, flush=True)
+            break
         url = BLUESKY_SEARCH + "?q=%s&limit=8" % urllib.parse.quote(q)
+        spent += 1
         try:
             d = _BLUE_FETCHER.json(url)
             for p in d.get("posts", []):
@@ -704,10 +751,15 @@ def collect_bluesky(extra_queries=()):
                     # articles" impossible to ever detect (2026-08-10).
                     "published": _iso(p.get("indexedAt") or rec.get("createdAt") or ""),
                 })
+            refusals = 0          # it answered; whatever came before was transient
         except Exception as e:
+            refusals += 1
             items.append({"source": "bluesky", "conv_id": conv_id,
                           "headline": "FETCH ERROR: %s" % e,
                           "body": "", "url": "", "published": ""})
+    # Say what this cost. Rung 6 of the espn-request-budget skill: a silent job
+    # is one nobody can size later, and this one is a guest on a free host.
+    print("  bluesky: %d/%d queries issued" % (spent, len(queries)))
     return items
 
 
