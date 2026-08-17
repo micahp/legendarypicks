@@ -140,6 +140,55 @@ of the cut and must not hold it.
 prod/dev fork one-way. It must **record the mapping it used** — source id, target id, and the
 publisher id justifying each — in a committed artifact, or the next pass re-derives it from names.
 
+### POST-RELEASE ORDER, set 2026-08-17 — do these in this sequence
+
+1. **gstack `retro`** (`/root/gstack/retro`) — engineering retrospective first, so the
+   refactor below is aimed by it rather than guessed at.
+2. **Break up every file of 1,000+ lines.** Measured 2026-08-17, 13 of them:
+
+   ```
+   2166  backend/wc_context.py              1232  pages/esports.tsx
+   1817  backend/ingest_league_narratives.py 1196  backend/settlement.py
+   1752  backend/routers/games.py           1182  backend/ingest_ufc_fight_stats.py
+   1586  backend/routers/nfl_mock_draft.py  1169  backend/audit_league_stats.py
+   1527  backend/routers/nfl_offseason.py   1160  backend/ingest_league_news.py
+   1442  backend/routers/players.py
+   1311  backend/espn_client.py
+   1281  backend/bovada_scraper.py
+   ```
+
+   Note `wc_context.py` is the largest file in the repo and World Cup is dormant until 2030.
+
+3. **A TOURNAMENT is not a LEAGUE — model the difference** (Micah, 2026-08-17). This is the
+   modelling item behind a defect we hit today, not a cleanup.
+
+   MLS props carry rows whose club is `AME`, `GDL`, `PUE`, `TOL`, `NFO` — Club América,
+   Chivas, Puebla, Toluca, Nottingham Forest. They are filed under `league='mls'` because the
+   props feed covered Leagues Cup fixtures and a friendly. They are not MLS players, so no
+   MLS spine will ever resolve them, and the merge correctly refuses every one:
+
+   ```
+   cross-team 'Igor Jesus':      NFO  vs published LAFC
+   cross-team 'Elias Achouri':   AME  vs published SD
+   cross-team 'Vincent Janssen': PUE  vs published POR
+   ```
+
+   That is 38 unresolved shadow rows on prod and the reason MLS still reports 1 FAIL.
+
+   **The distinction to build on:** a league has a fixed membership and a season-long table —
+   a club plays only clubs in it. A tournament draws entrants FROM leagues, can be
+   cross-league (MLS vs Liga MX) and cross-confederation, and its participants keep their
+   league identity. So a tournament fixture needs its own competition key while its players
+   stay resolvable against whichever league actually rosters them. Filing Leagues Cup under
+   `mls` collapses both halves of that and produces players nobody can resolve.
+
+   Already decided in this file 2026-08-06 for the LOGS side (Leagues Cup
+   `concacaf.leagues.cup`, CCC `concacaf.champions`, Campeones Cup as separate ESPN slugs, so
+   a Leagues Cup goal does not inflate MLS `games_played`). Today extends it to PROPS and to
+   IDENTITY. Same shape, wider than first scoped.
+
+4. **Player identity across databases** — the section below.
+
 ### NEXT RELEASE (v0.8.1 or v0.9.0) — player identity
 
 Scope, in order. Full detail in `TASK-next-release-player-identity.md`.

@@ -232,3 +232,9 @@ created this. Cheap now, expensive later.
 **Test for any remaining pre-release item:** *does it need code or a constraint to be correct?* If
 yes it rides this release. If it is a data promotion or a backfill, it can land either side of the
 cut and must not hold it.
+
+### Added 2026-08-17 (pt.3)
+
+| # | severity | defect | evidence | fix |
+|---|---|---|---|---|
+| 57 | **P1** | **A tournament is being stored as a league.** MLS prop rows carry clubs `AME`, `GDL`, `PUE`, `TOL`, `NFO` — Club América, Chivas, Puebla, Toluca, Nottingham Forest — under `league='mls'`, because the props feed covered Leagues Cup fixtures. They are not MLS players, so no MLS spine resolves them and the merge refuses every one. A league has fixed membership and a season table; a tournament draws entrants FROM leagues, is cross-league and cross-confederation, and its participants keep their own league identity. Filing one as the other collapses both halves. | 38 unresolved shadow rows on prod; `Igor Jesus NFO vs published LAFC`, `Elias Achouri AME vs published SD`. This is the whole of MLS's remaining C/vocabulary FAIL. | give tournament fixtures their own competition key while players stay resolvable against the league that rosters them. Extends the 2026-08-06 logs-side decision (`concacaf.leagues.cup`) to PROPS and IDENTITY. Scheduled post-release, after the gstack retro and the 1,000-line file split — see ROADMAP "POST-RELEASE ORDER". |
