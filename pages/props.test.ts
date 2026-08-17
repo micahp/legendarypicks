@@ -3,8 +3,10 @@ import { render, waitFor } from '@testing-library/react'
 import PropsPage, { LEAGUES } from './props'
 
 describe('Props league selector', () => {
-  it('omits World Cup and puts UFC first with MLB after NHL', () => {
-    expect(LEAGUES).toEqual(['All', 'ufc', 'mls', 'nba', 'nfl', 'nhl', 'mlb'])
+  it('omits World Cup, puts UFC first with MLB after NHL, and carries tennis', () => {
+    // atp/wta were missing while tennis was half the board (2026-08-17), which made them both
+    // unfilterable and last in every day group -- LEAGUES is the pill row AND the ordering.
+    expect(LEAGUES).toEqual(['All', 'ufc', 'mls', 'nba', 'nfl', 'nhl', 'mlb', 'atp', 'wta'])
   })
 })
 
