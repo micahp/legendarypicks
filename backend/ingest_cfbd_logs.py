@@ -252,6 +252,48 @@ def _opponent(team, home_away, home, away):
     return None
 
 
+# Names minted with no published position, reported at the end of the run. Empty is the
+# expected state and it still prints — a log that only speaks up on failure cannot tell
+# "clean" from "never ran" (fail-loudly §3.7).
+_MINTED_WITHOUT_POSITION = []
+
+
+def _published_positions(season):
+    """{espn_athlete_id: (position, position_group)} from CFBD's roster, or {}.
+
+    One request per season returns every roster row CFBD publishes (~30,000 for 2025),
+    keyed by the same ESPN athlete id this ingest already joins on — so setting the
+    position at mint time costs one request, not one per player.
+
+    Returns {} when the roster cannot be read. That is a degraded run, not a failed one:
+    the game logs are still worth ingesting. It is reported, and every player minted
+    without a position is counted, so the gap is a number in the run output rather than
+    something an audit finds months later.
+    """
+    try:
+        rows = _get_json("{}/roster?year={}".format(_API, season))
+    except Exception as exc:  # noqa: BLE001 - the logs are still worth having
+        print("  WARNING: CFBD roster for {} unavailable ({}) — players minted by this "
+              "run will carry no position".format(season, exc))
+        return {}
+    try:
+        from backfill_ncaaf_positions_cfbd import _position_group, _vocabulary
+        vocab = _vocabulary()
+    except Exception:  # noqa: BLE001
+        _position_group, vocab = (lambda position, _v: None), None
+    out = {}
+    for row in rows or []:
+        athlete_id, position = row.get("id"), row.get("position")
+        # CFBD writes "?" for an unknown position. Storing that is worse than NULL: it
+        # looks like a value and no vocabulary contains it.
+        if not athlete_id or not position or position == "?":
+            continue
+        out[str(athlete_id)] = (position, _position_group(position, vocab))
+    print("  CFBD roster {}: {} rows, {} carry a published position"
+          .format(season, len(rows or []), len(out)))
+    return out
+
+
 def _spine_index(con):
     """{espn_id: players.id} for the league. O(1) lookups during ingest."""
     idx = {}
@@ -267,25 +309,42 @@ def _spine_index(con):
     return idx
 
 
-def _resolve_or_create(con, spine, athlete_id, name, team):
+def _resolve_or_create(con, spine, athlete_id, name, team, positions=None):
     """players.id by espn_id; inserts the athlete when the spine lacks them.
 
     CFBD athlete ids ARE ESPN ids, so this is the whole resolution pass — the
     MLS 08-07 pattern (add missing players to the spine, then link) at zero
-    extra requests. Position is unknown from the player-stats payload and left
-    NULL for the roster sync to backfill.
+    extra requests.
+
+    This used to insert `position NULL, position_group NULL` with the comment "left NULL
+    for the roster sync to backfill". The roster sync is ingest_mls_ncaaf_rosters.py, which
+    reads ESPN's published team rosters — and these athletes are not on them, because they
+    are here precisely by having appeared in a game CFBD covered. The promised backfill
+    therefore never happened for anybody: measured 2026-08-16, **5,853 active NCAAF players
+    carried no position at all, 27% of the league**, and a blank position does not error or
+    render an empty state — it renders a generic game log, which reads as coverage
+    (fail-loudly §2c).
+
+    CFBD publishes the position itself, keyed by the same athlete id, one request per
+    season for all ~30,000 rows. So it is set HERE, at mint time, and the row is never
+    written blank in the first place. `positions` is that map; when it is empty (no API
+    key) the count of blank rows minted is reported by the caller rather than left to be
+    discovered by an audit a month later.
     """
     player_id = spine.get(athlete_id)
     if player_id is not None:
         return player_id
     now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    position, position_group = (positions or {}).get(str(athlete_id), (None, None))
     con.execute(
         "INSERT INTO players(name, team, league, espn_id, position, position_group, active, updated_at)"
-        " VALUES(?,?,?,?,NULL,NULL,1,?)",
-        (name, team, LEAGUE, athlete_id, now),
+        " VALUES(?,?,?,?,?,?,1,?)",
+        (name, team, LEAGUE, athlete_id, position, position_group, now),
     )
     player_id = con.execute("SELECT last_insert_rowid()").fetchone()[0]
     spine[athlete_id] = player_id
+    if position is None:
+        _MINTED_WITHOUT_POSITION.append(name)
     return player_id
 
 
@@ -307,6 +366,10 @@ def ingest(season, dry_run=False):
         }
     completed = sum(1 for m in game_meta.values() if m["completed"])
     print("  /games: %d published, %d completed" % (len(game_meta), completed))
+
+    # Positions, before any player is minted. One request for the whole season.
+    del _MINTED_WITHOUT_POSITION[:]
+    published_positions = _published_positions(season)
 
     # 2. Team vocabulary: school -> abbreviation (FBS + FCS in one call), and
     # school -> canonical ESPN code (abbreviation when it matches, else the
@@ -418,7 +481,8 @@ def ingest(season, dry_run=False):
             opponent = _opponent(team, home_away, home, away)
             player_id = None
             if con is not None:
-                player_id = _resolve_or_create(con, spine, athlete_id, name, team)
+                player_id = _resolve_or_create(con, spine, athlete_id, name, team,
+                                               published_positions)
             if player_id is None:
                 unresolved += 1
             else:
@@ -468,6 +532,13 @@ def ingest(season, dry_run=False):
           "(%d resolved, %d unresolved)." % (ingested, games_done, resolved, unresolved))
     print("  %d games fetched without /games metadata (skipped), %d team calls failed."
           % (missing_meta, failed))
+    # Printed at zero too. This ingest minted 5,853 positionless NCAAF players over its
+    # life -- 27% of the league -- and never said so once, because a blank position does
+    # not error, it renders a generic game log that reads as coverage.
+    print("  %d players minted with no published position%s"
+          % (len(_MINTED_WITHOUT_POSITION),
+             "" if not _MINTED_WITHOUT_POSITION
+             else " (e.g. %s)" % ", ".join(_MINTED_WITHOUT_POSITION[:5])))
     if total_logs is not None:
         print("  table now: %d rows, %d linked, %d distinct games." % (
             total_logs, linked, dist_games))
