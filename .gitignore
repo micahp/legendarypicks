@@ -106,3 +106,11 @@ backend/data/news-deletions.log
 # Agent state, not source. `.context/retros/` is deliberately TRACKED history
 # (see the committed retros) — do not ignore it.
 .hermes/
+
+# Bovada per-league backoff state. Runtime operational scheduling, NOT app data —
+# the scraper rewrites it every run, so tracking it dirtied the working tree on a
+# 30-minute timer and blocked `release.sh`'s clean-tree preflight indefinitely
+# (2026-08-17: one changed timestamp was the sole thing standing between dev and
+# a v0.8.0 dry-run). `_load_backoff()` returns {} when the file is absent, so a
+# fresh checkout or image simply fetches every league — it fails open by design.
+backend/data/bovada-league-backoff.json
