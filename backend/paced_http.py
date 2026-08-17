@@ -35,6 +35,7 @@ from __future__ import annotations
 
 import json
 import os
+import sys
 import time
 import urllib.error
 import urllib.parse
@@ -68,6 +69,16 @@ def _charge(url, budget, cooldown):
         return
     host = urllib.parse.urlsplit(url).netloc
     if _host_spend.get(host, 0) >= budget:
+        # SAY SO. This used to sleep a silent minute: no message, no traceback, a job
+        # that simply stopped producing output partway through and resumed later for no
+        # visible reason. Diagnosing it meant knowing this line existed. A pause nobody
+        # can attribute is worse than a slow job -- it gets misread as a hang, and the
+        # usual response is to kill the run and lose the work.
+        print(f"paced_http: {host} has taken {budget} requests from this process; "
+              f"pausing {cooldown:.0f}s before the next one. This is the per-host count "
+              f"budget, not an error. Fewer requests is the only real fix: use a bulk "
+              f"endpoint, or set_disk_cache() so a re-run costs nothing.",
+              file=sys.stderr, flush=True)
         time.sleep(cooldown)
         _host_spend[host] = 0
     _host_spend[host] = _host_spend.get(host, 0) + 1
