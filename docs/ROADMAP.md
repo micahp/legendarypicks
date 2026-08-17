@@ -28,14 +28,37 @@ Anything that does not serve that window competes with it. *That window is now m
 
 ## CURRENT — 2026-08-17: deployment target and what stands in front of it
 
-### The deployment target is v0.8.0. Nothing has shipped to prod since v0.7.8.
+### ✅ v0.8.0 IS DEPLOYED — images rebuilt and swapped 2026-08-17 18:16 CDT.
 
 What production is actually running, read off the containers rather than the tags:
 
 ```
-legendarypicks-frontend-1   image built 2026-08-09
-legendarypicks-backend-1    image built 2026-08-12
+legendarypicks-frontend-1   image 1b8d112d7929   built 2026-08-17 18:16
+legendarypicks-backend-1    image f04137e1e625   built 2026-08-17 18:14
 ```
+
+Rollback pins, if this build has to be backed out: backend `26797daa4256` (08-12),
+frontend `493fef124dc1` (08-09). `docker compose up -d` against those restores the
+prior release; no data migration ran, so nothing needs unwinding on the DB side.
+
+**Verified after the swap, on `https://legendarypicks.xyz` rather than on a 200:**
+
+| check | result |
+|---|---|
+| `/api/health` | names the DB it serves — `/app/data/picks.db`. This is itself proof the new code is live; the 08-12 image answered `{"status":"ok"}` and nothing else. |
+| `COV-leaders` | **PASS**, 7 surfaces across mlb,mls,nba,ncaaf,nfl,nhl. Was FAIL 2/7 (`Unsupported league: mls` / `ncaaf`) — pure deploy skew, exactly as this file predicted. |
+| `BOARD-stale-prod` | **PASS**, 40 games, none finished, 0 without `start_time`. Was FAIL, 16 of 56 finished games served as upcoming. |
+| leaders carry real rows | six leagues, real names and values — Messi 29 goals / 28 games (mls 2025), Luka (nba 2026), Mestemaker (ncaaf 2025). |
+| props board | 40 games — mlb 9, **atp 9, wta 9**, mls 13. The tennis spine is live on the board. |
+| `verify_ufc_rankings.py` | PASSED against the live API: men's P4P 16, women's P4P 16, 11 divisions. |
+| container logs | zero errors/tracebacks in either container since start. |
+
+The two gates in "Group 1 — deploy skew" below are now green. Group 2 (data) and Group 3
+(`REG-jest-all`) are unaffected by a deploy and stand where they stood.
+
+One commit sits past the `v0.8.0` tag in the deployed tree: `f4aabf6`, a `.dockerignore`
+fix. It changes no application code — only what the build context excludes. See
+post-release #2; this was the same defect shape, found one more time while building.
 
 **`backend/data` is bind-mounted; code is baked into the image.** That single fact orders
 everything below, because it splits every fix into one of two classes:
