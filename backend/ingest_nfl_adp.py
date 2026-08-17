@@ -68,18 +68,15 @@ DB = os.environ.get("LP_DB_PATH") or os.path.join(
 # confuses them -- constructs exist only in the fantasy API and it signs their
 # ids negative -- so record the category the publisher already drew, at the
 # boundary, instead of leaving every reader to infer it from a position label.
-# See migrate_player_entity_type.py for what inferring it cost.
-_ENTITY_BY_POSITION = {"DEF": "team_defense", "TQB": "team_qb", "HC": "coach"}
-
-
-def _entity_type(position, espn_id) -> str:
-    try:
-        negative = espn_id is not None and int(espn_id) < 0
-    except (TypeError, ValueError):
-        negative = False
-    if not negative:
-        return "player"
-    return _ENTITY_BY_POSITION.get((position or "").strip().upper(), "unknown")
+#
+# There used to be a private `_entity_type(position, espn_id)` here, a second
+# copy of migrate_player_entity_type.classify that nothing called. It was
+# removed on 2026-08-17 rather than left as a trap: it classified from
+# `position`, which migrate_player_fantasy_positions.py empties by design, so
+# the one reader who eventually trusted it would have got 'unknown' for all 96
+# constructs -- the exact defect that had this ingest failing every run.
+# There is one classifier now, in migrate_player_entity_type.py, and it reads
+# the publisher's id encoding.
 
 
 def _fetch_all() -> list:
