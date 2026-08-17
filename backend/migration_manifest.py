@@ -136,6 +136,14 @@ def _probe_league_position_groups(con: sqlite3.Connection) -> str:
     )
 
 def _probe_player_entity_type(con: sqlite3.Connection) -> str:
+    """Applied means the constructs are CLASSIFIED, not merely non-null.
+
+    This probe used to count `entity_type IS NULL` only. On 2026-08-17 all 96
+    NFL constructs sat at 'unknown' -- populated, so the probe read "applied"
+    for the whole outage while `ingest_nfl_adp.py` aborted every run on
+    `def_to_pid has 0 entries`. A column being filled in is a claim about the
+    column; ask the question the readers actually ask.
+    """
     applied = _has_columns(con, "players", ("entity_type",))
     if applied != "applied":
         return applied
@@ -143,7 +151,30 @@ def _probe_player_entity_type(con: sqlite3.Connection) -> str:
         con,
         "SELECT COUNT(*) FROM players WHERE league='nfl' AND entity_type IS NULL",
     )
-    return "applied" if n < 100 else f"unknown: {n} NFL rows have no entity_type"
+    if n >= 100:
+        return f"unknown: {n} NFL rows have no entity_type"
+    # Only ask about D/ST on a database that actually holds the constructs. A
+    # fixture with no NFL spine has nothing to classify; the broken state this
+    # guards against is the opposite -- the rows PRESENT and sitting at
+    # 'unknown' -- so this cannot hide it.
+    constructs = _count(
+        con,
+        "SELECT COUNT(*) FROM players WHERE league='nfl' "
+        "AND CAST(espn_id AS INTEGER) < 0",
+    )
+    if constructs == 0:
+        return "applied"
+    # The 32 team defences are the ones `ingest_nfl_adp.py` builds its map from.
+    defences = _count(
+        con,
+        "SELECT COUNT(*) FROM players WHERE league='nfl' "
+        "AND entity_type='team_defense'",
+    )
+    if defences != 32:
+        return (f"unknown: {defences} of {constructs} negative-id NFL rows "
+                f"classified team_defense, expected 32 "
+                f"-- ingest_nfl_adp.py's D/ST preflight will abort")
+    return "applied"
 
 
 def _probe_player_fantasy_positions(con: sqlite3.Connection) -> str:
