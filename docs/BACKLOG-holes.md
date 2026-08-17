@@ -156,3 +156,9 @@ Rows above are kept as written. These supersede where they overlap.
 | 42 | **P2** | **531 shadow MLS players on PROD.** No `espn_id`, no game logs, props attached; duplicates of athletes already in the spine. Dev repaired (183 → 0). | prod `players` where league='mls' and espn_id IS NULL: 531 | run `merge_mls_prop_players.py --db data/picks.db --apply` (blocked: needs authorisation to write prod) |
 | 43 | **P2** | **Prod MLS/NCAAF repairs never applied.** Prod still has 0 MLS `player_stats`, the 159 team-entity rows mislabeled as active players, and the NCAAF position blanks. | dev clean, prod unchanged | `migrate_mls_season_columns.py`, `ingest_mls_season_stats.py`, `migrate_player_entity_type.py`, `backfill_ncaaf_positions_cfbd.py`, each `--db data/picks.db --apply` |
 | 44 | **P3** | **`roster_season()` infers a season from a timestamp** with a hardcoded month rule — the same class as the `_SEASON = {"mls": 2025}` constant that served last year's squads all season. | `roster_membership.py:218` | read the published current season, as `ingest_mls_ncaaf_rosters._season()` now does |
+
+### Closed — tennis athlete spine (2026-08-16)
+
+| # | was | now |
+|---|---|---|
+| 2 / 41 | **Tennis discarded every ATP/WTA prop and correctly made the timer exit 3.** | Candidate `feat/tennis-spine` adds `ingest_tennis_players.py`, which reads ESPN's one-request-per-league ATP/WTA rankings payload and publishes its verbatim athlete names plus ESPN IDs (150 ATP, 150 WTA; NULL team). Against managed DEV, Bovada ATP resolved **168 of 168** scraped props with exit 0. Candidate code is unmerged; production remains unchanged. |
