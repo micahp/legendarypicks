@@ -88,17 +88,36 @@ Two of the four cleared themselves; the counts, not the intentions, are what cha
 Ordered by what blocks what, not by size. Detail for the defect rows is in
 `docs/BACKLOG-holes.md` under the 08-17 block.
 
-**Blocked on a decision from Micah**
+**All three answered 2026-08-17 — kept here with the decision, not deleted**
 
-1. **`start_time` write-once.** `routers/props.py:473` and `bovada_scraper.py:856` both guard
-   `if start_time and not game_row["start_time"]`, so a publisher revising first pitch can never
-   propagate — ~20 of prod's 95 disagreements. Three guards. Recommendation: overwrite only when
-   the publisher disagrees, which keeps the publisher authoritative and stops a stale board
-   overwriting a good instant.
-2. **Scores W2 / W4** — §6 of the scores task doc needs the Top Events ranking rule, how many
-   leagues it shows, and whether to wire NCAAF week navigation while the league is dark.
-3. **The Bluesky secret is an account password, not an app password** (15 chars, wrong shape).
-   Works either way; a leak costs the account instead of a revocation.
+1. ~~**`start_time` write-once**~~ — **DECIDED: overwrite only when the publisher disagrees.
+   DONE** (`3641992`). One helper in `link_prop_games.apply_start_time`, called from all three
+   ingest sites so the rule cannot drift per league. Compares instants, not strings, so a
+   re-scrape of an unchanged game does not rewrite the row; a real disagreement is written and
+   announced in the run log.
+
+   Micah asked first how the pipeline handles reschedules. **It does not handle them at all**,
+   and that is now measured rather than assumed:
+   - `team_game_results.status` holds exactly two values across all of 2026 — `completed`
+     (8,450) and `scheduled` (544). **Zero** rows record postponed, canceled or suspended.
+   - `prop_games` has no status column at all.
+   - `reconcile_gap.py:94` knows `STATUS_POSTPONED`/`CANCELED`/`SUSPENDED`, but it is a one-off
+     analysis script and is **on no timer**.
+   - Every ingest path looks its row up by `(league, date, home, away)`, so a game moved to a
+     new day creates a SECOND row while the original keeps its props — and ESPN issues makeups
+     under a **new event id**, so the original can never link to one.
+
+   So the policy change makes same-day revisions propagate, which is most of the class. Date
+   moves stay open as backlog #46, and they are the reason drop-at-kickoff cannot ship yet.
+2. ~~**Scores W2 / W4**~~ — **DEFERRED to the scoreboard redesign, post-0.8.0** (Micah,
+   2026-08-17). Not release-blocking; do not re-raise before the release.
+3. ~~**Bluesky account password vs app password**~~ — **RISK ACCEPTED** (Micah, 2026-08-17).
+   `createSession` takes either. Noted here so a future reader does not "fix" it as an
+   oversight: it was a decision.
+
+**The release is the priority.** Micah, 2026-08-17: *"ive been trying to get a release for a
+week."* Weigh anything below against whether it moves v0.8.0. Items that cannot ship without a
+deploy are worth less right now than items that clear a red gate.
 
 **Next code work**
 
