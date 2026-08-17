@@ -134,17 +134,58 @@ fi
 # for accepted nickname-vs-legal-name reasons) and blocking on it would just
 # get the check disabled; FAIL is a measured defect in the data a release
 # would ship.
+#
+# Two tiers, and the split is a DECISION rather than an omission. Until 2026-08-17 this
+# ran four leagues -- nfl/mlb/nba/nhl -- and the release shipped ufc, mls and ncaaf data
+# with nothing grading it. A league the release includes but the preflight never asks
+# about is a league whose defects ship silently, which is how "prod has zero news" and
+# "MLS is hidden on prod" both reached a release that headlined them.
+#
+#   BLOCKING  a FAIL here stops the release.
+#   REPORTED  runs, prints, and does NOT stop the release -- for a league we are still
+#             getting to green. It exists so "how close is MLS?" has a number in front of
+#             it every time we cut, instead of being asked once a fortnight.
+#
+# A REPORTED league is not a permanently excused one. Move it into BLOCKING the moment it
+# reaches 0 FAIL; that is one word of diff and it is visible in git, which is the point.
+# As of 2026-08-17: mls 7 passed / 1 FAIL, ncaaf 15 passed / 1 FAIL, and it is the SAME
+# defect in both -- C/vocabulary[position], a parent level and its own children sharing one
+# column (AM under M, CD under D; CB under DB, NT under DT). One repair promotes both.
+#
+# ufc is BLOCKING from the start: it audits 3 passed / 0 FAIL today. Its one UNVERIFIED
+# (no leaderboard surface) is correct by design -- it is a rankings league, not a stats one.
+AUDIT_BLOCKING="nfl mlb nba nhl ufc"
+AUDIT_REPORTED="mls ncaaf"
 if [ -f backend/audit_league_stats.py ] && [ -x backend/venv/bin/python ]; then
   echo
-  echo "release: audit_league_stats vs prod (nfl/mlb/nba/nhl; FAIL blocks, UNVERIFIED does not)"
+  echo "release: audit_league_stats vs prod — BLOCKING: $AUDIT_BLOCKING (FAIL blocks, UNVERIFIED does not)"
+  audit_args=""
+  for lg in $AUDIT_BLOCKING; do audit_args="$audit_args --league $lg"; done
   audit_out=$(backend/venv/bin/python backend/audit_league_stats.py \
-    --db backend/data/picks.db \
-    --league nfl --league mlb --league nba --league nhl --quiet 2>&1) || true
+    --db backend/data/picks.db $audit_args --quiet 2>&1) || true
   printf '%s\n' "$audit_out" | sed 's/^/  /'
   audit_fails=$(printf '%s\n' "$audit_out" | grep -c '^FAIL' || true)
+
+  echo
+  echo "release: audit_league_stats vs prod — REPORTED: $AUDIT_REPORTED (does NOT block; promote to BLOCKING at 0 FAIL)"
+  for lg in $AUDIT_REPORTED; do
+    rep_out=$(backend/venv/bin/python backend/audit_league_stats.py \
+      --db backend/data/picks.db --league "$lg" --quiet 2>&1) || true
+    printf '%s\n' "$rep_out" | sed 's/^/  /'
+    echo "  ^ $lg is REPORTED, not blocking. $(printf '%s\n' "$rep_out" | grep -c '^FAIL' || true) FAIL to go."
+  done
+
+  # A league the audit has never heard of cannot be reported as clean. `audit_league_stats`
+  # raises for a league that serves player_stats with no MANIFEST entry, but a league it is
+  # never ASKED about is silent, so name the gap here instead of letting absence read as green.
+  echo
+  echo "release: NOT audited — esports has no MANIFEST entry in audit_league_stats.py, so no"
+  echo "  check above covers it. That is a gap, not a pass. Adding a league to the audit means"
+  echo "  writing what it CLAIMS first; see the MANIFEST header in backend/audit_league_stats.py."
+
   if [ "$audit_fails" -gt 0 ]; then
     echo
-    die "$audit_fails audit check(s) FAIL against prod data -- promote or repair before releasing"
+    die "$audit_fails audit check(s) FAIL against prod data in a BLOCKING league -- promote or repair before releasing"
   fi
   echo
 fi
