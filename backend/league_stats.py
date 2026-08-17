@@ -22,6 +22,18 @@ class LeagueStatContractError(ValueError):
 _SEASON_STAT_LEAGUES = frozenset(("nba", "nfl", "nhl", "ncaaf", "mls"))
 _DERIVED_ROLLUP_LEAGUES = frozenset()
 
+# Leagues `/api/{league}/leaders` may serve. MLB is added as SHAPE, not as a
+# second permission: it is the one league whose rows are split by stat_type
+# (batting/pitching) rather than carrying a single 'season' row, so it is not in
+# _SEASON_STAT_LEAGUES and still has a leaderboard. Same exception style as
+# league_offering.ALWAYS_OFFERED.
+#
+# Exported because the router used to keep its own literal tuple. That copy went
+# stale the day NCAAF landed — 4,267 season rows with a MANIFEST branch right
+# here in this module, and the endpoint answered "Unsupported league: ncaaf" for
+# five days. One list, one place, per rule 4 (one column, one vocabulary).
+LEADERBOARD_LEAGUES = _SEASON_STAT_LEAGUES | frozenset(("mlb",))
+
 PLAYER_STATS_TABLE_SQL = """
 CREATE TABLE IF NOT EXISTS player_stats(
   id INTEGER PRIMARY KEY AUTOINCREMENT,

@@ -9,7 +9,7 @@ from fastapi.responses import JSONResponse
 from typing import Optional
 from _core import *
 from league_offering import offered_leagues, sql_league_filter
-from league_stats import canonical_population_sql
+from league_stats import LEADERBOARD_LEAGUES, canonical_population_sql
 from nfl_rankings import nfl_player_rank_context
 from nfl_stat_derivations import with_derived as _with_derived
 from nfl_news import (
@@ -965,6 +965,29 @@ _LEAGUE_CATEGORIES = {
             _metric("barrel_pct_against", "Barrel % Against", "percent_1"),
         ]},
     ],
+    # NCAAF holds SEASON TOTALS, not per-game rates — ingest_ncaaf_season_stats.py
+    # sums CFBD's per-game rows (see league_stats.py:195). So these are the raw
+    # columns, deliberately not the `_g` keys the NFL block uses: no *_g column is
+    # populated for ncaaf, and naming one here would silently drop the category
+    # (the availability loop below skips any key missing from db_cols).
+    # Every metric listed is non-NULL on both databases as of 2026-08-17.
+    "ncaaf": [
+        {"key": "passing", "label": "Passing", "stats": [
+            _metric("pass_yds", "Pass Yards", "integer"),
+            _metric("pass_td", "Pass Touchdowns", "integer"),
+            _metric("att", "Pass Attempts", "integer"),
+            _metric("intc", "Interceptions", "integer"),
+        ]},
+        {"key": "rushing", "label": "Rushing", "stats": [
+            _metric("rush_yds", "Rush Yards", "integer"),
+            _metric("rush_td", "Rush Touchdowns", "integer"),
+        ]},
+        {"key": "receiving", "label": "Receiving", "stats": [
+            _metric("rec_yds", "Receiving Yards", "integer"),
+            _metric("rec", "Receptions", "integer"),
+            _metric("rec_td", "Receiving Touchdowns", "integer"),
+        ]},
+    ],
     "mls": [
         {"key": "scoring", "label": "Scoring", "stats": [
             _metric("goals", "Goals", "integer"),
@@ -983,6 +1006,7 @@ _LEAGUE_DEFAULTS = {
     "nhl": ("scoring", "points_nhl"),
     "mlb_batting": ("production", "avg"),
     "mlb_pitching": ("strikeouts", "k_pct"),
+    "ncaaf": ("passing", "pass_yds"),
     "mls": ("scoring", "goals"),
 }
 
@@ -1234,7 +1258,7 @@ def league_leaders(league: str,
     ?min_games=N — minimum games played (default: 0 for all, 10 for MLB batting)
     """
     lg = league.lower()
-    if lg not in ("nba", "nfl", "nhl", "mlb", "mls"):
+    if lg not in LEADERBOARD_LEAGUES:
         return JSONResponse({"error": f"Unsupported league: {league}"}, 404)
 
     if lg == "mlb":
