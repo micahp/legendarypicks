@@ -486,6 +486,7 @@ def ingest_props(batch: PropIngest):
                 except Exception:
                     pass  # crosswalk is best-effort; don't block ingest
         ingested = 0
+        refreshed = 0
         unresolved = 0
         for p in batch.props:
             # Resolve player via identity spine (NEVER silently create)
@@ -495,24 +496,53 @@ def ingest_props(batch: PropIngest):
             if player_id is None:
                 unresolved += 1
                 continue  # logged to unresolved_players by the resolver
-            # insert prop
             odds_val = p.get("odds")
+            odds_int = None
             if odds_val is not None:
                 try:
                     odds_int = int(odds_val)
                 except (ValueError, TypeError):
                     odds_int = 100 if str(odds_val).upper() == "EVEN" else None
-                if odds_int is not None:
+
+            # Refresh the existing row rather than inserting a second one.
+            #
+            # `props` has no UNIQUE constraint, and this endpoint used to INSERT
+            # unconditionally, so every scrape of an unchanged board wrote a whole new copy
+            # of it. The scrapers run on 30-minute timers. Measured on dev 2026-08-16:
+            # 47,827 (game_id, player_id, market, line, side, source) groups holding more
+            # than one row. Nothing errored -- the board reads "latest per key" and looked
+            # right, while every hit-rate denominator counted the same prop once per scrape.
+            #
+            # `_wc_direct_ingest` and `_ufc_direct_ingest` in bovada_scraper.py have always
+            # done this check; the API path is the one that did not, which is why the two
+            # leagues that bypass the API are the two that stayed clean. Same key as
+            # ix_props_regrade, so the lookup is indexed.
+            source = p.get("source", "manual")
+            existing = con.execute(
+                "SELECT id FROM props WHERE game_id=? AND player_id=? AND market=? "
+                "AND line=? AND side=? AND source IS ?",
+                (game_id, player_id, p["market"], p["line"], p["side"], source)).fetchone()
+            if existing:
+                if odds_int is None:
+                    con.execute("UPDATE props SET captured_at=? WHERE id=?", (now, existing["id"]))
+                else:
                     con.execute(
-                        "INSERT INTO props(game_id,player_id,market,line,side,source,captured_at,odds,odds_captured_at) VALUES(?,?,?,?,?,?,?,?,?)",
-                        (game_id, player_id, p["market"], p["line"], p["side"], p.get("source", "manual"), now, odds_int, now))
+                        "UPDATE props SET captured_at=?,odds=?,odds_captured_at=? WHERE id=?",
+                        (now, odds_int, now, existing["id"]))
+                refreshed += 1
+            elif odds_int is not None:
+                con.execute(
+                    "INSERT INTO props(game_id,player_id,market,line,side,source,captured_at,odds,odds_captured_at) VALUES(?,?,?,?,?,?,?,?,?)",
+                    (game_id, player_id, p["market"], p["line"], p["side"], source, now, odds_int, now))
+                ingested += 1
             else:
                 con.execute(
-                    "INSERT INTO props(game_id,player_id,market,line,side,source,captured_at) VALUES(?,?,?,?,?,?,?,?)",
-                    (game_id, player_id, p["market"], p["line"], p["side"], p.get("source", "manual"), now))
-            ingested += 1
+                    "INSERT INTO props(game_id,player_id,market,line,side,source,captured_at) VALUES(?,?,?,?,?,?,?)",
+                    (game_id, player_id, p["market"], p["line"], p["side"], source, now))
+                ingested += 1
         con.commit()
-    return {"status": "ok", "game_id": game_id, "ingested": ingested, "unresolved": unresolved}
+    return {"status": "ok", "game_id": game_id, "ingested": ingested,
+            "refreshed": refreshed, "unresolved": unresolved}
 
 
 @router.post("/api/capture-odds")
