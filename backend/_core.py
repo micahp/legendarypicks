@@ -8,7 +8,7 @@ Routers in routers/ import everything they need via `from _core import *`.
 """
 import json
 import os, sqlite3, datetime as dt
-import re, unicodedata
+import re, sys, unicodedata
 from contextlib import closing
 from typing import Optional, Tuple
 from fastapi import HTTPException, Query
@@ -484,11 +484,50 @@ def _deepseek_chat(system: str, user: str, max_tokens: int = 8000) -> Optional[s
     }).encode()
     req = _u.Request("https://api.deepseek.com/v1/chat/completions", data=body,
                      headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"})
+    # Returning None on failure is the contract every caller is built on, and a
+    # request-path caller (core_stories) must not be made to raise. But None used
+    # to be ALL a caller got: a missing key, a 401, a 402 out-of-credits, a 429, a
+    # 90s timeout and a truncated answer were one indistinguishable value.
+    #
+    # That destroyed a real diagnosis. On 2026-08-17 discover_topics reported
+    # "model returned nothing parseable" every night. The model parsed fine; it
+    # never answered. finish_reason was `length` with reasoning_tokens=4000 of a
+    # 4000 ceiling -- the entire budget spent on hidden reasoning, zero left for
+    # the answer, exactly what this function's own docstring warns about. The API
+    # had said so in the response, and this except threw it away.
+    #
+    # So: still None, but never silent.
     try:
         with _u.urlopen(req, timeout=90) as r:
-            return json.loads(r.read())["choices"][0]["message"]["content"].strip()
-    except Exception:
+            payload = json.loads(r.read())
+    except Exception as exc:
+        detail = ""
+        try:                                   # HTTPError carries the API's reason
+            detail = " — " + exc.read().decode("utf-8", "replace")[:300]
+        except Exception:
+            pass
+        print(f"_deepseek_chat: request failed: {type(exc).__name__}: {exc}{detail}",
+              file=sys.stderr, flush=True)
         return None
+    try:
+        choice = payload["choices"][0]
+        content = (choice["message"]["content"] or "").strip()
+    except Exception as exc:
+        print(f"_deepseek_chat: unexpected response shape: {type(exc).__name__}: {exc} "
+              f"— keys={list(payload)[:8]}", file=sys.stderr, flush=True)
+        return None
+    if not content:
+        usage = payload.get("usage") or {}
+        detail = (usage.get("completion_tokens_details") or {})
+        print(f"_deepseek_chat: EMPTY answer. finish_reason="
+              f"{choice.get('finish_reason')!r} max_tokens={max_tokens} "
+              f"completion_tokens={usage.get('completion_tokens')} "
+              f"reasoning_tokens={detail.get('reasoning_tokens')}. "
+              f"finish_reason='length' with reasoning ~= the ceiling means the "
+              f"budget went entirely to hidden reasoning — RAISE max_tokens.",
+              file=sys.stderr, flush=True)
+        return None
+    return content
 
 
 _OPEN_SNAP = """(SELECT {col} FROM prop_odds_snapshots s
