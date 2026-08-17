@@ -27,6 +27,7 @@ Usage:
 import argparse
 import collections
 import datetime as dt
+import gzip
 import json
 import os
 import sqlite3
@@ -73,11 +74,48 @@ def ensure_table(con):
     """)
 
 
+def _kickoff_window(con, hours=48):
+    """(should_probe, why) — is an MLS slate close enough that a board could exist?
+
+    THE POINT OF THIS FUNCTION IS TO NOT MAKE THE REQUEST. RotoWire gives this relay away
+    for free and it is ~2 MB a call. Asking it hourly, around the clock, for a board that
+    only exists in the hours before an MLS slate, is 24 requests a day to answer a question
+    that has an answer on maybe two of them.
+
+    So the probe is driven by our own fixture table, which already knows when MLS plays. If
+    the nearest kickoff is further out than the window, the run makes NO http request at
+    all — it records that it skipped and why. A read after kickoff is worthless anyway
+    (boards are pulled at lock), so this is not only politer, it is a strictly better
+    instrument: every request it does make lands where evidence can be.
+    """
+    now = dt.datetime.now(dt.timezone.utc)
+    rows = con.execute(
+        "SELECT start_time FROM prop_games WHERE league='mls' AND start_time IS NOT NULL "
+        "AND start_time > ? ORDER BY start_time LIMIT 1", (now.isoformat(),)).fetchall()
+    if not rows:
+        return False, "no upcoming MLS fixture in prop_games"
+    try:
+        kickoff = dt.datetime.fromisoformat(rows[0]["start_time"].replace("Z", "+00:00"))
+    except (TypeError, ValueError):
+        return True, "next kickoff unparseable — probing rather than guessing"
+    ahead = (kickoff - now).total_seconds() / 3600.0
+    if ahead > hours:
+        return False, "next MLS kickoff is {:.0f}h away (window {}h)".format(ahead, hours)
+    return True, "next MLS kickoff in {:.1f}h".format(ahead)
+
+
 def probe():
     """One read of the relay, reduced to what soccer it was carrying."""
-    request = urllib.request.Request(API, headers=_HDRS)
+    # gzip cuts this response from ~2 MB to a couple of hundred KB. The relay is free and
+    # public; taking the smaller transfer is the least we can do for it.
+    headers = dict(_HDRS)
+    headers["Accept-Encoding"] = "gzip"
+    request = urllib.request.Request(API, headers=headers)
     with urllib.request.urlopen(request, timeout=90) as response:
-        board = json.load(response)
+        raw = response.read()
+        if (response.headers.get("Content-Encoding") or "").lower() == "gzip":
+            raw = gzip.decompress(raw)
+        board = json.loads(raw)
 
     markets = {str(m.get("marketID")): m for m in board.get("markets") or []}
     entities = {str(e.get("entityID")): e for e in board.get("entities") or []}
@@ -120,6 +158,11 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     parser.add_argument("--history", action="store_true",
                         help="print the recorded series without probing")
+    parser.add_argument("--window-hours", type=int, default=48,
+                        help="only call the relay when an MLS kickoff is within this many "
+                             "hours; outside it the run makes no request at all")
+    parser.add_argument("--force", action="store_true",
+                        help="probe even outside the window (manual checks only)")
     args = parser.parse_args(argv)
 
     con = sqlite3.connect(DB)
@@ -127,6 +170,15 @@ def main(argv=None):
     ensure_table(con)
 
     if not args.history:
+        should, why = _kickoff_window(con, args.window_hours)
+        if not should and not args.force:
+            print("skipped, no request made — {}".format(why))
+            print("  The relay is free and ~2 MB a call. A board only exists before lock, "
+                  "so a read outside that window costs someone else bandwidth and tells "
+                  "us nothing.")
+            con.close()
+            return 0
+        print("probing — {}".format(why))
         try:
             reading = probe()
         except Exception as exc:  # noqa: BLE001
