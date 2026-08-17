@@ -262,18 +262,29 @@ _BLUE_FETCHER = Fetcher(min_interval=1.5, retry_waits=(2,), cache_dir=CACHE_DIR,
 #     public.api.bsky.app  app.bsky.feed.searchPosts    403   <-- and api.bsky.app too
 #
 # So this is NOT a rate block and NOT our IP: a volume block refuses the host,
-# and every other endpoint on that host answers. `app.bsky.feed.searchPosts` is
-# gated behind authentication, and the 403 is a BunnyCDN edge page rather than
-# Bluesky's JSON error envelope -- the request never reaches the API. It is
-# permanent at any rate from any address, so retrying it is not perseverance,
-# it is 300 pointless requests a day aimed at somebody who is hosting us free.
+# and every other endpoint on that host answers. The 403 body is a BunnyCDN edge
+# page rather than Bluesky's JSON error envelope -- the request never reaches
+# the API.
 #
-# (Line 226's host swap on 2026-08-06 was the same 403 answered by moving hosts
-# without first establishing what it meant. Both hosts refuse it.)
+# It is gated on being UNAUTHENTICATED, and that distinction is the whole point.
+# Measured the same day, same box:
 #
-# The endpoints that DO answer are the way back in: `getAuthorFeed` is one
-# request per account we already follow, against 100 keyword searches. That is
-# a product change, not a repair, so it is written up rather than done here.
+#     api.bsky.app  searchPosts, no header          -> 403  (Bunny edge page)
+#     api.bsky.app  searchPosts, Authorization: ... -> 401  {"error":"BadJwt"}
+#     bsky.social   com.atproto.server.createSession -> 401 (fake creds; endpoint live)
+#
+# A malformed token gets a real ATProto error, which means the request PASSES
+# the edge and is auth-checked by the API. So Bluesky search is not lost to us;
+# it needs a session. `createSession` with an app password -> accessJwt ->
+# `Authorization: Bearer` on this call. That needs an account and a credential,
+# which is Micah's decision, so it is written up rather than done here.
+#
+# Until then this endpoint refuses every unauthenticated request instantly, so
+# retrying it is not perseverance -- it was 300 pointless requests a day aimed
+# at somebody hosting us for free.
+#
+# (Line 226's host swap on 2026-08-06 was this same 403 answered by moving hosts
+# without first establishing what it meant. Both hosts refuse it unauthenticated.)
 _BSKY_GIVE_UP = 3
 
 
