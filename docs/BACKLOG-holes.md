@@ -198,3 +198,37 @@ Graded on dev and prod **separately**, because they are different code:
 PASS BOARD-stale-dev  (71 games, none finished; 17 carry no start_time)
 FAIL BOARD-stale-prod (2 of 56 games already finished — both Sunday-night MLS fixtures)
 ```
+
+---
+
+## Added 2026-08-17 (pt.2) — the identity infrastructure, and why promotions keep costing a backfill
+
+### New
+
+| # | severity | defect | evidence | fix |
+|---|---|---|---|---|
+| 54 | **P0 infrastructure** | **`players.id` is a per-database counter, and we move data between databases.** Prod and dev are not a replica pair — they are two databases forked from a common ancestor, both written to independently by live ingests ever since. Each has its own `AUTOINCREMENT` sequence, so from the point they diverged **both handed the same integers to different people**. Every promotion is therefore an identity-reconciliation problem, it recurs, and it grows. This is the root behind the repeated backfills, not any one merge script. | 44,450 ids exist in both DBs. **1,379 name a different LEAGUE** on each side (`id=29174` is Paul George/nba on dev and Max Kepler/mlb on prod); 3,323 carry an `espn_id` on both sides that disagrees. dev `max(id)=59638` / 54,541 rows; prod `max(id)=59363` / 44,938 rows. 14 tables and >300k rows join on `players.id`. | **The natural key already exists and is already unique.** 99.6% of dev players and 99.9% of prod players carry a publisher id, and `(league, espn_id)` has **zero** duplicate groups on either database. Declare it, then promote through it. See row 55. |
+| 55 | **P0 infrastructure** | **The natural key is never declared and the crosswalk built for it is empty.** The only UNIQUE index on `players` is the automatic one on `id`. `player_source_ids` — `UNIQUE(source, league, source_player_key) -> player_id`, exactly the table this problem needs — holds **10 rows** on dev and is absent from prod. So every non-ESPN source (Bovada, RotoWire, Underdog) resolves by NAME on every run, which is the ambiguous-key class that has already cost us a name-matched identity repair. | `sqlite_master` on both DBs; `player_source_ids` count = 10 | **Must ride a release, never precede one.** A UNIQUE index is an assertion the WRITER has to satisfy, and prod's writer is frozen in the container image. Adding it ahead of the code is the `ux_prop_games_event` mistake of 2026-08-17 repeated on a bigger table. |
+| 56 | **P1** | **Promotion is implemented as a row copy, when the pattern that works is re-running the ingest.** The tennis spine reached prod on 2026-08-17 by running `ingest_tennis_players.py` against `picks.db`: identity came from the publisher, so there was nothing to reconcile — 2 requests, 300 rows, zero id remapping, four minutes. The same rows copied out of dev would have needed exactly the reconciliation that is producing collisions today. | contrast the tennis spine run against the current MLS promotion | where an ingest can be re-run against prod, that IS the promotion; where it genuinely cannot, match on the publisher id and never on `players.id` |
+
+### Sequencing decision (Micah + Claude, 2026-08-17)
+
+**Cut v0.8.0 BEFORE this work, not after.** Two reasons, and the first is not a preference:
+
+1. The fix in row 55 is a constraint, and a constraint cannot land ahead of the code that satisfies
+   it. "Identity first, then release" is not an available ordering — it inverts to "release, then
+   constrain".
+2. Prod is currently taking schema promotions while its code is frozen at the 2026-08-12 image. That
+   gap is the widest it has been, and it is the mechanism behind the backfills we have already paid
+   for twice. Cutting the release closes it, and every later identity change is then made against a
+   prod whose code can actually be verified.
+
+**Guardrail on anything landing before the cut:** a merge that allocates fresh target ids is a
+one-way widening of the fork. It should not block the release, but it **must record the mapping it
+used** — source id, target id, and the publisher id that justified each — in a committed artifact.
+Un-recorded, the next pass has to re-derive it from names, which is the ambiguous-key class that
+created this. Cheap now, expensive later.
+
+**Test for any remaining pre-release item:** *does it need code or a constraint to be correct?* If
+yes it rides this release. If it is a data promotion or a backfill, it can land either side of the
+cut and must not hold it.

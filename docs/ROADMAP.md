@@ -119,6 +119,39 @@ Ordered by what blocks what, not by size. Detail for the defect rows is in
 week."* Weigh anything below against whether it moves v0.8.0. Items that cannot ship without a
 deploy are worth less right now than items that clear a red gate.
 
+### Sequencing decided 2026-08-17 — cut v0.8.0 BEFORE the identity work
+
+The next release after this one is about **player identity**, and it does not go first. Backlog
+rows 54–56 hold the measurements; the ordering argument is:
+
+- **The fix is a constraint, so it cannot precede the code.** `UNIQUE(league, espn_id)` is an
+  assertion the *writer* has to satisfy, and prod's writer is frozen in the container image.
+  Applying it now repeats the `ux_prop_games_event` mistake of 2026-08-17 on a bigger table.
+  "Identity first, then release" inverts to "release, then constrain".
+- **The code/DB gap is itself the thing that costs the backfills.** Prod is taking schema
+  promotions right now while running 08-12 code. Closing that gap is what makes every later
+  identity change verifiable against prod instead of only against dev.
+
+**The test for any item claiming to be pre-release:** *does it need code or a constraint to be
+correct?* Yes → it rides this release. No (a data promotion, a backfill) → it can land either side
+of the cut and must not hold it.
+
+**Guardrail while the cut is pending:** any merge that allocates fresh target ids widens the
+prod/dev fork one-way. It must **record the mapping it used** — source id, target id, and the
+publisher id justifying each — in a committed artifact, or the next pass re-derives it from names.
+
+### NEXT RELEASE (v0.8.1 or v0.9.0) — player identity
+
+Scope, in order. Full detail in `TASK-next-release-player-identity.md`.
+
+1. Declare the natural key on `players` — it is already unique on both databases, 0 duplicate
+   `(league, espn_id)` groups, so the migration has no conflicts to resolve.
+2. Populate `player_source_ids` so Bovada/RotoWire/Underdog stop resolving by name every run.
+3. Convert promotion from row-copy to re-running the ingest against prod, which is what already
+   works — the 2026-08-17 tennis spine did it in 2 requests with zero id reconciliation.
+4. Only then: reconcile the ids that have already diverged, using the mapping artifacts recorded
+   under the guardrail above.
+
 **Next code work**
 
 4. **Drop props at kickoff, with a postponement exemption** (decided 2026-08-17). The board
