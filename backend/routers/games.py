@@ -306,9 +306,54 @@ def root():
             "source": "ESPN", "leagues": sorted(espn.LEAGUES)}
 
 
+# Both paths, and `/api/health` is the one that matters: the Next dev server
+# proxies ONLY `/api/*`, so bare `/health` through a tunnel hits the frontend and
+# returns its 404 page. A health endpoint you cannot reach from the URL you are
+# actually looking at is not one you will ever use -- which is why this took a
+# walk through /proc on 2026-08-17 instead of one curl.
+@router.get("/api/health")
 @router.get("/health")
 def health():
-    return {"status": "ok"}
+    """Which database is this process actually serving, and how stale is it?
+
+    `{"status": "ok"}` was the whole response, and "ok" was true of every server
+    on this box at once -- prod, dev, and a worktree serving a throwaway snapshot
+    in /tmp. On 2026-08-17 a dev tunnel showed "2 games, 104 props" and looked
+    frozen; the cause was that its backend pointed at
+    `/tmp/lp-mls-ncaaf-standings-runtime.VgZl9x/picks.db`, a copy taken at 11:16
+    on Aug 15 so the worktree could not corrupt the real dev DB. Correct
+    isolation, no visible signal: it answered 200 and looked like the app. Finding
+    it meant walking /proc for the listening pid's LP_DB_PATH.
+
+    A health check that cannot distinguish those three is not a health check, it
+    is a liveness ping wearing the name. So say the two things that actually
+    identify a deployment: WHICH file, and HOW FRESH.
+
+    Deliberately cheap -- two MAX() lookups on indexed timestamp columns, because
+    this gets polled. Failures degrade to null rather than 500ing: a health
+    endpoint that raises when one table is missing tells you less than one that
+    answers with the fields it could read.
+    """
+    info = {"status": "ok", "db_path": DB, "db_mtime": None,
+            "newest_prop_captured": None, "newest_game_date": None}
+    try:
+        con = _db()
+    except Exception as exc:
+        info["status"] = "degraded"
+        info["error"] = "%s: %s" % (type(exc).__name__, exc)
+        return info
+    try:
+        info["db_mtime"] = dt.datetime.fromtimestamp(
+            os.path.getmtime(DB), dt.timezone.utc).isoformat()
+    except Exception:
+        pass
+    for key, sql in (("newest_prop_captured", "SELECT MAX(captured_at) FROM props"),
+                     ("newest_game_date", "SELECT MAX(date) FROM prop_games")):
+        try:
+            info[key] = con.execute(sql).fetchone()[0]
+        except Exception:
+            pass
+    return info
 
 
 @router.get("/api/coverage")
