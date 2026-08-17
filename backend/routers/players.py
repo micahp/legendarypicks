@@ -1341,17 +1341,48 @@ def league_leaders(league: str,
                 "canonical player stats contain duplicate ownership for "
                 f"{lg} season {season}; rebuild required",
             )
-        identity_mismatch = con.execute(
-            f"""SELECT ps.player_id
+        # This guard exists for the 2026-07 MLB corruption, where a stats row carried
+        # ANOTHER PLAYER's name (Statcast's `player_name` is the pitcher's). It used to
+        # assert raw string equality against `players.name`, and that ruler is wrong:
+        # `player_stats` is a row about a SEASON and carries the name and team the player
+        # had THAT season, while `players` is the CURRENT index. A transfer or a change in
+        # how the publisher writes a name makes the two legitimately differ.
+        #
+        # Measured 2026-08-17 on picks.dev.db: 18 NCAAF rows tripped it and ZERO were
+        # corrupt. All 18 of dev's `players` rows matched ESPN's current listing exactly
+        # (AJ Green Jr.|WMU, DJ Lagway|BAY, ...) against 2025 stats rows reading AJ
+        # Green|ARK. 11 of the 18 differed only by accents, punctuation or a suffix. The
+        # whole league's leaderboard 503'd on correct data — the same false-positive shape
+        # the duplicate check above already carries a note about.
+        #
+        # So ask the question the guard actually means: does this row's name belong to a
+        # DIFFERENT person in this league? A formatting or transfer drift does not; the
+        # MLB pitcher case does, because the pitcher is himself a player in the index.
+        candidates = con.execute(
+            f"""SELECT ps.player_id, ps.player_name, p.name
                 FROM player_stats ps
                 JOIN players p
                   ON p.id=ps.player_id AND p.league=ps.league
                 WHERE {population_where}
-                  AND ps.player_name!=p.name
-                LIMIT 1""",
+                  AND ps.player_name!=p.name""",
             population_params,
-        ).fetchone()
-        if identity_mismatch is not None:
+        ).fetchall()
+        def _surname(value: str) -> str:
+            parts = _normalize_name(value).split()
+            return parts[-1] if parts else ""
+
+        for cand in candidates:
+            stats_name, index_name = cand["player_name"], cand["name"]
+            if _normalize_name(stats_name) == _normalize_name(index_name):
+                continue  # accents, punctuation, a suffix — the same person, written twice
+            if _surname(stats_name) and _surname(stats_name) == _surname(index_name):
+                # Same surname, different given name: every one of these measured on
+                # 2026-08-17 was a nickname against a legal name — Bam/Braylon McReynolds,
+                # Charlie/Charles Miska, Jake/Jacob Newell, Ray Ray/Nathaniel Joseph. The
+                # publisher writes one form in a season row and another in the index.
+                continue
+            # A different surname is the corruption signal: the MLB rows carried the
+            # PITCHER's name, and a fabricated name fails here too.
             raise HTTPException(
                 503,
                 "canonical player stats disagree with the player index for "

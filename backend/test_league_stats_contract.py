@@ -349,21 +349,56 @@ class LeagueStatsContractTests(unittest.TestCase):
         insert_row(self.db_path, 4, "NBA B", "nba", 2026, 10, values=metric_values("nba", high=False))
         self.assertEqual(len(call("nba", min_games=10, limit=1)["leaders"]), 1)
 
+    def _rename_stats_row(self, name):
+        with sqlite3.connect(self.db_path) as con:
+            con.execute(
+                "UPDATE player_stats SET player_name=? WHERE player_id=1", (name,)
+            )
+
     def test_denormalized_name_disagreement_fails_closed(self):
+        """A stats row naming a DIFFERENT person still fails closed.
+
+        The old fixture used 'Wrong Denormalized Name' against 'Canonical Name'.
+        Both end in 'Name', so the two share a surname — it passed for the wrong
+        reason once the guard started reading surnames. Use a name that disagrees
+        the way the MLB corruption did: a different person entirely.
+        """
         insert_row(
             self.db_path, 1, "Canonical Name", "nba", 2026, 20,
             values=metric_values("nba"),
         )
-        with sqlite3.connect(self.db_path) as con:
-            con.execute(
-                "UPDATE player_stats SET player_name='Wrong Denormalized Name' "
-                "WHERE player_id=1"
-            )
+        self._rename_stats_row("Someone Else Entirely")
 
         with self.assertRaises(HTTPException) as raised:
             call("nba")
         self.assertEqual(raised.exception.status_code, 503)
         self.assertIn("disagree with the player index", raised.exception.detail)
+
+    def test_same_person_written_two_ways_is_served(self):
+        """The guard must not 503 on how a publisher spells one person's name.
+
+        Measured 2026-08-17: 18 NCAAF rows tripped the old string-equality guard and
+        ZERO were corrupt — every `players` row matched ESPN's current listing, against
+        2025 stats rows carrying that season's spelling. The whole leaderboard went 503
+        on correct data. Each case below is a real pair from that measurement.
+        """
+        for season_name, index_name in (
+            ("AJ Green", "AJ Green Jr."),            # suffix
+            ("LaVell Wright", "La'Vell Wright"),     # punctuation
+            ("Rúben Ismael", "Ruben Ismael"),        # accent
+            ("Bam McReynolds", "Braylon McReynolds"),  # nickname vs legal name
+            ("Jake Newell", "Jacob Newell"),
+            ("Charlie Miska", "Charles Miska"),
+        ):
+            with self.subTest(season_name=season_name):
+                self.setUp()
+                insert_row(
+                    self.db_path, 1, index_name, "nba", 2026, 20,
+                    values=metric_values("nba"),
+                )
+                self._rename_stats_row(season_name)
+                leaders = call("nba")["leaders"]
+                self.assertEqual([row["name"] for row in leaders], [index_name])
 
     def test_duplicate_canonical_ownership_fails_closed(self):
         insert_row(
