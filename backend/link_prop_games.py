@@ -467,6 +467,30 @@ def link_existing_games(con: sqlite3.Connection, dry_run: bool = False,
             prev = g["espn_event_id"] or ""
             if espn_id:
                 if espn_id != prev:
+                    # Another row may already BE this event. That is not an error and not
+                    # a bad link -- it is the same fixture stored twice under two calendar
+                    # dates (see the neighbour-slate comment above), and linking is the
+                    # moment we can finally prove it. Fold this row into that one instead
+                    # of creating the second row that ux_prop_games_event now forbids.
+                    #
+                    # Without this the constraint turns a nightly timer into an
+                    # IntegrityError, and the duplicate it was meant to prevent becomes a
+                    # failed run instead.
+                    existing = con.execute(
+                        "SELECT id FROM prop_games WHERE league=? AND espn_event_id=? "
+                        "AND id!=?", (g["league"], espn_id, g["id"])).fetchone()
+                    if existing:
+                        merged_into = existing["id"] if hasattr(existing, "keys") else existing[0]
+                        if not dry_run:
+                            con.execute("UPDATE props SET game_id=? WHERE game_id=?",
+                                        (merged_into, g["id"]))
+                            con.execute("DELETE FROM prop_games WHERE id=?", (g["id"],))
+                        print(f"    game {g['id']}: {g['away']} @ {g['home']} is event "
+                              f"{espn_id}, already held by game {merged_into} — props "
+                              f"repointed, duplicate row removed")
+                        changed += 1
+                        linked += 1
+                        continue
                     if not dry_run:
                         con.execute("UPDATE prop_games SET espn_event_id=? WHERE id=?", (espn_id, g["id"]))
                     changed += 1

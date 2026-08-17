@@ -90,6 +90,24 @@ def _init_db():
           home TEXT, away TEXT, espn_event_id TEXT,
           start_time TEXT,
           final_home INTEGER, final_away INTEGER);
+        -- An ESPN event id IS the identity of a game, so two rows carrying one must not
+        -- exist. Prod held 59 events across 124 rows, and it was not tidiness: settlement
+        -- works one prop_games row at a time, so the props that landed on the second row
+        -- were never graded against anything. That is prod's June hole -- 14,046 unsettled
+        -- MLB props against 693 settled.
+        --
+        -- They arise honestly. prop_games.date comes from a UTC first pitch while ESPN's
+        -- scoreboard is keyed by LOCAL date, so one fixture arrives under two calendar
+        -- days; the ingest matches on (league, date, home, away) and misses, inserting a
+        -- second row; the linker then searches neighbouring slates -- correctly -- and
+        -- resolves BOTH to the same event. Nothing in that chain is a bug on its own,
+        -- which is why it needs a constraint rather than a fix.
+        --
+        -- Partial, because a blank event id asserts nothing: unlinked rows are not claims
+        -- about identity and several may legitimately share the empty string.
+        CREATE UNIQUE INDEX IF NOT EXISTS ux_prop_games_event
+          ON prop_games(league, espn_event_id)
+          WHERE espn_event_id IS NOT NULL AND espn_event_id != '';
         CREATE TABLE IF NOT EXISTS props(
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           game_id INTEGER REFERENCES prop_games(id),
