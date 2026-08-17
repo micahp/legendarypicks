@@ -29,6 +29,9 @@ log(){ printf '[%s] %s\n' "$(date -Is)" "$*" | tee -a "$LOG"; }
 # because stdout through `tee` is block-buffered and the buffer died with the
 # process. The one artifact that would have named the hung step never reached
 # the disk. An unbuffered log is the diagnosis, not a nicety.
+STEP_FAILURES=0
+FAILED_STEPS=""
+
 run_step(){
   local budget="$1"; shift
   local name="$1"
@@ -41,8 +44,25 @@ run_step(){
     0)       log "  OK: $name in ${took}s" ;;
     124|137) log "  TIMEOUT: $name hit its ${budget}s budget and was killed —"
              log "           later steps still run. The tail above names the"
-             log "           host it was waiting on." ;;
-    *)       log "  WARN: $name exited $rc after ${took}s" ;;
+             log "           host it was waiting on."
+             STEP_FAILURES=$(( STEP_FAILURES + 1 )); FAILED_STEPS="$FAILED_STEPS $name(timeout)" ;;
+    *)       log "  WARN: $name exited $rc after ${took}s"
+             STEP_FAILURES=$(( STEP_FAILURES + 1 )); FAILED_STEPS="$FAILED_STEPS $name(exit $rc)" ;;
   esac
+  return 0
+}
+
+# Call last. Runs every step, THEN reports -- "don't abort the next step" and
+# "report the job as failed" are different requirements and the script owes both.
+#
+# Without this the job is green whenever the last line runs, which is always. On
+# 2026-08-17 discover_topics.py was taught to exit 1 when its model stage writes
+# nothing, and that exit code would have died right here in run_step's
+# `return 0` -- a fix that reaches the process and not the operator.
+finish(){
+  if [ "$STEP_FAILURES" -gt 0 ]; then
+    log "=== $STEP_FAILURES step(s) FAILED:$FAILED_STEPS"
+    exit 1
+  fi
   return 0
 }

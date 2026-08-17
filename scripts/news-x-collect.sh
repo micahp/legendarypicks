@@ -33,3 +33,4 @@ log "=== x collect start ==="
 # the timer fires every 2 hours and the upserts are idempotent.
 run_step 480 ingest_league_news.py --x-only
 log "=== x collect done ==="
+finish

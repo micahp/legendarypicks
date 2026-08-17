@@ -45,12 +45,15 @@ log "=== news collect start === DB=$LP_DB_PATH"
 [ -f "$LP_DB_PATH" ] || { log "FATAL: $LP_DB_PATH does not exist"; exit 2; }
 # Budgets are the healthy runtime with room, not a guess: measured 2026-08-17 on
 # this box, the collector completes in ~4 min (ESPN+RSS in under one, the rest
-# being Bluesky's 100 requests at min_interval=1.5). They must sum to less than
-# the unit's TimeoutStartSec (1500) or systemd kills the job before the last
+# being Bluesky's 100 requests at min_interval=1.5). Discovery got 300 -> 420
+# when its model ceiling rose to 24000: observed 168s, and reasoning time
+# scales with that ceiling. They must sum to less than
+# the unit's TimeoutStartSec (1800) or systemd kills the job before the last
 # step can report — which is the failure this whole change exists to prevent.
 run_step 600 ingest_league_news.py
 run_step 420 ingest_league_narratives.py
 # 3. Discovery: propose conversations nobody named. Nothing is published from
 #    this — it writes candidates for review (discover_topics.py --list).
-run_step 300 discover_topics.py
+run_step 420 discover_topics.py
 log "=== news collect done === DB=$LP_DB_PATH"
+finish
