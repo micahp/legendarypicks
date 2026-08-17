@@ -14,7 +14,7 @@ Usage:
 
 Source: Bovada's internal API — no auth, no Cloudflare, live odds.
 """
-import sys, json, os, re, unicodedata, urllib.request, datetime as dt
+import sys, json, os, re, collections, unicodedata, urllib.request, datetime as dt
 
 from link_prop_games import link_prop_game
 import espn_client as espn
@@ -29,6 +29,10 @@ LEAGUES = {
     "nhl":  ("hockey", "nhl"),
     "wnba": ("basketball", "wnba"),
     "wc":   ("soccer", "fifa-world-cup/fifa-world-cup-matches"),
+    # Bovada files MLS by continent, not by country code. `soccer/usa/mls` and
+    # `soccer/united-states/mls` both 404, which is how a probe on 2026-08-16 first
+    # concluded "Bovada has no MLS" -- it has 14 fixtures and 1,464 player outcomes.
+    "mls":  ("soccer", "north-america/united-states/mls"),
     "ufc":  ("ufc-mma", "ufc"),
     "atp":  ("tennis", "atp"),
     "wta":  ("tennis", "wta"),
@@ -117,6 +121,8 @@ def fetch_events(sport: str, league: str) -> list:
 
 def parse_player_props(event: dict, league: str) -> list:
     """Extract all player props from a single Bovada event."""
+    if league == "mls":
+        return _parse_mls_props(event)
     if league == "wc":
         return _parse_wc_props(event)
     if league == "ufc":
@@ -274,6 +280,187 @@ def _parse_tennis_props(event: dict, league: str) -> list:
                     "source": "bovada",
                     "market_raw": mdesc,
                 })
+    return results
+
+
+# MLS player-attributed markets, enumerated live 2026-08-16 across all 14 fixtures on
+# soccer/north-america/united-states/mls. Every one is a yes/no market whose OUTCOMES are
+# the players ("Christian Ramirez (ATX)"); none of them carry a threshold ladder, and MLS
+# publishes no shots or shots-on-target market at all (the WC feed does -- do not assume
+# one soccer coupon implies another).
+#
+# Keyed on the EXACT market description rather than a substring. The WC rules below match
+# on substrings, which is why "to score 2 or more goals" had to be listed in _WC_SKIP_KW to
+# stop "anytime goal scorer" from swallowing it. An exact table cannot have that collision,
+# and it makes an unrecognised market visible instead of silently absorbed (see
+# _report_unmapped_market).
+#
+# The goal ladder is deliberately ONE market at three lines rather than three market names.
+# `goals` over 0.5 / 1.5 / 2.5 all settle from the same published stat, so the board, the
+# hit-rate chart and settlement.py need no new market vocabulary. Splitting them into
+# "hat_trick" and "two_plus_goals" would have created two markets nothing could grade.
+#
+#   market description            -> (canonical market, line)   outcomes seen 2026-08-16
+_MLS_PLAYER_MARKETS = {
+    "to assist a goal":          ("assists", 0.5),             # 639
+    "anytime goal scorer":       ("goals", 0.5),               # 357
+    "first goal scorer":         ("first_goal_scorer", 0.5),   # 332
+    "to score a hat trick":      ("goals", 2.5),               # 56
+    "to be shown a card":        ("card_shown", 0.5),          # 22
+    "to score or assist a goal": ("goal_or_assist", 0.5),      # 20
+    "to score 2 or more goals":  ("goals", 1.5),               # 20
+    # Bovada writes the first-goal market under two names. No event carries both (checked
+    # across all 14), and if one ever does the ingest dedup key
+    # (game_id, player_id, market, line, side, source) collapses them.
+    "player to score 1st goal":  ("first_goal_scorer", 0.5),   # 18
+}
+
+# Display groups whose markets are player-attributed. A market that appears here and is NOT
+# in _MLS_PLAYER_MARKETS is a market Bovada added since this table was measured -- it gets
+# reported, never silently dropped. Game-level groups (Game Lines, Corners, Combo Props ...)
+# are out of scope for the player-prop schema, the same deferral as UFC fight-level markets.
+_MLS_PLAYER_GROUPS = {"goalscorer", "assists", "cards"}
+
+# Outcomes inside a player market that are the market's complement rather than a person.
+# "No Goalscorer" is a real, priced outcome on every goalscorer ladder; minting it as a
+# player is how a sportsbook string becomes a row in `players`.
+_MLS_NON_PLAYER_OUTCOMES = {"no goalscorer", "no 1st goal", "no goal scorer",
+                            "no first goal scorer", "no card", "none", "no assist"}
+
+# Populated by _parse_mls_props, printed by main(). A module-level accumulator because the
+# parser runs per event and the finding is per RUN -- one unmapped market on 14 events is
+# one finding, not fourteen.
+_UNMAPPED_PLAYER_MARKETS = {}
+
+# {(player_name, bovada_code): game_desc} for outcomes whose club tag is not one of the
+# event's two teams. Printed by main() -- a silent drop here is a player the resolver was
+# never given a fair chance at.
+_STALE_TEAM_TAGS = {}
+
+
+def _report_unmapped_market(league: str, group: str, market_desc: str, n_outcomes: int):
+    """Record a player-attributed market we have no mapping for.
+
+    Silently skipping it is the exact shape fail-loudly §2a describes: the run still
+    prints a plausible prop count, and the missing market is invisible until somebody
+    counts Bovada's board by hand. main() exits non-zero when this dict is non-empty.
+    """
+    key = (league, group, market_desc)
+    entry = _UNMAPPED_PLAYER_MARKETS.setdefault(key, {"events": 0, "outcomes": 0})
+    entry["events"] += 1
+    entry["outcomes"] += n_outcomes
+
+
+def _looks_player_attributed(outcomes) -> bool:
+    """True when the outcomes are players ("Name (TEAM)") rather than Over/Under/Yes/No."""
+    named = 0
+    for o in outcomes or []:
+        desc = (o.get("description") or "").strip()
+        if re.match(r".+\(([^)]+)\)\s*$", desc):
+            named += 1
+    return bool(outcomes) and named >= max(2, len(outcomes) // 2)
+
+
+def _parse_mls_props(event: dict) -> list:
+    """Extract player props from a single Bovada MLS event.
+
+    The team parenthetical is NOT trusted as identity. Bovada tags three players on this
+    board with a club they no longer play for -- Alexis Sanchez (SEV), Josef Martinez (TIJ),
+    Igor Jesus (NFO) -- all three appearing in MLS fixtures between two other clubs. Passing
+    a foreign team code to the resolver turns a resolvable player into an unresolved one, so
+    a code that is not one of the event's two clubs is dropped and the resolver is left to
+    disambiguate on game_id, which it already does (_resolve_player_for_ingest / game_teams).
+    """
+    results = []
+    game_desc = event.get("description", "")
+    start_time = event.get("startTime")
+
+    home_team = ""
+    away_team = ""
+    for c in event.get("competitors", []):
+        if c.get("home", False):
+            home_team = c.get("name", "")
+        else:
+            away_team = c.get("name", "")
+
+    # Bovada names the competitors in full ("Austin FC") and codes the players in the
+    # outcome parenthetical ("(ATX)"), with no published mapping between the two. The
+    # event's own board supplies it: across its player markets the two squads account for
+    # every outcome but a handful, so the two most frequent codes ARE the two clubs.
+    # Measured 2026-08-16: real codes ran 18-53 outcomes each, the three stale tags ran 1.
+    code_counts = collections.Counter()
+    for dg in event.get("displayGroups", []):
+        if (dg.get("description") or "").strip().lower() not in _MLS_PLAYER_GROUPS:
+            continue
+        for market in dg.get("markets", []):
+            if (market.get("description") or "").strip().lower() not in _MLS_PLAYER_MARKETS:
+                continue
+            for outcome in market.get("outcomes", []):
+                m = re.match(r".+?\s*\(([^)]+)\)\s*$", (outcome.get("description") or "").strip())
+                if m:
+                    code_counts[m.group(1).strip().upper()] += 1
+    event_codes = {code for code, _ in code_counts.most_common(2)}
+
+    for dg in event.get("displayGroups", []):
+        group = (dg.get("description") or "").strip().lower()
+        if group not in _MLS_PLAYER_GROUPS:
+            continue
+
+        for market in dg.get("markets", []):
+            market_desc = (market.get("description") or "").strip()
+            outcomes = market.get("outcomes", [])
+            rule = _MLS_PLAYER_MARKETS.get(market_desc.lower())
+            if rule is None:
+                # Team-level markets share these groups ("First Card" is a team ladder,
+                # "Total Cards O/U - Seattle Sounders" a team total). Only report the ones
+                # that actually carry players.
+                if _looks_player_attributed(outcomes):
+                    _report_unmapped_market("mls", group, market_desc, len(outcomes))
+                continue
+
+            canonical_market, line = rule
+            for outcome in outcomes:
+                odesc = (outcome.get("description") or "").strip()
+                # The "nobody" outcome on a goalscorer ladder is the market's complement,
+                # not a player. Checked before the name parse so it can never be minted.
+                if odesc.lower() in _MLS_NON_PLAYER_OUTCOMES:
+                    continue
+                # The club parenthetical is OPTIONAL. Requiring it dropped 31 of 1,464
+                # outcomes on 2026-08-16 -- Sergi Roberto, Youssef Maziz, Célio Pompeu and
+                # 28 others -- silently, because Bovada writes a bare name whenever it has
+                # no club tag. `_split_market_and_player` learned this for MLB already: the
+                # team is optional, the NAME is what the prop is about.
+                m = re.match(r"(.+?)\s*\(([^)]+)\)\s*$", odesc)
+                if m:
+                    player_name = m.group(1).strip()
+                    team_code = m.group(2).strip().upper()
+                else:
+                    player_name = odesc
+                    team_code = ""
+                if not player_name:
+                    continue
+                # Combination outcomes ("Saka or Messi") are not a player.
+                if " or " in player_name.lower():
+                    continue
+                if team_code and team_code not in event_codes:
+                    _STALE_TEAM_TAGS[(player_name, team_code)] = game_desc
+                    team_code = ""
+                results.append({
+                    "player_name": player_name,
+                    "team": team_code,
+                    "market": canonical_market,
+                    "line": line,
+                    "side": "over",
+                    "odds": (outcome.get("price") or {}).get("american"),
+                    "league": "mls",
+                    "game_desc": game_desc,
+                    "home_team": home_team,
+                    "away_team": away_team,
+                    "start_time": start_time,
+                    "source": "bovada",
+                    "market_raw": market_desc,
+                })
+
     return results
 
 
@@ -813,6 +1000,7 @@ def main():
         sys.exit(1)
 
     all_props = []
+    resolve_counts = {}
     today = dt.date.today().isoformat()
 
     for key, (sport, lg) in targets:
@@ -885,12 +1073,29 @@ def main():
                             "source": "bovada",
                             "odds": p.get("odds"),
                         })
+                    lg_ingested = 0
+                    lg_refreshed = 0
+                    lg_unresolved = 0
+                    lg_failed = 0
                     for batch in by_game.values():
                         try:
                             result = ingest_batch(batch)
-                            print(f"  {batch['away']} @ {batch['home']}: {result['ingested']} ingested")
+                            lg_ingested += result.get("ingested") or 0
+                            lg_refreshed += result.get("refreshed") or 0
+                            lg_unresolved += result.get("unresolved") or 0
+                            print(f"  {batch['away']} @ {batch['home']}: "
+                                  f"{result['ingested']} new, {result.get('refreshed', 0)} refreshed")
                         except Exception as e:
+                            lg_failed += 1
                             print(f"  FAIL ingest: {e}")
+                    resolve_counts[lg] = {
+                        "scraped": len(lprops),
+                        "ingested": lg_ingested,
+                        "refreshed": lg_refreshed,
+                        "unresolved": lg_unresolved,
+                        "games_failed": lg_failed,
+                        "games": len(by_game),
+                    }
         # Optionally capture snapshots
         if do_capture:
             print(f"\nCapturing odds snapshots...")
@@ -901,6 +1106,54 @@ def main():
                 print(f"  FAIL capture: {e}")
     else:
         print("  (no props found — games may not have started yet, or sport is out of season)")
+
+    sys.exit(_run_report(resolve_counts, do_ingest))
+
+
+def _run_report(resolve_counts: dict, did_ingest: bool) -> int:
+    """Print what this run could NOT do, and return the process exit code.
+
+    Every line here prints even when the count is zero (fail-loudly §3.7): a log that only
+    speaks up on failure cannot tell "clean" from "never ran", which is the state the tennis
+    ingest sat in for its whole existence -- 169 players rejected every 30 minutes behind a
+    status line reading `0 ingested`.
+
+    Exit 3 means the run wrote data AND found something a human needs to look at. It is
+    deliberately not 0: a scrape that resolves none of what it scraped is a broken feed, and
+    a systemd unit is the only thing that will ever notice.
+    """
+    problems = []
+
+    print("\n--- run report ---")
+    print(f"  unmapped player markets: {len(_UNMAPPED_PLAYER_MARKETS)}")
+    for (lg, group, desc), n in sorted(_UNMAPPED_PLAYER_MARKETS.items()):
+        print(f"      UNMAPPED {lg} [{group}] {desc!r}"
+              f" — {n['outcomes']} outcomes across {n['events']} events, NOT ingested")
+        problems.append(f"unmapped market {lg}:{desc}")
+
+    print(f"  outcomes tagged with a club not in the fixture: {len(_STALE_TEAM_TAGS)}")
+    for (name, code), game in sorted(_STALE_TEAM_TAGS.items()):
+        print(f"      STALE TAG {name} ({code}) in {game} — team dropped, resolved on game_id")
+
+    if did_ingest:
+        for lg, c in sorted(resolve_counts.items()):
+            resolved = c["ingested"] + c["refreshed"]
+            print(f"  {lg}: resolved {resolved} of {c['scraped']} scraped"
+                  f" ({c['ingested']} new, {c['refreshed']} refreshed,"
+                  f" {c['unresolved']} unresolved) across {c['games']} games")
+            if c["scraped"] and not resolved:
+                print(f"      REJECTED all {c['scraped']} {lg} props —"
+                      f" nothing in `players` matched. A count of zero is a finding.")
+                problems.append(f"{lg} resolved 0 of {c['scraped']}")
+            if c["games_failed"]:
+                print(f"      {c['games_failed']} of {c['games']} {lg} games failed to POST")
+                problems.append(f"{lg} {c['games_failed']} games failed to POST")
+
+    if problems:
+        print("\nEXIT 3 — " + "; ".join(problems))
+        return 3
+    print("  no problems found")
+    return 0
 
 
 if __name__ == "__main__":
