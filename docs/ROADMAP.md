@@ -4,7 +4,8 @@
 reasoning — that section keeps its own rule: add, don't rewrite, mark superseded rather than
 delete.**
 
-Checked = shipped to **production**, not to dev. Checklist last updated **2026-08-14**.
+Checked = shipped to **production**, not to dev. Checklist last updated **2026-08-14**;
+current state and the deployment target are in the dated block below, updated **2026-08-17**.
 
 The constraint that orders all of it: **NFL fantasy drafts run the next 3-5 weeks**, and NFL
 draft research is the only use case a real user has said yes to (see "User evidence" below).
@@ -22,6 +23,117 @@ Anything that does not serve that window competes with it. *That window is now m
 > The one-line summary of that list: **most P0s are the same defect.** Data lands, the link
 > that makes it reachable does not, and nobody took the count that would have shown it —
 > four items are `prop_games.espn_event_id`, two are settlement coverage.
+
+---
+
+## CURRENT — 2026-08-17: deployment target and what stands in front of it
+
+### The deployment target is v0.8.0. Nothing has shipped to prod since v0.7.8.
+
+What production is actually running, read off the containers rather than the tags:
+
+```
+legendarypicks-frontend-1   image built 2026-08-09
+legendarypicks-backend-1    image built 2026-08-12
+```
+
+**`backend/data` is bind-mounted; code is baked into the image.** That single fact orders
+everything below, because it splits every fix into one of two classes:
+
+- **A data fix reaches prod the moment it runs.** 2026-08-17's tennis spine went from written
+  to live on prod in four minutes, and `props-prod` went 0/384 → 347 props with no deploy.
+- **A code fix cannot reach prod at all until a release.** It does not matter how small. The
+  slate filter repaired on 08-17 is five lines and prod will keep serving finished games until
+  v0.8.0 ships.
+
+The corollary, which has cost us twice: **a schema change must never get ahead of the code that
+understands it** (see `feedback_schema_must_not_outrun_prod_code`). Additive nullable columns are
+safe; constraints and indexes are not, because the writer that has to satisfy them is frozen at
+image-build time.
+
+### Release gates — 7 red as of 2026-08-17
+
+`./verify-gates.sh all` → 24 passed, 6 failed, plus one added the same day:
+
+| gate | state | note |
+|---|---|---|
+| COV-source | FAIL | `team_game_results.nfl` 1114 rows; `team_game_stats.mlb` 16 |
+| COV-gametype | FAIL | mlb 2026: 1,579 of 53,895 rows NULL |
+| COV-identity | FAIL | blocked on `orphan_players=1` |
+| COV-statset | FAIL | 12 of a known 21 open — **expected red**, see `docs/LEAGUE-STAT-GAPS.md` |
+| REG-adp-dst | FAIL | `HOU` off expected (236 vs 223) |
+| REG-jest-all | FAIL | 2 failing tests in 1 suite, not yet identified |
+| BOARD-stale-prod | FAIL | **new 2026-08-17.** Prod serves 2 finished games as upcoming. Red *by design* until a release carries the fix — the redness is the deploy skew, reported rather than assumed. |
+
+`BOARD-stale-dev` passes. That pairing is the point: the two are different code, so a green dev
+gate says nothing about the deployed board.
+
+### Release-blocking list from 2026-08-12 — remeasured 2026-08-17
+
+Two of the four cleared themselves; the counts, not the intentions, are what changed.
+
+- ~~**Prod news is empty** (#1)~~ — **CLOSED.** Prod `news_items` = 4,784, with 467 in the last
+  24h. Bluesky search came back the same day (91/91 queries, 406 posts) once the credential was
+  read under its real name.
+- ~~**Tennis discards a working feed** (#2)~~ — **CLOSED on prod.** 1,022 tennis props on
+  `picks.db`; the ATP/WTA spine is 150 per tour, every row carrying an ESPN id.
+- **MLS is hidden on prod** (#6) — **still open, unchanged.** `team_stats_coverage` where
+  `league='mls'` is **0 rows on prod, 1 on dev**. The release calls MLS out; nobody sees it.
+  Promotion is a data job, so this one *can* land without a deploy.
+- **Settlement writes failures in the shape of successes** (#21–23) — still open, and it is
+  the most expensive item on this page. See the 08-14 correction below.
+
+### Open work, consolidated 2026-08-17 from six sessions
+
+Ordered by what blocks what, not by size. Detail for the defect rows is in
+`docs/BACKLOG-holes.md` under the 08-17 block.
+
+**Blocked on a decision from Micah**
+
+1. **`start_time` write-once.** `routers/props.py:473` and `bovada_scraper.py:856` both guard
+   `if start_time and not game_row["start_time"]`, so a publisher revising first pitch can never
+   propagate — ~20 of prod's 95 disagreements. Three guards. Recommendation: overwrite only when
+   the publisher disagrees, which keeps the publisher authoritative and stops a stale board
+   overwriting a good instant.
+2. **Scores W2 / W4** — §6 of the scores task doc needs the Top Events ranking rule, how many
+   leagues it shows, and whether to wire NCAAF week navigation while the league is dark.
+3. **The Bluesky secret is an account password, not an app password** (15 chars, wrong shape).
+   Works either way; a leak costs the account instead of a revocation.
+
+**Next code work**
+
+4. **Drop props at kickoff, with a postponement exemption** (decided 2026-08-17). The board
+   currently keeps a game for 3 hours past its start. Kickoff is the right rule for a pregame
+   board, but it cannot ship until the board can tell *postponed* from *started*: `prop_games`
+   has no status column at all. ESPN already publishes `state`/`completed`/`status` and
+   `reconcile_gap.py:94` already knows `STATUS_POSTPONED`/`CANCELED`/`SUSPENDED`. Additive
+   nullable column, populated via the linked `espn_event_id`, then the filter changes.
+5. **MLS settlement returns 0 settled** on the four finished 08-15 games. Found, not diagnosed.
+   ~5,300 props sit behind it.
+6. **`props-freshness` self-heal blocks** — `systemctl start` on a `Type=oneshot` waits, the
+   watchdog allows 15s. One-line `--no-block`. Masked now that `props-prod` is green, not fixed.
+7. **Tennis spine source: rankings → tournament scoreboard.** Same 2 requests, 263–328 real
+   entrants including qualifiers and wildcards, and it stops decaying every Monday. Recovers
+   Monfils, Sloane Stephens, Lois Boisson — all genuine coverage misses, not spelling ones.
+8. **Surname-first name order** in `_resolve_player_for_ingest` — Xinyu Wang ↔ Wang Xinyu. Same
+   shape as Kim Kee-Hee in MLS, so it is one fix rather than a per-league patch.
+9. **The unconfigured-ESPN-script gate is unwritten** — 20 of 27 scripts including
+   `bovada_scraper.py`. `link_prop_games.py`'s budget guard is the model to generalise.
+
+**Queued product work**
+
+10. **Underdog-MLS** — the instruction before the last stop, never started.
+11. **PrizePicks MLS probe** — hourly; the first read that can carry evidence is the 08-19
+    slate. Would take MLS from 2/11 markets to 9/11.
+12. **2026 MLS log backfill paused** at 147 of ~350 matches. Resumable.
+
+**Host / cost, needs Micah to run**
+
+13. **DeepSeek peak billing** — 4 of 10 scheduled runs/day land in peak window, both news timers
+    at 100%. Retime three timers and pin them UTC (`TASK-deepseek-offpeak-scheduling.md` §4).
+14. **279,404 prod null-outcome rows** — delete plan still un-run.
+15. **`legendarypicks-underdog-ufc-props.timer` went onto the host against the ban**, firing
+    every 30 min. Tracked under `ops/systemd/`, but it should not have been installed.
 
 ---
 

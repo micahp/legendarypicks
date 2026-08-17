@@ -156,3 +156,45 @@ Rows above are kept as written. These supersede where they overlap.
 | 42 | **P2** | **531 shadow MLS players on PROD.** No `espn_id`, no game logs, props attached; duplicates of athletes already in the spine. Dev repaired (183 → 0). | prod `players` where league='mls' and espn_id IS NULL: 531 | run `merge_mls_prop_players.py --db data/picks.db --apply` (blocked: needs authorisation to write prod) |
 | 43 | **P2** | **Prod MLS/NCAAF repairs never applied.** Prod still has 0 MLS `player_stats`, the 159 team-entity rows mislabeled as active players, and the NCAAF position blanks. | dev clean, prod unchanged | `migrate_mls_season_columns.py`, `ingest_mls_season_stats.py`, `migrate_player_entity_type.py`, `backfill_ncaaf_positions_cfbd.py`, each `--db data/picks.db --apply` |
 | 44 | **P3** | **`roster_season()` infers a season from a timestamp** with a hardcoded month rule — the same class as the `_SEASON = {"mls": 2025}` constant that served last year's squads all season. | `roster_membership.py:218` | read the published current season, as `ingest_mls_ncaaf_rosters._season()` now does |
+
+---
+
+## Added / closed 2026-08-17 — the props-board pass
+
+Rows above are kept as written. These supersede where they overlap.
+
+### Closed
+
+| # | was | now |
+|---|---|---|
+| 1 | **Prod has zero news.** `news_items` empty for every league; the headline v0.8.0 feature. | **4,784 rows on prod, 467 in the last 24h.** Bluesky search restored the same day — 91/91 queries, 406 posts, 0 errors. The credential was present the whole time under a different spelling (`BLSKY_PASS`), and a single-spelling lookup reported "no credential" with the value in the file. `_bsky_credential()` now accepts an ordered alias list and prints which one matched. |
+| 2 / 41 | **Tennis discards a working feed.** Bovada serves ATP/WTA, every prop dropped because `players` had no atp/wta rows; `props-prod` exited 3 every 30 minutes. | **1,022 tennis props on prod.** 150 ATP + 150 WTA ingested from ESPN's rankings, all carrying publisher ids, 2 requests. `props-prod` 0/384 → atp 182/188, wta 165/188. `props-freshness` went green as a side effect — it had only ever failed because it kept self-healing a service that could not succeed. **DB-only, no deploy.** |
+
+### New
+
+| # | severity | defect | evidence | fix |
+|---|---|---|---|---|
+| 45 | **P0** | **The props board served games that had already finished.** The upcoming filter was `pg.date >= date('now')` — a UTC calendar date — while the client groups and labels every game by the LOCAL date it derives from `start_time`. Two rulers on one board. Shipped in v0.4.3 on **2026-07-17** and invisible for a month, because until `38f80bb` (08-15) the client grouped by the same UTC date the filter used: a finished Sunday match read as "today, 7:30 PM". Fixing the display half exposed it as a `SUN, AUG 16` header at the top of the board. | 36 of 197 July MLB games and 14 of 28 August MLS fixtures kick off 00:00–03:59Z, the window where UTC and local dates disagree | **Fixed on dev** (`7292522`): filter on the instant with a 3-hour grace, `COALESCE` to end-of-date for the 17 upcoming MLS rows carrying no `start_time`. Both slate paths share one predicate, asserted by a test. **Still live on prod** — `routers/props.py` is baked into the image. |
+| 46 | **P0** | **`prop_games` has no status column, so the board cannot tell postponed from started.** This blocks the decided rule (drop props at kickoff, 2026-08-17): applied naively it would silently delete a postponed game whose props are still live. | `prop_games` cols: `id, league, date, home, away, espn_event_id, final_home, final_away, start_time` | add a nullable `status`, populate from the linked `espn_event_id` — ESPN publishes `state`/`completed`/`status` and `reconcile_gap.py:94` already handles `STATUS_POSTPONED`/`CANCELED`/`SUSPENDED`. Additive, so it does not outrun prod's frozen code. |
+| 47 | **P1** | **Tennis start times are bucketed placeholders.** 13 of 15 ATP/WTA games on 08-17 share exactly `15:00:00Z`; 15 of 18 on 08-18 share it. A session start time is being stored as a match time, which is why the board reads as a wall of "10:00 AM". | `prop_games` where league in (atp,wta) | trace where `start_time` is set for tennis; the scoreboard source (row 49) publishes per-match times |
+| 48 | **P1** | **Tennis pills were missing from the props board.** `LEAGUES` is both the filter row AND the within-day ordering, so atp/wta were unfilterable and sorted last while tennis was 32 of the 71 games. The pills advertised UFC/NBA/NFL/NHL — four leagues with zero games. | `pages/props.tsx:31` | **Fixed on dev** (`750416f`), appended rather than reordered. Prod's frontend image predates it. |
+| 49 | **P1** | **The tennis spine decays by design.** It is the top 150 per tour; a tournament field is not the rankings — it includes qualifiers, wildcards and returning players. Cincinnati overlapped heavily so only 2 names missed, and that overlap drops as the tour moves to Winston-Salem, US Open qualifying and Challengers. | ESPN's `atp|wta/scoreboard` publishes **263–328 distinct athletes for one event** vs 150 from rankings, for the same 2 requests | swap the source in `ingest_tennis_players.py` from rankings to the tournament scoreboard, on a timer ahead of the props scrape |
+| 50 | **P1** | **Surname-first names never resolve.** Folding diacritics and case does not touch word order. Not tennis-only — the same shape is in MLS. | Bovada "Xinyu Wang" ↔ ESPN "Wang Xinyu"; "Shuai Zhang" ↔ "Zhang Shuai"; MLS "Kim Kee-Hee" | one fix in `_resolve_player_for_ingest`, not per-league |
+| 51 | **P2** | **The esports board buckets by start time**, so a match that ends late lands in the wrong day. Same class as 45, different surface. | `pages/esports.tsx`, `localDateKey(m.startTime)`; the slate payload carries no end time | `docs/TASK-esports-local-day-endtime.md` — add an end time, group finished matches by it |
+| 52 | **P2** | **`/scores` previous-day button shows today again.** Reported 2026-08-14. The HTTP 500 behind it is **gone** — prod returns 200 for 2026-08-15, 2026-08-10 and 2026-07-04 — but the navigation itself is unverified, so defect A stands and defect B is closed. | `PLAN-scores-prev-day-2026-08-14.md` | drive the page and watch the request the `‹` button actually issues |
+| 53 | **P3** | **Prod's frontend proxies `/api/*` to `127.0.0.1:8000` inside its own container**, where nothing listens, so a direct call to `:3100` 500s. Harmless in production only because nginx routes `/api/` straight to `:8100` and never uses that path. | `docker logs legendarypicks-frontend-1` → `ECONNREFUSED 127.0.0.1:8000` | point the rewrite at the compose service name; it is a trap for anyone testing the container directly |
+
+### Gate added the same day
+
+`BOARD-stale` (`verify-gates.sh`) asks the reader's question rather than the code's: **of the
+games the API serves as upcoming, has any already been played?** No fixture, so it cannot be
+satisfied by relabelling — which the existing unit test could be, and was. That test pins a
+00:30Z game to the previous day's group and never asks whether the row belongs on the board, so
+it stayed green through the entire month this defect was live.
+
+Graded on dev and prod **separately**, because they are different code:
+
+```
+PASS BOARD-stale-dev  (71 games, none finished; 17 carry no start_time)
+FAIL BOARD-stale-prod (2 of 56 games already finished — both Sunday-night MLS fixtures)
+```
