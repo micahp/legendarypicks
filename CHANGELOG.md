@@ -1,6 +1,53 @@
 # Changelog
 
-## v0.8.0 — 2026-08-11
+## v0.8.0 — 2026-08-17
+
+### The props board stopped showing yesterday
+
+- **Games that had already finished were served as upcoming** (`7292522`). The board filtered
+  `pg.date >= date('now')` — a UTC calendar date — while the client groups and labels every game by
+  the LOCAL date derived from `start_time`. Two rulers on one board: a match at 00:30Z was stored
+  under today and rendered under yesterday's header, so the first thing on the board was four
+  finished games. It shipped in v0.4.3 on 2026-07-17 and was invisible for a month, because until
+  the display was fixed both halves were wrong in the same direction — a finished Sunday match read
+  as "today, 7:30 PM". Now filtered on the instant with a three-hour grace, falling back to
+  end-of-date for rows carrying no `start_time`. Both slate query paths share one predicate.
+- **Tennis has filter pills** (`750416f`). `LEAGUES` is both the pill row and the within-day
+  ordering, and atp/wta were in neither — so tennis was unfilterable and sorted last while it was
+  32 of the 71 games on the board.
+- **A publisher revising first pitch now propagates** (`3641992`). All three ingest paths guarded on
+  "write only if empty", freezing the first instant we ever saw. Replaced with overwrite-on-
+  disagreement, comparing instants rather than strings so an unchanged game is not rewritten on
+  every 30-minute scrape.
+- **New gate, `BOARD-stale`** — asks whether anything the API serves as upcoming has already been
+  played, graded on dev and prod separately because they are different code.
+
+### Tennis props exist
+
+- **The ATP/WTA spine landed** — 150 per tour from ESPN's rankings, every row carrying a publisher
+  id, two requests. `props-prod` went from rejecting all 384 tennis props to resolving 347, and
+  `props-freshness` went green with it: it had only ever failed because it kept trying to self-heal
+  a service that could not succeed.
+- **Known limit:** a top-150 ranking list is a proxy for a tournament field, not the field itself.
+  Qualifiers, wildcards and returning players are absent by construction; the scoreboard source that
+  fixes it is scoped for the next release.
+
+### /api/health names the database it is serving
+
+- `{"status": "ok"}` was the entire response, and it was true of prod, dev, and a worktree serving a
+  frozen snapshot from `/tmp` — all three at once. It now reports `db_path`, `db_mtime`,
+  `newest_prop_captured` and `newest_game_date`, and is registered under `/api/health` because Next
+  proxies only `/api/*`, so the bare path hit the frontend's 404 and the endpoint was unreachable
+  from the URL anyone would actually be looking at.
+
+### Bluesky search is live
+
+- The credential was present the whole time under a spelling the code did not read. A single-spelling
+  lookup reported "no credential" with the value sitting in the file. `_bsky_credential()` now takes
+  an ordered list of accepted names and prints which one matched. First real run: 91 of 91 queries,
+  406 posts, 0 errors — against 0 posts and 300 wasted requests an hour earlier.
+
+## Earlier in the v0.8.0 cycle — 2026-08-11
 
 ### Kick viewer counts, silently null since the keys were never hydrated
 
