@@ -1,0 +1,10 @@
+[Unit]
+Description=Daily league-news collect (1-day freshness policy)
+
+[Timer]
+OnCalendar=*-*-* 03:35:00
+Persistent=true
+Unit=legendarypicks-news.service
+
+[Install]
+WantedBy=timers.target
