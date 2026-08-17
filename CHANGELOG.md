@@ -1,5 +1,45 @@
 # Changelog
 
+## v0.8.1 — 2026-08-17
+
+Cut hours after v0.8.0 and before it was ever deployed, so that what ships to production is what
+was actually fixed. v0.8.0's tag stands; this is the same release with the afternoon's work in it.
+
+### Every league the release ships is now audited
+
+- **The release preflight ran four leagues** — nfl/mlb/nba/nhl — while the release shipped ufc,
+  mls and ncaaf data with nothing grading it. It now runs in two tiers: **BLOCKING**
+  (nfl mlb nba nhl ufc ncaaf), where a FAIL stops the release, and **REPORTED** (mls), which
+  prints its count on every cut so "how close is MLS?" always has a number in front of it.
+  Promotion between tiers is one word of diff and visible in git.
+- Also names what is **not** audited: esports has no MANIFEST entry, and an unasked league is a
+  gap rather than a pass.
+
+### The position vocabulary had two levels in one column
+
+- **mls and ncaaf both failed `C/vocabulary[position]`** — `CD` beside its own parent `D`, `CB`
+  beside `DB`. Those pairs describe the same players at two levels and never join, so a filter on
+  `D` silently missed every centre-back stored as `CD`. ESPN publishes the hierarchy, so the
+  parent now lives in `position_group`, the same way MLB and NFL already do it. The rule was
+  verified before it was used: re-deriving the rows that already carried a group reproduced
+  **1,256 of 1,256 (mls) and 21,489 of 21,489 (ncaaf)**, zero disagreements.
+- **ncaaf reached 0 FAIL and moved to BLOCKING.** Behind the vocabulary defect sat 17 players
+  flagged `active` whom neither publisher rosters — ESPN does not list them and CFBD's own roster
+  (30,072 rows for 2025) does not either. The false claim was `active`, not the blank position, so
+  the mint now sets that flag from the roster map it actually read instead of hardcoding 1.
+- **mls: 15 shadow prop players merged into their published identity.** The sportsbook and ESPN
+  disagree on the form of the given name — `Will`/`William Sands`, `Chris`/`Christopher Durkin` —
+  never on the surname or the club. A variant is only allowed to close the gap when the surname
+  matches exactly, the club matches through the alias map, and there is exactly one candidate.
+  Zero ambiguous on either database.
+
+### Known and deliberately not fixed here
+
+- **MLS still reports 1 FAIL: 38 rows that are not MLS players.** They carry `AME`, `GDL`, `PUE`,
+  `TOL`, `NFO` — Club América, Chivas, Puebla, Toluca, Nottingham Forest — filed under
+  `league='mls'` because the props feed covered Leagues Cup fixtures. A tournament is not a
+  league, and modelling it as one is what makes them unresolvable. Scheduled post-release.
+
 ## v0.8.0 — 2026-08-17
 
 ### The props board stopped showing yesterday
