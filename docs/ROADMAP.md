@@ -210,7 +210,29 @@ publisher id justifying each — in a committed artifact, or the next pass re-de
 
 1. **gstack `retro`** (`/root/gstack/retro`) — engineering retrospective first, so the
    refactor below is aimed by it rather than guessed at.
-2. **Break up every file of 1,000+ lines.** Measured 2026-08-17, 13 of them:
+2. **Audit the `backend/` folder structure and every ignore-rule bypass in it** (Micah,
+   2026-08-17). Three separate misses in a single day, all the same shape: *an ignore rule
+   protects the path it names and nothing near it.*
+
+   | what was written | where | what should have caught it | why it didn't |
+   |---|---|---|---|
+   | 236MB DB backup | `backend/backups/` | `.gitignore` + `backend/.dockerignore` `data/picks.db*` | patterns anchored to `backend/data/` |
+   | 96MB ESPN response cache | `backend/.espn-cache/` | `.gitignore:88` `backend/data/espn-cache/` | the rule names a path that does not exist |
+   | Bovada backoff state | `backend/data/…json` | nothing | tracked on purpose, then rewritten every run |
+
+   The cache one is the tell: **somebody already wrote the ignore rule for it and pointed it at
+   the wrong directory**, so the intent has been in the tree unfulfilled for months. It cost a
+   7.45GB image (08-04), 0.93GB of context (08-11), and blocked the v0.8.0 preflight (08-17).
+
+   The question to answer is not "add more patterns" — it is **what is `backend/data/` for?**
+   It currently holds app data (`picks.db`), operational state (backoff json), seeded content
+   (`esports_team_logos.json`), and backups, with a different tracking policy for each and no
+   stated rule. Meanwhile the caches live *outside* it at `backend/.espn-cache`. Decide the
+   directory contract first — probably runtime/ephemeral separated from seeded/committed — then
+   make the ignore rules follow from it, and add a check that fails when a writer writes
+   somewhere no rule covers. Note `backend/data` is the **bind-mounted** path in prod, so this
+   is not purely cosmetic: what lives there is what prod sees.
+3. **Break up every file of 1,000+ lines.** Measured 2026-08-17, 13 of them:
 
    ```
    2166  backend/wc_context.py              1232  pages/esports.tsx
@@ -225,7 +247,7 @@ publisher id justifying each — in a committed artifact, or the next pass re-de
 
    Note `wc_context.py` is the largest file in the repo and World Cup is dormant until 2030.
 
-3. **A TOURNAMENT is not a LEAGUE — model the difference** (Micah, 2026-08-17). This is the
+4. **A TOURNAMENT is not a LEAGUE — model the difference** (Micah, 2026-08-17). This is the
    modelling item behind a defect we hit today, not a cleanup.
 
    MLS props carry rows whose club is `AME`, `GDL`, `PUE`, `TOL`, `NFO` — Club América,
@@ -253,7 +275,7 @@ publisher id justifying each — in a committed artifact, or the next pass re-de
    a Leagues Cup goal does not inflate MLS `games_played`). Today extends it to PROPS and to
    IDENTITY. Same shape, wider than first scoped.
 
-4. **Player identity across databases** — the section below.
+5. **Player identity across databases** — the section below.
 
 ### NEXT RELEASE (v0.8.1 or v0.9.0) — player identity
 
