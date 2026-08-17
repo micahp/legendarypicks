@@ -19,7 +19,7 @@ interface PerfRow {
 }
 
 type Tab = 'slate' | 'props' | 'performance' | 'matchups' | 'model'
-type League = 'All' | 'nba' | 'mlb' | 'mls' | 'nfl' | 'nhl' | 'ufc'
+type League = 'All' | 'nba' | 'mlb' | 'mls' | 'nfl' | 'nhl' | 'ufc' | 'atp' | 'wta'
 
 const TABS: { key: Tab; label: string }[] = [
   { key: 'slate', label: 'Slate' },
@@ -28,7 +28,12 @@ const TABS: { key: Tab; label: string }[] = [
   { key: 'matchups', label: 'Matchups' },
   { key: 'model', label: 'Model' },
 ]
-export const LEAGUES: League[] = ['All', 'ufc', 'mls', 'nba', 'nfl', 'nhl', 'mlb']
+// This list is BOTH the filter pills and the within-day ordering (see `leagueRank`), so a league
+// missing from it is unreachable by filter AND sorts last. atp/wta were absent while tennis was
+// 32 of the 71 games on the board (2026-08-17) -- the pills advertised four leagues with zero
+// games and hid the two that had the most. Appended rather than reordered so the existing
+// day-group order is unchanged.
+export const LEAGUES: League[] = ['All', 'ufc', 'mls', 'nba', 'nfl', 'nhl', 'mlb', 'atp', 'wta']
 
 function Skeleton({ lines = 4 }: { lines?: number }) {
   return (
