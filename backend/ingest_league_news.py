@@ -224,6 +224,81 @@ OPEN_QUERIES = [(None, lg) for lg in _OPEN_LEAGUES] + \
 CONVERSATION_QUERIES = _conversation_queries()
 ALL_BLUESKY_QUERIES = [q for _c, q in CONVERSATION_QUERIES]
 BLUESKY_SEARCH = "https://api.bsky.app/xrpc/app.bsky.feed.searchPosts"  # public.api 403'd 2026-08-06
+BLUESKY_PDS = "https://bsky.social"
+
+
+def _bsky_credential():
+    """(handle, app_password) or (None, None). Same convention as _core._deepseek_key.
+
+    An APP PASSWORD, never the account password: it is scoped, revocable from the
+    Bluesky UI, and cannot change the account. Generate at
+    Settings -> Privacy and Security -> App Passwords.
+    """
+    handle = os.environ.get("BSKY_HANDLE")
+    secret = os.environ.get("BSKY_APP_PASSWORD")
+    if handle and secret:
+        return handle, secret
+    found = {}
+    try:
+        with open("/root/.hermes/.env") as f:
+            for line in f:
+                for k in ("BSKY_HANDLE", "BSKY_APP_PASSWORD"):
+                    if line.startswith(k + "="):
+                        found[k] = line.split("=", 1)[1].strip().strip('"').strip("'")
+    except Exception:
+        return None, None
+    return found.get("BSKY_HANDLE"), found.get("BSKY_APP_PASSWORD")
+
+
+_BSKY_TOKEN = {"jwt": None, "tried": False}
+
+
+def _bsky_token():
+    """An accessJwt for the authenticated search path, or None.
+
+    Why this exists: `app.bsky.feed.searchPosts` refuses UNAUTHENTICATED callers
+    at the CDN edge (a BunnyCDN 403 page, not an ATProto error). Measured
+    2026-08-17 from this box: with an Authorization header the same request
+    returns `401 {"error":"BadJwt"}` -- a real ATProto response, so the request
+    passes the edge and is auth-checked. The endpoint is gated, not lost.
+
+    One session per process, cached. The token is short-lived, and every job that
+    uses it is a single short run, so there is no refresh path here on purpose --
+    a run that outlives its token should fail and be seen, not silently re-auth
+    in a loop.
+
+    NEVER logged, printed, or put in an error message.
+    """
+    if _BSKY_TOKEN["tried"]:
+        return _BSKY_TOKEN["jwt"]
+    _BSKY_TOKEN["tried"] = True
+    handle, secret = _bsky_credential()
+    if not (handle and secret):
+        print("  bluesky: no BSKY_HANDLE/BSKY_APP_PASSWORD — search is gated to "
+              "unauthenticated callers, so this run will collect nothing from it. "
+              "Set them in /root/.hermes/.env (app password, not the account "
+              "password).", file=sys.stderr, flush=True)
+        return None
+    body = json.dumps({"identifier": handle, "password": secret}).encode()
+    req = urllib.request.Request(
+        BLUESKY_PDS + "/xrpc/com.atproto.server.createSession", data=body,
+        headers={"Content-Type": "application/json"})
+    try:
+        with urllib.request.urlopen(req, timeout=30) as r:
+            _BSKY_TOKEN["jwt"] = json.loads(r.read()).get("accessJwt")
+    except Exception as exc:
+        detail = ""
+        try:
+            detail = " — " + exc.read().decode("utf-8", "replace")[:200]
+        except Exception:
+            pass
+        # `handle` is not secret; the password is, and is never in this string.
+        print("  bluesky: createSession failed for %s: %s: %s%s"
+              % (handle, type(exc).__name__, exc, detail),
+              file=sys.stderr, flush=True)
+        return None
+    print("  bluesky: authenticated as %s" % handle)
+    return _BSKY_TOKEN["jwt"]
 
 # Ingest path: NO retry ladder (espn-request-budget doctrine §6) — a 403 means
 # "this host is spent"; fail fast, record the FETCH ERROR row, move on. A
@@ -726,17 +801,25 @@ def tag_conversations(items):
 def collect_bluesky(extra_queries=()):
     items = []
     queries = list(CONVERSATION_QUERIES) + list(OPEN_QUERIES) + list(extra_queries)
+    # Authenticate if we can. Fetcher reads self.headers per request, so setting
+    # it here applies to every call below without a second Fetcher.
+    token = _bsky_token()
+    if token:
+        _BLUE_FETCHER.headers = dict(_BLUE_FETCHER.headers,
+                                     **{"Authorization": "Bearer " + token})
     refusals = 0
     spent = 0
     for i, (conv_id, q) in enumerate(queries):
         if refusals >= _BSKY_GIVE_UP:
             # Fail loudly, and name what was skipped. A collector that quietly
             # returns fewer items is indistinguishable from a quiet news day.
+            why = ("the session was accepted but the endpoint still refused — "
+                   "that is NEW, investigate before assuming a wall"
+                   if token else
+                   "app.bsky.feed.searchPosts is gated to unauthenticated "
+                   "callers, so the rest would all fail the same way")
             print("  bluesky: %d consecutive refusals — STOPPING, %d queries "
-                  "skipped. See _BSKY_GIVE_UP: app.bsky.feed.searchPosts is "
-                  "gated, not rate-limited, so the remaining %d requests would "
-                  "all fail the same way." % (refusals, len(queries) - i,
-                                              len(queries) - i),
+                  "skipped. %s" % (refusals, len(queries) - i, why),
                   file=sys.stderr, flush=True)
             break
         url = BLUESKY_SEARCH + "?q=%s&limit=8" % urllib.parse.quote(q)
@@ -770,7 +853,8 @@ def collect_bluesky(extra_queries=()):
                           "body": "", "url": "", "published": ""})
     # Say what this cost. Rung 6 of the espn-request-budget skill: a silent job
     # is one nobody can size later, and this one is a guest on a free host.
-    print("  bluesky: %d/%d queries issued" % (spent, len(queries)))
+    print("  bluesky: %d/%d queries issued (%s)"
+          % (spent, len(queries), "authenticated" if token else "UNAUTHENTICATED"))
     return items
 
 
