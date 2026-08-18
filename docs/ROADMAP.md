@@ -306,7 +306,8 @@ publisher id justifying each — in a committed artifact, or the next pass re-de
 ### POST-RELEASE ORDER, set 2026-08-17 — do these in this sequence
 
 1. **gstack `retro`** (`/root/gstack/retro`) — engineering retrospective first, so the
-   refactor below is aimed by it rather than guessed at.
+   refactor below is aimed by it rather than guessed at. **DONE 2026-08-18** —
+   `docs/retro-2026-08-18.md` (computed by hand; the gstack binaries are not on this box).
 2. **Audit the `backend/` folder structure and every ignore-rule bypass in it** (Micah,
    2026-08-17). Three separate misses in a single day, all the same shape: *an ignore rule
    protects the path it names and nothing near it.*
@@ -329,6 +330,11 @@ publisher id justifying each — in a committed artifact, or the next pass re-de
    make the ignore rules follow from it, and add a check that fails when a writer writes
    somewhere no rule covers. Note `backend/data` is the **bind-mounted** path in prod, so this
    is not purely cosmetic: what lives there is what prod sees.
+
+   **DONE 2026-08-18** — `docs/BACKEND-DATA-AUDIT-2026-08-18.md` states the contract
+   (app data / seeds / cache / state / logs) and the audit table above. The ignore rules
+   were already correct for the paths that exist; the remaining work is the physical
+   seeds/cache/state/logs directory split, which is a pure move.
 3. **Break up every file of 1,000+ lines.** Measured 2026-08-17, 13 of them:
 
    ```
@@ -343,6 +349,15 @@ publisher id justifying each — in a committed artifact, or the next pass re-de
    ```
 
    Note `wc_context.py` is the largest file in the repo and World Cup is dormant until 2030.
+
+   **Progress 2026-08-18:** `settlement.py` (1196 → 9-module package, 61 tests pass),
+   `nfl_mock_draft.py` (1586 → 9-module package, 51 tests pass), `narratives/` package
+   started from `ingest_league_narratives.py` (constants/topic_words/anchor_routing
+   extracted; the 1817-line original still holds the generation loop). Remaining:
+   `wc_context` (dormant), `games.py`, `ingest_league_narratives.py`,
+   `ingest_ufc_fight_stats.py`, `audit_league_stats.py`, `ingest_league_news.py`,
+   `nfl_offseason.py`, `players.py`, `espn_client.py`, `bovada_scraper.py`,
+   `pages/esports.tsx`.
 
 4. **A TOURNAMENT is not a LEAGUE — model the difference** (Micah, 2026-08-17). This is the
    modelling item behind a defect we hit today, not a cleanup.
@@ -371,6 +386,14 @@ publisher id justifying each — in a committed artifact, or the next pass re-de
    `concacaf.leagues.cup`, CCC `concacaf.champions`, Campeones Cup as separate ESPN slugs, so
    a Leagues Cup goal does not inflate MLS `games_played`). Today extends it to PROPS and to
    IDENTITY. Same shape, wider than first scoped.
+
+   **PROPS half DONE 2026-08-18** (`a77ecb1`). `bovada_scraper._parse_mls_props` now
+   detects a tournament fixture — one of the event's two dominant club codes is not an
+   MLS club — and files it under `lcup`, the tournament's own competition key, keeping
+   the player's real club tag so it resolves against the league that rosters it. Two
+   tests pin the routing (Chivas–San Diego → `lcup`; a real MLS fixture → `mls`).
+   The IDENTITY half (players resolvable against their home league across the
+   `lcup`/`ccc`/`campeones` keys) rides with the player-identity release below.
 
 5. **Player identity across databases** — the section below.
 
