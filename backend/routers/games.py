@@ -863,6 +863,35 @@ def get_standings(league: str, season: int = None):
             return espn.team_strength_standings(lg, season=season)
         except ValueError as e:
             raise HTTPException(404, str(e))
+        except Exception as exc:
+            # This page used to read /strength, which degrades to the last
+            # published snapshot when the publisher is unreachable. ESPN 403s
+            # this box routinely, so moving the page here without carrying the
+            # fallback across turned a degraded table into a 500.
+            #
+            # A snapshot cannot answer "which season is this", so it is served
+            # with season=None and no selectable years: the table renders
+            # without a pill rather than under a year we are guessing. And a
+            # snapshot is never served for an EXPLICITLY requested season — it
+            # is not that season, and quietly substituting it is the stale-table
+            # failure this route already refuses for MLS.
+            if season is not None:
+                raise HTTPException(
+                    503, f"{lg} standings for {season} unavailable: publisher unreachable"
+                )
+            rows = _strength_from_db(lg)
+            print(
+                f"[standings] publisher unavailable league={lg} "
+                f"error={type(exc).__name__}: {exc}; fallback_rows={len(rows)}"
+            )
+            if not rows:
+                raise HTTPException(503, f"{lg} standings unavailable: publisher unreachable")
+            return JSONResponse(
+                content={"league": lg, "season": None, "season_label": None,
+                         "available_seasons": [], "teams": rows},
+                headers={"Cache-Control": "public, max-age=30",
+                         "X-LP-Data-Source": "strength_snap"},
+            )
     # WC: group tables are ONLY valid during the Group phase. Once knockouts
     # have begun, serve the canonical bracket ONLY — never stale group tables.
     # The no-stale-group fallback: if the bracket is empty/unavailable while
