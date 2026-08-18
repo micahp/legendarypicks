@@ -1275,15 +1275,21 @@ def league_leaders(league: str,
         definition_key = lg
 
     definitions = _LEAGUE_CATEGORIES[definition_key]
+    # `games` is a column on every leaders table but belongs to no stat category,
+    # so it is sortable without being offerable as a category metric. Sorting the
+    # visible 25 rows in the browser is not an option here: those rows are the top
+    # 25 for the CURRENT stat, so a client-side re-sort would answer "who played
+    # most among the scoring leaders" while looking like "who played most".
+    _EXTRA_SORT_KEYS = {"games"}
     category_defs = {item["key"]: item for item in definitions}
     approved_stats = {
         metric["key"] for item in definitions for metric in item["stats"]
     }
     if category is not None and category not in category_defs:
         raise HTTPException(400, f"Unknown category {category!r} for {definition_key}")
-    if stat is not None and stat not in approved_stats:
+    if stat is not None and stat not in approved_stats | _EXTRA_SORT_KEYS:
         raise HTTPException(400, f"Unknown stat {stat!r} for {definition_key}")
-    if category is not None and stat is not None:
+    if category is not None and stat is not None and stat not in _EXTRA_SORT_KEYS:
         category_stats = {metric["key"] for metric in category_defs[category]["stats"]}
         if stat not in category_stats:
             raise HTTPException(400, f"Stat {stat!r} does not belong to category {category!r}")
@@ -1412,13 +1418,13 @@ def league_leaders(league: str,
             return _empty_leaders(lg, normalized_season, stat_type, available_seasons)
 
         available_categories = {item["key"]: item for item in categories}
-        if stat is not None and stat not in available_keys:
+        if stat is not None and stat not in available_keys | _EXTRA_SORT_KEYS:
             raise HTTPException(400, f"Stat {stat!r} is unavailable for season {season}")
         if category is not None:
             if category not in available_categories:
                 raise HTTPException(400, f"Category {category!r} is unavailable for season {season}")
             selected_category = category
-        elif stat is not None:
+        elif stat is not None and stat not in _EXTRA_SORT_KEYS:
             selected_category = next(
                 item["key"] for item in definitions
                 if any(metric["key"] == stat for metric in item["stats"])

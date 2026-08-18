@@ -237,6 +237,38 @@ class LeagueStatsContractTests(unittest.TestCase):
         self.assertEqual([column["key"] for column in defense["columns"]], ["stl", "blk"])
         self.assertEqual(call("nba", category="defense", stat="blk")["stat"], "blk")
 
+    def test_games_sorts_without_owning_a_category(self):
+        """GP is a column on every leaders table but belongs to no category.
+
+        It has to sort server-side like any other column: the rows returned are
+        the top N for the current stat, so re-sorting them in the browser would
+        answer a different question than the header claims. `games` owns no
+        category, which is exactly what made it able to 500 the route — the
+        category lookup is a next() over the definitions.
+        """
+        self.populate_all()
+        for league, stat_type, expected_category in [
+            ("nba", None, "scoring"),
+            ("nfl", None, "passing"),
+            ("mlb", "batting", "production"),
+            ("mlb", "pitching", "strikeouts"),
+        ]:
+            payload = call(league, type=stat_type, stat="games")
+            self.assertEqual(payload["stat"], "games")
+            # Sorting by GP must not move the category away from its default.
+            self.assertEqual(payload["category"], expected_category)
+            played = [leader["games"] for leader in payload["leaders"]]
+            self.assertEqual(played, sorted(played, reverse=True))
+
+        # It stays sortable alongside an explicit category rather than being
+        # rejected as a stat that does not belong to it.
+        with_category = call("nba", category="defense", stat="games")
+        self.assertEqual(with_category["stat"], "games")
+        self.assertEqual(with_category["category"], "defense")
+
+        # And it does not become a licence for arbitrary column names.
+        self.assert_http_400(lambda: call("nba", stat="player_id"))
+
     def test_invalid_category_stat_type_and_cross_category_stat_are_400(self):
         self.populate_all()
         self.assert_http_400(lambda: call("nba", category="goalies"))

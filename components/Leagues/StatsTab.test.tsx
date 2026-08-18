@@ -58,6 +58,76 @@ const renderTab = (data: LeadersData, extra: Record<string, unknown> = {}) =>
     />,
   )
 
+describe('sortable columns', () => {
+  it('re-queries rather than re-sorting the visible rows when GP is clicked', () => {
+    // The rows on screen are the top N for the CURRENT stat. Sorting them in
+    // the browser would answer "who played most among the scoring leaders"
+    // while the header claims "who played most", so GP goes to the API.
+    const onSelectSortMetric = jest.fn()
+    renderTab(leaders(), { onSelectSortMetric })
+    fireEvent.click(screen.getByRole('button', { name: /^GP/ }))
+    expect(onSelectSortMetric).toHaveBeenCalledWith('games')
+  })
+
+  it('marks GP as the sorted column when the API sorted by it', () => {
+    renderTab(leaders({ stat: 'games' } as Partial<LeadersData>))
+    const header = screen.getByRole('button', { name: /^GP/ }).closest('th')
+    expect(header?.getAttribute('aria-sort')).toBe('descending')
+  })
+})
+
+describe('team table sorting', () => {
+  const teamAggregates = {
+    supported: true,
+    categories: [
+      {
+        key: 'record',
+        label: 'Record',
+        columns: [
+          { key: 'wins', label: 'Wins', format: 'integer' },
+          { key: 'points_per_game', label: 'Points/Game', format: 'decimal_1' },
+        ],
+      },
+    ],
+    coverage: {},
+    columns: [],
+    teams: [
+      { team: 'BOS', games: 82, wins: 40, losses: 42, points_per_game: 110.2 },
+      { team: 'ATL', games: 82, wins: 61, losses: 21, points_per_game: 118.9 },
+      { team: 'CHI', games: 82, wins: 55, losses: 27, points_per_game: null },
+    ],
+  } as unknown as Parameters<typeof renderTab>[1]['teamAggregates']
+
+  const renderTeams = () =>
+    renderTab(leaders(), { subView: 'teams', supportsTeamStats: true, teamAggregates })
+
+  const teamOrder = () =>
+    Array.from(document.querySelectorAll('tbody tr')).map(
+      row => row.querySelectorAll('td')[1]?.textContent,
+    )
+
+  it('sorts every data column high to low', () => {
+    renderTeams()
+    expect(teamOrder()).toEqual(['BOS', 'ATL', 'CHI'])
+    fireEvent.click(screen.getByRole('button', { name: /^Wins/ }))
+    expect(teamOrder()).toEqual(['ATL', 'CHI', 'BOS'])
+  })
+
+  it('sorts the team name A-Z', () => {
+    renderTeams()
+    fireEvent.click(screen.getByRole('button', { name: /^Team/ }))
+    expect(teamOrder()).toEqual(['ATL', 'BOS', 'CHI'])
+  })
+
+  it('puts a missing value last instead of treating it as a low score', () => {
+    // CHI has no points_per_game. Sorting it as 0 would place it where a real
+    // worst-in-league belongs, which is a claim about the team.
+    renderTeams()
+    fireEvent.click(screen.getByRole('button', { name: /^Points\/Game/ }))
+    expect(teamOrder()).toEqual(['ATL', 'BOS', 'CHI'])
+  })
+})
+
 describe('stats filter pills', () => {
   it('offers exactly the seasons and categories the API published', () => {
     renderTab(leaders())

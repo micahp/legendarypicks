@@ -1,3 +1,4 @@
+import { useMemo, useState } from 'react'
 import {
   directionDisplay,
   formatMetric,
@@ -6,7 +7,14 @@ import {
   seasonLabel,
 } from './presentation'
 import FilterPill from './FilterPill'
-import type { LeadersData, SubView, TeamAggregatesData } from './types'
+import type {
+  LeadersData,
+  SubView,
+  TeamAggregate,
+  TeamAggregatesData,
+  TeamColumn,
+  TeamStatCategory,
+} from './types'
 
 type MlbType = 'batting' | 'pitching'
 
@@ -322,7 +330,9 @@ function PlayerLeadersTable({
   leaders: LeadersData
   onSelectSortMetric: (metric: string) => void
 }) {
-  const sortedLabel = leaders.columns.find(metric => metric.key === leaders.stat)?.label
+  const sortedLabel = leaders.stat === 'games'
+    ? 'Games Played'
+    : leaders.columns.find(metric => metric.key === leaders.stat)?.label
   return (
     <div className="space-y-3">
       <div className="text-xs text-zinc-500">Sorted by {sortedLabel || leaders.stat}</div>
@@ -333,7 +343,21 @@ function PlayerLeadersTable({
             <tr className="border-b border-zinc-800 text-zinc-500 text-[11px] uppercase tracking-wider">
               <th className="text-left px-4 py-3 font-medium w-10">#</th>
               <th className="text-left px-3 py-3 font-medium">Player</th>
-              <th className="text-right px-3 py-3 font-medium">GP</th>
+              <th
+                aria-sort={leaders.stat === 'games' ? 'descending' : 'none'}
+                className="px-3 py-3 text-right font-medium"
+              >
+                <button
+                  type="button"
+                  onClick={() => onSelectSortMetric('games')}
+                  className={`inline-flex items-center gap-1 whitespace-nowrap hover:text-zinc-200 ${
+                    leaders.stat === 'games' ? 'text-emerald-400' : 'text-zinc-500'
+                  }`}
+                >
+                  GP
+                  {leaders.stat === 'games' && <span aria-hidden="true">↓</span>}
+                </button>
+              </th>
               {leaders.columns.map(metric => (
                 <th
                   key={metric.key}
@@ -372,7 +396,11 @@ function PlayerLeadersTable({
                     <span className="text-zinc-500 ml-1.5 text-xs">{leader.team}</span>
                   )}
                 </td>
-                <td className="px-3 py-2.5 text-right font-mono tabular-nums text-zinc-400">
+                <td
+                  className={`px-3 py-2.5 text-right font-mono tabular-nums ${
+                    leaders.stat === 'games' ? 'text-emerald-300 font-bold' : 'text-zinc-400'
+                  }`}
+                >
                   {leader.games}
                 </td>
                 {leaders.columns.map(metric => (
@@ -431,6 +459,58 @@ function TeamStats({
   const activeCategory = categories.find(item => item.key === category) ?? categories[0]
   const columns = activeCategory?.columns ?? aggregates.columns ?? []
   return (
+    <TeamStatsTable
+      categories={categories}
+      activeCategory={activeCategory}
+      columns={columns}
+      teams={aggregates.teams}
+      onSelectCategory={onSelectCategory}
+    />
+  )
+}
+
+/**
+ * Every column here sorts, and the sort happens in the browser because this
+ * table IS the whole population — all 32 NFL teams, all 137 in NCAAF. That is
+ * what makes a client-side sort honest; the player leaders table above is a top
+ * N for one stat, so its headers re-query instead.
+ *
+ * Numbers sort high-to-low and the team name sorts A-Z, which is what
+ * "descending" means for each. A team with no value for the sorted column goes
+ * last in either direction — absence is not a low score, and sorting it as one
+ * would put it where a real worst-in-league belongs.
+ */
+function TeamStatsTable({
+  categories,
+  activeCategory,
+  columns,
+  teams,
+  onSelectCategory,
+}: {
+  categories: TeamStatCategory[]
+  activeCategory?: TeamStatCategory
+  columns: TeamColumn[]
+  teams: TeamAggregate[]
+  onSelectCategory: (category: string) => void
+}) {
+  const [sortKey, setSortKey] = useState<string | null>(null)
+
+  const sortedTeams = useMemo(() => {
+    if (!sortKey) return teams
+    const rows = [...teams]
+    rows.sort((a, b) => {
+      const left = a[sortKey]
+      const right = b[sortKey]
+      const leftMissing = left === null || left === undefined || left === ''
+      const rightMissing = right === null || right === undefined || right === ''
+      if (leftMissing || rightMissing) return leftMissing === rightMissing ? 0 : leftMissing ? 1 : -1
+      if (sortKey === 'team') return String(left).localeCompare(String(right))
+      return Number(right) - Number(left)
+    })
+    return rows
+  }, [teams, sortKey])
+
+  return (
     <div className="space-y-3">
       {categories.length > 1 && (
         <div className="flex flex-wrap items-center gap-2">
@@ -447,23 +527,52 @@ function TeamStats({
           <thead>
             <tr className="border-b border-zinc-800 text-zinc-400 text-xs uppercase tracking-wider">
               <th className="text-left py-3 pr-4 pl-4">#</th>
-              <th className="text-left py-3 pr-4">Team</th>
+              <th
+                aria-sort={sortKey === 'team' ? 'ascending' : 'none'}
+                className="text-left py-3 pr-4"
+              >
+                <button
+                  type="button"
+                  onClick={() => setSortKey('team')}
+                  className={`inline-flex items-center gap-1 whitespace-nowrap hover:text-zinc-200 ${
+                    sortKey === 'team' ? 'text-emerald-400' : 'text-zinc-400'
+                  }`}
+                >
+                  Team
+                  {sortKey === 'team' && <span aria-hidden="true">↓</span>}
+                </button>
+              </th>
               {columns.map(column => (
-                <th key={column.key} className="text-right py-3 px-3 whitespace-nowrap">
-                  {column.label}
+                <th
+                  key={column.key}
+                  aria-sort={sortKey === column.key ? 'descending' : 'none'}
+                  className="text-right py-3 px-3 whitespace-nowrap"
+                >
+                  <button
+                    type="button"
+                    onClick={() => setSortKey(column.key)}
+                    className={`inline-flex items-center gap-1 whitespace-nowrap hover:text-zinc-200 ${
+                      sortKey === column.key ? 'text-emerald-400' : 'text-zinc-400'
+                    }`}
+                  >
+                    {column.label}
+                    {sortKey === column.key && <span aria-hidden="true">↓</span>}
+                  </button>
                 </th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {aggregates.teams.map((team, index) => (
+            {sortedTeams.map((team, index) => (
               <tr key={team.team} className="border-b border-zinc-800/50 hover:bg-zinc-800/30">
                 <td className="py-3 pr-4 pl-4 text-zinc-500">{index + 1}</td>
                 <td className="py-3 pr-4 font-semibold text-zinc-200">{team.team}</td>
                 {columns.map(column => (
                   <td
                     key={column.key}
-                    className="py-3 px-3 text-right text-zinc-200 font-mono tabular-nums"
+                    className={`py-3 px-3 text-right font-mono tabular-nums ${
+                      sortKey === column.key ? 'text-emerald-300 font-bold' : 'text-zinc-200'
+                    }`}
                   >
                     {formatTeamMetric(column, team[column.key])}
                   </td>
