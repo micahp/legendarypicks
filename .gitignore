@@ -137,3 +137,8 @@ backend/.espn-cache/
 # continuously, and a tracked file a runtime process rewrites is what blocked
 # the v0.8.0 cut for a week. See docs/DESIGN-request-budget.md.
 backend/data/http-spend.jsonl
+
+# Runtime logo cache: the esports job rewrites this whenever it sees a new team,
+# so a tracked copy is permanently dirty and blocks the release preflight. Same
+# class as backend/.espn-cache, which held the v0.8.0 cut for a week.
+backend/data/esports_team_logos.json
