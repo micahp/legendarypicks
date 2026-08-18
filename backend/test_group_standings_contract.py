@@ -160,6 +160,58 @@ class TeamStrengthStandingsSeasonTest(unittest.TestCase):
         self.assertNotIn("season=", seen["url"])
 
 
+class OfferOnlySeasonsWeHoldTest(unittest.TestCase):
+    """The year picker offers seasons the rest of the app can follow up on.
+
+    ESPN serves 24-25 years of standings for every league. Measured 2026-08-17
+    against picks.db we hold one to three seasons each (NFL player_stats 2025;
+    NBA 2026+2025; MLB/NHL 2026 only), so the picker was offering two decades of
+    tables attached to nothing — pick 2003 and the Stats tab, the game logs and
+    the props all have nothing to say about it.
+    """
+
+    def envelope(self, served, offered):
+        return {"league": "nba", "season": served, "season_label": str(served),
+                "available_seasons": list(offered), "teams": []}
+
+    def test_years_without_data_behind_them_are_not_offered(self):
+        with patch.object(games, "seasons_we_hold", return_value={2026, 2025}):
+            out = games._offer_only_seasons_we_hold(
+                self.envelope(2026, [2026, 2025, 2024, 2023, 2003]), "nba")
+        self.assertEqual(out["available_seasons"], [2026, 2025])
+
+    def test_the_served_season_is_always_offered(self):
+        """NFL in August serves 2026 (preseason) while our newest ingested season
+        is 2025. The pill must not name a year absent from its own options."""
+        with patch.object(games, "seasons_we_hold", return_value={2025}):
+            out = games._offer_only_seasons_we_hold(
+                self.envelope(2026, [2026, 2025, 2024]), "nfl")
+        self.assertEqual(out["available_seasons"], [2026, 2025])
+
+    def test_holding_nothing_leaves_just_the_season_on_screen(self):
+        with patch.object(games, "seasons_we_hold", return_value=set()):
+            out = games._offer_only_seasons_we_hold(
+                self.envelope(2026, [2026, 2025, 2024]), "nba")
+        self.assertEqual(out["available_seasons"], [2026])
+
+    def test_a_degraded_payload_is_left_alone(self):
+        """The snapshot fallback carries no season and no year list. Filtering an
+        empty list must not invent one."""
+        payload = {"league": "nba", "season": None, "available_seasons": [], "teams": [{}]}
+        with patch.object(games, "seasons_we_hold", return_value={2026}):
+            out = games._offer_only_seasons_we_hold(payload, "nba")
+        self.assertEqual(out["available_seasons"], [])
+
+    def test_an_unreadable_database_does_not_shrink_the_picker_to_nothing(self):
+        """`seasons_we_hold` returning empty because it could not READ is not the
+        same as us holding nothing — but both land here, so the served season
+        still survives and the table still renders."""
+        with patch.object(games, "seasons_we_hold", return_value=set()):
+            out = games._offer_only_seasons_we_hold(
+                self.envelope(2026, [2026, 2025]), "nba")
+        self.assertIn(2026, out["available_seasons"])
+
+
 class MlsPublishedSeasonTest(unittest.TestCase):
     """MLS standings must name the season they are, and must be the live one.
 

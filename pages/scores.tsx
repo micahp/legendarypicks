@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import Head from 'next/head'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
@@ -207,27 +207,50 @@ export default function ScoresPage() {
   // Live scores must not be frozen; re-fetch every LIVE_POLL_MS when
   // any game is in-progress.  When status flips to post the backend
   // will reconcile from boxscore on the next tick.
+  // Only the leagues that actually have a game in progress get re-fetched.
+  // Refreshing all of them cost 22 upstream requests per tick (11 leagues x the
+  // two local dates) every 30s — ~44/minute into a publisher whose limit is a
+  // request COUNT, not a rate, so one open tab exhausted the budget in about
+  // two and a half minutes and blanked the board for everything. A live slate is
+  // typically one or two leagues, so this is the same freshness for a fraction
+  // of the spend, without making live scores any staler.
+  const liveLeagues = useMemo(
+    () => {
+      const seen: Record<string, true> = {}
+      games.forEach(g => { if (g.status === 'LIVE' && g.league) seen[g.league] = true })
+      return Object.keys(seen)
+    },
+    [games],
+  )
+  // The identity of the live leagues, not the games array — otherwise every
+  // score update restarts the interval and the poll never actually fires.
+  const liveLeagueKey = liveLeagues.slice().sort().join(',')
+
   useEffect(() => {
-    const liveCount = games.filter(g => g.status === 'LIVE').length
-    if (liveCount === 0) return
+    if (!liveLeagueKey) return
     let ignore = false
+    const polled = leagueFilter === 'All'
+      ? liveLeagueKey.split(',')
+      : [leagueKeyFor(leagueFilter)]
     const timer = setInterval(() => {
       const refetch = async () => {
         try {
-          let data: Game[]
-          if (leagueFilter === 'All') {
-            data = await SportsService.getAllGamesByLocalDate(date, { strict: true })
-          } else {
-            const l = leagueKeyFor(leagueFilter)
-            data = await SportsService.getGamesByLocalDate(l, date, { strict: true })
-          }
-          if (!ignore) setGames(Array.isArray(data) ? data : [])
+          const results = await Promise.allSettled(
+            polled.map(l => SportsService.getGamesByLocalDate(leagueKeyFor(l), date, { strict: true })),
+          )
+          const fresh: Game[] = []
+          results.forEach(r => { if (r.status === 'fulfilled' && Array.isArray(r.value)) fresh.push(...r.value) })
+          if (ignore || fresh.length === 0) return
+          // Only the polled leagues are replaced; every other league on the
+          // board keeps the rows it already has rather than vanishing.
+          const refreshed = new Set(polled.map(l => leagueKeyFor(l)))
+          setGames(prev => [...prev.filter(g => !refreshed.has(leagueKeyFor(g.league || ''))), ...fresh])
         } catch { /* silent — keep stale scores rather than blank */ }
       }
       refetch()
     }, LIVE_POLL_MS)
     return () => { ignore = true; clearInterval(timer) }
-  }, [games, date, leagueFilter])
+  }, [liveLeagueKey, date, leagueFilter])
 
   const visibleGames = liveOnly ? games.filter((g) => g.status === 'LIVE') : games
 

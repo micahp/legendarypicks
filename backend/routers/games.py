@@ -203,6 +203,71 @@ def _games_from_db(league: str, game_date: str):
     return games
 
 
+# The tables that make a season worth offering. A standings year the rest of
+# the app cannot follow up on — no players, no logs, no team aggregates — is a
+# table attached to nothing.
+_SEASON_EVIDENCE_TABLES = ("player_stats", "player_game_logs", "team_game_results")
+
+
+def seasons_we_hold(league: str):
+    """Seasons this league actually has data for in OUR tables.
+
+    ESPN will serve 24-25 years of standings for every league. Measured
+    2026-08-17 we hold one to three seasons each, so the picker was offering two
+    decades of tables that connect to nothing else on the site — pick 2003 and
+    the Stats tab, the game logs and the props all have nothing to say.
+
+    A missing table is not an empty answer: it means we cannot tell what we hold,
+    so it is skipped rather than counted as zero.
+    """
+    held = set()
+    lg = (league or "").lower()
+    try:
+        with closing(_db()) as con:
+            names = {row[0] for row in con.execute(
+                "SELECT name FROM sqlite_master WHERE type='table'"
+            )}
+            for table in _SEASON_EVIDENCE_TABLES:
+                if table not in names:
+                    continue
+                try:
+                    held.update(
+                        row[0] for row in con.execute(
+                            f"SELECT DISTINCT season FROM {table}"
+                            " WHERE league=? AND season IS NOT NULL",
+                            (lg,),
+                        ) if isinstance(row[0], int)
+                    )
+                except sqlite3.Error:
+                    continue
+    except sqlite3.Error as exc:
+        print(f"[standings] cannot read held seasons league={lg}: {type(exc).__name__}: {exc}")
+        return set()
+    return held
+
+
+def _offer_only_seasons_we_hold(payload, league: str):
+    """Narrow a standings envelope's `available_seasons` to years we hold.
+
+    The season being SERVED is always offered even when we hold nothing for it —
+    it is what is on screen, and dropping it would leave the pill naming a year
+    that is not in its own option list. Everything else has to earn its place by
+    having data behind it.
+    """
+    if not isinstance(payload, dict):
+        return payload
+    offered = payload.get("available_seasons")
+    if not isinstance(offered, list) or not offered:
+        return payload
+    held = seasons_we_hold(league)
+    served = payload.get("season")
+    kept = [year for year in offered if year in held or year == served]
+    if served is not None and served not in kept:
+        kept.append(served)
+    payload["available_seasons"] = sorted(set(kept), reverse=True)
+    return payload
+
+
 def _strength_from_db(league: str):
     """Latest ESPN-published strength snapshot, without deriving missing fields."""
     try:
@@ -855,7 +920,9 @@ def get_standings(league: str, season: int = None):
         # to last year (fail-loudly: the stale table is the plausible output
         # that hides the defect).
         try:
-            return espn.mls_conference_standings(season=season)
+            return _offer_only_seasons_we_hold(
+                espn.mls_conference_standings(season=season), lg
+            )
         except ValueError as e:
             raise HTTPException(503, f"MLS standings unavailable: {e}")
         except HTTPException:
@@ -868,7 +935,9 @@ def get_standings(league: str, season: int = None):
         # keeps the list shape — it is the selection prior, has its own DB
         # fallback, and several callers index it directly.
         try:
-            return espn.team_strength_standings(lg, season=season)
+            return _offer_only_seasons_we_hold(
+                espn.team_strength_standings(lg, season=season), lg
+            )
         except ValueError as e:
             raise HTTPException(404, str(e))
         except Exception as exc:
