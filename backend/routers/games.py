@@ -132,6 +132,62 @@ def _cap_schedule_candidates(starts, anchor: dt.date, direction: str):
     return sorted(set(selected))
 
 
+# How stale our own last read may be before the serving path stops trusting it.
+# The schedule timer runs every 10 minutes and the live poller every minute, so
+# anything past this means a timer is not running -- and a dead timer must
+# degrade to calling the publisher, not quietly serve a half-hour-old score.
+# Staleness that nobody can see is worse than a slow page: a frozen board looks
+# exactly like a correct one.
+_SNAPSHOT_MAX_AGE = 15 * 60
+
+
+def _scoreboard_snapshot(league: str, game_date: str):
+    """Our stored slate for this day, or None to fall through to the publisher.
+
+    None means one of two things, and both of them are honest reasons to ask
+    upstream: we have never fetched this (league, date), or what we hold is
+    older than `_SNAPSHOT_MAX_AGE`. An empty list is different -- it is the
+    publisher having told us there are no games -- and it is served as such.
+    """
+    try:
+        import scoreboard_store
+        stored = scoreboard_store.read(league, game_date)
+    except Exception as exc:
+        print(f"[scores] snapshot unreadable league={league} date={game_date}: "
+              f"{type(exc).__name__}: {exc}")
+        return None
+    if stored is None:
+        return None
+    age = stored.get("age_seconds")
+    if age is None:
+        return None
+    if age > _SNAPSHOT_MAX_AGE and not _nothing_newer_to_have(league, game_date):
+        return None
+    return stored["games"], age
+
+
+def _nothing_newer_to_have(league: str, game_date: str) -> bool:
+    """Is this snapshot old because a timer died, or because it is finished?
+
+    The age ceiling exists to catch a dead timer. It must not also retire the
+    days the ingest is deliberately not refreshing -- an out-of-season league,
+    a day where every game is final, a slate the publisher said was empty. Those
+    go hours or months without a write BY DESIGN, and falling through to ESPN
+    for them would put back exactly the per-request upstream call this replaced,
+    on the leagues that need it least.
+    """
+    try:
+        import league_activity
+        import scoreboard_store
+        if league_activity.plays_on(league, game_date) is False:
+            return True
+        wanted, _ = scoreboard_store.needs_refresh(league, game_date)
+        return not wanted
+    except Exception:
+        # Unknown is not "fine". Fall through and ask the publisher.
+        return False
+
+
 def _games_from_db(league: str, game_date: str):
     """Return completed publisher results in the scoreboard's shared shape.
 
@@ -655,9 +711,22 @@ def get_games(league: str, date: Optional[str] = Query(None, description="YYYY-M
         is_completed_day = False
 
     games = _games_from_db(lg, requested_date) if is_completed_day else None
+    snapshot_age = None
     if games:
         data_source = "team_game_results"
     else:
+        # Rung 1 is now OUR OWN last read of the publisher, not the publisher.
+        # `ingest_scoreboards.py` refreshes the slate on a timer and re-reads
+        # only what is in flight, so the page costs a SQLite read and the
+        # upstream spend stops scaling with how many people are on the site.
+        # Measured 2026-08-18: a cold board was 22 ESPN requests, and the
+        # serving process answers its own per-host ceiling with a 60 second
+        # sleep, so the board stalled itself every few loads.
+        snapshot = _scoreboard_snapshot(lg, requested_date)
+        if snapshot is not None:
+            games, snapshot_age = snapshot
+            data_source = "scoreboard_snapshots"
+    if games is None or (not games and data_source == "espn"):
         try:
             games = espn.games(league, date)
         except ValueError as e:
@@ -702,19 +771,24 @@ def get_games(league: str, date: Optional[str] = Query(None, description="YYYY-M
                     g["home"]["score"] = final["home"]
                 if g.get("away"):
                     g["away"]["score"] = final["away"]
-    # "Write the preview whenever we find out about the game": loading the scoreboard is
-    # exactly when we find out, so warm the AI-story cache in the background here. Non-
-    # blocking — the games response returns now; stories generate in daemon threads.
+    # "Write the preview whenever we find out about the game." That used to mean
+    # this handler, because the page load was the fetch. It is not any more: the
+    # ingest is where we find out, so `ingest_scoreboards.py` kicks the stories
+    # and this only covers the path where the handler did call the publisher
+    # itself. Leaving it on the snapshot path as well would put the generation
+    # back into the request that the snapshot exists to keep cheap.
     if data_source == "espn" and lg in ("nba", "nhl", "mlb", "nfl"):
         kick_game_stories(lg, games)
     max_age = 15 if data_source == "unavailable" else 30
-    return JSONResponse(
-        content=games,
-        headers={
-            "Cache-Control": f"public, max-age={max_age}",
-            "X-LP-Data-Source": data_source,
-        },
-    )
+    headers = {
+        "Cache-Control": f"public, max-age={max_age}",
+        "X-LP-Data-Source": data_source,
+    }
+    if snapshot_age is not None:
+        # How old the publisher's answer is, not how old the response is. A
+        # score with no age is a claim about now that we cannot support.
+        headers["X-LP-Data-Age"] = str(snapshot_age)
+    return JSONResponse(content=games, headers=headers)
 
 
 @router.get("/api/{league}/schedule-dates")
