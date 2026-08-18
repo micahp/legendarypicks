@@ -28,6 +28,12 @@ from settlement.boxscore_extract import (
     _norm_name,
 )
 from settlement.mlb_api import (
+    # `_mlb_schedule` was a module-level name on the pre-split settlement.py and
+    # the regrade tests monkeypatch it to stand in for the MLB Stats API. Losing
+    # it from this surface turned four tests that exercise doubleheaders and the
+    # UTC date shift into AttributeError -- they stopped testing settlement at
+    # all rather than failing on anything about settlement.
+    _mlb_schedule,
     _fetch_mlb_gamepk,
     _fetch_mlb_boxscore,
     _fetch_mlb_final,

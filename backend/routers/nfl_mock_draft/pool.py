@@ -66,9 +66,15 @@ def pool(season: int = Query(...)):
         _log_season = (_log_season_row[0] if _log_season_row and _log_season_row[0]
                        else _CURRENT_SEASON - 1)
 
-        availability = _availability_aggregates(
-            connection, _log_season
-        )
+        # Resolved through the PACKAGE at call time, not through the copy this
+        # module bound at import. The test that pins the pool cache patches
+        # `nfl_mock_draft._availability_aggregates` and asserts it is called
+        # exactly once; against an import-time copy the patch never takes and
+        # the cache assertion silently measures nothing.
+        import sys as _sys
+        availability = getattr(
+            _sys.modules[__package__], "_availability_aggregates",
+            _availability_aggregates)(connection, _log_season)
 
         # One implementation of the season aggregate, shared with the research
         # board. job16 originally re-accumulated these in Python to guarantee

@@ -1,12 +1,26 @@
 """Database connection and initialization for the NFL mock-draft package."""
 
 import sqlite3
-
-from .constants import _DB
+import sys
 
 
 def _conn():
-    connection = sqlite3.connect(_DB)
+    """Open the database named by the PACKAGE, resolved at call time.
+
+    `from .constants import _DB` binds a copy at import, and the tests redirect
+    the database by rebinding `nfl_mock_draft._DB` on the package. Against a
+    copy that assignment does nothing: every connection still opens the real
+    file. Measured 2026-08-18, right after the split, 36 mock-draft tests
+    errored with `no such table: player_game_logs` because they were pointed at
+    a fixture and silently reading production instead. Resolving through the
+    package is what makes the redirection real -- the same call-time lookup the
+    other split packages use for their patched names.
+    """
+    from . import constants
+    package = sys.modules[__package__]
+    # `constants` is the fallback only for the window during package import,
+    # before `__init__` has rebound the name. It is never the value a test set.
+    connection = sqlite3.connect(getattr(package, "_DB", constants._DB))
     connection.row_factory = sqlite3.Row
     return connection
 

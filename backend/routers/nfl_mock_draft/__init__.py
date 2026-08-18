@@ -47,6 +47,15 @@ from .helpers import (  # noqa: E402
 # Import game log constants
 from .game_log import _DST_LOG_FIELDS, _LOG_FIELDS  # noqa: E402
 
+# The offseason aggregates were module-level names on the pre-split
+# `nfl_mock_draft.py`, so patching them on this module is part of the surface
+# the split promised to keep. Without these lines the pool-cache test dies on
+# AttributeError instead of testing the cache.
+from ..nfl_offseason import (  # noqa: E402, F401
+    _availability_aggregates,
+    _dst_aggregates,
+)
+
 # Import endpoints (each module registers routes on `router`)
 from . import pool  # noqa: E402, F401
 from . import crud  # noqa: E402, F401
