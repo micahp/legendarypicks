@@ -4,40 +4,67 @@
 # `scripts/release.sh` is the heavyweight path and has to be: it bumps
 # package.json, writes the version tag the pre-push hook then requires, runs the
 # prod/dev divergence check and the per-league stats audit, and publishes GitHub
-# release notes. That is right for a version. It is far too much ceremony for
-# "mark where this build was", which is why marking a build kept feeling like
-# cutting a release.
+# release notes on a major or minor. That is right for a version. It is far too
+# much ceremony for "mark where this build was", which is why marking a build
+# kept feeling like cutting a release.
 #
-# So this writes a tag in its own namespace and does nothing else:
+# EVERY TAG CARRIES A NOTE. One sentence, what this build is and why it is being
+# marked. It is required here, not optional:
 #
-#   build/2026-08-18-0543-a1b2c3d          scripts/tag.sh
-#   build/2026-08-18-0543-a1b2c3d-prod     scripts/tag.sh prod
+#   - GitHub shows an annotated tag's message on the /tags page, so the note is
+#     the only description a build tag will ever have. There is no release
+#     behind it to explain it later.
+#   - A tag with no note is unreadable within a week. `build/2026-08-18-0551-f17`
+#     tells you when and what commit, which git already knew. It does not tell
+#     you why anyone stopped to mark it, and that is the whole reason the tag
+#     exists rather than a sha.
+#
+# So: what would you need to read, six months from now, to know whether this tag
+# is the one you are looking for? Write that.
+#
+#   scripts/tag.sh "last build before the props schema migration"
+#   scripts/tag.sh "known-good prod image, Bovada fallback verified" --label prod
+#   scripts/tag.sh "nightly smoke passed" --label nightly --push
 #
 # It REFUSES to write a vX.Y.Z tag. Version tags come from release.sh only --
 # hand-tagging versions is the exact drift release.sh was written to stop
 # (v0.6.1-v0.6.4 were burned that way), and a second door into it would undo
 # that. Nothing here touches package.json or CHANGELOG.md, so the pre-push hook
 # has no opinion on it either.
-#
-#   scripts/tag.sh                 tag HEAD
-#   scripts/tag.sh nightly         tag HEAD, suffixed
-#   scripts/tag.sh nightly --push  and push it
 set -euo pipefail
 
-LABEL="${1:-}"
+NOTE=""
+LABEL=""
 PUSH=""
-for arg in "$@"; do [ "$arg" = "--push" ] && PUSH=1; done
-[ "$LABEL" = "--push" ] && LABEL=""
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --push)  PUSH=1; shift ;;
+    --label) LABEL="${2:-}"; shift 2 ;;
+    *)       [ -z "$NOTE" ] && NOTE="$1" || true; shift ;;
+  esac
+done
 
 die() { echo "tag: $*" >&2; exit 1; }
 
 cd "$(git rev-parse --show-toplevel)"
 
-# A version is release.sh's job, whichever way it is spelled.
-if echo "$LABEL" | grep -qE '^v?[0-9]+\.[0-9]+\.[0-9]+$'; then
-  die "'$LABEL' is a version. Use scripts/release.sh $(echo "$LABEL" | sed 's/^v//') instead --
-  version tags carry a package.json bump, a CHANGELOG entry and the prod audits."
+if [ -z "$NOTE" ]; then
+  echo "tag: every tag carries a note. One sentence: what this build is, and why" >&2
+  echo "  you stopped to mark it. GitHub shows it on /tags, and it is the only" >&2
+  echo "  description a build tag ever gets -- there is no release behind it." >&2
+  echo >&2
+  echo "  scripts/tag.sh \"last build before the props schema migration\"" >&2
+  echo "  scripts/tag.sh \"known-good prod image\" --label prod --push" >&2
+  exit 1
 fi
+
+# A version is release.sh's job, whichever way it is spelled.
+for value in "$NOTE" "$LABEL"; do
+  if echo "$value" | grep -qE '^v?[0-9]+\.[0-9]+\.[0-9]+$'; then
+    die "'$value' is a version. Use scripts/release.sh $(echo "$value" | sed 's/^v//') \"one sentence\" instead --
+  version tags carry a package.json bump, a CHANGELOG entry and the prod audits."
+  fi
+done
 echo "$LABEL" | grep -qE '^[a-z0-9][a-z0-9._-]*$|^$' \
   || die "label must be lowercase alphanumeric with . _ - (got '$LABEL')"
 
@@ -54,8 +81,11 @@ git rev-parse -q --verify "refs/tags/$TAG" >/dev/null 2>&1 && die "$TAG already 
 DIRTY=""
 [ -n "$(git status --porcelain --untracked-files=no)" ] && DIRTY=" (tree was dirty)"
 
-git tag -a "$TAG" -m "build $STAMP at $SHA on $(git rev-parse --abbrev-ref HEAD)$DIRTY"
+git tag -a "$TAG" \
+  -m "$NOTE" \
+  -m "build $STAMP at $SHA on $(git rev-parse --abbrev-ref HEAD)$DIRTY"
 echo "tag: $TAG$DIRTY"
+echo "  $NOTE"
 
 if [ -n "$PUSH" ]; then
   git push origin "$TAG" && echo "tag: pushed"
