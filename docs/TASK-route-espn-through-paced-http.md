@@ -50,14 +50,32 @@ must inherit the serving posture, not a batch one: no pacing, no retry ladder, a
 already carries exactly that configuration, so route it through `espn_client` rather than
 constructing a `Fetcher`.
 
+## Before you start: commit the range-backfill work
+
+The date-range backfill is finished and verified but **uncommitted**, and it lives in
+`backend/espn_client/__init__.py`, `backend/espn_client/scoreboard.py`,
+`backend/ingest_scoreboards.py` and the untracked
+`backend/test_scoreboard_range_backfill.py`.
+
+Commit those four files as their own commit first, so this task starts from a clean tree.
+That work is not part of this task and must not be folded into it. Do not push.
+
+While committing it, confirm `espn_client/__init__.py` re-exports `scoreboard_raw_range`,
+`games_by_day`, `_ny_date` and `_slate_day`. Four names were silently dropped from package
+surfaces during the 2026-08-18 split sweep and thirty had to be restored; do not add to that.
+
 ## Scope lock
 
-**Touch only the 17 files above, plus their existing tests.**
+**Change only the 17 files listed above, plus their existing tests.**
 
-Do NOT modify: `paced_http.py`, `espn_client/*`, `scoreboard_store.py`, `league_activity.py`,
-`ingest_scoreboards.py`, `spend_report.py`, `.gitignore`, any systemd unit, anything under
-`/etc`, cron, or any database. Do not add a dependency. Do not change any budget, interval,
-retry ladder or cache TTL.
+Everything else is off limits *for this task*: `paced_http.py`, `espn_client/*`,
+`scoreboard_store.py`, `league_activity.py`, `ingest_scoreboards.py`, `spend_report.py`,
+`.gitignore`, any systemd unit, anything under `/etc`, cron, and any database. Do not add a
+dependency. Do not change any budget, interval, retry ladder or cache TTL.
+
+Note that none of the 17 files to convert are in that list, so once the range work above is
+committed there is no conflict. `ingest_league_news/fetch.py` IS in scope; the rest of
+`ingest_league_news/` is not.
 
 ## How
 
