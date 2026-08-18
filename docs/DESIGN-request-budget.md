@@ -195,3 +195,17 @@ a partial slate as complete, and keep caching. No ledger, no pools, no circuit b
 | 2026-08-17 01:02 | `fe82812` reverts it. The handoff records the reason as a misreading; **that is wrong** (see §1). Micah reverted it because the change was never explained to him, and because he understood the fix as capping each call at 100, which is correct per job and does not hold across eighteen of them. The disk-cache half is kept and pays for itself immediately. |
 | 2026-08-18 | Two concurrent backfills each stop politely at their own declared 60 and together take all three ESPN hosts to 403. `ingest_scoreboards.py` gains an exclusive `flock`. That fixes one instance, not the class: it covers two timers out of eighteen. |
 | 2026-08-18 | The range form is measured: 200 for team, combat and soccer leagues, `events: []` for tennis, and a hard **100-event response cap**. This is limit B, and it is the likely source of the misreading in the revert. |
+
+---
+
+## 8. What is gated on this
+
+`/scores` rebuilt on the ESPN model (ROADMAP §6) has as its stated target **zero ESPN
+requests to load a past date, enforced by a request-count gate**. That gate cannot mean
+anything while the counter is per process and 17 modules reach ESPN without going through
+`paced_http` at all: a gate reading a number that only some callers increment is a green
+light that proves nothing, which is the exact shape this repo keeps re-finding.
+
+So the order is: close the bypass doors
+(`docs/TASK-route-espn-through-paced-http.md`), let §4 run and answer §1, then spec the
+remainder of the scoreboard rebuild. Decided with Micah 2026-08-18.

@@ -188,7 +188,49 @@ users (Record A in `POSITIONING-2026-07-27.md` §7), and it is where the real ho
 
 ---
 
-## 6. THE COVERAGE MATRIX IS TOO COARSE
+## 6. `/scores` REBUILT ON THE ESPN MODEL: most of it landed sideways
+
+**Restored 2026-08-18.** This item was dropped in that day's rewrite, which was a
+straightforward miss, and it matters because **today's scoreboard work was this item being
+reinvented piecemeal.** Done as one piece, the 60-second stall, the blank past days, the
+dead arrows and the COD gap would not have been four separate emergencies.
+
+Spec: `TASK-scores-schedule-espn-model.md`, plus two primitives to reuse rather than
+rebuild: `docs/API-nfl-schedule-weeks-v1.md` (ESPN's own week calendar, live on
+`pages/leagues/[league].tsx`) and `docs/API-league-schedule-dates-v1.md`.
+
+The original measurement, which still reads correctly as a diagnosis:
+
+> The schedule has **no DB path** and never has (`7668c5e`, June 2025). Every schedule read
+> is a live ESPN call; the board fans out to 11 leagues x a two-day window = up to **22
+> upstream calls for one day change**; `schedule-dates` walks up to 8 ranges sequentially.
+> DB-backed `strength` answers in **0.10s** against 0.56 to 1.11s for anything touching
+> ESPN. Ten minutes of ESPN refusing on 08-14 took every past-date scores page down.
+
+### What 2026-08-18 delivered against it
+
+- [x] **Completed days are DB-primary**, not a fallback. `scoreboard_snapshots` plus a
+      capture-once rung.
+- [x] **Zero ESPN requests to load a past date.** Measured: 22 handler calls, 355ms, 85
+      games, zero upstream.
+- [x] **Date navigation jumps to the next day the league actually has games**, answered from
+      the store rather than per click from ESPN. Arrow latency 0.7-3.1s down to 0.33-0.71s.
+- [x] **COD included**, so a non-ESPN board league is reachable too.
+
+### What is still open
+
+- [ ] **An ESPN-style Top Events page** with a show-all link and no date picker.
+- [ ] **Week-grouped navigation for NFL and NCAAF.** NCAAF opens Aug 29, so this has a date.
+- [ ] **A request-count gate** enforcing the zero, so the property cannot silently regress.
+
+**⛔ Do not spec the remainder until the request-budget question is answered.** See
+`docs/DESIGN-request-budget.md`: a "zero ESPN requests" target enforced by a gate is
+meaningless while the counter is per process and 17 modules reach ESPN without going through
+it at all. Settle that, then spec this.
+
+---
+
+## 7. THE COVERAGE MATRIX IS TOO COARSE
 
 `backend/league_feature_matrix.py` is the file that answers "what do we have, for which
 league". It is the right idea and it is not detailed enough to act on. Every cell is a
@@ -234,7 +276,7 @@ say honestly whether they resolve and where they are visible; fixing settlement 
 
 ---
 
-## 7. MEASUREMENT DEBT: the checks that stay green by not being asked
+## 8. MEASUREMENT DEBT: the checks that stay green by not being asked
 
 - [ ] **`atp`, `wta`, `wnba` have no MANIFEST entry** (`audit_league_stats/cli.py:22`, 8
       keys: mlb nba nhl nfl ufc wc mls ncaaf). The audit only fails a missing entry for a
@@ -259,7 +301,7 @@ say honestly whether they resolve and where they are visible; fixing settlement 
 
 ---
 
-## 8. IN FLIGHT
+## 9. IN FLIGHT
 
 - [ ] **Tournament games under their own league key.** Decided 2026-08-06. Leagues Cup
       (`concacaf.leagues.cup`), CCC (`concacaf.champions`) and Campeones Cup are separate
@@ -282,7 +324,7 @@ say honestly whether they resolve and where they are visible; fixing settlement 
 
 ---
 
-## 9. QUEUED, not started
+## 10. QUEUED, not started
 
 Named by the user, no work done:
 
@@ -298,7 +340,7 @@ Named by the user, no work done:
 
 ---
 
-## 10. POST-DRAFT: league news engine
+## 11. POST-DRAFT: league news engine
 
 The engine is live and prod carries 5,526 items, so this section is no longer about
 building it. What is left is editorial shape, and 18.5% of prod rows (1,022) are still
@@ -315,7 +357,7 @@ building it. What is left is editorial shape, and 18.5% of prod rows (1,022) are
 
 ---
 
-## 11. LATER: deferred on purpose
+## 12. LATER: deferred on purpose
 
 - [ ] **Source-separated tables** (`espn_core_*` / `espn_fantasy_*`). November, not now.
 - [ ] **NFL 2024 game-id vocabulary migration.** Deliberately deferred, not shown in the
