@@ -394,6 +394,52 @@ Scope, in order. Full detail in `TASK-next-release-player-identity.md`.
    has no status column at all. ESPN already publishes `state`/`completed`/`status` and
    `reconcile_gap.py:94` already knows `STATUS_POSTPONED`/`CANCELED`/`SUSPENDED`. Additive
    nullable column, populated via the linked `espn_event_id`, then the filter changes.
+
+   **Ask the prop publisher, not the clock** (Micah, 2026-08-17). The 3-hour window is a
+   guess about a game we are already talking to a publisher about. That publisher answers the
+   question directly, two ways, and we are reading its feed anyway:
+
+   - **Does it say the game is live?** Bovada/PrizePicks/Underdog each mark an event in-play.
+   - **Did it remove the props?** A market that disappears from the feed is the publisher
+     saying the pregame board is closed — the strongest signal available, and it needs no
+     status vocabulary of ours.
+
+   Two publisher-owned facts beat one derived timer, and they get postponement right for
+   free: a postponed game keeps its props and is never marked live, so the exemption above
+   stops being a special case we have to implement. It also removes an ESPN dependency from
+   the props path rather than adding one. Prefer this to the `espn_event_id` route above if
+   it measures out; keep the ESPN status column only for what the prop feed cannot answer.
+
+4b. **Serve standings from our own tables, and offer only the years we hold** (Micah,
+   2026-08-17). Today `/api/{league}/standings` calls ESPN on every cache miss and the year
+   picker offers the publisher's 24-25 seasons — years we have no other data for, so picking
+   one gives a standings table attached to nothing. The rule should invert:
+
+   - The picker offers **the seasons we have ingested**, not the seasons ESPN will serve.
+   - Showing a league/season in the app means **ingesting that season's data**, once, on
+     purpose — not fetching it live per page view.
+
+   This is the storage question stated plainly: we hold `player_stats`, `player_game_logs`,
+   `team_game_results` and `strength_snap`, and then hit the publisher on a page load anyway.
+   An ingested season is a copy with a checksum; a per-request fetch is a dependency on a host
+   with a ~100-request budget (see 4c). Note the trap this replaced: the old MLS standings
+   rollup served `MAX(season)` of what our tables held, and our tables only ever held a
+   COMPLETED season — so ingest freshness, not just presence, is the thing to get right.
+
+4c. **A second scoreboard provider** (Micah, 2026-08-17). Live scores genuinely cannot come
+   from our DB, so ESPN stays on that path — but it must not be the only one. Measured
+   2026-08-17: the scores page issues **22 ESPN requests per load** (11 leagues x 2 local
+   dates) against a **20s** backend TTL, and re-fires all 22 every **30s while any game is
+   live**. That is ~44 requests/minute into a **count**-based ceiling of roughly 100 per host,
+   so one open tab exhausts the budget in about two and a half minutes. Both `_SITE` and
+   `_CORE` point at `site.web.api.espn.com`, so a scoreboard burst also takes standings,
+   leaders context and every other core call down with it — this is exactly how prod's
+   scoreboard went blank today.
+
+   Cheap fixes first (TTL above the poll interval; poll only leagues with a live game; move
+   the scoreboard path to `site.api.espn.com`, which is unused and answering). Then the real
+   one: a fallback provider. Bovada and Kalshi both carry live game state and we already
+   scrape Bovada, so the credential and client cost is near zero.
 5. **MLS settlement returns 0 settled** on the four finished 08-15 games. Found, not diagnosed.
    ~5,300 props sit behind it.
 6. **`props-freshness` self-heal blocks** — `systemctl start` on a `Type=oneshot` waits, the
