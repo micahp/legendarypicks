@@ -90,6 +90,13 @@ const LEAGUES = ['All', 'NBA', 'MLB', 'NHL', 'NFL', 'Leagues Cup', 'MLS', 'NCAAF
 // API keys for the board's league fan-out — shared by the games load and the
 // W3 schedule-dates navigation so a day change asks the same leagues it renders.
 const LEAGUE_KEYS = ['nba', 'mlb', 'nhl', 'nfl', 'lcup', 'mls', 'ncaaf', 'atp', 'wta', 'cod', 'ufc', 'wc']
+// ...but NOT for schedule-dates. `cod` is breakingpoint.gg, not ESPN, and the
+// endpoint answers 404 for any league it does not carry. Fanning out over
+// LEAGUE_KEYS therefore fired one guaranteed-404 request on every page load
+// AND every arrow click, logged an error to the console each time, and made
+// the day change wait on it: the click resolves a Promise.all, so the slowest
+// leg gates the whole navigation. Measured 2026-08-18.
+const SCHEDULE_DATE_KEYS = LEAGUE_KEYS.filter(key => key !== 'cod')
 // The visible filter label → API key. Filter names are user-facing; keys are not.
 function leagueKeyFor(filter: string): string {
   return filter === 'Call of Duty' ? 'cod'
@@ -120,8 +127,11 @@ export default function ScoresPage() {
     // distinguishable. When schedule discovery cannot answer or finds no game
     // in that direction, we do NOT invent a calendar date — the board stays
     // on the anchor, honestly showing what the anchor has.
-    const leagues = leagueFilter === 'All' ? LEAGUE_KEYS : [leagueKeyFor(leagueFilter)]
-    SportsService.getNeighbourGameDate(leagues, date, delta as -1 | 1)
+    const selected = leagueFilter === 'All'
+      ? SCHEDULE_DATE_KEYS
+      : [leagueKeyFor(leagueFilter)].filter(key => key !== 'cod')
+    if (!selected.length) return
+    SportsService.getNeighbourGameDate(selected, date, delta as -1 | 1)
       .then((target) => {
         if (target) setDate(target)
       })

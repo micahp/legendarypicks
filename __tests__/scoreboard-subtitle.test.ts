@@ -56,3 +56,51 @@ describe('scoreboard section heading', () => {
     expect(g.subtitle).toBeUndefined()
   })
 })
+
+
+import { SportsService } from '../services/sports'
+
+/**
+ * The day arrows must not be gated by a league that cannot answer.
+ *
+ * Two defects, both measured 2026-08-18 by driving the real page.
+ *
+ *   1. `cod` was in the schedule-dates fan-out. It is breakingpoint.gg, not
+ *      ESPN, so the endpoint 404s for it -- one guaranteed failure on every
+ *      page load and every arrow click, with a console error each time.
+ *   2. The click awaited `Promise.all`, so the slowest leg decided when the
+ *      day changed. Clicks took 0.7s to 3.1s against a board that is
+ *      otherwise pure SQLite reads; after `allSettled` they take ~0.3s.
+ */
+describe('day arrow discovery', () => {
+  const anchor = '2026-08-18'
+
+  it('still answers when one league rejects', async () => {
+    const spy = jest.spyOn(SportsService, 'getScheduleDates')
+    spy.mockImplementation(async (league: string) => {
+      if (league === 'broken') throw new Error('404')
+      return {
+        contract: 'league-schedule-dates-v1',
+        league,
+        anchor_date: anchor,
+        event_start_timezone: 'UTC',
+        future_event_starts: [],
+        past_event_starts: ['2026-08-15T22:00:00+00:00'],
+      } as any
+    })
+    const target = await SportsService.getNeighbourGameDate(['mlb', 'broken'], anchor, -1)
+    expect(target).toBe('2026-08-15')
+    spy.mockRestore()
+  })
+
+  it('a single refusing league does not blank the navigation', async () => {
+    const spy = jest.spyOn(SportsService, 'getScheduleDates')
+    spy.mockRejectedValue(new Error('every league refused'))
+    // Nothing answered, so there is no honest target. The board stays put
+    // rather than inventing a calendar date.
+    await expect(
+      SportsService.getNeighbourGameDate(['mlb'], anchor, -1)
+    ).resolves.toBeNull()
+    spy.mockRestore()
+  })
+})
