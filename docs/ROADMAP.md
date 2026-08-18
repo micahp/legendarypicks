@@ -146,6 +146,47 @@ gate says nothing about the deployed board.
 real failure (`test_story_form_season.py::...[mls-2026]`, red on BOTH databases, pre-existing).
 Do not read `REG-pytest` as "the tests pass".
 
+### ✅ RESOLVED 2026-08-17 (night) — and the ingest this section scoped was never needed
+
+Fixed in `230624b`. **The whole "ingest 2026 first" problem below was a consequence of deciding
+to derive the table.** Once you read the publisher's standings instead, there is no season to
+ingest, no 511-event loop to budget for, and no bulk endpoint to go hunting for: ESPN publishes
+the finished table for both conferences in **one request**, and it is the same request whether
+the season is 1 match old or complete.
+
+That answers the open design question below — *"find the bulk endpoint, or a cheaper publisher,
+before writing it"* — by removing it. The bulk endpoint is the standings endpoint. It is worth
+noticing how the question got framed: "the standings are stale" became "we must ingest 511
+events", because the derivation was treated as fixed and its inputs as the variable. The
+derivation was the variable.
+
+What shipped:
+
+- `espn.mls_conference_standings()` reads the published table. `points` and `rank` are **copied**,
+  which closes the second half of this section — the `#` column is now the league's rank, not a
+  restatement of our own sort.
+- The response carries `season`, `phase` and `in_progress`, read off ESPN's published season-type
+  calendar (`Regular Season` 2026-01-01 → 2026-11-09, `hasStandings: true`). A schedule is
+  published, never inferred — `published-first` rung 5.
+- The UI renders that as a caption — *2026 MLS · Regular Season · in progress* — because the
+  table having no season on it anywhere is half of why this survived to a release. When the
+  publisher does not state the phase, the UI claims nothing rather than defaulting.
+- Upstream failure → 503 with a reason. Never a fall-through to the table we already hold: that
+  fall-through IS this defect.
+
+**The old rollup was arithmetically exact.** Before removing it, it was checked against ESPN's
+published *2025* table: 30 of 30 teams, zero disagreements on P/W/D/L/Pts *and* rank. Worth
+recording because it is the uncomfortable version of the lesson — the derivation was correct
+and still produced a wrong page, because correctness of the computation says nothing about
+whether you computed it over the right rows.
+
+This also reverses the 2026-08-16 DB-first change, whose test asserted MLS "touches no ESPN host
+at all". That assertion is what guaranteed staleness. The thing it was protecting — no request
+per pageview — is preserved by the 900s TTL: one request per 15 minutes for the whole league.
+
+> The section below is kept as written, per the ledger rule. It is accurate about the defect and
+> about the ESPN hosts; it is superseded only on *what the fix had to be*.
+
 ### ⛔ RELEASE-BLOCKING, found 2026-08-17 (evening): MLS standings would ship LAST season
 
 Not on any previous list, and it is the one item here a user would notice within a second of
