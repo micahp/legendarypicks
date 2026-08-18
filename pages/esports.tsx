@@ -1237,9 +1237,14 @@ export default function EsportsPage() {
 
         <LiveNow matches={liveMatches} host={host} msi={live?.live ? live : null} slate={allMatches} />
 
-        <UpcomingSlate data={upcoming} />
-
+        {/* Above the slate, not below it. The slate is the tallest thing on the
+            site: measured 2026-08-18 it was 14,907px of a 16,231px page (159
+            scheduled + 493 results), so news stacked underneath it started at
+            y=15,142 and was unreachable in practice. Live games still come
+            first; news sits between them and the schedule. */}
         <EsportsNews />
+
+        <UpcomingSlate data={upcoming} />
       </div>
     </>
   )
