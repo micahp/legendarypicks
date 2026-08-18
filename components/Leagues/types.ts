@@ -29,26 +29,6 @@ export interface StandingGroup {
   rows: StandingRow[]
 }
 
-/**
- * The season a standings table belongs to, as the publisher states it.
- *
- * Exists because until 2026-08-17 the tables carried no season at all, so a
- * finished 2025 table and a live 2026 one were pixel-identical — and MLS was
- * serving the 2025 final table in August. A standings surface that cannot say
- * which season it is showing cannot be read honestly, so this travels with the
- * groups rather than being inferred on screen.
- *
- * `inProgress` is deliberately nullable: null means the publisher's calendar did
- * not say, which must render as unknown rather than defaulting to either
- * "Final" or "in progress". Absence is a claim about us, not about the season.
- */
-export interface StandingsSeason {
-  season: number | null
-  seasonLabel: string | null
-  phase: string | null
-  inProgress: boolean | null
-  asOf: string | null
-}
 
 export interface Leader {
   player_id: number

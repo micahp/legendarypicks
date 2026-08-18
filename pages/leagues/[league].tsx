@@ -202,7 +202,6 @@ export default function LeagueHubPage() {
             knockout={standings.knockout}
             groups={standings.groups}
             teams={standings.teams}
-            season={standings.season}
             leagueName={leagueName}
             league={route.league}
           />

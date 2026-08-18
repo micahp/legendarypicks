@@ -1,5 +1,44 @@
 # Changelog
 
+## Unreleased
+
+*Landed on `dev` after the `v0.8.0` tag and already deployed to production. Per the release
+convention these ride into the next feature release's notes rather than earning a bugfix
+release of their own; they are recorded here so the next cut does not have to reconstruct
+them from git.*
+
+### MLS standings served last season's final table in mid-August
+
+- **`/api/mls/standings` served the 2025 FINAL table** — 34 games played, every team — with
+  nothing on the surface naming the season (`230624b`). The arithmetic was never wrong: the
+  rollup it replaces reproduced ESPN's published 2025 table for **30 of 30 teams with zero
+  disagreements** on P/W/D/L/Pts *and* rank. The bug was season *selection* —
+  `_mls_standings_season()` returned `MAX(season)` of what our tables hold, and
+  `team_game_results` only ever holds a season that has **finished**, so the surface was
+  structurally incapable of showing a season in progress.
+- **Read the publisher's table instead of deriving one.** `points` and `rank` are copied, not
+  recomputed — MLS's tiebreakers past points/wins/GD are a spec we would be forking. The
+  season, phase and whether it is still being played come from ESPN's published season-type
+  calendar (`Regular Season` → 2026-11-09, `hasStandings: true`); a schedule is published,
+  never inferred.
+- **An upstream failure is a 503 with a reason**, never a fall-through to the table we already
+  hold. That fall-through *is* the defect.
+- Reverses the DB-first change of 2026-08-16, whose test asserted MLS "touches no ESPN host at
+  all" — the assertion that guaranteed staleness. What it was protecting, no request per
+  *pageview*, is preserved by the 900s TTL: one request per 15 minutes for the whole league.
+- Retires the "ingest MLS 2026 first" plan, which had been scoped as an ESPN-budget problem at
+  511 events. The standings endpoint is the bulk endpoint: one request, whatever the date.
+
+### Build
+
+- **The backend image context was carrying 230MB of HTTP cache** (`f4aabf6`).
+  `backend/.dockerignore` named `data/cache`, a directory that does not exist, while the two
+  caches that do — `backend/.espn-cache` (96MB) and `backend/data/espn-cache` (134MB) —
+  matched no pattern and were baked in by `COPY . .`. The second was unreachable at runtime
+  regardless: compose bind-mounts `./backend/data` over that exact path. Backend image
+  481MB → 246MB. Same shape as the 7.45GB image (08-04) and the 0.93GB context (08-11) — a
+  rule protects the path it names and nothing near it.
+
 ## v0.8.0 — 2026-08-17
 
 ### Every league the release ships is now audited
@@ -264,6 +303,25 @@ single-source dependencies on ESPN — `is_final` came only from a live call, an
 score read only `scoring_plays`, which holds zero rows for ncaaf, nfl and mls. Both now ask
 our own database first (`405ebe8`). `prop_games.start_time` backfilled from the published
 scoreboard (`e634890`) and settlement allows for two publishers' clock drift (`f6fed51`).
+
+### The Scores page stopped depending on ESPN being up
+
+*Added 2026-08-17, after the tag: this shipped in v0.8.0 and these notes did not mention it.
+Roughly 960 lines across six commits, all of it user-facing, and the omission is worth naming
+because the release notes are how anyone answers "when did this change?" later.*
+
+- **Past scores are DB-primary** (`2e014b7`). A finished game is a fact we already hold; it
+  was being re-fetched from ESPN on every view, so a walled host emptied a page about games
+  that finished days ago.
+- **Navigation survives a publisher outage** (`ec5872e`, 570 lines). The date arrows and the
+  day's card list were both built from a live scoreboard response, so one refusal did not
+  degrade the page — it removed the means to navigate away from it.
+- **The arrows step to neighbouring game DAYS** (`d8c64db`), read from schedule-dates rather
+  than stepping one calendar day at a time into empty pages.
+- **Live phase display** (`b01b9d3`), and **the word LIVE is dropped once we can name the
+  period** (`a205544`). "LIVE" beside a period we can actually name is the less specific of
+  two true labels; showing "3rd Quarter" says the same thing and says more.
+- **Game detail: the outer frame is gone from "What decided it"** (`f1af1b3`).
 
 **Build and gates.** Databases excluded from the Docker context **by name**, gated with a
 test (`ad90392`) — `*.bak` never matched `data/*.bak`, which baked 7GB of backups into the

@@ -1,4 +1,4 @@
-import type { KnockoutRound, StandingGroup, StandingsSeason, TeamStats } from './types'
+import type { KnockoutRound, StandingGroup, TeamStats } from './types'
 
 interface StandingsTabProps {
   error: string | null
@@ -7,7 +7,6 @@ interface StandingsTabProps {
   knockout: KnockoutRound[]
   groups: StandingGroup[]
   teams: TeamStats[]
-  season?: StandingsSeason
   leagueName: string
   league: string
 }
@@ -19,7 +18,6 @@ export default function StandingsTab({
   knockout,
   groups,
   teams,
-  season,
   leagueName,
   league,
 }: StandingsTabProps) {
@@ -51,62 +49,17 @@ export default function StandingsTab({
           <div className="text-zinc-500 text-sm">No standings available.</div>
         )
       ) : groups.length > 0 ? (
-        <>
-          <SeasonCaption season={season} />
-          {isSoccer ? (
-            <SoccerStandings groups={groups} />
-          ) : (
-            <ConferenceStandings groups={groups} />
-          )}
-        </>
+        isSoccer ? (
+          <SoccerStandings groups={groups} />
+        ) : (
+          <ConferenceStandings groups={groups} />
+        )
       ) : teams.length > 0 ? (
         <TeamSportStandings teams={teams} />
       ) : (
         <div className="text-zinc-500 text-sm">No data available for {leagueName}.</div>
       )}
     </>
-  )
-}
-
-/**
- * Which season this table is, and whether it is still being played.
- *
- * Added 2026-08-17, the day we found MLS serving the 2025 FINAL table in
- * mid-August. The table itself was correct; nothing on screen said which season
- * it was, so a finished season and a live one were indistinguishable. That is
- * the honest-data-ui failure mode exactly: a true number shown without the
- * condition that makes it true.
- *
- * Three states, and the third is the point:
- *   in progress  "2026 MLS · Regular Season · in progress"
- *   complete     "2025 MLS · Regular Season · final"
- *   unstated     nothing rendered at all
- *
- * When the publisher does not state the phase we render no claim rather than
- * defaulting to one. Guessing "final" on a live season and guessing "live" on a
- * finished one are both the bug we are fixing.
- */
-function SeasonCaption({ season }: { season?: StandingsSeason }) {
-  if (!season || (season.season == null && season.seasonLabel == null)) return null
-  const label = season.seasonLabel || String(season.season)
-  return (
-    <div className="mb-4 flex flex-wrap items-baseline gap-x-2 gap-y-1 text-sm">
-      <span className="font-semibold text-zinc-200">{label}</span>
-      {season.phase && (
-        <>
-          <span aria-hidden className="text-zinc-700">·</span>
-          <span className="text-zinc-400">{season.phase}</span>
-        </>
-      )}
-      {season.inProgress != null && (
-        <>
-          <span aria-hidden className="text-zinc-700">·</span>
-          <span className={season.inProgress ? 'text-emerald-400' : 'text-zinc-500'}>
-            {season.inProgress ? 'in progress' : 'final'}
-          </span>
-        </>
-      )}
-    </div>
   )
 }
 

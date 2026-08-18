@@ -1,12 +1,7 @@
 import React from 'react'
 import { render, screen } from '@testing-library/react'
 import StandingsTab from './StandingsTab'
-import type { StandingGroup, StandingsSeason } from './types'
-
-const liveSeason: StandingsSeason = {
-  season: 2026, seasonLabel: '2026 MLS', phase: 'Regular Season',
-  inProgress: true, asOf: '2026-08-17T23:52:30Z',
-}
+import type { StandingGroup } from './types'
 
 const mlsGroups: StandingGroup[] = [{
   group: 'Eastern Conference',
@@ -68,57 +63,3 @@ describe('grouped league standings', () => {
   })
 })
 
-/**
- * Added 2026-08-17. MLS shipped the 2025 FINAL table in mid-August with nothing
- * on screen naming the season, so a finished table and a live one looked
- * identical. These assert the caption says which is which — and, in the third
- * case, that it declines to say when the publisher did not.
- */
-describe('standings season caption', () => {
-  const renderWith = (season?: StandingsSeason) => render(
-    <StandingsTab
-      error={null}
-      loading={false}
-      isWorldCup={false}
-      knockout={[]}
-      groups={mlsGroups}
-      teams={[]}
-      season={season}
-      leagueName="MLS"
-      league="mls"
-    />,
-  )
-
-  it('names the season and says it is still being played', () => {
-    renderWith(liveSeason)
-
-    expect(screen.getByText('2026 MLS')).toBeTruthy()
-    expect(screen.getByText('Regular Season')).toBeTruthy()
-    expect(screen.getByText('in progress')).toBeTruthy()
-    expect(screen.queryByText('final')).toBeNull()
-  })
-
-  it('marks a completed season final rather than implying it is live', () => {
-    renderWith({ ...liveSeason, season: 2025, seasonLabel: '2025 MLS', inProgress: false })
-
-    expect(screen.getByText('2025 MLS')).toBeTruthy()
-    expect(screen.getByText('final')).toBeTruthy()
-    expect(screen.queryByText('in progress')).toBeNull()
-  })
-
-  it('claims nothing when the publisher did not state the phase', () => {
-    renderWith({ ...liveSeason, phase: null, inProgress: null })
-
-    expect(screen.getByText('2026 MLS')).toBeTruthy()
-    expect(screen.queryByText('in progress')).toBeNull()
-    expect(screen.queryByText('final')).toBeNull()
-  })
-
-  it('renders no caption at all for a league that sends no season', () => {
-    renderWith(undefined)
-
-    expect(screen.getByRole('heading', { name: 'Eastern Conference' })).toBeTruthy()
-    expect(screen.queryByText('in progress')).toBeNull()
-    expect(screen.queryByText('final')).toBeNull()
-  })
-})

@@ -1,47 +1,24 @@
 import { useEffect, useState } from 'react'
 import { SportsService } from '../../../services/sports'
-import type { KnockoutRound, StandingGroup, StandingsSeason, TeamStats } from '../types'
+import type { KnockoutRound, StandingGroup, TeamStats } from '../types'
 
-const NO_SEASON: StandingsSeason = {
-  season: null, seasonLabel: null, phase: null, inProgress: null, asOf: null,
-}
+// Leagues whose standings are conference-grouped ({group, rows}[]).
+const GROUPED_LEAGUES = ['mls', 'ncaaf']
 
 /**
- * Standings arrive in two shapes, and the difference is whether the endpoint
- * knows which season it is serving.
- *
- *   bare  `[{group, rows}]`                    — NCAAF, World Cup: no season stated
- *   named `{season, phase, in_progress, groups}` — MLS since 2026-08-17
- *
- * Read the named shape when it is offered and fall back to the bare one, so a
- * league adopting the season envelope needs no change here. A bare response
- * yields NO_SEASON, which the table renders as "season not stated" — never as a
- * guess, and never as silence.
+ * MLS returns `{season, groups}`; NCAAF and the World Cup return a bare
+ * `[{group, rows}]`. Read the groups out of either.
  */
-function readStandings(payload: any): { groups: StandingGroup[]; season: StandingsSeason } {
+function readGroups(payload: any): StandingGroup[] {
   if (payload && !Array.isArray(payload) && Array.isArray(payload.groups)) {
-    return {
-      groups: payload.groups as StandingGroup[],
-      season: {
-        season: payload.season ?? null,
-        seasonLabel: payload.season_label ?? null,
-        phase: payload.phase ?? null,
-        inProgress: payload.in_progress ?? null,
-        asOf: payload.as_of ?? null,
-      },
-    }
+    return payload.groups as StandingGroup[]
   }
   const grouped = Array.isArray(payload)
     && payload.length > 0
     && typeof (payload[0] as any)?.group === 'string'
     && Array.isArray((payload[0] as any)?.rows)
-  return { groups: grouped ? (payload as StandingGroup[]) : [], season: NO_SEASON }
+  return grouped ? (payload as StandingGroup[]) : []
 }
-
-// Leagues whose standings are conference-grouped ({group, rows}[]). The
-// backend serves that shape once their standings route lands; until then the
-// same endpoint returns flat W-L rows and we fall back to the team table.
-const GROUPED_LEAGUES = ['mls', 'ncaaf']
 
 export function useStandingsData(
   league: string,
@@ -51,7 +28,6 @@ export function useStandingsData(
   const [teams, setTeams] = useState<TeamStats[]>([])
   const [groups, setGroups] = useState<StandingGroup[]>([])
   const [knockout, setKnockout] = useState<KnockoutRound[]>([])
-  const [season, setSeason] = useState<StandingsSeason>(NO_SEASON)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -93,15 +69,13 @@ export function useStandingsData(
           }
           const standings = await standingsResponse.json()
           if (!ignore) {
-            const read = readStandings(standings)
-            if (read.groups.length > 0) {
-              setGroups(read.groups)
-              setSeason(read.season)
+            const parsed = readGroups(standings)
+            if (parsed.length > 0) {
+              setGroups(parsed)
               setTeams([])
             } else {
               setTeams(Array.isArray(standings) ? (standings as TeamStats[]) : [])
               setGroups([])
-              setSeason(NO_SEASON)
             }
           }
         } else {
@@ -115,7 +89,6 @@ export function useStandingsData(
         if (!ignore) {
           setError(err instanceof Error && err.message ? err.message : 'Unable to load standings.')
           setGroups([])
-          setSeason(NO_SEASON)
         }
       } finally {
         if (!ignore) setLoading(false)
@@ -125,5 +98,5 @@ export function useStandingsData(
     return () => { ignore = true }
   }, [league, isWorldCup, isUFC])
 
-  return { teams, groups, knockout, season, loading, error }
+  return { teams, groups, knockout, loading, error }
 }
