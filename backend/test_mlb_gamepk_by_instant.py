@@ -50,7 +50,7 @@ _NOT_YET = _game(825046, "2026-08-12T01:40:00Z", ARI, COL, state="Preview")
 @pytest.fixture
 def schedule(monkeypatch):
     def use(by_day):
-        monkeypatch.setattr(settlement, "_mlb_schedule",
+        monkeypatch.setattr(settlement.mlb_api, "_mlb_schedule",
                             lambda day: {"dates": [{"games": by_day.get(day, [])}]})
     return use
 

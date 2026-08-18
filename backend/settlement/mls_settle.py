@@ -1,0 +1,132 @@
+#!/usr/bin/env python3
+"""mls_settle.py — settle MLS props from the summary roster-stat surface."""
+import datetime as dt
+import json
+import sqlite3
+import unicodedata
+from typing import Optional
+
+from settlement.market_mapping import normalize_market, MARKET_ALIASES
+from settlement.grading import _grade_actual
+
+
+_MLS_ROSTER_MARKETS = {
+    "goals": "totalGoals",
+    "assists": "goalAssists",
+}
+
+# Markets whose actual is the SUM of published stats rather than one of them.
+_MLS_ROSTER_SUM_MARKETS = {
+    "card_shown": ("yellowCards", "redCards"),
+    "goal_or_assist": ("totalGoals", "goalAssists"),
+}
+
+# Markets that no box score can answer, because they are about ORDER.
+_MLS_EVENT_MARKETS = {"first_goal_scorer"}
+
+
+def _soccer_name(text: str) -> str:
+    """Accent-fold an exact soccer roster name without using substring matching."""
+    ascii_text = unicodedata.normalize("NFKD", str(text or "")).encode(
+        "ascii", "ignore").decode("ascii")
+    return " ".join("".join(
+        char for char in ascii_text.lower()
+        if char.isalnum() or char.isspace()).split())
+
+
+def _settle_mls_props(con: sqlite3.Connection, props: list, summary: dict) -> dict:
+    """Grade MLS goals/assists from the summary roster-stat surface."""
+    roster_rows = [
+        row
+        for group in summary.get("rosters") or []
+        for row in group.get("roster") or []
+    ]
+    if not roster_rows:
+        return {"settled": 0, "void": 0, "unmappable": 0, "pending": 0,
+                "errors": 1, "error_msg": "MLS summary has no player rosters"}
+
+    by_espn_id = {}
+    by_name = {}
+    for row in roster_rows:
+        athlete = row.get("athlete") or {}
+        athlete_id = str(athlete.get("id") or "")
+        if athlete_id:
+            by_espn_id.setdefault(athlete_id, []).append(row)
+        name_key = _soccer_name(athlete.get("displayName"))
+        if name_key:
+            by_name.setdefault(name_key, []).append(row)
+
+    settled = 0
+    void = 0
+    unmappable = 0
+    pending = 0
+    errors = 0
+    now = dt.datetime.now(dt.timezone.utc).isoformat()
+
+    from ingest_soccer_logs import _first_goal_scorer
+    first_scorer, goal_events_published = _first_goal_scorer(summary)
+
+    for prop in props:
+        canonical = normalize_market(prop["market"])
+        canonical = MARKET_ALIASES.get(canonical, canonical)
+        stat_name = _MLS_ROSTER_MARKETS.get(canonical)
+        sum_stats = _MLS_ROSTER_SUM_MARKETS.get(canonical)
+        if not stat_name and not sum_stats and canonical not in _MLS_EVENT_MARKETS:
+            unmappable += 1
+            continue
+
+        if prop["espn_id"]:
+            matches = by_espn_id.get(str(prop["espn_id"]), [])
+        else:
+            matches = by_name.get(_soccer_name(prop["player_name"]), [])
+        if not matches:
+            pending += 1
+            continue
+        if len(matches) != 1:
+            pending += 1
+            continue
+
+        stats_by_name = {stat.get("name"): stat.get("value")
+                         for stat in matches[0].get("stats") or []}
+
+        if canonical in _MLS_EVENT_MARKETS:
+            if not goal_events_published:
+                pending += 1
+                continue
+            actual_value = 1.0 if str(prop["espn_id"] or "") == str(first_scorer or "") \
+                else 0.0
+            if not prop["espn_id"]:
+                pending += 1
+                continue
+        elif sum_stats:
+            values = [stats_by_name.get(name) for name in sum_stats]
+            if any(v in (None, "") for v in values):
+                pending += 1
+                continue
+            try:
+                actual_value = float(sum(float(v) for v in values))
+            except (TypeError, ValueError):
+                pending += 1
+                continue
+        else:
+            published = [value for name, value in stats_by_name.items()
+                         if name == stat_name]
+            if len(published) != 1 or published[0] in (None, ""):
+                pending += 1
+                continue
+            actual_value = published[0]
+
+        try:
+            actual = float(actual_value)
+            if _grade_actual(con, prop, actual, now):
+                settled += 1
+            else:
+                unmappable += 1
+        except (TypeError, ValueError):
+            pending += 1
+        except Exception:
+            errors += 1
+
+    con.commit()
+    return {"settled": settled, "void": void, "unmappable": unmappable,
+            "pending": pending, "errors": errors}

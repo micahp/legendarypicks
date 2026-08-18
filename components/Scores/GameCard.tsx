@@ -48,6 +48,8 @@ function getStatusLabel(status: GameProps['status'], statusDetail?: string) {
   if (status === 'LIVE') return 'LIVE'
   // Suspended ≠ final: ESPN closes the event (state=post) but the match isn't over.
   if (status === 'FINAL' && statusDetail && /susp/i.test(statusDetail)) return 'SUSPENDED'
+  // Walkover: the publisher ended the match before it started — not a "Final" with a score.
+  if (status === 'FINAL' && statusDetail && /walkover/i.test(statusDetail)) return 'WALKOVER'
   // Extra innings / OT: ESPN gives "Final/10", "Final/OT" — show it instead of plain FINAL.
   if (status === 'FINAL') return statusDetail && statusDetail.includes('/') ? statusDetail : 'FINAL'
   return 'SCHEDULED'
