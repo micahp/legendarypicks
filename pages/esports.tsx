@@ -4,8 +4,6 @@ import Link from 'next/link'
 import { trackStreamWatched } from '../lib/analytics'
 import LiveDot from '../components/LiveDot'
 import { Eyebrow, SectionHeader, TeamCrest } from '../components/Esports/primitives'
-import { LeagueSection } from '../components/News/LeagueSection'
-import { useNewsData } from '../components/Leagues/hooks/useNewsData'
 
 /* ---------------- types ---------------- */
 type Player = { name: string; rating: number | null; clock: number | null }
@@ -487,16 +485,6 @@ function BoardBuilding() {
     </div>
   )
 }
-
-function EsportsNews() {
-  const { news, loading, error } = useNewsData('esports', true)
-  // Nothing to show is nothing to render — the page is a stack of sections and
-  // an empty one is just a heading over a gap.
-  if (loading || error || !news) return null
-  if (!news.conversations.length && !news.narratives.length && !news.granular.length) return null
-  return <LeagueSection league="esports" data={news} />
-}
-
 
 export function UpcomingSlate({ data, variant = 'full' }: { data: UpcomingData | null; variant?: 'full' | 'schedule' | 'results' }) {
   const [host, setHost] = useState('')
@@ -1236,13 +1224,6 @@ export default function EsportsPage() {
         </header>
 
         <LiveNow matches={liveMatches} host={host} msi={live?.live ? live : null} slate={allMatches} />
-
-        {/* Above the slate, not below it. The slate is the tallest thing on the
-            site: measured 2026-08-18 it was 14,907px of a 16,231px page (159
-            scheduled + 493 results), so news stacked underneath it started at
-            y=15,142 and was unreachable in practice. Live games still come
-            first; news sits between them and the schedule. */}
-        <EsportsNews />
 
         <UpcomingSlate data={upcoming} />
       </div>
