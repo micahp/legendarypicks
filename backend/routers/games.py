@@ -855,8 +855,12 @@ def get_standings(league: str, season: int = None):
         except Exception:
             raise HTTPException(503, "MLS standings unavailable: publisher unreachable")
     if lg != "wc":
+        # The envelope, not the bare row list: a standings table with nothing
+        # naming its season is the defect this fixes. /api/{league}/strength
+        # keeps the list shape — it is the selection prior, has its own DB
+        # fallback, and several callers index it directly.
         try:
-            return espn.team_strength(lg)
+            return espn.team_strength_standings(lg, season=season)
         except ValueError as e:
             raise HTTPException(404, str(e))
     # WC: group tables are ONLY valid during the Group phase. Once knockouts

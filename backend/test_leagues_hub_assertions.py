@@ -258,13 +258,27 @@ def test_leagues_hub_contract():
                 check("in-progress table is not a completed season",
                       most < 34, f"max played={most} while in_progress=True")
 
-    print("== [8] non-grouped leagues still flat (regression) ==")
+    print("== [8] non-grouped leagues: a flat table that names its season ==")
     nba = games_router.get_standings("nba")
-    check("nba standings is a flat list", isinstance(nba, list) and len(nba) > 0,
-          f"got {type(nba)} len={len(nba) if isinstance(nba, list) else 'n/a'}")
-    if nba:
+    check("nba standings is a season envelope", isinstance(nba, dict), type(nba))
+    nba_rows = nba.get("teams") if isinstance(nba, dict) else None
+    check("nba envelope carries a flat team list",
+          isinstance(nba_rows, list) and len(nba_rows) > 0,
+          f"got {type(nba_rows)} len={len(nba_rows) if isinstance(nba_rows, list) else 'n/a'}")
+    if nba_rows:
         check("nba row has no group key",
-              "group" not in nba[0] and "rows" not in nba[0], f"first={str(nba[0])[:100]}")
+              "group" not in nba_rows[0] and "rows" not in nba_rows[0],
+              f"first={str(nba_rows[0])[:100]}")
+    # The defect this exists to catch: a standings table with nothing naming its
+    # season. The season served must also be one the publisher lists as having a
+    # standings table — `season.year` alone pointed at 2027 for NBA/MLB/NHL on
+    # 2026-08-17 while the rows on screen were 2026.
+    check("nba names its season", isinstance(nba.get("season"), int),
+          f"season={nba.get('season')!r}")
+    check("nba season is one the publisher offers",
+          isinstance(nba.get("available_seasons"), list)
+          and nba.get("season") in (nba.get("available_seasons") or []),
+          f"season={nba.get('season')!r} not in {(nba.get('available_seasons') or [])[:4]}")
 
     print()
 

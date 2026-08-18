@@ -89,6 +89,77 @@ def mls_payload(year=2026, phase_start="2026-01-01T05:00Z",
     }
 
 
+class TeamStrengthStandingsSeasonTest(unittest.TestCase):
+    """The flat W-L table must name the season it is actually serving.
+
+    Measured against the live publisher 2026-08-17: on a request with no season,
+    NBA, MLB and NHL all reported `season.year` = 2027 while returning the 2026
+    table (MLB's Brewers 77-48 through 125 games — a season in progress). 2027 is
+    absent from their own `seasons[]`, because it has no standings table yet, so
+    the pointer names the NEXT season rather than the served one. NFL and MLS
+    agreed with their payloads. Labelling from `season.year` would have put
+    "2027" on a live 2026 table.
+    """
+
+    @staticmethod
+    def payload(pointer_year, published_years):
+        return {
+            "season": {"year": pointer_year, "displayName": str(pointer_year)},
+            "seasons": [
+                {"year": year, "displayName": f"{year - 1}-{str(year)[2:]}",
+                 "types": [{"name": "Regular Season", "hasStandings": True}]}
+                for year in published_years
+            ],
+            "children": [{"standings": {"entries": [entry(
+                "OKC", "Oklahoma City Thunder", wins=64, losses=18,
+                gamesPlayed=82, winPercent=0.78,
+            )]}}],
+        }
+
+    def test_a_pointer_past_the_published_years_is_corrected_to_the_served_one(self):
+        with patch.object(espn, "_get", return_value=self.payload(2027, [2026, 2025])):
+            out = espn.team_strength_standings("nba")
+
+        self.assertEqual(out["season"], 2026)
+        self.assertEqual(out["season_label"], "2025-26")
+        self.assertEqual(out["available_seasons"], [2026, 2025])
+        self.assertEqual(out["teams"][0]["abbrev"], "OKC")
+
+    def test_a_pointer_the_publisher_lists_is_left_alone(self):
+        """NFL in August: 2026 is the current season AND a published one."""
+        with patch.object(espn, "_get", return_value=self.payload(2026, [2026, 2025])):
+            out = espn.team_strength_standings("nfl")
+
+        self.assertEqual(out["season"], 2026)
+
+    def test_an_explicit_season_is_never_second_guessed(self):
+        """?season=2015 is accurate at the publisher, so it is copied as-is even
+        though it is not the newest published year."""
+        seen = {}
+
+        def fake_get(url, ttl=None):
+            seen["url"] = url
+            return self.payload(2015, [2026, 2015])
+
+        with patch.object(espn, "_get", fake_get):
+            out = espn.team_strength_standings("nba", season=2015)
+
+        self.assertIn("season=2015", seen["url"])
+        self.assertEqual(out["season"], 2015)
+
+    def test_the_default_request_pins_no_year(self):
+        seen = {}
+
+        def fake_get(url, ttl=None):
+            seen["url"] = url
+            return self.payload(2026, [2026])
+
+        with patch.object(espn, "_get", fake_get):
+            espn.team_strength_standings("nba")
+
+        self.assertNotIn("season=", seen["url"])
+
+
 class MlsPublishedSeasonTest(unittest.TestCase):
     """MLS standings must name the season they are, and must be the live one.
 
@@ -196,16 +267,34 @@ class StandingsRouteContractTest(unittest.TestCase):
     worked.
     """
 
-    def test_ncaaf_uses_its_own_conference_endpoint_and_other_leagues_keep_strength(self):
+    def test_ncaaf_uses_its_own_conference_endpoint_and_other_leagues_name_their_season(self):
+        """A flat W-L table must arrive carrying the season it belongs to.
+
+        This used to serve `team_strength`'s bare row list, so the standings tab
+        rendered a table with nothing on the page naming its season — and for
+        NBA, MLB and NHL the table on screen in August was the PREVIOUS season's
+        with no way to tell. `/api/{league}/strength` keeps the list shape; the
+        standings route serves the envelope.
+        """
         grouped = [{"group": "Sun Belt - East", "rows": []}]
-        flat = [{"abbrev": "BOS"}]
+        seasoned = {"league": "mlb", "season": 2026, "season_label": "2026",
+                    "available_seasons": [2026, 2025], "teams": [{"abbrev": "BOS"}]}
         with patch.object(games.espn, "ncaaf_conference_standings", return_value=grouped) as ncaaf_call, \
-             patch.object(games.espn, "team_strength", return_value=flat) as strength_call:
+             patch.object(games.espn, "team_strength_standings", return_value=seasoned) as strength_call, \
+             patch.object(games.espn, "team_strength") as bare_call:
             self.assertEqual(games.get_standings("ncaaf"), grouped)
-            self.assertEqual(games.get_standings("mlb"), flat)
+            self.assertEqual(games.get_standings("mlb"), seasoned)
 
         ncaaf_call.assert_called_once_with()
-        strength_call.assert_called_once_with("mlb")
+        strength_call.assert_called_once_with("mlb", season=None)
+        # The bare row list is no longer what standings serves.
+        bare_call.assert_not_called()
+
+    def test_a_requested_standings_season_reaches_the_publisher(self):
+        with patch.object(games.espn, "team_strength_standings",
+                          return_value={"teams": []}) as strength_call:
+            games.get_standings("nba", season=2015)
+        strength_call.assert_called_once_with("nba", season=2015)
 
     def test_mls_serves_the_published_seasoned_table(self):
         seasoned = {"league": "mls", "season": 2026, "in_progress": True,

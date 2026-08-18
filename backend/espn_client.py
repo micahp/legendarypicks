@@ -826,6 +826,10 @@ def team_strength(league):
     """
     _, path = _check(league)
     d = _get(_CORE.format(path=path) + "/standings", ttl=900)
+    return _team_strength_rows(d)
+
+
+def _team_strength_rows(d):
     rows = []
     for child in d.get("children", []):                  # divisions / conferences
         for ent in child.get("standings", {}).get("entries", []):
@@ -857,6 +861,62 @@ def team_strength(league):
             })
     rows.sort(key=lambda r: (r["win_pct"] if r["win_pct"] is not None else -1), reverse=True)
     return rows
+
+
+def team_strength_standings(league, season=None):
+    """`team_strength` rows plus the season the publisher says they belong to.
+
+    Same core /standings document team_strength already reads — the year and the
+    league's selectable years are fields on it, so this copies them rather than
+    inferring a season from the calendar or from MAX() of what we hold. Without
+    this the standings tab rendered a table with nothing naming its season.
+
+    `season` selects a past year; None serves whatever ESPN calls current, so the
+    default never pins a year that goes stale. `available_seasons` is read from
+    the payload's own `seasons[]`, filtered to the years that actually carry a
+    standings table, so a year we cannot serve is never offered.
+    """
+    _, path = _check(league)
+    url = _CORE.format(path=path) + "/standings"
+    if season is not None:
+        url += "?season=%d" % int(season)
+    d = _get(url, ttl=900)
+    season_doc = d.get("season") or {}
+    year = _int(season_doc.get("year"))
+    # Only years the publisher says carry a standings table are offerable.
+    published = {}
+    for entry in d.get("seasons") or []:
+        entry_year = _int(entry.get("year"))
+        if entry_year is None:
+            continue
+        if any(t.get("hasStandings") for t in (entry.get("types") or [])):
+            published[entry_year] = entry.get("displayName") or str(entry_year)
+    available = sorted(published, reverse=True)
+
+    # On a default request `season.year` names the season ESPN is POINTING at,
+    # which is not always the one it just served. Measured 2026-08-17: NBA, MLB
+    # and NHL all reported 2027 while returning the 2026 table (MLB's Brewers at
+    # 77-48 through 125 games — an in-progress 2026 season), and 2027 is absent
+    # from their own `seasons[]` because it has no standings table yet. NFL and
+    # MLS agreed. Trusting it would have labelled a live 2026 table "2027".
+    #
+    # An explicitly requested season is accurate (?season=2015 returns STL
+    # 100-62, GS 67-15, CAR 15-1), so only the default is corrected, and only
+    # ever downward to a year the publisher itself lists.
+    if season is None and available and (year is None or year > available[0]):
+        year = available[0]
+        label = published[year]
+    else:
+        label = season_doc.get("displayName") or published.get(year) or (
+            str(year) if year is not None else None
+        )
+    return {
+        "league": league.lower(),
+        "season": year,
+        "season_label": label,
+        "available_seasons": available or ([year] if year is not None else []),
+        "teams": _team_strength_rows(d),
+    }
 
 
 def team_strength_map(league):

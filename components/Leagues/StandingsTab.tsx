@@ -1,4 +1,5 @@
 import FilterPill from './FilterPill'
+import { seasonLabel } from './presentation'
 import type { KnockoutRound, StandingGroup, TeamStats } from './types'
 
 interface StandingsTabProps {
@@ -58,6 +59,7 @@ export default function StandingsTab({
       ) : groups.length > 0 ? (
         <>
           <SeasonPicker
+            league={league}
             season={season}
             seasons={availableSeasons}
             onSelect={onSelectSeason}
@@ -69,7 +71,15 @@ export default function StandingsTab({
           )}
         </>
       ) : teams.length > 0 ? (
-        <TeamSportStandings teams={teams} />
+        <>
+          <SeasonPicker
+            league={league}
+            season={season}
+            seasons={availableSeasons}
+            onSelect={onSelectSeason}
+          />
+          <TeamSportStandings teams={teams} />
+        </>
       ) : (
         <div className="text-zinc-500 text-sm">No data available for {leagueName}.</div>
       )}
@@ -78,9 +88,10 @@ export default function StandingsTab({
 }
 
 /**
- * Year selector, rendered as a FilterPill. Renders nothing unless the endpoint
- * offered more than one year, which keeps it off NCAAF and the World Cup —
- * they send no season list.
+ * Year selector, rendered as a FilterPill. It renders whenever the endpoint
+ * named a season — with one year it is a static pill, because a table whose
+ * season is unstated is the defect, not the missing control. It disappears only
+ * for a league that sends no season at all (the World Cup bracket).
  *
  * The wrapper is a flex row so a second pill (a phase filter, say) sits beside
  * this one without either learning about the other.
@@ -89,23 +100,25 @@ export default function StandingsTab({
  * range, so a year that cannot be served is never offered.
  */
 function SeasonPicker({
+  league,
   season,
   seasons,
   onSelect,
 }: {
+  league: string
   season?: number | null
   seasons?: number[]
   onSelect?: (season: number) => void
 }) {
-  if (!seasons || seasons.length < 2 || !onSelect) return null
+  if (!seasons || seasons.length === 0) return null
   return (
     <div className="mb-4 flex flex-wrap items-center gap-2">
       <FilterPill
         id="standings-season"
         label="Season"
         value={season ?? seasons[0]}
-        options={seasons.map(year => ({ value: year, label: String(year) }))}
-        onSelect={value => onSelect(Number(value))}
+        options={seasons.map(year => ({ value: year, label: seasonLabel(league, year) }))}
+        onSelect={value => onSelect?.(Number(value))}
       />
     </div>
   )

@@ -95,9 +95,13 @@ describe('standings season picker', () => {
     expect(onSelectSeason).toHaveBeenCalledWith(2024)
   })
 
-  it('renders no picker when only one season is offered', () => {
+  it('states the year without a control when only one season is offered', () => {
+    // A standings table whose season is unstated is the defect; the missing
+    // control is not. One year renders as a static pill.
     renderWith({ season: 2026, availableSeasons: [2026], onSelectSeason: jest.fn() })
-    expect(screen.queryByLabelText('Season')).toBeNull()
+    const season = screen.getByLabelText('Season')
+    expect(season.tagName).toBe('SPAN')
+    expect(season.textContent).toBe('2026')
   })
 
   it('renders no picker for a league that sends no season list', () => {

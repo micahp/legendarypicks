@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { SportsService } from '../../../services/sports'
 import type { KnockoutRound, StandingGroup, TeamStats } from '../types'
 
 // Leagues whose standings are conference-grouped ({group, rows}[]).
@@ -102,9 +101,23 @@ export function useStandingsData(
             }
           }
         } else {
-          const strength = await SportsService.getStrength(league)
+          // NFL / NBA / MLB / NHL — a flat W-L table that now arrives inside an
+          // envelope naming its season, so the year can be shown and switched
+          // the same way MLS does it. /strength stays the bare row list.
+          const query = requestedSeason != null ? `?season=${requestedSeason}` : ''
+          const standingsResponse = await fetch(`/api/${league}/standings${query}`)
+          if (!standingsResponse.ok) {
+            const body = await standingsResponse.json().catch(() => null)
+            throw new Error(body?.detail || 'Standings are unavailable.')
+          }
+          const standings = await standingsResponse.json()
           if (!ignore) {
-            setTeams(Array.isArray(strength) ? strength : [])
+            const rows = Array.isArray(standings) ? standings : standings?.teams
+            setTeams(Array.isArray(rows) ? (rows as TeamStats[]) : [])
+            setSeason(typeof standings?.season === 'number' ? standings.season : null)
+            setAvailableSeasons(
+              Array.isArray(standings?.available_seasons) ? standings.available_seasons : [],
+            )
             setGroups([])
           }
         }
