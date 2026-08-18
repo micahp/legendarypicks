@@ -33,10 +33,11 @@ export function useLeagueRouteState() {
   // being a hub. Everything below that branches on `isWorldCup` is left in place —
   // this is the one line that decides whether anyone can get there.
   const offerable = isUFC || supportsTeamStats
-  // News sits after Schedule everywhere it is offered. It is not offered on the
-  // World Cup (dormant hub, no feed) or UFC (its own rankings/predict shape).
+  // News sits last everywhere the feed carries the league. Measured 2026-08-18,
+  // UFC has 1 conversation / 2 narratives / 12 granular. Only the World Cup is
+  // left out: dormant hub, and its key returns nothing.
   const validTabs: HubTab[] = isUFC
-    ? ['rankings', 'schedule', 'predict']
+    ? ['rankings', 'schedule', 'predict', 'news']
     : isWorldCup
       ? ['standings', 'stats', 'schedule']
       : isNFL
