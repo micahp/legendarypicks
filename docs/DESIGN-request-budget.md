@@ -22,11 +22,37 @@ Both of these are measured and real, and they are not the same mechanism:
 (concurrency, a transient block, a different endpoint being gated). ESPN publishes no limit,
 returns no `Retry-After`, and sends no `X-RateLimit-*` headers, so there is nothing to read.
 
-This distinction is why `6b01fd1` (a cross-process spend ledger) was reverted as `fe82812`
-on 2026-08-17, three minutes after it landed, **at Micah's instruction**, recorded as "built
-on a misreading of Micah's '100 limit per call'." If the real constraint is B, a
-cross-process request-count ledger is machinery for a wall that does not exist, and the
-correct fix is chunking and caching, which is what the range backfill already does.
+If the real constraint is B, a cross-process request-count ledger is machinery for a wall
+that does not exist, and the correct fix is chunking and caching, which is what the range
+backfill already does.
+
+### Why the last attempt was reverted, corrected 2026-08-18
+
+`6b01fd1` (a cross-process spend ledger) was reverted as `fe82812` on 2026-08-17, three
+minutes after it landed. The 08-17 handoff recorded the reason as "built on a misreading of
+Micah's '100 limit per call'." **That is not the reason.** Micah's own account, 2026-08-18:
+
+> I reverted it because first of all I didn't understand what you were doing, and I thought
+> we could just do the 100 limit each call and it would be fine.
+
+Two separate things, and both matter more than the technical argument:
+
+1. **It was built without being explained.** A change to `paced_http`, which every ingest on
+   the box imports, arrived as a fait accompli. Reverting something you cannot evaluate is
+   the correct response, and the failure was upstream of the code.
+2. **The model was "cap each call at 100 and we never cross the line."** That is coherent,
+   and it is exactly what `HOST_BUDGET = 100` per process does. It holds **if only one job
+   talks to a host at a time.** It fails because the cap is per JOB and the limit is per
+   HOST: five jobs each stopping politely at 100 means the host saw 500. Every job tells the
+   truth about itself and none can see the others.
+
+The smallest demonstration is 2026-08-18: two backfills, each with a declared ceiling of 60,
+each stopping short of it, together sending about 107 to one host, and all three ESPN hosts
+began refusing. Both logs said "within budget". Both were correct.
+
+So the disagreement was never really about the number. It is about whether the counter is
+per process or per host, and that is worth settling with §4's data rather than with either
+of our recollections.
 
 **Do not rebuild the ledger until A is established from data.** Build §4 first: it is
 non-destructive, it costs nothing, and it answers the question.
@@ -166,6 +192,6 @@ a partial slate as complete, and keep caching. No ledger, no pools, no circuit b
 | 2026-08-04 | `roster_sync.py` fires 128 requests, trips a wall. The reflex fix is pacing. Pacing is the wrong lever: the run still spends 128, it just takes longer to get blocked. `.claude/skills/espn-request-budget` written from this. |
 | 2026-08-04 | Blocks established as per **hostname**, not per IP or account. `site.api` walled from this box; `site.web.api`, `sports.core.api` and `lm-api-reads.fantasy` answer. |
 | 2026-08-17 00:59 | `6b01fd1` adds a cross-process on-disk spend ledger with a rolling window, opt-in for batch callers, failing open. |
-| 2026-08-17 01:02 | `fe82812` reverts it at Micah's instruction: "built on a misreading of Micah's '100 limit per call'". The disk-cache half is kept and pays for itself immediately. |
+| 2026-08-17 01:02 | `fe82812` reverts it. The handoff records the reason as a misreading; **that is wrong** (see §1). Micah reverted it because the change was never explained to him, and because he understood the fix as capping each call at 100, which is correct per job and does not hold across eighteen of them. The disk-cache half is kept and pays for itself immediately. |
 | 2026-08-18 | Two concurrent backfills each stop politely at their own declared 60 and together take all three ESPN hosts to 403. `ingest_scoreboards.py` gains an exclusive `flock`. That fixes one instance, not the class: it covers two timers out of eighteen. |
 | 2026-08-18 | The range form is measured: 200 for team, combat and soccer leagues, `events: []` for tennis, and a hard **100-event response cap**. This is limit B, and it is the likely source of the misreading in the revert. |
