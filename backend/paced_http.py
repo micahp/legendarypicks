@@ -107,6 +107,9 @@ class Fetcher:
         # Bound the cache directory: swept every N writes (see _sweep).
         self._writes_since_sweep = 0
         self._sweep_every = 500
+        self.cache_max_bytes = float(
+            os.environ.get("LP_ESPN_CACHE_MAX_BYTES", "536870912") or 0
+        )
 
     # ── cache ────────────────────────────────────────────────────────────
     def _path(self, url):
@@ -157,15 +160,38 @@ class Fetcher:
             names = os.listdir(self.cache_dir)
         except OSError:
             return
+        survivors = []
         for name in names:
             if not name.endswith(".json") or len(name) != 37:
                 continue    # 32 hex chars + ".json" — not one of ours
             path = os.path.join(self.cache_dir, name)
             try:
-                if os.path.getmtime(path) < cutoff:
+                stat = os.stat(path)
+                if stat.st_mtime < cutoff:
                     os.remove(path)
+                else:
+                    survivors.append((stat.st_mtime, stat.st_size, path))
             except OSError:
                 continue    # a concurrent reader or a vanished file is not an error
+
+        # Age alone does not bound a cache — a busy day inside one ttl window can
+        # still fill a disk. Docker cannot size-cap a `local` volume on overlay2
+        # without filesystem quotas, so the ceiling is enforced here: oldest
+        # entries go first until the directory is back under the limit.
+        if self.cache_max_bytes <= 0:
+            return
+        total = sum(size for _mtime, size, _path in survivors)
+        if total <= self.cache_max_bytes:
+            return
+        survivors.sort()                      # oldest first
+        for _mtime, size, path in survivors:
+            if total <= self.cache_max_bytes:
+                break
+            try:
+                os.remove(path)
+                total -= size
+            except OSError:
+                continue
 
     def _write_disk(self, url, data):
         if not self.cache_dir:

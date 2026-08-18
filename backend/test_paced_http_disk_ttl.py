@@ -95,5 +95,57 @@ class DiskCacheIsBounded(unittest.TestCase):
         self.assertFalse(os.path.exists(self.fetcher._path("http://x/stale")))
 
 
+class DiskCacheHasAByteCeiling(unittest.TestCase):
+    """Age alone does not bound a cache — a busy window inside one ttl fills a disk.
+
+    Docker cannot size-cap a `local` volume on overlay2 without filesystem
+    quotas, so prod's ceiling is enforced here rather than by the volume driver.
+    """
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.fetcher = paced_http.Fetcher(
+            min_interval=0.0, retry_waits=(), cache_dir=self.tmp.name, cache_ttl=43200,
+        )
+
+    def write(self, url, payload, age_seconds):
+        self.fetcher._write_disk(url, payload)
+        path = self.fetcher._path(url)
+        stamp = time.time() - age_seconds
+        os.utime(path, (stamp, stamp))
+        return path
+
+    def test_oldest_entries_go_first_until_it_is_under_the_cap(self):
+        paths = {}
+        for i in range(6):
+            paths[i] = self.write(f"http://x/{i}", {"pad": "y" * 400}, age_seconds=1000 - i)
+        one = os.path.getsize(paths[0])
+        # Room for roughly three entries.
+        self.fetcher.cache_max_bytes = one * 3.5
+        self.fetcher._sweep()
+        alive = [i for i in range(6) if os.path.exists(paths[i])]
+        total = sum(os.path.getsize(paths[i]) for i in alive)
+        self.assertLessEqual(total, self.fetcher.cache_max_bytes)
+        # The survivors are the NEWEST ones; index 0 is the oldest.
+        self.assertNotIn(0, alive)
+        self.assertIn(5, alive)
+
+    def test_a_cache_under_the_cap_is_left_intact(self):
+        paths = [self.write(f"http://x/{i}", {"a": i}, age_seconds=10) for i in range(4)]
+        self.fetcher.cache_max_bytes = 10_000_000
+        self.fetcher._sweep()
+        self.assertTrue(all(os.path.exists(p) for p in paths))
+
+    def test_a_zero_cap_disables_the_byte_ceiling_only(self):
+        """0 means "no byte ceiling"; the age sweep must still run."""
+        fresh = self.write("http://x/fresh", {"a": 1}, age_seconds=10)
+        stale = self.write("http://x/stale", {"a": 2}, age_seconds=99999)
+        self.fetcher.cache_max_bytes = 0
+        self.fetcher._sweep()
+        self.assertTrue(os.path.exists(fresh))
+        self.assertFalse(os.path.exists(stale))
+
+
 if __name__ == "__main__":
     unittest.main()
