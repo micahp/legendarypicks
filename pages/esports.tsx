@@ -4,6 +4,8 @@ import Link from 'next/link'
 import { trackStreamWatched } from '../lib/analytics'
 import LiveDot from '../components/LiveDot'
 import { Eyebrow, SectionHeader, TeamCrest } from '../components/Esports/primitives'
+import { LeagueSection } from '../components/News/LeagueSection'
+import { useNewsData } from '../components/Leagues/hooks/useNewsData'
 
 /* ---------------- types ---------------- */
 type Player = { name: string; rating: number | null; clock: number | null }
@@ -485,6 +487,16 @@ function BoardBuilding() {
     </div>
   )
 }
+
+function EsportsNews() {
+  const { news, loading, error } = useNewsData('esports', true)
+  // Nothing to show is nothing to render — the page is a stack of sections and
+  // an empty one is just a heading over a gap.
+  if (loading || error || !news) return null
+  if (!news.conversations.length && !news.narratives.length && !news.granular.length) return null
+  return <LeagueSection league="esports" data={news} />
+}
+
 
 export function UpcomingSlate({ data, variant = 'full' }: { data: UpcomingData | null; variant?: 'full' | 'schedule' | 'results' }) {
   const [host, setHost] = useState('')
@@ -1226,6 +1238,8 @@ export default function EsportsPage() {
         <LiveNow matches={liveMatches} host={host} msi={live?.live ? live : null} slate={allMatches} />
 
         <UpcomingSlate data={upcoming} />
+
+        <EsportsNews />
       </div>
     </>
   )
