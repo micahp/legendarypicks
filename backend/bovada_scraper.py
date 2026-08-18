@@ -399,6 +399,19 @@ _MLS_PLAYER_MARKETS = {
 # are out of scope for the player-prop schema, the same deferral as UFC fight-level markets.
 _MLS_PLAYER_GROUPS = {"goalscorer", "assists", "cards"}
 
+# Clubs that belong to MLS. A Bovada soccer event whose two dominant player codes
+# are BOTH in this set is an MLS regular-season fixture. If either is a foreign
+# club (AME/GDL/PUE/TOL... Liga MX in a Leagues Cup fixture, NFO in a friendly),
+# the fixture is a TOURNAMENT and must file under `lcup` -- its own competition
+# key -- so the players stay resolvable against whichever league actually rosters
+# them. Filing Leagues Cup under `mls` is the shadow-player defect: it creates
+# players nobody's MLS spine can ever resolve (see _MINTED_PLAYERS note below).
+_MLS_CLUB_CODES = frozenset({
+    "ATL", "ATX", "MTL", "CLT", "CHI", "COL", "CLB", "DC", "CIN", "DAL",
+    "HOU", "MIA", "LA", "LAFC", "MIN", "NSH", "NE", "NYC", "RBNY", "ORL",
+    "PHI", "POR", "RSL", "SD", "SJ", "SEA", "SKC", "STL", "TOR", "VAN",
+})
+
 # Outcomes inside a player market that are the market's complement rather than a person.
 # "No Goalscorer" is a real, priced outcome on every goalscorer ladder; minting it as a
 # player is how a sportsbook string becomes a row in `players`.
@@ -490,6 +503,14 @@ def _parse_mls_props(event: dict) -> list:
                     code_counts[m.group(1).strip().upper()] += 1
     event_codes = {code for code, _ in code_counts.most_common(2)}
 
+    # TOURNAMENT vs LEAGUE (decided 2026-08-17). A league has a fixed membership;
+    # a tournament draws entrants FROM leagues. When one of the event's two
+    # dominant clubs is not an MLS club (Chivas, América, Puebla, Toluca in a
+    # Leagues Cup fixture; Nottingham Forest in a friendly), the fixture is not
+    # MLS and must file under the tournament's own competition key (`lcup`) so
+    # its players stay resolvable against whichever league actually rosters them.
+    league = "lcup" if (event_codes - _MLS_CLUB_CODES) else "mls"
+
     for dg in event.get("displayGroups", []):
         group = (dg.get("description") or "").strip().lower()
         if group not in _MLS_PLAYER_GROUPS:
@@ -541,7 +562,7 @@ def _parse_mls_props(event: dict) -> list:
                     "line": line,
                     "side": "over",
                     "odds": (outcome.get("price") or {}).get("american"),
-                    "league": "mls",
+                    "league": league,
                     "game_desc": game_desc,
                     "home_team": home_team,
                     "away_team": away_team,

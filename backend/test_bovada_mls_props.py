@@ -111,6 +111,35 @@ class MLSPropParsingTests(unittest.TestCase):
         self.assertEqual(props["Petar Musa"], "DAL")
         self.assertIn(("Alexis Sanchez", "SEV"), bs._STALE_TEAM_TAGS)
 
+    def test_a_leagues_cup_fixture_files_under_lcup_not_mls(self):
+        """A tournament fixture draws entrants FROM leagues; it is not the league.
+
+        A Chivas (GDL) vs San Diego (SD) Leagues Cup fixture must file its props under
+        `lcup` -- the tournament's own competition key -- so GDL players stay resolvable
+        against Liga MX rather than being minted as shadow MLS players nobody's spine
+        can resolve (the 2026-08-17 defect: AME/GDL/PUE/TOL rows under `mls`).
+        """
+        ev = _event({"Goalscorer": [
+            {"description": "Anytime Goal Scorer",
+             "outcomes": [_outcome("David Morales (GDL)"), _outcome("Hirving Lozano (GDL)"),
+                          _outcome("Christopher McVey (SD)")]},
+        ]}, desc="Chivas Guadalajara vs San Diego FC")
+        props = bs._parse_mls_props(ev)
+        self.assertTrue(props)
+        self.assertEqual({p["league"] for p in props}, {"lcup"})
+        # A GDL player keeps its club tag: it is resolvable against Liga MX.
+        self.assertEqual(next(p for p in props if p["player_name"] == "David Morales")["team"], "GDL")
+
+    def test_an_mls_fixture_still_files_under_mls(self):
+        """The same parser keeps filing a real MLS fixture under `mls`."""
+        ev = _event({"Goalscorer": [
+            {"description": "Anytime Goal Scorer",
+             "outcomes": [_outcome("Ilie Sánchez (ATX)"), _outcome("Petar Musa (DAL)")]},
+        ]})
+        props = bs._parse_mls_props(ev)
+        self.assertTrue(props)
+        self.assertEqual({p["league"] for p in props}, {"mls"})
+
     def test_an_unmapped_player_market_is_reported_and_exits_nonzero(self):
         """A market Bovada adds later must surface, not vanish into a plausible count."""
         ev = _event({"Goalscorer": [
