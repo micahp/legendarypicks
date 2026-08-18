@@ -5,6 +5,8 @@ import sqlite3
 
 from settlement.market_mapping import resolve_market
 from settlement.boxscore_extract import _find_player_stat, _find_player_compound_stat
+import sys
+
 from settlement.mlb_api import _fetch_mlb_gamepk, _fetch_mlb_final
 from settlement.mlb_settle import _settle_mlb_props
 from settlement.ufc_settle import _settle_ufc_props, _ufc_scoreboard_competition
@@ -30,9 +32,16 @@ def settle_game(con: sqlite3.Connection, game_id: int) -> dict:
                 "msg": f"game {game_id}: no espn_event_id, cannot pull boxscore"}
     if not espn_event_id:
         if game["final_home"] is None:
-            pk = _fetch_mlb_gamepk(game["date"], game["home"], game["away"],
-                                   start_time=game["start_time"])
-            final = _fetch_mlb_final(pk) if pk else None
+            # Through the PACKAGE, at call time. These were module-level names
+            # on the pre-split settlement.py and the finality tests replace them
+            # with stubs; against the copies this module bound at import, the
+            # stubs are ignored and the test asserts against the live MLB Stats
+            # API instead of its own fixture.
+            _pkg = sys.modules["settlement"]
+            pk = getattr(_pkg, "_fetch_mlb_gamepk", _fetch_mlb_gamepk)(
+                game["date"], game["home"], game["away"],
+                start_time=game["start_time"])
+            final = getattr(_pkg, "_fetch_mlb_final", _fetch_mlb_final)(pk) if pk else None
             if not final:
                 return {"settled": 0, "void": 0, "unmappable": 0, "errors": 0,
                         "msg": f"game {game_id}: not final yet (no ESPN link; MLB "
