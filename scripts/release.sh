@@ -9,7 +9,13 @@
 # reports exactly how to finish or undo rather than going quiet.
 #
 # Deliberately does NOT write release notes. The CHANGELOG entry must already
-# exist; a generated one would be worse than none.
+# exist; a generated one would be worse than none. It does PUBLISH them: on a
+# MAJOR or MINOR tag it creates the GitHub release from that entry (see the
+# gh step at the bottom).
+#
+# This is the heavyweight path, and it should be: it bumps package.json, writes
+# a tag the pre-push hook then requires, and runs the prod audits. If you just
+# want to mark a build, that is `scripts/tag.sh` and it does none of this.
 #
 #   scripts/release.sh 0.6.6
 #   scripts/release.sh 0.6.6 --dry-run
@@ -225,6 +231,51 @@ if [ -z "$DRY_RUN" ]; then
 else
   echo "  [dry-run] git push origin $BRANCH"
   echo "  [dry-run] git push origin $TAG"
+fi
+
+# ── publish the release notes ─────────────────────────────────────────────
+# Only MAJOR and MINOR get a GitHub release. Feature releases only; a patch's
+# work rides into the next minor's notes, which is why release_notes.py spans
+# back to the previous MINOR rather than the previous tag.
+#
+# This step did not exist until 2026-08-18, and the cost was visible: the tags
+# were all correct and pushed, but the releases page stopped at v0.6.0 from
+# July. v0.7.0 and v0.8.0 had to be created by hand, and v0.7.1-v0.7.10 had
+# never been published anywhere at all.
+#
+# A failed publish is NOT a failed release. The tag is pushed and immutable by
+# this point, so this reports how to finish rather than unwinding anything.
+if echo "$VERSION" | grep -qE '^[0-9]+\.[0-9]+\.0$'; then
+  NOTES=$(mktemp)
+  if python3 scripts/release_notes.py "$VERSION" > "$NOTES" 2>/dev/null; then
+    COVERS=$(python3 scripts/release_notes.py "$VERSION" --covers 2>/dev/null)
+    echo "release: publishing GitHub release for $TAG"
+    [ -n "$COVERS" ] && echo "  notes also cover: $COVERS"
+    if [ -n "$DRY_RUN" ]; then
+      echo "  [dry-run] gh release create $TAG --latest --title '$TAG — <title>' --notes-file ..."
+      echo "  [dry-run] notes: $(wc -c < "$NOTES") chars"
+    elif ! command -v gh >/dev/null 2>&1; then
+      echo "release: gh not installed; publish by hand:" >&2
+      echo "  scripts/release_notes.py $VERSION > notes.md" >&2
+      echo "  gh release create $TAG --latest --title '$TAG — <what shipped>' --notes-file notes.md" >&2
+    else
+      # The title is a FEATURE line, never the date: the convention is
+      # "v0.6.0 — NFL Player Rankings", so the heading's date half is dropped
+      # and left for a human to fill in with what actually shipped.
+      if gh release create "$TAG" --latest --title "$TAG" --notes-file "$NOTES"; then
+        echo "release: set the title to what shipped, e.g."
+        echo "  gh release edit $TAG --title \"$TAG — News engine, MLS, tennis props\""
+      else
+        echo "release: $TAG is tagged and pushed but the GitHub release was not created." >&2
+        echo "  retry:  scripts/release_notes.py $VERSION > notes.md && gh release create $TAG --latest --notes-file notes.md" >&2
+      fi
+    fi
+  else
+    echo "release: could not build notes for $VERSION; create the release by hand" >&2
+  fi
+  rm -f "$NOTES"
+else
+  echo "release: $TAG is a patch; no GitHub release (its notes ride into the next minor)"
 fi
 
 if [ -n "$DRY_RUN" ]; then

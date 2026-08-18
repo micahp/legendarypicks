@@ -1,12 +1,133 @@
 # Changelog
 
-## Since v0.8.0 — LIVE ON PRODUCTION, not yet tagged
+## v0.8.1 — 2026-08-18
 
-*All of this is built, deployed and serving on legendarypicks.xyz right now. It landed after
-the `v0.8.0` tag was cut, so it does not sit inside any tagged release's notes yet — a tag is
-a version label, not the deploy. Deploying is `docker compose up -d --build` off the working
-tree; it does not read a tag. These notes are parked here so the next version bump can take
-them as-is instead of reconstructing them from git.*
+### League hubs: a year on every standings table, and filters that look like filters
+
+- **Standings named no season anywhere.** `/api/{league}/standings` served `team_strength`'s
+  bare row list for NFL/NBA/MLB/NHL, so the table on screen had nothing saying which season it
+  was (`0057f81`). It now serves an envelope carrying the season, the selectable years and the
+  rows. `/api/{league}/strength` keeps the list shape: it is the selection prior, it has its
+  own DB fallback, and several callers index it directly.
+- **The season is not read from `season.year` on a default request.** Measured against the
+  live publisher on 2026-08-17: NBA, MLB and NHL each reported **2027** while returning the
+  **2026** table (Brewers 77-48 through 125 games, a season in progress), and 2027 is absent
+  from their own `seasons[]` because it has no standings table yet. That field points at the
+  NEXT season, not the served one. NFL and MLS agreed with their payloads. Trusting it would
+  have labelled a live 2026 table "2027". A default request is corrected down to the newest
+  year the publisher itself lists; an explicitly requested season is copied untouched, because
+  that one is accurate (`?season=2015` returns STL 100-62, GS 67-15, CAR 15-1, NYR 53-29).
+- **The year picker offers only seasons we hold** (`f880cef`). ESPN serves 24 to 25 years of
+  standings per league; measured on `picks.db` we hold one to three (NFL `player_stats` 2025;
+  NBA 2026+2025; MLB/NHL/MLS one each). Picking 2003 gave a standings table the rest of the
+  site knows nothing about. Options now come from `player_stats`, `player_game_logs` and
+  `team_game_results`, plus whatever season is actually being served, so the pill never names
+  a year missing from its own option list. A table we cannot read is skipped, not counted as
+  zero.
+- **MLS standings switch year** (`f7121e0`), 25 published seasons read from the payload's own
+  `seasons[]` filtered on `hasStandings`, never a generated range.
+- **Filters are pills** (`563c525`, `3cd687f`, `a2d438e`). The standings season control was a
+  captioned `<select>` and the stats tab had three separate button rows; both are now one row
+  of `FilterPill`. Season leads everywhere, so the year sits in the same position on every
+  league. With one option it renders as a static pill: the value still has to be on screen,
+  but a control offering one choice invites a click that can do nothing. The visible caption
+  is gone and the accessible name is not, it moved to `aria-label`.
+- **The season stayed on screen when switching to Teams** (`8547502`). It lived on the players
+  filter bar only, so the Teams sub-view dropped the year off the page while the table stayed
+  season-scoped.
+- **Every column of both stats tables sorts** (`79fe345`), and the two sort in different
+  places on purpose. Team aggregates ARE the whole population (32 NFL teams, 137 in NCAAF), so
+  sorting them in the browser is complete. The player leaders rows are the top N for the
+  current stat, so sorting those client-side would answer "who played most among the scoring
+  leaders" while the header says "who played most". A team with no value for the sorted column
+  sorts last in either direction: ordering it as a zero is a claim about the team.
+
+### League news on every hub
+
+- **A News tab on all six league hubs, on UFC, and on the esports page** (`83dd359`,
+  `244d052`, `f1732e8`). `/api/news/{league}` was already serving every league and nothing
+  rendered it; measured 2026-08-18 each league carries 1 to 2 conversations, 0 to 6 narratives
+  and 12 granular items.
+- **It renders the News page's own component** (`35b297c`). `pages/news.tsx`'s `LeagueSection`
+  moved to `components/News/LeagueSection.tsx` unchanged and both surfaces import it, so the
+  hub tab and `/news` cannot drift. A test asserts the tab's markup is byte-identical to the
+  News page's for the same data. The first cut of this was a second design of the same thing,
+  with its own sections, labels and copy; none of it was asked for and all of it rendered.
+- The hook reads `leagues[league]` rather than the whole payload: the endpoint keys every
+  league in its response and populates only the one asked for, so a missing entry is an empty
+  feed, never another league's news. Fetched only while the tab is open.
+
+### The ESPN request budget, and what to do when it runs out
+
+- **Production had no response cache at all.** `LP_ESPN_CACHE_DIR` was never set in the
+  container, so `paced_http` ran with `cache_dir=""` and only its in-memory cache was live:
+  per process, gone on every restart (`3984a20`). Every deploy cold-started every ESPN
+  surface. The cache had been correctly removed from the IMAGE, a 96MB response cache in a
+  layer is what made it 7.45GB, but nothing replaced it with a runtime home.
+- **It now lives on an isolated, capped volume** (`823ee3d`). Docker-managed and disk-backed,
+  outside the repo tree and outside any host path the app also reads, so a poisoned write
+  cannot land somewhere else and it can never be swept into git or baked into a layer.
+  Deliberately not tmpfs, which is RAM-backed and cleared on restart, the exact failure this
+  prevents. Two things had to be fixed before switching it on: `_read_disk` compared against
+  `cache_ttl` (12h) rather than the caller's ttl, so a scoreboard asking for 20s would have
+  been served a half-day-old score; and there was no eviction anywhere (0 unlink calls, the
+  two host directories had reached 100MB and 134MB). Entries older than `cache_ttl` are now
+  swept every 500 writes, and the directory is held under `LP_ESPN_CACHE_MAX_BYTES` by
+  dropping oldest first.
+- **The scores page polled 11 leagues to refresh 1** (`f880cef`). The live poll re-fetched
+  every league across two local dates every 30s whether or not it had a game in progress: 22
+  upstream requests a tick, roughly 44 a minute, against a ceiling that is a request COUNT of
+  about 100 per host. One open tab spent the budget in about two and a half minutes and
+  blanked the board for every league. It now polls only the leagues with a game actually
+  running and merges those rows in, leaving the rest of the board untouched.
+- **Bovada is a third rung under ESPN and the DB** (`7fc8b43`). We persist finished games, so
+  on the day itself `_games_from_db` has nothing and the board goes blank, which is exactly
+  when the ESPN budget runs out. Bovada is a different host with the same slate, and its
+  per-event endpoint carries `latestScore`, `currentPeriodScore`, `clock` and `gameStatus`.
+  That endpoint is easy to miss: the coupon listing has no score on it anywhere, and
+  concluding from the listing alone that Bovada has no scores is a statement about which
+  endpoint was asked. It never invents a score: a PRE_GAME event returns `latestScore` 0-0
+  with a `lastUpdated` days old, indistinguishable from a real 0-0, so a score is only read
+  from a game Bovada says is running and everything else carries `score: None`. A live game
+  whose score is refused still shows as live. Verified with ESPN forced to 403 and the DB
+  empty: the board served games instead of nothing.
+
+### Failures that read as 500s
+
+- **A bare-shell deploy emptied every API key** (`b24d7b8`). compose passes PANDASCORE, GRID,
+  YOUTUBE, DEEPSEEK and KICK through from the host shell as `${VAR:-}`, so any
+  `docker compose up -d` run without sourcing `/root/.hermes/.env` replaced all six with empty
+  strings. PandaScore then returned 0 matches, the team-logo index built to size 0, and every
+  scheduled esports match and the whole predict page rendered with no crest: 59 scheduled
+  matches, 0 logos. `.env` is now a symlink to the host env file, which compose reads for
+  interpolation, so there is no second copy of a secret and only the six vars named in the
+  compose file reach the container. Verified with `env -i`: a deploy from a completely bare
+  shell carries 6 of 6. `.gitignore` covered `.env*.local` but not the plain name, so the
+  symlink could have been committed; ignored first, created second.
+- **Standings degrade to the published snapshot instead of 500ing** (`abb9ba9`). The tab used
+  to read `/strength`, which falls back to `strength_snap` when the publisher is unreachable;
+  pointing it at `/standings` for the season envelope did not carry that across, so a routine
+  ESPN 403 became a 500. The snapshot cannot say which season it is, so it is served with
+  `season: null` and no selectable years, and it is never substituted for an explicitly
+  requested season.
+- **NCAAF standings say why they are unavailable** (`b6b7621`) instead of surfacing "Internal
+  Server Error". There is no conference-standings snapshot to degrade to, so it stays
+  fail-closed, it just carries a reason now.
+
+### Release tooling
+
+- **`scripts/release.sh` publishes the GitHub release** on a major or minor tag. It had no
+  `gh` step at all, so every tag since v0.6.0 in July was correct and pushed while the
+  releases page showed nothing. v0.7.0 and v0.8.0 had to be created by hand.
+- **`scripts/release_notes.py` slices CHANGELOG.md for a version**, spanning back to the
+  previous MINOR rather than the previous tag. Only major and minor tags get a release, so a
+  patch's notes have to ride into the next minor or they are published nowhere: v0.7.1 through
+  v0.7.10 and v0.6.1 through v0.6.14 were in exactly that state.
+- **`scripts/tag.sh` marks a build without cutting a release.** Version tags carry a
+  package.json bump, a CHANGELOG entry and the prod audits, which is right for a version and
+  far too much for "mark where this build was". It writes into a `build/` namespace and
+  refuses to write a `vX.Y.Z` tag, because hand-tagging versions is the drift release.sh
+  exists to stop.
 
 ### MLS standings served last season's final table in mid-August
 
