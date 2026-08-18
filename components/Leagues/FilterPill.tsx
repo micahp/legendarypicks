@@ -11,6 +11,12 @@
  * This stays a native <select>: it opens as the platform picker on mobile,
  * keyboards work, and 25 options scroll. `appearance-none` removes only the
  * browser's own arrow so ours can sit in its place.
+ *
+ * With one option it renders as a static pill — no select, no chevron. That
+ * case is not cosmetic: NFL publishes a single season, and a control offering
+ * one choice invites a click that can do nothing. The value still has to be on
+ * screen (the reader must know which season these numbers are), so the pill
+ * states it and stops pretending to be a control.
  */
 export default function FilterPill({
   label,
@@ -25,6 +31,18 @@ export default function FilterPill({
   onSelect: (value: string) => void
   id?: string
 }) {
+  if (options.length < 2) {
+    const only = options.find(option => String(option.value) === String(value)) ?? options[0]
+    if (!only) return null
+    return (
+      <span
+        aria-label={label}
+        className="inline-flex rounded-full border border-zinc-800 bg-zinc-900 px-4 py-1.5 text-sm font-medium text-zinc-400"
+      >
+        {only.label}
+      </span>
+    )
+  }
   return (
     <div className="relative inline-flex">
       <select

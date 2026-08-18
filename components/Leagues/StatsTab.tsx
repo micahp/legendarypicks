@@ -5,6 +5,7 @@ import {
   formatTeamMetric,
   seasonLabel,
 } from './presentation'
+import FilterPill from './FilterPill'
 import type { LeadersData, SubView, TeamAggregatesData } from './types'
 
 type MlbType = 'batting' | 'pitching'
@@ -60,16 +61,15 @@ export default function StatsTab({
         <SubViewTabs value={subView} onChange={onSelectSubView} />
       )}
 
-      {league === 'mlb' && subView === 'players' && (
-        <MlbTypeTabs value={mlbType} onChange={onSelectMlbType} />
-      )}
-
-      {subView === 'players' && leaders && leaders.available_seasons.length > 1 && (
-        <SeasonTabs
+      {subView === 'players' && leaders && (
+        <PlayerFilterBar
           league={league}
-          value={leaders.season}
-          seasons={leaders.available_seasons}
-          onChange={onSelectSeason}
+          isMlb={league === 'mlb'}
+          mlbType={mlbType}
+          leaders={leaders}
+          onSelectMlbType={onSelectMlbType}
+          onSelectSeason={onSelectSeason}
+          onSelectCategory={onSelectStatCategory}
         />
       )}
 
@@ -80,7 +80,6 @@ export default function StatsTab({
           loading={playerLoading}
           error={playerError}
           filterError={playerFilterError}
-          onSelectCategory={onSelectStatCategory}
           onSelectSortMetric={onSelectSortMetric}
           onResetFilters={onResetFilters}
         />
@@ -127,60 +126,74 @@ function SubViewTabs({
   )
 }
 
-function MlbTypeTabs({
-  value,
-  onChange,
-}: {
-  value: MlbType
-  onChange: (type: MlbType) => void
-}) {
-  return (
-    <div className="flex items-center gap-2">
-      {(['batting', 'pitching'] as const).map(type => (
-        <button
-          key={type}
-          type="button"
-          onClick={() => onChange(type)}
-          className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors capitalize ${
-            value === type
-              ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-              : 'bg-zinc-900 text-zinc-500 border border-zinc-800 hover:text-zinc-300'
-          }`}
-        >
-          {type}
-        </button>
-      ))}
-    </div>
-  )
-}
-
-function SeasonTabs({
+/**
+ * The player filter bar: MLB batting/pitching, season, stat category — one row
+ * of pills, the way a standings page reads.
+ *
+ * Every option here is the API's own, never a list this component knows. The
+ * seasons are the ones `player_stats` actually holds and the categories are the
+ * ones whose metrics have values for the selected season (measured 2026-08-17:
+ * this is why NBA never offers True Shooting % — the column is 100% NULL, so
+ * the endpoint drops it rather than serve a sort that does nothing).
+ *
+ * The season pill stays on screen even when only one season exists, because it
+ * is the only thing that says which season the table below is.
+ */
+function PlayerFilterBar({
   league,
-  value,
-  seasons,
-  onChange,
+  isMlb,
+  mlbType,
+  leaders,
+  onSelectMlbType,
+  onSelectSeason,
+  onSelectCategory,
 }: {
   league: string
-  value: number | string | null
-  seasons: (number | string)[]
-  onChange: (season: string) => void
+  isMlb: boolean
+  mlbType: MlbType
+  leaders: LeadersData
+  onSelectMlbType: (type: MlbType) => void
+  onSelectSeason: (season: string) => void
+  onSelectCategory: (category: string) => void
 }) {
+  const seasons = leaders.available_seasons ?? []
+  const categories = leaders.categories ?? []
+  if (!isMlb && seasons.length === 0 && categories.length === 0) return null
   return (
-    <div className="flex items-center gap-2">
-      {seasons.map(season => (
-        <button
-          key={season}
-          type="button"
-          onClick={() => onChange(String(season))}
-          className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-            String(value) === String(season)
-              ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-              : 'bg-zinc-900 text-zinc-500 border border-zinc-800 hover:text-zinc-300'
-          }`}
-        >
-          {seasonLabel(league, season)}
-        </button>
-      ))}
+    <div className="flex flex-wrap items-center gap-2">
+      {isMlb && (
+        <FilterPill
+          label="Stat type"
+          value={mlbType}
+          options={[
+            { value: 'batting', label: 'Batting' },
+            { value: 'pitching', label: 'Pitching' },
+          ]}
+          onSelect={value => onSelectMlbType(value as MlbType)}
+        />
+      )}
+      {seasons.length > 0 && (
+        <FilterPill
+          label="Season"
+          value={leaders.season ?? seasons[0]}
+          options={seasons.map(season => ({
+            value: season,
+            label: seasonLabel(league, season),
+          }))}
+          onSelect={onSelectSeason}
+        />
+      )}
+      {categories.length > 0 && (
+        <FilterPill
+          label="Stat category"
+          value={leaders.category ?? categories[0].key}
+          options={categories.map(category => ({
+            value: category.key,
+            label: category.label,
+          }))}
+          onSelect={onSelectCategory}
+        />
+      )}
     </div>
   )
 }
@@ -191,7 +204,6 @@ interface PlayerStatsProps {
   loading: boolean
   error: string | null
   filterError: boolean
-  onSelectCategory: (category: string) => void
   onSelectSortMetric: (metric: string) => void
   onResetFilters: () => void
 }
@@ -202,31 +214,11 @@ function PlayerStats({
   loading,
   error,
   filterError,
-  onSelectCategory,
   onSelectSortMetric,
   onResetFilters,
 }: PlayerStatsProps) {
   return (
     <>
-      {leaders?.categories?.length ? (
-        <div className="flex flex-wrap items-center gap-2" aria-label="Player stat categories">
-          {leaders.categories.map(category => (
-            <button
-              key={category.key}
-              type="button"
-              onClick={() => onSelectCategory(category.key)}
-              className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
-                leaders.category === category.key
-                  ? 'border-emerald-500/30 bg-emerald-500/20 text-emerald-400'
-                  : 'border-zinc-800 bg-zinc-900 text-zinc-500 hover:text-zinc-300'
-              }`}
-            >
-              {category.label}
-            </button>
-          ))}
-        </div>
-      ) : null}
-
       {!loading && !error && leaders?.change_metric && leaders.comparison ? (
         <WhatChanged leaders={leaders} />
       ) : null}
@@ -332,11 +324,7 @@ function PlayerLeadersTable({
   const sortedLabel = leaders.columns.find(metric => metric.key === leaders.stat)?.label
   return (
     <div className="space-y-3">
-      <div className="flex items-center gap-3 text-xs text-zinc-500">
-        <span>Season {seasonLabel(leaders.league, leaders.season)}</span>
-        <span>·</span>
-        <span>Sorted by {sortedLabel || leaders.stat}</span>
-      </div>
+      <div className="text-xs text-zinc-500">Sorted by {sortedLabel || leaders.stat}</div>
 
       <div className="overflow-x-auto rounded-xl border border-zinc-800 bg-zinc-900 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         <table className="w-full text-sm">
@@ -444,21 +432,13 @@ function TeamStats({
   return (
     <div className="space-y-3">
       {categories.length > 1 && (
-        <div className="flex flex-wrap items-center gap-2" aria-label="Team stat categories">
-          {categories.map(item => (
-            <button
-              key={item.key}
-              type="button"
-              onClick={() => onSelectCategory(item.key)}
-              className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
-                activeCategory?.key === item.key
-                  ? 'border-emerald-500/30 bg-emerald-500/20 text-emerald-400'
-                  : 'border-zinc-800 bg-zinc-900 text-zinc-500 hover:text-zinc-300'
-              }`}
-            >
-              {item.label}
-            </button>
-          ))}
+        <div className="flex flex-wrap items-center gap-2">
+          <FilterPill
+            label="Team stat category"
+            value={activeCategory?.key ?? categories[0].key}
+            options={categories.map(item => ({ value: item.key, label: item.label }))}
+            onSelect={onSelectCategory}
+          />
         </div>
       )}
       <div className="overflow-x-auto rounded-xl border border-zinc-800 bg-zinc-900 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
