@@ -8,6 +8,7 @@ don't depend on the live phase to exercise it). Exits non-zero on any failure.
 """
 import sys
 import os
+import datetime as _dt
 import sqlite3
 import tempfile
 import traceback
@@ -208,32 +209,54 @@ def test_leagues_hub_contract():
         check("ranks are 1..N per conference", per_group_ok,
               f"first ranks {ranks[:5]}")
 
-    print("== [7] mls standings: conference-grouped soccer shape ==")
-    # MLS standings are served from OUR rows, so this section needs a database that
-    # holds them. A DB without MLS answers 503 by design (see
-    # test_group_standings_contract). That is a fact about the database, not a broken
-    # surface, so say which one it is instead of dying at import and taking the whole
-    # gate run down with it.
+    print("== [7] mls standings: seasoned, conference-grouped soccer shape ==")
+    # Shape changed 2026-08-17: MLS now returns {season, phase, in_progress, groups}
+    # rather than a bare [{group, rows}]. It reads the publisher's table instead of
+    # rolling up our own, because our rows only ever cover a COMPLETED season and the
+    # bare shape had no way to say which one it was — so in mid-August this surface
+    # served the 2025 final table, unlabelled.
+    #
+    # A source outage answers 503 by design (never a fall-through to last season, see
+    # test_group_standings_contract). That is a fact about the upstream, not a broken
+    # surface, so say which one it is instead of taking the whole gate run down.
     mls = None
     try:
         mls = games_router.get_standings("mls")
     except HTTPException as exc:
         if exc.status_code == 503:
-            print(f"  SKIP  this database holds no MLS rows (503: {exc.detail}) — "
-                  f"shape unverified here; run against a DB with MLS loaded")
+            print(f"  SKIP  MLS standings source unavailable (503: {exc.detail}) — "
+                  f"shape unverified here")
         else:
             raise
     if mls is not None:
-        check("mls standings is a list", isinstance(mls, list), type(mls))
-        check("mls has Eastern+Western groups", len(mls) == 2, f"got {len(mls)} groups")
-        if len(mls) == 2:
-            names = sorted(g["group"] for g in mls)
+        check("mls standings is a season envelope", isinstance(mls, dict), type(mls))
+        groups = mls.get("groups") if isinstance(mls, dict) else None
+        # The assertion the defect was about: the table must name its own season,
+        # and that season must be the one currently being played.
+        check("mls names its season", isinstance(mls.get("season"), int),
+              f"season={mls.get('season')!r}")
+        check("mls season is not a past one",
+              isinstance(mls.get("season"), int)
+              and mls["season"] >= _dt.date.today().year,
+              f"serving {mls.get('season')!r} in {_dt.date.today().year}")
+        check("mls states whether the season is in progress",
+              isinstance(mls.get("in_progress"), bool), f"got {mls.get('in_progress')!r}")
+        check("mls has Eastern+Western groups",
+              isinstance(groups, list) and len(groups) == 2,
+              f"got {len(groups) if isinstance(groups, list) else type(groups)}")
+        if isinstance(groups, list) and len(groups) == 2:
+            names = sorted(g["group"] for g in groups)
             check("groups are Eastern/Western Conference",
                   names == ["Eastern Conference", "Western Conference"], str(names))
-            sample = mls[0]["rows"][0]
+            sample = groups[0]["rows"][0]
             for key in ("rank", "abbrev", "name", "played", "wins", "draws", "losses",
                         "gf", "ga", "gd", "points"):
                 check(f"mls row has {key}", key in sample, f"missing {key}")
+            # A mid-season table must not look like a finished one. MLS plays 34.
+            if mls.get("in_progress"):
+                most = max(r["played"] or 0 for g in groups for r in g["rows"])
+                check("in-progress table is not a completed season",
+                      most < 34, f"max played={most} while in_progress=True")
 
     print("== [8] non-grouped leagues still flat (regression) ==")
     nba = games_router.get_standings("nba")

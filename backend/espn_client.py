@@ -188,6 +188,22 @@ def _int(x):
         return None
 
 
+def _iso(text):
+    """ESPN timestamp -> aware datetime, or None. Never raises.
+
+    ESPN writes `2026-11-09T04:59Z` — a trailing `Z` and no seconds. Python 3.8
+    (the dev venv; the image is 3.11) rejects the `Z`, so it is rewritten the
+    same way the rest of this module already does it.
+    """
+    import datetime as _dt
+    if not text:
+        return None
+    try:
+        return _dt.datetime.fromisoformat(str(text).replace("Z", "+00:00"))
+    except (TypeError, ValueError):
+        return None
+
+
 def neighbor_dates(date_text):
     """Return an ESPN scoreboard date followed by its previous and next day.
 
@@ -1267,6 +1283,116 @@ def _parse_record(display_value):
         return int(parts[0]), int(parts[1])
     except ValueError:
         return None, None
+
+
+def _season_phase(seasons, year, now=None):
+    """The published season phase that is live right now, from ESPN's own
+    season-type calendar. Returns (phase_name, ends_at, in_progress).
+
+    ESPN publishes the whole calendar under `seasons[].types[]` — for MLS 2026:
+    Regular Season 2026-01-01 -> 2026-11-09 with `hasStandings: true`, then the
+    playoff rounds, each with its own window. "Is the season still being played?"
+    is therefore a PUBLISHED fact, and published-first rung 5 applies: a schedule
+    is never inferred. We never compare against a hardcoded month.
+
+    Only types carrying `hasStandings` are considered, because those are the ones
+    the table on screen is actually a table OF. Returns (None, None, None) when
+    the calendar does not say — which the caller must render as unknown, not as
+    "final" and not as "in progress".
+    """
+    import datetime as _dt
+    now = now or _dt.datetime.now(_dt.timezone.utc)
+    for season in seasons or []:
+        if _int(season.get("year")) != year:
+            continue
+        for t in season.get("types") or []:
+            if not t.get("hasStandings"):
+                continue
+            start, end = _iso(t.get("startDate")), _iso(t.get("endDate"))
+            if start and end and start <= now <= end:
+                return t.get("name"), end, True
+            # Past its end date: the phase happened and is over. Keep looking in
+            # case a later phase is live, but remember this one as the fallback.
+            if end and now > end:
+                return t.get("name"), end, False
+    return None, None, None
+
+
+def mls_conference_standings():
+    """MLS Eastern/Western tables, read from the publisher's own standings.
+
+    Replaces a DB rollup (`_mls_standings_from_db`) that summed
+    `team_game_results` and applied MLS's 3/1/0 rule itself. That rollup was not
+    wrong — measured 2026-08-17, it reproduced ESPN's published 2025 table for
+    all 30 teams with ZERO disagreements on P/W/D/L/Pts and rank. It was stale,
+    which is a different and worse failure: it served whatever season our tables
+    happened to hold, and they only ever hold a COMPLETED one. In mid-August
+    2026 that meant a 34-games-played 2025 final table presented as the
+    standings, with no season on it anywhere.
+
+    The season is therefore never chosen by us. It is read off the payload
+    (`season.year`), so "which season is this" is answered by the publisher on
+    every request and cannot drift from what the rows actually are.
+
+    `points` and `rank` are copied, never recomputed: MLS's tiebreakers past
+    points/wins/GD are a spec we would be forking, and ESPN already applies them.
+
+    TTL is 900s, matching `ncaaf_conference_standings`. This does spend ESPN
+    budget that the 2026-08-16 DB-first change deliberately stopped spending —
+    but per pageview it spends none, which is what that change was protecting:
+    one request per 15 minutes serves the whole league.
+
+    Returns {league, season, season_label, phase, in_progress, phase_ends,
+    as_of, groups: [{group, rows: [...]}]}. Raises ValueError when the publisher
+    returns no table — never a silently empty one.
+    """
+    import datetime as _dt
+    _, path = _check("mls")
+    d = _get(_CORE.format(path=path) + "/standings", ttl=900)
+    season = d.get("season") or {}
+    year = _int(season.get("year"))
+    if year is None:
+        raise ValueError("MLS standings: publisher named no season")
+
+    groups = []
+    for child in d.get("children") or []:
+        entries = (child.get("standings") or {}).get("entries") or []
+        if not entries:
+            continue
+        rows = []
+        for ent in entries:
+            s = {x.get("name"): x.get("value") for x in ent.get("stats") or []}
+            t = ent.get("team") or {}
+            rows.append({
+                "rank": _int(s.get("rank")),
+                "abbrev": t.get("abbreviation"),
+                "name": t.get("displayName"),
+                "played": _int(s.get("gamesPlayed")),
+                "wins": _int(s.get("wins")),
+                "draws": _int(s.get("ties")),
+                "losses": _int(s.get("losses")),
+                "gf": _int(s.get("pointsFor")),
+                "ga": _int(s.get("pointsAgainst")),
+                "gd": _int(s.get("pointDifferential")),
+                "points": _int(s.get("points")),
+            })
+        rows.sort(key=lambda r: (r["rank"] is None, r["rank"]))
+        groups.append({"group": child.get("name"), "rows": rows})
+
+    if not groups:
+        raise ValueError(f"MLS standings: publisher returned no groups for {year}")
+
+    phase, ends, in_progress = _season_phase(d.get("seasons"), year)
+    return {
+        "league": "mls",
+        "season": year,
+        "season_label": season.get("displayName") or str(year),
+        "phase": phase,
+        "in_progress": in_progress,
+        "phase_ends": ends.isoformat() if ends else None,
+        "as_of": _dt.datetime.now(_dt.timezone.utc).isoformat(),
+        "groups": groups,
+    }
 
 
 def ncaaf_conference_standings():
