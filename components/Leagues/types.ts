@@ -172,45 +172,6 @@ export interface KnockoutRound {
 }
 
 export type SubView = 'players' | 'teams'
-export interface NewsSource {
-  headline: string
-  url: string
-}
-
-/** A synthesised cross-source story. `sources` is what it was built from. */
-export interface NewsConversation {
-  conv_id: string
-  league: string
-  title: string
-  narrative: string
-  fan_voice?: string | null
-  paragraph?: string | null
-  sources?: NewsSource[]
-  generated_at?: string | null
-  story_time?: string | null
-  source_count?: number | null
-}
-
-/** One published item. `source` is an outlet slug (`espn-ligamx`) or a social
- *  handle (`@TomBogert`) — they are different kinds of claim and the UI says so
- *  rather than rendering both as "reported by". */
-export interface NewsItem {
-  id: number | string
-  league: string
-  headline: string
-  url: string
-  source: string
-  published: string
-  layer: string
-  key_player?: string | null
-}
-
-export interface LeagueNews {
-  conversations: NewsConversation[]
-  narratives: NewsItem[]
-  granular: NewsItem[]
-}
-
 export type HubTab = 'camp' | 'standings' | 'stats' | 'schedule' | 'news' | 'rankings' | 'predict'
 
 // ── NFL camp-mode contracts ──────────────────────────────────────────────

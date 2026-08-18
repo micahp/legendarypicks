@@ -1,83 +1,45 @@
 import { render, screen } from '@testing-library/react'
 import NewsTab from './NewsTab'
-import type { LeagueNews } from './types'
+import { LeagueSection } from '../News/LeagueSection'
+import type { LeagueNews } from '../News/LeagueSection'
 
-const feed = (over: Partial<LeagueNews> = {}): LeagueNews => ({
-  conversations: [],
-  narratives: [],
-  granular: [],
-  ...over,
-})
+const feed: LeagueNews = {
+  conversations: [{
+    conv_id: 'c1', league: 'mls', title: 'Cross-border spending',
+    narrative: 'Galaxy sell Cerrillo.', fan_voice: '', paragraph: 'A paragraph.',
+    sources: [{ headline: 'A', url: 'https://a.example', source: 'The Athletic' }],
+    generated_at: '2026-08-17T14:37:58Z', story_time: '2026-08-17T14:37:58Z', source_count: 3,
+  }],
+  narratives: [{
+    id: 1, league: 'mls', headline: 'CAS to hear appeal', url: 'https://y.example',
+    source: 'espn-ligamx', published: '2026-08-17T12:00:00Z', layer: 'narrative', key_player: null,
+  }],
+  granular: [{
+    id: 2, league: 'mls', headline: 'Hibs finalizing deal', url: 'https://x.example',
+    source: '@TomBogert', published: '2026-08-17T14:00:00Z', layer: 'trade', key_player: null,
+  }],
+  other: 0,
+}
 
-describe('league news tab', () => {
-  it('says a source count on a synthesised conversation', () => {
-    // The conversation text is ours, not a publisher's. How many sources it was
-    // built from is part of how much weight it carries, so it is stated rather
-    // than left to be inferred from the list length.
-    render(
-      <NewsTab
-        leagueName="MLS"
-        loading={false}
-        error={null}
-        news={feed({
-          conversations: [{
-            conv_id: 'c1', league: 'mls', title: 'Cross-border spending',
-            narrative: 'Galaxy sell Cerrillo.',
-            sources: [
-              { headline: 'A', url: 'https://a.example' },
-              { headline: 'B', url: 'https://b.example' },
-            ],
-          }],
-        })}
-      />,
-    )
-    expect(screen.getByText('Built from 2 sources')).not.toBeNull()
+describe('league hub News tab', () => {
+  it('renders exactly what the News page renders for that league', () => {
+    // The tab must not be a second design of the same thing: it delegates to the
+    // News page's own LeagueSection, so the markup is identical by construction.
+    const tab = render(<NewsTab league="mls" news={feed} loading={false} error={null} />)
+    const tabHtml = tab.container.innerHTML
+    tab.unmount()
+
+    const page = render(<LeagueSection league="mls" data={feed} />)
+    expect(tabHtml).toBe(page.container.innerHTML)
   })
 
-  it('marks a social handle as a post, not as an outlet', () => {
-    render(
-      <NewsTab
-        leagueName="MLS"
-        loading={false}
-        error={null}
-        news={feed({
-          granular: [
-            { id: 1, league: 'mls', headline: 'Deal close', url: 'https://x.example',
-              source: '@TomBogert', published: new Date().toISOString(), layer: 'trade' },
-            { id: 2, league: 'mls', headline: 'CAS to hear appeal', url: 'https://y.example',
-              source: 'espn-ligamx', published: new Date().toISOString(), layer: 'narrative' },
-          ],
-        })}
-      />,
-    )
-    expect(screen.getByText('Post by @TomBogert')).not.toBeNull()
-    // An outlet is named plainly — it is not relabelled as a post.
-    expect(screen.getByText('espn-ligamx')).not.toBeNull()
-    expect(screen.queryByText('Post by espn-ligamx')).toBeNull()
-  })
-
-  it('reads an unparseable timestamp as unknown rather than as now', () => {
-    render(
-      <NewsTab
-        leagueName="MLS"
-        loading={false}
-        error={null}
-        news={feed({
-          granular: [{ id: 3, league: 'mls', headline: 'H', url: 'https://z.example',
-            source: 'espn', published: 'not-a-date', layer: 'trade' }],
-        })}
-      />,
-    )
-    expect(screen.getByText('time unknown')).not.toBeNull()
-  })
-
-  it('says nothing is published rather than rendering an empty shell', () => {
-    render(<NewsTab leagueName="NBA" loading={false} error={null} news={feed()} />)
-    expect(screen.getByText(/No news published for NBA yet/)).not.toBeNull()
+  it('shows the section even with nothing in the feed', () => {
+    render(<NewsTab league="nba" news={null} loading={false} error={null} />)
+    expect(screen.getByText(/No classified news yet for NBA/)).not.toBeNull()
   })
 
   it('surfaces the endpoint reason on failure', () => {
-    render(<NewsTab leagueName="NBA" loading={false} error="News is unavailable." news={null} />)
+    render(<NewsTab league="nba" news={null} loading={false} error="News is unavailable." />)
     expect(screen.getByText('News is unavailable.')).not.toBeNull()
   })
 })

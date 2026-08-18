@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import type { LeagueNews } from '../types'
+import type { LeagueNews } from '../../News/LeagueSection'
 
 /**
  * League news feed. `/api/news/{league}` answers with every league keyed by
@@ -36,8 +36,9 @@ export function useNewsData(league: string, active: boolean) {
             conversations: Array.isArray(own.conversations) ? own.conversations : [],
             narratives: Array.isArray(own.narratives) ? own.narratives : [],
             granular: Array.isArray(own.granular) ? own.granular : [],
+            other: typeof own.other === 'number' ? own.other : 0,
           }
-          : { conversations: [], narratives: [], granular: [] })
+          : { conversations: [], narratives: [], granular: [], other: 0 })
       } catch (err) {
         if (!ignore) {
           setError(err instanceof Error && err.message ? err.message : 'Unable to load news.')

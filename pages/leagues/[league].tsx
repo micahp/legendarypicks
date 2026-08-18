@@ -283,7 +283,7 @@ export default function LeagueHubPage() {
 
         {route.activeTab === 'news' && (
           <NewsTab
-            leagueName={leagueName}
+            league={route.league}
             news={news.news}
             loading={news.loading}
             error={news.error}
