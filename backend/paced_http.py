@@ -64,6 +64,67 @@ def reset_host_budget():
     _host_spend.clear()
 
 
+# ── the spend log ─────────────────────────────────────────────────────────────
+#
+# Every number we have about ESPN's limit except the response cap is INFERRED
+# from behaviour, twice, and both times another explanation was available. See
+# docs/DESIGN-request-budget.md §1: there are two different limits both called
+# "100", and the last attempt to build a cross-process budget was reverted
+# because of the confusion between them.
+#
+# So before any more machinery: write down what we actually spend. One append
+# per request, no behaviour change, nothing to revert. It turns the questions
+# that are currently guesses into queries -- above all **does a 403 correlate
+# with a request count, or with a time of day, or with nothing?**, which is the
+# question that decides whether a shared counter is the right machine at all.
+#
+# A plain append-only JSONL file rather than SQLite on purpose: 18 timers write
+# this concurrently, and an O_APPEND write below PIPE_BUF is atomic on Linux,
+# so there is no lock to contend and no job can be wedged behind one.
+SPEND_LOG = os.environ.get(
+    "LP_HTTP_SPEND_LOG",
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "http-spend.jsonl"))
+
+# Who is spending. argv[0] is the job, and the whole point is telling eighteen
+# timers apart in one file.
+_PROCESS = os.path.basename(sys.argv[0] or "python") if sys.argv else "python"
+
+
+def _path_family(parts):
+    """A coarse path key, so one league's scoreboard does not become its own row.
+
+    Keeps the leading segments and drops ids and query strings: the question is
+    "which endpoint family costs us", not "which game".
+    """
+    trimmed = [seg for seg in parts.path.split("/") if seg][:5]
+    return "/" + "/".join(trimmed)
+
+
+def record_spend(url, status, cached=False, note=""):
+    """Append one line describing a request. NEVER raises: this is measurement.
+
+    A logging failure must not take down a fetch. If the directory is missing
+    or the disk is full we lose the record, which is strictly better than
+    losing the request.
+    """
+    try:
+        parts = urllib.parse.urlsplit(url)
+        line = json.dumps({
+            "ts": time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime()),
+            "host": parts.netloc,
+            "path": _path_family(parts),
+            "status": status,
+            "cached": bool(cached),
+            "proc": _PROCESS,
+            "pid": os.getpid(),
+            "note": note,
+        }, separators=(",", ":"))
+        with open(SPEND_LOG, "a") as fh:
+            fh.write(line + "\n")
+    except Exception:
+        pass
+
+
 class BudgetExhausted(RuntimeError):
     """The per-host count is spent and this caller must not wait it out."""
 
@@ -255,13 +316,20 @@ class Fetcher:
             try:
                 request = urllib.request.Request(url, headers=self.headers)
                 with urllib.request.urlopen(request, timeout=self.timeout) as r:
-                    return json.loads(r.read().decode())
+                    payload = json.loads(r.read().decode())
+                record_spend(url, getattr(r, "status", 200))
+                return payload
             except urllib.error.HTTPError as exc:
+                # A refusal is the most valuable line in the log: it is the one
+                # that says whether a 403 tracks a request count or nothing.
+                record_spend(url, exc.code, note="retrying" if
+                             (exc.code in RETRYABLE and wait is not None) else "raised")
                 if exc.code in RETRYABLE and wait is not None:
                     time.sleep(wait)
                     continue
                 raise
-            except (OSError, json.JSONDecodeError):
+            except (OSError, json.JSONDecodeError) as exc:
+                record_spend(url, 0, note=type(exc).__name__)
                 if wait is not None:
                     time.sleep(wait)
                     continue
@@ -281,13 +349,18 @@ class Fetcher:
             try:
                 request = urllib.request.Request(url, headers=self.headers)
                 with urllib.request.urlopen(request, timeout=self.timeout) as r:
-                    return r.read().decode("utf-8", "replace")
+                    body = r.read().decode("utf-8", "replace")
+                record_spend(url, getattr(r, "status", 200))
+                return body
             except urllib.error.HTTPError as exc:
+                record_spend(url, exc.code, note="retrying" if
+                             (exc.code in RETRYABLE and wait is not None) else "raised")
                 if exc.code in RETRYABLE and wait is not None:
                     time.sleep(wait)
                     continue
                 raise
-            except OSError:
+            except OSError as exc:
+                record_spend(url, 0, note=type(exc).__name__)
                 if wait is not None:
                     time.sleep(wait)
                     continue
@@ -317,10 +390,15 @@ class Fetcher:
         ttl = self.cache_ttl if ttl is None else float(ttl)
         hit = self._memory.get(url)
         if hit and hit[0] > now:
+            # Logged too: a request we did NOT make is the cheapest lever we
+            # have, and the hit rate is the number that says whether caching
+            # or a budget is the better next move.
+            record_spend(url, 200, cached=True, note="memory")
             return hit[1]
         on_disk = self._read_disk(url, ttl)
         if on_disk is not None:
             self._memory[url] = (now + ttl, on_disk)
+            record_spend(url, 200, cached=True, note="disk")
             return on_disk
         try:
             # Retry hard only when failing is the alternative. With a stale

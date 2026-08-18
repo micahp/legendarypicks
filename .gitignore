@@ -132,3 +132,8 @@ backend/.espn-cache/
 # on disk — but it must never be committed, symlink or not. `.env*.local` above
 # did not cover the plain name.
 .env
+
+# Runtime spend log (paced_http.record_spend). A process rewrites this
+# continuously, and a tracked file a runtime process rewrites is what blocked
+# the v0.8.0 cut for a week. See docs/DESIGN-request-budget.md.
+backend/data/http-spend.jsonl
