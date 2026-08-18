@@ -58,27 +58,10 @@ const renderTab = (data: LeadersData, extra: Record<string, unknown> = {}) =>
     />,
   )
 
-describe('sortable columns', () => {
-  it('re-queries rather than re-sorting the visible rows when GP is clicked', () => {
-    // The rows on screen are the top N for the CURRENT stat. Sorting them in
-    // the browser would answer "who played most among the scoring leaders"
-    // while the header claims "who played most", so GP goes to the API.
-    const onSelectSortMetric = jest.fn()
-    renderTab(leaders(), { onSelectSortMetric })
-    fireEvent.click(screen.getByRole('button', { name: /^GP/ }))
-    expect(onSelectSortMetric).toHaveBeenCalledWith('games')
-  })
-
-  it('marks GP as the sorted column when the API sorted by it', () => {
-    renderTab(leaders({ stat: 'games' } as Partial<LeadersData>))
-    const header = screen.getByRole('button', { name: /^GP/ }).closest('th')
-    expect(header?.getAttribute('aria-sort')).toBe('descending')
-  })
-})
-
 describe('team table sorting', () => {
   const teamAggregates = {
     supported: true,
+    season: 2025,
     categories: [
       {
         key: 'record',
@@ -105,6 +88,17 @@ describe('team table sorting', () => {
     Array.from(document.querySelectorAll('tbody tr')).map(
       row => row.querySelectorAll('td')[1]?.textContent,
     )
+
+  it('keeps the season on screen after switching to Teams', () => {
+    // /team-aggregates names its season but takes no season parameter, so the
+    // year must still be stated — it just is not a control here.
+    renderTeams()
+    const season = screen.getByLabelText('Season')
+    expect(season.tagName).toBe('SPAN')
+    // Same league vocabulary as the players view, so the year does not change
+    // shape when you switch sub-views.
+    expect(season.textContent).toBe('2024-25')
+  })
 
   it('sorts every data column high to low', () => {
     renderTeams()

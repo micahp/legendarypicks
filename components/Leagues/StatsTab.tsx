@@ -95,6 +95,7 @@ export default function StatsTab({
 
       {supportsTeamStats && subView === 'teams' && (
         <TeamStats
+          league={league}
           leagueName={leagueName}
           aggregates={teamAggregates}
           loading={teamLoading}
@@ -330,9 +331,7 @@ function PlayerLeadersTable({
   leaders: LeadersData
   onSelectSortMetric: (metric: string) => void
 }) {
-  const sortedLabel = leaders.stat === 'games'
-    ? 'Games Played'
-    : leaders.columns.find(metric => metric.key === leaders.stat)?.label
+  const sortedLabel = leaders.columns.find(metric => metric.key === leaders.stat)?.label
   return (
     <div className="space-y-3">
       <div className="text-xs text-zinc-500">Sorted by {sortedLabel || leaders.stat}</div>
@@ -343,21 +342,7 @@ function PlayerLeadersTable({
             <tr className="border-b border-zinc-800 text-zinc-500 text-[11px] uppercase tracking-wider">
               <th className="text-left px-4 py-3 font-medium w-10">#</th>
               <th className="text-left px-3 py-3 font-medium">Player</th>
-              <th
-                aria-sort={leaders.stat === 'games' ? 'descending' : 'none'}
-                className="px-3 py-3 text-right font-medium"
-              >
-                <button
-                  type="button"
-                  onClick={() => onSelectSortMetric('games')}
-                  className={`inline-flex items-center gap-1 whitespace-nowrap hover:text-zinc-200 ${
-                    leaders.stat === 'games' ? 'text-emerald-400' : 'text-zinc-500'
-                  }`}
-                >
-                  GP
-                  {leaders.stat === 'games' && <span aria-hidden="true">↓</span>}
-                </button>
-              </th>
+              <th className="text-right px-3 py-3 font-medium">GP</th>
               {leaders.columns.map(metric => (
                 <th
                   key={metric.key}
@@ -396,11 +381,7 @@ function PlayerLeadersTable({
                     <span className="text-zinc-500 ml-1.5 text-xs">{leader.team}</span>
                   )}
                 </td>
-                <td
-                  className={`px-3 py-2.5 text-right font-mono tabular-nums ${
-                    leaders.stat === 'games' ? 'text-emerald-300 font-bold' : 'text-zinc-400'
-                  }`}
-                >
+                <td className="px-3 py-2.5 text-right font-mono tabular-nums text-zinc-400">
                   {leader.games}
                 </td>
                 {leaders.columns.map(metric => (
@@ -425,6 +406,7 @@ function PlayerLeadersTable({
 }
 
 interface TeamStatsProps {
+  league: string
   leagueName: string
   aggregates: TeamAggregatesData | null
   loading: boolean
@@ -434,6 +416,7 @@ interface TeamStatsProps {
 }
 
 function TeamStats({
+  league,
   leagueName,
   aggregates,
   loading,
@@ -460,6 +443,8 @@ function TeamStats({
   const columns = activeCategory?.columns ?? aggregates.columns ?? []
   return (
     <TeamStatsTable
+      league={league}
+      season={aggregates.season}
       categories={categories}
       activeCategory={activeCategory}
       columns={columns}
@@ -481,12 +466,16 @@ function TeamStats({
  * would put it where a real worst-in-league belongs.
  */
 function TeamStatsTable({
+  league,
+  season,
   categories,
   activeCategory,
   columns,
   teams,
   onSelectCategory,
 }: {
+  league: string
+  season?: number | string | null
   categories: TeamStatCategory[]
   activeCategory?: TeamStatCategory
   columns: TeamColumn[]
@@ -512,16 +501,26 @@ function TeamStatsTable({
 
   return (
     <div className="space-y-3">
-      {categories.length > 1 && (
+      {(season !== null && season !== undefined) || categories.length > 1 ? (
         <div className="flex flex-wrap items-center gap-2">
-          <FilterPill
-            label="Team stat category"
-            value={activeCategory?.key ?? categories[0].key}
-            options={categories.map(item => ({ value: item.key, label: item.label }))}
-            onSelect={onSelectCategory}
-          />
+          {season !== null && season !== undefined && (
+            <FilterPill
+              label="Season"
+              value={season}
+              options={[{ value: season, label: seasonLabel(league, season) }]}
+              onSelect={() => undefined}
+            />
+          )}
+          {categories.length > 1 && (
+            <FilterPill
+              label="Team stat category"
+              value={activeCategory?.key ?? categories[0].key}
+              options={categories.map(item => ({ value: item.key, label: item.label }))}
+              onSelect={onSelectCategory}
+            />
+          )}
         </div>
-      )}
+      ) : null}
       <div className="overflow-x-auto rounded-xl border border-zinc-800 bg-zinc-900 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         <table className="w-full text-sm">
           <thead>
