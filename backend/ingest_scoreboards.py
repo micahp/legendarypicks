@@ -106,6 +106,126 @@ def _past_dates(days, today=None):
             for offset in range(days, 0, -1)]
 
 
+# The backfill fetches finished days by date RANGE -- `?dates=YYYYMMDD-YYYYMMDD`
+# -- instead of one request per day. Measured 2026-08-18 (clean, after the
+# 08-18 block): the range form answers 200 for team/combat/soccer leagues, but
+# the response is capped around 100 events (a 30-day request came back with
+# exactly 100, cut mid-day), and tennis (atp/wta) returns `events: []` for it.
+# So a run of consecutive missing days is fetched in chunks of at most
+# RANGE_MAX_DAYS, a chunk that comes back at the ceiling is split in half and
+# retried, and tennis stays on the per-day `_refresh` path.
+RANGE_MAX_DAYS = 5
+RANGE_EVENT_CAP = 100
+
+
+def _range_chunks(days, max_days=RANGE_MAX_DAYS):
+    """Contiguous runs of `days`, each at most `max_days` long, oldest first.
+
+    The range param is a window, so a run is split where the days stop being
+    consecutive (the window would otherwise include days we already hold) and
+    at `max_days` (the response is capped, see the module docstring).
+    """
+    out, run, prev = [], [], None
+    for day in sorted(days):
+        cur = dt.date.fromisoformat(day)
+        if run and prev is not None and (cur - prev).days != 1:
+            out.append(run)
+            run = []
+        run.append(day)
+        if len(run) >= max_days:
+            out.append(run)
+            run = []
+        prev = cur
+    if run:
+        out.append(run)
+    return out
+
+
+def _fetch_range_chunk(league, chunk, verbose=True):
+    """One (league, date-range) request, bucketed by day and saved per day.
+
+    Returns (games_written, error). Three guards, because an absent answer
+    must never be written as an authoritative empty:
+
+      - the whole chunk comes back empty: fall back to the per-day `_refresh`
+        path. Tennis answers the range form with nothing while its single-day
+        form answers, and nothing detects a new league that does the same;
+        an empty range is ambiguous, an empty single day is a fact.
+      - the response is at the ~100-event ceiling: split the chunk in half and
+        retry each half (the halves are small enough to be complete).
+      - a single day is at the ceiling: refuse loudly. A truncated slate
+        stored as complete would retire the day forever.
+
+    The ceiling is counted on RAW events, not normalized games: for UFC one
+    event is a card of many fights, so those are different units and counting
+    the normalized games would split too eagerly.
+    """
+    start, end = chunk[0], chunk[-1]
+    try:
+        by_day, raw_events = espn.games_by_day(league, start, end)
+    except Exception as exc:
+        return 0, f"{type(exc).__name__}: {exc}"
+
+    if not by_day:
+        # The range form returned nothing for the whole window. That is not
+        # "no games": tennis refuses the range form while answering per-day,
+        # and nothing detects a new league that does the same. Resolve the
+        # ambiguity the expensive, correct way: one per-day request.
+        if verbose:
+            print(f"  empty {league:6} {start}..{end}: range returned nothing, "
+                  f"falling back to per-day")
+        total, errors = 0, []
+        for day in chunk:
+            written, error = _refresh(league, day, verbose=verbose)
+            total += written
+            if error:
+                errors.append(error)
+        return total, errors[0] if errors else None
+
+    if raw_events >= RANGE_EVENT_CAP and len(chunk) > 1:
+        if verbose:
+            print(f"  split {league:6} {start}..{end}: "
+                  f"{raw_events} events at the ceiling")
+        mid = len(chunk) // 2
+        w1, e1 = _fetch_range_chunk(league, chunk[:mid], verbose=verbose)
+        w2, e2 = _fetch_range_chunk(league, chunk[mid:], verbose=verbose)
+        return w1 + w2, e1 or e2
+
+    if raw_events >= RANGE_EVENT_CAP:
+        # A single day at the ceiling is a truncated slate. No board league
+        # reaches this today (busiest NCAAF day we hold is 71 games, busiest
+        # MLB 22), so refuse loudly rather than store a partial day as final.
+        # The error leaves the day "never fetched", which is honest.
+        print(f"  WARN {league:6} {start}: {raw_events} events on a single day "
+              f"at the {RANGE_EVENT_CAP}-event ceiling; refusing to store a "
+              f"possibly-truncated slate")
+        return 0, (f"{raw_events} events on {start} at the "
+                   f"{RANGE_EVENT_CAP}-event ceiling")
+
+    written = 0
+    for day in chunk:
+        games = by_day.get(day, [])
+        written += scoreboard_store.save(league, day, games, source="espn")
+        if league in ("nba", "nhl", "mlb", "nfl") and games:
+            try:
+                from core_stories import kick_game_stories
+                kick_game_stories(league, games)
+            except Exception as exc:
+                print(f"  stories not kicked league={league}: {type(exc).__name__}: {exc}")
+
+    # Free: the calendar rode in on the fetch above and is served from the
+    # 20-second cache, so this costs no request.
+    try:
+        payload = espn.scoreboard_raw_range(league, start, end)
+        if not league_activity.record_from_payload(league, payload):
+            league_activity.touch(league)
+    except Exception as exc:
+        league_activity.touch(league)
+        if verbose:
+            print(f"  calendar unread league={league}: {type(exc).__name__}: {exc}")
+    return written, None
+
+
 def _refresh(league, date, verbose=True):
     """One (league, date): fetch, store the slate, record when the league plays.
 
@@ -215,6 +335,74 @@ def run_schedule(leagues, dates, dry_run=False, verbose=True):
     return 1 if failures else 0
 
 
+def run_backfill_range(leagues, dates, dry_run=False, verbose=True):
+    """Capture finished days with date RANGE requests, not one per day.
+
+    The schedule path refreshes today and tomorrow per day because a live
+    slate moves. A finished day never moves, so the backfill only needs one
+    read of each missing day -- and ESPN's scoreboard endpoint answers
+    `?dates=START-END`, so a run of consecutive missing days costs one
+    request instead of one per day. Two measured constraints (2026-08-18,
+    clean, after the block) shape the loop:
+
+      - the range response is capped around 100 events, so a chunk that comes
+        back at the ceiling is split in half and retried (`_fetch_range_chunk`);
+      - tennis (atp/wta) returns `events: []` for the range form, so tennis
+        stays on the per-day `_refresh` path.
+
+    Gating is unchanged from `run_schedule`: `league_activity.plan` retires a
+    league for its off season, and `needs_refresh` retires a day.
+    """
+    in_season, plan_skip = league_activity.plan(leagues, dates)
+    if verbose:
+        print(league_activity.report(leagues, dates))
+
+    wanted = {}
+    for league, date in in_season:
+        need, reason = scoreboard_store.needs_refresh(league, date)
+        if need:
+            wanted.setdefault(league, []).append(date)
+        elif verbose:
+            print(f"  skip  {league:6} {date}: {reason}")
+
+    if dry_run:
+        for league, days in sorted(wanted.items()):
+            days = sorted(days)
+            if league in ("atp", "wta"):
+                print(f"  {league:6} {len(days)} day(s), per-day "
+                      f"(the range form returns nothing for tennis)")
+            else:
+                chunks = _range_chunks(days)
+                print(f"  {league:6} {len(days)} day(s) in "
+                      f"{len(chunks)} range request(s)")
+        return 0
+
+    failures = []
+    total = 0
+    for league, days in sorted(wanted.items()):
+        days = sorted(days)
+        if league in ("atp", "wta"):
+            for date in days:
+                written, error = _refresh(league, date, verbose=verbose)
+                total += written
+                if error:
+                    failures.append((league, date, error))
+                    print(f"  FAIL {league:6} {date}: {error}")
+            continue
+        for chunk in _range_chunks(days):
+            start, end = chunk[0], chunk[-1]
+            written, error = _fetch_range_chunk(league, chunk, verbose=verbose)
+            total += written
+            if error:
+                failures.append((league, f"{start}..{end}", error))
+                print(f"  FAIL {league:6} {start}..{end}: {error}")
+    pending = _drain_stories(STORY_DRAIN_SCHEDULE)
+    print(f"[scoreboards] backfill: {total} games stored, {len(failures)} failed"
+          + (f", {pending} stories still generating at exit" if pending else "")
+          + f"; {_spend_report()}")
+    return 1 if failures else 0
+
+
 def run_live(verbose=True):
     targets = scoreboard_store.live_targets()
     if not targets:
@@ -315,8 +503,8 @@ def main(argv=None):
         dates = _past_dates(args.backfill, anchor)
         print(f"[scoreboards] backfill {dates[0]} to {dates[-1]} "
               f"({len(dates)} days x {len(leagues)} leagues, before gating)")
-        status = run_schedule(leagues, dates, dry_run=args.dry_run,
-                              verbose=not args.quiet)
+        status = run_backfill_range(leagues, dates, dry_run=args.dry_run,
+                                    verbose=not args.quiet)
     elif args.live:
         status = run_live(verbose=not args.quiet)
     else:

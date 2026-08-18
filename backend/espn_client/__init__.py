@@ -23,6 +23,7 @@ from .config import (
 from .scoreboard import (
     _ATP_MAJORS, _WTA_MAJORS, _is_major, _num, _int, _iso,
     neighbor_dates, _normalize_team_events, scoreboard_raw, games,
+    _ny_date, _slate_day, scoreboard_raw_range, games_by_day,
 )
 from .nfl import nfl_schedule_weeks, nfl_schedule_week_games, schedule_event_starts
 from .ufc import (

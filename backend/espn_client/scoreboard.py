@@ -178,9 +178,20 @@ def scoreboard_raw(league, date=None, ttl=20):
 def games(league, date=None):
     """Normalized scoreboard. date='YYYY-MM-DD' (or None=today). state: pre | in | post."""
     _, path = espn_client._check(league)
+    return _games_from_payload(league, date, espn_client.scoreboard_raw(league, date))
+
+
+def _games_from_payload(league, date, d):
+    """Normalize a raw scoreboard payload into the shared game shape.
+
+    This is the body of `games()` after its fetch. Split out so a date-range
+    payload (see `games_by_day`) can be normalized once and bucketed by day
+    instead of fetching per day. `date` is consulted only by tennis, which
+    filters a week-long tournament to the requested day; every other league
+    shape normalizes all events in the payload.
+    """
     is_tennis = league in ("atp", "wta")
     is_ufc = league == "ufc"
-    d = espn_client.scoreboard_raw(league, date)
     out = []
 
     if is_tennis:
@@ -435,3 +446,93 @@ def games(league, date=None):
     else:
         out.extend(_normalize_team_events(d.get("events", [])))
     return out
+
+
+def _ny_date(instant):
+    """America/New_York calendar date of a UTC instant, DST-aware.
+
+    Python 3.8 (the dev venv; the image is 3.11) has no `zoneinfo`, so the
+    rule is computed: EDT from the second Sunday of March 07:00Z until the
+    first Sunday of November 06:00Z, EST otherwise. This is the bucket key
+    for US leagues, because ESPN files an event under the local day the
+    venue plays it -- a 01:00Z fight is the evening of the previous day in
+    the US, and the store's `game_date` matches the New York day, not the
+    UTC day (measured 374/374 rows, 2026-08-18).
+    """
+    if instant.tzinfo is None:
+        instant = instant.replace(tzinfo=_dt.timezone.utc)
+    instant = instant.astimezone(_dt.timezone.utc)
+    year = instant.year
+
+    def _nth_sunday(month, n):
+        first = _dt.date(year, month, 1)
+        return first + _dt.timedelta(days=(6 - first.weekday()) % 7 + 7 * (n - 1))
+
+    dst_start = _dt.datetime.combine(_nth_sunday(3, 2), _dt.time(7, 0), tzinfo=_dt.timezone.utc)
+    dst_end = _dt.datetime.combine(_nth_sunday(11, 1), _dt.time(6, 0), tzinfo=_dt.timezone.utc)
+    offset = _dt.timedelta(hours=-4) if dst_start <= instant < dst_end else _dt.timedelta(hours=-5)
+    return (instant + offset).date()
+
+
+def _slate_day(league, event_date_text):
+    """The local day ESPN files an event under, from its UTC instant.
+
+    US leagues are bucketed by the America/New_York date (see `_ny_date`);
+    tennis is bucketed by the UTC date, because its normalization already
+    filters competitions by UTC day. Returns 'YYYY-MM-DD' or None.
+    """
+    if not event_date_text:
+        return None
+    try:
+        moment = _dt.datetime.fromisoformat(str(event_date_text).replace("Z", "+00:00"))
+    except (TypeError, ValueError):
+        return None
+    if moment.tzinfo is None:
+        moment = moment.replace(tzinfo=_dt.timezone.utc)
+    if league in ("atp", "wta"):
+        return moment.astimezone(_dt.timezone.utc).date().isoformat()
+    return _ny_date(moment).isoformat()
+
+
+def scoreboard_raw_range(league, start, end, ttl=20):
+    """The scoreboard document for a date RANGE, in one request.
+
+    ESPN's scoreboard endpoint also takes `?dates=YYYYMMDD-YYYYMMDD`.
+    Measured 2026-08-18 (clean, after the 08-18 block): it answers 200 for
+    team, combat and soccer leagues, but tennis (atp/wta) returns
+    `events: []`, and the response is capped around 100 events (a 30-day
+    request came back with exactly 100, cut mid-day). Callers chunk the
+    window and split when the cap is hit; tennis stays per-day.
+    """
+    _, path = espn_client._check(league)
+    q = f"?dates={str(start).replace('-', '')}-{str(end).replace('-', '')}"
+    return espn_client._get(espn_client._SITE.format(path=path) + "/scoreboard" + q, ttl=ttl)
+
+
+def games_by_day(league, start, end):
+    """Normalized games for a date range, keyed by the local slate day.
+
+    One request for the whole range (`scoreboard_raw_range`), then the
+    normalized games are bucketed under the day ESPN files them (`_slate_day`).
+    Returns `(by_day, raw_event_count)`: the bucketed games and how many raw
+    events the payload held. The ~100-event ceiling applies to RAW events --
+    for UFC one event is a card of many fights, so those are different units,
+    and comparing against normalized games would split too eagerly. Callers
+    check the raw count against the ceiling.
+
+    Tennis is not supported here: the range form returns no events for
+    atp/wta, so callers keep tennis per-day -- and `_games_from_payload`
+    would otherwise filter tennis to "today".
+    """
+    if league in ("atp", "wta"):
+        return {}, 0
+    payload = scoreboard_raw_range(league, start, end)
+    events = payload.get("events") or []
+    if not events:
+        return {}, 0
+    by_day = {}
+    for game in _games_from_payload(league, None, payload):
+        day = _slate_day(league, game.get("date"))
+        if day:
+            by_day.setdefault(day, []).append(game)
+    return by_day, len(events)
