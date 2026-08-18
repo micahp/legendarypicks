@@ -64,11 +64,32 @@ def reset_host_budget():
     _host_spend.clear()
 
 
-def _charge(url, budget, cooldown):
+class BudgetExhausted(RuntimeError):
+    """The per-host count is spent and this caller must not wait it out."""
+
+
+def _charge(url, budget, cooldown, on_exhausted="sleep"):
+    """Spend one request against the host's count.
+
+    `on_exhausted` is the difference between a batch job and a page load, and
+    getting it wrong is what broke the scoreboard. The default, "sleep", is
+    right for an ingest: it has nobody waiting and the work is worth the minute.
+    Inside a request handler it is catastrophic -- measured on prod 2026-08-18,
+    46 minutes of uptime produced 46 sixty-second sleeps, 38 of them in one
+    seven-second window, because this check is not guarded and every caller in
+    flight sleeps its own minute when the process crosses the ceiling. A serving
+    path passes "refuse" and gets an exception it can degrade from, which is the
+    behaviour the scores ladder (DB, then Bovada) was built for.
+    """
     if not budget or budget <= 0:
         return
     host = urllib.parse.urlsplit(url).netloc
     if _host_spend.get(host, 0) >= budget:
+        if on_exhausted == "refuse":
+            raise BudgetExhausted(
+                f"{host} has taken {budget} requests from this process; refusing "
+                f"rather than pausing {cooldown:.0f}s, because this caller has "
+                f"someone waiting. The budget is a count, not an error.")
         # SAY SO. This used to sleep a silent minute: no message, no traceback, a job
         # that simply stopped producing output partway through and resumed later for no
         # visible reason. Diagnosing it meant knowing this line existed. A pause nobody
@@ -89,7 +110,7 @@ class Fetcher:
 
     def __init__(self, min_interval=0.0, retry_waits=(5.0, 30.0, 120.0),
                  headers=None, timeout=30, cache_dir="", cache_ttl=43200,
-                 host_budget=None, host_cooldown=None):
+                 host_budget=None, host_cooldown=None, on_exhausted="sleep"):
         self.min_interval = float(min_interval or 0)
         self.retry_waits = tuple(retry_waits or ())
         self.headers = headers or DEFAULT_HDRS
@@ -102,6 +123,9 @@ class Fetcher:
         self.host_budget = HOST_BUDGET if host_budget is None else int(host_budget)
         self.host_cooldown = (HOST_COOLDOWN if host_cooldown is None
                               else float(host_cooldown))
+        # "sleep" (a batch job may wait) or "refuse" (a request handler may not).
+        # See _charge -- this is the setting whose default cost the scoreboard.
+        self.on_exhausted = on_exhausted
         self._last_request_at = 0.0
         self._memory = {}
         # Bound the cache directory: swept every N writes (see _sweep).
@@ -226,7 +250,7 @@ class Fetcher:
         payload -- and a user -- is worse than answering immediately.
         """
         for wait in (*(self.retry_waits if retry else ()), None):
-            _charge(url, self.host_budget, self.host_cooldown)
+            _charge(url, self.host_budget, self.host_cooldown, self.on_exhausted)
             self._throttle()
             try:
                 request = urllib.request.Request(url, headers=self.headers)
@@ -252,7 +276,7 @@ class Fetcher:
         with no pacing, no retry and no cache at all.
         """
         for wait in (*(self.retry_waits if retry else ()), None):
-            _charge(url, self.host_budget, self.host_cooldown)
+            _charge(url, self.host_budget, self.host_cooldown, self.on_exhausted)
             self._throttle()
             try:
                 request = urllib.request.Request(url, headers=self.headers)

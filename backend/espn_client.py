@@ -112,8 +112,14 @@ _HDRS = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrom
 # retry_waits is EMPTY by default, for the same reason the interval is 0: a page
 # load must not sit through a 155s ladder while somebody waits. Waiting out a
 # refusal is a batch job's move, so batch callers opt in via set_retry_waits().
+# on_exhausted="refuse": this module is what the request handlers call, and the
+# budget's default answer to exhaustion is `time.sleep(60)`. Measured on prod
+# 2026-08-18, that produced 46 minute-long pauses inside 46 minutes of uptime and
+# was the actual reason the scoreboard read as broken -- not an ESPN refusal.
+# A batch job opts back into waiting by constructing its own Fetcher or calling
+# set_host_budget on a client it owns; a page load never waits.
 _FETCHER = paced_http.Fetcher(min_interval=0.0, retry_waits=(),
-                              headers=_HDRS, timeout=20,
+                              headers=_HDRS, timeout=20, on_exhausted="refuse",
                               cache_dir=os.environ.get("LP_ESPN_CACHE_DIR") or "",
                               cache_ttl=float(os.environ.get("LP_ESPN_CACHE_TTL",
                                                              "43200") or 0))
@@ -144,6 +150,19 @@ def set_retry_waits(waits):
     """Wait out an upstream refusal on this ladder. Returns the previous one."""
     prev = _FETCHER.retry_waits
     _FETCHER.retry_waits = tuple(waits or ())
+    return prev
+
+
+def set_on_exhausted(mode):
+    """"sleep" or "refuse" when the per-host count is spent. Returns the previous.
+
+    The module default is "refuse" because the request handlers import this
+    module directly. A batch job that enters through the same module (every
+    ingest does) says so explicitly, since waiting out a cooldown is exactly
+    what a job with nobody watching should do.
+    """
+    prev = _FETCHER.on_exhausted
+    _FETCHER.on_exhausted = mode
     return prev
 
 
@@ -263,13 +282,26 @@ def _normalize_team_events(events):
     return out
 
 
+def scoreboard_raw(league, date=None, ttl=20):
+    """The scoreboard document as published, before normalization.
+
+    `games()` throws away everything outside `events`, but the same response
+    also carries `leagues[0].calendar` -- when this league plays. Reading that
+    is how the ingest knows not to ask about the NHL in August
+    (`league_activity.py`), and it must not cost a second request, so the
+    normalized and raw readers share one fetch instead of each having their own.
+    """
+    _, path = _check(league)
+    q = ("?dates=" + date.replace("-", "")) if date else ""
+    return _get(_SITE.format(path=path) + "/scoreboard" + q, ttl=ttl)
+
+
 def games(league, date=None):
     """Normalized scoreboard. date='YYYY-MM-DD' (or None=today). state: pre | in | post."""
     _, path = _check(league)
     is_tennis = league in ("atp", "wta")
     is_ufc = league == "ufc"
-    q = ("?dates=" + date.replace("-", "")) if date else ""
-    d = _get(_SITE.format(path=path) + "/scoreboard" + q, ttl=20)
+    d = scoreboard_raw(league, date)
     import datetime as _dt
     out = []
 
