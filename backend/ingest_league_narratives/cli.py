@@ -29,7 +29,8 @@ def main():
     args = ap.parse_args()
 
     db_path = os.environ.get("LP_DB_PATH") or os.path.join(
-        os.path.dirname(os.path.abspath(__file__)), "data", "picks.db")
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+        "data", "picks.db")
     _init_db()
     con = sqlite3.connect(db_path)
     con.row_factory = sqlite3.Row

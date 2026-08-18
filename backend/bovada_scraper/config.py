@@ -110,8 +110,14 @@ MARKET_MAP = {
 
 # Per-league backoff state: {league: {"last_empty_at": iso, "empty_runs": n}}.
 # Kept beside the DB rather than in it — it is operational scheduling, not app data.
-_BACKOFF_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                             "data", "bovada-league-backoff.json")
+# One dirname per directory this file sits below `backend/`. The split moved
+# it into a package, so this needs TWO -- with one it resolved to
+# `backend/<package>/data/`, which does not exist, and sqlite3.connect
+# CREATES the file rather than failing. The job would run against an empty
+# database and report success.
+_BACKOFF_PATH = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+    "data", "bovada-league-backoff.json")
 
 # An out-of-season league is asked for again after this long. UFC sits at zero players
 # between cards, tennis between tournaments, WNBA/NBA out of season — and this scraper ran

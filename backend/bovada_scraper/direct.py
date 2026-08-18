@@ -42,7 +42,8 @@ def _wc_direct_ingest(all_props: list, today: str):
     Creates player rows as needed."""
     import sqlite3, os as _os
     DB = _os.environ.get("LP_DB_PATH") or _os.path.join(
-        _os.path.dirname(_os.path.abspath(__file__)), "data", "picks.db")
+        _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))),
+        "data", "picks.db")
     con = sqlite3.connect(DB)
     con.row_factory = sqlite3.Row
     now = dt.datetime.now(dt.timezone.utc).isoformat()

@@ -53,3 +53,18 @@ from .board import (  # noqa: E402
     _draft_board_schema, _round, _rounded_ratio, _percentage, _escape_like,
     _name_search, nfl_draft_board,
 )
+
+
+# Names that were module-level on the pre-split file. Nothing re-exported them,
+# so `<pkg>.<name>` raised AttributeError -- a surface the split promised to keep.
+# None of these are ever REBOUND, only read or mutated in place, so importing them
+# here yields the same objects the submodules use.
+from .cache import (  # noqa: E402,F401
+    _database_token_memo,
+    _database_token_memo_lock,
+    _draft_board_cache,
+    _draft_board_cache_lock,
+)
+from .transactions import (  # noqa: E402,F401
+    _significance_cache,
+)

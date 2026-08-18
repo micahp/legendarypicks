@@ -73,3 +73,15 @@ from .crud import (  # noqa: E402
 )
 from .player_detail import player_detail  # noqa: E402
 from .game_log import _dst_game_log, player_game_log  # noqa: E402
+
+# Names that were module-level on the pre-split file. Nothing re-exported them,
+# so `<pkg>.<name>` raised AttributeError -- a surface the split promised to keep.
+# None of these are ever REBOUND, only read or mutated in place, so importing them
+# here yields the same objects the submodules use.
+from .constants import (  # noqa: E402,F401
+    _POOL_CACHE_MAX_ENTRIES,
+    _POOL_CACHE_TTL,
+    _POSTSEASON_FIRST_WEEK,
+    _pool_cache,
+    _pool_cache_lock,
+)

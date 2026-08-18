@@ -36,3 +36,13 @@ from .cli import _positive_int, _fight_limit, _print_summary, main  # noqa: F401
 
 if __name__ == "__main__":
     main()
+
+
+# Names that were module-level on the pre-split file. Nothing re-exported them,
+# so `<pkg>.<name>` raised AttributeError -- a surface the split promised to keep.
+# None of these are ever REBOUND, only read or mutated in place, so importing them
+# here yields the same objects the submodules use.
+from .fetch import (  # noqa: E402,F401
+    _STATS_URL,
+    _STATUS_URL,
+)

@@ -6,8 +6,14 @@ import sqlite3
 from .checks import (PASS, FAIL, UNVERIFIED, Result, check_injury_population, check_identity_crosswalk, check_leaders_reach_logs, check_position_content, check_published_identity, check_qualifier_unit, check_required_stats, check_single_vocabulary)  # noqa: E402
 from .identity import _identity_name_key  # noqa: E402
 
+# One dirname per directory this file sits below `backend/`. The split moved
+# it into a package, so this needs TWO -- with one it resolved to
+# `backend/<package>/data/`, which does not exist, and sqlite3.connect
+# CREATES the file rather than failing. The job would run against an empty
+# database and report success.
 DB = os.environ.get("LP_DB_PATH") or os.path.join(
-    os.path.dirname(os.path.abspath(__file__)), "data", "picks.db"
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+    "data", "picks.db"
 )
 
 # Every league we serve a stats surface for. Sourced from docs/LEAGUE-STAT-GAPS.md

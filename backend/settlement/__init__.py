@@ -67,3 +67,47 @@ __all__ = [
     "_grade_actual",
     "settle_game",
 ]
+
+
+# Names that were module-level on the pre-split file. Nothing re-exported them,
+# so `<pkg>.<name>` raised AttributeError -- a surface the split promised to keep.
+# None of these are ever REBOUND, only read or mutated in place, so importing them
+# here yields the same objects the submodules use.
+from .market_mapping import (  # noqa: E402,F401
+    _BATTING_LABELS,
+    _BATTING_ONLY,
+    _PITCHING_LABELS,
+    _PITCHING_ONLY,
+)
+from .mlb_api import (  # noqa: E402,F401
+    _MLB_BOXSCORE,
+    _MLB_HDR,
+    _MLB_SCHEDULE,
+    _MLB_SCHEDULE_CACHE,
+)
+from .mlb_settle import (  # noqa: E402,F401
+    _MLB_BATTING_STATS,
+    _MLB_MARKET_MAP,
+    _MLB_PITCHING_STATS,
+)
+from .mls_settle import (  # noqa: E402,F401
+    _MLS_EVENT_MARKETS,
+    _MLS_ROSTER_MARKETS,
+    _MLS_ROSTER_SUM_MARKETS,
+    _soccer_name,
+)
+from .ufc_settle import (  # noqa: E402,F401
+    _UFC_METHOD_MARKETS,
+    _UFC_NUMERIC_MARKETS,
+)
+
+# `DB` was a module-level name on the pre-split settlement.py and no submodule
+# defines it, so `settlement.DB` raised AttributeError outright. Restored here.
+# TWO dirnames, not one: the original sat at `backend/settlement.py`, this file
+# sits one directory deeper, and a wrong path here would not raise -- sqlite3
+# CREATES the file, so a caller would quietly settle against an empty database.
+import os as _os  # noqa: E402
+
+DB = _os.environ.get("LP_DB_PATH") or _os.path.join(
+    _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))),
+    "data", "picks.db")

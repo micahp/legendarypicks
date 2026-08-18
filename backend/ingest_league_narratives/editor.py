@@ -43,8 +43,14 @@ def _log_deletion(con, conv, reason):
 # deleted just log it to a file and we can read that file when we run the
 # review"). Run history keeps the OLD version, but not that it was SERVED then
 # dropped — this log is that record.
+# One dirname per directory this file sits below `backend/`. The split moved
+# it into a package, so this needs TWO -- with one it resolved to
+# `backend/<package>/data/`, which does not exist, and sqlite3.connect
+# CREATES the file rather than failing. The job would run against an empty
+# database and report success.
 _DELETIONS_LOG = os.environ.get("LP_NEWS_DELETIONS_LOG") or os.path.join(
-    os.path.dirname(os.path.abspath(__file__)), "data", "news-deletions.log")
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+    "data", "news-deletions.log")
 
 _BODY_CHARS = 600
 
