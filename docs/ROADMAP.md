@@ -122,22 +122,22 @@ true. Kept here in corrected form so nobody works them again.
 
 ## 4. NOW: draft window, ordered by whether a drafter notices
 
-### Draft research is SHIPPED, not unbuilt
+### ✅ Draft research is DONE. Closed 2026-08-18.
 
 The old entry read "Draft-research screens, what the one real user asked for, still
-unbuilt." That was never a scope. It is a restatement of the 2026-07-26 interview finding
-("she had no place she went to do draft research") that got written into the checklist as a
-deliverable and left unchecked for three weeks while the thing itself shipped.
+unbuilt." That was never a scope. It restated the 2026-07-26 interview finding ("she had no
+place she went to do draft research") as a deliverable and sat unchecked for three weeks
+while the thing itself shipped. **Confirmed by Micah 2026-08-18: these three surfaces ARE
+the draft research, so the item is closed, not carried.**
 
-Live on prod today:
+- [x] **Draft board**, `/leagues/nfl` camp tab. Positions QB/RB/WR/TE/FLEX/PK/DEF/all.
+      Sorts: Rank, Proj Pts, ADP, PPR per team game, PPR per game played, Expected PPR,
+      Availability, Snap share.
+- [x] **Player detail overlay**, four tabs: Overview, Game log, News, Projections.
+- [x] **Mock draft simulator**, `/mock-draft`. Board, Players, Queue, Rosters, results.
 
-- **Draft board**, `/leagues/nfl` camp tab. Positions QB/RB/WR/TE/FLEX/PK/DEF/all. Sorts:
-  Rank, Proj Pts, ADP, PPR per team game, PPR per game played, Expected PPR, Availability,
-  Snap share.
-- **Player detail overlay**, four tabs: Overview, Game log, News, Projections.
-- **Mock draft simulator**, `/mock-draft`. Board, Players, Queue, Rosters, results screen.
-
-Treat further draft work as **sharpening a shipped surface**, not building a missing one.
+Treat any further draft work as **sharpening a shipped surface**, not building a missing
+one, and do not re-open it without a user asking for something specific.
 
 ### The list
 
@@ -151,11 +151,16 @@ Treat further draft work as **sharpening a shipped surface**, not building a mis
       genuine product thinking left in the window, and it needs the user, not us. The board
       has eight sort dimensions; nobody has asked her which question it fails to answer.
 
-**Removed: "Fullbacks missing from the board."** Fullbacks are not a fantasy position. The
-`{QB,RB,WR,TE}` filter in `ingest_nfl_season_stats.py:29` is correct and Juszczyk having
-zero `player_stats` rows is the intended outcome. This has been corrected in conversation
-more than once and never written down, which is why it kept returning. Written down now
+**Removed: "Fullbacks missing from the board."** Fullbacks are not a fantasy position, so
+the `{QB,RB,WR,TE}` filter in `ingest_nfl_season_stats.py:29` is correct and Juszczyk
+having zero `player_stats` rows is the intended outcome. Corrected in conversation more
+than once and never written down, which is why it kept returning. Written down now
 (`project_lp_fullbacks_not_fantasy`).
+
+**Do not over-read that.** FB is the outlier, not the rule: **kicker (PK/K), defense (DEF)
+and FLEX are all fantasy positions** and the board already offers them. The narrow filter
+is specific to the nflverse season-stats ingest; the mock-draft pool is deliberately wider
+(~11,515 including PK, DEF and IDP) because filtering there is the UI's job.
 
 ---
 
@@ -183,7 +188,53 @@ users (Record A in `POSITIONING-2026-07-27.md` §7), and it is where the real ho
 
 ---
 
-## 6. MEASUREMENT DEBT: the checks that stay green by not being asked
+## 6. THE COVERAGE MATRIX IS TOO COARSE
+
+`backend/league_feature_matrix.py` is the file that answers "what do we have, for which
+league". It is the right idea and it is not detailed enough to act on. Every cell is a
+single count, and a count cannot tell you what the count is OF.
+
+Requested 2026-08-18. Each of these is a question the matrix cannot currently answer:
+
+- [ ] **Split the log surfaces.** "game logs" today means `player_game_logs`. Team-level
+      results and player-level logs are different products and must be separate lines:
+      **game logs, player game logs, player stats, team stats.**
+- [ ] **What YEARS are available**, per league, per surface. A count of 2,572 season-stat
+      rows reads identically whether it holds one season or four. Report the actual set of
+      seasons rather than a min-max range, because the interesting case is a GAP and a
+      range hides it: 2023 and 2026 with nothing between renders as "2023-2026" and reads
+      as four years of history. This is a live defect today, not a hypothetical: prod MLS
+      standings serve 2026 while `/api/mls/leaders` offers `available_seasons: [2025]`.
+- [ ] **What PROPS are available for a league**, meaning the distinct `props.market`
+      values and how many of each, not just a total. A book pricing a market our grader has
+      no mapping for produces props that land, look healthy, and never grade.
+- [ ] **WHERE those props come from.** `props.source` per league, with counts. We ingest
+      from Bovada, Underdog, RotoWire and PrizePicks and the matrix currently renders all
+      of them as one number, so "we have props for this league" cannot be traced to a
+      publisher.
+- [ ] **Are those props getting RESOLVED**, broken down the same two ways: settled per
+      source and settled per market. A per-league total already hides that ATP and WTA
+      settle **0 of 4,521** across both databases, and that UFC settles 112 on prod and 0
+      on dev. Keep keying settlement on `actual_value IS NOT NULL`, never `settled_at`:
+      settlement stamps the timestamp on props it could not map, so the timestamp records
+      that something RAN, not that anything landed.
+- [ ] **Is there a game detail, and do the settled props actually appear on it.** The
+      matrix has the raw numbers for this and reports them as two separate counts. It needs
+      to be one explicit ratio per league: of the props settled for this league, how many
+      hang off a `prop_games` row with an `espn_event_id`, and are therefore reachable by a
+      reader. Everything else is data we hold and nobody can see. Today that gap is 2,475
+      tennis props.
+
+The shape to avoid: this file exists because a hand-maintained feature matrix is a claim
+that outlives the code. Every addition above must be **derived on the run**, and anything
+that needs an ESPN request stays `UNPROBED` rather than being rendered as a zero.
+
+Note: settled props are their own subject and bigger than a matrix row. The matrix should
+say honestly whether they resolve and where they are visible; fixing settlement is §5.
+
+---
+
+## 7. MEASUREMENT DEBT: the checks that stay green by not being asked
 
 - [ ] **`atp`, `wta`, `wnba` have no MANIFEST entry** (`audit_league_stats/cli.py:22`, 8
       keys: mlb nba nhl nfl ufc wc mls ncaaf). The audit only fails a missing entry for a
@@ -208,7 +259,7 @@ users (Record A in `POSITIONING-2026-07-27.md` §7), and it is where the real ho
 
 ---
 
-## 7. IN FLIGHT
+## 8. IN FLIGHT
 
 - [ ] **Tournament games under their own league key.** Decided 2026-08-06. Leagues Cup
       (`concacaf.leagues.cup`), CCC (`concacaf.champions`) and Campeones Cup are separate
@@ -231,7 +282,7 @@ users (Record A in `POSITIONING-2026-07-27.md` §7), and it is where the real ho
 
 ---
 
-## 8. QUEUED, not started
+## 9. QUEUED, not started
 
 Named by the user, no work done:
 
@@ -247,7 +298,7 @@ Named by the user, no work done:
 
 ---
 
-## 9. POST-DRAFT: league news engine
+## 10. POST-DRAFT: league news engine
 
 The engine is live and prod carries 5,526 items, so this section is no longer about
 building it. What is left is editorial shape, and 18.5% of prod rows (1,022) are still
@@ -264,7 +315,7 @@ building it. What is left is editorial shape, and 18.5% of prod rows (1,022) are
 
 ---
 
-## 10. LATER: deferred on purpose
+## 11. LATER: deferred on purpose
 
 - [ ] **Source-separated tables** (`espn_core_*` / `espn_fantasy_*`). November, not now.
 - [ ] **NFL 2024 game-id vocabulary migration.** Deliberately deferred, not shown in the
