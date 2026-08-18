@@ -13,6 +13,7 @@ from nfl_rankings import nfl_player_rank_context
 from nfl_stat_derivations import with_derived as _with_derived
 from nfl_news import (ROTOWIRE_LABEL, load_news_feed, load_player_news_page, load_sleeper_crosswalk, merge_player_news, resolve_rotowire_id)
 from . import router
+import espn_client as espn
 
 
 
@@ -42,10 +43,8 @@ def __db_pkg(*args, **kwargs):
 def player_news(player_id: int,
                 limit: int = Query(10, ge=1, le=25)):
     """Fetch general NFL player reporting from ESPN search."""
-    import json as _json
     import re
     import urllib.parse
-    import urllib.request
 
     with closing(__db_pkg()) as con:
         p = con.execute("SELECT id,name,espn_id,league FROM players WHERE id=?", (player_id,)).fetchone()
@@ -65,12 +64,11 @@ def player_news(player_id: int,
         {"query": search_name, "limit": max(limit, 20)}
     )
     try:
-        request = urllib.request.Request(
-            url,
-            headers={"Accept": "application/json", "User-Agent": "LegendaryPicks/0.7"},
-        )
-        with urllib.request.urlopen(request, timeout=8) as response:
-            data = _json.loads(response.read().decode())
+        # Serving path: espn_client's shared fetcher has the serving posture —
+        # no pacing, no retry ladder, on_exhausted="refuse" — so a page load
+        # can never sit through a cooldown; a spent budget raises and this
+        # handler degrades to the empty state the raw call degraded to.
+        data = espn._get(url, ttl=30)
     except Exception:
         return {"player_id": player_id, "name": p["name"], "articles": []}
 

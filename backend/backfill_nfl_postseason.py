@@ -55,12 +55,12 @@ side effect of a backfill — and it is gated behind --replace-vocabulary.
 from __future__ import annotations
 
 import argparse
-import json
 import os
 import sqlite3
 import sys
 import time
-import urllib.request
+
+import paced_http
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
@@ -74,14 +74,18 @@ CORE = "https://sports.core.api.espn.com/v2/sports/football/leagues/nfl"
 SITE = "https://site.api.espn.com/apis/site/v2/sports/football/nfl"
 _HDR = {"User-Agent": "Mozilla/5.0 (legendarypicks ingest)"}
 
+# The shared client issues each attempt (per-host count + spend log), with the
+# module's own retry ladder kept on top: the raw call retried EVERY exception
+# four times before raising RuntimeError, and paced_http's ladder would only
+# retry RETRYABLE codes -- not the same posture.
+_FETCH = paced_http.Fetcher(headers=_HDR, timeout=30, retry_waits=())
+
 
 def _get(url: str, attempts: int = 4) -> dict:
     last = None
     for i in range(attempts):
         try:
-            req = urllib.request.Request(url, headers=_HDR)
-            with urllib.request.urlopen(req, timeout=30) as r:
-                return json.load(r)
+            return _FETCH.fetch(url)
         except Exception as e:  # noqa: BLE001
             last = e
             time.sleep(1.5 * (i + 1))

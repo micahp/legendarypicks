@@ -12,11 +12,12 @@ import re
 import sqlite3
 import sys
 import time
+import urllib.error
 import urllib.parse
 from datetime import datetime, timezone
 from typing import Dict, List, Optional, Tuple
 
-import requests
+import paced_http
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
@@ -63,7 +64,6 @@ _CACHE: Dict[str, dict] = {}
 # the whole run into a single NO-ORACLE. Slow it down for those runs rather than
 # discovering the ceiling again.
 _MIN_INTERVAL = float(os.environ.get("LP_RECONCILE_MIN_INTERVAL") or 0.5)
-_last_request = 0.0
 
 # ESPN's core API rejects the bare `python-requests/x.y` User-Agent with a bare 403 —
 # measured 2026-08-03: `requests.get(url)` -> 403 for nba/nhl/mlb while curl and a
@@ -80,6 +80,14 @@ _HDRS = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrom
 # never exhaust one host's budget against another's name.
 _HOST_BUDGET = int(os.environ.get("LP_RECONCILE_HOST_BUDGET") or 100)
 _HOST_SPEND: Dict[str, int] = {}
+
+# The shared client issues each request (pacing, the per-host count and the
+# spend log) but carries NO retry ladder: this module's policy decides what a
+# refusal means -- a 403 is fail-fast OracleUnreachable, a 429/5xx is worth
+# backing off -- and it must see every attempt to do that.
+_FETCH = paced_http.Fetcher(min_interval=_MIN_INTERVAL, retry_waits=(),
+                            headers=_HDRS, timeout=TIMEOUT,
+                            host_budget=_HOST_BUDGET)
 
 
 # Event documents are immutable once a game is final, and a mid-season league costs
@@ -137,7 +145,7 @@ def _disk_flush() -> None:
 
 
 def _get_json(url: str, attempts: int = 6) -> dict:
-    global _last_request, _DISK_DIRTY
+    global _DISK_DIRTY
     if url in _CACHE:
         return _CACHE[url]
     # Only individual /events/<id> documents are cached across runs. Collection
@@ -161,27 +169,29 @@ def _get_json(url: str, attempts: int = 6) -> dict:
         )
     last = None
     for i in range(attempts):
-        gap = _MIN_INTERVAL - (time.monotonic() - _last_request)
-        if gap > 0:
-            time.sleep(gap)
+        # The Fetcher paces (min_interval) and logs every attempt to the spend
+        # log; this module's own counter still refuses before the request.
+        _HOST_SPEND[host] = _HOST_SPEND.get(host, 0) + 1
         try:
-            _last_request = time.monotonic()
-            _HOST_SPEND[host] = _HOST_SPEND.get(host, 0) + 1
-            r = requests.get(url, timeout=TIMEOUT, headers=_HDRS)
-            if r.status_code == 403:
+            body = _FETCH.fetch(url)
+        except urllib.error.HTTPError as exc:
+            if exc.code == 403:
                 # A 403 from a host we already spent budget on means the wall is
                 # up. Retrying is how the old ladder burned 6 requests + backoff
                 # per URL and still reported NO-ORACLE. Fail the URL fast; the
                 # caller's recorded-vocabulary fallback (if any) handles it.
                 raise OracleUnreachable(
                     f"HTTP 403 from {host} after {_HOST_SPEND[host]} request(s)"
-                )
-            if r.status_code in (429, 500, 502, 503):
-                last = f"HTTP {r.status_code}"
+                ) from exc
+            if exc.code in (429, 500, 502, 503):
+                last = f"HTTP {exc.code}"
                 time.sleep(min(60, 3 * 2 ** i))
                 continue
-            r.raise_for_status()
-            body = r.json()
+            raise
+        except OSError as e:
+            last = f"{type(e).__name__}: {e}"
+            time.sleep(min(60, 3 * 2 ** i))
+        else:
             _CACHE[url] = body
             if cacheable:
                 _DISK[url] = body
@@ -189,9 +199,6 @@ def _get_json(url: str, attempts: int = 6) -> dict:
                 if len(_DISK) % 50 == 0:
                     _disk_flush()
             return body
-        except OSError as e:
-            last = f"{type(e).__name__}: {e}"
-            time.sleep(min(60, 3 * 2 ** i))
     raise OracleUnreachable(f"{last} after {attempts} attempts")
 
 def season_types(league: str, season: int) -> Dict[str, dict]:

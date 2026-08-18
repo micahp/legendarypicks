@@ -9,6 +9,7 @@ import unittest
 import urllib.error
 from unittest import mock
 
+import paced_http
 import ingest_nba_stats
 from ingest_nba_stats import (
     NBAStatsIngestError,
@@ -236,7 +237,8 @@ class FetchPacingTest(unittest.TestCase):
     """
 
     def setUp(self):
-        ingest_nba_stats._last_request_at = 0.0
+        paced_http.reset_host_budget()
+        ingest_nba_stats._FETCH._last_request_at = 0.0
         self.slept = []
         patch_sleep = mock.patch.object(
             ingest_nba_stats.time, "sleep", self.slept.append
@@ -245,7 +247,12 @@ class FetchPacingTest(unittest.TestCase):
         self.addCleanup(patch_sleep.stop)
 
     def responses(self, *outcomes):
-        """Drive urlopen through a fixed sequence of raises/returns."""
+        """Drive urlopen through a fixed sequence of raises/returns.
+
+        Patching paced_http.urllib.request.urlopen: the request now goes
+        through the shared Fetcher, which calls urlopen from its own module
+        namespace. (ingest_nba_stats no longer imports urllib.request.)
+        """
         remaining = list(outcomes)
 
         def urlopen(_request, timeout=None):
@@ -257,7 +264,7 @@ class FetchPacingTest(unittest.TestCase):
             body.__enter__.return_value = body
             return body
 
-        return mock.patch.object(ingest_nba_stats.urllib.request, "urlopen", urlopen)
+        return mock.patch.object(paced_http.urllib.request, "urlopen", urlopen)
 
     def test_requests_are_spaced_by_the_minimum_interval(self):
         with self.responses({"ok": 1}, {"ok": 2}):

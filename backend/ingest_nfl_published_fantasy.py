@@ -43,7 +43,8 @@ import os
 import sqlite3
 import sys
 import time
-import urllib.request
+
+import paced_http
 
 BASE = ("https://lm-api-reads.fantasy.espn.com/apis/v3/games/ffl/seasons/"
         "{season}/segments/0/leaguedefaults/3?view=kona_player_info")
@@ -79,12 +80,15 @@ def fetch_slot(season: int, slot: int, limit: int = 400) -> list:
         "limit": limit,
         "sortPercOwned": {"sortAsc": False, "sortPriority": 1},
     }}
-    req = urllib.request.Request(BASE.format(season=season), headers={
-        "x-fantasy-filter": json.dumps(flt),
-        "User-Agent": "Mozilla/5.0",
-    })
-    with urllib.request.urlopen(req, timeout=90) as response:
-        return json.load(response).get("players") or []
+    # A Fetcher per call, not a module-level one: the x-fantasy-filter header
+    # differs per slot while BASE is the SAME url for both, and the shared
+    # client's memory cache keys on url — a shared instance would serve the
+    # first slot's body to the second. Same headers, timeout and no-retry
+    # posture as the raw call it replaces.
+    fetch = paced_http.Fetcher(
+        headers={"x-fantasy-filter": json.dumps(flt), "User-Agent": "Mozilla/5.0"},
+        timeout=90, retry_waits=())
+    return (fetch.fetch(BASE.format(season=season)).get("players") or [])
 
 
 def weekly_points(entry: dict, season: int) -> list[tuple[int, float]]:

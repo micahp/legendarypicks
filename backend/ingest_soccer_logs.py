@@ -39,8 +39,9 @@ import re
 import sqlite3
 import sys
 import time
-import urllib.request
 from typing import Dict, List, Optional, Tuple
+
+import paced_http
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
@@ -62,8 +63,14 @@ DB = os.environ.get("LP_DB_PATH") or os.path.join(
 CORE = "https://sports.core.api.espn.com/v2/sports"
 _HDRS = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/124 Safari/537.36"}
 _MIN_INTERVAL = float(os.environ.get("LP_INGEST_MIN_INTERVAL") or 0.5)
-_last_request = 0.0
-_CACHE: Dict[str, dict] = {}
+
+# The shared client replaces this module's hand-rolled _throttle/_last_request
+# and its _CACHE dict: pacing is _MIN_INTERVAL (same env knob), the memory
+# cache is the Fetcher's (same "immutable within a run" guarantee, 12h ttl),
+# and the retry ladder stays in the module so the 403 fail-fast posture is
+# decided here, not inherited.
+_FETCH = paced_http.Fetcher(min_interval=_MIN_INTERVAL, retry_waits=(),
+                            headers=_HDRS, timeout=30)
 
 # Everything ESPN publishes per player on a soccer summary, not the four we happened to
 # need first. Measured on the MLS summary for event 727308 (2026-08-16): all 40 players in
@@ -252,22 +259,16 @@ def _roster_players(summary: dict):
 
 
 def _get_core(url: str, attempts: int = 4) -> dict:
-    """Paced, cached fetch of one sports.core.api document."""
-    global _last_request
-    if url in _CACHE:
-        return _CACHE[url]
+    """Paced, cached fetch of one sports.core.api document.
+
+    The request goes through the shared Fetcher (pacing + per-host count +
+    spend log); the retry ladder stays here so a refusal is waited out only
+    as many times as this module decides.
+    """
     last = None
     for i in range(attempts):
-        gap = _MIN_INTERVAL - (time.monotonic() - _last_request)
-        if gap > 0:
-            time.sleep(gap)
         try:
-            _last_request = time.monotonic()
-            req = urllib.request.Request(url, headers=_HDRS)
-            with urllib.request.urlopen(req, timeout=30) as r:
-                body = json.load(r)
-            _CACHE[url] = body
-            return body
+            return _FETCH.json(url)
         except Exception as e:  # noqa: BLE001 - any failure is retried
             last = e
             time.sleep(min(60, 1.5 * (i + 1)))

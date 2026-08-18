@@ -16,16 +16,21 @@ Usage: python3 nfl_transactions_sync.py [--full] [--pages N]
 """
 import argparse
 import datetime as dt
-import json
 import os
 import sqlite3
 import sys
 import urllib.error
-import urllib.request
+
+import paced_http
 
 DB = os.environ.get("LP_DB_PATH") or os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "picks.db")
 _URL = "https://site.web.api.espn.com/apis/site/v2/sports/football/nfl/transactions"
 _HDRS = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/124 Safari/537.36"}
+
+# The shared client: same headers and timeout as the raw call it replaces, and
+# no retry ladder (the module's sync() catches a refusal and reports it — a
+# retry would spend more of the same per-host budget rediscovering it is gone).
+_FETCH = paced_http.Fetcher(headers=_HDRS, timeout=15, retry_waits=())
 
 
 def ensure_tables(con):
@@ -43,8 +48,7 @@ def ensure_tables(con):
 
 def _fetch_page(page: int) -> dict:
     url = f"{_URL}?page={page}"
-    with urllib.request.urlopen(urllib.request.Request(url, headers=_HDRS), timeout=15) as r:
-        return json.loads(r.read().decode())
+    return _FETCH.fetch(url)
 
 
 def sync(con, pages: int = 3, full: bool = False) -> dict:

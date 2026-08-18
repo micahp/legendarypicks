@@ -29,7 +29,8 @@ Usage: python3 ingest_nfl_adp.py
 import json
 import os
 import sqlite3
-import urllib.request
+
+import paced_http
 
 URL = ("https://lm-api-reads.fantasy.espn.com/apis/v3/games/ffl/seasons/2026/players"
        "?scoringPeriodId=0&view=kona_player_info")
@@ -48,6 +49,12 @@ _EXPECTED_DEF_COUNT = 32
 # floor the response is truncated (the API silently pages) and writing a partial
 # snapshot would be worse than writing nothing — fail closed.
 _MIN_UNIVERSE = 10000
+
+# The shared client, with the raw call's exact headers (x-fantasy-filter, no
+# UA) and 120s timeout. No retry ladder: the module fails closed on the first
+# refusal, and a retry would spend more of the same per-host budget
+# rediscovering it is gone.
+_FETCH = paced_http.Fetcher(headers=HEADERS, timeout=120, retry_waits=())
 
 # ESPN defaultPositionId → the vocabulary this repo stores (players.position).
 # Positions ESPN publishes but this repo never drafted (P, DT, DE, LB, CB, S) are
@@ -81,10 +88,7 @@ DB = os.environ.get("LP_DB_PATH") or os.path.join(
 
 def _fetch_all() -> list:
     """Fetch the full player universe in one call (limit 20000, no ownership filter)."""
-    req = urllib.request.Request(URL, headers=HEADERS)
-    with urllib.request.urlopen(req, timeout=120) as r:
-        body = r.read().decode("utf-8")
-    data = json.loads(body)
+    data = _FETCH.fetch(URL)
     if len(data) < _MIN_UNIVERSE:
         raise RuntimeError(
             f"player feed returned {len(data)} entities (< {_MIN_UNIVERSE}): "
@@ -95,8 +99,7 @@ def _fetch_all() -> list:
 
 def _build_pro_team_map() -> dict[int, str]:
     """Fetch the published proTeams endpoint.  Fails closed — raises on error."""
-    with urllib.request.urlopen(PROTEAMS_URL, timeout=120) as r:
-        pro_data = json.loads(r.read().decode("utf-8"))
+    pro_data = _FETCH.fetch(PROTEAMS_URL)
     pro_team_map: dict[int, str] = {}
     for t in pro_data.get("settings", {}).get("proTeams", []):
         tid = t.get("id")

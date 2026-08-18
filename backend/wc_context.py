@@ -29,10 +29,12 @@ _SCOREBOARD = ("https://site.api.espn.com/apis/site/v2/sports/soccer/"
 def _forms(date, game_id):
     """{abbr: form-string} from the scoreboard (summary endpoint omits form)."""
     try:
-        req = urllib.request.Request(_SCOREBOARD.format(date=date),
-                                     headers={"User-Agent": "Mozilla/5.0"})
-        with urllib.request.urlopen(req, timeout=10) as r:
-            d = json.load(r)
+        # Serving path: espn_client's shared fetcher has the serving posture
+        # (no pacing, no retry, refuse rather than sleep), so this call can
+        # never sit through a cooldown inside a page load; any failure —
+        # including a spent budget — degrades to the empty form map the raw
+        # call degraded to.
+        d = espn._get(_SCOREBOARD.format(date=date), ttl=30)
         for e in d.get("events", []):
             if str(e.get("id")) == str(game_id):
                 out = {}

@@ -29,7 +29,8 @@ import json
 import os
 import sqlite3
 import sys
-import urllib.request
+
+import paced_http
 
 from ppr_scoring import STAT_IDS, normalize_stats, project_ppr
 
@@ -55,6 +56,15 @@ _EXPECTED_DEF_COUNT = 32
 DB = os.environ.get("LP_DB_PATH") or os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "data", "picks.db"
 )
+
+# The shared client, with the 60s timeout and no retry ladder of the raw calls
+# it replaces. The UA is preserved exactly: both raw calls were bare
+# `urlopen(url)` with no Request, so the effective header was urllib's own
+# default, and this box runs Python 3.8 — `Python-urllib/3.8`. Fetcher would
+# otherwise substitute the repo's Chrome UA, which is a behaviour change on
+# endpoints whose UA tolerance is unmeasured.
+_FETCH = paced_http.Fetcher(timeout=60, retry_waits=(),
+                            headers={"User-Agent": "Python-urllib/3.8"})
 
 
 def _load_snapshot() -> tuple[list, str]:
@@ -191,15 +201,19 @@ def _qbr_values(payload: dict) -> dict[str, dict[str, float | None]]:
 
 
 def _fetch_qbr_values() -> tuple[dict[str, dict[str, float | None]], str]:
-    with urllib.request.urlopen(QBR_URL, timeout=60) as response:
-        raw = response.read()
-    payload = json.loads(raw.decode("utf-8"))
+    # fetch_text, not json(): the qbr_payload_checksum contract is a hash of
+    # the RAW response bytes. fetch_text returns the decoded body, and a
+    # valid-UTF-8 response round-trips decode->encode byte-for-byte (the old
+    # code's strict decode would already have failed on anything else), so
+    # the stored checksum is unchanged.
+    raw_text = _FETCH.fetch_text(QBR_URL)
+    raw = raw_text.encode("utf-8")
+    payload = json.loads(raw_text)
     return _qbr_values(payload), hashlib.sha256(raw).hexdigest()
 
 
 def _build_pro_team_map() -> dict[int, str]:
-    with urllib.request.urlopen(PROTEAMS_URL, timeout=60) as r:
-        pro_data = json.loads(r.read().decode("utf-8"))
+    pro_data = _FETCH.fetch(PROTEAMS_URL)
     pro_team_map: dict[int, str] = {}
     for t in pro_data.get("settings", {}).get("proTeams", []):
         tid = t.get("id")

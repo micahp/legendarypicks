@@ -5,8 +5,9 @@ and upsert into the team_game_stats table. Idempotent.
 
 Usage: cd backend && venv/bin/python backfill_team_stats.py [--days N]
 """
-import sys, os, sqlite3, datetime as dt, time, json
-import urllib.request
+import sys, os, sqlite3, datetime as dt, json
+
+import paced_http
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import espn_client as espn
@@ -14,19 +15,13 @@ import espn_client as espn
 DB = os.environ.get("LP_DB_PATH") or os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "picks.db")
 _SITE = "https://site.api.espn.com/apis/site/v2/sports/{path}"
 UA = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/124.0.0.0 Safari/537.36"
-CACHE_TTL = 30
 
-_cache = {}
+# The shared client keeps the raw call's headers and timeout; the module's own
+# ttl-based _cache dict moves into the Fetcher's memory cache (json(url, ttl)).
+_FETCH = paced_http.Fetcher(headers={"User-Agent": UA}, timeout=15, retry_waits=())
 
 def _get(url, ttl=30):
-    now = time.time()
-    if url in _cache and _cache[url][0] > now:
-        return _cache[url][1]
-    req = urllib.request.Request(url, headers={"User-Agent": UA})
-    with urllib.request.urlopen(req, timeout=15) as r:
-        data = json.loads(r.read().decode())
-    _cache[url] = (now + ttl, data)
-    return data
+    return _FETCH.json(url, ttl=ttl)
 
 
 def _num(x):
