@@ -665,6 +665,22 @@ def get_games(league: str, date: Optional[str] = Query(None, description="YYYY-M
         except Exception as exc:
             games = _games_from_db(lg, requested_date)
             data_source = "team_game_results" if games else "unavailable"
+            if not games:
+                # Third rung. We persist FINISHED games, so on the day itself
+                # the DB has nothing and the board goes blank — which is exactly
+                # when ESPN's per-host request COUNT runs out. Bovada is a
+                # different host with the same slate, and its per-event endpoint
+                # carries score and clock. It never invents one: a game it
+                # cannot vouch for arrives with score None and renders as a dash.
+                try:
+                    import scoreboard_fallback
+                    games = scoreboard_fallback.bovada_games(lg, requested_date)
+                    if games:
+                        data_source = "bovada"
+                except Exception as fallback_exc:
+                    print(f"[scores] bovada fallback failed league={lg}: "
+                          f"{type(fallback_exc).__name__}: {fallback_exc}")
+                    games = []
             print(
                 f"[scores] publisher unavailable league={lg} date={requested_date} "
                 f"error={type(exc).__name__}: {exc}; "
