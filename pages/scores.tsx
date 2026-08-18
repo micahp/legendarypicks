@@ -90,13 +90,13 @@ const LEAGUES = ['All', 'NBA', 'MLB', 'NHL', 'NFL', 'Leagues Cup', 'MLS', 'NCAAF
 // API keys for the board's league fan-out — shared by the games load and the
 // W3 schedule-dates navigation so a day change asks the same leagues it renders.
 const LEAGUE_KEYS = ['nba', 'mlb', 'nhl', 'nfl', 'lcup', 'mls', 'ncaaf', 'atp', 'wta', 'cod', 'ufc', 'wc']
-// ...but NOT for schedule-dates. `cod` is breakingpoint.gg, not ESPN, and the
-// endpoint answers 404 for any league it does not carry. Fanning out over
-// LEAGUE_KEYS therefore fired one guaranteed-404 request on every page load
-// AND every arrow click, logged an error to the console each time, and made
-// the day change wait on it: the click resolves a Promise.all, so the slowest
-// leg gates the whole navigation. Measured 2026-08-18.
-const SCHEDULE_DATE_KEYS = LEAGUE_KEYS.filter(key => key !== 'cod')
+// `cod` is breakingpoint.gg, not ESPN. It used to 404 here on every page load
+// and every arrow click, so the board could never step to a COD day even when
+// one existed. The backend now serves cod/schedule-dates from the store like
+// any other league (the ingest captures breakingpoint's whole schedule in one
+// request), so it is back in the fan-out and answers honestly: no days held
+// means no candidates, which is different from a broken route.
+const SCHEDULE_DATE_KEYS = LEAGUE_KEYS
 // The visible filter label → API key. Filter names are user-facing; keys are not.
 function leagueKeyFor(filter: string): string {
   return filter === 'Call of Duty' ? 'cod'
@@ -129,7 +129,7 @@ export default function ScoresPage() {
     // on the anchor, honestly showing what the anchor has.
     const selected = leagueFilter === 'All'
       ? SCHEDULE_DATE_KEYS
-      : [leagueKeyFor(leagueFilter)].filter(key => key !== 'cod')
+      : [leagueKeyFor(leagueFilter)]
     if (!selected.length) return
     SportsService.getNeighbourGameDate(selected, date, delta as -1 | 1)
       .then((target) => {

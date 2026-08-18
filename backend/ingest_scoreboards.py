@@ -226,6 +226,66 @@ def _fetch_range_chunk(league, chunk, verbose=True):
     return written, None
 
 
+# ── Call of Duty ──────────────────────────────────────────────────────────────
+#
+# COD is on the board but it is NOT an ESPN league: it comes from
+# breakingpoint.gg, so it is absent from BOARD_LEAGUES and never appears in
+# `league_activity`. The consequence was that nothing ever captured it, and
+# because the day arrows discover days out of `scoreboard_snapshots`, the board
+# could never navigate TO a COD day. The frontend used to ask ESPN for
+# `cod/schedule-dates` and take a 404 on every click for its trouble.
+#
+# The store does not care who published a row. `get_cod_matches()` with no date
+# returns the WHOLE schedule in one request, so a single call captures every day
+# breakingpoint knows about, past and future, and the arrows and the finished-day
+# rung then work for COD through exactly the paths the ESPN leagues use.
+#
+# Bucketed by the UTC date, deliberately: `get_cod_matches(date_str)` filters on
+# the UTC date, so keying the store any other way would put a match on a day the
+# handler would not look for it. Two rulers on one league is the defect this
+# repo keeps re-finding.
+COD_SOURCE = "breakingpoint"
+
+
+def _cod_by_day(matches):
+    """Bucket COD matches by their UTC date. Returns {day_iso: [match, ...]}."""
+    by_day = {}
+    for match in matches:
+        stamp = str(match.get("date") or "")
+        if len(stamp) < 10:
+            continue
+        by_day.setdefault(stamp[:10], []).append(match)
+    return by_day
+
+
+def refresh_cod(verbose=True):
+    """Capture every day breakingpoint publishes, in one request.
+
+    Returns (days_written, error). An empty schedule is NOT written: COD is out
+    of season for months at a time, and writing empty slates for a whole
+    calendar would retire those days permanently (`needs_refresh` treats a
+    finished empty day as final). Absent evidence is not a zero.
+    """
+    try:
+        import breakingpoint_client
+        matches = breakingpoint_client.get_cod_matches()
+    except Exception as exc:
+        return 0, f"{type(exc).__name__}: {exc}"
+
+    if not matches:
+        if verbose:
+            print("  cod    breakingpoint published no matches; nothing stored")
+        return 0, None
+
+    written = 0
+    for day, slate in sorted(_cod_by_day(matches).items()):
+        scoreboard_store.save("cod", day, slate, source=COD_SOURCE)
+        written += 1
+    if verbose:
+        print(f"  cod    {len(matches)} matches across {written} day(s), 1 request")
+    return written, None
+
+
 def _refresh(league, date, verbose=True):
     """One (league, date): fetch, store the slate, record when the league plays.
 
@@ -512,6 +572,14 @@ def main(argv=None):
         leagues = [l.strip().lower() for l in args.leagues.split(",") if l.strip()]
         status = run_schedule(leagues, _dates(anchor), dry_run=args.dry_run,
                               verbose=not args.quiet)
+        # COD rides the same timer and is deliberately outside run_schedule:
+        # it is not an ESPN league, so it has no calendar to gate on and it
+        # spends none of the ESPN budget. One request captures every day.
+        if not args.dry_run and "cod" not in [l.lower() for l in leagues]:
+            _, cod_error = refresh_cod(verbose=not args.quiet)
+            if cod_error:
+                print(f"  FAIL cod: {cod_error}")
+                status = 1
     print(f"[scoreboards] {time.time() - started:.1f}s")
     return status
 

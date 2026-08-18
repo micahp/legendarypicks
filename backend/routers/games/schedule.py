@@ -8,6 +8,13 @@ from _core import *
 from . import router
 
 
+# Board leagues that no ESPN host carries, so `espn.LEAGUES` does not list them
+# and `_schedule_candidates` can never answer for them. They are served from the
+# store alone: if we hold no days for one, it answers "no candidates", which is
+# honest, rather than 404 which reads to the client as a broken route.
+_LOCAL_ONLY_LEAGUES = {"cod"}
+
+
 def _db():
     """Resolve `routers.games._db` at call time (see scoreboard.py `_db`)."""
     from routers.games import _db as _pkg_db
@@ -166,24 +173,27 @@ def _local_event_starts(league: str, anchor: dt.date, direction: str):
         low, high = anchor - horizon, anchor + dt.timedelta(days=1)
     else:
         low, high = anchor - dt.timedelta(days=1), anchor + horizon
-    try:
-        with closing(_db()) as con:
-            rows = con.execute(
-                "SELECT start_time FROM scoreboard_snapshots"
-                "  WHERE league=? AND start_time IS NOT NULL"
-                "        AND substr(start_time,1,10) BETWEEN ? AND ?"
-                " UNION"
-                " SELECT start_time FROM prop_games"
-                "  WHERE league=? AND start_time IS NOT NULL"
-                "        AND substr(start_time,1,10) BETWEEN ? AND ?",
-                (league, low.isoformat(), high.isoformat(),
-                 league, low.isoformat(), high.isoformat()),
-            ).fetchall()
-    except sqlite3.Error as exc:
-        print(f"[schedule-dates] local starts unavailable league={league}: "
-              f"{type(exc).__name__}: {exc}")
-        return []
-    return sorted({str(row[0]) for row in rows if row[0]})
+    # Each source is queried SEPARATELY, not UNIONed. A single statement across
+    # both means one unreadable table loses the other as well: the query raises
+    # and the arrow goes dead in that direction with days sitting in the table
+    # that did answer. Found 2026-08-18 against a database with no `prop_games`,
+    # where COD's stored days were discarded because of a table COD never uses.
+    # Partial evidence is still evidence; only "no source answered" is empty.
+    starts = set()
+    for table in ("scoreboard_snapshots", "prop_games"):
+        try:
+            with closing(_db()) as con:
+                rows = con.execute(
+                    f"SELECT start_time FROM {table}"
+                    "  WHERE league=? AND start_time IS NOT NULL"
+                    "        AND substr(start_time,1,10) BETWEEN ? AND ?",
+                    (league, low.isoformat(), high.isoformat()),
+                ).fetchall()
+            starts.update(str(row[0]) for row in rows if row[0])
+        except sqlite3.Error as exc:
+            print(f"[schedule-dates] {table} unreadable league={league}: "
+                  f"{type(exc).__name__}: {exc}")
+    return sorted(starts)
 
 
 def _schedule_candidates(league: str, anchor: dt.date, direction: str):
@@ -219,7 +229,14 @@ def get_schedule_dates(
     future event exists in the verified horizon, the most recent past date.
     """
     lg = league.lower()
-    if lg not in espn.LEAGUES:
+    # NON-ESPN LEAGUES ON THE BOARD STILL NEED ARROWS. `espn.LEAGUES` answers
+    # "can we ask ESPN about this", which is not the same question as "can the
+    # board navigate to a day of it". COD comes from breakingpoint.gg, so it
+    # failed this check and 404'd on every arrow click and every page load --
+    # meaning the board could never step to a COD day even when one existed.
+    # A league we hold days for is answerable from the store, whoever published
+    # it; only a league we can neither hold nor ask about is a 404.
+    if lg not in espn.LEAGUES and lg not in _LOCAL_ONLY_LEAGUES:
         raise HTTPException(404, f"unsupported league {lg!r}")
     anchor_date = _parse_anchor_date(anchor)
 
@@ -242,17 +259,20 @@ def get_schedule_dates(
     # later click for nothing.
     past_starts = _cap_schedule_candidates(local_past, anchor_date, "past")
 
-    if local_future and past_starts:
+    # A local-only league has no publisher to fall through TO, so what we hold
+    # is the whole answer, empty or not. Falling through would call ESPN with a
+    # league it does not carry, log a failure, and return the same thing.
+    if lg in _LOCAL_ONLY_LEAGUES or (local_future and past_starts):
         return JSONResponse(
             content={
                 "contract": _SCHEDULE_DATES_CONTRACT,
                 "league": lg,
                 "anchor_date": anchor_date.isoformat(),
                 "event_start_timezone": "UTC",
-                "available": True,
+                "available": bool(local_future or past_starts),
                 "source": "local",
                 "future_event_starts": _cap_schedule_candidates(
-                    local_future, anchor_date, "future"),
+                    local_future, anchor_date, "future") if local_future else [],
                 "past_event_starts": past_starts,
                 "search": {"future": [], "past": [], "max_horizon_days": 370},
             },
