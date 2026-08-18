@@ -1,4 +1,4 @@
-# Backlog â€” holes in the app
+# Backlog: holes in the app
 
 **Measured 2026-08-18** against `backend/data/picks.db` (prod), `backend/data/picks.dev.db`
 (dev) and the live prod API. Zero ESPN requests spent.
@@ -32,7 +32,7 @@ Severity: **P0** a user sees it wrong today, or a shipped feature is invisible Â
 
 ---
 
-## P0 â€” wrong or invisible in production today
+## P0: wrong or invisible in production today
 
 | # | defect | evidence | fix |
 |---|---|---|---|
@@ -49,7 +49,7 @@ Severity: **P0** a user sees it wrong today, or a shipped feature is invisible Â
 
 ---
 
-## P1 â€” a league is materially incomplete
+## P1: a league is materially incomplete
 
 | # | defect | evidence | fix |
 |---|---|---|---|
@@ -65,7 +65,7 @@ Severity: **P0** a user sees it wrong today, or a shipped feature is invisible Â
 
 ---
 
-## P2 â€” integrity
+## P2: integrity
 
 | # | defect | evidence | fix |
 |---|---|---|---|
@@ -83,7 +83,7 @@ Severity: **P0** a user sees it wrong today, or a shipped feature is invisible Â
 
 ---
 
-## P3 â€” cleanup
+## P3: cleanup
 
 | # | defect | evidence | fix |
 |---|---|---|---|
@@ -122,7 +122,7 @@ Kept so they stop being re-raised. Old numbers are shown so the correction is le
 
 ---
 
-## Not defects â€” recorded so they stop being re-raised
+## Not defects: recorded so they stop being re-raised
 
 - **NFL, NBA and NHL have no props in August.** Out of season. NCAAF's board opens Aug 29.
 - **NCAAF is hidden by decision** (Micah, 2026-08-11), not by absence. It is OFFERED on both
