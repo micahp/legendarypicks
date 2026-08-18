@@ -42,6 +42,7 @@ skill. A job whose cost nobody can see is one nobody can size later.
 """
 import argparse
 import datetime as dt
+import fcntl
 import os
 import sys
 import time
@@ -75,8 +76,34 @@ STORY_DRAIN_LIVE = 45
 
 
 def _dates(today=None):
+    """Yesterday, today, tomorrow.
+
+    Yesterday is here because a day does not finish at midnight UTC. Late games
+    are still in flight when the date rolls over, so a window of today-and-
+    tomorrow captures that slate mid-game and then, by the finished-day rule,
+    never looks at it again -- freezing a live score as the permanent record.
+    Yesterday costs one more request per league per day and then retires itself
+    the moment `needs_refresh` sees every game final.
+    """
     today = today or dt.date.today()
-    return [today.isoformat(), (today + dt.timedelta(days=1)).isoformat()]
+    return [(today - dt.timedelta(days=1)).isoformat(),
+            today.isoformat(),
+            (today + dt.timedelta(days=1)).isoformat()]
+
+
+def _past_dates(days, today=None):
+    """The finished days to capture, oldest first.
+
+    The serving path never asks a publisher about a day that is over: its result
+    cannot change, so a request per page view buys a fact that is already fixed.
+    That rule only works if the day was captured while it was current -- which is
+    true from here on, and false for every day before this job existed. This is
+    the one-time catch-up, and it is a JOB, not a page load: bounded, paced,
+    declared, and run once per missing day rather than once per viewer.
+    """
+    today = today or dt.date.today()
+    return [(today - dt.timedelta(days=offset)).isoformat()
+            for offset in range(days, 0, -1)]
 
 
 def _refresh(league, date, verbose=True):
@@ -212,12 +239,42 @@ def run_live(verbose=True):
     return 1 if failures else 0
 
 
+_LOCK_PATH = os.environ.get("LP_SCOREBOARD_LOCK", "/tmp/lp-scoreboards.lock")
+
+
+def _only_one_run(path=_LOCK_PATH):
+    """Hold an exclusive lock, or refuse to start. Returns the open file or None.
+
+    THE BUDGET IS PER HOST, BUT THE COUNTER IS PER PROCESS. Two copies of this
+    job each think they have spent 20 requests when between them they have
+    spent 40, so the declared ceiling stops meaning anything. Measured
+    2026-08-18: a backfill still running plus a second one started on top of it
+    walked ESPN's per-host count until all three ESPN hosts refused this box --
+    site.web.api, site.api and sports.core.api, none of which had been refusing
+    an hour earlier. Two timers plus a hand-run catch-up is exactly how that
+    happens, so the second one now declines instead of overlapping.
+    """
+    handle = open(path, "w")
+    try:
+        fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except OSError:
+        handle.close()
+        return None
+    handle.write(f"{os.getpid()}\n")
+    handle.flush()
+    return handle
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--live", action="store_true",
                         help="refresh only leagues holding a game that has started")
     parser.add_argument("--leagues", default=",".join(BOARD_LEAGUES))
     parser.add_argument("--date", help="anchor day (default today); tomorrow is added")
+    parser.add_argument("--backfill", type=int, metavar="DAYS",
+                        help="capture the last DAYS finished days, then stop. "
+                             "One-time catch-up for days that passed before this "
+                             "job existed; the serving path never asks about them.")
     parser.add_argument("--dry-run", action="store_true",
                         help="print what would be asked, request nothing")
     parser.add_argument("--quiet", action="store_true")
@@ -225,6 +282,12 @@ def main(argv=None):
 
     # Batch settings, opted into here rather than in the client, because the
     # serving path must never inherit them: a page load must not pause.
+    lock = _only_one_run()
+    if lock is None:
+        print("[scoreboards] another scoreboard run holds the lock; "
+              "declining rather than doubling the per-host spend")
+        return 0
+
     espn.set_min_interval(MIN_INTERVAL)
     espn.set_host_budget(HOST_BUDGET)
     # This job has nobody waiting on it, so it is allowed to wait out a spent
@@ -235,7 +298,15 @@ def main(argv=None):
     league_activity.init()
 
     started = time.time()
-    if args.live:
+    if args.backfill:
+        anchor = dt.date.fromisoformat(args.date) if args.date else None
+        leagues = [l.strip().lower() for l in args.leagues.split(",") if l.strip()]
+        dates = _past_dates(args.backfill, anchor)
+        print(f"[scoreboards] backfill {dates[0]} to {dates[-1]} "
+              f"({len(dates)} days x {len(leagues)} leagues, before gating)")
+        status = run_schedule(leagues, dates, dry_run=args.dry_run,
+                              verbose=not args.quiet)
+    elif args.live:
         status = run_live(verbose=not args.quiet)
     else:
         anchor = dt.date.fromisoformat(args.date) if args.date else None

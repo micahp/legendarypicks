@@ -408,3 +408,95 @@ class TestDayNavigation:
         con.commit()
         con.close()
         assert _local_event_starts("mlb", dt.date(2026, 8, 18), "past") == []
+
+
+class TestThePastIsNeverAsked:
+    """A day that is over cannot change, so it is never worth a request.
+
+    Anything we do not already hold for a finished day is a gap in our own
+    capture, and asking a publisher about it spends a request per page view on a
+    fact that is already fixed.
+    """
+
+    def _no_publisher(self, monkeypatch):
+        import espn_client
+
+        def _refuse(*args, **kwargs):
+            raise AssertionError("the past must never reach the publisher")
+
+        monkeypatch.setattr(espn_client, "games", _refuse)
+        monkeypatch.setattr(espn_client, "schedule_event_starts", _refuse)
+
+    def test_a_finished_day_we_do_not_hold_says_so_instead_of_asking(self, monkeypatch):
+        from fastapi.testclient import TestClient
+        import sports_service
+        self._no_publisher(monkeypatch)
+        client = TestClient(sports_service.app)
+        yesterday = (dt.date.today() - dt.timedelta(days=3)).isoformat()
+        response = client.get(f"/api/mlb/games?date={yesterday}")
+        assert response.status_code == 200
+        assert response.json() == []
+        assert response.headers.get("X-LP-Data-Source") == "unavailable"
+
+    def test_a_finished_day_we_do_hold_is_served_from_the_store(self, monkeypatch):
+        from fastapi.testclient import TestClient
+        import sports_service
+        self._no_publisher(monkeypatch)
+        past = (dt.date.today() - dt.timedelta(days=4)).isoformat()
+        scoreboard_store.save("nhl", past, [
+            {"game_id": "9", "date": f"{past}T23:00:00+00:00", "state": "post",
+             "home": {"abbrev": "AAA", "score": 3}, "away": {"abbrev": "BBB", "score": 2}}])
+        client = TestClient(sports_service.app)
+        response = client.get(f"/api/nhl/games?date={past}")
+        assert response.status_code == 200
+        assert len(response.json()) == 1
+        assert response.headers.get("X-LP-Data-Source") == "scoreboard_snapshots"
+
+
+class TestOnlyOneRunSpendsTheBudget:
+    """The per-host budget is shared; the counter that guards it is not.
+
+    Each process keeps its own `paced_http._host_spend`, so two copies of the
+    ingest each stop at HOST_BUDGET while together spending twice it. Measured
+    2026-08-18: a backfill still running plus a second one started on top of it
+    took all three ESPN hosts from answering to refusing this box. A declared
+    ceiling that two processes can each spend is not a ceiling.
+    """
+
+    def test_the_second_run_declines_instead_of_overlapping(self):
+        import tempfile
+        import ingest_scoreboards
+        with tempfile.NamedTemporaryFile(suffix=".lock") as tmp:
+            first = ingest_scoreboards._only_one_run(tmp.name)
+            assert first is not None, "the first run must be allowed to start"
+            try:
+                second = ingest_scoreboards._only_one_run(tmp.name)
+                assert second is None, \
+                    "a second concurrent run must decline, not double the spend"
+            finally:
+                first.close()
+
+    def test_the_lock_is_released_so_the_next_timer_tick_runs(self):
+        """A lock that outlives its holder is an outage, not a safeguard."""
+        import tempfile
+        import ingest_scoreboards
+        with tempfile.NamedTemporaryFile(suffix=".lock") as tmp:
+            ingest_scoreboards._only_one_run(tmp.name).close()
+            again = ingest_scoreboards._only_one_run(tmp.name)
+            assert again is not None
+            again.close()
+
+
+class TestAnEmptyFinishedDayIsNotReasked:
+    def test_a_past_day_that_published_nothing_is_final(self):
+        """Backoff is for a slate that might still change. A finished one cannot.
+
+        Without this, every viewer of an old empty day re-triggered the fetch
+        once the three-hour backoff lapsed -- a request per viewer for an
+        answer that was fixed the moment the day ended.
+        """
+        import scoreboard_store
+        scoreboard_store.save("nba", "2026-08-01", [], source="espn")
+        wanted, reason = scoreboard_store.needs_refresh("nba", "2026-08-01")
+        assert not wanted, reason
+        assert "over" in reason
