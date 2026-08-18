@@ -83,6 +83,12 @@ UFC_CALENDAR = {
 
 @pytest.fixture(autouse=True)
 def clean_db():
+    # `conftest.py` restores the SESSION's LP_DB_PATH before every test, and
+    # these modules resolve the path per call -- so without this line the suite
+    # is green when run alone and red under `LP_DB_PATH=data/picks.dev.db`,
+    # reading the real dev database that the timers are writing to. Setting it
+    # here, after conftest has had its turn, is what makes both runs the same.
+    os.environ["LP_DB_PATH"] = _DB_PATH
     import sqlite3
     con = sqlite3.connect(_DB_PATH)
     con.executescript("DROP TABLE IF EXISTS league_activity;"
