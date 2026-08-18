@@ -1,0 +1,16 @@
+[Unit]
+# The board used to call ESPN on every page view: 22 upstream requests for one
+# cold load, into a publisher whose limit is a request COUNT per host. This is
+# the whole of our scheduled scoreboard spend, and it does not move when traffic
+# does. Only leagues ESPN's own calendar says are playing are asked, so the real
+# cost is well under the ceiling: 8 of 22 pairs on 2026-08-18.
+Description=Refresh scoreboard slates every 10 minutes
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=10min
+Persistent=true
+Unit=legendarypicks-scoreboards.service
+
+[Install]
+WantedBy=timers.target

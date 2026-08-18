@@ -1,0 +1,15 @@
+[Unit]
+# Only games that have started and are not final. Nothing under way costs zero
+# requests, so this is silent all night and spends one request per live league
+# per minute during a slate -- instead of 22 per tick for eleven leagues, which
+# is what an open browser tab used to cost.
+Description=Re-read scoreboards for games under way — PROD
+
+[Timer]
+OnBootSec=3min
+OnUnitActiveSec=1min
+Persistent=false
+Unit=legendarypicks-scoreboards-live-prod.service
+
+[Install]
+WantedBy=timers.target
