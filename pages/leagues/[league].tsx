@@ -31,6 +31,8 @@ import {
   localToday,
 } from '../../components/Leagues/presentation'
 import { useCoverage } from '../../components/Leagues/hooks/useCoverage'
+import NewsTab from '../../components/Leagues/NewsTab'
+import { useNewsData } from '../../components/Leagues/hooks/useNewsData'
 import type { HubTab } from '../../components/Leagues/types'
 
 const TAB_LABELS: Record<HubTab, string> = {
@@ -38,6 +40,7 @@ const TAB_LABELS: Record<HubTab, string> = {
   standings: 'Standings',
   stats: 'Stats',
   schedule: 'Schedule',
+  news: 'News',
   rankings: 'Rankings',
   predict: 'Predict',
 }
@@ -46,6 +49,9 @@ export default function LeagueHubPage() {
   const route = useLeagueRouteState()
   const isNFL = route.league === 'nfl'
   const standings = useStandingsData(route.league, route.isWorldCup, route.isUFC)
+  // Fetched only while the tab is open — the hub already loads standings,
+  // leaders and team aggregates on mount without anyone asking for them.
+  const news = useNewsData(route.league, route.activeTab === 'news')
   const stats = useStatsData({
     league: route.league,
     activeTab: route.activeTab,
@@ -272,6 +278,15 @@ export default function LeagueHubPage() {
             onGoNext={handleGoNext}
             onSelectDate={route.selectScheduleDate}
             today={localToday}
+          />
+        )}
+
+        {route.activeTab === 'news' && (
+          <NewsTab
+            leagueName={leagueName}
+            news={news.news}
+            loading={news.loading}
+            error={news.error}
           />
         )}
 

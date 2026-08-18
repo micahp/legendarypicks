@@ -33,13 +33,15 @@ export function useLeagueRouteState() {
   // being a hub. Everything below that branches on `isWorldCup` is left in place —
   // this is the one line that decides whether anyone can get there.
   const offerable = isUFC || supportsTeamStats
+  // News sits after Schedule everywhere it is offered. It is not offered on the
+  // World Cup (dormant hub, no feed) or UFC (its own rankings/predict shape).
   const validTabs: HubTab[] = isUFC
     ? ['rankings', 'schedule', 'predict']
     : isWorldCup
       ? ['standings', 'stats', 'schedule']
       : isNFL
-        ? ['camp', 'standings', 'stats', 'schedule']
-        : ['standings', 'stats', 'schedule']
+        ? ['camp', 'standings', 'stats', 'schedule', 'news']
+        : ['standings', 'stats', 'schedule', 'news']
 
   const [activeTab, setActiveTab] = useState<HubTab>('standings')
   const [scheduleDate, setScheduleDate] = useState(() => localToday())
