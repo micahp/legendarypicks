@@ -1,5 +1,81 @@
 # Changelog
 
+## v0.8.2 — 2026-08-18
+
+### The scoreboard stops calling a publisher to draw a page
+
+- **The board stalled itself for 60 seconds at a time, and it was never ESPN.**
+  `paced_http` answers an exhausted per-host count with `time.sleep(60)`, which is a batch
+  job's behaviour running inside the serving process. Measured on prod: 46 minutes of uptime
+  with almost no traffic produced **46 sixty-second pauses**, 38 of them inside a seven
+  second window, because the budget check is unguarded and every caller in flight sleeps its
+  own minute once the process crosses the ceiling. A cold board cost 22 ESPN requests, so the
+  ceiling arrived about every five page loads. A request handler now **refuses** a spent
+  budget and degrades down the ladder it already had; only a batch job waits.
+- **Page loads no longer call a publisher at all.** `scoreboard_snapshots` holds the slate,
+  fed by two timers: a schedule run every ten minutes and a live run every minute that
+  refreshes only the leagues holding a game that has started and is not final. Nothing under
+  way costs nothing. Measured through the handler: 22 calls, 355ms, 85 games, **zero**
+  upstream requests, against 22 upstream requests and a stall before.
+- **We only ask about leagues that are playing.** `league_activity` reads
+  `leagues[0].calendar` out of payloads we already fetch, so it costs no extra request.
+  Today that took 22 league/date pairs to 8. Nothing is hand-written: Leagues Cup looks
+  finished on its league phase and is still asked, because ESPN publishes quarterfinals
+  through Sep 1. And a `day` calendar can never say no, so day leagues gate on the season
+  window only, MLB's own calendar omits a day it played 15 games.
+- **Past days work.** `team_game_results` holds NFL only, so every other league had no
+  finished-day rung and served a blank board. A finished day we have never captured is now
+  fetched once and stored, so the second view is a SQLite read. One request per league-day
+  for the life of that day, not one per viewer.
+- **The day arrows work.** They asked ESPN on every click, so a refusal froze the board
+  silently and the board would not step back past Sunday while UFC 330 sat in our own
+  database. They answer from the store first. Arrow latency **0.7 to 3.1 seconds down to
+  0.33 to 0.71**, after two more defects: `cod` was in the schedule-dates fan-out and 404s
+  because it is not an ESPN league, and the click awaited `Promise.all` so the slowest league
+  decided when the day changed.
+- **A UFC card is named, not just its segment.** ESPN publishes the week on `name` and drops
+  it from `shortName`, and the row's `card_segment` was beating its `event`, so three
+  different Contender Series cards in one month all read "MAIN CARD" and the board never said
+  which one. Now `Dana White's Contender Series: Season 10, Week 2 · Main Card`.
+- **Call of Duty is reachable.** It is breakingpoint.gg, not ESPN, so nothing captured it and
+  `schedule-dates` 404'd it: the board could never navigate to a COD day even when one
+  existed. The ingest captures breakingpoint's whole schedule in one request. First capture
+  found 15 matches across Aug 6 to 9, the Esports World Cup grand finals.
+- **A backfill fetches a date range**, one request for a run of consecutive missing days
+  instead of one per day, chunked below ESPN's measured 100-event response cap and split when
+  a chunk comes back at the ceiling.
+
+### Two ingests could spend one budget
+
+- `paced_http._host_spend` is per process, so a declared ceiling of 60 means 120 across two
+  runs. Two concurrent backfills, each stopping politely short of its own limit, took
+  `site.web.api`, `site.api` and `sports.core.api` from answering to refusing. The scoreboard
+  ingest now takes an exclusive lock; the live run waits briefly for it rather than losing a
+  poll to a schedule run that takes seven seconds.
+- **Outbound requests are now logged**, one line per request with host, endpoint, status,
+  process and whether it was served from cache. No policy, no behaviour change. Every figure
+  we have about ESPN's limit except the response cap is inferred from behaviour, and
+  `spend_report.py` exists to replace that with data before any more machinery is built.
+
+### Package splits, and the names they dropped
+
+Eleven files over 1,000 lines became packages. Each split promised to keep the original
+external surface and four did not, all the same shape: **a rebindable module global became an
+import-time copy.** `nfl_mock_draft`'s `_DB` was copied, so 36 tests that thought they were
+pointed at a fixture were **silently reading the real database**. `_availability_aggregates`
+and `settlement._mlb_schedule` were not re-exported at all. Four data paths kept a single
+`dirname` while moving a directory deeper, and `sqlite3.connect` creates a missing file rather
+than failing, so those jobs would have run against an empty database and reported success.
+Thirty dropped names restored, `settlement.DB` among them, which no submodule defined.
+
+### Also
+
+- Leagues Cup fixtures are filed under `lcup`, not `mls`, so a tournament goal cannot inflate
+  an MLS regular-season denominator.
+- A walkover renders as `WALKOVER`, not `FINAL`.
+- An empty day that is over is final: the three-hour backoff exists for a postponement, and a
+  finished day can have neither a postponement nor a late addition.
+
 ## v0.8.1 — 2026-08-18
 
 ### League hubs: a year on every standings table, and filters that look like filters
