@@ -304,3 +304,107 @@ class TestStaleButFinished:
         con.commit()
         con.close()
         assert _scoreboard_snapshot("mlb", "2026-08-18") is None
+
+
+class TestUfcEventName:
+    def test_the_week_survives_normalization(self, monkeypatch):
+        """ESPN drops the week from `shortName` and keeps it on `name`.
+
+        Measured 2026-08-18:
+          name      "Dana White's Contender Series: Season 10, Week 2"
+          shortName "Dana White's Contender Series"
+        The board names a UFC card the way it names a tennis tournament, and
+        "Contender Series" with no week is three different events a month
+        sharing one heading.
+        """
+        import espn_client
+        payload = {
+            "leagues": [UFC_CALENDAR],
+            "events": [{
+                "id": "600060733",
+                "name": "Dana White's Contender Series: Season 10, Week 2",
+                "shortName": "Dana White's Contender Series",
+                "date": "2026-08-18T23:00Z",
+                "competitions": [{
+                    "id": "401903488",
+                    "date": "2026-08-18T23:00Z",
+                    "startDate": "2026-08-18T23:00Z",
+                    "status": {"type": {"state": "pre", "description": "Scheduled",
+                                        "shortDetail": "8/18 - 7:00 PM EDT"}},
+                    "competitors": [
+                        {"id": "1", "order": 1, "athlete": {"displayName": "A Fighter"}},
+                        {"id": "2", "order": 2, "athlete": {"displayName": "B Fighter"}},
+                    ],
+                }],
+            }],
+        }
+        monkeypatch.setattr(espn_client, "_get", lambda url, ttl=20: payload)
+        games = espn_client.games("ufc", "2026-08-18")
+        assert games
+        assert games[0]["event"] == "Dana White's Contender Series: Season 10, Week 2"
+        assert games[0]["card_segment"] == "Main Card"
+
+
+class TestDayNavigation:
+    @staticmethod
+    def _point_router_at_the_fixture(monkeypatch):
+        """`routers.games` reaches the DB through `_core._db`, whose path is
+        bound at IMPORT time. Run alone this module imports first and the fixture
+        wins; run in the full suite another module imported `_core` already and
+        the reads land on the session database. Patching the function the router
+        actually calls is what makes both runs the same -- and is why no test
+        here ever writes to a real database.
+        """
+        import sqlite3
+        import routers.games as games_router
+
+        def _fixture_db():
+            con = sqlite3.connect(_DB_PATH)
+            con.row_factory = sqlite3.Row
+            return con
+
+        monkeypatch.setattr(games_router, "_db", _fixture_db)
+
+    def test_the_back_arrow_answers_from_what_we_hold(self, monkeypatch):
+        self._point_router_at_the_fixture(monkeypatch)
+        """The arrows used to ask ESPN on every click, so a 403 froze the board.
+
+        Measured 2026-08-18: `schedule-dates` returned `source: unavailable` for
+        every league and going back past Sunday was impossible, while UFC 330's
+        start instants were sitting in our own `prop_games` the whole time.
+        """
+        import sqlite3
+        from routers.games import _local_event_starts
+        con = sqlite3.connect(_DB_PATH)
+        con.executescript(
+            "CREATE TABLE IF NOT EXISTS prop_games("
+            " id INTEGER PRIMARY KEY AUTOINCREMENT, league TEXT NOT NULL,"
+            " date TEXT NOT NULL, home TEXT, away TEXT, espn_event_id TEXT,"
+            " final_home INTEGER, final_away INTEGER, start_time TEXT)")
+        con.execute("DELETE FROM prop_games")
+        con.execute("INSERT INTO prop_games (league, date, start_time)"
+                    " VALUES ('ufc','2026-08-16','2026-08-16T01:20:00+00:00')")
+        con.commit()
+        con.close()
+
+        past = _local_event_starts("ufc", dt.date(2026, 8, 18), "past")
+        assert any(value.startswith("2026-08-16") for value in past)
+        assert _local_event_starts("ufc", dt.date(2026, 8, 18), "future") == []
+
+    def test_a_day_precision_row_is_never_promoted_to_an_instant(self, monkeypatch):
+        self._point_router_at_the_fixture(monkeypatch)
+        """`team_game_results` is day precision on purpose.
+
+        Turning `2026-08-16` into midnight UTC moves the event onto the previous
+        local day throughout the Americas. The contract promises instants, so a
+        fabricated one is worse than a missing one.
+        """
+        import sqlite3
+        from routers.games import _local_event_starts
+        con = sqlite3.connect(_DB_PATH)
+        con.execute("DELETE FROM prop_games")
+        con.execute("INSERT INTO prop_games (league, date, start_time)"
+                    " VALUES ('mlb','2026-08-16',NULL)")
+        con.commit()
+        con.close()
+        assert _local_event_starts("mlb", dt.date(2026, 8, 18), "past") == []
