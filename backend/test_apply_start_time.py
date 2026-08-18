@@ -60,7 +60,8 @@ class ApplyStartTimeTests(unittest.TestCase):
     def test_write_once_is_actually_gone_from_every_ingest_path(self):
         # Three call sites had the identical `if published and not stored` guard. One left
         # behind is one league that still cannot follow a reschedule.
-        for name in ("bovada_scraper.py", os.path.join("routers", "props.py")):
+        for name in ("bovada_scraper/direct.py",
+                     os.path.join("routers", "props.py")):
             src = open(os.path.join(HERE, name)).read()
             code = "\n".join(l for l in src.splitlines() if not l.lstrip().startswith("#"))
             self.assertNotIn("not game_row[\"start_time\"]", code, name)
