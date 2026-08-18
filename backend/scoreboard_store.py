@@ -317,6 +317,13 @@ def needs_refresh(league, game_date, empty_backoff=EMPTY_BACKOFF, con=None):
             return True, "unreadable fetched_at"
 
         if not refresh["game_count"]:
+            if game_date < _now().date().isoformat():
+                # An empty day that is OVER stays empty. The backoff exists for
+                # a postponement or a late addition, and a finished day can
+                # have neither -- so re-asking is a request per viewer for an
+                # answer that is already fixed, which is the whole thing this
+                # store exists to stop.
+                return False, "day is over and published no games"
             if age >= empty_backoff:
                 return True, f"empty, last asked {int(age.total_seconds() // 60)}m ago"
             return False, f"published no games {int(age.total_seconds() // 60)}m ago"
