@@ -833,6 +833,14 @@ def get_standings(league: str, season: int = None):
             return espn.ncaaf_conference_standings()
         except ValueError as e:
             raise HTTPException(404, str(e))
+        except HTTPException:
+            raise
+        except Exception:
+            # An unreachable publisher rendered as a 500 stacktrace here. There
+            # is no conference-standings snapshot to fall back to, so this stays
+            # fail-closed — but it says why, the way the MLS branch does, rather
+            # than surfacing "Internal Server Error" to the page.
+            raise HTTPException(503, "NCAAF standings unavailable: publisher unreachable")
     if lg == "mls":
         # Eastern/Western tables read from the publisher, carrying the season
         # they belong to. This replaced a DB rollup on 2026-08-17: the rollup's
