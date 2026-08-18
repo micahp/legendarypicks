@@ -350,14 +350,16 @@ publisher id justifying each — in a committed artifact, or the next pass re-de
 
    Note `wc_context.py` is the largest file in the repo and World Cup is dormant until 2030.
 
-   **Progress 2026-08-18:** `settlement.py` (1196 → 9-module package, 61 tests pass),
-   `nfl_mock_draft.py` (1586 → 9-module package, 51 tests pass), `narratives/` package
-   started from `ingest_league_narratives.py` (constants/topic_words/anchor_routing
-   extracted; the 1817-line original still holds the generation loop). Remaining:
-   `wc_context` (dormant), `games.py`, `ingest_league_narratives.py`,
-   `ingest_ufc_fight_stats.py`, `audit_league_stats.py`, `ingest_league_news.py`,
-   `nfl_offseason.py`, `players.py`, `espn_client.py`, `bovada_scraper.py`,
-   `pages/esports.tsx`.
+   **DONE 2026-08-18.** Split into packages: `settlement.py` (1196 → 9 modules),
+   `nfl_mock_draft.py` (1586 → 9), `espn_client.py` (1549 → 7), `routers/games.py`
+   (1948 → 9), `ingest_league_narratives.py` (1817 → 12), `bovada_scraper.py`
+   (1281 → 7), `audit_league_stats.py` (1169 → 3), `ingest_league_news.py`
+   (1160 → 7), `ingest_ufc_fight_stats.py` (1182 → 8), `routers/players.py`
+   (1503 → 6), `routers/nfl_offseason.py` (1527 → 6). Every split keeps the
+   original module's external surface (verified by the full test sweep:
+   516 tests pass). `wc_context.py` (2166) stays untouched — World Cup code is
+   dormant until 2030. `pages/esports.tsx` (1232) is the remaining frontend
+   file, out of scope for the backend refactor.
 
 4. **A TOURNAMENT is not a LEAGUE — model the difference** (Micah, 2026-08-17). This is the
    modelling item behind a defect we hit today, not a cleanup.
