@@ -100,6 +100,14 @@ describe('stats filter pills', () => {
     expect(screen.queryByText('Efficiency')).toBeNull()
   })
 
+  it('leads with the season pill, ahead of the MLB stat-type pill', () => {
+    renderTab(leaders(), { league: 'mlb' })
+    const labels = Array.from(document.querySelectorAll('[aria-label]'))
+      .map(node => node.getAttribute('aria-label'))
+      .filter(label => label === 'Season' || label === 'Stat type' || label === 'Stat category')
+    expect(labels).toEqual(['Season', 'Stat type', 'Stat category'])
+  })
+
   it('drops the season caption above the table — the pill carries it', () => {
     renderTab(leaders())
     expect(screen.queryByText(/^Season 2026$/)).toBeNull()

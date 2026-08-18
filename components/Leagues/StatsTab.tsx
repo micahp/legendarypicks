@@ -127,8 +127,9 @@ function SubViewTabs({
 }
 
 /**
- * The player filter bar: MLB batting/pitching, season, stat category — one row
- * of pills, the way a standings page reads.
+ * The player filter bar: season, MLB batting/pitching, stat category — one row
+ * of pills, the way a standings page reads. Season leads, so the year sits in
+ * the same first position on every league and on the standings tab.
  *
  * Every option here is the API's own, never a list this component knows. The
  * seasons are the ones `player_stats` actually holds and the categories are the
@@ -161,17 +162,6 @@ function PlayerFilterBar({
   if (!isMlb && seasons.length === 0 && categories.length === 0) return null
   return (
     <div className="flex flex-wrap items-center gap-2">
-      {isMlb && (
-        <FilterPill
-          label="Stat type"
-          value={mlbType}
-          options={[
-            { value: 'batting', label: 'Batting' },
-            { value: 'pitching', label: 'Pitching' },
-          ]}
-          onSelect={value => onSelectMlbType(value as MlbType)}
-        />
-      )}
       {seasons.length > 0 && (
         <FilterPill
           label="Season"
@@ -181,6 +171,17 @@ function PlayerFilterBar({
             label: seasonLabel(league, season),
           }))}
           onSelect={onSelectSeason}
+        />
+      )}
+      {isMlb && (
+        <FilterPill
+          label="Stat type"
+          value={mlbType}
+          options={[
+            { value: 'batting', label: 'Batting' },
+            { value: 'pitching', label: 'Pitching' },
+          ]}
+          onSelect={value => onSelectMlbType(value as MlbType)}
         />
       )}
       {categories.length > 0 && (
