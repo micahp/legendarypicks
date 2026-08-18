@@ -500,3 +500,37 @@ class TestAnEmptyFinishedDayIsNotReasked:
         wanted, reason = scoreboard_store.needs_refresh("nba", "2026-08-01")
         assert not wanted, reason
         assert "over" in reason
+
+
+class TestTheLiveRunWaitsRatherThanSkipping:
+    """A safeguard that costs live scores every hour is priced wrong.
+
+    The lock exists to stop two runs spending one shared budget. Declining
+    instantly also meant the once-a-minute live poll lost its whole tick to a
+    schedule run that takes seven seconds -- measured 2026-08-18, three lost
+    polls in one hour for no protection that a short wait would not give.
+    """
+
+    def test_a_waiting_run_acquires_once_the_holder_releases(self):
+        import tempfile, threading, time as _t
+        import ingest_scoreboards
+        with tempfile.NamedTemporaryFile(suffix=".lock") as tmp:
+            held = ingest_scoreboards._only_one_run(tmp.name)
+            assert held is not None
+            threading.Timer(0.6, held.close).start()
+            started = _t.time()
+            waited = ingest_scoreboards._only_one_run(tmp.name, wait_seconds=5.0)
+            assert waited is not None, "the waiter must get in once the lock frees"
+            assert _t.time() - started >= 0.5, "it must actually have waited"
+            waited.close()
+
+    def test_a_wait_that_expires_still_declines(self):
+        """Waiting is bounded. A backfill running for minutes still wins."""
+        import tempfile
+        import ingest_scoreboards
+        with tempfile.NamedTemporaryFile(suffix=".lock") as tmp:
+            held = ingest_scoreboards._only_one_run(tmp.name)
+            try:
+                assert ingest_scoreboards._only_one_run(tmp.name, wait_seconds=1.0) is None
+            finally:
+                held.close()

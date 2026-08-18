@@ -242,7 +242,7 @@ def run_live(verbose=True):
 _LOCK_PATH = os.environ.get("LP_SCOREBOARD_LOCK", "/tmp/lp-scoreboards.lock")
 
 
-def _only_one_run(path=_LOCK_PATH):
+def _only_one_run(path=_LOCK_PATH, wait_seconds=0.0):
     """Hold an exclusive lock, or refuse to start. Returns the open file or None.
 
     THE BUDGET IS PER HOST, BUT THE COUNTER IS PER PROCESS. Two copies of this
@@ -255,11 +255,16 @@ def _only_one_run(path=_LOCK_PATH):
     happens, so the second one now declines instead of overlapping.
     """
     handle = open(path, "w")
-    try:
-        fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
-    except OSError:
-        handle.close()
-        return None
+    deadline = time.time() + wait_seconds
+    while True:
+        try:
+            fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            break
+        except OSError:
+            if time.time() >= deadline:
+                handle.close()
+                return None
+            time.sleep(0.5)
     handle.write(f"{os.getpid()}\n")
     handle.flush()
     return handle
@@ -282,7 +287,13 @@ def main(argv=None):
 
     # Batch settings, opted into here rather than in the client, because the
     # serving path must never inherit them: a page load must not pause.
-    lock = _only_one_run()
+    # The live run WAITS briefly rather than declining outright. Its whole value
+    # is timeliness and it costs two requests; a schedule run takes 7-13s, so a
+    # short wait gets it in almost every time. Measured 2026-08-18, an instant
+    # decline froze three live polls in one hour for no benefit. A backfill runs
+    # for minutes and will still push it out, which is the correct outcome --
+    # the point is to protect the shared budget, not to be first.
+    lock = _only_one_run(wait_seconds=20.0 if args.live else 0.0)
     if lock is None:
         print("[scoreboards] another scoreboard run holds the lock; "
               "declining rather than doubling the per-host spend")
