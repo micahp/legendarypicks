@@ -1,3 +1,4 @@
+import FilterPill from './FilterPill'
 import type { KnockoutRound, StandingGroup, TeamStats } from './types'
 
 interface StandingsTabProps {
@@ -77,9 +78,12 @@ export default function StandingsTab({
 }
 
 /**
- * Year selector. 25 published MLS seasons is too many for a button row, so this
- * is a select. Renders nothing unless the endpoint offered more than one year,
- * which keeps it off NCAAF and the World Cup — they send no season list.
+ * Year selector, rendered as a FilterPill. Renders nothing unless the endpoint
+ * offered more than one year, which keeps it off NCAAF and the World Cup —
+ * they send no season list.
+ *
+ * The wrapper is a flex row so a second pill (a phase filter, say) sits beside
+ * this one without either learning about the other.
  *
  * The options are the publisher's own `available_seasons`, never a generated
  * range, so a year that cannot be served is never offered.
@@ -95,20 +99,14 @@ function SeasonPicker({
 }) {
   if (!seasons || seasons.length < 2 || !onSelect) return null
   return (
-    <div className="mb-4 flex items-center gap-2">
-      <label htmlFor="standings-season" className="text-xs uppercase tracking-wider text-zinc-500">
-        Season
-      </label>
-      <select
+    <div className="mb-4 flex flex-wrap items-center gap-2">
+      <FilterPill
         id="standings-season"
+        label="Season"
         value={season ?? seasons[0]}
-        onChange={event => onSelect(Number(event.target.value))}
-        className="rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-1.5 text-sm font-medium text-zinc-200 hover:text-white focus:border-emerald-500/30 focus:outline-none"
-      >
-        {seasons.map(year => (
-          <option key={year} value={year}>{year}</option>
-        ))}
-      </select>
+        options={seasons.map(year => ({ value: year, label: String(year) }))}
+        onSelect={value => onSelect(Number(value))}
+      />
     </div>
   )
 }
