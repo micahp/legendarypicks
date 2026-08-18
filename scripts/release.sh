@@ -17,18 +17,29 @@
 # a tag the pre-push hook then requires, and runs the prod audits. If you just
 # want to mark a build, that is `scripts/tag.sh` and it does none of this.
 #
+# The optional second argument is the ANNOTATED TAG MESSAGE: one sentence, what
+# shipped, features first then data. GitHub shows it on the /tags page, so it is
+# the only description a patch gets (patches get no release). Left off, the tag
+# carries only its own name, which is what every tag before v0.8.1 has.
+#
 #   scripts/release.sh 0.6.6
+#   scripts/release.sh 0.6.6 "News tab on every league hub, plus an MLS season fix"
 #   scripts/release.sh 0.6.6 --dry-run
 set -euo pipefail
 
 VERSION="${1:-}"
 DRY_RUN=""
-[ "${2:-}" = "--dry-run" ] && DRY_RUN=1
+TAG_NOTE=""
+for arg in "$@"; do
+  [ "$arg" = "--dry-run" ] && DRY_RUN=1
+done
+# Second positional, when it is not the dry-run flag, is the tag message.
+[ "${2:-}" != "--dry-run" ] && TAG_NOTE="${2:-}"
 
 die() { echo "release: $*" >&2; exit 1; }
 run() { if [ -n "$DRY_RUN" ]; then echo "  [dry-run] $*"; else "$@"; fi; }
 
-[ -n "$VERSION" ] || die "usage: scripts/release.sh <version> [--dry-run]   e.g. 0.6.6"
+[ -n "$VERSION" ] || die "usage: scripts/release.sh <version> [\"tag message\"] [--dry-run]   e.g. 0.6.6"
 echo "$VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$' \
   || die "version must be bare semver without a leading v (got '$VERSION')"
 
@@ -213,7 +224,15 @@ fi
 
 run git add package.json CHANGELOG.md
 run git commit -q -m "chore(release): $TAG"
-run git tag -a "$TAG" -m "$TAG"
+if [ -n "$TAG_NOTE" ]; then
+  run git tag -a "$TAG" -m "$TAG" -m "$TAG_NOTE"
+else
+  run git tag -a "$TAG" -m "$TAG"
+  echo "release: no tag message given, so $TAG carries only its own name."
+  echo "  GitHub shows an annotated tag's message on /tags, and a patch gets no"
+  echo "  release, so that message is the only description it will ever have."
+  echo "  Next time:  scripts/release.sh $VERSION \"one sentence, what shipped\""
+fi
 
 # The local half is done and consistent. A push can still fail for reasons the
 # preflight cannot see (network, remote rejection), so say exactly how to finish
