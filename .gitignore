@@ -125,3 +125,10 @@ backend/data/bovada-league-backoff.json
 # which that pattern never matched. Same miss as `backend/backups/` dodging
 # `backend/data/picks.db*` the same day: an ignore rule only protects the path it names.
 backend/.espn-cache/
+
+# Compose reads ./.env for ${VAR} interpolation, which is how the backend's
+# pass-through keys (PANDASCORE/GRID/YOUTUBE/DEEPSEEK/KICK) reach the container.
+# It is a SYMLINK to /root/.hermes/.env so there is no second copy of a secret
+# on disk — but it must never be committed, symlink or not. `.env*.local` above
+# did not cover the plain name.
+.env
