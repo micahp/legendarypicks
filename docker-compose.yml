@@ -18,6 +18,18 @@ services:
       # — Kick-hosted matches show as live but with no viewer count on the board.
       KICK_CLIENT_ID: "${KICK_CLIENT_ID:-}"
       KICK_CLIENT_SECRET: "${KICK_CLIENT_SECRET:-}"
+      # ESPN response cache. Without this the container runs with cache_dir=""
+      # and only paced_http's in-memory cache is live — per process, and gone on
+      # every restart, so each deploy cold-started every ESPN surface. The cache
+      # was correctly removed from the IMAGE (.dockerignore: a 96MB response
+      # cache baked into a layer is what made it 7.45GB); what was missing is a
+      # runtime home for it. This path is inside the ./backend/data bind mount,
+      # so it survives rebuilds, and `.gitignore:88` already ignores it — the
+      # rule was written for exactly this location before it existed.
+      #
+      # ESPN's limit is a request COUNT per host, so a cache that survives a
+      # restart is the single biggest lever on the budget.
+      LP_ESPN_CACHE_DIR: "/app/data/espn-cache"
     # bind to loopback ONLY: reachable by host nginx, never from the internet
     # host 8100 -> container 8000 (8000 already used by another site)
     ports: ["127.0.0.1:8100:8000"]

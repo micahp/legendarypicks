@@ -104,6 +104,9 @@ class Fetcher:
                               else float(host_cooldown))
         self._last_request_at = 0.0
         self._memory = {}
+        # Bound the cache directory: swept every N writes (see _sweep).
+        self._writes_since_sweep = 0
+        self._sweep_every = 500
 
     # ── cache ────────────────────────────────────────────────────────────
     def _path(self, url):
@@ -111,11 +114,23 @@ class Fetcher:
         return os.path.join(
             self.cache_dir, hashlib.sha256(url.encode()).hexdigest()[:32] + ".json")
 
-    def _read_disk(self, url):
+    def _read_disk(self, url, ttl=None):
+        """`ttl` is the caller's freshness requirement for THIS url.
+
+        Without it the disk layer answered every read against `cache_ttl` — 12
+        hours by default — so a scoreboard asking for a 20-second cache would
+        have been handed a half-day-old score the moment a disk cache was
+        configured. The per-call ttl is the tighter contract and wins; a caller
+        that names none still gets the instance default, which is what the bulk
+        ingest scripts rely on for a free re-run.
+        """
         if not self.cache_dir or self.cache_ttl <= 0:
             return None
+        window = self.cache_ttl if ttl is None else min(float(ttl), self.cache_ttl)
+        if window <= 0:
+            return None
         try:
-            if time.time() - os.path.getmtime(self._path(url)) > self.cache_ttl:
+            if time.time() - os.path.getmtime(self._path(url)) > window:
                 return None
             with open(self._path(url)) as f:
                 return json.load(f)
@@ -124,11 +139,43 @@ class Fetcher:
             # job is to get the data, not to care where it came from.
             return None
 
+    def _sweep(self):
+        """Drop entries older than `cache_ttl`. Nothing else ever deletes one.
+
+        This cache had no eviction at all: the two directories on the host had
+        grown to 100MB and 134MB, and a 96MB copy of one is what got swept into
+        git and took the image to 7.45GB. Re-enabling an unbounded cache would
+        just re-run that.
+
+        Sampled rather than run on every write — the cost is a directory listing,
+        and the bound only has to hold over hours, not milliseconds. Deletion is
+        confined to files this class wrote (its own hashed `.json` names) inside
+        its own cache_dir; anything else in there is left alone.
+        """
+        cutoff = time.time() - self.cache_ttl
+        try:
+            names = os.listdir(self.cache_dir)
+        except OSError:
+            return
+        for name in names:
+            if not name.endswith(".json") or len(name) != 37:
+                continue    # 32 hex chars + ".json" — not one of ours
+            path = os.path.join(self.cache_dir, name)
+            try:
+                if os.path.getmtime(path) < cutoff:
+                    os.remove(path)
+            except OSError:
+                continue    # a concurrent reader or a vanished file is not an error
+
     def _write_disk(self, url, data):
         if not self.cache_dir:
             return
         try:
             os.makedirs(self.cache_dir, exist_ok=True)
+            self._writes_since_sweep += 1
+            if self._writes_since_sweep >= self._sweep_every:
+                self._writes_since_sweep = 0
+                self._sweep()
             tmp = self._path(url) + ".tmp"
             with open(tmp, "w") as f:
                 json.dump(data, f)
@@ -221,7 +268,7 @@ class Fetcher:
         hit = self._memory.get(url)
         if hit and hit[0] > now:
             return hit[1]
-        on_disk = self._read_disk(url)
+        on_disk = self._read_disk(url, ttl)
         if on_disk is not None:
             self._memory[url] = (now + ttl, on_disk)
             return on_disk
