@@ -397,7 +397,14 @@ def games(league, date=None):
         # No homeAway field; competitors have order=1 and order=2.
         # Detect card segments by time grouping (Main Card / Prelims / Early Prelims).
         for event in d.get("events", []):
-            event_name = event.get("shortName") or event.get("name", "")
+            # `name` over `shortName`: ESPN publishes the week on the long name
+            # and drops it from the short one. Measured 2026-08-18:
+            #   name      "Dana White's Contender Series: Season 10, Week 2"
+            #   shortName "Dana White's Contender Series"
+            # The board names a UFC event the way it names a tennis tournament,
+            # and "Contender Series" with no week is three different cards a
+            # month sharing one heading.
+            event_name = event.get("name") or event.get("shortName") or ""
             event_date = event.get("date", "")
             comps = event.get("competitions", [])
             if not comps:

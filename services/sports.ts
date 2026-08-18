@@ -155,12 +155,18 @@ function normalizeLivePeriod(g: any, league?: string): LivePeriod | undefined {
 }
 
 export function normalizeGame(g: any, leagueOverride?: string): Game {
-  // Preserve backend-provided stage/week context; UFC card segments remain most specific.
-  let subtitle = g?.card_segment || g?.subtitle || g?.event || ''
-
   // Determine league from various possible fields, with optional override
   const rawLeague = leagueOverride ? leagueOverride : (g?.league ?? g?.sport ?? '')
   const league = typeof rawLeague === 'string' ? rawLeague : (rawLeague?.abbreviation || rawLeague?.name || String(rawLeague || ''))
+
+  // The board's section heading. Tennis names the tournament ("Cincinnati
+  // Open"); a UFC card used to name only its segment ("Main Card"), which says
+  // nothing about WHICH card. The event leads for the same reason the tournament
+  // does, and the segment follows it, since Prelims and Main Card start at
+  // different times and still have to group separately.
+  const segment = g?.card_segment || ''
+  const event = g?.event || ''
+  let subtitle = event && segment ? `${event} · ${segment}` : (segment || g?.subtitle || event || '')
 
   return {
     gameId: String(g?.game_id ?? g?.gameId ?? ''),
@@ -519,7 +525,7 @@ export interface ScheduleDatesResponse {
   anchor_date: string
   event_start_timezone: string
   available?: boolean
-  source?: 'espn' | 'unavailable'
+  source?: 'espn' | 'local' | 'unavailable'
   error?: 'publisher_unavailable'
   future_event_starts: string[]
   past_event_starts: string[]
