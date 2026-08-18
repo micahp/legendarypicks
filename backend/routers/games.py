@@ -818,7 +818,7 @@ def get_strength(league: str):
 
 
 @router.get("/api/{league}/standings")
-def get_standings(league: str):
+def get_standings(league: str, season: int = None):
     """Group/division standings. For World Cup: group tables during the group
     stage; the canonical knockout bracket/results once the season phase leaves
     'Group' (progression gate via espn.wc_is_knockout — never serve stale groups
@@ -847,7 +847,7 @@ def get_standings(league: str):
         # to last year (fail-loudly: the stale table is the plausible output
         # that hides the defect).
         try:
-            return espn.mls_conference_standings()
+            return espn.mls_conference_standings(season=season)
         except ValueError as e:
             raise HTTPException(503, f"MLS standings unavailable: {e}")
         except HTTPException:

@@ -1318,8 +1318,13 @@ def _season_phase(seasons, year, now=None):
     return None, None, None
 
 
-def mls_conference_standings():
+def mls_conference_standings(season=None):
     """MLS Eastern/Western tables, read from the publisher's own standings.
+
+    `season` selects a past year; None serves whatever ESPN calls current. The
+    selectable years are returned as `available_seasons`, read from the payload's
+    own `seasons[]` (25 of them, 2002-2026) rather than a range we make up, so a
+    year we cannot actually serve is never offered.
 
     Replaces a DB rollup (`_mls_standings_from_db`) that summed
     `team_game_results` and applied MLS's 3/1/0 rule itself. That rollup was not
@@ -1348,11 +1353,18 @@ def mls_conference_standings():
     """
     import datetime as _dt
     _, path = _check("mls")
-    d = _get(_CORE.format(path=path) + "/standings", ttl=900)
-    season = d.get("season") or {}
-    year = _int(season.get("year"))
+    url = _CORE.format(path=path) + "/standings"
+    if season is not None:
+        url += "?season=%d" % int(season)
+    d = _get(url, ttl=900)
+    season_doc = d.get("season") or {}
+    year = _int(season_doc.get("year"))
     if year is None:
         raise ValueError("MLS standings: publisher named no season")
+    # Only years the publisher says carry a standings table are offerable.
+    available = sorted({_int(s.get("year")) for s in (d.get("seasons") or [])
+                        if any(t.get("hasStandings") for t in (s.get("types") or []))
+                        and _int(s.get("year")) is not None}, reverse=True)
 
     groups = []
     for child in d.get("children") or []:
@@ -1386,7 +1398,8 @@ def mls_conference_standings():
     return {
         "league": "mls",
         "season": year,
-        "season_label": season.get("displayName") or str(year),
+        "available_seasons": available or [year],
+        "season_label": season_doc.get("displayName") or str(year),
         "phase": phase,
         "in_progress": in_progress,
         "phase_ends": ends.isoformat() if ends else None,

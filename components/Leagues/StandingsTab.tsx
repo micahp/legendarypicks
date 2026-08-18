@@ -7,6 +7,9 @@ interface StandingsTabProps {
   knockout: KnockoutRound[]
   groups: StandingGroup[]
   teams: TeamStats[]
+  season?: number | null
+  availableSeasons?: number[]
+  onSelectSeason?: (season: number) => void
   leagueName: string
   league: string
 }
@@ -18,6 +21,9 @@ export default function StandingsTab({
   knockout,
   groups,
   teams,
+  season,
+  availableSeasons,
+  onSelectSeason,
   leagueName,
   league,
 }: StandingsTabProps) {
@@ -49,17 +55,61 @@ export default function StandingsTab({
           <div className="text-zinc-500 text-sm">No standings available.</div>
         )
       ) : groups.length > 0 ? (
-        isSoccer ? (
-          <SoccerStandings groups={groups} />
-        ) : (
-          <ConferenceStandings groups={groups} />
-        )
+        <>
+          <SeasonPicker
+            season={season}
+            seasons={availableSeasons}
+            onSelect={onSelectSeason}
+          />
+          {isSoccer ? (
+            <SoccerStandings groups={groups} />
+          ) : (
+            <ConferenceStandings groups={groups} />
+          )}
+        </>
       ) : teams.length > 0 ? (
         <TeamSportStandings teams={teams} />
       ) : (
         <div className="text-zinc-500 text-sm">No data available for {leagueName}.</div>
       )}
     </>
+  )
+}
+
+/**
+ * Year selector. 25 published MLS seasons is too many for a button row, so this
+ * is a select. Renders nothing unless the endpoint offered more than one year,
+ * which keeps it off NCAAF and the World Cup — they send no season list.
+ *
+ * The options are the publisher's own `available_seasons`, never a generated
+ * range, so a year that cannot be served is never offered.
+ */
+function SeasonPicker({
+  season,
+  seasons,
+  onSelect,
+}: {
+  season?: number | null
+  seasons?: number[]
+  onSelect?: (season: number) => void
+}) {
+  if (!seasons || seasons.length < 2 || !onSelect) return null
+  return (
+    <div className="mb-4 flex items-center gap-2">
+      <label htmlFor="standings-season" className="text-xs uppercase tracking-wider text-zinc-500">
+        Season
+      </label>
+      <select
+        id="standings-season"
+        value={season ?? seasons[0]}
+        onChange={event => onSelect(Number(event.target.value))}
+        className="rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-1.5 text-sm font-medium text-zinc-200 hover:text-white focus:border-emerald-500/30 focus:outline-none"
+      >
+        {seasons.map(year => (
+          <option key={year} value={year}>{year}</option>
+        ))}
+      </select>
+    </div>
   )
 }
 

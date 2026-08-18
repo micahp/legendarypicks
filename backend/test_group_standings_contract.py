@@ -137,6 +137,46 @@ class MlsPublishedSeasonTest(unittest.TestCase):
         self.assertEqual(out["season"], 2025)
         self.assertFalse(out["in_progress"])
 
+    def test_a_past_season_can_be_requested_and_the_years_come_from_the_publisher(self):
+        """The picker's options must be years we can actually serve, so they are
+        read off the payload's own `seasons[]` rather than a generated range."""
+        payload = mls_payload()
+        payload["seasons"].append({
+            "year": 2019,
+            "types": [{"name": "Regular Season", "hasStandings": True,
+                       "startDate": "2019-01-01T05:00Z", "endDate": "2019-11-09T04:59Z"}],
+        })
+        payload["seasons"].append({   # no standings table -> not offerable
+            "year": 2018,
+            "types": [{"name": "Combined", "hasStandings": False,
+                       "startDate": "2018-01-01T05:00Z", "endDate": "2018-11-09T04:59Z"}],
+        })
+        seen = {}
+
+        def fake_get(url, ttl=None):
+            seen["url"] = url
+            return payload
+
+        with patch.object(espn, "_get", fake_get):
+            out = espn.mls_conference_standings(season=2019)
+
+        self.assertIn("season=2019", seen["url"])
+        self.assertEqual(out["available_seasons"], [2026, 2019])
+
+    def test_the_default_request_pins_no_year(self):
+        """No `season` means "whatever the publisher calls current" — the default
+        view must not hardcode a year that goes stale next season."""
+        seen = {}
+
+        def fake_get(url, ttl=None):
+            seen["url"] = url
+            return mls_payload()
+
+        with patch.object(espn, "_get", fake_get):
+            espn.mls_conference_standings()
+
+        self.assertNotIn("season=", seen["url"])
+
     def test_an_empty_publisher_table_raises_instead_of_serving_nothing(self):
         payload = mls_payload()
         payload["children"] = []
@@ -176,7 +216,7 @@ class StandingsRouteContractTest(unittest.TestCase):
              patch.object(games.espn, "team_strength") as strength_call:
             self.assertEqual(games.get_standings("mls"), seasoned)
 
-        mls_call.assert_called_once_with()
+        mls_call.assert_called_once_with(season=None)
         group_call.assert_not_called()
         strength_call.assert_not_called()
 
