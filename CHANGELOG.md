@@ -1,11 +1,12 @@
 # Changelog
 
-## Unreleased
+## Since v0.8.0 — LIVE ON PRODUCTION, not yet tagged
 
-*Landed on `dev` after the `v0.8.0` tag and already deployed to production. Per the release
-convention these ride into the next feature release's notes rather than earning a bugfix
-release of their own; they are recorded here so the next cut does not have to reconstruct
-them from git.*
+*All of this is built, deployed and serving on legendarypicks.xyz right now. It landed after
+the `v0.8.0` tag was cut, so it does not sit inside any tagged release's notes yet — a tag is
+a version label, not the deploy. Deploying is `docker compose up -d --build` off the working
+tree; it does not read a tag. These notes are parked here so the next version bump can take
+them as-is instead of reconstructing them from git.*
 
 ### MLS standings served last season's final table in mid-August
 
