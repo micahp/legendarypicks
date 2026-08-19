@@ -1,5 +1,32 @@
 # Changelog
 
+## v0.8.3 — 2026-08-19
+
+### The morning window, which nobody had looked at
+
+- **The next-day button did nothing.** `_cap_schedule_candidates` only truncated a list and
+  never filtered by direction, and the local rung feeds it a window that deliberately
+  overruns the anchor by a day to catch timezone boundaries. So past instants shipped inside
+  `future_event_starts`. Measured on prod: MLB offered **9 future starts of which 0 were
+  usable**, ATP 0 of 16, UFC 0 of 1. Three leagues of four had a dead forward arrow. A field
+  named for a direction now contains only that direction, keeping one day of slack on the
+  near side because a 00:30Z start is the previous evening in the Americas.
+- **The prod scoreboard timers had never been installed.** v0.8.2 shipped the code that reads
+  `scoreboard_snapshots` and nothing filled it, so prod served an empty store and fell back
+  to the publisher on every past day. Installed; the store went from 0 to 112 rows across
+  five days on the first run.
+- **"Cheap Quality, Live" was showing last night as live.** At 09:50 ET, before any first
+  pitch, nine cards sat above the scoreboard: every one yesterday's game, every price 1 cent,
+  including Tampa Bay at 1c after winning 6-0, captioned "touched the 19c level set pregame,
+  stabilizing". The scoreboard directly below correctly said `pre` for all of them. Two
+  causes, both fixed: it read the undated board, which in the morning is still last night, so
+  it now reads the same date-keyed store `/scores` serves; and its failure path served the
+  expired cache entry with **no age limit**, so once the build began failing it froze on its
+  last good answer permanently. Bounded at 10 minutes, and past that it reports the failure.
+- **The widget is off `/scores`.** It already lives on `/plays`. A trading signal does not
+  belong above the scoreboard on a page called Scoreboard. It was added on 2026-07-04 and
+  verified that evening mid-slate, the one condition in which it works.
+
 ## v0.8.2 — 2026-08-18
 
 ### The scoreboard stops calling a publisher to draw a page
