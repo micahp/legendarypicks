@@ -334,6 +334,13 @@ Named by the user, no work done:
       generally.
 - [ ] **Daily RotoWire props dump.** Save everything that endpoint gives us to a directory,
       once a day at midnight, in case we expand to those leagues.
+- [x] **NFL and MLS props from the RotoWire relay.** Built 2026-08-19,
+      `backend/ingest_rotowire_props.py`, live on both databases: NFL 1,080 props over 29
+      games all linked to their ESPN event id, MLS 362 over 15. Only the publisher's `Game`
+      category; the ~750 NFL `Season` futures have no fixture to key on and are counted and
+      reported every run, never dropped. **Nothing schedules it yet** and the timer cadence
+      is an open decision. Still open from the same measurement: NCAAF (opens Aug 29), WNBA
+      (0 of 17, in season), NBA, NHL.
 - [ ] **ESPN's own headline as the post-game recap, instead of generating one.** Named by the
       user 2026-08-19. `competitions[].headlines[]` in the scoreboard payload we already
       fetch is a wire-service recap that names the inning, the pitcher who gave it up and the
