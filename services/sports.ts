@@ -177,8 +177,8 @@ export function normalizeGame(g: any, leagueOverride?: string): Game {
   // dropped by the status mapping below — surface it as the badge detail so a
   // shootout-decided final does not read as a plain FINAL.
   const rawStatus = g?.status
-  const specialStatus = rawStatus && !['SCHEDULED', 'LIVE', 'FINAL'].includes(rawStatus)
-    && rawStatus !== 'FT'
+  const plainStates = ['SCHEDULED', 'LIVE', 'FINAL', 'Final', 'Scheduled', 'In Progress']
+  const specialStatus = rawStatus && rawStatus !== 'FT' && !plainStates.includes(rawStatus)
     ? rawStatus
     : undefined
 
