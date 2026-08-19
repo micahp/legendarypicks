@@ -131,7 +131,33 @@ def _is_guaranteed_directional_start(value, anchor: dt.date, direction: str):
 
 
 def _cap_schedule_candidates(starts, anchor: dt.date, direction: str):
-    ordered = sorted(set(starts))
+    # FILTER BY DIRECTION FIRST. This used to only truncate, and the local rung
+    # feeds it a window that deliberately overruns the anchor by a day to catch
+    # timezone boundaries -- so past instants shipped inside `future_event_starts`
+    # and the client had to filter them again. Measured on prod 2026-08-19 with
+    # an unfilled store: MLB offered 9 "future" starts and every one was in the
+    # past, so the next-day button did nothing at all. A field named for a
+    # direction must only contain that direction.
+    #
+    # The comparison is on the UTC DATE, not the instant, matching the client:
+    # it converts each instant to its own local calendar day and compares days.
+    # A start on the anchor day itself is not a neighbour in either direction.
+    kept = []
+    for value in starts:
+        try:
+            moment = dt.datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+        except (TypeError, ValueError):
+            continue
+        if moment.tzinfo is None:
+            moment = moment.replace(tzinfo=dt.timezone.utc)
+        day = moment.astimezone(dt.timezone.utc).date()
+        # One day of slack on the near side, because a 00:30Z start is the
+        # previous evening in the Americas and IS the neighbouring day there.
+        if direction == "future" and day >= anchor:
+            kept.append(value)
+        elif direction == "past" and day <= anchor + dt.timedelta(days=1):
+            kept.append(value)
+    ordered = sorted(set(kept))
     if len(ordered) <= _SCHEDULE_CANDIDATE_LIMIT:
         return ordered
 

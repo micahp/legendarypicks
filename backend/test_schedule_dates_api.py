@@ -212,3 +212,40 @@ class LocalScheduleDatesTests(unittest.TestCase):
             body = games.get_schedule_dates("ufc", "2026-08-17").body.decode()
         self.assertIn("2026-08-15T22:00:00+00:00", body)
         self.assertIn("publisher_unavailable", body)
+
+
+class DirectionalCandidateTests(unittest.TestCase):
+    """A field named for a direction must only contain that direction.
+
+    `_cap_schedule_candidates` used to only truncate. The local rung feeds it a
+    window that deliberately overruns the anchor by a day to catch timezone
+    boundaries, so past instants shipped inside `future_event_starts`.
+
+    Measured on prod 2026-08-19 with an unfilled store: MLB offered 9 "future"
+    starts and every one of them was in the past, so the next-day button did
+    nothing at all. The client filtered them and was left with no target.
+    """
+
+    def test_past_instants_never_appear_as_future(self):
+        anchor = dt.date(2026, 8, 19)
+        capped = games._cap_schedule_candidates(
+            ["2026-08-18T00:05:00+00:00", "2026-08-18T23:00:00+00:00",
+             "2026-08-20T00:05:00+00:00"],
+            anchor, "future")
+        assert all("2026-08-18" not in value for value in capped), capped
+        assert "2026-08-20T00:05:00+00:00" in capped
+
+    def test_future_instants_never_appear_as_past(self):
+        anchor = dt.date(2026, 8, 19)
+        capped = games._cap_schedule_candidates(
+            ["2026-08-25T00:05:00+00:00", "2026-08-15T22:00:00+00:00"],
+            anchor, "past")
+        assert capped == ["2026-08-15T22:00:00+00:00"]
+
+    def test_the_near_side_keeps_a_day_of_slack(self):
+        """A 00:30Z start is the previous evening in the Americas, so it IS the
+        neighbouring day there. Dropping it would skip a real game."""
+        anchor = dt.date(2026, 8, 19)
+        capped = games._cap_schedule_candidates(
+            ["2026-08-20T00:30:00+00:00"], anchor, "past")
+        assert capped == ["2026-08-20T00:30:00+00:00"]

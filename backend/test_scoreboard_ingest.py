@@ -192,16 +192,24 @@ class TestScoreboardStore:
         assert scoreboard_store.live_targets() == []
 
     def test_refresh_is_skipped_only_for_reasons_the_publisher_gave(self):
-        wanted, reason = scoreboard_store.needs_refresh("mlb", "2026-08-18")
+        # TODAY, computed, not a literal. This test hardcoded 2026-08-18, which
+        # was today when it was written and became yesterday at midnight -- at
+        # which point the "a day that is OVER and published no games is final"
+        # rule correctly overrode the backoff and the test failed for a reason
+        # that had nothing to do with the behaviour it was checking. A date
+        # literal in a test about "is this day finished" is a time bomb.
+        today = dt.date.today().isoformat()
+        wanted, reason = scoreboard_store.needs_refresh("mlb", today)
         assert wanted and reason == "never fetched"
 
-        scoreboard_store.save("mlb", "2026-08-18", [])
-        wanted, reason = scoreboard_store.needs_refresh("mlb", "2026-08-18")
+        scoreboard_store.save("mlb", today, [])
+        wanted, reason = scoreboard_store.needs_refresh("mlb", today)
         assert not wanted and "no games" in reason
 
-        # Backed off, not abandoned: a late addition still lands.
+        # Backed off, not abandoned: a late addition still lands. Only true
+        # while the day is still current; see TestAnEmptyFinishedDayIsNotReasked.
         wanted, _ = scoreboard_store.needs_refresh(
-            "mlb", "2026-08-18", empty_backoff=dt.timedelta(seconds=0))
+            "mlb", today, empty_backoff=dt.timedelta(seconds=0))
         assert wanted
 
         scoreboard_store.save("nhl", "2026-08-17", [self._game("done", -5, "post")])
