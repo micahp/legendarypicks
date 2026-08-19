@@ -34,6 +34,7 @@ hours-old payload, so the defaults do nothing.
 from __future__ import annotations
 
 import json
+import collections
 import os
 import sys
 import time
@@ -58,10 +59,77 @@ HOST_BUDGET = int(os.environ.get("LP_HTTP_HOST_BUDGET", "100"))
 HOST_COOLDOWN = float(os.environ.get("LP_HTTP_HOST_COOLDOWN", "60"))
 _host_spend: dict[str, int] = {}
 
+# ── the burst rate, measured ──────────────────────────────────────────────────
+#
+# ANSWERED 2026-08-19 from the spend log, 27,801 ESPN requests over 25 hours.
+# What precedes a 403 versus what precedes a 200 on the healthy host:
+#
+#     requests in the 60s   before a 403 : median   63    before a 200 :   36
+#     requests in the 5min  before a 403 : median  311    before a 200 :  141
+#     requests in the 1h    before a 403 : median 1238    before a 200 : 1266   FLAT
+#
+# **The hour is flat. The minute is not.** So the publisher's limit is a SHORT
+# WINDOW RATE, not the per-host request COUNT that HOST_BUDGET above models and
+# not an hourly budget. See docs/DESIGN-request-budget.md §1b.
+#
+# The offender is one job: `ingest_scoreboards.py` is 71% of all ESPN traffic,
+# and its heaviest runs fire 94-142 requests in 11-26 seconds, over 500/min,
+# roughly 8x the rate where refusals begin.
+#
+# 50 per 60s is deliberately below the 63 where 403s concentrate and above the
+# 36 that precedes a typical success. It is a first setting, not a known
+# threshold: the measurement establishes the SHAPE over one day and does not
+# establish where refusals become certain. Re-measure before tightening.
+HOST_RATE = int(os.environ.get("LP_HTTP_HOST_RATE", "50"))
+RATE_WINDOW = float(os.environ.get("LP_HTTP_RATE_WINDOW", "60"))
+_host_recent: dict[str, "collections.deque"] = {}
+
 
 def reset_host_budget():
     """Forget what has been spent. For tests, and after a deliberate long wait."""
     _host_spend.clear()
+    _host_recent.clear()
+
+
+def _pace_rate(url, on_exhausted="sleep"):
+    """Hold the per-host short-window rate. Returns the seconds waited.
+
+    Process-wide, like `_host_spend`, because the publisher counts per host and
+    not per module. **It does NOT coordinate across processes**, so five jobs
+    each pacing at HOST_RATE can still show the host 5x that. That is the same
+    per-process-versus-per-host flaw the count budget has, and it is left open
+    on purpose: 71% of the traffic is a single job, so pacing each process
+    removes most of the burst without the shared-state machinery whose last
+    attempt was reverted. Whether the rest matters is a question for the next
+    day of spend-log data, not a guess to build against now.
+
+    `on_exhausted` carries the same meaning as in `_charge`: a batch job may
+    wait, a request handler may NOT. Getting that backwards is what made prod
+    sleep 46 minutes on 2026-08-18.
+    """
+    if not HOST_RATE or HOST_RATE <= 0:
+        return 0.0
+    host = urllib.parse.urlsplit(url).netloc
+    now = time.time()
+    seen = _host_recent.setdefault(host, collections.deque())
+    while seen and now - seen[0] >= RATE_WINDOW:
+        seen.popleft()
+    waited = 0.0
+    if len(seen) >= HOST_RATE:
+        wait = RATE_WINDOW - (now - seen[0])
+        if on_exhausted == "refuse":
+            raise BudgetExhausted(
+                f"{host} has taken {len(seen)} requests in the last "
+                f"{RATE_WINDOW:.0f}s; refusing rather than pausing {wait:.1f}s, "
+                f"because this caller has someone waiting.")
+        if wait > 0:
+            time.sleep(wait)
+            waited = wait
+        now = time.time()
+        while seen and now - seen[0] >= RATE_WINDOW:
+            seen.popleft()
+    seen.append(now)
+    return waited
 
 
 # ── the spend log ─────────────────────────────────────────────────────────────
@@ -87,7 +155,28 @@ SPEND_LOG = os.environ.get(
 
 # Who is spending. argv[0] is the job, and the whole point is telling eighteen
 # timers apart in one file.
-_PROCESS = os.path.basename(sys.argv[0] or "python") if sys.argv else "python"
+#
+# `python -m pkg` sets argv[0] to the package's `__main__.py`, so a plain
+# basename collapses EVERY `-m` invocation into one label. Measured 2026-08-19:
+# 3,043 ESPN requests, 11% of the day's traffic, all logged as `__main__.py`
+# across 395 distinct minutes, and unattributable. `python -m pytest` lands in
+# the same bucket as the ingest packages. The 08-18 package split made this
+# worse by turning two scripts into `-m` targets.
+#
+# So resolve `__main__.py` to the package that owns it, which is the directory
+# name, and name the test runner explicitly.
+def _who():
+    argv0 = (sys.argv[0] if sys.argv else "") or "python"
+    base = os.path.basename(argv0)
+    if base != "__main__.py":
+        return base
+    pkg = os.path.basename(os.path.dirname(os.path.abspath(argv0)))
+    if pkg in ("pytest", "_pytest"):
+        return "pytest"
+    return pkg or "__main__.py"
+
+
+_PROCESS = _who()
 
 
 def _path_family(parts):
@@ -311,6 +400,7 @@ class Fetcher:
         payload -- and a user -- is worse than answering immediately.
         """
         for wait in (*(self.retry_waits if retry else ()), None):
+            _pace_rate(url, self.on_exhausted)
             _charge(url, self.host_budget, self.host_cooldown, self.on_exhausted)
             self._throttle()
             try:
@@ -344,6 +434,7 @@ class Fetcher:
         with no pacing, no retry and no cache at all.
         """
         for wait in (*(self.retry_waits if retry else ()), None):
+            _pace_rate(url, self.on_exhausted)
             _charge(url, self.host_budget, self.host_cooldown, self.on_exhausted)
             self._throttle()
             try:
