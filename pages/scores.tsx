@@ -6,7 +6,6 @@ import { SportsService, Game } from '../services/sports'
 import GameCard from '../components/Scores/GameCard'
 import { SkeletonList, ErrorBanner, EmptyState } from '../components/Scores/States'
 import ListenLive from '../components/ListenLive'
-import LiveDiscounts from '../components/LiveDiscounts'
 import LiveDot from '../components/LiveDot'
 
 function gameHref(game: Game) {
@@ -352,7 +351,6 @@ export default function ScoresPage() {
           </button>
         </div>
         {error && <ErrorBanner message={error} />}
-        {isToday ? <LiveDiscounts /> : null}
         {liveOnly ? (
           <Link href="/scores" className="inline-block text-sm text-zinc-500 transition-colors hover:text-emerald-400">
             ← Full scoreboard

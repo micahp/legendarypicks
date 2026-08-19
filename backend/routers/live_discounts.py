@@ -37,6 +37,9 @@ _SERIES = {"mlb": "KXMLBGAME", "nfl": "KXNFLGAME", "nba": "KXNBAGAME", "nhl": "K
 _ESPN_TO_KALSHI = {"mlb": {"ARI": "AZ", "CHW": "CWS", "OAK": "ATH"}}
 
 _CACHE_TTL = 40          # seconds; widget polls at ~45s
+# How long a failing build may keep serving its last good answer. Generous
+# enough to ride out an upstream hiccup, far short of "until someone notices".
+_STALE_GRACE = 10 * 60
 _DIP_CENTS = 0.15        # live price this far under pregame = dip
 _QUALITY_MIN_PREGAME = 0.55
 _REVERSIBLE_MAX_DEFICIT = 3
@@ -338,9 +341,41 @@ def _game_start_ts(g):
     return int(d.timestamp())
 
 
+def _games_today(league):
+    """Today's slate, from the store, keyed by date. Never the undated board.
+
+    `espn.games(league)` with no date returns whatever ESPN's scoreboard is
+    currently serving, and in the morning that is still LAST NIGHT'S finished
+    games. This widget then read them as live, matched them to markets that had
+    already settled, and reported the losing side's residual 1-cent quote as a
+    98% discount on a game that ended hours ago.
+
+    Measured on prod 2026-08-19 at 09:50 ET, before any first pitch: nine cards,
+    every one of them yesterday's game, every one priced at 1 cent, including a
+    team that had won 6-0. The scoreboard for the same date correctly said `pre`
+    for all of them. The widget was verified on 2026-07-04 mid-slate, when live
+    games existed, so it has been wrong every morning since and looked right
+    every afternoon.
+
+    The store is date-keyed and is what `/scores` serves, so the two surfaces
+    now agree about what day it is. If the store cannot answer we fall back to
+    an explicitly dated publisher call, never an undated one.
+    """
+    today = dt.datetime.now(dt.timezone.utc).date().isoformat()
+    try:
+        import scoreboard_store
+        stored = scoreboard_store.read(league, today)
+        if stored is not None:
+            return stored["games"]
+    except Exception as exc:
+        print(f"[live-discounts] store unreadable league={league}: "
+              f"{type(exc).__name__}: {exc}")
+    return espn.games(league, today)
+
+
 def _build(league):
     series = _SERIES[league]
-    games = espn.games(league)
+    games = _games_today(league)
     markets = _kalshi_markets(series)
     rank, meta = _strength(league)
     sits = _situations(league)
@@ -603,9 +638,26 @@ def live_discounts(league: str = Query("mlb")):
             _cache[lg] = (now, p)
             payloads.append(p)
         except Exception as e:
-            if hit:
+            # A stale payload beats a stack trace, but only for a WHILE. `hit`
+            # here is the EXPIRED entry, and serving it with no age limit meant
+            # that once _build started failing the widget froze on its last good
+            # answer forever: every poll re-entered this branch, the timestamp
+            # was never refreshed, so it could never go fresh again. Measured on
+            # prod 2026-08-19 at 09:50 ET, nine cards frozen mid-game from the
+            # previous evening ("Top 5th", every price 1 cent, including a team
+            # that had won 6-0) while the scoreboard for the same date correctly
+            # said every game was `pre`.
+            #
+            # Past the grace window we report the failure instead. A widget that
+            # says nothing is honest; one that shows last night's prices as live
+            # is not.
+            age = now - hit[0] if hit else None
+            if hit and age is not None and age < _STALE_GRACE:
                 payloads.append(hit[1])
             else:
+                if hit:
+                    print(f"[live-discounts] dropping a {age / 60:.0f}m stale payload "
+                          f"for {lg} rather than serving it: {e}")
                 errors.append(f"{lg}: {e}")
     if not payloads:
         raise HTTPException(502, f"live discounts unavailable: {'; '.join(errors)}")
