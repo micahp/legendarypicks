@@ -7,13 +7,20 @@ data-derived fact — no speculation, so the story prompt's no-invention rule ho
 
 Fail-soft by contract: any error → [] and the story simply gets no stakes lines this pass.
 """
+import warnings
+
 import espn_client as espn
 
 # Leagues with a stakes model. generate_game_story uses this to decide whether a cached
 # pre-stakes story is final (league unsupported) or provisional (regenerate once, with stakes).
 SUPPORTED = {"wc", "mlb"}
 
-_MLB_STANDINGS = "https://site.api.espn.com/apis/v2/sports/baseball/mlb/standings?level=3"
+# `site.web.api`, NOT `site.api`: the latter is walled from this box and 403s every time.
+# This pointed at the walled host and so `_mlb` raised on every call since it was written,
+# which the fail-soft contract below turned into an empty list. Measured 2026-08-19 from the
+# spend log: 2,607 requests in one day, 403 every one, and every MLB story generated with no
+# stakes lines at all. The two hosts serve the identical path (261 KB, both leagues).
+_MLB_STANDINGS = "https://site.web.api.espn.com/apis/v2/sports/baseball/mlb/standings?level=3"
 
 
 def for_matchup(league, ab_a, ab_b):
@@ -25,7 +32,12 @@ def for_matchup(league, ab_a, ab_b):
             return _wc(ab_a, ab_b)
         if league == "mlb":
             return _mlb(ab_a, ab_b)
-    except Exception:
+    except Exception as e:
+        # Still fail-soft: a story without stakes beats no story. But it is no longer
+        # SILENT. The whole point of this module is that stories were starving without it,
+        # so "returns nothing" and "is broken" must not look the same from outside.
+        warnings.warn(f"stakes: {league} lookup failed, story gets no stakes lines: {e!r}",
+                      stacklevel=2)
         return []
     return []
 
