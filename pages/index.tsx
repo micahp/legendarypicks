@@ -33,12 +33,12 @@ export default function Home() {
   return (
     <>
       <Head>
-        <title>Legendary Picks: props with history — how every line landed</title>
-        <meta name="description" content="Player props with settled history — how the line landed, hit rates, and projections. Live scores, predictions, news, esports and mock drafts." />
+        <title>Legendary Picks: props with history, and how every line landed</title>
+        <meta name="description" content="Player props with settled history: how the line landed, hit rates, and projections. Live scores, predictions, news, esports and mock drafts." />
         <link rel="canonical" href="https://legendarypicks.xyz/" />
         {/* Open Graph (Facebook/LinkedIn/iMessage/etc.) */}
-        <meta property="og:title" content="Legendary Picks: props with history — how every line landed" />
-        <meta property="og:description" content="Player props with settled history — how the line landed, hit rates, and projections. Live scores, predictions, news, esports and mock drafts." />
+        <meta property="og:title" content="Legendary Picks: props with history, and how every line landed" />
+        <meta property="og:description" content="Player props with settled history: how the line landed, hit rates, and projections. Live scores, predictions, news, esports and mock drafts." />
         <meta property="og:image" content="https://legendarypicks.xyz/og-image.png" />
         <meta property="og:image:width" content="1200" />
         <meta property="og:image:height" content="630" />
@@ -47,8 +47,8 @@ export default function Home() {
         <meta property="og:site_name" content="Legendary Picks" />
         {/* Twitter / X card */}
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="Legendary Picks: props with history — how every line landed" />
-        <meta name="twitter:description" content="Player props with settled history — how the line landed, hit rates, and projections. Live scores, predictions, news, esports and mock drafts." />
+        <meta name="twitter:title" content="Legendary Picks: props with history, and how every line landed" />
+        <meta name="twitter:description" content="Player props with settled history: how the line landed, hit rates, and projections. Live scores, predictions, news, esports and mock drafts." />
         <meta name="twitter:image" content="https://legendarypicks.xyz/og-image.png" />
       </Head>
 
