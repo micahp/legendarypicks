@@ -195,8 +195,9 @@ straightforward miss, and it matters because **today's scoreboard work was this 
 reinvented piecemeal.** Done as one piece, the 60-second stall, the blank past days, the
 dead arrows and the COD gap would not have been four separate emergencies.
 
-Spec: `TASK-scores-schedule-espn-model.md`, plus two primitives to reuse rather than
-rebuild: `docs/API-nfl-schedule-weeks-v1.md` (ESPN's own week calendar, live on
+Spec: **`docs/SPEC-featured-events-scoreboard.md`** (written 2026-08-19), with
+`TASK-scores-schedule-espn-model.md` kept as the reference for week-grouped navigation.
+Two primitives to reuse rather than rebuild: `docs/API-nfl-schedule-weeks-v1.md` (ESPN's own week calendar, live on
 `pages/leagues/[league].tsx`) and `docs/API-league-schedule-dates-v1.md`.
 
 The original measurement, which still reads correctly as a diagnosis:
@@ -219,7 +220,8 @@ The original measurement, which still reads correctly as a diagnosis:
 
 ### What is still open
 
-- [ ] **An ESPN-style Top Events page** with a show-all link and no date picker.
+- [ ] **Featured Events strip and the "Next up" collapse**, per the spec. §4 is the ranking,
+      §6 is the empty state, §6b is the visual language.
 - [ ] **Week-grouped navigation for NFL and NCAAF.** NCAAF opens Aug 29, so this has a date.
 - [ ] **A request-count gate** enforcing the zero, so the property cannot silently regress.
 
