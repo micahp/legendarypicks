@@ -284,5 +284,145 @@ class RotowirePropsTests(unittest.TestCase):
         self.assertEqual(self.scalar("SELECT COUNT(*) FROM player_source_ids"), 0)
 
 
+class SoccerIsFiveCompetitionsUnderOneLabel(unittest.TestCase):
+    """MLS shares the `Soccer` sport label with La Liga, Ligue 1, Serie A and the EPL.
+
+    So resolving both clubs against MLS's own roster IS the membership test, and the
+    club vocabulary is stubbed here rather than fetched: a unit test must not decide
+    what it asserts by making a live request.
+    """
+
+    VOCABULARY = {
+        "atlanta united": "ATL", "atlanta united fc": "ATL",
+        "minnesota united": "MIN", "minnesota united fc": "MIN",
+        "cf montreal": "MTL", "d c united": "DC",
+        "new york red bulls": "RBNY", "red bull new york": "RBNY",
+        "los angeles football club": "LAFC", "lafc": "LAFC",
+        "vancouver whitecaps": "VAN", "vancouver whitecaps fc": "VAN",
+    }
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.db_path = os.path.join(self.tmp.name, "rw-mls.db")
+        create_schema(self.db_path)
+        self.old_db = rw.DB
+        rw.DB = self.db_path
+        self.old_vocab = rw.team_vocabulary
+        rw.team_vocabulary = lambda con, league: dict(self.VOCABULARY)
+        self.con = sqlite3.connect(self.db_path)
+        self.con.row_factory = sqlite3.Row
+
+    def tearDown(self):
+        self.con.close()
+        rw.DB = self.old_db
+        rw.team_vocabulary = self.old_vocab
+        self.tmp.cleanup()
+
+    def player(self, name, team):
+        player_id = self.con.execute(
+            "INSERT INTO players(name,team,league,active) VALUES(?,?,'mls',1)",
+            (name, team)).lastrowid
+        self.con.commit()
+        return player_id
+
+    def scalar(self, sql, params=()):
+        return self.con.execute(sql, params).fetchone()[0]
+
+    def soccer(self, player_name, team, home, away, market_id=152,
+               market_name="Shots on Target", link="https://www.rotowire.com/soccer/player/x-99"):
+        return {
+            "markets": [{"marketID": market_id, "sport": "Soccer", "category": "Game",
+                         "marketName": market_name}],
+            "entities": [{"entityID": 70, "eventID": 70, "sport": "Soccer",
+                          "name": player_name, "team": team, "pos": "F", "link": link}],
+            "events": [{"eventID": 70, "gameID": 263106, "eventTime": KICKOFF,
+                        "homeTeam": home, "awayTeam": away}],
+            "props": [{"propID": "a", "marketID": market_id, "entities": [70],
+                       "lines": [{"book": "prizepicks", "over": -120, "under": -110,
+                                  "line": 1.5}]}],
+        }
+
+    def test_a_non_mls_fixture_under_the_same_label_is_not_ingested(self):
+        self.player("Some Forward", "ATL")
+        rows, _ = rw.parse(self.soccer("Some Forward", "Atletico Madrid",
+                                       "Atletico Madrid", "Malaga"), "mls")
+
+        summary = rw.ingest(rows, "mls")
+
+        self.assertEqual(summary["new"], 0)
+        self.assertEqual(summary["unknown_team"], 2)
+        self.assertEqual(self.scalar("SELECT COUNT(*) FROM prop_games"), 0)
+
+    def test_the_same_club_spelled_three_ways_finds_one_game(self):
+        """`CF Montreal`, `CF Montréal` and `MTL` are one club, so one fixture."""
+        self.player("Some Forward", "ATL")
+        existing = self.con.execute(
+            "INSERT INTO prop_games(league,date,home,away) "
+            "VALUES('mls','2026-09-13','CF Montréal','Atlanta United FC')").lastrowid
+        self.con.commit()
+
+        rows, _ = rw.parse(self.soccer("Some Forward", "Atlanta United",
+                                       "CF Montreal", "Atlanta United"), "mls")
+        rw.ingest(rows, "mls")
+
+        self.assertEqual(self.scalar("SELECT COUNT(*) FROM prop_games"), 1)
+        self.assertEqual(self.scalar("SELECT DISTINCT game_id FROM props"), existing)
+
+    def test_a_club_alias_resolves(self):
+        """The relay says `New York Red Bulls`; ESPN says `Red Bull New York`."""
+        self.player("Some Forward", "RBNY")
+        rows, _ = rw.parse(self.soccer("Some Forward", "New York Red Bulls",
+                                       "New York Red Bulls", "Atlanta United"), "mls")
+
+        summary = rw.ingest(rows, "mls")
+
+        self.assertEqual(summary["new"], 2)
+        self.assertEqual(self.scalar("SELECT COUNT(*) FROM unresolved_players"), 0)
+
+    def test_a_dropped_middle_name_resolves_inside_the_club(self):
+        """`Juan Sanabria` on RSL is our `Juan Manuel Sanabria` on RSL."""
+        sanabria = self.player("Juan Manuel Sanabria", "RBNY")
+        rows, _ = rw.parse(self.soccer("Juan Sanabria", "New York Red Bulls",
+                                       "New York Red Bulls", "Atlanta United"), "mls")
+
+        rw.ingest(rows, "mls")
+
+        self.assertEqual(self.scalar("SELECT DISTINCT player_id FROM props"), sanabria)
+
+    def test_a_mononym_resolves_inside_the_club(self):
+        """`Luighi` is our `Luighi Hanri`. Common in MLS, and not a surname match."""
+        luighi = self.player("Luighi Hanri", "RBNY")
+        rows, _ = rw.parse(self.soccer("Luighi", "New York Red Bulls",
+                                       "New York Red Bulls", "Atlanta United"), "mls")
+
+        rw.ingest(rows, "mls")
+
+        self.assertEqual(self.scalar("SELECT DISTINCT player_id FROM props"), luighi)
+
+    def test_a_nickname_is_queued_rather_than_guessed(self):
+        """`Andrew Thomas` against our `Andy Thomas` is not derivable, so it refuses."""
+        self.player("Andy Thomas", "RBNY")
+        rows, _ = rw.parse(self.soccer("Andrew Thomas", "New York Red Bulls",
+                                       "New York Red Bulls", "Atlanta United"), "mls")
+
+        summary = rw.ingest(rows, "mls")
+
+        self.assertEqual(summary["new"], 0)
+        self.assertEqual(self.scalar("SELECT raw_name FROM unresolved_players"),
+                         "Andrew Thomas")
+
+    def test_a_fallback_never_reaches_outside_the_club(self):
+        """The same dropped-middle-name shape, on another club, must not resolve."""
+        self.player("Juan Manuel Sanabria", "ATL")
+        rows, _ = rw.parse(self.soccer("Juan Sanabria", "New York Red Bulls",
+                                       "New York Red Bulls", "Atlanta United"), "mls")
+
+        summary = rw.ingest(rows, "mls")
+
+        self.assertEqual(summary["new"], 0)
+        self.assertEqual(self.scalar("SELECT reason FROM unresolved_players"),
+                         "not_in_spine")
+
+
 if __name__ == "__main__":
     unittest.main()
