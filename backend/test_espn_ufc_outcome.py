@@ -14,7 +14,7 @@ from espn_client.scoreboard import _games_from_payload
 
 
 def _fight(fight_id="600059185", method_id=None, method_text="Unofficial Winner X",
-           period=3, clock="1:24", regulation=3):
+           period=3, clock="1:24", regulation=3, state="post", completed=True):
     details = []
     if method_id is not None:
         details.append({"id": "18901", "type": {"id": method_id, "text": method_text}})
@@ -27,8 +27,13 @@ def _fight(fight_id="600059185", method_id=None, method_text="Unofficial Winner 
         "competitions": [{
             "id": fight_id,
             "date": "2026-08-16T01:00Z",
-            "status": {"type": {"state": "post", "description": "Final",
-                                "shortDetail": "Final"},
+            # `completed` is what ESPN actually publishes and what decides
+            # whether a fight is over. Measured on the real 2026-08-15 payload:
+            #   {"id":"3","name":"STATUS_FINAL","state":"post","completed":true,...}
+            # An earlier version of this fixture omitted it, so the tests were
+            # asserting against a payload ESPN never sends.
+            "status": {"type": {"state": state, "completed": completed,
+                                "description": "Final", "shortDetail": "Final"},
                        "period": period, "displayClock": clock},
             "format": {"regulation": {"periods": regulation}},
             "details": details,
@@ -104,6 +109,42 @@ class UfcOutcomeTests(unittest.TestCase):
             warnings.simplefilter("always")
             _one(_fight(method_id=None, period=3, clock="5:00", regulation=3))
         self.assertEqual([str(w.message) for w in caught], [])
+
+
+class UfcOutcomeUnfinishedTests(unittest.TestCase):
+    """Nothing is emitted for a fight that is not over.
+
+    These are the empty-window cases. The decision rule reads period and clock,
+    and a LIVE fight at the start of its final round publishes exactly what a
+    decision publishes: period == regulation, displayClock "5:00" (UFC rounds
+    count down from 5:00). Without a completion guard the board labels a fight
+    "Decision" while it is still being fought.
+    """
+
+    def test_live_fight_at_the_start_of_the_final_round_is_not_a_decision(self):
+        g = _one(_fight(method_id=None, period=3, clock="5:00", regulation=3,
+                        state="in", completed=False))
+        self.assertIsNone(g["outcome_method"])
+        self.assertIsNone(g["outcome_round"])
+        self.assertIsNone(g["outcome_clock"])
+
+    def test_live_five_round_fight_at_the_start_of_round_five(self):
+        g = _one(_fight(method_id=None, period=5, clock="5:00", regulation=5,
+                        state="in", completed=False))
+        self.assertIsNone(g["outcome_method"])
+
+    def test_scheduled_fight_emits_nothing(self):
+        g = _one(_fight(method_id=None, period=0, clock="5:00",
+                        state="pre", completed=False))
+        self.assertIsNone(g["outcome_method"])
+
+    def test_postponed_is_state_post_but_was_never_fought(self):
+        # `state == "post"` is not "this fight happened": a postponed event is
+        # also state=post. `completed` is the key, the same rule the rest of
+        # espn_client.scoreboard already follows.
+        g = _one(_fight(method_id="20", method_text="Unofficial Winner Submission",
+                        period=3, clock="1:24", state="post", completed=False))
+        self.assertIsNone(g["outcome_method"])
 
 
 if __name__ == "__main__":

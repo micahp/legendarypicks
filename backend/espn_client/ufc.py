@@ -138,7 +138,20 @@ def ufc_outcome(competition):
     length AND the clock is the full round ("5:00"); otherwise emit nothing,
     never a guess — a fight that ended at 4:59 of round three with no detail
     could be a finish we cannot name.
+
+    Nothing is emitted for a fight that has not finished. The decision rule
+    reads period and clock, and a LIVE fight at the start of its final round
+    publishes exactly the values a decision does (period=3, displayClock=5:00
+    for a 3-round bout), so without this guard an in-progress fight is
+    labelled "Decision" while it is still being fought. Measured 2026-08-19.
+    The key is `status.type.completed`, not `state == "post"`: a POSTPONED
+    fight is also state="post" and was never fought (see the same note in
+    espn_client.scoreboard).
     """
+    status = competition.get("status") or {}
+    if not bool((status.get("type") or {}).get("completed")):
+        return None, None, None
+
     method = None
     for detail in competition.get("details") or []:
         t = detail.get("type") or {}
@@ -157,7 +170,6 @@ def ufc_outcome(competition):
                 stacklevel=2,
             )
 
-    status = competition.get("status") or {}
     period = status.get("period")
     clock = status.get("displayClock")
     if method is None:
