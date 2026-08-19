@@ -1,6 +1,6 @@
 ---
 name: answer-is-already-here
-description: MUST load the moment you are about to say "I can't", "blocked", "needs X", "unverifiable from here", "questions for Micah", or to hand a question back instead of answering it — and before reporting any diagnosis you reached by reasoning rather than by looking. Encodes the repeated failure where a host 403s, a tool is unavailable, or a fact seems unknowable, and the answer was already on this box: in a cache, a payload, a log, an error message, or git. Triggers on 403, blocked, rate limited, "cannot fetch", "no access", "I don't have", "would need", "let me know", "open question", any competitor or third-party research, any "why is prod different", and any moment you are about to escalate rather than measure.
+description: MUST load the moment you are about to say "I can't", "blocked", "needs X", "unverifiable from here", "questions for Micah", or to hand a question back instead of answering it, and before reporting any diagnosis you reached by reasoning rather than by looking. Encodes the repeated failure where a host 403s, a tool is unavailable, or a fact seems unknowable, and the answer was already on this box: in a cache, a payload, a log, an error message, or git. Triggers on 403, blocked, rate limited, "cannot fetch", "no access", "I don't have", "would need", "let me know", "open question", any competitor or third-party research, any "why is prod different", and any moment you are about to escalate rather than measure.
 ---
 
 # The answer is usually already here
