@@ -272,6 +272,12 @@ def bind_player_source_key(
         )
 
 
+def _game_exists(con: sqlite3.Connection, game_id: int) -> bool:
+    return con.execute(
+        "SELECT 1 FROM prop_games WHERE id=?", (game_id,)
+    ).fetchone() is not None
+
+
 def _game_with_fighters(con: sqlite3.Connection, game_id: int, player_ids: Set[int]) -> bool:
     found = {
         row["player_id"]
@@ -296,21 +302,43 @@ def resolve_game(
         raise SourceIdentityConflict("source game key {} has multiple mappings".format(source_game_key))
     if mapped:
         game_id = mapped[0]["game_id"]
-        if not _game_with_fighters(con, game_id, player_ids):
-            raise SourceIdentityConflict(
-                "source game key {} conflicts with canonical fighters".format(source_game_key)
+        # A mapped row that no longer exists is not a changed identity, it is a game
+        # that was folded into another one (link_prop_games and dedupe_prop_games both
+        # do that) by a pass that did not carry the mapping across. Re-resolving finds
+        # the survivor by fighter set, which is the same answer the fold intended.
+        # Raising here instead cost two hours of failed runs on 2026-08-19.
+        if not _game_exists(con, game_id):
+            print("  stale mapping: source game {} pointed at deleted game {}, "
+                  "re-resolving".format(source_game_key, game_id))
+            con.execute(
+                "DELETE FROM prop_game_source_ids WHERE source=? AND league=? AND source_game_key=?",
+                (SOURCE, LEAGUE, source_game_key),
             )
-        con.execute(
-            "UPDATE prop_game_source_ids SET last_seen=? WHERE source=? AND league=? AND source_game_key=?",
-            (now, SOURCE, LEAGUE, source_game_key),
-        )
-        return game_id
+            mapped = []
+        else:
+            if not _game_with_fighters(con, game_id, player_ids):
+                raise SourceIdentityConflict(
+                    "source game key {} conflicts with canonical fighters".format(source_game_key)
+                )
+            con.execute(
+                "UPDATE prop_game_source_ids SET last_seen=? WHERE source=? AND league=? AND source_game_key=?",
+                (now, SOURCE, LEAGUE, source_game_key),
+            )
+            return game_id
 
+    # A one-day window, not an exact date. Publishers disagree by a day on the same
+    # fixture because a card that starts 00:45 UTC is the previous evening in the US,
+    # and link_prop_games documents the same "neighbour slate" convention. Measured
+    # 2026-08-19: Underdog files Wint vs Chatman on 08-22, ESPN on 08-23, and an exact
+    # match minted a second row for a fight we already had under its ESPN event id.
+    # Two fighters meeting twice inside two days is not a thing, so the window is safe,
+    # and an ambiguous result still refuses below rather than guessing.
     candidates = con.execute(
         "SELECT pg.id FROM prop_games pg JOIN props pr ON pr.game_id=pg.id "
-        "WHERE pg.league=? AND pg.date=? AND pr.player_id IN (?,?) "
+        "WHERE pg.league=? AND pg.date BETWEEN date(?,'-1 day') AND date(?,'+1 day') "
+        "AND pr.player_id IN (?,?) "
         "GROUP BY pg.id HAVING COUNT(DISTINCT pr.player_id)=2",
-        (LEAGUE, group[0]["date"], *sorted(player_ids)),
+        (LEAGUE, group[0]["date"], group[0]["date"], *sorted(player_ids)),
     ).fetchall()
     if len(candidates) > 1:
         raise SourceIdentityConflict(

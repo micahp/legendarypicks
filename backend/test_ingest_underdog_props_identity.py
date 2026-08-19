@@ -12,6 +12,7 @@ os.environ["LP_DB_PATH"] = os.path.join(_IMPORT_TMP.name, "import-only.db")
 import ingest_underdog_props as underdog
 import apply_reviewed_ufc_identity as reviewed
 import bovada_scraper
+from prop_game_merge import dangling_source_mappings, fold_prop_game
 
 
 def create_schema(path):
@@ -207,6 +208,125 @@ class UnderdogIdentityTests(unittest.TestCase):
             else:
                 os.environ["LP_DB_PATH"] = old_path
         self.assertEqual(self.scalar("SELECT COUNT(*) FROM prop_games"), 1)
+
+
+class FoldedGameKeepsItsSourceMapping(unittest.TestCase):
+    """A fold moves the mapping too, and a mapping left behind self-heals.
+
+    Written 2026-08-19, after the UFC timer failed every 30 minutes for two hours
+    with `source game key 291703 conflicts with canonical fighters`. The fighters
+    matched fine. Game 1235 had been folded into 1234 by a pass that repointed
+    `props` and forgot `prop_game_source_ids`, so the guard compared the board
+    against a row that no longer existed and read absence as a changed identity.
+    """
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.db_path = os.path.join(self.tmp.name, "underdog.db")
+        create_schema(self.db_path)
+        self.old_db = underdog.DB
+        underdog.DB = self.db_path
+        self.con = sqlite3.connect(self.db_path)
+        self.con.row_factory = sqlite3.Row
+
+    def tearDown(self):
+        self.con.close()
+        underdog.DB = self.old_db
+        self.tmp.cleanup()
+
+    def player(self, name):
+        player_id = self.con.execute(
+            "INSERT INTO players(name,league) VALUES(?,'ufc')", (name,)
+        ).lastrowid
+        self.con.commit()
+        return player_id
+
+    def scalar(self, sql, params=()):
+        return self.con.execute(sql, params).fetchone()[0]
+
+    def test_fold_carries_the_source_mapping_onto_the_surviving_game(self):
+        self.player("Alpha Fighter")
+        self.player("Bravo Fighter")
+        underdog.direct_ingest(board())
+        loser = self.scalar("SELECT game_id FROM prop_game_source_ids WHERE source_game_key='g-1'")
+        winner = self.con.execute(
+            "INSERT INTO prop_games(league,date,home,away) VALUES('ufc','2026-08-16','A','B')"
+        ).lastrowid
+        self.con.commit()
+
+        self.assertEqual(fold_prop_game(self.con, loser, winner), winner)
+        self.con.commit()
+
+        self.assertEqual(
+            self.scalar("SELECT game_id FROM prop_game_source_ids WHERE source_game_key='g-1'"),
+            winner,
+        )
+        self.assertEqual(self.scalar("SELECT COUNT(*) FROM props WHERE game_id=?", (winner,)), 2)
+        self.assertEqual(self.scalar("SELECT COUNT(*) FROM prop_games WHERE id=?", (loser,)), 0)
+        self.assertEqual(len(dangling_source_mappings(self.con)), 0)
+
+    def test_a_mapping_left_pointing_at_a_deleted_game_re_resolves_instead_of_raising(self):
+        self.player("Alpha Fighter")
+        self.player("Bravo Fighter")
+        underdog.direct_ingest(board())
+        stranded = self.scalar("SELECT game_id FROM prop_game_source_ids WHERE source_game_key='g-1'")
+        survivor = self.con.execute(
+            "INSERT INTO prop_games(league,date,home,away) VALUES('ufc','2026-08-16','A','B')"
+        ).lastrowid
+        # The old fold, reproduced exactly: props move, the mapping is forgotten.
+        self.con.execute("UPDATE props SET game_id=? WHERE game_id=?", (survivor, stranded))
+        self.con.execute("DELETE FROM prop_games WHERE id=?", (stranded,))
+        self.con.commit()
+        self.assertEqual(len(dangling_source_mappings(self.con)), 1)
+
+        summary = underdog.direct_ingest(board())
+
+        self.assertEqual(summary["written_props"], 2)
+        self.assertEqual(
+            self.scalar("SELECT game_id FROM prop_game_source_ids WHERE source_game_key='g-1'"),
+            survivor,
+        )
+        self.assertEqual(len(dangling_source_mappings(self.con)), 0)
+        self.assertEqual(self.scalar("SELECT COUNT(*) FROM prop_games"), 1)
+
+    def test_a_publisher_one_day_off_resolves_onto_the_existing_fight(self):
+        """Underdog files Wint vs Chatman on 08-22, ESPN on 08-23. One fight."""
+        alpha_id = self.player("Alpha Fighter")
+        bravo_id = self.player("Bravo Fighter")
+        espn_game = self.con.execute(
+            "INSERT INTO prop_games(league,date,home,away,espn_event_id) "
+            "VALUES('ufc','2026-08-17','Alpha Fighter','Bravo Fighter','401911625')"
+        ).lastrowid
+        for player_id in (alpha_id, bravo_id):
+            self.con.execute(
+                "INSERT INTO props(game_id,player_id,market,line,side,source,captured_at) "
+                "VALUES(?,?,'win_by_decision',0.5,'over','bovada','2026-08-15T00:00:00Z')",
+                (espn_game, player_id),
+            )
+        self.con.commit()
+
+        underdog.direct_ingest(board())  # board() dates the same fight 2026-08-16
+
+        self.assertEqual(self.scalar("SELECT COUNT(*) FROM prop_games"), 1)
+        self.assertEqual(
+            self.scalar("SELECT game_id FROM prop_game_source_ids WHERE source_game_key='g-1'"),
+            espn_game,
+        )
+
+    def test_a_live_game_with_different_fighters_still_refuses(self):
+        self.player("Alpha Fighter")
+        self.player("Bravo Fighter")
+        underdog.direct_ingest(board())
+        other = self.con.execute(
+            "INSERT INTO prop_games(league,date,home,away) VALUES('ufc','2026-08-16','X','Y')"
+        ).lastrowid
+        self.con.execute(
+            "UPDATE prop_game_source_ids SET game_id=? WHERE source_game_key='g-1'", (other,)
+        )
+        self.con.commit()
+
+        with self.assertRaises(underdog.SourceIdentityConflict):
+            underdog.direct_ingest(board())
 
 
 if __name__ == "__main__":

@@ -19,6 +19,7 @@ import sys, os, sqlite3, re, unicodedata
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import espn_client as espn
+from prop_game_merge import fold_prop_game
 
 DB = os.environ.get("LP_DB_PATH") or os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "picks.db")
 
@@ -527,9 +528,7 @@ def link_existing_games(con: sqlite3.Connection, dry_run: bool = False,
                     if existing:
                         merged_into = existing["id"] if hasattr(existing, "keys") else existing[0]
                         if not dry_run:
-                            con.execute("UPDATE props SET game_id=? WHERE game_id=?",
-                                        (merged_into, g["id"]))
-                            con.execute("DELETE FROM prop_games WHERE id=?", (g["id"],))
+                            fold_prop_game(con, g["id"], merged_into)
                         print(f"    game {g['id']}: {g['away']} @ {g['home']} is event "
                               f"{espn_id}, already held by game {merged_into} — props "
                               f"repointed, duplicate row removed")

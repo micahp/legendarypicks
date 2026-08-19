@@ -89,6 +89,9 @@ import sys
 import time
 import urllib.request
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from prop_game_merge import fold_prop_game
+
 _SCHEDULE_CACHE = {}
 
 
@@ -278,12 +281,8 @@ def run(db_path, apply=False, resolve_finals=False):
         deleted_results += cur.rowcount
 
     for loser, winner in losers:
-        con.execute("UPDATE props SET game_id=? WHERE game_id=?", (winner, loser))
+        fold_prop_game(con, loser, winner)
     marks_batch = [l for l, _ in losers]
-    for chunk in range(0, len(marks_batch), 500):
-        batch = marks_batch[chunk:chunk + 500]
-        con.execute("DELETE FROM prop_games WHERE id IN ({})".format(
-            ",".join("?" * len(batch))), batch)
     con.commit()
 
     after_games = con.execute("SELECT COUNT(*) FROM prop_games").fetchone()[0]

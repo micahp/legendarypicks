@@ -3,6 +3,7 @@ from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import JSONResponse
 from typing import Optional
 from _core import *
+from prop_game_merge import fold_prop_game
 
 router = APIRouter()
 
@@ -484,9 +485,7 @@ def _link_or_fold(con, game_id, league, espn_id):
         if not holder:
             raise
         keep = holder["id"] if hasattr(holder, "keys") else holder[0]
-        con.execute("UPDATE props SET game_id=? WHERE game_id=?", (keep, game_id))
-        con.execute("DELETE FROM prop_games WHERE id=?", (game_id,))
-        return keep
+        return fold_prop_game(con, game_id, keep)
 
 
 @router.post("/api/props/ingest")
