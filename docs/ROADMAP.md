@@ -334,6 +334,20 @@ Named by the user, no work done:
       generally.
 - [ ] **Daily RotoWire props dump.** Save everything that endpoint gives us to a directory,
       once a day at midnight, in case we expand to those leagues.
+- [ ] **ESPN's own headline as the post-game recap, instead of generating one.** Named by the
+      user 2026-08-19. `competitions[].headlines[]` in the scoreboard payload we already
+      fetch is a wire-service recap that names the inning, the pitcher who gave it up and the
+      series context: "Lowe and Flores homer in the ninth off Jansen as the Pirates rally past
+      Tigers 4-3". It is plainly better than what we generate for a final, and it is free.
+      **Measured 2026-08-19 on the live board (games with a headline / games):**
+      `mlb 12/15, mls 0/15, wnba 0/2, atp 0/1`. So this is an MLB-only win today.
+      Acceptance: use the ESPN headline as the recap wherever it exists; **keep generation for
+      previews** (the scheduled-game headline is a thin tease, "Phillies try to keep home win
+      streak alive", while ours carries division, seed, streak and the hot bat) **and for
+      every league that gets nothing**; a card whose headline is absent falls back to our
+      generator or an honest blank, never a fabricated line. Depends on §B4 keeping the field
+      instead of discarding it. The payoff is a real cut in LLM volume with no quality loss.
+      **Skills to load:** `published-first`.
 - [ ] **Story generation deserves its own timer.** It currently rides on
       `ingest_scoreboards.py` only because that is where we now learn a game exists. Nothing
       ties it to the scoreboard. Related and still true: story generation reaches
