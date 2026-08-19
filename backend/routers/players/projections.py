@@ -14,6 +14,12 @@ from nfl_stat_derivations import with_derived as _with_derived
 from nfl_news import (ROTOWIRE_LABEL, load_news_feed, load_player_news_page, load_sleeper_crosswalk, merge_player_news, resolve_rotowire_id)
 from . import router
 from .search import _reg_season_game_filter  # noqa: E402
+# The 2026-08-18 split gave `profile.py` this import and missed `projections.py`,
+# which uses the same table at line ~60 to fold legacy 2024 nflverse keys onto the
+# canonical 2025 pbp names. It was a live NameError on that path. Invisible to
+# pyflakes because this module does `from _core import *`, which stops it checking
+# undefined names at all: found 2026-08-19 by expanding the star import in a copy.
+from .stats import _NFL_KEY_NORMALIZE  # noqa: E402
 
 
 def __db_pkg(*args, **kwargs):
