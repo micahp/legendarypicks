@@ -56,6 +56,11 @@ export interface Game {
   sets?: TennisSet[]
   // Live game period details (only present when LIVE)
   livePeriod?: LivePeriod
+  // UFC finish (a final with no score shows the method): "Submission" /
+  // "KO/TKO" / "Decision", the round it ended in, and the clock in that round.
+  outcomeMethod?: string
+  outcomeRound?: number
+  outcomeClock?: string
 }
 
 function statusFromState(state?: string): Game['status'] {
@@ -159,14 +164,23 @@ export function normalizeGame(g: any, leagueOverride?: string): Game {
   const rawLeague = leagueOverride ? leagueOverride : (g?.league ?? g?.sport ?? '')
   const league = typeof rawLeague === 'string' ? rawLeague : (rawLeague?.abbreviation || rawLeague?.name || String(rawLeague || ''))
 
-  // The board's section heading. Tennis names the tournament ("Cincinnati
-  // Open"); a UFC card used to name only its segment ("Main Card"), which says
-  // nothing about WHICH card. The event leads for the same reason the tournament
-  // does, and the segment follows it, since Prelims and Main Card start at
-  // different times and still have to group separately.
+  // The segment is the group (Main Card etc.); the event is the card. The
+  // board names a UFC event the way it names a tennis tournament.
   const segment = g?.card_segment || ''
   const event = g?.event || ''
   let subtitle = event && segment ? `${event} · ${segment}` : (segment || g?.subtitle || event || '')
+
+  // The backend computes a finish display for soccer that ESPN's shortDetail
+  // does not carry: "FT (Pens)" / "FT (AET)" / "Suspended" (see the soccer
+  // branch of espn_client._games_from_payload). It lives in the backend
+  // `status` field, which is not one of SCHEDULED/LIVE/FINAL, so it would be
+  // dropped by the status mapping below — surface it as the badge detail so a
+  // shootout-decided final does not read as a plain FINAL.
+  const rawStatus = g?.status
+  const specialStatus = rawStatus && !['SCHEDULED', 'LIVE', 'FINAL'].includes(rawStatus)
+    && rawStatus !== 'FT'
+    ? rawStatus
+    : undefined
 
   return {
     gameId: String(g?.game_id ?? g?.gameId ?? ''),
@@ -180,10 +194,13 @@ export function normalizeGame(g: any, leagueOverride?: string): Game {
     awayTeam: side(g?.away ?? g?.awayTeam),
     startTime: g?.date ?? g?.startTime ?? '',
     status: g?.status && ['SCHEDULED', 'LIVE', 'FINAL'].includes(g.status) ? g.status : statusFromState(g?.state),
-    statusDetail: g?.status_detail ?? g?.statusDetail ?? undefined,   // ESPN shortDetail, e.g. "Final/10"
+    statusDetail: g?.status_detail ?? g?.statusDetail ?? specialStatus,   // ESPN shortDetail, e.g. "Final/10"
     subtitle: subtitle || undefined,
     sets: normalizeSets(g),
     livePeriod: normalizeLivePeriod(g, league),
+    outcomeMethod: g?.outcome_method ?? g?.outcomeMethod ?? undefined,
+    outcomeRound: g?.outcome_round ?? g?.outcomeRound ?? undefined,
+    outcomeClock: g?.outcome_clock ?? g?.outcomeClock ?? undefined,
   }
 }
 

@@ -11,6 +11,7 @@ does) keeps working.
 """
 import re
 import unicodedata
+import warnings
 from concurrent.futures import ThreadPoolExecutor
 
 import espn_client
@@ -106,6 +107,66 @@ def _ufc_method(result):
     if "no contest" in raw:
         return "NC"
     return (result or {}).get("shortDisplayName") or "—"
+
+
+# The finish method, as ESPN publishes it on a finished fight's scoreboard
+# competition: `competitions[].details[]` carries a `type` whose id names the
+# method. Measured 2026-08-19 off ufc/scoreboard for 2026-08-15 and
+# 2026-08-18. ESPN's own text is prefixed "Unofficial Winner " and its KO/TKO
+# spelling is literally "Kotko", so the ids are the stable key, not the text.
+#
+# A human-readable table on purpose: a new method id extends this dict in one
+# place, and anything not in it is logged (see ufc_outcome), never silently
+# dropped. Draw / No Contest / DQ have no measured id yet; when one appears
+# the warning names it and this table grows.
+_UFC_METHOD_DETAIL = {
+    "20": "Submission",
+    "21": "KO/TKO",
+    "22": "Decision",
+}
+
+
+def ufc_outcome(competition):
+    """(method, round, clock) for a finished fight, or (None, None, None).
+
+    Parsed from the payload we already fetch — this is parsing, not
+    acquisition. `round` and `clock` are status.period / status.displayClock
+    (e.g. 3, "1:24") so a card can read "SUB · R3 1:24".
+
+    A fight that goes the distance publishes no finish detail. Decision is
+    derived only when the published period matches the published regulation
+    length AND the clock is the full round ("5:00"); otherwise emit nothing,
+    never a guess — a fight that ended at 4:59 of round three with no detail
+    could be a finish we cannot name.
+    """
+    method = None
+    for detail in competition.get("details") or []:
+        t = detail.get("type") or {}
+        tid = str(t.get("id") or "")
+        text = str(t.get("text") or "")
+        if tid in _UFC_METHOD_DETAIL:
+            method = _UFC_METHOD_DETAIL[tid]
+            break
+        # "Fight Over", "Round Start", "Takedown" etc. are event details, not
+        # methods; only an id whose text claims a winner is a method we have
+        # not seen yet, and it must be named, not dropped.
+        if tid and "winner" in text.lower():
+            warnings.warn(
+                f"ufc: unrecognised finish detail type id {tid!r} "
+                f"text={text!r} — add it to _UFC_METHOD_DETAIL",
+                stacklevel=2,
+            )
+
+    status = competition.get("status") or {}
+    period = status.get("period")
+    clock = status.get("displayClock")
+    if method is None:
+        fmt = competition.get("format") or {}
+        regulation = (fmt.get("regulation") or {}).get("periods")
+        if (isinstance(period, int) and isinstance(regulation, int)
+                and period == regulation and clock == "5:00"):
+            method = "Decision"
+    return method, period, clock
 
 
 def ufc_fight_history(athlete_id, limit=5):

@@ -285,6 +285,8 @@ def _games_from_payload(league, date, d):
         # UFC -- events contain fights (competitions) directly, athlete-based competitors.
         # No homeAway field; competitors have order=1 and order=2.
         # Detect card segments by time grouping (Main Card / Prelims / Early Prelims).
+        # Lazy import: ufc.py imports the package, so this must not run at module load.
+        import espn_client.ufc as _ufc
         for event in d.get("events", []):
             # `name` over `shortName`: ESPN publishes the week on the long name
             # and drops it from the short one. Measured 2026-08-18:
@@ -358,6 +360,11 @@ def _games_from_payload(league, date, d):
                         "record": record,
                         "winner": c.get("winner"),
                     }
+                # The finish method, round and clock: ESPN publishes them in
+                # details[] and the raw path used to throw them away — see
+                # espn_client.ufc.ufc_outcome. A final with no score shows the
+                # method, so a card can read "SUB · R3 1:24".
+                outcome_method, outcome_round, outcome_clock = _ufc.ufc_outcome(comp)
                 out.append({
                     "game_id": comp.get("id"),
                     "event_id": str(event.get("id") or ""),
@@ -371,6 +378,9 @@ def _games_from_payload(league, date, d):
                     "away": fighters.get("away"),
                     "event": event_name,
                     "card_segment": card_segment,
+                    "outcome_method": outcome_method,
+                    "outcome_round": outcome_round,
+                    "outcome_clock": outcome_clock,
                 })
     elif league in ("wc", "lcup", "mls"):
         # Soccer (World Cup / Leagues Cup / MLS) - events with group/round context, draws, ET, penalties
