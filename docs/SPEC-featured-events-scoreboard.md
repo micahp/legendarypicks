@@ -23,29 +23,55 @@ Two primitives exist and must be reused, not rebuilt:
 
 ---
 
-## 1. ⚠ The research I could not do from this box
+## 1. ESPN's card contract, read from ESPN's own payload
 
-Micah asked for Sleeper and ESPN to be researched, and noted **Sleeper's scoreboard is the
-homepage**. I could not get a reliable structural read of either:
+`espn.com` returns 403 to this box and archive.org is not fetchable, so I could not read
+their HTML. That turned out not to matter: **their site is built on the same scoreboard
+payload we already fetch**, so their field set IS their card contract, and it is sitting in
+our cache.
 
-- `espn.com` returns **403** to this datacenter IP (a known, documented block).
-- `web.archive.org` is not fetchable from here.
-- Sleeper's own redesign post describes a "dedicated Scores Tab" and nothing structural.
+Measured 2026-08-19 off a real MLB scoreboard payload:
 
-I am not going to invent a description of a competitor's UI. **Before building §3, someone
-with the apps open should answer five questions**, because each one changes the layout:
+```
+competition : broadcast, broadcasts, geoBroadcasts, notes, headlines, highlights,
+              leaders, venue, neutralSite, conferenceCompetition, recent, format
+competitor  : records, leaders, probables, linescores, statistics, winner, hits, errors
+```
 
-1. On Sleeper's home, what is above the first score card, if anything?
-2. Does a card show one line per team, or a matchup line? What fields ride along
-   (record, rank, network, odds, series state)?
-3. Is the ordering live-first, or chronological, or curated?
-4. How do you change day or week, and is that control visible before you scroll?
-5. What does the screen show when nothing is playing? That is our most common state, and it
-   is the state we have historically gotten wrong.
+Populated, on the first game of an ordinary Wednesday:
 
-Question 5 is the one I would answer first. See §6.
+```
+headlines : "Pirates and Tigers meet, winner secures 3-game series"
+probables : P. Skenes  vs  J. Jobe
+records   : PIT 62-66  (33-32 home)      DET 61-65  (32-31)
+broadcast : MLB.TV                        venue: PNC Park
+leaders   : 4 per team
+```
 
----
+**We keep none of it.** Our normalized game is:
+
+```
+game_id, date, state, completed, status, period, clock, status_detail,
+season_type, season_slug, competition_type, home{abbrev,name,nickname,score}, away{...}
+```
+
+So on every fetch we discard the team record, the broadcast network, the probable pitchers,
+the linescore, the leaders, ESPN's own one-line headline, and the venue, at **zero request
+cost to keep them**. This is `feedback_we_systematically_underread_publishers` in its worst
+form: not a gap in what we asked for, a gap in what we did with the answer.
+
+**That is the single highest-value change in this spec**, and it is a data-path change, so
+it precedes the page. See §9 step 0.
+
+### What I still cannot answer, and would take you two minutes
+
+Sleeper's scoreboard is the homepage and I could not get a structural read of it: their
+redesign post says only "a dedicated Scores Tab", and the App Store listing documents
+features rather than layout. Two questions actually change the design:
+
+1. Is Sleeper's ordering live-first, chronological, or curated?
+2. **What does it show when nothing is playing?** That is our most common state and the one
+   we have repeatedly gotten wrong. See §6 for what I have specified in the meantime.
 
 ## 2. The principle this page is being rebuilt around
 
@@ -71,18 +97,28 @@ renders a placeholder.
 
 Between 3 and 6 cards, larger than a list row, ordered by the ranking in §4.
 
-A featured card carries, and only carries, what we can source:
+A featured card carries ESPN's own field set (§1), and only what we can source:
 
 ```
-league badge · state (LIVE 7th · FINAL · 7:05 PM)
+league badge · state (LIVE 7th · FINAL · 7:05 PM) · broadcast
 away team    record    score
 home team    record    score
-one line of context, if we have it
+context line
 ```
 
-The context line is drawn from what we already hold, in this order, first one that exists:
-the game story headline (`game_story`), the props count for the game, the two teams'
-strength ranks (`strength_snap`). **If none exists, the line is absent, not blank.**
+The context line, first one that exists:
+
+| state | line | source |
+|---|---|---|
+| pre | `P. Skenes vs J. Jobe` | `probables` |
+| in / post | ESPN's headline: "winner secures 3-game series" | `headlines` |
+| any | top performer | `leaders` |
+| fallback | our own story headline | `game_story` |
+
+**If none exists the line is absent, not blank.** Note the first three are ESPN's, free, and
+better than anything we would compute. My first draft of this spec invented a hierarchy of
+props counts and strength ranks; that was guessing at a question the publisher had already
+answered.
 
 ### 3.2 The rest of the slate
 
@@ -113,7 +149,7 @@ Score each game and take the top N:
 | in progress | +100 | `state = 'in'` | a live game beats any scheduled one |
 | close and late | +40 | score margin and period, per league | the reason to look right now |
 | starting within 2h | +25 | `start_time` | the next thing to care about |
-| both teams strong | +20 | `strength_snap` rank | a good matchup |
+| both teams strong | +20 | `records`, then `strength_snap` | a good matchup |
 | has a story | +10 | `game_story` | we have something to say about it |
 | has props | +10 | `props` count | it is a game we cover deeply |
 | league priority | +0 to 15 | fixed table | breaks ties toward the sports we serve |
@@ -263,6 +299,9 @@ Do not let part two block the page. **Do not let part one be mistaken for part t
 
 ## 9. Build order
 
+0. **Stop discarding ESPN's fields at normalization** (§1): records, broadcast, probables,
+   linescores, leaders, headlines, venue. Additive to the normalized shape, no new requests,
+   and everything after this depends on it.
 1. **`/api/scores/board`** with §4's ranking and §5's contract. Pure server work over data we
    already hold, testable offline, no UI risk.
 2. **Featured Events strip** on `/scores`, reading `featured`. The rest of the page unchanged.
@@ -274,7 +313,7 @@ Steps 1 to 3 are the page. Step 4 has the deadline. Step 5 is the guard rail.
 
 ## 10. Open questions for Micah
 
-1. The five in §1. Especially: what does Sleeper show when nothing is playing?
+1. The two in §1. Especially: what does Sleeper show when nothing is playing?
 2. Featured count: 3, 4 or 6? It changes whether the strip is one row or two.
 3. Should Featured span leagues, or be one row per league we cover?
 4. Does `/scores` become the homepage, as Sleeper's is? That is a bigger change than this
