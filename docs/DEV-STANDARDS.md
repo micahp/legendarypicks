@@ -3,6 +3,10 @@
 Non-negotiable. Applies to every change (human or agent). Cite this in task specs; enforce it in review.
 Performance and correctness are part of "done" — not a follow-up after someone notices it's slow.
 
+**How work gets reviewed and merged:** `docs/PROCESS-delegated-work-review.md`, and the
+agent-facing `.claude/skills/falsify-before-merge`. Load the skill before merging any branch,
+before reporting DONE, and before writing acceptance criteria into a task spec.
+
 ## Performance (the one that keeps biting us)
 
 1. **A list/board must not download more than it shows.** A list of N items ships N lightweight rows
@@ -41,7 +45,7 @@ Performance and correctness are part of "done" — not a follow-up after someone
     - `monitor_props_freshness.py` + `legendarypicks-props-freshness.timer` (30 min) check each env's
       latest prop capture, ALERT loudly, and self-heal (re-trigger the ingest) if it's > 3 h stale.
     - **PROD DEPLOY CHECKLIST (do not skip):**
-      1. Stand up a **prod-targeted ingest** service/timer (`bovada_scraper.py all --ingest` pointed at
+      1. Stand up a **prod-targeted ingest** service/timer (`python -m bovada_scraper all --ingest` pointed at
          the prod DB / prod backend `:8100`), mirroring `legendarypicks-props.service`.
       2. **Enable `prod` in `monitor_props_freshness.py` `ENVS`** (uncomment the line) so prod staleness
          alerts + self-heals from the moment it's live.
