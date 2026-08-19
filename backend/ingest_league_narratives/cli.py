@@ -8,8 +8,14 @@ import datetime
 import hashlib
 import argparse
 
+# `_init_db` and `variety_resolve` were imported by the pre-split
+# ingest_league_narratives.py and the 2026-08-18 split dropped both import
+# lines, so `main()` died on `NameError: name '_init_db' is not defined`.
+# Nothing caught it: the step was ALSO calling a deleted file path from
+# news-collect.sh, so it never ran far enough to reach this line.
+from _core import _init_db
 from ingest_league_news import CONVERSATIONS
-from narrative_variety import report as variety_report
+from narrative_variety import report as variety_report, resolve as variety_resolve
 from .anchor_routing import _MIN_ITEMS  # noqa: E402
 from .content import _prompt_items  # noqa: E402
 from .editor import _editor_marks, _log_deletion  # noqa: E402

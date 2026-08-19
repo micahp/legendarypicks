@@ -34,7 +34,10 @@ FAILED_STEPS=""
 
 run_step(){
   local budget="$1"; shift
-  local name="$1"
+  # A step invoked as `-m package` must log the PACKAGE name, not "-m". The
+  # 2026-08-18 split turned several scripts into packages, so `-m` is now the
+  # normal way to call them.
+  local name="$1"; [ "$name" = "-m" ] && name="$2"
   local t0=$SECONDS
   local rc took
   timeout --signal=TERM --kill-after=30 "$budget" "$PY" -u "$@" 2>&1 | tee -a "$LOG"
