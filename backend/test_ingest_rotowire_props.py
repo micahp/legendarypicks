@@ -1,0 +1,288 @@
+#!/usr/bin/env python3
+"""Contracts for the RotoWire props ingest.
+
+The fixture below is shaped from the real 2026-08-19 payload, field for field, because a
+fixture is a claim about what the publisher sends: `props[].lines[]` carries one entry per
+book with its own `line`, `entities` is a list of ids into `entities[]`, an entity's
+`link` is where its stable player id lives, and `events[].gameID` is the stable fixture id
+while `eventID` is only an index inside one day's payload.
+"""
+import os
+import sqlite3
+import tempfile
+import unittest
+
+_IMPORT_TMP = tempfile.TemporaryDirectory()
+os.environ["LP_DB_PATH"] = os.path.join(_IMPORT_TMP.name, "import-only.db")
+
+import ingest_rotowire_props as rw
+
+
+def create_schema(path):
+    with sqlite3.connect(path) as con:
+        con.executescript("""
+            CREATE TABLE players(
+              id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL,
+              team TEXT, league TEXT NOT NULL, active INTEGER DEFAULT 1
+            );
+            CREATE TABLE prop_games(
+              id INTEGER PRIMARY KEY AUTOINCREMENT, league TEXT NOT NULL,
+              date TEXT NOT NULL, home TEXT, away TEXT, espn_event_id TEXT,
+              start_time TEXT
+            );
+            CREATE TABLE props(
+              id INTEGER PRIMARY KEY AUTOINCREMENT, game_id INTEGER,
+              player_id INTEGER, market TEXT NOT NULL, line REAL NOT NULL,
+              side TEXT NOT NULL, source TEXT, captured_at TEXT NOT NULL,
+              odds INTEGER, odds_captured_at TEXT
+            );
+            CREATE TABLE nfl_schedule(
+              game_id TEXT, season INTEGER, week INTEGER, gameday TEXT,
+              away_team TEXT, home_team TEXT
+            );
+            CREATE TABLE unresolved_players(
+              id INTEGER PRIMARY KEY AUTOINCREMENT, source TEXT NOT NULL,
+              raw_name TEXT NOT NULL, league TEXT NOT NULL, team TEXT,
+              first_seen TEXT NOT NULL, count INTEGER DEFAULT 1,
+              source_player_key TEXT, reason TEXT
+            );
+        """)
+        # The league's own calendar is where the team vocabulary comes from.
+        con.executemany(
+            "INSERT INTO nfl_schedule(game_id,season,week,gameday,away_team,home_team) "
+            "VALUES(?,2026,1,'2026-09-13',?,?)",
+            [("2026_01_SF_LA", "SF", "LAR"), ("2026_01_WAS_PHI", "WSH", "PHI"),
+             ("2026_01_ATL_TB", "ATL", "TB"), ("2026_01_NYJ_NE", "NYJ", "NE")])
+
+
+# 2026-09-13 13:00 ET kickoff, published as a UTC instant the way the relay does.
+# Deliberately a Sunday afternoon: the UTC instant is 17:00 the same day, so this
+# fixture does NOT hide a date bug behind a kickoff that never crosses midnight.
+KICKOFF = 1789318800
+
+
+def payload(market_id=13, market_name="Passing Yards", category="Game",
+            player_name="Matthew Stafford", team="LAR", home="LAR", away="SF",
+            link="https://www.rotowire.com/football/player/matthew-stafford-5971"):
+    return {
+        "markets": [
+            {"marketID": market_id, "sport": "NFL", "category": category,
+             "marketName": market_name},
+            {"marketID": 152, "sport": "Soccer", "category": "Game",
+             "marketName": "Shots on Target"},
+        ],
+        "entities": [
+            {"entityID": 6, "eventID": 6, "sport": "NFL", "name": player_name,
+             "team": team, "pos": "QB", "link": link, "photo": None},
+        ],
+        "events": [
+            {"eventID": 6, "gameID": 7583, "eventTime": KICKOFF,
+             "homeTeam": home, "awayTeam": away, "oddsSource": "draftkings"},
+        ],
+        "props": [
+            {"propID": "ee6f7059", "marketID": market_id, "entities": [6],
+             "projection": 231.16,
+             "lines": [
+                 {"book": "underdog", "over": -137, "under": -137, "line": 264.5},
+                 {"book": "prizepicks", "over": -119, "under": -125, "line": 263.5},
+             ],
+             "hitRates": []},
+        ],
+    }
+
+
+class RotowirePropsTests(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.db_path = os.path.join(self.tmp.name, "rw.db")
+        create_schema(self.db_path)
+        self.old_db = rw.DB
+        rw.DB = self.db_path
+        self.con = sqlite3.connect(self.db_path)
+        self.con.row_factory = sqlite3.Row
+
+    def tearDown(self):
+        self.con.close()
+        rw.DB = self.old_db
+        self.tmp.cleanup()
+
+    def player(self, name, team, active=1):
+        player_id = self.con.execute(
+            "INSERT INTO players(name,team,league,active) VALUES(?,?,'nfl',?)",
+            (name, team, active)).lastrowid
+        self.con.commit()
+        return player_id
+
+    def scalar(self, sql, params=()):
+        return self.con.execute(sql, params).fetchone()[0]
+
+    def test_each_book_is_its_own_row_and_both_sides_are_written(self):
+        stafford = self.player("Matthew Stafford", "LAR")
+        rows, _ = rw.parse(payload(), "nfl")
+
+        summary = rw.ingest(rows, "nfl")
+
+        self.assertEqual(summary["new"], 4)  # two books x over/under
+        written = self.con.execute(
+            "SELECT source, line, side, odds FROM props ORDER BY source, side").fetchall()
+        self.assertEqual([(r["source"], r["line"], r["side"], r["odds"]) for r in written], [
+            ("rotowire:prizepicks", 263.5, "over", -119),
+            ("rotowire:prizepicks", 263.5, "under", -125),
+            ("rotowire:underdog", 264.5, "over", -137),
+            ("rotowire:underdog", 264.5, "under", -137),
+        ])
+        self.assertEqual(self.scalar("SELECT COUNT(DISTINCT player_id) FROM props"), 1)
+        self.assertEqual(self.scalar("SELECT player_id FROM props LIMIT 1"), stafford)
+        self.assertEqual(self.scalar("SELECT market FROM props LIMIT 1"), "passing_yards")
+
+    def test_a_second_run_refreshes_rather_than_duplicating(self):
+        self.player("Matthew Stafford", "LAR")
+        rows, _ = rw.parse(payload(), "nfl")
+
+        rw.ingest(rows, "nfl")
+        summary = rw.ingest(rows, "nfl")
+
+        self.assertEqual((summary["new"], summary["refreshed"]), (0, 4))
+        self.assertEqual(self.scalar("SELECT COUNT(*) FROM props"), 4)
+        self.assertEqual(self.scalar("SELECT COUNT(*) FROM prop_games"), 1)
+
+    def test_season_futures_are_counted_and_never_ingested(self):
+        self.player("Matthew Stafford", "LAR")
+
+        rows, report = rw.parse(payload(market_id=168, market_name="Passing Yards",
+                                        category="Season"), "nfl")
+
+        self.assertEqual(rows, [])
+        self.assertEqual(report["counts"]["season_props"], 1)
+        self.assertEqual(report["counts"]["game_props"], 0)
+        self.assertEqual(len(report["unmapped_markets"]), 0)
+
+    def test_an_unmapped_market_is_reported_not_guessed_at(self):
+        self.player("Matthew Stafford", "LAR")
+
+        rows, report = rw.parse(payload(market_id=999, market_name="Rushing Attempts"),
+                                "nfl")
+
+        self.assertEqual(rows, [])
+        self.assertEqual(dict(report["unmapped_markets"]), {(999, "Rushing Attempts"): 1})
+
+    def test_a_market_id_whose_name_moved_refuses(self):
+        """13 is Passing Yards. If the relay renames it, it is a different market."""
+        self.player("Matthew Stafford", "LAR")
+
+        rows, report = rw.parse(payload(market_id=13, market_name="Pass Attempts"), "nfl")
+
+        self.assertEqual(rows, [])
+        self.assertEqual(report["renamed_markets"],
+                         {13: ("Passing Yards", "Pass Attempts")})
+
+    def test_the_publisher_team_code_is_mapped_onto_the_espn_vocabulary(self):
+        """RotoWire says WAS, ESPN says WSH, and ESPN is canonical here."""
+        self.player("Jayden Daniels", "WSH")
+        rows, _ = rw.parse(payload(player_name="Jayden Daniels", team="WAS",
+                                   home="WAS", away="PHI"), "nfl")
+
+        rw.ingest(rows, "nfl")
+
+        game = self.con.execute("SELECT home, away, date FROM prop_games").fetchone()
+        self.assertEqual((game["home"], game["away"]), ("WSH", "PHI"))
+        self.assertEqual(game["date"], "2026-09-13")  # the ET day, not the UTC one
+
+    def test_a_dropped_generational_suffix_still_resolves_and_binds(self):
+        """The relay says `Chris Godwin`; our spine says `Chris Godwin Jr.`."""
+        godwin = self.player("Chris Godwin Jr.", "TB")
+        rows, _ = rw.parse(payload(
+            player_name="Chris Godwin", team="TB", home="TB", away="ATL",
+            link="https://www.rotowire.com/football/player/chris-godwin-11718"), "nfl")
+
+        rw.ingest(rows, "nfl")
+
+        self.assertEqual(self.scalar("SELECT DISTINCT player_id FROM props"), godwin)
+        bound = self.con.execute(
+            "SELECT source_player_key, player_id FROM player_source_ids").fetchone()
+        self.assertEqual((bound["source_player_key"], bound["player_id"]), ("11718", godwin))
+        self.assertEqual(self.scalar("SELECT COUNT(*) FROM unresolved_players"), 0)
+
+    def test_a_suffix_match_requires_the_team_to_agree(self):
+        """Two `Chris Godwin`s and no team agreement is a miss, not a coin flip."""
+        self.player("Chris Godwin Jr.", "NYJ")
+        rows, _ = rw.parse(payload(player_name="Chris Godwin", team="TB",
+                                   home="TB", away="ATL"), "nfl")
+
+        summary = rw.ingest(rows, "nfl")
+
+        self.assertEqual(summary["new"], 0)
+        self.assertEqual(self.scalar("SELECT COUNT(*) FROM props"), 0)
+        queued = self.con.execute("SELECT raw_name, team, reason FROM unresolved_players").fetchone()
+        self.assertEqual((queued["raw_name"], queued["team"], queued["reason"]),
+                         ("Chris Godwin", "TB", "not_in_spine"))
+
+    def test_a_duplicate_spine_row_resolves_to_the_active_one(self):
+        """Measured 2026-08-19: Mahomes and Davante Adams each have two NFL rows."""
+        self.player("Matthew Stafford", "LAR", active=0)
+        live = self.player("Matthew Stafford", "LAR", active=1)
+        rows, _ = rw.parse(payload(), "nfl")
+
+        rw.ingest(rows, "nfl")
+
+        self.assertEqual(self.scalar("SELECT DISTINCT player_id FROM props"), live)
+
+    def test_two_live_duplicates_refuse_rather_than_pick_one(self):
+        self.player("Matthew Stafford", "LAR", active=1)
+        self.player("Matthew Stafford", "LAR", active=1)
+        rows, _ = rw.parse(payload(), "nfl")
+
+        summary = rw.ingest(rows, "nfl")
+
+        self.assertEqual(summary["new"], 0)
+        self.assertEqual(self.scalar("SELECT reason FROM unresolved_players"), "ambiguous")
+
+    def test_a_bound_source_id_wins_over_the_display_name(self):
+        """The point of the crosswalk: a renamed player still lands on the same row."""
+        stafford = self.player("Matthew Stafford", "LAR")
+        rw.ingest(rw.parse(payload(), "nfl")[0], "nfl")
+        self.con.execute("UPDATE players SET name='Matt Stafford' WHERE id=?", (stafford,))
+        self.con.commit()
+
+        summary = rw.ingest(rw.parse(payload(), "nfl")[0], "nfl")
+
+        self.assertEqual((summary["new"], summary["refreshed"]), (0, 4))
+        self.assertEqual(self.scalar("SELECT DISTINCT player_id FROM props"), stafford)
+
+    def test_a_source_id_that_moves_to_another_player_raises(self):
+        self.player("Matthew Stafford", "LAR")
+        rw.ingest(rw.parse(payload(), "nfl")[0], "nfl")
+        other = self.player("Puka Nacua", "LAR")
+        now = "2026-08-19T00:00:00+00:00"
+
+        with self.assertRaises(rw.SourceIdentityConflict):
+            rw.bind_player_source_key(self.con, "nfl", "5971", other, now)
+
+    def test_an_unknown_team_code_is_skipped_not_invented(self):
+        self.player("Matthew Stafford", "LAR")
+        rows, _ = rw.parse(payload(team="XXX", home="XXX", away="SF"), "nfl")
+
+        summary = rw.ingest(rows, "nfl")
+
+        self.assertEqual(summary["unknown_team"], 4)
+        self.assertEqual(self.scalar("SELECT COUNT(*) FROM prop_games"), 0)
+
+    def test_the_soccer_market_in_the_same_payload_is_left_alone(self):
+        self.player("Matthew Stafford", "LAR")
+        rows, report = rw.parse(payload(), "nfl")
+        self.assertEqual(report["counts"]["sport_props"], 1)
+        self.assertTrue(all(r["market"] == "passing_yards" for r in rows))
+
+    def test_a_dry_run_writes_nothing(self):
+        self.player("Matthew Stafford", "LAR")
+        rows, _ = rw.parse(payload(), "nfl")
+
+        rw.ingest(rows, "nfl", dry_run=True)
+
+        self.assertEqual(self.scalar("SELECT COUNT(*) FROM props"), 0)
+        self.assertEqual(self.scalar("SELECT COUNT(*) FROM prop_games"), 0)
+        self.assertEqual(self.scalar("SELECT COUNT(*) FROM player_source_ids"), 0)
+
+
+if __name__ == "__main__":
+    unittest.main()
