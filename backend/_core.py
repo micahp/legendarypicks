@@ -589,7 +589,8 @@ def _llm_endpoint(provider: str):
     return None
 
 
-def _llm_chat(system: str, user: str, max_tokens: int = 8000) -> Optional[str]:
+def _llm_chat(system: str, user: str, max_tokens: int = 8000,
+              reasoning: str = None) -> Optional[str]:
     """One chat completion, or None. Never raises: callers are built on None.
 
     `max_tokens` stays generous because this is a REASONING model and the
@@ -599,11 +600,33 @@ def _llm_chat(system: str, user: str, max_tokens: int = 8000) -> Optional[str]:
     answered. A low ceiling here does not truncate the answer, it deletes it.
     """
     import urllib.request as _u
-    body = json.dumps({
+    payload_body = {
         "model": _LLM_MODEL, "temperature": 0.4, "max_tokens": max_tokens,
         "messages": [{"role": "system", "content": system},
                      {"role": "user", "content": user}],
-    }).encode()
+    }
+    # Hidden reasoning is billed against max_tokens, so an expensive thinker can
+    # spend the ENTIRE ceiling and return empty content. That has now happened
+    # three times on three different ceilings: 4000 (discover_topics, 08-17),
+    # 3000 and 24000 (both 08-19, the second leaving 1 token for the answer out
+    # of 24,000).
+    #
+    # Our prompts are grounded writing: every fact is handed to the model and
+    # the job is selection and phrasing, not derivation. Measured 2026-08-19 on
+    # the same game-story prompt, all three outputs factually clean:
+    #
+    #     default   12.9s   1,252 out   1,126 reasoning
+    #     low       10.7s     653 out     503 reasoning
+    #     none       3.0s     142 out       0 reasoning
+    #
+    # So "none" by default: 4x faster, an order of magnitude cheaper, no
+    # accuracy cost on this shape of task, and the empty-answer failure becomes
+    # structurally impossible. A caller that genuinely needs deliberation (a
+    # ranking or a judge) passes reasoning="low"/"high" explicitly.
+    effort = reasoning or os.environ.get("LP_LLM_REASONING", "none")
+    if effort and effort != "default":
+        payload_body["reasoning_effort"] = effort
+    body = json.dumps(payload_body).encode()
 
     tried = []
     for provider in _LLM_PROVIDERS:
