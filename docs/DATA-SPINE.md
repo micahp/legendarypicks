@@ -329,7 +329,7 @@ committed. It was written and run off-repo, against both databases. That is its 
 finding, and it is the second time (see `feedback_agents_left_prod_code_untracked`):
 after any session that touched data, `git status` is not optional.
 
-`_wc_direct_ingest` in `bovada_scraper.py` is the same shape, legitimately, for the
+`_wc_direct_ingest` in the `bovada_scraper` package is the same shape, legitimately, for the
 World Cup — that spine really is name-matched, Phase 1, with no ESPN id to resolve
 against. What was wrong is that a mint printed **exactly like a match**. It is now
 counted and named in the run report, at zero too.
