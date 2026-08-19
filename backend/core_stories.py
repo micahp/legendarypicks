@@ -76,6 +76,38 @@ def _season_year_from_name(name):
     return int(m.group(0)) if m else None
 
 
+def _short_day(game_date):
+    """'Aug 18' from a stored game_date, or '' when there is none."""
+    if not game_date:
+        return ""
+    try:
+        import datetime as _d
+        return _d.date.fromisoformat(str(game_date)[:10]).strftime("%b %-d")
+    except Exception:
+        return ""
+
+
+def _game_start_instant(lg: str, game_id: str):
+    """The game's own UTC instant, for callers that did not pass start_time.
+
+    `game_result` does NOT carry a date (measured 2026-08-19: its keys are
+    scores/state/winner and nothing else), which is why reading `gr["date"]`
+    silently produced no date at all. The scoreboard row has one and two of the
+    three callers pass it as `start_time`; the serving route in
+    routers/game_extras does not, because it only has a league and a game id.
+
+    The summary payload carries it at `header.competitions[0].date`, and
+    `espn.summary` is already fetched for this game with a TTL, so this costs
+    no request.
+    """
+    try:
+        d = espn.summary(lg, game_id) or {}
+        comps = ((d.get("header") or {}).get("competitions") or [{}])
+        return (comps[0] or {}).get("date")
+    except Exception:
+        return None
+
+
 def _game_season_year(lg: str, game_id: str):
     """The season this game belongs to, per the publisher — an int year or None.
 
@@ -178,10 +210,38 @@ def generate_game_story(lg: str, game_id: str, refresh: bool = False,
     def facts(ab):
         s = smap.get(ab) or {}
         rk = f", quality rank #{_rank[ab]} of {len(_rank)}" if ab in _rank else ""
+        # ".500 winning percentage", not "0.5 win%". Measured 2026-08-19: two of
+        # three runs turned `0.5 win%` into "leads the AL West by half a game",
+        # a standings claim that is nowhere in the facts, and Liquid made the
+        # same misread as "a +0.5 win percentage edge". A bare 0.5 beside a
+        # division lead reads as games-back to anyone who knows the sport.
+        wp = s.get("win_pct")
+        try:
+            wp = f"{float(wp):.3f}".lstrip("0")
+        except (TypeError, ValueError):
+            wp = str(wp)
         return (f"{s.get('name', ab)} ({ab}): {s.get('wins')}-{s.get('losses')}, "
-                f"{s.get('win_pct')} win%, streak {s.get('streak')}, last-10 {s.get('last10')}, "
-                f"differential {s.get('differential')}{rk}")
-    grounding = (f"Matchup: {teams[0]} vs {teams[1]}. Game state: {gr.get('state')}.\n"
+                f"{wp} winning percentage, streak {s.get('streak')}, "
+                f"last-10 {s.get('last10')}, "
+                f"run differential {s.get('differential')}{rk}")
+    # THE DATE OF THIS GAME. Without it the writer has no anchor for "yesterday",
+    # "Tuesday" or "the series opener", and a model with no date produces one
+    # anyway: measured 2026-08-19, every candidate model named a weekday for the
+    # last meeting and every one was wrong. The last-five results carry their own
+    # dates now too (matchup_context._when), so relative language is checkable.
+    # New York day, DST-aware, because that is how every game in the store is
+    # bucketed and a UTC date is the previous evening in the US.
+    when = ""
+    _start = start_time or _game_start_instant(lg, game_id)
+    if _start:
+        try:
+            from espn_client.scoreboard import _ny_date
+            import datetime as _d
+            _m = _d.datetime.fromisoformat(str(_start).replace("Z", "+00:00"))
+            when = f" Date: {_ny_date(_m).strftime('%A %b %-d, %Y')}."
+        except Exception:
+            when = ""
+    grounding = (f"Matchup: {teams[0]} vs {teams[1]}. Game state: {gr.get('state')}.{when}\n"
                  f"{facts(teams[0])}\n{facts(teams[1])}")
 
     # THE RESULT. It was never in the grounding — `gr` carried scores and a winner and none
@@ -244,7 +304,7 @@ def generate_game_story(lg: str, game_id: str, refresh: bool = False,
                 if not sk:
                     continue
                 logs = con.execute(
-                    """SELECT stats FROM player_game_logs WHERE player_id=?
+                    """SELECT stats, game_date FROM player_game_logs WHERE player_id=?
                        ORDER BY COALESCE(game_date,'') DESC, CAST(game_no AS INTEGER) DESC LIMIT 5""",
                     (r["id"],)).fetchall()
                 # `sk` is a stat key OR a list of them: two MLB markets are compound
@@ -259,12 +319,23 @@ def generate_game_story(lg: str, game_id: str, refresh: bool = False,
                     st = json.loads(x["stats"])
                     if isinstance(sk, list):
                         if any(st.get(k) is not None for k in sk):
-                            vals.append(sum(st.get(k) or 0 for k in sk))
+                            vals.append((_short_day(x["game_date"]),
+                                         sum(st.get(k) or 0 for k in sk)))
                     else:
                         if st.get(sk) is not None:
-                            vals.append(st[sk])
+                            vals.append((_short_day(x["game_date"]), st[sk]))
                 if len(vals) >= 3:
-                    form_lines.append(f"{r['name']} — last 5 {_base_market(r['market'])}: {vals}")
+                    # DATED, not a bare array. A list of five numbers under the heading
+                    # "most recent first" was read BACKWARDS by every model tested
+                    # (2026-08-19): Mike Trout's combined H+R+RBI ran
+                    # [0, 0, 1, 1, 5] newest-first, and three different models called the
+                    # 5 "his last game" when it was five games ago. Sports game logs are
+                    # universally printed oldest-first, so the label loses to the
+                    # convention. That inverts hot and cold streaks, which is the single
+                    # claim these stories lead with.
+                    shown = ", ".join(f"{d} {v}" if d else str(v) for d, v in vals)
+                    form_lines.append(
+                        f"{r['name']} — last 5 {_base_market(r['market'])}: {shown}")
                     seen.add(r["id"])
 
             if len(form_lines) < 6:
@@ -277,7 +348,7 @@ def generate_game_story(lg: str, game_id: str, refresh: bool = False,
                 except Exception:
                     pass
     if form_lines:
-        grounding += "\nRecent player form (most recent first):\n" + "\n".join(form_lines)
+        grounding += "\nRecent player form (each value is dated; newest first):\n" + "\n".join(form_lines)
 
     # Matchup context: team form, who is producing, and — for a tournament that pairs two
     # leagues — how those leagues are faring against each other. All of it read off the

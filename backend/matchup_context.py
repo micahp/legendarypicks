@@ -25,6 +25,7 @@ writer saying "Santos are 27th" and saying "the Mexican sides have been struggli
 Fail-soft by contract, the same as stakes.py: any error, any missing key, any shape we did
 not expect returns fewer lines or none. A thin story is acceptable; a wrong one is not.
 """
+import datetime
 
 # ESPN labels one group of a cross-league tournament and leaves the other None (Liga MX is
 # named, MLS is not). Rather than hardcode "the unnamed one is MLS", derive it from the
@@ -225,13 +226,44 @@ def _form(d):
             at_vs = "at" if (e.get("atVs") or "") == "@" else "vs"
             comp = (e.get("leagueAbbreviation") or "").strip()
             described.append(f"{r or '?'} {e.get('score') or ''} {at_vs} {opp}"
-                             + (f" ({comp})" if comp else ""))
+                             + (f" ({comp})" if comp else "")
+                             + _when(e.get("gameDate")))
         line = f"{name} — last {len(described)}, most recent first: " + "; ".join(described)
         run = _streak(results)
         if run:
             line += f". {name} {run}"
         out.append(line + ".")
     return out
+
+
+
+def _when(game_date):
+    """" [Tue Aug 18]" for a published gameDate, or "" when there is none.
+
+    ESPN puts `gameDate` on every lastFiveGames event and we threw it away, so
+    the grounding listed five results with no dates at all. Every model then
+    invented a weekday for them and every one was wrong (measured 2026-08-19:
+    DeepSeek said Wednesday, Nemotron said Monday, the game was Tuesday). A
+    model handed no date will produce one anyway; the fix is the field, not the
+    prompt.
+
+    **The instant is UTC and the calendar day is not.** `2026-08-19T00:10Z` is
+    the evening of Tuesday the 18th in the US, so printing the UTC date would
+    reproduce the exact off-by-one this exists to fix. Reuse the scoreboard's
+    DST-aware New York rule, which is already how every game in the store is
+    bucketed.
+
+    The weekday is spelled out because that is the form a writer uses, and
+    making the model derive it from a date is another gap for it to fill.
+    """
+    if not game_date:
+        return ""
+    try:
+        from espn_client.scoreboard import _ny_date
+        moment = datetime.datetime.fromisoformat(str(game_date).replace("Z", "+00:00"))
+        return " [" + _ny_date(moment).strftime("%a %b %-d") + "]"
+    except Exception:
+        return ""
 
 
 def _streak(results):
