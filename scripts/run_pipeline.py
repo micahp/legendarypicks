@@ -84,7 +84,7 @@ def step_ingest_props(dry_run: bool = False) -> bool:
         return True
     # Run bovada_scraper for MLB only (fastest, most props)
     return _run(
-        [VENV_PY, "bovada_scraper.py", "mlb", "--ingest"],
+        [VENV_PY, "-m", "bovada_scraper", "mlb", "--ingest"],
         "ingest_props", timeout=120
     )
 

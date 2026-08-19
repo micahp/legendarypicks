@@ -6,7 +6,7 @@
 #   1. ingest_league_news.py        collect+classify into news_items
 #                                  (ESPN 7 req/host-budget-20 disk-cached 1h,
 #                                   RSS, Bluesky)
-#   2. ingest_league_narratives.py  conversation cards (1 DeepSeek batch call)
+#   2. -m ingest_league_narratives  conversation cards (1 DeepSeek batch call)
 #   3. discover_topics.py           propose NEW conversations from the corpus
 #                                  (review with --list; nothing auto-publishes)
 #
@@ -51,7 +51,7 @@ log "=== news collect start === DB=$LP_DB_PATH"
 # the unit's TimeoutStartSec (1800) or systemd kills the job before the last
 # step can report — which is the failure this whole change exists to prevent.
 run_step 600 ingest_league_news.py
-run_step 420 ingest_league_narratives.py
+run_step 420 -m ingest_league_narratives
 # 3. Discovery: propose conversations nobody named. Nothing is published from
 #    this — it writes candidates for review (discover_topics.py --list).
 run_step 420 discover_topics.py

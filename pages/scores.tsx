@@ -18,7 +18,9 @@ function gameHref(game: Game) {
 // ── Broadcast Rail live section (DESIGN-live-card-rail.md) ──
 // Solid surface + emerald breathing left edge. No opacity hacks, no label.
 // Featured game gets display scores; rest are compact inline chips.
-function LiveNow({ games, esportsLive }: { games: Game[]; esportsLive: boolean }) {
+// `isPastDate`: the reader is browsing a date other than today — the rail
+// tells them something is live right now, with a quiet way back.
+function LiveNow({ games, esportsLive, isPastDate }: { games: Game[]; esportsLive: boolean; isPastDate?: boolean }) {
   const live = games.filter((g) => g.status === 'LIVE').sort((a, b) => {
     const pa = LEAGUE_PRIORITY.indexOf(a.league || ''), pb = LEAGUE_PRIORITY.indexOf(b.league || '')
     return (pa === -1 ? 99 : pa) - (pb === -1 ? 99 : pb)
@@ -59,7 +61,7 @@ function LiveNow({ games, esportsLive }: { games: Game[]; esportsLive: boolean }
           live game, which on a summer evening is fifteen MLB scores squeezed to
           70px of team name each — a second, worse scoreboard sitting on top of
           the scoreboard. The rail picks ONE game and points at the rest. */}
-      {(rest.length > 0 || esportsLive) ? (
+      {(rest.length > 0 || esportsLive || isPastDate) ? (
         <div className="flex flex-wrap items-center gap-2 px-5 pb-4">
           {rest.length > 0 ? (
             <Link
@@ -76,6 +78,14 @@ function LiveNow({ games, esportsLive }: { games: Game[]; esportsLive: boolean }
             >
               <LiveDot />
               Watch live esports →
+            </Link>
+          ) : null}
+          {isPastDate ? (
+            <Link
+              href="/scores"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-800 bg-zinc-900/50 px-3 py-1.5 text-xs font-medium text-emerald-400/90 transition-colors hover:border-emerald-500/50 hover:text-emerald-300"
+            >
+              Jump to today →
             </Link>
           ) : null}
         </div>
@@ -154,6 +164,48 @@ export default function ScoresPage() {
   const [games, setGames] = useState<Game[]>([])
   const [loading, setLoading] = useState<boolean>(false)
   const [error, setError] = useState<string | null>(null)
+
+  // ── live right now, independent of the selected date ────────────────────
+  // The live section is a fact about the present, not about the date being
+  // browsed (TASK-scoreboard-outcomes-and-homepage.md item 2): a reader on a
+  // past date must still see that something is live today. When the board is
+  // ON today, the live set is derived from the board's own fetch (the 30s
+  // live-score poll keeps it fresh) — zero extra requests. On any other date,
+  // today is fetched once per date change, then only the leagues that were
+  // live are polled, the same bounded pattern as the poll below; nothing live
+  // means no poll, so browsing a past date at 09:50 costs one today-read.
+  const [liveGames, setLiveGames] = useState<Game[]>([])
+
+  useEffect(() => {
+    if (date === today) setLiveGames(games.filter((g) => g.status === 'LIVE'))
+  }, [date, today, games])
+
+  useEffect(() => {
+    if (date === today) return
+    let ignore = false
+    let pollTimer: ReturnType<typeof setInterval> | null = null
+    const refresh = async (leagues?: string[]) => {
+      try {
+        const data = leagues && leagues.length
+          ? (await Promise.all(
+              leagues.map((l) => SportsService.getGamesByLocalDate(l, today, { strict: false })),
+            )).flat()
+          : await SportsService.getAllGamesByLocalDate(today, { strict: false })
+        if (ignore) return
+        const live = data.filter((g) => g.status === 'LIVE')
+        setLiveGames(live)
+        const liveLeagues = Array.from(
+          new Set(live.map((g) => g.league).filter(Boolean)),
+        ) as string[]
+        if (pollTimer) clearInterval(pollTimer)
+        if (liveLeagues.length) pollTimer = setInterval(() => refresh(liveLeagues), LIVE_POLL_MS)
+      } catch {
+        /* leave as-is — a stale "something is live" beats a blank section */
+      }
+    }
+    refresh()
+    return () => { ignore = true; if (pollTimer) clearInterval(pollTimer) }
+  }, [date, today])
 
   // Is anything live on the esports page right now? Drives whether the chip says "Live esports".
   const [esportsLive, setEsportsLive] = useState(false)
@@ -321,6 +373,10 @@ export default function ScoresPage() {
             </div>
           </div>
         </div>
+        {/* Live right now — a fact about the present, so it sits ABOVE the
+            date control and ignores the selected date (item 2). Renders
+            nothing at all when nothing is live: no header, no empty state. */}
+        {!liveOnly ? <LiveNow games={liveGames} esportsLive={esportsLive} isPastDate={!isToday} /> : null}
         {/* Day navigator: ‹ date › — works on mobile (just two buttons + a label) */}
         <div className="flex items-center justify-center gap-2 sm:gap-3">
           <button
@@ -356,8 +412,6 @@ export default function ScoresPage() {
             ← Full scoreboard
           </Link>
         ) : null}
-        {!liveOnly && !loading && games.length > 0
-          ? <LiveNow games={games} esportsLive={esportsLive} /> : null}
         {loading ? (
           <SkeletonList />
         ) : visibleGames.length === 0 ? (

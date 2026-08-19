@@ -144,8 +144,9 @@ export default function GameCard(g: GameProps) {
   }
   const outcomeLabel = isUFCFinal && g.outcomeMethod
     ? [UFC_METHOD_SHORT[g.outcomeMethod] || g.outcomeMethod,
-       g.outcomeRound ? `R${g.outcomeRound}` : '',
-       g.outcomeClock || ''].filter(Boolean).join(' · ')
+       g.outcomeRound || g.outcomeClock
+         ? `R${g.outcomeRound ?? '?'}${g.outcomeClock ? ` ${g.outcomeClock}` : ''}`
+         : ''].filter(Boolean).join(' · ')
     : null
 
   return (
@@ -196,17 +197,17 @@ export default function GameCard(g: GameProps) {
         <div className="space-y-3">
           <div className="flex justify-between items-center">
             <span className={`font-semibold ${sideClass(g.homeTeam) ?? (isFinal ? (isDraw ? 'text-zinc-200' : homeWon ? 'text-zinc-200' : 'text-zinc-500') : 'text-zinc-200')}`}>{teamLabel(g.homeTeam)}</span>
-            {showScore && g.homeTeam.score !== undefined && (
+            {showScore && (g.homeTeam.score !== undefined || (outcomeLabel && homeWon)) && (
               <span className="flex items-center gap-1.5">
-                <span className={`text-xl font-black ${isFinal ? (isDraw ? 'text-white' : homeWon ? 'text-white' : 'text-zinc-500') : 'text-white'}`}>{g.homeTeam.score}</span>
+                <span className={`text-xl font-black ${isFinal ? (isDraw ? 'text-white' : homeWon ? 'text-white' : 'text-zinc-500') : 'text-white'}`}>{g.homeTeam.score !== undefined ? g.homeTeam.score : outcomeLabel}</span>
               </span>
             )}
           </div>
           <div className="flex justify-between items-center">
             <span className={`font-semibold ${sideClass(g.awayTeam) ?? (isFinal ? (isDraw ? 'text-zinc-200' : awayWon ? 'text-zinc-200' : 'text-zinc-500') : 'text-zinc-200')}`}>{teamLabel(g.awayTeam)}</span>
-            {showScore && g.awayTeam.score !== undefined && (
+            {showScore && (g.awayTeam.score !== undefined || (outcomeLabel && awayWon)) && (
               <span className="flex items-center gap-1.5">
-                <span className={`text-xl font-black ${isFinal ? (isDraw ? 'text-white' : awayWon ? 'text-white' : 'text-zinc-500') : 'text-white'}`}>{g.awayTeam.score}</span>
+                <span className={`text-xl font-black ${isFinal ? (isDraw ? 'text-white' : awayWon ? 'text-white' : 'text-zinc-500') : 'text-white'}`}>{g.awayTeam.score !== undefined ? g.awayTeam.score : outcomeLabel}</span>
               </span>
             )}
           </div>

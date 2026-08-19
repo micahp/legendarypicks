@@ -46,6 +46,8 @@ describe('/scores day navigation', () => {
     getGames.mockReset()
     getNeighbour.mockReset()
     getNeighbour.mockResolvedValue(null)
+    ;(SportsService.getAllGamesByLocalDate as jest.Mock).mockReset()
+    ;(SportsService.getAllGamesByLocalDate as jest.Mock).mockResolvedValue([])
     ;(global as any).fetch = jest.fn(() =>
       Promise.resolve({ json: () => Promise.resolve({ matches: [] }) }),
     )
@@ -120,5 +122,92 @@ describe('/scores day navigation', () => {
     expect(screen.getByText('TODAY-GAME')).toBeTruthy()
     expect(screen.queryByText('FABRICATED-DAY')).toBeNull()
     expect(getGames.mock.calls.every((call: any[]) => call[1] === today)).toBe(true)
+  })
+})
+
+// Item 2: the live section is a fact about the present. It renders ABOVE the
+// date control, ignores the selected date, and renders nothing at all — no
+// header, no empty state — when nothing is live. Three defects this month were
+// verified mid-slate and were wrong every morning; the empty case is tested
+// here deterministically, not by eyeballing a busy evening.
+describe('/scores live-above-the-date', () => {
+  const today = new Date().toLocaleDateString('en-CA')
+
+  function liveGame(gameId: string, name: string): Game {
+    return {
+      gameId,
+      league: 'MLB',
+      homeTeam: { teamId: 'HOME', name: `Live ${name} Home`, score: 3 },
+      awayTeam: { teamId: 'AWAY', name: `Live ${name} Away`, score: 1 },
+      startTime: new Date(`${today}T19:00:00`).toISOString(),
+      status: 'LIVE',
+    }
+  }
+
+  beforeEach(() => {
+    getGames.mockReset()
+    getNeighbour.mockReset()
+    getNeighbour.mockResolvedValue(null)
+    ;(SportsService.getAllGamesByLocalDate as jest.Mock).mockReset()
+    ;(SportsService.getAllGamesByLocalDate as jest.Mock).mockResolvedValue([])
+    ;(global as any).fetch = jest.fn(() =>
+      Promise.resolve({ json: () => Promise.resolve({ matches: [] }) }),
+    )
+  })
+
+  it('renders nothing at all in the empty window (no live games, no header)', async () => {
+    getGames.mockImplementation((league: string, date: string) => {
+      if (league !== 'mlb') return Promise.resolve([])
+      return Promise.resolve(date === today ? [game('FIN-1', today), game('FIN-2', today)] : [])
+    })
+
+    render(<ScoresPage />)
+    await waitFor(() => expect(screen.getByText('FIN-1')).toBeTruthy())
+
+    // No live rail: no featured game, no "more live games", no jump link.
+    expect(screen.queryByText(/more live game/)).toBeNull()
+    expect(screen.queryByText('Jump to today →')).toBeNull()
+    // And no empty-state header either — the rail is simply absent.
+    expect(screen.queryByText('Live now')).toBeNull()
+  })
+
+  it('shows today live games above the date control even on a past date', async () => {
+    const previous = shift(today, -1)
+    getNeighbour.mockResolvedValue(previous)
+    getGames.mockImplementation((league: string, date: string, options: any) => {
+      if (league !== 'mlb') return Promise.resolve([])
+      return Promise.resolve(date === today ? [game('TODAY-GAME', today)] : [game('PREVIOUS-GAME', previous)])
+    })
+    ;(SportsService.getAllGamesByLocalDate as jest.Mock).mockResolvedValue([liveGame('LIVE-1', 'Night')])
+
+    render(<ScoresPage />)
+    await waitFor(() => expect(screen.getByText('TODAY-GAME')).toBeTruthy())
+
+    fireEvent.click(screen.getByRole('button', { name: 'Previous day' }))
+    await waitFor(() => expect(screen.getByText('PREVIOUS-GAME')).toBeTruthy())
+
+    // The past-date board is showing, and the live rail still says what is
+    // live right now, with a quiet way back to today.
+    await waitFor(() => expect(screen.getByText('Live Night Away')).toBeTruthy())
+    expect(screen.getByText('Jump to today →')).toBeTruthy()
+  })
+
+  it('renders nothing when a past date is selected and nothing is live today', async () => {
+    const previous = shift(today, -1)
+    getNeighbour.mockResolvedValue(previous)
+    getGames.mockImplementation((league: string, date: string, options: any) => {
+      if (league !== 'mlb') return Promise.resolve([])
+      return Promise.resolve(date === today ? [game('TODAY-GAME', today)] : [game('PREVIOUS-GAME', previous)])
+    })
+    ;(SportsService.getAllGamesByLocalDate as jest.Mock).mockResolvedValue([game('FIN-ONLY', today)])
+
+    render(<ScoresPage />)
+    await waitFor(() => expect(screen.getByText('TODAY-GAME')).toBeTruthy())
+
+    fireEvent.click(screen.getByRole('button', { name: 'Previous day' }))
+    await waitFor(() => expect(screen.getByText('PREVIOUS-GAME')).toBeTruthy())
+
+    expect(screen.queryByText(/more live game/)).toBeNull()
+    expect(screen.queryByText('Jump to today →')).toBeNull()
   })
 })

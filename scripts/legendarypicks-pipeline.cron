@@ -13,7 +13,7 @@ LOGDIR=/root/legendarypicks/logs
 
 # Ingest fresh props from Bovada — 4x/day during active-game windows
 # MLB day games + evening
-0 13,17,20,23 * * * root cd $BACKEND && $PIPELINE bovada_scraper.py mlb --ingest >> $LOGDIR/bovada_cron.log 2>&1
+0 13,17,20,23 * * * root cd $BACKEND && $PIPELINE -m bovada_scraper mlb --ingest >> $LOGDIR/bovada_cron.log 2>&1
 
 # Link games + settle finaled games — every 30 min in evening/overnight
 # (games go final throughout the evening)

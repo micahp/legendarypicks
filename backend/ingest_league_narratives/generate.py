@@ -8,6 +8,11 @@ import datetime
 import hashlib
 import argparse
 
+# The 2026-08-18 split dropped the `_core` import the pre-split file carried, so
+# both call sites here died on `NameError: name '_deepseek_chat' is not defined`.
+# Nothing caught it because news-collect.sh was ALSO calling a deleted file path,
+# so this module never ran.
+from _core import _deepseek_chat  # noqa: E402
 from .content import _prompt_items  # noqa: E402
 from .parsing import _parse_response  # noqa: E402
 from .prompt import _SYSTEM  # noqa: E402

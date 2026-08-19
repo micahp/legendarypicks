@@ -2,10 +2,14 @@
 from __future__ import annotations
 
 import sqlite3
+from typing import TYPE_CHECKING
 
 from .schema import ensure_table
 
-def apply_plan(db_path: str, plan: IngestPlan) -> dict:
+if TYPE_CHECKING:  # the annotation is the only use; importing it at runtime
+    from .plan import IngestPlan  # would be a cycle (plan imports nothing here)
+
+def apply_plan(db_path: str, plan: "IngestPlan") -> dict:
     """Apply a completed plan in one short transaction with no source calls."""
     if plan.source_errors:
         raise RuntimeError("refusing write: source errors are present")

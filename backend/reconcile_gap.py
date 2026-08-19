@@ -8,7 +8,10 @@ import os
 import re
 import sys
 import time
-from typing import Dict, List, NamedTuple, Optional, Tuple
+from typing import Dict, List, NamedTuple, Optional, TYPE_CHECKING, Tuple
+
+if TYPE_CHECKING:  # the annotation below is quoted, so this is never imported at
+    from reconcile_report import Report  # runtime; without it the name is unresolvable
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
