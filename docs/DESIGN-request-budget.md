@@ -2,12 +2,14 @@
 
 Written 2026-08-18. Reference document, not a handoff.
 
-**Read §1 before writing any code against this.** There are two different limits both
-called "100" in this repo, and the last attempt at this was reverted because of it.
+**Read §1b before writing any code against this.** §1 posed the question and §1b answers it
+from a day of spend-log data: the limit is a **short-window burst rate**, not a request count
+per host and not an hourly budget. §1 is kept as the reasoning that got there, not as an open
+question. The last attempt at this was reverted; §1 says why.
 
 ---
 
-## 1. ⛔ The unresolved question: there are two "100"s
+## 1. The question that blocked this, and why (ANSWERED in §1b, 2026-08-19)
 
 Both of these are measured and real, and they are not the same mechanism:
 
@@ -56,6 +58,116 @@ of our recollections.
 
 **Do not rebuild the ledger until A is established from data.** Build §4 first: it is
 non-destructive, it costs nothing, and it answers the question.
+
+> **It did. §1b has the answer, and it says the hourly ledger this section was arguing about
+> is the wrong shape.** Read it before acting on anything above.
+
+---
+
+## 1b. ✅ ANSWERED 2026-08-19 from the spend log: A is real, and it is a BURST RATE
+
+The §4 instrumentation ran for a day and the question is settled. **Limit A exists, but it is
+not a request count per host and it is not an hourly budget. It is a short-window rate.**
+
+Measured over 27,801 ESPN requests, `2026-08-18T19:15` to `2026-08-19T19:37`, on
+`site.web.api.espn.com` (the healthy host), comparing what preceded each 403 against a
+2,000-request sample of 200s:
+
+```
+requests in the 60s   before a 403 : median   63     before a 200 : median   36
+requests in the 5min  before a 403 : median  311     before a 200 : median  141
+requests in the 1h    before a 403 : median 1238     before a 200 : median 1266   <- FLAT
+```
+
+**The hour is flat. The minute is not.** A refusal is preceded by roughly 1.75x the
+per-minute traffic and 2.2x the five-minute traffic of a successful call, while the preceding
+hour is indistinguishable (1238 vs 1266 is noise). Hourly volume does not predict a refusal:
+02:00 ran 3,033 requests for 1.1% 403s while 17:00 ran 1,430 for 9.2%.
+
+**The confound was tested and ruled out.** The obvious alternative is that high-403 hours run
+different code against different endpoints. They do not: hot and cold hours run the same
+processes (`ingest_scoreboards.py`, `__main__.py`, `pregenerate_game_stories.py`,
+`settle_props.py`) in the same proportions against the same top paths. The 403s also spread
+across all five processes (243/79/65/47/32) rather than concentrating in one, which is what a
+shared host-level limit looks like and not what a per-process bug looks like.
+
+### What this means for the design
+
+A cross-process **hourly** ledger is the wrong shape and would not have prevented any of
+these refusals. What the data asks for is a **short-window rate limit**, roughly a token
+bucket over 60 seconds, which is far simpler: it needs no durable shared state, only a
+per-host recent-request timestamp ring.
+
+**Also settled: most of our 403s are not this at all.** Split by host, the "403 problem" is
+mostly permanent refusals being retried:
+
+```
+site.web.api.espn.com        n=25188   403=  568 ( 2.3%)   <- the real rate signal
+site.api.espn.com            n= 2606   403= 2588 (99.3%)   <- walled host
+sports.core.api.espn.com     n=  232   403=  174 (75.0%)   <- gated endpoint
+lm-api-reads.fantasy.espn.com n=    4   403=    0 ( 0.0%)
+```
+
+Two endpoints answer 403 essentially every time and account for **2,761 of 3,206 real ESPN
+403s (86.1%)**:
+
+```
+2587 403 / 2587  100%  site.api.espn.com/apis/v2/sports/baseball/mlb
+ 174 403 /  232   75%  sports.core.api.espn.com/v2/sports/basketball/leagues/nba
+```
+
+Per the permanent-refusal rule (`.claude/skills/espn-request-budget` §5), **neither should be
+retried at all.** A 100% refusal rate over 2,587 attempts is a gated endpoint, not a rate
+block, and the fix is to stop asking, not to pace.
+
+### ⚠ The instrument pollutes its own log
+
+A third endpoint looked like the same thing and is not:
+
+```
+ 102 403 /  102  100%  site.web.api.espn.com/apis/v2/sports/test/standings
+```
+
+**Those 102 requests never happened.** `test_espn_client_degradation.py:28` builds that URL to
+exercise the 403 degradation path, and it mocks `urllib.request.urlopen` to raise a synthetic
+`HTTPError(403)`. No packet leaves the box. But `record_spend` logs the attempt anyway, so
+every suite run writes fake refusals into the file we are using to decide the budget.
+
+This is small (102 of 27,801, and 3.1% of all 403s) and it is excluded from every number in
+this section. It matters as a class, not a quantity: **an instrument that records simulated
+events alongside real ones will eventually be read as if all of them were real.** Two obvious
+fixes, either is fine: have the tests point at a non-ESPN hostname, or have `record_spend`
+skip when `urlopen` is patched. The first is simpler and needs no production change.
+
+### The concentration that governs everything
+
+```
+ingest_scoreboards.py      19,856 of 27,801 ESPN requests   = 71%
+__main__.py                 2,991
+pregenerate_game_stories.py 2,513
+settle_props.py             1,656
+link_prop_games.py            426
+uvicorn (the serving path)    310
+```
+
+**One process is 71% of all ESPN traffic.** Whatever the budget turns out to be, it is
+overwhelmingly a statement about `ingest_scoreboards.py`, which runs every 10 minutes. Pacing
+that one caller is most of the available win, and a global ledger coordinating six processes
+is machinery for the remaining 29%.
+
+Note `uvicorn` at 310: the serving path does reach ESPN, so it must keep the serving posture
+(no pacing, no retry ladder, `on_exhausted="refuse"`). See
+`feedback_serving_path_must_not_enforce_a_batch_budget`.
+
+### Limits of this measurement
+
+One day, 25 hourly buckets, 466 usable 403s on the healthy host (the synthetic test-suite
+403s are excluded throughout). The burst-rate conclusion is
+supported by the 60s and 5min windows agreeing while the 1h window is flat, and by the
+endpoint-mix confound being ruled out, but it rests on a single day of one traffic shape. It
+does **not** establish the threshold. Median 63 requests in the preceding 60s says roughly
+where refusals begin, not where they are certain. Before setting a number in code, re-run this
+against a second day.
 
 ---
 
