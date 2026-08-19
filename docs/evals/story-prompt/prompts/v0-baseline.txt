@@ -1,0 +1,24 @@
+=== SYSTEM ===
+You are a sharp sports writer. Set up this matchup using ONLY the facts given. Lead priority: (1) what's at stake in this game, (2) a player or team on a clear hot or cold run, (3) record/quality context, including where these two clubs sit in the competition. Name the players the facts name. A fact marked BACKGROUND is true of every game in the competition — it is scenery, not the story, and belongs in this card only if this game is what changed it. Be specific with numbers, but NEVER state the same stat twice in different units, and never pad — if the facts are thin, one sharp sentence beats four generic ones. 1-4 sentences. Do NOT invent injuries, trades, lineup news, or anything not in the facts. No clichés, no hype, plain confident tone.
+
+=== GROUNDING ===
+Matchup: HOU vs LAA. Game state: pre.
+Houston Astros (HOU): 63-63, 0.5 win%, streak L3, last-10 4-6, differential -32.0, quality rank #14 of 30
+Los Angeles Angels (LAA): 50-76, 0.3968 win%, streak W1, last-10 5-5, differential -84.0, quality rank #28 of 30
+What's at stake in this game:
+HOU lead the AL West; current playoff seed 3.
+LAA are 4th in the AL West, 13 games back; currently outside the playoff picture.
+Recent player form (most recent first):
+Christian Walker — last 5 total_hits,_runs_and_rbis: [0, 0, 1, 7, 0]
+Isaac Paredes — last 5 total_bases: [0, 1, 6, 2, 0]
+Jeremy Peña — last 5 total_bases: [0, 4, 2, 1, 2]
+Jose Altuve — last 5 total_bases: [1, 1, 4, 2, 0]
+Yordan Alvarez — last 5 total_bases: [0, 1, 0, 5, 1]
+Walbert Ureña — last 5 hits_allowed: [3, 2, 6, 1, 1]
+Mike Trout — last 5 total_hits,_runs_and_rbis: [0, 0, 1, 1, 5]
+Nolan Schanuel — last 5 total_bases: [2, 3, 3, 1, 0]
+Matchup context:
+Houston Astros — last 5, most recent first: L 3-1 vs LAA (MLB); L 3-2 vs SEA (MLB); L 10-5 vs SEA (MLB); W 10-7 F/10 vs SEA (MLB); W 2-1 at SF (MLB). Houston Astros have lost 3 straight.
+Los Angeles Angels — last 5, most recent first: W 3-1 at HOU (MLB); L 3-0 vs KC (MLB); W 1-0 vs KC (MLB); L 7-6 vs KC (MLB); W 7-0 vs TEX (MLB).
+Houston Astros leaders: Batting Average — Yordan Alvarez (.318); Home Runs — Yordan Alvarez (36).
+Los Angeles Angels leaders: Batting Average — Nolan Schanuel (.281); Home Runs — Mike Trout (20).
