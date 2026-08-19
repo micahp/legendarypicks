@@ -7,7 +7,7 @@ Split out of the old 2125-line sports_service.py god-file (see docs/RETRO-2026-0
 Routers in routers/ import everything they need via `from _core import *`.
 """
 import json
-import os, sqlite3, datetime as dt
+import os, sqlite3, sys, time, datetime as dt
 import re, sys, unicodedata
 from contextlib import closing
 from typing import Optional, Tuple
@@ -456,78 +456,226 @@ REPORTER_ROSTER = {
 }
 
 
+# ── the LLM call ──────────────────────────────────────────────────────────────
+#
+# One provider-agnostic chat function. It was `_deepseek_chat` with
+# `api.deepseek.com` hardcoded, and on 2026-08-18 that account ran out of
+# credit: 2,334 HTTP 402s in seven days, ~2 a minute, and every AI preview,
+# recap, news narrative and conversation card went dark. Micah's decision the
+# next day was to stop using DeepSeek direct, so the endpoint is now
+# configuration and the provider is a chain.
+#
+# PROVIDERS, in order. First one that can authenticate wins.
+#
+#   nous        https://inference-api.nousresearch.com/v1   $0.00005 / call
+#               The hermes agent's own default. Auth is OAuth, NOT a static
+#               key: the bearer token lives in /root/.hermes/auth.json and
+#               expires hourly. **We only ever READ that file**, freshly on
+#               every call, because the hermes agent is what refreshes it. We
+#               do not refresh and we do not write it: it is another process's
+#               state, and two writers to one token file is how you get a
+#               logged-out agent at 3am.
+#
+#   openrouter  https://openrouter.ai/api/v1                 $0.0002 / call
+#               Static API key, so it works when the OAuth token is stale.
+#               4x the price and still a fifth of a cent.
+#
+# MODEL: `deepseek/deepseek-v4-flash-0731`, dated on purpose. The old code
+# asked for `deepseek-v4-pro`, an UNDATED alias, and DeepSeek moved what it
+# points at without renaming it. Measured 2026-08-19 on OpenRouter's price
+# list, which is the visible edge of that move:
+#
+#     deepseek-v4-pro         in $1.44/M  out $2.88/M   <- the alias we called
+#     deepseek-v4-pro-0813    in $0.66/M  out $1.98/M   <- the dated snapshot
+#     deepseek-v4-flash-0731  in $0.14/M  out $0.28/M   <- this
+#
+# Never ask for an undated alias again. A model name without a date is a
+# moving target, and it moved us onto something twice the price.
+#
+# Quality was measured, not assumed: 3 runs of a real game-story prompt, every
+# claim checked against the grounding. flash-0731 invented nothing. Of the
+# alternatives, nvidia/nemotron-3.5-lightning was 20x faster (0.6s) but
+# contradicted itself inside one blurb (Houston "leads the division" and "sits
+# 13 games back"), and liquid/lfm-2.5-2.6b inverted which club led the division
+# and flipped the sign of a run differential.
+_LLM_MODEL = os.environ.get("LP_LLM_MODEL", "deepseek/deepseek-v4-flash-0731")
+_LLM_PROVIDERS = [p.strip() for p in
+                  os.environ.get("LP_LLM_PROVIDERS", "nous,openrouter").split(",") if p.strip()]
+_HERMES_AUTH = os.environ.get("LP_HERMES_AUTH", "/root/.hermes/auth.json")
+
+# A 401/402/403 is a PERMANENT refusal: the account has no money or no
+# permission, and it will not change until a person acts. The old code returned
+# None and every caller retried, which is how one dead account produced 2,334
+# requests. This is the same rule already written for ESPN's 403 in
+# .claude/skills/espn-request-budget §5, finally applied to the LLM path.
+_LLM_REFUSED_UNTIL: dict = {}
+_LLM_REFUSAL_COOLDOWN = float(os.environ.get("LP_LLM_REFUSAL_COOLDOWN", "3600"))
+
+
+def _env_key(name: str):
+    """A key from the environment, falling back to either .env on this box."""
+    v = os.environ.get(name)
+    if v:
+        return v
+    for path in ("/root/legendarypicks/.env", "/root/.hermes/.env"):
+        try:
+            with open(path) as f:
+                for line in f:
+                    if line.startswith(name + "="):
+                        return line.split("=", 1)[1].strip().strip('"').strip("'")
+        except Exception:
+            continue
+    return None
+
+
 def _deepseek_key():
-    k = os.environ.get("DEEPSEEK_API_KEY")
-    if k:
-        return k
-    try:  # fall back to the shared .env so the backend works however it was launched
-        with open("/root/.hermes/.env") as f:
-            for line in f:
-                if line.startswith("DEEPSEEK_API_KEY="):
-                    return line.split("=", 1)[1].strip().strip('"')
+    """Kept for callers that only want to know whether an LLM is configured."""
+    return _env_key("DEEPSEEK_API_KEY")
+
+
+def _nous_auth():
+    """(base_url, bearer) from the hermes agent's token file, or None.
+
+    Read-only and re-read every call, so a token the agent refreshed a minute
+    ago is picked up without restarting anything. An expired token is treated
+    as "no credential" rather than tried and failed, because a 401 here costs a
+    request and tells us what the clock already knew.
+    """
+    try:
+        with open(_HERMES_AUTH) as f:
+            n = (json.load(f).get("providers") or {}).get("nous") or {}
+        tok = n.get("access_token")
+        base = n.get("inference_base_url")
+        if not tok or not base:
+            return None
+        exp = n.get("expires_at")
+        if exp:
+            import datetime as _dt
+            if _dt.datetime.fromisoformat(exp) <= _dt.datetime.now(_dt.timezone.utc):
+                return None
+        return base, tok
     except Exception:
         return None
 
 
-def _deepseek_chat(system: str, user: str, max_tokens: int = 8000) -> Optional[str]:
-    # deepseek-v4-pro is a reasoning model. We let it reason at MAX (reasoning_effort=high)
-    # — DeepSeek is cheap, so we never starve the reasoning — and give a big token ceiling
-    # so the hidden reasoning + the answer are never truncated (low ceilings → empty content).
-    key = _deepseek_key()
-    if not key:
-        return None
+def _llm_endpoint(provider: str):
+    """(url, headers) for a provider, or None when it has no usable credential."""
+    if provider == "nous":
+        # A static portal key is preferred when one exists: it does not expire,
+        # so this path stops depending on another process keeping a token warm.
+        # The OAuth token stays as the fallback for boxes without a key.
+        base = os.environ.get("NOUS_BASE_URL") or _env_key("NOUS_BASE_URL") \
+            or "https://inference-api.nousresearch.com/v1"
+        key = _env_key("NOUS_PORTAL_KEY") or _env_key("NOUS_API_KEY")
+        if key:
+            return base.rstrip("/") + "/chat/completions", {"Authorization": f"Bearer {key}"}
+        got = _nous_auth()
+        if not got:
+            return None
+        base, tok = got
+        return base.rstrip("/") + "/chat/completions", {"Authorization": f"Bearer {tok}"}
+    if provider == "openrouter":
+        key = _env_key("OPENROUTER_API_KEY")
+        if not key:
+            return None
+        return ("https://openrouter.ai/api/v1/chat/completions",
+                {"Authorization": f"Bearer {key}"})
+    if provider == "deepseek":
+        key = _env_key("DEEPSEEK_API_KEY")
+        if not key:
+            return None
+        return ("https://api.deepseek.com/v1/chat/completions",
+                {"Authorization": f"Bearer {key}"})
+    return None
+
+
+def _llm_chat(system: str, user: str, max_tokens: int = 8000) -> Optional[str]:
+    """One chat completion, or None. Never raises: callers are built on None.
+
+    `max_tokens` stays generous because this is a REASONING model and the
+    hidden reasoning is billed against the same ceiling. Measured 2026-08-19 on
+    the same prompt: at 3000, two of three runs came back with empty content
+    and reasoning_tokens equal to the ceiling. At 8000, three of three
+    answered. A low ceiling here does not truncate the answer, it deletes it.
+    """
     import urllib.request as _u
     body = json.dumps({
-        "model": "deepseek-v4-pro", "temperature": 0.4, "max_tokens": max_tokens,
-        "reasoning_effort": "high",
-        "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}],
+        "model": _LLM_MODEL, "temperature": 0.4, "max_tokens": max_tokens,
+        "messages": [{"role": "system", "content": system},
+                     {"role": "user", "content": user}],
     }).encode()
-    req = _u.Request("https://api.deepseek.com/v1/chat/completions", data=body,
-                     headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"})
-    # Returning None on failure is the contract every caller is built on, and a
-    # request-path caller (core_stories) must not be made to raise. But None used
-    # to be ALL a caller got: a missing key, a 401, a 402 out-of-credits, a 429, a
-    # 90s timeout and a truncated answer were one indistinguishable value.
-    #
-    # That destroyed a real diagnosis. On 2026-08-17 discover_topics reported
-    # "model returned nothing parseable" every night. The model parsed fine; it
-    # never answered. finish_reason was `length` with reasoning_tokens=4000 of a
-    # 4000 ceiling -- the entire budget spent on hidden reasoning, zero left for
-    # the answer, exactly what this function's own docstring warns about. The API
-    # had said so in the response, and this except threw it away.
-    #
-    # So: still None, but never silent.
-    try:
-        with _u.urlopen(req, timeout=90) as r:
-            payload = json.loads(r.read())
-    except Exception as exc:
-        detail = ""
-        try:                                   # HTTPError carries the API's reason
-            detail = " — " + exc.read().decode("utf-8", "replace")[:300]
-        except Exception:
-            pass
-        print(f"_deepseek_chat: request failed: {type(exc).__name__}: {exc}{detail}",
-              file=sys.stderr, flush=True)
-        return None
-    try:
-        choice = payload["choices"][0]
-        content = (choice["message"]["content"] or "").strip()
-    except Exception as exc:
-        print(f"_deepseek_chat: unexpected response shape: {type(exc).__name__}: {exc} "
-              f"— keys={list(payload)[:8]}", file=sys.stderr, flush=True)
-        return None
-    if not content:
-        usage = payload.get("usage") or {}
-        detail = (usage.get("completion_tokens_details") or {})
-        print(f"_deepseek_chat: EMPTY answer. finish_reason="
-              f"{choice.get('finish_reason')!r} max_tokens={max_tokens} "
-              f"completion_tokens={usage.get('completion_tokens')} "
-              f"reasoning_tokens={detail.get('reasoning_tokens')}. "
-              f"finish_reason='length' with reasoning ~= the ceiling means the "
-              f"budget went entirely to hidden reasoning — RAISE max_tokens.",
-              file=sys.stderr, flush=True)
-        return None
-    return content
+
+    tried = []
+    for provider in _LLM_PROVIDERS:
+        until = _LLM_REFUSED_UNTIL.get(provider, 0)
+        if until > time.time():
+            tried.append(f"{provider}(refused, {int(until - time.time())}s left)")
+            continue
+        got = _llm_endpoint(provider)
+        if not got:
+            tried.append(f"{provider}(no credential)")
+            continue
+        url, headers = got
+        headers = dict(headers)
+        headers["Content-Type"] = "application/json"
+        # Without a User-Agent the Nous edge answers 403 with Cloudflare error
+        # 1010, a browser-signature block. It is not an auth failure and reads
+        # exactly like one.
+        headers["User-Agent"] = "legendarypicks-backend/1.0"
+        req = _u.Request(url, data=body, headers=headers)
+        try:
+            with _u.urlopen(req, timeout=180) as r:
+                payload = json.loads(r.read())
+        except Exception as exc:
+            code = getattr(exc, "code", None)
+            detail = ""
+            try:
+                detail = " — " + exc.read().decode("utf-8", "replace")[:300]
+            except Exception:
+                pass
+            if code in (401, 402, 403):
+                _LLM_REFUSED_UNTIL[provider] = time.time() + _LLM_REFUSAL_COOLDOWN
+                print(f"_llm_chat: {provider} REFUSED us ({code}). This is permanent until "
+                      f"someone acts, so it is now skipped for "
+                      f"{_LLM_REFUSAL_COOLDOWN / 60:.0f} min rather than retried.{detail}",
+                      file=sys.stderr, flush=True)
+            else:
+                print(f"_llm_chat: {provider} request failed: "
+                      f"{type(exc).__name__}: {exc}{detail}", file=sys.stderr, flush=True)
+            tried.append(f"{provider}({code or type(exc).__name__})")
+            continue
+        try:
+            choice = payload["choices"][0]
+            content = (choice["message"]["content"] or "").strip()
+        except Exception as exc:
+            print(f"_llm_chat: {provider} unexpected response shape: "
+                  f"{type(exc).__name__}: {exc} — keys={list(payload)[:8]}",
+                  file=sys.stderr, flush=True)
+            tried.append(f"{provider}(bad shape)")
+            continue
+        if not content:
+            usage = payload.get("usage") or {}
+            detail = (usage.get("completion_tokens_details") or {})
+            print(f"_llm_chat: {provider} EMPTY answer. finish_reason="
+                  f"{choice.get('finish_reason')!r} max_tokens={max_tokens} "
+                  f"completion_tokens={usage.get('completion_tokens')} "
+                  f"reasoning_tokens={detail.get('reasoning_tokens')}. "
+                  f"reasoning ~= the ceiling means the budget went entirely to hidden "
+                  f"reasoning — RAISE max_tokens.", file=sys.stderr, flush=True)
+            tried.append(f"{provider}(empty)")
+            continue
+        return content
+
+    # Every provider is gone. SAY SO, with which ones and why. A silent None
+    # here is what let previews, recaps and narratives sit dark for 17 hours.
+    print(f"_llm_chat: no provider answered. Tried: {', '.join(tried) or '(none configured)'}. "
+          f"model={_LLM_MODEL}", file=sys.stderr, flush=True)
+    return None
+
+
+# Every caller imports this name. Keep it working, but it no longer names a
+# vendor: the provider is configuration now.
+_deepseek_chat = _llm_chat
 
 
 _OPEN_SNAP = """(SELECT {col} FROM prop_odds_snapshots s
