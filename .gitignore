@@ -142,3 +142,7 @@ backend/data/http-spend.jsonl
 # so a tracked copy is permanently dirty and blocks the release preflight. Same
 # class as backend/.espn-cache, which held the v0.8.0 cut for a week.
 backend/data/esports_team_logos.json
+
+# Daily RotoWire relay archive: ~1 MB gzipped per day, written by a timer.
+# The history is the asset and it is irreplaceable, but it is data, not source.
+backend/data/rotowire-archive/
