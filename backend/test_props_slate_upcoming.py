@@ -8,6 +8,7 @@ board. Two rulers for one board. These tests assert the two properties that fix 
 future edit that reverts to a date comparison fails here instead of in the reader.
 """
 
+import datetime as dt
 import os
 import sqlite3
 import sys
@@ -22,6 +23,11 @@ _IMPORT_DB.close()
 os.environ["LP_DB_PATH"] = _IMPORT_DB.name
 
 from routers import props  # noqa: E402
+from espn_client.scoreboard import _slate_day  # noqa: E402
+
+
+def _utc_now_iso():
+    return dt.datetime.now(dt.timezone.utc).isoformat().replace("+00:00", "Z")
 
 
 class SlateUpcomingFilterTests(unittest.TestCase):
@@ -105,12 +111,35 @@ class SlateUpcomingFilterTests(unittest.TestCase):
     def test_missing_start_time_survives_its_whole_day(self):
         # 17 of 75 upcoming MLS rows carried no start_time (2026-08-17). A bare start_time
         # comparison would have deleted them from the board with no error anywhere.
-        today = self.con.execute("SELECT date('now')").fetchone()[0]
-        yesterday = self.con.execute("SELECT date('now','-1 day')").fetchone()[0]
+        #
+        # The dates come from `_slate_day`, not `date('now')`. `pg.date` is the New York
+        # slate day and `date('now')` is the UTC date; they disagree for the four hours
+        # after 20:00 ET, and this test asserted the UTC answer, so it failed every night
+        # from 00:00Z to 03:00Z. It was red for three hours a day and nobody saw it,
+        # because the suite is rarely run in that window.
+        today = _slate_day("mls", _utc_now_iso())
+        yesterday = (dt.date.fromisoformat(today) - dt.timedelta(days=1)).isoformat()
+        older = (dt.date.fromisoformat(today) - dt.timedelta(days=3)).isoformat()
         self.add(1, 0, start_time=None, date=today)
         self.add(2, 0, start_time="", date=today)
-        self.add(3, 0, start_time=None, date=yesterday)
+        self.add(3, 0, start_time=None, date=older)
         self.assertEqual(self.kept(), [1, 2], "a timeless row holds for the day it is dated for")
+        self.assertNotIn(3, self.kept(), "a timeless row does not hold forever")
+
+    def test_a_timeless_row_lasts_until_its_day_actually_ends(self):
+        """The fallback is the end of the NY day, not 19:59 ET on it.
+
+        `pg.date || 'T23:59:59Z'` reads like "end of day" and, once `pg.date`
+        became the New York slate day, meant 7:59pm Eastern. A timeless row
+        dated today dropped off mid-evening. Fails against that expression.
+        """
+        today = _slate_day("mls", _utc_now_iso())
+        self.add(1, 0, start_time=None, date=today)
+        kickoff = self.con.execute(
+            "SELECT " + props._KICKOFF + " FROM prop_games pg WHERE id=1").fetchone()[0]
+        # Midnight Eastern is 04:00Z (EDT) or 05:00Z (EST); never the same calendar day.
+        self.assertGreater(kickoff, today + "T23:59:59",
+                           "a timeless row must survive its own evening")
 
     def test_both_slate_paths_share_one_rule(self):
         # The summary and fully-nested paths are separate queries; a board that filters two ways

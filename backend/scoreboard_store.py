@@ -38,6 +38,8 @@ import os
 import sqlite3
 from contextlib import closing
 
+from espn_client.scoreboard import _slate_day
+
 DB = os.environ.get("LP_DB_PATH") or os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "data", "picks.db")
 
@@ -108,6 +110,26 @@ def _now():
 
 def _iso(moment):
     return moment.isoformat(timespec="seconds")
+
+
+def _today_for(league):
+    """Today, on the same clock `game_date` is keyed by.
+
+    This used to be `_now().date()`, the UTC date, compared against a
+    `game_date` that is the America/New_York slate day for every league except
+    tennis. The UTC date rolls over at 20:00 ET, so for the four hours from
+    8pm to midnight Eastern -- prime time -- tonight's slate compared as
+    STRICTLY LESS THAN today and the store answered "day is over and published
+    no games". An empty slate that gained a late addition in that window could
+    never pick it up, because the backoff that exists for exactly that case was
+    skipped.
+
+    `_slate_day` is the same function that decides `game_date`, so this asks the
+    question on one ruler. It is league-aware on purpose: tennis buckets by UTC
+    and must keep doing so.
+    """
+    now = _now()
+    return _slate_day(league, _iso(now)) or now.date().isoformat()
 
 
 def _normalize_start(value):
@@ -317,7 +339,7 @@ def needs_refresh(league, game_date, empty_backoff=EMPTY_BACKOFF, con=None):
             return True, "unreadable fetched_at"
 
         if not refresh["game_count"]:
-            if game_date < _now().date().isoformat():
+            if game_date < _today_for(league):
                 # An empty day that is OVER stays empty. The backoff exists for
                 # a postponement or a late addition, and a finished day can
                 # have neither -- so re-asking is a request per viewer for an

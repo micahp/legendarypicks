@@ -29,7 +29,17 @@ router = APIRouter()
 # was fixed to use the instant and the ORDER BY was left on `pg.date`, so once two rows
 # disagreed about which calendar day a 21:30 ET kickoff belongs to, a 9:30pm game sorted
 # ahead of a 7:00pm one on the same board.
-_KICKOFF = "datetime(COALESCE(NULLIF(pg.start_time, ''), pg.date || 'T23:59:59Z'))"
+# The fallback is `date(pg.date, '+1 day') || 'T05:00:00'`, not `pg.date || 'T23:59:59Z'`,
+# and the difference is the 2026-08-19 convention fix. `pg.date` is now the America/New_York
+# SLATE DAY for every league but tennis, so `pg.date || 'T23:59:59Z'` is not the end of that
+# day at all -- it is 7:59pm Eastern, in the middle of the evening slate. A timeless row
+# dated today fell off the board mid-evening, and only looked roughly right because the
+# 3-hour grace below happened to push it to about 11pm.
+# 05:00Z is midnight Eastern in EST, the worst case of the two offsets. In EDT that is one
+# extra hour of grace for a row whose kickoff we do not know, which is the safe direction:
+# this fallback exists precisely so a row with no time is not silently deleted from the board.
+_KICKOFF = ("datetime(COALESCE(NULLIF(pg.start_time, ''), "
+            "date(pg.date, '+1 day') || 'T05:00:00'))")
 
 _UPCOMING = _KICKOFF + " >= datetime('now', '-3 hours')"
 

@@ -60,7 +60,79 @@ def dangling_source_mappings(con: sqlite3.Connection) -> List[sqlite3.Row]:
     ).fetchall()
 
 
+def shared_match_keys(con: sqlite3.Connection) -> List[dict]:
+    """Rows that share `(league, date, home, away)`, classified.
+
+    That tuple is the key both ingest paths match an existing fixture on, and it
+    CANNOT DISTINGUISH A DOUBLEHEADER FROM A DUPLICATE. Two rows share it either
+    because the same game was stored twice, or because the same two clubs really
+    did play twice on one local day. Both look identical to the ingest, which
+    picks one arbitrarily.
+
+    Measured 2026-08-19, when re-dating every row onto the local slate day made
+    five such pairs collide at once: four were one game stored twice and one was
+    real. ESPN settled it -- the 07-27 Reds/Guardians game was Postponed and
+    replayed as two games on 07-28.
+
+    The published final score is what separates them, and it is the only thing
+    that does. Two rows for one game carry the same final; a doubleheader's two
+    games do not. So:
+
+      duplicate     finals agree (or one side has not been settled yet)
+      doubleheader  finals disagree, both settled
+
+    Returns the classification rather than acting on it. Folding merges props
+    and needs `dedupe_props.py` behind it, which is a decision, not a cleanup.
+    """
+    groups: dict = {}
+    for row in con.execute(
+            "SELECT id, league, date, home, away, start_time, final_home, final_away "
+            "FROM prop_games ORDER BY id"):
+        groups.setdefault(tuple(row[1:5]), []).append(row)
+
+    out = []
+    for key, rows in sorted(groups.items()):
+        if len(rows) < 2:
+            continue
+        finals = {(r["final_home"], r["final_away"]) for r in rows}
+        settled = [f for f in finals if f[0] is not None and f[1] is not None]
+        verdict = ("doubleheader" if len(settled) > 1 and len(finals) > 1
+                   else "duplicate")
+        out.append({
+            "league": key[0], "date": key[1], "home": key[2], "away": key[3],
+            "ids": [r["id"] for r in rows],
+            "finals": sorted(finals, key=str),
+            "starts": sorted(str(r["start_time"]) for r in rows),
+            "verdict": verdict,
+        })
+    return out
+
+
 def _table_exists(con: sqlite3.Connection, table: str) -> bool:
     return con.execute(
         "SELECT 1 FROM sqlite_master WHERE type='table' AND name=?", (table,)
     ).fetchone() is not None
+
+
+if __name__ == "__main__":
+    import os
+    import sys
+
+    db = os.environ.get("LP_DB_PATH") or os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), "data", "picks.db")
+    connection = sqlite3.connect(db)
+    connection.row_factory = sqlite3.Row
+    shared = shared_match_keys(connection)
+    dangling = dangling_source_mappings(connection)
+    print("database: %s" % db)
+    print("rows sharing (league, date, home, away): %d" % len(shared))
+    for group in shared:
+        print("  %-13s %-6s %s  %s @ %s  ids=%s finals=%s"
+              % (group["verdict"], group["league"], group["date"],
+                 group["away"], group["home"], group["ids"], group["finals"]))
+    print("dangling source mappings: %d" % len(dangling))
+    dupes = [g for g in shared if g["verdict"] == "duplicate"]
+    # A doubleheader is not a defect. A duplicate is, and so is a mapping whose
+    # game was deleted -- that one made the UFC timer fail every 30 minutes for
+    # two hours reading a deleted row as a changed identity.
+    sys.exit(1 if (dupes or dangling) else 0)

@@ -191,6 +191,34 @@ class TestScoreboardStore:
         scoreboard_store.save("mlb", "2026-08-18", [self._game("later", 5, "pre")])
         assert scoreboard_store.live_targets() == []
 
+    def test_tonights_empty_slate_is_not_called_over_during_prime_time(self):
+        """The UTC date rolls over at 20:00 ET, `game_date` does not.
+
+        `needs_refresh` compared `game_date` against the UTC date, so from 8pm
+        to midnight Eastern tonight's slate sorted as strictly less than
+        "today" and answered "day is over and published no games". The backoff
+        that exists to catch a late addition was skipped for the four hours a
+        late addition is most likely. Fails against `_now().date()`.
+        """
+        for league, clock in (("mlb", "america/new_york"), ("atp", "utc")):
+            today = scoreboard_store._today_for(league)
+            scoreboard_store.save(league, today, [])
+            wanted, reason = scoreboard_store.needs_refresh(
+                league, today, empty_backoff=dt.timedelta(seconds=0))
+            assert wanted, (
+                "%s slate %s (%s) was called over; reason=%r"
+                % (league, today, clock, reason))
+            assert "day is over" not in reason
+
+    def test_a_day_that_really_is_over_is_still_final(self):
+        """The fix must not turn the backoff into an infinite retry."""
+        today = scoreboard_store._today_for("mlb")
+        yesterday = (dt.date.fromisoformat(today) - dt.timedelta(days=1)).isoformat()
+        scoreboard_store.save("mlb", yesterday, [])
+        wanted, reason = scoreboard_store.needs_refresh(
+            "mlb", yesterday, empty_backoff=dt.timedelta(seconds=0))
+        assert not wanted and "day is over" in reason, reason
+
     def test_refresh_is_skipped_only_for_reasons_the_publisher_gave(self):
         # TODAY, computed, not a literal. This test hardcoded 2026-08-18, which
         # was today when it was written and became yesterday at midnight -- at
@@ -198,7 +226,14 @@ class TestScoreboardStore:
         # rule correctly overrode the backoff and the test failed for a reason
         # that had nothing to do with the behaviour it was checking. A date
         # literal in a test about "is this day finished" is a time bomb.
-        today = dt.date.today().isoformat()
+        #
+        # `dt.date.today()` was the second time bomb, and it went off on
+        # 2026-08-19. It is the BOX's local date, and the store keys `game_date`
+        # by the New York slate day -- two clocks that disagree for one hour a
+        # night on a Central box, and for four hours against the UTC date the
+        # store used to compare with. Ask the code for its own idea of today so
+        # this cannot drift again.
+        today = scoreboard_store._today_for("mlb")
         wanted, reason = scoreboard_store.needs_refresh("mlb", today)
         assert wanted and reason == "never fetched"
 
