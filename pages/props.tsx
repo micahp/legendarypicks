@@ -823,11 +823,13 @@ export default function PropsPage() {
   }
   const goToday = () => setDate(today)
 
-  // allow deep-linkable date via ?date=YYYY-MM-DD
+  // allow deep-linkable date via ?date=YYYY-MM-DD and tab via ?tab=<key>
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     const q = params.get('date')
     if (q && /^\d{4}-\d{2}-\d{2}$/.test(q)) setDate(q)
+    const t = params.get('tab')
+    if (t && TABS.some(x => x.key === t)) setTab(t as Tab)
   }, [])
 
   // Land each league on today when it has props, otherwise its nearest upcoming slate. Re-run when

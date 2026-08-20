@@ -62,7 +62,7 @@ export default function Home() {
             the season, and projections built from the player&apos;s own game logs.
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
-            <Link href="/props" className="px-5 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold transition-colors">
+            <Link href="/props?tab=props" className="px-5 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold transition-colors">
               Browse the prop board
             </Link>
             <Link href="/scores" className="px-5 py-2.5 rounded-lg border border-zinc-700 hover:bg-zinc-800 transition-colors">
@@ -81,7 +81,7 @@ export default function Home() {
           is smaller or further down. */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
         <Link
-          href="/props"
+          href="/props?tab=props"
           className="md:col-span-2 rounded-xl border border-zinc-800 bg-zinc-900 p-6 hover:border-emerald-500/40 transition-colors"
         >
           <h2 className="text-xl font-bold mb-2">Player props, with the history</h2>
