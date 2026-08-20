@@ -208,9 +208,9 @@ if [ -x backend/venv/bin/python ]; then
   # raises for a league that serves player_stats with no MANIFEST entry, but a league it is
   # never ASKED about is silent, so name the gap here instead of letting absence read as green.
   echo
-  echo "release: NOT audited — esports has no MANIFEST entry in audit_league_stats.py, so no"
+  echo "release: NOT audited: esports has no MANIFEST entry in audit_league_stats, so no"
   echo "  check above covers it. That is a gap, not a pass. Adding a league to the audit means"
-  echo "  writing what it CLAIMS first; see the MANIFEST header in backend/audit_league_stats.py."
+  echo "  writing what it CLAIMS first; see the MANIFEST header in backend/audit_league_stats/cli.py."
 
   if [ "$audit_fails" -gt 0 ]; then
     echo
