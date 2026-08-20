@@ -178,12 +178,19 @@ fi
 # playing-time qualifier) and one needs fetch_identity_names.py to learn ncaaf.
 AUDIT_BLOCKING="nfl mlb nba nhl ufc ncaaf"
 AUDIT_REPORTED="mls"
-if [ -f backend/audit_league_stats.py ] && [ -x backend/venv/bin/python ]; then
+# The runner moved from `backend/audit_league_stats.py` to a package on
+# 2026-08-18. This guard was `[ -f backend/audit_league_stats.py ]`, so from
+# that day the whole audit below was SKIPPED without a word, and v0.8.2 and
+# v0.8.3 were both cut with the prod stats audit never running. A gate that
+# cannot find its runner must stop the release, not step over it.
+[ -d backend/audit_league_stats ] \
+  || die "backend/audit_league_stats is missing -- the prod stats audit cannot run, and an audit that did not run is not an audit that passed"
+if [ -x backend/venv/bin/python ]; then
   echo
   echo "release: audit_league_stats vs prod — BLOCKING: $AUDIT_BLOCKING (FAIL blocks, UNVERIFIED does not)"
   audit_args=""
   for lg in $AUDIT_BLOCKING; do audit_args="$audit_args --league $lg"; done
-  audit_out=$(backend/venv/bin/python backend/audit_league_stats.py \
+  audit_out=$(PYTHONPATH=backend backend/venv/bin/python -m audit_league_stats \
     --db backend/data/picks.db $audit_args --quiet 2>&1) || true
   printf '%s\n' "$audit_out" | sed 's/^/  /'
   audit_fails=$(printf '%s\n' "$audit_out" | grep -c '^FAIL' || true)
@@ -191,7 +198,7 @@ if [ -f backend/audit_league_stats.py ] && [ -x backend/venv/bin/python ]; then
   echo
   echo "release: audit_league_stats vs prod — REPORTED: $AUDIT_REPORTED (does NOT block; promote to BLOCKING at 0 FAIL)"
   for lg in $AUDIT_REPORTED; do
-    rep_out=$(backend/venv/bin/python backend/audit_league_stats.py \
+    rep_out=$(PYTHONPATH=backend backend/venv/bin/python -m audit_league_stats \
       --db backend/data/picks.db --league "$lg" --quiet 2>&1) || true
     printf '%s\n' "$rep_out" | sed 's/^/  /'
     echo "  ^ $lg is REPORTED, not blocking. $(printf '%s\n' "$rep_out" | grep -c '^FAIL' || true) FAIL to go."

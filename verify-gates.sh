@@ -630,7 +630,16 @@ PY
   # This is EXPECTED RED until the stat gaps in docs/LEAGUE-STAT-GAPS.md are
   # closed. It is committed red on purpose: the number below only ever goes down,
   # and a drop that nobody earned shows up in the diff.
-  statset_out=$($PY /root/legendarypicks/backend/audit_league_stats.py --db "$D" --quiet 2>&1)
+  # `-m audit_league_stats`, not a file path: the 2026-08-18 split turned the
+  # runner into a package and this line kept naming the retired .py. python then
+  # exits 2 ("can't open file"), which lands in the `-le 21` arm below and prints
+  # "2 of a known 21 open" -- a MISSING RUNNER rendered as progress against the
+  # gap list. The `-d` check makes an unrunnable audit say so instead.
+  if [ ! -d /root/legendarypicks/backend/audit_league_stats ]; then
+    no "COV-statset" "runner missing: backend/audit_league_stats is not there, so nothing was audited"
+    return
+  fi
+  statset_out=$(PYTHONPATH=/root/legendarypicks/backend $PY -m audit_league_stats --db "$D" --quiet 2>&1)
   statset_failures=$?
   if [ "$statset_failures" -eq 0 ]; then
     ok "COV-statset" "every league holds what its pages claim"
