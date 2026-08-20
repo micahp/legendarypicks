@@ -539,15 +539,15 @@ def select_target_date(
 def apply_plan(db_path: str, plan: MlbPlan) -> dict:
     if plan.source_errors or plan.identity_conflicts:
         raise RuntimeError("refusing apply: MLB plan validation failed")
-    connection = sqlite3.connect(db_path, timeout=5)
+    connection = sqlite3.connect(db_path, timeout=common.BUSY_TIMEOUT_SECONDS)
     try:
         journal_mode = str(
             connection.execute("PRAGMA journal_mode").fetchone()[0]
         ).lower()
-        if journal_mode != "delete":
+        if journal_mode not in common.ROLLBACK_SAFE_JOURNAL_MODES:
             raise RuntimeError(
-                "production journal_mode is {}, expected delete".format(
-                    journal_mode
+                "production journal_mode is {}, expected one of {}".format(
+                    journal_mode, sorted(common.ROLLBACK_SAFE_JOURNAL_MODES)
                 )
             )
         connection.execute("BEGIN IMMEDIATE")

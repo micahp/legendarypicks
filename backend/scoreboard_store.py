@@ -39,6 +39,7 @@ import sqlite3
 from contextlib import closing
 
 from espn_client.scoreboard import _slate_day
+from history_refresh_common import BUSY_TIMEOUT_SECONDS
 
 DB = os.environ.get("LP_DB_PATH") or os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "data", "picks.db")
@@ -90,7 +91,10 @@ def _db_path():
 
 
 def _db():
-    con = sqlite3.connect(_db_path())
+    # This store writes `scoreboard_snapshots` every minute, so it is one half of the
+    # contention that made prod's props ingest 500 with `database is locked`. See the
+    # note in `_core._db`: the 5s SQLite default is what gave up.
+    con = sqlite3.connect(_db_path(), timeout=BUSY_TIMEOUT_SECONDS)
     con.row_factory = sqlite3.Row
     return con
 

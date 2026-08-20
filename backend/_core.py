@@ -17,6 +17,7 @@ from pydantic import BaseModel
 
 import espn_client as espn
 from analytics import ev as ev_mod, clv as clv_mod, calibration as calib_mod, projections as proj_mod
+from history_refresh_common import BUSY_TIMEOUT_SECONDS
 from league_stats import PLAYER_STATS_TABLE_SQL, canonical_player_stats_row
 from team_stats_json import stats_to_json
 # Extracted from this file, re-exported below so `from _core import *` callers
@@ -33,14 +34,48 @@ ALLOWED_ORIGINS = os.environ.get("LP_ALLOWED_ORIGINS", "http://localhost:3000,ht
 
 
 def _db():
+    # `timeout` is SQLite's busy timeout: how long a connection that cannot get the lock
+    # keeps retrying before it raises `database is locked`. The default is 5 seconds, and
+    # that default is what prod's props ingest was hitting -- the OperationalError came
+    # back out of the API as an HTTP 500 and the scraper reported "2 of 14 mlb games
+    # failed to POST", every 30 minutes, silently dropping props.
+    #
+    # This is the API's connection helper, imported by 61 non-test modules, so it is the
+    # one place worth fixing rather than the 176 individual connect() sites. WAL (set on
+    # the database file itself, not here) removes reader-vs-writer contention; this
+    # covers what WAL does not, which is writer-vs-writer. SQLite allows exactly one
+    # writer at a time in both modes.
     os.makedirs(os.path.dirname(DB), exist_ok=True)
-    con = sqlite3.connect(DB)
+    con = sqlite3.connect(DB, timeout=BUSY_TIMEOUT_SECONDS)
     con.row_factory = sqlite3.Row
     return con
 
 
+def ensure_wal(con):
+    """Put the served database in WAL, and report the mode it is actually in.
+
+    WAL is a persistent property of the database FILE, not of a connection, so it
+    survives restarts and applies to every process that opens it. That is also the
+    hazard: prod was flipped by hand on 2026-08-19, and a restore from a `delete`-mode
+    backup would silently put it back without a single line of code changing. Setting
+    it here means the API repairs that on startup instead of quietly serving 500s again.
+
+    Under `delete` a writer holds an exclusive lock on the whole database and every
+    reader waits. Prod runs API reads, a per-minute `scoreboard_snapshots` writer and a
+    30-minute props ingest against one file, so they serialised, the 5s busy timeout
+    expired and `database is locked` came back out of the API as an HTTP 500. The
+    scraper reported it honestly as "2 of 14 mlb games failed to POST".
+
+    The PRAGMA cannot be forced: if another connection holds a lock, SQLite returns the
+    CURRENT mode rather than raising. So this returns what the database is actually in,
+    which is the only answer worth having. Callers that care must check the value.
+    """
+    return str(con.execute("PRAGMA journal_mode=WAL").fetchone()[0]).lower()
+
+
 def _init_db():
     with closing(_db()) as con:
+        ensure_wal(con)
         con.executescript("""
         CREATE TABLE IF NOT EXISTS predictions(
           id INTEGER PRIMARY KEY AUTOINCREMENT,
