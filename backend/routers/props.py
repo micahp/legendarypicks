@@ -25,8 +25,13 @@ router = APIRouter()
 # COALESCE matters: 17 of the 75 upcoming MLS rows carry no start_time at all (2026-08-17), and a
 # bare start_time comparison would silently delete them from the board. Those fall back to the end
 # of their stored date, so a row with no time survives the whole day it is dated for.
-_UPCOMING = ("datetime(COALESCE(NULLIF(pg.start_time, ''), pg.date || 'T23:59:59Z')) "
-             ">= datetime('now', '-3 hours')")
+# Named, because ORDERING needs the same ruler as filtering. 2026-08-19: the filter above
+# was fixed to use the instant and the ORDER BY was left on `pg.date`, so once two rows
+# disagreed about which calendar day a 21:30 ET kickoff belongs to, a 9:30pm game sorted
+# ahead of a 7:00pm one on the same board.
+_KICKOFF = "datetime(COALESCE(NULLIF(pg.start_time, ''), pg.date || 'T23:59:59Z'))"
+
+_UPCOMING = _KICKOFF + " >= datetime('now', '-3 hours')"
 
 
 _CorePropIngest = PropIngest
@@ -282,7 +287,12 @@ def props_slate(league: Optional[str] = Query(None),
         gsql = ("SELECT pg.id AS game_id, pg.home, pg.away, pg.date AS game_date, pg.start_time, "
                 "pg.league, COUNT(p.id) AS prop_count "
                 "FROM prop_games pg JOIN props p ON p.game_id = pg.id WHERE 1=1" + filters)
-        gsql += " GROUP BY pg.id HAVING prop_count > 0 ORDER BY pg.date, pg.start_time, pg.home, pg.away"
+        # Order by when the game starts, NOT by `pg.date`. That column carries two
+        # conventions (some rows file a 21:30 ET kickoff under the next UTC day), so
+        # sorting by it puts a 9:30pm game ahead of a 7:00pm one whenever the two rows
+        # disagree. The kickoff instant is the same number for both conventions.
+        gsql += (" GROUP BY pg.id HAVING prop_count > 0 ORDER BY " + _KICKOFF
+                 + ", pg.home, pg.away")
 
         base_market = (
             "CASE WHEN instr(p.market, '___') > 0 "
@@ -335,7 +345,7 @@ def props_slate(league: Optional[str] = Query(None),
         # (e.g. months-old MLB that never pruned) and lets the client show the whole slate grouped by
         # date, Bovada-style. The exact-date path stays for deep links / the date navigator.
         sql += " AND " + _UPCOMING
-    sql += " ORDER BY pg.date, pg.home, pg.away, pl.name, p.market, p.side"
+    sql += " ORDER BY " + _KICKOFF + ", pg.home, pg.away, pl.name, p.market, p.side"
     with closing(_db()) as con:
         rows = con.execute(sql, params).fetchall()
 

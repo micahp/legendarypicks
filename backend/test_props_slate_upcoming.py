@@ -62,6 +62,35 @@ class SlateUpcomingFilterTests(unittest.TestCase):
         sql = "SELECT id FROM prop_games pg WHERE " + props._UPCOMING + " ORDER BY id"
         return [r[0] for r in self.con.execute(sql)]
 
+    def ordered(self):
+        """Game ids in the order the slate serves them."""
+        sql = ("SELECT id FROM prop_games pg ORDER BY " + props._KICKOFF
+               + ", pg.home, pg.away")
+        return [r[0] for r in self.con.execute(sql)]
+
+    def test_the_board_is_ordered_by_kickoff_not_by_the_date_column(self):
+        """Two rows can disagree about which calendar day a late kickoff belongs to.
+
+        Measured on prod 2026-08-19: MLS rows written from the sportsbook file a 21:30 ET
+        kickoff under the next UTC day, while rows written from the relay file it under
+        the local day. Ordering by `pg.date` then put a 9:30pm game above a 7:00pm one.
+        The kickoff instant is the same number under either convention.
+        """
+        # The shape that actually breaks: the LATER kickoff carries the EARLIER date, so
+        # ordering by `date` first hoists it above a game that starts before it. Prod
+        # 2026-08-19: Houston @ Vancouver, 9:30pm, date 08-19, sorted above St. Louis @
+        # Sporting KC, 7:00pm, date 08-20.
+        self.add(1, +1, date="2026-08-20")   # 7:00pm, filed under the UTC day
+        self.add(2, +2, date="2026-08-19")   # 9:30pm, filed under the local day
+        self.assertEqual(self.ordered(), [1, 2],
+                         "the earlier kickoff must come first whatever `date` says")
+
+    def test_a_row_with_no_start_time_still_has_a_place_in_the_order(self):
+        """17 of 30 MLS rows carried no start_time on 2026-08-19."""
+        self.add(1, +2)
+        self.add(2, +1, start_time=None)
+        self.assertEqual(sorted(self.ordered()), [1, 2])
+
     def test_finished_game_dated_today_is_dropped(self):
         # 00:30Z today: still `date >= date('now')`, but it kicked off hours ago and is over.
         self.add(1, -16)
