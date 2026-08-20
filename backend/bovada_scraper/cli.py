@@ -99,7 +99,7 @@ def main():
                         if gkey not in by_game:
                             by_game[gkey] = {
                                 "league": p["league"],
-                                "date": _wc_event_date(p, today),
+                                "date": _wc_event_date(p, today, p["league"]),
                                 "home": p["home_team"],
                                 "away": p["away_team"],
                                 "espn_event_id": "",

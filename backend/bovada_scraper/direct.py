@@ -14,16 +14,36 @@ import unicodedata
 from .config import _MINTED_PLAYERS  # noqa: E402
 import espn_client as espn  # noqa: E402
 from link_prop_games import link_prop_game, apply_start_time  # noqa: E402
+from espn_client.scoreboard import _slate_day  # noqa: E402
 
-def _wc_event_date(prop: dict, fallback: str) -> str:
-    """UTC event date from Bovada startTime (milliseconds or seconds)."""
+def _wc_event_date(prop: dict, fallback: str, league: str) -> str:
+    """The local slate day Bovada's startTime falls on, per `_slate_day`.
+
+    This returned the UTC date until 2026-08-19, and that is the whole of the
+    two-convention problem in `prop_games.date`. A 9:30pm Central kickoff is
+    02:30Z the NEXT day, so the board filed tonight's late games under tomorrow
+    while the scoreboard, which buckets by the local day, correctly said
+    tonight. ESPN settles it: it returns event 761739 at 2026-08-20T02:30Z on
+    its **Aug 19** board, so the local day is the publisher's own convention.
+
+    The cost of the old value is not just a wrong date. It is that half the
+    codebase grew a +/-1 day window to survive it -- `link_prop_games` searches
+    neighbour slates, `settlement/mlb_api` tries three days, `ingest_underdog_props`
+    matches `BETWEEN date-1 AND date+1`. Every one of those is compensation for
+    this line.
+
+    `league` is required rather than defaulted because `_slate_day` is not one
+    rule: tennis buckets by UTC on purpose, everything else by America/New_York.
+    A default would silently give one of them the wrong answer.
+    """
     try:
         stamp = float(prop.get("start_time"))
         if stamp > 10_000_000_000:
             stamp /= 1000
-        return dt.datetime.fromtimestamp(stamp, dt.timezone.utc).date().isoformat()
+        moment = dt.datetime.fromtimestamp(stamp, dt.timezone.utc)
     except (TypeError, ValueError, OSError, OverflowError):
         return fallback
+    return _slate_day(league, moment.isoformat().replace("+00:00", "Z")) or fallback
 
 def _event_start_iso(prop: dict):
     """Full UTC kickoff datetime (ISO) from Bovada startTime, so the slate can show a game time and
@@ -53,7 +73,7 @@ def _wc_direct_ingest(all_props: list, today: str):
     try:
         by_game = {}
         for p in all_props:
-            game_date = _wc_event_date(p, today)
+            game_date = _wc_event_date(p, today, "wc")
             gkey = (game_date, p["game_desc"])
             if gkey not in by_game:
                 by_game[gkey] = {
@@ -220,7 +240,7 @@ def _ufc_direct_ingest(all_props: list, today: str) -> int:
     try:
         by_game = {}
         for p in all_props:
-            gdate = _wc_event_date(p, today)
+            gdate = _wc_event_date(p, today, "ufc")
             gkey = (gdate, p["game_desc"])
             if gkey not in by_game:
                 by_game[gkey] = {"date": gdate, "home": p["home_team"], "away": p["away_team"], "props": []}
