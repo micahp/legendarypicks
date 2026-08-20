@@ -273,6 +273,18 @@ class RotowirePropsTests(unittest.TestCase):
         self.assertEqual(report["counts"]["sport_props"], 1)
         self.assertTrue(all(r["market"] == "passing_yards" for r in rows))
 
+    def test_a_late_kickoff_is_filed_under_the_day_it_is_played(self):
+        """A 22:30 ET kickoff is tonight's game, not tomorrow's, in every league.
+
+        The UTC date of that instant is the next day, and filing it there is what puts a
+        game the scoreboard calls tonight onto the prop board's tomorrow.
+        """
+        import datetime as _dt
+        late = _dt.datetime.fromtimestamp(1789266600, _dt.timezone.utc)  # 2026-09-13 02:30Z
+        self.assertEqual(late.date().isoformat(), "2026-09-13")          # the UTC day
+        for league in ("nfl", "mls"):
+            self.assertEqual(rw._board_day(league, late), "2026-09-12", league)
+
     def test_a_dry_run_writes_nothing(self):
         self.player("Matthew Stafford", "LAR")
         rows, _ = rw.parse(payload(), "nfl")
@@ -367,6 +379,37 @@ class SoccerIsFiveCompetitionsUnderOneLabel(unittest.TestCase):
 
         self.assertEqual(self.scalar("SELECT COUNT(*) FROM prop_games"), 1)
         self.assertEqual(self.scalar("SELECT DISTINCT game_id FROM props"), existing)
+
+    def test_a_matched_row_with_no_kickoff_gets_one_from_the_publisher(self):
+        """The board cannot place a game with no start_time, and the relay publishes it."""
+        self.player("Some Forward", "RBNY")
+        bare = self.con.execute(
+            "INSERT INTO prop_games(league,date,home,away,espn_event_id,start_time) "
+            "VALUES('mls','2026-09-13','New York Red Bulls','Atlanta United','761739',NULL)"
+        ).lastrowid
+        self.con.commit()
+
+        rw.ingest(rw.parse(self.soccer("Some Forward", "New York Red Bulls",
+                                       "New York Red Bulls", "Atlanta United"), "mls")[0], "mls")
+
+        self.assertEqual(self.scalar("SELECT COUNT(*) FROM prop_games"), 1)
+        self.assertEqual(self.scalar("SELECT start_time FROM prop_games WHERE id=?", (bare,)),
+                         "2026-09-13T17:00:00Z")
+
+    def test_an_existing_kickoff_is_never_overwritten(self):
+        """Filling a hole is safe. Replacing the publisher's own corrected time is not."""
+        self.player("Some Forward", "RBNY")
+        held = self.con.execute(
+            "INSERT INTO prop_games(league,date,home,away,start_time) "
+            "VALUES('mls','2026-09-13','New York Red Bulls','Atlanta United',"
+            "'2026-09-13T19:45:00+00:00')").lastrowid
+        self.con.commit()
+
+        rw.ingest(rw.parse(self.soccer("Some Forward", "New York Red Bulls",
+                                       "New York Red Bulls", "Atlanta United"), "mls")[0], "mls")
+
+        self.assertEqual(self.scalar("SELECT start_time FROM prop_games WHERE id=?", (held,)),
+                         "2026-09-13T19:45:00+00:00")
 
     def test_a_club_alias_resolves(self):
         """The relay says `New York Red Bulls`; ESPN says `Red Bull New York`."""

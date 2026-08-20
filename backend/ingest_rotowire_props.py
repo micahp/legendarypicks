@@ -76,6 +76,16 @@ SOURCE = "rotowire"
 # competitions: "Soccer" carries MLS, La Liga, Ligue 1, Serie A and the Premier League in
 # the same payload. So for those, resolving BOTH clubs against the league's own roster IS
 # the membership test, and a fixture whose clubs are not MLS clubs is simply not ours.
+# `day` is which calendar day a fixture is filed under.
+#
+# Measured 2026-08-19 on the rendered board: the slate groups games by `start_time`, not by
+# this column, and falls back to `date` only when a row has no kickoff. So the truthful
+# local slate day is the right value everywhere, and matching the UTC dates that Bovada's
+# MLS rows carry would only make a fallback read as tomorrow.
+#
+# The rows that actually break the board are the ones with NO `start_time`: 17 of 30 MLS
+# rows on 2026-08-19, against 0 of 30 NFL and 0 of 10 MLB. The board cannot place those at
+# all. See `_fill_missing_start_time`.
 LEAGUES = {
     "nfl": {"sport": "NFL", "kind": "code", "teams": {"WAS": "WSH"}},
     "mls": {"sport": "Soccer", "kind": "club", "aliases": {
@@ -142,6 +152,11 @@ def strip_suffix(value: str) -> str:
     while parts and parts[-1] in _SUFFIXES:
         parts.pop()
     return " ".join(parts)
+
+
+def _board_day(league: str, start: dt.datetime) -> Optional[str]:
+    """The local day this fixture is played on. See the note on LEAGUES."""
+    return _slate_day(league, start.isoformat().replace("+00:00", "Z"))
 
 
 def source_player_key(entity: Dict) -> Optional[str]:
@@ -229,7 +244,7 @@ def parse(payload: Dict, league: str) -> Tuple[List[Dict], Dict]:
                     "position": entity.get("pos"),
                     "home": event["homeTeam"],
                     "away": event["awayTeam"],
-                    "date": _slate_day(league, start.isoformat().replace("+00:00", "Z")),
+                    "date": _board_day(league, start),
                     "start_time": start.isoformat().replace("+00:00", "Z"),
                     "market": market_key,
                     "line": float(line["line"]),
@@ -402,6 +417,7 @@ def resolve_game(con: sqlite3.Connection, league: str, row: Dict, now: str,
     ]
     if existing:
         game_id = existing[0]["id"]
+        _fill_missing_start_time(con, game_id, row)
     else:
         game_id = con.execute(
             "INSERT INTO prop_games(league,date,home,away,espn_event_id,start_time) "
@@ -412,6 +428,29 @@ def resolve_game(con: sqlite3.Connection, league: str, row: Dict, now: str,
         "first_seen,last_seen) VALUES(?,?,?,?,?,?)",
         (SOURCE, league, row["source_game_key"], game_id, now, now))
     return game_id
+
+
+def _fill_missing_start_time(con: sqlite3.Connection, game_id: int, row: Dict) -> bool:
+    """Give a matched row the kickoff it never had. Fills only, never overwrites.
+
+    The board places a game by its kickoff, so a row without one cannot be put on a day at
+    all: measured 2026-08-19, 17 of 30 MLS rows carried no `start_time` and the relay was
+    handing us the exact instant for them while we threw it away, because a start time was
+    only written when this ingest CREATED the row.
+
+    Overwriting an existing value would be a different and much worse thing, since the row
+    may already carry the publisher's own corrected time.
+    """
+    if not row.get("start_time"):
+        return False
+    changed = con.execute(
+        "UPDATE prop_games SET start_time=? WHERE id=? "
+        "AND (start_time IS NULL OR start_time='')",
+        (row["start_time"], game_id)).rowcount
+    if changed:
+        print("  filled a missing start_time on game {}: {}".format(
+            game_id, row["start_time"]))
+    return bool(changed)
 
 
 def _game_exists(con: sqlite3.Connection, game_id: int) -> bool:
