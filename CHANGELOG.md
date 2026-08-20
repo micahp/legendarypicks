@@ -1,5 +1,60 @@
 # Changelog
 
+## v0.8.4 (2026-08-19)
+
+### A second props publisher, and the gate that was not looking
+
+- **NFL and MLS props from the RotoWire relay, which we were archiving and never reading.**
+  NFL: **1,080 props across 29 games**, all 29 linked to their ESPN event id, 0 players
+  queued, three books (underdog, prizepicks, sleeper). MLS: **362 props across 15 games**,
+  86 of 87 players resolved. Only the publisher's `Game` category is taken; the ~750 NFL
+  Season futures have no fixture to key on, so they are counted and reported every run
+  rather than dropped silently. Soccer is five competitions under one label, so resolving
+  **both** clubs against the MLS roster is the competition filter: 56 rows from La Liga,
+  Ligue 1, Serie A and the EPL were correctly left alone. Identity binds the publisher's
+  own player id, with fallbacks scoped to one club, because a looser name rule across a
+  whole league is how a prop lands on the wrong athlete with nothing raising.
+- **The board placed a game by a column that carried two conventions.** `prop_games.date`
+  held the UTC date of kickoff on Bovada-created rows and the local slate day on ours, and
+  the slate did `ORDER BY pg.date`. Identical 9:30pm kickoffs landed on two different board
+  days. The slate now orders by the kickoff **instant**, pinned by a test that fails against
+  the old ordering. Separately, **17 of 30 upcoming MLS rows had no `start_time` at all**
+  (against 0 of 30 NFL, 0 of 10 MLB), so they could not be placed and fell back to the date.
+  Every one already carried an ESPN event id. Both halves fixed: the ingest stops discarding
+  the kickoff the relay hands it, and the stored rows were repaired from ESPN.
+- **The prod stats audit had not run since the 08-18 split, and neither caller said so.**
+  `audit_league_stats.py` became a package; `scripts/release.sh` guarded the whole audit
+  behind `[ -f ...py ]` and skipped it in silence, while `verify-gates.sh` read python's
+  exit 2 as *2 failures against a known 21* and printed that as progress. **v0.8.2 and
+  v0.8.3 were both cut with it never running.** Both callers now use the package runner and
+  an audit that cannot run fails loud.
+- **MLB pitching was empty in production.** With the audit running again it reported the
+  one thing it exists to catch: `innings`, `era` and `whip` present as columns with **0 of
+  1,118 rows populated** on prod, against 735 of 1,075 on dev. A promotion that never
+  happened, invisible to the schema diff because the columns were on both sides. Filled from
+  MLB's own API: 784 pitching rows and 697 batting rows updated, 0 rejected. Blocking
+  leagues now audit **80 passed, 0 FAIL**.
+
+### Stories and spend
+
+- **The LLM call is a provider chain, not a hardcoded vendor.** DeepSeek returning 402 took
+  previews, recaps and narratives dark across 2,334 failures.
+- **We were paying for hidden reasoning that ate the whole answer**, and the spend log was
+  writing fake refusals into itself.
+- **MLB stakes pointed at the walled host**, so every MLB story had none.
+- **`paced_http` holds a per-host rate**, which is what the publisher actually counts. The
+  measured limit is a burst rate, not a request count: 27,801 requests show the 1 hour
+  window flat (1238 vs 1266) while the 60 second window separates cleanly.
+
+### Board and scoreboard
+
+- **The homepage leads with props and their history.**
+- **The live section sits above the date control and ignores it**, because a game in
+  progress is not a property of the day you are browsing.
+- **A fight still being fought was labelled "Decision".** Every final now says how it ended.
+- **The 08-18 split broke jobs living outside the repo**, including the props refresh, which
+  was dead for a day. Closed the pyflakes blind spot that hid it, and the defect underneath.
+
 ## v0.8.3 — 2026-08-19
 
 ### The morning window, which nobody had looked at
