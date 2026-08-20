@@ -1,5 +1,88 @@
 # Changelog
 
+## v0.8.5 (unreleased)
+
+**Already running on prod.** The backend container was rebuilt 2026-08-19 23:13 carrying
+these four commits, because the SQLite fix could not reach production as data. Prod has been
+serving untagged code since; cutting this release is what gives the running image a name.
+
+### One database was in a mode the other was not, and only prod paid for it
+
+- **Prod served HTTP 500s because SQLite gave up on the lock after 5 seconds.**
+  `legendarypicks-props-prod` exited 3 with "2 of 14 mlb games failed to POST" every 30
+  minutes, and underneath was `sqlite3.OperationalError: database is locked` coming back out
+  of the API as a 500. **Prod was `journal_mode=delete` while dev was `wal`.** Under `delete`
+  a writer takes an exclusive lock on the whole database and every reader waits, so prod's
+  API reads, the per-minute `scoreboard_snapshots` writer and the 30-minute props ingest all
+  serialised against each other. **Dev could never reproduce it**, so this survived as a
+  property neither database was measured on. Prod is now WAL and `_init_db` re-applies it on
+  startup, because WAL is state on a FILE and a restore from an older backup would silently
+  undo it with no diff to point at. `_core._db` (the API's helper, imported by 61 non-test
+  modules) and `scoreboard_store._db` (the per-minute writer) take a 30s busy timeout instead
+  of the 5s default. **Two scheduled scripts had to be fixed first or the flip would have
+  killed the nightly history refresh:** `apply_ufc_history_merge` and
+  `run_mlb_daily_history_ingest` both asserted `journal_mode == "delete"` before
+  `BEGIN IMMEDIATE`. That was never a durability property, since `BEGIN IMMEDIATE` behaves
+  identically in WAL; it was "am I really pointed at production?", true only because prod
+  happened to be `delete` and dev happened to be `wal`. Now checked against a set that still
+  refuses `off`, the mode that genuinely cannot be rolled back. Verified end to end: the
+  23:20 history refresh applied 2 identity rows through that exact path.
+- **The props ingest filed a game on the UTC day, not the day it is played.**
+  `bovada_scraper/direct.py` `_wc_event_date` returned the UTC date of kickoff, and its own
+  docstring said so. It ran every 30 minutes and `cli.py` routed **every** league through it,
+  so a backfill alone would have been undone inside the half hour. **150 rows on dev and 77
+  on prod** across MLB, MLS and UFC, plus 29 prod MLB rows matching neither convention. The
+  real cost was the compensation built around it: `link_prop_games` searching neighbour
+  slates, `settlement/mlb_api.py` trying three candidate days,
+  `ingest_underdog_props.py` matching `BETWEEN date-1 AND date+1`. `_wc_event_date` now
+  returns `_slate_day(league, ...)` with `league` required rather than defaulted, because
+  tennis buckets by UTC on purpose. Shipped as one commit with its migration, since a fixed
+  ingest against unmigrated rows mints a duplicate for every game.
+- **Two more places compared a local slate day against a UTC today.** Same defect, two more
+  sites, both visible only between UTC midnight and local midnight.
+  `scoreboard_store.needs_refresh` compared a New York `game_date` against the UTC date; the
+  UTC date rolls over at 20:00 ET, so from 8pm to midnight Eastern an empty slate was told
+  "day is over and published no games" and the backoff that exists to catch a late addition
+  was skipped, during the four hours a late addition is most likely.
+  `routers/props._KICKOFF` fell back to `pg.date || 'T23:59:59Z'` for a row with no
+  `start_time`, which after the convention fix meant **7:59pm Eastern**, so such a row
+  dropped off the board mid-evening and only looked roughly right because the 3-hour grace
+  pushed it to about 11pm. Both now use the code's own idea of today.
+- **A caller that is not an import is a caller a split cannot see.** The 2026-08-18 package
+  split left `/etc/cron.d/legendarypicks-pipeline` running `bovada_scraper.py mlb --ingest`,
+  dead for 7 consecutive runs. The repo copy of that same cron had already been fixed to
+  `-m bovada_scraper` and never reinstalled, so **git was right and the file that actually
+  runs was wrong**, which no code review could have caught. Removed rather than repaired:
+  the props timer already runs `-m bovada_scraper all --ingest` every 30 minutes and `all`
+  covers MLB, so repairing it would have restored a second concurrent Bovada writer on one
+  database. `espn_client` and `ingest_ufc_fight_stats` both kept an
+  `if __name__ == "__main__"` block in `__init__.py`, which `-m` never fires, so neither
+  package was runnable at all; both now have a `__main__.py`. New guard:
+  `scripts/check_command_targets.py` reads **installed** host config rather than the repo
+  copy, expands shell variables, honours systemd `WorkingDirectory`, skips disabled lines,
+  and exits 1 on any dead target.
+
+### Data repaired in place
+
+- **Duplicate `prop_games` folded and props deduped.** Three pairs were one game stored
+  twice (prod 357 into 341, dev 563 into 560 and 608 into 594). `dedupe_props.py` then
+  reconciled both databases: prod props **62,835 to 58,480** with 250 redundant results
+  dropped and 1,452 odds snapshots repointed, dev **69,069 to 68,697**. Both now hold zero
+  duplicate prop groups, which they did not before: 670 groups existed on prod and 170 on dev
+  independently of the folds.
+- **A doubleheader and a duplicate are still indistinguishable to the ingest's match key**,
+  but no longer invisible. `prop_game_merge.shared_match_keys` states the rule nothing in the
+  codebase could: the published final separates them and nothing else does. An **unsettled**
+  pair is called a duplicate deliberately, because guessing "doubleheader" lets a real
+  duplicate serve the same prop twice. Prod: 0 shared keys. Dev: 1, and it is the real
+  2026-07-27 Reds/Guardians doubleheader that ESPN confirms was postponed and replayed as two
+  games on 07-28. **The underlying fix is a schema change and has not been made.**
+- **UFC rankings were seven weeks stale in production.** `GET /api/ufc/rankings` is live and
+  had been serving a **2026-06-30** scrape as current; **81 of 208 ranked slots were wrong**,
+  though no champion had changed. The weekly ingest existed in the repo cron and had never
+  been installed. Prod refreshed, cron installed, copies in sync. Note the endpoint still
+  returns no `captured_at`, which is how this hid.
+
 ## v0.8.4 (2026-08-19)
 
 ### A second props publisher, and the gate that was not looking

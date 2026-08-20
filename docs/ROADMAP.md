@@ -1,16 +1,22 @@
 # Roadmap
 
-**This file is current state only.** History lives in **`docs/ROADMAP-ARCHIVE.md`** and is
-never rewritten, only appended to. When an item here closes, it moves to the archive with the
-date and the measurement that closed it.
+**This file is what we intend to build.** `docs/BACKLOG-holes.md` is what is measurably
+broken. **Both funnel into `CHANGELOG.md`, which is the only history of record**, and
+`scripts/release.sh` generates the GitHub release notes from it and refuses to cut a release
+without an entry.
+
+**So there is no roadmap archive.** A closed item leaves this file and appears in the
+changelog under the version that shipped it. A superseded roadmap is a git revision, not a
+document: `git log -p docs/ROADMAP.md`. The 2026-08-18 version and the old `# Ledger` are at
+`git show 0d2ec7c:docs/ROADMAP-ARCHIVE.md`.
 
 Checked = shipped to **production**, not to dev.
 
 **Rewritten 2026-08-20.** The previous version dated itself 2026-08-18, had grown to 1,520
 lines, and had buried thirty unchecked items (`B1`-`B16`, `M1`-`M7`, `R1`-`R9`) underneath a
 `# Ledger` heading that told readers not to rewrite what was below it. Open work was sitting
-in the history section, which is why it stopped being read. That is fixed: history is in the
-archive, open work is in section 13.
+in the history section, which is why it stopped being read. That is fixed: the still-open items moved to
+the backlog as P4, and the history is a git revision rather than a second file.
 
 **Every number below was measured on 2026-08-20** against `backend/data/picks.db` (prod),
 `backend/data/picks.dev.db` (dev) and the live prod API, spending **zero** ESPN requests.
@@ -355,52 +361,19 @@ of five.
 
 ---
 
-## 13. Promoted out of the archive, ALL UNVERIFIED
+## 13. Where the other work lives
 
-**These were unchecked items sitting below the old `# Ledger` heading**, where the rule
-"history, do not rewrite" kept them from being read or re-measured. They are listed here so
-they are visible. Full original text is in `docs/ROADMAP-ARCHIVE.md`.
+**This file is intent. `docs/BACKLOG-holes.md` is what is measurably broken.** The thirty
+items carried out of the old Ledger (`B1`-`B16`, `M1`-`M7`) are defects or suspected defects,
+so they moved there as **P4, all UNVERIFIED**. `B8` is user-reported and sits at the top.
 
-**Every one of them is UNVERIFIED as of 2026-08-20 and most predate 2026-08-11.** Rule 7
-applies: re-measure before working one. Do not treat this list as a set of confirmed defects,
-and do not treat it as noise either; `B8` is user-reported.
+What stayed here, because it needs a decision rather than a measurement:
 
-**User-facing, check these first:**
-
-- [ ] **B8. The player page renders the wrong game-log columns for K and D/ST.**
-      **User-reported.** A kicker's log showing skill-position columns is visibly wrong.
-- [ ] **B8 (mock-draft series). Kicker game data does not exist; Brandon Aubrey renders a false
-      figure.** A fabricated number is worse than a blank (`project_lp_honest_data_ui`).
-- [ ] **B15. `adp: p.adp ?? 999` fabricates an ADP in the UI.** Same shape as above.
-- [ ] **R7. Player search on the draft board.** Marked user-blocking when written.
-
-**Correctness, unverified:**
-
-- [ ] **B1.** Mid-season team change doubles the availability denominator.
-- [ ] **B2.** `team_game_results` has two incompatible key schemes.
-- [ ] **B3.** Team abbreviations disagree between tables.
-- [ ] **B7.** `players.nfl_gsis_id` mixes two id schemes.
-- [ ] **B9.** `players.position` has the same two-vocabulary split as `players.team`.
-- [ ] **B10.** Playoff rows in `player_game_logs` are unmarked.
-- [ ] **B11.** D/ST ADP is published; we derived it instead
-      (`feedback_check_if_the_value_is_published`).
-- [ ] **B14.** `team_games` absent from the mock-draft pool payload.
-- [ ] **M2.** Availability computed from a table that cannot express it.
-
-**Gates and tests, unverified:**
-
-- [ ] **B4.** Three draft-board tests red for a fixture gap.
-- [ ] **B5.** `test_league_stats_contract` failing.
-- [ ] **B6.** The 16-row NFL cleanup is not reproducible.
-- [ ] **B16.** Two jest suites fail and no gate covers them.
-
-**Product decisions that need Micah, not us:**
-
-- [ ] **R5.** `--all-positions` for IDP and kickers.
-- [ ] **R9 / R8.** Accounts, with the mock draft as the reason to make one; draft notes fold into
-      it.
-- [ ] **M3-M7.** Mock draft familiar-UX objects, resume and share, player detail overlay, camp
-      card resume state, room polish.
+- [ ] **`--all-positions` for IDP and kickers** (old `R5`). Needs Micah's call.
+- [ ] **Accounts, with the mock draft as the reason to make one** (old `R9`); draft notes fold
+      into it (old `R8`).
+- [ ] **Mock draft: familiar-UX objects, resume and share, player detail overlay, camp card
+      resume state, room polish** (old `M3`-`M7`).
 
 ---
 
