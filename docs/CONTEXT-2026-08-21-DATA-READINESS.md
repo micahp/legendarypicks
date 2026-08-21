@@ -106,6 +106,12 @@ even a malformed non-final historical snapshot cannot revive a poll. The
 general RotoWire archive remains a single all-sports raw relay capture, not a
 WC-targeted scheduler.
 
+The active props-freshness timer was also a bypass: on a stale read it issued
+`systemctl start` for the disabled props services. It now alerts and exits
+non-zero without starting an ingest. Re-enabling any props service remains an
+explicit post-landing decision after target selection and raw-capture migration
+are verified.
+
 Legacy World Cup rows are a separate historical repair, not a request to the
 publisher. `f403720` adds a backup-first tool that selects only World Cup
 `prop_results` rows where both `actual_value` and `hit` are NULL, writes an

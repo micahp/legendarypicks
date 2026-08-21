@@ -27,6 +27,8 @@ It is not permission to deploy, change a timer, or write DEV/production data.
 - The active host's two-minute live-discounts cron no longer sends `wc`; the
   default scoreboard and recap timer selectors also omit it. Explicit manual
   `wc` commands remain available for historical work.
+- Props freshness monitoring remains active but no longer self-starts either
+  disabled props ingest service on a stale read.
 - Candidate branch `feat/tennis-current-spine` holds unlanded data-integrity
   work.  Its raw-payload ledger covers the current Underdog, Bovada, and
   MLS/EPL ESPN-log boundaries; RotoWire already archives whole relay bodies.
