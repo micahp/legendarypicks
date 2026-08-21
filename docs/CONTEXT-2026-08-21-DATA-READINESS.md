@@ -74,6 +74,30 @@ could still skip/request World Cup as part of the broad invocation.  Do not
 re-enable either timer until the candidate scheduled-target code is landed and
 the explicit capture migration has been applied to each named database.
 
+## Settlement clone evidence
+
+`settle_props.py` now supports explicit `--league`, `--game-id`, `--through`,
+and `--limit` filters.  These constraints are applied by SQL before the driver
+can call a publisher; do not use the legacy unbounded all-league path as a
+diagnostic probe on this host.
+
+On separate low-priority, integrity-checked DEV clones:
+
+- Two completed NFL games from Aug. 20 graded 18 of 22 relay props with numeric
+  outcomes. Four stayed pending because the needed published player statistic
+  was absent; there were zero errors and zero unmappable markets.
+- A UFC finish-market game initially remained pending because DEV had zero
+  durable UFC logs for its valid ESPN fight ID, not because the finish grader
+  lacked a mapping. A bounded current-card plan then added 24 completed-fight
+  logs and 47 ESPN identity bindings to the clone only. Re-running the exact
+  completed fight graded all 16 props, including `finishes`, `knockouts`, and
+  `submissions`, with numeric outcomes and `quick_check = ok`.
+
+This establishes the required order for a real target: first obtain the
+verified UFC log/identity plan for that target, then apply it only with an
+explicit backup and authorization, and only then run a bounded settlement
+probe. Do not infer a zero-settlement diagnosis from props alone.
+
 ## Still unproven
 
 - Full publisher-payload retention is wired for Underdog, Bovada, the
