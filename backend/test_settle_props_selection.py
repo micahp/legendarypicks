@@ -37,6 +37,12 @@ def test_candidate_selection_respects_the_historical_boundary():
     assert [row['id'] for row in rows] == [2]
 
 
+def test_candidate_selection_can_target_an_exact_game_id():
+    con = _db()
+    rows = _candidate_games(con, game_ids=[3])
+    assert [(row['id'], row['league']) for row in rows] == [(3, 'ufc')]
+
+
 def test_candidate_selection_excludes_fully_settled_games():
     con = _db()
     con.execute("INSERT INTO prop_results VALUES (11)")
