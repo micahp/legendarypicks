@@ -183,6 +183,8 @@ class TestScoreboardStore:
         targets = scoreboard_store.live_targets()
         assert ("mlb", "2026-08-18") in targets
         assert ("nhl", "2026-08-18") not in targets
+        scoreboard_store.save("wc", "2026-08-18", [self._game("stale-wc", -1, "in")])
+        assert ("wc", "2026-08-18") not in scoreboard_store.live_targets()
         # A game 30 hours past its start and still not final is a row nobody
         # closed, not a live game. Polling it forever is a permanent cost.
         assert ("nba", "2026-08-18") not in targets

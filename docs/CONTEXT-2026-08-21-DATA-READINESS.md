@@ -101,8 +101,10 @@ to be removed: root cron's two-minute live-discounts poll explicitly asked for
 `mlb,wc`; the default scoreboard timer list included `wc`; and the default
 recap sweep inherited `wc` from the offered-league shape set. The managed
 files now select no WC work by default while retaining explicit manual league
-arguments. The general RotoWire archive remains a single all-sports raw relay
-capture, not a WC-targeted scheduler.
+arguments. The live-scoreboard tail has a separate explicit `wc` exclusion so
+even a malformed non-final historical snapshot cannot revive a poll. The
+general RotoWire archive remains a single all-sports raw relay capture, not a
+WC-targeted scheduler.
 
 Legacy World Cup rows are a separate historical repair, not a request to the
 publisher. `f403720` adds a backup-first tool that selects only World Cup

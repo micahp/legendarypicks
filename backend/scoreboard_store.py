@@ -291,6 +291,7 @@ def live_targets(now=None, con=None):
         rows = con.execute(
             "SELECT DISTINCT league, game_date FROM scoreboard_snapshots"
             " WHERE (state IS NULL OR state != 'post')"
+            "   AND league != 'wc'"
             "   AND start_time IS NOT NULL"
             "   AND start_time <= ? AND start_time >= ?"
             " ORDER BY league, game_date",
