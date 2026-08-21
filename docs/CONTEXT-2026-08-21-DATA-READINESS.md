@@ -18,6 +18,14 @@ document was applied to managed DEV, production, a timer, or either database.
   summary document before reading its fields; an unmigrated target is rejected
   before the first publisher request.
 
+RotoWire is a separate, already-compliant retention boundary rather than a
+candidate ledger gap: `ingest_rotowire_archive.py` preserves the complete
+relay body as received before `ingest_rotowire_props.py` filters it. A
+read-only audit found three daily raw archives (Aug. 19–21, 2.1 MB compressed)
+and an enabled daily archive timer. This is one general relay request, not a
+World-Cup-targeted request; the props timers that invoked Bovada's broad `all`
+target remain disabled.
+
 Focused checks:
 
 ```text
@@ -68,10 +76,10 @@ the explicit capture migration has been applied to each named database.
 
 ## Still unproven
 
-- Full publisher-payload retention is wired for Underdog, Bovada, and the
-  MLS/EPL ESPN soccer-log boundary in this candidate. Other ESPN and publisher
-  ingest boundaries still need the same before-normalization ledger treatment
-  before claiming “all publisher data is retained.”
+- Full publisher-payload retention is wired for Underdog, Bovada, the
+  MLS/EPL ESPN soccer-log boundary, and RotoWire's raw archive. Other ESPN and
+  publisher ingest boundaries still need the same before-normalization ledger
+  treatment before claiming “all publisher data is retained.”
 - Tennis/NFL/UFC settlement candidate work is not deployed or applied to DEV;
   its clone evidence must be remeasured against the target at apply time.
 - No real daytime props run after the SQLite-lock remediation has yet been
