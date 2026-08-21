@@ -1,18 +1,19 @@
 #!/usr/bin/env python3
-"""Publish the ESPN ATP/WTA ranking athlete spine into ``players``.
+"""Publish ESPN's current ATP/WTA tournament-field identity spine into ``players``.
 
 Tennis has no teams to traverse.  ESPN's generic core athlete collection is a
 16,000-row list of ``$ref`` stubs, which would turn a spine refresh into one
-request per athlete.  Its published rankings endpoint instead returns each
-ranked athlete's ESPN id, display name, and active flag in one payload:
+request per athlete. Its published scoreboard instead returns every singles
+draw participant and native athlete id in one payload per tour:
 
-    https://site.web.api.espn.com/apis/site/v2/sports/tennis/{atp|wta}/rankings
+    https://site.api.espn.com/apis/site/v2/sports/tennis/{atp|wta}/scoreboard
 
-That is one request per league (two total), never a per-athlete loop.  The
-ranking collection is the publisher's complete ranked population for the
-endpoint, so an empty collection, duplicate source id, missing identity field,
-or a name that the name-only prop resolver could not distinguish fails before
-any database row changes.
+That is one request per league (two total), never a per-athlete loop. The
+payload carries both singles draws, even when asked through one tour path, so
+the source boundary is the published bracket: ``mens-singles`` for ATP and
+``womens-singles`` for WTA. An empty field, duplicate source id, cross-draw
+identity, missing identity field, or a name that the resolver cannot
+distinguish fails before any database row changes.
 
 The publisher spelling is stored verbatim.  Bovada's resolver folds diacritics
 on both sides; doing that here would lose the authoritative spelling and make
@@ -44,20 +45,21 @@ DB = os.environ.get("LP_DB_PATH") or os.path.join(
 )
 LEAGUES = ("atp", "wta")
 HOST = "site.web.api.espn.com"
-SOURCE = "espn_rankings"
+SOURCE = "espn_tournament_scoreboard"
+SINGLES_GROUP = {"atp": "mens-singles", "wta": "womens-singles"}
 
 
 class TennisSpineError(RuntimeError):
     """The published identity population is not safe to publish."""
 
 
-def rankings_url(league: str) -> str:
-    """The one bulk ESPN ranking request for one tennis league."""
+def scoreboard_url(league: str, anchor: dt.date) -> str:
+    """The one bulk ESPN tournament-field request for one tennis league."""
     if league not in LEAGUES:
         raise TennisSpineError(f"unsupported tennis league {league!r}")
     return (
         espn_client._SITE.format(path=f"tennis/{league}")
-        + "/rankings?region=us&lang=en&contentorigin=espn"
+        + f"/scoreboard?dates={anchor:%Y%m%d}&limit=100"
     )
 
 
@@ -67,68 +69,50 @@ def _fold_name(value: str) -> str:
     return re.sub(r"\s+", " ", re.sub(r"[^\w\s]", "", value.lower())).strip()
 
 
-def extract_ranked_athletes(document: dict, league: str) -> list[dict]:
-    """Validate ESPN's one ranking collection and return publisher identities.
-
-    A source list that is merely *mostly* well formed is not a safe identity
-    spine.  The downstream resolver only receives a name, so a duplicate
-    folded name would make that resolver ambiguous even though the native IDs
-    differ; reject it rather than publishing an apparently healthy unusable
-    row.
-    """
-    rankings = document.get("rankings") if isinstance(document, dict) else None
-    if not isinstance(rankings, list) or not rankings:
-        raise TennisSpineError(
-            f"{league} rankings endpoint published 0 ranking collections"
-        )
-    expected_name = league.upper()
-    matching = [
-        ranking for ranking in rankings
-        if isinstance(ranking, dict) and str(ranking.get("name") or "").upper() == expected_name
+def extract_tournament_athletes(document: dict, league: str) -> list[dict]:
+    """Validate one tour's published singles draw and return identities."""
+    if not isinstance(document, dict):
+        raise TennisSpineError(f"{league} scoreboard response is not an object")
+    source_league = ((document.get("leagues") or [{}])[0].get("slug") or "").lower()
+    if source_league != league:
+        raise TennisSpineError(f"{league} scoreboard identified itself as {source_league or 'missing'}")
+    target_group = SINGLES_GROUP[league]
+    identities: dict[str, str] = {}
+    groups = 0
+    for event in document.get("events") or []:
+        for grouping in event.get("groupings") or []:
+            if (grouping.get("grouping") or {}).get("slug") != target_group:
+                continue
+            groups += 1
+            for competition in grouping.get("competitions") or []:
+                for competitor in competition.get("competitors") or []:
+                    source_id = str(competitor.get("id") or "").strip()
+                    name = (competitor.get("athlete") or {}).get("displayName")
+                    if not source_id or source_id == "0":
+                        raise TennisSpineError(f"{league} {target_group} competitor has no ESPN athlete id")
+                    if not isinstance(name, str) or not name.strip() or name.strip().upper() == "TBD":
+                        # ESPN represents an unfilled future bracket side with a
+                        # negative competitor id and no athlete. It is not an
+                        # identity to publish. A non-negative id without a name
+                        # would instead be a malformed real participant.
+                        if source_id.startswith("-"):
+                            continue
+                        raise TennisSpineError(f"{league} {target_group} competitor {source_id} has no athlete name")
+                    prior = identities.setdefault(source_id, name)
+                    if prior != name:
+                        raise TennisSpineError(f"{league} ESPN athlete id {source_id} maps to more than one name")
+    if not groups:
+        raise TennisSpineError(f"{league} scoreboard published no {target_group} draw")
+    if not identities:
+        raise TennisSpineError(f"{league} {target_group} draw published 0 athletes")
+    athletes = [
+        {"espn_id": source_id, "name": name, "active": True}
+        for source_id, name in sorted(identities.items())
     ]
-    if len(matching) != 1:
-        raise TennisSpineError(
-            f"{league} rankings endpoint published {len(matching)} matching "
-            f"{expected_name} collections, expected exactly 1"
-        )
-    ranks = matching[0].get("ranks")
-    if not isinstance(ranks, list) or not ranks:
-        raise TennisSpineError(
-            f"{league} {expected_name} ranking collection published 0 athletes"
-        )
-
-    athletes: list[dict] = []
-    for number, rank in enumerate(ranks, start=1):
-        athlete = rank.get("athlete") if isinstance(rank, dict) else None
-        if not isinstance(athlete, dict):
-            raise TennisSpineError(
-                f"{league} ranking {number} has no athlete identity"
-            )
-        source_id = str(athlete.get("id") or "").strip()
-        name = athlete.get("displayName")
-        active = athlete.get("active")
-        if not source_id or source_id == "0":
-            raise TennisSpineError(f"{league} ranking {number} has no ESPN athlete id")
-        if not isinstance(name, str) or not name.strip():
-            raise TennisSpineError(
-                f"{league} ranking {number} ({source_id}) has no display name"
-            )
-        if not isinstance(active, bool):
-            raise TennisSpineError(
-                f"{league} ranking {number} ({source_id}) has non-boolean active status"
-            )
-        athletes.append({"espn_id": source_id, "name": name, "active": active})
-
-    source_ids = [athlete["espn_id"] for athlete in athletes]
-    if len(set(source_ids)) != len(source_ids):
-        raise TennisSpineError(
-            f"{league} rankings contain {len(set(source_ids))} unique ESPN ids "
-            f"for {len(source_ids)} published athletes"
-        )
     folded_names = [_fold_name(athlete["name"]) for athlete in athletes]
     if not all(folded_names) or len(set(folded_names)) != len(folded_names):
         raise TennisSpineError(
-            f"{league} rankings contain {len(set(folded_names))} unique resolver names "
+            f"{league} {target_group} draw contains {len(set(folded_names))} unique resolver names "
             f"for {len(folded_names)} published athletes"
         )
     return athletes
@@ -226,6 +210,7 @@ def _new_fetch_json(host_budget: int) -> Callable[[str], dict]:
 def refresh(db_path: str, *, leagues: Iterable[str] = LEAGUES,
             fetch_json: Callable[[str], dict] | None = None,
             request_counts: collections.Counter | None = None,
+            anchor: dt.date | None = None,
             dry_run: bool = False) -> dict:
     """Fetch both complete source populations, validate, then atomically publish."""
     selected = tuple(leagues)
@@ -233,20 +218,21 @@ def refresh(db_path: str, *, leagues: Iterable[str] = LEAGUES,
         raise TennisSpineError(f"leagues must be a unique non-empty subset of {LEAGUES}")
     request_counts = request_counts if request_counts is not None else collections.Counter()
     fetch_json = fetch_json or _new_fetch_json(len(selected))
+    anchor = anchor or dt.date.today()
 
-    # Fetch and validate every league first.  Nothing in the database changes if
-    # ESPN publishes one healthy ranking list and one empty/broken one.
+    # Fetch and validate every league first. Nothing changes if either published
+    # singles field is empty, malformed, or crosses the other tour's draw.
     populations = {}
     for league in selected:
-        url = rankings_url(league)
+        url = scoreboard_url(league, anchor)
         request_counts[HOST] += 1
         try:
             document = fetch_json(url)
         except Exception as exc:  # status and endpoint are evidence, not a guess about ESPN
             raise TennisSpineError(
-                f"{league} bulk rankings request failed at {url}: {exc}"
+                f"{league} bulk scoreboard request failed at {url}: {exc}"
             ) from exc
-        populations[league] = extract_ranked_athletes(document, league)
+        populations[league] = extract_tournament_athletes(document, league)
 
     connection = sqlite3.connect(db_path)
     connection.row_factory = sqlite3.Row
@@ -326,7 +312,7 @@ def refresh(db_path: str, *, leagues: Iterable[str] = LEAGUES,
 def _print_results(results: dict) -> None:
     for league, result in results.items():
         published = result["published"]
-        print(f"{league}: published {published} of {published} ESPN ranking athletes")
+        print(f"{league}: published {published} of {published} ESPN singles-draw athletes")
         print(f"  unique ESPN ids {result['unique_ids']} of {published}; "
               f"active {result['active']} of {published}; sha256 {result['sha256'][:12]}")
         print(f"  matched {result['matched']} of {published} existing ESPN ids; "
@@ -345,6 +331,8 @@ def main(argv=None) -> int:
     parser.add_argument("--db", default=DB, help="absolute SQLite database path")
     parser.add_argument("--league", choices=LEAGUES, action="append",
                         help="publish only one league (repeatable)")
+    parser.add_argument("--anchor", type=dt.date.fromisoformat,
+                        help="published scoreboard date (default: today)")
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args(argv)
     leagues = tuple(args.league or LEAGUES)
@@ -352,10 +340,11 @@ def main(argv=None) -> int:
     planned = len(leagues)
     print(f"database: {args.db}{' (dry run)' if args.dry_run else ''}")
     print(f"request plan: {HOST} {planned} of {planned} "
-          f"(one bulk rankings request per league; no per-athlete requests)")
+          f"(one bulk scoreboard request per league; no per-athlete requests)")
     try:
         results = refresh(
-            args.db, leagues=leagues, request_counts=request_counts, dry_run=args.dry_run
+            args.db, leagues=leagues, request_counts=request_counts,
+            anchor=args.anchor, dry_run=args.dry_run
         )
         _print_results(results)
         return 0

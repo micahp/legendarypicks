@@ -7,12 +7,21 @@ import unittest
 import ingest_tennis_players as tennis
 
 
-def ranking_document(league, athletes):
+def scoreboard_document(league, athletes, other_draw=()):
+    target = tennis.SINGLES_GROUP[league]
+    other = "womens-singles" if target == "mens-singles" else "mens-singles"
     return {
-        "rankings": [{
-            "name": league.upper(),
-            "ranks": [{"athlete": athlete} for athlete in athletes],
-        }]
+        "leagues": [{"slug": league}],
+        "events": [{"groupings": [
+            {"grouping": {"slug": target}, "competitions": [{"competitors": [
+                {"id": athlete["id"], "athlete": {"displayName": athlete["displayName"]}}
+                for athlete in athletes
+            ]}]},
+            {"grouping": {"slug": other}, "competitions": [{"competitors": [
+                {"id": athlete["id"], "athlete": {"displayName": athlete["displayName"]}}
+                for athlete in other_draw
+            ]}]},
+        ]}],
     }
 
 
@@ -44,7 +53,7 @@ class TennisSpineTest(unittest.TestCase):
         def fetch(url):
             calls.append(url)
             for league in tennis.LEAGUES:
-                if f"/tennis/{league}/rankings" in url:
+                if f"/tennis/{league}/scoreboard" in url:
                     return documents[league]
             raise AssertionError(url)
 
@@ -52,13 +61,14 @@ class TennisSpineTest(unittest.TestCase):
 
     def test_publishes_publisher_ids_and_verbatim_accents_with_no_team(self):
         documents = {
-            "atp": ranking_document("atp", [
-                {"id": "100", "displayName": "Jannik Sinner", "active": True},
-                {"id": "101", "displayName": "João Fonseca", "active": True},
+            "atp": scoreboard_document("atp", [
+                {"id": "100", "displayName": "Jannik Sinner"},
+                {"id": "101", "displayName": "João Fonseca"},
             ]),
-            "wta": ranking_document("wta", [
-                {"id": "200", "displayName": "Iga Świątek", "active": True},
-            ]),
+            "wta": scoreboard_document(
+                "wta", [{"id": "200", "displayName": "Iga Świątek"}],
+                other_draw=[{"id": "100", "displayName": "Jannik Sinner"}],
+            ),
         }
         fetch, calls = self._fetcher(documents)
         counts = collections.Counter()
@@ -80,26 +90,33 @@ class TennisSpineTest(unittest.TestCase):
 
     def test_empty_second_league_leaves_first_league_unwritten(self):
         documents = {
-            "atp": ranking_document("atp", [
-                {"id": "100", "displayName": "Jannik Sinner", "active": True},
-            ]),
-            "wta": {"rankings": [{"name": "WTA", "ranks": []}]},
+            "atp": scoreboard_document("atp", [{"id": "100", "displayName": "Jannik Sinner"}]),
+            "wta": {"leagues": [{"slug": "wta"}], "events": []},
         }
         fetch, _ = self._fetcher(documents)
 
-        with self.assertRaisesRegex(tennis.TennisSpineError, "published 0 athletes"):
+        with self.assertRaisesRegex(tennis.TennisSpineError, "published no womens-singles draw"):
             tennis.refresh(self.db_path, fetch_json=fetch)
         with sqlite3.connect(self.db_path) as connection:
             self.assertEqual(0, connection.execute("SELECT COUNT(*) FROM players").fetchone()[0])
 
-    def test_duplicate_source_id_fails_before_writing(self):
-        document = ranking_document("atp", [
-            {"id": "100", "displayName": "Jannik Sinner", "active": True},
-            {"id": "100", "displayName": "Different Person", "active": True},
+    def test_duplicate_source_id_with_different_names_fails_before_writing(self):
+        document = scoreboard_document("atp", [
+            {"id": "100", "displayName": "Jannik Sinner"},
+            {"id": "100", "displayName": "Different Person"},
         ])
 
-        with self.assertRaisesRegex(tennis.TennisSpineError, "1 unique ESPN ids for 2"):
-            tennis.extract_ranked_athletes(document, "atp")
+        with self.assertRaisesRegex(tennis.TennisSpineError, "maps to more than one name"):
+            tennis.extract_tournament_athletes(document, "atp")
+
+    def test_unfilled_negative_bracket_side_is_not_a_player(self):
+        document = scoreboard_document("atp", [{"id": "100", "displayName": "Jannik Sinner"}])
+        competitors = document["events"][0]["groupings"][0]["competitions"][0]["competitors"]
+        competitors.append({"id": "-4", "athlete": {}})
+
+        athletes = tennis.extract_tournament_athletes(document, "atp")
+
+        self.assertEqual([{"espn_id": "100", "name": "Jannik Sinner", "active": True}], athletes)
 
     def test_name_only_existing_row_is_not_assigned_a_publisher_id(self):
         with sqlite3.connect(self.db_path) as connection:
@@ -109,8 +126,8 @@ class TennisSpineTest(unittest.TestCase):
             )
             connection.commit()
         documents = {
-            "atp": ranking_document("atp", [
-                {"id": "100", "displayName": "Jannik Sinner", "active": True},
+            "atp": scoreboard_document("atp", [
+                {"id": "100", "displayName": "Jannik Sinner"},
             ]),
         }
         fetch, _ = self._fetcher(documents)
@@ -131,8 +148,8 @@ class TennisSpineTest(unittest.TestCase):
             )
             connection.commit()
         documents = {
-            "wta": ranking_document("wta", [
-                {"id": "200", "displayName": "Iga Świątek", "active": True},
+            "wta": scoreboard_document("wta", [
+                {"id": "200", "displayName": "Iga Świątek"},
             ]),
         }
         fetch, _ = self._fetcher(documents)
