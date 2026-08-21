@@ -1165,6 +1165,158 @@ def _state_from_db(league: str, game_id: str):
     return "post" if row else None
 
 
+def _state_and_score_from_snapshot(league: str, game_id: str):
+    """Read state + final score from scoreboard_snapshots, or (None, None).
+
+    DB-ONLY, the same contract as _state_from_db/_final_score_from_db. The
+    scoreboard ingest writes a row here for every game it has seen (per-minute
+    for live games, once for finished slates), carrying the published state and
+    score. That makes it a fallback for games team_game_results has not caught
+    up to: a game that finished an hour ago can have a scoreboard snapshot row
+    before the season-results ingest has written its team_game_results row.
+
+    This is deliberately the LAST DB source consulted: team_game_results is the
+    source of record for finals (it carries every game of the season, not just
+    what was on a board), so a contradiction between the two should resolve to
+    team_game_results, never to the snapshot.
+
+    Returns (state, {home: int, away: int} | None). state is the snapshot's own
+    state string ('pre'/'in'/'post') or None when no row exists.
+    """
+    lg = league.lower()
+    with closing(_db()) as con:
+        row = con.execute(
+            "SELECT state, payload FROM scoreboard_snapshots "
+            "WHERE league=? AND game_id=? ORDER BY fetched_at DESC LIMIT 1",
+            (lg, game_id),
+        ).fetchone()
+    if not row:
+        return None, None
+    state = row["state"]
+    score = None
+    if state == "post":
+        try:
+            payload = json.loads(row["payload"]) if isinstance(row["payload"], str) else row["payload"]
+            home = (payload.get("home") or {}).get("score")
+            away = (payload.get("away") or {}).get("score")
+            if home is not None and away is not None:
+                score = {"home": int(home), "away": int(away)}
+        except Exception:
+            score = None
+    return state, score
+
+
+def _snapshot_result_info(league: str, game_id: str):
+    """Read winner + finish detail from the scoreboard snapshot, or None.
+
+    DB-ONLY, same contract. The scoreboard snapshot carries, per league:
+
+      - UFC:   home/away `winner` flag on every finished fight, plus
+               `outcome_method` / `outcome_round` / `outcome_clock` when the
+               fight was captured after the finish (code landed 2026-08-19;
+               older snapshots lack the outcome fields but keep the winner).
+      - soccer (mls/lcup/wc): home/away `winner` flag + `winner_abbrev` +
+               `is_draw` + `stage` (et/pens) — the publisher's flag is the
+               only honest grade for a shootout final.
+      - tennis (atp/wta): `sets` per side; the match winner is whoever won
+               more sets.
+      - team sports (mlb/nfl/etc.): scores, so the winner is derivable from
+               the score — caller should use the score, not this.
+
+    Returns a dict or None:
+      {winner_abbrev, winner_name, is_draw, outcome_method, outcome_round,
+       outcome_clock, sets: {home: [...], away: [...]}, home_winner, away_winner}
+    """
+    lg = league.lower()
+    with closing(_db()) as con:
+        row = con.execute(
+            "SELECT payload FROM scoreboard_snapshots "
+            "WHERE league=? AND game_id=? ORDER BY fetched_at DESC LIMIT 1",
+            (lg, game_id),
+        ).fetchone()
+    if not row:
+        return None
+    try:
+        payload = json.loads(row["payload"]) if isinstance(row["payload"], str) else row["payload"]
+    except Exception:
+        return None
+    home = payload.get("home") or {}
+    away = payload.get("away") or {}
+    info = {
+        "home_winner": home.get("winner"),
+        "away_winner": away.get("winner"),
+        "winner_abbrev": payload.get("winner_abbrev"),
+        "is_draw": payload.get("is_draw"),
+        "stage": payload.get("stage"),
+        "outcome_method": payload.get("outcome_method") or payload.get("outcomeMethod"),
+        "outcome_round": payload.get("outcome_round") or payload.get("outcomeRound"),
+        "outcome_clock": payload.get("outcome_clock") or payload.get("outcomeClock"),
+        "sets": {
+            "home": home.get("sets"),
+            "away": away.get("sets"),
+        },
+        "home_name": home.get("name") or home.get("abbrev"),
+        "away_name": away.get("name") or away.get("abbrev"),
+    }
+    # Winner abbrev: from the publisher flag (soccer), else from the winner flag on
+    # a side (UFC), else None. Never guess from score here — caller handles that.
+    if info["winner_abbrev"] is None:
+        if info["home_winner"] is True:
+            info["winner_abbrev"] = home.get("abbrev") or home.get("name")
+            info["winner_name"] = home.get("name") or home.get("abbrev")
+        elif info["away_winner"] is True:
+            info["winner_abbrev"] = away.get("abbrev") or away.get("name")
+            info["winner_name"] = away.get("name") or away.get("abbrev")
+    if info["winner_abbrev"] is None and info.get("winner_name") is None and not info["is_draw"]:
+        # Tennis: no winner flag in the payload; the sets decide.
+        hs = home.get("sets") or []
+        as_ = away.get("sets") or []
+        if hs and as_ and len(hs) == len(as_):
+            hw = sum(1 for h, a in zip(hs, as_) if h > a)
+            aw = sum(1 for h, a in zip(hs, as_) if a > h)
+            if hw > aw:
+                info["winner_abbrev"] = home.get("abbrev") or home.get("name")
+                info["winner_name"] = home.get("name") or home.get("abbrev")
+            elif aw > hw:
+                info["winner_abbrev"] = away.get("abbrev") or away.get("name")
+                info["winner_name"] = away.get("name") or away.get("abbrev")
+    return info
+
+
+def _context_from_snapshot(league: str, game_id: str):
+    """Read home/away team names from scoreboard_snapshots, or None.
+
+    DB-ONLY, same contract. The detail page's score strip needs team names, and
+    for a game the boxscore snapshot never captured (MLB etc.), game_context
+    has no row — but scoreboard_snapshots always carries the names it saw. This
+    lets the page render real teams instead of AWAY/HOME placeholders without
+    spending an ESPN request.
+    """
+    lg = league.lower()
+    with closing(_db()) as con:
+        row = con.execute(
+            "SELECT payload FROM scoreboard_snapshots "
+            "WHERE league=? AND game_id=? ORDER BY fetched_at DESC LIMIT 1",
+            (lg, game_id),
+        ).fetchone()
+    if not row:
+        return None
+    try:
+        payload = json.loads(row["payload"]) if isinstance(row["payload"], str) else row["payload"]
+        home = payload.get("home") or {}
+        away = payload.get("away") or {}
+        if not home.get("name") and not away.get("name"):
+            return None
+        return {
+            "venue_name": "", "venue_city": "",
+            "attendance": None, "officials": [],
+            "home_team": home.get("name") or home.get("abbrev") or "",
+            "away_team": away.get("name") or away.get("abbrev") or "",
+        }
+    except Exception:
+        return None
+
+
 def _snapshot_strength(league, rows):
     """Persist a strength snapshot so we accumulate history (the trading side wants the time series)."""
     now = dt.datetime.now(dt.timezone.utc).isoformat()

@@ -198,6 +198,17 @@ def generate_game_story(lg: str, game_id: str, refresh: bool = False,
     # home/away abbrevs so we can still write the preview when the game is discovered.
     if len(teams) != 2 and away and home:
         teams = [away, home]
+    # A finished scoreless game (UFC, tennis walkover): the summary endpoint 404s for
+    # these, so `gr` carries nothing and teams would be empty. The scoreboard snapshot
+    # has both sides — use it, or the generator bails before ever grounding the result.
+    if len(teams) != 2:
+        try:
+            from _core import _snapshot_result_info
+            snap_teams = _snapshot_result_info(lg, game_id)
+            if snap_teams and snap_teams.get("home_name") and snap_teams.get("away_name"):
+                teams = [snap_teams["home_name"], snap_teams["away_name"]]
+        except Exception:
+            pass
     if len(teams) != 2:
         return {"league": lg, "game_id": game_id,
                 "story": cached["story"] if cached else None, "cached": bool(cached)}
@@ -256,6 +267,49 @@ def generate_game_story(lg: str, game_id: str, refresh: bool = False,
         winner = gr.get("winner")
         grounding += (f"\nFINAL SCORE: {line}."
                       + (f" {winner} won." if winner else " The game was drawn."))
+    # A finished game with NO score (UFC, tennis walkover) must still be grounded on
+    # who won. `gr` carries no winner for these (UFC's summary endpoint 404s), so read
+    # the scoreboard snapshot — the same payload the board already serves. Never leave
+    # a finished game's result to the model to invent.
+    if (not scores) and (state or gr.get("state") or "").lower() == "post":
+        try:
+            from _core import _snapshot_result_info
+            snap = _snapshot_result_info(lg, game_id)
+            if snap:
+                winner_name = snap.get("winner_name") or snap.get("winner_abbrev")
+                if snap.get("is_draw"):
+                    grounding += "\nRESULT: The match was drawn."
+                elif winner_name:
+                    detail = []
+                    if snap.get("outcome_method"):
+                        detail.append(snap["outcome_method"])
+                        if snap.get("outcome_round"):
+                            detail.append(f"R{snap['outcome_round']}")
+                            if snap.get("outcome_clock"):
+                                detail.append(snap["outcome_clock"])
+                    elif snap.get("sets", {}).get("home") and snap.get("sets", {}).get("away"):
+                        # Name each side's set line so the order cannot be misread:
+                        # "Parks won sets 1-6, 6-4, 2-6" vs "Eala won 6-4..." — a bare
+                        # "1-6 | 6-4 | 2-6" was read backwards by the model (measured
+                        # 2026-08-20, the winner's first set became the loser's).
+                        hn = snap.get("home_name") or "home"
+                        an = snap.get("away_name") or "away"
+                        hs = snap["sets"]["home"] or []
+                        as_ = snap["sets"]["away"] or []
+                        if len(hs) == len(as_):
+                            sets_line = "; ".join(
+                                f"{hn} {h}-{a} {an}" for h, a in zip(hs, as_))
+                            detail.append(f"({sets_line})")
+                    suffix = f" ({', '.join(detail)})" if detail else ""
+                    grounding += f"\nRESULT: {winner_name} won{suffix}."
+                elif snap.get("sets", {}).get("home") is not None:
+                    # Sets present but no winner derivable (e.g. abandoned mid-match) —
+                    # state the sets, not a guess.
+                    grounding += "\nRESULT: sets " + " | ".join(
+                        f"{h}-{a}" for h, a in zip(
+                            snap["sets"]["home"] or [], snap["sets"]["away"] or [])) + "."
+        except Exception:
+            pass
 
     # Stakes: what each team is playing for in THIS game (stakes.py — certain facts only).
     try:

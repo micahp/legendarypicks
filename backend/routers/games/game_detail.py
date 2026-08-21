@@ -92,15 +92,48 @@ def get_game_detail(league: str, game_id: str):
             out["state"] = _state_from_db(lg, game_id)
         except Exception:
             pass
+        # team_game_results can lag a game that finished an hour ago: the
+        # season-results ingest is a slow sweep, while the scoreboard snapshot
+        # is written per-minute for live games and once per finished slate. If
+        # the source of record has not caught up, the snapshot is the next DB
+        # source that knows the game is over — still zero ESPN requests.
+        if out["state"] is None:
+            try:
+                snap_state, snap_score = _state_and_score_from_snapshot(lg, game_id)
+                if snap_state:
+                    out["state"] = snap_state
+                    if snap_state == "post" and snap_score:
+                        out["final_score"] = snap_score
+            except Exception:
+                pass
     is_final = out["state"] == "post"
     # Final score from OUR DB (scoring_plays) — only when the game is actually over.
+    # If the DB has no row yet (scoring_plays / team_game_results lag a game that
+    # just finished), keep whatever the snapshot fallback already set rather than
+    # clobbering it with None.
     if is_final:
         try:
-            out["final_score"] = _final_score_from_db(lg, game_id)
+            db_score = _final_score_from_db(lg, game_id)
+            if db_score is not None:
+                out["final_score"] = db_score
         except Exception:
             pass
     # Read from DB
     _read_game_detail_from_db(lg, game_id, out)
+
+    # UFC finish detail (method/round/clock): the snapshot carries it for
+    # fights captured after the finish. The frontend ScoreStrip/GameCard
+    # render "DEC · R3 5:00" on the winner's line from these fields, so a
+    # UFC game page shows how the fight ended, not just that it did.
+    if out["state"] == "post" and lg == "ufc":
+        try:
+            snap_info = _snapshot_result_info(lg, game_id)
+            if snap_info:
+                out["outcome_method"] = snap_info.get("outcome_method")
+                out["outcome_round"] = snap_info.get("outcome_round")
+                out["outcome_clock"] = snap_info.get("outcome_clock")
+        except Exception:
+            pass
 
     # A DB context row means the ESPN fallback below is skipped, but the live
     # score is not persisted — fill it from ESPN whenever the game is live.
@@ -137,7 +170,9 @@ def get_game_detail(league: str, game_id: str):
         # Re-query the DB now that snapshot has run
         _read_game_detail_from_db(lg, game_id, out)
         if is_final:
-            out["final_score"] = _final_score_from_db(lg, game_id)
+            db_score = _final_score_from_db(lg, game_id)
+            if db_score is not None:
+                out["final_score"] = db_score
 
         # If DB is still empty (e.g. pre-game or snapshot failed),
         # fall back to ESPN's scoreboard summary for minimal context + scores
@@ -169,6 +204,18 @@ def get_game_detail(league: str, game_id: str):
                     }
             except Exception:
                 pass  # ESPN fallback failed — return whatever we have
+
+        # If ESPN is walled (routine on this host since 2026-08-04) the score
+        # strip would still render AWAY/HOME placeholders. The scoreboard
+        # snapshot always carries the team names it saw — last DB source before
+        # giving up, still zero ESPN requests.
+        if not out["context"]:
+            try:
+                snap_ctx = _context_from_snapshot(lg, game_id)
+                if snap_ctx:
+                    out["context"] = snap_ctx
+            except Exception:
+                pass
 
         # Strength priors for whatever teams we ended up with
         if out["context"]:
