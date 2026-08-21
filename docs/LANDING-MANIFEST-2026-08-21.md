@@ -32,6 +32,10 @@ mock-draft incident. Do not pick it again.
 - `legendarypicks-props.timer` and `legendarypicks-props-prod.timer` remain
   disabled. Do not re-enable them before the scheduled target split and raw
   ledger migration have both landed and been verified.
+- Candidate pipeline/link/settlement scheduling excludes `wc` even if a
+  recent database row exists; it is still not authorization to re-enable a
+  timer. Verify the deployed timer command, target database migration, and a
+  bounded non-WC run first.
 - RotoWire’s archive timer is a single general relay request that retains its
   full body; it is not a World-Cup-specific request.
 - No new recurring World Cup fetch is authorized.

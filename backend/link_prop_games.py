@@ -20,8 +20,27 @@ import sys, os, sqlite3, re, unicodedata
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import espn_client as espn
 from prop_game_merge import fold_prop_game
+from publisher_capture import capture_payload, require_publisher_capture_schema
 
 DB = os.environ.get("LP_DB_PATH") or os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "picks.db")
+
+
+def _scoreboard_endpoint(league: str, date: str) -> str:
+    """The native scoreboard URL that produced a linker candidate slate."""
+    _, path = espn._check(league)
+    return espn._SITE.format(path=path) + "/scoreboard?dates=" + date.replace("-", "")
+
+
+def _scoreboard_games(league: str, date: str, connection, *, capture: bool) -> list:
+    """Capture a source scoreboard before normalizing it for event linking."""
+    raw = espn.scoreboard_raw(league, date)
+    if capture:
+        capture_payload(
+            connection, source="espn", league=league,
+            endpoint=_scoreboard_endpoint(league, date), payload=raw,
+        )
+    from espn_client.scoreboard import _games_from_payload
+    return _games_from_payload(league, date, raw)
 
 # Team name → abbreviation lookup (built from ESPN data on the fly + a static fallback)
 # ESPN returns team abbrev in game data, so we match by abbreviation.
@@ -545,6 +564,13 @@ def link_existing_games(con: sqlite3.Connection, dry_run: bool = False,
         print("All prop_games already linked.")
         return 0
 
+    # A real link run changes durable game identity, so it must retain the raw
+    # scoreboard that justified that change.  Check before the first request;
+    # dry runs deliberately remain side-effect free and therefore do not claim
+    # a durable source capture.
+    if not dry_run:
+        require_publisher_capture_schema(con)
+
     # Group by date+league to minimize ESPN calls
     from collections import defaultdict
     by_date_league = defaultdict(list)
@@ -563,7 +589,7 @@ def link_existing_games(con: sqlite3.Connection, dry_run: bool = False,
         seen_ids = set()
         for day in espn.neighbor_dates(date):
             try:
-                for eg in espn.games(league, day):
+                for eg in _scoreboard_games(league, day, con, capture=not dry_run):
                     if str(eg.get("game_id")) not in seen_ids:
                         seen_ids.add(str(eg.get("game_id")))
                         espn_games.append(eg)

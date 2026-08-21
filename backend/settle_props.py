@@ -5,7 +5,7 @@ settle_props.py — Drive the settlement pipeline.
 Find all prop_games that are FINAL and have unsettled props, settle each via settlement.py.
 Idempotent: re-running is safe (skips already-settled props).
 
-Usage: venv/bin/python settle_props.py [--dry-run] [--league nfl] [--game-id 123] [--through YYYY-MM-DD] [--limit 5]
+Usage: venv/bin/python settle_props.py [--dry-run] [--league nfl] [--game-id 123] [--since YYYY-MM-DD] [--through YYYY-MM-DD] [--limit 5]
 """
 import argparse
 import datetime as dt
@@ -17,7 +17,7 @@ from settlement import settle_game
 DB = os.environ.get("LP_DB_PATH") or os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "picks.db")
 
 
-def _candidate_games(con, leagues=None, game_ids=None, through=None, limit=None,
+def _candidate_games(con, leagues=None, game_ids=None, since=None, through=None, limit=None,
                      include_without_final=False):
     """Unsettled games, optionally constrained before any publisher request."""
     clauses = ["pg.espn_event_id != ''" if include_without_final
@@ -29,6 +29,9 @@ def _candidate_games(con, leagues=None, game_ids=None, through=None, limit=None,
     if game_ids:
         clauses.append("pg.id IN ({})".format(",".join("?" for _ in game_ids)))
         params.extend(game_ids)
+    if since:
+        clauses.append("pg.date >= ?")
+        params.append(since)
     if through:
         clauses.append("pg.date <= ?")
         params.append(through)
@@ -51,19 +54,19 @@ def _candidate_games(con, leagues=None, game_ids=None, through=None, limit=None,
     return con.execute(query, params).fetchall()
 
 
-def main(dry_run: bool = False, leagues=None, game_ids=None, through=None, limit=None):
+def main(dry_run: bool = False, leagues=None, game_ids=None, since=None, through=None, limit=None):
     con = sqlite3.connect(DB)
     con.row_factory = sqlite3.Row
 
     # Find finaled games with unsettled props
-    games = _candidate_games(con, leagues=leagues, game_ids=game_ids,
+    games = _candidate_games(con, leagues=leagues, game_ids=game_ids, since=since,
                              through=through, limit=limit)
 
     if not games:
         print("No finaled games with unsettled props.")
         # Try games with espn_event_id but no finals
         games_with_espn = _candidate_games(
-            con, leagues=leagues, game_ids=game_ids, through=through, limit=limit,
+            con, leagues=leagues, game_ids=game_ids, since=since, through=through, limit=limit,
             include_without_final=True
         )
         if games_with_espn:
@@ -130,6 +133,8 @@ if __name__ == "__main__":
                         help="restrict to one league; repeat for a bounded multi-league run")
     parser.add_argument("--game-id", action="append", type=int,
                         help="restrict to an exact prop_games.id; repeat to inspect several")
+    parser.add_argument("--since", metavar="YYYY-MM-DD",
+                        help="consider only games on or after this date")
     parser.add_argument("--through", metavar="YYYY-MM-DD",
                         help="consider only games on or before this date")
     parser.add_argument("--limit", type=int,
@@ -139,11 +144,15 @@ if __name__ == "__main__":
         parser.error("--limit must be positive")
     if args.game_id and any(game_id < 1 for game_id in args.game_id):
         parser.error("--game-id must be positive")
-    if args.through:
+    for option, value in (("--since", args.since), ("--through", args.through)):
+        if not value:
+            continue
         try:
-            if dt.date.fromisoformat(args.through).isoformat() != args.through:
+            if dt.date.fromisoformat(value).isoformat() != value:
                 raise ValueError
         except ValueError:
-            parser.error("--through must be YYYY-MM-DD")
+            parser.error("{} must be YYYY-MM-DD".format(option))
+    if args.since and args.through and args.since > args.through:
+        parser.error("--since must not be after --through")
     main(dry_run=args.dry_run, leagues=args.league, game_ids=args.game_id,
-         through=args.through, limit=args.limit)
+         since=args.since, through=args.through, limit=args.limit)

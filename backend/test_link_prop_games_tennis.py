@@ -1,7 +1,9 @@
 """Exact-identity tennis prop-game linking regressions."""
 import sqlite3
 
+import link_prop_games as linker
 from link_prop_games import link_prop_game
+from migrate_publisher_captures import apply_database
 
 
 def _database(player_ids=("101", "202")):
@@ -65,3 +67,63 @@ def test_tennis_one_id_fallback_accepts_order_and_one_extra_surname_only():
 
     wrong = _game("182329", "1797", "3155", "Elina Svitolina", "Wrong Wang Name")
     assert link_prop_game(con, _row(con), [wrong]) == ""
+
+
+def _link_database(path):
+    con = sqlite3.connect(path)
+    con.row_factory = sqlite3.Row
+    con.executescript("""
+        CREATE TABLE prop_games(
+            id INTEGER PRIMARY KEY, league TEXT, date TEXT, start_time TEXT,
+            home TEXT, away TEXT, espn_event_id TEXT
+        );
+        CREATE TABLE players(id INTEGER PRIMARY KEY, league TEXT, espn_id TEXT);
+        CREATE TABLE props(id INTEGER PRIMARY KEY, game_id INTEGER, player_id INTEGER);
+        INSERT INTO prop_games VALUES(1, 'atp', '2026-07-25', NULL,
+                                     'Daniel Merida Aguilar', 'Taylor Fritz', NULL);
+        INSERT INTO players VALUES(1, 'atp', '101');
+        INSERT INTO players VALUES(2, 'atp', '202');
+        INSERT INTO props VALUES(1, 1, 1);
+        INSERT INTO props VALUES(2, 1, 2);
+    """)
+    con.commit()
+    return con
+
+
+def test_linker_retains_raw_scoreboard_before_writing_event_id(tmp_path, monkeypatch):
+    path = tmp_path / "picks.db"
+    con = _link_database(path)
+    con.close()
+    apply_database(str(path))
+    raw = {"events": [{"publisher_only": {"keep": True}}]}
+    normalized = [_game("181913", "101", "202")]
+    monkeypatch.setattr(linker.espn, "neighbor_dates", lambda _date: ["2026-07-25"])
+    monkeypatch.setattr(linker.espn, "scoreboard_raw", lambda *_args, **_kwargs: raw)
+    monkeypatch.setattr(
+        "espn_client.scoreboard._games_from_payload", lambda *_args, **_kwargs: normalized
+    )
+    with sqlite3.connect(path) as con:
+        con.row_factory = sqlite3.Row
+        assert linker.link_existing_games(con, league="atp") == 1
+        event_id = con.execute("SELECT espn_event_id FROM prop_games").fetchone()[0]
+        payload = con.execute("SELECT payload_json FROM publisher_captures").fetchone()[0]
+    assert event_id == "181913"
+    assert "publisher_only" in payload
+
+
+def test_linker_rejects_unmigrated_target_before_scoreboard_request(tmp_path, monkeypatch):
+    path = tmp_path / "picks.db"
+    con = _link_database(path)
+    monkeypatch.setattr(
+        linker.espn, "scoreboard_raw", lambda *_args, **_kwargs: (_ for _ in ()).throw(
+            AssertionError("must not fetch")
+        )
+    )
+    try:
+        try:
+            linker.link_existing_games(con, league="atp")
+            assert False, "expected an unmigrated capture-schema failure"
+        except RuntimeError as exc:
+            assert "publisher capture schema" in str(exc)
+    finally:
+        con.close()

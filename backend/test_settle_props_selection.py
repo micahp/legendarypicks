@@ -37,6 +37,12 @@ def test_candidate_selection_respects_the_historical_boundary():
     assert [row['id'] for row in rows] == [2]
 
 
+def test_candidate_selection_respects_the_recent_boundary():
+    con = _db()
+    rows = _candidate_games(con, leagues=['nfl'], since='2026-08-21')
+    assert [row['id'] for row in rows] == [1]
+
+
 def test_candidate_selection_can_target_an_exact_game_id():
     con = _db()
     rows = _candidate_games(con, game_ids=[3])

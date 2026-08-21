@@ -89,6 +89,13 @@ could still skip/request World Cup as part of the broad invocation.  Do not
 re-enable either timer until the candidate scheduled-target code is landed and
 the explicit capture migration has been applied to each named database.
 
+The candidate scheduler now excludes `wc` at two levels when it discovers
+recent link/settlement work, and settlement supplies both `--league` and a
+three-day `--since` bound before it can call a publisher. This is deliberately
+redundant: a stray future-dated WC row must not turn an inactive tournament
+into a cron source request. The manual historical repair and explicit
+operator-scoped commands remain available.
+
 Legacy World Cup rows are a separate historical repair, not a request to the
 publisher. `f403720` adds a backup-first tool that selects only World Cup
 `prop_results` rows where both `actual_value` and `hit` are NULL, writes an

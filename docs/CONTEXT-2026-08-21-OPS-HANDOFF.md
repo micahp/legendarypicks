@@ -20,6 +20,10 @@ It is not permission to deploy, change a timer, or write DEV/production data.
   that way until a landed target split excludes World Cup and the raw-capture
   schema is present on each named database.  Historical World Cup repair is a
   local database operation and must make no publisher request.
+- Candidate recurring pipeline code excludes World Cup from both its database
+  discovery query and its link/settlement loops, with settlement bounded to the
+  recent three days. This is a landing prerequisite, not permission to
+  re-enable either timer.
 - Candidate branch `feat/tennis-current-spine` holds unlanded data-integrity
   work.  Its raw-payload ledger covers the current Underdog, Bovada, and
   MLS/EPL ESPN-log boundaries; RotoWire already archives whole relay bodies.
