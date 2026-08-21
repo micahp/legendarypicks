@@ -38,8 +38,8 @@ class TestDefaultLeagues:
     def test_resolves_through_offered_leagues(self):
         p = _pregenerate()
         con = _db([("nfl", 2025, "complete"), ("mlb", 2026, "in_progress")])
-        # vouched set plus the always-offered shape set (ufc, wc), sorted
-        assert p.default_leagues(con) == ["mlb", "nfl", "ufc", "wc"]
+        # WC remains manually addressable but is excluded from recurring work.
+        assert p.default_leagues(con) == ["mlb", "nfl", "ufc"]
 
     def test_a_promoted_league_turns_on_without_an_edit(self):
         p = _pregenerate()
@@ -57,14 +57,14 @@ class TestDefaultLeagues:
         # and there is no fallback list for the job to quietly sweep instead.
         p = _pregenerate()
         con = sqlite3.connect(":memory:")
-        assert p.default_leagues(con) == sorted(ALWAYS_OFFERED)
+        assert p.default_leagues(con) == sorted(ALWAYS_OFFERED - {"wc"})
 
     def test_no_connection_uses_the_core_database(self, monkeypatch):
         p = _pregenerate()
         import _core
         con = _db([("nfl", 2025, "complete")])
         monkeypatch.setattr(_core, "_db", lambda: con)
-        assert p.default_leagues() == ["nfl", "ufc", "wc"]
+        assert p.default_leagues() == ["nfl", "ufc"]
 
 
 class TestDefaultLeaguesAgainstTheRealDatabases:
