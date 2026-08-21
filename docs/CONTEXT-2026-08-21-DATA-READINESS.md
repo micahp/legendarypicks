@@ -13,11 +13,15 @@ document was applied to managed DEV, production, a timer, or either database.
 - `a09fde4` generalizes the existing NFL publisher-week contract to NCAAF.
   It does not invent week boundaries: ESPN's 2026 catalog names the regular
   season `2:1` through `2:15`, and the new endpoints preserve that identity.
+- `4c12316` applies the same source-native capture rule to the MLS/EPL soccer
+  ingest.  It retains each ESPN season, type, event-collection, and match
+  summary document before reading its fields; an unmigrated target is rejected
+  before the first publisher request.
 
 Focused checks:
 
 ```text
-24 passed — Bovada capture / existing publisher-capture / schedule-target tests
+22 passed — Underdog, Bovada, and soccer/ESPN capture boundary tests
 7 passed  — NFL + NCAAF week-contract tests
 ```
 
@@ -64,10 +68,10 @@ the explicit capture migration has been applied to each named database.
 
 ## Still unproven
 
-- Full publisher-payload retention is only wired for Underdog and Bovada in
-  this candidate.  ESPN and other ingest boundaries need the same
-  before-normalization ledger treatment before claiming “all publisher data is
-  retained.”
+- Full publisher-payload retention is wired for Underdog, Bovada, and the
+  MLS/EPL ESPN soccer-log boundary in this candidate. Other ESPN and publisher
+  ingest boundaries still need the same before-normalization ledger treatment
+  before claiming “all publisher data is retained.”
 - Tennis/NFL/UFC settlement candidate work is not deployed or applied to DEV;
   its clone evidence must be remeasured against the target at apply time.
 - No real daytime props run after the SQLite-lock remediation has yet been
