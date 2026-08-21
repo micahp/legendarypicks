@@ -7,7 +7,7 @@ of concrete streams.
 
 from fastapi import APIRouter
 
-from .watch_registry import public_sources
+from .watch_registry import public_broadcasts, public_sources
 
 
 router = APIRouter()
@@ -16,3 +16,8 @@ router = APIRouter()
 @router.get("/api/watch/sources")
 def watch_sources():
     return public_sources()
+
+
+@router.get("/api/watch/broadcasts")
+def watch_broadcasts():
+    return public_broadcasts()
