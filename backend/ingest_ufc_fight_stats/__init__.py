@@ -25,7 +25,7 @@ from .card import (  # noqa: F401
 )
 from .fetch import (  # noqa: F401
     fetch_fight_history, fetch_stats, fetch_fight_status, _error_kind,
-    _retry_delay, _retryable, SourceUnavailable,
+    _retry_delay, _retryable, SourceUnavailable, StatsPayload,
 )
 from .plan import (  # noqa: F401
     _prepared_log, _resolve_target_for_plan, build_plan,

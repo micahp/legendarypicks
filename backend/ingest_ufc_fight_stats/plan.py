@@ -200,6 +200,16 @@ def build_plan(
                     )
                 )
                 continue
+            raw_stats = getattr(stats, "raw_payload", None)
+            if raw_stats is not None:
+                plan.source_payloads.append(SourcePayload(
+                    endpoint=ingest._STATS_URL.format(
+                        event_id=str(fight["event_id"]),
+                        fight_id=str(fight["fight_id"]),
+                        competitor_id=identity.athlete_id,
+                    ),
+                    payload=raw_stats,
+                ))
             if not stats:
                 plan.missing_stats.append(
                     "{}:{}:{}".format(
@@ -403,6 +413,16 @@ def build_current_card_plan(
                 )
             )
             continue
+        raw_stats = getattr(stats, "raw_payload", None)
+        if raw_stats is not None:
+            plan.source_payloads.append(SourcePayload(
+                endpoint=ingest._STATS_URL.format(
+                    event_id=identity.event_id,
+                    fight_id=identity.fight_id,
+                    competitor_id=identity.athlete_id,
+                ),
+                payload=raw_stats,
+            ))
         if not stats:
             plan.missing_stats.append(
                 "{}:{}:{}".format(target.name, identity.fight_id, date_text)
