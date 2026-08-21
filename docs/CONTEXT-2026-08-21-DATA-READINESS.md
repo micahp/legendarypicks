@@ -117,6 +117,16 @@ probe. Do not infer a zero-settlement diagnosis from props alone.
   MLS/EPL ESPN soccer-log boundary, and RotoWire's raw archive. Other ESPN and
   publisher ingest boundaries still need the same before-normalization ledger
   treatment before claiming “all publisher data is retained.”
+
+### Direct-fetch audit scope
+
+A source audit found 63 Python files with a direct fetch primitive or a call to
+the shared ESPN fetcher. The completed work covers the high-priority props
+paths above; it does **not** yet cover unrelated roster, standings, news,
+scoreboard, MLB/NHL/NCAAF log, esports, or one-shot backfill fetchers. Treat
+the following statement as the only supported one today: **full native payload
+retention is present for the current Bovada, Underdog, RotoWire, and MLS/EPL
+soccer-log ingestion paths.** Do not generalize it to the repository.
 - Tennis/NFL/UFC settlement candidate work is not deployed or applied to DEV;
   its clone evidence must be remeasured against the target at apply time.
 - No real daytime props run after the SQLite-lock remediation has yet been
