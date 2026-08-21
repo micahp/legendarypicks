@@ -96,6 +96,14 @@ redundant: a stray future-dated WC row must not turn an inactive tournament
 into a cron source request. The manual historical repair and explicit
 operator-scoped commands remain available.
 
+An active-host audit also found three non-props recurring selectors that had
+to be removed: root cron's two-minute live-discounts poll explicitly asked for
+`mlb,wc`; the default scoreboard timer list included `wc`; and the default
+recap sweep inherited `wc` from the offered-league shape set. The managed
+files now select no WC work by default while retaining explicit manual league
+arguments. The general RotoWire archive remains a single all-sports raw relay
+capture, not a WC-targeted scheduler.
+
 Legacy World Cup rows are a separate historical repair, not a request to the
 publisher. `f403720` adds a backup-first tool that selects only World Cup
 `prop_results` rows where both `actual_value` and `hit` are NULL, writes an

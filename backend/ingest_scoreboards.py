@@ -56,7 +56,9 @@ import scoreboard_store
 
 # The leagues the scoreboard fans out over, minus `cod`, which is not an ESPN
 # league (breakingpoint.gg) and has its own path in the router.
-BOARD_LEAGUES = ["nba", "mlb", "nhl", "nfl", "lcup", "mls", "ncaaf", "atp", "wta", "ufc", "wc"]
+# World Cup is historical-only.  Keep `wc` available to an explicit operator
+# through `--leagues wc`, but never select it in the recurring default sweep.
+BOARD_LEAGUES = ["nba", "mlb", "nhl", "nfl", "lcup", "mls", "ncaaf", "atp", "wta", "ufc"]
 
 # Polite spacing between calls. This buys no budget -- ESPN's ceiling is a count,
 # not a rate -- it is here so a timer firing every ten minutes does not arrive as

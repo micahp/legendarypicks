@@ -16,14 +16,16 @@ nothing.
 Usage:
   LP_DB_PATH=data/picks.dev.db python3 pregenerate_game_stories.py [league ...] [--days N]
   LP_DB_PATH=data/picks.dev.db python3 pregenerate_game_stories.py --finals [league ...]
-  (default leagues: league_offering.offered_leagues — the vouched coverage set plus
-   ufc/wc; default --days 2 = today + tomorrow, and --days 2 with --finals =
+  (default leagues: league_offering.offered_leagues minus historical-only World Cup;
+   default --days 2 = today + tomorrow, and --days 2 with --finals =
    today + yesterday)
 """
 import sys, datetime as dt
 import espn_client as espn
 from _core import generate_game_story
 from league_offering import offered_leagues
+
+SCHEDULED_EXCLUDED_LEAGUES = {"wc"}
 
 
 def default_leagues(con=None):
@@ -33,7 +35,7 @@ def default_leagues(con=None):
     the way league_offering's docstring predicts: mls, ncaaf and ufc were offered
     on the hub and silently never got a timer sweep. One question, one answer —
     `offered_leagues` reads team_stats_coverage's vouched statuses plus the
-    always-offered shape set (ufc/wc), so a league turns on the moment its
+    always-offered shape set, so a league turns on the moment its
     coverage row is promoted. There is deliberately no fallback list here: if
     the registry is unreadable the job fails loudly instead of quietly sweeping
     a stale subset.
@@ -41,7 +43,7 @@ def default_leagues(con=None):
     if con is None:
         from _core import _db
         con = _db()
-    return sorted(offered_leagues(con))
+    return sorted(set(offered_leagues(con)) - SCHEDULED_EXCLUDED_LEAGUES)
 
 
 def discover(lg: str, days: int, backwards: bool = False):
