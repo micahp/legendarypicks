@@ -74,6 +74,14 @@ could still skip/request World Cup as part of the broad invocation.  Do not
 re-enable either timer until the candidate scheduled-target code is landed and
 the explicit capture migration has been applied to each named database.
 
+Legacy World Cup rows are a separate historical repair, not a request to the
+publisher. `f403720` adds a backup-first tool that selects only World Cup
+`prop_results` rows where both `actual_value` and `hit` are NULL, writes an
+explicit `prop_voids` audit row with reason `legacy_world_cup_ungraded`, then
+removes the misleading result row. On an integrity-checked DEV clone it
+converted all 1,128 candidates, left zero WC result rows, and passed
+`quick_check`. It has not run against DEV or production.
+
 ## Settlement clone evidence
 
 `settle_props.py` now supports explicit `--league`, `--game-id`, `--through`,
