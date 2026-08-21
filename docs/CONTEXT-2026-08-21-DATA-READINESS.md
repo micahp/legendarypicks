@@ -92,6 +92,11 @@ On separate low-priority, integrity-checked DEV clones:
   logs and 47 ESPN identity bindings to the clone only. Re-running the exact
   completed fight graded all 16 props, including `finishes`, `knockouts`, and
   `submissions`, with numeric outcomes and `quick_check = ok`.
+- A completed linked ATP game was probed separately. Its clone remained
+  unchanged because both tested ESPN tennis scoreboard hosts returned HTTP 403
+  for the historical date; the settlement driver recorded one retryable source
+  error and wrote no result row. This is an upstream-availability gate, not a
+  walkover/retirement decision or a reason to synthesize results.
 
 This establishes the required order for a real target: first obtain the
 verified UFC log/identity plan for that target, then apply it only with an
