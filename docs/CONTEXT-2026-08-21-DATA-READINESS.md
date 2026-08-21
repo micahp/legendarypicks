@@ -1,7 +1,9 @@
 # Context Summary — Data Readiness — August 21, 2026
 
-This is a candidate-branch handoff, not a release claim.  Nothing in this
-document was applied to managed DEV, production, a timer, or either database.
+This is a candidate-branch handoff, not a release claim.  On August 21, the
+backup-first raw-capture schema migration and the one-time legacy World Cup
+void repair were explicitly applied to managed DEV only.  Nothing here was
+applied to production, a timer, or a deployed candidate code path.
 
 ## Candidate work completed
 
@@ -123,7 +125,10 @@ publisher. `f403720` adds a backup-first tool that selects only World Cup
 explicit `prop_voids` audit row with reason `legacy_world_cup_ungraded`, then
 removes the misleading result row. On an integrity-checked DEV clone it
 converted all 1,128 candidates, left zero WC result rows, and passed
-`quick_check`. It has not run against DEV or production.
+`quick_check`. On August 21 it was applied to
+`/root/legendarypicks/backend/data/picks.dev.db` only: it created a verified
+backup, moved all 1,128 candidates into `prop_voids`, left zero matching
+`prop_results`, and passed `quick_check`. It has not run against production.
 
 ## Settlement clone evidence
 

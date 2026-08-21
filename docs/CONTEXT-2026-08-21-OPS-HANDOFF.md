@@ -47,7 +47,10 @@ It is not permission to deploy, change a timer, or write DEV/production data.
    both tested ESPN hosts, so no tennis result was invented.  NFL and UFC
    clone probes proved bounded grading paths, but neither is authorization to
    write a live database.  Legacy World Cup NULL/NULL results have a
-   clone-proven void conversion tool, also unapplied.
+   clone-proven void conversion tool. On August 21 it was applied to managed
+   DEV only with a verified backup: 1,128 false NULL/NULL result rows became
+   explicit void-ledger rows and zero matching result rows remain. Production
+   remains untouched.
 3. **MLS parity.** DEV has live 2026 standings but season leaders from 2025;
    retained regular-season logs stop at August 8.  Refresh a bounded clone,
    aggregate it, verify freshness, then seek target-specific authorization.
@@ -77,6 +80,12 @@ native body with source, endpoint, digest, and observation timestamps before
 parsing it.  Capture writes must be transactional with the derived rows, and
 an unmigrated target must fail before the first source request.  Do not claim
 coverage beyond the boundaries that have been tested.
+
+Managed DEV now has the additive `publisher_captures` migration
+(`20260821_001_publisher_captures`) after a verified backup and `quick_check`.
+That enables the landed raw-capture contract only when the relevant candidate
+code is deliberately deployed; it does not itself start a fetcher, change a
+timer, or make production compliant.
 
 For scheduled work, select league targets explicitly and record the request
 budget.  A broad `all` target is not an acceptable diagnostic: it can spend

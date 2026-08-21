@@ -22,10 +22,10 @@ mock-draft incident. Do not pick it again.
 
 | Change | Candidate commit(s) | Required order |
 |---|---|---|
-| Raw publisher ledger | `f5d4040`, `4ed32ab`, `4c12316` | Land code; make verified backups; run `migrate_publisher_captures.py --check` then `--apply` against each named target; verify capture rows on a bounded run. Only after that may props timers be reconsidered. |
+| Raw publisher ledger | `f5d4040`, `4ed32ab`, `4c12316` | The migration was applied to managed DEV only on Aug. 21 after a verified backup and `quick_check`; production still needs a separately authorized target-specific run. Land code and verify capture rows on a bounded run before props timers are reconsidered. |
 | UFC rankings source retention | current follow-up | The rankings scraper now fails before a UFC.com request unless the ledger exists. Land its code and migrate the named target before a bounded ranking refresh; verify the HTML capture and rankings count together. |
 | Per-day/live scoreboard source retention | current follow-up | Land code and migrate the named target before re-enabling this candidate path; verify a raw ESPN capture and normalized snapshot in one bounded run. The range-backfill path is not yet covered. |
-| Legacy WC null-result repair | `f403720` | Explicit target authorization only. Run `--check`, verify candidate count, use the generated backup, then `--apply`; verify no WC `prop_results` remain and matching `prop_voids` rows exist. No publisher request is involved. |
+| Legacy WC null-result repair | `f403720` | Managed DEV only: Aug. 21 run backed up the DB, moved all 1,128 candidates to `prop_voids`, left zero matching WC `prop_results`, and passed `quick_check`. Production still requires separate explicit target authorization. No publisher request is involved. |
 | MLS 2026 leaders | existing ingest scripts | Refresh bounded missing ESPN summaries into a clone, aggregate the same clone, verify freshness and leaders UI, then obtain explicit authorization for the named target. |
 
 ## Timers and source calls
