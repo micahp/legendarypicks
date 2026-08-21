@@ -1,7 +1,11 @@
 """Regression tests for published-scoreboard tennis settlement."""
 import sqlite3
+from io import BytesIO
+from urllib.error import HTTPError
 
+import espn_client
 import settlement
+from publisher_capture import create_publisher_capture_schema
 
 
 def _competition(completed=True, second_set=True):
@@ -130,8 +134,9 @@ def test_tennis_retirement_grades_only_irreversible_completed_play():
 
 def test_settle_game_uses_scoreboard_and_leaves_pre_match_unsettled(monkeypatch):
     con = _database()
+    create_publisher_capture_schema(con)
     monkeypatch.setattr(settlement, "_tennis_scoreboard_competition",
-                        lambda *_args: _competition(completed=False))
+                        lambda *_args, **_kwargs: _competition(completed=False))
     result = settlement.settle_game(con, 1)
     assert result["settled"] == 0
     assert result["errors"] == 0
@@ -140,8 +145,44 @@ def test_settle_game_uses_scoreboard_and_leaves_pre_match_unsettled(monkeypatch)
 
 def test_settle_game_uses_tennis_scoreboard_for_final(monkeypatch):
     con = _database()
+    create_publisher_capture_schema(con)
     monkeypatch.setattr(settlement, "_tennis_scoreboard_competition",
-                        lambda *_args: _competition())
+                        lambda *_args, **_kwargs: _competition())
     result = settlement.settle_game(con, 1)
     assert result["settled"] == 10
     assert con.execute("SELECT COUNT(*) FROM prop_results").fetchone()[0] == 10
+
+
+def test_tennis_403_is_captured_before_it_returns_an_error(monkeypatch):
+    con = _database()
+    create_publisher_capture_schema(con)
+    error = HTTPError(
+        "https://example.test/scoreboard?dates=20260821", 403, "Forbidden",
+        {"Retry-After": "60"}, BytesIO(b"publisher refusal"),
+    )
+    monkeypatch.setattr(espn_client, "neighbor_dates", lambda _date: ["2026-08-21"])
+    monkeypatch.setattr(espn_client, "scoreboard_raw",
+                        lambda *_args, **_kwargs: (_ for _ in ()).throw(error))
+
+    result = settlement.settle_game(con, 1)
+
+    assert result["errors"] == 1
+    captured = con.execute("SELECT payload_json FROM publisher_captures").fetchone()[0]
+    assert '"http_status":403' in captured
+    assert "Retry-After" in captured
+    assert "cHVibGlzaGVyIHJlZnVzYWw=" in captured
+    assert con.execute("SELECT COUNT(*) FROM prop_results").fetchone()[0] == 0
+
+
+def test_tennis_settlement_rejects_an_unmigrated_target_before_fetch(monkeypatch):
+    con = _database()
+    monkeypatch.setattr(espn_client, "scoreboard_raw",
+                        lambda *_args, **_kwargs: (_ for _ in ()).throw(
+                            AssertionError("must not fetch")
+                        ))
+
+    result = settlement.settle_game(con, 1)
+
+    assert result["errors"] == 1
+    assert "publisher capture schema" in result["error_msg"]
+    assert con.execute("SELECT COUNT(*) FROM prop_results").fetchone()[0] == 0

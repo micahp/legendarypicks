@@ -16,11 +16,16 @@ bound to the wrong game of a series (85 MLB rows on 2026-08-11).
 from __future__ import annotations  # this box runs 3.8; `int | None` is 3.10 syntax
 
 import sys, os, sqlite3, re, unicodedata
+from urllib.error import HTTPError
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import espn_client as espn
 from prop_game_merge import fold_prop_game
-from publisher_capture import capture_payload, require_publisher_capture_schema
+from publisher_capture import (
+    capture_http_error,
+    capture_payload,
+    require_publisher_capture_schema,
+)
 
 DB = os.environ.get("LP_DB_PATH") or os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "picks.db")
 
@@ -33,11 +38,21 @@ def _scoreboard_endpoint(league: str, date: str) -> str:
 
 def _scoreboard_games(league: str, date: str, connection, *, capture: bool) -> list:
     """Capture a source scoreboard before normalizing it for event linking."""
-    raw = espn.scoreboard_raw(league, date)
+    endpoint = _scoreboard_endpoint(league, date)
+    try:
+        raw = espn.scoreboard_raw(league, date)
+    except HTTPError as error:
+        if capture:
+            capture_http_error(
+                connection, source="espn", league=league, endpoint=endpoint,
+                error=error,
+            )
+            connection.commit()
+        raise
     if capture:
         capture_payload(
             connection, source="espn", league=league,
-            endpoint=_scoreboard_endpoint(league, date), payload=raw,
+            endpoint=endpoint, payload=raw,
         )
     from espn_client.scoreboard import _games_from_payload
     return _games_from_payload(league, date, raw)

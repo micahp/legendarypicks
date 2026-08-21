@@ -36,9 +36,12 @@ applied to production, a timer, or a deployed candidate code path.
   leaves the last-good rows intact.
 - Candidate scoreboard ingest now retains the native ESPN document before
   writing a normalized per-day or live scoreboard snapshot, and a scheduled
-  run rejects an unmigrated target before its first ESPN request. The separate
-  range-backfill helper still needs the same source-payload transaction before
-  this can be called full scoreboard-ingest coverage.
+  run rejects an unmigrated target before its first ESPN request. Tennis
+  settlement and prop-game linking apply the same preflight and retain an HTTP
+  refusal's status, response headers, and byte-preserving body before returning
+  the error; refusal leaves all props pending. The separate range-backfill
+  helper still needs the same source-payload transaction before this can be
+  called full scoreboard-ingest coverage.
 
 RotoWire is a separate, already-compliant retention boundary rather than a
 candidate ledger gap: `ingest_rotowire_archive.py` preserves the complete

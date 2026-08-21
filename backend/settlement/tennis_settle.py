@@ -2,7 +2,9 @@
 """tennis_settle.py — settle tennis props from ESPN's tournament scoreboard."""
 import datetime as dt
 import re
+from urllib.error import HTTPError
 
+from publisher_capture import capture_http_error, capture_payload
 from settlement.grading import _grade_actual
 from settlement.market_mapping import normalize_market
 
@@ -29,7 +31,8 @@ def _tennis_terminal_reason(competition: dict):
     return None
 
 
-def _tennis_scoreboard_competition(espn, league: str, date_text: str, event_id: str) -> dict:
+def _tennis_scoreboard_competition(espn, league: str, date_text: str, event_id: str,
+                                  connection=None) -> dict:
     """Return one exact singles competition from the publisher's daily board.
 
     Tennis tournament scoreboards contain both draws.  The requested league and
@@ -40,7 +43,22 @@ def _tennis_scoreboard_competition(espn, league: str, date_text: str, event_id: 
     checked = []
     for day in espn.neighbor_dates(date_text):
         checked.append(day)
-        payload = espn.scoreboard_raw(league, day, ttl=60)
+        _, path = espn._check(league)
+        endpoint = espn._SITE.format(path=path) + "/scoreboard?dates=" + day.replace("-", "")
+        try:
+            payload = espn.scoreboard_raw(league, day, ttl=60)
+        except HTTPError as error:
+            if connection is not None:
+                capture_http_error(
+                    connection, source="espn", league=league, endpoint=endpoint,
+                    error=error,
+                )
+                connection.commit()
+            raise
+        if connection is not None:
+            capture_payload(
+                connection, source="espn", league=league, endpoint=endpoint, payload=payload,
+            )
         returned = ((payload.get("leagues") or [{}])[0].get("slug") or "").lower()
         if returned != league:
             raise ValueError(

@@ -1,5 +1,7 @@
 """Exact-identity tennis prop-game linking regressions."""
 import sqlite3
+from io import BytesIO
+from urllib.error import HTTPError
 
 import link_prop_games as linker
 from link_prop_games import link_prop_game
@@ -127,3 +129,29 @@ def test_linker_rejects_unmigrated_target_before_scoreboard_request(tmp_path, mo
             assert "publisher capture schema" in str(exc)
     finally:
         con.close()
+
+
+def test_linker_retains_http_403_response_before_propagating(tmp_path, monkeypatch):
+    path = tmp_path / "picks.db"
+    con = _link_database(path)
+    apply_database(str(path))
+    error = HTTPError(
+        "https://example.test/scoreboard?dates=20260725", 403, "Forbidden",
+        {"X-ESPN-Policy": "paced"}, BytesIO(b"refused by publisher"),
+    )
+    monkeypatch.setattr(linker.espn, "scoreboard_raw",
+                        lambda *_args, **_kwargs: (_ for _ in ()).throw(error))
+
+    try:
+        linker._scoreboard_games("atp", "2026-07-25", con, capture=True)
+        assert False, "expected ESPN refusal"
+    except HTTPError:
+        pass
+    finally:
+        row = con.execute("SELECT payload_json FROM publisher_captures").fetchone()
+        con.close()
+
+    assert row is not None
+    assert '"http_status":403' in row[0]
+    assert "X-ESPN-Policy" in row[0]
+    assert "cmVmdXNlZCBieSBwdWJsaXNoZXI=" in row[0]

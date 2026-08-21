@@ -9,6 +9,7 @@ from __future__ import annotations
 import hashlib
 import json
 import sqlite3
+from base64 import b64encode
 from datetime import datetime, timezone
 from typing import Any
 
@@ -117,3 +118,51 @@ def capture_payload(
         (source, league, endpoint, digest, body, now, now),
     )
     return int(cursor.lastrowid), True
+
+
+def http_error_payload(error: Any) -> dict[str, Any]:
+    """Return the complete response evidence available on an HTTP failure.
+
+    ``urllib.error.HTTPError`` is also a response stream.  Reading it here is
+    deliberate: callers retain the refusal before propagating it, rather than
+    reducing a publisher answer to a status line in the spend log.  The body is
+    base64 so non-UTF-8 error documents remain byte-for-byte recoverable.
+    """
+    try:
+        raw_body = error.read()
+    except Exception as exc:  # a transport failure can have no readable body
+        raw_body = None
+        body_read_error = "{}: {}".format(type(exc).__name__, exc)
+    else:
+        body_read_error = None
+    try:
+        headers = [[str(key), str(value)] for key, value in error.headers.items()]
+    except Exception:
+        headers = []
+    payload = {
+        "capture_kind": "http_error",
+        "http_status": getattr(error, "code", None),
+        "reason": str(getattr(error, "reason", "") or ""),
+        "response_headers": headers,
+        "body_base64": (b64encode(raw_body).decode("ascii")
+                        if raw_body is not None else None),
+    }
+    if body_read_error:
+        payload["body_read_error"] = body_read_error
+    return payload
+
+
+def capture_http_error(
+    connection: sqlite3.Connection,
+    *,
+    source: str,
+    league: str,
+    endpoint: str,
+    error: Any,
+    captured_at: str | None = None,
+) -> tuple[int, bool]:
+    """Retain an HTTP refusal's status, headers, and exact response body."""
+    return capture_payload(
+        connection, source=source, league=league, endpoint=endpoint,
+        payload=http_error_payload(error), captured_at=captured_at,
+    )

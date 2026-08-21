@@ -44,9 +44,11 @@ It is not permission to deploy, change a timer, or write DEV/production data.
    read-only check; the candidate still needs a DEV browser check after an
    authorized landing.
 2. **Props integrity.** Tennis historical scoreboards returned HTTP 403 on
-   both tested ESPN hosts, so no tennis result was invented.  NFL and UFC
-   clone probes proved bounded grading paths, but neither is authorization to
-   write a live database.  Legacy World Cup NULL/NULL results have a
+   both tested ESPN hosts, so no tennis result was invented. Candidate tennis
+   settlement/linking now fail before any request on an unmigrated target and
+   retain each refusal's status, headers, and body before returning an error;
+   this code is not deployed. NFL and UFC clone probes proved bounded grading
+   paths, but neither is authorization to write a live database. Legacy World Cup NULL/NULL results have a
    clone-proven void conversion tool. On August 21 it was applied to managed
    DEV only with a verified backup: 1,128 false NULL/NULL result rows became
    explicit void-ledger rows and zero matching result rows remain. Production

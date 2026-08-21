@@ -12,6 +12,7 @@ from settlement.mlb_settle import _settle_mlb_props
 from settlement.ufc_settle import _settle_ufc_props, _ufc_scoreboard_competition
 from settlement.mls_settle import _settle_mls_props
 from settlement.tennis_settle import _settle_tennis_props, _tennis_scoreboard_competition
+from publisher_capture import require_publisher_capture_schema
 from settlement.nfl_settle import _settle_nfl_props
 
 
@@ -56,15 +57,24 @@ def settle_game(con: sqlite3.Connection, game_id: int) -> dict:
     # ── Tennis: result lives on the tournament scoreboard, not /summary ─────────
     if league in {"atp", "wta"}:
         try:
+            # Must fail before the first ESPN request: the scoreboard response,
+            # including a refusal, is evidence for a settlement decision.
+            require_publisher_capture_schema(con)
             import settlement
             competition = settlement._tennis_scoreboard_competition(
-                espn, league, game["date"], espn_event_id)
+                espn, league, game["date"], espn_event_id, connection=con)
             status_type = ((competition.get("status") or {}).get("type") or {})
             if status_type.get("completed") is not True:
+                # A pre-final response is still publisher evidence.  There are
+                # no derived settlement rows to pair with it on this branch.
+                con.commit()
                 return {"settled": 0, "void": 0, "unmappable": 0, "pending": 0,
                         "errors": 0, "msg": f"game {game_id}: not final yet "
                         f"(state={status_type.get('state')}, completed={status_type.get('completed')})"}
         except Exception as exc:
+            # A malformed/absent competition can follow a valid native body.
+            # Preserve that body even though no derived result is eligible.
+            con.commit()
             return {"settled": 0, "void": 0, "unmappable": 0, "pending": 0,
                     "errors": 1, "error_msg": f"game {game_id}: tennis scoreboard pull failed: {exc}"}
 
