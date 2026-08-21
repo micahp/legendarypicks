@@ -11,6 +11,24 @@ _TENNIS_LEAGUES = {"atp": "mens-singles", "wta": "womens-singles"}
 _SET_BETTING = re.compile(r"^set_betting___(\d+)_(\d+)$")
 
 
+def _tennis_terminal_reason(competition: dict):
+    """Return a published non-normal final state that has special settlement rules.
+
+    A walkover has no played match.  A retirement has played stats, but only an
+    outcome that is already irreversible from those stats may be graded.  In
+    both cases we deliberately leave void props out of ``prop_results``: a
+    NULL result row falsely looks like a settled numerical outcome downstream.
+    """
+    status_type = ((competition.get("status") or {}).get("type") or {})
+    values = " ".join(str(status_type.get(key) or "") for key in
+                      ("name", "description", "detail", "shortDetail")).lower()
+    if "walkover" in values:
+        return "walkover"
+    if "retir" in values:
+        return "retirement"
+    return None
+
+
 def _tennis_scoreboard_competition(espn, league: str, date_text: str, event_id: str) -> dict:
     """Return one exact singles competition from the publisher's daily board.
 
@@ -123,8 +141,71 @@ def _tennis_prop_actual(prop, actuals: dict):
     return None
 
 
+def _retirement_actuals(competition: dict) -> dict:
+    """Read only the score already published before a retirement.
+
+    The unfinished set need not have a winner, unlike a normal final.  Its
+    completed games remain usable for a monotonic total-games threshold.
+    """
+    actuals = {}
+    competitors = competition.get("competitors") or []
+    if len(competitors) != 2:
+        return actuals
+    for competitor in competitors:
+        athlete_id = str(competitor.get("id") or "")
+        if not athlete_id.isdigit() or int(athlete_id) <= 0:
+            return {}
+        games = 0.0
+        sets_won = 0
+        for score in competitor.get("linescores") or []:
+            value = score.get("value")
+            if not isinstance(value, (int, float)) or value < 0:
+                return {}
+            games += float(value)
+            sets_won += 1 if score.get("winner") is True else 0
+        actuals[athlete_id] = {"total_games": games, "sets_won": sets_won}
+    return actuals
+
+
+def _settle_tennis_retirement_props(con, props: list, competition: dict) -> dict:
+    """Grade only outcomes locked by official play before a retirement.
+
+    This follows the shared LegendaryPicks policy: no awarded post-retirement
+    statistics, no inferred future play, and no result row for a void prop.
+    """
+    actuals = _retirement_actuals(competition)
+    settled = 0
+    now = dt.datetime.now(dt.timezone.utc).isoformat()
+    for prop in props:
+        player = actuals.get(str(prop["espn_id"] or ""))
+        if not player:
+            continue
+        market = normalize_market(str(prop["market"] or "").strip().lower())
+        side = str(prop["side"] or "").lower()
+        actual = None
+        if market == "total_games" and side == "over":
+            candidate = player["total_games"]
+            if candidate > prop["line"]:
+                actual = candidate
+        elif market == "win_a_set" and side == "over":
+            candidate = 1.0 if player["sets_won"] >= 1 else 0.0
+            if candidate > prop["line"]:
+                actual = candidate
+        if actual is not None and _grade_actual(con, prop, actual, now):
+            settled += 1
+    con.commit()
+    return {"settled": settled, "void": len(props) - settled, "unmappable": 0,
+            "pending": 0, "errors": 0}
+
+
 def _settle_tennis_props(con, props: list, competition: dict) -> dict:
     """Grade supported tennis props from one already-validated competition."""
+    reason = _tennis_terminal_reason(competition)
+    if reason == "walkover":
+        return {"settled": 0, "void": len(props), "unmappable": 0,
+                "pending": 0, "errors": 0}
+    if reason == "retirement":
+        return _settle_tennis_retirement_props(con, props, competition)
     try:
         actuals = _tennis_actuals(competition)
     except ValueError as exc:

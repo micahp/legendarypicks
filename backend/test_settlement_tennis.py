@@ -19,6 +19,21 @@ def _competition(completed=True, second_set=True):
     }
 
 
+def _retirement_competition():
+    return {
+        "status": {"type": {"state": "post", "completed": True,
+                              "name": "STATUS_RETIRED"}},
+        "competitors": [
+            {"id": "101", "winner": True, "linescores": [
+                {"value": 6.0, "winner": True}, {"value": 3.0, "winner": False},
+            ]},
+            {"id": "202", "winner": False, "linescores": [
+                {"value": 3.0, "winner": False}, {"value": 0.0, "winner": False},
+            ]},
+        ],
+    }
+
+
 def _database():
     con = sqlite3.connect(":memory:")
     con.row_factory = sqlite3.Row
@@ -87,6 +102,30 @@ def test_tennis_settlement_refuses_incomplete_completed_score():
     assert result["pending"] == 10
     assert result["errors"] == 1
     assert con.execute("SELECT COUNT(*) FROM prop_results").fetchone()[0] == 0
+
+
+def test_tennis_walkover_voids_every_prop_without_result_rows():
+    con = _database()
+    competition = _competition()
+    competition["status"]["type"]["name"] = "STATUS_WALKOVER"
+
+    result = settlement._settle_tennis_props(con, _props(con), competition)
+
+    assert result == {"settled": 0, "void": 10, "unmappable": 0, "pending": 0, "errors": 0}
+    assert con.execute("SELECT COUNT(*) FROM prop_results").fetchone()[0] == 0
+
+
+def test_tennis_retirement_grades_only_irreversible_completed_play():
+    con = _database()
+    con.execute("UPDATE props SET line=8.5 WHERE id=3")
+
+    result = settlement._settle_tennis_props(con, _props(con), _retirement_competition())
+
+    assert result == {"settled": 2, "void": 8, "unmappable": 0, "pending": 0, "errors": 0}
+    assert [tuple(row) for row in con.execute(
+        "SELECT prop_id, actual_value, hit FROM prop_results ORDER BY prop_id")] == [
+        (3, 9.0, 1), (9, 1.0, 1),
+    ]
 
 
 def test_settle_game_uses_scoreboard_and_leaves_pre_match_unsettled(monkeypatch):
