@@ -15,7 +15,7 @@ mock-draft incident. Do not pick it again.
 |---|---|---|
 | NCAAF publisher-week navigation | `a09fde4` | Browser-check `/leagues/ncaaf?tab=schedule` after a DEV deployment; no DB mutation required. |
 | NFL relay settlement | `1155d70`, optionally bounded-driver commits `1aca2af`, `dcf607b`, `95b2418` | Fresh bounded clone probe against the intended target; never run the unbounded driver as a diagnostic. |
-| UFC finish settlement and retained status/stat responses | `39de106`, `75daf38`, current follow-up | First make the bounded UFC ingest plan against a clone of the intended target. Apply logs/identities only with a verified backup and explicit DB authorization; then settle a bounded exact game. The upstream card collection is not yet captured, so do not call UFC source retention complete. |
+| UFC finish settlement and retained current-card responses | `39de106`, `75daf38`, current follow-ups | First make the bounded UFC ingest plan against a clone of the intended target. Apply logs/identities only with a verified backup and explicit DB authorization; then settle a bounded exact game. The card scoreboard, status, and fighter-stat bodies are retained; the separate historical athlete-history path is not, so do not call all UFC source retention complete. |
 | Tennis linking and policy | `9a7a7ed` through `004ef42` | ESPN tennis historical scoreboards currently return 403. Keep unmerged until a live source probe succeeds; do not fabricate results or relax the walkover/retirement policy. |
 
 ## Schema/data-coupled work

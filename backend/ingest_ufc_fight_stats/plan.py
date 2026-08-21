@@ -16,7 +16,7 @@ import espn_client as espn  # noqa: E402
 
 import ingest_ufc_fight_stats as ingest
 from .targets import FighterTarget  # noqa: E402
-from .card import CardIdentity  # noqa: E402
+from .card import CardIdentity, card_source_payloads  # noqa: E402
 from .fetch import SourceUnavailable  # noqa: E402
 
 @dataclass(frozen=True)
@@ -88,6 +88,11 @@ def _resolve_target_for_plan(
     if target.card_date:
         card, card_error = ingest._card_for_date(target.card_date, card_cache)
         games = card or []
+        existing_endpoints = {source.endpoint for source in plan.source_payloads}
+        for endpoint, payload in card_source_payloads(card_cache):
+            if endpoint not in existing_endpoints:
+                plan.source_payloads.append(SourcePayload(endpoint, payload))
+                existing_endpoints.add(endpoint)
     identity: Optional[CardIdentity]
     if target.espn_id:
         identity = ingest._identity_for_existing_id(target.espn_id, games, target.name)

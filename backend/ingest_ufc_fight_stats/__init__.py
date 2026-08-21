@@ -21,7 +21,7 @@ from .names import _name_key, _name_parts, _parse_date, _opponent_for  # noqa: F
 from .targets import load_targets, _dedupe_games, FighterTarget  # noqa: F401
 from .card import (  # noqa: F401
     _card_for_date, _fighters_from_card, resolve_from_card,
-    _identity_for_existing_id, CardIdentity,
+    _identity_for_existing_id, CardIdentity, card_source_payloads,
 )
 from .fetch import (  # noqa: F401
     fetch_fight_history, fetch_stats, fetch_fight_status, _error_kind,

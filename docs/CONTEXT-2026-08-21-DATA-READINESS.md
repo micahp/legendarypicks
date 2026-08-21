@@ -21,10 +21,11 @@ document was applied to managed DEV, production, a timer, or either database.
   current-card plan and captures it in the same transaction before its
   result/method fields write a log. The follow-up candidate change carries the
   complete per-fighter ESPN statistics response the same way, including a
-  valid response with no usable stat categories. An HTTP 404 is not stored as
-  a fabricated empty source body. This remains a partial UFC boundary: the
-  scoreboard/card collection that identifies a fight is still normalized
-  upstream of this plan and is not yet retained here.
+  valid response with no usable stat categories. It also retains the raw ESPN
+  card scoreboard used to identify the fight, before normalizing that same
+  response—no second request. An HTTP 404 is not stored as a fabricated empty
+  source body. This completes the **current-card** UFC source boundary; the
+  separate historical athlete-history path still needs equivalent retention.
 
 RotoWire is a separate, already-compliant retention boundary rather than a
 candidate ledger gap: `ingest_rotowire_archive.py` preserves the complete

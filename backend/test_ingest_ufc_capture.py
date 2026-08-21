@@ -6,6 +6,7 @@ import sqlite3
 from urllib.error import HTTPError
 
 import ingest_ufc_fight_stats as ingest
+from ingest_ufc_fight_stats import card
 from migrate_publisher_captures import apply_database
 
 
@@ -56,6 +57,25 @@ def test_stats_404_does_not_invent_a_capture_payload(monkeypatch):
 
     assert dict(stats) == {}
     assert stats.raw_payload is None
+
+
+def test_card_fetch_carries_the_raw_scoreboard_body(monkeypatch):
+    raw = {"events": [{"publisher_only": {"keep": 1}}]}
+    normalized = [{"game_id": "fight", "event_id": "event"}]
+    monkeypatch.setattr(card.espn, "scoreboard_raw", lambda *_args, **_kwargs: raw)
+    monkeypatch.setattr(
+        "espn_client.scoreboard._games_from_payload",
+        lambda *_args, **_kwargs: normalized,
+    )
+
+    cache = {}
+    games, error = card._card_for_date("2026-07-25", cache)
+
+    assert error is None
+    assert games == normalized
+    assert card.card_source_payloads(cache) == [
+        (card._scoreboard_endpoint("2026-07-25"), raw)
+    ]
 
 
 def test_apply_retains_carried_ufc_source_payload(tmp_path):
