@@ -5,6 +5,7 @@ import sqlite3
 from typing import TYPE_CHECKING
 
 from .schema import ensure_table
+from publisher_capture import capture_payload, require_publisher_capture_schema
 
 if TYPE_CHECKING:  # the annotation is the only use; importing it at runtime
     from .plan import IngestPlan  # would be a cycle (plan imports nothing here)
@@ -20,6 +21,16 @@ def apply_plan(db_path: str, plan: "IngestPlan") -> dict:
     try:
         con.execute("BEGIN IMMEDIATE")
         ensure_table(con)
+        if plan.source_payloads:
+            # Status bodies were obtained while making this immutable plan. A
+            # successful apply must retain them before using their result/method
+            # fields to write a log; without the explicit migration, fail closed.
+            require_publisher_capture_schema(con)
+            for source in plan.source_payloads:
+                capture_payload(
+                    con, source="espn", league="ufc",
+                    endpoint=source.endpoint, payload=source.payload,
+                )
         identity_updates = 0
         for player_id, athlete_id in sorted(plan.identity_updates.items()):
             owner = con.execute(

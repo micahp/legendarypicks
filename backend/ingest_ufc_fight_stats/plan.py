@@ -33,6 +33,13 @@ class PreparedLog:
     def natural_key(self) -> Tuple[str, str, int, str]:
         return ("ufc", self.source_player_key, self.season, self.game_no)
 
+
+@dataclass(frozen=True)
+class SourcePayload:
+    """Untouched source body carried until the plan's single write transaction."""
+    endpoint: str
+    payload: dict
+
 @dataclass
 class IngestPlan:
     target_count: int
@@ -41,6 +48,7 @@ class IngestPlan:
     identity_updates: Dict[int, str] = field(default_factory=dict)
     game_links: Dict[int, str] = field(default_factory=dict)
     logs: List[PreparedLog] = field(default_factory=list)
+    source_payloads: List[SourcePayload] = field(default_factory=list)
     unresolved: List[str] = field(default_factory=list)
     missing_stats: List[str] = field(default_factory=list)
     source_errors: List[str] = field(default_factory=list)
@@ -335,6 +343,13 @@ def build_current_card_plan(
             except SourceUnavailable as exc:
                 status = exc
             status_cache[status_key] = status
+            if not isinstance(status, SourceUnavailable):
+                plan.source_payloads.append(SourcePayload(
+                    endpoint=ingest._STATUS_URL.format(
+                        event_id=identity.event_id, fight_id=identity.fight_id
+                    ),
+                    payload=status,
+                ))
         if isinstance(status, SourceUnavailable):
             plan.source_errors.append(
                 "{}: {} for fight {}".format(

@@ -29,7 +29,7 @@ from .fetch import (  # noqa: F401
 )
 from .plan import (  # noqa: F401
     _prepared_log, _resolve_target_for_plan, build_plan,
-    build_current_card_plan, IngestPlan, PreparedLog,
+    build_current_card_plan, IngestPlan, PreparedLog, SourcePayload,
 )
 from .apply import apply_plan  # noqa: F401
 from .cli import _positive_int, _fight_limit, _print_summary, main  # noqa: F401
