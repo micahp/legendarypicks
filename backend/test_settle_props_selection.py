@@ -31,6 +31,12 @@ def test_candidate_selection_filters_and_limits_before_settlement():
     assert [(row['id'], row['league']) for row in rows] == [(1, 'nfl')]
 
 
+def test_candidate_selection_respects_the_historical_boundary():
+    con = _db()
+    rows = _candidate_games(con, leagues=['nfl'], through='2026-08-20')
+    assert [row['id'] for row in rows] == [2]
+
+
 def test_candidate_selection_excludes_fully_settled_games():
     con = _db()
     con.execute("INSERT INTO prop_results VALUES (11)")

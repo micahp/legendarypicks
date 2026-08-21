@@ -5,9 +5,10 @@ settle_props.py — Drive the settlement pipeline.
 Find all prop_games that are FINAL and have unsettled props, settle each via settlement.py.
 Idempotent: re-running is safe (skips already-settled props).
 
-Usage: venv/bin/python settle_props.py [--dry-run] [--league nfl] [--limit 5]
+Usage: venv/bin/python settle_props.py [--dry-run] [--league nfl] [--through YYYY-MM-DD] [--limit 5]
 """
 import argparse
+import datetime as dt
 import sys, os, sqlite3
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -16,7 +17,7 @@ from settlement import settle_game
 DB = os.environ.get("LP_DB_PATH") or os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "picks.db")
 
 
-def _candidate_games(con, leagues=None, limit=None, include_without_final=False):
+def _candidate_games(con, leagues=None, through=None, limit=None, include_without_final=False):
     """Unsettled games, optionally constrained before any publisher request."""
     clauses = ["pg.espn_event_id != ''" if include_without_final
                else "(pg.final_home IS NOT NULL OR pg.espn_event_id != '')"]
@@ -24,6 +25,9 @@ def _candidate_games(con, leagues=None, limit=None, include_without_final=False)
     if leagues:
         clauses.append("pg.league IN ({})".format(",".join("?" for _ in leagues)))
         params.extend(leagues)
+    if through:
+        clauses.append("pg.date <= ?")
+        params.append(through)
     query = """
         SELECT DISTINCT pg.id, pg.league, pg.home, pg.away, pg.espn_event_id,
                pg.final_home, pg.final_away, pg.date,
@@ -43,18 +47,18 @@ def _candidate_games(con, leagues=None, limit=None, include_without_final=False)
     return con.execute(query, params).fetchall()
 
 
-def main(dry_run: bool = False, leagues=None, limit=None):
+def main(dry_run: bool = False, leagues=None, through=None, limit=None):
     con = sqlite3.connect(DB)
     con.row_factory = sqlite3.Row
 
     # Find finaled games with unsettled props
-    games = _candidate_games(con, leagues=leagues, limit=limit)
+    games = _candidate_games(con, leagues=leagues, through=through, limit=limit)
 
     if not games:
         print("No finaled games with unsettled props.")
         # Try games with espn_event_id but no finals
         games_with_espn = _candidate_games(
-            con, leagues=leagues, limit=limit, include_without_final=True
+            con, leagues=leagues, through=through, limit=limit, include_without_final=True
         )
         if games_with_espn:
             print(f"  {len(games_with_espn)} games with ESPN IDs but no finals (will check ESPN)")
@@ -118,9 +122,17 @@ if __name__ == "__main__":
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--league", action="append",
                         help="restrict to one league; repeat for a bounded multi-league run")
+    parser.add_argument("--through", metavar="YYYY-MM-DD",
+                        help="consider only games on or before this date")
     parser.add_argument("--limit", type=int,
                         help="maximum games to inspect after league filtering")
     args = parser.parse_args()
     if args.limit is not None and args.limit < 1:
         parser.error("--limit must be positive")
-    main(dry_run=args.dry_run, leagues=args.league, limit=args.limit)
+    if args.through:
+        try:
+            if dt.date.fromisoformat(args.through).isoformat() != args.through:
+                raise ValueError
+        except ValueError:
+            parser.error("--through must be YYYY-MM-DD")
+    main(dry_run=args.dry_run, leagues=args.league, through=args.through, limit=args.limit)
