@@ -17,6 +17,11 @@ document was applied to managed DEV, production, a timer, or either database.
   ingest.  It retains each ESPN season, type, event-collection, and match
   summary document before reading its fields; an unmigrated target is rejected
   before the first publisher request.
+- `75daf38` carries each raw ESPN UFC fight-status payload with the immutable
+  current-card plan and captures it in the same transaction before its
+  result/method fields write a log. It is deliberately partial: the separate
+  per-fighter stat payload needs the same treatment before UFC can be called a
+  fully retained source boundary.
 
 RotoWire is a separate, already-compliant retention boundary rather than a
 candidate ledger gap: `ingest_rotowire_archive.py` preserves the complete
