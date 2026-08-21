@@ -12,6 +12,7 @@ from settlement.mlb_settle import _settle_mlb_props
 from settlement.ufc_settle import _settle_ufc_props, _ufc_scoreboard_competition
 from settlement.mls_settle import _settle_mls_props
 from settlement.tennis_settle import _settle_tennis_props, _tennis_scoreboard_competition
+from settlement.nfl_settle import _settle_nfl_props
 
 
 def settle_game(con: sqlite3.Connection, game_id: int) -> dict:
@@ -179,6 +180,12 @@ def settle_game(con: sqlite3.Connection, game_id: int) -> dict:
         LEFT JOIN prop_results pr ON pr.prop_id = p.id
         WHERE p.game_id = ? AND pr.prop_id IS NULL
     """, (game_id,)).fetchall()
+
+    if league == "nfl":
+        if not props:
+            return {"settled": 0, "void": 0, "unmappable": 0, "pending": 0, "errors": 0,
+                    "msg": f"game {game_id}: no unsettled props"}
+        return _settle_nfl_props(con, props, box)
 
     settled = 0
     void = 0

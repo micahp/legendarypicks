@@ -45,6 +45,7 @@ from settlement.ufc_settle import (
     _ufc_actual,
 )
 from settlement.mls_settle import _settle_mls_props
+from settlement.nfl_settle import _settle_nfl_props, _nfl_actual
 from settlement.tennis_settle import (
     _settle_tennis_props,
     _tennis_actuals,
@@ -70,6 +71,8 @@ __all__ = [
     "_ufc_scoreboard_competition",
     "_ufc_actual",
     "_settle_mls_props",
+    "_settle_nfl_props",
+    "_nfl_actual",
     "_settle_tennis_props",
     "_tennis_actuals",
     "_tennis_prop_actual",
