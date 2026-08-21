@@ -28,6 +28,10 @@ document was applied to managed DEV, production, a timer, or either database.
   stored as a fabricated empty source body. This completes the UFC
   fight-stat-ingest source boundary; unrelated UFC fetchers elsewhere in the
   repository are outside this claim.
+- The UFC rankings scraper now requires the ledger before it requests
+  `ufc.com/rankings`, then retains the complete HTML response in the same
+  transaction before replacing derived ranking rows. A malformed scrape still
+  leaves the last-good rows intact.
 
 RotoWire is a separate, already-compliant retention boundary rather than a
 candidate ledger gap: `ingest_rotowire_archive.py` preserves the complete

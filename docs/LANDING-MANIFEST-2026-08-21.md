@@ -23,6 +23,7 @@ mock-draft incident. Do not pick it again.
 | Change | Candidate commit(s) | Required order |
 |---|---|---|
 | Raw publisher ledger | `f5d4040`, `4ed32ab`, `4c12316` | Land code; make verified backups; run `migrate_publisher_captures.py --check` then `--apply` against each named target; verify capture rows on a bounded run. Only after that may props timers be reconsidered. |
+| UFC rankings source retention | current follow-up | The rankings scraper now fails before a UFC.com request unless the ledger exists. Land its code and migrate the named target before a bounded ranking refresh; verify the HTML capture and rankings count together. |
 | Legacy WC null-result repair | `f403720` | Explicit target authorization only. Run `--check`, verify candidate count, use the generated backup, then `--apply`; verify no WC `prop_results` remain and matching `prop_voids` rows exist. No publisher request is involved. |
 | MLS 2026 leaders | existing ingest scripts | Refresh bounded missing ESPN summaries into a clone, aggregate the same clone, verify freshness and leaders UI, then obtain explicit authorization for the named target. |
 

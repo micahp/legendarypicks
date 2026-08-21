@@ -24,8 +24,9 @@ It is not permission to deploy, change a timer, or write DEV/production data.
   work.  Its raw-payload ledger covers the current Underdog, Bovada, and
   MLS/EPL ESPN-log boundaries; RotoWire already archives whole relay bodies.
   UFC fight-stat ingest retains current-card and historical athlete-overview,
-  competition, status, opponent, and per-fighter statistics bodies. This is
-  not a repository-wide claim that every publisher response is retained.
+  competition, status, opponent, and per-fighter statistics bodies; the UFC
+  rankings job retains its source HTML. This is not a repository-wide claim
+  that every publisher response is retained.
 
 ## Highest-priority gates
 
