@@ -32,6 +32,8 @@ Usage:
   python3 ingest_soccer_logs.py --league mls --season 2025
   python3 ingest_soccer_logs.py --league mls --season 2025 --dry-run
 """
+from __future__ import annotations
+
 import argparse
 import json
 import os
@@ -51,6 +53,7 @@ from _core import _normalize_name  # noqa: E402
 from espn_leagues import ESPN_LEAGUES  # noqa: E402
 from game_types import ALLSTAR, POST, REG  # noqa: E402
 from ingest_nfl_logs import ensure_table  # noqa: E402
+from publisher_capture import capture_payload, require_publisher_capture_schema  # noqa: E402
 
 DB = os.environ.get("LP_DB_PATH") or os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "data", "picks.db"
@@ -258,7 +261,7 @@ def _roster_players(summary: dict):
                 yield str(athlete_id), name, team, home_away, stats
 
 
-def _get_core(url: str, attempts: int = 4) -> dict:
+def _get_core(url: str, attempts: int = 4, capture=None) -> dict:
     """Paced, cached fetch of one sports.core.api document.
 
     The request goes through the shared Fetcher (pacing + per-host count +
@@ -268,7 +271,10 @@ def _get_core(url: str, attempts: int = 4) -> dict:
     last = None
     for i in range(attempts):
         try:
-            return _FETCH.json(url)
+            payload = _FETCH.json(url)
+            if capture is not None:
+                capture(url, payload)
+            return payload
         except Exception as e:  # noqa: BLE001 - any failure is retried
             last = e
             time.sleep(min(60, 1.5 * (i + 1)))
@@ -292,6 +298,37 @@ def _summary_retry(league: str, game_id: str, attempts: int = 4) -> dict:
             last = e
             time.sleep(min(60, 2.0 * (i + 1)))
     raise RuntimeError(f"summary {game_id} failed after {attempts} attempts: {last}")
+
+
+def _summary_endpoint(league: str, game_id: str) -> str:
+    """The exact publisher URL that supplied a summary body."""
+    _, path = espn._check(league)
+    return espn._SITE.format(path=path) + f"/summary?event={game_id}"
+
+
+def _capture_espn_payload(connection: sqlite3.Connection, league: str,
+                           endpoint: str, payload: dict) -> tuple[int, bool]:
+    """Record one complete ESPN source body before extracting product fields.
+
+    The caller has already verified the explicit capture migration.  Keeping
+    this in the same transaction as the derived log makes it impossible for a
+    successful ingest to retain a product row while discarding the document
+    that supplied it.
+    """
+    return capture_payload(
+        connection,
+        source="espn",
+        league=league,
+        endpoint=endpoint,
+        payload=payload,
+    )
+
+
+def _capture_summary(connection: sqlite3.Connection, league: str,
+                     game_id: str, payload: dict) -> tuple[int, bool]:
+    return _capture_espn_payload(
+        connection, league, _summary_endpoint(league, game_id), payload
+    )
 
 
 def _core_path(league: str) -> str:
@@ -322,14 +359,14 @@ def _team_code(league: str, abbrev: Optional[str]) -> str:
         return str(abbrev).upper()
 
 
-def _published_types(league: str, season: int) -> Tuple[str, List[dict]]:
+def _published_types(league: str, season: int, capture=None) -> Tuple[str, List[dict]]:
     """(displayName, [type, ...]) straight from the publisher.
 
     Reads the season document's ``types[]`` — the published list, never a
     range of ids — and each type's own document for its ``startDate``/
     ``endDate`` window when the season document does not inline it.
     """
-    doc = _get_core(f"{CORE}/{_core_path(league)}/seasons/{season}")
+    doc = _get_core(f"{CORE}/{_core_path(league)}/seasons/{season}", capture=capture)
     display_name = doc.get("displayName") or ""
     items = ((doc.get("types") or {}).get("items")) or []
     if not items:
@@ -345,7 +382,7 @@ def _published_types(league: str, season: int) -> Tuple[str, List[dict]]:
         start = str(item.get("startDate") or "")
         end = str(item.get("endDate") or "")
         if ref and not (name and start and end):
-            type_doc = _get_core(ref)
+            type_doc = _get_core(ref, capture=capture)
             name = name or str(type_doc.get("name") or "")
             start = start or str(type_doc.get("startDate") or "")
             end = end or str(type_doc.get("endDate") or "")
@@ -375,7 +412,7 @@ def _game_type_for_type(type_doc: dict) -> str:
     return POST
 
 
-def _type_events(league: str, season: int, type_id: str) -> List[str]:
+def _type_events(league: str, season: int, type_id: str, capture=None) -> List[str]:
     """Every event id in one published type's collection, from the $refs.
 
     One request per page at limit=100 (the project's pacing ceiling — smaller
@@ -388,7 +425,7 @@ def _type_events(league: str, season: int, type_id: str) -> List[str]:
     out: List[str] = []
     page = 1
     while True:
-        doc = _get_core(f"{url}?limit=100&page={page}")
+        doc = _get_core(f"{url}?limit=100&page={page}", capture=capture)
         for item in doc.get("items", []):
             m = re.search(r"/events/(\d+)", item.get("$ref", ""))
             if m:
@@ -542,16 +579,22 @@ def ingest(league: str, season: int, dry_run: bool = False,
     # a batch job, and an unpaced burst is exactly what trips ESPN's 403 wall
     # with no Retry-After (measured 2026-08-06; the wall outlives short
     # backoffs). Pace the shared fetcher for the duration of the run.
-    espn.set_min_interval(float(os.environ.get("LP_INGEST_MIN_INTERVAL") or 0.5))
-    display_name, types = _published_types(league, season)
-    print(f"{league} {season} ({display_name or 'no published label'}): "
-          f"{len(types)} published types")
-
     con = sqlite3.connect(DB)
     con.row_factory = sqlite3.Row
     if not dry_run:
+        # Check before the first publisher request. A run without the ledger
+        # must not obtain season/type/event/summary bodies then throw them away.
+        require_publisher_capture_schema(con)
         ensure_table(con)
     resolver = SoccerPlayerResolver(con, league=league)
+
+    capture = None if dry_run else (
+        lambda endpoint, payload: _capture_espn_payload(con, league, endpoint, payload)
+    )
+    espn.set_min_interval(float(os.environ.get("LP_INGEST_MIN_INTERVAL") or 0.5))
+    display_name, types = _published_types(league, season, capture=capture)
+    print(f"{league} {season} ({display_name or 'no published label'}): "
+          f"{len(types)} published types")
 
     ingested = 0
     resolved = 0
@@ -567,7 +610,7 @@ def ingest(league: str, season: int, dry_run: bool = False,
         type_id = type_doc.get("id") or ""
         name = type_doc.get("name") or f"type {type_id}"
         try:
-            event_ids = _type_events(league, season, type_id)
+            event_ids = _type_events(league, season, type_id, capture=capture)
         except Exception as exc:  # noqa: BLE001 - one type must not kill the run
             print(f"  [{type_id}] {name}: events fetch failed ({exc})")
             continue
@@ -612,6 +655,12 @@ def ingest(league: str, season: int, dry_run: bool = False,
                 print(f"    {league} {season} [{type_id}] event {game_id}: "
                       f"summary failed ({exc})")
                 continue
+
+            if not dry_run:
+                # This is intentionally before finality and stat extraction:
+                # a scheduled/cancelled summary is still publisher evidence,
+                # and every field outside our current mapping remains useful.
+                _capture_summary(con, league, game_id, summary)
 
             header = summary.get("header") or {}
             comp = (header.get("competitions") or [{}])[0]
