@@ -21,6 +21,8 @@ import urllib.request
 from collections import defaultdict
 from typing import Dict, List, Optional, Set, Tuple
 
+from publisher_capture import capture_payload
+
 
 DB = os.environ.get("LP_DB_PATH") or os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "data", "picks.db"
@@ -54,6 +56,30 @@ def fetch() -> Dict:
     req = urllib.request.Request(API, headers=HDR)
     with urllib.request.urlopen(req, timeout=30) as response:
         return json.loads(response.read().decode())
+
+
+def record_publisher_capture(data: Dict, dry_run: bool = False) -> Tuple[Optional[int], bool]:
+    """Persist the complete source response before any normalizing parser sees it.
+
+    The raw-capture migration is deliberately an explicit rollout prerequisite.
+    An ordinary ingest must not silently keep normalized props while discarding
+    fields from the response that produced them.  Dry-runs stay fully
+    non-mutating and say so at the call site.
+    """
+    if dry_run:
+        return None, False
+    con = sqlite3.connect(DB)
+    try:
+        result = capture_payload(
+            con, source=SOURCE, league=LEAGUE, endpoint=API, payload=data,
+        )
+        con.commit()
+        return result
+    except Exception:
+        con.rollback()
+        raise
+    finally:
+        con.close()
 
 
 def parse_ufc(data: Dict) -> Tuple[List[Dict], Dict]:
@@ -453,6 +479,15 @@ def main() -> int:
     dry_run = "--dry-run" in sys.argv
     print("Fetching one Underdog public bulk book...")
     data = fetch()
+    capture_id, capture_inserted = record_publisher_capture(data, dry_run=dry_run)
+    if dry_run:
+        print("DRY-RUN: full publisher response was not retained.")
+    else:
+        print(
+            "Publisher capture: {} row {}.".format(
+                "new" if capture_inserted else "re-observed", capture_id
+            )
+        )
     props, source_counts = parse_ufc(data)
     print(
         "Source: {scheduled_games} scheduled MMA games, {scheduled_players} fighters, "

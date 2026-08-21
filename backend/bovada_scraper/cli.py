@@ -10,11 +10,20 @@ import urllib.request
 
 import datetime as dt
 import sys
-from .config import API_BASE, LEAGUES, _MINTED_PLAYERS, _RESTED_LEAGUES, _STALE_TEAM_TAGS, _UNMAPPED_PLAYER_MARKETS  # noqa: E402
+from .config import API_BASE, LEAGUES, SCHEDULED_LEAGUES, _MINTED_PLAYERS, _RESTED_LEAGUES, _STALE_TEAM_TAGS, _UNMAPPED_PLAYER_MARKETS  # noqa: E402
 from .backoff import _load_backoff, _record_result, _save_backoff, _should_fetch  # noqa: E402
 from .client import fetch_events, parse_player_props  # noqa: E402
 from .direct import _event_start_iso, _ufc_direct_ingest, _wc_direct_ingest, _wc_event_date  # noqa: E402
 from .ingest import capture_snapshots, ingest_batch  # noqa: E402
+
+def targets_for_request(league: str):
+    """Select scheduled sources for ``all`` and retain explicit historical WC access."""
+    if league == "all":
+        return list(SCHEDULED_LEAGUES.items())
+    if league in LEAGUES:
+        return [(league, LEAGUES[league])]
+    return None
+
 
 def main():
     if len(sys.argv) < 2:
@@ -25,11 +34,8 @@ def main():
     do_ingest = "--ingest" in sys.argv
     do_capture = "--capture" in sys.argv
 
-    if league == "all":
-        targets = list(LEAGUES.items())
-    elif league in LEAGUES:
-        targets = [(league, LEAGUES[league])]
-    else:
+    targets = targets_for_request(league)
+    if targets is None:
         print(f"Unknown league: {league}")
         sys.exit(1)
 

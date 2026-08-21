@@ -40,6 +40,14 @@ LEAGUES = {
     "wta":  ("tennis", "wta"),
 }
 
+# ``all`` is the scheduled collection set.  Keep historical World Cup support
+# in LEAGUES for an explicit operator run, but never include it in a recurring
+# sweep: the tournament is over and an empty coupon is not worth a publisher
+# request every 30 minutes.
+SCHEDULED_LEAGUES = {
+    league: source for league, source in LEAGUES.items() if league != "wc"
+}
+
 HDR = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/131 Safari/537.36"}
 
 # Soccer (WC) market recognition rules — (match_substring, canonical_market, is_yesno)
