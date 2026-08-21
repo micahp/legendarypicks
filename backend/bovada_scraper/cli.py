@@ -1,18 +1,10 @@
 """cli — Bovada scraper cli layer."""
-import re
-import json
-import os
-import sys
-import collections
-import datetime as dt
-import unicodedata
-import urllib.request
-
 import datetime as dt
 import sys
 from .config import API_BASE, LEAGUES, SCHEDULED_LEAGUES, _MINTED_PLAYERS, _RESTED_LEAGUES, _STALE_TEAM_TAGS, _UNMAPPED_PLAYER_MARKETS  # noqa: E402
 from .backoff import _load_backoff, _record_result, _save_backoff, _should_fetch  # noqa: E402
-from .client import fetch_events, parse_player_props  # noqa: E402
+from .client import (events_from_coupon, fetch_coupon, parse_player_props,
+                     record_coupon_capture)  # noqa: E402
 from .direct import _event_start_iso, _ufc_direct_ingest, _wc_direct_ingest, _wc_event_date  # noqa: E402
 from .ingest import capture_snapshots, ingest_batch  # noqa: E402
 
@@ -52,13 +44,18 @@ def main():
             continue
         print(f"Fetching {key.upper()} from Bovada...")
         try:
-            events = fetch_events(sport, lg)
+            endpoint, coupon = fetch_coupon(sport, lg)
+            capture_id, inserted = record_coupon_capture(
+                coupon, league=key, endpoint=endpoint
+            )
+            events = events_from_coupon(coupon)
         except Exception as e:
             print(f"  FAIL: {e}")
             continue
 
         _record_result(key, backoff, len(events))
-        print(f"  {len(events)} events")
+        print(f"  capture {capture_id} ({'new body' if inserted else 'repeat body'}); "
+              f"{len(events)} events")
 
         for ev in events:
             props = parse_player_props(ev, key)
