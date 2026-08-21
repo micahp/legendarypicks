@@ -67,6 +67,7 @@ from routers import (  # noqa: E402
     nfl_draft_notes,
     nfl_mock_draft,
     nfl_schedule_api,
+    watch,
 )
 
 app = FastAPI(title="Legendary Picks Sports API", description="Multi-league sports data (ESPN)", version="2.0.0")
@@ -90,6 +91,7 @@ app.include_router(nfl_usage.router)
 app.include_router(nfl_draft_notes.router)
 app.include_router(nfl_mock_draft.router)
 app.include_router(nfl_schedule_api.router)
+app.include_router(watch.router)
 # League news engine router registered above (news) — see routers/news.py.
 
 
