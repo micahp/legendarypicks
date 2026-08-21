@@ -33,7 +33,7 @@ from .nfl import (
 )
 from .ufc import (
     _athlete_name_key, _athlete_name_parts, ufc_athlete, _ufc_method,
-    ufc_fight_history,
+    ufc_fight_history, FightHistory,
 )
 from .standings import (
     team_strength, _team_strength_rows, team_strength_standings,

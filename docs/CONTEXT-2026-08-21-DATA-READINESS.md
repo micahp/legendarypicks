@@ -23,9 +23,11 @@ document was applied to managed DEV, production, a timer, or either database.
   complete per-fighter ESPN statistics response the same way, including a
   valid response with no usable stat categories. It also retains the raw ESPN
   card scoreboard used to identify the fight, before normalizing that same
-  response—no second request. An HTTP 404 is not stored as a fabricated empty
-  source body. This completes the **current-card** UFC source boundary; the
-  separate historical athlete-history path still needs equivalent retention.
+  response—no second request. The historical runner also carries its athlete
+  overview, competition, status, and opponent documents. An HTTP 404 is not
+  stored as a fabricated empty source body. This completes the UFC
+  fight-stat-ingest source boundary; unrelated UFC fetchers elsewhere in the
+  repository are outside this claim.
 
 RotoWire is a separate, already-compliant retention boundary rather than a
 candidate ledger gap: `ingest_rotowire_archive.py` preserves the complete

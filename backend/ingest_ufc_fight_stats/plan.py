@@ -170,6 +170,11 @@ def build_plan(
         except SourceUnavailable as exc:
             plan.source_errors.append("{}: {}".format(target.name, str(exc)))
             continue
+        existing_endpoints = {source.endpoint for source in plan.source_payloads}
+        for endpoint, payload in getattr(fights, "source_payloads", []):
+            if endpoint not in existing_endpoints:
+                plan.source_payloads.append(SourcePayload(endpoint, payload))
+                existing_endpoints.add(endpoint)
         if not fights:
             emit("  {}: no completed fights in ESPN history".format(target.name))
             continue
