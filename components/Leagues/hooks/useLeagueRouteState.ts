@@ -16,6 +16,7 @@ export function useLeagueRouteState() {
   const isWorldCup = league === 'wc'
   const isUFC = league === 'ufc'
   const isNFL = league === 'nfl'
+  const isWeeklyFootball = league === 'nfl' || league === 'ncaaf'
 
   // Whether a league may be shown at all comes from the coverage registry, not from a
   // list in this file. The literal `['mlb','nba','nhl','nfl']` that used to live here
@@ -72,14 +73,14 @@ export function useLeagueRouteState() {
       ? queryTab as HubTab
       : validTabs[0]
     const urlDate = typeof router.query.date === 'string' ? router.query.date : null
-    const isNFL = league === 'nfl'
+    const isWeeklyFootball = league === 'nfl' || league === 'ncaaf'
 
     // ── Determine date + intent from URL ──
     let nextDate: string
     let nextIntent: DateIntent
 
-    // NFL: never use date from URL; always default to local today
-    const effectiveUrlDate = isNFL ? null : urlDate
+    // Football: never use date from URL; publisher weeks own navigation.
+    const effectiveUrlDate = isWeeklyFootball ? null : urlDate
 
     if (effectiveUrlDate && validScheduleDate(effectiveUrlDate)) {
       if (pendingAutoDate.current === effectiveUrlDate) {
@@ -103,9 +104,9 @@ export function useLeagueRouteState() {
     setNflWeek(urlWeek)
 
     // ── URL housekeeping ──
-    // NFL: never carry date; use week param instead
-    const wantsDateInUrl = !isNFL && nextIntent !== 'default' && nextTab === 'schedule'
-    const keepDateForIntent = !isNFL && nextIntent !== 'default' && nextTab !== 'schedule'
+    // Football: never carry date; use week param instead.
+    const wantsDateInUrl = !isWeeklyFootball && nextIntent !== 'default' && nextTab === 'schedule'
+    const keepDateForIntent = !isWeeklyFootball && nextIntent !== 'default' && nextTab !== 'schedule'
     const urlHasDate = router.query.date !== undefined
     const dateMismatch = wantsDateInUrl
       ? router.query.date !== nextDate
@@ -118,7 +119,7 @@ export function useLeagueRouteState() {
         league: router.query.league || league,
         tab: nextTab,
       }
-      if (!isNFL && nextIntent !== 'default') {
+      if (!isWeeklyFootball && nextIntent !== 'default') {
         query.date = nextDate
       } else {
         delete query.date

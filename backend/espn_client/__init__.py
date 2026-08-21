@@ -25,7 +25,12 @@ from .scoreboard import (
     neighbor_dates, _normalize_team_events, scoreboard_raw, games,
     _ny_date, _slate_day, scoreboard_raw_range, games_by_day,
 )
-from .nfl import nfl_schedule_weeks, nfl_schedule_week_games, schedule_event_starts
+from .nfl import (
+    schedule_weeks, schedule_week_games,
+    nfl_schedule_weeks, nfl_schedule_week_games,
+    ncaaf_schedule_weeks, ncaaf_schedule_week_games,
+    schedule_event_starts,
+)
 from .ufc import (
     _athlete_name_key, _athlete_name_parts, ufc_athlete, _ufc_method,
     ufc_fight_history,

@@ -13,16 +13,16 @@ import espn_client
 from .scoreboard import _normalize_team_events
 
 
-def nfl_schedule_weeks(season):
-    """Return ESPN's ordered NFL phase/week catalog for one league season."""
+def schedule_weeks(league_key, season):
+    """Return ESPN's ordered calendar phases/weeks for an ESPN football league."""
     season = int(season)
-    _, path = espn_client._check("nfl")
+    _, path = espn_client._check(league_key)
     url = espn_client._SITE.format(path=path) + f"/scoreboard?dates={season}&limit=1"
     data = espn_client._get(url, ttl=900)
     league = (data.get("leagues") or [{}])[0]
     league_season = league.get("season") or {}
     if espn_client._int(league_season.get("year")) != season:
-        raise ValueError(f"ESPN NFL calendar unavailable for season {season}")
+        raise ValueError(f"ESPN {league_key.upper()} calendar unavailable for season {season}")
 
     phases = []
     for phase in league.get("calendar") or []:
@@ -53,16 +53,16 @@ def nfl_schedule_weeks(season):
                 "weeks": entries,
             })
     if not phases:
-        raise ValueError(f"ESPN NFL calendar has no weeks for season {season}")
+        raise ValueError(f"ESPN {league_key.upper()} calendar has no weeks for season {season}")
     return phases
 
 
-def nfl_schedule_week_games(season, season_type, week):
-    """Return one ESPN NFL week, filtered defensively to the requested identity."""
+def schedule_week_games(league_key, season, season_type, week):
+    """Return one requested league week, fail-closed to its ESPN identity."""
     season = int(season)
     season_type = int(season_type)
     week = int(week)
-    _, path = espn_client._check("nfl")
+    _, path = espn_client._check(league_key)
     url = (
         espn_client._SITE.format(path=path)
         + f"/scoreboard?dates={season}&seasontype={season_type}&week={week}&limit=100"
@@ -80,6 +80,26 @@ def nfl_schedule_week_games(season, season_type, week):
             continue
         events.append(event)
     return _normalize_team_events(events)
+
+
+def nfl_schedule_weeks(season):
+    """Compatibility wrapper for the public NFL schedule calendar API."""
+    return schedule_weeks("nfl", season)
+
+
+def nfl_schedule_week_games(season, season_type, week):
+    """Compatibility wrapper for the public NFL week games API."""
+    return schedule_week_games("nfl", season, season_type, week)
+
+
+def ncaaf_schedule_weeks(season):
+    """NCAAF's publisher calendar, including regular season and bowls/CFP."""
+    return schedule_weeks("ncaaf", season)
+
+
+def ncaaf_schedule_week_games(season, season_type, week):
+    """NCAAF games for one publisher-defined season phase/week."""
+    return schedule_week_games("ncaaf", season, season_type, week)
 
 
 def schedule_event_starts(league, start_date, end_date, limit=1000):

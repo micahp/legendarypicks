@@ -542,6 +542,28 @@ export const SportsService = {
       return null
     }
   },
+
+  getLeagueScheduleWeeks: async (league: 'nfl' | 'ncaaf', anchor: string): Promise<NflScheduleWeeksResponse | null> => {
+    try {
+      const res = await axios.get(`${API_BASE_URL}/${league}/schedule-weeks`, { params: { anchor } })
+      return res.data
+    } catch (err) {
+      console.error(`Error fetching ${league.toUpperCase()} schedule weeks`, err)
+      return null
+    }
+  },
+
+  getLeagueScheduleWeek: async (league: 'nfl' | 'ncaaf', season: number, seasonType: number, week: number): Promise<NflScheduleWeekResponse | null> => {
+    try {
+      const res = await axios.get(`${API_BASE_URL}/${league}/schedule-week`, {
+        params: { season, season_type: seasonType, week },
+      })
+      return res.data
+    } catch (err) {
+      console.error(`Error fetching ${league.toUpperCase()} schedule week`, err)
+      return null
+    }
+  },
 }
 
 export interface ScheduleDatesResponse {
