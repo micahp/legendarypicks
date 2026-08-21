@@ -190,12 +190,15 @@ or different than recorded:**
       tennis. **The props exist and look healthy on the board.**
 - [ ] **Link tennis `prop_games`.** 274 of 325 prod ATP/WTA rows have no `espn_event_id` (16%
       linked); current dev is 53 of 63 linked, leaving 110 of 1,017 props unable to reach or
-      settle from a publisher event. The matcher and budget guards already landed (`b8886e9`);
-      this needs a run, not a build. Note `reference_espn_folds_tennis_names`: ESPN folds
-      accents in tennis names but not soccer ones.
+      settle from a publisher event. Candidate `7ca4fbb` resolves all 1,017 props in a clone,
+      including six duplicate fixtures folded into their already-linked event rows; managed data
+      has not been changed. Note `reference_espn_folds_tennis_names`: ESPN folds accents in
+      tennis but not soccer ones.
 - [ ] **Settle tennis.** 0 of 913 on prod, 0 of 1,017 on dev. Candidate `f4f8cd2` grades
-      linked final matches from the ESPN tournament scoreboard; it still requires landing and
-      a bounded clone rehearsal before any managed-data run.
+      linked final matches from the ESPN tournament scoreboard; clone evidence is 913 numeric
+      results, two legitimate pushes, 58 pre-match props, and 46 retired/walkover props left
+      retryable pending an authoritative settlement-policy source. It still requires landing
+      before any managed-data run.
 - [ ] **Grade or void the World Cup rows honestly.** 392 prod and 1,128 dev `prop_results`
       rows have `actual_value` NULL **and** `hit` NULL. A settled count that grades nothing is
       presence, not integrity.
