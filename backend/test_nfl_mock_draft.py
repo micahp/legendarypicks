@@ -297,8 +297,8 @@ class TestNflMockDraft(unittest.TestCase):
     #  Pool endpoint
     # ------------------------------------------------------------------
 
-    def test_pool_returns_players(self):
-        """Pool returns the full published universe with availability data."""
+    def test_pool_returns_draftable_players(self):
+        """Pool returns only players the draft engine can actually select."""
         resp = client.get(f"/api/nfl/mock-draft/pool?season={self.SEASON}")
         self.assertEqual(resp.status_code, 200)
         body = resp.json()
@@ -306,13 +306,11 @@ class TestNflMockDraft(unittest.TestCase):
         self.assertEqual(body["season"], self.SEASON)
         self.assertGreaterEqual(body["count"], 1)
 
-        # The pool is every nfl_adp row for the season — player 8 has neither a
-        # published ADP nor ownership, but is still a pool entry rendering a
-        # "—" ADP (v0.7.0 T2: free agents are in the universe, honestly empty).
+        # Player 8 has no published ADP and must not cross the public endpoint:
+        # the client engine rejects null-ADP rows before a draft starts.
         by_id = {p["player_id"]: p for p in body["players"]}
-        self.assertIn(8, by_id)
-        self.assertIsNone(by_id[8]["adp"])
-        self.assertEqual(by_id[8]["percent_owned"], 0.0)
+        self.assertNotIn(8, by_id)
+        self.assertTrue(all(player["adp"] is not None for player in body["players"]))
         self.assertNotIn(9, by_id)
         self.assertLessEqual(
             {p["position"] for p in body["players"]},
@@ -373,13 +371,13 @@ class TestNflMockDraft(unittest.TestCase):
             nfl_mock_draft._clear_pool_cache()
 
     def test_pool_ordering(self):
-        """Real ADP players come first, sorted by ADP ascending."""
+        """Draftable players are sorted by their published ADP ascending."""
         resp = client.get(f"/api/nfl/mock-draft/pool?season={self.SEASON}")
         body = resp.json()
         adp_values = [p["adp"] for p in body["players"]]
 
-        published_adp = [a for a in adp_values if a is not None]
-        self.assertEqual(published_adp, sorted(published_adp))
+        self.assertTrue(all(adp is not None for adp in adp_values))
+        self.assertEqual(adp_values, sorted(adp_values))
 
     def test_pool_availability_data(self):
         """Pool includes sample, games_played, games_missed."""

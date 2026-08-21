@@ -34,12 +34,14 @@ from ..nfl_offseason import (
 
 @router.get("/api/nfl/mock-draft/pool")
 def pool(season: int = Query(...)):
-    """Return the full published player universe for mock drafts (v0.7.0 T2).
+    """Return the published, draftable player pool.
 
-    No cap, no active/ownership filter: every nfl_adp row for the season is a
-    pool entry — free agents included, rendering a "—" ADP. D/ST carry ESPN's
-    published PPR rank as their ADP (v0.7.0 T1). X-Device-Id is NOT required
-    for this endpoint — it is read-only public data.
+    A player reaches the draft engine only with a supported fantasy position
+    and a publisher-backed ADP.  Returning every unranked roster/free-agent
+    row made this one public read several megabytes larger than the game can
+    use, and forced nginx to spool it to disk for slow clients.  D/ST use the
+    same ESPN PPR-rank-as-ADP rule as the engine.  X-Device-Id is not required:
+    this remains read-only public data.
     """
     if season != _CURRENT_SEASON:
         return _json({"error": f"season must be {_CURRENT_SEASON}"}, status=400)
@@ -141,6 +143,10 @@ def pool(season: int = Query(...)):
             "CASE WHEN na.position = 'DEF' THEN na.adp_ppr ELSE na.adp END AS adp"
             if (_has_ppr and _has_pos) else "na.adp"
         )
+        _draftable_adp_predicate = (
+            "(CASE WHEN na.position = 'DEF' THEN na.adp_ppr ELSE na.adp END) IS NOT NULL"
+            if (_has_ppr and _has_pos) else "na.adp IS NOT NULL"
+        )
 
         rows = connection.execute(
             f"""SELECT p.id AS player_id, p.name, {_pos_select}, p.team,
@@ -149,7 +155,8 @@ def pool(season: int = Query(...)):
                     JOIN nfl_adp na ON na.player_id = p.id AND na.season = ?
                     {_proj_join}
                     WHERE p.league = 'nfl'
-                      AND {_position_expr} IN ({','.join('?' for _ in _DRAFT_POSITIONS)})""",
+                      AND {_position_expr} IN ({','.join('?' for _ in _DRAFT_POSITIONS)})
+                      AND {_draftable_adp_predicate}""",
             (season, *_proj_params, *_DRAFT_POSITIONS),
         ).fetchall()
 
