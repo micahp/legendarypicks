@@ -1,5 +1,24 @@
 # Changelog
 
+## v0.8.6
+
+### UFC UnderDog props now fail closed without leaving known fights behind
+
+- **Repaired all four August 22 UFC fights that UnderDog published but the
+  identity spine rejected.** ESPN card `600060493` independently confirms the
+  authoritative display names: `Reinier de Ridder`, `Serghei Spivac`, `Wes
+  Schultz`, and `Chris Padilla`. The reviewed migration preserves the prior
+  and UnderDog variants as aliases and binds only their immutable UnderDog
+  fighter keys; it never fuzzy-matches or creates a new player.
+- **Made the review set reproducible and atomic.** The repair now validates
+  unique candidates and refuses conflicting native keys before committing the
+  full set. Its focused fixture covers all four fights alongside existing
+  source-key, alias, and duplicate-game protections.
+- **Verified current DEV coverage from one source fetch:** 13 scheduled UFC
+  fights, 26 fighters, 170 balanced UnderDog props; all 13/13 games resolved,
+  with zero rejected games or queued fighters. Production remains unchanged;
+  its current props database has no UnderDog rows.
+
 ## v0.8.5 (unreleased)
 
 **Already running on prod.** The backend container was rebuilt 2026-08-19 23:13 carrying
