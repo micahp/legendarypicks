@@ -209,6 +209,31 @@ class UnderdogIdentityTests(unittest.TestCase):
                 os.environ["LP_DB_PATH"] = old_path
         self.assertEqual(self.scalar("SELECT COUNT(*) FROM prop_games"), 1)
 
+    def test_august_22_reviewed_identities_bind_all_four_rejected_fights(self):
+        current_card_reviews = reviewed.REVIEWS[1:]
+        player_ids = {}
+        for review in current_card_reviews:
+            player_ids[review["canonical_name"]] = self.player(review["existing_name"])
+
+        applied = reviewed.apply_reviews(self.con, current_card_reviews)
+        self.con.commit()
+
+        self.assertEqual(applied, [player_ids[review["canonical_name"]] for review in current_card_reviews])
+        for review in current_card_reviews:
+            player_id = player_ids[review["canonical_name"]]
+            self.assertEqual(
+                self.con.execute("SELECT name FROM players WHERE id=?", (player_id,)).fetchone()["name"],
+                review["canonical_name"],
+            )
+            self.assertEqual(
+                self.con.execute(
+                    "SELECT player_id FROM player_source_ids WHERE source='underdog' "
+                    "AND league='ufc' AND source_player_key=?",
+                    (review["source_player_key"],),
+                ).fetchone()["player_id"],
+                player_id,
+            )
+
 
 class FoldedGameKeepsItsSourceMapping(unittest.TestCase):
     """A fold moves the mapping too, and a mapping left behind self-heals.
