@@ -3,12 +3,9 @@ import os
 import sqlite3
 import tempfile
 import unittest
-from unittest import mock
 
 from fastapi import HTTPException
-import ingest_ufc_rankings as rankings_ingest
 from ingest_ufc_rankings import P4P_DIVISIONS, WEIGHT_DIVISIONS, ensure_table, store
-from migrate_publisher_captures import apply_database
 from migrate_ufc_rankings_to_prod import promote
 from routers import games as games_router
 from verify_ufc_rankings import validate_payload
@@ -26,44 +23,6 @@ def complete_groups(fighter="Ranked Fighter"):
 
 
 class UfcIngestTests(unittest.TestCase):
-    def test_unmigrated_target_rejects_before_rankings_request(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            path = os.path.join(tmp, "rankings.db")
-            sqlite3.connect(path).close()
-            previous_path = rankings_ingest.DB_PATH
-            rankings_ingest.DB_PATH = path
-            try:
-                with mock.patch.object(
-                    rankings_ingest, "fetch_html", side_effect=AssertionError("must not fetch")
-                ):
-                    with self.assertRaisesRegex(RuntimeError, "publisher capture schema"):
-                        rankings_ingest.main()
-            finally:
-                rankings_ingest.DB_PATH = previous_path
-
-    def test_store_retains_complete_rankings_html_before_replacing_rows(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            path = os.path.join(tmp, "rankings.db")
-            with sqlite3.connect(path) as con:
-                ensure_table(con)
-                con.execute("INSERT INTO ufc_rankings VALUES ('Old',1,'Last Good',0,'old')")
-            apply_database(path)
-            raw_html = "<html><body><p>publisher-only source body</p></body></html>"
-            with sqlite3.connect(path) as con:
-                store(con, complete_groups(), "captured", raw_html=raw_html)
-                captured = con.execute(
-                    "SELECT source, league, endpoint, payload_json FROM publisher_captures"
-                ).fetchone()
-                rows = con.execute("SELECT COUNT(*) FROM ufc_rankings").fetchone()[0]
-
-        self.assertEqual(("ufc.com", "ufc"), captured[:2])
-        self.assertIn("publisher-only source body", captured[3])
-        expected_rows = sum(
-            len(group["fighters"]) + int(bool(group["champion"]))
-            for group in complete_groups()
-        )
-        self.assertEqual(expected_rows, rows)
-
     def test_incomplete_scrape_does_not_delete_last_good_data(self):
         con = sqlite3.connect(":memory:")
         ensure_table(con)

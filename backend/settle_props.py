@@ -5,10 +5,8 @@ settle_props.py — Drive the settlement pipeline.
 Find all prop_games that are FINAL and have unsettled props, settle each via settlement.py.
 Idempotent: re-running is safe (skips already-settled props).
 
-Usage: venv/bin/python settle_props.py [--dry-run] [--league nfl] [--game-id 123] [--since YYYY-MM-DD] [--through YYYY-MM-DD] [--limit 5]
+Usage: venv/bin/python settle_props.py [--dry-run]
 """
-import argparse
-import datetime as dt
 import sys, os, sqlite3
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -17,25 +15,12 @@ from settlement import settle_game
 DB = os.environ.get("LP_DB_PATH") or os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "picks.db")
 
 
-def _candidate_games(con, leagues=None, game_ids=None, since=None, through=None, limit=None,
-                     include_without_final=False):
-    """Unsettled games, optionally constrained before any publisher request."""
-    clauses = ["pg.espn_event_id != ''" if include_without_final
-               else "(pg.final_home IS NOT NULL OR pg.espn_event_id != '')"]
-    params = []
-    if leagues:
-        clauses.append("pg.league IN ({})".format(",".join("?" for _ in leagues)))
-        params.extend(leagues)
-    if game_ids:
-        clauses.append("pg.id IN ({})".format(",".join("?" for _ in game_ids)))
-        params.extend(game_ids)
-    if since:
-        clauses.append("pg.date >= ?")
-        params.append(since)
-    if through:
-        clauses.append("pg.date <= ?")
-        params.append(through)
-    query = """
+def main(dry_run: bool = False):
+    con = sqlite3.connect(DB)
+    con.row_factory = sqlite3.Row
+
+    # Find finaled games with unsettled props
+    games = con.execute("""
         SELECT DISTINCT pg.id, pg.league, pg.home, pg.away, pg.espn_event_id,
                pg.final_home, pg.final_away, pg.date,
                COUNT(p.id) as total_props,
@@ -43,32 +28,27 @@ def _candidate_games(con, leagues=None, game_ids=None, since=None, through=None,
         FROM prop_games pg
         JOIN props p ON p.game_id = pg.id
         LEFT JOIN prop_results pr ON pr.prop_id = p.id
-        WHERE {}
+        WHERE pg.final_home IS NOT NULL OR pg.espn_event_id != ''
         GROUP BY pg.id
         HAVING result_rows < total_props
-        ORDER BY pg.date DESC, pg.id DESC
-    """.format(" AND ".join(clauses))
-    if limit is not None:
-        query += " LIMIT ?"
-        params.append(limit)
-    return con.execute(query, params).fetchall()
-
-
-def main(dry_run: bool = False, leagues=None, game_ids=None, since=None, through=None, limit=None):
-    con = sqlite3.connect(DB)
-    con.row_factory = sqlite3.Row
-
-    # Find finaled games with unsettled props
-    games = _candidate_games(con, leagues=leagues, game_ids=game_ids, since=since,
-                             through=through, limit=limit)
+        ORDER BY pg.date DESC
+    """).fetchall()
 
     if not games:
         print("No finaled games with unsettled props.")
         # Try games with espn_event_id but no finals
-        games_with_espn = _candidate_games(
-            con, leagues=leagues, game_ids=game_ids, since=since, through=through, limit=limit,
-            include_without_final=True
-        )
+        games_with_espn = con.execute("""
+            SELECT DISTINCT pg.id, pg.league, pg.home, pg.away, pg.espn_event_id,
+                   pg.date, COUNT(p.id) as total_props,
+                   COUNT(pr.prop_id) as result_rows
+            FROM prop_games pg
+            JOIN props p ON p.game_id = pg.id
+            LEFT JOIN prop_results pr ON pr.prop_id = p.id
+            WHERE pg.espn_event_id != '' AND pg.espn_event_id IS NOT NULL
+            GROUP BY pg.id
+            HAVING result_rows < total_props
+            ORDER BY pg.date DESC
+        """).fetchall()
         if games_with_espn:
             print(f"  {len(games_with_espn)} games with ESPN IDs but no finals (will check ESPN)")
         else:
@@ -127,32 +107,5 @@ def main(dry_run: bool = False, leagues=None, game_ids=None, since=None, through
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--dry-run", action="store_true")
-    parser.add_argument("--league", action="append",
-                        help="restrict to one league; repeat for a bounded multi-league run")
-    parser.add_argument("--game-id", action="append", type=int,
-                        help="restrict to an exact prop_games.id; repeat to inspect several")
-    parser.add_argument("--since", metavar="YYYY-MM-DD",
-                        help="consider only games on or after this date")
-    parser.add_argument("--through", metavar="YYYY-MM-DD",
-                        help="consider only games on or before this date")
-    parser.add_argument("--limit", type=int,
-                        help="maximum games to inspect after league filtering")
-    args = parser.parse_args()
-    if args.limit is not None and args.limit < 1:
-        parser.error("--limit must be positive")
-    if args.game_id and any(game_id < 1 for game_id in args.game_id):
-        parser.error("--game-id must be positive")
-    for option, value in (("--since", args.since), ("--through", args.through)):
-        if not value:
-            continue
-        try:
-            if dt.date.fromisoformat(value).isoformat() != value:
-                raise ValueError
-        except ValueError:
-            parser.error("{} must be YYYY-MM-DD".format(option))
-    if args.since and args.through and args.since > args.through:
-        parser.error("--since must not be after --through")
-    main(dry_run=args.dry_run, leagues=args.league, game_ids=args.game_id,
-         since=args.since, through=args.through, limit=args.limit)
+    dry = "--dry-run" in sys.argv
+    main(dry_run=dry)

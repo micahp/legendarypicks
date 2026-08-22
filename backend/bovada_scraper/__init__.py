@@ -13,7 +13,7 @@ objects imported from .config, so tests that clear them and parsers
 that append to them share state exactly as before.
 """
 from .config import (  # noqa: F401
-    API_BASE, BOVADA, LEAGUES, SCHEDULED_LEAGUES, HDR, _SOCCER_MARKET_RULES, _WC_SKIP_KW,
+    API_BASE, BOVADA, LEAGUES, HDR, _SOCCER_MARKET_RULES, _WC_SKIP_KW,
     MARKET_MAP, _BACKOFF_PATH, _EMPTY_RUNS_BEFORE_BACKOFF, _BACKOFF_HOURS,
     _MLS_PLAYER_MARKETS, _MLS_PLAYER_GROUPS, _MLS_CLUB_CODES,
     _MLS_NON_PLAYER_OUTCOMES, _UNMAPPED_PLAYER_MARKETS, _STALE_TEAM_TAGS,
@@ -34,7 +34,7 @@ from .direct import (  # noqa: F401
     _find_existing_ufc_game_for_players, _ufc_direct_ingest,
 )
 from .ingest import ingest_batch, capture_snapshots  # noqa: F401
-from .cli import main, _run_report, targets_for_request  # noqa: F401
+from .cli import main, _run_report  # noqa: F401
 
 if __name__ == "__main__":
     main()

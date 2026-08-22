@@ -235,7 +235,6 @@ def _games_from_payload(league, date, d):
                     st = status.get("type", {})
                     players = {}
                     for c in comp.get("competitors", []):
-                        ath = {}
                         # Singles: athlete object. Doubles: team object with roster.
                         if c.get("type") == "team":
                             roster = c.get("roster", {})
@@ -249,11 +248,6 @@ def _games_from_payload(league, date, d):
                             "abbrev": abbrev,
                             "name": name,
                             "score": None,
-                            # Tennis competitors are athletes rather than teams.
-                            # Preserve ESPN's native athlete ID so a prop game
-                            # can be linked by its already-resolved players,
-                            # not a lossy display-name comparison.
-                            "athlete_id": str(c.get("id") or ath.get("id") or "") or None,
                         }
                     # Extract per-set game scores from linescores for each competitor
                     for c in comp.get("competitors", []):

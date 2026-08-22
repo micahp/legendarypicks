@@ -23,9 +23,7 @@ interface NflScheduleState {
   dateGroups: [string, Game[]][]
 }
 
-export function useFootballScheduleWeeks(
-  league: 'nfl' | 'ncaaf', enabled: boolean, explicitWeek: string | null,
-): NflScheduleState {
+export function useNflScheduleWeeks(enabled: boolean, explicitWeek: string | null): NflScheduleState {
   const [catalog, setCatalog] = useState<NflScheduleWeeksResponse | null>(null)
   const [catalogError, setCatalogError] = useState<string | null>(null)
   const [catalogLoading, setCatalogLoading] = useState(true)
@@ -78,22 +76,22 @@ export function useFootballScheduleWeeks(
     let ignore = false
     setCatalogLoading(true)
     setCatalogError(null)
-    SportsService.getLeagueScheduleWeeks(league, localToday()).then(data => {
+    SportsService.getNflScheduleWeeks(localToday()).then(data => {
       if (ignore) return
       if (data) {
         setCatalog(data)
       } else {
-        setCatalogError(`Unable to load ${league.toUpperCase()} schedule.`)
+        setCatalogError('Unable to load NFL schedule.')
       }
       setCatalogLoading(false)
     }).catch(() => {
       if (!ignore) {
-        setCatalogError(`Unable to load ${league.toUpperCase()} schedule.`)
+        setCatalogError('Unable to load NFL schedule.')
         setCatalogLoading(false)
       }
     })
     return () => { ignore = true }
-  }, [enabled, league])
+  }, [enabled])
 
   // Fetch games for selected week
   useEffect(() => {
@@ -105,12 +103,12 @@ export function useFootballScheduleWeeks(
     setGames([])
     setGamesLoading(true)
     setGamesError(null)
-    SportsService.getLeagueScheduleWeek(league, catalog.season, weekEntry.season_type, weekEntry.week).then(data => {
+    SportsService.getNflScheduleWeek(catalog.season, weekEntry.season_type, weekEntry.week).then(data => {
       if (ignore) return
       if (data && Array.isArray(data.games)) {
         setGames(data.games.map((g: any) => ({
-          ...normalizeGame(g, league),
-          league: league.toUpperCase(),
+          ...normalizeGame(g, 'nfl'),
+          league: 'NFL',
         })))
       } else {
         setGamesError('Unable to load games.')
@@ -123,7 +121,7 @@ export function useFootballScheduleWeeks(
       }
     })
     return () => { ignore = true }
-  }, [enabled, league, catalog?.season, weekEntry?.season_type, weekEntry?.week])
+  }, [enabled, catalog?.season, weekEntry?.season_type, weekEntry?.week])
 
   // Group games by local date
   const dateGroups = useMemo(() => {
@@ -151,9 +149,4 @@ export function useFootballScheduleWeeks(
     nextWeekKey,
     dateGroups,
   }
-}
-
-/** Backwards-compatible NFL call site; NCAAF uses the shared hook directly. */
-export function useNflScheduleWeeks(enabled: boolean, explicitWeek: string | null): NflScheduleState {
-  return useFootballScheduleWeeks('nfl', enabled, explicitWeek)
 }

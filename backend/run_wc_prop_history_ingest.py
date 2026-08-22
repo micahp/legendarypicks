@@ -591,16 +591,6 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     mode.add_argument("--apply", action="store_true")
     parser.add_argument("--db", default=os.environ.get("LP_DB_PATH") or DEFAULT_DB)
     args = parser.parse_args(argv)
-    # This is a batch publisher, never a request handler.  Its historical
-    # scoreboard scan must therefore opt into pacing and a persistent cache;
-    # otherwise the shared client correctly refuses after 50 requests and the
-    # plan can never establish complete source coverage.
-    cache_dir = os.environ.get("LP_ESPN_CACHE_DIR") or os.path.join(
-        os.path.dirname(os.path.abspath(args.db)), ".espn-wc-history-cache")
-    espn.set_disk_cache(cache_dir, ttl=7 * 24 * 60 * 60)
-    espn.set_min_interval(1.25)
-    espn.set_host_budget(50, cooldown=60)
-    espn.set_on_exhausted("sleep")
     try:
         run(args.db, apply=args.apply)
     except Exception as exc:

@@ -16,46 +16,12 @@ bound to the wrong game of a series (85 MLB rows on 2026-08-11).
 from __future__ import annotations  # this box runs 3.8; `int | None` is 3.10 syntax
 
 import sys, os, sqlite3, re, unicodedata
-from urllib.error import HTTPError
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import espn_client as espn
 from prop_game_merge import fold_prop_game
-from publisher_capture import (
-    capture_http_error,
-    capture_payload,
-    require_publisher_capture_schema,
-)
 
 DB = os.environ.get("LP_DB_PATH") or os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "picks.db")
-
-
-def _scoreboard_endpoint(league: str, date: str) -> str:
-    """The native scoreboard URL that produced a linker candidate slate."""
-    _, path = espn._check(league)
-    return espn._SITE.format(path=path) + "/scoreboard?dates=" + date.replace("-", "")
-
-
-def _scoreboard_games(league: str, date: str, connection, *, capture: bool) -> list:
-    """Capture a source scoreboard before normalizing it for event linking."""
-    endpoint = _scoreboard_endpoint(league, date)
-    try:
-        raw = espn.scoreboard_raw(league, date)
-    except HTTPError as error:
-        if capture:
-            capture_http_error(
-                connection, source="espn", league=league, endpoint=endpoint,
-                error=error,
-            )
-            connection.commit()
-        raise
-    if capture:
-        capture_payload(
-            connection, source="espn", league=league,
-            endpoint=endpoint, payload=raw,
-        )
-    from espn_client.scoreboard import _games_from_payload
-    return _games_from_payload(league, date, raw)
 
 # Team name → abbreviation lookup (built from ESPN data on the fly + a static fallback)
 # ESPN returns team abbrev in game data, so we match by abbreviation.
@@ -390,64 +356,6 @@ def _link_ufc_fight(game_row, espn_games):
     return ""
 
 
-def _link_tennis_match(con: sqlite3.Connection, game_row, espn_games: list) -> str:
-    """Link an ATP/WTA prop game by its two already-published ESPN athletes.
-
-    Tennis display names are not a stable crosswalk: ESPN may omit a surname
-    (``Daniel Merida`` vs the book's ``Daniel Merida Aguilar``) or reverse the
-    order (``Wang Xinyu`` vs ``Xinyu Wang``).  The props have already resolved
-    both people to ESPN IDs, which is stronger evidence than a time supplied by
-    a sportsbook.  When only one side has a prop, pair that ID with the exact
-    two-name matchup.  Anything absent or ambiguous remains unlinked.
-    """
-    if con is None:
-        return ""
-    rows = con.execute("""
-        SELECT DISTINCT pl.espn_id
-        FROM props p JOIN players pl ON pl.id = p.player_id
-        WHERE p.game_id=? AND pl.league=? AND NULLIF(pl.espn_id, '') IS NOT NULL
-    """, (game_row["id"], game_row["league"])).fetchall()
-    wanted = {str(row["espn_id"] if hasattr(row, "keys") else row[0]) for row in rows}
-    if not wanted or len(wanted) > 2:
-        return ""
-
-    def _name_tokens(value):
-        folded = unicodedata.normalize("NFKD", str(value or "")).encode(
-            "ascii", "ignore").decode("ascii").lower()
-        return set(re.findall(r"[a-z0-9]+", folded))
-
-    def _same_tennis_name(left, right):
-        """Accept reordering or one publisher-omitted surname, never fuzzy text."""
-        a, b = _name_tokens(left), _name_tokens(right)
-        if len(a) < 2 or len(b) < 2:
-            return False
-        if a == b:
-            return True
-        short, long = (a, b) if len(a) < len(b) else (b, a)
-        return short <= long and len(long) == len(short) + 1
-
-    matches = {}
-    for game in espn_games:
-        sides = [game.get("home") or {}, game.get("away") or {}]
-        published = {str(side.get("athlete_id") or "") for side in sides}
-        published.discard("")
-        published_names = [side.get("name") or "" for side in sides]
-        prop_names_list = [game_row["home"] or "", game_row["away"] or ""]
-        names_match = (
-            (_same_tennis_name(prop_names_list[0], published_names[0])
-             and _same_tennis_name(prop_names_list[1], published_names[1]))
-            or (_same_tennis_name(prop_names_list[0], published_names[1])
-                and _same_tennis_name(prop_names_list[1], published_names[0]))
-        )
-        if wanted <= published and names_match:
-            game_id = str(game.get("game_id") or "")
-            if game_id:
-                matches[game_id] = game
-    if len(matches) == 1:
-        return next(iter(matches))
-    return ""
-
-
 def link_prop_game(con: sqlite3.Connection, game_row, espn_games: list) -> str:
     """Link one prop_game to an ESPN game. Returns espn_event_id or ''.
 
@@ -471,8 +379,6 @@ def link_prop_game(con: sqlite3.Connection, game_row, espn_games: list) -> str:
     league = game_row["league"]
     if league == "ufc":
         return _link_ufc_fight(game_row, espn_games)
-    if league in {"atp", "wta"}:
-        return _link_tennis_match(con, game_row, espn_games)
 
     home_norm = _norm_team(game_row["home"], league)
     away_norm = _norm_team(game_row["away"], league)
@@ -539,10 +445,6 @@ def _scope(league: str, relink: bool, days: int | None) -> tuple[str, list]:
     tonight; a backfill is a deliberate, scoped, human-run thing.
     """
     clauses = [] if relink else ["(espn_event_id IS NULL OR espn_event_id = '')"]
-    # Orphaned prop_game shells cannot be crosswalked and used to consume the
-    # entire ESPN request budget on old tennis dates.  Only a row with props
-    # has the identity evidence this tool is authorized to link.
-    clauses.append("EXISTS (SELECT 1 FROM props WHERE props.game_id = prop_games.id)")
     params: list = []
     if league:
         clauses.append("league = ?")
@@ -579,13 +481,6 @@ def link_existing_games(con: sqlite3.Connection, dry_run: bool = False,
         print("All prop_games already linked.")
         return 0
 
-    # A real link run changes durable game identity, so it must retain the raw
-    # scoreboard that justified that change.  Check before the first request;
-    # dry runs deliberately remain side-effect free and therefore do not claim
-    # a durable source capture.
-    if not dry_run:
-        require_publisher_capture_schema(con)
-
     # Group by date+league to minimize ESPN calls
     from collections import defaultdict
     by_date_league = defaultdict(list)
@@ -604,7 +499,7 @@ def link_existing_games(con: sqlite3.Connection, dry_run: bool = False,
         seen_ids = set()
         for day in espn.neighbor_dates(date):
             try:
-                for eg in _scoreboard_games(league, day, con, capture=not dry_run):
+                for eg in espn.games(league, day):
                     if str(eg.get("game_id")) not in seen_ids:
                         seen_ids.add(str(eg.get("game_id")))
                         espn_games.append(eg)

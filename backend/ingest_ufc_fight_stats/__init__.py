@@ -21,15 +21,15 @@ from .names import _name_key, _name_parts, _parse_date, _opponent_for  # noqa: F
 from .targets import load_targets, _dedupe_games, FighterTarget  # noqa: F401
 from .card import (  # noqa: F401
     _card_for_date, _fighters_from_card, resolve_from_card,
-    _identity_for_existing_id, CardIdentity, card_source_payloads,
+    _identity_for_existing_id, CardIdentity,
 )
 from .fetch import (  # noqa: F401
     fetch_fight_history, fetch_stats, fetch_fight_status, _error_kind,
-    _retry_delay, _retryable, SourceUnavailable, StatsPayload,
+    _retry_delay, _retryable, SourceUnavailable,
 )
 from .plan import (  # noqa: F401
     _prepared_log, _resolve_target_for_plan, build_plan,
-    build_current_card_plan, IngestPlan, PreparedLog, SourcePayload,
+    build_current_card_plan, IngestPlan, PreparedLog,
 )
 from .apply import apply_plan  # noqa: F401
 from .cli import _positive_int, _fight_limit, _print_summary, main  # noqa: F401

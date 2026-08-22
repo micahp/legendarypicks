@@ -14,8 +14,6 @@ import urllib.request
 from contextlib import closing
 from datetime import datetime, timezone
 
-from publisher_capture import capture_payload, require_publisher_capture_schema
-
 DB_PATH = os.environ.get("LP_DB_PATH", "data/picks.dev.db")
 URL = "https://www.ufc.com/rankings"
 UA = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
@@ -119,16 +117,9 @@ def ensure_table(con):
     )
 
 
-def store(con, rankings, captured_at, raw_html=None):
-    """Replace validated rankings, retaining the source body in this transaction."""
+def store(con, rankings, captured_at):
     validate_rankings(rankings)
     with con:
-        if raw_html is not None:
-            require_publisher_capture_schema(con)
-            capture_payload(
-                con, source="ufc.com", league="ufc", endpoint=URL,
-                payload=raw_html, captured_at=captured_at,
-            )
         con.execute("DELETE FROM ufc_rankings")
         for div in rankings:
             if div["champion"]:
@@ -145,11 +136,6 @@ def store(con, rankings, captured_at, raw_html=None):
 # ── main ──────────────────────────────────────────────────────────────────────
 
 def main():
-    # An unmigrated target must fail before the source call.  Otherwise a
-    # successful scrape can be normalized and then discarded when the writer
-    # discovers there is nowhere to retain the native publisher response.
-    with closing(sqlite3.connect(DB_PATH)) as con:
-        require_publisher_capture_schema(con)
     print(f"Fetching {URL} ...", file=sys.stderr)
     html = fetch_html()
     all_rankings = parse_rankings(html)
@@ -174,7 +160,7 @@ def main():
     with closing(sqlite3.connect(DB_PATH)) as con:
         con.row_factory = sqlite3.Row
         ensure_table(con)
-        store(con, rankings, captured_at, raw_html=html)
+        store(con, rankings, captured_at)
         count = con.execute("SELECT COUNT(*) FROM ufc_rankings").fetchone()[0]
         print(f"Stored {count} rows in ufc_rankings", file=sys.stderr)
 

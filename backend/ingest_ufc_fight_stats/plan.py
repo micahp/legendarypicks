@@ -16,7 +16,7 @@ import espn_client as espn  # noqa: E402
 
 import ingest_ufc_fight_stats as ingest
 from .targets import FighterTarget  # noqa: E402
-from .card import CardIdentity, card_source_payloads  # noqa: E402
+from .card import CardIdentity  # noqa: E402
 from .fetch import SourceUnavailable  # noqa: E402
 
 @dataclass(frozen=True)
@@ -33,13 +33,6 @@ class PreparedLog:
     def natural_key(self) -> Tuple[str, str, int, str]:
         return ("ufc", self.source_player_key, self.season, self.game_no)
 
-
-@dataclass(frozen=True)
-class SourcePayload:
-    """Untouched source body carried until the plan's single write transaction."""
-    endpoint: str
-    payload: dict
-
 @dataclass
 class IngestPlan:
     target_count: int
@@ -48,7 +41,6 @@ class IngestPlan:
     identity_updates: Dict[int, str] = field(default_factory=dict)
     game_links: Dict[int, str] = field(default_factory=dict)
     logs: List[PreparedLog] = field(default_factory=list)
-    source_payloads: List[SourcePayload] = field(default_factory=list)
     unresolved: List[str] = field(default_factory=list)
     missing_stats: List[str] = field(default_factory=list)
     source_errors: List[str] = field(default_factory=list)
@@ -88,11 +80,6 @@ def _resolve_target_for_plan(
     if target.card_date:
         card, card_error = ingest._card_for_date(target.card_date, card_cache)
         games = card or []
-        existing_endpoints = {source.endpoint for source in plan.source_payloads}
-        for endpoint, payload in card_source_payloads(card_cache):
-            if endpoint not in existing_endpoints:
-                plan.source_payloads.append(SourcePayload(endpoint, payload))
-                existing_endpoints.add(endpoint)
     identity: Optional[CardIdentity]
     if target.espn_id:
         identity = ingest._identity_for_existing_id(target.espn_id, games, target.name)
@@ -170,11 +157,6 @@ def build_plan(
         except SourceUnavailable as exc:
             plan.source_errors.append("{}: {}".format(target.name, str(exc)))
             continue
-        existing_endpoints = {source.endpoint for source in plan.source_payloads}
-        for endpoint, payload in getattr(fights, "source_payloads", []):
-            if endpoint not in existing_endpoints:
-                plan.source_payloads.append(SourcePayload(endpoint, payload))
-                existing_endpoints.add(endpoint)
         if not fights:
             emit("  {}: no completed fights in ESPN history".format(target.name))
             continue
@@ -210,16 +192,6 @@ def build_plan(
                     )
                 )
                 continue
-            raw_stats = getattr(stats, "raw_payload", None)
-            if raw_stats is not None:
-                plan.source_payloads.append(SourcePayload(
-                    endpoint=ingest._STATS_URL.format(
-                        event_id=str(fight["event_id"]),
-                        fight_id=str(fight["fight_id"]),
-                        competitor_id=identity.athlete_id,
-                    ),
-                    payload=raw_stats,
-                ))
             if not stats:
                 plan.missing_stats.append(
                     "{}:{}:{}".format(
@@ -363,13 +335,6 @@ def build_current_card_plan(
             except SourceUnavailable as exc:
                 status = exc
             status_cache[status_key] = status
-            if not isinstance(status, SourceUnavailable):
-                plan.source_payloads.append(SourcePayload(
-                    endpoint=ingest._STATUS_URL.format(
-                        event_id=identity.event_id, fight_id=identity.fight_id
-                    ),
-                    payload=status,
-                ))
         if isinstance(status, SourceUnavailable):
             plan.source_errors.append(
                 "{}: {} for fight {}".format(
@@ -423,16 +388,6 @@ def build_current_card_plan(
                 )
             )
             continue
-        raw_stats = getattr(stats, "raw_payload", None)
-        if raw_stats is not None:
-            plan.source_payloads.append(SourcePayload(
-                endpoint=ingest._STATS_URL.format(
-                    event_id=identity.event_id,
-                    fight_id=identity.fight_id,
-                    competitor_id=identity.athlete_id,
-                ),
-                payload=raw_stats,
-            ))
         if not stats:
             plan.missing_stats.append(
                 "{}:{}:{}".format(target.name, identity.fight_id, date_text)

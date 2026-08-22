@@ -14,12 +14,9 @@ cache: a `list` calendar with phase entries (NFL), one with per-event blocks
 """
 import datetime as dt
 import os
-import sqlite3
 import tempfile
 
 import pytest
-
-from migrate_publisher_captures import apply_database
 
 # Bound once, here. `conftest.py` restores LP_DB_PATH between tests, so a suite
 # that reads the env at run time to find its own fixture DB finds the session's
@@ -168,36 +165,6 @@ class TestScoreboardStore:
         scoreboard_store.save("mlb", "2026-08-18", [])
         stored = scoreboard_store.read("mlb", "2026-08-18")
         assert stored is not None and stored["games"] == []
-
-    def test_raw_scoreboard_is_retained_before_normalized_snapshot_write(self):
-        apply_database(_DB_PATH)
-        raw = {"events": [{"publisher_only": {"keep": True}}]}
-        scoreboard_store.save(
-            "mlb", "2026-08-18", [self._game("A", 2, "pre")],
-            source_payload=("https://example.test/scoreboard", raw),
-        )
-        with sqlite3.connect(_DB_PATH) as con:
-            captured = con.execute("SELECT payload_json FROM publisher_captures").fetchone()[0]
-            snapshots = con.execute("SELECT COUNT(*) FROM scoreboard_snapshots").fetchone()[0]
-        assert "publisher_only" in captured
-        assert snapshots == 1
-
-    def test_refresh_uses_one_raw_body_for_capture_and_normalization(self, monkeypatch):
-        import ingest_scoreboards
-        apply_database(_DB_PATH)
-        raw = _payload(MLB_CALENDAR, [{"publisher_only": {"keep": True}}])
-        games = [self._game("A", 2, "pre")]
-        monkeypatch.setattr(ingest_scoreboards.espn, "scoreboard_raw",
-                            lambda *_args, **_kwargs: raw)
-        monkeypatch.setattr("espn_client.scoreboard._games_from_payload",
-                            lambda *_args, **_kwargs: games)
-
-        written, error = ingest_scoreboards._refresh("mlb", "2026-08-18")
-
-        assert (written, error) == (1, None)
-        with sqlite3.connect(_DB_PATH) as con:
-            captured = con.execute("SELECT payload_json FROM publisher_captures").fetchone()[0]
-        assert "publisher_only" in captured
 
     def test_a_dropped_game_disappears_instead_of_lingering(self):
         scoreboard_store.save("mlb", "2026-08-18",

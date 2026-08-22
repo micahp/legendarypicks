@@ -15,7 +15,7 @@ import { useLeagueRouteState } from '../../components/Leagues/hooks/useLeagueRou
 import { useScheduleData } from '../../components/Leagues/hooks/useScheduleData'
 import { useScheduleAutoDate } from '../../components/Leagues/hooks/useScheduleAutoDate'
 import { useScheduleNavigation } from '../../components/Leagues/hooks/useScheduleNavigation'
-import { useFootballScheduleWeeks } from '../../components/Leagues/hooks/useNflScheduleWeeks'
+import { useNflScheduleWeeks } from '../../components/Leagues/hooks/useNflScheduleWeeks'
 import { useStandingsData } from '../../components/Leagues/hooks/useStandingsData'
 import { useStatsData } from '../../components/Leagues/hooks/useStatsData'
 import { useUfcRankingsData } from '../../components/Leagues/hooks/useUfcRankingsData'
@@ -48,8 +48,6 @@ const TAB_LABELS: Record<HubTab, string> = {
 export default function LeagueHubPage() {
   const route = useLeagueRouteState()
   const isNFL = route.league === 'nfl'
-  const isNCAAF = route.league === 'ncaaf'
-  const isWeeklyFootball = isNFL || isNCAAF
   const standings = useStandingsData(route.league, route.isWorldCup, route.isUFC)
   // Fetched only while the tab is open — the hub already loads standings,
   // leaders and team aggregates on mount without anyone asking for them.
@@ -62,7 +60,7 @@ export default function LeagueHubPage() {
     supportsTeamStats: route.supportsTeamStats,
   })
   const schedule = useScheduleData(
-    isWeeklyFootball ? '' : route.league,  // football uses publisher weeks, not daily dates
+    isNFL ? '' : route.league,  // NFL uses weekly, not daily — suppress
     route.activeTab,
     route.scheduleDate,
   )
@@ -70,7 +68,7 @@ export default function LeagueHubPage() {
   // Auto-resolve schedule date when today is empty, intent is 'default',
   // and Schedule tab is active. resolutionKey prevents stale cross-league results.
   const autoDate = useScheduleAutoDate(
-    !isWeeklyFootball && route.activeTab === 'schedule',  // football never auto-resolves daily
+    !isNFL && route.activeTab === 'schedule',  // NFL never auto-resolves daily
     route.league,
     route.scheduleDate,
     schedule.games.length,
@@ -110,7 +108,7 @@ export default function LeagueHubPage() {
   const transactions = useNflTransactions(isNFL && route.activeTab === 'camp')
   const draftBoard = useNflDraftBoard(isNFL && route.activeTab === 'camp')
   // Resolve prev/next game dates for arrow navigation (non-NFL only)
-  const nav = useScheduleNavigation(isWeeklyFootball || route.activeTab !== 'schedule', route.league, route.scheduleDate)
+  const nav = useScheduleNavigation(isNFL || route.activeTab !== 'schedule', route.league, route.scheduleDate)
 
   const handleGoPrev = () => {
     if (nav.prevDate) route.selectScheduleDate(nav.prevDate)
@@ -119,23 +117,22 @@ export default function LeagueHubPage() {
     if (nav.nextDate) route.selectScheduleDate(nav.nextDate)
   }
 
-  // ── Publisher-defined weekly football schedule ──
-  const nflSchedule = useFootballScheduleWeeks(
-    isNCAAF ? 'ncaaf' : 'nfl',
-    isWeeklyFootball && route.activeTab === 'schedule',
+  // ── NFL weekly schedule ──
+  const nflSchedule = useNflScheduleWeeks(
+    isNFL && route.activeTab === 'schedule',
     route.nflWeek || null,
   )
 
   // Canonicalize NFL URL when week differs from resolved selection
   useEffect(() => {
-    if (!isWeeklyFootball || route.activeTab !== 'schedule') return
+    if (!isNFL || route.activeTab !== 'schedule') return
     if (nflSchedule.catalogLoading) return
     if (!nflSchedule.selectedKey) return
     // Canonicalize if URL week is empty OR differs from catalog resolution
     if (route.nflWeek !== nflSchedule.selectedKey) {
       route.canonicalizeNflWeek(nflSchedule.selectedKey)
     }
-  }, [isWeeklyFootball, route.activeTab, route.nflWeek, nflSchedule.selectedKey, nflSchedule.catalogLoading])
+  }, [isNFL, route.activeTab, route.nflWeek, nflSchedule.selectedKey, nflSchedule.catalogLoading])
   const ufc = useUfcRankingsData(route.isUFC, route.league)
   const predict = useUfcPredictData(route.isUFC, route.activeTab)
 
@@ -244,7 +241,7 @@ export default function LeagueHubPage() {
           />
         )}
 
-        {route.activeTab === 'schedule' && isWeeklyFootball && (
+        {route.activeTab === 'schedule' && isNFL && (
           <NflScheduleTab
             selectedKey={nflSchedule.selectedKey}
             weekEntry={nflSchedule.weekEntry}
@@ -263,7 +260,7 @@ export default function LeagueHubPage() {
           />
         )}
 
-        {route.activeTab === 'schedule' && !isWeeklyFootball && (
+        {route.activeTab === 'schedule' && !isNFL && (
           <ScheduleTab
             scheduleDate={route.scheduleDate}
             formattedDate={schedule.formattedDate}

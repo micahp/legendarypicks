@@ -23,7 +23,6 @@ LOG_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "logs")
 os.makedirs(LOG_DIR, exist_ok=True)
 
 API_BASE = os.environ.get("LP_API_BASE", "http://localhost:8000")
-SCHEDULED_EXCLUDED_LEAGUES = {"wc"}
 
 
 def _link_leagues() -> list:
@@ -42,7 +41,6 @@ def _link_leagues() -> list:
             return [r[0] for r in con.execute(
                 "SELECT DISTINCT LOWER(league) FROM prop_games "
                 "WHERE date >= DATE('now', '-3 days') AND league IS NOT NULL "
-                "AND LOWER(league) <> 'wc' "
                 "ORDER BY 1")]
     except sqlite3.Error as e:
         print(f"    WARN: cannot read prop_games leagues ({e}); linking nothing")
@@ -112,8 +110,6 @@ def step_link_games(dry_run: bool = False) -> bool:
     env.setdefault("LP_ESPN_CACHE_DIR", os.path.join(LOG_DIR, "espn-cache"))
     ok = True
     for lg in _link_leagues():
-        if lg in SCHEDULED_EXCLUDED_LEAGUES:
-            continue
         if not _run([VENV_PY, "link_prop_games.py", "--league", lg, "--days", "3"],
                     f"link_games_{lg}", timeout=120, env=env):
             ok = False
@@ -121,21 +117,14 @@ def step_link_games(dry_run: bool = False) -> bool:
 
 
 def step_settle(dry_run: bool = False) -> bool:
-    """Settle recent scheduled leagues only; World Cup work is manual-only."""
+    """Settle all finaled games with unsettled props."""
     if dry_run:
-        print("  [dry-run] Would run bounded non-WC settle_props.py per active league")
+        print("  [dry-run] Would run settle_props.py")
         return True
-    since = (dt.date.today() - dt.timedelta(days=3)).isoformat()
-    ok = True
-    for lg in _link_leagues():
-        if lg in SCHEDULED_EXCLUDED_LEAGUES:
-            continue
-        if not _run(
-            [VENV_PY, "settle_props.py", "--league", lg, "--since", since],
-            "settle_{}".format(lg), timeout=300
-        ):
-            ok = False
-    return ok
+    return _run(
+        [VENV_PY, "settle_props.py"],
+        "settle", timeout=300
+    )
 
 
 def step_refresh_stats(dry_run: bool = False) -> bool:

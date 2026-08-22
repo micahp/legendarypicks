@@ -17,14 +17,6 @@ from concurrent.futures import ThreadPoolExecutor
 import espn_client
 
 
-class FightHistory(list):
-    """Normalized history rows accompanied by their native ESPN documents."""
-
-    def __init__(self, fights, source_payloads):
-        super().__init__(fights)
-        self.source_payloads = source_payloads
-
-
 def _athlete_name_key(name):
     value = unicodedata.normalize("NFKD", str(name or "")).encode("ascii", "ignore").decode("ascii")
     return re.sub(r"[^a-z0-9]+", "", value.lower())
@@ -197,12 +189,10 @@ def ufc_fight_history(athlete_id, limit=5):
     each upstream object is cached for six hours by the shared client cache.
     """
     athlete_id = str(athlete_id)
-    overview_url = (
-        espn_client._COMMON.format(path="mma/ufc")
-        + f"/athletes/{athlete_id}/overview"
+    overview = espn_client._get(
+        espn_client._COMMON.format(path="mma/ufc") + f"/athletes/{athlete_id}/overview",
+        ttl=21600,
     )
-    overview = espn_client._get(overview_url, ttl=21600)
-    source_payloads = [(overview_url, overview)]
     references = []
     for item in overview.get("fightHistory", []):
         uid = item if isinstance(item, str) else (item or {}).get("uid", "")
@@ -214,9 +204,9 @@ def ufc_fight_history(athlete_id, limit=5):
 
     def safe_get(url):
         try:
-            return True, espn_client._get(url, ttl=21600)
+            return espn_client._get(url, ttl=21600)
         except Exception:
-            return False, None
+            return {}
 
     objects = {}
     jobs = []
@@ -228,14 +218,9 @@ def ufc_fight_history(athlete_id, limit=5):
         jobs.append(((fight_id, "competition"), base + "?lang=en&region=us"))
         jobs.append(((fight_id, "status"), base + "/status?lang=en&region=us"))
     with ThreadPoolExecutor(max_workers=min(10, max(1, len(jobs)))) as pool:
-        futures = [(key, url, pool.submit(safe_get, url)) for key, url in jobs]
-        for key, url, future in futures:
-            succeeded, payload = future.result()
-            objects[key] = payload if succeeded else {}
-            # Failed requests intentionally remain invisible here. A successful
-            # empty object is still a publisher response and must be retained.
-            if succeeded:
-                source_payloads.append((url, payload))
+        futures = [(key, pool.submit(safe_get, url)) for key, url in jobs]
+        for key, future in futures:
+            objects[key] = future.result()
 
     opponent_ids = set()
     for _, fight_id in references:
@@ -248,20 +233,15 @@ def ufc_fight_history(athlete_id, limit=5):
     opponent_names = {}
     with ThreadPoolExecutor(max_workers=min(5, max(1, len(opponent_ids)))) as pool:
         futures = {
-            opponent_id: (url := (
-                espn_client._SPORTS_CORE.format(sport="mma")
-                + f"/athletes/{opponent_id}?lang=en&region=us"
-            ), pool.submit(
+            opponent_id: pool.submit(
                 safe_get,
-                url,
-            ))
+                espn_client._SPORTS_CORE.format(sport="mma")
+                + f"/athletes/{opponent_id}?lang=en&region=us",
+            )
             for opponent_id in opponent_ids
         }
-        for opponent_id, (url, future) in futures.items():
-            succeeded, athlete = future.result()
-            athlete = athlete if succeeded else {}
-            if succeeded:
-                source_payloads.append((url, athlete))
+        for opponent_id, future in futures.items():
+            athlete = future.result()
             opponent_names[opponent_id] = (
                 athlete.get("displayName") or athlete.get("fullName") or "Opponent"
             )
@@ -309,4 +289,4 @@ def ufc_fight_history(athlete_id, limit=5):
             "fight_time_seconds": fight_time_seconds,
         })
     fights.sort(key=lambda row: row["date"], reverse=True)
-    return FightHistory(fights[:limit], source_payloads)
+    return fights[:limit]

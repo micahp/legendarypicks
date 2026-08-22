@@ -40,7 +40,6 @@ from contextlib import closing
 
 from espn_client.scoreboard import _slate_day
 from history_refresh_common import BUSY_TIMEOUT_SECONDS
-from publisher_capture import capture_payload, require_publisher_capture_schema
 
 DB = os.environ.get("LP_DB_PATH") or os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "data", "picks.db")
@@ -109,12 +108,6 @@ def init(con=None):
         own.commit()
 
 
-def require_capture_schema():
-    """Fail before an ingest request when the raw ledger is unavailable."""
-    with closing(_db()) as con:
-        require_publisher_capture_schema(con)
-
-
 def _now():
     return dt.datetime.now(dt.timezone.utc)
 
@@ -167,12 +160,10 @@ def _normalize_start(value):
     return _iso(moment.astimezone(dt.timezone.utc))
 
 
-def save(league, game_date, games, source="espn", con=None, source_payload=None):
+def save(league, game_date, games, source="espn", con=None):
     """Replace the stored slate for one (league, date). Returns rows written.
 
-    `source_payload`, when supplied, is ``(endpoint, native_body)`` and is
-    retained before any normalized rows in this same transaction. The day is
-    replaced, not merged: a game the publisher has dropped (a
+    The day is replaced, not merged: a game the publisher has dropped (a
     postponement, a schedule correction) must disappear from our board too, and
     an upsert alone would leave it there forever.
     """
@@ -182,13 +173,6 @@ def save(league, game_date, games, source="espn", con=None, source_payload=None)
     con = con or _db()
     try:
         init(con)
-        if source_payload is not None:
-            endpoint, payload = source_payload
-            require_publisher_capture_schema(con)
-            capture_payload(
-                con, source=source, league=league, endpoint=endpoint,
-                payload=payload, captured_at=fetched_at,
-            )
         keep = []
         for game in games or []:
             game_id = str(game.get("game_id") or "")

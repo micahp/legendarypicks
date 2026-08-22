@@ -21,7 +21,6 @@ _UFC_METHOD_MARKETS = {
     "win_by_submission": "SUB",
     "submissions": "SUB",
 }
-_UFC_FINISH_METHODS = {"KO/TKO", "SUB"}
 
 
 def _ufc_scoreboard_competition(espn, date_text: str, fight_id: str) -> dict:
@@ -56,19 +55,11 @@ def _ufc_actual(stats: dict, market: str) -> Optional[float]:
         except (TypeError, ValueError):
             return None
 
-    result = str(stats.get("result") or "").strip().upper()
-    method = str(stats.get("method") or "").strip().upper()
-    if canonical == "finishes":
-        if result == "W":
-            if not method:
-                return None
-            return 1.0 if method in _UFC_FINISH_METHODS else 0.0
-        if result in {"L", "D", "NC"}:
-            return 0.0
-        return None
     wanted_method = _UFC_METHOD_MARKETS.get(canonical)
     if not wanted_method:
         return None
+    result = str(stats.get("result") or "").strip().upper()
+    method = str(stats.get("method") or "").strip().upper()
     if result == "W":
         if not method:
             return None
@@ -97,7 +88,7 @@ def _settle_ufc_props(con: sqlite3.Connection, game, props: list) -> dict:
     pending = 0
     errors = 0
     now = dt.datetime.now(dt.timezone.utc).isoformat()
-    supported = set(_UFC_NUMERIC_MARKETS) | set(_UFC_METHOD_MARKETS) | {"finishes"}
+    supported = set(_UFC_NUMERIC_MARKETS) | set(_UFC_METHOD_MARKETS)
 
     for prop in props:
         canonical = normalize_market(prop["market"])

@@ -84,7 +84,7 @@ def test_ufc_uses_fight_finality_and_durable_logs(monkeypatch):
     monkeypatch.setattr(espn_client, "_get", fake_get)
     result = settlement.settle_game(con, 1)
 
-    assert result == {"settled": 6, "void": 0, "unmappable": 0,
+    assert result == {"settled": 5, "void": 0, "unmappable": 1,
                       "pending": 1, "errors": 0}
     assert seen == [
         "https://site.web.api.espn.com/apis/site/v2/sports/mma/ufc/scoreboard"
@@ -98,10 +98,10 @@ def test_ufc_uses_fight_finality_and_durable_logs(monkeypatch):
         102: (0.0, 0),
         103: (27.0, 1),
         104: (4.35, 1),
-        105: (1.0, 1),
     }
     # Unsupported and not-yet-ingested props stay retryable; a null placeholder
     # would make settle_props count them as already graded forever.
+    assert 105 not in rows
     assert 106 not in rows
     final = con.execute(
         "SELECT final_home, final_away FROM prop_games WHERE id=1").fetchone()
@@ -145,10 +145,10 @@ def test_ufc_finds_a_next_utc_day_fight_on_the_previous_card_date(monkeypatch):
 
     result = settlement.settle_game(con, 1)
 
-    assert result == {"settled": 6, "void": 0, "unmappable": 0,
+    assert result == {"settled": 5, "void": 0, "unmappable": 1,
                       "pending": 1, "errors": 0}
     assert [url.rsplit("=", 1)[-1] for url in seen] == ["20260816", "20260815"]
-    assert con.execute("SELECT COUNT(*) FROM prop_results").fetchone()[0] == 6
+    assert con.execute("SELECT COUNT(*) FROM prop_results").fetchone()[0] == 5
 
 
 def test_ufc_method_markets_require_published_outcome_and_method():
@@ -159,9 +159,7 @@ def test_ufc_method_markets_require_published_outcome_and_method():
     assert settlement._ufc_actual({"result": "L"}, "win_by_ko") == 0.0
     assert settlement._ufc_actual({"result": "W"}, "win_by_ko") is None
     assert settlement._ufc_actual({"result": "W", "method": "KO/TKO"},
-                                  "finishes") == 1.0
-    assert settlement._ufc_actual({"result": "W", "method": "DEC"},
-                                  "finishes") == 0.0
+                                  "finishes") is None
 
 
 def _mls_summary(completed=True):
