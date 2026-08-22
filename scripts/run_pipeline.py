@@ -139,6 +139,12 @@ def step_refresh_stats(dry_run: bool = False) -> bool:
     # MLB Statcast (slow — full season)
     if not _run([VENV_PY, "ingest_statcast.py", "--days", "200"], "ingest_mlb", timeout=600):
         success = False
+    # Statcast replaces each MLB display row, so restore MLB's published
+    # counting line afterwards (PA/RBI/innings/ERA/WHIP) rather than letting
+    # the next full refresh erase it.
+    if not _run([VENV_PY, "ingest_mlb_counting_stats.py", "--season", "2026"],
+                "ingest_mlb_counting_stats", timeout=120):
+        success = False
     return success
 
 

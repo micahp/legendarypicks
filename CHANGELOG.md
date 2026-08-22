@@ -18,6 +18,12 @@
   fights, 26 fighters, 170 balanced UnderDog props; all 13/13 games resolved,
   with zero rejected games or queued fighters. Production remains unchanged;
   its current props database has no UnderDog rows.
+- **Stopped the MLB full-refresh job from erasing MLB's published counting
+  line.** Statcast rebuilds a player’s display row, so the production pipeline
+  now runs the two-request MLB StatsAPI enrichment immediately afterwards.
+  Production’s 2026 repair restored pitching innings on 785 rows and ERA/WHIP
+  on 784 rows from the publisher; 29 published pitchers without a canonical
+  identity remain explicitly unlinked rather than guessed.
 
 ## v0.8.5 (unreleased)
 
