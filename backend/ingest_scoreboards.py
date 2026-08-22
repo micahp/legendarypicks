@@ -77,6 +77,12 @@ STORY_DRAIN_SCHEDULE = 240
 STORY_DRAIN_LIVE = 45
 
 
+def _scoreboard_endpoint(league, date):
+    _, path = espn._check(league)
+    return (espn._SITE.format(path=path) + "/scoreboard?dates="
+            + str(date).replace("-", ""))
+
+
 def _dates(today=None):
     """Yesterday, today, tomorrow.
 
@@ -296,11 +302,18 @@ def _refresh(league, date, verbose=True):
     never swallowed: the caller prints it and the exit code reflects it.
     """
     try:
-        games = espn.games(league, date)
+        # Keep the native source document first; normalization is a view of
+        # this same object and must not be the only durable record.
+        payload = espn.scoreboard_raw(league, date)
+        from espn_client.scoreboard import _games_from_payload
+        games = _games_from_payload(league, date, payload)
     except Exception as exc:
         return 0, f"{type(exc).__name__}: {exc}"
 
-    written = scoreboard_store.save(league, date, games, source="espn")
+    written = scoreboard_store.save(
+        league, date, games, source="espn",
+        source_payload=(_scoreboard_endpoint(league, date), payload),
+    )
 
     # "Write the preview whenever we find out about the game." This job is now
     # where we find out, so the kick moved here out of the request handler --
@@ -313,10 +326,8 @@ def _refresh(league, date, verbose=True):
         except Exception as exc:
             print(f"  stories not kicked league={league}: {type(exc).__name__}: {exc}")
 
-    # Free: the calendar rode in on the fetch above and is served from the
-    # 20-second cache, so this costs no request.
+    # The calendar rode in on the retained source body; no second request.
     try:
-        payload = espn.scoreboard_raw(league, date)
         if not league_activity.record_from_payload(league, payload):
             league_activity.touch(league)
     except Exception as exc:
@@ -556,6 +567,10 @@ def main(argv=None):
     espn.set_on_exhausted("sleep")
 
     scoreboard_store.init()
+    if not args.dry_run:
+        # The scheduled path must fail before its first ESPN request if the
+        # target cannot retain the raw responses it will normalize.
+        scoreboard_store.require_capture_schema()
     league_activity.init()
 
     started = time.time()

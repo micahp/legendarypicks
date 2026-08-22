@@ -11,6 +11,9 @@ from settlement.mlb_api import _fetch_mlb_gamepk, _fetch_mlb_final
 from settlement.mlb_settle import _settle_mlb_props
 from settlement.ufc_settle import _settle_ufc_props, _ufc_scoreboard_competition
 from settlement.mls_settle import _settle_mls_props
+from settlement.tennis_settle import _settle_tennis_props, _tennis_scoreboard_competition
+from publisher_capture import require_publisher_capture_schema
+from settlement.nfl_settle import _settle_nfl_props
 
 
 def settle_game(con: sqlite3.Connection, game_id: int) -> dict:
@@ -50,6 +53,42 @@ def settle_game(con: sqlite3.Connection, game_id: int) -> dict:
                         (final[0], final[1], game_id))
             con.commit()
             game = dict(game, final_home=final[0], final_away=final[1])
+
+    # ── Tennis: result lives on the tournament scoreboard, not /summary ─────────
+    if league in {"atp", "wta"}:
+        try:
+            # Must fail before the first ESPN request: the scoreboard response,
+            # including a refusal, is evidence for a settlement decision.
+            require_publisher_capture_schema(con)
+            import settlement
+            competition = settlement._tennis_scoreboard_competition(
+                espn, league, game["date"], espn_event_id, connection=con)
+            status_type = ((competition.get("status") or {}).get("type") or {})
+            if status_type.get("completed") is not True:
+                # A pre-final response is still publisher evidence.  There are
+                # no derived settlement rows to pair with it on this branch.
+                con.commit()
+                return {"settled": 0, "void": 0, "unmappable": 0, "pending": 0,
+                        "errors": 0, "msg": f"game {game_id}: not final yet "
+                        f"(state={status_type.get('state')}, completed={status_type.get('completed')})"}
+        except Exception as exc:
+            # A malformed/absent competition can follow a valid native body.
+            # Preserve that body even though no derived result is eligible.
+            con.commit()
+            return {"settled": 0, "void": 0, "unmappable": 0, "pending": 0,
+                    "errors": 1, "error_msg": f"game {game_id}: tennis scoreboard pull failed: {exc}"}
+
+        props = con.execute("""
+            SELECT p.id, p.market, p.line, p.side, p.player_id,
+                   pl.name as player_name, pl.team as player_team, pl.espn_id as espn_id
+            FROM props p JOIN players pl ON pl.id = p.player_id
+            LEFT JOIN prop_results pr ON pr.prop_id = p.id
+            WHERE p.game_id = ? AND pr.prop_id IS NULL
+        """, (game_id,)).fetchall()
+        if not props:
+            return {"settled": 0, "void": 0, "unmappable": 0, "pending": 0,
+                    "errors": 0, "msg": f"game {game_id}: no unsettled props"}
+        return settlement._settle_tennis_props(con, props, competition)
 
     # ── Is the game actually over? ──────────────────────────────────────────────
     if game["final_home"] is None:
@@ -151,6 +190,12 @@ def settle_game(con: sqlite3.Connection, game_id: int) -> dict:
         LEFT JOIN prop_results pr ON pr.prop_id = p.id
         WHERE p.game_id = ? AND pr.prop_id IS NULL
     """, (game_id,)).fetchall()
+
+    if league == "nfl":
+        if not props:
+            return {"settled": 0, "void": 0, "unmappable": 0, "pending": 0, "errors": 0,
+                    "msg": f"game {game_id}: no unsettled props"}
+        return _settle_nfl_props(con, props, box)
 
     settled = 0
     void = 0

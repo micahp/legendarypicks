@@ -162,9 +162,9 @@ The board shows a line and never says how it landed. Measured 2026-08-20:
 | mlb | 54,110 | 44,191 | 60,099 | 48,047 |
 | mls | 2,569 | 718 | 5,697 | 880 |
 | **nfl** | **1,080** | **0** | 1,082 | 0 |
-| atp | 536 | 0 | 552 | 0 |
+| atp | 536 | 0 | 556 | 0 |
 | wc | 392 | 0 | 1,128 | 0 |
-| wta | 377 | 0 | 427 | 0 |
+| wta | 377 | 0 | 461 | 0 |
 | ufc | 142 | 112 | 466 | **0** |
 
 **Three corrections to the 08-18 roadmap, all in the direction of the problem being smaller
@@ -173,7 +173,8 @@ or different than recorded:**
 - It said **"2,475 tennis props cannot reach a game page"** and **"ATP 0 of 2,402, WTA 0 of
   2,119"**. Today prod holds **913 tennis props total** (ATP 536, WTA 377) and dev holds 979.
   The old figure cannot be reproduced. Some of the drop is the 08-19 dedupe, which removed
-  4,355 prod props; the rest is unexplained. **Re-measure before quoting a tennis number.**
+  4,355 prod props; the rest is unexplained. Current dev has 1,017 tennis props (556 ATP,
+  461 WTA). **Re-measure before quoting a tennis number.**
 - It said **"dev has no UFC `prop_results` rows at all"**. Dev now holds **466 UFC props** and
   still settles **0** of them, against 112 of 142 on prod. The inversion is real; the "no
   rows" part is not.
@@ -188,10 +189,16 @@ or different than recorded:**
       relay, none graded. New since the last roadmap and the largest unsettled block outside
       tennis. **The props exist and look healthy on the board.**
 - [ ] **Link tennis `prop_games`.** 274 of 325 prod ATP/WTA rows have no `espn_event_id` (16%
-      linked); dev is 132 of 299. The matcher and budget guards already landed (`b8886e9`);
-      this needs a run, not a build. Note `reference_espn_folds_tennis_names`: ESPN folds
-      accents in tennis names but not soccer ones.
-- [ ] **Settle tennis.** 0 of 913 on prod, 0 of 979 on dev.
+      linked); current dev is 53 of 63 linked, leaving 110 of 1,017 props unable to reach or
+      settle from a publisher event. Candidate `7ca4fbb` resolves all 1,017 props in a clone,
+      including six duplicate fixtures folded into their already-linked event rows; managed data
+      has not been changed. Note `reference_espn_folds_tennis_names`: ESPN folds accents in
+      tennis but not soccer ones.
+- [ ] **Settle tennis.** 0 of 913 on prod, 0 of 1,017 on dev. Candidate `f4f8cd2` grades
+      linked final matches from the ESPN tournament scoreboard; clone evidence is 913 numeric
+      results, two legitimate pushes, 58 pre-match props, and 46 retired/walkover props left
+      retryable pending an authoritative settlement-policy source. It still requires landing
+      before any managed-data run.
 - [ ] **Grade or void the World Cup rows honestly.** 392 prod and 1,128 dev `prop_results`
       rows have `actual_value` NULL **and** `hit` NULL. A settled count that grades nothing is
       presence, not integrity.

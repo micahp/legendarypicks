@@ -13,6 +13,12 @@ import espn_client as espn  # noqa: E402
 from .names import _name_key, _name_parts, _parse_date
 from .targets import _dedupe_games
 
+
+# Kept inside the caller-owned card cache so one source response serves both
+# identity resolution and the raw-capture plan.  It cannot collide with an
+# ISO date key.
+_RAW_CARD_PAYLOADS_KEY = "__ufc_raw_card_payloads__"
+
 @dataclass(frozen=True)
 class CardIdentity:
     athlete_id: str
@@ -20,6 +26,19 @@ class CardIdentity:
     fight_id: Optional[str]
     method: str
     event_id: Optional[str] = None
+
+
+def _scoreboard_endpoint(card_date: Optional[str]) -> str:
+    """Return the exact ESPN scoreboard URL for a card-date source body."""
+    _, path = espn._check("ufc")
+    query = "?dates=" + card_date.replace("-", "") if card_date else ""
+    return espn._SITE.format(path=path) + "/scoreboard" + query
+
+
+def card_source_payloads(cache: Dict[Optional[str], object]) -> List[Tuple[str, dict]]:
+    """Raw successful card responses observed while resolving this plan."""
+    stored = cache.get(_RAW_CARD_PAYLOADS_KEY) or {}
+    return [stored[key] for key in sorted(stored)]
 
 def _card_for_date(
     card_date: Optional[str],
@@ -43,7 +62,14 @@ def _card_for_date(
         cached = cache.get(candidate)
         if cached is None:
             try:
-                cached = espn.games("ufc", candidate)
+                # `games()` normalizes and discards most of the scoreboard.
+                # Keep the actual publisher document first, then normalize the
+                # same object so this does not spend a second request.
+                raw = espn.scoreboard_raw("ufc", candidate)
+                from espn_client.scoreboard import _games_from_payload
+                cached = _games_from_payload("ufc", candidate, raw)
+                raw_cache = cache.setdefault(_RAW_CARD_PAYLOADS_KEY, {})
+                raw_cache[candidate] = (_scoreboard_endpoint(candidate), raw)
             except Exception as exc:
                 cached = exc
             cache[candidate] = cached

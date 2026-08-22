@@ -25,6 +25,19 @@ _STATUS_URL = (
 class SourceUnavailable(RuntimeError):
     """An upstream request failed in a way that must not be treated as no data."""
 
+
+class StatsPayload(dict):
+    """Parsed statistics with the untouched publisher response attached.
+
+    The ingest plan still consumes this as a normal mapping.  Keeping the
+    original body alongside it lets the plan retain even an empty-but-valid
+    statistics response before deciding that a fighter has no usable stats.
+    """
+
+    def __init__(self, values: dict, raw_payload: Optional[dict]):
+        super().__init__(values)
+        self.raw_payload = raw_payload
+
 def _error_kind(exc: Exception) -> str:
     if isinstance(exc, HTTPError):
         return "http_{}".format(exc.code)
@@ -78,7 +91,9 @@ def fetch_stats(
             break
         except HTTPError as exc:
             if exc.code == 404:
-                return {}
+                # A 404 has no publisher document to retain.  Do not turn it
+                # into an invented empty source body in the capture ledger.
+                return StatsPayload({}, None)
             last_error = exc
         except Exception as exc:
             last_error = exc
@@ -94,13 +109,14 @@ def fetch_stats(
         raise SourceUnavailable("stats_{}".format(_error_kind(last_error))) from last_error
     categories = (data.get("splits") or {}).get("categories") or []
     if not categories:
-        return {}
+        return StatsPayload({}, data)
     stats_list = categories[0].get("stats") or []
-    return {
+    values = {
         item["name"]: item.get("value")
         for item in stats_list
         if isinstance(item, dict) and "name" in item
     }
+    return StatsPayload(values, data)
 
 def fetch_fight_status(
     event_id: str,
