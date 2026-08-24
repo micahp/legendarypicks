@@ -52,13 +52,11 @@ PROVIDERS = [
     },
 ]
 
-# A cadence equal to the timer interval never fires twice in a row without this.
-# `_last_ok` reads `started_at`, so the run at *:34 measures its age from *:04:0X and
-# lands a couple of seconds SHORT of 30 minutes. Measured 2026-08-24: bovada was
-# cadence-skipped on the *:34 firing with "last ok 30m ago", which halves every
-# provider's real cadence to 60 minutes and is invisible because a skip is not an error.
-# The grace is deliberately smaller than any timer jitter we schedule against.
-CADENCE_GRACE_MIN = 2.0
+# Absolute timers can wake a few seconds early or late. The state table below records the
+# runner cycle time, rather than the point at which each provider finally starts after the
+# providers ahead of it. That removes provider-runtime jitter from cadence decisions; this
+# small tolerance now covers clock/scheduler jitter only.
+CADENCE_EARLY_TOLERANCE_MIN = 1.0
 
 INGEST_RUNS_DDL = """
 CREATE TABLE IF NOT EXISTS ingest_runs (
@@ -73,6 +71,12 @@ CREATE TABLE IF NOT EXISTS ingest_runs (
 );
 CREATE INDEX IF NOT EXISTS ix_ingest_runs_provider
     ON ingest_runs(provider, db_path, started_at DESC);
+CREATE TABLE IF NOT EXISTS ingest_provider_state (
+    provider       TEXT NOT NULL,
+    db_path        TEXT NOT NULL,
+    last_ok_at     TEXT NOT NULL,
+    PRIMARY KEY (provider, db_path)
+);
 """
 
 
@@ -115,6 +119,15 @@ def _parse_timestamp(value: str) -> dt.datetime:
 
 
 def _last_ok(con: sqlite3.Connection, provider_id: str, db_path: str) -> Optional[dt.datetime]:
+    state_row = con.execute(
+        "SELECT last_ok_at FROM ingest_provider_state WHERE provider = ? AND db_path = ?",
+        (provider_id, db_path),
+    ).fetchone()
+    if state_row:
+        return _parse_timestamp(state_row[0])
+
+    # Bootstrap databases created by the first runner release. Once this provider succeeds,
+    # its stable cycle timestamp is stored in ingest_provider_state.
     row = con.execute(
         """SELECT started_at FROM ingest_runs
  WHERE provider = ? AND db_path = ? AND status = 'ok'
@@ -122,6 +135,18 @@ def _last_ok(con: sqlite3.Connection, provider_id: str, db_path: str) -> Optiona
         (provider_id, db_path),
     ).fetchone()
     return _parse_timestamp(row[0]) if row else None
+
+
+def _record_last_ok(
+    con: sqlite3.Connection, provider_id: str, db_path: str, cycle_started_at: str
+) -> None:
+    con.execute(
+        """INSERT INTO ingest_provider_state(provider, db_path, last_ok_at)
+           VALUES(?, ?, ?)
+           ON CONFLICT(provider, db_path) DO UPDATE SET last_ok_at=excluded.last_ok_at""",
+        (provider_id, db_path, cycle_started_at),
+    )
+    con.commit()
 
 
 def _insert_run(
@@ -257,6 +282,9 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
 
     attempted = 0
     succeeded = 0
+    host_lock_conflicts = 0
+    cycle_started = _utc_now()
+    cycle_started_at = cycle_started.isoformat()
     try:
         for provider in PROVIDERS:
             provider_id = provider["id"]
@@ -276,8 +304,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             if not args.force:
                 last_ok = _last_ok(con, provider_id, db_path)
                 if last_ok is not None:
-                    age_min = max(0.0, (_utc_now() - last_ok).total_seconds() / 60.0)
-                    if age_min < provider["cadence_min"] - CADENCE_GRACE_MIN:
+                    age_min = max(0.0, (cycle_started - last_ok).total_seconds() / 60.0)
+                    if age_min < provider["cadence_min"] - CADENCE_EARLY_TOLERANCE_MIN:
                         started_at = _iso_now()
                         if not args.dry_run:
                             _insert_run(
@@ -296,6 +324,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
 
             host_lock = _try_lock(_host_lock_path(provider["host_lock"]))
             if host_lock is None:
+                host_lock_conflicts += 1
                 started_at = _iso_now()
                 if not args.dry_run:
                     _insert_run(con, provider_id, db_path, started_at, "skipped_lock", started_at)
@@ -369,6 +398,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
 
             if status == "ok":
                 succeeded += 1
+                if not args.dry_run:
+                    _record_last_ok(con, provider_id, db_path, cycle_started_at)
             if run_id is not None:
                 _finish_run(con, run_id, status, exit_code, detail)
             results[provider_id] = {
@@ -381,13 +412,14 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         con.close()
 
     _report(db_path, results)
-    # A cadence skip means this provider succeeded recently enough that we chose not to
-    # ask again. Counting it as "no success" made the unit red whenever the only provider
-    # attempted was a broken one: measured 2026-08-24, bovada and rotowire were both
-    # cadence-skipped, underdog failed as it always does, and the unit went red having
-    # done nothing wrong. Red must mean the run is broken, not that it was quiet.
+    # A cadence skip means this provider succeeded recently enough that we deliberately
+    # did not ask again. A host-lock skip is different: the two staggered units should not
+    # collide, so it proves an unexpected publisher caller is active and must turn the unit
+    # red even if another provider succeeded.
+    if host_lock_conflicts:
+        return 1
     healthy = succeeded + sum(
-        1 for r in results.values() if r["status"] in ("skipped_cadence", "skipped_lock")
+        1 for r in results.values() if r["status"] == "skipped_cadence"
     )
     return 0 if healthy or attempted == 0 else 1
 

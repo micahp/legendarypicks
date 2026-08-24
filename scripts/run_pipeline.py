@@ -10,10 +10,12 @@ Order (each step idempotent, safe to re-run):
   5. Coverage report (SLO check)
 
 Usage:
-  venv/bin/python scripts/run_pipeline.py [--full] [--dry-run]
+  venv/bin/python scripts/run_pipeline.py [--full] [--dry-run] [--skip-props]
     --full : also run full-league stat ingests (slow — do 1-2x/day)
     --dry-run : print what would run, don't execute
+    --skip-props : leave props publication to run_props_ingest.py
 """
+import argparse
 import sys, os, subprocess, datetime as dt, json, urllib.request
 
 BACKEND = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "backend")
@@ -159,9 +161,22 @@ def step_coverage_report(dry_run: bool = False) -> bool:
     )
 
 
-def main():
-    dry_run = "--dry-run" in sys.argv
-    full = "--full" in sys.argv
+def _parser():
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[1])
+    parser.add_argument("--full", action="store_true")
+    parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument(
+        "--skip-props",
+        action="store_true",
+        help="do not call the legacy Bovada publisher; the props runner owns publication",
+    )
+    return parser
+
+
+def main(argv=None):
+    args = _parser().parse_args(argv)
+    dry_run = args.dry_run
+    full = args.full
 
     print(f"{'='*60}")
     print(f"Legendary Picks Pipeline — {dt.datetime.now().isoformat()}")
@@ -171,8 +186,13 @@ def main():
 
     results = {}
 
-    # Step 1: Ingest fresh props (always)
-    results["ingest"] = step_ingest_props(dry_run)
+    # Scheduled callers use --skip-props because run_props_ingest.py is the only scheduled
+    # props publisher. Keeping the explicit flag preserves the useful by-hand full-pipeline
+    # workflow without hiding publisher ownership in a comment or cron-only convention.
+    if args.skip_props:
+        print("  [props] skipped: run_props_ingest.py owns scheduled publication")
+    else:
+        results["ingest"] = step_ingest_props(dry_run)
 
     # Step 2: Link games to ESPN (always)
     results["link"] = step_link_games(dry_run)
@@ -195,7 +215,8 @@ def main():
     if dry_run:
         print("  (DRY RUN)")
     print(f"{'='*60}")
+    return 0 if all(results.values()) else 1
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

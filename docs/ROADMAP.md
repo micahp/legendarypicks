@@ -81,7 +81,7 @@ deployed.** Re-measured against the live prod API today, not inferred from relea
 | `/api/mlb/schedule-dates` | `source=unavailable, available=false` | `source=local, available=true`, `future_event_starts` populated |
 
 **A second production fault in the same area was found and closed on 2026-08-19: SQLite lock
-contention.** `legendarypicks-props-prod` exited 3 with "2 of 14 mlb games failed to POST"
+contention.** The former `legendarypicks-props-prod` unit exited 3 with "2 of 14 mlb games failed to POST"
 every 30 minutes, because `sqlite3.OperationalError: database is locked` came back out of the
 API as an HTTP 500.
 
@@ -99,7 +99,8 @@ write; WAL and the 30s busy timeout are confirmed present in the running contain
 quiet evening slate.
 
 - [ ] **Watch a full daytime slate before calling the contention fix closed.**
-      `journalctl -u legendarypicks-props-prod.service | grep "failed to POST"`. If any run
+      `journalctl -u legendarypicks-props-prod.service | grep "failed to POST"`. This name now
+      refers to the registry runner's production unit. If any run
       exits 3, the busy timeout needs to reach past the two helpers changed so far
       (`_core._db`, `scoreboard_store._db`); 174 other `sqlite3.connect(` sites pass no
       timeout at all.
@@ -307,13 +308,13 @@ outlives its code.
 
 ## 10. Queued, named by the user, not started
 
-- [x] **Un-park the Bovada props timers.** DONE 2026-08-24. They were never deliberately
-      parked: `legendarypicks-props{,-prod}.timer` were `OnBootSec=3min` +
+- [x] **Un-park and replace the Bovada-only props timers.** DONE 2026-08-24. They were never deliberately
+      parked: the former `legendarypicks-props{,-prod}.timer` pair used `OnBootSec=3min` +
       `OnUnitActiveSec=30min` and sat in `SubState=elapsed` with no next elapse from
       2026-08-21 11:08, while reporting `enabled` and `active` the whole time. A monotonic
       timer whose reference activation systemd has forgotten has nothing left to schedule.
-      Both are now `OnCalendar`, staggered 15 minutes, sharing one `flock` on the Bovada host
-      budget. It also exposed a real defect: Bovada files NBA team totals inside a display
+      The replacement registry-runner timers are `OnCalendar`, staggered 15 minutes, and use
+      one in-process host lock per publisher. It also exposed a real defect: Bovada files NBA team totals inside a display
       group called "Score Props", and "Highest Scoring Quarter Total Points O/U - Boston
       Celtics" splits on " - " exactly like a player market, so the club landed in
       `player_name`. All 120 NBA outcomes were rejected by the resolver, `resolved 0 of 120`
@@ -323,11 +324,11 @@ outlives its code.
 - [ ] **Bovada and Kalshi live games**, plus a game detail from each.
 - [ ] **Daily RotoWire props dump.** Save everything that endpoint gives us to a directory once a
       day, in case we expand to those leagues.
-- [x] **Schedule the RotoWire relay ingest.** DONE 2026-08-24, shipped in v0.8.7. NFL only,
-      every 6h on both databases via `legendarypicks-rotowire-props{,-prod}.timer`, cadence
+- [x] **Schedule the RotoWire relay ingest.** DONE 2026-08-24, shipped in v0.8.7. NFL and MLS
+      now run through `run_props_ingest.py` on both databases; its DB-backed cadence is
       matched to the existing probe so no new request rate hits the publisher. Coverage went
       from 5 days stale to same-day; NFL had no other source at all since Bovada publishes
-      none. Those two units are a STOPGAP and get retired into the provider runner
+      none. The temporary per-provider units were retired into the provider runner
       (`/root/TASK-props-provider-runner.md`). Still uncovered by the relay: NCAAF (opens
       Aug 29), WNBA (0 of 17, in season), NBA, NHL.
 - [ ] **Audit the RotoWire props we store and never use.** Named by Micah 2026-08-24, and the

@@ -100,15 +100,15 @@ source-key reuse, no player creation for a missing key, reviewed aliases,
 conflicting source ids, canonical fight-label correction, and the Bovada
 duplicate-game regression.
 
-## DEV scheduler installed
+## DEV scheduler installed (historical; retired 2026-08-24)
 
 Repository units:
 
 - `ops/systemd/legendarypicks-underdog-ufc-props.service`
 - `ops/systemd/legendarypicks-underdog-ufc-props.timer`
 
-Installed units under `/etc/systemd/system/` are enabled and target only
-`/root/legendarypicks/backend/data/picks.dev.db`.
+These units were retired when `run_props_ingest.py` became the provider registry for both
+environments. The current units are `legendarypicks-props{,-prod}`.
 
 - Runs at **:07** and **:37** each hour, intentionally offset from the existing
   Bovada DEV refresh.

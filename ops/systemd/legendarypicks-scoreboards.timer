@@ -7,8 +7,7 @@
 Description=Refresh scoreboard slates every 10 minutes
 
 [Timer]
-OnBootSec=2min
-OnUnitActiveSec=10min
+OnCalendar=*-*-* *:00/10:00
 Persistent=true
 Unit=legendarypicks-scoreboards.service
 

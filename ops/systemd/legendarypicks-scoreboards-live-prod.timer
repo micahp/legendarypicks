@@ -6,8 +6,7 @@
 Description=Re-read scoreboards for games under way — PROD
 
 [Timer]
-OnBootSec=3min
-OnUnitActiveSec=1min
+OnCalendar=*-*-* *:*:40
 Persistent=false
 Unit=legendarypicks-scoreboards-live-prod.service
 

@@ -36,6 +36,15 @@ def _rows(path):
         ).fetchall()
 
 
+def _set_last_ok(path, provider_id, when):
+    with sqlite3.connect(path) as con:
+        con.execute(
+            "INSERT OR REPLACE INTO ingest_provider_state(provider, db_path, last_ok_at) "
+            "VALUES(?, ?, ?)",
+            (provider_id, os.path.abspath(path), when.isoformat()),
+        )
+
+
 def _configure(monkeypatch, tmp_path, providers, db_path):
     monkeypatch.setattr(runner, "PROVIDERS", providers)
     monkeypatch.setattr(runner, "LOCK_DIR", str(tmp_path / "locks"))
@@ -70,7 +79,7 @@ def test_force_overrides_cadence_but_not_the_lock(monkeypatch, tmp_path):
 
     with open(runner._host_lock_path("shared"), "a+") as held:
         fcntl.flock(held.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
-        assert runner.main(["--force"]) == 0
+        assert runner.main(["--force"]) == 1
 
     assert [row[1] for row in _rows(db_path)] == ["ok", "skipped_lock"]
 
@@ -132,7 +141,7 @@ def test_two_environments_cannot_run_one_provider_at_once(monkeypatch, tmp_path)
     monkeypatch.setenv("LP_DB_PATH", str(second_db))
     with open(runner._host_lock_path("publisher"), "a+") as held:
         fcntl.flock(held.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
-        assert runner.main(["--force"]) == 0
+        assert runner.main(["--force"]) == 1
 
     rows = _rows(second_db)
     assert [(row[0], row[1]) for row in rows] == [
@@ -221,6 +230,27 @@ def test_an_unmapped_source_label_is_reported_by_the_freshness_monitor(monkeypat
     assert exc.value.code == 1
     assert "UNKNOWN SOURCE new-provider-label" in capsys.readouterr().out
 
+
+def test_a_named_retired_source_does_not_keep_the_monitor_red(monkeypatch, capsys):
+    now = dt.datetime.now(dt.timezone.utc)
+    monkeypatch.setattr(freshness, "ENVS", {"dev": "unused"})
+    monkeypatch.setattr(
+        freshness,
+        "latest_capture",
+        lambda _base: {
+            "bovada": now,
+            "underdog": now,
+            "rotowire:prizepicks": now,
+            "kambi": now - dt.timedelta(days=30),
+        },
+    )
+
+    freshness.main()
+
+    output = capsys.readouterr().out
+    assert "RETIRED SOURCE kambi" in output
+    assert "UNKNOWN SOURCE kambi" not in output
+
 def test_a_cadence_equal_to_the_timer_interval_still_fires(monkeypatch, tmp_path):
     """The *:04/*:34 firing measures its age from the previous run's `started_at`, which is
     a few seconds after *:04, so an exact-equality check lands short and skips forever.
@@ -231,14 +261,44 @@ def test_a_cadence_equal_to_the_timer_interval_still_fires(monkeypatch, tmp_path
     assert runner.main([]) == 0
     # The previous run started 29m58s ago: one timer interval, minus the seconds the run
     # itself took to reach the ingest_runs insert.
-    with sqlite3.connect(db_path) as con:
-        con.execute(
-            "UPDATE ingest_runs SET started_at = ?",
-            ((dt.datetime.now(dt.timezone.utc) - dt.timedelta(minutes=29, seconds=58))
-             .isoformat(),),
-        )
+    _set_last_ok(
+        db_path,
+        "ontime",
+        dt.datetime.now(dt.timezone.utc) - dt.timedelta(minutes=29, seconds=58),
+    )
     assert runner.main([]) == 0
     assert [row[1] for row in _rows(db_path)] == ["ok", "ok"]
+
+
+def test_provider_runtime_does_not_move_the_next_cadence(monkeypatch, tmp_path):
+    db_path = _db(tmp_path / "stable-cycle.db")
+    providers = [_provider("first"), _provider("later")]
+    _configure(monkeypatch, tmp_path, providers, db_path)
+
+    assert runner.main([]) == 0
+    with sqlite3.connect(db_path) as con:
+        state = dict(con.execute(
+            "SELECT provider, last_ok_at FROM ingest_provider_state ORDER BY provider"
+        ))
+
+    assert state["first"] == state["later"]
+
+
+def test_host_lock_conflict_is_red_even_if_another_provider_succeeds(
+    monkeypatch, tmp_path
+):
+    db_path = _db(tmp_path / "lock-red.db")
+    providers = [_provider("shared", host_lock="publisher"), _provider("healthy")]
+    _configure(monkeypatch, tmp_path, providers, db_path)
+
+    with open(runner._host_lock_path("publisher"), "a+") as held:
+        fcntl.flock(held.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        assert runner.main(["--force"]) == 1
+
+    assert [(row[0], row[1]) for row in _rows(db_path)] == [
+        ("shared", "skipped_lock"),
+        ("healthy", "ok"),
+    ]
 
 
 def test_a_quiet_run_is_not_a_red_run(monkeypatch, tmp_path):

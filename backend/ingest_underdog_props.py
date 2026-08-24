@@ -279,10 +279,13 @@ def _game_exists(con: sqlite3.Connection, game_id: int) -> bool:
 
 
 def _game_with_fighters(con: sqlite3.Connection, game_id: int, player_ids: Set[int]) -> bool:
+    placeholders = ",".join("?" for _ in player_ids)
     found = {
         row["player_id"]
         for row in con.execute(
-            "SELECT DISTINCT player_id FROM props WHERE game_id=? AND player_id IN (?,?)",
+            "SELECT DISTINCT player_id FROM props WHERE game_id=? AND player_id IN ({})".format(
+                placeholders
+            ),
             (game_id, *sorted(player_ids)),
         )
     }
@@ -333,12 +336,13 @@ def resolve_game(
     # match minted a second row for a fight we already had under its ESPN event id.
     # Two fighters meeting twice inside two days is not a thing, so the window is safe,
     # and an ambiguous result still refuses below rather than guessing.
+    placeholders = ",".join("?" for _ in player_ids)
     candidates = con.execute(
         "SELECT pg.id FROM prop_games pg JOIN props pr ON pr.game_id=pg.id "
         "WHERE pg.league=? AND pg.date BETWEEN date(?,'-1 day') AND date(?,'+1 day') "
-        "AND pr.player_id IN (?,?) "
-        "GROUP BY pg.id HAVING COUNT(DISTINCT pr.player_id)=2",
-        (LEAGUE, group[0]["date"], group[0]["date"], *sorted(player_ids)),
+        "AND pr.player_id IN ({}) "
+        "GROUP BY pg.id HAVING COUNT(DISTINCT pr.player_id)=?".format(placeholders),
+        (LEAGUE, group[0]["date"], group[0]["date"], *sorted(player_ids), len(player_ids)),
     ).fetchall()
     if len(candidates) > 1:
         raise SourceIdentityConflict(

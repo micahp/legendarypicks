@@ -20,7 +20,8 @@ def create_schema(path):
         con.executescript("""
             CREATE TABLE players(
               id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL,
-              team TEXT, league TEXT NOT NULL
+              team TEXT, league TEXT NOT NULL, espn_id TEXT, active INTEGER DEFAULT 1,
+              updated_at TEXT
             );
             CREATE TABLE prop_games(
               id INTEGER PRIMARY KEY AUTOINCREMENT, league TEXT NOT NULL,
@@ -120,6 +121,18 @@ class UnderdogIdentityTests(unittest.TestCase):
         self.assertEqual(
             (unresolved["source_player_key"], unresolved["raw_name"], unresolved["reason"]),
             ("u-missing", "Unknown Fighter", "source_id_not_in_spine"),
+        )
+
+    def test_a_fight_with_a_line_for_only_one_fighter_is_ingested(self):
+        alpha_id = self.player("Alpha Fighter")
+
+        summary = underdog.direct_ingest(board()[:1])
+
+        self.assertEqual(summary["written_props"], 1)
+        self.assertEqual(summary["eligible_games"], 1)
+        self.assertEqual(
+            self.con.execute("SELECT player_id FROM props").fetchone()["player_id"],
+            alpha_id,
         )
 
     def test_reviewed_alias_can_bind_a_source_id_but_fuzzy_matching_cannot(self):
@@ -233,6 +246,28 @@ class UnderdogIdentityTests(unittest.TestCase):
                 ).fetchone()["player_id"],
                 player_id,
             )
+
+    def test_reviewed_espn_identity_can_publish_a_missing_current_card_fighter(self):
+        review = next(item for item in reviewed.REVIEWS if item.get("espn_id"))
+
+        player_id = reviewed.apply_review(self.con, review)
+        self.con.commit()
+
+        row = self.con.execute(
+            "SELECT name,league,espn_id FROM players WHERE id=?", (player_id,)
+        ).fetchone()
+        self.assertEqual(
+            (row["name"], row["league"], row["espn_id"]),
+            (review["canonical_name"], "ufc", review["espn_id"]),
+        )
+        self.assertEqual(
+            self.con.execute(
+                "SELECT player_id FROM player_source_ids WHERE source='underdog' "
+                "AND league='ufc' AND source_player_key=?",
+                (review["source_player_key"],),
+            ).fetchone()["player_id"],
+            player_id,
+        )
 
 
 class FoldedGameKeepsItsSourceMapping(unittest.TestCase):

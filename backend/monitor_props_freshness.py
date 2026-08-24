@@ -35,6 +35,10 @@ SOURCE_TO_PROVIDER = {
     "rotowire:underdog": "rotowire",
     "rotowire:sleeper": "rotowire",
 }
+# Historical Kambi rows remain useful for settled-prop analysis, but Kambi is no longer a
+# configured publisher. Naming it here distinguishes an intentionally retired source from a
+# new, unmapped label without pretending it is fresh or expecting it to run.
+RETIRED_SOURCES = {"kambi"}
 PROVIDER_STALE_HOURS = {
     provider["id"]: 4 * provider["cadence_min"] / 60.0 for provider in PROVIDERS
 }
@@ -76,6 +80,9 @@ def main():
 
         provider_captures = {provider["id"]: [] for provider in PROVIDERS}
         for source, captured_at in by_source.items():
+            if source in RETIRED_SOURCES:
+                print(f"INFO [{env}] RETIRED SOURCE {source}: excluded from freshness", flush=True)
+                continue
             provider_id = SOURCE_TO_PROVIDER.get(source)
             if provider_id is None:
                 print(f"ALERT [{env}] UNKNOWN SOURCE {source}", flush=True)

@@ -42,13 +42,14 @@ before reporting DONE, and before writing acceptance criteria into a task spec.
 11. **Every live environment gets its own continuous data feed + freshness monitoring.** Prod once went
     **8 days stale** because the ingest only fed dev and nothing watched prod. A pipeline that "runs on
     a timer" is not enough — timers die, deploys forget, and silence hides it.
-    - `monitor_props_freshness.py` + `legendarypicks-props-freshness.timer` (30 min) check each env's
-      latest prop capture, ALERT loudly, and self-heal (re-trigger the ingest) if it's > 3 h stale.
+    - `monitor_props_freshness.py` + `legendarypicks-props-freshness.timer` (30 min) check each
+      provider in each env and fail loudly when its provider-specific threshold is exceeded.
+      The monitor deliberately never starts an ingest; recovery stays an operator decision.
     - **PROD DEPLOY CHECKLIST (do not skip):**
-      1. Stand up a **prod-targeted ingest** service/timer (`python -m bovada_scraper all --ingest` pointed at
-         the prod DB / prod backend `:8100`), mirroring `legendarypicks-props.service`.
-      2. **Enable `prod` in `monitor_props_freshness.py` `ENVS`** (uncomment the line) so prod staleness
-         alerts + self-heals from the moment it's live.
+      1. Keep the **prod-targeted registry runner** service/timer pointed at the prod DB and
+         backend `:8100`, staggered behind `legendarypicks-props.service`.
+      2. **Keep `prod` in `monitor_props_freshness.py` `ENVS`** so prod staleness is visible from
+         the moment its feed is live.
     - Verify after deploy: `curl :8100/api/props?limit=1` shows a capture within the last hour.
 
 ## Cleanliness
