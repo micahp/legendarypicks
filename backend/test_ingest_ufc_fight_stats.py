@@ -487,3 +487,68 @@ class UfcIngestTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
+
+
+def _current_min_interval():
+    """Read the shared client's spacing without a private attribute."""
+    prev = ingest.espn.set_min_interval(0)
+    ingest.espn.set_min_interval(prev)
+    return prev
+
+
+class TestBatchPacing(unittest.TestCase):
+    """A fan-out must not spend the burst budget the request handlers need.
+
+    2026-08-24: this plan inherited espn_client's serving-path default of
+    min_interval=0 and fired 52 requests in one minute, twice. ESPN refused for
+    four minutes and 26 of those refusals landed on uvicorn, the serving path.
+    """
+
+    def _target(self):
+        return ingest.FighterTarget(
+            player_id=1,
+            name="Current Fighter",
+            espn_id=None,
+            card_date="2026-07-25",
+            prop_game_id=10,
+            opponent="Opponent",
+        )
+
+    def test_the_fan_out_is_paced_while_it_fetches(self):
+        seen = []
+
+        def _record(*_args, **_kwargs):
+            seen.append(_current_min_interval())
+            return (None, "scoreboard_unavailable:URLError")
+
+        before = _current_min_interval()
+        with mock.patch.object(ingest, "_card_for_date", side_effect=_record):
+            ingest.build_current_card_plan([self._target()], set(), {}, emit=lambda _: None)
+
+        self.assertEqual(1, len(seen))
+        self.assertGreaterEqual(seen[0], 1.0, "the card fan-out ran unpaced")
+        self.assertEqual(before, _current_min_interval(), "pacing leaked out of the plan")
+
+    def test_pacing_is_restored_when_the_plan_raises(self):
+        before = _current_min_interval()
+        with mock.patch.object(ingest, "_card_for_date", side_effect=RuntimeError("boom")):
+            with self.assertRaises(RuntimeError):
+                ingest.build_current_card_plan([self._target()], set(), {}, emit=lambda _: None)
+        self.assertEqual(
+            before,
+            _current_min_interval(),
+            "a raising plan left the serving path paced",
+        )
+
+    def test_the_history_fan_out_is_paced_too(self):
+        seen = []
+
+        def _record(*_args, **_kwargs):
+            seen.append(_current_min_interval())
+            return (None, "scoreboard_unavailable:URLError")
+
+        with mock.patch.object(ingest, "_card_for_date", side_effect=_record):
+            ingest.build_plan([self._target()], set(), {}, limit=5, emit=lambda _: None)
+
+        self.assertEqual(1, len(seen))
+        self.assertGreaterEqual(seen[0], 1.0, "the history fan-out ran unpaced")
