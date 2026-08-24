@@ -161,6 +161,28 @@ def _normalize_team_events(events):
     return out
 
 
+# Tennis changes on a completed game or set, not on a 20-second tick.
+#
+# Measured 2026-08-24 over 24h of `ingest_scoreboards` traffic: tennis was 3,974 requests,
+# 52.3% of all scoreboard load, at 8/min through the play hours, and only half of those
+# were served from cache. Every other league on that board is a clock sport where 20s is
+# the right freshness; a tennis scoreboard polled twenty times inside one game returns the
+# same body twenty times.
+#
+# 90s is still well inside a service game. It is not a guess about the sport so much as a
+# floor: the live timer fires every 60s, so this makes a second consecutive tick reuse the
+# first one's body instead of re-asking.
+LIVE_TTL = 20
+TENNIS_LIVE_TTL = 90
+
+
+def _live_ttl(league, ttl):
+    """Tennis gets a longer freshness window than the clock sports."""
+    if ttl != LIVE_TTL:
+        return ttl          # an explicit caller wins; this only moves the DEFAULT
+    return TENNIS_LIVE_TTL if league in ("atp", "wta") else ttl
+
+
 def scoreboard_raw(league, date=None, ttl=20):
     """The scoreboard document as published, before normalization.
 
@@ -172,7 +194,8 @@ def scoreboard_raw(league, date=None, ttl=20):
     """
     _, path = espn_client._check(league)
     q = ("?dates=" + date.replace("-", "")) if date else ""
-    return espn_client._get(espn_client._SITE.format(path=path) + "/scoreboard" + q, ttl=ttl)
+    return espn_client._get(espn_client._SITE.format(path=path) + "/scoreboard" + q,
+                            ttl=_live_ttl(league, ttl))
 
 
 def games(league, date=None):

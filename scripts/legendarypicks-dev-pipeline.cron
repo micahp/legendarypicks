@@ -18,4 +18,4 @@ LP_API_BASE=http://127.0.0.1:8096
 LP_DB_PATH=/root/legendarypicks/backend/data/picks.dev.db
 
 # Link games + settle finaled games in DEV. The props runner is the only props publisher.
-0 12,16,20,23 * * * root $PIPELINE $SCRIPTS/run_pipeline.py --skip-props >> $LOGDIR/dev_pipeline_cron.log 2>&1
+13 12,16,20,23 * * * root $PIPELINE $SCRIPTS/run_pipeline.py --skip-props >> $LOGDIR/dev_pipeline_cron.log 2>&1
