@@ -89,7 +89,10 @@ def _resolve_target_for_plan(
         )
         return None, games
     else:
-        identity = ingest.resolve_from_card(target.name, target.opponent, games)
+        identity = ingest.resolve_from_card(
+            target.name, target.opponent, games,
+            opponent_espn_id=target.opponent_espn_id,
+        )
     if identity is None:
         plan.unresolved.append(
             "{} (card={}, opponent={})".format(

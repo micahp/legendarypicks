@@ -7,7 +7,7 @@ from contextlib import closing
 from dataclasses import dataclass, field
 from typing import Dict, Iterable, List, Optional, Set, Tuple
 
-from .names import _opponent_for, _parse_date
+from .names import _name_key, _opponent_for, _parse_date
 from .schema import _read_only_connection
 
 @dataclass(frozen=True)
@@ -19,6 +19,10 @@ class FighterTarget:
     prop_game_id: Optional[int]
     opponent: Optional[str]
     prop_game_espn_id: Optional[str] = None
+    # The ESPN athlete id we already hold for this fighter's opponent, when our own spine
+    # resolves that opponent unambiguously. Lets `resolve_from_card` identify a fighter by
+    # who they are fighting rather than by how their name is spelled.
+    opponent_espn_id: Optional[str] = None
 
 def load_targets(
     db_path: str,
@@ -62,6 +66,19 @@ def load_targets(
                 """
             )
         }
+    # name key -> espn_id, for resolving an OPPONENT we already own. An ambiguous key maps
+    # to None and is then treated as unresolvable: a surname shared by two fighters must
+    # never silently pick one. `feedback_ambiguous_key_never_raises` is why this is explicit.
+    espn_id_by_name_key: Dict[str, Optional[str]] = {}
+    for row in player_rows:
+        pid = str(row["espn_id"] or "").strip()
+        if not pid:
+            continue
+        key = _name_key(str(row["name"]))
+        if not key:
+            continue
+        espn_id_by_name_key[key] = None if key in espn_id_by_name_key else pid
+
     by_player: Dict[int, List[sqlite3.Row]] = {}
     for row in associations:
         by_player.setdefault(int(row["player_id"]), []).append(row)
@@ -80,6 +97,11 @@ def load_targets(
         if not choices and not all_fighters:
             continue
         selected = choices[0][2] if choices else None
+        opponent_name = (
+            _opponent_for(player["name"], selected["home"], selected["away"])
+            if selected
+            else None
+        )
         targets.append(
             FighterTarget(
                 player_id=int(player["id"]),
@@ -87,14 +109,15 @@ def load_targets(
                 espn_id=str(player["espn_id"] or "").strip() or None,
                 card_date=str(selected["date"])[:10] if selected else None,
                 prop_game_id=int(selected["prop_game_id"]) if selected else None,
-                opponent=(
-                    _opponent_for(player["name"], selected["home"], selected["away"])
-                    if selected
-                    else None
-                ),
+                opponent=opponent_name,
                 prop_game_espn_id=(
                     str(selected["espn_event_id"] or "").strip() or None
                     if selected
+                    else None
+                ),
+                opponent_espn_id=(
+                    espn_id_by_name_key.get(_name_key(opponent_name))
+                    if opponent_name
                     else None
                 ),
             )

@@ -82,6 +82,96 @@ class UfcIngestTests(unittest.TestCase):
         self.assertEqual("opponent_pair", identity.method)
         self.assertEqual("401874315", identity.fight_id)
 
+    def test_a_first_name_divergence_resolves_on_the_opponents_espn_id(self):
+        """The real 2026-08-24 pair, both standing SKIPs on the prod card.
+
+        We hold "Sergey Spivak"; ESPN publishes "Serghei Spivac". Two publishers' spellings
+        of one person, not a typo, so every name ladder refuses and should keep refusing.
+        His opponent Vitor Petrino was already resolved on our side as 5060483, and ESPN's
+        card pairs 4421246 with 5060483. That identifies him without reading his name.
+        """
+        games = [
+            {
+                "game_id": "401887540",
+                "home": {"id": "4421246", "name": "Serghei Spivac"},
+                "away": {"id": "5060483", "name": "Vitor Petrino"},
+            }
+        ]
+
+        self.assertIsNone(
+            ingest.resolve_from_card("Sergey Spivak", "Vitor Petrino", games),
+            "the name ladders must still refuse a first-name divergence",
+        )
+
+        identity = ingest.resolve_from_card(
+            "Sergey Spivak", "Vitor Petrino", games, opponent_espn_id="5060483"
+        )
+
+        self.assertIsNotNone(identity)
+        self.assertEqual("4421246", identity.athlete_id)
+        self.assertEqual("opponent_id", identity.method)
+        self.assertEqual("401887540", identity.fight_id)
+
+    def test_a_shortened_first_name_resolves_on_the_opponents_espn_id(self):
+        """The other one: "Stanley Dorsainvil" against ESPN's "Stan Dorsainvil"."""
+        games = [
+            {
+                "game_id": "401911626",
+                "home": {"id": "5085318", "name": "Gauge Young"},
+                "away": {"id": "5397038", "name": "Stan Dorsainvil"},
+            }
+        ]
+
+        identity = ingest.resolve_from_card(
+            "Stanley Dorsainvil", "Gauge Young", games, opponent_espn_id="5085318"
+        )
+
+        self.assertIsNotNone(identity)
+        self.assertEqual("5397038", identity.athlete_id)
+        self.assertEqual("opponent_id", identity.method)
+
+    def test_an_opponent_id_absent_from_the_card_resolves_nothing(self):
+        """The counter-case. An id we hold that is not on this card must not fall through
+        to a name ladder and match something else."""
+        games = [
+            {
+                "game_id": "irrelevant",
+                "home": {"id": "1", "name": "Some Fighter"},
+                "away": {"id": "2", "name": "Another Fighter"},
+            }
+        ]
+
+        self.assertIsNone(
+            ingest.resolve_from_card(
+                "Sergey Spivak", "Vitor Petrino", games, opponent_espn_id="5060483"
+            )
+        )
+
+    def test_an_opponent_id_on_two_fights_of_one_card_refuses(self):
+        """A duplicated fixture must not make the match ambiguous and still pick one.
+
+        `dedupe_prop_games.py` exists because duplicate fixtures are a real state in this
+        data, so the ladder has to survive seeing the same opponent id twice.
+        """
+        games = [
+            {
+                "game_id": "a",
+                "home": {"id": "4421246", "name": "Serghei Spivac"},
+                "away": {"id": "5060483", "name": "Vitor Petrino"},
+            },
+            {
+                "game_id": "b",
+                "home": {"id": "9999999", "name": "Someone Else"},
+                "away": {"id": "5060483", "name": "Vitor Petrino"},
+            },
+        ]
+
+        self.assertIsNone(
+            ingest.resolve_from_card(
+                "Sergey Spivak", "Vitor Petrino", games, opponent_espn_id="5060483"
+            )
+        )
+
     def test_opponent_pair_does_not_guess_when_both_fighters_are_absent(self):
         games = [
             {
