@@ -171,6 +171,59 @@ against a second day.
 
 ---
 
+## 1c. CONFIRMED 2026-08-24, and the collateral is the serving path
+
+The 08-19 finding was a shape derived from a day of history. On 2026-08-24 it played out
+live, minute by minute, and the log recorded the whole thing. Baseline that day was
+`ingest_scoreboards` at a steady 4/min:
+
+```
+16:48  n=56   run_ufc_current_card_ingest=52   all 200
+16:55  n=67   run_ufc_current_card_ingest=52   all 200
+17:00  n=65   settle_props=50, link_prop_games=11
+17:01  n=50   403:6      <- refusals begin
+17:02  n=11   403:11
+17:04  n=30   403:30     <- 26 of these are UVICORN
+17:05  n=12   403:8
+17:06  n=4    all 200    <- cleared. four minutes, start to finish.
+```
+
+Three things this settles that §1b could only imply:
+
+1. **The refusal follows the minute, not the run.** Two jobs each well inside any plausible
+   per-run ceiling combined into a rate that was not.
+2. **The budget is shared with the request handlers.** 26 refusals landed on `uvicorn`. A
+   batch fan-out made the live site read as broken. Any batch job must be sized against what
+   the box is already spending, never against zero.
+3. **The block clears in minutes.** A session that day recorded "that budget is spent for a
+   while" and stopped work on the strength of it. It was spent for four minutes, and the
+   spend log could have said so for free.
+
+### What shipped in response
+
+`espn_client.batch_pacing()` is the short-window limiter §1b asked for, in the only form the
+measurement justifies: a context manager that sets `min_interval=1.5` (about 40 req/min,
+below the measured 36-to-63 onset band), a per-host budget with a cooldown, a retry ladder,
+and `on_exhausted="sleep"`, then restores all four. No cross-process ledger, no durable
+state.
+
+It restores because the fetcher is process-global: a plan built inside a longer-lived process
+must not leave a request handler with a 1.5s pause bolted on. It is applied to the function
+that FANS OUT, not to a `main()`, because a test and an in-process caller enter through the
+function (`roster_sync.py`, 2026-08-04, paid all 128 requests twice for exactly this).
+
+Callers converted so far: `ingest_ufc_fight_stats.plan.build_plan` and
+`build_current_card_plan`, and `settle_props.main`. `ingest_scoreboards` already paced itself
+and is unchanged.
+
+### Still open, measured 2026-08-24
+
+The test suite issues **24 live ESPN requests in one minute**, and 8 of them go to
+`sports.core.api.espn.com/v2/sports/basketball/leagues/nba`, the gated endpoint this document
+says at §1b should never be asked again. 6 of the 8 refuse. It is small enough not to trip
+anything on its own, but it keeps writing 403s into the instrument that everything else is
+measured with. Not chased down to the test that issues them.
+
 ## 2. What is actually broken today, regardless of which limit is real
 
 This part does not depend on the answer to §1.
