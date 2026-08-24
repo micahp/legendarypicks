@@ -12,9 +12,29 @@ sys.path.insert(0, HERE)
 
 import ingest_ufc_fight_stats as ingest
 import run_ufc_current_card_ingest as runner
+from ingest_ufc_fight_stats import roster
 
 
 class UfcTimerRunnerTests(unittest.TestCase):
+
+
+    def setUp(self):
+        """Neutralise the card-harvest phase for this class.
+
+        These tests assert the PLAN and APPLY contract against the sentinel path
+        `/tmp/not-opened.db`, which must never be opened. The harvest reads `players`
+        before planning, so it is stubbed here rather than the sentinel being weakened:
+        what each test guards is unchanged. The harvest has its own coverage in
+        test_ingest_ufc_fight_stats.py::CardHarvestTest, including that it opens no
+        writer and takes no backup when it has nothing to insert.
+        """
+        for target, attr, value in (
+            (runner, "_connect_readonly", None),
+            (runner.roster, "build_harvest_plan", roster.HarvestPlan()),
+        ):
+            patcher = mock.patch.object(target, attr, return_value=value)
+            patcher.start()
+            self.addCleanup(patcher.stop)
     def test_current_plan_does_not_create_backup_or_open_writer(self):
         plan = ingest.IngestPlan(target_count=1, existing_count=5)
         with mock.patch.object(

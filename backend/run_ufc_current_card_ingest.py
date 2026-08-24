@@ -12,8 +12,18 @@ import os
 import sys
 from typing import Callable, Optional
 
+import sqlite3
+
 import history_refresh_common as common
 import ingest_ufc_fight_stats as ingest
+from ingest_ufc_fight_stats import roster
+
+
+
+def _connect_readonly(db_path: str):
+    """A read-only handle for planning. The plan is built before any write, as with the
+    fight-stats plan: nothing is mutated until we know the whole shape of the change."""
+    return common.read_only_connection(db_path)
 
 
 def run(
@@ -23,6 +33,36 @@ def run(
     apply: bool = True,
 ) -> dict:
     now = now or dt.datetime.now()
+
+    # Harvest the spine from the published card BEFORE choosing targets, because
+    # `load_targets` reads its work set from `players` and therefore cannot see a fighter
+    # it has no row for. Measured 2026-08-24: ESPN's next 21 days named 94 scheduled
+    # fighters, all 94 carrying an athlete id, 93 of them absent from the prod spine.
+    # Harvesting first means a debut fighter is a target on the same run that discovers
+    # them rather than the run after.
+    harvest = roster.build_harvest_plan(
+        _connect_readonly(db_path),
+        today=now.date(),
+        lookback_days=14,
+        lookahead_days=21,
+        emit=emit,
+    )
+    harvest_backup = None
+    if harvest.mutations and apply:
+        # A second backup on the same run, accepted deliberately: after the initial
+        # catch-up a card window introduces a handful of fighters a week, so this is rare,
+        # and a spine write without a restore point is not.
+        harvest_backup = common.backup_database(db_path, "ufc-roster", now=now)
+        con = sqlite3.connect(db_path)
+        try:
+            with con:
+                inserted = roster.apply_harvest(con, harvest)
+        finally:
+            con.close()
+        emit("  harvested {} new UFC fighters from the card".format(inserted))
+    elif harvest.mutations:
+        emit("  dry run: {} new UFC fighters would be harvested".format(harvest.mutations))
+
     targets, existing_keys, owners = ingest.load_targets(
         db_path,
         now.date(),
@@ -95,6 +135,8 @@ def run(
     return {
         "status": "applied",
         "backup": backup_path,
+        "harvest_backup": harvest_backup,
+        "harvested": len(harvest.new),
         "unresolved": len(plan.unresolved),
         **result,
     }

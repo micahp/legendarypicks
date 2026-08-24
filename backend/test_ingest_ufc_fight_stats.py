@@ -15,6 +15,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 
 import ingest_ufc_fight_stats as ingest
+from ingest_ufc_fight_stats import roster
 
 
 def _create_fixture(path):
@@ -552,3 +553,212 @@ class TestBatchPacing(unittest.TestCase):
 
         self.assertEqual(1, len(seen))
         self.assertGreaterEqual(seen[0], 1.0, "the history fan-out ran unpaced")
+
+
+class CardHarvestTest(unittest.TestCase):
+    """The spine is harvested from the published card, not from a name.
+
+    Measured 2026-08-24: ESPN's next 21 days of UFC cards named 94 scheduled fighters,
+    every one of them carrying an athlete id, and 93 of the 94 were absent from the prod
+    spine. `load_targets` reads its work set from `players`, so a fighter with no row was
+    invisible to the whole pipeline forever.
+    """
+
+    def _con(self):
+        con = sqlite3.connect(":memory:")
+        con.execute(
+            "CREATE TABLE players(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL,"
+            " team TEXT, league TEXT NOT NULL, espn_id TEXT, active INTEGER DEFAULT 1,"
+            " updated_at TEXT, UNIQUE(espn_id, league))"
+        )
+        return con
+
+    def _fetch(self, games):
+        return lambda start, end: ({"2026-08-29": games}, 1)
+
+    def _fight(self, home_id, home, away_id, away):
+        return {
+            "home": {"id": home_id, "name": home},
+            "away": {"id": away_id, "name": away},
+            "event_id": "600060620",
+            "game_id": "401887532",
+        }
+
+    def test_a_fighter_we_do_not_hold_is_planned_from_the_card(self):
+        con = self._con()
+        plan = roster.build_harvest_plan(
+            con, today=dt.date(2026, 8, 24), emit=lambda _m: None,
+            fetch=self._fetch([self._fight("4569549", "Umar Nurmagomedov",
+                                           "3151289", "Song Yadong")]),
+        )
+        self.assertEqual({f["espn_id"] for f in plan.new}, {"4569549", "3151289"})
+        self.assertEqual(roster.apply_harvest(con, plan), 2)
+        held = dict(con.execute("SELECT espn_id, name FROM players WHERE league='ufc'"))
+        self.assertEqual(held["4569549"], "Umar Nurmagomedov")
+
+    def test_re_running_the_same_window_inserts_nothing(self):
+        con = self._con()
+        games = [self._fight("4569549", "Umar Nurmagomedov", "3151289", "Song Yadong")]
+        first = roster.build_harvest_plan(
+            con, today=dt.date(2026, 8, 24), emit=lambda _m: None, fetch=self._fetch(games))
+        roster.apply_harvest(con, first)
+        second = roster.build_harvest_plan(
+            con, today=dt.date(2026, 8, 24), emit=lambda _m: None, fetch=self._fetch(games))
+        self.assertEqual(second.new, [])
+        self.assertEqual(second.already_known, 2)
+        self.assertEqual(roster.apply_harvest(con, second), 0)
+
+    def test_a_side_with_no_publisher_id_is_never_created_from_its_name(self):
+        con = self._con()
+        plan = roster.build_harvest_plan(
+            con, today=dt.date(2026, 8, 24), emit=lambda _m: None,
+            fetch=self._fetch([self._fight("", "Nameless Challenger", "3151289", "Song Yadong")]),
+        )
+        self.assertEqual([f["espn_id"] for f in plan.new], ["3151289"])
+
+    def test_the_placeholder_opponent_is_skipped(self):
+        """ESPN files an unannounced opponent as a real athlete with a recurring id."""
+        con = self._con()
+        plan = roster.build_harvest_plan(
+            con, today=dt.date(2026, 8, 24), emit=lambda _m: None,
+            fetch=self._fetch([self._fight("4402367", "Opponent TBA", "3151289", "Song Yadong")]),
+        )
+        self.assertEqual([f["espn_id"] for f in plan.new], ["3151289"])
+        self.assertEqual(plan.placeholders, [("4402367", "Opponent TBA")])
+
+    def test_a_real_fighter_on_a_placeholder_id_is_not_dropped(self):
+        """Both conditions must hold. If ESPN ever reuses that id for a named fighter,
+        skipping on the id alone would silently drop a real person."""
+        con = self._con()
+        plan = roster.build_harvest_plan(
+            con, today=dt.date(2026, 8, 24), emit=lambda _m: None,
+            fetch=self._fetch([self._fight("4402367", "Real Person", "3151289", "Song Yadong")]),
+        )
+        self.assertIn("4402367", {f["espn_id"] for f in plan.new})
+        self.assertEqual(plan.placeholders, [])
+
+    def test_a_fighter_named_tba_without_the_placeholder_id_is_kept(self):
+        con = self._con()
+        plan = roster.build_harvest_plan(
+            con, today=dt.date(2026, 8, 24), emit=lambda _m: None,
+            fetch=self._fetch([self._fight("5999999", "TBA", "3151289", "Song Yadong")]),
+        )
+        self.assertIn("5999999", {f["espn_id"] for f in plan.new})
+
+    def test_a_different_spelling_is_reported_and_never_renamed(self):
+        """The two chronic UFC SKIPs are both name drift: we hold Bovada's `Sergey Spivak`
+        where ESPN publishes `Serghei Spivac`. Our name is joined on elsewhere, so a rename
+        is a separate deliberate decision, not a side effect of a harvest."""
+        con = self._con()
+        con.execute(
+            "INSERT INTO players(name, league, espn_id) VALUES('Sergey Spivak','ufc','4421246')")
+        plan = roster.build_harvest_plan(
+            con, today=dt.date(2026, 8, 24), emit=lambda _m: None,
+            fetch=self._fetch([self._fight("4421246", "Serghei Spivac", "5060483", "Vitor Petrino")]),
+        )
+        self.assertEqual(plan.name_drift, [("4421246", "Sergey Spivak", "Serghei Spivac")])
+        self.assertNotIn("4421246", {f["espn_id"] for f in plan.new})
+        roster.apply_harvest(con, plan)
+        self.assertEqual(
+            con.execute("SELECT name FROM players WHERE espn_id='4421246'").fetchone()[0],
+            "Sergey Spivak",
+        )
+
+    def test_an_id_less_row_is_adopted_rather_than_duplicated(self):
+        """Harvesting without this produced 46 duplicate names on dev and then 49
+        ownership CONFLICTs: the resolver tried to give the old row an id the newly
+        inserted row had already taken. The harvest caused the conflict it tripped over."""
+        con = self._con()
+        con.execute("INSERT INTO players(name, league, espn_id) VALUES('Edson Barboza','ufc',NULL)")
+        plan = roster.build_harvest_plan(
+            con, today=dt.date(2026, 8, 24), emit=lambda _m: None,
+            fetch=self._fetch([self._fight("2526299", "Edson Barboza", "3151289", "Song Yadong")]),
+        )
+        self.assertEqual([a[1] for a in plan.adopt], ["Edson Barboza"])
+        self.assertNotIn("2526299", {f["espn_id"] for f in plan.new})
+        roster.apply_harvest(con, plan)
+        rows = con.execute(
+            "SELECT name, espn_id FROM players WHERE league='ufc' AND name='Edson Barboza'"
+        ).fetchall()
+        self.assertEqual(rows, [("Edson Barboza", "2526299")])
+
+    def test_a_name_shared_by_two_id_less_rows_refuses_to_bind(self):
+        """An ambiguous key must refuse, not pick one. A wrong bind is silent and
+        permanent, and there is no error to notice later."""
+        con = self._con()
+        for _ in range(2):
+            con.execute("INSERT INTO players(name, league, espn_id) VALUES('Dan Hooker','ufc',NULL)")
+        plan = roster.build_harvest_plan(
+            con, today=dt.date(2026, 8, 24), emit=lambda _m: None,
+            fetch=self._fetch([self._fight("2559966", "Dan Hooker", "3151289", "Song Yadong")]),
+        )
+        self.assertEqual(plan.ambiguous, [("Dan Hooker", 2)])
+        self.assertEqual(plan.adopt, [])
+        self.assertNotIn("2559966", {f["espn_id"] for f in plan.new})
+        roster.apply_harvest(con, plan)
+        self.assertEqual(
+            con.execute("SELECT COUNT(*) FROM players WHERE espn_id='2559966'").fetchone()[0], 0)
+
+    def test_a_drifted_spelling_is_not_adopted_onto_the_wrong_row(self):
+        """Adoption is EXACT name only. A fuzzy or surname match is exactly what a
+        two-publisher vocabulary defeats, and binding `Serghei Spivac` onto an id-less
+        `Sergey Spivak` row on a surname would be a guess wearing a repair's clothes."""
+        con = self._con()
+        con.execute("INSERT INTO players(name, league, espn_id) VALUES('Sergey Spivak','ufc',NULL)")
+        plan = roster.build_harvest_plan(
+            con, today=dt.date(2026, 8, 24), emit=lambda _m: None,
+            fetch=self._fetch([self._fight("4421246", "Serghei Spivac", "5060483", "Vitor Petrino")]),
+        )
+        self.assertEqual(plan.adopt, [])
+        self.assertIn("4421246", {f["espn_id"] for f in plan.new})
+
+    def test_a_harvest_with_nothing_to_insert_opens_no_writer_and_takes_no_backup(self):
+        """A quiet sweep must cost nothing. The runner writes a 400MB backup before any
+        spine write, so taking one on every run because the card was merely READ would be
+        a per-run disk cost for no change."""
+        import run_ufc_current_card_ingest as runner
+
+        empty = roster.HarvestPlan()
+        self.assertEqual(empty.mutations, 0)
+        with mock.patch.object(runner, "_connect_readonly", return_value=None), \
+                mock.patch.object(runner.roster, "build_harvest_plan", return_value=empty), \
+                mock.patch.object(runner.ingest, "load_targets", return_value=([], set(), {})), \
+                mock.patch.object(runner.common, "backup_database") as backup, \
+                mock.patch.object(runner.sqlite3, "connect") as connect:
+            result = runner.run("/tmp/not-opened.db", now=dt.datetime(2026, 8, 24, 13, 0),
+                                emit=lambda _m: None)
+        self.assertEqual(result["status"], "no_targets")
+        backup.assert_not_called()
+        connect.assert_not_called()
+
+    def test_a_dry_run_never_writes_the_spine(self):
+        """apply=False must not insert, and must not take the roster backup either."""
+        import run_ufc_current_card_ingest as runner
+
+        plan = roster.HarvestPlan(new=[{"espn_id": "1", "name": "A", "opponent": None,
+                                        "event_id": None, "fight_id": None}])
+        self.assertEqual(plan.mutations, 1)
+        with mock.patch.object(runner, "_connect_readonly", return_value=None), \
+                mock.patch.object(runner.roster, "build_harvest_plan", return_value=plan), \
+                mock.patch.object(runner.ingest, "load_targets", return_value=([], set(), {})), \
+                mock.patch.object(runner.common, "backup_database") as backup, \
+                mock.patch.object(runner.sqlite3, "connect") as connect:
+            runner.run("/tmp/not-opened.db", now=dt.datetime(2026, 8, 24, 13, 0),
+                       emit=lambda _m: None, apply=False)
+        backup.assert_not_called()
+        connect.assert_not_called()
+
+    def test_one_request_covers_the_whole_window(self):
+        """21 per-day requests and one range request return the same answer. The budget
+        skill's first lever is issuing fewer requests."""
+        calls = []
+
+        def fetch(start, end):
+            calls.append((start, end))
+            return {"2026-08-29": [self._fight("4569549", "A", "3151289", "B")]}, 1
+
+        roster.build_harvest_plan(
+            self._con(), today=dt.date(2026, 8, 24), emit=lambda _m: None, fetch=fetch)
+        self.assertEqual(len(calls), 1)
+        self.assertEqual(calls[0], ("2026-08-10", "2026-09-14"))
+
