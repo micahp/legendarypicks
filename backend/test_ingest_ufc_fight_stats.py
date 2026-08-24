@@ -486,6 +486,120 @@ class UfcIngestTests(unittest.TestCase):
             ingest.apply_plan(self.path, plan)
 
 
+class OffCardResolveTest(unittest.TestCase):
+    """A fighter on no card is still resolvable, because ESPN holds an athlete record
+    independently of any fight. Wellington Turman sat unresolved on prod through a 90-day
+    card sweep and I called him unreachable; he is athlete 4426282 and always was."""
+
+    def _con(self):
+        con = sqlite3.connect(":memory:")
+        con.execute(
+            "CREATE TABLE players(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL,"
+            " team TEXT, league TEXT NOT NULL, espn_id TEXT, active INTEGER DEFAULT 1,"
+            " updated_at TEXT, UNIQUE(espn_id, league))")
+        con.execute(
+            "CREATE TABLE name_alias(id INTEGER PRIMARY KEY AUTOINCREMENT,"
+            " player_id INTEGER NOT NULL REFERENCES players(id), alias_norm TEXT NOT NULL,"
+            " UNIQUE(player_id, alias_norm))")
+        return con
+
+    def _fetch(self, roster_ids, hits):
+        """Stand in for the two endpoints: the league roster and the search."""
+        def fetch(url):
+            if "leagues/ufc/athletes" in url:
+                return {"pageCount": 1, "items": [
+                    {"$ref": "http://x/v2/sports/mma/athletes/{}?lang=en".format(i)}
+                    for i in roster_ids]}
+            return {"results": [{"type": "player", "contents": [
+                {"uid": "s:3301~a:{}".format(aid), "displayName": name}
+                for aid, name in hits]}]}
+        return fetch
+
+    def test_a_fighter_on_no_card_resolves_from_the_league_roster(self):
+        con = self._con()
+        con.execute("INSERT INTO players(name, league, espn_id) VALUES('Wellington Turman','ufc',NULL)")
+        plan = roster.build_offcard_plan(
+            con, emit=lambda _m: None,
+            fetch=self._fetch(["4426282"], [("4426282", "Wellington Turman")]))
+        self.assertEqual([(b[2], b[3]) for b in plan.bind], [("4426282", "Wellington Turman")])
+        self.assertEqual(roster.apply_offcard(con, plan), 1)
+        self.assertEqual(
+            con.execute("SELECT espn_id FROM players").fetchone()[0], "4426282")
+
+    def test_a_namesake_outside_the_league_is_refused(self):
+        """search/v2 spans every sport ESPN covers. A hit proves someone has that name,
+        not that they fight in the UFC. The league roster is what tells them apart."""
+        con = self._con()
+        con.execute("INSERT INTO players(name, league, espn_id) VALUES('Wellington Turman','ufc',NULL)")
+        plan = roster.build_offcard_plan(
+            con, emit=lambda _m: None,
+            fetch=self._fetch(["9999999"], [("4426282", "Wellington Turman")]))
+        self.assertEqual(plan.bind, [])
+        self.assertEqual(plan.not_in_league, [("Wellington Turman", "4426282")])
+        self.assertEqual(roster.apply_offcard(con, plan), 0)
+
+    def test_the_top_ranked_hit_is_never_taken_on_relevance(self):
+        """A search ranks by relevance. Taking rank 1 is how a namesake becomes an
+        identity, so only an exact FOLDED name match counts."""
+        con = self._con()
+        con.execute("INSERT INTO players(name, league, espn_id) VALUES('Aleksandr Rakic','ufc',NULL)")
+        plan = roster.build_offcard_plan(
+            con, emit=lambda _m: None,
+            fetch=self._fetch(["4079314"], [("4079314", "Aleksandar Rakic")]))
+        self.assertEqual(plan.bind, [])
+        self.assertEqual(plan.not_found, ["Aleksandr Rakic"])
+
+    def test_an_accent_or_capital_still_binds(self):
+        con = self._con()
+        con.execute("INSERT INTO players(name, league, espn_id) VALUES('Uros Medic','ufc',NULL)")
+        plan = roster.build_offcard_plan(
+            con, emit=lambda _m: None,
+            fetch=self._fetch(["4685870"], [("4685870", "Uro\u0161 Medi\u0107")]))
+        self.assertEqual([b[2] for b in plan.bind], ["4685870"])
+        roster.apply_offcard(con, plan)
+        # ESPN is canonical, and our spelling survives as an alias.
+        self.assertEqual(con.execute("SELECT name FROM players").fetchone()[0], "Uro\u0161 Medi\u0107")
+        self.assertIn("uros medic", {r[0] for r in con.execute("SELECT alias_norm FROM name_alias")})
+
+    def test_two_league_athletes_with_one_name_refuse_to_bind(self):
+        con = self._con()
+        con.execute("INSERT INTO players(name, league, espn_id) VALUES('Jose Silva','ufc',NULL)")
+        plan = roster.build_offcard_plan(
+            con, emit=lambda _m: None,
+            fetch=self._fetch(["111", "222"], [("111", "Jose Silva"), ("222", "Jose Silva")]))
+        self.assertEqual(plan.bind, [])
+        self.assertEqual(plan.ambiguous, [("Jose Silva", 2)])
+
+    def test_an_id_another_row_already_owns_is_refused(self):
+        """Binding it would put one publisher id on two rows, which is the ownership
+        conflict the fight-stats plan aborts on."""
+        con = self._con()
+        con.execute("INSERT INTO players(name, league, espn_id) VALUES('Real Fighter','ufc','4426282')")
+        con.execute("INSERT INTO players(name, league, espn_id) VALUES('Wellington Turman','ufc',NULL)")
+        plan = roster.build_offcard_plan(
+            con, emit=lambda _m: None,
+            fetch=self._fetch(["4426282"], [("4426282", "Wellington Turman")]))
+        self.assertEqual(plan.bind, [])
+        self.assertEqual(plan.already_owned, [("Wellington Turman", "4426282")])
+
+    def test_the_roster_costs_two_requests_not_one_per_athlete(self):
+        """1854 athletes arrive in bulk. A per-athlete loop would be 1854 requests to one
+        host, which is the shape the budget skill exists to prevent."""
+        calls = []
+
+        def fetch(url):
+            calls.append(url)
+            if "leagues/ufc/athletes" in url:
+                page = 2 if "page=2" in url else 1
+                return {"pageCount": 2, "items": [
+                    {"$ref": "http://x/v2/sports/mma/athletes/{}?lang=en".format(page)}]}
+            return {"results": []}
+
+        ids = roster.ufc_athlete_ids(fetch)
+        self.assertEqual(ids, {"1", "2"})
+        self.assertEqual(len(calls), 2)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
 
@@ -824,4 +938,3 @@ class CardHarvestTest(unittest.TestCase):
             self._con(), today=dt.date(2026, 8, 24), emit=lambda _m: None, fetch=fetch)
         self.assertEqual(len(calls), 1)
         self.assertEqual(calls[0], ("2026-08-10", "2026-09-14"))
-

@@ -22,6 +22,8 @@ answer.
 from __future__ import annotations
 
 import datetime as dt
+import re
+import urllib.parse
 from dataclasses import dataclass, field
 from typing import Callable, Dict, List, Optional, Sequence, Tuple
 
@@ -294,3 +296,146 @@ def apply_harvest(con, plan: HarvestPlan, now: Optional[str] = None) -> int:
             rows,
         )
     return len(rows) + adopted + renamed
+
+# ── resolving a fighter who is on no card ────────────────────────────────────
+#
+# The card sweep can only reach fighters ESPN has SCHEDULED. Wellington Turman sat
+# unresolved on prod through a 90-day sweep because he has no upcoming or recent bout,
+# and I wrongly called him unreachable. He is not: ESPN holds an athlete record for him
+# independently of any fight.
+#
+#   /v2/sports/mma/leagues/ufc/athletes?limit=1000   1854 athlete ids in TWO requests
+#   /apis/search/v2?query=Wellington+Turman          -> uid s:3301~a:4426282, in that set
+#
+# Two requests for the whole roster plus one per unresolved fighter, which is the budget
+# skill's first lever: the roster arrives in bulk and only the names we actually cannot
+# place cost a request each.
+#
+# The roster set is what makes the search safe to use. A search result alone proves ESPN
+# has SOMEONE by that name, not that they are a UFC fighter; requiring the id to appear in
+# the league's own athlete list is the difference between an identity and a namesake.
+UFC_ATHLETES_URL = (
+    "https://sports.core.api.espn.com/v2/sports/mma/leagues/ufc/athletes?limit=1000&page={page}"
+)
+SEARCH_URL = "https://site.web.api.espn.com/apis/search/v2?query={query}&limit=5"
+
+
+def ufc_athlete_ids(fetch=None) -> set:
+    """Every athlete id the UFC league publishes. Two requests, no per-athlete calls."""
+    fetch = fetch or (lambda url: espn._get(url, ttl=600))
+    ids = set()
+    page = 1
+    while True:
+        payload = fetch(UFC_ATHLETES_URL.format(page=page))
+        for item in payload.get("items") or []:
+            match = re.search(r"/athletes/(\d+)", item.get("$ref", ""))
+            if match:
+                ids.add(match.group(1))
+        if page >= int(payload.get("pageCount") or 1):
+            return ids
+        page += 1
+
+
+def _search_athletes(name: str, fetch=None) -> List[Tuple[str, str]]:
+    """(athlete_id, display_name) for the player-type hits ESPN returns for this name."""
+    fetch = fetch or (lambda url: espn._get(url, ttl=600))
+    payload = fetch(SEARCH_URL.format(query=urllib.parse.quote(name)))
+    out = []
+    for result in payload.get("results") or []:
+        if result.get("type") != "player":
+            continue
+        for item in result.get("contents") or []:
+            match = re.search(r"a:(\d+)", item.get("uid") or "")
+            if match:
+                out.append((match.group(1), item.get("displayName") or ""))
+    return out
+
+
+@dataclass
+class OffCardPlan:
+    """Bindings for fighters no card can reach. Built before any write."""
+
+    bind: List[Tuple[int, str, str, str]] = field(default_factory=list)   # player_id, name, espn_id, espn_name
+    not_found: List[str] = field(default_factory=list)
+    not_in_league: List[Tuple[str, str]] = field(default_factory=list)
+    ambiguous: List[Tuple[str, int]] = field(default_factory=list)
+    already_owned: List[Tuple[str, str]] = field(default_factory=list)
+
+    @property
+    def mutations(self) -> int:
+        return len(self.bind)
+
+
+def build_offcard_plan(con, emit: Callable[[str], None] = print, fetch=None,
+                       limit: Optional[int] = None) -> OffCardPlan:
+    """Resolve id-less fighters against ESPN's athlete roster rather than a card."""
+    plan = OffCardPlan()
+    rows = list(con.execute(
+        "SELECT id, name FROM players WHERE league=? AND NULLIF(espn_id,'') IS NULL "
+        "ORDER BY name", (LEAGUE,)))
+    if not rows:
+        return plan
+    if limit is not None:
+        rows = rows[:limit]
+
+    league_ids = ufc_athlete_ids(fetch)
+    owned = {str(r[0]) for r in con.execute(
+        "SELECT espn_id FROM players WHERE league=? AND NULLIF(espn_id,'') IS NOT NULL",
+        (LEAGUE,))}
+
+    for player_id, name in rows:
+        folded = _normalize_name(name)
+        hits = _search_athletes(name, fetch)
+        # Exact on the FOLDED name only. A search ranks by relevance, and taking its top
+        # hit is how a namesake becomes an identity.
+        exact = [(aid, disp) for aid, disp in hits if _normalize_name(disp) == folded]
+        if not exact:
+            plan.not_found.append(name)
+            continue
+        in_league = [(aid, disp) for aid, disp in exact if aid in league_ids]
+        if not in_league:
+            plan.not_in_league.append((name, exact[0][0]))
+            continue
+        if len({aid for aid, _ in in_league}) > 1:
+            plan.ambiguous.append((name, len(in_league)))
+            continue
+        aid, disp = in_league[0]
+        if aid in owned:
+            plan.already_owned.append((name, aid))
+            continue
+        plan.bind.append((player_id, name, aid, disp))
+        owned.add(aid)
+
+    emit("  off-card resolve: {} asked, {} bound, {} not found, {} not a UFC athlete, "
+         "{} ambiguous, {} id already owned".format(
+             len(rows), len(plan.bind), len(plan.not_found), len(plan.not_in_league),
+             len(plan.ambiguous), len(plan.already_owned)))
+    for player_id, name, aid, disp in plan.bind:
+        note = "" if _normalize_name(disp) == _normalize_name(name) else " (ESPN: %r)" % disp
+        emit("    BIND {!r} -> ESPN {}{}".format(name, aid, note))
+    for name in plan.not_found:
+        emit("    NO ESPN ATHLETE matches {!r} exactly".format(name))
+    for name, aid in plan.not_in_league:
+        emit("    NOT A UFC ATHLETE {!r}: ESPN {} is not in the league roster".format(name, aid))
+    return plan
+
+
+def apply_offcard(con, plan: OffCardPlan, now: Optional[str] = None) -> int:
+    """Bind the ids. Guarded so it cannot overwrite an id that arrived meanwhile."""
+    if not plan.mutations:
+        return 0
+    now = now or dt.datetime.now(dt.timezone.utc).isoformat()
+    bound = 0
+    for player_id, held_name, espn_id, espn_name in plan.bind:
+        cur = con.execute(
+            "UPDATE players SET espn_id=?, name=?, updated_at=? "
+            "WHERE id=? AND league=? AND NULLIF(espn_id,'') IS NULL",
+            (espn_id, espn_name, now, player_id, LEAGUE))
+        bound += cur.rowcount
+        if cur.rowcount:
+            # ESPN is canonical here too, so keep our spelling resolvable.
+            for spelling in (held_name, espn_name):
+                con.execute(
+                    "INSERT OR IGNORE INTO name_alias(player_id, alias_norm) VALUES(?,?)",
+                    (player_id, _normalize_name(spelling)))
+    return bound
