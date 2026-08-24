@@ -152,7 +152,14 @@ def render(result: dict, emit=print) -> None:
 
 
 def check_baseline(result: dict, baseline: dict, emit=print) -> List[str]:
-    """Compare against the committed baseline. Returns the list of regressions.
+    """Compare one database against its OWN committed baseline.
+
+    Keyed per database, deliberately. The first version wrote the baseline from prod and
+    checked it against both, so dev failed instantly on ufc and wc, where prod grades 93%
+    and 100% and dev grades 0%. Collapsing two environments onto one expected number
+    forces a choice between checking only prod, which lets dev rot unseen, and lowering
+    the number to whatever dev manages, which is how a gate stops meaning anything. Each
+    database gets its own committed truth instead.
 
     The baseline is COMMITTED so that weakening it shows up in git as a diff rather
     than as a number quietly drifting down. A new league is reported, never failed:
@@ -212,12 +219,17 @@ def main(argv=None) -> int:
         print("")
 
     if args.write_baseline:
-        baseline = {r["league"]: r["settled_pct"] for r in results[0]["leagues"]
-                    if r["settleable"]}
+        baseline = {
+            os.path.basename(result["db"]): {
+                r["league"]: r["settled_pct"] for r in result["leagues"] if r["settleable"]
+            }
+            for result in results
+        }
         with open(BASELINE, "w") as fh:
             json.dump(baseline, fh, indent=2, sort_keys=True)
             fh.write("\n")
-        print("props_coverage: baseline written from {}".format(results[0]["db"]))
+        print("props_coverage: baseline written for {}".format(
+            ", ".join(os.path.basename(r["db"]) for r in results)))
         return 0
 
     if args.check:
@@ -227,13 +239,18 @@ def main(argv=None) -> int:
                   "not a check that passed".format(BASELINE), file=sys.stderr)
             return 1
         with open(BASELINE) as fh:
-            baseline = json.load(fh)
+            baselines = json.load(fh)
         failures = []
         for result in results:
-            print("props_coverage: checking {} against the committed baseline"
-                  .format(result["db"]))
-            failures += ["{}  [{}]".format(f, os.path.basename(result["db"]))
-                         for f in check_baseline(result, baseline)]
+            key = os.path.basename(result["db"])
+            print("props_coverage: checking {} against its committed baseline".format(key))
+            if key not in baselines:
+                # Absence is not a pass. A database nobody committed an expectation for
+                # is a database nothing is grading.
+                failures.append("{}: no baseline committed for this database".format(key))
+                continue
+            failures += ["{}  [{}]".format(f, key)
+                         for f in check_baseline(result, baselines[key])]
         if failures:
             print("")
             for f in failures:
