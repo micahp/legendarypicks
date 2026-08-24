@@ -52,6 +52,14 @@ PROVIDERS = [
     },
 ]
 
+# A cadence equal to the timer interval never fires twice in a row without this.
+# `_last_ok` reads `started_at`, so the run at *:34 measures its age from *:04:0X and
+# lands a couple of seconds SHORT of 30 minutes. Measured 2026-08-24: bovada was
+# cadence-skipped on the *:34 firing with "last ok 30m ago", which halves every
+# provider's real cadence to 60 minutes and is invisible because a skip is not an error.
+# The grace is deliberately smaller than any timer jitter we schedule against.
+CADENCE_GRACE_MIN = 2.0
+
 INGEST_RUNS_DDL = """
 CREATE TABLE IF NOT EXISTS ingest_runs (
     id           INTEGER PRIMARY KEY,
@@ -269,7 +277,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                 last_ok = _last_ok(con, provider_id, db_path)
                 if last_ok is not None:
                     age_min = max(0.0, (_utc_now() - last_ok).total_seconds() / 60.0)
-                    if age_min < provider["cadence_min"]:
+                    if age_min < provider["cadence_min"] - CADENCE_GRACE_MIN:
                         started_at = _iso_now()
                         if not args.dry_run:
                             _insert_run(

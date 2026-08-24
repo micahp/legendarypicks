@@ -220,3 +220,22 @@ def test_an_unmapped_source_label_is_reported_by_the_freshness_monitor(monkeypat
 
     assert exc.value.code == 1
     assert "UNKNOWN SOURCE new-provider-label" in capsys.readouterr().out
+
+def test_a_cadence_equal_to_the_timer_interval_still_fires(monkeypatch, tmp_path):
+    """The *:04/*:34 firing measures its age from the previous run's `started_at`, which is
+    a few seconds after *:04, so an exact-equality check lands short and skips forever.
+    Measured on the box 2026-08-24: bovada skipped at *:34 with "last ok 30m ago"."""
+    db_path = _db(tmp_path / "grace.db")
+    _configure(monkeypatch, tmp_path, [_provider("ontime", cadence_min=30)], db_path)
+
+    assert runner.main([]) == 0
+    # The previous run started 29m58s ago: one timer interval, minus the seconds the run
+    # itself took to reach the ingest_runs insert.
+    with sqlite3.connect(db_path) as con:
+        con.execute(
+            "UPDATE ingest_runs SET started_at = ?",
+            ((dt.datetime.now(dt.timezone.utc) - dt.timedelta(minutes=29, seconds=58))
+             .isoformat(),),
+        )
+    assert runner.main([]) == 0
+    assert [row[1] for row in _rows(db_path)] == ["ok", "ok"]
