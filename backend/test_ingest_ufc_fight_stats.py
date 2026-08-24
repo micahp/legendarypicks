@@ -571,6 +571,14 @@ class CardHarvestTest(unittest.TestCase):
             " team TEXT, league TEXT NOT NULL, espn_id TEXT, active INTEGER DEFAULT 1,"
             " updated_at TEXT, UNIQUE(espn_id, league))"
         )
+        # Mirrors prod: the harvest reads reviewed aliases so it cannot insert a third
+        # spelling beside two that are already reconciled. A fixture missing a table the
+        # code reads is a fixture asserting the code never reads it.
+        con.execute(
+            "CREATE TABLE name_alias(id INTEGER PRIMARY KEY AUTOINCREMENT,"
+            " player_id INTEGER NOT NULL REFERENCES players(id), alias_norm TEXT NOT NULL,"
+            " UNIQUE(player_id, alias_norm))"
+        )
         return con
 
     def _fetch(self, games):
@@ -645,10 +653,12 @@ class CardHarvestTest(unittest.TestCase):
         )
         self.assertIn("5999999", {f["espn_id"] for f in plan.new})
 
-    def test_a_different_spelling_is_reported_and_never_renamed(self):
-        """The two chronic UFC SKIPs are both name drift: we hold Bovada's `Sergey Spivak`
-        where ESPN publishes `Serghei Spivac`. Our name is joined on elsewhere, so a rename
-        is a separate deliberate decision, not a side effect of a harvest."""
+    def test_espn_is_canonical_so_we_rename_and_keep_our_spelling_as_an_alias(self):
+        """ESPN's spelling wins and ours survives as an alias.
+
+        Renaming alone would silently break every Bovada board that spells the fighter the
+        old way, because `_resolve_player_for_ingest` reaches the alias table at step 3.
+        Both spellings are written, so either publisher's vocabulary resolves."""
         con = self._con()
         con.execute(
             "INSERT INTO players(name, league, espn_id) VALUES('Sergey Spivak','ufc','4421246')")
@@ -656,13 +666,79 @@ class CardHarvestTest(unittest.TestCase):
             con, today=dt.date(2026, 8, 24), emit=lambda _m: None,
             fetch=self._fetch([self._fight("4421246", "Serghei Spivac", "5060483", "Vitor Petrino")]),
         )
-        self.assertEqual(plan.name_drift, [("4421246", "Sergey Spivak", "Serghei Spivac")])
-        self.assertNotIn("4421246", {f["espn_id"] for f in plan.new})
+        self.assertEqual([(d[1], d[2]) for d in plan.name_drift],
+                         [("Sergey Spivak", "Serghei Spivac")])
         roster.apply_harvest(con, plan)
         self.assertEqual(
             con.execute("SELECT name FROM players WHERE espn_id='4421246'").fetchone()[0],
-            "Sergey Spivak",
+            "Serghei Spivac")
+        aliases = {r[0] for r in con.execute(
+            "SELECT alias_norm FROM name_alias WHERE player_id="
+            "(SELECT id FROM players WHERE espn_id='4421246')")}
+        self.assertEqual(aliases, {"sergey spivak", "serghei spivac"})
+
+    def test_a_reviewed_alias_binds_instead_of_minting_a_third_spelling(self):
+        """name_alias already reconciles Spivak/Spivac on prod. A harvest that ignored it
+        would insert ESPN's spelling as a third row for one man."""
+        con = self._con()
+        con.execute("INSERT INTO players(name, league, espn_id) VALUES('Sergey Spivak','ufc',NULL)")
+        pid = con.execute("SELECT id FROM players").fetchone()[0]
+        for alias in ("sergey spivak", "serghei spivac"):
+            con.execute("INSERT INTO name_alias(player_id, alias_norm) VALUES(?,?)", (pid, alias))
+        plan = roster.build_harvest_plan(
+            con, today=dt.date(2026, 8, 24), emit=lambda _m: None,
+            fetch=self._fetch([self._fight("4421246", "Serghei Spivac", "5060483", "Vitor Petrino")]),
         )
+        self.assertEqual([a[0] for a in plan.adopt], [pid])
+        self.assertNotIn("4421246", {f["espn_id"] for f in plan.new})
+        roster.apply_harvest(con, plan)
+        self.assertEqual(
+            con.execute("SELECT COUNT(*) FROM players WHERE espn_id='4421246'").fetchone()[0], 1)
+        self.assertEqual(
+            con.execute("SELECT name FROM players WHERE id=?", (pid,)).fetchone()[0],
+            "Sergey Spivak", "adopting binds the id, it does not rename")
+
+    def test_a_fold_difference_adopts_rather_than_duplicating(self):
+        """`MarQuel/Marquel`, an accent, or `De/de Ridder` is one fighter under one
+        vocabulary's punctuation. Same fold the props resolver already trusts at step 2b."""
+        for held, published in (("Marquel Mederos", "MarQuel Mederos"),
+                                ("Joel Alvarez", "Joel \u00c1lvarez"),
+                                ("Reinier De Ridder", "Reinier de Ridder")):
+            con = self._con()
+            con.execute("INSERT INTO players(name, league, espn_id) VALUES(?,'ufc',NULL)", (held,))
+            plan = roster.build_harvest_plan(
+                con, today=dt.date(2026, 8, 24), emit=lambda _m: None,
+                fetch=self._fetch([self._fight("9000001", published, "3151289", "Song Yadong")]),
+            )
+            self.assertEqual(len(plan.adopt), 1, "{} should adopt onto {}".format(published, held))
+            self.assertNotIn("9000001", {f["espn_id"] for f in plan.new})
+
+    def test_a_near_spelling_neither_binds_nor_inserts(self):
+        """`Aleksandr Rakic` held, ESPN publishes `Aleksandar Rakic`. One letter, one man.
+
+        Inserting mints a second row nothing surfaces; binding on a surname is the guess a
+        two-publisher vocabulary punishes. So it does neither and reports, and name_alias
+        is the table for exactly that reviewed judgment call."""
+        for held, published in (("Aleksandr Rakic", "Aleksandar Rakic"),
+                                ("Sergey Spivak", "Serghei Spivac"),
+                                ("Kaua Fernandes", "Kau\u00ea Fernandes")):
+            con = self._con()
+            con.execute("INSERT INTO players(name, league, espn_id) VALUES(?,'ufc',NULL)", (held,))
+            plan = roster.build_harvest_plan(
+                con, today=dt.date(2026, 8, 24), emit=lambda _m: None,
+                fetch=self._fetch([self._fight("9000002", published, "3151289", "Song Yadong")]),
+            )
+            self.assertEqual([(d[1], d[2]) for d in plan.suspected_duplicates],
+                             [(held, published)])
+            self.assertEqual(plan.adopt, [])
+            self.assertNotIn("9000002", {f["espn_id"] for f in plan.new})
+            roster.apply_harvest(con, plan)
+            self.assertEqual(
+                con.execute("SELECT COUNT(*) FROM players WHERE espn_id='9000002'").fetchone()[0],
+                0, "a suspected duplicate must not be minted")
+            self.assertEqual(
+                con.execute("SELECT COUNT(*) FROM players WHERE name=?", (held,)).fetchone()[0],
+                1, "and the row we already held must be untouched")
 
     def test_an_id_less_row_is_adopted_rather_than_duplicated(self):
         """Harvesting without this produced 46 duplicate names on dev and then 49
@@ -698,19 +774,6 @@ class CardHarvestTest(unittest.TestCase):
         roster.apply_harvest(con, plan)
         self.assertEqual(
             con.execute("SELECT COUNT(*) FROM players WHERE espn_id='2559966'").fetchone()[0], 0)
-
-    def test_a_drifted_spelling_is_not_adopted_onto_the_wrong_row(self):
-        """Adoption is EXACT name only. A fuzzy or surname match is exactly what a
-        two-publisher vocabulary defeats, and binding `Serghei Spivac` onto an id-less
-        `Sergey Spivak` row on a surname would be a guess wearing a repair's clothes."""
-        con = self._con()
-        con.execute("INSERT INTO players(name, league, espn_id) VALUES('Sergey Spivak','ufc',NULL)")
-        plan = roster.build_harvest_plan(
-            con, today=dt.date(2026, 8, 24), emit=lambda _m: None,
-            fetch=self._fetch([self._fight("4421246", "Serghei Spivac", "5060483", "Vitor Petrino")]),
-        )
-        self.assertEqual(plan.adopt, [])
-        self.assertIn("4421246", {f["espn_id"] for f in plan.new})
 
     def test_a_harvest_with_nothing_to_insert_opens_no_writer_and_takes_no_backup(self):
         """A quiet sweep must cost nothing. The runner writes a 400MB backup before any
