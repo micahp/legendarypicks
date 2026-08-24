@@ -381,7 +381,15 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         con.close()
 
     _report(db_path, results)
-    return 0 if succeeded or attempted == 0 else 1
+    # A cadence skip means this provider succeeded recently enough that we chose not to
+    # ask again. Counting it as "no success" made the unit red whenever the only provider
+    # attempted was a broken one: measured 2026-08-24, bovada and rotowire were both
+    # cadence-skipped, underdog failed as it always does, and the unit went red having
+    # done nothing wrong. Red must mean the run is broken, not that it was quiet.
+    healthy = succeeded + sum(
+        1 for r in results.values() if r["status"] in ("skipped_cadence", "skipped_lock")
+    )
+    return 0 if healthy or attempted == 0 else 1
 
 
 if __name__ == "__main__":

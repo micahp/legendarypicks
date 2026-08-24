@@ -239,3 +239,23 @@ def test_a_cadence_equal_to_the_timer_interval_still_fires(monkeypatch, tmp_path
         )
     assert runner.main([]) == 0
     assert [row[1] for row in _rows(db_path)] == ["ok", "ok"]
+
+
+def test_a_quiet_run_is_not_a_red_run(monkeypatch, tmp_path):
+    """Every healthy provider cadence-skipped and the one broken provider failed. Nothing
+    is wrong with the run, so it must not exit non-zero: a red unit has to mean broken,
+    not quiet. Measured 2026-08-24, this painted the props unit red on its first firing."""
+    db_path = _db(tmp_path / "quiet.db")
+    _configure(
+        monkeypatch,
+        tmp_path,
+        [_provider("healthy"), _provider("broken", code="raise SystemExit(2)")],
+        db_path,
+    )
+
+    assert runner.main([]) == 0  # `healthy` succeeded, so the run is green already
+    assert [row[1] for row in _rows(db_path)] == ["ok", "failed"]
+
+    # Second run: `healthy` is inside its cadence, `broken` fails again. Still exit 0.
+    assert runner.main([]) == 0
+    assert [row[1] for row in _rows(db_path)][-2:] == ["skipped_cadence", "failed"]
