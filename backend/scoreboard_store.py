@@ -54,6 +54,19 @@ LIVE_TAIL = dt.timedelta(hours=12)
 # addition is real, so this backs off rather than giving up.
 EMPTY_BACKOFF = dt.timedelta(hours=3)
 
+# How long a FUTURE slate that has not started stays unasked. Measured
+# 2026-08-24: `needs_refresh` answered "N not final" for tomorrow on every
+# league carrying a published slate, so the 10-minute schedule run re-fetched
+# five leagues' unstarted slates 144 times a day each. The asymmetry is the
+# giveaway -- a league publishing NOTHING for tomorrow got the 3h empty
+# backoff, while a league publishing a schedule got no backoff at all, so the
+# more a publisher told us the more we asked. "Not final" is the right question
+# for today, where it means in flight; on a future date it only means "has not
+# started yet". A postponement or an added match is real, which is why this
+# backs off rather than skipping the day outright, and why any game already
+# in flight or final overrides it entirely.
+FUTURE_BACKOFF = dt.timedelta(hours=1)
+
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS scoreboard_snapshots(
   league     TEXT NOT NULL,
@@ -306,7 +319,8 @@ def live_targets(now=None, con=None):
             con.close()
 
 
-def needs_refresh(league, game_date, empty_backoff=EMPTY_BACKOFF, con=None):
+def needs_refresh(league, game_date, empty_backoff=EMPTY_BACKOFF, con=None,
+                  future_backoff=FUTURE_BACKOFF):
     """Should the schedule run spend a request on this (league, date)?
 
     Being in season is not the same as having something new to say. Three cases
@@ -361,6 +375,21 @@ def needs_refresh(league, game_date, empty_backoff=EMPTY_BACKOFF, con=None):
             (league, game_date),
         ).fetchone()[0]
         if unfinished:
+            started = con.execute(
+                "SELECT COUNT(*) FROM scoreboard_snapshots"
+                " WHERE league=? AND game_date=? AND state IN ('in', 'post')",
+                (league, game_date),
+            ).fetchone()[0]
+            # `started` is what separates "has not begun" from "in flight". The
+            # date comparison alone would not: `game_date` is a slate day, so a
+            # game can still be running when the league's clock has rolled over.
+            # One started game is enough to hand the day straight back to the
+            # unfinished path it would otherwise have taken.
+            if not started and game_date > _today_for(league):
+                minutes = int(age.total_seconds() // 60)
+                if age >= future_backoff:
+                    return True, f"future slate, last asked {minutes}m ago"
+                return False, f"future slate, none started, asked {minutes}m ago"
             return True, f"{unfinished} not final"
         return False, "every game final"
     except sqlite3.Error as exc:
