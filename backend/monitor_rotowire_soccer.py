@@ -15,7 +15,7 @@ from the series rather than from whichever read someone happened to run.
 
 The relay is one request (~2 MB) and carries 10 books. PrizePicks soccer prices seven of
 the markets we cannot otherwise get for MLS — passes attempted, saves, shots, shots on
-target, tackles, clearances, crosses. Bovada and Kambi supply only goals and assists.
+target, tackles, clearances, crosses. Bovada supplies only goals and assists. (Kambi was dropped 2026-08-24, unused.)
 
 Writes to `source_probe_log`, which is additive and belongs to no league pipeline. It never
 writes props and never touches `players`.
