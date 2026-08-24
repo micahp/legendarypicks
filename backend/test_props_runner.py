@@ -284,6 +284,37 @@ def test_provider_runtime_does_not_move_the_next_cadence(monkeypatch, tmp_path):
     assert state["first"] == state["later"]
 
 
+def test_success_audit_and_cadence_state_commit_together(tmp_path):
+    db_path = _db(tmp_path / "atomic-state.db")
+    with sqlite3.connect(db_path) as con:
+        con.executescript(runner.INGEST_RUNS_DDL)
+        run_id = runner._insert_run(
+            con, "provider", os.path.abspath(db_path), "2026-08-24T12:00:00+00:00", "running"
+        )
+        con.execute("BEGIN")
+        con.execute(
+            "CREATE TRIGGER reject_state BEFORE INSERT ON ingest_provider_state "
+            "BEGIN SELECT RAISE(ABORT, 'state rejected'); END"
+        )
+        con.commit()
+
+        with pytest.raises(sqlite3.IntegrityError, match="state rejected"):
+            runner._finish_run(
+                con,
+                run_id,
+                "ok",
+                0,
+                None,
+                provider_id="provider",
+                db_path=os.path.abspath(db_path),
+                cycle_started_at="2026-08-24T12:00:00+00:00",
+            )
+
+        assert con.execute(
+            "SELECT status FROM ingest_runs WHERE id=?", (run_id,)
+        ).fetchone()[0] == "running"
+
+
 def test_host_lock_conflict_is_red_even_if_another_provider_succeeds(
     monkeypatch, tmp_path
 ):

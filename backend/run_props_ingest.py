@@ -137,18 +137,6 @@ def _last_ok(con: sqlite3.Connection, provider_id: str, db_path: str) -> Optiona
     return _parse_timestamp(row[0]) if row else None
 
 
-def _record_last_ok(
-    con: sqlite3.Connection, provider_id: str, db_path: str, cycle_started_at: str
-) -> None:
-    con.execute(
-        """INSERT INTO ingest_provider_state(provider, db_path, last_ok_at)
-           VALUES(?, ?, ?)
-           ON CONFLICT(provider, db_path) DO UPDATE SET last_ok_at=excluded.last_ok_at""",
-        (provider_id, db_path, cycle_started_at),
-    )
-    con.commit()
-
-
 def _insert_run(
     con: sqlite3.Connection,
     provider_id: str,
@@ -174,12 +162,28 @@ def _finish_run(
     status: str,
     exit_code: Optional[int],
     detail: Optional[str],
+    provider_id: Optional[str] = None,
+    db_path: Optional[str] = None,
+    cycle_started_at: Optional[str] = None,
 ) -> None:
-    con.execute(
-        "UPDATE ingest_runs SET finished_at=?, status=?, exit_code=?, detail=? WHERE id=?",
-        (_iso_now(), status, exit_code, detail[-2000:] if detail is not None else None, run_id),
-    )
-    con.commit()
+    try:
+        con.execute(
+            "UPDATE ingest_runs SET finished_at=?, status=?, exit_code=?, detail=? WHERE id=?",
+            (_iso_now(), status, exit_code, detail[-2000:] if detail is not None else None, run_id),
+        )
+        if status == "ok":
+            if not (provider_id and db_path and cycle_started_at):
+                raise ValueError("successful run requires provider cadence state")
+            con.execute(
+                """INSERT INTO ingest_provider_state(provider, db_path, last_ok_at)
+                   VALUES(?, ?, ?)
+                   ON CONFLICT(provider, db_path) DO UPDATE SET last_ok_at=excluded.last_ok_at""",
+                (provider_id, db_path, cycle_started_at),
+            )
+        con.commit()
+    except Exception:
+        con.rollback()
+        raise
 
 
 def _combined_output(stdout: Optional[str], stderr: Optional[str]) -> str:
@@ -398,10 +402,17 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
 
             if status == "ok":
                 succeeded += 1
-                if not args.dry_run:
-                    _record_last_ok(con, provider_id, db_path, cycle_started_at)
             if run_id is not None:
-                _finish_run(con, run_id, status, exit_code, detail)
+                _finish_run(
+                    con,
+                    run_id,
+                    status,
+                    exit_code,
+                    detail,
+                    provider_id=provider_id,
+                    db_path=db_path,
+                    cycle_started_at=cycle_started_at,
+                )
             results[provider_id] = {
                 "status": status,
                 "elapsed": _elapsed(provider_started),
