@@ -84,6 +84,41 @@ SELECT g.league                                                        AS league
  GROUP BY g.league
 """
 
+# The spine's own integrity, which nothing measured until 2026-08-24.
+#
+# Two rows in one league sharing one name, where one carries a publisher id and the other
+# does not, is almost always ONE person recorded twice: the resolved row and the row a
+# name-keyed ingest minted before anyone had an id for them. It is the exact shape a
+# harvest produces when it inserts instead of adopting, and I created 46 of them on dev
+# in one run. Prod already held 547 before I touched anything, 536 of them NFL.
+#
+# `all_have_distinct_ids` is deliberately NOT counted as a defect: two real players do
+# share a name, and when each carries their own publisher id that is the spine working.
+# NFL has 442 such groups and NCAAF 171. Counting those would make the number
+# unactionable, which is how a check stops being read.
+#
+# A duplicate espn_id within a league cannot happen -- UNIQUE(espn_id, league) -- so it is
+# checked anyway, because a constraint you never verify is a constraint you assume.
+SPINE_DUPES_SQL = """
+WITH g AS (
+  SELECT league, name, COUNT(*) AS n,
+         SUM(NULLIF(espn_id,'') IS NOT NULL) AS with_id,
+         SUM(NULLIF(espn_id,'') IS NULL)     AS without_id
+    FROM players GROUP BY league, name HAVING n > 1
+)
+SELECT league                                        AS league,
+       SUM(with_id >= 1 AND without_id >= 1)         AS suspected_duplicates,
+       SUM(with_id = 0)                              AS all_unresolved,
+       SUM(with_id = n)                              AS distinct_ids_ok
+  FROM g GROUP BY league
+"""
+
+DUPLICATE_ID_SQL = """
+SELECT league, espn_id, COUNT(*) AS n
+  FROM players WHERE NULLIF(espn_id,'') IS NOT NULL
+ GROUP BY league, espn_id HAVING n > 1
+"""
+
 NEVER_GRADED_SQL = """
 SELECT g.league AS league, p.market AS market, COUNT(*) AS rows_
   FROM props p
@@ -108,6 +143,8 @@ def measure(db_path: str, min_market_rows: int = 30) -> dict:
         settled = {r["league"]: dict(r) for r in con.execute(SETTLED_SQL) if r["league"]}
         never = [dict(r) for r in con.execute(NEVER_GRADED_SQL, (min_market_rows,))
                  if r["league"]]
+        dupes = [dict(r) for r in con.execute(SPINE_DUPES_SQL) if r["league"]]
+        dupe_ids = [dict(r) for r in con.execute(DUPLICATE_ID_SQL)]
     finally:
         con.close()
 
@@ -122,7 +159,9 @@ def measure(db_path: str, min_market_rows: int = 30) -> dict:
         row["pct_identified"] = _pct(row["identified"], row["ingested"])
         row["pct_fixtured"] = _pct(row["fixtured"], row["ingested"])
     stages.sort(key=lambda r: -r["ingested"])
-    return {"db": db_path, "leagues": stages, "never_graded_markets": never}
+    dupes.sort(key=lambda r: -r["suspected_duplicates"])
+    return {"db": db_path, "leagues": stages, "never_graded_markets": never,
+            "spine_duplicates": dupes, "duplicate_espn_ids": dupe_ids}
 
 
 def render(result: dict, emit=print) -> None:
@@ -144,6 +183,19 @@ def render(result: dict, emit=print) -> None:
         emit("  {:<7} {:>10} {:>8} {:>6.1f}%  {:>8} {:>8} {:>8}".format(
             r["league"], r["settleable"], r["settled_graded"], r["settled_pct"],
             r["blocked_identity"], r["blocked_fixture"], r["blocked_stats"]))
+    dupes = [d for d in result.get("spine_duplicates", []) if d["suspected_duplicates"]]
+    if dupes or result.get("duplicate_espn_ids"):
+        emit("")
+        emit("  spine duplicates -- one name, one league, one row with an id and one without:")
+        emit("  {:<7} {:>12} {:>15} {:>16}".format(
+            "league", "suspected", "all_unresolved", "distinct_ids_ok"))
+        for d in dupes:
+            emit("  {:<7} {:>12} {:>15} {:>16}".format(
+                d["league"], d["suspected_duplicates"], d["all_unresolved"],
+                d["distinct_ids_ok"]))
+        for d in result.get("duplicate_espn_ids", []):
+            emit("    IMPOSSIBLE {} espn_id {} on {} rows -- UNIQUE(espn_id, league) is gone"
+                 .format(d["league"], d["espn_id"], d["n"]))
     if result["never_graded_markets"]:
         emit("")
         emit("  markets that have NEVER graded a settled row:")
@@ -167,7 +219,29 @@ def check_baseline(result: dict, baseline: dict, emit=print) -> List[str]:
     """
     failures = []
     by_league = {r["league"]: r for r in result["leagues"]}
-    for league, expected in sorted(baseline.items()):
+    graded = baseline.get("graded", {})
+    dupe_baseline = baseline.get("spine_duplicates", {})
+
+    # Duplicates may go DOWN freely and must never go up. A new one is a person recorded
+    # twice, and nothing downstream ever raises about it: the row simply carries half the
+    # props. Prod's 547 are a backlog, not a licence -- the baseline freezes the backlog
+    # so a repair shows as a lowered number and a regression stops the release.
+    for row in result.get("spine_duplicates", []):
+        league, found = row["league"], row["suspected_duplicates"]
+        allowed = dupe_baseline.get(league)
+        if allowed is None:
+            if found:
+                failures.append("{}: {} suspected spine duplicates and no baseline for this "
+                                "league".format(league, found))
+            continue
+        if found > allowed:
+            failures.append("{}: suspected spine duplicates rose {} -> {}".format(
+                league, allowed, found))
+    for row in result.get("duplicate_espn_ids", []):
+        failures.append("{}: espn_id {} is on {} rows; UNIQUE(espn_id, league) is not "
+                        "enforced".format(row["league"], row["espn_id"], row["n"]))
+
+    for league, expected in sorted(graded.items()):
         row = by_league.get(league)
         if row is None:
             failures.append("{}: baseline expects this league, the database has no props"
@@ -181,7 +255,7 @@ def check_baseline(result: dict, baseline: dict, emit=print) -> List[str]:
             failures.append(
                 "{}: settled grading {:.1f}% is {:.1f} points below the baseline {:.1f}%"
                 .format(league, row["settled_pct"], drop, expected))
-    for league in sorted(set(by_league) - set(baseline)):
+    for league in sorted(set(by_league) - set(graded)):
         emit("  NEW {}: {:.1f}% settled grading, no baseline committed yet"
              .format(league, by_league[league]["settled_pct"]))
     return failures
@@ -221,7 +295,10 @@ def main(argv=None) -> int:
     if args.write_baseline:
         baseline = {
             os.path.basename(result["db"]): {
-                r["league"]: r["settled_pct"] for r in result["leagues"] if r["settleable"]
+                "graded": {r["league"]: r["settled_pct"]
+                           for r in result["leagues"] if r["settleable"]},
+                "spine_duplicates": {r["league"]: r["suspected_duplicates"]
+                                     for r in result.get("spine_duplicates", [])},
             }
             for result in results
         }
