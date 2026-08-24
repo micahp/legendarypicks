@@ -37,6 +37,14 @@ def run(
         targets, existing_keys, owners, emit=emit
     )
     if plan.source_errors or plan.conflicts:
+        # Name them. "19 source errors" with no names is unactionable: on 2026-08-24 the
+        # only way to learn that all 49 were `scoreboard_unavailable:HTTPError`, i.e. ESPN
+        # returning 403, was to rebuild the plan in-process by hand. A count is a claim
+        # ABOUT a failure, not the failure.
+        for item in plan.source_errors:
+            emit("  SOURCE ERROR {}".format(item))
+        for item in plan.conflicts:
+            emit("  CONFLICT {}".format(item))
         raise RuntimeError(
             "UFC plan failed: {} source errors, {} conflicts".format(
                 len(plan.source_errors), len(plan.conflicts)
