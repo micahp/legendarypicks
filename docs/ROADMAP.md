@@ -310,10 +310,24 @@ outlives its code.
 - [ ] **Bovada and Kalshi live games**, plus a game detail from each.
 - [ ] **Daily RotoWire props dump.** Save everything that endpoint gives us to a directory once a
       day, in case we expand to those leagues.
-- [ ] **Schedule the RotoWire relay ingest.** Built 2026-08-19
-      (`backend/ingest_rotowire_props.py`), live on both databases, **nothing schedules it** and
-      the cadence is an open decision. Still uncovered by it: NCAAF (opens Aug 29), WNBA (0 of
-      17, in season), NBA, NHL.
+- [x] **Schedule the RotoWire relay ingest.** DONE 2026-08-24, shipped in v0.8.7. NFL only,
+      every 6h on both databases via `legendarypicks-rotowire-props{,-prod}.timer`, cadence
+      matched to the existing probe so no new request rate hits the publisher. Coverage went
+      from 5 days stale to same-day; NFL had no other source at all since Bovada publishes
+      none. Those two units are a STOPGAP and get retired into the provider runner
+      (`/root/TASK-props-provider-runner.md`). Still uncovered by the relay: NCAAF (opens
+      Aug 29), WNBA (0 of 17, in season), NBA, NHL.
+- [ ] **Props should leave the board at kickoff.** Named by Micah 2026-08-24: a prop stops
+      being offerable once its game starts, *unless* the game has not actually started yet or
+      is cancelled, in which case it stays. So the rule keys on the game's real state, not on
+      the clock alone: `start_time` passed AND the game is not postponed/cancelled AND we have
+      evidence it began. We already store `prop_games.start_time` and final scores, and
+      `scoreboard_store` knows live state, so this is a serve-time filter plus a state source,
+      not a new ingest. Two traps to design around: (1) 17 of 30 MLS rows carried NO
+      `start_time` on 2026-08-19, so a missing start time must not silently expire a prop or
+      silently keep it; (2) doing this as a batch sweep re-introduces the
+      serve-path-enforcing-a-batch-budget shape. Efficient version is an indexed predicate on
+      the existing serve query, not a job that walks the table.
 - [ ] **Story generation deserves its own timer.** It rides on `ingest_scoreboards.py` only
       because that is where we now learn a game exists. Nothing ties it to the scoreboard.
       Related: story generation reaches `site.api.espn.com` through `stakes.py`, a host walled
