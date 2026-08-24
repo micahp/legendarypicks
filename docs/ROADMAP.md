@@ -307,6 +307,19 @@ outlives its code.
 
 ## 10. Queued, named by the user, not started
 
+- [x] **Un-park the Bovada props timers.** DONE 2026-08-24. They were never deliberately
+      parked: `legendarypicks-props{,-prod}.timer` were `OnBootSec=3min` +
+      `OnUnitActiveSec=30min` and sat in `SubState=elapsed` with no next elapse from
+      2026-08-21 11:08, while reporting `enabled` and `active` the whole time. A monotonic
+      timer whose reference activation systemd has forgotten has nothing left to schedule.
+      Both are now `OnCalendar`, staggered 15 minutes, sharing one `flock` on the Bovada host
+      budget. It also exposed a real defect: Bovada files NBA team totals inside a display
+      group called "Score Props", and "Highest Scoring Quarter Total Points O/U - Boston
+      Celtics" splits on " - " exactly like a player market, so the club landed in
+      `player_name`. All 120 NBA outcomes were rejected by the resolver, `resolved 0 of 120`
+      raised exit 3, and the exit took the whole unit down -- on a day Bovada published no NBA
+      player props at all. Team markets are now dropped at the parser and counted in the run
+      report. Bovada currently publishes NBA game/team markets only.
 - [ ] **Bovada and Kalshi live games**, plus a game detail from each.
 - [ ] **Daily RotoWire props dump.** Save everything that endpoint gives us to a directory once a
       day, in case we expand to those leagues.
@@ -317,6 +330,36 @@ outlives its code.
       none. Those two units are a STOPGAP and get retired into the provider runner
       (`/root/TASK-props-provider-runner.md`). Still uncovered by the relay: NCAAF (opens
       Aug 29), WNBA (0 of 17, in season), NBA, NHL.
+- [ ] **Audit the RotoWire props we store and never use.** Named by Micah 2026-08-24, and the
+      numbers are worse than "unused": **0.0% of RotoWire props are graded, in both databases**,
+      against Bovada's 78.7%. Prod holds 2,034 RotoWire rows and 0 `prop_results`. Three
+      distinct causes, measured, and they need separating before anything is deleted:
+      (1) **894 of 2,034 sit on markets `settlement.market_mapping.resolve_market()` cannot
+      resolve at all.** Every MLS market is in this bucket -- all 478 rows across
+      `passes_attempted`, `saves`, `shots`, `chances_created`, `clearances`, `crosses`,
+      `shots_on_target` -- plus NFL `interceptions_thrown` (102), `kicking_points` (82),
+      `field_goals_made` (64), `total_touchdowns` (46), `passing_touchdowns` (34),
+      `rushing_receiving_touchdowns` (32), `passing_rushing_yards` (30),
+      `rushing_receiving_yards` (14), `extra_points_made` (12). These are exactly the depth
+      markets RotoWire was brought in FOR, so an unmappable market is a market we paid to
+      collect and cannot settle.
+      (2) **10 of 25 RotoWire MLS fixtures carry an empty-string `espn_event_id`**, not NULL,
+      so `settle_game()` returns `no espn_event_id, cannot pull boxscore` and every prop on
+      them is unsettleable regardless of mapping. Note the shape: a coalesce-blind `IS NULL`
+      count reports 0 missing on these rows. Count with `coalesce(espn_event_id,'')=''`.
+      (3) The remaining 1,140 ARE mappable and simply have not been settled, because nothing
+      schedules settlement over RotoWire-sourced games.
+      Separately, on the collection side: the daily archive stores **the entire relay**, 3,191
+      props on 2026-08-24, of which we ingest ~9%. Unused every day: MLB Game 1050, WNBA Game
+      298, CFB Game 286, CS2 Game 205, NFL Season 743, NHL Season 81, CFB Season 59, MLB
+      Season 42, NBA Season 18, Valorant 3. That is cheap to keep (3.7 MB total, ~600 KB/day)
+      and deliberate per the dump item above, but it has **no retention policy**, and the
+      NFL Season bucket is 743 props a day we discard at ingest for having no fixture -- those
+      are season-long futures and want their own table rather than a daily drop.
+      Also still dropped at ingest for want of a mapping entry, counted every run: NFL
+      `Targets`, `Fantasy Score`, `Rushing Touchdowns`; MLS `Passes`, `Tackles`,
+      `Fouls Committed`.
+
 - [ ] **Props should leave the board at kickoff.** Named by Micah 2026-08-24: a prop stops
       being offerable once its game starts, *unless* the game has not actually started yet or
       is cancelled, in which case it stays. So the rule keys on the game's real state, not on
