@@ -11,11 +11,23 @@ import sys, os, sqlite3
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from settlement import settle_game
+import espn_client as espn
 
 DB = os.environ.get("LP_DB_PATH") or os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "picks.db")
 
 
 def main(dry_run: bool = False):
+    # settle_game asks ESPN for a boxscore per game, so this loop is a fan-out.
+    # Unpaced it reached 50 requests in a single minute on 2026-08-24, alongside
+    # ingest_scoreboards' steady 4/min, and site.web.api refused for the next four
+    # minutes; 26 of those refusals hit uvicorn. ESPN measures requests per minute,
+    # not per run, so the batch job spaces itself and the request handlers do not.
+    # Nobody waits on this script, so it is also allowed to wait out a cooldown.
+    with espn.batch_pacing():
+        return _main(dry_run=dry_run)
+
+
+def _main(dry_run: bool = False):
     con = sqlite3.connect(DB)
     con.row_factory = sqlite3.Row
 

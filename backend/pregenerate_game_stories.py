@@ -50,6 +50,15 @@ def discover(lg: str, days: int, backwards: bool = False):
     """[(game_id, home, away, state, start_time)] over a window of days.
 
     Forwards for previews, backwards for recaps — a finished game is behind us."""
+    # leagues x days of scoreboard calls, and this job was the third largest ESPN
+    # consumer in the 08-19 sample at 2,513 requests. ESPN's limit is a burst rate
+    # per host and the budget is shared with uvicorn, so the fan-out declares
+    # itself. Wrapped here rather than in main() because the loop is here.
+    with espn.batch_pacing():
+        return _discover(lg, days, backwards=backwards)
+
+
+def _discover(lg: str, days: int, backwards: bool = False):
     out, seen = [], set()
     today = dt.date.today()
     for i in range(days):
