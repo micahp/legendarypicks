@@ -691,9 +691,28 @@ def main(argv=None) -> int:
     if args.dry_run:
         print("dry run -- nothing written.")
         return 0
-    if counts["game_props"] and not (summary["new"] + summary["refreshed"]):
-        print("ERROR: a non-empty {} board produced zero props.".format(args.league))
+    # A board with rows we correctly REJECTED is not a failure. `game_props`
+    # counts the SPORT label, and RotoWire files MLS under a `Soccer` label it
+    # shares with La Liga, Serie A, Ligue 1 and the Premier League. On a day
+    # with no MLS fixtures the whole soccer board is another competition's, the
+    # membership filter rejects all of it, and this used to exit 2 and take the
+    # systemd unit down with it.
+    #
+    # Measured 2026-08-24: ESPN reports 0 MLS matches that day, the relay's
+    # soccer board is Osasuna/Bologna/Real Madrid/Chelsea, and every row is
+    # correctly rejected. Replayed against 08-22 (13 matches) the same code
+    # ingests 90 props across 9 games, so nothing about MLS is broken.
+    #
+    # The real failure is rows that PASSED the league filter and still wrote
+    # nothing. That is what this now checks.
+    considered = counts["game_props"] - summary["unknown_team"]
+    if considered > 0 and not (summary["new"] + summary["refreshed"]):
+        print("ERROR: {} {} rows passed the league filter and none ingested."
+              .format(considered, args.league))
         return 2
+    if counts["game_props"] and considered <= 0:
+        print("  no {} fixtures on this board; every row belonged to another "
+              "competition. Not an error.".format(args.league))
     return 0
 
 
