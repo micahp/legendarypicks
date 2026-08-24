@@ -5,6 +5,7 @@ from fastapi import HTTPException
 from fastapi.responses import JSONResponse
 from _core import *
 from provenance import publishers_for
+from sport_navigation import league_directory_navigation, prop_navigation
 from . import router
 from .contexts import _LCUP_RADIO
 
@@ -125,6 +126,16 @@ def coverage():
         d["publishers"] = pubs.get(d["league"], [])
         out.append(d)
     return out
+
+
+@router.get("/api/navigation/sports")
+def sport_navigation():
+    """DB-backed competition coverage with sport derived from publisher paths."""
+    with closing(_db()) as con:
+        return {
+            "props": prop_navigation(con),
+            "leagues": league_directory_navigation(con),
+        }
 
 
 @router.get("/api/stream/{league}")

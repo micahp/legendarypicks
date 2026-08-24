@@ -372,6 +372,61 @@ outlives its code.
       silently keep it; (2) doing this as a batch sweep re-introduces the
       serve-path-enforcing-a-batch-budget shape. Efficient version is an indexed predicate on
       the existing serve query, not a job that walks the table.
+- [ ] **Sport-first navigation on `/props` and `/leagues`** (`docs/DESIGN-sport-first-navigation.md`).
+      Named by Micah 2026-08-24. The top-level entity becomes the SPORT; a competition row
+      appears underneath only where we cover more than one competition in that sport. The
+      trigger was Leagues Cup being unreachable on `/props`, which shows league chips, but
+      adding an `lcup` chip returns the same question for Campeones Cup, CCC and every
+      tournament after them.
+      The measured argument is stronger than the aesthetic one: **RotoWire publishes soccer as
+      ONE bucket.** In the 2026-08-24 relay archive the sport key is the literal string
+      `Soccer`, there is no competition field on the market, the props carry no `eventID`, and
+      the 113 soccer props were Chelsea/Fulham (EPL), Bologna/Fiorentina/Lazio/Roma (Serie A),
+      Levante/Osasuna/Real Madrid/Real Sociedad (La Liga) and Deportivo/Málaga (Segunda).
+      **Zero MLS**, and Underdog publishes none either (`reference_underdog_no_mls`). So a
+      soccer tab whose contents are the two buttons `MLS` and `Leagues Cup` would have shown
+      two competitions with no props that day and hidden four that had them.
+      Decisions already made, so they are not re-argued: **football keeps NFL and NCAAF as two
+      top-level chips** (a chip between a drafter and the NFL is a cost, not a tidy-up);
+      **UFC stays UFC** until a second promotion is carried; storage keys (`atp`, `wta`,
+      `mls`, `lcup`) do not change, this is the top of the page only. Derive the sport from
+      the ESPN path in the complete `backend/espn_client/config.py` registry rather than a
+      hand-kept slug map.
+- [ ] **Consolidate ATP and WTA into one Tennis surface.** Falls out of the item above:
+      `pages/props.tsx:36` offers `atp` and `wta` as separate chips, so a visitor who wants
+      tennis must know to click two, which is the PrizePicks `EPL`-next-to-`Soccer` defect at
+      small scale. Consolidating on `/props` forces a Tennis entry on `/leagues`, and there is
+      no tennis hub today. Scope it to what tennis HAS: scores (`atp`/`wta` are in
+      `BOARD_LEAGUES` and ingest per-day), props (`_parse_tennis_props`), and news. Game logs
+      and season stats are declared not-applicable for both tours in
+      `backend/league_feature_matrix.py:61`, which is why every tennis market in
+      `core_markets.py:53` charts as `None`. A Draws tab for the current major is the one new
+      build, and it is **blocked on an unmeasured question: does ESPN publish a tennis draw?**
+      Measure that before speccing it. We cover majors, not the tour; Challengers, 250s and
+      500s are not ingested and the hub says so on screen rather than looking like a tour page
+      with holes in it.
+- [ ] **A new league or promotion is only worth adding if we can get its props.** Named by
+      Micah 2026-08-24 and recorded as a gate rather than re-argued per case. Props are the
+      product, so a second MMA promotion (which is what would rename UFC to MMA), a second
+      basketball league, or another soccer competition each has to clear this before it earns
+      a chip. NCAAF is the standing counter-example already on this board: it opens 08-29 with
+      **zero props on both databases**.
+- [ ] **Ingest esports props from the RotoWire relay.** Named by Micah 2026-08-24, and the
+      relay already carries them. Measured in the 2026-08-24 archive: **CS2 205 props** quoted
+      by sleeper (158), underdog (149) and prizepicks (139), plus **Valorant 3** (prizepicks
+      only). Markets are `Map 1 Kills`, `Map 1 Headshots`, `Maps 1+2 Kills`,
+      `Maps 1+2 Headshots`, `Maps 1+2+3 Kills`. No LoL, Dota or COD that day. We discard all
+      of it today, as the props-audit item above records.
+      **The catch is which CS2.** The 22 teams quoted were tier-2 and academy sides:
+      `Spirit Academy`, `CYBERSHOKE Prospects`, `ex-RUBY`, `Bushido Wildcats`,
+      `Chinggis Warriors`. Real props on real matches, not the tier a visitor means by "CS2".
+      Settlement needs an esports game spine these props can link to, which is the actual size
+      of this item.
+- [ ] **An option to hide esports props.** Named by Micah 2026-08-24. One account preference,
+      default on, that removes esports from the props board. Not a per-title matrix. The
+      reason is the uneven tier of the supply above, not the sport. **Do not build it before
+      the ingest**: an option that hides an empty board is untestable.
+
 - [ ] **Story generation deserves its own timer.** It rides on `ingest_scoreboards.py` only
       because that is where we now learn a game exists. Nothing ties it to the scoreboard.
       Related: story generation reaches `site.api.espn.com` through `stakes.py`, a host walled

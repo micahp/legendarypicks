@@ -1,6 +1,11 @@
 import { useState, useEffect, useRef } from 'react'
 import Head from 'next/head'
 import MarketSlateBoard from '../components/Props/MarketSlateBoard'
+import {
+  leagueNavigationLabel,
+  SportGroup,
+  useSportNavigation,
+} from '../components/Navigation/sports'
 
 // ── types ────────────────────────────────────────────────
 interface Player {
@@ -19,7 +24,7 @@ interface PerfRow {
 }
 
 type Tab = 'slate' | 'props' | 'performance' | 'matchups' | 'model'
-type League = 'All' | 'nba' | 'mlb' | 'mls' | 'nfl' | 'nhl' | 'ufc' | 'atp' | 'wta'
+type LeagueFilter = string
 
 const TABS: { key: Tab; label: string }[] = [
   { key: 'slate', label: 'Slate' },
@@ -28,13 +33,6 @@ const TABS: { key: Tab; label: string }[] = [
   { key: 'matchups', label: 'Matchups' },
   { key: 'model', label: 'Model' },
 ]
-// This list is BOTH the filter pills and the within-day ordering (see `leagueRank`), so a league
-// missing from it is unreachable by filter AND sorts last. atp/wta were absent while tennis was
-// 32 of the 71 games on the board (2026-08-17) -- the pills advertised four leagues with zero
-// games and hid the two that had the most. Appended rather than reordered so the existing
-// day-group order is unchanged.
-export const LEAGUES: League[] = ['All', 'ufc', 'mls', 'nba', 'nfl', 'nhl', 'mlb', 'atp', 'wta']
-
 function Skeleton({ lines = 4 }: { lines?: number }) {
   return (
     <div className="space-y-3 animate-pulse">
@@ -45,17 +43,55 @@ function Skeleton({ lines = 4 }: { lines?: number }) {
   )
 }
 
-function LeaguePills({ league, onChange }: { league: League; onChange: (l: League) => void }) {
+function SportPills({ groups, active, onChange }: {
+  groups: SportGroup[]
+  active: string
+  onChange: (key: string) => void
+}) {
   return (
-    <div className="flex max-w-full flex-wrap gap-1.5">
-      {LEAGUES.map(l => (
-        <button key={l} onClick={() => onChange(l)}
-          className={`px-3.5 py-1.5 rounded-lg text-sm font-medium transition-colors ${league === l ? 'bg-emerald-600 text-white' : 'bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-zinc-200'}`}>
-          {l === 'All' ? 'All' : l.toUpperCase()}
+    <nav aria-label="Sports" className="flex max-w-full flex-wrap gap-1.5">
+      {[{ key: 'all', label: 'All' }, ...groups].map(group => (
+        <button key={group.key} onClick={() => onChange(group.key)}
+          aria-pressed={active === group.key}
+          className={`px-3.5 py-1.5 rounded-lg text-sm font-medium transition-colors ${active === group.key ? 'bg-emerald-600 text-white' : 'bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-zinc-200'}`}>
+          {group.label}
         </button>
       ))}
-    </div>
+    </nav>
   )
+}
+
+function CompetitionPills({ group, active, onChange }: {
+  group: SportGroup
+  active: string
+  onChange: (league: string) => void
+}) {
+  if (group.competitions.length < 2) return null
+  return (
+    <nav aria-label={`${group.label} competitions`} className="flex max-w-full flex-wrap gap-1.5">
+      {[{ league: 'all', sport: group.sport }, ...group.competitions].map(competition => (
+        <button
+          key={competition.league}
+          type="button"
+          onClick={() => onChange(competition.league)}
+          aria-pressed={active === competition.league}
+          className={`rounded-md border px-3 py-1 text-xs font-medium transition-colors ${
+            active === competition.league
+              ? 'border-emerald-500/60 bg-emerald-950/70 text-emerald-300'
+              : 'border-zinc-800 bg-zinc-950 text-zinc-500 hover:text-zinc-300'
+          }`}
+        >
+          {competition.league === 'all' ? 'All competitions' : leagueNavigationLabel(competition.league)}
+        </button>
+      ))}
+    </nav>
+  )
+}
+
+function addLeagueFilter(params: URLSearchParams, filter: LeagueFilter) {
+  if (!filter || filter === 'All') return
+  if (filter.includes(',')) params.set('leagues', filter)
+  else params.set('league', filter)
 }
 
 function PlayerSearch({ query, setQuery, players, onSelect }: {
@@ -104,7 +140,7 @@ function Select({ value, onChange, options }: { value: string; onChange: (v: str
 }
 
 // ── Tab: Slate (games) ───────────────────────────────────
-function SlateTab({ league }: { league: League }) {
+function SlateTab({ league, leagueOrder }: { league: LeagueFilter; leagueOrder: string[] }) {
   const [slate, setSlate] = useState<SlateGame[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -131,7 +167,7 @@ function SlateTab({ league }: { league: League }) {
     const controller = new AbortController()
     const params = new URLSearchParams()
     params.set('summary', '1')
-    if (league !== 'All') params.set('league', league)
+    addLeagueFilter(params, league)
 
     setLoading(true)
     setError(null)
@@ -176,8 +212,8 @@ function SlateTab({ league }: { league: League }) {
   // Day above league, with each label rendered once rather than repeated on
   // every game card.
   const leagueRank = (leagueKey: string) => {
-    const rank = LEAGUES.indexOf(leagueKey as League)
-    return rank === -1 ? LEAGUES.length : rank
+    const rank = leagueOrder.indexOf(leagueKey)
+    return rank === -1 ? leagueOrder.length : rank
   }
   const dateGroups = new Map<string, Map<string, SlateGame[]>>()
   for (const game of slate) {
@@ -301,8 +337,8 @@ function SlateTab({ league }: { league: League }) {
 }
 
 // ── Tab: Performance (player stats dashboard) ─────────────
-function PerformanceTab({ league, query, setQuery, selectedPlayer, setSelectedPlayer }: {
-  league: League; query: string; setQuery: (q: string) => void
+function PerformanceTab({ query, setQuery, selectedPlayer, setSelectedPlayer }: {
+  query: string; setQuery: (q: string) => void
   selectedPlayer: Player | null; setSelectedPlayer: (p: Player | null) => void
 }) {
   const [players, setPlayers] = useState<Player[]>([])
@@ -671,8 +707,8 @@ const STAT_ORDER = ['pass_yds', 'rush_yds', 'rec_yds', 'pass_td', 'rush_td', 're
   'fpts_ppr', 'fpts']
 const TREND_ICON: Record<string, string> = { up: '↑', down: '↓', flat: '→' }
 
-function ModelTab({ league, query, setQuery, player, setPlayer }: {
-  league: League; query: string; setQuery: (q: string) => void
+function ModelTab({ query, setQuery, player, setPlayer }: {
+  query: string; setQuery: (q: string) => void
   player: Player | null; setPlayer: (p: Player | null) => void
 }) {
   const [players, setPlayers] = useState<Player[]>([])
@@ -805,7 +841,14 @@ function StatBox({ label, value, desc }: { label: string; value: string | number
 // ── Page ───────────────────────────────────────────────────
 export default function PropsPage() {
   const [tab, setTab] = useState<Tab>('slate')
-  const [league, setLeague] = useState<League>('All')
+  const { groups: sportGroups, loading: navigationLoading, error: navigationError } = useSportNavigation('props')
+  const [sportKey, setSportKey] = useState('all')
+  const [competition, setCompetition] = useState('all')
+  const selectedSport = sportGroups.find(group => group.key === sportKey)
+  const league = competition !== 'all'
+    ? competition
+    : selectedSport?.competitions.map(item => item.league).join(',') || 'All'
+  const leagueOrder = sportGroups.flatMap(group => group.competitions.map(item => item.league))
 
   // Shared across Performance/Matchups/Model so switching tabs keeps the same
   // player instead of making you re-search each time.
@@ -841,7 +884,7 @@ export default function PropsPage() {
     // Date discovery only needs game summaries. Pulling every nested prop here
     // duplicated the full slate payload before either tab rendered it.
     params.set('summary', '1')
-    if (league !== 'All') params.set('league', league)
+    addLeagueFilter(params, league)
     fetch(`/api/props/slate?${params}`)
       .then(r => r.json())
       .then((games: SlateGame[]) => {
@@ -864,8 +907,20 @@ export default function PropsPage() {
         {/* Page header row: title + league pills */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <h1 className="text-3xl font-extrabold tracking-tight">Props</h1>
-          <LeaguePills league={league} onChange={setLeague} />
+          <SportPills
+            groups={sportGroups}
+            active={sportKey}
+            onChange={key => { setSportKey(key); setCompetition('all') }}
+          />
         </div>
+
+        {navigationLoading && <div aria-label="Loading sports" className="h-7 w-full animate-pulse rounded bg-zinc-800" />}
+        {navigationError && (
+          <p className="text-xs text-zinc-500">Sport filters are unavailable; showing the complete board.</p>
+        )}
+        {selectedSport && (
+          <CompetitionPills group={selectedSport} active={competition} onChange={setCompetition} />
+        )}
 
         {/* Tab bar */}
         <div className="flex gap-0 flex-wrap border-b border-zinc-800 -mx-4 px-4">
@@ -910,11 +965,11 @@ export default function PropsPage() {
         )}
 
         {/* Tab content */}
-        {tab === 'slate' && <SlateTab league={league} />}
+        {tab === 'slate' && <SlateTab league={league} leagueOrder={leagueOrder} />}
         {tab === 'props' && <MarketSlateBoard league={league} date={date} />}
-        {tab === 'performance' && <PerformanceTab league={league} query={sharedQuery} setQuery={setSharedQuery} selectedPlayer={sharedPlayer} setSelectedPlayer={setSharedPlayer} />}
+        {tab === 'performance' && <PerformanceTab query={sharedQuery} setQuery={setSharedQuery} selectedPlayer={sharedPlayer} setSelectedPlayer={setSharedPlayer} />}
         {tab === 'matchups' && <MatchupsTab query={sharedQuery} setQuery={setSharedQuery} player={sharedPlayer} setPlayer={setSharedPlayer} />}
-        {tab === 'model' && <ModelTab league={league} query={sharedQuery} setQuery={setSharedQuery} player={sharedPlayer} setPlayer={setSharedPlayer} />}
+        {tab === 'model' && <ModelTab query={sharedQuery} setQuery={setSharedQuery} player={sharedPlayer} setPlayer={setSharedPlayer} />}
       </div>
     </>
   )

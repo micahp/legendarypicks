@@ -181,7 +181,7 @@ export default function MarketSlateBoard({ league, date }: { league: string; dat
   useEffect(() => {
     const controller = new AbortController()
     const summaryParams = new URLSearchParams({ date, summary: '1' })
-    if (league !== 'All') summaryParams.set('league', league)
+    if (league !== 'All') summaryParams.set(league.includes(',') ? 'leagues' : 'league', league)
 
     setLoading(true)
     setError(null)
@@ -213,7 +213,7 @@ export default function MarketSlateBoard({ league, date }: { league: string; dat
       }
 
       const fallbackParams = new URLSearchParams({ date, limit: '500' })
-      if (league !== 'All') fallbackParams.set('league', league)
+      if (league !== 'All') fallbackParams.set(league.includes(',') ? 'leagues' : 'league', league)
       const fallbackResponse = await fetch(`/api/props?${fallbackParams}`, { signal: controller.signal })
       if (!fallbackResponse.ok) throw new Error(`Props request failed (${fallbackResponse.status})`)
       const fallbackProps = await fallbackResponse.json()
@@ -258,7 +258,7 @@ export default function MarketSlateBoard({ league, date }: { league: string; dat
     if (!activeMarket || loadedMarket === '*' || loadedMarket === activeMarket) return
     const controller = new AbortController()
     const params = new URLSearchParams({ date, limit: '500', market: activeMarket })
-    if (league !== 'All') params.set('league', league)
+    if (league !== 'All') params.set(league.includes(',') ? 'leagues' : 'league', league)
 
     setLoading(true)
     setError(null)

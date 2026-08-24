@@ -50,10 +50,28 @@ _CorePropIngest = PropIngest
 class PropIngest(_CorePropIngest):
     start_time: Optional[str] = None
 
+
+def _league_sql(column: str, league: Optional[str], leagues: Optional[str]):
+    """A bound league predicate supporting one legacy key or a sport rollup."""
+    if league:
+        return f" AND LOWER({column}) = ?", [league.strip().lower()]
+    values = sorted({
+        value.strip().lower()
+        for value in (leagues or "").split(",")
+        if value.strip()
+    })
+    if not values:
+        return "", []
+    return (
+        f" AND LOWER({column}) IN ({','.join('?' for _ in values)})",
+        values,
+    )
+
 @router.get("/api/props")
 def list_props(player: Optional[str] = Query(None),
                market: Optional[str] = Query(None),
                league: Optional[str] = Query(None),
+               leagues: Optional[str] = Query(None),
                date: Optional[str] = Query(None),
                limit: int = Query(50, ge=1, le=500)):
     sql = """SELECT p.id, p.market, p.line, p.side, p.source, p.captured_at,
@@ -76,9 +94,9 @@ def list_props(player: Optional[str] = Query(None),
         # `total_bases___player_slug` under their base market.
         sql += " AND (p.market = ? OR instr(p.market, ? || '___') = 1)"
         params.extend((market, market))
-    if league:
-        sql += " AND pl.league = ?"
-        params.append(league)
+    league_sql, league_params = _league_sql("pl.league", league, leagues)
+    sql += league_sql
+    params.extend(league_params)
     if date:
         sql += " AND pg.date = ?"
         params.append(date)
@@ -274,6 +292,7 @@ def prop_stats(market: Optional[str] = Query(None),
 
 @router.get("/api/props/slate")
 def props_slate(league: Optional[str] = Query(None),
+                leagues: Optional[str] = Query(None),
                 date: Optional[str] = Query(None),
                 game_id: Optional[int] = Query(None),
                 summary: bool = Query(False)):
@@ -285,9 +304,9 @@ def props_slate(league: Optional[str] = Query(None),
     if summary:
         filters = ""
         filter_params = []
-        if league:
-            filters += " AND pg.league = ?"
-            filter_params.append(league)
+        league_sql, league_params = _league_sql("pg.league", league, leagues)
+        filters += league_sql
+        filter_params.extend(league_params)
         if date:
             filters += " AND pg.date = ?"
             filter_params.append(date)
@@ -341,9 +360,9 @@ def props_slate(league: Optional[str] = Query(None),
              JOIN prop_games pg ON pg.id = p.game_id
              WHERE 1=1"""
     params = []
-    if league:
-        sql += " AND pl.league = ?"
-        params.append(league)
+    league_sql, league_params = _league_sql("pl.league", league, leagues)
+    sql += league_sql
+    params.extend(league_params)
     if game_id is not None:
         sql += " AND pg.id = ?"
         params.append(game_id)
