@@ -185,3 +185,84 @@ class MergeTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class DatabaseSelectionTests(unittest.TestCase):
+    """Which database a destructive tool resolves to is part of its contract.
+
+    Shipped 2026-08-24 defaulting to data/picks.db and ignoring LP_DB_PATH, the
+    variable every other tool on this box is pointed with. So
+    `LP_DB_PATH=data/picks.dev.db spine_merge.py --apply` read as a dev
+    rehearsal and would have merged rows in PROD. It went unnoticed because
+    both environments answered, and answering is not the same as answering
+    about the right database: dev plans 259 merges and prod 447, and the bug
+    reported 447 for both.
+    """
+
+    def setUp(self):
+        self._saved = os.environ.get("LP_DB_PATH")
+
+    def tearDown(self):
+        if self._saved is None:
+            os.environ.pop("LP_DB_PATH", None)
+        else:
+            os.environ["LP_DB_PATH"] = self._saved
+
+    def _parsed(self, argv):
+        """Parse exactly as main() does, without connecting to anything."""
+        import argparse
+        ap = argparse.ArgumentParser()
+        ap.add_argument("--db", default=(os.environ.get("LP_DB_PATH")
+                                         or os.path.join(sm.HERE, "data", "picks.db")))
+        return ap.parse_args(argv)
+
+    def test_lp_db_path_is_honoured(self):
+        os.environ["LP_DB_PATH"] = "/tmp/some-dev.db"
+        self.assertEqual(self._parsed([]).db, "/tmp/some-dev.db")
+
+    def test_an_explicit_db_flag_still_wins(self):
+        os.environ["LP_DB_PATH"] = "/tmp/some-dev.db"
+        self.assertEqual(self._parsed(["--db", "/tmp/other.db"]).db, "/tmp/other.db")
+
+    def test_the_fallback_is_prod_only_when_nothing_was_said(self):
+        os.environ.pop("LP_DB_PATH", None)
+        self.assertEqual(self._parsed([]).db, REAL_DB)
+
+    def test_main_reads_the_database_lp_db_path_names(self):
+        """The end-to-end version: main() must plan against the named DB.
+
+        The parser tests above would still pass if main() built its own
+        connection from somewhere else, which is exactly the shape that made
+        this bug invisible.
+        """
+        with tempfile.TemporaryDirectory() as tmp:
+            path = os.path.join(tmp, "named.db")
+            _fixture(path)
+            os.environ["LP_DB_PATH"] = path
+            import io
+            import contextlib
+            buf = io.StringIO()
+            with contextlib.redirect_stdout(buf):
+                rc = sm.main([])
+            self.assertEqual(rc, 0)
+            self.assertIn(os.path.abspath(path), buf.getvalue())
+            self.assertNotIn("picks.db", buf.getvalue())
+
+    def test_the_reported_path_is_absolute(self):
+        """A relative path in a log does not identify a database.
+
+        `data/picks.dev.db` resolves against the cwd, and telling two
+        environments apart by how good their data looks is how a frozen
+        snapshot passed for dev once already.
+        """
+        with tempfile.TemporaryDirectory() as tmp:
+            path = os.path.join(tmp, "named.db")
+            _fixture(path)
+            os.environ["LP_DB_PATH"] = os.path.relpath(path)
+            import io
+            import contextlib
+            buf = io.StringIO()
+            with contextlib.redirect_stdout(buf):
+                sm.main([])
+            printed = [ln for ln in buf.getvalue().splitlines() if ln.startswith("db: ")][0]
+            self.assertTrue(printed[4:].startswith("/"), printed)

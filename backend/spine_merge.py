@@ -175,7 +175,14 @@ def apply_plan(con, plan: MergePlan) -> Dict[str, int]:
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("--db", default=os.path.join(HERE, "data", "picks.db"))
+    # LP_DB_PATH is how every other tool on this box is pointed at a database,
+    # and this one ignored it and defaulted to PROD. So
+    # `LP_DB_PATH=data/picks.dev.db spine_merge.py --apply` read as a dev
+    # rehearsal and would have merged rows in prod. A destructive tool must
+    # never resolve to prod through the same variable the operator used to say
+    # "not prod"; --db stays as the explicit override.
+    ap.add_argument("--db", default=(os.environ.get("LP_DB_PATH")
+                                     or os.path.join(HERE, "data", "picks.db")))
     ap.add_argument("--league")
     ap.add_argument("--limit", type=int)
     ap.add_argument("--apply", action="store_true", help="without this it only reports")
@@ -188,7 +195,11 @@ def main(argv=None) -> int:
     con = sqlite3.connect(args.db)
     try:
         plan = build_plan(con, args.league, args.limit)
-        print("db: {}".format(args.db))
+        # Absolute, and printed before anything is written. A relative path
+        # resolves against the cwd, so "data/picks.dev.db" in a log does not
+        # identify a database -- and telling two environments apart by how good
+        # their data looks is how a frozen snapshot passed for dev once already.
+        print("db: {}".format(os.path.abspath(args.db)))
         render(plan)
         if not args.apply:
             print("  dry run; pass --apply to write")
