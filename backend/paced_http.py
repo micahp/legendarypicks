@@ -149,9 +149,9 @@ def _pace_rate(url, on_exhausted="sleep"):
 # A plain append-only JSONL file rather than SQLite on purpose: 18 timers write
 # this concurrently, and an O_APPEND write below PIPE_BUF is atomic on Linux,
 # so there is no lock to contend and no job can be wedged behind one.
-SPEND_LOG = os.environ.get(
-    "LP_HTTP_SPEND_LOG",
-    os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "http-spend.jsonl"))
+_PROD_SPEND_LOG = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "data", "http-spend.jsonl")
+SPEND_LOG = os.environ.get("LP_HTTP_SPEND_LOG", _PROD_SPEND_LOG)
 
 # Who is spending. argv[0] is the job, and the whole point is telling eighteen
 # timers apart in one file.
@@ -189,6 +189,27 @@ def _path_family(parts):
     return "/" + "/".join(trimmed)
 
 
+# A test run is not spend. Measured 2026-08-24: `test_ingest_nba_stats.py` drives
+# a mocked urlopen through 403/429/404 against a real NBA core URL, and this
+# function recorded all 8 attempts as if they had left the box. They read as a
+# live host refusing us, on the exact endpoint this project has documented as
+# gated, and I reported them to Micah as the suite hammering a walled endpoint.
+# They never happened. The same shape produced 102 phantom 403s to a league named
+# `test` in the 08-19 sample, which that analysis had to detect and exclude by
+# hand.
+#
+# So the PRODUCTION log records production traffic and nothing else. A log that
+# mixes simulated events with real ones will eventually be read as if all of them
+# were real, and the reader cannot tell which is which from the row.
+#
+# Keyed on the destination, not on the caller: a test that points SPEND_LOG
+# somewhere else, by monkeypatch or by LP_HTTP_SPEND_LOG, is measuring on purpose
+# and still gets its rows. Only the default production path is protected. The
+# suite's genuinely-live calls stop appearing there too, which is the intended
+# trade: to attribute those, run the suite with a probe that patches urlopen.
+_IS_TEST_RUN = _PROCESS == "pytest"
+
+
 def record_spend(url, status, cached=False, note=""):
     """Append one line describing a request. NEVER raises: this is measurement.
 
@@ -196,6 +217,8 @@ def record_spend(url, status, cached=False, note=""):
     or the disk is full we lose the record, which is strictly better than
     losing the request.
     """
+    if _IS_TEST_RUN and os.path.abspath(SPEND_LOG) == os.path.abspath(_PROD_SPEND_LOG):
+        return
     try:
         parts = urllib.parse.urlsplit(url)
         line = json.dumps({

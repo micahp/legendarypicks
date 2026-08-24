@@ -216,13 +216,38 @@ Callers converted so far: `ingest_ufc_fight_stats.plan.build_plan` and
 `build_current_card_plan`, and `settle_props.main`. `ingest_scoreboards` already paced itself
 and is unchanged.
 
-### Still open, measured 2026-08-24
+### The suite was NOT hitting the gated endpoint. The instrument was lying again.
 
-The test suite issues **24 live ESPN requests in one minute**, and 8 of them go to
-`sports.core.api.espn.com/v2/sports/basketball/leagues/nba`, the gated endpoint this document
-says at §1b should never be asked again. 6 of the 8 refuse. It is small enough not to trip
-anything on its own, but it keeps writing 403s into the instrument that everything else is
-measured with. Not chased down to the test that issues them.
+Recorded here in full because I reported the opposite to Micah before checking.
+
+The spend log showed 8 requests per suite run to
+`sports.core.api.espn.com/v2/sports/basketball/leagues/nba`, 6 of them 403, labelled
+`proc=pytest`. That is the endpoint §1b says should never be asked again, so it read as the
+test suite hammering a walled path. **Zero of those requests exist.**
+`test_ingest_nba_stats.py::FetchPacingTest` drives a MOCKED `urlopen` through a fixed
+403/429/404 sequence against a real NBA core URL, and `record_spend` logged every attempt.
+Proven by running that one file with the log redirected: 8 rows, 6/1/1, no network.
+
+This is the third appearance of the same defect, after the 102 phantom 403s to a league named
+`test` that §1b had to exclude by hand. **A log that records simulated events beside real ones
+will be read as if all of them were real.** The row carries no field that distinguishes them.
+
+Fixed at the instrument: `record_spend` refuses to write when a test run targets the
+production log. Keyed on the DESTINATION rather than on the caller, so a test that redirects
+the log by monkeypatch or `LP_HTTP_SPEND_LOG` is measuring on purpose and still gets its rows.
+The suite's genuinely-live ESPN calls (13 under the prod DB, 16 under dev, attributed below)
+stop appearing in the production log too, which is the intended trade.
+
+To attribute live calls to the test that makes them, patch `urllib.request.urlopen` in a
+pytest plugin and record the nodeid. Measured that way, the whole suite makes **13 to 16 live
+ESPN requests**, none of them to a gated endpoint:
+
+```
+9  test_leagues_hub_assertions.py::test_leagues_hub_contract
+3  test_story_form_season.py::TestAgainstTheRealDatabases (prod DB)
+3  test_team_aggregates_contract.py, 3 test_ufc_rankings_pipeline.py (dev DB)
+1  test_scoreboard_range_backfill.py::TestFetchRangeChunk
+```
 
 ## 2. What is actually broken today, regardless of which limit is real
 
