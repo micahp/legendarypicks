@@ -1,5 +1,37 @@
 # Changelog
 
+## v0.8.7
+
+### RotoWire NFL props now publish on a schedule, in both environments
+
+- **RotoWire was collecting but never publishing.** The archive job captured
+  the relay every day and the probe logged live offers, but nothing anywhere
+  ran `ingest_rotowire_props.py`, so both databases sat frozen at the
+  2026-08-19 backfill while the relay moved on. The probe writes only to DEV's
+  `source_probe_log`, which is why DEV looked alive and PROD looked off; that
+  difference was accidental, not a setting.
+- **NFL props are current in DEV and PROD.** From one relay fetch: 293 of 1,036
+  published props are Game category, ingesting as 410 new and 730 refreshed
+  across 16 games and 151 players, with **zero players queued as unresolved**.
+  Coverage moved from 5 days stale to same-day across all three relay labels:
+  `rotowire:underdog` 384 to 510 rows and 12 to 13 markets,
+  `rotowire:prizepicks` 438 to 596 and 9 to 12, `rotowire:sleeper` 260 to 386
+  and 6 to 7. Fourteen NFL markets are live, led by receiving yards, rushing
+  yards and passing yards.
+- **NFL had no other source.** Bovada publishes no NFL at all, so before this
+  the league's props could not refresh from anywhere.
+- **Scheduled every 6h against both DBs**, matching the existing RotoWire probe
+  cadence so no new request rate is added to the publisher; the relay is one
+  request per run. The units take a per-environment `flock` and treat a missed
+  lock as success, the pattern the UnderDog unit already uses.
+- **Soccer is deliberately not scheduled.** The MLS leg failed loud on its
+  first run: a non-empty board produced zero props because 236 rows sit under
+  the soccer label without being MLS fixtures. The ingest refuses rather than
+  writing garbage, and soccer gets its own look before it gets a timer.
+- **Kambi removed.** No timer, no capture since 2026-08-17, zero rows in
+  production. The ingest script is deleted; its DEV rows and their 1,324 graded
+  results stay as settled history.
+
 ## v0.8.6
 
 ### UFC UnderDog props now fail closed without leaving known fights behind
