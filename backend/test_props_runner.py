@@ -252,9 +252,11 @@ def test_a_named_retired_source_does_not_keep_the_monitor_red(monkeypatch, capsy
     assert "UNKNOWN SOURCE kambi" not in output
 
 def test_a_cadence_equal_to_the_timer_interval_still_fires(monkeypatch, tmp_path):
-    """The *:04/*:34 firing measures its age from the previous run's `started_at`, which is
-    a few seconds after *:04, so an exact-equality check lands short and skips forever.
-    Measured on the box 2026-08-24: bovada skipped at *:34 with "last ok 30m ago"."""
+    """Absolute timer jitter of a few seconds must not halve a 30-minute cadence.
+
+    Measured on the box 2026-08-24: bovada skipped at *:34 with "last ok 30m ago".
+    Provider state now uses one runner-cycle timestamp and a one-minute scheduler tolerance.
+    """
     db_path = _db(tmp_path / "grace.db")
     _configure(monkeypatch, tmp_path, [_provider("ontime", cadence_min=30)], db_path)
 
