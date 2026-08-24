@@ -18,7 +18,7 @@ Internal modules:
 from .config import (
     LEAGUES, _SITE, _CORE, _COMMON, _SPORTS_CORE, _HDRS, _FETCHER, _CACHE,
     set_min_interval, set_disk_cache, set_retry_waits, set_on_exhausted,
-    set_host_budget, _get, _check,
+    set_host_budget, batch_pacing, _get, _check,
 )
 from .scoreboard import (
     _ATP_MAJORS, _WTA_MAJORS, _is_major, _num, _int, _iso,

@@ -19,54 +19,15 @@ from .targets import FighterTarget  # noqa: E402
 from .card import CardIdentity  # noqa: E402
 from .fetch import SourceUnavailable  # noqa: E402
 
-import contextlib
-
-# ESPN's refusal is a BURST RATE, not a per-run count. Measured 2026-08-19 over
-# 27,801 requests: the 60s window before a 403 held a median 63 requests, the 60s
-# window before a 200 held 36, and the 1h window is FLAT (1238 vs 1266). The lever
-# is requests per minute, not requests per run.
+# ESPN's limit is a burst rate per host and the budget is shared with the serving
+# path: on 2026-08-24 this plan inherited espn_client's min_interval=0, fired 52
+# requests inside one minute twice, and 26 of the resulting refusals landed on
+# uvicorn. The knobs and the reasoning now live in espn_client.batch_pacing().
 #
-# espn_client deliberately defaults to min_interval=0, because a page load must
-# never pause. This function is the only place the UFC ingest fans out across a
-# whole card, and on 2026-08-24 it inherited that serving-path default and fired
-# 52 requests inside one minute, twice. ingest_scoreboards was running its normal
-# 4/min at the same time; the combined rate crossed the threshold and
-# site.web.api.espn.com refused for four minutes, taking 26 requests from the
-# SERVING path (uvicorn) down with it. A batch job must not spend the budget the
-# request handlers need.
-#
-# Configured HERE rather than in run_ufc_current_card_ingest.main(), because every
-# caller that fans out enters through this function: the runner, a test, and the
-# hand-rebuilt in-process plan that was used to diagnose the 403 in the first
-# place. Configuration that only applies when you enter through one door is
-# configuration you do not have (roster_sync.py, 2026-08-04).
-_BATCH_MIN_INTERVAL = 1.5      # <= 40 req/min, below the measured 36-63 onset band
-_BATCH_HOST_BUDGET = 60
-_BATCH_HOST_COOLDOWN = 60.0
-_BATCH_RETRY_WAITS = (5.0, 20.0, 60.0)
+# Applied to the two functions that FAN OUT rather than to the runner's main(),
+# because a test and a hand-rebuilt in-process plan enter through them too.
+_batch_pacing = espn.batch_pacing
 
-
-@contextlib.contextmanager
-def _batch_pacing():
-    """Pace this fan-out, then hand the client back exactly as it was found.
-
-    Restoring matters: espn_client's fetcher is process-global, so a plan built
-    inside a longer-lived process must not leave the serving path with a 1.5s
-    pause and a 60s cooldown bolted on.
-    """
-    prev_interval = espn.set_min_interval(_BATCH_MIN_INTERVAL)
-    prev_budget = espn.set_host_budget(_BATCH_HOST_BUDGET, _BATCH_HOST_COOLDOWN)
-    prev_retries = espn.set_retry_waits(_BATCH_RETRY_WAITS)
-    # Nobody is waiting on this job, so waiting out a spent budget is the right
-    # move for it and the wrong move for a request handler.
-    prev_exhausted = espn.set_on_exhausted("sleep")
-    try:
-        yield
-    finally:
-        espn.set_on_exhausted(prev_exhausted)
-        espn.set_retry_waits(prev_retries)
-        espn.set_host_budget(prev_budget)
-        espn.set_min_interval(prev_interval)
 
 @dataclass(frozen=True)
 class PreparedLog:
