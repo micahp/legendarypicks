@@ -90,7 +90,10 @@ class TestAgainstTheRealDatabases:
     @pytest.mark.parametrize(
         "league,game_season,expect_stale",
         [
-            ("mls", 2026, True),    # logs stop at 2025, 2026 games are being previewed
+            # 2026-08-24: was True ("logs stop at 2025"). The MLS backfill landed and dev
+            # and prod now both hold 4,516 MLS 2026 logs spanning 2026-02-21..2026-08-08,
+            # so the season is no longer stale and the expectation was asserting history.
+            ("mls", 2026, False),
             ("ncaaf", 2026, True),  # logs stop at 2025, 2026 season starts Aug 29
             ("nfl", 2026, True),    # logs stop at 2025, 2026 preseason underway
             ("mlb", 2026, False),   # 2026 logs exist
