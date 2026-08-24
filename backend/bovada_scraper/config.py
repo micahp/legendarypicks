@@ -206,6 +206,16 @@ _MINTED_PLAYERS = []
 # mistaken for a league that produced nothing.
 _RESTED_LEAGUES = []
 
+# {(league, market_head, team_name): n} for outcomes whose "player" is one of the fixture's
+# own competitors. Bovada files team totals inside groups named "Game Props" and "Score
+# Props" -- "Highest Scoring Quarter Total Points O/U - Boston Celtics" splits exactly like
+# a player market does, so the club lands in player_name and the resolver rejects it. On
+# 2026-08-24 that was all 120 NBA outcomes, and the resulting "resolved 0 of 120" exit 3
+# took the whole unit down while Bovada was publishing no NBA player props at all.
+# Counted, not silenced: a league whose only offering is team markets must read differently
+# from a league that scraped nothing.
+_TEAM_LEVEL_OUTCOMES = {}
+
 # UFC has no per-fighter STAT props on Bovada; the fighter-attributed market is Method of Victory. Map
 # each outcome to a yes/no prop on the fighter (o0.5), mirroring the WC anytime-goal shape. Fight-level
 # markets (total rounds, go-the-distance) are game-level and not represented in the player-prop schema

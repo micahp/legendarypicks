@@ -47,3 +47,58 @@ def test_empty_and_malformed_descriptions_do_not_raise():
     assert b._split_market_and_player("") == ("", "", "")
     assert b._split_market_and_player(None) == ("", "", "")
     assert b._split_market_and_player(" - ")[1] == ""
+
+
+def _nba_team_market_event():
+    """The real shape from Bovada's NBA board on 2026-08-24, trimmed.
+
+    Bovada files team totals in a display group called "Score Props", and the market
+    description carries the club exactly where a player would sit. It splits like a player
+    market because it IS shaped like one.
+    """
+    return {
+        "description": "Boston Celtics @ Detroit Pistons",
+        "startTime": 1787621880000,
+        "competitors": [
+            {"name": "Detroit Pistons", "home": True},
+            {"name": "Boston Celtics", "home": False},
+        ],
+        "displayGroups": [{
+            "description": "Score Props",
+            "markets": [
+                {"description": "Highest Scoring Quarter Total Points O/U - Boston Celtics",
+                 "outcomes": [
+                     {"description": "Over", "price": {"handicap": "31.5", "american": -110}},
+                     {"description": "Under", "price": {"handicap": "31.5", "american": -110}},
+                 ]},
+                {"description": "Total Points - Jayson Tatum",
+                 "outcomes": [
+                     {"description": "Over", "price": {"handicap": "27.5", "american": -115}},
+                 ]},
+            ],
+        }],
+    }
+
+
+def test_a_team_market_is_not_emitted_as_a_player_prop():
+    """The fixture's own club standing where a player's name goes is a team market.
+
+    Emitting it produced "REJECTED all 120 nba props — nothing in `players` matched" on
+    2026-08-24 and exit 3 took the whole systemd unit down, on a day Bovada published no NBA
+    player props at all. The resolver could only report that nothing matched, which reads
+    identically to a broken feed.
+    """
+    from bovada_scraper.config import _TEAM_LEVEL_OUTCOMES
+    _TEAM_LEVEL_OUTCOMES.clear()
+    props = b.parse_player_props(_nba_team_market_event(), "nba")
+    names = {p["player_name"] for p in props}
+    assert "Boston Celtics" not in names
+    assert sum(_TEAM_LEVEL_OUTCOMES.values()) == 2
+
+
+def test_the_real_player_on_the_same_board_still_lands():
+    """The counter-case. Dropping team markets must not cost us the player markets sitting
+    in the same display group."""
+    props = b.parse_player_props(_nba_team_market_event(), "nba")
+    assert [(p["player_name"], p["market"], p["line"]) for p in props] == [
+        ("Jayson Tatum", "points", 27.5)]

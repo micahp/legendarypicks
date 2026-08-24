@@ -10,7 +10,7 @@ import urllib.request
 
 import collections
 import re
-from .config import (MARKET_MAP, _MLS_CLUB_CODES, _MLS_NON_PLAYER_OUTCOMES, _MLS_PLAYER_GROUPS, _MLS_PLAYER_MARKETS, _SOCCER_MARKET_RULES, _STALE_TEAM_TAGS, _UFC_METHOD, _UNMAPPED_PLAYER_MARKETS, _WC_SKIP_KW)  # noqa: E402
+from .config import (MARKET_MAP, _MLS_CLUB_CODES, _MLS_NON_PLAYER_OUTCOMES, _MLS_PLAYER_GROUPS, _MLS_PLAYER_MARKETS, _SOCCER_MARKET_RULES, _STALE_TEAM_TAGS, _TEAM_LEVEL_OUTCOMES, _UFC_METHOD, _UNMAPPED_PLAYER_MARKETS, _WC_SKIP_KW)  # noqa: E402
 
 def _parse_ufc_props(event: dict) -> list:
     comps = [c.get("name") for c in event.get("competitors", []) if c.get("name")]
@@ -438,6 +438,9 @@ def _parse_standard_props(event: dict, league: str) -> list:
         else:
             away_team = c.get("name", "")
 
+    # The fixture's own two clubs, for the team-market check below.
+    fixture_clubs = {n.strip().lower() for n in (home_team, away_team) if n and n.strip()}
+
     for dg in event.get("displayGroups", []):
         group_desc = (dg.get("description") or "").lower()
 
@@ -496,6 +499,19 @@ def _parse_standard_props(event: dict, league: str) -> list:
                 # Errors"), and anything whose description we cannot parse. A prop we cannot
                 # attribute is not a prop we can serve.
                 if not player_name:
+                    continue
+
+                # A "player" that IS one of the fixture's two clubs is a team market wearing
+                # a player market's shape. Bovada writes "Highest Scoring Quarter Total
+                # Points O/U - Boston Celtics" inside a group called "Score Props", and it
+                # splits on " - " exactly like "Total Strikeouts - Ryan Gusto (MIA)" does.
+                # Dropped here rather than at the resolver: the resolver can only report that
+                # nothing matched, which is indistinguishable from a broken feed, and on
+                # 2026-08-24 that read as "REJECTED all 120 nba props" on a day Bovada
+                # published no NBA player props at all. Counted so the league still reports.
+                if player_name.strip().lower() in fixture_clubs:
+                    key = (league, market_head, player_name.strip())
+                    _TEAM_LEVEL_OUTCOMES[key] = _TEAM_LEVEL_OUTCOMES.get(key, 0) + 1
                     continue
 
                 results.append({
