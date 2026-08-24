@@ -465,12 +465,33 @@ def link_existing_games(con: sqlite3.Connection, dry_run: bool = False,
     writes when the answer actually changes.
 
     `league` scopes the run to one league. This is a REQUEST BUDGET control, not a
-    convenience: ESPN's limit is a count per host (~100), not a rate, so the only
-    lever that works is issuing fewer requests. An unscoped run fetches a
-    scoreboard for every distinct date across every league that has props —
+    convenience. It fetches a scoreboard per distinct date per league, and the
+    unscoped run is a genuine fan-out.
+
+    The budget model here was wrong and it cost a live outage. This said ESPN's
+    limit is "a count per host (~100), not a rate, so the only lever that works is
+    issuing fewer requests". The 2026-08-19 measurement over 27,801 requests is the
+    opposite: the 1h window is FLAT (1238 before a 403 vs 1266 before a 200) and the
+    60s window is not (63 vs 36). Both levers are real, and this function had neither
+    — it inherited espn_client's serving-path default of min_interval=0. Measured
+    2026-08-24 21:00 UTC, this fired 18 requests inside one minute alongside
+    settle_props' 44 and ingest_scoreboards' 30; site.web.api refused for minutes and
+    13 of those refusals landed on UVICORN. A batch job spent the budget the page
+    loads needed. An unscoped run fetches a scoreboard for every distinct date across
+    every league that has props —
     tennis alone contributes dozens — and spends that budget whether or not you
     care about the league you are fixing. See .claude/skills/espn-request-budget.
     """
+    # Paced at the function that FANS OUT, not at main(): a caller that imports this
+    # gets the pacing too, and this is not reachable from a request handler so it can
+    # never pause a page load.
+    with espn.batch_pacing():
+        return _link_existing_games(con, dry_run, relink, league, days)
+
+
+def _link_existing_games(con: sqlite3.Connection, dry_run: bool = False,
+                         relink: bool = False, league: str = "",
+                         days: int | None = None) -> int:
     where, params = _scope(league, relink, days)
     unlinked = con.execute(f"""
         SELECT id, league, date, start_time, home, away, espn_event_id
