@@ -152,6 +152,18 @@ def prop_history(player_id: int = Query(...),
     log_leagues = _CHART_LOG_LEAGUES.get(league, (league,))
     league_placeholders = ",".join("?" for _ in log_leagues)
 
+    # A match the player never entered is not a 0. Both are stored -- the row is
+    # a real record of not playing -- but charting it as zero shots would count
+    # an absence as a measured performance and drag every hit-rate window down.
+    # 2026-08-25: a bench player charted five games, four of them DNPs, as
+    # 0/0/0/0/0 shots.
+    #
+    # Two sources, two signals: the summary ingest writes `appearances`, the
+    # lazy core read-through writes `minutes`. Either at 0 means absent; a row
+    # carrying neither is left alone rather than assumed.
+    _PLAYED = (" AND COALESCE(json_extract(stats, '$.minutes'), 1) != 0"
+               " AND COALESCE(json_extract(stats, '$.appearances'), 1) != 0")
+
     # stat_key is either a string (single JSON field) or a list (compound: sum fields)
     if isinstance(stat_key, list):
         keys = stat_key
@@ -189,7 +201,7 @@ def prop_history(player_id: int = Query(...),
                            {val_expr} AS val
                     FROM player_game_logs
                     WHERE player_id=? AND league IN ({league_placeholders})
-                      AND {where_clause}
+                      AND {where_clause}{_PLAYED}
                     ORDER BY game_date DESC LIMIT 100""",
                 (player_id, *log_leagues)
             ).fetchall()
@@ -199,7 +211,7 @@ def prop_history(player_id: int = Query(...),
                            json_extract(stats, ?) AS val
                     FROM player_game_logs
                     WHERE player_id=? AND league IN ({league_placeholders})
-                      AND json_extract(stats, ?) IS NOT NULL
+                      AND json_extract(stats, ?) IS NOT NULL{_PLAYED}
                     ORDER BY game_date DESC LIMIT 100""",
                 (stat_path, player_id, *log_leagues, stat_path)
             ).fetchall()
