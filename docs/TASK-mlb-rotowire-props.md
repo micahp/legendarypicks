@@ -90,6 +90,19 @@ unresolved club rather than minting a fixture beside one we already have.**
 
 ### 3b. `MLB_GAME_MARKETS`
 
+**CORRECTION, 2026-08-25, found by codex and verified.** The paragraphs below originally
+named `MARKET_STAT` in `backend/settlement/market_mapping.py`. **That is the wrong map for
+MLB.** `settle_game.py:81` delegates MLB to `settlement/mlb_settle.py`, which grades against
+the **MLB Stats API** boxscore using its own `_MLB_MARKET_MAP`, whose stat keys are that
+publisher's camelCase (`strikeOuts`, `baseOnBalls`, `totalBases`, `earnedRuns`), not ESPN's
+labels. `market_mapping.py` is still involved, but only for `normalize_market` and
+`MARKET_ALIASES`.
+
+**So `backend/settlement/mlb_settle.py` IS in scope**, and section 5 is amended to say so.
+Read the canonical keys off `_MLB_MARKET_MAP` (line 23), not off `MARKET_STAT`.
+
+Stopping to ask rather than editing a forbidden file was the right call.
+
 Same shape as `NFL_GAME_MARKETS`: keyed on the publisher's `marketID`, carrying the
 `marketName` we verified it under, so a renamed id is refused rather than silently
 re-pointed.
@@ -108,21 +121,22 @@ The eighteen ids present on 08-23, with counts:
 **These map cleanly to existing `MARKET_STAT` keys.** Start here:
 
 ```
-219 Total Bases       -> total_bases        (batting.TB)
+219 Total Bases       -> total_bases        (batting, totalBases)
 226 Hits+Runs+RBI     -> hits_runs_rbis     (compound, sums H+R+RBI)
-229 Earned Runs       -> earned_runs        (pitching.ER)
-230 Pitcher Strikeouts-> strikeouts         (pitching.K)
-231 Hits Allowed      -> hits_allowed       (pitching.H)
-232 Walks Allowed     -> walks              (pitching.BB)
-234 Outs              -> outs               (pitching.outs)
+229 Earned Runs       -> earned_runs        (pitching, earnedRuns)
+230 Pitcher Strikeouts-> strikeouts         (pitching, strikeOuts)
+231 Hits Allowed      -> hits_allowed       (pitching, hits)
+232 Walks Allowed     -> walks              (pitching, baseOnBalls)
+234 Outs              -> outs               (pitching, outs)
 ```
 
-**THE TRAP, and it would not raise.** `MARKET_STAT[("mlb","walks")]` is
-`("pitching","BB")`. RotoWire publishes **222 "Walks" (208 props, batters)** and
+**THE TRAP, and it would not raise.** `_MLB_MARKET_MAP["walks"]` is
+`("pitching", "baseOnBalls")`. RotoWire publishes **222 "Walks" (208 props, batters)** and
 **232 "Walks Allowed" (8 props, pitchers)** as different markets. Mapping 222 to `walks`
 grades a hitter against a pitcher's stat line and produces a plausible number for the wrong
 person. **232 is the one that belongs there. 222 needs its own canonical key and its own
-`MARKET_STAT` entry (`batting.BB`), or it stays unmapped and gets reported.**
+`_MLB_MARKET_MAP` entry, `("batting", "baseOnBalls")`, or it stays unmapped and gets
+reported.**
 
 **The second trap: a count line is not an anytime market.** `home_run_any`, `run_any`,
 `rbi_any`, `hit_any`, `double_any` answer "did they get one". RotoWire's `Home Runs`,
@@ -176,6 +190,8 @@ and the "What decided it" panel have something to show.
 ```
 backend/ingest_rotowire_props.py         LEAGUES entry, MLB_GAME_MARKETS, vocabulary branch
 backend/settlement/market_mapping.py     new canonical keys ONLY, no changes to existing rows
+backend/settlement/mlb_settle.py         _MLB_MARKET_MAP additions ONLY (added to scope 08-25)
+backend/test_settlement_mlb*.py          regression tests
 backend/test_ingest_rotowire_props.py    regression tests
 backend/test_settlement_*.py             regression tests
 docs/TASK-mlb-rotowire-props.md          a results section at the bottom
