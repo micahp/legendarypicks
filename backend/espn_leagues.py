@@ -11,5 +11,6 @@ NCAAF FBS is published group id '80' (146 teams, 888 of 911 events in 2025).
 
 ESPN_LEAGUES = {
     'mls': {'path': 'soccer/leagues/usa.1', 'scope_group': None, 'regular_type_name': 'Regular Season', 'display_name': 'MLS'},
+    'ligamx': {'path': 'soccer/leagues/mex.1', 'scope_group': None, 'regular_type_name': 'Regular Season', 'display_name': 'Liga MX'},
     'ncaaf': {'path': 'football/leagues/college-football', 'scope_group': '80', 'regular_type_name': 'Regular Season', 'display_name': 'NCAAF'},
 }

@@ -2,6 +2,7 @@
  "_provenance": {
   "fetched_at": "2026-08-06T20:07:30.259955+00:00",
   "leagues": [
+   "ligamx",
    "mlb",
    "mls",
    "nba",
@@ -9,10 +10,256 @@
    "nfl",
    "nhl"
   ],
-  "note": "abbreviation/leaf/parent as published by ESPN; not hand-authored. MLB carries one supplement: TWP (MLB-only abbreviation) -- see _MLB_SUPPLEMENT in fetch_position_vocabulary.py.",
+  "note": "abbreviation/leaf/parent as published by ESPN; not hand-authored. MLB carries one supplement: TWP (MLB-only abbreviation) -- see _MLB_SUPPLEMENT in fetch_position_vocabulary.py. ligamx shares the mls block: measured 2026-08-25, soccer/leagues/mex.1 and soccer/leagues/usa.1 publish the SAME 42 position ids (set equality, neither side exclusive), so this is a verified copy of one published vocabulary rather than a second fetch of it.",
   "source": "https://sports.core.api.espn.com/v2/sports/{sport}/leagues/{league}/positions?limit=200"
  },
  "leagues": {
+  "ligamx": {
+   "ancestry": {
+    "-": [],
+    "AM": [
+     "M"
+    ],
+    "AM-L": [
+     "M"
+    ],
+    "AM-R": [
+     "M"
+    ],
+    "CD": [
+     "D"
+    ],
+    "CD-L": [
+     "D"
+    ],
+    "CD-R": [
+     "D"
+    ],
+    "CF-L": [
+     "F"
+    ],
+    "CF-R": [
+     "F"
+    ],
+    "CM": [
+     "M"
+    ],
+    "CM-L": [
+     "M"
+    ],
+    "CM-R": [
+     "M"
+    ],
+    "D": [],
+    "DM": [
+     "M"
+    ],
+    "F": [],
+    "FCF": [
+     "F"
+    ],
+    "G": [],
+    "LB": [
+     "D"
+    ],
+    "LF": [
+     "F"
+    ],
+    "LM": [
+     "M"
+    ],
+    "M": [],
+    "RB": [
+     "D"
+    ],
+    "RCF": [
+     "F"
+    ],
+    "RCM": [
+     "M"
+    ],
+    "RF": [
+     "F"
+    ],
+    "RM": [
+     "M"
+    ],
+    "SUB": [],
+    "SW": [
+     "D"
+    ]
+   },
+   "positions": {
+    "-": {
+     "id": "26",
+     "leaf": false,
+     "name": "Unknown",
+     "parent_id": null
+    },
+    "AM": {
+     "id": "14",
+     "leaf": true,
+     "name": "Attacking Midfielder",
+     "parent_id": "10"
+    },
+    "AM-L": {
+     "id": "32",
+     "leaf": true,
+     "name": "Attacking Midfielder Left",
+     "parent_id": "10"
+    },
+    "AM-R": {
+     "id": "33",
+     "leaf": true,
+     "name": "Attacking Midfielder Right",
+     "parent_id": "10"
+    },
+    "CD": {
+     "id": "3",
+     "leaf": true,
+     "name": "Center Defender",
+     "parent_id": "2"
+    },
+    "CD-L": {
+     "id": "4",
+     "leaf": true,
+     "name": "Center Left Defender",
+     "parent_id": "2"
+    },
+    "CD-R": {
+     "id": "5",
+     "leaf": true,
+     "name": "Center Right Defender",
+     "parent_id": "2"
+    },
+    "CF-L": {
+     "id": "20",
+     "leaf": true,
+     "name": "Center Left Forward",
+     "parent_id": "19"
+    },
+    "CF-R": {
+     "id": "21",
+     "leaf": true,
+     "name": "Center Right Forward",
+     "parent_id": "19"
+    },
+    "CM": {
+     "id": "11",
+     "leaf": true,
+     "name": "Center Midfielder",
+     "parent_id": "10"
+    },
+    "CM-L": {
+     "id": "12",
+     "leaf": true,
+     "name": "Center Left Midfielder",
+     "parent_id": "10"
+    },
+    "CM-R": {
+     "id": "13",
+     "leaf": true,
+     "name": "Center Right Midfielder",
+     "parent_id": "10"
+    },
+    "D": {
+     "id": "2",
+     "leaf": false,
+     "name": "Defender",
+     "parent_id": null
+    },
+    "DM": {
+     "id": "6",
+     "leaf": true,
+     "name": "Defensive Midfielder",
+     "parent_id": "10"
+    },
+    "F": {
+     "id": "19",
+     "leaf": false,
+     "name": "Forward",
+     "parent_id": null
+    },
+    "FCF": {
+     "id": "22",
+     "leaf": true,
+     "name": "Front Center Forward",
+     "parent_id": "19"
+    },
+    "G": {
+     "id": "1",
+     "leaf": false,
+     "name": "Goalkeeper",
+     "parent_id": null
+    },
+    "LB": {
+     "id": "8",
+     "leaf": true,
+     "name": "Left Back",
+     "parent_id": "2"
+    },
+    "LF": {
+     "id": "24",
+     "leaf": true,
+     "name": "Left Forward",
+     "parent_id": "19"
+    },
+    "LM": {
+     "id": "16",
+     "leaf": true,
+     "name": "Left Midfielder",
+     "parent_id": "10"
+    },
+    "M": {
+     "id": "10",
+     "leaf": false,
+     "name": "Midfielder",
+     "parent_id": null
+    },
+    "RB": {
+     "id": "9",
+     "leaf": true,
+     "name": "Right Back",
+     "parent_id": "2"
+    },
+    "RCF": {
+     "id": "23",
+     "leaf": true,
+     "name": "Rear Center Forward",
+     "parent_id": "19"
+    },
+    "RCM": {
+     "id": "15",
+     "leaf": true,
+     "name": "Rear Center Midfielder",
+     "parent_id": "10"
+    },
+    "RF": {
+     "id": "25",
+     "leaf": true,
+     "name": "Right Forward",
+     "parent_id": "19"
+    },
+    "RM": {
+     "id": "17",
+     "leaf": true,
+     "name": "Right Midfielder",
+     "parent_id": "10"
+    },
+    "SUB": {
+     "id": "27",
+     "leaf": false,
+     "name": "Substitute",
+     "parent_id": null
+    },
+    "SW": {
+     "id": "7",
+     "leaf": true,
+     "name": "Sweeper",
+     "parent_id": "2"
+    }
+   }
+  },
   "mlb": {
    "ancestry": {
     "1B": [
