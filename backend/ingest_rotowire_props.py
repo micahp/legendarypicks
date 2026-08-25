@@ -866,6 +866,17 @@ def _club_spellings(name: str) -> List[str]:
         out.append(" ".join(parts[:-1]))
     else:
         out.extend(["{} {}".format(base, suffix) for suffix in ("fc", "sc")])
+    # A LEADING decoration, not just trailing. ESPN's Leagues Cup scoreboard says
+    # `Monterrey`; the watcher's stored fixture (from Bovada) says `CF Monterrey`.
+    # The existing suffix logic never matched it -- `cf` there is a trailing token
+    # this function already strips, but here it's the first word, so `resolve_team`
+    # returned None and the watcher's 15-min poll raised TeamVocabularyError on
+    # every run from 2026-08-25T17:02 onward. Same shape as the `club` prefix two
+    # lines up; `cf` gets the same two-way handling.
+    if len(parts) > 1 and parts[0] == "cf":
+        out.append(" ".join(parts[1:]))
+    else:
+        out.append("cf {}".format(base))
     return out
 
 
