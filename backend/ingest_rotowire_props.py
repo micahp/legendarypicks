@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Ingest player props from the RotoWire picks relay: NFL, MLB and MLS.
+"""Ingest player props from the RotoWire picks relay: NFL, MLB, MLS and Leagues Cup.
 
     LP_DB_PATH=data/picks.dev.db python ingest_rotowire_props.py nfl
     LP_DB_PATH=data/picks.dev.db python ingest_rotowire_props.py nfl --dry-run
@@ -109,6 +109,11 @@ LEAGUES = {
         "los angeles fc": "LAFC",
         "los angeles galaxy": "LA",
     }},
+    # Leagues Cup is specifically one MLS club against one Liga MX club. Both
+    # memberships are reconstructed from durable scoreboards below; neither
+    # domestic league vocabulary is widened by hand here.
+    "lcup": {"sport": "Soccer", "kind": "cross_club",
+              "mls_team_count": 30, "ligamx_team_count": 18},
 }
 
 # marketID -> (the marketName we verified it under, our key).
@@ -168,6 +173,7 @@ MARKETS = {
     "nfl": NFL_GAME_MARKETS,
     "mlb": MLB_GAME_MARKETS,
     "mls": SOCCER_GAME_MARKETS,
+    "lcup": SOCCER_GAME_MARKETS,
 }
 
 _SUFFIXES = {"jr", "jr.", "sr", "sr.", "ii", "iii", "iv", "v"}
@@ -295,7 +301,8 @@ def parse(payload: Dict, league: str) -> Tuple[List[Dict], Dict]:
 
 
 def resolve_player(con: sqlite3.Connection, league: str, row: Dict, now: str,
-                   team_code: Optional[str] = None) -> Optional[int]:
+                   team_code: Optional[str] = None,
+                   roster_league: Optional[str] = None) -> Optional[int]:
     """The canonical player id for one board row, or None once it has been queued.
 
     `team_code` is the club already resolved onto our vocabulary. It matters: the relay
@@ -303,6 +310,7 @@ def resolve_player(con: sqlite3.Connection, league: str, row: Dict, now: str,
     spine says `WSH` and `NYC`, so comparing the raw strings would silently fail every
     fallback that needs a team.
     """
+    roster_league = roster_league or league
     key = row.get("source_player_key")
     if key:
         bound = con.execute(
@@ -310,10 +318,17 @@ def resolve_player(con: sqlite3.Connection, league: str, row: Dict, now: str,
             "AND source_player_key=?", (SOURCE, league, key)).fetchone()
         if bound:
             return bound["player_id"]
+        if roster_league != league:
+            bound = con.execute(
+                "SELECT player_id FROM player_source_ids WHERE source=? AND league=? "
+                "AND source_player_key=?", (SOURCE, roster_league, key)).fetchone()
+            if bound:
+                bind_player_source_key(con, league, key, bound["player_id"], now)
+                return bound["player_id"]
 
     published = normalize_name(row["player_name"])
     roster = [dict(r) for r in con.execute(
-        "SELECT id, name, team, active FROM players WHERE league=?", (league,))]
+        "SELECT id, name, team, active FROM players WHERE league=?", (roster_league,))]
     candidates = [r for r in roster if normalize_name(r["name"]) == published]
 
     if not candidates and team_code:
@@ -396,11 +411,14 @@ class SourceIdentityConflict(RuntimeError):
 
 
 class TeamVocabulary(dict):
-    """Normalized spelling -> canonical code, plus its stored display name."""
+    """Normalized spelling -> code, plus display names and league membership."""
 
-    def __init__(self, aliases=None, display_names=None):
+    def __init__(self, aliases=None, display_names=None, memberships=None):
         super().__init__(aliases or {})
         self.display_names = dict(display_names or {})
+        self.memberships = {
+            name: set(codes) for name, codes in (memberships or {}).items()
+        }
 
 
 class TeamVocabularyError(RuntimeError):
@@ -555,13 +573,14 @@ def ingest(rows: List[Dict], league: str, dry_run: bool = False) -> Dict:
     vocabulary = team_vocabulary(con, league)
     try:
         for row in rows:
-            if vocabulary is not None and not _fixture_is_known(row, vocabulary):
+            if vocabulary is not None and not _fixture_is_known(league, row, vocabulary):
                 summary["unknown_team"] += 1
                 continue
             player_key = row.get("source_player_key") or row["player_name"]
             if player_key not in players:
                 players[player_key] = resolve_player(
-                    con, league, row, now, resolve_team(vocabulary, row["team"]))
+                    con, league, row, now, resolve_team(vocabulary, row["team"]),
+                    _roster_league(league, row, vocabulary))
             player_id = players[player_key]
             if player_id is None:
                 summary["unresolved_player_rows"] += 1
@@ -622,6 +641,10 @@ def team_vocabulary(con: sqlite3.Connection, league: str) -> Optional[Dict[str, 
 
     if spec["kind"] == "scoreboard":
         return _scoreboard_team_vocabulary(con, league, spec["team_count"])
+
+    if spec["kind"] == "cross_club":
+        return _lcup_team_vocabulary(
+            con, spec["mls_team_count"], spec["ligamx_team_count"])
 
     import espn_client as espn
     try:
@@ -715,16 +738,130 @@ def _scoreboard_team_vocabulary(
     return TeamVocabulary(index, display_names)
 
 
+def _lcup_team_vocabulary(
+    con: sqlite3.Connection, expected_mls_count: int, expected_ligamx_count: int
+) -> TeamVocabulary:
+    """Build the MLS/Liga MX union while preserving each membership.
+
+    The complete MLS population and every Leagues Cup opponent come from our
+    durable scoreboard payloads. Existing ``lcup`` prop-game names may add a
+    spelling only after joining to one of those published identities.
+    """
+    has_snapshots = con.execute(
+        "SELECT 1 FROM sqlite_master WHERE type='table' AND name='scoreboard_snapshots'"
+    ).fetchone()
+    if not has_snapshots:
+        raise TeamVocabularyError(
+            "scoreboard_snapshots is required for Leagues Cup team identity")
+
+    def published(league: str) -> Dict[str, Tuple[str, str]]:
+        clubs = {}
+        for stored in con.execute(
+            "SELECT payload FROM scoreboard_snapshots WHERE LOWER(league)=?", (league,)
+        ):
+            try:
+                payload = json.loads(stored[0])
+            except (TypeError, ValueError):
+                raise TeamVocabularyError(
+                    "malformed {} scoreboard snapshot payload".format(league))
+            for side in ("home", "away"):
+                team = payload.get(side) or {}
+                code = str(team.get("abbrev") or "").strip().upper()
+                name = str(team.get("name") or "").strip()
+                if not code or not name:
+                    continue
+                name_key = normalize_name(name)
+                prior = clubs.get(name_key)
+                if prior is not None and prior[0] != code:
+                    raise TeamVocabularyError(
+                        "{} name {!r} has conflicting codes: {}, {}".format(
+                            league, name, prior[0], code))
+                clubs[name_key] = (code, name)
+        return clubs
+
+    mls = published("mls")
+    if len(mls) != expected_mls_count:
+        raise TeamVocabularyError(
+            "MLS scoreboard vocabulary is incomplete: resolved {}/{} clubs".format(
+                len(mls), expected_mls_count))
+    tournament = published("lcup")
+    if not tournament:
+        raise TeamVocabularyError("Leagues Cup scoreboard vocabulary is empty")
+    liga_mx = {key: value for key, value in tournament.items() if key not in mls}
+    if len(liga_mx) != expected_ligamx_count:
+        raise TeamVocabularyError(
+            "Liga MX Leagues Cup vocabulary is incomplete: resolved {}/{} clubs".format(
+                len(liga_mx), expected_ligamx_count))
+
+    index = {}
+    display_names = {}
+    memberships = {"mls": set(), "ligamx": set()}
+    code_identities = collections.defaultdict(set)
+    for membership, clubs in (("mls", mls), ("ligamx", liga_mx)):
+        for code, name in clubs.values():
+            identity = "{}:{}".format(membership, code)
+            memberships[membership].add(identity)
+            display_names[identity] = name
+            code_identities[normalize_name(code)].add(identity)
+            for spelling in _club_spellings(name):
+                index[spelling] = identity
+                index[_squash(spelling)] = identity
+    # A raw abbreviation is accepted only when it names one identity in the
+    # union. `ATL` is deliberately absent: ESPN publishes it for both Atlanta
+    # United and Atlante, so resolving that string would be a guess.
+    for code, identities in code_identities.items():
+        if len(identities) == 1:
+            index[code] = next(iter(identities))
+    # Reuse the reviewed MLS cross-publisher spellings without adding Liga MX
+    # identities to the MLS vocabulary itself.
+    for spelling, code in LEAGUES["mls"].get("aliases", {}).items():
+        identity = "mls:{}".format(code)
+        if identity in memberships["mls"]:
+            key = normalize_name(spelling)
+            index[key] = identity
+            index[_squash(key)] = identity
+
+    has_prop_games = con.execute(
+        "SELECT 1 FROM sqlite_master WHERE type='table' AND name='prop_games'"
+    ).fetchone()
+    if has_prop_games:
+        for home, away in con.execute(
+            "SELECT home,away FROM prop_games WHERE LOWER(league)='lcup'"
+        ):
+            for raw in (home, away):
+                if not raw:
+                    continue
+                code = resolve_team(index, raw)
+                if not code:
+                    raise TeamVocabularyError(
+                        "stored Leagues Cup club is outside published vocabulary: {!r}".format(raw))
+                key = normalize_name(raw)
+                index[key] = code
+                index[_squash(key)] = code
+
+    return TeamVocabulary(
+        index,
+        display_names,
+        memberships=memberships,
+    )
+
+
 def _club_spellings(name: str) -> List[str]:
-    """A display name and the same name without its trailing FC/SC.
+    """A display name plus optional published Club/FC/SC decoration.
 
     The relay says "Chicago Fire" and "Atlanta United" where ESPN says "Chicago Fire FC"
     and "Atlanta United FC", and says "Vancouver Whitecaps FC" where ESPN drops it. The
-    suffix is decoration on both sides, so both spellings point at the same club.
+    suffix is decoration on both sides, so both spellings point at the same club. Liga MX
+    has the same boundary spelling in the other direction: ESPN says ``Necaxa`` while the
+    relay says ``Club Necaxa``.
     """
     base = normalize_name(name)
     out = [base]
     parts = base.split()
+    if len(parts) > 1 and parts[0] == "club":
+        out.append(" ".join(parts[1:]))
+    else:
+        out.append("club {}".format(base))
     if len(parts) > 1 and parts[-1] in {"fc", "sc", "cf"}:
         out.append(" ".join(parts[:-1]))
     else:
@@ -761,9 +898,36 @@ def _squash(key: str) -> str:
     return key.replace(" ", "")
 
 
-def _fixture_is_known(row: Dict, vocabulary: Optional[Dict[str, str]]) -> bool:
-    """Both sides of the fixture are clubs this league publishes."""
-    return all(resolve_team(vocabulary, row[side]) for side in ("home", "away"))
+def _fixture_is_known(
+    league: str, row: Dict, vocabulary: Optional[Dict[str, str]]
+) -> bool:
+    """Both clubs resolve; a tournament must cross its two member leagues."""
+    home = resolve_team(vocabulary, row["home"])
+    away = resolve_team(vocabulary, row["away"])
+    if not home or not away:
+        return False
+    if LEAGUES[league]["kind"] != "cross_club":
+        return True
+    memberships = getattr(vocabulary, "memberships", {})
+    mls = memberships.get("mls", set())
+    liga_mx = memberships.get("ligamx", set())
+    return ((home in mls and away in liga_mx)
+            or (home in liga_mx and away in mls))
+
+
+def _roster_league(
+    league: str, row: Dict, vocabulary: Optional[Dict[str, str]]
+) -> str:
+    """Return the canonical player spine allowed to own this tournament player."""
+    if LEAGUES[league]["kind"] != "cross_club":
+        return league
+    code = resolve_team(vocabulary, row.get("team"))
+    memberships = getattr(vocabulary, "memberships", {})
+    if code in memberships.get("mls", set()):
+        return "mls"
+    # There is no Liga MX player spine today. Keep those athletes unresolved
+    # rather than matching the shadow Liga MX rows historically filed as MLS.
+    return league
 
 
 def load_archive(date_str: str) -> Dict:
@@ -818,9 +982,12 @@ def main(argv=None) -> int:
     if summary["unknown_team"]:
         # For a club league this is the competition filter doing its job, not a defect:
         # a fixture whose clubs are not in this league is another league's fixture.
-        label = ("rows under this sport label but not in this league"
-                 if LEAGUES[args.league]["kind"] == "club" else
-                 "rows on a team code the league does not publish")
+        kind = LEAGUES[args.league]["kind"]
+        label = (
+            "rows under this sport label but not in this league" if kind == "club"
+            else "rows not proven to be an MLS-vs-Liga MX fixture" if kind == "cross_club"
+            else "rows on a team code the league does not publish"
+        )
         print("  {} {}.".format(summary["unknown_team"], label))
     if args.dry_run:
         print("dry run -- nothing written.")
@@ -839,7 +1006,10 @@ def main(argv=None) -> int:
     #
     # The real failure is rows that PASSED the league filter and still wrote
     # nothing. That is what this now checks.
-    considered = counts["game_props"] - summary["unknown_team"]
+    # Both values are expanded book/side rows. `counts["game_props"]` is source
+    # prop objects and cannot be subtracted from `unknown_team` without making a
+    # multi-book board look negative.
+    considered = summary["board_rows"] - summary["unknown_team"]
     if considered > 0 and not (summary["new"] + summary["refreshed"]):
         print("ERROR: {} {} rows passed the league filter and none ingested."
               .format(considered, args.league))

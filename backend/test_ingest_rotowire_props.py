@@ -481,6 +481,18 @@ class SoccerIsFiveCompetitionsUnderOneLabel(unittest.TestCase):
         "los angeles football club": "LAFC", "lafc": "LAFC",
         "vancouver whitecaps": "VAN", "vancouver whitecaps fc": "VAN",
     }
+    LCUP_VOCABULARY = rw.TeamVocabulary(
+        {
+            **VOCABULARY,
+            "san diego fc": "SD",
+            "guadalajara": "GDL",
+            "chivas guadalajara": "GDL",
+        },
+        memberships={
+            "mls": {"ATL", "MIN", "MTL", "DC", "RBNY", "LAFC", "VAN", "SD"},
+            "ligamx": {"GDL"},
+        },
+    )
 
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
@@ -489,7 +501,9 @@ class SoccerIsFiveCompetitionsUnderOneLabel(unittest.TestCase):
         self.old_db = rw.DB
         rw.DB = self.db_path
         self.old_vocab = rw.team_vocabulary
-        rw.team_vocabulary = lambda con, league: dict(self.VOCABULARY)
+        rw.team_vocabulary = lambda con, league: (
+            self.LCUP_VOCABULARY if league == "lcup" else dict(self.VOCABULARY)
+        )
         self.con = sqlite3.connect(self.db_path)
         self.con.row_factory = sqlite3.Row
 
@@ -499,10 +513,10 @@ class SoccerIsFiveCompetitionsUnderOneLabel(unittest.TestCase):
         rw.team_vocabulary = self.old_vocab
         self.tmp.cleanup()
 
-    def player(self, name, team):
+    def player(self, name, team, league="mls"):
         player_id = self.con.execute(
-            "INSERT INTO players(name,team,league,active) VALUES(?,?,'mls',1)",
-            (name, team)).lastrowid
+            "INSERT INTO players(name,team,league,active) VALUES(?,?,?,1)",
+            (name, team, league)).lastrowid
         self.con.commit()
         return player_id
 
@@ -533,6 +547,86 @@ class SoccerIsFiveCompetitionsUnderOneLabel(unittest.TestCase):
         self.assertEqual(summary["new"], 0)
         self.assertEqual(summary["unknown_team"], 2)
         self.assertEqual(self.scalar("SELECT COUNT(*) FROM prop_games"), 0)
+
+    def test_mls_v_liga_mx_files_under_lcup_while_europe_stays_refused(self):
+        """The Soccer bucket may partially succeed, but only on a proven cross fixture."""
+        player_id = self.player("Some Forward", "SD")
+        cross = self.soccer(
+            "Some Forward", "San Diego FC", "San Diego FC", "Guadalajara")
+        europe = self.soccer(
+            "European Forward", "Chelsea", "Chelsea", "Fulham",
+            link="https://www.rotowire.com/soccer/player/europe-100")
+        europe["entities"][0]["entityID"] = 71
+        europe["entities"][0]["eventID"] = 71
+        europe["events"][0]["eventID"] = 71
+        europe["events"][0]["gameID"] = 263107
+        europe["props"][0]["propID"] = "b"
+        europe["props"][0]["entities"] = [71]
+        for key in ("entities", "events", "props"):
+            cross[key].extend(europe[key])
+
+        rows, _ = rw.parse(cross, "lcup")
+        summary = rw.ingest(rows, "lcup")
+
+        self.assertEqual(summary["new"], 2)
+        self.assertEqual(summary["unknown_team"], 2)
+        game = self.con.execute("SELECT league,home,away FROM prop_games").fetchone()
+        self.assertEqual(tuple(game), ("lcup", "San Diego FC", "Guadalajara"))
+        self.assertEqual(self.scalar("SELECT DISTINCT player_id FROM props"), player_id)
+
+    def test_mls_v_mls_files_only_under_mls(self):
+        self.player("Some Forward", "ATL")
+        payload = self.soccer(
+            "Some Forward", "Atlanta United", "Atlanta United", "Minnesota United")
+
+        mls_summary = rw.ingest(rw.parse(payload, "mls")[0], "mls")
+        lcup_summary = rw.ingest(rw.parse(payload, "lcup")[0], "lcup")
+
+        self.assertEqual(mls_summary["new"], 2)
+        self.assertEqual(lcup_summary["new"], 0)
+        self.assertEqual(lcup_summary["unknown_team"], 2)
+        self.assertEqual(
+            self.con.execute("SELECT DISTINCT league FROM prop_games").fetchone()[0],
+            "mls",
+        )
+
+    def test_lcup_vocabulary_reads_liga_mx_name_from_stored_snapshot(self):
+        self.con.execute("DELETE FROM scoreboard_snapshots")
+        for code in sorted(rw.CANONICAL_TEAM_CODES["mls"]):
+            self.con.execute(
+                "INSERT INTO scoreboard_snapshots(league,payload) VALUES('mls',?)",
+                (json.dumps({
+                    "home": {"abbrev": code, "name": "{} Club".format(code)},
+                    "away": {"abbrev": code, "name": "{} Club".format(code)},
+                }),),
+            )
+        self.con.execute(
+            "INSERT INTO scoreboard_snapshots(league,payload) VALUES('lcup',?)",
+            (json.dumps({
+                "home": {"abbrev": "UANL", "name": "Tigres UANL"},
+                "away": {"abbrev": "ATL", "name": "ATL Club"},
+            }),),
+        )
+        self.con.execute(
+            "INSERT INTO scoreboard_snapshots(league,payload) VALUES('lcup',?)",
+            (json.dumps({
+                "home": {"abbrev": "ATL", "name": "Atlante"},
+                "away": {"abbrev": "ATL", "name": "ATL Club"},
+            }),),
+        )
+        self.con.commit()
+
+        vocabulary = rw._lcup_team_vocabulary(
+            self.con, len(rw.CANONICAL_TEAM_CODES["mls"]), 2)
+
+        self.assertEqual(
+            rw.resolve_team(vocabulary, "Tigres UANL"), "ligamx:UANL")
+        self.assertIn("ligamx:UANL", vocabulary.memberships["ligamx"])
+        self.assertEqual(rw.resolve_team(vocabulary, "Atlante"), "ligamx:ATL")
+        self.assertEqual(rw.resolve_team(vocabulary, "ATL Club"), "mls:ATL")
+        self.assertIsNone(rw.resolve_team(vocabulary, "ATL"))
+        self.assertEqual(
+            rw.resolve_team(vocabulary, "Los Angeles Football Club"), "mls:LAFC")
 
     def test_the_same_club_spelled_three_ways_finds_one_game(self):
         """`CF Montreal`, `CF Montréal` and `MTL` are one club, so one fixture."""
