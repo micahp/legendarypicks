@@ -353,9 +353,13 @@ outlives its code.
 
 ## 8. Measurement debt: checks that stay green by not being asked
 
-- [ ] **`atp`, `wta`, `wnba` have no MANIFEST entry** (`audit_league_stats/cli.py:22`). The audit
-      only fails a missing entry for a league that serves `player_stats`, and these three serve
-      zero, so it stays green by never asking. WNBA does not exist in either database.
+- [x] **`atp`, `wta`, `wnba` have no MANIFEST entry.** DONE 2026-08-24. All three are now
+      explicit audit subjects with `stat_types: {}`: ATP/WTA currently expose draws, matches,
+      and props but no season-totals leaderboard, while WNBA has no offered product or copied-DB
+      population. The copied audit now emits four concrete results for each league instead of
+      staying green by never asking; ATP/WTA pass the held ESPN-id spine check and all three
+      remain honestly UNVERIFIED for undeclared position content, leaderboard reachability,
+      and published identity evidence.
 - [ ] **`DURING / live state` is UNPROBED for every league.**
 - [ ] **`league_feature_matrix.py`'s docstring is stale:** it cites NCAAF as the example of a
       league hidden on prod, and NCAAF is OFFERED on both.

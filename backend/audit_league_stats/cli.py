@@ -221,6 +221,29 @@ MANIFEST = {
         },
         "single_vocabulary": [],
     },
+    "atp": {
+        # ATP/WTA currently expose tournament draws, match pages, and props.
+        # They do not expose a season-totals leaderboard and publish no rows in
+        # player_stats. Saying that here is materially different from omitting
+        # the league: every audit run now records that the surface was asked
+        # about and deliberately has no stat_types to measure.
+        "stat_types": {},
+        "position_content": {},
+        "single_vocabulary": [],
+    },
+    "wta": {
+        "stat_types": {},
+        "position_content": {},
+        "single_vocabulary": [],
+    },
+    "wnba": {
+        # WNBA is not offered and the copied database has no players, logs, or
+        # stats for it. Keep it in the ruler anyway: absence of product/data is
+        # now explicit evidence, not a league the audit never asks about.
+        "stat_types": {},
+        "position_content": {},
+        "single_vocabulary": [],
+    },
     "mls": {
         "stat_types": {
             "season": {
