@@ -23,6 +23,13 @@ the backlog as P4, and the history is a git revision rather than a second file.
 Where a measurement contradicts what the 08-18 roadmap claimed, the correction is called out
 in place, because this document has been confidently wrong before.
 
+**Partially reconciled 2026-08-25.** §1 was three releases behind while §10 carried
+same-day entries, so the document looked maintained and was not. §1 is now re-measured
+against the running containers. **Everything between §3 and §12 still dates from 08-20 and
+has not been re-measured since**, and roughly a dozen commits have landed since this file was
+last touched (`ec69941`). The live open list is `docs/CONTEXT-2026-08-24.md` §19, not this
+file. Read that first and treat unverified sections here as claims.
+
 The constraint that orders all of it: **NFL fantasy drafts are happening now**, and NCAAF
 opens **2026-08-29, nine days out**. That is the only hard date on the board.
 
@@ -30,22 +37,45 @@ opens **2026-08-29, nine days out**. That is the only hard date on the board.
 
 ## 1. What production is actually running
 
-**v0.8.4 on the frontend; the backend is FOUR COMMITS AHEAD OF ANY TAG.** Read off the
-containers rather than the tags:
+**Re-measured 2026-08-25. PROD IS RUNNING v0.8.5 CODE. Two tagged releases, v0.8.6 and
+v0.8.7, have never reached it.** The 08-20 version of this section said v0.8.4 plus four
+untagged commits, and stayed unedited through three releases while §10 below was updated
+today, which is how a stale document passes for a maintained one.
+
+Read off the containers, then falsified against the tags rather than inferred from them:
 
 ```
-legendarypicks-frontend   image built 2026-08-19 19:30   == v0.8.4 (tagged 19:21)
-legendarypicks-backend    image built 2026-08-19 23:13   == v0.8.4 + 4 untagged commits
+legendarypicks-frontend   image built 2026-08-21 11:41   up 3 days
+legendarypicks-backend    image built 2026-08-21 11:41   up 3 days
+
+v0.8.5  tagged 2026-08-20 08:47   <- in the image
+v0.8.6  tagged 2026-08-22 14:31   <- NOT in the image
+v0.8.7  tagged 2026-08-24 09:38   <- NOT in the image
 ```
 
-The four commits prod's backend carries beyond `v0.8.4`, all pushed to `dev`:
+Proven by content, not by dates:
 
 ```
-0473bc1  fix(props): the ingest filed a game on the UTC day, not the day it is played
-2775169  fix(split): a caller that is not an import is a caller a split cannot see
-8fc93a4  fix(clock): two more places comparing a local slate day against a UTC today
-7013ef1  fix(db): prod served 500s because SQLite gave up on the lock after 5 seconds
+md5 backend/ingest_scoreboards.py @ v0.8.5   c3aa055ab7fe0b89148c7e5b9e70c1bd
+md5 backend/ingest_scoreboards.py @ v0.8.7   d5b840308b65efe19c50102a1d6a4d23
+md5 /app/ingest_scoreboards.py in container  c3aa055ab7fe0b89148c7e5b9e70c1bd
 ```
+
+Byte-identical to v0.8.5. **Twelve backend modules changed between v0.8.5 and v0.8.7 and
+none of those changes are running in production**, including `ingest_scoreboards.py`,
+`scoreboard_store.py`, `_core.py`, `core_stories.py`, `monitor_props_freshness.py` and
+`routers/games/game_detail.py`.
+
+**This is not a contradiction of the changelog, and that is what makes it dangerous.** The
+v0.8.7 work was largely systemd units, cadence state and ingest runs, and those are host and
+data level, so they genuinely did take effect the moment they ran. "v0.8.7 shipped" is true
+of the scheduling half and false of the code half, and nothing on either database
+distinguishes the two. This is `feedback_dev_fix_prod_never_ran` at release scale rather than
+fix scale.
+
+- [ ] **Rebuild and redeploy prod, or state in writing which of v0.8.6 and v0.8.7 is
+      deliberately withheld.** Until one of those happens, "what is on prod" has a different
+      answer for code than for data, and the tag answers neither.
 
 **This was a deliberate rebuild, not drift, but it breaks the tag convention.** The container
 was rebuilt on 2026-08-19 at 23:13 to carry the busy-timeout half of the SQLite contention
@@ -68,7 +98,7 @@ at image-build time.
 
 ---
 
-## 2. Nothing is release-blocking as of 2026-08-20
+## 2. Release-blocking status, as measured 2026-08-20
 
 The 08-18 roadmap led with "the scoreboard fix is written, tested, and not deployed" as the
 one thing a visitor experienced as the site being broken. **All three faults are fixed and
@@ -372,6 +402,96 @@ outlives its code.
       silently keep it; (2) doing this as a batch sweep re-introduces the
       serve-path-enforcing-a-batch-budget shape. Efficient version is an indexed predicate on
       the existing serve query, not a job that walks the table.
+- [ ] **Sport-first navigation on `/props` and `/leagues`** (`docs/DESIGN-sport-first-navigation.md`).
+      Named by Micah 2026-08-24. The top-level entity becomes the SPORT; a competition row
+      appears underneath only where we cover more than one competition in that sport. The
+      trigger was Leagues Cup being unreachable on `/props`, which shows league chips, but
+      adding an `lcup` chip returns the same question for Campeones Cup, CCC and every
+      tournament after them.
+      The measured argument is stronger than the aesthetic one: **RotoWire publishes soccer as
+      ONE bucket.** In the 2026-08-24 relay archive the sport key is the literal string
+      `Soccer`, there is no competition field on the market, the props carry no `eventID`, and
+      the 113 soccer props were Chelsea/Fulham (EPL), Bologna/Fiorentina/Lazio/Roma (Serie A),
+      Levante/Osasuna/Real Madrid/Real Sociedad (La Liga) and Deportivo/Málaga (Segunda).
+      **Zero MLS**, and Underdog publishes none either (`reference_underdog_no_mls`). So a
+      soccer tab whose contents are the two buttons `MLS` and `Leagues Cup` would have shown
+      two competitions with no props that day and hidden four that had them.
+      Decisions already made, so they are not re-argued: **football keeps NFL and NCAAF as two
+      top-level chips** (a chip between a drafter and the NFL is a cost, not a tidy-up);
+      **UFC stays UFC** until a second promotion is carried; storage keys (`atp`, `wta`,
+      `mls`, `lcup`) do not change, this is the top of the page only. Derive the sport from
+      the ESPN path already in `backend/espn_leagues.py` rather than a hand-kept slug map.
+- [ ] **Consolidate ATP and WTA into one Tennis surface.** Falls out of the item above:
+      `pages/props.tsx:36` offers `atp` and `wta` as separate chips, so a visitor who wants
+      tennis must know to click two, which is the PrizePicks `EPL`-next-to-`Soccer` defect at
+      small scale. Consolidating on `/props` forces a Tennis entry on `/leagues`, and there is
+      no tennis hub today. Scope it to what tennis HAS: scores (`atp`/`wta` are in
+      `BOARD_LEAGUES` and ingest per-day), props (`_parse_tennis_props`), and news. Game logs
+      and season stats are declared not-applicable for both tours in
+      `backend/league_feature_matrix.py:61`, which is why every tennis market in
+      `core_markets.py:53` charts as `None`. A Draws tab for the current major is the one new
+      build, and it is **blocked on an unmeasured question: does ESPN publish a tennis draw?**
+      Measure that before speccing it. We cover majors, not the tour; Challengers, 250s and
+      500s are not ingested and the hub says so on screen rather than looking like a tour page
+      with holes in it.
+- [ ] **A new league or promotion is only worth adding if we can get its props.** Named by
+      Micah 2026-08-24 and recorded as a gate rather than re-argued per case. Props are the
+      product, so a second MMA promotion (which is what would rename UFC to MMA), a second
+      basketball league, or another soccer competition each has to clear this before it earns
+      a chip. NCAAF is the standing counter-example already on this board: it opens 08-29 with
+      **zero props on both databases**.
+- [ ] **Ingest esports props from the RotoWire relay.** Named by Micah 2026-08-24, and the
+      relay already carries them. Measured in the 2026-08-24 archive: **CS2 205 props** quoted
+      by sleeper (158), underdog (149) and prizepicks (139), plus **Valorant 3** (prizepicks
+      only). Markets are `Map 1 Kills`, `Map 1 Headshots`, `Maps 1+2 Kills`,
+      `Maps 1+2 Headshots`, `Maps 1+2+3 Kills`. No LoL, Dota or COD that day. We discard all
+      of it today, as the props-audit item above records.
+      **The catch is which CS2.** The 22 teams quoted were tier-2 and academy sides:
+      `Spirit Academy`, `CYBERSHOKE Prospects`, `ex-RUBY`, `Bushido Wildcats`,
+      `Chinggis Warriors`. Real props on real matches, not the tier a visitor means by "CS2".
+      Settlement needs an esports game spine these props can link to, which is the actual size
+      of this item.
+- [ ] **An option to hide esports props.** Named by Micah 2026-08-24. One account preference,
+      default on, that removes esports from the props board. Not a per-title matrix. The
+      reason is the uneven tier of the supply above, not the sport. **Do not build it before
+      the ingest**: an option that hides an empty board is untestable.
+
+- [ ] **ATP and WTA rankings on scoreboard cards** (`docs/DESIGN-sport-first-navigation.md`).
+      Named by Micah 2026-08-24. Two different values, and conflating them is what makes this
+      look like one item.
+      **The seed is already published and we discard it.** `competitors[].curatedRank.current`
+      rides on the tennis scoreboard payload we already fetch. Measured in `backend/.espn-cache`:
+      Winston-Salem men's singles 16 of 118 competitors carry it, values exactly 1..16, so it
+      is the tournament SEED and not a world ranking. `backend/espn_client/scoreboard.py:270`
+      builds the player dict as `{abbrev, name, score}` and drops the rest of the competitor,
+      including the seed AND the ESPN athlete id. Carrying both through is one change, costs
+      no requests, and the athlete id is the key every later tennis join needs.
+      **The world ranking is published too, and verified against both publishers.**
+      `sports.core.api.espn.com/v2/sports/tennis/leagues/{atp,wta}/rankings` returns an index
+      pointing at a week document with 150 ranks carrying `current`, `previous`, `points`,
+      `trend` and an athlete `$ref`. The id is in the ref URL, so it joins to the scoreboard
+      competitor with **no name matching and no per-athlete fan-out**: validated 38 of 56 at
+      Winston-Salem. Cost is 4 requests per week for both tours.
+      Verified rank for rank on points, since an unvalidated rank is worse than none:
+      **WTA vs `api.wtatennis.com`, ranks 1..100, 0 mismatches. ATP vs tennisexplorer.com,
+      ranks 1..50, 0 mismatches.**
+      Three traps measured and worth not re-deriving: (1) **150 is a hard cap**, `&limit=1000`
+      returns exactly 150; (2) **ESPN publishes ONE week, not a series** (weeks 33 and 35 both
+      404, and week 34 is flagged `occurrence.last: false`), so `captured_at` must be in the
+      primary key or we get no history at all; (3) do not key the table on the player name the
+      way `ufc_rankings` does, because ESPN folds tennis names and a surname collision misses
+      silently rather than raising.
+      Still unmeasured: **seed coverage on a real main draw.** The cached US Open payload is
+      the QUALIFYING draw, which is why it showed 0 seeds on 478 competitor slots and only 35
+      of 128 entrants inside the top 150. Re-measure once the main draw publishes, before
+      deciding whether a second ranking source is needed at all.
+      Dead ends, so nobody spends the requests again: every `atptour.com` host including
+      `app.atptour.com/api/v2/gateway` is Cloudflare-403 from this box, `api.atptour.com` does
+      not resolve at all, `api.sofascore.com` is walled, `live-tennis.eu` is 403, and
+      **Jeff Sackmann's `tennis_atp` and `tennis_wta` repos no longer exist** (that account now
+      holds one repo). `tennisexplorer.com` answers, and `ultimatetennisstatistics.com` answers
+      but is stale with no working date endpoint.
+
 - [ ] **Story generation deserves its own timer.** It rides on `ingest_scoreboards.py` only
       because that is where we now learn a game exists. Nothing ties it to the scoreboard.
       Related: story generation reaches `site.api.espn.com` through `stakes.py`, a host walled
