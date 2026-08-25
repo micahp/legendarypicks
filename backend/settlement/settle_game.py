@@ -12,6 +12,9 @@ from settlement.mlb_settle import _settle_mlb_props
 from settlement.ufc_settle import _settle_ufc_props, _ufc_scoreboard_competition
 from settlement.mls_settle import _settle_mls_props
 
+# The soccer competitions that grade off the roster-stat surface.
+_SOCCER_LEAGUES = ("mls", "lcup", "ligamx")
+
 
 def settle_game(con: sqlite3.Connection, game_id: int) -> dict:
     """Settle all unsettled props for one prop_games row."""
@@ -110,13 +113,17 @@ def settle_game(con: sqlite3.Connection, game_id: int) -> dict:
                     "errors": 0, "msg": f"game {game_id}: no unsettled props"}
         return _settle_ufc_props(con, game, props)
 
-    if league == "mls":
+    # Every soccer competition grades off the same published surface. Dispatching
+    # on `mls` alone meant a Leagues Cup fixture fell through to the boxscore
+    # path below, which soccer summaries do not populate -- `boxscore` carries
+    # only `teams` for these events, the per-player stats live under `rosters`.
+    if league in _SOCCER_LEAGUES:
         try:
             summary = espn.summary(league, espn_event_id)
         except Exception as e:
             return {"settled": 0, "void": 0, "unmappable": 0, "pending": 0,
                     "errors": 1,
-                    "error_msg": f"game {game_id}: MLS summary pull failed: {e}"}
+                    "error_msg": f"game {game_id}: {league} summary pull failed: {e}"}
         props = con.execute("""
             SELECT p.id, p.market, p.line, p.side, p.player_id,
                    pl.name as player_name, pl.team as player_team,

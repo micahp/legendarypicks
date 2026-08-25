@@ -10,10 +10,31 @@ from settlement.market_mapping import normalize_market, MARKET_ALIASES
 from settlement.grading import _grade_actual
 
 
+# ESPN's own field names on `rosters[].roster[].stats`, verified against a real
+# completed Leagues Cup summary (event 401863625) rather than taken from docs.
+# That surface publishes fourteen fields; these are the ones a priced market
+# asks about. Measured 2026-08-25 across 1,640 lcup logs: every one of these is
+# present on 1,640 of 1,640 rows.
 _MLS_ROSTER_MARKETS = {
     "goals": "totalGoals",
     "assists": "goalAssists",
+    "shots": "totalShots",
+    "shots_on_target": "shotsOnTarget",
+    "sot": "shotsOnTarget",
+    "fouls_committed": "foulsCommitted",
+    "fouls_suffered": "foulsSuffered",
+    "saves": "saves",
+    "shots_faced": "shotsFaced",
+    "goals_allowed": "goalsConceded",
+    "offsides": "offsides",
 }
+
+# Priced markets ESPN does NOT publish for these competitions. Measured at 0 of
+# 1,640 rows: tackles, clearances, crosses, dribbles, passes attempted. They are
+# left out deliberately so they count as `unmappable` and stay ungraded, rather
+# than being mapped to a near-miss field and graded WRONG. `sot` and
+# `shots_on_target` both appear above because the props table carries both keys
+# for the same stat -- one stat, two vocabularies, which is its own defect.
 
 # Markets whose actual is the SUM of published stats rather than one of them.
 _MLS_ROSTER_SUM_MARKETS = {

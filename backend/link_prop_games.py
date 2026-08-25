@@ -356,6 +356,26 @@ def _link_ufc_fight(game_row, espn_games):
     return ""
 
 
+# Soccer competitions whose stored club names may carry a decoration the
+# scoreboard drops. Scoped deliberately: widening spelling alternates across
+# every sport risks matching two different clubs that share a city word.
+_SOCCER_LINK_LEAGUES = ("mls", "lcup", "ligamx", "epl", "wc")
+
+
+def _SOCCER_SPELLINGS_OK(league: str) -> bool:
+    return str(league or "").lower() in _SOCCER_LINK_LEAGUES
+
+
+def _spellings_match(ours: str, published: set) -> bool:
+    """True when any spelling of our club equals any name the publisher sent."""
+    import ingest_rotowire_props as rw
+
+    theirs = {rw.normalize_name(name) for name in published if name}
+    mine = set(rw._club_spellings(rw.normalize_name(ours)))
+    mine.add(rw.normalize_name(ours))
+    return bool(mine & theirs)
+
+
 def link_prop_game(con: sqlite3.Connection, game_row, espn_games: list) -> str:
     """Link one prop_game to an ESPN game. Returns espn_event_id or ''.
 
@@ -410,6 +430,20 @@ def link_prop_game(con: sqlite3.Connection, game_row, espn_games: list) -> str:
             if (eg["home"]["abbrev"].upper() == home_norm
                     and eg["away"]["abbrev"].upper() == away_norm):
                 return True
+        if _SOCCER_SPELLINGS_OK(league):
+            # Our stored soccer names carry decorations ESPN drops: we hold
+            # `CF Monterrey`, `Club Leon` and `Club America` where the scoreboard
+            # publishes `Monterrey`, `Leon` and `America`. Exact containment
+            # therefore matched Toluca and nothing else -- 3 of 4 Leagues Cup
+            # fixtures stayed unlinked, and an unlinked game cannot settle at
+            # all, because settle_game returns early without an espn_event_id.
+            #
+            # Reuses the published-spelling generator the RotoWire ingest already
+            # relies on rather than adding a third club-name matcher, and folds
+            # accents on BOTH sides: ESPN writes `Leon` with an accent here and
+            # without one in other payloads.
+            return (_spellings_match(pg_home_name, _team_names(eg["home"]))
+                    and _spellings_match(pg_away_name, _team_names(eg["away"])))
         return (pg_home_name in _team_names(eg["home"])
                 and pg_away_name in _team_names(eg["away"]))
 
