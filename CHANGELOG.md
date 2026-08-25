@@ -1,5 +1,41 @@
 # Changelog
 
+## v0.8.9
+
+### Two scoreboard defects reported from real use, both diagnosed rather than guessed
+
+- **Going back from a game detail no longer loses your place.** Browsing back a
+  few days, opening a game and pressing back landed on today with no league
+  filter. `pages/scores.tsx` read `?date=` and `?league=` into state and never
+  wrote either back; there was no `router.push` or `router.replace` anywhere in
+  the file, so changing the day or the chip left the URL at a bare `/scores`,
+  and back restored exactly that. Every state change now writes the query
+  shallowly, because the board loads from its own effect and a route change must
+  not refetch the page. Defaults stay out of the URL so `/scores` keeps meaning
+  today and all leagues, and `?live=1` survives a day or league change since it
+  is read from the same query.
+- **A game detail tab that failed once no longer stays empty forever.** Two
+  defects, both of which render an EMPTY tab instead of raising, which is why
+  this read as missing data rather than a failed request. The load latch was
+  keyed on the tab name alone, and Next.js reuses the page component across
+  `/game/[league]/[gameId]` navigations, so moving between games kept the
+  previous game's latch and the new game never fetched. The latch was also set
+  before the await resolved with nothing catching a rejection. The key now
+  carries the game identity, and a failure un-latches so returning to the tab is
+  a real retry.
+- **The backend was never at fault**, measured against production for
+  2026-08-20 game `401816603`: `boxscore` returns 2 teams and 4 player groups,
+  `playbyplay` returns 9 periods, `gameinfo` returns the venue and attendance.
+
+### Docs
+
+- **`docs/ROADMAP-2.md`**, a staging file with an expiry date, holding new work
+  while `ROADMAP.md` is being rewritten in two places at once. It merges into the
+  roadmap and is deleted once the sport-first navigation branch lands.
+- **The NFL prop markets we receive and cannot grade**, measured against one day
+  of the RotoWire relay rather than listed from memory, including which of them
+  need a sum rather than a stat key and which need a parse.
+
 ## v0.8.8
 
 ### Props scheduling has one owner, and the pipeline is graded at every stage
