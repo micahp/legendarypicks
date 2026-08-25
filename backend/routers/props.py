@@ -128,6 +128,11 @@ def player_prop_history(player_id: int, market: Optional[str] = Query(None)):
     return {"player_id": player_id, "history": history, "hit_rate": hit_rate, "total_settled": len(settled)}
 
 
+# Which log leagues a chart may read for a prop in this league. Only a
+# cross-border competition needs more than its own.
+_CHART_LOG_LEAGUES = {"lcup": ("lcup", "mls", "ligamx")}
+
+
 @router.get("/api/props/history")
 def prop_history(player_id: int = Query(...),
                  market: str = Query(...),
@@ -138,6 +143,14 @@ def prop_history(player_id: int = Query(...),
     stat_key = _MARKET_STAT_KEY.get(league, {}).get(_base_market(market))
     if not stat_key:
         return {"error": f"market not chartable from logs: {market}", "games": []}
+
+    # A cross-border tournament's athletes keep their domestic logs, and the chart
+    # is about the PLAYER, not the competition the prop happens to sit in. Reading
+    # `league='lcup'` alone gave a Liga MX player his three group games and an MLS
+    # player three games instead of a season. The union is the same one the
+    # resolver and the settler use.
+    log_leagues = _CHART_LOG_LEAGUES.get(league, (league,))
+    league_placeholders = ",".join("?" for _ in log_leagues)
 
     # stat_key is either a string (single JSON field) or a list (compound: sum fields)
     if isinstance(stat_key, list):
@@ -175,20 +188,20 @@ def prop_history(player_id: int = Query(...),
                 f"""SELECT game_date, opponent, home_away,
                            {val_expr} AS val
                     FROM player_game_logs
-                    WHERE player_id=? AND league=?
+                    WHERE player_id=? AND league IN ({league_placeholders})
                       AND {where_clause}
                     ORDER BY game_date DESC LIMIT 100""",
-                (player_id, league)
+                (player_id, *log_leagues)
             ).fetchall()
         else:
             rows = con.execute(
                 f"""SELECT game_date, opponent, home_away,
                            json_extract(stats, ?) AS val
                     FROM player_game_logs
-                    WHERE player_id=? AND league=?
+                    WHERE player_id=? AND league IN ({league_placeholders})
                       AND json_extract(stats, ?) IS NOT NULL
                     ORDER BY game_date DESC LIMIT 100""",
-                (stat_path, player_id, league, stat_path)
+                (stat_path, player_id, *log_leagues, stat_path)
             ).fetchall()
 
     if not rows:
