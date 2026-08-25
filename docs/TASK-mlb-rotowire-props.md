@@ -209,3 +209,91 @@ Anything else, say why first.
 - **Say plainly in the results section that these two days are RotoWire-sourced** while the
   days either side are Bovada. That is a visible difference in the product and it should be
   written down, not discovered later.
+
+---
+
+# ADDENDUM, 2026-08-25: Leagues Cup, same file, same shape
+
+Added while you were working MLB. It belongs here because the fix lives in the same
+`LEAGUES` map and has the same shape, so do it in the same worktree and branch.
+
+## 1. The correction that makes this possible
+
+An earlier claim of mine, which reached `DESIGN-sport-first-navigation.md` and the roadmap,
+said **"RotoWire publishes soccer as one bucket, zero MLS."** That was measured on the
+2026-08-24 archive alone, which was a light day, and written down as a property of the
+publisher. **It is wrong.** Scanning all seven archived days:
+
+```
+08-19   42 clubs   MLS: 26 clubs                 LigaMX: -
+08-21   54 clubs   MLS: 10 clubs                 LigaMX: Tigres UANL, Santos Laguna
+08-22   71 clubs   MLS: 16 clubs                 LigaMX: Santos Laguna
+08-23   39 clubs   MLS: New England Revolution   LigaMX: Club Necaxa, Pumas UNAM
+08-24   12 clubs   MLS: -                        LigaMX: -
+```
+
+Liga MX clubs quoted on the same days as MLS clubs **is** Leagues Cup. Across the archive
+RotoWire has quoted América, Atlante, Juárez, Pumas UNAM, Santos Laguna and Tigres UANL.
+
+**So the props we want for Leagues Cup, in the seven markets that matter, are already
+landing in our archive every day and we discard them.**
+
+## 2. Why we hold zero Leagues Cup props
+
+`LEAGUES["mls"]` is `kind: "club"` and resolves club names against MLS. A Leagues Cup fixture
+is MLS versus Liga MX, so one side never resolves, the fixture is counted `unknown_team`, and
+the whole thing is dropped. That is precisely the failure the v0.8.7 changelog records:
+
+> Soccer is deliberately not scheduled. The MLS leg failed loud on its first run: a non-empty
+> board produced zero props because 236 rows sit under the soccer label without being MLS
+> fixtures.
+
+Those 236 rows are the European fixtures **and** the Leagues Cup ones. **The ingest is
+refusing correctly.** It simply has no `lcup` league to file them under.
+
+## 3. Build
+
+Add an **`lcup`** entry to `LEAGUES` whose club vocabulary is **MLS plus Liga MX**, so a
+fixture with one club from each resolves and files under `lcup`.
+
+**Filing Leagues Cup under `mls` is a known defect, not a shortcut.**
+`backend/bovada_scraper/config.py` already states why, and the Bovada parser already gets
+this right at `parsers.py:218`:
+
+> If either is a foreign club (AME/GDL/PUE/TOL... Liga MX in a Leagues Cup fixture, NFO in a
+> friendly), the fixture is a TOURNAMENT and must file under `lcup` -- its own competition
+> key -- so the players stay resolvable against whichever league actually rosters them.
+> Filing Leagues Cup under `mls` is the shadow-player defect: it creates players nobody's MLS
+> spine can ever resolve.
+
+So the discriminator is already written down and already implemented once, for a different
+publisher. **Match that behaviour; do not invent a second rule.**
+
+Read the Liga MX club vocabulary off a published source rather than hand-typing it. Our own
+`prop_games` and `scoreboard_snapshots` already carry `lcup` fixtures with both sides'
+published names, which is the cheapest source and costs no request.
+
+Two traps, both the same shape as the MLB ones:
+
+- **A club that resolves to neither league must FAIL CLOSED**, not fall back to `mls`. The
+  soccer bucket also carries EPL, Serie A, La Liga and Segunda, and those must keep being
+  refused and reported, exactly as they are today.
+- **Do not widen the `mls` vocabulary to include Liga MX.** That would make Leagues Cup
+  fixtures resolve as MLS and reintroduce the shadow-player defect the comment above
+  describes. `lcup` needs its own entry.
+
+## 4. Scope
+
+Same locks as the MLB task. Same file list, plus whatever `lcup` needs in
+`backend/test_ingest_rotowire_props.py`. **Still not scheduling anything**, so no changes to
+`run_props_ingest.py` and no host config.
+
+## 5. Done means
+
+- A regression test proving an **MLS vs Liga MX fixture files under `lcup`**, and that a
+  European fixture in the same payload is still refused and reported.
+- A regression test proving an MLS vs MLS fixture still files under `mls`.
+- A backfill from the archive days above, showing Leagues Cup props that we can currently
+  see in the payload and cannot reach in the product.
+- Say plainly how many Leagues Cup props exist per archive day, so the coverage claim is a
+  measured number rather than "it works now".
