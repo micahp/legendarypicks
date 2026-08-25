@@ -29,6 +29,33 @@ describe('Props league selector', () => {
       global.fetch = originalFetch
     }
   })
+
+  it('gives the slate heading the same name as the pill', () => {
+    // Fixing the pill alone left the board rendering a "Leagues Cup" pill directly
+    // above an "LCUP" heading over the same two games (verified in a browser against
+    // the 08-26 fixtures). The heading read `leagueKey.toUpperCase()` rather than the
+    // label map, so one competition wore two names on one screen.
+    const originalFetch = global.fetch
+    global.fetch = jest.fn(() => Promise.resolve({
+      ok: true,
+      json: () => Promise.resolve([{
+        game_id: 1494, home: 'Toluca', away: 'Austin FC', date: '2026-08-26',
+        start_time: '2026-08-27T00:30:00Z', league: 'lcup', prop_count: 8, players: [],
+      }]),
+    })) as any
+    try {
+      render(React.createElement(PropsPage))
+      return waitFor(() => {
+        const section = document.querySelector('[data-slate-league="lcup"]')
+        expect(section).not.toBeNull()
+        const heading = section!.querySelector('h3')!.textContent
+        expect(heading).toBe('Leagues Cup')
+        expect(heading).not.toBe('LCUP')
+      })
+    } finally {
+      global.fetch = originalFetch
+    }
+  })
 })
 
 describe('Props slate grouping', () => {

@@ -100,6 +100,29 @@ class LeagueFilterIsTheCompetition(unittest.TestCase):
         if advertised is not None:
             self.assertEqual(advertised, 2)
 
+    def test_the_expanded_slate_labels_the_game_with_the_competition(self):
+        """The fourth site of this shape, and the only one not in a WHERE clause.
+
+        The expanded slate SELECTed `pl.league` and put it on the GAME object, so
+        the same endpoint answered `lcup` under `summary=1` (which reads
+        `pg.league`) and `mls` for the same game when expanded, flipping to
+        `ligamx` with whichever athlete happened to sort first. No filter test
+        could reach it: the rows returned were already the right rows, it was the
+        label on them that was wrong.
+        """
+        summary = props.props_slate(league="lcup", date=None, summary=1, game_id=None)
+        summary_games = summary["games"] if isinstance(summary, dict) else summary
+        self.assertEqual(summary_games[0]["league"], "lcup")
+
+        for game_id in (None, 10):
+            slate = props.props_slate(league=None if game_id else "lcup",
+                                      date=None, summary=0, game_id=game_id)
+            games = slate["games"] if isinstance(slate, dict) else slate
+            game = next(g for g in games if g["game_id"] == 10)
+            self.assertEqual(
+                game["league"], "lcup",
+                "the expanded slate labelled the competition with a player's spine")
+
     def test_stats_counts_the_competition_not_the_spine(self):
         stats = props.prop_stats(market=None, league="lcup", window=365)
         self.assertEqual(sum(s["total"] for s in stats), 2)

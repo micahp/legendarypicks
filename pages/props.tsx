@@ -38,6 +38,11 @@ export const LEAGUES: League[] = ['All', 'ufc', 'mls', 'nba', 'nfl', 'nhl', 'mlb
 // A pill reads the league key uppercased, which is right for NBA and wrong for
 // LCUP. `pages/scores.tsx` already publishes the label as "Leagues Cup", so use
 // the same words rather than a second name for one competition.
+//
+// The slate's day-group heading reads from this same map for the same reason.
+// It did not, and the board rendered a "Leagues Cup" pill above an "LCUP"
+// heading over the same two games: fixing the pill alone had left one
+// competition wearing two names on one screen.
 const LEAGUE_LABELS: Partial<Record<League, string>> = { lcup: 'Leagues Cup' }
 
 function Skeleton({ lines = 4 }: { lines?: number }) {
@@ -229,7 +234,7 @@ function SlateTab({ league }: { league: League }) {
                 <section key={leagueKey} data-slate-league={leagueKey} className="space-y-4">
                   <div className="flex min-w-0 items-center gap-2">
                     <h3 className="text-base font-extrabold uppercase tracking-wide text-zinc-100">
-                      {leagueKey.toUpperCase()}
+                      {LEAGUE_LABELS[leagueKey as League] ?? leagueKey.toUpperCase()}
                     </h3>
                     <span className="truncate text-xs tabular-nums text-zinc-600">
                       {games.length} game{games.length === 1 ? '' : 's'} · {propCount} props
