@@ -429,8 +429,17 @@ def test_a_leagues_cup_fixture_grades_off_the_roster_surface(monkeypatch):
 
     assert result["errors"] == 0
     assert result["settled"] == 4
-    # tackles and passes attempted: priced, unpublished, refused.
-    assert result["unmappable"] == 2
+    # CORRECTED 2026-08-25: tackles and passes attempted were asserted
+    # UNMAPPABLE here on the measurement "ESPN publishes neither". That measured
+    # the SUMMARY; the CORE api publishes both, and `ingest_soccer_logs --deep`
+    # stores them. They are now KNOWN markets whose stored row this fixture does
+    # not have, so they are PENDING -- retryable once the deep pass has run.
+    #
+    # Pending, never zero: 0 tackles is a real result a player can have, so
+    # grading one because we did not look would settle a bet on a number nobody
+    # measured.
+    assert result["unmappable"] == 0
+    assert result["pending"] == 2
 
     rows = {row["prop_id"]: (row["actual_value"], row["hit"])
             for row in con.execute("SELECT * FROM prop_results")}
@@ -443,3 +452,25 @@ def test_a_leagues_cup_fixture_grades_off_the_roster_surface(monkeypatch):
     # Refused, not graded as a loss. A zero here would be a false settlement.
     assert 704 not in rows
     assert 705 not in rows
+
+
+def test_a_deep_market_settles_from_the_stored_core_row(monkeypatch):
+    """tackles comes from player_game_logs, written by --deep, not the summary."""
+    con = _lcup_connection()
+    con.execute(
+        "INSERT INTO player_game_logs(player_id, league, game_id, stats) "
+        "VALUES(?,?,?,?)",
+        (70, "lcup", "401909652",
+         json.dumps({"tackles": 3, "passes_attempted": 61})))
+    con.commit()
+    summary = _lcup_summary()
+    monkeypatch.setattr(espn_client, "summary", lambda league, event_id: summary)
+
+    result = settlement.settle_game(con, 7)
+
+    rows = {row["prop_id"]: (row["actual_value"], row["hit"])
+            for row in con.execute("SELECT * FROM prop_results")}
+    # 704 tackles o0.5 -> 3 tackles, hit. 705 passes attempted o10.5 -> 61, hit.
+    assert rows[704] == (3.0, 1)
+    assert rows[705] == (61.0, 1)
+    assert result["unmappable"] == 0

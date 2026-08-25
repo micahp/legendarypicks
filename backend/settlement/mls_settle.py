@@ -45,6 +45,23 @@ _MLS_ROSTER_SUM_MARKETS = {
 # Markets that no box score can answer, because they are about ORDER.
 _MLS_EVENT_MARKETS = {"first_goal_scorer"}
 
+# Markets the SUMMARY does not carry but the CORE api does, stored by
+# `ingest_soccer_logs --deep` into player_game_logs. Settled from that stored
+# row rather than a second live fetch: the deep pass costs about one request per
+# athlete, and settlement must not pay that per prop.
+#
+# A prop whose match has no deep row stays PENDING, never zero. The distinction
+# matters: 0 tackles is a real result a player can have, so writing 0 because we
+# did not look would grade a bet on a number nobody measured.
+_MLS_DEEP_LOG_MARKETS = {
+    "tackles": "tackles",
+    "clearances": "clearances",
+    "crosses": "crosses",
+    "passes_attempted": "passes_attempted",
+    "passes": "passes",
+    "shots_assisted": "shots_assisted",
+}
+
 
 def _soccer_name(text: str) -> str:
     """Accent-fold an exact soccer roster name without using substring matching."""
@@ -77,6 +94,11 @@ def _settle_mls_props(con: sqlite3.Connection, props: list, summary: dict) -> di
         if name_key:
             by_name.setdefault(name_key, []).append(row)
 
+    # The stored deep row is keyed by the ESPN event id, which the summary
+    # publishes on its own header rather than being passed in.
+    event_id = (((summary.get("header") or {}).get("competitions") or [{}])[0]
+                .get("id") or "")
+
     settled = 0
     void = 0
     unmappable = 0
@@ -92,7 +114,9 @@ def _settle_mls_props(con: sqlite3.Connection, props: list, summary: dict) -> di
         canonical = MARKET_ALIASES.get(canonical, canonical)
         stat_name = _MLS_ROSTER_MARKETS.get(canonical)
         sum_stats = _MLS_ROSTER_SUM_MARKETS.get(canonical)
-        if not stat_name and not sum_stats and canonical not in _MLS_EVENT_MARKETS:
+        deep_key = _MLS_DEEP_LOG_MARKETS.get(canonical)
+        if (not stat_name and not sum_stats and not deep_key
+                and canonical not in _MLS_EVENT_MARKETS):
             unmappable += 1
             continue
 
@@ -110,7 +134,18 @@ def _settle_mls_props(con: sqlite3.Connection, props: list, summary: dict) -> di
         stats_by_name = {stat.get("name"): stat.get("value")
                          for stat in matches[0].get("stats") or []}
 
-        if canonical in _MLS_EVENT_MARKETS:
+        if deep_key:
+            stored = con.execute(
+                "SELECT json_extract(stats, ?) FROM player_game_logs "
+                "WHERE player_id=? AND game_id=? "
+                "AND json_extract(stats, ?) IS NOT NULL LIMIT 1",
+                (f"$.{deep_key}", prop["player_id"], str(event_id),
+                 f"$.{deep_key}")).fetchone()
+            if not stored or stored[0] is None:
+                pending += 1
+                continue
+            actual_value = stored[0]
+        elif canonical in _MLS_EVENT_MARKETS:
             if not goal_events_published:
                 pending += 1
                 continue
