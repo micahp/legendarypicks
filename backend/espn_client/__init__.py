@@ -39,7 +39,7 @@ from .soccer import (
     _wc_round_from_event, _wc_competitor, wc_knockout_standings,
     wc_is_knockout, match_events, boxscore, roster, game_result,
     _parse_record, _season_phase, mls_conference_standings,
-    ncaaf_conference_standings,
+    ncaaf_conference_standings, soccer_athlete_form,
 )
 
 if __name__ == "__main__":
