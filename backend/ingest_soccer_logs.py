@@ -358,7 +358,7 @@ def _published_types(league: str, season: int) -> Tuple[str, List[dict]]:
     return display_name, types
 
 
-def _game_type_for_type(type_doc: dict) -> str:
+def _game_type_for_type(type_doc: dict, league: Optional[str] = None) -> str:
     """Our phase for one published soccer season type, from its own name.
 
     The vocabulary is game_types.py's ``REG | POST | ALLSTAR``. Mapping is by
@@ -366,11 +366,19 @@ def _game_type_for_type(type_doc: dict) -> str:
     measured basketball/baseball league, and DATA-COVERAGE-CONTRACT §6 forbids
     hardcoding ids. MLS files its All-Star Game as its own type (id 2), so
     every remaining non-regular-season type is a knockout phase — POST.
+
+    The regular-season phase is named by the league's own registry entry, not by
+    the literal string "regular season". Leagues Cup calls its group stage
+    "League Phase", so matching the literal would have filed all five of its
+    phases as knockout rounds -- roughly 50 group matches misread as POST.
     """
     name = str(type_doc.get("name") or "").lower()
     if "all-star" in name or "allstar" in name:
         return ALLSTAR
-    if "regular season" in name:
+    regular = str(
+        (ESPN_LEAGUES.get(league) or {}).get("regular_type_name") or "regular season"
+    ).lower()
+    if regular and regular in name:
         return REG
     return POST
 
@@ -416,18 +424,33 @@ def _verify_season(season: int, type_doc: dict) -> None:
         )
 
 
+# A cross-border tournament is its own competition key, but its athletes are
+# owned by the domestic spines. `players WHERE league='lcup'` has always held
+# ZERO rows, so every Leagues Cup athlete resolved against an empty roster:
+# 1,640 logs from 52 completed fixtures, 0 resolved. Same defect the props
+# endpoint fixed with `_roster_league_for_ingest`, at a third site.
+#
+# The union is safe here because resolution is team-scoped and each Leagues Cup
+# club code belongs to exactly one spine; where a code names two clubs the
+# existing uniqueness check already returns None rather than guessing.
+ROSTER_LEAGUES = {"lcup": ("mls", "ligamx")}
+
+
 class SoccerPlayerResolver:
     """Resolve ESPN names to existing players without fabricating rows.
 
-    The same tiers as WCPlayerResolver, scoped to the league being ingested
-    (``players WHERE league=?``) so a shared soccer ingest never resolves an
-    MLS athlete against a WC roster or vice versa.
+    The same tiers as WCPlayerResolver, scoped to the spine(s) that own the
+    league's athletes so a shared soccer ingest never resolves an MLS athlete
+    against a WC roster or vice versa.
     """
 
     def __init__(self, con: sqlite3.Connection, league: str, allowed_player_ids=None):
+        spines = ROSTER_LEAGUES.get(league, (league,))
+        placeholders = ",".join("?" for _ in spines)
         try:
             self.rows = [dict(row) for row in con.execute(
-                "SELECT id, name, team FROM players WHERE league=?", (league,)
+                "SELECT id, name, team FROM players WHERE league IN ({})".format(
+                    placeholders), tuple(spines)
             )]
         except sqlite3.OperationalError:
             # No players table (e.g. a bare dry-run DB): resolve nothing,
@@ -577,7 +600,7 @@ def ingest(league: str, season: int, dry_run: bool = False,
             print(f"  [{type_id}] {name}: 0 events — published empty, nothing to ingest")
             continue
         _verify_season(season, type_doc)
-        game_type = _game_type_for_type(type_doc)
+        game_type = _game_type_for_type(type_doc, league)
         type_logs = 0
         type_games = 0
         type_resolved = 0

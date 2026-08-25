@@ -12,5 +12,10 @@ NCAAF FBS is published group id '80' (146 teams, 888 of 911 events in 2025).
 ESPN_LEAGUES = {
     'mls': {'path': 'soccer/leagues/usa.1', 'scope_group': None, 'regular_type_name': 'Regular Season', 'display_name': 'MLS'},
     'ligamx': {'path': 'soccer/leagues/mex.1', 'scope_group': None, 'regular_type_name': 'Regular Season', 'display_name': 'Liga MX'},
+    # Leagues Cup publishes five phases and none of them is called a regular season:
+    # 'League Phase' is the group stage and the other four are knockout rounds. The
+    # name is what `regular_type_name` is for -- see ingest_soccer_logs._game_type_for_type,
+    # which reads this rather than matching the literal string 'regular season'.
+    'lcup': {'path': 'soccer/leagues/concacaf.leagues.cup', 'scope_group': None, 'regular_type_name': 'League Phase', 'display_name': 'Leagues Cup'},
     'ncaaf': {'path': 'football/leagues/college-football', 'scope_group': '80', 'regular_type_name': 'Regular Season', 'display_name': 'NCAAF'},
 }

@@ -115,6 +115,34 @@ moment. In order:
 Never record "ESPN doesn't publish X" after a 403. Record the host, the parameters and the
 date — a gap is a statement about which endpoint you asked, not a property of the world.
 
+## 5b. A dry run spends the real budget
+
+`--dry-run` means "write nothing", **not** "ask nothing". It issues every request the real
+run issues.
+
+2026-08-25, ingesting Leagues Cup player logs: the dry run spent 54 summary requests and
+reported `0 matches already held`, so nothing was cached. The real run launched immediately
+after had to re-fetch all 54, tripped the wall partway, and then **died on its very first
+call** on the next attempt:
+
+```
+seasons/2026 failed after 4 attempts: HTTP Error 403: Forbidden
+```
+
+Both `sports.core.api` and `site.web.api` were refusing. Nothing was written, and the two
+passes together cost more than double what one pass would have. Earlier the same evening,
+two phases that had genuinely published `0 events` came back as `403` instead — the same
+question, two different answers, and only one of them is a fact. **A refusal read as an
+empty collection is how "the publisher has none" gets written down.**
+
+So:
+
+- Budget the dry run and the real run as **one** spend, because they are.
+- Do not chain them. Either run once for real, or leave a cooling gap and probe with a
+  single request before the second pass.
+- When a job's own output flips from "published empty" to 403, stop and re-ask later. Do
+  not record the empty.
+
 ## 6. Before you call it done
 
 - State the request count the job will issue, per host, **before running it**.
