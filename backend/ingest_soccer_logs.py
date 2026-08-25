@@ -363,6 +363,34 @@ def _core_event_stats(league: str, game_id: str) -> tuple:
     return out, spent
 
 
+_BATCH_DECLARED = []
+
+
+def _declare_batch():
+    """Tell the shared ESPN client this process is a batch job, once.
+
+    espn_client defaults to on_exhausted="refuse" because the request handlers
+    import it directly -- a page load must never sit through a cooldown. This
+    ingest enters through the same module and is the opposite kind of caller,
+    and it never said so: on 2026-08-25 a Liga MX backfill spent the per-host
+    count, then every remaining fixture failed with "refusing rather than
+    pausing 60s, because this caller has someone waiting". Nobody was waiting.
+    153 fixtures, 0 rows written.
+
+    The docstring below already called this a batch job and set a retry ladder
+    for it; the one knob that decides refuse-vs-wait was left at the handler's
+    value. config.set_on_exhausted documents exactly this: "a batch job that
+    enters through the same module (every ingest does) says so explicitly".
+    """
+    if _BATCH_DECLARED:
+        return
+    try:
+        espn.set_on_exhausted("sleep")
+    except Exception:  # noqa: BLE001 - an older client without the knob still runs
+        pass
+    _BATCH_DECLARED.append(True)
+
+
 def _summary_retry(league: str, game_id: str, attempts: int = 4) -> dict:
     """espn.summary with retry/backoff.
 
@@ -372,6 +400,7 @@ def _summary_retry(league: str, game_id: str, attempts: int = 4) -> dict:
     skipping the game. Measured 2026-08-06: the wall tripped mid-run and the
     ingest burned the rest of the season printing 403s per event.
     """
+    _declare_batch()
     last = None
     for i in range(attempts):
         try:
