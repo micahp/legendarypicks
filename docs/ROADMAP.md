@@ -378,10 +378,21 @@ outlives its code.
       identified as candidate evidence, not used to close managed defects: prod still has
       746 unreachable tennis props, zero graded tennis/World Cup/NFL props, and 138/214 UFC
       graded while managed DEV remains 0/663.
-- [ ] `B/position-content` for **mlb** and **nba**: what must a catcher's or a guard's log record?
+- [x] `B/position-content` for **MLB and NBA.** DONE 2026-08-24. The manifest declares
+      publisher-shaped classes rather than inventing position-specific stats: every MLB
+      batter position (including catcher) requires `PA/H/R/RBI/HR`, pitchers require
+      `batters_faced/hits_allowed/outs`, and every NBA position (including guards) requires
+      `PTS/REB/AST/MIN/FGM`. Copied-DB audit: all 20 position checks pass, normally at 100%;
+      the lowest observation is MLB TWP batting fields at 126/129 (98%) and NBA PG minutes
+      at 76/77 (99%), both above the declared 80% floor. The complete MLB/NBA audit is
+      37/37 PASS.
 - [ ] `DATA-COVERAGE-CONTRACT.md` §7 rewrite: what each of the 8 checks needs from a new league.
-- [ ] `ufc` / `wc` UNVERIFIED x6, likely "no leaderboard surface to serve" rather than a missing
-      fetcher. Confirm which.
+- [x] `ufc` / `wc` UNVERIFIED classification. DONE 2026-08-24. The old “x6” count is stale:
+      the copied audit now gives each league three PASS results (game-log content, identity
+      crosswalk, published identity) and exactly one UNVERIFIED result. That remaining D check
+      is intentional absence, not a missing fetcher: neither league is in
+      `LEADERBOARD_LEAGUES`; UFC serves rankings and World Cup serves standings/historical
+      match logs, while both explicitly declare `stat_types: {}`.
 
 ---
 
