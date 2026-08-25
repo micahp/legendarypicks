@@ -147,7 +147,12 @@ something specific.
 ### The list
 
 - [ ] **Give the draft board its own route.** It is reachable only as a tab named `camp`
-      inside the league hub. A drafter cannot link a friend to it.
+      inside the league hub. A drafter cannot link a friend to it. **Candidate 2026-08-24:**
+      `/draft-board` is a stable standalone destination, wired through the exact same
+      `NflDraftBoardSurface` hook/component owner as the embedded NFL hub board. The hub links
+      to the full board, and the full board links back to NFL and into `/mock-draft`; notes,
+      filters, search, pagination and player overlays therefore cannot drift by route.
+      Unchecked until browser/release gates pass and it ships.
 - [ ] **Decide what a drafter still cannot answer on the board.** The one piece of genuine
       product thinking left in the window, and it needs the user, not us. The board has eight
       sort dimensions; nobody has asked her which question it fails to answer.

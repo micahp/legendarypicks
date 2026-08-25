@@ -9,7 +9,7 @@ import PredictTab from '../../components/Leagues/PredictTab'
 import NflCampHero from '../../components/Leagues/NflCampHero'
 import NflOffseasonMovers from '../../components/Leagues/NflOffseasonMovers'
 import NflMockDraftCard from '../../components/Leagues/NflMockDraftCard'
-import NflDraftRoom from '../../components/Leagues/NflDraftRoom'
+import NflDraftBoardSurface from '../../components/Leagues/NflDraftBoardSurface'
 import NflScheduleTab from '../../components/Leagues/NflScheduleTab'
 import { useLeagueRouteState } from '../../components/Leagues/hooks/useLeagueRouteState'
 import { useScheduleData } from '../../components/Leagues/hooks/useScheduleData'
@@ -22,7 +22,6 @@ import { useUfcRankingsData } from '../../components/Leagues/hooks/useUfcRanking
 import { useUfcPredictData } from '../../components/Leagues/hooks/useUfcPredictData'
 import { useNflSeasonContext } from '../../components/Leagues/hooks/useNflSeasonContext'
 import { useNflTransactions } from '../../components/Leagues/hooks/useNflTransactions'
-import { useNflDraftBoard } from '../../components/Leagues/hooks/useNflDraftBoard'
 import {
   LEAGUE_EMOJIS,
   LEAGUE_NAMES,
@@ -107,7 +106,6 @@ export default function LeagueHubPage() {
 
   const seasonContext = useNflSeasonContext(isNFL && route.activeTab === 'camp')
   const transactions = useNflTransactions(isNFL && route.activeTab === 'camp')
-  const draftBoard = useNflDraftBoard(isNFL && route.activeTab === 'camp')
   // Resolve prev/next game dates only for date-based leagues.
   const nav = useScheduleNavigation(weekLeague || route.activeTab !== 'schedule', route.league, route.scheduleDate)
 
@@ -180,25 +178,7 @@ export default function LeagueHubPage() {
               loading={transactions.loading}
               error={transactions.error}
             />
-            <NflDraftRoom
-              data={draftBoard.data}
-              loading={draftBoard.loading}
-              error={draftBoard.error}
-              position={draftBoard.position}
-              sort={draftBoard.sort}
-              offset={draftBoard.offset}
-              query={draftBoard.query}
-              notes={draftBoard.notes}
-              syncError={draftBoard.syncError}
-              onSelectPosition={draftBoard.selectPosition}
-              onSelectSort={draftBoard.selectSort}
-              onSetQuery={draftBoard.setQuery}
-              onClearQuery={draftBoard.clearQuery}
-              onSetOffset={draftBoard.setOffset}
-              onSetRank={draftBoard.setRank}
-              onToggleWatch={draftBoard.toggleWatch}
-              onToggleFade={draftBoard.toggleFade}
-            />
+            <NflDraftBoardSurface />
           </div>
         )}
 
