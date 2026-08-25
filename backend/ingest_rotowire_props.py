@@ -140,13 +140,25 @@ NFL_GAME_MARKETS = {
 }
 SOCCER_GAME_MARKETS = {
     147: ("Chances Created", "chances_created"),
+    # 148, 156 and 158 were dropped silently until 2026-08-25. The publisher's own
+    # catalogue carries twelve Soccer Game markets across the seven archived days and
+    # the live payload; we mapped eight, so Tackles, Passes and Fouls Committed were
+    # counted as UNMAPPED and discarded on every run.
+    148: ("Fouls Committed", "fouls_committed"),
     151: ("Goals Allowed", "goals_allowed"),
     152: ("Shots on Target", "shots_on_target"),
     154: ("Saves", "saves"),
     155: ("Shots", "shots"),
+    # 156 is the completed-pass line and 161 is the attempted one. Two markets, two
+    # keys: a pass that did not find a team-mate settles one and not the other.
+    156: ("Passes", "passes"),
     157: ("Clearances", "clearances"),
+    158: ("Tackles", "tackles"),
     159: ("Crosses", "crosses"),
     161: ("Passes Attempted", "passes_attempted"),
+    # 160 Fantasy Score stays absent on purpose, as the MLB ids below do: it is a
+    # composite of a scoring formula this publisher does not publish, so nothing
+    # downstream could settle it. It is reported as UNMAPPED rather than ingested.
 }
 MLB_GAME_MARKETS = {
     # Numeric count lines. These deliberately do not use the `_any` markets:

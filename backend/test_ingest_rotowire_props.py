@@ -783,5 +783,73 @@ class SoccerIsFiveCompetitionsUnderOneLabel(unittest.TestCase):
                          "not_in_spine")
 
 
+class TheSoccerCatalogueIsThePublishersNotOurs(unittest.TestCase):
+    """The gap that hid until 2026-08-25: we mapped eight Soccer Game markets while the
+    relay published twelve, so Tackles, Passes and Fouls Committed were counted as
+    UNMAPPED and discarded on every run. Nothing failed, because no test had ever asked
+    the publisher what its catalogue contains.
+
+    These two assertions are deliberately different in kind. The first pins what we claim
+    to map, so weakening it shows up in a diff. The second reads the archived payloads --
+    real observations, not a fixture we wrote -- and fails when the publisher ships an id
+    we do not carry.
+    """
+
+    EXPECTED = {
+        147: "chances_created",
+        148: "fouls_committed",
+        151: "goals_allowed",
+        152: "shots_on_target",
+        154: "saves",
+        155: "shots",
+        156: "passes",
+        157: "clearances",
+        158: "tackles",
+        159: "crosses",
+        161: "passes_attempted",
+    }
+    # 160 Fantasy Score is a composite of a scoring formula the publisher does not send.
+    # It is omitted on purpose and must keep being reported rather than quietly ingested.
+    DELIBERATELY_ABSENT = {160}
+
+    def test_the_mapping_is_what_we_say_it_is(self):
+        self.assertEqual(
+            {mid: key for mid, (_, key) in rw.SOCCER_GAME_MARKETS.items()},
+            self.EXPECTED)
+
+    def test_every_market_the_publisher_shipped_is_mapped_or_named_absent(self):
+        import glob
+        import gzip
+
+        pattern = os.path.join(rw.archive.ARCHIVE_DIR, "rotowire-*.json*")
+        payloads = sorted(glob.glob(pattern))
+        # A gate with no evidence behind it is a FAIL, not a skip: an empty archive
+        # directory would otherwise let this pass while checking nothing at all.
+        self.assertTrue(payloads, "no archived payloads under {}".format(pattern))
+
+        published = {}
+        for path in payloads:
+            opener = gzip.open if path.endswith(".gz") else open
+            with opener(path, "rt") as handle:
+                payload = json.load(handle)
+            for market in payload.get("markets", []):
+                if market.get("sport") == "Soccer" and market.get("category") == "Game":
+                    published[market["marketID"]] = market.get("marketName")
+
+        unmapped = {mid: name for mid, name in published.items()
+                    if mid not in rw.SOCCER_GAME_MARKETS
+                    and mid not in self.DELIBERATELY_ABSENT}
+        self.assertEqual(unmapped, {},
+                         "the relay publishes Soccer markets we would discard")
+
+        # The id is only half the contract. `parse` refuses a market whose name has
+        # changed under a known id, so a stale name here would silently take nothing.
+        for mid, (expected_name, _) in rw.SOCCER_GAME_MARKETS.items():
+            if mid in published:
+                self.assertEqual(published[mid], expected_name,
+                                 "market {} is published as {!r}".format(
+                                     mid, published[mid]))
+
+
 if __name__ == "__main__":
     unittest.main()
