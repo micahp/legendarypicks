@@ -89,6 +89,16 @@ CREATE TABLE IF NOT EXISTS scoreboard_refresh(
   source     TEXT,
   PRIMARY KEY(league, game_date)
 );
+CREATE TABLE IF NOT EXISTS tennis_draw_snapshots(
+  league        TEXT PRIMARY KEY,
+  tournament_id TEXT NOT NULL,
+  event_name    TEXT NOT NULL,
+  bracket_url   TEXT,
+  payload       TEXT NOT NULL,
+  match_count   INTEGER NOT NULL,
+  fetched_at    TEXT NOT NULL,
+  source        TEXT
+);
 """
 
 
@@ -281,6 +291,103 @@ def read(league, game_date, con=None):
         print(f"[scoreboard_store] read failed league={league} date={game_date}: "
               f"{type(exc).__name__}: {exc}")
         return None
+    finally:
+        if own:
+            con.close()
+
+
+def save_tennis_draws(league, draws, source="espn", con=None):
+    """Replace one tour's current major draw after validating it in full.
+
+    Empty and ambiguous publisher responses leave the last good snapshot alone.
+    The ingest treats those conditions as errors; this store never turns them
+    into an apparently valid empty bracket.
+    """
+    league = str(league or "").lower()
+    if league not in ("atp", "wta"):
+        raise ValueError("tennis draw league must be atp or wta")
+    draws = list(draws or [])
+    if not draws:
+        return 0
+    if len(draws) != 1:
+        raise ValueError(f"expected one current {league} draw, got {len(draws)}")
+    draw = draws[0]
+    matches = list(draw.get("matches") or [])
+    ids = [str(match.get("game_id") or "") for match in matches]
+    if (not draw.get("tournament_id") or not draw.get("event_name") or not matches
+            or int(draw.get("match_count") or 0) != len(matches)
+            or any(not game_id for game_id in ids) or len(set(ids)) != len(ids)
+            or any(not match.get("round") for match in matches)):
+        raise ValueError(f"invalid {league} draw snapshot")
+
+    own = con is None
+    con = con or _db()
+    try:
+        init(con)
+        fetched_at = _iso(_now())
+        con.execute(
+            "INSERT INTO tennis_draw_snapshots"
+            " (league, tournament_id, event_name, bracket_url, payload,"
+            "  match_count, fetched_at, source) VALUES (?,?,?,?,?,?,?,?)"
+            " ON CONFLICT(league) DO UPDATE SET"
+            " tournament_id=excluded.tournament_id, event_name=excluded.event_name,"
+            " bracket_url=excluded.bracket_url, payload=excluded.payload,"
+            " match_count=excluded.match_count, fetched_at=excluded.fetched_at,"
+            " source=excluded.source",
+            (league, str(draw["tournament_id"]), str(draw["event_name"]),
+             draw.get("bracket_url"), json.dumps(draw), len(matches),
+             fetched_at, source),
+        )
+        if own:
+            con.commit()
+        return len(matches)
+    finally:
+        if own:
+            con.close()
+
+
+def read_tennis_draws(tour=None, con=None):
+    """Return persisted draw snapshots for both tours or one requested tour."""
+    if tour is not None:
+        tour = str(tour).lower()
+        if tour not in ("atp", "wta"):
+            raise ValueError("tour must be atp or wta")
+    own = con is None
+    con = con or _db()
+    try:
+        init(con)
+        sql = ("SELECT league, payload, fetched_at, source"
+               " FROM tennis_draw_snapshots")
+        params = ()
+        if tour:
+            sql += " WHERE league=?"
+            params = (tour,)
+        sql += " ORDER BY league"
+        rows = con.execute(sql, params).fetchall()
+        result = []
+        now = _now()
+        for row in rows:
+            try:
+                draw = json.loads(row["payload"])
+            except (TypeError, ValueError):
+                continue
+            try:
+                moment = dt.datetime.fromisoformat(row["fetched_at"])
+                if moment.tzinfo is None:
+                    moment = moment.replace(tzinfo=dt.timezone.utc)
+                age = int((now - moment).total_seconds())
+            except (TypeError, ValueError):
+                age = None
+            draw.update({
+                "fetched_at": row["fetched_at"],
+                "age_seconds": age,
+                "source": row["source"],
+            })
+            result.append(draw)
+        return result
+    except sqlite3.Error as exc:
+        print(f"[scoreboard_store] read_tennis_draws failed: {type(exc).__name__}: {exc}")
+        return []
     finally:
         if own:
             con.close()

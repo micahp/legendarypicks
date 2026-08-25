@@ -300,7 +300,24 @@ def _refresh(league, date, verbose=True):
     except Exception as exc:
         return 0, f"{type(exc).__name__}: {exc}"
 
-    written = scoreboard_store.save(league, date, games, source="espn")
+    # Free: this is the same document `games()` just fetched, served from the
+    # client cache. Tennis draw publication must validate before the daily slate
+    # write so a malformed publisher shape cannot silently look successful.
+    try:
+        payload = espn.scoreboard_raw(league, date)
+        draws = espn.tennis_draws_from_payload(league, payload) \
+            if league in ("atp", "wta") else []
+        if league in ("atp", "wta") and games and not draws:
+            raise ValueError(f"{league} published games without a complete major draw")
+    except Exception as exc:
+        return 0, f"{type(exc).__name__}: {exc}"
+
+    try:
+        written = scoreboard_store.save(league, date, games, source="espn")
+        if draws:
+            scoreboard_store.save_tennis_draws(league, draws, source="espn")
+    except Exception as exc:
+        return 0, f"{type(exc).__name__}: {exc}"
 
     # "Write the preview whenever we find out about the game." This job is now
     # where we find out, so the kick moved here out of the request handler --
@@ -313,10 +330,8 @@ def _refresh(league, date, verbose=True):
         except Exception as exc:
             print(f"  stories not kicked league={league}: {type(exc).__name__}: {exc}")
 
-    # Free: the calendar rode in on the fetch above and is served from the
-    # 20-second cache, so this costs no request.
+    # Free: the calendar rode in on the fetch above.
     try:
-        payload = espn.scoreboard_raw(league, date)
         if not league_activity.record_from_payload(league, payload):
             league_activity.touch(league)
     except Exception as exc:

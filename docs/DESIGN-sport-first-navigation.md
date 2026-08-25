@@ -7,9 +7,10 @@ competition?**
 Answer: **sport at the top, competition underneath, and the competition level only exists
 where we cover more than one competition in that sport.**
 
-Every number in this doc was measured on 2026-08-24 against
+The relay numbers in this doc were measured on 2026-08-24 against
 `backend/data/rotowire-archive/rotowire-2026-08-24.json.gz` (3,191 props, the full relay)
-and the frontend source. Zero publisher requests were spent.
+and the frontend source. The Draws decision was measured separately against one bounded
+ESPN scoreboard response, documented in §4.
 
 ---
 
@@ -143,10 +144,15 @@ Tennis
 ```
 
 - **Scores** is the existing per-day board, both tours interleaved, tour shown on the row.
-- **Draws** is the current major's bracket for each tour, and it is the one new build.
-  **Not started, and it depends on an unmeasured question:** whether ESPN publishes a draw we
-  can read. Measure that before speccing the tab. If the draw is not published, the tab is
-  the tournament's match list grouped by round, which the scoreboard already gives us.
+- **Draws** is the current covered major's singles bracket for each tour. Measured
+  2026-08-24 from ESPN's existing `site.web.api.espn.com/.../tennis/{tour}/scoreboard`
+  response: a tournament event publishes `groupings[].competitions[]`; each competition
+  carries `tournamentId`, a `round` id/name, competitors and future undecided slots, while
+  the event carries a `rel=bracket` link. That link names a competition type and is exposed
+  only when it matches the selected grouping (the shared event currently advertises its
+  men's link on the WTA response too). No second publisher endpoint is needed.
+  The ingest persists the whole validated grouping from the already-fetched scoreboard;
+  missing ids/rounds or duplicate matches preserve the last good draw and fail the refresh.
 - **News** is the existing feed filtered to tennis.
 
 **We cover majors, not the tour.** Challengers, 250s and 500s are not ingested. The hub says
@@ -222,7 +228,9 @@ Do not build the toggle before the ingest. An option that hides an empty board i
 
 ## 7. Open questions, in the order they block work
 
-1. **Does ESPN publish a tennis draw?** Blocks the Draws tab. One measurement.
+1. **Resolved 2026-08-24: ESPN publishes the tennis draw in the scoreboard payload.** The
+   measured fields and persistence contract are in §4; the candidate implementation uses
+   that same response, not another request path.
 2. **How is a competition recovered from a RotoWire soccer prop?** Club name is the only
    signal in the payload, so this is a name-to-competition mapping, which is exactly the
    shape that misses silently rather than raising

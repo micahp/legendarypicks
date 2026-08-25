@@ -401,8 +401,13 @@ outlives its code.
       and season stats are declared not-applicable for both tours in
       `backend/league_feature_matrix.py:61`, which is why every tennis market in
       `core_markets.py:53` charts as `None`. A Draws tab for the current major is the one new
-      build, and it is **blocked on an unmeasured question: does ESPN publish a tennis draw?**
-      Measure that before speccing it. We cover majors, not the tour; Challengers, 250s and
+      build. **Measured 2026-08-24:** ESPN's existing tennis scoreboard response publishes
+      the complete singles grouping as `groupings[].competitions[]`, including tournament id,
+      round id/name, competitors, future TBD slots, and an official bracket link. The isolated
+      candidate now validates and stores that whole draw from the already-fetched response,
+      serves it DB-first at `/api/tennis/draws`, and adds `/leagues/tennis` with Scores,
+      Draws, and News plus a Both/ATP/WTA toggle. This remains unchecked until the candidate
+      passes the browser/release gates and is actually shipped. We cover majors, not the tour; Challengers, 250s and
       500s are not ingested and the hub says so on screen rather than looking like a tour page
       with holes in it.
 - [ ] **A new league or promotion is only worth adding if we can get its props.** Named by

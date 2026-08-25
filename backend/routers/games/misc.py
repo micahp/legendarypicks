@@ -6,6 +6,7 @@ from fastapi.responses import JSONResponse
 from _core import *
 from provenance import publishers_for
 from sport_navigation import league_directory_navigation, prop_navigation
+import scoreboard_store
 from . import router
 from .contexts import _LCUP_RADIO
 
@@ -136,6 +137,21 @@ def sport_navigation():
             "props": prop_navigation(con),
             "leagues": league_directory_navigation(con),
         }
+
+
+@router.get("/api/tennis/draws")
+def tennis_draws(tour: str = "all"):
+    """Persisted major singles draws; this serving route never calls ESPN."""
+    tour = str(tour or "all").lower()
+    if tour not in ("all", "atp", "wta"):
+        raise HTTPException(400, "tour must be all, atp, or wta")
+    draws = scoreboard_store.read_tennis_draws(None if tour == "all" else tour)
+    return {
+        "available": bool(draws),
+        "source": "tennis_draw_snapshots",
+        "tours": draws,
+        "reason": None if draws else "No verified major draw has been published yet.",
+    }
 
 
 @router.get("/api/stream/{league}")

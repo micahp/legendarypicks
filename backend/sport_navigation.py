@@ -60,9 +60,10 @@ def prop_navigation(con: sqlite3.Connection) -> list[dict[str, str]]:
 def league_directory_navigation(con: sqlite3.Connection) -> list[dict[str, str]]:
     """Competition hubs vouched by the coverage registry.
 
-    Esports has its own non-ESPN registry and route, so it is the one explicit
-    local-sport row. World Cup remains score-only and is deliberately omitted.
+    Tennis and esports are roll-up hubs rather than one-competition routes, so
+    they are explicit local rows. World Cup remains score-only and is omitted.
     """
     rows = _rows(offered_leagues(con) - HIDDEN_DIRECTORY_LEAGUES)
+    rows.append({"league": "tennis", "sport": "tennis"})
     rows.append({"league": "esports", "sport": "esports"})
     return sorted(rows, key=lambda row: (row["sport"], row["league"]))

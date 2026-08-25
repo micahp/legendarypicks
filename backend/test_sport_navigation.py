@@ -38,7 +38,7 @@ def test_props_navigation_is_stable_history_not_today_only():
     ]
 
 
-def test_directory_uses_coverage_gate_and_keeps_local_esports():
+def test_directory_uses_coverage_gate_and_keeps_rollup_hubs():
     con = _db()
     con.executemany(
         "INSERT INTO team_stats_coverage VALUES(?, ?, ?)",
@@ -48,6 +48,7 @@ def test_directory_uses_coverage_gate_and_keeps_local_esports():
         {"league": "mlb", "sport": "baseball"},
         {"league": "esports", "sport": "esports"},
         {"league": "ufc", "sport": "mma"},
+        {"league": "tennis", "sport": "tennis"},
     ]
 
 

@@ -14,6 +14,7 @@ const LEAGUE_CARDS: Record<string, { desc: string; emoji: string }> = {
   ncaaf: { desc: 'College Football, FBS teams, conference standings, player game logs', emoji: '🏈' },
   ufc: { desc: 'Ultimate Fighting Championship, pound-for-pound rankings, division champions', emoji: '🥊' },
   esports: { desc: 'Esports World Cup, Club Championship, cross-title schedule and results', emoji: '🎮' },
+  tennis: { desc: 'Major tournament scores, singles draws, and ATP/WTA news', emoji: '🎾' },
   // World Cup card hidden 2026-08-04 (Micah): it stays on /scores and keeps its API
   // and ingest — it just is not a league hub. See useLeagueRouteState's `offerable`.
 }
