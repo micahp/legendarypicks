@@ -4,8 +4,8 @@
     venv/bin/python league_feature_matrix.py --db data/picks.dev.db
     venv/bin/python league_feature_matrix.py --db data/picks.db --compare data/picks.dev.db
 
-Every cell is a COUNT of the rows that back a surface, turned into a mark. That is
-the point: a hand-maintained feature matrix is a claim about the product, and the
+Every count cell is paired with the explicit season keys behind that surface. That
+is the point: a hand-maintained feature matrix is a claim about the product, and the
 claims in this repo have a habit of outliving the code
 (`docs/DATA-SPINE.md` asserted MLB carried no espn_id for a week after 783 landed).
 This one cannot drift, because it is derived on every run.
@@ -40,9 +40,9 @@ from league_offering import offered_leagues
 # means the check is computed specially below.
 FEATURES = [
     ("players",      "players",             ""),
-    ("game logs",    "player_game_logs",    ""),
-    ("season stats", "player_stats",        ""),
-    ("game detail",  "team_game_results",   ""),
+    ("player game logs", "player_game_logs",  ""),
+    ("player stats", "player_stats",        ""),
+    ("team game results", "team_game_results", ""),
     ("team stats",   "team_game_stats",     ""),
     ("coverage row", "team_stats_coverage", ""),
     ("scoring plays", "scoring_plays",      ""),
@@ -56,12 +56,12 @@ FEATURES = [
 # Stated per league rather than inferred: "we never built it" and "it broke" look
 # identical in a count, and only one of them is a defect.
 NOT_APPLICABLE = {
-    "ufc":   {"game detail", "team stats", "coverage row", "scoring plays", "game context"},
+    "ufc":   {"team game results", "team stats", "coverage row", "scoring plays", "game context"},
     "wc":    {"team stats"},
-    "atp":   {"game detail", "team stats", "coverage row", "scoring plays",
-              "game context", "game logs", "season stats"},
-    "wta":   {"game detail", "team stats", "coverage row", "scoring plays",
-              "game context", "game logs", "season stats"},
+    "atp":   {"team game results", "team stats", "coverage row", "scoring plays",
+              "game context", "player stats"},
+    "wta":   {"team game results", "team stats", "coverage row", "scoring plays",
+              "game context", "player stats"},
     "lcup":  {"team stats", "coverage row"},
 }
 
@@ -111,6 +111,75 @@ def _linked_prop_games(con, league: str, tables: set[str]) -> tuple[int, int] | 
         "FROM prop_games WHERE LOWER(league)=?", (league,)
     ).fetchone()
     return (row[0] or 0, row[1] or 0)
+
+
+YEAR_SURFACES = {
+    "player game logs": ("player_game_logs", "season"),
+    "player stats": ("player_stats", "season"),
+    "team game results": ("team_game_results", "season"),
+    # team_game_stats has no season column. Its only durable season evidence is
+    # the reciprocal result row for the same league/game. Report rows that
+    # cannot make that join instead of assigning captured_at's calendar year.
+    "team stats": ("team_game_stats", None),
+}
+
+
+def _years(con, label: str, league: str, tables: set[str]):
+    """Return explicit season set plus rows with no season evidence."""
+    table, season_column = YEAR_SURFACES[label]
+    if table not in tables:
+        return None
+    columns = {row[1] for row in con.execute(f"PRAGMA table_info({table})")}
+    if "league" not in columns:
+        return None
+    if season_column is not None:
+        if season_column not in columns:
+            return None
+        years = tuple(
+            row[0]
+            for row in con.execute(
+                f"SELECT DISTINCT {season_column} FROM {table} "
+                f"WHERE LOWER(league)=? AND {season_column} IS NOT NULL "
+                f"ORDER BY {season_column}",
+                (league,),
+            )
+        )
+        unassigned = con.execute(
+            f"SELECT COUNT(*) FROM {table} "
+            f"WHERE LOWER(league)=? AND {season_column} IS NULL",
+            (league,),
+        ).fetchone()[0]
+        return {"years": years, "unassigned": unassigned, "basis": "explicit"}
+
+    if "team_game_results" not in tables:
+        return None
+    result_columns = {
+        row[1] for row in con.execute("PRAGMA table_info(team_game_results)")
+    }
+    if not {"league", "game_id", "season"} <= result_columns or "game_id" not in columns:
+        return None
+    years = tuple(
+        row[0]
+        for row in con.execute(
+            """SELECT DISTINCT r.season
+                 FROM team_game_stats s
+                 JOIN team_game_results r
+                   ON LOWER(r.league)=LOWER(s.league) AND r.game_id=s.game_id
+                WHERE LOWER(s.league)=? AND r.season IS NOT NULL
+                ORDER BY r.season""",
+            (league,),
+        )
+    )
+    unassigned = con.execute(
+        """SELECT COUNT(*) FROM team_game_stats s
+             WHERE LOWER(s.league)=?
+               AND NOT EXISTS(
+                   SELECT 1 FROM team_game_results r
+                    WHERE LOWER(r.league)=LOWER(s.league)
+                      AND r.game_id=s.game_id AND r.season IS NOT NULL)""",
+        (league,),
+    ).fetchone()[0]
+    return {"years": years, "unassigned": unassigned, "basis": "result join"}
 
 
 # ── product surfaces ──────────────────────────────────────────────────────────
@@ -262,8 +331,7 @@ def measure(path: str) -> dict:
         # Leagues Cup has game_story rows and nothing else, so a narrower probe
         # would leave it off the matrix entirely — the exact blind spot this
         # tool exists to remove.
-        for t in ("players", "prop_games", "team_stats_coverage",
-                  "game_story", "news_items", "team_game_results"):
+        for t in {table for _, table, _ in FEATURES} | {"prop_games"}:
             if t in tables:
                 leagues |= {r[0] for r in con.execute(
                     f"SELECT DISTINCT LOWER(league) FROM {t}")
@@ -275,12 +343,16 @@ def measure(path: str) -> dict:
             cells["props"] = _props_count(con, lg, tables)
             surfaces = {k: _surface(con, q, lg, tables) for k, q in SURFACE_SQL.items()}
             lifecycle = {k: _surface(con, q, lg, tables) for k, q in LIFECYCLE_SQL.items()}
+            years = {
+                label: _years(con, label, lg, tables) for label in YEAR_SURFACES
+            }
             out[lg] = {
                 "offered": lg in offered,
                 "cells": cells,
                 "prop_link": _linked_prop_games(con, lg, tables),
                 "surfaces": surfaces,
                 "lifecycle": lifecycle,
+                "years": years,
             }
         return out
 
@@ -300,7 +372,15 @@ def render(data: dict, title: str) -> None:
     width = max(len(l) for l in
                 labels + list(SURFACE_SQL) + list(LIFECYCLE_SQL) + [LIFECYCLE_UNPROBED]) + 2
     leagues = list(data)
-    colw = max(9, max(len(l) for l in leagues) + 2)
+    year_width = max(
+        (
+            len(_format_years(data[league]["years"].get(label)))
+            for league in leagues
+            for label in YEAR_SURFACES
+        ),
+        default=0,
+    )
+    colw = max(9, max(len(l) for l in leagues) + 2, year_width + 2)
 
     print(f"\n{title}")
     print("=" * (width + colw * len(leagues)))
@@ -311,6 +391,15 @@ def render(data: dict, title: str) -> None:
     for label in labels:
         row = "".join(f"{mark(label, l, data[l]['cells'].get(label)):>{colw}}"
                       for l in leagues)
+        print(f"{label:<{width}}{row}")
+
+    print("\nyears by data surface — explicit sets; gaps stay visible")
+    print("-" * (width + colw * len(leagues)))
+    for label in YEAR_SURFACES:
+        row = "".join(
+            f"{_format_years(data[league]['years'].get(label)):>{colw}}"
+            for league in leagues
+        )
         print(f"{label:<{width}}{row}")
 
     # Everything above counts rows. Everything below asks whether a reader can
@@ -345,6 +434,15 @@ def _block(data, leagues, width, colw, title, labels, unprobed=None):
         print(f"{label:<{width}}{row}")
     if unprobed:
         print(f"{unprobed:<{width}}" + "".join(f"{'UNPROBED':>{colw}}" for _ in leagues))
+
+
+def _format_years(value) -> str:
+    if value is None:
+        return "n/a"
+    years = ",".join(str(year) for year in value["years"]) or "--"
+    if value["unassigned"]:
+        years += f" +{value['unassigned']}?"
+    return years
 
 
 def main() -> int:

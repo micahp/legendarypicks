@@ -311,12 +311,20 @@ Spec: `docs/SPEC-featured-events-scoreboard.md`. Reuse `docs/API-nfl-schedule-we
 detailed enough to act on: every cell is a single count, and a count cannot say what it is OF.
 Each item below is a question the matrix cannot currently answer.
 
-- [ ] **Split the log surfaces:** game logs, player game logs, player stats, team stats are four
-      different products rendered as one line today.
-- [ ] **What YEARS are available**, per league per surface. Report the **set**, not a min-max
+- [x] **Split the log surfaces:** DONE 2026-08-24. The derived matrix now names and counts
+      `player_game_logs`, `player_stats`, `team_game_results`, and `team_game_stats` as four
+      distinct products instead of hiding their table identity behind “game logs”, “season
+      stats”, and “game detail”. League discovery also reads every matrix table, so a league
+      represented on only one of these surfaces is not silently omitted.
+- [x] **What YEARS are available**, per league per surface. DONE 2026-08-24. Report the **set**, not a min-max
       range: the interesting case is a GAP, and a range hides it. Live example, not
       hypothetical: prod MLS standings serve 2026 while `/api/mls/leaders` offers
-      `available_seasons: [2025]`.
+      `available_seasons: [2025]`. The candidate matrix now derives explicit season sets on
+      every run and reports unassigned rows separately. It makes the remaining MLS split
+      visible: player logs/stats `{2025, 2026}` versus team results/stats `{2025}`. Because
+      `team_game_stats` has no season column, its years come only from a same-game
+      `team_game_results` join; unmatched rows stay marked `+N?` rather than inheriting a
+      calendar year from `captured_at`.
 - [ ] **What PROPS exist per league**, meaning distinct `props.market` values and counts. A book
       pricing a market our grader cannot map produces props that land, look healthy and never
       grade. **NFL's 1,080 unsettled props are that shape.**
