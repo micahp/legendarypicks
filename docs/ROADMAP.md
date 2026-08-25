@@ -230,6 +230,12 @@ or different than recorded:**
       graded results, pushes, voids, and pending props instead of rendering every NULL verdict
       as pending. Candidate DB only; production and managed dev are unchanged.
 - [ ] **Get UFC settlement onto dev.** Until then a green dev suite says nothing about UFC.
+      **Copied-candidate proof 2026-08-24:** the refreshed copy holds 198 UFC props and now
+      has 139 numeric outcomes after a bounded four-game run added three. Of the remainder,
+      52 belong to the Aug. 29 card, six belong to an unlinked fight absent from ESPN, and
+      one Aleksandr Rakić decision prop remains pending because the durable fight log contains
+      only Marcin Tybura's side. Zero errors and zero unmappable markets. Candidate DB only;
+      managed dev was not run or changed.
 - [ ] **`team_game_stats` holds 16 MLB rows.** Find out whether that is a stalled ingest or a
       table nothing writes any more.
 - [ ] **Promote MLS to prod parity:** game logs **10,603 prod vs 21,177 dev**, stories 0 vs 30,
