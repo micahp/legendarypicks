@@ -133,6 +133,8 @@ class LeaguesCupChartsAcrossTheSpines(unittest.TestCase):
         con.execute("INSERT INTO players VALUES(1,'Liga MX Forward','AME','ligamx','F')")
         con.execute("INSERT INTO players VALUES(2,'MLS Winger','CLB','mls','M')")
         con.execute("INSERT INTO players VALUES(3,'Deep Row Midfielder','MTY','ligamx','M')")
+        con.execute("INSERT INTO players VALUES(4,'Bench Player','AME','ligamx','F')")
+        con.execute("INSERT INTO players VALUES(5,'Summary Bench','LEO','ligamx','M')")
         rows = [
             # The Liga MX player has ONLY tournament games -- there is no ligamx
             # game-log ingest, so this is everything we hold for him.
@@ -154,6 +156,22 @@ class LeaguesCupChartsAcrossTheSpines(unittest.TestCase):
             (3, "lcup", 2026, json.dumps({"shots": 1, "tackles": 1,
                                           "clearances": 0, "passes_attempted": 40}),
              "2026-08-10", "POR", "away", 2, "REG"),
+            # Two matches this player never entered. Stored, because the row is
+            # a real record of not playing -- but they are not zeroes.
+            (4, "ligamx", 2026, json.dumps({"shots": 0, "tackles": 0,
+                                            "minutes": 0}),
+             "2026-08-22", "JUA", "away", 3, "REG"),
+            (4, "ligamx", 2026, json.dumps({"shots": 0, "tackles": 0,
+                                            "minutes": 0}),
+             "2026-08-02", "SAN", "home", 4, "REG"),
+            (4, "ligamx", 2026, json.dumps({"shots": 2, "tackles": 3,
+                                            "minutes": 90}),
+             "2026-08-16", "ASL", "home", 5, "REG"),
+            # The summary ingest signals the same thing with `appearances`.
+            (5, "lcup", 2026, json.dumps({"shots": 0, "appearances": 0}),
+             "2026-08-14", "ATX", "home", 6, "REG"),
+            (5, "lcup", 2026, json.dumps({"shots": 4, "appearances": 1}),
+             "2026-08-10", "POR", "away", 7, "REG"),
         ]
         con.executemany(
             "INSERT INTO player_game_logs VALUES(?,?,?,?,?,?,?,?,?)", rows)
@@ -216,3 +234,41 @@ class LeaguesCupChartsAcrossTheSpines(unittest.TestCase):
         result = props.prop_history(
             player_id=1, market="tackles", line=0.5, side="over", league="lcup")
         self.assertEqual(result["games"], [])
+
+
+class AnAbsenceIsNotAZero(unittest.TestCase):
+    """A match the player never entered must not chart as 0.
+
+    2026-08-25: the lazy form read-through stores every match it reads,
+    including bench appearances, and a bench player then charted five games as
+    0/0/0/0/0 shots. Four of those were matches he did not play. Counting an
+    absence as a measured performance drags every hit-rate window down and is
+    indistinguishable afterwards from a genuine goalless game.
+    """
+
+    @classmethod
+    def tearDownClass(cls):
+        try:
+            os.unlink(_IMPORT_DB.name)
+        except FileNotFoundError:
+            pass
+
+    setUp = LeaguesCupChartsAcrossTheSpines.setUp
+
+    def test_minutes_zero_is_excluded(self):
+        result = props.prop_history(
+            player_id=4, market="shots", line=0.5, side="over", league="lcup")
+        self.assertEqual([g["value"] for g in result["games"]], [2.0])
+        self.assertEqual(result["hit_rate"]["season"], 1.0)
+
+    def test_appearances_zero_is_excluded(self):
+        result = props.prop_history(
+            player_id=5, market="shots", line=0.5, side="over", league="lcup")
+        self.assertEqual([g["value"] for g in result["games"]], [4.0])
+
+    def test_a_row_carrying_neither_signal_is_kept(self):
+        # The MLS fixtures in this file store neither key. Absence of a signal
+        # is not evidence of absence from the match.
+        result = props.prop_history(
+            player_id=2, market="shots", line=0.5, side="over", league="lcup")
+        self.assertEqual(len(result["games"]), 3)
