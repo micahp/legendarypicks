@@ -50,6 +50,7 @@ MARKET_STAT: Dict[Tuple[str, str], Tuple[str, str]] = {
     ("nfl", "receptions"):    ("receiving", "Rec"),
     ("nfl", "tackles"):       ("defensive", "Tkl"),
     ("nfl", "sacks"):         ("defensive", "Sk"),
+    ("nfl", "field_goals_made"):("kicking", "FG"),
     # ── NHL ──
     ("nhl", "shots"):         ("offensive", "Shots"),
     ("nhl", "goals"):         ("offensive", "G"),

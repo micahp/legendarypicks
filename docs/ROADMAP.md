@@ -197,7 +197,14 @@ or different than recorded:**
 
 - [ ] **NFL props settle zero.** 1,080 on prod, 1,082 on dev, all from the 2026-08-19 RotoWire
       relay, none graded. New since the last roadmap and the largest unsettled block outside
-      tennis. **The props exist and look healthy on the board.**
+      tennis. **The props exist and look healthy on the board. Copied-candidate proof
+      2026-08-24:** the refreshed copy holds 1,774 NFL props, but 1,694 belong to Sept. 9-14
+      games that have not happened. Of the 80 props on 13 completed preseason games, the
+      case-insensitive ESPN stat-label repair plus `field_goals_made` mapping produced 76
+      numeric outcomes, zero errors, and zero unmappable markets. Four receiving-yard props
+      remain pending because Jack Bech and Chris Godwin have no published stat line. Future
+      props received zero result rows. Candidate DB only; production and managed dev are
+      unchanged.**
 - [ ] **Link tennis `prop_games`.** 274 of 325 prod ATP/WTA rows have no `espn_event_id` (16%
       linked); dev is 132 of 299. The matcher and budget guards already landed (`b8886e9`);
       this needs a run, not a build. Note `reference_espn_folds_tennis_names`: ESPN folds
