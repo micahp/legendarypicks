@@ -372,9 +372,12 @@ outlives its code.
       changed `legacy_merge_nba_identities` from `unknown: registry row missing` to `applied`;
       three other touched rows refreshed checksums only, with no other status change, and the
       clone retained `PRAGMA quick_check=ok`. Managed DEV itself was not written.
-- [ ] **`docs/BACKLOG-holes.md` is dated 08-18** and its P0 list still leads with items this file
-      has since falsified. Regenerate from the matrix or delete the P0 section rather than leave
-      two documents contradicting each other.
+- [x] **Refresh `docs/BACKLOG-holes.md` P0.** DONE 2026-08-24. The five production-facing
+      rows were remeasured from current prod and managed-DEV databases using the matrix's
+      source/market/graded/reachable contract with zero ESPN requests. Candidate repairs are
+      identified as candidate evidence, not used to close managed defects: prod still has
+      746 unreachable tennis props, zero graded tennis/World Cup/NFL props, and 138/214 UFC
+      graded while managed DEV remains 0/663.
 - [ ] `B/position-content` for **mlb** and **nba**: what must a catcher's or a guard's log record?
 - [ ] `DATA-COVERAGE-CONTRACT.md` §7 rewrite: what each of the 8 checks needs from a new league.
 - [ ] `ufc` / `wc` UNVERIFIED x6, likely "no leaderboard surface to serve" rather than a missing

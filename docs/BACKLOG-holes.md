@@ -1,7 +1,9 @@
 # Backlog: holes in the app
 
-**Measured 2026-08-20** against `backend/data/picks.db` (prod), `backend/data/picks.dev.db`
-(dev) and the live prod API. Zero ESPN requests spent.
+**Base measurement 2026-08-20** against `backend/data/picks.db` (prod),
+`backend/data/picks.dev.db` (dev) and the live prod API. **P0 remeasured 2026-08-24**
+from both current databases through `league_feature_matrix.py`'s source/market/graded/
+reachable contract. Zero ESPN requests spent.
 
 **Where this file sits.** `docs/ROADMAP.md` is what we intend to build. This file is what is
 measurably broken. Both funnel into `CHANGELOG.md`, which is the only history of record, and
@@ -41,12 +43,12 @@ Severity: **P0** a user sees it wrong today, or a shipped feature is invisible �
 
 | # | defect | evidence | fix |
 |---|---|---|---|
-| 104 | **913 tennis props cannot reach a game page.** 274 of 325 prod ATP/WTA `prop_games` carry no `espn_event_id`, and the game page joins on it. **The 2026-08-18 figure of 2,475 props was not reproducible on 08-20** and is not explained by the 08-19 dedupe alone; re-measure before quoting a tennis number. | prod tennis `prop_games` **51 of 325 linked (16%)**; dev 167 of 299 | `link_prop_games.py` for atp/wta. Note `reference_espn_folds_tennis_names`: ESPN folds accents in tennis but not soccer, so a name join behaves differently per sport. |
-| 105 | **Tennis settles nothing at all.** Every ATP and WTA prop on both databases has no outcome. The board shows a line and never says how it landed. | prod atp **0 of 536**, wta **0 of 377**; dev atp 0 of 552, wta 0 of 427 | no grader path exists for tennis markets. Decide the markets first, then wire them. |
-| 106 | **The World Cup's settled props are voids.** 392 prod / 1,128 dev `prop_results` rows with `actual_value` NULL and `hit` NULL, all stamped 2026-07-20. Every count that keys on `settled_at` reports WC at 100%. | prod 392 rows, **0** with an outcome | either grade them or record them as voids somewhere a reader can see. Do not leave a settlement count that grades nothing. |
-| 107 | **UFC settles 112 on prod and 0 on dev.** The dev/prod skew running backwards: a green dev suite says nothing about UFC settlement. **Correction to the 08-18 row, which said dev has no UFC `prop_results` rows at all:** dev now holds 466 UFC props and settles none of them. | prod **112 of 142** (79%), dev **0 of 466** | run settlement against dev. Until then treat any dev-only UFC result as unmeasured. |
+| 104 | **746 tennis props cannot reach a game page.** The page joins through `prop_games.espn_event_id`; populated prop rows on an unlinked game are invisible. | prod ATP **310/746 reachable, 436 unreachable**, WTA **237/547 reachable, 310 unreachable**; only 55 of 358 game rows linked. Dev has 424 unreachable prop rows. | Candidate linking is proven on a copied DB; production promotion remains separately authorized work. Keep accent-folded matching and fail closed on non-unique player pairs. |
+| 105 | **Tennis settles nothing at all.** Every ATP and WTA prop on both managed databases has no numeric outcome. The board shows a line and never says how it landed. | prod ATP **0/746 graded**, WTA **0/547**; dev ATP **0/762**, WTA **0/583** | Candidate DB-first tennis grading is implemented and proven; promote code/data separately. |
+| 106 | **The World Cup's “settled” rows still have no outcomes on managed databases.** Every count keyed only on `settled_at` reports success while `actual_value` remains NULL. | prod **0/392 graded**; dev **0/1,128** | Candidate repair distinguishes 267 numeric results from 125 DNP voids; production and managed DEV remain unchanged. |
+| 107 | **UFC settles 138 on prod and 0 on dev.** The dev/prod skew still runs backwards, so a green dev suite says nothing about UFC settlement. | prod **138/214 graded**; dev **0/663** | Candidate bounded settlement proof exists; managed DEV still needs an authorized run. |
 
-| 109 | **NFL props settle zero.** 1,080 on prod and 1,082 on dev, all from the 2026-08-19 RotoWire relay, none graded. New since the last measurement and the largest unsettled block outside tennis. **The props exist and look healthy on the board**, which is what makes it a P0 rather than a P1. | prod **0 of 1,080** settled | confirm the grader has a mapping for the relay's NFL markets. A book pricing a market our grader cannot map produces props that land, look fine and never grade. |
+| 109 | **NFL props settle zero on managed databases.** The relay rows exist and look healthy on the board, which is what makes the missing outcomes P0. | prod **0/2,042 graded**; dev **0/2,066** across PrizePicks, Sleeper and Underdog | Candidate settlement fixes case-insensitive ESPN labels and field-goal fractions, grading 76 completed preseason rows while preserving future props; promote separately. |
 
 **The scoreboard block (old 101, 102, 103, 108) shipped in v0.8.2.** See Closed.
 
