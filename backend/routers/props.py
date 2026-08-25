@@ -325,7 +325,7 @@ def props_slate(league: Optional[str] = Query(None),
                            JOIN props p ON p.game_id = pg.id
                            JOIN players pl ON pl.id = p.player_id
                            WHERE 1=1 {filters}
-                           GROUP BY pg.id, p.player_id, {base_market}, p.line, p.source,
+                           GROUP BY pg.id, p.player_id, {base_market}, p.line,
                                     pg.date, pg.home, pg.away
                          ) grouped_markets
                          GROUP BY game_id, market
@@ -343,9 +343,10 @@ def props_slate(league: Optional[str] = Query(None),
                  "start_time": r["start_time"], "league": r["league"], "prop_count": r["prop_count"],
                  "markets": markets_by_game.get(r["game_id"], []), "players": []} for r in grows]
 
-    sql = """SELECT p.id, p.market, p.line, p.side, p.source,
+    sql = """SELECT p.id, p.market, p.line, p.side, p.source, p.odds,
                     pl.name AS player_name, pl.team AS player_team, pl.league,
-                    pg.id AS game_id, pg.home, pg.away, pg.date AS game_date, pg.start_time
+                    pg.id AS game_id, pg.home, pg.away, pg.date AS game_date, pg.start_time,
+                    pg.league AS game_league
              FROM props p
              JOIN players pl ON pl.id = p.player_id
              JOIN prop_games pg ON pg.id = p.game_id
@@ -384,7 +385,14 @@ def props_slate(league: Optional[str] = Query(None),
                 "away": r["away"],
                 "date": r["game_date"],
                 "start_time": r["start_time"],
-                "league": r["league"],
+                # The GAME's league, not the player's. `pl.league` here made the
+                # expanded slate label Leagues Cup fixture 1494 `mls`, and the
+                # value flipped to `ligamx` with whichever athlete sorted first,
+                # while `summary=1` (which reads pg.league) said `lcup`. Same
+                # endpoint, two answers for one game. Fourth site of the shape
+                # fixed in b8c3bd7/b8a3f60; those were WHERE clauses, this one is
+                # the response body, so no filter test could reach it.
+                "league": r["game_league"],
                 "players": {}
             }
         pkey = r["player_name"]
@@ -392,19 +400,40 @@ def props_slate(league: Optional[str] = Query(None),
             games[gkey]["players"][pkey] = {
                 "name": r["player_name"],
                 "team": r["player_team"],
-                "props": []
+                "props": [],
+                "_seen": {},
             }
-        games[gkey]["players"][pkey]["props"].append({
+        # One question, one row. Two sources can price the same player at the
+        # same line -- Bovada's anytime goal scorer and PrizePicks' `goals 0.5`
+        # are the same bet -- and appending both put 146 duplicate `goals 0.5
+        # OVER` rows on the Leagues Cup cards the day PrizePicks was added.
+        #
+        # The priced row wins. That is not a preference between books: a line
+        # carrying odds answers strictly more than the same line without them
+        # (here all 163 Bovada goal rows have odds and all 217 PrizePicks ones
+        # do not). Ranking books by name would be a trust list keyed on a name.
+        entry = {
             "market": r["market"],
             "line": r["line"],
             "side": r["side"],
             "source": r["source"],
-        })
+            "odds": r["odds"],
+        }
+        seen = games[gkey]["players"][pkey]["_seen"]
+        key = (r["market"], r["line"], r["side"])
+        held = seen.get(key)
+        if held is None:
+            seen[key] = entry
+            games[gkey]["players"][pkey]["props"].append(entry)
+        elif held["odds"] is None and r["odds"] is not None:
+            held.update(entry)
 
     # Convert to list sorted by date
     result = sorted(games.values(), key=lambda g: g["date"])
     for g in result:
         g["players"] = sorted(g["players"].values(), key=lambda p: p["name"])
+        for player in g["players"]:
+            player.pop("_seen", None)
         g["prop_count"] = sum(len(p["props"]) for p in g["players"])
 
     return result
@@ -522,6 +551,36 @@ def _link_or_fold(con, game_id, league, espn_id):
         return fold_prop_game(con, game_id, keep)
 
 
+def _roster_league_for_ingest(con, league: str, team: str) -> str:
+    """The spine allowed to own this player, which is not always the competition.
+
+    A cross-league tournament is filed under its own competition key, so a Leagues
+    Cup game is `lcup` while the athletes playing it are `mls` and `ligamx`. The
+    resolver matches on `players.league`, and `players WHERE league='lcup'` has
+    always held ZERO rows -- so every prop posted under `lcup` resolved against an
+    empty spine and was rejected. Measured 2026-08-25: 370 of 370 Bovada Leagues
+    Cup props, "REJECTED all 370 -- nothing in `players` matched".
+
+    This is the same defect `0746e83` fixed inside `ingest_rotowire_props.py`, at a
+    second site. That fix does not reach here: this is the HTTP ingest endpoint, a
+    different path with its own resolver, which the Bovada scraper posts to.
+
+    Routed by the club's own membership rather than a hand-written club list, and
+    AMBIGUOUS FAILS CLOSED: `ATL` is Atlanta United in MLS and Atlante in Liga MX,
+    so a code naming two spines resolves to neither and the athlete goes to the
+    review queue. Widening `mls` to swallow the tournament is the shadow-player
+    defect this whole route exists to avoid.
+    """
+    if league != "lcup" or not team:
+        return league
+    rows = con.execute(
+        "SELECT DISTINCT league FROM players WHERE team=? AND league IN ('mls','ligamx')",
+        (team.strip().upper(),)).fetchall()
+    if len(rows) == 1:
+        return rows[0][0]
+    return league
+
+
 @router.post("/api/props/ingest")
 def ingest_props(batch: PropIngest):
     """Ingest a batch of props for one game. Creates player/game rows as needed."""
@@ -576,8 +635,9 @@ def ingest_props(batch: PropIngest):
         unresolved = 0
         for p in batch.props:
             # Resolve player via identity spine (NEVER silently create)
+            roster_league = _roster_league_for_ingest(con, batch.league, p.get("team", ""))
             player_id, confidence = _resolve_player_for_ingest(
-                con, p["player_name"], p.get("team", ""), batch.league,
+                con, p["player_name"], p.get("team", ""), roster_league,
                 source=p.get("source", "props"), game_id=game_id)
             if player_id is None:
                 unresolved += 1
