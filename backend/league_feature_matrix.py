@@ -18,9 +18,10 @@ Marks:
     HIDDEN  the league is not offered by this database at all
 
 `offered` comes from `league_offering.offered_leagues`, the same registry the hub
-and the search gate read. A league can be fully populated and still HIDDEN — that
-is exactly NCAAF on production today, and the row shows both facts at once rather
-than letting one hide the other.
+and the search gate read. A league can be populated and still HIDDEN — ATP and
+WTA on the copied 2026-08-24 database carry identities and props while remaining
+unoffered, and the row shows both facts at once rather than letting one hide the
+other.
 
 What this does NOT measure: whether a page renders. Rows are necessary and not
 sufficient, and a green row here is a claim about the database, not about the

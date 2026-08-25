@@ -361,8 +361,9 @@ outlives its code.
       remain honestly UNVERIFIED for undeclared position content, leaderboard reachability,
       and published identity evidence.
 - [ ] **`DURING / live state` is UNPROBED for every league.**
-- [ ] **`league_feature_matrix.py`'s docstring is stale:** it cites NCAAF as the example of a
-      league hidden on prod, and NCAAF is OFFERED on both.
+- [x] **`league_feature_matrix.py`'s docstring is stale.** DONE 2026-08-24. It no longer cites
+      offered NCAAF as hidden; the current copied-DB example is ATP/WTA, whose identity and
+      prop rows are populated while the registry still marks both leagues HIDDEN.
 - [ ] **Dev's migration ledger is unreliable.** `legacy_merge_nba_identities` reports
       `unknown: registry row missing` on dev though dev's data is clean. A ledger that cannot
       answer "did this run" is not a ledger.
