@@ -247,7 +247,16 @@ or different than recorded:**
 - [ ] **Promote MLS to prod parity:** game logs **10,603 prod vs 21,177 dev**, stories 0 vs 30,
       leaders stuck on 2025 while standings serve 2026. All data jobs, none needs a deploy.
 - [ ] **MLS and NCAAF scoring plays: zero on both.** Confirm the publisher has them before
-      recording it as a gap (`feedback_we_systematically_underread_publishers`).
+      recording it as a gap (`feedback_we_systematically_underread_publishers`). **Confirmed
+      and copied-candidate proof 2026-08-24:** the publisher has them in two league-specific
+      collections the existing parser never read. A completed NCAAF summary publishes seven
+      entries under `scoringPlays`; a completed MLS summary publishes four goals under
+      `keyEvents`; both expose an empty `plays` array. The parser now reads the published
+      collection, maps team identity without prose guessing, reconstructs soccer's running
+      score from explicit home/away team ids, and records the first participant as scorer.
+      A game-id-required backfill advertises its exact request count and is dry-run by default.
+      The copy wrote 7 NCAAF + 4 MLS proof rows and wrote zero on rerun. Production and managed
+      dev are unchanged; full historical backfill remains a separate bounded data operation.
 
 **Not a defect, recorded so it is not "found" again:** grouping `props` by
 `(game_id, player_id, market, line, side)` reports 240 duplicate groups on prod and 1,085 on
