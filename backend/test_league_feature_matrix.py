@@ -48,5 +48,49 @@ class FeatureMatrixYearTests(unittest.TestCase):
         self.assertEqual(subject._format_years(result), "n/a")
 
 
+class FeatureMatrixPropTests(unittest.TestCase):
+    def setUp(self):
+        self.connection = sqlite3.connect(":memory:")
+        self.addCleanup(self.connection.close)
+        self.connection.executescript(
+            """
+            CREATE TABLE prop_games(id INTEGER PRIMARY KEY, league TEXT, espn_event_id TEXT);
+            CREATE TABLE props(id INTEGER PRIMARY KEY, game_id INTEGER, market TEXT, source TEXT);
+            CREATE TABLE prop_results(prop_id INTEGER PRIMARY KEY, actual_value REAL);
+            INSERT INTO prop_games VALUES (1, 'mls', 'event-1'), (2, 'mls', '');
+            INSERT INTO props VALUES
+                (1, 1, 'goals', 'book-a'),
+                (2, 2, 'goals', 'book-a'),
+                (3, 1, 'assists', 'book-b'),
+                (4, 1, 'assists', 'book-b');
+            INSERT INTO prop_results VALUES (1, 1), (2, 0), (3, NULL);
+            """
+        )
+
+    def test_inventory_splits_source_market_grade_and_reachability(self):
+        inventory = subject._prop_inventory(
+            self.connection, "mls", subject._tables(self.connection)
+        )
+        self.assertEqual(
+            inventory,
+            [
+                {
+                    "source": "book-a",
+                    "market": "goals",
+                    "total": 2,
+                    "graded": 2,
+                    "reachable": 1,
+                },
+                {
+                    "source": "book-b",
+                    "market": "assists",
+                    "total": 2,
+                    "graded": 0,
+                    "reachable": 0,
+                },
+            ],
+        )
+
+
 if __name__ == "__main__":
     unittest.main()

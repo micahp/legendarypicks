@@ -113,6 +113,50 @@ def _linked_prop_games(con, league: str, tables: set[str]) -> tuple[int, int] | 
     return (row[0] or 0, row[1] or 0)
 
 
+def _prop_inventory(con, league: str, tables: set[str]):
+    """Counts by source and market: total, graded, and reachable graded rows."""
+    if not {"props", "prop_games", "prop_results"} <= tables:
+        return None
+    prop_columns = {row[1] for row in con.execute("PRAGMA table_info(props)")}
+    game_columns = {row[1] for row in con.execute("PRAGMA table_info(prop_games)")}
+    result_columns = {
+        row[1] for row in con.execute("PRAGMA table_info(prop_results)")
+    }
+    if not {"game_id", "market", "source"} <= prop_columns:
+        return None
+    if not {"id", "league", "espn_event_id"} <= game_columns:
+        return None
+    if not {"prop_id", "actual_value"} <= result_columns:
+        return None
+    rows = con.execute(
+        """SELECT COALESCE(NULLIF(TRIM(p.source), ''), '(blank)') AS source,
+                  COALESCE(NULLIF(TRIM(p.market), ''), '(blank)') AS market,
+                  COUNT(*) AS total,
+                  SUM(EXISTS(SELECT 1 FROM prop_results r
+                              WHERE r.prop_id=p.id AND r.actual_value IS NOT NULL)) AS graded,
+                  SUM(EXISTS(SELECT 1 FROM prop_results r
+                              WHERE r.prop_id=p.id AND r.actual_value IS NOT NULL)
+                      AND g.espn_event_id IS NOT NULL
+                      AND g.espn_event_id != '') AS reachable
+             FROM props p
+             JOIN prop_games g ON g.id=p.game_id
+            WHERE LOWER(g.league)=?
+            GROUP BY source, market
+            ORDER BY source, total DESC, market""",
+        (league,),
+    ).fetchall()
+    return [
+        {
+            "source": row[0],
+            "market": row[1],
+            "total": row[2],
+            "graded": row[3] or 0,
+            "reachable": row[4] or 0,
+        }
+        for row in rows
+    ]
+
+
 YEAR_SURFACES = {
     "player game logs": ("player_game_logs", "season"),
     "player stats": ("player_stats", "season"),
@@ -353,6 +397,7 @@ def measure(path: str) -> dict:
                 "surfaces": surfaces,
                 "lifecycle": lifecycle,
                 "years": years,
+                "prop_inventory": _prop_inventory(con, lg, tables),
             }
         return out
 
@@ -365,7 +410,7 @@ def mark(label: str, league: str, n: int | None) -> str:
     return f"{n:,}" if n else "--"
 
 
-def render(data: dict, title: str) -> None:
+def render(data: dict, title: str, *, props_detail: bool = False) -> None:
     labels = [l for l, _, _ in FEATURES] + ["props"]
     # Every block shares one label column so the league columns line up down the
     # whole page — a row that shifts by two characters is a row you read wrong.
@@ -419,6 +464,39 @@ def render(data: dict, title: str) -> None:
             flag = "" if pl[0] == pl[1] else "   <-- gap"
             print(f"  {l:<8} {pl[0]:>4} / {pl[1]:<4}{flag}")
 
+    print("\nprops by source / market (graded, reachable, total):")
+    for league in leagues:
+        inventory = data[league].get("prop_inventory")
+        if inventory is None:
+            print(f"  {league}: n/a")
+            continue
+        if not inventory:
+            print(f"  {league}: --")
+            continue
+        markets = {row["market"] for row in inventory}
+        print(f"  {league}: {len(markets)} distinct market(s)")
+        sources = []
+        for row in inventory:
+            if row["source"] not in sources:
+                sources.append(row["source"])
+        for source in sources:
+            source_rows = [row for row in inventory if row["source"] == source]
+            graded = sum(row["graded"] for row in source_rows)
+            reachable = sum(row["reachable"] for row in source_rows)
+            total = sum(row["total"] for row in source_rows)
+            print(
+                f"    {source}: {graded:,} graded / {reachable:,} reachable / "
+                f"{total:,} total"
+            )
+            if props_detail:
+                for row in source_rows:
+                    print(
+                        f"      {row['market']}: {row['graded']:,} / "
+                        f"{row['reachable']:,} / {row['total']:,}"
+                    )
+        if not props_detail:
+            print("    market rows hidden; pass --props-detail to print every stored value")
+
     print(f"\nnot measured here: {', '.join(UNPROBED)} — every one is an ESPN read,")
     print("and the budget is a count per host. Absent evidence is not a zero.")
 
@@ -449,12 +527,17 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--db", required=True)
     ap.add_argument("--compare", help="second database to render alongside")
+    ap.add_argument(
+        "--props-detail",
+        action="store_true",
+        help="print every source/market row (MLB alone can exceed 1,000 rows)",
+    )
     args = ap.parse_args()
     for path in filter(None, (args.db, args.compare)):
         if not os.path.exists(path):
             print(f"no such database: {path}", file=sys.stderr)
             return 2
-        render(measure(path), os.path.basename(path))
+        render(measure(path), os.path.basename(path), props_detail=args.props_detail)
     return 0
 
 

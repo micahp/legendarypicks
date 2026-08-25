@@ -325,17 +325,25 @@ Each item below is a question the matrix cannot currently answer.
       `team_game_stats` has no season column, its years come only from a same-game
       `team_game_results` join; unmatched rows stay marked `+N?` rather than inheriting a
       calendar year from `captured_at`.
-- [ ] **What PROPS exist per league**, meaning distinct `props.market` values and counts. A book
+- [x] **What PROPS exist per league**, meaning distinct `props.market` values and counts. DONE
+      2026-08-24: the matrix derives every source/market count; the default prints distinct
+      market totals and `--props-detail` prints every stored value (kept opt-in because the
+      copied MLB inventory alone has 1,435 distinct strings). A book
       pricing a market our grader cannot map produces props that land, look healthy and never
       grade. **NFL's 1,080 unsettled props are that shape.**
-- [ ] **WHERE the props come from.** `props.source` per league. We ingest from Bovada, Underdog,
-      RotoWire and PrizePicks and render them as one number.
-- [ ] **Are they RESOLVED**, split by source and by market. Key settlement on
+- [x] **WHERE the props come from.** DONE 2026-08-24. `props.source` is now a first-class
+      grouping per league (including an explicit `(blank)` bucket), rather than Bovada,
+      Underdog, RotoWire, and PrizePicks rendering as one number.
+- [x] **Are they RESOLVED**, split by source and by market. DONE 2026-08-24. Key settlement on
       `actual_value IS NOT NULL`, **never `settled_at`**: settlement stamps a timestamp on props
       it could not map, so the timestamp records that something RAN, not that anything landed.
-- [ ] **Are settled props REACHABLE.** One explicit ratio per league: of the props settled, how
+      Copied MLS evidence now separates Bovada `718 graded / 2,207 total` from RotoWire
+      PrizePicks `0 / 478`, instead of hiding the latter behind the former.
+- [x] **Are settled props REACHABLE.** DONE 2026-08-24. One explicit count per source and
+      market now says: of the props graded, how
       many hang off a `prop_games` row with an `espn_event_id`. Everything else is data we hold
-      and nobody can see.
+      and nobody can see. The query uses `EXISTS` so a malformed duplicate result row cannot
+      inflate either the graded or reachable count.
 
 Everything above must be **derived on the run**. Anything needing an ESPN request stays
 `UNPROBED` rather than rendering as a zero, because a hand-maintained matrix is a claim that
