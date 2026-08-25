@@ -3,10 +3,31 @@ import { render, waitFor } from '@testing-library/react'
 import PropsPage, { LEAGUES } from '../pages/props'
 
 describe('Props league selector', () => {
-  it('omits World Cup, puts UFC first with MLB after NHL, and carries tennis', () => {
+  it('omits World Cup, puts UFC first with MLB after NHL, and carries tennis and Leagues Cup', () => {
     // atp/wta were missing while tennis was half the board (2026-08-17), which made them both
     // unfilterable and last in every day group -- LEAGUES is the pill row AND the ordering.
-    expect(LEAGUES).toEqual(['All', 'ufc', 'mls', 'nba', 'nfl', 'nhl', 'mlb', 'atp', 'wta'])
+    // lcup appended 2026-08-25 for the same reason, before its first fixtures on 08-26: the
+    // API had just been fixed to serve `?league=lcup`, and a league absent from this list is
+    // unreachable by filter no matter what the API returns.
+    expect(LEAGUES).toEqual(['All', 'ufc', 'mls', 'nba', 'nfl', 'nhl', 'mlb', 'atp', 'wta', 'lcup'])
+  })
+
+  it('labels Leagues Cup in words rather than uppercasing the key', () => {
+    // Rendering the page fetches the slate; the pills do not depend on it, but the
+    // component does, so stub it rather than assert against a crashed render.
+    const originalFetch = global.fetch
+    global.fetch = jest.fn(() => Promise.resolve({ ok: true, json: () => Promise.resolve([]) })) as any
+    try {
+    // Every other pill is its key uppercased, which is right for NBA and wrong for LCUP.
+    // pages/scores.tsx already publishes this competition as "Leagues Cup"; one competition
+    // should not have two names in one product.
+    render(React.createElement(PropsPage))
+      const labels = Array.from(document.querySelectorAll('button')).map(b => b.textContent)
+      expect(labels).toContain('Leagues Cup')
+      expect(labels).not.toContain('LCUP')
+    } finally {
+      global.fetch = originalFetch
+    }
   })
 })
 

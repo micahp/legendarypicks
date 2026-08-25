@@ -19,7 +19,7 @@ interface PerfRow {
 }
 
 type Tab = 'slate' | 'props' | 'performance' | 'matchups' | 'model'
-type League = 'All' | 'nba' | 'mlb' | 'mls' | 'nfl' | 'nhl' | 'ufc' | 'atp' | 'wta'
+type League = 'All' | 'nba' | 'mlb' | 'mls' | 'nfl' | 'nhl' | 'ufc' | 'atp' | 'wta' | 'lcup'
 
 const TABS: { key: Tab; label: string }[] = [
   { key: 'slate', label: 'Slate' },
@@ -33,7 +33,12 @@ const TABS: { key: Tab; label: string }[] = [
 // 32 of the 71 games on the board (2026-08-17) -- the pills advertised four leagues with zero
 // games and hid the two that had the most. Appended rather than reordered so the existing
 // day-group order is unchanged.
-export const LEAGUES: League[] = ['All', 'ufc', 'mls', 'nba', 'nfl', 'nhl', 'mlb', 'atp', 'wta']
+export const LEAGUES: League[] = ['All', 'ufc', 'mls', 'nba', 'nfl', 'nhl', 'mlb', 'atp', 'wta', 'lcup']
+
+// A pill reads the league key uppercased, which is right for NBA and wrong for
+// LCUP. `pages/scores.tsx` already publishes the label as "Leagues Cup", so use
+// the same words rather than a second name for one competition.
+const LEAGUE_LABELS: Partial<Record<League, string>> = { lcup: 'Leagues Cup' }
 
 function Skeleton({ lines = 4 }: { lines?: number }) {
   return (
@@ -51,7 +56,7 @@ function LeaguePills({ league, onChange }: { league: League; onChange: (l: Leagu
       {LEAGUES.map(l => (
         <button key={l} onClick={() => onChange(l)}
           className={`px-3.5 py-1.5 rounded-lg text-sm font-medium transition-colors ${league === l ? 'bg-emerald-600 text-white' : 'bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-zinc-200'}`}>
-          {l === 'All' ? 'All' : l.toUpperCase()}
+          {l === 'All' ? 'All' : (LEAGUE_LABELS[l] ?? l.toUpperCase())}
         </button>
       ))}
     </div>
