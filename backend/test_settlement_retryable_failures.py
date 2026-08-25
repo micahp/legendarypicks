@@ -59,7 +59,9 @@ def _boxscore_without_shots():
 
 
 def test_generic_unmapped_market_remains_retryable(monkeypatch):
-    con = _connection("wc", "goals")
+    # WC has a dedicated durable-log grader now; WNBA still exercises the
+    # generic unmapped-market path this regression is about.
+    con = _connection("wnba", "goals")
     monkeypatch.setattr(espn_client, "boxscore", lambda *args: {"players": [{}]})
 
     first = settlement.settle_game(con, 1)

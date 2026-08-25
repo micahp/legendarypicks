@@ -12,6 +12,7 @@ from settlement.mlb_settle import _settle_mlb_props
 from settlement.ufc_settle import _settle_ufc_props, _ufc_scoreboard_competition
 from settlement.mls_settle import _settle_mls_props
 from settlement.tennis_settle import _settle_tennis_props, _tennis_snapshot
+from settlement.wc_settle import _settle_wc_props
 
 
 def settle_game(con: sqlite3.Connection, game_id: int) -> dict:
@@ -79,6 +80,32 @@ def settle_game(con: sqlite3.Connection, game_id: int) -> dict:
             return {"settled": 0, "void": 0, "unmappable": 0, "pending": 0,
                     "errors": 0, "msg": f"game {game_id}: no unsettled props"}
         return _settle_tennis_props(con, props, snapshot)
+
+    # World Cup player logs are written only from publisher-completed matches.
+    # They are the durable source for the four player markets we ingest, so no
+    # per-game network request or generic team boxscore interpretation is needed.
+    if league == "wc":
+        published = con.execute(
+            "SELECT 1 FROM player_game_logs WHERE league='wc' AND game_id=? LIMIT 1",
+            (str(espn_event_id),),
+        ).fetchone()
+        if not published:
+            return {"settled": 0, "void": 0, "unmappable": 0, "pending": 0,
+                    "errors": 0,
+                    "msg": f"game {game_id}: no completed World Cup player logs"}
+        props = con.execute("""
+            SELECT p.id, p.market, p.line, p.side, p.player_id,
+                   pl.name as player_name, pl.team as player_team,
+                   pl.espn_id as espn_id
+            FROM props p
+            JOIN players pl ON pl.id = p.player_id
+            LEFT JOIN prop_results pr ON pr.prop_id = p.id
+            WHERE p.game_id = ? AND pr.prop_id IS NULL
+        """, (game_id,)).fetchall()
+        if not props:
+            return {"settled": 0, "void": 0, "unmappable": 0, "pending": 0,
+                    "errors": 0, "msg": f"game {game_id}: no unsettled props"}
+        return _settle_wc_props(con, espn_event_id, props)
 
     # ── Is the game actually over? ──────────────────────────────────────────────
     if game["final_home"] is None:

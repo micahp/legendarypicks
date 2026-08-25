@@ -221,7 +221,14 @@ or different than recorded:**
       production and managed dev are unchanged.
 - [ ] **Grade or void the World Cup rows honestly.** 392 prod and 1,128 dev `prop_results`
       rows have `actual_value` NULL **and** `hit` NULL. A settled count that grades nothing is
-      presence, not integrity.
+      presence, not integrity. **Copied-candidate proof 2026-08-24:** all 392 rows belong to
+      two completed matches. Durable ESPN player logs provide unique numeric evidence for
+      267 (goals, assists, shots, and shots on target); the official final rosters mark all
+      remaining 14 players as zero appearances/zero substitutions, accounting for the other
+      125 rows as DNP voids. The guarded repair produced 267 numeric outcomes, retained 125
+      voids, left zero unexplained rows, and was idempotent. The game API now distinguishes
+      graded results, pushes, voids, and pending props instead of rendering every NULL verdict
+      as pending. Candidate DB only; production and managed dev are unchanged.
 - [ ] **Get UFC settlement onto dev.** Until then a green dev suite says nothing about UFC.
 - [ ] **`team_game_stats` holds 16 MLB rows.** Find out whether that is a stalled ingest or a
       table nothing writes any more.

@@ -112,6 +112,11 @@ def list_props(player: Optional[str] = Query(None),
              "game_away": r["game_away"], "game_date": r["game_date"],
              "actual_value": r["actual_value"],
              "hit": bool(r["hit"]) if r["hit"] is not None else None,
+             "result_status": (
+                 "graded" if r["hit"] is not None else
+                 "push" if r["actual_value"] is not None else
+                 "void" if r["settled_at"] is not None else "pending"
+             ),
              "settled_at": r["settled_at"]} for r in rows]
 
 
