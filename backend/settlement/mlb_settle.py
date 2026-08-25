@@ -28,6 +28,12 @@ _MLB_MARKET_MAP = {
     "earned_runs":   ("pitching", "earnedRuns"),
     "walks":         ("pitching", "baseOnBalls"),
     # Batting
+    "batter_walks":          ("batting", "baseOnBalls"),
+    "doubles":               ("batting", "doubles"),
+    "home_runs":             ("batting", "homeRuns"),
+    "runs":                  ("batting", "runs"),
+    "rbis":                  ("batting", "rbi"),
+    "hits":                  ("batting", "hits"),
     "total_bases":           ("batting", "totalBases"),
     "hits_runs_rbis":        (None, None),  # compound — sum H+R+RBI
     "home_run_any":          ("batting", "homeRuns"),

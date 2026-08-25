@@ -212,6 +212,67 @@ Anything else, say why first.
 
 ---
 
+## 7. Results (2026-08-25 UTC)
+
+Implemented and backfilled from a new `feat/mlb-rotowire-backfill` worktree based exactly
+on `ff38374`. No scheduler, host configuration, Bovada ingest, 08-24 repair, or
+`spine_merge` work was performed.
+
+The archive dry runs made zero publisher requests and produced the same plan against DEV
+and production:
+
+```
+2026-08-22   14 games   5,196 rows   282 resolved players   6 queued players / 84 rows
+2026-08-23   15 games   5,906 rows   297 resolved players   6 queued players / 142 rows
+```
+
+Unmapped rows were reported and not ingested: 08-22 had 265 Fantasy Score and 39 Singles;
+08-23 had 442 Fantasy Score (176 on id 236 and 266 on id 237) and 79 Singles. The archives
+held no prop rows for Doubles id 216 or Wins id 227. The 222 Walks rows ingest as
+`batter_walks` and grade from `batting.baseOnBalls`; 232 Walks Allowed ingest as `walks`
+and grade from `pitching.baseOnBalls`. Numeric Home Runs, Runs, RBI, Hits, and Doubles use
+count-market keys, never `_any` keys.
+
+SQLite online backups, both verified with `PRAGMA quick_check`, were taken before the live
+writes:
+
+```
+/root/lp-db-backups/picks.dev.pre-mlb-rotowire-20260825T030441Z.db
+/root/lp-db-backups/picks.prod.pre-mlb-rotowire-20260825T030441Z.db
+```
+
+Final database measurements:
+
+```
+             08-22                         08-23
+DEV          5,196 props / 4,850 numeric   5,906 props / 5,508 numeric
+production   5,196 props / 4,868 numeric   5,906 props / 5,508 numeric
+```
+
+Twenty-eight of the 29 fixtures linked to an ESPN event. ATL @ MIL on 08-23 failed closed:
+the relay archive says `23:10Z`, while the durable scoreboard says `23:00Z`, and the linker
+correctly refuses a known start-time disagreement. Its 482 resolvable rows still settled
+through the MLB Stats API path. Both databases remained `PRAGMA quick_check=ok`.
+
+The required API fixtures passed through both the live DEV service (`127.0.0.1:8096`) and
+the live production service (`127.0.0.1:8100`):
+
+```
+401816628 TOR @ NYY   20 players   83 settled lines   every returned result has actual
+401816653 MIN @ SD    20 players   86 settled lines   every returned result has actual
+```
+
+Verification: the focused RotoWire/MLB settlement suite passed 34 tests; the full scoped
+settlement suite passed 57 tests; and the complete backend suite, using worktree-local
+copies of both real database schemas, passed 1,859 tests with 4 skips and 6 expected
+failures.
+
+**Source provenance:** 2026-08-22 and 2026-08-23 are RotoWire-sourced archive backfills.
+The neighboring 2026-08-21 and 2026-08-24 MLB prop slates are Bovada-sourced. This is an
+intentional visible provider difference, not an ongoing second MLB ingest.
+
+---
+
 # ADDENDUM, 2026-08-25: Leagues Cup, same file, same shape
 
 Added while you were working MLB. It belongs here because the fix lives in the same
@@ -297,3 +358,52 @@ Same locks as the MLB task. Same file list, plus whatever `lcup` needs in
   see in the payload and cannot reach in the product.
 - Say plainly how many Leagues Cup props exist per archive day, so the coverage claim is a
   measured number rather than "it works now".
+
+## 6. Results (2026-08-25 UTC)
+
+Implemented the competition route without widening MLS. `lcup` reads a complete 30-club
+MLS vocabulary and 18-club Liga MX vocabulary from durable `scoreboard_snapshots`, keeps
+the memberships separate, and accepts only a fixture with one club from each. MLS-vs-MLS
+still files under `mls`; Liga MX-vs-Liga MX and clubs outside both vocabularies fail closed.
+The stored abbreviation `ATL` is ambiguous between Atlanta United and Atlante, so raw
+`ATL` is deliberately unresolved while both published display names remain distinct.
+
+The addendum's conclusion that same-day MLS and Liga MX quotes were Leagues Cup did not
+survive fixture-level measurement. All seven archives contain **zero MLS-vs-Liga MX
+fixtures**. The Liga MX quotes are domestic fixtures, including Atlante-Tigres UANL and
+Necaxa-Pumas UNAM; they are not Leagues Cup games. Counts below are supported-market source
+prop objects before book/side expansion:
+
+```
+archive day   Leagues Cup   resolved MLS   resolved Liga MX   other/unknown
+2026-08-19              0            123                  0              60
+2026-08-20              0              0                  0              23
+2026-08-21              0              6                 16              87
+2026-08-22              0             34                  0             179
+2026-08-23              0             13                 11             208
+2026-08-24              0              0                  0             104
+2026-08-25              0              0                  0              30
+```
+
+Therefore the measured Leagues Cup backfill is **0 props / 0 expanded database rows on
+every archive day**. No database backfill was applied. Treating the domestic rows as
+Leagues Cup would reproduce the competition-shadowing defect this task was intended to
+prevent. The domestic columns require a stored club spelling; `other/unknown` therefore
+also retains `Santos Laguna`, because the durable snapshot says `Santos` and no stored
+crosswalk proves those names identical.
+
+The task also claimed existing `lcup` rows in both `prop_games` and
+`scoreboard_snapshots`. Every inspected current/candidate database has zero `lcup`
+`prop_games`; the durable vocabulary is in `scoreboard_snapshots`. DEV has the complete
+30 MLS + 18 Liga MX population. Production has only 4 of 18 Liga MX clubs, so the candidate
+refuses there with `TeamVocabularyError` instead of using a partial membership oracle.
+
+MLS-side tournament players reuse the MLS canonical player spine and stable RotoWire
+binding. Liga MX players remain unresolved because there is no Liga MX player spine; the
+ingest does not match the historical Liga MX shadow rows stored under `mls`.
+
+Verification: `backend/test_ingest_rotowire_props.py` passed 35 tests; the combined
+RotoWire/MLB settlement set passed 37; and the broader settlement set passed 25. The DEV
+clone remained `PRAGMA quick_check=ok`. Representative archive CLI dry runs exited zero,
+reported every refused expanded row, and wrote nothing. No scheduler, `run_props_ingest.py`,
+host configuration, live database, service, or timer was changed.
