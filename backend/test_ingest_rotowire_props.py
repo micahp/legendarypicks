@@ -574,6 +574,59 @@ class SoccerIsFiveCompetitionsUnderOneLabel(unittest.TestCase):
         self.assertEqual(tuple(game), ("lcup", "San Diego FC", "Guadalajara"))
         self.assertEqual(self.scalar("SELECT DISTINCT player_id FROM props"), player_id)
 
+    def test_both_sides_of_a_leagues_cup_fixture_reach_the_board(self):
+        """The Liga MX half is the half that was silently missing.
+
+        `test_mls_v_liga_mx_files_under_lcup_while_europe_stays_refused` proves
+        the fixture files correctly and that the MLS-side player resolves. It
+        asserts nothing about the other club, and `_roster_league` used to send
+        those athletes to `players WHERE league='lcup'`, a table that holds zero
+        rows, so they queued as `not_in_spine` while the game still looked
+        ingested. A fixture is two teams; a test that checks one of them will
+        pass through exactly this defect.
+        """
+        mls_id = self.player("Some Forward", "SD")
+        liga_id = self.player("Otro Delantero", "GDL", league="ligamx")
+        cross = self.soccer(
+            "Some Forward", "San Diego FC", "San Diego FC", "Guadalajara")
+        mexican = self.soccer(
+            "Otro Delantero", "Guadalajara", "San Diego FC", "Guadalajara",
+            link="https://www.rotowire.com/soccer/player/gdl-101")
+        mexican["entities"][0]["entityID"] = 72
+        mexican["props"][0]["propID"] = "c"
+        mexican["props"][0]["entities"] = [72]
+        for key in ("entities", "props"):
+            cross[key].extend(mexican[key])
+
+        summary = rw.ingest(rw.parse(cross, "lcup")[0], "lcup")
+
+        self.assertEqual(summary["unresolved_players"], 0)
+        self.assertEqual(
+            self.scalar("SELECT COUNT(*) FROM unresolved_players"), 0)
+        self.assertEqual(
+            sorted(r[0] for r in self.con.execute(
+                "SELECT DISTINCT player_id FROM props")),
+            sorted([mls_id, liga_id]))
+
+    def test_a_liga_mx_player_is_never_resolved_off_the_mls_spine(self):
+        """Routing by club must not become "try the other league next".
+
+        The shadow-player defect is a Liga MX name matching an MLS row. Here the
+        spine holds the name ONLY under `mls`, so a correct run refuses it.
+        """
+        self.player("Otro Delantero", "GDL", league="mls")
+        payload = self.soccer(
+            "Otro Delantero", "Guadalajara", "San Diego FC", "Guadalajara",
+            link="https://www.rotowire.com/soccer/player/gdl-102")
+
+        summary = rw.ingest(rw.parse(payload, "lcup")[0], "lcup")
+
+        self.assertEqual(summary["unresolved_players"], 1)
+        self.assertEqual(self.scalar("SELECT COUNT(*) FROM props"), 0)
+        queued = self.con.execute(
+            "SELECT league, reason FROM unresolved_players").fetchone()
+        self.assertEqual(tuple(queued), ("lcup", "not_in_spine"))
+
     def test_mls_v_mls_files_only_under_mls(self):
         self.player("Some Forward", "ATL")
         payload = self.soccer(

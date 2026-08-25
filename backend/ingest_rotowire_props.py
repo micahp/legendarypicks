@@ -925,8 +925,18 @@ def _roster_league(
     memberships = getattr(vocabulary, "memberships", {})
     if code in memberships.get("mls", set()):
         return "mls"
-    # There is no Liga MX player spine today. Keep those athletes unresolved
-    # rather than matching the shadow Liga MX rows historically filed as MLS.
+    if code in memberships.get("ligamx", set()):
+        # There IS a Liga MX player spine as of 2026-08-25 (ESPN soccer/mex.1,
+        # 558 players across 18 clubs, filed under league='ligamx'). Before it
+        # existed this branch returned `league`, which reads `players WHERE
+        # league='lcup'` -- a table that has always held zero rows -- so every
+        # Liga MX athlete queued as `not_in_spine` and half of each fixture's
+        # props never reached the board. Routing to the club's own league is
+        # what makes the tournament resolvable from BOTH sides without
+        # widening `mls`, which is still the defect this route exists to avoid.
+        return "ligamx"
+    # A club in neither membership fails closed: the same Soccer bucket also
+    # carries EPL, Serie A, La Liga and Segunda.
     return league
 
 
