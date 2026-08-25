@@ -132,6 +132,7 @@ class LeaguesCupChartsAcrossTheSpines(unittest.TestCase):
         # never 'lcup'.
         con.execute("INSERT INTO players VALUES(1,'Liga MX Forward','AME','ligamx','F')")
         con.execute("INSERT INTO players VALUES(2,'MLS Winger','CLB','mls','M')")
+        con.execute("INSERT INTO players VALUES(3,'Deep Row Midfielder','MTY','ligamx','M')")
         rows = [
             # The Liga MX player has ONLY tournament games -- there is no ligamx
             # game-log ingest, so this is everything we hold for him.
@@ -145,6 +146,14 @@ class LeaguesCupChartsAcrossTheSpines(unittest.TestCase):
             (2, "lcup", 2026, json.dumps({"shots": 1}), "2026-08-12", "MTY", "away", 1, "REG"),
             (2, "mls", 2026, json.dumps({"shots": 2}), "2026-07-20", "NE", "home", 2, "REG"),
             (2, "mls", 2026, json.dumps({"shots": 0}), "2026-07-13", "NYC", "away", 3, "REG"),
+            # A player whose rows came from a --deep run: the core-api fields
+            # are present alongside the summary ones.
+            (3, "lcup", 2026, json.dumps({"shots": 2, "tackles": 3,
+                                          "clearances": 4, "passes_attempted": 55}),
+             "2026-08-14", "ATX", "home", 1, "REG"),
+            (3, "lcup", 2026, json.dumps({"shots": 1, "tackles": 1,
+                                          "clearances": 0, "passes_attempted": 40}),
+             "2026-08-10", "POR", "away", 2, "REG"),
         ]
         con.executemany(
             "INSERT INTO player_game_logs VALUES(?,?,?,?,?,?,?,?,?)", rows)
@@ -180,11 +189,30 @@ class LeaguesCupChartsAcrossTheSpines(unittest.TestCase):
         self.assertEqual([g["value"] for g in result["games"]], [1.0, 1.0])
 
     def test_a_market_espn_does_not_publish_is_refused_not_drawn(self):
-        # PrizePicks prices these; ESPN publishes none of them for this
-        # competition. A near-miss stat key would draw a confident wrong line.
-        for market in ("tackles", "passes_attempted", "clearances", "crosses",
-                       "dribbles", "shots_assisted", "first_goal_scorer"):
+        # CORRECTED 2026-08-25. This test used to list tackles, clearances,
+        # crosses, passes attempted and shot assists here, on the measurement
+        # "ESPN publishes none of them". That measured the SUMMARY endpoint; the
+        # CORE api publishes all five, so they are chartable and only these two
+        # are genuinely unanswerable.
+        #
+        # dribbles: the core api has groundDuels and duelWinPct, which are NOT
+        # take-ons. first_goal_scorer: an ORDER market, which no per-game stat
+        # answers.
+        for market in ("dribbles", "first_goal_scorer"):
             result = props.prop_history(
                 player_id=1, market=market, line=0.5, side="over", league="lcup")
             self.assertEqual(result["games"], [], market)
             self.assertIn("not chartable", result["error"], market)
+
+    def test_a_deep_market_charts_when_the_row_carries_it(self):
+        # Written by `ingest_soccer_logs --deep`. A shallow row simply lacks the
+        # key and yields no games, rather than charting as a zero.
+        result = props.prop_history(
+            player_id=3, market="tackles", line=1.5, side="over", league="lcup")
+        self.assertEqual([g["value"] for g in result["games"]], [3.0, 1.0])
+        self.assertEqual(result["hit_rate"]["season"], 0.5)
+
+    def test_a_shallow_row_is_absent_not_zero(self):
+        result = props.prop_history(
+            player_id=1, market="tackles", line=0.5, side="over", league="lcup")
+        self.assertEqual(result["games"], [])
