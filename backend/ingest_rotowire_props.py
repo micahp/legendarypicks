@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Ingest player props from the RotoWire picks relay: NFL and MLS.
+"""Ingest player props from the RotoWire picks relay: NFL, MLB and MLS.
 
     LP_DB_PATH=data/picks.dev.db python ingest_rotowire_props.py nfl
     LP_DB_PATH=data/picks.dev.db python ingest_rotowire_props.py nfl --dry-run
@@ -63,6 +63,12 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import ingest_rotowire_archive as archive
 from espn_client.scoreboard import _slate_day
+from team_codes import (
+    ALIASES as TEAM_CODE_ALIASES,
+    CANONICAL as CANONICAL_TEAM_CODES,
+    UnknownTeamCode,
+    normalize as normalize_team_code,
+)
 
 DB = os.environ.get("LP_DB_PATH") or os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "data", "picks.db"
@@ -88,6 +94,10 @@ SOURCE = "rotowire"
 # all. See `_fill_missing_start_time`.
 LEAGUES = {
     "nfl": {"sport": "NFL", "kind": "code", "teams": {"WAS": "WSH"}},
+    # RotoWire publishes codes, while MLB prop_games stores ESPN display names.
+    # Both halves come from durable scoreboard snapshots; `team_codes` only
+    # normalizes known cross-publisher code variants before that lookup.
+    "mlb": {"sport": "MLB", "kind": "scoreboard", "team_count": 30},
     "mls": {"sport": "Soccer", "kind": "club", "aliases": {
         # Everything else falls out of accent folding, case folding, space squashing and
         # an optional trailing FC/SC. These are genuinely different names for one club,
@@ -133,7 +143,32 @@ SOCCER_GAME_MARKETS = {
     159: ("Crosses", "crosses"),
     161: ("Passes Attempted", "passes_attempted"),
 }
-MARKETS = {"nfl": NFL_GAME_MARKETS, "mls": SOCCER_GAME_MARKETS}
+MLB_GAME_MARKETS = {
+    # Numeric count lines. These deliberately do not use the `_any` markets:
+    # "over 1.5 hits" and "to record a hit" are different questions even
+    # though the eventual boxscore field is the same.
+    216: ("Doubles", "doubles"),
+    218: ("Home Runs", "home_runs"),
+    219: ("Total Bases", "total_bases"),
+    220: ("Runs", "runs"),
+    221: ("RBI", "rbis"),
+    # 222 is a BATTER line. 232 below is the pitcher's walks-allowed line.
+    222: ("Walks", "batter_walks"),
+    226: ("Hits+Runs+RBI", "hits_runs_rbis"),
+    229: ("Earned Runs", "earned_runs"),
+    230: ("Pitcher Strikeouts", "strikeouts"),
+    231: ("Hits Allowed", "hits_allowed"),
+    232: ("Walks Allowed", "walks"),
+    234: ("Outs", "outs"),
+    238: ("Hits", "hits"),
+    # Singles, Wins, and both Fantasy Score ids remain absent on purpose. They
+    # have no verified boxscore/scoring-formula mapping and are reported below.
+}
+MARKETS = {
+    "nfl": NFL_GAME_MARKETS,
+    "mlb": MLB_GAME_MARKETS,
+    "mls": SOCCER_GAME_MARKETS,
+}
 
 _SUFFIXES = {"jr", "jr.", "sr", "sr.", "ii", "iii", "iv", "v"}
 _LINK_ID = re.compile(r"-(\d+)/?$")
@@ -360,6 +395,18 @@ class SourceIdentityConflict(RuntimeError):
     """A stable source key now names a different canonical row."""
 
 
+class TeamVocabulary(dict):
+    """Normalized spelling -> canonical code, plus its stored display name."""
+
+    def __init__(self, aliases=None, display_names=None):
+        super().__init__(aliases or {})
+        self.display_names = dict(display_names or {})
+
+
+class TeamVocabularyError(RuntimeError):
+    """Durable team evidence is absent, incomplete, or internally conflicting."""
+
+
 def queue_unresolved(con: sqlite3.Connection, league: str, row: Dict, now: str,
                      reason: str) -> None:
     existing = con.execute(
@@ -388,6 +435,13 @@ def resolve_game(con: sqlite3.Connection, league: str, row: Dict, now: str,
     # display name into a table of codes, is how a second vocabulary gets started.
     if LEAGUES[league]["kind"] == "code":
         home, away = home_code or row["home"], away_code or row["away"]
+    elif LEAGUES[league]["kind"] == "scoreboard":
+        display_names = getattr(vocabulary, "display_names", {})
+        home, away = display_names.get(home_code), display_names.get(away_code)
+        if not home or not away:
+            raise TeamVocabularyError(
+                "no stored display name for resolved {} fixture {} @ {}".format(
+                    league, away_code, home_code))
     else:
         home, away = row["home"], row["away"]
 
@@ -404,12 +458,20 @@ def resolve_game(con: sqlite3.Connection, league: str, row: Dict, now: str,
         con.execute("DELETE FROM prop_game_source_ids WHERE source=? AND league=? "
                     "AND source_game_key=?", (SOURCE, league, row["source_game_key"]))
 
-    # A one-day window, because publishers disagree by a day on a fixture that starts
-    # after midnight UTC, and both spellings are the same game.
-    candidates = con.execute(
-        "SELECT id, home, away FROM prop_games WHERE league=? "
-        "AND date BETWEEN date(?,'-1 day') AND date(?,'+1 day') ORDER BY id",
-        (league, row["date"], row["date"])).fetchall()
+    # MLB's board date has already been normalized to the same New York slate day
+    # used by scoreboards. Exact-day matching is required because baseball series
+    # routinely repeat the same two clubs on consecutive dates; a +/-1 window
+    # silently folds the next game into yesterday's fixture. The older league
+    # paths retain their tolerance for publisher date disagreements.
+    if LEAGUES[league]["kind"] == "scoreboard":
+        candidates = con.execute(
+            "SELECT id, home, away FROM prop_games WHERE league=? AND date=? ORDER BY id",
+            (league, row["date"])).fetchall()
+    else:
+        candidates = con.execute(
+            "SELECT id, home, away FROM prop_games WHERE league=? "
+            "AND date BETWEEN date(?,'-1 day') AND date(?,'+1 day') ORDER BY id",
+            (league, row["date"], row["date"])).fetchall()
     existing = [
         c for c in candidates
         if (resolve_team(vocabulary, c["home"]), resolve_team(vocabulary, c["away"]))
@@ -528,12 +590,13 @@ def ingest(rows: List[Dict], league: str, dry_run: bool = False) -> Dict:
 def team_vocabulary(con: sqlite3.Connection, league: str) -> Optional[Dict[str, str]]:
     """{how a publisher might spell a club: our canonical code}, or None if unknowable.
 
-    Both leagues read this from the league's own published list rather than from whoever
+    Every league reads this from its own published list rather than from whoever
     happens to have a roster row: a real team with an empty roster is not an unknown team,
     and reading the vocabulary off `players` would have called it one. NFL's list is
     `nfl_schedule`, the league calendar we already store. MLS's is ESPN's conference
     standings, which publishes all 30 clubs with an abbreviation and a display name, at a
-    cost of one cached request.
+    cost of one cached request. MLB reads the 30 clubs already stored in durable
+    scoreboard snapshots: each payload carries abbreviation and display name.
 
     None means "no published vocabulary here", and then nothing is refused on the strength
     of a check we could not make.
@@ -557,6 +620,9 @@ def team_vocabulary(con: sqlite3.Connection, league: str) -> Optional[Dict[str, 
                       for publisher, ours in spec["teams"].items() if ours in codes})
         return index
 
+    if spec["kind"] == "scoreboard":
+        return _scoreboard_team_vocabulary(con, league, spec["team_count"])
+
     import espn_client as espn
     try:
         standings = espn.mls_conference_standings()
@@ -579,6 +645,74 @@ def team_vocabulary(con: sqlite3.Connection, league: str) -> Optional[Dict[str, 
         index[spelling] = code
         index[_squash(spelling)] = code
     return index or None
+
+
+def _scoreboard_team_vocabulary(
+    con: sqlite3.Connection, league: str, expected_count: int
+) -> TeamVocabulary:
+    """Build a complete code/display vocabulary from durable scoreboard rows.
+
+    Unlike the MLS branch this performs no request and has no permissive `None`
+    fallback. An incomplete set cannot prove an unknown code is outside MLB, so
+    the entire ingest fails closed before it can mint a parallel fixture.
+    """
+    has_table = con.execute(
+        "SELECT 1 FROM sqlite_master WHERE type='table' AND name='scoreboard_snapshots'"
+    ).fetchone()
+    if not has_table:
+        raise TeamVocabularyError("scoreboard_snapshots is required for MLB team identity")
+
+    display_names = {}
+    for stored in con.execute(
+        "SELECT payload FROM scoreboard_snapshots WHERE LOWER(league)=?", (league,)
+    ):
+        try:
+            payload = json.loads(stored[0])
+        except (TypeError, ValueError):
+            raise TeamVocabularyError("malformed MLB scoreboard snapshot payload")
+        for side in ("home", "away"):
+            team = payload.get(side) or {}
+            raw_code = team.get("abbrev")
+            display = str(team.get("name") or "").strip()
+            if not raw_code or not display:
+                continue
+            try:
+                code = normalize_team_code(league, raw_code)
+            except UnknownTeamCode as exc:
+                raise TeamVocabularyError(str(exc))
+            prior = display_names.get(code)
+            if prior is not None and prior != display:
+                raise TeamVocabularyError(
+                    "MLB code {} has conflicting display names: {!r}, {!r}".format(
+                        code, prior, display))
+            display_names[code] = display
+
+    expected_codes = set(CANONICAL_TEAM_CODES.get(league, ()))
+    resolved_codes = set(display_names)
+    if (
+        len(resolved_codes) != expected_count
+        or resolved_codes != expected_codes
+    ):
+        raise TeamVocabularyError(
+            "MLB scoreboard vocabulary is incomplete: resolved {}/{} clubs; "
+            "missing={}, unexpected={}".format(
+                len(resolved_codes), expected_count,
+                sorted(expected_codes - resolved_codes),
+                sorted(resolved_codes - expected_codes),
+            )
+        )
+
+    index = {}
+    for code, display in display_names.items():
+        index[normalize_name(code)] = code
+        index[normalize_name(display)] = code
+    # These aliases are the repository's already-published cross-source code
+    # vocabulary (for this archive, notably CWS -> CHW), not a new handwritten
+    # list in the RotoWire path.
+    for raw_code, code in TEAM_CODE_ALIASES.get(league, {}).items():
+        if code in display_names:
+            index[normalize_name(raw_code)] = code
+    return TeamVocabulary(index, display_names)
 
 
 def _club_spellings(name: str) -> List[str]:

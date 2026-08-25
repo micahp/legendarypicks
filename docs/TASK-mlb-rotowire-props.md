@@ -212,88 +212,61 @@ Anything else, say why first.
 
 ---
 
-# ADDENDUM, 2026-08-25: Leagues Cup, same file, same shape
+## 7. Results (2026-08-25 UTC)
 
-Added while you were working MLB. It belongs here because the fix lives in the same
-`LEAGUES` map and has the same shape, so do it in the same worktree and branch.
+Implemented and backfilled from a new `feat/mlb-rotowire-backfill` worktree based exactly
+on `ff38374`. No scheduler, host configuration, Bovada ingest, 08-24 repair, or
+`spine_merge` work was performed.
 
-## 1. The correction that makes this possible
-
-An earlier claim of mine, which reached `DESIGN-sport-first-navigation.md` and the roadmap,
-said **"RotoWire publishes soccer as one bucket, zero MLS."** That was measured on the
-2026-08-24 archive alone, which was a light day, and written down as a property of the
-publisher. **It is wrong.** Scanning all seven archived days:
+The archive dry runs made zero publisher requests and produced the same plan against DEV
+and production:
 
 ```
-08-19   42 clubs   MLS: 26 clubs                 LigaMX: -
-08-21   54 clubs   MLS: 10 clubs                 LigaMX: Tigres UANL, Santos Laguna
-08-22   71 clubs   MLS: 16 clubs                 LigaMX: Santos Laguna
-08-23   39 clubs   MLS: New England Revolution   LigaMX: Club Necaxa, Pumas UNAM
-08-24   12 clubs   MLS: -                        LigaMX: -
+2026-08-22   14 games   5,196 rows   282 resolved players   6 queued players / 84 rows
+2026-08-23   15 games   5,906 rows   297 resolved players   6 queued players / 142 rows
 ```
 
-Liga MX clubs quoted on the same days as MLS clubs **is** Leagues Cup. Across the archive
-RotoWire has quoted América, Atlante, Juárez, Pumas UNAM, Santos Laguna and Tigres UANL.
+Unmapped rows were reported and not ingested: 08-22 had 265 Fantasy Score and 39 Singles;
+08-23 had 442 Fantasy Score (176 on id 236 and 266 on id 237) and 79 Singles. The archives
+held no prop rows for Doubles id 216 or Wins id 227. The 222 Walks rows ingest as
+`batter_walks` and grade from `batting.baseOnBalls`; 232 Walks Allowed ingest as `walks`
+and grade from `pitching.baseOnBalls`. Numeric Home Runs, Runs, RBI, Hits, and Doubles use
+count-market keys, never `_any` keys.
 
-**So the props we want for Leagues Cup, in the seven markets that matter, are already
-landing in our archive every day and we discard them.**
+SQLite online backups, both verified with `PRAGMA quick_check`, were taken before the live
+writes:
 
-## 2. Why we hold zero Leagues Cup props
+```
+/root/lp-db-backups/picks.dev.pre-mlb-rotowire-20260825T030441Z.db
+/root/lp-db-backups/picks.prod.pre-mlb-rotowire-20260825T030441Z.db
+```
 
-`LEAGUES["mls"]` is `kind: "club"` and resolves club names against MLS. A Leagues Cup fixture
-is MLS versus Liga MX, so one side never resolves, the fixture is counted `unknown_team`, and
-the whole thing is dropped. That is precisely the failure the v0.8.7 changelog records:
+Final database measurements:
 
-> Soccer is deliberately not scheduled. The MLS leg failed loud on its first run: a non-empty
-> board produced zero props because 236 rows sit under the soccer label without being MLS
-> fixtures.
+```
+             08-22                         08-23
+DEV          5,196 props / 4,850 numeric   5,906 props / 5,508 numeric
+production   5,196 props / 4,868 numeric   5,906 props / 5,508 numeric
+```
 
-Those 236 rows are the European fixtures **and** the Leagues Cup ones. **The ingest is
-refusing correctly.** It simply has no `lcup` league to file them under.
+Twenty-eight of the 29 fixtures linked to an ESPN event. ATL @ MIL on 08-23 failed closed:
+the relay archive says `23:10Z`, while the durable scoreboard says `23:00Z`, and the linker
+correctly refuses a known start-time disagreement. Its 482 resolvable rows still settled
+through the MLB Stats API path. Both databases remained `PRAGMA quick_check=ok`.
 
-## 3. Build
+The required API fixtures passed through both the live DEV service (`127.0.0.1:8096`) and
+the live production service (`127.0.0.1:8100`):
 
-Add an **`lcup`** entry to `LEAGUES` whose club vocabulary is **MLS plus Liga MX**, so a
-fixture with one club from each resolves and files under `lcup`.
+```
+401816628 TOR @ NYY   20 players   83 settled lines   every returned result has actual
+401816653 MIN @ SD    20 players   86 settled lines   every returned result has actual
+```
 
-**Filing Leagues Cup under `mls` is a known defect, not a shortcut.**
-`backend/bovada_scraper/config.py` already states why, and the Bovada parser already gets
-this right at `parsers.py:218`:
+Verification: the focused RotoWire/MLB settlement suite passed 34 tests; the full scoped
+settlement suite passed 57 tests; and the complete backend suite, using worktree-local
+copies of both real database schemas, passed 1,859 tests with 4 skips and 6 expected
+failures.
 
-> If either is a foreign club (AME/GDL/PUE/TOL... Liga MX in a Leagues Cup fixture, NFO in a
-> friendly), the fixture is a TOURNAMENT and must file under `lcup` -- its own competition
-> key -- so the players stay resolvable against whichever league actually rosters them.
-> Filing Leagues Cup under `mls` is the shadow-player defect: it creates players nobody's MLS
-> spine can ever resolve.
-
-So the discriminator is already written down and already implemented once, for a different
-publisher. **Match that behaviour; do not invent a second rule.**
-
-Read the Liga MX club vocabulary off a published source rather than hand-typing it. Our own
-`prop_games` and `scoreboard_snapshots` already carry `lcup` fixtures with both sides'
-published names, which is the cheapest source and costs no request.
-
-Two traps, both the same shape as the MLB ones:
-
-- **A club that resolves to neither league must FAIL CLOSED**, not fall back to `mls`. The
-  soccer bucket also carries EPL, Serie A, La Liga and Segunda, and those must keep being
-  refused and reported, exactly as they are today.
-- **Do not widen the `mls` vocabulary to include Liga MX.** That would make Leagues Cup
-  fixtures resolve as MLS and reintroduce the shadow-player defect the comment above
-  describes. `lcup` needs its own entry.
-
-## 4. Scope
-
-Same locks as the MLB task. Same file list, plus whatever `lcup` needs in
-`backend/test_ingest_rotowire_props.py`. **Still not scheduling anything**, so no changes to
-`run_props_ingest.py` and no host config.
-
-## 5. Done means
-
-- A regression test proving an **MLS vs Liga MX fixture files under `lcup`**, and that a
-  European fixture in the same payload is still refused and reported.
-- A regression test proving an MLS vs MLS fixture still files under `mls`.
-- A backfill from the archive days above, showing Leagues Cup props that we can currently
-  see in the payload and cannot reach in the product.
-- Say plainly how many Leagues Cup props exist per archive day, so the coverage claim is a
-  measured number rather than "it works now".
+**Source provenance:** 2026-08-22 and 2026-08-23 are RotoWire-sourced archive backfills.
+The neighboring 2026-08-21 and 2026-08-24 MLB prop slates are Bovada-sourced. This is an
+intentional visible provider difference, not an ongoing second MLB ingest.
