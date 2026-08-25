@@ -1,5 +1,87 @@
 # Changelog
 
+## v0.9.0
+
+### Leagues Cup player props, from the one source that publishes them
+
+- **Twelve stat markets on all four fixtures, where every reachable source had
+  zero.** Shots 477, shots on target 301, goals 234, goal+assist 199, assists
+  157, tackles 140, fouls 129, and single-figure counts on passes attempted,
+  clearances, dribbles, crosses and shots assisted. 1,723 props served across
+  Monterrey/Chicago, Leon/Salt Lake, Toluca/Austin and America/Columbus.
+- **The audit that preceded it is in `docs/PROPS-SOURCE-AUDIT-2026-08-25.md`,
+  and its first conclusion was wrong.** It read the relay's empty soccer board
+  as "not posted yet" and predicted the fixtures would arrive near kickoff.
+  Falsified by direct comparison: PrizePicks had Leon vs Real Salt Lake priced
+  while the live relay payload contained none of those players and none of the
+  eight clubs in 6.6MB. The relay is a curated subset of PrizePicks, not a
+  mirror of it -- its entire soccer board was 22 props on Real Madrid vs Real
+  Sociedad. `lines.php` listing `prizepicks` as a book means we reach what
+  RotoWire republishes, not what PrizePicks prices.
+- **PrizePicks blocks this datacenter estate-wide**, measured: `api`,
+  `partner-api`, `app` and `www` all return 403 with a byte-identical error id,
+  and a path that does not exist returns 403 rather than 404, so the block fires
+  ahead of routing. `backend/tools/pull_prizepicks.py` fetches the payload from
+  a machine PrizePicks answers; `ingest_prizepicks_props.py` reads that file and
+  does not fetch.
+- **Only 16 of 1,653 lines are standard.** The rest are demon and goblin --
+  boosted alternates offering More only -- and the variant is carried in
+  `source` rather than flattened, because a demon read as a plain over/under is
+  a different bet than the one the book is taking.
+- **Kalshi and Bovada are closed by measurement, not assumption.** All 3,511
+  Kalshi sports series enumerated: eleven Leagues Cup series, every one
+  team-level, and no soccer player-stat series anywhere on the platform. All
+  2,213 Bovada outcomes across the four fixtures scanned through the per-event
+  path with `marketFilterId` dropped, which returns 64 market groups instead of
+  the coupon's 3: the only stat vocabulary present is assists and shots, almost
+  entirely inside combo parlays.
+
+### Settlement, closed end to end
+
+- **Grading now reaches these props at all.** `settle_game` dispatched on
+  `league == "mls"` alone, so a Leagues Cup fixture fell through to the boxscore
+  path -- which soccer summaries never populate, since their `boxscore` carries
+  only `teams` and per-player stats live under `rosters`.
+- **The soccer market map knew goals and assists and nothing else.** Shots,
+  shots on target and fouls -- 907 of the priced props -- had no mapping. Added
+  using ESPN's own field names, verified against a real completed fixture.
+  Tackles, clearances, crosses, dribbles and passes attempted are deliberately
+  left out: ESPN publishes none of them for this competition, measured at 0 of
+  1,640 rows, so they stay ungraded rather than being mapped to a near-miss
+  field and graded wrong.
+- **1,640 game logs across all 52 completed fixtures**, 740 players, none
+  unlinked. `players WHERE league='lcup'` has always held zero rows, so every
+  Leagues Cup athlete had resolved against an empty roster; they route to the
+  `mls` and `ligamx` spines that own them, failing closed where a club code
+  names both.
+- **Three of four fixtures had no `espn_event_id`,** and settlement returns
+  early without one. The linker compares club names by exact containment and we
+  store `CF Monterrey`, `Club Leon` and `Club America` where ESPN publishes
+  `Monterrey`, `Leon` and `America`, so it matched Toluca and nothing else. It
+  now reuses the published-spelling generator the RotoWire ingest relies on
+  rather than adding a fourth club-name matcher.
+
+### The board reads as one board
+
+- **One question, one row.** Bovada's anytime goal scorer and PrizePicks'
+  `goals 0.5` are the same bet, and the slate listed both -- 146 duplicate rows.
+  The priced row wins, which is not a preference between books: a line carrying
+  odds answers strictly more than the same line without them.
+- **The card header counts the way the card counts.** It used `COUNT(p.id)`
+  while the card dedupes per player, so the header said 495 and the card listed
+  454.
+- **One competition, one name.** The day-group heading uppercased the league
+  key, rendering a "Leagues Cup" pill directly above an "LCUP" heading over the
+  same two games.
+
+### Data
+
+- **The relay publishes twelve soccer markets and we mapped eight.** Tackles,
+  Passes and Fouls Committed were counted as UNMAPPED and discarded on every
+  run; 44 props recovered across five archived days. Both Fantasy Score markets
+  stay unmapped on purpose, as the MLB ones do: a composite of a scoring formula
+  the publisher does not send cannot be settled.
+
 ## v0.8.9
 
 ### Two scoreboard defects reported from real use, both diagnosed rather than guessed
