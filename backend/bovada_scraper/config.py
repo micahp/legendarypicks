@@ -35,6 +35,24 @@ LEAGUES = {
     # Historical Bovada MLS rows are kept, not deleted; the reader's source policy selects
     # the relay. `_parse_mls_props` stays in this file — it is measured, tested, and the
     # league is one line away if the relay does not work out.
+    # Leagues Cup, added 2026-08-25. The MLS coupon above was removed because Bovada
+    # priced 2 of the 11 markets this league is built for; that judgement was about
+    # MLS, where the RotoWire/PrizePicks relay prices seven and is the better source.
+    # It does not transfer to this tournament, because the relay carries NO Leagues
+    # Cup at all -- measured across the live payload and all seven archived days --
+    # so the choice here is Bovada or an empty board, not Bovada or a better source.
+    #
+    # The path is `north-america/leagues-cup`. Both `concacaf-leagues-cup` guesses
+    # were wrong: one 404s, the other returns 200 with ZERO events, which would have
+    # read as "Bovada does not carry it". Found by pulling Bovada's whole 1,084-event
+    # soccer tree and matching on club name instead of guessing slugs.
+    #
+    # What it yields, measured: 45-51 players per fixture on Anytime Goal Scorer and
+    # the same on First Goal Scorer, 636 outcomes across the four fixtures. That is
+    # goals and assists -- 2 of 11 -- and the stat lines (shots, passes, saves) are
+    # simply absent: the coupon's only player stat outcome in all four fixtures is a
+    # one-off `Hugo Cuypers 1+ Shots on Target` under Requested Specials.
+    "lcup": ("soccer", "north-america/leagues-cup"),
     "ufc":  ("ufc-mma", "ufc"),
     "atp":  ("tennis", "atp"),
     "wta":  ("tennis", "wta"),
