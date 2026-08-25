@@ -24,18 +24,31 @@ def test_sport_comes_from_the_complete_espn_path_registry():
     assert sport_for_league("unknown") is None
 
 
-def test_props_navigation_is_stable_history_not_today_only():
+def test_props_navigation_is_product_coverage_not_row_presence():
     con = _db()
     con.executemany(
         "INSERT INTO prop_games VALUES(?, ?)",
-        [(1, "atp"), (2, "wta"), (3, "mls"), (4, "wc"), (5, "unknown")],
+        [(1, "mls"), (2, "wc"), (3, "unknown")],
     )
-    con.executemany("INSERT INTO props VALUES(?, ?)", [(10, 1), (11, 2), (12, 3), (13, 4), (14, 5)])
+    con.executemany("INSERT INTO props VALUES(?, ?)", [(10, 1), (11, 2), (12, 3)])
     assert prop_navigation(con) == [
         {"league": "atp", "sport": "tennis"},
+        {"league": "lcup", "sport": "soccer"},
+        {"league": "mlb", "sport": "baseball"},
         {"league": "mls", "sport": "soccer"},
+        {"league": "nba", "sport": "basketball"},
+        {"league": "nfl", "sport": "football"},
+        {"league": "nhl", "sport": "hockey"},
+        {"league": "ufc", "sport": "mma"},
         {"league": "wta", "sport": "tennis"},
     ]
+
+
+def test_props_navigation_survives_an_empty_or_unreadable_prop_schema():
+    con = sqlite3.connect(":memory:")
+    rows = prop_navigation(con)
+    assert {row["league"] for row in rows} >= {"nba", "mls", "lcup"}
+    assert not ({"wc", "unknown"} & {row["league"] for row in rows})
 
 
 def test_directory_uses_coverage_gate_and_keeps_rollup_hubs():

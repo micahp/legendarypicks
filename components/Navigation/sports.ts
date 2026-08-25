@@ -53,8 +53,15 @@ function sportRank(sport: string): number {
 
 function competitionSort(a: Competition, b: Competition): number {
   const footballOrder = ['nfl', 'ncaaf']
+  const soccerOrder = ['mls', 'lcup']
   const tennisOrder = ['atp', 'wta']
-  const order = a.sport === 'football' ? footballOrder : a.sport === 'tennis' ? tennisOrder : []
+  const order = a.sport === 'football'
+    ? footballOrder
+    : a.sport === 'soccer'
+      ? soccerOrder
+      : a.sport === 'tennis'
+        ? tennisOrder
+        : []
   const aRank = order.indexOf(a.league)
   const bRank = order.indexOf(b.league)
   return (aRank === -1 ? order.length : aRank) - (bRank === -1 ? order.length : bRank)

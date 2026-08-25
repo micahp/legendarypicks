@@ -13,7 +13,27 @@ from league_offering import offered_leagues
 
 
 HIDDEN_DIRECTORY_LEAGUES = frozenset({"wc"})
-HIDDEN_PROP_LEAGUES = frozenset({"wc"})
+# Props navigation describes the product we offer, not whichever competitions
+# happen to have rows in today's database. Row presence is feed-dependent: NBA
+# can have scheduled games but no player-prop offers, and Leagues Cup can have a
+# published scoreboard slate before any prop_game row exists. Using props as the
+# enablement registry made both disappear while leaving Soccer visible solely
+# because MLS retained historical rows.
+#
+# Keep this product contract separate from the provider fetch registries. A
+# provider can be temporarily empty, and one stray stored row must not silently
+# launch a new competition in the UI.
+PROP_PRODUCT_LEAGUES = frozenset({
+    "atp",
+    "lcup",
+    "mlb",
+    "mls",
+    "nba",
+    "nfl",
+    "nhl",
+    "ufc",
+    "wta",
+})
 
 
 def sport_for_league(league: str) -> str | None:
@@ -34,27 +54,14 @@ def _rows(leagues) -> list[dict[str, str]]:
     return rows
 
 
-def prop_navigation(con: sqlite3.Connection) -> list[dict[str, str]]:
-    """Competitions with at least one stored prop, grouped later by published sport.
+def prop_navigation(_con: sqlite3.Connection) -> list[dict[str, str]]:
+    """Competitions supported by the Props product, grouped by published sport.
 
-    This intentionally measures the stored product rather than today's slate. A
-    top-level sport is stable across the calendar, while a competition only earns
-    a props filter after its first real prop lands.
+    The database decides what each selected board can render. It does not decide
+    whether the selector exists: an empty or unavailable slate gets an honest
+    empty state instead of silently removing the competition from navigation.
     """
-    try:
-        leagues = {
-            row[0]
-            for row in con.execute(
-                """SELECT DISTINCT LOWER(pg.league)
-                   FROM prop_games pg
-                   JOIN props p ON p.game_id = pg.id
-                   WHERE COALESCE(pg.league, '') <> ''"""
-            ).fetchall()
-            if row[0]
-        }
-    except sqlite3.Error:
-        return []
-    return _rows(leagues - HIDDEN_PROP_LEAGUES)
+    return _rows(PROP_PRODUCT_LEAGUES)
 
 
 def league_directory_navigation(con: sqlite3.Connection) -> list[dict[str, str]]:

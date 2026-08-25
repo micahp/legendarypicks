@@ -82,11 +82,13 @@ everywhere else: the value is published, do not re-derive it
    sport,** and it appears as a second row inside that sport, never mixed into the first.
 3. **The second row defaults to all competitions.** A filter the visitor did not set must
    never hide props.
-4. **Which competitions are offered is a runtime coverage question, not a constant.** League
-   directory cards read the vouched coverage registry (`docs/DATA-COVERAGE-CONTRACT.md` §4).
-   Props filters read distinct competitions that have at least one stored prop. This is
-   deliberately historical rather than today-only: the top-level sport stays stable across
-   the calendar, while a competition with no prop product never earns an empty filter.
+4. **Which competitions are offered comes from the product's enablement registry, not row
+   presence.** League directory cards read the vouched coverage registry
+   (`docs/DATA-COVERAGE-CONTRACT.md` §4). Props filters read the Props product registry.
+   Current or historical rows are inventory, not enablement: NBA remains navigable when no
+   player offers are posted, and a scheduled Leagues Cup slate remains navigable before a
+   provider has created any `prop_games` rows. One stray stored row also cannot silently
+   launch a new competition in the UI.
 5. **A sport is named for what it is, not for the one competition we happen to carry.** The
    exception is stated per sport in §3, because "we have one competition" and "this sport is
    one competition" look identical in a count and only one of them should be renamed later.

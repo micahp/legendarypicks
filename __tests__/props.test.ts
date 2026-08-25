@@ -1,5 +1,5 @@
 import React from 'react'
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import PropsPage from '../pages/props'
 import { groupSportNavigation } from '../components/Navigation/sports'
 
@@ -10,11 +10,14 @@ describe('Props sport selector', () => {
       { league: 'ncaaf', sport: 'football' },
       { league: 'mls', sport: 'soccer' },
       { league: 'lcup', sport: 'soccer' },
+      { league: 'nba', sport: 'basketball' },
       { league: 'atp', sport: 'tennis' },
       { league: 'wta', sport: 'tennis' },
       { league: 'ufc', sport: 'mma' },
     ], 'props')
-    expect(groups.map(group => group.label)).toEqual(['NFL', 'NCAAF', 'Soccer', 'Tennis', 'UFC'])
+    expect(groups.map(group => group.label)).toEqual(['NFL', 'NCAAF', 'Soccer', 'Tennis', 'NBA', 'UFC'])
+    expect(groups.find(group => group.label === 'Soccer')?.competitions.map(item => item.league))
+      .toEqual(['mls', 'lcup'])
     expect(groups.find(group => group.label === 'Tennis')?.competitions.map(item => item.league))
       .toEqual(['atp', 'wta'])
   })
@@ -30,6 +33,12 @@ describe('Props slate grouping', () => {
     { game_id: 6, home: 'C', away: 'D', date: '2026-08-16', start_time: '2026-08-16T02:30:00+00:00', league: 'nhl', prop_count: 4, players: [] },
   ]
   const originalFetch = global.fetch
+  const clickAndFlush = async (button: HTMLElement) => {
+    await act(async () => {
+      fireEvent.click(button)
+      await new Promise(resolve => setTimeout(resolve, 0))
+    })
+  }
 
   beforeEach(() => {
     global.fetch = jest.fn((input: RequestInfo | URL) => {
@@ -91,5 +100,37 @@ describe('Props slate grouping', () => {
         String(url).includes('league=wta'))).toBe(true)
     })
     await waitFor(() => expect(document.querySelectorAll('[data-slate-game]')).toHaveLength(slate.length))
+  })
+
+  it('keeps NBA and both soccer competitions selectable when their slate is empty', async () => {
+    global.fetch = jest.fn((input: RequestInfo | URL) => {
+      const url = String(input)
+      const payload = url.includes('/api/navigation/sports')
+        ? { props: [
+          { league: 'mls', sport: 'soccer' },
+          { league: 'lcup', sport: 'soccer' },
+          { league: 'nba', sport: 'basketball' },
+        ] }
+        : []
+      return Promise.resolve({ ok: true, json: () => Promise.resolve(payload) })
+    }) as any
+
+    render(React.createElement(PropsPage))
+
+    await clickAndFlush(await screen.findByRole('button', { name: 'Soccer' }))
+    const soccerNav = screen.getByRole('navigation', { name: 'Soccer competitions' })
+    expect(soccerNav.textContent).toContain('MLS')
+    expect(soccerNav.textContent).toContain('Leagues Cup')
+    await waitFor(() => expect((global.fetch as jest.Mock).mock.calls.some(([url]) =>
+      String(url).includes('leagues=mls%2Clcup'))).toBe(true))
+
+    await clickAndFlush(screen.getByRole('button', { name: 'Leagues Cup' }))
+    await waitFor(() => expect((global.fetch as jest.Mock).mock.calls.some(([url]) =>
+      String(url).includes('league=lcup'))).toBe(true))
+
+    await clickAndFlush(screen.getByRole('button', { name: 'NBA' }))
+    await waitFor(() => expect((global.fetch as jest.Mock).mock.calls.some(([url]) =>
+      String(url).includes('league=nba'))).toBe(true))
+    expect(screen.getByRole('button', { name: 'NBA' }).getAttribute('aria-pressed')).toBe('true')
   })
 })
