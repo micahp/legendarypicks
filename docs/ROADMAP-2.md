@@ -114,8 +114,80 @@ None of it is promoted, so every number is candidate evidence, not production st
 
 ## 3. Scoreboard upgrade
 
-- [ ] **Scoreboard upgrade.** Named 2026-08-25, scope not yet defined. Needs a spec before
-      it is work. The two defects in §2 are separate and should not be folded into it.
+**Correction: a spec already exists and I said it did not.**
+`docs/TASK-scoreboard-outcomes-and-homepage.md`, written 2026-08-19 from Micah's direction,
+carries three ordered items. `docs/SPEC-featured-events-scoreboard.md` is the adjacent one.
+Read both before writing anything new.
+
+- [ ] **Confirm which of the three 08-19 items actually shipped**, per surface, not per
+      commit message. Item 1 (every final says HOW it ended) looks implemented: `_core.py`
+      serves `outcome_method` / `outcome_round` / `outcome_clock`. Items 2 and 3 are
+      unverified.
+      - Item 1: every final shows the method of victory when there is no score. UFC was the
+        unhandled case; ESPN publishes it at `competitions[].details[]` and we were
+        discarding it.
+      - Item 2: the live section moves **above** the date control and ignores the selected
+        date, because a live game is a fact about the present, not about the date being
+        browsed. Renders nothing at all when nothing is live. Explicitly do **not** re-add
+        the Cheap Quality Live discounts widget to `/scores`.
+      - Item 3: the homepage leads with props and prop history rather than the scoreboard.
+- [ ] **Then decide what else "scoreboard upgrade" means**, on top of whatever of the above
+      is genuinely outstanding. The two defects in §2 are separate bugs and should not be
+      folded into it.
+
+---
+
+## 3b. NFL prop markets we receive and cannot grade
+
+Named by Micah 2026-08-25 off the `YDS` / `Yds` finding. **Measured against the RotoWire
+relay archive for 2026-08-24**, joined against `backend/settlement/market_mapping.py`.
+
+`MARKET_STAT` currently maps seven NFL markets, and two of them already cover part of what
+was asked:
+
+```
+passing_yards -> passing.Yds     passing_tds -> passing.TD
+rushing_yards -> rushing.Yds     receiving_yards -> receiving.Yds
+receptions    -> receiving.Rec   tackles -> defensive.Tkl
+sacks         -> defensive.Sk
+```
+
+**So sacks is already mapped, and RotoWire does publish it** (53 season, 9 game rows on
+08-24). Whether it actually grades is a separate question from whether it maps, and that is
+the thing to verify rather than assume.
+
+Missing, with the count RotoWire published in the **Game** category on one day:
+
+- [ ] **`rushing_tds`.** Not mapped at all, despite `passing_tds` being mapped. RotoWire
+      publishes `Rushing Touchdowns` (57 season rows) and it is already on the
+      dropped-for-want-of-a-mapping list in the main roadmap.
+- [ ] **`receiving_tds`.** Same gap. 93 season rows.
+- [ ] **`targets`** (Game 4, and `Targets` is named in the main roadmap's dropped list).
+- [ ] **The compound yardage markets**, which need a sum rather than a single stat key, the
+      way `mlb.hits_runs_rbis` already does with a `(None, None)` sentinel:
+      `Passing + Rushing Yards` (Game 4), `Rushing + Receiving Yards` (Game 4).
+- [ ] **The compound touchdown markets**: `Total Touchdowns` (Game 12),
+      `Rushing + Receiving Touchdowns` (Game 10), `Passing + Rushing Touchdowns` (14 season).
+- [ ] **The kicking family**: `Kicking Points` (Game 24), `Field Goals Made` (Game 8),
+      `Extra Points Made` (Game 4). Note Codex's finding that ESPN publishes field goals as
+      `made/attempted` in one string (`2/2`), so this needs a parse and not a lookup.
+- [ ] **`Interceptions Thrown`** (Game 22). Distinct from `Interceptions Caught`
+      (20 season), which is a defensive market and a different stat.
+- [ ] **`Fantasy Score`** (Game 10). This one is a scoring formula, not a published stat.
+      It needs `ppr_scoring.py` rather than a boxscore key, and it should be decided
+      separately from the rest.
+
+**Fumbles: RotoWire published NO fumbles market for NFL on 2026-08-24**, in either
+category. So the ask cannot be met by adding a mapping. Two separate questions before this
+becomes work: does any book we relay publish a fumbles prop at all, and does ESPN's NFL
+boxscore carry a fumbles category we could grade against. Measure both before writing it
+down as available or unavailable
+(`published-first-skill` §2b: a gap is a question until it is measured).
+
+**The general lesson from `YDS` / `Yds`, worth applying to every one of the above:** the
+label the publisher sends and the label the map asks for were compared case-sensitively, and
+the mismatch produced no error, only an ungraded prop. When adding these, fold the
+comparison and add the regression test that proves the publisher's actual casing, not ours.
 
 ---
 
