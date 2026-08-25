@@ -1,0 +1,39 @@
+bucket	shadow_id	name	bovada_team	espn_id	espn_team	signals
+A_two_signals_agree	32762	Aziel Jackson	VAN	318536	MIN	spine_exact_name|published_surname_initial
+A_two_signals_agree	33312	Aziel Jackson	VAN	318536	MIN	spine_exact_name|published_surname_initial
+A_two_signals_agree	32364	Brayan Ceballos	NE	322977	MTL	spine_exact_name|published_surname_initial
+A_two_signals_agree	32555	Elias Achouri	AME	324510	SD	spine_exact_name|published_surname_initial
+A_two_signals_agree	32782	Gallatin Sandnes	TOL	399992	SEA	spine_exact_name|published_surname_initial
+A_two_signals_agree	32541	Hirving Lozano	SD	200161	LA	spine_exact_name|published_surname_initial
+A_two_signals_agree	32536	Igor Jesus	NFO	322658	LAFC	spine_exact_name|published_surname_initial
+A_two_signals_agree	32826	Joao Klauss	STL	150409	LA	spine_exact_name|published_surname_initial
+A_two_signals_agree	32797	Kimani Stewart Baynes	COL	380601	COL	spine_exact_name|published_surname_initial
+A_two_signals_agree	32771	Trevor Wright	ATL	389925	VAN	spine_exact_name|published_surname_initial
+A_two_signals_agree	32628	Vincent Janssen	PUE	188402	POR	spine_exact_name|published_surname_initial
+B_one_signal	32359	Aleksey Miranchuk	ATL	185897	ATL	published_surname_initial
+B_one_signal	32572	Benji Kikanović	SJ	302893	SJ	published_surname_initial
+B_one_signal	32760	Cheikh Sabaly	VAN	276451	VAN	published_surname_initial
+B_one_signal	32750	Danny Musovski	SEA	256450	SEA	published_surname_initial
+B_one_signal	32642	Djé D'Avilla	CHI	335605	CHI	spine_name_subset
+B_one_signal	32787	J.C. Ngando	VAN	277302	VAN	published_surname_initial
+B_one_signal	32492	Jake Davis	SKC	286760	SKC	published_surname_initial
+B_one_signal	32692	Japhet Sery Larsen	PHI	288688	PHI	spine_name_subset
+B_one_signal	32558	Marco Delgado	LAFC	193171	LAFC	published_surname_club
+B_one_signal	32334	Marcos Zambrano	NE	404655	NE	spine_name_subset
+B_one_signal	32377	Matty Longstaff	MTL	279758	MTL	published_surname_initial
+B_one_signal	32331	Nick Markanich	HOU	333738	HOU	published_surname_initial
+B_one_signal	32693	Philippe Ndinga	PHI	378634	PHI	spine_name_subset
+B_one_signal	32754	Ralph Priso	VAN	297118	VAN	spine_name_subset
+B_one_signal	32574	Vitor Costa de Brito	SJ	223355	SJ	spine_name_subset
+B_one_signal	32564	Willy Kumado	SD	329734	SD	published_surname_initial
+B_one_signal	32784	Yeimar Gómez Andrade	SEA	206682	SEA	spine_name_subset
+D_no_publisher_evidence	32442	Ahmed Qasem	NSH			
+D_no_publisher_evidence	32353	Ajani Fortune	ATL			
+D_no_publisher_evidence	32438	Brian Anunga	CIN			
+D_no_publisher_evidence	32545	David Morales	GDL			
+D_no_publisher_evidence	32466	Ezequiel Abadia Reda	MIA			
+D_no_publisher_evidence	32706	Giovanny Sequera	PHI			
+D_no_publisher_evidence	33295	Giovanny Sequera	PHI			
+D_no_publisher_evidence	32358	Gustav Berggren	NYRB			
+D_no_publisher_evidence	32396	Neriman Axundzade	CLB			
+D_no_publisher_evidence	32520	Saba Lobzhanidze	RSL			
