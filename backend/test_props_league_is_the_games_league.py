@@ -1,0 +1,92 @@
+#!/usr/bin/env python3
+"""`?league=` means the competition, not the spine each athlete sits in.
+
+For every single-league sport the two are the same word, so this went unnoticed.
+They diverge in a cross-league tournament: a Leagues Cup game is `lcup` while the
+athletes playing it are `mls` and `ligamx`. `/api/props` filtered on `pl.league`
+and returned nothing for `lcup`, while `/api/props/slate` filtered on `pg.league`
+and still advertised the game with its prop_count. A board that claims N props
+and lists none, on the feature the product is built around.
+"""
+import os
+import sqlite3
+import sys
+import tempfile
+import unittest
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, HERE)
+
+# `_core.DB` is bound at IMPORT and never re-read. Pointing LP_DB_PATH at a
+# fixture before importing only works if nothing else imported `_core` first,
+# which is true when this file runs alone and false in the suite: another test
+# imports it, `DB` is already bound, and this file's fixture never gets a schema.
+# So bind the module attribute per test instead. That is the same shape as the
+# package split where `from .constants import _DB` bound a copy and 36 "fixture"
+# tests read prod.
+import _core  # noqa: E402
+from routers import props  # noqa: E402
+
+_FIXTURE = tempfile.NamedTemporaryFile(prefix="props-league-", suffix=".db", delete=False)
+_FIXTURE.close()
+
+
+def _seed():
+    con = sqlite3.connect(_FIXTURE.name)
+    # One Leagues Cup fixture: an MLS club against a Liga MX club, one athlete from
+    # each spine. This is the real shape of 2026-08-26.
+    con.execute("INSERT INTO players(id,name,team,league) VALUES(1,'MLS Forward','RSL','mls')")
+    con.execute("INSERT INTO players(id,name,team,league) VALUES(2,'Liga MX Forward','LEO','ligamx')")
+    # An MLS-vs-MLS fixture on the same day, so a filter that simply stopped
+    # filtering would also pass and must not.
+    con.execute("INSERT INTO players(id,name,team,league) VALUES(3,'Other Forward','ATX','mls')")
+    con.execute("INSERT INTO prop_games(id,league,date,start_time,home,away) "
+                "VALUES(10,'lcup','2026-08-26','2026-08-27T02:00:00+00:00','Leon','Real Salt Lake')")
+    con.execute("INSERT INTO prop_games(id,league,date,start_time,home,away) "
+                "VALUES(11,'mls','2026-08-26','2026-08-27T02:00:00+00:00','Austin FC','FC Dallas')")
+    for pid, (gid, player) in enumerate(((10, 1), (10, 2), (11, 3)), start=100):
+        con.execute(
+            "INSERT INTO props(id,game_id,player_id,market,line,side,source,captured_at,odds) "
+            "VALUES(?,?,?,'shots_on_target',1.5,'over','rotowire','2026-08-26T12:00:00Z',-120)",
+            (pid, gid, player))
+        con.execute(
+            "INSERT INTO prop_results(prop_id,actual_value,hit,settled_at) "
+            "VALUES(?,2.0,1,'2026-08-27T05:00:00Z')", (pid,))
+    con.commit()
+    con.close()
+
+
+class LeagueFilterIsTheCompetition(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls._old_db = _core.DB
+        _core.DB = _FIXTURE.name
+        _core._init_db()
+        _seed()
+
+    @classmethod
+    def tearDownClass(cls):
+        _core.DB = cls._old_db
+        try:
+            os.unlink(_FIXTURE.name)
+        except FileNotFoundError:
+            pass
+
+    def test_lcup_returns_both_spines(self):
+        rows = props.list_props(player=None, market=None, league="lcup", date=None, limit=50)
+        self.assertEqual(len(rows), 2, "both halves of the fixture must reach the board")
+        self.assertEqual(sorted(r["league"] for r in rows), ["ligamx", "mls"])
+        self.assertEqual({r["game_home"] for r in rows}, {"Leon"})
+
+    def test_mls_does_not_swallow_the_tournament_game(self):
+        """The filter must still be a filter: `mls` returns only the MLS fixture."""
+        rows = props.list_props(player=None, market=None, league="mls", date=None, limit=50)
+        self.assertEqual([r["game_home"] for r in rows], ["Austin FC"])
+
+    def test_stats_counts_the_competition_not_the_spine(self):
+        stats = props.prop_stats(market=None, league="lcup", window=365)
+        self.assertEqual(sum(s["total"] for s in stats), 2)
+
+
+if __name__ == "__main__":
+    unittest.main()

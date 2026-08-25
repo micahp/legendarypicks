@@ -77,7 +77,14 @@ def list_props(player: Optional[str] = Query(None),
         sql += " AND (p.market = ? OR instr(p.market, ? || '___') = 1)"
         params.extend((market, market))
     if league:
-        sql += " AND pl.league = ?"
+        # The GAME's league, not the player's. They are the same word in every
+        # single-league sport, and different in a cross-league tournament:
+        # Leagues Cup games are `lcup` while the athletes on them are `mls` and
+        # `ligamx`. Filtering on `pl.league` returned zero props for the one
+        # competition whose whole point is that two leagues meet, while
+        # `/api/props/slate` (which filters `pg.league`) still advertised the
+        # game and its prop_count. A board claiming N props and listing none.
+        sql += " AND pg.league = ?"
         params.append(league)
     if date:
         sql += " AND pg.date = ?"
@@ -253,6 +260,7 @@ def prop_stats(market: Optional[str] = Query(None),
              FROM props p
              JOIN prop_results r ON r.prop_id = p.id
              JOIN players pl ON pl.id = p.player_id
+             JOIN prop_games pg ON pg.id = p.game_id
              WHERE r.hit IS NOT NULL
                AND p.captured_at >= date('now', ? || ' days')"""
     params = [f"-{window}"]
@@ -260,7 +268,9 @@ def prop_stats(market: Optional[str] = Query(None),
         sql += " AND p.market = ?"
         params.append(market)
     if league:
-        sql += " AND pl.league = ?"
+        # Same rule as /api/props: hit rates for `lcup` are a property of the
+        # competition, not of whichever spine each athlete happens to sit in.
+        sql += " AND pg.league = ?"
         params.append(league)
     sql += " GROUP BY p.market, p.side ORDER BY total DESC"
     with closing(_db()) as con:
