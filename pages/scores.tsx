@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import Head from 'next/head'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
@@ -128,6 +128,32 @@ export default function ScoresPage() {
   const [date, setDate] = useState<string>(today)
   const [leagueFilter, setLeagueFilter] = useState<string>('All')
   const isToday = date === today
+
+  // The URL is the state, not a one-way seed into it. Until 2026-08-25 the query
+  // was READ into state below and never written back, so changing the day or the
+  // league chip left the URL at a bare `/scores`. Clicking into a game and
+  // pressing back then landed on `/scores` with no query, which resets to today
+  // with no filter and loses the reader's place. That is the whole bug.
+  //
+  // Shallow on purpose: the board loads from its own effect keyed on `date`, so a
+  // route change must not re-run getServerSideProps or refetch the page.
+  const syncQuery = useCallback((next: { date?: string; league?: string }) => {
+    const nextDate = next.date ?? date
+    const nextLeague = next.league ?? leagueFilter
+    const q: Record<string, string> = {}
+    // Defaults stay OUT of the URL, so a shared link carries only what was chosen
+    // and `/scores` keeps meaning "today, all leagues".
+    if (nextDate !== today) q.date = nextDate
+    if (nextLeague !== 'All') q.league = nextLeague
+    // ?live=1 is a third piece of state read from this same query (the rail's
+    // "more live games" destination). It has to survive a day or league change.
+    if (router.query.live === '1') q.live = '1'
+    router.push({ pathname: '/scores', query: q }, undefined, { shallow: true })
+  }, [date, leagueFilter, today, router])
+
+  const selectDate = (d: string) => { setDate(d); syncQuery({ date: d }) }
+  const selectLeague = (l: string) => { setLeagueFilter(l); syncQuery({ league: l }) }
+
   const shiftDay = (delta: number) => {
     // W3 — the arrows jump to the neighbouring date that actually has games
     // (schedule-dates contract) instead of calendar ±1. Strictness from
@@ -142,11 +168,11 @@ export default function ScoresPage() {
     if (!selected.length) return
     SportsService.getNeighbourGameDate(selected, date, delta as -1 | 1)
       .then((target) => {
-        if (target) setDate(target)
+        if (target) selectDate(target)
       })
       .catch(() => { /* discovery unavailable — stay on the anchor */ })
   }
-  const goToday = () => setDate(today)
+  const goToday = () => selectDate(today)
 
   // allow a shareable/deep-linkable day via ?date=YYYY-MM-DD
   useEffect(() => {
@@ -355,7 +381,7 @@ export default function ScoresPage() {
             <div className="relative">
               <select
                 value={leagueFilter}
-                onChange={(e) => setLeagueFilter(e.target.value)}
+                onChange={(e) => selectLeague(e.target.value)}
                 className="appearance-none bg-zinc-900 border border-zinc-800 rounded-lg pl-3 pr-8 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 {LEAGUES.map((l) => (
@@ -420,7 +446,7 @@ export default function ScoresPage() {
               Nothing is live right now.
             </div>
           ) : (
-            <EmptyState leagueFilter={leagueFilter} onViewAll={() => setLeagueFilter('All')} />
+            <EmptyState leagueFilter={leagueFilter} onViewAll={() => selectLeague('All')} />
           )
         ) : (
           <div className="space-y-12">
