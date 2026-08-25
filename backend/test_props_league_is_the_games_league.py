@@ -83,6 +83,23 @@ class LeagueFilterIsTheCompetition(unittest.TestCase):
         rows = props.list_props(player=None, market=None, league="mls", date=None, limit=50)
         self.assertEqual([r["game_home"] for r in rows], ["Austin FC"])
 
+    def test_the_slate_expands_to_the_props_it_advertised(self):
+        """The one endpoint that had BOTH rulers in it.
+
+        `props_slate` filters its GAME list on `pg.league` and used to fetch the
+        nested props on `pl.league`, so a Leagues Cup fixture was listed with its
+        prop_count and then expanded to nothing. The count and the list have to
+        be measured the same way or the board lies about itself.
+        """
+        slate = props.props_slate(league="lcup", date=None, summary=0, game_id=None)
+        games = slate["games"] if isinstance(slate, dict) else slate
+        self.assertEqual(len(games), 1, "the lcup fixture must be listed")
+        advertised = games[0].get("prop_count")
+        listed = len(games[0].get("players") or games[0].get("props") or [])
+        self.assertTrue(listed > 0, "the fixture expanded to nothing")
+        if advertised is not None:
+            self.assertEqual(advertised, 2)
+
     def test_stats_counts_the_competition_not_the_spine(self):
         stats = props.prop_stats(market=None, league="lcup", window=365)
         self.assertEqual(sum(s["total"] for s in stats), 2)

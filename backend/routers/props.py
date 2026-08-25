@@ -352,7 +352,11 @@ def props_slate(league: Optional[str] = Query(None),
              WHERE 1=1"""
     params = []
     if league:
-        sql += " AND pl.league = ?"
+        # The slate's GAME list already filters `pg.league` (see above), so a
+        # nested prop fetch on `pl.league` is the two-rulers bug inside one
+        # endpoint: the Leagues Cup fixture is listed with its prop_count and
+        # then expands to nothing, because its athletes are `mls` and `ligamx`.
+        sql += " AND pg.league = ?"
         params.append(league)
     if game_id is not None:
         sql += " AND pg.id = ?"
