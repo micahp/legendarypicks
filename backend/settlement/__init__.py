@@ -45,6 +45,7 @@ from settlement.ufc_settle import (
     _ufc_actual,
 )
 from settlement.mls_settle import _settle_mls_props
+from settlement.tennis_settle import _settle_tennis_props, _tennis_snapshot
 from settlement.grading import _grade_actual
 from settlement.settle_game import settle_game
 
@@ -64,6 +65,8 @@ __all__ = [
     "_ufc_scoreboard_competition",
     "_ufc_actual",
     "_settle_mls_props",
+    "_settle_tennis_props",
+    "_tennis_snapshot",
     "_grade_actual",
     "settle_game",
 ]
