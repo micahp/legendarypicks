@@ -293,3 +293,70 @@ a claim about the relay, not about the book.** Before treating a downstream feed
 as a proxy for an upstream one, get one independent read of the upstream -- even
 a screenshot from a phone -- and diff them. One such read this afternoon would
 have saved the entire watcher premise.
+
+---
+
+# CORRECTION 2 — ESPN publishes the stats we said it did not
+
+Section 2 above ("ESPN publishes 14 per-player stat fields for this competition;
+we store 4") is **half wrong**, and the wrong half was repeated into a commit
+message, `core_markets.py`, `settlement/mls_settle.py` and the v0.9.0 changelog
+before anyone questioned it.
+
+## The claim
+
+> Not published by ESPN, so still unsettleable if priced: passes, passes
+> attempted, tackles, clearances, crosses, chances created.
+
+Measured at "0 of 1,640 log rows", which was true — of the rows we had, written
+from the endpoint we asked.
+
+## What is actually published
+
+`site.web.api .../summary` carries **14** per-player fields under
+`rosters[].roster[].stats`. `sports.core.api .../competitors/{id}/roster/
+{athlete}/statistics` carries **108** for the same fixture, in four categories:
+
+```
+defensive   12  totalTackles effectiveTackles tacklePct totalClearance
+                effectiveClearance interceptions possWonDef3rd ballRecovery ...
+offensive   43  totalPasses accuratePasses passPct totalCrosses accurateCrosses
+                crossPct shotAssists totalShots shotsOnTarget totalLongBalls ...
+general     32  foulsCommitted foulsSuffered touches groundDuels duelWinPct ...
+goalKeeping 21  saves shotsFaced goalsConceded savePct crossesCaught ...
+```
+
+Real values, not schema, from event 401863625: `totalPasses` 22 / 101 / 83,
+`totalClearance` 2 / 1 / 4, `totalTackles` 0 / 0 / 1, `accuratePasses` 20 / 96 /
+80.
+
+**11 of the 12 priced markets are settleable and chartable, up from 7.** Only
+`Attempted Dribbles` (2 props) is genuinely absent: the core api publishes
+`groundDuels` and `duelWinPct`, which are not take-ons and must not stand in.
+
+## Why it was missed, which is the part worth keeping
+
+`ingest_soccer_logs.py` carries this comment, written before any of this:
+
+> Everything ESPN publishes per player on a soccer summary, not the four we
+> happened to need first. [...] The other 11 were not missing data -- they were
+> data we never asked for, which is the shape described in published-first §3:
+> **a gap is a statement about which endpoint we asked.**
+
+The same rule, in the same file, about the same ingest. Widening 4 fields to 14
+felt like completing the job, so nobody asked whether 14 was the whole
+publisher. **"We now read everything this endpoint has" is not "we now read
+everything."** A count of fields is a property of a document, never of a source.
+
+This is also the exact error corrected earlier the same day, one level up: the
+RotoWire relay lists `prizepicks` as a book, and that was read as "we can reach
+PrizePicks" when it meant "we can reach what RotoWire republishes". Same shape,
+same day, twice.
+
+## Cost, which is why this is not simply the new default
+
+The summary answers a whole match in one request. The core api needs one request
+**per athlete** — ~48 a fixture. A season backfill of the 52 completed Leagues
+Cup fixtures is ~2,500 requests against a host whose limit is a burst rate, so
+`--deep` is opt-in and paced, and a deep row carries its own freshness key so a
+shallow run is never forced to refetch on account of it.
