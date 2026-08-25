@@ -237,7 +237,13 @@ or different than recorded:**
       only Marcin Tybura's side. Zero errors and zero unmappable markets. Candidate DB only;
       managed dev was not run or changed.
 - [ ] **`team_game_stats` holds 16 MLB rows.** Find out whether that is a stalled ingest or a
-      table nothing writes any more.
+      table nothing writes any more. **Copied-candidate diagnosis 2026-08-24:** these are
+      obsolete residue, not a stalled MLB source. All 16 were written in one four-second
+      burst on June 9; every typed stat, JSON blob, run id, and source is empty. The public
+      team-stats route rejects MLB, MLB aggregates deliberately use `team_game_results`, and
+      current snapshot/backfill writers do not target MLB. A fail-closed cleanup removed the
+      16 empty rows on the copy and deleted zero on rerun; it refuses the whole operation if
+      any MLB row carries data or provenance. Production and managed dev are unchanged.
 - [ ] **Promote MLS to prod parity:** game logs **10,603 prod vs 21,177 dev**, stories 0 vs 30,
       leaders stuck on 2025 while standings serve 2026. All data jobs, none needs a deploy.
 - [ ] **MLS and NCAAF scoring plays: zero on both.** Confirm the publisher has them before
