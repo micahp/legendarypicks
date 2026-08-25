@@ -26,7 +26,10 @@ from .scoreboard import (
     tennis_draws_from_payload,
     _ny_date, _slate_day, scoreboard_raw_range, games_by_day,
 )
-from .nfl import nfl_schedule_weeks, nfl_schedule_week_games, schedule_event_starts
+from .nfl import (
+    football_schedule_weeks, football_schedule_week_games,
+    nfl_schedule_weeks, nfl_schedule_week_games, schedule_event_starts,
+)
 from .ufc import (
     _athlete_name_key, _athlete_name_parts, ufc_athlete, _ufc_method,
     ufc_fight_history,

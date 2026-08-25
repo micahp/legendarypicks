@@ -36,11 +36,13 @@ from .scoreboard import (  # noqa: E402
 )
 from .schedule import (  # noqa: E402
     get_schedule_dates, get_nfl_schedule_weeks, get_nfl_schedule_week,
+    get_ncaaf_schedule_weeks, get_ncaaf_schedule_week,
     _parse_anchor_date, _default_nfl_season, _flatten_nfl_weeks,
     _default_nfl_week, _event_start, _is_guaranteed_directional_start,
     _cap_schedule_candidates, _local_event_starts, _schedule_candidates,
     _SCHEDULE_DATES_CONTRACT, _NFL_SCHEDULE_WEEKS_CONTRACT,
-    _NFL_SCHEDULE_WEEK_CONTRACT, _SCHEDULE_SEARCH_RANGES,
+    _NFL_SCHEDULE_WEEK_CONTRACT, _NCAAF_SCHEDULE_WEEKS_CONTRACT,
+    _NCAAF_SCHEDULE_WEEK_CONTRACT, _SCHEDULE_SEARCH_RANGES,
     _SCHEDULE_CANDIDATE_LIMIT, _MIN_VIEWER_OFFSET, _MAX_VIEWER_OFFSET,
 )
 from .standings import (  # noqa: E402

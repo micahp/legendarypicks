@@ -521,27 +521,33 @@ export const SportsService = {
     return delta < 0 ? candidates[candidates.length - 1] : candidates[0]
   },
 
-  getNflScheduleWeeks: async (anchor: string): Promise<NflScheduleWeeksResponse | null> => {
+  getFootballScheduleWeeks: async (league: 'nfl' | 'ncaaf', anchor: string): Promise<NflScheduleWeeksResponse | null> => {
     try {
-      const res = await axios.get(`${API_BASE_URL}/nfl/schedule-weeks`, { params: { anchor } })
+      const res = await axios.get(`${API_BASE_URL}/${league}/schedule-weeks`, { params: { anchor } })
       return res.data
     } catch (err) {
-      console.error('Error fetching NFL schedule weeks', err)
+      console.error(`Error fetching ${league.toUpperCase()} schedule weeks`, err)
       return null
     }
   },
 
-  getNflScheduleWeek: async (season: number, seasonType: number, week: number): Promise<NflScheduleWeekResponse | null> => {
+  getFootballScheduleWeek: async (league: 'nfl' | 'ncaaf', season: number, seasonType: number, week: number): Promise<NflScheduleWeekResponse | null> => {
     try {
-      const res = await axios.get(`${API_BASE_URL}/nfl/schedule-week`, {
+      const res = await axios.get(`${API_BASE_URL}/${league}/schedule-week`, {
         params: { season, season_type: seasonType, week },
       })
       return res.data
     } catch (err) {
-      console.error('Error fetching NFL schedule week', err)
+      console.error(`Error fetching ${league.toUpperCase()} schedule week`, err)
       return null
     }
   },
+
+  getNflScheduleWeeks: async (anchor: string): Promise<NflScheduleWeeksResponse | null> =>
+    SportsService.getFootballScheduleWeeks('nfl', anchor),
+
+  getNflScheduleWeek: async (season: number, seasonType: number, week: number): Promise<NflScheduleWeekResponse | null> =>
+    SportsService.getFootballScheduleWeek('nfl', season, seasonType, week),
 }
 
 export interface ScheduleDatesResponse {

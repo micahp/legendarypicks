@@ -1,4 +1,4 @@
-"""routers/games/schedule.py — schedule-dates and NFL schedule-week endpoints."""
+"""routers/games/schedule.py — schedule dates and football week endpoints."""
 import datetime as dt
 
 from fastapi import HTTPException, Query
@@ -35,6 +35,8 @@ def _pkg_local_event_starts(league, anchor, direction):
 _SCHEDULE_DATES_CONTRACT = "league-schedule-dates-v1"
 _NFL_SCHEDULE_WEEKS_CONTRACT = "nfl-schedule-weeks-v1"
 _NFL_SCHEDULE_WEEK_CONTRACT = "nfl-schedule-week-v1"
+_NCAAF_SCHEDULE_WEEKS_CONTRACT = "ncaaf-schedule-weeks-v1"
+_NCAAF_SCHEDULE_WEEK_CONTRACT = "ncaaf-schedule-week-v1"
 _SCHEDULE_SEARCH_RANGES = {
     # Keep every ESPN range comfortably below its 1,000-event response cap.
     # A full NBA season in one 280-day request can otherwise truncate before
@@ -374,25 +376,32 @@ def get_nfl_schedule_weeks(
     anchor: Optional[str] = Query(None, description="Viewer-local YYYY-MM-DD"),
 ):
     """ESPN's ordered NFL phase/week catalog and the default week for an anchor date."""
+    return _get_football_schedule_weeks("nfl", season, anchor)
+
+
+def _get_football_schedule_weeks(league, season=None, anchor=None):
     anchor_date = _parse_anchor_date(anchor)
     selected_season = season if season is not None else _default_nfl_season(anchor_date)
     if selected_season < 2000 or selected_season > 2100:
         raise HTTPException(400, "season must be between 2000 and 2100")
     try:
-        phases = espn.nfl_schedule_weeks(selected_season)
+        phases = (espn.nfl_schedule_weeks(selected_season) if league == "nfl"
+                  else espn.football_schedule_weeks(league, selected_season))
     except (TypeError, ValueError) as exc:
         raise HTTPException(404, str(exc)) from exc
     except Exception as exc:
-        raise HTTPException(502, "NFL schedule week catalog unavailable") from exc
+        raise HTTPException(502, f"{league.upper()} schedule week catalog unavailable") from exc
 
     weeks = _flatten_nfl_weeks(phases)
     default_week, default_reason = _default_nfl_week(weeks, anchor_date)
     if default_week is None:
-        raise HTTPException(502, "NFL schedule week catalog is empty")
+        raise HTTPException(502, f"{league.upper()} schedule week catalog is empty")
+    contract = (_NFL_SCHEDULE_WEEKS_CONTRACT if league == "nfl"
+                else _NCAAF_SCHEDULE_WEEKS_CONTRACT)
     return JSONResponse(
         content={
-            "contract": _NFL_SCHEDULE_WEEKS_CONTRACT,
-            "league": "nfl",
+            "contract": contract,
+            "league": league,
             "season": selected_season,
             "anchor_date": anchor_date.isoformat(),
             "navigation": "week",
@@ -405,6 +414,15 @@ def get_nfl_schedule_weeks(
     )
 
 
+@router.get("/api/ncaaf/schedule-weeks")
+def get_ncaaf_schedule_weeks(
+    season: Optional[int] = Query(None, ge=2000, le=2100),
+    anchor: Optional[str] = Query(None, description="Viewer-local YYYY-MM-DD"),
+):
+    """ESPN's ordered NCAAF phase/week catalog."""
+    return _get_football_schedule_weeks("ncaaf", season, anchor)
+
+
 @router.get("/api/nfl/schedule-week")
 def get_nfl_schedule_week(
     season: int = Query(..., ge=2000, le=2100),
@@ -412,18 +430,24 @@ def get_nfl_schedule_week(
     week: int = Query(..., ge=1, le=25),
 ):
     """One NFL week of games, keyed by ESPN season type and week number."""
+    return _get_football_schedule_week("nfl", season, season_type, week)
+
+
+def _get_football_schedule_week(league, season, season_type, week):
     if season < 2000 or season > 2100:
         raise HTTPException(400, "season must be between 2000 and 2100")
     if season_type not in (1, 2, 3):
         raise HTTPException(400, "season_type must be 1, 2, or 3")
-    if week < 1 or week > 25:
-        raise HTTPException(400, "week must be between 1 and 25")
+    max_week = 25 if league == "nfl" else 999
+    if week < 1 or week > max_week:
+        raise HTTPException(400, f"week must be between 1 and {max_week}")
     try:
-        phases = espn.nfl_schedule_weeks(season)
+        phases = (espn.nfl_schedule_weeks(season) if league == "nfl"
+                  else espn.football_schedule_weeks(league, season))
     except (TypeError, ValueError) as exc:
         raise HTTPException(404, str(exc)) from exc
     except Exception as exc:
-        raise HTTPException(502, "NFL schedule week catalog unavailable") from exc
+        raise HTTPException(502, f"{league.upper()} schedule week catalog unavailable") from exc
 
     selected = next(
         (
@@ -434,16 +458,25 @@ def get_nfl_schedule_week(
         None,
     )
     if selected is None:
-        raise HTTPException(404, "NFL schedule week not found")
+        raise HTTPException(404, f"{league.upper()} schedule week not found")
     try:
-        week_games = espn.nfl_schedule_week_games(season, season_type, week)
+        if league == "nfl":
+            week_games = espn.nfl_schedule_week_games(season, season_type, week)
+        else:
+            week_games = espn.football_schedule_week_games(
+                league, season, season_type, week,
+                selected.get("start_time"), selected.get("end_time"),
+            )
     except Exception as exc:
-        raise HTTPException(502, "NFL schedule week games unavailable") from exc
+        raise HTTPException(502, f"{league.upper()} schedule week games unavailable") from exc
+
+    contract = (_NFL_SCHEDULE_WEEK_CONTRACT if league == "nfl"
+                else _NCAAF_SCHEDULE_WEEK_CONTRACT)
 
     return JSONResponse(
         content={
-            "contract": _NFL_SCHEDULE_WEEK_CONTRACT,
-            "league": "nfl",
+            "contract": contract,
+            "league": league,
             "season": season,
             "navigation": "week",
             "selected_week": selected,
@@ -451,3 +484,13 @@ def get_nfl_schedule_week(
         },
         headers={"Cache-Control": "public, max-age=20"},
     )
+
+
+@router.get("/api/ncaaf/schedule-week")
+def get_ncaaf_schedule_week(
+    season: int = Query(..., ge=2000, le=2100),
+    season_type: int = Query(..., ge=1, le=3),
+    week: int = Query(..., ge=1, le=999),
+):
+    """One NCAAF week, including ESPN's special CFP week key 999."""
+    return _get_football_schedule_week("ncaaf", season, season_type, week)

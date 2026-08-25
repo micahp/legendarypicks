@@ -114,10 +114,18 @@ quiet evening slate.
 - [ ] **Week-grouped navigation for NFL and NCAAF.** A drafter and a viewer both move through
       these sports by week, not by date.
       **Reuse, do not rebuild:** `docs/API-nfl-schedule-weeks-v1.md` already serves ESPN's own
-      week calendar and is live on `pages/leagues/[league].tsx`.
+      week calendar and is live on `pages/leagues/[league].tsx`. **Candidate 2026-08-24:**
+      the shared week UI now covers both leagues. NCAAF uses ESPN's published week boundaries,
+      not the capped `week=` response: Week 1 returned 99 verified games by range versus 25 by
+      direct week query, and ESPN's postseason `CFP` key `3:999` is preserved. Unchecked until
+      browser/release gates pass and it ships.
 - [ ] **Confirm NCAAF has anything to show on opening weekend.** NCAAF has **zero props** on
-      both databases (measured 08-16, unchanged). A league that opens with an empty board is
-      worse than a hidden one.
+      both databases (remeasured on the copied production DB 2026-08-24). ESPN currently
+      publishes eight games for August 29, including UNC-TCU, San Jose State-USC, and
+      NC State-Virginia; all eight were captured into the candidate DB. The runtime props
+      navigation consequently withholds NCAAF because it has no stored props, while the league
+      hub has a real Week 1 schedule. A league that opens with an empty props board is worse
+      than a hidden one.
 
 **The gate that was blocking this is now answered and should be removed.** The 08-18 roadmap
 said "do not spec the remainder until the request-budget question is answered". It was
