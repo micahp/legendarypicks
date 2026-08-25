@@ -119,6 +119,29 @@ def _same_published_season(league, log_season, stats_season):
     except ValueError:
         return False
 
+
+_SOCCER_PROFILE_STATS = {
+    "goalkeeper": {"saves", "shots_faced", "goals_conceded"},
+    "outfield": {
+        "goals", "assists", "shots", "sot", "fouls_committed",
+        "yellow_cards", "red_cards",
+    },
+    # A blank group does not authorize guessing whether shots or saves describe
+    # this player's job. Keep only metrics common to either surface.
+    "unknown": {"goals", "assists", "yellow_cards", "red_cards"},
+}
+
+
+def _profile_projection_keys(identity_league, position_group):
+    if str(identity_league or "").lower() != "mls":
+        return None
+    group = str(position_group or "").strip().lower()
+    if group == "goalkeeper":
+        return _SOCCER_PROFILE_STATS["goalkeeper"]
+    if group:
+        return _SOCCER_PROFILE_STATS["outfield"]
+    return _SOCCER_PROFILE_STATS["unknown"]
+
 @router.get("/api/player/{player_id}")
 def player_profile(
     player_id: int,
@@ -455,7 +478,10 @@ def player_profile(
             if isinstance(v, (int, float)):
                 series.setdefault(k, []).append(v)
     projections = {}
+    projection_keys = _profile_projection_keys(identity_league, p["position_group"])
     for k, vals in series.items():
+        if projection_keys is not None and k not in projection_keys:
+            continue
         if selected_league == "nfl" and k not in _NFL_PROJECTION_STATS:
             continue
         pr = proj_mod.project_stat(vals)

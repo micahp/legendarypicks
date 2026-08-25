@@ -283,9 +283,9 @@ class PlayerProfileApiTests(unittest.TestCase):
                VALUES(5,'Casey Keeper','MIA','mls','G','Goalkeeper')"""
         )
         rows = [
-            (5, "mls", 2026, {"saves": 5}, "2026-08-01", "ORL", "home", 3, "REG"),
-            (5, "mls", 2025, {"saves": 3}, "2025-07-01", "SEA", "away", 2, "REG"),
-            (5, "lcup", 2025, {"saves": 7}, "2025-08-01", "PUM", "home", 1, "REG"),
+            (5, "mls", 2026, {"saves": 5, "shots": 2}, "2026-08-01", "ORL", "home", 3, "REG"),
+            (5, "mls", 2025, {"saves": 3, "shots": 1}, "2025-07-01", "SEA", "away", 2, "REG"),
+            (5, "lcup", 2025, {"saves": 7, "shots": 4}, "2025-08-01", "PUM", "home", 1, "REG"),
         ]
         con.executemany(
             "INSERT INTO player_game_logs VALUES(?,?,?,?,?,?,?,?,?)",
@@ -302,6 +302,7 @@ class PlayerProfileApiTests(unittest.TestCase):
         self.assertEqual(2025, result["season"])
         self.assertEqual("Goalkeeper", result["position_group"])
         self.assertEqual([7], [row["stats"]["saves"] for row in result["recent_games"]])
+        self.assertNotIn("shots", result["projections"])
         self.assertEqual(
             [
                 {"league": "mls", "season": 2026, "games": 1},
