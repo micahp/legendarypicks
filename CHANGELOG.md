@@ -1,5 +1,89 @@
 # Changelog
 
+## v0.8.8
+
+### Props scheduling has one owner, and the pipeline is graded at every stage
+
+- **All props providers run through one registry** rather than a unit per
+  publisher. Scheduling is single-owner and observable, cadence state is
+  committed with its audit row, and the timing contract is written down. Every
+  timer the runner installs is `OnCalendar`, never monotonic: the previous
+  `OnBootSec`/`OnUnitActiveSec` pair sat in `SubState=elapsed` with no next
+  elapse from 2026-08-21 while reporting `enabled` and `active`, and Bovada props
+  went three days stale with nothing saying so.
+- **A coverage gate grades the props pipeline at every stage and blocks a release
+  that regresses it**, with the baseline held per DATABASE rather than as one
+  number for both, since dev and prod legitimately differ in volume.
+- **A quiet run is no longer read as a red run**, and source errors are named
+  instead of only counted.
+
+### The spine repairs itself generically, and duplicates cannot grow silently
+
+- **`spine_merge.py` replaces five one-off dedupe scripts** (`dedupe_mlb`,
+  `dedupe_nfl`, `dedupe_prop_games`, `merge_mls_prop_players`,
+  `apply_ufc_history_merge`), none of which were gated or scheduled. It
+  discovers referencing columns from the schema every run, because 14 tables
+  carry a `player_id` and only 5 declare a foreign key, so 9 were unenforced.
+  The old scripts touched 3, 5 and 1 table respectively; `dedupe_nfl` missed all
+  eight `nfl_*` tables.
+- **A gate blocks the duplicate backlog from growing**, proved to fail rather
+  than assumed to: `FAIL nfl: suspected spine duplicates rose 500 -> 536`,
+  exit 1, and clean again on restore. A duplicate never raises on its own, it
+  just splits one person's props across two rows.
+- **UFC spine harvested from the published card**, with a fighter ESPN holds but
+  no card carries now resolved off the roster set rather than a search rank, and
+  ESPN's spelling adopted as canonical with ours kept as an alias.
+
+### ESPN traffic: the largest saving of the release, and two self-inflicted blocks closed
+
+- **We polled tomorrow forever. 8 requests per run down to 1.** `needs_refresh`
+  asked "is every game final?", and on a future date nothing is final because
+  nothing has started, so the answer was always ask again, every 10 minutes, for
+  a schedule that cannot change. The asymmetry is what made it a defect: a league
+  that published NOTHING for tomorrow was backed off 3h, while a league that
+  published a schedule was asked 144 times a day. Measured live at ~1,440
+  requests/day across both environments, roughly 19% of scoreboard traffic and
+  13% of all ESPN traffic, and it grows with the season. Tomorrow's board is
+  unchanged, simply no longer re-fetched.
+- **This also removes an ESPN call from the serving path.**
+  `routers/games/scoreboard.py` reads `needs_refresh` to decide whether a page
+  load falls through to the publisher, and that path took 13 of the day's
+  refusals.
+- **Four batch fan-outs are now paced** (`link_prop_games`, `settle_props`,
+  `pregenerate_game_stories`, the UFC harvest), with the four knobs a batch ESPN
+  caller has to set living in one place. `link_prop_games` stayed unpaced because
+  its own docstring stated the superseded count model, so a function that said
+  pacing buys nothing was left unpaced; the old claim is kept quoted beside what
+  replaced it.
+- **Jobs no longer share a minute.** Every claimed minute was mapped before
+  restaggering rather than picking a free-looking number. Staggering changes when
+  jobs run and never how much any one may spend, which is why the pacing above
+  matters more than the schedule.
+- **The disk cache was configured and never enabled on the pollers.** It is now.
+
+### Honesty fixes in the instruments themselves
+
+- **The spend log recorded 8 refusals that never happened.** They were mocked
+  requests written to `data/http-spend.jsonl` as real, which is how a gated
+  endpoint was diagnosed from traffic that did not exist.
+- **A Bovada team market is not a player prop.** Team totals filed under a
+  display group called "Score Props" split on `" - "` exactly like a player
+  market, so the club landed in `player_name` and all 120 NBA outcomes were
+  rejected. Fixed at the parser, where the fixture's competitors are known.
+  Bovada publishes no NBA player props at present.
+- **An MLS board carrying another competition's rows is not a failure**, and MLS
+  2026 game logs exist, so the staleness expectation that asserted otherwise was
+  asserting history.
+
+### Docs
+
+- **Sport-first navigation design** (`docs/DESIGN-sport-first-navigation.md`):
+  the top-level entity on `/props` and `/leagues` becomes the sport, with a
+  competition row only where we carry more than one competition in that sport.
+- **The roadmap's production section was three releases stale** while a section
+  below it carried same-day entries. It is now re-measured against the running
+  containers, with the open items and the tennis rankings work recorded.
+
 ## v0.8.7
 
 ### RotoWire NFL props now publish on a schedule, in both environments
