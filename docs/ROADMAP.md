@@ -386,7 +386,11 @@ outlives its code.
       the lowest observation is MLB TWP batting fields at 126/129 (98%) and NBA PG minutes
       at 76/77 (99%), both above the declared 80% floor. The complete MLB/NBA audit is
       37/37 PASS.
-- [ ] `DATA-COVERAGE-CONTRACT.md` §7 rewrite: what each of the 8 checks needs from a new league.
+- [x] `DATA-COVERAGE-CONTRACT.md` §7 rewrite. DONE 2026-08-24. It now matches the executable
+      eight-check contract: three universal MANIFEST keys, conditional injury coverage,
+      spine IDs outside MANIFEST, per-check evidence requirements, and the exact distinction
+      between UNVERIFIED and checks that emit no row for an undeclared surface. Package paths
+      and the ATP/WTA/WNBA/UFC/World Cup examples are current.
 - [x] `ufc` / `wc` UNVERIFIED classification. DONE 2026-08-24. The old “x6” count is stale:
       the copied audit now gives each league three PASS results (game-log content, identity
       crosswalk, published identity) and exactly one UNVERIFIED result. That remaining D check
