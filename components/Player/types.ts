@@ -8,6 +8,7 @@ export interface Projection {
 export interface RecentGame { date: string | null; opponent: string | null; home: boolean | null; game_no?: string | number | null; stats: Record<string, number | string> }
 export interface NflScheduleGame { week: number; phase: 'regular' | 'postseason' | 'preseason'; opponent: string; home: boolean }
 export interface PropRow { market: string; side: string; line: number }
+export interface PlayerLogContext { league: string; season: number; games: number }
 export interface SeasonStatBlock {
   window?: string
   games?: number
@@ -24,6 +25,7 @@ export interface MlbSeasonStats {
 export type SeasonStats = SeasonStatBlock | MlbSeasonStats
 export interface PlayerProfile {
   id: number; name: string; team: string; league: string; position: string | null
+  selected_league: string; position_group: string | null; log_contexts: PlayerLogContext[]
   season: number | null; regular_season_games: number; postseason_games: number; preseason_games: number
   recent_games: RecentGame[]
   postseason_recent_games: RecentGame[]

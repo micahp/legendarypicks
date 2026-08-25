@@ -418,7 +418,12 @@ outlives its code.
       resolve by name), re-run promotion, reconcile diverged ids.
       `feedback_ambiguous_key_never_raises` is why this matters.
 - [ ] **Player detail: year and league selectors**, keyed off `position_group` so a keeper surface
-      shows saves, not shots.
+      shows saves, not shots. **Candidate complete 2026-08-24; not promoted.** The profile API
+      now publishes and fail-closed selects distinct `(league, season)` log contexts, while the
+      page keeps those choices in the URL. Copied-DB proof covers MLS 2025/2026; 2026 keeper
+      rows render saves/shots faced/goals allowed, and 2025 honestly reports that the stored
+      appearances lack keeper stats instead of falling back to shots. Synthetic contract proof
+      covers one durable MLS identity switching to a Leagues Cup log context.
 - [ ] **Backend directory contract** (`docs/BACKEND-DATA-AUDIT-2026-08-18.md`). Proposed split is
       app data / seeds / cache / state / logs. The physical move is the open work.
 

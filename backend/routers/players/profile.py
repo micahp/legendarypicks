@@ -28,7 +28,7 @@ def __db_pkg(*args, **kwargs):
     from routers.players import _db as _pkg
     return _pkg(*args, **kwargs)
 
-def _dst_game_logs(connection, player_id: int):
+def _dst_game_logs(connection, player_id: int, season=None):
     """A defense's weekly log, from `nfl_dst_stats` instead of `player_game_logs`.
 
     `player_game_logs` holds zero DEF rows and always will: every row in it comes
@@ -44,8 +44,10 @@ def _dst_game_logs(connection, player_id: int):
     """
     try:
         srow = connection.execute(
-            "SELECT MAX(season) AS season FROM nfl_dst_stats WHERE player_id=?",
-            (player_id,),
+            "SELECT MAX(season) AS season FROM nfl_dst_stats WHERE player_id=?"
+            if season is None else
+            "SELECT season FROM nfl_dst_stats WHERE player_id=? AND season=? LIMIT 1",
+            (player_id,) if season is None else (player_id, season),
         ).fetchone()
     except sqlite3.OperationalError:
         return None, None          # table absent: no logs, not a 500
@@ -102,8 +104,27 @@ def _season_stats_for_profile(player_id: int, player_name: str, league: str):
     )
     return result if has_stats else None
 
+
+def _same_published_season(league, log_season, stats_season):
+    """Match equivalent publisher keys without rewriting either stored value."""
+    try:
+        stats_year = int(stats_season)
+    except (TypeError, ValueError):
+        return False
+    raw_log_season = str(log_season or "")
+    if str(league or "").lower() in ("nba", "nhl") and len(raw_log_season) == 8:
+        raw_log_season = raw_log_season[-4:]
+    try:
+        return int(raw_log_season) == stats_year
+    except ValueError:
+        return False
+
 @router.get("/api/player/{player_id}")
-def player_profile(player_id: int):
+def player_profile(
+    player_id: int,
+    league: Optional[str] = None,
+    season: Optional[int] = None,
+):
     """Aggregate for the player page: header + recent game logs + per-stat
     projections + current props on this player. (Advanced metrics stay at
     /api/player/{id}/stats; this is the page-level rollup.)"""
@@ -120,26 +141,84 @@ def player_profile(player_id: int):
             ", last_news_date" if "last_news_date" in player_columns
             else ", NULL AS last_news_date"
         )
+        position_group_select = (
+            ", position_group" if "position_group" in player_columns
+            else ", NULL AS position_group"
+        )
         p = con.execute(
-            f"SELECT id, name, team, league, position{injury_select}{news_date_select} "
+            f"SELECT id, name, team, league, position{position_group_select}"
+            f"{injury_select}{news_date_select} "
             "FROM players WHERE id=?",
             (player_id,),
         ).fetchone()
         if not p:
             raise HTTPException(404, "Player not found")
-        league = p["league"]
-        srow = con.execute(
-            "SELECT season FROM player_game_logs WHERE player_id=? ORDER BY season DESC LIMIT 1",
-            (player_id,)).fetchone()
-        season = srow["season"] if srow else None
+        identity_league = str(p["league"] or "").lower()
+        requested_league = str(league or "").strip().lower() or None
+
+        # One durable player identity can have appearances in several competition
+        # keys (MLS, Leagues Cup, CCC) and seasons. Publish those choices rather
+        # than silently mixing all rows with the same player_id and year.
+        context_rows = con.execute(
+            """SELECT LOWER(league) AS league, season, COUNT(*) AS games
+               FROM player_game_logs
+               WHERE player_id=? AND league IS NOT NULL AND TRIM(league)<>''
+                 AND season IS NOT NULL
+               GROUP BY LOWER(league), season
+               ORDER BY season DESC, LOWER(league)""",
+            (player_id,),
+        ).fetchall()
+        log_contexts = [
+            {"league": row["league"], "season": row["season"], "games": row["games"]}
+            for row in context_rows
+        ]
+
+        # D/ST weekly rows deliberately live outside player_game_logs. They still
+        # participate in the same year selector contract.
+        is_dst = (
+            identity_league == "nfl"
+            and str(p["position"] or "").upper() in _DST_POSITIONS
+        )
+        if is_dst and not log_contexts:
+            try:
+                dst_contexts = con.execute(
+                    """SELECT season, COUNT(*) AS games FROM nfl_dst_stats
+                       WHERE player_id=? AND season IS NOT NULL
+                       GROUP BY season ORDER BY season DESC""",
+                    (player_id,),
+                ).fetchall()
+                log_contexts = [
+                    {"league": "nfl", "season": row["season"], "games": row["games"]}
+                    for row in dst_contexts
+                ]
+            except sqlite3.OperationalError:
+                pass
+
+        context_leagues = {row["league"] for row in log_contexts}
+        if requested_league and requested_league not in context_leagues:
+            raise HTTPException(400, "No game logs for selected league")
+        selected_league = requested_league
+        if selected_league is None and log_contexts:
+            selected_league = (
+                identity_league if identity_league in context_leagues
+                else log_contexts[0]["league"]
+            )
+        if selected_league is None:
+            selected_league = identity_league
+
+        available_seasons = [
+            row["season"] for row in log_contexts
+            if row["league"] == selected_league
+        ]
+        if season is not None and season not in available_seasons:
+            raise HTTPException(400, "No game logs for selected season")
+        selected_season = season if season is not None else (
+            max(available_seasons) if available_seasons else None
+        )
         dst_logs = None
         published_fantasy = {}
-        if (
-            league == "nfl"
-            and str(p["position"] or "").upper() in _DST_POSITIONS
-            and season is None
-        ):
-            season, dst_logs = _dst_game_logs(con, player_id)
+        if is_dst and selected_league == "nfl" and selected_season is not None:
+            _, dst_logs = _dst_game_logs(con, player_id, selected_season)
         logs = []
         postseason_logs = []
         preseason_logs = []
@@ -147,14 +226,18 @@ def player_profile(player_id: int):
         postseason_games = 0
         preseason_games = 0
         regular_season_games = 0
-        if season is not None:
-            reg_filter, _ = _reg_season_game_filter(con, league)
-            logs = con.execute(
-                f"""SELECT stats, game_date, opponent, home_away, game_no
-                   FROM player_game_logs WHERE player_id=? AND season=?
-                   {reg_filter}
-                   ORDER BY COALESCE(game_date,'') DESC, CAST(game_no AS INTEGER) DESC LIMIT 25""",
-                (player_id, season)).fetchall()
+        if selected_season is not None:
+            reg_filter, _ = _reg_season_game_filter(con, selected_league)
+            if dst_logs is None:
+                logs = con.execute(
+                    f"""SELECT stats, game_date, opponent, home_away, game_no
+                       FROM player_game_logs
+                       WHERE player_id=? AND league=? AND season=?
+                       {reg_filter}
+                       ORDER BY COALESCE(game_date,'') DESC,
+                                CAST(game_no AS INTEGER) DESC LIMIT 25""",
+                    (player_id, selected_league, selected_season),
+                ).fetchall()
             # COUNT, not len(logs). `logs` is LIMIT 25 — a page of recent games, not
             # the season — and `regular_season_games` renders on the player page as
             # "2026 · N games". For NFL's 17-game season the two agreed and the bug
@@ -162,8 +245,8 @@ def player_profile(player_id: int):
             # a player who missed nothing. A page size is not a measurement.
             regular_season_games = con.execute(
                 f"""SELECT COUNT(*) FROM player_game_logs
-                   WHERE player_id=? AND season=? {reg_filter}""",
-                (player_id, season)).fetchone()[0]
+                   WHERE player_id=? AND league=? AND season=? {reg_filter}""",
+                (player_id, selected_league, selected_season)).fetchone()[0]
             # Count postseason games separately (ESPN: separate containers)
             log_columns = {
                 row[1]
@@ -187,42 +270,43 @@ def player_profile(player_id: int):
                          game_type IS NULL
                          AND CAST(game_no AS INTEGER) >= 19
                        )"""
-                    if "game_no" in log_columns and league == "nfl"
+                    if "game_no" in log_columns and selected_league == "nfl"
                     else ""
                 )
                 post_row = con.execute(
                     f"""SELECT COUNT(*) FROM player_game_logs
                        WHERE player_id=? AND season=?
+                         AND league=?
                          AND (
                            (game_type IS NOT NULL AND game_type NOT IN ('REG','PRE'))
                            {legacy_postseason}
                          )""",
-                    (player_id, season)).fetchone()
+                    (player_id, selected_season, selected_league)).fetchone()
                 postseason_games = post_row[0] if post_row else 0
                 postseason_logs = con.execute(
                     f"""SELECT stats, game_date, opponent, home_away, game_no
-                       FROM player_game_logs WHERE player_id=? AND season=?
+                       FROM player_game_logs WHERE player_id=? AND season=? AND league=?
                          AND (
                            (game_type IS NOT NULL AND game_type NOT IN ('REG','PRE'))
                            {legacy_postseason}
                          )
                        ORDER BY COALESCE(game_date,'') DESC,
                                 CAST(game_no AS INTEGER) DESC LIMIT 25""",
-                    (player_id, season),
+                    (player_id, selected_season, selected_league),
                 ).fetchall()
                 preseason_logs = con.execute(
                     """SELECT stats, game_date, opponent, home_away, game_no
                        FROM player_game_logs
-                       WHERE player_id=? AND season=? AND game_type='PRE'
+                       WHERE player_id=? AND season=? AND league=? AND game_type='PRE'
                        ORDER BY COALESCE(game_date,'') DESC,
                                 CAST(game_no AS INTEGER) DESC LIMIT 25""",
-                    (player_id, season),
+                    (player_id, selected_season, selected_league),
                 ).fetchall()
                 # Same LIMIT-25 trap as regular_season_games above.
                 preseason_games = con.execute(
                     """SELECT COUNT(*) FROM player_game_logs
-                       WHERE player_id=? AND season=? AND game_type='PRE'""",
-                    (player_id, season)).fetchone()[0]
+                       WHERE player_id=? AND season=? AND league=? AND game_type='PRE'""",
+                    (player_id, selected_season, selected_league)).fetchone()[0]
 
             # NFL game logs currently leave home_away null. Resolve venue
             # and opponent from the published schedule rather than
@@ -245,7 +329,7 @@ def player_profile(player_id: int):
             # season leaves the log's existing value alone -- this overlays a better
             # number where one is published, it does not blank out anything.
             if (
-                league == "nfl"
+                selected_league == "nfl"
                 and str(p["position"] or "").upper() in _PUBLISHED_FANTASY_POSITIONS
             ):
                 try:
@@ -254,13 +338,13 @@ def player_profile(player_id: int):
                         for row in con.execute(
                             """SELECT week, points FROM nfl_published_fantasy_points
                                WHERE player_id=? AND season=?""",
-                            (player_id, season),
+                            (player_id, selected_season),
                         )
                     }
                 except sqlite3.OperationalError:
                     published_fantasy = {}
 
-            if league == "nfl":
+            if selected_league == "nfl":
                 schedule_columns = {
                     row[1]
                     for row in con.execute(
@@ -276,12 +360,12 @@ def player_profile(player_id: int):
                         f"""SELECT team, COUNT(*) AS games,
                                    MAX(CAST(game_no AS INTEGER)) AS latest_week
                             FROM player_game_logs
-                            WHERE player_id=? AND season=? AND team IS NOT NULL
+                            WHERE player_id=? AND league=? AND season=? AND team IS NOT NULL
                               {reg_filter}
                             GROUP BY team
                             ORDER BY games DESC, latest_week DESC, team DESC
                             LIMIT 1""",
-                        (player_id, season),
+                        (player_id, selected_league, selected_season),
                     ).fetchone()
                     if primary_team and primary_team["team"]:
                         schedule_team = primary_team["team"]
@@ -291,7 +375,7 @@ def player_profile(player_id: int):
                            FROM nfl_schedule
                            WHERE season=? AND (home_team=? OR away_team=?)
                            ORDER BY week DESC, game_type DESC""",
-                        (season, schedule_team, schedule_team),
+                        (selected_season, schedule_team, schedule_team),
                     ).fetchall()
                     for schedule_row in schedule_rows:
                         game_type = str(schedule_row["game_type"] or "").upper()
@@ -315,9 +399,9 @@ def player_profile(player_id: int):
                         })
         rank_context = (
             nfl_player_rank_context(
-                con, p["id"], p["position"], season
+                con, p["id"], p["position"], selected_season
             )
-            if league == "nfl" else {"season": None, "games": None, "stats": {}}
+            if selected_league == "nfl" else {"season": None, "games": None, "stats": {}}
         )
 
         props = con.execute(
@@ -329,7 +413,7 @@ def player_profile(player_id: int):
         serialized = []
         for row in rows:
             stats = _json.loads(row["stats"])
-            if league == "nfl":
+            if selected_league == "nfl":
                 stats = {_NFL_KEY_NORMALIZE.get(k, k): v for k, v in stats.items()}
                 # Misc TD, from the same definition the draft overlay renders.
                 stats = _with_derived(stats)
@@ -372,19 +456,26 @@ def player_profile(player_id: int):
                 series.setdefault(k, []).append(v)
     projections = {}
     for k, vals in series.items():
-        if league == "nfl" and k not in _NFL_PROJECTION_STATS:
+        if selected_league == "nfl" and k not in _NFL_PROJECTION_STATS:
             continue
         pr = proj_mod.project_stat(vals)
         if not pr:
             continue
-        if league == "nfl" and not pr.get("season_avg") and not pr.get("projection"):
+        if selected_league == "nfl" and not pr.get("season_avg") and not pr.get("projection"):
             continue
         projections[k] = pr
 
-    season_stats = __season_stats_for_profile_pkg(p["id"], p["name"], league)
+    season_stats = __season_stats_for_profile_pkg(p["id"], p["name"], identity_league)
+    if season_stats is not None and selected_season is not None:
+        if not _same_published_season(
+            identity_league, selected_season, season_stats.get("window")
+        ):
+            season_stats = None
     return {
-        "id": p["id"], "name": p["name"], "team": p["team"], "league": league,
-        "position": p["position"], "season": season,
+        "id": p["id"], "name": p["name"], "team": p["team"],
+        "league": identity_league, "selected_league": selected_league,
+        "position": p["position"], "position_group": p["position_group"],
+        "season": selected_season, "log_contexts": log_contexts,
         "injury_status": p["injury_status"],
         "last_news_date": p["last_news_date"],
         "regular_season_games": regular_season_games,
