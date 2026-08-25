@@ -146,9 +146,6 @@ something specific.
 
 ### The list
 
-- [ ] **Render `PK` as `K`.** Storage is right; four files leak the publisher's code into the
-      filter chips: `useNflDraftBoard.ts:10`, `NflDraftRoom.tsx:93`,
-      `PlayerDetailOverlay.tsx:78`, `MockDraft/columns.tsx:43`.
 - [ ] **Give the draft board its own route.** It is reachable only as a tab named `camp`
       inside the league hub. A drafter cannot link a friend to it.
 - [ ] **Decide what a drafter still cannot answer on the board.** The one piece of genuine
