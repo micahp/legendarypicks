@@ -39,6 +39,26 @@ _MARKET_STAT_KEY = {
     # MLS game logs store the same soccer stat shape as WC (goals/assists/shots/sot)
     "mls": {"goals": "goals", "assists": "assists", "shots": "shots",
             "shots_on_target": "sot", "shots_on_goal": "sot"},
+    # Leagues Cup. The stat keys are the ones ingest_soccer_logs actually writes
+    # (see _STAT_ORDER), verified against real lcup rows rather than assumed.
+    # `goal_or_assist` is a COMPOUND market: the chart sums the listed fields, so
+    # it charts as goals+assists per game rather than needing a stored column.
+    #
+    # The Nones are the point of this block. PrizePicks prices tackles, passes
+    # attempted, clearances, crosses, dribbles and shots assisted, and ESPN
+    # publishes NONE of them for this competition -- measured at 0 of 1,640 log
+    # rows. Mapping any of them to a near-miss field would not raise; it would
+    # draw a confident wrong line. first_goal_scorer is an ORDER market and no
+    # per-game stat answers it.
+    "lcup": {"goals": "goals", "assists": "assists", "shots": "shots",
+             "shots_on_target": "sot", "shots_on_goal": "sot",
+             "goal_or_assist": ["goals", "assists"],
+             "fouls_committed": "fouls_committed",
+             "saves": "saves", "goals_allowed": "goals_conceded",
+             "card_shown": ["yellow_cards", "red_cards"],
+             "tackles": None, "passes_attempted": None, "clearances": None,
+             "crosses": None, "dribbles": None, "shots_assisted": None,
+             "first_goal_scorer": None},
     # fight_time (minutes, from round+clock at the ESPN status endpoint -- see
     # ingest_ufc_fight_stats.py) now backfillable same as significant_strikes.
     # finishes/win_by_ko/win_by_submission are win-by-method yes/no props, same
