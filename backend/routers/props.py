@@ -304,8 +304,14 @@ def props_slate(league: Optional[str] = Query(None),
         else:
             filters += " AND " + _UPCOMING
 
+        # COUNT(p.id) counted the same question twice once a second book
+        # priced a line another already had, so the card header said 495
+        # while the card itself listed 454. One number, computed two ways,
+        # in one endpoint -- count the distinct questions, as the expanded
+        # path does when it dedupes on (market, line, side) per player.
         gsql = ("SELECT pg.id AS game_id, pg.home, pg.away, pg.date AS game_date, pg.start_time, "
-                "pg.league, COUNT(p.id) AS prop_count "
+                "pg.league, COUNT(DISTINCT p.player_id || '|' || p.market || '|' || "
+                "p.line || '|' || p.side) AS prop_count "
                 "FROM prop_games pg JOIN props p ON p.game_id = pg.id WHERE 1=1" + filters)
         # Order by when the game starts, NOT by `pg.date`. That column carries two
         # conventions (some rows file a 21:30 ET kickoff under the next UTC day), so
