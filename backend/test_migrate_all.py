@@ -149,6 +149,35 @@ class MigrateAllTests(unittest.TestCase):
             self.assertIn("legacy_migrate_nhl_season_keys", rows)
             self.assertIn("legacy_merge_nba_identities", rows)
 
+    def test_clean_nba_state_does_not_require_a_repair_registry_row(self):
+        self._level_pair()
+        migration = next(
+            item
+            for item in migration_manifest.LEGACY_MIGRATIONS
+            if item.migration_id == "legacy_merge_nba_identities"
+        )
+        with sqlite3.connect(self.dev) as connection:
+            self.assertEqual(migration.probe(connection), "applied")
+
+    def test_remaining_nba_split_keeps_migration_unknown(self):
+        self._level_pair()
+        with sqlite3.connect(self.dev) as connection:
+            connection.execute(
+                "INSERT INTO players(id,name,league,nba_id) VALUES(1,'Legacy','nba','7')"
+            )
+            connection.execute(
+                "INSERT INTO players(id,name,league,espn_id) VALUES(2,'Current','nba','7')"
+            )
+            migration = next(
+                item
+                for item in migration_manifest.LEGACY_MIGRATIONS
+                if item.migration_id == "legacy_merge_nba_identities"
+            )
+            self.assertEqual(
+                migration.probe(connection),
+                "unknown: 1 NBA identities remain split across rows",
+            )
+
     def test_apply_is_idempotent(self):
         self._level_pair()
         migrate_all.main(["--apply", "--prod", self.prod, "--dev", self.dev])

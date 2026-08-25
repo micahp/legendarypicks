@@ -252,6 +252,46 @@ def _make_registered(migration_id: str) -> Callable[[sqlite3.Connection], str]:
     return lambda con: _probe_registered(con, migration_id)
 
 
+def _probe_merge_nba_identities(con: sqlite3.Connection) -> str:
+    """Whether the NBA identity merge's durable postcondition holds.
+
+    DEV was already clean when production needed the repair, so requiring the
+    repair script's numbered registry row made a clean DEV database permanently
+    report ``unknown``. Legacy adoption probes state, not execution history:
+    no ESPN/legacy bridge split and no duplicate ESPN owner is the state this
+    migration exists to establish.
+    """
+    required = {"id", "league", "espn_id", "nba_id"}
+    columns = _columns(con, "players")
+    if not required <= columns:
+        missing = sorted(required - columns)
+        return "unknown: players lacks columns " + ", ".join(missing)
+    split = _count(
+        con,
+        """SELECT COUNT(*) FROM players e JOIN players h
+              ON h.league='nba' AND e.league='nba' AND e.id<>h.id
+             AND CAST(e.espn_id AS TEXT)=CAST(h.nba_id AS TEXT)
+            WHERE e.espn_id IS NOT NULL
+              AND TRIM(CAST(e.espn_id AS TEXT))!=''
+              AND h.nba_id IS NOT NULL
+              AND TRIM(CAST(h.nba_id AS TEXT))!=''""",
+    )
+    if split:
+        return f"unknown: {split} NBA identities remain split across rows"
+    duplicate_espn = _count(
+        con,
+        """SELECT COUNT(*) FROM (
+               SELECT CAST(espn_id AS TEXT)
+                 FROM players
+                WHERE league='nba' AND espn_id IS NOT NULL
+                  AND TRIM(CAST(espn_id AS TEXT))!=''
+                GROUP BY CAST(espn_id AS TEXT) HAVING COUNT(*)>1)""",
+    )
+    if duplicate_espn:
+        return f"unknown: {duplicate_espn} duplicate NBA ESPN ids remain"
+    return "applied"
+
+
 LEGACY_MIGRATIONS: tuple[LegacyMigration, ...] = (
     LegacyMigration(
         migration_id="legacy_migrate_schema",
@@ -401,7 +441,7 @@ LEGACY_MIGRATIONS: tuple[LegacyMigration, ...] = (
         migration_id="legacy_merge_nba_identities",
         script="backend/scripts/merge_nba_identities.py",
         description="merge split NBA espn_id/nba_id rows",
-        probe=_make_registered("20260805_001_merge_nba_identities"),
+        probe=_probe_merge_nba_identities,
         note="269 split athletes fixed on prod 2026-08-05; dev was already clean",
     ),
 )

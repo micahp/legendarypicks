@@ -364,9 +364,14 @@ outlives its code.
 - [x] **`league_feature_matrix.py`'s docstring is stale.** DONE 2026-08-24. It no longer cites
       offered NCAAF as hidden; the current copied-DB example is ATP/WTA, whose identity and
       prop rows are populated while the registry still marks both leagues HIDDEN.
-- [ ] **Dev's migration ledger is unreliable.** `legacy_merge_nba_identities` reports
-      `unknown: registry row missing` on dev though dev's data is clean. A ledger that cannot
-      answer "did this run" is not a ledger.
+- [x] **Dev's migration ledger is unreliable.** DONE 2026-08-24. The NBA adoption probe no
+      longer asks for a numbered repair row that correctly never existed on already-clean DEV.
+      It now measures the migration's durable state: zero ESPN/legacy split pairs and zero
+      duplicate NBA ESPN ids; either defect keeps the result `unknown`. Current managed DEV
+      passes that read-only probe. On a fresh managed-DEV database copy, `apply_legacy`
+      changed `legacy_merge_nba_identities` from `unknown: registry row missing` to `applied`;
+      three other touched rows refreshed checksums only, with no other status change, and the
+      clone retained `PRAGMA quick_check=ok`. Managed DEV itself was not written.
 - [ ] **`docs/BACKLOG-holes.md` is dated 08-18** and its P0 list still leads with items this file
       has since falsified. Regenerate from the matrix or delete the P0 section rather than leave
       two documents contradicting each other.
