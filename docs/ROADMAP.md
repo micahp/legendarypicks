@@ -360,7 +360,13 @@ outlives its code.
       staying green by never asking; ATP/WTA pass the held ESPN-id spine check and all three
       remain honestly UNVERIFIED for undeclared position content, leaderboard reachability,
       and published identity evidence.
-- [ ] **`DURING / live state` is UNPROBED for every league.**
+- [x] **`DURING / live state` is UNPROBED for every league.** DONE 2026-08-24. The matrix
+      now derives current stored evidence from `scoreboard_snapshots`, reporting live/total
+      rows with the latest `fetched_at` timestamp; a league with no rows says `NO SNAPSHOT`
+      rather than `0`, and a missing table says `n/a`. Copied evidence currently includes
+      MLB 4 live rows, ATP 3, and WTA 2, each with period/clock or set detail in the stored
+      payload. This measures durable backend evidence, not rendered pixels or current ESPN
+      freshness; standings and scoreboard freshness remain explicitly UNPROBED.
 - [x] **`league_feature_matrix.py`'s docstring is stale.** DONE 2026-08-24. It no longer cites
       offered NCAAF as hidden; the current copied-DB example is ATP/WTA, whose identity and
       prop rows are populated while the registry still marks both leagues HIDDEN.

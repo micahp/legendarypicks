@@ -92,5 +92,42 @@ class FeatureMatrixPropTests(unittest.TestCase):
         )
 
 
+class FeatureMatrixLiveSnapshotTests(unittest.TestCase):
+    def setUp(self):
+        self.connection = sqlite3.connect(":memory:")
+        self.addCleanup(self.connection.close)
+        self.connection.executescript(
+            """
+            CREATE TABLE scoreboard_snapshots(
+                league TEXT, state TEXT, fetched_at TEXT
+            );
+            INSERT INTO scoreboard_snapshots VALUES
+                ('mlb', 'in', '2026-08-25T00:20:20+00:00'),
+                ('mlb', 'post', '2026-08-25T00:20:20+00:00'),
+                ('mlb', 'pre', '2026-08-24T23:00:00+00:00');
+            """
+        )
+
+    def test_live_snapshot_reports_count_denominator_and_freshness(self):
+        result = subject._live_snapshot(
+            self.connection, "mlb", subject._tables(self.connection)
+        )
+        self.assertEqual(
+            result,
+            {
+                "total": 3,
+                "live": 1,
+                "fetched_at": "2026-08-25T00:20:20+00:00",
+            },
+        )
+        self.assertEqual(subject._format_live_snapshot(result), "1/3 @ 08-25 00:20")
+
+    def test_no_rows_is_not_rendered_as_a_live_zero(self):
+        result = subject._live_snapshot(
+            self.connection, "nba", subject._tables(self.connection)
+        )
+        self.assertEqual(subject._format_live_snapshot(result), "NO SNAPSHOT")
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -232,9 +232,10 @@ def _years(con, label: str, league: str, tables: set[str]):
 # Rows in a table do not prove a page works. These ask the next question: is
 # there anything BEHIND each surface a user actually opens, and can they reach
 # it? Every one is measured from the database, deliberately — the ESPN-backed
-# surfaces (standings, scoreboard) cannot be probed without spending a request
-# budget that is a count per host, so they are listed as UNPROBED rather than
-# guessed at. See .claude/skills/espn-request-budget.
+# surfaces (standings, scoreboard freshness) cannot be probed without spending
+# a request budget that is a count per host, so they are listed as UNPROBED
+# rather than guessed at. Live-state *storage* is measurable from the durable
+# scoreboard snapshot, including when it was last fetched.
 SURFACE_SQL = {
     # A player page is worth opening if the person has anything on it at all.
     "player detail": """
@@ -350,13 +351,41 @@ LIFECYCLE_SQL = {
 
 # Surfaces we cannot measure without an ESPN request. Never render these as a
 # pass or a fail: "evidence unavailable" is neither.
-UNPROBED = ("standings", "scoreboard / scores", "live game state")
+UNPROBED = ("standings", "scoreboard / scores freshness")
 
-# The DURING state is one of them, and it is not an oversight. Whether a page
-# says anything useful mid-game is answered by the live scoreboard, and probing
-# it costs a request budget that is a COUNT per host. Rendered as UNPROBED so the
-# gap stays visible instead of reading as a zero.
-LIFECYCLE_UNPROBED = "DURING — live state"
+
+def _live_snapshot(con, league: str, tables: set[str]):
+    """Current stored live-state evidence and its freshness, or None."""
+    if "scoreboard_snapshots" not in tables:
+        return None
+    columns = {
+        row[1] for row in con.execute("PRAGMA table_info(scoreboard_snapshots)")
+    }
+    if not {"league", "state", "fetched_at"} <= columns:
+        return None
+    row = con.execute(
+        """SELECT COUNT(*) AS total,
+                  SUM(LOWER(COALESCE(state,'')) IN ('in','live')) AS live,
+                  MAX(fetched_at) AS fetched_at
+             FROM scoreboard_snapshots WHERE LOWER(league)=?""",
+        (league,),
+    ).fetchone()
+    return {
+        "total": row[0] or 0,
+        "live": row[1] or 0,
+        "fetched_at": row[2],
+    }
+
+
+def _format_live_snapshot(value) -> str:
+    if value is None:
+        return "n/a"
+    if not value["total"]:
+        return "NO SNAPSHOT"
+    fetched = str(value["fetched_at"] or "unknown")
+    if len(fetched) >= 16:
+        fetched = fetched[5:16].replace("T", " ")
+    return f"{value['live']}/{value['total']} @ {fetched}"
 
 
 def _surface(con, sql: str, league: str, tables: set[str]) -> int | None:
@@ -399,6 +428,7 @@ def measure(path: str) -> dict:
                 "lifecycle": lifecycle,
                 "years": years,
                 "prop_inventory": _prop_inventory(con, lg, tables),
+                "live_snapshot": _live_snapshot(con, lg, tables),
             }
         return out
 
@@ -416,17 +446,24 @@ def render(data: dict, title: str, *, props_detail: bool = False) -> None:
     # Every block shares one label column so the league columns line up down the
     # whole page — a row that shifts by two characters is a row you read wrong.
     width = max(len(l) for l in
-                labels + list(SURFACE_SQL) + list(LIFECYCLE_SQL) + [LIFECYCLE_UNPROBED]) + 2
+                labels + list(SURFACE_SQL) + list(LIFECYCLE_SQL)
+                + ["DURING — live snapshot"]) + 2
     leagues = list(data)
-    year_width = max(
+    evidence_width = max(
         (
-            len(_format_years(data[league]["years"].get(label)))
+            len(value)
             for league in leagues
-            for label in YEAR_SURFACES
+            for value in (
+                *(
+                    _format_years(data[league]["years"].get(label))
+                    for label in YEAR_SURFACES
+                ),
+                _format_live_snapshot(data[league].get("live_snapshot")),
+            )
         ),
         default=0,
     )
-    colw = max(9, max(len(l) for l in leagues) + 2, year_width + 2)
+    colw = max(9, max(len(l) for l in leagues) + 2, evidence_width + 2)
 
     print(f"\n{title}")
     print("=" * (width + colw * len(leagues)))
@@ -456,7 +493,12 @@ def render(data: dict, title: str, *, props_detail: bool = False) -> None:
            list(SURFACE_SQL)[:3])
     _block(data, leagues, width, colw,
            "game detail, by state — the page does four jobs, not one",
-           list(LIFECYCLE_SQL), unprobed=LIFECYCLE_UNPROBED)
+           list(LIFECYCLE_SQL))
+    live_row = "".join(
+        f"{_format_live_snapshot(data[league].get('live_snapshot')):>{colw}}"
+        for league in leagues
+    )
+    print(f"{'DURING — live snapshot':<{width}}{live_row}")
 
     print("\nprop_games linked to an ESPN event (unlinked props never reach a game page):")
     for l in leagues:
