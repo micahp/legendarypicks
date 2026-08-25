@@ -3,8 +3,8 @@
 Written 2026-08-25. Every number below was measured, not recalled. Sources are named so
 you can re-measure rather than trust me.
 
-**Work in a NEW worktree branched from `feat/sport-first-navigation` at its current HEAD
-(`5bc892d`), on a new branch.** Not from `dev`. Two reasons: your existing branch already
+**Work in a NEW worktree branched from `feat/sport-first-navigation` at `ff38374`, on a new
+branch.** Not from `dev`, and not by continuing to commit on `feat/sport-first-navigation`. Two reasons: your existing branch already
 modifies `backend/settlement/market_mapping.py` and `backend/link_prop_games.py`, which this
 task also touches, and that branch is being audited right now so its commits must stop
 moving. Building on top of it keeps both true.
