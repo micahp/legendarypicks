@@ -231,3 +231,65 @@ markets -- the product exists, the competition does not. Dabble's US competition
 list has no soccer at all. RotoWire's own soccer sportsbook table
 (`/betting/soccer/tables/all-bets-props.php?date=`) supports five markets and all
 five are goal-scoring; empty across 15 days either way.
+
+---
+
+# CORRECTION, 2026-08-25 ~19:20 UTC: it was never timing
+
+The section "**Timing, not coverage**" above is **WRONG** and is superseded by
+this one. It is left in place because the reasoning that produced it is the
+thing worth keeping.
+
+## The observation
+
+The user, looking at PrizePicks directly on a non-blocked machine, saw Leagues
+Cup player props live on the board:
+
+```
+Victor Olatunji    Salt Lake - Attacker   @ Leon Tue 9:30pm    2.5  Shots
+Saba Lobjanidze    Salt Lake - Attacker   @ Leon Tue 9:30pm    2.5  Shots
+Alfonso Alvarado   Leon - Attacker        vs Salt Lake         1.5  Shots
+Dominik Marczuk    Salt Lake - Attacker   @ Leon Tue 9:30pm    1.5  Shots
+```
+
+The live relay payload was searched for those four surnames and for all eight
+Leagues Cup clubs at the same moment. **Zero hits in 6.6MB.** The relay's entire
+PrizePicks soccer board was 22 props on ONE fixture, Real Madrid vs Real
+Sociedad: Mbappe, Vinicius, Bellingham, Courtois, Huijsen, Aramburu, Gomez.
+
+## What that means
+
+**RotoWire's relay is a curated subset of PrizePicks, not a mirror of it.** It
+republishes a marquee European fixture and drops CONCACAF. `lines.php` carrying
+`prizepicks` as a book means we can reach *what RotoWire chose to republish* --
+not that we can reach PrizePicks.
+
+The earlier reasoning was sound and still wrong. `lines.php` takes no parameters,
+the anonymous payload is byte-identical to a subscribed browser's, and the 08-19
+archive did carry 370 MLS rows for same-day games. Every one of those is true.
+The conclusion drawn from them -- that an empty soccer board meant "not posted
+yet" -- was never tested against what PrizePicks itself was showing at that
+moment. **A publisher's silence is only evidence about the publisher.** We had no
+independent read on the upstream, so "not posted yet" and "not carried at all"
+were indistinguishable, and the audit picked one and wrote it down as fact.
+
+## Consequences
+
+1. `backend/watch_rotowire_lcup.py` will not find these props no matter how long
+   it polls. It is not worth waiting on for this tournament. It is still correct
+   for MLS, where the relay does carry the board.
+2. The only route to Leagues Cup player stat props is a PrizePicks fetch from a
+   non-datacenter IP. `backend/tools/pull_prizepicks.py` does that: standard
+   library only, no arguments, writes one bundle and prints the soccer markets
+   it found. Verified to fail loudly with the right message from this box.
+3. Item 1 under "What would unblock the 7 markets" above is withdrawn. Item 2 is
+   the whole answer.
+
+## The shape, for next time
+
+This is the same shape as the 2026-08-12 `SOCIAL_SOURCES` miss and the ESPN
+"gap is a statement about which endpoint we asked" rule: **a relay's book list is
+a claim about the relay, not about the book.** Before treating a downstream feed
+as a proxy for an upstream one, get one independent read of the upstream -- even
+a screenshot from a phone -- and diff them. One such read this afternoon would
+have saved the entire watcher premise.
