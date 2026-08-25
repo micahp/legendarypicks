@@ -246,6 +246,16 @@ or different than recorded:**
       any MLB row carries data or provenance. Production and managed dev are unchanged.
 - [ ] **Promote MLS to prod parity:** game logs **10,603 prod vs 21,177 dev**, stories 0 vs 30,
       leaders stuck on 2025 while standings serve 2026. All data jobs, none needs a deploy.
+      **Copied-candidate progress 2026-08-24:** a local rollup published 697 current-season
+      leaderboard rows from the copied ESPN logs, so the candidate API now defaults to 2026,
+      offers `[2026, 2025]`, and all 697 leaders reach a same-season game log. One paced,
+      low-priority 80-summary catch-up chunk added 1,497 logs across 49 completed May games
+      (10,603 -> 12,100 total; 2026 now 6,013 logs across 196 games), then hit ESPN's explicit
+      request wall and stopped at its declared budget. Held coverage still ends Aug. 8 and
+      stories remain zero, so promotion remains open. The run also exposed two diagnostics
+      bugs: Core type `1` and summary type `13846` both name the MLS regular season and must
+      be compared semantically (now regression-tested), and a player-name variable must not
+      overwrite the phase label. Production and managed dev are unchanged.
 - [ ] **MLS and NCAAF scoring plays: zero on both.** Confirm the publisher has them before
       recording it as a gap (`feedback_we_systematically_underread_publishers`). **Confirmed
       and copied-candidate proof 2026-08-24:** the publisher has them in two league-specific
