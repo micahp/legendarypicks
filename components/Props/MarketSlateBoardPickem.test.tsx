@@ -1,5 +1,5 @@
 import React from 'react'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, fireEvent } from '@testing-library/react'
 import MarketSlateBoard from './MarketSlateBoard'
 
 // RotoWire stamps a constant price on pick'em books. Verified in its raw payload
@@ -77,5 +77,48 @@ describe('a pick’em book shows no line price', () => {
     // Suppressing the price must not suppress the prop.
     render(<MarketSlateBoard league="ligamx" date="2026-08-26" />)
     expect((await rowFor('Pickem Player'))).toBeTruthy()
+  })
+})
+
+describe('the odds sort ranks by price and parks pick’em last', () => {
+  it('orders real prices shortest to longest and leaves pick’em at the bottom', async () => {
+    // American odds are monotonic as integers: -160 is a shorter price than
+    // +500. A pick'em row has no price at all, so it must not interleave.
+    const rows = [
+      prop(1, 'Pickem Player', 'rotowire:prizepicks', -137),
+      prop(2, 'Longshot', 'bovada', 500),
+      prop(3, 'Favourite', 'bovada', -160),
+    ]
+    ;(global as any).fetch = jest.fn((url: string) => {
+      if (url.includes('/api/props/slate')) {
+        return Promise.resolve(json([{ markets: [{ market: 'shots', count: rows.length }] }]))
+      }
+      if (url.includes('/api/props/history')) {
+        const id = Number(new URLSearchParams(url.split('?')[1]).get('player_id'))
+        return Promise.resolve(json({
+          player_id: id, player: 'x', team: 'LEO', league: 'ligamx', market: 'shots',
+          line: LINE, side: 'over', projection: 1,
+          hit_rate: { l5: 0.5, l10: 0.5, l20: 0.5, season: 0.5 },
+          hit_rate_n: { l5: 5, l10: 10, l20: 20, season: 20 },
+          games: Array.from({ length: 20 }, (_, i) => ({
+            date: '2026-08-0' + ((i % 9) + 1), value: 1, opponent: 'AME', home: true, hit: i % 2 === 0,
+          })),
+        }))
+      }
+      return Promise.resolve(json(rows))
+    })
+
+    render(<MarketSlateBoard league="ligamx" date="2026-08-26" />)
+    await waitFor(() => {
+      expect(document.querySelectorAll('[data-market-row]').length).toBe(rows.length)
+    })
+    fireEvent.click(screen.getByRole('button', { name: /^Odds/ }))
+    await waitFor(() => {
+      const names = Array.from(document.querySelectorAll('[data-market-row] h3'))
+        .map(n => (n.textContent || '').trim())
+      // Descending by default: longest price first, pick'em always last.
+      expect(names[names.length - 1]).toBe('Pickem Player')
+      expect(names.slice(0, 2)).toEqual(['Longshot', 'Favourite'])
+    })
   })
 })

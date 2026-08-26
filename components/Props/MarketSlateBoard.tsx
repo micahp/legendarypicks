@@ -51,7 +51,7 @@ interface SlateMarketSummary {
   markets?: MarketOption[]
 }
 
-type SortKey = 'hit-rate' | 'confidence' | 'edge' | 'line'
+type SortKey = 'hit-rate' | 'confidence' | 'odds' | 'edge' | 'line'
 type SortDirection = 'asc' | 'desc'
 
 
@@ -404,6 +404,20 @@ export default function MarketSlateBoard({ league, date }: { league: string; dat
     const valueFor = (row: BoardRow): number | null => {
       const history = historyByRow[row.key]?.data
       if (sortKey === 'line') return row.line
+      // American odds are MONOTONIC as raw integers: -400, -160, +120, +900 is
+      // 80%, 61.5%, 45.5%, 10% -- strictly decreasing probability across the
+      // negative/positive boundary. So a plain numeric sort is already
+      // shortest-price-to-longest, and needs no conversion.
+      //
+      // A pick'em row returns null and therefore sorts LAST in either direction
+      // (see the comparator). Its stored -137 is the relay's constant for books
+      // that quote no per-leg price, so ranking it against a real -160 would be
+      // ranking a placeholder against a measurement.
+      if (sortKey === 'odds') {
+        if (isPickem(row.source)) return null
+        const price = row.over?.odds ?? row.under?.odds
+        return price === null || price === undefined ? null : price
+      }
       if (!history) return null
       if (sortKey === 'hit-rate') return history.hit_rate.l10
       // Over EVERY game held, not a window: the point of this sort is to use
@@ -507,6 +521,7 @@ export default function MarketSlateBoard({ league, date }: { league: string; dat
           {([
             ['hit-rate', 'Hit rate'],
             ['confidence', 'Confidence'],
+            ['odds', 'Odds'],
             ['edge', 'Edge'],
             ['line', 'Line'],
           ] as [SortKey, string][]).map(([key, label]) => (
