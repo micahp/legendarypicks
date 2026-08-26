@@ -61,6 +61,14 @@ MARKETS = {
     # verified equivalence, and settlement should be checked against a graded
     # result before this market is trusted.
     "Fouls": "fouls_committed",
+    # Goalkeeper markets. PrizePicks publishes both and we dropped both as
+    # UNMAPPED, while `saves` and `goals_allowed` have been in the chart map for
+    # ligamx and lcup all along and the logs carry `saves` and `goals_conceded`
+    # on every soccer row. Measured in a real payload 2026-08-26: 29 Goalie
+    # Saves and 3 Goals Allowed lines, none of them on a fixture we currently
+    # price, so this adds no rows today and closes the gap for when it does.
+    "Goalie Saves": "saves",
+    "Goals Allowed": "goals_allowed",
 }
 
 # A demon is a harder line and a goblin an easier one, both with adjusted

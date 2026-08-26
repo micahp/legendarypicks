@@ -48,7 +48,19 @@ _MARKET_STAT_KEY = {
             # markets it launched with. goal_or_assist is COMPOUND -- the chart
             # sums the fields -- so it needs no stored column.
             "goal_or_assist": ["goals", "assists"],
-            "fouls_committed": "fouls_committed"},
+            "fouls_committed": "fouls_committed",
+            # Goalkeeper markets. `saves` is on 4,516 MLS rows and 86 board
+            # rows were rendering "No history" against it; the market has been
+            # mapped for ligamx and lcup all along.
+            "saves": "saves",
+            "goals_allowed": "goals_conceded",
+            # Bovada's card market, compound the same way ligamx maps it.
+            "card_shown": ["yellow_cards", "red_cards"],
+            # Kambi sends the raw key as the market name. `shots_on_target`
+            # below already resolves to the same field; without this entry the
+            # 21 kambi rows answer "not chartable" while identical rows from
+            # another book chart.
+            "sot": "sot"},
             # tackles is deliberately NOT here: ESPN's shallow MLS ingest does
             # not publish it and FotMob has only been run for ligamx and lcup,
             # so MLS holds 0 rows carrying it. Mapping it would chart an empty

@@ -441,6 +441,104 @@ class FirstGoalIsAnsweredFromTheStoredRow(unittest.TestCase):
         self.assertNotIn("tackles", core_markets._MARKET_STAT_KEY["mls"])
 
 
+class TheMlsMapCoversWhatMlsLogsAnswer(unittest.TestCase):
+    """The mls map launched with five markets and was never extended.
+
+    Reported 2026-08-26: "we don't have goalie saves as a prop?" We do -- 86 of
+    them, from RotoWire's PrizePicks relay -- and every one rendered "No
+    history", because `saves` was mapped for ligamx and lcup and absent for
+    mls. A market absent from the map is indistinguishable, to a reader, from a
+    market no source publishes.
+
+    Measured on the dev board, mls markets with no map entry: passes_attempted
+    226, saves 86, tackles 74, card_shown 54, chances_created 42, clearances
+    41, sot 21, crosses 19, shots_assisted 1. Only saves, card_shown and sot
+    are answerable from mls logs; the rest are FotMob-only fields and FotMob
+    has never been run for mls.
+    """
+
+    @classmethod
+    def tearDownClass(cls):
+        try:
+            os.unlink(_IMPORT_DB.name)
+        except FileNotFoundError:
+            pass
+
+    def setUp(self):
+        handle = tempfile.NamedTemporaryFile(
+            prefix="mls-map-", suffix=".db", delete=False)
+        self.path = handle.name
+        handle.close()
+        self.addCleanup(
+            lambda: os.path.exists(self.path) and os.unlink(self.path))
+        con = sqlite3.connect(self.path)
+        con.executescript("""
+            CREATE TABLE players(id INTEGER PRIMARY KEY, name TEXT, team TEXT,
+                                 league TEXT, position TEXT);
+            CREATE TABLE player_game_logs(
+              id INTEGER PRIMARY KEY AUTOINCREMENT, player_id INTEGER,
+              league TEXT, season INTEGER, stats TEXT, game_date TEXT,
+              opponent TEXT, home_away TEXT, game_no INTEGER, game_type TEXT,
+              source TEXT);
+        """)
+        con.execute("INSERT INTO players VALUES(1,'Keeper','CLB','mls','G')")
+        rows = [
+            (1, "mls", 2026, json.dumps({"saves": 4, "goals_conceded": 1,
+                                         "sot": 2, "yellow_cards": 1,
+                                         "red_cards": 0, "appearances": 1}),
+             "2026-08-10", "RSL", "home", 1, "REG", "espn"),
+            (1, "mls", 2026, json.dumps({"saves": 2, "goals_conceded": 0,
+                                         "sot": 1, "yellow_cards": 0,
+                                         "red_cards": 0, "appearances": 1}),
+             "2026-08-03", "ATX", "away", 2, "REG", "espn"),
+        ]
+        con.executemany(
+            "INSERT INTO player_game_logs(player_id, league, season, stats,"
+            " game_date, opponent, home_away, game_no, game_type, source)"
+            " VALUES(?,?,?,?,?,?,?,?,?,?)", rows)
+        con.commit()
+        con.close()
+
+        def connection():
+            c = sqlite3.connect(self.path)
+            c.row_factory = sqlite3.Row
+            return c
+
+        patcher = mock.patch.object(props, "_db", side_effect=connection)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def test_goalie_saves_charts(self):
+        result = props.prop_history(
+            player_id=1, market="saves", line=2.5, side="over", league="mls")
+        self.assertNotIn("error", result)
+        self.assertEqual([g["value"] for g in result["games"]], [4.0, 2.0])
+
+    def test_a_raw_sot_market_charts_like_shots_on_target(self):
+        """Kambi sends the stored key as the market name. Identical rows from
+        another book charted; these answered "not chartable"."""
+        for market in ("sot", "shots_on_target"):
+            result = props.prop_history(
+                player_id=1, market=market, line=1.5, side="over", league="mls")
+            self.assertEqual([g["value"] for g in result["games"]], [2.0, 1.0],
+                             market)
+
+    def test_card_shown_sums_both_colours(self):
+        result = props.prop_history(
+            player_id=1, market="card_shown", line=0.5, side="over",
+            league="mls")
+        self.assertEqual([g["value"] for g in result["games"]], [1.0, 0.0])
+
+    def test_a_fotmob_only_market_stays_unmapped_for_mls(self):
+        """FotMob has never been run for mls, so these hold 0 rows. Mapping one
+        would chart an empty series as though the market were answerable."""
+        import core_markets
+        for market in ("tackles", "clearances", "crosses", "chances_created",
+                       "passes_attempted"):
+            self.assertNotIn(market, core_markets._MARKET_STAT_KEY["mls"],
+                             market)
+
+
 class OneRowPerAppearance(unittest.TestCase):
     """Providers keep separate rows; the READER picks one.
 
