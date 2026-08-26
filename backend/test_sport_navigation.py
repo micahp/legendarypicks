@@ -61,6 +61,7 @@ def test_directory_uses_coverage_gate_and_keeps_rollup_hubs():
         {"league": "mlb", "sport": "baseball"},
         {"league": "esports", "sport": "esports"},
         {"league": "ufc", "sport": "mma"},
+        {"league": "soccer", "sport": "soccer"},
         {"league": "tennis", "sport": "tennis"},
     ]
 

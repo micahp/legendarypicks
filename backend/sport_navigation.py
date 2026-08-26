@@ -13,6 +13,7 @@ from league_offering import offered_leagues
 
 
 HIDDEN_DIRECTORY_LEAGUES = frozenset({"wc"})
+SOCCER_DIRECTORY_LEAGUES = frozenset({"mls", "lcup"})
 # Props navigation describes the product we offer, not whichever competitions
 # happen to have rows in today's database. Row presence is feed-dependent: NBA
 # can have scheduled games but no player-prop offers, and Leagues Cup can have a
@@ -67,10 +68,14 @@ def prop_navigation(_con: sqlite3.Connection) -> list[dict[str, str]]:
 def league_directory_navigation(con: sqlite3.Connection) -> list[dict[str, str]]:
     """Competition hubs vouched by the coverage registry.
 
-    Tennis and esports are roll-up hubs rather than one-competition routes, so
-    they are explicit local rows. World Cup remains score-only and is omitted.
+    Soccer, tennis and esports are roll-up hubs rather than one-competition
+    routes, so they are explicit local rows. World Cup remains score-only and
+    is omitted.
     """
-    rows = _rows(offered_leagues(con) - HIDDEN_DIRECTORY_LEAGUES)
+    rows = _rows(
+        offered_leagues(con) - HIDDEN_DIRECTORY_LEAGUES - SOCCER_DIRECTORY_LEAGUES
+    )
+    rows.append({"league": "soccer", "sport": "soccer"})
     rows.append({"league": "tennis", "sport": "tennis"})
     rows.append({"league": "esports", "sport": "esports"})
     return sorted(rows, key=lambda row: (row["sport"], row["league"]))

@@ -12,6 +12,7 @@ monkeypatching `espn_client._get` (as the test suite does) keeps working the
 way it did when this was a single module.
 """
 import datetime as _dt
+import re as _re
 
 import espn_client
 
@@ -328,6 +329,93 @@ def tennis_draws_from_payload(league, payload):
             "matches": matches,
         })
     return draws
+
+
+def tennis_rankings_from_payload(league, payload):
+    """Normalize ESPN's one published ATP/WTA ranking week.
+
+    Athlete identity is read from the reference URL.  The ranking document
+    does not publish names inline, and joining it by display name would undo
+    the tennis identity spine this project already maintains.
+    """
+    if league not in ("atp", "wta"):
+        raise ValueError("tennis rankings require league=atp or league=wta")
+    rows = []
+    for rank in payload.get("ranks", []) or []:
+        ref = str((rank.get("athlete") or {}).get("$ref") or "")
+        match = _re.search(r"/athletes/([^/?]+)", ref)
+        athlete_id = match.group(1) if match else ""
+        current = _int(rank.get("current"))
+        previous = _int(rank.get("previous"))
+        points = _int(rank.get("points"))
+        if not athlete_id or current is None:
+            raise ValueError(f"incomplete {league} ranking row")
+        rows.append({
+            "espn_athlete_id": athlete_id,
+            "rank": current,
+            "previous_rank": previous,
+            "points": points,
+        })
+    if len(rows) != 150:
+        raise ValueError(f"expected ESPN's capped {league} top 150, got {len(rows)}")
+    if sorted(row["rank"] for row in rows) != list(range(1, 151)):
+        raise ValueError(f"{league} ranking positions are incomplete or duplicated")
+    return rows
+
+
+def tennis_ranking_identities_from_payload(league, payload):
+    """Validate the bulk site ranking population used to refresh the spine."""
+    if league not in ("atp", "wta"):
+        raise ValueError("tennis ranking identities require league=atp or league=wta")
+    collections = [
+        row for row in (payload.get("rankings", []) or [])
+        if str(row.get("name") or "").upper() == league.upper()
+    ]
+    if len(collections) != 1:
+        raise ValueError(f"expected one {league} site ranking collection, got {len(collections)}")
+    identities = []
+    for row in collections[0].get("ranks", []) or []:
+        athlete = row.get("athlete") or {}
+        athlete_id = str(athlete.get("id") or "")
+        name = athlete.get("displayName")
+        active = athlete.get("active")
+        if not athlete_id or not isinstance(name, str) or not name.strip() or not isinstance(active, bool):
+            raise ValueError(f"incomplete {league} ranking identity")
+        identities.append({"espn_id": athlete_id, "name": name.strip(), "active": active})
+    if len(identities) != 150 or len({row["espn_id"] for row in identities}) != 150:
+        raise ValueError(f"expected 150 unique {league} ranking identities, got {len(identities)}")
+    return identities
+
+
+def tennis_ranking_identities(league):
+    """Fetch all names/ids in one bulk site response; never fan out by athlete."""
+    if league not in ("atp", "wta"):
+        raise ValueError("tennis ranking identities require league=atp or league=wta")
+    url = (
+        espn_client._SITE.format(path=f"tennis/{league}")
+        + "/rankings?region=us&lang=en&contentorigin=espn"
+    )
+    return tennis_ranking_identities_from_payload(league, espn_client._get(url, ttl=3600))
+
+
+def tennis_rankings(league):
+    """Fetch the current ESPN ranking document in two bounded requests."""
+    if league not in ("atp", "wta"):
+        raise ValueError("tennis rankings require league=atp or league=wta")
+    index_url = (
+        "https://sports.core.api.espn.com/v2/sports/tennis/leagues/"
+        f"{league}/rankings?lang=en&region=us&limit=1000"
+    )
+    index = espn_client._get(index_url, ttl=3600)
+    items = index.get("items", []) or []
+    if len(items) != 1:
+        raise ValueError(f"expected one current {league} ranking week, got {len(items)}")
+    ref = str(items[0].get("$ref") or "").replace("http://", "https://", 1)
+    if not ref.startswith("https://sports.core.api.espn.com/"):
+        raise ValueError(f"unexpected {league} ranking reference")
+    separator = "&" if "?" in ref else "?"
+    payload = espn_client._get(f"{ref}{separator}limit=1000", ttl=3600)
+    return tennis_rankings_from_payload(league, payload)
 
 
 def _games_from_payload(league, date, d):

@@ -8,7 +8,7 @@ describe('leagues list', () => {
       ok: true,
       json: () => Promise.resolve({
         leagues: [
-          { league: 'mls', sport: 'soccer' },
+          { league: 'soccer', sport: 'soccer' },
           { league: 'nfl', sport: 'football' },
           { league: 'ncaaf', sport: 'football' },
           { league: 'esports', sport: 'esports' },
@@ -18,7 +18,7 @@ describe('leagues list', () => {
   })
 
   it.each([
-    ['MLS', '/leagues/mls'],
+    ['Soccer', '/leagues/soccer'],
     ['NCAAF', '/leagues/ncaaf'],
     ['Esports', '/leagues/esports'],
   ])('lists %s with a card linking to its league destination', async (name, href) => {
@@ -35,6 +35,6 @@ describe('leagues list', () => {
     const section = football.closest('section')
     expect(section?.textContent).toContain('NFL')
     expect(section?.textContent).toContain('NCAAF')
-    expect(screen.getByRole('heading', { name: 'Soccer' })).toBeTruthy()
+    expect(screen.getByRole('heading', { level: 2, name: 'Soccer' })).toBeTruthy()
   })
 })

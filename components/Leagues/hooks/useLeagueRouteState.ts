@@ -38,7 +38,7 @@ export function useLeagueRouteState() {
   // UFC has 1 conversation / 2 narratives / 12 granular. Only the World Cup is
   // left out: dormant hub, and its key returns nothing.
   const validTabs: HubTab[] = isUFC
-    ? ['rankings', 'schedule', 'predict', 'news']
+    ? ['rankings', 'schedule', 'predict', 'optimizer', 'news']
     : isWorldCup
       ? ['standings', 'stats', 'schedule']
       : isNFL

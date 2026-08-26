@@ -1,4 +1,6 @@
 import Head from 'next/head'
+import Link from 'next/link'
+import { useRouter } from 'next/router'
 import { useEffect, useMemo, useState } from 'react'
 import GameCard from '../../components/Scores/GameCard'
 import NewsTab from '../../components/Leagues/NewsTab'
@@ -6,7 +8,7 @@ import { useNewsData } from '../../components/Leagues/hooks/useNewsData'
 import { SportsService } from '../../services/sports'
 import type { Game } from '../../services/sports'
 
-type HubTab = 'scores' | 'draws' | 'news'
+type HubTab = 'scores' | 'draws' | 'rankings' | 'news'
 type Tour = 'all' | 'atp' | 'wta'
 
 type DrawMatch = {
@@ -35,9 +37,31 @@ type DrawResponse = {
   reason?: string | null
 }
 
+type Ranking = {
+  espn_athlete_id: string
+  player_id: number
+  player_name: string
+  rank: number
+  previous_rank?: number | null
+  points?: number | null
+}
+
+type RankingTour = {
+  tour: 'atp' | 'wta'
+  captured_at: string
+  rankings: Ranking[]
+}
+
+type RankingResponse = {
+  available: boolean
+  tours: RankingTour[]
+  reason?: string | null
+}
+
 const TABS: { key: HubTab; label: string }[] = [
   { key: 'scores', label: 'Scores' },
   { key: 'draws', label: 'Draws' },
+  { key: 'rankings', label: 'Rankings' },
   { key: 'news', label: 'News' },
 ]
 
@@ -46,6 +70,9 @@ const TOURS: { key: Tour; label: string }[] = [
   { key: 'atp', label: 'ATP' },
   { key: 'wta', label: 'WTA' },
 ]
+
+const TAB_KEYS = new Set(TABS.map(item => item.key))
+const TOUR_KEYS = new Set(TOURS.map(item => item.key))
 
 function localDate(offset = 0) {
   const date = new Date()
@@ -65,6 +92,7 @@ function selectedTours(tour: Tour): ('atp' | 'wta')[] {
 }
 
 export default function TennisLeaguePage() {
+  const router = useRouter()
   const [tab, setTab] = useState<HubTab>('scores')
   const [tour, setTour] = useState<Tour>('all')
   const [date, setDate] = useState(localDate())
@@ -73,8 +101,17 @@ export default function TennisLeaguePage() {
   const [scoresError, setScoresError] = useState<string | null>(null)
   const [draws, setDraws] = useState<DrawResponse | null>(null)
   const [drawsError, setDrawsError] = useState<string | null>(null)
+  const [rankings, setRankings] = useState<RankingResponse | null>(null)
+  const [rankingsError, setRankingsError] = useState<string | null>(null)
   const atpNews = useNewsData('atp', tab === 'news' && tour !== 'wta')
   const wtaNews = useNewsData('wta', tab === 'news' && tour !== 'atp')
+
+  useEffect(() => {
+    const requestedTab = typeof router.query.tab === 'string' ? router.query.tab : 'scores'
+    const requestedTour = typeof router.query.tour === 'string' ? router.query.tour : 'all'
+    setTab((TAB_KEYS.has(requestedTab as HubTab) ? requestedTab : 'scores') as HubTab)
+    setTour((TOUR_KEYS.has(requestedTour as Tour) ? requestedTour : 'all') as Tour)
+  }, [router.query.tab, router.query.tour])
 
   useEffect(() => {
     if (tab !== 'scores') return
@@ -114,6 +151,25 @@ export default function TennisLeaguePage() {
     return () => { active = false }
   }, [tab, tour])
 
+  useEffect(() => {
+    if (tab !== 'rankings') return
+    let active = true
+    setRankingsError(null)
+    fetch(`/api/tennis/rankings?tour=${tour}&limit=50`, { cache: 'no-store' })
+      .then(async response => {
+        if (!response.ok) throw new Error('Ranking request failed')
+        return response.json()
+      })
+      .then(payload => { if (active) setRankings(payload) })
+      .catch(() => {
+        if (active) {
+          setRankings(null)
+          setRankingsError('Tennis rankings are unavailable right now.')
+        }
+      })
+    return () => { active = false }
+  }, [tab, tour])
+
   return (
     <>
       <Head><title>Tennis — Legendary Picks</title></Head>
@@ -122,26 +178,28 @@ export default function TennisLeaguePage() {
           <p className="text-xs font-bold uppercase tracking-widest text-emerald-400">Major tournament coverage</p>
           <h1 className="mt-1 text-3xl font-extrabold tracking-tight">Tennis</h1>
           <p className="mt-2 max-w-2xl text-sm text-zinc-400">
-            ATP and WTA scores, singles draws, and news for covered major tournaments.
+            ATP and WTA scores, singles draws, world rankings, and news for covered major tournaments.
             Tour events outside this coverage are not ingested here.
           </p>
         </header>
 
         <nav aria-label="Tennis sections" className="flex gap-2 border-b border-zinc-800">
           {TABS.map(item => (
-            <button key={item.key} onClick={() => setTab(item.key)}
+            <Link key={item.key} href={`/leagues/tennis?tab=${item.key}&tour=${tour}`}
+              onClick={() => setTab(item.key)} aria-current={tab === item.key ? 'page' : undefined}
               className={`border-b-2 px-4 py-2 text-sm font-bold ${tab === item.key ? 'border-emerald-400 text-white' : 'border-transparent text-zinc-500 hover:text-zinc-300'}`}>
               {item.label}
-            </button>
+            </Link>
           ))}
         </nav>
 
         <div aria-label="Tour" className="flex gap-2">
           {TOURS.map(item => (
-            <button key={item.key} onClick={() => setTour(item.key)} aria-pressed={tour === item.key}
+            <Link key={item.key} href={`/leagues/tennis?tab=${tab}&tour=${item.key}`}
+              onClick={() => setTour(item.key)} aria-current={tour === item.key ? 'page' : undefined}
               className={`rounded-full border px-4 py-1.5 text-sm font-semibold ${tour === item.key ? 'border-emerald-500 bg-emerald-500/10 text-emerald-300' : 'border-zinc-800 text-zinc-400'}`}>
               {item.label}
-            </button>
+            </Link>
           ))}
         </div>
 
@@ -149,6 +207,7 @@ export default function TennisLeaguePage() {
           <ScoresPanel date={date} setDate={setDate} games={games} loading={scoresLoading} error={scoresError} />
         )}
         {tab === 'draws' && <DrawsPanel data={draws} error={drawsError} />}
+        {tab === 'rankings' && <RankingsPanel data={rankings} error={rankingsError} />}
         {tab === 'news' && (
           <div className="space-y-8">
             {tour !== 'wta' && <section><h2 className="mb-3 text-lg font-bold">ATP News</h2><NewsTab league="atp" {...atpNews} /></section>}
@@ -213,6 +272,49 @@ function DrawTournament({ draw }: { draw: Draw }) {
         ))}
       </div>
     </section>
+  )
+}
+
+function RankingsPanel({ data, error }: { data: RankingResponse | null; error: string | null }) {
+  if (error) return <Unavailable text={error} />
+  if (!data) return <Loading />
+  if (!data.available || !data.tours.length) {
+    return <Unavailable text={data.reason || 'No verified ATP or WTA ranking snapshot has been published yet.'} />
+  }
+  return (
+    <div className="grid gap-6 lg:grid-cols-2">
+      {data.tours.map(snapshot => (
+        <section key={snapshot.tour} className="overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900">
+          <div className="flex items-end justify-between border-b border-zinc-800 px-4 py-3">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-wider text-emerald-400">World rankings</p>
+              <h2 className="text-xl font-bold">{snapshot.tour.toUpperCase()} Top 50</h2>
+            </div>
+            <p className="text-xs text-zinc-500">Captured {new Date(snapshot.captured_at).toLocaleDateString()}</p>
+          </div>
+          <div className="divide-y divide-zinc-800/80">
+            {snapshot.rankings.map(row => {
+              const movement = row.previous_rank == null ? null : row.previous_rank - row.rank
+              return (
+                <div key={row.espn_athlete_id} className="grid grid-cols-[2.5rem_1fr_auto_auto] items-center gap-3 px-4 py-2.5 text-sm">
+                  <span className="font-bold tabular-nums text-zinc-400">{row.rank}</span>
+                  <Link href={`/player/${row.player_id}?league=${snapshot.tour}`} className="min-w-0 truncate font-semibold text-zinc-200 hover:text-emerald-400">
+                    {row.player_name}
+                  </Link>
+                  <span className="tabular-nums text-zinc-400">{row.points == null ? '–' : row.points.toLocaleString()} pts</span>
+                  <span aria-label="Rank movement" className={`w-8 text-right text-xs tabular-nums ${movement == null || movement === 0 ? 'text-zinc-600' : movement > 0 ? 'text-emerald-400' : 'text-amber-400'}`}>
+                    {movement == null || movement === 0 ? '—' : movement > 0 ? `↑${movement}` : `↓${Math.abs(movement)}`}
+                  </span>
+                </div>
+              )
+            })}
+          </div>
+          <p className="border-t border-zinc-800 px-4 py-3 text-xs text-zinc-500">
+            ESPN publishes the current top 150. This view shows 50; tournament seeds are separate.
+          </p>
+        </section>
+      ))}
+    </div>
   )
 }
 

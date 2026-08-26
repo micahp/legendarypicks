@@ -368,6 +368,71 @@ def _spend_report():
     return "spent " + ", ".join(f"{host}={count}" for host, count in sorted(spend.items()))
 
 
+def _refresh_sport_hubs(leagues, dry_run=False, verbose=True, season=None):
+    """Refresh slow-moving sport-hub snapshots inside the existing runner.
+
+    This deliberately does not create a rankings or Leagues Cup timer.  The
+    scoreboard runner already owns the bounded publisher session; these
+    snapshots add work only when their persisted cadence says they are due.
+    """
+    selected = {str(league).lower() for league in leagues}
+    failures = []
+    season = season or dt.date.today().year
+
+    for tour in ("atp", "wta"):
+        if tour not in selected or not scoreboard_store.tennis_rankings_need_refresh(tour):
+            continue
+        if dry_run:
+            print(f"  would refresh {tour} spine + world rankings (3 bounded requests)")
+            continue
+        try:
+            identities = espn.tennis_ranking_identities(tour)
+            spine = scoreboard_store.save_tennis_ranking_spine(tour, identities)
+            rankings = espn.tennis_rankings(tour)
+            written = scoreboard_store.save_tennis_rankings(tour, rankings, source="espn")
+            if verbose:
+                print(
+                    f"  ok   {tour:6} spine={spine['published']} "
+                    f"inserted={spine['inserted']} world rankings={written}"
+                )
+        except Exception as exc:
+            error = f"{type(exc).__name__}: {exc}"
+            failures.append((tour, "rankings", error))
+            print(f"  FAIL {tour:6} rankings: {error}")
+
+    if "mls" in selected and scoreboard_store.soccer_competition_need_refresh("mls"):
+        if dry_run:
+            print("  would refresh mls conference standings (1 bounded request)")
+        else:
+            try:
+                snapshot = espn.mls_conference_standings(season=season)
+                counts = scoreboard_store.save_soccer_competition(snapshot, source="espn")
+                if verbose:
+                    print(f"  ok   mls    standings={counts['standings']}")
+            except Exception as exc:
+                error = f"{type(exc).__name__}: {exc}"
+                failures.append(("mls", "standings", error))
+                print(f"  FAIL mls    standings: {error}")
+
+    if "lcup" in selected and scoreboard_store.soccer_competition_need_refresh("lcup"):
+        if dry_run:
+            print("  would refresh lcup bracket + leaders (2 bounded requests)")
+        else:
+            try:
+                snapshot = espn.lcup_competition_snapshot(season)
+                counts = scoreboard_store.save_soccer_competition(snapshot, source="espn")
+                if verbose:
+                    print(
+                        f"  ok   lcup   bracket={counts['matches']} "
+                        f"leaders={counts['leaders']}"
+                    )
+            except Exception as exc:
+                error = f"{type(exc).__name__}: {exc}"
+                failures.append(("lcup", "competition", error))
+                print(f"  FAIL lcup   competition: {error}")
+    return failures
+
+
 def run_schedule(leagues, dates, dry_run=False, verbose=True):
     """Two gates, in order, and both of them are the publisher's own answers.
 
@@ -392,6 +457,7 @@ def run_schedule(leagues, dates, dry_run=False, verbose=True):
                 print(f"  skip  {league:6} {date}: {reason}")
     if dry_run:
         print(f"[scoreboards] would ask {len(plan_ask)} of {len(leagues) * len(dates)}")
+        _refresh_sport_hubs(leagues, dry_run=True, verbose=verbose)
         return 0
 
     failures = []
@@ -404,6 +470,7 @@ def run_schedule(leagues, dates, dry_run=False, verbose=True):
             print(f"  FAIL {league:6} {date}: {error}")
         elif verbose:
             print(f"  ok   {league:6} {date}  games={written}")
+    failures.extend(_refresh_sport_hubs(leagues, verbose=verbose))
     pending = _drain_stories(STORY_DRAIN_SCHEDULE)
     print(f"[scoreboards] schedule: {len(plan_ask)} asked, {len(plan_skip)} skipped, "
           f"{total} games stored, {len(failures)} failed"

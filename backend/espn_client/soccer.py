@@ -11,6 +11,8 @@ public functions resolve through the `espn_client` package at call time so
 monkeypatching `espn_client._get` / `espn_client.summary` (as the test suite
 does) keeps working.
 """
+import re
+
 import espn_client
 
 
@@ -525,3 +527,130 @@ def ncaaf_conference_standings():
             })
         groups.append({"group": gname, "rows": rows})
     return groups
+
+
+_LCUP_ROUND_ORDER = {
+    "quarterfinals": 1,
+    "semifinals": 2,
+    "third-place": 3,
+    "third-place-game": 3,
+    "3rd-place-match": 3,
+    "final": 4,
+}
+
+
+def lcup_competition_snapshot_from_payload(scoreboard, statistics):
+    """Build the Leagues Cup bracket and published leader categories.
+
+    The scoreboard's season slug is the round authority.  League-phase games
+    are deliberately excluded from the knockout bracket, and unpublished
+    future rounds are not reconstructed from presumed winners.
+    """
+    scoreboard_season = espn_client._int(
+        (((scoreboard.get("leagues") or [{}])[0].get("season") or {}).get("year"))
+    )
+    statistics_season = espn_client._int((statistics.get("season") or {}).get("year"))
+    if not scoreboard_season or statistics_season != scoreboard_season:
+        raise ValueError(
+            f"Leagues Cup source season mismatch: scoreboard={scoreboard_season} "
+            f"statistics={statistics_season}"
+        )
+
+    grouped = {}
+    for event in scoreboard.get("events", []) or []:
+        season = event.get("season") or {}
+        slug = str(season.get("slug") or "").lower()
+        if slug == "league-phase" or slug not in _LCUP_ROUND_ORDER:
+            continue
+        comp = (event.get("competitions") or [{}])[0]
+        status = comp.get("status") or event.get("status") or {}
+        status_type = status.get("type") or {}
+        state = status_type.get("state")
+        teams = {}
+        for competitor in comp.get("competitors", []) or []:
+            team = competitor.get("team") or {}
+            score = espn_client._num(competitor.get("score")) if state != "pre" else None
+            teams[competitor.get("homeAway")] = {
+                "id": str(team.get("id") or ""),
+                "abbrev": team.get("abbreviation"),
+                "name": team.get("displayName") or team.get("name") or "TBD",
+                "score": score,
+                "winner": competitor.get("winner") is True,
+            }
+        game_id = str(event.get("id") or comp.get("id") or "")
+        if not game_id or not teams.get("home") or not teams.get("away"):
+            raise ValueError(f"incomplete Leagues Cup {slug} match id={game_id or '<missing>'}")
+        grouped.setdefault(slug, []).append({
+            "game_id": game_id,
+            "date": event.get("date") or comp.get("date"),
+            "state": state,
+            "status": status_type.get("description") or status_type.get("shortDetail"),
+            "home": teams["home"],
+            "away": teams["away"],
+        })
+
+    labels = {
+        "quarterfinals": "Quarterfinals",
+        "semifinals": "Semifinals",
+        "third-place": "Third Place",
+        "third-place-game": "Third Place",
+        "3rd-place-match": "Third Place",
+        "final": "Final",
+    }
+    rounds = []
+    for slug in sorted(grouped, key=lambda value: (_LCUP_ROUND_ORDER[value], value)):
+        matches = sorted(grouped[slug], key=lambda row: (row.get("date") or "", row["game_id"]))
+        rounds.append({"key": slug, "label": labels[slug], "matches": matches})
+    if not rounds:
+        raise ValueError("Leagues Cup publisher has not published a knockout round")
+
+    leader_categories = []
+    for category in statistics.get("stats", []) or []:
+        key = str(category.get("name") or "")
+        if key not in ("goalsLeaders", "assistsLeaders"):
+            continue
+        leaders = []
+        for rank, item in enumerate(category.get("leaders", []) or [], start=1):
+            athlete = item.get("athlete") or {}
+            athlete_id = str(athlete.get("id") or "")
+            value = espn_client._int(item.get("value"))
+            if not athlete_id or not athlete.get("displayName") or value is None:
+                raise ValueError(f"incomplete Leagues Cup {key} row")
+            display = str(item.get("displayValue") or "")
+            match_count = re.search(r"Matches:\s*(\d+)", display)
+            team = athlete.get("team") or {}
+            leaders.append({
+                "rank": rank,
+                "espn_athlete_id": athlete_id,
+                "name": athlete.get("displayName"),
+                "team": team.get("displayName") or team.get("name"),
+                "team_abbrev": team.get("abbreviation"),
+                "matches": int(match_count.group(1)) if match_count else None,
+                "value": value,
+            })
+        leader_categories.append({
+            "key": "goals" if key == "goalsLeaders" else "assists",
+            "label": category.get("displayName") or category.get("shortDisplayName"),
+            "leaders": leaders,
+        })
+
+    return {
+        "league": "lcup",
+        "season": scoreboard_season,
+        "phase": (statistics.get("season") or {}).get("name"),
+        "rounds": rounds,
+        "leader_categories": leader_categories,
+    }
+
+
+def lcup_competition_snapshot(season):
+    """Fetch the current full-season bracket and published leader tables."""
+    season = int(season)
+    scoreboard = espn_client.scoreboard_raw("lcup", str(season), ttl=3600)
+    _, path = espn_client._check("lcup")
+    stats_url = (
+        espn_client._SITE.format(path=path)
+        + f"/statistics?season={season}&limit=50"
+    )
+    statistics = espn_client._get(stats_url, ttl=3600)
+    return lcup_competition_snapshot_from_payload(scoreboard, statistics)

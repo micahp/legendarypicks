@@ -10,11 +10,11 @@ const LEAGUE_CARDS: Record<string, { desc: string; emoji: string }> = {
   nba: { desc: 'National Basketball Association, scoring leaders, team standings, game schedule', emoji: '🏀' },
   nhl: { desc: 'National Hockey League, points leaders, goalie stats, division races', emoji: '🏒' },
   nfl: { desc: 'National Football League, passing, rushing, receiving leaders, team power rankings', emoji: '🏈' },
-  mls: { desc: 'Major League Soccer, standings, schedules, and player game logs', emoji: '⚽' },
+  soccer: { desc: 'MLS and Leagues Cup scores, standings, bracket, leaders, and news', emoji: '⚽' },
   ncaaf: { desc: 'College Football, FBS teams, conference standings, player game logs', emoji: '🏈' },
   ufc: { desc: 'Ultimate Fighting Championship, pound-for-pound rankings, division champions', emoji: '🥊' },
   esports: { desc: 'Esports World Cup, Club Championship, cross-title schedule and results', emoji: '🎮' },
-  tennis: { desc: 'Major tournament scores, singles draws, and ATP/WTA news', emoji: '🎾' },
+  tennis: { desc: 'Major tournament scores, singles draws, ATP/WTA world rankings, and news', emoji: '🎾' },
   // World Cup card hidden 2026-08-04 (Micah): it stays on /scores and keeps its API
   // and ingest — it just is not a league hub. See useLeagueRouteState's `offerable`.
 }

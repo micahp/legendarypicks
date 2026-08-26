@@ -6,6 +6,7 @@ import StandingsTab from '../../components/Leagues/StandingsTab'
 import StatsTab from '../../components/Leagues/StatsTab'
 import UfcRankingsTab from '../../components/Leagues/UfcRankingsTab'
 import PredictTab from '../../components/Leagues/PredictTab'
+import UfcOptimizerTab from '../../components/Leagues/UfcOptimizerTab'
 import NflCampHero from '../../components/Leagues/NflCampHero'
 import NflOffseasonMovers from '../../components/Leagues/NflOffseasonMovers'
 import NflMockDraftCard from '../../components/Leagues/NflMockDraftCard'
@@ -42,6 +43,7 @@ const TAB_LABELS: Record<HubTab, string> = {
   news: 'News',
   rankings: 'Rankings',
   predict: 'Predict',
+  optimizer: 'Optimizer',
 }
 
 export default function LeagueHubPage() {
@@ -293,6 +295,10 @@ export default function LeagueHubPage() {
             submittingKey={predict.submittingKey}
             onSubmitPick={predict.submitPick}
           />
+        )}
+
+        {route.activeTab === 'optimizer' && route.isUFC && (
+          <UfcOptimizerTab />
         )}
         </>
         )}

@@ -154,6 +154,44 @@ def tennis_draws(tour: str = "all"):
     }
 
 
+@router.get("/api/tennis/rankings")
+def tennis_rankings(tour: str = "all", limit: int = Query(50, ge=1, le=150)):
+    """Latest persisted ATP/WTA top-150 snapshots; never calls ESPN."""
+    tour = str(tour or "all").lower()
+    if tour not in ("all", "atp", "wta"):
+        raise HTTPException(400, "tour must be all, atp, or wta")
+    snapshots = scoreboard_store.read_tennis_rankings(
+        None if tour == "all" else tour,
+        limit=limit,
+    )
+    return {
+        "available": bool(snapshots),
+        "source": "tennis_ranking_snapshots",
+        "tours": snapshots,
+        "reason": None if snapshots else "No verified ATP or WTA ranking snapshot has been published yet.",
+    }
+
+
+@router.get("/api/soccer/competitions/{league}")
+def soccer_competition(league: str):
+    """Persisted competition hub data for Soccer; never calls ESPN."""
+    league = str(league or "").lower()
+    if league not in ("mls", "lcup"):
+        raise HTTPException(404, "competition snapshot is not supported")
+    snapshot = scoreboard_store.read_soccer_competition(league)
+    if snapshot is None:
+        return {
+            "available": False,
+            "league": league,
+            "reason": (
+                "MLS standings have not been published into this environment yet."
+                if league == "mls"
+                else "The Leagues Cup bracket has not been published into this environment yet."
+            ),
+        }
+    return {"available": True, **snapshot}
+
+
 @router.get("/api/stream/{league}")
 def stream_league_audio(league: str):
     from fastapi.responses import StreamingResponse

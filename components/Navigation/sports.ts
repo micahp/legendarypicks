@@ -39,6 +39,7 @@ export const LEAGUE_LABELS: Record<string, string> = {
   wta: 'WTA',
   ufc: 'UFC',
   tennis: 'Tennis',
+  soccer: 'Soccer',
   esports: 'Esports',
 }
 

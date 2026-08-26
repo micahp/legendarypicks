@@ -137,11 +137,12 @@ game detail, team stats, coverage row, scoring plays, game context, **game logs,
 stats**. That declaration is why every tennis market in `backend/core_markets.py:53` maps to
 `None` for charting.
 
-So the tennis hub is three tabs, not the seven a league hub gets:
+The 2026-08-25 ranking-source pass adds one more measured surface. The tennis
+hub is four tabs, not the seven a team-sport league hub gets:
 
 ```
 Tennis
-  [ Scores ]  [ Draws ]  [ News ]
+  [ Scores ]  [ Draws ]  [ Rankings ]  [ News ]
              ATP · WTA toggle inside each tab, defaulting to both
 ```
 
@@ -155,6 +156,12 @@ Tennis
   men's link on the WTA response too). No second publisher endpoint is needed.
   The ingest persists the whole validated grouping from the already-fetched scoreboard;
   missing ids/rounds or duplicate matches preserve the last good draw and fail the refresh.
+- **Rankings** is ESPN's published current ATP/WTA world-ranking document. It is
+  not `competitors[].curatedRank.current`, which is the current tournament's seed.
+  The world-ranking response is capped at 150 and exposes one current week, so
+  every bounded capture is retained under `(tour, captured_at, espn_athlete_id)`.
+  Athlete references join directly to the canonical tennis spine; names are display
+  fields and never keys. The UI shows the top 50 from the persisted top-150 snapshot.
 - **News** is the existing feed filtered to tennis.
 
 **We cover majors, not the tour.** Challengers, 250s and 500s are not ingested. The hub says
@@ -165,34 +172,30 @@ so on screen rather than looking like a tour page with holes in it
 
 ## 5. What a Soccer rollup page contains
 
-The failure mode to design away is a Soccer tab that is two buttons and nothing else. It is
-not a hub, it is a disambiguation prompt, and per §1 it would be a wrong one.
-
-The soccer hub is a **board first, competition second**:
+The failure mode to design away is a Soccer destination that is two buttons and
+nothing else. MLS and Leagues Cup are competition tabs inside one complete hub;
+each tab immediately exposes the surfaces that competition can honestly support:
 
 ```
 Soccer
-  [ Today ]  [ Props ]  [ Competitions ]  [ News ]
+  [ MLS ]  [ Leagues Cup ]
+
+  MLS:          [ Scores ] [ Standings ] [ Leaders ] [ News ]
+  Leagues Cup:  [ Bracket ] [ Scores ] [ Leaders ] [ News ]
 ```
 
-- **Today** is every soccer fixture we carry for the day, MLS and Leagues Cup and whatever
-  else, one list, with the competition as a label on each row rather than a filter above it.
-  A label answers "which competition is this" without making the visitor answer it first.
-- **Props** is the soccer prop board, same treatment. The competition row from §2 rule 2
-  lives here, defaulting to all.
-- **Competitions** is the only place the competition list is a navigation target, and it is a
-  list of hubs (MLS table, Leagues Cup bracket), not a filter. This is where a competition
-  that has its own standings shape earns a page.
-- **News** is the existing feed filtered to soccer.
+- **MLS** reuses the published conference tables, DB-backed season totals, persisted
+  scoreboards and MLS news already carried by the league hub.
+- **Leagues Cup** persists the publisher's full-season knockout rounds and its
+  published goals/assists leader tables. League-phase games never masquerade as
+  bracket nodes, scheduled 0-0 scores render as dashes, and later rounds stay absent
+  until the publisher names their participants.
+- Both competitions show their own day board. Storage keys remain `mls` and `lcup`.
+- `/leagues` links to one Soccer destination. The competition split happens inside
+  that destination instead of forcing the directory to stand in for the missing page.
 
-This makes Leagues Cup a row in the competitions list and a label on the board, which is
-what it is, and it means the next tournament costs nothing.
-
-`/leagues` keeps competition-level cards, because that page is a **directory of
-destinations** and Leagues Cup genuinely has its own bracket and its own table. What it needs
-is sport section headers over the card grid (`pages/leagues.tsx:4`) so soccer's cards sit
-together. Adding a competition then costs one card under an existing header instead of a
-judgment call about whether it deserves a slot next to NFL.
+The Props product remains sport-first and defaults to all soccer competitions; this
+page is a league-information destination, not a rewrite of Props filtering.
 
 ---
 
