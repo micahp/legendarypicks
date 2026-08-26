@@ -228,14 +228,27 @@ class LeaguesCupChartsAcrossTheSpines(unittest.TestCase):
         # appearance and ingest_fotmob_soccer_logs merges it in. "No source
         # publishes this" kept meaning "no source we had asked".
         #
-        # first_goal_scorer is the only one left, and it is different in kind:
-        # it is an ORDER market, and no per-game stat line answers it at any
-        # depth from any provider.
-        for market in ("first_goal_scorer",):
-            result = props.prop_history(
-                player_id=1, market=market, line=0.5, side="over", league="lcup")
-            self.assertEqual(result["games"], [], market)
-            self.assertIn("not chartable", result["error"], market)
+        # CORRECTED 2026-08-26: first_goal_scorer was the last one here, held
+        # out as "an ORDER market that no per-game stat answers at any depth
+        # from any provider". Wrong for the same reason as the two above: the
+        # ingest already writes `first_goal` per appearance from the published
+        # keyEvents. Three corrections, one shape -- a claim about what a
+        # PUBLISHER can answer, written from what we had looked at.
+        #
+        # Nothing is refused for soccer now, so this asserts the surviving rule
+        # instead: a market absent from the map is refused rather than drawn,
+        # and MLS tackles is the live case -- 0 stored rows, because FotMob has
+        # only run for ligamx and lcup.
+        result = props.prop_history(
+            player_id=1, market="tackles", line=0.5, side="over", league="mls")
+        self.assertEqual(result["games"], [])
+        self.assertIn("not chartable", result["error"])
+
+    def test_first_goal_is_no_longer_refused(self):
+        result = props.prop_history(
+            player_id=1, market="first_goal_scorer", line=0.5, side="over",
+            league="lcup")
+        self.assertNotIn("error", result)
 
     def test_a_deep_market_charts_when_the_row_carries_it(self):
         # Written by `ingest_soccer_logs --deep`. A shallow row simply lacks the
@@ -331,6 +344,101 @@ class TheRowReachesTheChartLabelledByThePlayersLeague(unittest.TestCase):
                 league=label)
             self.assertEqual([g["value"] for g in result["games"]], [3.0, 1.0],
                              label)
+
+
+class FirstGoalIsAnsweredFromTheStoredRow(unittest.TestCase):
+    """`first_goal_scorer` was mapped to None as "an ORDER market that no
+    per-game stat answers".
+
+    The ingest writes exactly that stat: `first_goal`, 1 when the player scored
+    the opener and 0 when he played and did not, derived from the published
+    keyEvents. The claim described the MARKET rather than the stored row, and
+    it cost 1,249 board rows -- 80 Liga MX and 1,169 MLS -- every one of which
+    rendered "No history" on the props tab.
+
+    MLS is included because its map had no entry at all, which reads to the
+    reader exactly like an explicit None.
+    """
+
+    @classmethod
+    def tearDownClass(cls):
+        try:
+            os.unlink(_IMPORT_DB.name)
+        except FileNotFoundError:
+            pass
+
+    def setUp(self):
+        handle = tempfile.NamedTemporaryFile(
+            prefix="first-goal-", suffix=".db", delete=False)
+        self.path = handle.name
+        handle.close()
+        self.addCleanup(
+            lambda: os.path.exists(self.path) and os.unlink(self.path))
+        con = sqlite3.connect(self.path)
+        con.executescript("""
+            CREATE TABLE players(id INTEGER PRIMARY KEY, name TEXT, team TEXT,
+                                 league TEXT, position TEXT);
+            CREATE TABLE player_game_logs(
+              id INTEGER PRIMARY KEY AUTOINCREMENT, player_id INTEGER,
+              league TEXT, season INTEGER, stats TEXT, game_date TEXT,
+              opponent TEXT, home_away TEXT, game_no INTEGER, game_type TEXT,
+              source TEXT);
+        """)
+        con.execute("INSERT INTO players VALUES(1,'Opener','LEO','ligamx','F')")
+        con.execute("INSERT INTO players VALUES(2,'MLS Opener','CLB','mls','F')")
+        rows = [
+            (1, "ligamx", 2026, json.dumps({"first_goal": 1, "appearances": 1}),
+             "2026-08-10", "AME", "home", 1, "REG", "espn"),
+            (1, "ligamx", 2026, json.dumps({"first_goal": 0, "appearances": 1}),
+             "2026-08-03", "TOL", "away", 2, "REG", "espn"),
+            # Did not play: no first_goal recorded, and _PLAYED drops it, so a
+            # DNP never charts as "did not score first".
+            (1, "ligamx", 2026, json.dumps({"first_goal": 0, "appearances": 0}),
+             "2026-07-27", "MTY", "home", 3, "REG", "espn"),
+            (2, "mls", 2026, json.dumps({"first_goal": 1, "appearances": 1}),
+             "2026-08-08", "RSL", "home", 4, "REG", "espn"),
+        ]
+        con.executemany(
+            "INSERT INTO player_game_logs(player_id, league, season, stats,"
+            " game_date, opponent, home_away, game_no, game_type, source)"
+            " VALUES(?,?,?,?,?,?,?,?,?,?)", rows)
+        con.commit()
+        con.close()
+        def connection():
+            con = sqlite3.connect(self.path)
+            con.row_factory = sqlite3.Row
+            return con
+
+        patcher = mock.patch.object(props, "_db", side_effect=connection)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def test_a_ligamx_first_goal_prop_charts(self):
+        result = props.prop_history(
+            player_id=1, market="first_goal_scorer", line=0.5, side="over",
+            league="ligamx")
+        self.assertNotIn("error", result)
+        self.assertEqual([g["value"] for g in result["games"]], [1.0, 0.0])
+
+    def test_an_absence_is_not_a_missed_opener(self):
+        result = props.prop_history(
+            player_id=1, market="first_goal_scorer", line=0.5, side="over",
+            league="ligamx")
+        self.assertEqual(len(result["games"]), 2, "the DNP must not chart")
+
+    def test_mls_charts_it_too(self):
+        result = props.prop_history(
+            player_id=2, market="first_goal_scorer", line=0.5, side="over",
+            league="mls")
+        self.assertNotIn("error", result)
+        self.assertEqual([g["value"] for g in result["games"]], [1.0])
+
+    def test_mls_does_not_claim_tackles_it_has_no_rows_for(self):
+        """MLS holds 0 rows carrying `tackles` -- FotMob has only been run for
+        ligamx and lcup -- so mapping it would chart an empty series as though
+        the market were answerable."""
+        import core_markets
+        self.assertNotIn("tackles", core_markets._MARKET_STAT_KEY["mls"])
 
 
 class OneRowPerAppearance(unittest.TestCase):
