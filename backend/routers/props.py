@@ -171,6 +171,19 @@ def prop_history(player_id: int = Query(...),
     _PLAYED = (" AND COALESCE(json_extract(stats, '$.minutes'), 1) != 0"
                " AND COALESCE(json_extract(stats, '$.appearances'), 1) != 0")
 
+    # ONE ROW PER APPEARANCE. Providers keep separate rows -- ESPN and FotMob
+    # each own theirs and neither edits the other -- so a player with both
+    # charted the same match twice: Federico Vinas showed 12 games,
+    # [7,7,4,4,3,3,1,1,1,1,1,1], for six he actually played.
+    #
+    # The reader picks, which is where the decision belongs. ESPN first because
+    # it is the identity spine every player_id is keyed on; FotMob supplies the
+    # markets ESPN does not publish, and rows without the requested stat are
+    # already excluded by the WHERE, so this only breaks ties where BOTH
+    # published the same number.
+    _PROVIDER_RANK = ("CASE source WHEN 'espn' THEN 0 WHEN 'espn-core' THEN 1"
+                      " WHEN 'fotmob' THEN 2 ELSE 3 END")
+
     # stat_key is either a string (single JSON field) or a list (compound: sum fields)
     if isinstance(stat_key, list):
         keys = stat_key
@@ -204,21 +217,29 @@ def prop_history(player_id: int = Query(...),
         # Get game logs with this stat, most recent first
         if isinstance(stat_key, list):
             rows = con.execute(
-                f"""SELECT game_date, opponent, home_away,
-                           {val_expr} AS val
-                    FROM player_game_logs
-                    WHERE player_id=? AND league IN ({league_placeholders})
-                      AND {where_clause}{_PLAYED}
+                f"""SELECT game_date, opponent, home_away, val FROM (
+                      SELECT game_date, opponent, home_away,
+                             {val_expr} AS val,
+                             ROW_NUMBER() OVER (PARTITION BY game_date
+                                                ORDER BY {_PROVIDER_RANK}) AS rn
+                      FROM player_game_logs
+                      WHERE player_id=? AND league IN ({league_placeholders})
+                        AND {where_clause}{_PLAYED}
+                    ) WHERE rn=1
                     ORDER BY game_date DESC LIMIT 100""",
                 (player_id, *log_leagues)
             ).fetchall()
         else:
             rows = con.execute(
-                f"""SELECT game_date, opponent, home_away,
-                           json_extract(stats, ?) AS val
-                    FROM player_game_logs
-                    WHERE player_id=? AND league IN ({league_placeholders})
-                      AND json_extract(stats, ?) IS NOT NULL{_PLAYED}
+                f"""SELECT game_date, opponent, home_away, val FROM (
+                      SELECT game_date, opponent, home_away,
+                             json_extract(stats, ?) AS val,
+                             ROW_NUMBER() OVER (PARTITION BY game_date
+                                                ORDER BY {_PROVIDER_RANK}) AS rn
+                      FROM player_game_logs
+                      WHERE player_id=? AND league IN ({league_placeholders})
+                        AND json_extract(stats, ?) IS NOT NULL{_PLAYED}
+                    ) WHERE rn=1
                     ORDER BY game_date DESC LIMIT 100""",
                 (stat_path, player_id, *log_leagues, stat_path)
             ).fetchall()
@@ -234,6 +255,7 @@ def prop_history(player_id: int = Query(...),
             "side": side,
             "projection": None,
             "hit_rate": {"l5": 0, "l10": 0, "l20": 0, "season": 0},
+            "hit_rate_n": {"l5": 0, "l10": 0, "l20": 0, "season": 0},
             "games": [],
         }
 
@@ -270,6 +292,18 @@ def prop_history(player_id: int = Query(...),
         "line": line,
         "side": side,
         "projection": projection,
+        # The SAMPLE behind each window, because a window's NAME is not its
+        # size. `games[:20]` on a player with three matches is three matches,
+        # so L5, L10 and L20 all report the same number and it reads as a
+        # twenty-game record. Surfaced on Liga MX first only because those
+        # players have three games where an MLS player has forty; the
+        # arithmetic was always this.
+        "hit_rate_n": {
+            "l5": len(games[:5]),
+            "l10": len(games[:10]),
+            "l20": len(games[:20]),
+            "season": len(games),
+        },
         "hit_rate": {
             "l5": _rate(games[:5], line),
             "l10": _rate(games[:10], line),
