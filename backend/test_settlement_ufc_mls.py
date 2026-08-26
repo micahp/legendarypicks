@@ -232,8 +232,14 @@ def test_mls_uses_roster_stats_not_team_boxscore(monkeypatch):
 
     result = settlement.settle_game(con, 2)
 
-    assert result == {"settled": 3, "void": 0, "unmappable": 1,
-                      "pending": 3, "errors": 0}
+    # `shots` (prop 205) moved from unmappable to pending on 2026-08-25, when
+    # the roster map gained the stat names ESPN actually publishes. That is a
+    # semantic upgrade, not a weakened assertion: the market is now understood,
+    # and this fixture's roster row simply does not carry `totalShots`, so it is
+    # RETRYABLE rather than "we do not know this market". Prop 205 is still
+    # asserted absent from prop_results below, exactly as before.
+    assert result == {"settled": 3, "void": 0, "unmappable": 0,
+                      "pending": 4, "errors": 0}
     rows = {row["prop_id"]: (row["actual_value"], row["hit"])
             for row in con.execute("SELECT * FROM prop_results")}
     assert rows == {
@@ -352,3 +358,119 @@ def test_mls_does_not_settle_before_full_time(monkeypatch):
     assert result["settled"] == 0
     assert "completed=False" in result["msg"]
     assert con.execute("SELECT COUNT(*) FROM prop_results").fetchone()[0] == 0
+
+
+def _lcup_connection():
+    """A Leagues Cup fixture with the markets PrizePicks actually prices.
+
+    The stat names below are ESPN's own, verified against a real completed
+    Leagues Cup summary (event 401863625) rather than invented: that surface
+    publishes fourteen per-player fields under `rosters[].roster[].stats`, and
+    `boxscore` carries only `teams`. A fixture naming these fields differently
+    would define a world in which the correct mapping is unwritable.
+    """
+    con = sqlite3.connect(":memory:")
+    _schema(con)
+    con.execute(
+        "INSERT INTO prop_games VALUES(7,'lcup','CF Monterrey','Chicago Fire',"
+        "'2026-08-25','401909652',NULL,NULL,'2026-08-26T00:30:00+00:00')")
+    con.executemany(
+        "INSERT INTO players VALUES(?,?,?,?,?)",
+        # A Leagues Cup athlete is owned by a DOMESTIC spine; players.league is
+        # never 'lcup'.
+        [(70, "Hugo Cuypers", "MTY", "ligamx", "303512")])
+    con.executemany(
+        "INSERT INTO props VALUES(?,?,?,?,?,?)",
+        [(700, 7, 70, "shots", 0.5, "over"),
+         (701, 7, 70, "shots_on_target", 1.5, "over"),
+         (702, 7, 70, "fouls_committed", 0.5, "over"),
+         (703, 7, 70, "goals", 0.5, "over"),
+         # Priced by PrizePicks, published by nobody we read. Must stay
+         # UNMAPPABLE rather than grade against a near-miss field.
+         (704, 7, 70, "tackles", 0.5, "over"),
+         (705, 7, 70, "passes_attempted", 10.5, "over")])
+    con.commit()
+    return con
+
+
+def _lcup_summary():
+    summary = _mls_summary()
+    summary["header"]["competitions"][0]["id"] = "401909652"
+    summary["rosters"] = [
+        {"team": {"abbreviation": "MTY"}, "roster": [
+            {"athlete": {"id": "303512", "displayName": "Hugo Cuypers"},
+             "stats": [{"name": key, "value": value} for key, value in {
+                 "totalShots": 3.0,
+                 "shotsOnTarget": 1.0,
+                 "foulsCommitted": 2.0,
+                 "totalGoals": 0.0,
+                 "goalAssists": 0.0,
+             }.items()]},
+        ]},
+    ]
+    return summary
+
+
+def test_a_leagues_cup_fixture_grades_off_the_roster_surface(monkeypatch):
+    """Dispatching on `mls` alone left Leagues Cup props ungraded forever.
+
+    settle_game routed only `mls` to the roster settler, so an `lcup` fixture
+    fell through to the boxscore path -- and soccer summaries do not populate
+    per-player boxscore stats at all.
+    """
+    con = _lcup_connection()
+    summary = _lcup_summary()
+    monkeypatch.setattr(espn_client, "summary", lambda league, event_id: summary)
+    monkeypatch.setattr(
+        espn_client, "boxscore",
+        lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("boxscore called")))
+
+    result = settlement.settle_game(con, 7)
+
+    assert result["errors"] == 0
+    assert result["settled"] == 4
+    # CORRECTED 2026-08-25: tackles and passes attempted were asserted
+    # UNMAPPABLE here on the measurement "ESPN publishes neither". That measured
+    # the SUMMARY; the CORE api publishes both, and `ingest_soccer_logs --deep`
+    # stores them. They are now KNOWN markets whose stored row this fixture does
+    # not have, so they are PENDING -- retryable once the deep pass has run.
+    #
+    # Pending, never zero: 0 tackles is a real result a player can have, so
+    # grading one because we did not look would settle a bet on a number nobody
+    # measured.
+    assert result["unmappable"] == 0
+    assert result["pending"] == 2
+
+    rows = {row["prop_id"]: (row["actual_value"], row["hit"])
+            for row in con.execute("SELECT * FROM prop_results")}
+    assert rows == {
+        700: (3.0, 1),   # 3 shots over 0.5
+        701: (1.0, 0),   # 1 on target, under 1.5
+        702: (2.0, 1),   # 2 fouls over 0.5
+        703: (0.0, 0),   # no goal
+    }
+    # Refused, not graded as a loss. A zero here would be a false settlement.
+    assert 704 not in rows
+    assert 705 not in rows
+
+
+def test_a_deep_market_settles_from_the_stored_core_row(monkeypatch):
+    """tackles comes from player_game_logs, written by --deep, not the summary."""
+    con = _lcup_connection()
+    con.execute(
+        "INSERT INTO player_game_logs(player_id, league, game_id, stats) "
+        "VALUES(?,?,?,?)",
+        (70, "lcup", "401909652",
+         json.dumps({"tackles": 3, "passes_attempted": 61})))
+    con.commit()
+    summary = _lcup_summary()
+    monkeypatch.setattr(espn_client, "summary", lambda league, event_id: summary)
+
+    result = settlement.settle_game(con, 7)
+
+    rows = {row["prop_id"]: (row["actual_value"], row["hit"])
+            for row in con.execute("SELECT * FROM prop_results")}
+    # 704 tackles o0.5 -> 3 tackles, hit. 705 passes attempted o10.5 -> 61, hit.
+    assert rows[704] == (3.0, 1)
+    assert rows[705] == (61.0, 1)
+    assert result["unmappable"] == 0

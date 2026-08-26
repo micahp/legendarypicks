@@ -133,4 +133,29 @@ describe('Props slate grouping', () => {
       String(url).includes('league=nba'))).toBe(true))
     expect(screen.getByRole('button', { name: 'NBA' }).getAttribute('aria-pressed')).toBe('true')
   })
+
+  it('uses the published Leagues Cup label for the slate heading', async () => {
+    global.fetch = jest.fn((input: RequestInfo | URL) => {
+      const payload = String(input).includes('/api/navigation/sports')
+        ? { props: [{ league: 'lcup', sport: 'soccer' }] }
+        : [{
+          game_id: 1494,
+          home: 'Toluca',
+          away: 'Austin FC',
+          date: '2026-08-26',
+          start_time: '2026-08-27T00:30:00Z',
+          league: 'lcup',
+          prop_count: 8,
+          players: [],
+        }]
+      return Promise.resolve({ ok: true, json: () => Promise.resolve(payload) })
+    }) as any
+
+    render(React.createElement(PropsPage))
+
+    await waitFor(() => {
+      const heading = document.querySelector('[data-slate-league="lcup"] h3')
+      expect(heading?.textContent).toBe('Leagues Cup')
+    })
+  })
 })

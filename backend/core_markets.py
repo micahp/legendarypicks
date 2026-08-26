@@ -39,6 +39,50 @@ _MARKET_STAT_KEY = {
     # MLS game logs store the same soccer stat shape as WC (goals/assists/shots/sot)
     "mls": {"goals": "goals", "assists": "assists", "shots": "shots",
             "shots_on_target": "sot", "shots_on_goal": "sot"},
+    # Leagues Cup. The stat keys are the ones ingest_soccer_logs actually writes
+    # (see _STAT_ORDER), verified against real lcup rows rather than assumed.
+    # `goal_or_assist` is a COMPOUND market: the chart sums the listed fields, so
+    # it charts as goals+assists per game rather than needing a stored column.
+    #
+    # CORRECTED 2026-08-25: tackles, clearances, crosses, passes attempted and
+    # shot assists were mapped to None here on the measurement "ESPN publishes
+    # none of them, 0 of 1,640 log rows". That measured the SUMMARY endpoint,
+    # which carries 14 per-player fields. The CORE api carries 108 for the same
+    # fixture and publishes all five. The gap was the endpoint we asked, not the
+    # publisher -- the exact rule stated at the top of ingest_soccer_logs.
+    # `ingest_soccer_logs --deep` writes them; a row from a shallow run simply
+    # lacks the key and charts as "no data" rather than as a zero.
+    #
+    # dribbles stays None because it is genuinely absent: the core api publishes
+    # groundDuels and duelWinPct, which are NOT take-ons and must not stand in
+    # for them. first_goal_scorer stays None because it is an ORDER market and
+    # no per-game stat answers it.
+    # `/api/props` returns the PLAYER's league, so a Leagues Cup prop on a Liga
+    # MX athlete asks the chart for `ligamx`, not `lcup`. There was no ligamx
+    # entry at all, so every one of those rows answered "market not chartable"
+    # and rendered "No history" -- while the MLS players on the same card
+    # charted fine, because `mls` is in this map. Same markets, same stat keys:
+    # one competition's props, two league labels reaching this table.
+    "ligamx": {"goals": "goals", "assists": "assists", "shots": "shots",
+               "shots_on_target": "sot", "shots_on_goal": "sot",
+               "goal_or_assist": ["goals", "assists"],
+               "fouls_committed": "fouls_committed",
+               "saves": "saves", "goals_allowed": "goals_conceded",
+               "card_shown": ["yellow_cards", "red_cards"],
+               "tackles": "tackles", "clearances": "clearances",
+               "crosses": "crosses", "passes_attempted": "passes_attempted",
+               "passes": "passes", "shots_assisted": "shots_assisted",
+               "dribbles": None, "first_goal_scorer": None},
+    "lcup": {"goals": "goals", "assists": "assists", "shots": "shots",
+             "shots_on_target": "sot", "shots_on_goal": "sot",
+             "goal_or_assist": ["goals", "assists"],
+             "fouls_committed": "fouls_committed",
+             "saves": "saves", "goals_allowed": "goals_conceded",
+             "card_shown": ["yellow_cards", "red_cards"],
+             "tackles": "tackles", "clearances": "clearances",
+             "crosses": "crosses", "passes_attempted": "passes_attempted",
+             "passes": "passes", "shots_assisted": "shots_assisted",
+             "dribbles": None, "first_goal_scorer": None},
     # fight_time (minutes, from round+clock at the ESPN status endpoint -- see
     # ingest_ufc_fight_stats.py) now backfillable same as significant_strikes.
     # finishes/win_by_ko/win_by_submission are win-by-method yes/no props, same

@@ -260,7 +260,7 @@ function SlateTab({ league, leagueOrder }: { league: LeagueFilter; leagueOrder: 
                 <section key={leagueKey} data-slate-league={leagueKey} className="space-y-4">
                   <div className="flex min-w-0 items-center gap-2">
                     <h3 className="text-base font-extrabold uppercase tracking-wide text-zinc-100">
-                      {leagueKey.toUpperCase()}
+                      {leagueNavigationLabel(leagueKey)}
                     </h3>
                     <span className="truncate text-xs tabular-nums text-zinc-600">
                       {games.length} game{games.length === 1 ? '' : 's'} · {propCount} props

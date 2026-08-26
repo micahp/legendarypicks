@@ -654,3 +654,80 @@ def lcup_competition_snapshot(season):
     )
     statistics = espn_client._get(stats_url, ttl=3600)
     return lcup_competition_snapshot_from_payload(scoreboard, statistics)
+
+
+def soccer_athlete_form(league, athlete_id, season, limit=5):
+    """Last `limit` played matches for one athlete, with the CORE api stat line.
+
+    Lazy and per-athlete, the same shape as `ufc_fight_history`: nothing is
+    ingested, a click pays for a live read, and the shared Fetcher's cache makes
+    the second click free.
+
+    Why the core api and not the summary: the summary's per-player surface
+    carries 14 fields and none of tackles, clearances, crosses or passes. The
+    core api carries ~92 for the same appearance and publishes all of them. See
+    docs/PROPS-SOURCE-AUDIT-2026-08-25.md "CORRECTION 2".
+
+    Costs 1 + 2N requests (eventlog, then statistics and event per match), which
+    is why it is a click and not a page load.
+    """
+    import espn_client
+
+    base = "https://sports.core.api.espn.com/v2/sports/soccer/leagues"
+    path = espn_client._check(league)[1].split("/")[-1]
+    log = espn_client._get(
+        f"{base}/{path}/seasons/{season}/athletes/{athlete_id}/eventlog", ttl=900)
+
+    played = [i for i in ((log.get("events") or {}).get("items") or [])
+              if i.get("played")]
+    # The publisher lists oldest first; the form strip wants the most recent.
+    played = list(reversed(played))[:int(limit)]
+
+    out = []
+    for item in played:
+        try:
+            stats = espn_client._get(item["statistics"]["$ref"], ttl=900)
+            event = espn_client._get(item["event"]["$ref"], ttl=900)
+        except Exception:  # noqa: BLE001 - one missing match is not a failed form
+            continue
+
+        line = {}
+        for category in (stats.get("splits") or {}).get("categories", []) or []:
+            for stat in category.get("stats", []) or []:
+                line[stat.get("name")] = stat.get("value")
+
+        team_id = str(item.get("teamId") or "")
+        home = None
+        for competitor in ((event.get("competitions") or [{}])[0]
+                           .get("competitors") or []):
+            if str(competitor.get("id") or "") == team_id:
+                home = competitor.get("homeAway") == "home"
+        # The opponent comes off the event's own name rather than a second
+        # request per match for the team document: "A at B" / "A vs B", minus
+        # whichever side is ours. A ref would cost 5 more requests a click for a
+        # string the publisher already sent.
+        label = str(event.get("shortName") or event.get("name") or "")
+        opponent = label
+        out.append({
+            "date": str(event.get("date") or "")[:10],
+            "event_id": str(event.get("id") or ""),
+            "matchup": opponent,
+            "home": home,
+            "minutes": line.get("minutes"),
+            "goals": line.get("totalGoals"),
+            "assists": line.get("goalAssists"),
+            "shots": line.get("totalShots"),
+            "shots_on_target": line.get("shotsOnTarget"),
+            "tackles": line.get("totalTackles"),
+            "clearances": line.get("totalClearance"),
+            "crosses": line.get("totalCrosses"),
+            # `passes_attempted`, not `passes`: that is the key
+            # ingest_soccer_logs and core_markets already use for totalPasses.
+            # One column, one vocabulary -- a second name for one stat is how a
+            # chart silently finds nothing.
+            "passes_attempted": line.get("totalPasses"),
+            "passes": line.get("accuratePasses"),
+            "fouls_committed": line.get("foulsCommitted"),
+            "saves": line.get("saves"),
+        })
+    return out

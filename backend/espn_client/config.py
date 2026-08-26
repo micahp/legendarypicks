@@ -28,6 +28,13 @@ LEAGUES = {  # our key -> (espn "sport/league" path, regulation periods)
     "wc":   ("soccer/fifa.world", 2),
     "lcup": ("soccer/concacaf.leagues.cup", 2),
     "mls":  ("soccer/usa.1", 2),
+    # Liga MX is here for identity, not for a board. Leagues Cup is
+    # MLS vs Liga MX, so half of every `lcup` fixture has players who
+    # exist in no spine we hold; filing them under `mls` is the
+    # shadow-player defect. `mex.1` publishes 18 teams whose display
+    # names match our stored `lcup` snapshots exactly (Santos, Pumas
+    # UNAM, Tigres UANL), so the join needs no crosswalk.
+    "ligamx": ("soccer/mex.1", 2),
 }
 
 # These were both `site.api.espn.com`, which refused this box for a full day on

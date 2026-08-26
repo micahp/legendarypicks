@@ -46,6 +46,7 @@ from .soccer import (
     _parse_record, _season_phase, mls_conference_standings,
     ncaaf_conference_standings, lcup_competition_snapshot_from_payload,
     lcup_competition_snapshot,
+    soccer_athlete_form,
 )
 
 if __name__ == "__main__":

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import FightForm from './FightForm'
+import MatchForm from './MatchForm'
 import PropChart, { PropHistory } from './PropChart'
 
 interface BoardProp {
@@ -504,6 +505,21 @@ export default function MarketSlateBoard({ league, date }: { league: string; dat
               ) : history?.games.length ? (
                 <div data-market-chart className="min-w-0 overflow-hidden border-t border-zinc-800 bg-zinc-950/40 p-3 sm:p-4">
                   <PropChart data={history} />
+                </div>
+              ) : (row.league === 'lcup' || row.league === 'ligamx') ? (
+                // No chart because we hold no logs for this player: Liga MX has
+                // no season ingest, so its athletes had three tournament games
+                // against an MLS player's forty-two. The click reads five
+                // matches from ESPN and STORES them, so the chart fills in from
+                // ordinary use rather than waiting for a backfill window.
+                //
+                // Matches BOTH labels. /api/props returns the PLAYER's league,
+                // so a Leagues Cup prop on a Liga MX athlete arrives as
+                // `ligamx` and one on an MLS athlete as `mls`. Checking only
+                // 'lcup' matched neither, and every Liga MX row fell through to
+                // "No history" with nothing to click.
+                <div data-market-chart className="min-w-0 overflow-hidden border-t border-zinc-800 bg-zinc-950/40">
+                  <MatchForm playerId={row.playerId} player={row.player} />
                 </div>
               ) : historyState?.loading ? (
                 <div data-market-chart className="min-w-0 overflow-hidden border-t border-zinc-800 bg-zinc-950/40 p-3 sm:p-4">

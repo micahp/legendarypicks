@@ -75,6 +75,8 @@ app.add_middleware(CORSMiddleware, allow_origins=ALLOWED_ORIGINS, allow_credenti
                    allow_methods=["*"], allow_headers=["*"])
 
 app.include_router(games.router)
+from routers.games import soccer_form  # noqa: E402
+app.include_router(soccer_form.router)
 app.include_router(players.router)
 app.include_router(props.router)
 app.include_router(analytics.router)

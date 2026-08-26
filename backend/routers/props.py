@@ -53,11 +53,12 @@ class PropIngest(_CorePropIngest):
 
 def _league_sql(column: str, league: Optional[str], leagues: Optional[str]):
     """A bound league predicate supporting one legacy key or a sport rollup."""
-    if league:
+    if isinstance(league, str) and league.strip():
         return f" AND LOWER({column}) = ?", [league.strip().lower()]
+    league_rollup = leagues if isinstance(leagues, str) else ""
     values = sorted({
         value.strip().lower()
-        for value in (leagues or "").split(",")
+        for value in league_rollup.split(",")
         if value.strip()
     })
     if not values:
@@ -94,7 +95,9 @@ def list_props(player: Optional[str] = Query(None),
         # `total_bases___player_slug` under their base market.
         sql += " AND (p.market = ? OR instr(p.market, ? || '___') = 1)"
         params.extend((market, market))
-    league_sql, league_params = _league_sql("pl.league", league, leagues)
+    # Filter on the game's competition. Leagues Cup athletes belong to their
+    # MLS or Liga MX identity spine, so filtering on pl.league drops the board.
+    league_sql, league_params = _league_sql("pg.league", league, leagues)
     sql += league_sql
     params.extend(league_params)
     if date:
@@ -144,6 +147,18 @@ def player_prop_history(player_id: int, market: Optional[str] = Query(None)):
     return {"player_id": player_id, "history": history, "hit_rate": hit_rate, "total_settled": len(settled)}
 
 
+# Which log leagues a chart may read for a prop in this league. Only a
+# cross-border competition needs more than its own.
+_CHART_LOG_LEAGUES = {
+    "lcup": ("lcup", "mls", "ligamx"),
+    # A Liga MX athlete's history is his domestic season plus the
+    # tournament, and the row reaches here labelled `ligamx` because
+    # /api/props returns the player's league rather than the game's.
+    "ligamx": ("ligamx", "lcup"),
+    "mls": ("mls", "lcup"),
+}
+
+
 @router.get("/api/props/history")
 def prop_history(player_id: int = Query(...),
                  market: str = Query(...),
@@ -154,6 +169,26 @@ def prop_history(player_id: int = Query(...),
     stat_key = _MARKET_STAT_KEY.get(league, {}).get(_base_market(market))
     if not stat_key:
         return {"error": f"market not chartable from logs: {market}", "games": []}
+
+    # A cross-border tournament's athletes keep their domestic logs, and the chart
+    # is about the PLAYER, not the competition the prop happens to sit in. Reading
+    # `league='lcup'` alone gave a Liga MX player his three group games and an MLS
+    # player three games instead of a season. The union is the same one the
+    # resolver and the settler use.
+    log_leagues = _CHART_LOG_LEAGUES.get(league, (league,))
+    league_placeholders = ",".join("?" for _ in log_leagues)
+
+    # A match the player never entered is not a 0. Both are stored -- the row is
+    # a real record of not playing -- but charting it as zero shots would count
+    # an absence as a measured performance and drag every hit-rate window down.
+    # 2026-08-25: a bench player charted five games, four of them DNPs, as
+    # 0/0/0/0/0 shots.
+    #
+    # Two sources, two signals: the summary ingest writes `appearances`, the
+    # lazy core read-through writes `minutes`. Either at 0 means absent; a row
+    # carrying neither is left alone rather than assumed.
+    _PLAYED = (" AND COALESCE(json_extract(stats, '$.minutes'), 1) != 0"
+               " AND COALESCE(json_extract(stats, '$.appearances'), 1) != 0")
 
     # stat_key is either a string (single JSON field) or a list (compound: sum fields)
     if isinstance(stat_key, list):
@@ -191,20 +226,20 @@ def prop_history(player_id: int = Query(...),
                 f"""SELECT game_date, opponent, home_away,
                            {val_expr} AS val
                     FROM player_game_logs
-                    WHERE player_id=? AND league=?
-                      AND {where_clause}
+                    WHERE player_id=? AND league IN ({league_placeholders})
+                      AND {where_clause}{_PLAYED}
                     ORDER BY game_date DESC LIMIT 100""",
-                (player_id, league)
+                (player_id, *log_leagues)
             ).fetchall()
         else:
             rows = con.execute(
                 f"""SELECT game_date, opponent, home_away,
                            json_extract(stats, ?) AS val
                     FROM player_game_logs
-                    WHERE player_id=? AND league=?
-                      AND json_extract(stats, ?) IS NOT NULL
+                    WHERE player_id=? AND league IN ({league_placeholders})
+                      AND json_extract(stats, ?) IS NOT NULL{_PLAYED}
                     ORDER BY game_date DESC LIMIT 100""",
-                (stat_path, player_id, league, stat_path)
+                (stat_path, player_id, *log_leagues, stat_path)
             ).fetchall()
 
     if not rows:
@@ -276,6 +311,7 @@ def prop_stats(market: Optional[str] = Query(None),
              FROM props p
              JOIN prop_results r ON r.prop_id = p.id
              JOIN players pl ON pl.id = p.player_id
+             JOIN prop_games pg ON pg.id = p.game_id
              WHERE r.hit IS NOT NULL
                AND p.captured_at >= date('now', ? || ' days')"""
     params = [f"-{window}"]
@@ -283,7 +319,9 @@ def prop_stats(market: Optional[str] = Query(None),
         sql += " AND p.market = ?"
         params.append(market)
     if league:
-        sql += " AND pl.league = ?"
+        # Same rule as /api/props: hit rates for `lcup` are a property of the
+        # competition, not of whichever spine each athlete happens to sit in.
+        sql += " AND pg.league = ?"
         params.append(league)
     sql += " GROUP BY p.market, p.side ORDER BY total DESC"
     with closing(_db()) as con:
@@ -318,8 +356,14 @@ def props_slate(league: Optional[str] = Query(None),
         else:
             filters += " AND " + _UPCOMING
 
+        # COUNT(p.id) counted the same question twice once a second book
+        # priced a line another already had, so the card header said 495
+        # while the card itself listed 454. One number, computed two ways,
+        # in one endpoint -- count the distinct questions, as the expanded
+        # path does when it dedupes on (market, line, side) per player.
         gsql = ("SELECT pg.id AS game_id, pg.home, pg.away, pg.date AS game_date, pg.start_time, "
-                "pg.league, COUNT(p.id) AS prop_count "
+                "pg.league, COUNT(DISTINCT p.player_id || '|' || p.market || '|' || "
+                "p.line || '|' || p.side) AS prop_count "
                 "FROM prop_games pg JOIN props p ON p.game_id = pg.id WHERE 1=1" + filters)
         # Order by when the game starts, NOT by `pg.date`. That column carries two
         # conventions (some rows file a 21:30 ET kickoff under the next UTC day), so
@@ -339,7 +383,7 @@ def props_slate(league: Optional[str] = Query(None),
                            JOIN props p ON p.game_id = pg.id
                            JOIN players pl ON pl.id = p.player_id
                            WHERE 1=1 {filters}
-                           GROUP BY pg.id, p.player_id, {base_market}, p.line, p.source,
+                           GROUP BY pg.id, p.player_id, {base_market}, p.line,
                                     pg.date, pg.home, pg.away
                          ) grouped_markets
                          GROUP BY game_id, market
@@ -357,15 +401,16 @@ def props_slate(league: Optional[str] = Query(None),
                  "start_time": r["start_time"], "league": r["league"], "prop_count": r["prop_count"],
                  "markets": markets_by_game.get(r["game_id"], []), "players": []} for r in grows]
 
-    sql = """SELECT p.id, p.market, p.line, p.side, p.source,
+    sql = """SELECT p.id, p.market, p.line, p.side, p.source, p.odds,
                     pl.name AS player_name, pl.team AS player_team, pl.league,
-                    pg.id AS game_id, pg.home, pg.away, pg.date AS game_date, pg.start_time
+                    pg.id AS game_id, pg.home, pg.away, pg.date AS game_date, pg.start_time,
+                    pg.league AS game_league
              FROM props p
              JOIN players pl ON pl.id = p.player_id
              JOIN prop_games pg ON pg.id = p.game_id
              WHERE 1=1"""
     params = []
-    league_sql, league_params = _league_sql("pl.league", league, leagues)
+    league_sql, league_params = _league_sql("pg.league", league, leagues)
     sql += league_sql
     params.extend(league_params)
     if game_id is not None:
@@ -394,7 +439,14 @@ def props_slate(league: Optional[str] = Query(None),
                 "away": r["away"],
                 "date": r["game_date"],
                 "start_time": r["start_time"],
-                "league": r["league"],
+                # The GAME's league, not the player's. `pl.league` here made the
+                # expanded slate label Leagues Cup fixture 1494 `mls`, and the
+                # value flipped to `ligamx` with whichever athlete sorted first,
+                # while `summary=1` (which reads pg.league) said `lcup`. Same
+                # endpoint, two answers for one game. Fourth site of the shape
+                # fixed in b8c3bd7/b8a3f60; those were WHERE clauses, this one is
+                # the response body, so no filter test could reach it.
+                "league": r["game_league"],
                 "players": {}
             }
         pkey = r["player_name"]
@@ -402,19 +454,40 @@ def props_slate(league: Optional[str] = Query(None),
             games[gkey]["players"][pkey] = {
                 "name": r["player_name"],
                 "team": r["player_team"],
-                "props": []
+                "props": [],
+                "_seen": {},
             }
-        games[gkey]["players"][pkey]["props"].append({
+        # One question, one row. Two sources can price the same player at the
+        # same line -- Bovada's anytime goal scorer and PrizePicks' `goals 0.5`
+        # are the same bet -- and appending both put 146 duplicate `goals 0.5
+        # OVER` rows on the Leagues Cup cards the day PrizePicks was added.
+        #
+        # The priced row wins. That is not a preference between books: a line
+        # carrying odds answers strictly more than the same line without them
+        # (here all 163 Bovada goal rows have odds and all 217 PrizePicks ones
+        # do not). Ranking books by name would be a trust list keyed on a name.
+        entry = {
             "market": r["market"],
             "line": r["line"],
             "side": r["side"],
             "source": r["source"],
-        })
+            "odds": r["odds"],
+        }
+        seen = games[gkey]["players"][pkey]["_seen"]
+        key = (r["market"], r["line"], r["side"])
+        held = seen.get(key)
+        if held is None:
+            seen[key] = entry
+            games[gkey]["players"][pkey]["props"].append(entry)
+        elif held["odds"] is None and r["odds"] is not None:
+            held.update(entry)
 
     # Convert to list sorted by date
     result = sorted(games.values(), key=lambda g: g["date"])
     for g in result:
         g["players"] = sorted(g["players"].values(), key=lambda p: p["name"])
+        for player in g["players"]:
+            player.pop("_seen", None)
         g["prop_count"] = sum(len(p["props"]) for p in g["players"])
 
     return result
@@ -532,6 +605,36 @@ def _link_or_fold(con, game_id, league, espn_id):
         return fold_prop_game(con, game_id, keep)
 
 
+def _roster_league_for_ingest(con, league: str, team: str) -> str:
+    """The spine allowed to own this player, which is not always the competition.
+
+    A cross-league tournament is filed under its own competition key, so a Leagues
+    Cup game is `lcup` while the athletes playing it are `mls` and `ligamx`. The
+    resolver matches on `players.league`, and `players WHERE league='lcup'` has
+    always held ZERO rows -- so every prop posted under `lcup` resolved against an
+    empty spine and was rejected. Measured 2026-08-25: 370 of 370 Bovada Leagues
+    Cup props, "REJECTED all 370 -- nothing in `players` matched".
+
+    This is the same defect `0746e83` fixed inside `ingest_rotowire_props.py`, at a
+    second site. That fix does not reach here: this is the HTTP ingest endpoint, a
+    different path with its own resolver, which the Bovada scraper posts to.
+
+    Routed by the club's own membership rather than a hand-written club list, and
+    AMBIGUOUS FAILS CLOSED: `ATL` is Atlanta United in MLS and Atlante in Liga MX,
+    so a code naming two spines resolves to neither and the athlete goes to the
+    review queue. Widening `mls` to swallow the tournament is the shadow-player
+    defect this whole route exists to avoid.
+    """
+    if league != "lcup" or not team:
+        return league
+    rows = con.execute(
+        "SELECT DISTINCT league FROM players WHERE team=? AND league IN ('mls','ligamx')",
+        (team.strip().upper(),)).fetchall()
+    if len(rows) == 1:
+        return rows[0][0]
+    return league
+
+
 @router.post("/api/props/ingest")
 def ingest_props(batch: PropIngest):
     """Ingest a batch of props for one game. Creates player/game rows as needed."""
@@ -586,8 +689,9 @@ def ingest_props(batch: PropIngest):
         unresolved = 0
         for p in batch.props:
             # Resolve player via identity spine (NEVER silently create)
+            roster_league = _roster_league_for_ingest(con, batch.league, p.get("team", ""))
             player_id, confidence = _resolve_player_for_ingest(
-                con, p["player_name"], p.get("team", ""), batch.league,
+                con, p["player_name"], p.get("team", ""), roster_league,
                 source=p.get("source", "props"), game_id=game_id)
             if player_id is None:
                 unresolved += 1
