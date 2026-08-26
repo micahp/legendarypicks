@@ -116,9 +116,11 @@ describe('the odds sort ranks by price and parks pick’em last', () => {
     await waitFor(() => {
       const names = Array.from(document.querySelectorAll('[data-market-row] h3'))
         .map(n => (n.textContent || '').trim())
-      // Descending by default: longest price first, pick'em always last.
+      // ASCENDING by default: shortest price first -- the favourite, which is
+      // the useful end. Descending would open the board on +10000 longshots.
+      // Pick'em has no price and parks last in either direction.
       expect(names[names.length - 1]).toBe('Pickem Player')
-      expect(names.slice(0, 2)).toEqual(['Longshot', 'Favourite'])
+      expect(names.slice(0, 2)).toEqual(['Favourite', 'Longshot'])
     })
   })
 })

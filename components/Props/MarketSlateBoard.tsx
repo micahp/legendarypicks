@@ -459,11 +459,20 @@ export default function MarketSlateBoard({ league, date }: { league: string; dat
     })
   }, [historyByRow, marketRows, sortDirection, sortKey])
 
+  // Descending is the right default for every key where BIGGER IS BETTER -- hit
+  // rate, confidence, edge. Odds is the exception: ascending is shortest price
+  // first, which is the favourite. Sorting it descending opens on +10000
+  // longshots, which is the least useful end of the board.
+  const DEFAULT_DIRECTION: Record<SortKey, 'asc' | 'desc'> = {
+    'hit-rate': 'desc', confidence: 'desc', edge: 'desc', line: 'desc',
+    odds: 'asc',
+  }
+
   const chooseSort = (next: SortKey) => {
     if (next === sortKey) setSortDirection(direction => direction === 'desc' ? 'asc' : 'desc')
     else {
       setSortKey(next)
-      setSortDirection('desc')
+      setSortDirection(DEFAULT_DIRECTION[next])
     }
   }
 
