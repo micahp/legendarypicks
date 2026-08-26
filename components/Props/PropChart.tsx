@@ -137,8 +137,9 @@ export default function PropChart({ data, window: initialWindow = 'l10' }: { dat
   return (
     <div className="space-y-2">
       <div className="flex items-center gap-3 text-sm flex-wrap">
-        <span className="font-semibold text-zinc-200">{data.player}</span>
-        <span className="text-zinc-500 text-xs">{data.team}</span>
+        {/* Player and team are already on the card directly above this chart;
+            repeating them here spent the widest row on information the reader
+            just read. */}
         <span className="text-zinc-400 capitalize">{data.market.replace(/_/g, ' ')}</span>
         <span className="font-bold tabular-nums text-zinc-200">Line {data.line}</span>
         {data.projection !== null && (

@@ -475,9 +475,13 @@ export default function MarketSlateBoard({ league, date }: { league: string; dat
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="text-xs text-zinc-500">Sort the research board</p>
-        <div className="flex flex-wrap gap-1.5" aria-label="Sort prop board">
+      {/* "Sort by" sits next to the controls it labels. It used to read "Sort
+          the research board" and was pushed to the far side of a
+          justify-between row, so the label and the buttons it described were at
+          opposite ends of the screen. */}
+      <div className="flex flex-wrap items-center gap-2">
+        <p className="shrink-0 text-xs text-zinc-500">Sort by</p>
+        <div className="flex flex-1 flex-wrap items-center gap-1.5" aria-label="Sort prop board">
           {([
             ['hit-rate', 'Hit rate'],
             ['confidence', 'Confidence'],
