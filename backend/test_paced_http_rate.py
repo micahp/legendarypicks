@@ -13,6 +13,7 @@ to make that mistake, so it is pinned here.
 """
 import time
 import unittest
+from unittest import mock
 
 import paced_http
 
@@ -66,6 +67,17 @@ class RateLimitTests(unittest.TestCase):
         paced_http.HOST_RATE = 0
         for _ in range(50):
             paced_http._pace_rate("https://example.test/a", "refuse")
+
+    def test_a_refusing_count_budget_recovers_after_its_cooldown(self):
+        host = "example.test"
+        paced_http._host_spend[host] = 5
+        paced_http._host_spend_started[host] = 100.0
+
+        with mock.patch.object(paced_http.time, "time", return_value=161.0):
+            paced_http._charge(f"https://{host}/a", 5, 60.0, "refuse")
+
+        self.assertEqual(paced_http._host_spend[host], 1)
+        self.assertEqual(paced_http._host_spend_started[host], 161.0)
 
 
 class ProcessLabelTests(unittest.TestCase):

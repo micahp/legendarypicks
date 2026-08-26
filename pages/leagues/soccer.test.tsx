@@ -10,11 +10,23 @@ jest.mock('next/router', () => ({ useRouter: () => mockRouter }))
 jest.mock('../../services/sports', () => ({
   SportsService: { getGamesByLocalDate: jest.fn() },
 }))
-jest.mock('../../components/Scores/GameCard', () => ({ gameId }: { gameId: string }) => <div>{gameId}</div>)
-jest.mock('../../components/Leagues/NewsTab', () => () => <div>News feed</div>)
-jest.mock('../../components/Leagues/StandingsTab', () => () => <div>MLS tables</div>)
+jest.mock('../../components/Scores/GameCard', () => function MockGameCard({ gameId }: { gameId: string }) {
+  return <div>{gameId}</div>
+})
+jest.mock('../../components/Leagues/NewsTab', () => function MockNewsTab() {
+  return <div>News feed</div>
+})
+jest.mock('../../components/Leagues/StandingsTab', () => function MockStandingsTab() {
+  return <div>MLS tables</div>
+})
+jest.mock('../../components/Leagues/StatsTab', () => function MockStatsTab() {
+  return <div>MLS player and team stats</div>
+})
 jest.mock('../../components/Leagues/hooks/useNewsData', () => ({
   useNewsData: () => ({ news: null, loading: false, error: null }),
+}))
+jest.mock('../../components/Leagues/hooks/useStatsData', () => ({
+  useStatsData: () => ({}),
 }))
 const getGames = SportsService.getGamesByLocalDate as jest.Mock
 
@@ -59,12 +71,6 @@ describe('Soccer league hub', () => {
       if (url === '/api/soccer/competitions/lcup') {
         return Promise.resolve({ ok: true, json: async () => lcupSnapshot })
       }
-      if (url.startsWith('/api/mls/leaders')) {
-        return Promise.resolve({
-          ok: true,
-          json: async () => ({ season: 2026, columns: [{ key: 'goals', label: 'Goals' }], leaders: [{ player_id: 8, name: 'Hugo Cuypers', team: 'CHI', games: 10, goals: 13 }] }),
-        })
-      }
       throw new Error(`unexpected fetch ${url}`)
     })
   })
@@ -103,13 +109,12 @@ describe('Soccer league hub', () => {
     expect(screen.getByLabelText('Goals').textContent).toBe('5')
   })
 
-  it('renders MLS leaders from the existing season totals contract', async () => {
+  it('keeps the existing MLS player and team stats surface', async () => {
     await act(async () => { render(<SoccerLeaguePage />) })
-    clickLink('Leaders')
+    clickLink('Stats')
 
-    expect(await screen.findByText('Hugo Cuypers')).toBeTruthy()
-    expect(screen.getByText('10 matches')).toBeTruthy()
-    expect(screen.getByLabelText('Goals').textContent).toBe('13')
+    expect(await screen.findByText('MLS player and team stats')).toBeTruthy()
+    expect(screen.queryByRole('link', { name: 'Leaders' })).toBeNull()
   })
 
   it('keeps the existing MLS standings URL as the Soccer hub entry', async () => {

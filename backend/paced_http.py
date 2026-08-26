@@ -58,6 +58,7 @@ RETRYABLE = frozenset({403, 429, 500, 502, 503, 504})
 HOST_BUDGET = int(os.environ.get("LP_HTTP_HOST_BUDGET", "100"))
 HOST_COOLDOWN = float(os.environ.get("LP_HTTP_HOST_COOLDOWN", "60"))
 _host_spend: dict[str, int] = {}
+_host_spend_started: dict[str, float] = {}
 
 # ── the burst rate, measured ──────────────────────────────────────────────────
 #
@@ -88,6 +89,7 @@ _host_recent: dict[str, "collections.deque"] = {}
 def reset_host_budget():
     """Forget what has been spent. For tests, and after a deliberate long wait."""
     _host_spend.clear()
+    _host_spend_started.clear()
     _host_recent.clear()
 
 
@@ -257,6 +259,15 @@ def _charge(url, budget, cooldown, on_exhausted="sleep"):
     if not budget or budget <= 0:
         return
     host = urllib.parse.urlsplit(url).netloc
+    now = time.time()
+    started = _host_spend_started.setdefault(host, now)
+    # A refusing request handler must not sleep, but it must recover once the
+    # publisher's cooldown has elapsed. Previously only the sleeping branch
+    # reset this counter, so a long-running server that reached the budget was
+    # poisoned permanently: every later ESPN call failed until process restart.
+    if cooldown > 0 and now - started >= cooldown:
+        _host_spend[host] = 0
+        _host_spend_started[host] = now
     if _host_spend.get(host, 0) >= budget:
         if on_exhausted == "refuse":
             raise BudgetExhausted(
@@ -275,6 +286,7 @@ def _charge(url, budget, cooldown, on_exhausted="sleep"):
               file=sys.stderr, flush=True)
         time.sleep(cooldown)
         _host_spend[host] = 0
+        _host_spend_started[host] = time.time()
     _host_spend[host] = _host_spend.get(host, 0) + 1
 
 

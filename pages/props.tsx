@@ -43,47 +43,104 @@ function Skeleton({ lines = 4 }: { lines?: number }) {
   )
 }
 
-function SportPills({ groups, active, onChange }: {
+function SportPills({ groups, active, competition, onSportChange, onCompetitionChange }: {
   groups: SportGroup[]
   active: string
-  onChange: (key: string) => void
+  competition: string
+  onSportChange: (key: string) => void
+  onCompetitionChange: (league: string) => void
 }) {
-  return (
-    <nav aria-label="Sports" className="flex max-w-full flex-wrap gap-1.5">
-      {[{ key: 'all', label: 'All' }, ...groups].map(group => (
-        <button key={group.key} onClick={() => onChange(group.key)}
-          aria-pressed={active === group.key}
-          className={`px-3.5 py-1.5 rounded-lg text-sm font-medium transition-colors ${active === group.key ? 'bg-emerald-600 text-white' : 'bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-zinc-200'}`}>
-          {group.label}
-        </button>
-      ))}
-    </nav>
-  )
-}
+  const [openGroup, setOpenGroup] = useState<string | null>(null)
+  const navRef = useRef<HTMLElement>(null)
 
-function CompetitionPills({ group, active, onChange }: {
-  group: SportGroup
-  active: string
-  onChange: (league: string) => void
-}) {
-  if (group.competitions.length < 2) return null
+  useEffect(() => {
+    const closeOnOutsideClick = (event: MouseEvent) => {
+      if (navRef.current && !navRef.current.contains(event.target as Node)) setOpenGroup(null)
+    }
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setOpenGroup(null)
+    }
+    document.addEventListener('mousedown', closeOnOutsideClick)
+    document.addEventListener('keydown', closeOnEscape)
+    return () => {
+      document.removeEventListener('mousedown', closeOnOutsideClick)
+      document.removeEventListener('keydown', closeOnEscape)
+    }
+  }, [])
+
+  const selectSport = (group: SportGroup) => {
+    if (active !== group.key) {
+      onSportChange(group.key)
+      setOpenGroup(null)
+      return
+    }
+    if (group.competitions.length > 1) {
+      setOpenGroup(current => current === group.key ? null : group.key)
+    }
+  }
+
   return (
-    <nav aria-label={`${group.label} competitions`} className="flex max-w-full flex-wrap gap-1.5">
-      {[{ league: 'all', sport: group.sport }, ...group.competitions].map(competition => (
-        <button
-          key={competition.league}
-          type="button"
-          onClick={() => onChange(competition.league)}
-          aria-pressed={active === competition.league}
-          className={`rounded-md border px-3 py-1 text-xs font-medium transition-colors ${
-            active === competition.league
-              ? 'border-emerald-500/60 bg-emerald-950/70 text-emerald-300'
-              : 'border-zinc-800 bg-zinc-950 text-zinc-500 hover:text-zinc-300'
-          }`}
-        >
-          {competition.league === 'all' ? 'All competitions' : leagueNavigationLabel(competition.league)}
-        </button>
-      ))}
+    <nav ref={navRef} aria-label="Sports" className="flex max-w-full flex-wrap gap-1.5">
+      <button
+        type="button"
+        onClick={() => { onSportChange('all'); setOpenGroup(null) }}
+        aria-pressed={active === 'all'}
+        className={`rounded-lg px-3.5 py-1.5 text-sm font-medium transition-colors ${active === 'all' ? 'bg-emerald-600 text-white' : 'border border-zinc-800 bg-zinc-900 text-zinc-400 hover:text-zinc-200'}`}
+      >
+        All
+      </button>
+      {groups.map(group => {
+        const hasMenu = group.competitions.length > 1
+        const menuOpen = openGroup === group.key
+        const selectedCompetition = active === group.key && competition !== 'all'
+          ? group.competitions.find(item => item.league === competition)
+          : undefined
+        const buttonLabel = selectedCompetition
+          ? leagueNavigationLabel(selectedCompetition.league)
+          : group.label
+        return (
+          <div key={group.key} className="relative">
+            <button
+              type="button"
+              onClick={() => selectSport(group)}
+              aria-label={buttonLabel}
+              aria-pressed={active === group.key}
+              aria-haspopup={hasMenu ? 'menu' : undefined}
+              aria-expanded={hasMenu ? menuOpen : undefined}
+              className={`flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-sm font-medium transition-colors ${active === group.key ? 'bg-emerald-600 text-white' : 'border border-zinc-800 bg-zinc-900 text-zinc-400 hover:text-zinc-200'}`}
+            >
+              <span>{buttonLabel}</span>
+              {hasMenu && active === group.key && (
+                <span aria-hidden="true" className="text-[10px]">▼</span>
+              )}
+            </button>
+            {hasMenu && menuOpen && (
+              <div
+                role="menu"
+                aria-label={`${group.label} filters`}
+                className="absolute right-0 top-full z-50 mt-2 min-w-[170px] overflow-hidden rounded-xl border border-zinc-700 bg-zinc-900 p-1.5 shadow-2xl shadow-black/50"
+              >
+                {[{ league: 'all', sport: group.sport }, ...group.competitions].map(item => {
+                  const selected = competition === item.league
+                  return (
+                    <button
+                      key={item.league}
+                      type="button"
+                      role="menuitemradio"
+                      aria-checked={selected}
+                      onClick={() => { onCompetitionChange(item.league); setOpenGroup(null) }}
+                      className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm transition-colors ${selected ? 'bg-emerald-500/10 text-emerald-300' : 'text-zinc-300 hover:bg-zinc-800'}`}
+                    >
+                      <span>{item.league === 'all' ? `All ${group.label}` : leagueNavigationLabel(item.league)}</span>
+                      {selected && <span aria-hidden="true" className="text-emerald-400">✓</span>}
+                    </button>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        )
+      })}
     </nav>
   )
 }
@@ -140,7 +197,12 @@ function Select({ value, onChange, options }: { value: string; onChange: (v: str
 }
 
 // ── Tab: Slate (games) ───────────────────────────────────
-function SlateTab({ league, leagueOrder }: { league: LeagueFilter; leagueOrder: string[] }) {
+function SlateTab({ league, leagueOrder, filterLabel, onViewAll }: {
+  league: LeagueFilter
+  leagueOrder: string[]
+  filterLabel?: string
+  onViewAll: () => void
+}) {
   const [slate, setSlate] = useState<SlateGame[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -243,7 +305,16 @@ function SlateTab({ league, leagueOrder }: { league: LeagueFilter; leagueOrder: 
       )}
       {loading ? <Skeleton lines={5} /> : groups.length === 0 ? (
         <div className="py-16 text-center text-sm text-zinc-500">
-          No upcoming games with props. Check back closer to game time.
+          <p>No upcoming games with props. Check back closer to game time.</p>
+          {filterLabel && (
+            <button
+              type="button"
+              onClick={onViewAll}
+              className="mt-4 rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-4 py-2 text-sm font-medium text-emerald-400 transition-colors hover:bg-emerald-500/20"
+            >
+              View All Leagues
+            </button>
+          )}
         </div>
       ) : (
         groups.map(({ gameDate, leagueGroups }) => (
@@ -848,6 +919,9 @@ export default function PropsPage() {
   const league = competition !== 'all'
     ? competition
     : selectedSport?.competitions.map(item => item.league).join(',') || 'All'
+  const activeFilterLabel = competition !== 'all'
+    ? leagueNavigationLabel(competition)
+    : selectedSport?.label
   const leagueOrder = sportGroups.flatMap(group => group.competitions.map(item => item.league))
 
   // Shared across Performance/Matchups/Model so switching tabs keeps the same
@@ -910,7 +984,9 @@ export default function PropsPage() {
           <SportPills
             groups={sportGroups}
             active={sportKey}
-            onChange={key => { setSportKey(key); setCompetition('all') }}
+            competition={competition}
+            onSportChange={key => { setSportKey(key); setCompetition('all') }}
+            onCompetitionChange={setCompetition}
           />
         </div>
 
@@ -918,10 +994,6 @@ export default function PropsPage() {
         {navigationError && (
           <p className="text-xs text-zinc-500">Sport filters are unavailable; showing the complete board.</p>
         )}
-        {selectedSport && (
-          <CompetitionPills group={selectedSport} active={competition} onChange={setCompetition} />
-        )}
-
         {/* Tab bar */}
         <div className="flex gap-0 flex-wrap border-b border-zinc-800 -mx-4 px-4">
           {TABS.map(t => (
@@ -965,8 +1037,22 @@ export default function PropsPage() {
         )}
 
         {/* Tab content */}
-        {tab === 'slate' && <SlateTab league={league} leagueOrder={leagueOrder} />}
-        {tab === 'props' && <MarketSlateBoard league={league} date={date} />}
+        {tab === 'slate' && (
+          <SlateTab
+            league={league}
+            leagueOrder={leagueOrder}
+            filterLabel={activeFilterLabel}
+            onViewAll={() => { setSportKey('all'); setCompetition('all') }}
+          />
+        )}
+        {tab === 'props' && (
+          <MarketSlateBoard
+            league={league}
+            date={date}
+            filterLabel={activeFilterLabel}
+            onViewAll={() => { setSportKey('all'); setCompetition('all') }}
+          />
+        )}
         {tab === 'performance' && <PerformanceTab query={sharedQuery} setQuery={setSharedQuery} selectedPlayer={sharedPlayer} setSelectedPlayer={setSharedPlayer} />}
         {tab === 'matchups' && <MatchupsTab query={sharedQuery} setQuery={setSharedQuery} player={sharedPlayer} setPlayer={setSharedPlayer} />}
         {tab === 'model' && <ModelTab query={sharedQuery} setQuery={setSharedQuery} player={sharedPlayer} setPlayer={setSharedPlayer} />}

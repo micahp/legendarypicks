@@ -168,6 +168,30 @@ MIGRATIONS: tuple[Migration, ...] = (
             ),
         ),
     ),
+    Migration(
+        migration_id="20260826_001_predictions_multi_sport_ledger",
+        table="predictions",
+        additions=tuple(
+            ColumnAddition(
+                contract=ColumnContract(name, declared_type),
+                sql=f"ALTER TABLE predictions ADD COLUMN {name} {declared_type}",
+            )
+            for name, declared_type in (
+                ("device_id", "TEXT"),
+                ("match_key", "TEXT"),
+                ("side", "TEXT"),
+                ("team_a", "TEXT"),
+                ("team_b", "TEXT"),
+                ("event_date", "TEXT"),
+                ("created_at_ms", "INTEGER"),
+                ("lock_at", "INTEGER"),
+                ("settled_at", "INTEGER"),
+                ("result", "TEXT"),
+                ("points", "REAL"),
+                ("crowd_share_at_lock", "REAL"),
+            )
+        ),
+    ),
 )
 
 REGISTRY_CONTRACT = (

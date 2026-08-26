@@ -160,6 +160,47 @@ class TeamStrengthStandingsSeasonTest(unittest.TestCase):
         self.assertNotIn("season=", seen["url"])
 
 
+class NcaafPublishedSeasonTest(unittest.TestCase):
+    @staticmethod
+    def payload(year=2026):
+        return {
+            "season": {"year": year, "displayName": str(year)},
+            "seasons": [
+                {"year": 2026, "types": [{"hasStandings": True}]},
+                {"year": 2025, "types": [{"hasStandings": True}]},
+                {"year": 2024, "types": [{"hasStandings": False}]},
+            ],
+            "children": [{
+                "name": "Big Ten Conference",
+                "standings": {"entries": [{
+                    "team": {"abbreviation": "OSU", "displayName": "Ohio State Buckeyes"},
+                    "stats": [{"name": "overall", "displayValue": "12-2"}],
+                }]},
+            }],
+        }
+
+    def test_names_the_published_season_and_offerable_years(self):
+        with patch.object(espn, "_get", return_value=self.payload()):
+            out = espn.ncaaf_conference_standings()
+
+        self.assertEqual(out["season"], 2026)
+        self.assertEqual(out["available_seasons"], [2026, 2025])
+        self.assertEqual(out["groups"][0]["rows"][0]["wins"], 12)
+
+    def test_an_explicit_year_reaches_the_publisher(self):
+        seen = {}
+
+        def fake_get(url, ttl=None):
+            seen["url"] = url
+            return self.payload(2025)
+
+        with patch.object(espn, "_get", fake_get):
+            out = espn.ncaaf_conference_standings(season=2025)
+
+        self.assertIn("season=2025", seen["url"])
+        self.assertEqual(out["season"], 2025)
+
+
 class OfferOnlySeasonsWeHoldTest(unittest.TestCase):
     """The year picker offers seasons the rest of the app can follow up on.
 
@@ -193,6 +234,12 @@ class OfferOnlySeasonsWeHoldTest(unittest.TestCase):
             out = games._offer_only_seasons_we_hold(
                 self.envelope(2026, [2026, 2025, 2024]), "nba")
         self.assertEqual(out["available_seasons"], [2026])
+
+    def test_a_historical_pick_keeps_the_current_season_as_a_way_back(self):
+        with patch.object(games, "seasons_we_hold", return_value={2025}):
+            out = games._offer_only_seasons_we_hold(
+                self.envelope(2025, [2026, 2025, 2024]), "ncaaf")
+        self.assertEqual(out["available_seasons"], [2026, 2025])
 
     def test_a_degraded_payload_is_left_alone(self):
         """The snapshot fallback carries no season and no year list. Filtering an
@@ -328,7 +375,9 @@ class StandingsRouteContractTest(unittest.TestCase):
         with no way to tell. `/api/{league}/strength` keeps the list shape; the
         standings route serves the envelope.
         """
-        grouped = [{"group": "Sun Belt - East", "rows": []}]
+        grouped = {"league": "ncaaf", "season": 2026,
+                   "available_seasons": [2026, 2025],
+                   "groups": [{"group": "Sun Belt - East", "rows": []}]}
         seasoned = {"league": "mlb", "season": 2026, "season_label": "2026",
                     "available_seasons": [2026, 2025], "teams": [{"abbrev": "BOS"}]}
         with patch.object(games.espn, "ncaaf_conference_standings", return_value=grouped) as ncaaf_call, \
@@ -337,7 +386,7 @@ class StandingsRouteContractTest(unittest.TestCase):
             self.assertEqual(games.get_standings("ncaaf"), grouped)
             self.assertEqual(games.get_standings("mlb"), seasoned)
 
-        ncaaf_call.assert_called_once_with()
+        ncaaf_call.assert_called_once_with(season=None)
         strength_call.assert_called_once_with("mlb", season=None)
         # The bare row list is no longer what standings serves.
         bare_call.assert_not_called()
@@ -347,6 +396,14 @@ class StandingsRouteContractTest(unittest.TestCase):
                           return_value={"teams": []}) as strength_call:
             games.get_standings("nba", season=2015)
         strength_call.assert_called_once_with("nba", season=2015)
+
+    def test_a_requested_ncaaf_season_reaches_the_publisher(self):
+        payload = {"league": "ncaaf", "season": 2025,
+                   "available_seasons": [2026, 2025], "groups": []}
+        with patch.object(games.espn, "ncaaf_conference_standings",
+                          return_value=payload) as standings_call:
+            games.get_standings("ncaaf", season=2025)
+        standings_call.assert_called_once_with(season=2025)
 
     def test_mls_serves_the_published_seasoned_table(self):
         seasoned = {"league": "mls", "season": 2026, "in_progress": True,

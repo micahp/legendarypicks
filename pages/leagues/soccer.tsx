@@ -5,13 +5,15 @@ import { useEffect, useState } from 'react'
 import GameCard from '../../components/Scores/GameCard'
 import NewsTab from '../../components/Leagues/NewsTab'
 import StandingsTab from '../../components/Leagues/StandingsTab'
+import StatsTab from '../../components/Leagues/StatsTab'
 import { useNewsData } from '../../components/Leagues/hooks/useNewsData'
+import { useStatsData } from '../../components/Leagues/hooks/useStatsData'
 import type { StandingGroup } from '../../components/Leagues/types'
 import { SportsService } from '../../services/sports'
 import type { Game } from '../../services/sports'
 
 type Competition = 'mls' | 'lcup'
-type Section = 'scores' | 'standings' | 'bracket' | 'leaders' | 'news'
+type Section = 'scores' | 'standings' | 'stats' | 'bracket' | 'leaders' | 'news'
 
 type BracketTeam = {
   id: string
@@ -69,12 +71,6 @@ type CompetitionSnapshot = {
   reason?: string
 }
 
-type MlsLeaderResponse = {
-  season?: number
-  columns?: { key: string; label: string }[]
-  leaders?: Leader[]
-}
-
 const COMPETITIONS: { key: Competition; label: string }[] = [
   { key: 'mls', label: 'MLS' },
   { key: 'lcup', label: 'Leagues Cup' },
@@ -84,7 +80,7 @@ const SECTIONS: Record<Competition, { key: Section; label: string }[]> = {
   mls: [
     { key: 'scores', label: 'Scores' },
     { key: 'standings', label: 'Standings' },
-    { key: 'leaders', label: 'Leaders' },
+    { key: 'stats', label: 'Stats' },
     { key: 'news', label: 'News' },
   ],
   lcup: [
@@ -141,10 +137,15 @@ export default function SoccerLeaguePage({
   const [lcupError, setLcupError] = useState<string | null>(null)
   const [mls, setMls] = useState<CompetitionSnapshot | null>(null)
   const [mlsError, setMlsError] = useState<string | null>(null)
-  const [mlsLeaders, setMlsLeaders] = useState<MlsLeaderResponse | null>(null)
-  const [mlsLeadersError, setMlsLeadersError] = useState<string | null>(null)
   const mlsNews = useNewsData('mls', competition === 'mls' && section === 'news')
   const lcupNews = useNewsData('lcup', competition === 'lcup' && section === 'news')
+  const stats = useStatsData({
+    league: 'mls',
+    activeTab: competition === 'mls' && section === 'stats' ? 'stats' : 'standings',
+    isWorldCup: false,
+    isUFC: false,
+    supportsTeamStats: true,
+  })
 
   useEffect(() => {
     let active = true
@@ -208,25 +209,6 @@ export default function SoccerLeaguePage({
     return () => { active = false }
   }, [competition, date, section])
 
-  useEffect(() => {
-    if (competition !== 'mls' || section !== 'leaders') return
-    let active = true
-    setMlsLeadersError(null)
-    fetch('/api/mls/leaders?limit=10')
-      .then(async response => {
-        if (!response.ok) throw new Error('MLS leaders request failed')
-        return response.json()
-      })
-      .then(payload => { if (active) setMlsLeaders(payload) })
-      .catch(() => {
-        if (active) {
-          setMlsLeaders(null)
-          setMlsLeadersError('MLS leaders are unavailable right now.')
-        }
-      })
-    return () => { active = false }
-  }, [competition, section])
-
   return (
     <>
       <Head><title>Soccer — Legendary Picks</title></Head>
@@ -285,8 +267,29 @@ export default function SoccerLeaguePage({
             error={lcupError || (!lcup?.available ? lcup?.reason || null : null)}
           />
         )}
-        {competition === 'mls' && section === 'leaders' && (
-          <MlsLeadersPanel data={mlsLeaders} error={mlsLeadersError} />
+        {competition === 'mls' && section === 'stats' && (
+          <StatsTab
+            league="mls"
+            leagueName="MLS"
+            supportsTeamStats={true}
+            subView={stats.subView}
+            mlbType={stats.mlbType}
+            leaders={stats.leaders}
+            playerLoading={stats.playerLoading}
+            playerError={stats.playerError}
+            playerFilterError={stats.playerFilterError}
+            teamAggregates={stats.teamAggregates}
+            teamLoading={stats.teamLoading}
+            teamError={stats.teamError}
+            teamCategory={stats.teamCategory}
+            onSelectSubView={stats.selectSubView}
+            onSelectMlbType={stats.selectMlbType}
+            onSelectSeason={stats.selectSeason}
+            onSelectStatCategory={stats.selectStatCategory}
+            onSelectSortMetric={stats.selectSortMetric}
+            onResetFilters={stats.resetStatsFilters}
+            onSelectTeamCategory={stats.selectTeamCategory}
+          />
         )}
         {section === 'news' && competition === 'mls' && <NewsTab league="mls" {...mlsNews} />}
         {section === 'news' && competition === 'lcup' && <NewsTab league="lcup" {...lcupNews} />}
@@ -390,26 +393,6 @@ function LeadersPanel({ categories, season, error }: { categories: LeaderCategor
       <div className="grid gap-6 lg:grid-cols-2">
         {categories.map(category => (
           <LeaderTable key={category.key} label={category.label} valueLabel={category.label} leaders={category.leaders.slice(0, 10)} valueKey="value" />
-        ))}
-      </div>
-    </div>
-  )
-}
-
-function MlsLeadersPanel({ data, error }: { data: MlsLeaderResponse | null; error: string | null }) {
-  if (error) return <Unavailable text={error} />
-  if (!data) return <Loading />
-  const rows = data.leaders || []
-  if (!rows.length) return <Unavailable text="No MLS player leaders have been published yet." />
-  return (
-    <div className="space-y-5">
-      <div>
-        <p className="text-xs font-bold uppercase tracking-wider text-emerald-400">Published season totals</p>
-        <h2 className="text-2xl font-bold">{data.season} MLS leaders</h2>
-      </div>
-      <div className="grid gap-6 lg:grid-cols-2">
-        {(data.columns || []).map(column => (
-          <LeaderTable key={column.key} label={column.label} valueLabel={column.label} leaders={rows} valueKey={column.key} />
         ))}
       </div>
     </div>

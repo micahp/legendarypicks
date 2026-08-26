@@ -8,8 +8,8 @@ jest.mock('next/router', () => ({ useRouter: () => mockRouter }))
 jest.mock('../../services/sports', () => ({
   SportsService: { getGamesByLocalDate: jest.fn() },
 }))
-jest.mock('../../components/Scores/GameCard', () => ({ gameId }: { gameId: string }) => <div>{gameId}</div>)
-jest.mock('../../components/Leagues/NewsTab', () => () => <div>News feed</div>)
+jest.mock('../../components/Scores/GameCard', () => function MockGameCard({ gameId }: { gameId: string }) { return <div>{gameId}</div> })
+jest.mock('../../components/Leagues/NewsTab', () => function MockNewsTab() { return <div>News feed</div> })
 jest.mock('../../components/Leagues/hooks/useNewsData', () => ({
   useNewsData: () => ({ news: null, loading: false, error: null }),
 }))
@@ -33,7 +33,8 @@ describe('Tennis league hub', () => {
   it('defaults to both tours and offers only the measured product tabs', async () => {
     await act(async () => { render(<TennisLeaguePage />) })
 
-    expect(screen.getByText('Major tournament coverage')).toBeTruthy()
+    expect(screen.queryByText('Major tournament coverage')).toBeNull()
+    expect(screen.queryByText(/ATP and WTA scores/)).toBeNull()
     expect(screen.getByRole('link', { name: 'Both' }).getAttribute('aria-current')).toBe('page')
     expect(screen.getByRole('link', { name: 'Scores' })).toBeTruthy()
     expect(screen.getByRole('link', { name: 'Draws' })).toBeTruthy()
@@ -41,6 +42,9 @@ describe('Tennis league hub', () => {
     expect(screen.getByRole('link', { name: 'News' })).toBeTruthy()
     expect(screen.queryByRole('link', { name: 'Stats' })).toBeNull()
     expect(screen.queryByRole('link', { name: 'Game Logs' })).toBeNull()
+    expect(screen.getByRole('button', { name: 'Previous day' }).className).toContain('h-10 w-10')
+    expect(screen.getByRole('button', { name: 'Next day' }).className).toContain('h-10 w-10')
+    expect(screen.queryByRole('button', { name: 'Jump to today' })).toBeNull()
     await waitFor(() => expect(getGames).toHaveBeenCalledTimes(2))
     expect(await screen.findByText('No covered ATP or WTA matches were published for this date.')).toBeTruthy()
     expect(getGames.mock.calls.map(call => call[0]).sort()).toEqual(['atp', 'wta'])
@@ -66,7 +70,7 @@ describe('Tennis league hub', () => {
         tours: [{
           league: 'atp', event_name: 'US Open', draw_type: "Men's Singles",
           bracket_url: 'https://www.espn.com/tennis/bracket/test', fetched_at: '2026-08-24T12:00:00Z',
-          matches: [{ game_id: 'm1', round: 'First Round', status: 'Scheduled', home: { name: 'Player One' } }],
+          matches: [{ game_id: 'm1', round: 'First Round', status: 'Scheduled', home: { athlete_id: '1001', name: 'Player One', seed: 12 }, away: { athlete_id: '1002', name: 'Player Two' } }],
         }],
       }),
     })
@@ -75,8 +79,9 @@ describe('Tennis league hub', () => {
     clickLink('Draws')
 
     expect(await screen.findByText('First Round')).toBeTruthy()
-    expect(screen.getByText('Player One')).toBeTruthy()
-    expect(screen.getByText('TBD')).toBeTruthy()
+    expect(screen.getByText('(12) Player One')).toBeTruthy()
+    expect(screen.getByText('Player Two')).toBeTruthy()
+    expect(screen.queryByText('(undefined) Player Two')).toBeNull()
     expect(screen.getByRole('link', { name: /Official bracket/ }).getAttribute('href')).toContain('espn.com')
   })
 

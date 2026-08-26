@@ -55,6 +55,16 @@ CREATE TABLE team_game_results (
     team TEXT NOT NULL
 )
 """
+LEGACY_PREDICTIONS_DDL = """
+CREATE TABLE predictions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    league TEXT NOT NULL,
+    game_id TEXT NOT NULL,
+    predicted_winner TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    correct INTEGER
+)
+"""
 
 
 class SchemaMigrationTests(unittest.TestCase):
@@ -73,6 +83,7 @@ class SchemaMigrationTests(unittest.TestCase):
             connection.execute(LEGACY_TEAM_STATS_DDL)
             connection.execute(LEGACY_NEWS_ITEMS_DDL)
             connection.execute(LEGACY_TEAM_GAME_RESULTS_DDL)
+            connection.execute(LEGACY_PREDICTIONS_DDL)
 
     def _create_current(self):
         with sqlite3.connect(self.db_path) as connection:
@@ -80,6 +91,7 @@ class SchemaMigrationTests(unittest.TestCase):
             connection.execute(LEGACY_TEAM_STATS_DDL)
             connection.execute(LEGACY_NEWS_ITEMS_DDL)
             connection.execute(LEGACY_TEAM_GAME_RESULTS_DDL)
+            connection.execute(LEGACY_PREDICTIONS_DDL)
             for migration in migrate_schema.MIGRATIONS:
                 if migration.table in ("player_game_logs", "app_schema_migrations"):
                     continue

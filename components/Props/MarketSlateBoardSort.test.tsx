@@ -1,5 +1,5 @@
 import React from 'react'
-import { render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import MarketSlateBoard from './MarketSlateBoard'
 
 // Four players on one market, deliberately named so that alphabetical order and
@@ -86,5 +86,26 @@ describe('the research board never falls back to alphabetical order', () => {
     // The specific defect: every primary value equal, so the comparator's last
     // clause decided the board. If these ever match again, the tiebreakers are gone.
     expect(order).not.toEqual(alphabetical)
+  })
+})
+
+describe('filtered empty states', () => {
+  it('identifies the selected league and can clear the filter', async () => {
+    ;(global as any).fetch = jest.fn(() => Promise.resolve(json([])))
+    const onViewAll = jest.fn()
+
+    render(
+      <MarketSlateBoard
+        league="nhl"
+        date="2026-08-25"
+        filterLabel="NHL"
+        onViewAll={onViewAll}
+      />,
+    )
+
+    const message = await screen.findByText('No upcoming games with props. Check back closer to game time.')
+    expect(message.parentElement?.className).not.toMatch(/border|bg-/)
+    fireEvent.click(screen.getByRole('button', { name: 'View All Leagues' }))
+    expect(onViewAll).toHaveBeenCalledTimes(1)
   })
 })

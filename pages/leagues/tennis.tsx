@@ -18,8 +18,8 @@ type DrawMatch = {
   status?: string
   status_detail?: string
   round: string
-  home?: { name?: string; sets?: number[] }
-  away?: { name?: string; sets?: number[] }
+  home?: { athlete_id?: string; name?: string; seed?: number | null; sets?: number[] }
+  away?: { athlete_id?: string; name?: string; seed?: number | null; sets?: number[] }
 }
 
 type Draw = {
@@ -175,12 +175,7 @@ export default function TennisLeaguePage() {
       <Head><title>Tennis — Legendary Picks</title></Head>
       <div className="space-y-6">
         <header>
-          <p className="text-xs font-bold uppercase tracking-widest text-emerald-400">Major tournament coverage</p>
-          <h1 className="mt-1 text-3xl font-extrabold tracking-tight">Tennis</h1>
-          <p className="mt-2 max-w-2xl text-sm text-zinc-400">
-            ATP and WTA scores, singles draws, world rankings, and news for covered major tournaments.
-            Tour events outside this coverage are not ingested here.
-          </p>
+          <h1 className="text-3xl font-extrabold tracking-tight">Tennis</h1>
         </header>
 
         <nav aria-label="Tennis sections" className="flex gap-2 border-b border-zinc-800">
@@ -226,12 +221,40 @@ function ScoresPanel({ date, setDate, games, loading, error }: {
   loading: boolean
   error: string | null
 }) {
+  const isToday = date === localDate()
   return (
     <section className="space-y-4">
-      <div className="flex items-center justify-between rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2">
-        <button aria-label="Previous day" onClick={() => setDate(shiftDate(date, -1))} className="px-3 py-1 text-zinc-400 hover:text-white">←</button>
-        <button onClick={() => setDate(localDate())} className="text-sm font-bold text-zinc-200">{date}</button>
-        <button aria-label="Next day" onClick={() => setDate(shiftDate(date, 1))} className="px-3 py-1 text-zinc-400 hover:text-white">→</button>
+      <div className="flex items-center justify-center gap-2 sm:gap-3">
+        <button
+          type="button"
+          aria-label="Previous day"
+          onClick={() => setDate(shiftDate(date, -1))}
+          className="flex h-10 w-10 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900 text-xl leading-none text-zinc-300 hover:bg-zinc-800 active:scale-95"
+        >
+          ‹
+        </button>
+        <div className="min-w-[11rem] text-center" aria-live="polite">
+          <span className="text-sm font-bold text-zinc-200">
+            {new Date(`${date}T12:00:00`).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
+          </span>
+          {!isToday && (
+            <button
+              type="button"
+              onClick={() => setDate(localDate())}
+              className="mx-auto mt-0.5 block text-xs font-medium text-emerald-400 hover:text-emerald-300"
+            >
+              Jump to today
+            </button>
+          )}
+        </div>
+        <button
+          type="button"
+          aria-label="Next day"
+          onClick={() => setDate(shiftDate(date, 1))}
+          className="flex h-10 w-10 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900 text-xl leading-none text-zinc-300 hover:bg-zinc-800 active:scale-95"
+        >
+          ›
+        </button>
       </div>
       {error ? <Unavailable text={error} /> : loading ? <Loading /> : games.length ? (
         <div className="grid gap-3 md:grid-cols-2">{games.map(game => <GameCard key={`${game.league}-${game.gameId}`} {...game} />)}</div>
@@ -325,7 +348,9 @@ function DrawMatchCard({ match }: { match: DrawMatch }) {
       <p className="mb-2 text-[10px] font-bold uppercase tracking-wide text-zinc-500">{match.status_detail || match.status || 'Scheduled'}</p>
       {([match.home, match.away] as const).map((player, side) => (
         <div key={side} className="flex justify-between gap-3 py-1">
-          <span className={player?.name ? 'text-zinc-200' : 'italic text-zinc-500'}>{player?.name || 'TBD'}</span>
+          <span className={player?.name ? 'text-zinc-200' : 'italic text-zinc-500'}>
+            {player?.name ? `${player.seed ? `(${player.seed}) ` : ''}${player.name}` : 'TBD'}
+          </span>
           {sets > 0 && <span className="tabular-nums text-zinc-400">{Array.from({ length: sets }, (_, index) => player?.sets?.[index] ?? '–').join('  ')}</span>}
         </div>
       ))}
