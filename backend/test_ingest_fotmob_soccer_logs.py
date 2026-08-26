@@ -72,11 +72,15 @@ class AmbiguityFailsClosed(unittest.TestCase):
         self.assertIsNone(fm.resolve({}, "Nobody Here"))
 
 
-class TheAppearanceIsOneRow(unittest.TestCase):
-    """ESPN keys game_no on its EVENT id; FotMob match ids are another space.
+class TheProvidersKeepSeparateRows(unittest.TestCase):
+    """Each provider owns its rows and nothing edits another's.
 
-    A naive insert puts two rows on one appearance and the chart counts games.
-    A player plays at most one match a date, so the date identifies it.
+    This once merged FotMob's line into the ESPN row for the same date, one row
+    per appearance. That left a row stamped `source='espn'` carrying
+    FotMob-sourced tackles, so the column named the row's creator rather than
+    each field's origin. Reverted; the cost is that one appearance can have two
+    rows, which every READER must resolve. See OneRowPerAppearance in
+    test_props_history.py for the reader half of this contract.
     """
 
     def setUp(self):
@@ -101,7 +105,7 @@ class TheAppearanceIsOneRow(unittest.TestCase):
         return self.con.execute(
             "SELECT stats, source FROM player_game_logs").fetchall()
 
-    def test_it_merges_into_the_espn_row_for_the_same_date(self):
+    def test_it_writes_its_own_row_and_leaves_the_espn_row_alone(self):
         self.con.execute(
             "INSERT INTO player_game_logs(player_id, league, season, game_no,"
             " game_id, game_date, stats, source, source_player_key)"
@@ -111,14 +115,29 @@ class TheAppearanceIsOneRow(unittest.TestCase):
         self.con.commit()
         who = {"id": 7, "team": "LEO", "espn_id": "49306"}
         result = fm.upsert(self.con, "ligamx", 2026, who, 1000014543,
-                           "2026-08-24", {"tackles": 4.0, "shots": 99.0}, False)
-        self.assertEqual(result, "merged")
-        rows = self._rows()
-        self.assertEqual(len(rows), 1, "one appearance must stay one row")
-        stats = json.loads(rows[0][0])
-        self.assertEqual(stats["tackles"], 4.0)
-        # Never overwritten: whoever wrote a value first stays its source.
-        self.assertEqual(stats["shots"], 2)
+                           "2026-08-24", {"tackles": 4.0, "shots": 99.0}, False,
+                           fotmob_id=880042)
+        self.assertEqual(result, "inserted")
+
+        by_source = {source: json.loads(stats) for stats, source in self._rows()}
+        self.assertEqual(set(by_source), {"espn", "fotmob"},
+                         "each provider keeps its own row")
+        # The ESPN row is untouched: it never learns a stat ESPN never published.
+        self.assertEqual(by_source["espn"], {"goals": 0, "shots": 2})
+        self.assertEqual(by_source["fotmob"], {"tackles": 4.0, "shots": 99.0})
+
+    def test_the_key_identifies_the_player_not_the_fixture(self):
+        """`fotmob-{match}-{team}` was one string for all eleven on a side, so
+        UNIQUE(league, source_player_key, season, game_no) kept ONE row per team
+        per match and INSERT OR IGNORE dropped the rest silently: a run that
+        reported 795 inserts wrote 131."""
+        for espn_id, fotmob_id in ((7, 880042), (8, 880043), (9, 880044)):
+            fm.upsert(self.con, "ligamx", 2026,
+                      {"id": espn_id, "team": "LEO", "espn_id": str(espn_id)},
+                      1000014543, "2026-08-24", {"tackles": 1.0}, False,
+                      fotmob_id=fotmob_id)
+        self.assertEqual(len(self._rows()), 3,
+                         "three team-mates in one fixture are three rows")
 
     def test_an_unresolved_player_is_retained_not_dropped(self):
         result = fm.upsert(self.con, "ligamx", 2026, None, 1000014543,
