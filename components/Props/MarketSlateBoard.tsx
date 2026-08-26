@@ -578,6 +578,15 @@ export default function MarketSlateBoard({ league, date }: { league: string; dat
                         <RateChip label="L20" value={history.hit_rate.l20} sample={history.hit_rate_n?.l20} required={20} />
                       </div>
                       <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs md:justify-end">
+                        {/* Every other sort key is a number the reader can see on the
+                            row -- hit rate in the chips, edge and line here. Sorting by
+                            a value that is nowhere on screen asks someone to trust an
+                            order they cannot check. */}
+                        <span className="text-zinc-500">Confidence <strong className="text-zinc-200 tabular-nums">
+                          {history.games.length
+                            ? `${Math.round(confidenceFloor(history.games.filter(g => g.hit).length, history.games.length) * 100)}%`
+                            : '—'}
+                        </strong></span>
                         <span className="text-zinc-500">Projection <strong className="text-zinc-200 tabular-nums">{projection === null ? '—' : formatValue(projection)}</strong></span>
                         <span className="text-zinc-500">Edge <strong className={`${edge !== null && Math.abs(edge) > 0 ? 'text-emerald-300' : 'text-zinc-300'} tabular-nums`}>
                           {edge === null ? '—' : edge === 0 ? 'Even' : `${edge > 0 ? 'O' : 'U'} +${Math.abs(edge).toFixed(1)}`}
