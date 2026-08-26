@@ -136,16 +136,32 @@ function groupProps(props: BoardProp[]): BoardRow[] {
   return Array.from(grouped.values())
 }
 
-function RateChip({ label, value }: { label: string; value: number }) {
+// A window's NAME is a claim about its SAMPLE. The API computes L20 as
+// games[:20], which on a player with three matches is three matches, so L5,
+// L10 and L20 all print the same figure and a 3-for-3 player reads as a
+// perfect twenty-game record. Reported from the board 2026-08-26 on Liga MX,
+// whose players have ~8 appearances where an MLS player has 40.
+//
+// `sample` is hit_rate_n from the API: the games actually behind this window.
+// Short of the window's own count there is no L10 to report, so the chip shows
+// a dash. Undefined (an older payload) keeps the previous behaviour rather
+// than blanking every chip.
+function RateChip({ label, value, sample, required }: {
+  label: string; value: number; sample?: number; required: number
+}) {
+  const short = sample !== undefined && sample < required
   const pct = Math.round(value * 100)
-  const tone = pct >= 60
-    ? 'border-emerald-800/70 bg-emerald-950/40 text-emerald-300'
-    : pct < 40
-      ? 'border-red-900/60 bg-red-950/30 text-red-300'
-      : 'border-zinc-700 bg-zinc-800/70 text-zinc-300'
+  const tone = short
+    ? 'border-zinc-800 bg-zinc-900/60 text-zinc-600'
+    : pct >= 60
+      ? 'border-emerald-800/70 bg-emerald-950/40 text-emerald-300'
+      : pct < 40
+        ? 'border-red-900/60 bg-red-950/30 text-red-300'
+        : 'border-zinc-700 bg-zinc-800/70 text-zinc-300'
   return (
-    <span className={`rounded-md border px-2 py-1 text-[11px] tabular-nums ${tone}`}>
-      <span className="text-zinc-500">{label}</span> {pct}%
+    <span data-rate-chip={label}
+          className={`rounded-md border px-2 py-1 text-[11px] tabular-nums ${tone}`}>
+      <span className="text-zinc-500">{label}</span> {short ? '—' : `${pct}%`}
     </span>
   )
 }
@@ -481,9 +497,9 @@ export default function MarketSlateBoard({ league, date }: { league: string; dat
                   ) : historyState?.loading ? <LoadingEvidence /> : history ? (
                     <div className="space-y-2">
                       <div className="flex flex-wrap gap-1.5 md:justify-end">
-                        <RateChip label="L5" value={history.hit_rate.l5} />
-                        <RateChip label="L10" value={history.hit_rate.l10} />
-                        <RateChip label="L20" value={history.hit_rate.l20} />
+                        <RateChip label="L5" value={history.hit_rate.l5} sample={history.hit_rate_n?.l5} required={5} />
+                        <RateChip label="L10" value={history.hit_rate.l10} sample={history.hit_rate_n?.l10} required={10} />
+                        <RateChip label="L20" value={history.hit_rate.l20} sample={history.hit_rate_n?.l20} required={20} />
                       </div>
                       <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs md:justify-end">
                         <span className="text-zinc-500">Projection <strong className="text-zinc-200 tabular-nums">{projection === null ? '—' : formatValue(projection)}</strong></span>
