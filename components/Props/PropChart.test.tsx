@@ -34,6 +34,16 @@ describe('PropChart venue handling', () => {
     return (container.querySelector('[data-game-labels]')?.textContent || '')
   }
 
+  it('renders a four-character away abbreviation in full', () => {
+    // `@BOS` was clipped by a 28px column with `truncate`, which reads as a
+    // data problem rather than a layout one.
+    const { container } = render(<PropChart data={chartData([
+      { date: '2026-08-21', value: 3, opponent: 'BOS', home: false, hit: true },
+    ])} />)
+    expect(columns(container)).toContain('@BOS')
+    expect(container.querySelector('[data-game-labels] .truncate')).toBeNull()
+  })
+
   it('marks a known away game with @', () => {
     const { container } = render(<PropChart data={chartData([
       { date: '2026-07-22', value: 18, opponent: 'AWY', home: false, hit: false },

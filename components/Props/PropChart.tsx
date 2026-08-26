@@ -122,7 +122,9 @@ export default function PropChart({ data, window: initialWindow = 'l10' }: { dat
   const maxVal = hasGames ? Math.max(data.line, ...displayGames.map(g => g.value)) : data.line
   const minVal = hasGames ? Math.min(0, ...displayGames.map(g => g.value)) : 0
   const range = maxVal - minVal || 1
-  const barW = 28
+  // Wide enough for an away abbreviation (`@BOS`) at the label size below the
+  // bar. It was 28, which clipped four characters.
+  const barW = 34
   const gap = 6
   const chartW = hasGames ? displayGames.length * (barW + gap) - gap : 0
   const chartH = 72
@@ -228,9 +230,13 @@ export default function PropChart({ data, window: initialWindow = 'l10' }: { dat
                 {displayGames.map((g, i) => (
                   <div key={i} className="text-center" style={{ width: barW, flexShrink: 0 }}>
                     <div className="text-[11px] font-semibold text-zinc-200 tabular-nums">{g.value}</div>
-                    <div className="truncate text-[10px] text-zinc-400"
+                    {/* No slice and no truncate. `@BOS` is four characters and
+                        was being clipped by a 28px column, which reads as a data
+                        problem rather than a layout one. The column is sized to
+                        hold a real abbreviation instead. */}
+                    <div className="whitespace-nowrap text-[10px] text-zinc-400"
                          title={`${g.home === false ? '@ ' : ''}${g.opponent} · ${g.date}`}>
-                      {g.home === false ? '@' : ''}{(g.opponent || '—').slice(0, 4)}
+                      {g.home === false ? '@' : ''}{g.opponent || '—'}
                     </div>
                     <div className="text-[10px] text-zinc-500 tabular-nums">{shortDate(g.date)}</div>
                   </div>
