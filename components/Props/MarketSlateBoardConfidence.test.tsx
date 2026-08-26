@@ -48,6 +48,13 @@ beforeEach(() => {
   })
 })
 
+
+// "Confidence" is now BOTH the sort button and a value on every row -- which is
+// the point: you can see what you sorted by. Tests must say which they mean.
+function sortButton(): HTMLElement {
+  return screen.getByRole('button', { name: /^Confidence/ })
+}
+
 async function order(): Promise<string[]> {
   await waitFor(() => {
     expect(document.querySelectorAll('[data-market-row]').length).toBe(ROWS.length)
@@ -61,14 +68,14 @@ describe('confidence sorts by the rate a record can support', () => {
   it('puts a thin perfect record below a broad good one', async () => {
     render(<MarketSlateBoard league="ligamx" date="2026-08-26" />)
     await order()
-    fireEvent.click(screen.getByText('Confidence'))
+    fireEvent.click(sortButton())
     expect((await order())[0]).toBe('Broad Good')
   })
 
   it('still ranks the thin record above nothing — it is evidence, just less', async () => {
     render(<MarketSlateBoard league="ligamx" date="2026-08-26" />)
     await order()
-    fireEvent.click(screen.getByText('Confidence'))
+    fireEvent.click(sortButton())
     expect(await order()).toContain('Thin Perfect')
   })
 
@@ -86,6 +93,18 @@ describe('confidence sorts by the rate a record can support', () => {
     expect(screen.queryByText(/can actually support/)).toBeNull()
     fireEvent.click(screen.getByLabelText('What Confidence means'))
     expect(screen.getByText(/can actually support/)).toBeTruthy()
+  })
+
+  it('shows the value it sorts by on every row', async () => {
+    // Every other sort key is visible on the row; sorting by a number that is
+    // nowhere on screen asks the reader to trust an order they cannot check.
+    render(<MarketSlateBoard league="ligamx" date="2026-08-26" />)
+    await order()
+    const shown = Array.from(document.querySelectorAll('[data-market-row]'))
+      .map(r => (r.textContent || '').match(/Confidence\s*(\d+)%/)?.[1])
+    expect(shown.filter(Boolean).length).toBe(ROWS.length)
+    // 16/22 -> 52%, and it is the raw rate that reads 73%.
+    expect(shown).toContain('52')
   })
 
   it('closes again, and sits beside the label it explains', async () => {
