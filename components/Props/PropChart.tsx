@@ -20,6 +20,11 @@ export interface PropHistory {
   side: 'over' | 'under'
   projection: number | null
   hit_rate: { l5: number; l10: number; l20: number; season: number }
+  // How many games are actually behind each window. A window's NAME is not
+  // its size: `games[:20]` on a player with three matches is three matches,
+  // and L5/L10/L20 then all print the same number, which reads as a
+  // twenty-game record. Optional so an older payload still renders.
+  hit_rate_n?: { l5: number; l10: number; l20: number; season: number }
   games: GameLog[]
 }
 

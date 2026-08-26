@@ -48,17 +48,20 @@ class PropHistoryVenueTests(unittest.TestCase):
             CREATE TABLE player_game_logs(
               player_id INTEGER, league TEXT, season INTEGER, stats TEXT,
               game_date TEXT, opponent TEXT, home_away TEXT, game_no INTEGER,
-              game_type TEXT
+              game_type TEXT,
+              -- The real table has this and these fixtures did not, so they
+              -- described a world where the reader cannot pick a provider.
+              source TEXT
             );
             """
         )
         con.execute("INSERT INTO players VALUES(1,'Alex Ready','AAA','nba','G')")
         con.executemany(
-            "INSERT INTO player_game_logs VALUES(?,?,?,?,?,?,?,?,?)",
+            "INSERT INTO player_game_logs VALUES(?,?,?,?,?,?,?,?,?,?)",
             [
-                (1, "nba", 2026, json.dumps({"PTS": 24}), "2026-07-20", "OPP1", "home", 1, None),
-                (1, "nba", 2026, json.dumps({"PTS": 18}), "2026-07-21", "OPP2", "away", 2, None),
-                (1, "nba", 2026, json.dumps({"PTS": 21}), "2026-07-22", "OPP3", None, 3, None),
+                (1, "nba", 2026, json.dumps({"PTS": 24}), "2026-07-20", "OPP1", "home", 1, None, "espn"),
+                (1, "nba", 2026, json.dumps({"PTS": 18}), "2026-07-21", "OPP2", "away", 2, None, "espn"),
+                (1, "nba", 2026, json.dumps({"PTS": 21}), "2026-07-22", "OPP3", None, 3, None, "espn"),
             ],
         )
         con.commit()
@@ -124,7 +127,10 @@ class LeaguesCupChartsAcrossTheSpines(unittest.TestCase):
             CREATE TABLE player_game_logs(
               player_id INTEGER, league TEXT, season INTEGER, stats TEXT,
               game_date TEXT, opponent TEXT, home_away TEXT, game_no INTEGER,
-              game_type TEXT
+              game_type TEXT,
+              -- The real table has this and these fixtures did not, so they
+              -- described a world where the reader cannot pick a provider.
+              source TEXT
             );
             """
         )
@@ -140,41 +146,45 @@ class LeaguesCupChartsAcrossTheSpines(unittest.TestCase):
             # game-log ingest, so this is everything we hold for him.
             (1, "lcup", 2026, json.dumps({"shots": 3, "goals": 1, "assists": 0,
                                           "fouls_committed": 2}),
-             "2026-08-14", "ATX", "home", 1, "REG"),
+             "2026-08-14", "ATX", "home", 1, "REG", "espn"),
             (1, "lcup", 2026, json.dumps({"shots": 6, "goals": 0, "assists": 1,
                                           "fouls_committed": 1}),
-             "2026-08-10", "POR", "home", 2, "REG"),
+             "2026-08-10", "POR", "home", 2, "REG", "espn"),
             # The MLS player carries a domestic season alongside the tournament.
-            (2, "lcup", 2026, json.dumps({"shots": 1}), "2026-08-12", "MTY", "away", 1, "REG"),
-            (2, "mls", 2026, json.dumps({"shots": 2}), "2026-07-20", "NE", "home", 2, "REG"),
-            (2, "mls", 2026, json.dumps({"shots": 0}), "2026-07-13", "NYC", "away", 3, "REG"),
-            # A player whose rows came from a --deep run: the core-api fields
-            # are present alongside the summary ones.
+            (2, "lcup", 2026, json.dumps({"shots": 1}),
+             "2026-08-12", "MTY", "away", 1, "REG", "espn"),
+            (2, "mls", 2026, json.dumps({"shots": 2}),
+             "2026-07-20", "NE", "home", 2, "REG", "espn"),
+            (2, "mls", 2026, json.dumps({"shots": 0}),
+             "2026-07-13", "NYC", "away", 3, "REG", "espn"),
+            # A player whose deep fields came from FotMob's own row.
             (3, "lcup", 2026, json.dumps({"shots": 2, "tackles": 3,
-                                          "clearances": 4, "passes_attempted": 55}),
-             "2026-08-14", "ATX", "home", 1, "REG"),
+                                          "clearances": 4,
+                                          "passes_attempted": 55}),
+             "2026-08-14", "ATX", "home", 1, "REG", "fotmob"),
             (3, "lcup", 2026, json.dumps({"shots": 1, "tackles": 1,
-                                          "clearances": 0, "passes_attempted": 40}),
-             "2026-08-10", "POR", "away", 2, "REG"),
+                                          "clearances": 0,
+                                          "passes_attempted": 40}),
+             "2026-08-10", "POR", "away", 2, "REG", "fotmob"),
             # Two matches this player never entered. Stored, because the row is
             # a real record of not playing -- but they are not zeroes.
             (4, "ligamx", 2026, json.dumps({"shots": 0, "tackles": 0,
                                             "minutes": 0}),
-             "2026-08-22", "JUA", "away", 3, "REG"),
+             "2026-08-22", "JUA", "away", 3, "REG", "fotmob"),
             (4, "ligamx", 2026, json.dumps({"shots": 0, "tackles": 0,
                                             "minutes": 0}),
-             "2026-08-02", "SAN", "home", 4, "REG"),
+             "2026-08-02", "SAN", "home", 4, "REG", "fotmob"),
             (4, "ligamx", 2026, json.dumps({"shots": 2, "tackles": 3,
                                             "minutes": 90}),
-             "2026-08-16", "ASL", "home", 5, "REG"),
+             "2026-08-16", "ASL", "home", 5, "REG", "fotmob"),
             # The summary ingest signals the same thing with `appearances`.
             (5, "lcup", 2026, json.dumps({"shots": 0, "appearances": 0}),
-             "2026-08-14", "ATX", "home", 6, "REG"),
+             "2026-08-14", "ATX", "home", 6, "REG", "espn"),
             (5, "lcup", 2026, json.dumps({"shots": 4, "appearances": 1}),
-             "2026-08-10", "POR", "away", 7, "REG"),
+             "2026-08-10", "POR", "away", 7, "REG", "espn"),
         ]
         con.executemany(
-            "INSERT INTO player_game_logs VALUES(?,?,?,?,?,?,?,?,?)", rows)
+            "INSERT INTO player_game_logs VALUES(?,?,?,?,?,?,?,?,?,?)", rows)
         con.commit()
         con.close()
 
@@ -321,3 +331,82 @@ class TheRowReachesTheChartLabelledByThePlayersLeague(unittest.TestCase):
                 league=label)
             self.assertEqual([g["value"] for g in result["games"]], [3.0, 1.0],
                              label)
+
+
+class OneRowPerAppearance(unittest.TestCase):
+    """Providers keep separate rows; the READER picks one.
+
+    2026-08-25: FotMob stopped merging into the ESPN row, so a player with both
+    charted the same match twice -- Federico Vinas showed 12 games,
+    [7,7,4,4,3,3,1,1,1,1,1,1], for six he actually played. 1,901 appearances
+    were double counted on prod.
+    """
+
+    @classmethod
+    def tearDownClass(cls):
+        try:
+            os.unlink(_IMPORT_DB.name)
+        except FileNotFoundError:
+            pass
+
+    def setUp(self):
+        handle = tempfile.NamedTemporaryFile(prefix="one-row-", suffix=".db",
+                                             delete=False)
+        self.path = handle.name
+        handle.close()
+        self.addCleanup(lambda: os.path.exists(self.path) and os.unlink(self.path))
+        con = sqlite3.connect(self.path)
+        con.executescript("""
+            CREATE TABLE players(
+              id INTEGER PRIMARY KEY, name TEXT, team TEXT, league TEXT,
+              position TEXT
+            );
+            CREATE TABLE player_game_logs(
+              player_id INTEGER, league TEXT, season INTEGER, stats TEXT,
+              game_date TEXT, opponent TEXT, home_away TEXT, game_no INTEGER,
+              game_type TEXT, source TEXT
+            );
+        """)
+        con.execute("INSERT INTO players VALUES(1,'Both Providers','AME','ligamx','F')")
+        con.executemany(
+            "INSERT INTO player_game_logs VALUES(?,?,?,?,?,?,?,?,?,?)",
+            [
+                # The SAME appearance, from two providers, with different
+                # numbers so the tie-break is observable.
+                (1, "ligamx", 2026, json.dumps({"shots": 3, "minutes": 90}),
+                 "2026-08-24", "TOL", "home", 1, "REG", "espn"),
+                (1, "ligamx", 2026,
+                 json.dumps({"shots": 9, "tackles": 4, "minutes": 90}),
+                 "2026-08-24", "TOL", "home", 1, "REG", "fotmob"),
+                # A second appearance only FotMob has.
+                (1, "ligamx", 2026,
+                 json.dumps({"shots": 2, "tackles": 1, "minutes": 90}),
+                 "2026-08-17", "NCX", "away", 2, "REG", "fotmob"),
+            ])
+        con.commit()
+        con.close()
+
+        def connection():
+            con = sqlite3.connect(self.path)
+            con.row_factory = sqlite3.Row
+            return con
+
+        patch = mock.patch.object(props, "_db", side_effect=connection)
+        patch.start()
+        self.addCleanup(patch.stop)
+
+    def test_a_match_both_providers_cover_is_charted_once(self):
+        result = props.prop_history(
+            player_id=1, market="shots", line=0.5, side="over", league="ligamx")
+        self.assertEqual(len(result["games"]), 2, "one row per appearance")
+        # ESPN wins the tie: it is the identity spine every player_id is keyed
+        # on. 3, not 9.
+        self.assertEqual([g["value"] for g in result["games"]], [3.0, 2.0])
+
+    def test_a_market_only_one_provider_has_still_charts(self):
+        # Rows without the stat are excluded by the WHERE, so the rank falls
+        # through to FotMob rather than charting nothing.
+        result = props.prop_history(
+            player_id=1, market="tackles", line=0.5, side="over",
+            league="ligamx")
+        self.assertEqual([g["value"] for g in result["games"]], [4.0, 1.0])
