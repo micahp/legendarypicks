@@ -7,6 +7,23 @@ Performance and correctness are part of "done" — not a follow-up after someone
 agent-facing `.claude/skills/falsify-before-merge`. Load the skill before merging any branch,
 before reporting DONE, and before writing acceptance criteria into a task spec.
 
+
+## A measurement is a claim about the instrument
+
+Before writing any zero, count, coverage percentage or "X doesn't publish Y" into code,
+a comment, a doc or a report: load `.claude/skills/measurement-is-a-claim`.
+
+Every such number is a fact about what you asked -- the query, the sample, the day, the
+endpoint, the league list -- and gets read later as a fact about the world. On 2026-08-26
+one session wrote eight false publisher facts, each a correct measurement of the wrong
+thing. `sot` "had 0 rows" because the lookup went through a map with no `sot` entry; the
+key was on 21,177 rows.
+
+Name the instrument in the sentence. Ask a second way, and treat a disagreement between
+the two as the finding. Prefer a series on disk over today's payload. Measure through the
+path that runs, not one that resembles it.
+
+
 ## Performance (the one that keeps biting us)
 
 1. **A list/board must not download more than it shows.** A list of N items ships N lightweight rows
