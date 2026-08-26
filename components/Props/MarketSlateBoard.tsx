@@ -78,6 +78,28 @@ function marketLabel(market: string): string {
   return MARKET_LABELS[market] || market.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
 }
 
+// Books that quote no per-leg price. PrizePicks, Underdog, Sleeper and Pick6 are
+// pick'em products: you choose over or under and the payout comes from the
+// ENTRY's multiplier (2-pick, 3-pick, flex), not from a price on the leg.
+//
+// RotoWire populates the field anyway with a constant. Verified in its raw
+// payload 2026-08-26: across every archived prop, `prizepicks` and `underdog`
+// each carry exactly ONE (over, under) pair -- (-137, -137) -- while sleeper has
+// 231 distinct pairs, draftkings-sb 351 and fanduel-sb 88. In our own table the
+// same shows as 2,688 prizepicks rows and 1,870 underdog rows with a single
+// distinct odds value.
+//
+// -137 is roughly 57.8% implied, about what a pick'em leg needs to break even at
+// standard multipliers. It is a sensible convention and it is not a price: it
+// never varies, and it is identical on both sides, which no real book does. Shown
+// as a number it invites a comparison that cannot mean anything -- so it is not
+// shown. A blank is honest; a placeholder rendered as a measurement is not.
+const PICKEM_SOURCES = /^(rotowire:)?(prizepicks|underdog|sleeper|pick6)(-demon|-goblin)?$/
+
+function isPickem(source: string | undefined): boolean {
+  return PICKEM_SOURCES.test((source || '').trim().toLowerCase())
+}
+
 function formatOdds(odds: number | null | undefined): string {
   if (odds === null || odds === undefined) return '—'
   return odds > 0 ? `+${odds}` : String(odds)
@@ -561,12 +583,22 @@ export default function MarketSlateBoard({ league, date }: { league: string; dat
                   <p className="mt-0.5 truncate text-xs text-zinc-500">{matchup(row)}</p>
                   <div className="mt-3 flex flex-wrap items-center gap-2">
                     <span className="text-2xl font-bold text-white tabular-nums">{formatValue(row.line)}</span>
-                    <span className="rounded-md border border-emerald-900/60 bg-emerald-950/40 px-2 py-1 text-xs text-emerald-300 tabular-nums">
-                      O <strong>{formatOdds(row.over?.odds)}</strong>
-                    </span>
-                    <span className="rounded-md border border-zinc-700 bg-zinc-800/70 px-2 py-1 text-xs text-zinc-300 tabular-nums">
-                      U <strong>{formatOdds(row.under?.odds)}</strong>
-                    </span>
+                    {isPickem(row.source) ? (
+                      /* No price to show. The book has none, so the row says so
+                         rather than printing the relay's constant. */
+                      <span className="rounded-md border border-zinc-800 bg-zinc-900/60 px-2 py-1 text-[11px] text-zinc-500">
+                        pick&rsquo;em &middot; no line price
+                      </span>
+                    ) : (
+                      <>
+                        <span className="rounded-md border border-emerald-900/60 bg-emerald-950/40 px-2 py-1 text-xs text-emerald-300 tabular-nums">
+                          O <strong>{formatOdds(row.over?.odds)}</strong>
+                        </span>
+                        <span className="rounded-md border border-zinc-700 bg-zinc-800/70 px-2 py-1 text-xs text-zinc-300 tabular-nums">
+                          U <strong>{formatOdds(row.under?.odds)}</strong>
+                        </span>
+                      </>
+                    )}
                     <span className="text-[10px] uppercase tracking-wide text-zinc-600">{row.source}</span>
                   </div>
                 </div>
