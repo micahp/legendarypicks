@@ -272,3 +272,47 @@ class AnAbsenceIsNotAZero(unittest.TestCase):
         result = props.prop_history(
             player_id=2, market="shots", line=0.5, side="over", league="lcup")
         self.assertEqual(len(result["games"]), 3)
+
+
+class TheRowReachesTheChartLabelledByThePlayersLeague(unittest.TestCase):
+    """/api/props returns pl.league, so a Leagues Cup prop arrives as `ligamx`.
+
+    2026-08-25, reported from the dev board: Juan Dominguez (LEO) rendered
+    "No history" with nothing to click, while MLS players on the same card
+    charted normally. _MARKET_STAT_KEY had `mls` and `lcup` and no `ligamx` at
+    all, so every Liga MX row answered "market not chartable".
+
+    One competition's props reach this table under three labels -- lcup for the
+    game, mls and ligamx for the athletes -- and all three must chart.
+    """
+
+    @classmethod
+    def tearDownClass(cls):
+        try:
+            os.unlink(_IMPORT_DB.name)
+        except FileNotFoundError:
+            pass
+
+    setUp = LeaguesCupChartsAcrossTheSpines.setUp
+
+    def test_a_ligamx_labelled_request_charts(self):
+        result = props.prop_history(
+            player_id=1, market="shots", line=1.5, side="over", league="ligamx")
+        self.assertNotIn("error", result)
+        self.assertEqual([g["value"] for g in result["games"]], [3.0, 6.0])
+
+    def test_ligamx_reaches_the_tournament_rows_too(self):
+        # His only logs ARE the tournament ones; scoping to `ligamx` alone
+        # would chart nothing.
+        result = props.prop_history(
+            player_id=1, market="goal_or_assist", line=0.5, side="over",
+            league="ligamx")
+        self.assertEqual(len(result["games"]), 2)
+
+    def test_the_three_labels_agree_on_a_deep_market(self):
+        for label in ("lcup", "ligamx"):
+            result = props.prop_history(
+                player_id=3, market="tackles", line=1.5, side="over",
+                league=label)
+            self.assertEqual([g["value"] for g in result["games"]], [3.0, 1.0],
+                             label)
