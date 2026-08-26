@@ -207,16 +207,21 @@ class LeaguesCupChartsAcrossTheSpines(unittest.TestCase):
         self.assertEqual([g["value"] for g in result["games"]], [1.0, 1.0])
 
     def test_a_market_espn_does_not_publish_is_refused_not_drawn(self):
-        # CORRECTED 2026-08-25. This test used to list tackles, clearances,
-        # crosses, passes attempted and shot assists here, on the measurement
-        # "ESPN publishes none of them". That measured the SUMMARY endpoint; the
-        # CORE api publishes all five, so they are chartable and only these two
-        # are genuinely unanswerable.
+        # Corrected twice in one night, and the shrinking list is the point.
         #
-        # dribbles: the core api has groundDuels and duelWinPct, which are NOT
-        # take-ons. first_goal_scorer: an ORDER market, which no per-game stat
-        # answers.
-        for market in ("dribbles", "first_goal_scorer"):
+        # First it held seven markets, on the measurement "ESPN publishes none
+        # of them" -- which measured the SUMMARY endpoint. ESPN's CORE api
+        # publishes five of them, so those became chartable.
+        #
+        # Then `dribbles` came off it too: ESPN has groundDuels and duelWinPct,
+        # which are not take-ons, but FotMob publishes `dribbles_succeeded` per
+        # appearance and ingest_fotmob_soccer_logs merges it in. "No source
+        # publishes this" kept meaning "no source we had asked".
+        #
+        # first_goal_scorer is the only one left, and it is different in kind:
+        # it is an ORDER market, and no per-game stat line answers it at any
+        # depth from any provider.
+        for market in ("first_goal_scorer",):
             result = props.prop_history(
                 player_id=1, market=market, line=0.5, side="over", league="lcup")
             self.assertEqual(result["games"], [], market)

@@ -72,7 +72,19 @@ _MARKET_STAT_KEY = {
                "tackles": "tackles", "clearances": "clearances",
                "crosses": "crosses", "passes_attempted": "passes_attempted",
                "passes": "passes", "shots_assisted": "shots_assisted",
-               "dribbles": None, "first_goal_scorer": None},
+               # dribbles is answerable after all: FotMob publishes
+             # `dribbles_succeeded` per appearance and ingest_fotmob_soccer_logs
+             # merges it in. ESPN has groundDuels and duelWinPct, which are not
+             # take-ons -- so this waited for a provider that measures the thing
+             # rather than a near-miss field.
+             "dribbles": "dribbles",
+             # PrizePicks "Shots Assisted" and Opta "chances created" are the
+             # same stat: a pass that leads to a shot. ESPN's shotAssists is
+             # populated on 0 rows; FotMob's chances_created on 1,352.
+             "shots_assisted": "chances_created",
+             "chances_created": "chances_created",
+             "interceptions": "interceptions",
+             "first_goal_scorer": None},
     "lcup": {"goals": "goals", "assists": "assists", "shots": "shots",
              "shots_on_target": "sot", "shots_on_goal": "sot",
              "goal_or_assist": ["goals", "assists"],
@@ -82,7 +94,19 @@ _MARKET_STAT_KEY = {
              "tackles": "tackles", "clearances": "clearances",
              "crosses": "crosses", "passes_attempted": "passes_attempted",
              "passes": "passes", "shots_assisted": "shots_assisted",
-             "dribbles": None, "first_goal_scorer": None},
+             # dribbles is answerable after all: FotMob publishes
+             # `dribbles_succeeded` per appearance and ingest_fotmob_soccer_logs
+             # merges it in. ESPN has groundDuels and duelWinPct, which are not
+             # take-ons -- so this waited for a provider that measures the thing
+             # rather than a near-miss field.
+             "dribbles": "dribbles",
+             # PrizePicks "Shots Assisted" and Opta "chances created" are the
+             # same stat: a pass that leads to a shot. ESPN's shotAssists is
+             # populated on 0 rows; FotMob's chances_created on 1,352.
+             "shots_assisted": "chances_created",
+             "chances_created": "chances_created",
+             "interceptions": "interceptions",
+             "first_goal_scorer": None},
     # fight_time (minutes, from round+clock at the ESPN status endpoint -- see
     # ingest_ufc_fight_stats.py) now backfillable same as significant_strikes.
     # finishes/win_by_ko/win_by_submission are win-by-method yes/no props, same
