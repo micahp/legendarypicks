@@ -20,6 +20,11 @@ export interface PropHistory {
   side: 'over' | 'under'
   projection: number | null
   hit_rate: { l5: number; l10: number; l20: number; season: number }
+  // How many games are actually behind each window. A window's NAME is not
+  // its size: `games[:20]` on a player with three matches is three matches,
+  // and L5/L10/L20 then all print the same number, which reads as a
+  // twenty-game record. Optional so an older payload still renders.
+  hit_rate_n?: { l5: number; l10: number; l20: number; season: number }
   games: GameLog[]
 }
 
@@ -84,11 +89,22 @@ export default function PropChart({ data, window: initialWindow = 'l10' }: { dat
     return filtered.slice(0, maxGames).reverse()
   }, [data.games, win, venue, vsOpp, opponents])
 
+  // A window's NAME is a claim about its SAMPLE. `games.slice(0, 20)` on a
+  // player with three matches is three matches, so L5, L10 and L20 all
+  // reported the same figure and a 3-for-3 player read as a perfect
+  // twenty-game record. Liga MX surfaced it -- those players have ~8
+  // appearances where an MLS player has 40 -- but the arithmetic was always
+  // this. Below the window's own count there is no L10 to report, so it
+  // renders as a dash rather than as a number that overstates what it saw.
+  //
+  // Season is exempt: it claims whatever exists, so it is never short.
   const hitRate = useMemo(() => {
     if (!displayGames.length) return null
+    const required = win === 'l5' ? 5 : win === 'l10' ? 10 : win === 'l20' ? 20 : 0
+    if (displayGames.length < required) return null
     const hits = displayGames.filter(g => g.hit).length
     return hits / displayGames.length
-  }, [displayGames])
+  }, [displayGames, win])
 
   const isDefaultFilters = win === initialWindow && venue === 'all' && !vsOpp
   const resetFilters = () => { setWin(initialWindow); setVenue('all'); setVsOpp(false) }

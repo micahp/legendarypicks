@@ -21,6 +21,22 @@ os.environ["LP_DB_PATH"] = _IMPORT_DB.name
 from routers import props  # noqa: E402
 
 
+def _provider_tables(con):
+    """Create FotMob's table and the joining view from the MIGRATION's own DDL.
+
+    Not a copy. A fixture that declares its own version of a shipped schema is a
+    claim about that schema, and the two drift: earlier fixtures in this file
+    declared `player_game_logs` without the `source` column the real table has,
+    so they described a world where the reader could not tell providers apart.
+    Importing the DDL means a schema change cannot pass these tests while
+    breaking production.
+    """
+    import scripts_split_provider_logs as split
+    split.ensure_espn_columns(con)
+    con.executescript(split.DDL_TABLE)
+    con.executescript(split.DDL_VIEW)
+
+
 class PropHistoryVenueTests(unittest.TestCase):
     """Preserve unknown venue instead of publishing it as an away game."""
 
@@ -48,17 +64,23 @@ class PropHistoryVenueTests(unittest.TestCase):
             CREATE TABLE player_game_logs(
               player_id INTEGER, league TEXT, season INTEGER, stats TEXT,
               game_date TEXT, opponent TEXT, home_away TEXT, game_no INTEGER,
-              game_type TEXT
+              game_type TEXT,
+              -- The real table has this and these fixtures did not, so they
+              -- described a world where the reader cannot pick a provider.
+              source TEXT
             );
             """
         )
+        _provider_tables(con)
         con.execute("INSERT INTO players VALUES(1,'Alex Ready','AAA','nba','G')")
         con.executemany(
-            "INSERT INTO player_game_logs VALUES(?,?,?,?,?,?,?,?,?)",
+            "INSERT INTO player_game_logs(player_id, league, season, stats,"
+            " game_date, opponent, home_away, game_no, game_type, source)"
+            " VALUES(?,?,?,?,?,?,?,?,?,?)",
             [
-                (1, "nba", 2026, json.dumps({"PTS": 24}), "2026-07-20", "OPP1", "home", 1, None),
-                (1, "nba", 2026, json.dumps({"PTS": 18}), "2026-07-21", "OPP2", "away", 2, None),
-                (1, "nba", 2026, json.dumps({"PTS": 21}), "2026-07-22", "OPP3", None, 3, None),
+                (1, "nba", 2026, json.dumps({"PTS": 24}), "2026-07-20", "OPP1", "home", 1, None, "espn"),
+                (1, "nba", 2026, json.dumps({"PTS": 18}), "2026-07-21", "OPP2", "away", 2, None, "espn"),
+                (1, "nba", 2026, json.dumps({"PTS": 21}), "2026-07-22", "OPP3", None, 3, None, "espn"),
             ],
         )
         con.commit()
@@ -124,10 +146,14 @@ class LeaguesCupChartsAcrossTheSpines(unittest.TestCase):
             CREATE TABLE player_game_logs(
               player_id INTEGER, league TEXT, season INTEGER, stats TEXT,
               game_date TEXT, opponent TEXT, home_away TEXT, game_no INTEGER,
-              game_type TEXT
+              game_type TEXT,
+              -- The real table has this and these fixtures did not, so they
+              -- described a world where the reader cannot pick a provider.
+              source TEXT
             );
             """
         )
+        _provider_tables(con)
         # A Leagues Cup athlete is owned by a DOMESTIC spine; players.league is
         # never 'lcup'.
         con.execute("INSERT INTO players VALUES(1,'Liga MX Forward','AME','ligamx','F')")
@@ -140,41 +166,47 @@ class LeaguesCupChartsAcrossTheSpines(unittest.TestCase):
             # game-log ingest, so this is everything we hold for him.
             (1, "lcup", 2026, json.dumps({"shots": 3, "goals": 1, "assists": 0,
                                           "fouls_committed": 2}),
-             "2026-08-14", "ATX", "home", 1, "REG"),
+             "2026-08-14", "ATX", "home", 1, "REG", "espn"),
             (1, "lcup", 2026, json.dumps({"shots": 6, "goals": 0, "assists": 1,
                                           "fouls_committed": 1}),
-             "2026-08-10", "POR", "home", 2, "REG"),
+             "2026-08-10", "POR", "home", 2, "REG", "espn"),
             # The MLS player carries a domestic season alongside the tournament.
-            (2, "lcup", 2026, json.dumps({"shots": 1}), "2026-08-12", "MTY", "away", 1, "REG"),
-            (2, "mls", 2026, json.dumps({"shots": 2}), "2026-07-20", "NE", "home", 2, "REG"),
-            (2, "mls", 2026, json.dumps({"shots": 0}), "2026-07-13", "NYC", "away", 3, "REG"),
-            # A player whose rows came from a --deep run: the core-api fields
-            # are present alongside the summary ones.
+            (2, "lcup", 2026, json.dumps({"shots": 1}),
+             "2026-08-12", "MTY", "away", 1, "REG", "espn"),
+            (2, "mls", 2026, json.dumps({"shots": 2}),
+             "2026-07-20", "NE", "home", 2, "REG", "espn"),
+            (2, "mls", 2026, json.dumps({"shots": 0}),
+             "2026-07-13", "NYC", "away", 3, "REG", "espn"),
+            # A player whose deep fields came from FotMob's own row.
             (3, "lcup", 2026, json.dumps({"shots": 2, "tackles": 3,
-                                          "clearances": 4, "passes_attempted": 55}),
-             "2026-08-14", "ATX", "home", 1, "REG"),
+                                          "clearances": 4,
+                                          "passes_attempted": 55}),
+             "2026-08-14", "ATX", "home", 1, "REG", "fotmob"),
             (3, "lcup", 2026, json.dumps({"shots": 1, "tackles": 1,
-                                          "clearances": 0, "passes_attempted": 40}),
-             "2026-08-10", "POR", "away", 2, "REG"),
+                                          "clearances": 0,
+                                          "passes_attempted": 40}),
+             "2026-08-10", "POR", "away", 2, "REG", "fotmob"),
             # Two matches this player never entered. Stored, because the row is
             # a real record of not playing -- but they are not zeroes.
             (4, "ligamx", 2026, json.dumps({"shots": 0, "tackles": 0,
                                             "minutes": 0}),
-             "2026-08-22", "JUA", "away", 3, "REG"),
+             "2026-08-22", "JUA", "away", 3, "REG", "fotmob"),
             (4, "ligamx", 2026, json.dumps({"shots": 0, "tackles": 0,
                                             "minutes": 0}),
-             "2026-08-02", "SAN", "home", 4, "REG"),
+             "2026-08-02", "SAN", "home", 4, "REG", "fotmob"),
             (4, "ligamx", 2026, json.dumps({"shots": 2, "tackles": 3,
                                             "minutes": 90}),
-             "2026-08-16", "ASL", "home", 5, "REG"),
+             "2026-08-16", "ASL", "home", 5, "REG", "fotmob"),
             # The summary ingest signals the same thing with `appearances`.
             (5, "lcup", 2026, json.dumps({"shots": 0, "appearances": 0}),
-             "2026-08-14", "ATX", "home", 6, "REG"),
+             "2026-08-14", "ATX", "home", 6, "REG", "espn"),
             (5, "lcup", 2026, json.dumps({"shots": 4, "appearances": 1}),
-             "2026-08-10", "POR", "away", 7, "REG"),
+             "2026-08-10", "POR", "away", 7, "REG", "espn"),
         ]
         con.executemany(
-            "INSERT INTO player_game_logs VALUES(?,?,?,?,?,?,?,?,?)", rows)
+            "INSERT INTO player_game_logs(player_id, league, season, stats,"
+            " game_date, opponent, home_away, game_no, game_type, source)"
+            " VALUES(?,?,?,?,?,?,?,?,?,?)", rows)
         con.commit()
         con.close()
 
@@ -207,20 +239,38 @@ class LeaguesCupChartsAcrossTheSpines(unittest.TestCase):
         self.assertEqual([g["value"] for g in result["games"]], [1.0, 1.0])
 
     def test_a_market_espn_does_not_publish_is_refused_not_drawn(self):
-        # CORRECTED 2026-08-25. This test used to list tackles, clearances,
-        # crosses, passes attempted and shot assists here, on the measurement
-        # "ESPN publishes none of them". That measured the SUMMARY endpoint; the
-        # CORE api publishes all five, so they are chartable and only these two
-        # are genuinely unanswerable.
+        # Corrected twice in one night, and the shrinking list is the point.
         #
-        # dribbles: the core api has groundDuels and duelWinPct, which are NOT
-        # take-ons. first_goal_scorer: an ORDER market, which no per-game stat
-        # answers.
-        for market in ("dribbles", "first_goal_scorer"):
-            result = props.prop_history(
-                player_id=1, market=market, line=0.5, side="over", league="lcup")
-            self.assertEqual(result["games"], [], market)
-            self.assertIn("not chartable", result["error"], market)
+        # First it held seven markets, on the measurement "ESPN publishes none
+        # of them" -- which measured the SUMMARY endpoint. ESPN's CORE api
+        # publishes five of them, so those became chartable.
+        #
+        # Then `dribbles` came off it too: ESPN has groundDuels and duelWinPct,
+        # which are not take-ons, but FotMob publishes `dribbles_succeeded` per
+        # appearance and ingest_fotmob_soccer_logs merges it in. "No source
+        # publishes this" kept meaning "no source we had asked".
+        #
+        # CORRECTED 2026-08-26: first_goal_scorer was the last one here, held
+        # out as "an ORDER market that no per-game stat answers at any depth
+        # from any provider". Wrong for the same reason as the two above: the
+        # ingest already writes `first_goal` per appearance from the published
+        # keyEvents. Three corrections, one shape -- a claim about what a
+        # PUBLISHER can answer, written from what we had looked at.
+        #
+        # Nothing is refused for soccer now, so this asserts the surviving rule
+        # instead: a market absent from the map is refused rather than drawn,
+        # and MLS tackles is the live case -- 0 stored rows, because FotMob has
+        # only run for ligamx and lcup.
+        result = props.prop_history(
+            player_id=1, market="tackles", line=0.5, side="over", league="mls")
+        self.assertEqual(result["games"], [])
+        self.assertIn("not chartable", result["error"])
+
+    def test_first_goal_is_no_longer_refused(self):
+        result = props.prop_history(
+            player_id=1, market="first_goal_scorer", line=0.5, side="over",
+            league="lcup")
+        self.assertNotIn("error", result)
 
     def test_a_deep_market_charts_when_the_row_carries_it(self):
         # Written by `ingest_soccer_logs --deep`. A shallow row simply lacks the
@@ -316,3 +366,294 @@ class TheRowReachesTheChartLabelledByThePlayersLeague(unittest.TestCase):
                 league=label)
             self.assertEqual([g["value"] for g in result["games"]], [3.0, 1.0],
                              label)
+
+
+class FirstGoalIsAnsweredFromTheStoredRow(unittest.TestCase):
+    """`first_goal_scorer` was mapped to None as "an ORDER market that no
+    per-game stat answers".
+
+    The ingest writes exactly that stat: `first_goal`, 1 when the player scored
+    the opener and 0 when he played and did not, derived from the published
+    keyEvents. The claim described the MARKET rather than the stored row, and
+    it cost 1,249 board rows -- 80 Liga MX and 1,169 MLS -- every one of which
+    rendered "No history" on the props tab.
+
+    MLS is included because its map had no entry at all, which reads to the
+    reader exactly like an explicit None.
+    """
+
+    @classmethod
+    def tearDownClass(cls):
+        try:
+            os.unlink(_IMPORT_DB.name)
+        except FileNotFoundError:
+            pass
+
+    def setUp(self):
+        handle = tempfile.NamedTemporaryFile(
+            prefix="first-goal-", suffix=".db", delete=False)
+        self.path = handle.name
+        handle.close()
+        self.addCleanup(
+            lambda: os.path.exists(self.path) and os.unlink(self.path))
+        con = sqlite3.connect(self.path)
+        con.executescript("""
+            CREATE TABLE players(id INTEGER PRIMARY KEY, name TEXT, team TEXT,
+                                 league TEXT, position TEXT);
+            CREATE TABLE player_game_logs(
+              id INTEGER PRIMARY KEY AUTOINCREMENT, player_id INTEGER,
+              league TEXT, season INTEGER, stats TEXT, game_date TEXT,
+              opponent TEXT, home_away TEXT, game_no INTEGER, game_type TEXT,
+              source TEXT);
+        """)
+        _provider_tables(con)
+        con.execute("INSERT INTO players VALUES(1,'Opener','LEO','ligamx','F')")
+        con.execute("INSERT INTO players VALUES(2,'MLS Opener','CLB','mls','F')")
+        rows = [
+            (1, "ligamx", 2026, json.dumps({"first_goal": 1, "appearances": 1}),
+             "2026-08-10", "AME", "home", 1, "REG", "espn"),
+            (1, "ligamx", 2026, json.dumps({"first_goal": 0, "appearances": 1}),
+             "2026-08-03", "TOL", "away", 2, "REG", "espn"),
+            # Did not play: no first_goal recorded, and _PLAYED drops it, so a
+            # DNP never charts as "did not score first".
+            (1, "ligamx", 2026, json.dumps({"first_goal": 0, "appearances": 0}),
+             "2026-07-27", "MTY", "home", 3, "REG", "espn"),
+            (2, "mls", 2026, json.dumps({"first_goal": 1, "appearances": 1}),
+             "2026-08-08", "RSL", "home", 4, "REG", "espn"),
+        ]
+        con.executemany(
+            "INSERT INTO player_game_logs(player_id, league, season, stats,"
+            " game_date, opponent, home_away, game_no, game_type, source)"
+            " VALUES(?,?,?,?,?,?,?,?,?,?)", rows)
+        con.commit()
+        con.close()
+        def connection():
+            con = sqlite3.connect(self.path)
+            con.row_factory = sqlite3.Row
+            return con
+
+        patcher = mock.patch.object(props, "_db", side_effect=connection)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def test_a_ligamx_first_goal_prop_charts(self):
+        result = props.prop_history(
+            player_id=1, market="first_goal_scorer", line=0.5, side="over",
+            league="ligamx")
+        self.assertNotIn("error", result)
+        self.assertEqual([g["value"] for g in result["games"]], [1.0, 0.0])
+
+    def test_an_absence_is_not_a_missed_opener(self):
+        result = props.prop_history(
+            player_id=1, market="first_goal_scorer", line=0.5, side="over",
+            league="ligamx")
+        self.assertEqual(len(result["games"]), 2, "the DNP must not chart")
+
+    def test_mls_charts_it_too(self):
+        result = props.prop_history(
+            player_id=2, market="first_goal_scorer", line=0.5, side="over",
+            league="mls")
+        self.assertNotIn("error", result)
+        self.assertEqual([g["value"] for g in result["games"]], [1.0])
+
+    def test_mls_does_not_claim_tackles_it_has_no_rows_for(self):
+        """MLS holds 0 rows carrying `tackles` -- FotMob has only been run for
+        ligamx and lcup -- so mapping it would chart an empty series as though
+        the market were answerable."""
+        import core_markets
+        self.assertNotIn("tackles", core_markets._MARKET_STAT_KEY["mls"])
+
+
+class TheMlsMapCoversWhatMlsLogsAnswer(unittest.TestCase):
+    """The mls map launched with five markets and was never extended.
+
+    Reported 2026-08-26: "we don't have goalie saves as a prop?" We do -- 86 of
+    them, from RotoWire's PrizePicks relay -- and every one rendered "No
+    history", because `saves` was mapped for ligamx and lcup and absent for
+    mls. A market absent from the map is indistinguishable, to a reader, from a
+    market no source publishes.
+
+    Measured on the dev board, mls markets with no map entry: passes_attempted
+    226, saves 86, tackles 74, card_shown 54, chances_created 42, clearances
+    41, sot 21, crosses 19, shots_assisted 1. Only saves, card_shown and sot
+    are answerable from mls LOGS; FotMob is the only log source we have for the
+    rest and it has never been run for mls.
+
+    CORRECTED 2026-08-26: this said "the rest are FotMob-only fields", which is
+    false about publishers. The RotoWire relay prices Tackles, Clearances,
+    Chances Created, Crosses and Passes Attempted for soccer -- 8 days of its
+    archive carry all five. It publishes no game logs, so the map still cannot
+    read them, but the reason is our log coverage and not the market's
+    existence.
+    """
+
+    @classmethod
+    def tearDownClass(cls):
+        try:
+            os.unlink(_IMPORT_DB.name)
+        except FileNotFoundError:
+            pass
+
+    def setUp(self):
+        handle = tempfile.NamedTemporaryFile(
+            prefix="mls-map-", suffix=".db", delete=False)
+        self.path = handle.name
+        handle.close()
+        self.addCleanup(
+            lambda: os.path.exists(self.path) and os.unlink(self.path))
+        con = sqlite3.connect(self.path)
+        con.executescript("""
+            CREATE TABLE players(id INTEGER PRIMARY KEY, name TEXT, team TEXT,
+                                 league TEXT, position TEXT);
+            CREATE TABLE player_game_logs(
+              id INTEGER PRIMARY KEY AUTOINCREMENT, player_id INTEGER,
+              league TEXT, season INTEGER, stats TEXT, game_date TEXT,
+              opponent TEXT, home_away TEXT, game_no INTEGER, game_type TEXT,
+              source TEXT);
+        """)
+        _provider_tables(con)
+        con.execute("INSERT INTO players VALUES(1,'Keeper','CLB','mls','G')")
+        rows = [
+            (1, "mls", 2026, json.dumps({"saves": 4, "goals_conceded": 1,
+                                         "sot": 2, "yellow_cards": 1,
+                                         "red_cards": 0, "appearances": 1}),
+             "2026-08-10", "RSL", "home", 1, "REG", "espn"),
+            (1, "mls", 2026, json.dumps({"saves": 2, "goals_conceded": 0,
+                                         "sot": 1, "yellow_cards": 0,
+                                         "red_cards": 0, "appearances": 1}),
+             "2026-08-03", "ATX", "away", 2, "REG", "espn"),
+        ]
+        con.executemany(
+            "INSERT INTO player_game_logs(player_id, league, season, stats,"
+            " game_date, opponent, home_away, game_no, game_type, source)"
+            " VALUES(?,?,?,?,?,?,?,?,?,?)", rows)
+        con.commit()
+        con.close()
+
+        def connection():
+            c = sqlite3.connect(self.path)
+            c.row_factory = sqlite3.Row
+            return c
+
+        patcher = mock.patch.object(props, "_db", side_effect=connection)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def test_goalie_saves_charts(self):
+        result = props.prop_history(
+            player_id=1, market="saves", line=2.5, side="over", league="mls")
+        self.assertNotIn("error", result)
+        self.assertEqual([g["value"] for g in result["games"]], [4.0, 2.0])
+
+    def test_a_raw_sot_market_charts_like_shots_on_target(self):
+        """Kambi sends the stored key as the market name. Identical rows from
+        another book charted; these answered "not chartable"."""
+        for market in ("sot", "shots_on_target"):
+            result = props.prop_history(
+                player_id=1, market=market, line=1.5, side="over", league="mls")
+            self.assertEqual([g["value"] for g in result["games"]], [2.0, 1.0],
+                             market)
+
+    def test_card_shown_sums_both_colours(self):
+        result = props.prop_history(
+            player_id=1, market="card_shown", line=0.5, side="over",
+            league="mls")
+        self.assertEqual([g["value"] for g in result["games"]], [1.0, 0.0])
+
+    def test_a_fotmob_only_market_stays_unmapped_for_mls(self):
+        """FotMob has never been run for mls, so these hold 0 rows. Mapping one
+        would chart an empty series as though the market were answerable."""
+        import core_markets
+        for market in ("tackles", "clearances", "crosses", "chances_created",
+                       "passes_attempted"):
+            self.assertNotIn(market, core_markets._MARKET_STAT_KEY["mls"],
+                             market)
+
+
+class OneRowPerAppearance(unittest.TestCase):
+    """Providers keep separate rows; the READER picks one.
+
+    2026-08-25: FotMob stopped merging into the ESPN row, so a player with both
+    charted the same match twice -- Federico Vinas showed 12 games,
+    [7,7,4,4,3,3,1,1,1,1,1,1], for six he actually played. 1,901 appearances
+    were double counted on prod.
+    """
+
+    @classmethod
+    def tearDownClass(cls):
+        try:
+            os.unlink(_IMPORT_DB.name)
+        except FileNotFoundError:
+            pass
+
+    def setUp(self):
+        handle = tempfile.NamedTemporaryFile(prefix="one-row-", suffix=".db",
+                                             delete=False)
+        self.path = handle.name
+        handle.close()
+        self.addCleanup(lambda: os.path.exists(self.path) and os.unlink(self.path))
+        con = sqlite3.connect(self.path)
+        con.executescript("""
+            CREATE TABLE players(
+              id INTEGER PRIMARY KEY, name TEXT, team TEXT, league TEXT,
+              position TEXT
+            );
+            CREATE TABLE player_game_logs(
+              player_id INTEGER, league TEXT, season INTEGER, stats TEXT,
+              game_date TEXT, opponent TEXT, home_away TEXT, game_no INTEGER,
+              game_type TEXT, source TEXT
+            );
+        """)
+        _provider_tables(con)
+        con.execute("INSERT INTO players VALUES(1,'Both Providers','AME','ligamx','F')")
+        con.executemany(
+            "INSERT INTO player_game_logs(player_id, league, season, stats,"
+            " game_date, opponent, home_away, game_no, game_type, source)"
+            " VALUES(?,?,?,?,?,?,?,?,?,?)",
+            [
+                # ESPN's table holds ESPN's line for this appearance.
+                (1, "ligamx", 2026, json.dumps({"shots": 3, "minutes": 90}),
+                 "2026-08-24", "TOL", "home", 1, "REG", "espn"),
+            ])
+        # FotMob's lines live in FotMob's table: the SAME appearance with a
+        # different number so the preference is observable, plus a second
+        # appearance ESPN never saw, which the view's second leg must carry.
+        con.executemany(
+            "INSERT INTO player_game_logs_fotmob(player_id, league, season,"
+            " stats, game_date, opponent, home_away, game_no, game_type, source)"
+            " VALUES(?,?,?,?,?,?,?,?,?,?)",
+            [
+                (1, "ligamx", 2026,
+                 json.dumps({"shots": 9, "tackles": 4, "minutes": 90}),
+                 "2026-08-24", "TOL", "home", "fotmob-1", "REG", "fotmob"),
+                (1, "ligamx", 2026,
+                 json.dumps({"shots": 2, "tackles": 1, "minutes": 90}),
+                 "2026-08-17", "NCX", "away", "fotmob-2", "REG", "fotmob"),
+            ])
+        con.commit()
+        con.close()
+
+        def connection():
+            con = sqlite3.connect(self.path)
+            con.row_factory = sqlite3.Row
+            return con
+
+        patch = mock.patch.object(props, "_db", side_effect=connection)
+        patch.start()
+        self.addCleanup(patch.stop)
+
+    def test_a_match_both_providers_cover_is_charted_once(self):
+        result = props.prop_history(
+            player_id=1, market="shots", line=0.5, side="over", league="ligamx")
+        self.assertEqual(len(result["games"]), 2, "one row per appearance")
+        # ESPN wins the tie: it is the identity spine every player_id is keyed
+        # on. 3, not 9.
+        self.assertEqual([g["value"] for g in result["games"]], [3.0, 2.0])
+
+    def test_a_market_only_one_provider_has_still_charts(self):
+        # Rows without the stat are excluded by the WHERE, so the rank falls
+        # through to FotMob rather than charting nothing.
+        result = props.prop_history(
+            player_id=1, market="tackles", line=0.5, side="over",
+            league="ligamx")
+        self.assertEqual([g["value"] for g in result["games"]], [4.0, 1.0])

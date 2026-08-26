@@ -5,9 +5,18 @@ PrizePicks is the only source measured on 2026-08-25 that prices Leagues Cup
 player stat markets, and its whole estate refuses this box: `api`, `partner-api`,
 `app` and `www` all return 403 with a byte-identical error id, and a path that
 does not exist returns 403 rather than 404, so the block fires ahead of routing.
-The RotoWire relay carries `prizepicks` as a book but republishes almost none of
-it -- 22 soccer props on one La Liga fixture while PrizePicks had all four
-Leagues Cup games on the board. A relay's book list is a claim about the relay.
+The RotoWire relay carries `prizepicks` as a book but does not carry this
+competition: 22 soccer props on one La Liga fixture while PrizePicks had all
+four Leagues Cup games on the board. A relay's book list is a claim about the
+relay.
+
+CORRECTED 2026-08-26 from eight days of the relay archive (08-19..08-26): the
+sentence above used to read "republishes almost none of it", generalised from
+that single day. The relay carries 979 soccer props over those eight days
+across twelve markets and five competitions -- Serie A, La Liga, the Premier
+League, Ligue 1 and MLS -- and its daily soccer volume swings 23..246, so no
+one day describes it. What survives is the narrow claim: ZERO Leagues Cup and
+ZERO Liga MX on all eight days, which is why this file exists.
 
 So the payload arrives as a file, fetched by a human browser (see
 `tools/pull_prizepicks.py`). This reads that file. It does not fetch.
@@ -61,6 +70,14 @@ MARKETS = {
     # verified equivalence, and settlement should be checked against a graded
     # result before this market is trusted.
     "Fouls": "fouls_committed",
+    # Goalkeeper markets. PrizePicks publishes both and we dropped both as
+    # UNMAPPED, while `saves` and `goals_allowed` have been in the chart map for
+    # ligamx and lcup all along and the logs carry `saves` and `goals_conceded`
+    # on every soccer row. Measured in a real payload 2026-08-26: 29 Goalie
+    # Saves and 3 Goals Allowed lines, none of them on a fixture we currently
+    # price, so this adds no rows today and closes the gap for when it does.
+    "Goalie Saves": "saves",
+    "Goals Allowed": "goals_allowed",
 }
 
 # A demon is a harder line and a goblin an easier one, both with adjusted

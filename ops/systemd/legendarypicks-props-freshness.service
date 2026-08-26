@@ -1,0 +1,12 @@
+[Unit]
+Description=Alert if any Legendary Picks props provider goes stale (any env)
+After=network-online.target
+Wants=network-online.target
+OnFailure=legendarypicks-ops-alert@%N.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/root/legendarypicks/backend
+ExecStart=/usr/bin/python3 /root/legendarypicks/backend/monitor_props_freshness.py
+TimeoutStartSec=90
+Nice=10

@@ -1,0 +1,10 @@
+[Unit]
+Description=Capture Bovada MLB prop odds every 5 minutes
+
+[Timer]
+OnCalendar=*-*-* *:02/5:00
+Persistent=true
+Unit=legendarypicks-mlb-capture.service
+
+[Install]
+WantedBy=timers.target

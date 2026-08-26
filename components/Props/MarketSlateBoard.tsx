@@ -51,7 +51,7 @@ interface SlateMarketSummary {
   markets?: MarketOption[]
 }
 
-type SortKey = 'hit-rate' | 'edge' | 'line'
+type SortKey = 'hit-rate' | 'confidence' | 'edge' | 'line'
 type SortDirection = 'asc' | 'desc'
 
 
@@ -136,16 +136,61 @@ function groupProps(props: BoardProp[]): BoardRow[] {
   return Array.from(grouped.values())
 }
 
-function RateChip({ label, value }: { label: string; value: number }) {
+// A window's NAME is a claim about its SAMPLE. The API computes L20 as
+// games[:20], which on a player with three matches is three matches, so L5,
+// L10 and L20 all print the same figure and a 3-for-3 player reads as a
+// perfect twenty-game record. Reported from the board 2026-08-26 on Liga MX,
+// whose players have ~8 appearances where an MLS player has 40.
+//
+// `sample` is hit_rate_n from the API: the games actually behind this window.
+// Short of the window's own count there is no L10 to report, so the chip shows
+// a dash. Undefined (an older payload) keeps the previous behaviour rather
+// than blanking every chip.
+
+// The lower edge of the range of true hit rates a record is consistent with
+// (Wilson score interval, 95%). Ranking on it answers "how likely is this to
+// hit again", where the raw rate answers "what fraction hit so far" -- and
+// those differ most exactly where this board lives.
+//
+// A Liga MX player has ~8 appearances because the Apertura is five matchdays
+// old; an MLS player has 40. Sorting their raw rates against each other puts a
+// 3-for-3 above a 28-for-48, because the percentage discards the sample size,
+// which is most of the information. 3/3 is consistent with a true rate
+// anywhere in 43.8%..100%; 28/48 with 44.3%..71.2%. The bottom of the range is
+// the pessimistic read, and it can only be high when a record is BOTH good and
+// well evidenced.
+//
+// As n grows every correction term vanishes and this converges on the raw
+// rate, so a 40-game player is ranked on his actual number. It needs no
+// minimum-games threshold, which is the thing a "hide rows under 10 games"
+// rule cannot avoid -- and such a rule would bury all but three Liga MX
+// players for a reason that is about the calendar, not the player.
+function confidenceFloor(hits: number, games: number): number {
+  if (games <= 0) return 0
+  const z = 1.96
+  const p = hits / games
+  const denom = 1 + (z * z) / games
+  const centre = p + (z * z) / (2 * games)
+  const margin = z * Math.sqrt((p * (1 - p)) / games + (z * z) / (4 * games * games))
+  return Math.max(0, (centre - margin) / denom)
+}
+
+function RateChip({ label, value, sample, required }: {
+  label: string; value: number; sample?: number; required: number
+}) {
+  const short = sample !== undefined && sample < required
   const pct = Math.round(value * 100)
-  const tone = pct >= 60
-    ? 'border-emerald-800/70 bg-emerald-950/40 text-emerald-300'
-    : pct < 40
-      ? 'border-red-900/60 bg-red-950/30 text-red-300'
-      : 'border-zinc-700 bg-zinc-800/70 text-zinc-300'
+  const tone = short
+    ? 'border-zinc-800 bg-zinc-900/60 text-zinc-600'
+    : pct >= 60
+      ? 'border-emerald-800/70 bg-emerald-950/40 text-emerald-300'
+      : pct < 40
+        ? 'border-red-900/60 bg-red-950/30 text-red-300'
+        : 'border-zinc-700 bg-zinc-800/70 text-zinc-300'
   return (
-    <span className={`rounded-md border px-2 py-1 text-[11px] tabular-nums ${tone}`}>
-      <span className="text-zinc-500">{label}</span> {pct}%
+    <span data-rate-chip={label}
+          className={`rounded-md border px-2 py-1 text-[11px] tabular-nums ${tone}`}>
+      <span className="text-zinc-500">{label}</span> {short ? '—' : `${pct}%`}
     </span>
   )
 }
@@ -173,6 +218,7 @@ export default function MarketSlateBoard({ league, date }: { league: string; dat
   const [loadedMarket, setLoadedMarket] = useState('')
   const [selectedMarket, setSelectedMarket] = useState('')
   const [sortKey, setSortKey] = useState<SortKey>('hit-rate')
+  const [helpOpen, setHelpOpen] = useState(false)
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -338,6 +384,11 @@ export default function MarketSlateBoard({ league, date }: { league: string; dat
       if (sortKey === 'line') return row.line
       if (!history) return null
       if (sortKey === 'hit-rate') return history.hit_rate.l10
+      // Over EVERY game held, not a window: the point of this sort is to use
+      // all the evidence rather than to truncate it.
+      if (sortKey === 'confidence') {
+        return confidenceFloor(history.games.filter(g => g.hit).length, history.games.length)
+      }
       return history.projection === null ? null : Math.abs(history.projection - row.line)
     }
     // Hit rate over ten games takes eleven distinct values, so ties are the common
@@ -429,21 +480,61 @@ export default function MarketSlateBoard({ league, date }: { league: string; dat
         <div className="flex flex-wrap gap-1.5" aria-label="Sort prop board">
           {([
             ['hit-rate', 'Hit rate'],
+            ['confidence', 'Confidence'],
             ['edge', 'Edge'],
             ['line', 'Line'],
           ] as [SortKey, string][]).map(([key, label]) => (
-            <button
-              key={key}
-              type="button"
-              onClick={() => chooseSort(key)}
-              aria-pressed={sortKey === key}
-              className={`rounded-md px-2.5 py-1.5 text-xs transition-colors ${
-                sortKey === key ? 'bg-zinc-700 text-zinc-100' : 'bg-zinc-900 text-zinc-500 hover:text-zinc-300'
-              }`}
-            >
-              {label}{sortKey === key ? (sortDirection === 'desc' ? ' ↓' : ' ↑') : ''}
-            </button>
+            <span key={key} className="inline-flex items-center">
+              <button
+                type="button"
+                onClick={() => chooseSort(key)}
+                aria-pressed={sortKey === key}
+                className={`rounded-md px-2.5 py-1.5 text-xs transition-colors ${
+                  sortKey === key ? 'bg-zinc-700 text-zinc-100' : 'bg-zinc-900 text-zinc-500 hover:text-zinc-300'
+                }`}
+              >
+                {label}{sortKey === key ? (sortDirection === 'desc' ? ' ↓' : ' ↑') : ''}
+              </button>
+            </span>
           ))}
+          {/* Anchored at the END of the controls rather than mid-row beside its
+              own button, where it broke the rhythm of the group. Still a tap
+              target, not a hover tooltip: hover does not exist on touch and
+              this board is read on phones. The panel opens right-aligned so it
+              cannot push the layout sideways on a narrow screen. */}
+          <span className="relative ml-auto inline-flex items-center">
+            <button
+              type="button"
+              aria-label="What Confidence means"
+              aria-expanded={helpOpen}
+              onClick={() => setHelpOpen(open => !open)}
+              className="grid h-5 w-5 place-items-center rounded-full border border-zinc-700 text-[10px] leading-none text-zinc-500 transition-colors hover:border-zinc-500 hover:text-zinc-300"
+            >
+              i
+            </button>
+            {helpOpen && (
+              <div
+                role="dialog"
+                aria-label="About Confidence"
+                className="absolute right-0 top-full z-20 mt-1.5 w-72 rounded-lg border border-zinc-700 bg-zinc-900 p-3 text-xs leading-relaxed text-zinc-400 shadow-xl"
+              >
+                <p>
+                  <span className="text-zinc-200">Confidence</span> ranks by the hit
+                  rate a record can actually support, not the rate it happens to
+                  show. A player who is 3-for-3 has too few games to prove much, so
+                  he sits below someone at 58% over 48 games. The more games behind
+                  a rate, the closer this gets to the rate itself.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setHelpOpen(false)}
+                  className="mt-2 text-[11px] text-zinc-500 hover:text-zinc-300"
+                >
+                  Got it
+                </button>
+              </div>
+            )}
+          </span>
         </div>
       </div>
 
@@ -481,11 +572,20 @@ export default function MarketSlateBoard({ league, date }: { league: string; dat
                   ) : historyState?.loading ? <LoadingEvidence /> : history ? (
                     <div className="space-y-2">
                       <div className="flex flex-wrap gap-1.5 md:justify-end">
-                        <RateChip label="L5" value={history.hit_rate.l5} />
-                        <RateChip label="L10" value={history.hit_rate.l10} />
-                        <RateChip label="L20" value={history.hit_rate.l20} />
+                        <RateChip label="L5" value={history.hit_rate.l5} sample={history.hit_rate_n?.l5} required={5} />
+                        <RateChip label="L10" value={history.hit_rate.l10} sample={history.hit_rate_n?.l10} required={10} />
+                        <RateChip label="L20" value={history.hit_rate.l20} sample={history.hit_rate_n?.l20} required={20} />
                       </div>
                       <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs md:justify-end">
+                        {/* Every other sort key is a number the reader can see on the
+                            row -- hit rate in the chips, edge and line here. Sorting by
+                            a value that is nowhere on screen asks someone to trust an
+                            order they cannot check. */}
+                        <span className="text-zinc-500">Confidence <strong className="text-zinc-200 tabular-nums">
+                          {history.games.length
+                            ? `${Math.round(confidenceFloor(history.games.filter(g => g.hit).length, history.games.length) * 100)}%`
+                            : '—'}
+                        </strong></span>
                         <span className="text-zinc-500">Projection <strong className="text-zinc-200 tabular-nums">{projection === null ? '—' : formatValue(projection)}</strong></span>
                         <span className="text-zinc-500">Edge <strong className={`${edge !== null && Math.abs(edge) > 0 ? 'text-emerald-300' : 'text-zinc-300'} tabular-nums`}>
                           {edge === null ? '—' : edge === 0 ? 'Even' : `${edge > 0 ? 'O' : 'U'} +${Math.abs(edge).toFixed(1)}`}
