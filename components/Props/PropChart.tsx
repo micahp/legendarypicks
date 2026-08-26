@@ -230,20 +230,19 @@ export default function PropChart({ data, window: initialWindow = 'l10' }: { dat
               <div data-game-labels className="flex" style={{ gap }}>
                 {displayGames.map((g, i) => (
                   <div key={i} className="text-center" style={{ width: barW, flexShrink: 0 }}>
-                    {/* One colour for all three lines -- zinc-500, what the bar
-                        values were before this chart was rebuilt. A three-tone
-                        ramp implied a hierarchy between value, opponent and date
-                        that nobody reading a game log wants. */}
-                    <div className="text-[11px] font-semibold text-zinc-500 tabular-nums">{g.value}</div>
+                    {/* One colour for all three lines. A three-tone ramp implied
+                        a hierarchy between value, opponent and date that nobody
+                        reading a game log wants. */}
+                    <div className="text-[11px] font-semibold text-zinc-400 tabular-nums">{g.value}</div>
                     {/* No slice and no truncate. `@BOS` is four characters and
                         was being clipped by a 28px column, which reads as a data
                         problem rather than a layout one. The column is sized to
                         hold a real abbreviation instead. */}
-                    <div className="whitespace-nowrap text-[10px] text-zinc-500"
+                    <div className="whitespace-nowrap text-[10px] text-zinc-400"
                          title={`${g.home === false ? '@ ' : ''}${g.opponent} · ${g.date}`}>
                       {g.home === false ? '@' : ''}{g.opponent || '—'}
                     </div>
-                    <div className="text-[10px] text-zinc-500 tabular-nums">{shortDate(g.date)}</div>
+                    <div className="text-[10px] text-zinc-400 tabular-nums">{shortDate(g.date)}</div>
                   </div>
                 ))}
               </div>
