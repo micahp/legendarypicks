@@ -481,7 +481,7 @@ export default function MarketSlateBoard({ league, date }: { league: string; dat
           opposite ends of the screen. */}
       <div className="flex flex-wrap items-center gap-2">
         <p className="shrink-0 text-xs text-zinc-500">Sort by</p>
-        <div className="flex flex-1 flex-wrap items-center gap-1.5" aria-label="Sort prop board">
+        <div className="flex flex-wrap items-center gap-1.5" aria-label="Sort prop board">
           {([
             ['hit-rate', 'Hit rate'],
             ['confidence', 'Confidence'],
@@ -501,12 +501,13 @@ export default function MarketSlateBoard({ league, date }: { league: string; dat
               </button>
             </span>
           ))}
-          {/* Anchored at the END of the controls rather than mid-row beside its
-              own button, where it broke the rhythm of the group. Still a tap
-              target, not a hover tooltip: hover does not exist on touch and
-              this board is read on phones. The panel opens right-aligned so it
-              cannot push the layout sideways on a narrow screen. */}
-          <span className="relative ml-auto inline-flex items-center">
+          {/* Immediately after the last sort button. `ml-auto` used to push it to
+              the far edge of the row, which separated it from the controls it
+              explains once the row stopped being justify-between. Still a tap
+              target, not a hover tooltip: hover does not exist on touch and this
+              board is read on phones. The panel opens right-aligned so it cannot
+              push the layout sideways on a narrow screen. */}
+          <span className="relative inline-flex items-center">
             <button
               type="button"
               aria-label="What Confidence means"
