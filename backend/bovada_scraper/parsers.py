@@ -53,16 +53,19 @@ def _parse_ufc_props(event: dict) -> list:
 # ATP Montreal + WTA Toronto). Four match-level markets carry player attribution:
 #   Moneyline                             -> match_winner  (each outcome = a player; yes/no "wins the match")
 #   Total Games O/U - <Player>            -> total_games   (player's games won over/under; handicap = line)
-#   Set Betting                           -> set_betting   (exact-set-score ladder: "<Player> 2 - 0")
+#   Set Betting                           -> NOT INGESTED (see below)
 #   Will <Player> Win At Least One Set?   -> win_a_set     (yes/no; "Yes" outcome carries the player)
 # Match-level only: markets are filtered to period.abbreviation == "MT" (pre-match "Match" and live
 # "Live Match"); per-set variants (" - S1" / " - LS2" outcome suffixes) are out of scope for the
 # props schema. Match-level markets with NO player attribution (Total Sets O/U 2.5, match Total
 # games, Game/Set spreads, tie-break, odd/even, tournament Outrights) are deferred — the same
-# deferral as UFC fight-level markets (see _UFC_METHOD). Set-betting scores ride in the market key
-# ("set_betting___2_0") so the per-player ladders don't collide on the ingest dedup key
-# (game_id, player_id, market, line, side, source); _base_market() still groups them under
-# "set_betting" for boards/charting.
+# deferral as UFC fight-level markets (see _UFC_METHOD).
+#
+# DROPPED 2026-08-26: Set Betting. It carries a player's name, which is why it was read as
+# player-attributed, but "<Player> 2 - 0" is the MATCH's scoreline -- the same event described
+# from one side. It is not a measure of a player's performance, nothing in player_game_logs can
+# ever chart it, and it belongs with the other match-level markets already deferred above.
+# 438 such props existed on dev and 442 on prod when this was removed.
 def _parse_tennis_props(event: dict, league: str) -> list:
     """Extract player-attributed tennis props from a single Bovada tennis event."""
     import re
@@ -85,8 +88,6 @@ def _parse_tennis_props(event: dict, league: str) -> list:
                 canonical, kind = "match_winner", "win"
             elif mdesc_lower.startswith("total games o/u - "):
                 canonical, kind = "total_games", "ou"
-            elif mdesc_lower == "set betting":
-                canonical, kind = "set_betting", "setscore"
             elif mdesc_lower.startswith("will ") and mdesc_lower.endswith(" win at least one set?"):
                 canonical, kind = "win_a_set", "winset"
             else:
@@ -114,12 +115,6 @@ def _parse_tennis_props(event: dict, league: str) -> list:
                     market = canonical
                     line = float(handicap) if handicap is not None else None
                     side = "over" if od.lower() == "over" else "under"
-                elif kind == "setscore":
-                    sm = re.search(r"(\d+)\s*-\s*(\d+)\s*$", od)
-                    if not sm or not player:
-                        continue
-                    market = "set_betting___{}_{}".format(sm.group(1), sm.group(2))
-                    line, side = 0.5, "over"
                 else:  # winset — the "No" outcome is the complement; keep the "Yes" price only
                     if od.lower() != "yes":
                         continue

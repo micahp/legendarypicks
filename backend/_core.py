@@ -48,6 +48,24 @@ def _db():
     os.makedirs(os.path.dirname(DB), exist_ok=True)
     con = sqlite3.connect(DB, timeout=BUSY_TIMEOUT_SECONDS)
     con.row_factory = sqlite3.Row
+    # SQLite defaults foreign_keys OFF, PER CONNECTION. `props.player_id`,
+    # `props.game_id` and `prop_results.prop_id` have all DECLARED their
+    # references since the schema was written, and none of them had ever fired:
+    # only three scripts in this repo set the pragma, and neither the API nor
+    # settlement is one of them. A constraint that reads as protection in the
+    # schema and enforces nothing is worse than no constraint, because it stops
+    # anyone looking.
+    #
+    # What that cost, found 2026-08-26: 78 props on both databases pointed at 15
+    # `players` rows that had been deleted by an identity repair, and 4
+    # `prop_results` outlived the props they graded. Nothing raised, nothing
+    # counted them. Both databases are at ZERO `PRAGMA foreign_key_check`
+    # violations as of that cleanup, so turning this on rejects no existing row.
+    #
+    # NULL is still allowed: an unresolved prop keeps `player_id IS NULL`, which
+    # is the fail-closed path the resolvers already use. What this stops is a
+    # non-NULL id pointing at nothing.
+    con.execute("PRAGMA foreign_keys=ON")
     return con
 
 

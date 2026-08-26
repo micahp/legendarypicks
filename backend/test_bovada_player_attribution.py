@@ -102,3 +102,39 @@ def test_the_real_player_on_the_same_board_still_lands():
     props = b.parse_player_props(_nba_team_market_event(), "nba")
     assert [(p["player_name"], p["market"], p["line"]) for p in props] == [
         ("Jayson Tatum", "points", 27.5)]
+
+
+def test_set_betting_is_not_a_player_prop():
+    """`<Player> 2 - 0` is the MATCH's scoreline, told from one side.
+
+    It carries a player's name, which is why it was read as player-attributed,
+    but it measures nothing about that player's performance and nothing in
+    player_game_logs can ever chart it. It belongs with the other match-level
+    tennis markets already deferred (Total Sets, game/set spreads, tie-break).
+    438 such props existed on dev and 442 on prod when this was removed.
+    """
+    from bovada_scraper.parsers import _parse_tennis_props
+    event = {
+        "competitors": [{"id": "1", "name": "Alexander Zverev"},
+                        {"id": "2", "name": "Terence Atmane"}],
+        "description": "Alexander Zverev vs Terence Atmane",
+        "startTime": 1787000000000,
+        "displayGroups": [{"markets": [
+            {"description": "Set Betting", "period": {"abbreviation": "MT"},
+             "outcomes": [
+                 {"description": "Alexander Zverev 2 - 0",
+                  "price": {"american": "+150"}},
+                 {"description": "Terence Atmane 2 - 1",
+                  "price": {"american": "+400"}},
+             ]},
+            # A real player market on the same event must still land, so this
+            # asserts a removal rather than a broken parser.
+            {"description": "Will Alexander Zverev Win At Least One Set?",
+             "period": {"abbreviation": "MT"},
+             "outcomes": [{"description": "Yes", "price": {"american": "-400"}}]},
+        ]}],
+    }
+    props = _parse_tennis_props(event, "atp")
+    markets = {p["market"] for p in props}
+    assert not any(m.startswith("set_betting") for m in markets), markets
+    assert "win_a_set" in markets, markets
