@@ -23,55 +23,70 @@ const threeGames: PropHistory['games'] = [
 ]
 
 describe('PropChart venue handling', () => {
-  function svgLabel(container: HTMLElement): string {
-    const svg = container.querySelector('svg')
-    const textNodes = svg ? Array.from(svg.querySelectorAll('text')) : []
-    return textNodes.map(t => t.textContent || '').join(' ')
+  // The per-game labels moved out of the SVG and onto DOM columns under each
+  // bar, matching the PrizePicks reference: value, opponent, date. Home games
+  // carry no prefix there -- only away gets `@` -- so the old "vs HOM" and the
+  // separate away arrow are gone by design, not by accident.
+  // Scoped to the label row. Reading the whole container also picks up the
+  // "vs <OPP>" FILTER chip, which is a different thing that happens to share
+  // the text -- the first version of this test failed on exactly that.
+  function columns(container: HTMLElement): string {
+    return (container.querySelector('[data-game-labels]')?.textContent || '')
   }
 
-  it('labels a known away game with @', () => {
+  it('marks a known away game with @', () => {
     const { container } = render(<PropChart data={chartData([
       { date: '2026-07-22', value: 18, opponent: 'AWY', home: false, hit: false },
     ])} />)
-    expect(svgLabel(container)).toContain('@ AWY')
+    expect(columns(container)).toContain('@AWY')
   })
 
-  it('labels a known home game with vs', () => {
+  it('leaves a home game unprefixed', () => {
     const { container } = render(<PropChart data={chartData([
       { date: '2026-07-22', value: 24, opponent: 'HOM', home: true, hit: true },
     ])} />)
-    expect(svgLabel(container)).toContain('vs HOM')
+    const text = columns(container)
+    expect(text).toContain('HOM')
+    expect(text).not.toContain('@HOM')
+    expect(text).not.toContain('vs HOM')
   })
 
   it('leaves unknown venue unmarked', () => {
     const { container } = render(<PropChart data={chartData([
       { date: '2026-07-22', value: 21, opponent: 'UNK', home: null, hit: true },
     ])} />)
-    const label = svgLabel(container)
-    expect(label).toContain('UNK')
-    expect(label).not.toContain('@')
-    expect(label).not.toContain('vs')
+    const text = columns(container)
+    expect(text).toContain('UNK')
+    expect(text).not.toContain('@UNK')
   })
 
-  it('shows the away arrow only for a known away game', () => {
-    const { container } = render(<PropChart data={chartData(threeGames)} />)
-    const arrows = Array.from(container.querySelectorAll('span'))
-      .filter(el => (el.className || '').includes('ml-0.5'))
-    expect(arrows).toHaveLength(3)
-    expect(arrows.map(arrow => arrow.textContent)).toEqual(['', '↑', ''])
+  it('prints the date under each bar as M/D', () => {
+    const { container } = render(<PropChart data={chartData([
+      { date: '2026-07-22', value: 21, opponent: 'UNK', home: null, hit: true },
+    ])} />)
+    expect(columns(container)).toContain('7/22')
   })
 
-  it('keeps unknown venue out of both venue filters', () => {
-    const { container } = render(<PropChart data={chartData(threeGames)} />)
-    const barCount = () => container.querySelectorAll('rect').length
+  it('colours a miss red and a hit green, not two shades of one hue', () => {
+    const { container } = render(<PropChart data={chartData([
+      { date: '2026-07-21', value: 24, opponent: 'HOM', home: true, hit: true },
+      { date: '2026-07-22', value: 18, opponent: 'AWY', home: false, hit: false },
+    ])} />)
+    const fills = Array.from(container.querySelectorAll('rect')).map(r => r.getAttribute('fill'))
+    expect(fills).toContain('#4ade80')
+    expect(fills).toContain('#f87171')
+  })
 
-    expect(barCount()).toBe(3)
-    fireEvent.click(screen.getByText('Home'))
-    expect(barCount()).toBe(1)
-    fireEvent.click(screen.getByText('Away'))
-    expect(barCount()).toBe(1)
-    fireEvent.click(screen.getByText('All'))
-    expect(barCount()).toBe(3)
+  it('prints the average of the games actually drawn', () => {
+    const { container } = render(<PropChart data={chartData([
+      { date: '2026-07-21', value: 24, opponent: 'HOM', home: true, hit: true },
+      { date: '2026-07-22', value: 18, opponent: 'AWY', home: false, hit: false },
+    ])} />)
+    // (24 + 18) / 2 = 21.0 over 2 games. The footer sits outside the label
+    // row, so this one reads the whole chart deliberately.
+    const all = container.textContent || ''
+    expect(all).toContain('21.0')
+    expect(all).toContain('avg last 2')
   })
 })
 

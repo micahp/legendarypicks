@@ -39,10 +39,11 @@ const WINDOWS: { key: Window; label: string }[] = [
 ]
 
 // ── helpers ───────────────────────────────────────────────
-function gameLabel(g: GameLog, i: number, total: number): string {
-  const isLast = i === total - 1
-  const loc = g.home === false ? '@ ' : g.home === true ? 'vs ' : ''
-  return isLast ? `${new Date(g.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} · ${loc}${g.opponent}` : ''
+// M/D, the form the reference uses under each bar. Noon-anchored so a UTC date
+// string does not roll backwards in a negative offset.
+function shortDate(iso: string): string {
+  const d = new Date(iso + 'T12:00:00')
+  return Number.isNaN(d.getTime()) ? iso : `${d.getMonth() + 1}/${d.getDate()}`
 }
 
 // ── component ─────────────────────────────────────────────
@@ -106,6 +107,14 @@ export default function PropChart({ data, window: initialWindow = 'l10' }: { dat
     return hits / displayGames.length
   }, [displayGames, win])
 
+  // "2.8 avg last 5" in the reference: the mean of what is actually drawn, so
+  // it moves with the window and the venue filters rather than describing a
+  // different set of games than the bars above it.
+  const average = useMemo(() => {
+    if (!displayGames.length) return null
+    return displayGames.reduce((sum, g) => sum + g.value, 0) / displayGames.length
+  }, [displayGames])
+
   const isDefaultFilters = win === initialWindow && venue === 'all' && !vsOpp
   const resetFilters = () => { setWin(initialWindow); setVenue('all'); setVsOpp(false) }
 
@@ -118,8 +127,6 @@ export default function PropChart({ data, window: initialWindow = 'l10' }: { dat
   const chartW = hasGames ? displayGames.length * (barW + gap) - gap : 0
   const chartH = 72
   const padTop = 16
-  const padBottom = 8
-  const svgH = chartH + padTop + padBottom + 22
 
   const y = (v: number) => padTop + chartH * (1 - (v - minVal) / range)
   const lineY = y(data.line)
@@ -185,43 +192,55 @@ export default function PropChart({ data, window: initialWindow = 'l10' }: { dat
         </div>
       ) : (
         <>
+          {/* Bars only. A miss is RED, not a dimmed green: at a glance the
+              question is hit-or-miss, and two shades of one hue answer it more
+              slowly than two hues. The dashed rule is the line itself, labelled
+              at the right where it ends. */}
           <div className="overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" style={{ maxWidth: '100%' }}>
-            <svg width={chartW} height={svgH} className="block" style={{ minWidth: chartW }}>
-              <line x1={0} y1={lineY} x2={chartW} y2={lineY} stroke="#71717a" strokeWidth={1} strokeDasharray="4,3" />
-              <text x={chartW + 2} y={lineY + 4} className="text-[9px] fill-zinc-500" textAnchor="start">{data.line}</text>
+            <div style={{ minWidth: chartW + 26 }}>
+              <svg width={chartW + 26} height={chartH + padTop + 6} className="block">
+                <line x1={0} y1={lineY} x2={chartW} y2={lineY}
+                      stroke="#d4d4d8" strokeWidth={1} strokeDasharray="5,4" />
+                <text x={chartW + 4} y={lineY + 4} className="text-[10px] font-semibold fill-zinc-300"
+                      textAnchor="start">{data.line}</text>
+                {displayGames.map((g, i) => {
+                  const x = i * (barW + gap)
+                  const barH = Math.max(3, chartH * (g.value - minVal) / range)
+                  const barY = padTop + chartH - barH
+                  const hit = isHit(g.value)
+                  return (
+                    <rect key={i} x={x} y={barY} width={barW} height={barH}
+                          rx={6} ry={6} fill={hit ? '#4ade80' : '#f87171'} />
+                  )
+                })}
+                {/* Baseline the bars stand on. */}
+                <line x1={0} y1={padTop + chartH} x2={chartW} y2={padTop + chartH}
+                      stroke="#3f3f46" strokeWidth={1.5} />
+              </svg>
 
-              {displayGames.map((g, i) => {
-                const x = i * (barW + gap)
-                const barH = Math.max(2, chartH * (g.value - minVal) / range)
-                const barY = padTop + chartH - barH
-                const hit = isHit(g.value)
-                const color = hit ? '#34d399' : '#71717a'
-                const alpha = hit ? '0.9' : '0.5'
-                return (
-                  <g key={i}>
-                    <rect x={x} y={barY} width={barW} height={barH} rx={3} fill={color} opacity={alpha} />
-                    <text x={x + barW / 2} y={svgH - 4} className="text-[9px] fill-zinc-500" textAnchor="middle">{g.value}</text>
-                    {i === displayGames.length - 1 && (
-                      <text x={x + barW / 2} y={svgH - 4} className="text-[9px] fill-zinc-500" textAnchor="middle" dy={-svgH + padTop + chartH + 18}>
-                        {gameLabel(g, i, displayGames.length)}
-                      </text>
-                    )}
-                  </g>
-                )
-              })}
-            </svg>
-          </div>
-
-          <div className="flex gap-[6px] text-[10px] text-zinc-600" style={{ paddingLeft: 0 }}>
-            {displayGames.map((g, i) => (
-              <div key={i} className="text-center overflow-hidden" style={{ width: barW, flexShrink: 0 }}>
-                <span title={`${g.home === false ? '@ ' : g.home === true ? 'vs ' : ''}${g.opponent} · ${g.date}`}>
-                  {g.opponent.length > 5 ? g.opponent.slice(0, 5) : g.opponent || '—'}
-                </span>
-                <span className="text-zinc-700 ml-0.5">{g.home === false ? '↑' : ''}</span>
+              {/* Value, opponent and date stacked under each bar, aligned to the
+                  same column width. Away games carry the @ the reference uses. */}
+              <div data-game-labels className="flex" style={{ gap }}>
+                {displayGames.map((g, i) => (
+                  <div key={i} className="text-center" style={{ width: barW, flexShrink: 0 }}>
+                    <div className="text-[11px] font-semibold text-zinc-200 tabular-nums">{g.value}</div>
+                    <div className="truncate text-[10px] text-zinc-400"
+                         title={`${g.home === false ? '@ ' : ''}${g.opponent} · ${g.date}`}>
+                      {g.home === false ? '@' : ''}{(g.opponent || '—').slice(0, 4)}
+                    </div>
+                    <div className="text-[10px] text-zinc-500 tabular-nums">{shortDate(g.date)}</div>
+                  </div>
+                ))}
               </div>
-            ))}
+            </div>
           </div>
+
+          {average !== null && (
+            <p className="text-center text-[11px] text-zinc-400">
+              <span className="font-semibold text-zinc-200 tabular-nums">{average.toFixed(1)}</span>
+              {' '}avg last {displayGames.length}
+            </p>
+          )}
         </>
       )}
     </div>
