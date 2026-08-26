@@ -130,7 +130,14 @@ def player_prop_history(player_id: int, market: Optional[str] = Query(None)):
 
 # Which log leagues a chart may read for a prop in this league. Only a
 # cross-border competition needs more than its own.
-_CHART_LOG_LEAGUES = {"lcup": ("lcup", "mls", "ligamx")}
+_CHART_LOG_LEAGUES = {
+    "lcup": ("lcup", "mls", "ligamx"),
+    # A Liga MX athlete's history is his domestic season plus the
+    # tournament, and the row reaches here labelled `ligamx` because
+    # /api/props returns the player's league rather than the game's.
+    "ligamx": ("ligamx", "lcup"),
+    "mls": ("mls", "lcup"),
+}
 
 
 @router.get("/api/props/history")

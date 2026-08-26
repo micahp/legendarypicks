@@ -57,6 +57,22 @@ _MARKET_STAT_KEY = {
     # groundDuels and duelWinPct, which are NOT take-ons and must not stand in
     # for them. first_goal_scorer stays None because it is an ORDER market and
     # no per-game stat answers it.
+    # `/api/props` returns the PLAYER's league, so a Leagues Cup prop on a Liga
+    # MX athlete asks the chart for `ligamx`, not `lcup`. There was no ligamx
+    # entry at all, so every one of those rows answered "market not chartable"
+    # and rendered "No history" -- while the MLS players on the same card
+    # charted fine, because `mls` is in this map. Same markets, same stat keys:
+    # one competition's props, two league labels reaching this table.
+    "ligamx": {"goals": "goals", "assists": "assists", "shots": "shots",
+               "shots_on_target": "sot", "shots_on_goal": "sot",
+               "goal_or_assist": ["goals", "assists"],
+               "fouls_committed": "fouls_committed",
+               "saves": "saves", "goals_allowed": "goals_conceded",
+               "card_shown": ["yellow_cards", "red_cards"],
+               "tackles": "tackles", "clearances": "clearances",
+               "crosses": "crosses", "passes_attempted": "passes_attempted",
+               "passes": "passes", "shots_assisted": "shots_assisted",
+               "dribbles": None, "first_goal_scorer": None},
     "lcup": {"goals": "goals", "assists": "assists", "shots": "shots",
              "shots_on_target": "sot", "shots_on_goal": "sot",
              "goal_or_assist": ["goals", "assists"],
