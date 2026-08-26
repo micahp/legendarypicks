@@ -51,7 +51,7 @@ interface SlateMarketSummary {
   markets?: MarketOption[]
 }
 
-type SortKey = 'hit-rate' | 'edge' | 'line'
+type SortKey = 'hit-rate' | 'confidence' | 'edge' | 'line'
 type SortDirection = 'asc' | 'desc'
 
 
@@ -146,6 +146,35 @@ function groupProps(props: BoardProp[]): BoardRow[] {
 // Short of the window's own count there is no L10 to report, so the chip shows
 // a dash. Undefined (an older payload) keeps the previous behaviour rather
 // than blanking every chip.
+
+// The lower edge of the range of true hit rates a record is consistent with
+// (Wilson score interval, 95%). Ranking on it answers "how likely is this to
+// hit again", where the raw rate answers "what fraction hit so far" -- and
+// those differ most exactly where this board lives.
+//
+// A Liga MX player has ~8 appearances because the Apertura is five matchdays
+// old; an MLS player has 40. Sorting their raw rates against each other puts a
+// 3-for-3 above a 28-for-48, because the percentage discards the sample size,
+// which is most of the information. 3/3 is consistent with a true rate
+// anywhere in 43.8%..100%; 28/48 with 44.3%..71.2%. The bottom of the range is
+// the pessimistic read, and it can only be high when a record is BOTH good and
+// well evidenced.
+//
+// As n grows every correction term vanishes and this converges on the raw
+// rate, so a 40-game player is ranked on his actual number. It needs no
+// minimum-games threshold, which is the thing a "hide rows under 10 games"
+// rule cannot avoid -- and such a rule would bury all but three Liga MX
+// players for a reason that is about the calendar, not the player.
+function confidenceFloor(hits: number, games: number): number {
+  if (games <= 0) return 0
+  const z = 1.96
+  const p = hits / games
+  const denom = 1 + (z * z) / games
+  const centre = p + (z * z) / (2 * games)
+  const margin = z * Math.sqrt((p * (1 - p)) / games + (z * z) / (4 * games * games))
+  return Math.max(0, (centre - margin) / denom)
+}
+
 function RateChip({ label, value, sample, required }: {
   label: string; value: number; sample?: number; required: number
 }) {
@@ -354,6 +383,11 @@ export default function MarketSlateBoard({ league, date }: { league: string; dat
       if (sortKey === 'line') return row.line
       if (!history) return null
       if (sortKey === 'hit-rate') return history.hit_rate.l10
+      // Over EVERY game held, not a window: the point of this sort is to use
+      // all the evidence rather than to truncate it.
+      if (sortKey === 'confidence') {
+        return confidenceFloor(history.games.filter(g => g.hit).length, history.games.length)
+      }
       return history.projection === null ? null : Math.abs(history.projection - row.line)
     }
     // Hit rate over ten games takes eleven distinct values, so ties are the common
@@ -438,6 +472,19 @@ export default function MarketSlateBoard({ league, date }: { league: string; dat
             </button>
           ))}
         </div>
+        {/* Confidence is not a metric anyone arrives already knowing, and an
+            unexplained ranking is one the reader invents a meaning for. Shown
+            only while it is the active sort, so it teaches at the moment it
+            matters instead of adding permanent chrome. */}
+        {sortKey === 'confidence' && (
+          <p className="mt-2 text-xs leading-relaxed text-zinc-500">
+            <span className="text-zinc-400">Confidence</span> ranks by the hit rate a
+            record can actually support, not the rate it happens to show. A player who
+            is 3-for-3 has too few games to prove much, so he sits below someone at 58%
+            over 48 games. The more games behind a rate, the closer this gets to the
+            rate itself.
+          </p>
+        )}
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -445,6 +492,7 @@ export default function MarketSlateBoard({ league, date }: { league: string; dat
         <div className="flex flex-wrap gap-1.5" aria-label="Sort prop board">
           {([
             ['hit-rate', 'Hit rate'],
+            ['confidence', 'Confidence'],
             ['edge', 'Edge'],
             ['line', 'Line'],
           ] as [SortKey, string][]).map(([key, label]) => (
