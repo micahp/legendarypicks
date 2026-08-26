@@ -165,45 +165,49 @@ def prop_history(player_id: int = Query(...),
     # 2026-08-25: a bench player charted five games, four of them DNPs, as
     # 0/0/0/0/0 shots.
     #
-    # Two sources, two signals: the summary ingest writes `appearances`, the
-    # lazy core read-through writes `minutes`. Either at 0 means absent; a row
-    # carrying neither is left alone rather than assumed.
-    _PLAYED = (" AND COALESCE(json_extract(stats, '$.minutes'), 1) != 0"
-               " AND COALESCE(json_extract(stats, '$.appearances'), 1) != 0")
-
-    # ONE ROW PER APPEARANCE. Providers keep separate rows -- ESPN and FotMob
-    # each own theirs and neither edits the other -- so a player with both
-    # charted the same match twice: Federico Vinas showed 12 games,
-    # [7,7,4,4,3,3,1,1,1,1,1,1], for six he actually played.
+    # ONE ROW PER APPEARANCE, from `player_game_logs_all`. Each provider owns
+    # its own TABLE -- `player_game_logs` is ESPN's and stays one row per
+    # appearance, `player_game_logs_fotmob` is FotMob's -- and the view joins
+    # them on (player_id, game_date), putting each provider's line in its own
+    # COLUMN. A value's provenance is the column it was read from: nothing to
+    # stamp, nothing to drift.
     #
-    # The reader picks, which is where the decision belongs. ESPN first because
-    # it is the identity spine every player_id is keyed on; FotMob supplies the
-    # markets ESPN does not publish, and rows without the requested stat are
-    # already excluded by the WHERE, so this only breaks ties where BOTH
-    # published the same number.
-    _PROVIDER_RANK = ("CASE source WHEN 'espn' THEN 0 WHEN 'espn-core' THEN 1"
-                      " WHEN 'fotmob' THEN 2 ELSE 3 END")
+    # This replaces a ROW_NUMBER() PARTITION BY game_date that existed to hide
+    # a duplication. Both providers had been kept as separate ROWS in one
+    # table, so 2,619 appearances existed twice and every reader had to know to
+    # dedupe or double-count. Federico Vinas charted 12 games,
+    # [7,7,4,4,3,3,1,1,1,1,1,1], for six he played.
+    #
+    # ESPN wins a field both publish: it is the identity spine every player_id
+    # is keyed on. FotMob fills the markets ESPN does not publish at all
+    # (tackles, clearances, crosses, chances created, dribbles).
+    def _val(key):
+        return (f"COALESCE(json_extract(espn_stats, '$.{key}'),"
+                f" json_extract(fotmob_stats, '$.{key}'))")
+
+    def _present(key):
+        return (f"(json_extract(espn_stats, '$.{key}') IS NOT NULL"
+                f" OR json_extract(fotmob_stats, '$.{key}') IS NOT NULL)")
+
+    # A match the player never entered is not a 0. The summary ingest writes
+    # `appearances`, the lazy core read-through writes `minutes`; either at 0
+    # means absent, and a row carrying neither is left alone rather than
+    # assumed. Checked across BOTH providers so one silent blob cannot readmit
+    # a DNP the other correctly marked.
+    _PLAYED = (f" AND COALESCE({_val('minutes')}, 1) != 0"
+               f" AND COALESCE({_val('appearances')}, 1) != 0")
 
     # stat_key is either a string (single JSON field) or a list (compound: sum fields)
     if isinstance(stat_key, list):
         keys = stat_key
         # SUM with COALESCE so missing fields don't null the whole row
-        coalesce_terms = [
-            f"COALESCE(json_extract(stats, '$.{k}'), 0)" for k in keys
-        ]
-        val_expr = f"({' + '.join(coalesce_terms)})"
+        val_expr = "(" + " + ".join(f"COALESCE({_val(k)}, 0)" for k in keys) + ")"
         # WHERE: at least one key must be non-null (found_any semantics)
-        non_null_terms = " OR ".join(
-            f"json_extract(stats, '$.{k}') IS NOT NULL" for k in keys
-        )
-        where_clause = f"({non_null_terms})"
-        params_for_query = ()  # no bind params needed, keys are hardcoded per market
+        where_clause = "(" + " OR ".join(_present(k) for k in keys) + ")"
     else:
-        val_expr = "json_extract(stats, ?)"
-        where_clause = "json_extract(stats, ?) IS NOT NULL"
-        stat_path = f"$.{stat_key}"
-        params_for_query = (stat_path, stat_path)
-        keys = None  # unused for non-compound
+        keys = None
+        val_expr = _val(stat_key)
+        where_clause = _present(stat_key)
 
     with closing(_db()) as con:
         con.row_factory = sqlite3.Row
@@ -214,35 +218,16 @@ def prop_history(player_id: int = Query(...),
         if not player:
             return {"error": "player not found", "games": []}
 
-        # Get game logs with this stat, most recent first
-        if isinstance(stat_key, list):
-            rows = con.execute(
-                f"""SELECT game_date, opponent, home_away, val FROM (
-                      SELECT game_date, opponent, home_away,
-                             {val_expr} AS val,
-                             ROW_NUMBER() OVER (PARTITION BY game_date
-                                                ORDER BY {_PROVIDER_RANK}) AS rn
-                      FROM player_game_logs
-                      WHERE player_id=? AND league IN ({league_placeholders})
-                        AND {where_clause}{_PLAYED}
-                    ) WHERE rn=1
-                    ORDER BY game_date DESC LIMIT 100""",
-                (player_id, *log_leagues)
-            ).fetchall()
-        else:
-            rows = con.execute(
-                f"""SELECT game_date, opponent, home_away, val FROM (
-                      SELECT game_date, opponent, home_away,
-                             json_extract(stats, ?) AS val,
-                             ROW_NUMBER() OVER (PARTITION BY game_date
-                                                ORDER BY {_PROVIDER_RANK}) AS rn
-                      FROM player_game_logs
-                      WHERE player_id=? AND league IN ({league_placeholders})
-                        AND json_extract(stats, ?) IS NOT NULL{_PLAYED}
-                    ) WHERE rn=1
-                    ORDER BY game_date DESC LIMIT 100""",
-                (stat_path, player_id, *log_leagues, stat_path)
-            ).fetchall()
+        # Get game logs with this stat, most recent first. One row per
+        # appearance comes from the view, so there is nothing to dedupe here.
+        rows = con.execute(
+            f"""SELECT game_date, opponent, home_away, {val_expr} AS val
+                  FROM player_game_logs_all
+                 WHERE player_id=? AND league IN ({league_placeholders})
+                   AND {where_clause}{_PLAYED}
+                 ORDER BY game_date DESC LIMIT 100""",
+            (player_id, *log_leagues)
+        ).fetchall()
 
     if not rows:
         return {
