@@ -21,6 +21,22 @@ os.environ["LP_DB_PATH"] = _IMPORT_DB.name
 from routers import props  # noqa: E402
 
 
+def _provider_tables(con):
+    """Create FotMob's table and the joining view from the MIGRATION's own DDL.
+
+    Not a copy. A fixture that declares its own version of a shipped schema is a
+    claim about that schema, and the two drift: earlier fixtures in this file
+    declared `player_game_logs` without the `source` column the real table has,
+    so they described a world where the reader could not tell providers apart.
+    Importing the DDL means a schema change cannot pass these tests while
+    breaking production.
+    """
+    import scripts_split_provider_logs as split
+    split.ensure_espn_columns(con)
+    con.executescript(split.DDL_TABLE)
+    con.executescript(split.DDL_VIEW)
+
+
 class PropHistoryVenueTests(unittest.TestCase):
     """Preserve unknown venue instead of publishing it as an away game."""
 
@@ -55,9 +71,12 @@ class PropHistoryVenueTests(unittest.TestCase):
             );
             """
         )
+        _provider_tables(con)
         con.execute("INSERT INTO players VALUES(1,'Alex Ready','AAA','nba','G')")
         con.executemany(
-            "INSERT INTO player_game_logs VALUES(?,?,?,?,?,?,?,?,?,?)",
+            "INSERT INTO player_game_logs(player_id, league, season, stats,"
+            " game_date, opponent, home_away, game_no, game_type, source)"
+            " VALUES(?,?,?,?,?,?,?,?,?,?)",
             [
                 (1, "nba", 2026, json.dumps({"PTS": 24}), "2026-07-20", "OPP1", "home", 1, None, "espn"),
                 (1, "nba", 2026, json.dumps({"PTS": 18}), "2026-07-21", "OPP2", "away", 2, None, "espn"),
@@ -134,6 +153,7 @@ class LeaguesCupChartsAcrossTheSpines(unittest.TestCase):
             );
             """
         )
+        _provider_tables(con)
         # A Leagues Cup athlete is owned by a DOMESTIC spine; players.league is
         # never 'lcup'.
         con.execute("INSERT INTO players VALUES(1,'Liga MX Forward','AME','ligamx','F')")
@@ -184,7 +204,9 @@ class LeaguesCupChartsAcrossTheSpines(unittest.TestCase):
              "2026-08-10", "POR", "away", 7, "REG", "espn"),
         ]
         con.executemany(
-            "INSERT INTO player_game_logs VALUES(?,?,?,?,?,?,?,?,?,?)", rows)
+            "INSERT INTO player_game_logs(player_id, league, season, stats,"
+            " game_date, opponent, home_away, game_no, game_type, source)"
+            " VALUES(?,?,?,?,?,?,?,?,?,?)", rows)
         con.commit()
         con.close()
 
@@ -384,6 +406,7 @@ class FirstGoalIsAnsweredFromTheStoredRow(unittest.TestCase):
               opponent TEXT, home_away TEXT, game_no INTEGER, game_type TEXT,
               source TEXT);
         """)
+        _provider_tables(con)
         con.execute("INSERT INTO players VALUES(1,'Opener','LEO','ligamx','F')")
         con.execute("INSERT INTO players VALUES(2,'MLS Opener','CLB','mls','F')")
         rows = [
@@ -488,6 +511,7 @@ class TheMlsMapCoversWhatMlsLogsAnswer(unittest.TestCase):
               opponent TEXT, home_away TEXT, game_no INTEGER, game_type TEXT,
               source TEXT);
         """)
+        _provider_tables(con)
         con.execute("INSERT INTO players VALUES(1,'Keeper','CLB','mls','G')")
         rows = [
             (1, "mls", 2026, json.dumps({"saves": 4, "goals_conceded": 1,
@@ -580,21 +604,31 @@ class OneRowPerAppearance(unittest.TestCase):
               game_type TEXT, source TEXT
             );
         """)
+        _provider_tables(con)
         con.execute("INSERT INTO players VALUES(1,'Both Providers','AME','ligamx','F')")
         con.executemany(
-            "INSERT INTO player_game_logs VALUES(?,?,?,?,?,?,?,?,?,?)",
+            "INSERT INTO player_game_logs(player_id, league, season, stats,"
+            " game_date, opponent, home_away, game_no, game_type, source)"
+            " VALUES(?,?,?,?,?,?,?,?,?,?)",
             [
-                # The SAME appearance, from two providers, with different
-                # numbers so the tie-break is observable.
+                # ESPN's table holds ESPN's line for this appearance.
                 (1, "ligamx", 2026, json.dumps({"shots": 3, "minutes": 90}),
                  "2026-08-24", "TOL", "home", 1, "REG", "espn"),
+            ])
+        # FotMob's lines live in FotMob's table: the SAME appearance with a
+        # different number so the preference is observable, plus a second
+        # appearance ESPN never saw, which the view's second leg must carry.
+        con.executemany(
+            "INSERT INTO player_game_logs_fotmob(player_id, league, season,"
+            " stats, game_date, opponent, home_away, game_no, game_type, source)"
+            " VALUES(?,?,?,?,?,?,?,?,?,?)",
+            [
                 (1, "ligamx", 2026,
                  json.dumps({"shots": 9, "tackles": 4, "minutes": 90}),
-                 "2026-08-24", "TOL", "home", 1, "REG", "fotmob"),
-                # A second appearance only FotMob has.
+                 "2026-08-24", "TOL", "home", "fotmob-1", "REG", "fotmob"),
                 (1, "ligamx", 2026,
                  json.dumps({"shots": 2, "tackles": 1, "minutes": 90}),
-                 "2026-08-17", "NCX", "away", 2, "REG", "fotmob"),
+                 "2026-08-17", "NCX", "away", "fotmob-2", "REG", "fotmob"),
             ])
         con.commit()
         con.close()

@@ -20,6 +20,23 @@ os.environ["LP_DB_PATH"] = os.path.join(_IMPORT_TMP.name, "import-only.db")
 import ingest_fotmob_soccer_logs as fm  # noqa: E402
 
 
+def _provider_tables(con):
+    """Create FotMob's table and the joining view from the MIGRATION's own DDL.
+
+    Not a copy. A fixture that declares its own version of a shipped schema is a
+    claim about that schema, and the two drift: earlier fixtures in this file
+    declared `player_game_logs` without the `source` column the real table has,
+    so they described a world where the reader could not tell providers apart.
+    Importing the DDL means a schema change cannot pass these tests while
+    breaking production.
+    """
+    import scripts_split_provider_logs as split
+    split.ensure_espn_columns(con)
+    con.executescript(split.DDL_TABLE)
+    con.executescript(split.DDL_VIEW)
+
+
+
 def _stat(key, value):
     return {"key": key, "stat": {"value": value, "type": "integer"}}
 
@@ -99,11 +116,13 @@ class TheProvidersKeepSeparateRows(unittest.TestCase):
               UNIQUE(league, source_player_key, season, game_no)
             );
         """)
+        _provider_tables(self.con)
         self.addCleanup(self.con.close)
 
     def _rows(self):
+        """FotMob's rows, from FotMob's table. `player_game_logs` is ESPN's."""
         return self.con.execute(
-            "SELECT stats, source FROM player_game_logs").fetchall()
+            "SELECT stats, source FROM player_game_logs_fotmob").fetchall()
 
     def test_it_writes_its_own_row_and_leaves_the_espn_row_alone(self):
         self.con.execute(
@@ -119,12 +138,36 @@ class TheProvidersKeepSeparateRows(unittest.TestCase):
                            fotmob_id=880042)
         self.assertEqual(result, "inserted")
 
-        by_source = {source: json.loads(stats) for stats, source in self._rows()}
-        self.assertEqual(set(by_source), {"espn", "fotmob"},
-                         "each provider keeps its own row")
+        # Each provider's line is in its provider's TABLE.
+        espn = self.con.execute(
+            "SELECT stats, source FROM player_game_logs").fetchall()
+        fotmob = self._rows()
+        self.assertEqual(len(espn), 1, "ESPN's table gains no row")
+        self.assertEqual(len(fotmob), 1, "FotMob writes exactly its own row")
         # The ESPN row is untouched: it never learns a stat ESPN never published.
-        self.assertEqual(by_source["espn"], {"goals": 0, "shots": 2})
-        self.assertEqual(by_source["fotmob"], {"tackles": 4.0, "shots": 99.0})
+        self.assertEqual(json.loads(espn[0][0]), {"goals": 0, "shots": 2})
+        self.assertEqual(espn[0][1], "espn")
+        self.assertEqual(json.loads(fotmob[0][0]), {"tackles": 4.0, "shots": 99.0})
+        self.assertEqual(fotmob[0][1], "fotmob")
+
+    def test_the_view_puts_one_appearance_on_one_row(self):
+        """The point of the split: two providers, one row, provenance by COLUMN."""
+        self.con.execute(
+            "INSERT INTO player_game_logs(player_id, league, season, game_no,"
+            " game_id, game_date, stats, source, source_player_key)"
+            " VALUES(?,?,?,?,?,?,?,?,?)",
+            (7, "ligamx", 2026, "401877001", "401877001", "2026-08-24",
+             json.dumps({"goals": 0, "shots": 2}), "espn", "49306"))
+        fm.upsert(self.con, "ligamx", 2026,
+                  {"id": 7, "team": "LEO", "espn_id": "49306"}, 1000014543,
+                  "2026-08-24", {"tackles": 4.0}, False, fotmob_id=880042)
+        self.con.commit()
+        rows = self.con.execute(
+            "SELECT espn_stats, fotmob_stats FROM player_game_logs_all"
+            " WHERE player_id=7").fetchall()
+        self.assertEqual(len(rows), 1, "one appearance is one row")
+        self.assertEqual(json.loads(rows[0][0])["shots"], 2)
+        self.assertEqual(json.loads(rows[0][1])["tackles"], 4.0)
 
     def test_the_key_identifies_the_player_not_the_fixture(self):
         """`fotmob-{match}-{team}` was one string for all eleven on a side, so
@@ -145,7 +188,10 @@ class TheProvidersKeepSeparateRows(unittest.TestCase):
         self.assertEqual(result, "inserted")
         self.assertEqual(len(self._rows()), 1)
         self.assertIsNone(self.con.execute(
-            "SELECT player_id FROM player_game_logs").fetchone()[0])
+            "SELECT player_id FROM player_game_logs_fotmob").fetchone()[0])
+        self.assertEqual(self.con.execute(
+            "SELECT COUNT(*) FROM player_game_logs").fetchone()[0], 0,
+            "an unresolved FotMob row never lands in ESPN's table")
 
 
 class TheSpineIsTheLeaguesThatOwnTheAthletes(unittest.TestCase):

@@ -20,11 +20,13 @@ ingest_soccer_logs does. Measured over three fixtures: 103 of 124 matched, 1
 ambiguous, 20 with no spine row at all.
 
 Collision. ESPN keys game_no on its EVENT id and FotMob's match ids are a
-different space, so a naive insert would put two rows on one appearance and the
-chart counts games. A player plays at most one match per date, so the appearance
-is identified by (player_id, game_date) and an existing row is MERGED into
-rather than duplicated. Existing keys are never overwritten: whoever wrote the
-value first is the source of record for it.
+different space, so nothing here can safely share a table with ESPN's rows. It
+does not: this writes `player_game_logs_fotmob`, its own table, and
+`player_game_logs` stays ESPN's at one row per appearance. The view
+`player_game_logs_all` joins the two on (player_id, game_date) -- a player plays
+at most one match a date -- and keeps each provider's line in its own COLUMN, so
+a value's provenance is where it was read from rather than a stamp that has to
+be maintained. See scripts_split_provider_logs.py.
 
 Usage:
   python3 ingest_fotmob_soccer_logs.py --league ligamx --dry-run
@@ -188,23 +190,31 @@ def resolve(index, name):
 
 def upsert(con, league, season, player, match_id, date, line, dry_run,
            fotmob_id=None):
-    """Write FotMob's own row. Providers are NOT merged into one another.
+    """Write FotMob's own row, into FotMob's own TABLE.
 
-    This used to merge into the ESPN row for the same (player_id, game_date),
-    one row per appearance. That produced a row stamped `source='espn'` carrying
-    FotMob-sourced tackles: the column named the row's creator, not each field's
-    origin, and an audit of it would conclude ESPN publishes tackles. Reverted
-    by scripts_unmerge_fotmob.py -- 2,609 rows on dev, 1,790 on prod.
+    Two earlier shapes, both wrong:
 
-    Each provider now owns its rows and nothing edits another's. The cost is
-    that one appearance can have two rows, so every READER must pick a source
-    rather than counting rows; see `_PROVIDER_RANK` in routers/props.py.
+    1. MERGED into the ESPN row for the same (player_id, game_date). That put
+       FotMob-sourced tackles on a row stamped `source='espn'` -- the column
+       named the row's creator, not each field's origin. Reverted by
+       scripts_unmerge_fotmob.py, 2,609 rows on dev and 1,790 on prod.
+    2. A separate ROW in `player_game_logs`. That duplicated every shared
+       appearance (2,619 on dev) and forced a ROW_NUMBER dedupe into the
+       reader, which each of the 20+ other consumers of that table would have
+       had to learn too. A duplication the reader hides is still a duplication.
+
+    Now: a separate TABLE. `player_game_logs` is ESPN's and holds one row per
+    appearance; this holds FotMob's, keyed the same way, including rows whose
+    player never resolved. `player_game_logs_all` joins them so each provider's
+    line sits in its own COLUMN and a value's provenance is the column it came
+    from. See scripts_split_provider_logs.py. A third provider is a third
+    table, not a migration of this one.
     """
     player_id = player["id"] if player else None
     if dry_run:
         return "inserted"
     con.execute(
-        "INSERT OR IGNORE INTO player_game_logs"
+        "INSERT OR IGNORE INTO player_game_logs_fotmob"
         "(player_id, league, season, game_no, game_id, game_date, stats,"
         " source, source_player_key) VALUES(?,?,?,?,?,?,?,?,?)",
         # source_player_key must identify the PLAYER, not the fixture. It was
@@ -264,7 +274,7 @@ def main(argv=None):
     if not args.dry_run:
         con.commit()
     landed = con.execute(
-        "SELECT COUNT(*) FROM player_game_logs WHERE league=? AND source='fotmob'",
+        "SELECT COUNT(*) FROM player_game_logs_fotmob WHERE league=?",
         (args.league,)).fetchone()[0]
     con.close()
     print("\n" + "  ".join(f"{k}={v}" for k, v in sorted(counts.items())))

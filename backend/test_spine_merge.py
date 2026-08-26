@@ -66,11 +66,19 @@ class ColumnDiscoveryTests(unittest.TestCase):
         whether the merge should reach it; a repair that silently stops covering a new
         table is the defect being fixed here.
 
-        Measured 2026-08-24: prod has 14 and dev has 15. Dev alone carries
+        Measured 2026-08-24: prod had 14 and dev 15. Dev alone carries
         `nfl_published_fantasy_points.player_id`, so a repair verified on dev touches a
         table prod does not have, and one verified on prod has never exercised that
-        column. That asymmetry is recorded here rather than averaged away."""
-        expected = {"picks.db": 14, "picks.dev.db": 15}
+        column. That asymmetry is recorded here rather than averaged away.
+
+        2026-08-26, +1 each: `player_game_logs_fotmob.player_id`. FotMob moved to its
+        own table so `player_game_logs` could go back to one row per appearance, and
+        this gate is what forced the question it exists to force -- should the merge
+        reach it? Yes. Its rows are keyed to the same spine by an accent-folded name,
+        and a merge that skipped them would strand every FotMob appearance on a
+        player_id nothing points at any more. `referencing_columns` finds it without a
+        change, because it discovers columns rather than reading a list."""
+        expected = {"picks.db": 15, "picks.dev.db": 16}
         for name, count in expected.items():
             path = os.path.join(HERE, "data", name)
             if not os.path.isfile(path):
