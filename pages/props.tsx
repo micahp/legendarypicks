@@ -826,12 +826,32 @@ export default function PropsPage() {
   const today = new Date().toLocaleDateString('en-CA')
   const [date, setDate] = useState<string>(today)
   const isToday = date === today
+  // The dates the SELECTED league actually has a slate on. Walking raw calendar
+  // days stepped onto dates that league never plays -- pick MLS and press ‹ and
+  // you land on an empty board that looks like a data gap. Empty until the slate
+  // summary answers, and then navigation moves between real slates only.
+  const [slateDates, setSlateDates] = useState<string[]>([])
+
   const shiftDay = (delta: number) => {
-    const d = new Date(date + 'T12:00:00')   // noon-anchored to dodge TZ rollover
-    d.setDate(d.getDate() + delta)
-    setDate(d.toLocaleDateString('en-CA'))
+    if (!slateDates.length) return
+    const at = slateDates.indexOf(date)
+    if (at === -1) {
+      // Deep-linked to a date off this league's slate: step to the nearest one
+      // in the direction asked rather than refusing.
+      const forward = slateDates.find(d => d > date)
+      const back = [...slateDates].reverse().find(d => d < date)
+      const target = delta > 0 ? (forward ?? back) : (back ?? forward)
+      if (target) setDate(target)
+      return
+    }
+    const next = slateDates[at + delta]
+    if (next) setDate(next)
   }
-  const goToday = () => setDate(today)
+
+  const atFirstSlate = !slateDates.length || date <= slateDates[0]
+  const atLastSlate = !slateDates.length || date >= slateDates[slateDates.length - 1]
+  const goToday = () => setDate(
+    slateDates.includes(today) ? today : (slateDates.find(d => d >= today) ?? today))
 
   // allow deep-linkable date via ?date=YYYY-MM-DD and tab via ?tab=<key>
   useEffect(() => {
@@ -846,7 +866,9 @@ export default function PropsPage() {
   // the league pill changes so a future WC/UFC slate is not hidden behind another league's date.
   // Explicit ?date= deep links always win.
   useEffect(() => {
-    if (new URLSearchParams(window.location.search).get('date')) return
+    // A deep link fixes the DATE, but the slate list is still needed or the
+    // arrows would have nothing to step through.
+    const deepLinked = !!new URLSearchParams(window.location.search).get('date')
     const params = new URLSearchParams()
     // Date discovery only needs game summaries. Pulling every nested prop here
     // duplicated the full slate payload before either tab rendered it.
@@ -856,6 +878,8 @@ export default function PropsPage() {
       .then(r => r.json())
       .then((games: SlateGame[]) => {
         const dates = Array.from(new Set(games.map(g => g.date))).sort()
+        setSlateDates(dates)
+        if (deepLinked) return
         if (dates.length) setDate(dates.includes(today) ? today : dates[0])
       })
       .catch(() => {})
@@ -890,11 +914,15 @@ export default function PropsPage() {
         {/* Date navigator — only on date-scoped tabs */}
         {showDateNav && (
           <div className="flex items-center justify-center gap-2 sm:gap-3">
+            {/* Disabled at the ends of THIS league's slate. An arrow that
+                silently does nothing reads as a broken button; a disabled one
+                says the slate stops here. */}
             <button
               type="button"
               onClick={() => shiftDay(-1)}
-              aria-label="Previous day"
-              className="flex items-center justify-center w-10 h-10 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-300 text-xl leading-none hover:bg-zinc-800 active:scale-95"
+              disabled={atFirstSlate}
+              aria-label="Previous slate date"
+              className="flex items-center justify-center w-10 h-10 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-300 text-xl leading-none transition-colors enabled:hover:bg-zinc-800 enabled:active:scale-95 disabled:cursor-not-allowed disabled:border-zinc-900 disabled:text-zinc-700"
             >
               ‹
             </button>
@@ -911,8 +939,9 @@ export default function PropsPage() {
             <button
               type="button"
               onClick={() => shiftDay(1)}
-              aria-label="Next day"
-              className="flex items-center justify-center w-10 h-10 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-300 text-xl leading-none hover:bg-zinc-800 active:scale-95"
+              disabled={atLastSlate}
+              aria-label="Next slate date"
+              className="flex items-center justify-center w-10 h-10 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-300 text-xl leading-none transition-colors enabled:hover:bg-zinc-800 enabled:active:scale-95 disabled:cursor-not-allowed disabled:border-zinc-900 disabled:text-zinc-700"
             >
               ›
             </button>
