@@ -38,7 +38,21 @@ _MARKET_STAT_KEY = {
            "shots_on_target": "sot", "shots_on_goal": "sot"},
     # MLS game logs store the same soccer stat shape as WC (goals/assists/shots/sot)
     "mls": {"goals": "goals", "assists": "assists", "shots": "shots",
-            "shots_on_target": "sot", "shots_on_goal": "sot"},
+            "shots_on_target": "sot", "shots_on_goal": "sot",
+            # 1,169 MLS first-goal props sat on the board with no entry here at
+            # all, which reads identically to "not chartable". `first_goal` is
+            # written per appearance on 4,516 MLS rows.
+            "first_goal_scorer": "first_goal",
+            # Both already stored for MLS and both already mapped for lcup and
+            # ligamx; this map had simply never been extended past the five
+            # markets it launched with. goal_or_assist is COMPOUND -- the chart
+            # sums the fields -- so it needs no stored column.
+            "goal_or_assist": ["goals", "assists"],
+            "fouls_committed": "fouls_committed"},
+            # tackles is deliberately NOT here: ESPN's shallow MLS ingest does
+            # not publish it and FotMob has only been run for ligamx and lcup,
+            # so MLS holds 0 rows carrying it. Mapping it would chart an empty
+            # series as though the market were answerable.
     # Leagues Cup. The stat keys are the ones ingest_soccer_logs actually writes
     # (see _STAT_ORDER), verified against real lcup rows rather than assumed.
     # `goal_or_assist` is a COMPOUND market: the chart sums the listed fields, so
@@ -55,8 +69,20 @@ _MARKET_STAT_KEY = {
     #
     # dribbles stays None because it is genuinely absent: the core api publishes
     # groundDuels and duelWinPct, which are NOT take-ons and must not stand in
-    # for them. first_goal_scorer stays None because it is an ORDER market and
-    # no per-game stat answers it.
+    # for them.
+    #
+    # CORRECTED 2026-08-26: first_goal_scorer was None on the reasoning that it
+    # is an ORDER market that no per-game stat answers. The ingest writes exactly
+    # that stat -- `first_goal`, 1 when the player scored the opener and 0 when
+    # he played and did not, derived from the published keyEvents -- so the
+    # question was already answerable from the logs we hold. The claim described
+    # the market rather than the stored row. It cost 1,249 board rows: 80 Liga MX
+    # and 1,169 MLS first-goal props all rendered "No history", which is what a
+    # market absent from this map looks like on the props tab.
+    #
+    # An absence still charts as no data rather than as a 0: a player who did not
+    # appear has no row, and _PLAYED already drops the appearances=0 rows, so a
+    # DNP never reads as "did not score first".
     # `/api/props` returns the PLAYER's league, so a Leagues Cup prop on a Liga
     # MX athlete asks the chart for `ligamx`, not `lcup`. There was no ligamx
     # entry at all, so every one of those rows answered "market not chartable"
@@ -84,7 +110,7 @@ _MARKET_STAT_KEY = {
              "shots_assisted": "chances_created",
              "chances_created": "chances_created",
              "interceptions": "interceptions",
-             "first_goal_scorer": None},
+             "first_goal_scorer": "first_goal"},
     "lcup": {"goals": "goals", "assists": "assists", "shots": "shots",
              "shots_on_target": "sot", "shots_on_goal": "sot",
              "goal_or_assist": ["goals", "assists"],
@@ -106,7 +132,7 @@ _MARKET_STAT_KEY = {
              "shots_assisted": "chances_created",
              "chances_created": "chances_created",
              "interceptions": "interceptions",
-             "first_goal_scorer": None},
+             "first_goal_scorer": "first_goal"},
     # fight_time (minutes, from round+clock at the ESPN status endpoint -- see
     # ingest_ufc_fight_stats.py) now backfillable same as significant_strikes.
     # finishes/win_by_ko/win_by_submission are win-by-method yes/no props, same
