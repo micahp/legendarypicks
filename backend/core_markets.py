@@ -30,10 +30,28 @@ _MARKET_STAT_KEY = {
             "points_rebounds_assists": "PRA", "pra": "PRA"},
     "nhl": {"goals": "goals", "assists": "assists", "points": "points",
             "shots": "shots", "shots_on_goal": "shots"},
-    "nfl": {"passing_yards": "passing_yards", "rushing_yards": "rushing_yards",
-            "receiving_yards": "receiving_yards", "receptions": "receptions",
-            "passing_tds": "passing_tds", "rushing_tds": "rushing_tds",
-            "receiving_tds": "receiving_tds", "interceptions": "interceptions"},
+    # CORRECTED 2026-08-26: every key here named a field that does not exist.
+    # The map said `receiving_yards -> receiving_yards`; NFL logs are written by
+    # `nflverse_weekly` and store `rec_yds`. All eight markets resolved to 0 rows,
+    # so the ENTIRE NFL board charted nothing -- 0 of 488 player/market combos --
+    # while 24,996 log rows sat there and 192 of 213 players with props had them.
+    # Same defect as the Liga MX one fixed today: a map naming a key the store
+    # does not use. Measured before mapping, not assumed: pass_yds 1,396,
+    # rush_yds 4,713, rec_yds 8,987, rec 8,987, pass_td 1,396, rush_td 4,713,
+    # rec_td 8,987, intc 1,396 -- against 0 for every name replaced.
+    "nfl": {"passing_yards": "pass_yds", "rushing_yards": "rush_yds",
+            "receiving_yards": "rec_yds", "receptions": "rec",
+            "passing_tds": "pass_td", "rushing_tds": "rush_td",
+            "receiving_tds": "rec_td", "interceptions": "intc",
+            # Compounds the board prices and the logs can already answer. The
+            # chart sums the listed fields, so these need no stored column.
+            "total_touchdowns": ["rush_td", "rec_td"],
+            "passing_rushing_yards": ["pass_yds", "rush_yds"],
+            "rushing_receiving_yards": ["rush_yds", "rec_yds"],
+            # Deliberately NOT mapped: field_goals_made. nflverse_weekly holds no
+            # kicking fields at all, so mapping it would draw an empty series as
+            # though the market were answerable.
+            "carries": "carries", "targets": "targets"},
     "wc": {"goals": "goals", "assists": "assists", "shots": "shots",
            "shots_on_target": "sot", "shots_on_goal": "sot"},
     # MLS game logs store the same soccer stat shape as WC (goals/assists/shots/sot)

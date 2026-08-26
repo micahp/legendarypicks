@@ -570,6 +570,109 @@ class TheMlsMapCoversWhatMlsLogsAnswer(unittest.TestCase):
                              market)
 
 
+class TheNflMapNamesKeysTheNflLogsActuallyHold(unittest.TestCase):
+    """Every NFL market pointed at a field that does not exist.
+
+    The map said `receiving_yards -> receiving_yards`. NFL logs are written by
+    `nflverse_weekly`, which stores `rec_yds`. All eight markets resolved to 0
+    rows, so the entire NFL board charted nothing -- 0 of 488 player/market
+    combos -- while 24,996 log rows sat there and 192 of 213 players with props
+    had them.
+
+    This test asserts the map against the STORED vocabulary rather than against
+    itself, because a map that names its own keys is consistent and useless.
+    """
+
+    @classmethod
+    def tearDownClass(cls):
+        try:
+            os.unlink(_IMPORT_DB.name)
+        except FileNotFoundError:
+            pass
+
+    def setUp(self):
+        handle = tempfile.NamedTemporaryFile(
+            prefix="nfl-map-", suffix=".db", delete=False)
+        self.path = handle.name
+        handle.close()
+        self.addCleanup(
+            lambda: os.path.exists(self.path) and os.unlink(self.path))
+        con = sqlite3.connect(self.path)
+        con.executescript("""
+            CREATE TABLE players(id INTEGER PRIMARY KEY, name TEXT, team TEXT,
+                                 league TEXT, position TEXT);
+            CREATE TABLE player_game_logs(
+              id INTEGER PRIMARY KEY AUTOINCREMENT, player_id INTEGER,
+              league TEXT, season INTEGER, stats TEXT, game_date TEXT,
+              opponent TEXT, home_away TEXT, game_no INTEGER, game_type TEXT,
+              source TEXT);
+        """)
+        _provider_tables(con)
+        con.execute("INSERT INTO players VALUES(1,'Receiver','KC','nfl','WR')")
+        # The real nflverse_weekly vocabulary, not the map's names.
+        rows = [
+            (1, "nfl", 2026, json.dumps({"rec_yds": 92, "rec": 7, "rec_td": 1,
+                                         "rush_yds": 8, "rush_td": 0}),
+             "2026-09-14", "LV", "home", 2, "REG", "nflverse_weekly"),
+            (1, "nfl", 2026, json.dumps({"rec_yds": 41, "rec": 3, "rec_td": 0,
+                                         "rush_yds": 2, "rush_td": 1}),
+             "2026-09-07", "DEN", "away", 1, "REG", "nflverse_weekly"),
+        ]
+        con.executemany(
+            "INSERT INTO player_game_logs(player_id, league, season, stats,"
+            " game_date, opponent, home_away, game_no, game_type, source)"
+            " VALUES(?,?,?,?,?,?,?,?,?,?)", rows)
+        con.commit()
+        con.close()
+
+        def connection():
+            c = sqlite3.connect(self.path)
+            c.row_factory = sqlite3.Row
+            return c
+
+        patcher = mock.patch.object(props, "_db", side_effect=connection)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def test_receiving_yards_charts(self):
+        result = props.prop_history(
+            player_id=1, market="receiving_yards", line=60.5, side="over",
+            league="nfl")
+        self.assertNotIn("error", result)
+        self.assertEqual([g["value"] for g in result["games"]], [92.0, 41.0])
+
+    def test_receptions_and_tds_chart(self):
+        for market, expected in (("receptions", [7.0, 3.0]),
+                                 ("receiving_tds", [1.0, 0.0])):
+            result = props.prop_history(
+                player_id=1, market=market, line=0.5, side="over", league="nfl")
+            self.assertEqual([g["value"] for g in result["games"]], expected,
+                             market)
+
+    def test_total_touchdowns_sums_rush_and_receiving(self):
+        result = props.prop_history(
+            player_id=1, market="total_touchdowns", line=0.5, side="over",
+            league="nfl")
+        self.assertEqual([g["value"] for g in result["games"]], [1.0, 1.0])
+
+    def test_every_mapped_nfl_key_exists_in_the_stored_vocabulary(self):
+        """The guard that would have caught this on the day it was written."""
+        import core_markets
+        stored = {"pass_yds", "rush_yds", "rec_yds", "rec", "pass_td",
+                  "rush_td", "rec_td", "intc", "carries", "targets",
+                  "fpts", "fpts_ppr", "att", "cmp"}
+        for market, key in core_markets._MARKET_STAT_KEY["nfl"].items():
+            for one in (key if isinstance(key, list) else [key]):
+                self.assertIn(one, stored, f"{market} -> {one}")
+
+    def test_field_goals_made_stays_unmapped(self):
+        """nflverse_weekly holds no kicking fields, so mapping it would draw an
+        empty series as though the market were answerable."""
+        import core_markets
+        self.assertNotIn("field_goals_made",
+                         core_markets._MARKET_STAT_KEY["nfl"])
+
+
 class OneRowPerAppearance(unittest.TestCase):
     """Providers keep separate rows; the READER picks one.
 
