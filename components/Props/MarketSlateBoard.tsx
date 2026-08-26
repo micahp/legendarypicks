@@ -484,7 +484,7 @@ export default function MarketSlateBoard({ league, date }: { league: string; dat
             ['edge', 'Edge'],
             ['line', 'Line'],
           ] as [SortKey, string][]).map(([key, label]) => (
-            <span key={key} className="relative inline-flex items-center">
+            <span key={key} className="inline-flex items-center">
               <button
                 type="button"
                 onClick={() => chooseSort(key)}
@@ -495,47 +495,46 @@ export default function MarketSlateBoard({ league, date }: { league: string; dat
               >
                 {label}{sortKey === key ? (sortDirection === 'desc' ? ' ↓' : ' ↑') : ''}
               </button>
-              {/* Nobody arrives knowing this metric, so it needs an explanation --
-                  but a HOVER tooltip would hide it from every phone, which is most
-                  of this board's traffic. A tap/click target works on both input
-                  models. It sits beside the word it explains rather than under the
-                  row, and it is not an asterisk: an asterisk promises a footnote
-                  somewhere else on the page. */}
-              {key === 'confidence' && (
-                <button
-                  type="button"
-                  aria-label="What Confidence means"
-                  aria-expanded={helpOpen}
-                  onClick={() => setHelpOpen(open => !open)}
-                  className="ml-1 grid h-4 w-4 place-items-center rounded-full border border-zinc-700 text-[9px] leading-none text-zinc-500 hover:border-zinc-500 hover:text-zinc-300"
-                >
-                  i
-                </button>
-              )}
-              {key === 'confidence' && helpOpen && (
-                <div
-                  role="dialog"
-                  aria-label="About Confidence"
-                  className="absolute left-0 top-full z-20 mt-1.5 w-72 rounded-lg border border-zinc-700 bg-zinc-900 p-3 text-xs leading-relaxed text-zinc-400 shadow-xl"
-                >
-                  <p>
-                    <span className="text-zinc-200">Confidence</span> ranks by the hit
-                    rate a record can actually support, not the rate it happens to
-                    show. A player who is 3-for-3 has too few games to prove much, so
-                    he sits below someone at 58% over 48 games. The more games behind
-                    a rate, the closer this gets to the rate itself.
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => setHelpOpen(false)}
-                    className="mt-2 text-[11px] text-zinc-500 hover:text-zinc-300"
-                  >
-                    Got it
-                  </button>
-                </div>
-              )}
             </span>
           ))}
+          {/* Anchored at the END of the controls rather than mid-row beside its
+              own button, where it broke the rhythm of the group. Still a tap
+              target, not a hover tooltip: hover does not exist on touch and
+              this board is read on phones. The panel opens right-aligned so it
+              cannot push the layout sideways on a narrow screen. */}
+          <span className="relative ml-auto inline-flex items-center">
+            <button
+              type="button"
+              aria-label="What Confidence means"
+              aria-expanded={helpOpen}
+              onClick={() => setHelpOpen(open => !open)}
+              className="grid h-5 w-5 place-items-center rounded-full border border-zinc-700 text-[10px] leading-none text-zinc-500 transition-colors hover:border-zinc-500 hover:text-zinc-300"
+            >
+              i
+            </button>
+            {helpOpen && (
+              <div
+                role="dialog"
+                aria-label="About Confidence"
+                className="absolute right-0 top-full z-20 mt-1.5 w-72 rounded-lg border border-zinc-700 bg-zinc-900 p-3 text-xs leading-relaxed text-zinc-400 shadow-xl"
+              >
+                <p>
+                  <span className="text-zinc-200">Confidence</span> ranks by the hit
+                  rate a record can actually support, not the rate it happens to
+                  show. A player who is 3-for-3 has too few games to prove much, so
+                  he sits below someone at 58% over 48 games. The more games behind
+                  a rate, the closer this gets to the rate itself.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setHelpOpen(false)}
+                  className="mt-2 text-[11px] text-zinc-500 hover:text-zinc-300"
+                >
+                  Got it
+                </button>
+              </div>
+            )}
+          </span>
         </div>
       </div>
 
