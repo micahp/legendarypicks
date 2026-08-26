@@ -1,0 +1,15 @@
+[Unit]
+Description=Daily NFL refresh (ADP + transactions), DEV then PROD
+
+[Timer]
+# ABSOLUTE, never OnBootSec + OnUnitActiveSec: a monotonic timer whose reference
+# activation systemd has forgotten reports enabled+active with no next elapse and
+# never says so (CONTEXT-2026-08-24 §2, three days of stale Bovada props).
+#
+# 04:10 is where the first of the four replaced timers fired. The other three
+# (04:15/04:20/04:25) are now sequential steps inside the one job.
+OnCalendar=*-*-* 04:10:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target

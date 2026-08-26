@@ -1,0 +1,10 @@
+[Unit]
+Description=Refresh NFL transactions ticker once daily — PROD
+
+[Timer]
+OnCalendar=*-*-* 04:25:00
+Persistent=true
+Unit=legendarypicks-nfl-transactions-prod.service
+
+[Install]
+WantedBy=timers.target
