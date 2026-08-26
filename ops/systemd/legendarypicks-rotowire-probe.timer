@@ -1,0 +1,14 @@
+[Unit]
+Description=Check for a PrizePicks MLS board — only inside the pre-lock window, and only a few times
+
+[Timer]
+# Every 6 hours. The unit itself makes NO request unless an MLS kickoff is within 48h,
+# so a normal week is a handful of calls, clustered where a board can actually exist.
+# The relay is free and ~2MB uncompressed; hourly polling of someone else's gift is not
+# a measurement strategy, it is a cost we push onto them.
+OnCalendar=*-*-* 00,06,12,18:07:00
+RandomizedDelaySec=900
+Persistent=true
+
+[Install]
+WantedBy=timers.target

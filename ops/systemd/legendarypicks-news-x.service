@@ -1,12 +1,33 @@
 [Unit]
-Description=League news — X timelines only (fast lane, dev DB)
+# Replaces legendarypicks-news-x{,-prod}: one script, two databases, two
+# schedules (0/2:15 dev / 0/2:45 prod). The duplication was per ENVIRONMENT.
+#
+# Separate from legendarypicks-news on purpose: this is the fast lane,
+# `ingest_league_news.py --x-only`, every two hours. The daily job does the
+# narrative and topic work that must not run twelve times a day.
+Description=League news, X timelines only (fast lane), DEV then PROD
 After=network-online.target
 Wants=network-online.target
+OnFailure=legendarypicks-ops-alert@%N.service
 
 [Service]
 Type=oneshot
 WorkingDirectory=/root/legendarypicks/backend
-Environment=LP_DB_PATH=/root/legendarypicks/backend/data/picks.dev.db
-ExecStart=/root/legendarypicks/scripts/news-x-collect.sh
-TimeoutStartSec=600
 Nice=10
+# One ExecStart so a DEV failure cannot cancel PROD; fails if EITHER failed.
+ExecStart=/bin/sh -c '\
+  rc=0; \
+  echo "=== DEV ==="; \
+  LP_DB_PATH=/root/legendarypicks/backend/data/picks.dev.db \
+  LP_STEP_LABEL=DEV \
+  /root/legendarypicks/scripts/news-x-collect.sh || rc=$?; \
+  echo "=== PROD ==="; \
+  LP_DB_PATH=/root/legendarypicks/backend/data/picks.db \
+  LP_NEWS_LOG=/var/log/legendarypicks-news-prod.log \
+  LP_STEP_LABEL=PROD \
+  /root/legendarypicks/scripts/news-x-collect.sh || rc=$?; \
+  exit $rc'
+# Old budgets were 600s dev and 900s prod. X is the slow path when handles time
+# out: news-lib.sh records a worst case near 1100s for 17 handles, so keep the
+# generous prod budget for both and add margin.
+TimeoutStartSec=2100
