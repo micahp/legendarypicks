@@ -73,8 +73,8 @@ describe('PropChart venue handling', () => {
       { date: '2026-07-22', value: 18, opponent: 'AWY', home: false, hit: false },
     ])} />)
     const fills = Array.from(container.querySelectorAll('rect')).map(r => r.getAttribute('fill'))
-    expect(fills).toContain('#4ade80')
-    expect(fills).toContain('#f87171')
+    expect(fills).toContain('#34d399')   // our emerald-400
+    expect(fills).toContain('#f87171')   // our red-400, same weight
   })
 
   it('prints the average of the games actually drawn', () => {

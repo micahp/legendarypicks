@@ -195,7 +195,11 @@ export default function PropChart({ data, window: initialWindow = 'l10' }: { dat
           {/* Bars only. A miss is RED, not a dimmed green: at a glance the
               question is hit-or-miss, and two shades of one hue answer it more
               slowly than two hues. The dashed rule is the line itself, labelled
-              at the right where it ends. */}
+              at the right where it ends.
+              #34d399 / #f87171 are OUR emerald-400 and red-400 -- the same pair
+              the hit-rate headline above already uses. The reference's neon
+              green is not copied: matching a competitor's layout is not a
+              reason to adopt their palette. */}
           <div className="overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" style={{ maxWidth: '100%' }}>
             <div style={{ minWidth: chartW + 26 }}>
               <svg width={chartW + 26} height={chartH + padTop + 6} className="block">
@@ -210,7 +214,7 @@ export default function PropChart({ data, window: initialWindow = 'l10' }: { dat
                   const hit = isHit(g.value)
                   return (
                     <rect key={i} x={x} y={barY} width={barW} height={barH}
-                          rx={6} ry={6} fill={hit ? '#4ade80' : '#f87171'} />
+                          rx={6} ry={6} fill={hit ? '#34d399' : '#f87171'} />
                   )
                 })}
                 {/* Baseline the bars stand on. */}
