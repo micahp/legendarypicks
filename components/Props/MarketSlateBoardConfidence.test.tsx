@@ -107,11 +107,13 @@ describe('confidence sorts by the rate a record can support', () => {
     expect(shown).toContain('52')
   })
 
-  it('closes again, and sits beside the label it explains', async () => {
+  it('closes again, and sits at the end of the sort controls', async () => {
     render(<MarketSlateBoard league="ligamx" date="2026-08-26" />)
     await order()
     const info = screen.getByLabelText('What Confidence means')
-    expect(info.previousElementSibling?.textContent).toContain('Confidence')
+    // Last child of the sort group, not wedged between two sort buttons.
+    const group = document.querySelector('[aria-label="Sort prop board"]')!
+    expect(group.lastElementChild!.contains(info)).toBe(true)
     fireEvent.click(info)
     fireEvent.click(screen.getByText('Got it'))
     expect(screen.queryByText(/can actually support/)).toBeNull()
