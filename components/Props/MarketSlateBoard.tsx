@@ -218,6 +218,7 @@ export default function MarketSlateBoard({ league, date }: { league: string; dat
   const [loadedMarket, setLoadedMarket] = useState('')
   const [selectedMarket, setSelectedMarket] = useState('')
   const [sortKey, setSortKey] = useState<SortKey>('hit-rate')
+  const [helpOpen, setHelpOpen] = useState(false)
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -472,19 +473,6 @@ export default function MarketSlateBoard({ league, date }: { league: string; dat
             </button>
           ))}
         </div>
-        {/* Confidence is not a metric anyone arrives already knowing, and an
-            unexplained ranking is one the reader invents a meaning for. Shown
-            only while it is the active sort, so it teaches at the moment it
-            matters instead of adding permanent chrome. */}
-        {sortKey === 'confidence' && (
-          <p className="mt-2 text-xs leading-relaxed text-zinc-500">
-            <span className="text-zinc-400">Confidence</span> ranks by the hit rate a
-            record can actually support, not the rate it happens to show. A player who
-            is 3-for-3 has too few games to prove much, so he sits below someone at 58%
-            over 48 games. The more games behind a rate, the closer this gets to the
-            rate itself.
-          </p>
-        )}
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -496,17 +484,57 @@ export default function MarketSlateBoard({ league, date }: { league: string; dat
             ['edge', 'Edge'],
             ['line', 'Line'],
           ] as [SortKey, string][]).map(([key, label]) => (
-            <button
-              key={key}
-              type="button"
-              onClick={() => chooseSort(key)}
-              aria-pressed={sortKey === key}
-              className={`rounded-md px-2.5 py-1.5 text-xs transition-colors ${
-                sortKey === key ? 'bg-zinc-700 text-zinc-100' : 'bg-zinc-900 text-zinc-500 hover:text-zinc-300'
-              }`}
-            >
-              {label}{sortKey === key ? (sortDirection === 'desc' ? ' ↓' : ' ↑') : ''}
-            </button>
+            <span key={key} className="relative inline-flex items-center">
+              <button
+                type="button"
+                onClick={() => chooseSort(key)}
+                aria-pressed={sortKey === key}
+                className={`rounded-md px-2.5 py-1.5 text-xs transition-colors ${
+                  sortKey === key ? 'bg-zinc-700 text-zinc-100' : 'bg-zinc-900 text-zinc-500 hover:text-zinc-300'
+                }`}
+              >
+                {label}{sortKey === key ? (sortDirection === 'desc' ? ' ↓' : ' ↑') : ''}
+              </button>
+              {/* Nobody arrives knowing this metric, so it needs an explanation --
+                  but a HOVER tooltip would hide it from every phone, which is most
+                  of this board's traffic. A tap/click target works on both input
+                  models. It sits beside the word it explains rather than under the
+                  row, and it is not an asterisk: an asterisk promises a footnote
+                  somewhere else on the page. */}
+              {key === 'confidence' && (
+                <button
+                  type="button"
+                  aria-label="What Confidence means"
+                  aria-expanded={helpOpen}
+                  onClick={() => setHelpOpen(open => !open)}
+                  className="ml-1 grid h-4 w-4 place-items-center rounded-full border border-zinc-700 text-[9px] leading-none text-zinc-500 hover:border-zinc-500 hover:text-zinc-300"
+                >
+                  i
+                </button>
+              )}
+              {key === 'confidence' && helpOpen && (
+                <div
+                  role="dialog"
+                  aria-label="About Confidence"
+                  className="absolute left-0 top-full z-20 mt-1.5 w-72 rounded-lg border border-zinc-700 bg-zinc-900 p-3 text-xs leading-relaxed text-zinc-400 shadow-xl"
+                >
+                  <p>
+                    <span className="text-zinc-200">Confidence</span> ranks by the hit
+                    rate a record can actually support, not the rate it happens to
+                    show. A player who is 3-for-3 has too few games to prove much, so
+                    he sits below someone at 58% over 48 games. The more games behind
+                    a rate, the closer this gets to the rate itself.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setHelpOpen(false)}
+                    className="mt-2 text-[11px] text-zinc-500 hover:text-zinc-300"
+                  >
+                    Got it
+                  </button>
+                </div>
+              )}
+            </span>
           ))}
         </div>
       </div>

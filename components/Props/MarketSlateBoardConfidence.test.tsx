@@ -77,11 +77,24 @@ describe('confidence sorts by the rate a record can support', () => {
     expect((await order())[0]).toBe('Thin Perfect')
   })
 
-  it('explains itself only while it is the active sort', async () => {
+  it('explains itself on tap, not on hover', async () => {
+    // A hover tooltip would hide this from every phone. The affordance is a
+    // real tap target, and it is reachable WITHOUT first choosing the sort --
+    // a reader should be able to find out what it means before committing.
     render(<MarketSlateBoard league="ligamx" date="2026-08-26" />)
     await order()
     expect(screen.queryByText(/can actually support/)).toBeNull()
-    fireEvent.click(screen.getByText('Confidence'))
+    fireEvent.click(screen.getByLabelText('What Confidence means'))
     expect(screen.getByText(/can actually support/)).toBeTruthy()
+  })
+
+  it('closes again, and sits beside the label it explains', async () => {
+    render(<MarketSlateBoard league="ligamx" date="2026-08-26" />)
+    await order()
+    const info = screen.getByLabelText('What Confidence means')
+    expect(info.previousElementSibling?.textContent).toContain('Confidence')
+    fireEvent.click(info)
+    fireEvent.click(screen.getByText('Got it'))
+    expect(screen.queryByText(/can actually support/)).toBeNull()
   })
 })
