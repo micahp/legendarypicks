@@ -254,7 +254,7 @@ Rollup verified by independent recompute from raw logs (Messi 29/16/157/71,
 
 | missing | in the logs? | note |
 |---|---|---|
-| **saves / goalsConceded / shotsFaced (GK)** | **yes — published, unmapped** | the summary publishes them per keeper (measured event 727308: Pantemis saves=2); `ingest_soccer_logs` maps only goals/assists/shots/sot. GK-saves gap flagged in MANIFEST. Needs a position-G mapping + `position_group` on log rows |
+| **saves / goalsConceded / shotsFaced (GK)** | **CLOSED 2026-08-26 — mapped and ingested** | was recorded here as "published, unmapped" on the basis that `ingest_soccer_logs` mapped only goals/assists/shots/sot. It maps all three now (`_STAT_KEYS`: `sv`/`saves`/`save`, `shf`/`shotsfaced`, `ga`/`goalsconceded`) and the rows carry them: mls 4,516 saves of 21,177 rows, lcup 1,759 of 3,453, ligamx 1,501 of 2,864 — the ratios are keepers over outfielders, not partial coverage. No `position_group` column was needed. What remained missing until 2026-08-26 was the READ side: `saves` was absent from the mls entry in `core_markets._MARKET_STAT_KEY`, so 86 priced MLS saves props charted "No history" against logs that held the answer |
 | **xG / xA / possession-adjacent player stats** | **no** | ESPN's soccer feed does not publish player xG in the summary line |
 | shots_on_target / possession / corners **team** stats | **no** | soccer-native team stat columns have no schema column yet; `team_game_stats` holds shots + blocked_shots only |
 | **draws on the standings surface** | yes (256 draws in results) | `/api/mls/standings` returns W/L/win_pct with no draws field, and the UI renders the generic W-L table for mls (the soccer P W D L table only renders for `isWorldCup`). **Open gap — MLS is paused with this unfixed** |

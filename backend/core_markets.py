@@ -61,10 +61,21 @@ _MARKET_STAT_KEY = {
             # 21 kambi rows answer "not chartable" while identical rows from
             # another book chart.
             "sot": "sot"},
-            # tackles is deliberately NOT here: ESPN's shallow MLS ingest does
-            # not publish it and FotMob has only been run for ligamx and lcup,
-            # so MLS holds 0 rows carrying it. Mapping it would chart an empty
+            # tackles is deliberately NOT here, and the reason is about LOGS,
+            # not about markets. This map resolves a market to a field in
+            # player_game_logs, and MLS holds 0 rows carrying `tackles`:
+            # ESPN's shallow ingest does not publish it and FotMob has only
+            # been run for ligamx and lcup. Mapping it would chart an empty
             # series as though the market were answerable.
+            #
+            # CORRECTED 2026-08-26: an earlier version of this note called
+            # these "FotMob-only" fields. That is false about PUBLISHERS. Eight
+            # days of the RotoWire relay archive (backend/data/rotowire-archive,
+            # 08-19..08-26, 979 soccer props) price Tackles 18, Clearances 50,
+            # Chances Created 57, Crosses 17 and Passes Attempted 283. What
+            # RotoWire does not give is game LOGS -- it is a props relay -- so
+            # the map still cannot read them, but "no one publishes this" was
+            # never the reason and should not be written as though it were.
     # Leagues Cup. The stat keys are the ones ingest_soccer_logs actually writes
     # (see _STAT_ORDER), verified against real lcup rows rather than assumed.
     # `goal_or_assist` is a COMPOUND market: the chart sums the listed fields, so

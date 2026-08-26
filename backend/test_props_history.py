@@ -453,8 +453,15 @@ class TheMlsMapCoversWhatMlsLogsAnswer(unittest.TestCase):
     Measured on the dev board, mls markets with no map entry: passes_attempted
     226, saves 86, tackles 74, card_shown 54, chances_created 42, clearances
     41, sot 21, crosses 19, shots_assisted 1. Only saves, card_shown and sot
-    are answerable from mls logs; the rest are FotMob-only fields and FotMob
-    has never been run for mls.
+    are answerable from mls LOGS; FotMob is the only log source we have for the
+    rest and it has never been run for mls.
+
+    CORRECTED 2026-08-26: this said "the rest are FotMob-only fields", which is
+    false about publishers. The RotoWire relay prices Tackles, Clearances,
+    Chances Created, Crosses and Passes Attempted for soccer -- 8 days of its
+    archive carry all five. It publishes no game logs, so the map still cannot
+    read them, but the reason is our log coverage and not the market's
+    existence.
     """
 
     @classmethod
