@@ -186,40 +186,34 @@ def resolve(index, name):
     return matches[0] if len(matches) == 1 else None
 
 
-def upsert(con, league, season, player, match_id, date, line, dry_run):
-    """Merge into this appearance's existing row, or insert a new one.
+def upsert(con, league, season, player, match_id, date, line, dry_run,
+           fotmob_id=None):
+    """Write FotMob's own row. Providers are NOT merged into one another.
 
-    (player_id, game_date) identifies an appearance: a player plays at most one
-    match a day. Existing keys are never overwritten -- whoever wrote a value
-    first stays the source of record for it -- so this only ever ADDS the fields
-    ESPN's surface does not carry.
+    This used to merge into the ESPN row for the same (player_id, game_date),
+    one row per appearance. That produced a row stamped `source='espn'` carrying
+    FotMob-sourced tackles: the column named the row's creator, not each field's
+    origin, and an audit of it would conclude ESPN publishes tackles. Reverted
+    by scripts_unmerge_fotmob.py -- 2,609 rows on dev, 1,790 on prod.
+
+    Each provider now owns its rows and nothing edits another's. The cost is
+    that one appearance can have two rows, so every READER must pick a source
+    rather than counting rows; see `_PROVIDER_RANK` in routers/props.py.
     """
     player_id = player["id"] if player else None
-    existing = None
-    if player_id is not None:
-        existing = con.execute(
-            "SELECT id, stats FROM player_game_logs "
-            "WHERE player_id=? AND game_date=? LIMIT 1",
-            (player_id, date)).fetchone()
-
-    if existing:
-        stored = json.loads(existing[1] or "{}")
-        added = {k: v for k, v in line.items() if k not in stored}
-        if not added or dry_run:
-            return "merged" if added else "unchanged"
-        stored.update(added)
-        con.execute("UPDATE player_game_logs SET stats=? WHERE id=?",
-                    (json.dumps(stored), existing[0]))
-        return "merged"
-
     if dry_run:
         return "inserted"
     con.execute(
         "INSERT OR IGNORE INTO player_game_logs"
         "(player_id, league, season, game_no, game_id, game_date, stats,"
         " source, source_player_key) VALUES(?,?,?,?,?,?,?,?,?)",
+        # source_player_key must identify the PLAYER, not the fixture. It was
+        # `fotmob-{match}-{team}` -- the same string for all eleven players on a
+        # side -- so UNIQUE(league, source_player_key, season, game_no) allowed
+        # ONE row per team per match and INSERT OR IGNORE silently dropped the
+        # rest: a run reporting 795 inserts wrote 131.
         (player_id, league, season, f"fotmob-{match_id}", str(match_id), date,
-         json.dumps(line), "fotmob", f"fotmob-{match_id}-{fold(player['team']) if player else ''}"))
+         json.dumps(line), "fotmob", f"fotmob-{fotmob_id or player_id}"))
     return "inserted"
 
 
@@ -256,21 +250,31 @@ def main(argv=None):
             continue
         players = (detail.get("content") or {}).get("playerStats") or {}
         counts["fixtures"] += 1
-        for entry in players.values():
+        for fotmob_id, entry in players.items():
             line = stat_line(entry)
             if not line:
                 continue
             who = resolve(index, entry.get("name"))
             counts["resolved" if who else "unresolved"] += 1
             counts[upsert(con, args.league, season, who, match_id, date,
-                          line, args.dry_run)] += 1
+                          line, args.dry_run, fotmob_id)] += 1
         if not args.dry_run and counts["fixtures"] % 10 == 0:
             con.commit()
 
     if not args.dry_run:
         con.commit()
+    landed = con.execute(
+        "SELECT COUNT(*) FROM player_game_logs WHERE league=? AND source='fotmob'",
+        (args.league,)).fetchone()[0]
     con.close()
     print("\n" + "  ".join(f"{k}={v}" for k, v in sorted(counts.items())))
+    if not args.dry_run:
+        # Say what LANDED, not only what we attempted. A run that reported 795
+        # inserts had written 131, and nothing in its own output disagreed.
+        print(f"fotmob rows now in {args.league}: {landed}")
+        if landed < counts["inserted"]:
+            print(f"  RECONCILE: claimed {counts['inserted']} inserts, "
+                  f"{landed} fotmob rows present -- writes were dropped")
     if args.dry_run:
         print("dry run -- nothing written.")
     return 0
