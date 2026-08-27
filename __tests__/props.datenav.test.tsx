@@ -1,6 +1,11 @@
+// Lives in __tests__/, NOT in pages/. There is no `pageExtensions` in
+// next.config.js, so every .tsx under pages/ is a ROUTE: a test file there is
+// built as a page, and `next build` fails with "Failed to collect page data" /
+// "beforeEach is not defined". Jest does not care where the file sits, so the
+// unit suite stayed green while the production build was broken.
 import React from 'react'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
-import PropsPage from './props'
+import PropsPage from '../pages/props'
 
 // Date navigation walked raw calendar days, so pressing ‹ on a league that plays
 // twice a week landed on an empty board indistinguishable from a data gap. The
