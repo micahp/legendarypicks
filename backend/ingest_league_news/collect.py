@@ -54,10 +54,28 @@ _BLUE_FETCHER = Fetcher(min_interval=1.5, retry_waits=(2,), cache_dir=CACHE_DIR,
 # TIMELINES ONLY. Nitter's /search/rss returns an empty document — X's search
 # endpoint is closed to it — so keyword queries stay on Bluesky. That is fine:
 # we came here for these accounts' own posts, not for search.
+#
+# 2026-08-27, THE MIRROR LADDER WAS BURNING THE FLEET (see newsletter repo's
+# corpus/README.md for the full autopsy): every public mirror died the week of
+# Aug 24 — nitter.net 410 Gone, xcancel served a cease-and-desist from X Corp,
+# and tiekoetter began 429ing all account surfaces while its front page stayed
+# 200. The spend report attributed ~130 nitter requests/day to this repo
+# against 12/day from the newsletter: two timers/day x (3-mirror probe ladder
+# + 15 handles), all of it hammering hosts that rate-limit BY IP — which we
+# share with the Innovative Hype brief, the podcast corpus, and everything
+# else on this box.
+#
+# Rules since then, both measured not guessed:
+# - ONE attempt per host per run. The ladder below exists only so recovery is
+#   automatic the day something comes back; it must never be walked twice in
+#   one fire, and no caller may retry it inside a run.
+# - When every host fails, print it LOUDLY with the per-host status and stop.
+#   A silent empty return reads as "quiet day", which is exactly how the
+#   frozen-corpus incident went unnoticed for 2.4 days.
 NITTER_INSTANCES = [
-    "https://nitter.net",
-    "https://nitter.privacyredirect.com",
     "https://nitter.tiekoetter.com",
+    "https://nitter.net",
+    "https://xcancel.com",
 ]
 
 # (handle, league) — the league is the handle's OWN label, which beats guessing.
@@ -120,15 +138,26 @@ def collect_x():
     """Timelines for X_ACCOUNTS through whichever Nitter mirror is alive."""
     items = []
     instance = None
+    probe_failures = []
+    # ONE attempt per host per run, first success wins. Every attempt is
+    # logged so a dead fleet is VISIBLE in the unit log, not inferred.
     for base in NITTER_INSTANCES:
+        url = "%s/%s/rss" % (base, X_ACCOUNTS[0][0])
         try:
-            _X_FETCHER.text("%s/%s/rss" % (base, X_ACCOUNTS[0][0]))
+            _X_FETCHER.text(url)
             instance = base
             break
-        except Exception:
+        except Exception as e:
+            status = getattr(e, "code", None)
+            probe_failures.append("%s:%s" % (base.replace("https://", ""),
+                                             status or repr(e)[:60]))
             continue
     if instance is None:
-        print("  x: no working nitter mirror (tried %d)" % len(NITTER_INSTANCES))
+        # LOUD skip. Empty output == "quiet day" was the bug class that froze
+        # the newsletter corpus for 2.4 days; refuse to look like it.
+        print("  x: NO WORKING NITTER MIRROR after %d single attempts (%s) — "
+              "skipping X collection this run" %
+              (len(NITTER_INSTANCES), "; ".join(probe_failures)))
         return []
     for handle, league in X_ACCOUNTS:
         try:
