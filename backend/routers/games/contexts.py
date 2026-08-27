@@ -203,5 +203,7 @@ def lcup_game_context(game_id: str, limit: int = Query(12, ge=1, le=100)):
 # amperwave HLS won't play in Chrome's <audio>, so the relay transcodes to MP3
 # with ffmpeg and streams it — one ffmpeg per listener.
 _LCUP_RADIO = {
-    "lcup": "https://live.amperwave.net/manifest/goodkarma-wuubfmaac-hlsc2.m3u8?source=tunein&source=TuneIn&gdpr=0&us_privacy=1YNY",
+    # CLB game test (2026-08-27): 97.1 The Fan WBNS-FM, Crew English radio,
+    # live during tonight's fixture — plain AAC shoutcast, ffmpeg handles it.
+    "lcup": "https://radiohio.streamguys1.com/cols/wbnsfm-iheart.m4a",
 }
