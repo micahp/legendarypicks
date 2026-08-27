@@ -1,5 +1,29 @@
 # Changelog
 
+## v0.8.13
+
+### The news pipeline stops burning the shared nitter fleet, and game detail stops asking ESPN for what we store
+
+- **`ingest_league_news` was sending ~130 nitter requests a day against a
+  fleet that died the week of Aug 24** (nitter.net 410 Gone, xcancel served
+  an X Corp cease-and-desist dated Aug 24, tiekoetter 429ing every account
+  surface). Two timers daily x a three-mirror probe ladder x 15 timelines,
+  all refusal traffic, on hosts that rate-limit by IP — which this box
+  shares with the newsletter's corpus poller. **One attempt per mirror per
+  run now**, privacyredirect dropped from the list entirely, and a dead
+  fleet prints its per-host statuses and skips the run loudly instead of
+  returning empty as if it were a quiet day. Worst case with every mirror
+  down drops from ~130 refusals/day to under 8.
+- **Game detail reads state, period, clock, status detail and live score
+  from the scoreboard snapshots before it considers ESPN.** Every page load
+  spent two publisher calls on values the minute-by-minute ingest already
+  had on disk, and because those calls sit behind bare excepts, a routine
+  403 silently rendered no score on a live game — reported on Leagues Cup
+  America/Columbus, snapshot 2-0 Halftime, page blank. Tests cover both
+  paths (`test_game_detail_db_first.py`, `test_game_detail_live_status.py`).
+- **Crew radio relay switched to 97.1 The Fan** (WBNS-FM) after the previous
+  stream dropped mid-fixture.
+
 ## v0.9.0
 
 ### Leagues Cup player props, from the one source that publishes them
