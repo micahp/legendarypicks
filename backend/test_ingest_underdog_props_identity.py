@@ -374,9 +374,18 @@ class FoldedGameKeepsItsSourceMapping(unittest.TestCase):
         )
 
     def test_a_live_game_with_different_fighters_still_refuses(self):
+        """The refusal is unchanged; what changed is its BLAST RADIUS.
+
+        This asserted that `direct_ingest` raises. It did, and that aborted the
+        whole run: from 2026-08-25 one conflicted fixture blocked 149 props
+        across 13 events for four days. The conflict is now a per-game skip that
+        is counted and named. The guard itself must still hold -- the mismatched
+        game gets no props -- so that is what this asserts now.
+        """
         self.player("Alpha Fighter")
         self.player("Bravo Fighter")
         underdog.direct_ingest(board())
+        written_before = self.scalar("SELECT COUNT(*) FROM props")
         other = self.con.execute(
             "INSERT INTO prop_games(league,date,home,away) VALUES('ufc','2026-08-16','X','Y')"
         ).lastrowid
@@ -385,9 +394,79 @@ class FoldedGameKeepsItsSourceMapping(unittest.TestCase):
         )
         self.con.commit()
 
-        with self.assertRaises(underdog.SourceIdentityConflict):
-            underdog.direct_ingest(board())
+        summary = underdog.direct_ingest(board())
+        self.assertEqual(summary["conflicted_games"], 1, summary)
+        self.assertEqual(summary["written_props"], 0,
+                         "a game whose fighters do not match must still get nothing")
+        self.assertEqual(self.scalar("SELECT COUNT(*) FROM props"), written_before)
+        self.assertTrue(summary.get("conflicts"), "the refusal must be named")
 
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class AnIdentityConflictSkipsTheGameNotTheRun(unittest.TestCase):
+    """`resolve_game` fails closed when a mapped game no longer holds the
+    fighters Underdog is sending. That refusal is right. Raising it out of the
+    ingest loop was not: one bad fixture aborted the WHOLE run.
+
+    It did, silently, for four days. From 2026-08-25T01:04 every scheduled run
+    fetched 149 balanced props across 13 events and wrote ZERO, on
+    `source game key 295987 conflicts with canonical fighters` -- prop_games 1274,
+    Xiao Long vs Francesco Nuzzi, which holds only one of the two fighters. The
+    board showed 3 UFC markets instead of 6, because win_by_decision comes from
+    Bovada and kept updating while every Underdog market froze.
+    """
+
+    setUp = UnderdogIdentityTests.setUp
+    tearDown = UnderdogIdentityTests.tearDown
+    player = UnderdogIdentityTests.player
+    scalar = UnderdogIdentityTests.scalar
+
+    def _conflicting_mapping(self):
+        """A source game mapped to a prop_game that holds only ONE of its two
+        fighters -- exactly the prod state that blocked the run."""
+        underdog.ensure_source_identity_schema(self.con)
+        alpha = self.player("Alpha Fighter")
+        self.player("Bravo Fighter")
+        game_id = self.con.execute(
+            "INSERT INTO prop_games(league,date,home,away) VALUES('ufc','2026-08-16','x','y')"
+        ).lastrowid
+        self.con.execute(
+            "INSERT INTO props(game_id,player_id,market,line,side,source,captured_at)"
+            " VALUES(?,?,'significant_strikes',40.5,'over','underdog','now')",
+            (game_id, alpha))
+        self.con.execute(
+            "INSERT INTO prop_game_source_ids(source,league,source_game_key,game_id,"
+            "first_seen,last_seen) VALUES('underdog','ufc','g-1',?,'now','now')",
+            (game_id,))
+        self.con.commit()
+
+    def test_the_run_completes_and_writes_the_other_games(self):
+        self._conflicting_mapping()
+        good = board(player_a="Charlie Fighter", player_b="Delta Fighter",
+                     key_a="u-c", key_b="u-d")
+        for prop in good:
+            prop["source_game_key"] = "g-2"
+        self.player("Charlie Fighter")
+        self.player("Delta Fighter")
+        summary = underdog.direct_ingest(board() + good)
+        self.assertEqual(summary["conflicted_games"], 1, summary)
+        self.assertGreater(summary["written_props"], 0,
+                           "a conflict on one game must not block the others")
+
+    def test_the_conflict_is_named_not_swallowed(self):
+        self._conflicting_mapping()
+        summary = underdog.direct_ingest(board())
+        self.assertEqual(summary["conflicted_games"], 1)
+        self.assertTrue(summary.get("conflicts"), "the skipped game must be named")
+        self.assertIn("g-1", summary["conflicts"][0])
+
+    def test_a_conflict_writes_nothing_for_that_game(self):
+        """Skipping must not weaken the guard: the conflicted game still gets no
+        props, because its identity is still unconfirmed."""
+        self._conflicting_mapping()
+        before = self.scalar("SELECT COUNT(*) FROM props")
+        underdog.direct_ingest(board())
+        self.assertEqual(self.scalar("SELECT COUNT(*) FROM props"), before)
