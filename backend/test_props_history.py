@@ -257,12 +257,16 @@ class LeaguesCupChartsAcrossTheSpines(unittest.TestCase):
         # keyEvents. Three corrections, one shape -- a claim about what a
         # PUBLISHER can answer, written from what we had looked at.
         #
-        # Nothing is refused for soccer now, so this asserts the surviving rule
-        # instead: a market absent from the map is refused rather than drawn,
-        # and MLS tackles is the live case -- 0 stored rows, because FotMob has
-        # only run for ligamx and lcup.
+        # MLS tackles WAS the live case here -- 0 stored rows, because FotMob
+        # had only run for ligamx and lcup. It was run for mls on 2026-08-26, so
+        # that example is gone and the rule needs one that is still true.
+        #
+        # `interceptions` is: nothing in the mls feed publishes it, from either
+        # provider, so it is absent from the map and must be REFUSED rather than
+        # drawn as an empty series.
         result = props.prop_history(
-            player_id=1, market="tackles", line=0.5, side="over", league="mls")
+            player_id=1, market="interceptions", line=0.5, side="over",
+            league="mls")
         self.assertEqual(result["games"], [])
         self.assertIn("not chartable", result["error"])
 
@@ -456,13 +460,13 @@ class FirstGoalIsAnsweredFromTheStoredRow(unittest.TestCase):
         self.assertNotIn("error", result)
         self.assertEqual([g["value"] for g in result["games"]], [1.0])
 
-    def test_mls_does_not_claim_tackles_it_has_no_rows_for(self):
-        """MLS holds 0 rows carrying `tackles` -- FotMob has only been run for
-        ligamx and lcup -- so mapping it would chart an empty series as though
-        the market were answerable."""
+    def test_mls_charts_tackles_now_that_fotmob_has_run_for_mls(self):
+        """This asserted mls REFUSED tackles, which was right while mls carried
+        0 rows for it. FotMob was run for mls on 2026-08-26 (9,679 rows, 314
+        fixtures, 8,955 resolved) and the market is mapped deliberately."""
         import core_markets
-        self.assertNotIn("tackles", core_markets._MARKET_STAT_KEY["mls"])
-
+        self.assertEqual(core_markets._MARKET_STAT_KEY["mls"].get("tackles"),
+                         "tackles")
 
 class TheMlsMapCoversWhatMlsLogsAnswer(unittest.TestCase):
     """The mls map launched with five markets and was never extended.
@@ -560,14 +564,32 @@ class TheMlsMapCoversWhatMlsLogsAnswer(unittest.TestCase):
             league="mls")
         self.assertEqual([g["value"] for g in result["games"]], [1.0, 0.0])
 
-    def test_a_fotmob_only_market_stays_unmapped_for_mls(self):
-        """FotMob has never been run for mls, so these hold 0 rows. Mapping one
-        would chart an empty series as though the market were answerable."""
+    def test_the_deep_mls_markets_are_mapped_now_that_mls_has_rows(self):
+        """These five were held out while MLS carried 0 rows for them.
+
+        FotMob was run for mls on 2026-08-26 -- 9,679 rows from 314 fixtures,
+        8,955 resolved -- and `mls` had been configured in
+        ingest_fotmob_soccer_logs.LEAGUES the whole time. It was a run that had
+        never happened, not a capability we lacked.
+
+        The previous version of this test asserted they stayed UNMAPPED, which
+        was right while the rows were absent and is the reason mapping them had
+        to be a deliberate edit rather than a silent one.
+        """
         import core_markets
-        for market in ("tackles", "clearances", "crosses", "chances_created",
-                       "passes_attempted"):
-            self.assertNotIn(market, core_markets._MARKET_STAT_KEY["mls"],
-                             market)
+        mls = core_markets._MARKET_STAT_KEY["mls"]
+        for market, key in (("tackles", "tackles"), ("clearances", "clearances"),
+                            ("crosses", "crosses"),
+                            ("chances_created", "chances_created"),
+                            ("passes_attempted", "passes")):
+            self.assertEqual(mls.get(market), key, market)
+
+    def test_mls_still_refuses_a_market_it_holds_no_rows_for(self):
+        """The guard the test above used to provide, kept alive on a market that
+        is still genuinely absent: nothing in mls logs carries `dribbles` for
+        every appearance, and `interceptions` is not published at all."""
+        import core_markets
+        self.assertNotIn("interceptions", core_markets._MARKET_STAT_KEY["mls"])
 
 
 class TheNflMapNamesKeysTheNflLogsActuallyHold(unittest.TestCase):

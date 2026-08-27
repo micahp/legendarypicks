@@ -87,22 +87,34 @@ _MARKET_STAT_KEY = {
             # below already resolves to the same field; without this entry the
             # 21 kambi rows answer "not chartable" while identical rows from
             # another book chart.
-            "sot": "sot"},
-            # tackles is deliberately NOT here, and the reason is about LOGS,
-            # not about markets. This map resolves a market to a field in
-            # player_game_logs, and MLS holds 0 rows carrying `tackles`:
-            # ESPN's shallow ingest does not publish it and FotMob has only
-            # been run for ligamx and lcup. Mapping it would chart an empty
-            # series as though the market were answerable.
+            "sot": "sot",
+            # CLOSED 2026-08-26. These five were held out because MLS carried 0
+            # rows for them: ESPN's shallow ingest does not publish them and
+            # FotMob had only ever been run for ligamx and lcup. `mls` was
+            # configured in ingest_fotmob_soccer_logs.LEAGUES the whole time --
+            # it was a run that had never happened, not a capability we lacked.
             #
-            # CORRECTED 2026-08-26: an earlier version of this note called
-            # these "FotMob-only" fields. That is false about PUBLISHERS. Eight
-            # days of the RotoWire relay archive (backend/data/rotowire-archive,
-            # 08-19..08-26, 979 soccer props) price Tackles 18, Clearances 50,
-            # Chances Created 57, Crosses 17 and Passes Attempted 283. What
-            # RotoWire does not give is game LOGS -- it is a props relay -- so
-            # the map still cannot read them, but "no one publishes this" was
-            # never the reason and should not be written as though it were.
+            # Run: 9,679 rows from 314 fixtures, 8,955 resolved to the spine.
+            # In `player_game_logs_all` now: tackles 8,955, passes 8,955,
+            # clearances 8,955, chances_created 8,409, crosses 3,589.
+            #
+            # This also closes the settlement residue: 186 of the 322 MLS props
+            # on these markets now have their OWN appearance covered, matched on
+            # player AND match date rather than on the player existing somewhere.
+            "tackles": "tackles",
+            "clearances": "clearances",
+            "chances_created": "chances_created",
+            # PrizePicks "Shots Assisted" and Opta "chances created" are the same
+            # stat, as already mapped for ligamx and lcup.
+            "shots_assisted": "chances_created",
+            "crosses": "crosses",
+            "passes_attempted": "passes"},
+            # An earlier note here called these "FotMob-only" fields, which is
+            # false about PUBLISHERS: eight days of the RotoWire relay archive
+            # price Tackles 18, Clearances 50, Chances Created 57, Crosses 17 and
+            # Passes Attempted 283. RotoWire is a props relay and gives no game
+            # LOGS, so it was never the source that could close this -- but "no
+            # one publishes this" was never the reason either.
     # Leagues Cup. The stat keys are the ones ingest_soccer_logs actually writes
     # (see _STAT_ORDER), verified against real lcup rows rather than assumed.
     # `goal_or_assist` is a COMPOUND market: the chart sums the listed fields, so
