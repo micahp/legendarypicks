@@ -97,11 +97,21 @@ backend/data/news-deletions.log
 # entries and left `git status` unreadable (2026-08-11).
 *.log
 
-# A 0-byte `picks.dev.db` appeared at the REPO ROOT (2026-08-10) from a process
-# started with the wrong cwd. It is the worst kind of stray: anything opening the
-# dev DB by relative path finds it, gets an EMPTY database, and answers 200 with
-# no data. Ignored here so it can never be committed. Never create one.
+# A 0-byte `picks.dev.db` appeared from a process started with the wrong cwd. It
+# is the worst kind of stray: anything opening the dev DB by relative path finds
+# it, gets an EMPTY database, and answers 200 with no data. It made real-database
+# tests assert nothing -- test_league_offering failed on "no such table: players"
+# and test_team_stats_json skipped itself as "not migrated yet" (see the note in
+# backend/conftest.py, which fixed the TEST side by anchoring to BACKEND_DIR).
+#
+# This rule named the repo ROOT and the file was one level down, in `data/`, so
+# it was never ignored and rode into 8b296db as 1 of 292 files. Same miss the
+# espn-cache note below records: an ignore rule only protects the path it names.
+# Both paths are covered now. Never create one.
 /picks.dev.db
+/data/*.db
+/data/*.db-shm
+/data/*.db-wal
 
 # Agent state, not source. `.context/retros/` is deliberately TRACKED history
 # (see the committed retros) — do not ignore it.
