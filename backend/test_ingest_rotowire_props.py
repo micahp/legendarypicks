@@ -851,5 +851,88 @@ class TheSoccerCatalogueIsThePublishersNotOurs(unittest.TestCase):
                                      mid, published[mid]))
 
 
+class EveryIngestedSportsCatalogueIsChecked(unittest.TestCase):
+    """The Soccer gate above was written for the Soccer incident and never
+    generalised, so the SAME defect sat in NFL untouched: the relay ships 20 NFL
+    Game markets and we mapped 14, discarding Targets, Pass Attempts, Pass
+    Completions, Rush Attempts and Rushing Touchdowns as UNMAPPED on every run.
+
+    A gate that covers one sport is a claim about that sport, not about the
+    ingest. This one asks the same question of every catalogue we maintain.
+    """
+
+    # Composites of a scoring formula the publisher does not send, so nothing
+    # downstream could settle them. Named, not silently skipped.
+    # Composites of a scoring formula the publisher does not send. Nothing
+    # downstream could settle them, so they are refused on purpose.
+    DELIBERATELY_ABSENT = {
+        "Soccer": {160},
+        "NFL": {130},
+        "MLB": {236, 237, 300},
+    }
+    # NOT deliberate -- markets the relay publishes that we do not yet take. This
+    # gate found them on 2026-08-26 the moment it stopped being Soccer-only. They
+    # are listed so the gap is VISIBLE and so the assertion still fails if the set
+    # GROWS; shrinking it is the work. Volumes over the eight archived days:
+    # Singles 719, Stolen Bases 138, Batter Strikeouts 7, Wins (pitcher) low.
+    KNOWN_GAPS = {
+        "MLB": {215, 223, 225, 227},
+    }
+    CATALOGUES = {
+        "Soccer": "SOCCER_GAME_MARKETS",
+        "NFL": "NFL_GAME_MARKETS",
+        "MLB": "MLB_GAME_MARKETS",
+    }
+
+    def _published(self, sport):
+        import glob
+        import gzip
+        pattern = os.path.join(rw.archive.ARCHIVE_DIR, "rotowire-*.json*")
+        payloads = sorted(glob.glob(pattern))
+        self.assertTrue(payloads, "no archived payloads under {}".format(pattern))
+        published = {}
+        for path in payloads:
+            opener = gzip.open if path.endswith(".gz") else open
+            with opener(path, "rt") as handle:
+                payload = json.load(handle)
+            for market in payload.get("markets", []):
+                if market.get("sport") == sport and market.get("category") == "Game":
+                    published[market["marketID"]] = market.get("marketName")
+        return published
+
+    def test_no_sport_discards_a_published_game_market_unnamed(self):
+        for sport, attr in self.CATALOGUES.items():
+            catalogue = getattr(rw, attr)
+            published = self._published(sport)
+            if not published:
+                continue  # the relay carried none of this sport in the window
+            allowed = (self.DELIBERATELY_ABSENT.get(sport, set())
+                       | self.KNOWN_GAPS.get(sport, set()))
+            unmapped = {mid: name for mid, name in published.items()
+                        if mid not in catalogue and mid not in allowed}
+            self.assertEqual(
+                unmapped, {},
+                "{} Game markets the relay publishes and we would discard".format(sport))
+            # A gap that has been CLOSED must leave this list, or the next real
+            # drop hides behind a stale allowance.
+            still_open = {mid for mid in self.KNOWN_GAPS.get(sport, set())
+                          if mid in published and mid not in catalogue}
+            self.assertEqual(
+                still_open, self.KNOWN_GAPS.get(sport, set()) & set(published),
+                "{}: a KNOWN_GAPS entry is now mapped -- remove it".format(sport))
+
+    def test_no_catalogue_holds_a_stale_market_name(self):
+        """`parse` refuses a market whose NAME changed under a known id, so a
+        stale name here takes nothing while looking mapped."""
+        for sport, attr in self.CATALOGUES.items():
+            published = self._published(sport)
+            for mid, (expected_name, _key) in getattr(rw, attr).items():
+                if mid in published:
+                    self.assertEqual(
+                        published[mid], expected_name,
+                        "{} market {} is published as {!r}".format(
+                            sport, mid, published[mid]))
+
+
 if __name__ == "__main__":
     unittest.main()

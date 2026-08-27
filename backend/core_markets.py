@@ -51,7 +51,16 @@ _MARKET_STAT_KEY = {
             # Deliberately NOT mapped: field_goals_made. nflverse_weekly holds no
             # kicking fields at all, so mapping it would draw an empty series as
             # though the market were answerable.
-            "carries": "carries", "targets": "targets"},
+            "carries": "carries", "targets": "targets",
+            # The market NAMES the RotoWire relay ships, mapped to the keys
+            # nflverse_weekly stores. Added 2026-08-26 alongside the ingest that
+            # started taking them; a prop that arrives with no map entry charts
+            # "No history", which is how the eight keys above went unnoticed.
+            # `rushing_touchdowns` is the relay's spelling of `rushing_tds`.
+            "rushing_touchdowns": "rush_td",
+            "rush_attempts": "carries",
+            "pass_attempts": "att",
+            "pass_completions": "cmp"},
     "wc": {"goals": "goals", "assists": "assists", "shots": "shots",
            "shots_on_target": "sot", "shots_on_goal": "sot"},
     # MLS game logs store the same soccer stat shape as WC (goals/assists/shots/sot)

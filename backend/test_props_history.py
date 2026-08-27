@@ -656,7 +656,13 @@ class TheNflMapNamesKeysTheNflLogsActuallyHold(unittest.TestCase):
         self.assertEqual([g["value"] for g in result["games"]], [1.0, 1.0])
 
     def test_every_mapped_nfl_key_exists_in_the_stored_vocabulary(self):
-        """The guard that would have caught this on the day it was written."""
+        """The guard that would have caught this on the day it was written.
+
+        Also covers the five markets added 2026-08-26 when the RotoWire ingest
+        started taking them: the publisher ships 20 NFL Game markets and we had
+        mapped 14, so Targets, Pass Attempts, Pass Completions, Rush Attempts
+        and Rushing Touchdowns were counted UNMAPPED and discarded every run.
+        """
         import core_markets
         stored = {"pass_yds", "rush_yds", "rec_yds", "rec", "pass_td",
                   "rush_td", "rec_td", "intc", "carries", "targets",
