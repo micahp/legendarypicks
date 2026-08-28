@@ -213,7 +213,7 @@ def upsert(con, league, season, player, match_id, date, line, dry_run,
     player_id = player["id"] if player else None
     if dry_run:
         return "inserted"
-    con.execute(
+    cursor = con.execute(
         "INSERT OR IGNORE INTO player_game_logs_fotmob"
         "(player_id, league, season, game_no, game_id, game_date, stats,"
         " source, source_player_key) VALUES(?,?,?,?,?,?,?,?,?)",
@@ -224,7 +224,7 @@ def upsert(con, league, season, player, match_id, date, line, dry_run,
         # rest: a run reporting 795 inserts wrote 131.
         (player_id, league, season, f"fotmob-{match_id}", str(match_id), date,
          json.dumps(line), "fotmob", f"fotmob-{fotmob_id or player_id}"))
-    return "inserted"
+    return "inserted" if cursor.rowcount else "unchanged"
 
 
 def main(argv=None):
@@ -236,7 +236,10 @@ def main(argv=None):
     args = parser.parse_args(argv)
 
     league_id, season = LEAGUES[args.league]
-    con = sqlite3.connect(DB_PATH)
+    # Production has frequent short-lived scoreboard and capture writers. Wait
+    # through those expected lock windows instead of aborting a long serial run.
+    con = sqlite3.connect(DB_PATH, timeout=60)
+    con.execute("PRAGMA busy_timeout = 60000")
     index = spine(con, args.league)
     print(f"{args.league}: {sum(len(v) for v in index.values())} spine players")
 

@@ -1,5 +1,25 @@
 # Changelog
 
+## v0.8.14
+
+### Scoreboards and game tabs survive normal production uptime
+
+- **Scheduled and completed slates no longer disappear when an upstream refresh
+  fails.** Interactive scoreboard readers may use the last persisted response
+  after its normal freshness window, while live games and batch ingestion still
+  fail closed instead of presenting stale state as current.
+- **Game-detail tabs no longer stop working after 100 lifetime ESPN requests.**
+  The obsolete process-lifetime counter is gone; the measured sliding request
+  budget and shared cache remain in force.
+- **Liga MX is now a first-class stored scoreboard and game-detail league.** Its
+  fixtures are normalized, persisted, exposed in score filters, and routed to
+  the soccer summary, play-by-play, and information tabs.
+- **The production MLS 2026 FotMob provider season is complete.** All 314
+  finished fixtures produced 9,679 provider rows; 8,954 resolve to canonical
+  players and 725 remain explicitly unresolved rather than guessed. The
+  importer now waits through normal short SQLite writer windows and reports
+  duplicate re-ingestion as unchanged.
+
 ## v0.8.13
 
 ### The news pipeline stops burning the shared nitter fleet, and game detail stops asking ESPN for what we store

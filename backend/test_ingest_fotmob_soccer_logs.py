@@ -182,6 +182,18 @@ class TheProvidersKeepSeparateRows(unittest.TestCase):
         self.assertEqual(len(self._rows()), 3,
                          "three team-mates in one fixture are three rows")
 
+    def test_reingesting_the_same_player_fixture_is_idempotent(self):
+        who = {"id": 7, "team": "LEO", "espn_id": "49306"}
+        first = fm.upsert(self.con, "ligamx", 2026, who, 1000014543,
+                          "2026-08-24", {"tackles": 4.0}, False,
+                          fotmob_id=880042)
+        second = fm.upsert(self.con, "ligamx", 2026, who, 1000014543,
+                           "2026-08-24", {"tackles": 99.0}, False,
+                           fotmob_id=880042)
+        self.assertEqual((first, second), ("inserted", "unchanged"))
+        self.assertEqual(len(self._rows()), 1)
+        self.assertEqual(json.loads(self._rows()[0][0]), {"tackles": 4.0})
+
     def test_an_unresolved_player_is_retained_not_dropped(self):
         result = fm.upsert(self.con, "ligamx", 2026, None, 1000014543,
                            "2026-08-24", {"tackles": 1.0}, False)
