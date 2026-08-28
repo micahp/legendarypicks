@@ -343,7 +343,7 @@ def get_game_boxscore(league: str, game_id: str):
     bs = sm["boxscore"]
 
     # ── Soccer (WC / Leagues Cup / MLS) shape ──
-    if lg in ("wc", "lcup", "mls"):
+    if lg in ("wc", "lcup", "mls", "ligamx"):
         team_stats_raw = []
         for t in bs.get("teams", []):
             ha = t.get("homeAway", "")
@@ -432,7 +432,7 @@ def get_game_playbyplay(league: str, game_id: str):
         return {"available": False}
 
     # ── Soccer (WC / Leagues Cup / MLS) shape ──
-    if lg in ("wc", "lcup", "mls"):
+    if lg in ("wc", "lcup", "mls", "ligamx"):
         try:
             ev = espn.match_events(league, game_id)
         except Exception:

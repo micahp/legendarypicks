@@ -256,6 +256,14 @@ def _charge(url, budget, cooldown, on_exhausted="sleep"):
     """
     if not budget or budget <= 0:
         return
+    # Request handlers are already protected by `_pace_rate`, the measured
+    # short-window limit above. A cumulative process-lifetime counter has no
+    # time window and therefore never recovers in a long-running API process:
+    # after its 100th request every later page load was refused until deploy or
+    # restart. Keep the count/cooldown circuit for bounded batch jobs, but do
+    # not turn normal process uptime into an outage for serving paths.
+    if on_exhausted == "refuse":
+        return
     host = urllib.parse.urlsplit(url).netloc
     if _host_spend.get(host, 0) >= budget:
         if on_exhausted == "refuse":
@@ -337,6 +345,16 @@ class Fetcher:
         except (OSError, json.JSONDecodeError):
             # A corrupt or absent entry is a miss, never an error -- the caller's
             # job is to get the data, not to care where it came from.
+            return None
+
+    def _read_disk_stale(self, url):
+        """Read a valid cached payload regardless of age for outage fallback."""
+        if not self.cache_dir:
+            return None
+        try:
+            with open(self._path(url)) as f:
+                return json.load(f)
+        except (OSError, json.JSONDecodeError):
             return None
 
     def _sweep(self):
@@ -514,6 +532,10 @@ class Fetcher:
             self._memory[url] = (now + ttl, on_disk)
             record_spend(url, 200, cached=True, note="disk")
             return on_disk
+        # Only interactive readers may use stale-on-error. A batch publisher
+        # must fail instead of treating an expired response as fresh input.
+        stale_disk = (self._read_disk_stale(url)
+                      if self.on_exhausted == "refuse" else None)
         try:
             # Retry hard only when failing is the alternative. With a stale
             # payload in hand the ladder is pure latency on a request somebody
@@ -529,6 +551,10 @@ class Fetcher:
             if hit is not None:
                 self._memory[url] = (now + min(ttl, 60), hit[1])
                 return hit[1]
+            if stale_disk is not None:
+                self._memory[url] = (now + min(ttl, 60), stale_disk)
+                record_spend(url, 200, cached=True, note="stale-disk")
+                return stale_disk
             raise
         self._memory[url] = (now + ttl, data)
         self._write_disk(url, data)

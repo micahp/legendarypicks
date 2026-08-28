@@ -67,6 +67,15 @@ class RateLimitTests(unittest.TestCase):
         for _ in range(50):
             paced_http._pace_rate("https://example.test/a", "refuse")
 
+    def test_process_lifetime_does_not_exhaust_a_serving_path(self):
+        """The API must still work after its hundredth lifetime request."""
+        for _ in range(250):
+            paced_http._charge(
+                "https://example.test/a", budget=100, cooldown=60,
+                on_exhausted="refuse",
+            )
+        self.assertEqual(paced_http._host_spend, {})
+
 
 class ProcessLabelTests(unittest.TestCase):
     """`python -m pkg` must not log as `__main__.py`.

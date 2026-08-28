@@ -56,8 +56,15 @@ def _scoreboard_snapshot(league: str, game_date: str):
     age = stored.get("age_seconds")
     if age is None:
         return None
-    if age > _SNAPSHOT_MAX_AGE and not _nothing_newer_to_have(league, game_date):
-        return None
+    if age > _SNAPSHOT_MAX_AGE:
+        states = {str(game.get("state") or "").lower()
+                  for game in stored["games"]}
+        # Never serve a stale live score. Scheduled and completed games are
+        # durable publisher facts, though, and must not disappear merely
+        # because the next timer tick or shared lock is late.
+        safe_stale = bool(stored["games"]) and "in" not in states
+        if not safe_stale and not _nothing_newer_to_have(league, game_date):
+            return None
     return stored["games"], age
 
 
