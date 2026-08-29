@@ -37,6 +37,7 @@ def test_props_navigation_is_product_coverage_not_row_presence():
         {"league": "mlb", "sport": "baseball"},
         {"league": "mls", "sport": "soccer"},
         {"league": "nba", "sport": "basketball"},
+        {"league": "ncaaf", "sport": "football"},
         {"league": "nfl", "sport": "football"},
         {"league": "nhl", "sport": "hockey"},
         {"league": "ufc", "sport": "mma"},
