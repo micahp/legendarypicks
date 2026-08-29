@@ -686,7 +686,7 @@ export default function MarketSlateBoard({ league, date }: { league: string; dat
           const projection = history?.projection ?? null
           const edge = projection === null ? null : projection - row.line
           return (
-            <article key={row.key} data-market-row className="min-w-0 overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900">
+            <article key={row.key} data-market-row className="min-w-0 overflow-visible rounded-xl border border-zinc-800 bg-zinc-900">
               <div className="grid min-w-0 gap-4 p-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-start">
                 <div className="min-w-0">
                   <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">

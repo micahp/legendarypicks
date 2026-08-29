@@ -60,7 +60,10 @@ describe('alternate provider lines', () => {
     })
     const options = within(listbox).getAllByRole('option').map(option => option.textContent)
     const visibleLine = document.querySelector('[data-selected-line]') as HTMLElement
+    const row = document.querySelector('[data-market-row]') as HTMLElement
 
+    expect(row.className).toContain('overflow-visible')
+    expect(row.className).not.toContain('overflow-hidden')
     expect(selector.className).toContain('text-2xl')
     expect(visibleLine.textContent).toBe('0.5')
     expect(visibleLine.nextElementSibling?.textContent).toBe('▾')
