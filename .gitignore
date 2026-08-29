@@ -156,3 +156,6 @@ backend/data/esports_team_logos.json
 # Daily RotoWire relay archive: ~1 MB gzipped per day, written by a timer.
 # The history is the asset and it is irreplaceable, but it is data, not source.
 backend/data/rotowire-archive/
+
+# UFCStats source responses are retained for deterministic serial replays.
+backend/data/ufcstats-archive/

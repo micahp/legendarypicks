@@ -86,7 +86,7 @@ export default function FightForm({ playerId, fighter }: { playerId: number; fig
       >
         <span>
           <span className="block text-xs font-semibold uppercase tracking-wide text-zinc-300">Last 5 fights</span>
-          <span className="mt-0.5 block text-[11px] text-zinc-600">ESPN form for {fighter}</span>
+          <span className="mt-0.5 block text-[11px] text-zinc-600">Fight form for {fighter}</span>
         </span>
         <span className="shrink-0 text-sm text-zinc-500" aria-hidden="true">{open ? '▾' : '▸'}</span>
       </button>
@@ -102,7 +102,7 @@ export default function FightForm({ playerId, fighter }: { playerId: number; fig
           ) : error ? (
             <p className="text-xs text-zinc-500">Recent fight form could not be loaded.</p>
           ) : !data?.fights.length ? (
-            <p className="text-xs text-zinc-500">No completed UFC fights are available from ESPN.</p>
+            <p className="text-xs text-zinc-500">No completed UFC fights are available.</p>
           ) : (
             <ol className="flex max-w-full gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" aria-label={`${fighter} recent fight form`}>
               {data.fights.map(fight => (

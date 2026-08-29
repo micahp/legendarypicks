@@ -109,6 +109,66 @@ class PropHistoryVenueTests(unittest.TestCase):
         self.assertEqual([21, 18, 24], [g["value"] for g in result["games"]])
 
 
+class UfcStatsPropHistoryTests(unittest.TestCase):
+    """UFC numeric charts read the provider-separated completed history."""
+
+    def setUp(self):
+        handle = tempfile.NamedTemporaryFile(
+            prefix="props-history-ufcstats-", suffix=".db", delete=False
+        )
+        self.path = handle.name
+        handle.close()
+        self.addCleanup(lambda: os.path.exists(self.path) and os.unlink(self.path))
+        con = sqlite3.connect(self.path)
+        con.executescript(
+            """
+            CREATE TABLE players(
+              id INTEGER PRIMARY KEY, name TEXT, team TEXT, league TEXT
+            );
+            CREATE TABLE player_game_logs_ufcstats(
+              player_id INTEGER, league TEXT, game_date TEXT,
+              opponent TEXT, stats TEXT
+            );
+            """
+        )
+        con.execute("INSERT INTO players VALUES(7,'Test Fighter','','ufc')")
+        con.executemany(
+            "INSERT INTO player_game_logs_ufcstats VALUES(?,?,?,?,?)",
+            [
+                (7, "ufc", "2026-08-01", "Opponent A", json.dumps({
+                    "sigStrikesLanded": 61, "fight_time": 15.0,
+                })),
+                (7, "ufc", "2026-07-01", "Opponent B", json.dumps({
+                    "sigStrikesLanded": 22, "fight_time": 4.5,
+                })),
+            ],
+        )
+        con.commit()
+        con.close()
+
+        def connection():
+            opened = sqlite3.connect(self.path)
+            opened.row_factory = sqlite3.Row
+            return opened
+
+        patch = mock.patch.object(props, "_db", side_effect=connection)
+        patch.start()
+        self.addCleanup(patch.stop)
+
+    def test_significant_strikes_and_fight_time_are_charted(self):
+        strikes = props.prop_history(
+            player_id=7, market="significant_strikes", line=40.5,
+            side="over", league="ufc",
+        )
+        duration = props.prop_history(
+            player_id=7, market="fight_time", line=10.0,
+            side="over", league="ufc",
+        )
+
+        self.assertEqual([61.0, 22.0], [g["value"] for g in strikes["games"]])
+        self.assertEqual([15.0, 4.5], [g["value"] for g in duration["games"]])
+
+
 if __name__ == "__main__":
     unittest.main()
 

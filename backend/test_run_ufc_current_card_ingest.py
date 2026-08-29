@@ -13,6 +13,7 @@ sys.path.insert(0, HERE)
 import ingest_ufc_fight_stats as ingest
 import run_ufc_current_card_ingest as runner
 from ingest_ufc_fight_stats import roster
+from ingest_ufc_fight_stats.ufcstats_pipeline import UfcStatsPlan
 
 
 class UfcTimerRunnerTests(unittest.TestCase):
@@ -31,22 +32,24 @@ class UfcTimerRunnerTests(unittest.TestCase):
         for target, attr, value in (
             (runner, "_connect_readonly", None),
             (runner.roster, "build_harvest_plan", roster.HarvestPlan()),
+            (runner, "inspect_ufcstats_migration", {
+                "state": "applied", "detail": "test",
+            }),
         ):
             patcher = mock.patch.object(target, attr, return_value=value)
             patcher.start()
             self.addCleanup(patcher.stop)
     def test_current_plan_does_not_create_backup_or_open_writer(self):
-        plan = ingest.IngestPlan(target_count=1, existing_count=5)
+        plan = UfcStatsPlan(target_count=1, existing_count=5)
         with mock.patch.object(
-            runner.ingest,
-            "load_targets",
-            return_value=([mock.sentinel.target], set(), {}),
+            runner, "load_ufcstats_state",
+            return_value=([mock.sentinel.target], {}, {}, {}, {}),
         ), mock.patch.object(
-            runner.ingest, "build_current_card_plan", return_value=plan
+            runner, "build_ufcstats_plan", return_value=plan
         ), mock.patch.object(
             runner.common, "backup_database"
         ) as backup, mock.patch.object(
-            runner.ingest, "apply_plan"
+            runner, "apply_ufcstats_plan"
         ) as apply:
             result = runner.run(
                 "/tmp/not-opened.db",
@@ -59,30 +62,30 @@ class UfcTimerRunnerTests(unittest.TestCase):
         apply.assert_not_called()
 
     def test_mutating_plan_backs_up_before_apply(self):
-        plan = ingest.IngestPlan(
+        plan = UfcStatsPlan(
             target_count=1,
-            identity_updates={1: "111"},
+            mappings={1: "ufcstats-111"},
         )
         order = []
         with mock.patch.object(
-            runner.ingest,
-            "load_targets",
-            return_value=([mock.sentinel.target], set(), {}),
+            runner, "load_ufcstats_state",
+            return_value=([mock.sentinel.target], {}, {}, {}, {}),
         ), mock.patch.object(
-            runner.ingest, "build_current_card_plan", return_value=plan
+            runner, "build_ufcstats_plan", return_value=plan
         ), mock.patch.object(
             runner.common,
             "backup_database",
             side_effect=lambda *_, **__: order.append("backup")
             or "/tmp/backup.db",
         ) as backup, mock.patch.object(
-            runner.ingest,
-            "apply_plan",
+            runner,
+            "apply_ufcstats_plan",
             side_effect=lambda *_: order.append("apply")
             or {
                 "inserted_logs": 0,
-                "identity_updates": 1,
-                "game_links": 0,
+                "updated_logs": 0,
+                "mappings_inserted": 1,
+                "mappings_refreshed": 0,
             },
         ):
             result = runner.run(
@@ -100,22 +103,21 @@ class UfcTimerRunnerTests(unittest.TestCase):
         )
 
     def test_dry_run_reports_mutations_without_backup_or_writer(self):
-        plan = ingest.IngestPlan(
+        plan = UfcStatsPlan(
             target_count=2,
-            logs=[mock.sentinel.log],
-            identity_updates={1: "111"},
-            game_links={9: "999"},
+            inserts=[mock.sentinel.log],
+            updates=[mock.sentinel.update],
+            mappings={1: "ufcstats-111"},
         )
         with mock.patch.object(
-            runner.ingest,
-            "load_targets",
-            return_value=([mock.sentinel.target], set(), {}),
+            runner, "load_ufcstats_state",
+            return_value=([mock.sentinel.target], {}, {}, {}, {}),
         ), mock.patch.object(
-            runner.ingest, "build_current_card_plan", return_value=plan
+            runner, "build_ufcstats_plan", return_value=plan
         ), mock.patch.object(
             runner.common, "backup_database"
         ) as backup, mock.patch.object(
-            runner.ingest, "apply_plan"
+            runner, "apply_ufcstats_plan"
         ) as writer:
             result = runner.run(
                 "/tmp/not-opened.db",
@@ -128,9 +130,9 @@ class UfcTimerRunnerTests(unittest.TestCase):
             {
                 "status": "dry_run",
                 "logs": 1,
-                "identity_updates": 1,
-                "game_links": 1,
-                "unresolved": 0,
+                "updates": 1,
+                "source_mappings": 1,
+                "no_history": 0,
             },
             result,
         )

@@ -222,16 +222,36 @@ def prop_history(player_id: int = Query(...),
         if not player:
             return {"error": "player not found", "games": []}
 
-        # Get game logs with this stat, most recent first. One row per
-        # appearance comes from the view, so there is nothing to dedupe here.
-        rows = con.execute(
-            f"""SELECT game_date, opponent, home_away, {val_expr} AS val
-                  FROM player_game_logs_all
-                 WHERE player_id=? AND league IN ({league_placeholders})
-                   AND {where_clause}{_PLAYED}
-                 ORDER BY game_date DESC LIMIT 100""",
-            (player_id, *log_leagues)
-        ).fetchall()
+        has_ufcstats = con.execute(
+            "SELECT 1 FROM sqlite_master WHERE type='table' "
+            "AND name='player_game_logs_ufcstats'"
+        ).fetchone() is not None
+        if league == "ufc" and has_ufcstats:
+            # UFCStats is provider-separated because its native fighter/fight
+            # ids do not share ESPN's vocabulary. The profile publishes the
+            # completed last-five directly; read that table rather than
+            # creating duplicate provider rows in player_game_logs_all.
+            ufc_value = f"json_extract(stats, '$.{stat_key}')"
+            rows = con.execute(
+                f"""SELECT game_date, opponent, NULL AS home_away,
+                            {ufc_value} AS val
+                       FROM player_game_logs_ufcstats
+                      WHERE player_id=? AND league='ufc'
+                        AND {ufc_value} IS NOT NULL
+                      ORDER BY game_date DESC LIMIT 100""",
+                (player_id,),
+            ).fetchall()
+        else:
+            # Get game logs with this stat, most recent first. One row per
+            # appearance comes from the view, so there is nothing to dedupe here.
+            rows = con.execute(
+                f"""SELECT game_date, opponent, home_away, {val_expr} AS val
+                      FROM player_game_logs_all
+                     WHERE player_id=? AND league IN ({league_placeholders})
+                       AND {where_clause}{_PLAYED}
+                     ORDER BY game_date DESC LIMIT 100""",
+                (player_id, *log_leagues)
+            ).fetchall()
 
     if not rows:
         return {

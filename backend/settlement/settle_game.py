@@ -9,7 +9,11 @@ import sys
 
 from settlement.mlb_api import _fetch_mlb_gamepk, _fetch_mlb_final
 from settlement.mlb_settle import _settle_mlb_props
-from settlement.ufc_settle import _settle_ufc_props, _ufc_scoreboard_competition
+from settlement.ufc_settle import (
+    _settle_ufc_props,
+    _ufc_scoreboard_competition,
+    _ufcstats_game_is_final,
+)
 from settlement.mls_settle import _settle_mls_props
 
 # The soccer competitions that grade off the roster-stat surface.
@@ -55,7 +59,11 @@ def settle_game(con: sqlite3.Connection, game_id: int) -> dict:
             game = dict(game, final_home=final[0], final_away=final[1])
 
     # ── Is the game actually over? ──────────────────────────────────────────────
-    if game["final_home"] is None:
+    ufcstats_final = (
+        league == "ufc"
+        and _ufcstats_game_is_final(con, game_id, game["date"])
+    )
+    if game["final_home"] is None and not ufcstats_final:
         try:
             if league == "ufc":
                 competition = _ufc_scoreboard_competition(

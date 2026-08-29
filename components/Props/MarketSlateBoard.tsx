@@ -463,14 +463,18 @@ export default function MarketSlateBoard({ league, date }: { league: string; dat
       const key = historyKey(row)
       if (requestedHistory.current.has(key)) continue
       requestedHistory.current.add(key)
+      const isUfcNumeric = row.league === 'ufc'
+        && ['significant_strikes', 'fight_time'].includes(baseMarket(row.rawMarket))
       setHistoryByRow(current => ({
         ...current,
-        [key]: { loading: row.league !== 'ufc', data: null },
+        [key]: { loading: row.league !== 'ufc' || isUfcNumeric, data: null },
       }))
 
       // Method-of-victory props are categorical. FightForm lazily loads the
-      // fighter's ESPN form only when its disclosure is opened.
-      if (row.league === 'ufc') continue
+      // fighter's completed form only when its disclosure is opened. UFC's
+      // significant-strike and fight-time markets are numeric and use the
+      // same chart contract as every other numeric market.
+      if (row.league === 'ufc' && !isUfcNumeric) continue
       const chartProp = row.over || row.under
       if (!chartProp) continue
       const controller = new AbortController()
@@ -702,6 +706,8 @@ export default function MarketSlateBoard({ league, date }: { league: string; dat
           const historyState = historyByRow[historyKey(row)]
           const history = historyState?.data
           const isUfc = row.league === 'ufc'
+          const isUfcNumeric = isUfc
+            && ['significant_strikes', 'fight_time'].includes(baseMarket(row.rawMarket))
           const hasAlternates = row.lines.length > 1
           const projection = history?.projection ?? null
           const edge = projection === null ? null : projection - row.line
@@ -778,7 +784,7 @@ export default function MarketSlateBoard({ league, date }: { league: string; dat
                 </div>
 
                 <div className="min-w-0 md:text-right">
-                  {isUfc ? (
+                  {isUfc && !isUfcNumeric ? (
                     <p className="text-xs text-zinc-600">Method-of-victory market</p>
                   ) : historyState?.loading ? <LoadingEvidence /> : history ? (
                     <div className="space-y-2">
@@ -809,7 +815,7 @@ export default function MarketSlateBoard({ league, date }: { league: string; dat
                 </div>
               </div>
 
-              {isUfc ? (
+              {isUfc && !isUfcNumeric ? (
                 <div data-market-chart className="min-w-0 overflow-hidden border-t border-zinc-800 bg-zinc-950/40">
                   <FightForm playerId={row.playerId} fighter={row.player} />
                 </div>
