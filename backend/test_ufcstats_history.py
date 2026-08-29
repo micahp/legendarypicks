@@ -213,7 +213,8 @@ def test_fighter_form_is_database_only_and_reports_ufcstats(monkeypatch, tmp_pat
     con.execute(
         "INSERT INTO player_game_logs_ufcstats VALUES(?,?,?,?,?,?,?)",
         (1, "ufc", "fight-aa", "event-aa", "2026-08-01", "Fighter Beta",
-         json.dumps({"result": "W", "method": "DEC"})),
+         json.dumps({"result": "W", "method": "DEC", "round": 3,
+                     "clock_display": "5:00"})),
     )
     con.commit()
     con.close()
@@ -228,6 +229,7 @@ def test_fighter_form_is_database_only_and_reports_ufcstats(monkeypatch, tmp_pat
 
     assert result["source"] == "ufcstats"
     assert result["fights"] == [{
-        "result": "W", "method": "DEC", "opponent": "Fighter Beta",
+        "result": "W", "method": "DEC", "round": 3, "time": "5:00",
+        "opponent": "Fighter Beta",
         "date": "2026-08-01", "event_id": "event-aa", "fight_id": "fight-aa",
     }]

@@ -50,12 +50,13 @@ describe('UFC numeric history', () => {
     expect(screen.queryByText('Last 5 fights')).toBeNull()
   })
 
-  it('keeps method markets on fight form without requesting numeric history', async () => {
+  it.each(['win_by_decision', 'knockouts', 'finishes', 'submissions'])(
+    'keeps %s on fight form without requesting numeric history', async market => {
     ;(global as any).fetch = jest.fn((url: string) => {
       if (url.includes('/api/props/slate')) {
-        return Promise.resolve(json([{ markets: [{ market: 'win_by_ko', count: 1 }] }]))
+        return Promise.resolve(json([{ markets: [{ market, count: 1 }] }]))
       }
-      return Promise.resolve(json([prop('win_by_ko')]))
+      return Promise.resolve(json([prop(market)]))
     })
 
     render(<MarketSlateBoard league="ufc" date="2026-08-29" />)

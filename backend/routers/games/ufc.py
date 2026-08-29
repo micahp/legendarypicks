@@ -157,6 +157,12 @@ def ufc_fighter_form(player_id: int):
         fights.append({
             "result": result,
             "method": method,
+            "round": stats.get("round") if isinstance(stats.get("round"), int) else None,
+            "time": (
+                str(stats.get("clock_display"))
+                if stats.get("clock_display") not in (None, "")
+                else None
+            ),
             "opponent": row["opponent"] or "",
             "date": row["game_date"] or "",
             "event_id": row["source_event_key"] or "",

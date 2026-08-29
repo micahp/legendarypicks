@@ -3,6 +3,8 @@ import { useState } from 'react'
 export interface FightResult {
   result: 'W' | 'L' | 'D' | 'NC'
   method: string
+  round?: number | null
+  time?: string | null
   opponent: string
   date: string
   event_id: string
@@ -52,6 +54,10 @@ function resultTone(result: FightResult['result']): string {
   return 'border-zinc-700 bg-zinc-800/60 text-zinc-300'
 }
 
+function isFinish(method: string): boolean {
+  return ['KO/TKO', 'SUB', 'DQ'].includes(method.toUpperCase())
+}
+
 export default function FightForm({ playerId, fighter }: { playerId: number; fighter: string }) {
   const [open, setOpen] = useState(false)
   const [data, setData] = useState<FightFormResponse | null>(() => formCache.get(playerId) || null)
@@ -92,7 +98,7 @@ export default function FightForm({ playerId, fighter }: { playerId: number; fig
       </button>
 
       {open && (
-        <div className="border-t border-zinc-800 px-3 py-3 sm:px-4">
+        <div data-fight-form-content className="px-3 pb-3 sm:px-4">
           {loading ? (
             <div className="flex gap-2 overflow-hidden animate-pulse" aria-label="Loading recent fights">
               {[0, 1, 2, 3, 4].map(index => (
@@ -118,6 +124,11 @@ export default function FightForm({ playerId, fighter }: { playerId: number; fig
                   <div className="mt-2 truncate text-[11px] font-medium text-zinc-200" title={fight.opponent}>
                     {fight.opponent}
                   </div>
+                  {isFinish(fight.method) && fight.round && fight.time && (
+                    <div data-fight-finish-time className="mt-1 text-[10px] font-medium tabular-nums opacity-70">
+                      Round {fight.round} · {fight.time}
+                    </div>
+                  )}
                 </li>
               ))}
             </ol>
