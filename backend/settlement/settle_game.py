@@ -3,7 +3,7 @@
 import datetime as dt
 import sqlite3
 
-from settlement.market_mapping import resolve_market
+from settlement.market_mapping import resolve_market, resolve_compound_market
 from settlement.boxscore_extract import _find_player_stat, _find_player_compound_stat
 import sys
 
@@ -295,15 +295,16 @@ def settle_game(con: sqlite3.Connection, game_id: int) -> dict:
         category, stat_key = mapping
 
         # Handle compound stats
-        if category is None and stat_key is None:
-            if "hits_runs_rbis" in prop["market"]:
-                actual = _find_player_compound_stat(
-                    box, prop["player_name"], prop["player_team"],
-                    ["batting", "batting", "batting"], ["H", "R", "RBI"],
-                    espn_id=prop["espn_id"])
-            else:
+        if category is None:
+            components = resolve_compound_market(league, prop["market"])
+            if not components:
                 unmappable += 1
                 continue
+            actual = _find_player_compound_stat(
+                box, prop["player_name"], prop["player_team"],
+                [component[0] for component in components],
+                [component[1] for component in components],
+                espn_id=prop["espn_id"], missing_as_zero=league == "ncaaf")
         else:
             actual = _find_player_stat(
                 box, prop["player_name"], prop["player_team"],
