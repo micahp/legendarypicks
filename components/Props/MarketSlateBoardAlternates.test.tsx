@@ -65,12 +65,15 @@ describe('alternate provider lines', () => {
     expect(row.className).toContain('overflow-visible')
     expect(row.className).not.toContain('overflow-hidden')
     expect(selector.className).toContain('text-2xl')
-    expect(visibleLine.textContent).toBe('0.5')
+    // Default-line rule (docs/PROPS-ODDS-TAXONOMY.md §5): the lowest line among
+    // REAL-odds offers is the default — bovada 2.5 beats the prizepicks/underdog
+    // placeholders at 0.5/1.5, even though those are numerically lower.
+    expect(visibleLine.textContent).toBe('2.5')
     expect(visibleLine.nextElementSibling?.textContent).toBe('▾')
     expect(selector.className).toContain('font-bold')
     expect(selector.className).toContain('text-white')
-    expect(selector.textContent).toBe('0.5▾')
-    expect(document.querySelector('[data-provider-label]')?.textContent).toBe('prizepicks')
+    expect(selector.textContent).toBe('2.5▾')
+    expect(document.querySelector('[data-provider-label]')?.textContent).toBe('bovada')
     expect(listbox.className).toContain('bg-zinc-950')
     expect(options).toEqual([
       '0.5 · prizepicks',
@@ -105,5 +108,39 @@ describe('alternate provider lines', () => {
       expect((global.fetch as jest.Mock).mock.calls.some(([url]) =>
         String(url).includes('/api/props/history?') && String(url).includes('line=2.5'))).toBe(true)
     })
+  })
+
+  it('falls back to the lowest placeholder line when no real-odds offer exists', async () => {
+    // MLS-style card: every offer is a pick'em placeholder (the depth markets
+    // no real book prices — docs/PROPS-ODDS-TAXONOMY.md §3).
+    ;(global as any).fetch = jest.fn((url: string) => {
+      if (url.includes('/api/props/slate')) {
+        return Promise.resolve(json([{ markets: [{ market: 'shots', count: 4 }] }]))
+      }
+      if (url.includes('/api/props/history')) {
+        const params = new URLSearchParams(url.split('?')[1])
+        const line = Number(params.get('line'))
+        return Promise.resolve(json({
+          player_id: 7, player: 'Alternate Player', team: 'SEA', league: 'mls',
+          market: 'shots', line, side: 'over', projection: 2,
+          hit_rate: { l5: 0.6, l10: 0.6, l20: 0.6, season: 0.6 },
+          hit_rate_n: { l5: 5, l10: 10, l20: 20, season: 20 },
+          games: [{ date: '2026-08-20', value: 2, opponent: 'DEN', home: true, hit: true }],
+        }))
+      }
+      return Promise.resolve(json([
+        prop(11, 27.5, 'over', 'rotowire:prizepicks', -137),
+        prop(12, 27.5, 'under', 'rotowire:prizepicks', -137),
+        prop(13, 28.5, 'over', 'rotowire:underdog', -137),
+        prop(14, 28.5, 'under', 'rotowire:underdog', -137),
+      ]))
+    })
+
+    render(<MarketSlateBoard league="mls" date="2026-09-09" />)
+    const visibleLine = await screen.findByText('27.5')
+    expect(visibleLine).toBeDefined()
+    // Placeholder card: pick'em display instead of prices, lowest line default.
+    expect(document.querySelector('[data-provider-label]')?.textContent).toBe('prizepicks')
+    expect(document.querySelector('[data-market-row]')?.textContent).toContain('no line price')
   })
 })
