@@ -45,8 +45,7 @@ PROVIDERS = [
         "timeout_sec": 600,
         "host_lock": "rotowire",
         "steps": [
-            ["ingest_rotowire_props.py", "nfl"],
-            ["ingest_rotowire_props.py", "mls"],
+            ["ingest_rotowire_props.py", "nfl", "mls", "ncaaf"],
         ],
         "needs_api_base": False,
     },

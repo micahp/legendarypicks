@@ -868,6 +868,7 @@ class EveryIngestedSportsCatalogueIsChecked(unittest.TestCase):
     DELIBERATELY_ABSENT = {
         "Soccer": {160},
         "NFL": {130},
+        "CFB": {138, 139},
         "MLB": {236, 237, 300},
     }
     # NOT deliberate -- markets the relay publishes that we do not yet take. This
@@ -881,6 +882,7 @@ class EveryIngestedSportsCatalogueIsChecked(unittest.TestCase):
     CATALOGUES = {
         "Soccer": "SOCCER_GAME_MARKETS",
         "NFL": "NFL_GAME_MARKETS",
+        "CFB": "CFB_GAME_MARKETS",
         "MLB": "MLB_GAME_MARKETS",
     }
 
