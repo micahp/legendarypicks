@@ -46,6 +46,29 @@
 
 ## v0.9.0
 
+### NCAAF props are published, charted and settlement-ready
+
+- **RotoWire's college-football board now reaches the product through one
+  fixture-linked ingest.** The provider payload is fetched once and reused for
+  NFL, MLS and NCAAF; each NCAAF offer must match an independently persisted
+  scoreboard fixture by both teams and kickoff before it can create a game.
+  The first live publication covers all eight Aug. 29 games and five providers:
+  PrizePicks, Sleeper, Underdog, FanDuel and Caesars.
+- **The pre-kickoff archive recovered the game the live feed had already
+  removed.** UNC at TCU was restored from the 2:32 AM capture without allowing
+  the older archive to overwrite newer live lines. Exact archive replay is
+  idempotent, and unresolved FCS identities remain queued rather than guessed.
+- **NCAAF is selectable on the Props board and its existing game logs now power
+  honest history charts.** The public DEV board was verified at desktop width
+  with all eight games, alternate providers and lines, and no browser or network
+  errors. Markets absent from historical logs still say no history instead of
+  drawing fabricated zeroes.
+- **All 17 accepted NCAAF market shapes can settle from ESPN's completed
+  boxscore.** This includes the two halves of C/ATT, FG and XP made/attempted
+  pairs, passing/rushing and rushing/receiving compounds, and total touchdowns.
+  Stable ESPN athlete IDs own the join when canonical school abbreviations
+  differ from the boxscore.
+
 ### Leagues Cup player props, from the one source that publishes them
 
 - **Twelve stat markets on all four fixtures, where every reachable source had
@@ -125,6 +148,26 @@
   run; 44 props recovered across five archived days. Both Fantasy Score markets
   stay unmapped on purpose, as the MLB ones do: a composite of a scoring formula
   the publisher does not send cannot be settled.
+
+### Navigation, radio and the props odds rule
+
+- **Sport-first navigation shipped**: the leagues hub is organized by sport
+  with a tennis hub (major draws, ATP/WTA rankings) and a multi-sport Predict
+  page. The wrong dev push that dropped them was reverted; the feature branch
+  was reconciled against dev conflict-by-conflict and merged back with the
+  full suite green (2,025 backend, 56 frontend).
+- **Eighteen MLB/NFL/soccer clubs carry verified per-team English radio on
+  game detail**, sourced from `data/radio-mls.json` (live HTTP-200 audio
+  probes; the meta rule holds — no fabricated callsigns or URLs). The relay
+  transcodes each to MP3; uncovered clubs render no player at all.
+- **The props odds taxonomy is documented** (`docs/PROPS-ODDS-TAXONOMY.md`):
+  real sportsbook odds vs the pick'em -137 placeholders, measured per source;
+  which league+market combinations have real coverage and which survive only
+  through the placeholders (MLS depth, NFL specials).
+- **Schema-discovery gate updated for the new appearance tables**: dev's
+  spine covers 18 player_id tables after `player_game_logs_ufcstats` and
+  `tennis_ranking_snapshots` joined; the pin documents why, prod follows on
+  migration.
 
 ## v0.8.9
 
