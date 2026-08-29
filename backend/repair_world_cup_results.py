@@ -3,7 +3,8 @@
 
 Dry-run is the default. ``--apply`` updates only existing World Cup result rows
 whose actual and verdict are both NULL. Rows with one unique numeric player log
-become graded outcomes; rows with no participant log remain explicit voids.
+become graded outcomes. A missing player log is unresolved, not proof that the
+player did not participate, so this repair leaves it pending.
 """
 import os
 import sqlite3
@@ -28,25 +29,28 @@ def repair(con: sqlite3.Connection, apply: bool = False) -> dict:
         ORDER BY p.id
     """).fetchall()
     gradeable = []
+    voidable = []
     reasons = {}
     for row in rows:
         actual, reason = _wc_actual(
             con, row["espn_event_id"], row["player_id"], row["market"])
         if actual is not None:
             gradeable.append(row)
+        elif reason == "did_not_play":
+            voidable.append(row)
         else:
             reasons[reason] = reasons.get(reason, 0) + 1
     result = {
         "legacy_null_rows": len(rows),
         "gradeable": len(gradeable),
-        "retained_voids": reasons.get("no_player_log", 0),
-        "other_unresolved": len(rows) - len(gradeable) - reasons.get("no_player_log", 0),
+        "retained_voids": len(voidable),
+        "other_unresolved": len(rows) - len(gradeable) - len(voidable),
         "updated": 0,
         "errors": 0,
     }
-    if apply and gradeable:
+    if apply and (gradeable or voidable):
         by_event = {}
-        for row in gradeable:
+        for row in gradeable + voidable:
             by_event.setdefault(row["espn_event_id"], []).append(row)
         for event_id, props in by_event.items():
             settled = _settle_wc_props(con, event_id, props, overwrite=True)

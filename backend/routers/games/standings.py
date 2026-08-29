@@ -81,7 +81,14 @@ def _offer_only_seasons_we_hold(payload, league: str):
         return payload
     held = _pkg_seasons_we_hold(league)
     served = payload.get("season")
-    kept = [year for year in offered if year in held or year == served]
+    # Keep the publisher's newest season even while an older year is selected.
+    # Otherwise selecting the last season we hold removes the current year from
+    # the response and traps the picker on the historical table.
+    current = max((year for year in offered if isinstance(year, int)), default=None)
+    kept = [
+        year for year in offered
+        if year in held or year == served or year == current
+    ]
     if served is not None and served not in kept:
         kept.append(served)
     payload["available_seasons"] = sorted(set(kept), reverse=True)
@@ -170,7 +177,9 @@ def get_standings(league: str, season: int = None):
         # entries arrive pre-ordered by conference standing. See
         # espn_client.ncaaf_conference_standings.
         try:
-            return espn.ncaaf_conference_standings()
+            return _offer_only_seasons_we_hold(
+                espn.ncaaf_conference_standings(season=season), lg
+            )
         except ValueError as e:
             raise HTTPException(404, str(e))
         except HTTPException:

@@ -43,6 +43,28 @@ CREATE TABLE team_game_results (
 """
 
 
+LEGACY_PREDICTIONS_DDL = """
+CREATE TABLE predictions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    league TEXT NOT NULL,
+    game_id TEXT NOT NULL,
+    predicted_winner TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    correct INTEGER
+)
+"""
+
+
+LEGACY_PROP_GAMES_DDL = """
+CREATE TABLE prop_games (
+    id INTEGER PRIMARY KEY,
+    league TEXT,
+    game_id TEXT,
+    start_time TEXT
+)
+"""
+
+
 OLD_REGISTRY_SQL = """
 CREATE TABLE app_schema_migrations (
     migration_id TEXT PRIMARY KEY,
@@ -59,6 +81,7 @@ def _bootstrap(path: str, old_registry: bool = False) -> None:
         con.execute(LEGACY_TEAM_STATS_DDL)
         con.execute(NEWS_ITEMS_DDL)
         con.execute(TEAM_GAME_RESULTS_DDL)
+        con.execute(LEGACY_PREDICTIONS_DDL)
         for addition in migrate_schema.MIGRATIONS[1].additions:
             con.execute(addition.sql)
         for migration in migrate_schema.MIGRATIONS:
@@ -87,10 +110,7 @@ def _bootstrap(path: str, old_registry: bool = False) -> None:
             "ot_losses INTEGER, games_started INTEGER, blocked_shots INTEGER,"
             "hits INTEGER, takeaways INTEGER, giveaways INTEGER)"
         )
-        con.execute(
-            "CREATE TABLE prop_games("
-            "id INTEGER PRIMARY KEY, league TEXT, game_id TEXT, start_time TEXT)"
-        )
+        con.execute(LEGACY_PROP_GAMES_DDL)
         con.execute(OLD_REGISTRY_SQL if old_registry else migrate_schema.REGISTRY_SQL)
         for migration in migrate_schema.MIGRATIONS[:2]:
             con.execute(
@@ -226,6 +246,8 @@ class MigrateAllTests(unittest.TestCase):
             con.execute(LEGACY_TEAM_STATS_DDL)
             con.execute(NEWS_ITEMS_DDL)
             con.execute(TEAM_GAME_RESULTS_DDL)
+            con.execute(LEGACY_PREDICTIONS_DDL)
+            con.execute(LEGACY_PROP_GAMES_DDL)
 
         result = migrate_all.main(
             ["--apply", "--only", "prod", "--prod", self.prod, "--dev", self.dev]

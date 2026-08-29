@@ -487,7 +487,7 @@ def mls_conference_standings(season=None):
     }
 
 
-def ncaaf_conference_standings():
+def ncaaf_conference_standings(season=None):
     """NCAAF per-conference standings — the {group, rows} shape the league
     hub's ConferenceStandings table renders.
 
@@ -499,12 +499,26 @@ def ncaaf_conference_standings():
     points column and no gf/ga/gd — those soccer-only fields are omitted
     rather than fabricated as zeros (honest-data-ui: dash != zero).
 
-    Returns [{group: "Big Ten Conference", rows: [{rank, abbrev, name,
-    played, wins, losses}]}]. Conferences with no published entries are
-    skipped entirely (a table with zero rows is a dead surface).
+    Returns a season-named envelope whose ``groups`` contain the published
+    conference rows. Conferences with no published entries are skipped
+    entirely (a table with zero rows is a dead surface).
     """
     _, path = espn_client._check("ncaaf")
-    d = espn_client._get(espn_client._CORE.format(path=path) + "/standings", ttl=900)
+    url = espn_client._CORE.format(path=path) + "/standings"
+    if season is not None:
+        url += "?season=%d" % int(season)
+    d = espn_client._get(url, ttl=900)
+    season_doc = d.get("season") or {}
+    year = espn_client._int(season_doc.get("year"))
+    if year is None:
+        raise ValueError("NCAAF standings: publisher named no season")
+    available = sorted({
+        entry_year
+        for entry in d.get("seasons") or []
+        for entry_year in [espn_client._int(entry.get("year"))]
+        if entry_year is not None
+        and any(t.get("hasStandings") for t in (entry.get("types") or []))
+    }, reverse=True)
     groups = []
     for child in d.get("children", []):
         gname = child.get("name", "")
@@ -526,7 +540,15 @@ def ncaaf_conference_standings():
                 "losses": l,
             })
         groups.append({"group": gname, "rows": rows})
-    return groups
+    if not groups:
+        raise ValueError(f"NCAAF standings: publisher returned no groups for {year}")
+    return {
+        "league": "ncaaf",
+        "season": year,
+        "season_label": season_doc.get("displayName") or str(year),
+        "available_seasons": available or [year],
+        "groups": groups,
+    }
 
 
 _LCUP_ROUND_ORDER = {

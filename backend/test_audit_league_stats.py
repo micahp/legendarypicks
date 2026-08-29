@@ -242,10 +242,10 @@ class AuditTests(unittest.TestCase):
         states = self.states("ufc", "D/leaders-reach-logs")
         self.assertEqual(audit.UNVERIFIED, states["D/leaders-reach-logs"])
 
-    def test_tennis_and_wnba_are_explicitly_in_the_ruler(self):
+    def test_tennis_is_explicitly_in_the_ruler(self):
         """No stats surface is a declaration, not permission to skip a league."""
         self.con.commit()
-        for league in ("atp", "wta", "wnba"):
+        for league in ("atp", "wta"):
             self.assertIn(league, audit.MANIFEST)
             self.assertEqual(audit.MANIFEST[league]["stat_types"], {})
             states = self.states(league, "D/leaders-reach-logs")

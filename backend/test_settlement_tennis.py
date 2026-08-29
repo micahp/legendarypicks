@@ -84,7 +84,9 @@ def test_tennis_settles_all_published_markets_without_a_live_pull(monkeypatch):
 
 def test_tennis_nonfinal_or_incomplete_snapshot_stays_pending():
     live = _database(state="in")
-    assert settlement.settle_game(live, 1)["settled"] == 0
+    live_result = settlement.settle_game(live, 1)
+    assert live_result["settled"] == 0
+    assert live_result["pending"] == 7
     assert live.execute("SELECT COUNT(*) FROM prop_results").fetchone()[0] == 0
 
     retired = _database(home_score=1, away_score=1)
@@ -92,3 +94,16 @@ def test_tennis_nonfinal_or_incomplete_snapshot_stays_pending():
     assert result["settled"] == 0
     assert result["pending"] == 7
     assert retired.execute("SELECT COUNT(*) FROM prop_results").fetchone()[0] == 0
+
+
+def test_tennis_missing_snapshot_reports_every_open_prop_as_pending():
+    con = _database()
+    con.execute("DELETE FROM scoreboard_snapshots")
+
+    result = settlement.settle_game(con, 1)
+
+    assert result == {
+        "settled": 0, "void": 0, "unmappable": 0, "pending": 7,
+        "errors": 0,
+        "msg": "game 1: no durable tennis scoreboard snapshot",
+    }

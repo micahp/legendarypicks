@@ -82,6 +82,20 @@ describe('GameCard method of victory', () => {
     expect(screen.queryByText('FINAL')).toBeNull()
   })
 
+  it('shows tournament seeds on tennis match cards and no number for unseeded players', () => {
+    render(<GameCard
+      gameId="x"
+      league="ATP"
+      homeTeam={{ teamId: 'Sinner', name: 'Jannik Sinner', seed: 1 }}
+      awayTeam={{ teamId: 'Player', name: 'Unseeded Player' }}
+      startTime="2026-08-26T15:00:00Z"
+      status="SCHEDULED"
+    />)
+    expect(screen.getByText('(1) Jannik Sinner')).toBeTruthy()
+    expect(screen.getByText('Unseeded Player')).toBeTruthy()
+    expect(screen.queryByText(/undefined.*Unseeded Player/)).toBeNull()
+  })
+
   it('labels a shootout-decided soccer final with the pens result', () => {
     render(<GameCard
       gameId="401863611"

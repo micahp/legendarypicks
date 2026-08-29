@@ -102,7 +102,7 @@ everywhere else: the value is published, do not re-derive it
 | Football | `NFL`, `NCAAF` | none | **Deliberately two top-level chips.** See below. |
 | Soccer | `Soccer` | yes | MLS, Leagues Cup, and whatever the relay actually carries |
 | Tennis | `Tennis` | yes | ATP, WTA |
-| Basketball | `NBA` | none | WNBA joins as a second chip if it gets props |
+| Basketball | `NBA` | none | |
 | Baseball | `MLB` | none | |
 | Hockey | `NHL` | none | |
 | MMA | `UFC` | none | renamed to MMA only when a second promotion has props |

@@ -87,6 +87,7 @@ MARKET_ALIASES = {
     "total_strikeouts": "strikeouts",
     "total_hits_allowed": "hits_allowed",
     "total_pitcher_outs": "outs",
+    "total_pitcher_walks": "walks",
     "total_earned_runs": "earned_runs",
     "total_walks": "walks",
     "total_points": "points",

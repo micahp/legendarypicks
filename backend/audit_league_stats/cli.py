@@ -236,14 +236,6 @@ MANIFEST = {
         "position_content": {},
         "single_vocabulary": [],
     },
-    "wnba": {
-        # WNBA is not offered and the copied database has no players, logs, or
-        # stats for it. Keep it in the ruler anyway: absence of product/data is
-        # now explicit evidence, not a league the audit never asks about.
-        "stat_types": {},
-        "position_content": {},
-        "single_vocabulary": [],
-    },
     "mls": {
         "stat_types": {
             "season": {

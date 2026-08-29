@@ -203,16 +203,32 @@ function LoadingEvidence() {
   )
 }
 
-function EmptyBoard({ date }: { date: string }) {
+function EmptyBoard({ filterLabel, onViewAll }: {
+  filterLabel?: string
+  onViewAll?: () => void
+}) {
   return (
-    <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 px-5 py-16 text-center">
-      <p className="text-sm font-medium text-zinc-300">No prop markets for this slate.</p>
-      <p className="mt-1 text-xs text-zinc-500">Try another league or move off {date}.</p>
+    <div className="py-16 text-center text-sm text-zinc-500">
+      <p>No upcoming games with props. Check back closer to game time.</p>
+      {filterLabel && onViewAll && (
+        <button
+          type="button"
+          onClick={onViewAll}
+          className="mt-4 rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-4 py-2 text-sm font-medium text-emerald-400 transition-colors hover:bg-emerald-500/20"
+        >
+          View All Leagues
+        </button>
+      )}
     </div>
   )
 }
 
-export default function MarketSlateBoard({ league, date }: { league: string; date: string }) {
+export default function MarketSlateBoard({ league, date, filterLabel, onViewAll }: {
+  league: string
+  date: string
+  filterLabel?: string
+  onViewAll?: () => void
+}) {
   const [props, setProps] = useState<BoardProp[]>([])
   const [marketOptions, setMarketOptions] = useState<MarketOption[]>([])
   const [loadedMarket, setLoadedMarket] = useState('')
@@ -444,7 +460,7 @@ export default function MarketSlateBoard({ league, date }: { league: string; dat
     return <div className="rounded-xl border border-red-900/60 bg-red-950/30 px-4 py-4 text-sm text-red-200">{error}</div>
   }
 
-  if (!markets.length) return <EmptyBoard date={date} />
+  if (!markets.length) return <EmptyBoard filterLabel={filterLabel} onViewAll={onViewAll} />
 
   return (
     <section className="min-w-0 space-y-4" aria-label="Market-first prop board">

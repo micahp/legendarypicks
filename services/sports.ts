@@ -29,6 +29,10 @@ export type { LivePeriod } from '../lib/liveGameStatus'
 export interface TeamSide {
   teamId: string
   name: string
+  athleteId?: string
+  // Tennis tournament seed from ESPN competitors[].curatedRank.current.
+  // This is deliberately separate from the weekly ATP/WTA world ranking.
+  seed?: number
   nickname?: string
   score?: number
   winner?: boolean
@@ -78,6 +82,8 @@ function side(s: any): Game['homeTeam'] {
   return {
     teamId: s?.abbrev ?? '',
     name: name + record,
+    athleteId: s?.athlete_id != null ? String(s.athlete_id) : s?.athleteId != null ? String(s.athleteId) : undefined,
+    seed: Number.isInteger(s?.seed) && s.seed > 0 ? s.seed : undefined,
     nickname: s?.nickname,
     score: s?.score ?? undefined,
     winner: s?.winner ?? undefined,

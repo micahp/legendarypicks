@@ -19,8 +19,19 @@ const LEAGUE_CARDS: Record<string, { desc: string; emoji: string }> = {
   // and ingest — it just is not a league hub. See useLeagueRouteState's `offerable`.
 }
 
+const LEAGUE_ORDER = ['mlb', 'nba', 'nhl', 'nfl', 'soccer', 'ncaaf', 'ufc', 'esports', 'tennis']
+
+function leagueRank(league: string): number {
+  const rank = LEAGUE_ORDER.indexOf(league)
+  return rank === -1 ? LEAGUE_ORDER.length : rank
+}
+
 export default function LeaguesPage() {
   const { groups, loading, error } = useSportNavigation('leagues')
+  const leagues = groups
+    .flatMap(group => group.competitions)
+    .filter((competition, index, all) => all.findIndex(item => item.league === competition.league) === index)
+    .sort((a, b) => leagueRank(a.league) - leagueRank(b.league) || leagueNavigationLabel(a.league).localeCompare(leagueNavigationLabel(b.league)))
   return (
     <>
       <Head>
@@ -39,41 +50,32 @@ export default function LeaguesPage() {
             League coverage is unavailable right now.
           </div>
         ) : (
-          <div className="space-y-8">
-            {groups.map(group => (
-              <section key={group.key} aria-labelledby={`sport-${group.key}`} className="space-y-3">
-                <h2 id={`sport-${group.key}`} className="text-sm font-bold uppercase tracking-wider text-zinc-400">
-                  {group.label}
-                </h2>
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {group.competitions.map(competition => {
-                    const card = LEAGUE_CARDS[competition.league] || {
-                      desc: `${leagueNavigationLabel(competition.league)} coverage and schedules`,
-                      emoji: '🏆',
-                    }
-                    return (
-                      <Link
-                        key={competition.league}
-                        href={`/leagues/${competition.league}`}
-                        className="group rounded-xl border border-zinc-800 bg-zinc-900 p-5 transition-colors hover:border-emerald-500/30 hover:bg-zinc-900/80"
-                      >
-                        <div className="flex items-start gap-3">
-                          <span className="shrink-0 text-2xl">{card.emoji}</span>
-                          <div className="min-w-0">
-                            <h3 className="text-lg font-bold text-zinc-200 transition-colors group-hover:text-emerald-400">
-                              {leagueNavigationLabel(competition.league)}
-                            </h3>
-                            <p className="mt-1 text-sm leading-relaxed text-zinc-500">
-                              {card.desc}
-                            </p>
-                          </div>
-                        </div>
-                      </Link>
-                    )
-                  })}
-                </div>
-              </section>
-            ))}
+          <div aria-label="League directory" className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {leagues.map(competition => {
+              const card = LEAGUE_CARDS[competition.league] || {
+                desc: `${leagueNavigationLabel(competition.league)} coverage and schedules`,
+                emoji: '🏆',
+              }
+              return (
+                <Link
+                  key={competition.league}
+                  href={`/leagues/${competition.league}`}
+                  className="group rounded-xl border border-zinc-800 bg-zinc-900 p-5 transition-colors hover:border-emerald-500/30 hover:bg-zinc-900/80"
+                >
+                  <div className="flex items-start gap-3">
+                    <span className="shrink-0 text-2xl">{card.emoji}</span>
+                    <div className="min-w-0">
+                      <h2 className="text-lg font-bold text-zinc-200 transition-colors group-hover:text-emerald-400">
+                        {leagueNavigationLabel(competition.league)}
+                      </h2>
+                      <p className="mt-1 text-sm leading-relaxed text-zinc-500">
+                        {card.desc}
+                      </p>
+                    </div>
+                  </div>
+                </Link>
+              )
+            })}
           </div>
         )}
       </div>

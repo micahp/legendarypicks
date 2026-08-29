@@ -85,16 +85,20 @@ describe('Props slate grouping', () => {
 
   it('queries both tours by default, then one tour when the competition is selected', async () => {
     render(React.createElement(PropsPage))
-    fireEvent.click(await screen.findByRole('button', { name: 'Tennis' }))
+    const tennis = await screen.findByRole('button', { name: 'Tennis' })
+    fireEvent.click(tennis)
 
     await waitFor(() => {
       expect((global.fetch as jest.Mock).mock.calls.some(([url]) =>
         String(url).includes('leagues=atp%2Cwta'))).toBe(true)
     })
     await waitFor(() => expect(document.querySelectorAll('[data-slate-game]')).toHaveLength(slate.length))
-    expect(screen.getByRole('navigation', { name: 'Tennis competitions' })).toBeTruthy()
+    expect(screen.queryByRole('menu', { name: 'Tennis filters' })).toBeNull()
 
-    fireEvent.click(screen.getByRole('button', { name: 'WTA' }))
+    fireEvent.click(tennis)
+    expect(screen.getByRole('menu', { name: 'Tennis filters' })).toBeTruthy()
+    expect(screen.getByRole('menuitemradio', { name: 'All Tennis' })).toBeTruthy()
+    fireEvent.click(screen.getByRole('menuitemradio', { name: 'WTA' }))
     await waitFor(() => {
       expect((global.fetch as jest.Mock).mock.calls.some(([url]) =>
         String(url).includes('league=wta'))).toBe(true)
@@ -117,16 +121,27 @@ describe('Props slate grouping', () => {
 
     render(React.createElement(PropsPage))
 
-    await clickAndFlush(await screen.findByRole('button', { name: 'Soccer' }))
-    const soccerNav = screen.getByRole('navigation', { name: 'Soccer competitions' })
-    expect(soccerNav.textContent).toContain('MLS')
-    expect(soccerNav.textContent).toContain('Leagues Cup')
+    const soccer = await screen.findByRole('button', { name: 'Soccer' })
+    await clickAndFlush(soccer)
     await waitFor(() => expect((global.fetch as jest.Mock).mock.calls.some(([url]) =>
       String(url).includes('leagues=mls%2Clcup'))).toBe(true))
+    expect(await screen.findByText('No upcoming games with props. Check back closer to game time.')).toBeTruthy()
 
-    await clickAndFlush(screen.getByRole('button', { name: 'Leagues Cup' }))
+    expect(screen.queryByRole('menu', { name: 'Soccer filters' })).toBeNull()
+    await clickAndFlush(soccer)
+    const soccerMenu = screen.getByRole('menu', { name: 'Soccer filters' })
+    expect(screen.getByRole('menuitemradio', { name: 'All Soccer' })).toBeTruthy()
+    expect(soccerMenu.textContent).toContain('MLS')
+    expect(soccerMenu.textContent).toContain('Leagues Cup')
+
+    await clickAndFlush(screen.getByRole('menuitemradio', { name: 'Leagues Cup' }))
     await waitFor(() => expect((global.fetch as jest.Mock).mock.calls.some(([url]) =>
       String(url).includes('league=lcup'))).toBe(true))
+    expect(screen.getByRole('button', { name: 'Leagues Cup' }).getAttribute('aria-pressed')).toBe('true')
+    expect(await screen.findByText('No upcoming games with props. Check back closer to game time.')).toBeTruthy()
+
+    await clickAndFlush(screen.getByRole('button', { name: 'View All Leagues' }))
+    expect(screen.getByRole('button', { name: 'All' }).getAttribute('aria-pressed')).toBe('true')
 
     await clickAndFlush(screen.getByRole('button', { name: 'NBA' }))
     await waitFor(() => expect((global.fetch as jest.Mock).mock.calls.some(([url]) =>

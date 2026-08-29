@@ -2,6 +2,7 @@ import json
 import sqlite3
 
 import settlement
+from ingest_wc_logs import WCPlayerResolver, _roster_players
 from repair_world_cup_results import repair
 
 
@@ -52,12 +53,12 @@ def _database():
     return con
 
 
-def test_wc_repair_grades_logs_and_retains_proven_dnp_void():
+def test_wc_repair_grades_logs_and_keeps_missing_logs_unresolved():
     con = _database()
     dry = repair(con, apply=False)
     assert dry == {
-        "legacy_null_rows": 3, "gradeable": 2, "retained_voids": 1,
-        "other_unresolved": 0, "updated": 0, "errors": 0,
+        "legacy_null_rows": 3, "gradeable": 2, "retained_voids": 0,
+        "other_unresolved": 1, "updated": 0, "errors": 0,
     }
     assert con.execute(
         "SELECT COUNT(*) FROM prop_results WHERE actual_value IS NOT NULL"
@@ -81,3 +82,46 @@ def test_wc_normal_settlement_uses_completed_logs_without_live_data():
     assert result == {
         "settled": 2, "void": 0, "unmappable": 0, "pending": 1, "errors": 0,
     }
+
+
+def test_wc_explicit_dnp_log_persists_an_evidence_backed_void():
+    con = _database()
+    con.execute("DELETE FROM prop_results")
+    con.execute(
+        "INSERT INTO player_game_logs VALUES (2,11,'wc','760516',?)",
+        (json.dumps({"did_not_play": 1}),),
+    )
+    con.commit()
+
+    result = settlement.settle_game(con, 1)
+
+    assert result == {
+        "settled": 2, "void": 1, "unmappable": 0, "pending": 0, "errors": 0,
+    }
+    assert tuple(con.execute(
+        "SELECT actual_value,hit FROM prop_results WHERE prop_id=3"
+    ).fetchone()) == (None, None)
+
+
+def test_wc_ingest_retains_publisher_appearance_zero_as_dnp_evidence():
+    summary = {"rosters": [{"team": {"abbreviation": "ENG"},
+                             "homeAway": "away", "roster": [{
+        "athlete": {"id": "999", "displayName": "Unused Reserve"},
+        "stats": [{"name": "appearances", "value": 0}],
+    }]}]}
+    assert list(_roster_players(summary)) == [
+        ("999", "Unused Reserve", "ENG", "away", {"did_not_play": 1})
+    ]
+
+
+def test_wc_resolver_prefers_the_stable_publisher_identity():
+    con = sqlite3.connect(":memory:")
+    con.row_factory = sqlite3.Row
+    con.execute(
+        "CREATE TABLE players(id INTEGER,name TEXT,team TEXT,league TEXT,espn_id TEXT)"
+    )
+    con.execute(
+        "INSERT INTO players VALUES(10,'Kylian Mbappé','FRA','wc','231388')"
+    )
+    resolver = WCPlayerResolver(con)
+    assert resolver.resolve("Publisher Renamed Him", "FRA", "231388") == 10

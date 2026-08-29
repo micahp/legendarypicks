@@ -226,18 +226,31 @@ def _tennis_game(event, grouping, comp):
     status_type = status.get("type", {})
     players = {}
     for competitor in comp.get("competitors", []) or []:
+        athlete = competitor.get("athlete", {}) or {}
         if competitor.get("type") == "team":
             roster = competitor.get("roster", {})
             name = roster.get("displayName") or roster.get("shortDisplayName") or "TBD"
             abbrev = (roster.get("shortDisplayName") or name)[:8]
         else:
-            athlete = competitor.get("athlete", {})
             name = athlete.get("displayName") or athlete.get("fullName") or "TBD"
             abbrev = athlete.get("shortName") or name[:3].upper()
+        curated_rank = competitor.get("curatedRank") or {}
+        try:
+            seed = int(curated_rank.get("current"))
+            if seed < 1:
+                seed = None
+        except (TypeError, ValueError):
+            seed = None
         players[competitor.get("homeAway")] = {
+            # ESPN's tennis competitor id is the athlete id. Keep it beside the
+            # tournament seed so downstream joins never need the display name.
+            "athlete_id": str(competitor.get("id") or athlete.get("id") or ""),
             "abbrev": abbrev,
             "name": name,
             "score": None,
+            # `curatedRank.current` is the seed assigned in this tournament's
+            # draw, not the ATP/WTA world ranking. Unseeded players stay null.
+            "seed": seed,
         }
     for competitor in comp.get("competitors", []) or []:
         linescores = competitor.get("linescores", []) or []

@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { useEffect, useMemo, useState } from 'react'
 import GameCard from '../../components/Scores/GameCard'
+import HorizontalScrollRail from '../../components/HorizontalScrollRail'
 import NewsTab from '../../components/Leagues/NewsTab'
 import { useNewsData } from '../../components/Leagues/hooks/useNewsData'
 import { SportsService } from '../../services/sports'
@@ -18,8 +19,8 @@ type DrawMatch = {
   status?: string
   status_detail?: string
   round: string
-  home?: { name?: string; sets?: number[] }
-  away?: { name?: string; sets?: number[] }
+  home?: { athlete_id?: string; name?: string; seed?: number | null; sets?: number[] }
+  away?: { athlete_id?: string; name?: string; seed?: number | null; sets?: number[] }
 }
 
 type Draw = {
@@ -66,7 +67,7 @@ const TABS: { key: HubTab; label: string }[] = [
 ]
 
 const TOURS: { key: Tour; label: string }[] = [
-  { key: 'all', label: 'Both' },
+  { key: 'all', label: 'All' },
   { key: 'atp', label: 'ATP' },
   { key: 'wta', label: 'WTA' },
 ]
@@ -175,12 +176,7 @@ export default function TennisLeaguePage() {
       <Head><title>Tennis — Legendary Picks</title></Head>
       <div className="space-y-6">
         <header>
-          <p className="text-xs font-bold uppercase tracking-widest text-emerald-400">Major tournament coverage</p>
-          <h1 className="mt-1 text-3xl font-extrabold tracking-tight">Tennis</h1>
-          <p className="mt-2 max-w-2xl text-sm text-zinc-400">
-            ATP and WTA scores, singles draws, world rankings, and news for covered major tournaments.
-            Tour events outside this coverage are not ingested here.
-          </p>
+          <h1 className="text-3xl font-extrabold tracking-tight">Tennis</h1>
         </header>
 
         <nav aria-label="Tennis sections" className="flex gap-2 border-b border-zinc-800">
@@ -193,15 +189,21 @@ export default function TennisLeaguePage() {
           ))}
         </nav>
 
-        <div aria-label="Tour" className="flex gap-2">
-          {TOURS.map(item => (
-            <Link key={item.key} href={`/leagues/tennis?tab=${tab}&tour=${item.key}`}
-              onClick={() => setTour(item.key)} aria-current={tour === item.key ? 'page' : undefined}
-              className={`rounded-full border px-4 py-1.5 text-sm font-semibold ${tour === item.key ? 'border-emerald-500 bg-emerald-500/10 text-emerald-300' : 'border-zinc-800 text-zinc-400'}`}>
-              {item.label}
-            </Link>
-          ))}
-        </div>
+        <label className="flex w-fit items-center gap-2 text-sm text-zinc-500">
+          <span>Tour</span>
+          <select
+            aria-label="Tour"
+            value={tour}
+            onChange={event => {
+              const nextTour = event.target.value as Tour
+              setTour(nextTour)
+              router.push({ pathname: '/leagues/tennis', query: { tab, tour: nextTour } }, undefined, { shallow: true })
+            }}
+            className="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm font-semibold text-zinc-200 outline-none focus:border-emerald-500"
+          >
+            {TOURS.map(item => <option key={item.key} value={item.key}>{item.label}</option>)}
+          </select>
+        </label>
 
         {tab === 'scores' && (
           <ScoresPanel date={date} setDate={setDate} games={games} loading={scoresLoading} error={scoresError} />
@@ -226,12 +228,40 @@ function ScoresPanel({ date, setDate, games, loading, error }: {
   loading: boolean
   error: string | null
 }) {
+  const isToday = date === localDate()
   return (
     <section className="space-y-4">
-      <div className="flex items-center justify-between rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2">
-        <button aria-label="Previous day" onClick={() => setDate(shiftDate(date, -1))} className="px-3 py-1 text-zinc-400 hover:text-white">←</button>
-        <button onClick={() => setDate(localDate())} className="text-sm font-bold text-zinc-200">{date}</button>
-        <button aria-label="Next day" onClick={() => setDate(shiftDate(date, 1))} className="px-3 py-1 text-zinc-400 hover:text-white">→</button>
+      <div className="flex items-center justify-center gap-2 sm:gap-3">
+        <button
+          type="button"
+          aria-label="Previous day"
+          onClick={() => setDate(shiftDate(date, -1))}
+          className="flex h-10 w-10 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900 text-xl leading-none text-zinc-300 hover:bg-zinc-800 active:scale-95"
+        >
+          ‹
+        </button>
+        <div className="min-w-[11rem] text-center" aria-live="polite">
+          <span className="text-sm font-bold text-zinc-200">
+            {new Date(`${date}T12:00:00`).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
+          </span>
+          {!isToday && (
+            <button
+              type="button"
+              onClick={() => setDate(localDate())}
+              className="mx-auto mt-0.5 block text-xs font-medium text-emerald-400 hover:text-emerald-300"
+            >
+              Jump to today
+            </button>
+          )}
+        </div>
+        <button
+          type="button"
+          aria-label="Next day"
+          onClick={() => setDate(shiftDate(date, 1))}
+          className="flex h-10 w-10 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900 text-xl leading-none text-zinc-300 hover:bg-zinc-800 active:scale-95"
+        >
+          ›
+        </button>
       </div>
       {error ? <Unavailable text={error} /> : loading ? <Loading /> : games.length ? (
         <div className="grid gap-3 md:grid-cols-2">{games.map(game => <GameCard key={`${game.league}-${game.gameId}`} {...game} />)}</div>
@@ -259,18 +289,23 @@ function DrawTournament({ draw }: { draw: Draw }) {
         <div>
           <p className="text-xs font-bold uppercase tracking-wider text-emerald-400">{draw.league.toUpperCase()} · {draw.draw_type || 'Singles'}</p>
           <h2 className="text-2xl font-bold">{draw.event_name}</h2>
-          <p className="text-xs text-zinc-500">Snapshot {new Date(draw.fetched_at).toLocaleString()}</p>
         </div>
         {draw.bracket_url && <a href={draw.bracket_url} target="_blank" rel="noreferrer" className="text-sm font-semibold text-blue-400 hover:text-blue-300">Official bracket ↗</a>}
       </div>
-      <div className="flex gap-4 overflow-x-auto pb-3">
+      <HorizontalScrollRail
+        label={`${draw.event_name} draw rounds`}
+        previousLabel="Previous draw rounds"
+        nextLabel="Next draw rounds"
+        railClassName="flex gap-4 pb-3"
+        stickyControls
+      >
         {rounds.map(([round, matches]) => (
           <div key={round} className="w-72 shrink-0 space-y-2">
             <h3 className="sticky top-0 bg-zinc-950 py-1 text-sm font-bold text-zinc-300">{round}</h3>
             {matches.map(match => <DrawMatchCard key={match.game_id} match={match} />)}
           </div>
         ))}
-      </div>
+      </HorizontalScrollRail>
     </section>
   )
 }
@@ -325,7 +360,9 @@ function DrawMatchCard({ match }: { match: DrawMatch }) {
       <p className="mb-2 text-[10px] font-bold uppercase tracking-wide text-zinc-500">{match.status_detail || match.status || 'Scheduled'}</p>
       {([match.home, match.away] as const).map((player, side) => (
         <div key={side} className="flex justify-between gap-3 py-1">
-          <span className={player?.name ? 'text-zinc-200' : 'italic text-zinc-500'}>{player?.name || 'TBD'}</span>
+          <span className={player?.name ? 'text-zinc-200' : 'italic text-zinc-500'}>
+            {player?.name ? `${player.seed ? `(${player.seed}) ` : ''}${player.name}` : 'TBD'}
+          </span>
           {sets > 0 && <span className="tabular-nums text-zinc-400">{Array.from({ length: sets }, (_, index) => player?.sets?.[index] ?? '–').join('  ')}</span>}
         </div>
       ))}

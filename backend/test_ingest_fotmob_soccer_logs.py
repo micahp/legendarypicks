@@ -85,6 +85,16 @@ class AmbiguityFailsClosed(unittest.TestCase):
                                     {"id": 8, "team": "AME", "espn_id": "2"}]}
         self.assertIsNone(fm.resolve(index, "Juan Dominguez"))
 
+    def test_exact_appearance_roster_disambiguates_duplicate_domestic_names(self):
+        index = {"victor guzman": [
+            {"id": 7, "team": "MTY", "espn_id": "1"},
+            {"id": 8, "team": "TOL", "espn_id": "2"},
+        ]}
+        self.assertEqual(
+            fm.resolve(index, "Víctor Guzmán", allowed_player_ids={7})["id"],
+            7,
+        )
+
     def test_no_spine_row_resolves_to_none(self):
         self.assertIsNone(fm.resolve({}, "Nobody Here"))
 
@@ -192,6 +202,18 @@ class TheProvidersKeepSeparateRows(unittest.TestCase):
         self.assertEqual(self.con.execute(
             "SELECT COUNT(*) FROM player_game_logs").fetchone()[0], 0,
             "an unresolved FotMob row never lands in ESPN's table")
+
+    def test_a_later_exact_resolution_repairs_the_retained_provider_row(self):
+        fm.upsert(self.con, "ligamx", 2026, None, 1000014543,
+                  "2026-08-24", {"tackles": 1.0}, False,
+                  fotmob_id=880042)
+        fm.upsert(self.con, "ligamx", 2026,
+                  {"id": 7, "team": "LEO", "espn_id": "7"}, 1000014543,
+                  "2026-08-24", {"tackles": 2.0}, False,
+                  fotmob_id=880042)
+        self.assertEqual(self.con.execute(
+            "SELECT player_id FROM player_game_logs_fotmob"
+        ).fetchone()[0], 7)
 
 
 class TheSpineIsTheLeaguesThatOwnTheAthletes(unittest.TestCase):

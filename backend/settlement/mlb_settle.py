@@ -61,14 +61,16 @@ def _settle_mlb_props(con, game_row, props) -> dict:
         start_time = None
     gamePk = settlement._fetch_mlb_gamepk(date_str, home, away, start_time=start_time)
     if not gamePk:
-        return {"settled": 0, "void": 0, "unmappable": 0, "pending": 0,
+        return {"settled": 0, "void": 0, "unmappable": 0,
+                "pending": len(props),
                 "errors": 0,
                 "msg": f"MLB gamePk not found for {away}@{home} on {date_str} "
                        f"(start_time={start_time or 'none'})"}
 
     box = settlement._fetch_mlb_boxscore(gamePk)
     if not box:
-        return {"settled": 0, "void": 0, "unmappable": 0, "pending": 0,
+        return {"settled": 0, "void": 0, "unmappable": 0,
+                "pending": len(props),
                 "errors": 1,
                 "error_msg": f"MLB boxscore failed for gamePk={gamePk}"}
 
@@ -89,9 +91,19 @@ def _settle_mlb_props(con, game_row, props) -> dict:
                 except ValueError:
                     continue
             stats = pdata.get("stats", {})
+            game_status = pdata.get("gameStatus") or {}
             player_stats[mlbam] = {
                 "batting": stats.get("batting", {}),
                 "pitching": stats.get("pitching", {}),
+                "appeared": any(bool(group) for group in stats.values()),
+                # A final boxscore explicitly identifies unused bench players.
+                # Require every stat group to be empty as well: a player who
+                # appeared and later returned to the bench is not a DNP.
+                "dnp": (
+                    game_status.get("isOnBench") is True
+                    and game_status.get("isSubstitute") is False
+                    and not any(bool(group) for group in stats.values())
+                ),
             }
 
     # Build player_id → mlbam_id lookup from the spine
@@ -117,9 +129,38 @@ def _settle_mlb_props(con, game_row, props) -> dict:
             pending += 1
             continue
 
+        if ps.get("dnp"):
+            try:
+                con.execute(
+                    "INSERT INTO prop_results(prop_id, actual_value, hit, settled_at) "
+                    "VALUES (?,NULL,NULL,?)",
+                    (prop["id"], now))
+                void += 1
+            except Exception:
+                errors += 1
+            continue
+
         canonical = normalize_market(prop["market"])
         canonical = MARKET_ALIASES.get(canonical, canonical)
         mapping = _MLB_MARKET_MAP.get(canonical)
+
+        # The player appeared, but not in the role this market measures (for
+        # example Ohtani batted but did not pitch, or a position player pitched
+        # without taking a plate appearance).  An empty required category plus
+        # a populated different category is positive role-DNP evidence.
+        required_category = ("batting" if canonical == "hits_runs_rbis"
+                             else (mapping[0] if mapping else None))
+        if (required_category and ps.get("appeared")
+                and not ps.get(required_category)):
+            try:
+                con.execute(
+                    "INSERT INTO prop_results(prop_id, actual_value, hit, settled_at) "
+                    "VALUES (?,NULL,NULL,?)",
+                    (prop["id"], now))
+                void += 1
+            except Exception:
+                errors += 1
+            continue
 
         if not mapping or mapping == (None, None):
             if canonical in ("hits_runs_rbis", "hits_runs_rbis"):

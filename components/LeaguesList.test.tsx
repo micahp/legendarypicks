@@ -23,18 +23,17 @@ describe('leagues list', () => {
     ['Esports', '/leagues/esports'],
   ])('lists %s with a card linking to its league destination', async (name, href) => {
     render(<LeaguesPage />)
-    const league = await screen.findByRole('heading', { level: 3, name })
+    const league = await screen.findByRole('heading', { level: 2, name })
     expect(league).toBeTruthy()
     const card = league.closest('a')
     expect(card?.getAttribute('href')).toBe(href)
   })
 
-  it('groups competition cards under sport headings', async () => {
+  it('renders one flat league grid without sport category headings', async () => {
     render(<LeaguesPage />)
-    const football = await screen.findByRole('heading', { name: 'Football' })
-    const section = football.closest('section')
-    expect(section?.textContent).toContain('NFL')
-    expect(section?.textContent).toContain('NCAAF')
-    expect(screen.getByRole('heading', { level: 2, name: 'Soccer' })).toBeTruthy()
+    const directory = await screen.findByLabelText('League directory')
+    expect(directory.textContent).toContain('NFL')
+    expect(directory.textContent).toContain('NCAAF')
+    expect(screen.queryByRole('heading', { name: 'Football' })).toBeNull()
   })
 })

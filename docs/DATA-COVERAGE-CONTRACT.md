@@ -153,9 +153,8 @@ Measured instances, so the sizes are not hypothetical:
 per-league declaration — that is why shape 1 was answered for four leagues the day the check
 was written. The *fixes* are all league-specific (`repair_mlb_identity_names.py`,
 `dedupe_mlb.py`, `dedupe_nfl.py`). So audit every league; repair only the ones the product
-needs. As of 2026-08-24 ATP, WTA and WNBA are explicit MANIFEST subjects with
-`stat_types: {}`. ATP/WTA have tournament/prop surfaces but no season leaderboard;
-WNBA has no offered product or database population. UFC and World Cup each now
+needs. ATP and WTA are explicit MANIFEST subjects with `stat_types: {}` because
+they have tournament/prop surfaces but no season leaderboard. UFC and World Cup each now
 measure three PASS results and one honest UNVERIFIED result: D records that no
 leaderboard surface is declared.
 

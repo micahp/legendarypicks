@@ -22,6 +22,8 @@ _UFC_METHOD_MARKETS = {
     "submissions": "SUB",
 }
 
+_UFC_FINISH_METHODS = {"KO/TKO", "SUB", "DQ"}
+
 
 def _ufc_scoreboard_competition(espn, date_text: str, fight_id: str) -> dict:
     """Return the exact fight object from ESPN's card-level UFC scoreboard."""
@@ -55,11 +57,26 @@ def _ufc_actual(stats: dict, market: str) -> Optional[float]:
         except (TypeError, ValueError):
             return None
 
+    result = str(stats.get("result") or "").strip().upper()
+    method = str(stats.get("method") or "").strip().upper()
+    if canonical == "finishes":
+        # Underdog's published contract is fighter-attributed: a finish is a
+        # win by knockout, submission, disqualification, or another stoppage.
+        # A decision win and every loss are zero; an unknown winning method is
+        # missing evidence, not a guessed finish.
+        if result == "W":
+            if not method:
+                return None
+            if method == "DEC":
+                return 0.0
+            return 1.0 if method in _UFC_FINISH_METHODS else None
+        if result == "L":
+            return 0.0
+        return None
+
     wanted_method = _UFC_METHOD_MARKETS.get(canonical)
     if not wanted_method:
         return None
-    result = str(stats.get("result") or "").strip().upper()
-    method = str(stats.get("method") or "").strip().upper()
     if result == "W":
         if not method:
             return None
@@ -88,7 +105,7 @@ def _settle_ufc_props(con: sqlite3.Connection, game, props: list) -> dict:
     pending = 0
     errors = 0
     now = dt.datetime.now(dt.timezone.utc).isoformat()
-    supported = set(_UFC_NUMERIC_MARKETS) | set(_UFC_METHOD_MARKETS)
+    supported = set(_UFC_NUMERIC_MARKETS) | set(_UFC_METHOD_MARKETS) | {"finishes"}
 
     for prop in props:
         canonical = normalize_market(prop["market"])

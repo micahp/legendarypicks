@@ -25,8 +25,14 @@ def _payload():
                     "round": {"id": "1", "displayName": "First Round"},
                     "status": {"type": {"state": "pre", "description": "Scheduled"}},
                     "competitors": [{
+                        "id": "1001",
                         "homeAway": "home",
+                        "curatedRank": {"current": 12},
                         "athlete": {"displayName": "Player One", "shortName": "P. One"},
+                    }, {
+                        "id": "1002",
+                        "homeAway": "away",
+                        "athlete": {"displayName": "Player Two", "shortName": "P. Two"},
                     }],
                 }, {
                     "id": "m2",
@@ -57,6 +63,10 @@ def test_draw_parser_keeps_rounds_future_tbd_and_official_link():
     assert draw["match_count"] == 2
     assert draw["bracket_url"].endswith("/type/1")
     assert [match["round"] for match in draw["matches"]] == ["First Round", "Second Round"]
+    assert draw["matches"][0]["home"]["athlete_id"] == "1001"
+    assert draw["matches"][0]["home"]["seed"] == 12
+    assert draw["matches"][0]["away"]["athlete_id"] == "1002"
+    assert draw["matches"][0]["away"]["seed"] is None
     assert draw["matches"][1]["home"] is None
     assert draw["matches"][1]["away"] is None
 

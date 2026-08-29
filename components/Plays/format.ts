@@ -43,7 +43,7 @@ export function titleCase(s: string): string {
 
 // Category labels: keep sport acronyms uppercase, humanize the compound bucket.
 export function categoryLabel(cat: string): string {
-  const upper = new Set(['mlb', 'nba', 'nfl', 'nhl', 'wnba', 'ufc'])
+  const upper = new Set(['mlb', 'nba', 'nfl', 'nhl', 'ufc'])
   if (upper.has(cat.toLowerCase())) return cat.toUpperCase()
   if (cat === 'crypto_econ_weather_politics') return 'Crypto / econ / weather / politics'
   return titleCase(cat)

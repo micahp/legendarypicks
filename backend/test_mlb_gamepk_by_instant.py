@@ -103,6 +103,18 @@ def test_an_unambiguous_day_still_resolves_without_an_instant(schedule):
     assert settlement._fetch_mlb_gamepk("2026-08-11", ARI, COL) == 825045
 
 
+def test_without_an_instant_adjacent_series_games_do_not_create_ambiguity(schedule):
+    """A calendar-date row asks only that date; neighbouring games are not rivals."""
+    previous = _game(825044, "2026-08-10T01:40:00Z", ARI, COL)
+    following = _game(825046, "2026-08-12T01:40:00Z", ARI, COL)
+    schedule({
+        "2026-08-10": [previous],
+        "2026-08-11": [_PLAYED],
+        "2026-08-12": [following],
+    })
+    assert settlement._fetch_mlb_gamepk("2026-08-11", ARI, COL) == 825045
+
+
 def test_the_instant_must_actually_match(schedule):
     """A start_time that matches nothing is a link problem, not a licence to guess."""
     schedule({"2026-08-11": [_PLAYED]})

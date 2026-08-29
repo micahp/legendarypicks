@@ -34,6 +34,8 @@ def _wc_actual(con: sqlite3.Connection, event_id: str, player_id: int,
         return None, "ambiguous_player_log"
     try:
         stats = json.loads(rows[0]["stats"] if hasattr(rows[0], "keys") else rows[0][0])
+        if stats.get("did_not_play") == 1:
+            return None, "did_not_play"
         value = stats.get(stat_key)
         return (float(value), "") if value is not None else (None, "missing_stat")
     except (TypeError, ValueError, json.JSONDecodeError):
@@ -51,6 +53,15 @@ def _settle_wc_props(con: sqlite3.Connection, event_id: str, props,
         if actual is None:
             if reason == "unmappable_market":
                 counts["unmappable"] += 1
+            elif reason == "did_not_play":
+                try:
+                    con.execute(
+                        "INSERT INTO prop_results(prop_id, actual_value, hit, settled_at) "
+                        "VALUES (?,NULL,NULL,?)",
+                        (prop["id"], now))
+                    counts["void"] += 1
+                except sqlite3.Error:
+                    counts["errors"] += 1
             else:
                 counts["pending"] += 1
             continue

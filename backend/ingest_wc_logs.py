@@ -92,13 +92,14 @@ def _boxscore_players(summary: dict):
         for stat_group in block.get("statistics", []):
             names = stat_group.get("names") or stat_group.get("labels") or []
             for row in stat_group.get("athletes", []):
-                if row.get("didNotPlay"):
-                    continue
                 athlete = row.get("athlete") or {}
                 athlete_id = athlete.get("id") or row.get("id")
                 name = athlete.get("displayName") or athlete.get("fullName")
-                raw = dict(zip(names, row.get("stats") or []))
-                stats = _target_line(raw)
+                if row.get("didNotPlay") is True:
+                    stats = {"did_not_play": 1}
+                else:
+                    raw = dict(zip(names, row.get("stats") or []))
+                    stats = _target_line(raw)
                 if athlete_id and name and stats:
                     yield str(athlete_id), name, team, home_away, stats
 
@@ -110,12 +111,13 @@ def _roster_players(summary: dict):
         home_away = block.get("homeAway")
         for row in block.get("roster", []):
             raw_stats = row.get("stats") or []
-            if not raw_stats or not _appeared(raw_stats):
+            if not raw_stats:
                 continue
             athlete = row.get("athlete") or {}
             athlete_id = athlete.get("id") or row.get("id")
             name = athlete.get("displayName") or athlete.get("fullName")
-            stats = _target_line(raw_stats)
+            stats = ({"did_not_play": 1} if not _appeared(raw_stats)
+                     else _target_line(raw_stats))
             if athlete_id and name and stats:
                 yield str(athlete_id), name, team, home_away, stats
 
@@ -125,7 +127,7 @@ class WCPlayerResolver:
 
     def __init__(self, con: sqlite3.Connection, allowed_player_ids=None):
         self.rows = [dict(row) for row in con.execute(
-            "SELECT id, name, team FROM players WHERE league='wc'"
+            "SELECT id, name, team, espn_id FROM players WHERE league='wc'"
         )]
         if allowed_player_ids is not None:
             allowed = {int(player_id) for player_id in allowed_player_ids}
@@ -146,7 +148,14 @@ class WCPlayerResolver:
                 rows = team_rows
         return rows[0]["id"] if len(rows) == 1 else None
 
-    def resolve(self, name: str, team: str):
+    def resolve(self, name: str, team: str, athlete_id: str = ""):
+        if athlete_id:
+            source_matches = [
+                row for row in self.rows
+                if str(row.get("espn_id") or "") == str(athlete_id)
+            ]
+            if len(source_matches) == 1:
+                return source_matches[0]["id"]
         normalized = _normalize_name(name)
         exact = [row for row in self.rows if row["name_norm"] == normalized]
         resolved = self._unique(exact, team)
@@ -281,7 +290,7 @@ def ingest(start: str, end: str) -> int:
                         home_away = "home"
                     elif team and away and team.upper() == away.upper():
                         home_away = "away"
-                player_id = resolver.resolve(name, team)
+                player_id = resolver.resolve(name, team, athlete_id)
                 if player_id is None:
                     unresolved += 1
                 else:

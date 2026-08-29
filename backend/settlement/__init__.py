@@ -8,7 +8,7 @@ This package splits the original settlement.py into modules by concern:
   mlb_api          — MLB Stats API: schedule, gamePk, boxscore, final
   mlb_settle       — settle MLB props from the MLB Stats API boxscore
   ufc_settle       — settle UFC props from durable per-fight logs
-  mls_settle       — settle MLS props from the summary roster-stat surface
+  mls_settle       — settle soccer props from durable provider appearances
   grading          — write one numeric actual to prop_results
   settle_game      — top-level driver: grade all unsettled props for one game
 

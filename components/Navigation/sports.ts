@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 
-export type NavigationSurface = 'props' | 'leagues'
+export type NavigationSurface = 'props' | 'leagues' | 'predict'
 
 export type Competition = {
   league: string
@@ -29,12 +29,12 @@ const SPORT_LABELS: Record<string, string> = {
 export const LEAGUE_LABELS: Record<string, string> = {
   mlb: 'MLB',
   nba: 'NBA',
-  wnba: 'WNBA',
   nhl: 'NHL',
   nfl: 'NFL',
   ncaaf: 'NCAAF',
   mls: 'MLS',
   lcup: 'Leagues Cup',
+  wc: 'World Cup',
   atp: 'ATP',
   wta: 'WTA',
   ufc: 'UFC',
@@ -90,7 +90,7 @@ export function groupSportNavigation(
     const competitions = [...unsorted].sort(competitionSort)
     // NFL and NCAAF deliberately remain direct top-level choices on the props
     // product. The league directory still groups both under Football.
-    if (surface === 'props' && sport === 'football') {
+    if ((surface === 'props' || surface === 'predict') && sport === 'football') {
       for (const competition of competitions) {
         groups.push({
           key: `${sport}:${competition.league}`,
@@ -112,7 +112,7 @@ export function groupSportNavigation(
   return groups.sort((a, b) => {
     const sportDifference = sportRank(a.sport) - sportRank(b.sport)
     if (sportDifference) return sportDifference
-    if (a.sport === 'football' && surface === 'props') {
+    if (a.sport === 'football' && (surface === 'props' || surface === 'predict')) {
       const order = ['nfl', 'ncaaf']
       return order.indexOf(a.competitions[0].league) - order.indexOf(b.competitions[0].league)
     }
