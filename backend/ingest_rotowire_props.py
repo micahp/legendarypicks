@@ -137,6 +137,19 @@ NFL_GAME_MARKETS = {
     25: ("Rushing + Receiving Yards", "rushing_receiving_yards"),
     26: ("Sacks", "sacks"),
     32: ("Extra Points Made", "extra_points_made"),
+    # ADDED 2026-08-26. The publisher's own catalogue carries 20 NFL Game markets
+    # across the eight archived days; we mapped fourteen, so these five were counted
+    # as UNMAPPED and discarded on every run. Same shape as the Soccer three above.
+    # Every one is already answerable by `nflverse_weekly`: targets 10,087 rows,
+    # carries 7,991, rush_td 4,713, att 503, cmp 503.
+    9: ("Pass Attempts", "pass_attempts"),
+    10: ("Pass Completions", "pass_completions"),
+    17: ("Targets", "targets"),
+    21: ("Rush Attempts", "rush_attempts"),
+    22: ("Rushing Touchdowns", "rushing_touchdowns"),
+    # NOT added: 130 Fantasy Score. It is a composite of a scoring formula the
+    # publisher does not send, so nothing downstream could settle it -- the same
+    # deferral already applied to the MLB and soccer Fantasy Score ids.
 }
 SOCCER_GAME_MARKETS = {
     147: ("Chances Created", "chances_created"),

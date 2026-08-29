@@ -1,5 +1,6 @@
 """routers/games/ufc.py — UFC rankings and fighter-form endpoints."""
 import html
+import json
 
 from fastapi import HTTPException
 from _core import *
@@ -109,7 +110,7 @@ def ufc_rankings():
 
 @router.get("/api/ufc/fighter/{player_id}/form")
 def ufc_fighter_form(player_id: int):
-    """Lazy ESPN-backed last-five form for one internal UFC fighter."""
+    """Database-backed last-five form for one internal UFC fighter."""
     with closing(_db()) as con:
         con.row_factory = sqlite3.Row
         player = con.execute(
@@ -118,46 +119,58 @@ def ufc_fighter_form(player_id: int):
         ).fetchone()
         if not player:
             raise HTTPException(404, "UFC fighter not found")
-        date_row = con.execute(
-            """SELECT pg.date
-               FROM props p JOIN prop_games pg ON pg.id=p.game_id
-               WHERE p.player_id=? AND pg.league='ufc'
-               ORDER BY ABS(julianday(pg.date) - julianday('now')) LIMIT 1""",
-            (player_id,),
-        ).fetchone()
+        has_ufcstats = con.execute(
+            "SELECT 1 FROM sqlite_master WHERE type='table' "
+            "AND name='player_game_logs_ufcstats'"
+        ).fetchone() is not None
+        if has_ufcstats:
+            rows = con.execute(
+                """SELECT game_id,source_event_key,game_date,opponent,stats
+                     FROM player_game_logs_ufcstats
+                    WHERE player_id=? AND league='ufc'
+                    ORDER BY game_date DESC LIMIT 5""",
+                (player_id,),
+            ).fetchall()
+            source = "ufcstats"
+        else:
+            # Compatibility while the additive migration is pending. This is
+            # still DB-only: request handlers never fetch or mutate source data.
+            rows = con.execute(
+                """SELECT game_id,'' AS source_event_key,game_date,opponent,stats
+                     FROM player_game_logs
+                    WHERE player_id=? AND league='ufc'
+                    ORDER BY game_date DESC LIMIT 5""",
+                (player_id,),
+            ).fetchall()
+            source = "espn"
 
-    athlete_id = str(player["espn_id"] or "")
-    canonical_name = player["name"]
-    if not athlete_id:
-        match = espn.ufc_athlete(player["name"], date_row["date"] if date_row else None)
-        if not match:
-            return {
-                "player_id": player_id,
-                "fighter": player["name"],
-                "source": "espn",
-                "fights": [],
-            }
-        athlete_id = match["id"]
-        canonical_name = match["name"]
-        # Persist the source crosswalk only when it is not already owned by a
-        # different UFC row. The endpoint never fabricates or merges players.
-        with closing(_db()) as con:
-            owner = con.execute(
-                "SELECT id FROM players WHERE league='ufc' AND espn_id=?",
-                (athlete_id,),
-            ).fetchone()
-            if owner is None or owner[0] == player_id:
-                con.execute("UPDATE players SET espn_id=? WHERE id=?", (athlete_id, player_id))
-                con.commit()
-
-    try:
-        fights = espn.ufc_fight_history(athlete_id, limit=5)
-    except Exception as exc:
-        raise HTTPException(502, "ESPN UFC fight history unavailable") from exc
+    fights = []
+    for row in rows:
+        try:
+            stats = json.loads(row["stats"] or "")
+        except (TypeError, ValueError, json.JSONDecodeError):
+            continue
+        result = str(stats.get("result") or "").upper()
+        method = str(stats.get("method") or "").upper()
+        if result not in {"W", "L", "D", "NC"} or not method:
+            continue
+        fights.append({
+            "result": result,
+            "method": method,
+            "round": stats.get("round") if isinstance(stats.get("round"), int) else None,
+            "time": (
+                str(stats.get("clock_display"))
+                if stats.get("clock_display") not in (None, "")
+                else None
+            ),
+            "opponent": row["opponent"] or "",
+            "date": row["game_date"] or "",
+            "event_id": row["source_event_key"] or "",
+            "fight_id": row["game_id"] or "",
+        })
     return {
         "player_id": player_id,
-        "fighter": canonical_name,
-        "espn_id": athlete_id,
-        "source": "espn",
+        "fighter": player["name"],
+        "source": source,
         "fights": fights,
     }

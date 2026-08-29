@@ -565,8 +565,8 @@ def _games_from_payload(league, date, d):
                     "outcome_round": outcome_round,
                     "outcome_clock": outcome_clock,
                 })
-    elif league in ("wc", "lcup", "mls"):
-        # Soccer (World Cup / Leagues Cup / MLS) - events with group/round context, draws, ET, penalties
+    elif league in ("wc", "lcup", "mls", "ligamx"):
+        # Soccer events with group/round context, draws, ET, penalties.
         for e in d.get("events", []):
             comp = (e.get("competitions") or [{}])[0]
             status = comp.get("status", {})

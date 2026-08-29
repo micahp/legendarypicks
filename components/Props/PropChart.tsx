@@ -39,10 +39,22 @@ const WINDOWS: { key: Window; label: string }[] = [
 ]
 
 // ── helpers ───────────────────────────────────────────────
-function gameLabel(g: GameLog, i: number, total: number): string {
-  const isLast = i === total - 1
-  const loc = g.home === false ? '@ ' : g.home === true ? 'vs ' : ''
-  return isLast ? `${new Date(g.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} · ${loc}${g.opponent}` : ''
+// M/D, the form the reference uses under each bar. Noon-anchored so a UTC date
+// string does not roll backwards in a negative offset.
+function shortDate(iso: string): string {
+  const d = new Date(iso + 'T12:00:00')
+  return Number.isNaN(d.getTime()) ? iso : `${d.getMonth() + 1}/${d.getDate()}`
+}
+
+function chartOpponent(opponent: string, league: string): string {
+  if (league !== 'ufc') return opponent
+  const parts = opponent.trim().split(/\s+/).filter(Boolean)
+  if (parts.length < 2) return opponent
+  const suffix = parts[parts.length - 1]
+  if (/^(Jr\.?|Sr\.?|II|III|IV)$/i.test(suffix) && parts.length > 2) {
+    return `${parts[parts.length - 2]} ${suffix}`
+  }
+  return suffix
 }
 
 // ── component ─────────────────────────────────────────────
@@ -106,6 +118,14 @@ export default function PropChart({ data, window: initialWindow = 'l10' }: { dat
     return hits / displayGames.length
   }, [displayGames, win])
 
+  // "2.8 avg last 5" in the reference: the mean of what is actually drawn, so
+  // it moves with the window and the venue filters rather than describing a
+  // different set of games than the bars above it.
+  const average = useMemo(() => {
+    if (!displayGames.length) return null
+    return displayGames.reduce((sum, g) => sum + g.value, 0) / displayGames.length
+  }, [displayGames])
+
   const isDefaultFilters = win === initialWindow && venue === 'all' && !vsOpp
   const resetFilters = () => { setWin(initialWindow); setVenue('all'); setVsOpp(false) }
 
@@ -113,13 +133,13 @@ export default function PropChart({ data, window: initialWindow = 'l10' }: { dat
   const maxVal = hasGames ? Math.max(data.line, ...displayGames.map(g => g.value)) : data.line
   const minVal = hasGames ? Math.min(0, ...displayGames.map(g => g.value)) : 0
   const range = maxVal - minVal || 1
-  const barW = 28
-  const gap = 6
+  // Wide enough for an away abbreviation (`@BOS`) at the label size below the
+  // bar. It was 28, which clipped four characters.
+  const barW = data.league === 'ufc' ? 72 : 34
+  const gap = data.league === 'ufc' ? 8 : 6
   const chartW = hasGames ? displayGames.length * (barW + gap) - gap : 0
   const chartH = 72
   const padTop = 16
-  const padBottom = 8
-  const svgH = chartH + padTop + padBottom + 22
 
   const y = (v: number) => padTop + chartH * (1 - (v - minVal) / range)
   const lineY = y(data.line)
@@ -128,8 +148,9 @@ export default function PropChart({ data, window: initialWindow = 'l10' }: { dat
   return (
     <div className="space-y-2">
       <div className="flex items-center gap-3 text-sm flex-wrap">
-        <span className="font-semibold text-zinc-200">{data.player}</span>
-        <span className="text-zinc-500 text-xs">{data.team}</span>
+        {/* Player and team are already on the card directly above this chart;
+            repeating them here spent the widest row on information the reader
+            just read. */}
         <span className="text-zinc-400 capitalize">{data.market.replace(/_/g, ' ')}</span>
         <span className="font-bold tabular-nums text-zinc-200">Line {data.line}</span>
         {data.projection !== null && (
@@ -185,43 +206,68 @@ export default function PropChart({ data, window: initialWindow = 'l10' }: { dat
         </div>
       ) : (
         <>
+          {/* Bars only. A miss is RED, not a dimmed green: at a glance the
+              question is hit-or-miss, and two shades of one hue answer it more
+              slowly than two hues. The dashed rule is the line itself, labelled
+              at the right where it ends.
+              #34d399 / #f87171 are OUR emerald-400 and red-400 -- the same pair
+              the hit-rate headline above already uses. The reference's neon
+              green is not copied: matching a competitor's layout is not a
+              reason to adopt their palette. */}
           <div className="overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" style={{ maxWidth: '100%' }}>
-            <svg width={chartW} height={svgH} className="block" style={{ minWidth: chartW }}>
-              <line x1={0} y1={lineY} x2={chartW} y2={lineY} stroke="#71717a" strokeWidth={1} strokeDasharray="4,3" />
-              <text x={chartW + 2} y={lineY + 4} className="text-[9px] fill-zinc-500" textAnchor="start">{data.line}</text>
+            <div style={{ minWidth: chartW + 26 }}>
+              <svg width={chartW + 26} height={chartH + padTop + 6} className="block">
+                <line x1={0} y1={lineY} x2={chartW} y2={lineY}
+                      stroke="#d4d4d8" strokeWidth={1} strokeDasharray="5,4" />
+                <text x={chartW + 4} y={lineY + 4} className="text-[10px] font-semibold fill-zinc-300"
+                      textAnchor="start">{data.line}</text>
+                {displayGames.map((g, i) => {
+                  const x = i * (barW + gap)
+                  const barH = Math.max(3, chartH * (g.value - minVal) / range)
+                  const barY = padTop + chartH - barH
+                  const hit = isHit(g.value)
+                  return (
+                    <rect key={i} x={x} y={barY} width={barW} height={barH}
+                          rx={6} ry={6} fill={hit ? '#34d399' : '#f87171'} />
+                  )
+                })}
+                {/* Baseline the bars stand on. */}
+                <line x1={0} y1={padTop + chartH} x2={chartW} y2={padTop + chartH}
+                      stroke="#3f3f46" strokeWidth={1.5} />
+              </svg>
 
-              {displayGames.map((g, i) => {
-                const x = i * (barW + gap)
-                const barH = Math.max(2, chartH * (g.value - minVal) / range)
-                const barY = padTop + chartH - barH
-                const hit = isHit(g.value)
-                const color = hit ? '#34d399' : '#71717a'
-                const alpha = hit ? '0.9' : '0.5'
-                return (
-                  <g key={i}>
-                    <rect x={x} y={barY} width={barW} height={barH} rx={3} fill={color} opacity={alpha} />
-                    <text x={x + barW / 2} y={svgH - 4} className="text-[9px] fill-zinc-500" textAnchor="middle">{g.value}</text>
-                    {i === displayGames.length - 1 && (
-                      <text x={x + barW / 2} y={svgH - 4} className="text-[9px] fill-zinc-500" textAnchor="middle" dy={-svgH + padTop + chartH + 18}>
-                        {gameLabel(g, i, displayGames.length)}
-                      </text>
-                    )}
-                  </g>
-                )
-              })}
-            </svg>
-          </div>
-
-          <div className="flex gap-[6px] text-[10px] text-zinc-600" style={{ paddingLeft: 0 }}>
-            {displayGames.map((g, i) => (
-              <div key={i} className="text-center overflow-hidden" style={{ width: barW, flexShrink: 0 }}>
-                <span title={`${g.home === false ? '@ ' : g.home === true ? 'vs ' : ''}${g.opponent} · ${g.date}`}>
-                  {g.opponent.length > 5 ? g.opponent.slice(0, 5) : g.opponent || '—'}
-                </span>
-                <span className="text-zinc-700 ml-0.5">{g.home === false ? '↑' : ''}</span>
+              {/* Value, opponent and date stacked under each bar, aligned to the
+                  same column width. Away games carry the @ the reference uses. */}
+              <div data-game-labels className="flex" style={{ gap }}>
+                {displayGames.map((g, i) => (
+                  <div key={i} className="text-center" style={{ width: barW, flexShrink: 0 }}>
+                    {/* One colour for all three lines. A three-tone ramp implied
+                        a hierarchy between value, opponent and date that nobody
+                        reading a game log wants. */}
+                    <div className="text-[11px] font-semibold text-zinc-400 tabular-nums">{g.value}</div>
+                    {/* Team sports publish compact abbreviations. UFC publishes
+                        full names, which collided across five 34px columns on
+                        desktop; show a wider surname label while retaining the
+                        complete opponent and date in the tooltip. */}
+                    <div
+                         data-ufc-opponent-label={data.league === 'ufc' ? 'true' : undefined}
+                         className={`whitespace-nowrap text-[10px] text-zinc-400 ${data.league === 'ufc' ? 'overflow-hidden text-ellipsis' : ''}`}
+                         title={`${g.home === false ? '@ ' : ''}${g.opponent} · ${g.date}`}>
+                      {g.home === false ? '@' : ''}{chartOpponent(g.opponent || '—', data.league)}
+                    </div>
+                    <div className="text-[10px] text-zinc-400 tabular-nums">{shortDate(g.date)}</div>
+                  </div>
+                ))}
               </div>
-            ))}
+            </div>
           </div>
+
+          {average !== null && (
+            <p className="text-center text-[11px] text-zinc-400">
+              <span className="font-semibold text-zinc-200 tabular-nums">{average.toFixed(1)}</span>
+              {' '}avg last {displayGames.length}
+            </p>
+          )}
         </>
       )}
     </div>

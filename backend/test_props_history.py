@@ -109,6 +109,66 @@ class PropHistoryVenueTests(unittest.TestCase):
         self.assertEqual([21, 18, 24], [g["value"] for g in result["games"]])
 
 
+class UfcStatsPropHistoryTests(unittest.TestCase):
+    """UFC numeric charts read the provider-separated completed history."""
+
+    def setUp(self):
+        handle = tempfile.NamedTemporaryFile(
+            prefix="props-history-ufcstats-", suffix=".db", delete=False
+        )
+        self.path = handle.name
+        handle.close()
+        self.addCleanup(lambda: os.path.exists(self.path) and os.unlink(self.path))
+        con = sqlite3.connect(self.path)
+        con.executescript(
+            """
+            CREATE TABLE players(
+              id INTEGER PRIMARY KEY, name TEXT, team TEXT, league TEXT
+            );
+            CREATE TABLE player_game_logs_ufcstats(
+              player_id INTEGER, league TEXT, game_date TEXT,
+              opponent TEXT, stats TEXT
+            );
+            """
+        )
+        con.execute("INSERT INTO players VALUES(7,'Test Fighter','','ufc')")
+        con.executemany(
+            "INSERT INTO player_game_logs_ufcstats VALUES(?,?,?,?,?)",
+            [
+                (7, "ufc", "2026-08-01", "Opponent A", json.dumps({
+                    "sigStrikesLanded": 61, "fight_time": 15.0,
+                })),
+                (7, "ufc", "2026-07-01", "Opponent B", json.dumps({
+                    "sigStrikesLanded": 22, "fight_time": 4.5,
+                })),
+            ],
+        )
+        con.commit()
+        con.close()
+
+        def connection():
+            opened = sqlite3.connect(self.path)
+            opened.row_factory = sqlite3.Row
+            return opened
+
+        patch = mock.patch.object(props, "_db", side_effect=connection)
+        patch.start()
+        self.addCleanup(patch.stop)
+
+    def test_significant_strikes_and_fight_time_are_charted(self):
+        strikes = props.prop_history(
+            player_id=7, market="significant_strikes", line=40.5,
+            side="over", league="ufc",
+        )
+        duration = props.prop_history(
+            player_id=7, market="fight_time", line=10.0,
+            side="over", league="ufc",
+        )
+
+        self.assertEqual([61.0, 22.0], [g["value"] for g in strikes["games"]])
+        self.assertEqual([15.0, 4.5], [g["value"] for g in duration["games"]])
+
+
 if __name__ == "__main__":
     unittest.main()
 
@@ -257,12 +317,16 @@ class LeaguesCupChartsAcrossTheSpines(unittest.TestCase):
         # keyEvents. Three corrections, one shape -- a claim about what a
         # PUBLISHER can answer, written from what we had looked at.
         #
-        # Nothing is refused for soccer now, so this asserts the surviving rule
-        # instead: a market absent from the map is refused rather than drawn,
-        # and MLS tackles is the live case -- 0 stored rows, because FotMob has
-        # only run for ligamx and lcup.
+        # MLS tackles WAS the live case here -- 0 stored rows, because FotMob
+        # had only run for ligamx and lcup. It was run for mls on 2026-08-26, so
+        # that example is gone and the rule needs one that is still true.
+        #
+        # `interceptions` is: nothing in the mls feed publishes it, from either
+        # provider, so it is absent from the map and must be REFUSED rather than
+        # drawn as an empty series.
         result = props.prop_history(
-            player_id=1, market="tackles", line=0.5, side="over", league="mls")
+            player_id=1, market="interceptions", line=0.5, side="over",
+            league="mls")
         self.assertEqual(result["games"], [])
         self.assertIn("not chartable", result["error"])
 
@@ -456,13 +520,13 @@ class FirstGoalIsAnsweredFromTheStoredRow(unittest.TestCase):
         self.assertNotIn("error", result)
         self.assertEqual([g["value"] for g in result["games"]], [1.0])
 
-    def test_mls_does_not_claim_tackles_it_has_no_rows_for(self):
-        """MLS holds 0 rows carrying `tackles` -- FotMob has only been run for
-        ligamx and lcup -- so mapping it would chart an empty series as though
-        the market were answerable."""
+    def test_mls_charts_tackles_now_that_fotmob_has_run_for_mls(self):
+        """This asserted mls REFUSED tackles, which was right while mls carried
+        0 rows for it. FotMob was run for mls on 2026-08-26 (9,679 rows, 314
+        fixtures, 8,955 resolved) and the market is mapped deliberately."""
         import core_markets
-        self.assertNotIn("tackles", core_markets._MARKET_STAT_KEY["mls"])
-
+        self.assertEqual(core_markets._MARKET_STAT_KEY["mls"].get("tackles"),
+                         "tackles")
 
 class TheMlsMapCoversWhatMlsLogsAnswer(unittest.TestCase):
     """The mls map launched with five markets and was never extended.
@@ -560,15 +624,149 @@ class TheMlsMapCoversWhatMlsLogsAnswer(unittest.TestCase):
             league="mls")
         self.assertEqual([g["value"] for g in result["games"]], [1.0, 0.0])
 
-    def test_a_fotmob_only_market_stays_unmapped_for_mls(self):
-        """FotMob has never been run for mls, so these hold 0 rows. Mapping one
-        would chart an empty series as though the market were answerable."""
+    def test_the_deep_mls_markets_are_mapped_now_that_mls_has_rows(self):
+        """These five were held out while MLS carried 0 rows for them.
+
+        FotMob was run for mls on 2026-08-26 -- 9,679 rows from 314 fixtures,
+        8,955 resolved -- and `mls` had been configured in
+        ingest_fotmob_soccer_logs.LEAGUES the whole time. It was a run that had
+        never happened, not a capability we lacked.
+
+        The previous version of this test asserted they stayed UNMAPPED, which
+        was right while the rows were absent and is the reason mapping them had
+        to be a deliberate edit rather than a silent one.
+        """
         import core_markets
-        for market in ("tackles", "clearances", "crosses", "chances_created",
-                       "passes_attempted"):
-            self.assertNotIn(market, core_markets._MARKET_STAT_KEY["mls"],
+        mls = core_markets._MARKET_STAT_KEY["mls"]
+        for market, key in (("tackles", "tackles"), ("clearances", "clearances"),
+                            ("crosses", "crosses"),
+                            ("chances_created", "chances_created"),
+                            ("passes_attempted", "passes_attempted")):
+            self.assertEqual(mls.get(market), key, market)
+
+    def test_passes_attempted_uses_its_exact_key(self):
+        """RotoWire supplies attempts; FotMob accurate passes remain separate."""
+        import core_markets
+        for league in ("mls", "lcup"):
+            self.assertEqual(
+                core_markets._MARKET_STAT_KEY[league].get("passes_attempted"),
+                "passes_attempted")
+
+    def test_mls_still_refuses_a_market_it_holds_no_rows_for(self):
+        """The guard the test above used to provide, kept alive on a market that
+        is still genuinely absent: nothing in mls logs carries `dribbles` for
+        every appearance, and `interceptions` is not published at all."""
+        import core_markets
+        self.assertNotIn("interceptions", core_markets._MARKET_STAT_KEY["mls"])
+
+
+class TheNflMapNamesKeysTheNflLogsActuallyHold(unittest.TestCase):
+    """Every NFL market pointed at a field that does not exist.
+
+    The map said `receiving_yards -> receiving_yards`. NFL logs are written by
+    `nflverse_weekly`, which stores `rec_yds`. All eight markets resolved to 0
+    rows, so the entire NFL board charted nothing -- 0 of 488 player/market
+    combos -- while 24,996 log rows sat there and 192 of 213 players with props
+    had them.
+
+    This test asserts the map against the STORED vocabulary rather than against
+    itself, because a map that names its own keys is consistent and useless.
+    """
+
+    @classmethod
+    def tearDownClass(cls):
+        try:
+            os.unlink(_IMPORT_DB.name)
+        except FileNotFoundError:
+            pass
+
+    def setUp(self):
+        handle = tempfile.NamedTemporaryFile(
+            prefix="nfl-map-", suffix=".db", delete=False)
+        self.path = handle.name
+        handle.close()
+        self.addCleanup(
+            lambda: os.path.exists(self.path) and os.unlink(self.path))
+        con = sqlite3.connect(self.path)
+        con.executescript("""
+            CREATE TABLE players(id INTEGER PRIMARY KEY, name TEXT, team TEXT,
+                                 league TEXT, position TEXT);
+            CREATE TABLE player_game_logs(
+              id INTEGER PRIMARY KEY AUTOINCREMENT, player_id INTEGER,
+              league TEXT, season INTEGER, stats TEXT, game_date TEXT,
+              opponent TEXT, home_away TEXT, game_no INTEGER, game_type TEXT,
+              source TEXT);
+        """)
+        _provider_tables(con)
+        con.execute("INSERT INTO players VALUES(1,'Receiver','KC','nfl','WR')")
+        # The real nflverse_weekly vocabulary, not the map's names.
+        rows = [
+            (1, "nfl", 2026, json.dumps({"rec_yds": 92, "rec": 7, "rec_td": 1,
+                                         "rush_yds": 8, "rush_td": 0}),
+             "2026-09-14", "LV", "home", 2, "REG", "nflverse_weekly"),
+            (1, "nfl", 2026, json.dumps({"rec_yds": 41, "rec": 3, "rec_td": 0,
+                                         "rush_yds": 2, "rush_td": 1}),
+             "2026-09-07", "DEN", "away", 1, "REG", "nflverse_weekly"),
+        ]
+        con.executemany(
+            "INSERT INTO player_game_logs(player_id, league, season, stats,"
+            " game_date, opponent, home_away, game_no, game_type, source)"
+            " VALUES(?,?,?,?,?,?,?,?,?,?)", rows)
+        con.commit()
+        con.close()
+
+        def connection():
+            c = sqlite3.connect(self.path)
+            c.row_factory = sqlite3.Row
+            return c
+
+        patcher = mock.patch.object(props, "_db", side_effect=connection)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def test_receiving_yards_charts(self):
+        result = props.prop_history(
+            player_id=1, market="receiving_yards", line=60.5, side="over",
+            league="nfl")
+        self.assertNotIn("error", result)
+        self.assertEqual([g["value"] for g in result["games"]], [92.0, 41.0])
+
+    def test_receptions_and_tds_chart(self):
+        for market, expected in (("receptions", [7.0, 3.0]),
+                                 ("receiving_tds", [1.0, 0.0])):
+            result = props.prop_history(
+                player_id=1, market=market, line=0.5, side="over", league="nfl")
+            self.assertEqual([g["value"] for g in result["games"]], expected,
                              market)
 
+    def test_total_touchdowns_sums_rush_and_receiving(self):
+        result = props.prop_history(
+            player_id=1, market="total_touchdowns", line=0.5, side="over",
+            league="nfl")
+        self.assertEqual([g["value"] for g in result["games"]], [1.0, 1.0])
+
+    def test_every_mapped_nfl_key_exists_in_the_stored_vocabulary(self):
+        """The guard that would have caught this on the day it was written.
+
+        Also covers the five markets added 2026-08-26 when the RotoWire ingest
+        started taking them: the publisher ships 20 NFL Game markets and we had
+        mapped 14, so Targets, Pass Attempts, Pass Completions, Rush Attempts
+        and Rushing Touchdowns were counted UNMAPPED and discarded every run.
+        """
+        import core_markets
+        stored = {"pass_yds", "rush_yds", "rec_yds", "rec", "pass_td",
+                  "rush_td", "rec_td", "intc", "carries", "targets",
+                  "fpts", "fpts_ppr", "att", "cmp"}
+        for market, key in core_markets._MARKET_STAT_KEY["nfl"].items():
+            for one in (key if isinstance(key, list) else [key]):
+                self.assertIn(one, stored, f"{market} -> {one}")
+
+    def test_field_goals_made_stays_unmapped(self):
+        """nflverse_weekly holds no kicking fields, so mapping it would draw an
+        empty series as though the market were answerable."""
+        import core_markets
+        self.assertNotIn("field_goals_made",
+                         core_markets._MARKET_STAT_KEY["nfl"])
 
 class OneRowPerAppearance(unittest.TestCase):
     """Providers keep separate rows; the READER picks one.

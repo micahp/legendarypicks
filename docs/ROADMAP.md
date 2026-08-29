@@ -302,6 +302,23 @@ or different than recorded:**
       The copy wrote 7 NCAAF + 4 MLS proof rows and wrote zero on rerun. Production and managed
       dev are unchanged; full historical backfill remains a separate bounded data operation.
 
+- [ ] **Prop CHART coverage, measured 2026-08-26 through the endpoint's own map and log
+      union (not SQL, which answers a different question).** Chart rate by board, as
+      player/market combos: `wc` 90.7%, `mls` 86.0%, `lcup` 83.1%, `mlb` 72.8%, and then a
+      cliff:
+      - [ ] **ATP 0% (294 combos) and WTA 0% (232 combos).** Every tennis market is mapped to
+            `None` or absent from `_MARKET_STAT_KEY`, so nothing charts by construction. Note
+            tennis *settlement* now exists on `feat/sport-first-navigation`, so results are
+            arriving while history stays empty. The chart map was never extended.
+      - [ ] **UFC 6.1% (440 combos, 27 chart).** Mostly method-of-victory, which is
+            categorical and deliberately not charted -- the board renders FightForm instead.
+            **Confirm that before treating it as a defect**; the number is only a gap if the
+            markets under it are numeric ones.
+      NFL was 0% here too and is fixed: the map named eight keys the logs do not hold
+      (`receiving_yards` vs the stored `rec_yds`), so 0 of 488 combos charted against 24,996
+      log rows. Now 69.3%. The remaining NFL 126 not-chartable are led by `field_goals_made`,
+      left unmapped on purpose because `nflverse_weekly` publishes no kicking fields.
+
 **Not a defect, recorded so it is not "found" again:** grouping `props` by
 `(game_id, player_id, market, line, side)` reports 240 duplicate groups on prod and 1,085 on
 dev. Including `source` gives **0 on both**. Those rows are `rotowire:prizepicks`,

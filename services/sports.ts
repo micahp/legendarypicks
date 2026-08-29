@@ -295,7 +295,7 @@ export const SportsService = {
   },
 
   getAllGamesByDate: async (date: string): Promise<Game[]> => {
-    const leagues = ['nba', 'mlb', 'nhl', 'nfl', 'lcup', 'mls', 'atp', 'wta', 'cod', 'ufc', 'wc']
+    const leagues = ['nba', 'mlb', 'nhl', 'nfl', 'lcup', 'mls', 'ligamx', 'atp', 'wta', 'cod', 'ufc', 'wc']
     const promises = leagues.map((l) => SportsService.getGamesByDate(l, date))
     const results = await Promise.all(promises)
     return results.flat()
@@ -353,7 +353,7 @@ export const SportsService = {
   },
 
   getAllGamesByLocalDate: async (localDate: string, opts?: { strict?: boolean }): Promise<Game[]> => {
-    const leagues = ['nba', 'mlb', 'nhl', 'nfl', 'lcup', 'mls', 'atp', 'wta', 'cod', 'ufc', 'wc']
+    const leagues = ['nba', 'mlb', 'nhl', 'nfl', 'lcup', 'mls', 'ligamx', 'atp', 'wta', 'cod', 'ufc', 'wc']
     const results = await Promise.all(leagues.map((l) => SportsService.getGamesByLocalDate(l, localDate, opts)))
     return results.flat()
   },

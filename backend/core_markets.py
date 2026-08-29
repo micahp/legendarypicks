@@ -30,10 +30,37 @@ _MARKET_STAT_KEY = {
             "points_rebounds_assists": "PRA", "pra": "PRA"},
     "nhl": {"goals": "goals", "assists": "assists", "points": "points",
             "shots": "shots", "shots_on_goal": "shots"},
-    "nfl": {"passing_yards": "passing_yards", "rushing_yards": "rushing_yards",
-            "receiving_yards": "receiving_yards", "receptions": "receptions",
-            "passing_tds": "passing_tds", "rushing_tds": "rushing_tds",
-            "receiving_tds": "receiving_tds", "interceptions": "interceptions"},
+    # CORRECTED 2026-08-26: every key here named a field that does not exist.
+    # The map said `receiving_yards -> receiving_yards`; NFL logs are written by
+    # `nflverse_weekly` and store `rec_yds`. All eight markets resolved to 0 rows,
+    # so the ENTIRE NFL board charted nothing -- 0 of 488 player/market combos --
+    # while 24,996 log rows sat there and 192 of 213 players with props had them.
+    # Same defect as the Liga MX one fixed today: a map naming a key the store
+    # does not use. Measured before mapping, not assumed: pass_yds 1,396,
+    # rush_yds 4,713, rec_yds 8,987, rec 8,987, pass_td 1,396, rush_td 4,713,
+    # rec_td 8,987, intc 1,396 -- against 0 for every name replaced.
+    "nfl": {"passing_yards": "pass_yds", "rushing_yards": "rush_yds",
+            "receiving_yards": "rec_yds", "receptions": "rec",
+            "passing_tds": "pass_td", "rushing_tds": "rush_td",
+            "receiving_tds": "rec_td", "interceptions": "intc",
+            # Compounds the board prices and the logs can already answer. The
+            # chart sums the listed fields, so these need no stored column.
+            "total_touchdowns": ["rush_td", "rec_td"],
+            "passing_rushing_yards": ["pass_yds", "rush_yds"],
+            "rushing_receiving_yards": ["rush_yds", "rec_yds"],
+            # Deliberately NOT mapped: field_goals_made. nflverse_weekly holds no
+            # kicking fields at all, so mapping it would draw an empty series as
+            # though the market were answerable.
+            "carries": "carries", "targets": "targets",
+            # The market NAMES the RotoWire relay ships, mapped to the keys
+            # nflverse_weekly stores. Added 2026-08-26 alongside the ingest that
+            # started taking them; a prop that arrives with no map entry charts
+            # "No history", which is how the eight keys above went unnoticed.
+            # `rushing_touchdowns` is the relay's spelling of `rushing_tds`.
+            "rushing_touchdowns": "rush_td",
+            "rush_attempts": "carries",
+            "pass_attempts": "att",
+            "pass_completions": "cmp"},
     "wc": {"goals": "goals", "assists": "assists", "shots": "shots",
            "shots_on_target": "sot", "shots_on_goal": "sot"},
     # MLS game logs store the same soccer stat shape as WC (goals/assists/shots/sot)
@@ -60,22 +87,38 @@ _MARKET_STAT_KEY = {
             # below already resolves to the same field; without this entry the
             # 21 kambi rows answer "not chartable" while identical rows from
             # another book chart.
-            "sot": "sot"},
-            # tackles is deliberately NOT here, and the reason is about LOGS,
-            # not about markets. This map resolves a market to a field in
-            # player_game_logs, and MLS holds 0 rows carrying `tackles`:
-            # ESPN's shallow ingest does not publish it and FotMob has only
-            # been run for ligamx and lcup. Mapping it would chart an empty
-            # series as though the market were answerable.
+            "sot": "sot",
+            # CLOSED 2026-08-26. These five were held out because MLS carried 0
+            # rows for them: ESPN's shallow ingest does not publish them and
+            # FotMob had only ever been run for ligamx and lcup. `mls` was
+            # configured in ingest_fotmob_soccer_logs.LEAGUES the whole time --
+            # it was a run that had never happened, not a capability we lacked.
             #
-            # CORRECTED 2026-08-26: an earlier version of this note called
-            # these "FotMob-only" fields. That is false about PUBLISHERS. Eight
-            # days of the RotoWire relay archive (backend/data/rotowire-archive,
-            # 08-19..08-26, 979 soccer props) price Tackles 18, Clearances 50,
-            # Chances Created 57, Crosses 17 and Passes Attempted 283. What
-            # RotoWire does not give is game LOGS -- it is a props relay -- so
-            # the map still cannot read them, but "no one publishes this" was
-            # never the reason and should not be written as though it were.
+            # Run: 9,679 rows from 314 fixtures, 8,955 resolved to the spine.
+            # In `player_game_logs_all` now: tackles 8,955, passes 8,955,
+            # clearances 8,955, chances_created 8,409, crosses 3,589.
+            #
+            # This also closes the settlement residue: 186 of the 322 MLS props
+            # on these markets now have their OWN appearance covered, matched on
+            # player AND match date rather than on the player existing somewhere.
+            "tackles": "tackles",
+            "clearances": "clearances",
+            "chances_created": "chances_created",
+            # PrizePicks "Shots Assisted" and Opta "chances created" are the same
+            # stat, as already mapped for ligamx and lcup.
+            "shots_assisted": "chances_created",
+            "crosses": "crosses",
+            # This is exact attempted passes from the provider-separated
+            # RotoWire rows. FotMob's accurate/completed `passes` field is never
+            # substituted for it.
+            "passes_attempted": "passes_attempted",
+            },
+            # An earlier note here called these "FotMob-only" fields, which is
+            # false about PUBLISHERS: eight days of the RotoWire relay archive
+            # price Tackles 18, Clearances 50, Chances Created 57, Crosses 17 and
+            # Passes Attempted 283. The separate RotoWire stats source now
+            # supplies the attempted-pass game logs without changing FotMob's
+            # accurate-pass semantics.
     # Leagues Cup. The stat keys are the ones ingest_soccer_logs actually writes
     # (see _STAT_ORDER), verified against real lcup rows rather than assumed.
     # `goal_or_assist` is a COMPOUND market: the chart sums the listed fields, so

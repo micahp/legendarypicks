@@ -391,7 +391,7 @@ def direct_ingest(props: List[Dict], dry_run: bool = False) -> Dict:
     summary = {
         "parsed_props": len(props), "source_games": 0, "eligible_games": 0,
         "skipped_games": 0, "written_props": 0, "resolved_players": 0,
-        "unresolved_players": 0,
+        "unresolved_players": 0, "conflicted_games": 0,
     }
     try:
         ensure_source_identity_schema(con)
@@ -433,7 +433,29 @@ def direct_ingest(props: List[Dict], dry_run: bool = False) -> Dict:
 
             for source_player_key, player_id in resolved.items():
                 bind_player_source_key(con, source_player_key, player_id, now)
-            game_id = resolve_game(con, group, set(resolved.values()), now)
+            # A game whose identity cannot be confirmed is skipped, NOT fatal.
+            # `resolve_game` fails closed on purpose -- it refuses to write props
+            # onto a game whose fighter set does not match what Underdog is
+            # sending -- but raising out of the loop aborted the WHOLE run, so one
+            # bad fixture blocked every other event.
+            #
+            # It did: from 2026-08-25T01:04 until this change, every run fetched
+            # 149 balanced props across 13 events and wrote ZERO, on
+            # `source game key 295987 conflicts with canonical fighters` (game
+            # 1274, Xiao Long vs Francesco Nuzzi, which holds only one of the two
+            # fighters). The board showed 3 UFC markets instead of 6 because
+            # win_by_decision comes from Bovada and kept updating while every
+            # Underdog market froze. Same lesson the stale-mapping branch in
+            # `resolve_game` already records from 2026-08-19.
+            try:
+                game_id = resolve_game(con, group, set(resolved.values()), now)
+            except SourceIdentityConflict as conflict:
+                summary["skipped_games"] += 1
+                summary["conflicted_games"] += 1
+                summary.setdefault("conflicts", []).append(str(conflict))
+                print("  CONFLICT source game {}: {} -- skipped, run continues".format(
+                    source_game_key, conflict))
+                continue
             for prop in group:
                 upsert_prop(con, game_id, resolved[prop["source_player_key"]], prop, now)
                 summary["written_props"] += 1
@@ -469,11 +491,16 @@ def main() -> int:
     print(
         "Ingest: {written_props} props from {eligible_games} eligible of {source_games} source games; "
         "{resolved_players} of {resolved_players_plus_unresolved} participant IDs resolved; "
-        "{skipped_games} rejected games, {unresolved_players} queued fighters.".format(
+        "{skipped_games} skipped games ({conflicted_games} identity conflicts), "
+        "{unresolved_players} queued fighters.".format(
             resolved_players_plus_unresolved=(summary["resolved_players"] + summary["unresolved_players"]),
             **summary
         )
     )
+    # A skipped game is a REPORTED game. These were fatal until 2026-08-26, which
+    # at least made them loud; now that the run continues, silence would be worse.
+    for line in summary.get("conflicts", []):
+        print("  UNWRITTEN (identity conflict): {}".format(line))
     if summary["written_props"] == 0:
         print("ERROR: non-empty Underdog UFC board produced zero eligible props.")
         return 2

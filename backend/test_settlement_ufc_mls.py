@@ -123,6 +123,95 @@ def test_ufc_uses_fight_finality_and_durable_logs(monkeypatch):
     assert (final["final_home"], final["final_away"]) == (None, None)
 
 
+def test_ufc_settlement_reads_provider_separated_ufcstats_logs(monkeypatch):
+    con = _ufc_connection()
+    con.execute("DELETE FROM player_game_logs")
+    con.execute("""CREATE TABLE player_game_logs_ufcstats(
+        player_id INTEGER, league TEXT, game_date TEXT,
+        source_player_key TEXT, stats TEXT)""")
+    winner = {"result": "W", "method": "KO/TKO", "sigStrikesLanded": 27,
+              "fight_time": 4.35}
+    loser = {"result": "L", "method": "KO/TKO", "sigStrikesLanded": 11,
+             "fight_time": 4.35}
+    con.executemany(
+        "INSERT INTO player_game_logs_ufcstats VALUES(?,?,?,?,?)",
+        [(10, "ufc", "2026-07-25", "ufcstats-a", json.dumps(winner)),
+         (11, "ufc", "2026-07-25", "ufcstats-b", json.dumps(loser))],
+    )
+    monkeypatch.setattr(espn_client, "_get", lambda *args, **kwargs: _ufc_scoreboard())
+
+    result = settlement.settle_game(con, 1)
+
+    assert result == {"settled": 6, "void": 0, "unmappable": 0,
+                      "pending": 1, "errors": 0}
+    assert con.execute("SELECT COUNT(*) FROM prop_results").fetchone()[0] == 6
+
+
+def test_complete_ufcstats_rows_prove_finality_without_espn(monkeypatch):
+    con = _ufc_connection()
+    con.execute("DELETE FROM player_game_logs")
+    con.execute("DELETE FROM props WHERE player_id=12")
+    con.execute("""CREATE TABLE player_game_logs_ufcstats(
+        player_id INTEGER, league TEXT, game_date TEXT,
+        source_player_key TEXT, stats TEXT)""")
+    con.executemany(
+        "INSERT INTO player_game_logs_ufcstats VALUES(?,?,?,?,?)",
+        [
+            (10, "ufc", "2026-07-25", "ufcstats-a", json.dumps({
+                "result": "W", "method": "KO/TKO",
+                "sigStrikesLanded": 27, "fight_time": 4.35,
+            })),
+            (11, "ufc", "2026-07-25", "ufcstats-b", json.dumps({
+                "result": "L", "method": "KO/TKO",
+                "sigStrikesLanded": 11, "fight_time": 4.35,
+            })),
+        ],
+    )
+    monkeypatch.setattr(
+        espn_client,
+        "_get",
+        lambda *args, **kwargs: (_ for _ in ()).throw(
+            AssertionError("ESPN finality called despite complete UFCStats rows")
+        ),
+    )
+
+    result = settlement.settle_game(con, 1)
+
+    assert result == {"settled": 6, "void": 0, "unmappable": 0,
+                      "pending": 0, "errors": 0}
+
+
+def test_ufcstats_settlement_accepts_the_adjacent_source_date(monkeypatch):
+    con = _ufc_connection()
+    con.execute("DELETE FROM player_game_logs")
+    con.execute("DELETE FROM props WHERE player_id=12")
+    con.execute("""CREATE TABLE player_game_logs_ufcstats(
+        player_id INTEGER, league TEXT, game_date TEXT,
+        source_player_key TEXT, stats TEXT)""")
+    winner = {"result": "W", "method": "KO/TKO", "sigStrikesLanded": 27,
+              "fight_time": 4.35}
+    loser = {"result": "L", "method": "KO/TKO", "sigStrikesLanded": 11,
+             "fight_time": 4.35}
+    # The prop slate is July 25 UTC; UFCStats publishes the local event date.
+    con.executemany(
+        "INSERT INTO player_game_logs_ufcstats VALUES(?,?,?,?,?)",
+        [(10, "ufc", "2026-07-24", "ufcstats-a", json.dumps(winner)),
+         (11, "ufc", "2026-07-24", "ufcstats-b", json.dumps(loser))],
+    )
+    monkeypatch.setattr(
+        espn_client,
+        "_get",
+        lambda *args, **kwargs: (_ for _ in ()).throw(
+            AssertionError("ESPN finality called for adjacent UFCStats date")
+        ),
+    )
+
+    result = settlement.settle_game(con, 1)
+
+    assert result == {"settled": 6, "void": 0, "unmappable": 0,
+                      "pending": 0, "errors": 0}
+
+
 def test_ufc_does_not_settle_a_nonfinal_fight(monkeypatch):
     con = _ufc_connection()
     monkeypatch.setattr(espn_client, "_get", lambda *args, **kwargs: _ufc_scoreboard(False))

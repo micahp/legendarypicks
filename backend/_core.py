@@ -48,6 +48,24 @@ def _db():
     os.makedirs(os.path.dirname(DB), exist_ok=True)
     con = sqlite3.connect(DB, timeout=BUSY_TIMEOUT_SECONDS)
     con.row_factory = sqlite3.Row
+    # SQLite defaults foreign_keys OFF, PER CONNECTION. `props.player_id`,
+    # `props.game_id` and `prop_results.prop_id` have all DECLARED their
+    # references since the schema was written, and none of them had ever fired:
+    # only three scripts in this repo set the pragma, and neither the API nor
+    # settlement is one of them. A constraint that reads as protection in the
+    # schema and enforces nothing is worse than no constraint, because it stops
+    # anyone looking.
+    #
+    # What that cost, found 2026-08-26: 78 props on both databases pointed at 15
+    # `players` rows that had been deleted by an identity repair, and 4
+    # `prop_results` outlived the props they graded. Nothing raised, nothing
+    # counted them. Both databases are at ZERO `PRAGMA foreign_key_check`
+    # violations as of that cleanup, so turning this on rejects no existing row.
+    #
+    # NULL is still allowed: an unresolved prop keeps `player_id IS NULL`, which
+    # is the fail-closed path the resolvers already use. What this stops is a
+    # non-NULL id pointing at nothing.
+    con.execute("PRAGMA foreign_keys=ON")
     return con
 
 
@@ -1165,6 +1183,30 @@ def _state_from_db(league: str, game_id: str):
     return "post" if row else None
 
 
+def _snapshot_field(league: str, game_id: str, key: str):
+    """One field out of the newest scoreboard snapshot, or None. DB-ONLY.
+
+    The snapshot carries `period`, `clock` and `status_detail` alongside the
+    score -- the same values the detail page would otherwise fetch live. Reading
+    them here keeps a live game page answerable with zero publisher requests.
+    """
+    lg = league.lower()
+    with closing(_db()) as con:
+        row = con.execute(
+            "SELECT payload FROM scoreboard_snapshots "
+            "WHERE league=? AND game_id=? ORDER BY fetched_at DESC LIMIT 1",
+            (lg, game_id),
+        ).fetchone()
+    if not row:
+        return None
+    try:
+        payload = json.loads(row["payload"]) if isinstance(row["payload"], str) else row["payload"]
+    except Exception:
+        return None
+    value = payload.get(key)
+    return value if value not in ("", None) else None
+
+
 def _state_and_score_from_snapshot(league: str, game_id: str):
     """Read state + final score from scoreboard_snapshots, or (None, None).
 
@@ -1194,7 +1236,15 @@ def _state_and_score_from_snapshot(league: str, game_id: str):
         return None, None
     state = row["state"]
     score = None
-    if state == "post":
+    # The score is read for ANY state that published one, not just 'post'. The
+    # payload shape is identical for a live game -- the 2026-08-26 Leagues Cup
+    # snapshot carried home 2, away 0 at Halftime -- and gating on 'post' meant a
+    # live game's score was thrown away here and then re-fetched from ESPN by the
+    # detail handler, which is a live request for a number already on disk.
+    #
+    # Callers decide what a score MEANS: game_detail still only promotes it to
+    # `final_score` when the state is 'post'.
+    if state in ("post", "in"):
         try:
             payload = json.loads(row["payload"]) if isinstance(row["payload"], str) else row["payload"]
             home = (payload.get("home") or {}).get("score")

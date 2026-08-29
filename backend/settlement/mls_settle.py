@@ -148,7 +148,6 @@ def _summary_first_goal_actual(summary, prop):
         return None
     return 1.0 if str(prop["espn_id"]) == str(first_scorer or "") else 0.0
 
-
 def _settle_mls_props(con: sqlite3.Connection, game, props: list,
                       summary_loader=None) -> dict:
     """Grade soccer props DB-first, loading a summary only for missing event data."""

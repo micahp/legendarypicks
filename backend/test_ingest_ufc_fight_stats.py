@@ -899,7 +899,10 @@ class CardHarvestTest(unittest.TestCase):
         self.assertEqual(empty.mutations, 0)
         with mock.patch.object(runner, "_connect_readonly", return_value=None), \
                 mock.patch.object(runner.roster, "build_harvest_plan", return_value=empty), \
-                mock.patch.object(runner.ingest, "load_targets", return_value=([], set(), {})), \
+                mock.patch.object(runner, "inspect_ufcstats_migration",
+                                  return_value={"state": "applied", "detail": "ok"}), \
+                mock.patch.object(runner, "load_ufcstats_state",
+                                  return_value=([], {}, {}, {}, {})), \
                 mock.patch.object(runner.common, "backup_database") as backup, \
                 mock.patch.object(runner.sqlite3, "connect") as connect:
             result = runner.run("/tmp/not-opened.db", now=dt.datetime(2026, 8, 24, 13, 0),
@@ -917,7 +920,10 @@ class CardHarvestTest(unittest.TestCase):
         self.assertEqual(plan.mutations, 1)
         with mock.patch.object(runner, "_connect_readonly", return_value=None), \
                 mock.patch.object(runner.roster, "build_harvest_plan", return_value=plan), \
-                mock.patch.object(runner.ingest, "load_targets", return_value=([], set(), {})), \
+                mock.patch.object(runner, "inspect_ufcstats_migration",
+                                  return_value={"state": "applied", "detail": "ok"}), \
+                mock.patch.object(runner, "load_ufcstats_state",
+                                  return_value=([], {}, {}, {}, {})), \
                 mock.patch.object(runner.common, "backup_database") as backup, \
                 mock.patch.object(runner.sqlite3, "connect") as connect:
             runner.run("/tmp/not-opened.db", now=dt.datetime(2026, 8, 24, 13, 0),

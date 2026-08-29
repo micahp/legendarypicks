@@ -296,16 +296,30 @@ class TestServingPath:
         from routers.games import _scoreboard_snapshot
         assert _scoreboard_snapshot("nhl", "2026-08-18") is None
 
+    def test_a_stale_scheduled_slate_remains_visible(self):
+        """The hourly refresh boundary must not erase tomorrow's games."""
+        import sqlite3
+        from routers.games import _scoreboard_snapshot
+        scoreboard_store.save("mlb", "2026-08-18", [
+            {"game_id": "1", "date": "2026-08-18T22:35Z", "state": "pre"}])
+        old = (dt.datetime.now(dt.timezone.utc) - dt.timedelta(hours=2)).isoformat()
+        con = sqlite3.connect(_DB_PATH)
+        con.execute("UPDATE scoreboard_refresh SET fetched_at=? WHERE league='mlb'", (old,))
+        con.commit()
+        con.close()
+        games, age = _scoreboard_snapshot("mlb", "2026-08-18")
+        assert [game["game_id"] for game in games] == ["1"]
+        assert age > 3600
+
 
 class TestServingPathNeverSleeps:
-    def test_an_exhausted_budget_refuses_instead_of_pausing(self):
+    def test_the_obsolete_lifetime_budget_does_not_refuse_a_handler(self):
         import paced_http
         paced_http.reset_host_budget()
         paced_http._host_spend["site.web.api.espn.com"] = 500
         try:
-            with pytest.raises(paced_http.BudgetExhausted):
-                paced_http._charge("https://site.web.api.espn.com/x", 100, 60,
-                                   "refuse")
+            paced_http._charge("https://site.web.api.espn.com/x", 100, 60,
+                               "refuse")
         finally:
             paced_http.reset_host_budget()
 

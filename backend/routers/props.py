@@ -74,7 +74,8 @@ def list_props(player: Optional[str] = Query(None),
                league: Optional[str] = Query(None),
                leagues: Optional[str] = Query(None),
                date: Optional[str] = Query(None),
-               limit: int = Query(50, ge=1, le=500)):
+               limit: int = Query(50, ge=1, le=500),
+               offset: int = Query(0, ge=0)):
     sql = """SELECT p.id, p.market, p.line, p.side, p.source, p.captured_at,
                     p.odds,
                     p.player_id,
@@ -103,8 +104,11 @@ def list_props(player: Optional[str] = Query(None),
     if date:
         sql += " AND pg.date = ?"
         params.append(date)
-    sql += " ORDER BY p.captured_at DESC LIMIT ?"
-    params.append(limit)
+    # `captured_at` is shared by every row in one ingest. The id tie-breaker is
+    # required for deterministic offset pagination; without it, offers can move
+    # between pages and an alternate line can be omitted or duplicated.
+    sql += " ORDER BY p.captured_at DESC, p.id DESC LIMIT ? OFFSET ?"
+    params.extend((limit, offset))
     with closing(_db()) as con:
         rows = con.execute(sql, params).fetchall()
     return [{"id": r["id"], "market": r["market"], "line": r["line"], "side": r["side"],
@@ -237,16 +241,36 @@ def prop_history(player_id: int = Query(...),
         if not player:
             return {"error": "player not found", "games": []}
 
-        # Get game logs with this stat, most recent first. One row per
-        # appearance comes from the view, so there is nothing to dedupe here.
-        rows = con.execute(
-            f"""SELECT game_date, opponent, home_away, {val_expr} AS val
-                  FROM player_game_logs_all
-                 WHERE player_id=? AND league IN ({league_placeholders})
-                   AND {where_clause}{_PLAYED}
-                 ORDER BY game_date DESC LIMIT 100""",
-            (player_id, *log_leagues)
-        ).fetchall()
+        has_ufcstats = con.execute(
+            "SELECT 1 FROM sqlite_master WHERE type='table' "
+            "AND name='player_game_logs_ufcstats'"
+        ).fetchone() is not None
+        if league == "ufc" and has_ufcstats:
+            # UFCStats is provider-separated because its native fighter/fight
+            # ids do not share ESPN's vocabulary. The profile publishes the
+            # completed last-five directly; read that table rather than
+            # creating duplicate provider rows in player_game_logs_all.
+            ufc_value = f"json_extract(stats, '$.{stat_key}')"
+            rows = con.execute(
+                f"""SELECT game_date, opponent, NULL AS home_away,
+                            {ufc_value} AS val
+                       FROM player_game_logs_ufcstats
+                      WHERE player_id=? AND league='ufc'
+                        AND {ufc_value} IS NOT NULL
+                      ORDER BY game_date DESC LIMIT 100""",
+                (player_id,),
+            ).fetchall()
+        else:
+            # Get game logs with this stat, most recent first. One row per
+            # appearance comes from the view, so there is nothing to dedupe here.
+            rows = con.execute(
+                f"""SELECT game_date, opponent, home_away, {val_expr} AS val
+                      FROM player_game_logs_all
+                     WHERE player_id=? AND league IN ({league_placeholders})
+                       AND {where_clause}{_PLAYED}
+                     ORDER BY game_date DESC LIMIT 100""",
+                (player_id, *log_leagues)
+            ).fetchall()
 
     if not rows:
         return {

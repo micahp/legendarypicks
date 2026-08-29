@@ -9,7 +9,11 @@ import sys
 
 from settlement.mlb_api import _fetch_mlb_gamepk, _fetch_mlb_final
 from settlement.mlb_settle import _settle_mlb_props
-from settlement.ufc_settle import _settle_ufc_props, _ufc_scoreboard_competition
+from settlement.ufc_settle import (
+    _settle_ufc_props,
+    _ufc_scoreboard_competition,
+    _ufcstats_game_is_final,
+)
 from settlement.mls_settle import _settle_mls_props
 from settlement.tennis_settle import _settle_tennis_props, _tennis_snapshot
 from settlement.wc_settle import _settle_wc_props
@@ -165,7 +169,11 @@ def settle_game(con: sqlite3.Connection, game_id: int) -> dict:
         return _settle_wc_props(con, espn_event_id, props)
 
     # ── Is the game actually over? ──────────────────────────────────────────────
-    if game["final_home"] is None:
+    ufcstats_final = (
+        league == "ufc"
+        and _ufcstats_game_is_final(con, game_id, game["date"])
+    )
+    if game["final_home"] is None and not ufcstats_final:
         try:
             if league == "ufc":
                 competition = _ufc_scoreboard_competition(

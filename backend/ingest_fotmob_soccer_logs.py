@@ -242,7 +242,10 @@ def main(argv=None):
     args = parser.parse_args(argv)
 
     league_id, season = LEAGUES[args.league]
-    con = sqlite3.connect(DB_PATH)
+    # Production has frequent short-lived scoreboard and capture writers. Wait
+    # through those expected lock windows instead of aborting a long serial run.
+    con = sqlite3.connect(DB_PATH, timeout=60)
+    con.execute("PRAGMA busy_timeout = 60000")
     index = spine(con, args.league)
     print(f"{args.league}: {sum(len(v) for v in index.values())} spine players")
 
