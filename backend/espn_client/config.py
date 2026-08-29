@@ -17,7 +17,6 @@ import paced_http
 
 LEAGUES = {  # our key -> (espn "sport/league" path, regulation periods)
     "nba":  ("basketball/nba", 4),
-    "wnba": ("basketball/wnba", 4),
     "nhl":  ("hockey/nhl", 3),
     "mlb":  ("baseball/mlb", 9),
     "nfl":  ("football/nfl", 4),

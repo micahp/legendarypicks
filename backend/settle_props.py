@@ -5,8 +5,10 @@ settle_props.py — Drive the settlement pipeline.
 Find all prop_games that are FINAL and have unsettled props, settle each via settlement.py.
 Idempotent: re-running is safe (skips already-settled props).
 
-Usage: venv/bin/python settle_props.py [--dry-run]
+Usage: venv/bin/python settle_props.py [--dry-run] [--league LEAGUE]
+                                     [--through YYYY-MM-DD] [--max-games N]
 """
+import datetime as dt
 import sys, os, sqlite3
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -16,7 +18,8 @@ import espn_client as espn
 DB = os.environ.get("LP_DB_PATH") or os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "picks.db")
 
 
-def main(dry_run: bool = False):
+def main(dry_run: bool = False, league: str = "", through: str = "",
+         max_games: int = 0):
     # settle_game asks ESPN for a boxscore per game, so this loop is a fan-out.
     # Unpaced it reached 50 requests in a single minute on 2026-08-24, alongside
     # ingest_scoreboards' steady 4/min, and site.web.api refused for the next four
@@ -24,10 +27,12 @@ def main(dry_run: bool = False):
     # not per run, so the batch job spaces itself and the request handlers do not.
     # Nobody waits on this script, so it is also allowed to wait out a cooldown.
     with espn.batch_pacing():
-        return _main(dry_run=dry_run)
+        return _main(dry_run=dry_run, league=league, through=through,
+                     max_games=max_games)
 
 
-def _main(dry_run: bool = False):
+def _main(dry_run: bool = False, league: str = "", through: str = "",
+          max_games: int = 0):
     con = sqlite3.connect(DB)
     con.row_factory = sqlite3.Row
 
@@ -40,11 +45,13 @@ def _main(dry_run: bool = False):
         FROM prop_games pg
         JOIN props p ON p.game_id = pg.id
         LEFT JOIN prop_results pr ON pr.prop_id = p.id
-        WHERE pg.final_home IS NOT NULL OR pg.espn_event_id != ''
+        WHERE (pg.final_home IS NOT NULL OR pg.espn_event_id != '')
+          AND (? = '' OR pg.league = ?)
+          AND pg.date <= COALESCE(NULLIF(?, ''), date('now'))
         GROUP BY pg.id
         HAVING result_rows < total_props
         ORDER BY pg.date DESC
-    """).fetchall()
+    """, (league, league, through)).fetchall()
 
     if not games:
         print("No finaled games with unsettled props.")
@@ -57,10 +64,12 @@ def _main(dry_run: bool = False):
             JOIN props p ON p.game_id = pg.id
             LEFT JOIN prop_results pr ON pr.prop_id = p.id
             WHERE pg.espn_event_id != '' AND pg.espn_event_id IS NOT NULL
+              AND (? = '' OR pg.league = ?)
+              AND pg.date <= COALESCE(NULLIF(?, ''), date('now'))
             GROUP BY pg.id
             HAVING result_rows < total_props
             ORDER BY pg.date DESC
-        """).fetchall()
+        """, (league, league, through)).fetchall()
         if games_with_espn:
             print(f"  {len(games_with_espn)} games with ESPN IDs but no finals (will check ESPN)")
         else:
@@ -68,6 +77,9 @@ def _main(dry_run: bool = False):
             con.close()
             return
         games = games_with_espn
+
+    if max_games:
+        games = games[:max_games]
 
     print(f"Games to settle: {len(games)}")
     totals = {"settled": 0, "void": 0, "unmappable": 0, "pending": 0,
@@ -120,4 +132,33 @@ def _main(dry_run: bool = False):
 
 if __name__ == "__main__":
     dry = "--dry-run" in sys.argv
-    main(dry_run=dry)
+    scope = ""
+    through = ""
+    max_games = 0
+    for index, arg in enumerate(sys.argv):
+        if arg == "--league" and index + 1 < len(sys.argv):
+            scope = sys.argv[index + 1].lower()
+        elif arg.startswith("--league="):
+            scope = arg.split("=", 1)[1].lower()
+        elif arg == "--through" and index + 1 < len(sys.argv):
+            through = sys.argv[index + 1]
+        elif arg.startswith("--through="):
+            through = arg.split("=", 1)[1]
+        elif arg == "--max-games" and index + 1 < len(sys.argv):
+            max_games = int(sys.argv[index + 1])
+        elif arg.startswith("--max-games="):
+            max_games = int(arg.split("=", 1)[1])
+    if scope and scope not in espn.LEAGUES:
+        print(f"Unsupported league: {scope}", file=sys.stderr)
+        raise SystemExit(2)
+    try:
+        if through:
+            dt.date.fromisoformat(through)
+    except ValueError:
+        print(f"Invalid --through date: {through}", file=sys.stderr)
+        raise SystemExit(2)
+    if max_games < 0:
+        print("Invalid --max-games: must be non-negative", file=sys.stderr)
+        raise SystemExit(2)
+    raise SystemExit(main(dry_run=dry, league=scope, through=through,
+                          max_games=max_games) or 0)

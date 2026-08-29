@@ -77,8 +77,14 @@ class ColumnDiscoveryTests(unittest.TestCase):
         reach it? Yes. Its rows are keyed to the same spine by an accent-folded name,
         and a merge that skipped them would strand every FotMob appearance on a
         player_id nothing points at any more. `referencing_columns` finds it without a
-        change, because it discovers columns rather than reading a list."""
-        expected = {"picks.db": 15, "picks.dev.db": 16}
+        change, because it discovers columns rather than reading a list.
+
+        2026-08-27, dev +1: `player_game_logs_rotowire.player_id` is another
+        provider-separated appearance table and must participate in an identity
+        merge. The worktree production-shaped database also gained
+        `tennis_ranking_snapshots.player_id`, so its independently pinned total is
+        now 16."""
+        expected = {"picks.db": 16, "picks.dev.db": 17}
         for name, count in expected.items():
             path = os.path.join(HERE, "data", name)
             if not os.path.isfile(path):

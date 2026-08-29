@@ -300,7 +300,24 @@ def _refresh(league, date, verbose=True):
     except Exception as exc:
         return 0, f"{type(exc).__name__}: {exc}"
 
-    written = scoreboard_store.save(league, date, games, source="espn")
+    # Free: this is the same document `games()` just fetched, served from the
+    # client cache. Tennis draw publication must validate before the daily slate
+    # write so a malformed publisher shape cannot silently look successful.
+    try:
+        payload = espn.scoreboard_raw(league, date)
+        draws = espn.tennis_draws_from_payload(league, payload) \
+            if league in ("atp", "wta") else []
+        if league in ("atp", "wta") and games and not draws:
+            raise ValueError(f"{league} published games without a complete major draw")
+    except Exception as exc:
+        return 0, f"{type(exc).__name__}: {exc}"
+
+    try:
+        written = scoreboard_store.save(league, date, games, source="espn")
+        if draws:
+            scoreboard_store.save_tennis_draws(league, draws, source="espn")
+    except Exception as exc:
+        return 0, f"{type(exc).__name__}: {exc}"
 
     # "Write the preview whenever we find out about the game." This job is now
     # where we find out, so the kick moved here out of the request handler --
@@ -313,10 +330,8 @@ def _refresh(league, date, verbose=True):
         except Exception as exc:
             print(f"  stories not kicked league={league}: {type(exc).__name__}: {exc}")
 
-    # Free: the calendar rode in on the fetch above and is served from the
-    # 20-second cache, so this costs no request.
+    # Free: the calendar rode in on the fetch above.
     try:
-        payload = espn.scoreboard_raw(league, date)
         if not league_activity.record_from_payload(league, payload):
             league_activity.touch(league)
     except Exception as exc:
@@ -353,6 +368,71 @@ def _spend_report():
     return "spent " + ", ".join(f"{host}={count}" for host, count in sorted(spend.items()))
 
 
+def _refresh_sport_hubs(leagues, dry_run=False, verbose=True, season=None):
+    """Refresh slow-moving sport-hub snapshots inside the existing runner.
+
+    This deliberately does not create a rankings or Leagues Cup timer.  The
+    scoreboard runner already owns the bounded publisher session; these
+    snapshots add work only when their persisted cadence says they are due.
+    """
+    selected = {str(league).lower() for league in leagues}
+    failures = []
+    season = season or dt.date.today().year
+
+    for tour in ("atp", "wta"):
+        if tour not in selected or not scoreboard_store.tennis_rankings_need_refresh(tour):
+            continue
+        if dry_run:
+            print(f"  would refresh {tour} spine + world rankings (3 bounded requests)")
+            continue
+        try:
+            identities = espn.tennis_ranking_identities(tour)
+            spine = scoreboard_store.save_tennis_ranking_spine(tour, identities)
+            rankings = espn.tennis_rankings(tour)
+            written = scoreboard_store.save_tennis_rankings(tour, rankings, source="espn")
+            if verbose:
+                print(
+                    f"  ok   {tour:6} spine={spine['published']} "
+                    f"inserted={spine['inserted']} world rankings={written}"
+                )
+        except Exception as exc:
+            error = f"{type(exc).__name__}: {exc}"
+            failures.append((tour, "rankings", error))
+            print(f"  FAIL {tour:6} rankings: {error}")
+
+    if "mls" in selected and scoreboard_store.soccer_competition_need_refresh("mls"):
+        if dry_run:
+            print("  would refresh mls conference standings (1 bounded request)")
+        else:
+            try:
+                snapshot = espn.mls_conference_standings(season=season)
+                counts = scoreboard_store.save_soccer_competition(snapshot, source="espn")
+                if verbose:
+                    print(f"  ok   mls    standings={counts['standings']}")
+            except Exception as exc:
+                error = f"{type(exc).__name__}: {exc}"
+                failures.append(("mls", "standings", error))
+                print(f"  FAIL mls    standings: {error}")
+
+    if "lcup" in selected and scoreboard_store.soccer_competition_need_refresh("lcup"):
+        if dry_run:
+            print("  would refresh lcup bracket + leaders (2 bounded requests)")
+        else:
+            try:
+                snapshot = espn.lcup_competition_snapshot(season)
+                counts = scoreboard_store.save_soccer_competition(snapshot, source="espn")
+                if verbose:
+                    print(
+                        f"  ok   lcup   bracket={counts['matches']} "
+                        f"leaders={counts['leaders']}"
+                    )
+            except Exception as exc:
+                error = f"{type(exc).__name__}: {exc}"
+                failures.append(("lcup", "competition", error))
+                print(f"  FAIL lcup   competition: {error}")
+    return failures
+
+
 def run_schedule(leagues, dates, dry_run=False, verbose=True):
     """Two gates, in order, and both of them are the publisher's own answers.
 
@@ -377,6 +457,7 @@ def run_schedule(leagues, dates, dry_run=False, verbose=True):
                 print(f"  skip  {league:6} {date}: {reason}")
     if dry_run:
         print(f"[scoreboards] would ask {len(plan_ask)} of {len(leagues) * len(dates)}")
+        _refresh_sport_hubs(leagues, dry_run=True, verbose=verbose)
         return 0
 
     failures = []
@@ -389,6 +470,7 @@ def run_schedule(leagues, dates, dry_run=False, verbose=True):
             print(f"  FAIL {league:6} {date}: {error}")
         elif verbose:
             print(f"  ok   {league:6} {date}  games={written}")
+    failures.extend(_refresh_sport_hubs(leagues, verbose=verbose))
     pending = _drain_stories(STORY_DRAIN_SCHEDULE)
     print(f"[scoreboards] schedule: {len(plan_ask)} asked, {len(plan_skip)} skipped, "
           f"{total} games stored, {len(failures)} failed"

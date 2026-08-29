@@ -13,6 +13,7 @@ to make that mistake, so it is pinned here.
 """
 import time
 import unittest
+from unittest import mock
 
 import paced_http
 

@@ -1,6 +1,11 @@
 import { useState, useEffect, useRef } from 'react'
 import Head from 'next/head'
 import MarketSlateBoard from '../components/Props/MarketSlateBoard'
+import {
+  leagueNavigationLabel,
+  SportGroup,
+  useSportNavigation,
+} from '../components/Navigation/sports'
 
 // ── types ────────────────────────────────────────────────
 interface Player {
@@ -19,7 +24,7 @@ interface PerfRow {
 }
 
 type Tab = 'slate' | 'props' | 'performance' | 'matchups' | 'model'
-type League = 'All' | 'nba' | 'mlb' | 'mls' | 'nfl' | 'nhl' | 'ufc' | 'atp' | 'wta' | 'lcup'
+type LeagueFilter = string
 
 const TABS: { key: Tab; label: string }[] = [
   { key: 'slate', label: 'Slate' },
@@ -28,23 +33,6 @@ const TABS: { key: Tab; label: string }[] = [
   { key: 'matchups', label: 'Matchups' },
   { key: 'model', label: 'Model' },
 ]
-// This list is BOTH the filter pills and the within-day ordering (see `leagueRank`), so a league
-// missing from it is unreachable by filter AND sorts last. atp/wta were absent while tennis was
-// 32 of the 71 games on the board (2026-08-17) -- the pills advertised four leagues with zero
-// games and hid the two that had the most. Appended rather than reordered so the existing
-// day-group order is unchanged.
-export const LEAGUES: League[] = ['All', 'ufc', 'mls', 'nba', 'nfl', 'nhl', 'mlb', 'atp', 'wta', 'lcup']
-
-// A pill reads the league key uppercased, which is right for NBA and wrong for
-// LCUP. `pages/scores.tsx` already publishes the label as "Leagues Cup", so use
-// the same words rather than a second name for one competition.
-//
-// The slate's day-group heading reads from this same map for the same reason.
-// It did not, and the board rendered a "Leagues Cup" pill above an "LCUP"
-// heading over the same two games: fixing the pill alone had left one
-// competition wearing two names on one screen.
-const LEAGUE_LABELS: Partial<Record<League, string>> = { lcup: 'Leagues Cup' }
-
 function Skeleton({ lines = 4 }: { lines?: number }) {
   return (
     <div className="space-y-3 animate-pulse">
@@ -55,17 +43,112 @@ function Skeleton({ lines = 4 }: { lines?: number }) {
   )
 }
 
-function LeaguePills({ league, onChange }: { league: League; onChange: (l: League) => void }) {
+function SportPills({ groups, active, competition, onSportChange, onCompetitionChange }: {
+  groups: SportGroup[]
+  active: string
+  competition: string
+  onSportChange: (key: string) => void
+  onCompetitionChange: (league: string) => void
+}) {
+  const [openGroup, setOpenGroup] = useState<string | null>(null)
+  const navRef = useRef<HTMLElement>(null)
+
+  useEffect(() => {
+    const closeOnOutsideClick = (event: MouseEvent) => {
+      if (navRef.current && !navRef.current.contains(event.target as Node)) setOpenGroup(null)
+    }
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setOpenGroup(null)
+    }
+    document.addEventListener('mousedown', closeOnOutsideClick)
+    document.addEventListener('keydown', closeOnEscape)
+    return () => {
+      document.removeEventListener('mousedown', closeOnOutsideClick)
+      document.removeEventListener('keydown', closeOnEscape)
+    }
+  }, [])
+
+  const selectSport = (group: SportGroup) => {
+    if (active !== group.key) {
+      onSportChange(group.key)
+      setOpenGroup(null)
+      return
+    }
+    if (group.competitions.length > 1) {
+      setOpenGroup(current => current === group.key ? null : group.key)
+    }
+  }
+
   return (
-    <div className="flex max-w-full flex-wrap gap-1.5">
-      {LEAGUES.map(l => (
-        <button key={l} onClick={() => onChange(l)}
-          className={`px-3.5 py-1.5 rounded-lg text-sm font-medium transition-colors ${league === l ? 'bg-emerald-600 text-white' : 'bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-zinc-200'}`}>
-          {l === 'All' ? 'All' : (LEAGUE_LABELS[l] ?? l.toUpperCase())}
-        </button>
-      ))}
-    </div>
+    <nav ref={navRef} aria-label="Sports" className="flex max-w-full flex-wrap gap-1.5">
+      <button
+        type="button"
+        onClick={() => { onSportChange('all'); setOpenGroup(null) }}
+        aria-pressed={active === 'all'}
+        className={`rounded-lg px-3.5 py-1.5 text-sm font-medium transition-colors ${active === 'all' ? 'bg-emerald-600 text-white' : 'border border-zinc-800 bg-zinc-900 text-zinc-400 hover:text-zinc-200'}`}
+      >
+        All
+      </button>
+      {groups.map(group => {
+        const hasMenu = group.competitions.length > 1
+        const menuOpen = openGroup === group.key
+        const selectedCompetition = active === group.key && competition !== 'all'
+          ? group.competitions.find(item => item.league === competition)
+          : undefined
+        const buttonLabel = selectedCompetition
+          ? leagueNavigationLabel(selectedCompetition.league)
+          : group.label
+        return (
+          <div key={group.key} className="relative">
+            <button
+              type="button"
+              onClick={() => selectSport(group)}
+              aria-label={buttonLabel}
+              aria-pressed={active === group.key}
+              aria-haspopup={hasMenu ? 'menu' : undefined}
+              aria-expanded={hasMenu ? menuOpen : undefined}
+              className={`flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-sm font-medium transition-colors ${active === group.key ? 'bg-emerald-600 text-white' : 'border border-zinc-800 bg-zinc-900 text-zinc-400 hover:text-zinc-200'}`}
+            >
+              <span>{buttonLabel}</span>
+              {hasMenu && active === group.key && (
+                <span aria-hidden="true" className="text-[10px]">▼</span>
+              )}
+            </button>
+            {hasMenu && menuOpen && (
+              <div
+                role="menu"
+                aria-label={`${group.label} filters`}
+                className="absolute right-0 top-full z-50 mt-2 min-w-[170px] overflow-hidden rounded-xl border border-zinc-700 bg-zinc-900 p-1.5 shadow-2xl shadow-black/50"
+              >
+                {[{ league: 'all', sport: group.sport }, ...group.competitions].map(item => {
+                  const selected = competition === item.league
+                  return (
+                    <button
+                      key={item.league}
+                      type="button"
+                      role="menuitemradio"
+                      aria-checked={selected}
+                      onClick={() => { onCompetitionChange(item.league); setOpenGroup(null) }}
+                      className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm transition-colors ${selected ? 'bg-emerald-500/10 text-emerald-300' : 'text-zinc-300 hover:bg-zinc-800'}`}
+                    >
+                      <span>{item.league === 'all' ? `All ${group.label}` : leagueNavigationLabel(item.league)}</span>
+                      {selected && <span aria-hidden="true" className="text-emerald-400">✓</span>}
+                    </button>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        )
+      })}
+    </nav>
   )
+}
+
+function addLeagueFilter(params: URLSearchParams, filter: LeagueFilter) {
+  if (!filter || filter === 'All') return
+  if (filter.includes(',')) params.set('leagues', filter)
+  else params.set('league', filter)
 }
 
 function PlayerSearch({ query, setQuery, players, onSelect }: {
@@ -114,7 +197,12 @@ function Select({ value, onChange, options }: { value: string; onChange: (v: str
 }
 
 // ── Tab: Slate (games) ───────────────────────────────────
-function SlateTab({ league }: { league: League }) {
+function SlateTab({ league, leagueOrder, filterLabel, onViewAll }: {
+  league: LeagueFilter
+  leagueOrder: string[]
+  filterLabel?: string
+  onViewAll: () => void
+}) {
   const [slate, setSlate] = useState<SlateGame[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -141,7 +229,7 @@ function SlateTab({ league }: { league: League }) {
     const controller = new AbortController()
     const params = new URLSearchParams()
     params.set('summary', '1')
-    if (league !== 'All') params.set('league', league)
+    addLeagueFilter(params, league)
 
     setLoading(true)
     setError(null)
@@ -186,8 +274,8 @@ function SlateTab({ league }: { league: League }) {
   // Day above league, with each label rendered once rather than repeated on
   // every game card.
   const leagueRank = (leagueKey: string) => {
-    const rank = LEAGUES.indexOf(leagueKey as League)
-    return rank === -1 ? LEAGUES.length : rank
+    const rank = leagueOrder.indexOf(leagueKey)
+    return rank === -1 ? leagueOrder.length : rank
   }
   const dateGroups = new Map<string, Map<string, SlateGame[]>>()
   for (const game of slate) {
@@ -217,7 +305,16 @@ function SlateTab({ league }: { league: League }) {
       )}
       {loading ? <Skeleton lines={5} /> : groups.length === 0 ? (
         <div className="py-16 text-center text-sm text-zinc-500">
-          No upcoming games with props. Check back closer to game time.
+          <p>No upcoming games with props. Check back closer to game time.</p>
+          {filterLabel && (
+            <button
+              type="button"
+              onClick={onViewAll}
+              className="mt-4 rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-4 py-2 text-sm font-medium text-emerald-400 transition-colors hover:bg-emerald-500/20"
+            >
+              View All Leagues
+            </button>
+          )}
         </div>
       ) : (
         groups.map(({ gameDate, leagueGroups }) => (
@@ -234,7 +331,7 @@ function SlateTab({ league }: { league: League }) {
                 <section key={leagueKey} data-slate-league={leagueKey} className="space-y-4">
                   <div className="flex min-w-0 items-center gap-2">
                     <h3 className="text-base font-extrabold uppercase tracking-wide text-zinc-100">
-                      {LEAGUE_LABELS[leagueKey as League] ?? leagueKey.toUpperCase()}
+                      {leagueNavigationLabel(leagueKey)}
                     </h3>
                     <span className="truncate text-xs tabular-nums text-zinc-600">
                       {games.length} game{games.length === 1 ? '' : 's'} · {propCount} props
@@ -311,8 +408,8 @@ function SlateTab({ league }: { league: League }) {
 }
 
 // ── Tab: Performance (player stats dashboard) ─────────────
-function PerformanceTab({ league, query, setQuery, selectedPlayer, setSelectedPlayer }: {
-  league: League; query: string; setQuery: (q: string) => void
+function PerformanceTab({ query, setQuery, selectedPlayer, setSelectedPlayer }: {
+  query: string; setQuery: (q: string) => void
   selectedPlayer: Player | null; setSelectedPlayer: (p: Player | null) => void
 }) {
   const [players, setPlayers] = useState<Player[]>([])
@@ -681,8 +778,8 @@ const STAT_ORDER = ['pass_yds', 'rush_yds', 'rec_yds', 'pass_td', 'rush_td', 're
   'fpts_ppr', 'fpts']
 const TREND_ICON: Record<string, string> = { up: '↑', down: '↓', flat: '→' }
 
-function ModelTab({ league, query, setQuery, player, setPlayer }: {
-  league: League; query: string; setQuery: (q: string) => void
+function ModelTab({ query, setQuery, player, setPlayer }: {
+  query: string; setQuery: (q: string) => void
   player: Player | null; setPlayer: (p: Player | null) => void
 }) {
   const [players, setPlayers] = useState<Player[]>([])
@@ -815,7 +912,17 @@ function StatBox({ label, value, desc }: { label: string; value: string | number
 // ── Page ───────────────────────────────────────────────────
 export default function PropsPage() {
   const [tab, setTab] = useState<Tab>('slate')
-  const [league, setLeague] = useState<League>('All')
+  const { groups: sportGroups, loading: navigationLoading, error: navigationError } = useSportNavigation('props')
+  const [sportKey, setSportKey] = useState('all')
+  const [competition, setCompetition] = useState('all')
+  const selectedSport = sportGroups.find(group => group.key === sportKey)
+  const league = competition !== 'all'
+    ? competition
+    : selectedSport?.competitions.map(item => item.league).join(',') || 'All'
+  const activeFilterLabel = competition !== 'all'
+    ? leagueNavigationLabel(competition)
+    : selectedSport?.label
+  const leagueOrder = sportGroups.flatMap(group => group.competitions.map(item => item.league))
 
   // Shared across Performance/Matchups/Model so switching tabs keeps the same
   // player instead of making you re-search each time.
@@ -873,7 +980,7 @@ export default function PropsPage() {
     // Date discovery only needs game summaries. Pulling every nested prop here
     // duplicated the full slate payload before either tab rendered it.
     params.set('summary', '1')
-    if (league !== 'All') params.set('league', league)
+    addLeagueFilter(params, league)
     fetch(`/api/props/slate?${params}`)
       .then(r => r.json())
       .then((games: SlateGame[]) => {
@@ -898,9 +1005,19 @@ export default function PropsPage() {
         {/* Page header row: title + league pills */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <h1 className="text-3xl font-extrabold tracking-tight">Props</h1>
-          <LeaguePills league={league} onChange={setLeague} />
+          <SportPills
+            groups={sportGroups}
+            active={sportKey}
+            competition={competition}
+            onSportChange={key => { setSportKey(key); setCompetition('all') }}
+            onCompetitionChange={setCompetition}
+          />
         </div>
 
+        {navigationLoading && <div aria-label="Loading sports" className="h-7 w-full animate-pulse rounded bg-zinc-800" />}
+        {navigationError && (
+          <p className="text-xs text-zinc-500">Sport filters are unavailable; showing the complete board.</p>
+        )}
         {/* Tab bar */}
         <div className="flex gap-0 flex-wrap border-b border-zinc-800 -mx-4 px-4">
           {TABS.map(t => (
@@ -949,11 +1066,25 @@ export default function PropsPage() {
         )}
 
         {/* Tab content */}
-        {tab === 'slate' && <SlateTab league={league} />}
-        {tab === 'props' && <MarketSlateBoard league={league} date={date} />}
-        {tab === 'performance' && <PerformanceTab league={league} query={sharedQuery} setQuery={setSharedQuery} selectedPlayer={sharedPlayer} setSelectedPlayer={setSharedPlayer} />}
+        {tab === 'slate' && (
+          <SlateTab
+            league={league}
+            leagueOrder={leagueOrder}
+            filterLabel={activeFilterLabel}
+            onViewAll={() => { setSportKey('all'); setCompetition('all') }}
+          />
+        )}
+        {tab === 'props' && (
+          <MarketSlateBoard
+            league={league}
+            date={date}
+            filterLabel={activeFilterLabel}
+            onViewAll={() => { setSportKey('all'); setCompetition('all') }}
+          />
+        )}
+        {tab === 'performance' && <PerformanceTab query={sharedQuery} setQuery={setSharedQuery} selectedPlayer={sharedPlayer} setSelectedPlayer={setSharedPlayer} />}
         {tab === 'matchups' && <MatchupsTab query={sharedQuery} setQuery={setSharedQuery} player={sharedPlayer} setPlayer={setSharedPlayer} />}
-        {tab === 'model' && <ModelTab league={league} query={sharedQuery} setQuery={setSharedQuery} player={sharedPlayer} setPlayer={setSharedPlayer} />}
+        {tab === 'model' && <ModelTab query={sharedQuery} setQuery={setSharedQuery} player={sharedPlayer} setPlayer={setSharedPlayer} />}
       </div>
     </>
   )

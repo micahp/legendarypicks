@@ -108,27 +108,17 @@ _MARKET_STAT_KEY = {
             # stat, as already mapped for ligamx and lcup.
             "shots_assisted": "chances_created",
             "crosses": "crosses",
-            # `passes_attempted` is NOT mapped to FotMob's `passes`, though it is
-            # tempting: FotMob publishes ACCURATE passes and the market asks for
-            # ATTEMPTED. ingest_fotmob_soccer_logs.py:54 records that decision --
-            # "mapping one onto the other would be a different question answered
-            # with a confident number" -- and it was violated here on 2026-08-26
-            # before Codex caught it. lcup maps this market to the ESPN core key
-            # `passes_attempted`; MLS holds 0 rows carrying that key, so the
-            # market stays unmapped for MLS until a shallow-vs-deep ESPN run
-            # provides it.
-            #
-            # It is also why the honest coverage number is 50, not 186: 136 of
-            # the 222 passes_attempted props have a FotMob APPEARANCE, and 0 have
-            # the named statistic. An appearance is not evidence for a market the
-            # provider does not measure.
+            # This is exact attempted passes from the provider-separated
+            # RotoWire rows. FotMob's accurate/completed `passes` field is never
+            # substituted for it.
+            "passes_attempted": "passes_attempted",
             },
             # An earlier note here called these "FotMob-only" fields, which is
             # false about PUBLISHERS: eight days of the RotoWire relay archive
             # price Tackles 18, Clearances 50, Chances Created 57, Crosses 17 and
-            # Passes Attempted 283. RotoWire is a props relay and gives no game
-            # LOGS, so it was never the source that could close this -- but "no
-            # one publishes this" was never the reason either.
+            # Passes Attempted 283. The separate RotoWire stats source now
+            # supplies the attempted-pass game logs without changing FotMob's
+            # accurate-pass semantics.
     # Leagues Cup. The stat keys are the ones ingest_soccer_logs actually writes
     # (see _STAT_ORDER), verified against real lcup rows rather than assumed.
     # `goal_or_assist` is a COMPOUND market: the chart sums the listed fields, so

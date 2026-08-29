@@ -640,27 +640,17 @@ class TheMlsMapCoversWhatMlsLogsAnswer(unittest.TestCase):
         mls = core_markets._MARKET_STAT_KEY["mls"]
         for market, key in (("tackles", "tackles"), ("clearances", "clearances"),
                             ("crosses", "crosses"),
-                            ("chances_created", "chances_created")):
+                            ("chances_created", "chances_created"),
+                            ("passes_attempted", "passes_attempted")):
             self.assertEqual(mls.get(market), key, market)
 
-    def test_passes_attempted_is_not_answered_with_accurate_passes(self):
-        """FotMob publishes ACCURATE passes; the market asks for ATTEMPTED.
-
-        ingest_fotmob_soccer_logs.py:54 records that decision -- "mapping one
-        onto the other would be a different question answered with a confident
-        number" -- and it was violated here on 2026-08-26 by mapping
-        `passes_attempted -> passes` for mls, on the strength of 136 of 222 props
-        having a FotMob APPEARANCE. An appearance is not evidence for a market
-        the provider does not measure: 0 of those 222 have the named statistic.
-
-        lcup maps this market to the ESPN core key `passes_attempted`. MLS holds
-        no rows carrying it, so for MLS the market stays unmapped.
-        """
+    def test_passes_attempted_uses_its_exact_key(self):
+        """RotoWire supplies attempts; FotMob accurate passes remain separate."""
         import core_markets
-        self.assertNotIn("passes_attempted", core_markets._MARKET_STAT_KEY["mls"])
-        self.assertEqual(
-            core_markets._MARKET_STAT_KEY["lcup"].get("passes_attempted"),
-            "passes_attempted")
+        for league in ("mls", "lcup"):
+            self.assertEqual(
+                core_markets._MARKET_STAT_KEY[league].get("passes_attempted"),
+                "passes_attempted")
 
     def test_mls_still_refuses_a_market_it_holds_no_rows_for(self):
         """The guard the test above used to provide, kept alive on a market that
@@ -777,7 +767,6 @@ class TheNflMapNamesKeysTheNflLogsActuallyHold(unittest.TestCase):
         import core_markets
         self.assertNotIn("field_goals_made",
                          core_markets._MARKET_STAT_KEY["nfl"])
-
 
 class OneRowPerAppearance(unittest.TestCase):
     """Providers keep separate rows; the READER picks one.

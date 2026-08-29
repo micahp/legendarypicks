@@ -97,8 +97,12 @@ def _find_player_stat(boxscore: dict, player_name: str, team: str,
                 stats_list = athlete_entry.get("stats", [])
                 labels = stats_group.get("labels") or []
                 if isinstance(stats_list, list) and len(stats_list) > 0:
-                    if labels and stat_key in labels:
-                        idx = labels.index(stat_key)
+                    # ESPN's label casing varies by sport and feed: NFL
+                    # publishes YDS while the established maps use Yds.
+                    label_keys = [str(label).casefold() for label in labels]
+                    wanted_key = str(stat_key).casefold()
+                    if labels and wanted_key in label_keys:
+                        idx = label_keys.index(wanted_key)
                         if idx < len(stats_list):
                             val = stats_list[idx]
                             if val in (None, ""):
@@ -106,6 +110,15 @@ def _find_player_stat(boxscore: dict, player_name: str, team: str,
                             try:
                                 return float(val)
                             except (ValueError, TypeError):
+                                # Kicking FG/XP and passing C/ATT are published
+                                # as made/attempted. A mapped made-stat uses the
+                                # numerator; malformed pairs still fail closed.
+                                if isinstance(val, str) and "/" in val:
+                                    made, _attempted = val.split("/", 1)
+                                    try:
+                                        return float(made)
+                                    except (ValueError, TypeError):
+                                        pass
                                 return None
                 return None
     return None

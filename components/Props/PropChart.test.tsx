@@ -162,3 +162,49 @@ describe('a window short of its own sample reports a dash', () => {
     expect(headline(container)).toContain('60%')
   })
 })
+
+describe('a window short of its own sample reports a dash', () => {
+  // 2026-08-26, reported from the props tab: a Liga MX player with three
+  // matches printed 100% on L5, L10 AND L20, because `slice(0, 20)` of three
+  // games is three games. The label claimed a twenty-game record; the data was
+  // three. MLS looked correct only because those players have 25-42 games.
+  function headline(container: HTMLElement): string {
+    return container.textContent || ''
+  }
+
+  it('shows a dash for L5 when only three games exist', () => {
+    const { container } = render(
+      <PropChart data={chartData(threeGames)} window="l5" />
+    )
+    expect(headline(container)).toContain('—')
+    expect(headline(container)).not.toContain('67%')
+  })
+
+  it('shows a dash for L10 and L20 on the same three games', () => {
+    for (const w of ['l10', 'l20'] as const) {
+      const { container } = render(
+        <PropChart data={chartData(threeGames)} window={w} />
+      )
+      expect(headline(container)).toContain('—')
+    }
+  })
+
+  it('still reports season, which claims only what exists', () => {
+    const { container } = render(
+      <PropChart data={chartData(threeGames)} window="season" />
+    )
+    expect(headline(container)).toContain('67%')
+  })
+
+  it('reports a real percentage once the window is full', () => {
+    const five = [
+      ...threeGames,
+      { date: '2026-07-23', value: 30, opponent: 'HOM', home: true, hit: true },
+      { date: '2026-07-24', value: 10, opponent: 'AWY', home: false, hit: false },
+    ]
+    const { container } = render(
+      <PropChart data={chartData(five)} window="l5" />
+    )
+    expect(headline(container)).toContain('60%')
+  })
+})

@@ -55,13 +55,16 @@ def _prop(pid=1, market="total_hits,_runs_and_rbis", line=1.5, side="over"):
             "player_id": 10, "player_name": "Austin Riley", "player_team": "ATL"}
 
 
-def _run(monkeypatch, batting, prop=None, crosswalk=True):
+def _run(monkeypatch, batting, prop=None, crosswalk=True, pitching=None,
+         game_status=None, fielding=None):
     """Settle one hits+runs+RBIs prop against a player whose batting dict is `batting`."""
     con = _Con()
     monkeypatch.setattr(settlement, "_fetch_mlb_gamepk", lambda *a, **k: 825048)
     monkeypatch.setattr(settlement, "_fetch_mlb_boxscore", lambda pk: {
         "teams": {"home": {"players": {"ID12345": {"stats": {"batting": batting,
-                                                             "pitching": {}}}}},
+                                                             "pitching": pitching or {},
+                                                             "fielding": fielding or {}},
+                                                  "gameStatus": game_status or {}}}},
                   "away": {"players": {}}}})
     monkeypatch.setattr(con, "execute", con.execute)
     con.execute = con.execute  # keep the recorder
@@ -86,6 +89,29 @@ def test_a_player_with_no_batting_object_stays_pending(monkeypatch):
     assert out["void"] == 0
     assert out["pending"] == 1
     assert rows == [], "absence must not create a terminal prop_results row"
+
+
+def test_an_explicit_unused_bench_player_is_persisted_as_a_void(monkeypatch):
+    out, rows = _run(
+        monkeypatch, {},
+        game_status={"isOnBench": True, "isSubstitute": False},
+    )
+    assert out["settled"] == 0
+    assert out["void"] == 1
+    assert out["pending"] == 0
+    assert rows == [(1, None, None)]
+
+
+def test_a_player_who_batted_but_did_not_pitch_voids_a_pitching_prop(monkeypatch):
+    out, rows = _run(
+        monkeypatch,
+        {"atBats": 4, "hits": 1},
+        prop=_prop(market="total_strikeouts"),
+        pitching={},
+    )
+    assert out["void"] == 1
+    assert out["pending"] == 0
+    assert rows == [(1, None, None)]
 
 
 def test_a_genuine_0_for_4_still_grades(monkeypatch):
@@ -117,13 +143,45 @@ def test_a_missing_mlbam_crosswalk_stays_pending(monkeypatch):
     assert rows == []
 
 
-def test_an_unsupported_mlb_market_stays_retryable(monkeypatch):
+def test_an_unresolved_gamepk_accounts_for_every_prop_as_pending(monkeypatch):
+    con = _Con()
+    monkeypatch.setattr(settlement, "_fetch_mlb_gamepk", lambda *a, **k: None)
+    props = [_prop(pid=1), _prop(pid=2)]
+    out = settlement._settle_mlb_props(
+        con,
+        {"date": "2026-08-11", "home": "Home", "away": "Away",
+         "start_time": None},
+        props,
+    )
+    assert out["pending"] == 2
+    assert out["errors"] == 0
+    assert con.rows == []
+
+
+def test_an_unavailable_boxscore_accounts_for_every_prop_as_pending(monkeypatch):
+    con = _Con()
+    monkeypatch.setattr(settlement, "_fetch_mlb_gamepk", lambda *a, **k: 825048)
+    monkeypatch.setattr(settlement, "_fetch_mlb_boxscore", lambda *a, **k: None)
+    props = [_prop(pid=1), _prop(pid=2)]
+    out = settlement._settle_mlb_props(
+        con,
+        {"date": "2026-08-11", "home": "Home", "away": "Away",
+         "start_time": None},
+        props,
+    )
+    assert out["pending"] == 2
+    assert out["errors"] == 1
+    assert con.rows == []
+
+
+def test_total_pitcher_walks_uses_the_published_pitching_walk_count(monkeypatch):
     out, rows = _run(
-        monkeypatch, {"hits": 2, "runs": 1, "rbi": 0},
+        monkeypatch, {}, pitching={"baseOnBalls": 2},
         prop=_prop(market="total_pitcher_walks"),
     )
-    assert out["unmappable"] == 1
-    assert rows == []
+    assert out["settled"] == 1
+    assert out["unmappable"] == 0
+    assert rows[0][1:] == (2.0, 1)
 
 
 def test_a_malformed_published_value_stays_pending(monkeypatch):

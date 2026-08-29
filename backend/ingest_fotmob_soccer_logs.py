@@ -182,9 +182,12 @@ def spine(con, league):
     return index
 
 
-def resolve(index, name):
-    """One spine row, or None. A name naming two players resolves to neither."""
+def resolve(index, name, allowed_player_ids=None):
+    """One spine row, optionally constrained to this date's ESPN roster."""
     matches = index.get(fold(name), [])
+    if allowed_player_ids is not None:
+        allowed = {int(player_id) for player_id in allowed_player_ids}
+        matches = [row for row in matches if int(row["id"]) in allowed]
     return matches[0] if len(matches) == 1 else None
 
 
@@ -213,10 +216,13 @@ def upsert(con, league, season, player, match_id, date, line, dry_run,
     player_id = player["id"] if player else None
     if dry_run:
         return "inserted"
-    cursor = con.execute(
-        "INSERT OR IGNORE INTO player_game_logs_fotmob"
+    con.execute(
+        "INSERT INTO player_game_logs_fotmob"
         "(player_id, league, season, game_no, game_id, game_date, stats,"
-        " source, source_player_key) VALUES(?,?,?,?,?,?,?,?,?)",
+        " source, source_player_key) VALUES(?,?,?,?,?,?,?,?,?) "
+        "ON CONFLICT(league,source_player_key,season,game_no) DO UPDATE SET "
+        "player_id=COALESCE(excluded.player_id,player_game_logs_fotmob.player_id), "
+        "stats=excluded.stats, ingested_at=datetime('now')",
         # source_player_key must identify the PLAYER, not the fixture. It was
         # `fotmob-{match}-{team}` -- the same string for all eleven players on a
         # side -- so UNIQUE(league, source_player_key, season, game_no) allowed
@@ -224,7 +230,7 @@ def upsert(con, league, season, player, match_id, date, line, dry_run,
         # rest: a run reporting 795 inserts wrote 131.
         (player_id, league, season, f"fotmob-{match_id}", str(match_id), date,
          json.dumps(line), "fotmob", f"fotmob-{fotmob_id or player_id}"))
-    return "inserted" if cursor.rowcount else "unchanged"
+    return "inserted"
 
 
 def main(argv=None):
@@ -262,12 +268,21 @@ def main(argv=None):
             counts["fetch_failed"] += 1
             continue
         players = (detail.get("content") or {}).get("playerStats") or {}
+        # Cross-provider identity is strongest when the exact ESPN appearance
+        # roster already exists.  Date scope turns duplicate domestic-spine
+        # names (Víctor Guzmán at MTY and TOL) into one match participant while
+        # still failing closed if both actually played that date.
+        appearance_ids = {row[0] for row in con.execute(
+            "SELECT DISTINCT player_id FROM player_game_logs "
+            "WHERE league=? AND game_date=? AND player_id IS NOT NULL",
+            (args.league, date),
+        )}
         counts["fixtures"] += 1
         for fotmob_id, entry in players.items():
             line = stat_line(entry)
             if not line:
                 continue
-            who = resolve(index, entry.get("name"))
+            who = resolve(index, entry.get("name"), appearance_ids)
             counts["resolved" if who else "unresolved"] += 1
             counts[upsert(con, args.league, season, who, match_id, date,
                           line, args.dry_run, fotmob_id)] += 1

@@ -284,16 +284,32 @@ function LoadingEvidence() {
   )
 }
 
-function EmptyBoard({ date }: { date: string }) {
+function EmptyBoard({ filterLabel, onViewAll }: {
+  filterLabel?: string
+  onViewAll?: () => void
+}) {
   return (
-    <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 px-5 py-16 text-center">
-      <p className="text-sm font-medium text-zinc-300">No prop markets for this slate.</p>
-      <p className="mt-1 text-xs text-zinc-500">Try another league or move off {date}.</p>
+    <div className="py-16 text-center text-sm text-zinc-500">
+      <p>No upcoming games with props. Check back closer to game time.</p>
+      {filterLabel && onViewAll && (
+        <button
+          type="button"
+          onClick={onViewAll}
+          className="mt-4 rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-4 py-2 text-sm font-medium text-emerald-400 transition-colors hover:bg-emerald-500/20"
+        >
+          View All Leagues
+        </button>
+      )}
     </div>
   )
 }
 
-export default function MarketSlateBoard({ league, date }: { league: string; date: string }) {
+export default function MarketSlateBoard({ league, date, filterLabel, onViewAll }: {
+  league: string
+  date: string
+  filterLabel?: string
+  onViewAll?: () => void
+}) {
   const [props, setProps] = useState<BoardProp[]>([])
   const [marketOptions, setMarketOptions] = useState<MarketOption[]>([])
   const [loadedMarket, setLoadedMarket] = useState('')
@@ -332,7 +348,7 @@ export default function MarketSlateBoard({ league, date }: { league: string; dat
   useEffect(() => {
     const controller = new AbortController()
     const summaryParams = new URLSearchParams({ date, summary: '1' })
-    if (league !== 'All') summaryParams.set('league', league)
+    if (league !== 'All') summaryParams.set(league.includes(',') ? 'leagues' : 'league', league)
 
     setLoading(true)
     setError(null)
@@ -365,7 +381,7 @@ export default function MarketSlateBoard({ league, date }: { league: string; dat
       }
 
       const fallbackParams = new URLSearchParams({ date })
-      if (league !== 'All') fallbackParams.set('league', league)
+      if (league !== 'All') fallbackParams.set(league.includes(',') ? 'leagues' : 'league', league)
       const fallbackProps = await fetchAllProps(fallbackParams, controller.signal)
       const counts = new Map<string, number>()
       for (const row of groupProps(fallbackProps)) {
@@ -412,7 +428,7 @@ export default function MarketSlateBoard({ league, date }: { league: string; dat
     if (!activeMarket || loadedMarket === '*' || loadedMarket === activeMarket) return
     const controller = new AbortController()
     const params = new URLSearchParams({ date, market: activeMarket })
-    if (league !== 'All') params.set('league', league)
+    if (league !== 'All') params.set(league.includes(',') ? 'leagues' : 'league', league)
 
     setLoading(true)
     setError(null)
@@ -599,7 +615,7 @@ export default function MarketSlateBoard({ league, date }: { league: string; dat
     return <div className="rounded-xl border border-red-900/60 bg-red-950/30 px-4 py-4 text-sm text-red-200">{error}</div>
   }
 
-  if (!markets.length) return <EmptyBoard date={date} />
+  if (!markets.length) return <EmptyBoard filterLabel={filterLabel} onViewAll={onViewAll} />
 
   return (
     <section className="min-w-0 space-y-4" aria-label="Market-first prop board">
@@ -659,13 +675,12 @@ export default function MarketSlateBoard({ league, date }: { league: string; dat
               </button>
             </span>
           ))}
-          {/* Immediately after the last sort button. `ml-auto` used to push it to
-              the far edge of the row, which separated it from the controls it
-              explains once the row stopped being justify-between. Still a tap
-              target, not a hover tooltip: hover does not exist on touch and this
-              board is read on phones. The panel opens right-aligned so it cannot
-              push the layout sideways on a narrow screen. */}
-          <span className="relative inline-flex items-center">
+          {/* Anchored at the END of the controls rather than mid-row beside its
+              own button, where it broke the rhythm of the group. Still a tap
+              target, not a hover tooltip: hover does not exist on touch and
+              this board is read on phones. The panel opens right-aligned so it
+              cannot push the layout sideways on a narrow screen. */}
+          <span className="relative ml-auto inline-flex items-center">
             <button
               type="button"
               aria-label="What Confidence means"

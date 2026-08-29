@@ -35,7 +35,9 @@ ladder rather than serving an empty board.
 import datetime as dt
 import json
 import os
+import re
 import sqlite3
+import unicodedata
 from contextlib import closing
 
 from espn_client.scoreboard import _slate_day
@@ -88,6 +90,40 @@ CREATE TABLE IF NOT EXISTS scoreboard_refresh(
   game_count INTEGER NOT NULL,
   source     TEXT,
   PRIMARY KEY(league, game_date)
+);
+CREATE TABLE IF NOT EXISTS tennis_draw_snapshots(
+  league        TEXT PRIMARY KEY,
+  tournament_id TEXT NOT NULL,
+  event_name    TEXT NOT NULL,
+  bracket_url   TEXT,
+  payload       TEXT NOT NULL,
+  match_count   INTEGER NOT NULL,
+  fetched_at    TEXT NOT NULL,
+  source        TEXT
+);
+CREATE TABLE IF NOT EXISTS tennis_ranking_snapshots(
+  tour             TEXT NOT NULL,
+  captured_at      TEXT NOT NULL,
+  espn_athlete_id  TEXT NOT NULL,
+  player_id        INTEGER NOT NULL REFERENCES players(id),
+  player_name      TEXT NOT NULL,
+  rank             INTEGER NOT NULL,
+  previous_rank    INTEGER,
+  points           INTEGER,
+  source           TEXT,
+  PRIMARY KEY(tour, captured_at, espn_athlete_id),
+  UNIQUE(tour, captured_at, rank)
+);
+CREATE INDEX IF NOT EXISTS idx_tennis_rankings_latest
+  ON tennis_ranking_snapshots(tour, captured_at DESC, rank);
+CREATE TABLE IF NOT EXISTS soccer_competition_snapshots(
+  league       TEXT PRIMARY KEY,
+  season       INTEGER NOT NULL,
+  payload      TEXT NOT NULL,
+  match_count  INTEGER NOT NULL,
+  leader_count INTEGER NOT NULL,
+  fetched_at   TEXT NOT NULL,
+  source       TEXT
 );
 """
 
@@ -281,6 +317,431 @@ def read(league, game_date, con=None):
         print(f"[scoreboard_store] read failed league={league} date={game_date}: "
               f"{type(exc).__name__}: {exc}")
         return None
+    finally:
+        if own:
+            con.close()
+
+
+def save_tennis_draws(league, draws, source="espn", con=None):
+    """Replace one tour's current major draw after validating it in full.
+
+    Empty and ambiguous publisher responses leave the last good snapshot alone.
+    The ingest treats those conditions as errors; this store never turns them
+    into an apparently valid empty bracket.
+    """
+    league = str(league or "").lower()
+    if league not in ("atp", "wta"):
+        raise ValueError("tennis draw league must be atp or wta")
+    draws = list(draws or [])
+    if not draws:
+        return 0
+    if len(draws) != 1:
+        raise ValueError(f"expected one current {league} draw, got {len(draws)}")
+    draw = draws[0]
+    matches = list(draw.get("matches") or [])
+    ids = [str(match.get("game_id") or "") for match in matches]
+    if (not draw.get("tournament_id") or not draw.get("event_name") or not matches
+            or int(draw.get("match_count") or 0) != len(matches)
+            or any(not game_id for game_id in ids) or len(set(ids)) != len(ids)
+            or any(not match.get("round") for match in matches)):
+        raise ValueError(f"invalid {league} draw snapshot")
+
+    own = con is None
+    con = con or _db()
+    try:
+        init(con)
+        fetched_at = _iso(_now())
+        con.execute(
+            "INSERT INTO tennis_draw_snapshots"
+            " (league, tournament_id, event_name, bracket_url, payload,"
+            "  match_count, fetched_at, source) VALUES (?,?,?,?,?,?,?,?)"
+            " ON CONFLICT(league) DO UPDATE SET"
+            " tournament_id=excluded.tournament_id, event_name=excluded.event_name,"
+            " bracket_url=excluded.bracket_url, payload=excluded.payload,"
+            " match_count=excluded.match_count, fetched_at=excluded.fetched_at,"
+            " source=excluded.source",
+            (league, str(draw["tournament_id"]), str(draw["event_name"]),
+             draw.get("bracket_url"), json.dumps(draw), len(matches),
+             fetched_at, source),
+        )
+        if own:
+            con.commit()
+        return len(matches)
+    finally:
+        if own:
+            con.close()
+
+
+def read_tennis_draws(tour=None, con=None):
+    """Return persisted draw snapshots for both tours or one requested tour."""
+    if tour is not None:
+        tour = str(tour).lower()
+        if tour not in ("atp", "wta"):
+            raise ValueError("tour must be atp or wta")
+    own = con is None
+    con = con or _db()
+    try:
+        init(con)
+        sql = ("SELECT league, payload, fetched_at, source"
+               " FROM tennis_draw_snapshots")
+        params = ()
+        if tour:
+            sql += " WHERE league=?"
+            params = (tour,)
+        sql += " ORDER BY league"
+        rows = con.execute(sql, params).fetchall()
+        result = []
+        now = _now()
+        for row in rows:
+            try:
+                draw = json.loads(row["payload"])
+            except (TypeError, ValueError):
+                continue
+            try:
+                moment = dt.datetime.fromisoformat(row["fetched_at"])
+                if moment.tzinfo is None:
+                    moment = moment.replace(tzinfo=dt.timezone.utc)
+                age = int((now - moment).total_seconds())
+            except (TypeError, ValueError):
+                age = None
+            draw.update({
+                "fetched_at": row["fetched_at"],
+                "age_seconds": age,
+                "source": row["source"],
+            })
+            result.append(draw)
+        return result
+    except sqlite3.Error as exc:
+        print(f"[scoreboard_store] read_tennis_draws failed: {type(exc).__name__}: {exc}")
+        return []
+    finally:
+        if own:
+            con.close()
+
+
+def _tennis_name_key(value):
+    value = unicodedata.normalize("NFKD", str(value or ""))
+    value = value.encode("ascii", "ignore").decode("ascii").casefold()
+    return re.sub(r"\s+", " ", re.sub(r"[^a-z0-9\s]", "", value)).strip()
+
+
+def save_tennis_ranking_spine(tour, identities, con=None):
+    """Atomically refresh the current top-150 identity population by ESPN id."""
+    tour = str(tour or "").lower()
+    if tour not in ("atp", "wta"):
+        raise ValueError("tennis spine tour must be atp or wta")
+    identities = list(identities or [])
+    ids = [str(row.get("espn_id") or "") for row in identities]
+    names = [str(row.get("name") or "").strip() for row in identities]
+    name_keys = [_tennis_name_key(name) for name in names]
+    if (len(identities) != 150 or any(not value for value in ids + names + name_keys)
+            or len(set(ids)) != 150 or len(set(name_keys)) != 150
+            or any(not isinstance(row.get("active"), bool) for row in identities)):
+        raise ValueError(f"invalid {tour} top-150 identity population")
+
+    own = con is None
+    con = con or _db()
+    try:
+        init(con)
+        columns = {row[1] for row in con.execute("PRAGMA table_info(players)").fetchall()}
+        required = {"id", "name", "team", "league", "espn_id", "active", "updated_at"}
+        if not required <= columns:
+            raise ValueError(f"players table cannot hold {tour} ranking spine")
+        existing = con.execute(
+            "SELECT id,name,espn_id FROM players WHERE league=?", (tour,)
+        ).fetchall()
+        by_id = {}
+        by_name = {}
+        for row in existing:
+            source_id = str(row["espn_id"] or "")
+            if source_id:
+                if source_id in by_id:
+                    raise ValueError(f"duplicate existing {tour} ESPN id {source_id}")
+                by_id[source_id] = row
+            by_name.setdefault(_tennis_name_key(row["name"]), []).append(row)
+        for source_id, name in zip(ids, names):
+            current = by_id.get(source_id)
+            conflicts = [
+                row for row in by_name.get(_tennis_name_key(name), [])
+                if current is None or row["id"] != current["id"]
+            ]
+            if conflicts:
+                raise ValueError(
+                    f"{tour} ESPN id {source_id} conflicts with another stored identity by name"
+                )
+
+        updated_at = _iso(_now())
+        con.execute("UPDATE players SET active=0, updated_at=? WHERE league=?", (updated_at, tour))
+        for identity in identities:
+            source_id = str(identity["espn_id"])
+            current = by_id.get(source_id)
+            if current:
+                con.execute(
+                    "UPDATE players SET name=?,team=NULL,active=?,updated_at=? WHERE id=?",
+                    (identity["name"], int(identity["active"]), updated_at, current["id"]),
+                )
+            else:
+                con.execute(
+                    "INSERT INTO players(name,team,league,espn_id,active,updated_at)"
+                    " VALUES(?,NULL,?,?,?,?)",
+                    (identity["name"], tour, source_id, int(identity["active"]), updated_at),
+                )
+        active = con.execute(
+            "SELECT COUNT(*) FROM players WHERE league=? AND active=1", (tour,)
+        ).fetchone()[0]
+        if active != sum(int(row["active"]) for row in identities):
+            raise ValueError(f"{tour} active spine count mismatch after publication")
+        if own:
+            con.commit()
+        return {"published": 150, "inserted": sum(1 for value in ids if value not in by_id)}
+    finally:
+        if own:
+            con.close()
+
+
+def save_tennis_rankings(tour, rankings, source="espn", con=None):
+    """Publish one complete ESPN top-150 snapshot keyed by athlete id.
+
+    ESPN exposes only the current ranking week and caps the response at 150,
+    even when a larger limit is requested.  Every capture is therefore kept:
+    replacing a row by tour/player would erase the only history we can build.
+    Names are display fields resolved from the canonical tennis spine; they
+    are never identity keys.
+    """
+    tour = str(tour or "").lower()
+    if tour not in ("atp", "wta"):
+        raise ValueError("tennis ranking tour must be atp or wta")
+    rankings = list(rankings or [])
+    if len(rankings) != 150:
+        raise ValueError(f"expected ESPN's complete {tour} top 150, got {len(rankings)}")
+
+    athlete_ids = [str(row.get("espn_athlete_id") or "") for row in rankings]
+    ranks = [row.get("rank") for row in rankings]
+    if (any(not athlete_id for athlete_id in athlete_ids)
+            or len(set(athlete_ids)) != len(athlete_ids)
+            or any(not isinstance(rank, int) for rank in ranks)
+            or sorted(ranks) != list(range(1, 151))):
+        raise ValueError(f"invalid {tour} ranking identity or rank population")
+
+    own = con is None
+    con = con or _db()
+    try:
+        init(con)
+        marks = ",".join("?" * len(athlete_ids))
+        players = con.execute(
+            "SELECT id, name, espn_id FROM players"
+            f" WHERE league=? AND espn_id IN ({marks})",
+            [tour] + athlete_ids,
+        ).fetchall()
+        by_espn_id = {str(row["espn_id"]): row for row in players}
+        missing = [athlete_id for athlete_id in athlete_ids if athlete_id not in by_espn_id]
+        if missing:
+            raise ValueError(
+                f"{tour} rankings resolve {len(rankings) - len(missing)} of {len(rankings)} "
+                f"canonical athletes; refusing partial snapshot"
+            )
+
+        captured_at = _iso(_now())
+        for row in rankings:
+            athlete_id = str(row["espn_athlete_id"])
+            player = by_espn_id[athlete_id]
+            con.execute(
+                "INSERT INTO tennis_ranking_snapshots"
+                " (tour, captured_at, espn_athlete_id, player_id, player_name,"
+                "  rank, previous_rank, points, source) VALUES (?,?,?,?,?,?,?,?,?)"
+                " ON CONFLICT(tour, captured_at, espn_athlete_id) DO UPDATE SET"
+                " player_id=excluded.player_id, player_name=excluded.player_name,"
+                " rank=excluded.rank, previous_rank=excluded.previous_rank,"
+                " points=excluded.points, source=excluded.source",
+                (tour, captured_at, athlete_id, player["id"], player["name"],
+                 row["rank"], row.get("previous_rank"), row.get("points"), source),
+            )
+        if own:
+            con.commit()
+        return len(rankings)
+    finally:
+        if own:
+            con.close()
+
+
+def read_tennis_rankings(tour=None, limit=150, con=None):
+    """Read the latest complete capture for one or both tours."""
+    if tour is not None:
+        tour = str(tour).lower()
+        if tour not in ("atp", "wta"):
+            raise ValueError("tour must be atp or wta")
+    limit = max(1, min(int(limit), 150))
+    own = con is None
+    con = con or _db()
+    try:
+        init(con)
+        tours = [tour] if tour else ["atp", "wta"]
+        result = []
+        for selected in tours:
+            latest = con.execute(
+                "SELECT MAX(captured_at) AS captured_at"
+                " FROM tennis_ranking_snapshots WHERE tour=?",
+                (selected,),
+            ).fetchone()
+            captured_at = latest["captured_at"] if latest else None
+            if not captured_at:
+                continue
+            rows = con.execute(
+                "SELECT espn_athlete_id, player_id, player_name, rank,"
+                " previous_rank, points FROM tennis_ranking_snapshots"
+                " WHERE tour=? AND captured_at=? ORDER BY rank LIMIT ?",
+                (selected, captured_at, limit),
+            ).fetchall()
+            try:
+                moment = dt.datetime.fromisoformat(captured_at)
+                if moment.tzinfo is None:
+                    moment = moment.replace(tzinfo=dt.timezone.utc)
+                age = int((_now() - moment).total_seconds())
+            except (TypeError, ValueError):
+                age = None
+            result.append({
+                "tour": selected,
+                "captured_at": captured_at,
+                "age_seconds": age,
+                "source": "espn_world_rankings",
+                "rankings": [dict(row) for row in rows],
+            })
+        return result
+    finally:
+        if own:
+            con.close()
+
+
+def tennis_rankings_need_refresh(tour, max_age=dt.timedelta(hours=24), con=None):
+    """Whether a tour lacks a capture made within the bounded daily cadence."""
+    own = con is None
+    con = con or _db()
+    try:
+        init(con)
+        row = con.execute(
+            "SELECT MAX(captured_at) AS captured_at"
+            " FROM tennis_ranking_snapshots WHERE tour=?",
+            (str(tour).lower(),),
+        ).fetchone()
+        if not row or not row["captured_at"]:
+            return True
+        moment = dt.datetime.fromisoformat(row["captured_at"])
+        if moment.tzinfo is None:
+            moment = moment.replace(tzinfo=dt.timezone.utc)
+        return _now() - moment >= max_age
+    except (TypeError, ValueError):
+        return True
+    finally:
+        if own:
+            con.close()
+
+
+def save_soccer_competition(snapshot, source="espn", con=None):
+    """Replace one validated competition hub snapshot atomically."""
+    snapshot = dict(snapshot or {})
+    league = str(snapshot.get("league") or "").lower()
+    if league not in ("mls", "lcup"):
+        raise ValueError("soccer competition snapshot must be mls or lcup")
+    season = snapshot.get("season")
+    if league == "mls":
+        groups = list(snapshot.get("groups") or [])
+        rows = [row for group in groups for row in (group.get("rows") or [])]
+        keys = [str(row.get("abbrev") or "") for row in rows]
+        if (not isinstance(season, int) or not groups or not rows
+                or any(not key for key in keys) or len(set(keys)) != len(keys)):
+            raise ValueError("invalid MLS standings snapshot")
+        match_ids = []
+        leader_ids = []
+    else:
+        groups = []
+        rounds = list(snapshot.get("rounds") or [])
+        leaders = list(snapshot.get("leader_categories") or [])
+        match_ids = [
+            str(match.get("game_id") or "")
+            for round_row in rounds
+            for match in (round_row.get("matches") or [])
+        ]
+        leader_ids = [
+            f"{category.get('key')}:{row.get('espn_athlete_id')}"
+            for category in leaders
+            for row in (category.get("leaders") or [])
+        ]
+        if (not isinstance(season, int) or not rounds or not match_ids
+                or any(not match_id for match_id in match_ids)
+                or len(set(match_ids)) != len(match_ids)
+                or any(not value.split(":", 1)[-1] for value in leader_ids)
+                or len(set(leader_ids)) != len(leader_ids)):
+            raise ValueError("invalid Leagues Cup bracket or leaders snapshot")
+
+    own = con is None
+    con = con or _db()
+    try:
+        init(con)
+        fetched_at = _iso(_now())
+        con.execute(
+            "INSERT INTO soccer_competition_snapshots"
+            " (league, season, payload, match_count, leader_count, fetched_at, source)"
+            " VALUES (?,?,?,?,?,?,?)"
+            " ON CONFLICT(league) DO UPDATE SET season=excluded.season,"
+            " payload=excluded.payload, match_count=excluded.match_count,"
+            " leader_count=excluded.leader_count, fetched_at=excluded.fetched_at,"
+            " source=excluded.source",
+            (league, season, json.dumps(snapshot), len(match_ids), len(leader_ids),
+             fetched_at, source),
+        )
+        if own:
+            con.commit()
+        return {
+            "matches": len(match_ids),
+            "leaders": len(leader_ids),
+            "standings": len(rows) if league == "mls" else 0,
+        }
+    finally:
+        if own:
+            con.close()
+
+
+def read_soccer_competition(league, con=None):
+    """Read a persisted competition hub snapshot; never fetch a publisher."""
+    own = con is None
+    con = con or _db()
+    try:
+        init(con)
+        row = con.execute(
+            "SELECT payload, fetched_at, source FROM soccer_competition_snapshots"
+            " WHERE league=?",
+            (str(league).lower(),),
+        ).fetchone()
+        if not row:
+            return None
+        snapshot = json.loads(row["payload"])
+        snapshot.update({"fetched_at": row["fetched_at"], "source": row["source"]})
+        return snapshot
+    except (sqlite3.Error, TypeError, ValueError) as exc:
+        print(f"[scoreboard_store] read_soccer_competition failed: {type(exc).__name__}: {exc}")
+        return None
+    finally:
+        if own:
+            con.close()
+
+
+def soccer_competition_need_refresh(league, max_age=dt.timedelta(hours=6), con=None):
+    own = con is None
+    con = con or _db()
+    try:
+        init(con)
+        row = con.execute(
+            "SELECT fetched_at FROM soccer_competition_snapshots WHERE league=?",
+            (str(league).lower(),),
+        ).fetchone()
+        if not row:
+            return True
+        moment = dt.datetime.fromisoformat(row["fetched_at"])
+        if moment.tzinfo is None:
+            moment = moment.replace(tzinfo=dt.timezone.utc)
+        return _now() - moment >= max_age
+    except (TypeError, ValueError):
+        return True
     finally:
         if own:
             con.close()

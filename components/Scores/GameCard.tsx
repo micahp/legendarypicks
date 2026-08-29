@@ -5,6 +5,8 @@ import type { LivePeriod } from '../../lib/liveGameStatus'
 interface TeamInfo {
   teamId: string
   name: string
+  athleteId?: string
+  seed?: number
   nickname?: string
   score?: number
   winner?: boolean
@@ -84,6 +86,7 @@ export default function GameCard(g: GameProps) {
   const isSoccer = g.league === 'WC' || g.league === 'LCUP' || g.league === 'MLS'
 
   const teamLabel = (t: GameProps['homeTeam']) => {
+    if (isTennis && t.seed) return `(${t.seed}) ${t.name}`
     // An unresolved EWC participant renders its dependency label, never a bare TBD.
     if (t.label) return t.label
     if (!isTeamSport) return t.name
@@ -178,7 +181,7 @@ export default function GameCard(g: GameProps) {
             const won = isFinal && (side === 'home' ? homeSets > awaySets : awaySets > homeSets)
             return (
             <div key={side} className="flex items-center justify-between gap-3">
-              <span className={`font-semibold truncate ${isFinal ? (won ? 'text-white' : 'text-zinc-500') : 'text-zinc-200'}`}>{team.name}</span>
+              <span className={`font-semibold truncate ${isFinal ? (won ? 'text-white' : 'text-zinc-500') : 'text-zinc-200'}`}>{teamLabel(team)}</span>
               <div className="flex gap-1 shrink-0 tabular-nums">
                 {g.sets!.map((set, i) => {
                   const mine = side === 'home' ? set.homeScore : set.awayScore

@@ -23,9 +23,14 @@ from .config import (
 from .scoreboard import (
     _ATP_MAJORS, _WTA_MAJORS, _is_major, _num, _int, _iso,
     neighbor_dates, _normalize_team_events, scoreboard_raw, games,
+    tennis_draws_from_payload, tennis_rankings_from_payload, tennis_rankings,
+    tennis_ranking_identities_from_payload, tennis_ranking_identities,
     _ny_date, _slate_day, scoreboard_raw_range, games_by_day,
 )
-from .nfl import nfl_schedule_weeks, nfl_schedule_week_games, schedule_event_starts
+from .nfl import (
+    football_schedule_weeks, football_schedule_week_games,
+    nfl_schedule_weeks, nfl_schedule_week_games, schedule_event_starts,
+)
 from .ufc import (
     _athlete_name_key, _athlete_name_parts, ufc_athlete, _ufc_method,
     ufc_fight_history,
@@ -39,7 +44,9 @@ from .soccer import (
     _wc_round_from_event, _wc_competitor, wc_knockout_standings,
     wc_is_knockout, match_events, boxscore, roster, game_result,
     _parse_record, _season_phase, mls_conference_standings,
-    ncaaf_conference_standings, soccer_athlete_form,
+    ncaaf_conference_standings, lcup_competition_snapshot_from_payload,
+    lcup_competition_snapshot,
+    soccer_athlete_form,
 )
 
 if __name__ == "__main__":

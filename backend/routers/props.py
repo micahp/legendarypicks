@@ -50,10 +50,29 @@ _CorePropIngest = PropIngest
 class PropIngest(_CorePropIngest):
     start_time: Optional[str] = None
 
+
+def _league_sql(column: str, league: Optional[str], leagues: Optional[str]):
+    """A bound league predicate supporting one legacy key or a sport rollup."""
+    if isinstance(league, str) and league.strip():
+        return f" AND LOWER({column}) = ?", [league.strip().lower()]
+    league_rollup = leagues if isinstance(leagues, str) else ""
+    values = sorted({
+        value.strip().lower()
+        for value in league_rollup.split(",")
+        if value.strip()
+    })
+    if not values:
+        return "", []
+    return (
+        f" AND LOWER({column}) IN ({','.join('?' for _ in values)})",
+        values,
+    )
+
 @router.get("/api/props")
 def list_props(player: Optional[str] = Query(None),
                market: Optional[str] = Query(None),
                league: Optional[str] = Query(None),
+               leagues: Optional[str] = Query(None),
                date: Optional[str] = Query(None),
                limit: int = Query(50, ge=1, le=500),
                offset: int = Query(0, ge=0)):
@@ -77,16 +96,11 @@ def list_props(player: Optional[str] = Query(None),
         # `total_bases___player_slug` under their base market.
         sql += " AND (p.market = ? OR instr(p.market, ? || '___') = 1)"
         params.extend((market, market))
-    if league:
-        # The GAME's league, not the player's. They are the same word in every
-        # single-league sport, and different in a cross-league tournament:
-        # Leagues Cup games are `lcup` while the athletes on them are `mls` and
-        # `ligamx`. Filtering on `pl.league` returned zero props for the one
-        # competition whose whole point is that two leagues meet, while
-        # `/api/props/slate` (which filters `pg.league`) still advertised the
-        # game and its prop_count. A board claiming N props and listing none.
-        sql += " AND pg.league = ?"
-        params.append(league)
+    # Filter on the game's competition. Leagues Cup athletes belong to their
+    # MLS or Liga MX identity spine, so filtering on pl.league drops the board.
+    league_sql, league_params = _league_sql("pg.league", league, leagues)
+    sql += league_sql
+    params.extend(league_params)
     if date:
         sql += " AND pg.date = ?"
         params.append(date)
@@ -105,6 +119,11 @@ def list_props(player: Optional[str] = Query(None),
              "game_away": r["game_away"], "game_date": r["game_date"],
              "actual_value": r["actual_value"],
              "hit": bool(r["hit"]) if r["hit"] is not None else None,
+             "result_status": (
+                 "graded" if r["hit"] is not None else
+                 "push" if r["actual_value"] is not None else
+                 "void" if r["settled_at"] is not None else "pending"
+             ),
              "settled_at": r["settled_at"]} for r in rows]
 
 
@@ -359,6 +378,7 @@ def prop_stats(market: Optional[str] = Query(None),
 
 @router.get("/api/props/slate")
 def props_slate(league: Optional[str] = Query(None),
+                leagues: Optional[str] = Query(None),
                 date: Optional[str] = Query(None),
                 game_id: Optional[int] = Query(None),
                 summary: bool = Query(False)):
@@ -370,9 +390,9 @@ def props_slate(league: Optional[str] = Query(None),
     if summary:
         filters = ""
         filter_params = []
-        if league:
-            filters += " AND pg.league = ?"
-            filter_params.append(league)
+        league_sql, league_params = _league_sql("pg.league", league, leagues)
+        filters += league_sql
+        filter_params.extend(league_params)
         if date:
             filters += " AND pg.date = ?"
             filter_params.append(date)
@@ -433,13 +453,9 @@ def props_slate(league: Optional[str] = Query(None),
              JOIN prop_games pg ON pg.id = p.game_id
              WHERE 1=1"""
     params = []
-    if league:
-        # The slate's GAME list already filters `pg.league` (see above), so a
-        # nested prop fetch on `pl.league` is the two-rulers bug inside one
-        # endpoint: the Leagues Cup fixture is listed with its prop_count and
-        # then expands to nothing, because its athletes are `mls` and `ligamx`.
-        sql += " AND pg.league = ?"
-        params.append(league)
+    league_sql, league_params = _league_sql("pg.league", league, leagues)
+    sql += league_sql
+    params.extend(league_params)
     if game_id is not None:
         sql += " AND pg.id = ?"
         params.append(game_id)

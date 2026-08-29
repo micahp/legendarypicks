@@ -309,6 +309,58 @@ def _same_fighter(prop_name, espn_name):
             and prop_parts[-1] == espn_parts[-1])
 
 
+def _same_tennis_player(prop_name, espn_name):
+    """Match ESPN's full player name to Bovada's displayed, often-cut prefix."""
+    prop_key = _fighter_key(prop_name)
+    espn_key = _fighter_key(espn_name)
+    if not prop_key or not espn_key:
+        return False
+    if prop_key == espn_key:
+        return True
+    return (min(len(prop_key), len(espn_key)) >= 7
+            and (prop_key.startswith(espn_key) or espn_key.startswith(prop_key)))
+
+
+def _link_tennis_match(game_row, espn_games):
+    """Resolve a possibly truncated tennis pair, failing closed on ambiguity.
+
+    Tennis feed start times are estimates, not stable identity.  On the copied
+    production database, 112 previously unlinked ATP rows had one published
+    player-pair match in the three-day ESPN window, but only 15 were within 15
+    minutes of ESPN's eventual court time.  Require both players and uniqueness;
+    use an exact published instant only to break a duplicate-pair tie.
+    """
+    prop_names = [game_row["away"], game_row["home"]]
+
+    def published_names(game):
+        return [((game.get("away") or {}).get("name") or ""),
+                ((game.get("home") or {}).get("name") or "")]
+
+    candidates = {}
+    wanted_start = _instant(game_row["start_time"])
+    for game in espn_games:
+        names = published_names(game)
+        same_pair = (
+            (_same_tennis_player(prop_names[0], names[0])
+             and _same_tennis_player(prop_names[1], names[1]))
+            or (_same_tennis_player(prop_names[0], names[1])
+                and _same_tennis_player(prop_names[1], names[0]))
+        )
+        if not same_pair:
+            continue
+        game_id = str(game.get("game_id") or "")
+        if game_id:
+            candidates[game_id] = game
+    if len(candidates) == 1:
+        return next(iter(candidates))
+    if wanted_start is not None:
+        exact = [game_id for game_id, game in candidates.items()
+                 if _instant(game.get("date")) == wanted_start]
+        if len(exact) == 1:
+            return exact[0]
+    return ""
+
+
 def _link_ufc_fight(game_row, espn_games):
     """Resolve an unordered fighter pair to one UFC competition id.
 
@@ -399,6 +451,8 @@ def link_prop_game(con: sqlite3.Connection, game_row, espn_games: list) -> str:
     league = game_row["league"]
     if league == "ufc":
         return _link_ufc_fight(game_row, espn_games)
+    if league in ("atp", "wta"):
+        return _link_tennis_match(game_row, espn_games)
 
     home_norm = _norm_team(game_row["home"], league)
     away_norm = _norm_team(game_row["away"], league)

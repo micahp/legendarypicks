@@ -43,6 +43,28 @@ CREATE TABLE team_game_results (
 """
 
 
+LEGACY_PREDICTIONS_DDL = """
+CREATE TABLE predictions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    league TEXT NOT NULL,
+    game_id TEXT NOT NULL,
+    predicted_winner TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    correct INTEGER
+)
+"""
+
+
+LEGACY_PROP_GAMES_DDL = """
+CREATE TABLE prop_games (
+    id INTEGER PRIMARY KEY,
+    league TEXT,
+    game_id TEXT,
+    start_time TEXT
+)
+"""
+
+
 OLD_REGISTRY_SQL = """
 CREATE TABLE app_schema_migrations (
     migration_id TEXT PRIMARY KEY,
@@ -59,6 +81,7 @@ def _bootstrap(path: str, old_registry: bool = False) -> None:
         con.execute(LEGACY_TEAM_STATS_DDL)
         con.execute(NEWS_ITEMS_DDL)
         con.execute(TEAM_GAME_RESULTS_DDL)
+        con.execute(LEGACY_PREDICTIONS_DDL)
         for addition in migrate_schema.MIGRATIONS[1].additions:
             con.execute(addition.sql)
         for migration in migrate_schema.MIGRATIONS:
@@ -87,10 +110,7 @@ def _bootstrap(path: str, old_registry: bool = False) -> None:
             "ot_losses INTEGER, games_started INTEGER, blocked_shots INTEGER,"
             "hits INTEGER, takeaways INTEGER, giveaways INTEGER)"
         )
-        con.execute(
-            "CREATE TABLE prop_games("
-            "id INTEGER PRIMARY KEY, league TEXT, game_id TEXT, start_time TEXT)"
-        )
+        con.execute(LEGACY_PROP_GAMES_DDL)
         con.execute(OLD_REGISTRY_SQL if old_registry else migrate_schema.REGISTRY_SQL)
         for migration in migrate_schema.MIGRATIONS[:2]:
             con.execute(
@@ -149,6 +169,35 @@ class MigrateAllTests(unittest.TestCase):
             self.assertIn("legacy_migrate_nhl_season_keys", rows)
             self.assertIn("legacy_merge_nba_identities", rows)
 
+    def test_clean_nba_state_does_not_require_a_repair_registry_row(self):
+        self._level_pair()
+        migration = next(
+            item
+            for item in migration_manifest.LEGACY_MIGRATIONS
+            if item.migration_id == "legacy_merge_nba_identities"
+        )
+        with sqlite3.connect(self.dev) as connection:
+            self.assertEqual(migration.probe(connection), "applied")
+
+    def test_remaining_nba_split_keeps_migration_unknown(self):
+        self._level_pair()
+        with sqlite3.connect(self.dev) as connection:
+            connection.execute(
+                "INSERT INTO players(id,name,league,nba_id) VALUES(1,'Legacy','nba','7')"
+            )
+            connection.execute(
+                "INSERT INTO players(id,name,league,espn_id) VALUES(2,'Current','nba','7')"
+            )
+            migration = next(
+                item
+                for item in migration_manifest.LEGACY_MIGRATIONS
+                if item.migration_id == "legacy_merge_nba_identities"
+            )
+            self.assertEqual(
+                migration.probe(connection),
+                "unknown: 1 NBA identities remain split across rows",
+            )
+
     def test_apply_is_idempotent(self):
         self._level_pair()
         migrate_all.main(["--apply", "--prod", self.prod, "--dev", self.dev])
@@ -197,6 +246,8 @@ class MigrateAllTests(unittest.TestCase):
             con.execute(LEGACY_TEAM_STATS_DDL)
             con.execute(NEWS_ITEMS_DDL)
             con.execute(TEAM_GAME_RESULTS_DDL)
+            con.execute(LEGACY_PREDICTIONS_DDL)
+            con.execute(LEGACY_PROP_GAMES_DDL)
 
         result = migrate_all.main(
             ["--apply", "--only", "prod", "--prod", self.prod, "--dev", self.dev]

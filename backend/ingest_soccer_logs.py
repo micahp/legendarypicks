@@ -207,13 +207,14 @@ def _boxscore_players(summary: dict):
         for stat_group in block.get("statistics", []):
             names = stat_group.get("names") or stat_group.get("labels") or []
             for row in stat_group.get("athletes", []):
-                if row.get("didNotPlay"):
-                    continue
                 athlete = row.get("athlete") or {}
                 athlete_id = athlete.get("id") or row.get("id")
                 name = athlete.get("displayName") or athlete.get("fullName")
-                raw = dict(zip(names, row.get("stats") or []))
-                stats = _target_line(raw)
+                if row.get("didNotPlay") is True:
+                    stats = {"did_not_play": 1}
+                else:
+                    raw = dict(zip(names, row.get("stats") or []))
+                    stats = _target_line(raw)
                 if athlete_id and name and stats:
                     yield str(athlete_id), name, team, home_away, stats
 
@@ -291,12 +292,13 @@ def _roster_players(summary: dict):
         home_away = block.get("homeAway")
         for row in block.get("roster", []):
             raw_stats = row.get("stats") or []
-            if not raw_stats or not _appeared(raw_stats):
+            if not raw_stats:
                 continue
             athlete = row.get("athlete") or {}
             athlete_id = athlete.get("id") or row.get("id")
             name = athlete.get("displayName") or athlete.get("fullName")
-            stats = _target_line(raw_stats)
+            stats = ({"did_not_play": 1} if not _appeared(raw_stats)
+                     else _target_line(raw_stats))
             if athlete_id and name and stats:
                 yield str(athlete_id), name, team, home_away, stats
 
@@ -475,6 +477,19 @@ def _published_types(league: str, season: int) -> Tuple[str, List[dict]]:
     return display_name, types
 
 
+def _game_type_for_name(name: str, league: Optional[str] = None) -> str:
+    """Map a publisher phase name onto our shared game-type vocabulary."""
+    normalized = str(name or "").lower()
+    if "all-star" in normalized or "allstar" in normalized:
+        return ALLSTAR
+    regular = str(
+        (ESPN_LEAGUES.get(league) or {}).get("regular_type_name") or "regular season"
+    ).lower()
+    if regular and regular in normalized:
+        return REG
+    return POST
+
+
 def _game_type_for_type(type_doc: dict, league: Optional[str] = None) -> str:
     """Our phase for one published soccer season type, from its own name.
 
@@ -489,15 +504,7 @@ def _game_type_for_type(type_doc: dict, league: Optional[str] = None) -> str:
     "League Phase", so matching the literal would have filed all five of its
     phases as knockout rounds -- roughly 50 group matches misread as POST.
     """
-    name = str(type_doc.get("name") or "").lower()
-    if "all-star" in name or "allstar" in name:
-        return ALLSTAR
-    regular = str(
-        (ESPN_LEAGUES.get(league) or {}).get("regular_type_name") or "regular season"
-    ).lower()
-    if regular and regular in name:
-        return REG
-    return POST
+    return _game_type_for_name(type_doc.get("name") or "", league)
 
 
 def _type_events(league: str, season: int, type_id: str) -> List[str]:
@@ -566,7 +573,7 @@ class SoccerPlayerResolver:
         placeholders = ",".join("?" for _ in spines)
         try:
             self.rows = [dict(row) for row in con.execute(
-                "SELECT id, name, team FROM players WHERE league IN ({})".format(
+                "SELECT id, name, team, espn_id FROM players WHERE league IN ({})".format(
                     placeholders), tuple(spines)
             )]
         except sqlite3.OperationalError:
@@ -593,7 +600,14 @@ class SoccerPlayerResolver:
                 rows = team_rows
         return rows[0]["id"] if len(rows) == 1 else None
 
-    def resolve(self, name: str, team: str):
+    def resolve(self, name: str, team: str, athlete_id: str = ""):
+        if athlete_id:
+            source_matches = [
+                row for row in self.rows
+                if str(row.get("espn_id") or "") == str(athlete_id)
+            ]
+            if len(source_matches) == 1:
+                return source_matches[0]["id"]
         normalized = _normalize_name(name)
         exact = [row for row in self.rows if row["name_norm"] == normalized]
         resolved = self._unique(exact, team)
@@ -708,16 +722,16 @@ def ingest(league: str, season: int, dry_run: bool = False,
     budget_exhausted = False
     for type_doc in types:
         type_id = type_doc.get("id") or ""
-        name = type_doc.get("name") or f"type {type_id}"
+        type_name = type_doc.get("name") or f"type {type_id}"
         try:
             event_ids = _type_events(league, season, type_id)
         except Exception as exc:  # noqa: BLE001 - one type must not kill the run
-            print(f"  [{type_id}] {name}: events fetch failed ({exc})")
+            print(f"  [{type_id}] {type_name}: events fetch failed ({exc})")
             continue
         if not event_ids:
             # An empty published collection is a fact, not a failure: MLS
             # type 0 "Combined" publishes 0 events every season.
-            print(f"  [{type_id}] {name}: 0 events — published empty, nothing to ingest")
+            print(f"  [{type_id}] {type_name}: 0 events — published empty, nothing to ingest")
             continue
         _verify_season(season, type_doc)
         game_type = _game_type_for_type(type_doc, league)
@@ -770,10 +784,23 @@ def ingest(league: str, season: int, dry_run: bool = False,
             # "stamp the data, not the URL" discipline as game_types.py.
             envelope_season = header.get("season") or comp.get("season") or {}
             envelope_type = str(envelope_season.get("type") or "")
-            if envelope_type and envelope_type != str(type_id):
+            envelope_name = str(envelope_season.get("name") or "")
+            # Core season collections and site-summary envelopes use different
+            # numeric phase vocabularies for soccer (for example, MLS regular
+            # season is Core type 1 but summary type 13846). Their published
+            # names carry the comparable meaning, so compare that meaning and
+            # retain the ids only as diagnostic detail.
+            envelope_game_type = (
+                _game_type_for_name(envelope_name, league) if envelope_name else None
+            )
+            if envelope_game_type and envelope_game_type != game_type:
                 phase_mismatches += 1
-                print(f"    event {game_id}: envelope files season.type={envelope_type}, "
-                      f"enumerated from type {type_id} — written as {game_type}")
+                print(
+                    f"    event {game_id}: envelope phase {envelope_name!r} "
+                    f"(type {envelope_type or 'unknown'}) disagrees with "
+                    f"collection {type_name!r} (type {type_id}) — written as "
+                    f"{game_type}"
+                )
 
             # Support both the generic contract and ESPN's current soccer
             # roster contract. Roster rows win if both exist.
@@ -815,14 +842,14 @@ def ingest(league: str, season: int, dry_run: bool = False,
             away = competitors.get("away") or ""
             game_date = str(comp.get("date") or "")[:10] or None
 
-            for athlete_id, name, team, home_away, stats in player_lines.values():
+            for athlete_id, player_name, team, home_away, stats in player_lines.values():
                 team = _team_code(league, team)
                 if not home_away:
                     if team and home and team.upper() == home.upper():
                         home_away = "home"
                     elif team and away and team.upper() == away.upper():
                         home_away = "away"
-                player_id = resolver.resolve(name, team)
+                player_id = resolver.resolve(player_name, team, athlete_id)
                 if player_id is None:
                     unresolved += 1
                     type_unresolved += 1
@@ -868,7 +895,7 @@ def ingest(league: str, season: int, dry_run: bool = False,
             time.sleep(0.05)
 
         print(
-            f"  [{type_id}] {name}: {len(event_ids)} published events, "
+            f"  [{type_id}] {type_name}: {len(event_ids)} published events, "
             f"{type_games} completed games, "
             f"{type_logs} player logs ({type_resolved} resolved, "
             f"{type_unresolved} unresolved)  game_type={game_type}"

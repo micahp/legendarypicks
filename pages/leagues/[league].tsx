@@ -6,23 +6,23 @@ import StandingsTab from '../../components/Leagues/StandingsTab'
 import StatsTab from '../../components/Leagues/StatsTab'
 import UfcRankingsTab from '../../components/Leagues/UfcRankingsTab'
 import PredictTab from '../../components/Leagues/PredictTab'
+import UfcOptimizerTab from '../../components/Leagues/UfcOptimizerTab'
 import NflCampHero from '../../components/Leagues/NflCampHero'
 import NflOffseasonMovers from '../../components/Leagues/NflOffseasonMovers'
 import NflMockDraftCard from '../../components/Leagues/NflMockDraftCard'
-import NflDraftRoom from '../../components/Leagues/NflDraftRoom'
+import NflDraftBoardSurface from '../../components/Leagues/NflDraftBoardSurface'
 import NflScheduleTab from '../../components/Leagues/NflScheduleTab'
 import { useLeagueRouteState } from '../../components/Leagues/hooks/useLeagueRouteState'
 import { useScheduleData } from '../../components/Leagues/hooks/useScheduleData'
 import { useScheduleAutoDate } from '../../components/Leagues/hooks/useScheduleAutoDate'
 import { useScheduleNavigation } from '../../components/Leagues/hooks/useScheduleNavigation'
-import { useNflScheduleWeeks } from '../../components/Leagues/hooks/useNflScheduleWeeks'
+import { useFootballScheduleWeeks } from '../../components/Leagues/hooks/useNflScheduleWeeks'
 import { useStandingsData } from '../../components/Leagues/hooks/useStandingsData'
 import { useStatsData } from '../../components/Leagues/hooks/useStatsData'
 import { useUfcRankingsData } from '../../components/Leagues/hooks/useUfcRankingsData'
 import { useUfcPredictData } from '../../components/Leagues/hooks/useUfcPredictData'
 import { useNflSeasonContext } from '../../components/Leagues/hooks/useNflSeasonContext'
 import { useNflTransactions } from '../../components/Leagues/hooks/useNflTransactions'
-import { useNflDraftBoard } from '../../components/Leagues/hooks/useNflDraftBoard'
 import {
   LEAGUE_EMOJIS,
   LEAGUE_NAMES,
@@ -43,11 +43,13 @@ const TAB_LABELS: Record<HubTab, string> = {
   news: 'News',
   rankings: 'Rankings',
   predict: 'Predict',
+  optimizer: 'Optimizer',
 }
 
 export default function LeagueHubPage() {
   const route = useLeagueRouteState()
   const isNFL = route.league === 'nfl'
+  const weekLeague = route.league === 'nfl' || route.league === 'ncaaf'
   const standings = useStandingsData(route.league, route.isWorldCup, route.isUFC)
   // Fetched only while the tab is open — the hub already loads standings,
   // leaders and team aggregates on mount without anyone asking for them.
@@ -60,7 +62,7 @@ export default function LeagueHubPage() {
     supportsTeamStats: route.supportsTeamStats,
   })
   const schedule = useScheduleData(
-    isNFL ? '' : route.league,  // NFL uses weekly, not daily — suppress
+    weekLeague ? '' : route.league,
     route.activeTab,
     route.scheduleDate,
   )
@@ -68,7 +70,7 @@ export default function LeagueHubPage() {
   // Auto-resolve schedule date when today is empty, intent is 'default',
   // and Schedule tab is active. resolutionKey prevents stale cross-league results.
   const autoDate = useScheduleAutoDate(
-    !isNFL && route.activeTab === 'schedule',  // NFL never auto-resolves daily
+    !weekLeague && route.activeTab === 'schedule',
     route.league,
     route.scheduleDate,
     schedule.games.length,
@@ -106,9 +108,8 @@ export default function LeagueHubPage() {
 
   const seasonContext = useNflSeasonContext(isNFL && route.activeTab === 'camp')
   const transactions = useNflTransactions(isNFL && route.activeTab === 'camp')
-  const draftBoard = useNflDraftBoard(isNFL && route.activeTab === 'camp')
-  // Resolve prev/next game dates for arrow navigation (non-NFL only)
-  const nav = useScheduleNavigation(isNFL || route.activeTab !== 'schedule', route.league, route.scheduleDate)
+  // Resolve prev/next game dates only for date-based leagues.
+  const nav = useScheduleNavigation(weekLeague || route.activeTab !== 'schedule', route.league, route.scheduleDate)
 
   const handleGoPrev = () => {
     if (nav.prevDate) route.selectScheduleDate(nav.prevDate)
@@ -117,22 +118,23 @@ export default function LeagueHubPage() {
     if (nav.nextDate) route.selectScheduleDate(nav.nextDate)
   }
 
-  // ── NFL weekly schedule ──
-  const nflSchedule = useNflScheduleWeeks(
-    isNFL && route.activeTab === 'schedule',
-    route.nflWeek || null,
+  // ── NFL/NCAAF weekly schedule ──
+  const footballSchedule = useFootballScheduleWeeks(
+    route.league === 'ncaaf' ? 'ncaaf' : 'nfl',
+    weekLeague && route.activeTab === 'schedule',
+    route.scheduleWeek || null,
   )
 
-  // Canonicalize NFL URL when week differs from resolved selection
+  // Canonicalize football URL when week differs from resolved selection.
   useEffect(() => {
-    if (!isNFL || route.activeTab !== 'schedule') return
-    if (nflSchedule.catalogLoading) return
-    if (!nflSchedule.selectedKey) return
+    if (!weekLeague || route.activeTab !== 'schedule') return
+    if (footballSchedule.catalogLoading) return
+    if (!footballSchedule.selectedKey) return
     // Canonicalize if URL week is empty OR differs from catalog resolution
-    if (route.nflWeek !== nflSchedule.selectedKey) {
-      route.canonicalizeNflWeek(nflSchedule.selectedKey)
+    if (route.scheduleWeek !== footballSchedule.selectedKey) {
+      route.canonicalizeScheduleWeek(footballSchedule.selectedKey)
     }
-  }, [isNFL, route.activeTab, route.nflWeek, nflSchedule.selectedKey, nflSchedule.catalogLoading])
+  }, [weekLeague, route.activeTab, route.scheduleWeek, footballSchedule.selectedKey, footballSchedule.catalogLoading])
   const ufc = useUfcRankingsData(route.isUFC, route.league)
   const predict = useUfcPredictData(route.isUFC, route.activeTab)
 
@@ -178,25 +180,7 @@ export default function LeagueHubPage() {
               loading={transactions.loading}
               error={transactions.error}
             />
-            <NflDraftRoom
-              data={draftBoard.data}
-              loading={draftBoard.loading}
-              error={draftBoard.error}
-              position={draftBoard.position}
-              sort={draftBoard.sort}
-              offset={draftBoard.offset}
-              query={draftBoard.query}
-              notes={draftBoard.notes}
-              syncError={draftBoard.syncError}
-              onSelectPosition={draftBoard.selectPosition}
-              onSelectSort={draftBoard.selectSort}
-              onSetQuery={draftBoard.setQuery}
-              onClearQuery={draftBoard.clearQuery}
-              onSetOffset={draftBoard.setOffset}
-              onSetRank={draftBoard.setRank}
-              onToggleWatch={draftBoard.toggleWatch}
-              onToggleFade={draftBoard.toggleFade}
-            />
+            <NflDraftBoardSurface />
           </div>
         )}
 
@@ -241,26 +225,26 @@ export default function LeagueHubPage() {
           />
         )}
 
-        {route.activeTab === 'schedule' && isNFL && (
+        {route.activeTab === 'schedule' && weekLeague && (
           <NflScheduleTab
-            selectedKey={nflSchedule.selectedKey}
-            weekEntry={nflSchedule.weekEntry}
-            phaseLabel={nflSchedule.phaseLabel}
-            phases={nflSchedule.catalog?.phases.map(p => ({ season_type: p.season_type, label: p.label })) || []}
-            weeksInPhase={nflSchedule.catalog?.weeks || []}
-            prevWeekKey={nflSchedule.prevWeekKey}
-            nextWeekKey={nflSchedule.nextWeekKey}
-            dateGroups={nflSchedule.dateGroups}
-            games={nflSchedule.games}
-            gamesLoading={nflSchedule.gamesLoading}
-            gamesError={nflSchedule.gamesError}
-            catalogLoading={nflSchedule.catalogLoading}
-            catalogError={nflSchedule.catalogError}
-            onSelectWeek={route.selectNflWeek}
+            selectedKey={footballSchedule.selectedKey}
+            weekEntry={footballSchedule.weekEntry}
+            phaseLabel={footballSchedule.phaseLabel}
+            phases={footballSchedule.catalog?.phases.map(p => ({ season_type: p.season_type, label: p.label })) || []}
+            weeksInPhase={footballSchedule.catalog?.weeks || []}
+            prevWeekKey={footballSchedule.prevWeekKey}
+            nextWeekKey={footballSchedule.nextWeekKey}
+            dateGroups={footballSchedule.dateGroups}
+            games={footballSchedule.games}
+            gamesLoading={footballSchedule.gamesLoading}
+            gamesError={footballSchedule.gamesError}
+            catalogLoading={footballSchedule.catalogLoading}
+            catalogError={footballSchedule.catalogError}
+            onSelectWeek={route.selectScheduleWeek}
           />
         )}
 
-        {route.activeTab === 'schedule' && !isNFL && (
+        {route.activeTab === 'schedule' && !weekLeague && (
           <ScheduleTab
             scheduleDate={route.scheduleDate}
             formattedDate={schedule.formattedDate}
@@ -311,6 +295,10 @@ export default function LeagueHubPage() {
             submittingKey={predict.submittingKey}
             onSubmitPick={predict.submitPick}
           />
+        )}
+
+        {route.activeTab === 'optimizer' && route.isUFC && (
+          <UfcOptimizerTab />
         )}
         </>
         )}

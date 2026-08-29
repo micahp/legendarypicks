@@ -18,7 +18,6 @@ LEAGUES = {
     "nba":  ("basketball", "nba"),
     "nfl":  ("football", "nfl"),
     "nhl":  ("hockey", "nhl"),
-    "wnba": ("basketball", "wnba"),
     "wc":   ("soccer", "fifa-world-cup/fifa-world-cup-matches"),
     # MLS was here from 2026-08-16 until later the same day, on the continent path
     # `soccer/north-america/united-states/mls` (`soccer/usa/mls` 404s). It scraped fine —
@@ -138,7 +137,7 @@ _BACKOFF_PATH = os.path.join(
     "data", "bovada-league-backoff.json")
 
 # An out-of-season league is asked for again after this long. UFC sits at zero players
-# between cards, tennis between tournaments, WNBA/NBA out of season — and this scraper ran
+# between cards, tennis between tournaments, NBA out of season — and this scraper ran
 # `all` every 30 minutes regardless, so each of those cost 48 requests a day to be told
 # "no board" 48 times. Bovada gives this API away with no auth and no key; asking it 48
 # times for an answer that changed once is a cost we push onto them for nothing.

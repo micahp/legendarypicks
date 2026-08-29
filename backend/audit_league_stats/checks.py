@@ -323,14 +323,14 @@ def check_leaders_reach_logs(con, league, spec, out, floor=0.60):
     prod still held 48,017 rows on nhle.com's raw `20252026` season key.
     """
     # A league whose manifest declares no stat_types has no leaderboard surface
-    # to serve (UFC is fighters + rankings; WC is dormant until 2030) -- D has
+    # to serve -- D has
     # nothing to measure, and a FAIL here would assert a defect in a surface
     # that does not exist. The manifest's "nothing to declare, said out loud"
     # is the contract; honor it rather than contradicting it.
     if not spec.get("stat_types"):
         out.add(UNVERIFIED, league, "D/leaders-reach-logs",
                 "no stat_types declared -- this league has no leaderboard "
-                "surface to serve (rankings/dormant, not a stats league)")
+                "surface declared")
         return
     served = con.execute(
         "SELECT MAX(season) FROM player_stats WHERE league=?", (league,)

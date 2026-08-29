@@ -59,7 +59,9 @@ def _boxscore_without_shots():
 
 
 def test_generic_unmapped_market_remains_retryable(monkeypatch):
-    con = _connection("wc", "goals")
+    # WC has a dedicated durable-log grader; NBA exercises the generic
+    # unmapped-market path this regression is about.
+    con = _connection("nba", "goals")
     monkeypatch.setattr(espn_client, "boxscore", lambda *args: {"players": [{}]})
 
     first = settlement.settle_game(con, 1)
@@ -91,3 +93,28 @@ def test_generic_invalid_side_remains_retryable(monkeypatch):
 
     assert first["unmappable"] == second["unmappable"] == 1
     assert con.execute("SELECT COUNT(*) FROM prop_results").fetchone()[0] == 0
+
+
+def test_publisher_confirmed_cancellation_voids_once_without_a_live_fetch(monkeypatch):
+    con = _connection("ufc", "significant_strikes")
+    con.executescript("""
+        ALTER TABLE prop_games ADD COLUMN cancelled_at TEXT;
+        ALTER TABLE prop_games ADD COLUMN cancel_reason TEXT;
+        ALTER TABLE prop_games ADD COLUMN cancel_source TEXT;
+        UPDATE prop_games SET cancelled_at='2026-07-25T00:00:00Z',
+          cancel_reason='illness', cancel_source='https://www.ufc.com/news/update';
+    """)
+    monkeypatch.setattr(
+        espn_client, "game_result",
+        lambda *args: (_ for _ in ()).throw(
+            AssertionError("cancelled game performed a live fetch")),
+    )
+
+    first = settlement.settle_game(con, 1)
+    second = settlement.settle_game(con, 1)
+
+    assert first["void"] == 1
+    assert second["void"] == 0
+    assert tuple(con.execute(
+        "SELECT actual_value,hit FROM prop_results WHERE prop_id=1"
+    ).fetchone()) == (None, None)

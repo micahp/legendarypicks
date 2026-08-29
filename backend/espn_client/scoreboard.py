@@ -12,6 +12,7 @@ monkeypatching `espn_client._get` (as the test suite does) keeps working the
 way it did when this was a single module.
 """
 import datetime as _dt
+import re as _re
 
 import espn_client
 
@@ -204,6 +205,232 @@ def games(league, date=None):
     return _games_from_payload(league, date, espn_client.scoreboard_raw(league, date))
 
 
+def _tennis_bracket_url(event, grouping=None):
+    group_id = str(((grouping or {}).get("grouping") or {}).get("id") or "")
+    for link in event.get("links", []) or []:
+        if "bracket" in (link.get("rel") or []):
+            href = link.get("href")
+            # ESPN's shared tournament event may advertise only the men's
+            # `type/1` bracket even on the WTA scoreboard. Expose the link only
+            # when it names this published grouping; never synthesize type/2.
+            if href and group_id and "/type/" in href:
+                if href.rstrip("/").rsplit("/", 1)[-1] != group_id:
+                    continue
+            return href
+    return None
+
+
+def _tennis_game(event, grouping, comp):
+    """One ESPN tennis competition, preserving its published draw position."""
+    status = comp.get("status", {})
+    status_type = status.get("type", {})
+    players = {}
+    for competitor in comp.get("competitors", []) or []:
+        athlete = competitor.get("athlete", {}) or {}
+        if competitor.get("type") == "team":
+            roster = competitor.get("roster", {})
+            name = roster.get("displayName") or roster.get("shortDisplayName") or "TBD"
+            abbrev = (roster.get("shortDisplayName") or name)[:8]
+        else:
+            name = athlete.get("displayName") or athlete.get("fullName") or "TBD"
+            abbrev = athlete.get("shortName") or name[:3].upper()
+        curated_rank = competitor.get("curatedRank") or {}
+        try:
+            seed = int(curated_rank.get("current"))
+            if seed < 1:
+                seed = None
+        except (TypeError, ValueError):
+            seed = None
+        players[competitor.get("homeAway")] = {
+            # ESPN's tennis competitor id is the athlete id. Keep it beside the
+            # tournament seed so downstream joins never need the display name.
+            "athlete_id": str(competitor.get("id") or athlete.get("id") or ""),
+            "abbrev": abbrev,
+            "name": name,
+            "score": None,
+            # `curatedRank.current` is the seed assigned in this tournament's
+            # draw, not the ATP/WTA world ranking. Unseeded players stay null.
+            "seed": seed,
+        }
+    for competitor in comp.get("competitors", []) or []:
+        linescores = competitor.get("linescores", []) or []
+        per_set = [int(value.get("value")) for value in linescores
+                   if value.get("value") is not None]
+        wins = sum(1 for value in linescores if value.get("winner") is True)
+        side = competitor.get("homeAway")
+        if side in players:
+            players[side]["sets"] = per_set
+            if per_set:
+                players[side]["score"] = wins
+
+    home_sets = players.get("home", {}).get("sets", [])
+    away_sets = players.get("away", {}).get("sets", [])
+    set_count = max(len(home_sets), len(away_sets))
+    set_scores = []
+    for index in range(set_count):
+        home = str(home_sets[index]) if index < len(home_sets) else "-"
+        away = str(away_sets[index]) if index < len(away_sets) else "-"
+        set_scores.append(f"{home}-{away}")
+    score_text = " | ".join(set_scores) if set_scores else None
+    round_data = comp.get("round") or {}
+    grouping_data = grouping.get("grouping") or {}
+    return {
+        "game_id": comp.get("id"),
+        "date": comp.get("date") or event.get("date"),
+        "state": status_type.get("state"),
+        "status": status_type.get("description") or score_text or "",
+        "period": status.get("period"),
+        "clock": status.get("displayClock"),
+        "status_detail": status_type.get("shortDetail"),
+        "home": players.get("home"),
+        "away": players.get("away"),
+        "event": event.get("shortName") or event.get("name", ""),
+        "tournament_id": str(comp.get("tournamentId") or event.get("id") or ""),
+        "draw_type": grouping_data.get("displayName") or grouping_data.get("name"),
+        "round_id": str(round_data.get("id") or ""),
+        "round": round_data.get("displayName") or round_data.get("name"),
+        "bracket_url": _tennis_bracket_url(event, grouping),
+    }
+
+
+def _tennis_groupings(league, payload):
+    prefix = "mens" if league == "atp" else "womens"
+    for event in payload.get("events", []) or []:
+        event_name = event.get("shortName") or event.get("name", "")
+        if not _is_major(league, event_name):
+            continue
+        for grouping in event.get("groupings", []) or []:
+            slug = (grouping.get("grouping") or {}).get("slug", "")
+            if (not slug.startswith(prefix) or "doubles" in slug or "mixed" in slug):
+                continue
+            yield event, grouping
+
+
+def tennis_draws_from_payload(league, payload):
+    """Return complete major singles draws from an already-fetched scoreboard.
+
+    Unlike ``games()``, this intentionally keeps every published competition in
+    the tournament, including future TBD slots. Missing ids/rounds and duplicate
+    match ids invalidate the snapshot rather than silently publishing a partial
+    bracket over the last known-good one.
+    """
+    if league not in ("atp", "wta"):
+        raise ValueError("tennis draws require league=atp or league=wta")
+    draws = []
+    seen = set()
+    for event, grouping in _tennis_groupings(league, payload):
+        matches = [_tennis_game(event, grouping, comp)
+                   for comp in grouping.get("competitions", []) or []]
+        if not matches:
+            continue
+        for match in matches:
+            game_id = str(match.get("game_id") or "")
+            if not game_id or not match.get("round"):
+                raise ValueError(f"incomplete {league} draw match id={game_id or '<missing>'}")
+            if game_id in seen:
+                raise ValueError(f"duplicate {league} draw match id={game_id}")
+            seen.add(game_id)
+        matches.sort(key=lambda match: (match.get("date") or "", match["game_id"]))
+        group_data = grouping.get("grouping") or {}
+        draws.append({
+            "league": league,
+            "tournament_id": matches[0]["tournament_id"],
+            "event_name": event.get("shortName") or event.get("name", ""),
+            "draw_type": group_data.get("displayName") or group_data.get("name"),
+            "bracket_url": _tennis_bracket_url(event, grouping),
+            "match_count": len(matches),
+            "matches": matches,
+        })
+    return draws
+
+
+def tennis_rankings_from_payload(league, payload):
+    """Normalize ESPN's one published ATP/WTA ranking week.
+
+    Athlete identity is read from the reference URL.  The ranking document
+    does not publish names inline, and joining it by display name would undo
+    the tennis identity spine this project already maintains.
+    """
+    if league not in ("atp", "wta"):
+        raise ValueError("tennis rankings require league=atp or league=wta")
+    rows = []
+    for rank in payload.get("ranks", []) or []:
+        ref = str((rank.get("athlete") or {}).get("$ref") or "")
+        match = _re.search(r"/athletes/([^/?]+)", ref)
+        athlete_id = match.group(1) if match else ""
+        current = _int(rank.get("current"))
+        previous = _int(rank.get("previous"))
+        points = _int(rank.get("points"))
+        if not athlete_id or current is None:
+            raise ValueError(f"incomplete {league} ranking row")
+        rows.append({
+            "espn_athlete_id": athlete_id,
+            "rank": current,
+            "previous_rank": previous,
+            "points": points,
+        })
+    if len(rows) != 150:
+        raise ValueError(f"expected ESPN's capped {league} top 150, got {len(rows)}")
+    if sorted(row["rank"] for row in rows) != list(range(1, 151)):
+        raise ValueError(f"{league} ranking positions are incomplete or duplicated")
+    return rows
+
+
+def tennis_ranking_identities_from_payload(league, payload):
+    """Validate the bulk site ranking population used to refresh the spine."""
+    if league not in ("atp", "wta"):
+        raise ValueError("tennis ranking identities require league=atp or league=wta")
+    collections = [
+        row for row in (payload.get("rankings", []) or [])
+        if str(row.get("name") or "").upper() == league.upper()
+    ]
+    if len(collections) != 1:
+        raise ValueError(f"expected one {league} site ranking collection, got {len(collections)}")
+    identities = []
+    for row in collections[0].get("ranks", []) or []:
+        athlete = row.get("athlete") or {}
+        athlete_id = str(athlete.get("id") or "")
+        name = athlete.get("displayName")
+        active = athlete.get("active")
+        if not athlete_id or not isinstance(name, str) or not name.strip() or not isinstance(active, bool):
+            raise ValueError(f"incomplete {league} ranking identity")
+        identities.append({"espn_id": athlete_id, "name": name.strip(), "active": active})
+    if len(identities) != 150 or len({row["espn_id"] for row in identities}) != 150:
+        raise ValueError(f"expected 150 unique {league} ranking identities, got {len(identities)}")
+    return identities
+
+
+def tennis_ranking_identities(league):
+    """Fetch all names/ids in one bulk site response; never fan out by athlete."""
+    if league not in ("atp", "wta"):
+        raise ValueError("tennis ranking identities require league=atp or league=wta")
+    url = (
+        espn_client._SITE.format(path=f"tennis/{league}")
+        + "/rankings?region=us&lang=en&contentorigin=espn"
+    )
+    return tennis_ranking_identities_from_payload(league, espn_client._get(url, ttl=3600))
+
+
+def tennis_rankings(league):
+    """Fetch the current ESPN ranking document in two bounded requests."""
+    if league not in ("atp", "wta"):
+        raise ValueError("tennis rankings require league=atp or league=wta")
+    index_url = (
+        "https://sports.core.api.espn.com/v2/sports/tennis/leagues/"
+        f"{league}/rankings?lang=en&region=us&limit=1000"
+    )
+    index = espn_client._get(index_url, ttl=3600)
+    items = index.get("items", []) or []
+    if len(items) != 1:
+        raise ValueError(f"expected one current {league} ranking week, got {len(items)}")
+    ref = str(items[0].get("$ref") or "").replace("http://", "https://", 1)
+    if not ref.startswith("https://sports.core.api.espn.com/"):
+        raise ValueError(f"unexpected {league} ranking reference")
+    separator = "&" if "?" in ref else "?"
+    payload = espn_client._get(f"{ref}{separator}limit=1000", ttl=3600)
+    return tennis_rankings_from_payload(league, payload)
+
+
 def _games_from_payload(league, date, d):
     """Normalize a raw scoreboard payload into the shared game shape.
 
@@ -225,85 +452,18 @@ def _games_from_payload(league, date, d):
             target_date = _dt.datetime.strptime(date, "%Y-%m-%d").date()
         else:
             target_date = _dt.date.today()
-        for event in d.get("events", []):
-            # ATP/WTA both return full tournament -- filter by gender grouping
-            # Use startswith to avoid matching "mens" inside "womens"
-            if league == "atp":
-                gender_prefix = "mens"
-            else:
-                gender_prefix = "womens"
-            # ----- major-tournament gate -----
-            short_name = event.get("shortName") or event.get("name", "")
-            if not _is_major(league, short_name):
-                continue
-            # ---------------------------------
-            for grp in event.get("groupings", []):
-                slug = grp.get("grouping", {}).get("slug", "")
-                if not slug.startswith(gender_prefix):
-                    continue
-                # Singles only -- skip doubles and mixed
-                if "doubles" in slug or "mixed" in slug:
-                    continue
-                for comp in grp.get("competitions", []):
-                    # Filter by date -- tennis tournaments span weeks
-                    comp_date = comp.get("date", "")
-                    if comp_date:
-                        try:
-                            cd = _dt.datetime.fromisoformat(comp_date.replace("Z", "+00:00")).date()
-                            if cd != target_date:
-                                continue
-                        except (ValueError, TypeError):
-                            pass
-                    status = comp.get("status", {})
-                    st = status.get("type", {})
-                    players = {}
-                    for c in comp.get("competitors", []):
-                        # Singles: athlete object. Doubles: team object with roster.
-                        if c.get("type") == "team":
-                            roster = c.get("roster", {})
-                            name = roster.get("displayName") or roster.get("shortDisplayName") or "TBD"
-                            abbrev = roster.get("shortDisplayName", name)[:8]
-                        else:
-                            ath = c.get("athlete", {})
-                            name = ath.get("displayName") or ath.get("fullName") or "TBD"
-                            abbrev = ath.get("shortName") or name[:3].upper()
-                        players[c.get("homeAway")] = {
-                            "abbrev": abbrev,
-                            "name": name,
-                            "score": None,
-                        }
-                    # Extract per-set game scores from linescores for each competitor
-                    for c in comp.get("competitors", []):
-                        ls = c.get("linescores", [])
-                        per_set = [int(v.get("value")) for v in ls if v.get("value") is not None]
-                        wins = sum(1 for v in ls if v.get("winner") is True)
-                        ha = c.get("homeAway")
-                        if ha in players:
-                            players[ha]["sets"] = per_set
-                            if per_set:
-                                players[ha]["score"] = wins
-                    # Build status string from paired set scores (home[i] - away[i])
-                    home_sets = players.get("home", {}).get("sets", [])
-                    away_sets = players.get("away", {}).get("sets", [])
-                    n_sets = max(len(home_sets), len(away_sets))
-                    set_strs = []
-                    for i in range(n_sets):
-                        h = str(home_sets[i]) if i < len(home_sets) else "-"
-                        a = str(away_sets[i]) if i < len(away_sets) else "-"
-                        set_strs.append(f"{h}-{a}")
-                    score_str = " | ".join(set_strs) if set_strs else None
-                    out.append({
-                        "game_id": comp.get("id"),
-                        "date": comp.get("date") or event.get("date"),
-                        "state": st.get("state"),
-                        "status": st.get("description") or score_str or "",
-                        "period": status.get("period"),
-                        "clock": status.get("displayClock"),
-                        "status_detail": st.get("shortDetail"),
-                        "home": players.get("home"),
-                        "away": players.get("away"),
-                        "event": event.get("shortName") or event.get("name", ""),
-                    })
+        for event, grp in _tennis_groupings(league, d):
+            for comp in grp.get("competitions", []):
+                # Filter by date -- tennis tournaments span weeks
+                comp_date = comp.get("date", "")
+                if comp_date:
+                    try:
+                        cd = _dt.datetime.fromisoformat(comp_date.replace("Z", "+00:00")).date()
+                        if cd != target_date:
+                            continue
+                    except (ValueError, TypeError):
+                        pass
+                out.append(_tennis_game(event, grp, comp))
     elif is_ufc:
         # UFC -- events contain fights (competitions) directly, athlete-based competitors.
         # No homeAway field; competitors have order=1 and order=2.

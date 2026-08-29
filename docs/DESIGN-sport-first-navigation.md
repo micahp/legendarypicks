@@ -7,9 +7,10 @@ competition?**
 Answer: **sport at the top, competition underneath, and the competition level only exists
 where we cover more than one competition in that sport.**
 
-Every number in this doc was measured on 2026-08-24 against
+The relay numbers in this doc were measured on 2026-08-24 against
 `backend/data/rotowire-archive/rotowire-2026-08-24.json.gz` (3,191 props, the full relay)
-and the frontend source. Zero publisher requests were spent.
+and the frontend source. The Draws decision was measured separately against one bounded
+ESPN scoreboard response, documented in §4.
 
 ---
 
@@ -56,11 +57,14 @@ that day and hide four that did.
 
 ### The sport grouping is published, so do not invent it
 
-`backend/espn_leagues.py` already stores ESPN's own path, and the prefix is the sport:
+`backend/espn_client/config.py` stores the complete set of ESPN site paths, and the prefix is
+the sport. (`backend/espn_leagues.py` is a narrower core-API registry containing only MLS and
+NCAAF, so it cannot drive whole-product navigation.)
 
 ```
-mls    soccer/leagues/usa.1
-ncaaf  football/leagues/college-football
+mls    soccer/usa.1
+ncaaf  football/college-football
+atp    tennis/atp
 ```
 
 Derive `sport` from the registry path rather than hand-maintaining a slug-to-sport map, so a
@@ -78,10 +82,13 @@ everywhere else: the value is published, do not re-derive it
    sport,** and it appears as a second row inside that sport, never mixed into the first.
 3. **The second row defaults to all competitions.** A filter the visitor did not set must
    never hide props.
-4. **Which competitions are offered is a runtime coverage question, not a constant.** The
-   registry already decides this for league hubs (`useLeagueSwitcher`,
-   `docs/DATA-COVERAGE-CONTRACT.md` §4). The chip row reads the same source, so a
-   competition with no games today is absent without anyone editing a file.
+4. **Which competitions are offered comes from the product's enablement registry, not row
+   presence.** League directory cards read the vouched coverage registry
+   (`docs/DATA-COVERAGE-CONTRACT.md` §4). Props filters read the Props product registry.
+   Current or historical rows are inventory, not enablement: NBA remains navigable when no
+   player offers are posted, and a scheduled Leagues Cup slate remains navigable before a
+   provider has created any `prop_games` rows. One stray stored row also cannot silently
+   launch a new competition in the UI.
 5. **A sport is named for what it is, not for the one competition we happen to carry.** The
    exception is stated per sport in §3, because "we have one competition" and "this sport is
    one competition" look identical in a count and only one of them should be renamed later.
@@ -95,7 +102,7 @@ everywhere else: the value is published, do not re-derive it
 | Football | `NFL`, `NCAAF` | none | **Deliberately two top-level chips.** See below. |
 | Soccer | `Soccer` | yes | MLS, Leagues Cup, and whatever the relay actually carries |
 | Tennis | `Tennis` | yes | ATP, WTA |
-| Basketball | `NBA` | none | WNBA joins as a second chip if it gets props |
+| Basketball | `NBA` | none | |
 | Baseball | `MLB` | none | |
 | Hockey | `NHL` | none | |
 | MMA | `UFC` | none | renamed to MMA only when a second promotion has props |
@@ -130,19 +137,31 @@ game detail, team stats, coverage row, scoring plays, game context, **game logs,
 stats**. That declaration is why every tennis market in `backend/core_markets.py:53` maps to
 `None` for charting.
 
-So the tennis hub is three tabs, not the seven a league hub gets:
+The 2026-08-25 ranking-source pass adds one more measured surface. The tennis
+hub is four tabs, not the seven a team-sport league hub gets:
 
 ```
 Tennis
-  [ Scores ]  [ Draws ]  [ News ]
+  [ Scores ]  [ Draws ]  [ Rankings ]  [ News ]
              ATP · WTA toggle inside each tab, defaulting to both
 ```
 
 - **Scores** is the existing per-day board, both tours interleaved, tour shown on the row.
-- **Draws** is the current major's bracket for each tour, and it is the one new build.
-  **Not started, and it depends on an unmeasured question:** whether ESPN publishes a draw we
-  can read. Measure that before speccing the tab. If the draw is not published, the tab is
-  the tournament's match list grouped by round, which the scoreboard already gives us.
+- **Draws** is the current covered major's singles bracket for each tour. Measured
+  2026-08-24 from ESPN's existing `site.web.api.espn.com/.../tennis/{tour}/scoreboard`
+  response: a tournament event publishes `groupings[].competitions[]`; each competition
+  carries `tournamentId`, a `round` id/name, competitors and future undecided slots, while
+  the event carries a `rel=bracket` link. That link names a competition type and is exposed
+  only when it matches the selected grouping (the shared event currently advertises its
+  men's link on the WTA response too). No second publisher endpoint is needed.
+  The ingest persists the whole validated grouping from the already-fetched scoreboard;
+  missing ids/rounds or duplicate matches preserve the last good draw and fail the refresh.
+- **Rankings** is ESPN's published current ATP/WTA world-ranking document. It is
+  not `competitors[].curatedRank.current`, which is the current tournament's seed.
+  The world-ranking response is capped at 150 and exposes one current week, so
+  every bounded capture is retained under `(tour, captured_at, espn_athlete_id)`.
+  Athlete references join directly to the canonical tennis spine; names are display
+  fields and never keys. The UI shows the top 50 from the persisted top-150 snapshot.
 - **News** is the existing feed filtered to tennis.
 
 **We cover majors, not the tour.** Challengers, 250s and 500s are not ingested. The hub says
@@ -153,34 +172,30 @@ so on screen rather than looking like a tour page with holes in it
 
 ## 5. What a Soccer rollup page contains
 
-The failure mode to design away is a Soccer tab that is two buttons and nothing else. It is
-not a hub, it is a disambiguation prompt, and per §1 it would be a wrong one.
-
-The soccer hub is a **board first, competition second**:
+The failure mode to design away is a Soccer destination that is two buttons and
+nothing else. MLS and Leagues Cup are competition tabs inside one complete hub;
+each tab immediately exposes the surfaces that competition can honestly support:
 
 ```
 Soccer
-  [ Today ]  [ Props ]  [ Competitions ]  [ News ]
+  [ MLS ]  [ Leagues Cup ]
+
+  MLS:          [ Scores ] [ Standings ] [ Leaders ] [ News ]
+  Leagues Cup:  [ Bracket ] [ Scores ] [ Leaders ] [ News ]
 ```
 
-- **Today** is every soccer fixture we carry for the day, MLS and Leagues Cup and whatever
-  else, one list, with the competition as a label on each row rather than a filter above it.
-  A label answers "which competition is this" without making the visitor answer it first.
-- **Props** is the soccer prop board, same treatment. The competition row from §2 rule 2
-  lives here, defaulting to all.
-- **Competitions** is the only place the competition list is a navigation target, and it is a
-  list of hubs (MLS table, Leagues Cup bracket), not a filter. This is where a competition
-  that has its own standings shape earns a page.
-- **News** is the existing feed filtered to soccer.
+- **MLS** reuses the published conference tables, DB-backed season totals, persisted
+  scoreboards and MLS news already carried by the league hub.
+- **Leagues Cup** persists the publisher's full-season knockout rounds and its
+  published goals/assists leader tables. League-phase games never masquerade as
+  bracket nodes, scheduled 0-0 scores render as dashes, and later rounds stay absent
+  until the publisher names their participants.
+- Both competitions show their own day board. Storage keys remain `mls` and `lcup`.
+- `/leagues` links to one Soccer destination. The competition split happens inside
+  that destination instead of forcing the directory to stand in for the missing page.
 
-This makes Leagues Cup a row in the competitions list and a label on the board, which is
-what it is, and it means the next tournament costs nothing.
-
-`/leagues` keeps competition-level cards, because that page is a **directory of
-destinations** and Leagues Cup genuinely has its own bracket and its own table. What it needs
-is sport section headers over the card grid (`pages/leagues.tsx:4`) so soccer's cards sit
-together. Adding a competition then costs one card under an existing header instead of a
-judgment call about whether it deserves a slot next to NFL.
+The Props product remains sport-first and defaults to all soccer competitions; this
+page is a league-information destination, not a rewrite of Props filtering.
 
 ---
 
@@ -218,7 +233,9 @@ Do not build the toggle before the ingest. An option that hides an empty board i
 
 ## 7. Open questions, in the order they block work
 
-1. **Does ESPN publish a tennis draw?** Blocks the Draws tab. One measurement.
+1. **Resolved 2026-08-24: ESPN publishes the tennis draw in the scoreboard payload.** The
+   measured fields and persistence contract are in §4; the candidate implementation uses
+   that same response, not another request path.
 2. **How is a competition recovered from a RotoWire soccer prop?** Club name is the only
    signal in the payload, so this is a name-to-competition mapping, which is exactly the
    shape that misses silently rather than raising

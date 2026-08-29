@@ -53,6 +53,26 @@ CREATE TABLE player_game_logs (
 )
 """
 
+LEGACY_PREDICTIONS_DDL = """
+CREATE TABLE predictions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    league TEXT NOT NULL,
+    game_id TEXT NOT NULL,
+    predicted_winner TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    correct INTEGER
+)
+"""
+
+LEGACY_PROP_GAMES_DDL = """
+CREATE TABLE prop_games (
+    id INTEGER PRIMARY KEY,
+    league TEXT,
+    game_id TEXT,
+    start_time TEXT
+)
+"""
+
 
 class LogMigrationTests(unittest.TestCase):
     def setUp(self):
@@ -86,13 +106,21 @@ class LogMigrationTests(unittest.TestCase):
                 "CREATE TABLE team_game_results("
                 "league TEXT NOT NULL, game_id TEXT NOT NULL, team TEXT NOT NULL)"
             )
+            connection.execute(LEGACY_PREDICTIONS_DDL)
             for addition in migrate_schema.MIGRATIONS[1].additions:
                 connection.execute(addition.sql)
             for table in migrate_logs_to_prod.PROTECTED_TABLES:
-                connection.execute(
-                    f"CREATE TABLE {table}("
-                    "id INTEGER PRIMARY KEY, payload TEXT)"
-                )
+                if table == "prop_games":
+                    connection.execute(
+                        "CREATE TABLE prop_games("
+                        "id INTEGER PRIMARY KEY, league TEXT, game_id TEXT, "
+                        "start_time TEXT, payload TEXT)"
+                    )
+                else:
+                    connection.execute(
+                        f"CREATE TABLE {table}("
+                        "id INTEGER PRIMARY KEY, payload TEXT)"
+                    )
                 connection.execute(
                     f"INSERT INTO {table}(id, payload) VALUES(1, ?)",
                     (f"{table}-live",),

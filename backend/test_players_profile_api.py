@@ -275,6 +275,75 @@ class PlayerProfileApiTests(unittest.TestCase):
             result["coverage"],
         )
 
+    def test_profile_selects_one_league_and_season_without_mixing_contexts(self):
+        con = sqlite3.connect(self.path)
+        con.execute("ALTER TABLE players ADD COLUMN position_group TEXT")
+        con.execute(
+            """INSERT INTO players(id,name,team,league,position,position_group)
+               VALUES(5,'Casey Keeper','MIA','mls','G','Goalkeeper')"""
+        )
+        rows = [
+            (5, "mls", 2026, {"saves": 5, "shots": 2}, "2026-08-01", "ORL", "home", 3, "REG"),
+            (5, "mls", 2025, {"saves": 3, "shots": 1}, "2025-07-01", "SEA", "away", 2, "REG"),
+            (5, "lcup", 2025, {"saves": 7, "shots": 4}, "2025-08-01", "PUM", "home", 1, "REG"),
+        ]
+        con.executemany(
+            "INSERT INTO player_game_logs VALUES(?,?,?,?,?,?,?,?,?)",
+            [row[:3] + (json.dumps(row[3]),) + row[4:] for row in rows],
+        )
+        con.commit()
+        con.close()
+
+        with mock.patch.object(players, "_season_stats_for_profile", return_value=None):
+            result = players.player_profile(5, league="lcup", season=2025)
+
+        self.assertEqual("mls", result["league"])
+        self.assertEqual("lcup", result["selected_league"])
+        self.assertEqual(2025, result["season"])
+        self.assertEqual("Goalkeeper", result["position_group"])
+        self.assertEqual([7], [row["stats"]["saves"] for row in result["recent_games"]])
+        self.assertNotIn("shots", result["projections"])
+        self.assertEqual(
+            [
+                {"league": "mls", "season": 2026, "games": 1},
+                {"league": "lcup", "season": 2025, "games": 1},
+                {"league": "mls", "season": 2025, "games": 1},
+            ],
+            result["log_contexts"],
+        )
+
+    def test_profile_rejects_an_unpublished_log_context(self):
+        from fastapi import HTTPException
+
+        with self.assertRaises(HTTPException) as raised:
+            players.player_profile(1, league="lcup", season=2026)
+
+        self.assertEqual(400, raised.exception.status_code)
+        self.assertEqual("No game logs for selected league", raised.exception.detail)
+
+    def test_selected_old_year_does_not_show_newer_season_totals(self):
+        stats = {"window": "2025", "stats": {"pts": 20.0}}
+        with mock.patch.object(players, "_season_stats_for_profile", return_value=stats):
+            result = players.player_profile(1, league="nba", season=2026)
+
+        self.assertIsNone(result["season_stats"])
+        self.assertFalse(result["coverage"]["season_stats"])
+
+    def test_split_year_log_key_matches_ending_year_season_totals(self):
+        con = sqlite3.connect(self.path)
+        con.execute(
+            "INSERT INTO player_game_logs VALUES(?,?,?,?,?,?,?,?,?)",
+            (3, "nhl", 20252026, json.dumps({"goals": 1}), "2026-01-01", "NYR", "home", 1, "REG"),
+        )
+        con.commit()
+        con.close()
+        stats = {"window": "2026", "stats": {"goals": 20}}
+
+        with mock.patch.object(players, "_season_stats_for_profile", return_value=stats):
+            result = players.player_profile(3, league="nhl", season=20252026)
+
+        self.assertEqual(stats, result["season_stats"])
+
 
 class NflSeasonStatsPositionTests(unittest.TestCase):
     """player_stats is zero-filled across every NFL column, so the profile has to

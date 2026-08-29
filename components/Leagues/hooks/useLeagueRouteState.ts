@@ -16,6 +16,7 @@ export function useLeagueRouteState() {
   const isWorldCup = league === 'wc'
   const isUFC = league === 'ufc'
   const isNFL = league === 'nfl'
+  const isWeeklyFootball = isNFL || league === 'ncaaf'
 
   // Whether a league may be shown at all comes from the coverage registry, not from a
   // list in this file. The literal `['mlb','nba','nhl','nfl']` that used to live here
@@ -37,7 +38,7 @@ export function useLeagueRouteState() {
   // UFC has 1 conversation / 2 narratives / 12 granular. Only the World Cup is
   // left out: dormant hub, and its key returns nothing.
   const validTabs: HubTab[] = isUFC
-    ? ['rankings', 'schedule', 'predict', 'news']
+    ? ['rankings', 'schedule', 'predict', 'optimizer', 'news']
     : isWorldCup
       ? ['standings', 'stats', 'schedule']
       : isNFL
@@ -47,7 +48,7 @@ export function useLeagueRouteState() {
   const [activeTab, setActiveTab] = useState<HubTab>('standings')
   const [scheduleDate, setScheduleDate] = useState(() => localToday())
   const [dateIntent, setDateIntent] = useState<DateIntent>('default')
-  const [nflWeek, setNflWeek] = useState<string>('')
+  const [scheduleWeek, setScheduleWeek] = useState<string>('')
 
   // Marks auto-resolve URL writes. Persists until user action or league change
   // so unrelated route events between write and round-trip don't reclassify it.
@@ -72,14 +73,14 @@ export function useLeagueRouteState() {
       ? queryTab as HubTab
       : validTabs[0]
     const urlDate = typeof router.query.date === 'string' ? router.query.date : null
-    const isNFL = league === 'nfl'
+    const usesWeek = league === 'nfl' || league === 'ncaaf'
 
     // ── Determine date + intent from URL ──
     let nextDate: string
     let nextIntent: DateIntent
 
-    // NFL: never use date from URL; always default to local today
-    const effectiveUrlDate = isNFL ? null : urlDate
+    // Week-based football never uses date from URL.
+    const effectiveUrlDate = usesWeek ? null : urlDate
 
     if (effectiveUrlDate && validScheduleDate(effectiveUrlDate)) {
       if (pendingAutoDate.current === effectiveUrlDate) {
@@ -100,12 +101,12 @@ export function useLeagueRouteState() {
 
     // NFL week from URL
     const urlWeek = typeof router.query.week === 'string' ? router.query.week : ''
-    setNflWeek(urlWeek)
+    setScheduleWeek(urlWeek)
 
     // ── URL housekeeping ──
-    // NFL: never carry date; use week param instead
-    const wantsDateInUrl = !isNFL && nextIntent !== 'default' && nextTab === 'schedule'
-    const keepDateForIntent = !isNFL && nextIntent !== 'default' && nextTab !== 'schedule'
+    // Week-based football never carries date; it uses the week param instead.
+    const wantsDateInUrl = !usesWeek && nextIntent !== 'default' && nextTab === 'schedule'
+    const keepDateForIntent = !usesWeek && nextIntent !== 'default' && nextTab !== 'schedule'
     const urlHasDate = router.query.date !== undefined
     const dateMismatch = wantsDateInUrl
       ? router.query.date !== nextDate
@@ -118,7 +119,7 @@ export function useLeagueRouteState() {
         league: router.query.league || league,
         tab: nextTab,
       }
-      if (!isNFL && nextIntent !== 'default') {
+      if (!usesWeek && nextIntent !== 'default') {
         query.date = nextDate
       } else {
         delete query.date
@@ -138,9 +139,9 @@ export function useLeagueRouteState() {
       tab,
     }
     // Preserve date for any non-default intent, regardless of tab
-    if (intent !== 'default' && date) {
+    if (!isWeeklyFootball && intent !== 'default' && date) {
       query.date = date
-    } else if (intent === 'default') {
+    } else {
       delete query.date
     }
     void router.replace(
@@ -171,8 +172,8 @@ export function useLeagueRouteState() {
     updateRoute('schedule', date, 'auto')
   }
 
-  const selectNflWeek = (key: string) => {
-    setNflWeek(key)
+  const selectScheduleWeek = (key: string) => {
+    setScheduleWeek(key)
     const query: Record<string, string | string[] | undefined> = {
       ...router.query,
       league: router.query.league || league,
@@ -187,8 +188,8 @@ export function useLeagueRouteState() {
     )
   }
 
-  const canonicalizeNflWeek = (key: string) => {
-    setNflWeek(key)
+  const canonicalizeScheduleWeek = (key: string) => {
+    setScheduleWeek(key)
     const query: Record<string, string | string[] | undefined> = {
       ...router.query,
       league: router.query.league || league,
@@ -215,11 +216,12 @@ export function useLeagueRouteState() {
     activeTab,
     scheduleDate,
     dateIntent,
-    nflWeek,
+    isWeeklyFootball,
+    scheduleWeek,
     selectTab,
     selectScheduleDate,
     resolveScheduleDate,
-    selectNflWeek,
-    canonicalizeNflWeek,
+    selectScheduleWeek,
+    canonicalizeScheduleWeek,
   }
 }
