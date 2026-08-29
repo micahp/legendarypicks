@@ -44,6 +44,23 @@ describe('PropChart venue handling', () => {
     expect(container.querySelector('[data-game-labels] .truncate')).toBeNull()
   })
 
+  it('uses wider surname labels for UFC opponents without losing the full tooltip', () => {
+    const data = chartData([
+      { date: '2026-08-21', value: 61, opponent: 'Deiveson Figueiredo', home: null, hit: true },
+      { date: '2026-08-22', value: 42, opponent: 'Raul Rosas Jr.', home: null, hit: false },
+    ])
+    data.league = 'ufc'
+    data.market = 'significant_strikes'
+    const { container } = render(<PropChart data={data} />)
+    const labels = Array.from(
+      container.querySelectorAll<HTMLElement>('[data-ufc-opponent-label="true"]'),
+    )
+
+    expect(labels.map(label => label.textContent)).toEqual(['Rosas Jr.', 'Figueiredo'])
+    expect(labels[1].title).toBe('Deiveson Figueiredo · 2026-08-21')
+    expect(labels[0].parentElement?.style.width).toBe('72px')
+  })
+
   it('marks a known away game with @', () => {
     const { container } = render(<PropChart data={chartData([
       { date: '2026-07-22', value: 18, opponent: 'AWY', home: false, hit: false },

@@ -46,6 +46,17 @@ function shortDate(iso: string): string {
   return Number.isNaN(d.getTime()) ? iso : `${d.getMonth() + 1}/${d.getDate()}`
 }
 
+function chartOpponent(opponent: string, league: string): string {
+  if (league !== 'ufc') return opponent
+  const parts = opponent.trim().split(/\s+/).filter(Boolean)
+  if (parts.length < 2) return opponent
+  const suffix = parts[parts.length - 1]
+  if (/^(Jr\.?|Sr\.?|II|III|IV)$/i.test(suffix) && parts.length > 2) {
+    return `${parts[parts.length - 2]} ${suffix}`
+  }
+  return suffix
+}
+
 // ── component ─────────────────────────────────────────────
 export default function PropChart({ data, window: initialWindow = 'l10' }: { data: PropHistory; window?: Window }) {
   const [win, setWin] = useState<Window>(initialWindow)
@@ -124,8 +135,8 @@ export default function PropChart({ data, window: initialWindow = 'l10' }: { dat
   const range = maxVal - minVal || 1
   // Wide enough for an away abbreviation (`@BOS`) at the label size below the
   // bar. It was 28, which clipped four characters.
-  const barW = 34
-  const gap = 6
+  const barW = data.league === 'ufc' ? 72 : 34
+  const gap = data.league === 'ufc' ? 8 : 6
   const chartW = hasGames ? displayGames.length * (barW + gap) - gap : 0
   const chartH = 72
   const padTop = 16
@@ -234,13 +245,15 @@ export default function PropChart({ data, window: initialWindow = 'l10' }: { dat
                         a hierarchy between value, opponent and date that nobody
                         reading a game log wants. */}
                     <div className="text-[11px] font-semibold text-zinc-400 tabular-nums">{g.value}</div>
-                    {/* No slice and no truncate. `@BOS` is four characters and
-                        was being clipped by a 28px column, which reads as a data
-                        problem rather than a layout one. The column is sized to
-                        hold a real abbreviation instead. */}
-                    <div className="whitespace-nowrap text-[10px] text-zinc-400"
+                    {/* Team sports publish compact abbreviations. UFC publishes
+                        full names, which collided across five 34px columns on
+                        desktop; show a wider surname label while retaining the
+                        complete opponent and date in the tooltip. */}
+                    <div
+                         data-ufc-opponent-label={data.league === 'ufc' ? 'true' : undefined}
+                         className={`whitespace-nowrap text-[10px] text-zinc-400 ${data.league === 'ufc' ? 'overflow-hidden text-ellipsis' : ''}`}
                          title={`${g.home === false ? '@ ' : ''}${g.opponent} · ${g.date}`}>
-                      {g.home === false ? '@' : ''}{g.opponent || '—'}
+                      {g.home === false ? '@' : ''}{chartOpponent(g.opponent || '—', data.league)}
                     </div>
                     <div className="text-[10px] text-zinc-400 tabular-nums">{shortDate(g.date)}</div>
                   </div>
