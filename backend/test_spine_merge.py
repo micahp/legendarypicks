@@ -83,8 +83,14 @@ class ColumnDiscoveryTests(unittest.TestCase):
         provider-separated appearance table and must participate in an identity
         merge. The worktree production-shaped database also gained
         `tennis_ranking_snapshots.player_id`, so its independently pinned total is
-        now 16."""
-        expected = {"picks.db": 16, "picks.dev.db": 17}
+        now 16.
+
+        2026-08-29, sport-first merge: `tennis_ranking_snapshots.player_id`
+        reached dev (+1) and `player_game_logs_ufcstats.player_id` arrived with
+        the UFCStats history work (+1) — a provider-separated appearance table
+        that must participate like FotMob's. dev pins 18; prod holds 16 until
+        the ufcstats migration runs there (16 already includes tennis)."""
+        expected = {"picks.db": 16, "picks.dev.db": 18}
         for name, count in expected.items():
             path = os.path.join(HERE, "data", name)
             if not os.path.isfile(path):
