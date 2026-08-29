@@ -51,11 +51,53 @@ MARKET_STAT: Dict[Tuple[str, str], Tuple[str, str]] = {
     ("nfl", "tackles"):       ("defensive", "Tkl"),
     ("nfl", "sacks"):         ("defensive", "Sk"),
     ("nfl", "field_goals_made"):("kicking", "FG"),
+    # ── NCAAF ──
+    # College football publishes the same site-boxscore groups as NFL, but the
+    # RotoWire relay uses a slightly different market vocabulary. C/ATT is one
+    # published cell, so the selector suffix tells the extractor which half is
+    # the measured value instead of treating both markets as completions.
+    ("ncaaf", "passing_yards"):       ("passing", "YDS"),
+    ("ncaaf", "passing_touchdowns"):  ("passing", "TD"),
+    ("ncaaf", "interceptions_thrown"): ("passing", "INT"),
+    ("ncaaf", "pass_completions"):    ("passing", "C/ATT:made"),
+    ("ncaaf", "pass_attempts"):       ("passing", "C/ATT:attempted"),
+    ("ncaaf", "rushing_yards"):       ("rushing", "YDS"),
+    ("ncaaf", "rushing_touchdowns"):  ("rushing", "TD"),
+    ("ncaaf", "rush_attempts"):       ("rushing", "CAR"),
+    ("ncaaf", "receiving_yards"):     ("receiving", "YDS"),
+    ("ncaaf", "receptions"):          ("receiving", "REC"),
+    ("ncaaf", "field_goals_made"):    ("kicking", "FG"),
+    ("ncaaf", "extra_points_made"):   ("kicking", "XP"),
+    ("ncaaf", "kicking_points"):      ("kicking", "PTS"),
     # ── NHL ──
     ("nhl", "shots"):         ("offensive", "Shots"),
     ("nhl", "goals"):         ("offensive", "G"),
     ("nhl", "assists"):       ("offensive", "A"),
     ("nhl", "saves"):         ("goalkeeping", "Sv"),
+}
+
+
+# Compounds are explicit component lists rather than invented stored keys.
+# A football athlete missing from one component group recorded zero in that
+# category; at least one component still has to identify the athlete.
+COMPOUND_MARKET_STAT = {
+    ("mlb", "hits_runs_rbis"): (
+        ("batting", "H"), ("batting", "R"), ("batting", "RBI"),
+    ),
+    ("ncaaf", "passing_rushing_yards"): (
+        ("passing", "YDS"), ("rushing", "YDS"),
+    ),
+    ("ncaaf", "rushing_receiving_yards"): (
+        ("rushing", "YDS"), ("receiving", "YDS"),
+    ),
+    ("ncaaf", "rushing_receiving_touchdowns"): (
+        ("rushing", "TD"), ("receiving", "TD"),
+    ),
+    ("ncaaf", "total_touchdowns"): (
+        ("rushing", "TD"), ("receiving", "TD"),
+        ("kickReturns", "TD"), ("puntReturns", "TD"),
+        ("defensive", "TD"),
+    ),
 }
 
 
@@ -115,4 +157,16 @@ def resolve_market(league: str, raw_market: str) -> Optional[Tuple[str, str]]:
     Returns None if the market can't be mapped (should go to unmappable queue)."""
     canonical = normalize_market(raw_market)
     canonical = MARKET_ALIASES.get(canonical, canonical)
-    return MARKET_STAT.get((league, canonical))
+    direct = MARKET_STAT.get((league, canonical))
+    if direct is not None:
+        return direct
+    if (league, canonical) in COMPOUND_MARKET_STAT:
+        return (None, canonical)
+    return None
+
+
+def resolve_compound_market(league: str, raw_market: str):
+    """Return the published component fields for a supported compound."""
+    normalized = normalize_market(raw_market)
+    canonical = MARKET_ALIASES.get(normalized, normalized)
+    return COMPOUND_MARKET_STAT.get((league, canonical))

@@ -768,6 +768,19 @@ class TheNflMapNamesKeysTheNflLogsActuallyHold(unittest.TestCase):
         self.assertNotIn("field_goals_made",
                          core_markets._MARKET_STAT_KEY["nfl"])
 
+    def test_ncaaf_maps_only_the_stats_its_history_rows_publish(self):
+        import core_markets
+        stored = {"pass_yds", "rush_yds", "rec_yds", "rec", "pass_td",
+                  "rush_td", "rec_td", "intc", "att"}
+        mapping = core_markets._MARKET_STAT_KEY["ncaaf"]
+        for market, key in mapping.items():
+            for one in (key if isinstance(key, list) else [key]):
+                self.assertIn(one, stored, f"{market} -> {one}")
+        for unavailable in ("pass_completions", "rush_attempts",
+                            "field_goals_made", "extra_points_made",
+                            "kicking_points"):
+            self.assertNotIn(unavailable, mapping)
+
 class OneRowPerAppearance(unittest.TestCase):
     """Providers keep separate rows; the READER picks one.
 

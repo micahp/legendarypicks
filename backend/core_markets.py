@@ -61,6 +61,24 @@ _MARKET_STAT_KEY = {
             "rush_attempts": "carries",
             "pass_attempts": "att",
             "pass_completions": "cmp"},
+    # NCAAF's durable ESPN logs use the same compact offensive vocabulary as
+    # nflverse. Only map fields those rows actually store: completions, carries,
+    # and kicking are intentionally absent until the history ingest publishes
+    # them, while final-game settlement can still use ESPN's full boxscore.
+    "ncaaf": {
+            "passing_yards": "pass_yds",
+            "passing_touchdowns": "pass_td",
+            "interceptions_thrown": "intc",
+            "pass_attempts": "att",
+            "rushing_yards": "rush_yds",
+            "rushing_touchdowns": "rush_td",
+            "receiving_yards": "rec_yds",
+            "receptions": "rec",
+            "total_touchdowns": ["rush_td", "rec_td"],
+            "passing_rushing_yards": ["pass_yds", "rush_yds"],
+            "rushing_receiving_yards": ["rush_yds", "rec_yds"],
+            "rushing_receiving_touchdowns": ["rush_td", "rec_td"],
+            },
     "wc": {"goals": "goals", "assists": "assists", "shots": "shots",
            "shots_on_target": "sot", "shots_on_goal": "sot"},
     # MLS game logs store the same soccer stat shape as WC (goals/assists/shots/sot)
