@@ -735,9 +735,6 @@ export default function MarketSlateBoard({ league, date }: { league: string; dat
                         </span>
                       </>
                     )}
-                    {!hasAlternates && (
-                      <span className="text-[10px] uppercase tracking-wide text-zinc-600">{sourceLabel(row.source)}</span>
-                    )}
                   </div>
                 </div>
 
