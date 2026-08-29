@@ -198,6 +198,25 @@ function groupProps(props: BoardProp[]): BoardRow[] {
   }))
 }
 
+const PROP_PAGE_SIZE = 500
+const MAX_PROP_PAGES = 20
+
+async function fetchAllProps(params: URLSearchParams, signal: AbortSignal): Promise<BoardProp[]> {
+  const rows: BoardProp[] = []
+  for (let page = 0; page < MAX_PROP_PAGES; page += 1) {
+    const pageParams = new URLSearchParams(params)
+    pageParams.set('limit', String(PROP_PAGE_SIZE))
+    pageParams.set('offset', String(page * PROP_PAGE_SIZE))
+    const response = await fetch(`/api/props?${pageParams}`, { signal })
+    if (!response.ok) throw new Error(`Props request failed (${response.status})`)
+    const data = await response.json()
+    if (!Array.isArray(data)) throw new Error('Props response was not a list')
+    rows.push(...data)
+    if (data.length < PROP_PAGE_SIZE) return rows
+  }
+  throw new Error(`Props response exceeded ${MAX_PROP_PAGES * PROP_PAGE_SIZE} rows`)
+}
+
 // A window's NAME is a claim about its SAMPLE. The API computes L20 as
 // games[:20], which on a player with three matches is three matches, so L5,
 // L10 and L20 all print the same figure and a 3-for-3 player reads as a
@@ -325,12 +344,9 @@ export default function MarketSlateBoard({ league, date }: { league: string; dat
         return
       }
 
-      const fallbackParams = new URLSearchParams({ date, limit: '500' })
+      const fallbackParams = new URLSearchParams({ date })
       if (league !== 'All') fallbackParams.set('league', league)
-      const fallbackResponse = await fetch(`/api/props?${fallbackParams}`, { signal: controller.signal })
-      if (!fallbackResponse.ok) throw new Error(`Props request failed (${fallbackResponse.status})`)
-      const fallbackProps = await fallbackResponse.json()
-      if (!Array.isArray(fallbackProps)) throw new Error('Props response was not a list')
+      const fallbackProps = await fetchAllProps(fallbackParams, controller.signal)
       const counts = new Map<string, number>()
       for (const row of groupProps(fallbackProps)) {
         counts.set(row.market, (counts.get(row.market) || 0) + 1)
@@ -375,18 +391,13 @@ export default function MarketSlateBoard({ league, date }: { league: string; dat
   useEffect(() => {
     if (!activeMarket || loadedMarket === '*' || loadedMarket === activeMarket) return
     const controller = new AbortController()
-    const params = new URLSearchParams({ date, limit: '500', market: activeMarket })
+    const params = new URLSearchParams({ date, market: activeMarket })
     if (league !== 'All') params.set('league', league)
 
     setLoading(true)
     setError(null)
-    fetch(`/api/props?${params}`, { signal: controller.signal })
-      .then(response => {
-        if (!response.ok) throw new Error(`Props request failed (${response.status})`)
-        return response.json()
-      })
+    fetchAllProps(params, controller.signal)
       .then(data => {
-        if (!Array.isArray(data)) throw new Error('Props response was not a list')
         setProps(data)
         setLoadedMarket(activeMarket)
         setLoading(false)

@@ -55,7 +55,8 @@ def list_props(player: Optional[str] = Query(None),
                market: Optional[str] = Query(None),
                league: Optional[str] = Query(None),
                date: Optional[str] = Query(None),
-               limit: int = Query(50, ge=1, le=500)):
+               limit: int = Query(50, ge=1, le=500),
+               offset: int = Query(0, ge=0)):
     sql = """SELECT p.id, p.market, p.line, p.side, p.source, p.captured_at,
                     p.odds,
                     p.player_id,
@@ -89,8 +90,11 @@ def list_props(player: Optional[str] = Query(None),
     if date:
         sql += " AND pg.date = ?"
         params.append(date)
-    sql += " ORDER BY p.captured_at DESC LIMIT ?"
-    params.append(limit)
+    # `captured_at` is shared by every row in one ingest. The id tie-breaker is
+    # required for deterministic offset pagination; without it, offers can move
+    # between pages and an alternate line can be omitted or duplicated.
+    sql += " ORDER BY p.captured_at DESC, p.id DESC LIMIT ? OFFSET ?"
+    params.extend((limit, offset))
     with closing(_db()) as con:
         rows = con.execute(sql, params).fetchall()
     return [{"id": r["id"], "market": r["market"], "line": r["line"], "side": r["side"],

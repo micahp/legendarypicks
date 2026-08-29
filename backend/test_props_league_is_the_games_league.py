@@ -41,9 +41,9 @@ def _seed():
     # filtering would also pass and must not.
     con.execute("INSERT INTO players(id,name,team,league) VALUES(3,'Other Forward','ATX','mls')")
     con.execute("INSERT INTO prop_games(id,league,date,start_time,home,away) "
-                "VALUES(10,'lcup','2026-08-26','2026-08-27T02:00:00+00:00','Leon','Real Salt Lake')")
+                "VALUES(10,'lcup','2026-08-26','2099-08-27T02:00:00+00:00','Leon','Real Salt Lake')")
     con.execute("INSERT INTO prop_games(id,league,date,start_time,home,away) "
-                "VALUES(11,'mls','2026-08-26','2026-08-27T02:00:00+00:00','Austin FC','FC Dallas')")
+                "VALUES(11,'mls','2026-08-26','2099-08-27T02:00:00+00:00','Austin FC','FC Dallas')")
     for pid, (gid, player) in enumerate(((10, 1), (10, 2), (11, 3)), start=100):
         con.execute(
             "INSERT INTO props(id,game_id,player_id,market,line,side,source,captured_at,odds) "
@@ -73,15 +73,25 @@ class LeagueFilterIsTheCompetition(unittest.TestCase):
             pass
 
     def test_lcup_returns_both_spines(self):
-        rows = props.list_props(player=None, market=None, league="lcup", date=None, limit=50)
+        rows = props.list_props(player=None, market=None, league="lcup", date=None,
+                                limit=50, offset=0)
         self.assertEqual(len(rows), 2, "both halves of the fixture must reach the board")
         self.assertEqual(sorted(r["league"] for r in rows), ["ligamx", "mls"])
         self.assertEqual({r["game_home"] for r in rows}, {"Leon"})
 
     def test_mls_does_not_swallow_the_tournament_game(self):
         """The filter must still be a filter: `mls` returns only the MLS fixture."""
-        rows = props.list_props(player=None, market=None, league="mls", date=None, limit=50)
+        rows = props.list_props(player=None, market=None, league="mls", date=None,
+                                limit=50, offset=0)
         self.assertEqual([r["game_home"] for r in rows], ["Austin FC"])
+
+    def test_props_pages_are_stable_and_do_not_repeat_rows(self):
+        pages = [props.list_props(player=None, market=None, league=None, date=None,
+                                  limit=1, offset=offset)
+                 for offset in range(3)]
+        ids = [page[0]["id"] for page in pages]
+        self.assertEqual(ids, [102, 101, 100])
+        self.assertEqual(len(set(ids)), 3)
 
     def test_the_slate_expands_to_the_props_it_advertised(self):
         """The one endpoint that had BOTH rulers in it.
