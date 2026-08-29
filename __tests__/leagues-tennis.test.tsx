@@ -1,16 +1,16 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
-import TennisLeaguePage from './tennis'
-import { SportsService } from '../../services/sports'
+import TennisLeaguePage from '../pages/leagues/tennis'
+import { SportsService } from '../services/sports'
 
 const mockRouter = { query: {} as Record<string, string>, push: jest.fn() }
 jest.mock('next/router', () => ({ useRouter: () => mockRouter }))
 
-jest.mock('../../services/sports', () => ({
+jest.mock('../services/sports', () => ({
   SportsService: { getGamesByLocalDate: jest.fn() },
 }))
-jest.mock('../../components/Scores/GameCard', () => function MockGameCard({ gameId }: { gameId: string }) { return <div>{gameId}</div> })
-jest.mock('../../components/Leagues/NewsTab', () => function MockNewsTab() { return <div>News feed</div> })
-jest.mock('../../components/Leagues/hooks/useNewsData', () => ({
+jest.mock('../components/Scores/GameCard', () => function MockGameCard({ gameId }: { gameId: string }) { return <div>{gameId}</div> })
+jest.mock('../components/Leagues/NewsTab', () => function MockNewsTab() { return <div>News feed</div> })
+jest.mock('../components/Leagues/hooks/useNewsData', () => ({
   useNewsData: () => ({ news: null, loading: false, error: null }),
 }))
 

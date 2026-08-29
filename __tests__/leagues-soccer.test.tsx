@@ -1,31 +1,31 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
-import SoccerLeaguePage from './soccer'
-import MlsSoccerPage from './mls'
-import LeaguesCupSoccerPage from './lcup'
-import { SportsService } from '../../services/sports'
+import SoccerLeaguePage from '../pages/leagues/soccer'
+import MlsSoccerPage from '../pages/leagues/mls'
+import LeaguesCupSoccerPage from '../pages/leagues/lcup'
+import { SportsService } from '../services/sports'
 
 const mockRouter = { query: {} as Record<string, string> }
 jest.mock('next/router', () => ({ useRouter: () => mockRouter }))
 
-jest.mock('../../services/sports', () => ({
+jest.mock('../services/sports', () => ({
   SportsService: { getGamesByLocalDate: jest.fn() },
 }))
-jest.mock('../../components/Scores/GameCard', () => function MockGameCard({ gameId }: { gameId: string }) {
+jest.mock('../components/Scores/GameCard', () => function MockGameCard({ gameId }: { gameId: string }) {
   return <div>{gameId}</div>
 })
-jest.mock('../../components/Leagues/NewsTab', () => function MockNewsTab() {
+jest.mock('../components/Leagues/NewsTab', () => function MockNewsTab() {
   return <div>News feed</div>
 })
-jest.mock('../../components/Leagues/StandingsTab', () => function MockStandingsTab() {
+jest.mock('../components/Leagues/StandingsTab', () => function MockStandingsTab() {
   return <div>MLS tables</div>
 })
-jest.mock('../../components/Leagues/StatsTab', () => function MockStatsTab() {
+jest.mock('../components/Leagues/StatsTab', () => function MockStatsTab() {
   return <div>MLS player and team stats</div>
 })
-jest.mock('../../components/Leagues/hooks/useNewsData', () => ({
+jest.mock('../components/Leagues/hooks/useNewsData', () => ({
   useNewsData: () => ({ news: null, loading: false, error: null }),
 }))
-jest.mock('../../components/Leagues/hooks/useStatsData', () => ({
+jest.mock('../components/Leagues/hooks/useStatsData', () => ({
   useStatsData: () => ({}),
 }))
 const getGames = SportsService.getGamesByLocalDate as jest.Mock

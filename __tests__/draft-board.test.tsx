@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react'
-import DraftBoardPage from './draft-board'
+import DraftBoardPage from '../pages/draft-board'
 
 jest.mock('../components/Leagues/NflDraftBoardSurface', () => ({ standalone }: { standalone?: boolean }) => (
   <div data-testid="draft-board-surface" data-standalone={String(standalone)} />

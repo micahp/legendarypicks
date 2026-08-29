@@ -1,5 +1,5 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
-import PredictPage from './predict'
+import PredictPage from '../pages/predict'
 
 const mockRouter = {
   query: {} as Record<string, string>,
