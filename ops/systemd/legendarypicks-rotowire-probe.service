@@ -1,5 +1,5 @@
 [Unit]
-Description=Probe the RotoWire picks relay for a PrizePicks MLS board
+Description=Capture and publish the pre-lock RotoWire PrizePicks MLS board
 After=network-online.target
 Wants=network-online.target
 
@@ -7,6 +7,6 @@ Wants=network-online.target
 Type=oneshot
 WorkingDirectory=/root/legendarypicks/backend
 Environment=LP_DB_PATH=/root/legendarypicks/backend/data/picks.dev.db
-ExecStart=/root/legendarypicks/backend/venv/bin/python /root/legendarypicks/backend/monitor_rotowire_soccer.py
+ExecStart=/usr/bin/flock -n /run/lock/legendarypicks-provider-rotowire.lock /root/legendarypicks/backend/venv/bin/python /root/legendarypicks/backend/monitor_rotowire_soccer.py --publish-db /root/legendarypicks/backend/data/picks.dev.db --publish-db /root/legendarypicks/backend/data/picks.db
 TimeoutStartSec=180
 Nice=15
