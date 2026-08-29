@@ -56,6 +56,9 @@ describe('alternate provider lines', () => {
     })
     const options = within(select).getAllByRole('option').map(option => option.textContent)
 
+    expect(select.className).toContain('border-0')
+    expect(select.className).toContain('bg-transparent')
+    expect(select.className).not.toContain('rounded')
     expect(options).toEqual([
       '0.5 · prizepicks',
       '0.5 · underdog',
