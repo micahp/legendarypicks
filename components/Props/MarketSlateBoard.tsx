@@ -100,6 +100,13 @@ function isPickem(source: string | undefined): boolean {
   return PICKEM_SOURCES.test((source || '').trim().toLowerCase())
 }
 
+function sourceLabel(source: string): string {
+  // Keep the full value (for example `rotowire:underdog`) in the data model:
+  // it records how the offer reached us. The reader only needs the app where
+  // the offer can be played, so the relay prefix does not belong on the card.
+  return source.replace(/^rotowire:/i, '')
+}
+
 function formatOdds(odds: number | null | undefined): string {
   if (odds === null || odds === undefined) return '—'
   return odds > 0 ? `+${odds}` : String(odds)
@@ -623,7 +630,7 @@ export default function MarketSlateBoard({ league, date }: { league: string; dat
                         </span>
                       </>
                     )}
-                    <span className="text-[10px] uppercase tracking-wide text-zinc-600">{row.source}</span>
+                    <span className="text-[10px] uppercase tracking-wide text-zinc-600">{sourceLabel(row.source)}</span>
                   </div>
                 </div>
 

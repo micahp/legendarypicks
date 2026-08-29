@@ -23,7 +23,7 @@ function prop(id: number, name: string, source: string, odds: number | null) {
 }
 
 const ROWS = [
-  prop(1, 'Pickem Player', 'rotowire:prizepicks', -137),
+  prop(1, 'Pickem Player', 'rotowire:underdog', -137),
   prop(2, 'Booked Player', 'bovada', -160),
 ]
 
@@ -58,11 +58,18 @@ async function rowFor(player: string): Promise<HTMLElement> {
 }
 
 describe('a pick’em book shows no line price', () => {
-  it('does not print the relay constant for a prizepicks row', async () => {
+  it('does not print the relay constant for an underdog row', async () => {
     render(<MarketSlateBoard league="ligamx" date="2026-08-26" />)
     const row = await rowFor('Pickem Player')
     expect(row.textContent).not.toContain('-137')
     expect(row.textContent).toContain('no line price')
+  })
+
+  it('shows the playable app without the RotoWire relay prefix', async () => {
+    render(<MarketSlateBoard league="ligamx" date="2026-08-26" />)
+    const row = await rowFor('Pickem Player')
+    expect(row.textContent).toContain('underdog')
+    expect(row.textContent).not.toContain('rotowire:')
   })
 
   it('still prints a real book’s price', async () => {
