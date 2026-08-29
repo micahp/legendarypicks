@@ -696,7 +696,9 @@ export default function MarketSlateBoard({ league, date }: { league: string; dat
                   <p className="mt-0.5 truncate text-xs text-zinc-500">{matchup(row)}</p>
                   <div className="mt-3 flex flex-wrap items-center gap-2">
                     {hasAlternates ? (
-                      <span className="relative inline-flex max-w-full items-center">
+                      <span className="relative inline-flex max-w-full items-center gap-1 text-2xl font-bold text-white tabular-nums">
+                        <span data-selected-line>{formatValue(row.line)}</span>
+                        <span aria-hidden="true">▾</span>
                         <select
                           aria-label={`Line and provider for ${row.player} ${marketLabel(row.market)}`}
                           data-line-selector
@@ -705,7 +707,7 @@ export default function MarketSlateBoard({ league, date }: { league: string; dat
                             ...current,
                             [row.key]: event.target.value,
                           }))}
-                          className="max-w-full appearance-none border-0 bg-transparent p-0 pr-5 text-2xl font-bold uppercase text-white tabular-nums outline-none"
+                          className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
                         >
                           {row.lines.map(line => (
                             <option key={line.offerKey} value={line.offerKey}>
@@ -713,7 +715,6 @@ export default function MarketSlateBoard({ league, date }: { league: string; dat
                             </option>
                           ))}
                         </select>
-                        <span aria-hidden="true" className="pointer-events-none absolute right-0 text-xs text-zinc-500">▾</span>
                       </span>
                     ) : (
                       <span className="text-2xl font-bold text-white tabular-nums">{formatValue(row.line)}</span>

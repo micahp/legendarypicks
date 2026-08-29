@@ -55,10 +55,14 @@ describe('alternate provider lines', () => {
       name: 'Line and provider for Alternate Player Shots',
     })
     const options = within(select).getAllByRole('option').map(option => option.textContent)
+    const visibleLine = document.querySelector('[data-selected-line]') as HTMLElement
 
-    expect(select.className).toContain('border-0')
-    expect(select.className).toContain('bg-transparent')
-    expect(select.className).not.toContain('rounded')
+    expect(select.className).toContain('opacity-0')
+    expect(visibleLine.textContent).toBe('0.5')
+    expect(visibleLine.nextElementSibling?.textContent).toBe('▾')
+    expect(visibleLine.parentElement?.className).toContain('text-2xl')
+    expect(visibleLine.parentElement?.className).toContain('font-bold')
+    expect(visibleLine.parentElement?.className).toContain('text-white')
     expect(options).toEqual([
       '0.5 · prizepicks',
       '0.5 · underdog',
@@ -78,6 +82,7 @@ describe('alternate provider lines', () => {
 
     const row = document.querySelector('[data-market-row]') as HTMLElement
     await waitFor(() => {
+      expect(document.querySelector('[data-selected-line]')?.textContent).toBe('2.5')
       expect(row.textContent).toContain('-110')
       expect(row.textContent).toContain('+100')
       expect(row.textContent).not.toContain('no line price')
