@@ -17,8 +17,10 @@ The relay is one request (~2 MB) and carries 10 books. PrizePicks soccer prices 
 the markets we cannot otherwise get for MLS — passes attempted, saves, shots, shots on
 target, tackles, clearances, crosses. Bovada supplies only goals and assists. (Kambi was dropped 2026-08-24, unused.)
 
-Writes to `source_probe_log`, which is additive and belongs to no league pipeline. It never
-writes props and never touches `players`.
+Writes each observation to `source_probe_log`, which is additive and belongs to no league
+pipeline.  With explicit `--publish-db` arguments, the same fetched payload is also passed
+to the normal identity-safe MLS publisher for each database.  This lets the scheduled
+pre-lock read populate the board without spending another request per environment.
 
 Usage:
   python3 monitor_rotowire_soccer.py            # probe once, record, print the series
@@ -89,11 +91,33 @@ def _kickoff_window(con, hours=48):
     instrument: every request it does make lands where evidence can be.
     """
     now = dt.datetime.now(dt.timezone.utc)
-    rows = con.execute(
-        "SELECT start_time FROM prop_games WHERE league='mls' AND start_time IS NOT NULL "
-        "AND start_time > ? ORDER BY start_time LIMIT 1", (now.isoformat(),)).fetchall()
+    # The scoreboard snapshot is the published schedule and is refreshed independently
+    # of props.  `prop_games` is created by a successful props ingest, so using it as the
+    # only gate creates a circular dependency: a new MLS slate cannot be probed until a
+    # prior provider has already created its games.  That skipped the 2026-08-29 board
+    # even though scoreboard_snapshots held all 13 fixtures and PrizePicks was live.
+    has_scoreboard = con.execute(
+        "SELECT 1 FROM sqlite_master WHERE type='table' "
+        "AND name='scoreboard_snapshots'"
+    ).fetchone()
+    rows = []
+    if has_scoreboard:
+        rows = con.execute(
+            "SELECT start_time FROM scoreboard_snapshots "
+            "WHERE LOWER(league)='mls' AND start_time IS NOT NULL "
+            "AND julianday(start_time) > julianday(?) "
+            "ORDER BY julianday(start_time) LIMIT 1",
+            (now.isoformat(),),
+        ).fetchall()
     if not rows:
-        return False, "no upcoming MLS fixture in prop_games"
+        rows = con.execute(
+            "SELECT start_time FROM prop_games WHERE LOWER(league)='mls' "
+            "AND start_time IS NOT NULL AND julianday(start_time) > julianday(?) "
+            "ORDER BY julianday(start_time) LIMIT 1",
+            (now.isoformat(),),
+        ).fetchall()
+    if not rows:
+        return False, "no upcoming MLS fixture in published schedule or prop_games"
     try:
         kickoff = dt.datetime.fromisoformat(rows[0]["start_time"].replace("Z", "+00:00"))
     except (TypeError, ValueError):
@@ -104,8 +128,8 @@ def _kickoff_window(con, hours=48):
     return True, "next MLS kickoff in {:.1f}h".format(ahead)
 
 
-def probe():
-    """One read of the relay, reduced to what soccer it was carrying."""
+def fetch_payload():
+    """Fetch the relay once and return its complete payload."""
     # gzip cuts this response from ~2 MB to a couple of hundred KB. The relay is free and
     # public; taking the smaller transfer is the least we can do for it.
     headers = dict(_HDRS)
@@ -115,7 +139,13 @@ def probe():
         raw = response.read()
         if (response.headers.get("Content-Encoding") or "").lower() == "gzip":
             raw = gzip.decompress(raw)
-        board = json.loads(raw)
+        return json.loads(raw)
+
+
+def probe(board=None):
+    """Reduce one relay payload to what PrizePicks soccer was carrying."""
+    if board is None:
+        board = fetch_payload()
 
     markets = {str(m.get("marketID")): m for m in board.get("markets") or []}
     entities = {str(e.get("entityID")): e for e in board.get("entities") or []}
@@ -154,6 +184,41 @@ def probe():
     }
 
 
+def publish_payload(payload, db_paths):
+    """Publish one fetched payload to each database serially."""
+    import ingest_rotowire_props as publisher
+
+    rows, report = publisher.parse(payload, "mls")
+    game_props = report["counts"]["game_props"]
+    all_ok = True
+    for configured in db_paths:
+        absolute = os.path.abspath(configured)
+        if not os.path.isfile(absolute):
+            print("PUBLISH FAILED: database does not exist: {}".format(absolute))
+            all_ok = False
+            continue
+        publisher.DB = absolute
+        try:
+            summary = publisher.ingest(rows, "mls")
+        except Exception as exc:  # noqa: BLE001
+            print("PUBLISH FAILED [{}]: {}: {}".format(
+                absolute, type(exc).__name__, exc))
+            all_ok = False
+            continue
+        considered = summary["board_rows"] - summary["unknown_team"]
+        print(
+            "publish [{}]: {new} new, {refreshed} refreshed, {games} games, "
+            "{players} players, {unresolved_player_rows} unresolved rows".format(
+                absolute, **summary
+            )
+        )
+        if game_props and considered > 0 and not (summary["new"] + summary["refreshed"]):
+            print("PUBLISH FAILED [{}]: {} MLS rows passed the league filter but none "
+                  "were written".format(absolute, considered))
+            all_ok = False
+    return all_ok
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     parser.add_argument("--history", action="store_true",
@@ -163,6 +228,10 @@ def main(argv=None):
                              "hours; outside it the run makes no request at all")
     parser.add_argument("--force", action="store_true",
                         help="probe even outside the window (manual checks only)")
+    parser.add_argument(
+        "--publish-db", action="append", default=[], metavar="PATH",
+        help="publish the fetched MLS payload to this database; repeat for multiple DBs",
+    )
     args = parser.parse_args(argv)
 
     con = sqlite3.connect(DB)
@@ -180,7 +249,8 @@ def main(argv=None):
             return 0
         print("probing — {}".format(why))
         try:
-            reading = probe()
+            payload = fetch_payload()
+            reading = probe(payload)
         except Exception as exc:  # noqa: BLE001
             print("PROBE FAILED: {}".format(exc))
             print("  Not recorded. A failed read is not evidence of an empty board — the "
@@ -202,6 +272,9 @@ def main(argv=None):
         if reading["markets"]:
             print("  markets: " + ", ".join(
                 "{} {}".format(v, k) for k, v in sorted(reading["markets"].items())))
+        if args.publish_db and not publish_payload(payload, args.publish_db):
+            con.close()
+            return 2
 
     rows = con.execute(
         "SELECT * FROM source_probe_log WHERE source=? ORDER BY probed_at", (SOURCE,)
