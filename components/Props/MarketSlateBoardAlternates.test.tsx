@@ -51,18 +51,22 @@ describe('alternate provider lines', () => {
     render(<MarketSlateBoard league="nfl" date="2026-09-09" />)
 
     await waitFor(() => expect(document.querySelectorAll('[data-market-row]')).toHaveLength(1))
-    const select = screen.getByRole('combobox', {
-      name: 'Line and provider for Alternate Player Shots',
+    const selector = screen.getByLabelText(
+      'Line and provider for Alternate Player Shots',
+    )
+    fireEvent.click(selector)
+    const listbox = screen.getByRole('listbox', {
+      name: 'Alternate lines for Alternate Player Shots',
     })
-    const options = within(select).getAllByRole('option').map(option => option.textContent)
+    const options = within(listbox).getAllByRole('option').map(option => option.textContent)
     const visibleLine = document.querySelector('[data-selected-line]') as HTMLElement
 
-    expect(select.className).toContain('opacity-0')
+    expect(selector.className).toContain('text-2xl')
     expect(visibleLine.textContent).toBe('0.5')
     expect(visibleLine.nextElementSibling?.textContent).toBe('▾')
-    expect(visibleLine.parentElement?.className).toContain('text-2xl')
-    expect(visibleLine.parentElement?.className).toContain('font-bold')
-    expect(visibleLine.parentElement?.className).toContain('text-white')
+    expect(selector.className).toContain('font-bold')
+    expect(selector.className).toContain('text-white')
+    expect(listbox.className).toContain('bg-zinc-950')
     expect(options).toEqual([
       '0.5 · prizepicks',
       '0.5 · underdog',
@@ -75,10 +79,11 @@ describe('alternate provider lines', () => {
   it('updates the offer odds and chart line when another option is selected', async () => {
     render(<MarketSlateBoard league="nfl" date="2026-09-09" />)
 
-    const select = await screen.findByRole('combobox', {
-      name: 'Line and provider for Alternate Player Shots',
-    })
-    fireEvent.change(select, { target: { value: '2.5|bovada' } })
+    const selector = await screen.findByLabelText(
+      'Line and provider for Alternate Player Shots',
+    )
+    fireEvent.click(selector)
+    fireEvent.click(screen.getByRole('option', { name: '2.5 · bovada' }))
 
     const row = document.querySelector('[data-market-row]') as HTMLElement
     await waitFor(() => {

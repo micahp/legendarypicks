@@ -696,26 +696,42 @@ export default function MarketSlateBoard({ league, date }: { league: string; dat
                   <p className="mt-0.5 truncate text-xs text-zinc-500">{matchup(row)}</p>
                   <div className="mt-3 flex flex-wrap items-center gap-2">
                     {hasAlternates ? (
-                      <span className="relative inline-flex max-w-full items-center gap-1 text-2xl font-bold text-white tabular-nums">
-                        <span data-selected-line>{formatValue(row.line)}</span>
-                        <span aria-hidden="true">▾</span>
-                        <select
+                      <details data-line-selector className="group relative inline-block max-w-full">
+                        <summary
                           aria-label={`Line and provider for ${row.player} ${marketLabel(row.market)}`}
-                          data-line-selector
-                          value={row.offerKey}
-                          onChange={event => setSelectedLineByRow(current => ({
-                            ...current,
-                            [row.key]: event.target.value,
-                          }))}
-                          className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                          aria-haspopup="listbox"
+                          className="inline-flex cursor-pointer list-none items-center gap-1 text-2xl font-bold text-white tabular-nums marker:content-none"
+                        >
+                          <span data-selected-line>{formatValue(row.line)}</span>
+                          <span aria-hidden="true">▾</span>
+                        </summary>
+                        <div
+                          role="listbox"
+                          aria-label={`Alternate lines for ${row.player} ${marketLabel(row.market)}`}
+                          className="absolute left-0 z-30 mt-2 min-w-max overflow-hidden rounded-lg border border-zinc-700 bg-zinc-950 py-1 shadow-xl"
                         >
                           {row.lines.map(line => (
-                            <option key={line.offerKey} value={line.offerKey}>
+                            <button
+                              key={line.offerKey}
+                              type="button"
+                              role="option"
+                              aria-selected={line.offerKey === row.offerKey}
+                              onClick={event => {
+                                setSelectedLineByRow(current => ({
+                                  ...current,
+                                  [row.key]: line.offerKey,
+                                }))
+                                event.currentTarget.closest('details')?.removeAttribute('open')
+                              }}
+                              className={`block w-full px-3 py-2 text-left text-sm font-medium tabular-nums transition-colors hover:bg-zinc-800 focus:bg-zinc-800 focus:outline-none ${
+                                line.offerKey === row.offerKey ? 'bg-zinc-800 text-emerald-300' : 'text-zinc-100'
+                              }`}
+                            >
                               {formatValue(line.line)} · {sourceLabel(line.source)}
-                            </option>
+                            </button>
                           ))}
-                        </select>
-                      </span>
+                        </div>
+                      </details>
                     ) : (
                       <span className="text-2xl font-bold text-white tabular-nums">{formatValue(row.line)}</span>
                     )}
