@@ -30,6 +30,7 @@ PROP_PRODUCT_LEAGUES = frozenset({
     "mlb",
     "mls",
     "nba",
+    "ncaaf",
     "nfl",
     "nhl",
     "ufc",
