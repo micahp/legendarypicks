@@ -94,6 +94,20 @@ SOURCE = "rotowire"
 # all. See `_fill_missing_start_time`.
 LEAGUES = {
     "nfl": {"sport": "NFL", "kind": "code", "teams": {"WAS": "WSH"}},
+    # College teams arrive as school names while our spine uses ESPN codes.  Resolve
+    # them only through the durable ESPN scoreboard and require the exact scheduled
+    # fixture before creating a prop game.  The relay also carries next week's board;
+    # an event absent from our published schedule is retained in the archive but cannot
+    # be guessed into the database.
+    "ncaaf": {"sport": "CFB", "kind": "fixture_scoreboard", "aliases": {
+        "north carolina state": "NCSU",
+    }, "player_aliases": {
+        # NC State's official 2026 roster publishes both full names and nicknames:
+        # Jayden "Duke" Scott and Joshisa "Jojo" Trader.  Scope these reviewed
+        # aliases to NCSU; neither nickname is a league-wide identity key.
+        ("NCSU", "duke scott"): "jayden scott",
+        ("NCSU", "jojo trader"): "joshisa trader",
+    }},
     # RotoWire publishes codes, while MLB prop_games stores ESPN display names.
     # Both halves come from durable scoreboard snapshots; `team_codes` only
     # normalizes known cross-publisher code variants before that lookup.
@@ -151,6 +165,27 @@ NFL_GAME_MARKETS = {
     # publisher does not send, so nothing downstream could settle it -- the same
     # deferral already applied to the MLB and soccer Fantasy Score ids.
 }
+CFB_GAME_MARKETS = {
+    99: ("Field Goals Made", "field_goals_made"),
+    102: ("Interceptions Thrown", "interceptions_thrown"),
+    103: ("Kicking Points", "kicking_points"),
+    104: ("Pass Attempts", "pass_attempts"),
+    105: ("Pass Completions", "pass_completions"),
+    107: ("Passing Touchdowns", "passing_touchdowns"),
+    108: ("Passing Yards", "passing_yards"),
+    109: ("Passing + Rushing Yards", "passing_rushing_yards"),
+    110: ("Total Touchdowns", "total_touchdowns"),
+    114: ("Receiving Yards", "receiving_yards"),
+    115: ("Receptions", "receptions"),
+    116: ("Rush Attempts", "rush_attempts"),
+    117: ("Rushing Touchdowns", "rushing_touchdowns"),
+    118: ("Rushing Yards", "rushing_yards"),
+    119: ("Rushing + Receiving Touchdowns", "rushing_receiving_touchdowns"),
+    120: ("Rushing + Receiving Yards", "rushing_receiving_yards"),
+    127: ("Extra Points Made", "extra_points_made"),
+    # 138 and 139 are provider-specific fantasy composites without a published
+    # scoring formula, so they remain reported and unavailable for settlement.
+}
 SOCCER_GAME_MARKETS = {
     147: ("Chances Created", "chances_created"),
     # 148, 156 and 158 were dropped silently until 2026-08-25. The publisher's own
@@ -196,6 +231,7 @@ MLB_GAME_MARKETS = {
 }
 MARKETS = {
     "nfl": NFL_GAME_MARKETS,
+    "ncaaf": CFB_GAME_MARKETS,
     "mlb": MLB_GAME_MARKETS,
     "mls": SOCCER_GAME_MARKETS,
     "lcup": SOCCER_GAME_MARKETS,
@@ -352,6 +388,11 @@ def resolve_player(con: sqlite3.Connection, league: str, row: Dict, now: str,
                 return bound["player_id"]
 
     published = normalize_name(row["player_name"])
+    reviewed_alias = (LEAGUES[league].get("player_aliases") or {}).get(
+        ((team_code or "").upper(), published)
+    )
+    if reviewed_alias:
+        published = normalize_name(reviewed_alias)
     roster = [dict(r) for r in con.execute(
         "SELECT id, name, team, active FROM players WHERE league=?", (roster_league,))]
     candidates = [r for r in roster if normalize_name(r["name"]) == published]
@@ -476,7 +517,10 @@ def resolve_game(con: sqlite3.Connection, league: str, row: Dict, now: str,
     # already had. What we STORE is whatever that league's rows already carry: codes for
     # NFL, club display names for MLS. Writing a code into a table of display names, or a
     # display name into a table of codes, is how a second vocabulary gets started.
-    if LEAGUES[league]["kind"] == "code":
+    if LEAGUES[league]["kind"] == "fixture_scoreboard":
+        fixture = _scheduled_fixture(con, league, row, vocabulary)
+        home, away = fixture["home"], fixture["away"]
+    elif LEAGUES[league]["kind"] == "code":
         home, away = home_code or row["home"], away_code or row["away"]
     elif LEAGUES[league]["kind"] == "scoreboard":
         display_names = getattr(vocabulary, "display_names", {})
@@ -506,6 +550,28 @@ def resolve_game(con: sqlite3.Connection, league: str, row: Dict, now: str,
     # routinely repeat the same two clubs on consecutive dates; a +/-1 window
     # silently folds the next game into yesterday's fixture. The older league
     # paths retain their tolerance for publisher date disagreements.
+    if LEAGUES[league]["kind"] == "fixture_scoreboard":
+        existing = con.execute(
+            "SELECT id FROM prop_games WHERE league=? AND espn_event_id=?",
+            (league, fixture["game_id"]),
+        ).fetchone()
+        if existing:
+            game_id = existing["id"]
+            _fill_missing_start_time(con, game_id, {"start_time": fixture["start_time"]})
+        else:
+            game_id = con.execute(
+                "INSERT INTO prop_games(league,date,home,away,espn_event_id,start_time) "
+                "VALUES(?,?,?,?,?,?)",
+                (league, row["date"], home, away, fixture["game_id"],
+                 fixture["start_time"]),
+            ).lastrowid
+        con.execute(
+            "INSERT INTO prop_game_source_ids(source,league,source_game_key,game_id,"
+            "first_seen,last_seen) VALUES(?,?,?,?,?,?)",
+            (SOURCE, league, row["source_game_key"], game_id, now, now),
+        )
+        return game_id
+
     if LEAGUES[league]["kind"] == "scoreboard":
         candidates = con.execute(
             "SELECT id, home, away FROM prop_games WHERE league=? AND date=? ORDER BY id",
@@ -667,6 +733,10 @@ def team_vocabulary(con: sqlite3.Connection, league: str) -> Optional[Dict[str, 
     if spec["kind"] == "scoreboard":
         return _scoreboard_team_vocabulary(con, league, spec["team_count"])
 
+    if spec["kind"] == "fixture_scoreboard":
+        return _fixture_scoreboard_team_vocabulary(
+            con, league, spec.get("aliases") or {})
+
     if spec["kind"] == "cross_club":
         return _lcup_team_vocabulary(
             con, spec["mls_team_count"], spec["ligamx_team_count"])
@@ -693,6 +763,113 @@ def team_vocabulary(con: sqlite3.Connection, league: str) -> Optional[Dict[str, 
         index[spelling] = code
         index[_squash(spelling)] = code
     return index or None
+
+
+def _fixture_scoreboard_team_vocabulary(
+    con: sqlite3.Connection, league: str, aliases: Dict[str, str]
+) -> TeamVocabulary:
+    """Team names and codes from the durable fixtures this database can prove."""
+    has_table = con.execute(
+        "SELECT 1 FROM sqlite_master WHERE type='table' AND name='scoreboard_snapshots'"
+    ).fetchone()
+    if not has_table:
+        raise TeamVocabularyError(
+            "scoreboard_snapshots is required for {} fixture identity".format(league))
+
+    index, display_names = {}, {}
+    for stored in con.execute(
+        "SELECT payload FROM scoreboard_snapshots WHERE LOWER(league)=?", (league,)
+    ):
+        try:
+            payload = json.loads(stored[0])
+        except (TypeError, ValueError):
+            raise TeamVocabularyError(
+                "malformed {} scoreboard snapshot payload".format(league))
+        for side in ("home", "away"):
+            team = payload.get(side) or {}
+            code = str(team.get("abbrev") or "").strip().upper()
+            name = str(team.get("name") or "").strip()
+            nickname = str(team.get("nickname") or "").strip()
+            if not code or not name:
+                continue
+            # The NCAAF scoreboard legitimately includes an FCS opponent beside an
+            # FBS club (today: NDSU and Sacramento State).  Those codes are outside
+            # the group-80 FBS directory by definition, but the published fixture is
+            # still authoritative.  Accept the scoreboard's code for fixture identity;
+            # player resolution remains restricted to our NCAAF spine and therefore
+            # fails closed for an opponent we do not cover.
+            prior = display_names.get(code)
+            if prior is not None and prior != name:
+                raise TeamVocabularyError(
+                    "{} code {} has conflicting names: {!r}, {!r}".format(
+                        league, code, prior, name))
+            display_names[code] = name
+            spellings = {code, name}
+            if nickname and normalize_name(name).endswith(normalize_name(nickname)):
+                school = normalize_name(name)[:-len(normalize_name(nickname))].strip()
+                if school:
+                    spellings.add(school)
+            for spelling in spellings:
+                key = normalize_name(spelling)
+                index[key] = code
+                index[_squash(key)] = code
+
+    if not display_names:
+        raise TeamVocabularyError(
+            "{} scoreboard vocabulary is empty".format(league))
+    for spelling, code in aliases.items():
+        if code not in display_names:
+            continue
+        key = normalize_name(spelling)
+        index[key] = code
+        index[_squash(key)] = code
+    return TeamVocabulary(index, display_names)
+
+
+def _scheduled_fixture(
+    con: sqlite3.Connection, league: str, row: Dict,
+    vocabulary: Optional[Dict[str, str]],
+) -> Dict[str, str]:
+    """The one published fixture matching both teams and the exact kickoff."""
+    home_code = resolve_team(vocabulary, row.get("home"))
+    away_code = resolve_team(vocabulary, row.get("away"))
+    matches = []
+    for stored in con.execute(
+        "SELECT payload FROM scoreboard_snapshots WHERE LOWER(league)=?", (league,)
+    ):
+        try:
+            payload = json.loads(stored[0])
+        except (TypeError, ValueError):
+            raise TeamVocabularyError(
+                "malformed {} scoreboard snapshot payload".format(league))
+        home = payload.get("home") or {}
+        away = payload.get("away") or {}
+        if (str(home.get("abbrev") or "").upper(),
+                str(away.get("abbrev") or "").upper()) != (home_code, away_code):
+            continue
+        published_start = str(payload.get("date") or "")
+        try:
+            published_instant = dt.datetime.fromisoformat(
+                published_start.replace("Z", "+00:00"))
+            source_instant = dt.datetime.fromisoformat(
+                str(row.get("start_time") or "").replace("Z", "+00:00"))
+        except ValueError:
+            continue
+        if published_instant != source_instant:
+            continue
+        matches.append({
+            "game_id": str(payload.get("game_id") or ""),
+            "start_time": published_instant.isoformat().replace("+00:00", "Z"),
+            "home": str(home.get("name") or ""),
+            "away": str(away.get("name") or ""),
+        })
+    valid = [match for match in matches if all(match.values())]
+    if len(valid) != 1:
+        raise TeamVocabularyError(
+            "{} fixture {} @ {} at {} matched {} published games".format(
+                league, row.get("away"), row.get("home"), row.get("start_time"),
+                len(valid)))
+    return valid[0]
 
 
 def _scoreboard_team_vocabulary(
@@ -987,28 +1164,23 @@ def load_archive(date_str: str) -> Dict:
         return json.load(handle)
 
 
-def main(argv=None) -> int:
-    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("league", choices=sorted(LEAGUES))
-    parser.add_argument("--dry-run", action="store_true",
-                        help="parse and resolve, write nothing")
-    parser.add_argument("--from-archive", metavar="YYYY-MM-DD",
-                        help="read an archived payload instead of making a request")
-    args = parser.parse_args(argv)
+def load_archive_file(path: str) -> Dict:
+    absolute = os.path.abspath(path)
+    if not os.path.isfile(absolute):
+        raise SystemExit("archived payload does not exist: {}".format(absolute))
+    opener = gzip.open if absolute.endswith(".gz") else open
+    with opener(absolute, "rt") as handle:
+        return json.load(handle)
 
-    if args.from_archive:
-        payload = load_archive(args.from_archive)
-        print("Reading the archived payload for {}.".format(args.from_archive))
-    else:
-        payload, _ = archive.fetch()
-        print("Fetched the RotoWire relay once.")
 
-    rows, report = parse(payload, args.league)
+def ingest_payload(payload: Dict, league: str, dry_run: bool = False) -> int:
+    """Parse and publish one league from an already-fetched relay payload."""
+    rows, report = parse(payload, league)
     counts = report["counts"]
     # The sport label, not the league: "Soccer" is MLS plus four European competitions,
     # and reporting 183 of them as "MLS props" would overstate our coverage five ways.
     print("Source: {} {} props, {} of them Game category, {} Season (no fixture, not "
-          "ingested).".format(counts["sport_props"], LEAGUES[args.league]["sport"],
+          "ingested).".format(counts["sport_props"], LEAGUES[league]["sport"],
                               counts["game_props"], counts["season_props"]))
 
     for (market_id, name), n in sorted(report["unmapped_markets"].items(),
@@ -1021,21 +1193,21 @@ def main(argv=None) -> int:
         if counts[reason]:
             print("  {}: {} props skipped".format(reason, counts[reason]))
 
-    summary = ingest(rows, args.league, dry_run=args.dry_run)
+    summary = ingest(rows, league, dry_run=dry_run)
     print("Ingest: {new} new, {refreshed} refreshed across {games} games and {players} "
           "players; {unresolved_players} players queued ({unresolved_player_rows} rows)."
           .format(**summary))
     if summary["unknown_team"]:
         # For a club league this is the competition filter doing its job, not a defect:
         # a fixture whose clubs are not in this league is another league's fixture.
-        kind = LEAGUES[args.league]["kind"]
+        kind = LEAGUES[league]["kind"]
         label = (
             "rows under this sport label but not in this league" if kind == "club"
             else "rows not proven to be an MLS-vs-Liga MX fixture" if kind == "cross_club"
             else "rows on a team code the league does not publish"
         )
         print("  {} {}.".format(summary["unknown_team"], label))
-    if args.dry_run:
+    if dry_run:
         print("dry run -- nothing written.")
         return 0
     # A board with rows we correctly REJECTED is not a failure. `game_props`
@@ -1058,12 +1230,43 @@ def main(argv=None) -> int:
     considered = summary["board_rows"] - summary["unknown_team"]
     if considered > 0 and not (summary["new"] + summary["refreshed"]):
         print("ERROR: {} {} rows passed the league filter and none ingested."
-              .format(considered, args.league))
+              .format(considered, league))
         return 2
     if counts["game_props"] and considered <= 0:
         print("  no {} fixtures on this board; every row belonged to another "
-              "competition. Not an error.".format(args.league))
+              "competition. Not an error.".format(league))
     return 0
+
+
+def main(argv=None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument("league", nargs="+", choices=sorted(LEAGUES))
+    parser.add_argument("--dry-run", action="store_true",
+                        help="parse and resolve, write nothing")
+    parser.add_argument("--from-archive", metavar="YYYY-MM-DD",
+                        help="read an archived payload instead of making a request")
+    parser.add_argument("--archive-file", metavar="PATH",
+                        help="read this exact archived payload instead of making a request")
+    args = parser.parse_args(argv)
+
+    if args.from_archive and args.archive_file:
+        parser.error("--from-archive and --archive-file are mutually exclusive")
+    if args.archive_file:
+        payload = load_archive_file(args.archive_file)
+        print("Reading the archived payload {}.".format(os.path.abspath(args.archive_file)))
+    elif args.from_archive:
+        payload = load_archive(args.from_archive)
+        print("Reading the archived payload for {}.".format(args.from_archive))
+    else:
+        payload, _ = archive.fetch()
+        print("Fetched the RotoWire relay once for {}.".format(
+            ", ".join(args.league)))
+
+    result = 0
+    for league in args.league:
+        print("--- {} ---".format(league))
+        result = max(result, ingest_payload(payload, league, dry_run=args.dry_run))
+    return result
 
 
 if __name__ == "__main__":
