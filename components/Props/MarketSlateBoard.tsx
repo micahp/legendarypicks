@@ -310,6 +310,26 @@ export default function MarketSlateBoard({ league, date }: { league: string; dat
   const historyControllers = useRef(new Map<string, AbortController>())
 
   useEffect(() => {
+    const closeOpenLineMenus = (event: PointerEvent) => {
+      document.querySelectorAll<HTMLDetailsElement>('[data-line-selector][open]').forEach(menu => {
+        if (!menu.contains(event.target as Node)) menu.removeAttribute('open')
+      })
+    }
+    const closeLineMenusOnEscape = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return
+      document.querySelectorAll<HTMLDetailsElement>('[data-line-selector][open]')
+        .forEach(menu => menu.removeAttribute('open'))
+    }
+
+    document.addEventListener('pointerdown', closeOpenLineMenus)
+    document.addEventListener('keydown', closeLineMenusOnEscape)
+    return () => {
+      document.removeEventListener('pointerdown', closeOpenLineMenus)
+      document.removeEventListener('keydown', closeLineMenusOnEscape)
+    }
+  }, [])
+
+  useEffect(() => {
     const controller = new AbortController()
     const summaryParams = new URLSearchParams({ date, summary: '1' })
     if (league !== 'All') summaryParams.set('league', league)
@@ -751,6 +771,9 @@ export default function MarketSlateBoard({ league, date }: { league: string; dat
                         </span>
                       </>
                     )}
+                    <span data-provider-label className="text-[10px] uppercase tracking-wide text-zinc-600">
+                      {sourceLabel(row.source)}
+                    </span>
                   </div>
                 </div>
 

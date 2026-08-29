@@ -69,6 +69,8 @@ describe('alternate provider lines', () => {
     expect(visibleLine.nextElementSibling?.textContent).toBe('▾')
     expect(selector.className).toContain('font-bold')
     expect(selector.className).toContain('text-white')
+    expect(selector.textContent).toBe('0.5▾')
+    expect(document.querySelector('[data-provider-label]')?.textContent).toBe('prizepicks')
     expect(listbox.className).toContain('bg-zinc-950')
     expect(options).toEqual([
       '0.5 · prizepicks',
@@ -77,6 +79,11 @@ describe('alternate provider lines', () => {
       '2.5 · bovada',
     ])
     expect(options.join(' ')).not.toContain('rotowire:')
+
+    const menu = selector.closest('details') as HTMLDetailsElement
+    expect(menu.open).toBe(true)
+    fireEvent.pointerDown(document.body)
+    expect(menu.open).toBe(false)
   })
 
   it('updates the offer odds and chart line when another option is selected', async () => {
@@ -91,6 +98,7 @@ describe('alternate provider lines', () => {
     const row = document.querySelector('[data-market-row]') as HTMLElement
     await waitFor(() => {
       expect(document.querySelector('[data-selected-line]')?.textContent).toBe('2.5')
+      expect(document.querySelector('[data-provider-label]')?.textContent).toBe('bovada')
       expect(row.textContent).toContain('-110')
       expect(row.textContent).toContain('+100')
       expect(row.textContent).not.toContain('no line price')

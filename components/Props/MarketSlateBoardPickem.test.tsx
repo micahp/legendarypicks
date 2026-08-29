@@ -65,10 +65,10 @@ describe('a pick’em book shows no line price', () => {
     expect(row.textContent).toContain('no line price')
   })
 
-  it('does not show a provider outside an alternate-line dropdown', async () => {
+  it('shows the original provider label without the RotoWire relay prefix', async () => {
     render(<MarketSlateBoard league="ligamx" date="2026-08-26" />)
     const row = await rowFor('Pickem Player')
-    expect(row.textContent).not.toContain('underdog')
+    expect(row.textContent).toContain('underdog')
     expect(row.textContent).not.toContain('rotowire:')
   })
 
