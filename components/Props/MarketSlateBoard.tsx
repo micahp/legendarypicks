@@ -105,32 +105,10 @@ function marketLabel(market: string): string {
 // never varies, and it is identical on both sides, which no real book does. Shown
 // as a number it invites a comparison that cannot mean anything -- so it is not
 // shown. A blank is honest; a placeholder rendered as a measurement is not.
-//
-// Classification measured 2026-08-29 (docs/PROPS-ODDS-TAXONOMY.md): sleeper is
-// a real book on the relay (63 distinct odds over 500 rows); pick6 is a
-// -137 placeholder (296 rows, one value). prizepicks and underdog via the
-// relay are placeholders; the DIRECT underdog ingest (`underdog`, UFC) carries
-// real prices and must not match this pattern.
-const PICKEM_SOURCES = /^(rotowire:)?(prizepicks|underdog|pick6)(-demon|-goblin)?$/
+const PICKEM_SOURCES = /^(rotowire:)?(prizepicks|underdog|sleeper|pick6)(-demon|-goblin)?$/
 
 function isPickem(source: string | undefined): boolean {
   return PICKEM_SOURCES.test((source || '').trim().toLowerCase())
-}
-
-// The default-line rule (docs/PROPS-ODDS-TAXONOMY.md §5): when a card carries
-// offers from real sportsbooks, the default is the LOWEST line among those
-// real-odds offers — a real price beats a placeholder regardless of line, and
-// the deepest real book wins the slot. Placeholder-only cards fall back to the
-// lowest line overall, which is the only option for the MLS/NFL-depth markets
-// no real book prices. The dropdown still lists every offer.
-function defaultOfferKey(row: BoardRow): string | null {
-  if (!row.lines.length) return null
-  const real = row.lines.filter(l => !isPickem(l.source))
-  const pool = real.length ? real : row.lines
-  const lowest = pool.reduce((a, b) =>
-    b.line < a.line ? b : a
-  )
-  return lowest.offerKey
 }
 
 function sourceLabel(source: string): string {
@@ -413,7 +391,6 @@ export default function MarketSlateBoard({ league, date }: { league: string; dat
   const allRows = useMemo(() => groupProps(props), [props])
   const activeRows = useMemo<ActiveBoardRow[]>(() => allRows.map(row => {
     const selected = row.lines.find(line => line.offerKey === selectedLineByRow[row.key])
-      || row.lines.find(line => line.offerKey === defaultOfferKey(row))
       || row.lines[0]
     return { ...row, ...selected }
   }), [allRows, selectedLineByRow])
