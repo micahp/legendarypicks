@@ -156,8 +156,8 @@ def test_multi_league_runner_fetches_the_relay_once(monkeypatch):
         fetched.append(True)
         return payload, b"{}"
 
-    def fake_ingest_payload(received, league, dry_run=False):
-        ingested.append((received, league, dry_run))
+    def fake_ingest_payload(received, league, dry_run=False, captured_at=None):
+        ingested.append((received, league, dry_run, captured_at))
         return 0
 
     monkeypatch.setattr(rw.archive, "fetch", fake_fetch)
@@ -165,6 +165,24 @@ def test_multi_league_runner_fetches_the_relay_once(monkeypatch):
 
     assert rw.main(["nfl", "mls", "ncaaf", "--dry-run"]) == 0
     assert len(fetched) == 1
-    assert [(league, dry) for _, league, dry in ingested] == [
+    assert [(league, dry) for _, league, dry, _ in ingested] == [
         ("nfl", True), ("mls", True), ("ncaaf", True),
     ]
+
+
+def test_archive_replay_cannot_replace_a_newer_live_line():
+    with tempfile.TemporaryDirectory() as directory:
+        path = os.path.join(directory, "picks.db")
+        _database(path)
+        rw.DB = path
+        rows, _ = rw.parse(_payload(), "ncaaf")
+        rw.ingest(rows, "ncaaf", captured_at="2026-08-29T18:00:00+00:00")
+
+        older = rw.ingest(
+            rows, "ncaaf", captured_at="2026-08-29T07:32:56+00:00")
+
+        assert older["stale_archive"] == 2
+        with sqlite3.connect(path) as con:
+            assert con.execute(
+                "SELECT DISTINCT captured_at FROM props"
+            ).fetchall() == [("2026-08-29T18:00:00+00:00",)]

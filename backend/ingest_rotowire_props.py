@@ -632,10 +632,18 @@ def upsert_prop(con: sqlite3.Connection, game_id: int, player_id: int, row: Dict
                 now: str) -> str:
     source = "{}:{}".format(SOURCE, row["book"])
     existing = con.execute(
-        "SELECT id FROM props WHERE game_id=? AND player_id=? AND market=? AND line=? "
+        "SELECT id,captured_at FROM props WHERE game_id=? AND player_id=? AND market=? AND line=? "
         "AND side=? AND source=?",
         (game_id, player_id, row["market"], row["line"], row["side"], source)).fetchone()
     if existing:
+        try:
+            incoming = dt.datetime.fromisoformat(now.replace("Z", "+00:00"))
+            stored = dt.datetime.fromisoformat(
+                str(existing["captured_at"] or "").replace("Z", "+00:00"))
+        except ValueError:
+            incoming = stored = None
+        if incoming is not None and stored is not None and incoming < stored:
+            return "stale_archive"
         con.execute("UPDATE props SET captured_at=?, odds=?, odds_captured_at=? WHERE id=?",
                     (now, row["odds"], now if row["odds"] is not None else None,
                      existing["id"]))
@@ -648,7 +656,8 @@ def upsert_prop(con: sqlite3.Connection, game_id: int, player_id: int, row: Dict
     return "new"
 
 
-def ingest(rows: List[Dict], league: str, dry_run: bool = False) -> Dict:
+def ingest(rows: List[Dict], league: str, dry_run: bool = False,
+           captured_at: Optional[str] = None) -> Dict:
     # A 30s busy timeout, not the 5s default: the scoreboard timers write every minute
     # and prod's props ingest is already 500ing on `database is locked` (roadmap B14).
     # Waiting for the writer is correct here; failing the run and dropping a slate of
@@ -656,7 +665,7 @@ def ingest(rows: List[Dict], league: str, dry_run: bool = False) -> Dict:
     con = sqlite3.connect(DB, timeout=30)
     con.row_factory = sqlite3.Row
     ensure_schema(con)
-    now = dt.datetime.now(dt.timezone.utc).isoformat()
+    now = captured_at or dt.datetime.now(dt.timezone.utc).isoformat()
     summary = collections.Counter()
     summary["board_rows"] = len(rows)
     games, players = {}, {}
@@ -694,7 +703,7 @@ def ingest(rows: List[Dict], league: str, dry_run: bool = False) -> Dict:
     # raising: `**Counter()` drops absent keys, it does not default them.
     return {key: summary[key] for key in (
         "board_rows", "new", "refreshed", "games", "players", "unresolved_players",
-        "unresolved_player_rows", "unknown_team")}
+        "unresolved_player_rows", "unknown_team", "stale_archive")}
 
 
 def team_vocabulary(con: sqlite3.Connection, league: str) -> Optional[Dict[str, str]]:
@@ -1173,7 +1182,8 @@ def load_archive_file(path: str) -> Dict:
         return json.load(handle)
 
 
-def ingest_payload(payload: Dict, league: str, dry_run: bool = False) -> int:
+def ingest_payload(payload: Dict, league: str, dry_run: bool = False,
+                   captured_at: Optional[str] = None) -> int:
     """Parse and publish one league from an already-fetched relay payload."""
     rows, report = parse(payload, league)
     counts = report["counts"]
@@ -1193,10 +1203,13 @@ def ingest_payload(payload: Dict, league: str, dry_run: bool = False) -> int:
         if counts[reason]:
             print("  {}: {} props skipped".format(reason, counts[reason]))
 
-    summary = ingest(rows, league, dry_run=dry_run)
+    summary = ingest(rows, league, dry_run=dry_run, captured_at=captured_at)
     print("Ingest: {new} new, {refreshed} refreshed across {games} games and {players} "
           "players; {unresolved_players} players queued ({unresolved_player_rows} rows)."
           .format(**summary))
+    if summary["stale_archive"]:
+        print("  {} archived rows were older than stored live rows; newer odds retained."
+              .format(summary["stale_archive"]))
     if summary["unknown_team"]:
         # For a club league this is the competition filter doing its job, not a defect:
         # a fixture whose clubs are not in this league is another league's fixture.
@@ -1251,9 +1264,14 @@ def main(argv=None) -> int:
 
     if args.from_archive and args.archive_file:
         parser.error("--from-archive and --archive-file are mutually exclusive")
+    captured_at = None
     if args.archive_file:
         payload = load_archive_file(args.archive_file)
-        print("Reading the archived payload {}.".format(os.path.abspath(args.archive_file)))
+        archive_path = os.path.abspath(args.archive_file)
+        captured_at = dt.datetime.fromtimestamp(
+            os.path.getmtime(archive_path), dt.timezone.utc).isoformat()
+        print("Reading the archived payload {} captured at {}.".format(
+            archive_path, captured_at))
     elif args.from_archive:
         payload = load_archive(args.from_archive)
         print("Reading the archived payload for {}.".format(args.from_archive))
@@ -1265,7 +1283,8 @@ def main(argv=None) -> int:
     result = 0
     for league in args.league:
         print("--- {} ---".format(league))
-        result = max(result, ingest_payload(payload, league, dry_run=args.dry_run))
+        result = max(result, ingest_payload(
+            payload, league, dry_run=args.dry_run, captured_at=captured_at))
     return result
 
 
