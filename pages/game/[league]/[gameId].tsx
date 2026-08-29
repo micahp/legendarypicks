@@ -19,6 +19,7 @@ import { useGameProps } from '../../../components/Game/useGameProps'
 import WCContext from '../../../components/Game/WCContext'
 import BoothFeed from '../../../components/Game/BoothFeed'
 import ListenLive, { LCUP_PAGE } from '../../../components/ListenLive'
+import { RADIO_LABELS, radioForMatchup } from '../../../lib/radio'
 import { SHOW_BOOTH } from '../../../lib/featureFlags'
 
 const TAB_DEFS: { key: Tab; label: string }[] = [
@@ -338,6 +339,8 @@ export default function GameDetailPage() {
   }
 
   const ctx = detail?.context
+  // Which club (if either) has a verified English radio stream — null hides the player.
+  const radioMatch = radioForMatchup(ctx?.home_team, ctx?.away_team)
   const sHome = detail?.strength ? detail.strength[ctx?.home_team || ''] : undefined
   const sAway = detail?.strength ? detail.strength[ctx?.away_team || ''] : undefined
   const homeRecord = sHome ? `${sHome.wins}-${sHome.losses}` : ''
@@ -362,10 +365,12 @@ export default function GameDetailPage() {
         homeRecord={homeRecord} awayRecord={awayRecord}
       />
 
-      {/* Leagues Cup live audio: ESPN 106.3 West Palm (WUUB-FM), Inter Miami's
-          official English radio partner — relayed to MP3 via /api/stream/lcup. */}
-      {lg === 'wc' ? <ListenLive /> : lg === 'lcup' ? (
-        <ListenLive streamUrl="/api/stream/lcup" streamPageUrl={LCUP_PAGE} label="ESPN 106.3 West Palm · English radio (free)" />
+      {/* Live audio: per-team English radio, sourced from data/radio-mls.json
+          (verified streams only) and relayed to MP3 by /api/stream/<key>.
+          Renders only when one of the two clubs has a verified station —
+          an unverified stream is never offered. */}
+      {lg === 'wc' ? <ListenLive /> : radioMatch ? (
+        <ListenLive streamUrl={radioMatch.streamUrl} streamPageUrl={LCUP_PAGE} label={RADIO_LABELS[radioMatch.key] || 'English radio (free)'} />
       ) : null}
 
       {/* Game context: WC gets the broadcast+market+form summary; others the AI matchup story */}

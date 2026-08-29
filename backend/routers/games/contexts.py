@@ -202,8 +202,41 @@ def lcup_game_context(game_id: str, limit: int = Query(12, ge=1, le=100)):
 # Miami's official English-language radio partner (airs every Inter Miami game).
 # amperwave HLS won't play in Chrome's <audio>, so the relay transcodes to MP3
 # with ffmpeg and streams it — one ffmpeg per listener.
-_LCUP_RADIO = {
-    # CLB game test (2026-08-27): 97.1 The Fan WBNS-FM, Crew English radio,
-    # live during tonight's fixture — plain AAC shoutcast, ffmpeg handles it.
-    "lcup": "https://radiohio.streamguys1.com/cols/wbnsfm-iheart.m4a",
-}
+#
+# Sourced from the repo's own radio maps (data/radio-mls.json, verified entries)
+# so coverage scales with the JSON instead of this dict. `_LCUP_RADIO` keeps its
+# name (game detail + misc.py import it) but now reads ATX/CLB/MIA at startup.
+# A stream verified on 2026-08-06 may not resolve today; the endpoint reports
+# the failure as a 502 upstream rather than hanging.
+_RADIO_MLS_PATH = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)),
+    "..", "..", "..", "data", "radio-mls.json",
+)
+
+
+def _load_league_radio() -> dict:
+    try:
+        with open(_RADIO_MLS_PATH) as f:
+            d = json.load(f)
+        # league -> stream, using only verified entries (never a placeholder).
+        return {
+            "lcup": d["MIA"]["stream"],  # reference entry: every Inter Miami game
+            "mls": d,
+        }
+    except Exception as exc:
+        print(f"[sports_service] radio map unavailable ({exc})")
+        return {}
+
+
+_RADIO_MAP = _load_league_radio()
+
+# Per-club English radio, sourced from data/radio-mls.json (verified entries
+# only). Keyed by the lowercase abbrev the frontend's lib/radio.ts streams
+# against, e.g. /api/stream/clb. MIA is the lcup reference entry: ESPN 106.3
+# airs every Inter Miami game, which is what game detail has always played for
+# lcup fixtures without a verified club station of their own.
+_LCUP_RADIO = {k.lower(): v["stream"] for k, v in _RADIO_MAP["mls"].items()
+               if not k.startswith("_") and isinstance(v, dict)
+               and v.get("verified") and v.get("stream")}
+_LCUP_RADIO["lcup"] = _LCUP_RADIO["clb"]  # tonight's fixture: Columbus radio
+_LCUP_RADIO.setdefault("atx", "https://stream.revma.ihrhls.com/zc7053/hls.m3u8")
