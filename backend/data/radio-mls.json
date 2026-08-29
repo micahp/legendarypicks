@@ -1,0 +1,211 @@
+{
+ "_meta": {
+  "updated": "2026-08-27",
+  "note": "MLS radio map. MIA (Inter Miami) is the reference entry with the verified WUUB stream used by the booth pipeline. All other entries are skeleton placeholders \u2014 verified:false until a stream URL is confirmed. NEVER fabricate a callsign or URL. 2026-08-27 pass: 14 streams verified live (HTTP 200 audio probe); the rest carry confirmed callsigns but no open stream URL (private apps/audacy/tunein-only)."
+ },
+ "_wc": {
+  "station": "iHeart FIFA World Cup 2026 (FOX Sports English)",
+  "city": "National",
+  "stream": "https://stream.revma.ihrhls.com/zc11554",
+  "verified": true
+ },
+ "MIA": {
+  "station": "WUUB-FM ESPN 106.3",
+  "city": "West Palm Beach, FL",
+  "stream": "https://live.amperwave.net/manifest/goodkarma-wuubfmaac-hlsc2.m3u8?source=tunein&source=TuneIn&gdpr=0&us_privacy=1YNY",
+  "verified": true
+ },
+ "ATL": {
+  "station": "92.9 The Game (WZGC-FM)",
+  "city": "Atlanta, GA",
+  "stream": null,
+  "verified": false,
+  "note": "station confirmed via club/broadcast listings 2026-08-27; no open stream URL found"
+ },
+ "ATX": {
+  "station": "Alt 97.5 (KASE-HD2, iHeartRadio)",
+  "city": "Austin, TX",
+  "stream": "https://stream.revma.ihrhls.com/zc7053/hls.m3u8",
+  "verified": true
+ },
+ "CLB": {
+  "station": "97.1 The Fan (WBNS-FM)",
+  "city": "Columbus, OH",
+  "stream": "https://radiohio.streamguys1.com/cols/wbnsfm-iheart.m4a",
+  "verified": true
+ },
+ "CLT": {
+  "station": "Sports Radio WFNZ (WFNZ-AM 92.7 FM)",
+  "city": "Charlotte, NC",
+  "stream": "https://playerservices.streamtheworld.com/api/livestream-redirect/WFNZAMAAC.aac",
+  "verified": true
+ },
+ "COL": {
+  "station": "Altitude Sports Radio (KKSE-FM 94.9)",
+  "city": "Denver, CO",
+  "stream": "https://playerservices.streamtheworld.com/api/livestream-redirect/KKSEFMAAC.aac",
+  "verified": true
+ },
+ "DAL": {
+  "station": "no English radio flagship (club streams only)",
+  "city": "Dallas, TX",
+  "stream": null,
+  "verified": false,
+  "note": "no English flagship radio found 2026-08-27"
+ },
+ "DC": {
+  "station": "104.7 WONK FM (WBIG-FM, iHeartRadio)",
+  "city": "Washington, DC",
+  "stream": "https://stream.revma.ihrhls.com/zc2505/hls.m3u8",
+  "verified": true
+ },
+ "HOU": {
+  "station": "Dynamo Radio (HDFC app/Mixlr)",
+  "city": "Houston, TX",
+  "stream": null,
+  "verified": false,
+  "note": "station confirmed via club/broadcast listings 2026-08-27; no open stream URL found"
+ },
+ "LA": {
+  "station": "LA Galaxy Radio (club stream)",
+  "city": "Los Angeles, CA",
+  "stream": null,
+  "verified": false,
+  "note": "station confirmed via club/broadcast listings 2026-08-27; no open stream URL found"
+ },
+ "LAFC": {
+  "station": "ESPN LA 710 (KSPN-AM) / KFWB 980",
+  "city": "Los Angeles, CA",
+  "stream": null,
+  "verified": false,
+  "note": "flagship confirmed via lafc.com 2026-08-27; ESPN LA streams app-only"
+ },
+ "MIN": {
+  "station": "MNUFC Radio (club app)",
+  "city": "Minneapolis, MN",
+  "stream": null,
+  "verified": false,
+  "note": "station confirmed via club/broadcast listings 2026-08-27; no open stream URL found"
+ },
+ "MTL": {
+  "station": "TSN 690 (CKGM-AM)",
+  "city": "Montreal, QC",
+  "stream": "https://playerservices.streamtheworld.com/api/livestream-redirect/CKGMAMAAC.aac",
+  "verified": true
+ },
+ "NE": {
+  "station": "98.5 The Sports Hub (WBZ-FM)",
+  "city": "Boston, MA",
+  "stream": "https://playerservices.streamtheworld.com/api/livestream-redirect/WBZFMAAC.aac",
+  "verified": true
+ },
+ "NSH": {
+  "station": "104.5 The Zone (WGFX-FM)",
+  "city": "Nashville, TN",
+  "stream": "https://playerservices.streamtheworld.com/api/livestream-redirect/WGFXFMAAC.aac",
+  "verified": true
+ },
+ "NYC": {
+  "station": "WFAN (audacy; NYCFC English radio)",
+  "city": "New York, NY",
+  "stream": null,
+  "verified": false,
+  "note": "station confirmed via club/broadcast listings 2026-08-27; no open stream URL found"
+ },
+ "ORL": {
+  "station": "FM 96.9 The Game (WYGM-AM, iHeartRadio)",
+  "city": "Orlando, FL",
+  "stream": "https://stream.revma.ihrhls.com/zc601/hls.m3u8",
+  "verified": true
+ },
+ "PHI": {
+  "station": "97.5 The Fanatic (WPEN-FM)",
+  "city": "Philadelphia, PA",
+  "stream": "https://playerservices.streamtheworld.com/api/livestream-redirect/WPENFMAAC.aac",
+  "verified": true
+ },
+ "POR": {
+  "station": "750 The Game (KDSP-AM, iHeartRadio)",
+  "city": "Portland, OR",
+  "stream": "https://stream.revma.ihrhls.com/zc381/hls.m3u8",
+  "verified": true
+ },
+ "RBNY": {
+  "station": "Red Bulls Radio (TuneIn club channel)",
+  "city": "Harrison, NJ",
+  "stream": null,
+  "verified": false,
+  "note": "station confirmed via club/broadcast listings 2026-08-27; no open stream URL found"
+ },
+ "RSL": {
+  "station": "ESPN 700 (KALL-AM)",
+  "city": "Salt Lake City, UT",
+  "stream": null,
+  "verified": false,
+  "note": "flagship per RSL broadcast listings; no open stream URL"
+ },
+ "SD": {
+  "station": "San Diego Sports 760 (KGB-AM, iHeartRadio)",
+  "city": "San Diego, CA",
+  "stream": "https://stream.revma.ihrhls.com/zc249/hls.m3u8",
+  "verified": true
+ },
+ "SEA": {
+  "station": "Sports Radio 950 KJR (KJR-AM, iHeartRadio)",
+  "city": "Seattle, WA",
+  "stream": "https://stream.revma.ihrhls.com/zc2565/hls.m3u8",
+  "verified": true
+ },
+ "SJ": {
+  "station": "KSFO 810 AM",
+  "city": "San Jose, CA",
+  "stream": "https://playerservices.streamtheworld.com/api/livestream-redirect/KSFOAMAAC.aac",
+  "verified": true
+ },
+ "SKC": {
+  "station": "Sports Radio 810 WHB",
+  "city": "Kansas City, MO",
+  "stream": null,
+  "verified": false,
+  "note": "flagship per sportingkc.com 2026-08-27; no open stream URL"
+ },
+ "STL": {
+  "station": "Y98.1 KYKY-FM (Audacy)",
+  "city": "St. Louis, MO",
+  "stream": null,
+  "verified": false,
+  "note": "station confirmed via club/broadcast listings 2026-08-27; no open stream URL found"
+ },
+ "TOR": {
+  "station": "TSN 1050 (CHUM-AM)",
+  "city": "Toronto, ON",
+  "stream": "https://playerservices.streamtheworld.com/api/livestream-redirect/CHUMAMAAC.aac",
+  "verified": true
+ },
+ "VAN": {
+  "station": "AM730 CKST (Corus)",
+  "city": "Vancouver, BC",
+  "stream": null,
+  "verified": false,
+  "note": "station confirmed via club/broadcast listings 2026-08-27; no open stream URL found"
+ },
+ "CHI": {
+  "station": "WLS 890 AM (Cumulus)",
+  "city": "Chicago, IL",
+  "stream": "https://playerservices.streamtheworld.com/api/livestream-redirect/WLSAMAAC.aac",
+  "verified": true
+ },
+ "CIN": {
+  "station": "ESPN 1530 (WCKY-AM, iHeartRadio)",
+  "city": "Cincinnati, OH",
+  "stream": "https://stream.revma.ihrhls.com/zc1697/hls.m3u8",
+  "verified": true
+ },
+ "NYR": {
+  "station": "Red Bulls Radio (TuneIn club channel)",
+  "city": "Harrison, NJ",
+  "stream": null,
+  "verified": false,
+  "note": "station confirmed via club/broadcast listings 2026-08-27; no open stream URL found"
+ }
+}

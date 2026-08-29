@@ -208,10 +208,17 @@ def lcup_game_context(game_id: str, limit: int = Query(12, ge=1, le=100)):
 # name (game detail + misc.py import it) but now reads ATX/CLB/MIA at startup.
 # A stream verified on 2026-08-06 may not resolve today; the endpoint reports
 # the failure as a 502 upstream rather than hanging.
-_RADIO_MLS_PATH = os.path.join(
-    os.path.dirname(os.path.abspath(__file__)),
-    "..", "..", "..", "data", "radio-mls.json",
-)
+# The radio map ships in backend/data/ (mounted into the prod container) with
+# the repo-root data/ copy as the authoring location. Both are checked so the
+# module works in-container and in-repo.
+_RADIO_MLS_CANDIDATES = [
+    os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                 "..", "..", "data", "radio-mls.json"),
+    os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                 "..", "..", "..", "data", "radio-mls.json"),
+]
+_RADIO_MLS_PATH = next((p for p in _RADIO_MLS_CANDIDATES if os.path.isfile(p)),
+                       _RADIO_MLS_CANDIDATES[0])
 
 
 def _load_league_radio() -> dict:
