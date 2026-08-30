@@ -30,7 +30,9 @@ def _database():
         INSERT INTO players VALUES
           (10, 'College Quarterback', 'NCSU', '1001'),
           (11, 'College Running Back', 'NCSU', '1002'),
-          (12, 'College Kicker', 'NCSU', '1003');
+          (12, 'College Kicker', 'NCSU', '1003'),
+          (13, 'Zero Receiver', 'NCSU', '1004'),
+          (14, 'Unproven Bench Player', 'NCSU', '1005');
         INSERT INTO props VALUES
           (1, 1, 'pass_attempts', 24.5, 'over', 10),
           (2, 1, 'pass_completions', 13.5, 'over', 10),
@@ -48,7 +50,9 @@ def _database():
           (14, 1, 'total_touchdowns', 1.5, 'over', 11),
           (15, 1, 'field_goals_made', 1.5, 'over', 12),
           (16, 1, 'extra_points_made', 2.5, 'over', 12),
-          (17, 1, 'kicking_points', 8.5, 'over', 12);
+          (17, 1, 'kicking_points', 8.5, 'over', 12),
+          (18, 1, 'receiving_yards', 0.5, 'under', 13),
+          (19, 1, 'receiving_yards', 0.5, 'under', 14);
     """)
     return con
 
@@ -69,6 +73,7 @@ def _boxscore():
              "athletes": [
                  _athlete("1001", "College Quarterback", ["5", "20", "4", "1"]),
                  _athlete("1002", "College Running Back", ["10", "60", "6", "1"]),
+                 _athlete("1004", "Zero Receiver", ["1", "4", "4", "0"]),
              ]},
             {"name": "receiving", "labels": ["REC", "YDS", "AVG", "TD"],
              "athletes": [_athlete("1002", "College Running Back", ["3", "30", "10", "1"])]},
@@ -83,7 +88,7 @@ def test_all_ingested_ncaaf_markets_settle_from_published_boxscore(monkeypatch):
     monkeypatch.setattr(espn_client, "boxscore", lambda *_args: _boxscore())
 
     assert settlement.settle_game(con, 1) == {
-        "settled": 17, "void": 0, "unmappable": 0, "pending": 0, "errors": 0,
+        "settled": 18, "void": 0, "unmappable": 0, "pending": 1, "errors": 0,
     }
     rows = con.execute(
         "SELECT prop_id, actual_value, hit FROM prop_results ORDER BY prop_id"
@@ -93,5 +98,5 @@ def test_all_ingested_ncaaf_markets_settle_from_published_boxscore(monkeypatch):
         (5, 1.0, 1), (6, 20.0, 1), (7, 1.0, 1), (8, 270.0, 1),
         (9, 30.0, 1), (10, 3.0, 1), (11, 10.0, 1), (12, 90.0, 1),
         (13, 2.0, 1), (14, 2.0, 1), (15, 2.0, 1), (16, 3.0, 1),
-        (17, 9.0, 1),
+        (17, 9.0, 1), (18, 0.0, 1),
     ]

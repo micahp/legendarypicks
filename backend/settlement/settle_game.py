@@ -4,7 +4,11 @@ import datetime as dt
 import sqlite3
 
 from settlement.market_mapping import resolve_market, resolve_compound_market
-from settlement.boxscore_extract import _find_player_stat, _find_player_compound_stat
+from settlement.boxscore_extract import (
+    _find_player_stat,
+    _find_player_compound_stat,
+    _player_appeared,
+)
 import sys
 
 from settlement.mlb_api import _fetch_mlb_gamepk, _fetch_mlb_final
@@ -309,6 +313,17 @@ def settle_game(con: sqlite3.Connection, game_id: int) -> dict:
             actual = _find_player_stat(
                 box, prop["player_name"], prop["player_team"],
                 category, stat_key, espn_id=prop["espn_id"])
+
+        # ESPN omits a player from a category when his result there is zero.
+        # Grade that omission as zero only when another boxscore category
+        # independently proves the same stable athlete appeared. A player
+        # absent from the whole boxscore remains pending instead of turning a
+        # possible DNP into a losing over/winning under.
+        if (actual is None and league == "ncaaf"
+                and _player_appeared(
+                    box, prop["player_name"], prop["player_team"],
+                    espn_id=prop["espn_id"])):
+            actual = 0.0
 
         if actual is None:
             pending += 1

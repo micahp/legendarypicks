@@ -130,6 +130,31 @@ def _find_player_stat(boxscore: dict, player_name: str, team: str,
     return None
 
 
+def _player_appeared(boxscore: dict, player_name: str, team: str,
+                     espn_id: Optional[str] = None) -> bool:
+    """Whether the completed boxscore proves this athlete participated.
+
+    A missing receiving row is zero only when the same athlete appears in some
+    other stat group. Absence from the whole boxscore is ambiguous (DNP versus
+    an appearance with no recorded counting stat) and must not be graded zero.
+    """
+    players = (boxscore or {}).get("players") or []
+    wanted_id = str(espn_id or "")
+    wanted_name = _norm_name(player_name)
+    wanted_team = str(team or "").upper()
+    for team_group in players:
+        published_team = (team_group.get("team") or {}).get("abbreviation", "").upper()
+        for stats_group in team_group.get("statistics", []) or []:
+            for entry in stats_group.get("athletes", []) or []:
+                athlete = entry.get("athlete") or {}
+                if wanted_id and str(athlete.get("id") or "") == wanted_id:
+                    return True
+                if (not wanted_id and published_team == wanted_team
+                        and _norm_name(athlete.get("displayName")) == wanted_name):
+                    return True
+    return False
+
+
 def _find_player_compound_stat(boxscore: dict, player_name: str, team: str,
                                 categories: List[str], stat_keys: List[str],
                                 espn_id: Optional[str] = None,
