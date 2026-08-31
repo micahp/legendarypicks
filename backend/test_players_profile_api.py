@@ -59,6 +59,11 @@ class PlayerProfileApiTests(unittest.TestCase):
               carries_g REAL, rush_yds_g REAL, rec_yds_g REAL, targets INTEGER,
               receptions INTEGER, fantasy_ppr_g REAL
             );
+            CREATE TABLE tennis_ranking_snapshots(
+              tour TEXT, captured_at TEXT, espn_athlete_id TEXT,
+              player_id INTEGER, player_name TEXT, rank INTEGER,
+              previous_rank INTEGER, points INTEGER, source TEXT
+            );
             -- The enablement registry. search_players only returns leagues this
             -- database vouches for, so a fixture that omits this table is a
             -- database offering nothing (ufc/wc aside) -- which is the correct
@@ -84,6 +89,8 @@ class PlayerProfileApiTests(unittest.TestCase):
                 (2, "Alex Empty", "BBB", "nfl", "QB"),
                 (3, "Alex Stats", "CCC", "nhl", "C"),
                 (4, "Alex Prop", "DDD", "ufc", None),
+                (50, "Alex Ranked", None, "atp", None),
+                (60, "Alex Tennis Empty", None, "wta", None),
             ],
         )
         con.execute(
@@ -97,6 +104,10 @@ class PlayerProfileApiTests(unittest.TestCase):
         con.execute(
             "INSERT INTO props VALUES(?,?,?,?,?)",
             (4, "points", "over", 20.5, "2026-07-21T12:00:00Z"),
+        )
+        con.execute(
+            "INSERT INTO tennis_ranking_snapshots VALUES(?,?,?,?,?,?,?,?,?)",
+            ("atp", "2026-08-30T12:00:00Z", "1005", 50, "Alex Ranked", 12, 14, 4321, "espn"),
         )
         con.commit()
         con.close()
@@ -113,13 +124,37 @@ class PlayerProfileApiTests(unittest.TestCase):
     def test_search_omits_unrenderable_identity_and_reports_coverage(self):
         result = players.search_players("Alex")
 
-        self.assertEqual([4, 1, 3], [row["id"] for row in result])
+        self.assertEqual([4, 1, 3, 50], [row["id"] for row in result])
         self.assertNotIn(2, [row["id"] for row in result])
+        self.assertNotIn(60, [row["id"] for row in result])
         by_id = {row["id"]: row for row in result}
         self.assertEqual(
-            {"game_logs": True, "props": False, "season_stats": False},
+            {"game_logs": True, "props": False, "season_stats": False, "rankings": False},
             by_id[1]["coverage"],
         )
+        self.assertEqual(
+            {"game_logs": False, "props": False, "season_stats": False, "rankings": True},
+            by_id[50]["coverage"],
+        )
+
+    def test_search_tolerates_a_database_without_tennis_rankings(self):
+        con = sqlite3.connect(self.path)
+        con.execute("DROP TABLE tennis_ranking_snapshots")
+        con.commit()
+        con.close()
+
+        result = players.search_players("Alex")
+
+        self.assertEqual([4, 1, 3], [row["id"] for row in result])
+
+    def test_ranked_tennis_search_result_opens_a_data_backed_profile(self):
+        result = players.player_profile(50)
+
+        self.assertEqual("atp", result["league"])
+        self.assertEqual("ready", result["data_status"])
+        self.assertEqual(12, result["tennis_ranking"]["rank"])
+        self.assertEqual("2026-08-30T12:00:00Z", result["tennis_ranking"]["captured_at"])
+        self.assertTrue(result["coverage"]["rankings"])
 
     def test_profile_includes_existing_season_stats_contract(self):
         stats = {
@@ -271,7 +306,7 @@ class PlayerProfileApiTests(unittest.TestCase):
 
         self.assertEqual("unavailable", result["data_status"])
         self.assertEqual(
-            {"game_logs": False, "props": False, "season_stats": False},
+            {"game_logs": False, "props": False, "season_stats": False, "rankings": False},
             result["coverage"],
         )
 

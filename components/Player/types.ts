@@ -34,7 +34,11 @@ export interface PlayerProfile {
   projections: Record<string, Projection>
   props: PropRow[]
   season_stats: SeasonStats | null
-  coverage: { game_logs: boolean; props: boolean; season_stats: boolean }
+  tennis_ranking?: {
+    tour: 'atp' | 'wta'; rank: number; previous_rank: number | null
+    points: number | null; captured_at: string; source: string | null
+  } | null
+  coverage: { game_logs: boolean; props: boolean; season_stats: boolean; rankings?: boolean }
   data_status: 'ready' | 'unavailable'
   injury_status?: string | null
   last_news_date?: number | null

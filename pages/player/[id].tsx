@@ -171,11 +171,27 @@ export default function PlayerPage() {
           }} />
         )}
 
-        {/* Honest empty state: no logs, no props, no season stats on file. */}
+        {/* Honest empty state: no logs, props, season stats, or ranking on file. */}
         {p.data_status === 'unavailable' && (
           <p className="text-sm text-zinc-500 py-6 text-center border border-zinc-800 rounded-xl bg-zinc-900">
-            No stats, game logs, or props on file for this player yet.
+            No stats, game logs, props, or ranking on file for this player yet.
           </p>
+        )}
+
+        {show('overview') && p.tennis_ranking && (
+          <section>
+            <h2 className="mb-2 text-sm font-bold uppercase tracking-wider text-zinc-400">World Ranking</h2>
+            <div className="flex items-center justify-between gap-4 rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-3">
+              <div>
+                <div className="text-sm font-semibold text-zinc-100">{p.tennis_ranking.tour.toUpperCase()} singles</div>
+                <div className="mt-1 text-xs text-zinc-500">
+                  {p.tennis_ranking.points != null ? `${p.tennis_ranking.points.toLocaleString()} points · ` : ''}
+                  ESPN world rankings · Updated {new Date(p.tennis_ranking.captured_at).toLocaleDateString()}
+                </div>
+              </div>
+              <div className="font-mono text-2xl font-bold tabular-nums text-zinc-100">#{p.tennis_ranking.rank}</div>
+            </div>
+          </section>
         )}
 
         {/* Season stats: the only meaningful content for stats-only profiles

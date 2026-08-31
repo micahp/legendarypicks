@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/router'
 
-interface Hit { id: number; name: string; team: string; league: string }
+interface Hit { id: number; name: string; team: string | null; league: string }
 
 export default function GlobalSearch() {
   const router = useRouter()
@@ -69,7 +69,7 @@ export default function GlobalSearch() {
               <button key={p.id} onClick={() => go(p.id)} onMouseEnter={() => setActive(i)}
                 className={`w-full text-left px-4 py-2.5 flex justify-between items-center text-sm ${i === active ? 'bg-zinc-800' : 'hover:bg-zinc-800'}`}>
                 <span className="font-medium">{p.name}</span>
-                <span className="text-xs text-zinc-500">{p.team} · {p.league?.toUpperCase()}</span>
+                <span className="text-xs text-zinc-500">{p.team ? `${p.team} · ` : ''}{p.league?.toUpperCase()}</span>
               </button>
             ))}
           </div>

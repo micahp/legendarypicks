@@ -67,17 +67,28 @@ def search_players(q: str = Query("", description="Search query")):
         # working player page. Having data for a league is not the same as
         # offering it, and the registry is the only thing that knows which.
         league_sql, league_params = sql_league_filter(offered_leagues(con))
+        has_tennis_rankings = con.execute(
+            "SELECT 1 FROM sqlite_master WHERE type='table' "
+            "AND name='tennis_ranking_snapshots'"
+        ).fetchone() is not None
+        ranking_evidence = (
+            "EXISTS(SELECT 1 FROM tennis_ranking_snapshots tr "
+            "WHERE tr.player_id=p.id)"
+            if has_tennis_rankings else "0"
+        )
         rows = con.execute(
-            """SELECT p.id, p.name, p.team, p.league,
+            f"""SELECT p.id, p.name, p.team, p.league,
                       EXISTS(SELECT 1 FROM player_game_logs g WHERE g.player_id=p.id) AS has_logs,
                       EXISTS(SELECT 1 FROM props pr WHERE pr.player_id=p.id) AS has_props,
-                      EXISTS(SELECT 1 FROM player_stats s WHERE s.player_id=p.id) AS has_stats
+                      EXISTS(SELECT 1 FROM player_stats s WHERE s.player_id=p.id) AS has_stats,
+                      {ranking_evidence} AS has_rankings
                FROM players p
                WHERE p.name LIKE ? COLLATE NOCASE
                  AND (
                    EXISTS(SELECT 1 FROM player_game_logs g WHERE g.player_id=p.id)
                    OR EXISTS(SELECT 1 FROM props pr WHERE pr.player_id=p.id)
                    OR EXISTS(SELECT 1 FROM player_stats s WHERE s.player_id=p.id)
+                   OR {ranking_evidence}
                  )"""
             + league_sql
             + """
@@ -87,7 +98,7 @@ def search_players(q: str = Query("", description="Search query")):
                    WHEN p.name LIKE ? COLLATE NOCASE THEN 1
                    ELSE 2
                  END,
-                 has_props DESC, has_logs DESC, has_stats DESC,
+                 has_props DESC, has_logs DESC, has_stats DESC, has_rankings DESC,
                  p.name COLLATE NOCASE, p.id
                LIMIT 20""",
             # Order matters: the league filter's placeholders sit in the WHERE
@@ -104,6 +115,7 @@ def search_players(q: str = Query("", description="Search query")):
                 "game_logs": bool(r["has_logs"]),
                 "props": bool(r["has_props"]),
                 "season_stats": bool(r["has_stats"]),
+                "rankings": bool(r["has_rankings"]),
             },
         }
         for r in rows

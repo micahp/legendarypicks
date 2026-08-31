@@ -116,6 +116,8 @@ CREATE TABLE IF NOT EXISTS tennis_ranking_snapshots(
 );
 CREATE INDEX IF NOT EXISTS idx_tennis_rankings_latest
   ON tennis_ranking_snapshots(tour, captured_at DESC, rank);
+CREATE INDEX IF NOT EXISTS idx_tennis_rankings_player
+  ON tennis_ranking_snapshots(player_id);
 CREATE TABLE IF NOT EXISTS soccer_competition_snapshots(
   league       TEXT PRIMARY KEY,
   season       INTEGER NOT NULL,

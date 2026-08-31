@@ -39,10 +39,11 @@ class TestOfferedLeagues:
         assert "ncaaf" not in offered_leagues(con)
         assert "mls" not in offered_leagues(con)
 
-    def test_ufc_and_wc_are_offered_without_a_coverage_row(self):
-        # Shape, not permission: they are not team-stats leagues and will never
-        # have a row. Gating them on one would hide two leagues that ship today.
+    def test_non_team_sports_are_offered_without_a_coverage_row(self):
+        # Shape, not permission: these are not team-stats leagues and will never
+        # have a row. Their shipped surfaces use separate persisted contracts.
         assert ALWAYS_OFFERED <= offered_leagues(_db())
+        assert {"atp", "wta"} <= offered_leagues(_db())
 
     def test_missing_registry_fails_closed(self):
         # No table at all. "Could not check" must not open the players table.

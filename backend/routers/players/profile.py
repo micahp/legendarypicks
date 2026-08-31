@@ -431,6 +431,22 @@ def player_profile(
             """SELECT market, side, line, MAX(captured_at) ca FROM props
                WHERE player_id=? GROUP BY market, side ORDER BY ca DESC LIMIT 30""",
             (player_id,)).fetchall()
+        tennis_ranking = None
+        if identity_league in ("atp", "wta"):
+            has_tennis_rankings = con.execute(
+                "SELECT 1 FROM sqlite_master WHERE type='table' "
+                "AND name='tennis_ranking_snapshots'"
+            ).fetchone() is not None
+            if has_tennis_rankings:
+                ranking_row = con.execute(
+                    """SELECT tour, rank, previous_rank, points, captured_at, source
+                       FROM tennis_ranking_snapshots
+                       WHERE player_id=?
+                       ORDER BY captured_at DESC LIMIT 1""",
+                    (player_id,),
+                ).fetchone()
+                if ranking_row:
+                    tennis_ranking = dict(ranking_row)
 
     def serialize_game_logs(rows, fantasy_by_week=None):
         serialized = []
@@ -517,10 +533,12 @@ def player_profile(
         "stat_rank_games": rank_context["games"],
         "props": [{"market": _base_market(x["market"]), "side": x["side"], "line": x["line"]} for x in props],
         "season_stats": season_stats,
+        "tennis_ranking": tennis_ranking,
         "coverage": {
             "game_logs": bool(logs),
             "props": bool(props),
             "season_stats": season_stats is not None,
+            "rankings": tennis_ranking is not None,
         },
-        "data_status": "ready" if (logs or props or season_stats) else "unavailable",
+        "data_status": "ready" if (logs or props or season_stats or tennis_ranking) else "unavailable",
     }
