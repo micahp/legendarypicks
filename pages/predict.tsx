@@ -187,8 +187,9 @@ export default function PredictPage() {
   const selectTitle = (slug: string) => router.push({ pathname: '/predict', query: { sport: 'esports', title: slug } }, undefined, { shallow: true })
 
   const selectedLabel = isEsports && slate ? slate.selected_title.label : sportLabel
-  const record = useMemo(() => isEsports && slate ? recordForTitle(myPicks, slate.selected_title.label) : apiRecord, [isEsports, slate, myPicks, apiRecord])
-  const settled = useMemo(() => myPicks.filter(p => p.settledAt !== null && (!isEsports || !slate || p.matchKey.split('||')[2] === slate.selected_title.label)).sort((a, b) => (b.settledAt || 0) - (a.settledAt || 0)), [myPicks, isEsports, slate])
+  const allEsports = isEsports && slate?.selected_title.slug === 'all'
+  const record = useMemo(() => isEsports && slate && !allEsports ? recordForTitle(myPicks, slate.selected_title.label) : apiRecord, [isEsports, slate, allEsports, myPicks, apiRecord])
+  const settled = useMemo(() => myPicks.filter(p => p.settledAt !== null && (!isEsports || !slate || allEsports || p.matchKey.split('||')[2] === slate.selected_title.label)).sort((a, b) => (b.settledAt || 0) - (a.settledAt || 0)), [myPicks, isEsports, slate, allEsports])
   const hasRecord = record.wins + record.losses + record.voids > 0
   const selectedTitle = slate?.titles.find(title => title.slug === slate.selected_title.slug)
   const matchDays = useMemo(() => {
@@ -216,7 +217,7 @@ export default function PredictPage() {
         previousLabel="Previous esports titles"
         nextLabel="Next esports titles"
         railClassName="flex gap-1.5 pb-1"
-      >{slate.titles.map(title => <FilterPill key={title.slug} active={title.slug === slate.selected_title.slug} onClick={() => selectTitle(title.slug)}>{title.live_count > 0 && <span className="mr-1 text-emerald-400">●</span>}{title.label}{title.match_count > 0 && <span className="ml-1 opacity-60">{title.match_count}</span>}</FilterPill>)}</HorizontalScrollRail>}
+      ><FilterPill active={allEsports} onClick={() => selectTitle('all')}>All Esports{slate.titles.some(title => title.match_count > 0) && <span className="ml-1 opacity-60">{slate.titles.reduce((total, title) => total + title.match_count, 0)}</span>}</FilterPill>{slate.titles.map(title => <FilterPill key={title.slug} active={title.slug === slate.selected_title.slug} onClick={() => selectTitle(title.slug)}>{title.live_count > 0 && <span className="mr-1 text-emerald-400">●</span>}{title.label}{title.match_count > 0 && <span className="ml-1 opacity-60">{title.match_count}</span>}</FilterPill>)}</HorizontalScrollRail>}
       {fetchError && <div className="mt-4 flex items-center justify-between gap-3 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300"><span>{fetchError}</span><button onClick={() => setReloadTick(t => t + 1)} className="shrink-0 font-medium text-red-200 hover:text-red-100">Retry</button></div>}
       {!fetchError && slate?.error && <div className="mt-4 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-300">{slate.error}</div>}
       <div className="mt-6 mb-3 text-[10px] font-medium uppercase tracking-[0.18em] text-zinc-500">{selectedLabel} matches</div>
@@ -226,7 +227,7 @@ export default function PredictPage() {
         const existing = myPicks.find(pick => pick.matchKey === match.matchKey)
         const locked = match.live || match.finished || match.startTime === null || match.startTime <= Date.now()
         return <div key={match.matchKey} className="mb-3 rounded-xl border border-zinc-800 bg-zinc-900/40 p-4">
-          <div className="mb-3 flex items-center justify-between"><div className="text-[10px] font-medium uppercase tracking-[0.18em] text-zinc-500">{match.live ? <span className="text-[#ff3d71]">LIVE</span> : timeLabel(match.startTime)}</div><a href={isEsports ? '/esports' : '/scores'} className="shrink-0 text-[11px] font-medium uppercase tracking-wider text-zinc-500 hover:text-zinc-200">{isEsports ? 'Watch' : 'Scores'} ↗</a></div>
+          <div className="mb-3 flex items-center justify-between"><div className="text-[10px] font-medium uppercase tracking-[0.18em] text-zinc-500">{match.live ? <span className="text-[#ff3d71]">LIVE</span> : timeLabel(match.startTime)}{allEsports && <span className="ml-2 text-zinc-400">{match.title}</span>}</div><a href={isEsports ? '/esports' : '/scores'} className="shrink-0 text-[11px] font-medium uppercase tracking-wider text-zinc-500 hover:text-zinc-200">{isEsports ? 'Watch' : 'Scores'} ↗</a></div>
           <div className="flex items-center justify-between gap-3"><TeamLine name={match.teamA} logo={match.logoA} seed={match.seedA} /><span className="text-xs text-zinc-600">vs</span><TeamLine name={match.teamB} logo={match.logoB} seed={match.seedB} /></div>
           <div className="mt-3">{existing ? <><div className="text-sm"><span className="text-zinc-500">You picked </span><span className="font-semibold text-zinc-50">{existing.side === 'D' ? 'Draw' : existing.side === 'A' ? match.teamA : match.teamB}</span></div><CrowdReveal match={match} crowd={crowd[match.matchKey]} /></> : locked ? <p className="text-sm text-zinc-500">{match.live ? 'Picks closed — game in progress.' : 'Picks closed.'}</p> : <div className={`grid gap-3 ${match.allowDraw ? 'grid-cols-3' : 'grid-cols-2'}`}><PickButton disabled={submittingKey === match.matchKey} onClick={() => makePick(match, 'A')}>Pick {match.teamA}</PickButton>{match.allowDraw && <PickButton disabled={submittingKey === match.matchKey} onClick={() => makePick(match, 'D')}>Pick Draw</PickButton>}<PickButton disabled={submittingKey === match.matchKey} onClick={() => makePick(match, 'B')}>Pick {match.teamB}</PickButton></div>}</div>
         </div>

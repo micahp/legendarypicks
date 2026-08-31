@@ -42,4 +42,19 @@ describe('league hub News tab', () => {
     render(<NewsTab league="nba" news={null} loading={false} error="News is unavailable." />)
     expect(screen.getByText('News is unavailable.')).not.toBeNull()
   })
+
+  it('labels each item by its source league in a combined feed', () => {
+    const tennisFeed: LeagueNews = {
+      conversations: [{ ...feed.conversations[0], league: 'atp', title: 'ATP story' }],
+      narratives: [{ ...feed.narratives[0], league: 'wta', headline: 'WTA story' }],
+      granular: [],
+      other: 0,
+    }
+
+    render(<NewsTab league="tennis" news={tennisFeed} loading={false} error={null} showLeague />)
+
+    expect(screen.getByText(/ATP · ATP story/)).toBeTruthy()
+    expect(screen.getByText('WTA')).toBeTruthy()
+    expect(screen.getByText('WTA story')).toBeTruthy()
+  })
 })
