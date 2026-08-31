@@ -14,6 +14,7 @@ from league_offering import offered_leagues
 
 HIDDEN_DIRECTORY_LEAGUES = frozenset({"wc"})
 SOCCER_DIRECTORY_LEAGUES = frozenset({"mls", "lcup"})
+TENNIS_DIRECTORY_LEAGUES = frozenset({"atp", "wta"})
 # Props navigation describes the product we offer, not whichever competitions
 # happen to have rows in today's database. Row presence is feed-dependent: NBA
 # can have scheduled games but no player-prop offers, and Leagues Cup can have a
@@ -74,7 +75,10 @@ def league_directory_navigation(con: sqlite3.Connection) -> list[dict[str, str]]
     is omitted.
     """
     rows = _rows(
-        offered_leagues(con) - HIDDEN_DIRECTORY_LEAGUES - SOCCER_DIRECTORY_LEAGUES
+        offered_leagues(con)
+        - HIDDEN_DIRECTORY_LEAGUES
+        - SOCCER_DIRECTORY_LEAGUES
+        - TENNIS_DIRECTORY_LEAGUES
     )
     rows.append({"league": "soccer", "sport": "soccer"})
     rows.append({"league": "tennis", "sport": "tennis"})

@@ -15,6 +15,7 @@ export type SportGroup = {
 }
 
 const SPORT_ORDER = ['football', 'soccer', 'tennis', 'basketball', 'baseball', 'hockey', 'mma', 'esports']
+const ROLLUP_HUB_SPORTS = new Set(['soccer', 'tennis', 'esports'])
 const SPORT_LABELS: Record<string, string> = {
   football: 'Football',
   soccer: 'Soccer',
@@ -87,7 +88,9 @@ export function groupSportNavigation(
 
   const groups: SportGroup[] = []
   for (const [sport, unsorted] of Array.from(bySport.entries())) {
-    const competitions = [...unsorted].sort(competitionSort)
+    const competitions = surface === 'leagues' && ROLLUP_HUB_SPORTS.has(sport)
+      ? [{ league: sport, sport }]
+      : [...unsorted].sort(competitionSort)
     // NFL and NCAAF deliberately remain direct top-level choices on the props
     // product. The league directory still groups both under Football.
     if ((surface === 'props' || surface === 'predict') && sport === 'football') {
@@ -102,8 +105,7 @@ export function groupSportNavigation(
       continue
     }
 
-    const alwaysSportNamed = new Set(['soccer', 'tennis', 'esports'])
-    const label = surface === 'leagues' || alwaysSportNamed.has(sport) || competitions.length > 1
+    const label = surface === 'leagues' || ROLLUP_HUB_SPORTS.has(sport) || competitions.length > 1
       ? SPORT_LABELS[sport] || sport.replace(/\b\w/g, letter => letter.toUpperCase())
       : leagueNavigationLabel(competitions[0].league)
     groups.push({ key: sport, sport, label, competitions })
