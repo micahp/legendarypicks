@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import Head from 'next/head'
 import MarketSlateBoard from '../components/Props/MarketSlateBoard'
+import MatchForm from '../components/Props/MatchForm'
+import PropChart, { PropHistory } from '../components/Props/PropChart'
 import {
   leagueNavigationLabel,
   SportGroup,
@@ -14,7 +16,7 @@ interface Player {
 interface SlateGame {
   game_id: number; home: string; away: string; date: string; start_time?: string | null; league: string
   prop_count: number
-  players: { name: string; team: string; props: { market: string; line: number; side: string; source: string }[] }[]
+  players: { id: number; name: string; team: string; props: { market: string; line: number; side: string; source: string }[] }[]
 }
 interface PerfRow {
   market: string; side: string; total_settled: number
@@ -210,10 +212,32 @@ function SlateTab({ league, leagueOrder, filterLabel, onViewAll }: {
   // A game's props load only when it's opened — the summary list carries no props, so the tab paints
   // instantly instead of pulling every game's book (the fully-nested slate is ~1.4MB / 15k props).
   const [gameProps, setGameProps] = useState<Record<number, { loading: boolean; players: SlateGame['players'] }>>({})
+  // Same mechanism as GameProps.tsx's Props tab: one open chart at a time, keyed by
+  // player+market+side so re-clicking the same prop closes it instead of re-fetching.
+  const [openPropKey, setOpenPropKey] = useState<string | null>(null)
+  const [propChart, setPropChart] = useState<PropHistory | null>(null)
+  const [propChartLoading, setPropChartLoading] = useState(false)
+
+  const openPropChart = async (gameLeague: string, playerId: number, market: string, line: number, side: string) => {
+    const key = `${playerId}-${market}-${side}`
+    if (openPropKey === key) { setOpenPropKey(null); setPropChart(null); setPropChartLoading(false); return }
+    setOpenPropKey(key); setPropChart(null); setPropChartLoading(true)
+    try {
+      const params = new URLSearchParams({ player_id: String(playerId), market, line: String(line), side, league: gameLeague })
+      const r = await fetch(`/api/props/history?${params}`)
+      const d = await r.json()
+      setPropChart(d.games?.length ? d : null)
+    } catch {
+      setPropChart(null)
+    } finally {
+      setPropChartLoading(false)
+    }
+  }
 
   const openGame = (gid: number) => {
     const opening = expandedGame !== gid
     setExpandedGame(opening ? gid : null)
+    setOpenPropKey(null); setPropChart(null); setPropChartLoading(false)
     if (!opening || gid in gameProps) return
     setGameProps(prev => ({ ...prev, [gid]: { loading: true, players: [] } }))
     fetch(`/api/props/slate?game_id=${gid}`)
@@ -373,21 +397,55 @@ function SlateTab({ league, leagueOrder, filterLabel, onViewAll }: {
                                 {gp.players.map(player => (
                                   <div key={`${player.team}-${player.name}`}>
                                     <div className="mb-1.5 flex flex-wrap items-baseline gap-x-1.5 text-xs">
-                                      <span className="font-bold text-zinc-300">{player.name}</span>
+                                      {player.id ? (
+                                        <a href={`/player/${player.id}`} className="font-bold text-zinc-300 hover:text-emerald-400">{player.name}</a>
+                                      ) : (
+                                        <span className="font-bold text-zinc-300">{player.name}</span>
+                                      )}
                                       <span className="text-zinc-600">{player.team}</span>
                                     </div>
                                     <div className="flex flex-wrap gap-1.5">
                                       {Array.from(new Map(player.props.map(prop => [
                                         `${prop.market}-${prop.side}-${prop.line}-${prop.source}`, prop,
-                                      ] as const)).values()).map((prop, index) => (
-                                        <span
-                                          key={`${prop.market}-${prop.side}-${prop.line}-${index}`}
-                                          className={`inline-flex max-w-full items-center gap-1 break-all rounded px-2 py-1 text-[11px] font-mono tabular-nums ${prop.side === 'over' || prop.side === 'yes' ? 'bg-emerald-900/30 text-emerald-300' : 'bg-red-900/30 text-red-300'}`}
-                                        >
-                                          {prop.market.replace(/_/g, ' ')} {prop.line} {prop.side.toUpperCase()}
-                                        </span>
-                                      ))}
+                                      ] as const)).values()).map((prop, index) => {
+                                        const key = player.id ? `${player.id}-${prop.market}-${prop.side}` : null
+                                        const open = key !== null && openPropKey === key
+                                        const pillClass = `inline-flex max-w-full items-center gap-1 break-all rounded px-2 py-1 text-[11px] font-mono tabular-nums transition-colors ${
+                                          open ? 'bg-emerald-600 text-white'
+                                            : prop.side === 'over' || prop.side === 'yes' ? 'bg-emerald-900/30 text-emerald-300 hover:bg-emerald-900/50'
+                                            : 'bg-red-900/30 text-red-300 hover:bg-red-900/50'
+                                        }`
+                                        const label = <>{prop.market.replace(/_/g, ' ')} {prop.line} {prop.side.toUpperCase()}</>
+                                        return player.id ? (
+                                          <button
+                                            key={`${prop.market}-${prop.side}-${prop.line}-${index}`}
+                                            onClick={() => openPropChart(game.league, player.id, prop.market, prop.line, prop.side)}
+                                            className={pillClass}
+                                          >
+                                            {label}
+                                          </button>
+                                        ) : (
+                                          <span key={`${prop.market}-${prop.side}-${prop.line}-${index}`} className={pillClass}>
+                                            {label}
+                                          </span>
+                                        )
+                                      })}
                                     </div>
+                                    {player.id && openPropKey?.startsWith(`${player.id}-`) && (
+                                      <div className="mt-2">
+                                        {propChartLoading ? (
+                                          <div className="h-24 animate-pulse rounded-lg bg-zinc-800/60" />
+                                        ) : propChart ? (
+                                          <PropChart data={propChart} />
+                                        ) : game.league === 'ligamx' || game.league === 'lcup' ? (
+                                          <MatchForm playerId={player.id} player={player.name} />
+                                        ) : (
+                                          <div data-history-empty className="rounded-lg border border-zinc-800 bg-zinc-950/40 px-3 py-2 text-xs text-zinc-600">
+                                            No history yet.
+                                          </div>
+                                        )}
+                                      </div>
+                                    )}
                                   </div>
                                 ))}
                               </div>
