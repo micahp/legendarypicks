@@ -9,7 +9,9 @@ jest.mock('../services/sports', () => ({
   SportsService: { getGamesByLocalDate: jest.fn() },
 }))
 jest.mock('../components/Scores/GameCard', () => function MockGameCard({ gameId }: { gameId: string }) { return <div>{gameId}</div> })
-jest.mock('../components/Leagues/NewsTab', () => function MockNewsTab() { return <div>News feed</div> })
+jest.mock('../components/Leagues/NewsTab', () => function MockNewsTab({ league, showLeague }: { league: string; showLeague?: boolean }) {
+  return <div>{league} News feed {showLeague ? 'with tour labels' : ''}</div>
+})
 jest.mock('../components/Leagues/hooks/useNewsData', () => ({
   useNewsData: () => ({ news: null, loading: false, error: null }),
 }))
@@ -73,6 +75,33 @@ describe('Tennis league hub', () => {
     clickLink('Draws')
 
     expect(await screen.findByText('No verified major draw has been published yet.')).toBeTruthy()
+  })
+
+  it('shows one combined tennis news feed without an ATP or WTA split', async () => {
+    await act(async () => { render(<TennisLeaguePage />) })
+    await screen.findByText('No covered ATP or WTA matches were published for this date.')
+
+    expect(screen.getByRole('link', { name: 'News' }).getAttribute('href'))
+      .toBe('/leagues/tennis?tab=news')
+    clickLink('News')
+
+    expect(screen.queryByRole('combobox', { name: 'Tour' })).toBeNull()
+    expect(screen.getByText('tennis News feed with tour labels')).toBeTruthy()
+    expect(screen.queryByText('ATP News')).toBeNull()
+    expect(screen.queryByText('WTA News')).toBeNull()
+  })
+
+  it('separates ATP and WTA scores into labeled sections', async () => {
+    getGames.mockImplementation(async (league: string) => [{
+      gameId: `${league}-match`, league: league.toUpperCase(), startTime: '2026-08-30T18:00:00Z',
+    }])
+
+    await act(async () => { render(<TennisLeaguePage />) })
+
+    await screen.findByText('atp-match')
+    expect(screen.getByRole('heading', { name: 'ATP' })).toBeTruthy()
+    expect(screen.getByRole('heading', { name: 'WTA' })).toBeTruthy()
+    expect(screen.getByText('wta-match')).toBeTruthy()
   })
 
   it('renders published rounds, future TBD slots, and the official bracket link', async () => {

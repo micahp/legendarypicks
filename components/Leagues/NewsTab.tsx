@@ -14,11 +14,13 @@ export default function NewsTab({
   news,
   loading,
   error,
+  showLeague = false,
 }: {
   league: string
   news: LeagueNews | null
   loading: boolean
   error: string | null
+  showLeague?: boolean
 }) {
   if (error) {
     return (
@@ -32,6 +34,7 @@ export default function NewsTab({
   return (
     <LeagueSection
       league={league}
+      showLeague={showLeague}
       data={news ?? { conversations: [], narratives: [], granular: [], other: 0 }}
     />
   )

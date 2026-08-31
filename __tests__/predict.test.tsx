@@ -37,6 +37,45 @@ describe('multi-sport predict page', () => {
     expect(screen.getByRole('button', { name: 'Next esports titles' })).toBeTruthy()
   })
 
+  it('offers all esports, labels mixed-title matches, and keeps overall history', async () => {
+    mockRouter.query = { sport: 'esports', title: 'all' }
+    ;(global as any).fetch = jest.fn((input: string) => {
+      if (input === '/api/esports/predict?title=all') return ok({
+        schema_version: 'v1', selected_title: { slug: 'all', label: 'All Esports' },
+        titles: [
+          { slug: 'cod', label: 'Call of Duty', match_count: 1, live_count: 0, result_count: 1, next_start: null },
+          { slug: 'valorant', label: 'Valorant', match_count: 1, live_count: 0, result_count: 1, next_start: null },
+        ],
+        matches: [{ matchKey: 'A||B||Valorant||League', teamA: 'A', teamB: 'B', title: 'Valorant', league: 'League', startTime: Date.now() + 60000, logoA: null, logoB: null, live: false, finished: false }],
+        match_count: 2, has_more: false, building: false, error: null, source: 'stored',
+      })
+      if (input === '/api/esports/picks/me') return ok({
+        picks: [
+          { matchKey: 'Old A||Old B||Call of Duty||League', side: 'A', createdAt: 1, lockAt: 1, settledAt: 2, result: 'win', points: 1 },
+          { matchKey: 'Old C||Old D||Valorant||League', side: 'B', createdAt: 1, lockAt: 1, settledAt: 1, result: 'loss', points: 0 },
+        ],
+        record: { wins: 1, losses: 1, voids: 0, streak: 1 },
+      })
+      throw new Error(`unexpected fetch ${input}`)
+    })
+
+    render(<PredictPage />)
+
+    expect(await screen.findByText('All Esports matches')).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'All Esports 2' })).toBeTruthy()
+    expect(screen.getAllByText('Valorant')).toHaveLength(2)
+    expect(screen.getByText('1–1')).toBeTruthy()
+    expect(screen.getByText(/Old A/)).toBeTruthy()
+    expect(screen.getByText(/Old D/)).toBeTruthy()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Call of Duty 1' }))
+    expect(mockRouter.push).toHaveBeenCalledWith(
+      { pathname: '/predict', query: { sport: 'esports', title: 'cod' } },
+      undefined,
+      { shallow: true },
+    )
+  })
+
   it('renders a three-way soccer card and persists through the generic ledger', async () => {
     mockRouter.query = { sport: 'mls' }
     ;(global as any).fetch = jest.fn((input: string, init?: RequestInit) => {

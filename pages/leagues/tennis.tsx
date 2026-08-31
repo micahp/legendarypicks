@@ -6,6 +6,7 @@ import GameCard from '../../components/Scores/GameCard'
 import HorizontalScrollRail from '../../components/HorizontalScrollRail'
 import NewsTab from '../../components/Leagues/NewsTab'
 import { useNewsData } from '../../components/Leagues/hooks/useNewsData'
+import type { LeagueNews } from '../../components/News/LeagueSection'
 import { SportsService } from '../../services/sports'
 import type { Game } from '../../services/sports'
 
@@ -92,6 +93,28 @@ function selectedTours(tour: Tour): ('atp' | 'wta')[] {
   return tour === 'all' ? ['atp', 'wta'] : [tour]
 }
 
+function uniqueBy<T>(items: T[], key: (item: T) => string | number): T[] {
+  const seen = new Set<string | number>()
+  return items.filter(item => {
+    const value = key(item)
+    if (seen.has(value)) return false
+    seen.add(value)
+    return true
+  })
+}
+
+function combineTennisNews(atp: LeagueNews | null, wta: LeagueNews | null): LeagueNews | null {
+  if (!atp && !wta) return null
+  const feeds = [atp, wta].filter((feed): feed is LeagueNews => Boolean(feed))
+  return {
+    conversations: uniqueBy(feeds.flatMap(feed => feed.conversations), item => item.conv_id)
+      .sort((a, b) => new Date(b.story_time || b.generated_at).getTime() - new Date(a.story_time || a.generated_at).getTime()),
+    narratives: uniqueBy(feeds.flatMap(feed => feed.narratives), item => item.id),
+    granular: uniqueBy(feeds.flatMap(feed => feed.granular), item => item.id),
+    other: feeds.reduce((total, feed) => total + feed.other, 0),
+  }
+}
+
 export default function TennisLeaguePage() {
   const router = useRouter()
   const [tab, setTab] = useState<HubTab>('scores')
@@ -104,8 +127,9 @@ export default function TennisLeaguePage() {
   const [drawsError, setDrawsError] = useState<string | null>(null)
   const [rankings, setRankings] = useState<RankingResponse | null>(null)
   const [rankingsError, setRankingsError] = useState<string | null>(null)
-  const atpNews = useNewsData('atp', tab === 'news' && tour !== 'wta')
-  const wtaNews = useNewsData('wta', tab === 'news' && tour !== 'atp')
+  const atpNews = useNewsData('atp', tab === 'news')
+  const wtaNews = useNewsData('wta', tab === 'news')
+  const tennisNews = useMemo(() => combineTennisNews(atpNews.news, wtaNews.news), [atpNews.news, wtaNews.news])
 
   useEffect(() => {
     const requestedTab = typeof router.query.tab === 'string' ? router.query.tab : 'scores'
@@ -181,7 +205,7 @@ export default function TennisLeaguePage() {
 
         <nav aria-label="Tennis sections" className="flex gap-2 border-b border-zinc-800">
           {TABS.map(item => (
-            <Link key={item.key} href={`/leagues/tennis?tab=${item.key}&tour=${tour}`}
+            <Link key={item.key} href={item.key === 'news' ? '/leagues/tennis?tab=news' : `/leagues/tennis?tab=${item.key}&tour=${tour}`}
               onClick={() => setTab(item.key)} aria-current={tab === item.key ? 'page' : undefined}
               className={`border-b-2 px-4 py-2 text-sm font-bold ${tab === item.key ? 'border-emerald-400 text-white' : 'border-transparent text-zinc-500 hover:text-zinc-300'}`}>
               {item.label}
@@ -189,7 +213,7 @@ export default function TennisLeaguePage() {
           ))}
         </nav>
 
-        <label className="flex w-fit items-center gap-2 text-sm text-zinc-500">
+        {tab !== 'news' && <label className="flex w-fit items-center gap-2 text-sm text-zinc-500">
           <span>Tour</span>
           <select
             aria-label="Tour"
@@ -203,30 +227,34 @@ export default function TennisLeaguePage() {
           >
             {TOURS.map(item => <option key={item.key} value={item.key}>{item.label}</option>)}
           </select>
-        </label>
+        </label>}
 
         {tab === 'scores' && (
-          <ScoresPanel date={date} setDate={setDate} games={games} loading={scoresLoading} error={scoresError} />
+          <ScoresPanel date={date} setDate={setDate} games={games} loading={scoresLoading} error={scoresError} tour={tour} />
         )}
         {tab === 'draws' && <DrawsPanel data={draws} error={drawsError} />}
         {tab === 'rankings' && <RankingsPanel data={rankings} error={rankingsError} />}
         {tab === 'news' && (
-          <div className="space-y-8">
-            {tour !== 'wta' && <section><h2 className="mb-3 text-lg font-bold">ATP News</h2><NewsTab league="atp" {...atpNews} /></section>}
-            {tour !== 'atp' && <section><h2 className="mb-3 text-lg font-bold">WTA News</h2><NewsTab league="wta" {...wtaNews} /></section>}
-          </div>
+          <NewsTab
+            league="tennis"
+            news={tennisNews}
+            loading={atpNews.loading || wtaNews.loading}
+            error={atpNews.error && wtaNews.error ? 'Tennis news is unavailable right now.' : null}
+            showLeague
+          />
         )}
       </div>
     </>
   )
 }
 
-function ScoresPanel({ date, setDate, games, loading, error }: {
+function ScoresPanel({ date, setDate, games, loading, error, tour }: {
   date: string
   setDate: (date: string) => void
   games: Game[]
   loading: boolean
   error: string | null
+  tour: Tour
 }) {
   const isToday = date === localDate()
   return (
@@ -264,7 +292,22 @@ function ScoresPanel({ date, setDate, games, loading, error }: {
         </button>
       </div>
       {error ? <Unavailable text={error} /> : loading ? <Loading /> : games.length ? (
-        <div className="grid gap-3 md:grid-cols-2">{games.map(game => <GameCard key={`${game.league}-${game.gameId}`} {...game} />)}</div>
+        <div className="space-y-8">
+          {selectedTours(tour).map(item => {
+            const tourGames = games.filter(game => String(game.league || '').toLowerCase() === item)
+            if (!tourGames.length) return null
+            return (
+              <section key={item} aria-labelledby={`${item}-scores-heading`} className="space-y-3">
+                <h2 id={`${item}-scores-heading`} className="text-lg font-bold text-zinc-100">
+                  {item.toUpperCase()}
+                </h2>
+                <div className="grid gap-3 md:grid-cols-2">
+                  {tourGames.map(game => <GameCard key={`${game.league}-${game.gameId}`} {...game} />)}
+                </div>
+              </section>
+            )
+          })}
+        </div>
       ) : <Unavailable text="No covered ATP or WTA matches were published for this date." />}
     </section>
   )

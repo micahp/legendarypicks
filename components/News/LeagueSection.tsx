@@ -15,6 +15,9 @@ export const LEAGUE_LABELS: Record<string, string> = {
   mls: 'MLS',
   ncaaf: 'NCAAF',
   ufc: 'UFC',
+  atp: 'ATP',
+  wta: 'WTA',
+  tennis: 'Tennis',
   esports: 'Esports',
   wc: 'FIFA World Cup',
 }
@@ -143,7 +146,11 @@ export function AiNarrativeCard({ ai, showLeague }: { ai: AiNarrative; showLeagu
 }
 
 
-export function LeagueSection({ league, data }: { league: string; data: LeagueNews }) {
+export function LeagueSection({ league, data, showLeague = false }: {
+  league: string
+  data: LeagueNews
+  showLeague?: boolean
+}) {
   // One flat news list: narrative headlines + trades/staff/injuries mixed,
   // newest first, no layer tags (Micah, 2026-08-08).
   const news = [...data.narratives, ...data.granular].sort(
@@ -154,11 +161,11 @@ export function LeagueSection({ league, data }: { league: string; data: LeagueNe
       <h2 className="flex items-center gap-2 text-lg font-bold text-zinc-100">
         <span>{leagueLabel(league)}</span>
       </h2>
-      {data.conversations.map((c) => <AiNarrativeCard key={c.conv_id} ai={c} />)}
+      {data.conversations.map((c) => <AiNarrativeCard key={c.conv_id} ai={c} showLeague={showLeague} />)}
       {news.length > 0 && (
         <div className="space-y-2">
           <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-500">More news</h3>
-          {news.map((n) => <NewsCard key={n.id} item={n} />)}
+          {news.map((n) => <NewsCard key={n.id} item={n} showLeague={showLeague} />)}
         </div>
       )}
       {data.conversations.length === 0 && news.length === 0 && (
@@ -167,4 +174,3 @@ export function LeagueSection({ league, data }: { league: string; data: LeagueNe
     </section>
   )
 }
-
