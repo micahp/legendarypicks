@@ -1,49 +1,5 @@
 # Changelog
 
-## v0.8.14
-
-### Scoreboards and game tabs survive normal production uptime
-
-- **Scheduled and completed slates no longer disappear when an upstream refresh
-  fails.** Interactive scoreboard readers may use the last persisted response
-  after its normal freshness window, while live games and batch ingestion still
-  fail closed instead of presenting stale state as current.
-- **Game-detail tabs no longer stop working after 100 lifetime ESPN requests.**
-  The obsolete process-lifetime counter is gone; the measured sliding request
-  budget and shared cache remain in force.
-- **Liga MX is now a first-class stored scoreboard and game-detail league.** Its
-  fixtures are normalized, persisted, exposed in score filters, and routed to
-  the soccer summary, play-by-play, and information tabs.
-- **The production MLS 2026 FotMob provider season is complete.** All 314
-  finished fixtures produced 9,679 provider rows; 8,954 resolve to canonical
-  players and 725 remain explicitly unresolved rather than guessed. The
-  importer now waits through normal short SQLite writer windows and reports
-  duplicate re-ingestion as unchanged.
-
-## v0.8.13
-
-### The news pipeline stops burning the shared nitter fleet, and game detail stops asking ESPN for what we store
-
-- **`ingest_league_news` was sending ~130 nitter requests a day against a
-  fleet that died the week of Aug 24** (nitter.net 410 Gone, xcancel served
-  an X Corp cease-and-desist dated Aug 24, tiekoetter 429ing every account
-  surface). Two timers daily x a three-mirror probe ladder x 15 timelines,
-  all refusal traffic, on hosts that rate-limit by IP — which this box
-  shares with the newsletter's corpus poller. **One attempt per mirror per
-  run now**, privacyredirect dropped from the list entirely, and a dead
-  fleet prints its per-host statuses and skips the run loudly instead of
-  returning empty as if it were a quiet day. Worst case with every mirror
-  down drops from ~130 refusals/day to under 8.
-- **Game detail reads state, period, clock, status detail and live score
-  from the scoreboard snapshots before it considers ESPN.** Every page load
-  spent two publisher calls on values the minute-by-minute ingest already
-  had on disk, and because those calls sit behind bare excepts, a routine
-  403 silently rendered no score on a live game — reported on Leagues Cup
-  America/Columbus, snapshot 2-0 Halftime, page blank. Tests cover both
-  paths (`test_game_detail_db_first.py`, `test_game_detail_live_status.py`).
-- **Crew radio relay switched to 97.1 The Fan** (WBNS-FM) after the previous
-  stream dropped mid-fixture.
-
 ## v0.9.0
 
 ### NCAAF props are published, charted and settlement-ready
@@ -168,6 +124,50 @@
   spine covers 18 player_id tables after `player_game_logs_ufcstats` and
   `tennis_ranking_snapshots` joined; the pin documents why, prod follows on
   migration.
+
+## v0.8.14
+
+### Scoreboards and game tabs survive normal production uptime
+
+- **Scheduled and completed slates no longer disappear when an upstream refresh
+  fails.** Interactive scoreboard readers may use the last persisted response
+  after its normal freshness window, while live games and batch ingestion still
+  fail closed instead of presenting stale state as current.
+- **Game-detail tabs no longer stop working after 100 lifetime ESPN requests.**
+  The obsolete process-lifetime counter is gone; the measured sliding request
+  budget and shared cache remain in force.
+- **Liga MX is now a first-class stored scoreboard and game-detail league.** Its
+  fixtures are normalized, persisted, exposed in score filters, and routed to
+  the soccer summary, play-by-play, and information tabs.
+- **The production MLS 2026 FotMob provider season is complete.** All 314
+  finished fixtures produced 9,679 provider rows; 8,954 resolve to canonical
+  players and 725 remain explicitly unresolved rather than guessed. The
+  importer now waits through normal short SQLite writer windows and reports
+  duplicate re-ingestion as unchanged.
+
+## v0.8.13
+
+### The news pipeline stops burning the shared nitter fleet, and game detail stops asking ESPN for what we store
+
+- **`ingest_league_news` was sending ~130 nitter requests a day against a
+  fleet that died the week of Aug 24** (nitter.net 410 Gone, xcancel served
+  an X Corp cease-and-desist dated Aug 24, tiekoetter 429ing every account
+  surface). Two timers daily x a three-mirror probe ladder x 15 timelines,
+  all refusal traffic, on hosts that rate-limit by IP — which this box
+  shares with the newsletter's corpus poller. **One attempt per mirror per
+  run now**, privacyredirect dropped from the list entirely, and a dead
+  fleet prints its per-host statuses and skips the run loudly instead of
+  returning empty as if it were a quiet day. Worst case with every mirror
+  down drops from ~130 refusals/day to under 8.
+- **Game detail reads state, period, clock, status detail and live score
+  from the scoreboard snapshots before it considers ESPN.** Every page load
+  spent two publisher calls on values the minute-by-minute ingest already
+  had on disk, and because those calls sit behind bare excepts, a routine
+  403 silently rendered no score on a live game — reported on Leagues Cup
+  America/Columbus, snapshot 2-0 Halftime, page blank. Tests cover both
+  paths (`test_game_detail_db_first.py`, `test_game_detail_live_status.py`).
+- **Crew radio relay switched to 97.1 The Fan** (WBNS-FM) after the previous
+  stream dropped mid-fixture.
 
 ## v0.8.9
 
