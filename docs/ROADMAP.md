@@ -37,12 +37,40 @@ opens **2026-08-29, nine days out**. That is the only hard date on the board.
 
 ## 1. What production is actually running
 
-**Re-measured 2026-08-25. PROD IS RUNNING v0.8.5 CODE. Two tagged releases, v0.8.6 and
-v0.8.7, have never reached it.** The 08-20 version of this section said v0.8.4 plus four
-untagged commits, and stayed unedited through three releases while §10 below was updated
-today, which is how a stale document passes for a maintained one.
+**STALE — the section below described the 2026-08-25 measurement. Re-measured 2026-08-31:
+prod is current.** v0.9.0 was cut and deployed 2026-08-29 (`dc4bbdb`, took over from a
+codex run that died at its usage limit mid-deploy), including the `player_game_logs_ufcstats`
+schema migration applied directly against prod. The backend container was rebuilt again
+2026-08-30 18:41 to carry the NCAAF zero-stat settlement fix; frontend was rebuilt
+2026-08-29 17:32.
 
-Read off the containers, then falsified against the tags rather than inferred from them:
+```
+legendarypicks-frontend-1   up since 2026-08-29 17:32
+legendarypicks-backend-1    up since 2026-08-30 18:41
+```
+
+Proven by content, same method as the stale measurement below used:
+
+```
+md5 backend/ingest_scoreboards.py (dev HEAD)        4f1aab5baa6aff8390e1220808ce5a24
+md5 /app/ingest_scoreboards.py in prod container     4f1aab5baa6aff8390e1220808ce5a24
+```
+
+Byte-identical. The v0.8.5/v0.8.6/v0.8.7 drift this section originally documented is
+closed — don't re-open the "rebuild and redeploy" or "cut v0.8.5" items below, they're done.
+
+**The failure mode that produced the stale section is still live and worth keeping.** The
+08-20 version of this section said v0.8.4 plus four untagged commits, and stayed unedited
+through three releases while other sections got updated — a stale "what's running" section
+reads as maintained right up until someone acts on it. Re-measure this section (containers +
+one byte-identical file, not tags or dates) before trusting it, every time it's read for a
+decision.
+
+<details>
+<summary>Prior measurement (2026-08-25, superseded above)</summary>
+
+**PROD IS RUNNING v0.8.5 CODE. Two tagged releases, v0.8.6 and v0.8.7, have never reached
+it.**
 
 ```
 legendarypicks-frontend   image built 2026-08-21 11:41   up 3 days
@@ -52,8 +80,6 @@ v0.8.5  tagged 2026-08-20 08:47   <- in the image
 v0.8.6  tagged 2026-08-22 14:31   <- NOT in the image
 v0.8.7  tagged 2026-08-24 09:38   <- NOT in the image
 ```
-
-Proven by content, not by dates:
 
 ```
 md5 backend/ingest_scoreboards.py @ v0.8.5   c3aa055ab7fe0b89148c7e5b9e70c1bd
@@ -73,17 +99,17 @@ of the scheduling half and false of the code half, and nothing on either databas
 distinguishes the two. This is `feedback_dev_fix_prod_never_ran` at release scale rather than
 fix scale.
 
-- [ ] **Rebuild and redeploy prod, or state in writing which of v0.8.6 and v0.8.7 is
-      deliberately withheld.** Until one of those happens, "what is on prod" has a different
-      answer for code than for data, and the tag answers neither.
+- [x] **Rebuild and redeploy prod, or state in writing which of v0.8.6 and v0.8.7 is
+      deliberately withheld.** DONE 2026-08-29 — v0.9.0 deploy rebuilt both containers.
 
 **This was a deliberate rebuild, not drift, but it breaks the tag convention.** The container
 was rebuilt on 2026-08-19 at 23:13 to carry the busy-timeout half of the SQLite contention
 fix, which could not reach prod as data.
 
-- [ ] **Cut `v0.8.5` so the running image has a name again.** Use `scripts/release.sh`, never
-      by hand. Until then "what is on prod" cannot be answered by a tag, which is the one
-      thing a tag exists for.
+- [x] **Cut `v0.8.5` so the running image has a name again.** Superseded — prod now runs a
+      tagged v0.9.0 image built from the same commit as the running containers.
+
+</details>
 
 **`backend/data` is bind-mounted; code is baked into the image.** That single fact splits
 every fix into two classes and it has not changed:
@@ -455,14 +481,27 @@ outlives its code.
 
 ## 9. In flight
 
-- [ ] **Tournament games under their own league key.** Leagues Cup (`concacaf.leagues.cup`), CCC
-      and Campeones Cup are separate ESPN slugs, so their logs must not inflate MLS
-      regular-season denominators. **Props half shipped** (`a77ecb1`); **logs and denominators
-      half is open.**
+- [x] **Tournament games under their own league key — Leagues Cup half. Re-measured
+      2026-08-31.** `player_game_logs` cleanly separates the two: `league='lcup'` holds 1,640
+      REG rows (dev) / 1,169 REG + 63 POST (prod), zero of them under `league='mls'`.
+      `ingest_mls_season_stats.py` scopes its regular-season query to `league='mls'`
+      explicitly, so Leagues Cup appearances cannot inflate that denominator. **Props half
+      shipped** (`a77ecb1`, 2026-08-18); **logs half also closed**, landed with this week's
+      Leagues Cup props work (2026-08-25) without a matching roadmap update.
+      - [ ] **CCC and Campeones Cup remain genuinely open, not just undocumented.**
+            `backend/espn_leagues.py` has no registry entry for either — they are not ingested
+            under any key today. No denominator-inflation risk (nothing to leak in), but also
+            no coverage. Follows the same `lcup` pattern once someone picks it up: new
+            `ESPN_LEAGUES` entry, `--league` value, roster-spine mapping in
+            `ROSTER_LEAGUES` (`ingest_soccer_logs.py`).
 - [ ] **Player identity, steps 2 to 4** (`docs/TASK-next-release-player-identity.md`). Step 1
-      done: `UNIQUE(espn_id, league)` on both DBs, 0 duplicate groups. Remaining: populate
-      `player_source_ids` (10 rows today, all underdog/ufc, while Bovada and RotoWire still
-      resolve by name), re-run promotion, reconcile diverged ids.
+      done: `UNIQUE(espn_id, league)` on both DBs, 0 duplicate groups. **Re-measured
+      2026-08-31: `player_source_ids` moved from 10 rows to 1,395 on dev** (1,283 rotowire,
+      22 ufcstats, 90 underdog) / 1,062 on prod (978/22/62) — RotoWire now resolves by source
+      id as a side effect of this week's props backfills. **Bovada still resolves by name**:
+      no `bovada` rows in `player_source_ids`, and no Bovada ingest module writes to that
+      table. Remaining: Bovada source-id population, re-run promotion, reconcile diverged
+      ids — none of those three verified this pass.
       `feedback_ambiguous_key_never_raises` is why this matters.
 - [ ] **Player detail: year and league selectors**, keyed off `position_group` so a keeper surface
       shows saves, not shots. **Candidate complete 2026-08-24; not promoted.** The profile API
