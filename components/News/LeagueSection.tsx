@@ -64,6 +64,35 @@ export type LeagueNews = {
 }
 
 
+function uniqueBy<T>(items: T[], key: (item: T) => string | number): T[] {
+  const seen = new Set<string | number>()
+  return items.filter(item => {
+    const value = key(item)
+    if (seen.has(value)) return false
+    seen.add(value)
+    return true
+  })
+}
+
+
+// ATP and WTA are classified as separate leagues (see backend/news_classifier.py —
+// player-name term lists can't be shared without one tour's headlines winning the
+// other's ambiguous matches), but the product surfaces them as one Tennis tab. This
+// merges the two feeds so callers with both a `tennis` tab and per-item league tags
+// (via `showLeague`) can render one combined, deduped, newest-first feed.
+export function combineTennisNews(atp: LeagueNews | null, wta: LeagueNews | null): LeagueNews | null {
+  if (!atp && !wta) return null
+  const feeds = [atp, wta].filter((feed): feed is LeagueNews => Boolean(feed))
+  return {
+    conversations: uniqueBy(feeds.flatMap(feed => feed.conversations), item => item.conv_id)
+      .sort((a, b) => new Date(b.story_time || b.generated_at).getTime() - new Date(a.story_time || a.generated_at).getTime()),
+    narratives: uniqueBy(feeds.flatMap(feed => feed.narratives), item => item.id),
+    granular: uniqueBy(feeds.flatMap(feed => feed.granular), item => item.id),
+    other: feeds.reduce((total, feed) => total + feed.other, 0),
+  }
+}
+
+
 export function relativeTime(iso: string): string {
   if (!iso) return ''
   const t = new Date(iso).getTime()

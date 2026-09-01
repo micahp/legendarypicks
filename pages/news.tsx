@@ -5,6 +5,7 @@ import {
   LeagueSection,
   LEAGUE_LABELS,
   NewsCard,
+  combineTennisNews,
   leagueLabel,
   relativeTime,
 } from '../components/News/LeagueSection'
@@ -15,7 +16,7 @@ import type { AiNarrative, LeagueNews, NewsItem } from '../components/News/Leagu
 // tabs land per league as data appears. Backend: /api/news (routers/news.py),
 // collected out-of-band by ingest_league_news.py.
 
-const LEAGUE_ORDER = ['nfl', 'mlb', 'nba', 'nhl', 'mls', 'ncaaf', 'ufc', 'esports']
+const LEAGUE_ORDER = ['nfl', 'mlb', 'nba', 'nhl', 'mls', 'ncaaf', 'ufc', 'tennis', 'esports']
 
 type NewsData = {
   conversations: AiNarrative[]
@@ -50,8 +51,11 @@ export default function NewsPage() {
   const leagues = useMemo(() => {
     if (!data) return []
     const present = Object.keys(data.leagues).filter((lg) => lg !== 'unclassified')
-    return LEAGUE_ORDER.filter((lg) => present.includes(lg))
-      .concat(present.filter((lg) => !LEAGUE_ORDER.includes(lg)).sort())
+    // ATP and WTA are separate classifier leagues but share one tab: see
+    // combineTennisNews in components/News/LeagueSection.
+    const merged = Array.from(new Set(present.map((lg) => (lg === 'atp' || lg === 'wta') ? 'tennis' : lg)))
+    return LEAGUE_ORDER.filter((lg) => merged.includes(lg))
+      .concat(merged.filter((lg) => !LEAGUE_ORDER.includes(lg)).sort())
   }, [data])
 
   return (
@@ -116,6 +120,12 @@ export default function NewsPage() {
                   </div>
                 )
             })()
+          ) : active === 'tennis' ? (
+            <LeagueSection
+              league="tennis"
+              showLeague
+              data={combineTennisNews(data.leagues.atp || null, data.leagues.wta || null) || { conversations: [], narratives: [], granular: [], other: 0 }}
+            />
           ) : (
             <LeagueSection league={active} data={data.leagues[active] || { conversations: [], narratives: [], granular: [], other: 0 }} />
           )

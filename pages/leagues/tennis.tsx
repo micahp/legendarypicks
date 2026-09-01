@@ -6,7 +6,7 @@ import GameCard from '../../components/Scores/GameCard'
 import HorizontalScrollRail from '../../components/HorizontalScrollRail'
 import NewsTab from '../../components/Leagues/NewsTab'
 import { useNewsData } from '../../components/Leagues/hooks/useNewsData'
-import type { LeagueNews } from '../../components/News/LeagueSection'
+import { combineTennisNews } from '../../components/News/LeagueSection'
 import { SportsService } from '../../services/sports'
 import type { Game } from '../../services/sports'
 
@@ -91,28 +91,6 @@ function shiftDate(value: string, offset: number) {
 
 function selectedTours(tour: Tour): ('atp' | 'wta')[] {
   return tour === 'all' ? ['atp', 'wta'] : [tour]
-}
-
-function uniqueBy<T>(items: T[], key: (item: T) => string | number): T[] {
-  const seen = new Set<string | number>()
-  return items.filter(item => {
-    const value = key(item)
-    if (seen.has(value)) return false
-    seen.add(value)
-    return true
-  })
-}
-
-function combineTennisNews(atp: LeagueNews | null, wta: LeagueNews | null): LeagueNews | null {
-  if (!atp && !wta) return null
-  const feeds = [atp, wta].filter((feed): feed is LeagueNews => Boolean(feed))
-  return {
-    conversations: uniqueBy(feeds.flatMap(feed => feed.conversations), item => item.conv_id)
-      .sort((a, b) => new Date(b.story_time || b.generated_at).getTime() - new Date(a.story_time || a.generated_at).getTime()),
-    narratives: uniqueBy(feeds.flatMap(feed => feed.narratives), item => item.id),
-    granular: uniqueBy(feeds.flatMap(feed => feed.granular), item => item.id),
-    other: feeds.reduce((total, feed) => total + feed.other, 0),
-  }
 }
 
 export default function TennisLeaguePage() {
