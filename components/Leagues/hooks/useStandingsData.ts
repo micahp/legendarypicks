@@ -1,11 +1,38 @@
 import { useEffect, useState } from 'react'
-import { SportsService } from '../../../services/sports'
 import type { KnockoutRound, StandingGroup, TeamStats } from '../types'
 
-// Leagues whose standings are conference-grouped ({group, rows}[]). The
-// backend serves that shape once their standings route lands; until then the
-// same endpoint returns flat W-L rows and we fall back to the team table.
+// Leagues whose standings are conference-grouped ({group, rows}[]).
 const GROUPED_LEAGUES = ['mls', 'ncaaf']
+
+/**
+ * MLS returns `{season, available_seasons, groups}`; NCAAF and the World Cup
+ * return a bare `[{group, rows}]`. Read both out of either shape — a league
+ * that sends no season list simply gets no season picker.
+ */
+function readStandings(payload: any): {
+  groups: StandingGroup[]
+  season: number | null
+  availableSeasons: number[]
+} {
+  if (payload && !Array.isArray(payload) && Array.isArray(payload.groups)) {
+    return {
+      groups: payload.groups as StandingGroup[],
+      season: typeof payload.season === 'number' ? payload.season : null,
+      availableSeasons: Array.isArray(payload.available_seasons)
+        ? (payload.available_seasons as number[])
+        : [],
+    }
+  }
+  const grouped = Array.isArray(payload)
+    && payload.length > 0
+    && typeof (payload[0] as any)?.group === 'string'
+    && Array.isArray((payload[0] as any)?.rows)
+  return {
+    groups: grouped ? (payload as StandingGroup[]) : [],
+    season: null,
+    availableSeasons: [],
+  }
+}
 
 export function useStandingsData(
   league: string,
@@ -15,6 +42,11 @@ export function useStandingsData(
   const [teams, setTeams] = useState<TeamStats[]>([])
   const [groups, setGroups] = useState<StandingGroup[]>([])
   const [knockout, setKnockout] = useState<KnockoutRound[]>([])
+  const [season, setSeason] = useState<number | null>(null)
+  const [availableSeasons, setAvailableSeasons] = useState<number[]>([])
+  // null = "whatever the publisher calls current". Set only by the picker, so
+  // the default view never pins a year that will go stale next season.
+  const [requestedSeason, setRequestedSeason] = useState<number | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -44,18 +76,24 @@ export function useStandingsData(
             }
           }
         } else if (GROUPED_LEAGUES.includes(league)) {
-          // MLS / NCAAF — conference-grouped standings. Shape-detect: the
-          // {group, rows}[] form renders as per-conference tables; the flat
-          // W-L rows the endpoint serves today render as the team table.
-          const standingsResponse = await fetch(`/api/${league}/standings`)
+          // MLS / NCAAF — conference-grouped standings, in either the bare or
+          // the season-named shape (see readStandings). A flat W-L body still
+          // falls back to the team table.
+          const query = requestedSeason != null ? `?season=${requestedSeason}` : ''
+          const standingsResponse = await fetch(`/api/${league}/standings${query}`)
+          // A 503 here is the endpoint refusing to serve a stale season rather
+          // than a transport failure, and it carries a reason worth showing.
+          if (!standingsResponse.ok) {
+            const body = await standingsResponse.json().catch(() => null)
+            throw new Error(body?.detail || 'Standings are unavailable.')
+          }
           const standings = await standingsResponse.json()
           if (!ignore) {
-            const groupedShape = Array.isArray(standings)
-              && standings.length > 0
-              && typeof (standings[0] as any)?.group === 'string'
-              && Array.isArray((standings[0] as any)?.rows)
-            if (groupedShape) {
-              setGroups(standings as StandingGroup[])
+            const parsed = readStandings(standings)
+            if (parsed.groups.length > 0) {
+              setGroups(parsed.groups)
+              setSeason(parsed.season)
+              setAvailableSeasons(parsed.availableSeasons)
               setTeams([])
             } else {
               setTeams(Array.isArray(standings) ? (standings as TeamStats[]) : [])
@@ -63,21 +101,45 @@ export function useStandingsData(
             }
           }
         } else {
-          const strength = await SportsService.getStrength(league)
+          // NFL / NBA / MLB / NHL — a flat W-L table that now arrives inside an
+          // envelope naming its season, so the year can be shown and switched
+          // the same way MLS does it. /strength stays the bare row list.
+          const query = requestedSeason != null ? `?season=${requestedSeason}` : ''
+          const standingsResponse = await fetch(`/api/${league}/standings${query}`)
+          if (!standingsResponse.ok) {
+            const body = await standingsResponse.json().catch(() => null)
+            throw new Error(body?.detail || 'Standings are unavailable.')
+          }
+          const standings = await standingsResponse.json()
           if (!ignore) {
-            setTeams(Array.isArray(strength) ? strength : [])
+            const rows = Array.isArray(standings) ? standings : standings?.teams
+            setTeams(Array.isArray(rows) ? (rows as TeamStats[]) : [])
+            setSeason(typeof standings?.season === 'number' ? standings.season : null)
+            setAvailableSeasons(
+              Array.isArray(standings?.available_seasons) ? standings.available_seasons : [],
+            )
             setGroups([])
           }
         }
-      } catch {
-        if (!ignore) setError('Unable to load standings.')
+      } catch (err) {
+        if (!ignore) {
+          setError(err instanceof Error && err.message ? err.message : 'Unable to load standings.')
+          setGroups([])
+        }
       } finally {
         if (!ignore) setLoading(false)
       }
     }
     load()
     return () => { ignore = true }
-  }, [league, isWorldCup, isUFC])
+  }, [league, isWorldCup, isUFC, requestedSeason])
 
-  return { teams, groups, knockout, loading, error }
+  // Switching leagues must drop a year picked for the previous one.
+  useEffect(() => { setRequestedSeason(null) }, [league])
+
+  return {
+    teams, groups, knockout, loading, error,
+    season, availableSeasons,
+    selectSeason: (next: number) => setRequestedSeason(next),
+  }
 }

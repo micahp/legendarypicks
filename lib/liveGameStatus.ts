@@ -59,10 +59,17 @@ function usableClock(period?: LivePeriod): string | null {
 }
 
 export function formatLiveStatus(period?: LivePeriod, fallback?: string | null): string {
-  const parts = ['LIVE', phaseLabel(period), usableClock(period)]
-  const unique = parts.filter((part): part is string => Boolean(part)).filter((part, index, all) => all.indexOf(part) === index)
-  if (unique.length > 1) return unique.join(' · ')
+  // "LIVE · Q4 · 1:51" says the same thing twice: a quarter number IS the game
+  // being in progress, and the badge this renders into is already coloured for
+  // live. So the phase wins whenever we have one, and the word is kept only for
+  // the case where we know a game is live but not where it is — which is the
+  // one time it carries information. Matches WCContext's `phaseLabel || 'Live'`.
+  const phase = phaseLabel(period)
+  const clock = usableClock(period)
+  if (phase) {
+    return clock && clock !== phase ? `${phase} · ${clock}` : phase
+  }
 
-  const detail = fallback?.trim()
+  const detail = fallback?.trim() || clock
   return detail && detail !== '0:00' ? `LIVE · ${detail}` : 'LIVE'
 }

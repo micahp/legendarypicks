@@ -91,6 +91,19 @@ class PublisherOutageRoutesTest(unittest.TestCase):
         self.db_patch.start()
         self.addCleanup(self.db_patch.stop)
 
+        # `games._db` is not the only door to a database. The snapshot rung goes
+        # through `scoreboard_store`, which resolves LP_DB_PATH per call, so
+        # patching `_db` alone left these tests reading the REAL dev database:
+        # the outage case returned 14 live MLB games and still passed as though
+        # the fixture had produced them. An outage test that quietly reads
+        # production data is not testing an outage.
+        self._prev_db_env = os.environ.get("LP_DB_PATH")
+        os.environ["LP_DB_PATH"] = self.db_path
+        self.addCleanup(lambda: (
+            os.environ.__setitem__("LP_DB_PATH", self._prev_db_env)
+            if self._prev_db_env is not None
+            else os.environ.pop("LP_DB_PATH", None)))
+
         app = FastAPI()
         app.include_router(games.router)
         self.client = TestClient(app, raise_server_exceptions=False)

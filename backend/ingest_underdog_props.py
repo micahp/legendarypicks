@@ -21,14 +21,6 @@ import urllib.request
 from collections import defaultdict
 from typing import Dict, List, Optional, Set, Tuple
 
-from prop_source_identity import (
-    SourceIdentityConflict,
-    bind_player_source_key as _bind_player_source_key,
-    ensure_source_identity_schema as _ensure_source_identity_schema,
-    normalize_name,
-    queue_unresolved_player as _queue_unresolved_player,
-)
-
 
 DB = os.environ.get("LP_DB_PATH") or os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "data", "picks.db"
@@ -51,6 +43,10 @@ _UFC_MARKETS = {
     "finishes": "finishes",
 }
 _SUBHEADER_RE = re.compile(r"^(Higher|Lower)\s+([\d.]+)\s")
+
+
+class SourceIdentityConflict(RuntimeError):
+    """A supposedly stable source key now names a different canonical row."""
 
 
 def fetch() -> Dict:
@@ -145,16 +141,62 @@ def parse_ufc(data: Dict) -> Tuple[List[Dict], Dict]:
 
 def ensure_source_identity_schema(con: sqlite3.Connection) -> None:
     """Additive source-key tables; no display name is a cross-source key."""
-    _ensure_source_identity_schema(con)
+    con.executescript("""
+        CREATE TABLE IF NOT EXISTS player_source_ids(
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          source TEXT NOT NULL,
+          league TEXT NOT NULL,
+          source_player_key TEXT NOT NULL,
+          player_id INTEGER NOT NULL REFERENCES players(id),
+          first_seen TEXT NOT NULL,
+          last_seen TEXT NOT NULL,
+          UNIQUE(source, league, source_player_key)
+        );
+        CREATE INDEX IF NOT EXISTS idx_player_source_ids_player
+          ON player_source_ids(player_id, source, league);
+        CREATE TABLE IF NOT EXISTS prop_game_source_ids(
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          source TEXT NOT NULL,
+          league TEXT NOT NULL,
+          source_game_key TEXT NOT NULL,
+          game_id INTEGER NOT NULL REFERENCES prop_games(id),
+          first_seen TEXT NOT NULL,
+          last_seen TEXT NOT NULL,
+          UNIQUE(source, league, source_game_key)
+        );
+        CREATE INDEX IF NOT EXISTS idx_prop_game_source_ids_game
+          ON prop_game_source_ids(game_id, source, league);
+    """)
+    columns = {row[1] for row in con.execute("PRAGMA table_info(unresolved_players)")}
+    for column in ("source_player_key", "reason"):
+        if column not in columns:
+            con.execute("ALTER TABLE unresolved_players ADD COLUMN {} TEXT".format(column))
+    con.execute(
+        "CREATE INDEX IF NOT EXISTS idx_unresolved_players_source_key "
+        "ON unresolved_players(source, league, source_player_key)"
+    )
 
 
 def queue_unresolved_player(
     con: sqlite3.Connection, source_player_key: str, player_name: str, reason: str
 ) -> None:
     """Queue once by source key, preserving the newest publisher display name."""
-    _queue_unresolved_player(
-        con, source=SOURCE, league=LEAGUE, source_player_key=source_player_key,
-        player_name=player_name, team=None, reason=reason,
+    existing = con.execute(
+        "SELECT id FROM unresolved_players WHERE source=? AND league=? AND source_player_key=?",
+        (SOURCE, LEAGUE, source_player_key),
+    ).fetchone()
+    if existing:
+        con.execute(
+            "UPDATE unresolved_players SET count=count+1, raw_name=?, reason=? WHERE id=?",
+            (player_name, reason, existing["id"]),
+        )
+        return
+    con.execute(
+        "INSERT INTO unresolved_players("
+        "source,raw_name,league,team,first_seen,count,source_player_key,reason"
+        ") VALUES(?,?,?,?,?,1,?,?)",
+        (SOURCE, player_name, LEAGUE, None, dt.datetime.now(dt.timezone.utc).isoformat(),
+         source_player_key, reason),
     )
 
 
@@ -195,20 +237,55 @@ def resolve_player(
     return None, reason
 
 
+def normalize_name(value: str) -> str:
+    """Match the repository's stored alias normalization without fuzzy matching."""
+    import unicodedata
+
+    value = unicodedata.normalize("NFKD", value or "").encode("ascii", "ignore").decode("ascii")
+    value = re.sub(r"\b(jr\.?|sr\.?|ii|iii|iv|v)\b", "", value.lower())
+    return re.sub(r"\s+", " ", re.sub(r"[^\w\s]", "", value)).strip()
+
+
 def bind_player_source_key(
     con: sqlite3.Connection, source_player_key: str, player_id: int, now: str
 ) -> None:
-    _bind_player_source_key(
-        con, source=SOURCE, league=LEAGUE, source_player_key=source_player_key,
-        player_id=player_id, now=now,
-    )
+    existing = con.execute(
+        "SELECT player_id FROM player_source_ids WHERE source=? AND league=? AND source_player_key=?",
+        (SOURCE, LEAGUE, source_player_key),
+    ).fetchone()
+    if existing and existing["player_id"] != player_id:
+        raise SourceIdentityConflict(
+            "source player key {} maps to {} not {}".format(
+                source_player_key, existing["player_id"], player_id
+            )
+        )
+    if existing:
+        con.execute(
+            "UPDATE player_source_ids SET last_seen=? WHERE source=? AND league=? AND source_player_key=?",
+            (now, SOURCE, LEAGUE, source_player_key),
+        )
+    else:
+        con.execute(
+            "INSERT INTO player_source_ids(source,league,source_player_key,player_id,first_seen,last_seen) "
+            "VALUES(?,?,?,?,?,?)",
+            (SOURCE, LEAGUE, source_player_key, player_id, now, now),
+        )
+
+
+def _game_exists(con: sqlite3.Connection, game_id: int) -> bool:
+    return con.execute(
+        "SELECT 1 FROM prop_games WHERE id=?", (game_id,)
+    ).fetchone() is not None
 
 
 def _game_with_fighters(con: sqlite3.Connection, game_id: int, player_ids: Set[int]) -> bool:
+    placeholders = ",".join("?" for _ in player_ids)
     found = {
         row["player_id"]
         for row in con.execute(
-            "SELECT DISTINCT player_id FROM props WHERE game_id=? AND player_id IN (?,?)",
+            "SELECT DISTINCT player_id FROM props WHERE game_id=? AND player_id IN ({})".format(
+                placeholders
+            ),
             (game_id, *sorted(player_ids)),
         )
     }
@@ -228,21 +305,44 @@ def resolve_game(
         raise SourceIdentityConflict("source game key {} has multiple mappings".format(source_game_key))
     if mapped:
         game_id = mapped[0]["game_id"]
-        if not _game_with_fighters(con, game_id, player_ids):
-            raise SourceIdentityConflict(
-                "source game key {} conflicts with canonical fighters".format(source_game_key)
+        # A mapped row that no longer exists is not a changed identity, it is a game
+        # that was folded into another one (link_prop_games and dedupe_prop_games both
+        # do that) by a pass that did not carry the mapping across. Re-resolving finds
+        # the survivor by fighter set, which is the same answer the fold intended.
+        # Raising here instead cost two hours of failed runs on 2026-08-19.
+        if not _game_exists(con, game_id):
+            print("  stale mapping: source game {} pointed at deleted game {}, "
+                  "re-resolving".format(source_game_key, game_id))
+            con.execute(
+                "DELETE FROM prop_game_source_ids WHERE source=? AND league=? AND source_game_key=?",
+                (SOURCE, LEAGUE, source_game_key),
             )
-        con.execute(
-            "UPDATE prop_game_source_ids SET last_seen=? WHERE source=? AND league=? AND source_game_key=?",
-            (now, SOURCE, LEAGUE, source_game_key),
-        )
-        return game_id
+            mapped = []
+        else:
+            if not _game_with_fighters(con, game_id, player_ids):
+                raise SourceIdentityConflict(
+                    "source game key {} conflicts with canonical fighters".format(source_game_key)
+                )
+            con.execute(
+                "UPDATE prop_game_source_ids SET last_seen=? WHERE source=? AND league=? AND source_game_key=?",
+                (now, SOURCE, LEAGUE, source_game_key),
+            )
+            return game_id
 
+    # A one-day window, not an exact date. Publishers disagree by a day on the same
+    # fixture because a card that starts 00:45 UTC is the previous evening in the US,
+    # and link_prop_games documents the same "neighbour slate" convention. Measured
+    # 2026-08-19: Underdog files Wint vs Chatman on 08-22, ESPN on 08-23, and an exact
+    # match minted a second row for a fight we already had under its ESPN event id.
+    # Two fighters meeting twice inside two days is not a thing, so the window is safe,
+    # and an ambiguous result still refuses below rather than guessing.
+    placeholders = ",".join("?" for _ in player_ids)
     candidates = con.execute(
         "SELECT pg.id FROM prop_games pg JOIN props pr ON pr.game_id=pg.id "
-        "WHERE pg.league=? AND pg.date=? AND pr.player_id IN (?,?) "
-        "GROUP BY pg.id HAVING COUNT(DISTINCT pr.player_id)=2",
-        (LEAGUE, group[0]["date"], *sorted(player_ids)),
+        "WHERE pg.league=? AND pg.date BETWEEN date(?,'-1 day') AND date(?,'+1 day') "
+        "AND pr.player_id IN ({}) "
+        "GROUP BY pg.id HAVING COUNT(DISTINCT pr.player_id)=?".format(placeholders),
+        (LEAGUE, group[0]["date"], group[0]["date"], *sorted(player_ids), len(player_ids)),
     ).fetchall()
     if len(candidates) > 1:
         raise SourceIdentityConflict(
@@ -291,7 +391,7 @@ def direct_ingest(props: List[Dict], dry_run: bool = False) -> Dict:
     summary = {
         "parsed_props": len(props), "source_games": 0, "eligible_games": 0,
         "skipped_games": 0, "written_props": 0, "resolved_players": 0,
-        "unresolved_players": 0,
+        "unresolved_players": 0, "conflicted_games": 0,
     }
     try:
         ensure_source_identity_schema(con)
@@ -333,7 +433,29 @@ def direct_ingest(props: List[Dict], dry_run: bool = False) -> Dict:
 
             for source_player_key, player_id in resolved.items():
                 bind_player_source_key(con, source_player_key, player_id, now)
-            game_id = resolve_game(con, group, set(resolved.values()), now)
+            # A game whose identity cannot be confirmed is skipped, NOT fatal.
+            # `resolve_game` fails closed on purpose -- it refuses to write props
+            # onto a game whose fighter set does not match what Underdog is
+            # sending -- but raising out of the loop aborted the WHOLE run, so one
+            # bad fixture blocked every other event.
+            #
+            # It did: from 2026-08-25T01:04 until this change, every run fetched
+            # 149 balanced props across 13 events and wrote ZERO, on
+            # `source game key 295987 conflicts with canonical fighters` (game
+            # 1274, Xiao Long vs Francesco Nuzzi, which holds only one of the two
+            # fighters). The board showed 3 UFC markets instead of 6 because
+            # win_by_decision comes from Bovada and kept updating while every
+            # Underdog market froze. Same lesson the stale-mapping branch in
+            # `resolve_game` already records from 2026-08-19.
+            try:
+                game_id = resolve_game(con, group, set(resolved.values()), now)
+            except SourceIdentityConflict as conflict:
+                summary["skipped_games"] += 1
+                summary["conflicted_games"] += 1
+                summary.setdefault("conflicts", []).append(str(conflict))
+                print("  CONFLICT source game {}: {} -- skipped, run continues".format(
+                    source_game_key, conflict))
+                continue
             for prop in group:
                 upsert_prop(con, game_id, resolved[prop["source_player_key"]], prop, now)
                 summary["written_props"] += 1
@@ -369,11 +491,16 @@ def main() -> int:
     print(
         "Ingest: {written_props} props from {eligible_games} eligible of {source_games} source games; "
         "{resolved_players} of {resolved_players_plus_unresolved} participant IDs resolved; "
-        "{skipped_games} rejected games, {unresolved_players} queued fighters.".format(
+        "{skipped_games} skipped games ({conflicted_games} identity conflicts), "
+        "{unresolved_players} queued fighters.".format(
             resolved_players_plus_unresolved=(summary["resolved_players"] + summary["unresolved_players"]),
             **summary
         )
     )
+    # A skipped game is a REPORTED game. These were fatal until 2026-08-26, which
+    # at least made them loud; now that the run continues, silence would be worse.
+    for line in summary.get("conflicts", []):
+        print("  UNWRITTEN (identity conflict): {}".format(line))
     if summary["written_props"] == 0:
         print("ERROR: non-empty Underdog UFC board produced zero eligible props.")
         return 2

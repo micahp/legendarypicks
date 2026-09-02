@@ -50,7 +50,7 @@ _NOT_YET = _game(825046, "2026-08-12T01:40:00Z", ARI, COL, state="Preview")
 @pytest.fixture
 def schedule(monkeypatch):
     def use(by_day):
-        monkeypatch.setattr(settlement, "_mlb_schedule",
+        monkeypatch.setattr(settlement.mlb_api, "_mlb_schedule",
                             lambda day: {"dates": [{"games": by_day.get(day, [])}]})
     return use
 
@@ -100,6 +100,18 @@ def test_a_postponed_game_is_never_the_answer(schedule):
 def test_an_unambiguous_day_still_resolves_without_an_instant(schedule):
     """Don't break the 396 historical rows that have no start_time and no rival."""
     schedule({"2026-08-11": [_PLAYED]})
+    assert settlement._fetch_mlb_gamepk("2026-08-11", ARI, COL) == 825045
+
+
+def test_without_an_instant_adjacent_series_games_do_not_create_ambiguity(schedule):
+    """A calendar-date row asks only that date; neighbouring games are not rivals."""
+    previous = _game(825044, "2026-08-10T01:40:00Z", ARI, COL)
+    following = _game(825046, "2026-08-12T01:40:00Z", ARI, COL)
+    schedule({
+        "2026-08-10": [previous],
+        "2026-08-11": [_PLAYED],
+        "2026-08-12": [following],
+    })
     assert settlement._fetch_mlb_gamepk("2026-08-11", ARI, COL) == 825045
 
 

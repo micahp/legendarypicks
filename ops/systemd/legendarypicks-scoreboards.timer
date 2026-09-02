@@ -1,0 +1,11 @@
+[Unit]
+Description=Refresh the scoreboard slates the board serves, DEV then PROD
+
+[Timer]
+# ABSOLUTE, never monotonic. Keeps the DEV slot; PROD now follows in the same run
+# rather than five minutes later.
+OnCalendar=*-*-* *:00/10:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target

@@ -9,20 +9,37 @@
 # reports exactly how to finish or undo rather than going quiet.
 #
 # Deliberately does NOT write release notes. The CHANGELOG entry must already
-# exist; a generated one would be worse than none.
+# exist; a generated one would be worse than none. It does PUBLISH them: on a
+# MAJOR or MINOR tag it creates the GitHub release from that entry (see the
+# gh step at the bottom).
+#
+# This is the heavyweight path, and it should be: it bumps package.json, writes
+# a tag the pre-push hook then requires, and runs the prod audits. If you just
+# want to mark a build, that is `scripts/tag.sh` and it does none of this.
+#
+# The optional second argument is the ANNOTATED TAG MESSAGE: one sentence, what
+# shipped, features first then data. GitHub shows it on the /tags page, so it is
+# the only description a patch gets (patches get no release). Left off, the tag
+# carries only its own name, which is what every tag before v0.8.1 has.
 #
 #   scripts/release.sh 0.6.6
+#   scripts/release.sh 0.6.6 "News tab on every league hub, plus an MLS season fix"
 #   scripts/release.sh 0.6.6 --dry-run
 set -euo pipefail
 
 VERSION="${1:-}"
 DRY_RUN=""
-[ "${2:-}" = "--dry-run" ] && DRY_RUN=1
+TAG_NOTE=""
+for arg in "$@"; do
+  [ "$arg" = "--dry-run" ] && DRY_RUN=1
+done
+# Second positional, when it is not the dry-run flag, is the tag message.
+[ "${2:-}" != "--dry-run" ] && TAG_NOTE="${2:-}"
 
 die() { echo "release: $*" >&2; exit 1; }
 run() { if [ -n "$DRY_RUN" ]; then echo "  [dry-run] $*"; else "$@"; fi; }
 
-[ -n "$VERSION" ] || die "usage: scripts/release.sh <version> [--dry-run]   e.g. 0.6.6"
+[ -n "$VERSION" ] || die "usage: scripts/release.sh <version> [\"tag message\"] [--dry-run]   e.g. 0.6.6"
 echo "$VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$' \
   || die "version must be bare semver without a leading v (got '$VERSION')"
 
@@ -134,17 +151,98 @@ fi
 # for accepted nickname-vs-legal-name reasons) and blocking on it would just
 # get the check disabled; FAIL is a measured defect in the data a release
 # would ship.
-if [ -f backend/audit_league_stats.py ] && [ -x backend/venv/bin/python ]; then
+#
+# Two tiers, and the split is a DECISION rather than an omission. Until 2026-08-17 this
+# ran four leagues -- nfl/mlb/nba/nhl -- and the release shipped ufc, mls and ncaaf data
+# with nothing grading it. A league the release includes but the preflight never asks
+# about is a league whose defects ship silently, which is how "prod has zero news" and
+# "MLS is hidden on prod" both reached a release that headlined them.
+#
+#   BLOCKING  a FAIL here stops the release.
+#   REPORTED  runs, prints, and does NOT stop the release -- for a league we are still
+#             getting to green. It exists so "how close is MLS?" has a number in front of
+#             it every time we cut, instead of being asked once a fortnight.
+#
+# A REPORTED league is not a permanently excused one. Move it into BLOCKING the moment it
+# reaches 0 FAIL; that is one word of diff and it is visible in git, which is the point.
+# As of 2026-08-17: mls 7 passed / 1 FAIL, ncaaf 15 passed / 1 FAIL, and it is the SAME
+# defect in both -- C/vocabulary[position], a parent level and its own children sharing one
+# column (AM under M, CD under D; CB under DB, NT under DT). One repair promotes both.
+#
+# ufc is BLOCKING from the start: it audits 3 passed / 0 FAIL today. Its one UNVERIFIED
+# (no leaderboard surface) is correct by design -- it is a rankings league, not a stats one.
+# ncaaf promoted to BLOCKING 2026-08-17, the same day it was added as REPORTED: it went to
+# 0 FAIL / 17 passed once the position vocabulary was split and 17 players who appear on no
+# roster either publisher publishes stopped claiming to be active. Its 2 remaining checks are
+# UNVERIFIED, which does not block -- one is a publisher gap (college football publishes no
+# playing-time qualifier) and one needs fetch_identity_names.py to learn ncaaf.
+AUDIT_BLOCKING="nfl mlb nba nhl ufc ncaaf"
+AUDIT_REPORTED="mls"
+# The runner moved from `backend/audit_league_stats.py` to a package on
+# 2026-08-18. This guard was `[ -f backend/audit_league_stats.py ]`, so from
+# that day the whole audit below was SKIPPED without a word, and v0.8.2 and
+# v0.8.3 were both cut with the prod stats audit never running. A gate that
+# cannot find its runner must stop the release, not step over it.
+[ -d backend/audit_league_stats ] \
+  || die "backend/audit_league_stats is missing -- the prod stats audit cannot run, and an audit that did not run is not an audit that passed"
+if [ -x backend/venv/bin/python ]; then
   echo
-  echo "release: audit_league_stats vs prod (nfl/mlb/nba/nhl; FAIL blocks, UNVERIFIED does not)"
-  audit_out=$(backend/venv/bin/python backend/audit_league_stats.py \
-    --db backend/data/picks.db \
-    --league nfl --league mlb --league nba --league nhl --quiet 2>&1) || true
+  echo "release: audit_league_stats vs prod — BLOCKING: $AUDIT_BLOCKING (FAIL blocks, UNVERIFIED does not)"
+  audit_args=""
+  for lg in $AUDIT_BLOCKING; do audit_args="$audit_args --league $lg"; done
+  audit_out=$(PYTHONPATH=backend backend/venv/bin/python -m audit_league_stats \
+    --db backend/data/picks.db $audit_args --quiet 2>&1) || true
   printf '%s\n' "$audit_out" | sed 's/^/  /'
   audit_fails=$(printf '%s\n' "$audit_out" | grep -c '^FAIL' || true)
+
+  echo
+  echo "release: audit_league_stats vs prod — REPORTED: $AUDIT_REPORTED (does NOT block; promote to BLOCKING at 0 FAIL)"
+  for lg in $AUDIT_REPORTED; do
+    rep_out=$(PYTHONPATH=backend backend/venv/bin/python -m audit_league_stats \
+      --db backend/data/picks.db --league "$lg" --quiet 2>&1) || true
+    printf '%s\n' "$rep_out" | sed 's/^/  /'
+    echo "  ^ $lg is REPORTED, not blocking. $(printf '%s\n' "$rep_out" | grep -c '^FAIL' || true) FAIL to go."
+  done
+
+  # A league the audit has never heard of cannot be reported as clean. `audit_league_stats`
+  # raises for a league that serves player_stats with no MANIFEST entry, but a league it is
+  # never ASKED about is silent, so name the gap here instead of letting absence read as green.
+  echo
+  echo "release: NOT audited: esports has no MANIFEST entry in audit_league_stats, so no"
+  echo "  check above covers it. That is a gap, not a pass. Adding a league to the audit means"
+  echo "  writing what it CLAIMS first; see the MANIFEST header in backend/audit_league_stats/cli.py."
+
   if [ "$audit_fails" -gt 0 ]; then
     echo
-    die "$audit_fails audit check(s) FAIL against prod data -- promote or repair before releasing"
+    die "$audit_fails audit check(s) FAIL against prod data in a BLOCKING league -- promote or repair before releasing"
+  fi
+  echo
+fi
+
+# ── preflight: does the props pipeline still grade what it graded last release? ──
+# audit_league_stats above grades the STATS surface. Nothing graded the PROPS pipeline,
+# and "are props working?" was answered by a different ad-hoc query every time it was
+# asked -- each measuring a different stage, so no two answers were comparable and no
+# trend existed. The stage that was actually broken kept being mis-attributed: identity
+# was blamed for MLB's settlement gap when identity is 19% of it, and prop LINKAGE was
+# blamed for everything when linkage has been 100% on every league the whole time.
+#
+# So this reports all five stages per league, and BLOCKS only on a regression against
+# `docs/props-coverage-baseline.json`. The baseline is COMMITTED so that lowering it is
+# a diff someone has to write and review, rather than a number quietly drifting down.
+# Raise it deliberately when a league improves; that one-line diff is the record that it
+# did. Both databases are checked, because green on one and broken on the other has
+# hidden real defects here before.
+#
+# A missing baseline is a FAIL, not a skip: a check that cannot run is not a check that
+# passed. Same reason the audit above refuses to step over a missing runner.
+[ -f backend/props_coverage.py ] \
+  || die "backend/props_coverage.py is missing -- the props pipeline check cannot run, and a check that did not run is not a check that passed"
+if [ -x backend/venv/bin/python ]; then
+  echo "release: props pipeline coverage, per league, both databases"
+  if ! backend/venv/bin/python backend/props_coverage.py --check 2>&1 | sed 's/^/  /'; then
+    echo
+    die "a league's settled grading regressed against docs/props-coverage-baseline.json -- repair it, or change the baseline deliberately and say why in the commit"
   fi
   echo
 fi
@@ -161,7 +259,15 @@ fi
 
 run git add package.json CHANGELOG.md
 run git commit -q -m "chore(release): $TAG"
-run git tag -a "$TAG" -m "$TAG"
+if [ -n "$TAG_NOTE" ]; then
+  run git tag -a "$TAG" -m "$TAG" -m "$TAG_NOTE"
+else
+  run git tag -a "$TAG" -m "$TAG"
+  echo "release: no tag message given, so $TAG carries only its own name."
+  echo "  GitHub shows an annotated tag's message on /tags, and a patch gets no"
+  echo "  release, so that message is the only description it will ever have."
+  echo "  Next time:  scripts/release.sh $VERSION \"one sentence, what shipped\""
+fi
 
 # The local half is done and consistent. A push can still fail for reasons the
 # preflight cannot see (network, remote rejection), so say exactly how to finish
@@ -179,6 +285,51 @@ if [ -z "$DRY_RUN" ]; then
 else
   echo "  [dry-run] git push origin $BRANCH"
   echo "  [dry-run] git push origin $TAG"
+fi
+
+# ── publish the release notes ─────────────────────────────────────────────
+# Only MAJOR and MINOR get a GitHub release. Feature releases only; a patch's
+# work rides into the next minor's notes, which is why release_notes.py spans
+# back to the previous MINOR rather than the previous tag.
+#
+# This step did not exist until 2026-08-18, and the cost was visible: the tags
+# were all correct and pushed, but the releases page stopped at v0.6.0 from
+# July. v0.7.0 and v0.8.0 had to be created by hand, and v0.7.1-v0.7.10 had
+# never been published anywhere at all.
+#
+# A failed publish is NOT a failed release. The tag is pushed and immutable by
+# this point, so this reports how to finish rather than unwinding anything.
+if echo "$VERSION" | grep -qE '^[0-9]+\.[0-9]+\.0$'; then
+  NOTES=$(mktemp)
+  if python3 scripts/release_notes.py "$VERSION" > "$NOTES" 2>/dev/null; then
+    COVERS=$(python3 scripts/release_notes.py "$VERSION" --covers 2>/dev/null)
+    echo "release: publishing GitHub release for $TAG"
+    [ -n "$COVERS" ] && echo "  notes also cover: $COVERS"
+    if [ -n "$DRY_RUN" ]; then
+      echo "  [dry-run] gh release create $TAG --latest --title '$TAG — <title>' --notes-file ..."
+      echo "  [dry-run] notes: $(wc -c < "$NOTES") chars"
+    elif ! command -v gh >/dev/null 2>&1; then
+      echo "release: gh not installed; publish by hand:" >&2
+      echo "  scripts/release_notes.py $VERSION > notes.md" >&2
+      echo "  gh release create $TAG --latest --title '$TAG — <what shipped>' --notes-file notes.md" >&2
+    else
+      # The title is a FEATURE line, never the date: the convention is
+      # "v0.6.0 — NFL Player Rankings", so the heading's date half is dropped
+      # and left for a human to fill in with what actually shipped.
+      if gh release create "$TAG" --latest --title "$TAG" --notes-file "$NOTES"; then
+        echo "release: set the title to what shipped, e.g."
+        echo "  gh release edit $TAG --title \"$TAG — News engine, MLS, tennis props\""
+      else
+        echo "release: $TAG is tagged and pushed but the GitHub release was not created." >&2
+        echo "  retry:  scripts/release_notes.py $VERSION > notes.md && gh release create $TAG --latest --notes-file notes.md" >&2
+      fi
+    fi
+  else
+    echo "release: could not build notes for $VERSION; create the release by hand" >&2
+  fi
+  rm -f "$NOTES"
+else
+  echo "release: $TAG is a patch; no GitHub release (its notes ride into the next minor)"
 fi
 
 if [ -n "$DRY_RUN" ]; then

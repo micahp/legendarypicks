@@ -40,7 +40,8 @@ import os
 import sqlite3
 import sys
 import time
-import urllib.request
+
+import paced_http
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
@@ -64,6 +65,12 @@ GAME_TYPE = "REG"                                     # this ingest covers only 
 _CORE = "https://sports.core.api.espn.com/v2/sports/{path}"
 _SITE = "https://site.web.api.espn.com/apis/site/v2/sports/{path}"
 _HDRS = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/124 Safari/537.36"}
+
+# The shared client for the direct fetches this module still makes (season
+# type $refs, and the summary fallback): same headers and timeout as the raw
+# call it replaces, and no retry ladder — the callers wrap it in their own
+# retry/fallback logic and must see every attempt.
+_FETCH = paced_http.Fetcher(headers=_HDRS, timeout=30, retry_waits=())
 
 # our key <- (published stat-group name, published label), measured 2026-08-06
 # against a completed 2025 FBS summary: passing labels C/ATT,YDS,AVG,TD,INT,QBR;
@@ -110,9 +117,7 @@ def _number(value):
 
 
 def _fetch_json(url):
-    req = urllib.request.Request(url, headers=_HDRS)
-    with urllib.request.urlopen(req, timeout=30) as resp:
-        return json.loads(resp.read().decode("utf-8"))
+    return _FETCH.fetch(url)
 
 
 def _core_get(suffix):

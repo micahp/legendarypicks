@@ -1,0 +1,11 @@
+[Unit]
+Description=League news, X timelines only (fast lane), DEV then PROD
+
+[Timer]
+# ABSOLUTE, never monotonic. Keeps the DEV half's slot; PROD follows in the same
+# job rather than 30 minutes later.
+OnCalendar=*-*-* 0/2:15:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target

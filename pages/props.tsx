@@ -1,6 +1,13 @@
 import { useState, useEffect, useRef } from 'react'
 import Head from 'next/head'
 import MarketSlateBoard from '../components/Props/MarketSlateBoard'
+import MatchForm from '../components/Props/MatchForm'
+import PropChart, { PropHistory } from '../components/Props/PropChart'
+import {
+  leagueNavigationLabel,
+  SportGroup,
+  useSportNavigation,
+} from '../components/Navigation/sports'
 
 // ── types ────────────────────────────────────────────────
 interface Player {
@@ -9,7 +16,7 @@ interface Player {
 interface SlateGame {
   game_id: number; home: string; away: string; date: string; start_time?: string | null; league: string
   prop_count: number
-  players: { name: string; team: string; props: { market: string; line: number; side: string; source: string }[] }[]
+  players: { id: number; name: string; team: string; props: { market: string; line: number; side: string; source: string }[] }[]
 }
 interface PerfRow {
   market: string; side: string; total_settled: number
@@ -19,7 +26,7 @@ interface PerfRow {
 }
 
 type Tab = 'slate' | 'props' | 'performance' | 'matchups' | 'model'
-type League = 'All' | 'nba' | 'mlb' | 'mls' | 'nfl' | 'nhl' | 'ufc'
+type LeagueFilter = string
 
 const TABS: { key: Tab; label: string }[] = [
   { key: 'slate', label: 'Slate' },
@@ -28,8 +35,6 @@ const TABS: { key: Tab; label: string }[] = [
   { key: 'matchups', label: 'Matchups' },
   { key: 'model', label: 'Model' },
 ]
-export const LEAGUES: League[] = ['All', 'ufc', 'mls', 'nba', 'nfl', 'nhl', 'mlb']
-
 function Skeleton({ lines = 4 }: { lines?: number }) {
   return (
     <div className="space-y-3 animate-pulse">
@@ -40,17 +45,112 @@ function Skeleton({ lines = 4 }: { lines?: number }) {
   )
 }
 
-function LeaguePills({ league, onChange }: { league: League; onChange: (l: League) => void }) {
+function SportPills({ groups, active, competition, onSportChange, onCompetitionChange }: {
+  groups: SportGroup[]
+  active: string
+  competition: string
+  onSportChange: (key: string) => void
+  onCompetitionChange: (league: string) => void
+}) {
+  const [openGroup, setOpenGroup] = useState<string | null>(null)
+  const navRef = useRef<HTMLElement>(null)
+
+  useEffect(() => {
+    const closeOnOutsideClick = (event: MouseEvent) => {
+      if (navRef.current && !navRef.current.contains(event.target as Node)) setOpenGroup(null)
+    }
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setOpenGroup(null)
+    }
+    document.addEventListener('mousedown', closeOnOutsideClick)
+    document.addEventListener('keydown', closeOnEscape)
+    return () => {
+      document.removeEventListener('mousedown', closeOnOutsideClick)
+      document.removeEventListener('keydown', closeOnEscape)
+    }
+  }, [])
+
+  const selectSport = (group: SportGroup) => {
+    if (active !== group.key) {
+      onSportChange(group.key)
+      setOpenGroup(null)
+      return
+    }
+    if (group.competitions.length > 1) {
+      setOpenGroup(current => current === group.key ? null : group.key)
+    }
+  }
+
   return (
-    <div className="flex max-w-full flex-wrap gap-1.5">
-      {LEAGUES.map(l => (
-        <button key={l} onClick={() => onChange(l)}
-          className={`px-3.5 py-1.5 rounded-lg text-sm font-medium transition-colors ${league === l ? 'bg-emerald-600 text-white' : 'bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-zinc-200'}`}>
-          {l === 'All' ? 'All' : l.toUpperCase()}
-        </button>
-      ))}
-    </div>
+    <nav ref={navRef} aria-label="Sports" className="flex max-w-full flex-wrap gap-1.5">
+      <button
+        type="button"
+        onClick={() => { onSportChange('all'); setOpenGroup(null) }}
+        aria-pressed={active === 'all'}
+        className={`rounded-lg px-3.5 py-1.5 text-sm font-medium transition-colors ${active === 'all' ? 'bg-emerald-600 text-white' : 'border border-zinc-800 bg-zinc-900 text-zinc-400 hover:text-zinc-200'}`}
+      >
+        All
+      </button>
+      {groups.map(group => {
+        const hasMenu = group.competitions.length > 1
+        const menuOpen = openGroup === group.key
+        const selectedCompetition = active === group.key && competition !== 'all'
+          ? group.competitions.find(item => item.league === competition)
+          : undefined
+        const buttonLabel = selectedCompetition
+          ? leagueNavigationLabel(selectedCompetition.league)
+          : group.label
+        return (
+          <div key={group.key} className="relative">
+            <button
+              type="button"
+              onClick={() => selectSport(group)}
+              aria-label={buttonLabel}
+              aria-pressed={active === group.key}
+              aria-haspopup={hasMenu ? 'menu' : undefined}
+              aria-expanded={hasMenu ? menuOpen : undefined}
+              className={`flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-sm font-medium transition-colors ${active === group.key ? 'bg-emerald-600 text-white' : 'border border-zinc-800 bg-zinc-900 text-zinc-400 hover:text-zinc-200'}`}
+            >
+              <span>{buttonLabel}</span>
+              {hasMenu && active === group.key && (
+                <span aria-hidden="true" className="text-[10px]">▼</span>
+              )}
+            </button>
+            {hasMenu && menuOpen && (
+              <div
+                role="menu"
+                aria-label={`${group.label} filters`}
+                className="absolute right-0 top-full z-50 mt-2 min-w-[170px] overflow-hidden rounded-xl border border-zinc-700 bg-zinc-900 p-1.5 shadow-2xl shadow-black/50"
+              >
+                {[{ league: 'all', sport: group.sport }, ...group.competitions].map(item => {
+                  const selected = competition === item.league
+                  return (
+                    <button
+                      key={item.league}
+                      type="button"
+                      role="menuitemradio"
+                      aria-checked={selected}
+                      onClick={() => { onCompetitionChange(item.league); setOpenGroup(null) }}
+                      className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm transition-colors ${selected ? 'bg-emerald-500/10 text-emerald-300' : 'text-zinc-300 hover:bg-zinc-800'}`}
+                    >
+                      <span>{item.league === 'all' ? `All ${group.label}` : leagueNavigationLabel(item.league)}</span>
+                      {selected && <span aria-hidden="true" className="text-emerald-400">✓</span>}
+                    </button>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        )
+      })}
+    </nav>
   )
+}
+
+function addLeagueFilter(params: URLSearchParams, filter: LeagueFilter) {
+  if (!filter || filter === 'All') return
+  if (filter.includes(',')) params.set('leagues', filter)
+  else params.set('league', filter)
 }
 
 function PlayerSearch({ query, setQuery, players, onSelect }: {
@@ -99,7 +199,12 @@ function Select({ value, onChange, options }: { value: string; onChange: (v: str
 }
 
 // ── Tab: Slate (games) ───────────────────────────────────
-function SlateTab({ league }: { league: League }) {
+function SlateTab({ league, leagueOrder, filterLabel, onViewAll }: {
+  league: LeagueFilter
+  leagueOrder: string[]
+  filterLabel?: string
+  onViewAll: () => void
+}) {
   const [slate, setSlate] = useState<SlateGame[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -107,10 +212,32 @@ function SlateTab({ league }: { league: League }) {
   // A game's props load only when it's opened — the summary list carries no props, so the tab paints
   // instantly instead of pulling every game's book (the fully-nested slate is ~1.4MB / 15k props).
   const [gameProps, setGameProps] = useState<Record<number, { loading: boolean; players: SlateGame['players'] }>>({})
+  // Same mechanism as GameProps.tsx's Props tab: one open chart at a time, keyed by
+  // player+market+side so re-clicking the same prop closes it instead of re-fetching.
+  const [openPropKey, setOpenPropKey] = useState<string | null>(null)
+  const [propChart, setPropChart] = useState<PropHistory | null>(null)
+  const [propChartLoading, setPropChartLoading] = useState(false)
+
+  const openPropChart = async (gameLeague: string, playerId: number, market: string, line: number, side: string) => {
+    const key = `${playerId}-${market}-${side}`
+    if (openPropKey === key) { setOpenPropKey(null); setPropChart(null); setPropChartLoading(false); return }
+    setOpenPropKey(key); setPropChart(null); setPropChartLoading(true)
+    try {
+      const params = new URLSearchParams({ player_id: String(playerId), market, line: String(line), side, league: gameLeague })
+      const r = await fetch(`/api/props/history?${params}`)
+      const d = await r.json()
+      setPropChart(d.games?.length ? d : null)
+    } catch {
+      setPropChart(null)
+    } finally {
+      setPropChartLoading(false)
+    }
+  }
 
   const openGame = (gid: number) => {
     const opening = expandedGame !== gid
     setExpandedGame(opening ? gid : null)
+    setOpenPropKey(null); setPropChart(null); setPropChartLoading(false)
     if (!opening || gid in gameProps) return
     setGameProps(prev => ({ ...prev, [gid]: { loading: true, players: [] } }))
     fetch(`/api/props/slate?game_id=${gid}`)
@@ -126,7 +253,7 @@ function SlateTab({ league }: { league: League }) {
     const controller = new AbortController()
     const params = new URLSearchParams()
     params.set('summary', '1')
-    if (league !== 'All') params.set('league', league)
+    addLeagueFilter(params, league)
 
     setLoading(true)
     setError(null)
@@ -171,8 +298,8 @@ function SlateTab({ league }: { league: League }) {
   // Day above league, with each label rendered once rather than repeated on
   // every game card.
   const leagueRank = (leagueKey: string) => {
-    const rank = LEAGUES.indexOf(leagueKey as League)
-    return rank === -1 ? LEAGUES.length : rank
+    const rank = leagueOrder.indexOf(leagueKey)
+    return rank === -1 ? leagueOrder.length : rank
   }
   const dateGroups = new Map<string, Map<string, SlateGame[]>>()
   for (const game of slate) {
@@ -202,7 +329,16 @@ function SlateTab({ league }: { league: League }) {
       )}
       {loading ? <Skeleton lines={5} /> : groups.length === 0 ? (
         <div className="py-16 text-center text-sm text-zinc-500">
-          No upcoming games with props. Check back closer to game time.
+          <p>No upcoming games with props. Check back closer to game time.</p>
+          {filterLabel && (
+            <button
+              type="button"
+              onClick={onViewAll}
+              className="mt-4 rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-4 py-2 text-sm font-medium text-emerald-400 transition-colors hover:bg-emerald-500/20"
+            >
+              View All Leagues
+            </button>
+          )}
         </div>
       ) : (
         groups.map(({ gameDate, leagueGroups }) => (
@@ -219,7 +355,7 @@ function SlateTab({ league }: { league: League }) {
                 <section key={leagueKey} data-slate-league={leagueKey} className="space-y-4">
                   <div className="flex min-w-0 items-center gap-2">
                     <h3 className="text-base font-extrabold uppercase tracking-wide text-zinc-100">
-                      {leagueKey.toUpperCase()}
+                      {leagueNavigationLabel(leagueKey)}
                     </h3>
                     <span className="truncate text-xs tabular-nums text-zinc-600">
                       {games.length} game{games.length === 1 ? '' : 's'} · {propCount} props
@@ -261,21 +397,55 @@ function SlateTab({ league }: { league: League }) {
                                 {gp.players.map(player => (
                                   <div key={`${player.team}-${player.name}`}>
                                     <div className="mb-1.5 flex flex-wrap items-baseline gap-x-1.5 text-xs">
-                                      <span className="font-bold text-zinc-300">{player.name}</span>
+                                      {player.id ? (
+                                        <a href={`/player/${player.id}`} className="font-bold text-zinc-300 hover:text-emerald-400">{player.name}</a>
+                                      ) : (
+                                        <span className="font-bold text-zinc-300">{player.name}</span>
+                                      )}
                                       <span className="text-zinc-600">{player.team}</span>
                                     </div>
                                     <div className="flex flex-wrap gap-1.5">
                                       {Array.from(new Map(player.props.map(prop => [
                                         `${prop.market}-${prop.side}-${prop.line}-${prop.source}`, prop,
-                                      ] as const)).values()).map((prop, index) => (
-                                        <span
-                                          key={`${prop.market}-${prop.side}-${prop.line}-${index}`}
-                                          className={`inline-flex max-w-full items-center gap-1 break-all rounded px-2 py-1 text-[11px] font-mono tabular-nums ${prop.side === 'over' || prop.side === 'yes' ? 'bg-emerald-900/30 text-emerald-300' : 'bg-red-900/30 text-red-300'}`}
-                                        >
-                                          {prop.market.replace(/_/g, ' ')} {prop.line} {prop.side.toUpperCase()}
-                                        </span>
-                                      ))}
+                                      ] as const)).values()).map((prop, index) => {
+                                        const key = player.id ? `${player.id}-${prop.market}-${prop.side}` : null
+                                        const open = key !== null && openPropKey === key
+                                        const pillClass = `inline-flex max-w-full items-center gap-1 break-all rounded px-2 py-1 text-[11px] font-mono tabular-nums transition-colors ${
+                                          open ? 'bg-emerald-600 text-white'
+                                            : prop.side === 'over' || prop.side === 'yes' ? 'bg-emerald-900/30 text-emerald-300 hover:bg-emerald-900/50'
+                                            : 'bg-red-900/30 text-red-300 hover:bg-red-900/50'
+                                        }`
+                                        const label = <>{prop.market.replace(/_/g, ' ')} {prop.line} {prop.side.toUpperCase()}</>
+                                        return player.id ? (
+                                          <button
+                                            key={`${prop.market}-${prop.side}-${prop.line}-${index}`}
+                                            onClick={() => openPropChart(game.league, player.id, prop.market, prop.line, prop.side)}
+                                            className={pillClass}
+                                          >
+                                            {label}
+                                          </button>
+                                        ) : (
+                                          <span key={`${prop.market}-${prop.side}-${prop.line}-${index}`} className={pillClass}>
+                                            {label}
+                                          </span>
+                                        )
+                                      })}
                                     </div>
+                                    {player.id && openPropKey?.startsWith(`${player.id}-`) && (
+                                      <div className="mt-2">
+                                        {propChartLoading ? (
+                                          <div className="h-24 animate-pulse rounded-lg bg-zinc-800/60" />
+                                        ) : propChart ? (
+                                          <PropChart data={propChart} />
+                                        ) : game.league === 'ligamx' || game.league === 'lcup' ? (
+                                          <MatchForm playerId={player.id} player={player.name} />
+                                        ) : (
+                                          <div data-history-empty className="rounded-lg border border-zinc-800 bg-zinc-950/40 px-3 py-2 text-xs text-zinc-600">
+                                            No history yet.
+                                          </div>
+                                        )}
+                                      </div>
+                                    )}
                                   </div>
                                 ))}
                               </div>
@@ -296,8 +466,8 @@ function SlateTab({ league }: { league: League }) {
 }
 
 // ── Tab: Performance (player stats dashboard) ─────────────
-function PerformanceTab({ league, query, setQuery, selectedPlayer, setSelectedPlayer }: {
-  league: League; query: string; setQuery: (q: string) => void
+function PerformanceTab({ query, setQuery, selectedPlayer, setSelectedPlayer }: {
+  query: string; setQuery: (q: string) => void
   selectedPlayer: Player | null; setSelectedPlayer: (p: Player | null) => void
 }) {
   const [players, setPlayers] = useState<Player[]>([])
@@ -666,8 +836,8 @@ const STAT_ORDER = ['pass_yds', 'rush_yds', 'rec_yds', 'pass_td', 'rush_td', 're
   'fpts_ppr', 'fpts']
 const TREND_ICON: Record<string, string> = { up: '↑', down: '↓', flat: '→' }
 
-function ModelTab({ league, query, setQuery, player, setPlayer }: {
-  league: League; query: string; setQuery: (q: string) => void
+function ModelTab({ query, setQuery, player, setPlayer }: {
+  query: string; setQuery: (q: string) => void
   player: Player | null; setPlayer: (p: Player | null) => void
 }) {
   const [players, setPlayers] = useState<Player[]>([])
@@ -800,7 +970,17 @@ function StatBox({ label, value, desc }: { label: string; value: string | number
 // ── Page ───────────────────────────────────────────────────
 export default function PropsPage() {
   const [tab, setTab] = useState<Tab>('slate')
-  const [league, setLeague] = useState<League>('All')
+  const { groups: sportGroups, loading: navigationLoading, error: navigationError } = useSportNavigation('props')
+  const [sportKey, setSportKey] = useState('all')
+  const [competition, setCompetition] = useState('all')
+  const selectedSport = sportGroups.find(group => group.key === sportKey)
+  const league = competition !== 'all'
+    ? competition
+    : selectedSport?.competitions.map(item => item.league).join(',') || 'All'
+  const activeFilterLabel = competition !== 'all'
+    ? leagueNavigationLabel(competition)
+    : selectedSport?.label
+  const leagueOrder = sportGroups.flatMap(group => group.competitions.map(item => item.league))
 
   // Shared across Performance/Matchups/Model so switching tabs keeps the same
   // player instead of making you re-search each time.
@@ -811,34 +991,60 @@ export default function PropsPage() {
   const today = new Date().toLocaleDateString('en-CA')
   const [date, setDate] = useState<string>(today)
   const isToday = date === today
-  const shiftDay = (delta: number) => {
-    const d = new Date(date + 'T12:00:00')   // noon-anchored to dodge TZ rollover
-    d.setDate(d.getDate() + delta)
-    setDate(d.toLocaleDateString('en-CA'))
-  }
-  const goToday = () => setDate(today)
+  // The dates the SELECTED league actually has a slate on. Walking raw calendar
+  // days stepped onto dates that league never plays -- pick MLS and press ‹ and
+  // you land on an empty board that looks like a data gap. Empty until the slate
+  // summary answers, and then navigation moves between real slates only.
+  const [slateDates, setSlateDates] = useState<string[]>([])
 
-  // allow deep-linkable date via ?date=YYYY-MM-DD
+  const shiftDay = (delta: number) => {
+    if (!slateDates.length) return
+    const at = slateDates.indexOf(date)
+    if (at === -1) {
+      // Deep-linked to a date off this league's slate: step to the nearest one
+      // in the direction asked rather than refusing.
+      const forward = slateDates.find(d => d > date)
+      const back = [...slateDates].reverse().find(d => d < date)
+      const target = delta > 0 ? (forward ?? back) : (back ?? forward)
+      if (target) setDate(target)
+      return
+    }
+    const next = slateDates[at + delta]
+    if (next) setDate(next)
+  }
+
+  const atFirstSlate = !slateDates.length || date <= slateDates[0]
+  const atLastSlate = !slateDates.length || date >= slateDates[slateDates.length - 1]
+  const goToday = () => setDate(
+    slateDates.includes(today) ? today : (slateDates.find(d => d >= today) ?? today))
+
+  // allow deep-linkable date via ?date=YYYY-MM-DD and tab via ?tab=<key>
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     const q = params.get('date')
     if (q && /^\d{4}-\d{2}-\d{2}$/.test(q)) setDate(q)
+    const t = params.get('tab')
+    if (t && TABS.some(x => x.key === t)) setTab(t as Tab)
   }, [])
 
   // Land each league on today when it has props, otherwise its nearest upcoming slate. Re-run when
   // the league pill changes so a future WC/UFC slate is not hidden behind another league's date.
   // Explicit ?date= deep links always win.
   useEffect(() => {
-    if (new URLSearchParams(window.location.search).get('date')) return
+    // A deep link fixes the DATE, but the slate list is still needed or the
+    // arrows would have nothing to step through.
+    const deepLinked = !!new URLSearchParams(window.location.search).get('date')
     const params = new URLSearchParams()
     // Date discovery only needs game summaries. Pulling every nested prop here
     // duplicated the full slate payload before either tab rendered it.
     params.set('summary', '1')
-    if (league !== 'All') params.set('league', league)
+    addLeagueFilter(params, league)
     fetch(`/api/props/slate?${params}`)
       .then(r => r.json())
       .then((games: SlateGame[]) => {
         const dates = Array.from(new Set(games.map(g => g.date))).sort()
+        setSlateDates(dates)
+        if (deepLinked) return
         if (dates.length) setDate(dates.includes(today) ? today : dates[0])
       })
       .catch(() => {})
@@ -857,9 +1063,19 @@ export default function PropsPage() {
         {/* Page header row: title + league pills */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <h1 className="text-3xl font-extrabold tracking-tight">Props</h1>
-          <LeaguePills league={league} onChange={setLeague} />
+          <SportPills
+            groups={sportGroups}
+            active={sportKey}
+            competition={competition}
+            onSportChange={key => { setSportKey(key); setCompetition('all') }}
+            onCompetitionChange={setCompetition}
+          />
         </div>
 
+        {navigationLoading && <div aria-label="Loading sports" className="h-7 w-full animate-pulse rounded bg-zinc-800" />}
+        {navigationError && (
+          <p className="text-xs text-zinc-500">Sport filters are unavailable; showing the complete board.</p>
+        )}
         {/* Tab bar */}
         <div className="flex gap-0 flex-wrap border-b border-zinc-800 -mx-4 px-4">
           {TABS.map(t => (
@@ -873,11 +1089,15 @@ export default function PropsPage() {
         {/* Date navigator — only on date-scoped tabs */}
         {showDateNav && (
           <div className="flex items-center justify-center gap-2 sm:gap-3">
+            {/* Disabled at the ends of THIS league's slate. An arrow that
+                silently does nothing reads as a broken button; a disabled one
+                says the slate stops here. */}
             <button
               type="button"
               onClick={() => shiftDay(-1)}
-              aria-label="Previous day"
-              className="flex items-center justify-center w-10 h-10 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-300 text-xl leading-none hover:bg-zinc-800 active:scale-95"
+              disabled={atFirstSlate}
+              aria-label="Previous slate date"
+              className="flex items-center justify-center w-10 h-10 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-300 text-xl leading-none transition-colors enabled:hover:bg-zinc-800 enabled:active:scale-95 disabled:cursor-not-allowed disabled:border-zinc-900 disabled:text-zinc-700"
             >
               ‹
             </button>
@@ -894,8 +1114,9 @@ export default function PropsPage() {
             <button
               type="button"
               onClick={() => shiftDay(1)}
-              aria-label="Next day"
-              className="flex items-center justify-center w-10 h-10 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-300 text-xl leading-none hover:bg-zinc-800 active:scale-95"
+              disabled={atLastSlate}
+              aria-label="Next slate date"
+              className="flex items-center justify-center w-10 h-10 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-300 text-xl leading-none transition-colors enabled:hover:bg-zinc-800 enabled:active:scale-95 disabled:cursor-not-allowed disabled:border-zinc-900 disabled:text-zinc-700"
             >
               ›
             </button>
@@ -903,11 +1124,25 @@ export default function PropsPage() {
         )}
 
         {/* Tab content */}
-        {tab === 'slate' && <SlateTab league={league} />}
-        {tab === 'props' && <MarketSlateBoard league={league} date={date} />}
-        {tab === 'performance' && <PerformanceTab league={league} query={sharedQuery} setQuery={setSharedQuery} selectedPlayer={sharedPlayer} setSelectedPlayer={setSharedPlayer} />}
+        {tab === 'slate' && (
+          <SlateTab
+            league={league}
+            leagueOrder={leagueOrder}
+            filterLabel={activeFilterLabel}
+            onViewAll={() => { setSportKey('all'); setCompetition('all') }}
+          />
+        )}
+        {tab === 'props' && (
+          <MarketSlateBoard
+            league={league}
+            date={date}
+            filterLabel={activeFilterLabel}
+            onViewAll={() => { setSportKey('all'); setCompetition('all') }}
+          />
+        )}
+        {tab === 'performance' && <PerformanceTab query={sharedQuery} setQuery={setSharedQuery} selectedPlayer={sharedPlayer} setSelectedPlayer={setSharedPlayer} />}
         {tab === 'matchups' && <MatchupsTab query={sharedQuery} setQuery={setSharedQuery} player={sharedPlayer} setPlayer={setSharedPlayer} />}
-        {tab === 'model' && <ModelTab league={league} query={sharedQuery} setQuery={setSharedQuery} player={sharedPlayer} setPlayer={setSharedPlayer} />}
+        {tab === 'model' && <ModelTab query={sharedQuery} setQuery={setSharedQuery} player={sharedPlayer} setPlayer={setSharedPlayer} />}
       </div>
     </>
   )

@@ -54,13 +54,17 @@ def game_props(league: str, game_id: str):
                                                 "team": r["team"], "props": []})
         market = _base_market(r["market"])
         result = None
-        if r["settled_at"] is not None and r["hit"] is not None:
+        if r["settled_at"] is not None and r["actual_value"] is not None:
             # `cashed` is the side the number actually landed on, derived from this row's
             # own side and verdict — so a line stored on one side only still says which way
             # it went, and the page never has to infer it from a missing sibling.
-            cashed = r["side"] if r["hit"] else _other_side(r["side"])
+            cashed = None if r["hit"] is None else (
+                r["side"] if r["hit"] else _other_side(r["side"]))
             result = {"actual": r["actual_value"], "hit": bool(r["hit"]),
                       "settled_at": r["settled_at"], "cashed": cashed}
+            if r["hit"] is None:
+                result["hit"] = None
+                result["status"] = "push"
             key = (r["player_id"], market, r["line"])
             if key not in settled:
                 # Both stored sides of a line carry the same actual and the same line, so
@@ -73,6 +77,11 @@ def game_props(league: str, game_id: str):
                     "player_id": r["player_id"], "name": r["name"], "team": r["team"],
                     "market": market, "line": r["line"], "actual": r["actual_value"],
                     "cashed": cashed, "margin": margin}
+        elif r["settled_at"] is not None:
+            # A terminal row with no numeric actual is an explicit void. Keep it
+            # distinct from both a pending prop (no row) and a numeric push.
+            result = {"status": "void", "actual": None, "hit": None,
+                      "settled_at": r["settled_at"], "cashed": None}
         d["props"].append({"market": market, "line": r["line"],
                            "side": r["side"], "result": result})
 
@@ -154,4 +163,3 @@ def game_edge(league: str, game_id: str):
                 })
 
     return {"league": lg, "game_id": str(game_id), "players": players_out}
-

@@ -19,6 +19,7 @@ import { useGameProps } from '../../../components/Game/useGameProps'
 import WCContext from '../../../components/Game/WCContext'
 import BoothFeed from '../../../components/Game/BoothFeed'
 import ListenLive, { LCUP_PAGE } from '../../../components/ListenLive'
+import { RADIO_LABELS, radioForMatchup } from '../../../lib/radio'
 import { SHOW_BOOTH } from '../../../lib/featureFlags'
 
 const TAB_DEFS: { key: Tab; label: string }[] = [
@@ -181,13 +182,30 @@ function useTabData(league: string | undefined, gameId: string | undefined, acti
   const [loadingBoxscore, setLoadingBoxscore] = useState(false)
   const [loadingPbp, setLoadingPbp] = useState(false)
   const [loadingInfo, setLoadingInfo] = useState(false)
+  // Two defects fixed here on 2026-08-25, both of which render a tab permanently
+  // EMPTY rather than raising anything:
+  //
+  // 1. The latch was keyed on the tab alone. Next.js reuses this component across
+  //    `/game/[league]/[gameId]` navigations, so moving from one game to another
+  //    kept the previous game's `{boxscore: true}` and the new game never fetched.
+  //    The key now carries the game identity, so a different game is a different
+  //    latch and old entries simply stop matching.
+  // 2. The latch was set BEFORE the await resolved and nothing caught a rejection,
+  //    so one failed request marked the tab loaded forever. It now un-latches on
+  //    failure, which makes leaving the tab and returning a real retry.
   const [tabLoaded, setTabLoaded] = useState<Record<string, boolean>>({})
 
   const fetchTab = useCallback(async (tab: Tab) => {
     if (!league || !gameId) return
-    if (tabLoaded[tab]) return
+    const key = `${league.toLowerCase()}:${gameId}:${tab}`
+    if (tabLoaded[key]) return
 
-    setTabLoaded(prev => ({ ...prev, [tab]: true }))
+    setTabLoaded(prev => ({ ...prev, [key]: true }))
+    const unlatch = () => setTabLoaded(prev => {
+      const next = { ...prev }
+      delete next[key]
+      return next
+    })
     const lg = league.toLowerCase()
 
     if (tab === 'boxscore') {
@@ -199,6 +217,8 @@ function useTabData(league: string | undefined, gameId: string | undefined, acti
         } else {
           setBoxscore(d as BoxScoreData)
         }
+      } catch {
+        unlatch()
       } finally {
         setLoadingBoxscore(false)
       }
@@ -211,6 +231,8 @@ function useTabData(league: string | undefined, gameId: string | undefined, acti
         } else {
           setPbp(d as PbPData)
         }
+      } catch {
+        unlatch()
       } finally {
         setLoadingPbp(false)
       }
@@ -219,6 +241,8 @@ function useTabData(league: string | undefined, gameId: string | undefined, acti
       try {
         const d = await SportsService.getGameInfo(league, gameId)
         setGameInfo(d as GameInfoData)
+      } catch {
+        unlatch()
       } finally {
         setLoadingInfo(false)
       }
@@ -315,6 +339,8 @@ export default function GameDetailPage() {
   }
 
   const ctx = detail?.context
+  // Which club (if either) has a verified English radio stream — null hides the player.
+  const radioMatch = radioForMatchup(ctx?.home_team, ctx?.away_team)
   const sHome = detail?.strength ? detail.strength[ctx?.home_team || ''] : undefined
   const sAway = detail?.strength ? detail.strength[ctx?.away_team || ''] : undefined
   const homeRecord = sHome ? `${sHome.wins}-${sHome.losses}` : ''
@@ -339,10 +365,12 @@ export default function GameDetailPage() {
         homeRecord={homeRecord} awayRecord={awayRecord}
       />
 
-      {/* Leagues Cup live audio: ESPN 106.3 West Palm (WUUB-FM), Inter Miami's
-          official English radio partner — relayed to MP3 via /api/stream/lcup. */}
-      {lg === 'wc' ? <ListenLive /> : lg === 'lcup' ? (
-        <ListenLive streamUrl="/api/stream/lcup" streamPageUrl={LCUP_PAGE} label="ESPN 106.3 West Palm · English radio (free)" />
+      {/* Live audio: per-team English radio, sourced from data/radio-mls.json
+          (verified streams only) and relayed to MP3 by /api/stream/<key>.
+          Renders only when one of the two clubs has a verified station —
+          an unverified stream is never offered. */}
+      {lg === 'wc' ? <ListenLive /> : radioMatch ? (
+        <ListenLive streamUrl={radioMatch.streamUrl} streamPageUrl={LCUP_PAGE} label={RADIO_LABELS[radioMatch.key] || 'English radio (free)'} />
       ) : null}
 
       {/* Game context: WC gets the broadcast+market+form summary; others the AI matchup story */}

@@ -15,10 +15,10 @@ whatever the last successful run left behind.
 
 | Unit | Interval | Feeds |
 |---|---|---|
-| `legendarypicks-props.timer` / `-props-prod.timer` | 30 min | `bovada_scraper.py all --ingest` — player props, all leagues, dev + prod |
-| `legendarypicks-wc-props.timer` / `-wc-props-prod.timer` | 15 min | `bovada_scraper.py wc --ingest` — World Cup props |
-| `legendarypicks-mlb-capture.timer` | 5 min | `bovada_scraper.py mlb --capture` — opening/closing odds snapshots |
-| `legendarypicks-props-freshness.timer` | 30 min | not a data feed itself — watchdog: checks each env's latest `captured_at`, alerts + self-heals (re-triggers ingest) if >3h stale |
+| `legendarypicks-props.timer` / `-props-prod.timer` | 30 min, staggered | `run_props_ingest.py` — registry-driven Bovada, UnderDog, and RotoWire publication, one environment per unit |
+| `legendarypicks-wc-props.timer` / `-wc-props-prod.timer` | 15 min | `python -m bovada_scraper wc --ingest` — World Cup props |
+| `legendarypicks-mlb-capture.timer` | 5 min | `python -m bovada_scraper mlb --capture` — opening/closing odds snapshots |
+| `legendarypicks-props-freshness.timer` | 30 min | not a data feed itself — watchdog: checks each provider in each env and alerts only; it never starts ingest |
 
 Common thread: **high-value-per-hour-of-staleness** data (live odds, in-progress capture) feeding a
 **page that gets traffic** (props page). The timer cadence roughly matches how fast the underlying
@@ -125,5 +125,5 @@ worktree-isolation note in `hermes-worktree.sh` docs: host config lives outside 
 
 Also removed as part of the same pass: `legendarypicks-wc-props.timer` / `-prod` (World Cup ended
 2026-07-19, last `prop_games` row for `league='wc'` is that date — nothing to keep polling for).
-The ingest script (`bovada_scraper.py wc`) is untouched for next tournament; only the always-on
+The ingest script (`python -m bovada_scraper wc`) is untouched for next tournament; only the always-on
 timers are gone.

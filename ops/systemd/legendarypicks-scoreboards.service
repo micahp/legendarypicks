@@ -1,0 +1,32 @@
+[Unit]
+# Replaces legendarypicks-scoreboards{,-prod}: one script, two databases, two
+# schedules five minutes apart (*:00/10 dev, *:05/10 prod). Duplication was per
+# ENVIRONMENT, not per league -- ingest_scoreboards.py already covers all ten
+# leagues in BOARD_LEAGUES in a single run.
+#
+# Safe to serialise, measured 2026-08-25 over a 2h window: a scoreboard run is a
+# MEDIAN OF 2 ESPN requests, while the measured 403 onset is ~63 requests in the
+# prior 60s. Running both environments back to back is ~4 requests in a minute.
+# The five-minute offset was buying separation the request volume never needed,
+# and sequential execution removes the race instead of moving it.
+Description=Refresh the scoreboard slates the board serves, DEV then PROD
+After=network-online.target
+Wants=network-online.target
+OnFailure=legendarypicks-ops-alert@%N.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/root/legendarypicks/backend
+Nice=10
+Environment=LP_ESPN_CACHE_DIR=/root/legendarypicks/backend/.espn-cache
+# One ExecStart so a DEV failure cannot cancel PROD; fails if EITHER failed.
+ExecStart=/bin/sh -c '\
+  rc=0; \
+  echo "=== DEV ==="; \
+  LP_DB_PATH=/root/legendarypicks/backend/data/picks.dev.db \
+  /root/legendarypicks/backend/venv/bin/python ingest_scoreboards.py || rc=$?; \
+  echo "=== PROD ==="; \
+  LP_DB_PATH=/root/legendarypicks/backend/data/picks.db \
+  /root/legendarypicks/backend/venv/bin/python ingest_scoreboards.py || rc=$?; \
+  exit $rc'
+TimeoutStartSec=1200

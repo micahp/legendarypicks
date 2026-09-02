@@ -72,7 +72,7 @@ LP_DB_PATH=$PWD/data/picks.dev.db venv/bin/python settle_props.py
 LP_DB_PATH=$PWD/data/picks.dev.db venv/bin/python backfill_team_stats.py
 
 # capture odds snapshots into dev
-LP_DB_PATH=$PWD/data/picks.dev.db venv/bin/python bovada_scraper.py mlb --capture
+LP_DB_PATH=$PWD/data/picks.dev.db venv/bin/python -m bovada_scraper mlb --capture
 
 # one-shot env for a subshell
 export LP_DB_PATH=$PWD/data/picks.dev.db

@@ -1,0 +1,48 @@
+[Unit]
+Description=Refresh all registered props providers, DEV then PROD, through one registry
+After=network-online.target
+Wants=network-online.target
+OnFailure=legendarypicks-ops-alert@%N.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/root/legendarypicks/backend
+Nice=10
+
+# ONE unit covering both environments, replacing five.
+#
+# Why not the staggered pair. Dev at *:04/*:34 and prod at *:19/*:49 behind a shared lock
+# DETECTS a collision where this REMOVES it. The stagger is 15 minutes and a provider's own
+# timeout allows a single bovada step to reach 600s, so a slow dev run straddles the prod
+# firing; prod then records skipped_lock and loses that cycle. With my exit-code change a
+# lock skip is correctly scored as healthy, which is right for the unit's colour and
+# precisely why the lost cycle would not be visible as a failure. Running the two
+# environments sequentially in one unit means there is no second scheduled writer to race,
+# so no cycle is ever skipped and one process at a time spends a publisher's budget. That
+# is the ESPN 403 lesson from 2026-08-24, where two concurrent batch jobs each fired ~50
+# requests inside one minute and 26 of the resulting refusals landed on uvicorn.
+#
+# One ExecStart, not two, because systemd abandons the remaining ExecStart lines of a
+# oneshot once one exits non-zero, which would let a dev failure silently cancel prod.
+# This runs both regardless and fails the unit if EITHER failed.
+#
+# run_props_ingest.py exits 0 when at least one provider succeeded or was skipped inside
+# its cadence, so one broken provider does not paint the unit red. That is deliberate: a
+# red unit must mean the run is broken, not that it was quiet. A broken PROVIDER is
+# reported by ingest_runs and by legendarypicks-props-freshness, which is the surface that
+# should go red for it.
+ExecStart=/bin/sh -c '\
+  rc=0; \
+  echo "=== DEV ==="; \
+  LP_DB_PATH=/root/legendarypicks/backend/data/picks.dev.db \
+  LP_API_BASE=http://127.0.0.1:8096 \
+  /root/legendarypicks/backend/venv/bin/python run_props_ingest.py || rc=$?; \
+  echo "=== PROD ==="; \
+  LP_DB_PATH=/root/legendarypicks/backend/data/picks.db \
+  LP_API_BASE=http://127.0.0.1:8100 \
+  /root/legendarypicks/backend/venv/bin/python run_props_ingest.py || rc=$?; \
+  exit $rc'
+
+# Per-provider upper bound is 600 + 300 + (2 * 600) = 2100s per environment, so 4200s for
+# both. 4800 leaves headroom without letting a wedged run straddle the next firing.
+TimeoutStartSec=4800

@@ -55,3 +55,63 @@ plugged into the same EV/CLV pipeline the sportsbook-sourced props use. Whether/
 represent that distinction in the schema (a different `source` value on the existing `props`
 table, e.g. `source='underdog'`, is the minimal change) is a design decision for whoever builds
 the ingestion, not yet made.
+
+---
+
+# Re-measured 2026-08-16 — Underdog carries NO MLS
+
+Triggered by: "pull in the Underdog props for MLS before we cut v0.8.0."
+**Answer: it cannot be done. Underdog does not publish MLS.** The July table above has no
+soccer row at all, which left this an open question; it is now measured and closed.
+
+## What was asked, and of what
+
+A gap is a statement about which endpoint you asked, so four were asked, all from this host,
+all HTTP 200:
+
+| endpoint | bytes | games | MLS |
+|---|---|---|---|
+| `beta/v5/over_under_lines` (the one we ingest) | 7.2 MB | 47 | none |
+| `beta/v6/over_under_lines` | 7.4 MB | 47 | none |
+| `beta/v4/over_under_lines` | 2.8 MB | — | none |
+| `beta/v5/over_under_lines?sport_id=FIFA` | 0.8 MB | 10 | none |
+
+The `?sport_id=` filter is a **new finding** — the endpoint accepts one, so a future ingest
+need not pull the whole 7 MB board to read one sport.
+
+The string `MLS` does not occur anywhere in any payload, nor do `Major League Soccer`,
+`Sounders`, `Galaxy`, `Inter Miami`, `LAFC`, or `Atlanta United`. This is not an off-season
+artifact: MLS is mid-season on 2026-08-16, and the board's horizon reaches 2026-08-23.
+
+## What Underdog's soccer actually is
+
+`sport_id` for soccer is **`FIFA`**, and the competition is carried in `sport_group_name`:
+
+- **EPL** — 9 games, **La Liga** — 1 game. That is the entirety of soccer on the board.
+- 118 soccer players, 386 lines across 9 markets, all first-half/period-scoped:
+  `period_1_2_goals` (105), `period_1_2_team_first_goalscorer` (95),
+  `period_1_2_first_goal_scorer` (68), `period_1_2_last_goalscorer` (53), `period_1_goals` (26),
+  `period_1_2_goals_assists` (15), `period_1_2_shots_on_target` (11),
+  `period_1_2_assists` (8), `period_1_2_shots_attempted` (5).
+
+Neither EPL nor La Liga exists in our spine — `players` holds `nfl, ncaaf, mlb, nhl, mls, nba,
+ufc, wc` and nothing else. So this coverage maps to no league we carry, and building a soccer
+ingest against it today would resolve 0 of N players (see the `fail-loudly` skill §2a for what
+that failure looks like when it is allowed to print a count instead of an error).
+
+## Board composition this pull, for comparison with July
+
+`NFL 329 players / 16 games`, `CFB 167 / 6`, `FIFA 118 / 10`, `MLB 89 / 5`, `TENNIS 63 / 32
+solo_games`, `LOL 39 / 4`, `CS 29 / 3`, `VAL 19 / 2`, `WNBA 7 / 1`.
+
+**MMA is entirely absent** — zero MMA players between cards, so
+`ingest_underdog_props.py ufc` correctly prints `NO-BOARD` and writes nothing right now.
+That is the designed behaviour, not a fault.
+
+## Consequence for v0.8.0
+
+The release notes must not say MLS props are thin *because Underdog is not plugged in yet* —
+that framing implies a fix that is pending. It is not pending; the source does not carry the
+league. MLS props are 714 rows from Bovada across 15 games, and Underdog cannot add to that
+number at any date. If MLS prop depth is a product requirement, it needs a different
+publisher, not this integration.

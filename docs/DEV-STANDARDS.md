@@ -3,6 +3,27 @@
 Non-negotiable. Applies to every change (human or agent). Cite this in task specs; enforce it in review.
 Performance and correctness are part of "done" — not a follow-up after someone notices it's slow.
 
+**How work gets reviewed and merged:** `docs/PROCESS-delegated-work-review.md`, and the
+agent-facing `.claude/skills/falsify-before-merge`. Load the skill before merging any branch,
+before reporting DONE, and before writing acceptance criteria into a task spec.
+
+
+## A measurement is a claim about the instrument
+
+Before writing any zero, count, coverage percentage or "X doesn't publish Y" into code,
+a comment, a doc or a report: load `.claude/skills/measurement-is-a-claim`.
+
+Every such number is a fact about what you asked -- the query, the sample, the day, the
+endpoint, the league list -- and gets read later as a fact about the world. On 2026-08-26
+one session wrote eight false publisher facts, each a correct measurement of the wrong
+thing. `sot` "had 0 rows" because the lookup went through a map with no `sot` entry; the
+key was on 21,177 rows.
+
+Name the instrument in the sentence. Ask a second way, and treat a disagreement between
+the two as the finding. Prefer a series on disk over today's payload. Measure through the
+path that runs, not one that resembles it.
+
+
 ## Performance (the one that keeps biting us)
 
 1. **A list/board must not download more than it shows.** A list of N items ships N lightweight rows
@@ -38,13 +59,14 @@ Performance and correctness are part of "done" — not a follow-up after someone
 11. **Every live environment gets its own continuous data feed + freshness monitoring.** Prod once went
     **8 days stale** because the ingest only fed dev and nothing watched prod. A pipeline that "runs on
     a timer" is not enough — timers die, deploys forget, and silence hides it.
-    - `monitor_props_freshness.py` + `legendarypicks-props-freshness.timer` (30 min) check each env's
-      latest prop capture, ALERT loudly, and self-heal (re-trigger the ingest) if it's > 3 h stale.
+    - `monitor_props_freshness.py` + `legendarypicks-props-freshness.timer` (30 min) check each
+      provider in each env and fail loudly when its provider-specific threshold is exceeded.
+      The monitor deliberately never starts an ingest; recovery stays an operator decision.
     - **PROD DEPLOY CHECKLIST (do not skip):**
-      1. Stand up a **prod-targeted ingest** service/timer (`bovada_scraper.py all --ingest` pointed at
-         the prod DB / prod backend `:8100`), mirroring `legendarypicks-props.service`.
-      2. **Enable `prod` in `monitor_props_freshness.py` `ENVS`** (uncomment the line) so prod staleness
-         alerts + self-heals from the moment it's live.
+      1. Keep the **prod-targeted registry runner** service/timer pointed at the prod DB and
+         backend `:8100`, staggered behind `legendarypicks-props.service`.
+      2. **Keep `prod` in `monitor_props_freshness.py` `ENVS`** so prod staleness is visible from
+         the moment its feed is live.
     - Verify after deploy: `curl :8100/api/props?limit=1` shows a capture within the last hour.
 
 ## Cleanliness

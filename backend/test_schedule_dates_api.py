@@ -12,6 +12,21 @@ from routers import games
 
 
 class ScheduleDatesApiTests(unittest.TestCase):
+    """These cover the PUBLISHER-SEARCH rung, so the local rung is held empty.
+
+    The arrows now answer from our own store first and only fall through to
+    ESPN's schedule search when we cannot. Without this the cases below stop
+    testing what they were written to test -- they short-circuit on whatever
+    the ambient database happens to hold, which is why they turned red against
+    `picks.dev.db` and stayed green standalone. The local rung has its own
+    coverage in `LocalScheduleDatesTests`.
+    """
+
+    def setUp(self):
+        local = patch.object(games, "_local_event_starts", return_value=[])
+        local.start()
+        self.addCleanup(local.stop)
+
     def payload(self, league="nba", anchor="2026-07-21"):
         response = games.get_schedule_dates(league, anchor)
         return response.body.decode("utf-8")
@@ -153,3 +168,84 @@ class ScheduleDatesApiTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class LocalScheduleDatesTests(unittest.TestCase):
+    """The day arrows must not need a publisher to move.
+
+    Measured 2026-08-18: every ESPN host was refusing this box, so
+    `schedule-dates` answered `source: unavailable` with empty candidate lists
+    for every league, and the board simply would not step back past Sunday --
+    while UFC 330's start instants sat in our own `prop_games` the whole time.
+    A navigation control whose failure mode is silence is indistinguishable
+    from a dead button.
+    """
+
+    def setUp(self):
+        self.refuse = patch.object(
+            games.espn, "schedule_event_starts",
+            side_effect=RuntimeError("publisher refused"))
+        self.refuse.start()
+        self.addCleanup(self.refuse.stop)
+
+    def test_local_starts_answer_without_asking_the_publisher(self):
+        with patch.object(games, "_local_event_starts") as local:
+            local.side_effect = lambda lg, anchor, direction: (
+                ["2026-08-19T23:00:00+00:00"] if direction == "future"
+                else ["2026-08-15T22:00:00+00:00"])
+            body = games.get_schedule_dates("ufc", "2026-08-17").body.decode()
+        self.assertIn('"source":"local"', body.replace(" ", ""))
+        self.assertIn("2026-08-15T22:00:00+00:00", body)
+        # The publisher was never consulted: patching it to raise would have
+        # surfaced as a 502 rather than a served payload.
+
+    def test_one_sided_local_history_still_answers_what_it_has(self):
+        """Holding only the past is a partial answer, not a failure.
+
+        The store starts the day it is built, so the future side can be empty
+        while the past side is not. Refusing to serve the half we hold is how
+        the arrow went dead in the first place.
+        """
+        with patch.object(games, "_local_event_starts") as local:
+            local.side_effect = lambda lg, anchor, direction: (
+                [] if direction == "future" else ["2026-08-15T22:00:00+00:00"])
+            body = games.get_schedule_dates("ufc", "2026-08-17").body.decode()
+        self.assertIn("2026-08-15T22:00:00+00:00", body)
+        self.assertIn("publisher_unavailable", body)
+
+
+class DirectionalCandidateTests(unittest.TestCase):
+    """A field named for a direction must only contain that direction.
+
+    `_cap_schedule_candidates` used to only truncate. The local rung feeds it a
+    window that deliberately overruns the anchor by a day to catch timezone
+    boundaries, so past instants shipped inside `future_event_starts`.
+
+    Measured on prod 2026-08-19 with an unfilled store: MLB offered 9 "future"
+    starts and every one of them was in the past, so the next-day button did
+    nothing at all. The client filtered them and was left with no target.
+    """
+
+    def test_past_instants_never_appear_as_future(self):
+        anchor = dt.date(2026, 8, 19)
+        capped = games._cap_schedule_candidates(
+            ["2026-08-18T00:05:00+00:00", "2026-08-18T23:00:00+00:00",
+             "2026-08-20T00:05:00+00:00"],
+            anchor, "future")
+        assert all("2026-08-18" not in value for value in capped), capped
+        assert "2026-08-20T00:05:00+00:00" in capped
+
+    def test_future_instants_never_appear_as_past(self):
+        anchor = dt.date(2026, 8, 19)
+        capped = games._cap_schedule_candidates(
+            ["2026-08-25T00:05:00+00:00", "2026-08-15T22:00:00+00:00"],
+            anchor, "past")
+        assert capped == ["2026-08-15T22:00:00+00:00"]
+
+    def test_the_near_side_keeps_a_day_of_slack(self):
+        """A 00:30Z start is the previous evening in the Americas, so it IS the
+        neighbouring day there. Dropping it would skip a real game."""
+        anchor = dt.date(2026, 8, 19)
+        capped = games._cap_schedule_candidates(
+            ["2026-08-20T00:30:00+00:00"], anchor, "past")
+        assert capped == ["2026-08-20T00:30:00+00:00"]

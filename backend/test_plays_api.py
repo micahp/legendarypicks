@@ -231,3 +231,81 @@ class PlaysApiTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
+
+
+class TestTheWidgetUsesTodaysSlate:
+    """The morning window is the one nobody looked at.
+
+    `espn.games(league)` with no date returns whatever ESPN is serving, and
+    before first pitch that is still last night's finished games. Measured on
+    prod 2026-08-19 at 09:50 ET: nine cards, all yesterday's games, all priced
+    at 1 cent because their markets had settled, including a team that won 6-0.
+    The scoreboard for the same date correctly said `pre` for every one.
+    """
+
+    def test_todays_games_come_from_the_store_not_an_undated_call(self, monkeypatch):
+        import datetime as dt
+        from routers import live_discounts
+        import scoreboard_store
+
+        today = dt.datetime.now(dt.timezone.utc).date().isoformat()
+        monkeypatch.setattr(scoreboard_store, "read",
+                            lambda lg, d: {"games": [{"game_id": "X", "state": "pre"}]}
+                            if d == today else None)
+
+        def never(*a, **k):
+            raise AssertionError("the undated publisher board must not be called")
+        monkeypatch.setattr(live_discounts.espn, "games", never)
+
+        games = live_discounts._games_today("mlb")
+        assert [g["game_id"] for g in games] == ["X"]
+
+    def test_the_fallback_is_dated_never_undated(self, monkeypatch):
+        """A store miss falls back to the publisher WITH a date. An undated call
+        is what produced yesterday's games in the first place."""
+        import datetime as dt
+        from routers import live_discounts
+        import scoreboard_store
+
+        monkeypatch.setattr(scoreboard_store, "read", lambda lg, d: None)
+        seen = {}
+
+        def capture(league, date=None):
+            seen["date"] = date
+            return []
+        monkeypatch.setattr(live_discounts.espn, "games", capture)
+
+        live_discounts._games_today("mlb")
+        assert seen["date"] == dt.datetime.now(dt.timezone.utc).date().isoformat()
+
+
+class TestAStalePayloadExpires:
+    """"A stale payload beats a stack trace" is true for a minute, not a day.
+
+    `hit` in the failure branch is the EXPIRED cache entry. Serving it with no
+    age limit meant that once `_build` began failing the widget froze on its
+    last good answer permanently: every poll re-entered the branch, the
+    timestamp was never refreshed, so it could never go fresh again.
+    """
+
+    def test_a_recent_failure_still_serves_the_last_good_answer(self, monkeypatch):
+        import time
+        from routers import live_discounts as ld
+        ld._cache["mlb"] = (time.time() - 60, {"cards": ["old"]})
+        monkeypatch.setattr(ld, "_build", lambda lg: (_ for _ in ()).throw(RuntimeError("upstream")))
+        out = ld.live_discounts(league="mlb")
+        assert out["cards"] == ["old"], "a one-minute hiccup should not blank the widget"
+
+    def test_an_old_failure_reports_instead_of_freezing(self, monkeypatch):
+        import time
+        from fastapi import HTTPException
+        from routers import live_discounts as ld
+        ld._cache["mlb"] = (time.time() - 14 * 3600, {"cards": ["yesterday"]})
+        monkeypatch.setattr(ld, "_build", lambda lg: (_ for _ in ()).throw(RuntimeError("upstream")))
+        try:
+            out = ld.live_discounts(league="mlb")
+        except HTTPException as exc:
+            assert exc.status_code == 502
+        else:
+            assert out.get("cards") != ["yesterday"], \
+                "a 14-hour-old payload must never be served as live"

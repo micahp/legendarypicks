@@ -1,0 +1,664 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Legendary Picks — Props Layout Concepts</title>
+  <style>
+    :root {
+      --page: #0f0f11;
+      --panel: #18181b;
+      --panel-2: #202024;
+      --panel-3: #27272a;
+      --line: #303036;
+      --line-soft: #25252a;
+      --text: #f4f4f5;
+      --muted: #a1a1aa;
+      --faint: #71717a;
+      --green: #34d399;
+      --green-strong: #10b981;
+      --green-dim: rgba(52, 211, 153, .12);
+      --red: #fb7185;
+      --amber: #fbbf24;
+      --blue: #60a5fa;
+      --shadow: 0 20px 60px rgba(0, 0, 0, .35);
+    }
+
+    * { box-sizing: border-box; }
+
+    html { color-scheme: dark; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 75% -10%, rgba(52, 211, 153, .08), transparent 28rem),
+        var(--page);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      letter-spacing: -.01em;
+    }
+
+    button { font: inherit; }
+
+    .topbar {
+      height: 64px;
+      border-bottom: 1px solid var(--line-soft);
+      background: rgba(15, 15, 17, .88);
+      backdrop-filter: blur(18px);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 28px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .brand { display: flex; align-items: center; gap: 11px; font-weight: 800; }
+    .brand-mark {
+      width: 31px;
+      height: 31px;
+      border-radius: 9px;
+      display: grid;
+      place-items: center;
+      color: #07130e;
+      background: linear-gradient(145deg, #6ee7b7, #10b981);
+      box-shadow: 0 0 26px rgba(52, 211, 153, .2);
+      font-size: 13px;
+    }
+    .concept-tag {
+      color: var(--faint);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .13em;
+      font-weight: 700;
+    }
+
+    main { max-width: 1320px; margin: 0 auto; padding: 38px 28px 70px; }
+
+    .intro {
+      display: flex;
+      justify-content: space-between;
+      align-items: end;
+      gap: 28px;
+      margin-bottom: 24px;
+    }
+
+    .eyebrow {
+      margin: 0 0 10px;
+      color: var(--green);
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .16em;
+    }
+
+    h1 { margin: 0; font-size: clamp(27px, 4vw, 44px); line-height: 1.05; letter-spacing: -.045em; }
+    .lede { color: var(--muted); max-width: 700px; margin: 12px 0 0; line-height: 1.6; font-size: 14px; }
+
+    .view-switch {
+      display: inline-flex;
+      padding: 4px;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      background: #121214;
+      flex-shrink: 0;
+    }
+
+    .view-switch button {
+      border: 0;
+      border-radius: 9px;
+      color: var(--faint);
+      background: transparent;
+      padding: 10px 15px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 750;
+      transition: .18s ease;
+    }
+
+    .view-switch button.active { background: var(--panel-3); color: white; box-shadow: 0 4px 14px rgba(0,0,0,.28); }
+
+    .axis-strip {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      border: 1px solid var(--line-soft);
+      border-radius: 14px;
+      background: rgba(24, 24, 27, .62);
+      margin-bottom: 18px;
+      overflow: hidden;
+    }
+    .axis-item { padding: 15px 18px; }
+    .axis-item:last-child { text-align: right; }
+    .axis-label { color: var(--faint); font-size: 10px; text-transform: uppercase; letter-spacing: .12em; font-weight: 800; }
+    .axis-value { margin-top: 4px; font-size: 13px; font-weight: 700; }
+    .axis-arrow { color: #52525b; font-size: 18px; }
+
+    .artifact {
+      border: 1px solid var(--line);
+      border-radius: 19px;
+      background: #121214;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .artifact-bar {
+      min-height: 56px;
+      padding: 12px 18px;
+      border-bottom: 1px solid var(--line-soft);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      background: #151517;
+    }
+    .artifact-title { font-size: 13px; font-weight: 800; }
+    .artifact-caption { color: var(--faint); font-size: 11px; margin-top: 3px; }
+    .artifact-badge {
+      border: 1px solid rgba(52, 211, 153, .25);
+      color: var(--green);
+      background: var(--green-dim);
+      border-radius: 999px;
+      padding: 6px 9px;
+      font-size: 10px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+
+    .view { display: none; }
+    .view.active { display: block; }
+
+    .builder-shell { display: grid; grid-template-columns: minmax(0, 1fr) 300px; min-height: 690px; }
+    .builder-main { padding: 18px; border-right: 1px solid var(--line-soft); }
+    .builder-top { display: flex; gap: 9px; align-items: center; overflow-x: auto; padding-bottom: 15px; }
+
+    .pill {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      color: var(--muted);
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-size: 11px;
+      font-weight: 750;
+      white-space: nowrap;
+    }
+    .pill.active { color: #062017; border-color: var(--green); background: var(--green); }
+
+    .game-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 17px 18px;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      background: var(--panel);
+      margin-bottom: 12px;
+    }
+    .teams { display: flex; align-items: center; gap: 12px; font-weight: 800; font-size: 15px; }
+    .team-logo {
+      width: 31px;
+      height: 31px;
+      display: grid;
+      place-items: center;
+      border: 1px solid #3f3f46;
+      border-radius: 50%;
+      font-size: 9px;
+      background: #222227;
+      color: #d4d4d8;
+    }
+    .at { color: #52525b; font-weight: 500; }
+    .game-time { text-align: right; font-size: 11px; color: var(--muted); line-height: 1.5; }
+    .game-time strong { color: white; display: block; }
+
+    .market-group { border: 1px solid var(--line); border-radius: 12px; background: var(--panel); margin-top: 10px; overflow: hidden; }
+    .market-head {
+      width: 100%;
+      border: 0;
+      color: white;
+      background: transparent;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px 16px;
+      cursor: pointer;
+      text-align: left;
+    }
+    .market-head strong { font-size: 12px; }
+    .market-count { color: var(--faint); font-size: 10px; margin-left: 7px; font-weight: 650; }
+    .chev { color: var(--faint); transform: rotate(0); transition: .18s; }
+    .market-group.closed .chev { transform: rotate(-90deg); }
+    .market-group.closed .market-body { display: none; }
+    .market-body { border-top: 1px solid var(--line-soft); }
+    .builder-row {
+      display: grid;
+      grid-template-columns: minmax(150px, 1fr) 112px 112px;
+      gap: 8px;
+      align-items: center;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--line-soft);
+    }
+    .builder-row:last-child { border-bottom: 0; }
+    .player-name { font-size: 12px; font-weight: 750; }
+    .player-sub { color: var(--faint); font-size: 10px; margin-top: 3px; }
+    .odds-btn {
+      border: 1px solid #3a3a40;
+      border-radius: 9px;
+      background: var(--panel-3);
+      color: #e4e4e7;
+      min-height: 45px;
+      padding: 6px 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 11px;
+    }
+    .odds-btn span:last-child { color: var(--green); font-weight: 800; }
+    .odds-btn.selected { border-color: var(--green); background: var(--green-dim); }
+
+    .betslip { background: #101012; padding: 18px; display: flex; flex-direction: column; }
+    .betslip-title { font-size: 13px; font-weight: 800; display: flex; align-items: center; justify-content: space-between; }
+    .leg-count { color: var(--green); background: var(--green-dim); border-radius: 99px; padding: 3px 7px; font-size: 9px; }
+    .slip-card { margin-top: 15px; border: 1px solid var(--line); border-radius: 12px; padding: 14px; background: var(--panel); }
+    .slip-market { color: var(--green); font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .07em; }
+    .slip-pick { margin-top: 8px; font-size: 13px; font-weight: 800; }
+    .slip-game { margin-top: 4px; color: var(--faint); font-size: 10px; }
+    .stake-row { display: flex; align-items: center; justify-content: space-between; margin-top: 18px; color: var(--muted); font-size: 11px; }
+    .stake-input { border: 1px solid var(--line); border-radius: 8px; background: #101012; padding: 9px 10px; width: 94px; text-align: right; color: white; font-weight: 800; }
+    .return-row { display: flex; justify-content: space-between; padding: 15px 0; margin-top: auto; color: var(--muted); font-size: 11px; }
+    .return-row strong { color: white; font-size: 15px; }
+    .place-bet { border: 0; border-radius: 10px; padding: 12px; background: var(--green-strong); color: #04120c; font-weight: 900; cursor: pointer; }
+    .demo-note { text-align: center; color: #52525b; font-size: 9px; margin-top: 10px; }
+
+    .research-shell { min-height: 690px; display: grid; grid-template-columns: 210px minmax(0, 1fr); }
+    .market-rail { border-right: 1px solid var(--line-soft); background: #101012; padding: 17px 12px; }
+    .rail-label { color: var(--faint); font-size: 9px; letter-spacing: .11em; font-weight: 800; text-transform: uppercase; padding: 0 9px 9px; }
+    .rail-item {
+      width: 100%;
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      border-radius: 8px;
+      padding: 10px 9px;
+      text-align: left;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 11px;
+      cursor: pointer;
+      margin: 2px 0;
+    }
+    .rail-item span { color: #52525b; font-size: 9px; }
+    .rail-item.active { background: var(--green-dim); color: var(--green); font-weight: 800; }
+
+    .research-main { padding: 18px; min-width: 0; }
+    .research-head { display: flex; align-items: end; justify-content: space-between; gap: 15px; margin-bottom: 14px; }
+    .research-head h2 { margin: 0; font-size: 19px; letter-spacing: -.025em; }
+    .research-head p { margin: 4px 0 0; color: var(--faint); font-size: 10px; }
+    .filters { display: flex; gap: 6px; flex-wrap: wrap; justify-content: end; }
+    .filter {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      color: var(--muted);
+      border-radius: 8px;
+      padding: 7px 9px;
+      font-size: 10px;
+      cursor: pointer;
+    }
+    .filter.active { border-color: #4b5563; background: var(--panel-3); color: white; }
+
+    .research-card {
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      background: var(--panel);
+      margin-top: 10px;
+      display: grid;
+      grid-template-columns: 200px minmax(260px, 1fr) 180px;
+      gap: 17px;
+      align-items: stretch;
+      padding: 15px;
+    }
+    .player-block { display: flex; flex-direction: column; justify-content: center; }
+    .player-line { display: flex; align-items: center; gap: 9px; }
+    .avatar {
+      width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      border-radius: 10px;
+      background: linear-gradient(145deg, #34343a, #222227);
+      border: 1px solid #3f3f46;
+      color: #d4d4d8;
+      font-size: 10px;
+      font-weight: 900;
+    }
+    .matchup { color: var(--faint); font-size: 10px; margin: 8px 0 0 43px; }
+    .line-summary { margin: 12px 0 0 43px; font-size: 12px; }
+    .line-summary strong { font-size: 18px; margin-right: 5px; }
+
+    .chart { position: relative; height: 104px; display: flex; align-items: end; gap: 7px; padding: 14px 5px 20px; }
+    .chart-line { position: absolute; left: 0; right: 0; top: 47%; border-top: 1px dashed #71717a; }
+    .chart-line::after { content: attr(data-line); position: absolute; right: 0; top: -14px; color: var(--faint); font-size: 8px; }
+    .bar-wrap { flex: 1; height: 100%; display: flex; align-items: end; justify-content: center; position: relative; z-index: 1; }
+    .bar { width: min(18px, 70%); min-height: 5px; border-radius: 4px 4px 2px 2px; background: #52525b; opacity: .65; position: relative; }
+    .bar.hit { background: var(--green); opacity: .9; }
+    .bar::after { content: attr(data-v); position: absolute; width: 28px; left: 50%; transform: translateX(-50%); bottom: -15px; color: var(--faint); font-size: 8px; text-align: center; }
+
+    .edge-block { border-left: 1px solid var(--line-soft); padding-left: 15px; display: flex; flex-direction: column; justify-content: center; }
+    .hit-rate { font-size: 27px; font-weight: 900; letter-spacing: -.05em; color: var(--green); }
+    .hit-label { font-size: 9px; color: var(--faint); text-transform: uppercase; letter-spacing: .1em; font-weight: 800; }
+    .trend { color: var(--muted); font-size: 10px; margin-top: 5px; }
+    .mini-odds { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 11px; }
+    .mini-odds button { border: 1px solid var(--line); border-radius: 7px; background: #111113; color: #d4d4d8; padding: 7px 5px; font-size: 9px; }
+    .mini-odds strong { color: var(--green); margin-left: 3px; }
+
+    .comparison {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 16px;
+    }
+    .comparison-card { border: 1px solid var(--line-soft); border-radius: 13px; padding: 15px 17px; background: rgba(24,24,27,.55); }
+    .comparison-card strong { font-size: 12px; }
+    .comparison-card p { color: var(--faint); font-size: 11px; line-height: 1.55; margin: 6px 0 0; }
+
+    @media (max-width: 920px) {
+      .intro { align-items: start; flex-direction: column; }
+      .builder-shell { grid-template-columns: 1fr; }
+      .builder-main { border-right: 0; }
+      .betslip { border-top: 1px solid var(--line-soft); min-height: 280px; }
+      .research-shell { grid-template-columns: 1fr; }
+      .market-rail { border-right: 0; border-bottom: 1px solid var(--line-soft); display: flex; overflow-x: auto; gap: 4px; }
+      .rail-label { display: none; }
+      .rail-item { width: auto; flex: none; gap: 14px; }
+      .research-card { grid-template-columns: 175px minmax(240px, 1fr); }
+      .edge-block { grid-column: 1 / -1; border-left: 0; border-top: 1px solid var(--line-soft); padding: 12px 0 0; flex-direction: row; align-items: center; gap: 14px; }
+      .mini-odds { margin: 0 0 0 auto; width: 170px; }
+    }
+
+    @media (max-width: 650px) {
+      .topbar { padding: 0 16px; }
+      main { padding: 25px 14px 50px; }
+      .view-switch { width: 100%; }
+      .view-switch button { flex: 1; }
+      .axis-strip { grid-template-columns: 1fr; }
+      .axis-item:last-child { text-align: left; border-top: 1px solid var(--line-soft); }
+      .axis-arrow { display: none; }
+      .artifact-bar { align-items: start; }
+      .artifact-badge { display: none; }
+      .builder-main, .research-main { padding: 12px; }
+      .game-header { align-items: start; }
+      .teams { gap: 6px; font-size: 12px; }
+      .team-logo { display: none; }
+      .builder-row { grid-template-columns: 1fr 94px 94px; padding: 10px; }
+      .research-head { align-items: start; flex-direction: column; }
+      .filters { justify-content: start; }
+      .research-card { grid-template-columns: 1fr; }
+      .matchup, .line-summary { margin-left: 43px; }
+      .edge-block { grid-column: auto; }
+      .comparison { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><span class="brand-mark">LP</span> Legendary Picks</div>
+    <div class="concept-tag">Props layout concept · not production</div>
+  </header>
+
+  <main>
+    <section class="intro">
+      <div>
+        <p class="eyebrow">Same slate, different organizing axis</p>
+        <h1>How should props feel?</h1>
+        <p class="lede">The builder starts with a game and helps someone assemble a bet. The research board starts with a market and helps someone find the strongest line. Switch between both full-page concepts below.</p>
+      </div>
+      <div class="view-switch" aria-label="Choose mockup">
+        <button class="active" data-view="builder">Bovada-style builder</button>
+        <button data-view="research">props.cash-style research</button>
+      </div>
+    </section>
+
+    <section class="axis-strip" aria-label="Concept comparison">
+      <div class="axis-item">
+        <div class="axis-label">Builder question</div>
+        <div class="axis-value">“What can I add to this game?”</div>
+      </div>
+      <div class="axis-arrow">↔</div>
+      <div class="axis-item">
+        <div class="axis-label">Research question</div>
+        <div class="axis-value">“Who has the strongest line today?”</div>
+      </div>
+    </section>
+
+    <section class="artifact">
+      <div class="artifact-bar">
+        <div>
+          <div class="artifact-title" id="artifactTitle">Concept A · Game → market → selectable prop</div>
+          <div class="artifact-caption" id="artifactCaption">A compact bet-building surface organized around one matchup.</div>
+        </div>
+        <div class="artifact-badge" id="artifactBadge">Fastest to build a card</div>
+      </div>
+
+      <div class="view active" id="builderView">
+        <div class="builder-shell">
+          <div class="builder-main">
+            <div class="builder-top">
+              <span class="pill active">MLB</span>
+              <span class="pill">All games · 14</span>
+              <span class="pill">Today · Jul 17</span>
+              <span class="pill">Game props</span>
+              <span class="pill">Player props</span>
+            </div>
+
+            <div class="game-header">
+              <div class="teams">
+                <span class="team-logo">TB</span> Tampa Bay <span class="at">@</span> Boston <span class="team-logo">BOS</span>
+              </div>
+              <div class="game-time"><strong>12:35 PM CT</strong>Fenway Park · 96 props</div>
+            </div>
+
+            <div class="market-group">
+              <button class="market-head"><span><strong>Pitcher strikeouts</strong><span class="market-count">4 lines</span></span><span class="chev">⌄</span></button>
+              <div class="market-body">
+                <div class="builder-row">
+                  <div><div class="player-name">Garrett Crochet</div><div class="player-sub">BOS · LHP</div></div>
+                  <button class="odds-btn selected"><span>O 7.5</span><span>+105</span></button>
+                  <button class="odds-btn"><span>U 7.5</span><span>-135</span></button>
+                </div>
+                <div class="builder-row">
+                  <div><div class="player-name">Shane Baz</div><div class="player-sub">TB · RHP</div></div>
+                  <button class="odds-btn"><span>O 5.5</span><span>-115</span></button>
+                  <button class="odds-btn"><span>U 5.5</span><span>-105</span></button>
+                </div>
+              </div>
+            </div>
+
+            <div class="market-group">
+              <button class="market-head"><span><strong>Total bases</strong><span class="market-count">16 lines</span></span><span class="chev">⌄</span></button>
+              <div class="market-body">
+                <div class="builder-row">
+                  <div><div class="player-name">Jarren Duran</div><div class="player-sub">BOS · OF</div></div>
+                  <button class="odds-btn"><span>O 1.5</span><span>-125</span></button>
+                  <button class="odds-btn"><span>U 1.5</span><span>-105</span></button>
+                </div>
+                <div class="builder-row">
+                  <div><div class="player-name">Yandy Díaz</div><div class="player-sub">TB · 1B</div></div>
+                  <button class="odds-btn"><span>O 1.5</span><span>-110</span></button>
+                  <button class="odds-btn"><span>U 1.5</span><span>-120</span></button>
+                </div>
+              </div>
+            </div>
+
+            <div class="market-group closed">
+              <button class="market-head"><span><strong>Hits + runs + RBIs</strong><span class="market-count">14 lines</span></span><span class="chev">⌄</span></button>
+              <div class="market-body"></div>
+            </div>
+            <div class="market-group closed">
+              <button class="market-head"><span><strong>Player hits</strong><span class="market-count">18 lines</span></span><span class="chev">⌄</span></button>
+              <div class="market-body"></div>
+            </div>
+          </div>
+
+          <aside class="betslip">
+            <div class="betslip-title">Your card <span class="leg-count">1 leg</span></div>
+            <div class="slip-card">
+              <div class="slip-market">Pitcher strikeouts</div>
+              <div class="slip-pick">Garrett Crochet O 7.5</div>
+              <div class="slip-game">Tampa Bay @ Boston · +105</div>
+            </div>
+            <div class="stake-row"><span>Stake</span><div class="stake-input">$25.00</div></div>
+            <div class="return-row"><span>Potential return</span><strong>$51.25</strong></div>
+            <button class="place-bet">Add to picks</button>
+            <div class="demo-note">Interaction shown for layout only</div>
+          </aside>
+        </div>
+      </div>
+
+      <div class="view" id="researchView">
+        <div class="research-shell">
+          <aside class="market-rail">
+            <div class="rail-label">Markets</div>
+            <button class="rail-item active">Pitcher strikeouts <span>28</span></button>
+            <button class="rail-item">Total bases <span>64</span></button>
+            <button class="rail-item">Player hits <span>72</span></button>
+            <button class="rail-item">Hits + runs + RBIs <span>58</span></button>
+            <button class="rail-item">Earned runs <span>24</span></button>
+            <button class="rail-item">Outs recorded <span>26</span></button>
+          </aside>
+
+          <div class="research-main">
+            <div class="research-head">
+              <div><h2>Pitcher strikeouts</h2><p>Every line on today’s slate · sorted by L10 over rate</p></div>
+              <div class="filters">
+                <button class="filter">All books</button>
+                <button class="filter active">L10</button>
+                <button class="filter">Home</button>
+                <button class="filter">Opponent</button>
+                <button class="filter">Sort: hit rate ↓</button>
+              </div>
+            </div>
+
+            <article class="research-card">
+              <div class="player-block">
+                <div class="player-line"><span class="avatar">GC</span><div><div class="player-name">Garrett Crochet</div><div class="player-sub">Boston · LHP</div></div></div>
+                <div class="matchup">vs TB · 12:35 PM CT</div>
+                <div class="line-summary"><strong>7.5</strong> strikeouts</div>
+              </div>
+              <div class="chart" aria-label="Garrett Crochet last ten strikeout results">
+                <div class="chart-line" data-line="7.5 line"></div>
+                <div class="bar-wrap"><div class="bar hit" style="height:72%" data-v="9"></div></div>
+                <div class="bar-wrap"><div class="bar hit" style="height:81%" data-v="10"></div></div>
+                <div class="bar-wrap"><div class="bar" style="height:43%" data-v="5"></div></div>
+                <div class="bar-wrap"><div class="bar hit" style="height:64%" data-v="8"></div></div>
+                <div class="bar-wrap"><div class="bar hit" style="height:88%" data-v="11"></div></div>
+                <div class="bar-wrap"><div class="bar" style="height:51%" data-v="6"></div></div>
+                <div class="bar-wrap"><div class="bar hit" style="height:72%" data-v="9"></div></div>
+                <div class="bar-wrap"><div class="bar hit" style="height:64%" data-v="8"></div></div>
+                <div class="bar-wrap"><div class="bar" style="height:58%" data-v="7"></div></div>
+                <div class="bar-wrap"><div class="bar hit" style="height:81%" data-v="10"></div></div>
+              </div>
+              <div class="edge-block"><div><div class="hit-rate">70%</div><div class="hit-label">L10 over</div><div class="trend">Avg 8.3 · proj 8.1</div></div><div class="mini-odds"><button>O 7.5 <strong>+105</strong></button><button>U 7.5 <strong>-135</strong></button></div></div>
+            </article>
+
+            <article class="research-card">
+              <div class="player-block">
+                <div class="player-line"><span class="avatar">PS</span><div><div class="player-name">Paul Skenes</div><div class="player-sub">Pittsburgh · RHP</div></div></div>
+                <div class="matchup">@ CLE · 6:10 PM CT</div>
+                <div class="line-summary"><strong>6.5</strong> strikeouts</div>
+              </div>
+              <div class="chart" aria-label="Paul Skenes last ten strikeout results">
+                <div class="chart-line" data-line="6.5 line"></div>
+                <div class="bar-wrap"><div class="bar hit" style="height:75%" data-v="9"></div></div>
+                <div class="bar-wrap"><div class="bar" style="height:42%" data-v="5"></div></div>
+                <div class="bar-wrap"><div class="bar hit" style="height:67%" data-v="8"></div></div>
+                <div class="bar-wrap"><div class="bar hit" style="height:83%" data-v="10"></div></div>
+                <div class="bar-wrap"><div class="bar hit" style="height:58%" data-v="7"></div></div>
+                <div class="bar-wrap"><div class="bar" style="height:50%" data-v="6"></div></div>
+                <div class="bar-wrap"><div class="bar hit" style="height:67%" data-v="8"></div></div>
+                <div class="bar-wrap"><div class="bar hit" style="height:75%" data-v="9"></div></div>
+                <div class="bar-wrap"><div class="bar" style="height:33%" data-v="4"></div></div>
+                <div class="bar-wrap"><div class="bar hit" style="height:58%" data-v="7"></div></div>
+              </div>
+              <div class="edge-block"><div><div class="hit-rate">70%</div><div class="hit-label">L10 over</div><div class="trend">Avg 7.3 · proj 7.5</div></div><div class="mini-odds"><button>O 6.5 <strong>-120</strong></button><button>U 6.5 <strong>-110</strong></button></div></div>
+            </article>
+
+            <article class="research-card">
+              <div class="player-block">
+                <div class="player-line"><span class="avatar">SB</span><div><div class="player-name">Shane Baz</div><div class="player-sub">Tampa Bay · RHP</div></div></div>
+                <div class="matchup">@ BOS · 12:35 PM CT</div>
+                <div class="line-summary"><strong>5.5</strong> strikeouts</div>
+              </div>
+              <div class="chart" aria-label="Shane Baz last ten strikeout results">
+                <div class="chart-line" data-line="5.5 line"></div>
+                <div class="bar-wrap"><div class="bar" style="height:40%" data-v="4"></div></div>
+                <div class="bar-wrap"><div class="bar hit" style="height:61%" data-v="6"></div></div>
+                <div class="bar-wrap"><div class="bar hit" style="height:70%" data-v="7"></div></div>
+                <div class="bar-wrap"><div class="bar" style="height:50%" data-v="5"></div></div>
+                <div class="bar-wrap"><div class="bar hit" style="height:80%" data-v="8"></div></div>
+                <div class="bar-wrap"><div class="bar" style="height:30%" data-v="3"></div></div>
+                <div class="bar-wrap"><div class="bar hit" style="height:61%" data-v="6"></div></div>
+                <div class="bar-wrap"><div class="bar" style="height:50%" data-v="5"></div></div>
+                <div class="bar-wrap"><div class="bar hit" style="height:70%" data-v="7"></div></div>
+                <div class="bar-wrap"><div class="bar" style="height:40%" data-v="4"></div></div>
+              </div>
+              <div class="edge-block"><div><div class="hit-rate" style="color:var(--amber)">50%</div><div class="hit-label">L10 over</div><div class="trend">Avg 5.5 · proj 5.7</div></div><div class="mini-odds"><button>O 5.5 <strong>-115</strong></button><button>U 5.5 <strong>-105</strong></button></div></div>
+            </article>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="comparison">
+      <div class="comparison-card"><strong>Bovada pattern wins at transaction speed.</strong><p>Users stay inside one game, scan familiar sportsbook categories, tap prices, and see their card assemble immediately.</p></div>
+      <div class="comparison-card"><strong>props.cash pattern wins at decision support.</strong><p>Users stay inside one stat market, compare the entire slate, and judge lines with recent-game distributions before choosing a side.</p></div>
+    </section>
+  </main>
+
+  <script>
+    const copy = {
+      builder: {
+        title: 'Concept A · Game → market → selectable prop',
+        caption: 'A compact bet-building surface organized around one matchup.',
+        badge: 'Fastest to build a card'
+      },
+      research: {
+        title: 'Concept B · Market → player → evidence',
+        caption: 'A research board organized around comparing one stat across the whole slate.',
+        badge: 'Best for finding an edge'
+      }
+    };
+
+    document.querySelectorAll('[data-view]').forEach(button => {
+      button.addEventListener('click', () => {
+        const target = button.dataset.view;
+        document.querySelectorAll('[data-view]').forEach(b => b.classList.toggle('active', b === button));
+        document.getElementById('builderView').classList.toggle('active', target === 'builder');
+        document.getElementById('researchView').classList.toggle('active', target === 'research');
+        document.getElementById('artifactTitle').textContent = copy[target].title;
+        document.getElementById('artifactCaption').textContent = copy[target].caption;
+        document.getElementById('artifactBadge').textContent = copy[target].badge;
+      });
+    });
+
+    document.querySelectorAll('.market-head').forEach(button => {
+      button.addEventListener('click', () => button.closest('.market-group').classList.toggle('closed'));
+    });
+
+    document.querySelectorAll('.odds-btn').forEach(button => {
+      button.addEventListener('click', () => {
+        document.querySelectorAll('.odds-btn').forEach(b => b.classList.remove('selected'));
+        button.classList.add('selected');
+      });
+    });
+
+    document.querySelectorAll('.filter').forEach(button => {
+      button.addEventListener('click', () => button.classList.toggle('active'));
+    });
+  </script>
+</body>
+</html>

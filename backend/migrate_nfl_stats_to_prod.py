@@ -107,15 +107,19 @@ if DRY:
     sys.exit(0)
 
 # ── backup ────────────────────────────────────────────────────────────────
-# NOT shutil.copy. Prod picks.db is journal_mode=delete (dev is the WAL one), and
-# it has live same-DB writers: mlb-capture ~every 5min, props-prod every 30min,
-# history-prod 4x daily, NFL ADP/transactions daily. Copying the file of a
-# delete-mode database mid-transaction captures the main file in a state that
-# needs its rollback journal to be consistent, and the copy does not include it --
-# a backup that looks fine and is torn exactly when it is needed. The online
+# NOT shutil.copy. picks.db has live same-DB writers: mlb-capture ~every 5min,
+# props-prod every 30min, history-prod 4x daily, NFL ADP/transactions daily.
+# Copying the file mid-transaction gives a backup that looks fine and is torn
+# exactly when it is needed, and this is true in BOTH journal modes for different
+# reasons: under `delete` the main file needs its rollback journal to be consistent
+# and the copy does not include it, and under `wal` the committed pages may still
+# be sitting in the -wal sidecar that the copy also does not include. The online
 # backup API takes a transactionally consistent snapshot instead, and it is
 # integrity-checked below before any write happens. Same guardrail
 # migrate_ufc_rankings_to_prod.py already follows.
+#
+# (Prod moved from `delete` to `wal` on 2026-08-19 to stop readers and writers
+# blocking each other; this comment used to name prod as the delete-mode one.)
 ts = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
 bak = f"{PROD}.bak-premigrate-nflstats-{ts}"
 src = sqlite3.connect(PROD)

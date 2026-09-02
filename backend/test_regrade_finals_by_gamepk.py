@@ -15,6 +15,13 @@ import pytest
 
 import regrade_props
 import settlement
+# Patched on the SUBMODULE, which is where the function now lives. Before the
+# package split `settlement._mlb_schedule` and `settlement.mlb_api._mlb_schedule`
+# were the same object; they are two namespaces now, and rebinding the package
+# alias leaves the caller inside `mlb_api` calling the real MLB Stats API. The
+# instant-resolution tests already patch the submodule -- both files must aim at
+# the same object or one of them is testing the network.
+import settlement.mlb_api
 
 
 ATL, SF = "Atlanta Braves", "San Francisco Giants"
@@ -37,7 +44,7 @@ GAME_2 = _sched(824913, "2026-06-17T23:15:00Z", 5, 7)
 def mlb(monkeypatch):
     """Both halves on one date, plus a per-gamePk score lookup."""
     day = {"dates": [{"games": GAME_1["dates"][0]["games"] + GAME_2["dates"][0]["games"]}]}
-    monkeypatch.setattr(settlement, "_mlb_schedule",
+    monkeypatch.setattr(settlement.mlb_api, "_mlb_schedule",
                         lambda d: day if d == "2026-06-17" else {"dates": []})
     by_pk = {824912: (2, 7), 824913: (5, 7)}
     monkeypatch.setattr(settlement, "_fetch_mlb_final", lambda pk: by_pk.get(pk))
@@ -60,7 +67,7 @@ def test_an_unresolvable_row_is_not_given_a_final(mlb):
 def test_a_game_on_the_other_side_of_the_utc_shift_is_found(monkeypatch):
     """prop_games says 2026-08-11; the schedule files it under 2026-08-10."""
     played = _sched(825048, "2026-08-11T01:40:00Z", 9, 0)
-    monkeypatch.setattr(settlement, "_mlb_schedule",
+    monkeypatch.setattr(settlement.mlb_api, "_mlb_schedule",
                         lambda d: played if d == "2026-08-10" else {"dates": []})
     monkeypatch.setattr(settlement, "_fetch_mlb_final", lambda pk: (9, 0) if pk == 825048 else None)
     assert regrade_props.final_for(
@@ -70,7 +77,7 @@ def test_a_game_on_the_other_side_of_the_utc_shift_is_found(monkeypatch):
 
 def test_a_game_that_is_not_final_has_no_final(monkeypatch):
     preview = _sched(825046, "2026-08-12T01:40:00Z", 0, 0, state="Preview")
-    monkeypatch.setattr(settlement, "_mlb_schedule",
+    monkeypatch.setattr(settlement.mlb_api, "_mlb_schedule",
                         lambda d: preview if d == "2026-08-12" else {"dates": []})
     monkeypatch.setattr(settlement, "_fetch_mlb_final", lambda pk: None)
     assert regrade_props.final_for(

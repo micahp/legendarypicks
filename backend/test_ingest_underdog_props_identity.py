@@ -12,6 +12,7 @@ os.environ["LP_DB_PATH"] = os.path.join(_IMPORT_TMP.name, "import-only.db")
 import ingest_underdog_props as underdog
 import apply_reviewed_ufc_identity as reviewed
 import bovada_scraper
+from prop_game_merge import dangling_source_mappings, fold_prop_game
 
 
 def create_schema(path):
@@ -19,7 +20,8 @@ def create_schema(path):
         con.executescript("""
             CREATE TABLE players(
               id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL,
-              team TEXT, league TEXT NOT NULL
+              team TEXT, league TEXT NOT NULL, espn_id TEXT, active INTEGER DEFAULT 1,
+              updated_at TEXT
             );
             CREATE TABLE prop_games(
               id INTEGER PRIMARY KEY AUTOINCREMENT, league TEXT NOT NULL,
@@ -121,6 +123,18 @@ class UnderdogIdentityTests(unittest.TestCase):
             ("u-missing", "Unknown Fighter", "source_id_not_in_spine"),
         )
 
+    def test_a_fight_with_a_line_for_only_one_fighter_is_ingested(self):
+        alpha_id = self.player("Alpha Fighter")
+
+        summary = underdog.direct_ingest(board()[:1])
+
+        self.assertEqual(summary["written_props"], 1)
+        self.assertEqual(summary["eligible_games"], 1)
+        self.assertEqual(
+            self.con.execute("SELECT player_id FROM props").fetchone()["player_id"],
+            alpha_id,
+        )
+
     def test_reviewed_alias_can_bind_a_source_id_but_fuzzy_matching_cannot(self):
         kaua_id = self.player("Kaua Fernandes")
         self.player("Jalin Turner")
@@ -185,7 +199,10 @@ class UnderdogIdentityTests(unittest.TestCase):
         ).fetchone()["source_player_key"]
         self.assertEqual(source_key, reviewed.REVIEW["source_player_key"])
 
-        old_path = os.environ["LP_DB_PATH"]
+        # Another module in a full-suite run restores LP_DB_PATH to *absent*, so
+        # reading it unconditionally raises KeyError and this test's result then
+        # depends on collection order rather than on the code under test.
+        old_path = os.environ.get("LP_DB_PATH")
         os.environ["LP_DB_PATH"] = self.db_path
         try:
             bovada_scraper._ufc_direct_ingest([
@@ -199,9 +216,257 @@ class UnderdogIdentityTests(unittest.TestCase):
                  "odds": 100, "start_time": None},
             ], "2026-08-16")
         finally:
-            os.environ["LP_DB_PATH"] = old_path
+            if old_path is None:
+                os.environ.pop("LP_DB_PATH", None)
+            else:
+                os.environ["LP_DB_PATH"] = old_path
         self.assertEqual(self.scalar("SELECT COUNT(*) FROM prop_games"), 1)
+
+    def test_august_22_reviewed_identities_bind_all_four_rejected_fights(self):
+        current_card_reviews = reviewed.REVIEWS[1:]
+        player_ids = {}
+        for review in current_card_reviews:
+            player_ids[review["canonical_name"]] = self.player(review["existing_name"])
+
+        applied = reviewed.apply_reviews(self.con, current_card_reviews)
+        self.con.commit()
+
+        self.assertEqual(applied, [player_ids[review["canonical_name"]] for review in current_card_reviews])
+        for review in current_card_reviews:
+            player_id = player_ids[review["canonical_name"]]
+            self.assertEqual(
+                self.con.execute("SELECT name FROM players WHERE id=?", (player_id,)).fetchone()["name"],
+                review["canonical_name"],
+            )
+            self.assertEqual(
+                self.con.execute(
+                    "SELECT player_id FROM player_source_ids WHERE source='underdog' "
+                    "AND league='ufc' AND source_player_key=?",
+                    (review["source_player_key"],),
+                ).fetchone()["player_id"],
+                player_id,
+            )
+
+    def test_reviewed_espn_identity_can_publish_a_missing_current_card_fighter(self):
+        review = next(item for item in reviewed.REVIEWS if item.get("espn_id"))
+
+        player_id = reviewed.apply_review(self.con, review)
+        self.con.commit()
+
+        row = self.con.execute(
+            "SELECT name,league,espn_id FROM players WHERE id=?", (player_id,)
+        ).fetchone()
+        self.assertEqual(
+            (row["name"], row["league"], row["espn_id"]),
+            (review["canonical_name"], "ufc", review["espn_id"]),
+        )
+        self.assertEqual(
+            self.con.execute(
+                "SELECT player_id FROM player_source_ids WHERE source='underdog' "
+                "AND league='ufc' AND source_player_key=?",
+                (review["source_player_key"],),
+            ).fetchone()["player_id"],
+            player_id,
+        )
+
+
+class FoldedGameKeepsItsSourceMapping(unittest.TestCase):
+    """A fold moves the mapping too, and a mapping left behind self-heals.
+
+    Written 2026-08-19, after the UFC timer failed every 30 minutes for two hours
+    with `source game key 291703 conflicts with canonical fighters`. The fighters
+    matched fine. Game 1235 had been folded into 1234 by a pass that repointed
+    `props` and forgot `prop_game_source_ids`, so the guard compared the board
+    against a row that no longer existed and read absence as a changed identity.
+    """
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.db_path = os.path.join(self.tmp.name, "underdog.db")
+        create_schema(self.db_path)
+        self.old_db = underdog.DB
+        underdog.DB = self.db_path
+        self.con = sqlite3.connect(self.db_path)
+        self.con.row_factory = sqlite3.Row
+
+    def tearDown(self):
+        self.con.close()
+        underdog.DB = self.old_db
+        self.tmp.cleanup()
+
+    def player(self, name):
+        player_id = self.con.execute(
+            "INSERT INTO players(name,league) VALUES(?,'ufc')", (name,)
+        ).lastrowid
+        self.con.commit()
+        return player_id
+
+    def scalar(self, sql, params=()):
+        return self.con.execute(sql, params).fetchone()[0]
+
+    def test_fold_carries_the_source_mapping_onto_the_surviving_game(self):
+        self.player("Alpha Fighter")
+        self.player("Bravo Fighter")
+        underdog.direct_ingest(board())
+        loser = self.scalar("SELECT game_id FROM prop_game_source_ids WHERE source_game_key='g-1'")
+        winner = self.con.execute(
+            "INSERT INTO prop_games(league,date,home,away) VALUES('ufc','2026-08-16','A','B')"
+        ).lastrowid
+        self.con.commit()
+
+        self.assertEqual(fold_prop_game(self.con, loser, winner), winner)
+        self.con.commit()
+
+        self.assertEqual(
+            self.scalar("SELECT game_id FROM prop_game_source_ids WHERE source_game_key='g-1'"),
+            winner,
+        )
+        self.assertEqual(self.scalar("SELECT COUNT(*) FROM props WHERE game_id=?", (winner,)), 2)
+        self.assertEqual(self.scalar("SELECT COUNT(*) FROM prop_games WHERE id=?", (loser,)), 0)
+        self.assertEqual(len(dangling_source_mappings(self.con)), 0)
+
+    def test_a_mapping_left_pointing_at_a_deleted_game_re_resolves_instead_of_raising(self):
+        self.player("Alpha Fighter")
+        self.player("Bravo Fighter")
+        underdog.direct_ingest(board())
+        stranded = self.scalar("SELECT game_id FROM prop_game_source_ids WHERE source_game_key='g-1'")
+        survivor = self.con.execute(
+            "INSERT INTO prop_games(league,date,home,away) VALUES('ufc','2026-08-16','A','B')"
+        ).lastrowid
+        # The old fold, reproduced exactly: props move, the mapping is forgotten.
+        self.con.execute("UPDATE props SET game_id=? WHERE game_id=?", (survivor, stranded))
+        self.con.execute("DELETE FROM prop_games WHERE id=?", (stranded,))
+        self.con.commit()
+        self.assertEqual(len(dangling_source_mappings(self.con)), 1)
+
+        summary = underdog.direct_ingest(board())
+
+        self.assertEqual(summary["written_props"], 2)
+        self.assertEqual(
+            self.scalar("SELECT game_id FROM prop_game_source_ids WHERE source_game_key='g-1'"),
+            survivor,
+        )
+        self.assertEqual(len(dangling_source_mappings(self.con)), 0)
+        self.assertEqual(self.scalar("SELECT COUNT(*) FROM prop_games"), 1)
+
+    def test_a_publisher_one_day_off_resolves_onto_the_existing_fight(self):
+        """Underdog files Wint vs Chatman on 08-22, ESPN on 08-23. One fight."""
+        alpha_id = self.player("Alpha Fighter")
+        bravo_id = self.player("Bravo Fighter")
+        espn_game = self.con.execute(
+            "INSERT INTO prop_games(league,date,home,away,espn_event_id) "
+            "VALUES('ufc','2026-08-17','Alpha Fighter','Bravo Fighter','401911625')"
+        ).lastrowid
+        for player_id in (alpha_id, bravo_id):
+            self.con.execute(
+                "INSERT INTO props(game_id,player_id,market,line,side,source,captured_at) "
+                "VALUES(?,?,'win_by_decision',0.5,'over','bovada','2026-08-15T00:00:00Z')",
+                (espn_game, player_id),
+            )
+        self.con.commit()
+
+        underdog.direct_ingest(board())  # board() dates the same fight 2026-08-16
+
+        self.assertEqual(self.scalar("SELECT COUNT(*) FROM prop_games"), 1)
+        self.assertEqual(
+            self.scalar("SELECT game_id FROM prop_game_source_ids WHERE source_game_key='g-1'"),
+            espn_game,
+        )
+
+    def test_a_live_game_with_different_fighters_still_refuses(self):
+        """The refusal is unchanged; what changed is its BLAST RADIUS.
+
+        This asserted that `direct_ingest` raises. It did, and that aborted the
+        whole run: from 2026-08-25 one conflicted fixture blocked 149 props
+        across 13 events for four days. The conflict is now a per-game skip that
+        is counted and named. The guard itself must still hold -- the mismatched
+        game gets no props -- so that is what this asserts now.
+        """
+        self.player("Alpha Fighter")
+        self.player("Bravo Fighter")
+        underdog.direct_ingest(board())
+        written_before = self.scalar("SELECT COUNT(*) FROM props")
+        other = self.con.execute(
+            "INSERT INTO prop_games(league,date,home,away) VALUES('ufc','2026-08-16','X','Y')"
+        ).lastrowid
+        self.con.execute(
+            "UPDATE prop_game_source_ids SET game_id=? WHERE source_game_key='g-1'", (other,)
+        )
+        self.con.commit()
+
+        summary = underdog.direct_ingest(board())
+        self.assertEqual(summary["conflicted_games"], 1, summary)
+        self.assertEqual(summary["written_props"], 0,
+                         "a game whose fighters do not match must still get nothing")
+        self.assertEqual(self.scalar("SELECT COUNT(*) FROM props"), written_before)
+        self.assertTrue(summary.get("conflicts"), "the refusal must be named")
 
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class AnIdentityConflictSkipsTheGameNotTheRun(unittest.TestCase):
+    """`resolve_game` fails closed when a mapped game no longer holds the
+    fighters Underdog is sending. That refusal is right. Raising it out of the
+    ingest loop was not: one bad fixture aborted the WHOLE run.
+
+    It did, silently, for four days. From 2026-08-25T01:04 every scheduled run
+    fetched 149 balanced props across 13 events and wrote ZERO, on
+    `source game key 295987 conflicts with canonical fighters` -- prop_games 1274,
+    Xiao Long vs Francesco Nuzzi, which holds only one of the two fighters. The
+    board showed 3 UFC markets instead of 6, because win_by_decision comes from
+    Bovada and kept updating while every Underdog market froze.
+    """
+
+    setUp = UnderdogIdentityTests.setUp
+    tearDown = UnderdogIdentityTests.tearDown
+    player = UnderdogIdentityTests.player
+    scalar = UnderdogIdentityTests.scalar
+
+    def _conflicting_mapping(self):
+        """A source game mapped to a prop_game that holds only ONE of its two
+        fighters -- exactly the prod state that blocked the run."""
+        underdog.ensure_source_identity_schema(self.con)
+        alpha = self.player("Alpha Fighter")
+        self.player("Bravo Fighter")
+        game_id = self.con.execute(
+            "INSERT INTO prop_games(league,date,home,away) VALUES('ufc','2026-08-16','x','y')"
+        ).lastrowid
+        self.con.execute(
+            "INSERT INTO props(game_id,player_id,market,line,side,source,captured_at)"
+            " VALUES(?,?,'significant_strikes',40.5,'over','underdog','now')",
+            (game_id, alpha))
+        self.con.execute(
+            "INSERT INTO prop_game_source_ids(source,league,source_game_key,game_id,"
+            "first_seen,last_seen) VALUES('underdog','ufc','g-1',?,'now','now')",
+            (game_id,))
+        self.con.commit()
+
+    def test_the_run_completes_and_writes_the_other_games(self):
+        self._conflicting_mapping()
+        good = board(player_a="Charlie Fighter", player_b="Delta Fighter",
+                     key_a="u-c", key_b="u-d")
+        for prop in good:
+            prop["source_game_key"] = "g-2"
+        self.player("Charlie Fighter")
+        self.player("Delta Fighter")
+        summary = underdog.direct_ingest(board() + good)
+        self.assertEqual(summary["conflicted_games"], 1, summary)
+        self.assertGreater(summary["written_props"], 0,
+                           "a conflict on one game must not block the others")
+
+    def test_the_conflict_is_named_not_swallowed(self):
+        self._conflicting_mapping()
+        summary = underdog.direct_ingest(board())
+        self.assertEqual(summary["conflicted_games"], 1)
+        self.assertTrue(summary.get("conflicts"), "the skipped game must be named")
+        self.assertIn("g-1", summary["conflicts"][0])
+
+    def test_a_conflict_writes_nothing_for_that_game(self):
+        """Skipping must not weaken the guard: the conflicted game still gets no
+        props, because its identity is still unconfirmed."""
+        self._conflicting_mapping()
+        before = self.scalar("SELECT COUNT(*) FROM props")
+        underdog.direct_ingest(board())
+        self.assertEqual(self.scalar("SELECT COUNT(*) FROM props"), before)

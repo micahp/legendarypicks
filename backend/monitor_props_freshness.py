@@ -3,70 +3,116 @@
 monitor_props_freshness.py — guard against props data silently dropping off.
 
 Prod once went 8 days stale because nothing was feeding it AND nothing noticed. This checks each
-environment's most-recent prop capture; if it's older than the threshold it (1) logs a loud ALERT,
-(2) SELF-HEALS by re-triggering that env's ingest service, and (3) exits non-zero so the systemd
-timer records a failure. Run every 30 min by legendarypicks-props-freshness.timer.
+provider's most-recent prop capture in each environment; if it is older than four times that
+provider's cadence it logs a loud ALERT and exits non-zero so the systemd timer records a failure.
+It deliberately reports only and never starts an ingest service.
 
 Add an env to ENVS the moment it is supposed to be fed (prod → enable at deploy, once prod has its
 own ingest service).
 """
-import sys, json, subprocess, urllib.request, datetime as dt
+import datetime as dt
+import os
+import sqlite3
+import sys
 
-STALE_HOURS = 3.0  # ingest runs every 30 min; >3h without a fresh capture = something is wrong
+from run_props_ingest import PROVIDERS
 
-# env -> (backend base url, systemd ingest service to re-trigger on staleness)
+# env -> backend base url. Keep these stable because they are the existing environment identities.
 ENVS = {
-    "dev": ("http://127.0.0.1:8096", "legendarypicks-props.service"),
-    "prod": ("http://127.0.0.1:8100", "legendarypicks-props-prod.service"),  # enabled at v0.5.5 prod deploy 2026-07-19
+    "dev": "http://127.0.0.1:8096",
+    "prod": "http://127.0.0.1:8100",
+}
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+DB_BY_BASE = {
+    ENVS["dev"]: os.path.join(HERE, "data", "picks.dev.db"),
+    ENVS["prod"]: os.path.join(HERE, "data", "picks.db"),
+}
+SOURCE_TO_PROVIDER = {
+    "bovada": "bovada",
+    "underdog": "underdog",
+    "rotowire:prizepicks": "rotowire",
+    "rotowire:underdog": "rotowire",
+    "rotowire:sleeper": "rotowire",
+}
+# Historical Kambi rows remain useful for settled-prop analysis, but Kambi is no longer a
+# configured publisher. Naming it here distinguishes an intentionally retired source from a
+# new, unmapped label without pretending it is fresh or expecting it to run.
+RETIRED_SOURCES = {"kambi"}
+PROVIDER_STALE_HOURS = {
+    provider["id"]: 4 * provider["cadence_min"] / 60.0 for provider in PROVIDERS
 }
 
 
 def latest_capture(base):
-    """Most-recent prop capture_at (UTC datetime) for an env, or None if unreachable/empty."""
-    req = urllib.request.Request(base + "/api/props?limit=1")
-    with urllib.request.urlopen(req, timeout=20) as r:
-        rows = json.load(r)
-    if not rows:
+    """Newest capture timestamp for every source in one environment's local DB."""
+    db_path = DB_BY_BASE[base]
+    with sqlite3.connect(db_path, timeout=20) as con:
+        rows = con.execute(
+            "SELECT source, max(captured_at) FROM props GROUP BY source"
+        ).fetchall()
+    return {source: _parse_timestamp(captured_at) for source, captured_at in rows}
+
+
+def _parse_timestamp(value):
+    if not value:
         return None
-    ts = rows[0].get("captured_at")
-    return dt.datetime.fromisoformat(ts) if ts else None
+    parsed = dt.datetime.fromisoformat(value.replace("Z", "+00:00"))
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=dt.timezone.utc)
+    return parsed.astimezone(dt.timezone.utc)
 
 
 def main():
     now = dt.datetime.now(dt.timezone.utc)
     stale = []
-    for env, (base, service) in ENVS.items():
+    for env, base in ENVS.items():
         try:
-            latest = latest_capture(base)
+            by_source = latest_capture(base)
         except Exception as e:
             print(f"ALERT [{env}] props freshness check FAILED: {e} ({base})", flush=True)
             stale.append(env)
             continue
-        if latest is None:
+        if not by_source:
             print(f"ALERT [{env}] no props in DB at all ({base})", flush=True)
             stale.append(env)
-            _self_heal(env, service)
             continue
-        age_h = (now - latest).total_seconds() / 3600
-        if age_h > STALE_HOURS:
-            print(f"ALERT [{env}] props STALE: last capture {latest.isoformat()} "
-                  f"({age_h:.1f}h ago, threshold {STALE_HOURS}h) — self-healing via {service}", flush=True)
-            stale.append(env)
-            _self_heal(env, service)
-        else:
-            print(f"OK [{env}] fresh: last capture {age_h:.1f}h ago", flush=True)
+
+        provider_captures = {provider["id"]: [] for provider in PROVIDERS}
+        for source, captured_at in by_source.items():
+            if source in RETIRED_SOURCES:
+                print(f"INFO [{env}] RETIRED SOURCE {source}: excluded from freshness", flush=True)
+                continue
+            provider_id = SOURCE_TO_PROVIDER.get(source)
+            if provider_id is None:
+                print(f"ALERT [{env}] UNKNOWN SOURCE {source}", flush=True)
+                stale.append(f"{env}:{source}")
+                continue
+            if captured_at is not None:
+                provider_captures[provider_id].append(captured_at)
+
+        for provider in PROVIDERS:
+            provider_id = provider["id"]
+            captures = provider_captures[provider_id]
+            threshold_h = PROVIDER_STALE_HOURS[provider_id]
+            if not captures:
+                print(f"ALERT [{env}] {provider_id} has no props in DB", flush=True)
+                stale.append(f"{env}:{provider_id}")
+                continue
+            latest = max(captures)
+            age_h = (now - latest).total_seconds() / 3600
+            if age_h > threshold_h:
+                print(
+                    f"ALERT [{env}] {provider_id} STALE: last capture {latest.isoformat()} "
+                    f"({age_h:.1f}h ago, threshold {threshold_h:g}h)",
+                    flush=True,
+                )
+                stale.append(f"{env}:{provider_id}")
+            else:
+                print(f"OK [{env}] {provider_id} fresh: last capture {age_h:.1f}h ago", flush=True)
 
     if stale:
-        sys.exit(1)  # non-zero → the timer logs a failure; hook OnFailure for a push alert later
-
-
-def _self_heal(env, service):
-    """Re-trigger the env's ingest so a stopped/failed run recovers on its own."""
-    try:
-        subprocess.run(["systemctl", "start", service], timeout=15, check=False)
-        print(f"  [{env}] triggered {service}", flush=True)
-    except Exception as e:
-        print(f"  [{env}] self-heal failed: {e}", flush=True)
+        sys.exit(1)  # non-zero makes the existing monitor timer record the failure
 
 
 if __name__ == "__main__":

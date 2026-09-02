@@ -5,6 +5,8 @@ import type { LivePeriod } from '../../lib/liveGameStatus'
 interface TeamInfo {
   teamId: string
   name: string
+  athleteId?: string
+  seed?: number
   nickname?: string
   score?: number
   winner?: boolean
@@ -34,6 +36,11 @@ interface GameProps {
   sets?: TennisSet[]
   // Live game period details (only present when LIVE)
   livePeriod?: LivePeriod
+  // UFC finish (a final with no score shows the method): "Submission" /
+  // "KO/TKO" / "Decision", the round it ended in, and the clock in that round.
+  outcomeMethod?: string
+  outcomeRound?: number
+  outcomeClock?: string
 }
 
 function getStatusBadge(status: GameProps['status']) {
@@ -48,6 +55,15 @@ function getStatusLabel(status: GameProps['status'], statusDetail?: string) {
   if (status === 'LIVE') return 'LIVE'
   // Suspended ≠ final: ESPN closes the event (state=post) but the match isn't over.
   if (status === 'FINAL' && statusDetail && /susp/i.test(statusDetail)) return 'SUSPENDED'
+  // Walkover: the publisher ended the match before it started — not a "Final" with a score.
+  if (status === 'FINAL' && statusDetail && /walkover/i.test(statusDetail)) return 'WALKOVER'
+  // Retirement mid-match: the publisher ends it with no winner on the court. Measured
+  // 2026-08-19: six atp/wta finals carried status_detail='Retired' this week and the
+  // card read plain FINAL, so the reader could not tell the match stopped early.
+  if (status === 'FINAL' && statusDetail && /retired/i.test(statusDetail)) return 'RETIRED'
+  // Shootout / extra time: a soccer final that ended 1-1 on pens is not a draw. The
+  // backend computes "FT (Pens)" / "FT (AET)" (espn_client soccer branch); show it.
+  if (status === 'FINAL' && statusDetail && /pens|aet|shootout/i.test(statusDetail)) return statusDetail
   // Extra innings / OT: ESPN gives "Final/10", "Final/OT" — show it instead of plain FINAL.
   if (status === 'FINAL') return statusDetail && statusDetail.includes('/') ? statusDetail : 'FINAL'
   return 'SCHEDULED'
@@ -70,6 +86,7 @@ export default function GameCard(g: GameProps) {
   const isSoccer = g.league === 'WC' || g.league === 'LCUP' || g.league === 'MLS'
 
   const teamLabel = (t: GameProps['homeTeam']) => {
+    if (isTennis && t.seed) return `(${t.seed}) ${t.name}`
     // An unresolved EWC participant renders its dependency label, never a bare TBD.
     if (t.label) return t.label
     if (!isTeamSport) return t.name
@@ -93,8 +110,11 @@ export default function GameCard(g: GameProps) {
 
   // Winner/loser dimming — same treatment as ScoreStrip on the detail page
   const isFinal = g.status === 'FINAL'
-  // Team sports: compare scores. UFC: use winner boolean. Soccer: winner flag + draw handling.
-  const isSoccerFinal = isFinal && g.league === 'WC'
+  // Soccer (WC, LCUP, MLS): the winner comes from the publisher's flag, never from the
+  // score — a shootout-decided final is 1-1 with a winner. ESPN publishes the flag on
+  // every finished competitor (measured 2026-08-19: all 11 MLS finals and 6 LCUP
+  // shootout games carried winner true/false). Draws carry no flag on either side.
+  const isSoccerFinal = isFinal && (g.league === 'WC' || g.league === 'LCUP' || g.league === 'MLS')
   const isUFCFinal = isFinal && g.league === 'UFC'
   const homeWon = isFinal
     ? (isSoccerFinal ? !!(g as any).homeTeam?.winner === true
@@ -117,6 +137,20 @@ export default function GameCard(g: GameProps) {
       router.push(href)
     }
   }
+
+  // UFC has no score; a final shows the finish instead, same slot as a score:
+  // "SUB · R3 1:24" on the winner's line. The label is compact the way a box
+  // score is; the full method is already on the detail page.
+  const UFC_METHOD_SHORT: Record<string, string> = {
+    'Submission': 'SUB', 'KO/TKO': 'KO/TKO', 'Decision': 'DEC',
+    'Draw': 'DRAW', 'No Contest': 'NC', 'DQ': 'DQ',
+  }
+  const outcomeLabel = isUFCFinal && g.outcomeMethod
+    ? [UFC_METHOD_SHORT[g.outcomeMethod] || g.outcomeMethod,
+       g.outcomeRound || g.outcomeClock
+         ? `R${g.outcomeRound ?? '?'}${g.outcomeClock ? ` ${g.outcomeClock}` : ''}`
+         : ''].filter(Boolean).join(' · ')
+    : null
 
   return (
     <div
@@ -147,7 +181,7 @@ export default function GameCard(g: GameProps) {
             const won = isFinal && (side === 'home' ? homeSets > awaySets : awaySets > homeSets)
             return (
             <div key={side} className="flex items-center justify-between gap-3">
-              <span className={`font-semibold truncate ${isFinal ? (won ? 'text-white' : 'text-zinc-500') : 'text-zinc-200'}`}>{team.name}</span>
+              <span className={`font-semibold truncate ${isFinal ? (won ? 'text-white' : 'text-zinc-500') : 'text-zinc-200'}`}>{teamLabel(team)}</span>
               <div className="flex gap-1 shrink-0 tabular-nums">
                 {g.sets!.map((set, i) => {
                   const mine = side === 'home' ? set.homeScore : set.awayScore
@@ -166,17 +200,17 @@ export default function GameCard(g: GameProps) {
         <div className="space-y-3">
           <div className="flex justify-between items-center">
             <span className={`font-semibold ${sideClass(g.homeTeam) ?? (isFinal ? (isDraw ? 'text-zinc-200' : homeWon ? 'text-zinc-200' : 'text-zinc-500') : 'text-zinc-200')}`}>{teamLabel(g.homeTeam)}</span>
-            {showScore && g.homeTeam.score !== undefined && (
+            {showScore && (g.homeTeam.score !== undefined || (outcomeLabel && homeWon)) && (
               <span className="flex items-center gap-1.5">
-                <span className={`text-xl font-black ${isFinal ? (isDraw ? 'text-white' : homeWon ? 'text-white' : 'text-zinc-500') : 'text-white'}`}>{g.homeTeam.score}</span>
+                <span className={`text-xl font-black ${isFinal ? (isDraw ? 'text-white' : homeWon ? 'text-white' : 'text-zinc-500') : 'text-white'}`}>{g.homeTeam.score !== undefined ? g.homeTeam.score : outcomeLabel}</span>
               </span>
             )}
           </div>
           <div className="flex justify-between items-center">
             <span className={`font-semibold ${sideClass(g.awayTeam) ?? (isFinal ? (isDraw ? 'text-zinc-200' : awayWon ? 'text-zinc-200' : 'text-zinc-500') : 'text-zinc-200')}`}>{teamLabel(g.awayTeam)}</span>
-            {showScore && g.awayTeam.score !== undefined && (
+            {showScore && (g.awayTeam.score !== undefined || (outcomeLabel && awayWon)) && (
               <span className="flex items-center gap-1.5">
-                <span className={`text-xl font-black ${isFinal ? (isDraw ? 'text-white' : awayWon ? 'text-white' : 'text-zinc-500') : 'text-white'}`}>{g.awayTeam.score}</span>
+                <span className={`text-xl font-black ${isFinal ? (isDraw ? 'text-white' : awayWon ? 'text-white' : 'text-zinc-500') : 'text-white'}`}>{g.awayTeam.score !== undefined ? g.awayTeam.score : outcomeLabel}</span>
               </span>
             )}
           </div>

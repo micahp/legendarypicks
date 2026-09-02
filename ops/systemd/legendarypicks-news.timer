@@ -1,0 +1,11 @@
+[Unit]
+Description=League news: collect + narratives + topics, DEV then PROD
+
+[Timer]
+# ABSOLUTE, never monotonic. 03:35 is where the DEV half already fired; PROD now
+# follows it in the same job instead of waiting until 04:20.
+OnCalendar=*-*-* 03:35:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target

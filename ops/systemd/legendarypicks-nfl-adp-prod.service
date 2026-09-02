@@ -1,0 +1,12 @@
+[Unit]
+Description=Refresh NFL fantasy ADP (ESPN) — PROD
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/root/legendarypicks/backend
+Environment=LP_DB_PATH=/root/legendarypicks/backend/data/picks.db
+ExecStart=/root/legendarypicks/backend/venv/bin/python /root/legendarypicks/backend/ingest_nfl_adp.py
+TimeoutStartSec=300
+Nice=10

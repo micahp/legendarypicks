@@ -1,0 +1,149 @@
+{
+  "date": "2026-08-18",
+  "window": "7d",
+  "ref_analyzed": "origin/dev",
+  "metrics": {
+    "commits": 248,
+    "contributors": 1,
+    "prs_merged": 1,
+    "pr_refs": 1,
+    "insertions": 49021,
+    "deletions": 4515,
+    "net_loc": 44506,
+    "test_loc": 9446,
+    "test_ratio": 0.193,
+    "logical_sloc_added": 49021,
+    "active_days": 8,
+    "sessions": 30,
+    "deep_sessions": 13,
+    "medium_sessions": 3,
+    "micro_sessions": 14,
+    "avg_session_minutes": 59,
+    "loc_per_session_hour": 1652,
+    "weighted_commits": 248,
+    "peak_hour": 11,
+    "focus_score": 0.863,
+    "focus_dir": "backend",
+    "fix_pct": 0.315,
+    "feat_pct": 0.19,
+    "docs_pct": 0.129,
+    "type_counts": {
+      "fix": 78,
+      "feat": 47,
+      "test": 3,
+      "revert": 3,
+      "chore": 15,
+      "docs": 32,
+      "release": 1,
+      "gate": 3,
+      "refactor": 2,
+      "merge": 13,
+      "ops": 1,
+      "navigate": 1,
+      "make": 1,
+      "props": 7,
+      "game": 2,
+      "stories": 6,
+      "settlement": 6,
+      "matrix": 2,
+      "news": 18,
+      "tests": 2,
+      "skills": 1,
+      "search": 1,
+      "booth": 1,
+      "team": 1,
+      "gates": 1
+    },
+    "ai_assisted_commits": 0,
+    "test_files_changed": 75,
+    "test_files_total_on_branch": 1919
+  },
+  "authors": {
+    "micahp": 248
+  },
+  "version_range": [
+    "0.7.10",
+    "0.8.1"
+  ],
+  "streak_days": 57,
+  "personal_streak_days": 57,
+  "commit_hours": [
+    17,
+    16,
+    1,
+    0,
+    0,
+    0,
+    0,
+    1,
+    0,
+    8,
+    12,
+    38,
+    14,
+    3,
+    11,
+    15,
+    19,
+    11,
+    22,
+    18,
+    18,
+    7,
+    3,
+    14
+  ],
+  "top_hotspots": [
+    [
+      "backend/routers/games.py",
+      19
+    ],
+    [
+      "backend/ingest_league_narratives.py",
+      16
+    ],
+    [
+      "backend/settlement.py",
+      15
+    ],
+    [
+      "backend/espn_client.py",
+      13
+    ],
+    [
+      "docs/ROADMAP.md",
+      13
+    ],
+    [
+      "backend/_core.py",
+      11
+    ],
+    [
+      "backend/link_prop_games.py",
+      10
+    ],
+    [
+      "CHANGELOG.md",
+      9
+    ],
+    [
+      "package.json",
+      7
+    ],
+    [
+      "components/Leagues/StandingsTab.tsx",
+      7
+    ]
+  ],
+  "ship_of_week": "feat(scores): the board serves our stored slate, not a live publisher call",
+  "ship_loc": 84,
+  "rel_in_window": [
+    "release: v0.8.0 \u2014 tennis spine, UFC settlement, NCAAF/MLS coverage",
+    "release: v0.8.1 \u2014 scores DB-primary, ESPN cache isolation, News tab"
+  ],
+  "prior_ref": "origin/dev",
+  "prior_version_range": [
+    "0.4.0",
+    "0.4.4"
+  ]
+}

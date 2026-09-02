@@ -25,7 +25,12 @@ class HostTest(unittest.TestCase):
 
 class DegradationTest(unittest.TestCase):
     def setUp(self):
-        self.url = "https://site.web.api.espn.com/apis/v2/sports/test/standings"
+        # NOT an espn.com host. urlopen is mocked below, so no request is made,
+        # but espn_client still records the attempt to the spend log. Pointed at a
+        # real ESPN host this wrote 102 synthetic 403s a day into the file we use to
+        # measure the request budget (docs/DESIGN-request-budget.md §1b). An
+        # instrument must not record simulated events beside real ones.
+        self.url = "https://espn.invalid/apis/v2/sports/test/standings"
         espn_client._CACHE.pop(self.url, None)
         self.addCleanup(espn_client._CACHE.pop, self.url, None)
 

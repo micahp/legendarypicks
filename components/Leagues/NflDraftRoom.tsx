@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import Link from 'next/link'
 import type { NflDraftBoard, NflDraftNotes, NflDraftPlayer, NflDraftSort } from './types'
 import { POSITIONS, SORT_LABELS } from './hooks/useNflDraftBoard'
 import type { DraftPosition } from './hooks/useNflDraftBoard'
@@ -195,6 +196,7 @@ interface Props {
   onSetRank: (playerId: number, rank: number | null) => void
   onToggleWatch: (playerId: number) => void
   onToggleFade: (playerId: number) => void
+  standalone?: boolean
 }
 
 export default function NflDraftRoom({
@@ -215,15 +217,21 @@ export default function NflDraftRoom({
   onSetRank,
   onToggleWatch,
   onToggleFade,
+  standalone = false,
 }: Props) {
   const [selectedPlayerId, setSelectedPlayerId] = useState<number | null>(null)
   return (
     <>
     <section className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3 pb-2">
-        <h3 className="text-xl font-bold text-zinc-100">
-          Player Rankings
-        </h3>
+        <div className="flex items-center gap-3">
+          <h3 className="text-xl font-bold text-zinc-100">Player Rankings</h3>
+          {!standalone && (
+            <Link href="/draft-board" className="text-xs font-semibold text-emerald-400 hover:text-emerald-300">
+              Open full board →
+            </Link>
+          )}
+        </div>
 
         {/* Search. Research is name-driven — you arrive wanting one player. */}
         <div className="relative w-full sm:w-64">

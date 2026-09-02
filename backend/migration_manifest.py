@@ -136,6 +136,14 @@ def _probe_league_position_groups(con: sqlite3.Connection) -> str:
     )
 
 def _probe_player_entity_type(con: sqlite3.Connection) -> str:
+    """Applied means the constructs are CLASSIFIED, not merely non-null.
+
+    This probe used to count `entity_type IS NULL` only. On 2026-08-17 all 96
+    NFL constructs sat at 'unknown' -- populated, so the probe read "applied"
+    for the whole outage while `ingest_nfl_adp.py` aborted every run on
+    `def_to_pid has 0 entries`. A column being filled in is a claim about the
+    column; ask the question the readers actually ask.
+    """
     applied = _has_columns(con, "players", ("entity_type",))
     if applied != "applied":
         return applied
@@ -143,7 +151,30 @@ def _probe_player_entity_type(con: sqlite3.Connection) -> str:
         con,
         "SELECT COUNT(*) FROM players WHERE league='nfl' AND entity_type IS NULL",
     )
-    return "applied" if n < 100 else f"unknown: {n} NFL rows have no entity_type"
+    if n >= 100:
+        return f"unknown: {n} NFL rows have no entity_type"
+    # Only ask about D/ST on a database that actually holds the constructs. A
+    # fixture with no NFL spine has nothing to classify; the broken state this
+    # guards against is the opposite -- the rows PRESENT and sitting at
+    # 'unknown' -- so this cannot hide it.
+    constructs = _count(
+        con,
+        "SELECT COUNT(*) FROM players WHERE league='nfl' "
+        "AND CAST(espn_id AS INTEGER) < 0",
+    )
+    if constructs == 0:
+        return "applied"
+    # The 32 team defences are the ones `ingest_nfl_adp.py` builds its map from.
+    defences = _count(
+        con,
+        "SELECT COUNT(*) FROM players WHERE league='nfl' "
+        "AND entity_type='team_defense'",
+    )
+    if defences != 32:
+        return (f"unknown: {defences} of {constructs} negative-id NFL rows "
+                f"classified team_defense, expected 32 "
+                f"-- ingest_nfl_adp.py's D/ST preflight will abort")
+    return "applied"
 
 
 def _probe_player_fantasy_positions(con: sqlite3.Connection) -> str:
@@ -219,6 +250,46 @@ def _probe_registered(con: sqlite3.Connection, migration_id: str) -> str:
 
 def _make_registered(migration_id: str) -> Callable[[sqlite3.Connection], str]:
     return lambda con: _probe_registered(con, migration_id)
+
+
+def _probe_merge_nba_identities(con: sqlite3.Connection) -> str:
+    """Whether the NBA identity merge's durable postcondition holds.
+
+    DEV was already clean when production needed the repair, so requiring the
+    repair script's numbered registry row made a clean DEV database permanently
+    report ``unknown``. Legacy adoption probes state, not execution history:
+    no ESPN/legacy bridge split and no duplicate ESPN owner is the state this
+    migration exists to establish.
+    """
+    required = {"id", "league", "espn_id", "nba_id"}
+    columns = _columns(con, "players")
+    if not required <= columns:
+        missing = sorted(required - columns)
+        return "unknown: players lacks columns " + ", ".join(missing)
+    split = _count(
+        con,
+        """SELECT COUNT(*) FROM players e JOIN players h
+              ON h.league='nba' AND e.league='nba' AND e.id<>h.id
+             AND CAST(e.espn_id AS TEXT)=CAST(h.nba_id AS TEXT)
+            WHERE e.espn_id IS NOT NULL
+              AND TRIM(CAST(e.espn_id AS TEXT))!=''
+              AND h.nba_id IS NOT NULL
+              AND TRIM(CAST(h.nba_id AS TEXT))!=''""",
+    )
+    if split:
+        return f"unknown: {split} NBA identities remain split across rows"
+    duplicate_espn = _count(
+        con,
+        """SELECT COUNT(*) FROM (
+               SELECT CAST(espn_id AS TEXT)
+                 FROM players
+                WHERE league='nba' AND espn_id IS NOT NULL
+                  AND TRIM(CAST(espn_id AS TEXT))!=''
+                GROUP BY CAST(espn_id AS TEXT) HAVING COUNT(*)>1)""",
+    )
+    if duplicate_espn:
+        return f"unknown: {duplicate_espn} duplicate NBA ESPN ids remain"
+    return "applied"
 
 
 LEGACY_MIGRATIONS: tuple[LegacyMigration, ...] = (
@@ -370,7 +441,7 @@ LEGACY_MIGRATIONS: tuple[LegacyMigration, ...] = (
         migration_id="legacy_merge_nba_identities",
         script="backend/scripts/merge_nba_identities.py",
         description="merge split NBA espn_id/nba_id rows",
-        probe=_make_registered("20260805_001_merge_nba_identities"),
+        probe=_probe_merge_nba_identities,
         note="269 split athletes fixed on prod 2026-08-05; dev was already clean",
     ),
 )

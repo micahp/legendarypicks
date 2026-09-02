@@ -15,6 +15,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 
 import ingest_ufc_fight_stats as ingest
+from ingest_ufc_fight_stats import roster
 
 
 def _create_fixture(path):
@@ -81,6 +82,96 @@ class UfcIngestTests(unittest.TestCase):
         self.assertEqual("4895691", identity.athlete_id)
         self.assertEqual("opponent_pair", identity.method)
         self.assertEqual("401874315", identity.fight_id)
+
+    def test_a_first_name_divergence_resolves_on_the_opponents_espn_id(self):
+        """The real 2026-08-24 pair, both standing SKIPs on the prod card.
+
+        We hold "Sergey Spivak"; ESPN publishes "Serghei Spivac". Two publishers' spellings
+        of one person, not a typo, so every name ladder refuses and should keep refusing.
+        His opponent Vitor Petrino was already resolved on our side as 5060483, and ESPN's
+        card pairs 4421246 with 5060483. That identifies him without reading his name.
+        """
+        games = [
+            {
+                "game_id": "401887540",
+                "home": {"id": "4421246", "name": "Serghei Spivac"},
+                "away": {"id": "5060483", "name": "Vitor Petrino"},
+            }
+        ]
+
+        self.assertIsNone(
+            ingest.resolve_from_card("Sergey Spivak", "Vitor Petrino", games),
+            "the name ladders must still refuse a first-name divergence",
+        )
+
+        identity = ingest.resolve_from_card(
+            "Sergey Spivak", "Vitor Petrino", games, opponent_espn_id="5060483"
+        )
+
+        self.assertIsNotNone(identity)
+        self.assertEqual("4421246", identity.athlete_id)
+        self.assertEqual("opponent_id", identity.method)
+        self.assertEqual("401887540", identity.fight_id)
+
+    def test_a_shortened_first_name_resolves_on_the_opponents_espn_id(self):
+        """The other one: "Stanley Dorsainvil" against ESPN's "Stan Dorsainvil"."""
+        games = [
+            {
+                "game_id": "401911626",
+                "home": {"id": "5085318", "name": "Gauge Young"},
+                "away": {"id": "5397038", "name": "Stan Dorsainvil"},
+            }
+        ]
+
+        identity = ingest.resolve_from_card(
+            "Stanley Dorsainvil", "Gauge Young", games, opponent_espn_id="5085318"
+        )
+
+        self.assertIsNotNone(identity)
+        self.assertEqual("5397038", identity.athlete_id)
+        self.assertEqual("opponent_id", identity.method)
+
+    def test_an_opponent_id_absent_from_the_card_resolves_nothing(self):
+        """The counter-case. An id we hold that is not on this card must not fall through
+        to a name ladder and match something else."""
+        games = [
+            {
+                "game_id": "irrelevant",
+                "home": {"id": "1", "name": "Some Fighter"},
+                "away": {"id": "2", "name": "Another Fighter"},
+            }
+        ]
+
+        self.assertIsNone(
+            ingest.resolve_from_card(
+                "Sergey Spivak", "Vitor Petrino", games, opponent_espn_id="5060483"
+            )
+        )
+
+    def test_an_opponent_id_on_two_fights_of_one_card_refuses(self):
+        """A duplicated fixture must not make the match ambiguous and still pick one.
+
+        `dedupe_prop_games.py` exists because duplicate fixtures are a real state in this
+        data, so the ladder has to survive seeing the same opponent id twice.
+        """
+        games = [
+            {
+                "game_id": "a",
+                "home": {"id": "4421246", "name": "Serghei Spivac"},
+                "away": {"id": "5060483", "name": "Vitor Petrino"},
+            },
+            {
+                "game_id": "b",
+                "home": {"id": "9999999", "name": "Someone Else"},
+                "away": {"id": "5060483", "name": "Vitor Petrino"},
+            },
+        ]
+
+        self.assertIsNone(
+            ingest.resolve_from_card(
+                "Sergey Spivak", "Vitor Petrino", games, opponent_espn_id="5060483"
+            )
+        )
 
     def test_opponent_pair_does_not_guess_when_both_fighters_are_absent(self):
         games = [
@@ -395,5 +486,461 @@ class UfcIngestTests(unittest.TestCase):
             ingest.apply_plan(self.path, plan)
 
 
+class OffCardResolveTest(unittest.TestCase):
+    """A fighter on no card is still resolvable, because ESPN holds an athlete record
+    independently of any fight. Wellington Turman sat unresolved on prod through a 90-day
+    card sweep and I called him unreachable; he is athlete 4426282 and always was."""
+
+    def _con(self):
+        con = sqlite3.connect(":memory:")
+        con.execute(
+            "CREATE TABLE players(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL,"
+            " team TEXT, league TEXT NOT NULL, espn_id TEXT, active INTEGER DEFAULT 1,"
+            " updated_at TEXT, UNIQUE(espn_id, league))")
+        con.execute(
+            "CREATE TABLE name_alias(id INTEGER PRIMARY KEY AUTOINCREMENT,"
+            " player_id INTEGER NOT NULL REFERENCES players(id), alias_norm TEXT NOT NULL,"
+            " UNIQUE(player_id, alias_norm))")
+        return con
+
+    def _fetch(self, roster_ids, hits):
+        """Stand in for the two endpoints: the league roster and the search."""
+        def fetch(url):
+            if "leagues/ufc/athletes" in url:
+                return {"pageCount": 1, "items": [
+                    {"$ref": "http://x/v2/sports/mma/athletes/{}?lang=en".format(i)}
+                    for i in roster_ids]}
+            return {"results": [{"type": "player", "contents": [
+                {"uid": "s:3301~a:{}".format(aid), "displayName": name}
+                for aid, name in hits]}]}
+        return fetch
+
+    def test_a_fighter_on_no_card_resolves_from_the_league_roster(self):
+        con = self._con()
+        con.execute("INSERT INTO players(name, league, espn_id) VALUES('Wellington Turman','ufc',NULL)")
+        plan = roster.build_offcard_plan(
+            con, emit=lambda _m: None,
+            fetch=self._fetch(["4426282"], [("4426282", "Wellington Turman")]))
+        self.assertEqual([(b[2], b[3]) for b in plan.bind], [("4426282", "Wellington Turman")])
+        self.assertEqual(roster.apply_offcard(con, plan), 1)
+        self.assertEqual(
+            con.execute("SELECT espn_id FROM players").fetchone()[0], "4426282")
+
+    def test_a_namesake_outside_the_league_is_refused(self):
+        """search/v2 spans every sport ESPN covers. A hit proves someone has that name,
+        not that they fight in the UFC. The league roster is what tells them apart."""
+        con = self._con()
+        con.execute("INSERT INTO players(name, league, espn_id) VALUES('Wellington Turman','ufc',NULL)")
+        plan = roster.build_offcard_plan(
+            con, emit=lambda _m: None,
+            fetch=self._fetch(["9999999"], [("4426282", "Wellington Turman")]))
+        self.assertEqual(plan.bind, [])
+        self.assertEqual(plan.not_in_league, [("Wellington Turman", "4426282")])
+        self.assertEqual(roster.apply_offcard(con, plan), 0)
+
+    def test_the_top_ranked_hit_is_never_taken_on_relevance(self):
+        """A search ranks by relevance. Taking rank 1 is how a namesake becomes an
+        identity, so only an exact FOLDED name match counts."""
+        con = self._con()
+        con.execute("INSERT INTO players(name, league, espn_id) VALUES('Aleksandr Rakic','ufc',NULL)")
+        plan = roster.build_offcard_plan(
+            con, emit=lambda _m: None,
+            fetch=self._fetch(["4079314"], [("4079314", "Aleksandar Rakic")]))
+        self.assertEqual(plan.bind, [])
+        self.assertEqual(plan.not_found, ["Aleksandr Rakic"])
+
+    def test_an_accent_or_capital_still_binds(self):
+        con = self._con()
+        con.execute("INSERT INTO players(name, league, espn_id) VALUES('Uros Medic','ufc',NULL)")
+        plan = roster.build_offcard_plan(
+            con, emit=lambda _m: None,
+            fetch=self._fetch(["4685870"], [("4685870", "Uro\u0161 Medi\u0107")]))
+        self.assertEqual([b[2] for b in plan.bind], ["4685870"])
+        roster.apply_offcard(con, plan)
+        # ESPN is canonical, and our spelling survives as an alias.
+        self.assertEqual(con.execute("SELECT name FROM players").fetchone()[0], "Uro\u0161 Medi\u0107")
+        self.assertIn("uros medic", {r[0] for r in con.execute("SELECT alias_norm FROM name_alias")})
+
+    def test_two_league_athletes_with_one_name_refuse_to_bind(self):
+        con = self._con()
+        con.execute("INSERT INTO players(name, league, espn_id) VALUES('Jose Silva','ufc',NULL)")
+        plan = roster.build_offcard_plan(
+            con, emit=lambda _m: None,
+            fetch=self._fetch(["111", "222"], [("111", "Jose Silva"), ("222", "Jose Silva")]))
+        self.assertEqual(plan.bind, [])
+        self.assertEqual(plan.ambiguous, [("Jose Silva", 2)])
+
+    def test_an_id_another_row_already_owns_is_refused(self):
+        """Binding it would put one publisher id on two rows, which is the ownership
+        conflict the fight-stats plan aborts on."""
+        con = self._con()
+        con.execute("INSERT INTO players(name, league, espn_id) VALUES('Real Fighter','ufc','4426282')")
+        con.execute("INSERT INTO players(name, league, espn_id) VALUES('Wellington Turman','ufc',NULL)")
+        plan = roster.build_offcard_plan(
+            con, emit=lambda _m: None,
+            fetch=self._fetch(["4426282"], [("4426282", "Wellington Turman")]))
+        self.assertEqual(plan.bind, [])
+        self.assertEqual(plan.already_owned, [("Wellington Turman", "4426282")])
+
+    def test_the_roster_costs_two_requests_not_one_per_athlete(self):
+        """1854 athletes arrive in bulk. A per-athlete loop would be 1854 requests to one
+        host, which is the shape the budget skill exists to prevent."""
+        calls = []
+
+        def fetch(url):
+            calls.append(url)
+            if "leagues/ufc/athletes" in url:
+                page = 2 if "page=2" in url else 1
+                return {"pageCount": 2, "items": [
+                    {"$ref": "http://x/v2/sports/mma/athletes/{}?lang=en".format(page)}]}
+            return {"results": []}
+
+        ids = roster.ufc_athlete_ids(fetch)
+        self.assertEqual(ids, {"1", "2"})
+        self.assertEqual(len(calls), 2)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
+
+
+def _current_min_interval():
+    """Read the shared client's spacing without a private attribute."""
+    prev = ingest.espn.set_min_interval(0)
+    ingest.espn.set_min_interval(prev)
+    return prev
+
+
+class TestBatchPacing(unittest.TestCase):
+    """A fan-out must not spend the burst budget the request handlers need.
+
+    2026-08-24: this plan inherited espn_client's serving-path default of
+    min_interval=0 and fired 52 requests in one minute, twice. ESPN refused for
+    four minutes and 26 of those refusals landed on uvicorn, the serving path.
+    """
+
+    def _target(self):
+        return ingest.FighterTarget(
+            player_id=1,
+            name="Current Fighter",
+            espn_id=None,
+            card_date="2026-07-25",
+            prop_game_id=10,
+            opponent="Opponent",
+        )
+
+    def test_the_fan_out_is_paced_while_it_fetches(self):
+        seen = []
+
+        def _record(*_args, **_kwargs):
+            seen.append(_current_min_interval())
+            return (None, "scoreboard_unavailable:URLError")
+
+        before = _current_min_interval()
+        with mock.patch.object(ingest, "_card_for_date", side_effect=_record):
+            ingest.build_current_card_plan([self._target()], set(), {}, emit=lambda _: None)
+
+        self.assertEqual(1, len(seen))
+        self.assertGreaterEqual(seen[0], 1.0, "the card fan-out ran unpaced")
+        self.assertEqual(before, _current_min_interval(), "pacing leaked out of the plan")
+
+    def test_pacing_is_restored_when_the_plan_raises(self):
+        before = _current_min_interval()
+        with mock.patch.object(ingest, "_card_for_date", side_effect=RuntimeError("boom")):
+            with self.assertRaises(RuntimeError):
+                ingest.build_current_card_plan([self._target()], set(), {}, emit=lambda _: None)
+        self.assertEqual(
+            before,
+            _current_min_interval(),
+            "a raising plan left the serving path paced",
+        )
+
+    def test_the_history_fan_out_is_paced_too(self):
+        seen = []
+
+        def _record(*_args, **_kwargs):
+            seen.append(_current_min_interval())
+            return (None, "scoreboard_unavailable:URLError")
+
+        with mock.patch.object(ingest, "_card_for_date", side_effect=_record):
+            ingest.build_plan([self._target()], set(), {}, limit=5, emit=lambda _: None)
+
+        self.assertEqual(1, len(seen))
+        self.assertGreaterEqual(seen[0], 1.0, "the history fan-out ran unpaced")
+
+
+class CardHarvestTest(unittest.TestCase):
+    """The spine is harvested from the published card, not from a name.
+
+    Measured 2026-08-24: ESPN's next 21 days of UFC cards named 94 scheduled fighters,
+    every one of them carrying an athlete id, and 93 of the 94 were absent from the prod
+    spine. `load_targets` reads its work set from `players`, so a fighter with no row was
+    invisible to the whole pipeline forever.
+    """
+
+    def _con(self):
+        con = sqlite3.connect(":memory:")
+        con.execute(
+            "CREATE TABLE players(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL,"
+            " team TEXT, league TEXT NOT NULL, espn_id TEXT, active INTEGER DEFAULT 1,"
+            " updated_at TEXT, UNIQUE(espn_id, league))"
+        )
+        # Mirrors prod: the harvest reads reviewed aliases so it cannot insert a third
+        # spelling beside two that are already reconciled. A fixture missing a table the
+        # code reads is a fixture asserting the code never reads it.
+        con.execute(
+            "CREATE TABLE name_alias(id INTEGER PRIMARY KEY AUTOINCREMENT,"
+            " player_id INTEGER NOT NULL REFERENCES players(id), alias_norm TEXT NOT NULL,"
+            " UNIQUE(player_id, alias_norm))"
+        )
+        return con
+
+    def _fetch(self, games):
+        return lambda start, end: ({"2026-08-29": games}, 1)
+
+    def _fight(self, home_id, home, away_id, away):
+        return {
+            "home": {"id": home_id, "name": home},
+            "away": {"id": away_id, "name": away},
+            "event_id": "600060620",
+            "game_id": "401887532",
+        }
+
+    def test_a_fighter_we_do_not_hold_is_planned_from_the_card(self):
+        con = self._con()
+        plan = roster.build_harvest_plan(
+            con, today=dt.date(2026, 8, 24), emit=lambda _m: None,
+            fetch=self._fetch([self._fight("4569549", "Umar Nurmagomedov",
+                                           "3151289", "Song Yadong")]),
+        )
+        self.assertEqual({f["espn_id"] for f in plan.new}, {"4569549", "3151289"})
+        self.assertEqual(roster.apply_harvest(con, plan), 2)
+        held = dict(con.execute("SELECT espn_id, name FROM players WHERE league='ufc'"))
+        self.assertEqual(held["4569549"], "Umar Nurmagomedov")
+
+    def test_re_running_the_same_window_inserts_nothing(self):
+        con = self._con()
+        games = [self._fight("4569549", "Umar Nurmagomedov", "3151289", "Song Yadong")]
+        first = roster.build_harvest_plan(
+            con, today=dt.date(2026, 8, 24), emit=lambda _m: None, fetch=self._fetch(games))
+        roster.apply_harvest(con, first)
+        second = roster.build_harvest_plan(
+            con, today=dt.date(2026, 8, 24), emit=lambda _m: None, fetch=self._fetch(games))
+        self.assertEqual(second.new, [])
+        self.assertEqual(second.already_known, 2)
+        self.assertEqual(roster.apply_harvest(con, second), 0)
+
+    def test_a_side_with_no_publisher_id_is_never_created_from_its_name(self):
+        con = self._con()
+        plan = roster.build_harvest_plan(
+            con, today=dt.date(2026, 8, 24), emit=lambda _m: None,
+            fetch=self._fetch([self._fight("", "Nameless Challenger", "3151289", "Song Yadong")]),
+        )
+        self.assertEqual([f["espn_id"] for f in plan.new], ["3151289"])
+
+    def test_the_placeholder_opponent_is_skipped(self):
+        """ESPN files an unannounced opponent as a real athlete with a recurring id."""
+        con = self._con()
+        plan = roster.build_harvest_plan(
+            con, today=dt.date(2026, 8, 24), emit=lambda _m: None,
+            fetch=self._fetch([self._fight("4402367", "Opponent TBA", "3151289", "Song Yadong")]),
+        )
+        self.assertEqual([f["espn_id"] for f in plan.new], ["3151289"])
+        self.assertEqual(plan.placeholders, [("4402367", "Opponent TBA")])
+
+    def test_a_real_fighter_on_a_placeholder_id_is_not_dropped(self):
+        """Both conditions must hold. If ESPN ever reuses that id for a named fighter,
+        skipping on the id alone would silently drop a real person."""
+        con = self._con()
+        plan = roster.build_harvest_plan(
+            con, today=dt.date(2026, 8, 24), emit=lambda _m: None,
+            fetch=self._fetch([self._fight("4402367", "Real Person", "3151289", "Song Yadong")]),
+        )
+        self.assertIn("4402367", {f["espn_id"] for f in plan.new})
+        self.assertEqual(plan.placeholders, [])
+
+    def test_a_fighter_named_tba_without_the_placeholder_id_is_kept(self):
+        con = self._con()
+        plan = roster.build_harvest_plan(
+            con, today=dt.date(2026, 8, 24), emit=lambda _m: None,
+            fetch=self._fetch([self._fight("5999999", "TBA", "3151289", "Song Yadong")]),
+        )
+        self.assertIn("5999999", {f["espn_id"] for f in plan.new})
+
+    def test_espn_is_canonical_so_we_rename_and_keep_our_spelling_as_an_alias(self):
+        """ESPN's spelling wins and ours survives as an alias.
+
+        Renaming alone would silently break every Bovada board that spells the fighter the
+        old way, because `_resolve_player_for_ingest` reaches the alias table at step 3.
+        Both spellings are written, so either publisher's vocabulary resolves."""
+        con = self._con()
+        con.execute(
+            "INSERT INTO players(name, league, espn_id) VALUES('Sergey Spivak','ufc','4421246')")
+        plan = roster.build_harvest_plan(
+            con, today=dt.date(2026, 8, 24), emit=lambda _m: None,
+            fetch=self._fetch([self._fight("4421246", "Serghei Spivac", "5060483", "Vitor Petrino")]),
+        )
+        self.assertEqual([(d[1], d[2]) for d in plan.name_drift],
+                         [("Sergey Spivak", "Serghei Spivac")])
+        roster.apply_harvest(con, plan)
+        self.assertEqual(
+            con.execute("SELECT name FROM players WHERE espn_id='4421246'").fetchone()[0],
+            "Serghei Spivac")
+        aliases = {r[0] for r in con.execute(
+            "SELECT alias_norm FROM name_alias WHERE player_id="
+            "(SELECT id FROM players WHERE espn_id='4421246')")}
+        self.assertEqual(aliases, {"sergey spivak", "serghei spivac"})
+
+    def test_a_reviewed_alias_binds_instead_of_minting_a_third_spelling(self):
+        """name_alias already reconciles Spivak/Spivac on prod. A harvest that ignored it
+        would insert ESPN's spelling as a third row for one man."""
+        con = self._con()
+        con.execute("INSERT INTO players(name, league, espn_id) VALUES('Sergey Spivak','ufc',NULL)")
+        pid = con.execute("SELECT id FROM players").fetchone()[0]
+        for alias in ("sergey spivak", "serghei spivac"):
+            con.execute("INSERT INTO name_alias(player_id, alias_norm) VALUES(?,?)", (pid, alias))
+        plan = roster.build_harvest_plan(
+            con, today=dt.date(2026, 8, 24), emit=lambda _m: None,
+            fetch=self._fetch([self._fight("4421246", "Serghei Spivac", "5060483", "Vitor Petrino")]),
+        )
+        self.assertEqual([a[0] for a in plan.adopt], [pid])
+        self.assertNotIn("4421246", {f["espn_id"] for f in plan.new})
+        roster.apply_harvest(con, plan)
+        self.assertEqual(
+            con.execute("SELECT COUNT(*) FROM players WHERE espn_id='4421246'").fetchone()[0], 1)
+        self.assertEqual(
+            con.execute("SELECT name FROM players WHERE id=?", (pid,)).fetchone()[0],
+            "Sergey Spivak", "adopting binds the id, it does not rename")
+
+    def test_a_fold_difference_adopts_rather_than_duplicating(self):
+        """`MarQuel/Marquel`, an accent, or `De/de Ridder` is one fighter under one
+        vocabulary's punctuation. Same fold the props resolver already trusts at step 2b."""
+        for held, published in (("Marquel Mederos", "MarQuel Mederos"),
+                                ("Joel Alvarez", "Joel \u00c1lvarez"),
+                                ("Reinier De Ridder", "Reinier de Ridder")):
+            con = self._con()
+            con.execute("INSERT INTO players(name, league, espn_id) VALUES(?,'ufc',NULL)", (held,))
+            plan = roster.build_harvest_plan(
+                con, today=dt.date(2026, 8, 24), emit=lambda _m: None,
+                fetch=self._fetch([self._fight("9000001", published, "3151289", "Song Yadong")]),
+            )
+            self.assertEqual(len(plan.adopt), 1, "{} should adopt onto {}".format(published, held))
+            self.assertNotIn("9000001", {f["espn_id"] for f in plan.new})
+
+    def test_a_near_spelling_neither_binds_nor_inserts(self):
+        """`Aleksandr Rakic` held, ESPN publishes `Aleksandar Rakic`. One letter, one man.
+
+        Inserting mints a second row nothing surfaces; binding on a surname is the guess a
+        two-publisher vocabulary punishes. So it does neither and reports, and name_alias
+        is the table for exactly that reviewed judgment call."""
+        for held, published in (("Aleksandr Rakic", "Aleksandar Rakic"),
+                                ("Sergey Spivak", "Serghei Spivac"),
+                                ("Kaua Fernandes", "Kau\u00ea Fernandes")):
+            con = self._con()
+            con.execute("INSERT INTO players(name, league, espn_id) VALUES(?,'ufc',NULL)", (held,))
+            plan = roster.build_harvest_plan(
+                con, today=dt.date(2026, 8, 24), emit=lambda _m: None,
+                fetch=self._fetch([self._fight("9000002", published, "3151289", "Song Yadong")]),
+            )
+            self.assertEqual([(d[1], d[2]) for d in plan.suspected_duplicates],
+                             [(held, published)])
+            self.assertEqual(plan.adopt, [])
+            self.assertNotIn("9000002", {f["espn_id"] for f in plan.new})
+            roster.apply_harvest(con, plan)
+            self.assertEqual(
+                con.execute("SELECT COUNT(*) FROM players WHERE espn_id='9000002'").fetchone()[0],
+                0, "a suspected duplicate must not be minted")
+            self.assertEqual(
+                con.execute("SELECT COUNT(*) FROM players WHERE name=?", (held,)).fetchone()[0],
+                1, "and the row we already held must be untouched")
+
+    def test_an_id_less_row_is_adopted_rather_than_duplicated(self):
+        """Harvesting without this produced 46 duplicate names on dev and then 49
+        ownership CONFLICTs: the resolver tried to give the old row an id the newly
+        inserted row had already taken. The harvest caused the conflict it tripped over."""
+        con = self._con()
+        con.execute("INSERT INTO players(name, league, espn_id) VALUES('Edson Barboza','ufc',NULL)")
+        plan = roster.build_harvest_plan(
+            con, today=dt.date(2026, 8, 24), emit=lambda _m: None,
+            fetch=self._fetch([self._fight("2526299", "Edson Barboza", "3151289", "Song Yadong")]),
+        )
+        self.assertEqual([a[1] for a in plan.adopt], ["Edson Barboza"])
+        self.assertNotIn("2526299", {f["espn_id"] for f in plan.new})
+        roster.apply_harvest(con, plan)
+        rows = con.execute(
+            "SELECT name, espn_id FROM players WHERE league='ufc' AND name='Edson Barboza'"
+        ).fetchall()
+        self.assertEqual(rows, [("Edson Barboza", "2526299")])
+
+    def test_a_name_shared_by_two_id_less_rows_refuses_to_bind(self):
+        """An ambiguous key must refuse, not pick one. A wrong bind is silent and
+        permanent, and there is no error to notice later."""
+        con = self._con()
+        for _ in range(2):
+            con.execute("INSERT INTO players(name, league, espn_id) VALUES('Dan Hooker','ufc',NULL)")
+        plan = roster.build_harvest_plan(
+            con, today=dt.date(2026, 8, 24), emit=lambda _m: None,
+            fetch=self._fetch([self._fight("2559966", "Dan Hooker", "3151289", "Song Yadong")]),
+        )
+        self.assertEqual(plan.ambiguous, [("Dan Hooker", 2)])
+        self.assertEqual(plan.adopt, [])
+        self.assertNotIn("2559966", {f["espn_id"] for f in plan.new})
+        roster.apply_harvest(con, plan)
+        self.assertEqual(
+            con.execute("SELECT COUNT(*) FROM players WHERE espn_id='2559966'").fetchone()[0], 0)
+
+    def test_a_harvest_with_nothing_to_insert_opens_no_writer_and_takes_no_backup(self):
+        """A quiet sweep must cost nothing. The runner writes a 400MB backup before any
+        spine write, so taking one on every run because the card was merely READ would be
+        a per-run disk cost for no change."""
+        import run_ufc_current_card_ingest as runner
+
+        empty = roster.HarvestPlan()
+        self.assertEqual(empty.mutations, 0)
+        with mock.patch.object(runner, "_connect_readonly", return_value=None), \
+                mock.patch.object(runner.roster, "build_harvest_plan", return_value=empty), \
+                mock.patch.object(runner, "inspect_ufcstats_migration",
+                                  return_value={"state": "applied", "detail": "ok"}), \
+                mock.patch.object(runner, "load_ufcstats_state",
+                                  return_value=([], {}, {}, {}, {})), \
+                mock.patch.object(runner.common, "backup_database") as backup, \
+                mock.patch.object(runner.sqlite3, "connect") as connect:
+            result = runner.run("/tmp/not-opened.db", now=dt.datetime(2026, 8, 24, 13, 0),
+                                emit=lambda _m: None)
+        self.assertEqual(result["status"], "no_targets")
+        backup.assert_not_called()
+        connect.assert_not_called()
+
+    def test_a_dry_run_never_writes_the_spine(self):
+        """apply=False must not insert, and must not take the roster backup either."""
+        import run_ufc_current_card_ingest as runner
+
+        plan = roster.HarvestPlan(new=[{"espn_id": "1", "name": "A", "opponent": None,
+                                        "event_id": None, "fight_id": None}])
+        self.assertEqual(plan.mutations, 1)
+        with mock.patch.object(runner, "_connect_readonly", return_value=None), \
+                mock.patch.object(runner.roster, "build_harvest_plan", return_value=plan), \
+                mock.patch.object(runner, "inspect_ufcstats_migration",
+                                  return_value={"state": "applied", "detail": "ok"}), \
+                mock.patch.object(runner, "load_ufcstats_state",
+                                  return_value=([], {}, {}, {}, {})), \
+                mock.patch.object(runner.common, "backup_database") as backup, \
+                mock.patch.object(runner.sqlite3, "connect") as connect:
+            runner.run("/tmp/not-opened.db", now=dt.datetime(2026, 8, 24, 13, 0),
+                       emit=lambda _m: None, apply=False)
+        backup.assert_not_called()
+        connect.assert_not_called()
+
+    def test_one_request_covers_the_whole_window(self):
+        """21 per-day requests and one range request return the same answer. The budget
+        skill's first lever is issuing fewer requests."""
+        calls = []
+
+        def fetch(start, end):
+            calls.append((start, end))
+            return {"2026-08-29": [self._fight("4569549", "A", "3151289", "B")]}, 1
+
+        roster.build_harvest_plan(
+            self._con(), today=dt.date(2026, 8, 24), emit=lambda _m: None, fetch=fetch)
+        self.assertEqual(len(calls), 1)
+        self.assertEqual(calls[0], ("2026-08-10", "2026-09-14"))

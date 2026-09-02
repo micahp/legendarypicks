@@ -29,6 +29,7 @@ export interface StandingGroup {
   rows: StandingRow[]
 }
 
+
 export interface Leader {
   player_id: number
   name: string
@@ -171,7 +172,7 @@ export interface KnockoutRound {
 }
 
 export type SubView = 'players' | 'teams'
-export type HubTab = 'camp' | 'standings' | 'stats' | 'schedule' | 'rankings' | 'predict'
+export type HubTab = 'camp' | 'standings' | 'stats' | 'schedule' | 'news' | 'rankings' | 'predict' | 'optimizer'
 
 // ── NFL camp-mode contracts ──────────────────────────────────────────────
 

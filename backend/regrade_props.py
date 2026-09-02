@@ -64,13 +64,31 @@ def espn_truth(event_id):
 
 
 def measure(con, sample):
-    """-> (checked, disagreeing) against ESPN, plus a few examples."""
+    """-> (checked, disagreeing, examples, unreachable) against ESPN.
+
+    The repair itself reads the MLB Stats API and needs nothing from ESPN. This is the
+    independent ruler on top of it, so an ESPN refusal must not take the repair down --
+    on 2026-08-17 a 403 on the 12-game sample aborted the whole run before it wrote a
+    single row, leaving prod's conflicting grades in place.
+
+    `unreachable` is returned rather than swallowed. A cross-check that could not ask is
+    not a cross-check that passed: main() reports it and exits non-zero, per
+    published-first §6 (a missing oracle is a FAIL, never a skip).
+    """
     import re
     clean = lambda m: re.sub(r"___.*$", "", m)
-    checked = wrong = 0
+    checked = wrong = unreachable = 0
     examples = []
     for event_id in sample:
-        truth = espn_truth(event_id)
+        try:
+            truth = espn_truth(event_id)
+        except Exception as exc:
+            unreachable += 1
+            if unreachable == 1:
+                print(f"    ESPN did not answer for event {event_id} "
+                      f"({type(exc).__name__}: {exc}) — cross-check degraded, repair "
+                      f"continues")
+            continue
         rows = con.execute("""
             SELECT pl.name, p.market, r.actual_value FROM props p
             JOIN prop_games g ON g.id = p.game_id
@@ -87,7 +105,7 @@ def measure(con, sample):
                 wrong += 1
                 if len(examples) < 8:
                     examples.append(f"{name} {mk}: graded {actual:g}, ESPN {truth[name][mk]}")
-    return checked, wrong, examples
+    return checked, wrong, examples, unreachable
 
 
 # ── the repair ───────────────────────────────────────────────────────────────────────────
@@ -117,6 +135,14 @@ def main():
     ap.add_argument("--limit", type=int, default=0)
     ap.add_argument("--dry-run", action="store_true")
     args = ap.parse_args()
+
+    # The cross-check sweeps one ESPN summary per sampled game, and this script gets
+    # re-run after every repair attempt. Without a disk cache each run re-paid for
+    # payloads it already had and walked toward the per-host wall for nothing.
+    import espn_client as _espn
+    _espn.set_disk_cache(os.environ.get("LP_ESPN_CACHE_DIR") or os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), ".espn-cache"), ttl=86400)
+    _espn.set_min_interval(float(os.environ.get("LP_ESPN_MIN_INTERVAL", "0.5")))
 
     db = os.path.abspath(args.db)
     con = sqlite3.connect(db)
@@ -148,8 +174,11 @@ def main():
     print(f"sample     {len(sample)} games cross-checked against ESPN\n")
 
     print("── BEFORE ─────────────────────────────────────────────")
-    b_checked, b_wrong, b_ex = measure(con, sample)
+    b_checked, b_wrong, b_ex, b_unreachable = measure(con, sample)
     print(f"  {b_wrong} of {b_checked} graded props disagree with ESPN's final box score")
+    if b_unreachable:
+        print(f"  NO-ORACLE: ESPN did not answer for {b_unreachable} of {len(sample)} "
+              f"sampled games — this run cannot claim the grades were verified")
     for e in b_ex[:5]:
         print(f"    {e}")
 
@@ -203,7 +232,7 @@ def main():
           f"({purged[0]} false results deleted) · {errors} errors")
 
     print("\n── AFTER ──────────────────────────────────────────────")
-    a_checked, a_wrong, a_ex = measure(con, sample)
+    a_checked, a_wrong, a_ex, a_unreachable = measure(con, sample)
     print(f"  {a_wrong} of {a_checked} graded props disagree with ESPN's final box score")
     for e in a_ex[:5]:
         print(f"    {e}")
@@ -214,6 +243,17 @@ def main():
     print(f"  backup  {backup}")
     con.close()
 
+    # This used to return None unconditionally, so the script exited 0 even when the
+    # cross-check printed an unchanged number, or could not run at all. A check nothing
+    # gates on is decoration. Unreachable evidence is a FAIL, not a pass.
+    if b_unreachable or a_unreachable:
+        print(f"\nNO-ORACLE — ESPN was unreachable for "
+              f"{max(b_unreachable, a_unreachable)} of {len(sample)} sampled games. The "
+              f"re-grade ran; its result is UNVERIFIED. Re-run the check when ESPN "
+              f"answers.")
+        return 3
+    return 0
+
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main() or 0)

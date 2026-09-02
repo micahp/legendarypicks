@@ -97,12 +97,65 @@ backend/data/news-deletions.log
 # entries and left `git status` unreadable (2026-08-11).
 *.log
 
-# A 0-byte `picks.dev.db` appeared at the REPO ROOT (2026-08-10) from a process
-# started with the wrong cwd. It is the worst kind of stray: anything opening the
-# dev DB by relative path finds it, gets an EMPTY database, and answers 200 with
-# no data. Ignored here so it can never be committed. Never create one.
+# A 0-byte `picks.dev.db` appeared from a process started with the wrong cwd. It
+# is the worst kind of stray: anything opening the dev DB by relative path finds
+# it, gets an EMPTY database, and answers 200 with no data. It made real-database
+# tests assert nothing -- test_league_offering failed on "no such table: players"
+# and test_team_stats_json skipped itself as "not migrated yet" (see the note in
+# backend/conftest.py, which fixed the TEST side by anchoring to BACKEND_DIR).
+#
+# This rule named the repo ROOT and the file was one level down, in `data/`, so
+# it was never ignored and rode into 8b296db as 1 of 292 files. Same miss the
+# espn-cache note below records: an ignore rule only protects the path it names.
+# Both paths are covered now. Never create one.
 /picks.dev.db
+/data/*.db
+/data/*.db-shm
+/data/*.db-wal
 
 # Agent state, not source. `.context/retros/` is deliberately TRACKED history
 # (see the committed retros) — do not ignore it.
 .hermes/
+
+# Bovada per-league backoff state. Runtime operational scheduling, NOT app data —
+# the scraper rewrites it every run, so tracking it dirtied the working tree on a
+# 30-minute timer and blocked `release.sh`'s clean-tree preflight indefinitely
+# (2026-08-17: one changed timestamp was the sole thing standing between dev and
+# a v0.8.0 dry-run). `_load_backoff()` returns {} when the file is absent, so a
+# fresh checkout or image simply fetches every league — it fails open by design.
+backend/data/bovada-league-backoff.json
+
+# ESPN response disk cache. 96MB of hashed request/response JSON, rewritten by any
+# script that calls a publisher — tracking it dirtied the tree on every run and blocked
+# `release.sh`'s clean-tree preflight (2026-08-17).
+#
+# It was never meant to be tracked: it rode into 8b296db, a one-line build fix, as 218
+# of that commit's 292 files. Note line 88 already ignored `backend/data/espn-cache/` —
+# the intent was there, the path was wrong. The cache lives at `backend/.espn-cache`,
+# which that pattern never matched. Same miss as `backend/backups/` dodging
+# `backend/data/picks.db*` the same day: an ignore rule only protects the path it names.
+backend/.espn-cache/
+
+# Compose reads ./.env for ${VAR} interpolation, which is how the backend's
+# pass-through keys (PANDASCORE/GRID/YOUTUBE/DEEPSEEK/KICK) reach the container.
+# It is a SYMLINK to /root/.hermes/.env so there is no second copy of a secret
+# on disk — but it must never be committed, symlink or not. `.env*.local` above
+# did not cover the plain name.
+.env
+
+# Runtime spend log (paced_http.record_spend). A process rewrites this
+# continuously, and a tracked file a runtime process rewrites is what blocked
+# the v0.8.0 cut for a week. See docs/DESIGN-request-budget.md.
+backend/data/http-spend.jsonl
+
+# Runtime logo cache: the esports job rewrites this whenever it sees a new team,
+# so a tracked copy is permanently dirty and blocks the release preflight. Same
+# class as backend/.espn-cache, which held the v0.8.0 cut for a week.
+backend/data/esports_team_logos.json
+
+# Daily RotoWire relay archive: ~1 MB gzipped per day, written by a timer.
+# The history is the asset and it is irreplaceable, but it is data, not source.
+backend/data/rotowire-archive/
+
+# UFCStats source responses are retained for deterministic serial replays.
+backend/data/ufcstats-archive/

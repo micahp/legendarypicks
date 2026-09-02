@@ -9,6 +9,16 @@ This walks every team's ESPN roster for mls + ncaaf, upserts `players` rows
 the log ingests re-run with a working resolver.
 
 Measured shapes (2026-08-06):
+- Liga MX rosters: site.web .../soccer/mex.1/teams/{id}/roster, 18 teams.
+  Added 2026-08-25 for Leagues Cup identity: `lcup` is MLS vs Liga MX, so
+  half of every fixture had players in no spine we hold, and the only
+  alternatives were minting them under `mls` (the shadow-player defect)
+  or leaving every Liga MX prop unresolved. Its 18 display names match
+  our stored `lcup` scoreboard payloads exactly, so no crosswalk.
+  ESPN publishes `ATL` for BOTH Atlanta United and Atlante, in different
+  leagues; that is why these rows are filed under `ligamx` and not
+  merged into the soccer bucket, and why the roster is what resolves the
+  collision (a player is on one of them, and the publisher says which).
 - MLS rosters: site.web .../soccer/usa.1/teams/{id}/roster?season=2025 — the
   season param works (2025 roster = 31 for ATL vs 28 current). 30 teams.
 - NCAAF rosters: site.web .../football/college-football/teams/{id}/roster
@@ -29,6 +39,7 @@ Measured shapes (2026-08-06):
 
 Request count (state BEFORE running, per espn-request-budget):
 - mls:  1 (site teams) + 30 (rosters)                     = 31 site.web
+- ligamx: 1 (site teams) + 18 (rosters)                   = 19 site.web
 - ncaaf: 1 (site teams) + 2 (group-80 whitelist, 2 pages) + 146 (rosters)
        = 149 site.web + 2 sports.core
 The shared fetcher self-throttles past ~100/host; the disk cache makes a
@@ -58,19 +69,55 @@ _CORE = "https://sports.core.api.espn.com/v2/sports/{path}"
 # site path (espn_client LEAGUES) -> core path (espn_leagues registry)
 _SITE_PATH = {
     "mls": "soccer/usa.1",
+    "ligamx": "soccer/mex.1",
     "ncaaf": "football/college-football",
 }
 _CORE_PATH = {
     "mls": "soccer/leagues/usa.1",
+    "ligamx": "soccer/leagues/mex.1",
     "ncaaf": "football/leagues/college-football",
 }
-_SCOPE_GROUP = {"mls": None, "ncaaf": "80"}
-_REG_TYPE_ID = {"mls": "1", "ncaaf": "2"}
-_SEASON = {"mls": 2025, "ncaaf": 2025}
+_SCOPE_GROUP = {"mls": None, "ligamx": None, "ncaaf": "80"}
+_REG_TYPE_ID = {"mls": "1", "ligamx": "1", "ncaaf": "2"}
+_SEASON_CACHE = {}
 
 
 def _get(url: str, ttl: int = 43200) -> dict:
     return espn._get(url, ttl=ttl)
+
+
+def _season(league: str) -> int:
+    """The season ESPN currently publishes for this league.
+
+    This was `_SEASON = {"mls": 2025, "ncaaf": 2025}`. A season is a definition,
+    and a definition is always published (published-first rung 5) -- hardcoding
+    one means the roster sync silently serves last year's squads the moment the
+    calendar turns. Measured 2026-08-16: ESPN published 2026 for both leagues
+    while this constant still said 2025, so every MLS roster fetch returned the
+    2025 squad (Atlanta: Brad Guzan present, Lucas Hoyos absent) and 146 players
+    carrying live 2026 Bovada props matched nothing in the spine.
+
+    `/seasons?limit=1` returns newest-first, so the year in the first $ref is
+    the current season. There is deliberately no fallback: a stale constant is
+    exactly the failure this replaces, and guessing a year would reintroduce it
+    quietly. LP_ROSTER_SEASON overrides for backfills of a specific season.
+    """
+    override = os.environ.get("LP_ROSTER_SEASON")
+    if override:
+        return int(override)
+    if league in _SEASON_CACHE:
+        return _SEASON_CACHE[league]
+    path = _CORE_PATH[league]
+    d = _get(f"{_CORE.format(path=path)}/seasons?limit=1", ttl=43200)
+    items = d.get("items") or []
+    ref = items[0].get("$ref") if items and isinstance(items[0], dict) else None
+    m = re.search(r"/seasons/(\d{4})", ref or "")
+    if not m:
+        raise RuntimeError(
+            "ESPN published no current season for {} (asked {}/seasons?limit=1)"
+            .format(league, path))
+    _SEASON_CACHE[league] = int(m.group(1))
+    return _SEASON_CACHE[league]
 
 
 def _vocabulary():
@@ -79,7 +126,7 @@ def _vocabulary():
     with open(path) as fh:
         d = json.load(fh)
     out = {}
-    for lg in ("mls", "ncaaf"):
+    for lg in d.get("leagues", {}):
         v = d.get("leagues", {}).get(lg, {})
         out[lg] = (v.get("positions", {}), v.get("ancestry", {}))
     return out
@@ -153,7 +200,7 @@ def _core_team_abbrev(league, team_id):
     """Abbreviation from the core team doc (one request per team)."""
     path = _CORE_PATH[league]
     try:
-        d = _get(f"{_CORE.format(path=path)}/seasons/{_SEASON[league]}"
+        d = _get(f"{_CORE.format(path=path)}/seasons/{_season(league)}"
                  f"/teams/{team_id}")
         return str(d.get("abbreviation") or "").upper() or None
     except Exception:  # noqa: BLE001
@@ -198,7 +245,7 @@ def _group_whitelist(league):
     scope = _SCOPE_GROUP[league]
     if not scope:
         return None
-    season = _SEASON[league]
+    season = _season(league)
     type_id = _REG_TYPE_ID[league]
     base = _CORE.format(path=_CORE_PATH[league])
     d = _get(f"{base}/seasons/{season}/types/{type_id}"
@@ -222,7 +269,7 @@ def _fetch_roster(league, team_id, limit=200):
     path = _SITE_PATH[league]
     url = _SITE.format(path=path) + f"/teams/{team_id}/roster?limit={limit}"
     if league == "mls":
-        url += f"&season={_SEASON[league]}"
+        url += f"&season={_season(league)}"
     d = _get(url)
     out = []
     for a in d.get("athletes", []) or []:
@@ -330,5 +377,14 @@ def main(leagues):
 
 
 if __name__ == "__main__":
-    args = [a for a in sys.argv[1:] if a in ("mls", "ncaaf")]
+    known = ("mls", "ncaaf", "ligamx")
+    args = [a for a in sys.argv[1:] if a in known]
+    unknown = [a for a in sys.argv[1:] if a not in known]
+    if unknown:
+        raise SystemExit("unknown league(s): {} (known: {})".format(
+            ", ".join(unknown), ", ".join(known)))
+    # `ligamx` is deliberately NOT in the default set. It exists for
+    # Leagues Cup identity only: no board, no stat manifest, no coverage
+    # gate. A caller asks for it by name rather than acquiring it by
+    # running the job that already existed.
     main(args or ["mls", "ncaaf"])

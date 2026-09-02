@@ -353,8 +353,7 @@ class NflNewsIdentityAndApiTests(unittest.TestCase):
                 }
             ]
         }
-        response = FakeResponse(__import__("json").dumps(payload).encode())
-        with mock.patch("urllib.request.urlopen", return_value=response):
+        with mock.patch("espn_client._get", return_value=payload):
             result = players.player_news(6, 10)
 
         self.assertEqual(
@@ -401,8 +400,7 @@ class NflNewsIdentityAndApiTests(unittest.TestCase):
                 },
             ]
         }
-        response = FakeResponse(__import__("json").dumps(payload).encode())
-        with mock.patch("urllib.request.urlopen", return_value=response):
+        with mock.patch("espn_client._get", return_value=payload):
             result = players.player_news(8, 10)
 
         self.assertEqual(
@@ -435,8 +433,7 @@ class NflNewsIdentityAndApiTests(unittest.TestCase):
                 },
             ]
         }
-        response = FakeResponse(__import__("json").dumps(payload).encode())
-        with mock.patch("urllib.request.urlopen", return_value=response):
+        with mock.patch("espn_client._get", return_value=payload):
             result = players.player_news(8, 10)
 
         self.assertEqual([], result["articles"])

@@ -1,5 +1,5 @@
 import React from 'react'
-import { render, screen } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 import StandingsTab from './StandingsTab'
 import type { StandingGroup } from './types'
 
@@ -60,5 +60,53 @@ describe('grouped league standings', () => {
     expect(screen.queryByRole('columnheader', { name: 'Pts' })).toBeNull()
     expect(screen.getByText('0')).toBeTruthy()
     expect(screen.getAllByText('—')).toHaveLength(3)
+  })
+})
+
+
+describe('standings season picker', () => {
+  const renderWith = (props: Partial<{
+    season: number | null
+    availableSeasons: number[]
+    onSelectSeason: (s: number) => void
+  }>) => render(
+    <StandingsTab
+      error={null}
+      loading={false}
+      isWorldCup={false}
+      knockout={[]}
+      groups={mlsGroups}
+      teams={[]}
+      leagueName="MLS"
+      league="mls"
+      {...props}
+    />,
+  )
+
+  it('offers the publisher’s seasons and reports the pick', () => {
+    const onSelectSeason = jest.fn()
+    renderWith({ season: 2026, availableSeasons: [2026, 2025, 2024], onSelectSeason })
+
+    const select = screen.getByLabelText('Season') as HTMLSelectElement
+    expect(select.value).toBe('2026')
+    expect(screen.getByRole('option', { name: '2024' })).toBeTruthy()
+
+    fireEvent.change(select, { target: { value: '2024' } })
+    expect(onSelectSeason).toHaveBeenCalledWith(2024)
+  })
+
+  it('states the year without a control when only one season is offered', () => {
+    // A standings table whose season is unstated is the defect; the missing
+    // control is not. One year renders as a static pill.
+    renderWith({ season: 2026, availableSeasons: [2026], onSelectSeason: jest.fn() })
+    const season = screen.getByLabelText('Season')
+    expect(season.tagName).toBe('SPAN')
+    expect(season.textContent).toBe('2026')
+  })
+
+  it('renders no picker for a league that sends no season list', () => {
+    renderWith({})
+    expect(screen.queryByLabelText('Season')).toBeNull()
+    expect(screen.getByRole('heading', { name: 'Eastern Conference' })).toBeTruthy()
   })
 })

@@ -48,12 +48,28 @@ const LEAGUE_LOG_COLS: Record<string, { key: string; label: string }[]> = {
     { key: 'def_int_yds', label: 'INT YDS' }, { key: 'def_int_td', label: 'INT TD' },
     { key: 'def_td', label: 'DEF TD' }, { key: 'qbhur', label: 'QB HUR' },
   ],
+  soccer_outfield: [
+    { key: 'goals', label: 'G' }, { key: 'assists', label: 'A' },
+    { key: 'shots', label: 'SH' }, { key: 'sot', label: 'SOT' },
+    { key: 'fouls_committed', label: 'FC' },
+    { key: 'yellow_cards', label: 'YC' }, { key: 'red_cards', label: 'RC' },
+  ],
+  soccer_goalkeeper: [
+    { key: 'saves', label: 'SV' }, { key: 'shots_faced', label: 'SF' },
+    { key: 'goals_conceded', label: 'GA' },
+  ],
+  soccer_unknown: [
+    { key: 'goals', label: 'G' }, { key: 'assists', label: 'A' },
+    { key: 'yellow_cards', label: 'YC' }, { key: 'red_cards', label: 'RC' },
+  ],
 }
 
-export default function LeagueGameLog({ games, league, position }: {
+export default function LeagueGameLog({ games, league, identityLeague, position, positionGroup }: {
   games: RecentGame[]
   league: string
+  identityLeague?: string
   position?: string | null
+  positionGroup?: string | null
 }) {
   // A goalie's log holds `goals, assists, pim, toi` — his SKATER line. Rendering
   // it puts four true numbers on the page that answer none of the questions
@@ -78,8 +94,28 @@ export default function LeagueGameLog({ games, league, position }: {
     if (typeof v === 'number') present.add(k)
   }))
   const pitching = league === 'mlb' && present.has('outs') && !present.has('PA')
-  const cols = (LEAGUE_LOG_COLS[pitching ? 'mlb_pitching' : league] || [])
+  const normalizedGroup = String(positionGroup || '').toLowerCase()
+  const soccerFamily = identityLeague === 'mls'
+    ? normalizedGroup === 'goalkeeper'
+      ? 'soccer_goalkeeper'
+      : normalizedGroup
+        ? 'soccer_outfield'
+        : 'soccer_unknown'
+    : null
+  const family = soccerFamily || (pitching ? 'mlb_pitching' : league)
+  const cols = (LEAGUE_LOG_COLS[family] || [])
     .filter(c => present.has(c.key))
+  if (family === 'soccer_goalkeeper' && !cols.length) {
+    return (
+      <div className="rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-6 text-sm text-zinc-400">
+        No goalkeeping stats on file for this competition and year.
+        <span className="mt-1 block text-xs text-zinc-600">
+          {games.length} appearance{games.length === 1 ? '' : 's'} recorded; saves,
+          shots faced and goals allowed were not published in these stored logs.
+        </span>
+      </div>
+    )
+  }
   if (!cols.length) return null
 
   return (

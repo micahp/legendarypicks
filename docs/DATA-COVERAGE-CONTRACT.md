@@ -1,6 +1,6 @@
 ## 7. Adding a league
 
-The MANIFEST entry is the contract. `audit_league_stats.py` measures every league
+The MANIFEST entry is the contract. `python -m audit_league_stats` measures every league
 against its own declaration — a league with no entry is reported (`UNVERIFIED
 manifest`, never skipped), and a league whose entry is half-empty is reported
 for exactly the checks it did not declare. So the order is: **write the MANIFEST
@@ -11,28 +11,39 @@ someone has said what the league claims.
 
 ### 7.1 The MANIFEST entry — cheap, do this first
 
-Every league in `backend/audit_league_stats.py`'s `MANIFEST` needs five fields.
-Write them from the publisher's own shape, never from what you hope to serve:
+Every league in `backend/audit_league_stats/cli.py`'s `MANIFEST` needs three
+explicit keys. A fourth is conditional. Publisher IDs are required data on the
+spine, not a MANIFEST field. Write every declaration from the publisher's own
+shape, never from what you hope to serve:
 
 | field | what it means | where the truth lives |
 |---|---|---|
 | `stat_types` | which season surfaces exist (e.g. `season`, `batting`+`pitching`), each with `required` columns and a `qualifier` | the publisher's season/leaderboard endpoint |
 | `position_content` | what a position's **log** must record — the keys a log must carry to count as having observed that player, per position class, plus a `coverage` floor | the box-score/event feed, **measured**, not assumed |
 | `single_vocabulary` | which categorical columns hold exactly one vocabulary (`position`, `position_group`, `team`…) | the publisher's own vocab/code list |
-| `injury_population` | floor for injury-status coverage on active players (only where the league serves injuries) | the league's roster feed |
-| (implicit) the league's id column | which external id each row carries, and who issues it | the ingest that created the rows |
+| `injury_population` (conditional) | floor for injury-status coverage on the rendered fantasy pool; omit only when the league has no injury surface | the league's roster/injury feed plus the product's pool query |
 
-`stat_types` may legitimately be `{}` — a league with no leaderboard surface (UFC
-is fighters + rankings; WC is dormant). Say that in the entry rather than
-omitting it. Same for `position_content`: a league with **no `player_game_logs`
-rows at all** cannot have its positions' content declared — record that instead
-of declaring content for logs that do not exist.
+The spine must separately answer which external id each row carries and who
+issued it. Checks F and G derive that from `players` and the fetched identity
+map; adding an invented `id_column` key to MANIFEST would not satisfy either.
+
+`stat_types` may legitimately be `{}` — a league with no leaderboard surface
+(UFC rankings, World Cup standings, ATP/WTA tournament draws). Say that in the
+entry rather than omitting the league. This makes D explicitly UNVERIFIED for an
+absent surface; it does not manufacture a PASS. Likewise, `position_content: {}`
+is an explicit declaration that no log-content contract exists yet and B reports
+UNVERIFIED. A single positionless class can still be measured honestly with
+`all_logs: true`, as UFC and World Cup do.
 
 ### 7.2 Then satisfy each check, in this order
 
-Each of the seven checks asks a different question. The league must answer all of
-them; a check left undeclared reports `UNVERIFIED` — **which is a failure, never
-a skip**. A green light you cannot defend is worse than a red one you can.
+Each of the eight checks asks a different question. A check that emits
+`UNVERIFIED` counts as a failure, never a skip. Some checks intentionally emit no
+row when their surface is not declared: A and E iterate `stat_types`, C iterates
+`single_vocabulary`, and H runs only when `injury_population` exists. D is the
+exception that keeps an absent leaderboard visible by emitting UNVERIFIED when
+`stat_types` is empty. A green light you cannot defend is worse than a red one
+you can.
 
 | # | check | what it needs from the league | the question it answers |
 |---|---|---|---|
@@ -41,14 +52,13 @@ a skip**. A green light you cannot defend is worse than a red one you can.
 | C | `C/vocabulary[...]` | which columns are single-vocabulary, and whether a group column is declared | are two ingests writing two vocabularies into one column? |
 | D | `D/leaders-reach-logs` | a `stat_types` entry (a leaderboard surface to serve) | can you click a leader and see a game? |
 | E | `E/qualifier[...]` | the published qualifier and its unit, per stat type | is the leaderboard's qualifier measurable from a column we hold? |
-| F | `F/identity-crosswalk` | a publisher id **and** an `espn_id` (or an explicit single-publisher note) | can a second publisher reach this league at all? |
+| F | `F/identity-crosswalk` | populated external-id columns on `players`; overlap where two publishers are present | can a second publisher reach the same canonical people, or did it create a split population? |
 | G | `G/published-identity` | a publisher id→name map, fetched from the publisher that **issued the id** | does each id point at the person whose name is on the row? |
+| H | `H/injury-population` | `injury_population.floor`, the rendered pool definition, and populated `injury_status`/`last_news_date` | does the injury surface carry evidence for enough of the people it actually renders? |
 
-There is also an eighth check, **`H/injury-population`**, and it is the one
-*optional* entry in the manifest: only leagues that serve injuries declare
-`injury_population.floor` (NFL does; a league with no injury surface simply
-omits it). If a league serves injuries, the floor must be measured against the
-live population, not picked to pass.
+H is the one conditional manifest entry: only leagues that serve injuries
+declare it (NFL does). Its floor must be measured against the live rendered
+population, not picked to pass.
 
 Two checks are not free:
 
@@ -139,13 +149,14 @@ Measured instances, so the sizes are not hypothetical:
 5. NFL `rush_td`/`rec_td` read "no such column" while already sitting in
    `player_game_logs`; MLB `pa`/`hits`/`rbi` likewise.
 
-**Diagnosis generalises; repair does not.** The seven audit checks run for every league off a
+**Diagnosis generalises; repair does not.** The eight audit checks run for every league off a
 per-league declaration — that is why shape 1 was answered for four leagues the day the check
 was written. The *fixes* are all league-specific (`repair_mlb_identity_names.py`,
 `dedupe_mlb.py`, `dedupe_nfl.py`). So audit every league; repair only the ones the product
-needs. As of 2026-08-05 **`atp`, `wnba` and `wta` have no MANIFEST entry at all — they are
-unmeasured, not passing.** (`ufc` and `wc` were in that list until 2026-08-05; they now have
-declarations and measure 0 FAIL / 2 honest UNVERIFIED on the leaderboard checks.)
+needs. ATP and WTA are explicit MANIFEST subjects with `stat_types: {}` because
+they have tournament/prop surfaces but no season leaderboard. UFC and World Cup each now
+measure three PASS results and one honest UNVERIFIED result: D records that no
+leaderboard surface is declared.
 
 ### Known shape notes for the next three
 

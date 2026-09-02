@@ -16,8 +16,9 @@ import sqlite3
 import sys
 import time
 import urllib.error
-import urllib.request
 from collections.abc import Callable, Mapping
+
+import paced_http
 
 from league_stats import LeagueStatContractError, publish_player_stats
 
@@ -47,20 +48,17 @@ HEADERS = {
 MIN_INTERVAL = float(os.environ.get("LP_ESPN_MIN_INTERVAL", "0.5"))
 RETRY_WAITS = (5.0, 20.0, 60.0)
 _RETRYABLE = frozenset({403, 429, 500, 502, 503, 504})
-_last_request_at = 0.0
+
+# The shared client issues each attempt (pacing, the per-host count and the
+# spend log), with the module's own retry ladder kept on top: it also honours
+# Retry-After, which paced_http deliberately does not, and it converts the
+# exhausted ladder into NBAStatsIngestError rather than a bare HTTPError.
+_FETCH = paced_http.Fetcher(min_interval=MIN_INTERVAL, retry_waits=(),
+                            headers=HEADERS, timeout=20)
 
 
 class NBAStatsIngestError(RuntimeError):
     """The published NBA snapshot was incomplete or invalid."""
-
-
-def _throttle() -> None:
-    """Hold MIN_INTERVAL between consecutive upstream reads."""
-    global _last_request_at
-    gap = time.monotonic() - _last_request_at
-    if gap < MIN_INTERVAL:
-        time.sleep(MIN_INTERVAL - gap)
-    _last_request_at = time.monotonic()
 
 
 def fetch_athlete_stats(espn_id: str, season: int) -> dict | None:
@@ -69,15 +67,10 @@ def fetch_athlete_stats(espn_id: str, season: int) -> dict | None:
     Paced, and patient with a refusal: a 403 here means we are asking too
     fast, and backing off recovers where retrying immediately does not.
     """
-    request = urllib.request.Request(
-        URL.format(season=int(season), espn_id=espn_id),
-        headers=HEADERS,
-    )
+    url = URL.format(season=int(season), espn_id=espn_id)
     for attempt, wait in enumerate((*RETRY_WAITS, None)):
-        _throttle()
         try:
-            with urllib.request.urlopen(request, timeout=20) as response:
-                return json.loads(response.read().decode())
+            return _FETCH.fetch(url)
         except urllib.error.HTTPError as exc:
             if exc.code == 404:
                 return None

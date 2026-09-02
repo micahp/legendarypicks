@@ -19,6 +19,7 @@ import sys, os, sqlite3, re, unicodedata
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import espn_client as espn
+from prop_game_merge import fold_prop_game
 
 DB = os.environ.get("LP_DB_PATH") or os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "picks.db")
 
@@ -226,6 +227,51 @@ def _instant(value):
     return dt.astimezone(_dt.timezone.utc).replace(second=0, microsecond=0)
 
 
+def apply_start_time(con, game_id, published, stored, label=""):
+    """Store the publisher's kickoff instant, overwriting ours only when it DISAGREES.
+
+    Policy set by Micah 2026-08-17, replacing write-once. All three ingest paths
+    (`routers/props.py`, `bovada_scraper.py` x2) guarded on `if published and not stored`,
+    so the first value we ever saw was permanent: a publisher revising first pitch could
+    never propagate, which is ~20 of prod's 95 start_time disagreements. That is the +17h
+    /+19h class, separate from the +24h UTC-rollover class.
+
+    Write-once and last-writer-wins are both wrong here for the same reason -- neither asks
+    whether the two values differ:
+
+      * write-once  freezes a bad instant forever, and a wrong kickoff is not a cosmetic
+                    defect: the board files the game on the wrong day and settlement looks
+                    for it at the wrong time.
+      * last-writer every scrape rewrites the row on its 30-minute timer, so `mtime` and any
+        -wins     "what changed?" audit become noise, and a stale board can overwrite a
+                  good instant with an old one.
+
+    So: compare INSTANTS, not strings. `prop_games` stores `2026-08-11T01:40:00+00:00` and
+    ESPN sends `2026-08-11T01:40Z`; they are the same moment and must not count as a change.
+    A real disagreement is written and ANNOUNCED, because a moved kickoff is exactly the
+    signal a human wants to see in a run log -- it is usually a reschedule.
+
+    Note what this does NOT do: a game moved to a DIFFERENT DAY is not this function's
+    problem. Every ingest path looks its row up by (league, date, home, away), so a new date
+    creates a second row and leaves the original holding its props. Nothing in the pipeline
+    records postponements at all -- `team_game_results.status` only ever holds 'completed'
+    or 'scheduled' -- and ESPN issues makeups under a NEW event id, so the original can
+    never link to one. See BACKLOG-holes #46.
+
+    Returns "set", "moved", "same" or "skipped" so callers can count.
+    """
+    if not published:
+        return "skipped"          # never blank a known instant with a publisher's silence
+    if not stored:
+        con.execute("UPDATE prop_games SET start_time=? WHERE id=?", (published, game_id))
+        return "set"
+    if _instant(published) == _instant(stored):
+        return "same"
+    con.execute("UPDATE prop_games SET start_time=? WHERE id=?", (published, game_id))
+    print("    start_time moved%s: %s -> %s" % (label and " " + label, stored, published))
+    return "moved"
+
+
 def _fighter_key(name):
     """Accent-fold a fighter name to its alphanumeric identity key."""
     value = unicodedata.normalize("NFKD", str(name or "")).encode(
@@ -261,6 +307,58 @@ def _same_fighter(prop_name, espn_name):
     return (len(prop_parts) >= 2 and len(espn_parts) >= 2
             and prop_parts[0] == espn_parts[0]
             and prop_parts[-1] == espn_parts[-1])
+
+
+def _same_tennis_player(prop_name, espn_name):
+    """Match ESPN's full player name to Bovada's displayed, often-cut prefix."""
+    prop_key = _fighter_key(prop_name)
+    espn_key = _fighter_key(espn_name)
+    if not prop_key or not espn_key:
+        return False
+    if prop_key == espn_key:
+        return True
+    return (min(len(prop_key), len(espn_key)) >= 7
+            and (prop_key.startswith(espn_key) or espn_key.startswith(prop_key)))
+
+
+def _link_tennis_match(game_row, espn_games):
+    """Resolve a possibly truncated tennis pair, failing closed on ambiguity.
+
+    Tennis feed start times are estimates, not stable identity.  On the copied
+    production database, 112 previously unlinked ATP rows had one published
+    player-pair match in the three-day ESPN window, but only 15 were within 15
+    minutes of ESPN's eventual court time.  Require both players and uniqueness;
+    use an exact published instant only to break a duplicate-pair tie.
+    """
+    prop_names = [game_row["away"], game_row["home"]]
+
+    def published_names(game):
+        return [((game.get("away") or {}).get("name") or ""),
+                ((game.get("home") or {}).get("name") or "")]
+
+    candidates = {}
+    wanted_start = _instant(game_row["start_time"])
+    for game in espn_games:
+        names = published_names(game)
+        same_pair = (
+            (_same_tennis_player(prop_names[0], names[0])
+             and _same_tennis_player(prop_names[1], names[1]))
+            or (_same_tennis_player(prop_names[0], names[1])
+                and _same_tennis_player(prop_names[1], names[0]))
+        )
+        if not same_pair:
+            continue
+        game_id = str(game.get("game_id") or "")
+        if game_id:
+            candidates[game_id] = game
+    if len(candidates) == 1:
+        return next(iter(candidates))
+    if wanted_start is not None:
+        exact = [game_id for game_id, game in candidates.items()
+                 if _instant(game.get("date")) == wanted_start]
+        if len(exact) == 1:
+            return exact[0]
+    return ""
 
 
 def _link_ufc_fight(game_row, espn_games):
@@ -310,6 +408,26 @@ def _link_ufc_fight(game_row, espn_games):
     return ""
 
 
+# Soccer competitions whose stored club names may carry a decoration the
+# scoreboard drops. Scoped deliberately: widening spelling alternates across
+# every sport risks matching two different clubs that share a city word.
+_SOCCER_LINK_LEAGUES = ("mls", "lcup", "ligamx", "epl", "wc")
+
+
+def _SOCCER_SPELLINGS_OK(league: str) -> bool:
+    return str(league or "").lower() in _SOCCER_LINK_LEAGUES
+
+
+def _spellings_match(ours: str, published: set) -> bool:
+    """True when any spelling of our club equals any name the publisher sent."""
+    import ingest_rotowire_props as rw
+
+    theirs = {rw.normalize_name(name) for name in published if name}
+    mine = set(rw._club_spellings(rw.normalize_name(ours)))
+    mine.add(rw.normalize_name(ours))
+    return bool(mine & theirs)
+
+
 def link_prop_game(con: sqlite3.Connection, game_row, espn_games: list) -> str:
     """Link one prop_game to an ESPN game. Returns espn_event_id or ''.
 
@@ -333,6 +451,8 @@ def link_prop_game(con: sqlite3.Connection, game_row, espn_games: list) -> str:
     league = game_row["league"]
     if league == "ufc":
         return _link_ufc_fight(game_row, espn_games)
+    if league in ("atp", "wta"):
+        return _link_tennis_match(game_row, espn_games)
 
     home_norm = _norm_team(game_row["home"], league)
     away_norm = _norm_team(game_row["away"], league)
@@ -364,6 +484,20 @@ def link_prop_game(con: sqlite3.Connection, game_row, espn_games: list) -> str:
             if (eg["home"]["abbrev"].upper() == home_norm
                     and eg["away"]["abbrev"].upper() == away_norm):
                 return True
+        if _SOCCER_SPELLINGS_OK(league):
+            # Our stored soccer names carry decorations ESPN drops: we hold
+            # `CF Monterrey`, `Club Leon` and `Club America` where the scoreboard
+            # publishes `Monterrey`, `Leon` and `America`. Exact containment
+            # therefore matched Toluca and nothing else -- 3 of 4 Leagues Cup
+            # fixtures stayed unlinked, and an unlinked game cannot settle at
+            # all, because settle_game returns early without an espn_event_id.
+            #
+            # Reuses the published-spelling generator the RotoWire ingest already
+            # relies on rather than adding a third club-name matcher, and folds
+            # accents on BOTH sides: ESPN writes `Leon` with an accent here and
+            # without one in other payloads.
+            return (_spellings_match(pg_home_name, _team_names(eg["home"]))
+                    and _spellings_match(pg_away_name, _team_names(eg["away"])))
         return (pg_home_name in _team_names(eg["home"])
                 and pg_away_name in _team_names(eg["away"]))
 
@@ -419,12 +553,33 @@ def link_existing_games(con: sqlite3.Connection, dry_run: bool = False,
     writes when the answer actually changes.
 
     `league` scopes the run to one league. This is a REQUEST BUDGET control, not a
-    convenience: ESPN's limit is a count per host (~100), not a rate, so the only
-    lever that works is issuing fewer requests. An unscoped run fetches a
-    scoreboard for every distinct date across every league that has props —
+    convenience. It fetches a scoreboard per distinct date per league, and the
+    unscoped run is a genuine fan-out.
+
+    The budget model here was wrong and it cost a live outage. This said ESPN's
+    limit is "a count per host (~100), not a rate, so the only lever that works is
+    issuing fewer requests". The 2026-08-19 measurement over 27,801 requests is the
+    opposite: the 1h window is FLAT (1238 before a 403 vs 1266 before a 200) and the
+    60s window is not (63 vs 36). Both levers are real, and this function had neither
+    — it inherited espn_client's serving-path default of min_interval=0. Measured
+    2026-08-24 21:00 UTC, this fired 18 requests inside one minute alongside
+    settle_props' 44 and ingest_scoreboards' 30; site.web.api refused for minutes and
+    13 of those refusals landed on UVICORN. A batch job spent the budget the page
+    loads needed. An unscoped run fetches a scoreboard for every distinct date across
+    every league that has props —
     tennis alone contributes dozens — and spends that budget whether or not you
     care about the league you are fixing. See .claude/skills/espn-request-budget.
     """
+    # Paced at the function that FANS OUT, not at main(): a caller that imports this
+    # gets the pacing too, and this is not reachable from a request handler so it can
+    # never pause a page load.
+    with espn.batch_pacing():
+        return _link_existing_games(con, dry_run, relink, league, days)
+
+
+def _link_existing_games(con: sqlite3.Connection, dry_run: bool = False,
+                         relink: bool = False, league: str = "",
+                         days: int | None = None) -> int:
     where, params = _scope(league, relink, days)
     unlinked = con.execute(f"""
         SELECT id, league, date, start_time, home, away, espn_event_id
@@ -467,6 +622,28 @@ def link_existing_games(con: sqlite3.Connection, dry_run: bool = False,
             prev = g["espn_event_id"] or ""
             if espn_id:
                 if espn_id != prev:
+                    # Another row may already BE this event. That is not an error and not
+                    # a bad link -- it is the same fixture stored twice under two calendar
+                    # dates (see the neighbour-slate comment above), and linking is the
+                    # moment we can finally prove it. Fold this row into that one instead
+                    # of creating the second row that ux_prop_games_event now forbids.
+                    #
+                    # Without this the constraint turns a nightly timer into an
+                    # IntegrityError, and the duplicate it was meant to prevent becomes a
+                    # failed run instead.
+                    existing = con.execute(
+                        "SELECT id FROM prop_games WHERE league=? AND espn_event_id=? "
+                        "AND id!=?", (g["league"], espn_id, g["id"])).fetchone()
+                    if existing:
+                        merged_into = existing["id"] if hasattr(existing, "keys") else existing[0]
+                        if not dry_run:
+                            fold_prop_game(con, g["id"], merged_into)
+                        print(f"    game {g['id']}: {g['away']} @ {g['home']} is event "
+                              f"{espn_id}, already held by game {merged_into} — props "
+                              f"repointed, duplicate row removed")
+                        changed += 1
+                        linked += 1
+                        continue
                     if not dry_run:
                         con.execute("UPDATE prop_games SET espn_event_id=? WHERE id=?", (espn_id, g["id"]))
                     changed += 1

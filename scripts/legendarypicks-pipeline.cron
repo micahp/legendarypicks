@@ -13,15 +13,25 @@ LOGDIR=/root/legendarypicks/logs
 
 # Ingest fresh props from Bovada — 4x/day during active-game windows
 # MLB day games + evening
-0 13,17,20,23 * * * root cd $BACKEND && $PIPELINE bovada_scraper.py mlb --ingest >> $LOGDIR/bovada_cron.log 2>&1
+# REMOVED 2026-08-19. The installed copy of this line still said
+# `bovada_scraper.py`, which became a package on 08-18, so it had been dead for 7
+# consecutive runs. The repo copy here was fixed to `-m bovada_scraper` and never
+# reinstalled, which is the drift that hid it: the file in git was correct and the
+# file that RUNS was not.
+#
+# Removed rather than repaired. legendarypicks-props.timer already runs
+# `-m bovada_scraper all --ingest` every 30 minutes and `all` includes mlb, so
+# reinstalling this would add a SECOND concurrent Bovada writer against one
+# database and one publisher budget.
+#0 13,17,20,23 * * * root cd $BACKEND && $PIPELINE -m bovada_scraper mlb --ingest >> $LOGDIR/bovada_cron.log 2>&1
 
 # Link games + settle finaled games — every 30 min in evening/overnight
 # (games go final throughout the evening)
-*/30 19-23,0-3 * * * root $PIPELINE $SCRIPTS/run_pipeline.py >> $LOGDIR/pipeline_cron.log 2>&1
+23,53 19-23,0-3 * * * root $PIPELINE $SCRIPTS/run_pipeline.py --skip-props >> $LOGDIR/pipeline_cron.log 2>&1
 
 # Full pipeline with stat refresh — 2x/day (morning + after games finish)
 # NHL roster + MLB Statcast full-season pull
-0 8,4 * * * root $PIPELINE $SCRIPTS/run_pipeline.py --full >> $LOGDIR/pipeline_full_cron.log 2>&1
+23 8,4 * * * root $PIPELINE $SCRIPTS/run_pipeline.py --full --skip-props >> $LOGDIR/pipeline_full_cron.log 2>&1
 
 # Coverage report — daily at 9am
 0 9 * * * root $PIPELINE $SCRIPTS/coverage_report.py >> $LOGDIR/coverage_cron.log 2>&1

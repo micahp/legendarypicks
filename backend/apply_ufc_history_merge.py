@@ -19,6 +19,8 @@ import sys
 from contextlib import closing
 from typing import Dict, Optional, Sequence
 
+from history_refresh_common import BUSY_TIMEOUT_SECONDS, ROLLBACK_SAFE_JOURNAL_MODES
+
 from plan_ufc_history_merge import (
     DEFAULT_DEV,
     DEFAULT_PROD,
@@ -103,7 +105,7 @@ def apply_merge_plan(prod_path: str, plan: MergePlan) -> dict:
     if plan.identity_conflicts or plan.invalid_source_rows:
         raise RuntimeError("refusing apply: source/identity validation failed")
 
-    con = sqlite3.connect(prod_path, timeout=5)
+    con = sqlite3.connect(prod_path, timeout=BUSY_TIMEOUT_SECONDS)
     con.row_factory = sqlite3.Row
     counts = {
         "identity_fills": 0,
@@ -112,9 +114,11 @@ def apply_merge_plan(prod_path: str, plan: MergePlan) -> dict:
     }
     try:
         journal_mode = str(con.execute("PRAGMA journal_mode").fetchone()[0]).lower()
-        if journal_mode != "delete":
+        if journal_mode not in ROLLBACK_SAFE_JOURNAL_MODES:
             raise RuntimeError(
-                "production journal_mode is {}, expected delete".format(journal_mode)
+                "production journal_mode is {}, expected one of {}".format(
+                    journal_mode, sorted(ROLLBACK_SAFE_JOURNAL_MODES)
+                )
             )
         con.execute("BEGIN IMMEDIATE")
 

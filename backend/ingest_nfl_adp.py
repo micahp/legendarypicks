@@ -29,7 +29,8 @@ Usage: python3 ingest_nfl_adp.py
 import json
 import os
 import sqlite3
-import urllib.request
+
+import paced_http
 
 URL = ("https://lm-api-reads.fantasy.espn.com/apis/v3/games/ffl/seasons/2026/players"
        "?scoringPeriodId=0&view=kona_player_info")
@@ -48,6 +49,12 @@ _EXPECTED_DEF_COUNT = 32
 # floor the response is truncated (the API silently pages) and writing a partial
 # snapshot would be worse than writing nothing — fail closed.
 _MIN_UNIVERSE = 10000
+
+# The shared client, with the raw call's exact headers (x-fantasy-filter, no
+# UA) and 120s timeout. No retry ladder: the module fails closed on the first
+# refusal, and a retry would spend more of the same per-host budget
+# rediscovering it is gone.
+_FETCH = paced_http.Fetcher(headers=HEADERS, timeout=120, retry_waits=())
 
 # ESPN defaultPositionId → the vocabulary this repo stores (players.position).
 # Positions ESPN publishes but this repo never drafted (P, DT, DE, LB, CB, S) are
@@ -68,26 +75,20 @@ DB = os.environ.get("LP_DB_PATH") or os.path.join(
 # confuses them -- constructs exist only in the fantasy API and it signs their
 # ids negative -- so record the category the publisher already drew, at the
 # boundary, instead of leaving every reader to infer it from a position label.
-# See migrate_player_entity_type.py for what inferring it cost.
-_ENTITY_BY_POSITION = {"DEF": "team_defense", "TQB": "team_qb", "HC": "coach"}
-
-
-def _entity_type(position, espn_id) -> str:
-    try:
-        negative = espn_id is not None and int(espn_id) < 0
-    except (TypeError, ValueError):
-        negative = False
-    if not negative:
-        return "player"
-    return _ENTITY_BY_POSITION.get((position or "").strip().upper(), "unknown")
+#
+# There used to be a private `_entity_type(position, espn_id)` here, a second
+# copy of migrate_player_entity_type.classify that nothing called. It was
+# removed on 2026-08-17 rather than left as a trap: it classified from
+# `position`, which migrate_player_fantasy_positions.py empties by design, so
+# the one reader who eventually trusted it would have got 'unknown' for all 96
+# constructs -- the exact defect that had this ingest failing every run.
+# There is one classifier now, in migrate_player_entity_type.py, and it reads
+# the publisher's id encoding.
 
 
 def _fetch_all() -> list:
     """Fetch the full player universe in one call (limit 20000, no ownership filter)."""
-    req = urllib.request.Request(URL, headers=HEADERS)
-    with urllib.request.urlopen(req, timeout=120) as r:
-        body = r.read().decode("utf-8")
-    data = json.loads(body)
+    data = _FETCH.fetch(URL)
     if len(data) < _MIN_UNIVERSE:
         raise RuntimeError(
             f"player feed returned {len(data)} entities (< {_MIN_UNIVERSE}): "
@@ -98,8 +99,7 @@ def _fetch_all() -> list:
 
 def _build_pro_team_map() -> dict[int, str]:
     """Fetch the published proTeams endpoint.  Fails closed — raises on error."""
-    with urllib.request.urlopen(PROTEAMS_URL, timeout=120) as r:
-        pro_data = json.loads(r.read().decode("utf-8"))
+    pro_data = _FETCH.fetch(PROTEAMS_URL)
     pro_team_map: dict[int, str] = {}
     for t in pro_data.get("settings", {}).get("proTeams", []):
         tid = t.get("id")

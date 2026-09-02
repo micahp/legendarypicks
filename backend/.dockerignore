@@ -1,6 +1,21 @@
 venv
 __pycache__
+
+# HTTP response caches. Third time this shape has cost us (see docs/ROADMAP.md
+# post-release #2): a rule that names one path while the writer writes to a
+# sibling. `data/cache` was the only one listed here, and the two caches that
+# actually exist are neither of them -- `backend/.espn-cache` (96MB, the one
+# swept into git by 8b296db) and `backend/data/espn-cache` (134MB). Both were
+# reaching the build context and getting baked into a layer by `COPY . .`.
+# Name every cache directory, not the one that was current when this was written.
 data/cache
+data/espn-cache
+.espn-cache
+
+# Online backups written by migrate_*/regrade scripts. `data/picks.db*` catches
+# the ones beside the database, but `backend/backups/` dodges every pattern here
+# for the same reason it dodged .gitignore on 2026-08-17.
+backups
 
 # Databases and their backups. `*` does NOT cross a path separator here, so a
 # bare `*.bak` matches only the context root and never `data/picks.db.bak-...`.

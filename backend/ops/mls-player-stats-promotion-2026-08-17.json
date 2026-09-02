@@ -1,0 +1,5744 @@
+{
+  "generated_at": "2026-08-17T21:53:38.104255+00:00",
+  "league": "mls",
+  "source": "data/picks.dev.db",
+  "target": "data/picks.db",
+  "joined_on": "players.espn_id",
+  "target_rows_before": 332,
+  "target_rows_after": 851,
+  "players_allocated": [
+    {
+      "espn_id": "102985",
+      "dst_player_id": 59364,
+      "name": "Oscar Ustari",
+      "inserted": true
+    },
+    {
+      "espn_id": "121021",
+      "dst_player_id": 59365,
+      "name": "Jordi Alba",
+      "inserted": true
+    },
+    {
+      "espn_id": "282589",
+      "dst_player_id": 59366,
+      "name": "Marcelo Weigandt",
+      "inserted": true
+    },
+    {
+      "espn_id": "121893",
+      "dst_player_id": 59367,
+      "name": "Sergio Busquets",
+      "inserted": true
+    },
+    {
+      "espn_id": "335238",
+      "dst_player_id": 59368,
+      "name": "Juli\u00e1n Fern\u00e1ndez",
+      "inserted": true
+    },
+    {
+      "espn_id": "173386",
+      "dst_player_id": 59369,
+      "name": "Yaw Yeboah",
+      "inserted": true
+    },
+    {
+      "espn_id": "337928",
+      "dst_player_id": 59370,
+      "name": "Lo\u00efc Mesanvi",
+      "inserted": true
+    },
+    {
+      "espn_id": "171673",
+      "dst_player_id": 59371,
+      "name": "Yuya Kubo",
+      "inserted": true
+    },
+    {
+      "espn_id": "297790",
+      "dst_player_id": 59372,
+      "name": "Kim Joon-Hong",
+      "inserted": true
+    },
+    {
+      "espn_id": "342830",
+      "dst_player_id": 59373,
+      "name": "Boris Enow",
+      "inserted": true
+    },
+    {
+      "espn_id": "106957",
+      "dst_player_id": 59374,
+      "name": "Christian Benteke",
+      "inserted": true
+    },
+    {
+      "espn_id": "223034",
+      "dst_player_id": 59375,
+      "name": "Randall Leal",
+      "inserted": true
+    },
+    {
+      "espn_id": "296240",
+      "dst_player_id": 59376,
+      "name": "Derek Dodson",
+      "inserted": true
+    },
+    {
+      "espn_id": "217281",
+      "dst_player_id": 59377,
+      "name": "Dominique Badji",
+      "inserted": true
+    },
+    {
+      "espn_id": "303577",
+      "dst_player_id": 59378,
+      "name": "Brian Guti\u00e9rrez",
+      "inserted": true
+    },
+    {
+      "espn_id": "159478",
+      "dst_player_id": 59379,
+      "name": "Kellyn Acosta",
+      "inserted": true
+    },
+    {
+      "espn_id": "156157",
+      "dst_player_id": 59380,
+      "name": "Darlington Nagbe",
+      "inserted": true
+    },
+    {
+      "espn_id": "297121",
+      "dst_player_id": 59381,
+      "name": "Jacen Russell-Rowe",
+      "inserted": true
+    },
+    {
+      "espn_id": "56935",
+      "dst_player_id": 59382,
+      "name": "Brad Guzan",
+      "inserted": true
+    },
+    {
+      "espn_id": "288479",
+      "dst_player_id": 59383,
+      "name": "Bartosz Slisz",
+      "inserted": true
+    },
+    {
+      "espn_id": "315919",
+      "dst_player_id": 59384,
+      "name": "Sunusi Ibrahim",
+      "inserted": true
+    },
+    {
+      "espn_id": "324044",
+      "dst_player_id": 59385,
+      "name": "Fernando \u00c1lvarez",
+      "inserted": true
+    },
+    {
+      "espn_id": "150334",
+      "dst_player_id": 59386,
+      "name": "Pedro Gallese",
+      "inserted": true
+    },
+    {
+      "espn_id": "255476",
+      "dst_player_id": 59387,
+      "name": "Rodrigo Schlegel",
+      "inserted": true
+    },
+    {
+      "espn_id": "291218",
+      "dst_player_id": 59388,
+      "name": "C\u00e9sar Araujo",
+      "inserted": true
+    },
+    {
+      "espn_id": "151510",
+      "dst_player_id": 59389,
+      "name": "Luis Muriel",
+      "inserted": true
+    },
+    {
+      "espn_id": "378916",
+      "dst_player_id": 59390,
+      "name": "Nicol\u00e1s Rodr\u00edguez",
+      "inserted": true
+    },
+    {
+      "espn_id": "248276",
+      "dst_player_id": 59391,
+      "name": "Alex Freeman",
+      "inserted": true
+    },
+    {
+      "espn_id": "203926",
+      "dst_player_id": 59392,
+      "name": "Mikkel Uhre",
+      "inserted": true
+    },
+    {
+      "espn_id": "246855",
+      "dst_player_id": 59393,
+      "name": "Olivier Mbaizo",
+      "inserted": true
+    },
+    {
+      "espn_id": "333746",
+      "dst_player_id": 59394,
+      "name": "Chris Donovan",
+      "inserted": true
+    },
+    {
+      "espn_id": "262507",
+      "dst_player_id": 59395,
+      "name": "Ignatius Ganago",
+      "inserted": true
+    },
+    {
+      "espn_id": "96526",
+      "dst_player_id": 59396,
+      "name": "Jonathan P\u00e9rez",
+      "inserted": true
+    },
+    {
+      "espn_id": "241859",
+      "dst_player_id": 59397,
+      "name": "Julio Cascante",
+      "inserted": true
+    },
+    {
+      "espn_id": "276407",
+      "dst_player_id": 59398,
+      "name": "Osman Bukari",
+      "inserted": true
+    },
+    {
+      "espn_id": "216183",
+      "dst_player_id": 59399,
+      "name": "J\u00e1der Obrian",
+      "inserted": true
+    },
+    {
+      "espn_id": "162946",
+      "dst_player_id": 59400,
+      "name": "Diego Rubio",
+      "inserted": true
+    },
+    {
+      "espn_id": "238919",
+      "dst_player_id": 59401,
+      "name": "Maarten Paes",
+      "inserted": true
+    },
+    {
+      "espn_id": "180955",
+      "dst_player_id": 59402,
+      "name": "Sebastian Lletget",
+      "inserted": true
+    },
+    {
+      "espn_id": "351188",
+      "dst_player_id": 59403,
+      "name": "Pedrinho",
+      "inserted": true
+    },
+    {
+      "espn_id": "233049",
+      "dst_player_id": 59404,
+      "name": "Andrew Tarbell",
+      "inserted": true
+    },
+    {
+      "espn_id": "302996",
+      "dst_player_id": 59405,
+      "name": "Obafemi Awodesu",
+      "inserted": true
+    },
+    {
+      "espn_id": "171623",
+      "dst_player_id": 59406,
+      "name": "Daniel Steres",
+      "inserted": true
+    },
+    {
+      "espn_id": "287464",
+      "dst_player_id": 59407,
+      "name": "Sebastian Kowalczyk",
+      "inserted": true
+    },
+    {
+      "espn_id": "255910",
+      "dst_player_id": 59408,
+      "name": "Amine Bassi",
+      "inserted": true
+    },
+    {
+      "espn_id": "304169",
+      "dst_player_id": 59409,
+      "name": "Erik Due\u00f1as",
+      "inserted": true
+    },
+    {
+      "espn_id": "199690",
+      "dst_player_id": 59410,
+      "name": "Franco Escobar",
+      "inserted": true
+    },
+    {
+      "espn_id": "312130",
+      "dst_player_id": 59411,
+      "name": "Adilson Malanda",
+      "inserted": true
+    },
+    {
+      "espn_id": "231057",
+      "dst_player_id": 59412,
+      "name": "Eryk Williamson",
+      "inserted": true
+    },
+    {
+      "espn_id": "246766",
+      "dst_player_id": 59413,
+      "name": "Miguel Berry",
+      "inserted": true
+    },
+    {
+      "espn_id": "146067",
+      "dst_player_id": 59414,
+      "name": "Teal Bunbury",
+      "inserted": true
+    },
+    {
+      "espn_id": "149994",
+      "dst_player_id": 59415,
+      "name": "Samuel Williams",
+      "inserted": true
+    },
+    {
+      "espn_id": "132237",
+      "dst_player_id": 59416,
+      "name": "Omar Gonz\u00e1lez",
+      "inserted": true
+    },
+    {
+      "espn_id": "325335",
+      "dst_player_id": 59417,
+      "name": "Harold Osorio",
+      "inserted": true
+    },
+    {
+      "espn_id": "311165",
+      "dst_player_id": 59418,
+      "name": "Rida Zouhir",
+      "inserted": true
+    },
+    {
+      "espn_id": "400746",
+      "dst_player_id": 59419,
+      "name": "Anderson Rosa",
+      "inserted": true
+    },
+    {
+      "espn_id": "111177",
+      "dst_player_id": 59420,
+      "name": "Mathias J\u00f8rgensen",
+      "inserted": true
+    },
+    {
+      "espn_id": "311088",
+      "dst_player_id": 59421,
+      "name": "Leo Afonso",
+      "inserted": true
+    },
+    {
+      "espn_id": "280680",
+      "dst_player_id": 59422,
+      "name": "Adam Salda\u00f1a",
+      "inserted": true
+    },
+    {
+      "espn_id": "276305",
+      "dst_player_id": 59423,
+      "name": "Luca Orellano",
+      "inserted": true
+    },
+    {
+      "espn_id": "156228",
+      "dst_player_id": 59424,
+      "name": "Gast\u00f3n Brugman",
+      "inserted": true
+    },
+    {
+      "espn_id": "180719",
+      "dst_player_id": 59425,
+      "name": "Andreas Maxs\u00f8",
+      "inserted": true
+    },
+    {
+      "espn_id": "287355",
+      "dst_player_id": 59426,
+      "name": "Tucker Lepley",
+      "inserted": true
+    },
+    {
+      "espn_id": "176044",
+      "dst_player_id": 59427,
+      "name": "Brad Smith",
+      "inserted": true
+    },
+    {
+      "espn_id": "285949",
+      "dst_player_id": 59428,
+      "name": "Odin Holm",
+      "inserted": true
+    },
+    {
+      "espn_id": "391448",
+      "dst_player_id": 59429,
+      "name": "Adrian Wibowo",
+      "inserted": true
+    },
+    {
+      "espn_id": "203304",
+      "dst_player_id": 59430,
+      "name": "J\u00fanior Urso",
+      "inserted": true
+    },
+    {
+      "espn_id": "241661",
+      "dst_player_id": 59431,
+      "name": "Rominigue Kouam\u00e9",
+      "inserted": true
+    },
+    {
+      "espn_id": "270788",
+      "dst_player_id": 59432,
+      "name": "Wyatt Omsberg",
+      "inserted": true
+    },
+    {
+      "espn_id": "240232",
+      "dst_player_id": 59433,
+      "name": "Derrick Jones",
+      "inserted": true
+    },
+    {
+      "espn_id": "183779",
+      "dst_player_id": 59434,
+      "name": "Eriq Zavaleta",
+      "inserted": true
+    },
+    {
+      "espn_id": "399258",
+      "dst_player_id": 59435,
+      "name": "Samuel Bassett",
+      "inserted": true
+    },
+    {
+      "espn_id": "250685",
+      "dst_player_id": 59436,
+      "name": "Giacomo Vrioni",
+      "inserted": true
+    },
+    {
+      "espn_id": "286759",
+      "dst_player_id": 59437,
+      "name": "Nicholas Scardina",
+      "inserted": true
+    },
+    {
+      "espn_id": "319388",
+      "dst_player_id": 59438,
+      "name": "Tarik Scott",
+      "inserted": true
+    },
+    {
+      "espn_id": "381592",
+      "dst_player_id": 59439,
+      "name": "Jeong Ho-Yeon",
+      "inserted": true
+    },
+    {
+      "espn_id": "237957",
+      "dst_player_id": 59440,
+      "name": "Lassi Lappalainen",
+      "inserted": true
+    },
+    {
+      "espn_id": "204833",
+      "dst_player_id": 59441,
+      "name": "Pablo Ort\u00edz",
+      "inserted": true
+    },
+    {
+      "espn_id": "245843",
+      "dst_player_id": 59442,
+      "name": "Paxton Pomykal",
+      "inserted": true
+    },
+    {
+      "espn_id": "75574",
+      "dst_player_id": 59443,
+      "name": "Kei Kamara",
+      "inserted": true
+    },
+    {
+      "espn_id": "188305",
+      "dst_player_id": 59444,
+      "name": "Dario Zuparic",
+      "inserted": true
+    },
+    {
+      "espn_id": "339804",
+      "dst_player_id": 59445,
+      "name": "Baltasar Rodr\u00edguez",
+      "inserted": true
+    },
+    {
+      "espn_id": "6746",
+      "dst_player_id": 59446,
+      "name": "David Bingham",
+      "inserted": true
+    },
+    {
+      "espn_id": "259654",
+      "dst_player_id": 59447,
+      "name": "Nykolas Sessock",
+      "inserted": true
+    },
+    {
+      "espn_id": "307126",
+      "dst_player_id": 59448,
+      "name": "Andy Moran",
+      "inserted": true
+    },
+    {
+      "espn_id": "239814",
+      "dst_player_id": 59449,
+      "name": "Alexandru Baluta",
+      "inserted": true
+    },
+    {
+      "espn_id": "218965",
+      "dst_player_id": 59450,
+      "name": "Jailson",
+      "inserted": true
+    },
+    {
+      "espn_id": "379938",
+      "dst_player_id": 59451,
+      "name": "Markus Anderson",
+      "inserted": true
+    },
+    {
+      "espn_id": "366021",
+      "dst_player_id": 59452,
+      "name": "Anthony Ram\u00edrez",
+      "inserted": true
+    },
+    {
+      "espn_id": "338175",
+      "dst_player_id": 59453,
+      "name": "Edward Davis",
+      "inserted": true
+    },
+    {
+      "espn_id": "338832",
+      "dst_player_id": 59454,
+      "name": "Alan Carleton",
+      "inserted": true
+    },
+    {
+      "espn_id": "381176",
+      "dst_player_id": 59455,
+      "name": "Salvatore Mazzaferro",
+      "inserted": true
+    },
+    {
+      "espn_id": "315922",
+      "dst_player_id": 59456,
+      "name": "Patrick Weah",
+      "inserted": true
+    },
+    {
+      "espn_id": "261589",
+      "dst_player_id": 59457,
+      "name": "David Ochoa",
+      "inserted": true
+    },
+    {
+      "espn_id": "159461",
+      "dst_player_id": 59458,
+      "name": "Bill Tuiloma",
+      "inserted": true
+    },
+    {
+      "espn_id": "356108",
+      "dst_player_id": 59459,
+      "name": "Brandon Cambridge",
+      "inserted": true
+    },
+    {
+      "espn_id": "407483",
+      "dst_player_id": 59460,
+      "name": "Sebastiano Musu",
+      "inserted": true
+    },
+    {
+      "espn_id": "302890",
+      "dst_player_id": 59461,
+      "name": "Luke Hille",
+      "inserted": true
+    },
+    {
+      "espn_id": "249728",
+      "dst_player_id": 59462,
+      "name": "Tate Schmitt",
+      "inserted": true
+    },
+    {
+      "espn_id": "297098",
+      "dst_player_id": 59463,
+      "name": "Daouda Amadou",
+      "inserted": true
+    },
+    {
+      "espn_id": "257744",
+      "dst_player_id": 59464,
+      "name": "Brenner",
+      "inserted": true
+    },
+    {
+      "espn_id": "376802",
+      "dst_player_id": 59465,
+      "name": "Allan Oyirwoth",
+      "inserted": true
+    },
+    {
+      "espn_id": "273249",
+      "dst_player_id": 59466,
+      "name": "Jacob Jackson",
+      "inserted": true
+    },
+    {
+      "espn_id": "410439",
+      "dst_player_id": 59467,
+      "name": "Sharod George",
+      "inserted": true
+    },
+    {
+      "espn_id": "400005",
+      "dst_player_id": 59468,
+      "name": "Nicklaus Sullivan",
+      "inserted": true
+    }
+  ],
+  "mapping": [
+    {
+      "espn_id": "102985",
+      "src_player_id": 32578,
+      "dst_player_id": 59364,
+      "name": "Oscar Ustari"
+    },
+    {
+      "espn_id": "121021",
+      "src_player_id": 32581,
+      "dst_player_id": 59365,
+      "name": "Jordi Alba"
+    },
+    {
+      "espn_id": "282589",
+      "src_player_id": 32582,
+      "dst_player_id": 59366,
+      "name": "Marcelo Weigandt"
+    },
+    {
+      "espn_id": "121893",
+      "src_player_id": 32593,
+      "dst_player_id": 59367,
+      "name": "Sergio Busquets"
+    },
+    {
+      "espn_id": "335238",
+      "src_player_id": 32762,
+      "dst_player_id": 59368,
+      "name": "Juli\u00e1n Fern\u00e1ndez"
+    },
+    {
+      "espn_id": "173386",
+      "src_player_id": 32558,
+      "dst_player_id": 59369,
+      "name": "Yaw Yeboah"
+    },
+    {
+      "espn_id": "337928",
+      "src_player_id": 32637,
+      "dst_player_id": 59370,
+      "name": "Lo\u00efc Mesanvi"
+    },
+    {
+      "espn_id": "171673",
+      "src_player_id": 32320,
+      "dst_player_id": 59371,
+      "name": "Yuya Kubo"
+    },
+    {
+      "espn_id": "297790",
+      "src_player_id": 32454,
+      "dst_player_id": 59372,
+      "name": "Kim Joon-Hong"
+    },
+    {
+      "espn_id": "342830",
+      "src_player_id": 32470,
+      "dst_player_id": 59373,
+      "name": "Boris Enow"
+    },
+    {
+      "espn_id": "106957",
+      "src_player_id": 32471,
+      "dst_player_id": 59374,
+      "name": "Christian Benteke"
+    },
+    {
+      "espn_id": "223034",
+      "src_player_id": 32473,
+      "dst_player_id": 59375,
+      "name": "Randall Leal"
+    },
+    {
+      "espn_id": "296240",
+      "src_player_id": 32459,
+      "dst_player_id": 59376,
+      "name": "Derek Dodson"
+    },
+    {
+      "espn_id": "217281",
+      "src_player_id": 32472,
+      "dst_player_id": 59377,
+      "name": "Dominique Badji"
+    },
+    {
+      "espn_id": "303577",
+      "src_player_id": 32279,
+      "dst_player_id": 59378,
+      "name": "Brian Guti\u00e9rrez"
+    },
+    {
+      "espn_id": "159478",
+      "src_player_id": 32275,
+      "dst_player_id": 59379,
+      "name": "Kellyn Acosta"
+    },
+    {
+      "espn_id": "156157",
+      "src_player_id": 32342,
+      "dst_player_id": 59380,
+      "name": "Darlington Nagbe"
+    },
+    {
+      "espn_id": "297121",
+      "src_player_id": 32354,
+      "dst_player_id": 59381,
+      "name": "Jacen Russell-Rowe"
+    },
+    {
+      "espn_id": "56935",
+      "src_player_id": 32201,
+      "dst_player_id": 59382,
+      "name": "Brad Guzan"
+    },
+    {
+      "espn_id": "288479",
+      "src_player_id": 32219,
+      "dst_player_id": 59383,
+      "name": "Bartosz Slisz"
+    },
+    {
+      "espn_id": "315919",
+      "src_player_id": 32662,
+      "dst_player_id": 59384,
+      "name": "Sunusi Ibrahim"
+    },
+    {
+      "espn_id": "324044",
+      "src_player_id": 32649,
+      "dst_player_id": 59385,
+      "name": "Fernando \u00c1lvarez"
+    },
+    {
+      "espn_id": "150334",
+      "src_player_id": 32769,
+      "dst_player_id": 59386,
+      "name": "Pedro Gallese"
+    },
+    {
+      "espn_id": "255476",
+      "src_player_id": 32775,
+      "dst_player_id": 59387,
+      "name": "Rodrigo Schlegel"
+    },
+    {
+      "espn_id": "291218",
+      "src_player_id": 32786,
+      "dst_player_id": 59388,
+      "name": "C\u00e9sar Araujo"
+    },
+    {
+      "espn_id": "151510",
+      "src_player_id": 32794,
+      "dst_player_id": 59389,
+      "name": "Luis Muriel"
+    },
+    {
+      "espn_id": "378916",
+      "src_player_id": 32800,
+      "dst_player_id": 59390,
+      "name": "Nicol\u00e1s Rodr\u00edguez"
+    },
+    {
+      "espn_id": "248276",
+      "src_player_id": 32774,
+      "dst_player_id": 59391,
+      "name": "Alex Freeman"
+    },
+    {
+      "espn_id": "203926",
+      "src_player_id": 32824,
+      "dst_player_id": 59392,
+      "name": "Mikkel Uhre"
+    },
+    {
+      "espn_id": "246855",
+      "src_player_id": 32808,
+      "dst_player_id": 59393,
+      "name": "Olivier Mbaizo"
+    },
+    {
+      "espn_id": "333746",
+      "src_player_id": 32828,
+      "dst_player_id": 59394,
+      "name": "Chris Donovan"
+    },
+    {
+      "espn_id": "262507",
+      "src_player_id": 32694,
+      "dst_player_id": 59395,
+      "name": "Ignatius Ganago"
+    },
+    {
+      "espn_id": "96526",
+      "src_player_id": 32716,
+      "dst_player_id": 59396,
+      "name": "Jonathan P\u00e9rez"
+    },
+    {
+      "espn_id": "241859",
+      "src_player_id": 32239,
+      "dst_player_id": 59397,
+      "name": "Julio Cascante"
+    },
+    {
+      "espn_id": "276407",
+      "src_player_id": 32258,
+      "dst_player_id": 59398,
+      "name": "Osman Bukari"
+    },
+    {
+      "espn_id": "216183",
+      "src_player_id": 32254,
+      "dst_player_id": 59399,
+      "name": "J\u00e1der Obrian"
+    },
+    {
+      "espn_id": "162946",
+      "src_player_id": 32253,
+      "dst_player_id": 59400,
+      "name": "Diego Rubio"
+    },
+    {
+      "espn_id": "238919",
+      "src_player_id": 32416,
+      "dst_player_id": 59401,
+      "name": "Maarten Paes"
+    },
+    {
+      "espn_id": "180955",
+      "src_player_id": 32432,
+      "dst_player_id": 59402,
+      "name": "Sebastian Lletget"
+    },
+    {
+      "espn_id": "351188",
+      "src_player_id": 32437,
+      "dst_player_id": 59403,
+      "name": "Pedrinho"
+    },
+    {
+      "espn_id": "233049",
+      "src_player_id": 32480,
+      "dst_player_id": 59404,
+      "name": "Andrew Tarbell"
+    },
+    {
+      "espn_id": "302996",
+      "src_player_id": 32490,
+      "dst_player_id": 59405,
+      "name": "Obafemi Awodesu"
+    },
+    {
+      "espn_id": "171623",
+      "src_player_id": 32484,
+      "dst_player_id": 59406,
+      "name": "Daniel Steres"
+    },
+    {
+      "espn_id": "287464",
+      "src_player_id": 32501,
+      "dst_player_id": 59407,
+      "name": "Sebastian Kowalczyk"
+    },
+    {
+      "espn_id": "255910",
+      "src_player_id": 32497,
+      "dst_player_id": 59408,
+      "name": "Amine Bassi"
+    },
+    {
+      "espn_id": "304169",
+      "src_player_id": 32503,
+      "dst_player_id": 59409,
+      "name": "Erik Due\u00f1as"
+    },
+    {
+      "espn_id": "199690",
+      "src_player_id": 32486,
+      "dst_player_id": 59410,
+      "name": "Franco Escobar"
+    },
+    {
+      "espn_id": "312130",
+      "src_player_id": 32367,
+      "dst_player_id": 59411,
+      "name": "Adilson Malanda"
+    },
+    {
+      "espn_id": "231057",
+      "src_player_id": 32371,
+      "dst_player_id": 59412,
+      "name": "Eryk Williamson"
+    },
+    {
+      "espn_id": "246766",
+      "src_player_id": 32536,
+      "dst_player_id": 59413,
+      "name": "Miguel Berry"
+    },
+    {
+      "espn_id": "146067",
+      "src_player_id": 32729,
+      "dst_player_id": 59414,
+      "name": "Teal Bunbury"
+    },
+    {
+      "espn_id": "149994",
+      "src_player_id": 32274,
+      "dst_player_id": 59415,
+      "name": "Samuel Williams"
+    },
+    {
+      "espn_id": "132237",
+      "src_player_id": 32263,
+      "dst_player_id": 59416,
+      "name": "Omar Gonz\u00e1lez"
+    },
+    {
+      "espn_id": "325335",
+      "src_player_id": 32281,
+      "dst_player_id": 59417,
+      "name": "Harold Osorio"
+    },
+    {
+      "espn_id": "311165",
+      "src_player_id": 32468,
+      "dst_player_id": 59418,
+      "name": "Rida Zouhir"
+    },
+    {
+      "espn_id": "400746",
+      "src_player_id": 32398,
+      "dst_player_id": 59419,
+      "name": "Anderson Rosa"
+    },
+    {
+      "espn_id": "111177",
+      "src_player_id": 32518,
+      "dst_player_id": 59420,
+      "name": "Mathias J\u00f8rgensen"
+    },
+    {
+      "espn_id": "311088",
+      "src_player_id": 32229,
+      "dst_player_id": 59421,
+      "name": "Leo Afonso"
+    },
+    {
+      "espn_id": "280680",
+      "src_player_id": 32563,
+      "dst_player_id": 59422,
+      "name": "Adam Salda\u00f1a"
+    },
+    {
+      "espn_id": "276305",
+      "src_player_id": 32323,
+      "dst_player_id": 59423,
+      "name": "Luca Orellano"
+    },
+    {
+      "espn_id": "156228",
+      "src_player_id": 32717,
+      "dst_player_id": 59424,
+      "name": "Gast\u00f3n Brugman"
+    },
+    {
+      "espn_id": "180719",
+      "src_player_id": 32390,
+      "dst_player_id": 59425,
+      "name": "Andreas Maxs\u00f8"
+    },
+    {
+      "espn_id": "287355",
+      "src_player_id": 32531,
+      "dst_player_id": 59426,
+      "name": "Tucker Lepley"
+    },
+    {
+      "espn_id": "176044",
+      "src_player_id": 32303,
+      "dst_player_id": 59427,
+      "name": "Brad Smith"
+    },
+    {
+      "espn_id": "285949",
+      "src_player_id": 32565,
+      "dst_player_id": 59428,
+      "name": "Odin Holm"
+    },
+    {
+      "espn_id": "391448",
+      "src_player_id": 32577,
+      "dst_player_id": 59429,
+      "name": "Adrian Wibowo"
+    },
+    {
+      "espn_id": "203304",
+      "src_player_id": 32494,
+      "dst_player_id": 59430,
+      "name": "J\u00fanior Urso"
+    },
+    {
+      "espn_id": "241661",
+      "src_player_id": 32276,
+      "dst_player_id": 59431,
+      "name": "Rominigue Kouam\u00e9"
+    },
+    {
+      "espn_id": "270788",
+      "src_player_id": 32675,
+      "dst_player_id": 59432,
+      "name": "Wyatt Omsberg"
+    },
+    {
+      "espn_id": "240232",
+      "src_player_id": 32345,
+      "dst_player_id": 59433,
+      "name": "Derrick Jones"
+    },
+    {
+      "espn_id": "183779",
+      "src_player_id": 32520,
+      "dst_player_id": 59434,
+      "name": "Eriq Zavaleta"
+    },
+    {
+      "espn_id": "399258",
+      "src_player_id": 32408,
+      "dst_player_id": 59435,
+      "name": "Samuel Bassett"
+    },
+    {
+      "espn_id": "250685",
+      "src_player_id": 32658,
+      "dst_player_id": 59436,
+      "name": "Giacomo Vrioni"
+    },
+    {
+      "espn_id": "286759",
+      "src_player_id": 32365,
+      "dst_player_id": 59437,
+      "name": "Nicholas Scardina"
+    },
+    {
+      "espn_id": "319388",
+      "src_player_id": 32444,
+      "dst_player_id": 59438,
+      "name": "Tarik Scott"
+    },
+    {
+      "espn_id": "381592",
+      "src_player_id": 32634,
+      "dst_player_id": 59439,
+      "name": "Jeong Ho-Yeon"
+    },
+    {
+      "espn_id": "237957",
+      "src_player_id": 32351,
+      "dst_player_id": 59440,
+      "name": "Lassi Lappalainen"
+    },
+    {
+      "espn_id": "204833",
+      "src_player_id": 32488,
+      "dst_player_id": 59441,
+      "name": "Pablo Ort\u00edz"
+    },
+    {
+      "espn_id": "245843",
+      "src_player_id": 32433,
+      "dst_player_id": 59442,
+      "name": "Paxton Pomykal"
+    },
+    {
+      "espn_id": "75574",
+      "src_player_id": 32319,
+      "dst_player_id": 59443,
+      "name": "Kei Kamara"
+    },
+    {
+      "espn_id": "188305",
+      "src_player_id": 32838,
+      "dst_player_id": 59444,
+      "name": "Dario Zuparic"
+    },
+    {
+      "espn_id": "339804",
+      "src_player_id": 32600,
+      "dst_player_id": 59445,
+      "name": "Baltasar Rodr\u00edguez"
+    },
+    {
+      "espn_id": "6746",
+      "src_player_id": 32357,
+      "dst_player_id": 59446,
+      "name": "David Bingham"
+    },
+    {
+      "espn_id": "259654",
+      "src_player_id": 32209,
+      "dst_player_id": 59447,
+      "name": "Nykolas Sessock"
+    },
+    {
+      "espn_id": "307126",
+      "src_player_id": 32567,
+      "dst_player_id": 59448,
+      "name": "Andy Moran"
+    },
+    {
+      "espn_id": "239814",
+      "src_player_id": 32573,
+      "dst_player_id": 59449,
+      "name": "Alexandru Baluta"
+    },
+    {
+      "espn_id": "218965",
+      "src_player_id": 32560,
+      "dst_player_id": 59450,
+      "name": "Jailson"
+    },
+    {
+      "espn_id": "379938",
+      "src_player_id": 32831,
+      "dst_player_id": 59451,
+      "name": "Markus Anderson"
+    },
+    {
+      "espn_id": "366021",
+      "src_player_id": 32448,
+      "dst_player_id": 59452,
+      "name": "Anthony Ram\u00edrez"
+    },
+    {
+      "espn_id": "338175",
+      "src_player_id": 32829,
+      "dst_player_id": 59453,
+      "name": "Edward Davis"
+    },
+    {
+      "espn_id": "338832",
+      "src_player_id": 32727,
+      "dst_player_id": 59454,
+      "name": "Alan Carleton"
+    },
+    {
+      "espn_id": "381176",
+      "src_player_id": 32212,
+      "dst_player_id": 59455,
+      "name": "Salvatore Mazzaferro"
+    },
+    {
+      "espn_id": "315922",
+      "src_player_id": 32230,
+      "dst_player_id": 59456,
+      "name": "Patrick Weah"
+    },
+    {
+      "espn_id": "261589",
+      "src_player_id": 32544,
+      "dst_player_id": 59457,
+      "name": "David Ochoa"
+    },
+    {
+      "espn_id": "159461",
+      "src_player_id": 32363,
+      "dst_player_id": 59458,
+      "name": "Bill Tuiloma"
+    },
+    {
+      "espn_id": "356108",
+      "src_player_id": 32385,
+      "dst_player_id": 59459,
+      "name": "Brandon Cambridge"
+    },
+    {
+      "espn_id": "407483",
+      "src_player_id": 32767,
+      "dst_player_id": 59460,
+      "name": "Sebastiano Musu"
+    },
+    {
+      "espn_id": "302890",
+      "src_player_id": 32629,
+      "dst_player_id": 59461,
+      "name": "Luke Hille"
+    },
+    {
+      "espn_id": "249728",
+      "src_player_id": 32710,
+      "dst_player_id": 59462,
+      "name": "Tate Schmitt"
+    },
+    {
+      "espn_id": "297098",
+      "src_player_id": 32403,
+      "dst_player_id": 59463,
+      "name": "Daouda Amadou"
+    },
+    {
+      "espn_id": "257744",
+      "src_player_id": 32322,
+      "dst_player_id": 59464,
+      "name": "Brenner"
+    },
+    {
+      "espn_id": "376802",
+      "src_player_id": 32688,
+      "dst_player_id": 59465,
+      "name": "Allan Oyirwoth"
+    },
+    {
+      "espn_id": "273249",
+      "src_player_id": 32417,
+      "dst_player_id": 59466,
+      "name": "Jacob Jackson"
+    },
+    {
+      "espn_id": "410439",
+      "src_player_id": 32692,
+      "dst_player_id": 59467,
+      "name": "Sharod George"
+    },
+    {
+      "espn_id": "400005",
+      "src_player_id": 32542,
+      "dst_player_id": 59468,
+      "name": "Nicklaus Sullivan"
+    },
+    {
+      "espn_id": "316344",
+      "src_player_id": 32586,
+      "dst_player_id": 58672,
+      "name": "Noah Allen"
+    },
+    {
+      "espn_id": "358595",
+      "src_player_id": 32588,
+      "dst_player_id": 32588,
+      "name": "Tom\u00e1s Avil\u00e9s"
+    },
+    {
+      "espn_id": "229289",
+      "src_player_id": 32596,
+      "dst_player_id": 58681,
+      "name": "David Ruiz"
+    },
+    {
+      "espn_id": "211678",
+      "src_player_id": 32603,
+      "dst_player_id": 58344,
+      "name": "Faf\u00e0 Picault"
+    },
+    {
+      "espn_id": "125088",
+      "src_player_id": 32602,
+      "dst_player_id": 58689,
+      "name": "Luis Su\u00e1rez"
+    },
+    {
+      "espn_id": "45843",
+      "src_player_id": 32601,
+      "dst_player_id": 58688,
+      "name": "Lionel Messi"
+    },
+    {
+      "espn_id": "237823",
+      "src_player_id": 32256,
+      "dst_player_id": 58629,
+      "name": "Robert Taylor"
+    },
+    {
+      "espn_id": "315617",
+      "src_player_id": 32584,
+      "dst_player_id": 58670,
+      "name": "Gonzalo Luj\u00e1n"
+    },
+    {
+      "espn_id": "315594",
+      "src_player_id": 32598,
+      "dst_player_id": 58682,
+      "name": "Telasco Segovia"
+    },
+    {
+      "espn_id": "316269",
+      "src_player_id": 32585,
+      "dst_player_id": 58671,
+      "name": "Ian Fray"
+    },
+    {
+      "espn_id": "252974",
+      "src_player_id": 32738,
+      "dst_player_id": 58812,
+      "name": "Matt Freese"
+    },
+    {
+      "espn_id": "270669",
+      "src_player_id": 32743,
+      "dst_player_id": 32743,
+      "name": "Strahinja Tanasijevic"
+    },
+    {
+      "espn_id": "254450",
+      "src_player_id": 32742,
+      "dst_player_id": 58814,
+      "name": "Kevin O'Toole"
+    },
+    {
+      "espn_id": "321979",
+      "src_player_id": 32746,
+      "dst_player_id": 58819,
+      "name": "Mitja Ilenic"
+    },
+    {
+      "espn_id": "70624",
+      "src_player_id": 32750,
+      "dst_player_id": 58824,
+      "name": "Maxi Mor\u00e1lez"
+    },
+    {
+      "espn_id": "285383",
+      "src_player_id": 32755,
+      "dst_player_id": 58622,
+      "name": "Justin Haak"
+    },
+    {
+      "espn_id": "268192",
+      "src_player_id": 32754,
+      "dst_player_id": 58829,
+      "name": "Keaton Parks"
+    },
+    {
+      "espn_id": "310827",
+      "src_player_id": 32761,
+      "dst_player_id": 58839,
+      "name": "Alonso Mart\u00ednez"
+    },
+    {
+      "espn_id": "337149",
+      "src_player_id": 32763,
+      "dst_player_id": 58841,
+      "name": "Agustin Ojeda"
+    },
+    {
+      "espn_id": "250852",
+      "src_player_id": 32760,
+      "dst_player_id": 58837,
+      "name": "Hannes Wolf"
+    },
+    {
+      "espn_id": "400718",
+      "src_player_id": 32749,
+      "dst_player_id": 58823,
+      "name": "Nico Cavallo"
+    },
+    {
+      "espn_id": "259199",
+      "src_player_id": 32753,
+      "dst_player_id": 58828,
+      "name": "Andr\u00e9s Perea"
+    },
+    {
+      "espn_id": "358680",
+      "src_player_id": 32756,
+      "dst_player_id": 58831,
+      "name": "Jonathan Shore"
+    },
+    {
+      "espn_id": "43372",
+      "src_player_id": 32543,
+      "dst_player_id": 58634,
+      "name": "Hugo Lloris"
+    },
+    {
+      "espn_id": "201103",
+      "src_player_id": 32549,
+      "dst_player_id": 58639,
+      "name": "Aaron Long"
+    },
+    {
+      "espn_id": "183758",
+      "src_player_id": 32547,
+      "dst_player_id": 58637,
+      "name": "Ryan Hollingshead"
+    },
+    {
+      "espn_id": "218252",
+      "src_player_id": 32550,
+      "dst_player_id": 58640,
+      "name": "Sergi Palencia"
+    },
+    {
+      "espn_id": "322658",
+      "src_player_id": 32568,
+      "dst_player_id": 58650,
+      "name": "Igor Jesus"
+    },
+    {
+      "espn_id": "231192",
+      "src_player_id": 32561,
+      "dst_player_id": 58647,
+      "name": "Timothy Tillman"
+    },
+    {
+      "espn_id": "193171",
+      "src_player_id": 32559,
+      "dst_player_id": 58646,
+      "name": "Mark Delgado"
+    },
+    {
+      "espn_id": "251805",
+      "src_player_id": 32574,
+      "dst_player_id": 58657,
+      "name": "Jeremy Ebobisse"
+    },
+    {
+      "espn_id": "213304",
+      "src_player_id": 32572,
+      "dst_player_id": 58656,
+      "name": "Denis Bouanga"
+    },
+    {
+      "espn_id": "115713",
+      "src_player_id": 32570,
+      "dst_player_id": 58653,
+      "name": "David Mart\u00ednez"
+    },
+    {
+      "espn_id": "283453",
+      "src_player_id": 32552,
+      "dst_player_id": 58643,
+      "name": "Nkosi Tafari"
+    },
+    {
+      "espn_id": "340613",
+      "src_player_id": 32576,
+      "dst_player_id": 58574,
+      "name": "Nathan Ordaz"
+    },
+    {
+      "espn_id": "199904",
+      "src_player_id": 32548,
+      "dst_player_id": 58638,
+      "name": "Eddie Segura"
+    },
+    {
+      "espn_id": "231059",
+      "src_player_id": 32608,
+      "dst_player_id": 58663,
+      "name": "Dayne St. Clair"
+    },
+    {
+      "espn_id": "101934",
+      "src_player_id": 32611,
+      "dst_player_id": 58700,
+      "name": "Michael Boxall"
+    },
+    {
+      "espn_id": "337922",
+      "src_player_id": 32617,
+      "dst_player_id": 58705,
+      "name": "Morris Duggan"
+    },
+    {
+      "espn_id": "285452",
+      "src_player_id": 32627,
+      "dst_player_id": 58712,
+      "name": "Carlos Harvey"
+    },
+    {
+      "espn_id": "286669",
+      "src_player_id": 32628,
+      "dst_player_id": 58361,
+      "name": "Joseph Rosales"
+    },
+    {
+      "espn_id": "287784",
+      "src_player_id": 32635,
+      "dst_player_id": 58716,
+      "name": "Bongokuhle Hlongwane"
+    },
+    {
+      "espn_id": "183726",
+      "src_player_id": 32621,
+      "dst_player_id": 58708,
+      "name": "Wil Trapp"
+    },
+    {
+      "espn_id": "233943",
+      "src_player_id": 32623,
+      "dst_player_id": 58709,
+      "name": "Joaqu\u00edn Pereyra"
+    },
+    {
+      "espn_id": "245570",
+      "src_player_id": 32624,
+      "dst_player_id": 58975,
+      "name": "Hassani Dotson"
+    },
+    {
+      "espn_id": "289941",
+      "src_player_id": 32636,
+      "dst_player_id": 58717,
+      "name": "Kelvin Yeboah"
+    },
+    {
+      "espn_id": "195992",
+      "src_player_id": 32622,
+      "dst_player_id": 58387,
+      "name": "Robin Lod"
+    },
+    {
+      "espn_id": "281323",
+      "src_player_id": 32613,
+      "dst_player_id": 58702,
+      "name": "Anthony Markanich"
+    },
+    {
+      "espn_id": "315972",
+      "src_player_id": 32298,
+      "dst_player_id": 58403,
+      "name": "Roman Celentano"
+    },
+    {
+      "espn_id": "249768",
+      "src_player_id": 32307,
+      "dst_player_id": 58411,
+      "name": "Miles Robinson"
+    },
+    {
+      "espn_id": "232755",
+      "src_player_id": 32306,
+      "dst_player_id": 58408,
+      "name": "Teenage Hadebe"
+    },
+    {
+      "espn_id": "42583",
+      "src_player_id": 32301,
+      "dst_player_id": 32301,
+      "name": "Gilberto Flores"
+    },
+    {
+      "espn_id": "311520",
+      "src_player_id": 32308,
+      "dst_player_id": 58944,
+      "name": "Lukas Engel"
+    },
+    {
+      "espn_id": "275106",
+      "src_player_id": 32312,
+      "dst_player_id": 58416,
+      "name": "Obinna Nwobodo"
+    },
+    {
+      "espn_id": "279180",
+      "src_player_id": 32313,
+      "dst_player_id": 58417,
+      "name": "Pavel Bucha"
+    },
+    {
+      "espn_id": "86436",
+      "src_player_id": 32310,
+      "dst_player_id": 58414,
+      "name": "Evander"
+    },
+    {
+      "espn_id": "251694",
+      "src_player_id": 32321,
+      "dst_player_id": 58424,
+      "name": "K\u00e9vin Denkey"
+    },
+    {
+      "espn_id": "398300",
+      "src_player_id": 32318,
+      "dst_player_id": 58421,
+      "name": "Stefan Chirila"
+    },
+    {
+      "espn_id": "254292",
+      "src_player_id": 32311,
+      "dst_player_id": 58415,
+      "name": "Tah Anunga"
+    },
+    {
+      "espn_id": "159296",
+      "src_player_id": 32302,
+      "dst_player_id": 58405,
+      "name": "Alvas Powell"
+    },
+    {
+      "espn_id": "333699",
+      "src_player_id": 32461,
+      "dst_player_id": 58560,
+      "name": "Lucas Bartlett"
+    },
+    {
+      "espn_id": "228416",
+      "src_player_id": 32455,
+      "dst_player_id": 58557,
+      "name": "Kye Rowles"
+    },
+    {
+      "espn_id": "256210",
+      "src_player_id": 32456,
+      "dst_player_id": 32456,
+      "name": "Aaron Herrera"
+    },
+    {
+      "espn_id": "269158",
+      "src_player_id": 32463,
+      "dst_player_id": 58564,
+      "name": "Brandon Servania"
+    },
+    {
+      "espn_id": "271242",
+      "src_player_id": 32457,
+      "dst_player_id": 58468,
+      "name": "David Schnegg"
+    },
+    {
+      "espn_id": "380712",
+      "src_player_id": 32476,
+      "dst_player_id": 58575,
+      "name": "Jacob Murrell"
+    },
+    {
+      "espn_id": "308772",
+      "src_player_id": 32467,
+      "dst_player_id": 58567,
+      "name": "Hosei Kijima"
+    },
+    {
+      "espn_id": "307475",
+      "src_player_id": 32466,
+      "dst_player_id": 58968,
+      "name": "Gabriel Pirani"
+    },
+    {
+      "espn_id": "303693",
+      "src_player_id": 32261,
+      "dst_player_id": 58373,
+      "name": "Chris Brady"
+    },
+    {
+      "espn_id": "233813",
+      "src_player_id": 32265,
+      "dst_player_id": 58376,
+      "name": "Jack Elliott"
+    },
+    {
+      "espn_id": "245068",
+      "src_player_id": 32267,
+      "dst_player_id": 58378,
+      "name": "Andrew Gutman"
+    },
+    {
+      "espn_id": "293671",
+      "src_player_id": 32278,
+      "dst_player_id": 58380,
+      "name": "Jonathan Dean"
+    },
+    {
+      "espn_id": "330207",
+      "src_player_id": 32282,
+      "dst_player_id": 58390,
+      "name": "Sergio Oregel"
+    },
+    {
+      "espn_id": "235511",
+      "src_player_id": 32290,
+      "dst_player_id": 59362,
+      "name": "Hugo Cuypers"
+    },
+    {
+      "espn_id": "210538",
+      "src_player_id": 32289,
+      "dst_player_id": 58396,
+      "name": "Jonathan Bamba"
+    },
+    {
+      "espn_id": "186466",
+      "src_player_id": 32288,
+      "dst_player_id": 58395,
+      "name": "Philip Zinckernagel"
+    },
+    {
+      "espn_id": "249926",
+      "src_player_id": 32291,
+      "dst_player_id": 58423,
+      "name": "Tom Barlow"
+    },
+    {
+      "espn_id": "160971",
+      "src_player_id": 32264,
+      "dst_player_id": 58375,
+      "name": "Mauricio Pineda"
+    },
+    {
+      "espn_id": "275080",
+      "src_player_id": 32332,
+      "dst_player_id": 58431,
+      "name": "Patrick Schulte"
+    },
+    {
+      "espn_id": "264469",
+      "src_player_id": 32336,
+      "dst_player_id": 58642,
+      "name": "Yevhen Cheberko"
+    },
+    {
+      "espn_id": "271075",
+      "src_player_id": 32337,
+      "dst_player_id": 58439,
+      "name": "Malte Amundsen"
+    },
+    {
+      "espn_id": "180113",
+      "src_player_id": 32335,
+      "dst_player_id": 58436,
+      "name": "Steven Moreira"
+    },
+    {
+      "espn_id": "296221",
+      "src_player_id": 32348,
+      "dst_player_id": 58450,
+      "name": "Sean Zawadzki"
+    },
+    {
+      "espn_id": "270189",
+      "src_player_id": 32347,
+      "dst_player_id": 58449,
+      "name": "Dylan Chambost"
+    },
+    {
+      "espn_id": "359542",
+      "src_player_id": 32355,
+      "dst_player_id": 32355,
+      "name": "Max Arfsten"
+    },
+    {
+      "espn_id": "317021",
+      "src_player_id": 32339,
+      "dst_player_id": 58441,
+      "name": "Mohamed Farsi"
+    },
+    {
+      "espn_id": "235817",
+      "src_player_id": 32344,
+      "dst_player_id": 32344,
+      "name": "Diego Rossi"
+    },
+    {
+      "espn_id": "286389",
+      "src_player_id": 32338,
+      "dst_player_id": 58440,
+      "name": "Andr\u00e9s Herrera"
+    },
+    {
+      "espn_id": "188454",
+      "src_player_id": 32205,
+      "dst_player_id": 58324,
+      "name": "Stian Gregersen"
+    },
+    {
+      "espn_id": "240783",
+      "src_player_id": 32206,
+      "dst_player_id": 58325,
+      "name": "Ronald Hern\u00e1ndez"
+    },
+    {
+      "espn_id": "138636",
+      "src_player_id": 32204,
+      "dst_player_id": 58321,
+      "name": "Matt Edwards"
+    },
+    {
+      "espn_id": "185897",
+      "src_player_id": 32215,
+      "dst_player_id": 58331,
+      "name": "Alexey Miranchuk"
+    },
+    {
+      "espn_id": "242439",
+      "src_player_id": 32227,
+      "dst_player_id": 59360,
+      "name": "Emmanuel Latte Lath"
+    },
+    {
+      "espn_id": "221128",
+      "src_player_id": 32216,
+      "dst_player_id": 58954,
+      "name": "Saba Lobjanidze"
+    },
+    {
+      "espn_id": "48128",
+      "src_player_id": 32214,
+      "dst_player_id": 58343,
+      "name": "Miguel Almir\u00f3n"
+    },
+    {
+      "espn_id": "319441",
+      "src_player_id": 32397,
+      "dst_player_id": 58497,
+      "name": "Noah Cobb"
+    },
+    {
+      "espn_id": "304153",
+      "src_player_id": 32221,
+      "dst_player_id": 58335,
+      "name": "Jay Fortune"
+    },
+    {
+      "espn_id": "197351",
+      "src_player_id": 32225,
+      "dst_player_id": 58457,
+      "name": "Jamal Thiar\u00e9"
+    },
+    {
+      "espn_id": "303555",
+      "src_player_id": 32642,
+      "dst_player_id": 58519,
+      "name": "Jonathan Sirois"
+    },
+    {
+      "espn_id": "236890",
+      "src_player_id": 32266,
+      "dst_player_id": 58377,
+      "name": "Joel Waterman"
+    },
+    {
+      "espn_id": "271816",
+      "src_player_id": 32644,
+      "dst_player_id": 58727,
+      "name": "Luca Petrasso"
+    },
+    {
+      "espn_id": "87387",
+      "src_player_id": 32652,
+      "dst_player_id": 58734,
+      "name": "Samuel Piette"
+    },
+    {
+      "espn_id": "302991",
+      "src_player_id": 32465,
+      "dst_player_id": 58566,
+      "name": "Caden Clark"
+    },
+    {
+      "espn_id": "302060",
+      "src_player_id": 32366,
+      "dst_player_id": 58927,
+      "name": "Jahkeele Marshall-Rutty"
+    },
+    {
+      "espn_id": "275798",
+      "src_player_id": 32659,
+      "dst_player_id": 58745,
+      "name": "Prince Owusu"
+    },
+    {
+      "espn_id": "233047",
+      "src_player_id": 32657,
+      "dst_player_id": 58744,
+      "name": "Fabian Herbers"
+    },
+    {
+      "espn_id": "308587",
+      "src_player_id": 32661,
+      "dst_player_id": 32661,
+      "name": "Kwadwo Opoku"
+    },
+    {
+      "espn_id": "302238",
+      "src_player_id": 32655,
+      "dst_player_id": 58967,
+      "name": "Bryce Duke"
+    },
+    {
+      "espn_id": "343641",
+      "src_player_id": 32656,
+      "dst_player_id": 58738,
+      "name": "Victor Loturi"
+    },
+    {
+      "espn_id": "311532",
+      "src_player_id": 32776,
+      "dst_player_id": 58852,
+      "name": "David Brekalo"
+    },
+    {
+      "espn_id": "203974",
+      "src_player_id": 32391,
+      "dst_player_id": 59017,
+      "name": "Rafael Santos"
+    },
+    {
+      "espn_id": "285939",
+      "src_player_id": 32785,
+      "dst_player_id": 58963,
+      "name": "Dagur Th\u00f3rhallsson"
+    },
+    {
+      "espn_id": "233401",
+      "src_player_id": 32782,
+      "dst_player_id": 58857,
+      "name": "Mart\u00edn Ojeda"
+    },
+    {
+      "espn_id": "241473",
+      "src_player_id": 32783,
+      "dst_player_id": 58858,
+      "name": "Eduard Atuesta"
+    },
+    {
+      "espn_id": "250448",
+      "src_player_id": 32784,
+      "dst_player_id": 58859,
+      "name": "Iv\u00e1n Angulo"
+    },
+    {
+      "espn_id": "324270",
+      "src_player_id": 32796,
+      "dst_player_id": 58870,
+      "name": "Marco Pasalic"
+    },
+    {
+      "espn_id": "390621",
+      "src_player_id": 32790,
+      "dst_player_id": 58863,
+      "name": "Joran Gerbet"
+    },
+    {
+      "espn_id": "186943",
+      "src_player_id": 32803,
+      "dst_player_id": 58877,
+      "name": "Andre Blake"
+    },
+    {
+      "espn_id": "351372",
+      "src_player_id": 32811,
+      "dst_player_id": 32811,
+      "name": "Olwethu Makhanya"
+    },
+    {
+      "espn_id": "234962",
+      "src_player_id": 32807,
+      "dst_player_id": 58613,
+      "name": "Jakob Glesnes"
+    },
+    {
+      "espn_id": "261317",
+      "src_player_id": 32809,
+      "dst_player_id": 58880,
+      "name": "Kai Wagner"
+    },
+    {
+      "espn_id": "366034",
+      "src_player_id": 32812,
+      "dst_player_id": 58884,
+      "name": "Frankie Westfield"
+    },
+    {
+      "espn_id": "313068",
+      "src_player_id": 32826,
+      "dst_player_id": 58573,
+      "name": "Tai Baribo"
+    },
+    {
+      "espn_id": "322063",
+      "src_player_id": 32820,
+      "dst_player_id": 58895,
+      "name": "Jovan Lukic"
+    },
+    {
+      "espn_id": "333939",
+      "src_player_id": 32821,
+      "dst_player_id": 58896,
+      "name": "Danley Jean Jacques"
+    },
+    {
+      "espn_id": "304130",
+      "src_player_id": 32819,
+      "dst_player_id": 58894,
+      "name": "Quinn Sullivan"
+    },
+    {
+      "espn_id": "257844",
+      "src_player_id": 32346,
+      "dst_player_id": 58447,
+      "name": "D\u00e1niel Gazdag"
+    },
+    {
+      "espn_id": "134066",
+      "src_player_id": 32814,
+      "dst_player_id": 58889,
+      "name": "Alejandro Bedoya"
+    },
+    {
+      "espn_id": "322977",
+      "src_player_id": 32677,
+      "dst_player_id": 58732,
+      "name": "Brayan Ceballos"
+    },
+    {
+      "espn_id": "164551",
+      "src_player_id": 32670,
+      "dst_player_id": 58751,
+      "name": "Mamadou Fofana"
+    },
+    {
+      "espn_id": "343191",
+      "src_player_id": 32679,
+      "dst_player_id": 58755,
+      "name": "Ilay Feingold"
+    },
+    {
+      "espn_id": "245451",
+      "src_player_id": 32674,
+      "dst_player_id": 58911,
+      "name": "Brandon Bye"
+    },
+    {
+      "espn_id": "276684",
+      "src_player_id": 32687,
+      "dst_player_id": 58767,
+      "name": "Alhassan Yusuf"
+    },
+    {
+      "espn_id": "251806",
+      "src_player_id": 32686,
+      "dst_player_id": 58766,
+      "name": "Jackson Yueill"
+    },
+    {
+      "espn_id": "338883",
+      "src_player_id": 32701,
+      "dst_player_id": 58778,
+      "name": "Luca Langoni"
+    },
+    {
+      "espn_id": "284834",
+      "src_player_id": 32695,
+      "dst_player_id": 58774,
+      "name": "Leonardo Campana"
+    },
+    {
+      "espn_id": "152168",
+      "src_player_id": 32684,
+      "dst_player_id": 58763,
+      "name": "Carles Gil"
+    },
+    {
+      "espn_id": "156217",
+      "src_player_id": 32702,
+      "dst_player_id": 58782,
+      "name": "Joe Willis"
+    },
+    {
+      "espn_id": "255501",
+      "src_player_id": 32711,
+      "dst_player_id": 58788,
+      "name": "Jack Maher"
+    },
+    {
+      "espn_id": "183764",
+      "src_player_id": 32707,
+      "dst_player_id": 59030,
+      "name": "Walker Zimmerman"
+    },
+    {
+      "espn_id": "201353",
+      "src_player_id": 32708,
+      "dst_player_id": 58787,
+      "name": "Daniel Lovitz"
+    },
+    {
+      "espn_id": "146355",
+      "src_player_id": 32705,
+      "dst_player_id": 58785,
+      "name": "Andy N\u00e1jar"
+    },
+    {
+      "espn_id": "389905",
+      "src_player_id": 32714,
+      "dst_player_id": 59005,
+      "name": "Wyatt Meyer"
+    },
+    {
+      "espn_id": "318341",
+      "src_player_id": 32726,
+      "dst_player_id": 58800,
+      "name": "Matthew Corcoran"
+    },
+    {
+      "espn_id": "233041",
+      "src_player_id": 32720,
+      "dst_player_id": 58797,
+      "name": "Alex Muyl"
+    },
+    {
+      "espn_id": "290109",
+      "src_player_id": 32721,
+      "dst_player_id": 58798,
+      "name": "Edvard Tagseth"
+    },
+    {
+      "espn_id": "227627",
+      "src_player_id": 32731,
+      "dst_player_id": 58804,
+      "name": "Sam Surridge"
+    },
+    {
+      "espn_id": "174548",
+      "src_player_id": 32718,
+      "dst_player_id": 58795,
+      "name": "Hany Mukhtar"
+    },
+    {
+      "espn_id": "313976",
+      "src_player_id": 32733,
+      "dst_player_id": 58806,
+      "name": "Ahmed Qasim"
+    },
+    {
+      "espn_id": "183780",
+      "src_player_id": 32232,
+      "dst_player_id": 58348,
+      "name": "Brad Stuver"
+    },
+    {
+      "espn_id": "238438",
+      "src_player_id": 32238,
+      "dst_player_id": 58354,
+      "name": "Brendan Hines-Ike"
+    },
+    {
+      "espn_id": "304696",
+      "src_player_id": 32241,
+      "dst_player_id": 58356,
+      "name": "Guilherme Biro"
+    },
+    {
+      "espn_id": "213250",
+      "src_player_id": 32236,
+      "dst_player_id": 58352,
+      "name": "Mikkel Desler"
+    },
+    {
+      "espn_id": "150185",
+      "src_player_id": 32245,
+      "dst_player_id": 58359,
+      "name": "Ilie S\u00e1nchez"
+    },
+    {
+      "espn_id": "316077",
+      "src_player_id": 32248,
+      "dst_player_id": 58737,
+      "name": "Dani Pereira"
+    },
+    {
+      "espn_id": "304535",
+      "src_player_id": 32247,
+      "dst_player_id": 58363,
+      "name": "Owen Wolff"
+    },
+    {
+      "espn_id": "228620",
+      "src_player_id": 32255,
+      "dst_player_id": 58369,
+      "name": "Brandon V\u00e1zquez"
+    },
+    {
+      "espn_id": "231047",
+      "src_player_id": 32237,
+      "dst_player_id": 58353,
+      "name": "Jon Gallagher"
+    },
+    {
+      "espn_id": "318486",
+      "src_player_id": 32249,
+      "dst_player_id": 58364,
+      "name": "CJ Fodrey"
+    },
+    {
+      "espn_id": "225834",
+      "src_player_id": 32246,
+      "dst_player_id": 58360,
+      "name": "Besard Sabovic"
+    },
+    {
+      "espn_id": "219276",
+      "src_player_id": 32387,
+      "dst_player_id": 58489,
+      "name": "Zack Steffen"
+    },
+    {
+      "espn_id": "296216",
+      "src_player_id": 32396,
+      "dst_player_id": 58964,
+      "name": "Ian Murphy"
+    },
+    {
+      "espn_id": "233045",
+      "src_player_id": 32393,
+      "dst_player_id": 58494,
+      "name": "Keegan Rosenberry"
+    },
+    {
+      "espn_id": "251369",
+      "src_player_id": 32394,
+      "dst_player_id": 58495,
+      "name": "Reggie Cannon"
+    },
+    {
+      "espn_id": "315920",
+      "src_player_id": 32405,
+      "dst_player_id": 59051,
+      "name": "Oliver Larraz"
+    },
+    {
+      "espn_id": "277851",
+      "src_player_id": 32401,
+      "dst_player_id": 58503,
+      "name": "Joshua Atencio"
+    },
+    {
+      "espn_id": "288791",
+      "src_player_id": 32410,
+      "dst_player_id": 58511,
+      "name": "Rafael Navarro"
+    },
+    {
+      "espn_id": "277392",
+      "src_player_id": 32400,
+      "dst_player_id": 58920,
+      "name": "Cole Bassett"
+    },
+    {
+      "espn_id": "380601",
+      "src_player_id": 32414,
+      "dst_player_id": 58515,
+      "name": "Kimani Stewart-Baynes"
+    },
+    {
+      "espn_id": "380600",
+      "src_player_id": 32413,
+      "dst_player_id": 58508,
+      "name": "Wayne Frederick"
+    },
+    {
+      "espn_id": "268731",
+      "src_player_id": 32423,
+      "dst_player_id": 58524,
+      "name": "Osaze Urhoghide"
+    },
+    {
+      "espn_id": "233460",
+      "src_player_id": 32421,
+      "dst_player_id": 58522,
+      "name": "Sebastien Ibeagha"
+    },
+    {
+      "espn_id": "219275",
+      "src_player_id": 32420,
+      "dst_player_id": 58521,
+      "name": "Shaq Moore"
+    },
+    {
+      "espn_id": "157285",
+      "src_player_id": 32431,
+      "dst_player_id": 58532,
+      "name": "Ramiro"
+    },
+    {
+      "espn_id": "277128",
+      "src_player_id": 32441,
+      "dst_player_id": 58543,
+      "name": "Petar Musa"
+    },
+    {
+      "espn_id": "199822",
+      "src_player_id": 32440,
+      "dst_player_id": 58542,
+      "name": "Anderson Julio"
+    },
+    {
+      "espn_id": "318373",
+      "src_player_id": 32443,
+      "dst_player_id": 58545,
+      "name": "Bernard Kamungo"
+    },
+    {
+      "espn_id": "348870",
+      "src_player_id": 32447,
+      "dst_player_id": 58547,
+      "name": "Logan Farrington"
+    },
+    {
+      "espn_id": "297142",
+      "src_player_id": 32435,
+      "dst_player_id": 58535,
+      "name": "Patrickson Delgado"
+    },
+    {
+      "espn_id": "315921",
+      "src_player_id": 32492,
+      "dst_player_id": 59001,
+      "name": "Ethan Bartlow"
+    },
+    {
+      "espn_id": "267116",
+      "src_player_id": 32499,
+      "dst_player_id": 58851,
+      "name": "Griffin Dorsey"
+    },
+    {
+      "espn_id": "303512",
+      "src_player_id": 32502,
+      "dst_player_id": 58597,
+      "name": "Jack McGlynn"
+    },
+    {
+      "espn_id": "236342",
+      "src_player_id": 32496,
+      "dst_player_id": 58594,
+      "name": "Artur"
+    },
+    {
+      "espn_id": "287444",
+      "src_player_id": 32353,
+      "dst_player_id": 58601,
+      "name": "Ibrahim Aliyu"
+    },
+    {
+      "espn_id": "194553",
+      "src_player_id": 32507,
+      "dst_player_id": 58599,
+      "name": "Ezequiel Ponce"
+    },
+    {
+      "espn_id": "289300",
+      "src_player_id": 32509,
+      "dst_player_id": 58571,
+      "name": "Gabriel Segal"
+    },
+    {
+      "espn_id": "221408",
+      "src_player_id": 32358,
+      "dst_player_id": 58463,
+      "name": "Kristijan Kahlina"
+    },
+    {
+      "espn_id": "319014",
+      "src_player_id": 32375,
+      "dst_player_id": 58469,
+      "name": "Andrew Privett"
+    },
+    {
+      "espn_id": "146290",
+      "src_player_id": 32361,
+      "dst_player_id": 58465,
+      "name": "Tim Ream"
+    },
+    {
+      "espn_id": "156506",
+      "src_player_id": 32362,
+      "dst_player_id": 58466,
+      "name": "Nathan Byrne"
+    },
+    {
+      "espn_id": "7567",
+      "src_player_id": 32370,
+      "dst_player_id": 58475,
+      "name": "Ashley Westwood"
+    },
+    {
+      "espn_id": "312976",
+      "src_player_id": 32379,
+      "dst_player_id": 58482,
+      "name": "Liel Abada"
+    },
+    {
+      "espn_id": "340596",
+      "src_player_id": 32381,
+      "dst_player_id": 32381,
+      "name": "Kerwin Vargas"
+    },
+    {
+      "espn_id": "268604",
+      "src_player_id": 32373,
+      "dst_player_id": 58477,
+      "name": "Pep Biel"
+    },
+    {
+      "espn_id": "246371",
+      "src_player_id": 32372,
+      "dst_player_id": 58476,
+      "name": "Brandt Bronico"
+    },
+    {
+      "espn_id": "282755",
+      "src_player_id": 32374,
+      "dst_player_id": 58478,
+      "name": "Djibril Diani"
+    },
+    {
+      "espn_id": "383890",
+      "src_player_id": 32386,
+      "dst_player_id": 58487,
+      "name": "Tyger Smalls"
+    },
+    {
+      "espn_id": "340698",
+      "src_player_id": 32382,
+      "dst_player_id": 58484,
+      "name": "Idan Toklomati"
+    },
+    {
+      "espn_id": "295620",
+      "src_player_id": 32645,
+      "dst_player_id": 58728,
+      "name": "Bode Hidalgo"
+    },
+    {
+      "espn_id": "159382",
+      "src_player_id": 32833,
+      "dst_player_id": 58846,
+      "name": "Maxime Cr\u00e9peau"
+    },
+    {
+      "espn_id": "302907",
+      "src_player_id": 32841,
+      "dst_player_id": 58914,
+      "name": "Zac McGraw"
+    },
+    {
+      "espn_id": "249756",
+      "src_player_id": 32839,
+      "dst_player_id": 58912,
+      "name": "Kamal Miller"
+    },
+    {
+      "espn_id": "332367",
+      "src_player_id": 32843,
+      "dst_player_id": 58915,
+      "name": "Finn Surman"
+    },
+    {
+      "espn_id": "187782",
+      "src_player_id": 32837,
+      "dst_player_id": 58910,
+      "name": "Eric Miller"
+    },
+    {
+      "espn_id": "29447",
+      "src_player_id": 32836,
+      "dst_player_id": 58909,
+      "name": "Ian Smith"
+    },
+    {
+      "espn_id": "322058",
+      "src_player_id": 32516,
+      "dst_player_id": 58608,
+      "name": "Novak Micovic"
+    },
+    {
+      "espn_id": "105803",
+      "src_player_id": 32517,
+      "dst_player_id": 58609,
+      "name": "Maya Yoshida"
+    },
+    {
+      "espn_id": "133963",
+      "src_player_id": 32519,
+      "dst_player_id": 58610,
+      "name": "Carlos Garc\u00e9s"
+    },
+    {
+      "espn_id": "225615",
+      "src_player_id": 32521,
+      "dst_player_id": 58612,
+      "name": "John Nelson"
+    },
+    {
+      "espn_id": "238050",
+      "src_player_id": 32522,
+      "dst_player_id": 58614,
+      "name": "Miki Yamane"
+    },
+    {
+      "espn_id": "122356",
+      "src_player_id": 32526,
+      "dst_player_id": 58618,
+      "name": "Marco Reus"
+    },
+    {
+      "espn_id": "286198",
+      "src_player_id": 32530,
+      "dst_player_id": 32530,
+      "name": "Edwin Cerrillo"
+    },
+    {
+      "espn_id": "230580",
+      "src_player_id": 32528,
+      "dst_player_id": 58620,
+      "name": "Lucas Sanabria"
+    },
+    {
+      "espn_id": "235061",
+      "src_player_id": 32535,
+      "dst_player_id": 58370,
+      "name": "Christian Ram\u00edrez"
+    },
+    {
+      "espn_id": "156187",
+      "src_player_id": 32527,
+      "dst_player_id": 58764,
+      "name": "Diego Fagundez"
+    },
+    {
+      "espn_id": "295005",
+      "src_player_id": 32539,
+      "dst_player_id": 32539,
+      "name": "Gabriel Pec"
+    },
+    {
+      "espn_id": "321370",
+      "src_player_id": 32541,
+      "dst_player_id": 58632,
+      "name": "Ruben Ramos"
+    },
+    {
+      "espn_id": "287568",
+      "src_player_id": 32532,
+      "dst_player_id": 58623,
+      "name": "Elijah Wynder"
+    },
+    {
+      "espn_id": "297050",
+      "src_player_id": 32524,
+      "dst_player_id": 58615,
+      "name": "Juli\u00e1n Aude"
+    },
+    {
+      "espn_id": "400742",
+      "src_player_id": 32213,
+      "dst_player_id": 58329,
+      "name": "Dominik Chong Qui"
+    },
+    {
+      "espn_id": "255802",
+      "src_player_id": 32218,
+      "dst_player_id": 58333,
+      "name": "Tristan Muyumba"
+    },
+    {
+      "espn_id": "146324",
+      "src_player_id": 32378,
+      "dst_player_id": 32378,
+      "name": "Wilfried Zaha"
+    },
+    {
+      "espn_id": "364658",
+      "src_player_id": 32326,
+      "dst_player_id": 58956,
+      "name": "Dominik Marczuk"
+    },
+    {
+      "espn_id": "236641",
+      "src_player_id": 32773,
+      "dst_player_id": 58410,
+      "name": "Kyle Smith"
+    },
+    {
+      "espn_id": "356098",
+      "src_player_id": 32799,
+      "dst_player_id": 58860,
+      "name": "Gustavo Caraballo"
+    },
+    {
+      "espn_id": "329273",
+      "src_player_id": 32797,
+      "dst_player_id": 58871,
+      "name": "Tyrese Spicer"
+    },
+    {
+      "espn_id": "279758",
+      "src_player_id": 32653,
+      "dst_player_id": 58735,
+      "name": "Matthew Longstaff"
+    },
+    {
+      "espn_id": "315524",
+      "src_player_id": 32725,
+      "dst_player_id": 58799,
+      "name": "Patrick Yazbek"
+    },
+    {
+      "espn_id": "334227",
+      "src_player_id": 32678,
+      "dst_player_id": 58754,
+      "name": "William Sands"
+    },
+    {
+      "espn_id": "388854",
+      "src_player_id": 32328,
+      "dst_player_id": 58428,
+      "name": "Kenji Mboma Dem"
+    },
+    {
+      "espn_id": "271536",
+      "src_player_id": 32816,
+      "dst_player_id": 58891,
+      "name": "Jes\u00fas Bueno"
+    },
+    {
+      "espn_id": "266026",
+      "src_player_id": 32815,
+      "dst_player_id": 58890,
+      "name": "Indiana Vassilev"
+    },
+    {
+      "espn_id": "384397",
+      "src_player_id": 32823,
+      "dst_player_id": 58897,
+      "name": "Cavan Sullivan"
+    },
+    {
+      "espn_id": "322680",
+      "src_player_id": 32827,
+      "dst_player_id": 58900,
+      "name": "Bruno Damiani"
+    },
+    {
+      "espn_id": "254300",
+      "src_player_id": 32268,
+      "dst_player_id": 58379,
+      "name": "Samual Rogers"
+    },
+    {
+      "espn_id": "271884",
+      "src_player_id": 32464,
+      "dst_player_id": 58565,
+      "name": "Jared Stroud"
+    },
+    {
+      "espn_id": "320300",
+      "src_player_id": 32460,
+      "dst_player_id": 58559,
+      "name": "Matti Peltola"
+    },
+    {
+      "espn_id": "358517",
+      "src_player_id": 32618,
+      "dst_player_id": 58706,
+      "name": "Jefferson D\u00edaz"
+    },
+    {
+      "espn_id": "327355",
+      "src_player_id": 32631,
+      "dst_player_id": 58713,
+      "name": "Owen Gene"
+    },
+    {
+      "espn_id": "401057",
+      "src_player_id": 32651,
+      "dst_player_id": 32651,
+      "name": "Aleksandr Guboglo"
+    },
+    {
+      "espn_id": "222453",
+      "src_player_id": 32399,
+      "dst_player_id": 32399,
+      "name": "Connor Ronan"
+    },
+    {
+      "espn_id": "293695",
+      "src_player_id": 32411,
+      "dst_player_id": 59012,
+      "name": "Calvin Harris"
+    },
+    {
+      "espn_id": "370116",
+      "src_player_id": 32556,
+      "dst_player_id": 59363,
+      "name": "Artem Smolyakov"
+    },
+    {
+      "espn_id": "297380",
+      "src_player_id": 32745,
+      "dst_player_id": 58817,
+      "name": "Tayvon Gray"
+    },
+    {
+      "espn_id": "185792",
+      "src_player_id": 32740,
+      "dst_player_id": 58813,
+      "name": "Thiago Martins"
+    },
+    {
+      "espn_id": "377602",
+      "src_player_id": 32251,
+      "dst_player_id": 59361,
+      "name": "Nicol\u00e1s Dubersarsky"
+    },
+    {
+      "espn_id": "275500",
+      "src_player_id": 32257,
+      "dst_player_id": 58371,
+      "name": "Myrto Uzuni"
+    },
+    {
+      "espn_id": "196666",
+      "src_player_id": 32235,
+      "dst_player_id": 58351,
+      "name": "Oleksandr Svatok"
+    },
+    {
+      "espn_id": "257619",
+      "src_player_id": 32835,
+      "dst_player_id": 58907,
+      "name": "James Pantemis"
+    },
+    {
+      "espn_id": "366047",
+      "src_player_id": 32525,
+      "dst_player_id": 58617,
+      "name": "Harbor Miller"
+    },
+    {
+      "espn_id": "293694",
+      "src_player_id": 32533,
+      "dst_player_id": 58624,
+      "name": "Isaiah Parente"
+    },
+    {
+      "espn_id": "218058",
+      "src_player_id": 32489,
+      "dst_player_id": 58582,
+      "name": "Erik Sviatchenko"
+    },
+    {
+      "espn_id": "329025",
+      "src_player_id": 32599,
+      "dst_player_id": 58683,
+      "name": "Yannick Bright"
+    },
+    {
+      "espn_id": "315801",
+      "src_player_id": 32604,
+      "dst_player_id": 58691,
+      "name": "Tadeo Allende"
+    },
+    {
+      "espn_id": "199032",
+      "src_player_id": 32595,
+      "dst_player_id": 58680,
+      "name": "Santiago Morales"
+    },
+    {
+      "espn_id": "329364",
+      "src_player_id": 32504,
+      "dst_player_id": 58768,
+      "name": "Brooklyn Raines"
+    },
+    {
+      "espn_id": "262728",
+      "src_player_id": 32545,
+      "dst_player_id": 58635,
+      "name": "Thomas Hasal"
+    },
+    {
+      "espn_id": "303125",
+      "src_player_id": 32211,
+      "dst_player_id": 59359,
+      "name": "Pedro Amador"
+    },
+    {
+      "espn_id": "235093",
+      "src_player_id": 32226,
+      "dst_player_id": 58346,
+      "name": "Cayman Togashi"
+    },
+    {
+      "espn_id": "214446",
+      "src_player_id": 32508,
+      "dst_player_id": 58345,
+      "name": "Sergio Santos"
+    },
+    {
+      "espn_id": "147256",
+      "src_player_id": 32771,
+      "dst_player_id": 58849,
+      "name": "Robin Jansson"
+    },
+    {
+      "espn_id": "297079",
+      "src_player_id": 32474,
+      "dst_player_id": 58572,
+      "name": "Jo\u00e3o Peglow"
+    },
+    {
+      "espn_id": "334716",
+      "src_player_id": 32462,
+      "dst_player_id": 59018,
+      "name": "Lukas MacNaughton"
+    },
+    {
+      "espn_id": "399516",
+      "src_player_id": 32273,
+      "dst_player_id": 58384,
+      "name": "Leonardo Barroso"
+    },
+    {
+      "espn_id": "266454",
+      "src_player_id": 32712,
+      "dst_player_id": 58789,
+      "name": "Josh Bauer"
+    },
+    {
+      "espn_id": "259805",
+      "src_player_id": 32240,
+      "dst_player_id": 58355,
+      "name": "Zan Kolmanic"
+    },
+    {
+      "espn_id": "304135",
+      "src_player_id": 32647,
+      "dst_player_id": 58730,
+      "name": "Brandan Craig"
+    },
+    {
+      "espn_id": "313955",
+      "src_player_id": 32614,
+      "dst_player_id": 58703,
+      "name": "Nicol\u00e1s Romero"
+    },
+    {
+      "espn_id": "297047",
+      "src_player_id": 32580,
+      "dst_player_id": 58665,
+      "name": "Rocco R\u00edos Novo"
+    },
+    {
+      "espn_id": "294071",
+      "src_player_id": 32795,
+      "dst_player_id": 58602,
+      "name": "Duncan McGuire"
+    },
+    {
+      "espn_id": "259951",
+      "src_player_id": 32277,
+      "dst_player_id": 58388,
+      "name": "Maren Haile-Selassie"
+    },
+    {
+      "espn_id": "362895",
+      "src_player_id": 32316,
+      "dst_player_id": 58419,
+      "name": "Gerardo Valenzuela"
+    },
+    {
+      "espn_id": "307221",
+      "src_player_id": 32660,
+      "dst_player_id": 58513,
+      "name": "Dante Sealy"
+    },
+    {
+      "espn_id": "216609",
+      "src_player_id": 32685,
+      "dst_player_id": 58765,
+      "name": "Matt Polster"
+    },
+    {
+      "espn_id": "156197",
+      "src_player_id": 32479,
+      "dst_player_id": 58578,
+      "name": "Jimmy Maurer"
+    },
+    {
+      "espn_id": "251801",
+      "src_player_id": 32422,
+      "dst_player_id": 58523,
+      "name": "Lalas Abubakar"
+    },
+    {
+      "espn_id": "286214",
+      "src_player_id": 32732,
+      "dst_player_id": 58658,
+      "name": "Jacob Shaffelburg"
+    },
+    {
+      "espn_id": "286778",
+      "src_player_id": 32810,
+      "dst_player_id": 58881,
+      "name": "Nathan Harriel"
+    },
+    {
+      "espn_id": "304659",
+      "src_player_id": 32540,
+      "dst_player_id": 32540,
+      "name": "Matheus Nascimento"
+    },
+    {
+      "espn_id": "252778",
+      "src_player_id": 32208,
+      "dst_player_id": 58438,
+      "name": "Brooks Lennon"
+    },
+    {
+      "espn_id": "310279",
+      "src_player_id": 32583,
+      "dst_player_id": 58668,
+      "name": "Maximiliano Falc\u00f3n"
+    },
+    {
+      "espn_id": "290024",
+      "src_player_id": 32220,
+      "dst_player_id": 58334,
+      "name": "Will Reilly"
+    },
+    {
+      "espn_id": "201354",
+      "src_player_id": 32305,
+      "dst_player_id": 58407,
+      "name": "Nick Hagglund"
+    },
+    {
+      "espn_id": "256253",
+      "src_player_id": 32609,
+      "dst_player_id": 58698,
+      "name": "Alec Smir"
+    },
+    {
+      "espn_id": "365853",
+      "src_player_id": 32805,
+      "dst_player_id": 58879,
+      "name": "Andrew Rick"
+    },
+    {
+      "espn_id": "274002",
+      "src_player_id": 32817,
+      "dst_player_id": 58892,
+      "name": "Jeremy Rafanello"
+    },
+    {
+      "espn_id": "171562",
+      "src_player_id": 32329,
+      "dst_player_id": 58429,
+      "name": "Evan Bush"
+    },
+    {
+      "espn_id": "392011",
+      "src_player_id": 32340,
+      "dst_player_id": 58443,
+      "name": "Cesar Ruvalcaba"
+    },
+    {
+      "espn_id": "399918",
+      "src_player_id": 32341,
+      "dst_player_id": 58444,
+      "name": "Tristan Brown"
+    },
+    {
+      "espn_id": "402322",
+      "src_player_id": 32766,
+      "dst_player_id": 58844,
+      "name": "Seymour Reid"
+    },
+    {
+      "espn_id": "358681",
+      "src_player_id": 32757,
+      "dst_player_id": 58832,
+      "name": "Maxi Carrizo"
+    },
+    {
+      "espn_id": "316317",
+      "src_player_id": 32770,
+      "dst_player_id": 58847,
+      "name": "Javier Otero"
+    },
+    {
+      "espn_id": "286719",
+      "src_player_id": 32713,
+      "dst_player_id": 58790,
+      "name": "Julian Gaines"
+    },
+    {
+      "espn_id": "360855",
+      "src_player_id": 32389,
+      "dst_player_id": 58491,
+      "name": "Adam Beaudry"
+    },
+    {
+      "espn_id": "304623",
+      "src_player_id": 32412,
+      "dst_player_id": 58512,
+      "name": "Darren Yapi"
+    },
+    {
+      "espn_id": "302672",
+      "src_player_id": 32840,
+      "dst_player_id": 58913,
+      "name": "Juan Mosquera"
+    },
+    {
+      "espn_id": "379566",
+      "src_player_id": 32419,
+      "dst_player_id": 58520,
+      "name": "Michael Collodi"
+    },
+    {
+      "espn_id": "331136",
+      "src_player_id": 32481,
+      "dst_player_id": 58579,
+      "name": "Blake Gillingham"
+    },
+    {
+      "espn_id": "357792",
+      "src_player_id": 32271,
+      "dst_player_id": 59003,
+      "name": "Justin Reynolds"
+    },
+    {
+      "espn_id": "376513",
+      "src_player_id": 32681,
+      "dst_player_id": 58758,
+      "name": "Peyton Miller"
+    },
+    {
+      "espn_id": "231150",
+      "src_player_id": 32672,
+      "dst_player_id": 58753,
+      "name": "Tanner Beason"
+    },
+    {
+      "espn_id": "291705",
+      "src_player_id": 32676,
+      "dst_player_id": 32676,
+      "name": "Keegan Hughes"
+    },
+    {
+      "espn_id": "179245",
+      "src_player_id": 32409,
+      "dst_player_id": 58510,
+      "name": "Alex Harris"
+    },
+    {
+      "espn_id": "245083",
+      "src_player_id": 32359,
+      "dst_player_id": 58697,
+      "name": "Drake Callender"
+    },
+    {
+      "espn_id": "362812",
+      "src_player_id": 32350,
+      "dst_player_id": 58455,
+      "name": "Taha Habroune"
+    },
+    {
+      "espn_id": "356357",
+      "src_player_id": 32426,
+      "dst_player_id": 58526,
+      "name": "Nolan Norris"
+    },
+    {
+      "espn_id": "380441",
+      "src_player_id": 32439,
+      "dst_player_id": 58540,
+      "name": "Kaick"
+    },
+    {
+      "espn_id": "256843",
+      "src_player_id": 32537,
+      "dst_player_id": 58630,
+      "name": "Joseph Paintsil"
+    },
+    {
+      "espn_id": "167061",
+      "src_player_id": 32706,
+      "dst_player_id": 58786,
+      "name": "Jeisson Palacios"
+    },
+    {
+      "espn_id": "388445",
+      "src_player_id": 32789,
+      "dst_player_id": 58862,
+      "name": "Colin Guske"
+    },
+    {
+      "espn_id": "364675",
+      "src_player_id": 32650,
+      "dst_player_id": 58733,
+      "name": "Dawid Bugaj"
+    },
+    {
+      "espn_id": "260912",
+      "src_player_id": 32395,
+      "dst_player_id": 58584,
+      "name": "Sam Vines"
+    },
+    {
+      "espn_id": "347042",
+      "src_player_id": 32605,
+      "dst_player_id": 58692,
+      "name": "Allen Obando"
+    },
+    {
+      "espn_id": "260213",
+      "src_player_id": 32612,
+      "dst_player_id": 58701,
+      "name": "D.J. Taylor"
+    },
+    {
+      "espn_id": "261168",
+      "src_player_id": 32693,
+      "dst_player_id": 58714,
+      "name": "Tom\u00e1s Chancalay"
+    },
+    {
+      "espn_id": "187273",
+      "src_player_id": 32304,
+      "dst_player_id": 58406,
+      "name": "Matt Miazga"
+    },
+    {
+      "espn_id": "256444",
+      "src_player_id": 32452,
+      "dst_player_id": 58664,
+      "name": "Luis Barraza"
+    },
+    {
+      "espn_id": "288873",
+      "src_player_id": 32402,
+      "dst_player_id": 58504,
+      "name": "Ted Ku-Dipietro"
+    },
+    {
+      "espn_id": "263585",
+      "src_player_id": 32825,
+      "dst_player_id": 58899,
+      "name": "Milan Iloski"
+    },
+    {
+      "espn_id": "303469",
+      "src_player_id": 32646,
+      "dst_player_id": 58729,
+      "name": "Jalen Neal"
+    },
+    {
+      "espn_id": "384984",
+      "src_player_id": 32664,
+      "dst_player_id": 58741,
+      "name": "Hennadii Synchuk"
+    },
+    {
+      "espn_id": "335605",
+      "src_player_id": 32283,
+      "dst_player_id": 58391,
+      "name": "D'Avilla Dje Tah"
+    },
+    {
+      "espn_id": "231052",
+      "src_player_id": 32343,
+      "dst_player_id": 58446,
+      "name": "Amar Sejdic"
+    },
+    {
+      "espn_id": "287252",
+      "src_player_id": 32523,
+      "dst_player_id": 32523,
+      "name": "Mauricio Cuevas"
+    },
+    {
+      "espn_id": "401054",
+      "src_player_id": 32791,
+      "dst_player_id": 58865,
+      "name": "Zakaria Taifi"
+    },
+    {
+      "espn_id": "316325",
+      "src_player_id": 32777,
+      "dst_player_id": 58792,
+      "name": "Thomas Williams"
+    },
+    {
+      "espn_id": "398878",
+      "src_player_id": 32715,
+      "dst_player_id": 58794,
+      "name": "Chris Applewhite"
+    },
+    {
+      "espn_id": "65434",
+      "src_player_id": 32478,
+      "dst_player_id": 58577,
+      "name": "Jonathan Bond"
+    },
+    {
+      "espn_id": "257090",
+      "src_player_id": 32498,
+      "dst_player_id": 58595,
+      "name": "Ondrej Lingr"
+    },
+    {
+      "espn_id": "252607",
+      "src_player_id": 32641,
+      "dst_player_id": 58723,
+      "name": "S\u00e9bastian Breza"
+    },
+    {
+      "espn_id": "400462",
+      "src_player_id": 32665,
+      "dst_player_id": 58747,
+      "name": "Owen Graham-Roache"
+    },
+    {
+      "espn_id": "273974",
+      "src_player_id": 32458,
+      "dst_player_id": 32458,
+      "name": "Conner Antley"
+    },
+    {
+      "espn_id": "308892",
+      "src_player_id": 32222,
+      "dst_player_id": 58336,
+      "name": "Luke Brennan"
+    },
+    {
+      "espn_id": "382779",
+      "src_player_id": 32272,
+      "dst_player_id": 58382,
+      "name": "Christopher Cupps"
+    },
+    {
+      "espn_id": "293342",
+      "src_player_id": 32388,
+      "dst_player_id": 58490,
+      "name": "Nico Hansen"
+    },
+    {
+      "espn_id": "283228",
+      "src_player_id": 32564,
+      "dst_player_id": 58736,
+      "name": "Frankie Amaya"
+    },
+    {
+      "espn_id": "251800",
+      "src_player_id": 32625,
+      "dst_player_id": 58710,
+      "name": "Julian Gressel"
+    },
+    {
+      "espn_id": "313969",
+      "src_player_id": 32262,
+      "dst_player_id": 58374,
+      "name": "Jeff Gal"
+    },
+    {
+      "espn_id": "241031",
+      "src_player_id": 32752,
+      "dst_player_id": 58826,
+      "name": "Aiden O'Neill"
+    },
+    {
+      "espn_id": "315455",
+      "src_player_id": 32491,
+      "dst_player_id": 58586,
+      "name": "Felipe Andrade"
+    },
+    {
+      "espn_id": "201136",
+      "src_player_id": 32719,
+      "dst_player_id": 58796,
+      "name": "Bryan Acosta"
+    },
+    {
+      "espn_id": "403425",
+      "src_player_id": 32801,
+      "dst_player_id": 58874,
+      "name": "Justin Ellis"
+    },
+    {
+      "espn_id": "324048",
+      "src_player_id": 32469,
+      "dst_player_id": 58568,
+      "name": "Jackson Hopkins"
+    },
+    {
+      "espn_id": "403365",
+      "src_player_id": 32620,
+      "dst_player_id": 58707,
+      "name": "Kieran Chandler"
+    },
+    {
+      "espn_id": "224640",
+      "src_player_id": 32330,
+      "dst_player_id": 58430,
+      "name": "Nicholas Hagen"
+    },
+    {
+      "espn_id": "360934",
+      "src_player_id": 32369,
+      "dst_player_id": 58471,
+      "name": "Jack Neeley"
+    },
+    {
+      "espn_id": "340690",
+      "src_player_id": 32475,
+      "dst_player_id": 58426,
+      "name": "Kristian Fletcher"
+    },
+    {
+      "espn_id": "182070",
+      "src_player_id": 32493,
+      "dst_player_id": 58591,
+      "name": "Duane Holmes"
+    },
+    {
+      "espn_id": "288060",
+      "src_player_id": 32818,
+      "dst_player_id": 58893,
+      "name": "Ben Bender"
+    },
+    {
+      "espn_id": "295727",
+      "src_player_id": 32566,
+      "dst_player_id": 58649,
+      "name": "Ryan Raposo"
+    },
+    {
+      "espn_id": "400745",
+      "src_player_id": 32689,
+      "dst_player_id": 32689,
+      "name": "Eric Klein"
+    },
+    {
+      "espn_id": "319038",
+      "src_player_id": 32587,
+      "dst_player_id": 58972,
+      "name": "Ryan Sailor"
+    },
+    {
+      "espn_id": "323199",
+      "src_player_id": 32510,
+      "dst_player_id": 58603,
+      "name": "Lawrence Ennali"
+    },
+    {
+      "espn_id": "314665",
+      "src_player_id": 32293,
+      "dst_player_id": 58398,
+      "name": "Jason Shokalook"
+    },
+    {
+      "espn_id": "184786",
+      "src_player_id": 32736,
+      "dst_player_id": 58810,
+      "name": "Tomas Romero"
+    },
+    {
+      "espn_id": "239175",
+      "src_player_id": 32551,
+      "dst_player_id": 58641,
+      "name": "Ryan Porteous"
+    },
+    {
+      "espn_id": "381237",
+      "src_player_id": 32638,
+      "dst_player_id": 58720,
+      "name": "Alisa Randell"
+    },
+    {
+      "espn_id": "400247",
+      "src_player_id": 32429,
+      "dst_player_id": 58529,
+      "name": "\u00c1lvaro Augusto"
+    },
+    {
+      "espn_id": "405592",
+      "src_player_id": 32430,
+      "dst_player_id": 58530,
+      "name": "Joshua Torquato"
+    },
+    {
+      "espn_id": "304154",
+      "src_player_id": 32648,
+      "dst_player_id": 58731,
+      "name": "Efra\u00edn Morales"
+    },
+    {
+      "espn_id": "274296",
+      "src_player_id": 32562,
+      "dst_player_id": 58648,
+      "name": "Mathieu Choini\u00e8re"
+    },
+    {
+      "espn_id": "149945",
+      "src_player_id": 32571,
+      "dst_player_id": 58654,
+      "name": "Son Heung-Min"
+    },
+    {
+      "espn_id": "385044",
+      "src_player_id": 32203,
+      "dst_player_id": 58320,
+      "name": "Jayden Hibbert"
+    },
+    {
+      "espn_id": "262061",
+      "src_player_id": 32210,
+      "dst_player_id": 59358,
+      "name": "Juan Berrocal"
+    },
+    {
+      "espn_id": "402315",
+      "src_player_id": 32224,
+      "dst_player_id": 58340,
+      "name": "Cooper Sanchez"
+    },
+    {
+      "espn_id": "243384",
+      "src_player_id": 32217,
+      "dst_player_id": 58332,
+      "name": "Steven Alzate"
+    },
+    {
+      "espn_id": "376494",
+      "src_player_id": 32830,
+      "dst_player_id": 58902,
+      "name": "Sal Olivas"
+    },
+    {
+      "espn_id": "348652",
+      "src_player_id": 32446,
+      "dst_player_id": 58546,
+      "name": "Samuel Sarver"
+    },
+    {
+      "espn_id": "322966",
+      "src_player_id": 32243,
+      "dst_player_id": 58358,
+      "name": "Mateja Djordjevic"
+    },
+    {
+      "espn_id": "377044",
+      "src_player_id": 32663,
+      "dst_player_id": 58746,
+      "name": "Olger Escobar"
+    },
+    {
+      "espn_id": "283864",
+      "src_player_id": 32434,
+      "dst_player_id": 58534,
+      "name": "Christian Cappis"
+    },
+    {
+      "espn_id": "108107",
+      "src_player_id": 32751,
+      "dst_player_id": 58825,
+      "name": "Nicol\u00e1s Fern\u00e1ndez"
+    },
+    {
+      "espn_id": "196842",
+      "src_player_id": 32485,
+      "dst_player_id": 58581,
+      "name": "Ant\u00f4nio Carlos"
+    },
+    {
+      "espn_id": "242928",
+      "src_player_id": 32514,
+      "dst_player_id": 58606,
+      "name": "JT Marcinkowski"
+    },
+    {
+      "espn_id": "319023",
+      "src_player_id": 32553,
+      "dst_player_id": 58644,
+      "name": "Kenny Nielsen"
+    },
+    {
+      "espn_id": "243195",
+      "src_player_id": 32207,
+      "dst_player_id": 58326,
+      "name": "Enea Mihaj"
+    },
+    {
+      "espn_id": "322064",
+      "src_player_id": 32376,
+      "dst_player_id": 58977,
+      "name": "Nikola Petkovic"
+    },
+    {
+      "espn_id": "351379",
+      "src_player_id": 32349,
+      "dst_player_id": 58454,
+      "name": "Hugo Picard"
+    },
+    {
+      "espn_id": "270819",
+      "src_player_id": 32352,
+      "dst_player_id": 58458,
+      "name": "Wessam Abou Ali"
+    },
+    {
+      "espn_id": "303794",
+      "src_player_id": 32667,
+      "dst_player_id": 58748,
+      "name": "Matt Turner"
+    },
+    {
+      "espn_id": "318238",
+      "src_player_id": 32643,
+      "dst_player_id": 58724,
+      "name": "Thomas Gillier"
+    },
+    {
+      "espn_id": "291608",
+      "src_player_id": 32442,
+      "dst_player_id": 58544,
+      "name": "Louicius Deedson"
+    },
+    {
+      "espn_id": "361138",
+      "src_player_id": 32325,
+      "dst_player_id": 58427,
+      "name": "Ender Echenique"
+    },
+    {
+      "espn_id": "353751",
+      "src_player_id": 32315,
+      "dst_player_id": 58418,
+      "name": "Stiven Jimenez"
+    },
+    {
+      "espn_id": "174466",
+      "src_player_id": 32594,
+      "dst_player_id": 58679,
+      "name": "Rodrigo De Paul"
+    },
+    {
+      "espn_id": "172833",
+      "src_player_id": 32364,
+      "dst_player_id": 58467,
+      "name": "Harry Toffolo"
+    },
+    {
+      "espn_id": "381753",
+      "src_player_id": 32415,
+      "dst_player_id": 58516,
+      "name": "Sydney Wathuta"
+    },
+    {
+      "espn_id": "321363",
+      "src_player_id": 32280,
+      "dst_player_id": 58389,
+      "name": "Andr\u00e9 Franco"
+    },
+    {
+      "espn_id": "210228",
+      "src_player_id": 32772,
+      "dst_player_id": 58850,
+      "name": "Adri\u00e1n Mar\u00edn"
+    },
+    {
+      "espn_id": "304129",
+      "src_player_id": 32404,
+      "dst_player_id": 58506,
+      "name": "Paxten Aaronson"
+    },
+    {
+      "espn_id": "314343",
+      "src_player_id": 32380,
+      "dst_player_id": 58483,
+      "name": "Archie Goodwin"
+    },
+    {
+      "espn_id": "325936",
+      "src_player_id": 32787,
+      "dst_player_id": 58801,
+      "name": "Shakur Mohammed"
+    },
+    {
+      "espn_id": "280489",
+      "src_player_id": 32654,
+      "dst_player_id": 32654,
+      "name": "Iv\u00e1n Jaime"
+    },
+    {
+      "espn_id": "305664",
+      "src_player_id": 32324,
+      "dst_player_id": 58425,
+      "name": "Ayoub Jabbari"
+    },
+    {
+      "espn_id": "381418",
+      "src_player_id": 32639,
+      "dst_player_id": 58721,
+      "name": "Mamadou Dieng"
+    },
+    {
+      "espn_id": "179237",
+      "src_player_id": 32730,
+      "dst_player_id": 58655,
+      "name": "Tyler Boyd"
+    },
+    {
+      "espn_id": "218188",
+      "src_player_id": 32392,
+      "dst_player_id": 58493,
+      "name": "Rob Holding"
+    },
+    {
+      "espn_id": "381219",
+      "src_player_id": 32252,
+      "dst_player_id": 58367,
+      "name": "Ervin Torres"
+    },
+    {
+      "espn_id": "242975",
+      "src_player_id": 32297,
+      "dst_player_id": 58402,
+      "name": "Evan Louro"
+    },
+    {
+      "espn_id": "363908",
+      "src_player_id": 32317,
+      "dst_player_id": 58420,
+      "name": "Samuel Gidi"
+    },
+    {
+      "espn_id": "399970",
+      "src_player_id": 32607,
+      "dst_player_id": 58695,
+      "name": "D\u00e1niel Pint\u00e9r"
+    },
+    {
+      "espn_id": "276051",
+      "src_player_id": 32744,
+      "dst_player_id": 58815,
+      "name": "Raul Gustavo"
+    },
+    {
+      "espn_id": "334205",
+      "src_player_id": 32406,
+      "dst_player_id": 32406,
+      "name": "Alexis Castillo Manyoma"
+    },
+    {
+      "espn_id": "366558",
+      "src_player_id": 32813,
+      "dst_player_id": 58885,
+      "name": "Neil Pierre"
+    },
+    {
+      "espn_id": "270543",
+      "src_player_id": 32626,
+      "dst_player_id": 58711,
+      "name": "Dominik Fitz"
+    },
+    {
+      "espn_id": "328543",
+      "src_player_id": 32616,
+      "dst_player_id": 58704,
+      "name": "Nectarios Triantis"
+    },
+    {
+      "espn_id": "387661",
+      "src_player_id": 32606,
+      "dst_player_id": 58694,
+      "name": "Mateo Silvetti"
+    },
+    {
+      "espn_id": "183796",
+      "src_player_id": 32671,
+      "dst_player_id": 58752,
+      "name": "Andrew Farrell"
+    },
+    {
+      "espn_id": "219466",
+      "src_player_id": 32495,
+      "dst_player_id": 58592,
+      "name": "Diadie Samassekou"
+    },
+    {
+      "espn_id": "271514",
+      "src_player_id": 32453,
+      "dst_player_id": 58554,
+      "name": "Jordan Farr"
+    },
+    {
+      "espn_id": "305755",
+      "src_player_id": 32697,
+      "dst_player_id": 58776,
+      "name": "Dor Turgeman"
+    },
+    {
+      "espn_id": "324553",
+      "src_player_id": 32436,
+      "dst_player_id": 58537,
+      "name": "Diego Garc\u00eda"
+    },
+    {
+      "espn_id": "372070",
+      "src_player_id": 32377,
+      "dst_player_id": 58479,
+      "name": "Baye Coulibaly"
+    },
+    {
+      "espn_id": "323247",
+      "src_player_id": 32511,
+      "dst_player_id": 58604,
+      "name": "Nelson Qui\u00f1ones"
+    },
+    {
+      "espn_id": "356358",
+      "src_player_id": 52107,
+      "dst_player_id": 52107,
+      "name": "Benjamin Cremaschi"
+    },
+    {
+      "espn_id": "318181",
+      "src_player_id": 52099,
+      "dst_player_id": 52099,
+      "name": "Federico Redondo"
+    },
+    {
+      "espn_id": "255259",
+      "src_player_id": 52073,
+      "dst_player_id": 52073,
+      "name": "Birk Risa"
+    },
+    {
+      "espn_id": "315381",
+      "src_player_id": 52096,
+      "dst_player_id": 52096,
+      "name": "Monsef Bakrar"
+    },
+    {
+      "espn_id": "200651",
+      "src_player_id": 52055,
+      "dst_player_id": 52055,
+      "name": "Marlon"
+    },
+    {
+      "espn_id": "88965",
+      "src_player_id": 52119,
+      "dst_player_id": 52119,
+      "name": "Olivier Giroud"
+    },
+    {
+      "espn_id": "294039",
+      "src_player_id": 52085,
+      "dst_player_id": 52085,
+      "name": "Tani Oluwaseyi"
+    },
+    {
+      "espn_id": "297256",
+      "src_player_id": 33088,
+      "dst_player_id": 33088,
+      "name": "Jeong Sang-Bin"
+    },
+    {
+      "espn_id": "227776",
+      "src_player_id": 52060,
+      "dst_player_id": 52060,
+      "name": "Samuel Shashoua"
+    },
+    {
+      "espn_id": "183778",
+      "src_player_id": 32907,
+      "dst_player_id": 32907,
+      "name": "DeAndre Yedlin"
+    },
+    {
+      "espn_id": "220573",
+      "src_player_id": 32965,
+      "dst_player_id": 32965,
+      "name": "Corey Baird"
+    },
+    {
+      "espn_id": "215961",
+      "src_player_id": 32864,
+      "dst_player_id": 32864,
+      "name": "Carlos Coronel"
+    },
+    {
+      "espn_id": "230822",
+      "src_player_id": 32873,
+      "dst_player_id": 32873,
+      "name": "Sean Nealis"
+    },
+    {
+      "espn_id": "227054",
+      "src_player_id": 32872,
+      "dst_player_id": 32872,
+      "name": "Alexander Hack"
+    },
+    {
+      "espn_id": "303608",
+      "src_player_id": 32877,
+      "dst_player_id": 32877,
+      "name": "Noah Eile"
+    },
+    {
+      "espn_id": "304164",
+      "src_player_id": 32885,
+      "dst_player_id": 32885,
+      "name": "Daniel Edelman"
+    },
+    {
+      "espn_id": "280811",
+      "src_player_id": 32884,
+      "dst_player_id": 32884,
+      "name": "Peter Stroud"
+    },
+    {
+      "espn_id": "342198",
+      "src_player_id": 32880,
+      "dst_player_id": 32880,
+      "name": "Omar Valencia"
+    },
+    {
+      "espn_id": "270302",
+      "src_player_id": 32893,
+      "dst_player_id": 32893,
+      "name": "Cameron Harper"
+    },
+    {
+      "espn_id": "102254",
+      "src_player_id": 32892,
+      "dst_player_id": 32892,
+      "name": "Eric Maxim Choupo-Moting"
+    },
+    {
+      "espn_id": "148641",
+      "src_player_id": 32881,
+      "dst_player_id": 32881,
+      "name": "Emil Forsberg"
+    },
+    {
+      "espn_id": "181028",
+      "src_player_id": 32882,
+      "dst_player_id": 32882,
+      "name": "Lewis Morgan"
+    },
+    {
+      "espn_id": "315924",
+      "src_player_id": 32886,
+      "dst_player_id": 32886,
+      "name": "Wikelman Carmona"
+    },
+    {
+      "espn_id": "223780",
+      "src_player_id": 32848,
+      "dst_player_id": 32848,
+      "name": "Felipe Carballo"
+    },
+    {
+      "espn_id": "288041",
+      "src_player_id": 32894,
+      "dst_player_id": 32894,
+      "name": "Julian Hall"
+    },
+    {
+      "espn_id": "141316",
+      "src_player_id": 33092,
+      "dst_player_id": 33092,
+      "name": "Sean Johnson"
+    },
+    {
+      "espn_id": "140531",
+      "src_player_id": 33095,
+      "dst_player_id": 33095,
+      "name": "Kevin Long"
+    },
+    {
+      "espn_id": "227734",
+      "src_player_id": 33097,
+      "dst_player_id": 33097,
+      "name": "Sigurd Rosted"
+    },
+    {
+      "espn_id": "220571",
+      "src_player_id": 33096,
+      "dst_player_id": 33096,
+      "name": "Henry Wingo"
+    },
+    {
+      "espn_id": "217254",
+      "src_player_id": 52057,
+      "dst_player_id": 52057,
+      "name": "Deybi Flores"
+    },
+    {
+      "espn_id": "359272",
+      "src_player_id": 33113,
+      "dst_player_id": 33113,
+      "name": "Alonso Coello"
+    },
+    {
+      "espn_id": "184221",
+      "src_player_id": 33105,
+      "dst_player_id": 33105,
+      "name": "Jonathan Osorio"
+    },
+    {
+      "espn_id": "359270",
+      "src_player_id": 33112,
+      "dst_player_id": 33112,
+      "name": "Markus Cimermancic"
+    },
+    {
+      "espn_id": "230626",
+      "src_player_id": 33098,
+      "dst_player_id": 33098,
+      "name": "Richie Laryea"
+    },
+    {
+      "espn_id": "290190",
+      "src_player_id": 33116,
+      "dst_player_id": 33116,
+      "name": "Theo Corbeanu"
+    },
+    {
+      "espn_id": "180956",
+      "src_player_id": 52050,
+      "dst_player_id": 52050,
+      "name": "Federico Bernardeschi"
+    },
+    {
+      "espn_id": "252562",
+      "src_player_id": 33099,
+      "dst_player_id": 33099,
+      "name": "Raoul Petretta"
+    },
+    {
+      "espn_id": "310293",
+      "src_player_id": 33101,
+      "dst_player_id": 33101,
+      "name": "Zane Monlouis"
+    },
+    {
+      "espn_id": "298071",
+      "src_player_id": 33117,
+      "dst_player_id": 33117,
+      "name": "Deandre Kerr"
+    },
+    {
+      "espn_id": "192080",
+      "src_player_id": 52052,
+      "dst_player_id": 52052,
+      "name": "Carlos Ter\u00e1n"
+    },
+    {
+      "espn_id": "317343",
+      "src_player_id": 52098,
+      "dst_player_id": 52098,
+      "name": "Omari Glasgow"
+    },
+    {
+      "espn_id": "318536",
+      "src_player_id": 52101,
+      "dst_player_id": 52101,
+      "name": "Aziel Jackson"
+    },
+    {
+      "espn_id": "215441",
+      "src_player_id": 52056,
+      "dst_player_id": 52056,
+      "name": "Luis Abram"
+    },
+    {
+      "espn_id": "158331",
+      "src_player_id": 52047,
+      "dst_player_id": 52047,
+      "name": "Mateusz Klich"
+    },
+    {
+      "espn_id": "285358",
+      "src_player_id": 52082,
+      "dst_player_id": 52082,
+      "name": "Edwin Mosquera"
+    },
+    {
+      "espn_id": "169515",
+      "src_player_id": 52049,
+      "dst_player_id": 52049,
+      "name": "Derrick Williams"
+    },
+    {
+      "espn_id": "231066",
+      "src_player_id": 52063,
+      "dst_player_id": 52063,
+      "name": "George Campbell"
+    },
+    {
+      "espn_id": "311163",
+      "src_player_id": 52095,
+      "dst_player_id": 52095,
+      "name": "Nathan Saliba"
+    },
+    {
+      "espn_id": "269342",
+      "src_player_id": 52076,
+      "dst_player_id": 52076,
+      "name": "Tom Pearce"
+    },
+    {
+      "espn_id": "309410",
+      "src_player_id": 52094,
+      "dst_player_id": 52094,
+      "name": "Ramiro Enrique"
+    },
+    {
+      "espn_id": "343370",
+      "src_player_id": 52105,
+      "dst_player_id": 52105,
+      "name": "Ivan Glavinovich"
+    },
+    {
+      "espn_id": "237259",
+      "src_player_id": 52068,
+      "dst_player_id": 52068,
+      "name": "Aljaz Ivacic"
+    },
+    {
+      "espn_id": "286319",
+      "src_player_id": 52083,
+      "dst_player_id": 52083,
+      "name": "Luis D\u00edaz"
+    },
+    {
+      "espn_id": "272505",
+      "src_player_id": 33034,
+      "dst_player_id": 33034,
+      "name": "John Pulskamp"
+    },
+    {
+      "espn_id": "303521",
+      "src_player_id": 33044,
+      "dst_player_id": 33044,
+      "name": "Robert Voloder"
+    },
+    {
+      "espn_id": "231395",
+      "src_player_id": 33039,
+      "dst_player_id": 33039,
+      "name": "Joaqu\u00edn"
+    },
+    {
+      "espn_id": "259925",
+      "src_player_id": 33041,
+      "dst_player_id": 33041,
+      "name": "Logan Ndenbe"
+    },
+    {
+      "espn_id": "286760",
+      "src_player_id": 33051,
+      "dst_player_id": 33051,
+      "name": "Jacob Davis"
+    },
+    {
+      "espn_id": "395357",
+      "src_player_id": 33046,
+      "dst_player_id": 33046,
+      "name": "Jacob Bartlett"
+    },
+    {
+      "espn_id": "215186",
+      "src_player_id": 33049,
+      "dst_player_id": 33049,
+      "name": "Memo Rodr\u00edguez"
+    },
+    {
+      "espn_id": "207894",
+      "src_player_id": 33048,
+      "dst_player_id": 33048,
+      "name": "Nemanja Radoja"
+    },
+    {
+      "espn_id": "313069",
+      "src_player_id": 32932,
+      "dst_player_id": 32932,
+      "name": "William Agada"
+    },
+    {
+      "espn_id": "199926",
+      "src_player_id": 33047,
+      "dst_player_id": 33047,
+      "name": "Erik Thommy"
+    },
+    {
+      "espn_id": "233050",
+      "src_player_id": 33053,
+      "dst_player_id": 33053,
+      "name": "D\u00e1niel Sall\u00f3i"
+    },
+    {
+      "espn_id": "195675",
+      "src_player_id": 52053,
+      "dst_player_id": 52053,
+      "name": "Dany Rosero"
+    },
+    {
+      "espn_id": "286194",
+      "src_player_id": 33042,
+      "dst_player_id": 33042,
+      "name": "Zorhan Bassong"
+    },
+    {
+      "espn_id": "240110",
+      "src_player_id": 33054,
+      "dst_player_id": 33054,
+      "name": "Dejan Joveljic"
+    },
+    {
+      "espn_id": "222659",
+      "src_player_id": 33050,
+      "dst_player_id": 33050,
+      "name": "Manu Garc\u00eda"
+    },
+    {
+      "espn_id": "259070",
+      "src_player_id": 33055,
+      "dst_player_id": 33055,
+      "name": "Shapi Suleymanov"
+    },
+    {
+      "espn_id": "233720",
+      "src_player_id": 52065,
+      "dst_player_id": 52065,
+      "name": "Chidozie Awaziem"
+    },
+    {
+      "espn_id": "252351",
+      "src_player_id": 33108,
+      "dst_player_id": 33108,
+      "name": "Djordje Mihailovic"
+    },
+    {
+      "espn_id": "281523",
+      "src_player_id": 52080,
+      "dst_player_id": 52080,
+      "name": "K\u00e9vin Cabral"
+    },
+    {
+      "espn_id": "252818",
+      "src_player_id": 32857,
+      "dst_player_id": 32857,
+      "name": "Omir Fern\u00e1ndez"
+    },
+    {
+      "espn_id": "175906",
+      "src_player_id": 33059,
+      "dst_player_id": 33059,
+      "name": "Roman B\u00fcrki"
+    },
+    {
+      "espn_id": "294222",
+      "src_player_id": 33066,
+      "dst_player_id": 33066,
+      "name": "Henry Kessler"
+    },
+    {
+      "espn_id": "319055",
+      "src_player_id": 33069,
+      "dst_player_id": 33069,
+      "name": "Kyle Hiebert"
+    },
+    {
+      "espn_id": "233046",
+      "src_player_id": 33063,
+      "dst_player_id": 33063,
+      "name": "Joshua Yaro"
+    },
+    {
+      "espn_id": "189505",
+      "src_player_id": 33074,
+      "dst_player_id": 33074,
+      "name": "Eduard L\u00f6wen"
+    },
+    {
+      "espn_id": "261518",
+      "src_player_id": 33065,
+      "dst_player_id": 33065,
+      "name": "Akil Watts"
+    },
+    {
+      "espn_id": "234125",
+      "src_player_id": 33076,
+      "dst_player_id": 33076,
+      "name": "Marcel Hartel"
+    },
+    {
+      "espn_id": "231866",
+      "src_player_id": 52064,
+      "dst_player_id": 52064,
+      "name": "Jannes Horn"
+    },
+    {
+      "espn_id": "252749",
+      "src_player_id": 33064,
+      "dst_player_id": 33064,
+      "name": "Tomas Totland"
+    },
+    {
+      "espn_id": "150409",
+      "src_player_id": 33085,
+      "dst_player_id": 33085,
+      "name": "Jo\u00e3o Klauss"
+    },
+    {
+      "espn_id": "208341",
+      "src_player_id": 33086,
+      "dst_player_id": 33086,
+      "name": "Simon Becher"
+    },
+    {
+      "espn_id": "213499",
+      "src_player_id": 33087,
+      "dst_player_id": 33087,
+      "name": "Cedric Teuchert"
+    },
+    {
+      "espn_id": "153289",
+      "src_player_id": 33073,
+      "dst_player_id": 33073,
+      "name": "Alfredo Morales"
+    },
+    {
+      "espn_id": "312934",
+      "src_player_id": 33079,
+      "dst_player_id": 33079,
+      "name": "Conrad Wallem"
+    },
+    {
+      "espn_id": "248648",
+      "src_player_id": 52071,
+      "dst_player_id": 52071,
+      "name": "Marco Farfan"
+    },
+    {
+      "espn_id": "199958",
+      "src_player_id": 52054,
+      "dst_player_id": 52054,
+      "name": "Luciano Acosta"
+    },
+    {
+      "espn_id": "280931",
+      "src_player_id": 52079,
+      "dst_player_id": 52079,
+      "name": "Tsiki Ntsabeleng"
+    },
+    {
+      "espn_id": "105957",
+      "src_player_id": 52043,
+      "dst_player_id": 52043,
+      "name": "Nicol\u00e1s Lodeiro"
+    },
+    {
+      "espn_id": "5289",
+      "src_player_id": 52115,
+      "dst_player_id": 52115,
+      "name": "Patrick Agyemang"
+    },
+    {
+      "espn_id": "131979",
+      "src_player_id": 32970,
+      "dst_player_id": 32970,
+      "name": "Stefan Frei"
+    },
+    {
+      "espn_id": "254383",
+      "src_player_id": 32977,
+      "dst_player_id": 32977,
+      "name": "Jackson Ragen"
+    },
+    {
+      "espn_id": "206682",
+      "src_player_id": 32975,
+      "dst_player_id": 32975,
+      "name": "Yeimar G\u00f3mez"
+    },
+    {
+      "espn_id": "252474",
+      "src_player_id": 32976,
+      "dst_player_id": 32976,
+      "name": "Nouhou Tolo"
+    },
+    {
+      "espn_id": "256514",
+      "src_player_id": 32978,
+      "dst_player_id": 32978,
+      "name": "Alex Roldan"
+    },
+    {
+      "espn_id": "171573",
+      "src_player_id": 32983,
+      "dst_player_id": 32983,
+      "name": "Albert Rusn\u00e1k"
+    },
+    {
+      "espn_id": "318554",
+      "src_player_id": 32989,
+      "dst_player_id": 32989,
+      "name": "Obed Vargas"
+    },
+    {
+      "espn_id": "216617",
+      "src_player_id": 32985,
+      "dst_player_id": 32985,
+      "name": "Cristian Roldan"
+    },
+    {
+      "espn_id": "210252",
+      "src_player_id": 32995,
+      "dst_player_id": 32995,
+      "name": "Jordan Morris"
+    },
+    {
+      "espn_id": "254382",
+      "src_player_id": 32997,
+      "dst_player_id": 32997,
+      "name": "Paul Rothrock"
+    },
+    {
+      "espn_id": "362501",
+      "src_player_id": 33001,
+      "dst_player_id": 33001,
+      "name": "Georgi Minoungou"
+    },
+    {
+      "espn_id": "251571",
+      "src_player_id": 32996,
+      "dst_player_id": 32996,
+      "name": "Jes\u00fas Ferreira"
+    },
+    {
+      "espn_id": "280721",
+      "src_player_id": 32999,
+      "dst_player_id": 32999,
+      "name": "Pedro de la Vega"
+    },
+    {
+      "espn_id": "159491",
+      "src_player_id": 32993,
+      "dst_player_id": 32993,
+      "name": "Paul Arriola"
+    },
+    {
+      "espn_id": "257193",
+      "src_player_id": 32979,
+      "dst_player_id": 32979,
+      "name": "Jon Bell"
+    },
+    {
+      "espn_id": "134307",
+      "src_player_id": 32902,
+      "dst_player_id": 32902,
+      "name": "Rafael"
+    },
+    {
+      "espn_id": "294874",
+      "src_player_id": 32913,
+      "dst_player_id": 32913,
+      "name": "Philip Quinton"
+    },
+    {
+      "espn_id": "203329",
+      "src_player_id": 32908,
+      "dst_player_id": 32908,
+      "name": "Justen Glad"
+    },
+    {
+      "espn_id": "243168",
+      "src_player_id": 32909,
+      "dst_player_id": 32909,
+      "name": "Alexandros Katranis"
+    },
+    {
+      "espn_id": "257622",
+      "src_player_id": 32911,
+      "dst_player_id": 32911,
+      "name": "Javain Brown"
+    },
+    {
+      "espn_id": "228390",
+      "src_player_id": 32919,
+      "dst_player_id": 32919,
+      "name": "Pablo Ruiz"
+    },
+    {
+      "espn_id": "82716",
+      "src_player_id": 52118,
+      "dst_player_id": 52118,
+      "name": "Nelson Palacio"
+    },
+    {
+      "espn_id": "265977",
+      "src_player_id": 32921,
+      "dst_player_id": 32921,
+      "name": "Braian Ojeda"
+    },
+    {
+      "espn_id": "368824",
+      "src_player_id": 52109,
+      "dst_player_id": 52109,
+      "name": "Forster Ajago"
+    },
+    {
+      "espn_id": "148356",
+      "src_player_id": 32918,
+      "dst_player_id": 32918,
+      "name": "Diego Luna"
+    },
+    {
+      "espn_id": "303508",
+      "src_player_id": 32931,
+      "dst_player_id": 32931,
+      "name": "Tyler Wolff"
+    },
+    {
+      "espn_id": "256489",
+      "src_player_id": 32910,
+      "dst_player_id": 32910,
+      "name": "Samuel Junqua"
+    },
+    {
+      "espn_id": "238896",
+      "src_player_id": 32920,
+      "dst_player_id": 32920,
+      "name": "Diogo Gon\u00e7alves"
+    },
+    {
+      "espn_id": "296109",
+      "src_player_id": 32922,
+      "dst_player_id": 32922,
+      "name": "Emeka Eneli"
+    },
+    {
+      "espn_id": "270238",
+      "src_player_id": 32912,
+      "dst_player_id": 32912,
+      "name": "Brayan Vera"
+    },
+    {
+      "espn_id": "243832",
+      "src_player_id": 33003,
+      "dst_player_id": 33003,
+      "name": "Daniel"
+    },
+    {
+      "espn_id": "250920",
+      "src_player_id": 33011,
+      "dst_player_id": 33011,
+      "name": "Bruno Wilson"
+    },
+    {
+      "espn_id": "222188",
+      "src_player_id": 33006,
+      "dst_player_id": 33006,
+      "name": "Dave Romney"
+    },
+    {
+      "espn_id": "236882",
+      "src_player_id": 33008,
+      "dst_player_id": 33008,
+      "name": "Rodrigues"
+    },
+    {
+      "espn_id": "249699",
+      "src_player_id": 33021,
+      "dst_player_id": 33021,
+      "name": "Ian Harkes"
+    },
+    {
+      "espn_id": "382638",
+      "src_player_id": 33026,
+      "dst_player_id": 33026,
+      "name": "Beau Leroux"
+    },
+    {
+      "espn_id": "380800",
+      "src_player_id": 33014,
+      "dst_player_id": 33014,
+      "name": "Jamar Ricketts"
+    },
+    {
+      "espn_id": "73200",
+      "src_player_id": 33017,
+      "dst_player_id": 33017,
+      "name": "Cristian Espinoza"
+    },
+    {
+      "espn_id": "172688",
+      "src_player_id": 33029,
+      "dst_player_id": 33029,
+      "name": "Josef Mart\u00ednez"
+    },
+    {
+      "espn_id": "186385",
+      "src_player_id": 33030,
+      "dst_player_id": 33030,
+      "name": "Cristian Arango"
+    },
+    {
+      "espn_id": "160646",
+      "src_player_id": 52048,
+      "dst_player_id": 52048,
+      "name": "Hernan Lopez"
+    },
+    {
+      "espn_id": "237002",
+      "src_player_id": 33019,
+      "dst_player_id": 33019,
+      "name": "Mark-Anthony Kaye"
+    },
+    {
+      "espn_id": "223355",
+      "src_player_id": 33007,
+      "dst_player_id": 33007,
+      "name": "V\u00edtor Costa"
+    },
+    {
+      "espn_id": "295339",
+      "src_player_id": 33031,
+      "dst_player_id": 33031,
+      "name": "Preston Judd"
+    },
+    {
+      "espn_id": "207638",
+      "src_player_id": 32964,
+      "dst_player_id": 32964,
+      "name": "Amahl Pellegrino"
+    },
+    {
+      "espn_id": "300420",
+      "src_player_id": 33032,
+      "dst_player_id": 33032,
+      "name": "Ousseni Bouda"
+    },
+    {
+      "espn_id": "290715",
+      "src_player_id": 32850,
+      "dst_player_id": 32850,
+      "name": "David Ayala"
+    },
+    {
+      "espn_id": "156564",
+      "src_player_id": 32847,
+      "dst_player_id": 32847,
+      "name": "Joao Ortiz"
+    },
+    {
+      "espn_id": "71042",
+      "src_player_id": 32845,
+      "dst_player_id": 32845,
+      "name": "Diego Char\u00e1"
+    },
+    {
+      "espn_id": "301463",
+      "src_player_id": 32851,
+      "dst_player_id": 32851,
+      "name": "Jimer Fory"
+    },
+    {
+      "espn_id": "315294",
+      "src_player_id": 32859,
+      "dst_player_id": 32859,
+      "name": "Antony"
+    },
+    {
+      "espn_id": "202539",
+      "src_player_id": 32855,
+      "dst_player_id": 32855,
+      "name": "Felipe Mora"
+    },
+    {
+      "espn_id": "354979",
+      "src_player_id": 32860,
+      "dst_player_id": 32860,
+      "name": "Kevin Kelsy"
+    },
+    {
+      "espn_id": "222765",
+      "src_player_id": 32856,
+      "dst_player_id": 32856,
+      "name": "Ariel Lassiter"
+    },
+    {
+      "espn_id": "303579",
+      "src_player_id": 32852,
+      "dst_player_id": 32852,
+      "name": "David Da Costa"
+    },
+    {
+      "espn_id": "228578",
+      "src_player_id": 32849,
+      "dst_player_id": 32849,
+      "name": "Cristhian Paredes"
+    },
+    {
+      "espn_id": "272338",
+      "src_player_id": 33121,
+      "dst_player_id": 33121,
+      "name": "Yohei Takaoka"
+    },
+    {
+      "espn_id": "256476",
+      "src_player_id": 33127,
+      "dst_player_id": 33127,
+      "name": "Tristan Blackmon"
+    },
+    {
+      "espn_id": "302798",
+      "src_player_id": 33129,
+      "dst_player_id": 33129,
+      "name": "Ranko Veselinovic"
+    },
+    {
+      "espn_id": "193452",
+      "src_player_id": 33125,
+      "dst_player_id": 33125,
+      "name": "Sam Adekugbe"
+    },
+    {
+      "espn_id": "286523",
+      "src_player_id": 33128,
+      "dst_player_id": 33128,
+      "name": "Math\u00edas Laborda"
+    },
+    {
+      "espn_id": "202501",
+      "src_player_id": 33140,
+      "dst_player_id": 33140,
+      "name": "Andr\u00e9s Cubas"
+    },
+    {
+      "espn_id": "295771",
+      "src_player_id": 33143,
+      "dst_player_id": 33143,
+      "name": "Sebastian Berhalter"
+    },
+    {
+      "espn_id": "297150",
+      "src_player_id": 52088,
+      "dst_player_id": 52088,
+      "name": "Pedro Vite"
+    },
+    {
+      "espn_id": "249490",
+      "src_player_id": 33149,
+      "dst_player_id": 33149,
+      "name": "Brian White"
+    },
+    {
+      "espn_id": "173404",
+      "src_player_id": 33139,
+      "dst_player_id": 33139,
+      "name": "Ryan Gauld"
+    },
+    {
+      "espn_id": "280612",
+      "src_player_id": 33151,
+      "dst_player_id": 33151,
+      "name": "Jayden Nelson"
+    },
+    {
+      "espn_id": "341727",
+      "src_player_id": 33133,
+      "dst_player_id": 33133,
+      "name": "\u00c9dier Ocampo"
+    },
+    {
+      "espn_id": "386231",
+      "src_player_id": 52113,
+      "dst_player_id": 52113,
+      "name": "Nicolas Fleuriau Chateau"
+    },
+    {
+      "espn_id": "340228",
+      "src_player_id": 33132,
+      "dst_player_id": 33132,
+      "name": "Ali Ahmed"
+    },
+    {
+      "espn_id": "371482",
+      "src_player_id": 33147,
+      "dst_player_id": 33147,
+      "name": "Jeevan Badwal"
+    },
+    {
+      "espn_id": "297118",
+      "src_player_id": 33144,
+      "dst_player_id": 33144,
+      "name": "Ralph Priso-Mbongue"
+    },
+    {
+      "espn_id": "265874",
+      "src_player_id": 32940,
+      "dst_player_id": 32940,
+      "name": "CJ dos Santos"
+    },
+    {
+      "espn_id": "210139",
+      "src_player_id": 32944,
+      "dst_player_id": 32944,
+      "name": "Paddy McNair"
+    },
+    {
+      "espn_id": "257114",
+      "src_player_id": 32946,
+      "dst_player_id": 32946,
+      "name": "Christopher McVey"
+    },
+    {
+      "espn_id": "242613",
+      "src_player_id": 32945,
+      "dst_player_id": 32945,
+      "name": "Franco Negri"
+    },
+    {
+      "espn_id": "308969",
+      "src_player_id": 52093,
+      "dst_player_id": 52093,
+      "name": "Jasper L\u00f6effelsend"
+    },
+    {
+      "espn_id": "214371",
+      "src_player_id": 32955,
+      "dst_player_id": 32955,
+      "name": "Jeppe Tverskov"
+    },
+    {
+      "espn_id": "225609",
+      "src_player_id": 32956,
+      "dst_player_id": 32956,
+      "name": "Luca de la Torre"
+    },
+    {
+      "espn_id": "116825",
+      "src_player_id": 32953,
+      "dst_player_id": 32953,
+      "name": "An\u00edbal Godoy"
+    },
+    {
+      "espn_id": "186324",
+      "src_player_id": 32962,
+      "dst_player_id": 32962,
+      "name": "Marcus Ingvartsen"
+    },
+    {
+      "espn_id": "200161",
+      "src_player_id": 32963,
+      "dst_player_id": 32963,
+      "name": "Hirving Lozano"
+    },
+    {
+      "espn_id": "250454",
+      "src_player_id": 32957,
+      "dst_player_id": 32957,
+      "name": "Anders Dreyer"
+    },
+    {
+      "espn_id": "312610",
+      "src_player_id": 32968,
+      "dst_player_id": 32968,
+      "name": "Tom\u00e1s \u00c1ngel"
+    },
+    {
+      "espn_id": "399756",
+      "src_player_id": 32952,
+      "dst_player_id": 32952,
+      "name": "Ian Pilcher"
+    },
+    {
+      "espn_id": "303619",
+      "src_player_id": 32967,
+      "dst_player_id": 32967,
+      "name": "Alejandro Alvarado Jr."
+    },
+    {
+      "espn_id": "277212",
+      "src_player_id": 32958,
+      "dst_player_id": 32958,
+      "name": "Onni Valakari"
+    },
+    {
+      "espn_id": "329734",
+      "src_player_id": 32947,
+      "dst_player_id": 32947,
+      "name": "William Kumado"
+    },
+    {
+      "espn_id": "219188",
+      "src_player_id": 52058,
+      "dst_player_id": 52058,
+      "name": "Xande Silva"
+    },
+    {
+      "espn_id": "358654",
+      "src_player_id": 32935,
+      "dst_player_id": 32935,
+      "name": "Ariath Piol"
+    },
+    {
+      "espn_id": "304126",
+      "src_player_id": 32915,
+      "dst_player_id": 32915,
+      "name": "Kobi Henry"
+    },
+    {
+      "espn_id": "319045",
+      "src_player_id": 32990,
+      "dst_player_id": 32990,
+      "name": "Kalani Kossa-Rienzi"
+    },
+    {
+      "espn_id": "280765",
+      "src_player_id": 32987,
+      "dst_player_id": 32987,
+      "name": "Daniel Leyva"
+    },
+    {
+      "espn_id": "255311",
+      "src_player_id": 52074,
+      "dst_player_id": 52074,
+      "name": "Ola Brynhildsen"
+    },
+    {
+      "espn_id": "380923",
+      "src_player_id": 32900,
+      "dst_player_id": 32900,
+      "name": "Mohammed Sofo"
+    },
+    {
+      "espn_id": "237164",
+      "src_player_id": 32874,
+      "dst_player_id": 32874,
+      "name": "Raheem Edwards"
+    },
+    {
+      "espn_id": "242942",
+      "src_player_id": 32875,
+      "dst_player_id": 32875,
+      "name": "Dylan Nealis"
+    },
+    {
+      "espn_id": "249985",
+      "src_player_id": 33010,
+      "dst_player_id": 33010,
+      "name": "DeJuan Jones"
+    },
+    {
+      "espn_id": "158081",
+      "src_player_id": 52046,
+      "dst_player_id": 52046,
+      "name": "Maximiliano Urruti"
+    },
+    {
+      "espn_id": "294215",
+      "src_player_id": 52087,
+      "dst_player_id": 52087,
+      "name": "Bret Halsey"
+    },
+    {
+      "espn_id": "245098",
+      "src_player_id": 33009,
+      "dst_player_id": 33009,
+      "name": "Nick Lima"
+    },
+    {
+      "espn_id": "196978",
+      "src_player_id": 33037,
+      "dst_player_id": 33037,
+      "name": "Tim Leibold"
+    },
+    {
+      "espn_id": "235485",
+      "src_player_id": 33040,
+      "dst_player_id": 33040,
+      "name": "Andrew Brody"
+    },
+    {
+      "espn_id": "337030",
+      "src_player_id": 33071,
+      "dst_player_id": 33071,
+      "name": "Devin Padelford"
+    },
+    {
+      "espn_id": "308788",
+      "src_player_id": 52092,
+      "dst_player_id": 52092,
+      "name": "Ousman Jabang"
+    },
+    {
+      "espn_id": "323130",
+      "src_player_id": 33118,
+      "dst_player_id": 33118,
+      "name": "Jules-Anthony Vilsaint"
+    },
+    {
+      "espn_id": "66579",
+      "src_player_id": 52116,
+      "dst_player_id": 52116,
+      "name": "Michael Edwards"
+    },
+    {
+      "espn_id": "191693",
+      "src_player_id": 32954,
+      "dst_player_id": 32954,
+      "name": "Emmanuel Boateng"
+    },
+    {
+      "espn_id": "338135",
+      "src_player_id": 33080,
+      "dst_player_id": 33080,
+      "name": "C\u00e9lio Pompeu"
+    },
+    {
+      "espn_id": "220478",
+      "src_player_id": 33075,
+      "dst_player_id": 33075,
+      "name": "Christopher Durkin"
+    },
+    {
+      "espn_id": "235873",
+      "src_player_id": 52066,
+      "dst_player_id": 52066,
+      "name": "Claudio Bravo"
+    },
+    {
+      "espn_id": "351302",
+      "src_player_id": 33153,
+      "dst_player_id": 33153,
+      "name": "Daniel R\u00edos"
+    },
+    {
+      "espn_id": "277302",
+      "src_player_id": 33141,
+      "dst_player_id": 33141,
+      "name": "Jean-Claude Ngando"
+    },
+    {
+      "espn_id": "268173",
+      "src_player_id": 32971,
+      "dst_player_id": 32971,
+      "name": "Andy Thomas"
+    },
+    {
+      "espn_id": "201606",
+      "src_player_id": 32984,
+      "dst_player_id": 32984,
+      "name": "Jo\u00e3o Paulo"
+    },
+    {
+      "espn_id": "256450",
+      "src_player_id": 32998,
+      "dst_player_id": 32998,
+      "name": "Daniel Musovski"
+    },
+    {
+      "espn_id": "336755",
+      "src_player_id": 32897,
+      "dst_player_id": 32897,
+      "name": "Dennis Gjengaar"
+    },
+    {
+      "espn_id": "337361",
+      "src_player_id": 33102,
+      "dst_player_id": 33102,
+      "name": "Nickseon Gomis"
+    },
+    {
+      "espn_id": "319389",
+      "src_player_id": 33110,
+      "dst_player_id": 33110,
+      "name": "Kosi Thompson"
+    },
+    {
+      "espn_id": "364702",
+      "src_player_id": 33103,
+      "dst_player_id": 33103,
+      "name": "Lazar Stefanovic"
+    },
+    {
+      "espn_id": "231098",
+      "src_player_id": 33115,
+      "dst_player_id": 33115,
+      "name": "Derrick Etienne Jr."
+    },
+    {
+      "espn_id": "286804",
+      "src_player_id": 33043,
+      "dst_player_id": 33043,
+      "name": "Jansen Miller"
+    },
+    {
+      "espn_id": "317465",
+      "src_player_id": 33022,
+      "dst_player_id": 33022,
+      "name": "Noel Buck"
+    },
+    {
+      "espn_id": "285201",
+      "src_player_id": 52081,
+      "dst_player_id": 52081,
+      "name": "Santiago Moreno"
+    },
+    {
+      "espn_id": "381072",
+      "src_player_id": 32951,
+      "dst_player_id": 32951,
+      "name": "Luca Bombino"
+    },
+    {
+      "espn_id": "275859",
+      "src_player_id": 52078,
+      "dst_player_id": 52078,
+      "name": "Dominik Iankov"
+    },
+    {
+      "espn_id": "338836",
+      "src_player_id": 33131,
+      "dst_player_id": 33131,
+      "name": "Tate Johnson"
+    },
+    {
+      "espn_id": "189531",
+      "src_player_id": 52051,
+      "dst_player_id": 52051,
+      "name": "Damir Kreilach"
+    },
+    {
+      "espn_id": "333752",
+      "src_player_id": 33023,
+      "dst_player_id": 33023,
+      "name": "Niko Tsakiris"
+    },
+    {
+      "espn_id": "331314",
+      "src_player_id": 52102,
+      "dst_player_id": 52102,
+      "name": "Iuri Tavares"
+    },
+    {
+      "espn_id": "228387",
+      "src_player_id": 52061,
+      "dst_player_id": 52061,
+      "name": "H\u00e9ctor Mart\u00ednez"
+    },
+    {
+      "espn_id": "198189",
+      "src_player_id": 33062,
+      "dst_player_id": 33062,
+      "name": "Timo Baumgartl"
+    },
+    {
+      "espn_id": "308083",
+      "src_player_id": 32896,
+      "dst_player_id": 32896,
+      "name": "Serge Ngoma"
+    },
+    {
+      "espn_id": "239706",
+      "src_player_id": 52070,
+      "dst_player_id": 52070,
+      "name": "Cengiz \u00dcnder"
+    },
+    {
+      "espn_id": "350481",
+      "src_player_id": 52106,
+      "dst_player_id": 52106,
+      "name": "Fidel Barajas"
+    },
+    {
+      "espn_id": "216998",
+      "src_player_id": 33052,
+      "dst_player_id": 33052,
+      "name": "Khiry Shelton"
+    },
+    {
+      "espn_id": "178054",
+      "src_player_id": 33060,
+      "dst_player_id": 33060,
+      "name": "Benjamin Lundt"
+    },
+    {
+      "espn_id": "289938",
+      "src_player_id": 33078,
+      "dst_player_id": 33078,
+      "name": "Tomas Ostrak"
+    },
+    {
+      "espn_id": "67671",
+      "src_player_id": 52117,
+      "dst_player_id": 52117,
+      "name": "Joakim Nilsson"
+    },
+    {
+      "espn_id": "238109",
+      "src_player_id": 52069,
+      "dst_player_id": 52069,
+      "name": "Bj\u00f8rn Inge Utvik"
+    },
+    {
+      "espn_id": "291999",
+      "src_player_id": 32966,
+      "dst_player_id": 32966,
+      "name": "Alex Mighten"
+    },
+    {
+      "espn_id": "217162",
+      "src_player_id": 32865,
+      "dst_player_id": 32865,
+      "name": "John McCarthy"
+    },
+    {
+      "espn_id": "222174",
+      "src_player_id": 52059,
+      "dst_player_id": 52059,
+      "name": "Souleyman Doumbia"
+    },
+    {
+      "espn_id": "246337",
+      "src_player_id": 33020,
+      "dst_player_id": 33020,
+      "name": "Jack Skahan"
+    },
+    {
+      "espn_id": "398860",
+      "src_player_id": 33016,
+      "dst_player_id": 33016,
+      "name": "Reid Roberts"
+    },
+    {
+      "espn_id": "381406",
+      "src_player_id": 52111,
+      "dst_player_id": 52111,
+      "name": "Cole Mrowka"
+    },
+    {
+      "espn_id": "318476",
+      "src_player_id": 32867,
+      "dst_player_id": 32867,
+      "name": "Anthony Marcucci"
+    },
+    {
+      "espn_id": "362442",
+      "src_player_id": 32888,
+      "dst_player_id": 32888,
+      "name": "Ronald Donkor"
+    },
+    {
+      "espn_id": "217009",
+      "src_player_id": 32871,
+      "dst_player_id": 32871,
+      "name": "Tim Parker"
+    },
+    {
+      "espn_id": "139028",
+      "src_player_id": 52045,
+      "dst_player_id": 52045,
+      "name": "Lorenzo Insigne"
+    },
+    {
+      "espn_id": "298072",
+      "src_player_id": 33100,
+      "dst_player_id": 33100,
+      "name": "Kobe Franklin"
+    },
+    {
+      "espn_id": "267109",
+      "src_player_id": 33056,
+      "dst_player_id": 33056,
+      "name": "Mason Toye"
+    },
+    {
+      "espn_id": "300110",
+      "src_player_id": 52089,
+      "dst_player_id": 52089,
+      "name": "L\u00e9o Ch\u00fa"
+    },
+    {
+      "espn_id": "249186",
+      "src_player_id": 52072,
+      "dst_player_id": 52072,
+      "name": "Lachlan Brook"
+    },
+    {
+      "espn_id": "371467",
+      "src_player_id": 33146,
+      "dst_player_id": 33146,
+      "name": "Liam Mackenzie"
+    },
+    {
+      "espn_id": "343994",
+      "src_player_id": 33134,
+      "dst_player_id": 33134,
+      "name": "Belal Halbouni"
+    },
+    {
+      "espn_id": "256209",
+      "src_player_id": 33150,
+      "dst_player_id": 33150,
+      "name": "Emmanuel Sabbi"
+    },
+    {
+      "espn_id": "399457",
+      "src_player_id": 32969,
+      "dst_player_id": 32969,
+      "name": "Anisse Saidi"
+    },
+    {
+      "espn_id": "316138",
+      "src_player_id": 52097,
+      "dst_player_id": 52097,
+      "name": "Hamady Diop"
+    },
+    {
+      "espn_id": "391469",
+      "src_player_id": 32901,
+      "dst_player_id": 32901,
+      "name": "Wiktor Bogacz"
+    },
+    {
+      "espn_id": "319046",
+      "src_player_id": 32933,
+      "dst_player_id": 32933,
+      "name": "Jes\u00fas Barea"
+    },
+    {
+      "espn_id": "374519",
+      "src_player_id": 32936,
+      "dst_player_id": 32936,
+      "name": "Zavier Gozo"
+    },
+    {
+      "espn_id": "281494",
+      "src_player_id": 33012,
+      "dst_player_id": 33012,
+      "name": "Daniel Munie"
+    },
+    {
+      "espn_id": "402338",
+      "src_player_id": 52114,
+      "dst_player_id": 52114,
+      "name": "Andy Batioja"
+    },
+    {
+      "espn_id": "304120",
+      "src_player_id": 32988,
+      "dst_player_id": 32988,
+      "name": "Reed Baker-Whiting"
+    },
+    {
+      "espn_id": "233707",
+      "src_player_id": 33106,
+      "dst_player_id": 33106,
+      "name": "Maxime Dominguez"
+    },
+    {
+      "espn_id": "365859",
+      "src_player_id": 32948,
+      "dst_player_id": 32948,
+      "name": "Oscar Verhoeven"
+    },
+    {
+      "espn_id": "384451",
+      "src_player_id": 52112,
+      "dst_player_id": 52112,
+      "name": "Charles Sharp"
+    },
+    {
+      "espn_id": "333333",
+      "src_player_id": 33130,
+      "dst_player_id": 33130,
+      "name": "Giuseppe Bovalina"
+    },
+    {
+      "espn_id": "272027",
+      "src_player_id": 52077,
+      "dst_player_id": 52077,
+      "name": "Show"
+    },
+    {
+      "espn_id": "175922",
+      "src_player_id": 32974,
+      "dst_player_id": 32974,
+      "name": "Kim Kee-Hee"
+    },
+    {
+      "espn_id": "318520",
+      "src_player_id": 52100,
+      "dst_player_id": 52100,
+      "name": "Cody Baker"
+    },
+    {
+      "espn_id": "127512",
+      "src_player_id": 52044,
+      "dst_player_id": 52044,
+      "name": "Maxime Chanot"
+    },
+    {
+      "espn_id": "216999",
+      "src_player_id": 33002,
+      "dst_player_id": 33002,
+      "name": "Earl Edwards"
+    },
+    {
+      "espn_id": "129395",
+      "src_player_id": 32854,
+      "dst_player_id": 32854,
+      "name": "Jonathan Rodr\u00edguez"
+    },
+    {
+      "espn_id": "362459",
+      "src_player_id": 33058,
+      "dst_player_id": 33058,
+      "name": "Stephen Afrifa"
+    },
+    {
+      "espn_id": "346651",
+      "src_player_id": 33081,
+      "dst_player_id": 33081,
+      "name": "Mykhi Joyner"
+    },
+    {
+      "espn_id": "182014",
+      "src_player_id": 32943,
+      "dst_player_id": 32943,
+      "name": "Andr\u00e9s Reyes"
+    },
+    {
+      "espn_id": "196354",
+      "src_player_id": 32994,
+      "dst_player_id": 32994,
+      "name": "Ryan Kent"
+    },
+    {
+      "espn_id": "331616",
+      "src_player_id": 33013,
+      "dst_player_id": 33013,
+      "name": "Max Floriani"
+    },
+    {
+      "espn_id": "252481",
+      "src_player_id": 32876,
+      "dst_player_id": 32876,
+      "name": "Kyle Duncan"
+    },
+    {
+      "espn_id": "360526",
+      "src_player_id": 52108,
+      "dst_player_id": 52108,
+      "name": "Hakim Karamoko"
+    },
+    {
+      "espn_id": "362114",
+      "src_player_id": 32925,
+      "dst_player_id": 32925,
+      "name": "Noel Caliskan"
+    },
+    {
+      "espn_id": "380895",
+      "src_player_id": 52110,
+      "dst_player_id": 52110,
+      "name": "Jackson Travis"
+    },
+    {
+      "espn_id": "290805",
+      "src_player_id": 52084,
+      "dst_player_id": 52084,
+      "name": "Garrison Tubbs"
+    },
+    {
+      "espn_id": "301856",
+      "src_player_id": 33000,
+      "dst_player_id": 33000,
+      "name": "Osaze De Rosario"
+    },
+    {
+      "espn_id": "303894",
+      "src_player_id": 33067,
+      "dst_player_id": 33067,
+      "name": "Jayden Reid"
+    },
+    {
+      "espn_id": "236121",
+      "src_player_id": 52067,
+      "dst_player_id": 52067,
+      "name": "Toyosi Olusanya"
+    },
+    {
+      "espn_id": "297277",
+      "src_player_id": 33057,
+      "dst_player_id": 33057,
+      "name": "Santiago Mu\u00f1oz"
+    },
+    {
+      "espn_id": "336926",
+      "src_player_id": 52103,
+      "dst_player_id": 52103,
+      "name": "Jake Girdwood-Reich"
+    },
+    {
+      "espn_id": "304160",
+      "src_player_id": 52091,
+      "dst_player_id": 52091,
+      "name": "Joseph Zalinsky"
+    },
+    {
+      "espn_id": "371080",
+      "src_player_id": 32982,
+      "dst_player_id": 32982,
+      "name": "Stuart Hawkins"
+    },
+    {
+      "espn_id": "400722",
+      "src_player_id": 33028,
+      "dst_player_id": 33028,
+      "name": "Nick Fernandez"
+    },
+    {
+      "espn_id": "229876",
+      "src_player_id": 52062,
+      "dst_player_id": 52062,
+      "name": "Paul Marie"
+    },
+    {
+      "espn_id": "272154",
+      "src_player_id": 33077,
+      "dst_player_id": 33077,
+      "name": "Rasmus Alm"
+    },
+    {
+      "espn_id": "100525",
+      "src_player_id": 32928,
+      "dst_player_id": 32928,
+      "name": "Johnny Russell"
+    },
+    {
+      "espn_id": "302893",
+      "src_player_id": 33033,
+      "dst_player_id": 33033,
+      "name": "Benjamin Kikanovic"
+    },
+    {
+      "espn_id": "255418",
+      "src_player_id": 32858,
+      "dst_player_id": 32858,
+      "name": "Kristoffer Velde"
+    },
+    {
+      "espn_id": "121767",
+      "src_player_id": 32846,
+      "dst_player_id": 32846,
+      "name": "Mat\u00edas Rojas"
+    },
+    {
+      "espn_id": "309232",
+      "src_player_id": 33152,
+      "dst_player_id": 33152,
+      "name": "Kenji Cabrera"
+    },
+    {
+      "espn_id": "405591",
+      "src_player_id": 33156,
+      "dst_player_id": 33156,
+      "name": "Rayan Elloumi"
+    },
+    {
+      "espn_id": "258971",
+      "src_player_id": 52075,
+      "dst_player_id": 52075,
+      "name": "Javair\u00f4 Dilrosun"
+    },
+    {
+      "espn_id": "399190",
+      "src_player_id": 32938,
+      "dst_player_id": 32938,
+      "name": "Aiden Hezarkhani"
+    },
+    {
+      "espn_id": "336970",
+      "src_player_id": 52104,
+      "dst_player_id": 52104,
+      "name": "Gavin Turner"
+    },
+    {
+      "espn_id": "385759",
+      "src_player_id": 33090,
+      "dst_player_id": 33090,
+      "name": "Brendan McSorley"
+    },
+    {
+      "espn_id": "308639",
+      "src_player_id": 33109,
+      "dst_player_id": 33109,
+      "name": "Malik Henry"
+    },
+    {
+      "espn_id": "241245",
+      "src_player_id": 33107,
+      "dst_player_id": 33107,
+      "name": "Jos\u00e9 Cifuentes"
+    },
+    {
+      "espn_id": "403773",
+      "src_player_id": 33155,
+      "dst_player_id": 33155,
+      "name": "Johnny Selemani"
+    },
+    {
+      "espn_id": "301358",
+      "src_player_id": 52090,
+      "dst_player_id": 52090,
+      "name": "Wessel Speel"
+    },
+    {
+      "espn_id": "324186",
+      "src_player_id": 33070,
+      "dst_player_id": 33070,
+      "name": "Michael Wentzel"
+    },
+    {
+      "espn_id": "217816",
+      "src_player_id": 33038,
+      "dst_player_id": 33038,
+      "name": "Ian James"
+    },
+    {
+      "espn_id": "292912",
+      "src_player_id": 32930,
+      "dst_player_id": 32930,
+      "name": "Victor Olatunji"
+    },
+    {
+      "espn_id": "335525",
+      "src_player_id": 32934,
+      "dst_player_id": 32934,
+      "name": "Rwan Cruz"
+    },
+    {
+      "espn_id": "400713",
+      "src_player_id": 32961,
+      "dst_player_id": 32961,
+      "name": "Manu Duah"
+    },
+    {
+      "espn_id": "289420",
+      "src_player_id": 33142,
+      "dst_player_id": 33142,
+      "name": "Antoine Coupland"
+    },
+    {
+      "espn_id": "391712",
+      "src_player_id": 32863,
+      "dst_player_id": 32863,
+      "name": "Gage Guerra"
+    },
+    {
+      "espn_id": "353145",
+      "src_player_id": 33111,
+      "dst_player_id": 33111,
+      "name": "Michael Sullivan"
+    },
+    {
+      "espn_id": "365854",
+      "src_player_id": 32959,
+      "dst_player_id": 32959,
+      "name": "David Vazquez"
+    },
+    {
+      "espn_id": "359541",
+      "src_player_id": 33154,
+      "dst_player_id": 33154,
+      "name": "Nelson Pierre"
+    },
+    {
+      "espn_id": "337051",
+      "src_player_id": 33145,
+      "dst_player_id": 33145,
+      "name": "Jackson Castro"
+    },
+    {
+      "espn_id": "308481",
+      "src_player_id": 33068,
+      "dst_player_id": 33068,
+      "name": "Jaziel Orozco"
+    },
+    {
+      "espn_id": "380672",
+      "src_player_id": 33083,
+      "dst_player_id": 33083,
+      "name": "Tyson Pearce"
+    },
+    {
+      "espn_id": "286424",
+      "src_player_id": 32941,
+      "dst_player_id": 32941,
+      "name": "Pablo Sisniega"
+    },
+    {
+      "espn_id": "294201",
+      "src_player_id": 52086,
+      "dst_player_id": 52086,
+      "name": "Chris Rindov"
+    },
+    {
+      "espn_id": "362940",
+      "src_player_id": 32898,
+      "dst_player_id": 32898,
+      "name": "Rafael Mosquera"
+    },
+    {
+      "espn_id": "294040",
+      "src_player_id": 33093,
+      "dst_player_id": 33093,
+      "name": "Luka Gavran"
+    },
+    {
+      "espn_id": "371460",
+      "src_player_id": 32949,
+      "dst_player_id": 32949,
+      "name": "Aiden Harangi"
+    },
+    {
+      "espn_id": "304424",
+      "src_player_id": 33045,
+      "dst_player_id": 33045,
+      "name": "Al\u00e1n Montes"
+    },
+    {
+      "espn_id": "355253",
+      "src_player_id": 33072,
+      "dst_player_id": 33072,
+      "name": "Fallou Fall"
+    },
+    {
+      "espn_id": "384356",
+      "src_player_id": 32991,
+      "dst_player_id": 32991,
+      "name": "Snyder Brunell"
+    },
+    {
+      "espn_id": "371488",
+      "src_player_id": 32960,
+      "dst_player_id": 32960,
+      "name": "Pedro Soma"
+    },
+    {
+      "espn_id": "123465",
+      "src_player_id": 33148,
+      "dst_player_id": 33148,
+      "name": "Thomas M\u00fcller"
+    },
+    {
+      "espn_id": "235593",
+      "src_player_id": 33018,
+      "dst_player_id": 33018,
+      "name": "Ronaldo Vieira"
+    },
+    {
+      "espn_id": "377553",
+      "src_player_id": 32950,
+      "dst_player_id": 32950,
+      "name": "Leo Duru"
+    },
+    {
+      "espn_id": "238420",
+      "src_player_id": 32883,
+      "dst_player_id": 32883,
+      "name": "Gustaf Beggren"
+    },
+    {
+      "espn_id": "299188",
+      "src_player_id": 32981,
+      "dst_player_id": 32981,
+      "name": "Antino Lopez"
+    },
+    {
+      "espn_id": "272039",
+      "src_player_id": 32986,
+      "dst_player_id": 32986,
+      "name": "Peter Kingston"
+    },
+    {
+      "espn_id": "410803",
+      "src_player_id": 33084,
+      "dst_player_id": 33084,
+      "name": "Seth Antwi"
+    },
+    {
+      "espn_id": "182090",
+      "src_player_id": 32870,
+      "dst_player_id": 32870,
+      "name": "Marcelo Morales"
+    }
+  ],
+  "unresolvable": []
+}

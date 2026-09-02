@@ -22,14 +22,14 @@ def con():
                                 date TEXT, espn_event_id TEXT, final_home REAL, final_away REAL,
                                 start_time TEXT);
         CREATE TABLE players(id INTEGER PRIMARY KEY, name TEXT, team TEXT, mlbam_id INTEGER,
-                             espn_id TEXT);
+                             espn_id TEXT, league TEXT);
         CREATE TABLE props(id INTEGER PRIMARY KEY, game_id INTEGER, player_id INTEGER,
                            market TEXT, line REAL, side TEXT);
         CREATE TABLE prop_results(prop_id INTEGER, actual_value REAL, hit INTEGER, settled_at TEXT);
         INSERT INTO prop_games VALUES (1,'mlb','Washington Nationals','Cincinnati Reds',
                                        '2026-08-09','401816457',NULL,NULL,
                                        '2026-08-09T16:15:00+00:00');
-        INSERT INTO players VALUES (10,'Brady Singer','CIN',12345,'4239580');
+        INSERT INTO players VALUES (10,'Brady Singer','CIN',12345,'4239580','mlb');
         INSERT INTO props VALUES (100,1,10,'outs',17.5,'over');
     """)
     c.commit()

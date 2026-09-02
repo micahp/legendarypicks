@@ -7,8 +7,8 @@ Split out of the old 2125-line sports_service.py god-file (see docs/RETRO-2026-0
 Routers in routers/ import everything they need via `from _core import *`.
 """
 import json
-import os, sqlite3, datetime as dt
-import re, unicodedata
+import os, sqlite3, sys, time, datetime as dt
+import re, sys, unicodedata
 from contextlib import closing
 from typing import Optional, Tuple
 from fastapi import HTTPException, Query
@@ -17,6 +17,7 @@ from pydantic import BaseModel
 
 import espn_client as espn
 from analytics import ev as ev_mod, clv as clv_mod, calibration as calib_mod, projections as proj_mod
+from history_refresh_common import BUSY_TIMEOUT_SECONDS
 from league_stats import PLAYER_STATS_TABLE_SQL, canonical_player_stats_row
 from team_stats_json import stats_to_json
 # Extracted from this file, re-exported below so `from _core import *` callers
@@ -31,44 +32,68 @@ DB = os.environ.get("LP_DB_PATH") or os.path.join(os.path.dirname(os.path.abspat
 
 ALLOWED_ORIGINS = os.environ.get("LP_ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:3007").split(",")
 
-# A prop row's source is part of its user-facing contract, not merely ingest
-# provenance.  PrizePicks lines relayed by RotoWire are pick'em thresholds;
-# their `over` / `under` booleans are selections, not American prices.
-PROP_SOURCE_CONTRACTS = {
-    "rotowire_prizepicks_relay": {
-        "offer_kind": "pickem_threshold",
-        "source_label": "PrizePicks threshold via RotoWire",
-    },
-}
-
-# An explicit source policy prevents a stale sportsbook feed from silently
-# filling the MLS board while the replacement publisher has no MLS fixture.
-CURRENT_PROP_SOURCE_BY_LEAGUE = {"mls": "rotowire_prizepicks_relay"}
-
-
-def prop_source_contract(source: Optional[str]) -> dict:
-    """Return presentation semantics for a persisted prop source."""
-    return {
-        "offer_kind": "sportsbook_odds",
-        "source_label": source or "Unknown source",
-        **PROP_SOURCE_CONTRACTS.get(source or "", {}),
-    }
-
-
-def current_prop_source(league: Optional[str]) -> Optional[str]:
-    """Return the sole current board publisher where a league has one."""
-    return CURRENT_PROP_SOURCE_BY_LEAGUE.get((league or "").lower())
-
 
 def _db():
+    # `timeout` is SQLite's busy timeout: how long a connection that cannot get the lock
+    # keeps retrying before it raises `database is locked`. The default is 5 seconds, and
+    # that default is what prod's props ingest was hitting -- the OperationalError came
+    # back out of the API as an HTTP 500 and the scraper reported "2 of 14 mlb games
+    # failed to POST", every 30 minutes, silently dropping props.
+    #
+    # This is the API's connection helper, imported by 61 non-test modules, so it is the
+    # one place worth fixing rather than the 176 individual connect() sites. WAL (set on
+    # the database file itself, not here) removes reader-vs-writer contention; this
+    # covers what WAL does not, which is writer-vs-writer. SQLite allows exactly one
+    # writer at a time in both modes.
     os.makedirs(os.path.dirname(DB), exist_ok=True)
-    con = sqlite3.connect(DB)
+    con = sqlite3.connect(DB, timeout=BUSY_TIMEOUT_SECONDS)
     con.row_factory = sqlite3.Row
+    # SQLite defaults foreign_keys OFF, PER CONNECTION. `props.player_id`,
+    # `props.game_id` and `prop_results.prop_id` have all DECLARED their
+    # references since the schema was written, and none of them had ever fired:
+    # only three scripts in this repo set the pragma, and neither the API nor
+    # settlement is one of them. A constraint that reads as protection in the
+    # schema and enforces nothing is worse than no constraint, because it stops
+    # anyone looking.
+    #
+    # What that cost, found 2026-08-26: 78 props on both databases pointed at 15
+    # `players` rows that had been deleted by an identity repair, and 4
+    # `prop_results` outlived the props they graded. Nothing raised, nothing
+    # counted them. Both databases are at ZERO `PRAGMA foreign_key_check`
+    # violations as of that cleanup, so turning this on rejects no existing row.
+    #
+    # NULL is still allowed: an unresolved prop keeps `player_id IS NULL`, which
+    # is the fail-closed path the resolvers already use. What this stops is a
+    # non-NULL id pointing at nothing.
+    con.execute("PRAGMA foreign_keys=ON")
     return con
+
+
+def ensure_wal(con):
+    """Put the served database in WAL, and report the mode it is actually in.
+
+    WAL is a persistent property of the database FILE, not of a connection, so it
+    survives restarts and applies to every process that opens it. That is also the
+    hazard: prod was flipped by hand on 2026-08-19, and a restore from a `delete`-mode
+    backup would silently put it back without a single line of code changing. Setting
+    it here means the API repairs that on startup instead of quietly serving 500s again.
+
+    Under `delete` a writer holds an exclusive lock on the whole database and every
+    reader waits. Prod runs API reads, a per-minute `scoreboard_snapshots` writer and a
+    30-minute props ingest against one file, so they serialised, the 5s busy timeout
+    expired and `database is locked` came back out of the API as an HTTP 500. The
+    scraper reported it honestly as "2 of 14 mlb games failed to POST".
+
+    The PRAGMA cannot be forced: if another connection holds a lock, SQLite returns the
+    CURRENT mode rather than raising. So this returns what the database is actually in,
+    which is the only answer worth having. Callers that care must check the value.
+    """
+    return str(con.execute("PRAGMA journal_mode=WAL").fetchone()[0]).lower()
 
 
 def _init_db():
     with closing(_db()) as con:
+        ensure_wal(con)
         con.executescript("""
         CREATE TABLE IF NOT EXISTS predictions(
           id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -118,6 +143,31 @@ def _init_db():
           home TEXT, away TEXT, espn_event_id TEXT,
           start_time TEXT,
           final_home INTEGER, final_away INTEGER);
+        -- An ESPN event id IS the identity of a game, so two rows carrying one must not
+        -- exist. Prod held 59 events across 124 rows, and it was not tidiness: settlement
+        -- works one prop_games row at a time, so the props that landed on the second row
+        -- were never graded against anything.
+        --
+        -- Sized honestly, because an earlier version of this comment claimed the duplicates
+        -- WERE prod's June hole and that was wrong. Of June's 14,124 unsettled MLB props
+        -- (against 693 settled), the partition on 2026-08-17 was: 827 on rows never linked,
+        -- 4,467 on linked rows holding no final score, 2,212 on duplicated rows, and 6,618
+        -- on rows that are linked, unique, and final -- unexplained by any of this. The
+        -- duplicates are 16% of it. Removing them is worth doing on its own terms; it is
+        -- not the fix for June.
+        --
+        -- They arise honestly. prop_games.date comes from a UTC first pitch while ESPN's
+        -- scoreboard is keyed by LOCAL date, so one fixture arrives under two calendar
+        -- days; the ingest matches on (league, date, home, away) and misses, inserting a
+        -- second row; the linker then searches neighbouring slates -- correctly -- and
+        -- resolves BOTH to the same event. Nothing in that chain is a bug on its own,
+        -- which is why it needs a constraint rather than a fix.
+        --
+        -- Partial, because a blank event id asserts nothing: unlinked rows are not claims
+        -- about identity and several may legitimately share the empty string.
+        CREATE UNIQUE INDEX IF NOT EXISTS ux_prop_games_event
+          ON prop_games(league, espn_event_id)
+          WHERE espn_event_id IS NOT NULL AND espn_event_id != '';
         CREATE TABLE IF NOT EXISTS props(
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           game_id INTEGER REFERENCES prop_games(id),
@@ -134,35 +184,6 @@ def _init_db():
           league TEXT NOT NULL, team TEXT,
           first_seen TEXT NOT NULL, count INTEGER DEFAULT 1,
           source_player_key TEXT, reason TEXT);
-        -- Stable source identities are distinct from display strings.  They are
-        -- intentionally additive so a source cannot repoint a canonical player
-        -- or game through a name match on a later capture.
-        CREATE TABLE IF NOT EXISTS player_source_ids(
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          source TEXT NOT NULL, league TEXT NOT NULL,
-          source_player_key TEXT NOT NULL,
-          player_id INTEGER NOT NULL REFERENCES players(id),
-          first_seen TEXT NOT NULL, last_seen TEXT NOT NULL,
-          UNIQUE(source, league, source_player_key));
-        CREATE TABLE IF NOT EXISTS prop_game_source_ids(
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          source TEXT NOT NULL, league TEXT NOT NULL,
-          source_game_key TEXT NOT NULL,
-          game_id INTEGER NOT NULL REFERENCES prop_games(id),
-          first_seen TEXT NOT NULL, last_seen TEXT NOT NULL,
-          UNIQUE(source, league, source_game_key));
-        CREATE TABLE IF NOT EXISTS prop_source_captures(
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          source TEXT NOT NULL, league TEXT NOT NULL,
-          captured_at TEXT NOT NULL, status TEXT NOT NULL,
-          payload_sha256 TEXT NOT NULL, payload_path TEXT,
-          source_url TEXT NOT NULL DEFAULT '', parser_version TEXT NOT NULL DEFAULT '',
-          source_prop_count INTEGER NOT NULL DEFAULT 0,
-          candidate_event_count INTEGER NOT NULL DEFAULT 0,
-          eligible_event_count INTEGER NOT NULL DEFAULT 0,
-          rejected_event_count INTEGER NOT NULL DEFAULT 0,
-          market_counts_json TEXT NOT NULL DEFAULT '{}',
-          rejected_reasons_json TEXT NOT NULL DEFAULT '{}', message TEXT);
         CREATE TABLE IF NOT EXISTS name_alias(
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           player_id INTEGER NOT NULL REFERENCES players(id),
@@ -229,16 +250,6 @@ def _init_db():
         for col in ("source_player_key", "reason"):
             if col not in unresolved_columns:
                 con.execute(f"ALTER TABLE unresolved_players ADD COLUMN {col} TEXT")
-        capture_columns = {
-            r[1] for r in con.execute("PRAGMA table_info(prop_source_captures)").fetchall()
-        }
-        for col, decl in (
-            ("source_url", "TEXT NOT NULL DEFAULT ''"),
-            ("parser_version", "TEXT NOT NULL DEFAULT ''"),
-            ("rejected_reasons_json", "TEXT NOT NULL DEFAULT '{}'")
-        ):
-            if col not in capture_columns:
-                con.execute(f"ALTER TABLE prop_source_captures ADD COLUMN {col} {decl}")
         player_stats_columns = {
             r[1] for r in con.execute("PRAGMA table_info(player_stats)").fetchall()
         }
@@ -247,18 +258,6 @@ def _init_db():
         con.execute(
             "CREATE INDEX IF NOT EXISTS idx_unresolved_players_source_key "
             "ON unresolved_players(source, league, source_player_key)"
-        )
-        con.execute(
-            "CREATE INDEX IF NOT EXISTS idx_player_source_ids_player "
-            "ON player_source_ids(player_id, source, league)"
-        )
-        con.execute(
-            "CREATE INDEX IF NOT EXISTS idx_prop_game_source_ids_game "
-            "ON prop_game_source_ids(game_id, source, league)"
-        )
-        con.execute(
-            "CREATE INDEX IF NOT EXISTS idx_prop_source_captures_latest "
-            "ON prop_source_captures(source, league, captured_at DESC)"
         )
         # Player search/profile checks data availability on these foreign keys.
         # Without the indexes, a two-letter search can repeatedly scan the full
@@ -510,39 +509,249 @@ REPORTER_ROSTER = {
 }
 
 
+# ── the LLM call ──────────────────────────────────────────────────────────────
+#
+# One provider-agnostic chat function. It was `_deepseek_chat` with
+# `api.deepseek.com` hardcoded, and on 2026-08-18 that account ran out of
+# credit: 2,334 HTTP 402s in seven days, ~2 a minute, and every AI preview,
+# recap, news narrative and conversation card went dark. Micah's decision the
+# next day was to stop using DeepSeek direct, so the endpoint is now
+# configuration and the provider is a chain.
+#
+# PROVIDERS, in order. First one that can authenticate wins.
+#
+#   nous        https://inference-api.nousresearch.com/v1   $0.00005 / call
+#               The hermes agent's own default. Auth is OAuth, NOT a static
+#               key: the bearer token lives in /root/.hermes/auth.json and
+#               expires hourly. **We only ever READ that file**, freshly on
+#               every call, because the hermes agent is what refreshes it. We
+#               do not refresh and we do not write it: it is another process's
+#               state, and two writers to one token file is how you get a
+#               logged-out agent at 3am.
+#
+#   openrouter  https://openrouter.ai/api/v1                 $0.0002 / call
+#               Static API key, so it works when the OAuth token is stale.
+#               4x the price and still a fifth of a cent.
+#
+# MODEL: `deepseek/deepseek-v4-flash-0731`, dated on purpose. The old code
+# asked for `deepseek-v4-pro`, an UNDATED alias, and DeepSeek moved what it
+# points at without renaming it. Measured 2026-08-19 on OpenRouter's price
+# list, which is the visible edge of that move:
+#
+#     deepseek-v4-pro         in $1.44/M  out $2.88/M   <- the alias we called
+#     deepseek-v4-pro-0813    in $0.66/M  out $1.98/M   <- the dated snapshot
+#     deepseek-v4-flash-0731  in $0.14/M  out $0.28/M   <- this
+#
+# Never ask for an undated alias again. A model name without a date is a
+# moving target, and it moved us onto something twice the price.
+#
+# Quality was measured, not assumed: 3 runs of a real game-story prompt, every
+# claim checked against the grounding. flash-0731 invented nothing. Of the
+# alternatives, nvidia/nemotron-3.5-lightning was 20x faster (0.6s) but
+# contradicted itself inside one blurb (Houston "leads the division" and "sits
+# 13 games back"), and liquid/lfm-2.5-2.6b inverted which club led the division
+# and flipped the sign of a run differential.
+_LLM_MODEL = os.environ.get("LP_LLM_MODEL", "deepseek/deepseek-v4-flash-0731")
+_LLM_PROVIDERS = [p.strip() for p in
+                  os.environ.get("LP_LLM_PROVIDERS", "nous,openrouter").split(",") if p.strip()]
+_HERMES_AUTH = os.environ.get("LP_HERMES_AUTH", "/root/.hermes/auth.json")
+
+# A 401/402/403 is a PERMANENT refusal: the account has no money or no
+# permission, and it will not change until a person acts. The old code returned
+# None and every caller retried, which is how one dead account produced 2,334
+# requests. This is the same rule already written for ESPN's 403 in
+# .claude/skills/espn-request-budget §5, finally applied to the LLM path.
+_LLM_REFUSED_UNTIL: dict = {}
+_LLM_REFUSAL_COOLDOWN = float(os.environ.get("LP_LLM_REFUSAL_COOLDOWN", "3600"))
+
+
+def _env_key(name: str):
+    """A key from the environment, falling back to either .env on this box."""
+    v = os.environ.get(name)
+    if v:
+        return v
+    for path in ("/root/legendarypicks/.env", "/root/.hermes/.env"):
+        try:
+            with open(path) as f:
+                for line in f:
+                    if line.startswith(name + "="):
+                        return line.split("=", 1)[1].strip().strip('"').strip("'")
+        except Exception:
+            continue
+    return None
+
+
 def _deepseek_key():
-    k = os.environ.get("DEEPSEEK_API_KEY")
-    if k:
-        return k
-    try:  # fall back to the shared .env so the backend works however it was launched
-        with open("/root/.hermes/.env") as f:
-            for line in f:
-                if line.startswith("DEEPSEEK_API_KEY="):
-                    return line.split("=", 1)[1].strip().strip('"')
-    except Exception:
-        return None
+    """Kept for callers that only want to know whether an LLM is configured."""
+    return _env_key("DEEPSEEK_API_KEY")
 
 
-def _deepseek_chat(system: str, user: str, max_tokens: int = 8000) -> Optional[str]:
-    # deepseek-v4-pro is a reasoning model. We let it reason at MAX (reasoning_effort=high)
-    # — DeepSeek is cheap, so we never starve the reasoning — and give a big token ceiling
-    # so the hidden reasoning + the answer are never truncated (low ceilings → empty content).
-    key = _deepseek_key()
-    if not key:
-        return None
-    import urllib.request as _u
-    body = json.dumps({
-        "model": "deepseek-v4-pro", "temperature": 0.4, "max_tokens": max_tokens,
-        "reasoning_effort": "high",
-        "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}],
-    }).encode()
-    req = _u.Request("https://api.deepseek.com/v1/chat/completions", data=body,
-                     headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"})
+def _nous_auth():
+    """(base_url, bearer) from the hermes agent's token file, or None.
+
+    Read-only and re-read every call, so a token the agent refreshed a minute
+    ago is picked up without restarting anything. An expired token is treated
+    as "no credential" rather than tried and failed, because a 401 here costs a
+    request and tells us what the clock already knew.
+    """
     try:
-        with _u.urlopen(req, timeout=90) as r:
-            return json.loads(r.read())["choices"][0]["message"]["content"].strip()
+        with open(_HERMES_AUTH) as f:
+            n = (json.load(f).get("providers") or {}).get("nous") or {}
+        tok = n.get("access_token")
+        base = n.get("inference_base_url")
+        if not tok or not base:
+            return None
+        exp = n.get("expires_at")
+        if exp:
+            import datetime as _dt
+            if _dt.datetime.fromisoformat(exp) <= _dt.datetime.now(_dt.timezone.utc):
+                return None
+        return base, tok
     except Exception:
         return None
+
+
+def _llm_endpoint(provider: str):
+    """(url, headers) for a provider, or None when it has no usable credential."""
+    if provider == "nous":
+        # A static portal key is preferred when one exists: it does not expire,
+        # so this path stops depending on another process keeping a token warm.
+        # The OAuth token stays as the fallback for boxes without a key.
+        base = os.environ.get("NOUS_BASE_URL") or _env_key("NOUS_BASE_URL") \
+            or "https://inference-api.nousresearch.com/v1"
+        key = _env_key("NOUS_PORTAL_KEY") or _env_key("NOUS_API_KEY")
+        if key:
+            return base.rstrip("/") + "/chat/completions", {"Authorization": f"Bearer {key}"}
+        got = _nous_auth()
+        if not got:
+            return None
+        base, tok = got
+        return base.rstrip("/") + "/chat/completions", {"Authorization": f"Bearer {tok}"}
+    if provider == "openrouter":
+        key = _env_key("OPENROUTER_API_KEY")
+        if not key:
+            return None
+        return ("https://openrouter.ai/api/v1/chat/completions",
+                {"Authorization": f"Bearer {key}"})
+    if provider == "deepseek":
+        key = _env_key("DEEPSEEK_API_KEY")
+        if not key:
+            return None
+        return ("https://api.deepseek.com/v1/chat/completions",
+                {"Authorization": f"Bearer {key}"})
+    return None
+
+
+def _llm_chat(system: str, user: str, max_tokens: int = 8000,
+              reasoning: str = None) -> Optional[str]:
+    """One chat completion, or None. Never raises: callers are built on None.
+
+    `max_tokens` stays generous because this is a REASONING model and the
+    hidden reasoning is billed against the same ceiling. Measured 2026-08-19 on
+    the same prompt: at 3000, two of three runs came back with empty content
+    and reasoning_tokens equal to the ceiling. At 8000, three of three
+    answered. A low ceiling here does not truncate the answer, it deletes it.
+    """
+    import urllib.request as _u
+    payload_body = {
+        "model": _LLM_MODEL, "temperature": 0.4, "max_tokens": max_tokens,
+        "messages": [{"role": "system", "content": system},
+                     {"role": "user", "content": user}],
+    }
+    # Hidden reasoning is billed against max_tokens, so an expensive thinker can
+    # spend the ENTIRE ceiling and return empty content. That has now happened
+    # three times on three different ceilings: 4000 (discover_topics, 08-17),
+    # 3000 and 24000 (both 08-19, the second leaving 1 token for the answer out
+    # of 24,000).
+    #
+    # Our prompts are grounded writing: every fact is handed to the model and
+    # the job is selection and phrasing, not derivation. Measured 2026-08-19 on
+    # the same game-story prompt, all three outputs factually clean:
+    #
+    #     default   12.9s   1,252 out   1,126 reasoning
+    #     low       10.7s     653 out     503 reasoning
+    #     none       3.0s     142 out       0 reasoning
+    #
+    # So "none" by default: 4x faster, an order of magnitude cheaper, no
+    # accuracy cost on this shape of task, and the empty-answer failure becomes
+    # structurally impossible. A caller that genuinely needs deliberation (a
+    # ranking or a judge) passes reasoning="low"/"high" explicitly.
+    effort = reasoning or os.environ.get("LP_LLM_REASONING", "none")
+    if effort and effort != "default":
+        payload_body["reasoning_effort"] = effort
+    body = json.dumps(payload_body).encode()
+
+    tried = []
+    for provider in _LLM_PROVIDERS:
+        until = _LLM_REFUSED_UNTIL.get(provider, 0)
+        if until > time.time():
+            tried.append(f"{provider}(refused, {int(until - time.time())}s left)")
+            continue
+        got = _llm_endpoint(provider)
+        if not got:
+            tried.append(f"{provider}(no credential)")
+            continue
+        url, headers = got
+        headers = dict(headers)
+        headers["Content-Type"] = "application/json"
+        # Without a User-Agent the Nous edge answers 403 with Cloudflare error
+        # 1010, a browser-signature block. It is not an auth failure and reads
+        # exactly like one.
+        headers["User-Agent"] = "legendarypicks-backend/1.0"
+        req = _u.Request(url, data=body, headers=headers)
+        try:
+            with _u.urlopen(req, timeout=180) as r:
+                payload = json.loads(r.read())
+        except Exception as exc:
+            code = getattr(exc, "code", None)
+            detail = ""
+            try:
+                detail = " — " + exc.read().decode("utf-8", "replace")[:300]
+            except Exception:
+                pass
+            if code in (401, 402, 403):
+                _LLM_REFUSED_UNTIL[provider] = time.time() + _LLM_REFUSAL_COOLDOWN
+                print(f"_llm_chat: {provider} REFUSED us ({code}). This is permanent until "
+                      f"someone acts, so it is now skipped for "
+                      f"{_LLM_REFUSAL_COOLDOWN / 60:.0f} min rather than retried.{detail}",
+                      file=sys.stderr, flush=True)
+            else:
+                print(f"_llm_chat: {provider} request failed: "
+                      f"{type(exc).__name__}: {exc}{detail}", file=sys.stderr, flush=True)
+            tried.append(f"{provider}({code or type(exc).__name__})")
+            continue
+        try:
+            choice = payload["choices"][0]
+            content = (choice["message"]["content"] or "").strip()
+        except Exception as exc:
+            print(f"_llm_chat: {provider} unexpected response shape: "
+                  f"{type(exc).__name__}: {exc} — keys={list(payload)[:8]}",
+                  file=sys.stderr, flush=True)
+            tried.append(f"{provider}(bad shape)")
+            continue
+        if not content:
+            usage = payload.get("usage") or {}
+            detail = (usage.get("completion_tokens_details") or {})
+            print(f"_llm_chat: {provider} EMPTY answer. finish_reason="
+                  f"{choice.get('finish_reason')!r} max_tokens={max_tokens} "
+                  f"completion_tokens={usage.get('completion_tokens')} "
+                  f"reasoning_tokens={detail.get('reasoning_tokens')}. "
+                  f"reasoning ~= the ceiling means the budget went entirely to hidden "
+                  f"reasoning — RAISE max_tokens.", file=sys.stderr, flush=True)
+            tried.append(f"{provider}(empty)")
+            continue
+        return content
+
+    # Every provider is gone. SAY SO, with which ones and why. A silent None
+    # here is what let previews, recaps and narratives sit dark for 17 hours.
+    print(f"_llm_chat: no provider answered. Tried: {', '.join(tried) or '(none configured)'}. "
+          f"model={_LLM_MODEL}", file=sys.stderr, flush=True)
+    return None
+
+
+# Every caller imports this name. Keep it working, but it no longer names a
+# vendor: the provider is configuration now.
+_deepseek_chat = _llm_chat
 
 
 _OPEN_SNAP = """(SELECT {col} FROM prop_odds_snapshots s
@@ -740,6 +949,43 @@ def _pick_one(rows, nteam: str, game_teams: set):
     return None
 
 
+_FOLDED_NAME_INDEX = {}
+
+
+def _folded_name_index(con, league: str) -> dict:
+    """{folded_name: [player rows]} for one league, rebuilt when the league changes.
+
+    There is no stored normalized column to index, and adding one would need every writer
+    to maintain it -- a second definition of "the same name" that drifts silently, which is
+    the defect this exists to fix. So the fold is computed from `players` itself and cached
+    per process, stamped with (row count, max id, max updated_at). Any insert, delete or
+    rename moves the stamp and the map is rebuilt; a stale map can never outlive a write.
+
+    The API server is long-lived, so the stamp query runs per resolve. It is one aggregate
+    over an indexed column, and it is what makes the cache safe to keep.
+    """
+    has_updated_at = any(
+        r[1] == "updated_at" for r in con.execute("PRAGMA table_info(players)"))
+    if has_updated_at:
+        stamp = tuple(con.execute(
+            "SELECT COUNT(*), COALESCE(MAX(id),0), COALESCE(MAX(updated_at),'') "
+            "FROM players WHERE league=?", (league,)).fetchone())
+        cached = _FOLDED_NAME_INDEX.get(league)
+        if cached is not None and cached[0] == stamp:
+            return cached[1]
+    else:
+        # A `players` without updated_at (test fixtures, and any future schema that drops
+        # it) gives no signal that a row was RENAMED in place, and a cache that can go
+        # stale without knowing it is worse than no cache. Rebuild every call instead.
+        stamp = None
+    index = {}
+    for row in con.execute("SELECT id, name, team FROM players WHERE league=?", (league,)):
+        index.setdefault(_normalize_name(row["name"]), []).append(row)
+    if stamp is not None:
+        _FOLDED_NAME_INDEX[league] = (stamp, index)
+    return index
+
+
 def _resolve_player_for_ingest(con, player_name: str, team: str, league: str, source: str = "props",
                                game_id=None):
     """Resolve a player name to players.id via the identity spine.
@@ -747,6 +993,7 @@ def _resolve_player_for_ingest(con, player_name: str, team: str, league: str, so
     Resolution order (deterministic, NO silent creates):
     1. Exact name + league (fast path for already-matched players)
     2. Normalized name + team + league (deterministic spine match)
+    2b. Folded name on both sides + league (diacritics/case/punctuation)
     3. name_alias table (known nicknames/alternate spellings)
     4. If nothing matches → write to unresolved_players, return None
 
@@ -786,6 +1033,26 @@ def _resolve_player_for_ingest(con, player_name: str, team: str, league: str, so
         ).fetchall()
         if len(cands) == 1:
             return (cands[0]["id"], "high")
+
+    # 2b. Folded name on BOTH sides.
+    #
+    # Step 2 folds accents off the INCOMING name and then compares it to the stored name
+    # unfolded, so `Thomas Muller` from a sportsbook never matches `Thomas Müller` as ESPN
+    # publishes him -- and the miss is silent, because a name that resolves to nothing is
+    # indistinguishable from a player we do not carry. Measured on the MLS board
+    # 2026-08-16: 53 of 74 unresolved names had an exact same-team match in the spine
+    # differing only by a diacritic or a capital (Christian Ramírez, Andrés Cubas, Albert
+    # Rusnák, Kim Kee-Hee). This is the "ambiguous key never raises -- it MISSES" shape.
+    #
+    # Deliberately NOT name_alias: that table is for reviewed judgment calls ("Matt" for
+    # "Matthew"), and it holds 2 rows. Folding a diacritic is not a judgment call, so it
+    # belongs on the deterministic path where every league gets it. Ambiguity is still
+    # refused -- _pick_one is the same tiebreak the exact-name path uses.
+    cands = _folded_name_index(con, league).get(nname) or []
+    if cands:
+        picked = _pick_one(cands, nteam, game_teams)
+        if picked is not None:
+            return (picked, "high")
 
     # 3. name_alias lookup
     row = con.execute(
@@ -914,6 +1181,190 @@ def _state_from_db(league: str, game_id: str):
             (lg, game_id),
         ).fetchone()
     return "post" if row else None
+
+
+def _snapshot_field(league: str, game_id: str, key: str):
+    """One field out of the newest scoreboard snapshot, or None. DB-ONLY.
+
+    The snapshot carries `period`, `clock` and `status_detail` alongside the
+    score -- the same values the detail page would otherwise fetch live. Reading
+    them here keeps a live game page answerable with zero publisher requests.
+    """
+    lg = league.lower()
+    with closing(_db()) as con:
+        row = con.execute(
+            "SELECT payload FROM scoreboard_snapshots "
+            "WHERE league=? AND game_id=? ORDER BY fetched_at DESC LIMIT 1",
+            (lg, game_id),
+        ).fetchone()
+    if not row:
+        return None
+    try:
+        payload = json.loads(row["payload"]) if isinstance(row["payload"], str) else row["payload"]
+    except Exception:
+        return None
+    value = payload.get(key)
+    return value if value not in ("", None) else None
+
+
+def _state_and_score_from_snapshot(league: str, game_id: str):
+    """Read state + final score from scoreboard_snapshots, or (None, None).
+
+    DB-ONLY, the same contract as _state_from_db/_final_score_from_db. The
+    scoreboard ingest writes a row here for every game it has seen (per-minute
+    for live games, once for finished slates), carrying the published state and
+    score. That makes it a fallback for games team_game_results has not caught
+    up to: a game that finished an hour ago can have a scoreboard snapshot row
+    before the season-results ingest has written its team_game_results row.
+
+    This is deliberately the LAST DB source consulted: team_game_results is the
+    source of record for finals (it carries every game of the season, not just
+    what was on a board), so a contradiction between the two should resolve to
+    team_game_results, never to the snapshot.
+
+    Returns (state, {home: int, away: int} | None). state is the snapshot's own
+    state string ('pre'/'in'/'post') or None when no row exists.
+    """
+    lg = league.lower()
+    with closing(_db()) as con:
+        row = con.execute(
+            "SELECT state, payload FROM scoreboard_snapshots "
+            "WHERE league=? AND game_id=? ORDER BY fetched_at DESC LIMIT 1",
+            (lg, game_id),
+        ).fetchone()
+    if not row:
+        return None, None
+    state = row["state"]
+    score = None
+    # The score is read for ANY state that published one, not just 'post'. The
+    # payload shape is identical for a live game -- the 2026-08-26 Leagues Cup
+    # snapshot carried home 2, away 0 at Halftime -- and gating on 'post' meant a
+    # live game's score was thrown away here and then re-fetched from ESPN by the
+    # detail handler, which is a live request for a number already on disk.
+    #
+    # Callers decide what a score MEANS: game_detail still only promotes it to
+    # `final_score` when the state is 'post'.
+    if state in ("post", "in"):
+        try:
+            payload = json.loads(row["payload"]) if isinstance(row["payload"], str) else row["payload"]
+            home = (payload.get("home") or {}).get("score")
+            away = (payload.get("away") or {}).get("score")
+            if home is not None and away is not None:
+                score = {"home": int(home), "away": int(away)}
+        except Exception:
+            score = None
+    return state, score
+
+
+def _snapshot_result_info(league: str, game_id: str):
+    """Read winner + finish detail from the scoreboard snapshot, or None.
+
+    DB-ONLY, same contract. The scoreboard snapshot carries, per league:
+
+      - UFC:   home/away `winner` flag on every finished fight, plus
+               `outcome_method` / `outcome_round` / `outcome_clock` when the
+               fight was captured after the finish (code landed 2026-08-19;
+               older snapshots lack the outcome fields but keep the winner).
+      - soccer (mls/lcup/wc): home/away `winner` flag + `winner_abbrev` +
+               `is_draw` + `stage` (et/pens) — the publisher's flag is the
+               only honest grade for a shootout final.
+      - tennis (atp/wta): `sets` per side; the match winner is whoever won
+               more sets.
+      - team sports (mlb/nfl/etc.): scores, so the winner is derivable from
+               the score — caller should use the score, not this.
+
+    Returns a dict or None:
+      {winner_abbrev, winner_name, is_draw, outcome_method, outcome_round,
+       outcome_clock, sets: {home: [...], away: [...]}, home_winner, away_winner}
+    """
+    lg = league.lower()
+    with closing(_db()) as con:
+        row = con.execute(
+            "SELECT payload FROM scoreboard_snapshots "
+            "WHERE league=? AND game_id=? ORDER BY fetched_at DESC LIMIT 1",
+            (lg, game_id),
+        ).fetchone()
+    if not row:
+        return None
+    try:
+        payload = json.loads(row["payload"]) if isinstance(row["payload"], str) else row["payload"]
+    except Exception:
+        return None
+    home = payload.get("home") or {}
+    away = payload.get("away") or {}
+    info = {
+        "home_winner": home.get("winner"),
+        "away_winner": away.get("winner"),
+        "winner_abbrev": payload.get("winner_abbrev"),
+        "is_draw": payload.get("is_draw"),
+        "stage": payload.get("stage"),
+        "outcome_method": payload.get("outcome_method") or payload.get("outcomeMethod"),
+        "outcome_round": payload.get("outcome_round") or payload.get("outcomeRound"),
+        "outcome_clock": payload.get("outcome_clock") or payload.get("outcomeClock"),
+        "sets": {
+            "home": home.get("sets"),
+            "away": away.get("sets"),
+        },
+        "home_name": home.get("name") or home.get("abbrev"),
+        "away_name": away.get("name") or away.get("abbrev"),
+    }
+    # Winner abbrev: from the publisher flag (soccer), else from the winner flag on
+    # a side (UFC), else None. Never guess from score here — caller handles that.
+    if info["winner_abbrev"] is None:
+        if info["home_winner"] is True:
+            info["winner_abbrev"] = home.get("abbrev") or home.get("name")
+            info["winner_name"] = home.get("name") or home.get("abbrev")
+        elif info["away_winner"] is True:
+            info["winner_abbrev"] = away.get("abbrev") or away.get("name")
+            info["winner_name"] = away.get("name") or away.get("abbrev")
+    if info["winner_abbrev"] is None and info.get("winner_name") is None and not info["is_draw"]:
+        # Tennis: no winner flag in the payload; the sets decide.
+        hs = home.get("sets") or []
+        as_ = away.get("sets") or []
+        if hs and as_ and len(hs) == len(as_):
+            hw = sum(1 for h, a in zip(hs, as_) if h > a)
+            aw = sum(1 for h, a in zip(hs, as_) if a > h)
+            if hw > aw:
+                info["winner_abbrev"] = home.get("abbrev") or home.get("name")
+                info["winner_name"] = home.get("name") or home.get("abbrev")
+            elif aw > hw:
+                info["winner_abbrev"] = away.get("abbrev") or away.get("name")
+                info["winner_name"] = away.get("name") or away.get("abbrev")
+    return info
+
+
+def _context_from_snapshot(league: str, game_id: str):
+    """Read home/away team names from scoreboard_snapshots, or None.
+
+    DB-ONLY, same contract. The detail page's score strip needs team names, and
+    for a game the boxscore snapshot never captured (MLB etc.), game_context
+    has no row — but scoreboard_snapshots always carries the names it saw. This
+    lets the page render real teams instead of AWAY/HOME placeholders without
+    spending an ESPN request.
+    """
+    lg = league.lower()
+    with closing(_db()) as con:
+        row = con.execute(
+            "SELECT payload FROM scoreboard_snapshots "
+            "WHERE league=? AND game_id=? ORDER BY fetched_at DESC LIMIT 1",
+            (lg, game_id),
+        ).fetchone()
+    if not row:
+        return None
+    try:
+        payload = json.loads(row["payload"]) if isinstance(row["payload"], str) else row["payload"]
+        home = payload.get("home") or {}
+        away = payload.get("away") or {}
+        if not home.get("name") and not away.get("name"):
+            return None
+        return {
+            "venue_name": "", "venue_city": "",
+            "attendance": None, "officials": [],
+            "home_team": home.get("name") or home.get("abbrev") or "",
+            "away_team": away.get("name") or away.get("abbrev") or "",
+        }
+    except Exception:
+        return None
 
 
 def _snapshot_strength(league, rows):

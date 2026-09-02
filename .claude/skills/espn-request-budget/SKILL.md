@@ -1,24 +1,50 @@
 ---
 name: espn-request-budget
-description: MUST load before writing or running any code that calls an ESPN host — site.api.espn.com, sports.core.api.espn.com, site.web.api.espn.com, lm-api-reads.fantasy.espn.com — or before diagnosing a 403/timeout from one. ESPN's limit is a request COUNT per host, not a rate, so pacing does not save you and sleeping longer makes a blocked job slower without making it succeed. Triggers on roster sync, any per-athlete loop, "rate limit", 403 from ESPN, adding a league, and any ingest that would issue more than ~50 requests to one host.
+description: MUST load before writing or running any code that calls an ESPN host (site.api.espn.com, sports.core.api.espn.com, site.web.api.espn.com, lm-api-reads.fantasy.espn.com) or before diagnosing a 403/timeout from one. ESPN's limit is a BURST RATE per host, measured in requests per minute, not an hourly or per-run count: the hour is flat, the minute is not. So the two levers are issuing fewer requests and spacing the ones you issue, and a fan-out that inherits the serving path's min_interval=0 will refuse the request handlers' traffic along with its own. Triggers on roster sync, any per-athlete loop, "rate limit", 403 from ESPN, adding a league, and any ingest that would issue more than ~50 requests to one host.
 ---
 
 # The ESPN request budget
 
 ## 1. The one thing to know
 
-**ESPN's limit is a COUNT per host, not a rate.** Measured 2026-08-04: roughly **100
-requests to a single host** and that host starts refusing, regardless of how far apart the
-requests were spaced.
+**ESPN's limit is a BURST RATE per host, not a count.** Measured 2026-08-19 across 27,801
+requests from `backend/data/http-spend.jsonl`:
 
-This is the opposite of the intuition, and acting on the intuition is what cost a day.
-`roster_sync.py` fired 128 requests back to back, tripped the wall, and the reflex fix was to
-add pacing. Pacing was the wrong lever: the run still spent 128 requests, it just took longer
-to get blocked. **The only lever that works is issuing fewer requests.**
+```
+requests in the 60s  before a 403 : median   63     before a 200 : median   36
+requests in the 5min before a 403 : median  311     before a 200 : median  141
+requests in the 1h   before a 403 : median 1238     before a 200 : median 1266   <- FLAT
+```
 
-A corollary that matters: once you are near the ceiling, *waiting does not restore the
-budget within a run*. Do not write a retry ladder that assumes a 403 is transient. Treat it
-as "this host is spent" and fail loudly.
+**The hour is flat. The minute is not.** Hourly volume does not predict a refusal. So there
+are exactly two levers, and both are real:
+
+1. **Issue fewer requests.** A bulk endpoint that returns 578 athletes in 6 calls beats 643
+   per-athlete calls no matter how you pace them.
+2. **Space the ones you do issue.** Requests per minute is the quantity being measured.
+
+Do not build a cross-process hourly ledger. It is the wrong shape and would not have
+prevented any of these refusals. A token bucket over roughly 60s per host needs no durable
+shared state. Full working: `docs/DESIGN-request-budget.md` §1b.
+
+**The budget is shared with the serving path.** 2026-08-24: the UFC plan fired 52 requests
+inside one minute while `ingest_scoreboards` ran its normal 4/min. `site.web.api` refused for
+four minutes and **26 of those refusals landed on uvicorn**, so a batch job made the live
+site read as broken. Size a fan-out against what the box is already spending, not against
+zero.
+
+## 1b. SUPERSEDED: the count model
+
+The 2026-08-04 reading of the same wall was "roughly 100 requests per host, regardless of
+spacing, so pacing does not save you". That is preserved here because it is what this file
+said for two weeks and because its **corollary is still true**: when a job needs hundreds of
+requests, pacing alone will not rescue it, and the answer is a bulk endpoint or a cache.
+
+What was wrong about it: the 08-04 runs measured successive attempts against a host that was
+already tripped and cooling, which reads as a count ceiling. The 08-19 sample separates the
+windows and the hour is flat. **Pace your fan-outs.** The line "sleeping longer makes a
+blocked job slower without making it succeed" is what left the UFC ingest at min_interval=0
+on 2026-08-24.
 
 ## 2. Per-host, and the hosts are genuinely different
 
@@ -55,7 +81,9 @@ Walk this in order. Every rung above the last removes requests rather than spaci
    asking ESPN is a request spent for nothing.
 4. **Can it be cached?** `paced_http` has a disk cache keyed on the URL. A second run inside
    the TTL costs **zero** requests — measured: 128 requests / 188s became 0 / 1.7s.
-5. **Only then**, pace it — and pace it to be polite, not because pacing buys budget.
+5. **And pace what is left.** Spacing is the second real lever, not a courtesy: the
+   quantity ESPN measures is requests per minute. Set it where the fan-out happens (§4),
+   and size it against the traffic the box is already producing, not against zero.
 
 ## 4. Use the shared client, and configure it where the work happens
 
@@ -86,6 +114,34 @@ moment. In order:
 
 Never record "ESPN doesn't publish X" after a 403. Record the host, the parameters and the
 date — a gap is a statement about which endpoint you asked, not a property of the world.
+
+## 5b. A dry run spends the real budget
+
+`--dry-run` means "write nothing", **not** "ask nothing". It issues every request the real
+run issues.
+
+2026-08-25, ingesting Leagues Cup player logs: the dry run spent 54 summary requests and
+reported `0 matches already held`, so nothing was cached. The real run launched immediately
+after had to re-fetch all 54, tripped the wall partway, and then **died on its very first
+call** on the next attempt:
+
+```
+seasons/2026 failed after 4 attempts: HTTP Error 403: Forbidden
+```
+
+Both `sports.core.api` and `site.web.api` were refusing. Nothing was written, and the two
+passes together cost more than double what one pass would have. Earlier the same evening,
+two phases that had genuinely published `0 events` came back as `403` instead — the same
+question, two different answers, and only one of them is a fact. **A refusal read as an
+empty collection is how "the publisher has none" gets written down.**
+
+So:
+
+- Budget the dry run and the real run as **one** spend, because they are.
+- Do not chain them. Either run once for real, or leave a cooling gap and probe with a
+  single request before the second pass.
+- When a job's own output flips from "published empty" to 403, stop and re-ask later. Do
+  not record the empty.
 
 ## 6. Before you call it done
 

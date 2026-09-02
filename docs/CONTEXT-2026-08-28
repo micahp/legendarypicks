@@ -1,0 +1,477 @@
+# 2026-08-28: RotoWire soccer ingestion and whole-worktree settlement
+
+Written after the full worktree settlement pass. This document records what was
+actually written, what settled, what remains pending, why it remains pending,
+and the exact verification boundary.
+
+## Outcome
+
+The settlement work is complete and validated for the worktree database. The
+five-row RotoWire clone rehearsal was not treated as completion.
+
+The verified settlement clone was promoted into the real worktree database:
+
+```text
+/root/lp-sport-first-nav/backend/data/picks.dev.db
+```
+
+Managed DEV (`/root/legendarypicks`) and production were not written,
+migrated, restarted, deployed, merged, tagged, or pushed. The managed checkout's
+Python virtual environment was used read-only.
+
+Final worktree totals:
+
+| population | count |
+|---|---:|
+| props | 107,929 |
+| terminal result rows | 99,000 |
+| numeric results | 92,102 |
+| evidence-backed voids | 6,898 |
+| all currently pending, including future/current slates | 8,929 |
+| historical pending through 2026-08-26 | 5,571 |
+
+"Settlement fully validated" does not mean every stored prop received an
+invented number. It means every terminal result is supported, the remaining
+historical holes are measured and classified, and a complete replay reaches a
+zero-delta fixed point.
+
+## Scope and safety
+
+Only these worktree databases were mutated:
+
+```text
+/root/lp-sport-first-nav/backend/data/picks.dev.db
+/root/lp-sport-first-nav/backend/data/picks.db
+```
+
+The small similarly named database at
+`/root/lp-sport-first-nav/data/picks.dev.db` was not the settlement target.
+
+Execution was serial and low priority (`nice -n 19`, `ionice -c3`). ESPN and
+MLB responses were reused from the worktree caches. Available RAM and disk were
+checked before the long passes; no parallel settlement workers were started.
+
+## Backups and promotion
+
+Before promotion, the source worktree database was backed up with SQLite
+`VACUUM INTO`, and both the source and backup passed `PRAGMA quick_check`:
+
+```text
+/root/lp-sport-first-nav/backend/data/picks.dev.db.pre-full-settlement-20260828T141118.136196Z.bak
+```
+
+The audit clone was:
+
+```text
+/root/lp-sport-first-nav/backend/data/picks.dev.settlement-audit-20260827T1909Z.clone.db
+```
+
+It was checkpointed, checked, and promoted with SQLite's backup API rather
+than a plain file copy. After promotion, the worktree DB and clone had the same
+whole-schema/content SHA3 digest:
+
+```text
+bbc98aeab8866528e3ffd171a16af1f5145f7911b47c4a66369158a3
+```
+
+The second worktree database received its own verified migration backup:
+
+```text
+/root/lp-sport-first-nav/backend/data/picks.db.pre-schema-20260828T141235.177486Z.bak
+```
+
+Both databases now report all seven numbered migrations as applied, including
+the multi-sport prediction ledger and durable prop-game cancellation evidence.
+
+## RotoWire soccer-stat ingestion
+
+The public endpoint is a capped, position-filtered sample. It is not a complete
+league roster feed, and the ingest does not claim that it is.
+
+The useful public filters were:
+
+```text
+A, G, F, M, D, FM, MD, FMD
+```
+
+Measured 2026 coverage:
+
+| league | available non-empty weeks | treatment of remaining weeks |
+|---|---:|---|
+| MLS | 1-20 | weeks 21-38 were explicitly probed with `A`; all were empty |
+| Liga MX | 1-5 | weeks 6-38 were explicitly probed with `A`; all were empty |
+
+All eight filters were collected for every week that returned data. Once the
+first filter proved a later week empty, the other overlapping filters were not
+requested, avoiding 357 useless public calls.
+
+Archive inventory:
+
+| archive population | count |
+|---|---:|
+| MLS week/filter responses | 178 |
+| Liga MX week/filter responses | 73 |
+| fixture responses | 2 |
+| total archives | 253 |
+
+The filter responses produced 444 deduplicated provider rows:
+
+| league | rows | resolved | unresolved | rows with `passes_attempted` |
+|---|---:|---:|---:|---:|
+| MLS | 354 | 353 | 1 | 354 |
+| Liga MX | 90 | 80 | 10 | 90 |
+| total | 444 | 433 | 11 | 444 |
+
+Provider rows live in `player_game_logs_rotowire`; they were not merged into
+ESPN or FotMob rows. `player_game_logs_all` exposes RotoWire separately.
+
+Identity resolution order was stable source ID first, then exact
+fixture/roster evidence. Ambiguous or absent identities remained null. No name-
+only identity was guessed.
+
+The 11 unresolved source keys are:
+
+```text
+Liga MX 20997: Atlético San Luis, five appearances
+Liga MX 19517: Santos Laguna, four appearances
+Liga MX 22163: Tijuana, one appearance
+MLS     43330: Seattle vs Cincinnati, 2026-08-22
+```
+
+Every stored RotoWire row has exact attempted passes. Completed or accurate
+passes were never substituted for attempted passes.
+
+## The earlier 14 attempted-pass props
+
+The earlier group of 14 is no longer open. The complete pass ultimately
+produced 16 numeric `passes_attempted` prop results across eight player-game
+appearances and seven MLS fixtures. Two more rows became resolvable as the full
+fixture/log population was completed.
+
+The current entire MLS attempted-pass population is:
+
+| state | count |
+|---|---:|
+| numeric | 16 |
+| evidence-backed void | 10 |
+| pending | 196 |
+| total | 222 |
+
+The remaining 196 were not graded from FotMob's accurate-pass field. They are
+part of the exact-stat gap described below.
+
+## Historical settlement by league
+
+The audited historical boundary is `prop_games.date <= 2026-08-26`.
+
+| league | props | numeric | void | pending |
+|---|---:|---:|---:|---:|
+| ATP | 829 | 372 | 0 | 457 |
+| Leagues Cup | 1,871 | 1,429 | 170 | 272 |
+| MLB | 93,687 | 83,901 | 6,330 | 3,456 |
+| MLS | 5,811 | 4,693 | 12 | 1,106 |
+| NFL | 68 | 66 | 0 | 2 |
+| UFC | 611 | 596 | 15 | 0 |
+| World Cup | 1,128 | 748 | 371 | 9 |
+| WTA | 566 | 297 | 0 | 269 |
+| **total** | **104,571** | **92,102** | **6,898** | **5,571** |
+
+The difference between 5,571 historical pending and 8,929 overall pending is
+3,358 props on later/current slates outside the audited historical boundary.
+
+## What settled and why
+
+### MLB
+
+MLB was processed one game at a time with a disk cache and stable process RSS
+around 29-30 MB.
+
+Work completed:
+
+- 777 games were processed in the full historical pass.
+- A `gamePk` lookup defect was fixed. When no start instant exists, lookup is
+  now restricted to the exact calendar date; with an instant it may inspect
+  adjacent dates. The old unconditional `+/-1 day` window made 21 White Sox
+  series games falsely ambiguous.
+- `total_pitcher_walks` now maps to the published walks-allowed statistic.
+- Explicit unused-bench evidence creates a DNP void only when all relevant stat
+  groups are empty.
+- A player who appeared only in the other role may be voided for the missing
+  batting/pitching category, but is not treated as globally absent.
+- The postponed San Francisco Giants at Atlanta Braves game on 2026-06-18
+  (`gamePk=824911`) is stored as cancelled/postponed with publisher evidence.
+
+The 6,330 MLB voids consist of:
+
+```text
+6,206 explicit unused-bench DNPs
+   42 role-specific DNPs
+   82 props from the officially postponed game
+```
+
+The remaining 3,456 MLB props point at player MLBAM IDs absent from the
+official game boxscore roster. They are pending because there is no evidence
+for a numeric result or a DNP void. No name or adjacent-game guess was used.
+
+### MLS
+
+Settlement now checks provider-separated stored logs before considering live
+fallbacks and supports RotoWire's exact `passes_attempted`, plus deep fields
+including dribbles and interceptions.
+
+ESPN event identity is checked before local date. This fixed false misses where
+a local fixture date rolls into the next UTC date.
+
+The 12 MLS voids have durable DNP evidence.
+
+The 1,106 pending MLS props split exactly into:
+
+```text
+904 player absent from the official fixture appearance roster
+202 player appeared, but the exact requested statistic is not published
+```
+
+Of the 202 missing exact statistics:
+
+```text
+190 passes_attempted
+  6 first_goal
+  4 chances_created
+  2 crosses
+```
+
+These are unknown values, not zeroes and not DNPs.
+
+### Leagues Cup
+
+Four exact ESPN final summaries and six latest FotMob fixtures were archived
+and ingested. UTC/local fixture matching and appearance identity were repaired.
+
+- 1,429 numeric results
+- 170 evidence-backed DNP voids
+- 272 pending because the player is absent from the official appearance roster
+  or the exact deep statistic is not published
+
+### World Cup
+
+The old repair path treated a missing log as if it proved DNP. That was removed.
+Missing logs are now unresolved unless a durable official appearance roster
+explicitly proves the player did not play.
+
+Three exact finals were archived and reingested with stable ESPN athlete IDs.
+
+- 748 numeric results
+- 371 evidence-backed DNP voids
+- 9 pending because the necessary player identity is missing from the worktree
+  spine
+
+### UFC
+
+Official finish semantics were corrected: a winning KO/TKO, submission, or DQ
+is one finish; a decision or loss is zero; unknown/draw cases remain pending.
+
+Archived current-card ingest produced 119 fight logs and 32 links. Duplicate
+fighter identities were reconciled where source evidence supported it.
+
+The Islam Dulatov vs Wellington Turman bout was officially cancelled due to
+Dulatov's illness. Cancellation metadata is stored on `prop_games`, and all 15
+props are durably voided. UFC now has zero historical pending props.
+
+Official evidence:
+
+```text
+https://www.ufc.com/news/ufc-abu-dhabi-fight-card-updates
+```
+
+### NFL
+
+- 66 of 68 historical props have numeric results.
+- The remaining two are Chris Godwin receiving-yard props where the player/stat
+  evidence is absent from the official boxscore.
+- Independent samples were checked against publisher values, including Baker
+  Mayfield, Harrison Butker, C.J. Stroud, and Ka'imi Fairbairn.
+
+### ATP and WTA
+
+Tennis does not have complete fixture linkage, so the settlement runner cannot
+reach every stored game.
+
+ATP pending:
+
+```text
+427 props on 41 unlinked games
+ 30 props on linked games with incomplete exact evidence
+457 total
+```
+
+WTA pending:
+
+```text
+251 props on 26 unlinked games
+ 18 props on linked games with incomplete exact evidence
+269 total
+```
+
+These rows remain retryable rather than being silently dropped from the pending
+count.
+
+## Settlement behavior repaired
+
+The principal code changes in this session were:
+
+- `settlement/settle_game.py`
+  - every early return now accounts for all open props as pending;
+  - sourced cancellations void idempotently before a live fetch;
+  - missing event linkage is reported as missing durable publisher identity.
+- `settle_props.py`
+  - future games are excluded by default;
+  - `--through` provides an explicit historical boundary;
+  - `--max-games` bounds a run.
+- `settlement/mlb_api.py` and `mlb_settle.py`
+  - serial disk-cached fetches, pacing/retries, exact `gamePk` lookup,
+    walks mapping, and evidence-backed DNP handling.
+- `settlement/mls_settle.py`
+  - DB-first provider-separated settlement, exact fixture identity,
+    RotoWire attempted passes, deep markets, and durable DNP voids.
+- `settlement/ufc_settle.py`
+  - corrected finish semantics and cancellation visibility.
+- `settlement/wc_settle.py`, `repair_world_cup_results.py`,
+  `ingest_wc_logs.py`, and `ingest_soccer_logs.py`
+  - missing data no longer masquerades as DNP; stable athlete IDs are preferred.
+- `ingest_fotmob_soccer_logs.py`
+  - exact match-date appearance rosters disambiguate duplicate names;
+  - unresolved rows can be safely repaired without overwriting resolved IDs
+    with null.
+- `migrate_schema.py`
+  - durable `cancelled_at`, `cancel_reason`, and `cancel_source` fields.
+- Migration and identity-spine test fixtures were updated so both new numbered
+  migrations and the RotoWire provider table are explicitly covered.
+
+The predictions multi-sport migration was concurrent pre-existing worktree WIP;
+this session preserved it and updated the synthetic migration fixtures so the
+combined current schema is testable.
+
+## Idempotency and fixed-point proof
+
+After promotion, every historical league was replayed serially against the real
+worktree DB using the archived caches.
+
+```text
+before: 99,000 results = 92,102 numeric + 6,898 void
+after:  99,000 results = 92,102 numeric + 6,898 void
+delta:  0 results, 0 numeric, 0 void
+```
+
+Per-run outcome:
+
+| league | new numeric | new void | unmappable | errors | pending revisited |
+|---|---:|---:|---:|---:|---:|
+| ATP | 0 | 0 | 0 | 0 | 30 linked |
+| Leagues Cup | 0 | 0 | 0 | 0 | 272 |
+| MLB | 0 | 0 | 0 | 0 | 3,456 |
+| MLS | 0 | 0 | 0 | 0 | 1,106 |
+| NFL | 0 | 0 | 0 | 0 | 2 |
+| UFC | 0 | 0 | 0 | 0 | 0 |
+| World Cup | 0 | 0 | 0 | 0 | 9 |
+| WTA | 0 | 0 | 0 | 0 | 18 linked |
+
+The runner only revisits linked tennis games; the larger unlinked populations
+are still included in the measured database pending totals above.
+
+## Settlement visibility
+
+Settlement is visible in `prop_results` and through the existing API/UI result
+contracts. Relevant API and frontend result-rendering tests passed.
+
+The multi-sport predictions table contains three legacy graded predictions and
+no open new-format prediction records requiring settlement. The sports-pick
+settler returned zero new settled/voided/pending records, and its API contract
+tests passed, including tie voids, read-only GET behavior, POST settlement, and
+result visibility.
+
+## Database integrity
+
+Final checks:
+
+| database | numbered migrations | `integrity_check` | FK violations |
+|---|---:|---|---:|
+| `backend/data/picks.dev.db` | 7 applied | `ok` | 0 |
+| `backend/data/picks.db` | 7 applied | `ok` | 83 |
+
+The 83 foreign-key violations in `picks.db` are legacy rows. The verified
+pre-migration backup contains the same exact 83 violations, so the migration
+introduced none. They include old orphaned player references and four old
+`prop_results` references. They were measured but not repaired because identity
+repair was outside the authorized settlement mutation.
+
+## Tests and remaining repository-red gates
+
+Focused settlement/finality/API suite:
+
+```text
+101 passed
+```
+
+Migration and identity-spine regression suite after fixture updates:
+
+```text
+45 passed
+```
+
+Settlement visibility frontend suite:
+
+```text
+5 suites passed
+25 tests passed
+```
+
+Complete `backend/` suite against each worktree database:
+
+```text
+1,984 passed
+4 failed
+4 skipped
+6 expected failures
+```
+
+Both database targets produced the same four failures. None is a settlement
+failure:
+
+1. `test_ingest_rotowire_props` requires RotoWire props-relay archives under
+   `backend/data/rotowire-archive`; this worktree has no such archives. The new
+   soccer-stat archives are a different source and live under
+   `rotowire-soccer-stats-archive`.
+2. `test_leagues_hub_assertions` receives the current NCAAF standings response
+   as a five-key dictionary while the old test expects a list with at least
+   eight conference groups.
+3. Two `test_props_league_is_the_games_league` assertions call the current-date
+   slate without pinning their fixture date. The stored Leagues Cup fixture has
+   aged out, so the endpoint correctly returns no current slate.
+
+A repository-root `pytest` invocation also cannot collect because duplicate
+test module basenames exist under both `scripts/` and `backend/scripts/`.
+Running the complete `backend/` tree avoids that unrelated Python import-name
+collision.
+
+## What remains genuinely open
+
+Settlement itself is at a verified fixed point. Future useful work is:
+
+1. Repair or link the 67 unlinked tennis games, then replay ATP/WTA.
+2. Repair the nine missing World Cup spine identities if historical World Cup
+   maintenance is authorized.
+3. Investigate the 904 MLS roster absences and 3,456 MLB official-roster
+   absences as possible upstream prop-game/player linkage defects. Do not grade
+   them by name.
+4. Acquire a publisher that exposes the exact 190 missing MLS attempted-pass
+   values. FotMob accurate passes are not an acceptable substitute.
+5. Independently repair the 83 legacy `picks.db` foreign-key violations under a
+   separately backed-up identity/data-repair task.
+6. Restore the separate RotoWire props-relay archive evidence if the broad
+   catalogue test is meant to be a release gate.
+7. Update the live NCAAF standings contract test and pin the Leagues Cup test
+   dates. These are repository hygiene issues, not settlement blockers.
+
+Do not describe the 5,571 historical pending props as settled or void. They are
+measured unknowns with explicit causes, retained so later authoritative evidence
+can settle them safely.

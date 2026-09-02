@@ -1,0 +1,11 @@
+[Unit]
+Description=Check Legendary Picks props freshness every 30 minutes
+
+[Timer]
+OnCalendar=*-*-* *:29:00
+OnCalendar=*-*-* *:59:00
+Persistent=true
+Unit=legendarypicks-props-freshness.service
+
+[Install]
+WantedBy=timers.target

@@ -18,6 +18,21 @@ services:
       # — Kick-hosted matches show as live but with no viewer count on the board.
       KICK_CLIENT_ID: "${KICK_CLIENT_ID:-}"
       KICK_CLIENT_SECRET: "${KICK_CLIENT_SECRET:-}"
+      # ESPN response cache. Without this the container runs with cache_dir=""
+      # and only paced_http's in-memory cache is live — per process, and gone on
+      # every restart, so each deploy cold-started every ESPN surface. ESPN's
+      # limit is a request COUNT per host, so a cache that survives a restart is
+      # the single biggest lever on the budget.
+      #
+      # It is NOT on the ./backend/data bind mount and NOT in the image. A cache
+      # has to be writable by the process filling it, so the protection is to
+      # give it a home nothing else can reach: the `espn_cache` named volume
+      # below lives under Docker, not in the repo tree, so a poisoned write
+      # cannot land on a host path anything else reads, and it can never be
+      # swept into git or baked into a layer the way the last one was.
+      LP_ESPN_CACHE_DIR: "/cache/espn"
+      # Hard ceiling on the cache directory, enforced by paced_http._sweep.
+      LP_ESPN_CACHE_MAX_BYTES: "536870912"
     # bind to loopback ONLY: reachable by host nginx, never from the internet
     # host 8100 -> container 8000 (8000 already used by another site)
     ports: ["127.0.0.1:8100:8000"]
@@ -30,7 +45,21 @@ services:
       # backend image (built from ./backend only). Read-only bind so the container
       # sees the same files dev does, same pattern as ./backend/data above.
       - ./docs:/docs:ro
+      # Cache only. Capped so a runaway writer fills a bounded volume instead of
+      # the host disk — the old cache reached 134MB with no eviction at all.
+      - type: volume
+        source: espn_cache
+        target: /cache
+        volume:
+          nocopy: true
     restart: unless-stopped
+    # A container that only serves an API needs neither of these headroom-wise;
+    # they exist so a runaway loop or a fork bomb is bounded rather than taking
+    # the host down with it.
+    mem_limit: 2g
+    pids_limit: 512
+    security_opt:
+      - no-new-privileges:true
 
   frontend:
     build:
@@ -44,6 +73,9 @@ services:
         # var would build a site that looks instrumented but records nothing.
         # Override with GA_TRACKING_ID=... to point a build at a different property.
         NEXT_PUBLIC_GA_TRACKING_ID: ${GA_TRACKING_ID:-G-ZZKRW6MMMM}
+        # Baked into the standalone build; see the Dockerfile. The `environment`
+        # entry below is the same value for SSR and does NOT substitute for this.
+        API_PROXY_TARGET: http://backend:8000
     depends_on: [backend]
     environment:
       # reach the backend container over the compose network (SSR/server-side /api)
@@ -51,3 +83,20 @@ services:
     # host 3100 -> container 3000 (3000 already used by another site)
     ports: ["127.0.0.1:3100:3000"]
     restart: unless-stopped
+    mem_limit: 1g
+    pids_limit: 256
+    security_opt:
+      - no-new-privileges:true
+
+volumes:
+  # Docker-managed and disk-backed, so the ESPN cache survives a restart (the
+  # whole point of having it) while living outside the repo tree and outside any
+  # host path the app also reads.
+  #
+  # Deliberately NOT tmpfs: a tmpfs volume is RAM-backed and cleared on restart,
+  # which is the exact failure this cache exists to prevent. And Docker cannot
+  # size-cap a `local` volume on overlay2 without filesystem quotas, so the cap
+  # is enforced where it actually can be — paced_http._sweep bounds the
+  # directory by both age and total bytes (LP_ESPN_CACHE_MAX_BYTES).
+  espn_cache:
+    driver: local

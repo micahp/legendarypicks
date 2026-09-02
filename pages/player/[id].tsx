@@ -6,7 +6,7 @@ import NflUsageTrend from '../../components/Leagues/NflUsageTrend'
 import StatRankCard from '../../components/Leagues/StatRankCard'
 import InjuryTag from '../../components/Leagues/InjuryTag'
 import { trackPlayerViewed, trackUsageTrendViewed } from '../../lib/analytics'
-import { seasonLabel } from '../../components/Leagues/presentation'
+import { leagueLabel, seasonLabel } from '../../components/Leagues/presentation'
 
 // The page was 891 lines and did four jobs: defined what a player is, formatted
 // numbers, drew four game-log tables, and rendered the route. Split 2026-08-04 —
@@ -20,11 +20,14 @@ import SeasonStatsSection from '../../components/Player/SeasonStatsSection'
 import LeagueGameLog from '../../components/Player/LeagueGameLog'
 import { NflGameLog } from '../../components/Player/NflGameLog'
 import TabStrip, { playerTabs } from '../../components/Player/TabStrip'
+import LogContextSelectors from '../../components/Player/LogContextSelectors'
 import type { PlayerTab } from '../../components/Player/TabStrip'
 
 export default function PlayerPage() {
   const router = useRouter()
   const { id } = router.query
+  const queryLeague = typeof router.query.league === 'string' ? router.query.league : null
+  const querySeason = typeof router.query.season === 'string' ? router.query.season : null
   const [p, setP] = useState<PlayerProfile | null>(null)
   const [state, setState] = useState<FetchState>('loading')
   const [retryTick, setRetryTick] = useState(0)
@@ -39,7 +42,11 @@ export default function PlayerPage() {
     let alive = true
     setState('loading')
     setP(null)
-    fetch(`/api/player/${id}`)
+    const params = new URLSearchParams()
+    if (queryLeague) params.set('league', queryLeague)
+    if (querySeason && /^\d+$/.test(querySeason)) params.set('season', querySeason)
+    const query = params.toString()
+    fetch(`/api/player/${id}${query ? `?${query}` : ''}`)
       .then(r => {
         if (r.status === 404) { if (alive) setState('not_found'); return null }
         if (!r.ok) { if (alive) setState('error'); return null }
@@ -54,7 +61,7 @@ export default function PlayerPage() {
       })
       .catch(() => { if (alive) setState('error') })
     return () => { alive = false }
-  }, [id, retryTick])
+  }, [id, queryLeague, querySeason, retryTick])
 
   // The standalone player profile is a general sports surface, so its News
   // tab keeps ESPN's athlete-tagged reporting. Fantasy analysis belongs only
@@ -121,6 +128,15 @@ export default function PlayerPage() {
   const tabbed = tabs.length > 1
   const show = (t: PlayerTab) => !tabbed || tab === t
   const nflSchedule = p.nfl_schedule_games ?? []
+  const selectedLeague = p.selected_league || p.league
+
+  const selectLogContext = (league: string, season: number) => {
+    void router.replace(
+      { pathname: router.pathname, query: { id: String(id), league, season: String(season) } },
+      undefined,
+      { shallow: true },
+    )
+  }
 
   return (
     <>
@@ -133,9 +149,16 @@ export default function PlayerPage() {
             {isNfl && <InjuryTag status={p.injury_status} />}
           </div>
           <div className="text-sm text-zinc-500 mt-1">
-            {[p.team, p.position, p.league?.toUpperCase(), p.season ? `${seasonLabel(p.league, p.season)} · ${p.regular_season_games} games` : null].filter(Boolean).join(' · ')}
+            {[p.team, p.position, leagueLabel(selectedLeague), p.season ? `${seasonLabel(selectedLeague, p.season)} · ${p.regular_season_games} games` : null].filter(Boolean).join(' · ')}
           </div>
         </div>
+
+        <LogContextSelectors
+          contexts={p.log_contexts || []}
+          league={selectedLeague}
+          season={p.season}
+          onChange={selectLogContext}
+        />
 
         {tabbed && p.data_status !== 'unavailable' && (
           <TabStrip tabs={tabs} tab={tab} setTab={(t) => {
@@ -148,11 +171,27 @@ export default function PlayerPage() {
           }} />
         )}
 
-        {/* Honest empty state: no logs, no props, no season stats on file. */}
+        {/* Honest empty state: no logs, props, season stats, or ranking on file. */}
         {p.data_status === 'unavailable' && (
           <p className="text-sm text-zinc-500 py-6 text-center border border-zinc-800 rounded-xl bg-zinc-900">
-            No stats, game logs, or props on file for this player yet.
+            No stats, game logs, props, or ranking on file for this player yet.
           </p>
+        )}
+
+        {show('overview') && p.tennis_ranking && (
+          <section>
+            <h2 className="mb-2 text-sm font-bold uppercase tracking-wider text-zinc-400">World Ranking</h2>
+            <div className="flex items-center justify-between gap-4 rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-3">
+              <div>
+                <div className="text-sm font-semibold text-zinc-100">{p.tennis_ranking.tour.toUpperCase()} singles</div>
+                <div className="mt-1 text-xs text-zinc-500">
+                  {p.tennis_ranking.points != null ? `${p.tennis_ranking.points.toLocaleString()} points · ` : ''}
+                  ESPN world rankings · Updated {new Date(p.tennis_ranking.captured_at).toLocaleDateString()}
+                </div>
+              </div>
+              <div className="font-mono text-2xl font-bold tabular-nums text-zinc-100">#{p.tennis_ranking.rank}</div>
+            </div>
+          </section>
         )}
 
         {/* Season stats: the only meaningful content for stats-only profiles
@@ -342,8 +381,10 @@ export default function PlayerPage() {
             ) : (
               <LeagueGameLog
                 games={p.recent_games}
-                league={p.league}
+                league={selectedLeague}
+                identityLeague={p.league}
                 position={p.position}
+                positionGroup={p.position_group}
               />
             )}
           </section>

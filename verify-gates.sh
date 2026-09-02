@@ -630,7 +630,16 @@ PY
   # This is EXPECTED RED until the stat gaps in docs/LEAGUE-STAT-GAPS.md are
   # closed. It is committed red on purpose: the number below only ever goes down,
   # and a drop that nobody earned shows up in the diff.
-  statset_out=$($PY /root/legendarypicks/backend/audit_league_stats.py --db "$D" --quiet 2>&1)
+  # `-m audit_league_stats`, not a file path: the 2026-08-18 split turned the
+  # runner into a package and this line kept naming the retired .py. python then
+  # exits 2 ("can't open file"), which lands in the `-le 21` arm below and prints
+  # "2 of a known 21 open" -- a MISSING RUNNER rendered as progress against the
+  # gap list. The `-d` check makes an unrunnable audit say so instead.
+  if [ ! -d /root/legendarypicks/backend/audit_league_stats ]; then
+    no "COV-statset" "runner missing: backend/audit_league_stats is not there, so nothing was audited"
+    return
+  fi
+  statset_out=$(PYTHONPATH=/root/legendarypicks/backend $PY -m audit_league_stats --db "$D" --quiet 2>&1)
   statset_failures=$?
   if [ "$statset_failures" -eq 0 ]; then
     ok "COV-statset" "every league holds what its pages claim"
@@ -799,6 +808,85 @@ ovlwidth(){
   else no OVL-width "exit=$rc  <no summary line — the gate itself died>  $(printf '%s' "$out" | tail -1)"; fi
 }
 
+# ── BOARD-stale · nothing on the props board may have already finished ─────────
+#
+# Added 2026-08-17. The upcoming filter was `pg.date >= date('now')` -- a UTC calendar date --
+# while the client groups and labels every game by the LOCAL date it derives from start_time.
+# A match at 00:30Z is stored under today and rendered as "yesterday, 7:30 PM", so the board
+# opened on a header for YESTERDAY holding four games that were already over.
+#
+# It shipped in v0.4.3 on 2026-07-17 and nothing caught it for a month, for two reasons worth
+# writing down because they are what this gate is shaped against:
+#
+#   1. Until 2026-08-15 the client grouped by the same UTC date the filter used. One ruler,
+#      self-consistent, and a finished Sunday match read as "a game tonight at 7:30". Wrong
+#      with no symptom. `38f80bb` fixed the display half and the filter half stayed UTC --
+#      that is when the bug became legible, not when it started.
+#   2. The unit test that shipped with 38f80bb uses a fixture dated 2026-08-17 starting at
+#      00:30Z and asserts it renders under the PREVIOUS day. It pins the label and never asks
+#      whether the row belongs on the board. A check that validates a property does not
+#      question it.
+#
+# So this asks the reader's question instead of the code's: of the games the API is serving as
+# upcoming, has any of them already been played? That is falsifiable from outside, needs no
+# fixture, and cannot be satisfied by relabelling.
+#
+# Graded on BOTH $B and $P, separately, because the two are different code. `routers/props.py`
+# is baked into the prod image (only `backend/data` is bind-mounted), so a green dev gate says
+# nothing about the deployed board -- prod's frontend image predates 38f80bb entirely. This is
+# the same gap COV-prod exists for. BOARD-stale-prod is RED as of 2026-08-17 and stays red
+# until a release carries the fix; that redness IS the deploy skew, reported rather than
+# assumed.
+board(){
+  for pair in "dev $B" "prod $P"; do
+    set -- $pair
+    $PY - "$1" "$2" <<'PY'
+import json, sys, urllib.request, datetime as dt
+
+which, base = sys.argv[1], sys.argv[2]
+gid = "BOARD-stale-%s" % which
+try:
+    with urllib.request.urlopen(base + "/api/props/slate?summary=1", timeout=30) as fh:
+        games = json.load(fh)
+except Exception as exc:
+    # Evidence unavailable is a FAIL, not a skip.
+    print("FAIL %s (no JSON from %s: %s)" % (gid, base, exc))
+    raise SystemExit
+
+if not isinstance(games, list) or not games:
+    print("FAIL %s (board served %s -- an empty board cannot be graded)"
+          % (gid, type(games).__name__ if not isinstance(games, list) else "0 games"))
+    raise SystemExit
+
+now = dt.datetime.now(dt.timezone.utc)
+# Same 3-hour grace the filter uses: a game being played now is legitimately on the board.
+cutoff = now - dt.timedelta(hours=3)
+stale, undated = [], 0
+for g in games:
+    st = (g.get("start_time") or "").strip()
+    if not st:
+        undated += 1          # no start_time: the date filter is all there is, nothing to check
+        continue
+    try:
+        when = dt.datetime.fromisoformat(st.replace("Z", "+00:00"))
+    except ValueError:
+        undated += 1
+        continue
+    if when.tzinfo is None:
+        when = when.replace(tzinfo=dt.timezone.utc)
+    if when < cutoff:
+        stale.append("%s %s @ %s (%s)" % (g.get("league"), g.get("away"), g.get("home"), st))
+
+if stale:
+    print("FAIL %s (%d of %d games already finished, e.g. %s)"
+          % (gid, len(stale), len(games), "; ".join(stale[:3])))
+else:
+    print("PASS %s (%d games, none finished; %d carry no start_time)"
+          % (gid, len(games), undated))
+PY
+  done
+}
+
 # ── the runner's own verdict ───────────────────────────────────────────────────
 # Until 2026-07-28 this script printed FAIL and exited 0. Every gate, including
 # `all`: ok() and no() are both a bare echo, and nothing summed them. Anything
@@ -815,7 +903,7 @@ ovlwidth(){
 #      `all` dispatch ran 14 gates and silently skipped REG-render because the
 #      function was written but never added to the case. The count below is what
 #      makes that structurally impossible to repeat, rather than fixed once.
-ALL_IDS="A1 A1b A1c A2 A3 B1 B2 B2b B4 COV-nba COV-nhl COV-honest COV-keys COV-source COV-gametype COV-api COV-prod COV-leaders COV-identity COV-statset REG-pool REG-adp-dst REG-dst REG-pytest REG-jest REG-jest-all REG-modules REG-render OVL-width"
+ALL_IDS="A1 A1b A1c A2 A3 B1 B2 B2b B4 COV-nba COV-nhl COV-honest COV-keys COV-source COV-gametype COV-api COV-prod COV-leaders COV-identity COV-statset BOARD-stale-dev BOARD-stale-prod REG-pool REG-adp-dst REG-dst REG-pytest REG-jest REG-jest-all REG-modules REG-render OVL-width"
 
 out=$(mktemp) || exit 2
 trap 'rm -f "$out"' EXIT
@@ -835,7 +923,8 @@ trap 'rm -f "$out"' EXIT
     render|REG-render|regrender) regrender;;
     OVL-width|ovl|overlay) ovlwidth;;
     cov|COV|coverage|COV-nba|COV-nhl|COV-honest|COV-keys|COV-source|COV-gametype|COV-api|COV-prod|COV-leaders|COV-identity|COV-statset) cov;;
-    all) a1; a2; a3; b1; b2; b4; echo "--- coverage ---"; cov; echo "--- regressions ---"; reg; regrender; ovlwidth;;
+    board|BOARD|BOARD-stale|BOARD-stale-dev|BOARD-stale-prod) board;;
+    all) a1; a2; a3; b1; b2; b4; echo "--- coverage ---"; cov; echo "--- the served board ---"; board; echo "--- regressions ---"; reg; regrender; ovlwidth;;
     *) echo "FAIL runner (unknown gate '$1' — nothing ran)";;
   esac
 } 2>&1 | tee "$out"

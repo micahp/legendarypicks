@@ -29,6 +29,10 @@ export type { LivePeriod } from '../lib/liveGameStatus'
 export interface TeamSide {
   teamId: string
   name: string
+  athleteId?: string
+  // Tennis tournament seed from ESPN competitors[].curatedRank.current.
+  // This is deliberately separate from the weekly ATP/WTA world ranking.
+  seed?: number
   nickname?: string
   score?: number
   winner?: boolean
@@ -56,6 +60,11 @@ export interface Game {
   sets?: TennisSet[]
   // Live game period details (only present when LIVE)
   livePeriod?: LivePeriod
+  // UFC finish (a final with no score shows the method): "Submission" /
+  // "KO/TKO" / "Decision", the round it ended in, and the clock in that round.
+  outcomeMethod?: string
+  outcomeRound?: number
+  outcomeClock?: string
 }
 
 function statusFromState(state?: string): Game['status'] {
@@ -73,6 +82,8 @@ function side(s: any): Game['homeTeam'] {
   return {
     teamId: s?.abbrev ?? '',
     name: name + record,
+    athleteId: s?.athlete_id != null ? String(s.athlete_id) : s?.athleteId != null ? String(s.athleteId) : undefined,
+    seed: Number.isInteger(s?.seed) && s.seed > 0 ? s.seed : undefined,
     nickname: s?.nickname,
     score: s?.score ?? undefined,
     winner: s?.winner ?? undefined,
@@ -155,12 +166,27 @@ function normalizeLivePeriod(g: any, league?: string): LivePeriod | undefined {
 }
 
 export function normalizeGame(g: any, leagueOverride?: string): Game {
-  // Preserve backend-provided stage/week context; UFC card segments remain most specific.
-  let subtitle = g?.card_segment || g?.subtitle || g?.event || ''
-
   // Determine league from various possible fields, with optional override
   const rawLeague = leagueOverride ? leagueOverride : (g?.league ?? g?.sport ?? '')
   const league = typeof rawLeague === 'string' ? rawLeague : (rawLeague?.abbreviation || rawLeague?.name || String(rawLeague || ''))
+
+  // The segment is the group (Main Card etc.); the event is the card. The
+  // board names a UFC event the way it names a tennis tournament.
+  const segment = g?.card_segment || ''
+  const event = g?.event || ''
+  let subtitle = event && segment ? `${event} · ${segment}` : (segment || g?.subtitle || event || '')
+
+  // The backend computes a finish display for soccer that ESPN's shortDetail
+  // does not carry: "FT (Pens)" / "FT (AET)" / "Suspended" (see the soccer
+  // branch of espn_client._games_from_payload). It lives in the backend
+  // `status` field, which is not one of SCHEDULED/LIVE/FINAL, so it would be
+  // dropped by the status mapping below — surface it as the badge detail so a
+  // shootout-decided final does not read as a plain FINAL.
+  const rawStatus = g?.status
+  const plainStates = ['SCHEDULED', 'LIVE', 'FINAL', 'Final', 'Scheduled', 'In Progress']
+  const specialStatus = rawStatus && rawStatus !== 'FT' && !plainStates.includes(rawStatus)
+    ? rawStatus
+    : undefined
 
   return {
     gameId: String(g?.game_id ?? g?.gameId ?? ''),
@@ -174,10 +200,13 @@ export function normalizeGame(g: any, leagueOverride?: string): Game {
     awayTeam: side(g?.away ?? g?.awayTeam),
     startTime: g?.date ?? g?.startTime ?? '',
     status: g?.status && ['SCHEDULED', 'LIVE', 'FINAL'].includes(g.status) ? g.status : statusFromState(g?.state),
-    statusDetail: g?.status_detail ?? g?.statusDetail ?? undefined,   // ESPN shortDetail, e.g. "Final/10"
+    statusDetail: g?.status_detail ?? g?.statusDetail ?? specialStatus,   // ESPN shortDetail, e.g. "Final/10"
     subtitle: subtitle || undefined,
     sets: normalizeSets(g),
     livePeriod: normalizeLivePeriod(g, league),
+    outcomeMethod: g?.outcome_method ?? g?.outcomeMethod ?? undefined,
+    outcomeRound: g?.outcome_round ?? g?.outcomeRound ?? undefined,
+    outcomeClock: g?.outcome_clock ?? g?.outcomeClock ?? undefined,
   }
 }
 
@@ -266,7 +295,7 @@ export const SportsService = {
   },
 
   getAllGamesByDate: async (date: string): Promise<Game[]> => {
-    const leagues = ['nba', 'mlb', 'nhl', 'nfl', 'lcup', 'mls', 'atp', 'wta', 'cod', 'ufc', 'wc']
+    const leagues = ['nba', 'mlb', 'nhl', 'nfl', 'lcup', 'mls', 'ligamx', 'atp', 'wta', 'cod', 'ufc', 'wc']
     const promises = leagues.map((l) => SportsService.getGamesByDate(l, date))
     const results = await Promise.all(promises)
     return results.flat()
@@ -324,7 +353,7 @@ export const SportsService = {
   },
 
   getAllGamesByLocalDate: async (localDate: string, opts?: { strict?: boolean }): Promise<Game[]> => {
-    const leagues = ['nba', 'mlb', 'nhl', 'nfl', 'lcup', 'mls', 'atp', 'wta', 'cod', 'ufc', 'wc']
+    const leagues = ['nba', 'mlb', 'nhl', 'nfl', 'lcup', 'mls', 'ligamx', 'atp', 'wta', 'cod', 'ufc', 'wc']
     const results = await Promise.all(leagues.map((l) => SportsService.getGamesByLocalDate(l, localDate, opts)))
     return results.flat()
   },
@@ -477,7 +506,14 @@ export const SportsService = {
   // schedule-dates contract. Returns null when no league reports a game in that
   // direction or discovery fails — callers decide the fallback.
   getNeighbourGameDate: async (leagues: string[], anchor: string, delta: -1 | 1): Promise<string | null> => {
-    const perLeague = await Promise.all(leagues.map(async (league) => {
+    // `allSettled`, not `all`: the arrow must move on what answered. Every
+    // league is asked in parallel and the nearest day across them wins, so one
+    // league that is slow or refusing used to hold the whole navigation --
+    // measured 2026-08-18 at 0.7s to 3.1s per click against a board that is
+    // otherwise pure SQLite reads. A league that cannot answer contributes no
+    // candidates, which is the same thing it contributed before; it just no
+    // longer decides when the click lands.
+    const settled = await Promise.allSettled(leagues.map(async (league) => {
       const data = await SportsService.getScheduleDates(league, anchor)
       if (!data) return [] as string[]
       const starts = delta < 0 ? data.past_event_starts : data.future_event_starts
@@ -485,32 +521,39 @@ export const SportsService = {
         .map(iso => new Date(iso).toLocaleDateString('en-CA'))
         .filter(d => delta < 0 ? d < anchor : d > anchor)
     }))
+    const perLeague = settled.map(r => (r.status === 'fulfilled' ? r.value : []))
     const candidates = perLeague.flat().sort()
     if (!candidates.length) return null
     return delta < 0 ? candidates[candidates.length - 1] : candidates[0]
   },
 
-  getNflScheduleWeeks: async (anchor: string): Promise<NflScheduleWeeksResponse | null> => {
+  getFootballScheduleWeeks: async (league: 'nfl' | 'ncaaf', anchor: string): Promise<NflScheduleWeeksResponse | null> => {
     try {
-      const res = await axios.get(`${API_BASE_URL}/nfl/schedule-weeks`, { params: { anchor } })
+      const res = await axios.get(`${API_BASE_URL}/${league}/schedule-weeks`, { params: { anchor } })
       return res.data
     } catch (err) {
-      console.error('Error fetching NFL schedule weeks', err)
+      console.error(`Error fetching ${league.toUpperCase()} schedule weeks`, err)
       return null
     }
   },
 
-  getNflScheduleWeek: async (season: number, seasonType: number, week: number): Promise<NflScheduleWeekResponse | null> => {
+  getFootballScheduleWeek: async (league: 'nfl' | 'ncaaf', season: number, seasonType: number, week: number): Promise<NflScheduleWeekResponse | null> => {
     try {
-      const res = await axios.get(`${API_BASE_URL}/nfl/schedule-week`, {
+      const res = await axios.get(`${API_BASE_URL}/${league}/schedule-week`, {
         params: { season, season_type: seasonType, week },
       })
       return res.data
     } catch (err) {
-      console.error('Error fetching NFL schedule week', err)
+      console.error(`Error fetching ${league.toUpperCase()} schedule week`, err)
       return null
     }
   },
+
+  getNflScheduleWeeks: async (anchor: string): Promise<NflScheduleWeeksResponse | null> =>
+    SportsService.getFootballScheduleWeeks('nfl', anchor),
+
+  getNflScheduleWeek: async (season: number, seasonType: number, week: number): Promise<NflScheduleWeekResponse | null> =>
+    SportsService.getFootballScheduleWeek('nfl', season, seasonType, week),
 }
 
 export interface ScheduleDatesResponse {
@@ -519,7 +562,7 @@ export interface ScheduleDatesResponse {
   anchor_date: string
   event_start_timezone: string
   available?: boolean
-  source?: 'espn' | 'unavailable'
+  source?: 'espn' | 'local' | 'unavailable'
   error?: 'publisher_unavailable'
   future_event_starts: string[]
   past_event_starts: string[]

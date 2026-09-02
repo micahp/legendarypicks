@@ -23,54 +23,188 @@ const threeGames: PropHistory['games'] = [
 ]
 
 describe('PropChart venue handling', () => {
-  function svgLabel(container: HTMLElement): string {
-    const svg = container.querySelector('svg')
-    const textNodes = svg ? Array.from(svg.querySelectorAll('text')) : []
-    return textNodes.map(t => t.textContent || '').join(' ')
+  // The per-game labels moved out of the SVG and onto DOM columns under each
+  // bar, matching the PrizePicks reference: value, opponent, date. Home games
+  // carry no prefix there -- only away gets `@` -- so the old "vs HOM" and the
+  // separate away arrow are gone by design, not by accident.
+  // Scoped to the label row. Reading the whole container also picks up the
+  // "vs <OPP>" FILTER chip, which is a different thing that happens to share
+  // the text -- the first version of this test failed on exactly that.
+  function columns(container: HTMLElement): string {
+    return (container.querySelector('[data-game-labels]')?.textContent || '')
   }
 
-  it('labels a known away game with @', () => {
+  it('renders a four-character away abbreviation in full', () => {
+    // `@BOS` was clipped by a 28px column with `truncate`, which reads as a
+    // data problem rather than a layout one.
+    const { container } = render(<PropChart data={chartData([
+      { date: '2026-08-21', value: 3, opponent: 'BOS', home: false, hit: true },
+    ])} />)
+    expect(columns(container)).toContain('@BOS')
+    expect(container.querySelector('[data-game-labels] .truncate')).toBeNull()
+  })
+
+  it('uses wider surname labels for UFC opponents without losing the full tooltip', () => {
+    const data = chartData([
+      { date: '2026-08-21', value: 61, opponent: 'Deiveson Figueiredo', home: null, hit: true },
+      { date: '2026-08-22', value: 42, opponent: 'Raul Rosas Jr.', home: null, hit: false },
+    ])
+    data.league = 'ufc'
+    data.market = 'significant_strikes'
+    const { container } = render(<PropChart data={data} />)
+    const labels = Array.from(
+      container.querySelectorAll<HTMLElement>('[data-ufc-opponent-label="true"]'),
+    )
+
+    expect(labels.map(label => label.textContent)).toEqual(['Rosas Jr.', 'Figueiredo'])
+    expect(labels[1].title).toBe('Deiveson Figueiredo · 2026-08-21')
+    expect(labels[0].parentElement?.style.width).toBe('72px')
+  })
+
+  it('marks a known away game with @', () => {
     const { container } = render(<PropChart data={chartData([
       { date: '2026-07-22', value: 18, opponent: 'AWY', home: false, hit: false },
     ])} />)
-    expect(svgLabel(container)).toContain('@ AWY')
+    expect(columns(container)).toContain('@AWY')
   })
 
-  it('labels a known home game with vs', () => {
+  it('leaves a home game unprefixed', () => {
     const { container } = render(<PropChart data={chartData([
       { date: '2026-07-22', value: 24, opponent: 'HOM', home: true, hit: true },
     ])} />)
-    expect(svgLabel(container)).toContain('vs HOM')
+    const text = columns(container)
+    expect(text).toContain('HOM')
+    expect(text).not.toContain('@HOM')
+    expect(text).not.toContain('vs HOM')
   })
 
   it('leaves unknown venue unmarked', () => {
     const { container } = render(<PropChart data={chartData([
       { date: '2026-07-22', value: 21, opponent: 'UNK', home: null, hit: true },
     ])} />)
-    const label = svgLabel(container)
-    expect(label).toContain('UNK')
-    expect(label).not.toContain('@')
-    expect(label).not.toContain('vs')
+    const text = columns(container)
+    expect(text).toContain('UNK')
+    expect(text).not.toContain('@UNK')
   })
 
-  it('shows the away arrow only for a known away game', () => {
-    const { container } = render(<PropChart data={chartData(threeGames)} />)
-    const arrows = Array.from(container.querySelectorAll('span'))
-      .filter(el => (el.className || '').includes('ml-0.5'))
-    expect(arrows).toHaveLength(3)
-    expect(arrows.map(arrow => arrow.textContent)).toEqual(['', '↑', ''])
+  it('prints the date under each bar as M/D', () => {
+    const { container } = render(<PropChart data={chartData([
+      { date: '2026-07-22', value: 21, opponent: 'UNK', home: null, hit: true },
+    ])} />)
+    expect(columns(container)).toContain('7/22')
   })
 
-  it('keeps unknown venue out of both venue filters', () => {
-    const { container } = render(<PropChart data={chartData(threeGames)} />)
-    const barCount = () => container.querySelectorAll('rect').length
+  it('colours a miss red and a hit green, not two shades of one hue', () => {
+    const { container } = render(<PropChart data={chartData([
+      { date: '2026-07-21', value: 24, opponent: 'HOM', home: true, hit: true },
+      { date: '2026-07-22', value: 18, opponent: 'AWY', home: false, hit: false },
+    ])} />)
+    const fills = Array.from(container.querySelectorAll('rect')).map(r => r.getAttribute('fill'))
+    expect(fills).toContain('#34d399')   // our emerald-400
+    expect(fills).toContain('#f87171')   // our red-400, same weight
+  })
 
-    expect(barCount()).toBe(3)
-    fireEvent.click(screen.getByText('Home'))
-    expect(barCount()).toBe(1)
-    fireEvent.click(screen.getByText('Away'))
-    expect(barCount()).toBe(1)
-    fireEvent.click(screen.getByText('All'))
-    expect(barCount()).toBe(3)
+  it('prints the average of the games actually drawn', () => {
+    const { container } = render(<PropChart data={chartData([
+      { date: '2026-07-21', value: 24, opponent: 'HOM', home: true, hit: true },
+      { date: '2026-07-22', value: 18, opponent: 'AWY', home: false, hit: false },
+    ])} />)
+    // (24 + 18) / 2 = 21.0 over 2 games. The footer sits outside the label
+    // row, so this one reads the whole chart deliberately.
+    const all = container.textContent || ''
+    expect(all).toContain('21.0')
+    expect(all).toContain('avg last 2')
+  })
+})
+
+describe('a window short of its own sample reports a dash', () => {
+  // 2026-08-26, reported from the props tab: a Liga MX player with three
+  // matches printed 100% on L5, L10 AND L20, because `slice(0, 20)` of three
+  // games is three games. The label claimed a twenty-game record; the data was
+  // three. MLS looked correct only because those players have 25-42 games.
+  function headline(container: HTMLElement): string {
+    return container.textContent || ''
+  }
+
+  it('shows a dash for L5 when only three games exist', () => {
+    const { container } = render(
+      <PropChart data={chartData(threeGames)} window="l5" />
+    )
+    expect(headline(container)).toContain('—')
+    expect(headline(container)).not.toContain('67%')
+  })
+
+  it('shows a dash for L10 and L20 on the same three games', () => {
+    for (const w of ['l10', 'l20'] as const) {
+      const { container } = render(
+        <PropChart data={chartData(threeGames)} window={w} />
+      )
+      expect(headline(container)).toContain('—')
+    }
+  })
+
+  it('still reports season, which claims only what exists', () => {
+    const { container } = render(
+      <PropChart data={chartData(threeGames)} window="season" />
+    )
+    expect(headline(container)).toContain('67%')
+  })
+
+  it('reports a real percentage once the window is full', () => {
+    const five = [
+      ...threeGames,
+      { date: '2026-07-23', value: 30, opponent: 'HOM', home: true, hit: true },
+      { date: '2026-07-24', value: 10, opponent: 'AWY', home: false, hit: false },
+    ]
+    const { container } = render(
+      <PropChart data={chartData(five)} window="l5" />
+    )
+    expect(headline(container)).toContain('60%')
+  })
+})
+
+describe('a window short of its own sample reports a dash', () => {
+  // 2026-08-26, reported from the props tab: a Liga MX player with three
+  // matches printed 100% on L5, L10 AND L20, because `slice(0, 20)` of three
+  // games is three games. The label claimed a twenty-game record; the data was
+  // three. MLS looked correct only because those players have 25-42 games.
+  function headline(container: HTMLElement): string {
+    return container.textContent || ''
+  }
+
+  it('shows a dash for L5 when only three games exist', () => {
+    const { container } = render(
+      <PropChart data={chartData(threeGames)} window="l5" />
+    )
+    expect(headline(container)).toContain('—')
+    expect(headline(container)).not.toContain('67%')
+  })
+
+  it('shows a dash for L10 and L20 on the same three games', () => {
+    for (const w of ['l10', 'l20'] as const) {
+      const { container } = render(
+        <PropChart data={chartData(threeGames)} window={w} />
+      )
+      expect(headline(container)).toContain('—')
+    }
+  })
+
+  it('still reports season, which claims only what exists', () => {
+    const { container } = render(
+      <PropChart data={chartData(threeGames)} window="season" />
+    )
+    expect(headline(container)).toContain('67%')
+  })
+
+  it('reports a real percentage once the window is full', () => {
+    const five = [
+      ...threeGames,
+      { date: '2026-07-23', value: 30, opponent: 'HOM', home: true, hit: true },
+      { date: '2026-07-24', value: 10, opponent: 'AWY', home: false, hit: false },
+    ]
+    const { container } = render(
+      <PropChart data={chartData(five)} window="l5" />
+    )
+    expect(headline(container)).toContain('60%')
   })
 })

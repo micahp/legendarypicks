@@ -181,21 +181,28 @@ def build_predict_slate(
 
     data = upcoming if isinstance(upcoming, dict) else {}
     all_matches = data.get("matches") if isinstance(data.get("matches"), list) else []
-    requested_slug = _title_slug(title)
-    if title and not requested_slug:
+    normalized_title = " ".join(str(title or "").strip().lower().replace("_", " ").split())
+    all_titles = normalized_title in {"all", "all esports"}
+    requested_slug = None if all_titles else _title_slug(title)
+    if title and not all_titles and not requested_slug:
         raise ValueError("unsupported esports title")
 
     title_options = _title_options(all_matches)
 
-    if requested_slug is None:
+    if requested_slug is None and not all_titles:
         requested_slug = _default_title_slug(title_options)
 
-    selected_display = _ESPORTS_TITLES[requested_slug]
+    selected_display = "All Esports" if all_titles else _ESPORTS_TITLES[requested_slug]
+    supported_displays = set(_TITLE_SLUG)
     selected_matches = sorted(
         [
             match for match in all_matches
             if isinstance(match, dict)
-            and match.get("title") == selected_display
+            and (
+                match.get("title") in supported_displays
+                if all_titles
+                else match.get("title") == selected_display
+            )
             and _is_pickable(match)
         ],
         key=lambda row: (not bool(row.get("live")), _start_sort(row)),
@@ -204,7 +211,10 @@ def build_predict_slate(
 
     return {
         "schema_version": SCHEMA_VERSION,
-        "selected_title": {"slug": requested_slug, "label": selected_display},
+        "selected_title": {
+            "slug": "all" if all_titles else requested_slug,
+            "label": selected_display,
+        },
         "titles": title_options,
         "matches": [
             {field: match.get(field) for field in _MATCH_FIELDS}
@@ -283,13 +293,13 @@ def build_league_slate(
 def predict_slate(
     title: Optional[str] = Query(
         None,
-        description="Game-title slug or alias, for example league-of-legends, cs2, or cod.",
+        description="Game-title slug or alias, or all for every supported title.",
     ),
 ):
     try:
         return build_predict_slate(esports_upcoming(), title=title)
     except ValueError as exc:
-        allowed = ", ".join(_ESPORTS_TITLES)
+        allowed = "all, " + ", ".join(_ESPORTS_TITLES)
         raise HTTPException(400, "title must be one of: {}".format(allowed)) from exc
 
 
