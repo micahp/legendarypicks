@@ -58,6 +58,8 @@ from routers import (  # noqa: E402
     game_extras,
     esports,
     live_discounts,
+    swing_board,
+    upcoming_board,
     momentum,
     news,
     plays,
@@ -83,6 +85,8 @@ app.include_router(analytics.router)
 app.include_router(game_extras.router)
 app.include_router(esports.router)
 app.include_router(live_discounts.router)
+app.include_router(swing_board.router)
+app.include_router(upcoming_board.router)
 app.include_router(momentum.router)
 app.include_router(news.router)
 app.include_router(plays.router)
