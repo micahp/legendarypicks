@@ -43,11 +43,53 @@ asked directly, instead of a fabricated answer.
    theory. `no such table: prop_games` is the diagnosis, not a symptom to reason around.
 4. **Is there a second door?** A different host, a different endpoint, a narrower command.
    `git status` instead of `find /`. `sports.core.api` instead of `site.api`.
+4b. **If the door is a web app: it declares its own endpoints. Stop guessing URLs.**
+   See §2b — this rung has its own ladder, and guessing is the failure it prevents.
 5. **Can I measure it instead of concluding it?** Run the failing thing. One
    `settle_game()` call beat three measured-but-wrong causes. See
    `feedback_run_the_failing_operation`.
 6. **Only now**: say what is blocked, what you tried, and the single question that unblocks
    it.
+
+## 2b. A web app declares its own endpoints. Never guess a feed URL.
+
+Measured 2026-09-02, hunting live tennis point-by-point. Five guesses at
+`usopen.org/en_US/scores/feeds/...` all 404'd, and the last of them was written up as
+"unresolved, needs a browser". It needed no browser. The real path was
+`matches/live/scores.json`, not the `scores/live_scores.json` shape guessed at — one
+segment different, and unguessable in principle.
+
+**A guessed URL that 404s tells you nothing.** It is not evidence the data is absent; it is
+evidence you guessed wrong. Do not write it up as a negative result.
+
+The ladder, all `curl`, no browser needed:
+
+1. **Fetch the page.** If it is a ~4KB shell, the paths are not in the HTML — that is a
+   signal to go to the bundle, not a signal to give up.
+2. **Grep the HTML for `src="..."`.** The app's JS bundle is named there.
+3. **Fetch the bundle and grep it for path/config patterns** — `"/api/`, `"/feeds/`,
+   `config`, `.json"`. A 2.5MB bundle greps in a second.
+4. **The bundle almost always names one config file** rather than 35 endpoints. Here it was
+   `/en_US/json/gen/config_web.json`, and that file declared **every** feed path the site
+   uses, complete with `<matchId>` placeholders: live scores, point-by-point, draws, player
+   stats, head-to-head.
+5. Now you have the contract, not a guess.
+
+That single config turned "unresolved, needs a browser" into the richest source found:
+IBM SlamTracker's own point-by-point, 57 fields per point, free.
+
+**The error response is part of the contract too.** Bovada's scores endpoint refuses
+`Accept: application/json` with a 406 whose body *lists the media types it accepts*. Reading
+it gave `application/vnd.scoreboards.full+json` and the endpoint worked immediately. A 406,
+a 415 or a 400 with a field list is documentation, not a wall.
+
+**An agent's "there is nothing there" is a claim about its browser, not about the world.**
+The same day, a hosted browser agent was sent to SofaScore and reported "no live US Open
+matches, there are no events today". Matches were provably live — one of them was trading
+actively in our own tape at that moment. It honestly reported what it saw; what it saw was
+an empty shell served to automation. Treat a third-party agent's negative result as
+*unverified*, and check it against something you hold. Compare `measurement-is-a-claim`:
+the measurement described the instrument.
 
 ## 3. Escalating is allowed. Escalating early is the defect.
 

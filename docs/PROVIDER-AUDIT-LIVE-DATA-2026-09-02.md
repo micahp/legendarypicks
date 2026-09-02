@@ -162,7 +162,91 @@ Opta event-feed tier as the widget above.
 
 ---
 
-## 3. Tennis — ESPN declares it has nothing; one thread still open
+## 3. Tennis — **RESOLVED same day. The US Open publishes point-by-point, free.**
+
+> **This section's original conclusion was wrong, and the way it was wrong matters.** It
+> ended at "the US Open feed is unresolved, needs a headless browser" after five guessed
+> URLs returned 404. No browser was needed. The paths are *declared* by the site itself in
+> `/en_US/json/gen/config_web.json`, reachable with `curl`, and the real live-scores path
+> was `matches/live/scores.json` — one segment off every guess. A guessed URL that 404s is
+> evidence you guessed wrong, not evidence the data is absent. Original section kept below.
+
+### What is actually available
+
+```
+config (declares all 35 feed paths)
+  https://www.usopen.org/en_US/json/gen/config_web.json
+live scores + point score in the current game
+  /en_US/scores/feeds/2026/matches/live/scores.json
+point-by-point, full history
+  /en_US/scores/feeds/2026/slamtracker/history/<matchId>C.json
+also declared: draws, head2head, player stats_chart, match_insight, distance
+```
+
+No auth, no key, not blocked from this box. It is IBM SlamTracker's own data — the same
+engine behind the tournament's app, which is almost certainly what Google's tennis panel
+renders too. Go to the source, not the aggregator.
+
+**Live scores feed** carries `scores.gameScore` — the live point score inside the current
+game (`[null, "A"]` = advantage to team 2) — plus per-set games with tiebreaks, server,
+`last_serve_speed`, seeds, and ATP player ids.
+
+**Point-by-point** is a JSON array, one record per point, **57 fields**. Measured live on
+Shelton vs Hurkacz (match 1225): 140 points at the time of reading; 1,248 points across 10
+matches captured on the first full run, with 23 break points won.
+
+| field | why it matters |
+|---|---|
+| `BreakPoint`, `BreakPointWon`, `BreakPointOpportunity` | the reversible moment, flagged by the publisher rather than derived |
+| `P1Momentum`, `P2Momentum` | IBM's own momentum number, per point |
+| `P1Score`, `P2Score` | 0/15/30/40/AD inside the game |
+| `P1GamesWon/SetsWon`, `P2GamesWon/SetsWon` | the ladder above the point |
+| `Ace`, `DoubleFault`, `UnforcedError`, `Winner`, `WinnerShotType` | how the point ended |
+| `Speed_MPH`, `ServeWidth`, `ServeDepth`, `ReturnDepth`, `RallyCount` | how it was played |
+| `P1DistanceRun`, `P2DistanceRun` | fatigue proxy, per point and cumulative |
+| **`EpochTimeStart` / `EpochTimeEnd`** | **joins a point to the order-book tape by time** |
+| `Sentence` | e.g. "H. Hurkacz loses the break point with a double fault" |
+
+`EpochTimeStart` is the load-bearing field. It is what turns "price fell 15c at 18:32" into
+"he was broken at 18:31", which is the entire stop-loss / take-profit decision.
+
+**Scope limit, recorded so nobody assumes more:** these feeds are tournament-scoped. They
+work for the US Open and stop when it ends. There is no equivalent for ordinary tour events.
+Bovada (§3b) covers the rest at set/game/server resolution only.
+
+Captured by `prediction-market-trading/usopen_points.py`, cron every minute.
+
+## 3b. Bovada — the general fallback, and the reason to stop leaning on ESPN
+
+ESPN declares `statsSource: none` for tennis, and during this session **both** its hosts
+(`site.web.api`, `sports.core.api`) returned 403 under the burst limit — a budget this box
+shares with the production scoreboard ingest, so every request spent probing is one the
+serving path cannot make.
+
+Bovada prices tennis in-play, so it must carry live state, and it is a separate estate:
+
+```
+live events   /services/sports/event/coupon/events/A/description/tennis?liveOnly=true...
+match state   /services/sports/results/api/v1/scores/<eventId>
+              REQUIRES  Accept: application/vnd.scoreboards.full+json
+```
+
+The scores endpoint refuses `Accept: application/json` with a **406 that lists the media
+types it accepts** — the error is the documentation.
+
+Measured 2026-09-02: 33 live tennis events (all US Open) plus soccer, 104 events captured in
+one pass. Publishes `sportDetails.tennis.sets`, `currentPeriodScore` (games),
+`previousPeriodsScore`, and **`server`** — which makes completed breaks computable.
+
+**Does NOT publish the point score.** Break *points* are therefore invisible here; only
+completed breaks. That is the line between Bovada and the US Open feed.
+
+Captured by `prediction-market-trading/bovada_scores.py`, cron every minute.
+
+<details>
+<summary>Original §3 (superseded above — kept because the failure is the lesson)</summary>
+
+### Tennis — ESPN declares it has nothing; one thread still open
 
 ### The publisher answers directly
 
@@ -203,6 +287,8 @@ absent) — building it is the blocker, not the site.
 
 ---
 
+</details>
+
 ## 4. SofaScore — confirmed dead, do not re-probe
 
 Re-measured 2026-09-01 after being logged as "walled" on 2026-08-25:
@@ -232,7 +318,8 @@ Same datacenter-IP pattern as `app.atptour.com` and `live-tennis.eu`. Upgraded f
 | Soccer momentum | **YES** | FotMob `content.momentum.main.data` | reachable, not wired up |
 | Soccer ball position | NO (as tracking) | Opta `live_action` widget | licensed; nobody publishes true tracking free |
 | Soccer player-to-player passes | **NO** | — | Opta event-feed tier, paid |
-| Tennis points per game | **NO** on ESPN | — | ESPN declares `statsSource: none`. US Open own feed UNRESOLVED, needs a browser |
+| Tennis points per game | **YES** | US Open `slamtracker/history/<id>C.json` | 57 fields/point incl. break points + IBM momentum. Tournament-scoped only |
+| Tennis sets/games/server (any event) | **YES** | Bovada `results/api/v1/scores/<id>` | no point score; needs the vnd.scoreboards.full+json Accept header |
 
 ## 6. What to do next, in order
 
