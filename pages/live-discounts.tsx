@@ -50,6 +50,8 @@ type UsOpen = {
   } | null
   last_point: string | null
   duration: string | null
+  status?: string | null
+  playing?: boolean
   best_of: number
 }
 type Card = {
@@ -474,6 +476,20 @@ export default function LiveDiscountsPage() {
                         {card.context_flags.point_state}
                       </span>
                     )}
+                  </div>
+                )}
+
+                {card.usopen && card.usopen.playing === false && (
+                  <div className="mt-3 rounded-md border border-amber-400/50 bg-amber-500/10 px-3 py-2">
+                    <span className="text-[11px] font-bold uppercase tracking-widest text-amber-300">
+                      ⏸ Not playing — {card.usopen.status}
+                    </span>
+                    <p className="mt-1 text-[12.5px] text-zinc-300">
+                      The book is frozen: no price movement, resting depth unchanged. Wyckoff
+                      declines a market with no effort in it, but the price-only models cannot
+                      tell a frozen book from a quiet one. Treat any turn/fade score here as
+                      unreliable until play resumes, and expect a gap on the restart.
+                    </p>
                   </div>
                 )}
 
