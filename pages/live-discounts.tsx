@@ -97,6 +97,9 @@ type Card = {
     break_point_against_me?: boolean
     serving?: boolean
     sets_deficit?: number
+    underdog_by_seed?: boolean
+    seed_mine?: number | null
+    seed_theirs?: number | null
     best_of?: number
     move_imminent?: boolean
     point_state?: string | null
@@ -351,6 +354,14 @@ export default function LiveDiscountsPage() {
                       >
                         {card.model}
                       </span>
+                      {card.context_flags?.underdog_by_seed && (
+                        <span
+                          className="rounded bg-amber-500/15 px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-amber-300"
+                          title="Unseeded against a seed. Not a prediction — 8% of completed singles were a seed losing. It says the discount is narrative rather than information."
+                        >
+                          Unseeded vs {card.context_flags.seed_theirs}
+                        </span>
+                      )}
                       {i === 0 && (
                         <span className="rounded bg-emerald-500/15 px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-emerald-400">
                           Best on board
