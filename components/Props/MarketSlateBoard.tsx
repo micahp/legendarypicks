@@ -8,6 +8,8 @@ interface BoardProp {
   line: number
   side: string
   source: string
+  offer_kind?: 'sportsbook_odds' | 'pickem_threshold'
+  source_label?: string
   captured_at: string
   odds: number | null
   player_id: number
@@ -29,6 +31,8 @@ interface BoardRow {
   rawMarket: string
   line: number
   source: string
+  offerKind: 'sportsbook_odds' | 'pickem_threshold'
+  sourceLabel: string
   home: string
   away: string
   date: string
@@ -48,6 +52,11 @@ interface MarketOption {
 
 interface SlateMarketSummary {
   markets?: MarketOption[]
+}
+
+interface SourceStatus {
+  status: string
+  message?: string
 }
 
 type SortKey = 'hit-rate' | 'edge' | 'line'
@@ -116,6 +125,8 @@ function groupProps(props: BoardProp[]): BoardRow[] {
         rawMarket: prop.market,
         line: prop.line,
         source: prop.source,
+        offerKind: prop.offer_kind || 'sportsbook_odds',
+        sourceLabel: prop.source_label || prop.source,
         home,
         away,
         date: prop.game_date,
@@ -157,11 +168,12 @@ function LoadingEvidence() {
   )
 }
 
-function EmptyBoard({ date }: { date: string }) {
+function EmptyBoard({ date, sourceStatus }: { date: string; sourceStatus: SourceStatus | null }) {
+  const unavailable = sourceStatus && sourceStatus.status !== 'PUBLISHED'
   return (
     <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 px-5 py-16 text-center">
-      <p className="text-sm font-medium text-zinc-300">No prop markets for this slate.</p>
-      <p className="mt-1 text-xs text-zinc-500">Try another league or move off {date}.</p>
+      <p className="text-sm font-medium text-zinc-300">{unavailable ? 'MLS prop source unavailable for this slate.' : 'No prop markets for this slate.'}</p>
+      <p className="mt-1 text-xs text-zinc-500">{unavailable ? sourceStatus.message : `Try another league or move off ${date}.`}</p>
     </div>
   )
 }
@@ -175,6 +187,7 @@ export default function MarketSlateBoard({ league, date }: { league: string; dat
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [sourceStatus, setSourceStatus] = useState<SourceStatus | null>(null)
   const [historyByRow, setHistoryByRow] = useState<Record<string, HistoryState>>({})
   const historyRequest = useRef(0)
 
@@ -185,15 +198,26 @@ export default function MarketSlateBoard({ league, date }: { league: string; dat
 
     setLoading(true)
     setError(null)
+    setSourceStatus(null)
     setProps([])
     setMarketOptions([])
     setLoadedMarket('')
 
     const loadMarketSummary = async () => {
+      const statusRequest = league === 'mls'
+        ? fetch('/api/props/source-status?league=mls', { signal: controller.signal })
+        : null
       const response = await fetch(`/api/props/slate?${summaryParams}`, { signal: controller.signal })
       if (!response.ok) throw new Error(`Market summary request failed (${response.status})`)
       const games = await response.json()
       if (!Array.isArray(games)) throw new Error('Market summary response was not a list')
+      if (statusRequest) {
+        const statusResponse = await statusRequest
+        if (statusResponse.ok) {
+          const status = await statusResponse.json()
+          if (status && typeof status.status === 'string') setSourceStatus(status)
+        }
+      }
 
       // New summaries carry counts only; one selected market is fetched below.
       // During a managed backend rollout, fall back to the old list contract so
@@ -392,7 +416,7 @@ export default function MarketSlateBoard({ league, date }: { league: string; dat
     return <div className="rounded-xl border border-red-900/60 bg-red-950/30 px-4 py-4 text-sm text-red-200">{error}</div>
   }
 
-  if (!markets.length) return <EmptyBoard date={date} />
+  if (!markets.length) return <EmptyBoard date={date} sourceStatus={sourceStatus} />
 
   return (
     <section className="min-w-0 space-y-4" aria-label="Market-first prop board">
@@ -464,13 +488,23 @@ export default function MarketSlateBoard({ league, date }: { league: string; dat
                   <p className="mt-0.5 truncate text-xs text-zinc-500">{matchup(row)}</p>
                   <div className="mt-3 flex flex-wrap items-center gap-2">
                     <span className="text-2xl font-bold text-white tabular-nums">{formatValue(row.line)}</span>
-                    <span className="rounded-md border border-emerald-900/60 bg-emerald-950/40 px-2 py-1 text-xs text-emerald-300 tabular-nums">
-                      O <strong>{formatOdds(row.over?.odds)}</strong>
-                    </span>
-                    <span className="rounded-md border border-zinc-700 bg-zinc-800/70 px-2 py-1 text-xs text-zinc-300 tabular-nums">
-                      U <strong>{formatOdds(row.under?.odds)}</strong>
-                    </span>
-                    <span className="text-[10px] uppercase tracking-wide text-zinc-600">{row.source}</span>
+                    {row.offerKind === 'pickem_threshold' ? <>
+                      <span className="rounded-md border border-emerald-900/60 bg-emerald-950/40 px-2 py-1 text-xs text-emerald-300">
+                        More
+                      </span>
+                      <span className="rounded-md border border-zinc-700 bg-zinc-800/70 px-2 py-1 text-xs text-zinc-300">
+                        Less
+                      </span>
+                      <span className="text-[10px] tracking-wide text-zinc-600">{row.sourceLabel}</span>
+                    </> : <>
+                      <span className="rounded-md border border-emerald-900/60 bg-emerald-950/40 px-2 py-1 text-xs text-emerald-300 tabular-nums">
+                        O <strong>{formatOdds(row.over?.odds)}</strong>
+                      </span>
+                      <span className="rounded-md border border-zinc-700 bg-zinc-800/70 px-2 py-1 text-xs text-zinc-300 tabular-nums">
+                        U <strong>{formatOdds(row.under?.odds)}</strong>
+                      </span>
+                      <span className="text-[10px] uppercase tracking-wide text-zinc-600">{row.sourceLabel}</span>
+                    </>}
                   </div>
                 </div>
 

@@ -31,6 +31,34 @@ DB = os.environ.get("LP_DB_PATH") or os.path.join(os.path.dirname(os.path.abspat
 
 ALLOWED_ORIGINS = os.environ.get("LP_ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:3007").split(",")
 
+# A prop row's source is part of its user-facing contract, not merely ingest
+# provenance.  PrizePicks lines relayed by RotoWire are pick'em thresholds;
+# their `over` / `under` booleans are selections, not American prices.
+PROP_SOURCE_CONTRACTS = {
+    "rotowire_prizepicks_relay": {
+        "offer_kind": "pickem_threshold",
+        "source_label": "PrizePicks threshold via RotoWire",
+    },
+}
+
+# An explicit source policy prevents a stale sportsbook feed from silently
+# filling the MLS board while the replacement publisher has no MLS fixture.
+CURRENT_PROP_SOURCE_BY_LEAGUE = {"mls": "rotowire_prizepicks_relay"}
+
+
+def prop_source_contract(source: Optional[str]) -> dict:
+    """Return presentation semantics for a persisted prop source."""
+    return {
+        "offer_kind": "sportsbook_odds",
+        "source_label": source or "Unknown source",
+        **PROP_SOURCE_CONTRACTS.get(source or "", {}),
+    }
+
+
+def current_prop_source(league: Optional[str]) -> Optional[str]:
+    """Return the sole current board publisher where a league has one."""
+    return CURRENT_PROP_SOURCE_BY_LEAGUE.get((league or "").lower())
+
 
 def _db():
     os.makedirs(os.path.dirname(DB), exist_ok=True)
@@ -106,6 +134,35 @@ def _init_db():
           league TEXT NOT NULL, team TEXT,
           first_seen TEXT NOT NULL, count INTEGER DEFAULT 1,
           source_player_key TEXT, reason TEXT);
+        -- Stable source identities are distinct from display strings.  They are
+        -- intentionally additive so a source cannot repoint a canonical player
+        -- or game through a name match on a later capture.
+        CREATE TABLE IF NOT EXISTS player_source_ids(
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          source TEXT NOT NULL, league TEXT NOT NULL,
+          source_player_key TEXT NOT NULL,
+          player_id INTEGER NOT NULL REFERENCES players(id),
+          first_seen TEXT NOT NULL, last_seen TEXT NOT NULL,
+          UNIQUE(source, league, source_player_key));
+        CREATE TABLE IF NOT EXISTS prop_game_source_ids(
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          source TEXT NOT NULL, league TEXT NOT NULL,
+          source_game_key TEXT NOT NULL,
+          game_id INTEGER NOT NULL REFERENCES prop_games(id),
+          first_seen TEXT NOT NULL, last_seen TEXT NOT NULL,
+          UNIQUE(source, league, source_game_key));
+        CREATE TABLE IF NOT EXISTS prop_source_captures(
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          source TEXT NOT NULL, league TEXT NOT NULL,
+          captured_at TEXT NOT NULL, status TEXT NOT NULL,
+          payload_sha256 TEXT NOT NULL, payload_path TEXT,
+          source_url TEXT NOT NULL DEFAULT '', parser_version TEXT NOT NULL DEFAULT '',
+          source_prop_count INTEGER NOT NULL DEFAULT 0,
+          candidate_event_count INTEGER NOT NULL DEFAULT 0,
+          eligible_event_count INTEGER NOT NULL DEFAULT 0,
+          rejected_event_count INTEGER NOT NULL DEFAULT 0,
+          market_counts_json TEXT NOT NULL DEFAULT '{}',
+          rejected_reasons_json TEXT NOT NULL DEFAULT '{}', message TEXT);
         CREATE TABLE IF NOT EXISTS name_alias(
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           player_id INTEGER NOT NULL REFERENCES players(id),
@@ -172,6 +229,16 @@ def _init_db():
         for col in ("source_player_key", "reason"):
             if col not in unresolved_columns:
                 con.execute(f"ALTER TABLE unresolved_players ADD COLUMN {col} TEXT")
+        capture_columns = {
+            r[1] for r in con.execute("PRAGMA table_info(prop_source_captures)").fetchall()
+        }
+        for col, decl in (
+            ("source_url", "TEXT NOT NULL DEFAULT ''"),
+            ("parser_version", "TEXT NOT NULL DEFAULT ''"),
+            ("rejected_reasons_json", "TEXT NOT NULL DEFAULT '{}'")
+        ):
+            if col not in capture_columns:
+                con.execute(f"ALTER TABLE prop_source_captures ADD COLUMN {col} {decl}")
         player_stats_columns = {
             r[1] for r in con.execute("PRAGMA table_info(player_stats)").fetchall()
         }
@@ -180,6 +247,18 @@ def _init_db():
         con.execute(
             "CREATE INDEX IF NOT EXISTS idx_unresolved_players_source_key "
             "ON unresolved_players(source, league, source_player_key)"
+        )
+        con.execute(
+            "CREATE INDEX IF NOT EXISTS idx_player_source_ids_player "
+            "ON player_source_ids(player_id, source, league)"
+        )
+        con.execute(
+            "CREATE INDEX IF NOT EXISTS idx_prop_game_source_ids_game "
+            "ON prop_game_source_ids(game_id, source, league)"
+        )
+        con.execute(
+            "CREATE INDEX IF NOT EXISTS idx_prop_source_captures_latest "
+            "ON prop_source_captures(source, league, captured_at DESC)"
         )
         # Player search/profile checks data availability on these foreign keys.
         # Without the indexes, a two-letter search can repeatedly scan the full

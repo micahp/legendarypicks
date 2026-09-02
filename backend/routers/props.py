@@ -1,4 +1,5 @@
 """routers/props.py — props endpoints. Handlers only; shared code lives in _core."""
+import json
 from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import JSONResponse
 from typing import Optional
@@ -12,6 +13,34 @@ _CorePropIngest = PropIngest
 
 class PropIngest(_CorePropIngest):
     start_time: Optional[str] = None
+
+
+def _current_source_filter(league: Optional[str], table_alias: str = "pg"):
+    """Return SQL that keeps a replaced league from falling back to stale rows."""
+    source = current_prop_source(league)
+    if source:
+        return " AND p.source = ?", [source]
+    if league:
+        return "", []
+    # No league filter still must not surface legacy MLS Bovada rows in a
+    # global board.  Other leagues retain their existing multiple-source view.
+    mls_source = current_prop_source("mls")
+    return " AND ({}.league <> ? OR p.source = ?)".format(table_alias), ["mls", mls_source]
+
+
+def _prop_payload(row):
+    contract = prop_source_contract(row["source"])
+    return {
+        "id": row["id"], "market": row["market"], "line": row["line"], "side": row["side"],
+        "source": row["source"], "captured_at": row["captured_at"], "odds": row["odds"],
+        "offer_kind": contract["offer_kind"], "source_label": contract["source_label"],
+        "player_id": row["player_id"], "player_name": row["player_name"],
+        "player_team": row["player_team"], "league": row["league"],
+        "game_home": row["game_home"], "game_away": row["game_away"], "game_date": row["game_date"],
+        "actual_value": row["actual_value"],
+        "hit": bool(row["hit"]) if row["hit"] is not None else None,
+        "settled_at": row["settled_at"],
+    }
 
 @router.get("/api/props")
 def list_props(player: Optional[str] = Query(None),
@@ -45,19 +74,49 @@ def list_props(player: Optional[str] = Query(None),
     if date:
         sql += " AND pg.date = ?"
         params.append(date)
+    source_sql, source_params = _current_source_filter(league)
+    sql += source_sql
+    params.extend(source_params)
     sql += " ORDER BY p.captured_at DESC LIMIT ?"
     params.append(limit)
     with closing(_db()) as con:
         rows = con.execute(sql, params).fetchall()
-    return [{"id": r["id"], "market": r["market"], "line": r["line"], "side": r["side"],
-             "source": r["source"], "captured_at": r["captured_at"], "odds": r["odds"],
-             "player_id": r["player_id"],
-             "player_name": r["player_name"], "player_team": r["player_team"],
-             "league": r["league"], "game_home": r["game_home"],
-             "game_away": r["game_away"], "game_date": r["game_date"],
-             "actual_value": r["actual_value"],
-             "hit": bool(r["hit"]) if r["hit"] is not None else None,
-             "settled_at": r["settled_at"]} for r in rows]
+    return [_prop_payload(r) for r in rows]
+
+
+@router.get("/api/props/source-status")
+def prop_source_status(league: str = Query(...)):
+    """Expose source freshness without pretending an absent MLS board exists."""
+    source = current_prop_source(league)
+    if not source:
+        raise HTTPException(status_code=404, detail="no managed prop source for league")
+    with closing(_db()) as con:
+        table = con.execute(
+            "SELECT 1 FROM sqlite_master WHERE type='table' AND name='prop_source_captures'"
+        ).fetchone()
+        row = con.execute(
+            "SELECT captured_at,status,payload_sha256,payload_path,source_url,parser_version,source_prop_count,"
+            "candidate_event_count,eligible_event_count,rejected_event_count,market_counts_json,rejected_reasons_json,message "
+            "FROM prop_source_captures WHERE source=? AND league=? "
+            "ORDER BY captured_at DESC,id DESC LIMIT 1", (source, league)
+        ).fetchone() if table else None
+    contract = prop_source_contract(source)
+    if not row:
+        return {
+            "league": league, "source": source, **contract, "status": "never_captured",
+            "message": "MLS PrizePicks thresholds have not been captured yet.",
+        }
+    return {
+        "league": league, "source": source, **contract, "captured_at": row["captured_at"],
+        "status": row["status"], "payload_sha256": row["payload_sha256"],
+        "payload_path": row["payload_path"], "source_prop_count": row["source_prop_count"],
+        "source_url": row["source_url"], "parser_version": row["parser_version"],
+        "candidate_event_count": row["candidate_event_count"],
+        "eligible_event_count": row["eligible_event_count"],
+        "rejected_event_count": row["rejected_event_count"],
+        "market_counts": json.loads(row["market_counts_json"] or "{}"),
+        "rejected_reasons": json.loads(row["rejected_reasons_json"] or "{}"), "message": row["message"],
+    }
 
 
 @router.get("/api/props/player/{player_id}/history")
@@ -256,6 +315,9 @@ def props_slate(league: Optional[str] = Query(None),
             filter_params.append(date)
         else:
             filters += " AND pg.date >= date('now')"
+        source_sql, source_params = _current_source_filter(league)
+        filters += source_sql
+        filter_params.extend(source_params)
 
         gsql = ("SELECT pg.id AS game_id, pg.home, pg.away, pg.date AS game_date, pg.start_time, "
                 "pg.league, COUNT(p.id) AS prop_count "
@@ -313,6 +375,9 @@ def props_slate(league: Optional[str] = Query(None),
         # (e.g. months-old MLB that never pruned) and lets the client show the whole slate grouped by
         # date, Bovada-style. The exact-date path stays for deep links / the date navigator.
         sql += " AND pg.date >= date('now')"
+    source_sql, source_params = _current_source_filter(league)
+    sql += source_sql
+    params.extend(source_params)
     sql += " ORDER BY pg.date, pg.home, pg.away, pl.name, p.market, p.side"
     with closing(_db()) as con:
         rows = con.execute(sql, params).fetchall()
@@ -343,6 +408,7 @@ def props_slate(league: Optional[str] = Query(None),
             "line": r["line"],
             "side": r["side"],
             "source": r["source"],
+            **prop_source_contract(r["source"]),
         })
 
     # Convert to list sorted by date
