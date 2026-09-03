@@ -60,6 +60,7 @@ from routers import (  # noqa: E402
     live_discounts,
     swing_board,
     set_watch,
+    parlay_board,
     upcoming_board,
     momentum,
     news,
@@ -88,6 +89,7 @@ app.include_router(esports.router)
 app.include_router(live_discounts.router)
 app.include_router(swing_board.router)
 app.include_router(set_watch.router)
+app.include_router(parlay_board.router)
 app.include_router(upcoming_board.router)
 app.include_router(momentum.router)
 app.include_router(news.router)

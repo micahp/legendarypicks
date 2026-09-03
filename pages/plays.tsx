@@ -1,6 +1,7 @@
 import Head from 'next/head'
 import { useEffect, useState } from 'react'
 import LiveBoard from '../components/Plays/LiveBoard'
+import ParlayRow from '../components/Plays/ParlayRow'
 import SetWatch from '../components/Plays/SetWatch'
 import UpcomingBoard from '../components/Plays/UpcomingBoard'
 
@@ -73,6 +74,8 @@ export default function PlaysPage() {
       <div className="space-y-5">
         {/* Above the tabs on purpose: a set in progress is the shortest-lived
             play on the page and the one you cannot come back to later. */}
+        <ParlayRow />
+
         <SetWatch />
 
         <nav aria-label="Plays sections" className="flex gap-1 border-b border-zinc-800">
