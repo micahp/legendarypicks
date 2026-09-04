@@ -1256,6 +1256,29 @@ def _state_and_score_from_snapshot(league: str, game_id: str):
     return state, score
 
 
+def _strength_for(league: str, team_key: str):
+    """Resolve a team's quality-prior row from `espn.team_strength_map`, which is
+    keyed by ABBREVIATION ("WSH"), against a `context.home_team`/`away_team` value
+    that is sometimes an abbreviation and sometimes a full display name ("Washington
+    Nationals") depending which fallback populated `context` in game_detail.py.
+
+    A direct `.get(team_key)` silently missed on every league whose context comes
+    from the snapshot's team NAME (nfl/mlb/ncaaf/mls/lcup/atp/wta) -- confirmed
+    2026-08-30: MLB 401816747 and NFL 401873302 both returned strength=None for
+    both sides despite `team_strength_map` holding real rows for WSH/MIA/BAL/WSH.
+    The Season Records card on GameInfo then rendered its heading over an empty
+    grid. Try the key as an abbrev first (the common case, and free); only fall
+    back to a full scan by display name when that misses.
+    """
+    smap = espn.team_strength_map(league)
+    if team_key in smap:
+        return smap[team_key]
+    for row in smap.values():
+        if row.get("name") == team_key:
+            return row
+    return None
+
+
 def _snapshot_result_info(league: str, game_id: str):
     """Read winner + finish detail from the scoreboard snapshot, or None.
 

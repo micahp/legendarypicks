@@ -23,6 +23,11 @@ ESPN_NEWS = {
     "nba": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/news?limit=25",
     "nhl": "https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/news?limit=25",
     "ufc": "https://site.api.espn.com/apis/site/v2/sports/mma/ufc/news?limit=25",
+    # Added 2026-08-30. Tennis News tab (leagues/tennis?tab=news) reads the
+    # combined atp+wta feed via /api/news/atp + /api/news/wta with no rows to
+    # combine — verified live, both endpoints return 200/real articles.
+    "atp": "https://site.api.espn.com/apis/site/v2/sports/tennis/atp/news?limit=25",
+    "wta": "https://site.api.espn.com/apis/site/v2/sports/tennis/wta/news?limit=25",
     # Added 2026-08-10. The cross-border conversation had no article anchors
     # because usa.1 is the MLS wire and nothing else: Liga MX and the tournament
     # itself were invisible to us.

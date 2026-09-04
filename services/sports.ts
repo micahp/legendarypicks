@@ -336,13 +336,24 @@ export const SportsService = {
         }
       }),
     )
+    // A LIVE game that started very early in its UTC day belongs, by local-day
+    // arithmetic, to the PREVIOUS local calendar day for any timezone west of it --
+    // Venus Williams vs Sofia Kenin, 2026-08-31T04:10Z, is 2026-08-30 23:10 in
+    // Chicago. That is a correct reading of "which day this started" and a wrong
+    // reading of "should this be on today's board": a match still being played
+    // right now is relevant today regardless of which local date its start instant
+    // falls on. Only exempts a live game on the CALLER'S OWN today (never a past
+    // or future date being browsed) -- a live game is "now", not "whichever date
+    // it is now".
+    const todayLocal = new Date().toLocaleDateString('en-CA')
+    const isTodayView = localDate === todayLocal
     const seen = new Set<string>()
     const kept: Game[] = []
     for (const { d, games } of perDate) {
       for (const g of games) {
         const day = localDayOf(g.startTime)
-        // valid instant → keep on its local day; undated (TBD) → keep on its own backend bucket
-        if (!(day ? day === localDate : d === localDate)) continue
+        const onRequestedDay = day ? day === localDate : d === localDate
+        if (!onRequestedDay && !(isTodayView && g.status === 'LIVE')) continue
         const key = `${g.league}:${g.gameId}`
         if (seen.has(key)) continue
         seen.add(key)

@@ -243,17 +243,31 @@ def generate_game_story(lg: str, game_id: str, refresh: bool = False,
     # New York day, DST-aware, because that is how every game in the store is
     # bucketed and a UTC date is the previous evening in the US.
     when = ""
+    story_date = None
     _start = start_time or _game_start_instant(lg, game_id)
     if _start:
         try:
             from espn_client.scoreboard import _ny_date
             import datetime as _d
             _m = _d.datetime.fromisoformat(str(_start).replace("Z", "+00:00"))
-            when = f" Date: {_ny_date(_m).strftime('%A %b %-d, %Y')}."
+            story_date = _ny_date(_m)
+            when = f" Date: {story_date.strftime('%A %b %-d, %Y')}."
         except Exception:
             when = ""
     grounding = (f"Matchup: {teams[0]} vs {teams[1]}. Game state: {gr.get('state')}.{when}\n"
                  f"{facts(teams[0])}\n{facts(teams[1])}")
+
+    # Host city/venue was never in the grounding, so nothing stopped the writer from
+    # guessing one out of its own knowledge of where a team is usually based. Reported
+    # 2026-08-30: MLB 401816747 (Nationals home at Nationals Park, Washington -- ESPN's
+    # own venue data) came back "Two also-rans meet in Miami", because the Marlins were
+    # named first in `teams` and the model defaulted to "the team named first is playing
+    # at home" -- true often enough in this league's writing to pass unnoticed, false
+    # here since Washington was hosting. Ground it explicitly instead of leaving the
+    # model to infer a location from team identity.
+    host_abbrev = gr.get("home") or home
+    if host_abbrev and host_abbrev in teams:
+        grounding += f"\nHost: {host_abbrev} — this game is played at {host_abbrev}'s home venue."
 
     # THE RESULT. It was never in the grounding — `gr` carried scores and a winner and none
     # of it was passed on, so a finished game's facts said only "state: post". The soccer
@@ -395,7 +409,7 @@ def generate_game_story(lg: str, game_id: str, refresh: bool = False,
             if len(form_lines) < 6:
                 try:
                     import player_form as _pform
-                    for line in _pform.lines(lg, teams, con=con):
+                    for line in _pform.lines(lg, teams, con=con, as_of=story_date):
                         if len(form_lines) >= 6:
                             break
                         form_lines.append(line)
@@ -487,8 +501,9 @@ def generate_game_story(lg: str, game_id: str, refresh: bool = False,
               "specific with numbers, but NEVER "
               "state the same stat twice in different units, and never pad — if the facts are "
               "thin, one sharp sentence beats four generic ones. 1-4 sentences. Do NOT invent "
-              "injuries, trades, lineup news, or anything not in the facts. No clichés, no hype, "
-              "plain confident tone.")
+              "injuries, trades, lineup news, or a host city/venue — only the Host fact (if "
+              "given) says who is playing at home; never assume it from a team's usual city. "
+              "No clichés, no hype, plain confident tone.")
     story = _deepseek_chat(system, grounding)
     if story:
         with closing(_db()) as con:

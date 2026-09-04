@@ -1,0 +1,12 @@
+[Unit]
+Description=Refresh qualified production player histories four times daily
+
+[Timer]
+OnCalendar=*-*-* 05,11,17,23:17:00
+Persistent=true
+RandomizedDelaySec=5m
+AccuracySec=1m
+Unit=legendarypicks-history-prod.service
+
+[Install]
+WantedBy=timers.target

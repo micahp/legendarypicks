@@ -1,0 +1,15 @@
+[Unit]
+Description=Legendary Picks production UFC current-card fight stats
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=root
+WorkingDirectory=/root/legendarypicks/backend
+Environment=LP_DB_PATH=/root/legendarypicks/backend/data/picks.db
+ExecStart=/root/legendarypicks/backend/venv/bin/python /root/legendarypicks/backend/run_ufc_current_card_ingest.py
+TimeoutStartSec=10min
+Nice=10
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7

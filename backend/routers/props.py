@@ -445,7 +445,7 @@ def props_slate(league: Optional[str] = Query(None),
                  "markets": markets_by_game.get(r["game_id"], []), "players": []} for r in grows]
 
     sql = """SELECT p.id, p.market, p.line, p.side, p.source, p.odds,
-                    pl.name AS player_name, pl.team AS player_team, pl.league,
+                    pl.id AS player_id, pl.name AS player_name, pl.team AS player_team, pl.league,
                     pg.id AS game_id, pg.home, pg.away, pg.date AS game_date, pg.start_time,
                     pg.league AS game_league
              FROM props p
@@ -495,6 +495,7 @@ def props_slate(league: Optional[str] = Query(None),
         pkey = r["player_name"]
         if pkey not in games[gkey]["players"]:
             games[gkey]["players"][pkey] = {
+                "id": r["player_id"],
                 "name": r["player_name"],
                 "team": r["player_team"],
                 "props": [],

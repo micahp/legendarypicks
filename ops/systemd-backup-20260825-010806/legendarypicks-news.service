@@ -1,0 +1,16 @@
+[Unit]
+Description=League news collect + narratives + summaries (daily, dev DB)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/root/legendarypicks/backend
+Environment=LP_DB_PATH=/root/legendarypicks/backend/data/picks.dev.db
+ExecStart=/root/legendarypicks/scripts/news-collect.sh
+# Must exceed the sum of news-collect.sh's per-step budgets (600+420+300
+# = 1440). systemd is now the backstop, not the mechanism: the script
+# bounds each step itself so a hung collector loses only its own step.
+# At 900 the whole job died at the first hang and steps 2-3 never ran.
+TimeoutStartSec=1800
+Nice=10

@@ -517,6 +517,13 @@ outlives its code.
 
 ## 10. Queued, named by the user, not started
 
+- [ ] **Preserved deferred WNBA and retired MLS-props work.** The former `stash@{1}` WNBA
+      enablement for the scoreboard sweep and predictions `_SPORTS` is preserved at
+      `preserve/stash-wnba-sport-first-20260826` (`bf0a8e8b`) and the verified stash entry
+      was retired 2026-09-02. It is not wanted now: dev's
+      `test_wnba_is_not_an_offered_prediction_league` explicitly expects a 404, so the
+      unique work was deliberately reversed. The retired MLS/NCAAF worktree's MLS-props
+      artifacts remain at `preserve/mls-ncaaf-worktree-20260902` for later review.
 - [x] **Un-park and replace the Bovada-only props timers.** DONE 2026-08-24. They were never deliberately
       parked: the former `legendarypicks-props{,-prod}.timer` pair used `OnBootSec=3min` +
       `OnUnitActiveSec=30min` and sat in `SubState=elapsed` with no next elapse from

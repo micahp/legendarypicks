@@ -2,7 +2,7 @@ import { useRouter } from 'next/router'
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { SportsService } from '../../../services/sports'
 import {
-  GameDetail, Tab, isNBA, isNHL, isMLB, isNFL, isWC, isSoccer,
+  GameDetail, Tab, isNBA, isNHL, isMLB, isNFL, isNCAAF, isWC, isSoccer,
   hasGameTabs, usesDetailEndpoint, usesPerTabEndpoints,
   BoxScoreData, PbPData, SoccerBoxScoreData, SoccerPbPData, GameInfoData,
 } from '../../../components/Game/types'
@@ -34,7 +34,7 @@ const LIVE_DETAIL_POLL_MS = 30_000
 // ── Loading skeletons ──
 function BoxScoreSkeleton({ league }: { league: string }) {
   const isMLBLeague = league === 'mlb'
-  const isNFLLeague = league === 'nfl'
+  const isNFLLeague = league === 'nfl' || league === 'ncaaf'
   const isWCLeague = league === 'wc'
   const isUS = isMLBLeague || isNFLLeague
 
@@ -340,7 +340,13 @@ export default function GameDetailPage() {
 
   const ctx = detail?.context
   // Which club (if either) has a verified English radio stream — null hides the player.
-  const radioMatch = radioForMatchup(ctx?.home_team, ctx?.away_team)
+  // TEAM_RADIO is an MLS-only map keyed by bare abbreviation ("TOR", "MIA", "CHI",
+  // "DC", "COL", "SD", "SEA", ...), and those codes collide with other leagues'
+  // team abbreviations. Calling this unconditionally sent an NBA Raptors or NHL
+  // Maple Leafs page to Toronto FC's soccer radio stream, and a Heat/Marlins/Dolphins
+  // page to Inter Miami's — found 2026-08-30 sweeping NBA/NHL game pages. Scope the
+  // lookup to the leagues the map actually covers (mls, lcup — see lib/radio.ts).
+  const radioMatch = isSoccer(lg) ? radioForMatchup(ctx?.home_team, ctx?.away_team) : null
   const sHome = detail?.strength ? detail.strength[ctx?.home_team || ''] : undefined
   const sAway = detail?.strength ? detail.strength[ctx?.away_team || ''] : undefined
   const homeRecord = sHome ? `${sHome.wins}-${sHome.losses}` : ''
@@ -408,7 +414,7 @@ export default function GameDetailPage() {
                   )
                 ) : tabData.boxscore ? (
                   isMLB(lg) ? <MLBBoxScore data={tabData.boxscore} />
-                  : isNFL(lg) ? <NFLBoxScore data={tabData.boxscore} />
+                  : (isNFL(lg) || isNCAAF(lg)) ? <NFLBoxScore data={tabData.boxscore} />
                   : <p className="text-zinc-500 text-sm">No box score data.</p>
                 ) : (
                   <p className="text-zinc-500 text-sm">No box score data.</p>

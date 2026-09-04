@@ -166,10 +166,13 @@ class TestSuppressedFormLifecycle:
         con.close()
         _, calls = self._generate(path, monkeypatch, season_year=2026)
         assert len(calls) == 1
-        # 2026 logs land for the home team (3+ games = real form).
+        # 2026 logs land for the home team (3+ games = real form), close enough to this
+        # story's own start_time (2026-08-15) to be current — a gap of months would trip
+        # the transfer/injury staleness filter in player_form._team_lines, which is a
+        # different concern from the one this test exercises.
         con = _open(path)
         con.execute("INSERT INTO players(id, name) VALUES (7, 'Test Striker')")
-        for i, date in enumerate(["2026-03-01", "2026-03-08", "2026-03-15"]):
+        for i, date in enumerate(["2026-08-01", "2026-08-05", "2026-08-10"]):
             _log(con, 7, "mls", 2026, "H", date, i + 1, '{"goals": 1}')
         con.close()
         _, calls2 = self._generate(path, monkeypatch, season_year=2026, story_text="WITH FORM")

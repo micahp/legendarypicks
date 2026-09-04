@@ -731,7 +731,11 @@ export default function MarketSlateBoard({ league, date, filterLabel, onViewAll 
               <div className="grid min-w-0 gap-4 p-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-start">
                 <div className="min-w-0">
                   <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
-                    <h3 className="truncate font-semibold text-zinc-100">{row.player}</h3>
+                    <h3 className="truncate font-semibold text-zinc-100">
+                      {row.playerId ? (
+                        <a href={`/player/${row.playerId}`} className="hover:text-emerald-400">{row.player}</a>
+                      ) : row.player}
+                    </h3>
                     <span className="text-xs font-medium text-zinc-500">{row.team}</span>
                   </div>
                   <p className="mt-0.5 truncate text-xs text-zinc-500">{matchup(row)}</p>

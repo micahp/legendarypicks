@@ -159,3 +159,11 @@ backend/data/rotowire-archive/
 
 # UFCStats source responses are retained for deterministic serial replays.
 backend/data/ufcstats-archive/
+
+# stray empty db created by a bad LP_DB_PATH default; the real ones live in backend/data/
+backend/picks.db
+# generated boards — regenerated on a cron, would churn every commit
+backend/data/swing_board.json
+backend/data/upcoming_board.json
+backend/data/set_watch.json
+backend/data/parlay_board.json

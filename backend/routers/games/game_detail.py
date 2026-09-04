@@ -80,9 +80,26 @@ def get_game_detail(league: str, game_id: str):
     # page load for values already on disk.
     _gr = {}
     try:
-        snap_state, _ = _state_and_score_from_snapshot(lg, game_id)
+        snap_state, snap_score = _state_and_score_from_snapshot(lg, game_id)
         if snap_state:
             out["state"] = snap_state
+            # The score was discarded here (`_`) on the theory that
+            # `_final_score_from_db` below would supply it properly. But that
+            # reads scoring_plays/team_game_results, which for leagues without a
+            # live boxscore capture (mls/lcup/ligamx/ncaaf/atp/wta/nfl) can lag a
+            # game that just went final by hours, or never carry it at all for
+            # this specific game. Once `context` gets populated from the
+            # snapshot's team names a few lines below, the ESPN fallback block
+            # that is the ONLY other source of `final_score` never runs, because
+            # its guard is `not team_stats and not context` — team_stats is
+            # always empty for these leagues, so context alone decided whether
+            # a finished game ever got a score. Measured on MLS 761758/761769
+            # (2026-08-30): state='post', score in scoreboard_snapshots, and
+            # `final_score` stuck at null — the game page rendered "-" instead
+            # of the final. Take the score right here so a leaguewide-lagging
+            # source-of-record can never blank out a number we already have.
+            if snap_state == "post" and snap_score:
+                out["final_score"] = snap_score
             for field in ("period", "clock", "status_detail"):
                 value = _snapshot_field(lg, game_id, field)
                 if value is not None:
@@ -293,7 +310,7 @@ def get_game_detail(league: str, game_id: str):
                     continue
                 try:
                     if ab not in out["strength"]:
-                        out["strength"][ab] = espn.team_strength_map(lg).get(ab)
+                        out["strength"][ab] = _strength_for(lg, ab)
                 except Exception:
                     pass
     else:
@@ -302,7 +319,7 @@ def get_game_detail(league: str, game_id: str):
             for ab in [out["context"]["home_team"], out["context"]["away_team"]]:
                 if not ab: continue
                 try:
-                    out["strength"][ab] = espn.team_strength_map(lg).get(ab)
+                    out["strength"][ab] = _strength_for(lg, ab)
                 except Exception:
                     pass
 

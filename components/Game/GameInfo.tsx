@@ -149,7 +149,12 @@ export default function GameInfo({
         </div>
       )}
 
-      {/* Season records */}
+      {/* Season records — a heading over an empty grid claims data that isn't
+          there. Renders only when at least one side resolved (both sides null
+          was the fallout of the abbrev/name key mismatch fixed 2026-08-30;
+          this guard also covers the honest case, a league with no strength
+          data at all, e.g. ATP/WTA pre-season). */}
+      {(awayStrength || homeStrength) && (
       <div>
         <div className="text-xs text-zinc-500 font-bold uppercase tracking-wide mb-3">Season Records</div>
         <div className="grid grid-cols-2 gap-4">
@@ -163,6 +168,7 @@ export default function GameInfo({
           ) : null)}
         </div>
       </div>
+      )}
     </div>
   )
 }

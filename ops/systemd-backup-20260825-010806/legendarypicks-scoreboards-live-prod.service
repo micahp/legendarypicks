@@ -1,0 +1,19 @@
+[Unit]
+Description=Refresh the scoreboard slates the board serves — PROD (live)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/root/legendarypicks/backend
+Environment=LP_DB_PATH=/root/legendarypicks/backend/data/picks.db
+# The disk cache was CONFIGURED and never enabled. `paced_http` defaults cache_dir to
+# LP_ESPN_CACHE_DIR and to "" when it is unset, so with no env var the only cache is
+# in-process -- and this unit is a oneshot that exits every minute, so its memory cache
+# died before it could ever be read. Every live tick started cold.
+# Measured 2026-08-24: ingest_scoreboards is 69.8% of all ESPN traffic and tennis alone
+# is 52.3% of that, polled at 8/min through the play hours.
+Environment=LP_ESPN_CACHE_DIR=/root/legendarypicks/backend/.espn-cache
+ExecStart=/root/legendarypicks/backend/venv/bin/python /root/legendarypicks/backend/ingest_scoreboards.py --live --quiet
+TimeoutStartSec=120
+Nice=10
