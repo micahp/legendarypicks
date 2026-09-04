@@ -107,9 +107,16 @@ type Card = {
 }
 
 // Serve floor. `pct` is conditional on THIS MATCH SO FAR and is meaningless
-// without `served` beside it — 100% off one service game is not a 100% hold.
-// `band` and `base_rate_*` are null whenever the verdict is INSUFFICIENT, so a
-// thin sample cannot borrow a base rate it did not earn.
+// without `served` beside it: 100% off one service game is not a 100% hold.
+// `band` is null whenever the verdict is INSUFFICIENT, so a thin sample cannot
+// borrow a label it did not earn.
+//
+// The payload used to carry base_rate_2x / base_rate_n / measured_on /
+// population, and this panel rendered them as "sides holding X% doubled on Y%
+// of N tracked entries". Validation on 2026-09-03 showed that rate was computed
+// with target leakage and does not survive correction, so the producer stopped
+// emitting it on 2026-09-04. Do not add a forecast back to this panel without a
+// validated one to put there.
 type HoldSide = { pct: number | null; held: number; served: number }
 type Hold = {
   mine: HoldSide
@@ -118,10 +125,6 @@ type Hold = {
   why: string
   band: string | null
   min_games: number
-  base_rate_2x: number | null
-  base_rate_n: number | null
-  measured_on: string
-  population: number
 }
 type Board = {
   available: boolean
@@ -183,6 +186,10 @@ export default function LiveBoard() {
   // Which cards have the serve-floor panel open. The board is already dense, so
   // this stays shut by default and costs one pill of space when closed.
   const [openHold, setOpenHold] = useState<Set<string>>(() => new Set())
+  // Sport filter. The by_sport counts below the sort bar were <span>s — a
+  // readout, not a control — so there was no way to narrow a 15-card board to
+  // the one series you are actually watching. They are buttons now.
+  const [sportFilter, setSportFilter] = useState<string | null>(null)
 
   const load = useCallback(async () => {
     try {
@@ -205,7 +212,8 @@ export default function LiveBoard() {
   }, [load])
 
   const sort = SORTS.find((s) => s.id === sortId) ?? SORTS[0]
-  const raw = board?.cards ?? []
+  const all = board?.cards ?? []
+  const raw = sportFilter ? all.filter((c) => c.sport === sportFilter) : all
   // Cards with no value for the active sort keep their server order and sit at the end.
   const scored = raw.filter((c) => sort.get(c) != null)
   const unscored = raw.filter((c) => sort.get(c) == null)
@@ -308,14 +316,39 @@ export default function LiveBoard() {
 
         {board?.by_sport && Object.keys(board.by_sport).length > 0 && (
           <div className="flex flex-wrap gap-2">
-            {Object.entries(board.by_sport).map(([sport, n]) => (
-              <span
-                key={sport}
-                className="rounded-full border border-zinc-700 bg-zinc-900 px-2.5 py-0.5 text-xs text-zinc-400"
+            {Object.entries(board.by_sport)
+              .sort((a, b) => b[1] - a[1])
+              .map(([sport, n]) => {
+                const on = sportFilter === sport
+                return (
+                  <button
+                    key={sport}
+                    type="button"
+                    onClick={() => setSportFilter(on ? null : sport)}
+                    aria-pressed={on}
+                    title={on ? 'Show every sport' : `Show only ${sport}`}
+                    className={`rounded-full border px-2.5 py-0.5 text-xs transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-zinc-400 ${
+                      on
+                        ? 'border-emerald-400 bg-emerald-500/15 text-emerald-300'
+                        : 'border-zinc-700 bg-zinc-900 text-zinc-400 hover:border-zinc-500 hover:text-zinc-200'
+                    }`}
+                  >
+                    {sport}{' '}
+                    <span className={`tabular-nums ${on ? 'text-emerald-200' : 'text-zinc-200'}`}>
+                      {n}
+                    </span>
+                  </button>
+                )
+              })}
+            {sportFilter && (
+              <button
+                type="button"
+                onClick={() => setSportFilter(null)}
+                className="rounded-full px-2.5 py-0.5 text-xs text-zinc-500 underline-offset-2 hover:underline focus:outline-none focus-visible:ring-1 focus-visible:ring-zinc-400"
               >
-                {sport} <span className="tabular-nums text-zinc-200">{n}</span>
-              </span>
-            ))}
+                clear ({all.length - raw.length} hidden)
+              </button>
+            )}
           </div>
         )}
 
@@ -670,15 +703,11 @@ export default function LiveBoard() {
                           season rate.{' '}
                           {card.hold.verdict === 'INSUFFICIENT'
                             ? `Needs ${card.hold.min_games} service games before it means anything.`
-                            : card.hold.base_rate_2x != null && card.hold.base_rate_n != null
-                              ? `Sides holding ${card.hold.band}% doubled on ${Math.round(
-                                  card.hold.base_rate_2x * 100,
-                                )}% of ${card.hold.base_rate_n} tracked entries.`
-                              : ''}
+                            : ''}
                         </p>
                         <p className="mt-1 text-[11px] text-zinc-700">
-                          Measured {card.hold.measured_on} over {card.hold.population} sides that
-                          traded at or under 20¢. Not a projection.
+                          A count of games played, not a forecast. It says nothing about where the
+                          price goes.
                         </p>
                       </div>
                     )}
