@@ -56,9 +56,19 @@ type Payload = {
   }
 }
 
+// Survives collapse/expand, and survives remounts of this component within the
+// page session. The producer runs every 2 minutes, so re-fetching on every open
+// buys nothing and costs a "Loading…" flash each time. A cached payload inside
+// the TTL renders instantly and still refreshes in the background, so what you
+// see is never older than the poll it triggered.
+let CACHE: { data: Payload; at: number } | null = null
+const TTL_MS = 30000
+
 export default function ParlayRow() {
   const [open, setOpen] = useState(false)
-  const [data, setData] = useState<Payload | null>(null)
+  const [data, setData] = useState<Payload | null>(
+    () => (CACHE && Date.now() - CACHE.at < TTL_MS ? CACHE.data : null),
+  )
 
   useEffect(() => {
     if (!open) return
@@ -67,11 +77,18 @@ export default function ParlayRow() {
       try {
         const r = await fetch('/api/live/parlay', { cache: 'no-store' })
         const j = await r.json()
+        CACHE = { data: j, at: Date.now() }
         if (!dead) setData(j)
       } catch {
-        if (!dead) setData({ available: false, reason: 'Parlay board unreachable.' })
+        // A failed refresh must not blank a payload we already have. Only
+        // report unreachable when there is nothing to show.
+        if (!dead && !CACHE) {
+          setData({ available: false, reason: 'Parlay board unreachable.' })
+        }
       }
     }
+    // Paint the cached payload first, then refresh behind it.
+    if (CACHE && Date.now() - CACHE.at < TTL_MS) setData(CACHE.data)
     load()
     const t = setInterval(load, 30000)
     return () => {
