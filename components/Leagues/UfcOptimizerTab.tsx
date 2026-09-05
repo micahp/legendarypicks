@@ -1,4 +1,4 @@
-import { ChangeEvent, ReactNode, useMemo, useRef, useState } from 'react'
+import { ChangeEvent, ReactNode, useEffect, useMemo, useRef, useState } from 'react'
 import {
   lineupsToCsv,
   optimizeUfcLineups,
@@ -42,6 +42,8 @@ export default function UfcOptimizerTab() {
   const [sourceName, setSourceName] = useState(
     () => selectNextDraftKingsSlate(PUBLISHED_DRAFTKINGS_POOLS)?.sourceName || '',
   )
+  const [poolLoading, setPoolLoading] = useState(true)
+  const [poolError, setPoolError] = useState<string | null>(null)
   const [csvText, setCsvText] = useState('')
   const [showPaste, setShowPaste] = useState(false)
   const [importError, setImportError] = useState<string | null>(null)
@@ -57,6 +59,38 @@ export default function UfcOptimizerTab() {
   const [lineups, setLineups] = useState<UfcOptimizerLineup[]>([])
   const [buildMessage, setBuildMessage] = useState<string | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
+  const poolController = useRef<AbortController | null>(null)
+  const manualImport = useRef(false)
+
+  useEffect(() => {
+    const controller = new AbortController()
+    poolController.current = controller
+    fetch('/api/ufc/draftkings-pool', { signal: controller.signal })
+      .then(response => {
+        if (!response.ok) throw new Error(`Pool request failed (${response.status})`)
+        return response.json()
+      })
+      .then(data => {
+        if (manualImport.current) return
+        const selected = data?.slate
+          ? selectNextDraftKingsSlate([data.slate as UfcOptimizerSlate])
+          : null
+        setSlate(selected
+          ? { ...selected, fighters: selected.fighters.map(fighter => ({ ...fighter })) }
+          : null)
+        setSourceName(selected?.sourceName || '')
+        setPoolError(null)
+      })
+      .catch(error => {
+        if (error.name !== 'AbortError') {
+          setPoolError('Current DraftKings pool availability could not be verified.')
+        }
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setPoolLoading(false)
+      })
+    return () => controller.abort()
+  }, [])
 
   const clearBuild = () => {
     setLineups([])
@@ -66,6 +100,9 @@ export default function UfcOptimizerTab() {
   const loadCsv = (contents: string, name: string) => {
     try {
       const parsed = parseDraftKingsMmaCsv(contents)
+      manualImport.current = true
+      poolController.current?.abort()
+      setPoolLoading(false)
       parsed.sourceName = name
       setSlate(parsed)
       setSourceName(name)
@@ -182,7 +219,9 @@ export default function UfcOptimizerTab() {
             <p className="mt-1 text-sm text-zinc-500">
               {slate
                 ? 'The next available DraftKings pool is loaded. Build six-fighter lineups under the $50,000 salary cap; opponents are never paired.'
-                : 'No current DraftKings MMA pool is available yet. Import a pool when DraftKings publishes it.'}
+                : poolLoading
+                  ? 'Checking the current DraftKings MMA pool…'
+                  : 'No current DraftKings MMA pool is available yet. Import a pool when DraftKings publishes it.'}
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -240,10 +279,15 @@ export default function UfcOptimizerTab() {
             {importError}
           </p>
         )}
+        {poolError && (
+          <p role="alert" className="mt-4 rounded-lg border border-amber-500/20 bg-amber-500/10 px-3 py-2 text-sm text-amber-300">
+            {poolError}
+          </p>
+        )}
       </section>
 
       {!slate ? (
-        <EmptyOptimizer />
+        <EmptyOptimizer loading={poolLoading} />
       ) : (
         <>
           <section className="rounded-xl border border-zinc-800 bg-zinc-900 p-4">
@@ -260,10 +304,12 @@ export default function UfcOptimizerTab() {
                   {slate.fighters.length} fighters · {slate.fightCount} fights
                   {slate.source === 'rotowire_snapshot'
                     ? ' · DraftKings salaries and RotoWire projections captured August 25.'
-                    : ' · Salary and DK FPPG came from this file.'}
+                    : slate.source === 'rotowire_live'
+                      ? ' · Current DraftKings salaries and RotoWire projections.'
+                      : ' · Salary and DK FPPG came from this file.'}
                 </p>
                 <p className="mt-1 text-xs text-zinc-600">
-                  {slate.source === 'rotowire_snapshot'
+                  {slate.source !== 'draftkings_csv'
                     ? `${slate.fighters.filter(fighter => fighter.fppg === null).length} fighters have no published projection and stay out until you enter a target.`
                     : 'Target starts as DraftKings FPPG. It is editable and is not labeled or treated as a projection.'}
                 </p>
@@ -409,7 +455,9 @@ export default function UfcOptimizerTab() {
           sourceUrl={slate.sourceUrl}
           sourceDescription={slate.source === 'rotowire_snapshot'
             ? 'Salary, projection, odds, record, and measurements are the August 25 RotoWire snapshot. '
-            : 'Salary and DK FPPG came from the imported DraftKings CSV; other details may be unavailable. '}
+            : slate.source === 'rotowire_live'
+              ? 'Salary, projection, odds, record, and measurements are from the current RotoWire DraftKings pool. '
+              : 'Salary and DK FPPG came from the imported DraftKings CSV; other details may be unavailable. '}
           locked={lockedIds.has(overlayFighter.id)}
           excluded={excludedIds.has(overlayFighter.id)}
           onTarget={value => updateTarget(overlayFighter.id, value)}
@@ -443,10 +491,12 @@ export default function UfcOptimizerTab() {
   )
 }
 
-function EmptyOptimizer() {
+function EmptyOptimizer({ loading }: { loading: boolean }) {
   return (
     <section className="rounded-xl border border-dashed border-zinc-800 bg-zinc-900/50 px-5 py-12 text-center">
-      <p className="text-sm font-semibold text-zinc-300">DraftKings MMA pool not available yet</p>
+      <p className="text-sm font-semibold text-zinc-300">
+        {loading ? 'Checking DraftKings MMA pool…' : 'DraftKings MMA pool not available yet'}
+      </p>
       <p className="mx-auto mt-2 max-w-xl text-sm text-zinc-500">
         Download the contest CSV from DraftKings, then import it here. The file stays in this browser and is not written to the database.
       </p>

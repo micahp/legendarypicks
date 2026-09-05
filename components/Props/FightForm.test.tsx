@@ -1,5 +1,5 @@
 import React from 'react'
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import FightForm from './FightForm'
 
 function response(body: any) {
@@ -27,9 +27,9 @@ describe('UFC recent fight form', () => {
     })))
 
     const { container } = render(<FightForm playerId={99001} fighter="Test Fighter" />)
-    fireEvent.click(screen.getByRole('button', { name: /Last 5 fights/i }))
-
     await waitFor(() => expect(screen.getByText('Round 2 · 2:11')).toBeTruthy())
+    expect(screen.getByRole('button', { name: /Last 5 fights/i }).getAttribute('aria-expanded')).toBe('true')
+    expect((global.fetch as jest.Mock)).toHaveBeenCalledTimes(1)
     expect(screen.queryByText('Round 3 · 5:00')).toBeNull()
     expect(container.querySelector('[data-fight-form-content]')?.className).not.toContain('border-t')
   })

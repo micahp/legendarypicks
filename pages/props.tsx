@@ -3,6 +3,7 @@ import Head from 'next/head'
 import MarketSlateBoard from '../components/Props/MarketSlateBoard'
 import MatchForm from '../components/Props/MatchForm'
 import PropChart, { PropHistory } from '../components/Props/PropChart'
+import SlatePlayerOffers from '../components/Props/SlatePlayerOffers'
 import {
   leagueNavigationLabel,
   SportGroup,
@@ -219,7 +220,7 @@ function SlateTab({ league, leagueOrder, filterLabel, onViewAll }: {
   const [propChartLoading, setPropChartLoading] = useState(false)
 
   const openPropChart = async (gameLeague: string, playerId: number, market: string, line: number, side: string) => {
-    const key = `${playerId}-${market}-${side}`
+    const key = `${playerId}-${market}-${line}-${side}`
     if (openPropKey === key) { setOpenPropKey(null); setPropChart(null); setPropChartLoading(false); return }
     setOpenPropKey(key); setPropChart(null); setPropChartLoading(true)
     try {
@@ -365,7 +366,7 @@ function SlateTab({ league, leagueOrder, filterLabel, onViewAll }: {
                     {games.map(game => {
                       const expanded = expandedGame === game.game_id
                       return (
-                        <article key={game.game_id} data-slate-game className="min-w-0 overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900">
+                        <article key={game.game_id} data-slate-game data-slate-game-id={game.game_id} className="min-w-0 overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900">
                           <button
                             type="button"
                             onClick={() => openGame(game.game_id)}
@@ -395,7 +396,11 @@ function SlateTab({ league, leagueOrder, filterLabel, onViewAll }: {
                             return (
                               <div data-slate-props className="max-h-96 space-y-4 overflow-y-auto border-t border-zinc-800 px-4 py-3">
                                 {gp.players.map(player => (
-                                  <div key={`${player.team}-${player.name}`}>
+                                  <div
+                                    key={`${player.team}-${player.name}`}
+                                    data-slate-player={player.name}
+                                    data-slate-player-id={player.id || undefined}
+                                  >
                                     <div className="mb-1.5 flex flex-wrap items-baseline gap-x-1.5 text-xs">
                                       {player.id ? (
                                         <a href={`/player/${player.id}`} className="font-bold text-zinc-300 hover:text-emerald-400">{player.name}</a>
@@ -404,33 +409,14 @@ function SlateTab({ league, leagueOrder, filterLabel, onViewAll }: {
                                       )}
                                       <span className="text-zinc-600">{player.team}</span>
                                     </div>
-                                    <div className="flex flex-wrap gap-1.5">
-                                      {Array.from(new Map(player.props.map(prop => [
-                                        `${prop.market}-${prop.side}-${prop.line}-${prop.source}`, prop,
-                                      ] as const)).values()).map((prop, index) => {
-                                        const key = player.id ? `${player.id}-${prop.market}-${prop.side}` : null
-                                        const open = key !== null && openPropKey === key
-                                        const pillClass = `inline-flex max-w-full items-center gap-1 break-all rounded px-2 py-1 text-[11px] font-mono tabular-nums transition-colors ${
-                                          open ? 'bg-emerald-600 text-white'
-                                            : prop.side === 'over' || prop.side === 'yes' ? 'bg-emerald-900/30 text-emerald-300 hover:bg-emerald-900/50'
-                                            : 'bg-red-900/30 text-red-300 hover:bg-red-900/50'
-                                        }`
-                                        const label = <>{prop.market.replace(/_/g, ' ')} {prop.line} {prop.side.toUpperCase()}</>
-                                        return player.id ? (
-                                          <button
-                                            key={`${prop.market}-${prop.side}-${prop.line}-${index}`}
-                                            onClick={() => openPropChart(game.league, player.id, prop.market, prop.line, prop.side)}
-                                            className={pillClass}
-                                          >
-                                            {label}
-                                          </button>
-                                        ) : (
-                                          <span key={`${prop.market}-${prop.side}-${prop.line}-${index}`} className={pillClass}>
-                                            {label}
-                                          </span>
-                                        )
-                                      })}
-                                    </div>
+                                    <SlatePlayerOffers
+                                      playerId={player.id}
+                                      playerName={player.name}
+                                      props={player.props}
+                                      onOpen={prop => openPropChart(
+                                        game.league, player.id, prop.market, prop.line, prop.side,
+                                      )}
+                                    />
                                     {player.id && openPropKey?.startsWith(`${player.id}-`) && (
                                       <div className="mt-2">
                                         {propChartLoading ? (

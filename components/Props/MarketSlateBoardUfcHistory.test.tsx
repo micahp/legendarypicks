@@ -56,12 +56,20 @@ describe('UFC numeric history', () => {
       if (url.includes('/api/props/slate')) {
         return Promise.resolve(json([{ markets: [{ market, count: 1 }] }]))
       }
+      if (url.includes('/api/ufc/fighter/7/form')) {
+        return Promise.resolve(json({
+          player_id: 7, fighter: 'Test Fighter', source: 'ufcstats',
+          fights: [{ result: 'W', method: 'DEC', opponent: 'Opponent',
+            date: '2026-08-01', event_id: 'event', fight_id: 'fight' }],
+        }))
+      }
       return Promise.resolve(json([prop(market)]))
     })
 
     render(<MarketSlateBoard league="ufc" date="2026-08-29" />)
 
     await waitFor(() => expect(screen.getByText('Last 5 fights')).toBeTruthy())
+    await waitFor(() => expect(screen.getByText('W · DEC')).toBeTruthy())
     const urls = (global as any).fetch.mock.calls.map((call: any[]) => call[0])
     expect(urls.some((url: string) => url.includes('/api/props/history'))).toBe(false)
   })
