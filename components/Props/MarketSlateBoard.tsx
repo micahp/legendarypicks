@@ -199,9 +199,36 @@ function groupProps(props: BoardProp[]): BoardRow[] {
 }
 
 const PROP_PAGE_SIZE = 500
-const MAX_PROP_PAGES = 20
+// 60,000 rows of headroom. The old cap was 20 pages / 10,000 rows and it did not
+// merely truncate: hitting it THREW, the caller caught it, and the whole board
+// rendered "The prop board could not be loaded" with zero games. On 2026-09-05 a
+// day's props reached 12,545 across all leagues (ncaaf 6,722 alone), so the All
+// view died outright and several league views were one ingest away from it.
+//
+// A board that is too large must DEGRADE, never disappear. The size of a slate is
+// not an error condition, and a growing product hitting a constant is a certainty,
+// not an edge case.
+const MAX_PROP_PAGES = 120
 
-async function fetchAllProps(params: URLSearchParams, signal: AbortSignal): Promise<BoardProp[]> {
+// How many rows the board renders, and requests per-row history for, at once.
+// The board fires ONE /api/props/history fetch per rendered row, so this number
+// is a concurrency budget, not a layout preference. On 2026-09-05 the ncaaf
+// `receiving_yards` market alone held 2,470 rows: unbounded, the board opened
+// 2,470 fetches, exhausted the browser's per-host connection pool, and
+// re-rendered the whole list on every response. The page stopped answering
+// clicks entirely, which is what "the league selects are broken" looked like.
+// Narrowing to one league does not save it -- that 2,470 IS one league.
+const ROW_WINDOW = 150
+
+export interface PropFetchResult {
+  rows: BoardProp[]
+  truncated: boolean
+}
+
+async function fetchAllProps(
+  params: URLSearchParams,
+  signal: AbortSignal,
+): Promise<PropFetchResult> {
   const rows: BoardProp[] = []
   for (let page = 0; page < MAX_PROP_PAGES; page += 1) {
     const pageParams = new URLSearchParams(params)
@@ -212,9 +239,11 @@ async function fetchAllProps(params: URLSearchParams, signal: AbortSignal): Prom
     const data = await response.json()
     if (!Array.isArray(data)) throw new Error('Props response was not a list')
     rows.push(...data)
-    if (data.length < PROP_PAGE_SIZE) return rows
+    if (data.length < PROP_PAGE_SIZE) return { rows, truncated: false }
   }
-  throw new Error(`Props response exceeded ${MAX_PROP_PAGES * PROP_PAGE_SIZE} rows`)
+  // Every row we did fetch is still shown, and the board says it is incomplete.
+  // Silently serving a partial board would be worse than the crash this replaces.
+  return { rows, truncated: true }
 }
 
 // A window's NAME is a claim about its SAMPLE. The API computes L20 as
@@ -319,6 +348,9 @@ export default function MarketSlateBoard({ league, date, filterLabel, onViewAll 
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  // A partial board is a fact the reader must see, not a silent shortfall.
+  const [truncated, setTruncated] = useState(false)
+  const [rowLimit, setRowLimit] = useState(ROW_WINDOW)
   const [historyByRow, setHistoryByRow] = useState<Record<string, HistoryState>>({})
   const [selectedLineByRow, setSelectedLineByRow] = useState<Record<string, string>>({})
   const historyRequest = useRef(0)
@@ -382,7 +414,9 @@ export default function MarketSlateBoard({ league, date, filterLabel, onViewAll 
 
       const fallbackParams = new URLSearchParams({ date })
       if (league !== 'All') fallbackParams.set(league.includes(',') ? 'leagues' : 'league', league)
-      const fallbackProps = await fetchAllProps(fallbackParams, controller.signal)
+      const fallback = await fetchAllProps(fallbackParams, controller.signal)
+      const fallbackProps = fallback.rows
+      setTruncated(fallback.truncated)
       const counts = new Map<string, number>()
       for (const row of groupProps(fallbackProps)) {
         counts.set(row.market, (counts.get(row.market) || 0) + 1)
@@ -433,8 +467,9 @@ export default function MarketSlateBoard({ league, date, filterLabel, onViewAll 
     setLoading(true)
     setError(null)
     fetchAllProps(params, controller.signal)
-      .then(data => {
-        setProps(data)
+      .then(result => {
+        setProps(result.rows)
+        setTruncated(result.truncated)
         setLoadedMarket(activeMarket)
         setLoading(false)
       })
@@ -452,6 +487,16 @@ export default function MarketSlateBoard({ league, date, filterLabel, onViewAll 
     () => activeRows.filter(row => row.market === activeMarket),
     [activeMarket, activeRows],
   )
+
+  // Which rows are in the window is decided from the history-INDEPENDENT order
+  // and then held fixed. Slicing the live hit-rate sort instead would let a row
+  // that comes back with no history sink out of the window, promote an unloaded
+  // row into it, fetch that one, and walk the whole market a row at a time --
+  // the unbounded fan-out this window exists to prevent.
+  const windowRows = useMemo(() => marketRows.slice(0, rowLimit), [marketRows, rowLimit])
+
+  // A different market or slate is a different list, so the window starts over.
+  useEffect(() => { setRowLimit(ROW_WINDOW) }, [activeMarket, date, league])
 
   const marketLineCount = useMemo(
     () => marketRows.reduce((count, row) => count + row.lines.length, 0),
@@ -473,9 +518,74 @@ export default function MarketSlateBoard({ league, date, filterLabel, onViewAll 
     }
   }, [activeMarket, date, league])
 
+
+  const sortedRows = useMemo(() => {
+    const valueFor = (row: ActiveBoardRow): number | null => {
+      const history = historyByRow[historyKey(row)]?.data
+      if (sortKey === 'line') return row.line
+      // American odds are MONOTONIC as raw integers: -400, -160, +120, +900 is
+      // 80%, 61.5%, 45.5%, 10% -- strictly decreasing probability across the
+      // negative/positive boundary. So a plain numeric sort is already
+      // shortest-price-to-longest, and needs no conversion.
+      //
+      // A pick'em row returns null and therefore sorts LAST in either direction
+      // (see the comparator). Its stored -137 is the relay's constant for books
+      // that quote no per-leg price, so ranking it against a real -160 would be
+      // ranking a placeholder against a measurement.
+      if (sortKey === 'odds') {
+        if (isPickem(row.source)) return null
+        const price = row.over?.odds ?? row.under?.odds
+        return price === null || price === undefined ? null : price
+      }
+      if (!history) return null
+      if (sortKey === 'hit-rate') return history.hit_rate.l10
+      // Over EVERY game held, not a window: the point of this sort is to use
+      // all the evidence rather than to truncate it.
+      if (sortKey === 'confidence') {
+        return confidenceFloor(history.games.filter(g => g.hit).length, history.games.length)
+      }
+      return history.projection === null ? null : Math.abs(history.projection - row.line)
+    }
+    // Hit rate over ten games takes eleven distinct values, so ties are the common
+    // case, not the edge case: a real slate put six rows on 40% at once. Falling
+    // through to the player's name turned the research board into an alphabetical
+    // list — the reader sees an order and reads meaning into it, and there is none.
+    // So every tie breaks on another number, in a stated order, and the row key is
+    // only ever a determinism guard so React keys stay stable across renders.
+    const tiebreakers: ((row: ActiveBoardRow) => number)[] = [
+      row => {
+        const h = historyByRow[historyKey(row)]?.data
+        return h?.projection == null ? -Infinity : Math.abs(h.projection - row.line)
+      },
+      row => historyByRow[historyKey(row)]?.data?.hit_rate.season ?? -Infinity,
+      row => historyByRow[historyKey(row)]?.data?.games.length ?? -Infinity,
+      row => row.line,
+    ]
+    return [...windowRows].sort((a, b) => {
+      const av = valueFor(a)
+      const bv = valueFor(b)
+      if (av === null && bv !== null) return 1
+      if (av !== null && bv === null) return -1
+      if (av !== null && bv !== null && av !== bv) {
+        return sortDirection === 'desc' ? bv - av : av - bv
+      }
+      // Ties always resolve most-evidence-first, whichever way the primary points.
+      for (const key of tiebreakers) {
+        const d = key(b) - key(a)
+        if (d) return d
+      }
+      return a.key.localeCompare(b.key)
+    })
+  }, [historyByRow, sortDirection, sortKey, windowRows])
+
+  // `sortedRows` already covers only the window, so this is what renders.
+  const visibleRows = sortedRows
+
+  // Driven by the stable window: the board opens at most `rowLimit` history
+  // requests, however large the market is.
   useEffect(() => {
     const requestId = historyRequest.current
-    for (const row of marketRows) {
+    for (const row of windowRows) {
       const key = historyKey(row)
       if (requestedHistory.current.has(key)) continue
       requestedHistory.current.add(key)
@@ -524,66 +634,7 @@ export default function MarketSlateBoard({ league, date, filterLabel, onViewAll 
           }
         })
     }
-  }, [marketRows])
-
-  const sortedRows = useMemo(() => {
-    const valueFor = (row: ActiveBoardRow): number | null => {
-      const history = historyByRow[historyKey(row)]?.data
-      if (sortKey === 'line') return row.line
-      // American odds are MONOTONIC as raw integers: -400, -160, +120, +900 is
-      // 80%, 61.5%, 45.5%, 10% -- strictly decreasing probability across the
-      // negative/positive boundary. So a plain numeric sort is already
-      // shortest-price-to-longest, and needs no conversion.
-      //
-      // A pick'em row returns null and therefore sorts LAST in either direction
-      // (see the comparator). Its stored -137 is the relay's constant for books
-      // that quote no per-leg price, so ranking it against a real -160 would be
-      // ranking a placeholder against a measurement.
-      if (sortKey === 'odds') {
-        if (isPickem(row.source)) return null
-        const price = row.over?.odds ?? row.under?.odds
-        return price === null || price === undefined ? null : price
-      }
-      if (!history) return null
-      if (sortKey === 'hit-rate') return history.hit_rate.l10
-      // Over EVERY game held, not a window: the point of this sort is to use
-      // all the evidence rather than to truncate it.
-      if (sortKey === 'confidence') {
-        return confidenceFloor(history.games.filter(g => g.hit).length, history.games.length)
-      }
-      return history.projection === null ? null : Math.abs(history.projection - row.line)
-    }
-    // Hit rate over ten games takes eleven distinct values, so ties are the common
-    // case, not the edge case: a real slate put six rows on 40% at once. Falling
-    // through to the player's name turned the research board into an alphabetical
-    // list — the reader sees an order and reads meaning into it, and there is none.
-    // So every tie breaks on another number, in a stated order, and the row key is
-    // only ever a determinism guard so React keys stay stable across renders.
-    const tiebreakers: ((row: ActiveBoardRow) => number)[] = [
-      row => {
-        const h = historyByRow[historyKey(row)]?.data
-        return h?.projection == null ? -Infinity : Math.abs(h.projection - row.line)
-      },
-      row => historyByRow[historyKey(row)]?.data?.hit_rate.season ?? -Infinity,
-      row => historyByRow[historyKey(row)]?.data?.games.length ?? -Infinity,
-      row => row.line,
-    ]
-    return [...marketRows].sort((a, b) => {
-      const av = valueFor(a)
-      const bv = valueFor(b)
-      if (av === null && bv !== null) return 1
-      if (av !== null && bv === null) return -1
-      if (av !== null && bv !== null && av !== bv) {
-        return sortDirection === 'desc' ? bv - av : av - bv
-      }
-      // Ties always resolve most-evidence-first, whichever way the primary points.
-      for (const key of tiebreakers) {
-        const d = key(b) - key(a)
-        if (d) return d
-      }
-      return a.key.localeCompare(b.key)
-    })
-  }, [historyByRow, marketRows, sortDirection, sortKey])
+  }, [windowRows])
 
   // Descending is the right default for every key where BIGGER IS BETTER -- hit
   // rate, confidence, edge. Odds is the exception: ascending is shortest price
@@ -619,6 +670,16 @@ export default function MarketSlateBoard({ league, date, filterLabel, onViewAll 
 
   return (
     <section className="min-w-0 space-y-4" aria-label="Market-first prop board">
+      {truncated && (
+        <div
+          role="status"
+          data-board-truncated
+          className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-200"
+        >
+          This slate is larger than the board loads at once. Everything shown is real, but
+          some lines are missing. Pick a single league or market to see all of them.
+        </div>
+      )}
       <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-3 space-y-3">
         <div className="flex items-center justify-between gap-3">
           <div>
@@ -716,8 +777,21 @@ export default function MarketSlateBoard({ league, date, filterLabel, onViewAll 
         </div>
       </div>
 
+      {marketRows.length > visibleRows.length && (
+        <div
+          role="status"
+          data-row-window
+          className="rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-3 text-xs text-zinc-400"
+        >
+          Showing <span className="tabular-nums text-zinc-200">{visibleRows.length}</span> of{' '}
+          <span className="tabular-nums text-zinc-200">{marketRows.length}</span> lines in this
+          market. Hit rate is loaded only for the lines shown, so this ranks the lines on
+          screen, not the whole market.
+        </div>
+      )}
+
       <div className="space-y-3">
-        {sortedRows.map(row => {
+        {visibleRows.map(row => {
           const historyState = historyByRow[historyKey(row)]
           const history = historyState?.data
           const isUfc = row.league === 'ufc'
@@ -868,6 +942,17 @@ export default function MarketSlateBoard({ league, date, filterLabel, onViewAll 
           )
         })}
       </div>
+
+      {marketRows.length > visibleRows.length && (
+        <button
+          type="button"
+          data-show-more-rows
+          onClick={() => setRowLimit(current => current + ROW_WINDOW)}
+          className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-3 text-sm font-medium text-zinc-300 transition-colors hover:border-zinc-700 hover:text-zinc-100"
+        >
+          Show {Math.min(ROW_WINDOW, marketRows.length - visibleRows.length)} more
+        </button>
+      )}
     </section>
   )
 }
