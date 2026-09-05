@@ -162,6 +162,12 @@ _CHART_LOG_LEAGUES = {
     "mls": ("mls", "lcup"),
 }
 
+_SOCCER_CHART_LEAGUES = frozenset(("mls", "ligamx", "lcup"))
+_FOTMOB_STAT_KEYS = {"sot": "shots_on_target"}
+_SOCCER_NON_FOTMOB_HISTORY = frozenset(
+    ("first_goal_scorer", "passes_attempted", "card_shown")
+)
+
 
 @router.get("/api/props/history")
 def prop_history(player_id: int = Query(...),
@@ -170,6 +176,14 @@ def prop_history(player_id: int = Query(...),
                  side: str = Query("over"),
                  league: str = Query(...)):
     """Per-game stat history for a prop's player+market, with the line."""
+    if (
+        league in _SOCCER_CHART_LEAGUES
+        and _base_market(market) in _SOCCER_NON_FOTMOB_HISTORY
+    ):
+        return {
+            "error": "market not published in approved FotMob history: {}".format(market),
+            "games": [],
+        }
     stat_key = _MARKET_STAT_KEY.get(league, {}).get(_base_market(market))
     if not stat_key:
         return {"error": f"market not chartable from logs: {market}", "games": []}
@@ -201,14 +215,21 @@ def prop_history(player_id: int = Query(...),
     # dedupe or double-count. Federico Vinas charted 12 games,
     # [7,7,4,4,3,3,1,1,1,1,1,1], for six he played.
     #
-    # ESPN wins a field both publish: it is the identity spine every player_id
-    # is keyed on. FotMob fills the markets ESPN does not publish at all
-    # (tackles, clearances, crosses, chances created, dribbles).
+    # Soccer prop history is deliberately FotMob-only. ESPN may still supply a
+    # canonical player id elsewhere in the application, but the user-visible
+    # history value must come from the requested non-ESPN publisher. Other
+    # leagues retain the established ESPN/FotMob coalescing contract.
     def _val(key):
+        if league in _SOCCER_CHART_LEAGUES:
+            fotmob_key = _FOTMOB_STAT_KEYS.get(key, key)
+            return f"json_extract(fotmob_stats, '$.{fotmob_key}')"
         return (f"COALESCE(json_extract(espn_stats, '$.{key}'),"
                 f" json_extract(fotmob_stats, '$.{key}'))")
 
     def _present(key):
+        if league in _SOCCER_CHART_LEAGUES:
+            fotmob_key = _FOTMOB_STAT_KEYS.get(key, key)
+            return f"json_extract(fotmob_stats, '$.{fotmob_key}') IS NOT NULL"
         return (f"(json_extract(espn_stats, '$.{key}') IS NOT NULL"
                 f" OR json_extract(fotmob_stats, '$.{key}') IS NOT NULL)")
 

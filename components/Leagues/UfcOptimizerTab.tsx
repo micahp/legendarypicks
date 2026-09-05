@@ -3,6 +3,7 @@ import {
   lineupsToCsv,
   optimizeUfcLineups,
   parseDraftKingsMmaCsv,
+  selectNextDraftKingsSlate,
   UFC_DK_SALARY_CAP,
   type UfcOptimizerFighter,
   type UfcOptimizerLineup,
@@ -13,6 +14,7 @@ import UfcSlateRail, { buildUfcSlateFights, type UfcPoolSort } from './UfcSlateR
 import UfcFighterOverlay from './UfcFighterOverlay'
 
 const LINEUP_COUNTS = [1, 2, 3, 5, 10, 20, 50, 100, 150]
+const PUBLISHED_DRAFTKINGS_POOLS = [UFC_DK_SLATE_2026_08_29]
 
 function money(value: number): string {
   return `$${value.toLocaleString()}`
@@ -30,11 +32,16 @@ function replaceInSet(current: Set<string>, id: string, enabled: boolean): Set<s
 }
 
 export default function UfcOptimizerTab() {
-  const [slate, setSlate] = useState<UfcOptimizerSlate | null>(() => ({
-    ...UFC_DK_SLATE_2026_08_29,
-    fighters: UFC_DK_SLATE_2026_08_29.fighters.map(fighter => ({ ...fighter })),
-  }))
-  const [sourceName, setSourceName] = useState(UFC_DK_SLATE_2026_08_29.sourceName)
+  const [slate, setSlate] = useState<UfcOptimizerSlate | null>(() => {
+    const selected = selectNextDraftKingsSlate(PUBLISHED_DRAFTKINGS_POOLS)
+    return selected ? {
+      ...selected,
+      fighters: selected.fighters.map(fighter => ({ ...fighter })),
+    } : null
+  })
+  const [sourceName, setSourceName] = useState(
+    () => selectNextDraftKingsSlate(PUBLISHED_DRAFTKINGS_POOLS)?.sourceName || '',
+  )
   const [csvText, setCsvText] = useState('')
   const [showPaste, setShowPaste] = useState(false)
   const [importError, setImportError] = useState<string | null>(null)
@@ -173,7 +180,9 @@ export default function UfcOptimizerTab() {
               </span>
             </div>
             <p className="mt-1 text-sm text-zinc-500">
-              Saturday&apos;s slate is loaded. Build six-fighter lineups under the $50,000 salary cap; opponents are never paired.
+              {slate
+                ? 'The next available DraftKings pool is loaded. Build six-fighter lineups under the $50,000 salary cap; opponents are never paired.'
+                : 'No current DraftKings MMA pool is available yet. Import a pool when DraftKings publishes it.'}
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -437,7 +446,7 @@ export default function UfcOptimizerTab() {
 function EmptyOptimizer() {
   return (
     <section className="rounded-xl border border-dashed border-zinc-800 bg-zinc-900/50 px-5 py-12 text-center">
-      <p className="text-sm font-semibold text-zinc-300">Import a DraftKings MMA player list</p>
+      <p className="text-sm font-semibold text-zinc-300">DraftKings MMA pool not available yet</p>
       <p className="mx-auto mt-2 max-w-xl text-sm text-zinc-500">
         Download the contest CSV from DraftKings, then import it here. The file stays in this browser and is not written to the database.
       </p>

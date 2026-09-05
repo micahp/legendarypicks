@@ -8,6 +8,50 @@ A market that maps to None is charted as "not available" rather than guessed —
 a fabricated stat key does not raise, it draws the wrong line.
 """
 
+
+_UFC_NUMERIC_MARKETS = {
+    "significant_strikes": "sigStrikesLanded",
+    "fight_time": "fight_time",
+}
+_UFC_METHOD_MARKETS = {
+    "win_by_decision": "DEC",
+    "win_by_ko": "KO/TKO",
+    "knockouts": "KO/TKO",
+    "win_by_submission": "SUB",
+    "submissions": "SUB",
+}
+_UFC_FINISH_METHODS = {"KO/TKO", "SUB", "DQ"}
+
+
+def ufc_actual(stats: dict, market: str):
+    """Map UFCStats' published result/method fields to one prop actual."""
+    canonical = (market or "").strip().lower()
+    stat_key = _UFC_NUMERIC_MARKETS.get(canonical)
+    if stat_key:
+        value = stats.get(stat_key)
+        try:
+            return float(value) if value not in (None, "") else None
+        except (TypeError, ValueError):
+            return None
+
+    result = str(stats.get("result") or "").strip().upper()
+    method = str(stats.get("method") or "").strip().upper()
+    if canonical == "finishes":
+        if result == "W":
+            if not method:
+                return None
+            if method == "DEC":
+                return 0.0
+            return 1.0 if method in _UFC_FINISH_METHODS else None
+        return 0.0 if result in {"L", "D", "NC"} else None
+
+    wanted_method = _UFC_METHOD_MARKETS.get(canonical)
+    if not wanted_method:
+        return None
+    if result == "W":
+        return None if not method else float(method == wanted_method)
+    return 0.0 if result in {"L", "D", "NC"} else None
+
 _MARKET_STAT_KEY = {
     "mlb": {"total_bases": "TB", "hits": "H", "home_runs": "HR", "walks": "BB",
             "doubles": "2B", "total_doubles": "2B", "triples": "3B", "total_triples": "3B",
@@ -217,12 +261,12 @@ _MARKET_STAT_KEY = {
              "chances_created": "chances_created",
              "interceptions": "interceptions",
              "first_goal_scorer": "first_goal"},
-    # fight_time (minutes, from round+clock at the ESPN status endpoint -- see
-    # ingest_ufc_fight_stats.py) now backfillable same as significant_strikes.
-    # finishes/win_by_ko/win_by_submission are win-by-method yes/no props, same
-    # category as MLB's home_run_any/hit_any etc — none of those are chartable either,
-    # this isn't a new gap. All fall back to "chart not available" via lookup returning None.
-    "ufc": {"significant_strikes": "sigStrikesLanded", "fight_time": "fight_time"},
+    # UFCStats publishes the numeric values plus result and method on each
+    # completed fighter row. The ingest materialises the four binary prop
+    # actuals with the same ufc_actual() contract settlement uses.
+    "ufc": {"significant_strikes": "sigStrikesLanded", "fight_time": "fight_time",
+            "finishes": "finishes", "knockouts": "knockouts",
+            "submissions": "submissions", "win_by_decision": "win_by_decision"},
     # Tennis match logs come from the official US Open point-by-point feed and
     # are read from their provider-separated table in routers/props.py.
     # total_sets is a match-level Bovada market (O/U 2.5, no player attribution) deferred from
