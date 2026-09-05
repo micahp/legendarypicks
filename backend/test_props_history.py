@@ -37,6 +37,15 @@ def _provider_tables(con):
     con.executescript(split.DDL_VIEW)
 
 
+def _insert_fotmob_rows(con, rows):
+    con.executemany(
+        "INSERT INTO player_game_logs_fotmob(player_id,league,season,stats,"
+        " game_date,opponent,home_away,game_no,game_type,source)"
+        " VALUES(?,?,?,?,?,?,?,?,?,?)",
+        [tuple(row[:-1]) + ("fotmob",) for row in rows],
+    )
+
+
 class PropHistoryVenueTests(unittest.TestCase):
     """Preserve unknown venue instead of publishing it as an away game."""
 
@@ -137,9 +146,13 @@ class UfcStatsPropHistoryTests(unittest.TestCase):
             [
                 (7, "ufc", "2026-08-01", "Opponent A", json.dumps({
                     "sigStrikesLanded": 61, "fight_time": 15.0,
+                    "finishes": 0, "knockouts": 0, "submissions": 0,
+                    "win_by_decision": 1,
                 })),
                 (7, "ufc", "2026-07-01", "Opponent B", json.dumps({
                     "sigStrikesLanded": 22, "fight_time": 4.5,
+                    "finishes": 1, "knockouts": 0, "submissions": 1,
+                    "win_by_decision": 0,
                 })),
             ],
         )
@@ -167,6 +180,19 @@ class UfcStatsPropHistoryTests(unittest.TestCase):
 
         self.assertEqual([61.0, 22.0], [g["value"] for g in strikes["games"]])
         self.assertEqual([15.0, 4.5], [g["value"] for g in duration["games"]])
+
+        expected = {
+            "finishes": [0.0, 1.0],
+            "knockouts": [0.0, 0.0],
+            "submissions": [0.0, 1.0],
+            "win_by_decision": [1.0, 0.0],
+        }
+        for market, values in expected.items():
+            result = props.prop_history(
+                player_id=7, market=market, line=0.5,
+                side="over", league="ufc",
+            )
+            self.assertEqual(values, [game["value"] for game in result["games"]])
 
 
 if __name__ == "__main__":
@@ -263,10 +289,7 @@ class LeaguesCupChartsAcrossTheSpines(unittest.TestCase):
             (5, "lcup", 2026, json.dumps({"shots": 4, "appearances": 1}),
              "2026-08-10", "POR", "away", 7, "REG", "espn"),
         ]
-        con.executemany(
-            "INSERT INTO player_game_logs(player_id, league, season, stats,"
-            " game_date, opponent, home_away, game_no, game_type, source)"
-            " VALUES(?,?,?,?,?,?,?,?,?,?)", rows)
+        _insert_fotmob_rows(con, rows)
         con.commit()
         con.close()
 
@@ -330,11 +353,11 @@ class LeaguesCupChartsAcrossTheSpines(unittest.TestCase):
         self.assertEqual(result["games"], [])
         self.assertIn("not chartable", result["error"])
 
-    def test_first_goal_is_no_longer_refused(self):
+    def test_first_goal_is_refused_without_an_approved_non_espn_history_source(self):
         result = props.prop_history(
             player_id=1, market="first_goal_scorer", line=0.5, side="over",
             league="lcup")
-        self.assertNotIn("error", result)
+        self.assertIn("not published in approved FotMob history", result["error"])
 
     def test_a_deep_market_charts_when_the_row_carries_it(self):
         # Written by `ingest_soccer_logs --deep`. A shallow row simply lacks the
@@ -485,10 +508,7 @@ class FirstGoalIsAnsweredFromTheStoredRow(unittest.TestCase):
             (2, "mls", 2026, json.dumps({"first_goal": 1, "appearances": 1}),
              "2026-08-08", "RSL", "home", 4, "REG", "espn"),
         ]
-        con.executemany(
-            "INSERT INTO player_game_logs(player_id, league, season, stats,"
-            " game_date, opponent, home_away, game_no, game_type, source)"
-            " VALUES(?,?,?,?,?,?,?,?,?,?)", rows)
+        _insert_fotmob_rows(con, rows)
         con.commit()
         con.close()
         def connection():
@@ -500,25 +520,25 @@ class FirstGoalIsAnsweredFromTheStoredRow(unittest.TestCase):
         patcher.start()
         self.addCleanup(patcher.stop)
 
-    def test_a_ligamx_first_goal_prop_charts(self):
+    def test_a_ligamx_first_goal_prop_is_explicitly_unavailable(self):
         result = props.prop_history(
             player_id=1, market="first_goal_scorer", line=0.5, side="over",
             league="ligamx")
-        self.assertNotIn("error", result)
-        self.assertEqual([g["value"] for g in result["games"]], [1.0, 0.0])
+        self.assertIn("not published in approved FotMob history", result["error"])
+        self.assertEqual(result["games"], [])
 
     def test_an_absence_is_not_a_missed_opener(self):
         result = props.prop_history(
             player_id=1, market="first_goal_scorer", line=0.5, side="over",
             league="ligamx")
-        self.assertEqual(len(result["games"]), 2, "the DNP must not chart")
+        self.assertEqual(result["games"], [])
 
     def test_mls_charts_it_too(self):
         result = props.prop_history(
             player_id=2, market="first_goal_scorer", line=0.5, side="over",
             league="mls")
-        self.assertNotIn("error", result)
-        self.assertEqual([g["value"] for g in result["games"]], [1.0])
+        self.assertIn("not published in approved FotMob history", result["error"])
+        self.assertEqual(result["games"], [])
 
     def test_mls_charts_tackles_now_that_fotmob_has_run_for_mls(self):
         """This asserted mls REFUSED tackles, which was right while mls carried
@@ -579,18 +599,15 @@ class TheMlsMapCoversWhatMlsLogsAnswer(unittest.TestCase):
         con.execute("INSERT INTO players VALUES(1,'Keeper','CLB','mls','G')")
         rows = [
             (1, "mls", 2026, json.dumps({"saves": 4, "goals_conceded": 1,
-                                         "sot": 2, "yellow_cards": 1,
+                                         "shots_on_target": 2, "yellow_cards": 1,
                                          "red_cards": 0, "appearances": 1}),
              "2026-08-10", "RSL", "home", 1, "REG", "espn"),
             (1, "mls", 2026, json.dumps({"saves": 2, "goals_conceded": 0,
-                                         "sot": 1, "yellow_cards": 0,
+                                         "shots_on_target": 1, "yellow_cards": 0,
                                          "red_cards": 0, "appearances": 1}),
              "2026-08-03", "ATX", "away", 2, "REG", "espn"),
         ]
-        con.executemany(
-            "INSERT INTO player_game_logs(player_id, league, season, stats,"
-            " game_date, opponent, home_away, game_no, game_type, source)"
-            " VALUES(?,?,?,?,?,?,?,?,?,?)", rows)
+        _insert_fotmob_rows(con, rows)
         con.commit()
         con.close()
 
@@ -622,7 +639,8 @@ class TheMlsMapCoversWhatMlsLogsAnswer(unittest.TestCase):
         result = props.prop_history(
             player_id=1, market="card_shown", line=0.5, side="over",
             league="mls")
-        self.assertEqual([g["value"] for g in result["games"]], [1.0, 0.0])
+        self.assertIn("not published in approved FotMob history", result["error"])
+        self.assertEqual(result["games"], [])
 
     def test_the_deep_mls_markets_are_mapped_now_that_mls_has_rows(self):
         """These five were held out while MLS carried 0 rows for them.
@@ -857,9 +875,9 @@ class OneRowPerAppearance(unittest.TestCase):
         result = props.prop_history(
             player_id=1, market="shots", line=0.5, side="over", league="ligamx")
         self.assertEqual(len(result["games"]), 2, "one row per appearance")
-        # ESPN wins the tie: it is the identity spine every player_id is keyed
-        # on. 3, not 9.
-        self.assertEqual([g["value"] for g in result["games"]], [3.0, 2.0])
+        # The approved soccer-history source wins the tie. Canonical identity
+        # does not authorize ESPN's stat value to enter this chart.
+        self.assertEqual([g["value"] for g in result["games"]], [9.0, 2.0])
 
     def test_a_market_only_one_provider_has_still_charts(self):
         # Rows without the stat are excluded by the WHERE, so the rank falls

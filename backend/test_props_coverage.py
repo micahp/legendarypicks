@@ -170,5 +170,60 @@ class BaselineGateTests(unittest.TestCase):
             pc.BASELINE = original
 
 
+class CurrentHistoryGateTests(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.mkdtemp()
+        self.db = _db(
+            os.path.join(self.tmp, "history.db"),
+            players=[("Fighter A", "ufc", "1"), ("Fighter B", "ufc", "2")],
+            games=[(1, "ufc", "2099-01-01", "E1", "2099-01-01T00:00:00")],
+            props=[
+                (1, 1, "significant_strikes", 20.5, "over", "underdog", "now"),
+                (1, 1, "significant_strikes", 21.5, "under", "underdog", "now"),
+                (1, 2, "significant_strikes", 18.5, "over", "underdog", "now"),
+            ],
+        )
+        con = sqlite3.connect(self.db)
+        con.executescript("""
+            CREATE TABLE player_source_ids(
+              source TEXT,league TEXT,source_player_key TEXT,player_id INTEGER);
+            CREATE TABLE player_game_logs_ufcstats(
+              player_id INTEGER,league TEXT,game_date TEXT,opponent TEXT,stats TEXT);
+            INSERT INTO player_source_ids VALUES('ufcstats','ufc','a',1);
+            INSERT INTO player_source_ids VALUES('ufcstats','ufc','b',2);
+            INSERT INTO player_game_logs_ufcstats
+              VALUES(1,'ufc','2026-08-01','Fighter B','{"sigStrikesLanded":30}');
+            INSERT INTO player_game_logs_ufcstats
+              VALUES(2,'ufc','2026-08-01','Fighter A','{"sigStrikesLanded":12}');
+        """)
+        con.commit()
+        con.close()
+
+    def test_lines_and_sides_collapse_to_one_player_market_denominator(self):
+        result = pc.measure_current_history(self.db)
+
+        self.assertEqual(result["pairs"], 2)
+        self.assertEqual(result["markets"][0]["n"], 2)
+        self.assertEqual(result["markets"][0]["with_history"], 2)
+        self.assertEqual(pc.check_current_history(result), [])
+
+    def test_a_three_person_current_ufc_game_fails_the_gate(self):
+        con = sqlite3.connect(self.db)
+        con.execute(
+            "INSERT INTO players(name,league,espn_id) VALUES('Shadow A','ufc',NULL)"
+        )
+        player_id = con.execute("SELECT MAX(id) FROM players").fetchone()[0]
+        con.execute(
+            "INSERT INTO props(game_id,player_id,market,line,side,source,captured_at) "
+            "VALUES(1,?,'win_by_decision',0.5,'over','bovada','now')",
+            (player_id,),
+        )
+        con.commit()
+        con.close()
+
+        result = pc.measure_current_history(self.db)
+        failures = pc.check_current_history(result)
+        self.assertTrue(any("expected 2" in failure for failure in failures))
+
 if __name__ == "__main__":
     unittest.main()

@@ -25,6 +25,7 @@ from typing import Dict, List, Optional, Sequence, Tuple
 
 BASE_URL = "http://www.ufcstats.com"
 COMPLETED_EVENTS_URL = BASE_URL + "/statistics/events/completed?page=all"
+UPCOMING_EVENTS_URL = BASE_URL + "/statistics/events/upcoming?page=all"
 _MAX_RESPONSE_BYTES = 2_000_000
 _USER_AGENT = "LegendaryPicks-UFCStats-Ingest/1.0"
 
@@ -510,6 +511,24 @@ class UfcStatsClient:
     def completed_events(self) -> List[SourceEvent]:
         return parse_completed_events(
             self.get_html(COMPLETED_EVENTS_URL, "events-completed")
+        )
+
+    def upcoming_events(self) -> List[SourceEvent]:
+        """Return UFCStats' current published future-event inventory."""
+        return parse_completed_events(
+            self.get_html(UPCOMING_EVENTS_URL, "events-upcoming")
+        )
+
+    def published_events(self) -> List[SourceEvent]:
+        """Return the de-duplicated completed/live and upcoming event inventory."""
+        by_key = {
+            event.source_event_key: event
+            for event in self.completed_events() + self.upcoming_events()
+        }
+        return sorted(
+            by_key.values(),
+            key=lambda item: (item.date, item.source_event_key),
+            reverse=True,
         )
 
     def event_card(self, event: SourceEvent) -> List[SourceCardFight]:

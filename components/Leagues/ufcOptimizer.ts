@@ -54,6 +54,29 @@ export interface UfcOptimizerResult {
   candidatesConsidered: number
 }
 
+export function draftKingsSlateLockAt(slate: UfcOptimizerSlate): number | null {
+  const starts = slate.fighters
+    .map(fighter => fighter.startTime ? Date.parse(fighter.startTime) : NaN)
+    .filter(value => Number.isFinite(value))
+  if (starts.length) return Math.min(...starts)
+  if (!slate.slateDate) return null
+  const endOfDate = Date.parse(`${slate.slateDate}T23:59:59Z`)
+  return Number.isFinite(endOfDate) ? endOfDate : null
+}
+
+/** Select the next published DraftKings pool; expired embedded pools never win. */
+export function selectNextDraftKingsSlate(
+  slates: UfcOptimizerSlate[],
+  nowMs: number = Date.now(),
+): UfcOptimizerSlate | null {
+  return slates
+    .map(slate => ({ slate, lockAt: draftKingsSlateLockAt(slate) }))
+    .filter((item): item is { slate: UfcOptimizerSlate; lockAt: number } => (
+      item.lockAt !== null && item.lockAt > nowMs
+    ))
+    .sort((left, right) => left.lockAt - right.lockAt)[0]?.slate || null
+}
+
 const HEADER_ALIASES: Record<string, string[]> = {
   id: ['id'],
   name: ['name'],

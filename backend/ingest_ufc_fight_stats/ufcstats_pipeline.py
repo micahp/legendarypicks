@@ -9,7 +9,9 @@ from contextlib import closing
 from dataclasses import dataclass, field
 from typing import Callable, Dict, List, Optional, Sequence, Set, Tuple
 
-from .names import _name_key, _parse_date
+from core_markets import ufc_actual
+
+from .names import _name_key, _name_parts, _parse_date
 from .schema import _read_only_connection
 from .targets import FighterTarget
 from .ufcstats_source import (
@@ -23,6 +25,15 @@ from .ufcstats_source import (
 
 SOURCE = "ufcstats"
 TABLE = "player_game_logs_ufcstats"
+NUMERIC_PROP_MARKETS = ("significant_strikes", "fight_time")
+SUPPORTED_PROP_MARKETS = (
+    "significant_strikes",
+    "fight_time",
+    "finishes",
+    "knockouts",
+    "submissions",
+    "win_by_decision",
+)
 
 
 @dataclass(frozen=True)
@@ -41,19 +52,31 @@ class PreparedUfcStatsLog:
         return self.source_player_key, self.source_fight_key
 
 
+@dataclass(frozen=True)
+class UfcIdentityMerge:
+    keep_player_id: int
+    drop_player_id: int
+    source_player_key: str
+    drop_name: str
+
+
 @dataclass
 class UfcStatsPlan:
     target_count: int
+    active_target_count: int = 0
     published_event_count: int = 0
     scoped_card_fight_count: int = 0
+    scoped_card_participant_count: int = 0
     resolved_count: int = 0
     profile_count: int = 0
     candidate_count: int = 0
     existing_count: int = 0
     mappings: Dict[int, str] = field(default_factory=dict)
+    identity_merges: List[UfcIdentityMerge] = field(default_factory=list)
     inserts: List[PreparedUfcStatsLog] = field(default_factory=list)
     updates: List[PreparedUfcStatsLog] = field(default_factory=list)
     no_history: List[str] = field(default_factory=list)
+    inactive: List[str] = field(default_factory=list)
     unresolved: List[str] = field(default_factory=list)
     source_errors: List[str] = field(default_factory=list)
     conflicts: List[str] = field(default_factory=list)
@@ -135,15 +158,19 @@ def _existing_logs(con: sqlite3.Connection) -> Dict[Tuple[str, str], PreparedUfc
     return existing
 
 
-def _load_numeric_prop_targets(
+def _load_prop_targets(
     con: sqlite3.Connection,
     as_of: dt.date,
     accepted: Dict[int, Set[str]],
     lookback_days: int,
     lookahead_days: int,
+    markets: Sequence[str],
 ) -> List[FighterTarget]:
     start = as_of - dt.timedelta(days=max(0, lookback_days))
     end = as_of + dt.timedelta(days=max(0, lookahead_days))
+    if not markets:
+        return []
+    placeholders = ",".join("?" for _ in markets)
     associations = con.execute(
         """SELECT DISTINCT p.player_id,pl.name,pl.espn_id,pg.id AS prop_game_id,
                   pg.date,pg.home,pg.away,pg.espn_event_id
@@ -151,8 +178,9 @@ def _load_numeric_prop_targets(
              JOIN players pl ON pl.id=p.player_id
              JOIN prop_games pg ON pg.id=p.game_id
             WHERE pg.league='ufc'
-              AND p.market IN ('significant_strikes','fight_time')
-            ORDER BY pg.date DESC,pg.id,p.player_id"""
+              AND p.market IN ({})
+            ORDER BY pg.date DESC,pg.id,p.player_id""".format(placeholders),
+        tuple(markets),
     ).fetchall()
     players_by_game: Dict[int, Set[int]] = {}
     for row in con.execute(
@@ -188,6 +216,10 @@ def _load_numeric_prop_targets(
                 opponent = away
             elif _name_key(away) in own_keys:
                 opponent = home
+            elif _compatible_fighter_names(str(row["name"]), home):
+                opponent = away
+            elif _compatible_fighter_names(str(row["name"]), away):
+                opponent = home
         targets.append(
             FighterTarget(
                 player_id=player_id,
@@ -207,6 +239,7 @@ def load_ufcstats_state(
     as_of: dt.date,
     lookback_days: int = 14,
     lookahead_days: int = 21,
+    markets: Optional[Sequence[str]] = None,
 ) -> Tuple[
     List[FighterTarget],
     Dict[int, Set[str]],
@@ -216,8 +249,13 @@ def load_ufcstats_state(
 ]:
     with closing(_read_only_connection(db_path)) as con:
         accepted = _accepted_name_keys(con)
-        targets = _load_numeric_prop_targets(
-            con, as_of, accepted, lookback_days, lookahead_days
+        targets = _load_prop_targets(
+            con,
+            as_of,
+            accepted,
+            lookback_days,
+            lookahead_days,
+            tuple(markets or NUMERIC_PROP_MARKETS),
         )
         by_player, by_source = _source_mappings(con)
         existing = _existing_logs(con)
@@ -234,6 +272,8 @@ def _profile_log(player_id: int, profile: FighterProfile, fight) -> PreparedUfcS
         "result": fight.result,
         "method": fight.method,
     }
+    for market in ("finishes", "knockouts", "submissions", "win_by_decision"):
+        stats[market] = ufc_actual(stats, market)
     return PreparedUfcStatsLog(
         player_id=player_id,
         source_player_key=profile.source_player_key,
@@ -251,6 +291,7 @@ def _candidate_card_mapping(
     fights: Sequence[SourceCardFight],
     accepted: Dict[int, Set[str]],
     owner_by_name: Dict[str, Optional[int]],
+    allow_pair_alias: bool = False,
 ) -> List[str]:
     own_keys = accepted.get(target.player_id, {_name_key(target.name)})
     opponent_keys = {_name_key(target.opponent)} if target.opponent else set()
@@ -261,24 +302,69 @@ def _candidate_card_mapping(
     for fight in fights:
         left, right = fight.fighters
         left_key, right_key = _name_key(left.name), _name_key(right.name)
-        if left_key in own_keys and right_key in opponent_keys:
+        left_is_own = left_key in own_keys or (
+            allow_pair_alias and _compatible_fighter_names(target.name, left.name)
+        )
+        right_is_own = right_key in own_keys or (
+            allow_pair_alias and _compatible_fighter_names(target.name, right.name)
+        )
+        left_is_opponent = left_key in opponent_keys or (
+            allow_pair_alias
+            and target.opponent is not None
+            and _compatible_fighter_names(target.opponent, left.name)
+        )
+        right_is_opponent = right_key in opponent_keys or (
+            allow_pair_alias
+            and target.opponent is not None
+            and _compatible_fighter_names(target.opponent, right.name)
+        )
+        if left_is_own and right_is_opponent:
             matches.append(left.source_player_key)
-        elif right_key in own_keys and left_key in opponent_keys:
+        elif right_is_own and left_is_opponent:
             matches.append(right.source_player_key)
     matched = sorted(set(matches))
-    if matched:
+    if matched or allow_pair_alias:
         return matched
-    # A publisher abbreviation on the opponent must not strand an otherwise
-    # exact identity. At this point the event date is already exact; accept the
-    # fighter only when his reviewed canonical/alias key appears in exactly one
-    # fight on that published card. This resolved Ding Meng while refusing any
-    # same-name ambiguity, and does not bind the Cam/Cameron opponent split.
+    # Preserve the scheduled production runner's existing exact-own-name
+    # behavior.  The stricter props-history command opts into the pair-aware
+    # path above so replacements cannot be mistaken for aliases.
     exact_on_card = []
     for fight in fights:
         for fighter in fight.fighters:
             if _name_key(fighter.name) in own_keys:
                 exact_on_card.append(fighter.source_player_key)
     return sorted(set(exact_on_card))
+
+
+def _compatible_fighter_names(left: str, right: str) -> bool:
+    """Strict publisher-name compatibility; never opponent-only identity.
+
+    UFC providers commonly omit a middle name or shorten a first name.  Requiring
+    the same surname plus equal/prefix-compatible given names handles those forms
+    while refusing to turn a withdrawn fighter into a replacement merely because
+    both were scheduled against the same opponent.
+    """
+    left_words = _name_parts(left)
+    right_words = _name_parts(right)
+    if left_words == right_words:
+        return True
+    if len(left_words) < 2 or len(right_words) < 2:
+        return False
+    if left_words[-1] != right_words[-1]:
+        return False
+    left_given, right_given = left_words[0], right_words[0]
+    return (
+        left_given == right_given
+        or (
+            len(left_given) == len(right_given)
+            and len(left_given) >= 4
+            and sum(a != b for a, b in zip(left_given, right_given)) == 1
+        )
+        or (
+            min(len(left_given), len(right_given)) >= 3
+            and (left_given.startswith(right_given) or right_given.startswith(left_given))
+        )
+    )
 
 
 def build_ufcstats_plan(
@@ -290,13 +376,19 @@ def build_ufcstats_plan(
     client: UfcStatsClient,
     limit: int = 5,
     emit: Callable[[str], None] = print,
+    include_upcoming_events: bool = False,
+    allow_pair_alias: bool = False,
 ) -> UfcStatsPlan:
     """Fetch the entire bounded source set before returning a write plan."""
     plan = UfcStatsPlan(target_count=len(targets))
     if not targets:
         return plan
     try:
-        events = client.completed_events()
+        events = (
+            client.published_events()
+            if include_upcoming_events
+            else client.completed_events()
+        )
     except UfcStatsSourceError as exc:
         plan.source_errors.append(str(exc))
         return plan
@@ -308,6 +400,7 @@ def build_ufcstats_plan(
     card_by_date: Dict[str, List[SourceCardFight]] = {}
     fetched_cards: Dict[str, List[SourceCardFight]] = {}
     scoped_fight_keys: Set[str] = set()
+    scoped_participant_keys: Set[str] = set()
     for date_text in sorted({target.card_date for target in targets if target.card_date}):
         target_date = _parse_date(date_text)
         neighbor_dates = (
@@ -344,8 +437,14 @@ def build_ufcstats_plan(
             scoped_fight_keys.update(
                 fight.source_fight_key for fight in fetched_cards[event.source_event_key]
             )
+            scoped_participant_keys.update(
+                fighter.source_player_key
+                for fight in fetched_cards[event.source_event_key]
+                for fighter in fight.fighters
+            )
         card_by_date[str(date_text)] = card_fights
     plan.scoped_card_fight_count = len(scoped_fight_keys)
+    plan.scoped_card_participant_count = len(scoped_participant_keys)
 
     owner_by_name: Dict[str, Optional[int]] = {}
     for player_id, keys in accepted.items():
@@ -356,7 +455,8 @@ def build_ufcstats_plan(
                 None if key in owner_by_name and owner_by_name[key] != player_id else player_id
             )
 
-    resolved: Dict[int, str] = {}
+    target_by_id = {target.player_id: target for target in targets}
+    candidate_by_player: Dict[int, str] = {}
     for target in targets:
         stored = stored_by_player.get(target.player_id)
         candidates = _candidate_card_mapping(
@@ -364,6 +464,7 @@ def build_ufcstats_plan(
             card_by_date.get(str(target.card_date or ""), []),
             accepted,
             owner_by_name,
+            allow_pair_alias=allow_pair_alias,
         )
         if len(candidates) > 1:
             plan.conflicts.append(
@@ -380,30 +481,94 @@ def build_ufcstats_plan(
                 )
             )
             continue
-        source_key = stored or published
-        if not source_key:
-            plan.unresolved.append(
-                "{} (card={}, opponent={})".format(
-                    target.name, target.card_date or "none", target.opponent or "none"
+        if not published:
+            if stored and not allow_pair_alias:
+                # Preserve the scheduled production runner's prior behavior:
+                # an already reviewed mapping remains eligible for history even
+                # when the current card lookup no longer sees that bout.
+                candidate_by_player[target.player_id] = stored
+                continue
+            plan.inactive.append(
+                "{} (card={}, opponent={}, not on published card snapshot)".format(
+                    target.name,
+                    target.card_date or "none",
+                    target.opponent or "none",
                 )
             )
+            continue
+        candidate_by_player[target.player_id] = stored or published
+
+    # Multiple local ids can be the same fighter when two prop publishers use
+    # different display names.  A shared UFCStats id is sufficient merge
+    # evidence only when the ids occur in the same local fight and their own
+    # names are strict compatible forms.  This is a reusable identity repair,
+    # not a reviewed exception for one card.
+    players_by_source: Dict[str, List[int]] = {}
+    for player_id, source_key in candidate_by_player.items():
+        players_by_source.setdefault(source_key, []).append(player_id)
+    dropped: Set[int] = set()
+    for source_key, player_ids in sorted(players_by_source.items()):
+        if len(player_ids) == 1:
+            continue
+        group = [target_by_id[player_id] for player_id in sorted(player_ids)]
+        game_ids = {target.prop_game_id for target in group}
+        compatible = all(
+            _compatible_fighter_names(group[0].name, target.name)
+            for target in group[1:]
+        )
+        if len(game_ids) != 1 or None in game_ids or not compatible:
+            plan.conflicts.append(
+                "UFCStats {} matched multiple incompatible local players: {}".format(
+                    source_key,
+                    ",".join(str(player_id) for player_id in sorted(player_ids)),
+                )
+            )
+            continue
+        keep_id = min(player_ids)
+        for drop_id in sorted(set(player_ids) - {keep_id}):
+            plan.identity_merges.append(
+                UfcIdentityMerge(
+                    keep_player_id=keep_id,
+                    drop_player_id=drop_id,
+                    source_player_key=source_key,
+                    drop_name=target_by_id[drop_id].name,
+                )
+            )
+            dropped.add(drop_id)
+            emit(
+                "  merge player {} into {} from shared UFCStats {}".format(
+                    drop_id, keep_id, source_key
+                )
+            )
+
+    resolved: Dict[int, str] = {}
+    for player_id, source_key in sorted(candidate_by_player.items()):
+        if player_id in dropped:
             continue
         owner = owner_by_source.get(source_key)
-        if owner is not None and owner != target.player_id:
+        merge_drop_ids = {
+            merge.drop_player_id
+            for merge in plan.identity_merges
+            if merge.source_player_key == source_key
+        }
+        if owner is not None and owner != player_id and owner not in merge_drop_ids:
             plan.conflicts.append(
                 "UFCStats {} for {} is already owned by player {}".format(
-                    source_key, target.name, owner
+                    source_key, target_by_id[player_id].name, owner
                 )
             )
             continue
-        owner_by_source[source_key] = target.player_id
-        resolved[target.player_id] = source_key
-        if stored != source_key:
-            plan.mappings[target.player_id] = source_key
-        emit("  resolved {} -> UFCStats {}".format(target.name, source_key))
+        resolved[player_id] = source_key
+        if stored_by_player.get(player_id) != source_key and owner != player_id:
+            plan.mappings[player_id] = source_key
+        emit(
+            "  resolved {} -> UFCStats {}".format(
+                target_by_id[player_id].name, source_key
+            )
+        )
     plan.resolved_count = len(resolved)
+    plan.active_target_count = len(resolved)
 
-    target_by_id = {target.player_id: target for target in targets}
     for player_id, source_key in sorted(resolved.items(), key=lambda item: target_by_id[item[0]].name):
         target = target_by_id[player_id]
         try:
@@ -412,7 +577,11 @@ def build_ufcstats_plan(
             plan.source_errors.append("{}: {}".format(target.name, str(exc)))
             continue
         plan.profile_count += 1
-        if _name_key(profile.name) not in accepted.get(player_id, {_name_key(target.name)}):
+        if (
+            _name_key(profile.name)
+            not in accepted.get(player_id, {_name_key(target.name)})
+            and not (allow_pair_alias and _compatible_fighter_names(profile.name, target.name))
+        ):
             plan.conflicts.append(
                 "UFCStats {} publishes {!r}, canonical player {} is {!r}".format(
                     source_key, profile.name, player_id, target.name
@@ -449,6 +618,7 @@ def build_ufcstats_plan(
         )
 
     plan.no_history = sorted(set(plan.no_history))
+    plan.inactive = sorted(set(plan.inactive))
     plan.unresolved = sorted(set(plan.unresolved))
     plan.source_errors = sorted(set(plan.source_errors))
     plan.conflicts = sorted(set(plan.conflicts))
@@ -474,6 +644,51 @@ def apply_ufcstats_plan(db_path: str, plan: UfcStatsPlan) -> dict:
         if not _table_exists(con, "player_source_ids"):
             raise RuntimeError("player_source_ids is missing")
         now = dt.datetime.now(dt.timezone.utc).isoformat()
+        identities_merged = 0
+        identity_rows_moved = 0
+        if plan.identity_merges:
+            from spine_merge import referencing_columns
+
+            references = referencing_columns(con)
+            for merge in plan.identity_merges:
+                keep = con.execute(
+                    "SELECT id,league FROM players WHERE id=?", (merge.keep_player_id,)
+                ).fetchone()
+                drop = con.execute(
+                    "SELECT id,league FROM players WHERE id=?", (merge.drop_player_id,)
+                ).fetchone()
+                if (
+                    keep is None
+                    or drop is None
+                    or keep["league"] != "ufc"
+                    or drop["league"] != "ufc"
+                ):
+                    raise RuntimeError("UFC identity merge endpoints changed")
+                for table, column in references:
+                    cursor = con.execute(
+                        "UPDATE OR IGNORE {} SET {}=? WHERE {}=?".format(
+                            table, column, column
+                        ),
+                        (merge.keep_player_id, merge.drop_player_id),
+                    )
+                    identity_rows_moved += cursor.rowcount
+                for table, column in references:
+                    con.execute(
+                        "DELETE FROM {} WHERE {}=?".format(table, column),
+                        (merge.drop_player_id,),
+                    )
+                if _table_exists(con, "name_alias"):
+                    con.execute(
+                        "INSERT OR IGNORE INTO name_alias(player_id,alias_norm) VALUES(?,?)",
+                        (merge.keep_player_id, _name_key(merge.drop_name)),
+                    )
+                cursor = con.execute(
+                    "DELETE FROM players WHERE id=? AND league='ufc'",
+                    (merge.drop_player_id,),
+                )
+                if cursor.rowcount != 1:
+                    raise RuntimeError("UFC identity merge lost drop player")
+                identities_merged += 1
         mappings_inserted = 0
         mappings_refreshed = 0
         for player_id, source_key in sorted(plan.mappings.items()):
@@ -547,6 +762,8 @@ def apply_ufcstats_plan(db_path: str, plan: UfcStatsPlan) -> dict:
                 )
         con.commit()
         return {
+            "identities_merged": identities_merged,
+            "identity_rows_moved": identity_rows_moved,
             "mappings_inserted": mappings_inserted,
             "mappings_refreshed": mappings_refreshed,
             "inserted_logs": len(plan.inserts),

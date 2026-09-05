@@ -7,6 +7,7 @@ from typing import Optional
 
 from settlement.market_mapping import normalize_market, MARKET_ALIASES
 from settlement.grading import _grade_actual
+from core_markets import ufc_actual
 
 
 _UFC_NUMERIC_MARKETS = {
@@ -22,7 +23,6 @@ _UFC_METHOD_MARKETS = {
     "submissions": "SUB",
 }
 
-_UFC_FINISH_METHODS = {"KO/TKO", "SUB", "DQ"}
 _UFC_FINISH_MARKETS = {"finishes"}
 
 
@@ -45,46 +45,10 @@ def _ufc_scoreboard_competition(espn, date_text: str, fight_id: str) -> dict:
 
 
 def _ufc_actual(stats: dict, market: str) -> Optional[float]:
-    """Read a supported UFC actual from one durable per-fight log."""
+    """Compatibility wrapper around the shared published result/method contract."""
     canonical = normalize_market(market)
     canonical = MARKET_ALIASES.get(canonical, canonical)
-    stat_key = _UFC_NUMERIC_MARKETS.get(canonical)
-    if stat_key:
-        value = stats.get(stat_key)
-        if value in (None, ""):
-            return None
-        try:
-            return float(value)
-        except (TypeError, ValueError):
-            return None
-
-    result = str(stats.get("result") or "").strip().upper()
-    method = str(stats.get("method") or "").strip().upper()
-    if canonical in _UFC_FINISH_MARKETS:
-        # Underdog's published contract is fighter-attributed: a finish is a
-        # win by knockout, submission, disqualification, or another stoppage.
-        # A decision win and every loss are zero; an unknown winning method is
-        # missing evidence, not a guessed finish.
-        if result == "W":
-            if not method:
-                return None
-            if method == "DEC":
-                return 0.0
-            return 1.0 if method in _UFC_FINISH_METHODS else None
-        if result in {"L", "D", "NC"}:
-            return 0.0
-        return None
-
-    wanted_method = _UFC_METHOD_MARKETS.get(canonical)
-    if not wanted_method:
-        return None
-    if result == "W":
-        if not method:
-            return None
-        return 1.0 if method == wanted_method else 0.0
-    if result in {"L", "D", "NC"}:
-        return 0.0
-    return None
+    return ufc_actual(stats, canonical)
 
 
 def _ufcstats_game_is_final(

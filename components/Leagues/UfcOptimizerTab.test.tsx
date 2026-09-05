@@ -14,6 +14,14 @@ const CSV = [
 ].join('\n')
 
 describe('UFC optimizer tab', () => {
+  beforeEach(() => {
+    jest.spyOn(Date, 'now').mockReturnValue(Date.parse('2026-08-28T12:00:00Z'))
+  })
+
+  afterEach(() => {
+    jest.restoreAllMocks()
+  })
+
   it('opens with Saturday loaded and keeps missing projections honest', () => {
     render(<UfcOptimizerTab />)
     const localTwoEastern = new Date('2026-08-29T06:00:00Z').toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
@@ -118,5 +126,15 @@ describe('UFC optimizer tab', () => {
 
     expect(screen.getByText(/Opposing fighters cannot both be locked/)).toBeTruthy()
     expect(screen.queryByText('Optimized lineups')).toBeNull()
+  })
+
+  it('never presents an embedded DraftKings pool after its lock time', () => {
+    jest.mocked(Date.now).mockReturnValue(Date.parse('2026-09-05T12:00:00Z'))
+    render(<UfcOptimizerTab />)
+
+    expect(screen.getByText('DraftKings MMA pool not available yet')).toBeTruthy()
+    expect(screen.getByText(/No current DraftKings MMA pool is available yet/)).toBeTruthy()
+    expect(screen.queryByText('August 29 DraftKings Classic · UFC Shanghai')).toBeNull()
+    expect(screen.getByRole('button', { name: 'Import DraftKings CSV' })).toBeTruthy()
   })
 })

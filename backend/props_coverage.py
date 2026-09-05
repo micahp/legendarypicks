@@ -36,7 +36,7 @@ import json
 import os
 import sqlite3
 import sys
-from typing import List
+from typing import Dict, List
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 DEFAULT_DBS = [
@@ -50,6 +50,7 @@ BASELINE = os.path.join(HERE, "..", "docs", "props-coverage-baseline.json")
 # exactly at its baseline would flap. Wide enough to absorb a slate, narrow enough that
 # a broken settle path cannot hide inside it.
 REGRESSION_TOLERANCE_PCT = 5.0
+HISTORY_LEAGUES = ("atp", "wta", "ufc", "mls", "ligamx", "lcup")
 
 STAGE_SQL = """
 SELECT g.league                                                        AS league,
@@ -164,6 +165,150 @@ def measure(db_path: str, min_market_rows: int = 30) -> dict:
             "spine_duplicates": dupes, "duplicate_espn_ids": dupe_ids}
 
 
+def measure_current_history(db_path: str) -> dict:
+    """Exercise the real history handler for every current player/market pair.
+
+    Alternate lines and over/under sides deliberately collapse here: they share
+    one historical stat series. The denominator therefore matches the UI
+    consolidation contract rather than inflating coverage with repeated lines.
+    """
+    from routers import props as props_router
+
+    absolute = os.path.abspath(db_path)
+    con = sqlite3.connect("file:{}?mode=ro".format(absolute), uri=True)
+    con.row_factory = sqlite3.Row
+    try:
+        columns = {row[1] for row in con.execute("PRAGMA table_info(prop_games)")}
+        not_cancelled = (
+            " AND pg.cancelled_at IS NULL" if "cancelled_at" in columns else ""
+        )
+        placeholders = ",".join("?" for _ in HISTORY_LEAGUES)
+        rows = con.execute(
+            """SELECT pg.league,p.player_id,p.market,MIN(p.line) AS line,
+                      MIN(p.side) AS side
+                 FROM props p JOIN prop_games pg ON pg.id=p.game_id
+                WHERE pg.league IN ({}) AND {}{}
+                GROUP BY pg.league,p.player_id,p.market
+                ORDER BY pg.league,p.market,p.player_id""".format(
+                placeholders, props_router._UPCOMING, not_cancelled
+            ),
+            HISTORY_LEAGUES,
+        ).fetchall()
+        ufc_bad_games = [
+            dict(row)
+            for row in con.execute(
+                """SELECT pg.id,COUNT(DISTINCT p.player_id) AS participants
+                     FROM prop_games pg JOIN props p ON p.game_id=pg.id
+                    WHERE pg.league='ufc' AND {}{}
+                    GROUP BY pg.id HAVING participants != 2""".format(
+                    props_router._UPCOMING, not_cancelled
+                )
+            )
+        ]
+        mapped_ufc = {
+            int(row[0])
+            for row in con.execute(
+                """SELECT player_id FROM player_source_ids
+                    WHERE source='ufcstats' AND league='ufc'"""
+            )
+        } if con.execute(
+            "SELECT 1 FROM sqlite_master WHERE type='table' AND name='player_source_ids'"
+        ).fetchone() else set()
+    finally:
+        con.close()
+
+    def reader_connection():
+        opened = sqlite3.connect("file:{}?mode=ro".format(absolute), uri=True)
+        opened.row_factory = sqlite3.Row
+        return opened
+
+    old_db = props_router._db
+    by_key: Dict[tuple, dict] = {}
+    try:
+        props_router._db = reader_connection
+        for row in rows:
+            result = props_router.prop_history(
+                player_id=int(row["player_id"]),
+                market=str(row["market"]),
+                line=float(row["line"]),
+                side=str(row["side"]),
+                league=str(row["league"]),
+            )
+            key = (str(row["league"]), str(row["market"]))
+            bucket = by_key.setdefault(
+                key,
+                {
+                    "league": key[0],
+                    "market": key[1],
+                    "n": 0,
+                    "chartable": 0,
+                    "with_history": 0,
+                    "empty": 0,
+                    "explicit_unavailable": 0,
+                    "unexpected_errors": 0,
+                    "source_mapped_empty": 0,
+                },
+            )
+            bucket["n"] += 1
+            error = str(result.get("error") or "")
+            games = result.get("games") or []
+            if not error:
+                bucket["chartable"] += 1
+                if games:
+                    bucket["with_history"] += 1
+                else:
+                    bucket["empty"] += 1
+                    if key[0] == "ufc" and int(row["player_id"]) in mapped_ufc:
+                        bucket["source_mapped_empty"] += 1
+            elif error.startswith("market not chartable from logs:") or error.startswith(
+                "market not published in approved FotMob history:"
+            ):
+                bucket["explicit_unavailable"] += 1
+            else:
+                bucket["unexpected_errors"] += 1
+    finally:
+        props_router._db = old_db
+
+    markets = []
+    for bucket in by_key.values():
+        bucket["chartable_pct"] = _pct(bucket["chartable"], bucket["n"])
+        bucket["with_history_pct"] = _pct(bucket["with_history"], bucket["n"])
+        markets.append(bucket)
+    markets.sort(key=lambda row: (row["league"], row["market"]))
+    return {
+        "db": absolute,
+        "pairs": sum(row["n"] for row in markets),
+        "markets": markets,
+        "ufc_bad_games": ufc_bad_games,
+    }
+
+
+def check_current_history(result: dict) -> List[str]:
+    """Fail on unclassified reader errors or malformed current UFC fights."""
+    failures = []
+    for row in result["markets"]:
+        if row["unexpected_errors"]:
+            failures.append(
+                "{} {}: {} unexpected reader errors".format(
+                    row["league"], row["market"], row["unexpected_errors"]
+                )
+            )
+        classified = row["chartable"] + row["explicit_unavailable"]
+        if classified != row["n"]:
+            failures.append(
+                "{} {}: classified {}/{} current player-market pairs".format(
+                    row["league"], row["market"], classified, row["n"]
+                )
+            )
+    for row in result.get("ufc_bad_games", []):
+        failures.append(
+            "ufc game {} has {} canonical participants, expected 2".format(
+                row["id"], row["participants"]
+            )
+        )
+    return failures
+
+
 def render(result: dict, emit=print) -> None:
     emit("db: {}".format(result["db"]))
     emit("")
@@ -201,6 +346,26 @@ def render(result: dict, emit=print) -> None:
         emit("  markets that have NEVER graded a settled row:")
         for m in result["never_graded_markets"]:
             emit("    {:<7} {:<28} {:>6}".format(m["league"], m["market"], m["rows_"]))
+
+
+def render_current_history(result: dict, emit=print) -> None:
+    emit("current-board history: {} player/market pairs".format(result["pairs"]))
+    emit("  {:<7} {:<26} {:>5} {:>6} {:>6} {:>7} {:>6}".format(
+        "league", "market", "n", "chart", "games", "empty", "unavail"
+    ))
+    for row in result["markets"]:
+        emit("  {:<7} {:<26} {:>5} {:>6} {:>6} {:>7} {:>6}".format(
+            row["league"],
+            row["market"],
+            row["n"],
+            row["chartable"],
+            row["with_history"],
+            row["empty"],
+            row["explicit_unavailable"],
+        ))
+    emit("  UFC games with participant count other than two: {}".format(
+        len(result.get("ufc_bad_games", []))
+    ))
 
 
 def check_baseline(result: dict, baseline: dict, emit=print) -> List[str]:
@@ -270,6 +435,16 @@ def main(argv=None) -> int:
     ap.add_argument("--write-baseline", action="store_true",
                     help="rewrite the baseline from the FIRST database given")
     ap.add_argument("--min-market-rows", type=int, default=30)
+    ap.add_argument(
+        "--current-history",
+        action="store_true",
+        help="measure every current tennis, soccer and UFC player/market through the API reader",
+    )
+    ap.add_argument(
+        "--check-current-history",
+        action="store_true",
+        help="fail on unclassified reader errors or malformed current UFC fights",
+    )
     args = ap.parse_args(argv)
 
     dbs = args.db or [p for p in DEFAULT_DBS if os.path.isfile(p)]
@@ -284,12 +459,21 @@ def main(argv=None) -> int:
             return 2
         results.append(measure(db, args.min_market_rows))
 
+    history_results = []
+    if args.current_history or args.check_current_history:
+        history_results = [measure_current_history(db) for db in dbs]
+
     if args.json:
-        print(json.dumps(results, indent=2))
+        print(json.dumps(
+            {"pipeline": results, "current_history": history_results}, indent=2
+        ))
         return 0
 
     for result in results:
         render(result)
+        print("")
+    for result in history_results:
+        render_current_history(result)
         print("")
 
     if args.write_baseline:
@@ -309,6 +493,7 @@ def main(argv=None) -> int:
             ", ".join(os.path.basename(r["db"]) for r in results)))
         return 0
 
+    exit_code = 0
     if args.check:
         if not os.path.isfile(BASELINE):
             # A check whose evidence is missing is a FAIL, not a skip.
@@ -332,9 +517,22 @@ def main(argv=None) -> int:
             print("")
             for f in failures:
                 print("props_coverage: FAIL {}".format(f), file=sys.stderr)
-            return 1
-        print("props_coverage: no league regressed against its baseline")
-    return 0
+            exit_code = 1
+        else:
+            print("props_coverage: no league regressed against its baseline")
+    if args.check_current_history:
+        failures = [
+            "{} [{}]".format(failure, os.path.basename(result["db"]))
+            for result in history_results
+            for failure in check_current_history(result)
+        ]
+        if failures:
+            for failure in failures:
+                print("props_coverage: FAIL {}".format(failure), file=sys.stderr)
+            exit_code = 1
+        else:
+            print("props_coverage: every current history pair classified")
+    return exit_code
 
 
 if __name__ == "__main__":
