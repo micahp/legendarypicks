@@ -1,5 +1,48 @@
 # Changelog
 
+## v0.9.1
+
+### Props history and slate integrity
+
+- **UFC recent form now comes from UFCStats and opens automatically.** The
+  active DraftKings optimizer selects the next unlocked Classic pool, removes
+  publisher-cancelled fights, handles previously unseen fighters by stable
+  source identity, and shows an explicit unavailable state instead of a card
+  whose lock time has passed.
+- **Alternate prop lines are consolidated into one readable question.** Over
+  and under share one row, alternate lines live in the same dropdown pattern
+  used by the Props board, and the public-tunnel browser check discovers and
+  verifies a real multi-line offer rather than relying on a fixture.
+- **Tennis total-games and match-winner history is now published from official
+  US Open results.** Every completed singles match contributes two player logs,
+  one winner and one shared game total, with unresolved records reported rather
+  than guessed.
+- **Soccer form is DB-first and source-honest.** The request path reads persisted
+  FotMob logs and no longer performs a hidden ESPN fallback or invents missing
+  stat fields.
+
+### Tennis, boards and navigation
+
+- **ATP and WTA now share one Tennis destination and searchable ranked-player
+  experience.** News and scores retain tour context without duplicating the
+  top-level league surface.
+- **Underdog tennis props are charted from official US Open point histories.**
+  Six tennis markets are registered, and markets without support remain
+  explicitly no-history instead of displaying fabricated values.
+- **The Plays, Upcoming and Live Discounts boards expose the state needed to
+  act.** Set-watch context, serve floors, collapsed parlay rows, series filters,
+  match-not-playing warnings, seed mismatches and explicit sorting are visible
+  where decisions are made.
+
+### Pipeline and verification
+
+- **Props provenance and coverage are repeatable release gates.** UFCStats
+  history acquisition, current-board coverage, stale-pool handling and the
+  public Props/UFC optimizer journey are exercised end to end.
+- **NCAAF zero-stat appearances settle from proven completed games,** and
+  Leagues Cup/Liga MX slate props are live-backfilled while preserving honest
+  no-history states.
+
 ## v0.9.0
 
 ### NCAAF props are published, charted and settlement-ready
