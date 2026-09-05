@@ -43,19 +43,29 @@ class MLSPropParsingTests(unittest.TestCase):
         bs._UNMAPPED_PLAYER_MARKETS.clear()
         bs._STALE_TEAM_TAGS.clear()
 
-    def test_mls_is_not_scraped_from_bovada_but_the_parser_is_kept(self):
-        """Bovada is no longer the MLS source; the parser stays usable.
+    def test_mls_is_scraped_from_bovada_for_goals_and_assists(self):
+        """Bovada is the MLS source for the two markets nothing else prices.
 
-        MLS props come from the RotoWire/PrizePicks relay, which prices 7 of the 11 markets
-        this league is being built for against Bovada's 2. The league was in LEAGUES for a
-        few hours on 2026-08-16 under `soccer/north-america/united-states/mls` — the
-        continent path, since `soccer/usa/mls` 404s — and that route is recorded here
-        because rediscovering it cost real time once already.
+        HISTORY. MLS was removed from LEAGUES on 2026-08-17 because Bovada prices 2 of the
+        11 markets this league is built for while the RotoWire/PrizePicks relay prices 7.
+        The stated reason was that a second book writing goals and assists into the same
+        board would mean two sources disagreeing.
 
-        The parser is not deleted with the route. It is measured and tested, and the league
-        is one line away if the relay does not work out.
+        RESTORED 2026-09-05, because that reason turned out to be false in the only way
+        that matters: the relay writes ZERO goals and ZERO assists. Measured on the
+        13-fixture slate of 2026-09-05 — 428 props, 8 markets, every row
+        `rotowire:prizepicks`, not one goalscorer line. The newest goals row anywhere in
+        the database was 2026-08-17, the day of the removal, so the product shipped a
+        soccer league with no goalscorer market for 19 days.
+
+        There is no disagreement to create when the other source is silent. Bovada's 2 and
+        the relay's 7 are different markets, not competing opinions on one market.
+
+        The route is the continent path; `soccer/usa/mls` 404s. Recorded here because
+        rediscovering it cost real time once already.
         """
-        self.assertNotIn("mls", bs.LEAGUES)
+        self.assertEqual(bs.LEAGUES.get("mls"),
+                         ("soccer", "north-america/united-states/mls"))
         self.assertTrue(callable(bs._parse_mls_props))
 
     def test_goal_ladder_is_one_market_at_three_lines(self):
