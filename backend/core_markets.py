@@ -223,33 +223,26 @@ _MARKET_STAT_KEY = {
     # category as MLB's home_run_any/hit_any etc — none of those are chartable either,
     # this isn't a new gap. All fall back to "chart not available" via lookup returning None.
     "ufc": {"significant_strikes": "sigStrikesLanded", "fight_time": "fight_time"},
-    # Tennis has no game-log ingest — docs/LEAGUE-SOURCES-FIELDS.md "Tennis — Bovada prop markets":
-    # charting requires tennis game logs that don't exist, so every market maps to None (the chart
-    # lookup returns "market not chartable") until that lands. Never fabricate a stat key.
+    # Tennis match logs come from the official US Open point-by-point feed and
+    # are read from their provider-separated table in routers/props.py.
     # total_sets is a match-level Bovada market (O/U 2.5, no player attribution) deferred from
     # _parse_tennis_props; listed here so the intent is explicit.
-    # Tennis is mapped but every value is None, and that is the honest state:
-    # there are ZERO tennis rows in player_game_logs and player_game_logs_all,
-    # so nothing here can chart. A market ABSENT from this map reads identically
-    # to one mapped to None, which is why the six Underdog markets added on
-    # 2026-09-05 are listed rather than left out -- the board should say "no
-    # history" because we checked, not because nobody wrote the entry.
-    #
-    # All six settle from countable match stats and become chartable the moment
-    # a tennis game-log ingest exists. The intended keys are named here so that
-    # ingest has a target to write to, and so the next person does not have to
-    # re-derive them:
+    # All six settle from countable point-history fields. Keep match-level
+    # Bovada markets None because those contracts are not attributed to one
+    # player log; the six Underdog player markets are chartable:
     #   aces -> aces, double_faults -> double_faults, games_won -> games_won,
     #   breakpoints_won -> breakpoints_won, points_won -> points_won,
     #   sets_won -> sets_won
     "atp": {"match_winner": None, "total_games": None, "set_betting": None,
             "win_a_set": None, "total_sets": None,
-            "aces": None, "double_faults": None, "games_won": None,
-            "breakpoints_won": None, "points_won": None, "sets_won": None},
+            "aces": "aces", "double_faults": "double_faults",
+            "games_won": "games_won", "breakpoints_won": "breakpoints_won",
+            "points_won": "points_won", "sets_won": "sets_won"},
     "wta": {"match_winner": None, "total_games": None, "set_betting": None,
             "win_a_set": None, "total_sets": None,
-            "aces": None, "double_faults": None, "games_won": None,
-            "breakpoints_won": None, "points_won": None, "sets_won": None},
+            "aces": "aces", "double_faults": "double_faults",
+            "games_won": "games_won", "breakpoints_won": "breakpoints_won",
+            "points_won": "points_won", "sets_won": "sets_won"},
 }
 
 

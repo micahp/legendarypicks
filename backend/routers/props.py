@@ -245,7 +245,22 @@ def prop_history(player_id: int = Query(...),
             "SELECT 1 FROM sqlite_master WHERE type='table' "
             "AND name='player_game_logs_ufcstats'"
         ).fetchone() is not None
-        if league == "ufc" and has_ufcstats:
+        has_usopen = con.execute(
+            "SELECT 1 FROM sqlite_master WHERE type='table' "
+            "AND name='player_game_logs_usopen'"
+        ).fetchone() is not None
+        if league in ("atp", "wta") and has_usopen:
+            tennis_value = f"json_extract(stats, '$.{stat_key}')"
+            rows = con.execute(
+                f"""SELECT game_date, opponent, NULL AS home_away,
+                            {tennis_value} AS val
+                       FROM player_game_logs_usopen
+                      WHERE player_id=? AND league=?
+                        AND {tennis_value} IS NOT NULL
+                      ORDER BY game_date DESC LIMIT 100""",
+                (player_id, league),
+            ).fetchall()
+        elif league == "ufc" and has_ufcstats:
             # UFCStats is provider-separated because its native fighter/fight
             # ids do not share ESPN's vocabulary. The profile publishes the
             # completed last-five directly; read that table rather than
