@@ -1,8 +1,7 @@
 import { useState } from 'react'
 
-// Mirrors FightForm deliberately: same click-to-load contract, same module-level
-// cache and in-flight dedupe, same closed-by-default posture. A cold click costs
-// ESPN 1 + 2N requests, so it must never fire on render.
+// Mirrors FightForm's cache and in-flight dedupe. The endpoint is read-only and
+// reads the FotMob history published by the league pipeline.
 export interface MatchStatLine {
   date: string
   event_id: string
@@ -104,7 +103,7 @@ export default function MatchForm({ playerId, player }: { playerId: number; play
       >
         <span>
           <span className="block text-xs font-semibold uppercase tracking-wide text-zinc-300">Last 5 matches</span>
-          <span className="mt-0.5 block text-[11px] text-zinc-600">ESPN form for {player}</span>
+          <span className="mt-0.5 block text-[11px] text-zinc-600">FotMob form for {player}</span>
         </span>
         <span className="shrink-0 text-sm text-zinc-500" aria-hidden="true">{open ? '▾' : '▸'}</span>
       </button>
@@ -120,7 +119,7 @@ export default function MatchForm({ playerId, player }: { playerId: number; play
           ) : error ? (
             <p className="text-xs text-zinc-500">Recent match form could not be loaded.</p>
           ) : !data?.matches.length ? (
-            <p className="text-xs text-zinc-500">No completed Liga MX matches are available from ESPN.</p>
+            <p className="text-xs text-zinc-500">No completed FotMob matches are available.</p>
           ) : (
             <ol
               className="flex max-w-full gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"

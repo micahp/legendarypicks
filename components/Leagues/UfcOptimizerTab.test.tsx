@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import UfcOptimizerTab from './UfcOptimizerTab'
 
 const HEADER = 'Position,Name + ID,Name,ID,Roster Position,Salary,Game Info,TeamAbbrev,AvgPointsPerGame'
@@ -16,6 +16,7 @@ const CSV = [
 describe('UFC optimizer tab', () => {
   beforeEach(() => {
     jest.spyOn(Date, 'now').mockReturnValue(Date.parse('2026-08-28T12:00:00Z'))
+    ;(global as any).fetch = jest.fn(() => new Promise(() => {}))
   })
 
   afterEach(() => {
@@ -128,13 +129,45 @@ describe('UFC optimizer tab', () => {
     expect(screen.queryByText('Optimized lineups')).toBeNull()
   })
 
-  it('never presents an embedded DraftKings pool after its lock time', () => {
+  it('never presents an embedded DraftKings pool after its lock time', async () => {
     jest.mocked(Date.now).mockReturnValue(Date.parse('2026-09-05T12:00:00Z'))
+    ;(global as any).fetch = jest.fn(() => Promise.resolve({
+      ok: true, json: () => Promise.resolve({ slate: null, reason: 'no_unlocked_classic_pool' }),
+    }))
     render(<UfcOptimizerTab />)
 
-    expect(screen.getByText('DraftKings MMA pool not available yet')).toBeTruthy()
+    await waitFor(() => expect(screen.getByText('DraftKings MMA pool not available yet')).toBeTruthy())
     expect(screen.getByText(/No current DraftKings MMA pool is available yet/)).toBeTruthy()
     expect(screen.queryByText('August 29 DraftKings Classic · UFC Shanghai')).toBeNull()
     expect(screen.getByRole('button', { name: 'Import DraftKings CSV' })).toBeTruthy()
+  })
+
+  it('loads the next verified publisher pool without requiring local fighter history', async () => {
+    jest.mocked(Date.now).mockReturnValue(Date.parse('2026-09-05T12:00:00Z'))
+    const fighters = Array.from({ length: 6 }, (_, index) => ({
+      id: `rw:new-${index}`, name: `Unseen Fighter ${index}`, salary: 8000,
+      fppg: 50, target: 50, gameInfo: `rw-event:${Math.floor(index / 2)}`,
+      opponentId: `rw:new-${index % 2 ? index - 1 : index + 1}`,
+      startTime: '2026-09-05T20:00:00Z',
+    }))
+    ;(global as any).fetch = jest.fn(() => Promise.resolve({
+      ok: true,
+      json: () => Promise.resolve({
+        slate: {
+          fighters, fightCount: 3, unresolvedMatchups: 0, source: 'rotowire_live',
+          sourceName: 'DraftKings Classic · UFC New Fighters',
+          sourceUrl: 'https://www.rotowire.com/daily/mma/optimizer.php',
+          slateDate: '2026-09-05', capturedAt: '2026-09-05T12:00:00Z',
+          metricLabel: 'RW projection',
+        },
+      }),
+    }))
+
+    render(<UfcOptimizerTab />)
+
+    await waitFor(() => expect(screen.getByText('DraftKings Classic · UFC New Fighters')).toBeTruthy())
+    expect(screen.getByText(/6 fighters · 3 fights/)).toBeTruthy()
+    expect(screen.getAllByText('Unseen Fighter 0').length).toBeGreaterThan(0)
+    expect((global.fetch as jest.Mock).mock.calls[0][0]).toBe('/api/ufc/draftkings-pool')
   })
 })

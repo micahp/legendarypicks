@@ -23,7 +23,7 @@ export interface UfcOptimizerSlate {
   fighters: UfcOptimizerFighter[]
   fightCount: number
   unresolvedMatchups: number
-  source: 'draftkings_csv' | 'rotowire_snapshot'
+  source: 'draftkings_csv' | 'rotowire_snapshot' | 'rotowire_live'
   sourceName: string
   sourceUrl: string | null
   slateDate: string | null
