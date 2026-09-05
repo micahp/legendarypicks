@@ -8,7 +8,8 @@ before one short DEV transaction; identity ambiguity fails closed.
 
 Usage:
   python3 ingest_usopen_tennis_logs.py --dry-run
-  LP_DB_PATH=/absolute/picks.dev.db python3 ingest_usopen_tennis_logs.py
+  LP_DB_PATH=/absolute/picks.dev.db python3 ingest_usopen_tennis_logs.py \
+    --apply --expect-matches N --expect-source-rows N --backup /absolute/backup.db
 """
 import argparse
 import collections
@@ -33,7 +34,7 @@ UA = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
 MIN_INTERVAL = float(os.environ.get("LP_USOPEN_MIN_INTERVAL") or 0.20)
 TABLE = "player_game_logs_usopen"
 STAT_FIELDS = ("aces", "double_faults", "games_won", "breakpoints_won",
-               "points_won", "sets_won")
+               "points_won", "sets_won", "total_games", "match_winner")
 CODE_FIELDS = {"Ace": "aces", "DoubleFault": "double_faults",
                "GameWinner": "games_won", "BreakPointWon": "breakpoints_won",
                "PointWinner": "points_won", "SetWinner": "sets_won"}
@@ -145,6 +146,10 @@ def aggregate_match(match, points):
     winner = str(match.get("winner") or "0")
     if winner not in ("1", "2") or str(points[-1].get("MatchWinner") or "0") != winner:
         raise RuntimeError(f"match {match['match_id']} winner reconciliation failed")
+    total_games = sum(expected_games)
+    for i in (0, 1):
+        stats[i]["total_games"] = total_games
+        stats[i]["match_winner"] = 1 if winner == str(i + 1) else 0
     game_date = dt.datetime.fromtimestamp(float(match["epoch"]) / 1000,
                                           dt.timezone.utc).date().isoformat()
     league = "atp" if match["eventCode"] == "MS" else "wta"
@@ -213,10 +218,66 @@ def publish(con, rows):
                           "usopen.org", row["source_player_key"], row["game_type"]))
 
 
+def require_apply_contract(args, audit, db_path):
+    """Refuse a write unless it matches a separately observed dry-run."""
+    if not args.apply:
+        return
+    if args.expect_matches is None or args.expect_source_rows is None:
+        raise RuntimeError("apply requires --expect-matches and --expect-source-rows")
+    observed = (audit["matches"], audit["source_rows"])
+    expected = (args.expect_matches, args.expect_source_rows)
+    if observed != expected:
+        raise RuntimeError(
+            "source population changed since dry-run: "
+            f"expected matches/rows={expected}, observed={observed}")
+    if not args.backup:
+        raise RuntimeError("apply requires --backup with an absolute new path")
+    backup_path = pathlib.Path(args.backup)
+    if not backup_path.is_absolute():
+        raise RuntimeError("backup path must be absolute")
+    backup_path = backup_path.resolve()
+    if backup_path == db_path:
+        raise RuntimeError("backup path must differ from database path")
+    if backup_path.exists():
+        raise RuntimeError(f"backup path already exists: {backup_path}")
+    if not backup_path.parent.is_dir():
+        raise RuntimeError(f"backup parent does not exist: {backup_path.parent}")
+
+
+def verified_backup(con, backup_path):
+    """Take a WAL-safe SQLite backup and verify it before publication."""
+    destination = sqlite3.connect(str(backup_path))
+    try:
+        con.backup(destination)
+        check = destination.execute("PRAGMA quick_check").fetchone()[0]
+        if check != "ok":
+            raise RuntimeError(f"backup quick_check failed: {check}")
+        destination.commit()
+    except Exception:
+        destination.close()
+        try:
+            backup_path.unlink()
+        except FileNotFoundError:
+            pass
+        raise
+    finally:
+        try:
+            destination.close()
+        except Exception:
+            pass
+    return check
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument("--apply", action="store_true")
+    parser.add_argument("--expect-matches", type=int)
+    parser.add_argument("--expect-source-rows", type=int)
+    parser.add_argument("--backup")
     args = parser.parse_args(argv)
+    if args.dry_run and args.apply:
+        parser.error("--dry-run and --apply are mutually exclusive")
     db_path = pathlib.Path(DB_PATH).resolve()
     if not db_path.is_file():
         parser.error(f"database must already exist: {db_path}")
@@ -229,9 +290,13 @@ def main(argv=None):
         print(f"source: {audit['completed_days']} days, {audit['matches']} matches, "
               f"{audit['source_rows']} player logs")
         print(f"identity: {identity['resolved']} resolved, {identity['unresolved']} unresolved")
-        if args.dry_run:
+        if not args.apply:
             print("dry-run: source and reconciliation passed; nothing written")
             return 0
+        require_apply_contract(args, audit, db_path)
+        backup_path = pathlib.Path(args.backup).resolve()
+        backup_check = verified_backup(con, backup_path)
+        print(f"backup: {backup_path}; quick_check={backup_check}")
         con.execute("BEGIN IMMEDIATE")
         publish(con, resolved)
         con.commit()
