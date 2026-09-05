@@ -94,7 +94,6 @@ export default function FightForm({ playerId, fighter }: { playerId: number; fig
       >
         <span>
           <span className="block text-xs font-semibold uppercase tracking-wide text-zinc-300">Last 5 fights</span>
-          <span className="mt-0.5 block text-[11px] text-zinc-600">Fight form for {fighter}</span>
         </span>
         <span className="shrink-0 text-sm text-zinc-500" aria-hidden="true">{open ? '▾' : '▸'}</span>
       </button>

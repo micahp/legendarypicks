@@ -10,7 +10,7 @@ import urllib.request
 
 import collections
 import re
-from .config import (MARKET_MAP, _MLS_CLUB_CODES, _MLS_NON_PLAYER_OUTCOMES, _MLS_PLAYER_GROUPS, _MLS_PLAYER_MARKETS, _SOCCER_MARKET_RULES, _STALE_TEAM_TAGS, _TEAM_LEVEL_OUTCOMES, _UFC_METHOD, _UNMAPPED_PLAYER_MARKETS, _WC_SKIP_KW)  # noqa: E402
+from .config import (MARKET_MAP, _MLS_CLUB_CODES, _MLS_NON_PLAYER_OUTCOMES, _MLS_PLAYER_GROUPS, _MLS_PLAYER_MARKETS, _SOCCER_MARKET_RULES, _STALE_TEAM_TAGS, _TEAM_LEVEL_OUTCOMES, _GROUP_SEEN, _LADDER_OUTCOMES, _UFC_METHOD, _UNMAPPED_PLAYER_MARKETS, _WC_SKIP_KW)  # noqa: E402
 
 def _parse_ufc_props(event: dict) -> list:
     comps = [c.get("name") for c in event.get("competitors", []) if c.get("name")]
@@ -439,9 +439,24 @@ def _parse_standard_props(event: dict, league: str) -> list:
     for dg in event.get("displayGroups", []):
         group_desc = (dg.get("description") or "").lower()
 
-        # Only process player/pitcher props
-        if "prop" not in group_desc:
-            continue
+        # NO GROUP-NAME FILTER. This used to be `if "prop" not in group_desc: continue`,
+        # which asked whether Bovada happened to put the word "prop" in a display group's
+        # NAME. It does for "Batter Props" and "TD Scorer Props"; it does not for
+        # "Receiving Yards", "Rushing Yards" or "Passing Yards", which are the groups
+        # carrying the yardage over/unders that most of football's player props live in.
+        #
+        # Measured 2026-09-05, player-attributed markets discarded by that one line:
+        #   nfl    347 skipped vs 275 kept  (Receiving 156, Rushing 90, Passing 57)
+        #   ncaaf  292 skipped vs 145 kept  (Alternate 156, Receiving 71, Passing 36)
+        #   mlb     60 skipped vs 958 kept  (Alternate 60)
+        #
+        # It is safe to drop because the group name was never the real gate. Every
+        # market still has to yield an Over/Under outcome, still has to split a player
+        # off its description, and still gets dropped if that "player" is one of the
+        # fixture's own clubs. Those three guards are what actually decides a player
+        # prop, and they run below regardless of what the group is called.
+        _GROUP_SEEN[(league, dg.get("description") or "")] = (
+            _GROUP_SEEN.get((league, dg.get("description") or ""), 0) + 1)
 
         for market in dg.get("markets", []):
             market_desc = (market.get("description") or "").strip()
@@ -473,6 +488,16 @@ def _parse_standard_props(event: dict, league: str) -> list:
                     side = "over"
                 elif desc_lower == "under":
                     side = "under"
+                elif re.match(r"^[\d.]+\+\s", desc):
+                    # An ALTERNATE-LINE LADDER rung: "10+ Receiving Yards -725",
+                    # "20+ -200", eleven of them per market (key=GAME-PROP-12). These are
+                    # real priced player props and we do not take them yet, because a rung
+                    # is not an over/under: one market becomes eleven rows and the board
+                    # would bury the single-line props under them. Counted so that
+                    # "we decided not to" never looks like "the publisher stopped sending".
+                    _LADDER_OUTCOMES[(league, market_head)] = (
+                        _LADDER_OUTCOMES.get((league, market_head), 0) + 1)
+                    continue
                 else:
                     # Not an over/under outcome — it's a player name for yes/no props
                     # e.g., "Kyle Schwarber (PHI)"

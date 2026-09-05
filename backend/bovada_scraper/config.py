@@ -17,6 +17,12 @@ LEAGUES = {
     "mlb":  ("baseball", "mlb"),
     "nba":  ("basketball", "nba"),
     "nfl":  ("football", "nfl"),
+    # NCAAF, added 2026-09-05. We have carried NCAAF props since Aug 29 but every one
+    # came from the RotoWire relay, and 3,802 of them are priced at a fabricated -137.
+    # Bovada carries 637 player-attributed markets across 67 college fixtures with real
+    # prices, and was never configured here. Path is `football/college-football`;
+    # `football/ncaaf` is not a Bovada slug.
+    "ncaaf": ("football", "college-football"),
     "nhl":  ("hockey", "nhl"),
     "wc":   ("soccer", "fifa-world-cup/fifa-world-cup-matches"),
     # MLS was here from 2026-08-16 until later the same day, on the continent path
@@ -260,6 +266,14 @@ _RESTED_LEAGUES = []
 # Counted, not silenced: a league whose only offering is team markets must read differently
 # from a league that scraped nothing.
 _TEAM_LEVEL_OUTCOMES = {}
+# Every display group the parser walked, per league. The group-name filter that used to
+# gate this parser silently discarded 347 NFL and 292 NCAAF player-attributed markets,
+# and nothing reported it because a group that is never visited leaves no trace. Now it
+# does.
+_GROUP_SEEN = {}
+# Alternate-line ladder rungs seen and deliberately not ingested ("10+ Receiving Yards").
+# A decision we made, kept distinct from data the publisher stopped sending.
+_LADDER_OUTCOMES = {}
 
 # UFC has no per-fighter STAT props on Bovada; the fighter-attributed market is Method of Victory. Map
 # each outcome to a yes/no prop on the fighter (o0.5), mirroring the WC anytime-goal shape. Fight-level

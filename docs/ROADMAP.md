@@ -35,6 +35,45 @@ opens **2026-08-29, nine days out**. That is the only hard date on the board.
 
 ---
 
+## 0. FIRST: EPL, La Liga and Serie A onto Bovada
+
+**Micah's call, 2026-09-05. This is the top of the board.** Not started, deliberately:
+it is a lot of work and it must not be mixed into the odds work happening now.
+
+We hold **zero** props for these three leagues. Not thin, zero. Measured the same day
+against Bovada's own sharded coupons, from this datacenter box, no workaround:
+
+```
+league   events  player-prop markets  priced outcomes
+epl          12                  528             3178
+laliga       17                  586             2254
+seriea       17                  546             2243
+                              1,660            7,675
+```
+
+Groups carried: EPL `Shots 145, Player Props 94, Goal Props 40, Cards 8, Corners 8`;
+La Liga `Game Props 171, Shots 70, Goal Props 65, Player Props 51`.
+
+Why it is more than a config line, and why it is not being done today:
+
+- Bovada is already in `LEAGUES` for six leagues and the soccer parser exists, so the
+  FETCH is close to free. Everything after it is not.
+- These are new leagues to the spine: fixtures, clubs, and players all have to resolve,
+  and `_MLS_CLUB_CODES` style club-membership sets do not exist for them.
+- `prop_games` has no epl/laliga/seriea rows, so there is nothing for a prop to attach
+  to until a fixture ingest runs.
+- The coverage contract requires a MANIFEST entry written BEFORE the ingest, per
+  COV-statset. Three leagues, three entries.
+- `player_game_logs` has no rows for any of them, so every prop lands unchartable until
+  a log ingest exists, exactly as tennis does today.
+
+Underdog also publishes these under `sport_id=FIFA` (413 players, 1,309 balanced lines
+including Goals, Assists, Shots on Target, Saves and Fouls Committed), and
+`ingest_underdog_props.py` now takes a sport parameter, so that path is one map away.
+Its odds are real, unlike the relay's.
+
+---
+
 ## 1. What production is actually running
 
 **STALE — the section below described the 2026-08-25 measurement. Re-measured 2026-08-31:

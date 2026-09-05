@@ -61,10 +61,22 @@ class LeagueBackoffTests(unittest.TestCase):
         state = {"ufc": {"empty_runs": 9, "last_empty_at": "not-a-timestamp"}}
         self.assertTrue(bs._should_fetch("ufc", state)[0])
 
-    def test_mls_is_no_longer_scraped_from_bovada(self):
-        """MLS props come from the RotoWire/PrizePicks relay, which prices 7 of the 11
-        markets the league is being built for. Bovada prices 2."""
-        self.assertNotIn("mls", bs.LEAGUES)
+    def test_every_league_we_carry_props_for_is_configured(self):
+        """MLS and NCAAF were both absent and both were mistakes, for different reasons.
+
+        MLS was REMOVED 2026-08-17 on the premise that a second book writing goals and
+        assists would mean two sources disagreeing with the relay. The relay writes ZERO
+        of both, so there was no disagreement to create and the board shipped a soccer
+        league with no goalscorer market for 19 days.
+
+        NCAAF was never configured at all. Every one of its props came from the relay,
+        and 3,802 of those carry a fabricated -137 price.
+
+        Bovada is the only real-price source for several of these leagues, so a league
+        we serve props for and do not fetch here is a league priced by placeholder.
+        """
+        for league in ("mls", "ncaaf", "nfl", "mlb", "atp", "wta", "ufc", "lcup"):
+            self.assertIn(league, bs.LEAGUES, league)
 
 
 if __name__ == "__main__":
