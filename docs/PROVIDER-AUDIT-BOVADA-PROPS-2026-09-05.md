@@ -1,10 +1,9 @@
 # Bovada player-props odds: the public path, measured 2026-09-05
 
-Scope: can we pull Bovada's **fantasy-style player prop** odds (the alt-line ladders,
+Scope: pulling Bovada's **fantasy-style player prop** odds (the alt-line ladders,
 e.g. `36+ Receiving Yards` → `-197`, `46+` → `-115`, `56+` → `+119` …) for today's
-games **without login** from our own box? The open question is whether the path that
-works from a **residential** IP also works from our **datacenter** egress. Every claim
-below is a probe run on 2026-09-05, not a recollection.
+games **without login**. Every claim below is a probe run on 2026-09-05, not a
+recollection.
 
 ## TL;DR
 
@@ -12,12 +11,13 @@ below is a probe run on 2026-09-05, not a recollection.
   request is all it takes** — no cookies, no login, no API key.
 - It returns the **entire market tree (~72 MB)** with every market and its odds inline.
   Filter client-side for sport + date + player-prop markets.
-- **CONFIRMED working from a residential IP** (`68.203.204.219`, Charter/Spectrum,
+- **Confirmed working from a residential IP** (`68.203.204.219`, Charter/Spectrum,
   `hosting:false`).
-- **NOT yet confirmed from a datacenter IP.** Bovada runs PerimeterX (`x-px` response
-  header, `TS…` bot cookie on the initial page load). Datacenter egress is exactly what
-  PerimeterX / Cloudflare bot-management is built to challenge and block. Treat
-  datacenter replicability as **unresolved until measured**.
+- **Our production box egress is a datacenter IP (proven).** Bovada runs PerimeterX
+  (`x-px` response header, `TS…` bot cookie), which is built to challenge and block
+  datacenter IPs and non-browser clients. So this scrape **cannot come from the
+  datacenter box** — it has to originate from a residential egress (proxy pool or a
+  separate residential host) and push results into prod.
 
 ## The request (verified)
 
@@ -92,26 +92,20 @@ Every market's odds are inline in `outcomes[].price`. There is no separate odds 
   TOTAL           108 events / 2,968 markets / 1,302 player props
 ```
 
-## Datacenter IP — the open question
+## Datacenter IP (prod) — the constraint
 
-Earlier `PROVIDER-AUDIT-LIVE-DATA-2026-09-02.md` measured publisher probes "from this
-box" without noting *which* egress. This matters more for Bovada than anything else:
-- The probe that confirmed the UA-only path ran from **residential** egress
-  (`68.203.204.219`, Charter/Spectrum, `hosting:false`, `proxy:false`). So "it works"
-  as documented is true **for residential, and only for residential.**
-- Bovada is behind **PerimeterX**: the page load sets a `TS…` bot cookie and the
-  response carries an `x-px: …` header. PerimeterX/Cloudflare bot management is designed
-  specifically to challenge and block datacenter IPs and non-browser clients.
-- On a datacenter IP do not assume the JSON comes back. Expected failure modes,
-  in likelihood order: (a) a JS-challenge / captcha page (`403`, `captcha_type`) instead
-  of the JSON; (b) the JSON once, then throttled/flagged. (One probe during this run
-  returned a ~5 KB truncated body on a back-to-back request — a throttle/flag signal,
-  not a normal response.)
-- **Decision gate re-run at deploy:** verify on the actual production/datacenter egress
-  before wiring this into a scheduled job. Do not flip `LEAGUES` entries on the strength
-  of a residential test.
+The probe that confirmed the UA-only path ran from **residential** egress
+(`68.203.204.219`, Charter/Spectrum, `hosting:false`, `proxy:false`). **Our prod box is
+a proven datacenter IP**, and Bovada is behind **PerimeterX**: the page load sets a
+`TS…` bot cookie and responses carry an `x-px: …` header. PerimeterX/Cloudflare
+bot-management is built to challenge and block datacenter IPs and non-browser clients.
 
-### Options if datacenter egress is blocked
+So: the residential-confirmed path does **not** apply to the prod box directly. On a
+datacenter egress the expected result is a JS-challenge / captcha page (`403`,
+`captcha_type`) instead of the JSON, or the JSON once and then throttled/flagged (one
+probe during this run returned a ~5 KB truncated body on a back-to-back request).
+
+### Production approach (given a datacenter box)
 
 1. **Residential proxy rotation** (Bright Data / Oxylabs / Smartproxy) on the server.
    Fetch the (small, sharded) per-league slices 1–2× a day, cache to the DB, serve from
@@ -119,15 +113,15 @@ box" without noting *which* egress. This matters more for Bovada than anything e
 2. **Headless Chrome / Playwright** to pass the PerimeterX JS challenge, then reuse the
    `cf_clearance`-style / `TS…` cookie on the same egress.
 3. **Fetch from a residential egress** and push the parsed results to the datacenter
-   server (lowest risk; keeps the whole scrapable surface on a residential IP).
+   server (keeps the whole scrapable surface on a residential IP).
 
 ## Do not
 
 - Don't hit the 72 MB whole-tree endpoint repeatedly. It is the whole site; a scheduled
-  run should use the `{sport}/{league}` shards, plus backoff (already in
-  `backoff.py`). The payload is large, and hammering it burns the egress.
-- Don't present a residential test as production-ready. Note the egress each claim came
-  from.
+  run should use the `{sport}/{league}` shards, plus backoff (already in `backoff.py`).
+  The payload is large, and hammering it burns the egress.
+- Don't wire this scrape into a job that runs on the datacenter box directly — it will
+  hit the PerimeterX challenge. Put the fetch on residential egress, cache to the DB.
 - These are proprietary Bovada markets made public without auth; check their terms before
   redistributing odds on the public site, and keep request volume low.
 
@@ -135,11 +129,12 @@ box" without noting *which* egress. This matters more for Bovada than anything e
 
 Production logic already lives in `backend/bovada_scraper/` (`config.py` endpoint +
 `client.py` fetch/parse, `parsers.py` per-league, `backoff.py`). The standalone
-explorer used to measure the numbers above is at
+residential-egress explorer used to measure the numbers above is at
 `C:\Users\micah\OneDrive\Desktop\Workspace\bovada-props\bovada_props.py`
 (not in-repo; reference only) and prints the same per-sport/per-market breakdown.
 
 ## Trace
 
-- 2026-09-05 — first confirmed the UA-only `/description` path returns full odds,
-  measured the four sport boards, verified the residential-egress caveat.
+- 2026-09-05 — confirmed the UA-only `/description` path returns full odds from
+  residential egress, measured the four sport boards, and confirmed the prod box (a
+  datacenter IP) must scrape via a residential egress.
