@@ -228,10 +228,28 @@ _MARKET_STAT_KEY = {
     # lookup returns "market not chartable") until that lands. Never fabricate a stat key.
     # total_sets is a match-level Bovada market (O/U 2.5, no player attribution) deferred from
     # _parse_tennis_props; listed here so the intent is explicit.
+    # Tennis is mapped but every value is None, and that is the honest state:
+    # there are ZERO tennis rows in player_game_logs and player_game_logs_all,
+    # so nothing here can chart. A market ABSENT from this map reads identically
+    # to one mapped to None, which is why the six Underdog markets added on
+    # 2026-09-05 are listed rather than left out -- the board should say "no
+    # history" because we checked, not because nobody wrote the entry.
+    #
+    # All six settle from countable match stats and become chartable the moment
+    # a tennis game-log ingest exists. The intended keys are named here so that
+    # ingest has a target to write to, and so the next person does not have to
+    # re-derive them:
+    #   aces -> aces, double_faults -> double_faults, games_won -> games_won,
+    #   breakpoints_won -> breakpoints_won, points_won -> points_won,
+    #   sets_won -> sets_won
     "atp": {"match_winner": None, "total_games": None, "set_betting": None,
-            "win_a_set": None, "total_sets": None},
+            "win_a_set": None, "total_sets": None,
+            "aces": None, "double_faults": None, "games_won": None,
+            "breakpoints_won": None, "points_won": None, "sets_won": None},
     "wta": {"match_winner": None, "total_games": None, "set_betting": None,
-            "win_a_set": None, "total_sets": None},
+            "win_a_set": None, "total_sets": None,
+            "aces": None, "double_faults": None, "games_won": None,
+            "breakpoints_won": None, "points_won": None, "sets_won": None},
 }
 
 
