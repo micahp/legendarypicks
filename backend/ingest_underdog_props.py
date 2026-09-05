@@ -18,6 +18,7 @@ import re
 import sqlite3
 import sys
 import urllib.request
+import collections
 from collections import defaultdict
 from typing import Dict, List, Optional, Set, Tuple
 
@@ -42,6 +43,40 @@ _UFC_MARKETS = {
     "fight_time": "fight_time",
     "finishes": "finishes",
 }
+
+# TENNIS, added 2026-09-05. Underdog publishes 49 tennis players and 366 balanced
+# lines in the SAME payload this file already fetches every 30 minutes, and we
+# had never asked: the parser filtered on sport_id == "MMA" and discarded 2,106
+# of 2,134 players. Tennis is the shape this board wants and could not get
+# anywhere else -- Bovada's tennis coupon has exactly ONE fantasy-style player
+# over/under (Total Games) among 71 market shapes, and the RotoWire relay
+# carries no tennis at all.
+#
+# Mapped: the counting stats a tennis game log can settle from.
+_TENNIS_MARKETS = {
+    "games_won": "games_won",
+    "aces": "aces",
+    "double_faults": "double_faults",
+    "breakpoints_won": "breakpoints_won",
+    "points_won": "points_won",
+    "sets_won": "sets_won",
+}
+# DEFERRED, deliberately, and reported as unmapped rather than dropped in
+# silence. Two different reasons and they should not be conflated:
+#
+#   period_1_games_won, period_1_aces, period_1_games_played
+#       First-set-only. A single set is not a player's match performance and
+#       settling it needs set-scoped logs we do not have.
+#   games_played, sets_played, tie_breakers_played
+#       Match LENGTH, not player performance. Both players share the value, so
+#       it is the same row written twice under two names.
+#
+# These are useful to the tennis reprice model and wrong for a props board,
+# which is the same split as the Bovada Service Game props.
+_TENNIS_DEFERRED = {
+    "period_1_games_won", "period_1_aces", "period_1_games_played",
+    "games_played", "sets_played", "tie_breakers_played",
+}
 _SUBHEADER_RE = re.compile(r"^(Higher|Lower)\s+([\d.]+)\s")
 
 
@@ -58,10 +93,52 @@ def fetch() -> Dict:
 
 def parse_ufc(data: Dict) -> Tuple[List[Dict], Dict]:
     """Return board rows plus the source-side count needed for reconciliation."""
+    return parse_solo(data, "MMA", _UFC_MARKETS)
+
+
+def tennis_tour(game: Dict) -> Optional[str]:
+    """-> 'atp' | 'wta' | None, from Underdog's own competition grouping.
+
+    Underdog files every tennis match under sport_id TENNIS with no tour field,
+    but `sport_group_name` names the draw: "US Open Men's Singles", "US Open
+    Women's Singles", "ATP Challenger Como". LP keys tennis fixtures as atp/wta,
+    so a match we cannot classify is returned as None and DROPPED rather than
+    guessed -- filing a women's match under atp would silently create a second
+    fixture for a match we already hold.
+    """
+    name = (game.get("sport_group_name") or "")
+    low = name.lower()
+    if "women" in low or low.startswith("wta"):
+        return "wta"
+    if "men" in low or low.startswith("atp"):
+        return "atp"
+    return None
+
+
+def parse_tennis(data: Dict, tour: str) -> Tuple[List[Dict], Dict]:
+    """Tennis over/unders from the same payload UFC already reads, one tour."""
+    return parse_solo(data, "TENNIS", _TENNIS_MARKETS,
+                      deferred=_TENNIS_DEFERRED,
+                      game_filter=lambda g: tennis_tour(g) == tour)
+
+
+def parse_solo(data: Dict, sport_id: str, market_map: Dict,
+               deferred: set = frozenset(),
+               game_filter=None) -> Tuple[List[Dict], Dict]:
+    """One parser for every 1v1 sport Underdog files under `solo_games`.
+
+    Was hardcoded to MMA. Parameterised rather than copied, because a second
+    copy is a second ruler for the same question and they drift.
+
+    `deferred` names stats we CHOSE not to map. They are counted separately from
+    stats we simply do not recognise, because "we decided against this" and "the
+    publisher started sending something new" are different facts and a single
+    unmapped bucket cannot tell them apart.
+    """
     players = {
         str(player["id"]): player
         for player in data.get("players", [])
-        if player.get("sport_id") == "MMA" and player.get("id") is not None
+        if player.get("sport_id") == sport_id and player.get("id") is not None
     }
     appearances = {
         str(appearance["id"]): appearance
@@ -71,23 +148,34 @@ def parse_ufc(data: Dict) -> Tuple[List[Dict], Dict]:
     games = {
         str(game["id"]): game
         for game in data.get("solo_games", [])
-        if game.get("sport_id") == "MMA" and game.get("id") is not None
+        if game.get("sport_id") == sport_id and game.get("id") is not None
+        and (game_filter is None or game_filter(game))
     }
     scheduled_game_keys = {
         key for key, game in games.items() if game.get("status") == "scheduled"
     }
 
     props = []
+    unmapped, deferred_hits = collections.Counter(), collections.Counter()
     for source_line in data.get("over_under_lines", []):
         if source_line.get("line_type") != "balanced":
             continue
         over_under = source_line.get("over_under") or {}
         appearance_stat = over_under.get("appearance_stat") or {}
-        market = _UFC_MARKETS.get(appearance_stat.get("stat"))
-        if not market:
-            continue
+        # Resolve the appearance FIRST. This is one unfiltered bulk book covering
+        # every sport Underdog runs, so testing the market before knowing whose
+        # line it is counts NFL and MLB stats as unmapped for tennis -- which is
+        # exactly the noise that makes an unmapped report unreadable and then
+        # ignored.
         appearance = appearances.get(str(appearance_stat.get("appearance_id")))
         if not appearance:
+            continue
+        stat = appearance_stat.get("stat")
+        market = market_map.get(stat)
+        if not market:
+            # Counted, never silently dropped. A stat we chose to defer and a
+            # stat the publisher just invented must not look the same.
+            (deferred_hits if stat in deferred else unmapped)[stat] += 1
             continue
         game_key = str(appearance.get("match_id"))
         game = games.get(game_key)
@@ -132,6 +220,12 @@ def parse_ufc(data: Dict) -> Tuple[List[Dict], Dict]:
                 "start_time": game.get("scheduled_at"),
             })
 
+    if unmapped:
+        print("  UNMAPPED %s stats (publisher sent something we do not know): %s"
+              % (sport_id, ", ".join("%s=%d" % kv for kv in unmapped.most_common())))
+    if deferred_hits:
+        print("  deferred %s stats (mapped out on purpose): %s"
+              % (sport_id, ", ".join("%s=%d" % kv for kv in deferred_hits.most_common())))
     return props, {
         "scheduled_games": len(scheduled_game_keys),
         "scheduled_players": len({p["source_player_key"] for p in props}),
@@ -473,13 +567,25 @@ def direct_ingest(props: List[Dict], dry_run: bool = False) -> Dict:
 
 
 def main() -> int:
-    if len(sys.argv) < 2 or sys.argv[1] != LEAGUE:
+    global LEAGUE
+    league = sys.argv[1] if len(sys.argv) > 1 else ""
+    if league not in ("ufc", "atp", "wta"):
         print(__doc__)
         return 1
+    # LEAGUE is a module constant threaded through twelve DB call sites (source
+    # ids, aliases, unresolved players, fixture keys). Rebinding it once here,
+    # before any of that runs, is deliberate: adding a parameter to twelve
+    # signatures to support a second sport is a bigger and riskier diff than
+    # setting the value the whole write path already reads. One process, one
+    # league, one run.
+    LEAGUE = league
     dry_run = "--dry-run" in sys.argv
     print("Fetching one Underdog public bulk book...")
     data = fetch()
-    props, source_counts = parse_ufc(data)
+    if league == "ufc":
+        props, source_counts = parse_ufc(data)
+    else:
+        props, source_counts = parse_tennis(data, league)
     print(
         "Source: {scheduled_games} scheduled MMA games, {scheduled_players} fighters, "
         "{scheduled_props} balanced UFC props".format(**source_counts)
