@@ -36,7 +36,15 @@ PROVIDERS = [
         "cadence_min": 30,
         "timeout_sec": 300,
         "host_lock": "underdog",
-        "steps": [["ingest_underdog_props.py", "ufc"]],
+        # atp/wta added 2026-09-05 with the tennis parser. Underdog publishes 49 tennis
+        # players and 366 balanced lines in the SAME payload the ufc step already fetches,
+        # and it is the only source for aces, double faults and breakpoints won -- Bovada's
+        # tennis coupon has one fantasy-style over/under among 71 market shapes and the
+        # RotoWire relay carries no tennis at all. Three steps rather than one because
+        # LEAGUE is per-run; the fetch is cached per host by the runner's own lock.
+        "steps": [["ingest_underdog_props.py", "ufc"],
+                  ["ingest_underdog_props.py", "atp"],
+                  ["ingest_underdog_props.py", "wta"]],
         "needs_api_base": False,
     },
     {
