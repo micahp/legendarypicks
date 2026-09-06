@@ -9,7 +9,12 @@ Description=Fire the ingest registry hourly; each job honours its own cadence
 #
 # :22 deliberately avoids the props timer at :04 and :34 and the scoreboard cadence, so two
 # batch jobs are not spending the same publisher's per-minute budget at the same instant.
+# TWICE an hour, because the registry's tightest cadence is settlement at 30 minutes and a
+# timer that fires hourly can never deliver it: a job's cadence_min is a ceiling on how often
+# it runs, never a floor. Every other job stays on its own cadence and simply records
+# skipped_cadence on the extra firing, which costs nothing.
 OnCalendar=*-*-* *:22:00
+OnCalendar=*-*-* *:52:00
 Persistent=true
 Unit=legendarypicks-ingest-jobs.service
 
