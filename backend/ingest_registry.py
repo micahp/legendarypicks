@@ -58,10 +58,16 @@ JOBS: List[Dict[str, object]] = [
             ["ingest_soccer_logs.py", "--league", "mls", "--request-budget", "12"],
             ["ingest_soccer_logs.py", "--league", "lcup", "--request-budget", "12"],
         ],
-        # 12 calls at 4s spacing is about 15 requests in a rolling minute. The scoreboard
-        # path already spends a measured ~5/min on site.web.api, and the median run of
-        # requests preceding a 200 is 36/min against 63 preceding a 403.
-        "env": {"LP_INGEST_MIN_INTERVAL": "4.0"},
+        # MEASURED, not estimated. The first end-to-end run on 2026-09-06 at 4.0s spacing
+        # peaked at 42 requests/min on site.web.api against a predicted ~20, and every one
+        # of 506 requests in that window returned 200. The prediction was wrong twice: the
+        # scoreboard baseline is higher than the ~5/min it was sized against, and
+        # --request-budget counts SUMMARY requests only, so phase and season enumeration
+        # spend on top of it. 42 clears the 63/min median that precedes a 403 but sits above
+        # the 36/min median that precedes a 200, which is less margin than intended for a
+        # job that shares this host with the serving path. 6.0s buys that margin back; the
+        # run takes longer and nobody waits on it.
+        "env": {"LP_INGEST_MIN_INTERVAL": "6.0"},
         "needs_api_base": False,
         "freshness": [
             {
