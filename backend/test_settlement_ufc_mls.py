@@ -352,8 +352,11 @@ def test_mls_uses_durable_appearance_stats_without_a_summary(monkeypatch):
 
     # The market is understood but no stored shots value exists, so it remains
     # retryable rather than being silently turned into zero.
-    assert result == {"settled": 3, "void": 0, "unmappable": 0,
-                      "pending": 4, "errors": 0}
+    assert result == {
+        "settled": 3, "void": 0, "unmappable": 0, "pending": 4, "errors": 0,
+        "msg": "WARNING game 2: soccer source starvation — 2 of 7 unsettled "
+               "props have no stored player appearance",
+    }
     rows = {row["prop_id"]: (row["actual_value"], row["hit"])
             for row in con.execute("SELECT * FROM prop_results")}
     assert rows == {

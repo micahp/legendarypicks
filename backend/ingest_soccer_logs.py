@@ -368,6 +368,10 @@ def _core_event_stats(league: str, game_id: str) -> tuple:
 _BATCH_DECLARED = []
 
 
+class _SummaryBudgetExhausted(Exception):
+    """Internal control flow: the declared site.web request share is spent."""
+
+
 def _declare_batch():
     """Tell the shared ESPN client this process is a batch job, once.
 
@@ -393,7 +397,8 @@ def _declare_batch():
     _BATCH_DECLARED.append(True)
 
 
-def _summary_retry(league: str, game_id: str, attempts: int = 4) -> dict:
+def _summary_retry(league: str, game_id: str, attempts: int = 4,
+                   before_request=None) -> dict:
     """espn.summary with retry/backoff.
 
     espn_client's shared fetcher deliberately has empty retry_waits (a page
@@ -406,7 +411,11 @@ def _summary_retry(league: str, game_id: str, attempts: int = 4) -> dict:
     last = None
     for i in range(attempts):
         try:
+            if before_request:
+                before_request()
             return espn.summary(league, game_id)
+        except _SummaryBudgetExhausted:
+            raise
         except Exception as e:  # noqa: BLE001 - any failure is retried
             last = e
             time.sleep(min(60, 2.0 * (i + 1)))
@@ -422,6 +431,19 @@ def _core_path(league: str) -> str:
             f"'path' to backend/espn_leagues.py before ingesting it"
         )
     return entry["path"]
+
+
+def _published_current_season(league: str) -> int:
+    """The current season key from this league's published season collection."""
+    url = f"{CORE}/{_core_path(league)}/seasons?limit=1"
+    doc = _get_core(url)
+    items = doc.get("items") or []
+    ref = items[0].get("$ref") if items and isinstance(items[0], dict) else ""
+    match = re.search(r"/seasons/(\d{4})(?:\?|/|$)", ref or "")
+    if not match:
+        raise RuntimeError(
+            f"ESPN published no current season for {league} (asked {url})")
+    return int(match.group(1))
 
 
 def _team_code(league: str, abbrev: Optional[str]) -> str:
@@ -689,7 +711,7 @@ def _opponent(team: str, home_away: str, home: str, away: str):
     return None
 
 
-def ingest(league: str, season: int, dry_run: bool = False,
+def ingest(league: str, season: Optional[int] = None, dry_run: bool = False,
            request_budget: int = 80, force_refetch: bool = False,
            deep: bool = False) -> int:
     # The summary fetches below go through espn_client's shared fetcher, which
@@ -698,6 +720,10 @@ def ingest(league: str, season: int, dry_run: bool = False,
     # with no Retry-After (measured 2026-08-06; the wall outlives short
     # backoffs). Pace the shared fetcher for the duration of the run.
     espn.set_min_interval(float(os.environ.get("LP_INGEST_MIN_INTERVAL") or 0.5))
+    # A season is a publisher definition, not the server's calendar year. Reuse
+    # the existing ESPN /seasons?limit=1 resolver so this recurring pipeline does
+    # not silently pin itself to 2026. An explicit season still supports backfills.
+    season = int(season) if season is not None else _published_current_season(league)
     display_name, types = _published_types(league, season)
     print(f"{league} {season} ({display_name or 'no published label'}): "
           f"{len(types)} published types")
@@ -720,6 +746,15 @@ def ingest(league: str, season: int, dry_run: bool = False,
     skipped_already_held = 0
     requests_spent = 0
     budget_exhausted = False
+
+    def spend_summary_request():
+        """Count and cap every site.web attempt, including retries."""
+        nonlocal requests_spent, budget_exhausted
+        if requests_spent >= request_budget:
+            budget_exhausted = True
+            raise _SummaryBudgetExhausted
+        requests_spent += 1
+
     for type_doc in types:
         type_id = type_doc.get("id") or ""
         type_name = type_doc.get("name") or f"type {type_id}"
@@ -746,10 +781,10 @@ def ingest(league: str, season: int, dry_run: bool = False,
             #
             # Every run used to re-fetch every completed match's summary whether or not we
             # already had it, so re-running a season was always full price -- 511 requests
-            # for MLS 2026. ESPN's limit is a COUNT per host (~100 measured), so a full
-            # season could not complete in one run and a resumed run started from zero
-            # again. Skipping what is already stored makes the backfill chunkable: each run
-            # spends its budget on matches nobody has fetched yet.
+            # for MLS 2026. That creates an avoidable burst against the shared host, and a
+            # resumed run used to start from zero again. Skipping what is already stored
+            # makes the refresh resumable: each run
+            # spends its paced burst-rate share on matches nobody has fetched yet.
             #
             # The freshness key is a stat introduced with the widened set. A row written by
             # the old 4-stat version does not carry it, so widening re-fetches exactly the
@@ -765,8 +800,10 @@ def ingest(league: str, season: int, dry_run: bool = False,
                 break
 
             try:
-                requests_spent += 1
-                summary = _summary_retry(league, game_id)
+                summary = _summary_retry(
+                    league, game_id, before_request=spend_summary_request)
+            except _SummaryBudgetExhausted:
+                break
             except Exception as exc:  # noqa: BLE001
                 print(f"    {league} {season} [{type_id}] event {game_id}: "
                       f"summary failed ({exc})")
@@ -938,27 +975,27 @@ def ingest(league: str, season: int, dry_run: bool = False,
               f"{deep_matched} athletes matched to a summary line")
     if budget_exhausted:
         print(f"  BUDGET EXHAUSTED — stopped at {request_budget} requests with matches "
-              f"still unfetched. ESPN's limit is a COUNT per host, so this run stopped on "
-              f"purpose rather than discovering the wall. Re-run to continue; matches "
+              f"still unfetched. ESPN's limit is a BURST RATE per host; this run stopped "
+              f"at its declared share. Re-run to continue; matches "
               f"already stored are skipped and cost nothing.")
     print(f"{league} {season} table now has {total} logs, {linked} linked.")
     return ingested
 
 
-if __name__ == "__main__":
+def main(argv=None):
     ap = argparse.ArgumentParser(
         description="Ingest per-match soccer player logs from ESPN by season type."
     )
     ap.add_argument("--league", default="mls",
                     help="ESPN soccer league key (mls today, epl later)")
-    ap.add_argument("--season", type=int, required=True,
-                    help="Season key to ingest (e.g. 2025 for MLS)")
+    ap.add_argument("--season", type=int,
+                    help="Season key to ingest; default is ESPN's published current season")
     ap.add_argument("--dry-run", action="store_true",
                     help="Fetch, resolve and report without writing any rows")
     ap.add_argument("--request-budget", type=int, default=80,
-                    help="Stop after this many summary requests to site.web.api. ESPN's "
-                         "limit is a COUNT per host (~100 measured), so a season is "
-                         "ingested over several runs; already-stored matches are free.")
+                    help="Stop after this many summary attempts to site.web.api, including "
+                         "retries. ESPN's limit is a burst rate per host; already-stored "
+                         "matches are free.")
     ap.add_argument("--deep", action="store_true",
                     help="also read the core api per-athlete stats (tackles, "
                          "clearances, crosses, passes, shot assists). Costs about "
@@ -968,6 +1005,11 @@ if __name__ == "__main__":
     ap.add_argument("--force-refetch", action="store_true",
                     help="Re-fetch matches already stored (use after changing what is "
                          "extracted from the summary)")
-    args = ap.parse_args()
-    raise SystemExit(ingest(args.league, args.season, args.dry_run,
-                            args.request_budget, args.force_refetch, args.deep))
+    args = ap.parse_args(argv)
+    ingest(args.league, args.season, args.dry_run,
+           args.request_budget, args.force_refetch, args.deep)
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

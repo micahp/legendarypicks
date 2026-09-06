@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """settle_game.py — top-level driver: grade all unsettled props for one game."""
 import datetime as dt
+import re
 import sqlite3
 
 from settlement.market_mapping import resolve_market, resolve_compound_market
@@ -68,6 +69,18 @@ def _void_cancelled_game(con: sqlite3.Connection, game_id: int) -> dict:
     return {"settled": 0, "void": len(prop_ids), "unmappable": 0,
             "pending": 0, "errors": 0,
             "msg": f"game {game_id}: publisher-confirmed cancellation"}
+
+
+def _publisher_cancellation_reason(result: dict):
+    """Return ESPN's explicit cancellation text; never infer it from state."""
+    if result.get("completed") is True:
+        return None
+    for field in ("status", "status_detail"):
+        value = str(result.get(field) or "").strip()
+        normalized = re.sub(r"[^a-z]", "", value.lower())
+        if "postpon" in normalized or "cancel" in normalized:
+            return value
+    return None
 
 
 def settle_game(con: sqlite3.Connection, game_id: int) -> dict:
@@ -190,6 +203,25 @@ def settle_game(con: sqlite3.Connection, game_id: int) -> dict:
             else:
                 result = espn.game_result(league, espn_event_id)
             if not result.get("completed"):
+                # A linked postponed game reaches this recurring fetch on every
+                # settlement pass. ESPN's explicit status text is sufficient to
+                # terminate that retry loop; state=post alone is not, because it
+                # also describes finals. Recording the durable publisher reason
+                # feeds the cancellation path already used at the top of this
+                # function and voids every still-open prop in this same pass.
+                reason = _publisher_cancellation_reason(result)
+                cancellation_columns = {
+                    "cancelled_at", "cancel_reason", "cancel_source"
+                }
+                if reason and cancellation_columns.issubset(game_columns):
+                    con.execute(
+                        "UPDATE prop_games SET cancelled_at=?, cancel_reason=?, "
+                        "cancel_source=? WHERE id=? AND cancelled_at IS NULL",
+                        (dt.datetime.now(dt.timezone.utc).isoformat(), reason,
+                         "espn", game_id),
+                    )
+                    con.commit()
+                    return _void_cancelled_game(con, game_id)
                 return _pending_result(
                     con, game_id,
                     msg=f"game {game_id}: not final yet (state={result['state']}, "
