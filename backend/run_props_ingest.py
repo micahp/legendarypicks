@@ -206,10 +206,11 @@ def _elapsed(started: float) -> float:
     return time.monotonic() - started
 
 
-def _report(db_path: str, results: Dict[str, Dict[str, object]]) -> None:
-    print("--- props ingest run report ---")
+def _report(db_path: str, results: Dict[str, Dict[str, object]], registry=None,
+            label: str = "props ingest") -> None:
+    print("--- {} run report ---".format(label))
     print("  db: {}".format(db_path))
-    for provider in PROVIDERS:
+    for provider in (PROVIDERS if registry is None else registry):
         result = results[provider["id"]]
         print(
             "  {:<10} {:<18} {:>5.1f}s  {}".format(
@@ -218,22 +219,22 @@ def _report(db_path: str, results: Dict[str, Dict[str, object]]) -> None:
         )
 
 
-def _provider_ids() -> List[str]:
-    return [provider["id"] for provider in PROVIDERS]
+def _provider_ids(registry=None) -> List[str]:
+    return [provider["id"] for provider in (PROVIDERS if registry is None else registry)]
 
 
-def _parser() -> argparse.ArgumentParser:
+def _parser(registry=None) -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--only", choices=_provider_ids(), metavar="PROVIDER")
+    parser.add_argument("--only", choices=_provider_ids(registry), metavar="PROVIDER")
     parser.add_argument("--force", action="store_true", help="ignore provider cadence")
     parser.add_argument("--dry-run", action="store_true", help="run supported providers without writes")
     parser.add_argument("--list", action="store_true", help="print the provider registry and exit")
     return parser
 
 
-def _print_registry() -> None:
+def _print_registry(registry=None) -> None:
     print("provider   cadence_min  timeout_sec  host_lock  steps")
-    for provider in PROVIDERS:
+    for provider in (PROVIDERS if registry is None else registry):
         steps = "; ".join(" ".join(step) for step in provider["steps"])
         print(
             "{:<10} {:>11}  {:>11}  {:<9}  {}".format(
@@ -243,21 +244,28 @@ def _print_registry() -> None:
         )
 
 
-def _initial_results(only: Optional[str]) -> Dict[str, Dict[str, object]]:
+def _initial_results(only: Optional[str], registry=None) -> Dict[str, Dict[str, object]]:
     return {
         provider["id"]: {
             "status": "not_selected" if only and provider["id"] != only else "pending",
             "elapsed": 0.0,
             "tail": "not selected" if only and provider["id"] != only else "not run",
         }
-        for provider in PROVIDERS
+        for provider in (PROVIDERS if registry is None else registry)
     }
 
 
-def main(argv: Optional[Sequence[str]] = None) -> int:
-    args = _parser().parse_args(argv)
+def main(argv: Optional[Sequence[str]] = None, registry=None,
+         label: str = "props ingest") -> int:
+    """Drive one registry. `registry` defaults to PROVIDERS so the props timer is unchanged.
+
+    `run_ingest_jobs.py` passes `ingest_registry.JOBS` through this same function on purpose:
+    the ledger, the cadence skip, the host locks and the run lock are the parts that are hard
+    to get right, and a second copy of them would drift from this one.
+    """
+    args = _parser(registry).parse_args(argv)
     if args.list:
-        _print_registry()
+        _print_registry(registry)
         return 0
 
     configured_db = os.environ.get("LP_DB_PATH")
@@ -270,7 +278,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
               file=sys.stderr)
         return 2
 
-    results = _initial_results(args.only)
+    jobs = PROVIDERS if registry is None else registry
+    results = _initial_results(args.only, registry)
     try:
         con = sqlite3.connect(db_path, timeout=30)
         con.executescript(INGEST_RUNS_DDL)
@@ -281,13 +290,13 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
 
     run_lock = _try_lock(_run_lock_path(db_path))
     if run_lock is None:
-        print("props ingest already running for {}; skipping".format(db_path))
-        for provider in PROVIDERS:
+        print("{} already running for {}; skipping".format(label, db_path))
+        for provider in jobs:
             if not args.only or args.only == provider["id"]:
                 results[provider["id"]] = {
                     "status": "skipped_lock", "elapsed": 0.0, "tail": "run lock held"
                 }
-        _report(db_path, results)
+        _report(db_path, results, registry, label)
         con.close()
         return 0
 
@@ -297,7 +306,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     cycle_started = _utc_now()
     cycle_started_at = cycle_started.isoformat()
     try:
-        for provider in PROVIDERS:
+        for provider in jobs:
             provider_id = provider["id"]
             if args.only and args.only != provider_id:
                 continue
@@ -367,6 +376,10 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                 else:
                     child_env = os.environ.copy()
                     child_env["LP_DB_PATH"] = db_path
+                    # A job may pin its own pacing. `LP_INGEST_MIN_INTERVAL` is how an ESPN
+                    # job stays under a burst rate it shares with the serving path.
+                    for key, value in (provider.get("env") or {}).items():
+                        child_env[str(key)] = str(value)
                     for step_number, step in enumerate(provider["steps"], start=1):
                         argv_for_step = [sys.executable] + list(step)
                         if args.dry_run:
@@ -429,7 +442,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         run_lock.close()
         con.close()
 
-    _report(db_path, results)
+    _report(db_path, results, registry, label)
     # A cadence skip means this provider succeeded recently enough that we deliberately
     # did not ask again. A host-lock skip is different: the two staggered units should not
     # collide, so it proves an unexpected publisher caller is active and must turn the unit
