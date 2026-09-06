@@ -36,6 +36,13 @@ from typing import Dict, Optional, Set
 # check, it is a category error.
 _CLUB_LEAGUES = {"mls", "ligamx", "lcup", "nfl", "mlb", "nba", "nhl", "ncaaf", "wc"}
 
+# A cross-league competition is defined by the crossing. Leagues Cup is MLS against Liga MX,
+# so two MLS clubs cannot meet in it and neither can two Liga MX clubs. Membership alone
+# cannot see this: every club involved is a legitimate member, which is why 6 of prod's 10
+# lcup fixtures passed a membership check while not being Leagues Cup at all. Four were Liga
+# MX league games and two were MLS games duplicated from an already-linked mls row.
+_CROSS_LEAGUE = {"lcup": ("mls", "ligamx")}
+
 # How many distinct clubs a league must have on record before an absence means anything.
 # Below this the league is not "known", it is merely observed, and a missing club says more
 # about our coverage than about the fixture.
@@ -181,9 +188,24 @@ def belongs(con: sqlite3.Connection, league: str, home: str, away: str,
     if league.lower() not in _CLUB_LEAGUES:
         return None
     cache = _cache if _cache is not None else {}
-    if league not in cache:
-        cache[league] = known_clubs(con, league)
-    clubs = cache[league]
+
+    def clubs_for(name):
+        if name not in cache:
+            cache[name] = known_clubs(con, name)
+        return cache[name]
+
+    members = _CROSS_LEAGUE.get(league.lower())
+    if members:
+        first, second = (clubs_for(members[0]), clubs_for(members[1]))
+        if min(len(first), len(second)) < _MIN_CLUBS_TO_JUDGE:
+            return None
+        # One side from each member league, in either order. A club on record in BOTH sets
+        # satisfies whichever side it needs to, because the ambiguity is ours and must not
+        # convict a real fixture.
+        return bool((_on_record(home, first) and _on_record(away, second))
+                    or (_on_record(home, second) and _on_record(away, first)))
+
+    clubs = clubs_for(league)
     if len(clubs) < _MIN_CLUBS_TO_JUDGE:
         return None
     home_known, away_known = _on_record(home, clubs), _on_record(away, clubs)

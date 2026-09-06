@@ -147,3 +147,51 @@ class ThePublishedClubListIsWhatMakesItStrict(unittest.TestCase):
     def test_a_foreign_club_is_still_refused_with_the_list_present(self):
         con = self._ncaaf(published=["Texas", "Texas State", "Hawai'i", "UNLV"])
         self.assertIs(lm.belongs(con, "ncaaf", "Bologna", "Sassuolo", strict=True), False)
+
+
+class ACrossLeagueCupMustActuallyCross(unittest.TestCase):
+    """Leagues Cup is MLS against Liga MX. Membership alone cannot see a violation, because
+    every club involved is a legitimate member: 6 of prod's 10 lcup fixtures passed a
+    membership check while not being Leagues Cup at all. Four were Liga MX league games and
+    two were MLS games duplicated from an already-linked mls row."""
+
+    def _con_both(self):
+        mls = ["Atlanta United", "Austin FC", "LA Galaxy", "Inter Miami CF",
+               "Seattle Sounders FC", "Portland Timbers", "FC Dallas", "Toronto FC",
+               "New York Red Bulls", "Los Angeles FC"]
+        lmx = ["Club América", "Club León", "Toluca", "CF Monterrey", "Cruz Azul",
+               "Santos Laguna", "Guadalajara", "Atlético San Luis", "Pumas UNAM", "Tigres"]
+        rows = [("mls", mls[i], mls[i + 1], "m%d" % i) for i in range(0, 9, 2)]
+        rows += [("ligamx", lmx[i], lmx[i + 1], "x%d" % i) for i in range(0, 9, 2)]
+        return _con(rows)
+
+    def test_a_real_leagues_cup_fixture_belongs(self):
+        self.assertIs(
+            lm.belongs(self._con_both(), "lcup", "CF Monterrey", "Inter Miami CF"), True)
+
+    def test_the_same_fixture_the_other_way_round_belongs(self):
+        self.assertIs(
+            lm.belongs(self._con_both(), "lcup", "Austin FC", "Toluca"), True)
+
+    def test_two_mls_clubs_cannot_meet_in_it(self):
+        self.assertIs(
+            lm.belongs(self._con_both(), "lcup", "Seattle Sounders", "New York Red Bulls"),
+            False)
+
+    def test_two_liga_mx_clubs_cannot_meet_in_it_either(self):
+        self.assertIs(
+            lm.belongs(self._con_both(), "lcup", "Toluca", "Club León"), False)
+
+    def test_the_cross_rule_applies_to_the_guard_too(self):
+        """strict is irrelevant here: crossing is the definition, not a strictness dial."""
+        con = self._con_both()
+        self.assertIs(lm.belongs(con, "lcup", "Toluca", "Club León", strict=True), False)
+        self.assertIs(lm.belongs(con, "lcup", "Toluca", "Club León", strict=False), False)
+
+    def test_it_declines_to_judge_when_a_member_league_is_barely_known(self):
+        con = _con([("mls", "Austin FC", "LA Galaxy", "1"),
+                    ("mls", "FC Dallas", "Toronto FC", "2"),
+                    ("mls", "Atlanta United", "Inter Miami CF", "3"),
+                    ("mls", "Seattle Sounders FC", "Portland Timbers", "4"),
+                    ("mls", "New York Red Bulls", "Los Angeles FC", "5")])
+        self.assertIsNone(lm.belongs(con, "lcup", "Austin FC", "Toluca"))
