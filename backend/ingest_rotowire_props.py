@@ -508,8 +508,19 @@ def queue_unresolved(con: sqlite3.Connection, league: str, row: Dict, now: str,
 
 
 def resolve_game(con: sqlite3.Connection, league: str, row: Dict, now: str,
-                 vocabulary: Optional[Dict[str, str]] = None) -> int:
-    """The canonical prop_games id for one fixture, created only when it is new."""
+                 vocabulary: Optional[Dict[str, str]] = None,
+                 allow_new: bool = True) -> Optional[int]:
+    """The canonical prop_games id for one fixture, created only when it is new.
+
+    `allow_new=False` means "match a fixture we already know, or give up". The caller passes
+    it when the club vocabulary could not be built, because minting is the one operation a
+    later, better-informed run cannot undo: a wrong game row collects props, and every one
+    of them is then filed under the wrong league.
+    """
+    if not allow_new and not con.execute(
+            "SELECT 1 FROM prop_game_source_ids WHERE source=? AND league=? "
+            "AND source_game_key=?", (SOURCE, league, row["source_game_key"])).fetchone():
+        return None
     home_code = resolve_team(vocabulary, row["home"])
     away_code = resolve_team(vocabulary, row["away"])
     # What we MATCH on is always the resolved code, so "CF Montreal", "CF Montréal" and
@@ -687,7 +698,16 @@ def ingest(rows: List[Dict], league: str, dry_run: bool = False,
                 continue
             if row["source_game_key"] not in games:
                 games[row["source_game_key"]] = resolve_game(
-                    con, league, row, now, vocabulary)
+                    con, league, row, now, vocabulary, allow_new=vocabulary is not None)
+            if games[row["source_game_key"]] is None:
+                # Fail CLOSED on "cannot check". The club vocabulary comes from ESPN's
+                # conference standings, and a refusal there used to skip the team check
+                # entirely and admit whatever the relay published. On 2026-09-05 17:18 that
+                # let Sassuolo @ Bologna (Serie A) and Guadalajara @ Atletico San Luis
+                # (Liga MX) into prod as MLS fixtures, with Bernardeschi's Serie A prop
+                # resolving by name onto our stale Toronto row.
+                summary["unverifiable_fixture"] += 1
+                continue
             summary[upsert_prop(con, games[row["source_game_key"]], player_id, row, now)] += 1
         if dry_run:
             con.rollback()
@@ -703,7 +723,8 @@ def ingest(rows: List[Dict], league: str, dry_run: bool = False,
     # raising: `**Counter()` drops absent keys, it does not default them.
     return {key: summary[key] for key in (
         "board_rows", "new", "refreshed", "games", "players", "unresolved_players",
-        "unresolved_player_rows", "unknown_team", "stale_archive")}
+        "unresolved_player_rows", "unknown_team", "unverifiable_fixture",
+        "stale_archive")}
 
 
 def team_vocabulary(con: sqlite3.Connection, league: str) -> Optional[Dict[str, str]]:
@@ -753,9 +774,13 @@ def team_vocabulary(con: sqlite3.Connection, league: str) -> Optional[Dict[str, 
     import espn_client as espn
     try:
         standings = espn.mls_conference_standings()
-    except Exception as exc:  # a refusal is not a vocabulary, so check nothing
-        print("  club vocabulary unavailable ({}: {}); team checks skipped this "
-              "run".format(type(exc).__name__, exc))
+    except Exception as exc:
+        # A refusal is not a vocabulary. This used to say "so check nothing" and return
+        # None, which skipped the team check and admitted every fixture the relay
+        # published. Now existing fixtures still refresh and NEW ones are refused, so an
+        # ESPN outage costs us new games rather than wrong ones.
+        print("  club vocabulary unavailable ({}: {}); existing fixtures still refresh, "
+              "NEW fixtures are refused this run".format(type(exc).__name__, exc))
         return None
     index = {}
     for group in standings.get("groups") or []:

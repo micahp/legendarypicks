@@ -938,3 +938,51 @@ class EveryIngestedSportsCatalogueIsChecked(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class AnUnverifiableFixtureCannotMintAGame(unittest.TestCase):
+    """The club vocabulary is built from ESPN's conference standings. A refusal there used
+    to skip the team check and admit whatever the relay published: on 2026-09-05 17:18 that
+    put Sassuolo @ Bologna (Serie A) and Guadalajara @ Atletico San Luis (Liga MX) into
+    prod as MLS fixtures. Evidence unavailable is a FAIL, never a skip."""
+
+    def _con(self):
+        con = sqlite3.connect(":memory:")
+        con.row_factory = sqlite3.Row
+        con.executescript("""
+            CREATE TABLE prop_games(id INTEGER PRIMARY KEY, league TEXT, date TEXT,
+                home TEXT, away TEXT, espn_event_id TEXT, start_time TEXT);
+            CREATE TABLE prop_game_source_ids(source TEXT, league TEXT,
+                source_game_key TEXT, game_id INTEGER, first_seen TEXT, last_seen TEXT);
+        """)
+        con.commit()
+        return con
+
+    def _row(self, key="serie-a-1"):
+        return {"home": "Bologna", "away": "Sassuolo", "source_game_key": key,
+                "start_time": "2026-09-06T16:00:00Z", "date": "2026-09-06"}
+
+    def test_a_new_fixture_is_refused_when_the_vocabulary_is_unavailable(self):
+        con = self._con()
+        self.assertIsNone(
+            rw.resolve_game(con, "mls", self._row(), "now", None, allow_new=False))
+        self.assertEqual(
+            con.execute("SELECT COUNT(*) FROM prop_games").fetchone()[0], 0,
+            "an unverifiable fixture must not mint a game row")
+
+    def test_a_fixture_we_already_know_still_resolves(self):
+        """An outage must cost us NEW games, not the refresh of games we already hold."""
+        con = self._con()
+        con.execute("INSERT INTO prop_games(id,league,date,home,away,espn_event_id) "
+                    "VALUES(41,'mls','2026-09-06','Bologna','Sassuolo','')")
+        con.execute("INSERT INTO prop_game_source_ids VALUES(?,?,?,?,?,?)",
+                    (rw.SOURCE, "mls", "serie-a-1", 41, "now", "now"))
+        con.commit()
+        self.assertEqual(
+            rw.resolve_game(con, "mls", self._row(), "now", None, allow_new=False), 41)
+
+    def test_allow_new_defaults_to_true_so_a_healthy_run_is_unchanged(self):
+        con = self._con()
+        game_id = rw.resolve_game(con, "mls", self._row(), "now", None)
+        self.assertIsNotNone(game_id)
+        self.assertEqual(con.execute("SELECT COUNT(*) FROM prop_games").fetchone()[0], 1)
