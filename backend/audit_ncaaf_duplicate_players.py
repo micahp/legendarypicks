@@ -32,7 +32,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from ingest_cfbd_logs import _API, _get_json, _season_from_the_schedule
+from cfbd_shared import _API, _get_json, _season_from_the_schedule
 
 LEAGUE = "ncaaf"
 DB = os.environ.get("LP_DB_PATH") or os.path.join(

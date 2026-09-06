@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Ingest NCAAF (college football) FBS player logs from CollegeFootballData (CFBD).
+"""Ingest NCAAF FBS player game logs from CollegeFootballData (CFBD).
 
 Why CFBD instead of ESPN summaries (decision 2026-08-07: CFBD permitted — the
 "do not use cfbd key" ruling was news-engine-only; verified live same day):
@@ -7,8 +7,8 @@ Why CFBD instead of ESPN summaries (decision 2026-08-07: CFBD permitted — the
 - ~139 requests for the whole season (1 /games + 1 /teams + 137 per-team
   /games/players) vs 888 summary fetches.
 - /games/players returns ESPN event ids and ESPN athlete ids verbatim, so rows
-  join the spine directly on espn_id — no name-resolution pass. Athletes the
-  spine does not know yet are added (self-heal), like the MLS resolve pass.
+  resolve onto the existing roster-built spine by espn_id. Missing athletes are
+  queued for identity review; a stats run never creates a player.
 - The payload includes FCS buy-game opponents (verified: Alabama-Eastern
   Illinois carried 229 EIU player rows), so the 230-team population survives.
 - It publishes defensive categories (tackles/sacks/INTs) ESPN's summaries
@@ -20,10 +20,11 @@ categories[] -> types[] -> athletes[]. This module reuses the ESPN ingest's
 stat mapping shape (our key <- (group, label)) and merges per athlete per
 game exactly like the ESPN ingest.
 
-Re-source semantics: the existing ncaaf rows for the season are deleted first,
-then replaced — player_game_logs is single-source per (league, season) after
-this run. Rows key on UNIQUE(league, source_player_key, season, game_no) where
-source_player_key = ESPN athlete id and game_no = ESPN event id.
+Re-source semantics: existing NCAAF athlete rows for the season are deleted and
+replaced. Legacy rows linked to negative-ID team entities are preserved pending
+a separate migration, but no new team aggregates are written. Rows key on
+UNIQUE(league, source_player_key, season, game_no), where source_player_key is
+the ESPN athlete id and game_no is the ESPN event id.
 
 Usage:
   python3 ingest_cfbd_logs.py --season 2025 [--dry-run]
@@ -33,16 +34,20 @@ import json
 import os
 import sqlite3
 import sys
-import time
-import urllib.error
 import urllib.parse
-import urllib.request
-from datetime import datetime, timezone
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import team_codes
+from cfbd_shared import (
+    CfbdError,
+    _API,
+    _get_json,
+    _school_to_code,
+    _season_from_the_schedule,
+)
 from ingest_nfl_logs import ensure_table  # shared player_game_logs schema
+from league_stats import queue_unresolved_player
 
 DB = os.environ.get("LP_DB_PATH") or os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "data", "picks.db"
@@ -50,10 +55,6 @@ DB = os.environ.get("LP_DB_PATH") or os.path.join(
 
 LEAGUE = "ncaaf"
 GAME_TYPE = "REG"
-_API = "https://api.collegefootballdata.com"
-_MIN_INTERVAL = float(os.environ.get("LP_CFBD_MIN_INTERVAL") or 1.0)  # free tier ~1 req/s
-_HDRS = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/124 Safari/537.36"}
-
 # our key <- (published group name, published label) — the offense half is the
 # same vocabulary the ESPN ingest measured (passing C/ATT,YDS,AVG,TD,INT;
 # rushing CAR,YDS,AVG,TD,LONG; receiving REC,YDS,AVG,TD,LONG).
@@ -98,59 +99,6 @@ def _number(value):
         return None
 
 
-def _api_key():
-    key = os.environ.get("CFBD_API_KEY")
-    if key:
-        return key
-    env_path = os.path.join(os.path.expanduser("~"), ".hermes", ".env")
-    try:
-        with open(env_path) as fh:
-            for line in fh:
-                line = line.strip()
-                if line.startswith("CFBD_API_KEY="):
-                    return line.split("=", 1)[1]
-    except OSError:
-        pass
-    raise RuntimeError("CFBD_API_KEY not found (env or ~/.hermes/.env)")
-
-
-_last_request = [0.0]
-
-
-class CfbdError(Exception):
-    pass
-
-
-def _get_json(url):
-    """One paced CFBD request with a short 429/5xx ladder.
-
-    CFBD's free tier is ~1 request/second; pacing is the budget, and a 429 is
-    waited out briefly (never a 403 — CFBD does not wall like ESPN).
-    """
-    global _last_request
-    gap = _MIN_INTERVAL - (time.monotonic() - _last_request[0])
-    if gap > 0:
-        time.sleep(gap)
-    attempts = 4
-    last = None
-    for i in range(attempts):
-        req = urllib.request.Request(url, headers=_HDRS)
-        req.add_header("Authorization", "Bearer " + _api_key())
-        try:
-            _last_request[0] = time.monotonic()
-            with urllib.request.urlopen(req, timeout=120) as resp:
-                return json.loads(resp.read().decode("utf-8"))
-        except urllib.error.HTTPError as e:
-            last = "HTTP %s" % e.code
-            if e.code in (400, 401, 403):
-                break  # a real error; retrying will not fix it
-            time.sleep(min(30, 2.0 * (i + 1)))
-        except OSError as e:
-            last = "%s: %s" % (type(e).__name__, e)
-            time.sleep(min(30, 2.0 * (i + 1)))
-    raise CfbdError("%s failed after %d attempts: %s" % (url, attempts, last))
-
-
 def _line_stats(group_name, type_name, stat, maps):
     """Our stat value from one (group, type, stat) triple."""
     group = _key(group_name)
@@ -184,7 +132,7 @@ def _merge_game_athletes(game):
                 for athlete in type_entry.get("athletes") or []:
                     athlete_id = str(athlete.get("id") or "")
                     name = (athlete.get("name") or "").strip()
-                    if not athlete_id or not name:
+                    if not athlete_id:
                         continue
                     mapped = _line_stats(group_name, type_name, athlete.get("stat"), _STAT_MAP)
                     if mapped is None:
@@ -192,7 +140,10 @@ def _merge_game_athletes(game):
                     if mapped is None:
                         continue
                     key, num = mapped
-                    entry = merged.setdefault(athlete_id, [name, school, home_away, {}])
+                    entry = merged.setdefault(
+                        athlete_id,
+                        [name or "(name unavailable)", school, home_away, {}],
+                    )
                     entry[3][key] = num
     for athlete_id, (name, school, home_away, stats) in merged.items():
         yield athlete_id, name, school, home_away, stats
@@ -208,38 +159,6 @@ def _team_code(abbrev):
         return raw
 
 
-# ESPN display names by canonical code (docs/espn-team-codes-2026-07-27.json).
-# CFBD's abbreviations mostly match ESPN's, but three FBS schools differ
-# (Air Force=AF vs AFA, Buffalo=BUF vs BUFF, Jacksonville State=JXST vs JVST);
-# their school names are still prefixes of the ESPN display names, so match on
-# the name when the abbreviation does not resolve.
-_NAME_BY_CODE = {}
-try:
-    with open(os.path.join(
-        os.path.dirname(os.path.abspath(__file__)), "..", "docs",
-        "espn-team-codes-2026-07-27.json",
-    )) as _fh:
-        _NAME_BY_CODE = {
-            code: str(name or "").lower()
-            for code, name in (json.load(_fh).get("ncaaf") or {}).items()
-        }
-except OSError:
-    _NAME_BY_CODE = {}
-
-
-def _school_to_code(school, abbrev):
-    """Canonical ESPN code for a CFBD team, or None (FCS schools etc.)."""
-    ab = (abbrev or "").strip().upper()
-    if ab and team_codes.is_canonical(LEAGUE, ab):
-        return ab
-    s = (school or "").strip().lower()
-    if s:
-        for code, display in _NAME_BY_CODE.items():
-            if display.startswith(s):
-                return code
-    return None
-
-
 def _opponent(team, home_away, home, away):
     if home_away == "home":
         return away
@@ -252,121 +171,34 @@ def _opponent(team, home_away, home, away):
     return None
 
 
-# Names minted with no published position, reported at the end of the run. Empty is the
-# expected state and it still prints — a log that only speaks up on failure cannot tell
-# "clean" from "never ran" (fail-loudly §3.7).
-_MINTED_WITHOUT_POSITION = []
-
-
-def _published_positions(season):
-    """{espn_athlete_id: (position, position_group)} from CFBD's roster, or {}.
-
-    One request per season returns every roster row CFBD publishes (~30,000 for 2025),
-    keyed by the same ESPN athlete id this ingest already joins on — so setting the
-    position at mint time costs one request, not one per player.
-
-    Returns {} when the roster cannot be read. That is a degraded run, not a failed one:
-    the game logs are still worth ingesting. It is reported, and every player minted
-    without a position is counted, so the gap is a number in the run output rather than
-    something an audit finds months later.
-    """
-    try:
-        rows = _get_json("{}/roster?year={}".format(_API, season))
-    except Exception as exc:  # noqa: BLE001 - the logs are still worth having
-        print("  WARNING: CFBD roster for {} unavailable ({}) — players minted by this "
-              "run will carry no position".format(season, exc))
-        return {}
-    try:
-        from backfill_ncaaf_positions_cfbd import _position_group, _vocabulary
-        vocab = _vocabulary()
-    except Exception:  # noqa: BLE001
-        _position_group, vocab = (lambda position, _v: None), None
-    out = {}
-    for row in rows or []:
-        athlete_id, position = row.get("id"), row.get("position")
-        # CFBD writes "?" for an unknown position. Storing that is worse than NULL: it
-        # looks like a value and no vocabulary contains it.
-        if not athlete_id or not position or position == "?":
-            continue
-        out[str(athlete_id)] = (position, _position_group(position, vocab))
-    print("  CFBD roster {}: {} rows, {} carry a published position"
-          .format(season, len(rows or []), len(out)))
-    return out
-
-
 def _spine_index(con):
-    """{espn_id: players.id} for the league. O(1) lookups during ingest."""
+    """Return the positive athlete-ID spine, refusing ambiguous ownership."""
     idx = {}
-    if con is not None:
-        try:
-            for row in con.execute(
-                "SELECT id, espn_id FROM players WHERE league=? AND espn_id IS NOT NULL",
-                (LEAGUE,),
-            ):
-                idx[str(row[1])] = row[0]
-        except sqlite3.Error:
-            pass
+    for row in con.execute(
+        "SELECT id, espn_id FROM players WHERE league=? AND espn_id IS NOT NULL "
+        "AND CAST(espn_id AS INTEGER)>0",
+        (LEAGUE,),
+    ):
+        athlete_id = str(row[1])
+        if athlete_id in idx:
+            raise RuntimeError(
+                "NCAAF spine has more than one player for ESPN athlete id %s" % athlete_id
+            )
+        idx[athlete_id] = row[0]
     return idx
 
 
-def _resolve_or_create(con, spine, athlete_id, name, team, positions=None):
-    """players.id by espn_id; inserts the athlete when the spine lacks them.
-
-    CFBD athlete ids ARE ESPN ids, so this is the whole resolution pass — the
-    MLS 08-07 pattern (add missing players to the spine, then link) at zero
-    extra requests.
-
-    This used to insert `position NULL, position_group NULL` with the comment "left NULL
-    for the roster sync to backfill". The roster sync is ingest_mls_ncaaf_rosters.py, which
-    reads ESPN's published team rosters — and these athletes are not on them, because they
-    are here precisely by having appeared in a game CFBD covered. The promised backfill
-    therefore never happened for anybody: measured 2026-08-16, **5,853 active NCAAF players
-    carried no position at all, 27% of the league**, and a blank position does not error or
-    render an empty state — it renders a generic game log, which reads as coverage
-    (fail-loudly §2c).
-
-    CFBD publishes the position itself, keyed by the same athlete id, one request per
-    season for all ~30,000 rows. So it is set HERE, at mint time, and the row is never
-    written blank in the first place. `positions` is that map; when it is empty (no API
-    key) the count of blank rows minted is reported by the caller rather than left to be
-    discovered by an audit a month later.
-    """
-    player_id = spine.get(athlete_id)
-    if player_id is not None:
-        return player_id
-    now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-    position, position_group = (positions or {}).get(str(athlete_id), (None, None))
-    # `active` used to be hardcoded 1 here, which is an assumption rather than a
-    # measurement: appearing in one game log is evidence that somebody PLAYED, not that
-    # they are on a roster now. 17 athletes reached 2026-08-17 flagged active with no
-    # position, and neither publisher could supply one -- ESPN does not roster them and
-    # CFBD's own roster (30,072 rows for 2025, 15,441 for 2026) does not list them. Mostly
-    # single-appearance players, several at FCS schools. `active` was the false claim; the
-    # blank position was the honest one, and the audit scopes its blank check to active
-    # players precisely because a position is a CURRENT roster spot.
-    #
-    # So say what we measured. In the roster map -> active. Absent from a map we DID read
-    # -> not active. And when the map is empty at all (no CFBD key) fall back to 1 rather
-    # than deactivating a whole league on the strength of a missing credential -- an
-    # unavailable roster is not evidence that nobody is on one.
-    if positions:
-        active = 1 if str(athlete_id) in positions else 0
-    else:
-        active = 1
-    con.execute(
-        "INSERT INTO players(name, team, league, espn_id, position, position_group, active, updated_at)"
-        " VALUES(?,?,?,?,?,?,?,?)",
-        (name, team, LEAGUE, athlete_id, position, position_group, active, now),
-    )
-    player_id = con.execute("SELECT last_insert_rowid()").fetchone()[0]
-    spine[athlete_id] = player_id
-    if position is None:
-        _MINTED_WITHOUT_POSITION.append(name)
-    return player_id
+def _is_team_entity(athlete_id):
+    """CFBD/ESPN use negative IDs for aggregate team rows, never athletes."""
+    try:
+        return int(str(athlete_id)) < 0
+    except (TypeError, ValueError):
+        return False
 
 
-def ingest(season, dry_run=False):
+def ingest(season, dry_run=False, db_path=None):
     season = int(season)
+    db_path = db_path or DB
     print("NCAAF CFBD %s FBS log ingest%s" % (season, " (dry run)" if dry_run else ""))
 
     # 1. Season metadata: one call per season.
@@ -383,10 +215,6 @@ def ingest(season, dry_run=False):
         }
     completed = sum(1 for m in game_meta.values() if m["completed"])
     print("  /games: %d published, %d completed" % (len(game_meta), completed))
-
-    # Positions, before any player is minted. One request for the whole season.
-    del _MINTED_WITHOUT_POSITION[:]
-    published_positions = _published_positions(season)
 
     # 2. Team vocabulary: school -> abbreviation (FBS + FCS in one call), and
     # school -> canonical ESPN code (abbreviation when it matches, else the
@@ -462,20 +290,47 @@ def ingest(season, dry_run=False):
             print("  teams %d/%d, %d unique games so far" % (i, len(fetch_schools), len(raw_games)))
     print("  %d unique games fetched (%d team calls failed)" % (len(raw_games), failed))
 
-    con = None
+    if dry_run:
+        con = sqlite3.connect(
+            "file:{}?mode=ro".format(db_path), uri=True, timeout=30
+        )
+    else:
+        con = sqlite3.connect(db_path, timeout=30)
+    con.row_factory = sqlite3.Row
     if not dry_run:
-        con = sqlite3.connect(DB)
-        con.row_factory = sqlite3.Row
         ensure_table(con)
-        # Re-source: the CFBD run is the single source for the season.
+    preserved_team_rows = con.execute(
+        """SELECT COUNT(*) FROM player_game_logs AS logs
+           JOIN players AS player ON player.id=logs.player_id
+           WHERE logs.league=? AND logs.season=?
+             AND CAST(player.espn_id AS INTEGER)<0""",
+        (LEAGUE, season),
+    ).fetchone()[0]
+    if not dry_run:
+        # Re-source athlete logs while retaining legacy aggregate rows. Negative ESPN IDs
+        # are team entities, and their existing references need a separately authorized
+        # migration; this job neither deletes them nor creates more of them.
         deleted = con.execute(
-            "DELETE FROM player_game_logs WHERE league=? AND season=?",
-            (LEAGUE, season),
+            """DELETE FROM player_game_logs
+               WHERE league=? AND season=?
+                 AND NOT EXISTS (
+                   SELECT 1 FROM players
+                   WHERE players.id=player_game_logs.player_id
+                     AND players.league=?
+                     AND CAST(players.espn_id AS INTEGER)<0
+                 )""",
+            (LEAGUE, season, LEAGUE),
         ).rowcount
-        print("  deleted %d previous %s %s log rows" % (deleted, LEAGUE, season))
+        print("  deleted %d previous athlete log rows; preserved %d legacy "
+              "team-entity rows" % (deleted, preserved_team_rows))
     spine = _spine_index(con)
 
-    ingested = resolved = unresolved = 0
+    ingested = resolved_rows = unresolved_rows = 0
+    resolved_ids = set()
+    unresolved_ids = set()
+    team_entity_ids = set()
+    team_entity_rows = 0
+    missing_team_rows = 0
     games_done = 0
     missing_meta = 0
     for gid, game in sorted(raw_games.items()):
@@ -493,17 +348,32 @@ def ingest(season, dry_run=False):
         home = _code_for(meta.get("home") or "")
         away = _code_for(meta.get("away") or "")
         for athlete_id, name, team, home_away, stats in sides:
+            if _is_team_entity(athlete_id):
+                team_entity_ids.add(athlete_id)
+                team_entity_rows += 1
+                continue
+            player_id = spine.get(athlete_id)
+            if player_id is None:
+                unresolved_rows += 1
+                first_miss = athlete_id not in unresolved_ids
+                unresolved_ids.add(athlete_id)
+                if first_miss and not dry_run:
+                    queue_unresolved_player(
+                        con,
+                        source="cfbd",
+                        raw_name=name,
+                        league=LEAGUE,
+                        team=team,
+                        source_player_key=athlete_id,
+                        reason="absent_from_spine",
+                    )
+                continue
+            resolved_rows += 1
+            resolved_ids.add(athlete_id)
             if team is None or not stats:
+                missing_team_rows += 1
                 continue
             opponent = _opponent(team, home_away, home, away)
-            player_id = None
-            if con is not None:
-                player_id = _resolve_or_create(con, spine, athlete_id, name, team,
-                                               published_positions)
-            if player_id is None:
-                unresolved += 1
-            else:
-                resolved += 1
             ingested += 1
             if dry_run:
                 continue
@@ -544,51 +414,30 @@ def ingest(season, dry_run=False):
         con.close()
     else:
         total_logs = linked = dist_games = None
+        con.close()
 
-    print("Done. %d NCAAF FBS log rows from %d completed games "
-          "(%d resolved, %d unresolved)." % (ingested, games_done, resolved, unresolved))
+    identity_total = len(resolved_ids | unresolved_ids)
+    print("Done. %d resolved NCAAF FBS athlete log rows from %d completed games." % (
+        ingested, games_done))
+    print("IDENTITY RESOLUTION: matched %d of %d athlete IDs "
+          "(%d unresolved; %d resolved rows, %d unresolved rows)." % (
+              len(resolved_ids), identity_total, len(unresolved_ids),
+              resolved_rows, unresolved_rows))
+    print("UNRESOLVED ATHLETES: %d unique IDs across %d log rows; %s." % (
+        len(unresolved_ids), unresolved_rows,
+        "would be queued (dry run; no writes)" if dry_run else "queued in unresolved_players"))
+    print("REJECTED NON-ATHLETE TEAM ENTITIES: %d unique negative ESPN IDs across "
+          "%d stat lines; not written to player_game_logs." % (
+              len(team_entity_ids), team_entity_rows))
+    print("  legacy team-entity rows already stored for this season: %d preserved; "
+          "this job does not migrate or delete them." % preserved_team_rows)
     print("  %d games fetched without /games metadata (skipped), %d team calls failed."
           % (missing_meta, failed))
-    # Printed at zero too. This ingest minted 5,853 positionless NCAAF players over its
-    # life -- 27% of the league -- and never said so once, because a blank position does
-    # not error, it renders a generic game log that reads as coverage.
-    print("  %d players minted with no published position%s"
-          % (len(_MINTED_WITHOUT_POSITION),
-             "" if not _MINTED_WITHOUT_POSITION
-             else " (e.g. %s)" % ", ".join(_MINTED_WITHOUT_POSITION[:5])))
+    print("  %d resolved athlete log rows skipped without a team code." % missing_team_rows)
     if total_logs is not None:
         print("  table now: %d rows, %d linked, %d distinct games." % (
             total_logs, linked, dist_games))
     return ingested
-
-
-def _season_from_the_schedule(db_path=None):
-    """The season key of the NCAAF games we are actually holding, never today's year.
-
-    A recurring caller must not have to hardcode a year, and the server's calendar is the
-    wrong source: it says 2027 in January while the 2026 season is still being played out in
-    bowls. The schedule we already ingested says which season is live, so read that.
-
-    Returns None when there is nothing to read, so the caller can refuse rather than guess.
-    """
-    path = db_path or os.environ.get("LP_DB_PATH") or os.path.join(
-        os.path.dirname(os.path.abspath(__file__)), "data", "picks.db")
-    try:
-        con = sqlite3.connect("file:{}?mode=ro".format(path), uri=True, timeout=20)
-    except sqlite3.Error:
-        return None
-    try:
-        row = con.execute(
-            "SELECT max(date) FROM prop_games WHERE league='ncaaf'").fetchone()
-    except sqlite3.Error:
-        return None
-    finally:
-        con.close()
-    if not row or not row[0]:
-        return None
-    # A college football season is keyed by the year it STARTS, and it runs into January.
-    year, month = int(str(row[0])[:4]), int(str(row[0])[5:7])
-    return year - 1 if month <= 2 else year
 
 
 if __name__ == "__main__":
@@ -600,7 +449,7 @@ if __name__ == "__main__":
     parser.add_argument("--dry-run", action="store_true",
                         help="fetch and resolve but write nothing")
     args = parser.parse_args()
-    season = args.season if args.season is not None else _season_from_the_schedule()
+    season = args.season if args.season is not None else _season_from_the_schedule(DB)
     if season is None:
         raise SystemExit(
             "no --season given and no NCAAF games in the database to read one from")
