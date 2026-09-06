@@ -58,8 +58,12 @@ def fold(value: Optional[str]) -> str:
     ascii_value = (unicodedata.normalize("NFKD", str(value or ""))
                    .encode("ascii", "ignore").decode("ascii"))
     squashed = re.sub(r"[^a-z0-9]+", " ", ascii_value.lower()).strip()
-    # A trailing club suffix is decoration, not identity: "Toronto FC" and "Toronto".
-    return re.sub(r"\b(fc|sc|cf|afc|united|club)\b", "", squashed).strip() or squashed
+    # Club decoration is not identity. "Toronto FC" and "Toronto" are one club, and so are
+    # "Atletico de San Luis" and "Atletico San Luis": the connective is a naming convention,
+    # not a distinguishing word. Without `de` a plainly Liga MX fixture was reported as
+    # belonging to no league we carry.
+    stripped = re.sub(r"\b(fc|sc|cf|afc|cd|ud|sd|united|club|de|del|la|el)\b", "", squashed)
+    return re.sub(r"\s+", " ", stripped).strip() or squashed
 
 
 def squash(value: Optional[str]) -> str:

@@ -35,6 +35,7 @@ export const LEAGUE_LABELS: Record<string, string> = {
   ncaaf: 'NCAAF',
   mls: 'MLS',
   lcup: 'Leagues Cup',
+  ligamx: 'Liga MX',
   wc: 'World Cup',
   atp: 'ATP',
   wta: 'WTA',
@@ -55,7 +56,7 @@ function sportRank(sport: string): number {
 
 function competitionSort(a: Competition, b: Competition): number {
   const footballOrder = ['nfl', 'ncaaf']
-  const soccerOrder = ['mls', 'lcup']
+  const soccerOrder = ['mls', 'lcup', 'ligamx']
   const tennisOrder = ['atp', 'wta']
   const order = a.sport === 'football'
     ? footballOrder
