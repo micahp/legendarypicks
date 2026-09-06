@@ -562,12 +562,48 @@ def ingest(season, dry_run=False):
     return ingested
 
 
+def _season_from_the_schedule(db_path=None):
+    """The season key of the NCAAF games we are actually holding, never today's year.
+
+    A recurring caller must not have to hardcode a year, and the server's calendar is the
+    wrong source: it says 2027 in January while the 2026 season is still being played out in
+    bowls. The schedule we already ingested says which season is live, so read that.
+
+    Returns None when there is nothing to read, so the caller can refuse rather than guess.
+    """
+    path = db_path or os.environ.get("LP_DB_PATH") or os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), "data", "picks.db")
+    try:
+        con = sqlite3.connect("file:{}?mode=ro".format(path), uri=True, timeout=20)
+    except sqlite3.Error:
+        return None
+    try:
+        row = con.execute(
+            "SELECT max(date) FROM prop_games WHERE league='ncaaf'").fetchone()
+    except sqlite3.Error:
+        return None
+    finally:
+        con.close()
+    if not row or not row[0]:
+        return None
+    # A college football season is keyed by the year it STARTS, and it runs into January.
+    year, month = int(str(row[0])[:4]), int(str(row[0])[5:7])
+    return year - 1 if month <= 2 else year
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Ingest NCAAF FBS regular-season player logs from CFBD")
-    parser.add_argument("--season", type=int, required=True,
-                        help="season year (ESPN/CFBD key, e.g. 2025)")
+    parser.add_argument("--season", type=int,
+                        help="season year (ESPN/CFBD key). Default: the season of the "
+                             "newest NCAAF game already scheduled in the database.")
     parser.add_argument("--dry-run", action="store_true",
                         help="fetch and resolve but write nothing")
     args = parser.parse_args()
-    ingest(args.season, dry_run=args.dry_run)
+    season = args.season if args.season is not None else _season_from_the_schedule()
+    if season is None:
+        raise SystemExit(
+            "no --season given and no NCAAF games in the database to read one from")
+    print("season {} ({})".format(
+        season, "given" if args.season is not None else "from the stored schedule"))
+    ingest(season, dry_run=args.dry_run)

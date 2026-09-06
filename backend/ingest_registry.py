@@ -114,6 +114,57 @@ JOBS: List[Dict[str, object]] = [
             "label": "settlement",
         }],
     },
+    {
+        "id": "mlb_pitcher_logs",
+        # statcast_pitcher stopped on 2026-08-02 while MLB played on, because
+        # ingest_statcast (batters) had a timer and this one never got one. That single
+        # omission is what leaves settlement re-fetching a publisher for the three biggest
+        # unsettled MLB markets: strikeouts (816 props), outs (816) and hits_allowed (544),
+        # all of which are already stored keys -- K, outs, hits_allowed -- on a table that
+        # simply stopped advancing 35 days ago.
+        "cadence_min": 360,
+        # The Statcast pull is one large query over a date window, minutes not seconds.
+        "timeout_sec": 2400,
+        # Its own publisher. This costs ZERO ESPN budget, which is why it is the cheapest
+        # large win available: 2,176 props unblocked without touching the host everything
+        # else is queued behind.
+        "host_lock": "statcast",
+        # 45 days covers the 35-day hole with margin; the script's own default is 60.
+        "steps": [["ingest_mlb_pitcher_logs.py", "--days", "45"]],
+        "needs_api_base": False,
+        "freshness": [{
+            "table": "player_game_logs",
+            "date_column": "game_date",
+            "where": "source = 'statcast_pitcher'",
+            # Statcast publishes with roughly a day's lag, so 72h is the honest threshold:
+            # tighter would alert on the publisher's own cadence rather than on our failure.
+            "stale_hours": 72,
+            "label": "mlb pitcher logs",
+        }],
+    },
+    {
+        "id": "ncaaf_logs",
+        # cfbd rows stopped on 2025-12-13, the end of LAST season, while NCAAF played
+        # through 2026-09-05 and became the biggest prop league on the board. 266 days.
+        # NCAAF settlement grades off the ESPN boxscore directly, so this does not block
+        # settling; it starves the charts and every hit-rate denominator behind them.
+        "cadence_min": 720,
+        "timeout_sec": 2400,
+        # CFBD is its own publisher, so this costs no ESPN budget either.
+        "host_lock": "cfbd",
+        # No --season: it now defaults to the season of the newest NCAAF game already in
+        # the schedule. Hardcoding a year here is the failure this registry exists to stop.
+        "steps": [["ingest_cfbd_logs.py"]],
+        "needs_api_base": False,
+        "freshness": [{
+            "table": "player_game_logs",
+            "date_column": "game_date",
+            "where": "source = 'cfbd'",
+            # Games are weekly, so a week plus slack. Tighter would alert every Tuesday.
+            "stale_hours": 240,
+            "label": "ncaaf logs",
+        }],
+    },
 ]
 
 _REQUIRED = ("id", "cadence_min", "timeout_sec", "host_lock", "steps", "freshness")
