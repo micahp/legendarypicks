@@ -202,6 +202,28 @@ JOBS: List[Dict[str, object]] = [
             "label": "nfl depth charts",
         }],
     },
+    {
+        "id": "ncaaf_rosters",
+        # The identity spine the log ingest resolves onto, from CFBD in TWO requests where
+        # the ESPN path costs 149 to site.web.api. Measured 2026-09-06: prod held 14,234
+        # NCAAF players and CFBD published 30,635 roster rows; this minted 8,609 of them.
+        # Ordered before the logs by cadence, not by sequence: a log row for a player the
+        # spine has never heard of is the defect this prevents.
+        "cadence_min": 1440,
+        "timeout_sec": 900,
+        "host_lock": "cfbd",
+        "steps": [["ingest_ncaaf_rosters_cfbd.py"]],
+        "needs_api_base": False,
+        "freshness": [{
+            "table": "players",
+            "date_column": "updated_at",
+            "where": "league = 'ncaaf'",
+            # Daily sync, so two days of slack before it is our problem rather than a quiet
+            # week in the transfer portal.
+            "stale_hours": 72,
+            "label": "ncaaf spine",
+        }],
+    },
 ]
 
 _REQUIRED = ("id", "cadence_min", "timeout_sec", "host_lock", "steps", "freshness")
