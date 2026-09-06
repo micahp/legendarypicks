@@ -529,6 +529,66 @@ def _game_type_for_type(type_doc: dict, league: Optional[str] = None) -> str:
     return _game_type_for_name(type_doc.get("name") or "", league)
 
 
+def _settlement_waiting_on(con, league: str) -> dict:
+    """ESPN event ids whose props are still unsettled, mapped to the game's date.
+
+    These are the matches settlement is actually blocked on. Everything else in a season is
+    history: useful, but nobody is waiting for it.
+    """
+    try:
+        rows = con.execute(
+            """SELECT g.espn_event_id, g.date
+                 FROM prop_games g
+                 JOIN props p ON p.game_id = g.id
+                 LEFT JOIN prop_results r ON r.prop_id = p.id
+                WHERE g.league = ?
+                  AND COALESCE(g.espn_event_id, '') <> ''
+                  AND r.prop_id IS NULL
+                GROUP BY g.id""",
+            (league,)).fetchall()
+    except sqlite3.Error as exc:
+        # Degrade to recency alone, and SAY so. A silent fallback here would look exactly
+        # like a season with nothing outstanding.
+        print(f"  ordering: cannot read outstanding props ({exc}); falling back to recency")
+        return {}
+    return {str(event_id): str(date or "") for event_id, date in rows}
+
+
+def _fetch_order(waiting: dict, event_ids: List[str]) -> List[str]:
+    """Order a phase's matches by what settlement is waiting on, newest first.
+
+    The publisher returns a season's events oldest-first, and this loop stops at
+    --request-budget, so a bounded run spent itself on the START of the season. Measured
+    2026-09-06: the first scheduled run wrote 440 MLS logs and every one was from 2026-05-02
+    and 05-03, while the games holding unsettled props were four months newer and the table's
+    newest date did not move at all. A 28-day gap would have taken about 30 hourly runs to
+    close, in the wrong direction the whole time.
+
+    Two keys, in this order:
+
+    1. Matches with unsettled props, newest first. This is the purpose, read from our own
+       database rather than guessed: settlement is blocked on exactly these.
+    2. Everything else, by descending event id. That is a PROXY for recency, not a fact:
+       measured across 626 stored MLS matches, id order agrees with date order 95.4% of the
+       time, so 4.6% of pairs are out of sequence. Good enough to break a tie between
+       matches nobody is waiting on, and never used to decide anything else.
+    """
+    def key(event_id: str):
+        eid = str(event_id)
+        try:
+            numeric = int(eid)
+        except (TypeError, ValueError):
+            numeric = 0
+        if eid in waiting:
+            return (0, waiting[eid], numeric)
+        return (1, "", numeric)
+
+    ordered = sorted(event_ids, key=key, reverse=True)
+    # sorted(reverse=True) would put group 1 first; group 0 must lead.
+    return ([e for e in ordered if str(e) in waiting]
+            + [e for e in ordered if str(e) not in waiting])
+
+
 def _type_events(league: str, season: int, type_id: str) -> List[str]:
     """Every event id in one published type's collection, from the $refs.
 
@@ -755,6 +815,9 @@ def ingest(league: str, season: Optional[int] = None, dry_run: bool = False,
             raise _SummaryBudgetExhausted
         requests_spent += 1
 
+    # Read once, not per phase: the answer cannot change inside a single run.
+    settlement_waiting = _settlement_waiting_on(con, league)
+
     for type_doc in types:
         type_id = type_doc.get("id") or ""
         type_name = type_doc.get("name") or f"type {type_id}"
@@ -769,6 +832,13 @@ def ingest(league: str, season: Optional[int] = None, dry_run: bool = False,
             print(f"  [{type_id}] {type_name}: 0 events — published empty, nothing to ingest")
             continue
         _verify_season(season, type_doc)
+        # A bounded budget must buy the matches settlement is waiting on, not the oldest
+        # ones the publisher happens to list first. See _fetch_order.
+        waiting_here = sum(1 for e in event_ids if str(e) in settlement_waiting)
+        if waiting_here:
+            print(f"  [{type_id}] {type_name}: {waiting_here} of {len(event_ids)} matches "
+                  f"have unsettled props; those are fetched first")
+        event_ids = _fetch_order(settlement_waiting, event_ids)
         game_type = _game_type_for_type(type_doc, league)
         type_logs = 0
         type_games = 0
