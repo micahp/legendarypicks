@@ -4,6 +4,7 @@ from fastapi.responses import JSONResponse
 from typing import Optional
 from _core import *
 from prop_game_merge import fold_prop_game
+import league_membership
 import logging
 
 logger = logging.getLogger(__name__)
@@ -774,6 +775,40 @@ def ingest_props(batch: PropIngest):
                 (batch.league, batch.date, batch.home, batch.away))
         game_row = cur.fetchone()
         if not game_row:
+            # A fixture may only be CREATED under a league it plausibly belongs to.
+            #
+            # On 2026-09-05 two fixtures were written as league='mls': Sassuolo @ Bologna
+            # (Serie A) and Guadalajara @ Atletico San Luis (Liga MX). The RotoWire ingest
+            # had a guard for exactly this and it was skipped because the vocabulary it
+            # reads comes from a live ESPN request that had been refused. But the guard
+            # lived in ONE ingest, and this endpoint creates prop_games too, on trust: by
+            # row count bovada made 54 of prod's MLS games against RotoWire's 45. A rule
+            # enforced on one surface is not enforced.
+            #
+            # league_membership reads only what the database already holds and issues no
+            # request, because this is a request handler and a serving path must never wait
+            # on a publisher. It returns None for "cannot check", which is NOT a refusal:
+            # a league we barely cover must not have its real fixtures rejected.
+            # strict: BOTH clubs must be on record. A fixture in a league is played
+            # between two of its members, so one recognised club proves nothing; that is
+            # precisely what a cross-competition fixture looks like. This is only safe to
+            # demand because `league_clubs` now holds the publisher's complete list.
+            belongs = league_membership.belongs(
+                con, batch.league, batch.home, batch.away, strict=True)
+            if belongs is False:
+                logger.warning(
+                    "REFUSED %s fixture %s @ %s: neither club is on record in this league, "
+                    "so creating it would file every prop under the wrong league",
+                    batch.league, batch.away, batch.home)
+                raise HTTPException(
+                    status_code=422,
+                    detail="{} @ {} does not belong to {}".format(
+                        batch.away, batch.home, batch.league))
+            if belongs is None:
+                logger.info(
+                    "%s fixture %s @ %s created unchecked: too few clubs on record to "
+                    "judge. audit_foreign_fixtures.py is the surface that catches this.",
+                    batch.league, batch.away, batch.home)
             cur = con.execute(
                 "INSERT INTO prop_games(league,date,home,away,espn_event_id,start_time) VALUES(?,?,?,?,?,?)",
                 (batch.league, batch.date, batch.home, batch.away,

@@ -55,6 +55,38 @@ def _position_group(position):
         return None
 
 
+_CLUBS_DDL = """
+CREATE TABLE IF NOT EXISTS league_clubs (
+    league     TEXT NOT NULL,
+    name       TEXT NOT NULL,
+    code       TEXT,
+    source     TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    PRIMARY KEY (league, name)
+);
+"""
+
+
+def _store_clubs(con, league, code_by_school, now):
+    """Persist the publisher's club list so a checker never needs a request to know it.
+
+    league_membership judges whether a fixture belongs to the league claiming it, and it runs
+    inside a request handler, so it can only read what is already stored. Its club record was
+    built from scoreboard snapshots and linked games, which is incomplete: three real NCAAF
+    fixtures (Texas State @ Texas, Oklahoma State @ Tulsa, UNLV @ Hawaii) read as foreign
+    purely because we had never recorded the opponent. The publisher hands us the whole list
+    in the call this job already makes; throwing it away was the only reason the check had to
+    be lenient.
+    """
+    con.executescript(_CLUBS_DDL)
+    con.executemany(
+        "INSERT INTO league_clubs(league,name,code,source,updated_at) VALUES(?,?,?,?,?) "
+        "ON CONFLICT(league,name) DO UPDATE SET code=excluded.code, "
+        "source=excluded.source, updated_at=excluded.updated_at",
+        [(league, school, code, "cfbd", now) for school, code in code_by_school.items()])
+    return len(code_by_school)
+
+
 def _team_vocabulary(season):
     """school -> canonical code, from the publisher's own team list. One request."""
     teams = _get_json("%s/teams?year=%d" % (_API, season))
@@ -95,6 +127,9 @@ def ingest(season=None, dry_run=False):
     counts = dict(inserted=0, updated=0, unchanged=0, no_team_code=0,
                   no_athlete_id=0, no_name=0)
     now = dt.datetime.now(dt.timezone.utc).isoformat()
+    if not dry_run:
+        print("  league_clubs: stored %d published %s schools"
+              % (_store_clubs(con, LEAGUE, code_by_school, now), LEAGUE))
     for row in rows:
         athlete_id = str(row.get("id") or "").strip()
         if not athlete_id:
