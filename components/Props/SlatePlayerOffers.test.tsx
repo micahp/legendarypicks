@@ -45,3 +45,107 @@ describe('slate player offer consolidation', () => {
     }))
   })
 })
+
+describe('prices on the offer row', () => {
+  it('shows a real book price beside the book', () => {
+    render(
+      <SlatePlayerOffers
+        playerId={1}
+        playerName="Test Player"
+        props={[
+          { market: 'saves', line: 2.5, side: 'over', source: 'rotowire:fanduel-sb', odds: -110 },
+          { market: 'saves', line: 2.5, side: 'under', source: 'rotowire:fanduel-sb', odds: -110 },
+        ]}
+        onOpen={() => {}}
+      />,
+    )
+    expect(document.querySelector('[data-slate-odds]')?.textContent).toBe('-110')
+  })
+
+  it('shows a positive price with its sign, because the sign is the meaning', () => {
+    render(
+      <SlatePlayerOffers
+        playerId={1}
+        playerName="Test Player"
+        props={[
+          { market: 'saves', line: 2.5, side: 'over', source: 'rotowire:caesars-sb', odds: 145 },
+          { market: 'saves', line: 2.5, side: 'under', source: 'rotowire:caesars-sb', odds: 145 },
+        ]}
+        onOpen={() => {}}
+      />,
+    )
+    expect(document.querySelector('[data-slate-odds]')?.textContent).toBe('+145')
+  })
+
+  it('shows NO price for a pickem source, even though the payload carries -137', () => {
+    render(
+      <SlatePlayerOffers
+        playerId={1}
+        playerName="Test Player"
+        props={[
+          { market: 'saves', line: 2.5, side: 'over', source: 'rotowire:prizepicks', odds: -137 },
+          { market: 'saves', line: 2.5, side: 'under', source: 'rotowire:prizepicks', odds: -137 },
+        ]}
+        onOpen={() => {}}
+      />,
+    )
+    expect(document.querySelector('[data-slate-odds]')).toBeNull()
+    expect(document.body.textContent).not.toContain('137')
+  })
+
+  it('shows nothing when there is no price at all', () => {
+    render(
+      <SlatePlayerOffers
+        playerId={1}
+        playerName="Test Player"
+        props={[
+          { market: 'saves', line: 2.5, side: 'over', source: 'rotowire:betr' },
+          { market: 'saves', line: 2.5, side: 'under', source: 'rotowire:betr' },
+        ]}
+        onOpen={() => {}}
+      />,
+    )
+    expect(document.querySelector('[data-slate-odds]')).toBeNull()
+  })
+
+  it('prices each chip when the two sides differ', () => {
+    render(
+      <SlatePlayerOffers
+        playerId={1}
+        playerName="Test Player"
+        props={[
+          { market: 'saves', line: 2.5, side: 'over', source: 'rotowire:draftkings-sb', odds: -120 },
+          { market: 'saves', line: 2.5, side: 'under', source: 'rotowire:draftkings-sb', odds: 100 },
+        ]}
+        onOpen={() => {}}
+      />,
+    )
+    expect(document.querySelector('[data-slate-odds]')).toBeNull()
+    const row = document.querySelector('[data-slate-market-row]') as HTMLElement
+    expect(row.textContent).toContain('-120')
+    expect(row.textContent).toContain('+100')
+  })
+
+  it('keeps OVER and UNDER together in one group, so they wrap as a pair', () => {
+    render(
+      <SlatePlayerOffers
+        playerId={1}
+        playerName="Test Player"
+        props={[
+          { market: 'saves', line: 2.5, side: 'over', source: 'rotowire:prizepicks' },
+          { market: 'saves', line: 2.5, side: 'under', source: 'rotowire:prizepicks' },
+        ]}
+        onOpen={() => {}}
+      />,
+    )
+    const row = document.querySelector('[data-slate-market-row]') as HTMLElement
+    // The ROW may still wrap on a phone; that is fine and deliberate. What must not happen
+    // is the pair splitting, so nothing here asserts flex-nowrap and nothing truncates.
+    expect(row.className).toContain('flex-wrap')
+    const chips = Array.from(row.querySelectorAll('button, span'))
+      .filter(el => ['OVER', 'UNDER'].includes((el.textContent || '').trim()))
+    expect(chips).toHaveLength(2)
+    expect(chips[0].parentElement).toBe(chips[1].parentElement)
+    expect(chips[0].parentElement?.className).toContain('shrink-0')
+  })
+})
