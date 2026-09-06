@@ -1,5 +1,35 @@
 # Changelog
 
+## v0.9.2
+
+### Identity and fixture integrity
+
+- **NCAAF boxscores no longer create player identities.** CFBD roster
+  publication owns the spine, while game logs resolve positive athlete IDs
+  onto it, queue misses visibly, and reject negative-ID team aggregates without
+  deleting the legacy rows that already reference them.
+- **Soccer fixtures must belong to the league claiming them.** The shared
+  creation guard requires both clubs to match the stored league membership,
+  and Leagues Cup additionally requires one MLS side and one Liga MX side.
+  Club membership is published from FotMob rather than consuming ESPN's
+  constrained request budget.
+- **Previously mislabelled soccer fixtures were relabelled and folded without
+  losing settled results.** The four remaining Leagues Cup games are genuine
+  MLS-versus-Liga-MX fixtures; unsupported Serie A stays refused rather than
+  being filed under MLS.
+
+### Props board clarity
+
+- **Over and under stay together when a market row wraps.** Alternate lines
+  remain behind one selector, and selecting a line no longer silently changes
+  the provider.
+- **Prices appear in one consistent place and only when they are real.** The
+  pick'em conversion constant is no longer presented as sportsbook odds.
+- **Source and settlement failures are visible.** Fixture verification fails
+  closed when its membership evidence is unavailable, soccer appearance
+  matching covers the publisher's UTC date boundary, and registry scheduling
+  keeps freshness gaps measurable.
+
 ## v0.9.1
 
 ### Props history and slate integrity
