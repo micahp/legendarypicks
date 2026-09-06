@@ -4,6 +4,9 @@ from fastapi.responses import JSONResponse
 from typing import Optional
 from _core import *
 from prop_game_merge import fold_prop_game
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -715,10 +718,50 @@ def _roster_league_for_ingest(con, league: str, team: str) -> str:
     return league
 
 
+def _try_link_prop_game(con, row, league, date, game_id):
+    """Link a new prop_games row to its ESPN event, and SAY what happened.
+
+    This was `except Exception: pass`, commented "crosswalk is best-effort; don't block
+    ingest". The best-effort part is right: this runs inside a request handler, and a
+    serving path must not wait on a publisher. Swallowing the exception is the part that
+    was wrong. It discarded the only proof the step ever ran.
+
+    What that cost, measured on prod 2026-09-06: 130 prop_games with no espn_event_id
+    carrying 1,828 props, and settlement keys on that link for every league except MLB, so
+    all 1,828 are permanently unsettleable. Not one of those failures was ever recorded.
+    A prop that can never earn a result is a hole in the record of a product whose name is
+    picks plus an earned record.
+
+    Never raises: the caller must still ingest the props. Returns (game_id, outcome), where
+    outcome is one of linked / no_match / failed, and the caller reports it either way.
+    """
+    try:
+        from link_prop_games import link_prop_game
+        import espn_client as _espn
+        espn_games = _espn.games(league, date)
+        espn_id = link_prop_game(con, row, espn_games)
+    except Exception as exc:
+        logger.warning(
+            "prop_game %s (%s %s): ESPN crosswalk FAILED, game stays unlinked and its "
+            "props cannot settle: %s: %s",
+            game_id, league, date, type(exc).__name__, exc)
+        return game_id, "failed"
+    if not espn_id:
+        logger.warning(
+            "prop_game %s (%s %s): no ESPN match among %d candidates, game stays unlinked "
+            "and its props cannot settle",
+            game_id, league, date, len(espn_games or []))
+        return game_id, "no_match"
+    return _link_or_fold(con, game_id, league, espn_id), "linked"
+
+
 @router.post("/api/props/ingest")
 def ingest_props(batch: PropIngest):
     """Ingest a batch of props for one game. Creates player/game rows as needed."""
     now = dt.datetime.now(dt.timezone.utc).isoformat()
+    # Say the zero: every response reports the crosswalk outcome, so "we did not need to
+    # link" is distinguishable from "the link failed" by the caller, not just in a log.
+    link_outcome = "already_linked"
     with closing(_db()) as con:
         # ensure game row — match on league+date+home+away (espn_event_id is optional)
         if batch.espn_event_id:
@@ -738,16 +781,11 @@ def ingest_props(batch: PropIngest):
             game_id = cur.lastrowid
             # Try to link espn_event_id for newly created games
             if not batch.espn_event_id:
-                try:
-                    from link_prop_games import link_prop_game
-                    import espn_client as _espn
-                    new_row = con.execute("SELECT id, league, date, home, away FROM prop_games WHERE id=?", (game_id,)).fetchone()
-                    espn_games = _espn.games(batch.league, batch.date)
-                    espn_id = link_prop_game(con, new_row, espn_games)
-                    if espn_id:
-                        game_id = _link_or_fold(con, game_id, batch.league, espn_id)
-                except Exception:
-                    pass
+                new_row = con.execute(
+                    "SELECT id, league, date, home, away FROM prop_games WHERE id=?",
+                    (game_id,)).fetchone()
+                game_id, link_outcome = _try_link_prop_game(
+                    con, new_row, batch.league, batch.date, game_id)
         else:
             game_id = game_row["id"]
             from link_prop_games import apply_start_time
@@ -755,15 +793,8 @@ def ingest_props(batch: PropIngest):
                              label="%s @ %s" % (batch.away, batch.home))
             # If existing game has no espn_event_id, try to link it now
             if not game_row["espn_event_id"] and not batch.espn_event_id:
-                try:
-                    from link_prop_games import link_prop_game
-                    import espn_client as _espn
-                    espn_games = _espn.games(batch.league, batch.date)
-                    espn_id = link_prop_game(con, game_row, espn_games)
-                    if espn_id:
-                        game_id = _link_or_fold(con, game_id, batch.league, espn_id)
-                except Exception:
-                    pass  # crosswalk is best-effort; don't block ingest
+                game_id, link_outcome = _try_link_prop_game(
+                    con, game_row, batch.league, batch.date, game_id)
         ingested = 0
         refreshed = 0
         unresolved = 0
@@ -822,7 +853,7 @@ def ingest_props(batch: PropIngest):
                 ingested += 1
         con.commit()
     return {"status": "ok", "game_id": game_id, "ingested": ingested,
-            "refreshed": refreshed, "unresolved": unresolved}
+            "refreshed": refreshed, "unresolved": unresolved, "link": link_outcome}
 
 
 @router.post("/api/capture-odds")
