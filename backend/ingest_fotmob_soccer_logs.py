@@ -233,12 +233,37 @@ def upsert(con, league, season, player, match_id, date, line, dry_run,
     return "inserted"
 
 
+def already_held(con, league, season, match_id):
+    """True when this fixture's rows are already stored, so it costs nothing to skip.
+
+    Every run used to fetch matchDetails for EVERY finished fixture in the season, one
+    request each, including matches whose result cannot change. Measured 2026-09-06: a full
+    MLS run spent its first ten minutes rewriting rows for 2026-02-21 through 05-17, which
+    we already held, while the dates anyone was waiting on sat empty at the far end.
+
+    `ingest_soccer_logs` has solved this next door with `_already_ingested`, and its comment
+    says why: skipping stored matches is what makes a refresh resumable. This is the same
+    rule against this table's own key.
+
+    A fixture with zero stored rows is NOT held: a match that failed halfway must be
+    retried, not skipped because something was written once.
+    """
+    row = con.execute(
+        "SELECT COUNT(*) FROM player_game_logs_fotmob "
+        "WHERE league=? AND season=? AND game_id=?",
+        (league, season, str(match_id))).fetchone()
+    return bool(row and row[0])
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--league", default="ligamx", choices=sorted(LEAGUES))
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--limit", type=int, default=0,
-                        help="stop after N fixtures")
+                        help="stop after N fixtures (the NEWEST N)")
+    parser.add_argument("--force-refetch", action="store_true",
+                        help="re-fetch fixtures already stored (use after changing what is "
+                             "extracted from a match)")
     args = parser.parse_args(argv)
 
     league_id, season = LEAGUES[args.league]
@@ -260,6 +285,9 @@ def main(argv=None):
     for match in finished:
         match_id = match["id"]
         date = str((match.get("status") or {}).get("utcTime") or "")[:10]
+        if not args.force_refetch and already_held(con, args.league, season, match_id):
+            counts["skipped_already_held"] += 1
+            continue
         try:
             detail = _get("https://www.fotmob.com/api/data/matchDetails"
                           f"?matchId={match_id}")
@@ -272,11 +300,25 @@ def main(argv=None):
         # roster already exists.  Date scope turns duplicate domestic-spine
         # names (Víctor Guzmán at MTY and TOL) into one match participant while
         # still failing closed if both actually played that date.
+        # ESPN's roster for this date NARROWS the spine when we have it: two players can
+        # share a name in a league, and only one of them was in this match.
+        #
+        # An EMPTY set is not a narrow constraint, it is a guarantee of zero resolution, and
+        # that is what it silently was. FotMob cannot resolve a date ESPN has not ingested,
+        # so it could never get ahead of ESPN. Measured 2026-09-06: a live run reported
+        # `fixtures=6 inserted=183 unresolved=183`, 100% unresolved, against a historical
+        # 92.5% (8,954 of 9,679 stored MLS rows). Nothing was broken; the constraint was
+        # empty, so every candidate was filtered out.
+        #
+        # With no ESPN rows for the date, fall back to the whole league spine and let
+        # `resolve` fail closed on any name it cannot make unique. That is a weaker
+        # constraint, honestly weaker, and it is the difference between resolving a player
+        # and resolving nobody at all.
         appearance_ids = {row[0] for row in con.execute(
             "SELECT DISTINCT player_id FROM player_game_logs "
             "WHERE league=? AND game_date=? AND player_id IS NOT NULL",
             (args.league, date),
-        )}
+        )} or None
         counts["fixtures"] += 1
         for fotmob_id, entry in players.items():
             line = stat_line(entry)
