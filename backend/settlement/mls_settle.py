@@ -156,6 +156,7 @@ def _settle_mls_props(con: sqlite3.Connection, game, props: list,
     unmappable = 0
     pending = 0
     errors = 0
+    missing_appearances = 0
     now = dt.datetime.now(dt.timezone.utc).isoformat()
     summary = None
     summary_attempted = False
@@ -215,6 +216,8 @@ def _settle_mls_props(con: sqlite3.Connection, game, props: list,
                 appearance, (key,), (fotmob_key,), (rotowire_key,))
 
         if actual is None:
+            if appearance is None:
+                missing_appearances += 1
             pending += 1
             continue
         try:
@@ -228,6 +231,12 @@ def _settle_mls_props(con: sqlite3.Connection, game, props: list,
     con.commit()
     result = {"settled": settled, "void": void, "unmappable": unmappable,
               "pending": pending, "errors": errors}
+    if missing_appearances:
+        result["msg"] = (
+            f"WARNING game {game['id']}: soccer source starvation — "
+            f"{missing_appearances} of {len(props)} unsettled props have no "
+            f"stored player appearance"
+        )
     if summary_failed:
         result["error_msg"] = "soccer summary fallback failed"
     return result
