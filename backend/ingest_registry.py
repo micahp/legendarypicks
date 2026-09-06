@@ -165,6 +165,43 @@ JOBS: List[Dict[str, object]] = [
             "label": "ncaaf logs",
         }],
     },
+    {
+        "id": "nfl_schedule",
+        # nfl_schedule stopped 2026-08-05 and the season started 2026-08-29, so the
+        # schedule went stale three weeks before it mattered most. ingest_nfl_schedule was
+        # in no unit, no cron and no runner script.
+        "cadence_min": 720,
+        "timeout_sec": 1200,
+        # nflverse publishes as files on github, its own host, so this costs no ESPN
+        # budget. --season already defaults to 2026, so no year is hardcoded here.
+        "host_lock": "nflverse",
+        "steps": [["ingest_nfl_schedule.py"]],
+        "needs_api_base": False,
+        "freshness": [{
+            "table": "nfl_schedule",
+            "date_column": "ingested_at",
+            # A schedule is a definition and rarely moves, but "we refreshed it" is the
+            # claim being checked, not "it changed".
+            "stale_hours": 48,
+            "label": "nfl schedule",
+        }],
+    },
+    {
+        "id": "nfl_depth_charts",
+        # Depth charts move weekly in season and stopped on 2026-07-29, before a snap was
+        # played. They feed the sit/start and waiver surfaces directly.
+        "cadence_min": 720,
+        "timeout_sec": 1200,
+        "host_lock": "nflverse",
+        "steps": [["ingest_nfl_depth_charts.py"]],
+        "needs_api_base": False,
+        "freshness": [{
+            "table": "nfl_depth_chart",
+            "date_column": "ingested_at",
+            "stale_hours": 48,
+            "label": "nfl depth charts",
+        }],
+    },
 ]
 
 _REQUIRED = ("id", "cadence_min", "timeout_sec", "host_lock", "steps", "freshness")
