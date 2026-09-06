@@ -1,8 +1,10 @@
 import json
 import sqlite3
+import unittest
 
 import espn_client
 import settlement
+from settlement import mls_settle
 
 
 def _schema(con):
@@ -795,3 +797,83 @@ def test_a_deep_market_settles_from_the_stored_core_row(monkeypatch):
     assert rows[704] == (3.0, 1)
     assert rows[705] == (61.0, 1)
     assert result["unmappable"] == 0
+
+
+class SoccerAppearanceCrossesTheDateBoundary(unittest.TestCase):
+    """prop_games.date is LOCAL; FotMob keys on utcTime. An evening kickoff on the west
+    coast is the next day in UTC, so the appearance sits under a date the join never asked
+    for. Measured on prod 2026-09-06: 9 of 17 MLS fixtures dated 09-05 start 00:30-02:30Z
+    on 09-06, and FotMob held 5 matches under 09-05 against 8 under 09-06."""
+
+    def _db(self):
+        con = sqlite3.connect(":memory:")
+        con.row_factory = sqlite3.Row
+        con.executescript("""
+            CREATE TABLE player_game_logs(player_id INT, league TEXT, season INT,
+                game_no TEXT, game_id TEXT, game_date TEXT, team TEXT, opponent TEXT,
+                home_away TEXT, game_type TEXT, stats TEXT);
+            CREATE TABLE player_game_logs_fotmob(player_id INT, league TEXT, season INT,
+                game_no TEXT, game_id TEXT, game_date TEXT, team TEXT, opponent TEXT,
+                home_away TEXT, game_type TEXT, stats TEXT);
+            CREATE VIEW player_game_logs_all AS
+              SELECT e.player_id, e.league, e.season, e.game_no, e.game_id, e.game_date,
+                     e.team, e.opponent, e.home_away, e.game_type,
+                     e.stats AS espn_stats, f.stats AS fotmob_stats
+                FROM player_game_logs e
+                LEFT JOIN player_game_logs_fotmob f
+                  ON f.player_id = e.player_id AND f.game_date = e.game_date
+              UNION ALL
+              SELECT f.player_id, f.league, f.season, f.game_no, f.game_id, f.game_date,
+                     f.team, f.opponent, f.home_away, f.game_type,
+                     NULL AS espn_stats, f.stats AS fotmob_stats
+                FROM player_game_logs_fotmob f
+               WHERE NOT EXISTS (SELECT 1 FROM player_game_logs e
+                                  WHERE e.player_id = f.player_id
+                                    AND e.game_date = f.game_date);
+        """)
+        con.commit()
+        return con
+
+    def _game(self, date, start_time):
+        return {"id": 1, "league": "mls", "date": date, "start_time": start_time,
+                "espn_event_id": "999"}
+
+    def test_a_utc_next_day_appearance_is_found(self):
+        con = self._db()
+        con.execute("INSERT INTO player_game_logs_fotmob(player_id,league,game_date,stats) "
+                    "VALUES(7,'mls','2026-09-06',?)", (json.dumps({"goals": 1}),))
+        con.commit()
+        row = mls_settle._stored_appearance(
+            con, self._game("2026-09-05", "2026-09-06T01:30:00Z"), 7)
+        self.assertIsNotNone(row, "the appearance is stored under the UTC date")
+        self.assertEqual(json.loads(row["fotmob_stats"])["goals"], 1)
+
+    def test_the_local_date_still_works(self):
+        con = self._db()
+        con.execute("INSERT INTO player_game_logs_fotmob(player_id,league,game_date,stats) "
+                    "VALUES(7,'mls','2026-09-05',?)", (json.dumps({"goals": 2}),))
+        con.commit()
+        row = mls_settle._stored_appearance(
+            con, self._game("2026-09-05", "2026-09-05T23:30:00Z"), 7)
+        self.assertIsNotNone(row)
+
+    def test_an_appearance_on_BOTH_dates_still_fails_closed(self):
+        """Widening the candidate dates widens what must be unique. Two appearances mean we
+        cannot say which match this is, and guessing is how a prop grades against the wrong
+        game."""
+        con = self._db()
+        for date in ("2026-09-05", "2026-09-06"):
+            con.execute("INSERT INTO player_game_logs_fotmob(player_id,league,game_date,stats) "
+                        "VALUES(7,'mls',?,?)", (date, json.dumps({"goals": 1})))
+        con.commit()
+        row = mls_settle._stored_appearance(
+            con, self._game("2026-09-05", "2026-09-06T01:30:00Z"), 7)
+        self.assertIsNone(row)
+
+    def test_a_missing_start_time_does_not_raise(self):
+        con = self._db()
+        con.execute("INSERT INTO player_game_logs_fotmob(player_id,league,game_date,stats) "
+                    "VALUES(7,'mls','2026-09-05',?)", (json.dumps({"goals": 1}),))
+        con.commit()
+        row = mls_settle._stored_appearance(con, self._game("2026-09-05", None), 7)
+        self.assertIsNotNone(row)

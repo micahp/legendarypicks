@@ -95,10 +95,26 @@ def _stored_appearance(con: sqlite3.Connection, game, player_id,
 
     # A FotMob-only row has a provider-specific game id. Date+player is the
     # cross-provider key used by the view, but it is safe only when unique.
+    #
+    # BOTH dates, because the two publishers key on different clocks. prop_games.date is the
+    # LOCAL US date; FotMob stores utcTime[:10]. An evening kickoff on the west coast is the
+    # next day in UTC, so the rows sit under a date this join never asked for. Measured on
+    # prod 2026-09-06: 9 of the 17 MLS fixtures dated 09-05 start at 00:30-02:30Z on 09-06,
+    # and FotMob held 5 matches under 09-05 against 8 under 09-06. The data was there and
+    # unreachable.
+    #
+    # Uniqueness still decides. Widening the candidate dates widens what must be unique, so
+    # a player with an appearance on both dates resolves to nobody, exactly as before.
+    dates = [game["date"]]
+    start_time = str(game["start_time"] or "")[:10]
+    if start_time and start_time != game["date"]:
+        dates.append(start_time)
+    placeholders = ",".join("?" for _ in dates)
     rows = con.execute(
         f"SELECT game_id, espn_stats, fotmob_stats, {rotowire} "
-        "FROM player_game_logs_all WHERE player_id=? AND league=? AND game_date=?",
-        (player_id, game["league"], game["date"]),
+        f"FROM player_game_logs_all WHERE player_id=? AND league=? "
+        f"AND game_date IN ({placeholders})",
+        (player_id, game["league"], *dates),
     ).fetchall()
     fotmob_only = [row for row in rows if row["espn_stats"] is None]
     return fotmob_only[0] if len(fotmob_only) == 1 else None
