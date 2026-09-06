@@ -42,10 +42,15 @@ JOBS: List[Dict[str, object]] = [
         "cadence_min": 60,
         "timeout_sec": 1800,
         "host_lock": "espn",
-        # The summary path answers a whole match in one request and publishes goals,
-        # assists and cards. `--deep` is roughly one core-api request PER ATHLETE (~45 a
-        # fixture) and buys only tackles/clearances/crosses/passes, so it is deliberately
-        # not scheduled: it belongs in a hand-run backfill, not an hourly job.
+        # NO LONGER THE PRIMARY SOURCE OF MLS APPEARANCES. As of 2026-09-06 the FotMob job
+        # supplies goals, assists and shots on its own host, so this exists for the keys
+        # FotMob does not publish at all: yellow_cards, red_cards, offsides, own_goals,
+        # sub_ins and first_goal. Cards alone are 203 unsettled props with no other source.
+        #
+        # The summary path answers a whole match in one request. `--deep` is roughly one
+        # core-api request PER ATHLETE (~45 a fixture) and buys only
+        # tackles/clearances/crosses/passes, all of which FotMob already publishes, so it is
+        # deliberately not scheduled: it belongs in a hand-run backfill, not an hourly job.
         #
         # DEPENDENCY, and it is deliberate that this fails loudly until it lands: these
         # steps omit `--season`, which on `dev` today is a REQUIRED argument, so the job
@@ -71,11 +76,16 @@ JOBS: List[Dict[str, object]] = [
         "needs_api_base": False,
         "freshness": [
             {
-                "table": "player_game_logs",
+                # The VIEW, not the ESPN table. The question this check exists to answer is
+                # "can we grade a recent MLS game", and after 2026-09-06 either publisher can
+                # answer it: player_game_logs_all unions ESPN's rows with FotMob's. Pointing
+                # at the ESPN table alone would report a hole that FotMob has already filled,
+                # which is a claim about one source dressed up as a claim about our coverage.
+                "table": "player_game_logs_all",
                 "date_column": "game_date",
                 "where": "league = 'mls'",
                 "stale_hours": 48,
-                "label": "mls appearances",
+                "label": "mls appearances (any source)",
             },
             {
                 "table": "player_game_logs",
@@ -222,6 +232,32 @@ JOBS: List[Dict[str, object]] = [
             # week in the transfer portal.
             "stale_hours": 72,
             "label": "ncaaf spine",
+        }],
+    },
+    {
+        "id": "fotmob_soccer_logs",
+        # MLS appearances WITHOUT ESPN. This is the point of the job: settlement was blocked
+        # on a publisher whose per-minute budget is shared with the serving path, for stats
+        # another publisher gives away on its own host.
+        #
+        # Cheap only because the fixture skip landed with it. Before that every run fetched
+        # matchDetails for every finished fixture in the season; on 2026-09-06 a full MLS run
+        # touched 343 fixtures to learn nothing. With the skip: 314 skipped, 29 fetched. An
+        # hourly job costs a handful of requests on a match day and nearly nothing otherwise.
+        "cadence_min": 60,
+        "timeout_sec": 1800,
+        # FotMob's own host. Deliberately NOT the "espn" lock: the whole point is that this
+        # can run while an ESPN job is running, because it spends a different budget.
+        "host_lock": "fotmob",
+        "steps": [["ingest_fotmob_soccer_logs.py", "--league", "mls"],
+                  ["ingest_fotmob_soccer_logs.py", "--league", "lcup"]],
+        "needs_api_base": False,
+        "freshness": [{
+            "table": "player_game_logs_fotmob",
+            "date_column": "game_date",
+            "where": "league = 'mls'",
+            "stale_hours": 48,
+            "label": "mls appearances (fotmob)",
         }],
     },
 ]
