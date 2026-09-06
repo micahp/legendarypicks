@@ -38,10 +38,41 @@ SOURCE_TO_PROVIDER = {
 # Historical Kambi rows remain useful for settled-prop analysis, but Kambi is no longer a
 # configured publisher. Naming it here distinguishes an intentionally retired source from a
 # new, unmapped label without pretending it is fresh or expecting it to run.
-RETIRED_SOURCES = {"kambi"}
+RETIRED_SOURCES = {
+    "kambi",
+    # PrizePicks is not a configured provider: `ingest_prizepicks_props.py` takes a
+    # projections.json path by hand and no timer, cron or registry entry runs it. Its rows
+    # stopped on 2026-08-25 because nobody ran it, not because a feed broke, so alerting on
+    # them every run reported a decision as a failure.
+    "prizepicks",
+    "prizepicks-demon",
+    "prizepicks-goblin",
+}
+KNOWN_PROVIDER_IDS = {provider["id"] for provider in PROVIDERS}
 PROVIDER_STALE_HOURS = {
     provider["id"]: 4 * provider["cadence_min"] / 60.0 for provider in PROVIDERS
 }
+
+
+def resolve_provider(source):
+    """Map a props `source` label to the provider id that publishes it.
+
+    Rotowire emits one label per sportsbook (`rotowire:draftkings-sb`, `rotowire:pick6`,
+    `rotowire:betr`, ...) and adds books whenever it likes. Enumerating them meant every new
+    book counted as an unknown source and failed this check, which is a claim about our list,
+    not about whether rotowire is publishing. The label already carries its provider in the
+    prefix, so read the publisher's own encoding. A book going quiet is absorbed by the
+    provider's own freshness, which is the question this monitor exists to answer.
+
+    Returns (provider_id, derived). `derived` is True when the prefix answered it, so the
+    caller can still say out loud that it saw a label nobody declared.
+    """
+    if source in SOURCE_TO_PROVIDER:
+        return SOURCE_TO_PROVIDER[source], False
+    prefix = source.split(":", 1)[0]
+    if prefix in KNOWN_PROVIDER_IDS:
+        return prefix, True
+    return None, False
 
 
 def latest_capture(base):
@@ -83,11 +114,15 @@ def main():
             if source in RETIRED_SOURCES:
                 print(f"INFO [{env}] RETIRED SOURCE {source}: excluded from freshness", flush=True)
                 continue
-            provider_id = SOURCE_TO_PROVIDER.get(source)
+            provider_id, derived = resolve_provider(source)
             if provider_id is None:
                 print(f"ALERT [{env}] UNKNOWN SOURCE {source}", flush=True)
                 stale.append(f"{env}:{source}")
                 continue
+            if derived:
+                # Visible, but not a failure: the prefix is evidence, an absent list entry is not.
+                print(f"INFO [{env}] {source}: counted under {provider_id} (from label prefix)",
+                      flush=True)
             if captured_at is not None:
                 provider_captures[provider_id].append(captured_at)
 
