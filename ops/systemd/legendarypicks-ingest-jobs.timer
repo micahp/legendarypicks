@@ -1,0 +1,17 @@
+[Unit]
+Description=Fire the ingest registry hourly; each job honours its own cadence
+
+[Timer]
+# ABSOLUTE, never OnBootSec + OnUnitActiveSec. A monotonic timer whose reference activation
+# systemd has forgotten enters SubState=elapsed with no next elapse while still reporting
+# `enabled` and `active`. That parked the Bovada timers from 2026-08-21 to 08-24 and two
+# sessions wrote it up as a deliberate park.
+#
+# :22 deliberately avoids the props timer at :04 and :34 and the scoreboard cadence, so two
+# batch jobs are not spending the same publisher's per-minute budget at the same instant.
+OnCalendar=*-*-* *:22:00
+Persistent=true
+Unit=legendarypicks-ingest-jobs.service
+
+[Install]
+WantedBy=timers.target

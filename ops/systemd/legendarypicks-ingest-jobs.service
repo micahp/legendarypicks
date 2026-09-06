@@ -1,0 +1,47 @@
+[Unit]
+Description=Run every ingest_registry job, DEV then PROD, through one registry
+After=network-online.target
+Wants=network-online.target
+OnFailure=legendarypicks-ops-alert@%N.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/root/legendarypicks/backend
+Nice=10
+Environment=PYTHONUNBUFFERED=1
+
+# ONE timer for every non-props ingest, not one timer per ingest.
+#
+# backend/ holds 49 ingest_*.py against about 14 timers, and writing an ingest was a
+# separate act from scheduling it. ingest_soccer_logs.py was in no unit, no crontab and no
+# runner script: it worked, it was tested, and it ran never, so MLS appearance rows stopped
+# on 2026-08-08 while finaled games ran to 2026-09-05. Adding a fifteenth timer per ingest
+# repeats that. A registry entry carries its own cadence, so one timer serves many jobs at
+# different rates and adding a job cannot forget to schedule it.
+#
+# Cadence lives in ingest_registry.JOBS, not here. This unit may fire more often than any
+# job needs; run_props_ingest's ledger skips a job inside its own cadence_min and records
+# skipped_cadence. Firing hourly against a 60-minute cadence is therefore correct, not
+# wasteful.
+#
+# One ExecStart, not two, because systemd abandons the remaining ExecStart lines of a
+# oneshot once one exits non-zero, which would let a dev failure silently cancel prod. Same
+# reason as legendarypicks-props.service. Both run regardless; the unit fails if either did.
+#
+# Host budget is shared, not per unit. Jobs declare host_lock, and a job holding "espn"
+# blocks another ESPN job rather than both bursting at a host whose limit is a burst rate
+# shared with the serving path. That is the 2026-08-24 lesson where two concurrent batch
+# jobs fired ~50 requests in a minute and 26 refusals landed on uvicorn.
+#
+# No LP_API_BASE: these jobs write their database directly rather than posting to the API.
+ExecStart=/bin/sh -c '\
+  rc=0; \
+  echo "=== DEV ==="; \
+  LP_DB_PATH=/root/legendarypicks/backend/data/picks.dev.db \
+  /root/legendarypicks/backend/venv/bin/python run_ingest_jobs.py || rc=$?; \
+  echo "=== PROD ==="; \
+  LP_DB_PATH=/root/legendarypicks/backend/data/picks.db \
+  /root/legendarypicks/backend/venv/bin/python run_ingest_jobs.py || rc=$?; \
+  exit $rc'
+
+TimeoutStartSec=3600
