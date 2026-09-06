@@ -33,8 +33,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-import team_codes
-from ingest_cfbd_logs import (
+from cfbd_shared import (
     _API,
     _get_json,
     _school_to_code,
