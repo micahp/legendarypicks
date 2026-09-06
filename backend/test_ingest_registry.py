@@ -125,13 +125,13 @@ class TheMonitorFailsClosed(unittest.TestCase):
         con.execute("CREATE TABLE player_game_logs(league TEXT, game_date TEXT)")
         con.commit()
         con.close()
-        self.today = dt.date(2026, 9, 6)
+        self.now = dt.datetime(2026, 9, 6, 12, 0, tzinfo=dt.timezone.utc)
         self.target = {"job": "j", "label": "rows", "table": "player_game_logs",
                        "date_column": "game_date", "stale_hours": 48}
 
     def _levels(self, targets=None):
         return [lvl for lvl, _ in monitor.check(
-            "test", self.db, targets or [self.target], today=self.today)]
+            "test", self.db, targets or [self.target], now=self.now)]
 
     def _insert(self, date):
         con = sqlite3.connect(self.db)
@@ -162,6 +162,23 @@ class TheMonitorFailsClosed(unittest.TestCase):
     def test_an_unparseable_date_alerts_rather_than_reading_as_fresh(self):
         self._insert("not-a-date")
         self.assertEqual(self._levels(), ["ALERT"])
+
+    def test_hour_precision_so_a_settlement_gap_is_visible(self):
+        """A settlement stall is hours, not days. Day granularity could not see the real
+        defect: prod settled nothing for 14.5h against a 6h threshold."""
+        target = dict(self.target, date_column="game_date", stale_hours=6)
+        self._insert("2026-09-06T03:00:00+00:00")
+        self.assertEqual(self._levels([target]), ["ALERT"])
+
+    def test_a_timestamp_inside_the_threshold_is_fresh(self):
+        target = dict(self.target, stale_hours=6)
+        self._insert("2026-09-06T09:00:00+00:00")
+        self.assertEqual(self._levels([target]), ["OK"])
+
+    def test_a_bare_date_is_read_as_the_START_of_that_day(self):
+        """Never fresher than reality: a date-only value must not round in our favour."""
+        self.assertEqual(monitor._parse_when("2026-09-06"),
+                         dt.datetime(2026, 9, 6, 0, 0, tzinfo=dt.timezone.utc))
 
 
 if __name__ == "__main__":

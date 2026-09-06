@@ -10,10 +10,11 @@ Order (each step idempotent, safe to re-run):
   5. Coverage report (SLO check)
 
 Usage:
-  venv/bin/python scripts/run_pipeline.py [--full] [--dry-run] [--skip-props]
+  venv/bin/python scripts/run_pipeline.py [--full] [--dry-run] [--skip-props] [--skip-settle]
     --full : also run full-league stat ingests (slow — do 1-2x/day)
     --dry-run : print what would run, don't execute
     --skip-props : leave props publication to run_props_ingest.py
+    --skip-settle: leave settlement to the ingest_registry `settlement` job
 """
 import argparse
 import sys, os, subprocess, datetime as dt, json, urllib.request
@@ -166,6 +167,11 @@ def _parser():
     parser.add_argument("--full", action="store_true")
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument(
+        "--skip-settle",
+        action="store_true",
+        help="leave settlement to the ingest_registry settlement job",
+    )
+    parser.add_argument(
         "--skip-props",
         action="store_true",
         help="do not call the legacy Bovada publisher; the props runner owns publication",
@@ -197,8 +203,16 @@ def main(argv=None):
     # Step 2: Link games to ESPN (always)
     results["link"] = step_link_games(dry_run)
 
-    # Step 3: Settle finaled games (always)
-    results["settle"] = step_settle(dry_run)
+    # Step 3: Settle finaled games.
+    #
+    # Scheduled callers use --skip-settle, for the same reason they use --skip-props: one
+    # owner per publisher. settle_game fetches an ESPN boxscore per game, and two settlement
+    # processes racing would spend one host's per-minute budget twice over, which is exactly
+    # how all three ESPN hosts went from answering to refusing on 2026-08-18.
+    if args.skip_settle:
+        print("  [settle] skipped: the ingest_registry settlement job owns scheduled settlement")
+    else:
+        results["settle"] = step_settle(dry_run)
 
     # Step 4: Full-league stat refresh (only with --full)
     if full:

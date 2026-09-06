@@ -28,15 +28,26 @@ ENVS = {
 }
 
 
-def _parse_date(value):
-    """A date column here is a game date (YYYY-MM-DD), not a capture timestamp."""
+def _parse_when(value):
+    """Accept a game date (YYYY-MM-DD) or a full timestamp, and keep the precision.
+
+    Settlement lag is measured in hours, not days: "nothing has settled for 6 hours" is the
+    finding, and a date-only comparison cannot see it. A bare date is read as the START of
+    that day, so a stale date can only ever be reported as older than it is, never fresher.
+    """
     text = str(value or "").strip()
     if not text:
         return None
     try:
-        return dt.date.fromisoformat(text[:10])
+        when = dt.datetime.fromisoformat(text.replace("Z", "+00:00"))
     except ValueError:
-        return None
+        try:
+            when = dt.datetime.combine(dt.date.fromisoformat(text[:10]), dt.time.min)
+        except ValueError:
+            return None
+    if when.tzinfo is None:
+        when = when.replace(tzinfo=dt.timezone.utc)
+    return when
 
 
 def _newest(con, target):
@@ -44,12 +55,12 @@ def _newest(con, target):
     sql = "SELECT max({}) FROM {}".format(target["date_column"], target["table"])
     if where:
         sql += " WHERE " + where
-    return _parse_date(con.execute(sql).fetchone()[0])
+    return _parse_when(con.execute(sql).fetchone()[0])
 
 
-def check(env, db_path, targets, today=None):
+def check(env, db_path, targets, now=None):
     """Return a list of (level, message). level is OK, INFO or ALERT."""
-    today = today or dt.date.today()
+    now = now or dt.datetime.now(dt.timezone.utc)
     out = []
     if not os.path.isfile(db_path):
         return [("ALERT", "[{}] database missing, cannot check anything: {}".format(env, db_path))]
@@ -72,14 +83,14 @@ def check(env, db_path, targets, today=None):
                 out.append(("ALERT", "[{}] {}: NO ROWS at all in {}".format(
                     env, label, target["table"])))
                 continue
-            age_h = (today - newest).days * 24
+            age_h = (now - newest).total_seconds() / 3600.0
             threshold = target["stale_hours"]
             if age_h > threshold:
-                out.append(("ALERT", "[{}] {} STALE: newest {} is {}, {}h old (threshold {}h)"
-                            .format(env, label, target["date_column"], newest.isoformat(),
-                                    age_h, threshold)))
+                out.append(("ALERT", "[{}] {} STALE: newest {} is {}, {:.1f}h old "
+                            "(threshold {}h)".format(env, label, target["date_column"],
+                                                     newest.isoformat(), age_h, threshold)))
             else:
-                out.append(("OK", "[{}] {} fresh: newest {} ({}h, threshold {}h)".format(
+                out.append(("OK", "[{}] {} fresh: newest {} ({:.1f}h, threshold {}h)".format(
                     env, label, newest.isoformat(), age_h, threshold)))
     finally:
         con.close()

@@ -86,6 +86,34 @@ JOBS: List[Dict[str, object]] = [
             },
         ],
     },
+    {
+        "id": "settlement",
+        # Every 30 minutes, ALL DAY. /etc/cron.d/legendarypicks-pipeline ran settlement at
+        # :23 and :53 during hours 19-23 and 0-3 only, so nothing settled between 03:53 and
+        # 19:23 no matter how many games finished. Measured on prod 2026-09-06: MLB's median
+        # time from kickoff to settled was 57.5h across 65,875 props, against 4.9h for NCAAF
+        # and 2.7h for Leagues Cup on the same machinery. Most of that gap is a game waiting
+        # for a window, not a game that is hard to grade.
+        "cadence_min": 30,
+        # 1800, not 300. run_pipeline.py capped this step at 300s and prod recorded 207
+        # TIMEOUTs against 1,267 successes, 14% of every run killed mid-backlog. settle_props
+        # wraps itself in espn.batch_pacing(), which deliberately sleeps out an ESPN cooldown
+        # because nobody waits on a batch job, so a 300s cap guarantees a kill whenever the
+        # host is busy. A settlement run that is cut off is not an error anyone sees: it just
+        # leaves props ungraded until some later run happens to reach them.
+        "timeout_sec": 1800,
+        # settle_game fetches a boxscore per game, so this shares the ESPN burst budget with
+        # soccer_logs and must never run beside it.
+        "host_lock": "espn",
+        "steps": [["settle_props.py"]],
+        "needs_api_base": False,
+        "freshness": [{
+            "table": "prop_results",
+            "date_column": "settled_at",
+            "stale_hours": 6,
+            "label": "settlement",
+        }],
+    },
 ]
 
 _REQUIRED = ("id", "cadence_min", "timeout_sec", "host_lock", "steps", "freshness")
