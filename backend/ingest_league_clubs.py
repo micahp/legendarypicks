@@ -12,12 +12,15 @@ until `ingest_ncaaf_rosters_cfbd` began storing CFBD's 139 schools. Then
 record held too few clubs to recognise either side, so a plainly Liga MX fixture was reported
 as belonging to no league we carry.
 
-ESPN publishes the whole club list for a soccer league in ONE request, and
-`ingest_mls_ncaaf_rosters._site_teams` has always fetched it and kept only the
-abbreviations. This keeps the names too.
+NOT FROM ESPN. The first version of this read ESPN's team list, which was the wrong instinct
+twice over: identity should not depend on the one publisher whose budget constrains
+everything else, and on this box that endpoint returned 403 on the very first dev run. NCAAF
+rosters had already been moved off ESPN to CFBD for the same reason, at 2 requests instead
+of 149.
 
-Cost: 1 request per league to site.web.api. That host's limit is a burst rate, and this is
-two or three requests run rarely, so it needs no pacing beyond the shared fetcher's own.
+FotMob publishes a league's full table, and we already depend on it for soccer appearances.
+One request per league, on a host that is not the bottleneck: Liga MX returns all 18 clubs
+with `name`, `shortName` and an id.
 """
 import argparse
 import datetime as dt
@@ -27,17 +30,13 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-import espn_client as espn
+from ingest_fotmob_soccer_logs import LEAGUES as _FOTMOB_LEAGUES, _get as _fotmob_get
 
 DB = os.environ.get("LP_DB_PATH") or os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "data", "picks.db")
 
-_SITE = "https://site.web.api.espn.com/apis/site/v2/sports/{path}"
-_PATHS = {
-    "mls": "soccer/usa.1",
-    "ligamx": "soccer/mex.1",
-    "lcup": "soccer/concacaf.leagues.cup",
-}
+# The same league ids the appearance ingest already uses, so the two cannot drift.
+_PATHS = {league: ids[0] for league, ids in _FOTMOB_LEAGUES.items()}
 
 _DDL = """
 CREATE TABLE IF NOT EXISTS league_clubs (
@@ -51,24 +50,52 @@ CREATE TABLE IF NOT EXISTS league_clubs (
 """
 
 
-def published_clubs(league):
-    """Every name ESPN publishes for a league's clubs, with its abbreviation.
+def _rows(node):
+    """Every club row, whatever nesting the league uses.
 
-    Several spellings per club on purpose: `displayName`, `shortDisplayName`, `name` and
-    `location` are all things a bookmaker might print, and the checker folds them anyway. A
-    name we do not store is a real fixture we might refuse.
+    Liga MX publishes `data.table.all`. MLS and Leagues Cup publish `data.tables`, a list of
+    conference groups each holding its own `table.all`. The first version handled the first
+    shape and half of the second, so both leagues stored nothing while reporting success;
+    only the "published NOTHING" guard stopped that from shrinking the record.
+
+    Walks the structure instead of naming one path, so a third shape costs nothing.
     """
-    document = espn._get(_SITE.format(path=_PATHS[league]) + "/teams?limit=200", ttl=43200)
+    if isinstance(node, dict):
+        if node.get("all"):
+            return list(node["all"])
+        for key in ("table", "tables"):
+            if node.get(key):
+                return _rows(node[key])
+        return []
+    if isinstance(node, list):
+        rows = []
+        for item in node:
+            rows.extend(_rows(item))
+        return rows
+    return []
+
+
+def published_clubs(league):
+    """Every name FotMob publishes for a league's clubs, keyed to its own id.
+
+    Both `name` and `shortName` on purpose: "CF America" and "America" are both things a
+    bookmaker might print, and the checker folds them anyway. A name we do not store is a
+    real fixture we might refuse.
+    """
+    document = _fotmob_get(
+        "https://www.fotmob.com/api/data/leagues?id={}".format(_PATHS[league]))
     out = {}
-    for sport in document.get("sports") or []:
-        for entry in sport.get("leagues") or []:
-            for item in entry.get("teams") or []:
-                team = item.get("team") or {}
-                code = (team.get("abbreviation") or "").upper() or None
-                for key in ("displayName", "shortDisplayName", "name", "location", "nickname"):
-                    name = (team.get(key) or "").strip()
-                    if name:
-                        out[name] = code
+    for entry in document.get("table") or []:
+        data = (entry or {}).get("data") or {}
+        # `table` for a single-table league, `tables` for one with conferences. MLS and
+        # Leagues Cup publish the plural and returned nothing until this read both.
+        table = data.get("table") or data.get("tables")
+        for row in _rows(table):
+            club_id = str(row.get("id") or "") or None
+            for key in ("name", "shortName"):
+                name = (row.get(key) or "").strip()
+                if name:
+                    out[name] = club_id
     return out
 
 
@@ -84,7 +111,7 @@ def ingest(leagues, dry_run=False):
             # nothing. Writing it would shrink the record the checker depends on.
             print("  {}: published NOTHING; leaving the stored record alone".format(league))
             continue
-        print("  {}: {} published names, {} distinct codes".format(
+        print("  {}: {} published names, {} distinct clubs".format(
             league, len(clubs), len({c for c in clubs.values() if c})))
         if dry_run:
             continue
@@ -92,7 +119,7 @@ def ingest(leagues, dry_run=False):
             "INSERT INTO league_clubs(league,name,code,source,updated_at) VALUES(?,?,?,?,?) "
             "ON CONFLICT(league,name) DO UPDATE SET code=excluded.code, "
             "source=excluded.source, updated_at=excluded.updated_at",
-            [(league, name, code, "espn", now) for name, code in clubs.items()])
+            [(league, name, code, "fotmob", now) for name, code in clubs.items()])
         total += len(clubs)
     if not dry_run:
         con.commit()
