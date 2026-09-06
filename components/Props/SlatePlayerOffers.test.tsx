@@ -47,83 +47,46 @@ describe('slate player offer consolidation', () => {
 })
 
 describe('prices on the offer row', () => {
-  it('shows a real book price beside the book', () => {
+  const render1 = (over: number | undefined, under: number | undefined, source: string) =>
     render(
       <SlatePlayerOffers
         playerId={1}
         playerName="Test Player"
         props={[
-          { market: 'saves', line: 2.5, side: 'over', source: 'rotowire:fanduel-sb', odds: -110 },
-          { market: 'saves', line: 2.5, side: 'under', source: 'rotowire:fanduel-sb', odds: -110 },
+          { market: 'saves', line: 2.5, side: 'over', source, odds: over },
+          { market: 'saves', line: 2.5, side: 'under', source, odds: under },
         ]}
         onOpen={() => {}}
       />,
     )
-    expect(document.querySelector('[data-slate-odds]')?.textContent).toBe('-110')
+
+  const prices = () =>
+    Array.from(document.querySelectorAll('[data-slate-odds]')).map(el => el.textContent)
+
+  it('prices BOTH pills, always in the same place', () => {
+    render1(-110, -110, 'rotowire:fanduel-sb')
+    expect(prices()).toEqual(['-110', '-110'])
   })
 
-  it('shows a positive price with its sign, because the sign is the meaning', () => {
-    render(
-      <SlatePlayerOffers
-        playerId={1}
-        playerName="Test Player"
-        props={[
-          { market: 'saves', line: 2.5, side: 'over', source: 'rotowire:caesars-sb', odds: 145 },
-          { market: 'saves', line: 2.5, side: 'under', source: 'rotowire:caesars-sb', odds: 145 },
-        ]}
-        onOpen={() => {}}
-      />,
-    )
-    expect(document.querySelector('[data-slate-odds]')?.textContent).toBe('+145')
+  it('keeps a positive sign, because the sign is the meaning', () => {
+    render1(145, -160, 'rotowire:caesars-sb')
+    expect(prices()).toEqual(['+145', '-160'])
   })
 
   it('shows NO price for a pickem source, even though the payload carries -137', () => {
-    render(
-      <SlatePlayerOffers
-        playerId={1}
-        playerName="Test Player"
-        props={[
-          { market: 'saves', line: 2.5, side: 'over', source: 'rotowire:prizepicks', odds: -137 },
-          { market: 'saves', line: 2.5, side: 'under', source: 'rotowire:prizepicks', odds: -137 },
-        ]}
-        onOpen={() => {}}
-      />,
-    )
-    expect(document.querySelector('[data-slate-odds]')).toBeNull()
+    render1(-137, -137, 'rotowire:prizepicks')
+    expect(prices()).toEqual([])
     expect(document.body.textContent).not.toContain('137')
   })
 
   it('shows nothing when there is no price at all', () => {
-    render(
-      <SlatePlayerOffers
-        playerId={1}
-        playerName="Test Player"
-        props={[
-          { market: 'saves', line: 2.5, side: 'over', source: 'rotowire:betr' },
-          { market: 'saves', line: 2.5, side: 'under', source: 'rotowire:betr' },
-        ]}
-        onOpen={() => {}}
-      />,
-    )
-    expect(document.querySelector('[data-slate-odds]')).toBeNull()
+    render1(undefined, undefined, 'rotowire:betr')
+    expect(prices()).toEqual([])
   })
 
-  it('prices each chip when the two sides differ', () => {
-    render(
-      <SlatePlayerOffers
-        playerId={1}
-        playerName="Test Player"
-        props={[
-          { market: 'saves', line: 2.5, side: 'over', source: 'rotowire:draftkings-sb', odds: -120 },
-          { market: 'saves', line: 2.5, side: 'under', source: 'rotowire:draftkings-sb', odds: 100 },
-        ]}
-        onOpen={() => {}}
-      />,
-    )
-    expect(document.querySelector('[data-slate-odds]')).toBeNull()
-    const row = document.querySelector('[data-slate-market-row]') as HTMLElement
-    expect(row.textContent).toContain('-120')
-    expect(row.textContent).toContain('+100')
+  it('prices one side when only one side is priced', () => {
+    render1(-120, undefined, 'rotowire:draftkings-sb')
+    expect(prices()).toEqual(['-120'])
   })
 
   it('keeps OVER and UNDER together in one group, so they wrap as a pair', () => {

@@ -39,17 +39,6 @@ function formatLine(line: number): string {
   return Number.isInteger(line) ? String(line) : line.toFixed(1)
 }
 
-// The price belongs beside the book when BOTH sides are priced the same, which is the
-// common case for a pick'em-style relay, and beside each chip when they differ. Showing a
-// single number for two different prices would be a fabricated value, and showing two
-// numbers when there is one wastes the width this row does not have on a phone.
-function sharedOdds(offer: SlateOffer): string | null {
-  const over = realOdds(offer.source, offer.over?.odds)
-  const under = realOdds(offer.source, offer.under?.odds)
-  if (over && under) return over === under ? over : null
-  return over || under
-}
-
 export function groupSlateOffers(props: SlateOfferProp[]): SlateMarketOffers[] {
   const markets = new Map<string, Map<string, SlateOffer>>()
   for (const prop of props) {
@@ -93,7 +82,6 @@ export default function SlatePlayerOffers({
         const selected = row.offers.find(offer => offer.key === selectedByMarket[row.market])
           || row.offers[0]
         const lineOptions = uniqueLineOptions(row.offers)
-        const shared = sharedOdds(selected)
         return (
           <div
             key={row.market}
@@ -144,7 +132,6 @@ export default function SlatePlayerOffers({
             )}
             <span className="whitespace-nowrap text-[9px] uppercase tracking-wide text-zinc-600">
               {sourceLabel(selected.source)}
-              {shared ? <span data-slate-odds className="ml-1 tabular-nums text-zinc-400">{shared}</span> : null}
             </span>
             {/* The pair wraps TOGETHER or not at all. The row may still break onto a second
                 line on a phone, which is fine; UNDER landing on its own line away from OVER
@@ -152,6 +139,9 @@ export default function SlatePlayerOffers({
             <span className="flex shrink-0 items-center gap-2">
             {(['over', 'under'] as const).map(side => {
               const prop = selected[side]
+              // ONE place, always: the price rides the pill for the side it prices. Moving
+              // it depending on the data made the reader work out where to look each time.
+              const price = realOdds(selected.source, prop?.odds)
               const tone = side === 'over'
                 ? 'bg-emerald-900/30 text-emerald-300 hover:bg-emerald-900/50'
                 : 'bg-red-900/30 text-red-300 hover:bg-red-900/50'
@@ -163,16 +153,12 @@ export default function SlatePlayerOffers({
                   className={`rounded px-2 py-1 text-[11px] font-mono font-semibold ${tone}`}
                 >
                   {side === 'over' ? 'OVER' : 'UNDER'}
-                  {!shared && realOdds(selected.source, prop.odds)
-                    ? <span className="ml-1 tabular-nums opacity-80">{realOdds(selected.source, prop.odds)}</span>
-                    : null}
+                  {price ? <span data-slate-odds className="ml-1 tabular-nums opacity-80">{price}</span> : null}
                 </button>
               ) : prop ? (
                 <span key={side} className={`rounded px-2 py-1 text-[11px] font-mono font-semibold ${tone}`}>
                   {side === 'over' ? 'OVER' : 'UNDER'}
-                  {!shared && realOdds(selected.source, prop.odds)
-                    ? <span className="ml-1 tabular-nums opacity-80">{realOdds(selected.source, prop.odds)}</span>
-                    : null}
+                  {price ? <span data-slate-odds className="ml-1 tabular-nums opacity-80">{price}</span> : null}
                 </span>
               ) : null
             })}
