@@ -47,12 +47,12 @@ beforeEach(() => {
 })
 
 describe('alternate provider lines', () => {
-  it('keeps one player prop card and lists each provider plus line once', async () => {
+  it('keeps one player prop card and lists each numeric line once', async () => {
     render(<MarketSlateBoard league="nfl" date="2026-09-09" />)
 
     await waitFor(() => expect(document.querySelectorAll('[data-market-row]')).toHaveLength(1))
     const selector = screen.getByLabelText(
-      'Line and provider for Alternate Player Shots',
+      'Line for Alternate Player Shots',
     )
     fireEvent.click(selector)
     const listbox = screen.getByRole('listbox', {
@@ -72,13 +72,10 @@ describe('alternate provider lines', () => {
     expect(selector.textContent).toBe('0.5▾')
     expect(document.querySelector('[data-provider-label]')?.textContent).toBe('prizepicks')
     expect(listbox.className).toContain('bg-zinc-950')
-    expect(options).toEqual([
-      '0.5 · prizepicks',
-      '0.5 · underdog',
-      '1.5 · underdog',
-      '2.5 · bovada',
-    ])
-    expect(options.join(' ')).not.toContain('rotowire:')
+    expect(options).toEqual(['0.5', '1.5', '2.5'])
+    expect(options.join(' ')).not.toContain('prizepicks')
+    expect(options.join(' ')).not.toContain('underdog')
+    expect(options.join(' ')).not.toContain('bovada')
 
     const menu = selector.closest('details') as HTMLDetailsElement
     expect(menu.open).toBe(true)
@@ -90,10 +87,10 @@ describe('alternate provider lines', () => {
     render(<MarketSlateBoard league="nfl" date="2026-09-09" />)
 
     const selector = await screen.findByLabelText(
-      'Line and provider for Alternate Player Shots',
+      'Line for Alternate Player Shots',
     )
     fireEvent.click(selector)
-    fireEvent.click(screen.getByRole('option', { name: '2.5 · bovada' }))
+    fireEvent.click(screen.getByRole('option', { name: '2.5' }))
 
     const row = document.querySelector('[data-market-row]') as HTMLElement
     await waitFor(() => {

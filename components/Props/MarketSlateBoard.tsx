@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import FightForm from './FightForm'
 import MatchForm from './MatchForm'
 import PropChart, { PropHistory } from './PropChart'
+import { uniqueLineOptions } from './lineOptions'
 
 interface BoardProp {
   id: number
@@ -797,7 +798,10 @@ export default function MarketSlateBoard({ league, date, filterLabel, onViewAll 
           const isUfc = row.league === 'ufc'
           const isUfcNumeric = isUfc
             && ['significant_strikes', 'fight_time'].includes(baseMarket(row.rawMarket))
-          const hasAlternates = row.lines.length > 1
+          // Providers remain distinct offers in the data model, but this control
+          // answers only one question: which numeric threshold should be shown?
+          const lineOptions = uniqueLineOptions(row.lines)
+          const hasAlternates = lineOptions.length > 1
           const projection = history?.projection ?? null
           const edge = projection === null ? null : projection - row.line
           return (
@@ -817,7 +821,7 @@ export default function MarketSlateBoard({ league, date, filterLabel, onViewAll 
                     {hasAlternates ? (
                       <details data-line-selector className="group relative inline-block max-w-full">
                         <summary
-                          aria-label={`Line and provider for ${row.player} ${marketLabel(row.market)}`}
+                          aria-label={`Line for ${row.player} ${marketLabel(row.market)}`}
                           aria-haspopup="listbox"
                           className="inline-flex cursor-pointer list-none items-center gap-1 text-2xl font-bold text-white tabular-nums marker:content-none"
                         >
@@ -829,7 +833,7 @@ export default function MarketSlateBoard({ league, date, filterLabel, onViewAll 
                           aria-label={`Alternate lines for ${row.player} ${marketLabel(row.market)}`}
                           className="absolute left-0 z-30 mt-2 min-w-max overflow-hidden rounded-lg border border-zinc-700 bg-zinc-950 py-1 shadow-xl"
                         >
-                          {row.lines.map(line => (
+                          {lineOptions.map(line => (
                             <button
                               key={line.offerKey}
                               type="button"
@@ -846,7 +850,7 @@ export default function MarketSlateBoard({ league, date, filterLabel, onViewAll 
                                 line.offerKey === row.offerKey ? 'bg-zinc-800 text-emerald-300' : 'text-zinc-100'
                               }`}
                             >
-                              {formatValue(line.line)} · {sourceLabel(line.source)}
+                              {formatValue(line.line)}
                             </button>
                           ))}
                         </div>

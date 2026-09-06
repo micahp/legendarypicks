@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { uniqueLineOptions } from './lineOptions'
 
 export interface SlateOfferProp {
   market: string
@@ -78,6 +79,7 @@ export default function SlatePlayerOffers({
       {rows.map(row => {
         const selected = row.offers.find(offer => offer.key === selectedByMarket[row.market])
           || row.offers[0]
+        const lineOptions = uniqueLineOptions(row.offers)
         return (
           <div
             key={row.market}
@@ -87,10 +89,10 @@ export default function SlatePlayerOffers({
             <span className="min-w-[8rem] flex-1 text-[11px] font-medium capitalize text-zinc-300">
               {label(row.market)}
             </span>
-            {row.offers.length > 1 ? (
+            {lineOptions.length > 1 ? (
               <details data-slate-line-selector className="relative inline-block">
                 <summary
-                  aria-label={`Line and provider for ${playerName} ${label(row.market)}`}
+                  aria-label={`Line for ${playerName} ${label(row.market)}`}
                   aria-haspopup="listbox"
                   className="inline-flex cursor-pointer list-none items-center gap-1 rounded px-1.5 py-1 text-xs font-bold text-white tabular-nums marker:content-none"
                 >
@@ -102,7 +104,7 @@ export default function SlatePlayerOffers({
                   aria-label={`Alternate lines for ${playerName} ${label(row.market)}`}
                   className="absolute right-0 z-30 mt-1 min-w-max overflow-hidden rounded-lg border border-zinc-700 bg-zinc-950 py-1 shadow-xl"
                 >
-                  {row.offers.map(offer => (
+                  {lineOptions.map(offer => (
                     <button
                       key={offer.key}
                       type="button"
@@ -116,7 +118,7 @@ export default function SlatePlayerOffers({
                         offer.key === selected.key ? 'bg-zinc-800 text-emerald-300' : 'text-zinc-100'
                       }`}
                     >
-                      {formatLine(offer.line)} · {sourceLabel(offer.source)}
+                      {formatLine(offer.line)}
                     </button>
                   ))}
                 </div>
