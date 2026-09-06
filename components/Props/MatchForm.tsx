@@ -101,10 +101,7 @@ export default function MatchForm({ playerId, player }: { playerId: number; play
         aria-expanded={open}
         className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left transition-colors hover:bg-zinc-900/60"
       >
-        <span>
-          <span className="block text-xs font-semibold uppercase tracking-wide text-zinc-300">Last 5 matches</span>
-          <span className="mt-0.5 block text-[11px] text-zinc-600">FotMob form for {player}</span>
-        </span>
+        <span className="block text-xs font-semibold uppercase tracking-wide text-zinc-300">Last 5 matches</span>
         <span className="shrink-0 text-sm text-zinc-500" aria-hidden="true">{open ? '▾' : '▸'}</span>
       </button>
 
@@ -119,7 +116,7 @@ export default function MatchForm({ playerId, player }: { playerId: number; play
           ) : error ? (
             <p className="text-xs text-zinc-500">Recent match form could not be loaded.</p>
           ) : !data?.matches.length ? (
-            <p className="text-xs text-zinc-500">No completed FotMob matches are available.</p>
+            <p className="text-xs text-zinc-500">No completed matches are available yet.</p>
           ) : (
             <ol
               className="flex max-w-full gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
