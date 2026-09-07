@@ -77,6 +77,43 @@ def fold(value) -> str:
     return re.sub(r"[^a-z]+", "", ascii_value.lower())
 
 
+# REVIEWED ALIASES: the folds that are correct but that folding alone cannot reach.
+#
+# `fold` removes accents, case, punctuation and spaces, which covers the variance a publisher
+# actually produces. It deliberately does NOT cover a different NAME: a nickname (Willy for
+# William), a transliteration (Lobzhanidze for Lobjanidze), a dropped surname (Vitor Costa for
+# Vitor Costa de Brito). Reaching those needs a similarity threshold, and a threshold is a
+# guess applied uniformly - the shape that turned 124 of 317 MLB "duplicate" groups into two
+# different humans.
+#
+# So each one is reviewed once, by a person, against a published source, and written down
+# here with that source. Anyone can check any line. It is deliberately NOT a database table:
+# a judgment call belongs in version control where its reasoning and its reviewer travel with
+# it, not in a row somebody later cannot trace.
+#
+# league -> {folded spelling we receive: (folded spelling the publisher uses, evidence)}
+REVIEWED_ALIASES = {
+    "mls": {
+        # mlssoccer.com/players/jacob-davis/ serves the player it displays as "Jake Davis".
+        "jakedavis": ("jacobdavis", "mlssoccer.com/players/jacob-davis/ - Sporting KC"),
+        # sandiegofc.com/players/willy-kumado/; ESPN files the same player as William Kumado.
+        "willykumado": ("williamkumado", "sandiegofc.com/players/willy-kumado/ - San Diego FC"),
+        # Georgian, transliterated two ways: en.wikipedia.org/wiki/Saba_Lobzhanidze against
+        # rsl.com/players/saba-lobjanidze/. Same player, traded to RSL 2026-07-01.
+        "sabalobzhanidze": ("sabalobjanidze", "rsl.com/players/saba-lobjanidze/ - Real Salt Lake"),
+        # mlssoccer.com/players/vitor-costa-de-brito/ displays "Vitor Costa". Brazilian left
+        # back, San Jose since 2024-02-07.
+        "vitorcostadebrito": ("vitorcosta", "mlssoccer.com/players/vitor-costa-de-brito/ - San Jose"),
+        # Seattle centre back, published as "Yeimar" or "Yeimar Gomez"; full name Gomez Andrade.
+        "yeimargomezandrade": ("yeimargomez", "soundersfc roster - Seattle, CB"),
+        # philadelphiaunion.com/players/philippe-ndinga/; ESPN id 378634 files the same player
+        # as Philippe Ndinga Ossibadjouo. Signed from Degerfors IF 2026-02-27.
+        "philippendinga": ("philippeossibadjouo",
+                           "philadelphiaunion.com/players/philippe-ndinga/ - Philadelphia"),
+    },
+}
+
+
 def ensure(con: sqlite3.Connection) -> None:
     con.executescript(DDL)
 
@@ -97,11 +134,16 @@ def lookup(con: sqlite3.Connection, league: str, name: str,
     folded = fold(name)
     if not folded:
         return None
+    keys = [folded]
+    alias = (REVIEWED_ALIASES.get(league) or {}).get(folded)
+    if alias:
+        keys.append(alias[0])
     try:
         rows = con.execute(
             "SELECT source, source_player_key, position, position_group, team, name "
-            "FROM published_roster WHERE league=? AND name_folded=?",
-            (league, folded)).fetchall()
+            "FROM published_roster WHERE league=? AND name_folded IN ({})".format(
+                ",".join("?" * len(keys))),
+            [league] + keys).fetchall()
     except sqlite3.Error:
         return None  # a database without the table simply has no published roster
     if not rows:
