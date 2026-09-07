@@ -8,6 +8,28 @@
 This is a Next.js app with a shared **Layout** and an intentional **two-tone dark theme**. The rules below
 come from real mistakes. Follow them literally; when unsure, look at how an existing page does it and copy that.
 
+## 0a. Before you write a new script or report a new finding, ask what is already here
+
+    scripts/prior_art.py "id drift"        # any terms; all must appear on one line
+
+It searches module DOCSTRINGS first, then skills, this file, docs/ and code comments.
+Docstrings lead because that is where this repo actually records its measurements, which is
+why grepping `docs/` alone misses them.
+
+The cost of skipping it, all on 2026-09-06, all in one session:
+
+* wrote `player_merge.py`, a worse copy of `spine_merge.py`, which had solved the same
+  problem generically three weeks earlier. `prior_art.py "generic repair"` names it first.
+* presented `players.id` drift between dev and prod as a finding, using `id=29174`
+  (Paul George on dev, Max Kepler on prod). `promote_player_positions.py`'s docstring had
+  recorded that drift, that id and those two players on 2026-08-17.
+  `prior_art.py "same integer"` names it first.
+* nearly filed a `--dry-run` artefact as an identity defect, which a comment in the same
+  file already explained.
+
+A script that was replaced refuses on its own (`backend/superseded.py`). A MEASUREMENT that
+was already taken cannot refuse, so it is on you to ask.
+
 ## 0. Current state — read these first
 
 > ### Leagues that are NOT in play — do not spend time here
