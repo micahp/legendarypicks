@@ -16,6 +16,9 @@ Usage:
   python3 dedupe_nfl.py            # dry run (default) — prints what it would delete
   python3 dedupe_nfl.py --apply    # delete (back up the DB first!)
 """
+import superseded  # noqa: E402  (must precede any work this script would do)
+superseded.refuse("dedupe_nfl")
+
 import sys, os, sqlite3
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from sports_service import _normalize_name

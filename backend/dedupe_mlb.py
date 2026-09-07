@@ -29,6 +29,9 @@ Usage:
   python3 dedupe_mlb.py            # dry run
   python3 dedupe_mlb.py --apply    # apply (back up the DB first!)
 """
+import superseded  # noqa: E402  (must precede any work this script would do)
+superseded.refuse("dedupe_mlb")
+
 import sys, os, sqlite3
 DB = os.environ.get("LP_DB_PATH") or os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "picks.db")
 # Tables whose rows carry a player_id to repoint. `predictions` is deliberately

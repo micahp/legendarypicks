@@ -153,8 +153,17 @@ Every rule below comes from a real mistake on 2026-06-15.
     human (e.g. props on the `espn_id` row, logs on a Statcast `mlbam_id` row) and every join silently
     splits. This actually happened: 317 MLB players split, prop charts showed no data for Freeman/Betts/
     Kurtz while coverage *looked* fine. See **`docs/IDENTITY-SPINE-STATE.md`** (as-built spine, the rule,
-    per-league dup status) + `docs/SPEC-player-identity-spine.md` (design). Cleanup: `dedupe_mlb.py` /
-    `dedupe_nfl.py` — merge by shared source-id only, never by name.
+    per-league dup status) + `docs/SPEC-player-identity-spine.md` (design). Cleanup: **`spine_merge.py`,
+    and only that** — merge by shared source-id only, never by name. It discovers every referencing
+    column from the schema each run (foreign keys plus the `*player_id` convention, excluding
+    `nfl_adp.espn_player_id`, which is a publisher's id). The per-league dedupers it replaced on
+    2026-08-24 (`dedupe_mlb.py`, `dedupe_nfl.py`, `merge_mls_prop_players.py`) touch 5, 3 and 1 table
+    respectively out of the 14 that carry a `player_id`, so they orphan rows silently: only 5 of those
+    14 declare a foreign key, and an orphaned `player_id` raises nowhere, the row just stops joining.
+    Measured 2026-09-06, long after they were superseded: 129 orphaned references on prod and 98 on
+    dev, and one of them (`player_id=33312`, 6 logs) aborted an entire MLS log migration with a
+    KeyError while 10,574 real rows went unmigrated. This line named those scripts until today, which
+    is why they kept getting used.
   - **"Join on the id" assumes the id names the right person. ASSERT it.** (2026-08-04)
     An id-keyed join is only as trustworthy as the pairing on the row, and nothing here had ever
     checked that `players.name` and `players.mlbam_id` describe the same human. **223 rows did not.**

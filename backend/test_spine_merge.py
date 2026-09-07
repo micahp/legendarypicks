@@ -90,7 +90,14 @@ class ColumnDiscoveryTests(unittest.TestCase):
         the UFCStats history work (+1) — a provider-separated appearance table
         that must participate like FotMob's. dev pins 18; prod holds 16 until
         the ufcstats migration runs there (16 already includes tennis)."""
-        expected = {"picks.db": 16, "picks.dev.db": 18}
+        # Re-pinned 2026-09-06. This assertion is the guardrail spine_merge's docstring
+        # promises: it fails when the schema grows, so a new table cannot be missed by a
+        # merge. It HAD been failing, red among the "pre-existing" suite failures nobody
+        # re-read, which is the same disease as an alarm that is red every run. prod gained
+        # player_game_logs_usopen and tennis_ranking_snapshots; dev additionally carries
+        # nfl_published_fantasy_points. All are real players.id references and are now
+        # covered by discovery.
+        expected = {"picks.db": 18, "picks.dev.db": 19}
         for name, count in expected.items():
             path = os.path.join(HERE, "data", name)
             if not os.path.isfile(path):
