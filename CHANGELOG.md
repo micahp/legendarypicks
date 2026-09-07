@@ -1,5 +1,62 @@
 # Changelog
 
+## v0.9.3
+
+### Identity, and the work that was already done
+
+- **The player-identity merge has one path again.** `spine_merge.py` replaced five per-league
+  dedupers on 2026-08-24, but all five stayed runnable and `AGENTS.md` still named two of
+  them. They touch 5, 3 and 1 of the 14 tables carrying a `player_id`, of which only 5 declare
+  a foreign key, so an orphaned reference raises nowhere and the row just stops joining.
+  Measured: 129 orphaned references on prod, 98 on dev. The superseded scripts now refuse and
+  name their replacement.
+- **`prior_art.py` asks what is already here.** A replaced script can refuse; a measurement
+  that was already taken cannot. This searches module docstrings first, because that is where
+  this repo records its measurements, then skills, `AGENTS.md` and `docs/`.
+- **A schema guard that was already firing has been re-armed.** `test_spine_merge`'s column
+  pin is, by its own docstring, the thing that fails when the schema grows. It was failing,
+  red among suite failures nobody re-read. Prod has since gained two `player_id` tables.
+- **Published rosters now own MLS identity creation.** FotMob and MLSsoccer roster rows are
+  collapsed by publisher spelling plus club, retain both native IDs, and publish one canonical
+  player before props ingestion runs. The request path now resolves that durable binding or
+  queues the miss; it never creates a player from a sportsbook spelling.
+- **Ambiguous roster identities stay visible.** Same-name players at different clubs and
+  publisher transfer disagreements are counted and refused instead of guessed. Publisher
+  spellings replaced five manual MLS aliases; only the reviewed Saba transliteration remains.
+
+### Fixtures belong to the league claiming them
+
+- **A game can only be created under a league both its clubs belong to**, enforced where games
+  are created rather than in one ingest. Club membership is published by FotMob, not by ESPN,
+  whose per-minute budget is shared with the serving path.
+- **A cross-league cup must actually cross.** Six of ten Leagues Cup fixtures were not Leagues
+  Cup: four Liga MX league games and two MLS games, one of them a duplicate of a fixture
+  already held correctly. Relabelled and folded without losing settled results.
+- **An unverifiable fixture cannot mint a game.** When the club vocabulary cannot be built,
+  existing fixtures still refresh and new ones are refused, instead of admitting whatever a
+  relay published.
+
+### Data that had stopped arriving
+
+- **The ingest registry.** Adding a job and scheduling it are now one act: an entry declares
+  its cadence, the host budget it shares, and how an outsider can tell it ran. Adopted the
+  ingests that had no timer, including one that had never run on a schedule at all while MLS
+  appearances went 28 days stale.
+- **Settlement runs all day.** It was scheduled only between 19:23 and 03:53 and capped at
+  300s, which killed 14% of runs mid-backlog.
+- **MLS appearances no longer depend on ESPN**, and the FotMob ingest no longer re-fetches
+  the whole season on every run.
+- **NCAAF rosters cost 2 requests instead of 149**, from CFBD rather than ESPN.
+- **The MLS log migration is unblocked.** One orphan log aborted it entirely; 8,334 rows have
+  since reached prod.
+
+### Props board
+
+- Over and under stay together when a row wraps, and prices appear in one place and only when
+  they are real: the pick'em conversion constant is no longer shown as sportsbook odds.
+- The line selector picks a line, not a provider.
+- The match form no longer names the data provider.
+
 ## v0.9.2
 
 ### Identity and fixture integrity

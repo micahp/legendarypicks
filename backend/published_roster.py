@@ -37,10 +37,11 @@ HOW IT REFUSES. Exactly one match, or nothing. A name in two squads is two peopl
 publisher says otherwise, and guessing between them is how 124 of 317 MLB "duplicate" groups
 turned out to be two different humans.
 """
+import collections
 import re
 import sqlite3
 import unicodedata
-from typing import Optional, Tuple
+from typing import Iterable, Optional, Tuple
 
 DDL = """
 CREATE TABLE IF NOT EXISTS published_roster (
@@ -52,11 +53,28 @@ CREATE TABLE IF NOT EXISTS published_roster (
     team              TEXT,
     position          TEXT,
     position_group    TEXT,
+    team_code         TEXT,
+    player_id         INTEGER,
     updated_at        TEXT NOT NULL,
     PRIMARY KEY (league, source, source_player_key)
 );
 CREATE INDEX IF NOT EXISTS ix_published_roster_lookup
     ON published_roster(league, name_folded);
+
+-- Every spelling a publisher prints for one of its own people, not just the display one.
+-- mlssoccer.com prints "Jake Davis" and files him at /players/jacob-davis/; both are the
+-- same publisher naming the same person, and storing only the first is what forced six
+-- hand-written aliases on 2026-09-06.
+CREATE TABLE IF NOT EXISTS published_roster_name (
+    league            TEXT NOT NULL,
+    source            TEXT NOT NULL,
+    source_player_key TEXT NOT NULL,
+    name              TEXT NOT NULL,
+    name_folded       TEXT NOT NULL,
+    PRIMARY KEY (league, source, source_player_key, name_folded)
+);
+CREATE INDEX IF NOT EXISTS ix_published_roster_name_lookup
+    ON published_roster_name(league, name_folded);
 """
 
 
@@ -77,7 +95,7 @@ def fold(value) -> str:
     return re.sub(r"[^a-z]+", "", ascii_value.lower())
 
 
-# REVIEWED ALIASES: the folds that are correct but that folding alone cannot reach.
+# REVIEWED ALIASES: genuine disagreements no publisher roster currently resolves.
 #
 # `fold` removes accents, case, punctuation and spaces, which covers the variance a publisher
 # actually produces. It deliberately does NOT cover a different NAME: a nickname (Willy for
@@ -94,28 +112,101 @@ def fold(value) -> str:
 # league -> {folded spelling we receive: (folded spelling the publisher uses, evidence)}
 REVIEWED_ALIASES = {
     "mls": {
-        # mlssoccer.com/players/jacob-davis/ serves the player it displays as "Jake Davis".
-        "jakedavis": ("jacobdavis", "mlssoccer.com/players/jacob-davis/ - Sporting KC"),
-        # sandiegofc.com/players/willy-kumado/; ESPN files the same player as William Kumado.
-        "willykumado": ("williamkumado", "sandiegofc.com/players/willy-kumado/ - San Diego FC"),
         # Georgian, transliterated two ways: en.wikipedia.org/wiki/Saba_Lobzhanidze against
         # rsl.com/players/saba-lobjanidze/. Same player, traded to RSL 2026-07-01.
         "sabalobzhanidze": ("sabalobjanidze", "rsl.com/players/saba-lobjanidze/ - Real Salt Lake"),
-        # mlssoccer.com/players/vitor-costa-de-brito/ displays "Vitor Costa". Brazilian left
-        # back, San Jose since 2024-02-07.
-        "vitorcostadebrito": ("vitorcosta", "mlssoccer.com/players/vitor-costa-de-brito/ - San Jose"),
-        # Seattle centre back, published as "Yeimar" or "Yeimar Gomez"; full name Gomez Andrade.
-        "yeimargomezandrade": ("yeimargomez", "soundersfc roster - Seattle, CB"),
-        # philadelphiaunion.com/players/philippe-ndinga/; ESPN id 378634 files the same player
-        # as Philippe Ndinga Ossibadjouo. Signed from Degerfors IF 2026-02-27.
-        "philippendinga": ("philippeossibadjouo",
-                           "philadelphiaunion.com/players/philippe-ndinga/ - Philadelphia"),
     },
 }
 
 
 def ensure(con: sqlite3.Connection) -> None:
     con.executescript(DDL)
+    columns = {row[1] for row in con.execute("PRAGMA table_info(published_roster)")}
+    if "team_code" not in columns:
+        con.execute("ALTER TABLE published_roster ADD COLUMN team_code TEXT")
+    if "player_id" not in columns:
+        con.execute("ALTER TABLE published_roster ADD COLUMN player_id INTEGER")
+
+
+_SOURCE_PRIORITY = ("fotmob", "mlssoccer")
+
+
+def _rank(source: str) -> int:
+    """Which publisher's identity a collapsed person is returned under.
+
+    FotMob leads because `player_game_logs_fotmob` joins on FotMob ids, so a player created
+    under a FotMob key can be charted the day they are created. A publisher not named here
+    sorts last rather than being refused: an unranked source is still a real identity.
+    """
+    return _SOURCE_PRIORITY.index(source) if source in _SOURCE_PRIORITY else len(_SOURCE_PRIORITY)
+
+
+def _spellings(con: sqlite3.Connection, league: str, source: str, key: str,
+               primary: str) -> set:
+    """Every folded spelling one publisher prints for one of its people."""
+    out = {primary}
+    try:
+        out.update(row[0] for row in con.execute(
+            "SELECT name_folded FROM published_roster_name "
+            "WHERE league=? AND source=? AND source_player_key=?", (league, source, key)))
+    except sqlite3.Error:
+        pass  # a database filled before the table existed still has the display spelling
+    return {value for value in out if value}
+
+
+def _candidates(con: sqlite3.Connection, league: str, keys) -> list:
+    """Roster rows a folded name reaches, through any spelling its publisher prints."""
+    placeholders = ",".join("?" * len(keys))
+    sql = ("SELECT source, source_player_key, position, position_group, team, name, "
+           "name_folded FROM published_roster WHERE league=? AND (name_folded IN ({0}) "
+           "OR EXISTS (SELECT 1 FROM published_roster_name n WHERE n.league=published_roster"
+           ".league AND n.source=published_roster.source AND n.source_player_key="
+           "published_roster.source_player_key AND n.name_folded IN ({0})))").format(
+               placeholders)
+    try:
+        return con.execute(sql, [league] + keys + keys).fetchall()
+    except sqlite3.Error:
+        pass
+    try:  # no published_roster_name yet: the display spelling is all there is
+        return con.execute(
+            "SELECT source, source_player_key, position, position_group, team, name, "
+            "name_folded FROM published_roster WHERE league=? AND name_folded IN ({})".format(
+                placeholders), [league] + keys).fetchall()
+    except sqlite3.Error:
+        return []  # a database without the table simply has no published roster
+
+
+def _twins(con: sqlite3.Connection, league: str, row, spellings: set) -> list:
+    """The same person as another publisher files them.
+
+    Two publishers share no id, so the evidence that two rows are one person has to come
+    from what they both publish: the SAME CLUB and a spelling in common. Both halves are
+    required. A shared spelling alone would merge two people of one name across two clubs,
+    which is the 124-of-317 MLB failure; a shared club alone would merge a squad.
+
+    A row without a team cannot be collapsed at all, and is left as its own person.
+
+    The club comparison is done in Python over `fold`, not in SQL. SQLite's UPPER is
+    ASCII-only, so `CF Montréal` upper-cased in here and upper-cased in there are two
+    different strings, and the first version of this refused all 11 Montreal players it was
+    written to resolve.
+    """
+    team = fold(row[4])
+    if not team or not spellings:
+        return []
+    ordered = sorted(spellings)
+    placeholders = ",".join("?" * len(ordered))
+    sql = ("SELECT r.source, r.source_player_key, r.position, r.position_group, r.team, "
+           "r.name, r.name_folded FROM published_roster r WHERE r.league=? "
+           "AND r.source<>? AND (r.name_folded IN ({0}) "
+           "OR EXISTS (SELECT 1 FROM published_roster_name n WHERE n.league=r.league "
+           "AND n.source=r.source AND n.source_player_key=r.source_player_key "
+           "AND n.name_folded IN ({0})))").format(placeholders)
+    try:
+        found = con.execute(sql, [league, row[0]] + ordered + ordered).fetchall()
+    except sqlite3.Error:
+        return []
+    return [other for other in found if fold(other[4]) == team]
 
 
 def lookup(con: sqlite3.Connection, league: str, name: str,
@@ -130,6 +221,11 @@ def lookup(con: sqlite3.Connection, league: str, name: str,
     Team NARROWS when it is given and it helps; it never excludes the only candidate we have.
     A sportsbook's team string is often absent or its own vocabulary, so requiring it would
     refuse real players for a reason that says more about the publisher than the person.
+
+    UNIQUENESS IS JUDGED OVER PEOPLE, NOT ROWS. With two publishers loaded for one league the
+    same person matches twice, and the older rule read that as ambiguity and refused. So
+    matching rows are first collapsed into people by `_twins`, and only then does exactly one
+    person, or nothing, decide the answer.
     """
     folded = fold(name)
     if not folded:
@@ -138,21 +234,317 @@ def lookup(con: sqlite3.Connection, league: str, name: str,
     alias = (REVIEWED_ALIASES.get(league) or {}).get(folded)
     if alias:
         keys.append(alias[0])
-    try:
-        rows = con.execute(
-            "SELECT source, source_player_key, position, position_group, team, name "
-            "FROM published_roster WHERE league=? AND name_folded IN ({})".format(
-                ",".join("?" * len(keys))),
-            [league] + keys).fetchall()
-    except sqlite3.Error:
-        return None  # a database without the table simply has no published roster
+    rows = _candidates(con, league, keys)
     if not rows:
         return None
     if len(rows) > 1 and team:
         narrowed = [r for r in rows if (r[4] or "").strip().upper() == team.strip().upper()]
         if len(narrowed) == 1:
             rows = narrowed
-    if len(rows) != 1:
+
+    people = []  # each entry: (identity set, best row)
+    for row in rows:
+        cluster = {(row[0], row[1]): row}
+        for twin in _twins(con, league, row,
+                           _spellings(con, league, row[0], row[1], row[6])):
+            cluster[(twin[0], twin[1])] = twin
+        # Absorb EVERY cluster this one overlaps, not the first: a row can bridge two
+        # clusters built earlier, and stopping at the first would report one person as two
+        # and refuse a name we can answer.
+        overlapping = [c for c in people if c.keys() & cluster.keys()]
+        for existing in overlapping:
+            cluster.update(existing)
+            people.remove(existing)
+        people.append(cluster)
+    if len(people) != 1:
         return None
-    row = rows[0]
-    return (row[0], row[1], row[2], row[3], row[5])
+    best = min(people[0].values(), key=lambda r: (_rank(r[0]), r[0]))
+    return (best[0], best[1], best[2], best[3], best[5])
+
+
+def lookup_player(con: sqlite3.Connection, league: str, name: str,
+                  team: Optional[str] = None) -> Optional[int]:
+    """Return one identity already published by the roster job, or None.
+
+    This is the request-path contract. It reads the durable ``player_id`` crosswalk and
+    never computes a cross-publisher identity or creates a player. Roster ingestion owns
+    both operations. A database that has not received the additive columns simply has no
+    published identity yet and fails closed into the unresolved queue.
+    """
+    folded = fold(name)
+    if not folded:
+        return None
+    keys = [folded]
+    alias = (REVIEWED_ALIASES.get(league) or {}).get(folded)
+    if alias:
+        keys.append(alias[0])
+    placeholders = ",".join("?" * len(keys))
+    sql = ("SELECT DISTINCT r.player_id, r.team_code FROM published_roster r "
+           "JOIN players p ON p.id=r.player_id AND p.league=r.league "
+           "WHERE r.league=? AND r.player_id IS NOT NULL AND "
+           "(r.name_folded IN ({0}) OR EXISTS (SELECT 1 FROM published_roster_name n "
+           "WHERE n.league=r.league AND n.source=r.source AND "
+           "n.source_player_key=r.source_player_key AND n.name_folded IN ({0})))").format(
+               placeholders)
+    try:
+        rows = con.execute(sql, [league] + keys + keys).fetchall()
+    except sqlite3.Error:
+        return None
+    if len(rows) > 1 and team:
+        wanted = str(team).strip().upper()
+        narrowed = [row for row in rows if str(row[1] or "").strip().upper() == wanted]
+        if len({row[0] for row in narrowed}) == 1:
+            rows = narrowed
+    owners = {int(row[0]) for row in rows}
+    if len(owners) == 1:
+        return next(iter(owners))
+
+    # Compatibility for leagues that still have one roster publisher. Their stable source
+    # crosswalk predates ``published_roster.player_id`` and is already durable; using it does
+    # not recompute a cross-publisher identity. Once a league has multiple publishers, only
+    # roster publication may collapse them and this fallback refuses.
+    try:
+        source_count = con.execute(
+            "SELECT COUNT(DISTINCT source) FROM published_roster WHERE league=?",
+            (league,)).fetchone()[0]
+    except sqlite3.Error:
+        return None
+    if source_count != 1:
+        return None
+    published = lookup(con, league, name, team)
+    if not published:
+        return None
+    source, source_key = published[:2]
+    try:
+        row = con.execute(
+            "SELECT s.player_id FROM player_source_ids s JOIN players p ON p.id=s.player_id "
+            "AND p.league=s.league WHERE s.source=? AND s.league=? AND s.source_player_key=?",
+            (source, league, source_key)).fetchone()
+    except sqlite3.Error:
+        return None
+    return int(row[0]) if row else None
+
+
+def _identity_components(con: sqlite3.Connection, league: str,
+                         touched: Optional[Iterable[Tuple[str, str]]] = None):
+    """Connected publisher rows, joined only by shared spelling and published club."""
+    columns = ("source", "source_player_key", "name", "name_folded", "team",
+               "team_code", "position", "position_group", "player_id")
+    raw = con.execute(
+        "SELECT {} FROM published_roster WHERE league=?".format(",".join(columns)),
+        (league,)).fetchall()
+    rows = [dict(zip(columns, row)) for row in raw]
+    names = collections.defaultdict(set)
+    for row in rows:
+        key = (row["source"], row["source_player_key"])
+        names[key].add(row["name_folded"])
+    for source, key, spelling in con.execute(
+            "SELECT source,source_player_key,name_folded FROM published_roster_name "
+            "WHERE league=?", (league,)):
+        names[(source, key)].add(spelling)
+
+    parent = {i: i for i in range(len(rows))}
+
+    def find(i):
+        while parent[i] != i:
+            parent[i] = parent[parent[i]]
+            i = parent[i]
+        return i
+
+    def union(left, right):
+        left, right = find(left), find(right)
+        if left != right:
+            parent[right] = left
+
+    shared = collections.defaultdict(list)
+    for i, row in enumerate(rows):
+        if not row["team_code"]:
+            continue
+        for spelling in names[(row["source"], row["source_player_key"])]:
+            shared[(row["team_code"], spelling)].append(i)
+    for indexes in shared.values():
+        for offset, left in enumerate(indexes):
+            for right in indexes[offset + 1:]:
+                if rows[left]["source"] != rows[right]["source"]:
+                    union(left, right)
+
+    groups = collections.defaultdict(list)
+    for i, row in enumerate(rows):
+        groups[find(i)].append(row)
+    if touched is None:
+        return list(groups.values()), names
+    touched = set(touched)
+    return [group for group in groups.values()
+            if any((row["source"], row["source_player_key"]) in touched for row in group)], names
+
+
+def publish_identities(con: sqlite3.Connection, league: str, now: str,
+                       touched: Optional[Iterable[Tuple[str, str]]] = None) -> dict:
+    """Publish roster-owned canonical IDs and source crosswalks.
+
+    Stable source IDs win. Names only discover an unbound candidate, after which the
+    published team narrows ambiguity. Every refusal is counted; safe components remain
+    additive so one namesake does not discard the rest of a league's identities.
+    """
+    components, names = _identity_components(con, league, touched)
+    players = [dict(zip(("id", "name", "team"), row)) for row in con.execute(
+        "SELECT id,name,team FROM players WHERE league=?", (league,)).fetchall()]
+    players_by_name = collections.defaultdict(list)
+    for player in players:
+        players_by_name[fold(player["name"])].append(player)
+    stats = collections.Counter(components=len(components))
+    failure_examples = []
+
+    def refuse(reason, component):
+        stats[reason] += 1
+        if len(failure_examples) < 20:
+            failure_examples.append({
+                "reason": reason,
+                "names": sorted({row["name"] for row in component}),
+                "teams": sorted({row["team"] for row in component if row["team"]}),
+                "source_keys": sorted(
+                    "{}:{}".format(row["source"], row["source_player_key"])
+                    for row in component),
+            })
+    source_owners = {}
+    keys_by_player_source = collections.defaultdict(set)
+    for source, key, player_id in con.execute(
+            "SELECT source,source_player_key,player_id FROM player_source_ids "
+            "WHERE league=?", (league,)):
+        source_owners[(source, key)] = int(player_id)
+        keys_by_player_source[(int(player_id), source)].add(key)
+
+    def component_priority(component):
+        """Resolve facts before questions so output is independent of row order."""
+        source_keys = {(row["source"], row["source_player_key"]) for row in component}
+        if (any(row["player_id"] is not None for row in component)
+                or any(key in source_owners for key in source_keys)):
+            priority = 0
+        else:
+            team_codes = {row["team_code"] for row in component if row["team_code"]}
+            spellings = set().union(*(
+                names[(row["source"], row["source_player_key"])] for row in component))
+            candidates = {player["id"]: player for spelling in spellings
+                          for player in players_by_name.get(spelling, ())}
+            same_team = ({pid for pid, player in candidates.items()
+                          if len(team_codes) == 1
+                          and str(player["team"] or "").upper()
+                          == next(iter(team_codes)).upper()})
+            if len(same_team) == 1:
+                priority = 1
+            elif not candidates:
+                priority = 2
+            else:
+                priority = 3
+        first = min((row["source"], row["source_player_key"]) for row in component)
+        return priority, first
+
+    components.sort(key=component_priority)
+
+    for component in components:
+        source_keys = {(row["source"], row["source_player_key"]) for row in component}
+        owners = {int(row["player_id"]) for row in component if row["player_id"] is not None}
+        owners.update(source_owners[key] for key in source_keys if key in source_owners)
+        valid_owners = {row[0] for row in con.execute(
+            "SELECT id FROM players WHERE league=? AND id IN ({})".format(
+                ",".join("?" * len(owners))), [league] + sorted(owners))} if owners else set()
+        if owners != valid_owners or len(owners) > 1:
+            refuse("conflicts", component)
+            continue
+
+        team_codes = {row["team_code"] for row in component if row["team_code"]}
+        if len(team_codes) > 1:
+            refuse("conflicts", component)
+            continue
+        team_code = next(iter(team_codes)) if team_codes else None
+        spellings = set().union(*(
+            names[(row["source"], row["source_player_key"])] for row in component))
+        name_candidates = {player["id"]: player for spelling in spellings
+                           for player in players_by_name.get(spelling, ())}
+
+        if owners:
+            player_id = next(iter(owners))
+            if not team_code:
+                team_code = next((player["team"] for player in players
+                                  if player["id"] == player_id), None)
+            stats["duplicate_candidates"] += len(set(name_candidates) - {player_id})
+        else:
+            if not team_code:
+                refuse("missing_team", component)
+                continue
+            # A source-native ID is stronger than a name. If this candidate is already
+            # bound to a different key from the same publisher, this roster row names a
+            # different person even when the display strings are identical (the two David
+            # Ruiz records in MLS are the concrete case).
+            candidates = {
+                pid: player for pid, player in name_candidates.items()
+                if all(not keys_by_player_source[(pid, row["source"])]
+                       or row["source_player_key"] in keys_by_player_source[
+                           (pid, row["source"])]
+                       for row in component)
+            }
+            narrowed = {pid: player for pid, player in candidates.items()
+                        if str(player["team"] or "").upper() == team_code.upper()}
+            if len(narrowed) == 1:
+                candidates = narrowed
+            elif len(narrowed) > 1:
+                refuse("ambiguous", component)
+                continue
+            elif candidates:
+                # A unique name at a different club can be either a transfer or a
+                # namesake. Without a stable source ID connecting the two, choosing either
+                # interpretation invents identity evidence.
+                refuse("team_conflicts", component)
+                continue
+            elif name_candidates:
+                # Every name candidate was rejected because the SAME publisher already
+                # assigns it a different native key. That is positive evidence that this
+                # roster row is a namesake, so creating the second person is safe.
+                candidates = {}
+            if candidates:
+                player_id = next(iter(candidates))
+                stats["matched"] += 1
+            else:
+                best = min(component, key=lambda row: (_rank(row["source"]), row["source"]))
+                cur = con.execute(
+                    "INSERT INTO players(name,team,league,position,position_group,active,updated_at) "
+                    "VALUES(?,?,?,?,?,1,?)",
+                    (best["name"], team_code, league, best["position"],
+                     best["position_group"], now))
+                player_id = int(cur.lastrowid)
+                players_by_name[fold(best["name"])].append(
+                    {"id": player_id, "name": best["name"], "team": team_code})
+                stats["inserted"] += 1
+
+        conflict = any(
+            keys_by_player_source[(player_id, row["source"])] - {row["source_player_key"]}
+            for row in component)
+        if conflict:
+            refuse("conflicts", component)
+            continue
+
+        best = min(component, key=lambda row: (_rank(row["source"]), row["source"]))
+        con.execute(
+            "UPDATE players SET team=COALESCE(NULLIF(team,''),?), "
+            "position=COALESCE(NULLIF(position,''),?), "
+            "position_group=COALESCE(NULLIF(position_group,''),?), active=1, updated_at=? "
+            "WHERE id=?",
+            (team_code, best["position"], best["position_group"], now, player_id))
+        for row in component:
+            con.execute(
+                "INSERT INTO player_source_ids(source,league,source_player_key,player_id,"
+                "first_seen,last_seen) VALUES(?,?,?,?,?,?) "
+                "ON CONFLICT(source,league,source_player_key) DO UPDATE SET last_seen=excluded.last_seen",
+                (row["source"], league, row["source_player_key"], player_id, now, now))
+            source_owners[(row["source"], row["source_player_key"])] = player_id
+            keys_by_player_source[(player_id, row["source"])].add(row["source_player_key"])
+            con.execute(
+                "UPDATE published_roster SET player_id=?, team_code=COALESCE(team_code,?) "
+                "WHERE league=? AND source=? "
+                "AND source_player_key=?",
+                (player_id, team_code, league, row["source"], row["source_player_key"]))
+            stats["source_ids"] += 1
+        stats["published"] += 1
+    result = dict(stats)
+    result["failure_examples"] = failure_examples
+    return result

@@ -997,8 +997,8 @@ def _resolve_player_for_ingest(con, player_name: str, team: str, league: str, so
     2. Normalized name + team + league (deterministic spine match)
     2b. Folded name on both sides + league (diacritics/case/punctuation)
     3. name_alias table (known nicknames/alternate spellings)
-    4. The PUBLISHER'S OWN ROSTER (`published_roster`), read from a stored table: create the
-       player already carrying their publisher id and position
+    4. The PUBLISHER'S OWN ROSTER (`published_roster`), read from a stored table: return the
+       canonical identity already published by the roster job
     5. If nothing matches → write to unresolved_players, return None
 
     A name that matches more than one row in the league is NOT a match. `game_id`
@@ -1079,33 +1079,13 @@ def _resolve_player_for_ingest(con, player_name: str, team: str, league: str, so
     # espn_roster, which proves our spine is missing people ESPN itself names. The queue
     # recorded each miss and nothing ever acted on it.
     #
-    # A row created here is the OPPOSITE of the shadow rows this resolver stopped minting: it
-    # is born carrying the publisher's id and position, so it can be merged, charted and
-    # settled like any other. Exactly one match or nothing; a name in two squads is two people
-    # until a publisher says otherwise.
-    #
     # READS a table and never fetches, because this runs inside /api/props/ingest and a
-    # serving path must not wait on a publisher.
-    published = published_roster.lookup(con, league, player_name, nteam)
-    if published:
-        pub_source, pub_key, position, position_group, published_name = published
-        bound = con.execute(
-            "SELECT player_id FROM player_source_ids WHERE source=? AND league=? "
-            "AND source_player_key=?", (pub_source, league, pub_key)).fetchone()
-        if bound:
-            return (bound["player_id"], "high")
-        cur = con.execute(
-            "INSERT INTO players(name, team, league, position, position_group, active, "
-            "updated_at) VALUES(?,?,?,?,?,1,?)",
-            (published_name or player_name, nteam or None, league, position,
-             position_group, now))
-        con.execute(
-            "INSERT INTO player_source_ids(source, league, source_player_key, player_id, "
-            "first_seen, last_seen) VALUES(?,?,?,?,?,?) "
-            "ON CONFLICT(source, league, source_player_key) DO UPDATE SET "
-            "player_id=excluded.player_id, last_seen=excluded.last_seen",
-            (pub_source, league, pub_key, cur.lastrowid, now, now))
-        return (cur.lastrowid, "high")
+    # serving path must not wait on a publisher or mint identity. The roster job owns the
+    # durable cross-publisher decision; an unbound row is unresolved, not permission to
+    # recompute that decision from names during every request.
+    published_player_id = published_roster.lookup_player(con, league, player_name, nteam)
+    if published_player_id is not None:
+        return (published_player_id, "high")
 
     # 5. No match anywhere — log to unresolved_players (review queue, never silently drop)
     existing = con.execute(

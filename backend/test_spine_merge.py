@@ -190,6 +190,26 @@ class MergeTests(unittest.TestCase):
         second = sm.build_plan(self.con)
         self.assertEqual(second.merges, [])
 
+    def test_a_unique_publisher_id_is_cleared_before_it_moves(self):
+        """The published spelling can be the id-less survivor.
+
+        Assigning the drop row's id first violates UNIQUE(espn_id, league) before the
+        following clear can run. The whole clone rehearsal hit this exact ordering.
+        """
+        self._players(("Published Spelling", "mls", None),
+                      ("Alternate Spelling", "mls", "185897"))
+        self.con.row_factory = sqlite3.Row
+        plan = sm.MergePlan(
+            merges=[sm.Merge("mls", "fotmob=1", 1, 2, "fotmob=1", {})],
+            columns=sm.referencing_columns(self.con))
+        with self.con:
+            counts = sm.apply_plan(self.con, plan)
+        self.assertEqual(counts["merged"], 1)
+        self.assertEqual(
+            self.con.execute("SELECT espn_id FROM players WHERE id=1").fetchone()[0],
+            "185897")
+        self.assertIsNone(self.con.execute("SELECT 1 FROM players WHERE id=2").fetchone())
+
     def test_league_filter_restricts_the_plan(self):
         self._players(("A", "ufc", None), ("A", "ufc", "1"),
                       ("B", "nfl", None), ("B", "nfl", "2"))
@@ -399,6 +419,16 @@ class APublishersSquadFindsTheDuplicateANameCannot(unittest.TestCase):
             "name_folded, team, position, position_group, updated_at) "
             "VALUES('mls','fotmob','1305746','William Kumado',?, 'San Diego FC','D',"
             "'Defender','now')", (published_roster.fold("William Kumado"),))
+        self.con.execute(
+            "INSERT INTO published_roster(league, source, source_player_key, name, "
+            "name_folded, team, position, position_group, updated_at) "
+            "VALUES('mls','mlssoccer','M1','Willy Kumado',?, 'San Diego FC','D',"
+            "'Defender','now')", (published_roster.fold("Willy Kumado"),))
+        self.con.executemany(
+            "INSERT INTO published_roster_name(league,source,source_player_key,name,name_folded) "
+            "VALUES('mls','mlssoccer','M1',?,?)",
+            [(name, published_roster.fold(name))
+             for name in ("Willy Kumado", "William Kumado")])
         self.con.commit()
 
     def _two_rows(self):

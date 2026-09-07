@@ -351,14 +351,15 @@ def apply_plan(con, plan: MergePlan) -> Dict[str, int]:
             for column in present:
                 value = drop_row[column]
                 if str(value or "").strip() and not str(keep_row[column] or "").strip():
-                    con.execute("UPDATE players SET {}=? WHERE id=?".format(column),
-                                (value, m.keep_id))
-                    # And clear it here, so the id now names exactly one row. The delete
-                    # below refuses to remove a row still holding an espn_id, which is the
-                    # right guard: an identity that was NOT carried must block the merge
-                    # rather than vanish with the row.
+                    # Clear the old owner before assigning the UNIQUE publisher id to the
+                    # survivor. Doing this in the opposite order aborts on
+                    # UNIQUE(espn_id, league) when the published spelling is the id-less
+                    # row. The enclosing transaction restores both rows if the assignment
+                    # fails, so there is no window where a committed identity disappears.
                     con.execute("UPDATE players SET {}=NULL WHERE id=?".format(column),
                                 (m.drop_id,))
+                    con.execute("UPDATE players SET {}=? WHERE id=?".format(column),
+                                (value, m.keep_id))
                     counts["ids_carried"] += 1
         for table, col in plan.columns:
             cur = con.execute(
