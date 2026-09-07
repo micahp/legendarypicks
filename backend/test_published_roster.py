@@ -286,8 +286,16 @@ class PublishedIdentityRefusals(unittest.TestCase):
             CREATE TABLE player_source_ids(id INTEGER PRIMARY KEY, source TEXT, league TEXT,
                 source_player_key TEXT, player_id INT, first_seen TEXT, last_seen TEXT,
                 UNIQUE(source, league, source_player_key));
+            CREATE TABLE player_game_logs(id INTEGER PRIMARY KEY, player_id INT,
+                league TEXT, team TEXT, game_date TEXT);
         """)
         pr.ensure(self.con)
+
+    def _logged(self, player_id, team, date="2026-04-05"):
+        """A dated appearance for that club. This is the evidence, not `players.team`."""
+        self.con.execute(
+            "INSERT INTO player_game_logs(player_id, league, team, game_date) "
+            "VALUES(?, 'mls', ?, ?)", (player_id, team, date))
 
     def _write(self, members):
         self.ipr._write(self.con, "mls", members, "now")
@@ -331,7 +339,9 @@ class PublishedIdentityRefusals(unittest.TestCase):
             pr.lookup_player(self.con, "mls", "David Ruiz", "MIA"),
             pr.lookup_player(self.con, "mls", "David Ruiz", "RBNY"))
 
-    def test_a_cross_publisher_same_name_at_a_new_club_is_not_called_a_transfer(self):
+    def test_a_new_club_with_no_logs_at_all_stays_undecided(self):
+        """The only genuinely unsafe case: nothing corroborates either club, so a transfer
+        and a namesake are still the same shape."""
         self.con.execute(
             "INSERT INTO players(name,team,league,position,position_group,active,updated_at) "
             "VALUES('Moving Name','MIA','mls','M','Midfielder',1,'old')")
@@ -340,7 +350,7 @@ class PublishedIdentityRefusals(unittest.TestCase):
             "name": "Moving Name", "names": ["Moving Name"],
             "team": "Red Bull New York", "position": "M",
             "position_group": "Midfielder"}])
-        self.assertEqual(stats["team_conflicts"], 1)
+        self.assertEqual(stats["unverified_team"], 1)
         self.assertEqual(self.con.execute("SELECT COUNT(*) FROM players").fetchone()[0], 1)
         self.assertEqual(self.con.execute(
             "SELECT COUNT(*) FROM player_source_ids").fetchone()[0], 0)
@@ -423,3 +433,99 @@ class TheIngestAsksEveryPublisher(unittest.TestCase):
             {row[0] for row in self.con.execute(
                 "SELECT name_folded FROM published_roster_name")},
             {"jakedavis", "jacobdavis"})
+
+
+class ATransferIsNotAFailure(unittest.TestCase):
+    """A player who changes clubs does not change which club his old logs belong to.
+
+    Refusing every one of these compared `players.team`, a last-known value with no
+    timestamp, against the publisher's current squad, and called the difference evidence
+    of two different humans. Measured on prod 2026-09-07, all three San Diego FC refusals
+    were real transfers with corroborating game logs.
+    """
+
+    def setUp(self):
+        import ingest_published_rosters as ipr
+        self.ipr = ipr
+        self.con = sqlite3.connect(":memory:")
+        self.con.row_factory = sqlite3.Row
+        self.con.executescript("""
+            CREATE TABLE players(id INTEGER PRIMARY KEY, name TEXT, team TEXT, league TEXT,
+                position TEXT, position_group TEXT, active INT, updated_at TEXT,
+                espn_id TEXT);
+            CREATE TABLE player_source_ids(id INTEGER PRIMARY KEY, source TEXT, league TEXT,
+                source_player_key TEXT, player_id INT, first_seen TEXT, last_seen TEXT,
+                UNIQUE(source, league, source_player_key));
+            CREATE TABLE player_game_logs(id INTEGER PRIMARY KEY, player_id INT,
+                league TEXT, team TEXT, game_date TEXT);
+        """)
+        pr.ensure(self.con)
+
+    def _player(self, name, team):
+        return self.con.execute(
+            "INSERT INTO players(name,team,league,position,position_group,active,updated_at) "
+            "VALUES(?,?,'mls','M','Midfielder',1,'old')", (name, team)).lastrowid
+
+    def _logged(self, player_id, team):
+        self.con.execute(
+            "INSERT INTO player_game_logs(player_id, league, team, game_date) "
+            "VALUES(?, 'mls', ?, '2026-04-05')", (player_id, team))
+
+    def _publish(self, name, published_team):
+        members = [{"source": "mlssoccer", "source_player_key": "M1", "name": name,
+                    "names": [name], "team": published_team, "position": "M",
+                    "position_group": "Midfielder"}]
+        self.ipr._write(self.con, "mls", members, "now")
+        return pr.publish_identities(self.con, "mls", "now",
+                                     [("mlssoccer", "M1")])
+
+    def _bound_to(self):
+        row = self.con.execute("SELECT player_id FROM player_source_ids").fetchone()
+        return row[0] if row else None
+
+    def test_logs_at_the_stored_club_make_it_a_transfer(self):
+        """Jacob Jackson: stored DAL, four logs at DAL, MLS now publishes San Diego."""
+        pid = self._player("Jacob Jackson", "DAL")
+        self._logged(pid, "DAL")
+        stats = self._publish("Jacob Jackson", "San Diego FC")
+        self.assertEqual(stats["transfers"], 1)
+        self.assertEqual(self._bound_to(), pid, "the transfer binds to the existing person")
+        self.assertEqual(self.con.execute("SELECT COUNT(*) FROM players").fetchone()[0], 1,
+                         "and does not mint a second one")
+
+    def test_logs_at_the_PUBLISHED_club_mean_our_stored_team_is_wrong(self):
+        """Wilson Eisner: stored SJ, but his own four logs say San Diego, which is also
+        what the publisher says. The stored team is the outlier, not the publisher."""
+        pid = self._player("Wilson Eisner", "SJ")
+        self._logged(pid, "SD")
+        stats = self._publish("Wilson Eisner", "SD")
+        self.assertEqual(stats["stale_team"], 1)
+        self.assertEqual(stats.get("transfers", 0), 0)
+        self.assertEqual(self._bound_to(), pid)
+
+    def test_a_multi_club_history_still_reads_as_a_transfer(self):
+        """Sam Vines: 22 logs at COL, 3 at HOU, stored HOU, now published at San Diego."""
+        pid = self._player("Sam Vines", "HOU")
+        self._logged(pid, "COL")
+        self._logged(pid, "HOU")
+        stats = self._publish("Sam Vines", "San Diego FC")
+        self.assertEqual(stats["transfers"], 1)
+        self.assertEqual(self._bound_to(), pid)
+
+    def test_no_logs_anywhere_is_still_refused(self):
+        """Nothing corroborates either club, so transfer and namesake stay the same shape.
+        This is the case that should keep the job red."""
+        self._player("Ghost Player", "MIA")
+        stats = self._publish("Ghost Player", "Red Bull New York")
+        self.assertEqual(stats["unverified_team"], 1)
+        self.assertIsNone(self._bound_to())
+
+    def test_two_namesakes_at_other_clubs_are_ambiguous_not_a_transfer(self):
+        """Corroborating logs cannot pick between two people, so this stays a refusal."""
+        first = self._player("Twin Name", "MIA")
+        second = self._player("Twin Name", "CHI")
+        self._logged(first, "MIA")
+        self._logged(second, "CHI")
+        stats = self._publish("Twin Name", "San Diego FC")
+        self.assertEqual(stats["ambiguous"], 1)
+        self.assertIsNone(self._bound_to())

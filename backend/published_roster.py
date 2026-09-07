@@ -392,6 +392,20 @@ def publish_identities(con: sqlite3.Connection, league: str, now: str,
     players_by_name = collections.defaultdict(list)
     for player in players:
         players_by_name[fold(player["name"])].append(player)
+
+    # Which clubs each player has actually PLAYED for, from their own game logs. This is
+    # the evidence that separates a transfer from a bad row: `players.team` is a
+    # last-known value with no timestamp, so it cannot say on its own whether it is stale
+    # history or simply wrong. One grouped read, league-scoped.
+    logged_teams = collections.defaultdict(set)
+    try:
+        for player_id, team in con.execute(
+                "SELECT g.player_id, g.team FROM player_game_logs g JOIN players p "
+                "ON p.id=g.player_id WHERE p.league=? AND g.team IS NOT NULL "
+                "GROUP BY g.player_id, g.team", (league,)):
+            logged_teams[int(player_id)].add(str(team).strip().upper())
+    except sqlite3.Error:
+        pass  # a database without game logs simply offers no corroboration
     stats = collections.Counter(components=len(components))
     failure_examples = []
 
@@ -490,11 +504,37 @@ def publish_identities(con: sqlite3.Connection, league: str, now: str,
             elif len(narrowed) > 1:
                 refuse("ambiguous", component)
                 continue
+            elif len(candidates) == 1:
+                # A unique name at a different club is USUALLY a transfer, not a namesake.
+                # The first version refused all of these as "team_conflicts", which
+                # compared two different things and called the difference a failure:
+                # `players.team` is where we last saw someone, the publisher's team is
+                # where they are now, and a player who moves clubs does not retroactively
+                # change which club his old game logs belong to.
+                #
+                # So ask the logs, which are dated and cannot be stale in the same way:
+                #
+                #   publisher's club appears in their logs  -> they already play there;
+                #       our stored team is the wrong one (STALE_TEAM). Bind, and say so.
+                #   our stored team appears in their logs   -> that club is real history
+                #       and the publisher has the newer fact (TRANSFER). Bind.
+                #   neither club appears                    -> nothing corroborates either
+                #       claim, so transfer and namesake are still indistinguishable.
+                #       This is the only one that is genuinely unsafe (UNVERIFIED_TEAM).
+                only_id, only_player = next(iter(candidates.items()))
+                played = logged_teams.get(only_id, set())
+                stored = str(only_player["team"] or "").strip().upper()
+                if team_code.upper() in played:
+                    stats["stale_team"] += 1
+                elif stored and stored in played:
+                    stats["transfers"] += 1
+                else:
+                    refuse("unverified_team", component)
+                    continue
             elif candidates:
-                # A unique name at a different club can be either a transfer or a
-                # namesake. Without a stable source ID connecting the two, choosing either
-                # interpretation invents identity evidence.
-                refuse("team_conflicts", component)
+                # More than one unbound namesake at other clubs. Picking one would be the
+                # guess this whole path exists to refuse.
+                refuse("ambiguous", component)
                 continue
             elif name_candidates:
                 # Every name candidate was rejected because the SAME publisher already

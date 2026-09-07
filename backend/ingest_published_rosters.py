@@ -356,8 +356,23 @@ def main(argv=None):
     parser.add_argument("--apply", action="store_true")
     args = parser.parse_args(argv)
     result = ingest(args.leagues or sorted(_PROVIDERS), dry_run=not args.apply)
-    blockers = result["identity"].get("ambiguous", 0) + result["identity"].get(
-        "conflicts", 0) + result["identity"].get("team_conflicts", 0)
+    # Exit non-zero only for identities we genuinely cannot decide. A transfer is not a
+    # failure: a player who changes clubs does not change which club his old game logs
+    # belong to, and the first version of this exited 2 on every such row, which would
+    # have left a daily job permanently red for a reason that was never a defect. An
+    # alarm that is red every run is one nobody reads.
+    identity = result["identity"]
+    blockers = (identity.get("ambiguous", 0) + identity.get("conflicts", 0)
+                + identity.get("unverified_team", 0))
+    decided = identity.get("transfers", 0) + identity.get("stale_team", 0)
+    if decided:
+        print("  decided by game logs: {} transfer(s), {} stale stored team(s)".format(
+            identity.get("transfers", 0), identity.get("stale_team", 0)))
+    if blockers:
+        print("  UNDECIDED: {} ambiguous, {} conflicting, {} with no logs to corroborate "
+              "either club".format(identity.get("ambiguous", 0),
+                                   identity.get("conflicts", 0),
+                                   identity.get("unverified_team", 0)))
     return 2 if blockers else 0
 
 
