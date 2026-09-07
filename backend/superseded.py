@@ -69,10 +69,18 @@ def refuse(name: str) -> None:
 
     Deliberately fatal rather than a warning. A warning on a repair script is read after the
     repair has already run, which is exactly too late for a merge that deletes rows.
+
+    Fatal only when the script is being RUN, though. Refusing an IMPORT refuses far more than
+    the repair: `test_mlb_identity_invariants.py` imports `pick_canonical` from `dedupe_mlb`
+    to assert the invariant still holds, and a SystemExit at import time took down pytest
+    COLLECTION, so the entire backend suite stopped running rather than one script. The
+    danger being guarded against is executing a merge that deletes rows, and an import does
+    not do that. An importer still gets the notice on stderr.
     """
     entry = REGISTRY.get(name)
     if entry is None:
         return
+    caller = sys._getframe(1).f_globals.get("__name__")
     print(
         "REFUSED: {name} was superseded by {repl} on {on}.\n"
         "  why: {why}.\n"
@@ -83,4 +91,5 @@ def refuse(name: str) -> None:
         "  running it: git show HEAD:backend/{name}.py".format(
             name=name, repl=entry.replacement, on=entry.on, why=entry.why),
         file=sys.stderr)
-    raise SystemExit(2)
+    if caller == "__main__":
+        raise SystemExit(2)

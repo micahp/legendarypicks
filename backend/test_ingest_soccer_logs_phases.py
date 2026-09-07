@@ -5,6 +5,22 @@ import ingest_soccer_logs as subject
 
 
 class SoccerPhaseTests(unittest.TestCase):
+    def setUp(self):
+        """Put the process-global ESPN client back the way this test found it.
+
+        `main()` calls `_declare_batch()`, which flips `espn.on_exhausted` to "sleep" for the
+        life of the PROCESS and deliberately never restores it: a batch job really does want
+        to wait out a spent budget. In a test runner that process is the whole suite, so this
+        file left every later test with a client that sleeps, and
+        `test_scoreboard_ingest.TestServingPathNeverSleeps` failed 14 files later with
+        'sleep' == 'refuse' - the exact defect that assertion exists to catch, arriving from
+        a test rather than from the serving path.
+        """
+        previous = subject.espn.set_on_exhausted("refuse")
+        subject.espn.set_on_exhausted(previous)
+        self.addCleanup(subject.espn.set_on_exhausted, previous)
+        self.addCleanup(subject._BATCH_DECLARED.clear)
+
     def test_core_and_summary_regular_season_ids_share_semantic_phase(self):
         core = {"id": "1", "name": "Regular Season"}
         summary = {"type": 13846, "name": "2026 MLS, Regular Season"}
