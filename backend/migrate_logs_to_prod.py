@@ -77,6 +77,10 @@ class Plan:
     identity_mismatches: tuple[int, ...]
     player_id_remaps: tuple[tuple[int, int], ...]
     skipped_identityless_logs: int
+    # Source logs whose player row no longer exists. Reported, never migrated: a log that
+    # points at a deleted identity would arrive in the target pointing at nothing.
+    orphan_player_ids: tuple[int, ...] = ()
+    skipped_orphan_logs: int = 0
 
 
 def _validated_path(path: str) -> str:
@@ -266,6 +270,17 @@ def build_plan(
                 != _identity(target_players[player_id])
             )
         )
+        # A log whose player_id has no `players` row in the SOURCE carries no identity to
+        # migrate: there is nothing to insert into the target and nothing to remap onto.
+        # This used to KeyError on the first one and abandon the whole migration. Measured
+        # 2026-09-06: dev holds 6 such logs for player_id 33312, a row removed by a dedupe,
+        # and prod already holds the same 6 dangling. One deleted row must not block 10,574
+        # real ones, and it must not be copied either, so it is counted and excluded from
+        # both the player map and the log copy.
+        orphan_player_ids = sorted(
+            source_log_player_ids - source_players.keys()
+        )
+        source_log_player_ids -= set(orphan_player_ids)
         missing_player_ids = sorted(
             source_log_player_ids - target_players.keys()
         )
@@ -318,7 +333,9 @@ def build_plan(
         }
         missing_logs = []
         skipped_identityless = 0
+        skipped_orphan = 0
         mismatch_set = set(mismatches)
+        orphan_set = set(orphan_player_ids)
         for row in source.execute(
             f"SELECT {_select_columns(LOG_COLUMNS)} "
             "FROM player_game_logs WHERE 1=1" + league_clause,
@@ -331,6 +348,9 @@ def build_plan(
                 skipped_identityless += 1
                 continue
             if row["player_id"] in mismatch_set:
+                continue
+            if row["player_id"] in orphan_set:
+                skipped_orphan += 1
                 continue
             key = (
                 row["league"],
@@ -357,6 +377,8 @@ def build_plan(
         identity_mismatches=mismatches,
         player_id_remaps=tuple(sorted(remaps.items())),
         skipped_identityless_logs=skipped_identityless,
+        orphan_player_ids=tuple(orphan_player_ids),
+        skipped_orphan_logs=skipped_orphan,
     )
 
 
@@ -481,6 +503,13 @@ def _print_plan(plan: Plan) -> None:
     print(
         "identityless source logs skipped: "
         f"{plan.skipped_identityless_logs}"
+    )
+    # Say the zero: an orphan count of 0 must look different from a run that never checked.
+    print(
+        "orphan source logs skipped (player row deleted): "
+        f"{plan.skipped_orphan_logs}"
+        + (f" from player ids {list(plan.orphan_player_ids)}"
+           if plan.orphan_player_ids else "")
     )
 
 
