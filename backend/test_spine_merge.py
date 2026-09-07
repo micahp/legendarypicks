@@ -97,7 +97,10 @@ class ColumnDiscoveryTests(unittest.TestCase):
         # player_game_logs_usopen and tennis_ranking_snapshots; dev additionally carries
         # nfl_published_fantasy_points. All are real players.id references and are now
         # covered by discovery.
-        expected = {"picks.db": 18, "picks.dev.db": 19}
+        # 2026-09-07: both gained `published_roster.player_id`, the roster-owned identity
+        # binding v0.9.3 added. Discovery picking it up is the point: a merge that did not
+        # repoint it would leave roster rows naming a player id that no longer exists.
+        expected = {"picks.db": 19, "picks.dev.db": 20}
         for name, count in expected.items():
             path = os.path.join(HERE, "data", name)
             if not os.path.isfile(path):
