@@ -1,7 +1,14 @@
-"""One-shot: create the `published_roster_name` table PROD is missing.
+"""One-shot: bring a database up to the `published_roster` schema v0.9.3 reads.
 
-`published_roster.lookup_player` reads this table to find every spelling a publisher
-prints for one of its own people. mlssoccer.com displays "Jake Davis" and files him at
+Three additive changes, all of them `published_roster.ensure()`'s own:
+
+    published_roster_name           new table, every spelling a publisher prints
+    published_roster.team_code      new column
+    published_roster.player_id      new column, the canonical identity binding
+
+`published_roster.lookup_player` reads the names table to find every spelling a publisher
+prints for one of its own people, and `player_id` is where roster publication records the
+canonical person, which is what lets the request path resolve without minting anything. mlssoccer.com displays "Jake Davis" and files him at
 `/players/jacob-davis/`; storing only the first is what forced six hand-written aliases
 into `REVIEWED_ALIASES` on 2026-09-06, five of which the second publisher retired.
 
@@ -16,8 +23,10 @@ each league declares. Copying dev's 2,180 rows would be the wrong move twice ove
 migration that carries data is a migration that can carry a bad row, and the ingest that
 owns this table is scheduled and idempotent.
 
-Additive and idempotent: `CREATE TABLE IF NOT EXISTS` plus its index, no existing row
-read or written. Safe to re-run.
+Additive and idempotent: a `CREATE TABLE IF NOT EXISTS` and two `ADD COLUMN`s, no
+existing row read or written. Safe to re-run, and it must be run on BOTH databases: the
+first version of this returned early when the names table was already present, which
+skipped the column check and left dev behind prod.
 
 Usage:
   cd backend && python3 migrate_published_roster_name.py \
@@ -65,26 +74,37 @@ def main(argv=None) -> int:
                   "first, then re-run this".format(args.db))
             return 1
 
-        before = has_table(connection, TABLE)
-        print("{}: {} is {}".format(args.db, TABLE, "PRESENT" if before else "MISSING"))
-        if before:
-            rows = connection.execute("SELECT COUNT(*) FROM {}".format(TABLE)).fetchone()[0]
-            print("  nothing to do; it holds {} rows".format(rows))
+        # Every check runs every time. Reporting "present" for one of the three and
+        # returning is how the first run of this left dev two columns behind prod.
+        missing = []
+        if not has_table(connection, TABLE):
+            missing.append("table " + TABLE)
+        columns = {row[1] for row in connection.execute(
+            "PRAGMA table_info(published_roster)")}
+        missing.extend("published_roster." + c
+                       for c in ("team_code", "player_id") if c not in columns)
+        print("{}: {}".format(args.db,
+                              "missing " + ", ".join(missing) if missing
+                              else "already at the v0.9.3 schema"))
+        if not missing:
             return 0
         if not args.apply:
-            print("  would create the table and its lookup index (dry run)")
+            print("  would add the above (dry run)")
             return 0
 
-        # The DDL comes from the module that reads the table, so the two cannot drift.
+        # The DDL comes from the module that reads it, so the two cannot drift.
         published_roster.ensure(connection)
         connection.commit()
-        if not has_table(connection, TABLE):
-            print("  FAILED: table still absent after ensure()")
+        columns = {row[1] for row in connection.execute(
+            "PRAGMA table_info(published_roster)")}
+        still = ([] if has_table(connection, TABLE) else ["table " + TABLE])
+        still += ["published_roster." + c
+                  for c in ("team_code", "player_id") if c not in columns]
+        if still:
+            print("  FAILED: still missing {}".format(", ".join(still)))
             return 1
-        indexes = [r[0] for r in connection.execute(
-            "SELECT name FROM sqlite_master WHERE type='index' AND tbl_name=?", (TABLE,))]
-        print("  created {}, indexes: {}".format(TABLE, ", ".join(indexes) or "none"))
-        print("  it is EMPTY by design; ingest_published_rosters.py fills it")
+        print("  added {}".format(", ".join(missing)))
+        print("  {} is EMPTY by design; ingest_published_rosters.py fills it".format(TABLE))
         return 0
     finally:
         connection.close()
