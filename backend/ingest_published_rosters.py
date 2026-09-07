@@ -43,7 +43,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import published_roster
 import paced_http
 from ingest_fotmob_soccer_logs import _get as _fotmob_get
-from link_prop_games import _norm_team as _team_code
+import club_crosswalk
 
 DB = os.environ.get("LP_DB_PATH") or os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "data", "picks.db")
@@ -270,6 +270,12 @@ _PROVIDERS = {
 
 
 def _write(con, league: str, members: List[Dict], now: str) -> None:
+    # The club code comes from the static map where it has one, and otherwise from what the
+    # already-bound rosters teach. Before this, `link_prop_games._norm_team` was the only
+    # source and it covers MLS alone, so every Liga MX and Leagues Cup row was written with
+    # no code and could never be bound to a person: 1,100 identities on prod, failing
+    # silently because a missing join key matches nothing rather than raising.
+    learned = club_crosswalk.learn(con)
     con.executemany(
         "INSERT INTO published_roster(league, source, source_player_key, name, "
         "name_folded, team, position, position_group, team_code, updated_at) "
@@ -280,7 +286,8 @@ def _write(con, league: str, members: List[Dict], now: str) -> None:
         "team_code=excluded.team_code, updated_at=excluded.updated_at",
         [(league, m["source"], m["source_player_key"], m["name"],
           published_roster.fold(m["name"]), m["team"], m["position"],
-          m["position_group"], _team_code(m["team"], league), now) for m in members])
+          m["position_group"], club_crosswalk.resolve(m["team"], league, learned),
+          now) for m in members])
     con.executemany(
         "INSERT INTO published_roster_name(league, source, source_player_key, name, "
         "name_folded) VALUES(?,?,?,?,?) "

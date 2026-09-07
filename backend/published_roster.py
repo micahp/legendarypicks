@@ -128,6 +128,22 @@ def ensure(con: sqlite3.Connection) -> None:
         con.execute("ALTER TABLE published_roster ADD COLUMN player_id INTEGER")
 
 
+# Competitions whose players are owned by another league, and which must therefore never
+# create a person.
+#
+# Leagues Cup is played by MLS and Liga MX clubs, so every one of its people already has a
+# canonical row under one of those leagues. Measured on a clone of prod 2026-09-07: with
+# `team_code` filled by `club_crosswalk`, publishing lcup identities inserted 1,004 players
+# of whom 997 (99%) were names that already existed in mls or ligamx. That is 997 shadow
+# rows, the exact defect this resolver was rewritten to stop producing, and the club
+# crosswalk is what unlocks it: before the crosswalk every lcup row failed on `missing_team`
+# and the danger was hidden behind a different bug.
+#
+# Binding an lcup row to the person who already owns that publisher id is correct and is
+# measurable at 100% coverage on the FotMob key. It is deliberately not done here yet.
+# Refusing to mint is the half that must not wait.
+NO_MINT_LEAGUES = frozenset({"lcup"})
+
 _SOURCE_PRIORITY = ("fotmob", "mlssoccer")
 
 
@@ -544,6 +560,11 @@ def publish_identities(con: sqlite3.Connection, league: str, now: str,
             if candidates:
                 player_id = next(iter(candidates))
                 stats["matched"] += 1
+            elif league in NO_MINT_LEAGUES:
+                # See NO_MINT_LEAGUES. This person exists under their home league; a row
+                # created here would be a duplicate of them, not a discovery.
+                refuse("owned_elsewhere", component)
+                continue
             else:
                 best = min(component, key=lambda row: (_rank(row["source"]), row["source"]))
                 cur = con.execute(
