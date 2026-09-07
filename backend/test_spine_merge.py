@@ -374,3 +374,75 @@ class APublisherIdIsAnyPublisher(unittest.TestCase):
         """)
         con.commit()
         self.assertEqual(len(sm.build_plan(con).merges), 1)
+
+
+class APublishersSquadFindsTheDuplicateANameCannot(unittest.TestCase):
+    """`Willy Kumado` and `William Kumado` are one San Diego defender.
+
+    Grouping by name never sees them. The publisher's own squad does, and saying two rows are
+    the same person because ONE publisher names them as one squad member is stricter than
+    saying so because their names match.
+    """
+
+    def setUp(self):
+        self.con = _fixture(":memory:")
+        self.con.executescript("""
+            ALTER TABLE players ADD COLUMN active INTEGER DEFAULT 1;
+            CREATE TABLE player_source_ids(id INTEGER PRIMARY KEY AUTOINCREMENT, source TEXT,
+              league TEXT, source_player_key TEXT, player_id INTEGER,
+              UNIQUE(source, league, source_player_key));
+        """)
+        import published_roster
+        published_roster.ensure(self.con)
+        self.con.execute(
+            "INSERT INTO published_roster(league, source, source_player_key, name, "
+            "name_folded, team, position, position_group, updated_at) "
+            "VALUES('mls','fotmob','1305746','William Kumado',?, 'San Diego FC','D',"
+            "'Defender','now')", (published_roster.fold("William Kumado"),))
+        self.con.commit()
+
+    def _two_rows(self):
+        self.con.executemany(
+            "INSERT INTO players(name, team, league, espn_id, active) VALUES(?,?,?,?,1)",
+            [("Willy Kumado", "SD", "mls", None), ("William Kumado", "SD", "mls", "329734")])
+        self.con.execute(
+            "INSERT INTO player_source_ids(source, league, source_player_key, player_id) "
+            "VALUES('fotmob','mls','1305746',1)")
+        self.con.commit()
+
+    def test_the_two_spellings_are_planned_as_one_merge(self):
+        self._two_rows()
+        plan = sm.build_plan(self.con, league="mls")
+        self.assertEqual(len(plan.merges), 1)
+        self.assertEqual(plan.merges[0].drop_id, 1,
+                         "the row carrying the espn_id has to be the one that survives")
+        self.assertEqual(plan.merges[0].keep_id, 2)
+
+    def test_the_merge_carries_every_identity_onto_the_survivor(self):
+        """A merge that loses a publisher id leaves the person HARDER to resolve."""
+        self._two_rows()
+        plan = sm.build_plan(self.con, league="mls")
+        with self.con:
+            sm.apply_plan(self.con, plan)
+        self.assertEqual(self.con.execute("SELECT COUNT(*) FROM players").fetchone()[0], 1)
+        survivor = self.con.execute("SELECT id, name, espn_id FROM players").fetchone()
+        self.assertEqual(survivor[1], "William Kumado")
+        self.assertEqual(survivor[2], "329734")
+        self.assertEqual(
+            self.con.execute("SELECT player_id FROM player_source_ids").fetchone()[0],
+            survivor[0], "the fotmob binding has to follow the person")
+
+    def test_two_keys_from_the_SAME_publisher_are_two_people(self):
+        self._two_rows()
+        self.con.execute("UPDATE players SET espn_id='111' WHERE id=1")
+        self.con.commit()
+        plan = sm.build_plan(self.con, league="mls")
+        self.assertEqual(plan.merges, [])
+        self.assertTrue(any("espn_id" in reason for _, _, reason in plan.refused))
+
+    def test_a_name_in_no_published_squad_is_left_to_the_name_pass(self):
+        self.con.executemany(
+            "INSERT INTO players(name, team, league, espn_id, active) VALUES(?,?,?,?,1)",
+            [("Nobody Published", "SD", "mls", None)])
+        self.con.commit()
+        self.assertEqual(sm.build_plan(self.con, league="mls").merges, [])

@@ -23,6 +23,12 @@ That is a person recorded twice: the resolved row, and the row a name-keyed inge
 before anyone had an id for them. Prod held 547 such groups before any of today's work,
 536 of them NFL.
 
+A name is not the only way to find those two rows. When two rows in one league resolve to
+the SAME published squad member -- `Willy Kumado` and `William Kumado` at San Diego, one
+folded through a reviewed alias -- they are the same person on the publisher's own evidence,
+and their names never match. That is STRICTER than name matching, not looser, so both
+candidate sources feed the same keep/drop machinery below.
+
 What it refuses:
   - a name held by two rows that BOTH carry ids (two real players do share a name; NFL
     has 442 such groups and NCAAF 171, and they are the spine working)
@@ -42,6 +48,12 @@ from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Sequence, Tuple
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, HERE)
+
+try:
+    import published_roster
+except ImportError:  # a database or checkout without it simply has no published rosters
+    published_roster = None
 
 
 def referencing_columns(con) -> List[Tuple[str, str]]:
@@ -131,24 +143,151 @@ def publisher_identity(con, player_id: int, row=None):
     return None
 
 
+def _name_groups(con, league: Optional[str]) -> List[Tuple[str, str, List[int]]]:
+    """(league, label, [player ids]) for every league+name held by more than one row."""
+    where = "WHERE league = ?" if league else ""
+    args: Sequence = (league,) if league else ()
+    out = []
+    for group in con.execute(
+            "SELECT league, name, COUNT(*) n FROM players {} GROUP BY league, name "
+            "HAVING n > 1".format(where), args).fetchall():
+        ids = [r[0] for r in con.execute(
+            "SELECT id FROM players WHERE league=? AND name=? ORDER BY id",
+            (group["league"], group["name"]))]
+        out.append((group["league"], group["name"], ids))
+    return out
+
+
+def _published_groups(con, league: Optional[str]) -> List[Tuple[str, str, List[int]]]:
+    """The same thing, keyed on the published squad member two rows both resolve to.
+
+    This is what finds a duplicate whose two names never match: `Willy Kumado` and
+    `William Kumado` are one San Diego defender, and only the publisher can say so. It asks
+    `published_roster.lookup`, so it inherits that module's fold, its uniqueness rule and its
+    reviewed aliases rather than inventing a second opinion about who somebody is.
+    """
+    if published_roster is None:
+        return []
+    try:
+        leagues = [league] if league else [
+            r[0] for r in con.execute("SELECT DISTINCT league FROM published_roster")]
+        columns = {row[1] for row in con.execute("PRAGMA table_info(players)")}
+    except sqlite3.Error:
+        return []  # no published roster here; the name-keyed pass is the whole plan
+    if not {"team", "active"} <= columns:
+        return []  # a schema this old cannot say who is on a squad today
+    out = []
+    for one in leagues:
+        claims: Dict[Tuple[str, str], List[int]] = {}
+        for row in con.execute(
+                "SELECT id, name, team FROM players WHERE league=? AND active=1 ORDER BY id",
+                (one,)).fetchall():
+            match = published_roster.lookup(con, one, row["name"], row["team"])
+            if match:
+                claims.setdefault((match[0], match[1]), []).append(row["id"])
+        for (source, key), ids in claims.items():
+            if len(ids) > 1:
+                out.append((one, "{}={}".format(source, key), ids))
+    return out
+
+
+def _keys_by_publisher(con, rows) -> Dict[str, set]:
+    """publisher -> the set of keys these rows carry for it. Two keys means two people."""
+    keys: Dict[str, set] = {}
+    for row in rows:
+        for column in _ID_COLUMNS:
+            value = row[column] if column in row.keys() else None
+            if value is not None and str(value).strip():
+                keys.setdefault(column, set()).add(str(value).strip())
+        for binding in con.execute(
+                "SELECT source, source_player_key FROM player_source_ids WHERE player_id=?",
+                (row["id"],)).fetchall():
+            keys.setdefault(binding[0], set()).add(str(binding[1]))
+    return keys
+
+
+def _identity_count(con, row) -> int:
+    n = sum(1 for column in _ID_COLUMNS
+            if column in row.keys() and row[column] is not None
+            and str(row[column]).strip())
+    return n + con.execute(
+        "SELECT COUNT(*) FROM player_source_ids WHERE player_id=?", (row["id"],)).fetchone()[0]
+
+
+def _moved(con, plan, player_id: int) -> Dict[str, int]:
+    moved = {}
+    for table, col in plan.columns:
+        n = con.execute("SELECT COUNT(*) FROM {} WHERE {}=?".format(table, col),
+                        (player_id,)).fetchone()[0]
+        if n:
+            moved[table] = n
+    return moved
+
+
 def build_plan(con, league: Optional[str] = None, limit: Optional[int] = None) -> MergePlan:
     con.row_factory = sqlite3.Row
     plan = MergePlan(columns=referencing_columns(con))
 
-    where = "WHERE league = ?" if league else ""
-    args: Sequence = (league,) if league else ()
-    groups = con.execute(
-        "SELECT league, name, COUNT(*) n FROM players {} GROUP BY league, name "
-        "HAVING n > 1".format(where), args).fetchall()
+    seen: set = set()
+    groups = ([("name",) + g for g in _name_groups(con, league)]
+              + [("published",) + g for g in _published_groups(con, league)])
 
-    for group in groups:
+    for origin, group_league, label, ids in groups:
+        key = tuple(sorted(ids))
+        if key in seen:
+            continue  # a duplicate both sources found; one plan entry, not two
+        seen.add(key)
+        group = {"league": group_league, "name": label}
         rows = con.execute(
-            "SELECT id, name, {} FROM players WHERE league=? AND name=? ORDER BY id".format(
-                ", ".join(_present_id_columns(con) or ("espn_id",))),
-            (group["league"], group["name"])).fetchall()
+            "SELECT id, name, {} FROM players WHERE id IN ({}) ORDER BY id".format(
+                ", ".join(_present_id_columns(con) or ("espn_id",)),
+                ",".join("?" * len(ids))), ids).fetchall()
         identity = {r["id"]: publisher_identity(con, r["id"], r) for r in rows}
         with_id = [r for r in rows if identity[r["id"]]]
         without = [r for r in rows if not identity[r["id"]]]
+
+        if origin == "published":
+            # These rows are grouped because the PUBLISHER named them as one squad member, so
+            # "both carry an id" is not evidence of two people here -- one row can carry an
+            # espn_id and the other a fotmob id and neither says anything about the other.
+            # What would be evidence is two DIFFERENT keys from the SAME publisher, so that is
+            # what this refuses on.
+            keys = _keys_by_publisher(con, rows)
+            conflict = sorted(p for p, values in keys.items() if len(values) > 1)
+            if conflict:
+                plan.refused.append((
+                    group["league"], group["name"],
+                    "{} names two keys for these rows; that is two people".format(
+                        ", ".join(conflict))))
+                continue
+            if len(rows) != 2:
+                plan.refused.append((group["league"], group["name"],
+                                     "{} rows resolve here; which survives is a guess".format(
+                                         len(rows))))
+                continue
+            # The survivor is the row already spelled the way the PUBLISHER spells it. Every
+            # identity travels either way, because apply_plan carries them, so what the
+            # choice actually decides is which name the person keeps -- and we are merging
+            # these two rows BECAUSE the publisher named them as one squad member, so their
+            # rendering is the fact and the sportsbook's is a display artifact. After that,
+            # the row carrying more ids, then the one more rows already point at, then age.
+            published_name = con.execute(
+                "SELECT name FROM published_roster WHERE league=? AND source=? "
+                "AND source_player_key=?",
+                (group["league"],) + tuple(label.split("=", 1))).fetchone()
+            wanted = published_roster.fold(published_name[0]) if published_name else None
+            ranked = sorted(rows, key=lambda r: (
+                0 if wanted and published_roster.fold(r["name"]) == wanted else 1,
+                -_identity_count(con, r),
+                -sum(_moved(con, plan, r["id"]).values()),
+                r["id"]))
+            keep, drop = ranked[0], ranked[1]
+            plan.merges.append(Merge(
+                group["league"], group["name"], keep["id"], drop["id"],
+                identity[keep["id"]] or label, _moved(con, plan, drop["id"])))
+            if limit and len(plan.merges) >= limit:
+                break
+            continue
 
         if not without:
             continue  # distinct publisher ids: two real people, the spine working
@@ -172,14 +311,8 @@ def build_plan(con, league: Optional[str] = None, limit: Optional[int] = None) -
             continue
 
         keep, drop = with_id[0], without[0]
-        moved = {}
-        for table, col in plan.columns:
-            n = con.execute("SELECT COUNT(*) FROM {} WHERE {}=?".format(table, col),
-                            (drop["id"],)).fetchone()[0]
-            if n:
-                moved[table] = n
         plan.merges.append(Merge(group["league"], group["name"], keep["id"], drop["id"],
-                                 identity[keep["id"]], moved))
+                                 identity[keep["id"]], _moved(con, plan, drop["id"])))
         if limit and len(plan.merges) >= limit:
             break
     return plan
@@ -205,8 +338,28 @@ def render(plan: MergePlan, emit=print, show: int = 12) -> None:
 
 def apply_plan(con, plan: MergePlan) -> Dict[str, int]:
     """Repoint every reference, then delete the now-unreferenced row."""
-    counts = {"merged": 0, "rows_moved": 0, "aliases": 0}
+    counts = {"merged": 0, "rows_moved": 0, "aliases": 0, "ids_carried": 0}
+    present = _present_id_columns(con)
     for m in plan.merges:
+        # Carry identities the survivor lacks BEFORE anything is deleted. A merge that drops
+        # a publisher id makes the person harder to resolve than before it ran, which is the
+        # opposite of the point, and it is also what the delete guard below would catch far
+        # too late.
+        drop_row = con.execute("SELECT * FROM players WHERE id=?", (m.drop_id,)).fetchone()
+        keep_row = con.execute("SELECT * FROM players WHERE id=?", (m.keep_id,)).fetchone()
+        if drop_row is not None and keep_row is not None:
+            for column in present:
+                value = drop_row[column]
+                if str(value or "").strip() and not str(keep_row[column] or "").strip():
+                    con.execute("UPDATE players SET {}=? WHERE id=?".format(column),
+                                (value, m.keep_id))
+                    # And clear it here, so the id now names exactly one row. The delete
+                    # below refuses to remove a row still holding an espn_id, which is the
+                    # right guard: an identity that was NOT carried must block the merge
+                    # rather than vanish with the row.
+                    con.execute("UPDATE players SET {}=NULL WHERE id=?".format(column),
+                                (m.drop_id,))
+                    counts["ids_carried"] += 1
         for table, col in plan.columns:
             cur = con.execute(
                 "UPDATE OR IGNORE {} SET {}=? WHERE {}=?".format(table, col, col),
