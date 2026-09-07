@@ -295,8 +295,11 @@ def lookup_player(con: sqlite3.Connection, league: str, name: str,
     if alias:
         keys.append(alias[0])
     placeholders = ",".join("?" * len(keys))
+    # A competition in NO_MINT_LEAGUES borrows its people from their home league, so
+    # requiring p.league = r.league there would hide every identity it just bound.
+    same_league = "" if league in NO_MINT_LEAGUES else " AND p.league=r.league"
     sql = ("SELECT DISTINCT r.player_id, r.team_code FROM published_roster r "
-           "JOIN players p ON p.id=r.player_id AND p.league=r.league "
+           "JOIN players p ON p.id=r.player_id" + same_league + " "
            "WHERE r.league=? AND r.player_id IS NOT NULL AND "
            "(r.name_folded IN ({0}) OR EXISTS (SELECT 1 FROM published_roster_name n "
            "WHERE n.league=r.league AND n.source=r.source AND "
@@ -444,6 +447,24 @@ def publish_identities(con: sqlite3.Connection, league: str, now: str,
         source_owners[(source, key)] = int(player_id)
         keys_by_player_source[(int(player_id), source)].add(key)
 
+    # For a competition that owns nobody, the SAME publisher id in another league is the
+    # person. FotMob does not renumber a player because he entered a second competition,
+    # so this is an exact join on the publisher's own id with no name matching at all.
+    # Measured on prod 2026-09-07: every one of the 1,035 Leagues Cup roster rows shares a
+    # FotMob id with an MLS or Liga MX row, and 94% of those are already bound.
+    #
+    # A key owned by two different people somewhere is not resolved here; it is left to be
+    # refused, because picking between them is the guess this path exists to avoid.
+    foreign_owners = {}
+    if league in NO_MINT_LEAGUES:
+        elsewhere = collections.defaultdict(set)
+        for source, key, player_id in con.execute(
+                "SELECT source,source_player_key,player_id FROM player_source_ids "
+                "WHERE league<>?", (league,)):
+            elsewhere[(source, key)].add(int(player_id))
+        foreign_owners = {key: next(iter(ids))
+                          for key, ids in elsewhere.items() if len(ids) == 1}
+
     def component_priority(component):
         """Resolve facts before questions so output is independent of row order."""
         source_keys = {(row["source"], row["source_player_key"]) for row in component}
@@ -475,9 +496,25 @@ def publish_identities(con: sqlite3.Connection, league: str, now: str,
         source_keys = {(row["source"], row["source_player_key"]) for row in component}
         owners = {int(row["player_id"]) for row in component if row["player_id"] is not None}
         owners.update(source_owners[key] for key in source_keys if key in source_owners)
+        # Borrowing is a property of the competition, not of this run. Deciding it per
+        # run made the first pass bind 1,035 rows and the second refuse all 1,035 as
+        # conflicts: once the crosswalk rows existed, the owner arrived through
+        # `source_owners` instead, and a league-scoped existence check cannot see a person
+        # who lives in another league.
+        borrows = league in NO_MINT_LEAGUES
+        adopted_foreign = False
+        if not owners and foreign_owners:
+            found = {foreign_owners[key] for key in source_keys if key in foreign_owners}
+            if len(found) == 1:
+                owners = found
+                adopted_foreign = True
+        # A borrowed player is valid in THEIR league, not in this competition, so the
+        # existence check follows the same rule the binding does.
         valid_owners = {row[0] for row in con.execute(
-            "SELECT id FROM players WHERE league=? AND id IN ({})".format(
-                ",".join("?" * len(owners))), [league] + sorted(owners))} if owners else set()
+            "SELECT id FROM players WHERE id IN ({}){}".format(
+                ",".join("?" * len(owners)),
+                "" if borrows else " AND league=?"),
+            sorted(owners) + ([] if borrows else [league]))} if owners else set()
         if owners != valid_owners or len(owners) > 1:
             refuse("conflicts", component)
             continue
@@ -494,6 +531,8 @@ def publish_identities(con: sqlite3.Connection, league: str, now: str,
 
         if owners:
             player_id = next(iter(owners))
+            if adopted_foreign:
+                stats["bound_from_home_league"] += 1
             if not team_code:
                 team_code = next((player["team"] for player in players
                                   if player["id"] == player_id), None)
@@ -585,6 +624,23 @@ def publish_identities(con: sqlite3.Connection, league: str, now: str,
             continue
 
         best = min(component, key=lambda row: (_rank(row["source"]), row["source"]))
+        if borrows:
+            # Their club is a fact about their home league. A cup entry must not restate
+            # it, and must never mark a player active on the strength of a tournament.
+            for row in component:
+                con.execute(
+                    "INSERT INTO player_source_ids(source,league,source_player_key,"
+                    "player_id,first_seen,last_seen) VALUES(?,?,?,?,?,?) "
+                    "ON CONFLICT(source,league,source_player_key) DO UPDATE SET "
+                    "last_seen=excluded.last_seen",
+                    (row["source"], league, row["source_player_key"], player_id, now, now))
+                con.execute(
+                    "UPDATE published_roster SET player_id=?, team_code=COALESCE(team_code,?) "
+                    "WHERE league=? AND source=? AND source_player_key=?",
+                    (player_id, team_code, league, row["source"], row["source_player_key"]))
+                stats["source_ids"] += 1
+            stats["published"] += 1
+            continue
         con.execute(
             "UPDATE players SET team=COALESCE(NULLIF(team,''),?), "
             "position=COALESCE(NULLIF(position,''),?), "

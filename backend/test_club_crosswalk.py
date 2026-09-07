@@ -176,3 +176,109 @@ class ACompetitionDoesNotOwnItsPlayers(unittest.TestCase):
         stats = self._publish("mls")
         self.assertEqual(stats["inserted"], 1)
         self.assertEqual(stats.get("owned_elsewhere", 0), 0)
+
+
+class ACompetitionBorrowsItsPeople(unittest.TestCase):
+    """Leagues Cup binds to the person who already owns that publisher id.
+
+    FotMob does not renumber a player because he entered a second competition, so this is
+    an exact join on the publisher's own id with no name matching. Measured on prod
+    2026-09-07: all 1,035 lcup roster rows share a FotMob id with an mls or ligamx row.
+    """
+
+    def setUp(self):
+        import published_roster as pr
+        self.pr = pr
+        self.con = sqlite3.connect(":memory:")
+        self.con.row_factory = sqlite3.Row
+        self.con.executescript("""
+            CREATE TABLE players(id INTEGER PRIMARY KEY, name TEXT, team TEXT, league TEXT,
+                position TEXT, position_group TEXT, active INT, updated_at TEXT,
+                espn_id TEXT);
+            CREATE TABLE player_source_ids(id INTEGER PRIMARY KEY, source TEXT, league TEXT,
+                source_player_key TEXT, player_id INT, first_seen TEXT, last_seen TEXT,
+                UNIQUE(source, league, source_player_key));
+            CREATE TABLE player_game_logs(id INTEGER PRIMARY KEY, player_id INT,
+                league TEXT, team TEXT, game_date TEXT);
+        """)
+        pr.ensure(self.con)
+
+    def _home_player(self, name, league, team, key="F1"):
+        pid = self.con.execute(
+            "INSERT INTO players(name,team,league,position,position_group,active,updated_at) "
+            "VALUES(?,?,?,'M','Midfielder',1,'old')", (name, team, league)).lastrowid
+        self.con.execute(
+            "INSERT INTO player_source_ids(source,league,source_player_key,player_id,"
+            "first_seen,last_seen) VALUES('fotmob',?,?,?,'old','old')", (league, key, pid))
+        return pid
+
+    def _cup_row(self, name, key="F1", club="Minnesota United", code="MIN"):
+        self.con.execute(
+            "INSERT INTO published_roster(league,source,source_player_key,name,name_folded,"
+            "team,position,position_group,updated_at,team_code) "
+            "VALUES('lcup','fotmob',?,?,?,?,'M','Midfielder','now',?)",
+            (key, name, self.pr.fold(name), club, code))
+
+    def test_it_binds_to_the_home_league_person_and_creates_nobody(self):
+        pid = self._home_player("Elias Achouri", "mls", "SD")
+        self._cup_row("Elias Achouri")
+        stats = self.pr.publish_identities(self.con, "lcup", "now")
+        self.assertEqual(stats["bound_from_home_league"], 1)
+        self.assertEqual(stats.get("inserted", 0), 0)
+        self.assertEqual(self.con.execute("SELECT COUNT(*) FROM players").fetchone()[0], 1)
+        self.assertEqual(self.con.execute(
+            "SELECT player_id FROM published_roster WHERE league='lcup'").fetchone()[0], pid)
+
+    def test_the_publisher_id_wins_over_the_spelling(self):
+        """All three publisher rows said `Darius Randell` while players.name said
+        `Alisa Randell`. The id is the identity; the stored name being wrong is a separate
+        defect and must not stop the binding."""
+        pid = self._home_player("Alisa Randell", "mls", "MIN")
+        self._cup_row("Darius Randell")
+        self.pr.publish_identities(self.con, "lcup", "now")
+        self.assertEqual(self.con.execute(
+            "SELECT player_id FROM published_roster WHERE league='lcup'").fetchone()[0], pid)
+
+    def test_it_does_not_restate_their_club_or_reactivate_them(self):
+        """Their club is a fact about their home league; a cup entry must not overwrite it."""
+        pid = self._home_player("Someone Else", "ligamx", "TIJ")
+        self.con.execute("UPDATE players SET active=0 WHERE id=?", (pid,))
+        self._cup_row("Someone Else")
+        self.pr.publish_identities(self.con, "lcup", "now")
+        row = self.con.execute("SELECT team, active FROM players WHERE id=?", (pid,)).fetchone()
+        self.assertEqual(row["team"], "TIJ")
+        self.assertEqual(row["active"], 0)
+
+    def test_a_second_run_changes_nothing(self):
+        """The first version bound 1,035 rows then refused all 1,035 as conflicts, because
+        the owner arrived through source_owners and a league-scoped existence check cannot
+        see a person who lives in another league."""
+        self._home_player("Elias Achouri", "mls", "SD")
+        self._cup_row("Elias Achouri")
+        self.pr.publish_identities(self.con, "lcup", "now")
+        stats = self.pr.publish_identities(self.con, "lcup", "later")
+        self.assertEqual(stats.get("conflicts", 0), 0)
+        self.assertEqual(stats.get("inserted", 0), 0)
+        self.assertEqual(self.con.execute("SELECT COUNT(*) FROM players").fetchone()[0], 1)
+
+    def test_an_id_owned_by_two_people_is_refused(self):
+        self._home_player("Twin One", "mls", "SD", key="F1")
+        self._home_player("Twin Two", "ligamx", "TIJ", key="F1")
+        self._cup_row("Twin One")
+        stats = self.pr.publish_identities(self.con, "lcup", "now")
+        self.assertEqual(stats.get("bound_from_home_league", 0), 0)
+        self.assertEqual(stats["owned_elsewhere"], 1)
+
+    def test_an_id_nobody_owns_is_still_refused_not_created(self):
+        self._cup_row("Unknown Person", key="NOBODY")
+        stats = self.pr.publish_identities(self.con, "lcup", "now")
+        self.assertEqual(stats["owned_elsewhere"], 1)
+        self.assertEqual(self.con.execute("SELECT COUNT(*) FROM players").fetchone()[0], 0)
+
+    def test_the_request_path_returns_the_borrowed_identity(self):
+        """lookup_player joined p.league = r.league, which would have hidden every
+        identity this binds."""
+        pid = self._home_player("Elias Achouri", "mls", "SD")
+        self._cup_row("Elias Achouri")
+        self.pr.publish_identities(self.con, "lcup", "now")
+        self.assertEqual(self.pr.lookup_player(self.con, "lcup", "Elias Achouri"), pid)
