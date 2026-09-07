@@ -89,6 +89,48 @@ class MergePlan:
         return len(self.merges)
 
 
+# The columns that hold a PUBLISHER's id for a player. `espn_id` is not special; it is simply
+# the one this file happened to be written around. Widened 2026-09-06 because a row can be
+# perfectly well resolved without ESPN ever having heard of it: `player_source_ids` already
+# holds 1,470 rotowire, 131 underdog and 44 ufcstats bindings, and esports is 100% keyless by
+# nature, so the old rule could never merge a cs2 or valorant duplicate at all.
+_ID_COLUMNS = ("espn_id", "mlbam_id", "nfl_gsis_id", "nhl_id", "nba_id")
+
+
+def _present_id_columns(con) -> Tuple[str, ...]:
+    """Which publisher-id columns this database actually has.
+
+    Discovered rather than assumed, for the same reason `referencing_columns` is: a database
+    that predates a column, or a test fixture that only needs two of them, must not make the
+    tool raise.
+    """
+    have = {row[1] for row in con.execute("PRAGMA table_info(players)")}
+    return tuple(column for column in _ID_COLUMNS if column in have)
+
+
+def publisher_identity(con, player_id: int, row=None):
+    """A stable key naming this player at some publisher, or None.
+
+    Any one of them is enough. Two rows are the same person when they share one, which is
+    STRICTER than matching a name, not looser: a name is how 124 of 317 MLB "duplicate"
+    groups turned out to be two different people.
+    """
+    if row is not None:
+        for column in _ID_COLUMNS:
+            value = (row[column] if column in row.keys() else None)
+            if value is not None and str(value).strip():
+                return "{}={}".format(column, str(value).strip())
+    try:
+        binding = con.execute(
+            "SELECT source, source_player_key FROM player_source_ids WHERE player_id=? "
+            "ORDER BY source, source_player_key LIMIT 1", (player_id,)).fetchone()
+    except sqlite3.Error:
+        return None  # a database without the table simply has no such bindings
+    if binding:
+        return "{}={}".format(binding[0], binding[1])
+    return None
+
+
 def build_plan(con, league: Optional[str] = None, limit: Optional[int] = None) -> MergePlan:
     con.row_factory = sqlite3.Row
     plan = MergePlan(columns=referencing_columns(con))
@@ -101,10 +143,12 @@ def build_plan(con, league: Optional[str] = None, limit: Optional[int] = None) -
 
     for group in groups:
         rows = con.execute(
-            "SELECT id, name, espn_id FROM players WHERE league=? AND name=? ORDER BY id",
+            "SELECT id, name, {} FROM players WHERE league=? AND name=? ORDER BY id".format(
+                ", ".join(_present_id_columns(con) or ("espn_id",))),
             (group["league"], group["name"])).fetchall()
-        with_id = [r for r in rows if (r["espn_id"] or "").strip()]
-        without = [r for r in rows if not (r["espn_id"] or "").strip()]
+        identity = {r["id"]: publisher_identity(con, r["id"], r) for r in rows}
+        with_id = [r for r in rows if identity[r["id"]]]
+        without = [r for r in rows if not identity[r["id"]]]
 
         if not without:
             continue  # distinct publisher ids: two real people, the spine working
@@ -113,6 +157,10 @@ def build_plan(con, league: Optional[str] = None, limit: Optional[int] = None) -
                                  "every row is unresolved; nothing to merge into"))
             continue
         if len(with_id) > 1:
+            # Reached only when an id-LESS row also exists: the "two real people, both
+            # resolved" case returned above. Distinct publisher ids do not help here, because
+            # the open question is which of them the unresolved row belongs to, and that is
+            # exactly the guess this tool refuses to make.
             plan.refused.append((group["league"], group["name"],
                                  "{} rows carry ids; which one survives is a guess".format(
                                      len(with_id))))
@@ -131,7 +179,7 @@ def build_plan(con, league: Optional[str] = None, limit: Optional[int] = None) -
             if n:
                 moved[table] = n
         plan.merges.append(Merge(group["league"], group["name"], keep["id"], drop["id"],
-                                 keep["espn_id"], moved))
+                                 identity[keep["id"]], moved))
         if limit and len(plan.merges) >= limit:
             break
     return plan
@@ -147,7 +195,9 @@ def render(plan: MergePlan, emit=print, show: int = 12) -> None:
         emit("    {:<7} {}".format(lg, n))
     for m in plan.merges[:show]:
         detail = ", ".join("{} x{}".format(t, n) for t, n in sorted(m.moved.items())) or "no rows"
-        emit("    MERGE {:<6} {!r}: drop {} into {} (espn {}) moving {}".format(
+        # The surviving id is no longer necessarily ESPN's, so print the key as it is
+        # rather than labelling every publisher "espn".
+        emit("    MERGE {:<6} {!r}: drop {} into {} (on {}) moving {}".format(
             m.league, m.name, m.drop_id, m.keep_id, m.keep_espn_id, detail))
     for league, name, why in plan.refused[:show]:
         emit("    REFUSE {:<6} {!r}: {}".format(league, name, why))

@@ -293,3 +293,84 @@ class DatabaseSelectionTests(unittest.TestCase):
                 sm.main([])
             printed = [ln for ln in buf.getvalue().splitlines() if ln.startswith("db: ")][0]
             self.assertTrue(printed[4:].startswith("/"), printed)
+
+
+class APublisherIdIsAnyPublisher(unittest.TestCase):
+    """espn_id was never special; it is the one this file happened to be written around.
+
+    player_source_ids already holds 1,470 rotowire, 131 underdog and 44 ufcstats bindings,
+    and esports is 100% keyless by nature (227 cs2 and 14 valorant active on dev), so the
+    espn_id-only rule could never merge an esports duplicate at all.
+    """
+
+    def setUp(self):
+        self.con = sqlite3.connect(":memory:")
+        self.con.row_factory = sqlite3.Row
+        self.con.executescript("""
+            CREATE TABLE players(id INTEGER PRIMARY KEY, name TEXT, league TEXT,
+                espn_id TEXT, mlbam_id TEXT);
+            CREATE TABLE props(id INTEGER PRIMARY KEY, player_id INT);
+            CREATE TABLE player_source_ids(id INTEGER PRIMARY KEY, source TEXT, league TEXT,
+                source_player_key TEXT, player_id INT);
+        """)
+        self.con.commit()
+
+    def _player(self, pid, name, league="mls", espn=None, mlbam=None):
+        self.con.execute("INSERT INTO players VALUES(?,?,?,?,?)",
+                         (pid, name, league, espn, mlbam))
+
+    def _bind(self, pid, source, key, league="mls"):
+        self.con.execute(
+            "INSERT INTO player_source_ids(source,league,source_player_key,player_id) "
+            "VALUES(?,?,?,?)", (source, league, key, pid))
+
+    def test_a_fotmob_binding_makes_a_row_resolved(self):
+        """The Giovanny Sequera case: two rows, neither with an espn_id, one now carrying a
+        FotMob id. Before this, spine_merge refused with 'nothing to merge into'."""
+        self._player(1, "Giovanny Sequera")
+        self._player(2, "Giovanny Sequera")
+        self._bind(1, "fotmob", "1483557")
+        self.con.execute("INSERT INTO props VALUES(10, 2)")
+        self.con.commit()
+        plan = sm.build_plan(self.con)
+        self.assertEqual(plan.refused, [])
+        self.assertEqual(len(plan.merges), 1)
+        self.assertEqual((plan.merges[0].keep_id, plan.merges[0].drop_id), (1, 2))
+
+    def test_a_non_espn_publisher_column_also_counts(self):
+        self._player(1, "Some Batter", league="mlb", mlbam="12345")
+        self._player(2, "Some Batter", league="mlb")
+        self.con.commit()
+        plan = sm.build_plan(self.con)
+        self.assertEqual(len(plan.merges), 1)
+        self.assertEqual(plan.merges[0].keep_id, 1)
+
+    def test_two_rows_bound_to_different_publishers_are_two_people(self):
+        """Different published ids means the publisher says they are different humans."""
+        self._player(1, "Common Name")
+        self._player(2, "Common Name")
+        self._bind(1, "fotmob", "111")
+        self._bind(2, "fotmob", "222")
+        self.con.commit()
+        plan = sm.build_plan(self.con)
+        self.assertEqual(plan.merges, [])
+        self.assertEqual(plan.refused, [])
+
+    def test_still_refuses_when_nothing_is_resolved(self):
+        self._player(1, "Nobody Knows")
+        self._player(2, "Nobody Knows")
+        self.con.commit()
+        plan = sm.build_plan(self.con)
+        self.assertEqual(plan.merges, [])
+        self.assertIn("nothing to merge into", plan.refused[0][2])
+
+    def test_a_database_without_player_source_ids_does_not_raise(self):
+        con = sqlite3.connect(":memory:")
+        con.row_factory = sqlite3.Row
+        con.executescript("""
+            CREATE TABLE players(id INTEGER PRIMARY KEY, name TEXT, league TEXT, espn_id TEXT);
+            CREATE TABLE props(id INTEGER PRIMARY KEY, player_id INT);
+            INSERT INTO players VALUES(1,'A','nfl','7'), (2,'A','nfl',NULL);
+        """)
+        con.commit()
+        self.assertEqual(len(sm.build_plan(con).merges), 1)
