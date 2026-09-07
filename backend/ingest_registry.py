@@ -260,6 +260,46 @@ JOBS: List[Dict[str, object]] = [
             "label": "mls appearances (fotmob)",
         }],
     },
+    {
+        "id": "published_rosters",
+        # The roster `_resolve_player_for_ingest` consults before giving up on a player.
+        # Without this the table is a snapshot: it resolves whoever was on a squad the day
+        # somebody ran the script by hand, and every player signed afterwards goes back to
+        # being dropped. That is the exact shape this registry exists to remove.
+        #
+        # Both steps here, in this order, on purpose. The roster ingest reads `league_clubs`
+        # for its club list and prints "no published clubs stored" without one, so a stale
+        # club list is a silently smaller roster rather than an error. Keeping them one job
+        # means they cannot disagree about which clubs exist.
+        "cadence_min": 1440,
+        "timeout_sec": 1200,
+        # FotMob's own host, and the same lock fotmob_soccer_logs takes, so the two never
+        # spend that budget at the same time. One request per club, ~60 clubs across the
+        # three leagues.
+        "host_lock": "fotmob",
+        "steps": [["ingest_league_clubs.py"],
+                  ["ingest_published_rosters.py", "--apply"]],
+        "needs_api_base": False,
+        "freshness": [
+            {
+                "table": "published_roster",
+                "date_column": "updated_at",
+                "where": "league = 'mls'",
+                # Daily job, two days of slack. A roster that stops advancing does not break
+                # anything visibly: props for new signings just quietly go unresolved again,
+                # which is precisely why it needs an instrument rather than a reader.
+                "stale_hours": 72,
+                "label": "published rosters (mls)",
+            },
+            {
+                "table": "league_clubs",
+                "date_column": "updated_at",
+                "where": "league = 'mls'",
+                "stale_hours": 72,
+                "label": "published clubs (mls)",
+            },
+        ],
+    },
 ]
 
 _REQUIRED = ("id", "cadence_min", "timeout_sec", "host_lock", "steps", "freshness")
