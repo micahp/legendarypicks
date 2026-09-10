@@ -535,17 +535,37 @@ REPORTER_ROSTER = {
 #               Static API key, so it works when the OAuth token is stale.
 #               4x the price and still a fifth of a cent.
 #
-# MODEL: `deepseek/deepseek-v4-flash-0731`, dated on purpose. The old code
-# asked for `deepseek-v4-pro`, an UNDATED alias, and DeepSeek moved what it
-# points at without renaming it. Measured 2026-08-19 on OpenRouter's price
-# list, which is the visible edge of that move:
+# MODEL: `deepseek/deepseek-v4.1-flash`, 2026-09-10. Version-pinned on purpose.
+# The rule that got us here, learned 2026-08-19: the old code asked for
+# `deepseek-v4-pro`, an UNDATED alias, and DeepSeek moved what it points at
+# without renaming it, onto something twice the price. Measured then on
+# OpenRouter's price list, which is the visible edge of that move:
 #
 #     deepseek-v4-pro         in $1.44/M  out $2.88/M   <- the alias we called
 #     deepseek-v4-pro-0813    in $0.66/M  out $1.98/M   <- the dated snapshot
-#     deepseek-v4-flash-0731  in $0.14/M  out $0.28/M   <- this
+#     deepseek-v4-flash-0731  in $0.14/M  out $0.28/M   <- what we moved to
 #
-# Never ask for an undated alias again. A model name without a date is a
-# moving target, and it moved us onto something twice the price.
+# Re-read 2026-09-10 on the same list, the day v4.1 flash was published:
+#
+#     deepseek-v4.1-flash     in $0.15/M  out $0.60/M   <- this
+#     deepseek-v4-flash-0731  in $0.065/M out $0.18/M   <- what this replaces
+#     deepseek-v4-pro         in $0.955/M out $1.911/M
+#
+# Note the direction: v4.1 flash costs 2.3x the input and 3.3x the output of
+# the 07-31 snapshot. It is still a sixth of v4-pro, and it is what Micah asked
+# for, but do not describe this move as a saving.
+#
+# `v4.1` is a VERSION, not an undated alias, so it satisfies the 08-19 rule:
+# `deepseek-v4-flash` with no version is the shape that moves under you.
+#
+# NOUS CANNOT RELIABLY SERVE IT YET. Measured 2026-09-10, the day after
+# publication: 1 of 4 calls succeeded, the other three answered HTTP 429 "the
+# requested model is temporarily at capacity upstream". That is a fall-through
+# to OpenRouter, not a failure -- the loop below treats a non-401/402/403 as
+# retryable and moves to the next provider -- but it means most LLM calls now
+# spend a wasted request on nous and print a request-failed line first. Expect
+# that in the logs and re-measure before calling it a defect. OpenRouter served
+# it 2 of 2 with `is_byok: true`, so it bills this box's own DeepSeek key.
 #
 # Quality was measured, not assumed: 3 runs of a real game-story prompt, every
 # claim checked against the grounding. flash-0731 invented nothing. Of the
@@ -553,7 +573,7 @@ REPORTER_ROSTER = {
 # contradicted itself inside one blurb (Houston "leads the division" and "sits
 # 13 games back"), and liquid/lfm-2.5-2.6b inverted which club led the division
 # and flipped the sign of a run differential.
-_LLM_MODEL = os.environ.get("LP_LLM_MODEL", "deepseek/deepseek-v4-flash-0731")
+_LLM_MODEL = os.environ.get("LP_LLM_MODEL", "deepseek/deepseek-v4.1-flash")
 _LLM_PROVIDERS = [p.strip() for p in
                   os.environ.get("LP_LLM_PROVIDERS", "nous,openrouter").split(",") if p.strip()]
 _HERMES_AUTH = os.environ.get("LP_HERMES_AUTH", "/root/.hermes/auth.json")

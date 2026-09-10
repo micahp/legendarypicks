@@ -110,11 +110,27 @@ class ProviderChainTests(unittest.TestCase):
 
 
 class ConfigTests(unittest.TestCase):
-    def test_the_model_is_dated_never_a_moving_alias(self):
-        # `deepseek-v4-pro` is an undated alias and DeepSeek moved what it
-        # points at without renaming it, onto something twice the price.
-        self.assertIn("-0731", _core._LLM_MODEL)
-        self.assertNotEqual(_core._LLM_MODEL, "deepseek-v4-pro")
+    # The name of a model we ask for must PIN something: a release date or a
+    # version. `deepseek-v4-pro` pinned neither, DeepSeek moved what it pointed
+    # at without renaming it, and we paid twice the price for months before
+    # anyone noticed. This used to assert the literal string "-0731", which
+    # made the RULE unreadable and had to be edited every time the model moved
+    # on legitimate grounds. It now asserts the rule.
+    MOVING_ALIASES = ("deepseek/deepseek-v4-pro", "deepseek/deepseek-v4-flash",
+                      "deepseek-v4-pro", "deepseek-v4-flash", "deepseek-chat")
+
+    def test_the_model_is_pinned_never_a_moving_alias(self):
+        import re
+        model = _core._LLM_MODEL
+        self.assertNotIn(model, self.MOVING_ALIASES,
+                         "%s names no version and no date, so it can move under us" % model)
+        self.assertTrue(re.search(r"-\d{4}$|v\d+\.\d+", model),
+                        "%s pins neither a date suffix nor a vN.N version" % model)
+
+    def test_the_pinned_model_is_the_one_we_meant(self):
+        # A rule test passes on any pinned name. This one fails if the model
+        # changes at all, so the change is deliberate and shows up in a diff.
+        self.assertEqual(_core._LLM_MODEL, "deepseek/deepseek-v4.1-flash")
 
     def test_the_old_name_still_resolves_for_existing_callers(self):
         self.assertIs(_core._deepseek_chat, _core._llm_chat)
