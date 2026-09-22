@@ -7,6 +7,7 @@ from _core import *
 from provenance import publishers_for
 from sport_navigation import league_directory_navigation, prop_navigation
 import scoreboard_store
+import league_readiness
 from . import router
 from .contexts import _LCUP_RADIO
 
@@ -127,6 +128,23 @@ def coverage():
         d["publishers"] = pubs.get(d["league"], [])
         out.append(d)
     return out
+
+
+@router.get("/api/readiness/leagues")
+def readiness_leagues(as_of: str = None):
+    """Current-season product readiness from persisted calendars and data.
+
+    This is deliberately separate from `/api/health` (process liveness) and
+    `/api/coverage` (the historical certification registry).  It performs no
+    publisher requests.  `as_of` exists so season-boundary behavior can be
+    inspected and tested without changing the server clock.
+    """
+    try:
+        day = dt.date.fromisoformat(as_of) if as_of else dt.date.today()
+    except ValueError:
+        raise HTTPException(400, "as_of must be YYYY-MM-DD")
+    with closing(_db()) as con:
+        return league_readiness.build_readiness(con, day)
 
 
 @router.get("/api/navigation/sports")
