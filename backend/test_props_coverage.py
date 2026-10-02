@@ -27,7 +27,10 @@ def _db(path, players, props=(), games=(), results=()):
         """
         CREATE TABLE players(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL,
           team TEXT, league TEXT NOT NULL, espn_id TEXT, active INTEGER DEFAULT 1,
+          mlbam_id TEXT, nfl_gsis_id TEXT, nhl_id TEXT, nba_id TEXT,
           updated_at TEXT, UNIQUE(espn_id, league));
+        CREATE TABLE player_source_ids(
+          source TEXT, league TEXT, source_player_key TEXT, player_id INTEGER);
         CREATE TABLE prop_games(id INTEGER PRIMARY KEY AUTOINCREMENT, league TEXT NOT NULL,
           date TEXT NOT NULL, home TEXT, away TEXT, espn_event_id TEXT,
           final_home INTEGER, final_away INTEGER, start_time TEXT);
@@ -75,6 +78,35 @@ class SpineDuplicateTests(unittest.TestCase):
     def test_a_unique_name_is_not_reported_at_all(self):
         r = self._measure([("Solo Fighter", "ufc", "1")])
         self.assertEqual(r["spine_duplicates"], [])
+
+    def test_two_native_identities_are_not_mislabeled_by_missing_espn_id(self):
+        path = _db(
+            os.path.join(self.tmp, "native.db"),
+            [("Matt Murray", "nhl", "1"), ("Matt Murray", "nhl", None)],
+        )
+        with sqlite3.connect(path) as con:
+            con.execute("UPDATE players SET nhl_id='8483575' WHERE espn_id IS NULL")
+        row = pc.measure(path)["spine_duplicates"][0]
+        self.assertEqual(row["suspected_duplicates"], 0)
+        self.assertEqual(row["distinct_ids_ok"], 1)
+
+    def test_a_source_binding_is_a_durable_identity(self):
+        path = _db(
+            os.path.join(self.tmp, "source.db"),
+            [("Jonathan Perez", "ligamx", "1"),
+             ("Jonathan Perez", "ligamx", None)],
+        )
+        with sqlite3.connect(path) as con:
+            second = con.execute(
+                "SELECT id FROM players WHERE espn_id IS NULL"
+            ).fetchone()[0]
+            con.execute(
+                "INSERT INTO player_source_ids VALUES('fotmob','ligamx','2',?)",
+                (second,),
+            )
+        row = pc.measure(path)["spine_duplicates"][0]
+        self.assertEqual(row["suspected_duplicates"], 0)
+        self.assertEqual(row["distinct_ids_ok"], 1)
 
 
 class BaselineGateTests(unittest.TestCase):
@@ -185,8 +217,6 @@ class CurrentHistoryGateTests(unittest.TestCase):
         )
         con = sqlite3.connect(self.db)
         con.executescript("""
-            CREATE TABLE player_source_ids(
-              source TEXT,league TEXT,source_player_key TEXT,player_id INTEGER);
             CREATE TABLE player_game_logs_ufcstats(
               player_id INTEGER,league TEXT,game_date TEXT,opponent TEXT,stats TEXT);
             INSERT INTO player_source_ids VALUES('ufcstats','ufc','a',1);

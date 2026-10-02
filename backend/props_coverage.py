@@ -100,19 +100,44 @@ SELECT g.league                                                        AS league
 #
 # A duplicate espn_id within a league cannot happen -- UNIQUE(espn_id, league) -- so it is
 # checked anyway, because a constraint you never verify is a constraint you assume.
-SPINE_DUPES_SQL = """
-WITH g AS (
+def _spine_dupes_sql(con: sqlite3.Connection) -> str:
+    """Measure resolved/unresolved name groups using every durable identity.
+
+    The first gate only read ``espn_id``. That labels two real players as a
+    duplicate whenever one is known to ESPN and the other is known to another
+    publisher, including NHL-native IDs and FotMob source bindings. Keep this
+    instrument aligned with ``spine_merge.publisher_identity`` instead.
+    """
+    columns = {row[1] for row in con.execute("PRAGMA table_info(players)")}
+    predicates = [
+        "NULLIF(TRIM(CAST(p.{} AS TEXT)),'') IS NOT NULL".format(column)
+        for column in ("espn_id", "mlbam_id", "nfl_gsis_id", "nhl_id", "nba_id")
+        if column in columns
+    ]
+    has_source_ids = con.execute(
+        "SELECT 1 FROM sqlite_master WHERE type='table' AND name='player_source_ids'"
+    ).fetchone() is not None
+    if has_source_ids:
+        predicates.append(
+            "EXISTS(SELECT 1 FROM player_source_ids s WHERE s.player_id=p.id)"
+        )
+    resolved = " OR ".join(predicates) or "0"
+    return """
+WITH identified AS (
+  SELECT p.league, p.name, CASE WHEN {resolved} THEN 1 ELSE 0 END AS has_id
+    FROM players p
+), g AS (
   SELECT league, name, COUNT(*) AS n,
-         SUM(NULLIF(espn_id,'') IS NOT NULL) AS with_id,
-         SUM(NULLIF(espn_id,'') IS NULL)     AS without_id
-    FROM players GROUP BY league, name HAVING n > 1
+         SUM(has_id) AS with_id,
+         SUM(has_id = 0) AS without_id
+    FROM identified GROUP BY league, name HAVING n > 1
 )
 SELECT league                                        AS league,
        SUM(with_id >= 1 AND without_id >= 1)         AS suspected_duplicates,
        SUM(with_id = 0)                              AS all_unresolved,
        SUM(with_id = n)                              AS distinct_ids_ok
   FROM g GROUP BY league
-"""
+""".format(resolved=resolved)
 
 DUPLICATE_ID_SQL = """
 SELECT league, espn_id, COUNT(*) AS n
@@ -144,7 +169,7 @@ def measure(db_path: str, min_market_rows: int = 30) -> dict:
         settled = {r["league"]: dict(r) for r in con.execute(SETTLED_SQL) if r["league"]}
         never = [dict(r) for r in con.execute(NEVER_GRADED_SQL, (min_market_rows,))
                  if r["league"]]
-        dupes = [dict(r) for r in con.execute(SPINE_DUPES_SQL) if r["league"]]
+        dupes = [dict(r) for r in con.execute(_spine_dupes_sql(con)) if r["league"]]
         dupe_ids = [dict(r) for r in con.execute(DUPLICATE_ID_SQL)]
     finally:
         con.close()
