@@ -27,6 +27,7 @@ export interface UfcOptimizerSlate {
   sourceName: string
   sourceUrl: string | null
   slateDate: string | null
+  lockAt?: string | null
   capturedAt: string | null
   metricLabel: 'DK FPPG' | 'RW projection'
 }
@@ -55,6 +56,10 @@ export interface UfcOptimizerResult {
 }
 
 export function draftKingsSlateLockAt(slate: UfcOptimizerSlate): number | null {
+  if (slate.lockAt) {
+    const explicit = Date.parse(slate.lockAt)
+    if (Number.isFinite(explicit)) return explicit
+  }
   const starts = slate.fighters
     .map(fighter => fighter.startTime ? Date.parse(fighter.startTime) : NaN)
     .filter(value => Number.isFinite(value))
@@ -163,9 +168,7 @@ export function parseDraftKingsMmaCsv(csv: string): UfcOptimizerSlate {
   if (indices.name < 0 || indices.salary < 0 || (indices.id < 0 && indices.nameAndId < 0)) {
     throw new Error('The CSV must include Name, Salary, and a DraftKings ID column.')
   }
-  if (indices.gameInfo < 0) {
-    throw new Error('The CSV must include Game Info so opposing fighters can never share a lineup.')
-  }
+  if (indices.gameInfo < 0) throw new Error('The CSV must include Game Info so matchups can be identified.')
 
   const fighters: UfcOptimizerFighter[] = []
   const seen = new Set<string>()
@@ -301,10 +304,6 @@ export function optimizeUfcLineups(
   if (locked.some(fighter => !validTarget(fighter))) {
     return { lineups: [], error: 'Every locked fighter needs a non-negative target score.', candidatesConsidered: 0 }
   }
-  const lockedSet = new Set(locked.map(fighter => fighter.id))
-  if (locked.some(fighter => fighter.opponentId && lockedSet.has(fighter.opponentId))) {
-    return { lineups: [], error: 'Opposing fighters cannot both be locked.', candidatesConsidered: 0 }
-  }
   const lockedSalary = locked.reduce((sum, fighter) => sum + fighter.salary, 0)
   if (lockedSalary > salaryCap) {
     return { lineups: [], error: 'Locked fighters exceed the salary cap.', candidatesConsidered: 0 }
@@ -312,7 +311,6 @@ export function optimizeUfcLineups(
 
   const pool = fighters
     .filter(fighter => !lockedIds.has(fighter.id) && !excludedIds.has(fighter.id) && validTarget(fighter))
-    .filter(fighter => !fighter.opponentId || !lockedSet.has(fighter.opponentId))
     .sort((left, right) => (right.target as number) - (left.target as number) || right.salary - left.salary)
   const remaining = rosterSize - locked.length
   if (pool.length < remaining) {
@@ -323,7 +321,6 @@ export function optimizeUfcLineups(
   const heap: UfcOptimizerLineup[] = []
   let candidatesConsidered = 0
   const chosen: UfcOptimizerFighter[] = []
-  const chosenIds = new Set(lockedSet)
 
   const visit = (start: number, salary: number, target: number) => {
     if (chosen.length === remaining) {
@@ -337,11 +334,8 @@ export function optimizeUfcLineups(
     for (let index = start; index <= pool.length - needed; index += 1) {
       const fighter = pool[index]
       if (salary + fighter.salary > salaryCap) continue
-      if (fighter.opponentId && chosenIds.has(fighter.opponentId)) continue
       chosen.push(fighter)
-      chosenIds.add(fighter.id)
       visit(index + 1, salary + fighter.salary, target + (fighter.target as number))
-      chosenIds.delete(fighter.id)
       chosen.pop()
     }
   }

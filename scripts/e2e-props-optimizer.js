@@ -80,8 +80,9 @@ async function findAlternateExample(page) {
     if (pool.body?.slate) {
       await page.getByText(pool.body.slate.sourceName, { exact: true }).waitFor({ timeout: TIMEOUT })
       const starts = pool.body.slate.fighters.map(fighter => Date.parse(fighter.startTime)).filter(Number.isFinite)
+      const lockAt = Date.parse(pool.body.slate.lockAt)
       check(starts.length === pool.body.slate.fighters.length, 'current optimizer pool has missing start times')
-      check(Math.min(...starts) > Date.now(), 'optimizer rendered a pool after its first lock')
+      check(Number.isFinite(lockAt) && lockAt > Date.now(), 'optimizer rendered a pool after its DraftKings lock')
       const perFight = new Map()
       pool.body.slate.fighters.forEach(fighter => perFight.set(
         fighter.gameInfo, (perFight.get(fighter.gameInfo) || 0) + 1,

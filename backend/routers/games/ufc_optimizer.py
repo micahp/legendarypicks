@@ -2,8 +2,16 @@
 
 RotoWire's slate list identifies whether a DraftKings Classic pool exists; its
 player and projection endpoints publish the salary pool. The response is cached
-briefly and never writes the database. Cancelled bouts are removed explicitly;
-an unexplained one-sided or duplicate bout fails closed.
+briefly and never writes the database.
+
+The two inventories routinely disagree during fight week, and that disagreement
+is not an error: the event list says who is fighting, the salary feed says who
+is priced, and a late replacement appears in one before the other. A bout the
+publisher cancelled, a bout DraftKings has not priced on both sides, and a
+priced fighter the publisher places in no bout are each excluded with a count
+and served alongside the bouts that are whole. Only genuine ambiguity -- a
+duplicate fighter, an event that does not publish two sides, or a slate with
+too few usable bouts to fill a lineup -- fails closed.
 """
 import datetime as dt
 import json
@@ -94,6 +102,7 @@ def build_current_pool(now=None, get_json=_get_json):
         raise RuntimeError("RotoWire Classic slate has no events")
     active_events = {}
     cancelled = []
+    cancelled_fighters = set()
     fighter_event = {}
     for event_id in event_ids:
         event = events.get(event_id)
@@ -103,6 +112,10 @@ def build_current_pool(now=None, get_json=_get_json):
         fighters = [event.get("fighter1"), event.get("fighter2")]
         if any(word in status for word in ("CANCEL", "POSTPON", "SCRATCH")):
             cancelled.append(event_id)
+            cancelled_fighters.update(
+                str(fighter.get("id")) for fighter in fighters
+                if isinstance(fighter, dict) and fighter.get("id")
+            )
             continue
         if any(not isinstance(fighter, dict) or not fighter.get("id") for fighter in fighters):
             raise RuntimeError(f"RotoWire event {event_id} does not publish two fighters")
@@ -127,25 +140,59 @@ def build_current_pool(now=None, get_json=_get_json):
             raise RuntimeError("RotoWire projections have missing or duplicate slate IDs")
         projections[key] = _number(row.get("pts"))
 
-    by_event = {event_id: [] for event_id in active_events}
-    seen_players = set()
+    seen_raw_fighters = set()
     for row in raw_players:
         if not isinstance(row, dict):
             raise RuntimeError("RotoWire player payload contains a non-object")
         fighter_id = str(row.get("rwID") or "")
         assignment_id = str(row.get("slateID") or "")
+        if not fighter_id or not assignment_id or fighter_id in seen_raw_fighters:
+            raise RuntimeError("RotoWire pool has a missing or duplicate fighter")
+        seen_raw_fighters.add(fighter_id)
+
+    priced = {str(row.get("rwID") or ""): row for row in raw_players}
+
+    # The publisher keeps two inventories and they disagree during fight-week
+    # churn: a replaced fighter stays priced after he loses his bout, and his
+    # replacement is in the bout before DraftKings prices him. Neither case is
+    # ambiguous -- the event node is the published statement of who is
+    # fighting whom -- so each is excluded WITH A COUNT instead of failing the
+    # whole pool. Never pair fighters ourselves; DraftKings salary symmetry is
+    # a price, not a matchup.
+    unavailable_fighters = []
+    unmatched_fighters = []
+    for fighter_id, row in priced.items():
+        if fighter_id in fighter_event or fighter_id in cancelled_fighters:
+            continue
+        if str(row.get("injuryStatus") or "").upper() == "OUT":
+            unavailable_fighters.append(fighter_id)
+        else:
+            unmatched_fighters.append(fighter_id)
+
+    # A bout with only one priced fighter cannot be offered. Drop it whole so
+    # a half-bout never reaches the board, and keep the rest of the slate.
+    unpriced_events = []
+    for event_id in list(active_events):
+        ids = [str((active_events[event_id].get(side) or {}).get("id") or "")
+               for side in ("fighter1", "fighter2")]
+        if all(fighter_id in priced for fighter_id in ids):
+            continue
+        unpriced_events.append(event_id)
+        del active_events[event_id]
+        for fighter_id in ids:
+            fighter_event.pop(fighter_id, None)
+    ordered_event_ids = [event_id for event_id in event_ids if event_id in active_events]
+
+    by_event = {event_id: [] for event_id in active_events}
+    seen_players = set()
+    for row in raw_players:
+        fighter_id = str(row.get("rwID") or "")
+        assignment_id = str(row.get("slateID") or "")
         event_id = fighter_event.get(fighter_id)
         if not event_id:
-            # A player left in the salary pool after a publisher-marked
-            # cancellation is excluded with that bout, never remapped by name.
-            if any(fighter_id in {
-                str((events[eid].get("fighter1") or {}).get("id") or ""),
-                str((events[eid].get("fighter2") or {}).get("id") or ""),
-            } for eid in cancelled):
-                continue
-            raise RuntimeError(f"RotoWire pool fighter {fighter_id or '?'} has no active event")
-        if not assignment_id or fighter_id in seen_players:
-            raise RuntimeError("RotoWire pool has a missing or duplicate fighter")
+            continue
+        if fighter_id in seen_players:
+            raise RuntimeError("RotoWire pool has a duplicate fighter")
         seen_players.add(fighter_id)
         event = active_events[event_id]
         pair = [str(event[side]["id"]) for side in ("fighter1", "fighter2")]
@@ -162,7 +209,10 @@ def build_current_pool(now=None, get_json=_get_json):
             "salary": _number(row.get("salary"), required=True),
             "fppg": projection, "target": projection,
             "gameInfo": f"rw-event:{event_id}", "opponentId": f"rw:{opponent_id}",
-            "startTime": _eastern(str(event["eventDate"])).astimezone(dt.timezone.utc).isoformat(),
+            "startTime": (
+                _eastern(str(event["eventDate"])).astimezone(dt.timezone.utc).isoformat()
+                if event.get("eventDate") else None
+            ),
             "country": row.get("countryFlag"), "record": stats.get("record"),
             "age": _number(stats.get("age")), "height": stats.get("height"),
             "reach": stats.get("reach"), "weightClass": stats.get("weightClassLong"),
@@ -171,18 +221,25 @@ def build_current_pool(now=None, get_json=_get_json):
     malformed = [event_id for event_id, rows in by_event.items() if len(rows) != 2]
     if malformed:
         raise RuntimeError(f"RotoWire pool does not contain two fighters for events: {','.join(malformed)}")
-    fighters = [fighter for event_id in event_ids for fighter in by_event.get(event_id, [])]
+    fighters = [fighter for event_id in ordered_event_ids for fighter in by_event.get(event_id, [])]
     if len(fighters) < 6:
         raise RuntimeError("RotoWire Classic pool has fewer than six active fighters")
-    event_names = sorted({str(active_events[event_id].get("eventName") or "UFC") for event_id in active_events})
+    event_names = sorted({
+        str(active_events[event_id].get("eventName") or "UFC")
+        for event_id in ordered_event_ids
+    })
     title = " / ".join(event_names)
     return {
         "checked_at": now.isoformat(), "reason": None,
         "excluded_cancelled_fights": len(cancelled),
+        "excluded_unavailable_fighters": len(unavailable_fighters),
+        "excluded_unpriced_fights": len(unpriced_events),
+        "excluded_unmatched_fighters": len(unmatched_fighters),
         "slate": {
             "fighters": fighters, "fightCount": len(by_event), "unresolvedMatchups": 0,
             "source": "rotowire_live", "sourceName": f"DraftKings Classic · {title}",
             "sourceUrl": SOURCE_URL, "slateDate": lock_at.date().isoformat(),
+            "lockAt": lock_at.astimezone(dt.timezone.utc).isoformat(),
             "capturedAt": now.isoformat(), "metricLabel": "RW projection",
         },
     }
@@ -197,6 +254,10 @@ def current_draftkings_pool():
         try:
             value = build_current_pool(now=now)
         except Exception as exc:
-            raise HTTPException(502, "current DraftKings MMA pool could not be verified") from exc
+            # Say what the publisher did. The previous generic text cost a
+            # python REPL to answer "why is the pool empty" every time.
+            raise HTTPException(
+                502, f"current DraftKings MMA pool could not be verified: {exc}"
+            ) from exc
         _cache.update(value=value, expires=now.timestamp() + CACHE_SECONDS)
         return value

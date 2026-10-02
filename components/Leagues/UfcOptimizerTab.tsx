@@ -31,6 +31,26 @@ function replaceInSet(current: Set<string>, id: string, enabled: boolean): Set<s
   return next
 }
 
+// What the publisher left out of this pool. A bout we dropped is a claim
+// about the feed, not about the card, so the board says so rather than
+// quietly showing a shorter slate.
+export function describePoolExclusions(payload: {
+  excluded_cancelled_fights?: number
+  excluded_unpriced_fights?: number
+  excluded_unmatched_fighters?: number
+  excluded_unavailable_fighters?: number
+} | null | undefined): string | null {
+  if (!payload) return null
+  const parts: string[] = []
+  const fight = (count: number) => (count === 1 ? '1 bout' : `${count} bouts`)
+  const fighter = (count: number) => (count === 1 ? '1 fighter' : `${count} fighters`)
+  if (payload.excluded_cancelled_fights) parts.push(`${fight(payload.excluded_cancelled_fights)} cancelled`)
+  if (payload.excluded_unpriced_fights) parts.push(`${fight(payload.excluded_unpriced_fights)} not priced on both sides`)
+  if (payload.excluded_unmatched_fighters) parts.push(`${fighter(payload.excluded_unmatched_fighters)} priced with no bout`)
+  if (payload.excluded_unavailable_fighters) parts.push(`${fighter(payload.excluded_unavailable_fighters)} out`)
+  return parts.length ? `Excluded by the publisher: ${parts.join(', ')}.` : null
+}
+
 export default function UfcOptimizerTab() {
   const [slate, setSlate] = useState<UfcOptimizerSlate | null>(() => {
     const selected = selectNextDraftKingsSlate(PUBLISHED_DRAFTKINGS_POOLS)
@@ -44,6 +64,7 @@ export default function UfcOptimizerTab() {
   )
   const [poolLoading, setPoolLoading] = useState(true)
   const [poolError, setPoolError] = useState<string | null>(null)
+  const [poolExclusions, setPoolExclusions] = useState<string | null>(null)
   const [csvText, setCsvText] = useState('')
   const [showPaste, setShowPaste] = useState(false)
   const [importError, setImportError] = useState<string | null>(null)
@@ -79,10 +100,12 @@ export default function UfcOptimizerTab() {
           ? { ...selected, fighters: selected.fighters.map(fighter => ({ ...fighter })) }
           : null)
         setSourceName(selected?.sourceName || '')
+        setPoolExclusions(selected ? describePoolExclusions(data) : null)
         setPoolError(null)
       })
       .catch(error => {
         if (error.name !== 'AbortError') {
+          setPoolExclusions(null)
           setPoolError('Current DraftKings pool availability could not be verified.')
         }
       })
@@ -218,7 +241,7 @@ export default function UfcOptimizerTab() {
             </div>
             <p className="mt-1 text-sm text-zinc-500">
               {slate
-                ? 'The next available DraftKings pool is loaded. Build six-fighter lineups under the $50,000 salary cap; opponents are never paired.'
+                ? 'The next available DraftKings pool is loaded. Build six-fighter lineups under the $50,000 salary cap.'
                 : poolLoading
                   ? 'Checking the current DraftKings MMA pool…'
                   : 'No current DraftKings MMA pool is available yet. Import a pool when DraftKings publishes it.'}
@@ -308,6 +331,9 @@ export default function UfcOptimizerTab() {
                       ? ' · Current DraftKings salaries and RotoWire projections.'
                       : ' · Salary and DK FPPG came from this file.'}
                 </p>
+                {poolExclusions && (
+                  <p className="mt-1 text-xs text-amber-300/80">{poolExclusions}</p>
+                )}
                 <p className="mt-1 text-xs text-zinc-600">
                   {slate.source !== 'draftkings_csv'
                     ? `${slate.fighters.filter(fighter => fighter.fppg === null).length} fighters have no published projection and stay out until you enter a target.`

@@ -116,7 +116,7 @@ describe('UFC optimizer tab', () => {
     })
   })
 
-  it('surfaces opposing locks as a validation error', () => {
+  it('builds with opposing locks because both fighters are valid DraftKings selections', () => {
     render(<UfcOptimizerTab />)
     fireEvent.click(screen.getByRole('button', { name: 'Paste CSV' }))
     fireEvent.change(screen.getByLabelText('DraftKings CSV contents'), { target: { value: CSV } })
@@ -125,8 +125,10 @@ describe('UFC optimizer tab', () => {
     fireEvent.click(screen.getByLabelText('Lock Underdog 1'))
     fireEvent.click(screen.getByRole('button', { name: 'Build 2' }))
 
-    expect(screen.getByText(/Opposing fighters cannot both be locked/)).toBeTruthy()
-    expect(screen.queryByText('Optimized lineups')).toBeNull()
+    expect(screen.getByText('Optimized lineups')).toBeTruthy()
+    const first = document.querySelector('[data-lineup-index="1"]')
+    expect(first?.textContent).toContain('Favorite 1')
+    expect(first?.textContent).toContain('Underdog 1')
   })
 
   it('never presents an embedded DraftKings pool after its lock time', async () => {

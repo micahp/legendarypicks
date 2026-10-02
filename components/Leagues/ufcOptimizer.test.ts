@@ -2,8 +2,10 @@ import {
   lineupsToCsv,
   optimizeUfcLineups,
   parseDraftKingsMmaCsv,
+  selectNextDraftKingsSlate,
   type UfcOptimizerFighter,
 } from './ufcOptimizer'
+import { describePoolExclusions } from './UfcOptimizerTab'
 import { UFC_DK_SLATE_2026_08_29 } from './data/ufcDraftKingsSlate20260829'
 
 const HEADER = 'Position,Name + ID,Name,ID,Roster Position,Salary,Game Info,TeamAbbrev,AvgPointsPerGame'
@@ -41,6 +43,20 @@ describe('DraftKings MMA CSV import', () => {
   it('rejects duplicate DraftKings fighter IDs instead of joining by name', () => {
     const duplicate = `${slateCsv()}\n${csvRow('Different Name', 'f1', 7600, 'X@Y 08/29/2026', 60)}`
     expect(() => parseDraftKingsMmaCsv(duplicate)).toThrow(/appears more than once/)
+  })
+})
+
+describe('DraftKings slate availability', () => {
+  it('uses the explicit contest lock instead of an inconsistent fighter time', () => {
+    const slate = parseDraftKingsMmaCsv(slateCsv())
+    slate.lockAt = '2026-08-29T21:30:00Z'
+    slate.fighters = slate.fighters.map(fighter => ({
+      ...fighter,
+      startTime: '2026-08-29T20:30:00Z',
+    }))
+
+    expect(selectNextDraftKingsSlate([slate], Date.parse('2026-08-29T21:00:00Z'))).toBe(slate)
+    expect(selectNextDraftKingsSlate([slate], Date.parse('2026-08-29T21:30:00Z'))).toBeNull()
   })
 })
 
@@ -91,7 +107,7 @@ describe('UFC lineup optimization', () => {
     ])
   })
 
-  it('honors locks and exclusions while still preventing opponent pairs', () => {
+  it('honors locks and exclusions while allowing a valid same-bout stack', () => {
     const slate = parseDraftKingsMmaCsv(slateCsv())
     const result = optimizeUfcLineups(slate.fighters, {
       count: 1,
@@ -101,22 +117,20 @@ describe('UFC lineup optimization', () => {
     const ids = new Set(result.lineups[0].fighters.map(fighter => fighter.id))
 
     expect(ids.has('u1')).toBe(true)
-    expect(ids.has('f1')).toBe(false)
+    expect(ids.has('f1')).toBe(true)
     expect(ids.has('f2')).toBe(false)
-    result.lineups[0].fighters.forEach(fighter => {
-      expect(fighter.opponentId ? ids.has(fighter.opponentId) : false).toBe(false)
-    })
   })
 
-  it('rejects two locked opponents with a specific validation error', () => {
+  it('accepts two locked opponents because DraftKings MMA permits both fighters', () => {
     const slate = parseDraftKingsMmaCsv(slateCsv())
     const result = optimizeUfcLineups(slate.fighters, {
       count: 1,
       lockedIds: ['f1', 'u1'],
     })
 
-    expect(result.lineups).toEqual([])
-    expect(result.error).toMatch(/Opposing fighters/)
+    expect(result.error).toBeNull()
+    expect(result.lineups).toHaveLength(1)
+    expect(result.lineups[0].fighters.map(fighter => fighter.id)).toEqual(expect.arrayContaining(['f1', 'u1']))
   })
 
   it('returns distinct lineups and applies non-locked exposure limits', () => {
@@ -152,5 +166,26 @@ describe('UFC lineup optimization', () => {
 
     expect(csv).toContain('Favorite 1 (f1)')
     expect(csv.split('\n')[0]).toBe('Lineup,F1,F2,F3,F4,F5,F6,Salary,Target')
+  })
+})
+
+describe('publisher exclusions on the live pool', () => {
+  it('names each kind of exclusion and stays silent when the slate is whole', () => {
+    expect(describePoolExclusions({
+      excluded_cancelled_fights: 1,
+      excluded_unpriced_fights: 1,
+      excluded_unmatched_fighters: 2,
+      excluded_unavailable_fighters: 1,
+    })).toBe(
+      'Excluded by the publisher: 1 bout cancelled, 1 bout not priced on both sides, '
+      + '2 fighters priced with no bout, 1 fighter out.',
+    )
+    expect(describePoolExclusions({
+      excluded_cancelled_fights: 0,
+      excluded_unpriced_fights: 0,
+      excluded_unmatched_fighters: 0,
+      excluded_unavailable_fighters: 0,
+    })).toBeNull()
+    expect(describePoolExclusions(null)).toBeNull()
   })
 })
