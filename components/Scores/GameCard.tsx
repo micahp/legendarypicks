@@ -53,6 +53,12 @@ function getStatusBadge(status: GameProps['status']) {
 
 function getStatusLabel(status: GameProps['status'], statusDetail?: string) {
   if (status === 'LIVE') return 'LIVE'
+  // Postponed / cancelled: ESPN closes the event (state=post, score 0-0) for a match that
+  // never happened. Measured 2026-10-02: RBNY v STL read "0 0 FINAL" on 09-26 and was
+  // actually played 09-30. Same shape as SUSPENDED below, and checked before it.
+  if (status === 'FINAL' && statusDetail && /postpon/i.test(statusDetail)) return 'POSTPONED'
+  if (status === 'FINAL' && statusDetail && /cancel/i.test(statusDetail)) return 'CANCELED'
+  if (status === 'FINAL' && statusDetail && /abandon/i.test(statusDetail)) return 'ABANDONED'
   // Suspended ≠ final: ESPN closes the event (state=post) but the match isn't over.
   if (status === 'FINAL' && statusDetail && /susp/i.test(statusDetail)) return 'SUSPENDED'
   // Walkover: the publisher ended the match before it started — not a "Final" with a score.
@@ -105,11 +111,15 @@ export default function GameCard(g: GameProps) {
   // - FINAL: show FINAL badge (no time)
   const showTime = g.status === 'SCHEDULED' && (!isUFC || g.showScheduledTime)
   const showStatusBadge = g.status === 'LIVE' || g.status === 'FINAL'
-  // Scores only exist once a game starts — never render 0–0 before first pitch/tip/puck
-  const showScore = g.status === 'LIVE' || g.status === 'FINAL'
+  // A postponed, cancelled or abandoned match is closed (FINAL) but was never played.
+  const notPlayed = g.status === 'FINAL' && !!g.statusDetail
+    && /postpon|cancel|abandon/i.test(g.statusDetail)
+  // Scores only exist once a game starts — never render 0–0 before first pitch/tip/puck,
+  // and never for a match that did not happen.
+  const showScore = (g.status === 'LIVE' || g.status === 'FINAL') && !notPlayed
 
   // Winner/loser dimming — same treatment as ScoreStrip on the detail page
-  const isFinal = g.status === 'FINAL'
+  const isFinal = g.status === 'FINAL' && !notPlayed
   // Soccer (WC, LCUP, MLS): the winner comes from the publisher's flag, never from the
   // score — a shootout-decided final is 1-1 with a winner. ESPN publishes the flag on
   // every finished competitor (measured 2026-08-19: all 11 MLS finals and 6 LCUP

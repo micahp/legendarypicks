@@ -122,3 +122,21 @@ describe('GameCard method of victory', () => {
     expect(screen.getByText('Final/OT')).toBeTruthy()
   })
 })
+
+describe('GameCard postponed match', () => {
+  it('says POSTPONED and shows no 0-0 score for a match that was never played', () => {
+    // The real 09-26 row: state post, status FT, 0-0, detail Postponed.
+    render(<GameCard
+      gameId="761833"
+      league="MLS"
+      homeTeam={{ teamId: 'RBNY', name: 'Red Bull New York', score: 0, winner: false }}
+      awayTeam={{ teamId: 'STL', name: 'St. Louis CITY SC', score: 0, winner: false }}
+      startTime="2026-09-26T23:30:00Z"
+      status="FINAL"
+      statusDetail="Postponed"
+    />)
+    expect(screen.getByText('POSTPONED')).toBeTruthy()
+    expect(screen.queryByText('FINAL')).toBeNull()
+    expect(screen.queryAllByText('0')).toHaveLength(0)
+  })
+})

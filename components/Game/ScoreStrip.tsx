@@ -8,9 +8,15 @@ export default function ScoreStrip({ ctx, score, state, league, period, clock, s
   statusDetail?: string | null
   homeName: string; awayName: string; homeRecord: string; awayRecord: string
 }) {
-  const isFinal = state === 'post'
+  // ESPN closes a postponed / cancelled / abandoned match as state=post with a 0-0 score.
+  // It was never played, so it has no score, no winner and no loser to dim.
+  const notPlayed = state === 'post' && !!statusDetail
+    && /postpon|cancel|abandon/i.test(statusDetail)
+  const isFinal = state === 'post' && !notPlayed
   const isLive = state === 'in'
-  const statusLabel = isFinal
+  const statusLabel = notPlayed
+    ? (statusDetail as string).toUpperCase()
+    : isFinal
     ? (statusDetail && /susp/i.test(statusDetail) ? 'SUSPENDED' : statusDetail || 'FINAL')
     : isLive
     ? formatLiveStatus({
@@ -31,7 +37,7 @@ export default function ScoreStrip({ ctx, score, state, league, period, clock, s
       <div className="flex flex-col items-center text-center min-w-0 flex-1 gap-0.5">
         <div className="text-xs font-bold text-zinc-400">{ctx?.away_team || 'AWAY'}</div>
         <span className={`text-4xl md:text-5xl font-black tabular-nums tracking-tight ${awayDim ? 'text-zinc-500' : 'text-white'}`}>
-          {score?.away ?? '-'}
+          {notPlayed ? '-' : (score?.away ?? '-')}
         </span>
         <div className={`text-xs ${awayDim ? 'text-zinc-600' : 'text-zinc-400'}`}>{awayRecord}</div>
         <div className={`text-sm font-semibold mt-0.5 truncate max-w-[140px] ${awayDim ? 'text-zinc-500' : 'text-zinc-200'}`}>{awayName}</div>
@@ -48,7 +54,7 @@ export default function ScoreStrip({ ctx, score, state, league, period, clock, s
       <div className="flex flex-col items-center text-center min-w-0 flex-1 gap-0.5">
         <div className="text-xs font-bold text-zinc-400">{ctx?.home_team || 'HOME'}</div>
         <span className={`text-4xl md:text-5xl font-black tabular-nums tracking-tight ${homeDim ? 'text-zinc-500' : 'text-white'}`}>
-          {score?.home ?? '-'}
+          {notPlayed ? '-' : (score?.home ?? '-')}
         </span>
         <div className={`text-xs ${homeDim ? 'text-zinc-600' : 'text-zinc-400'}`}>{homeRecord}</div>
         <div className={`text-sm font-semibold mt-0.5 truncate max-w-[140px] ${homeDim ? 'text-zinc-500' : 'text-zinc-200'}`}>{homeName}</div>

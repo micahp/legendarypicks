@@ -37,3 +37,13 @@ describe('ScoreStrip live status', () => {
     expect(screen.getByText('Q4 · 1:51')).toBeTruthy()
   })
 })
+
+describe('ScoreStrip postponed match', () => {
+  it('labels it postponed and shows no 0-0', () => {
+    const { container } = render(<ScoreStrip ctx={null} score={{ away: 0, home: 0 }} state="post"
+      league="mls" statusDetail="Postponed" homeName="Red Bull New York" awayName="St. Louis CITY SC"
+      homeRecord="" awayRecord="" />)
+    expect(screen.getByText('POSTPONED')).toBeTruthy()
+    expect(container.textContent).not.toContain('0')
+  })
+})
