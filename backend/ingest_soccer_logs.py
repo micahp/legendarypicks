@@ -588,7 +588,7 @@ def _not_started(con, league: str, now_iso: str) -> set:
     return future
 
 
-def _fetch_order(waiting: dict, event_ids: List[str]) -> List[str]:
+def _fetch_order(waiting: dict, event_ids: List[str], final: Optional[set] = None) -> List[str]:
     """Order a phase's matches by what settlement is waiting on, newest first.
 
     The publisher returns a season's events oldest-first, and this loop stops at
@@ -619,8 +619,53 @@ def _fetch_order(waiting: dict, event_ids: List[str]) -> List[str]:
 
     ordered = sorted(event_ids, key=key, reverse=True)
     # sorted(reverse=True) would put group 1 first; group 0 must lead.
-    return ([e for e in ordered if str(e) in waiting]
-            + [e for e in ordered if str(e) not in waiting])
+    if final is None:
+        return ([e for e in ordered if str(e) in waiting]
+                + [e for e in ordered if str(e) not in waiting])
+    # With the scoreboard's word on which matches are over, "is it final" leads and the
+    # event-id recency proxy only breaks ties. A box score exists exactly when the match
+    # is final, which is the same signal the game detail page uses to call it over.
+    done = lambda e: str(e) in final
+    return ([e for e in ordered if str(e) in waiting and done(e)]
+            + [e for e in ordered if str(e) not in waiting and done(e)]
+            + [e for e in ordered if str(e) in waiting and not done(e)]
+            + [e for e in ordered if str(e) not in waiting and not done(e)])
+
+
+def _finished_on_scoreboard(con, league: str) -> set:
+    """ESPN event ids the scoreboard capture has recorded as final (state post).
+
+    The scoreboard timers refresh about once a minute during games, and the game detail
+    page reads the same rows to decide a game is over, so this is the moment a summary
+    first has a box score to give. RBNY v STL was recorded post at 01:39Z on 10-01, about
+    two hours after kickoff, and never fetched: with no props it ranked behind matches
+    nobody had played yet.
+
+    `state = post` alone is not "played", which espn_client/scoreboard.py says in as many
+    words: a POSTPONED game is also state post, with a 0-0 score. The soccer rows we store
+    do not carry ESPN's `completed` flag, and on 2026-10-02 two MLS rows were post with
+    detail "Postponed" -- RBNY v STL among them, stored as a 0-0 final on 09-26 before it was
+    played 09-30. So trust `completed` where a row has it, and otherwise refuse any detail
+    that names a match that did not finish.
+    """
+    try:
+        rows = con.execute(
+            "SELECT game_id, json_extract(payload,'$.completed'),"
+            "       LOWER(COALESCE(json_extract(payload,'$.status_detail'),''))"
+            "  FROM scoreboard_snapshots WHERE league=? AND state='post'",
+            (league,)).fetchall()
+    except sqlite3.Error as exc:
+        print(f"  scoreboard final check unavailable ({exc}); ordering by recency alone")
+        return set()
+    unplayed = ("postpon", "cancel", "abandon", "suspend", "delay")
+    final = set()
+    for game_id, completed, detail in rows:
+        if completed is not None:
+            if completed:
+                final.add(str(game_id))
+        elif not any(word in detail for word in unplayed):
+            final.add(str(game_id))
+    return final
 
 
 def _type_events(league: str, season: int, type_id: str) -> List[str]:
@@ -859,6 +904,7 @@ def ingest(league: str, season: Optional[int] = None, dry_run: bool = False,
     # waiting on yet; ranking it first is what starved the whole job. See _not_started.
     settlement_waiting = {e: d for e, d in settlement_waiting.items()
                           if e not in not_started}
+    finished = _finished_on_scoreboard(con, league)
 
     for type_doc in types:
         type_id = type_doc.get("id") or ""
@@ -880,7 +926,7 @@ def ingest(league: str, season: Optional[int] = None, dry_run: bool = False,
         if waiting_here:
             print(f"  [{type_id}] {type_name}: {waiting_here} of {len(event_ids)} matches "
                   f"have unsettled props; those are fetched first")
-        event_ids = _fetch_order(settlement_waiting, event_ids)
+        event_ids = _fetch_order(settlement_waiting, event_ids, finished)
         game_type = _game_type_for_type(type_doc, league)
         type_logs = 0
         type_games = 0
