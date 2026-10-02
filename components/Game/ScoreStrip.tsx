@@ -46,11 +46,8 @@ export default function ScoreStrip({ ctx, score, state, league, period, clock, s
 
       {/* Center: status, with the publisher's preseason phase above it */}
       <div className="flex flex-col items-center gap-1 shrink-0">
-        {isPreseason && (
-          <span className="px-1.5 py-0.5 rounded border border-amber-500/30 text-[10px] font-bold uppercase tracking-wide text-amber-400">
-            Preseason
-          </span>
-        )}
+        {/* Quiet: same muted text as the record lines, no colour, no weight, no border. */}
+        {isPreseason && <span className="text-xs text-zinc-500">Preseason</span>}
         <span className={`text-xs font-bold uppercase tracking-widest ${isLive ? 'text-red-500' : 'text-zinc-500'}`}>
           {statusLabel}
         </span>
