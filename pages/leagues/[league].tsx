@@ -33,6 +33,8 @@ import {
 import { useCoverage } from '../../components/Leagues/hooks/useCoverage'
 import NewsTab from '../../components/Leagues/NewsTab'
 import { useNewsData } from '../../components/Leagues/hooks/useNewsData'
+import SeasonAvailabilityNote from '../../components/Leagues/SeasonAvailabilityNote'
+import { useLeagueReadiness } from '../../components/Leagues/hooks/useLeagueReadiness'
 import type { HubTab } from '../../components/Leagues/types'
 
 const TAB_LABELS: Record<HubTab, string> = {
@@ -61,6 +63,10 @@ export default function LeagueHubPage() {
     isUFC: route.isUFC,
     supportsTeamStats: route.supportsTeamStats,
   })
+  const readiness = useLeagueReadiness(
+    route.league,
+    route.league === 'nhl' && route.activeTab === 'stats',
+  )
   const schedule = useScheduleData(
     weekLeague ? '' : route.league,
     route.activeTab,
@@ -201,28 +207,31 @@ export default function LeagueHubPage() {
         )}
 
         {route.activeTab === 'stats' && (
-          <StatsTab
-            league={route.league}
-            leagueName={leagueName}
-            supportsTeamStats={route.supportsTeamStats}
-            subView={stats.subView}
-            mlbType={stats.mlbType}
-            leaders={stats.leaders}
-            playerLoading={stats.playerLoading}
-            playerError={stats.playerError}
-            playerFilterError={stats.playerFilterError}
-            teamAggregates={stats.teamAggregates}
-            teamLoading={stats.teamLoading}
-            teamError={stats.teamError}
-            teamCategory={stats.teamCategory}
-            onSelectSubView={stats.selectSubView}
-            onSelectMlbType={stats.selectMlbType}
-            onSelectSeason={stats.selectSeason}
-            onSelectStatCategory={stats.selectStatCategory}
-            onSelectSortMetric={stats.selectSortMetric}
-            onResetFilters={stats.resetStatsFilters}
-            onSelectTeamCategory={stats.selectTeamCategory}
-          />
+          <div className="space-y-4">
+            <SeasonAvailabilityNote league={route.league} readiness={readiness} />
+            <StatsTab
+              league={route.league}
+              leagueName={leagueName}
+              supportsTeamStats={route.supportsTeamStats}
+              subView={stats.subView}
+              mlbType={stats.mlbType}
+              leaders={stats.leaders}
+              playerLoading={stats.playerLoading}
+              playerError={stats.playerError}
+              playerFilterError={stats.playerFilterError}
+              teamAggregates={stats.teamAggregates}
+              teamLoading={stats.teamLoading}
+              teamError={stats.teamError}
+              teamCategory={stats.teamCategory}
+              onSelectSubView={stats.selectSubView}
+              onSelectMlbType={stats.selectMlbType}
+              onSelectSeason={stats.selectSeason}
+              onSelectStatCategory={stats.selectStatCategory}
+              onSelectSortMetric={stats.selectSortMetric}
+              onResetFilters={stats.resetStatsFilters}
+              onSelectTeamCategory={stats.selectTeamCategory}
+            />
+          </div>
         )}
 
         {route.activeTab === 'schedule' && weekLeague && (

@@ -13,6 +13,12 @@ export type ReadinessCheck = {
   reason?: string
   season?: number | null
   refreshed_at?: string | null
+  captured_at?: string | null
+  source?: string | null
+  age_days?: number | null
+  stale_after_days?: number | null
+  team_count?: number | null
+  player_count?: number | null
 }
 
 export type LeagueReadiness = {
@@ -27,7 +33,7 @@ export type LeagueReadiness = {
 }
 
 export type LeagueReadinessPayload = {
-  contract: 'league-readiness-v1'
+  contract: 'league-readiness-v3'
   as_of: string
   warnings: Array<{
     league: string

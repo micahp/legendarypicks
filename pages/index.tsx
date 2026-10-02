@@ -2,7 +2,6 @@ import Head from 'next/head'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import LiveDot from '../components/LiveDot'
-import SeasonalNflCard from '../components/SeasonalNflCard'
 
 // The homepage leads with props — the most differentiated surface we have.
 // Micah's framing: "props" alone is a noun; the differentiator is the HISTORY,
@@ -110,7 +109,7 @@ export default function Home() {
       </div>
 
       {/* The surfaces the homepage used to under-sell. */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
         <Link href="/news" className="rounded-xl border border-zinc-800 bg-zinc-900 p-6 hover:border-zinc-700 transition-colors">
           <h3 className="font-bold text-lg mb-2">News</h3>
           <p className="text-sm text-zinc-400">League news and features behind the slate.</p>
@@ -122,7 +121,6 @@ export default function Home() {
           </div>
           <p className="text-sm text-zinc-400">Live broadcasts, brackets and matches across the circuit.</p>
         </Link>
-        <SeasonalNflCard />
       </div>
     </>
   )

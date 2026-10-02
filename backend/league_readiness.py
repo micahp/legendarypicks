@@ -30,6 +30,7 @@ MANIFEST_LEAGUES = {"mlb", "mls", "nba", "ncaaf", "nfl", "nhl"}
 PLAYER_STATS_LEAGUES = MANIFEST_LEAGUES
 GAME_LOG_LEAGUES = MANIFEST_LEAGUES | {"lcup", "ligamx", "ufc", "wc"}
 TEAM_SCHEDULE_LEAGUES = MANIFEST_LEAGUES
+ROSTER_FRESH_DAYS = {"nhl": 7}
 
 # ESPN keys NBA/NHL by the year the season ends and the other leagues here by
 # the year it starts (or by the sole calendar year).  See season_keys.py.
@@ -60,14 +61,14 @@ STATIC_SEASONS = {
     },),
     "nhl": ({
         "season": 2027,
-        "season_start": "2026-09-15",
-        "season_end": "2027-07-01",
+        "season_start": "2026-09-19",
+        "season_end": "2027-06-10",
         "phases": (
-            ("preseason", "2026-09-15", "2026-09-28"),
+            ("preseason", "2026-09-19", "2026-09-28"),
             ("regular_season", "2026-09-29", "2027-04-10"),
-            ("postseason", "2027-04-11", "2027-07-01"),
+            ("postseason", "2027-04-11", "2027-06-10"),
         ),
-        "source": "NHL 2026-27 schedule + persisted ESPN season envelope",
+        "source": "NHL 2026-27 published season window",
     },),
 }
 
@@ -210,6 +211,53 @@ def _not_applicable() -> dict:
     return {"status": "not_applicable", "count": None}
 
 
+def _roster_snapshot_check(con: sqlite3.Connection, tables: set[str],
+                           league: str, season: int, as_of: dt.date) -> dict:
+    """Describe the one published current-roster snapshot without network I/O."""
+    stale_after_days = ROSTER_FRESH_DAYS.get(league)
+    if stale_after_days is None:
+        return _not_applicable()
+    if "roster_snapshots" not in tables:
+        return {"status": "unverified", "season": None,
+                "reason": "roster snapshot storage is unavailable"}
+    row = con.execute(
+        "SELECT season,source,captured_at,team_count,player_count"
+        " FROM roster_snapshots WHERE league=? AND status='published'"
+        " ORDER BY captured_at DESC LIMIT 1",
+        (league,),
+    ).fetchone()
+    if row is None:
+        return {"status": "missing", "season": None,
+                "reason": f"no published roster snapshot exists for season {season}"}
+
+    captured = _day(row["captured_at"])
+    age_days = max(0, (as_of - captured).days) if captured else None
+    check = {
+        "status": "ready",
+        "season": row["season"],
+        "source": row["source"],
+        "captured_at": row["captured_at"],
+        "age_days": age_days,
+        "stale_after_days": stale_after_days,
+        "team_count": row["team_count"],
+        "player_count": row["player_count"],
+    }
+    if row["season"] != season:
+        check["status"] = "stale"
+        check["reason"] = (
+            f"latest roster snapshot is season {row['season']}; current season is {season}"
+        )
+    elif captured is None:
+        check["status"] = "unverified"
+        check["reason"] = "published roster snapshot has no valid capture date"
+    elif age_days > stale_after_days:
+        check["status"] = "stale"
+        check["reason"] = (
+            f"roster snapshot is {age_days} days old; maximum is {stale_after_days}"
+        )
+    return check
+
+
 def _manifest_check(rows: list[dict], league: str, season: int,
                     as_of: dt.date, active: bool) -> dict:
     league_rows = [row for row in rows if str(row.get("league", "")).lower() == league]
@@ -309,6 +357,10 @@ def build_readiness(con: sqlite3.Connection, as_of: dt.date | None = None) -> di
                     "refreshed_at": refresh_row["refreshed_at"],
                 }
 
+        # team_game_results holds COMPLETED results. Counting its distinct
+        # games is a results inventory, never a schedule inventory: a zero
+        # here says no completed game has been ingested, not that the
+        # publisher has no schedule.
         schedule_count = _count(
             con, tables, "team_game_results",
             "SELECT COUNT(DISTINCT game_id) FROM team_game_results"
@@ -343,8 +395,15 @@ def build_readiness(con: sqlite3.Connection, as_of: dt.date | None = None) -> di
         checks = {
             "coverage_manifest": manifest,
             "scoreboard": scoreboard,
-            "schedule": (_availability(schedule_count, phase)
-                         if league in TEAM_SCHEDULE_LEAGUES else _not_applicable()),
+            "roster_snapshot": _roster_snapshot_check(
+                con, tables, league, season, as_of
+            ),
+            # Named for what the rows ARE. The former key `schedule` invited
+            # the preseason-zero reading "the publisher has no schedule",
+            # which the source contradicts.
+            "completed_team_results": (
+                _availability(schedule_count, phase)
+                if league in TEAM_SCHEDULE_LEAGUES else _not_applicable()),
             "player_stats": (_availability(stats_count, phase, regular_only=True)
                              if league in PLAYER_STATS_LEAGUES else _not_applicable()),
             "game_logs": (_availability(logs_count, phase, regular_only=True)
@@ -376,6 +435,9 @@ def build_readiness(con: sqlite3.Connection, as_of: dt.date | None = None) -> di
             })
         if active and scoreboard["status"] in {"missing", "unverified"}:
             reasons.append("no scoreboard snapshot is stored around today")
+        roster = checks["roster_snapshot"]
+        if active and roster["status"] in {"missing", "stale", "unverified"}:
+            reasons.append(roster.get("reason") or "current roster snapshot is not ready")
         season_end = _day(end)
         has_future_static = any(
             (_day(candidate["season_start"]) or dt.date.min) > as_of
@@ -409,7 +471,10 @@ def build_readiness(con: sqlite3.Connection, as_of: dt.date | None = None) -> di
         })
 
     return {
-        "contract": "league-readiness-v1",
+        # v3 adds current-roster freshness. v2 renamed `schedule` to
+        # `completed_team_results` because those rows are completed games,
+        # never a schedule inventory.
+        "contract": "league-readiness-v3",
         "as_of": as_of.isoformat(),
         "warnings": warnings,
         "leagues": output,

@@ -32,6 +32,10 @@ def database():
         CREATE TABLE prop_games(id INTEGER PRIMARY KEY, league TEXT, date TEXT);
         CREATE TABLE props(id INTEGER PRIMARY KEY, game_id INTEGER);
         CREATE TABLE prop_results(prop_id INTEGER, actual_value REAL);
+        CREATE TABLE roster_snapshots(
+          id INTEGER PRIMARY KEY, league TEXT, season INTEGER, source TEXT,
+          captured_at TEXT, team_count INTEGER, player_count INTEGER, status TEXT
+        );
         """
     )
     con.executemany(
@@ -64,6 +68,10 @@ def database():
     con.execute("INSERT INTO prop_games VALUES (1,'nfl','2026-09-22')")
     con.execute("INSERT INTO props VALUES (1,1)")
     con.execute("INSERT INTO prop_results VALUES (1,250.0)")
+    con.execute(
+        "INSERT INTO roster_snapshots VALUES (1,'nhl',2027,'espn_site_roster',"
+        "'2026-08-04T20:17:45+00:00',32,1051,'published')"
+    )
     return con
 
 
@@ -80,7 +88,7 @@ def test_old_complete_rows_are_stale_once_the_new_season_is_active():
     assert nfl["status"] == "degraded"
     assert nfl["checks"]["coverage_manifest"]["status"] == "stale"
     assert nfl["checks"]["coverage_manifest"]["season"] == 2025
-    assert nfl["checks"]["schedule"] == {"status": "available", "count": 1}
+    assert nfl["checks"]["completed_team_results"] == {"status": "available", "count": 1}
 
     nhl = by_league(payload, "nhl")
     assert nhl["expected_season"] == 2027
@@ -88,6 +96,12 @@ def test_old_complete_rows_are_stale_once_the_new_season_is_active():
     assert nhl["status"] == "degraded"
     assert nhl["checks"]["coverage_manifest"]["season"] == 2026
     assert nhl["checks"]["player_stats"] == {"status": "pending", "count": 0}
+    assert nhl["checks"]["roster_snapshot"]["status"] == "stale"
+    assert nhl["checks"]["roster_snapshot"]["season"] == 2027
+    assert nhl["checks"]["roster_snapshot"]["age_days"] == 49
+    # The preseason zero is a results count, not a claim that the publisher
+    # has no schedule.
+    assert nhl["checks"]["completed_team_results"] == {"status": "missing", "count": 0}
 
 
 def test_nba_warns_before_preseason_then_flips_phase_on_opening_day():
@@ -123,7 +137,29 @@ def test_in_progress_manifest_expires_when_checked_through_stops_advancing():
 def test_contract_names_every_scoreboard_competition():
     payload = league_readiness.build_readiness(database(), dt.date(2026, 9, 22))
     assert {row["league"] for row in payload["leagues"]} == set(league_readiness.LEAGUES)
-    assert payload["contract"] == "league-readiness-v1"
+    assert payload["contract"] == "league-readiness-v3"
+
+
+def test_current_nhl_roster_snapshot_is_ready_inside_the_freshness_window():
+    con = database()
+    con.execute(
+        "UPDATE roster_snapshots SET source='nhle.com:roster',"
+        " captured_at='2026-09-20T18:00:00+00:00', player_count=1245"
+        " WHERE league='nhl'"
+    )
+    nhl = by_league(
+        league_readiness.build_readiness(con, dt.date(2026, 9, 22)), "nhl"
+    )
+    assert nhl["checks"]["roster_snapshot"] == {
+        "status": "ready",
+        "season": 2027,
+        "source": "nhle.com:roster",
+        "captured_at": "2026-09-20T18:00:00+00:00",
+        "age_days": 2,
+        "stale_after_days": 7,
+        "team_count": 32,
+        "player_count": 1245,
+    }
 
 
 def test_a_fetched_empty_scoreboard_is_available_not_missing():
