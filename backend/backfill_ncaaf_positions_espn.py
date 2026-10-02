@@ -34,6 +34,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import espn_client as espn  # noqa: E402
+from cfbd_shared import _school_to_code  # noqa: E402
 
 LEAGUE = "ncaaf"
 _SITE = "https://site.web.api.espn.com/apis/site/v2/sports/football/college-football"
@@ -57,7 +58,7 @@ def _position_group(position, vocab):
 
 
 def team_ids() -> dict:
-    """{ABBREV: espn team id} for every published college-football team."""
+    """{canonical team code: ESPN team id} for every published team."""
     d = espn._get(_SITE + "/teams?limit=900", ttl=43200)
     out = {}
     for sport in d.get("sports", []) or []:
@@ -65,9 +66,11 @@ def team_ids() -> dict:
             for item in league.get("teams", []) or []:
                 team = item.get("team") or {}
                 abbrev = (team.get("abbreviation") or "").upper()
+                school = team.get("displayName") or team.get("name") or ""
                 tid = str(team.get("id") or "")
-                if abbrev and tid:
-                    out[abbrev] = tid
+                code = _school_to_code(school, abbrev)
+                if code and tid:
+                    out[code] = tid
     return out
 
 

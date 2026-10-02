@@ -7,6 +7,7 @@ import unittest
 from unittest import mock
 
 import ingest_ncaaf_rosters_cfbd as rosters
+import backfill_ncaaf_positions_espn as espn_positions
 
 
 class CfbdRosterPositionTests(unittest.TestCase):
@@ -75,6 +76,19 @@ class CfbdRosterPositionTests(unittest.TestCase):
                 "SELECT position,position_group FROM players WHERE espn_id='101'"
             ).fetchone()
         self.assertEqual(row, ("PK", "Special Teams"))
+
+
+class EspnRosterPositionTests(unittest.TestCase):
+    def test_team_directory_normalizes_espn_code_to_committed_vocabulary(self):
+        document = {
+            "sports": [{"leagues": [{"teams": [{"team": {
+                "id": "2005",
+                "abbreviation": "AF",
+                "displayName": "Air Force Falcons",
+            }}]}]}]
+        }
+        with mock.patch.object(espn_positions.espn, "_get", return_value=document):
+            self.assertEqual(espn_positions.team_ids()["AFA"], "2005")
 
 
 if __name__ == "__main__":
