@@ -29,6 +29,10 @@ PROJECTIONS = BASE + "/projections.php?slateID={slate_id}&projSource=RotoWire"
 SOURCE_URL = "https://www.rotowire.com/daily/mma/optimizer.php"
 USER_AGENT = "LegendaryPicks/0.9 current-DraftKings-pool"
 CACHE_SECONDS = 300
+# How old a stored pool may be before a page view goes and gets a new one. The
+# scheduled job runs twice a day; this covers the hours in between, when salaries
+# and the card still move. Micah's number.
+STALE_SECONDS = 4 * 3600
 _cache = {"expires": 0.0, "value": None}
 _lock = threading.Lock()
 
@@ -261,6 +265,39 @@ def _stored_pool(now):
         return None
 
 
+def _age_seconds(stored, now):
+    """Seconds since this pool was captured, or None if it does not say."""
+    stamp = (stored or {}).get("stored_captured_at")
+    try:
+        captured = dt.datetime.fromisoformat(str(stamp).replace("Z", "+00:00"))
+    except (TypeError, ValueError):
+        return None
+    if captured.tzinfo is None:
+        captured = captured.replace(tzinfo=dt.timezone.utc)
+    return (now - captured).total_seconds()
+
+
+def _persist(payload, now):
+    """Keep a page-load refresh, so the next reader does not fetch it again.
+
+    Best effort on purpose, and loud about it. The reader already has a good
+    pool in hand; failing the request because the write failed would trade a
+    working board for a bookkeeping problem.
+    """
+    try:
+        from routers.games import _db as _pkg_db
+        from dk_pool_store import ensure_table, publish
+        connection = _pkg_db()
+        try:
+            ensure_table(connection)
+            publish(connection, payload, captured_at=now.isoformat())
+            connection.commit()
+        finally:
+            connection.close()
+    except Exception as exc:
+        print(f"[ufc_pool] could not store refreshed pool: {type(exc).__name__}: {exc}")
+
+
 @router.get("/api/ufc/draftkings-pool")
 def current_draftkings_pool():
     """Serve the captured pool; fetch live only when there is nothing stored.
@@ -275,16 +312,27 @@ def current_draftkings_pool():
         if _cache["value"] is not None and _cache["expires"] > now.timestamp():
             return _cache["value"]
         stored = _stored_pool(now)
-        if stored is not None:
+        age = _age_seconds(stored, now) if stored is not None else None
+        if stored is not None and age is not None and age <= STALE_SECONDS:
             _cache.update(value=stored, expires=now.timestamp() + CACHE_SECONDS)
             return stored
         try:
             value = build_current_pool(now=now)
         except Exception as exc:
+            if stored is not None:
+                # A stale pool beats no pool, and it says how stale it is rather
+                # than presenting itself as current.
+                print(f"[ufc_pool] refresh failed, serving stored pool: "
+                      f"{type(exc).__name__}: {exc}")
+                _cache.update(value=stored, expires=now.timestamp() + CACHE_SECONDS)
+                return stored
             # Say what the publisher did. The previous generic text cost a
             # python REPL to answer "why is the pool empty" every time.
             raise HTTPException(
                 502, f"current DraftKings MMA pool could not be verified: {exc}"
             ) from exc
+        if value.get("slate"):
+            _persist(value, now)
+            value = dict(value, stored_captured_at=now.isoformat())
         _cache.update(value=value, expires=now.timestamp() + CACHE_SECONDS)
         return value

@@ -307,7 +307,22 @@ JOBS: List[Dict[str, object]] = [
         # instant emptied the board, and a slate nobody opened was never captured at all.
         # This makes the capture independent of page views and gives the board something
         # to serve when RotoWire is slow.
-        "cadence_min": 30,
+        # Twice a day, midnight and noon, which is Micah's call. The serving path
+        # covers the hours between: a page view older than four hours refreshes the
+        # pool itself and stores what it got, so the cadence here is the floor on
+        # capture, not the only way a pool gets refreshed.
+        #
+        # 720 is also what keeps the hourly registry sweep from running this job as
+        # well. The engine skips a job whose last_ok_at is inside its cadence, so the
+        # dedicated timer does the work and the sweep is only a backstop.
+        #
+        # It is a backstop that gets used. The run lock is per database, and the hourly
+        # sweep occupies DEV from :10 to :43 and PROD from :43 to :10, so at midnight
+        # and noon the dedicated timer's DEV half runs and its PROD half reports
+        # skipped_lock. The sweep then picks PROD up on this cadence inside the hour.
+        # Capture is therefore twice a day WITHIN AN HOUR of midnight and noon, not on
+        # the minute, and that is the honest description of it.
+        "cadence_min": 720,
         "timeout_sec": 300,
         # RotoWire's own host. The props provider runner also talks to RotoWire, so they
         # share this lock rather than spending that budget at the same time.
