@@ -55,6 +55,11 @@ export interface Game {
   status: 'SCHEDULED' | 'LIVE' | 'FINAL'
   // ESPN short detail, e.g. "Final/10" (extra innings) or "Final/OT" — shown on the FINAL badge
   statusDetail?: string
+  // The publisher's phase. ESPN files every league it covers as season_slug "preseason" /
+  // "regular-season" / "post-season" (season_type 1/2/3); measured 2026-10-02 on NFL, NHL,
+  // NBA, MLB and NCAAF. Soccer, tennis and UFC payloads carry no phase, so they are never
+  // labelled rather than guessed.
+  isPreseason?: boolean
   subtitle?: string
   // Tennis: array of set scores [home, away] for each set
   sets?: TennisSet[]
@@ -165,6 +170,16 @@ function normalizeLivePeriod(g: any, league?: string): LivePeriod | undefined {
   return undefined
 }
 
+// Preseason by the publisher's own word: the season slug first, the numeric type only when
+// no slug was stored, and a soccer `stage` of "preseason" for the leagues that file one.
+export function isPreseasonGame(g: any): boolean {
+  const slug = String(g?.season_slug ?? g?.seasonSlug ?? '').toLowerCase()
+  if (slug) return slug === 'preseason'
+  const type = g?.season_type ?? g?.seasonType
+  if (type !== undefined && type !== null && type !== '') return Number(type) === 1
+  return String(g?.stage ?? '').toLowerCase() === 'preseason'
+}
+
 export function normalizeGame(g: any, leagueOverride?: string): Game {
   // Determine league from various possible fields, with optional override
   const rawLeague = leagueOverride ? leagueOverride : (g?.league ?? g?.sport ?? '')
@@ -201,6 +216,7 @@ export function normalizeGame(g: any, leagueOverride?: string): Game {
     startTime: g?.date ?? g?.startTime ?? '',
     status: g?.status && ['SCHEDULED', 'LIVE', 'FINAL'].includes(g.status) ? g.status : statusFromState(g?.state),
     statusDetail: g?.status_detail ?? g?.statusDetail ?? specialStatus,   // ESPN shortDetail, e.g. "Final/10"
+    isPreseason: isPreseasonGame(g),
     subtitle: subtitle || undefined,
     sets: normalizeSets(g),
     livePeriod: normalizeLivePeriod(g, league),

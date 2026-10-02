@@ -1,6 +1,6 @@
 import { useRouter } from 'next/router'
 import { useState, useEffect, useMemo, useCallback } from 'react'
-import { SportsService } from '../../../services/sports'
+import { SportsService, isPreseasonGame } from '../../../services/sports'
 import {
   GameDetail, Tab, isNBA, isNHL, isMLB, isNFL, isNCAAF, isWC, isSoccer,
   hasGameTabs, usesDetailEndpoint, usesPerTabEndpoints,
@@ -366,6 +366,7 @@ export default function GameDetailPage() {
         ctx={ctx || null} score={displayScore} state={gameState}
         league={detail?.league || lg} period={detail?.period} clock={detail?.clock}
         statusDetail={detail?.status_detail}
+        isPreseason={isPreseasonGame(detail)}
         homeName={sHome?.name || ctx?.home_team || ''}
         awayName={sAway?.name || ctx?.away_team || ''}
         homeRecord={homeRecord} awayRecord={awayRecord}

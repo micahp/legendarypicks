@@ -38,6 +38,8 @@ export interface GameDetail {
   period?: number | null
   clock?: string | null
   status_detail?: string | null
+  season_type?: number | null
+  season_slug?: string | null
 }
 
 export type Tab = 'boxscore' | 'playbyplay' | 'props' | 'info' | 'booth'

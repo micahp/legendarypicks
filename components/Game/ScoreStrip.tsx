@@ -2,10 +2,11 @@ import { GameContext } from './types'
 import { formatLiveStatus, livePeriodTypeForLeague } from '../../lib/liveGameStatus'
 
 // ── score strip (compact ESPN-style) ──
-export default function ScoreStrip({ ctx, score, state, league, period, clock, statusDetail, homeName, awayName, homeRecord, awayRecord }: {
+export default function ScoreStrip({ ctx, score, state, league, period, clock, statusDetail, isPreseason, homeName, awayName, homeRecord, awayRecord }: {
   ctx: GameContext | null; score: { away: number; home: number } | null; state?: string | null
   league?: string | null; period?: number | null; clock?: string | null
   statusDetail?: string | null
+  isPreseason?: boolean
   homeName: string; awayName: string; homeRecord: string; awayRecord: string
 }) {
   // ESPN closes a postponed / cancelled / abandoned match as state=post with a 0-0 score.
@@ -43,8 +44,13 @@ export default function ScoreStrip({ ctx, score, state, league, period, clock, s
         <div className={`text-sm font-semibold mt-0.5 truncate max-w-[140px] ${awayDim ? 'text-zinc-500' : 'text-zinc-200'}`}>{awayName}</div>
       </div>
 
-      {/* Center: status */}
-      <div className="flex items-center shrink-0">
+      {/* Center: status, with the publisher's preseason phase above it */}
+      <div className="flex flex-col items-center gap-1 shrink-0">
+        {isPreseason && (
+          <span className="px-1.5 py-0.5 rounded border border-amber-500/30 text-[10px] font-bold uppercase tracking-wide text-amber-400">
+            Preseason
+          </span>
+        )}
         <span className={`text-xs font-bold uppercase tracking-widest ${isLive ? 'text-red-500' : 'text-zinc-500'}`}>
           {statusLabel}
         </span>

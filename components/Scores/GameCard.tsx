@@ -30,6 +30,7 @@ interface GameProps {
   startTime: string
   status: 'SCHEDULED' | 'LIVE' | 'FINAL'
   statusDetail?: string   // ESPN "Final/10" etc.
+  isPreseason?: boolean   // publisher-filed preseason; labelled on every league that says so
   subtitle?: string
   showScheduledTime?: boolean
   // Tennis: array of set scores [home, away] for each set
@@ -170,6 +171,11 @@ export default function GameCard(g: GameProps) {
       <div className="flex items-center justify-between text-xs text-zinc-400 mb-2">
         {/* Left side: time (for scheduled, non-UFC) or period info (for live) */}
         <span className="flex items-center gap-2">
+          {g.isPreseason && (
+            <span className="px-1.5 py-0.5 rounded border border-amber-500/30 text-[10px] font-bold uppercase tracking-wide text-amber-400">
+              Preseason
+            </span>
+          )}
           {showTime && <span>{timeLabel}</span>}
         </span>
 

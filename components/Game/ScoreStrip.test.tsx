@@ -47,3 +47,11 @@ describe('ScoreStrip postponed match', () => {
     expect(container.textContent).not.toContain('0')
   })
 })
+
+describe('ScoreStrip preseason label', () => {
+  it('labels a preseason game', () => {
+    render(<ScoreStrip ctx={null} score={null} state="pre" league="nba" statusDetail="10/3 - 7:00 PM EDT"
+      isPreseason homeName="Toronto Raptors" awayName="Miami Heat" homeRecord="" awayRecord="" />)
+    expect(screen.getByText('Preseason')).toBeTruthy()
+  })
+})

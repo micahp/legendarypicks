@@ -68,7 +68,10 @@ def get_game_detail(league: str, game_id: str):
     out = {"game_id": game_id, "league": lg,
            "team_stats": [], "scoring_plays": [], "context": None, "strength": {},
            "final_score": None, "live_score": None, "state": None,
-           "period": None, "clock": None, "status_detail": None}
+           "period": None, "clock": None, "status_detail": None,
+           # The publisher's phase (ESPN season_type 1/2/3, slug preseason/regular-season/
+           # post-season), so the game page can say "preseason" the way the score cards do.
+           "season_type": None, "season_slug": None}
     # Game state up front so we NEVER label a live/upcoming game "final".
     #
     # DB FIRST. The scoreboard ingest writes a snapshot per minute for a live
@@ -100,7 +103,7 @@ def get_game_detail(league: str, game_id: str):
             # source-of-record can never blank out a number we already have.
             if snap_state == "post" and snap_score:
                 out["final_score"] = snap_score
-            for field in ("period", "clock", "status_detail"):
+            for field in ("period", "clock", "status_detail", "season_type", "season_slug"):
                 value = _snapshot_field(lg, game_id, field)
                 if value is not None:
                     out[field] = value

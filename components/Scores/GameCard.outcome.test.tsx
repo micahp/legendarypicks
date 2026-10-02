@@ -140,3 +140,19 @@ describe('GameCard postponed match', () => {
     expect(screen.queryAllByText('0')).toHaveLength(0)
   })
 })
+
+describe('GameCard preseason label', () => {
+  it('labels a publisher-filed preseason game', () => {
+    render(<GameCard gameId="401902644" league="NBA" isPreseason
+      homeTeam={{ teamId: 'TOR', name: 'Toronto Raptors' }} awayTeam={{ teamId: 'MIA', name: 'Miami Heat' }}
+      startTime="2026-10-03T23:00:00Z" status="SCHEDULED" />)
+    expect(screen.getByText('Preseason')).toBeTruthy()
+  })
+
+  it('shows no label on a regular-season game', () => {
+    render(<GameCard gameId="401900001" league="NBA"
+      homeTeam={{ teamId: 'OKC', name: 'Thunder' }} awayTeam={{ teamId: 'HOU', name: 'Rockets' }}
+      startTime="2026-10-20T23:30:00Z" status="SCHEDULED" />)
+    expect(screen.queryByText('Preseason')).toBeNull()
+  })
+})
