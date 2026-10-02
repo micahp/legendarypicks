@@ -134,6 +134,7 @@ SEASON_KEYED_TABLES = (
     ("player_stats", "league"),
     ("team_game_results", "league"),
     ("team_stats_coverage", "league"),
+    ("league_standings_snapshots", "league"),
 )
 
 

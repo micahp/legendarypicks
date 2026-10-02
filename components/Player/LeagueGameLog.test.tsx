@@ -79,3 +79,35 @@ it('states when an older goalkeeper context has appearances but no keeper stats'
   expect(screen.getByText('No goalkeeping stats on file for this competition and year.')).toBeTruthy()
   expect(screen.queryByRole('columnheader', { name: 'SH' })).toBeNull()
 })
+
+it('renders published NHL goaltending instead of a skater line', () => {
+  render(
+    <LeagueGameLog
+      games={[{
+        ...GAME,
+        stats: { saves: 32, shotsAgainst: 36, goalsAgainst: 4, savePctg: 0.888889 },
+      }]}
+      league="nhl"
+      position="G"
+    />,
+  )
+
+  expect(screen.getByRole('columnheader', { name: 'SV' })).toBeTruthy()
+  expect(screen.getByRole('columnheader', { name: 'SA' })).toBeTruthy()
+  expect(screen.getByRole('columnheader', { name: 'GA' })).toBeTruthy()
+  expect(screen.queryByRole('columnheader', { name: 'G' })).toBeNull()
+  expect(screen.getByText('88.9%')).toBeTruthy()
+})
+
+it('states when an older NHL goalie log has no goaltending line', () => {
+  render(
+    <LeagueGameLog
+      games={[{ ...GAME, stats: { goals: 0, shots: 0 } }]}
+      league="nhl"
+      position="G"
+    />,
+  )
+
+  expect(screen.getByText('No goaltending stats on file for this season.')).toBeTruthy()
+  expect(screen.queryByRole('columnheader', { name: 'G' })).toBeNull()
+})

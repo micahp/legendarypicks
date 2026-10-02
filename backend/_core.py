@@ -848,13 +848,14 @@ _NBA_MARKET_STAT = {
     "turnovers": ("TO",  "espn"),
 }
 
-# NHL: nhle.com source, skater stats confirmed: goals,assists,points,shots.
-# "saves" is a goalie stat — zero NHL rows have a non-null $.saves key.
-# Goalie game logs are not ingested at all; leave "saves" unmapped.
+# NHL: current game logs come from the official gamecenter boxscore. Keep the
+# source exact so projections cannot silently mix the legacy season with the
+# current published feed.
 _NHL_MARKET_STAT = {
-    "goals":   ("goals",   "nhle.com"),
-    "shots":   ("shots",   "nhle.com"),
-    "assists": ("assists", "nhle.com"),
+    "goals":   ("goals",   "nhle.com:gamecenter/boxscore"),
+    "shots":   ("shots",   "nhle.com:gamecenter/boxscore"),
+    "assists": ("assists", "nhle.com:gamecenter/boxscore"),
+    "saves":   ("saves",   "nhle.com:gamecenter/boxscore"),
 }
 
 _LEAGUE_MARKET_STAT = {

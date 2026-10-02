@@ -50,10 +50,8 @@ import paced_http
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from league_stats import (  # noqa: E402
-    LeagueStatContractError,
     load_unique_source_id_map,
     publish_player_stats,
-    queue_unresolved_player,
 )
 from season_keys import normalize_season  # noqa: E402
 
@@ -202,52 +200,93 @@ def _toi(seconds) -> str | None:
 def refresh(db_path: str, *, season: int, dry_run: bool = False) -> dict:
     goalies = fetch_report("goalie/summary", season)
     skaters = fetch_report("skater/summary", season)
-    realtime = {
-        int(row["playerId"]): row for row in fetch_report("skater/realtime", season)
-    }
+    realtime_rows = fetch_report("skater/realtime", season)
+
+    def unique_by_id(label: str, rows: list[dict]) -> dict[int, dict]:
+        indexed: dict[int, dict] = {}
+        duplicates = []
+        for row in rows:
+            player_id = int(row.get("playerId") or 0)
+            if not player_id:
+                raise NHLStatsIngestError(f"{label}: row has no playerId")
+            if player_id in indexed:
+                duplicates.append(player_id)
+            indexed[player_id] = row
+        if duplicates:
+            raise NHLStatsIngestError(
+                f"{label}: {len(set(duplicates))} duplicate playerId values"
+            )
+        return indexed
+
+    goalie_by_id = unique_by_id("goalie/summary", goalies)
+    skater_by_id = unique_by_id("skater/summary", skaters)
+    realtime = unique_by_id("skater/realtime", realtime_rows)
+    if set(skater_by_id) != set(realtime):
+        missing = sorted(set(skater_by_id) - set(realtime))
+        extra = sorted(set(realtime) - set(skater_by_id))
+        raise NHLStatsIngestError(
+            "skater report populations disagree: "
+            f"summary={len(skater_by_id)} realtime={len(realtime)} "
+            f"missing={missing[:5]} extra={extra[:5]}"
+        )
+    overlap = sorted(set(goalie_by_id) & set(skater_by_id))
+    if overlap:
+        raise NHLStatsIngestError(
+            f"goalie and skater reports overlap on {len(overlap)} playerId values"
+        )
     print(f"published: {len(goalies)} goalies, {len(skaters)} skaters, "
           f"{len(realtime)} realtime rows")
 
-    connection = sqlite3.connect(db_path)
+    connection = sqlite3.connect(db_path, timeout=60, isolation_level=None)
     connection.row_factory = sqlite3.Row
+    connection.execute("PRAGMA busy_timeout=60000")
     try:
         nhl_id_to_player, ambiguous = load_unique_source_id_map(
             connection, league="nhl", id_column="nhl_id"
         )
+        if ambiguous:
+            raise NHLStatsIngestError(
+                f"{len(ambiguous)} NHL ids have duplicate canonical owners"
+            )
         counts = {"goalies": 0, "defence": 0, "forwards": 0,
                   "unresolved": 0, "rejected": 0}
         espn_season = normalize_season(SOURCE, "nhl", season)
 
         work = [(row, goalie_values(row), "goalies", row.get("goalieFullName"))
-                for row in goalies]
-        for row in skaters:
+                for row in goalie_by_id.values()]
+        for row in skater_by_id.values():
             position = str(row.get("positionCode") or "?").upper()
             bucket = "defence" if position == "D" else "forwards"
             work.append((row, skater_values(row, realtime.get(int(row["playerId"]))),
                          bucket, row.get("skaterFullName")))
 
+        planned = []
+        unresolved = []
         for row, values, bucket, name in work:
             source_key = str(row.get("playerId"))
             player_id = nhl_id_to_player.get(source_key)
             if player_id is None:
                 counts["unresolved"] += 1
-                if not dry_run:
-                    queue_unresolved_player(
-                        connection,
-                        source=SOURCE,
-                        raw_name=str(name or ""),
-                        league="nhl",
-                        team=values.get("nhl_team"),
-                        source_player_key=source_key,
-                        reason=("duplicate_spine_nhl_id"
-                                if source_key in ambiguous
-                                else "nhl_id_not_in_spine"),
-                    )
+                unresolved.append((source_key, str(name or "")))
                 continue
-            if dry_run:
-                counts[bucket] += 1
-                continue
-            try:
+            planned.append((player_id, row, values, bucket, name))
+            counts[bucket] += 1
+
+        if unresolved:
+            raise NHLStatsIngestError(
+                f"{len(unresolved)} published players have no canonical nhl_id owner: "
+                + ", ".join(f"{key} {name}" for key, name in unresolved[:10])
+            )
+        if dry_run:
+            return counts
+
+        try:
+            connection.execute("BEGIN IMMEDIATE")
+            connection.execute(
+                "DELETE FROM player_stats WHERE league='nhl' AND season=?",
+                (espn_season,),
+            )
+            for player_id, row, values, bucket, name in planned:
                 publish_player_stats(
                     connection,
                     player_id=player_id,
@@ -258,13 +297,10 @@ def refresh(db_path: str, *, season: int, dry_run: bool = False) -> dict:
                     games=row.get("gamesPlayed"),
                     values=values,
                 )
-                counts[bucket] += 1
-            except LeagueStatContractError as exc:
-                counts["rejected"] += 1
-                print(f"  rejected {name}: {exc}")
-
-        if not dry_run:
             connection.commit()
+        except Exception:
+            connection.rollback()
+            raise
         return counts
     finally:
         connection.close()

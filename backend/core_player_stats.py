@@ -231,6 +231,30 @@ def _get_nhl_stats(player_name: str, player_id: int, now: float):
             con.close()
             return {"stats": None, "message": f"No NHL data for {player_name}. Run ingest_nhl.py."}
 
+        position = str(row["nhl_position"] or "").upper()
+        if position == "G":
+            stats = {
+                "saves": row["saves"],
+                "shots_against": row["shots_against"],
+                "goals_against": row["goals_against"],
+                "save_pct": row["save_pct"],
+                "gaa": row["gaa"],
+                "shutouts": row["shutouts"],
+                "wins": row["wins"],
+                "losses": row["losses"],
+                "ot_losses": row["ot_losses"],
+                "games_started": row["games_started"],
+            }
+        else:
+            stats = {
+                "goals": row["goals"], "assists": row["assists"],
+                "points": row["points_nhl"], "shots": row["shots"],
+                "shooting_pct": row["shooting_pct"],
+                "plus_minus": row["plus_minus"], "pim": row["pim"],
+                "ppg": row["ppg"], "ppp": row["ppp"], "shg": row["shg"],
+                "toi": row["toi"], "faceoff_pct": row["faceoff_pct"],
+            }
+
         out = {
             "window": str(row["season"]),
             "player_name_nhl": player_name,
@@ -238,13 +262,7 @@ def _get_nhl_stats(player_name: str, player_id: int, now: float):
             "team": row["nhl_team"],
             "games": row["games"],
             "source": row["source"] or "nhle.com",
-            "stats": {
-                "goals": row["goals"], "assists": row["assists"], "points": row["points_nhl"],
-                "shots": row["shots"], "shooting_pct": row["shooting_pct"],
-                "plus_minus": row["plus_minus"], "pim": row["pim"],
-                "ppg": row["ppg"], "ppp": row["ppp"], "shg": row["shg"],
-                "toi": row["toi"], "faceoff_pct": row["faceoff_pct"],
-            }
+            "stats": stats,
         }
         con.close()
         return out

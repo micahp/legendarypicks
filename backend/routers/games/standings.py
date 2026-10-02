@@ -2,6 +2,7 @@
 from fastapi import HTTPException
 from fastapi.responses import JSONResponse
 from _core import *
+from nhl_standings_store import NHLStandingsError, read_snapshot
 from . import router
 
 
@@ -171,6 +172,22 @@ def get_standings(league: str, season: int = None):
     'Group' (progression gate via espn.wc_is_knockout — never serve stale groups
     once knockouts have begun)."""
     lg = league.lower()
+    if lg == "nhl":
+        try:
+            with closing(_db()) as con:
+                stored = read_snapshot(con, league=lg, season=season)
+        except (sqlite3.Error, NHLStandingsError) as exc:
+            raise HTTPException(
+                503, f"NHL standings snapshot unavailable: {exc}"
+            ) from exc
+        if stored is not None:
+            return JSONResponse(
+                content=stored,
+                headers={
+                    "Cache-Control": "public, max-age=300",
+                    "X-LP-Data-Source": str(stored.get("source") or "nhle.com"),
+                },
+            )
     if lg == "ncaaf":
         # Conference-grouped tables - CFB's /standings payload has no
         # rank/gamesPlayed/losses keys; the record lives in `overall` and

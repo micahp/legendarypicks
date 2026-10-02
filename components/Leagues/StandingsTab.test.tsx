@@ -109,4 +109,31 @@ describe('standings season picker', () => {
     expect(screen.queryByLabelText('Season')).toBeNull()
     expect(screen.getByRole('heading', { name: 'Eastern Conference' })).toBeTruthy()
   })
+
+  it('names a single NHL season and keeps unplayed rates unavailable', () => {
+    render(
+      <StandingsTab
+        error={null}
+        loading={false}
+        isWorldCup={false}
+        knockout={[]}
+        groups={[]}
+        teams={[{
+          abbrev: 'ANA', name: 'Anaheim Ducks', wins: 0, losses: 0,
+          win_pct: null, differential: 0, streak: null, last10: null,
+          games_played: 0,
+        }]}
+        season={2027}
+        availableSeasons={[2027]}
+        onSelectSeason={jest.fn()}
+        leagueName="NHL"
+        league="nhl"
+      />,
+    )
+
+    const season = screen.getByLabelText('Season')
+    expect(season.tagName).toBe('SPAN')
+    expect(season.textContent).toBe('2026-27')
+    expect(screen.getAllByText('—')).toHaveLength(3)
+  })
 })

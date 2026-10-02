@@ -3,11 +3,17 @@ export interface TeamStats {
   name: string
   wins: number
   losses: number
-  win_pct: number
-  differential: number
-  streak: string
-  last10: string
+  win_pct: number | null
+  differential: number | null
+  streak: string | null
+  last10: string | null
   games_played: number
+  rank?: number
+  ot_losses?: number
+  points?: number
+  point_pct?: number | null
+  conference?: string | null
+  division?: string | null
 }
 
 export interface StandingRow {

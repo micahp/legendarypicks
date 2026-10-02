@@ -18,6 +18,8 @@ _IMPORT_DB.close()
 os.environ["LP_DB_PATH"] = _IMPORT_DB.name
 
 from routers import players  # noqa: E402
+import core_player_stats  # noqa: E402
+import _core  # noqa: E402
 
 
 class PlayerProfileApiTests(unittest.TestCase):
@@ -459,6 +461,78 @@ class NflSeasonStatsPositionTests(unittest.TestCase):
         ):
             self.assertIsNone(
                 players._season_stats_for_profile(1, "Nobody", "nfl"))
+
+
+class NhlSeasonStatsPositionTests(unittest.TestCase):
+    def test_goalie_profile_uses_published_goaltending_fields(self):
+        handle = tempfile.NamedTemporaryFile(
+            prefix="nhl-goalie-profile-", suffix=".db", delete=False
+        )
+        path = handle.name
+        handle.close()
+        self.addCleanup(lambda: os.path.exists(path) and os.unlink(path))
+        row = {
+            "season": 2027, "nhl_position": "G", "nhl_team": "CHI",
+            "games": 1, "source": "nhle.com", "saves": 32,
+            "shots_against": 36, "goals_against": 4, "save_pct": 88.9,
+            "gaa": 4.01, "shutouts": 0, "wins": 0, "losses": 1,
+            "ot_losses": 0, "games_started": 1,
+        }
+
+        with mock.patch.dict(os.environ, {"LP_DB_PATH": path}), mock.patch.object(
+            core_player_stats, "canonical_player_stats_row", return_value=row
+        ):
+            result = core_player_stats._get_nhl_stats(
+                "Spencer Knight", 26494, 0
+            )
+
+        self.assertEqual(
+            {
+                "saves": 32, "shots_against": 36, "goals_against": 4,
+                "save_pct": 88.9, "gaa": 4.01, "shutouts": 0,
+                "wins": 0, "losses": 1, "ot_losses": 0,
+                "games_started": 1,
+            },
+            result["stats"],
+        )
+        self.assertNotIn("goals", result["stats"])
+
+
+class NhlCurrentProjectionSourceTests(unittest.TestCase):
+    def test_saves_use_current_gamecenter_rows_not_legacy_logs(self):
+        handle = tempfile.NamedTemporaryFile(
+            prefix="nhl-current-projection-", suffix=".db", delete=False
+        )
+        path = handle.name
+        handle.close()
+        self.addCleanup(lambda: os.path.exists(path) and os.unlink(path))
+        con = sqlite3.connect(path)
+        con.execute(
+            "CREATE TABLE player_game_logs("
+            "player_id INTEGER, league TEXT, stats TEXT, source TEXT, game_date TEXT)"
+        )
+        con.executemany(
+            "INSERT INTO player_game_logs VALUES(?,?,?,?,?)",
+            [
+                (1, "nhl", json.dumps({"saves": saves}),
+                 "nhle.com:gamecenter/boxscore", f"2026-10-0{index}")
+                for index, saves in enumerate((31, 32, 33, 34, 35), 1)
+            ] + [
+                (1, "nhl", json.dumps({"saves": 1}), "nhle.com", "2026-04-01")
+            ],
+        )
+        con.commit()
+        con.close()
+
+        def connection():
+            opened = sqlite3.connect(path)
+            opened.row_factory = sqlite3.Row
+            return opened
+
+        with mock.patch.object(_core, "_db", side_effect=connection):
+            values = _core._query_game_log_values(1, "saves", 30.5, "nhl")
+
+        self.assertEqual([35.0, 34.0, 33.0, 32.0, 31.0], values)
 
 
 class DstGameLogTests(unittest.TestCase):
