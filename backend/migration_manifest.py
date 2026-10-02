@@ -211,6 +211,23 @@ def _probe_team_stats_from_dev(con: sqlite3.Connection) -> str:
     return "applied" if n > 0 else "unknown: coverage manifest empty"
 
 
+def _probe_team_evidence_schema(con: sqlite3.Connection) -> str:
+    required = {
+        "team_game_results": {"source", "run_id"},
+        "team_game_stats": {"source"},
+        "team_stats_team_inventory": {"run_id", "team_id", "team_abbrev"},
+        "team_stats_ingestion_failures": {
+            "run_id", "game_id", "team", "reason", "recorded_at",
+        },
+    }
+    missing = []
+    for table, columns in required.items():
+        absent = sorted(columns - _columns(con, table))
+        if absent:
+            missing.append(f"{table} lacks {absent}")
+    return "applied" if not missing else "unknown: " + "; ".join(missing)
+
+
 def _probe_team_stats_proof(con: sqlite3.Connection) -> str:
     # migrate_team_stats.py builds a fresh proof DB in /tmp by design; it
     # never targets picks.db / picks.dev.db (PROTECTED_SUBSTRINGS).
@@ -405,6 +422,13 @@ LEGACY_MIGRATIONS: tuple[LegacyMigration, ...] = (
         probe=_probe_ufc_rankings,
         note="dev is the source; the script only writes the prod target",
         applies_to="prod",
+    ),
+    LegacyMigration(
+        migration_id="legacy_migrate_team_evidence_schema",
+        script="backend/migrate_team_evidence_schema.py",
+        description="team-stat provenance columns and evidence tables",
+        probe=_probe_team_evidence_schema,
+        note="required by game-oriented NHL publication",
     ),
     LegacyMigration(
         migration_id="legacy_migrate_team_stats_from_dev",

@@ -38,8 +38,29 @@ TEAM_GAME_RESULTS_DDL = """
 CREATE TABLE team_game_results (
     league TEXT NOT NULL,
     game_id TEXT NOT NULL,
-    team TEXT NOT NULL
+    team TEXT NOT NULL,
+    source TEXT,
+    run_id TEXT
 )
+"""
+
+
+TEAM_EVIDENCE_DDL = """
+CREATE TABLE team_stats_team_inventory (
+    run_id TEXT NOT NULL,
+    team_id TEXT NOT NULL,
+    team_abbrev TEXT,
+    PRIMARY KEY (run_id, team_id)
+);
+CREATE TABLE team_stats_ingestion_failures (
+    run_id TEXT NOT NULL,
+    game_id TEXT,
+    team TEXT,
+    reason TEXT NOT NULL,
+    recorded_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX idx_ingestion_failures_run
+    ON team_stats_ingestion_failures(run_id);
 """
 
 
@@ -79,8 +100,10 @@ def _bootstrap(path: str, old_registry: bool = False) -> None:
     with sqlite3.connect(path) as con:
         ensure_table(con)
         con.execute(LEGACY_TEAM_STATS_DDL)
+        con.execute("ALTER TABLE team_game_stats ADD COLUMN source TEXT")
         con.execute(NEWS_ITEMS_DDL)
         con.execute(TEAM_GAME_RESULTS_DDL)
+        con.executescript(TEAM_EVIDENCE_DDL)
         con.execute(LEGACY_PREDICTIONS_DDL)
         for addition in migrate_schema.MIGRATIONS[1].additions:
             con.execute(addition.sql)

@@ -39,6 +39,8 @@
 
 ### Fixes
 
+- NHL season reports page in stable player-ID order, so live stat changes cannot move a
+  player across a page boundary and silently replace another player with a duplicate.
 - NHL projections match every source their history was written under. Pointing the market map
   at the new boxscore source alone cut the projection window off from 51,143 legacy log rows.
 - The UFC optimizer permits both fighters of a bout in one lineup, and reads the contest's own

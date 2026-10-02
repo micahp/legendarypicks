@@ -102,6 +102,13 @@ def fetch_report(report: str, season: int) -> list[dict]:
             "isGame": "false",
             "start": start,
             "limit": PAGE,
+            # Current-season totals can change between page requests. Without
+            # a stable publisher-side order, a player can move across a page
+            # boundary and arrive twice while another player is omitted.
+            "sort": json.dumps(
+                [{"property": "playerId", "direction": "ASC"}],
+                separators=(",", ":"),
+            ),
             "cayenneExp": f"seasonId={int(season)} and gameTypeId=2",
         })
         document = _get(f"{BASE.format(report=report)}?{query}")

@@ -5,7 +5,9 @@ The bug these pin: every goalie row in the database read 0 goals, 0 assists,
 0 shots, because the only mapping that existed was forward-shaped.
 """
 
+import json
 import unittest
+import urllib.parse
 from unittest import mock
 
 import ingest_nhl_season_stats as ingest
@@ -120,6 +122,21 @@ class FetchReportTest(unittest.TestCase):
         with mock.patch.object(ingest, "_get", fake_get):
             ingest.fetch_report("goalie/summary", 20252026)
         self.assertIn("gameTypeId%3D2", seen[0].replace("+", "%20"))
+
+    def test_it_uses_a_stable_player_id_order_across_pages(self):
+        seen = []
+
+        def fake_get(url):
+            seen.append(url)
+            return {"data": [GOALIE_ROW], "total": 1}
+
+        with mock.patch.object(ingest, "_get", fake_get):
+            ingest.fetch_report("goalie/summary", 20252026)
+        query = urllib.parse.parse_qs(urllib.parse.urlsplit(seen[0]).query)
+        self.assertEqual(
+            json.loads(query["sort"][0]),
+            [{"property": "playerId", "direction": "ASC"}],
+        )
 
     def test_a_short_page_run_fails_closed(self):
         # The publisher says 500 rows exist and hands back 1. Publishing that
